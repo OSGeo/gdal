@@ -16537,7 +16537,18 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
 
     if( GetAccess() == GA_Update )
     {
-        if( padfTransform[0] == 0.0 &&
+        if( nGCPCount > 0 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "GCPs previously set are going to be cleared "
+                     "due to the setting of a geotransform.");
+            bForceUnsetGTOrGCPs = true;
+            GDALDeinitGCPs( nGCPCount, pasGCPList );
+            CPLFree( pasGCPList );
+            nGCPCount = 0;
+            pasGCPList = NULL;
+        }
+        else if( padfTransform[0] == 0.0 &&
             padfTransform[1] == 1.0 &&
             padfTransform[2] == 0.0 &&
             padfTransform[3] == 0.0 &&
@@ -16625,7 +16636,30 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
         LookForProjection();
 
         if( nGCPCount > 0 && nGCPCountIn == 0 )
+        {
             bForceUnsetGTOrGCPs = true;
+        }
+        else if( nGCPCountIn > 0 &&
+                 !(adfGeoTransform[0] == 0.0 &&
+                   adfGeoTransform[1] == 1.0 &&
+                   adfGeoTransform[2] == 0.0 &&
+                   adfGeoTransform[3] == 0.0 &&
+                   adfGeoTransform[4] == 0.0 &&
+                   adfGeoTransform[5] == 1.0) )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "A geotransform previously set is going to be cleared "
+                     "due to the setting of GCPs.");
+            adfGeoTransform[0] = 0.0;
+            adfGeoTransform[1] = 1.0;
+            adfGeoTransform[2] = 0.0;
+            adfGeoTransform[3] = 0.0;
+            adfGeoTransform[4] = 0.0;
+            adfGeoTransform[5] = 1.0;
+            bGeoTransformValid = false;
+            bForceUnsetGTOrGCPs = true;
+        }
+
         if( !EQUAL(pszProjection, "") &&
                    (pszGCPProjection == NULL ||
                    pszGCPProjection[0] == '\0') )
