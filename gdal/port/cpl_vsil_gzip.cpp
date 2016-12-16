@@ -456,9 +456,9 @@ VSIGZipHandle::~VSIGZipHandle()
 
 void VSIGZipHandle::check_header()
 {
-    /* Assure two bytes in the buffer so we can peek ahead -- handle case
-    where first byte of header is at the end of the buffer after the last
-    gzip segment */
+    // Assure two bytes in the buffer so we can peek ahead -- handle case
+    // where first byte of header is at the end of the buffer after the last
+    // gzip segment.
     uInt len = stream.avail_in;
     if( len < 2 )
     {
@@ -482,7 +482,8 @@ void VSIGZipHandle::check_header()
         }
         if( len == 0 )  // && ferror(file)
         {
-            if( VSIFTellL((VSILFILE*)m_poBaseHandle) != offsetEndCompressedData )
+            if( VSIFTellL((VSILFILE*)m_poBaseHandle) !=
+                offsetEndCompressedData )
                 z_err = Z_ERRNO;
         }
         stream.avail_in += len;
@@ -844,14 +845,14 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
 
                 CPLPrintUIntBig(szBuffer, m_compressed_size, 31);
                 char* pszFirstNonSpace = szBuffer;
-                while( *pszFirstNonSpace == ' ' ) pszFirstNonSpace ++;
+                while( *pszFirstNonSpace == ' ' ) pszFirstNonSpace++;
                 CPL_IGNORE_RET_VAL(
                     VSIFPrintfL(fpCacheLength,
                                 "compressed_size=%s\n", pszFirstNonSpace));
 
                 CPLPrintUIntBig(szBuffer, m_uncompressed_size, 31);
                 pszFirstNonSpace = szBuffer;
-                while( *pszFirstNonSpace == ' ' ) pszFirstNonSpace ++;
+                while( *pszFirstNonSpace == ' ' ) pszFirstNonSpace++;
                 CPL_IGNORE_RET_VAL(
                     VSIFPrintfL(fpCacheLength,
                                 "uncompressed_size=%s\n", pszFirstNonSpace));
