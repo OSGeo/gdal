@@ -70,7 +70,7 @@ class ValueRange
 public:
     ValueRange(double min, double max);  // step = 1
     ValueRange(double min, double max, double step);
-    explicit ValueRange(std::string str);
+    explicit ValueRange(const std::string& str);
     std::string ToString();
     ilwisStoreType get_NeededStoreType() { return st; }
     double get_rLo() { return _rLo; }
@@ -122,8 +122,8 @@ public:
 
     ILWISRasterBand( ILWISDataset *, int );
     virtual ~ILWISRasterBand();
-    CPLErr GetILWISInfo(std::string pszFileName);
-    void ILWISOpen( std::string pszFilename);
+    CPLErr GetILWISInfo(const std::string& pszFileName);
+    void ILWISOpen( const std::string& pszFilename);
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IWriteBlock( int, int, void * ) override;
@@ -133,7 +133,7 @@ private:
     void FillWithNoData(void * pImage);
     void SetValue(void *pImage, int i, double rV);
     double GetValue(void *pImage, int i);
-    void ReadValueDomainProperties(std::string pszFileName);
+    void ReadValueDomainProperties(const std::string& pszFileName);
 };
 
 /************************************************************************/
@@ -149,10 +149,10 @@ class ILWISDataset : public GDALPamDataset
     int    bGeoDirty;
     int    bNewDataset;            /* product of Create() */
     std::string pszFileType; //indicating the input dataset: Map/MapList
-    CPLErr ReadProjection( std::string csyFileName);
+    CPLErr ReadProjection( const std::string& csyFileName);
     CPLErr WriteProjection();
     CPLErr WriteGeoReference();
-    void   CollectTransformCoef(std::string &pszRefFile );
+    void   CollectTransformCoef( std::string &pszRefFile );
 
 public:
     ILWISDataset();
@@ -214,10 +214,10 @@ private:
     void Store();
 };
 
-std::string ReadElement(std::string section, std::string entry, std::string filename);
-bool WriteElement(std::string sSection, std::string sEntry, std::string fn, std::string sValue);
-bool WriteElement(std::string sSection, std::string sEntry, std::string fn, int nValue);
-bool WriteElement(std::string sSection, std::string sEntry, std::string fn, double dValue);
+std::string ReadElement(const std::string& section, const std::string& entry, const std::string& filename);
+bool WriteElement(const std::string& sSection, const std::string& sEntry, const std::string& fn, const std::string& sValue);
+bool WriteElement(const std::string& sSection, const std::string& sEntry, const std::string& fn, int nValue);
+bool WriteElement(const std::string& sSection, const std::string& sEntry, const std::string& fn, double dValue);
 
 } // namespace GDAL
 
