@@ -270,7 +270,7 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffsetIn, int nWhence )
         if( nOffsetIn > m_nOffset && nOffsetIn < 4096 + m_nOffset )
         {
             const int nDiff = static_cast<int>(nOffsetIn - m_nOffset);
-            GByte abyTemp[4096];
+            GByte abyTemp[4096] = {};
             const int nRead = static_cast<int>(fread(abyTemp, 1, nDiff, fp));
             if( nRead == nDiff )
             {

@@ -213,7 +213,6 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     VSICurlStreamingFSHandler* m_poFS;
 
   private:
-
     char*           m_pszURL;
 
 #ifdef notdef
@@ -271,7 +270,6 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     void SetURL( const char* pszURL );
 
   public:
-
     VSICurlStreamingHandle( VSICurlStreamingFSHandler* poFS,
                             const char* pszURL );
     virtual ~VSICurlStreamingHandle();
@@ -648,7 +646,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 
         if( ENABLE_DEBUG )
             CPLDebug("VSICURL",
-                     "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
+                     "GetFileSize(%s)=" CPL_FRMT_GUIB " response_code=%d",
                      m_pszURL, fileSize, static_cast<int>(response_code));
     }
 
@@ -1028,7 +1026,7 @@ void VSICurlStreamingHandle::DownloadInThread()
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlStreamingHandleReceivedBytes);
 
-    char szCurlErrBuf[CURL_ERROR_SIZE+1];
+    char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
     szCurlErrBuf[0] = '\0';
     curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
@@ -1061,9 +1059,9 @@ void VSICurlStreamingHandle::DownloadInThread()
     ReleaseMutex();
 }
 
-static void VSICurlDownloadInThread(void* pArg)
+static void VSICurlDownloadInThread( void* pArg )
 {
-  static_cast<VSICurlStreamingHandle *>(pArg)->DownloadInThread();
+    static_cast<VSICurlStreamingHandle *>(pArg)->DownloadInThread();
 }
 
 /************************************************************************/
@@ -1697,17 +1695,17 @@ class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
     VSIS3HandleHelper* m_poS3HandleHelper;
 
   protected:
-        virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb )
-            override;
-        virtual bool StopReceivingBytesOnError() override { return false; }
-        virtual bool CanRestartOnError( const char* pszErrorMsg,
-                                        bool bSetError ) override;
-        virtual bool InterpretRedirect() override { return false; }
+    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb )
+        override;
+    virtual bool StopReceivingBytesOnError() override { return false; }
+    virtual bool CanRestartOnError( const char* pszErrorMsg,
+                                    bool bSetError ) override;
+    virtual bool InterpretRedirect() override { return false; }
 
-    public:
-        VSIS3StreamingHandle( VSIS3StreamingFSHandler* poFS,
-                              VSIS3HandleHelper* poS3HandleHelper );
-        virtual ~VSIS3StreamingHandle();
+  public:
+    VSIS3StreamingHandle( VSIS3StreamingFSHandler* poFS,
+                          VSIS3HandleHelper* poS3HandleHelper );
+    virtual ~VSIS3StreamingHandle();
 };
 
 /************************************************************************/
