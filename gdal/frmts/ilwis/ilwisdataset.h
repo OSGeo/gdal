@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef ILWISDATASET_H_INCLUDED
+#define ILWISDATASET_H_INCLUDED
+
 #ifdef _MSC_VER
 #pragma warning(disable : 4786)
 #pragma warning(disable : 4503)
@@ -49,6 +52,9 @@
 #define iUNDEF  -2147483647
 #define flUNDEF ((float)-1e38)
 #define rUNDEF  ((double)-1e308)
+
+namespace GDAL
+{
 
 enum ilwisStoreType
 {
@@ -207,3 +213,12 @@ private:
     void Load();
     void Store();
 };
+
+std::string ReadElement(std::string section, std::string entry, std::string filename);
+bool WriteElement(std::string sSection, std::string sEntry, std::string fn, std::string sValue);
+bool WriteElement(std::string sSection, std::string sEntry, std::string fn, int nValue);
+bool WriteElement(std::string sSection, std::string sEntry, std::string fn, double dValue);
+
+} // namespace GDAL
+
+#endif // ILWISDATASET_H_INCLUDED 
