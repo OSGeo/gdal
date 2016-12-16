@@ -1085,7 +1085,12 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
         {
             return poFeatureDefn;
         }
-        poSrcFDefn = l_poDS->GetLayer(0)->GetLayerDefn();
+        OGRLayer* l_poLayer = l_poDS->GetLayer(0);
+        if( l_poLayer == NULL )
+        {
+            return poFeatureDefn;
+        }
+        poSrcFDefn = l_poLayer->GetLayerDefn();
         bGotApproximateLayerDefn = TRUE;
         /* We cannot trust width and precision based on a single feature */
         bUnsetWidthPrecision = TRUE;
@@ -1195,6 +1200,8 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
             if (poBaseDS)
             {
                 poBaseLayer = poBaseDS->GetLayer(0);
+                if( poBaseLayer == NULL )
+                    return NULL;
                 poBaseLayer->ResetReading();
 
                 /* Check that the layer field definition is consistent with the one */
