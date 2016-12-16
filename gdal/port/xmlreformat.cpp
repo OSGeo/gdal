@@ -34,11 +34,14 @@ CPL_CVSID("$Id$");
 int main( int argc, char **argv )
 
 {
-    static char szXML[20000000];
+    // TODO(schwehr): Switch to using std::string.
+    static char szXML[20000000] = {};
     FILE *fp = NULL;
 
     if( argc == 1 )
+    {
         fp = stdin;
+    }
     else if( argv[1][0] == '-' )
     {
         printf( "Usage: xmlreformat [filename]\n" );/*ok*/
@@ -54,7 +57,7 @@ int main( int argc, char **argv )
         }
     }
 
-    int nLen = static_cast<int>(fread(szXML, 1, sizeof(szXML), fp));
+    const int nLen = static_cast<int>(fread(szXML, 1, sizeof(szXML), fp));
     if( nLen >= static_cast<int>(sizeof(szXML)) - 2 )
     {
         fprintf( stderr,
