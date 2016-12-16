@@ -97,7 +97,7 @@ static void CPLFixPath(char* pszPath)
             return;
         char* pszSlashBefore = pszSlashDotDot - 1;
         while( pszSlashBefore > pszPath && *pszSlashBefore != '/' )
-            pszSlashBefore --;
+            pszSlashBefore--;
         if( pszSlashBefore == pszPath )
             return;
         memmove(pszSlashBefore + 1, pszSlashDotDot + 4,

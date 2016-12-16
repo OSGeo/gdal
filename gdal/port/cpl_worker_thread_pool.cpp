@@ -157,7 +157,7 @@ bool CPLWorkerThreadPool::SubmitJob( CPLThreadFunc pfnFunc, void* pData )
 
     psItem->psNext = psJobQueue;
     psJobQueue = psItem;
-    nPendingJobs ++;
+    nPendingJobs++;
 
     if( psWaitingWorkerThreadsList )
     {
@@ -170,7 +170,7 @@ bool CPLWorkerThreadPool::SubmitJob( CPLThreadFunc pfnFunc, void* pData )
         CPLList* psNext = psWaitingWorkerThreadsList->psNext;
         CPLList* psToFree = psWaitingWorkerThreadsList;
         psWaitingWorkerThreadsList = psNext;
-        nWaitingWorkerThreads --;
+        nWaitingWorkerThreads--;
 
         //CPLAssert(
         //  CPLListCount(psWaitingWorkerThreadsList) == nWaitingWorkerThreads);
@@ -233,7 +233,7 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
 
         psItem->psNext = psJobQueue;
         psJobQueue = psItem;
-        nPendingJobs ++;
+        nPendingJobs++;
     }
 
     if( !bRet )
@@ -243,7 +243,7 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
             CPLList* psNext = psIter->psNext;
             VSIFree(psIter->pData);
             VSIFree(psIter);
-            nPendingJobs --;
+            nPendingJobs--;
             psIter = psNext;
         }
     }
@@ -269,7 +269,7 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
             CPLList* psNext = psWaitingWorkerThreadsList->psNext;
             CPLList* psToFree = psWaitingWorkerThreadsList;
             psWaitingWorkerThreadsList = psNext;
-            nWaitingWorkerThreads --;
+            nWaitingWorkerThreads--;
 
             //CPLAssert( CPLListCount(psWaitingWorkerThreadsList) == nWaitingWorkerThreads);
 
@@ -411,7 +411,7 @@ bool CPLWorkerThreadPool::Setup(int nThreads,
 void CPLWorkerThreadPool::DeclareJobFinished()
 {
     CPLAcquireMutex(hMutex, 1000.0);
-    nPendingJobs --;
+    nPendingJobs--;
     CPLCondSignal(hCond);
     CPLReleaseMutex(hMutex);
 }
@@ -449,7 +449,7 @@ CPLWorkerThreadPool::GetNextJob( CPLWorkerThread* psWorkerThread )
         if( !psWorkerThread->bMarkedAsWaiting )
         {
             psWorkerThread->bMarkedAsWaiting = TRUE;
-            nWaitingWorkerThreads ++;
+            nWaitingWorkerThreads++;
             CPLAssert(nWaitingWorkerThreads <= static_cast<int>(aWT.size()));
 
             CPLList* psItem =
