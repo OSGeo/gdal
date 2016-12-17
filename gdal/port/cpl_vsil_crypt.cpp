@@ -1128,7 +1128,7 @@ size_t
 VSICryptFileHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
 {
     size_t nToWrite = nSize * nMemb;
-    const GByte* pabyBuffer = static_cast<GByte *>(pBuffer);
+    const GByte* pabyBuffer = static_cast<const GByte *>(pBuffer);
 
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "Write(nCurPos=" CPL_FRMT_GUIB ", nToWrite=%d,"
