@@ -12612,6 +12612,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         if( TIFFRGBAImageOK( hTIFF, szMessage ) == 1 )
         {
             const char* pszSourceColorSpace = NULL;
+            nBands = 4;
             switch( nPhotometric )
             {
                 case PHOTOMETRIC_CIELAB:
@@ -12628,6 +12629,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                     break;
                 case PHOTOMETRIC_YCBCR:
                     pszSourceColorSpace = "YCbCr";
+                    nBands = 3; // probably true for other photometric values
                     break;
             }
             if( pszSourceColorSpace )
@@ -12635,7 +12637,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                                             pszSourceColorSpace,
                                             "IMAGE_STRUCTURE" );
             bTreatAsRGBA = true;
-            nBands = 4;
+
         }
         else
         {
