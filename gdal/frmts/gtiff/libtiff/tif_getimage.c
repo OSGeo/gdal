@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.99 2016-11-20 22:29:47 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.100 2016-12-17 22:33:11 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -2816,6 +2816,13 @@ int
 TIFFReadRGBAStrip(TIFF* tif, uint32 row, uint32 * raster )
 
 {
+    return TIFFReadRGBAStripExt(tif, row, raster, 0 );
+}
+
+int
+TIFFReadRGBAStripExt(TIFF* tif, uint32 row, uint32 * raster, int stop_on_error)
+
+{
     char 	emsg[1024] = "";
     TIFFRGBAImage img;
     int 	ok;
@@ -2836,7 +2843,7 @@ TIFFReadRGBAStrip(TIFF* tif, uint32 row, uint32 * raster )
 		return (0);
     }
 
-    if (TIFFRGBAImageOK(tif, emsg) && TIFFRGBAImageBegin(&img, tif, 0, emsg)) {
+    if (TIFFRGBAImageOK(tif, emsg) && TIFFRGBAImageBegin(&img, tif, stop_on_error, emsg)) {
 
         img.row_offset = row;
         img.col_offset = 0;
@@ -2866,6 +2873,13 @@ TIFFReadRGBAStrip(TIFF* tif, uint32 row, uint32 * raster )
 int
 TIFFReadRGBATile(TIFF* tif, uint32 col, uint32 row, uint32 * raster)
 
+{
+    return TIFFReadRGBATileExt(tif, col, row, raster, 0 );
+}
+
+
+int
+TIFFReadRGBATileExt(TIFF* tif, uint32 col, uint32 row, uint32 * raster, int stop_on_error )
 {
     char 	emsg[1024] = "";
     TIFFRGBAImage img;
@@ -2901,7 +2915,7 @@ TIFFReadRGBATile(TIFF* tif, uint32 col, uint32 row, uint32 * raster)
      */
     
     if (!TIFFRGBAImageOK(tif, emsg) 
-	|| !TIFFRGBAImageBegin(&img, tif, 0, emsg)) {
+	|| !TIFFRGBAImageBegin(&img, tif, stop_on_error, emsg)) {
 	    TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", emsg);
 	    return( 0 );
     }
