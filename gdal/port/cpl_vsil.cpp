@@ -132,7 +132,7 @@ typedef struct
     int i;
     char* pszPath;
     char* pszDisplayedPath;
-}  VSIReadDirRecursiveTask;
+} VSIReadDirRecursiveTask;
 
 /**
  * \brief Read names in a directory recursively.
@@ -994,7 +994,7 @@ int VSIFReadMultiRangeL( int nRanges, void ** ppData,
 
 /**
  * \fn VSIVirtualHandle::Write( const void *pBuffer,
- *                              size_t nSize,size_t nCount )
+ *                              size_t nSize, size_t nCount )
  * \brief Write bytes to file.
  *
  * Writess nCount objects of nSize bytes to the indicated file at the
@@ -1195,6 +1195,8 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
 /*                        VSIFGetRangeStatusL()                        */
 /************************************************************************/
 
+// TODO(rouault): "exte,t" in r34586?
+
 /**
  * \fn VSIVirtualHandle::GetRangeStatus( vsi_l_offset nOffset,
  *                                       vsi_l_offset nLength )
@@ -1204,8 +1206,8 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
  * a sparse file are allocated or not. This is currently only
  * implemented for Linux (and no other Unix derivatives) and Windows.
  *
- * Note: a return of VSI_RANGE_STATUS_DATA doesn't exclude that the
- * exte,t is filled with zeroes ! It must be interpreted as "may
+ * Note: A return of VSI_RANGE_STATUS_DATA doesn't exclude that the
+ * exte,t is filled with zeroes! It must be interpreted as "may
  * contain non-zero data".
  *
  * @param nOffset offset of the start of the extent.
@@ -1223,8 +1225,8 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
  * a sparse file are allocated or not. This is currently only
  * implemented for Linux (and no other Unix derivatives) and Windows.
  *
- * Note: a return of VSI_RANGE_STATUS_DATA doesn't exclude that the
- * exte,t is filled with zeroes ! It must be interpreted as "may
+ * Note: A return of VSI_RANGE_STATUS_DATA doesn't exclude that the
+ * exte,t is filled with zeroes! It must be interpreted as "may
  * contain non-zero data".
  *
  * @param fp file handle opened with VSIFOpenL().
@@ -1386,7 +1388,8 @@ int VSIIngestFile( VSILFILE* fp,
 
         // With "large" VSI I/O API we can read data chunks larger than
         // VSIMalloc could allocate. Catch it here.
-        if( nDataLen > (vsi_l_offset)(size_t)nDataLen ||
+        if( nDataLen >
+            static_cast<vsi_l_offset>(static_cast<size_t>(nDataLen)) ||
             (nMaxSize >= 0 && nDataLen > static_cast<vsi_l_offset>(nMaxSize)) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -1614,28 +1617,28 @@ VSIFilesystemHandler *VSIFileManager::GetHandler( const char *pszPath )
 
 {
     VSIFileManager *poThis = Get();
-    std::map<std::string,VSIFilesystemHandler*>::const_iterator iter;
-    size_t nPathLen = strlen(pszPath);
+    const size_t nPathLen = strlen(pszPath);
 
-    for( iter = poThis->oHandlers.begin();
+    for( std::map<std::string, VSIFilesystemHandler*>::const_iterator iter =
+             poThis->oHandlers.begin();
          iter != poThis->oHandlers.end();
          ++iter )
     {
         const char* pszIterKey = iter->first.c_str();
         const size_t nIterKeyLen = iter->first.size();
-        if( strncmp(pszPath,pszIterKey,nIterKeyLen) == 0 )
+        if( strncmp(pszPath, pszIterKey, nIterKeyLen) == 0 )
             return iter->second;
 
         // "/vsimem\foo" should be handled as "/vsimem/foo".
         if( nIterKeyLen && nPathLen > nIterKeyLen &&
             pszIterKey[nIterKeyLen-1] == '/' &&
             pszPath[nIterKeyLen-1] == '\\' &&
-            strncmp(pszPath,pszIterKey,nIterKeyLen-1) == 0 )
+            strncmp(pszPath, pszIterKey, nIterKeyLen - 1) == 0 )
             return iter->second;
 
         // /vsimem should be treated as a match for /vsimem/.
         if( nPathLen + 1 == nIterKeyLen
-            && strncmp(pszPath,pszIterKey,nPathLen) == 0 )
+            && strncmp(pszPath, pszIterKey, nPathLen) == 0 )
             return iter->second;
     }
 
