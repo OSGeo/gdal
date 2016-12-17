@@ -2783,7 +2783,9 @@ def tiff_read_ycbcr_lzw():
               ('ycbcr_24_lzw.tif', 0, 0, 0), # not supported
               ('ycbcr_41_lzw.tif', 13218, 12758, 12592),
               ('ycbcr_42_lzw.tif', 13277, 12779, 12614),
-            (  'ycbcr_44_lzw.tif', 12994, 13229, 12149) ]
+              ('ycbcr_42_lzw_optimized.tif', 19918, 20120, 19087),
+              ('ycbcr_44_lzw.tif', 12994, 13229, 12149),
+              ('ycbcr_44_lzw_optimized.tif', 19666, 19860, 18836) ]
 
     for (filename, cs1, cs2, cs3) in tests:
         ds = gdal.Open('data/' + filename)
