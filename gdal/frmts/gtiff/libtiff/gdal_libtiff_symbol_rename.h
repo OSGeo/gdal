@@ -512,6 +512,8 @@
 #define TIFFReadRGBAImageOriented gdal_TIFFReadRGBAImageOriented
 #define TIFFReadRGBAStrip gdal_TIFFReadRGBAStrip
 #define TIFFReadRGBATile gdal_TIFFReadRGBATile
+#define TIFFReadRGBAStripExt gdal_TIFFReadRGBAStripExt
+#define TIFFReadRGBATileExt gdal_TIFFReadRGBATileExt
 #define TIFFReadScanline gdal_TIFFReadScanline
 #define TIFFReadTile gdal_TIFFReadTile
 #define TIFFReadUInt64 gdal_TIFFReadUInt64
