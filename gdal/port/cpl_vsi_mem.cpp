@@ -154,7 +154,7 @@ class VSIMemHandle CPL_FINAL : public VSIVirtualHandle
 class VSIMemFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
   public:
-    std::map<CPLString,VSIMemFile*> oFileList;
+    std::map<CPLString, VSIMemFile*> oFileList;
     CPLMutex        *hMutex;
 
                      VSIMemFilesystemHandler();
@@ -528,7 +528,7 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
         poFile = oFileList[osFilename];
 
     // If no file and opening in read, error out.
-    if( strstr(pszAccess,"w") == NULL
+    if( strstr(pszAccess, "w") == NULL
         && strstr(pszAccess, "a") == NULL
         && poFile == NULL )
     {
@@ -571,13 +571,13 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
     poHandle->m_nOffset = 0;
     poHandle->bEOF = false;
     poHandle->bUpdate =
-        strstr(pszAccess,"w") ||
-        strstr(pszAccess,"+") ||
-        strstr(pszAccess,"a");
+        strstr(pszAccess, "w") ||
+        strstr(pszAccess, "+") ||
+        strstr(pszAccess, "a");
 
     CPLAtomicInc(&(poFile->nRefCount));
 
-    if( strstr(pszAccess,"a") )
+    if( strstr(pszAccess, "a") )
         poHandle->m_nOffset = poFile->nLength;
 
     return poHandle;
@@ -730,8 +730,8 @@ char **VSIMemFilesystemHandler::ReadDirEx( const char *pszPath,
 
     // In case of really big number of files in the directory, CSLAddString
     // can be slow (see #2158). We then directly build the list.
-    int nItems=0;
-    int nAllocatedItems=0;
+    int nItems = 0;
+    int nAllocatedItems = 0;
 
     for( std::map<CPLString, VSIMemFile*>::const_iterator iter =
              oFileList.begin();
@@ -739,13 +739,13 @@ char **VSIMemFilesystemHandler::ReadDirEx( const char *pszPath,
          ++iter )
     {
         const char *pszFilePath = iter->second->osFilename.c_str();
-        if( EQUALN(osPath,pszFilePath,nPathLen)
+        if( EQUALN(osPath, pszFilePath, nPathLen)
             && pszFilePath[nPathLen] == '/'
-            && strstr(pszFilePath+nPathLen+1,"/") == NULL )
+            && strstr(pszFilePath+nPathLen+1, "/") == NULL )
         {
             if( nItems == 0 )
             {
-                papszDir = static_cast<char**>( CPLCalloc(2,sizeof(char*)) );
+                papszDir = static_cast<char**>(CPLCalloc(2, sizeof(char*)));
                 nAllocatedItems = 1;
             }
             else if( nItems >= nAllocatedItems )
@@ -792,7 +792,7 @@ int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
         return -1;
     }
 
-    std::map<CPLString,VSIMemFile*>::iterator it = oFileList.find(osOldPath);
+    std::map<CPLString, VSIMemFile*>::iterator it = oFileList.find(osOldPath);
     while( it != oFileList.end() && it->first.ifind(osOldPath) == 0 )
     {
         const CPLString osRemainder = it->first.substr(osOldPath.size());
