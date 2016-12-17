@@ -249,6 +249,14 @@ def tiff_read_ojpeg():
         print('Expected checksum = %d. Got = %d' % (expected_cs, got_cs))
         return 'fail'
 
+    #
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('data/zackthecat_corrupted.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    gdal.PopErrorHandler()
+    if cs != 0:
+        print('Should be 0 with internal libtiff')
+
     return 'success'
 
 ###############################################################################
