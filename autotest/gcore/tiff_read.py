@@ -2763,6 +2763,37 @@ def tiff_read_corrupted_jpeg_cloud_optimized():
     return 'success'
 
 ###############################################################################
+# Test reading YCbCr images with LZW compression
+
+def tiff_read_ycbcr_lzw():
+
+    tests = [ ('ycbcr_11_lzw.tif', 13459, 12939, 12414),
+              ('ycbcr_12_lzw.tif', 13565, 13105, 12660),
+              ('ycbcr_14_lzw.tif', 0, 0, 0), # not supported
+              ('ycbcr_21_lzw.tif', 13587, 13297, 12760),
+              ('ycbcr_22_lzw.tif', 13393, 13137, 12656),
+              ('ycbcr_24_lzw.tif', 0, 0, 0), # not supported
+              ('ycbcr_41_lzw.tif', 13218, 12758, 12592),
+              ('ycbcr_42_lzw.tif', 13277, 12779, 12614),
+            (  'ycbcr_44_lzw.tif', 12994, 13229, 12149) ]
+
+    for (filename, cs1, cs2, cs3) in tests:
+        ds = gdal.Open('data/' + filename)
+        if cs1 == 0:
+            gdal.PushErrorHandler()
+        got_cs1 = ds.GetRasterBand(1).Checksum()
+        got_cs2 = ds.GetRasterBand(2).Checksum()
+        got_cs3 = ds.GetRasterBand(3).Checksum()
+        if cs1 == 0:
+            gdal.PopErrorHandler()
+        if got_cs1 != cs1 or got_cs2 != cs2 or got_cs3 != cs3:
+            gdaltest.post_reason('failure')
+            print(filename, got_cs1, got_cs2, got_cs3)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2851,7 +2882,9 @@ gdaltest_list.append( (tiff_read_one_band_from_two_bands) )
 gdaltest_list.append( (tiff_read_jpeg_cloud_optimized) )
 gdaltest_list.append( (tiff_read_corrupted_jpeg_cloud_optimized) )
 
-#gdaltest_list = [ tiff_read_aux ]
+gdaltest_list.append( (tiff_read_ycbcr_lzw) )
+
+# gdaltest_list = [ tiff_read_ycbcr_lzw ]
 
 if __name__ == '__main__':
 

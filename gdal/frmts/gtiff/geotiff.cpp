@@ -5546,7 +5546,7 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
                    poGDS->hTIFF,
                    nBlockXOff * nBlockXSize,
                    nBlockYOff * nBlockYSize,
-                   reinterpret_cast<uint32 *>(poGDS->pabyBlockBuf)) == -1
+                   reinterpret_cast<uint32 *>(poGDS->pabyBlockBuf)) == 0
                 && !poGDS->bIgnoreReadErrors )
             {
                 // Once TIFFError() is properly hooked, this can go away.
@@ -5563,7 +5563,7 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( TIFFReadRGBAStrip(
                    poGDS->hTIFF,
                    nBlockId * nBlockYSize,
-                   reinterpret_cast<uint32 *>(poGDS->pabyBlockBuf)) == -1
+                   reinterpret_cast<uint32 *>(poGDS->pabyBlockBuf)) == 0
                 && !poGDS->bIgnoreReadErrors )
             {
                 // Once TIFFError() is properly hooked, this can go away.
