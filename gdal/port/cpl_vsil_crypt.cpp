@@ -609,7 +609,8 @@ int VSICryptFileHeader::ReadFromFile( VSIVirtualHandle* fp,
         delete poEncCipher;
 
         if( osKeyCheck.size() != osKeyCheckRes.size() ||
-            memcmp(osKeyCheck.c_str(), osKeyCheckRes.c_str(), osKeyCheck.size()) != 0 )
+            memcmp(osKeyCheck.c_str(), osKeyCheckRes.c_str(), osKeyCheck.size())
+            != 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Bad key");
             return FALSE;
@@ -624,13 +625,14 @@ int VSICryptFileHeader::ReadFromFile( VSIVirtualHandle* fp,
              nPayloadFileSize);
 #endif
 
-    GUInt16 nExtraContentSize;
+    GUInt16 nExtraContentSize = 0;
     if( fp->Read(&nExtraContentSize, 2, 1) == 0 )
         return VSICryptReadError();
     nExtraContentSize = CPL_LSBWORD16(nExtraContentSize);
 
     osExtraContent.resize(nExtraContentSize);
-    if( fp->Read((void*)osExtraContent.c_str(), 1, nExtraContentSize) != nExtraContentSize )
+    if( fp->Read((void*)osExtraContent.c_str(), 1, nExtraContentSize)
+        != nExtraContentSize )
         return VSICryptReadError();
 
     return TRUE;
@@ -640,7 +642,8 @@ int VSICryptFileHeader::ReadFromFile( VSIVirtualHandle* fp,
 /*                          WriteToFile()                               */
 /************************************************************************/
 
-int VSICryptFileHeader::WriteToFile(VSIVirtualHandle* fp, CryptoPP::BlockCipher* poEncCipher)
+int VSICryptFileHeader::WriteToFile( VSIVirtualHandle* fp,
+                                     CryptoPP::BlockCipher* poEncCipher )
 {
     fp->Seek(0, SEEK_SET);
 
@@ -759,8 +762,10 @@ class VSICryptFileHandle CPL_FINAL : public VSIVirtualHandle
 
     virtual int          Seek( vsi_l_offset nOffset, int nWhence ) override;
     virtual vsi_l_offset Tell() override;
-    virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
-    virtual size_t       Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t       Read( void *pBuffer, size_t nSize,
+                               size_t nMemb ) override;
+    virtual size_t       Write( const void *pBuffer, size_t nSize,
+                                size_t nMemb ) override;
     virtual int          Eof() override;
     virtual int          Flush() override;
     virtual int          Close() override;
@@ -865,7 +870,8 @@ int VSICryptFileHandle::Init( const CPLString& osKey, bool bWriteHeader )
                  poHeader->nSectorSize, nBlockSize);
         return FALSE;
     }
-    if( poHeader->eMode == MODE_CBC_CTS && poHeader->nSectorSize < 2 * nBlockSize )
+    if( poHeader->eMode == MODE_CBC_CTS &&
+        poHeader->nSectorSize < 2 * nBlockSize )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Sector size (%d) should be at least twice larger than "
@@ -886,7 +892,7 @@ int VSICryptFileHandle::Init( const CPLString& osKey, bool bWriteHeader )
 /*                          EncryptBlock()                              */
 /************************************************************************/
 
-void VSICryptFileHandle::EncryptBlock(GByte* pabyData, vsi_l_offset nOffset)
+void VSICryptFileHandle::EncryptBlock( GByte* pabyData, vsi_l_offset nOffset )
 {
     std::string osRes;
     std::string osIV(VSICryptGenerateSectorIV(poHeader->osIV, nOffset));
@@ -1038,7 +1044,7 @@ vsi_l_offset VSICryptFileHandle::Tell()
 
 size_t VSICryptFileHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
 {
-    const size_t nToRead = nSize * nMemb;
+    size_t nToRead = nSize * nMemb;
     GByte* pabyBuffer = static_cast<GByte *>(pBuffer);
 
 #ifdef VERBOSE_VSICRYPT
@@ -1148,7 +1154,7 @@ VSICryptFileHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
     {
         if( !FlushDirty() )
             return 0;
-        const vsi_l_offset nOffset =
+        vsi_l_offset nOffset =
             (poHeader->nPayloadFileSize + poHeader->nSectorSize - 1) /
             poHeader->nSectorSize * poHeader->nSectorSize;
         const vsi_l_offset nEndOffset =
@@ -1626,7 +1632,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
         {
             osIV.resize(nBlockSize);
             CryptoPP::OS_GenerateRandomBlock(
-                false  // Do not need cryptographic randomness.
+                false,  // Do not need cryptographic randomness.
                 (byte*)osIV.c_str(), osIV.size());
         }
 
