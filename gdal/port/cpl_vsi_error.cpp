@@ -52,11 +52,11 @@ CPL_CVSID("$Id$");
 
 static const int DEFAULT_LAST_ERR_MSG_SIZE =
 #if !defined(HAVE_VSNPRINTF)
-  20000
+    20000
 #else
-  500
+    500
 #endif
-  ;
+    ;
 
 typedef struct {
     VSIErrorNum nLastErrNo;
