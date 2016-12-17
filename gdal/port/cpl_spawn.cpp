@@ -204,7 +204,7 @@ int CPLPipeWrite( CPL_FILE_HANDLE fout, const void* data, int length )
 
 static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout)
 {
-    char buf[PIPE_BUFFER_SIZE];
+    char buf[PIPE_BUFFER_SIZE] = {};
     while( true )
     {
         DWORD nRead = 0;

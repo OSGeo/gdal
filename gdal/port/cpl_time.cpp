@@ -43,18 +43,20 @@ static const int TM_YEAR_BASE = 1900;
 static const int DAYSPERNYEAR = 365;
 static const int DAYSPERLYEAR = 366;
 
-static bool isleap(int y) {
-  return ((y % 4) == 0 && (y % 100) != 0) || (y % 400) == 0;
+static bool isleap( int y )
+{
+    return ((y % 4) == 0 && (y % 100) != 0) || (y % 400) == 0;
 }
 
-static int LEAPS_THROUGH_END_OF(int y) {
-  return y / 4 - y / 100 + y / 400;
+static int LEAPS_THROUGH_END_OF( int y )
+{
+    return y / 4 - y / 100 + y / 400;
 }
 
 static const int mon_lengths[2][MONSPERYEAR] = {
-  {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
-  {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
-} ;
+    { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
+    { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+};
 
 static const int year_lengths[2] = { DAYSPERNYEAR, DAYSPERLYEAR };
 
@@ -79,8 +81,8 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
     GIntBig days = unixTime / SECSPERDAY;
     GIntBig rem = unixTime % SECSPERDAY;
 
-    if( unixTime < -(GIntBig)10000 * SECSPERDAY * DAYSPERLYEAR ||
-        unixTime > (GIntBig)10000 * SECSPERDAY * DAYSPERLYEAR )
+    if( unixTime < -static_cast<GIntBig>(10000) * SECSPERDAY * DAYSPERLYEAR ||
+        unixTime > static_cast<GIntBig>(10000) * SECSPERDAY * DAYSPERLYEAR )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid unixTime = " CPL_FRMT_GIB,
@@ -156,30 +158,34 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
 GIntBig CPLYMDHMSToUnixTime( const struct tm *brokendowntime )
 {
 
-  if( brokendowntime->tm_mon < 0 || brokendowntime->tm_mon >= 12 )
-    return -1;
+    if( brokendowntime->tm_mon < 0 || brokendowntime->tm_mon >= 12 )
+        return -1;
 
-  /* Number of days of the current month */
-  GIntBig days = brokendowntime->tm_mday - 1;
+    // Number of days of the current month.
+    GIntBig days = brokendowntime->tm_mday - 1;
 
-  /* Add the number of days of the current year */
-  const int* ip = mon_lengths[static_cast<int>(isleap(TM_YEAR_BASE + brokendowntime->tm_year))];
-  for( int mon = 0; mon < brokendowntime->tm_mon; mon++ )
-      days += ip[mon];
+    // Add the number of days of the current year.
+    const int* ip =
+        mon_lengths[static_cast<int>(isleap(TM_YEAR_BASE +
+                                            brokendowntime->tm_year))];
+    for( int mon = 0; mon < brokendowntime->tm_mon; mon++ )
+        days += ip[mon];
 
-  /* Add the number of days of the other years */
-  days +=
-      ( TM_YEAR_BASE
-        + static_cast<GIntBig>( brokendowntime->tm_year )
-        - EPOCH_YEAR ) * DAYSPERNYEAR
-      + LEAPS_THROUGH_END_OF( static_cast<int> (TM_YEAR_BASE )
-                           + static_cast<int>( brokendowntime->tm_year )
-                           - static_cast<int>( 1 ) )
-      - LEAPS_THROUGH_END_OF( EPOCH_YEAR - 1 );
+    // Add the number of days of the other years.
+    days +=
+        ( TM_YEAR_BASE
+          + static_cast<GIntBig>(brokendowntime->tm_year)
+          - EPOCH_YEAR ) * DAYSPERNYEAR
+        + LEAPS_THROUGH_END_OF(static_cast<int>(TM_YEAR_BASE)
+                               + static_cast<int>( brokendowntime->tm_year)
+                               - static_cast<int>(1))
+        - LEAPS_THROUGH_END_OF( EPOCH_YEAR - 1 );
 
-  /* Now add the secondes, minutes and hours to the number of days since EPOCH */
-  return brokendowntime->tm_sec +
-         brokendowntime->tm_min * SECSPERMIN +
-         brokendowntime->tm_hour * SECSPERHOUR +
-         days * SECSPERDAY;
+    // Now add the secondes, minutes and hours to the number of days
+    // since EPOCH.
+    return
+        brokendowntime->tm_sec +
+        brokendowntime->tm_min * SECSPERMIN +
+        brokendowntime->tm_hour * SECSPERHOUR +
+        days * SECSPERDAY;
 }

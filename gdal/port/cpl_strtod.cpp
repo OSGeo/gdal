@@ -72,7 +72,7 @@ extern float strtof(const char *nptr, char **endptr);
  */
 double CPLAtofDelim(const char *nptr, char point)
 {
-  return CPLStrtodDelim(nptr, NULL, point);
+    return CPLStrtodDelim(nptr, NULL, point);
 }
 
 /************************************************************************/
@@ -116,7 +116,7 @@ double CPLAtofDelim(const char *nptr, char point)
  */
 double CPLAtof(const char *nptr)
 {
-  return CPLStrtod(nptr, NULL);
+    return CPLStrtod(nptr, NULL);
 }
 
 /************************************************************************/
@@ -165,7 +165,7 @@ static char* CPLReplacePointByLocalePoint( const char* pszNumber, char point )
     static char byPoint = 0;
     if( byPoint == 0 )
     {
-        char szBuf[16];
+        char szBuf[16] = {};
         snprintf(szBuf, sizeof(szBuf), "%.1f", 1.0);
         byPoint = szBuf[1];
     }
