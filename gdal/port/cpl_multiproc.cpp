@@ -90,7 +90,7 @@ struct _CPLLock
 };
 
 #ifdef DEBUG_CONTENTION
-static GUIntBig CPLrdtsc( void )
+static GUIntBig CPLrdtsc()
 {
     unsigned int a;
     unsigned int d;
@@ -101,7 +101,7 @@ static GUIntBig CPLrdtsc( void )
     return static_cast<GUIntBig>(a) | (static_cast<GUIntBig>(d) << 32);
 }
 
-static GUIntBig CPLrdtscp(void)
+static GUIntBig CPLrdtscp()
 {
     unsigned int a;
     unsigned int d;
@@ -113,7 +113,7 @@ static GUIntBig CPLrdtscp(void)
 }
 #endif
 
-static CPLSpinLock   *CPLCreateSpinLock( void ); /* returned NON acquired */
+static CPLSpinLock *CPLCreateSpinLock();  // Returned NON acquired.
 static int     CPLCreateOrAcquireSpinLockInternal( CPLLock** );
 static int     CPLAcquireSpinLock( CPLSpinLock* );
 static void    CPLReleaseSpinLock( CPLSpinLock* );
@@ -391,7 +391,7 @@ static void CPLCleanupTLSList( void **papTLSList )
 
 {
 #ifdef DEBUG_VERBOSE
-    /*ok*/printf( "CPLCleanupTLSList(%p)\n", papTLSList );
+    printf( "CPLCleanupTLSList(%p)\n", papTLSList );  /*ok*/
 #endif
 
     if( papTLSList == NULL )
@@ -971,14 +971,14 @@ void CPLCondWait( CPLCond *hCond, CPLMutex* hClientMutex )
 
     CPLReleaseMutex(psCond->hInternalMutex);
 
-    /* Release the client mutex before waiting for the event being signaled */
+    // Release the client mutex before waiting for the event being signaled.
     CPLReleaseMutex(hClientMutex);
 
     // Ideally we would check that we do not get WAIT_FAILED but it is hard
     // to report a failure.
     WaitForSingleObject(hEvent, INFINITE);
 
-    /* Reacquire the client mutex */
+    // Reacquire the client mutex.
     CPLAcquireMutex(hClientMutex, 1000.0);
 }
 
@@ -990,7 +990,7 @@ void CPLCondSignal( CPLCond *hCond )
 {
     Win32Cond* psCond = (Win32Cond*) hCond;
 
-    /* Signal the first registered event, and remove it from the list */
+    // Signal the first registered event, and remove it from the list.
     CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
 
     WaiterItem* psIter = psCond->psWaiterList;
@@ -1012,7 +1012,7 @@ void CPLCondBroadcast( CPLCond *hCond )
 {
     Win32Cond* psCond = (Win32Cond*) hCond;
 
-    /* Signal all the registered events, and remove them from the list */
+    // Signal all the registered events, and remove them from the list.
     CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
 
     WaiterItem* psIter = psCond->psWaiterList;
@@ -1118,12 +1118,12 @@ typedef struct {
 static DWORD WINAPI CPLStdCallThreadJacket( void *pData )
 
 {
-    CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo *) pData;
+    CPLStdCallThreadInfo *psInfo = static_cast<CPLStdCallThreadInfo *>(pData);
 
     psInfo->pfnMain( psInfo->pAppData );
 
     if( psInfo->hThread == NULL )
-        CPLFree( psInfo ); /* Only for detached threads */
+        CPLFree( psInfo );  // Only for detached threads.
 
     CPLCleanupTLS();
 
@@ -1923,7 +1923,7 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
     }
 #endif
 
-    return 1; /* can we return the actual thread pid? */
+    return 1;  // Can we return the actual thread pid?
 }
 
 /************************************************************************/
@@ -2037,7 +2037,7 @@ void CPLSleep( double dfWaitInSeconds )
 void CPLFinalizeTLS()
 {
     CPLCleanupTLS();
-    /* See #5509 for the explanation why this may be needed */
+    // See #5509 for the explanation why this may be needed.
     pthread_key_delete(oTLSKey);
 }
 
@@ -2048,9 +2048,7 @@ void CPLFinalizeTLS()
 void CPLCleanupTLS()
 
 {
-    void **papTLSList;
-
-    papTLSList = (void **) pthread_getspecific( oTLSKey );
+    void **papTLSList = (void **) pthread_getspecific( oTLSKey );
     if( papTLSList == NULL )
         return;
 
@@ -2071,7 +2069,7 @@ struct _CPLSpinLock
     pthread_spinlock_t spin;
 };
 
-CPLSpinLock *CPLCreateSpinLock( void )
+CPLSpinLock *CPLCreateSpinLock()
 {
     CPLSpinLock* psSpin =
         static_cast<CPLSpinLock *>(malloc(sizeof(CPLSpinLock)));
@@ -2119,7 +2117,7 @@ int CPLCreateOrAcquireSpinLockInternal( CPLLock** ppsLock )
         }
     }
     pthread_mutex_unlock(&global_mutex);
-    /* coverity[missing_unlock] */
+    // coverity[missing_unlock]
     return( *ppsLock != NULL && CPLAcquireSpinLock( (*ppsLock)->u.hSpinLock ) );
 }
 
@@ -2141,9 +2139,9 @@ void CPLDestroySpinLock( CPLSpinLock* psSpin )
     pthread_spin_destroy( &(psSpin->spin) );
     free( psSpin );
 }
-#endif /* HAVE_PTHREAD_SPINLOCK */
+#endif  // HAVE_PTHREAD_SPINLOCK
 
-#endif /* def CPL_MULTIPROC_PTHREAD */
+#endif  // def CPL_MULTIPROC_PTHREAD
 
 /************************************************************************/
 /*                             CPLGetTLS()                              */
@@ -2189,8 +2187,8 @@ void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
 /*                      CPLSetTLSWithFreeFunc()                         */
 /************************************************************************/
 
-/* Warning : the CPLTLSFreeFunc must not in any case directly or indirectly */
-/* use or fetch any TLS data, or a terminating thread will hang ! */
+// Warning: The CPLTLSFreeFunc must not in any case directly or indirectly
+// use or fetch any TLS data, or a terminating thread will hang!
 void CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree )
 
 {
@@ -2206,8 +2204,8 @@ void CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree )
 /*                      CPLSetTLSWithFreeFuncEx()                       */
 /************************************************************************/
 
-/* Warning : the CPLTLSFreeFunc must not in any case directly or indirectly */
-/* use or fetch any TLS data, or a terminating thread will hang ! */
+// Warning: the CPLTLSFreeFunc must not in any case directly or indirectly
+// use or fetch any TLS data, or a terminating thread will hang!
 void CPLSetTLSWithFreeFuncEx( int nIndex, void *pData,
                               CPLTLSFreeFunc pfnFree,
                               int* pbMemoryErrorOccurred )
@@ -2222,7 +2220,7 @@ void CPLSetTLSWithFreeFuncEx( int nIndex, void *pData,
 }
 #ifndef HAVE_SPINLOCK_IMPL
 
-/* No spinlock specific API ? Fallback to mutex */
+// No spinlock specific API? Fallback to mutex.
 
 /************************************************************************/
 /*                          CPLCreateSpinLock()                         */
@@ -2272,7 +2270,7 @@ void CPLDestroySpinLock( CPLSpinLock* psSpin )
     CPLDestroyMutex( (CPLMutex*)psSpin );
 }
 
-#endif /* HAVE_SPINLOCK_IMPL */
+#endif  // HAVE_SPINLOCK_IMPL
 
 /************************************************************************/
 /*                            CPLCreateLock()                           */
@@ -2479,11 +2477,9 @@ CPLLockHolder::CPLLockHolder( CPLLock **phLock,
     nLine = nLineIn;
 
 #ifdef DEBUG_MUTEX
-    /*
-     * XXX: There is no way to use CPLDebug() here because it works with
-     * mutexes itself so we will fall in infinite recursion. Good old
-     * fprintf() will do the job right.
-     */
+    // XXX: There is no way to use CPLDebug() here because it works with
+    // mutexes itself so we will fall in infinite recursion. Good old
+    // fprintf() will do the job right.
     fprintf( stderr,
              "CPLLockHolder: Request %p for pid %ld at %d/%s.\n",
              *phLock, static_cast<long>(CPLGetPID()), nLine, pszFile );
@@ -2504,7 +2500,7 @@ CPLLockHolder::CPLLockHolder( CPLLock **phLock,
 
         hLock = *phLock;
     }
-#endif /* ndef MUTEX_NONE */
+#endif  // ndef MUTEX_NONE
 }
 
 /************************************************************************/
@@ -2529,7 +2525,7 @@ CPLLockHolder::CPLLockHolder( CPLLock *hLockIn,
             hLock = NULL;
         }
     }
-#endif /* ndef MUTEX_NONE */
+#endif // ndef MUTEX_NONE
 }
 
 /************************************************************************/
@@ -2549,7 +2545,7 @@ CPLLockHolder::~CPLLockHolder()
 #endif
         CPLReleaseLock( hLock );
     }
-#endif /* ndef MUTEX_NONE */
+#endif  // ndef MUTEX_NONE
 }
 
 /************************************************************************/
