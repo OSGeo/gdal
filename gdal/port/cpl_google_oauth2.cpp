@@ -200,8 +200,8 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
         CPLString osURL;
         osURL.Seize( GOA2GetAuthorizationURL(pszScope) );
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to use a OAuth2 authorization code multiple times.\n"
-                  "Request a fresh authorization token at\n%s.",
+                  "Attempt to use a OAuth2 authorization code multiple times.  "
+                  "Request a fresh authorization token at %s.",
                   osURL.c_str() );
         CPLHTTPDestroyResult(psResult);
         return NULL;

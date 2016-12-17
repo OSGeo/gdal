@@ -1215,7 +1215,7 @@ char *CPLSerializeXMLTree( const CPLXMLNode *psNode )
 
 {
     size_t nMaxLength = 100;
-    char *pszText =  static_cast<char *>(VSIMalloc(nMaxLength));
+    char *pszText = static_cast<char *>(VSIMalloc(nMaxLength));
     if( pszText == NULL )
         return NULL;
     pszText[0] = '\0';
@@ -1612,7 +1612,7 @@ const char *CPLGetXMLValue( CPLXMLNode *psRoot, const char *pszPath,
     CPLXMLNode *psTarget = NULL;
 
     if( pszPath == NULL || *pszPath == '\0' )
-        psTarget  = psRoot;
+        psTarget = psRoot;
     else
         psTarget = CPLGetXMLNode( psRoot, pszPath );
 
@@ -1929,7 +1929,7 @@ CPLXMLNode *CPLCloneXMLTree( CPLXMLNode *psTree )
  * @return TRUE on success.
  */
 
-int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
+int CPLSetXMLValue( CPLXMLNode *psRoot, const char *pszPath,
                     const char *pszValue )
 
 {

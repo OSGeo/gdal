@@ -526,7 +526,7 @@ const char *CPLFormFilename( const char * pszPath,
     {
         // /a/b + .. --> /a
         if( pszPath[nLenPath-1] == '\\' || pszPath[nLenPath-1] == '/' )
-            nLenPath --;
+            nLenPath--;
         size_t nLenPathOri = nLenPath;
         while( nLenPath > 0 && pszPath[nLenPath-1] != '\\' &&
                pszPath[nLenPath-1] != '/')

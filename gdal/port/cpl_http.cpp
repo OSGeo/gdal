@@ -123,7 +123,7 @@ static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
                               void *reqInfo )
 {
     CPLHTTPResult *psResult = static_cast<CPLHTTPResult *>(reqInfo);
-    // Copy  the buffer  to a  char* and  initialize with  zeros (zero
+    // Copy the buffer to a char* and initialize with zeros (zero
     // terminate as well).
     char* pszHdr = static_cast<char *>(CPLCalloc(nmemb + 1, size));
     CPLPrintString(pszHdr, static_cast<char *>(buffer),
@@ -340,7 +340,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Setup the request.                                              */
 /* -------------------------------------------------------------------- */
-    char szCurlErrBuf[CURL_ERROR_SIZE+1];
+    char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
     struct curl_slist *headers=NULL;
 
     const char* pszArobase = strchr(pszURL, '@');
