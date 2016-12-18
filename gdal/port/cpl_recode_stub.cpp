@@ -144,8 +144,8 @@ char *CPLRecodeStub( const char *pszSource,
 /* -------------------------------------------------------------------- */
 /*      ISO8859 to UTF8                                                 */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszSrcEncoding,CPL_ENC_ISO8859_1) == 0
-        && strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
+    if( strcmp(pszSrcEncoding, CPL_ENC_ISO8859_1) == 0
+        && strcmp(pszDstEncoding, CPL_ENC_UTF8) == 0 )
     {
         const int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = static_cast<char *>(CPLCalloc(1, nCharCount * 2 + 1));
@@ -158,8 +158,8 @@ char *CPLRecodeStub( const char *pszSource,
 /* -------------------------------------------------------------------- */
 /*      UTF8 to ISO8859                                                 */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) == 0
-        && strcmp(pszDstEncoding,CPL_ENC_ISO8859_1) == 0 )
+    if( strcmp(pszSrcEncoding, CPL_ENC_UTF8) == 0
+        && strcmp(pszDstEncoding, CPL_ENC_ISO8859_1) == 0 )
     {
         int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = static_cast<char *>(CPLCalloc(1, nCharCount + 1));
@@ -174,7 +174,7 @@ char *CPLRecodeStub( const char *pszSource,
 /*      CPXXX to UTF8                                                   */
 /* ---------------------------------------------------------------------*/
     if( STARTS_WITH(pszSrcEncoding, "CP")
-        && strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
+        && strcmp(pszDstEncoding, CPL_ENC_UTF8) == 0 )
     {
         int nCode = atoi( pszSrcEncoding + 2 );
         if( nCode > 0 ) {
@@ -187,7 +187,7 @@ char *CPLRecodeStub( const char *pszSource,
 /* ---------------------------------------------------------------------*/
 /*      UTF8 to CPXXX                                                   */
 /* ---------------------------------------------------------------------*/
-    if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) == 0
+    if( strcmp(pszSrcEncoding, CPL_ENC_UTF8) == 0
         && STARTS_WITH(pszDstEncoding, "CP") )
     {
          int nCode = atoi( pszDstEncoding + 2 );
@@ -201,7 +201,7 @@ char *CPLRecodeStub( const char *pszSource,
 /*      Anything else to UTF-8 is treated as ISO8859-1 to UTF-8 with    */
 /*      a one-time warning.                                             */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
+    if( strcmp(pszDstEncoding, CPL_ENC_UTF8) == 0 )
     {
         int nCharCount = static_cast<int>(strlen(pszSource));
         char *pszResult = static_cast<char *>(CPLCalloc(1, nCharCount * 2 + 1));
@@ -243,11 +243,11 @@ char *CPLRecodeStub( const char *pszSource,
 /*      UTF-8 to anything else is treated as UTF-8 to ISO-8859-1        */
 /*      with a warning.                                                 */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) == 0
-        && strcmp(pszDstEncoding,CPL_ENC_ISO8859_1) == 0 )
+    if( strcmp(pszSrcEncoding, CPL_ENC_UTF8) == 0
+        && strcmp(pszDstEncoding, CPL_ENC_ISO8859_1) == 0 )
     {
         int nCharCount = static_cast<int>(strlen(pszSource));
-        char *pszResult = static_cast<char *>(CPLCalloc(1,nCharCount + 1));
+        char *pszResult = static_cast<char *>(CPLCalloc(1, nCharCount + 1));
 
         if( !bHaveWarned2 )
         {
@@ -314,14 +314,14 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
 /*      We try to avoid changes of character set.  We are just          */
 /*      providing for unicode to unicode.                               */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszSrcEncoding,"WCHAR_T") != 0 &&
-        strcmp(pszSrcEncoding,CPL_ENC_UTF8) != 0
-        && strcmp(pszSrcEncoding,CPL_ENC_UTF16) != 0
-        && strcmp(pszSrcEncoding,CPL_ENC_UCS2) != 0
-        && strcmp(pszSrcEncoding,CPL_ENC_UCS4) != 0 )
+    if( strcmp(pszSrcEncoding, "WCHAR_T") != 0 &&
+        strcmp(pszSrcEncoding, CPL_ENC_UTF8) != 0
+        && strcmp(pszSrcEncoding, CPL_ENC_UTF16) != 0
+        && strcmp(pszSrcEncoding, CPL_ENC_UCS2) != 0
+        && strcmp(pszSrcEncoding, CPL_ENC_UCS4) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Stub recoding implementation does not support\n"
+                  "Stub recoding implementation does not support "
                   "CPLRecodeFromWCharStub(...,%s,%s)",
                   pszSrcEncoding, pszDstEncoding );
         return NULL;
@@ -362,7 +362,7 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
 /* -------------------------------------------------------------------- */
 /*      If something other than UTF-8 was requested, recode now.        */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
+    if( strcmp(pszDstEncoding, CPL_ENC_UTF8) == 0 )
         return pszResult;
 
     char *pszFinalResult =
@@ -407,12 +407,13 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
                                const char *pszDstEncoding )
 
 {
-    char *pszUTF8Source = (char *) pszSource;
+    char *pszUTF8Source = const_cast<char *>(pszSource);
 
-    if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) != 0
-        && strcmp(pszSrcEncoding,CPL_ENC_ASCII) != 0 )
+    if( strcmp(pszSrcEncoding, CPL_ENC_UTF8) != 0
+        && strcmp(pszSrcEncoding, CPL_ENC_ASCII) != 0 )
     {
-        pszUTF8Source = CPLRecodeStub( pszSource, pszSrcEncoding, CPL_ENC_UTF8 );
+        pszUTF8Source =
+            CPLRecodeStub(pszSource, pszSrcEncoding, CPL_ENC_UTF8);
         if( pszUTF8Source == NULL )
             return NULL;
     }
@@ -421,13 +422,13 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
 /*      We try to avoid changes of character set.  We are just          */
 /*      providing for unicode to unicode.                               */
 /* -------------------------------------------------------------------- */
-    if( strcmp(pszDstEncoding,"WCHAR_T") != 0
-        && strcmp(pszDstEncoding,CPL_ENC_UCS2) != 0
-        && strcmp(pszDstEncoding,CPL_ENC_UCS4) != 0
-        && strcmp(pszDstEncoding,CPL_ENC_UTF16) != 0 )
+    if( strcmp(pszDstEncoding, "WCHAR_T") != 0
+        && strcmp(pszDstEncoding, CPL_ENC_UCS2) != 0
+        && strcmp(pszDstEncoding, CPL_ENC_UCS4) != 0
+        && strcmp(pszDstEncoding, CPL_ENC_UTF16) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Stub recoding implementation does not support\n"
+                  "Stub recoding implementation does not support "
                   "CPLRecodeToWCharStub(...,%s,%s)",
                   pszSrcEncoding, pszDstEncoding );
         if( pszUTF8Source != pszSource )
@@ -507,10 +508,10 @@ int CPLIsUTF8Stub(const char* pabyData, int nLen)
 // Codes 0x80..0x9f from the Microsoft CP1252 character set, translated
 // to Unicode:
 static const unsigned short cp1252[32] = {
-  0x20ac, 0x0081, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021,
-  0x02c6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008d, 0x017d, 0x008f,
-  0x0090, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
-  0x02dc, 0x2122, 0x0161, 0x203a, 0x0153, 0x009d, 0x017e, 0x0178
+    0x20ac, 0x0081, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021,
+    0x02c6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008d, 0x017d, 0x008f,
+    0x0090, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
+    0x02dc, 0x2122, 0x0161, 0x203a, 0x0153, 0x009d, 0x017e, 0x0178
 };
 #endif
 
@@ -539,7 +540,7 @@ static const unsigned short cp1252[32] = {
 \code
     if( *p & 0x80 )
     {  // What should be a multibyte encoding.
-      code = utf8decode(p,end,&len);
+      code = utf8decode(p, end, &len);
       if( len<2 ) code = 0xFFFD;  // Turn errors into REPLACEMENT CHARACTER.
     }
     else
@@ -730,8 +731,8 @@ static unsigned utf8towc(const char* src, unsigned srclen,
     }
     if( ++count == dstlen )
     {
-        dst[count-1] = 0
-        ; break;
+        dst[count-1] = 0;
+        break;
     }
   }
   // We filled dst, measure the rest:
@@ -782,12 +783,12 @@ static unsigned utf8towc(const char* src, unsigned srclen,
     nothing is written and this call just measures the storage space
     needed.
 */
-static unsigned utf8toa(const char* src, unsigned srclen,
-                        char* dst, unsigned dstlen)
+static unsigned int utf8toa( const char* src, unsigned srclen,
+                             char* dst, unsigned dstlen )
 {
   const char* p = src;
   const char* e = src+srclen;
-  unsigned count = 0;
+  unsigned int count = 0;
   if( dstlen ) while( true )
   {
     if( p >= e )
@@ -805,23 +806,23 @@ static unsigned utf8toa(const char* src, unsigned srclen,
     else
     {
         int len = 0;
-        unsigned ucs = utf8decode(p,e,&len);
+        const unsigned int ucs = utf8decode(p, e, &len);
         p += len;
         if( ucs < 0x100 )
         {
-            dst[count] = (char)ucs;
+            dst[count] = static_cast<char>(ucs);
         }
         else
         {
-          if( !bHaveWarned4 )
-          {
-              bHaveWarned4 = true;
-              CPLError(CE_Warning, CPLE_AppDefined,
-                       "One or several characters couldn't be converted "
-                       "correctly from UTF-8 to ISO-8859-1.  "
-                       "This warning will not be emitted anymore.");
-          }
-          dst[count] = '?';
+            if( !bHaveWarned4 )
+            {
+                bHaveWarned4 = true;
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "One or several characters couldn't be converted "
+                         "correctly from UTF-8 to ISO-8859-1.  "
+                         "This warning will not be emitted anymore.");
+            }
+            dst[count] = '?';
       }
     }
     if( ++count >= dstlen )
@@ -878,22 +879,22 @@ static unsigned utf8toa(const char* src, unsigned srclen,
     and UTF-8 encoded (as 4 bytes). Mismatched halves of surrogate
     pairs are converted as though they are individual characters.
 */
-static unsigned utf8fromwc(char* dst, unsigned dstlen,
-                           const wchar_t* src, unsigned srclen) {
-  unsigned i = 0;
-  unsigned count = 0;
+static unsigned int utf8fromwc( char* dst, unsigned dstlen,
+                                const wchar_t* src, unsigned srclen )
+{
+  unsigned int i = 0;
+  unsigned int count = 0;
   if( dstlen ) while( true )
   {
-      unsigned ucs;
       if( i >= srclen )
       {
           dst[count] = 0;
           return count;
       }
-      ucs = src[i++];
+      unsigned int ucs = src[i++];
       if( ucs < 0x80U )
       {
-          dst[count++] = (char)ucs;
+          dst[count++] = static_cast<char>(ucs);
           if( count >= dstlen )
           {
               dst[count-1] = 0;
@@ -909,16 +910,16 @@ static unsigned utf8fromwc(char* dst, unsigned dstlen,
               count += 2;
               break;
           }
-          dst[count++] = 0xc0 | (char)(ucs >> 6);
-          dst[count++] = 0x80 | (char)(ucs & 0x3F);
+          dst[count++] = 0xc0 | static_cast<char>(ucs >> 6);
+          dst[count++] = 0x80 | static_cast<char>(ucs & 0x3F);
 #ifdef _WIN32
       }
       else if( ucs >= 0xd800 && ucs <= 0xdbff && i < srclen &&
                src[i] >= 0xdc00 && src[i] <= 0xdfff)
       {
           // Surrogate pair.
-          unsigned ucs2 = src[i++];
-          ucs = 0x10000U + ((ucs&0x3ff)<<10) + (ucs2&0x3ff);
+          unsigned int ucs2 = src[i++];
+          ucs = 0x10000U + ((ucs & 0x3ff) << 10) + (ucs2 & 0x3ff);
           // All surrogate pairs turn into 4-byte utf8.
 #else
       }
@@ -936,10 +937,10 @@ static unsigned utf8fromwc(char* dst, unsigned dstlen,
               count += 4;
               break;
           }
-          dst[count++] = 0xf0 | (char)(ucs >> 18);
-          dst[count++] = 0x80 | (char)((ucs >> 12) & 0x3F);
-          dst[count++] = 0x80 | (char)((ucs >> 6) & 0x3F);
-          dst[count++] = 0x80 | (char)(ucs & 0x3F);
+          dst[count++] = 0xf0 | static_cast<char>(ucs >> 18);
+          dst[count++] = 0x80 | static_cast<char>((ucs >> 12) & 0x3F);
+          dst[count++] = 0x80 | static_cast<char>((ucs >> 6) & 0x3F);
+          dst[count++] = 0x80 | static_cast<char>(ucs & 0x3F);
       }
       else
       {
@@ -953,16 +954,16 @@ static unsigned utf8fromwc(char* dst, unsigned dstlen,
               count += 3;
               break;
           }
-          dst[count++] = 0xe0 | (char)(ucs >> 12);
-          dst[count++] = 0x80 | (char)((ucs >> 6) & 0x3F);
-          dst[count++] = 0x80 | (char)(ucs & 0x3F);
+          dst[count++] = 0xe0 | static_cast<char>(ucs >> 12);
+          dst[count++] = 0x80 | static_cast<char>((ucs >> 6) & 0x3F);
+          dst[count++] = 0x80 | static_cast<char>(ucs & 0x3F);
       }
   }
 
   // We filled dst, measure the rest:
   while( i < srclen )
   {
-      unsigned ucs = src[i++];
+      unsigned int ucs = src[i++];
       if( ucs < 0x80U )
       {
           count++;
@@ -1226,7 +1227,7 @@ int utf8locale( void )
             ((s = getenv("LC_ALL"))   && *s) ||
             ((s = getenv("LANG"))     && *s) )
         {
-            ret = strstr(s,"utf") || strstr(s,"UTF");
+            ret = strstr(s, "utf") || strstr(s, "UTF");
         }
 #endif
     }
@@ -1291,9 +1292,9 @@ unsigned utf8tomb( const char* src, unsigned srclen,
     if( dstlen )
     {
       ret = wcstombs(dst, buf, dstlen);
-      if( ret >= dstlen - 1 ) ret = wcstombs(0,buf,0);
+      if( ret >= dstlen - 1 ) ret = wcstombs(0, buf, 0);
     } else {
-      ret = wcstombs(0,buf,0);
+      ret = wcstombs(0, buf, 0);
     }
     if( buf != lbuf ) free((void*)buf);
     if( ret >= 0 ) return (unsigned)ret;
