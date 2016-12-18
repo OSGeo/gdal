@@ -3401,8 +3401,8 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 
                 for( int i = 0; i < nVCount; i++ )
                 {
-                    GInt32 nX = CPL_LSBINT32PTR(pabyData + 4*(i*3+1));
-                    GInt32 nY = CPL_LSBINT32PTR(pabyData + 4*(i*3+0));
+                    GInt32 nX = CPL_LSBSINT32PTR(pabyData + 4*(i*3+1));
+                    GInt32 nY = CPL_LSBSINT32PTR(pabyData + 4*(i*3+0));
 
                     if( bGotExtents )
                     {
@@ -3432,8 +3432,8 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 
                 for( int i = 0; i < nVCount; i++ )
                 {
-                    const GInt32 nX = CPL_LSBINT32PTR(pabyData + 4*(i*2+1));
-                    const GInt32 nY = CPL_LSBINT32PTR(pabyData + 4*(i*2+0));
+                    const GInt32 nX = CPL_LSBSINT32PTR(pabyData + 4*(i*2+1));
+                    const GInt32 nY = CPL_LSBSINT32PTR(pabyData + 4*(i*2+0));
 
                     if( bGotExtents )
                     {

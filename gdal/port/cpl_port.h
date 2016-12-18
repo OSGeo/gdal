@@ -886,10 +886,14 @@ template<> struct CPLStaticAssert<true>
 #  define CPL_MSBPTR64(x)       CPL_SWAP64PTR(x)
 #endif
 
-/** Return a Int16 from the 2 bytes ordered in LSB order at address x */
+/** Return a Int16 from the 2 bytes ordered in LSB order at address x.
+ * @deprecated Use rather CPL_LSBSINT16PTR or CPL_LSBUINT16PTR for explicit
+ * signedness. */
 #define CPL_LSBINT16PTR(x)    ((*(GByte*)(x)) | (*(((GByte*)(x))+1) << 8))
 
-/** Return a Int32 from the 4 bytes ordered in LSB order at address x */
+/** Return a Int32 from the 4 bytes ordered in LSB order at address x.
+ * @deprecated Use rather CPL_LSBSINT32PTR or CPL_LSBUINT32PTR for explicit
+ * signedness. */
 #define CPL_LSBINT32PTR(x)    ((*(GByte*)(x)) | (*(((GByte*)(x))+1) << 8) | \
                               (*(((GByte*)(x))+2) << 16) | (*(((GByte*)(x))+3) << 24))
 
