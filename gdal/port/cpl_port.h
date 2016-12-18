@@ -1097,7 +1097,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #endif
 #endif
 
-#if !defined(_MSC_VER) && !defined(__APPLE__)
+#if !defined(_MSC_VER) && !defined(__APPLE__) && !defined(_FORTIFY_SOURCE)
 CPL_C_START
 #  if defined(GDAL_COMPILATION) && defined(WARN_STANDARD_PRINTF)
 int vsnprintf(char *str, size_t size, const char* fmt, va_list args)
