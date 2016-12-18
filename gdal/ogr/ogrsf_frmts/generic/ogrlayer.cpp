@@ -2192,6 +2192,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
                 CPLErrorReset();
                 z_geom = x_geom->Intersection(y_geom);
                 if (CPLGetLastErrorType() != CE_None || z_geom == NULL) {
+                    delete z_geom;
                     delete y;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
@@ -2529,6 +2530,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
             CPLErrorReset();
             OGRGeometry *poIntersection = x_geom->Intersection(y_geom);
             if (CPLGetLastErrorType() != CE_None || poIntersection == NULL) {
+                delete poIntersection;
                 delete y;
                 if (!bSkipFailures) {
                     ret = OGRERR_FAILURE;
@@ -2562,6 +2564,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                     CPLErrorReset();
                     OGRGeometry *x_geom_diff_new = x_geom_diff->Difference(y_geom);
                     if (CPLGetLastErrorType() != CE_None || x_geom_diff_new == NULL) {
+                        delete x_geom_diff_new;
                         if (!bSkipFailures) {
                             ret = OGRERR_FAILURE;
                             delete y;
@@ -2671,6 +2674,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                 CPLErrorReset();
                 OGRGeometry *x_geom_diff_new = x_geom_diff->Difference(y_geom);
                 if (CPLGetLastErrorType() != CE_None || x_geom_diff_new == NULL) {
+                    delete x_geom_diff_new;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
                         delete x;
@@ -2960,6 +2964,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
                 CPLErrorReset();
                 OGRGeometry *geom_new = geom->Difference(y_geom);
                 if (CPLGetLastErrorType() != CE_None || geom_new == NULL) {
+                    delete geom_new;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
                         delete geom;
@@ -3049,6 +3054,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
                 CPLErrorReset();
                 OGRGeometry *geom_new = geom->Difference(y_geom);
                 if (CPLGetLastErrorType() != CE_None || geom_new == NULL) {
+                    delete geom_new;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
                         delete geom;
@@ -3372,6 +3378,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
             CPLErrorReset();
             OGRGeometry* poIntersection = x_geom->Intersection(y_geom);
             if (CPLGetLastErrorType() != CE_None || poIntersection == NULL) {
+                delete poIntersection;
                 delete y;
                 if (!bSkipFailures) {
                     ret = OGRERR_FAILURE;
@@ -3703,6 +3710,7 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
                 CPLErrorReset();
                 OGRGeometry *x_geom_diff_new = x_geom_diff->Difference(y_geom);
                 if (CPLGetLastErrorType() != CE_None || x_geom_diff_new == NULL) {
+                    delete x_geom_diff_new;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
                         delete y;
@@ -4006,6 +4014,7 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
                 CPLErrorReset();
                 OGRGeometry *geom_new = geom->Union(y_geom);
                 if (CPLGetLastErrorType() != CE_None || geom_new == NULL) {
+                    delete geom_new;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
                         delete y;
@@ -4029,6 +4038,7 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
             CPLErrorReset();
             OGRGeometry* poIntersection = x_geom->Intersection(geom);
             if (CPLGetLastErrorType() != CE_None || poIntersection == NULL) {
+                delete poIntersection;
                 if (!bSkipFailures) {
                     ret = OGRERR_FAILURE;
                     delete geom;
@@ -4277,6 +4287,7 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
             CPLErrorReset();
             OGRGeometry *geom_new = geom->Difference(y_geom);
             if (CPLGetLastErrorType() != CE_None || geom_new == NULL) {
+                delete geom_new;
                 if (!bSkipFailures) {
                     ret = OGRERR_FAILURE;
                     delete x;
@@ -4290,7 +4301,10 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
                 delete geom;
                 geom = geom_new;
                 if (geom->IsEmpty())
+                {
+                    delete y;
                     break;
+                }
             }
             delete y;
         }
@@ -4313,6 +4327,10 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
                     ret = OGRERR_NONE;
                 }
             }
+        }
+        else
+        {
+            delete geom;
         }
         delete x;
     }
