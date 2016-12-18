@@ -248,6 +248,9 @@ def ogr_fgdb_stress_test_cleanup():
     return 'success'
 
 
+# Do nothing in whole run of the suite
+gdaltest_list = []
+
 explicit_gdaltest_list = [ ogr_fgdb_stress_test_init,
                            ogr_fgdb_stress_test_1,
                            ogr_fgdb_stress_test_2,
