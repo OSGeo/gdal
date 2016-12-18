@@ -604,7 +604,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap argout used in Feature::GetFieldAsIntegerList()
  */
-%typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen, int *pList)
+%typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen = 0, int *pList = NULL)
 {
   /* %typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen, int *pList) */
   $1 = &nLen;
@@ -626,36 +626,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap argout used in Feature::GetFieldAsInteger64List()
  */
-%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList)
-{
-  /* %typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList) */
-  $1 = &nLen;
-  $2 = &pList;
-}
-
-%typemap(argout) (int *nLen, const GIntBig **pList )
-{
-  /* %typemap(argout) (int *nLen, const GIntBig **pList ) */
-  Py_DECREF($result);
-  PyObject *out = PyList_New( *$1 );
-  for( int i=0; i<*$1; i++ ) {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, (*$2)[i]);
-    PyObject* val;
-%#if PY_VERSION_HEX>=0x03000000
-    val = PyLong_FromString(szTmp, NULL, 10);
-%#else
-    val = PyInt_FromString(szTmp, NULL, 10);
-%#endif
-    PyList_SetItem( out, i, val );
-  }
-  $result = out;
-}
-
-/*
- * Typemap argout used in Feature::GetFieldAsInteger64List()
- */
-%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList)
+%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen = 0, GIntBig *pList = NULL)
 {
   /* %typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList) */
   $1 = &nLen;
@@ -684,7 +655,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap argout used in Feature::GetFieldAsDoubleList()
  */
-%typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen, double *pList)
+%typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen = 0, double *pList = NULL)
 {
   /* %typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen, double *pList) */
   $1 = &nLen;
