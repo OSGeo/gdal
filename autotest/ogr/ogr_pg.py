@@ -5355,7 +5355,7 @@ def ogr_pg_85():
     gdaltest.pg_ds.CreateLayer('ogr_pg_85_1')
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_85_2')
     lyr.CreateField(ogr.FieldDefn('foo'))
-    gdaltest.pg_ds.ExecuteSQL('SELECT 1') # make sure the layers are well created
+    gdaltest.pg_ds.ReleaseResultSet(gdaltest.pg_ds.ExecuteSQL('SELECT 1')) # make sure the layers are well created
 
     old_val = gdal.GetConfigOption('PG_USE_COPY')
     gdal.SetConfigOption('PG_USE_COPY', 'YES')
