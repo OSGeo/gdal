@@ -16140,8 +16140,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsIntegerList__SWIG_0(PyObject *SWIGU
   int res1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
-  int nLen3 ;
-  int *pList3 ;
+  int nLen3 = 0 ;
+  int *pList3 = NULL ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   
@@ -16208,8 +16208,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsIntegerList__SWIG_1(PyObject *SWIGU
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  int nLen3 ;
-  int *pList3 ;
+  int nLen3 = 0 ;
+  int *pList3 = NULL ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   
@@ -16332,8 +16332,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger64List(PyObject *SWIGUNUSEDP
   int res1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
-  int nLen3 ;
-  GIntBig *pList3 ;
+  int nLen3 = 0 ;
+  GIntBig *pList3 = NULL ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   
@@ -16406,8 +16406,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDoubleList__SWIG_0(PyObject *SWIGUN
   int res1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
-  int nLen3 ;
-  double *pList3 ;
+  int nLen3 = 0 ;
+  double *pList3 = NULL ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   
@@ -16474,8 +16474,8 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDoubleList__SWIG_1(PyObject *SWIGUN
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
-  int nLen3 ;
-  double *pList3 ;
+  int nLen3 = 0 ;
+  double *pList3 = NULL ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   
