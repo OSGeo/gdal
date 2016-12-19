@@ -48,3 +48,9 @@ tar xzf libspatialite4.0dev_ubuntu12.04-64bit_srs_stripped.tar.gz
 ln -s install-libspatialite-4.0dev/lib/libspatialite.so.5.0.1 libspatialite.so.3
 LD_LIBRARY_PATH=$PWD python ogr_sqlite.py
 cd ..
+
+if test `git diff | wc -l` != "0"; then
+    echo "Files have been modified duing testsuite run:"
+    git diff
+    exit 1
+fi
