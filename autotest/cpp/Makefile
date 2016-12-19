@@ -3,7 +3,7 @@
 CXX = g++
 CXXFLAGS := $(shell gdal-config --cflags) -I. -Itut $(CPPFLAGS)
 CXXFLAGS += -Wall
-CXXFLAGS += -Wextra
+CXXFLAGS += -Wextra -Wno-unused-function
 # CXXFLAGS += -Werror
 
 ifdef HARDEN

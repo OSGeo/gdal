@@ -41,7 +41,7 @@ namespace tut
     struct test_ogr_data
     {
         // Expected number of drivers
-        OGRSFDriverRegistrar* drv_reg_;
+        GDALDriverManager* drv_reg_;
         int drv_count_;
         std::string drv_shape_;
         bool has_geos_support_;
@@ -51,7 +51,7 @@ namespace tut
             drv_count_(0),
             drv_shape_("ESRI Shapefile")
         {
-            drv_reg_ = OGRSFDriverRegistrar::GetRegistrar();
+            drv_reg_ = GetGDALDriverManager();
 
             // Windows CE port builds with fixed number of drivers
 #ifdef OGR_ENABLED
@@ -85,23 +85,7 @@ namespace tut
     template<>
     void object::test<1>()
     {
-        ensure("OGRSFDriverRegistrar::GetRegistrar() is NULL", NULL != drv_reg_);
-    }
-
-    // Test number of registered OGR drivers
-    template<>
-    template<>
-    void object::test<2>()
-    {
-        OGRSFDriverRegistrar* reg = NULL;
-        reg = OGRSFDriverRegistrar::GetRegistrar();
-        ensure(NULL != reg);
-
-#ifdef WIN32CE
-        // This is only restricted on WIN32CE.
-        ensure_equals("OGR registered drivers count doesn't match",
-            reg->GetDriverCount(), drv_count_);
-#endif
+        ensure("GetGDALDriverManager() is NULL", NULL != drv_reg_);
     }
 
     // Test if Shapefile driver is registered
@@ -109,11 +93,10 @@ namespace tut
     template<>
     void object::test<3>()
     {
-        OGRSFDriverRegistrar* reg = NULL;
-        reg = OGRSFDriverRegistrar::GetRegistrar();
-        ensure(NULL != reg);
+        GDALDriverManager* manager = GetGDALDriverManager();
+        ensure(NULL != manager);
 
-        GDALDriver* drv = reg->GetDriverByName(drv_shape_.c_str());
+        GDALDriver* drv = manager->GetDriverByName(drv_shape_.c_str());
         ensure("Shapefile driver is not registered", NULL != drv);
     }
 

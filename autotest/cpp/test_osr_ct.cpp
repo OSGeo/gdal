@@ -41,6 +41,7 @@
 #include <tut_gdal.h>
 #include <ogr_srs_api.h> // OSR
 #include <ogr_api.h> // OGR
+#include <cpl_conv.h>
 #include <cpl_error.h> // CPL
 #include <algorithm>
 #include <cmath>
@@ -176,7 +177,7 @@ namespace tut
         std::string pretty(wktSrs);
         ensure_equals("SRS output is incorrect", pretty.substr(0, 6), std::string("PROJCS"));
 
-        OGRFree(wktSrs);
+        CPLFree(wktSrs);
         OGR_G_DestroyGeometry(geom);
     }
 
