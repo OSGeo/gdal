@@ -892,16 +892,22 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
         */
 
         const char* pszVal = CSLFetchNameValue( papszOptions, "INIT_WITH_EPSG" );
+        const int nSpatialiteVersionNumber = GetSpatialiteVersionNumber();
         if( pszVal != NULL && !CPLTestBool(pszVal) &&
-            GetSpatialiteVersionNumber() >= 40 )
-            osCommand =  "SELECT InitSpatialMetadata('NONE')";
+            nSpatialiteVersionNumber >= 40 )
+        {
+            if( nSpatialiteVersionNumber >= 41 )
+                osCommand =  "SELECT InitSpatialMetadata(1, 'NONE')";
+            else
+                osCommand =  "SELECT InitSpatialMetadata('NONE')";
+        }
         else
         {
             /* Since spatialite 4.1, InitSpatialMetadata() is no longer run */
             /* into a transaction, which makes population of spatial_ref_sys */
             /* from EPSG awfully slow. We have to use InitSpatialMetadata(1) */
             /* to run within a transaction */
-            if( GetSpatialiteVersionNumber() >= 41 )
+            if( nSpatialiteVersionNumber >= 41 )
                 osCommand =  "SELECT InitSpatialMetadata(1)";
             else
                 osCommand =  "SELECT InitSpatialMetadata()";

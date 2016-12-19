@@ -1002,6 +1002,44 @@ def ogr_sqlite_19():
     return 'success'
 
 ###############################################################################
+# Create a SpatiaLite DB with INIT_WITH_EPSG=NO
+
+def ogr_sqlite_19_bis():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) < 4:
+        return 'skip'
+
+    ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( '/vsimem/spatialite_test_without_epsg.db', options = ['SPATIALITE=YES', 'INIT_WITH_EPSG=NO'] )
+
+    # EPSG:26632 has a ' character in it's WKT representation
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:26632')
+    ds.CreateLayer( 'test', srs = srs )
+
+    ds = None
+    ds = ogr.Open('/vsimem/spatialite_test_without_epsg.db')
+
+    sql_lyr = ds.ExecuteSQL( "select count(*) from spatial_ref_sys" )
+    feat = sql_lyr.GetNextFeature()
+    nb_srs = feat.GetFieldAsInteger(0)
+    ds.ReleaseResultSet( sql_lyr )
+
+    if nb_srs != 1:
+        gdaltest.post_reason('did not get expected SRS count')
+        print(nb_srs)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/spatialite_test_without_epsg.d')
+
+    return 'success'
+
+###############################################################################
 # Create a regular DB with INIT_WITH_EPSG=YES
 
 def ogr_sqlite_20():
@@ -3632,6 +3670,7 @@ gdaltest_list = [
     ogr_sqlite_17,
     ogr_sqlite_18,
     ogr_sqlite_19,
+    ogr_sqlite_19_bis,
     ogr_spatialite_2,
     ogr_spatialite_3,
     ogr_spatialite_4,
