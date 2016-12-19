@@ -1003,6 +1003,81 @@ def mask_24():
     return 'success'
 
 ###############################################################################
+# Test various error conditions
+
+def mask_25():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_25.tif', 1, 1 )
+    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALL_VALID:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # No INTERNAL_MASK_FLAGS_x metadata
+    gdal.GetDriverByName('GTiff').Create('/vsimem/mask_25.tif.msk', 1, 1 )
+    ds = gdal.Open('/vsimem/mask_25.tif')
+    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_ALL_VALID:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 3:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/mask_25.tif')
+    gdal.Unlink('/vsimem/mask_25.tif.msk')
+
+    # Per-band mask
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_25.tif', 1, 1 )
+    ds.GetRasterBand(1).CreateMaskBand(0)
+    ds = None
+    ds = gdal.Open('/vsimem/mask_25.tif')
+    if ds.GetRasterBand(1).GetMaskFlags() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 0:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/mask_25.tif')
+    gdal.Unlink('/vsimem/mask_25.tif.msk')
+
+    # .msk file does not have enough bands
+    gdal.GetDriverByName('GTiff').Create('/vsimem/mask_25.tif', 1, 1, 2 )
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_25.tif.msk', 1, 1 )
+    ds.SetMetadataItem('INTERNAL_MASK_FLAGS_2', '0')
+    ds = None
+    ds = gdal.Open('/vsimem/mask_25.tif')
+    with gdaltest.error_handler():
+        if ds.GetRasterBand(2).GetMaskFlags() != gdal.GMF_ALL_VALID:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/mask_25.tif')
+    gdal.Unlink('/vsimem/mask_25.tif.msk')
+
+    # Invalid sequences of CreateMaskBand() calls
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/mask_25.tif', 1, 1, 2 )
+    ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
+    with gdaltest.error_handler():
+        if ds.GetRasterBand(2).CreateMaskBand(0) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/mask_25.tif')
+    gdal.Unlink('/vsimem/mask_25.tif.msk')
+
+    # CreateMaskBand not supported by this dataset
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('MEM').Create('',1,1)
+        ds.CreateMaskBand(0)
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 
@@ -1034,7 +1109,8 @@ gdaltest_list = [
     mask_21,
     mask_22,
     mask_23,
-    mask_24 ]
+    mask_24,
+    mask_25 ]
 
 if __name__ == '__main__':
 
