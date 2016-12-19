@@ -7,19 +7,20 @@
 
 static void OpenJPEG2000(const char* pszFilename)
 {
-    const char* const apszDrivers[] = {"JP2ECW", "JP2OpenJPEG", "JPEG2000" , "JP2MrSID", "JP2KAK" };
-    GDALDriverH aphDrivers[5];
+    const int N_DRIVERS = 6;
+    const char* const apszDrivers[] = {"JP2ECW", "JP2OpenJPEG", "JPEG2000" , "JP2MrSID", "JP2KAK", "JP2Lura" };
+    GDALDriverH aphDrivers[ N_DRIVERS ];
     GDALDatasetH hDS;
     int i, j;
 
-    for(i=0;i<5;i++)
+    for(i=0;i<N_DRIVERS;i++)
         aphDrivers[i] = GDALGetDriverByName(apszDrivers[i]);
 
-    for(i=0;i<5;i++)
+    for(i=0;i<N_DRIVERS;i++)
     {
         if( aphDrivers[i] == NULL )
             continue;
-        for(j=0;j<5;j++)
+        for(j=0;j<N_DRIVERS;j++)
         {
             if( i == j || aphDrivers[j] == NULL )
                 continue;
@@ -27,8 +28,11 @@ static void OpenJPEG2000(const char* pszFilename)
         }
 
         hDS = GDALOpen(pszFilename, GA_ReadOnly);
-        assert( hDS != NULL );
-        for(j=0;j<5;j++)
+        if( !EQUAL(apszDrivers[i], "JP2Lura") )
+        {
+            assert( hDS != NULL );
+        }
+        for(j=0;j<N_DRIVERS;j++)
         {
             if( i == j || aphDrivers[j] == NULL )
                 continue;
