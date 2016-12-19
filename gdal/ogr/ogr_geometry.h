@@ -1268,7 +1268,6 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     // IWks Interface.
     virtual OGRErr importFromWkb( unsigned char *, int = -1,
                                   OGRwkbVariant=wkbVariantOldOgc ) CPL_OVERRIDE;
-    virtual OGRErr importFromWkt( char ** ) CPL_OVERRIDE;
 
     // New methods rewritten from OGRPolygon/OGRCurvePolygon/OGRGeometry.
     virtual OGRErr addRingDirectly( OGRCurve * poNewRing ) CPL_OVERRIDE;
