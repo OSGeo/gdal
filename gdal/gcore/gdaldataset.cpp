@@ -2471,7 +2471,9 @@ char ** CPL_STDCALL GDALGetFileList( GDALDatasetH hDS )
  *
  * @since GDAL 1.5.0
  *
- * @param nFlagsIn ignored. GMF_PER_DATASET will be assumed.
+ * @param nFlagsIn 0 or combination of GMF_PER_DATASET / GMF_ALPHA. 
+ *                 GMF_PER_DATASET will be always set, even if not explicitly
+ *                 specified.
  * @return CE_None on success or CE_Failure on an error.
  *
  * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
