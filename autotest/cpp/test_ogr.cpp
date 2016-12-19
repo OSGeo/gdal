@@ -335,6 +335,7 @@ namespace tut
         T value3;
         value3 = *poOrigin;
         value3 = *poOrigin;
+        value3 = value3;
 
         std::ostringstream strErrorAssign;
         strErrorAssign << poOrigin->getGeometryName() << ": assignment operator changed a value";
@@ -479,6 +480,7 @@ namespace tut
       OGR_ST_SetUnit(hTool, OGRSTUPixel, 1.0);
       ensure_equals(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0);
       ensure_equals(OGR_ST_GetUnit(hTool), OGRSTUPixel);
+      OGR_ST_Destroy(hTool);
 
       OGR_SM_Destroy(hSM);
     }

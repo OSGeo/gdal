@@ -627,6 +627,9 @@ error:
 void OGRPolyhedralSurface::flattenTo2D()
 {
     oMP.flattenTo2D();
+
+    flags &= ~OGR_G_3D;
+    flags &= ~OGR_G_MEASURED;
 }
 
 /************************************************************************/

@@ -1542,6 +1542,11 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
         eErr = reinterpret_cast<OGRGeometryCollection *>(hGeom)->
             addGeometryDirectly(reinterpret_cast<OGRGeometry *>(hNewSubGeom));
     }
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+    {
+        eErr = reinterpret_cast<OGRPolyhedralSurface *>(hGeom)->
+            addGeometryDirectly(reinterpret_cast<OGRGeometry *>(hNewSubGeom));
+    }
 
     if( eErr != OGRERR_NONE )
         delete reinterpret_cast<OGRGeometry *>(hNewSubGeom);
