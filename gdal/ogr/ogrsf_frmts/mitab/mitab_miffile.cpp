@@ -244,7 +244,7 @@ MIFFile::MIFFile() :
     m_poSpatialRef(NULL),
     m_nFeatureCount(0),
     m_nWriteFeatureId(-1),
-    m_nAttribut(0),
+    m_nAttribute(0),
     m_bPreParsed(FALSE),
     m_bHeaderWrote(FALSE)
 {
@@ -385,7 +385,7 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
         return -1;
     }
 
-    if ( m_nAttribut > 0 || m_eAccessMode == TABWrite )
+    if ( m_nAttribute > 0 || m_eAccessMode == TABWrite )
     {
         /*-----------------------------------------------------------------
         * Open .MID file
@@ -420,7 +420,7 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
             {
                 CPLDebug("MITAB",
                          "%s is not found, although %d attributes are declared",
-                         pszTmpFname, m_nAttribut);
+                         pszTmpFname, m_nAttribute);
                 delete m_poMIDFile;
                 m_poMIDFile = NULL;
             }
@@ -639,7 +639,7 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
             if (CSLCount(papszToken) == 2)
             {
                 nColumns = atoi(papszToken[1]);
-                m_nAttribut = nColumns;
+                m_nAttribute = nColumns;
                 if (nColumns == 0)
                 {
                     // Permit to 0 columns
@@ -650,7 +650,7 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
             else
             {
                 bColumns = FALSE;
-                m_nAttribut = 0;
+                m_nAttribute = 0;
             }
             CSLDestroy(papszToken);
         }
