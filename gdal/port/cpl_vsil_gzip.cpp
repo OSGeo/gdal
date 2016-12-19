@@ -1894,7 +1894,7 @@ void VSIZipReader::SetInfo()
     brokendowntime.tm_year = file_info.tmu_date.tm_year - 1900;
     nModifiedTime = CPLYMDHMSToUnixTime(&brokendowntime);
 
-    cpl_unzGetFilePos(unzF, &this->file_pos);
+    cpl_unzGetFilePos(unzF, &file_pos);
 }
 
 /************************************************************************/

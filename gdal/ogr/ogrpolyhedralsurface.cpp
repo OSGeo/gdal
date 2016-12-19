@@ -1069,5 +1069,5 @@ OGRBoolean OGRPolyhedralSurface::hasCurveGeometry(int) const
 
 OGRErr OGRPolyhedralSurface::removeGeometry(int iGeom, int bDelete)
 {
-    return this->oMP.removeGeometry(iGeom,bDelete);
+    return oMP.removeGeometry(iGeom,bDelete);
 }
