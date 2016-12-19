@@ -994,12 +994,15 @@ CPLErr GDALDefaultOverviews::CreateMaskBand( int nFlags, int nBand )
 /*                            GetMaskBand()                             */
 /************************************************************************/
 
+// Secret code meaning we don't handle this band.
+static const int MISSING_FLAGS = 0x8000;
+
 GDALRasterBand *GDALDefaultOverviews::GetMaskBand( int nBand )
 
 {
     const int nFlags = GetMaskFlags( nBand );
 
-    if( nFlags == 0x8000 )  // Secret code meaning we don't handle this band.
+    if( nFlags == MISSING_FLAGS )
         return NULL;
 
     if( nFlags & GMF_PER_DATASET )
@@ -1030,7 +1033,7 @@ int GDALDefaultOverviews::GetMaskFlags( int nBand )
             CPLString().Printf( "INTERNAL_MASK_FLAGS_%d", std::max(nBand, 1)) );
 
     if( pszValue == NULL )
-        return 0x8000;
+        return MISSING_FLAGS;
 
     return atoi(pszValue);
 }
