@@ -6194,8 +6194,7 @@ void GDALRasterBand::InvalidateMaskBand()
  *
  * @since GDAL 1.5.0
  *
- * @param nFlagsIn combination of GMF_ALL_VALID,
- * GMF_PER_DATASET, GMF_ALPHA and GMF_NODATA.
+ * @param nFlagsIn 0 or combination of GMF_PER_DATASET / GMF_ALPHA.
  *
  * @return CE_None on success or CE_Failure on an error.
  *
