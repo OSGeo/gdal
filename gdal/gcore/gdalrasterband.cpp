@@ -5851,8 +5851,20 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
  *     The null flags will return GMF_ALL_VALID.</li>
  * </ul>
  *
- * Note that the GetMaskBand() should always return a GDALRasterBand mask, even if it is only
- * an all 255 mask with the flags indicating GMF_ALL_VALID.
+ * Note that the GetMaskBand() should always return a GDALRasterBand mask, even
+ * if it is only an all 255 mask with the flags indicating GMF_ALL_VALID.
+ *
+ * For an external .msk file to be recognized by GDAL, it must be a valid GDAL
+ * dataset, with the same name as the main dataset and suffixed with .msk,
+ * with either one band (in the GMF_PER_DATASET case), or as many bands as the
+ * main dataset.
+ * It must have INTERNAL_MASK_FLAGS_xx metadata items set at the dataset
+ * level, where xx matches the band number of a band of the main dataset. The
+ * value of those items is a combination of the flags GMF_ALL_VALID,
+ * GMF_PER_DATASET, GMF_ALPHA and GMF_NODATA. If a metadata item is missing for
+ * a band, then the other rules explained above will be used to generate a
+ * on-the-fly mask band.
+ * \see CreateMaskBand() for the characteristics of .msk files created by GDAL.
  *
  * This method is the same as the C function GDALGetMaskBand().
  *
@@ -6089,6 +6101,18 @@ GDALRasterBandH CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand )
  *     The null flags will return GMF_ALL_VALID.</li>
  * </ul>
  *
+ * For an external .msk file to be recognized by GDAL, it must be a valid GDAL
+ * dataset, with the same name as the main dataset and suffixed with .msk,
+ * with either one band (in the GMF_PER_DATASET case), or as many bands as the
+ * main dataset.
+ * It must have INTERNAL_MASK_FLAGS_xx metadata items set at the dataset
+ * level, where xx matches the band number of a band of the main dataset. The
+ * value of those items is a combination of the flags GMF_ALL_VALID,
+ * GMF_PER_DATASET, GMF_ALPHA and GMF_NODATA. If a metadata item is missing for
+ * a band, then the other rules explained above will be used to generate a
+ * on-the-fly mask band.
+ * \see CreateMaskBand() for the characteristics of .msk files created by GDAL.
+ * 
  * This method is the same as the C function GDALGetMaskFlags().
  *
  * @since GDAL 1.5.0
@@ -6158,6 +6182,9 @@ void GDALRasterBand::InvalidateMaskBand()
  * as many bands as the original image (or just one for GMF_PER_DATASET).
  * The mask images will be deflate compressed tiled images with the same
  * block size as the original image if possible.
+ * It will have INTERNAL_MASK_FLAGS_xx metadata items set at the dataset
+ * level, where xx matches the band number of a band of the main dataset. The
+ * value of those items will be the one of the nFlagsIn parameter.
  *
  * Note that if you got a mask band with a previous call to GetMaskBand(),
  * it might be invalidated by CreateMaskBand(). So you have to call GetMaskBand()
@@ -6167,9 +6194,13 @@ void GDALRasterBand::InvalidateMaskBand()
  *
  * @since GDAL 1.5.0
  *
+ * @param nFlagsIn combination of GMF_ALL_VALID,
+ * GMF_PER_DATASET, GMF_ALPHA and GMF_NODATA.
+ *
  * @return CE_None on success or CE_Failure on an error.
  *
  * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see GDALDataset::CreateMaskBand()
  *
  */
 
