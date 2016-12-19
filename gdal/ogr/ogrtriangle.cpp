@@ -125,10 +125,6 @@ OGRTriangle::OGRTriangle(const OGRPoint &p, const OGRPoint &q,
 
 OGRTriangle::~OGRTriangle()
 {
-    if (!oCC.IsEmpty())
-    {
-        oCC.empty(this);
-    }
 }
 
 /************************************************************************/
@@ -149,7 +145,6 @@ OGRTriangle& OGRTriangle::operator=( const OGRTriangle& other )
     if( this != &other)
     {
         OGRPolygon::operator=( other );
-        oCC = other.oCC;
     }
     return *this;
 }
@@ -206,28 +201,6 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
     if ( !quickValidityCheck() )
     {
         CPLDebug("OGR", "Triangle is not made of a closed rings of 3 points");
-        empty();
-        return OGRERR_CORRUPT_DATA;
-    }
-
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                           importFromWkt()                            */
-/************************************************************************/
-
-OGRErr OGRTriangle::importFromWkt( char ** ppszInput )
-
-{
-    OGRErr eErr = OGRPolygon::importFromWkt( ppszInput );
-    if( eErr != OGRERR_NONE )
-        return eErr;
-
-    if ( !quickValidityCheck() )
-    {
-        CPLDebug("OGR",
-                 "Triangle is not made of a closed rings of 3 points");
         empty();
         return OGRERR_CORRUPT_DATA;
     }

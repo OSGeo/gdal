@@ -89,7 +89,6 @@ OGRTriangulatedSurface& OGRTriangulatedSurface::operator=(
     if( this != &other)
     {
         OGRPolyhedralSurface::operator=( other );
-        oMP = other.oMP;
     }
     return *this;
 }
