@@ -49,6 +49,8 @@ ln -s install-libspatialite-4.0dev/lib/libspatialite.so.5.0.1 libspatialite.so.3
 LD_LIBRARY_PATH=$PWD python ogr_sqlite.py
 cd ..
 
+git checkout ogr/ogr_fgdb.py
+git checkout ogr/ogr_pgeo.py
 if test `git diff | wc -l` != "0"; then
     echo "Files have been modified duing testsuite run:"
     git diff
