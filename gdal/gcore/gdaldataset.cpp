@@ -2461,6 +2461,9 @@ char ** CPL_STDCALL GDALGetFileList( GDALDatasetH hDS )
  * one band.
  * The mask images will be deflate compressed tiled images with the same
  * block size as the original image if possible.
+ * It will have INTERNAL_MASK_FLAGS_xx metadata items set at the dataset
+ * level, where xx matches the band number of a band of the main dataset. The
+ * value of those items will be the one of the nFlagsIn parameter.
  *
  * Note that if you got a mask band with a previous call to GetMaskBand(),
  * it might be invalidated by CreateMaskBand(). So you have to call GetMaskBand()
@@ -2472,6 +2475,7 @@ char ** CPL_STDCALL GDALGetFileList( GDALDatasetH hDS )
  * @return CE_None on success or CE_Failure on an error.
  *
  * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see GDALRasterBand::CreateMaskBand()
  *
  */
 CPLErr GDALDataset::CreateMaskBand( int nFlagsIn )
