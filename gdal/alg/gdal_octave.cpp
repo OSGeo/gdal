@@ -182,7 +182,7 @@ void GDALOctaveLayer::ComputeLayer( GDALIntegralImage *poImg )
     detHessians = new double *[height];
     signs = new int *[height];
 
-    for( int i = 0; i < this->height; i++ )
+    for( int i = 0; i < height; i++ )
     {
         detHessians[i] = new double[width];
         signs[i] = new int[width];
