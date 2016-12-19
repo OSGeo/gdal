@@ -145,6 +145,9 @@ namespace tut
         testSpatialReferenceLeakOnCopy<OGRMultiPoint>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRMultiCurve>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRMultiLineString>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRTriangle>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRPolyhedralSurface>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRTriangulatedSurface>(poSRS);
 
         delete poSRS;
     }
@@ -294,6 +297,29 @@ namespace tut
         return poCollection;
     }
 
+    template<>
+    OGRTriangle* make()
+    {
+        OGRPoint p1(0, 0), p2(0, 1), p3(1, 1);
+        return new OGRTriangle(p1, p2, p3);
+    }
+
+    template<>
+    OGRTriangulatedSurface* make()
+    {
+        OGRTriangulatedSurface* poTS = new OGRTriangulatedSurface();
+        poTS->addGeometryDirectly(make<OGRTriangle>());
+        return poTS;
+    }
+
+    template<>
+    OGRPolyhedralSurface* make()
+    {
+        OGRPolyhedralSurface* poPS = new OGRPolyhedralSurface();
+        poPS->addGeometryDirectly(make<OGRPolygon>());
+        return poPS;
+    }
+
     template<class T>
     void testCopyEquals()
     {
@@ -312,6 +338,14 @@ namespace tut
 
         std::ostringstream strErrorAssign;
         strErrorAssign << poOrigin->getGeometryName() << ": assignment operator changed a value";
+#ifdef DEBUG_VERBOSE
+        char* wkt1 = NULL, *wkt2 = NULL;
+        poOrigin->exportToWkt(&wkt1);
+        value3.exportToWkt(&wkt2);
+        printf("%s %s\n", wkt1, wkt2);
+        CPLFree(wkt1);
+        CPLFree(wkt2);
+#endif
         ensure(strErrorAssign.str().c_str(), CPL_TO_BOOL(poOrigin->Equals(&value3)));
 
         OGRGeometryFactory::destroyGeometry(poOrigin);
@@ -335,6 +369,9 @@ namespace tut
         testCopyEquals<OGRMultiPoint>();
         testCopyEquals<OGRMultiCurve>();
         testCopyEquals<OGRMultiLineString>();
+        testCopyEquals<OGRTriangle>();
+        testCopyEquals<OGRPolyhedralSurface>();
+        testCopyEquals<OGRTriangulatedSurface>();
 
     }
 

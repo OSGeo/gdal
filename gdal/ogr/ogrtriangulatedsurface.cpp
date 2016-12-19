@@ -58,8 +58,10 @@ OGRTriangulatedSurface::OGRTriangulatedSurface()
 
 OGRTriangulatedSurface::OGRTriangulatedSurface(
                                         const OGRTriangulatedSurface& other ) :
-    OGRPolyhedralSurface(other)
-{ }
+    OGRPolyhedralSurface()
+{
+    *this = other;
+}
 
 /************************************************************************/
 /*                        ~OGRTriangulatedSurface()                     */
@@ -88,7 +90,18 @@ OGRTriangulatedSurface& OGRTriangulatedSurface::operator=(
 {
     if( this != &other)
     {
-        OGRPolyhedralSurface::operator=( other );
+        // We need to do it manually. We cannot rely on the = operator
+        // of OGRPolyhedralSurface since it will be confused by a multipolygon
+        // of triangles.
+        OGRSurface::operator=( other );
+        empty();
+        set3D( other.Is3D() );
+        setMeasured( other.IsMeasured() );
+        assignSpatialReference( other.getSpatialReference() );
+        for(int i=0;i<other.oMP.nGeomCount;i++)
+        {
+            addGeometry( other.oMP.getGeometryRef(i) );
+        }
     }
     return *this;
 }
