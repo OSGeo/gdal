@@ -710,7 +710,7 @@ class MIFFile CPL_FINAL : public IMapInfoFile
 
     int         m_nFeatureCount;
     int         m_nWriteFeatureId;
-    int         m_nAttribut;
+    int         m_nAttribute;
 
     ///////////////
     // Private Read access specific stuff

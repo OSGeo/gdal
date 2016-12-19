@@ -605,7 +605,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                     int nSRSDimensionLocFlags,
                                     bool bForceLineStringAsLinearRing,
                                     const char* pszNamespaceDecl,
-                                    const char* pszOverridenElementName )
+                                    const char* pszOverriddenElementName )
 
 {
 
@@ -945,8 +945,8 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         }
 
         // Buffer for polygon tag name + srsName attribute if set.
-        const char* pszElemName = pszOverridenElementName ?
-                                        pszOverridenElementName : "Polygon";
+        const char* pszElemName = pszOverriddenElementName ?
+                                        pszOverriddenElementName : "Polygon";
         const size_t nPolyTagLength = 7 + strlen(pszElemName);
         const size_t nPolyTagNameBufLen = nPolyTagLength + nAttrsLength + 1;
         char* pszPolyTagName =

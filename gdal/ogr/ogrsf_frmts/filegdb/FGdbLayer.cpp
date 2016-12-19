@@ -2340,7 +2340,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
             has_z = true;
         }
         // For TIN and PolyhedralSurface, default to create a multipatch,
-        // unless the user explictly disabled it
+        // unless the user explicitly disabled it
         else if( (wkbFlatten(eType) == wkbTIN ||
                   wkbFlatten(eType) == wkbPolyhedralSurface ) &&
                  CPLTestBool(CSLFetchNameValueDef(papszOptions,
