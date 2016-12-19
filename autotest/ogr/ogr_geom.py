@@ -279,6 +279,42 @@ def ogr_geom_polyhedral_surface():
         gdaltest.post_reason ("Failure in Empty() of PolyhedralSurface")
         return 'fail'
 
+    g = ogr.CreateGeometryFromWkt('POLYHEDRALSURFACE (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)))')
+    if g.Equals(g) == 0:
+        gdaltest.post_reason ("fail")
+        return 'fail'
+
+    for wkt in [ 'MULTIPOLYGON (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)))',
+                 'POLYHEDRALSURFACE (((0 0 0,0 0 1,0 1 1,0 0 0)))',
+                 'POLYHEDRALSURFACE (((0 0 0,0 0 1,0 1 1,0 0 0)),((0 0 0,0 0 1,0 1 1,0 0 0)))',
+                 'POLYHEDRALSURFACE EMPTY' ]:
+        g2 = ogr.CreateGeometryFromWkt(wkt)
+        if g.Equals(g2):
+            gdaltest.post_reason ("Unexpected true Equals() return")
+            print(wkt)
+            return 'fail'
+
+    # Error
+    if g.AddGeometry( ogr.CreateGeometryFromWkt('POINT (0 0)') ) == 0:
+        gdaltest.post_reason ("fail")
+        return 'fail'
+
+    # Error
+    if g.AddGeometryDirectly( ogr.CreateGeometryFromWkt('POINT (0 0)') ) == 0:
+        gdaltest.post_reason ("fail")
+        return 'fail'
+
+    # Test dimension promotion
+    g = ogr.CreateGeometryFromWkt('POLYHEDRALSURFACE EMPTY')
+    g.AddGeometryDirectly( ogr.CreateGeometryFromWkt('POLYGON ZM ((0 0 1 2,0 1 1 2,1 1 1 2,0 0 1 2))') )
+    g.AddGeometryDirectly( ogr.CreateGeometryFromWkt('POLYGON ((10 10,10 11,11 11,10 10))') )
+    wkt = g.ExportToIsoWkt()
+    if wkt != 'POLYHEDRALSURFACE ZM (((0 0 1 2,0 1 1 2,1 1 1 2,0 0 1 2)),((10 10 0 0,10 11 0 0,11 11 0 0,10 10 0 0)))':
+        gdaltest.post_reason ("fail")
+        print(wkt)
+        return 'fail'
+
+
     return 'success'
 
 ###############################################################################
@@ -3885,6 +3921,12 @@ def ogr_geom_measured_geometries_to_2D_or_3D():
                  [ 'MULTISURFACE ZM (((1 2 3 4)))', 'MULTISURFACE (((1 2)))', 'MULTISURFACE Z (((1 2 3)))' ],
                  [ 'GEOMETRYCOLLECTION M (POINT M (1 2 3))', 'GEOMETRYCOLLECTION (POINT (1 2))', 'GEOMETRYCOLLECTION Z (POINT Z (1 2 0))' ],
                  [ 'GEOMETRYCOLLECTION ZM (POINT ZM (1 2 3 4))', 'GEOMETRYCOLLECTION (POINT (1 2))', 'GEOMETRYCOLLECTION Z (POINT Z (1 2 3))' ],
+                 [ 'TRIANGLE M ((0 0 3,0 1 3,1 1 3,0 0 3))', 'TRIANGLE ((0 0,0 1,1 1,0 0))', 'TRIANGLE Z ((0 0 0,0 1 0,1 1 0,0 0 0))' ],
+                 [ 'TRIANGLE ZM ((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4))', 'TRIANGLE ((0 0,0 1,1 1,0 0))', 'TRIANGLE Z ((0 0 3,0 1 3,1 1 3,0 0 3))' ],
+                 [ 'POLYHEDRALSURFACE M (((0 0 3,0 1 3,1 1 3,0 0 3)))', 'POLYHEDRALSURFACE (((0 0,0 1,1 1,0 0)))', 'POLYHEDRALSURFACE Z (((0 0 0,0 1 0,1 1 0,0 0 0)))' ],
+                 [ 'POLYHEDRALSURFACE ZM (((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)))', 'POLYHEDRALSURFACE (((0 0,0 1,1 1,0 0)))', 'POLYHEDRALSURFACE Z (((0 0 3,0 1 3,1 1 3,0 0 3)))' ],
+                 [ 'TIN M (((0 0 3,0 1 3,1 1 3,0 0 3)))', 'TIN (((0 0,0 1,1 1,0 0)))', 'TIN Z (((0 0 0,0 1 0,1 1 0,0 0 0)))' ],
+                 [ 'TIN ZM (((0 0 3 4,0 1 3 4,1 1 3 4,0 0 3 4)))', 'TIN (((0 0,0 1,1 1,0 0)))', 'TIN Z (((0 0 3,0 1 3,1 1 3,0 0 3)))' ],
                ]
     for (before, after_2D, after_3D) in list_wkt:
 
