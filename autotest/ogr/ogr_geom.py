@@ -438,6 +438,15 @@ def ogr_geom_tin():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Add a POLYGON that can be cast as a TRIANGLE
+    g = ogr.Geometry(ogr.wkbTIN)
+    if g.AddGeometry(ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,0 0))')) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if g.ExportToIsoWkt() != 'TIN (((0 0,0 1,1 1,0 0)))':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
