@@ -113,14 +113,15 @@ class CachedFileProp
     time_t          nExpireTimestampLocal;
     CPLString       osRedirectURL;
 
-                    CachedFileProp() : eExists(EXIST_UNKNOWN),
-                                       bHasComputedFileSize(false),
-                                       fileSize(0),
-                                       bIsDirectory(false),
-                                       mTime(0),
-                                       bS3Redirect(false),
-                                       nExpireTimestampLocal(0)
-                                       {}
+                    CachedFileProp() :
+                        eExists(EXIST_UNKNOWN),
+                        bHasComputedFileSize(false),
+                        fileSize(0),
+                        bIsDirectory(false),
+                        mTime(0),
+                        bS3Redirect(false),
+                        nExpireTimestampLocal(0)
+                        {}
 };
 
 typedef struct
@@ -510,7 +511,7 @@ int VSICurlHandle::Seek( vsi_l_offset nOffset, int nWhence )
 static GIntBig VSICurlGetTimeStampFromRFC822DateTime( const char* pszDT )
 {
     // Sun, 03 Apr 2016 12:07:27 GMT
-    if( strlen(pszDT) && pszDT[3] == ',' && pszDT[4] == ' ' )
+    if( strlen(pszDT) >= 5 && pszDT[3] == ',' && pszDT[4] == ' ' )
         pszDT += 5;
     int nDay = 0;
     int nYear = 0;
