@@ -987,7 +987,7 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
 /* -------------------------------------------------------------------- */
     if( osOldBasename != osNewBasename )
     {
-        for( int i=0; papszFileList[i] != NULL; i++ )
+        for( int i = 0; papszFileList[i] != NULL; i++ )
         {
             if( osOldBasename == CPLGetBasename( papszFileList[i] ) )
                 continue;
@@ -1012,10 +1012,10 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
 /* -------------------------------------------------------------------- */
     if( osOldBasename != osNewBasename )
     {
-        const CPLString osOldExtra = CPLGetFilename(pszOldFilename)
-            + strlen(osOldBasename);
-        const CPLString osNewExtra = CPLGetFilename(pszNewFilename)
-            + strlen(osNewBasename);
+        const CPLString osOldExtra =
+            CPLGetFilename(pszOldFilename) + osOldBasename.size();
+        const CPLString osNewExtra =
+            CPLGetFilename(pszNewFilename) + osNewBasename.size();
 
         if( osOldExtra != osNewExtra )
         {
@@ -1032,7 +1032,7 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
     char **papszNewList = NULL;
     const CPLString osNewPath = CPLGetPath( pszNewFilename );
 
-    for( int i=0; papszFileList[i] != NULL; i++ )
+    for( int i = 0; papszFileList[i] != NULL; i++ )
     {
         const CPLString osOldFilename = CPLGetFilename( papszFileList[i] );
 
@@ -1040,7 +1040,7 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
             osOldBasename == osNewBasename
             ? CPLFormFilename( osNewPath, osOldFilename, NULL )
             : CPLFormFilename( osNewPath, osNewBasename,
-                               osOldFilename.c_str() + strlen(osOldBasename));
+                               osOldFilename.c_str() + osOldBasename.size());
 
         papszNewList = CSLAddString( papszNewList, osNewFilename );
     }
