@@ -90,10 +90,9 @@ static const double DEFAULT_SPLIT_RATIO = 0.55;
 static CPL_INLINE bool CPL_RectContained( const CPLRectObj *a,
                                           const CPLRectObj *b )
 {
-    if( a->minx >= b->minx && a->maxx <= b->maxx )
-        if( a->miny >= b->miny && a->maxy <= b->maxy )
-          return true;
-    return false;
+    return
+        a->minx >= b->minx && a->maxx <= b->maxx &&
+        a->miny >= b->miny && a->maxy <= b->maxy;
 }
 
 /*
@@ -394,12 +393,12 @@ static void CPLQuadTreeNodeAddFeatureAlg1( CPLQuadTree* hQuadTree,
         // in a subnode if possible.
         if( psNode->nFeatures >= hQuadTree->nBucketCapacity )
         {
-            CPLRectObj half1;
-            CPLRectObj half2;
-            CPLRectObj quad1;
-            CPLRectObj quad2;
-            CPLRectObj quad3;
-            CPLRectObj quad4;
+            CPLRectObj half1 = {};
+            CPLRectObj half2 = {};
+            CPLRectObj quad1 = {};
+            CPLRectObj quad2 = {};
+            CPLRectObj quad3 = {};
+            CPLRectObj quad4 = {};
 
             CPLQuadTreeSplitBounds( hQuadTree->dfSplitRatio, &psNode->rect,
                                     &half1, &half2);
@@ -632,6 +631,7 @@ static void CPLQuadTreeCollectFeatures(const CPLQuadTree *hQuadTree,
     /* -------------------------------------------------------------------- */
     if( *pnFeatureCount + psNode->nFeatures > *pnMaxFeatures )
     {
+        // TODO(schwehr): Symbolic constant.
         *pnMaxFeatures = (*pnFeatureCount + psNode->nFeatures) * 2 + 20;
         *pppFeatureList = static_cast<void **>(
             CPLRealloc(*pppFeatureList, sizeof(void*) * *pnMaxFeatures) );
@@ -761,20 +761,24 @@ void CPLQuadTreeForeach( const CPLQuadTree *hQuadTree,
 /*                       CPLQuadTreeDumpNode()                          */
 /************************************************************************/
 
-static void CPLQuadTreeDumpNode(const QuadTreeNode *psNode,
-                                int nIndentLevel,
-                                CPLQuadTreeDumpFeatureFunc pfnDumpFeatureFunc,
-                                void* pUserData)
+static void CPLQuadTreeDumpNode( const QuadTreeNode *psNode,
+                                 int nIndentLevel,
+                                 CPLQuadTreeDumpFeatureFunc pfnDumpFeatureFunc,
+                                 void* pUserData )
 {
     if( psNode->nNumSubNodes )
     {
         for( int count = nIndentLevel; --count >= 0; )
+        {
             printf("  "); /*ok*/
+        }
         printf("SubhQuadTrees :\n"); /*ok*/
         for( int i = 0; i < psNode->nNumSubNodes; i++ )
         {
             for( int count = nIndentLevel+1; --count >= 0; )
+            {
                 printf("  "); /*ok*/
+            }
             printf("SubhQuadTree %d :\n", i+1); /*ok*/
             CPLQuadTreeDumpNode(psNode->apSubNode[i], nIndentLevel + 2,
                                 pfnDumpFeatureFunc, pUserData);
@@ -788,12 +792,16 @@ static void CPLQuadTreeDumpNode(const QuadTreeNode *psNode,
         for( int i = 0; i < psNode->nFeatures; i++ )
         {
             if( pfnDumpFeatureFunc )
+            {
                 pfnDumpFeatureFunc(psNode->pahFeatures[i], nIndentLevel + 2,
                                    pUserData);
+            }
             else
             {
-                for( int count=nIndentLevel + 1; --count >= 0; )
+                for( int count = nIndentLevel + 1; --count >= 0; )
+                {
                     printf("  "); /*ok*/
+                }
                 printf("%p\n", psNode->pahFeatures[i]); /*ok*/
             }
         }
