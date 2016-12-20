@@ -393,12 +393,12 @@ static void CPLQuadTreeNodeAddFeatureAlg1( CPLQuadTree* hQuadTree,
         // in a subnode if possible.
         if( psNode->nFeatures >= hQuadTree->nBucketCapacity )
         {
-            CPLRectObj half1 = {};
-            CPLRectObj half2 = {};
-            CPLRectObj quad1 = {};
-            CPLRectObj quad2 = {};
-            CPLRectObj quad3 = {};
-            CPLRectObj quad4 = {};
+            CPLRectObj half1 = { 0.0, 0.0, 0.0, 0.0 };
+            CPLRectObj half2 = { 0.0, 0.0, 0.0, 0.0 };
+            CPLRectObj quad1 = { 0.0, 0.0, 0.0, 0.0 };
+            CPLRectObj quad2 = { 0.0, 0.0, 0.0, 0.0 };
+            CPLRectObj quad3 = { 0.0, 0.0, 0.0, 0.0 };
+            CPLRectObj quad4 = { 0.0, 0.0, 0.0, 0.0 };
 
             CPLQuadTreeSplitBounds( hQuadTree->dfSplitRatio, &psNode->rect,
                                     &half1, &half2);
