@@ -268,7 +268,7 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
         {
             osValue += osWord;
             if ( osWord.size() < 2 ) continue;
-            if( osWord[osWord.size()-1] == ')' && osWord[osWord.size()-2] == '\'' ) break;
+            if( osWord.back() == ')' && osWord[osWord.size()-2] == '\'' ) break;
         }
     }
 
@@ -281,7 +281,7 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
             SkipWhite();
 
             osValue += osWord;
-            if( !osWord.empty() && osWord[osWord.size()-1] == ')'  ) break;
+            if( !osWord.empty() && osWord.back() == ')'  ) break;
         }
     }
     else

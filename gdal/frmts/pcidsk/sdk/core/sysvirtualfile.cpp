@@ -201,7 +201,7 @@ void SysVirtualFile::SetBlockInfo( int requested_block,
     while( (int) xblock_segment.size() < blocks_loaded )
     {
         xblock_segment.push_back( xblock_segment[0] );
-        xblock_index.push_back( xblock_index[xblock_index.size()-1]+1 );
+        xblock_index.push_back( xblock_index.back()+1 );
     }
 
     xblock_segment.push_back( new_block_segment );

@@ -672,7 +672,7 @@ OGRVDVLayer::OGRVDVLayer(const CPLString& osTableName,
         {
             CPLString osChs(pszLine+4);
             osChs.Trim();
-            if( osChs.size() >= 2 && osChs[0] == '"' && osChs[osChs.size()-1] == '"' )
+            if( osChs.size() >= 2 && osChs[0] == '"' && osChs.back() == '"' )
                 osChs = osChs.substr(1, osChs.size()-2);
             m_bRecodeFromLatin1 = EQUAL(osChs, "ISO8859-1") ||
                                   EQUAL(osChs, "ISO_LATIN_1");
@@ -827,7 +827,7 @@ OGRFeature* OGRVDVLayer::GetNextFeature()
                 else
                     osToken = papszTokens[i];
                 // Strip trailing spaces
-                while( osToken.size() && osToken[osToken.size()-1] == ' ' )
+                while( !osToken.empty() && osToken.back() == ' ' )
                     osToken.resize(osToken.size()-1);
                 OGRFieldType eFieldType = m_poFeatureDefn->GetFieldDefn(i)->GetType();
                 if( m_bRecodeFromLatin1 && eFieldType == OFTString )

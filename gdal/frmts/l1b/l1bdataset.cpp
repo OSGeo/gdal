@@ -3158,7 +3158,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         if( pszFilename[0] == '"' )
             pszFilename ++;
         osFilename = pszFilename;
-        if( !osFilename.empty() && osFilename[osFilename.size()-1] == '"' )
+        if( !osFilename.empty() && osFilename.back() == '"' )
             osFilename.resize(osFilename.size()-1);
         fp = VSIFOpenL( osFilename, "rb" );
         if ( !fp )

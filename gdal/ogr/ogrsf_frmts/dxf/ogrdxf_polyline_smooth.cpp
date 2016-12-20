@@ -309,7 +309,7 @@ void DXFSmoothPolyline::Close()
     if(m_vertices.size() >= 2)
     {
         const bool bVisuallyClosed =
-            (m_vertices[m_vertices.size() - 1].shares_2D_pos(m_vertices[0]));
+            (m_vertices.back().shares_2D_pos(m_vertices[0]));
 
         if(!bVisuallyClosed)
         {

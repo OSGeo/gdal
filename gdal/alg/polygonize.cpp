@@ -132,7 +132,7 @@ void RPolygon::Coalesce()
                 std::vector<int> &anString = aanXY[iString];
 
                 if( anBase[anBase.size() - 2] == anString[0]
-                    && anBase[anBase.size() - 1] == anString[1] )
+                    && anBase.back() == anString[1] )
                 {
                     Merge( static_cast<int>(iBaseString),
                            static_cast<int>(iString), 1 );
@@ -140,8 +140,8 @@ void RPolygon::Coalesce()
                 }
                 else if( anBase[anBase.size() - 2] ==
                              anString[anString.size() - 2] &&
-                         anBase[anBase.size()-1] ==
-                             anString[anString.size() - 1] )
+                         anBase.back() ==
+                             anString.back() )
                 {
                     Merge( static_cast<int>(iBaseString),
                            static_cast<int>(iString), -1 );
@@ -152,7 +152,7 @@ void RPolygon::Coalesce()
 
         // At this point our loop *should* be closed!
         CPLAssert( anBase[0] == anBase[anBase.size()-2]
-                   && anBase[1] == anBase[anBase.size()-1] );
+                   && anBase[1] == anBase.back() );
     }
 }
 

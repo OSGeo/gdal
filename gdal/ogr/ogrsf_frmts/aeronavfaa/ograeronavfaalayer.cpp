@@ -478,7 +478,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
             {
                 CPLString osName = pszLine + 2;
                 osName.resize(60);
-                while(!osName.empty() && osName[osName.size()-1] == ' ')
+                while(!osName.empty() && osName.back() == ' ')
                 {
                     osName.resize(osName.size()-1);
                 }
@@ -655,7 +655,7 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
             osCityName.resize(pszComma - pszBegin);
             osStateName = pszComma + 2;
             osStateName.resize(78 - (pszComma + 2 - pszLine));
-            while(!osStateName.empty() && osStateName[osStateName.size()-1] == ' ')
+            while(!osStateName.empty() && osStateName.back() == ' ')
             {
                 osStateName.resize(osStateName.size()-1);
             }

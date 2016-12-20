@@ -140,7 +140,7 @@ PCIDSK2Band::~PCIDSK2Band()
 {
     while( !apoOverviews.empty() )
     {
-        delete apoOverviews[apoOverviews.size()-1];
+        delete apoOverviews.back();
         apoOverviews.pop_back();
     }
     CSLDestroy( papszLastMDListValue );
@@ -498,7 +498,7 @@ void PCIDSK2Band::RefreshOverviewList()
 /* -------------------------------------------------------------------- */
     while( !apoOverviews.empty() )
     {
-        delete apoOverviews[apoOverviews.size()-1];
+        delete apoOverviews.back();
         apoOverviews.pop_back();
     }
 
@@ -2096,7 +2096,7 @@ PCIDSK2Dataset::ICreateLayer( const char * pszLayerName,
 
     apoLayers.push_back( new OGRPCIDSKLayer( poSeg, poVecSeg, TRUE ) );
 
-    return apoLayers[apoLayers.size()-1];
+    return apoLayers.back();
 }
 
 /************************************************************************/

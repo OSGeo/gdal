@@ -145,7 +145,7 @@ int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptionsIn
         const char* pszVal = CSLFetchNameValue(papszOpenOptionsIn, apszOpenOptions[i]);
         if( pszVal )
         {
-            if( osNewName[osNewName.size()-1] != ':' )
+            if( osNewName.back() != ':' )
                 osNewName += ",";
             if( i > 0 )
             {

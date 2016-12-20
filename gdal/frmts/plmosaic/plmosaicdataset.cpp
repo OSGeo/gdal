@@ -458,7 +458,7 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
             CPLCalloc( 1, sizeof( CPLHTTPResult ) ) );
         vsi_l_offset nDataLength = 0;
         CPLString osURL(pszURL);
-        if( osURL[osURL.size()-1 ] == '/' )
+        if( osURL.back() == '/' )
             osURL.resize(osURL.size()-1);
         GByte* pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLength, FALSE);
         if( pabyBuf )
@@ -734,7 +734,7 @@ void PLMosaicDataset::CreateMosaicCachePathIfNecessary()
 int PLMosaicDataset::OpenMosaic()
 {
     CPLString osURL(osBaseURL);
-    if( osURL[osURL.size()-1] != '/' )
+    if( osURL.back() != '/' )
         osURL += '/';
     osURL += osMosaic;
     json_object* poObj = RunRequest(osURL);

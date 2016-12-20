@@ -879,10 +879,10 @@ void OGROSMLayer::AddComputedAttribute( const char* pszName,
     OGRFieldDefn oField(pszName, eType);
     poFeatureDefn->AddFieldDefn(&oField);
     oComputedAttributes.push_back(OGROSMComputedAttribute(pszName));
-    oComputedAttributes[oComputedAttributes.size()-1].eType = eType;
-    oComputedAttributes[oComputedAttributes.size()-1].nIndex = poFeatureDefn->GetFieldCount() - 1;
-    oComputedAttributes[oComputedAttributes.size()-1].osSQL = pszSQL;
-    oComputedAttributes[oComputedAttributes.size()-1].hStmt = hStmt;
-    oComputedAttributes[oComputedAttributes.size()-1].aosAttrToBind = aosAttrToBind;
-    oComputedAttributes[oComputedAttributes.size()-1].anIndexToBind = anIndexToBind;
+    oComputedAttributes.back().eType = eType;
+    oComputedAttributes.back().nIndex = poFeatureDefn->GetFieldCount() - 1;
+    oComputedAttributes.back().osSQL = pszSQL;
+    oComputedAttributes.back().hStmt = hStmt;
+    oComputedAttributes.back().aosAttrToBind = aosAttrToBind;
+    oComputedAttributes.back().anIndexToBind = anIndexToBind;
 }

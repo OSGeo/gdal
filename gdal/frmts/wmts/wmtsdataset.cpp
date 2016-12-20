@@ -353,7 +353,7 @@ const char *WMTSBand::GetMetadataItem( const char * pszName,
         if( sscanf( pszName+6, "%d_%d", &iPixel, &iLine ) != 2 )
             return NULL;
 
-        const WMTSTileMatrix& oTM = poGDS->oTMS.aoTM[poGDS->oTMS.aoTM.size()-1];
+        const WMTSTileMatrix& oTM = poGDS->oTMS.aoTM.back();
 
         iPixel += (int)floor(0.5 + (poGDS->adfGT[0] - oTM.dfTLX) / oTM.dfPixelSize);
         iLine += (int)floor(0.5 + (oTM.dfTLY - poGDS->adfGT[3]) / oTM.dfPixelSize);
@@ -614,7 +614,7 @@ CPLString WMTSDataset::FixCRSName(const char* pszCRS)
 
     CPLString osRet(pszCRS);
     while( osRet.size() &&
-           (osRet[osRet.size()-1] == ' ' || osRet[osRet.size()-1] == '\r' || osRet[osRet.size()-1] == '\n') )
+           (osRet.back() == ' ' || osRet.back() == '\r' || osRet.back() == '\n') )
     {
         osRet.resize(osRet.size() - 1);
     }
@@ -1584,7 +1584,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 {
                     // Check if this doesn't match the most precise tile matrix
                     // by densifying its contour
-                    const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
+                    const WMTSTileMatrix& oTM = oTMS.aoTM.back();
 
                     bool bMatchFound = false;
                     const char *pszProjectionTMS = oTMS.oSRS.GetAttrValue("PROJECTION");
@@ -1748,7 +1748,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         if( !bHasAOI &&
             (eExtentMethod == AUTO || eExtentMethod == MOST_PRECISE_TILE_MATRIX) )
         {
-            const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
+            const WMTSTileMatrix& oTM = oTMS.aoTM.back();
             CPLDebug("WMTS", "Using TM level %s bounding box", oTM.osIdentifier.c_str() );
 
             sAOI.MinX = oTM.dfTLX;
@@ -1770,7 +1770,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         {
             // Clip with implied BoundingBox of the most precise TM
             // Useful for http://tileserver.maptiler.com/wmts
-            const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
+            const WMTSTileMatrix& oTM = oTMS.aoTM.back();
 
             // For https://data.linz.govt.nz/services;key=XXXXXXXX/wmts/1.0.0/set/69/WMTSCapabilities.xml
             // only clip in Y since there's a warp over dateline.
@@ -1792,7 +1792,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
 
         // Clip with limits of most precise TM when available
         {
-            const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
+            const WMTSTileMatrix& oTM = oTMS.aoTM.back();
             if( aoMapTileMatrixLimits.find(oTM.osIdentifier) != aoMapTileMatrixLimits.end() )
             {
                 const WMTSTileMatrixLimits& oTMLimits = aoMapTileMatrixLimits[oTM.osIdentifier];
@@ -1818,7 +1818,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 {
                     CPLDebug("WMTS", "Using zoom level %s instead of %s to avoid int overflow",
                              oTMS.aoTM[nMaxZoomLevel].osIdentifier.c_str(),
-                             oTMS.aoTM[(int)oTMS.aoTM.size()-1].osIdentifier.c_str());
+                             oTMS.aoTM.back().osIdentifier.c_str());
                 }
 
                 // Align AOI on pixel boundaries with respect to TopLeftCorner of

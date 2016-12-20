@@ -2228,7 +2228,7 @@ GDALDataset* KmlSingleDocRasterDataset::Open(const char* pszFilename,
     }
 
     const char* pszImageFilename = CPLFormFilename( osDirname,
-            CPLSPrintf("kml_image_L%d_%d_%d", (int)aosDescs.size(), 0, 0), aosDescs[aosDescs.size()-1].szExtI);
+            CPLSPrintf("kml_image_L%d_%d_%d", (int)aosDescs.size(), 0, 0), aosDescs.back().szExtI);
     GDALDataset* poImageDS = (GDALDataset*) GDALOpen(pszImageFilename, GA_ReadOnly);
     if( poImageDS == NULL )
     {
@@ -2241,7 +2241,7 @@ GDALDataset* KmlSingleDocRasterDataset::Open(const char* pszFilename,
     }
     GDALClose( (GDALDatasetH) poImageDS) ;
 
-    const KmlSingleDocRasterTilesDesc& oDesc = aosDescs[aosDescs.size()-1];
+    const KmlSingleDocRasterTilesDesc& oDesc = aosDescs.back();
     int nXSize = 0;
     int nYSize = 0;
     int nBands = 0;

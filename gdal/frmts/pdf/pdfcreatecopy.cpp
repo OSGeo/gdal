@@ -2339,7 +2339,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                     /* If the text is of the form {stuff}, then it means we want to fetch */
                     /* the value of the field "stuff" in the feature */
                     if( !osLabelText.empty() && osLabelText[0] == '{' &&
-                        osLabelText[osLabelText.size() - 1] == '}' )
+                        osLabelText.back() == '}' )
                     {
                         osLabelText = pszStr + 1;
                         osLabelText.resize(osLabelText.size() - 1);

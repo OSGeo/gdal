@@ -3685,7 +3685,7 @@ bool OGROSMDataSource::ParseConf( char** papszOpenOptionsIn )
                         }
                         oAttributes[i].osSQL = pszSQL;
                         if( bInQuotes && oAttributes[i].osSQL.size() > 1 &&
-                            oAttributes[i].osSQL[oAttributes[i].osSQL.size()-1] == '"' )
+                            oAttributes[i].osSQL.back() == '"' )
                             oAttributes[i].osSQL.resize(oAttributes[i].osSQL.size()-1);
                         break;
                     }

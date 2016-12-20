@@ -853,7 +853,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 {
                     if (!(!oCoords.empty() &&
                           oCoords[oCoords.size() - 2] == CLOSE_SUBPATH &&
-                          oCoords[oCoords.size() - 1] == CLOSE_SUBPATH))
+                          oCoords.back() == CLOSE_SUBPATH))
                     {
                         oCoords.push_back(CLOSE_SUBPATH);
                         oCoords.push_back(CLOSE_SUBPATH);
@@ -880,7 +880,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 {
                     if (!(!oCoords.empty() &&
                           oCoords[oCoords.size() - 2] == CLOSE_SUBPATH &&
-                          oCoords[oCoords.size() - 1] == CLOSE_SUBPATH))
+                          oCoords.back() == CLOSE_SUBPATH))
                     {
                         oCoords.push_back(CLOSE_SUBPATH);
                         oCoords.push_back(CLOSE_SUBPATH);
@@ -894,7 +894,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 {
                     if (!(!oCoords.empty() &&
                           oCoords[oCoords.size() - 2] == CLOSE_SUBPATH &&
-                          oCoords[oCoords.size() - 1] == CLOSE_SUBPATH))
+                          oCoords.back() == CLOSE_SUBPATH))
                     {
                         oCoords.push_back(CLOSE_SUBPATH);
                         oCoords.push_back(CLOSE_SUBPATH);

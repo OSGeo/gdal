@@ -567,7 +567,7 @@ int OGRMDBTable::FetchColumns()
         else
             apoColumnLengths.push_back(0);
 
-        //CPLDebug("MDB", "Column %s, type = %d", apoColumnNames[apoColumnNames.size()-1].c_str(), type);
+        //CPLDebug("MDB", "Column %s, type = %d", apoColumnNames.back().c_str(), type);
 
         env->env->DeleteLocalRef(column_type);
 

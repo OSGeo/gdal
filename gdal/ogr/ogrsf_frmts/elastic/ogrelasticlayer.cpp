@@ -1378,7 +1378,7 @@ CPLString OGRElasticLayer::BuildMap() {
         json_object* poContainer = GetContainerForMapping(poMappingProperties,
                                                           m_aaosFieldPaths[i],
                                                           oMap);
-        const char* pszLastComponent = m_aaosFieldPaths[i][(int)m_aaosFieldPaths[i].size()-1];
+        const char* pszLastComponent = m_aaosFieldPaths[i].back();
 
         const char* pszType = "string";
         const char* pszFormat = NULL;
@@ -1438,7 +1438,7 @@ CPLString OGRElasticLayer::BuildMap() {
         bool bAddGeoJSONType = false;
         if( m_abIsGeoPoint[i] &&
             aosPath.size() >= 2 &&
-            aosPath[(int)aosPath.size()-1] == "coordinates" )
+            aosPath.back() == "coordinates" )
         {
             bAddGeoJSONType = true;
             aosPath.resize( (int)aosPath.size() - 1 );
@@ -1447,7 +1447,7 @@ CPLString OGRElasticLayer::BuildMap() {
         json_object* poContainer = GetContainerForMapping(poMappingProperties,
                                                         aosPath,
                                                         oMap);
-        const char* pszLastComponent = aosPath[(int)aosPath.size()-1];
+        const char* pszLastComponent = aosPath.back();
 
         if( m_abIsGeoPoint[i] )
         {
@@ -1827,14 +1827,14 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 bool bAddGeoJSONType = false;
                 if( m_abIsGeoPoint[i] &&
                     aosPath.size() >= 2 &&
-                    aosPath[(int)aosPath.size()-1] == "coordinates" )
+                    aosPath.back() == "coordinates" )
                 {
                     bAddGeoJSONType = true;
                     aosPath.resize( (int)aosPath.size() - 1 );
                 }
 
                 json_object* poContainer = GetContainerForFeature(fieldObject, aosPath, oMap);
-                const char* pszLastComponent = aosPath[(int)aosPath.size()-1];
+                const char* pszLastComponent = aosPath.back();
 
                 if( m_abIsGeoPoint[i] )
                 {
@@ -1887,7 +1887,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
             }
 
             json_object* poContainer = GetContainerForFeature(fieldObject, m_aaosFieldPaths[i], oMap);
-            const char* pszLastComponent = m_aaosFieldPaths[i][(int)m_aaosFieldPaths[i].size()-1];
+            const char* pszLastComponent = m_aaosFieldPaths[i].back();
 
             switch (m_poFeatureDefn->GetFieldDefn(i)->GetType()) {
                 case OFTInteger:

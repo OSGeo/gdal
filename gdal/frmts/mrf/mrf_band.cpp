@@ -244,7 +244,7 @@ GDALMRFRasterBand::~GDALMRFRasterBand()
 {
     while( !overviews.empty() )
     {
-        delete overviews[overviews.size()-1];
+        delete overviews.back();
         overviews.pop_back();
     };
 }

@@ -1047,7 +1047,7 @@ int FileGDBTable::Open(const char* pszFilename,
             }
         }
 
-        nCountNullableFields += apoFields[apoFields.size()-1]->bNullable;
+        nCountNullableFields += apoFields.back()->bNullable;
     }
     nNullableFieldsSizeInBytes = BIT_ARRAY_SIZE_IN_BYTES(nCountNullableFields);
 

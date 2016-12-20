@@ -2793,7 +2793,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                 if( pszKey && strncmp(pszKey, osPrefix, osPrefix.size()) == 0 )
                 {
                     CPLString osKey = pszKey;
-                    if( !osKey.empty() && osKey[osKey.size()-1] == '/' )
+                    if( !osKey.empty() && osKey.back() == '/' )
                         osKey.resize(osKey.size()-1);
                     if( osKey.size() > osPrefix.size() )
                     {
@@ -4194,7 +4194,7 @@ CPLString VSIS3FSHandler::GetURLFromDirname( const CPLString& osDirname )
     }
     UpdateHandleFromMap(poS3HandleHelper);
     CPLString osBaseURL(poS3HandleHelper->GetURL());
-    if( !osBaseURL.empty() && osBaseURL[osBaseURL.size()-1] == '/' )
+    if( !osBaseURL.empty() && osBaseURL.back() == '/' )
         osBaseURL.resize(osBaseURL.size()-1);
     delete poS3HandleHelper;
 

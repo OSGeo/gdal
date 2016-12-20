@@ -1708,7 +1708,7 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
         if( oField.GetType() == OFTString )
         {
             CPLString osVal = pszDefault;
-            if( osVal[0] == '\'' && osVal[osVal.size()-1] == '\'' )
+            if( osVal[0] == '\'' && osVal.back() == '\'' )
             {
                 osVal = osVal.substr(1);
                 osVal.resize(osVal.size()-1);

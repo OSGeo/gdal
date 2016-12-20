@@ -1257,12 +1257,11 @@ int WCSDataset::ExtractGridInfo100()
         // we will default to the last - likely the most recent - entry.
 
         if( !aosTimePositions.empty()
-            && osDefaultTime == ""
+            && osDefaultTime.empty()
             && osServiceURL.ifind("time=") == std::string::npos
             && osCoverageExtra.ifind("time=") == std::string::npos )
         {
-            osDefaultTime = aosTimePositions[aosTimePositions.size()-1];
-
+            osDefaultTime = aosTimePositions.back();
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "DefaultTime",
                                          osDefaultTime );

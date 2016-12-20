@@ -1184,7 +1184,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
         if (aoPARPtrList[j] == NULL)
             continue;
         const xyPairListType& sFirstRing = *(aoPARPtrList[j]);
-        const xyPairType* psNext = &(sFirstRing[sFirstRing.size()-1]);
+        const xyPairType* psNext = &(sFirstRing.back());
 
         xyPairListType aoXY;
         for( int i = 0; i < (int)sFirstRing.size(); i++ )
@@ -1192,7 +1192,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
         aoPARPtrList[j] = NULL;
 
         int nIter = 1;
-        while(aoXY[aoXY.size()-1] != aoXY[0] && nIter < (int)aoPARPtrList.size())
+        while(aoXY.back() != aoXY[0] && nIter < (int)aoPARPtrList.size())
         {
             bool bFound = false;
             bool bReverseSecond = false;
@@ -1208,7 +1208,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
                         bReverseSecond = false;
                         break;
                     }
-                    else if (*psNext == sSecondRing[sSecondRing.size()-1])
+                    else if (*psNext == sSecondRing.back())
                     {
                         bFound = true;
                         bReverseSecond = true;
@@ -1231,7 +1231,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
                 {
                     for(i=1;i<(int)secondRing.size();i++)
                         aoXY.push_back(secondRing[i]);
-                    psNext = &secondRing[secondRing.size()-1];
+                    psNext = &secondRing.back();
                 }
                 else
                 {

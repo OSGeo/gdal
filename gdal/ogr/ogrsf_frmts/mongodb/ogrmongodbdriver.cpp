@@ -1415,7 +1415,7 @@ OGRErr OGRMongoDBLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
                 pszIndexType = CPLGetConfigOption("OGR_MONGODB_SPAT_INDEX_TYPE", "2dsphere");
             m_poDS->GetConn()->createIndex(m_osQualifiedCollection,
                                          BSON( oFieldDefn.GetNameRef() << pszIndexType ));
-            m_aosGeomIndexes[m_aosGeomIndexes.size()-1] = pszIndexType;
+            m_aosGeomIndexes.back() = pszIndexType;
         }
         catch( const DBException &e )
         {
@@ -1622,7 +1622,7 @@ void OGRMongoDBLayer::InsertInMap(IntOrMap* rootMap,
     intOrMap->bIsMap = FALSE;
     intOrMap->u.nField = nField;
     std::map< CPLString, IntOrMap* >* poPrevMap = aoMap[aosFieldPathPrev]->u.poMap;
-    const CPLString& osLastComponent(aosFieldPathFull[aosFieldPathFull.size() - 1]);
+    const CPLString& osLastComponent(aosFieldPathFull.back());
     CPLAssert( (*poPrevMap).find(osLastComponent) == (*poPrevMap).end() );
     (*(poPrevMap))[osLastComponent] = intOrMap;
 }

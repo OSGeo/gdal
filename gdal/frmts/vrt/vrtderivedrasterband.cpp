@@ -396,7 +396,7 @@ static bool LoadPythonAPI()
                                                         NULL, FALSE ));
                             osVersion = pszStr;
                             if( !osVersion.empty() &&
-                                osVersion[osVersion.size() - 1] == '\n' )
+                                osVersion.back() == '\n' )
                             {
                                 osVersion.resize(osVersion.size() - 1);
                             }
