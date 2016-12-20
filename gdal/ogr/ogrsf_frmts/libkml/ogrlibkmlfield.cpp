@@ -1120,7 +1120,7 @@ static void ogrkmlSetAltitudeMode( OGRFeature* poOgrFeat, int iField,
 /*                            TrimSpaces()                              */
 /************************************************************************/
 
-static const char* TrimSpaces( string& oText )
+static const char* TrimSpaces( CPLString& oText )
 {
     // SerializePretty() adds a new line before the data
     // ands trailing spaces. I believe this is wrong
@@ -1454,7 +1454,7 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
 
     if( poKmlFeature->has_snippet() )
     {
-        string oText = poKmlFeature->get_snippet()->get_text();
+        CPLString oText = poKmlFeature->get_snippet()->get_text();
 
         iField = poOgrFeat->GetFieldIndex( oFC.snippetfield );
 
@@ -1507,7 +1507,7 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
 
                 if( iField > -1 && poKmlSimpleData->has_text() )
                 {
-                    string oText = poKmlSimpleData->get_text();
+                    CPLString oText = poKmlSimpleData->get_text();
 
                     poOgrFeat->SetField( iField, TrimSpaces(oText) );
                 }
