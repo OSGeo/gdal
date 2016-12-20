@@ -76,11 +76,11 @@ static void CPLQuadTreeAddFeatureInternal(CPLQuadTree *hQuadTree,
                                           const CPLRectObj *pRect);
 
 /* -------------------------------------------------------------------- */
-/*      If the following is 0.5, psNodes will be split in half.  If it    */
-/*      is 0.6 then each apSubNode will contain 60% of the parent         */
-/*      psNode, with 20% representing overlap.  This can be help to       */
+/*      If the following is 0.5, psNodes will be split in half.  If it  */
+/*      is 0.6 then each apSubNode will contain 60% of the parent       */
+/*      psNode, with 20% representing overlap.  This can be help to     */
 /*      prevent small objects on a boundary from shifting too high      */
-/*      up the hQuadTree.                                                    */
+/*      up the hQuadTree.                                               */
 /* -------------------------------------------------------------------- */
 static const double DEFAULT_SPLIT_RATIO = 0.55;
 
@@ -459,7 +459,7 @@ static void CPLQuadTreeNodeAddFeatureAlg1( CPLQuadTree* hQuadTree,
     else
     {
     /* -------------------------------------------------------------------- */
-    /*      If there are apSubNodes, then consider whether this object        */
+    /*      If there are apSubNodes, then consider whether this object      */
     /*      will fit in them.                                               */
     /* -------------------------------------------------------------------- */
         for( int i = 0; i < psNode->nNumSubNodes; i++ )
@@ -515,7 +515,7 @@ static void CPLQuadTreeNodeAddFeatureAlg2( CPLQuadTree *hQuadTree,
                                            int nMaxDepth)
 {
   /* -------------------------------------------------------------------- */
-  /*      If there are apSubNodes, then consider whether this object        */
+  /*      If there are apSubNodes, then consider whether this object      */
   /*      will fit in them.                                               */
   /* -------------------------------------------------------------------- */
     if( nMaxDepth > 1 && psNode->nNumSubNodes > 0 )
@@ -532,8 +532,8 @@ static void CPLQuadTreeNodeAddFeatureAlg2( CPLQuadTree *hQuadTree,
     }
 
   /* -------------------------------------------------------------------- */
-  /*      Otherwise, consider creating four apSubNodes if could fit into    */
-  /*      them, and adding to the appropriate apSubNode.                    */
+  /*      Otherwise, consider creating four apSubNodes if could fit into  */
+  /*      them, and adding to the appropriate apSubNode.                  */
   /* -------------------------------------------------------------------- */
     else if( nMaxDepth > 1 && psNode->nNumSubNodes == 0 )
     {
@@ -567,7 +567,7 @@ static void CPLQuadTreeNodeAddFeatureAlg2( CPLQuadTree *hQuadTree,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If none of that worked, just add it to this psNodes list.         */
+/*      If none of that worked, just add it to this psNodes list.       */
 /* -------------------------------------------------------------------- */
     psNode->nFeatures++;
 
