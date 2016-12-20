@@ -93,7 +93,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
             if( papszKeyedValues[iKey][0] == 'J' )
             {
                 CPLString osArg = papszKeyedValues[iKey] + 2;
-                if( osArg[0] == '"' && osArg[osArg.length()-1] == '"' )
+                if( osArg[0] == '"' && osArg.back() == '"' )
                 {
                     osArg = osArg.substr(1,osArg.length()-2);
                     char *pszArg = CPLUnescapeString(osArg, NULL,
