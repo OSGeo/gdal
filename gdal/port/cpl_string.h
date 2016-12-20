@@ -394,6 +394,10 @@ public:
             static_cast<std::string::size_type>(i));
     }
 
+    /** Return last character (undefined behaviour if string is empty) */
+    // Note: this is standard in C++11
+    const char& back() const { return operator[](size()-1); }
+    
     /** Clear the string */
     void Clear() { resize(0); }
 
