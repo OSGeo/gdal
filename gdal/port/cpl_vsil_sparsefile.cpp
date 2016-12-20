@@ -416,6 +416,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
                                                   oRegion.osFilename, NULL );
         }
 
+        // TODO(schwehr): Symbolic constant and an explanation for 32.
         oRegion.nDstOffset =
             CPLScanUIntBig( CPLGetXMLValue(psRegion, "DestinationOffset", "0"),
                             32 );
