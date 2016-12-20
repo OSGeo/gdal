@@ -1061,7 +1061,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
     if (hDS == NULL)
         goto end;
 
-    if (strlen(osTableName) == 0)
+    if (osTableName.empty())
     {
         int nCountSubdataset = 0;
         int nLayers = OGR_DS_GetLayerCount(hDS);

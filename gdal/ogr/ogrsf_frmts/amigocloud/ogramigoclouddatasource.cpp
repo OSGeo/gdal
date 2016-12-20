@@ -126,7 +126,7 @@ CPLString OGRAMIGOCLOUDGetOptionValue(const char* pszFilename,
     if (!pszOptionValue)
         return "";
 
-    CPLString osOptionValue(pszOptionValue + strlen(osOptionName));
+    CPLString osOptionValue(pszOptionValue + osOptionName.size());
     const char* pszSpace = strchr(osOptionValue.c_str(), ' ');
     if (pszSpace)
         osOptionValue.resize(pszSpace - osOptionValue.c_str());

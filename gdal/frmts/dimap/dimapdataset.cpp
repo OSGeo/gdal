@@ -217,7 +217,7 @@ char **DIMAPDataset::GetMetadata( const char *pszDomain )
 const char *DIMAPDataset::GetProjectionRef()
 
 {
-    if( strlen(osProjection) > 0 )
+    if( !osProjection.empty() )
         return osProjection;
 
     return GDALPamDataset::GetProjectionRef();

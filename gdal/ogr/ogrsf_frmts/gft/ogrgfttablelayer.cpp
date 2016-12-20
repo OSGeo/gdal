@@ -1292,9 +1292,9 @@ void OGRGFTTableLayer::BuildWhere()
             std::min(180.0, sEnvelope.MaxX + 1.0e-11));
     }
 
-    if( strlen(osQuery) > 0 )
+    if( !osQuery.empty() )
     {
-        if( strlen(osWHERE) == 0 )
+        if( osWHERE.empty() )
             osWHERE = "WHERE ";
         else
             osWHERE += " AND ";

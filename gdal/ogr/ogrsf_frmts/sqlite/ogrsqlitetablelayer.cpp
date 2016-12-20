@@ -1060,7 +1060,7 @@ GIntBig OGRSQLiteTableLayer::GetFeatureCount( int bForce )
     const char *pszSQL = NULL;
 
     if (m_poFilterGeom != NULL && CheckSpatialIndexTable(m_iGeomFieldFilter) &&
-        strlen(osQuery) == 0)
+        osQuery.empty())
     {
         OGREnvelope  sEnvelope;
 

@@ -834,9 +834,9 @@ void OGRPGTableLayer::BuildWhere()
                        szBox3D_1, szBox3D_2, poGeomFieldDefn->nSRSId );
     }
 
-    if( strlen(osQuery) > 0 )
+    if( !osQuery.empty() )
     {
-        if( strlen(osWHERE) == 0 )
+        if( osWHERE.empty() )
         {
             osWHERE.Printf( "WHERE %s ", osQuery.c_str()  );
         }
@@ -863,10 +863,10 @@ void OGRPGTableLayer::BuildFullQueryStatement()
         pszQueryStatement = NULL;
     }
     pszQueryStatement = (char *)
-        CPLMalloc(strlen(osFields)+strlen(osWHERE)
+        CPLMalloc(osFields.size()+osWHERE.size()
                   +strlen(pszSqlTableName) + 40);
     snprintf( pszQueryStatement,
-              strlen(osFields)+strlen(osWHERE)
+              osFields.size()+osWHERE.size()
                   +strlen(pszSqlTableName) + 40,
              "SELECT %s FROM %s %s",
              osFields.c_str(), pszSqlTableName, osWHERE.c_str() );
@@ -1966,7 +1966,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     OGRErr result = OGRERR_NONE;
 
     int copyResult = PQputCopyData(hPGConn, osCommand.c_str(),
-                                   static_cast<int>(strlen(osCommand.c_str())));
+                                   static_cast<int>(osCommand.size()));
 #ifdef DEBUG_VERBOSE
     CPLDebug("PG", "PQputCopyData(%s)", osCommand.c_str());
 #endif
@@ -2862,7 +2862,7 @@ OGRErr OGRPGTableLayer::StartCopy()
 
     CPLString osFields = BuildCopyFields();
 
-    size_t size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
+    size_t size = osFields.size() +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
 
     snprintf( pszCommand, size,

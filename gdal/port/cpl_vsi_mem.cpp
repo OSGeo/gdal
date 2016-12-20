@@ -723,9 +723,9 @@ char **VSIMemFilesystemHandler::ReadDirEx( const char *pszPath,
     NormalizePath( osPath );
 
     char **papszDir = NULL;
-    size_t nPathLen = strlen(osPath);
+    size_t nPathLen = osPath.size();
 
-    if( nPathLen > 0 && osPath[nPathLen-1] == '/' )
+    if( nPathLen > 0 && osPath.back() == '/' )
         nPathLen--;
 
     // In case of really big number of files in the directory, CSLAddString

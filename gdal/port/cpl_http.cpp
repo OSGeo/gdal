@@ -920,7 +920,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
         return FALSE;
     }
 
-    pszNext += strlen(osBoundary);
+    pszNext += osBoundary.size();
     while( *pszNext != '\n' && *pszNext != '\r' && *pszNext != '\0' )
         pszNext++;
     if( *pszNext == '\r' )
@@ -990,7 +990,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 
         while( nBytesAvail > 0
                && (*pszNext != '-'
-                   || strncmp(pszNext, osBoundary, strlen(osBoundary)) != 0) )
+                   || strncmp(pszNext, osBoundary, osBoundary.size()) != 0) )
         {
             pszNext++;
             nBytesAvail--;
@@ -1007,7 +1007,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
         psPart->nDataLen =
             static_cast<int>(
                 pszNext - reinterpret_cast<char *>(psPart->pabyData));
-        pszNext += strlen(osBoundary);
+        pszNext += osBoundary.size();
 
         if( STARTS_WITH(pszNext, "--") )
         {

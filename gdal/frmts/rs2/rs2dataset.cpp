@@ -809,7 +809,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     char *pszSigma0LUT = NULL;
 
     char *pszPath = CPLStrdup(CPLGetPath( osMDFilename ));
-    const int nFLen = static_cast<int>(strlen(osMDFilename));
+    const int nFLen = static_cast<int>(osMDFilename.size());
 
     CPLXMLNode *psNode = psImageAttributes->psChild;
     for( ;

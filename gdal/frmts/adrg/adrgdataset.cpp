@@ -1632,7 +1632,7 @@ GDALDataset *ADRGDataset::Create( const char* pszFilename,
     }
 
     CPLString osBaseFileName(CPLGetBasename(pszFilename));
-    if( strlen(osBaseFileName) != 8 ||
+    if( osBaseFileName.size() != 8 ||
         osBaseFileName[6] != '0' ||
         osBaseFileName[7] != '1' )
     {

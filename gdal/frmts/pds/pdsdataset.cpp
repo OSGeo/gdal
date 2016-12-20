@@ -260,7 +260,7 @@ CPLErr PDSDataset::IRasterIO( GDALRWFlag eRWFlag,
 const char *PDSDataset::GetProjectionRef()
 
 {
-    if( strlen(osProjection) > 0 )
+    if( !osProjection.empty() )
         return osProjection;
 
     return GDALPamDataset::GetProjectionRef();

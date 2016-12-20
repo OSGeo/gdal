@@ -425,7 +425,7 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
         bRewriteGeogCitation = true;
     }
 
-    if( osCitation[strlen(osCitation) - 1] != '|' )
+    if( osCitation.back() != '|' )
         osCitation += "|";
 
     if( bRewriteGeogCitation )

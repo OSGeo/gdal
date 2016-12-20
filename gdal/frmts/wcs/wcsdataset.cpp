@@ -618,8 +618,8 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
-    if( (strlen(osBandIdentifier) && poTileDS->GetRasterCount() != nBandCount)
-        || (!strlen(osBandIdentifier) && poTileDS->GetRasterCount() !=
+    if( (!osBandIdentifier.empty() && poTileDS->GetRasterCount() != nBandCount)
+        || (osBandIdentifier.empty() && poTileDS->GetRasterCount() !=
             GetRasterCount() ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -639,7 +639,7 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
     {
         GDALRasterBand *poTileBand = NULL;
 
-        if( strlen(osBandIdentifier) )
+        if( !osBandIdentifier.empty() )
             poTileBand = poTileDS->GetRasterBand( iBand + 1 );
         else
             poTileBand = poTileDS->GetRasterBand( panBandMap[iBand] );
@@ -695,7 +695,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
     CPLString osBandList;
     int       bSelectingBands = FALSE;
 
-    if( strlen(osBandIdentifier) && nBandCount > 0 && panBandList != NULL )
+    if( !osBandIdentifier.empty() && nBandCount > 0 && panBandList != NULL )
     {
         int iBand;
 
@@ -1147,7 +1147,7 @@ int WCSDataset::ExtractGridInfo100()
              papszFormatList != NULL && papszFormatList[iFormat] != NULL;
              iFormat++ )
         {
-            if( strlen(osPreferredFormat) == 0 )
+            if( osPreferredFormat.empty() )
                 osPreferredFormat = papszFormatList[iFormat];
 
             if( strstr(papszFormatList[iFormat],"tiff") != NULL
@@ -1161,7 +1161,7 @@ int WCSDataset::ExtractGridInfo100()
 
         CSLDestroy( papszFormatList );
 
-        if( strlen(osPreferredFormat) > 0 )
+        if( !osPreferredFormat.empty() )
         {
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "PreferredFormat",
@@ -1195,7 +1195,7 @@ int WCSDataset::ExtractGridInfo100()
       "CoverageOffering.rangeSet.RangeSet.axisDescription.AxisDescription" );
     CPLXMLNode *psValues;
 
-    if( strlen(osBandIdentifier) == 0
+    if( osBandIdentifier.empty()
         && psAD != NULL
         && (EQUAL(CPLGetXMLValue(psAD,"name",""),"Band")
             || EQUAL(CPLGetXMLValue(psAD,"name",""),"Bands"))
@@ -1221,7 +1221,7 @@ int WCSDataset::ExtractGridInfo100()
             }
         }
 
-        if( strlen(osBandIdentifier) )
+        if( !osBandIdentifier.empty() )
         {
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "BandIdentifier",
@@ -1455,7 +1455,7 @@ int WCSDataset::ExtractGridInfo()
 /* -------------------------------------------------------------------- */
     osCRS = CPLGetXMLValue( psGCRS, "GridBaseCRS", "" );
 
-    if( strlen(osCRS) == 0 )
+    if( osCRS.empty() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to find GridCRS.GridBaseCRS" );
@@ -1575,7 +1575,7 @@ int WCSDataset::ExtractGridInfo()
                 && psNode->psChild
                 && psNode->psChild->eType == CXT_Text )
             {
-                if( strlen(osPreferredFormat) == 0 )
+                if( osPreferredFormat.empty() )
                     osPreferredFormat = psNode->psChild->pszValue;
 
                 if( strstr(psNode->psChild->pszValue,"tiff") != NULL
@@ -1588,7 +1588,7 @@ int WCSDataset::ExtractGridInfo()
             }
         }
 
-        if( strlen(osPreferredFormat) > 0 )
+        if( !osPreferredFormat.empty() )
         {
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "PreferredFormat",
@@ -1621,7 +1621,7 @@ int WCSDataset::ExtractGridInfo()
         CPLString osFieldName =
             CPLGetXMLValue( psCO, "Range.Field.Identifier", "" );
 
-        if( strlen(osFieldName) > 0 )
+        if( !osFieldName.empty() )
         {
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "FieldName",
@@ -1669,7 +1669,7 @@ int WCSDataset::ExtractGridInfo()
             }
         }
 
-        if( strlen(osBandIdentifier) )
+        if( !osBandIdentifier.empty() )
         {
             bServiceDirty = TRUE;
             if( CPLGetXMLValue(psService,"BandIdentifier",NULL) == NULL )
@@ -1878,7 +1878,7 @@ int WCSDataset::EstablishRasterDetails()
 void WCSDataset::FlushMemoryResult()
 
 {
-    if( strlen(osResultFilename) > 0 )
+    if( !osResultFilename.empty() )
     {
         VSIUnlink( osResultFilename );
         osResultFilename = "";

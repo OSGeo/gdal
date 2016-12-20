@@ -685,7 +685,7 @@ OGRErr OGRPGDumpLayer::StartCopy( int bSetFID )
 
     CPLString osFields = BuildCopyFields(bSetFID);
 
-    size_t size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
+    size_t size = osFields.size() +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
 
     snprintf( pszCommand, size,

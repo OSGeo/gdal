@@ -1711,7 +1711,7 @@ static OGRErr LoadDODDatum( OGRSpatialReference *poSRS,
 
     CPLString osDName = CSVGetField( pszGTDatum, "CODE", szExpanded,
                                      CC_ApproxString, "NAME" );
-    if( strlen(osDName) == 0 )
+    if( osDName.empty() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to find datum %s/%s in gt_datum.csv.",
@@ -1735,7 +1735,7 @@ static OGRErr LoadDODDatum( OGRSpatialReference *poSRS,
 
     CPLString osEName = CSVGetField( pszGTEllipse, "CODE", osEllipseCode,
                                      CC_ApproxString, "NAME" );
-    if( strlen(osEName) == 0 )
+    if( osEName.empty() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to find datum %s in gt_ellips.csv.",

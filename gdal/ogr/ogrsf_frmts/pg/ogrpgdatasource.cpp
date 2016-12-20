@@ -1576,7 +1576,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 
     CPLString osSQLLayerName;
     if (pszSchemaName == NULL ||
-        ( strlen(osCurrentSchema) > 0 &&
+        ( !osCurrentSchema.empty() &&
           EQUAL(pszSchemaName, osCurrentSchema.c_str() ) ) )
         osSQLLayerName = pszTableName;
     else

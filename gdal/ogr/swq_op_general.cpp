@@ -1387,7 +1387,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
             if( node->nSubExprCount > 2 )
             {
                 int nWidth = static_cast<int>(sub_node_values[2]->int_value);
-                if( nWidth > 0 && static_cast<int>(strlen(osRet)) > nWidth )
+                if( nWidth > 0 && static_cast<int>(osRet.size()) > nWidth )
                     osRet.resize(nWidth);
             }
 

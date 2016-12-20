@@ -945,7 +945,7 @@ static int getEPSGObjectCodeValue( CPLXMLNode *psNode,
         || !EQUAL(osObjectType, pszEPSGObjectType) )
         return nDefault;
 
-    if( strlen(osValue) > 0 )
+    if( !osValue.empty() )
         return atoi(osValue);
 
     const char *pszValue = CPLGetXMLValue( psNode, "", NULL);

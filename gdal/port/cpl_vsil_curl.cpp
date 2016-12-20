@@ -972,8 +972,8 @@ retry:
         // Try to guess if this is a directory. Generally if this is a
         // directory, curl will retry with an URL with slash added.
         if( pszEffectiveURL != NULL &&
-            strncmp(osURL, pszEffectiveURL, strlen(osURL)) == 0 &&
-            pszEffectiveURL[strlen(osURL)] == '/' )
+            strncmp(osURL, pszEffectiveURL, osURL.size()) == 0 &&
+            pszEffectiveURL[osURL.size()] == '/' )
         {
             eExists = EXIST_YES;
             fileSize = 0;
@@ -1669,7 +1669,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
         goto end;
     }
 
-    pszNext += strlen(osBoundary);
+    pszNext += osBoundary.size();
     while( *pszNext != '\n' && *pszNext != '\r' && *pszNext != '\0' )
         pszNext++;
     if( *pszNext == '\r' )
@@ -1767,7 +1767,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
 
         while( nBytesAvail > 0
                && (*pszNext != '-'
-                   || strncmp(pszNext, osBoundary, strlen(osBoundary)) != 0) )
+                   || strncmp(pszNext, osBoundary, osBoundary.size()) != 0) )
         {
             pszNext++;
             nBytesAvail--;
@@ -1781,7 +1781,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
             goto end;
         }
 
-        pszNext += strlen(osBoundary);
+        pszNext += osBoundary.size();
         if( STARTS_WITH(pszNext, "--") )
         {
             // End of multipart.
@@ -3254,7 +3254,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename,
 
     // Does it look like a FTP directory?
     if( STARTS_WITH(osFilename, "/vsicurl/ftp") &&
-        pszFilename[strlen(osFilename) - 1] == '/' && !bSkipReadDir )
+        osFilename.back() == '/' && !bSkipReadDir )
     {
         char** papszFileList = ReadDirEx(osFilename, 0);
         if( papszFileList )
@@ -3354,8 +3354,8 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
                                                   bool* pbGotFileList )
 {
     CPLString osDirname(pszDirname);
-    while( osDirname[strlen(osDirname) - 1] == '/' )
-        osDirname.erase(strlen(osDirname) - 1);
+    while( osDirname.back() == '/' )
+        osDirname.erase(osDirname.size() - 1);
 
     const char* pszUpDir = strstr(osDirname, "/..");
     if( pszUpDir != NULL )

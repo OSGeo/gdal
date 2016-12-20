@@ -873,7 +873,7 @@ char **SRPDataset::GetFileList()
 
         papszFileList = CSLAddString(papszFileList, osIMGFileName.c_str());
 
-        if( strlen(osQALFileName) > 0 )
+        if( !osQALFileName.empty() )
             papszFileList = CSLAddString( papszFileList, osQALFileName );
     }
     return papszFileList;

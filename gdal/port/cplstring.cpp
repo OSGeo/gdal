@@ -406,7 +406,7 @@ CPLString CPLURLGetValue(const char* pszURL, const char* pszKey)
     if( nKeyPos != std::string::npos && nKeyPos > 0 &&
         (pszURL[nKeyPos-1] == '?' || pszURL[nKeyPos-1] == '&') )
     {
-        CPLString osValue(pszURL + nKeyPos + strlen(osKey));
+        CPLString osValue(pszURL + nKeyPos + osKey.size());
         const char* pszValue = osValue.c_str();
         const char* pszSep = strchr(pszValue, '&');
         if( pszSep )

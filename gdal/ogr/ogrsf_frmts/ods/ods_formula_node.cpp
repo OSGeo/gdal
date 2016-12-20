@@ -1482,7 +1482,7 @@ bool ods_formula_node::EvaluateLEN( IODSCellEvaluator* poEvaluator )
 
     eNodeType = SNT_CONSTANT;
     field_type = ODS_FIELD_TYPE_INTEGER;
-    int_value = static_cast<int>(strlen(osVal.c_str())); // FIXME : UTF8 support
+    int_value = static_cast<int>(osVal.size()); // FIXME : UTF8 support
 
     FreeSubExpr();
 
