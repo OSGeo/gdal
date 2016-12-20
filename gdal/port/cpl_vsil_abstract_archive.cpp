@@ -417,7 +417,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
             // Remove trailing slash.
             if( !osFileInArchive.empty() )
             {
-                const char lastC = osFileInArchive[osFileInArchive.size() - 1];
+                const char lastC = osFileInArchive.back();
                 if( IsEitherSlash(lastC) )
                     osFileInArchive.resize(osFileInArchive.size() - 1);
             }
@@ -519,8 +519,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
                 // Remove trailing slash.
                 if( !osFileInArchive.empty() )
                 {
-                    const char lastC =
-                        osFileInArchive[osFileInArchive.size() - 1];
+                    const char lastC = osFileInArchive.back();
                     if( IsEitherSlash(lastC) )
                         osFileInArchive.resize(osFileInArchive.size() - 1);
                 }
@@ -559,7 +558,7 @@ VSIArchiveFilesystemHandler::OpenArchiveFile( const char* archiveFilename,
 
         // Skip optional leading subdir.
         const CPLString osFileName = poReader->GetFileName();
-        if( IsEitherSlash(osFileName[osFileName.size() - 1]) )
+        if( IsEitherSlash(osFileName.back()) )
         {
             if( poReader->GotoNextFile() == FALSE )
             {
@@ -658,7 +657,7 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename,
         {
             // Skip optional leading subdir.
             const CPLString osFileName = poReader->GetFileName();
-            if( IsEitherSlash(osFileName[osFileName.size() - 1]) )
+            if( IsEitherSlash(osFileName.back()) )
             {
                 if( poReader->GotoNextFile() == FALSE )
                 {

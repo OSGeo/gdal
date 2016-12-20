@@ -436,7 +436,7 @@ void KMLNode::addContent(std::string const& text)
 
 void KMLNode::appendContent(std::string const& text)
 {
-    std::string& tmp = (*pvsContent_)[pvsContent_->size() - 1];
+    std::string& tmp = pvsContent_->back();
     tmp += text;
 }
 

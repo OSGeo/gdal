@@ -3439,7 +3439,7 @@ static OGRGeometry* TransformBeforeAntimeridianToWGS84(
     if( bHasLines )
     {
         double x = 180.0 - EPS;
-        double y = aoPoints[aoPoints.size()-1].y+EPS;
+        double y = aoPoints.back().y+EPS;
         poRevCT->Transform(1, &x, &y);
         poLR1->addPoint( x, y );
     }
@@ -3468,7 +3468,7 @@ static OGRGeometry* TransformBeforeAntimeridianToWGS84(
     if( bHasLines )
     {
         double x = -180.0 + EPS;
-        double y = aoPoints[aoPoints.size()-1].y+EPS;
+        double y = aoPoints.back().y+EPS;
         poRevCT->Transform(1, &x, &y);
         poLR2->addPoint( x, y );
     }

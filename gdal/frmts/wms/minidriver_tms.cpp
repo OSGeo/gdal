@@ -44,7 +44,7 @@ CPLErr WMSMiniDriver_TMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
         if (base_url[0] != '\0') {
             m_base_url = base_url;
             if (m_base_url.find("${") == std::string::npos) {
-                if (m_base_url[m_base_url.size()-1] != '/') {
+                if (m_base_url.back() != '/') {
                     m_base_url += "/";
                 }
                 m_base_url += "${version}/${layer}/${z}/${x}/${y}.${format}";

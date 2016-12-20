@@ -1116,7 +1116,7 @@ static int GetFieldType(const char* pszArg, int* pnSubFieldType)
              {
                  *pnSubFieldType = -1;
                  CPLString osArgSubType = pszOpenParenthesis + 1;
-                 if( !osArgSubType.empty() && osArgSubType[osArgSubType.size()-1] == ')' )
+                 if( !osArgSubType.empty() && osArgSubType.back() == ')' )
                      osArgSubType.resize(osArgSubType.size()-1);
                  for( int iSubType = 0; iSubType <= (int) OFSTMaxSubType; iSubType++ )
                  {

@@ -2860,7 +2860,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             osPCSCode = (pszPCSCode) ? pszPCSCode : "";
             if( !osPCSCode.empty() )
             {
-                int nZone      = osPCSCode[osPCSCode.size() - 1] - '0';
+                int nZone      = osPCSCode.back() - '0';
                 int nSPCode    = atoi_nz( osPCSCode );
 
                 if( nZone == 0 )

@@ -761,7 +761,7 @@ try_again:
 
             apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
             if( !ParseGeometryField(psChild, psLTree,
-                                    apoGeomFieldProps[apoGeomFieldProps.size()-1] ) )
+                                    apoGeomFieldProps.back() ) )
             {
                 goto error;
             }

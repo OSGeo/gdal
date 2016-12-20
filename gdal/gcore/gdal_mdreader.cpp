@@ -467,7 +467,7 @@ CPLString CPLStrip(const CPLString& sString, const char cChar)
         dCopyCount--;
     }
 
-    if (sString[sString.size() - 1] == cChar)
+    if (sString.back() == cChar)
         dCopyCount--;
 
     if(dCopyCount == 0)

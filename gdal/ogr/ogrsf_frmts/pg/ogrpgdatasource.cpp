@@ -375,7 +375,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         const char* pszVal = CSLFetchNameValue(papszOpenOptions, apszOpenOptions[i]);
         if( pszVal )
         {
-            if( osConnectionName[osConnectionName.size()-1] != ':' )
+            if( osConnectionName.back() != ':' )
                 osConnectionName += " ";
             osConnectionName += apszOpenOptions[i];
             osConnectionName += "=";

@@ -455,8 +455,8 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
         const char* pszNext = strchr(pszURL + nKeyPos, '&');
         if( pszNext )
         {
-            if( osNewURL[osNewURL.size()-1] == '&'
-                || osNewURL[osNewURL.size()-1] == '?' )
+            if( osNewURL.back() == '&'
+                || osNewURL.back() == '?' )
                 osNewURL += pszNext + 1;
             else
                 osNewURL += pszNext;
@@ -467,7 +467,7 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
     {
         if( pszValue )
         {
-            if( osURL[osURL.size()-1] != '&' && osURL[osURL.size()-1] != '?' )
+            if( osURL.back() != '&' && osURL.back() != '?' )
                 osURL += '&';
             osURL += osKey;
             osURL += pszValue;

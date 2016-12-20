@@ -2222,7 +2222,7 @@ int VSIZipFilesystemHandler::Mkdir( const char *pszDirname,
                                     long /* nMode */ )
 {
     CPLString osDirname = pszDirname;
-    if( !osDirname.empty() && osDirname[osDirname.size() - 1] != '/' )
+    if( !osDirname.empty() && osDirname.back() != '/' )
         osDirname += "/";
     VSIVirtualHandle* poZIPHandle = OpenForWrite(osDirname, "wb");
     if( poZIPHandle == NULL )

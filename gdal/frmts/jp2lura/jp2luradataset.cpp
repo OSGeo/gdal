@@ -1238,7 +1238,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                 bUseXLBoxes =
                     CSLFetchBoolean(papszOptions, "JP2C_XLBOX", FALSE) ||
                     (GIntBig)nXSize * nYSize * nBands * nDataTypeSize /
-                                    dfRates[adfRates.size() - 1] > 4e9;*/
+                                    dfRates.back() > 4e9;*/
             GUInt32 nLBox = (bUseXLBoxes) ? 1 : 0;
             CPL_MSBPTR32(&nLBox);
             VSIFWriteL(&nLBox, 1, 4, fp);

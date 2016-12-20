@@ -801,7 +801,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     /** if keyword not found leave as "M" or "MSB" **/
 
     CPLString osST = GetKeyword( osPrefix+"IMAGE.SAMPLE_TYPE" );
-    if( osST.size() >= 2 && osST[0] == '"' && osST[osST.size()-1] == '"' )
+    if( osST.size() >= 2 && osST[0] == '"' && osST.back() == '"' )
         osST = osST.substr( 1, osST.size() - 2 );
 
     char chByteOrder = 'M';  //default to MSB
@@ -1361,8 +1361,8 @@ void PDSDataset::CleanString( CPLString &osInput )
 
 {
    if(  ( osInput.size() < 2 ) ||
-        ((osInput.at(0) != '"'   || osInput.at(osInput.size()-1) != '"' ) &&
-        ( osInput.at(0) != '\'' || osInput.at(osInput.size()-1) != '\'')) )
+        ((osInput.at(0) != '"'   || osInput.back() != '"' ) &&
+        ( osInput.at(0) != '\'' || osInput.back() != '\'')) )
         return;
 
     char *pszWrk = CPLStrdup(osInput.c_str() + 1);

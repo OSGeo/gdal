@@ -218,7 +218,7 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
         osURL = pszFilename;
     else
         osURL = pszFilename + 8;
-    if (!osURL.empty() && osURL[osURL.size() - 1] == '/')
+    if (!osURL.empty() && osURL.back() == '/')
         osURL.resize(osURL.size() - 1);
 
     const char* pszUserPwd = CPLGetConfigOption("COUCHDB_USERPWD", NULL);

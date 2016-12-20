@@ -1056,7 +1056,7 @@ void OGRPLScenesV1Layer::ResetReading()
 CPLString OGRPLScenesV1Layer::BuildRequestURL()
 {
     const CPLString& osFilter = m_poDS->GetFilter();
-    if( !osFilter.empty() && osFilter[0] == '{' && osFilter[osFilter.size()-1] == '}' )
+    if( !osFilter.empty() && osFilter[0] == '{' && osFilter.back() == '}' )
     {
         // Quick search
         return m_poDS->GetBaseURL() + GetName() + "/quick-search";

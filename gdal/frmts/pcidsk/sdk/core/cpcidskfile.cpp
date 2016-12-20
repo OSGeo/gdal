@@ -786,8 +786,8 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
 
     edb_file_list.push_back( new_file );
 
-    *file_p = edb_file_list[edb_file_list.size()-1].file;
-    *io_mutex_p  = edb_file_list[edb_file_list.size()-1].io_mutex;
+    *file_p = edb_file_list.back().file;
+    *io_mutex_p  = edb_file_list.back().io_mutex;
 
     return new_file.writable;
 }
@@ -856,8 +856,8 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
 
     file_list.push_back( new_file );
 
-    *io_handle_pp = &(file_list[file_list.size()-1].io_handle);
-    *io_mutex_pp  = &(file_list[file_list.size()-1].io_mutex);
+    *io_handle_pp = &(file_list.back().io_handle);
+    *io_mutex_pp  = &(file_list.back().io_mutex);
 }
 
 /************************************************************************/

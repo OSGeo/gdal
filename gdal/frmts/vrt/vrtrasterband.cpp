@@ -484,8 +484,8 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         const int nSrcBand = atoi(CPLGetXMLValue( psNode, "SourceBand", "1" ) );
 
         m_apoOverviews.resize( m_apoOverviews.size() + 1 );
-        m_apoOverviews[m_apoOverviews.size()-1].osFilename = pszSrcDSName;
-        m_apoOverviews[m_apoOverviews.size()-1].nBand = nSrcBand;
+        m_apoOverviews.back().osFilename = pszSrcDSName;
+        m_apoOverviews.back().nBand = nSrcBand;
 
         CPLFree( pszSrcDSName );
     }

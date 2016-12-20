@@ -647,7 +647,7 @@ OGRErr GMLHandler::startElementGeometry(const char *pszName, int nLenName, void*
     memcpy(psCurNode->pszValue, pszName, nLenName+1);
 
     /* Attach element as the last child of its parent */
-    NodeLastChild& sNodeLastChild = apsXMLNode[apsXMLNode.size()-1];
+    NodeLastChild& sNodeLastChild = apsXMLNode.back();
     CPLXMLNode* psLastChildParent = sNodeLastChild.psLastChild;
 
     if (psLastChildParent == NULL)
@@ -1431,7 +1431,7 @@ OGRErr GMLHandler::endElementGeometry()
         psNode->eType = CXT_Text;
         psNode->pszValue = m_pszGeometry;
 
-        NodeLastChild& sNodeLastChild = apsXMLNode[apsXMLNode.size()-1];
+        NodeLastChild& sNodeLastChild = apsXMLNode.back();
         CPLXMLNode* psLastChildParent = sNodeLastChild.psLastChild;
         if (psLastChildParent == NULL)
         {
@@ -1450,7 +1450,7 @@ OGRErr GMLHandler::endElementGeometry()
 
     if( m_nDepth == m_nGeometryDepth )
     {
-        CPLXMLNode* psInterestNode = apsXMLNode[apsXMLNode.size()-1].psNode;
+        CPLXMLNode* psInterestNode = apsXMLNode.back().psNode;
 
         /*char* pszXML = CPLSerializeXMLTree(psInterestNode);
         CPLDebug("GML", "geometry = %s", pszXML);
