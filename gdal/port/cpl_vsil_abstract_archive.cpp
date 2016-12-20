@@ -175,18 +175,19 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive(
 
         char* pszStrippedFileName = CPLStrdup(fileName);
         char* pszIter = NULL;
-        for( pszIter = pszStrippedFileName;*pszIter;pszIter++ )
+        for( pszIter = pszStrippedFileName; *pszIter; pszIter++ )
         {
             if( *pszIter == '\\' )
                 *pszIter = '/';
         }
 
+        const size_t nLen = strlen(fileName);
         const bool bIsDir =
-            strlen(fileName) > 0 && fileName[strlen(fileName)-1] == '/';
+            nLen > 0 && fileName[nLen-1] == '/';
         if( bIsDir )
         {
             // Remove trailing slash.
-            pszStrippedFileName[strlen(fileName)-1] = 0;
+            pszStrippedFileName[nLen-1] = '\0';
         }
 
         if( oSet.find(pszStrippedFileName) == oSet.end() )
@@ -336,29 +337,30 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
                                                   CPLString &osFileInArchive,
                                                   int bCheckMainFileExists )
 {
+    // TODO(schwehr): Cleanup redundant calls to GetPrefix and strlen.
     if( strcmp(pszFilename, GetPrefix()) == 0 )
         return NULL;
 
     int i = 0;
 
     // Detect extended syntax: /vsiXXX/{archive_filename}/file_in_archive.
-    if( pszFilename[strlen(GetPrefix())+ 1] == '{' )
+    if( pszFilename[strlen(GetPrefix()) + 1] == '{' )
     {
         pszFilename += strlen(GetPrefix()) + 1;
-        int nCountCurles = 0;
+        int nCountCurlies = 0;
         while( pszFilename[i] )
         {
             if( pszFilename[i] == '{' )
-                nCountCurles++;
+                nCountCurlies++;
             else if( pszFilename[i] == '}' )
             {
-                nCountCurles--;
-                if( nCountCurles == 0 )
+                nCountCurlies--;
+                if( nCountCurlies == 0 )
                     break;
             }
             i++;
         }
-        if( nCountCurles > 0 )
+        if( nCountCurlies > 0 )
             return NULL;
         char* archiveFilename = CPLStrdup(pszFilename + 1);
         archiveFilename[i - 1] = 0;
@@ -412,9 +414,9 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
             // Remove trailing slash.
             if( !osFileInArchive.empty() )
             {
-                char lastC = osFileInArchive[strlen(osFileInArchive) - 1];
+                const char lastC = osFileInArchive[osFileInArchive.size() - 1];
                 if( lastC == '\\' || lastC == '/' )
-                    osFileInArchive.resize(strlen(osFileInArchive) - 1);
+                    osFileInArchive.resize(osFileInArchive.size() - 1);
             }
 
             return archiveFilename;
