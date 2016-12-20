@@ -1131,7 +1131,7 @@ void OGRCARTOTableLayer::BuildWhere()
                        szBox3D_1, szBox3D_2 );
     }
 
-    if( strlen(osQuery) > 0 )
+    if( !osQuery.empty() )
     {
         if( !osWHERE.empty() )
             osWHERE += " AND ";

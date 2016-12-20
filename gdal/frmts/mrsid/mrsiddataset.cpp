@@ -1116,7 +1116,7 @@ char *MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec
                     break;
             }
 
-            iLength = static_cast<int>(strlen(pszMetadata) + strlen(osTemp) + 2);
+            iLength = static_cast<int>(strlen(pszMetadata) + osTemp.size() + 2);
 
             pszMetadata = (char *)CPLRealloc( pszMetadata, iLength );
             if ( !EQUAL( pszMetadata, "" ) )

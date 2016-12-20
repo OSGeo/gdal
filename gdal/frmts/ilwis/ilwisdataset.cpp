@@ -239,7 +239,7 @@ void IniFile::Store()
 
         // write the section name
         osLine.Printf( "[%s]\r\n", (*iterSect).first.c_str());
-        VSIFWriteL( osLine.c_str(), 1, strlen(osLine), filIni );
+        VSIFWriteL( osLine.c_str(), 1, osLine.size(), filIni );
         SectionEntries *entries = (*iterSect).second;
         SectionEntries::iterator iterEntry;
         for (iterEntry = (*entries).begin(); iterEntry != (*entries).end(); ++iterEntry)
@@ -247,7 +247,7 @@ void IniFile::Store()
             std::string key = (*iterEntry).first;
             osLine.Printf( "%s=%s\r\n",
                            TrimSpaces(key).c_str(), (*iterEntry).second.c_str());
-            VSIFWriteL( osLine.c_str(), 1, strlen(osLine), filIni );
+            VSIFWriteL( osLine.c_str(), 1, osLine.size(), filIni );
         }
 
         VSIFWriteL( "\r\n", 1, 2, filIni );

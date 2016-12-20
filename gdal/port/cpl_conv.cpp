@@ -2815,7 +2815,7 @@ int CPLCheckForFile( char *pszFilename, char **papszSiblingFiles )
     {
         if( EQUAL(papszSiblingFiles[i], osFileOnly) )
         {
-            strcpy( pszFilename + strlen(pszFilename) - strlen(osFileOnly),
+            strcpy( pszFilename + strlen(pszFilename) - osFileOnly.size(),
                     papszSiblingFiles[i] );
             return TRUE;
         }

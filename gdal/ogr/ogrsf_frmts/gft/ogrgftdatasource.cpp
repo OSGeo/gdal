@@ -155,7 +155,7 @@ static CPLString OGRGFTGetOptionValue(const char* pszFilename,
     if (!pszOptionValue)
         return "";
 
-    CPLString osOptionValue(pszOptionValue + strlen(osOptionName));
+    CPLString osOptionValue(pszOptionValue + osOptionName.size());
     const char* pszSpace = strchr(osOptionValue.c_str(), ' ');
     if (pszSpace)
         osOptionValue.resize(pszSpace - osOptionValue.c_str());
@@ -446,7 +446,7 @@ char** OGRGFTDataSource::AddHTTPOptions(char** papszOptions)
 {
     bMustCleanPersistent = TRUE;
 
-    if (strlen(osAccessToken) > 0)
+    if( !osAccessToken.empty() )
       papszOptions = CSLAddString(papszOptions,
         CPLSPrintf("HEADERS=Authorization: Bearer %s",
                    osAccessToken.c_str()));

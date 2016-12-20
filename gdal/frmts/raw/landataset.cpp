@@ -808,7 +808,7 @@ char **LANDataset::GetFileList()
     // Main data file, etc.
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    if( strlen(osSTAFilename) > 0 )
+    if( !osSTAFilename.empty() )
         papszFileList = CSLAddString( papszFileList, osSTAFilename );
 
     return papszFileList;

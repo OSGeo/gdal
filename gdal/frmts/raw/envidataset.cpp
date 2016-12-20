@@ -2518,7 +2518,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
             if (papszBandNames && CSLCount(papszBandNames) > i)
             {
                 osBandName = papszBandNames[i];
-                if (strlen(osWavelength) > 0)
+                if( !osWavelength.empty() )
                 {
                     osBandName += " (";
                     osBandName += osWavelength;

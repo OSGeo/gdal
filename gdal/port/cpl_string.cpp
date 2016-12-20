@@ -1049,7 +1049,7 @@ int CPLVASPrintf( char **buf, CPL_FORMAT_STRING(const char *fmt), va_list ap )
     if( buf )
         *buf = CPLStrdup(osWork.c_str());
 
-    return static_cast<int>(strlen(osWork));
+    return static_cast<int>(osWork.size());
 }
 
 /************************************************************************/

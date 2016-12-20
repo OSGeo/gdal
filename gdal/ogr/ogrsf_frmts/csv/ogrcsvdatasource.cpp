@@ -387,11 +387,11 @@ CPLString OGRCSVDataSource::GetRealExtension(CPLString osFilename)
     CPLString osExt = CPLGetExtension(osFilename);
     if( STARTS_WITH(osFilename, "/vsigzip/") && EQUAL(osExt, "gz") )
     {
-        if( strlen(osFilename) > 7
-            && EQUAL(osFilename + strlen(osFilename) - 7, ".csv.gz") )
+        if( osFilename.size() > 7
+            && EQUAL(osFilename + osFilename.size() - 7, ".csv.gz") )
             osExt = "csv";
-        else if( strlen(osFilename) > 7
-                 && EQUAL(osFilename + strlen(osFilename) - 7, ".tsv.gz") )
+        else if( osFilename.size() > 7
+                 && EQUAL(osFilename + osFilename.size() - 7, ".tsv.gz") )
             osExt = "tsv";
     }
     return osExt;
@@ -450,9 +450,9 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
               STARTS_WITH_CI(osBaseFilename, "NationalFedCodes_") ||
               STARTS_WITH_CI(osBaseFilename, "AllStates_") ||
               STARTS_WITH_CI(osBaseFilename, "AllStatesFedCodes_") ||
-              ( strlen(osBaseFilename) > 2 &&
+              ( osBaseFilename.size() > 2 &&
                 STARTS_WITH_CI(osBaseFilename+2, "_Features_")) ||
-              ( strlen(osBaseFilename) > 2 &&
+              ( osBaseFilename.size() > 2 &&
                 STARTS_WITH_CI(osBaseFilename+2, "_FedCodes_"))) &&
              (EQUAL(osExt, "txt") || EQUAL(osExt, "zip")) )
     {
@@ -515,7 +515,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
             if (STARTS_WITH_CI(osBaseFilename, "NationalFedCodes_") ||
                 STARTS_WITH_CI(osBaseFilename, "AllStatesFedCodes_") ||
                 STARTS_WITH_CI(osBaseFilename, "ANTARCTICA_") ||
-                ( strlen(osBaseFilename) > 2 &&
+                ( osBaseFilename.size() > 2 &&
                   STARTS_WITH_CI(osBaseFilename+2, "_FedCodes_")))
             {
                 OpenTable( osFilename, papszOpenOptionsIn, NULL, "PRIMARY");

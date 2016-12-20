@@ -692,7 +692,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     CSLDestroy( papszFiles );
 
     // Look in parent if we don't find a .clr in the coverage dir.
-    if( strlen(osClrFilename) == 0 )
+    if( osClrFilename.empty() )
     {
         osTestName.Printf( "%s/../%s.clr",
                            psInfo->pszCoverName,
@@ -711,7 +711,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
             osClrFilename = osTestName;
     }
 
-    if( strlen(osClrFilename) > 0 )
+    if( !osClrFilename.empty() )
         poDS->TranslateColorTable( osClrFilename );
 
 /* -------------------------------------------------------------------- */
@@ -927,13 +927,13 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
     {
         CPLString osNewFilename;
 
-        if( !EQUALN(papszFileList[i],osOldPath,strlen(osOldPath)) )
+        if( !EQUALN(papszFileList[i],osOldPath,osOldPath.size()) )
         {
             CPLAssert( false );
             return CE_Failure;
         }
 
-        osNewFilename = osNewPath + (papszFileList[i] + strlen(osOldPath));
+        osNewFilename = osNewPath + (papszFileList[i] + osOldPath.size());
 
         papszNewFileList = CSLAddString( papszNewFileList, osNewFilename );
     }

@@ -396,7 +396,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
         const char *pszOziDatum = CSVFilename( "ozi_datum.csv" );
         CPLString osDName = CSVGetField( pszOziDatum, "NAME", papszDatum[0],
                                     CC_ApproxString, "NAME" );
-        if( strlen(osDName) == 0 )
+        if( osDName.empty() )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Failed to find datum %s in ozi_datum.csv.",
@@ -453,7 +453,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
             CPLString osEName =
                 CSVGetField( pszOziEllipse, "ELLIPSOID_CODE", osEllipseCode,
                              CC_ApproxString, "NAME" );
-            if( strlen(osEName) == 0 )
+            if( osEName.empty() )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "Failed to find ellipsoid %s in ozi_ellips.csv.",

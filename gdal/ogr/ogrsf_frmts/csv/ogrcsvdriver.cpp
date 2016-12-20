@@ -69,9 +69,9 @@ static int OGRCSVDriverIdentify( GDALOpenInfo* poOpenInfo )
               STARTS_WITH_CI(osBaseFilename, "NationalFedCodes_") ||
               STARTS_WITH_CI(osBaseFilename, "AllStates_") ||
               STARTS_WITH_CI(osBaseFilename, "AllStatesFedCodes_") ||
-              (strlen(osBaseFilename) > 2
+              (osBaseFilename.size() > 2
                && STARTS_WITH_CI(osBaseFilename+2, "_Features_")) ||
-              (strlen(osBaseFilename) > 2
+              (osBaseFilename.size()
                && STARTS_WITH_CI(osBaseFilename+2, "_FedCodes_"))) &&
              (EQUAL(osExt, "txt") || EQUAL(osExt, "zip")) )
         {

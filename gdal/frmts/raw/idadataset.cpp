@@ -644,7 +644,7 @@ void IDADataset::ReadColorTable()
 /*      Decide what .clr file to look for and try to open.              */
 /* -------------------------------------------------------------------- */
     CPLString osCLRFilename = CPLGetConfigOption( "IDA_COLOR_FILE", "" );
-    if( strlen(osCLRFilename) == 0 )
+    if( osCLRFilename.empty() )
         osCLRFilename = CPLResetExtension(GetDescription(), "clr" );
 
     VSILFILE *fp = VSIFOpenL( osCLRFilename, "r" );
