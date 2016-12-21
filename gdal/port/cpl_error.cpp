@@ -974,7 +974,7 @@ void CPLTurnFailureIntoWarning( int bOn )
  * Install custom error handle with user's data. This method is
  * essentially CPLSetErrorHandler with an added pointer to pUserData.
  * The pUserData is not returned in the CPLErrorHandler, however, and
- * must be fetched via CPLGetLastErrorUserData
+ * must be fetched via CPLGetErrorHandlerUserData.
  *
  * @param pfnErrorHandlerNew new error handler function.
  * @param pUserData User data to carry along with the error context.
