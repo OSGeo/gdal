@@ -390,8 +390,6 @@ public:
     virtual std::vector<CPLString> GetExtensions() override;
     virtual VSIArchiveReader* CreateReader(const char* pszTarFileName) override;
 
-    using VSIFilesystemHandler::Open;
-
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
                                     bool bSetError ) override;

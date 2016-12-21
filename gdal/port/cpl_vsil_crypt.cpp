@@ -1417,8 +1417,6 @@ public:
     VSICryptFilesystemHandler();
     virtual ~VSICryptFilesystemHandler();
 
-    using VSIFilesystemHandler::Open;
-
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
                                     bool bSetError ) override;

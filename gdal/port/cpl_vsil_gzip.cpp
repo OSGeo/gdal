@@ -226,8 +226,6 @@ public:
     VSIGZipFilesystemHandler();
     virtual ~VSIGZipFilesystemHandler();
 
-    using VSIFilesystemHandler::Open;
-
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
                                     bool bSetError ) override;
@@ -1977,8 +1975,6 @@ public:
     virtual std::vector<CPLString> GetExtensions() override;
     virtual VSIArchiveReader* CreateReader( const char* pszZipFileName )
         override;
-
-    using VSIFilesystemHandler::Open;
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,

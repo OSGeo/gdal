@@ -117,6 +117,7 @@ public:
                                     vsi_l_offset &nSparseFileOffset,
                                     vsi_l_offset &nSparseFileSize );
 
+    // TODO(schwehr): Fix VSISparseFileFilesystemHandler::Stat to not need using.
     using VSIFilesystemHandler::Open;
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
@@ -464,6 +465,8 @@ int VSISparseFileFilesystemHandler::Stat( const char * pszFilename,
                                           int nFlags )
 
 {
+    // TODO(schwehr): Fix this so that the using statement is not needed.
+    // Will just adding the bool for bSetError be okay?
     VSIVirtualHandle *poFile = Open( pszFilename, "r" );
 
     memset( psStatBuf, 0, sizeof(VSIStatBufL) );
