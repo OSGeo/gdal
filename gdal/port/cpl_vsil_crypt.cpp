@@ -113,20 +113,21 @@ static CryptoPP::PNew s_pNew = NULL;
 static CryptoPP::PDelete s_pDelete = NULL;
 
 extern "C" __declspec(dllexport)
-void __cdecl SetNewAndDeleteFromCryptoPP(CryptoPP::PNew pNew,
-                                         CryptoPP::PDelete pDelete,
-                                         CryptoPP::PSetNewHandler pSetNewHandler)
+void __cdecl SetNewAndDeleteFromCryptoPP(
+    CryptoPP::PNew pNew,
+    CryptoPP::PDelete pDelete,
+    CryptoPP::PSetNewHandler pSetNewHandler )
 {
     s_pNew = pNew;
     s_pDelete = pDelete;
 }
 
-void * __cdecl operator new (size_t size)
+void * __cdecl operator new( vsize_t size )
 {
     return s_pNew(size);
 }
 
-void __cdecl operator delete (void * p)
+void __cdecl operator delete( void * p )
 {
     s_pDelete(p);
 }
@@ -373,7 +374,7 @@ static VSICryptMode GetMode( const char* pszName )
 
 class VSICryptFileHeader
 {
-        std::string             CryptKeyCheck(CryptoPP::BlockCipher* poEncCipher);
+        std::string CryptKeyCheck( CryptoPP::BlockCipher* poEncCipher );
 
     public:
         VSICryptFileHeader() : nHeaderSize(0),
@@ -416,8 +417,8 @@ static bool VSICryptReadError()
 /*                       VSICryptGenerateSectorIV()                     */
 /************************************************************************/
 
-static std::string VSICryptGenerateSectorIV(const std::string& osIV,
-                                            vsi_l_offset nOffset)
+static std::string VSICryptGenerateSectorIV( const std::string& osIV,
+                                             vsi_l_offset nOffset )
 {
     std::string osSectorIV(osIV);
     const size_t nLength = std::min(sizeof(vsi_l_offset), osSectorIV.size());
@@ -1421,10 +1422,13 @@ public:
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
                                     bool bSetError ) override;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+                           int nFlags ) override;
     virtual int      Unlink( const char *pszFilename ) override;
-    virtual int      Rename( const char *oldpath, const char *newpath ) override;
-    virtual char**   ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
+    virtual int      Rename( const char *oldpath, const char *newpath )
+        override;
+    virtual char**   ReadDirEx( const char *pszDirname, int nMaxFiles )
+        override;
 };
 
 /************************************************************************/
@@ -1447,12 +1451,13 @@ VSICryptFilesystemHandler::~VSICryptFilesystemHandler()
 /*                             GetFilename()                            */
 /************************************************************************/
 
-static CPLString GetFilename(const char* pszFilename)
+static CPLString GetFilename( const char* pszFilename )
 {
     if( strcmp(pszFilename, VSICRYPT_PREFIX_WITHOUT_SLASH) == 0 )
         pszFilename = VSICRYPT_PREFIX;
 
-    CPLAssert( strncmp(pszFilename, VSICRYPT_PREFIX, strlen(VSICRYPT_PREFIX)) == 0 );
+    CPLAssert( strncmp(pszFilename, VSICRYPT_PREFIX,
+                       strlen(VSICRYPT_PREFIX)) == 0 );
     pszFilename += strlen(VSICRYPT_PREFIX);
     const char* pszFileArg = strstr(pszFilename, "file=");
     if( pszFileArg == NULL )
@@ -1465,8 +1470,8 @@ static CPLString GetFilename(const char* pszFilename)
 /*                             GetArgument()                            */
 /************************************************************************/
 
-static CPLString GetArgument(const char* pszFilename, const char* pszParamName,
-                             const char* pszDefault = "")
+static CPLString GetArgument( const char* pszFilename, const char* pszParamName,
+                              const char* pszDefault = "" )
 {
     CPLString osParamName(pszParamName);
     osParamName += "=";
@@ -1486,7 +1491,7 @@ static CPLString GetArgument(const char* pszFilename, const char* pszParamName,
 /*                               GetKey()                               */
 /************************************************************************/
 
-static CPLString GetKey(const char* pszFilename)
+static CPLString GetKey( const char* pszFilename )
 {
     CPLString osKey = GetArgument(pszFilename, "key");
     if( osKey.empty() )
@@ -1549,7 +1554,8 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
         CPLString osAccess(pszAccess);
         if( strchr(pszAccess, 'b') == NULL )
             osAccess += "b";
-        VSIVirtualHandle* fpBase = (VSIVirtualHandle*)VSIFOpenL(osFilename, osAccess);
+        VSIVirtualHandle* fpBase =
+            (VSIVirtualHandle*)VSIFOpenL(osFilename, osAccess);
         if( fpBase == NULL )
             return NULL;
         VSICryptFileHeader* poHeader = new VSICryptFileHeader();
@@ -1562,8 +1568,12 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
             return NULL;
         }
 
-        VSICryptFileHandle* poHandle = new VSICryptFileHandle( osFilename, fpBase, poHeader,
-                    strchr(pszAccess, '+') ? VSICRYPT_READ | VSICRYPT_WRITE : VSICRYPT_READ);
+        VSICryptFileHandle* poHandle =
+            new VSICryptFileHandle(
+                osFilename, fpBase, poHeader,
+                strchr(pszAccess, '+')
+                ? VSICRYPT_READ | VSICRYPT_WRITE
+                : VSICRYPT_READ);
         if( !poHandle->Init(osKey, false) )
         {
             memset((void*)osKey.c_str(), 0, osKey.size());
@@ -1576,23 +1586,29 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
     else if( strchr(pszAccess, 'w' ) )
     {
         CPLString osAlg(GetArgument(pszFilename, "alg",
-                                              CPLGetConfigOption("VSICRYPT_ALG", "AES")));
+                                    CPLGetConfigOption("VSICRYPT_ALG", "AES")));
         VSICryptAlg eAlg = GetAlg(osAlg);
 
-        VSICryptMode eMode = GetMode(GetArgument(pszFilename, "mode",
-                                              CPLGetConfigOption("VSICRYPT_MODE", "CBC")));
+        VSICryptMode eMode =
+            GetMode(GetArgument(pszFilename, "mode",
+                                CPLGetConfigOption("VSICRYPT_MODE", "CBC")));
 
-        CPLString osFreeText = GetArgument(pszFilename, "freetext",
-                                           CPLGetConfigOption("VSICRYPT_FREETEXT", ""));
+        CPLString osFreeText =
+            GetArgument(pszFilename, "freetext",
+                        CPLGetConfigOption("VSICRYPT_FREETEXT", ""));
 
         CPLString osIV = GetArgument(pszFilename, "iv",
-                                           CPLGetConfigOption("VSICRYPT_IV", ""));
+                                           CPLGetConfigOption("VSICRYPT_IV",
+                                                              ""));
 
-        int nSectorSize = atoi(GetArgument(pszFilename, "sector_size",
-                                           CPLGetConfigOption("VSICRYPT_SECTOR_SIZE", "512")));
+        int nSectorSize =
+            atoi(GetArgument(pszFilename, "sector_size",
+                             CPLGetConfigOption("VSICRYPT_SECTOR_SIZE",
+                                                "512")));
         if( nSectorSize <= 0 || nSectorSize >= 65535 )
         {
-            CPLError(CE_Warning, CPLE_NotSupported, "Invalid value for sector_size. Defaulting to 512.");
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Invalid value for sector_size. Defaulting to 512.");
             nSectorSize = 512;
         }
 
@@ -1743,7 +1759,8 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
 /*                                Stat()                                */
 /************************************************************************/
 
-int VSICryptFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags )
+int VSICryptFilesystemHandler::Stat( const char *pszFilename,
+                                     VSIStatBufL *pStatBuf, int nFlags )
 {
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "Stat(%s)", pszFilename);
@@ -1790,7 +1807,8 @@ int VSICryptFilesystemHandler::Unlink( const char *pszFilename )
 /*                               Rename()                               */
 /************************************************************************/
 
-int VSICryptFilesystemHandler::Rename( const char *oldpath, const char* newpath )
+int VSICryptFilesystemHandler::Rename( const char *oldpath,
+                                       const char* newpath )
 {
     CPLString osNewPath;
     if( strncmp(newpath, VSICRYPT_PREFIX, strlen(VSICRYPT_PREFIX)) == 0 )
@@ -1838,8 +1856,9 @@ static GDALDataset* VSICryptOpen(GDALOpenInfo* poOpenInfo)
 {
     if( !VSICryptIdentify(poOpenInfo) )
         return NULL;
-    return (GDALDataset*)GDALOpen( (CPLString(VSICRYPT_PREFIX) + poOpenInfo->pszFilename).c_str(),
-                     poOpenInfo->eAccess );
+    return (GDALDataset*)GDALOpen(
+        (CPLString(VSICRYPT_PREFIX) + poOpenInfo->pszFilename).c_str(),
+        poOpenInfo->eAccess );
 }
 
 #endif
@@ -1851,91 +1870,105 @@ static GDALDataset* VSICryptOpen(GDALOpenInfo* poOpenInfo)
 /************************************************************************/
 
 /**
- * \brief Install /vsicrypt/ encrypted file system handler (requires <a href="http://www.cryptopp.com/">libcrypto++</a>)
+ * \brief Install /vsicrypt/ encrypted file system handler
+ * (requires <a href="http://www.cryptopp.com/">libcrypto++</a>)
  *
- * A special file handler is installed that allows reading/creating/update encrypted
- * files on the fly, with random access capabilities.
+ * A special file handler is installed that allows reading/creating/update
+ * encrypted files on the fly, with random access capabilities.
  *
  * The cryptographic algorithms used are
- * <a href="https://en.wikipedia.org/wiki/Block_cipher">block ciphers</a>, with symmetric key.
+ * <a href="https://en.wikipedia.org/wiki/Block_cipher">block ciphers</a>,
+ * with symmetric key.
  *
- * In their simplest form, recognized filenames are of the form /vsicrypt//absolute_path/to/file,
- * /vsicrypt/c:/absolute_path/to/file or /vsicrypt/relative/path/to/file.
+ * In their simplest form, recognized filenames are of the form
+ * /vsicrypt//absolute_path/to/file, /vsicrypt/c:/absolute_path/to/file or
+ * /vsicrypt/relative/path/to/file.
  *
  * Options can also be used with the following format :
  * /vsicrypt/option1=val1,option2=val2,...,file=/path/to/file
  *
  * They can also be passed as configuration option/environment variable, because
- * in some use cases, the syntax with option in the filename might not properly work with some drivers.
+ * in some use cases, the syntax with option in the filename might not properly
+ * work with some drivers.
  *
  * In all modes, the encryption key must be provided. There are several ways
  * of doing so :
  * <ul>
- * <li>By adding a key= parameter to the filename, like /vsicrypt/key=my_secret_key,file=/path/to/file.
- *     Note that this restricts the key to be in text format, whereas at its full power,
- *     it can be binary content.</li>
- * <li>By adding a key_b64= parameter to the filename, to specify a binary key expressed
- *     in Base64 encoding, like /vsicrypt/key_b64=th1sl00kslikebase64=,file=/path/to/file.</li>
- * <li>By setting the VSICRYPT_KEY configuration option. The key should be in text format.</li>
- * <li>By setting the VSICRYPT_KEY_B64 configuration option. The key should be encoded in Base64.</li>
+ * <li>By adding a key= parameter to the filename, like
+ *     /vsicrypt/key=my_secret_key,file=/path/to/file.  Note that this restricts
+ *     the key to be in text format, whereas at its full power, it can be binary
+ *     content.</li>
+ * <li>By adding a key_b64= parameter to the filename, to specify a binary key
+ *     expressed in Base64 encoding, like
+ *     /vsicrypt/key_b64=th1sl00kslikebase64=,file=/path/to/file.</li>
+ * <li>By setting the VSICRYPT_KEY configuration option. The key should be in
+ * text format.</li>
+ * <li>By setting the VSICRYPT_KEY_B64 configuration option. The key should be
+ * encoded in Base64.</li>
  * <li>By using the VSISetCryptKey() C function.</li>
  * </ul>
  *
- * When creating a file, if key=GENERATE_IT or VSICRYPT_KEY=GENERATE_IT is passed,
- * the encryption key will be generated from the pseudo-random number generator of the
- * operating system. The key will be displayed on the standard error stream in a Base64 form
- * (unless the VSICRYPT_DISPLAY_GENERATED_KEY configuration option is set to OFF),
- * and the VSICRYPT_KEY_B64 configuration option will also be set with the Base64 form
- * of the key (so that CPLGetConfigOption("VSICRYPT_KEY_B64", NULL) can be used to get it back).
+ * When creating a file, if key=GENERATE_IT or VSICRYPT_KEY=GENERATE_IT is
+ * passed, the encryption key will be generated from the pseudo-random number
+ * generator of the operating system. The key will be displayed on the standard
+ * error stream in a Base64 form (unless the VSICRYPT_DISPLAY_GENERATED_KEY
+ * configuration option is set to OFF), and the VSICRYPT_KEY_B64 configuration
+ * option will also be set with the Base64 form of the key (so that
+ * CPLGetConfigOption("VSICRYPT_KEY_B64", NULL) can be used to get it back).
  *
  * The available options are :
  * <ul>
+
  * <li>alg=AES/Blowfish/Camellia/CAST256/DES_EDE2/DES_EDE3/MARS/IDEA/RC5/RC6/Serpent/SHACAL2/SKIPJACK/Twofish/XTEA:
- *     to specify the <a href="https://en.wikipedia.org/wiki/Block_cipher">block cipher</a> algorithm.
- *     The default is AES.
- *     Only used on creation. Ignored otherwise.
- *     Note: depending on how GDAL is build, if linked against the DLL version of libcrypto++,
- *     only a subset of those algorithms will be available, namely AES, DES_EDE2, DES_EDE3 and SKIPJACK.
- *     Also available as VSICRYPT_ALG configuration option.</li>
- * <li>mode=CBC/CFB/OFB/CTR/CBC_CTS: to specify the <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation">block cipher mode of operation</a>.
+ *     to specify the <a href="https://en.wikipedia.org/wiki/Block_cipher">block
+ *     cipher</a> algorithm.  The default is AES.  Only used on
+ *     creation. Ignored otherwise.  Note: depending on how GDAL is build, if
+ *     linked against the DLL version of libcrypto++, only a subset of those
+ *     algorithms will be available, namely AES, DES_EDE2, DES_EDE3 and
+ *     SKIPJACK.  Also available as VSICRYPT_ALG configuration option.</li>
+ * <li>mode=CBC/CFB/OFB/CTR/CBC_CTS: to specify the
+ *     <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation">
+ *       block cipher mode of operation</a>.
  *     The default is CBC.
  *     Only used on creation. Ignored otherwise.
  *     Also available as VSICRYPT_MODE configuration option.</li>
  * <li>key=text_key: see above.</li>
  * <li>key_b64=base64_encoded_key: see above.</li>
- * <li>freetext=some_text: to specify a text content that will be written *unencrypted*
- *     in the file header, for informational purposes. Default to empty.
- *     Only used on creation. Ignored otherwise.
+ * <li>freetext=some_text: to specify a text content that will be written
+ *     *unencrypted* in the file header, for informational purposes. Default to
+ *     empty.  Only used on creation. Ignored otherwise.
  *     Also available as VSICRYPT_FREETEXT configuration option.</li>
  * <li>sector_size=int_value: to specify the size of the "sector", which is the
- *     unit chunk of information that is encrypted/decrypted. Default to 512 bytes.
- *     The valid values depend on the algorithm and block cipher mode of operation.
- *     Only used on creation. Ignored otherwise.
- *     Also available as VSICRYPT_SECTOR_SIZE configuration option.</li>
+ *     unit chunk of information that is encrypted/decrypted. Default to 512
+ *     bytes.  The valid values depend on the algorithm and block cipher mode of
+ *     operation.  Only used on creation. Ignored otherwise.  Also available as
+ *     VSICRYPT_SECTOR_SIZE configuration option.</li>
  * <li>iv=initial_vector_as_text: to specify the Initial Vector. This is an
- *     advanced option that should generally *NOT* be used. It is only useful
- *     to get completely deterministic output
- *     given the plaintext, key and other parameters, which in general *NOT* what
- *     you want to do. By default, a random initial vector of the appropriate size
- *     will be generated for each new file created.
- *     Only used on creation. Ignored otherwise.
- *     Also available as VSICRYPT_IV configuration option.</li>
- * <li>add_key_check=YES/NO: whether a special value should be encrypted in the header,
- *     so as to be quickly able to determine if the decryption key is correct.
- *     Defaults to NO.
- *     Only used on creation. Ignored otherwise.
+ *     advanced option that should generally *NOT* be used. It is only useful to
+ *     get completely deterministic output given the plaintext, key and other
+ *     parameters, which in general *NOT* what you want to do. By default, a
+ *     random initial vector of the appropriate size will be generated for each
+ *     new file created.  Only used on creation. Ignored otherwise.  Also
+ *     available as VSICRYPT_IV configuration option.</li>
+
+ * <li>add_key_check=YES/NO: whether a special value should be encrypted in the
+ *     header, so as to be quickly able to determine if the decryption key is
+ *     correct.  Defaults to NO.  Only used on creation. Ignored otherwise.
  *     Also available as VSICRYPT_ADD_KEY_CHECK configuration option.</li>
- * <li>file=filename. To specify the filename. This must be the last option put in the
- *     option list (so as to make it possible to use filenames with comma in them. )
+ * <li>file=filename. To specify the filename. This must be the last option put
+ *     in the option list (so as to make it possible to use filenames with comma
+ *     in them. )
  * </ul>
  *
- * This special file handler can be combined with other virtual filesystems handlers,
- * such as /vsizip. For example, /vsicrypt//vsicurl/path/to/remote/encrypted/file.tif
+ * This special file handler can be combined with other virtual filesystems
+ * handlers, such as /vsizip. For example,
+ * /vsicrypt//vsicurl/path/to/remote/encrypted/file.tif
  *
  * Implementation details:
  *
  * The structure of encrypted files is the following: a header, immediately
- * followed by the encrypted payload (by sectors, i.e. chunks of sector_size bytes).
+ * followed by the encrypted payload (by sectors, i.e. chunks of sector_size
+ * bytes).
  *
  * The header structure is the following :
  * <ol>
@@ -1944,68 +1977,79 @@ static GDALDataset* VSICryptOpen(GDALOpenInfo* poOpenInfo)
  * <li>UINT8. Format major version. Current value: 1.</li>
  * <li>UINT8. Format minor version. Current value: 0.</li>
  * <li>UINT16. Sector size.</li>
- * <li>UINT8. Cipher algorithm. Valid values are: 0 = AES (Rijndael), 1 = Blowfish, 2 = Camellia, 3 = CAST256,
- *     4 = DES_EDE2, 5 = DES_EDE3, 6 = MARS, 7 = IDEA, 8 = RC5, 9 = RC6, 10 = Serpent, 11 = SHACAL2,
- *     12 = SKIPJACK, 13 = Twofish, 14 = XTEA.</li>
- * <li>UINT8. Block cipher mode of operation. Valid values are: 0 = CBC, 1 = CFB, 2 = OFB, 3 = CTR, 4 = CBC_CTS.</li>
+ * <li>UINT8. Cipher algorithm. Valid values are: 0 = AES (Rijndael), 1 =
+ *     Blowfish, 2 = Camellia, 3 = CAST256, 4 = DES_EDE2, 5 = DES_EDE3, 6 =
+ *     MARS, 7 = IDEA, 8 = RC5, 9 = RC6, 10 = Serpent, 11 = SHACAL2, 12 =
+ *     SKIPJACK, 13 = Twofish, 14 = XTEA.</li>
+ * <li>UINT8. Block cipher mode of operation. Valid values are: 0 = CBC, 1 =
+ *     CFB, 2 = OFB, 3 = CTR, 4 = CBC_CTS.</li>
  * <li>UINT8. Size in bytes of the Initial Vector.</li>
- * <li>N bytes with the content of the Initial Vector, where N is the value of the previous field.</li>
+ * <li>N bytes with the content of the Initial Vector, where N is the value of
+ *     the previous field.</li>
  * <li>UINT16_LE. Size in bytes of the free text.</li>
- * <li>N bytes with the content of the free text, where N is the value of the previous field.</li>
- * <li>UINT8. Size in bytes of encrypted content (key check), or 0 if key check is absent.</li>
- * <li>N bytes with encrypted content (key check), where N is the value of the previous field.</li>
+ * <li>N bytes with the content of the free text, where N is the value of the
+ *     previous field.</li>
+ * <li>UINT8. Size in bytes of encrypted content (key check), or 0 if key check
+ *     is absent.</li>
+ * <li>N bytes with encrypted content (key check), where N is the value of the
+ *     previous field.</li>
  * <li>UINT64_LE. Size of the unencrypted file, in bytes.</li>
- * <li>UINT16_LE. Size in bytes of extra content (of unspecified semantics). For v1.0, fixed value of 0</li>
- * <li>N bytes with extra content (of unspecified semantics), where N is the value of the previous field.</li>
+ * <li>UINT16_LE. Size in bytes of extra content (of unspecified semantics). For
+ *     v1.0, fixed value of 0</li>
+ * <li>N bytes with extra content (of unspecified semantics), where N is the
+ *     value of the previous field.</li>
  * </ol>
  *
  * This design does not provide any means of authentication or integrity check.
  *
- * Each sector is encrypted/decrypted independently of other sectors.
- * For that, the Initial Vector contained in the header is XOR'ed with the file offset
- * (relative to plain text file) of the start of the sector being processed, as a 8-byte integer.
- * More precisely, the first byte of the main IV is XOR'ed with the 8 least-significant
- * bits of the sector offset, the second byte of the main IV is XOR'ed with the following
- * 8 bits of the sector offset, etc... until the 8th byte.
+ * Each sector is encrypted/decrypted independently of other sectors.  For that,
+ * the Initial Vector contained in the header is XOR'ed with the file offset
+ * (relative to plain text file) of the start of the sector being processed, as
+ * a 8-byte integer.  More precisely, the first byte of the main IV is XOR'ed
+ * with the 8 least-significant bits of the sector offset, the second byte of
+ * the main IV is XOR'ed with the following 8 bits of the sector offset,
+ * etc... until the 8th byte.
  *
- * This design could potentially be prone to chosen-plaintext attack, for example
- * if the attacker managed to get (part of) an existing encrypted file to be encrypted from
- * plaintext he might have selected.
+ * This design could potentially be prone to chosen-plaintext attack, for
+ * example if the attacker managed to get (part of) an existing encrypted file
+ * to be encrypted from plaintext he might have selected.
  *
  * Note: if "hostile" code can explore process content, or attach to it with a
- * debugger, it might be relatively easy to retrieve the encryption key.
- * A GDAL plugin could for example get the content of configuration options, or
- * list opened datasets and see the key/key_b64 values, so disabling plugin loading
- * might be a first step, as well as linking statically GDAL to application code.
- * If plugin loading is enabled or GDAL dynamically linked, using VSISetCryptKey()
- * to set the key might make it a bit more complicated to spy the key.
- * But, as said initially, this is in no way a perfect protection.
+ * debugger, it might be relatively easy to retrieve the encryption key.  A GDAL
+ * plugin could for example get the content of configuration options, or list
+ * opened datasets and see the key/key_b64 values, so disabling plugin loading
+ * might be a first step, as well as linking statically GDAL to application
+ * code.  If plugin loading is enabled or GDAL dynamically linked, using
+ * VSISetCryptKey() to set the key might make it a bit more complicated to spy
+ * the key.  But, as said initially, this is in no way a perfect protection.
  *
  * @since GDAL 2.1.0
  */
 void VSIInstallCryptFileHandler(void)
 
 {
-    VSIFileManager::InstallHandler( VSICRYPT_PREFIX, new VSICryptFilesystemHandler );
+    VSIFileManager::InstallHandler( VSICRYPT_PREFIX,
+                                    new VSICryptFilesystemHandler );
 
 #ifdef VSICRYPT_DRIVER
-    if( GDALGetDriverByName( "VSICRYPT" ) == NULL )
-    {
-        GDALDriver      *poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "VSICRYPT" ) != NULL )
+        return;
 
-        poDriver->SetDescription( "VSICRYPT" );
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "VSICRYPT" );
 #ifdef GDAL_DCAP_RASTER
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
 #endif
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   CPLSPrintf("Wrapper for %s files", VSICRYPT_PREFIX) );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                               CPLSPrintf("Wrapper for %s files",
+                                          VSICRYPT_PREFIX) );
 
-        poDriver->pfnOpen = VSICryptOpen;
-        poDriver->pfnIdentify = VSICryptIdentify;
+    poDriver->pfnOpen = VSICryptOpen;
+    poDriver->pfnIdentify = VSICryptIdentify;
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 #endif
 }
 
@@ -2040,7 +2084,8 @@ public:
 
 void VSIInstallCryptFileHandler(void)
 {
-    VSIFileManager::InstallHandler( VSICRYPT_PREFIX, new VSIDummyCryptFilesystemHandler );
+    VSIFileManager::InstallHandler( VSICRYPT_PREFIX,
+                                    new VSIDummyCryptFilesystemHandler );
 }
 
 void VSISetCryptKey( const GByte* /* pabyKey */, int /* nKeySize */ )
@@ -2048,9 +2093,9 @@ void VSISetCryptKey( const GByte* /* pabyKey */, int /* nKeySize */ )
     // Not supported.
 }
 
-#endif /* HAVE_CRYPTOPP */
+#endif  // HAVE_CRYPTOPP
 
-/* Below is only useful if using as a plugin over GDAL 1.11 or GDAL 2.0 */
+// Below is only useful if using as a plugin over GDAL 1.11 or GDAL 2.0.
 #ifdef VSICRYPT_AUTOLOAD
 
 CPL_C_START
@@ -2059,7 +2104,8 @@ CPL_C_END
 
 void GDALRegisterMe()
 {
-    if( VSIFileManager::GetHandler(VSICRYPT_PREFIX) == VSIFileManager::GetHandler(".") )
+    if( VSIFileManager::GetHandler(VSICRYPT_PREFIX) ==
+        VSIFileManager::GetHandler(".") )
         VSIInstallCryptFileHandler();
 }
 
@@ -2070,7 +2116,8 @@ CPL_C_END
 
 void RegisterOGRCRYPT()
 {
-    if( VSIFileManager::GetHandler(VSICRYPT_PREFIX) == VSIFileManager::GetHandler(".") )
+    if( VSIFileManager::GetHandler(VSICRYPT_PREFIX) ==
+        VSIFileManager::GetHandler(".") )
         VSIInstallCryptFileHandler();
 }
 #endif
