@@ -1069,6 +1069,7 @@ size_t VSICryptFileHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     {
         if( nCurPos >= nWBOffset && nCurPos < nWBOffset + nWBSize )
         {
+            // TODO(schwehr): Can nToCopy be a size_t to simplify casting?
             int nToCopy = std::min(
                 static_cast<int>(nToRead),
                 static_cast<int>(nWBSize - (nCurPos - nWBOffset)));
@@ -1492,6 +1493,7 @@ static CPLString GetArgument( const char* pszFilename, const char* pszParamName,
 static CPLString GetKey( const char* pszFilename )
 {
     CPLString osKey = GetArgument(pszFilename, "key");
+    // TODO(schwehr): Make 10U and 1024U into symbolic constants.
     if( osKey.empty() )
     {
         const char* pszKey = CPLGetConfigOption("VSICRYPT_KEY", "");
