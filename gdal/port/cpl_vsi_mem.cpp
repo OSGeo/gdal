@@ -160,6 +160,7 @@ class VSIMemFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
                      VSIMemFilesystemHandler();
     virtual          ~VSIMemFilesystemHandler();
 
+    // TODO(schwehr): Fix VSIFileFromMemBuffer so that using is not needed.
     using VSIFilesystemHandler::Open;
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
@@ -965,6 +966,8 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
         CPLAtomicInc(&(poFile->nRefCount));
     }
 
+    // TODO(schwehr): Fix this so that the using statement is not needed.
+    // Will just adding the bool for bSetError be okay?
     return reinterpret_cast<VSILFILE *>( poHandler->Open( osFilename, "r+" ) );
 }
 

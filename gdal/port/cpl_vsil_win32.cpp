@@ -58,7 +58,7 @@ CPL_CVSID("$Id$");
 class VSIWin32FilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
-
+    // TODO(schwehr): Fix Open call to remove the need for this using call.
     using VSIFilesystemHandler::Open;
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
