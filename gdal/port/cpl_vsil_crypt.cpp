@@ -1724,7 +1724,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
         if( fpBase == NULL )
         {
             memset((void*)osKey.c_str(), 0, osKey.size());
-            return Open(pszFilename, "wb+");
+            return VSIFilesystemHandler::Open(pszFilename, "wb+");
         }
         VSICryptFileHeader* poHeader = new VSICryptFileHeader();
         if( !poHeader->ReadFromFile(fpBase, osKey) )
