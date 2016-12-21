@@ -162,7 +162,7 @@ bool CPLWorkerThreadPool::SubmitJob( CPLThreadFunc pfnFunc, void* pData )
     if( psWaitingWorkerThreadsList )
     {
         CPLWorkerThread* psWorkerThread =
-            (CPLWorkerThread*)psWaitingWorkerThreadsList->pData;
+            static_cast<CPLWorkerThread *>(psWaitingWorkerThreadsList->pData);
 
         CPLAssert( psWorkerThread->bMarkedAsWaiting );
         psWorkerThread->bMarkedAsWaiting = FALSE;
