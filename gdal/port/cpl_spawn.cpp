@@ -247,6 +247,7 @@ CPLSpawnedProcess* CPLSpawnAsync(
         return NULL;
     }
 
+    // TODO(schwehr): Consider initializing saAttr.
     SECURITY_ATTRIBUTES saAttr;
     saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
     saAttr.bInheritHandle = TRUE;
@@ -291,6 +292,7 @@ CPLSpawnedProcess* CPLSpawnAsync(
             goto err_pipe;
     }
 
+    // TODO(schwehr): Consider initializing piProcInfo.
     PROCESS_INFORMATION piProcInfo;
     memset(&piProcInfo, 0, sizeof(PROCESS_INFORMATION));
     STARTUPINFO siStartInfo;
