@@ -1291,6 +1291,7 @@ VSICryptFileHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
 /*                             Truncate()                               */
 /************************************************************************/
 
+// Returns 0 on success.  Returns -1 on error.
 int VSICryptFileHandle::Truncate( vsi_l_offset nNewSize )
 {
 #ifdef VERBOSE_VSICRYPT
@@ -1301,8 +1302,10 @@ int VSICryptFileHandle::Truncate( vsi_l_offset nNewSize )
 
     if( !FlushDirty() )
         return -1;
-    if( poBaseHandle->Truncate( poHeader->nHeaderSize +
-            ((nNewSize + poHeader->nSectorSize - 1) / poHeader->nSectorSize) * poHeader->nSectorSize ) != 0 )
+    if( poBaseHandle->Truncate(
+            poHeader->nHeaderSize +
+            ((nNewSize + poHeader->nSectorSize - 1) / poHeader->nSectorSize) *
+            poHeader->nSectorSize ) != 0 )
         return -1;
     bUpdateHeader = true;
     poHeader->nPayloadFileSize = nNewSize;
