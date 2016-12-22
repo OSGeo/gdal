@@ -54,6 +54,7 @@ static bool IsEitherSlash( char c )
 {
     return c == '/' || c == '\\';
 }
+
 /************************************************************************/
 /*                    ~VSIArchiveEntryFileOffset()                      */
 /************************************************************************/
@@ -186,8 +187,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive(
         }
 
         const size_t nLen = strlen(fileName);
-        const bool bIsDir =
-            nLen > 0 && fileName[nLen-1] == '/';
+        const bool bIsDir = nLen > 0 && fileName[nLen-1] == '/';
         if( bIsDir )
         {
             // Remove trailing slash.
