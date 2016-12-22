@@ -129,7 +129,7 @@ int CPLBase64DecodeInPlace( GByte* pszBase64 )
             else if( idx + 1 < offset_2 )
             {
                 b2 = CPLBase64DecodeChar[pszBase64[idx+1]];
-                c3 = 'A';
+                // c3 = 'A';
             }  // Else: Use the default values.
 
             const unsigned char b3 = CPLBase64DecodeChar[c3];
@@ -213,14 +213,14 @@ char *CPLBase64Encode(int nDataLen, const GByte *pabyBytesToEncode)
 
         if( array3_idx == kCharArray3Size )
         {
-            unsigned char charArray4[kCharArray4Size] = {};
-
-            charArray4[0] = (charArray3[0] & 0xfc) >> 2;
-            charArray4[1] = ((charArray3[0] & 0x03) << 4)
-                + ((charArray3[1] & 0xf0) >> 4);
-            charArray4[2] = ((charArray3[1] & 0x0f) << 2)
-                + ((charArray3[2] & 0xc0) >> 6);
-            charArray4[3] = charArray3[2] & 0x3f;
+            const unsigned char charArray4[kCharArray4Size] = {
+                static_cast<unsigned char>( (charArray3[0] & 0xfc) >> 2),
+                static_cast<unsigned char>(((charArray3[0] & 0x03) << 4) +
+                                           ((charArray3[1] & 0xf0) >> 4)),
+                static_cast<unsigned char>(((charArray3[1] & 0x0f) << 2) +
+                                           ((charArray3[2] & 0xc0) >> 6)),
+                static_cast<unsigned char>(  charArray3[2] & 0x3f)
+            };
 
             for( int idx = 0; idx < kCharArray4Size; ++idx )
             {
@@ -238,13 +238,14 @@ char *CPLBase64Encode(int nDataLen, const GByte *pabyBytesToEncode)
             charArray3[idx] = '\0';
         }
 
-        unsigned char charArray4[kCharArray4Size] = {};
-        charArray4[0] = (charArray3[0] & 0xfc) >> 2;
-        charArray4[1] = ((charArray3[0] & 0x03) << 4)
-            + ((charArray3[1] & 0xf0) >> 4);
-        charArray4[2] = ((charArray3[1] & 0x0f) << 2)
-            + ((charArray3[2] & 0xc0) >> 6);
-        charArray4[3] = charArray3[2] & 0x3f;
+        const unsigned char charArray4[kCharArray4Size] = {
+            static_cast<unsigned char>( (charArray3[0] & 0xfc) >> 2),
+            static_cast<unsigned char>(((charArray3[0] & 0x03) << 4) +
+                                       ((charArray3[1] & 0xf0) >> 4)),
+            static_cast<unsigned char>(((charArray3[1] & 0x0f) << 2) +
+                                       ((charArray3[2] & 0xc0) >> 6)),
+            static_cast<unsigned char>(  charArray3[2] & 0x3f)
+        };
 
         for( int idx = 0; idx < (array3_idx + 1); ++idx )
         {
