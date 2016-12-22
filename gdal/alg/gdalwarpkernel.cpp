@@ -4535,16 +4535,27 @@ static CPL_INLINE bool GWKCheckAndComputeSrcOffsets(const int* _pabSuccess,
         || _padfY[_iDstX] < _poWK->nSrcYOff )
         return false;
 
+    // Check for potential overflow when casting from float to int, (if
+    // operating outside natural projection area, padfX/Y can be a very huge
+    // positive number before doing the actual conversion), as such cast is
+    // undefined behaviour that can trigger exception with some compilers
+    // (see #6753)
+    if( _padfX[_iDstX] + 1e-10 > _nSrcXSize + _poWK->nSrcXOff ||
+        _padfY[_iDstX] + 1e-10 > _nSrcYSize + _poWK->nSrcYOff )
+    {
+        return false;
+    }
+
     int iSrcX, iSrcY;
 
-    iSrcX = ((int) (_padfX[_iDstX] + 1e-10)) - _poWK->nSrcXOff;
-    iSrcY = ((int) (_padfY[_iDstX] + 1e-10)) - _poWK->nSrcYOff;
+    iSrcX = static_cast<int>(_padfX[_iDstX] + 1e-10) - _poWK->nSrcXOff;
+    iSrcY = static_cast<int>(_padfY[_iDstX] + 1e-10) - _poWK->nSrcYOff;
 
-    /* If operating outside natural projection area, padfX/Y can be */
-    /* a very huge positive number, that becomes -2147483648 in the */
-    /* int trucation. So it is necessary to test now for non negativeness. */
-    if( iSrcX < 0 || iSrcX >= _nSrcXSize || iSrcY < 0 || iSrcY >= _nSrcYSize )
-        return false;
+    // Those checks should normally be OK given the previous ones.
+    CPLAssert( iSrcX >= 0 );
+    CPLAssert( iSrcY >= 0 );
+    CPLAssert( iSrcX < _nSrcXSize );
+    CPLAssert( iSrcY < _nSrcYSize );
 
     iSrcOffset = iSrcX + iSrcY * _nSrcXSize;
 
