@@ -250,9 +250,9 @@ int VSITarReader::GotoNextFile()
                   m_abyBufferIdx < m_abyBufferSize -
                   (static_cast<int>(strlen("***NEWFILE***:"))+2))) &&
                 m_abyBufferIdx >= 0 &&  // Make CSA happy, but useless.
-                memcmp( m_abyBuffer + m_abyBufferIdx,
-                        "***NEWFILE***:",
-                        strlen("***NEWFILE***:")) == 0 )
+                memcmp(m_abyBuffer + m_abyBufferIdx,
+                       "***NEWFILE***:",
+                       strlen("***NEWFILE***:")) == 0 )
             {
                 if( nCurOffset > 0 && nCurOffset != m_nCurOffsetOld )
                 {
@@ -354,10 +354,10 @@ int VSITarReader::GotoFirstFile()
 /*                         GotoFileOffset()                             */
 /************************************************************************/
 
-int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
+int VSITarReader::GotoFileOffset( VSIArchiveEntryFileOffset* pOffset )
 {
     VSITarEntryFileOffset* pTarEntryOffset =
-                    reinterpret_cast<VSITarEntryFileOffset*>(pOffset);
+        static_cast<VSITarEntryFileOffset*>(pOffset);
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
     if( m_bIsFuzzerFriendly )
     {
