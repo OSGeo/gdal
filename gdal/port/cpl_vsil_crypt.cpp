@@ -417,6 +417,7 @@ static bool VSICryptReadError()
 /*                       VSICryptGenerateSectorIV()                     */
 /************************************************************************/
 
+// TODO(rouault): This function really needs a comment saying what it does.
 static std::string VSICryptGenerateSectorIV( const std::string& osIV,
                                              vsi_l_offset nOffset )
 {
@@ -424,6 +425,7 @@ static std::string VSICryptGenerateSectorIV( const std::string& osIV,
     const size_t nLength = std::min(sizeof(vsi_l_offset), osSectorIV.size());
     for( size_t i = 0; i < nLength; i++ )
     {
+        // TODO(rouault): Explain what this block is trying to do?
         osSectorIV[i] = static_cast<char>((osSectorIV[i] ^ nOffset) & 0xff);
         nOffset >>= 8;
     }
