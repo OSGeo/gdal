@@ -46,7 +46,7 @@
 #endif
 
 #define TIMESTAMP_DEBUG
-//#define MEMORY_DEBUG
+// #define MEMORY_DEBUG
 
 CPL_CVSID("$Id$");
 

@@ -2753,7 +2753,9 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                 if( pszKey && strlen(pszKey) > osPrefix.size() )
                 {
                     CPLString osCachedFilename = osBaseURL + pszKey;
-                    //CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
+#if DEBUG_VERBOSE
+                    CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
+#endif
 
                     CachedFileProp* cachedFileProp =
                         GetCachedFileProp(osCachedFilename);
@@ -2764,7 +2766,12 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                     cachedFileProp->bIsDirectory = false;
                     cachedFileProp->mTime = 0;
 
-                    int nYear, nMonth, nDay, nHour, nMin, nSec;
+                    int nYear = 0;
+                    int nMonth = 0;
+                    int nDay = 0;
+                    int nHour = 0;
+                    int nMin = 0;
+                    int nSec = 0;
                     if( sscanf( CPLGetXMLValue(psIter, "LastModified", ""),
                                 "%04d-%02d-%02dT%02d:%02d:%02d",
                                 &nYear, &nMonth, &nDay,

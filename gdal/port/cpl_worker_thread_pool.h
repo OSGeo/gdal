@@ -57,7 +57,7 @@ typedef struct
     CPLWorkerThreadPool *poTP;
     CPLJoinableThread   *hThread;
     int                  bMarkedAsWaiting;
-    //CPLWorkerThreadJob  *psNextJob;
+    // CPLWorkerThreadJob  *psNextJob;
 
     CPLMutex            *hMutex;
     CPLCond             *hCond;

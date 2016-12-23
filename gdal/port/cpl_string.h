@@ -395,16 +395,16 @@ public:
     }
 
     /** Return last character (undefined behaviour if string is empty) */
-    // Note: this is standard in C++11
+    // Note: This is standard in C++11.
     const char& back() const { return operator[](size()-1); }
-    
+
     /** Clear the string */
     void Clear() { resize(0); }
 
     /** Assign specified string and take ownership of it (assumed to be
      * allocated with CPLMalloc()). NULL can be safely passed to clear the
      * string. */
-    void Seize(char *pszValue)
+    void Seize( char *pszValue )
     {
         if (pszValue == NULL )
             Clear();

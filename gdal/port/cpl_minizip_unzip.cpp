@@ -1498,10 +1498,10 @@ extern uLong64 ZEXPORT cpl_unzGetCurrentFileZStreamPos( unzFile file)
     file_in_zip_read_info_s* pfile_in_zip_read_info;
     s=(unz_s*)file;
     if (file==NULL)
-        return 0; //UNZ_PARAMERROR;
+        return 0;  // UNZ_PARAMERROR;
     pfile_in_zip_read_info=s->pfile_in_zip_read;
     if (pfile_in_zip_read_info==NULL)
-        return 0; //UNZ_PARAMERROR;
+        return 0;  // UNZ_PARAMERROR;
     return pfile_in_zip_read_info->pos_in_zipfile +
                          pfile_in_zip_read_info->byte_before_the_zipfile;
 }
@@ -1836,13 +1836,13 @@ extern int ZEXPORT cpl_unzGetGlobalComment (unzFile file, char * szComment, uLon
     return static_cast<int>(uReadThis);
 }
 
-/* Additions by RX '2004 */
+// Additions by RX '2004.
 extern uLong64 ZEXPORT cpl_unzGetOffset (unzFile file)
 {
     unz_s* s;
 
     if (file==NULL)
-          return 0; //UNZ_PARAMERROR;
+          return 0;  // UNZ_PARAMERROR;
     s=(unz_s*)file;
     if (!s->current_file_ok)
       return 0;

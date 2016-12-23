@@ -109,7 +109,7 @@ DECLARE_SYMBOL(freopen, FILE*, (const char *path, const char *mode,
 
 DECLARE_SYMBOL(open, int, (const char *path, int flags, mode_t mode));
 DECLARE_SYMBOL(open64, int, (const char *path, int flags, mode_t mode));
-//DECLARE_SYMBOL(creat, int, (const char *path, mode_t mode));
+// DECLARE_SYMBOL(creat, int, (const char *path, mode_t mode));
 DECLARE_SYMBOL(close, int, (int fd));
 DECLARE_SYMBOL(read, ssize_t, (int fd, void *buf, size_t count));
 DECLARE_SYMBOL(write, ssize_t, (int fd, const void *buf, size_t count));
@@ -404,7 +404,7 @@ static void copyVSIStatBufLToBuf64( VSIStatBufL *bufSrc, struct stat64 *buf )
     buf->st_ino = bufSrc->st_ino;
     // S_IXUSR | S_IXGRP | S_IXOTH;
     buf->st_mode = bufSrc->st_mode | S_IRUSR | S_IRGRP | S_IROTH;
-    buf->st_nlink = 1; //bufSrc->st_nlink;
+    buf->st_nlink = 1; // bufSrc->st_nlink;
     buf->st_uid = bufSrc->st_uid;
     buf->st_gid = bufSrc->st_gid;
     buf->st_rdev = bufSrc->st_rdev;

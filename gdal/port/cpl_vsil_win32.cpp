@@ -542,10 +542,12 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
                                                    bool /* bSetError */ )
 
 {
-    DWORD dwDesiredAccess, dwCreationDisposition, dwFlagsAndAttributes;
+    DWORD dwDesiredAccess;
+    DWORD dwCreationDisposition;
+    DWORD dwFlagsAndAttributes;
     HANDLE hFile;
 
-    // GENERICs are used instead of FILE_GENERIC_READ
+    // GENERICs are used instead of FILE_GENERIC_READ.
     dwDesiredAccess = GENERIC_READ;
     if (strchr(pszAccess, '+') != NULL || strchr(pszAccess, 'w') != NULL)
         dwDesiredAccess |= GENERIC_WRITE;
@@ -578,8 +580,11 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
             }
             if( nVersion < 1 * 10000 + 7 * 100 + 4 )
             {
-                //CPLDebug("VSI", "Wine %s detected. Append mode needs FILE_WRITE_DATA",
-                //         pszWineVersion);
+#if DEBUG_VERBOSE
+                CPLDebug("VSI",
+                         "Wine %s detected. Append mode needs FILE_WRITE_DATA",
+                         pszWineVersion);
+#endif
                 dwDesiredAccess |= FILE_WRITE_DATA;
             }
         }
@@ -722,7 +727,7 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
         {
             // _wstat64 doesn't like \\?\ paths, so do our poor-man
             // stat like.
-            //nResult = _wstat64( pwszFilename, pStatBuf );
+            // nResult = _wstat64( pwszFilename, pStatBuf );
 
             VSIVirtualHandle* poHandle = Open( pszFilename, "rb");
             if( poHandle != NULL )
