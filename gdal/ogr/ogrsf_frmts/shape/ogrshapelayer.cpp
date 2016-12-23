@@ -45,6 +45,89 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
+/*                      OGRShapeHeapObjectHooks()                       */
+/*                                                                      */
+/*      SAHeapObjectHooks provides a heap allocation mechanism for      */
+/*      override the default malloc/free routines called in pair        */
+/*      'SHPReadObjectH/SHPDestroyObjectH' functions.                   */
+/*                                                                      */
+/*      We override this hook for share a memory buffer between the     */
+/*      consecutive object readings and therefore optimize the memory   */
+/*      management.                                                     */
+/*      The pair 'SHPReadObjectH/SHPDestroyObjectH' function must be    */
+/*      called only once per object.                                    */
+/************************************************************************/
+
+// Heap manager for optimize memory allocations in 'SHPReadObjectH/SHPDestroyObjectH'
+class OGRShapeHeapObjectHooks : public SAHeapObjectHooks
+{
+public:
+    OGRShapeHeapObjectHooks() : mMemoryBuffer( NULL ), mMemorySize( 0 ), mLocked( false )
+    {
+        FCalloc = OGRShapeHeapObjectHooks::hook_calloc;
+        FFree   = OGRShapeHeapObjectHooks::hook_free;
+    }
+   ~OGRShapeHeapObjectHooks()
+    {
+        freeMem();
+    }
+private:
+    void * mMemoryBuffer;
+    size_t mMemorySize;
+    bool   mLocked;
+
+    // Free allocated memory
+    void freeMem()
+    {
+        if ( mMemoryBuffer )
+        {
+            OGRFree( mMemoryBuffer );
+            mMemoryBuffer = NULL;
+            mMemorySize = 0;
+            mLocked = false;
+        }
+    }
+
+    // Helper hook functions
+    static void *hook_calloc( void *thisHook, size_t num, size_t size )
+    {
+        return ((OGRShapeHeapObjectHooks*)thisHook)->sharedCalloc( num, size );
+    }
+    static void hook_free( void *thisHook, void *memblock )
+    {
+        return ((OGRShapeHeapObjectHooks*)thisHook)->sharedFree( memblock );
+    }
+
+    // Allocates shared memory blocks
+    void *sharedCalloc( size_t num, size_t size )
+    {
+        if ( mLocked )
+            throw "The pair 'SHPReadObjectH/SHPDestroyObjectH' must be called only once per object";
+
+        if ( mMemoryBuffer && mMemorySize < (num*size) ) 
+            freeMem();
+
+        if ( !mMemoryBuffer )
+        {
+            mMemoryBuffer = OGRCalloc( num, size );
+            mMemorySize = num * size;
+        }
+        else
+        {
+            memset( mMemoryBuffer, 0, num * size );
+        }
+        mLocked = true;
+
+        return mMemoryBuffer;
+    }
+    // Deallocates or frees shared memory blocks
+    void sharedFree( void *memblock )
+    {
+        mLocked = false;
+    }
+};
+
+/************************************************************************/
 /*                           OGRShapeLayer()                            */
 /************************************************************************/
 
@@ -132,6 +215,8 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
 
     poFeatureDefn = SHPReadOGRFeatureDefn( CPLGetBasename(pszFullName),
                                            hSHP, hDBF, osEncoding );
+
+    m_poHeapObjectHooks = new OGRShapeHeapObjectHooks();
 }
 
 /************************************************************************/
@@ -175,6 +260,12 @@ OGRShapeLayer::~OGRShapeLayer()
 
     if( hSBN != NULL )
         SBNCloseDiskTree( hSBN );
+
+    if( m_poHeapObjectHooks )
+    {
+        delete m_poHeapObjectHooks;
+        m_poHeapObjectHooks = NULL;
+    }
 }
 
 /************************************************************************/
@@ -619,7 +710,7 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId /*, OGREnvelope* psShapeExten
     {
         SHPObject   *psShape;
         
-        psShape = SHPReadObject( hSHP, iShapeId );
+        psShape = SHPReadObjectH( hSHP, iShapeId, m_poHeapObjectHooks );
 
         // do not trust degenerate bounds on non-point geometries
         // or bounds on null shapes.
@@ -632,14 +723,14 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId /*, OGREnvelope* psShapeExten
             || psShape->nSHPType == SHPT_NULL )
         {
             poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
-                                           iShapeId, psShape, osEncoding );
+                                           iShapeId, psShape, m_poHeapObjectHooks, osEncoding );
         }
         else if( m_sFilterEnvelope.MaxX < psShape->dfXMin 
                  || m_sFilterEnvelope.MaxY < psShape->dfYMin
                  || psShape->dfXMax  < m_sFilterEnvelope.MinX
                  || psShape->dfYMax < m_sFilterEnvelope.MinY ) 
         {
-            SHPDestroyObject(psShape);
+            SHPDestroyObjectH( psShape, m_poHeapObjectHooks );
             poFeature = NULL;
         } 
         else 
@@ -649,13 +740,13 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId /*, OGREnvelope* psShapeExten
             psShapeExtent->MaxX = psShape->dfXMax;
             psShapeExtent->MaxY = psShape->dfYMax;*/
             poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
-                                           iShapeId, psShape, osEncoding );
+                                           iShapeId, psShape, m_poHeapObjectHooks, osEncoding );
         }                
     } 
     else 
     {
         poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
-                                       iShapeId, NULL, osEncoding );
+                                       iShapeId, NULL, m_poHeapObjectHooks, osEncoding );
     }    
     
     return poFeature;
@@ -759,7 +850,7 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
         return NULL;
 
     OGRFeature *poFeature = NULL;
-    poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId, NULL,
+    poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId, NULL, m_poHeapObjectHooks,
                                    osEncoding );
 
     if( poFeature != NULL )
@@ -1040,7 +1131,7 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
 
         /* Read full shape for point layers */
         if (bExpectPoints)
-            psShape = SHPReadObject( hSHP, iShape);
+            psShape = SHPReadObjectH( hSHP, iShape, m_poHeapObjectHooks );
 
 /* -------------------------------------------------------------------- */
 /*      Only read feature type and bounding box for now. In case of     */
@@ -1092,10 +1183,10 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                 /* We need to read the full geometry */
                 /* to compute the envelope */
                 if (psShape == &sShape)
-                    psShape = SHPReadObject( hSHP, iShape);
+                    psShape = SHPReadObjectH( hSHP, iShape, m_poHeapObjectHooks );
                 if (psShape)
                 {
-                    poGeometry = SHPReadOGRObject( hSHP, iShape, psShape );
+                    poGeometry = SHPReadOGRObject( hSHP, iShape, psShape, m_poHeapObjectHooks );
                     poGeometry->getEnvelope( &sGeomEnv );
                     psShape = NULL;
                 }
@@ -1145,11 +1236,10 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                     if (poGeometry == NULL)
                     {
                         if (psShape == &sShape)
-                            psShape = SHPReadObject( hSHP, iShape);
+                            psShape = SHPReadObjectH( hSHP, iShape, m_poHeapObjectHooks );
                         if (psShape)
                         {
-                            poGeometry =
-                                SHPReadOGRObject( hSHP, iShape, psShape );
+                            poGeometry = SHPReadOGRObject( hSHP, iShape, psShape, m_poHeapObjectHooks );
                             psShape = NULL;
                         }
                     }
@@ -1176,7 +1266,7 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
             nFeatureCount ++;
 
         if (psShape && psShape != &sShape)
-            SHPDestroyObject( psShape );
+            SHPDestroyObjectH( psShape, m_poHeapObjectHooks );
     }
 
     return nFeatureCount;
@@ -2313,14 +2403,14 @@ OGRErr OGRShapeLayer::Repack()
             {
                 SHPObject *hObject;
 
-                hObject = SHPReadObject( hSHP, iShape );
+                hObject = SHPReadObjectH( hSHP, iShape, m_poHeapObjectHooks );
                 if( hObject == NULL )
                     eErr = OGRERR_FAILURE;
                 else if( SHPWriteObject( hNewSHP, -1, hObject ) == -1 )
                     eErr = OGRERR_FAILURE;
 
                 if( hObject )
-                    SHPDestroyObject( hObject );
+                    SHPDestroyObjectH( hObject, m_poHeapObjectHooks );
             }
         }
 
@@ -2580,7 +2670,7 @@ OGRErr OGRShapeLayer::RecomputeExtent()
     {
         if( hDBF == NULL || !DBFIsRecordDeleted( hDBF, iShape ) )
         {
-            SHPObject *psObject = SHPReadObject( hSHP, iShape );
+            SHPObject *psObject = SHPReadObjectH( hSHP, iShape, m_poHeapObjectHooks );
             if ( psObject != NULL &&
                  psObject->nSHPType != SHPT_NULL &&
                  psObject->nVertices != 0 )
@@ -2606,7 +2696,7 @@ OGRErr OGRShapeLayer::RecomputeExtent()
                     adBoundsMax[3] = MAX(adBoundsMax[3],psObject->padfM[i]);
                 }
             }
-            SHPDestroyObject(psObject);
+            SHPDestroyObjectH( psObject, m_poHeapObjectHooks );
         }
     }
 

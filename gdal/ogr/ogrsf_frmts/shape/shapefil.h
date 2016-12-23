@@ -243,7 +243,7 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #endif
 
 /* -------------------------------------------------------------------- */
-/*      IO/Error hook functions.                                        */
+/*      IO/Error/Heap hook functions.                                   */
 /* -------------------------------------------------------------------- */
 typedef int *SAFile;
 
@@ -269,6 +269,12 @@ void SHPAPI_CALL SASetupDefaultHooks( SAHooks *psHooks );
 #ifdef SHPAPI_UTF8_HOOKS
 void SHPAPI_CALL SASetupUtf8Hooks( SAHooks *psHooks );
 #endif
+
+// Support for override default routines to allocate and free memory in pair 'SHPReadObjectH/SHPDestroyObjectH'.
+typedef struct {
+    void*      (*FCalloc) ( void *thisHook, size_t num, size_t size );
+    void       (*FFree)   ( void *thisHook, void *memblock );
+} SAHeapObjectHooks;
 
 /************************************************************************/
 /*                             SHP Support.                             */
@@ -386,11 +392,15 @@ void SHPAPI_CALL
 
 SHPObject SHPAPI_CALL1(*)
       SHPReadObject( SHPHandle hSHP, int iShape );
+SHPObject SHPAPI_CALL1(*)
+      SHPReadObjectH( SHPHandle hSHP, int iShape, SAHeapObjectHooks * psHeapHooks );
 int SHPAPI_CALL
       SHPWriteObject( SHPHandle hSHP, int iShape, SHPObject * psObject );
 
 void SHPAPI_CALL
       SHPDestroyObject( SHPObject * psObject );
+void SHPAPI_CALL
+      SHPDestroyObjectH( SHPObject * psObject, SAHeapObjectHooks * psHeapHooks );
 void SHPAPI_CALL
       SHPComputeExtents( SHPObject * psObject );
 SHPObject SHPAPI_CALL1(*)
