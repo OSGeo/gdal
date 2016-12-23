@@ -1452,7 +1452,8 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * to embed as CDATA within an XML element.  The '\\0' is not escaped and 
  * should not be included in the input.
  *
- * CPLES_URL(2): Everything except alphanumerics and the underscore are 
+ * CPLES_URL(2): Everything except alphanumerics and the characters 
+ * '$', '-', '_', '.', '+', '!', '*', ''', '(', ')' and ',' (see RFC1738) are 
  * converted to a percent followed by a two digit hex encoding of the character
  * (leading zero supplied if needed).  This is the mechanism used for encoding
  * values to be passed in URLs.
@@ -1528,7 +1529,12 @@ char *CPLEscapeString( const char *pszInput, int nLength,
             if( (pszInput[iIn] >= 'a' && pszInput[iIn] <= 'z')
                 || (pszInput[iIn] >= 'A' && pszInput[iIn] <= 'Z')
                 || (pszInput[iIn] >= '0' && pszInput[iIn] <= '9')
-                || pszInput[iIn] == '_' || pszInput[iIn] == '.' )
+                || pszInput[iIn] == '$' || pszInput[iIn] == '-'
+                || pszInput[iIn] == '_' || pszInput[iIn] == '.' 
+                || pszInput[iIn] == '+' || pszInput[iIn] == '!'
+                || pszInput[iIn] == '*' || pszInput[iIn] == '\''
+                || pszInput[iIn] == '(' || pszInput[iIn] == ')'
+                || pszInput[iIn] == '"' || pszInput[iIn] == ',' )
             {
                 pszOutput[iOut++] = pszInput[iIn];
             }
