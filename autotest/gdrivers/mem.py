@@ -615,6 +615,81 @@ def mem_10():
     return 'success'
 
 ###############################################################################
+# Test CreateMaskBand()
+
+def mem_11():
+
+    # Error case: building overview on a 0 band dataset
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 0 )
+    if ds.CreateMaskBand(gdal.GMF_PER_DATASET) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Per dataset mask on single band dataset
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1 )
+    if ds.CreateMaskBand(gdal.GMF_PER_DATASET) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMaskFlags() != gdal.GMF_PER_DATASET:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    mask = ds.GetRasterBand(1).GetMaskBand()
+    cs = mask.Checksum()
+    if cs != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    mask.Fill(255)
+    cs = mask.Checksum()
+    if cs != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check that the per dataset mask is shared by all bands
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2 )
+    if ds.CreateMaskBand(gdal.GMF_PER_DATASET) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    mask1 = ds.GetRasterBand(1).GetMaskBand()
+    mask1.Fill(255)
+    mask2 = ds.GetRasterBand(2).GetMaskBand()
+    cs = mask2.Checksum()
+    if cs != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Same but call it on band 2
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2 )
+    if ds.GetRasterBand(2).CreateMaskBand(gdal.GMF_PER_DATASET) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    mask2 = ds.GetRasterBand(2).GetMaskBand()
+    mask2.Fill(255)
+    mask1 = ds.GetRasterBand(1).GetMaskBand()
+    cs = mask1.Checksum()
+    if cs != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Per band masks
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2 )
+    if ds.GetRasterBand(1).CreateMaskBand(0) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).CreateMaskBand(0) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    mask1 = ds.GetRasterBand(1).GetMaskBand()
+    mask2 = ds.GetRasterBand(2).GetMaskBand()
+    mask2.Fill(255)
+    cs1 = mask1.Checksum()
+    cs2 = mask2.Checksum()
+    if cs1 != 0 or cs2 != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def mem_cleanup():
@@ -633,6 +708,7 @@ gdaltest_list = [
     mem_8,
     mem_9,
     mem_10,
+    mem_11,
     mem_cleanup ]
 
 if __name__ == '__main__':

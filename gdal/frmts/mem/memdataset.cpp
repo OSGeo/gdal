@@ -83,6 +83,37 @@ GDALRasterBandH MEMCreateRasterBandEx( GDALDataset *poDS, int nBand,
 /*                           MEMRasterBand()                            */
 /************************************************************************/
 
+MEMRasterBand::MEMRasterBand( GByte *pabyDataIn, GDALDataType eTypeIn,
+                              int nXSizeIn, int nYSizeIn ) :
+    GDALPamRasterBand(FALSE),
+    pabyData(pabyDataIn),
+    nPixelOffset(0),
+    nLineOffset(0),
+    bOwnData(true),
+    bNoDataSet(FALSE),
+    dfNoData(0.0),
+    poColorTable(NULL),
+    eColorInterp(GCI_Undefined),
+    pszUnitType(NULL),
+    papszCategoryNames(NULL),
+    dfOffset(0.0),
+    dfScale(1.0),
+    psSavedHistograms(NULL)
+{
+    eAccess = GA_Update;
+    eDataType = eTypeIn;
+    nRasterXSize = nXSizeIn;
+    nRasterYSize = nYSizeIn;
+    nBlockXSize = nXSizeIn;
+    nBlockYSize = 1;
+    nPixelOffset = GDALGetDataTypeSizeBytes(eTypeIn);
+    nLineOffset = nPixelOffset * static_cast<size_t>(nBlockXSize);
+}
+
+/************************************************************************/
+/*                           MEMRasterBand()                            */
+/************************************************************************/
+
 MEMRasterBand::MEMRasterBand( GDALDataset *poDSIn, int nBandIn,
                               GByte *pabyDataIn, GDALDataType eTypeIn,
                               GSpacing nPixelOffsetIn, GSpacing nLineOffsetIn,
@@ -716,6 +747,47 @@ GDALRasterBand * MEMRasterBand::GetOverview( int i )
 }
 
 /************************************************************************/
+/*                         CreateMaskBand()                             */
+/************************************************************************/
+
+CPLErr MEMRasterBand::CreateMaskBand( int nFlagsIn )
+{
+    InvalidateMaskBand();
+
+    MEMDataset* poMemDS = dynamic_cast<MEMDataset*>(poDS);
+    if( (nFlagsIn & GMF_PER_DATASET) != 0 && nBand != 1 && poMemDS != NULL )
+    {
+        MEMRasterBand* poFirstBand =
+            reinterpret_cast<MEMRasterBand*>(poMemDS->GetRasterBand(1));
+        if( poFirstBand != NULL)
+            return poFirstBand->CreateMaskBand( nFlagsIn );
+    }
+
+    GByte* pabyMaskData = static_cast<GByte*>(VSI_CALLOC_VERBOSE(nRasterXSize,
+                                                                 nRasterYSize));
+    if( pabyMaskData == NULL )
+        return CE_Failure;
+
+    nMaskFlags = nFlagsIn;
+    bOwnMask = true;
+    poMask = new MEMRasterBand( pabyMaskData, GDT_Byte,
+                                nRasterXSize, nRasterYSize );
+    if( (nFlagsIn & GMF_PER_DATASET) != 0 && nBand == 1 && poMemDS != NULL )
+    {
+        for( int i = 2; i <= poMemDS->GetRasterCount(); ++i )
+        {
+            MEMRasterBand* poOtherBand = 
+                reinterpret_cast<MEMRasterBand*>(poMemDS->GetRasterBand(i));
+            poOtherBand->InvalidateMaskBand();
+            poOtherBand->nMaskFlags = nFlagsIn;
+            poOtherBand->bOwnMask = false;
+            poOtherBand->poMask = poMask;
+        }
+    }
+    return CE_None;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*      MEMDataset                                                     */
 /* ==================================================================== */
@@ -1147,6 +1219,18 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
     CPLFree( pahBands );
 
     return eErr;
+}
+
+/************************************************************************/
+/*                         CreateMaskBand()                             */
+/************************************************************************/
+
+CPLErr MEMDataset::CreateMaskBand( int nFlagsIn )
+{
+    GDALRasterBand* poFirstBand = GetRasterBand(1);
+    if( poFirstBand == NULL )
+        return CE_Failure;
+    return poFirstBand->CreateMaskBand( nFlagsIn | GMF_PER_DATASET );
 }
 
 /************************************************************************/

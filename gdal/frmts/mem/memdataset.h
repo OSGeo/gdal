@@ -106,6 +106,8 @@ class CPL_DLL MEMDataset : public GDALDataset
                                      GDALProgressFunc pfnProgress,
                                      void * pProgressData ) CPL_OVERRIDE;
 
+    virtual CPLErr          CreateMaskBand( int nFlagsIn ) CPL_OVERRIDE;
+
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -118,6 +120,10 @@ class CPL_DLL MEMDataset : public GDALDataset
 
 class CPL_DLL MEMRasterBand : public GDALPamRasterBand
 {
+  private:
+                MEMRasterBand( GByte *pabyDataIn, GDALDataType eTypeIn,
+                               int nXSizeIn, int nYSizeIn );
+
   protected:
     friend      class MEMDataset;
 
@@ -188,6 +194,8 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
 
     virtual int GetOverviewCount() CPL_OVERRIDE;
     virtual GDALRasterBand *GetOverview(int) CPL_OVERRIDE;
+
+    virtual CPLErr          CreateMaskBand( int nFlagsIn ) CPL_OVERRIDE;
 
     // Allow access to MEM driver's private internal memory buffer.
     GByte *GetData() const { return(pabyData); }
