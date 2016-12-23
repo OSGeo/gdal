@@ -436,8 +436,8 @@ GBool PostGISRasterDataset::SetRasterProperties
             osCommand.Printf(
                 "select srid, nbband, st_xmin(geom) as xmin, st_xmax(geom) as xmax, "
                 "st_ymin(geom) as ymin, st_ymax(geom) as ymax from (select st_srid(%s) srid, "
-                "st_extent(%s::geometry) geom, max(ST_NumBands(rast)) nbband from %s.%s "
-                "group by st_srid(%s)) foo", pszColumn, pszColumn, pszSchema, 
+                "st_extent(%s::geometry) geom, max(ST_NumBands(%s)) nbband from %s.%s "
+                "group by st_srid(%s)) foo", pszColumn, pszColumn, pszColumn, pszSchema, 
                 pszTable, pszColumn);
         }
 
@@ -445,8 +445,9 @@ GBool PostGISRasterDataset::SetRasterProperties
             osCommand.Printf(
                 "select srid, nbband, st_xmin(geom) as xmin, st_xmax(geom) as xmax, "
                 "st_ymin(geom) as ymin, st_ymax(geom) as ymax from (select st_srid(%s) srid, "
-                "st_extent(%s::geometry) geom, max(ST_NumBands(rast)) nbband from %s.%s "
-                "where %s group by st_srid(%s)) foo", pszColumn, pszColumn, pszSchema, 
+                "st_extent(%s::geometry) geom, max(ST_NumBands(%s)) nbband from %s.%s "
+                "where %s group by st_srid(%s)) foo", pszColumn, pszColumn,
+                pszColumn, pszSchema, 
                 pszTable, pszWhere, pszColumn);
         }
 
@@ -701,21 +702,25 @@ GBool PostGISRasterDataset::SetRasterProperties
         
         /* Create query to fetch metadata from db */
         if (pszWhere == NULL) {
-            osCommand.Printf("select st_bandpixeltype(rast, band), "
-                "st_bandnodatavalue(rast, band) is null, "
-                "st_bandnodatavalue(rast, band) from (select %s, "
+            osCommand.Printf("select st_bandpixeltype(%s, band), "
+                "st_bandnodatavalue(%s, band) is null, "
+                "st_bandnodatavalue(%s, band) from (select %s, "
                 "generate_series(1, st_numbands(%s)) band from (select "
-                "rast from %s.%s limit 1) bar) foo",
-                pszColumn, pszColumn, pszSchema, pszTable);
+                "%s from %s.%s limit 1) bar) foo",
+                pszColumn, pszColumn, pszColumn,
+                pszColumn, pszColumn, pszColumn,
+                pszSchema, pszTable);
         } 
 
         else {
-            osCommand.Printf("select st_bandpixeltype(rast, band), "
-                "st_bandnodatavalue(rast, band) is null, "
-                "st_bandnodatavalue(rast, band) from (select %s, "
+            osCommand.Printf("select st_bandpixeltype(%s, band), "
+                "st_bandnodatavalue(%s, band) is null, "
+                "st_bandnodatavalue(%s, band) from (select %s, "
                 "generate_series(1, st_numbands(%s)) band from (select "
-                "rast from %s.%s where %s limit 1) bar) foo",
-                pszColumn, pszColumn, pszSchema, pszTable, pszWhere);
+                "%s from %s.%s where %s limit 1) bar) foo",
+                pszColumn, pszColumn, pszColumn,
+                pszColumn, pszColumn, pszColumn,
+                pszSchema, pszTable, pszWhere);
         }
 
         CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
