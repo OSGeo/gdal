@@ -48,8 +48,6 @@
 
 CPL_CVSID("$Id$");
 
-using std::vector;
-
 /************************************************************************/
 /* ==================================================================== */
 /*                             GDALOpenInfo                             */
@@ -200,7 +198,7 @@ retry:  // TODO(schwehr): Stop using goto.
             // my_remote_utm.tif.  This helps a lot for GDAL based readers that
             // only provide file explorers to open datasets.
             const int nBufSize = 2048;
-            vector<char> oFilename(nBufSize);
+            std::vector<char> oFilename(nBufSize);
             char *szPointerFilename = &oFilename[0];
             int nBytes = static_cast<int>(
                 readlink( pszFilename, szPointerFilename, nBufSize ) );
