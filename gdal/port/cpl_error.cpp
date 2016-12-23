@@ -44,7 +44,7 @@
 #include "cpl_vsi.h"
 
 #define TIMESTAMP_DEBUG
-//#define MEMORY_DEBUG
+// #define MEMORY_DEBUG
 
 CPL_CVSID("$Id$");
 

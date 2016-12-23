@@ -142,26 +142,26 @@ typedef enum
     ALG_AES,
     ALG_Blowfish,
     ALG_Camellia,
-    //ALG_CAST128, (obsolete)
+    // ALG_CAST128, (obsolete)
     ALG_CAST256,
-    //ALG_DES, (obsolete)
+    // ALG_DES, (obsolete)
     ALG_DES_EDE2,
     ALG_DES_EDE3,
-    //ALG_DES_XEX3, (obsolete)
-    //ALG_Gost, (obsolete)
+    // ALG_DES_XEX3, (obsolete)
+    // ALG_Gost, (obsolete)
     ALG_MARS,
     ALG_IDEA,
-    //ALG_RC2, (obsolete)
+    // ALG_RC2, (obsolete)
     ALG_RC5,
     ALG_RC6,
-    //ALG_SAFER_K, (obsolete)
-    //ALG_SAFER_SK, (obsolete)
+    // ALG_SAFER_K, (obsolete)
+    // ALG_SAFER_SK, (obsolete)
     ALG_Serpent,
     ALG_SHACAL2,
-    //ALG_SHARK, (obsolete)
+    // ALG_SHARK, (obsolete)
     ALG_SKIPJACK,
     ALG_Twofish,
-    //ALG_ThreeWay, (obsolete)
+    // ALG_ThreeWay, (obsolete)
     ALG_XTEA,
     ALG_MAX = ALG_XTEA
 } VSICryptAlg;
@@ -229,25 +229,25 @@ static VSICryptAlg GetAlg( const char* pszName )
     CASE_ALG(AES)
     CASE_ALG(Blowfish)
     CASE_ALG(Camellia)
-    //CASE_ALG(CAST128) (obsolete)
+    // CASE_ALG(CAST128) (obsolete)
     CASE_ALG(CAST256)
-    //CASE_ALG(DES) (obsolete)
+    // CASE_ALG(DES) (obsolete)
     CASE_ALG(DES_EDE2)
     CASE_ALG(DES_EDE3)
-    //CASE_ALG(DES_XEX3) (obsolete)
-    //CASE_ALG(Gost) (obsolete)
+    // CASE_ALG(DES_XEX3) (obsolete)
+    // CASE_ALG(Gost) (obsolete)
     CASE_ALG(MARS)
     CASE_ALG(IDEA)
-    //CASE_ALG(RC2) (obsolete)
+    // CASE_ALG(RC2) (obsolete)
     CASE_ALG(RC5)
     CASE_ALG(RC6)
-    //CASE_ALG(SAFER_K) (obsolete)
-    //CASE_ALG(SAFER_SK) (obsolete)
+    // CASE_ALG(SAFER_K) (obsolete)
+    // CASE_ALG(SAFER_SK) (obsolete)
     CASE_ALG(Serpent)
     CASE_ALG(SHACAL2)
-    //CASE_ALG(SHARK) (obsolete)
+    // CASE_ALG(SHARK) (obsolete)
     CASE_ALG(SKIPJACK)
-    //CASE_ALG(ThreeWay) (obsolete)
+    // CASE_ALG(ThreeWay) (obsolete)
     CASE_ALG(Twofish)
     CASE_ALG(XTEA)
 
@@ -271,29 +271,29 @@ static CryptoPP::BlockCipher* GetEncBlockCipher( VSICryptAlg eAlg )
 #ifndef USE_ONLY_CRYPTODLL_ALG
         CASE_ALG(Blowfish)
         CASE_ALG(Camellia)
-        //CASE_ALG(CAST128) (obsolete)
+        // CASE_ALG(CAST128) (obsolete)
         CASE_ALG(CAST256)
 #endif
-        //CASE_ALG(DES) (obsolete)
+        // CASE_ALG(DES) (obsolete)
         CASE_ALG(DES_EDE2)
         CASE_ALG(DES_EDE3)
-        //CASE_ALG(DES_XEX3) (obsolete)
+        // CASE_ALG(DES_XEX3) (obsolete)
 #ifndef USE_ONLY_CRYPTODLL_ALG
-        //CASE_ALG(Gost) (obsolete)
+        // CASE_ALG(Gost) (obsolete)
         CASE_ALG(MARS)
         CASE_ALG(IDEA)
-        //CASE_ALG(RC2) (obsolete)
+        // CASE_ALG(RC2) (obsolete)
         CASE_ALG(RC5)
         CASE_ALG(RC6)
-        //CASE_ALG(SAFER_K) (obsolete)
-        //CASE_ALG(SAFER_SK) (obsolete)
+        // CASE_ALG(SAFER_K) (obsolete)
+        // CASE_ALG(SAFER_SK) (obsolete)
         CASE_ALG(Serpent)
         CASE_ALG(SHACAL2)
-        //CASE_ALG(SHARK) (obsolete)
+        // CASE_ALG(SHARK) (obsolete)
 #endif
         CASE_ALG(SKIPJACK)
 #ifndef USE_ONLY_CRYPTODLL_ALG
-        //CASE_ALG(ThreeWay) (obsolete)
+        // CASE_ALG(ThreeWay) (obsolete)
         CASE_ALG(Twofish)
         CASE_ALG(XTEA)
 #endif
@@ -316,29 +316,29 @@ static CryptoPP::BlockCipher* GetDecBlockCipher( VSICryptAlg eAlg )
 #ifndef USE_ONLY_CRYPTODLL_ALG
         CASE_ALG(Blowfish)
         CASE_ALG(Camellia)
-        //CASE_ALG(CAST128) (obsolete)
+        // CASE_ALG(CAST128) (obsolete)
         CASE_ALG(CAST256)
 #endif
-        //CASE_ALG(DES) (obsolete)
+        // CASE_ALG(DES) (obsolete)
         CASE_ALG(DES_EDE2)
         CASE_ALG(DES_EDE3)
-        //CASE_ALG(DES_XEX3) (obsolete)
+        // CASE_ALG(DES_XEX3) (obsolete)
 #ifndef USE_ONLY_CRYPTODLL_ALG
-        //CASE_ALG(Gost) (obsolete)
+        // CASE_ALG(Gost) (obsolete)
         CASE_ALG(MARS)
         CASE_ALG(IDEA)
-        //CASE_ALG(RC2) (obsolete)
+        // CASE_ALG(RC2) (obsolete)
         CASE_ALG(RC5)
         CASE_ALG(RC6)
-        //CASE_ALG(SAFER_K) (obsolete)
-        //CASE_ALG(SAFER_SK) (obsolete)
+        // CASE_ALG(SAFER_K) (obsolete)
+        // CASE_ALG(SAFER_SK) (obsolete)
         CASE_ALG(Serpent)
         CASE_ALG(SHACAL2)
-        //CASE_ALG(SHARK) (obsolete)
+        // CASE_ALG(SHARK) (obsolete)
 #endif
         CASE_ALG(SKIPJACK)
 #ifndef USE_ONLY_CRYPTODLL_ALG
-        //CASE_ALG(ThreeWay) (obsolete)
+        // CASE_ALG(ThreeWay) (obsolete)
         CASE_ALG(Twofish)
         CASE_ALG(XTEA)
 #endif
@@ -2058,9 +2058,9 @@ void VSIInstallCryptFileHandler(void)
 #endif
 }
 
-//#ifdef _MSC_VER
-//#pragma warning( pop ) /* 5105 */
-//#endif
+// #ifdef _MSC_VER
+// #pragma warning( pop ) /* 5105 */
+// #endif
 
 #else /* HAVE_CRYPTOPP */
 

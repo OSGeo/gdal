@@ -61,7 +61,7 @@ CPL_CVSID("$Id$");
 #  define MUTEX_NONE
 #endif
 
-//#define DEBUG_MUTEX
+// #define DEBUG_MUTEX
 
 #if defined(DEBUG) && (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
 #ifndef DEBUG_CONTENTION

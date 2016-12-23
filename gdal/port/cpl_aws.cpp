@@ -38,7 +38,7 @@
 
 CPL_CVSID("$Id$");
 
-//#define DEBUG_VERBOSE 1
+// #define DEBUG_VERBOSE 1
 
 /************************************************************************/
 /*                         CPLGetLowerCaseHex()                         */

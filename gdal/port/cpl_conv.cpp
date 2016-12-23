@@ -76,7 +76,7 @@
 #include "cpl_vsi.h"
 
 // Uncomment to get list of options that have been fetched and set.
-//#define DEBUG_CONFIG_OPTIONS
+// #define DEBUG_CONFIG_OPTIONS
 
 #ifdef DEBUG_CONFIG_OPTIONS
 
