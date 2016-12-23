@@ -180,6 +180,7 @@ OGRGeometryH CPL_DLL OGR_G_GetBoundary( OGRGeometryH ) CPL_WARN_DEPRECATED("Non 
 
 /* Methods for getting/setting vertices in points, line strings and rings */
 int    CPL_DLL OGR_G_GetPointCount( OGRGeometryH );
+void   CPL_DLL OGR_G_SetPointCount( OGRGeometryH hGeom, int nNewPointCount );
 int    CPL_DLL OGR_G_GetPoints( OGRGeometryH hGeom,
                                 void* pabyX, int nXStride,
                                 void* pabyY, int nYStride,
@@ -195,6 +196,10 @@ void   CPL_DLL OGR_G_SetPoint_2D( OGRGeometryH, int iPoint,
                                   double, double );
 void   CPL_DLL OGR_G_AddPoint( OGRGeometryH, double, double, double );
 void   CPL_DLL OGR_G_AddPoint_2D( OGRGeometryH, double, double );
+void   CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
+                                void* pabyX, int nXStride,
+                                void* pabyY, int nYStride,
+                                void* pabyZ, int nZStride );
 
 /* Methods for getting/setting rings and members collections */
 
