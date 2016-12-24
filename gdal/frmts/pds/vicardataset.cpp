@@ -164,12 +164,13 @@ int VICARDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->pabyHeader == NULL )
         return FALSE;
 
+    char *pszHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
     return
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "LBLSIZE" ) != NULL &&
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "FORMAT" ) != NULL &&
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NL" ) != NULL &&
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NS" ) != NULL &&
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NB" ) != NULL;
+        strstr(pszHeader, "LBLSIZE") != NULL &&
+        strstr(pszHeader, "FORMAT") != NULL &&
+        strstr(pszHeader, "NL") != NULL &&
+        strstr(pszHeader, "NS") != NULL &&
+        strstr(pszHeader, "NB") != NULL;
 }
 
 /************************************************************************/
@@ -179,7 +180,7 @@ int VICARDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 {
 /* -------------------------------------------------------------------- */
-/*      Does this look like a VICAR dataset?                             */
+/*      Does this look like a VICAR dataset?                            */
 /* -------------------------------------------------------------------- */
     if( !Identify( poOpenInfo ) )
         return NULL;
