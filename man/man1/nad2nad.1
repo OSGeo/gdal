@@ -1,0 +1,195 @@
+.\" release 4
+.nr LL 5.5i
+.ad b
+.hy 1
+.TH NAD2NAD 1 "2000/03/21 Rel. 4.4" 
+.SH NAME
+nad2nad \- North American Datum conversion filter
+.SH SYNOPSIS
+.B nad2nad
+[
+.B \-eEfihortwW
+[
+.I args
+] ] [
+.B +args
+]
+file[s]
+.SH DESCRIPTION
+Program
+.B nad2nad
+is a filter to convert data between North
+America Datum 1927 (NAD27) and North American Datum 1983.
+.B nad2nad
+can optionally process both State Plane Coordinate System (SPCS) and
+Universal Transverse Mercator (UTM) grid data as well
+as geographic data for both input and output.  This can also be 
+accomplished with the \fIcs2cs\fR program.
+.PP
+The following control parameters can appear in any order:
+.TP
+.BI \-[i|o] " keyword[,keyword]"
+The
+.B \-i
+and
+.B \-o
+option expect keyword arguments which define various characteristics and
+processing modes of the
+respective input data.
+Usage allows multiple arguments to be included with a \- operator
+when separated by commas.
+Datum conversion requires the data to be in geographic coordinates, but
+.B nad2nad
+will allow conversion of data to and from SPCS or UTM grid systems.
+The following are keywords and arguments recognized by both the
+.B \-i
+and
+.B \-o
+that will apply to respective input and output conversion of user
+data to internal geographic coordinates:
+.RS 1in
+.TP
+.B 27|83
+datum of data
+.TP
+.BI utm= n
+.B UTM
+coordinates in meters for zone
+.I n
+.TP
+.BI spcs= n
+for data in
+.B SPCS
+coordinates, where
+.I n
+is state zone number.
+.TP
+.B feet
+data units are in U.S. Surveyor's feet.
+This is allowed only when the
+.I spcs
+option been previously used.
+Default coordinates are in meters.
+.TP
+.B bin
+for data in binary form.
+.TP
+.B rev
+data in lat-lon order rather than default lon-lat order.
+.TP
+.BI hp= ss
+use high precision conversion zone
+.I ss.
+Certain States have ancillary correction tables to further refine
+the basic conus table.
+.I Ss
+key and States are:
+.RS .5in
+FL Florida
+.br
+MD Maryland
+.br
+TN Tennessee
+.br
+WI Wisconsin
+.br
+WO Washington, Oregon and northern part of California.
+.RE
+.RE
+.TP
+.BI \-t "a"
+.I A
+specifies a character employed as the first character to denote
+a control line to be passed through without processing.
+This option applicable to ascii input only.
+(# is the default value).
+.TP
+.BI \-e " string"
+.I String
+is an arbitrary string to be output if an error is detected during
+data transformations.
+The default value is: *\et*.
+Note that if the
+.B "\-o bin"
+option is employed, an error is output as HUGE_VAL for both values.
+.TP
+.BI \-r " region"
+specifies which regional conversion table to employ which are identified
+by the following:
+.RS .5in
+conus \- conterminous 48 States
+.br
+alaska \- State of Alaska
+.br
+hawaii \- State of Hawaii
+.br
+prvi \- Puerto Rico and Virgin Islands
+.br
+stgeorge \- St. George Is, Alaska
+.br
+stpaul \- St. Paul Is, Alaska
+.br
+stlrnc \- St. Lawrence Is, Alaska
+.TP
+.B \-E
+Input coordinates are echoed to output before ouput values.
+.RE
+.TP
+.BI \-f " format"
+.I Format
+is a
+.I printf
+format string to control the form of the output values.
+For inverse projections, the output will be in degrees when this option
+is employed.
+If a format is specified for inverse projection the
+output data will be in decimal degrees.
+The default format is \(``%.2f\('' for forward projection and DMS
+for inverse.
+.TP
+.BI \-[w|W] n
+.I N
+is the number of significant fractional digits to employ for
+seconds output (when the option is not specified,
+.B \-w3
+is assumed).
+When
+.B \-W
+is employed the fields will be constant width and with leading zeroes.
+.PP
+One or more
+.I files
+(processed in left to right order)
+specify the source of data to be transformed.
+A \- will specify the location of processing standard input.
+If no files are specified, the input is assumed to be from
+.I stdin.
+For ASCII input data the two data values must be in the
+first two white space separated fields and
+when both input and output are ASCII all trailing portions
+of the input line are appended to the output line.
+.PP
+Input geographic data
+(longitude and latitude) must be in DMS format when neither
+.I utm
+nor
+.I spcs
+is specified, otherwise in meters or feet (\fIfeet\fR option used).
+Input data fields must be separated by white space and not have
+imbedded white space.
+.PP
+Output data will be in tab separated fields of DMS or grid
+coordinates in meters or feet.
+.PP
+Any data after the two input values are echoed after the two
+output data values.
+.SH SEE ALSO
+.B cs2cs(1U), proj(1U),
+.br
+.I "Cartographic Projection Procedures for the UNIX Environment\(emA User's Manual,"
+(Evenden, 1990, Open-file report 90\-284).
+.SH BUGS
+A list of known bugs can found at https://github.com/OSGeo/proj.4/issues
+where new bug reports can be submitted too.
+.SH HOME PAGE
+http://proj4.org/

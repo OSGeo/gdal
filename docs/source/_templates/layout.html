@@ -1,0 +1,20 @@
+{# Import the theme's layout. #}
+{% extends "!layout.html" %}
+
+{# Add some extra stuff before and use existing with 'super()' call. #}
+
+{%- block footer %}
+    <div class="footer">
+        <div class="container">
+                    &copy;  {{ copyright }}
+                        Gerald Evenden,
+                        <a href="https://github.com/warmerdam">Frank Warmerdam</a>,
+                        and
+                        <a href="https://github.com/OSGeo/proj.4/graphs/contributors">others</a>,
+            {%- if last_updated %}
+                {% trans last_updated=last_updated|e %}Last updated
+                    on {{ last_updated }}.{% endtrans %}
+            {%- endif %}
+        </div>
+    </div>
+{%- endblock %}

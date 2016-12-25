@@ -1,0 +1,48 @@
+# Version checking for @PROJECT_NAME@
+
+set (PACKAGE_VERSION "@PROJ_VERSION@")
+set (PACKAGE_VERSION_MAJOR "@PROJ_VERSION_MAJOR@")
+set (PACKAGE_VERSION_MINOR "@PROJ_VERSION_MINOR@")
+set (PACKAGE_VERSION_PATCH "@PROJ_VERSION_PATCH@")
+
+if (NOT PACKAGE_FIND_NAME STREQUAL "@PROJECT_NAME@")
+  # Check package name (in particular, because of the way cmake finds
+  # package config files, the capitalization could easily be "wrong").
+  # This is necessary to ensure that the automatically generated
+  # variables, e.g., <package>_FOUND, are consistently spelled.
+  set (REASON "package = @PROJECT_NAME@, NOT ${PACKAGE_FIND_NAME}")
+  set (PACKAGE_VERSION_UNSUITABLE TRUE)
+elseif (NOT (APPLE OR (NOT DEFINED CMAKE_SIZEOF_VOID_P) OR
+      CMAKE_SIZEOF_VOID_P EQUAL @CMAKE_SIZEOF_VOID_P@))
+  # Reject if there's a 32-bit/64-bit mismatch (not necessary with Apple
+  # since a multi-architecture library is built for that platform).
+  set (REASON "sizeof(*void) =  @CMAKE_SIZEOF_VOID_P@")
+  set (PACKAGE_VERSION_UNSUITABLE TRUE)
+elseif (MSVC AND NOT MSVC_VERSION STREQUAL "@MSVC_VERSION@")
+  # Reject if there's a mismatch in MSVC compiler versions
+  set (REASON "_MSC_VER = @MSVC_VERSION@")
+  set (PACKAGE_VERSION_UNSUITABLE TRUE)
+elseif (NOT CMAKE_CROSSCOMPILING STREQUAL "@CMAKE_CROSSCOMPILING@")
+  # Reject if there's a mismatch in ${CMAKE_CROSSCOMPILING}
+  set (REASON "cross-compiling = @CMAKE_CROSSCOMPILING@")
+  set (PACKAGE_VERSION_UNSUITABLE TRUE)
+elseif (CMAKE_CROSSCOMPILING AND
+    NOT (CMAKE_SYSTEM_NAME STREQUAL "@CMAKE_SYSTEM_NAME@" AND
+      CMAKE_SYSTEM_PROCESSOR STREQUAL "@CMAKE_SYSTEM_PROCESSOR@"))
+  # Reject if cross-compiling and there's a mismatch in the target system
+  set (REASON "target = @CMAKE_SYSTEM_NAME@-@CMAKE_SYSTEM_PROCESSOR@")
+  set (PACKAGE_VERSION_UNSUITABLE TRUE)
+elseif (PACKAGE_FIND_VERSION)
+  if (PACKAGE_FIND_VERSION VERSION_EQUAL PACKAGE_VERSION)
+    set (PACKAGE_VERSION_EXACT TRUE)
+  elseif (PACKAGE_FIND_VERSION VERSION_LESS PACKAGE_VERSION
+    AND PACKAGE_FIND_VERSION_MAJOR EQUAL PACKAGE_VERSION_MAJOR)
+    set (PACKAGE_VERSION_COMPATIBLE TRUE)
+  endif ()
+endif ()
+
+# If unsuitable, append the reason to the package version so that it's
+# visible to the user.
+if (PACKAGE_VERSION_UNSUITABLE)
+  set (PACKAGE_VERSION "${PACKAGE_VERSION} (${REASON})")
+endif ()

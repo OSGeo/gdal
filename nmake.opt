@@ -1,0 +1,42 @@
+!IFDEF EXT_NMAKE_OPT
+!INCLUDE $(EXT_NMAKE_OPT)
+!ENDIF
+
+# Directory tree where PROJ will be installed.
+!IFNDEF INSTDIR
+INSTDIR=C:\PROJ
+!ENDIF
+
+# Set the following to the directory where the PROJ distribution data files
+# (ie, the contents of ..\NAD) are to be installed.  It is possible to later
+# move the data files to another directory, and define the PROJ_LIB
+# environment variable to point to that directory.  It is also possible to
+# have PROJ_LIB name the original NAD directory of the unpacked PROJ
+# distribution.  Any setting of the PROJ_LIB environment variable takes
+# precedence at runtime over the setting of the PROJ_LIB_DIR macro stored in
+# the compiled software.
+!IFNDEF PROJ_LIB_DIR
+PROJ_LIB_DIR=$(INSTDIR)\SHARE
+!ENDIF
+
+# Uncomment the first for an optimized build, or the second for debug.
+!IFNDEF OPTFLAGS
+!IFNDEF DEBUG
+OPTFLAGS=	/Ox /Op /MD
+!ELSE
+OPTFLAGS=	/Zi /MD /Fdproj.pdb
+!ENDIF
+!ENDIF
+
+!IFDEF SELFTEST
+OPTFLAGS= $(OPTFLAGS) -DPJ_SELFTEST
+!ENDIF
+
+# Uncomment the first for linking exes against DLL or second for static
+EXE_PROJ =	proj_i.lib
+#EXE_PROJ =	proj.lib
+
+# Set the version number for the DLL.  Normally we leave this blank since
+# we want software that is dynamically loading the DLL to have no problem
+# with version numbers.
+VERSION=

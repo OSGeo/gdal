@@ -1,0 +1,32 @@
+#
+# makefile.vc - builds PROJ.4 library with Visual C++
+#
+
+!INCLUDE ..\nmake.opt
+
+OLD_GRIDS = conus MD TN WI WO alaska hawaii prvi stgeorge stlrnc stpaul null
+
+OTHER_FILES = FL GL27 nad.lst nad27 nad83 proj_def.dat world epsg esri \
+	esri.extra other.extra IGNF
+
+
+
+default:
+	if exist conus.lla $(MAKE) /f makefile.vc nadshift
+
+nadshift:
+	for %f in ( $(OLD_GRIDS) ) do ..\src\nad2bin.exe %f < %f.lla
+
+clean:
+	-for %f in ( $(OLD_GRIDS) ) do del %f
+
+install-nadgrids:
+	for %f in ( $(OLD_GRIDS) ) do copy %f $(PROJ_LIB_DIR)
+
+install-all: 
+	-mkdir $(INSTDIR)
+	-mkdir $(PROJ_LIB_DIR)
+	for %f in ( $(OTHER_FILES) ) do copy %f $(PROJ_LIB_DIR)
+	if exist conus $(MAKE) /f makefile.vc install-nadgrids
+	-copy *.gsb $(PROJ_LIB_DIR)
+	-copy ntv1_can.dat $(PROJ_LIB_DIR)

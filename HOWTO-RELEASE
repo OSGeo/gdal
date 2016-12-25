@@ -1,0 +1,74 @@
+	Preparing a PROJ.4 Release
+	==========================
+
+1) Update the version number in configure.in (in AC_INIT()).
+
+   1a) Update the version number in PROJ_BUILD_VERSION in CMakeLists.txt
+   1b) Update the version number in doc/source/conf.py
+
+2) Update the version number in proj_api.h (#define PJ_VERSION).
+
+3) Update the version number, and date in src/pj_release.c.
+
+4) Update the version number in the -version-info definition in
+   src/Makefile.am.  It consists of "current:revision:age".  Set
+   the same in the PROJ_SOVERSION variable in CMakeLists.txt
+
+   4a) Increment PROJ_BUILD_VERSION in CMakeLists.txt to follow
+       libtool versioning
+
+   - If the library source code has changed at all since the last update,
+     then increment revision (c:r:a becomes c:r+1:a).
+
+   - If any interfaces have been added, removed, or changed since the last
+     update, increment current, and set revision to 0.
+
+   - If any interfaces have been added since the last public release, then
+     increment age.
+
+   - If any interfaces have been removed since the last public release, then
+     set age to 0.
+
+4.5) Run "autogen.sh" (hopefully on the same machine it was last run on)
+
+5) Add a note to the ChangeLog that a new release is being issued, and what
+   the release number is.
+
+6) Update NEWS file with summary of release changes.
+
+7) Update the proj.spec file for the new version:
+    - PACKAGE_VERSION
+    - Source0
+    - %setup line
+    - rm -rf line
+
+8) If this is a major release, prepare a branch.
+
+   svn copy https://svn.osgeo.org/metacrs/proj/trunk \
+            https://svn.osgeo.org/metacrs/proj/branches/4.7
+
+9) Tag the release set in SVN
+
+   svn copy https://svn.osgeo.org/metacrs/proj/branches/4.7 \
+            https://svn.osgeo.org/metacrs/proj/tags/4.7.0
+
+10) Do a "make dist-all" in the proj root directory.  After some grinding
+   this should result in files like proj-4.4.3.tar.gz and proj-4.4.3.zip
+   being created.  These are full source distributions.
+
+11) Put these in the proj ftp area on /osgeo/download/proj on
+   download.osgeo.org.  This can be done via scp using a command like the
+   following.
+
+  scp proj-4.4.3.{tar.gz,zip} warmerdam@download.osgeo.org:/osgeo/download/proj
+
+12) Announce the new release on the PROJ.4 and MetaCRS mailing lists.
+
+13) Issue a new release report on Freshmeat.
+
+   http://freshmeat.net/projects/proj.4/
+
+NOTES:
+
+ o Information about preparing binary releases, and RPMs should be formalized.
+ o A "beta" release step should likely be incorporated.

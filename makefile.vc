@@ -1,0 +1,30 @@
+#
+# NMAKE Makefile to build PROJ.4 on Windows
+#
+# This makefile.vc delegates making targets to src\makefile.vc
+# so it's just a thin wrapper.
+#
+MAKE = nmake
+RM = -del
+
+default:    
+	cd src
+	$(MAKE) /f makefile.vc
+	cd ..\nad
+	$(MAKE) /f makefile.vc
+	cd ..
+
+clean:	
+	cd src
+	$(MAKE) /f makefile.vc clean
+	cd ..\nad
+	$(MAKE) /f makefile.vc clean
+	cd ..
+
+install-all:
+	cd src
+	$(MAKE) /f makefile.vc install
+	cd ..\nad
+	$(MAKE) /f makefile.vc install-all
+	cd ..
+

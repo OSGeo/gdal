@@ -1,0 +1,44 @@
+// COMTest1.idl : IDL source for COMTest1.dll
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (COMTest1.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+	[
+		object,
+		uuid(28849AA6-E8FB-4077-8D7A-D83CDFC2DC44),
+		dual,
+		helpstring("IProjDef Interface"),
+		pointer_default(unique)
+	]
+	interface IProjDef : IDispatch
+	{
+		[id(1), helpstring("method Initialize")] HRESULT Initialize([in] BSTR proj_string, [out, retval] int *success );
+		[id(2), helpstring("method TransformPoint3D")] HRESULT TransformPoint3D([in] IUnknown *srcProj, 
+				[in,out] double *x, [in, out] double *y, [in, out] double *z, [out, retval] int *success );
+		[id(3), helpstring("method GetHandle")] HRESULT GetHandle([out, retval] long *pHandle );
+		[id(4), helpstring("method IsLatLong")] HRESULT IsLatLong([out, retval] int *result);
+		[id(5), helpstring("method GetLastError")] HRESULT GetLastError([out, retval] BSTR *error );
+	};
+
+[
+	uuid(A0ADE3D8-9A85-4BD3-AD56-BFEF42495130),
+	version(1.0),
+	helpstring("PROJ.4")
+]
+library PROJ4Lib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	[
+		uuid(B9B8F0A3-D9F8-4537-9A03-329DC9AE144C),
+		helpstring("ProjDef Class")
+	]
+	coclass ProjDef
+	{
+		[default] interface IProjDef;
+	};
+};

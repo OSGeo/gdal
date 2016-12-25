@@ -1,0 +1,302 @@
+Content-type: text/html; charset=UTF-8
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CS2CS</TITLE>
+</HEAD><BODY>
+<H1>CS2CS</H1>
+Section: User Commands  (1)<BR>Updated: 2000/03/21 Rel. 4.4<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+cs2cs - cartographic coordinate system filter
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>cs2cs</B>
+
+[
+<B>-eEfIlrstvwW</B>
+
+[
+<I>args</I>
+
+] ] [
+<B>+opts[=arg]</B>
+
+]
+<BR>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;<B>+to</B>&nbsp;[<B>+opts</B>[<B>=arg</B>]]&nbsp;]
+file[s]
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<I>Cs2cs</I>
+
+performs transformation between the source and destination cartographic
+coordinate system on a set of input points.  The coordinate system
+transformation can include translation between projected and geographic 
+coordinates as well as the application of datum shifts.
+<P>
+
+The following control parameters can appear in any order:
+<DL COMPACT>
+<DT><B>-I</B>
+
+<DD>
+method to specify inverse translation, convert from <B>+to</B> coordinate
+system to the primary coordinate system defined.
+<DT><B>-t</B><I>a</I>
+
+<DD>
+<I>A</I>
+
+specifies a character employed as the first character to denote
+a control line to be passed through without processing.
+This option applicable to ascii input only.
+(# is the default value).
+<DT><B>-e</B><I> string</I>
+
+<DD>
+<I>String</I>
+
+is an arbitrary string to be output if an error is detected during
+data transformations.
+The default value is: *\t*.
+Note that if the
+<B>-b,</B>
+
+<B>-i</B>
+
+or
+<B>-o</B>
+
+options are employed, an error is returned as HUGE_VAL
+value for both return values.
+<DT><B>-E</B>
+
+<DD>
+causes the input coordinates to be copied to the output line
+prior to printing the converted values.
+<DT><B>-l</B><I>[p|P|=|e|u|d]</I><B>id</B>
+
+<DD>
+List projection identifiers with
+<B>-l,</B>
+
+<B>-lp</B>
+
+or
+<B>-lP (expanded)</B>
+
+that can be selected with
+<B>+proj.</B>
+
+<B>-l=</B><I>id</I>
+
+gives expanded description of projection
+<I>id.</I>
+
+List ellipsoid identifiers with
+<B>-le,</B>
+
+that can be selected with
+<B>+ellps,</B>
+
+<B>-lu</B>
+
+list of cartesian to meter conversion factors
+that can be selected with
+<B>+units</B>
+
+or
+<B>-ld</B>
+
+list of datums that can be selected with 
+<B>+datum.</B>
+
+<DT><B>-r</B>
+
+<DD>
+This options reverses the order of the
+expected input from longitude-latitude or x-y to latitude-longitude or y-x.
+<DT><B>-s</B>
+
+<DD>
+This options reverses the order of the
+output from x-y or longitude-latitude to y-x or latitude-longitude.
+<DT><B>-f</B><I> format</I>
+
+<DD>
+<I>Format</I>
+
+is a
+<I>printf</I>
+
+format string to control the form of the output values.
+For inverse projections, the output will be in degrees when this option
+is employed.
+If a format is specified for inverse projection the
+output data will be in decimal degrees.
+The default format is &quot;%.2f&quot; for forward projection and DMS
+for inverse.
+<DT><B>-[w|W]</B><I>n</I>
+
+<DD>
+<I>N</I>
+
+is the number of significant fractional digits to employ for
+seconds output (when the option is not specified,
+<B>-w3</B>
+
+is assumed).
+When
+<B>-W</B>
+
+is employed the fields will be constant width and with leading zeroes.
+<DT><B>-v</B>
+
+<DD>
+causes a listing of cartographic control parameters tested for and
+used by the program to be printed prior to input data.
+</DL>
+<P>
+
+The
+<B>+args</B>
+
+run-line arguments are associated with cartographic parameters
+and usage varies with projection and for a complete description see
+<I>Cartographic Projection Procedures for the UNIX Environment---A User's Manual</I>
+
+and supplementary documentation for Release 4.
+<P>
+
+The <I>cs2cs</I> program requires two coordinate system definitions.  The
+first (or primary is defined based on all projection parameters not
+appearing after the <B>+to</B> argument.  All projection parameters 
+appearing after the <B>+to</B> argument are considered the definition
+of the second coordinate system.  If there is no second coordinate system
+defined, a geographic coordinate system based on the datum and ellipsoid of
+the source coordinate system is assumed.  Note that the source and destination
+coordinate system can both be projections, both be geographic, or one of
+each and may have the same or different datums.  
+<P>
+
+Additional projection control parameters may be contained in two
+auxiliary control files:
+the first is optionally referenced with the
+<B>+init=</B><I>file:id</I>
+
+and the second is always processed after the name
+of the projection has been established from either the run-line
+or the contents of
+<B>+init</B>
+
+file.
+The environment parameter
+<B>PROJ_LIB</B>
+
+establishes the default directory for a file reference without
+an absolute path.  This is also used for supporting files like
+datum shift files.
+<P>
+
+One or more
+<I>files</I>
+
+(processed in left to right order)
+specify the source of data to be transformed.
+A - will specify the location of processing standard input.
+If no files are specified, the input is assumed to be from
+<I>stdin.</I>
+
+For input data the two data values must be in the
+first two white space separated fields and
+when both input and output are ASCII all trailing portions
+of the input line are appended to the output line.
+<P>
+
+Input geographic data
+(longitude and latitude) must be in DMS or decimal degrees format and input
+cartesian data must be in units consistent with the ellipsoid
+major axis or sphere radius units.
+Output geographic coordinates will normally be in DMS format (use 
+<B>-f %.12f </B>
+
+for decimal degrees with 12 decimal places), while
+projected (cartesian) coordinates will be in linear (meter, feet) units.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The following script
+<DL COMPACT><DT><DD>
+<BR>&nbsp;<TT>cs2cs&nbsp;+proj=latlong&nbsp;+datum=NAD83&nbsp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+to&nbsp;+proj=utm&nbsp;+zone=10&nbsp;+datum=NAD27&nbsp;-r&nbsp;&lt;&lt;EOF
+<BR>&nbsp;45d15'33.1&quot;<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT>111.5W<BR>
+<BR>&nbsp;45d15.551666667N<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>-111d30<BR>
+<BR>&nbsp;+45.25919444444<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>111d30'000w<BR>
+<BR>&nbsp;EOF</TT>
+</DL>
+
+will transform the input NAD83 geographic coordinates into NAD27 coordinates
+in the UTM projection with zone 10 selected.
+The geographic values of this example are equivalent and meant
+as examples of various forms of DMS input.
+The x-y output data will appear as three lines of:
+<DL COMPACT><DT><DD>
+<BR>&nbsp;<TT>1402285.99&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5076292.42&nbsp;0.000
+</DL>
+
+</TT><A NAME="lbAF">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/proj.1.html">proj</A>(1),</B>
+
+<BR>
+
+<I>Cartographic Projection Procedures for the UNIX Environment---A User's Manual,</I>
+
+(Evenden, 1990, Open-file report 90-284).
+<BR>
+
+<I>Map Projections Used by the U. S. Geological Survey</I>
+
+(Snyder, 1984,
+USGS Bulletin 1532).
+<BR>
+
+<I>Map Projections---A Working Manual</I>
+
+(Snyder, 1988, USGS Prof. Paper 1395).
+<BR>
+
+<I>An Album of Map Projections</I>
+
+(Snyder &amp; Voxland, 1989, USGS Prof. Paper 1453).
+<A NAME="lbAG">&nbsp;</A>
+<H2>HOME PAGE</H2>
+
+<A HREF="https://github.com/OSGeo/proj.4/wiki">https://github.com/OSGeo/proj.4/wiki</A>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">EXAMPLE</A><DD>
+<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">HOME PAGE</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 20:43:10 GMT, February 18, 2016
+</BODY>
+</HTML>

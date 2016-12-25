@@ -1,0 +1,447 @@
+Content-type: text/html; charset=UTF-8
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PROJ</TITLE>
+</HEAD><BODY>
+<H1>PROJ</H1>
+Section: User Commands  (1)<BR>Updated: 2000/03/21 Rel. 4.4<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+proj - forward cartographic projection filter
+<BR>
+
+invproj - inverse cartographic projection filter
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>proj</B>
+
+[
+<B>-bceEfiIlmorsStTvVwW</B>
+
+[
+<I>args</I>
+
+] ] [
+<B>+args</B>
+
+]
+file[s]
+<BR>
+
+<B>invproj</B>
+
+[
+<B>-bceEfiIlmorsStTwW</B>
+
+[
+<I>args</I>
+
+] ] [
+<B>+args</B>
+
+]
+file[s]
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<I>Proj</I>
+
+and
+<I>invproj</I>
+
+perform respective forward and inverse transformation of cartographic data
+to or from cartesian data with a wide range of selectable projection functions.
+<P>
+
+The following control parameters can appear in any order:
+<DL COMPACT>
+<DT><B>-b</B>
+
+<DD>
+Special option for binary coordinate data input and output
+through standard input and standard output.
+Data is assumed to be in system type
+<I>double</I>
+
+floating point words.
+This option is to be used when
+<B>proj</B>
+
+is a
+<I>son</I>
+
+process and allows bypassing formatting operations.
+<DT><B>-i</B>
+
+<DD>
+Selects binary input only (see
+<B>-b option).</B>
+
+<DT><B>-I</B>
+
+<DD>
+alternate method to specify inverse projection.
+Redundant when used with
+<B>invproj.</B>
+
+<DT><B>-o</B>
+
+<DD>
+Selects binary output only (see
+<B>-b option).</B>
+
+<DT><B>-t</B><I>a</I>
+
+<DD>
+<I>A</I>
+
+specifies a character employed as the first character to denote
+a control line to be passed through without processing.
+This option applicable to ascii input only.
+(# is the default value).
+<DT><B>-e</B><I> string</I>
+
+<DD>
+<I>String</I>
+
+is an arbitrary string to be output if an error is detected during
+data transformations.
+The default value is: *\t*.
+Note that if the
+<B>-b,</B>
+
+<B>-i</B>
+
+or
+<B>-o</B>
+
+options are employed, an error is returned as HUGE_VAL
+value for both return values.
+<DT><B>-E</B>
+
+<DD>
+causes the input coordinates to be copied to the output line
+prior to printing the converted values.
+<DT><B>-l</B><I>[p|P|=|e|u|d]</I><B>id</B>
+
+<DD>
+List projection identifiers with
+<B>-l,</B>
+
+<B>-lp</B>
+
+or
+<B>-lP (expanded)</B>
+
+that can be selected with
+<B>+proj.</B>
+
+<B>-l=</B><I>id</I>
+
+gives expanded description of projection
+<I>id.</I>
+
+List ellipsoid identifiers with
+<B>-le,</B>
+
+that can be selected with
+<B>+ellps,</B>
+
+<B>-lu</B>
+
+list of cartesian to meter conversion factors
+that can be selected with
+<B>+units</B>
+
+or
+<B>-ld</B>
+
+list of datums that can be selected with 
+<B>+datum.</B>
+
+<DT><B>-r</B>
+
+<DD>
+This options reverses the order of the
+expected input from longitude-latitude or x-y to latitude-longitude or y-x.
+<DT><B>-s</B>
+
+<DD>
+This options reverses the order of the
+output from x-y or longitude-latitude to y-x or latitude-longitude.
+<DT><B>-S</B>
+
+<DD>
+Causes estimation of
+<I>meridinal</I>
+
+and
+<I>parallel</I>
+
+scale factors,
+<I>area</I>
+
+scale factor and
+<I>angular distortion,</I>
+
+and
+<I>maximum</I>
+
+and
+<I>minimum</I>
+
+scale factors to be listed between &lt;&gt; for each input point.
+For conformal projections meridinal and parallel scales factors
+will be equal and angular distortion zero.
+Equal area projections will have an area factor of 1.
+<DT><B>-m</B><I> mult</I>
+
+<DD>
+The cartesian data may be scaled by the
+<I>mult</I>
+
+parameter.
+When processing data in a forward projection mode the
+cartesian output values are multiplied by
+<I>mult</I>
+
+otherwise the input cartesian values are divided by
+<I>mult</I>
+
+before inverse projection.
+If the first two characters of
+<I>mult</I>
+
+are 1/ or 1: then the reciprocal value of
+<I>mult</I>
+
+is employed.
+<DT><B>-f</B><I> format</I>
+
+<DD>
+<I>Format</I>
+
+is a
+<I>printf</I>
+
+format string to control the form of the output values.
+For inverse projections, the output will be in degrees when this option
+is employed.
+The default format is &quot;%.2f&quot; for forward projection and DMS
+for inverse.
+<DT><B>-[w|W]</B><I>n</I>
+
+<DD>
+<I>N</I>
+
+is the number of significant fractional digits to employ for
+seconds output (when the option is not specified,
+<B>-w3</B>
+
+is assumed).
+When
+<B>-W</B>
+
+is employed the fields will be constant width and with leading zeroes.
+<DT><B>-v</B>
+
+<DD>
+causes a listing of cartographic control parameters tested for and
+used by the program to be printed prior to input data.
+Should not be used with the
+<B>-T</B>
+
+option.
+<DT><B>-V</B>
+
+<DD>
+This option causes an expanded annotated listing of the characteristics
+of the projected point.
+<B>-v is implied with this option.</B>
+
+<DT><B>-T</B><I> ulow,uhi,vlow,vhi,res[,umax,vmax]</I>
+
+<DD>
+This option creates a set of bivariate Chebyshev polynomial
+coefficients that approximate the selected cartographic projection on
+<I>stdout.</I>
+
+The values
+<I>low</I>
+
+and
+<I>hi</I>
+
+denote the range of the input where the
+<I>u</I>
+
+or
+<I>v</I>
+
+prefixes apply to respective longitude-x or latitude-y
+depending upon whether a forward or inverse projection is selected.
+<I>Res</I>
+
+is an integer number specifying the power of 10 precision of the
+approximation.
+For example, a
+<I>res</I>
+
+of -3 specifies an approximation with an accuracy better than .001.
+<I>Umax,</I>
+
+and
+<I>vmax</I>
+
+specify maximum degree of the polynomials (default: 15).
+See also:
+<B><A HREF="../man1/fproj.1.html">fproj</A>(1).</B>
+
+</DL>
+<P>
+
+The
+<B>+args</B>
+
+run-line arguments are associated with cartographic parameters
+and usage varies with projection and for a complete description see
+<I>Cartographic Projection Procedures for the UNIX Environment---A User's Manual</I>
+
+and supplementary documentation for Release 4.
+<P>
+
+Additional projection control parameters may be contained in two
+auxiliary control files:
+the first is optionally referenced with the
+<B>+init=</B><I>file:id</I>
+
+and the second is always processed after the name
+of the projection has been established from either the run-line
+or the contents of
+<B>+init</B>
+
+file.
+The environment parameter
+<B>PROJ_LIB</B>
+
+establishes the default directory for a file reference without
+an absolute path.  This is also used for supporting files like
+datum shift files.
+<P>
+
+One or more
+<I>files</I>
+
+(processed in left to right order)
+specify the source of data to be transformed.
+A - will specify the location of processing standard input.
+If no files are specified, the input is assumed to be from
+<I>stdin.</I>
+
+For ASCII input data the two data values must be in the
+first two white space separated fields and
+when both input and output are ASCII all trailing portions
+of the input line are appended to the output line.
+<P>
+
+Input geographic data
+(longitude and latitude) must be in DMS format and input
+cartesian data must be in units consistent with the ellipsoid
+major axis or sphere radius units.
+Output geographic coordinates will be in DMS
+(if the
+<B>-w</B>
+
+switch is not employed) and precise to 0.001&quot;
+with trailing, zero-valued minute-second fields deleted.
+<A NAME="lbAE">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The following script
+<DL COMPACT><DT><DD>
+<BR>&nbsp;<TT>proj&nbsp;+proj=utm&nbsp;+lon_0=112w&nbsp;+ellps=clrk66&nbsp;-r&nbsp;&lt;&lt;EOF
+<BR>&nbsp;45d15'33.1&quot;<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT>111.5W<BR>
+<BR>&nbsp;45d15.551666667N<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>-111d30<BR>
+<BR>&nbsp;+45.25919444444<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>111d30'000w<BR>
+<BR>&nbsp;EOF</TT>
+</DL>
+
+will perform UTM forward projection with a standard UTM
+central meridian nearest longitude 112&#176;W.
+The geographic values of this example are equivalent and meant
+as examples of various forms of DMS input.
+The x-y output data will appear as three lines of:
+<DL COMPACT><DT><DD>
+<BR>&nbsp;<TT>460769.27<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>5011648.45<BR>
+</DL>
+
+</TT><A NAME="lbAF">&nbsp;</A>
+<H2>OTHER PROGRAMS</H2>
+
+<P>
+
+The <I>proj</I> program is limited to converting between geographic and
+projection coordinates within one datum.
+<P>
+
+The <I>cs2cs</I> program operates
+similarly, but allows translation between any pair of definable coordinate
+systems, including support for datum translation.
+<P>
+
+The <I>geod</I> program provides the ability to compute geodesic (Great
+Circle) computations.
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/cs2cs.1.html">cs2cs</A>(1), <A HREF="../man1/geod.1.html">geod</A>(1), <A HREF="../man3/pj_init.3.html">pj_init</A>(3),</B>
+
+<BR>
+
+<I>Cartographic Projection Procedures for the UNIX Environment---A User's Manual,</I>
+
+(Evenden, 1990, Open-file report 90-284).
+<BR>
+
+<I>Map Projections Used by the U. S. Geological Survey</I>
+
+(Snyder, 1984,
+USGS Bulletin 1532).
+<BR>
+
+<I>Map Projections---A Working Manual</I>
+
+(Snyder, 1988, USGS Prof. Paper 1395).
+<BR>
+
+<I>An Album of Map Projections</I>
+
+(Snyder &amp; Voxland, 1989, USGS Prof. Paper 1453).
+<A NAME="lbAH">&nbsp;</A>
+<H2>HOME PAGE</H2>
+
+<A HREF="https://github.com/OSGeo/proj.4/wiki">https://github.com/OSGeo/proj.4/wiki</A>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">EXAMPLE</A><DD>
+<DT><A HREF="#lbAF">OTHER PROGRAMS</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">HOME PAGE</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 20:44:57 GMT, February 18, 2016
+</BODY>
+</HTML>

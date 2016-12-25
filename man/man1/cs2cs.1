@@ -1,0 +1,205 @@
+.\" release 4
+.nr LL 5.5i
+.ad b
+.hy 1
+.TH CS2CS 1 "2000/03/21 Rel. 4.4"
+.SH NAME
+cs2cs \- cartographic coordinate system filter
+.SH SYNOPSIS
+.B cs2cs
+[
+.B \-eEfIlrstvwW
+[
+.I args
+] ] [
+.B +opts[=arg]
+]
+.br
+      [ \fB+to\fR [\fB+opts\fR[\fB=arg\fR]] ]
+file[s]
+.SH DESCRIPTION
+.I Cs2cs
+performs transformation between the source and destination cartographic
+coordinate system on a set of input points.  The coordinate system
+transformation can include translation between projected and geographic
+coordinates as well as the application of datum shifts.
+.PP
+The following control parameters can appear in any order:
+.TP
+.BI \-I
+method to specify inverse translation, convert from \fB+to\fR coordinate
+system to the primary coordinate system defined.
+.TP
+.BI \-t "a"
+.I A
+specifies a character employed as the first character to denote
+a control line to be passed through without processing.
+This option applicable to ascii input only.
+(# is the default value).
+.TP
+.BI \-e " string"
+.I String
+is an arbitrary string to be output if an error is detected during
+data transformations.
+The default value is: *\et*.
+Note that if the
+.B \-b,
+.B \-i
+or
+.B \-o
+options are employed, an error is returned as HUGE_VAL
+value for both return values.
+.TP
+.BI \-E
+causes the input coordinates to be copied to the output line
+prior to printing the converted values.
+.TP
+.BI \-l "[p|P|=|e|u|d]" id
+List projection identifiers with
+.B \-l,
+.B \-lp
+or
+.B \-lP (expanded)
+that can be selected with
+.B +proj.
+.BI \-l= id
+gives expanded description of projection
+.I id.
+List ellipsoid identifiers with
+.B \-le,
+that can be selected with
+.B +ellps,
+.B \-lu
+list of cartesian to meter conversion factors
+that can be selected with
+.B +units
+or
+.B \-ld
+list of datums that can be selected with
+.B +datum.
+.TP
+.BI \-r
+This options reverses the order of the
+expected input from longitude-latitude or x-y to latitude-longitude or y-x.
+.TP
+.BI \-s
+This options reverses the order of the
+output from x-y or longitude-latitude to y-x or latitude-longitude.
+.TP
+.BI \-f " format"
+.I Format
+is a
+.I printf
+format string to control the form of the output values.
+For inverse projections, the output will be in degrees when this option
+is employed.
+If a format is specified for inverse projection the
+output data will be in decimal degrees.
+The default format is "%.2f" for forward projection and DMS
+for inverse.
+.TP
+.BI \-[w|W] n
+.I N
+is the number of significant fractional digits to employ for
+seconds output (when the option is not specified,
+.B \-w3
+is assumed).
+When
+.B \-W
+is employed the fields will be constant width and with leading zeroes.
+.TP
+.B \-v
+causes a listing of cartographic control parameters tested for and
+used by the program to be printed prior to input data.
+.PP
+The
+.B +args
+run-line arguments are associated with cartographic parameters
+and usage varies with projection and for a complete description see
+.I "Cartographic Projection Procedures for the UNIX Environment\(emA User's Manual"
+and supplementary documentation for Release 4.
+.PP
+The \fIcs2cs\fR program requires two coordinate system definitions.  The
+first (or primary is defined based on all projection parameters not
+appearing after the \fB+to\fR argument.  All projection parameters
+appearing after the \fB+to\fR argument are considered the definition
+of the second coordinate system.  If there is no second coordinate system
+defined, a geographic coordinate system based on the datum and ellipsoid of
+the source coordinate system is assumed.  Note that the source and destination
+coordinate system can both be projections, both be geographic, or one of
+each and may have the same or different datums.
+.PP
+Additional projection control parameters may be contained in two
+auxiliary control files:
+the first is optionally referenced with the
+.BI +init= file:id
+and the second is always processed after the name
+of the projection has been established from either the run-line
+or the contents of
+.B +init
+file.
+The environment parameter
+.B PROJ_LIB
+establishes the default directory for a file reference without
+an absolute path.  This is also used for supporting files like
+datum shift files.
+.PP
+One or more
+.I files
+(processed in left to right order)
+specify the source of data to be transformed.
+A \- will specify the location of processing standard input.
+If no files are specified, the input is assumed to be from
+.I stdin.
+For input data the two data values must be in the
+first two white space separated fields and
+when both input and output are ASCII all trailing portions
+of the input line are appended to the output line.
+.PP
+Input geographic data
+(longitude and latitude) must be in DMS or decimal degrees format and input
+cartesian data must be in units consistent with the ellipsoid
+major axis or sphere radius units.
+Output geographic coordinates will normally be in DMS format (use
+.B \-f %.12f
+for decimal degrees with 12 decimal places), while
+projected (cartesian) coordinates will be in linear (meter, feet) units.
+
+.SH EXAMPLE
+The following script
+.RS 5
+ \f(CWcs2cs +proj=latlong +datum=NAD83
+       +to +proj=utm +zone=10 +datum=NAD27 \-r <<EOF
+ 45d15'33.1"	111.5W
+ 45d15.551666667N	\-111d30
+ +45.25919444444	111d30'000w
+ EOF\fR
+.RE
+will transform the input NAD83 geographic coordinates into NAD27 coordinates
+in the UTM projection with zone 10 selected.
+The geographic values of this example are equivalent and meant
+as examples of various forms of DMS input.
+The x\-y output data will appear as three lines of:
+.RS 5
+ \f(CW1402285.99      5076292.42 0.000
+.RE
+.SH SEE ALSO
+.B proj(1),
+.br
+.I "Cartographic Projection Procedures for the UNIX Environment\(emA User's Manual,"
+(Evenden, 1990, Open-file report 90\-284).
+.br
+.I "Map Projections Used by the U. S. Geological Survey"
+(Snyder, 1984,
+USGS Bulletin 1532).
+.br
+.I "Map Projections\(emA Working Manual"
+(Snyder, 1988, USGS Prof. Paper 1395).
+.br
+.I "An Album of Map Projections"
+(Snyder & Voxland, 1989, USGS Prof. Paper 1453).
+.SH BUGS
+A list of known bugs can found at https://github.com/OSGeo/proj.4/issues
+where new bug reports can be submitted too.
+.SH HOME PAGE
+http://proj4.org/
