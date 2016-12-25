@@ -1515,24 +1515,26 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
 /* -------------------------------------------------------------------- */
     if( nVertices > 0 )
     {
-        psObject->padfX = (double *) calloc(sizeof(double),nVertices);
-        psObject->padfY = (double *) calloc(sizeof(double),nVertices);
-        psObject->padfZ = (double *) calloc(sizeof(double),nVertices);
-        psObject->padfM = (double *) calloc(sizeof(double),nVertices);
-
-        for( i = 0; i < nVertices; i++ )
+        size_t nSize = sizeof(double) * nVertices;
+        psObject->padfX = (double *) padfX ? malloc(nSize) :
+                                             calloc(sizeof(double),nVertices);
+        psObject->padfY = (double *) padfY ? malloc(nSize) :
+                                             calloc(sizeof(double),nVertices);
+        psObject->padfZ = (double *) padfZ && bHasZ ? malloc(nSize) :
+                                             calloc(sizeof(double),nVertices);
+        psObject->padfM = (double *) padfM && bHasM ? malloc(nSize) :
+                                             calloc(sizeof(double),nVertices);
+        if( padfX != NULL && psObject->padfX != NULL)
+            memcpy(psObject->padfX, padfX, nSize);
+        if( padfY != NULL && psObject->padfY != NULL)
+            memcpy(psObject->padfY, padfY, nSize);
+        if( padfZ != NULL && bHasZ && psObject->padfZ != NULL)
+            memcpy(psObject->padfZ, padfZ, nSize);
+        if( padfM != NULL && bHasM && psObject->padfM != NULL)
         {
-            if( padfX != NULL )
-                psObject->padfX[i] = padfX[i];
-            if( padfY != NULL )
-                psObject->padfY[i] = padfY[i];
-            if( padfZ != NULL && bHasZ )
-                psObject->padfZ[i] = padfZ[i];
-            if( padfM != NULL && bHasM )
-                psObject->padfM[i] = padfM[i];
-        }
-        if( padfM != NULL && bHasM )
+            memcpy(psObject->padfM, padfM, nSize);
             psObject->bMeasureIsUsed = TRUE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
