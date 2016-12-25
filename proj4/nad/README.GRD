@@ -1,0 +1,48 @@
+	Grid Shift File Formats
+	=======================
+
+
+ASCII .lla
+----------
+
+First line: comment, at most 80 characters in length.
+
+Second line:
+
+<grid_size_x> <grid_size_y> <ignore> <lowleft_longitude> <resolution_longitude>
+<lowleft_latitude> <resolution_latitude>
+
+Angles are in decimal degrees.
+
+
+Subsequent lines are:
+
+<line_no>: <x_shift> <y_shift> *
+
+The <line_no> is zero based, and will vary from 0 to <grid_size_y>-1.  The 
+number of x/y shift pairs will match <grid_size_x>.  Grid lines can be
+split over multiple physical text lines.  Use the colon to identify starts
+of new grid lines.  The shift values are in millionths of a secondc of arc. 
+
+
+For example, from MD.lla:
+
+Maryland - HP
+  25  17   1   -80.00000      .25000    37.00000      .25000
+0: 5107 -2502 -700 496 -656 468 -587 418 -481 347 -325 256 -111 152 166 50
+493 -37 854 -96 1221 -118 1568 -125 1953 -143 2433 -195 2464 -281 2529 -395
+1987 -729 447 -916 -3011 -1181 -5559 -406 -6094 541 -5714 1110 -5247 1289
+-4993 1254 -4960 1151
+1: 4757 -1695 -644 429 -627 411 -602 368 -555 299 -470 206 -328 96 -125 -15
+126 -105 391 -146 634 -120 762 -58 911 -13 1583 -8 1049 -28 1451 123 1377 -464
+907 -603 -4056 -1955 -6769 -485 -5797 929 -4254 1413 -3251 1295 -2871 993
+-2899 724
+
+
+The grid is 25x7, and covers the region with a lower left corner of
+80d00'W 37d00'N and an upper right corner of 73d45'W 43d15'N.  
+
+
+BINARY 
+------
+

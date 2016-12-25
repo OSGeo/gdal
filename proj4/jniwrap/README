@@ -1,0 +1,128 @@
+   -------------------- J P R O J . 4 --------------------
+
+This is the second release of JNI wrappers for the main proj4 functions.
+
+PLEASE read the following information.
+
+The first release of JNI wrappers were created by:
+
+                http://www.hydrologis.com
+
+For more information regarding the current release please see the web page at:
+
+                http://www.geoapi.org/geoapi-proj4/
+
+   ---------------------------------------------------
+
+
+What is "Proj.4 wrapper":
+-------------
+
+"Proj.4 wrapper" is a small library of Java classes that wrap a few Proj.4 functions by
+using the Java Native Interface (JNI). The main Java class is org.proj4.PJ.
+
+
+Compilation:
+-------------
+
+To compile the native part, configure has to be run in the proj directory like this:
+
+    CFLAGS=-Iinclude2 ./configure --with-jni=include1
+
+where
+
+    include1 = folder in which the header file jni.h resides (usually $JAVA_HOME/include)
+    include2 = folder in which the header file jni_md.h resides (usually $JAVA_HOME/include/linux or whatever)
+
+On MacOS, those two folders are /System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Home/include/
+
+
+The java part is compiled by running ant inside the "jniwrap" folder.
+This will compile the classes and archive them in a jar library.
+It applies to Linux, Macos and Windows (and virtually to every system
+supporting java).
+
+
+Requirements:
+-------------
+
+Beyond the ones already put by Proj.4, you need:
+- JSE 1.5+, the Java standard development kit version 1.5 or above
+- Ant, to run the build
+- Doxygen for the documentation generation
+
+
+Documentation:
+--------------
+
+The documentation is held inside the code and can be retrieved by running
+doxygen inside the folder jniwrap. This will create the HTML format
+documentation inside of jniwrap/docs
+
+The standard way to achive this is to use an Ant target:
+
+    ant do_make_help
+
+
+License:
+--------
+
+GPL for the first release
+Proj.4 license for the second release.
+
+
+Authors:
+--------
+
+Andrea Antonello (andrea.antonello@hydrologis.com)
+Martin Desruisseaux (martin.desruisseaux@geomatys.fr)
+
+
+Usage & a fast example:
+-----------------------
+
+The jproj.jar is all is needed to implement proj support in java applications.
+The whole job is done by the proj4, so there are just a couple of functions that
+be used.
+
+The best way is to see everything through an example.
+In the following example we create two Coordinate System and transform 3 points.
+The Coordinate System and the points are hard-coded for simplicity. Of course,
+real applications would read them from a file or other data source.
+
+________________________________________________________________________________
+import org.proj4.*;
+import java.util.Arrays;
+
+
+/**
+ * Converts coordinates from EPSG:32632 (WGS 84 / UTM zone 32N) to WGS84,
+ * then prints the result to the standard output stream.
+ */
+public class Main {
+    public static void main(String[] args) throws PJException {
+        PJ sourcePJ = new PJ("+init=epsg:32632");           // (x,y) axis order
+        PJ targetPJ = new PJ("+proj=latlong +datum=WGS84"); // (λ,φ) axis order
+        double[] coordinates = {
+            500000,       0,   // First coordinate
+            400000,  100000,   // Second coordinate
+            600000, -100000    // Third coordinate
+        };
+        sourcePJ.transform(targetPJ, 2, coordinates, 0, 3);
+        System.out.println(Arrays.toString(coordinates));
+    }
+}
+________________________________________________________________________________
+
+compile the Main code:
+we assume that proj was compiled with the right flag to support jproj.
+Therefore we have a library called jproj.jar.
+Thus we compile the Main.java with the command:
+
+javac -classpath <path to the jar library>/jproj.jar Main.java
+
+and execute the created test case with:
+
+java -cp .:<path to the jar library>/jproj.jar -Djava.library.path=<path to the libproj, if needed> Main
+
+That's it, enjoy!

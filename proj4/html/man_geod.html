@@ -1,0 +1,305 @@
+<HTML><HEAD><TITLE>Manpage of GEOD</TITLE>
+</HEAD><BODY>
+<H1>GEOD</H1>
+Section: User Commands  (1)<BR>Updated: 2000/03/21 Rel. 4.4<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+geod - direct geodesic computations
+<BR>
+
+invgeod - inverse geodesic computations
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>geod</B>
+
+<B>+ellps=&lt;ellipse&gt;</B>
+
+[
+<B>-afFIlptwW</B>
+
+[
+<I>args</I>
+
+] ] [
+<B>+args</B>
+
+]
+file[s]
+<BR>
+
+<B>invgeod</B>
+
+<B>+ellps=&lt;ellipse&gt;</B>
+
+[
+<B>-afFIlptwW</B>
+
+[
+<I>args</I>
+
+] ] [
+<B>+args</B>
+
+]
+file[s]
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<I>Geod</I>
+
+(direct) and
+<I>invgeod</I>
+
+(inverse)
+perform geodesic (``Great Circle'') computations for determining
+latitude, longitude and back azimuth of a terminus point
+given a initial point latitude, longitude, azimuth and distance (direct) or
+the forward and back azimuths and distance between an initial and
+terminus point latitudes and longitudes (inverse).
+<P>
+
+The following runline control parameters can appear in any order:
+<DL COMPACT>
+<DT><B>-I</B>
+
+<DD>
+Specifies that the inverse geodesic computation is to be performed.
+May be used with execution of
+<B>goed</B>
+
+as an alternative to
+<B>invgeod</B>
+
+execution.
+<DT><B>-a</B>
+
+<DD>
+Latitude and longitudes of the initial and terminal points,
+forward and back azimuths and distance are output.
+<DT><B>-t</B><I>a</I>
+
+<DD>
+<I>A</I>
+
+specifies a character employed as the first character to denote
+a control line to be passed through without processing.
+<DT><B>-le</B>
+
+<DD>
+Gives a listing of all the ellipsoids that may be selected with the
+<B>+ellps=</B>
+
+option.
+<DT><B>-lu</B>
+
+<DD>
+Gives a listing of all the units that may be selected with the
+<B>+units=</B>
+
+option.
+<DT><B>-[f|F]</B><I> format</I>
+
+<DD>
+<I>Format</I>
+
+is a
+<I>printf</I>
+
+format string to control the output form of the geographic coordinate values
+(<B>f</B>) or distance value (<B>F</B>).
+The default mode is DMS for geographic coordinates and &quot;%.3f&quot; for distance.
+<DT><B>-[w|W]</B><I>n</I>
+
+<DD>
+<I>N</I>
+
+is the number of significant fractional digits to employ for
+seconds output (when the option is not specified,
+<B>-w3</B>
+
+is assumed).
+When
+<B>-W</B>
+
+is employed the fields will be constant width with leading zeroes.
+<DT><B>-p</B>
+
+<DD>
+This option causes the azimuthal values to be output as unsigned
+DMS numbers between 0 and 360 degrees.  Also note -f.
+</DL>
+<P>
+
+The
+<B>+args</B>
+
+run-line arguments are associated with geodetic parameters
+for specifying the ellipsoidal or sphere to use.
+See
+<B>proj</B>
+
+documentation for full list of these parameters and contrl.
+The options are processed in left to right order
+from the run line.
+Reentry of an option is ignored with the first occurance assumed to
+be the desired value.
+<P>
+
+One or more
+<I>files</I>
+
+(processed in left to right order)
+specify the source of data to be transformed.
+A - will specify the location of processing standard input.
+If no files are specified, the input is assumed to be from
+<I>stdin.</I>
+
+<P>
+
+For direct determinations input data must be in latitude,
+longitude, azimuth and distance order and output will be
+latitude, longitude and back azimuth of the terminus point.
+Latitude, longitude of the initial and terminus point are
+input for the inverse mode and respective forward and back
+azimuth from the initial and terminus points are output along
+with the distance between the points.
+<P>
+
+Input geographic coordinates
+(latitude and longitude) and azimuthal data must be in DMS format and input
+distance data must be in units consistent with the ellipsoid
+major axis or sphere radius units.
+Output geographic coordinates will be in DMS
+(if the
+<B>-f</B>
+
+switch is not employed) to 0.001&quot;
+with trailing, zero-valued minute-second fields deleted.
+Output distance data will be in the same units as the ellipsoid or
+sphere radius.
+<P>
+
+The Earth's ellipsoidal figure may be selected in the same
+manner as program
+<B>proj</B>
+
+by using
+<B>+ellps=, +a=, +es=,</B>
+
+etc.
+<P>
+
+<I>Geod</I>
+
+may also be used to determine intermediate points along either
+a geodesic line between two points or along an arc of specified distance
+from a geographic point.
+In both cases an initial point must be specified with
+<B>+lat_1=</B><I>lat</I>
+
+and
+<B>+lon_1=</B><I>lon</I>
+
+parameters and either a terminus point
+<B>+lat_2=</B><I>lat</I>
+
+and
+<B>+lon_2=</B><I>lon</I>
+
+or a distance and azimuth from the initial point with
+<B>+S=</B><I>distance</I>
+
+and
+<B>+A=</B><I>azimuth</I>
+
+must be specified.
+<P>
+
+If points along a geodesic are to be determined then either
+<B>+n_S=</B><I>integer</I>
+
+specifying the number of intermediate points and/or
+<B>+del_S=</B><I>distance</I>
+
+specifying the incremental distance between points must be specified.
+<P>
+
+To determine points along an arc equidistant from the initial point both
+<B>+del_A=</B><I>angle</I>
+
+and
+<B>+n_A=</B><I>integer</I>
+
+must be specified which determine the respective angular increments
+and number of points to be determined.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The following script determines the geodesic azimuths and distance in
+U.S. stature miles from Boston, MA, to Portland, OR:
+<DL COMPACT><DT><DD>
+<BR>&nbsp;<TT>geod&nbsp;+ellps=clrk66&nbsp;&lt;&lt;EOF&nbsp;-I&nbsp;+units=us-mi
+<BR>&nbsp;42d15'N&nbsp;71d07'W&nbsp;45d31'N&nbsp;123d41'W
+<BR>&nbsp;EOF</TT>
+</DL>
+
+which gives the results:
+<DL COMPACT><DT><DD>
+<BR>&nbsp;<TT>-66d31'50.141&quot;&nbsp;&nbsp;&nbsp;75d39'13.083&quot;&nbsp;&nbsp;&nbsp;2587.504
+</DL>
+
+where the first two values are the
+azimuth from Boston to Portland, the back azimuth from Portland to
+Boston followed by the distance.
+<P>
+
+An example of forward geodesic use is to use the Boston location and determine
+Portland's location by azimuth and distance:
+<DL COMPACT><DT><DD>
+<BR>&nbsp;geod&nbsp;+ellps=clrk66&nbsp;&lt;&lt;EOF&nbsp;+units=us-mi
+<BR>&nbsp;42d15'N&nbsp;71d07'W&nbsp;-66d31'50.141&quot;&nbsp;2587.504
+<BR>&nbsp;EOF</TT>
+</DL>
+
+which gives:
+<DL COMPACT><DT><DD>
+<BR>&nbsp;<TT>45d31'0.003&quot;N&nbsp;&nbsp;&nbsp;123d40'59.985&quot;W&nbsp;75d39'13.094&quot;</TT>
+</DL>
+
+Note: lack of precision in the distance value compromises
+the precision of the Portland location.
+<A NAME="lbAF">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+Thomas, P.D., 1970,
+<I>Spheroidal Geodesics, Reference Systems &amp; Local Geometry:</I>
+
+U.S. Naval Oceanographic  Office, S-138.
+<A NAME="lbAG">&nbsp;</A>
+<H2>HOME PAGE</H2>
+
+<A HREF="http://www.remotesensing.org/proj">http://www.remotesensing.org/proj</A>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">EXAMPLE</A><DD>
+<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">HOME PAGE</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 13:14:56 GMT, October 14, 2005
+</BODY>
+</HTML>

@@ -1,0 +1,53 @@
+:
+# SCCSID @(#)install.in	4.8 95/09/24 GIE REL
+#
+# Installation script all PROJ.4 system reference files.
+#
+# This script must be executed after compilation of proj library.
+#
+# Execute as:
+#
+#	install
+#
+# ------------------------------------------------------------
+prefix=/usr/local
+#
+lib=${prefix}/lib/proj.4
+# Copy in "init" files
+for x in proj_def.dat nad27 nad83 world GL27
+do
+	cp $x ${lib}/$x
+	if [ $? -ne 0 ] ; then
+		echo "init copying failed for file $x"
+	else
+		echo "file $x installed"
+	fi
+done
+# just test for conus and assume others are there
+if [ -f conus.lla ] ; then
+# install nad2nad NADCON files
+	echo "installing ${lib}/nad2783"
+	lib=${lib}/nad2783
+	if [ ! -d $lib ] ; then
+		mkdir $lib
+		if [ $? -ne 0 ] ; then
+			echo "failed to make dir $lib"
+			echo "nad2nad lib install stopped"
+			exit 1
+		fi
+	fi
+# Process ascii grid into nad2nad compatible files.
+	for x in *.lla ; do
+		dest=`expr $x : '\(.*\)\.lla'`
+		cat < $x | ../src/nad2bin ${lib}/${dest}
+		if [ $? -ne 0 ] ; then
+			echo "nad2nad file install failed on file ${lib}/${dest}"
+			exit 1
+		fi
+		echo "${lib}/${dest} installed"
+	done
+else
+	echo "nad2nad NADCON files not present"
+fi
+echo "normal completion"
+exit 0

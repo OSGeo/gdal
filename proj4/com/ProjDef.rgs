@@ -1,0 +1,26 @@
+HKCR
+{
+	COMTest1.ProjDef.1 = s 'ProjDef Class'
+	{
+		CLSID = s '{B9B8F0A3-D9F8-4537-9A03-329DC9AE144C}'
+	}
+	COMTest1.ProjDef = s 'ProjDef Class'
+	{
+		CLSID = s '{B9B8F0A3-D9F8-4537-9A03-329DC9AE144C}'
+		CurVer = s 'PROJ4.ProjDef.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {B9B8F0A3-D9F8-4537-9A03-329DC9AE144C} = s 'ProjDef Class'
+		{
+			ProgID = s 'PROJ4.ProjDef.1'
+			VersionIndependentProgID = s 'PROJ4.ProjDef'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Both'
+			}
+			'TypeLib' = s '{A0ADE3D8-9A85-4BD3-AD56-BFEF42495130}'
+		}
+	}
+}

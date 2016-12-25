@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<project name="jproj" default="compile" basedir=".">
+
+    <!-- ******************************************* -->
+    <!--     Set the variables                       -->
+    <!-- ******************************************* -->
+    <property name="src"     value="org/proj4"/>
+    <property name="srcProj" value="../src"/>
+    <property name="build"   value="classes"/>
+    <property name="libs"    value="libs"/>
+
+    <!-- ******************************************* -->
+    <!--     Start everything (default target)       -->
+    <!-- ******************************************* -->
+    <target name="compile" depends="start, do_javac, jar_it">
+        <echo>Compilation finished...</echo>
+    </target>
+
+    <!-- ******************************************* -->
+    <!--     Create some begin stuff                 -->
+    <!-- ******************************************* -->
+    <target name="start">
+        <echo>Creating folder structure...</echo>
+        <mkdir dir="${build}"/>
+        <mkdir dir="${libs}"/>
+    </target>
+
+    <!-- ******************************************* -->
+    <!--     Execute javac compilation               -->
+    <!-- ******************************************* -->
+    <target name="do_javac" depends="start">
+        <echo>Compiling the java code...</echo>
+        <javac srcdir="${src}" destdir="${build}" encoding="UTF-8" source="1.5" target="1.5" includeAntRuntime="false"/>
+    </target>
+
+    <!-- ******************************************* -->
+    <!--     Execute javah for JNI headers           -->
+    <!-- ******************************************* -->
+    <!-- Needed if new native methods are added.     -->
+    <!-- Header file is created only if the old      -->
+    <!-- proj/src/org_proj4_PJ.h file is deleted     -->
+    <!-- before to run this task.                    -->
+    <!-- ******************************************* -->
+    <target name="do_javah" depends="do_javac">
+        <echo>Creating jni headers...</echo>
+        <javah classpath="${build}" class="org.proj4.PJ" destdir="${srcProj}"/>
+    </target>
+
+    <!-- ******************************************* -->
+    <!--     Do the C part compilation through make  -->
+    <!-- ******************************************* -->
+    <target name="do_make" depends="do_javah">
+        <echo>Compiling libraries...</echo>
+        <exec dir=".." executable="make"/>
+    </target>
+
+    <!-- ******************************************* -->
+    <!--     Create binary package distribution      -->
+    <!-- ******************************************* -->
+    <target name="jar_it">
+        <jar destfile="${libs}/jproj.jar" basedir="${build}/">
+            <manifest>
+                <attribute name="Built-By" value="Proj.4"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <!-- ****************************************************** -->
+    <!--     Execute doxygen help file and source file creation -->
+    <!-- ****************************************************** -->
+    <target name="do_make_help" depends="start">
+        <echo>Creating help files...</echo>
+        <exec dir="." executable="doxygen">
+            <arg line="doxygen.cfg"/>
+        </exec>
+    </target>
+
+    <!-- ******************************************* -->
+    <!--     Clean up everything                     -->
+    <!-- ******************************************* -->
+    <target name="clean">
+        <echo>Cleaning up...</echo>
+        <delete dir="${build}"/>
+        <delete dir="${libs}"/>
+        <delete dir="docs"/>
+    </target>
+
+</project>

@@ -1,0 +1,55 @@
+platform:
+- x64
+- x86
+
+environment:
+  matrix:
+
+  - BUILD_TYPE: nmake
+
+# Does not work
+# VS 2008
+#  - BUILD_TYPE: cmake
+#    VS_VERSION: Visual Studio 9 2008
+
+# VS 2010
+  - BUILD_TYPE: cmake
+    VS_VERSION: Visual Studio 10
+
+# VS 2012
+  - BUILD_TYPE: cmake
+    VS_VERSION: Visual Studio 11
+
+# VS 2013
+  - BUILD_TYPE: cmake
+    VS_VERSION: Visual Studio 12
+
+shallow_clone: true
+
+build_script:
+  - echo build_script
+  - if "%BUILD_TYPE%" == "nmake" if "%platform%" == "x86" call "%VS120COMNTOOLS%\..\..\VC\vcvarsall.bat"
+  - if "%BUILD_TYPE%" == "nmake" if "%platform%" == "x64" "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
+  - if "%BUILD_TYPE%" == "nmake" if "%platform%" == "x64" call "%VS120COMNTOOLS%\..\..\VC\vcvarsall.bat" x86_amd64
+  - if "%BUILD_TYPE%" == "nmake" nmake /f makefile.vc SELFTEST=1
+  - if "%BUILD_TYPE%" == "nmake" nmake /f makefile.vc install-all
+  - if "%BUILD_TYPE%" == "nmake" if "%platform%" == "x64" cd src
+  - if "%BUILD_TYPE%" == "nmake" if "%platform%" == "x64" nmake /f makefile.vc SELFTEST=1 multistresstest.exe
+# Disabled for now as it scales badly
+#  - if "%BUILD_TYPE%" == "nmake" if "%platform%" == "x64" multistresstest.exe
+  - if "%BUILD_TYPE%" == "cmake" if "%platform%" == "x64" SET VS_FULL=%VS_VERSION% Win64
+  - if "%BUILD_TYPE%" == "cmake" if "%platform%" == "x86" SET VS_FULL=%VS_VERSION%
+  - if "%BUILD_TYPE%" == "cmake" echo "%VS_FULL%"
+  - if "%BUILD_TYPE%" == "cmake" cmake -G "%VS_FULL%" . -DSELFTEST=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=../bin -DBUILD_LIBPROJ_SHARED=ON
+  - if "%BUILD_TYPE%" == "cmake" cmake --build . --config Release
+
+test_script:
+  - echo test_script
+  - if "%BUILD_TYPE%" == "nmake" cd C:\PROJ\bin
+  - if "%BUILD_TYPE%" == "cmake" cd C:\projects\proj-4\bin
+  - echo "Contents of current directory:"
+  - dir
+  - proj.exe -VC
+
+deploy: off
+

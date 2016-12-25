@@ -1,0 +1,1968 @@
+2015-12-13: jswhit <https://github.com/jswhit>
+	* : Add inverse hammer transform (pull request #329).
+
+2015-09-10 sisyphus <https://github.com/sisyphus>
+	* : Rename PVALUE in pj_param.cto prevent Windows variable name clash
+
+2015-09-10 Bas Couwenberg <https://github.com/sebastic>
+	* : Don't include files in proj dist, also included in proj-datumgrids
+	dist #301
+
+2015-09-10 Ture Pålsson <https://github.com/turepalsson>
+	* : PTHREAD_MUTEX_RECURSIVE detection issue on FreeBSD #303
+
+2015-09-10 Martin Raspaud <https://github.com/mraspaud>
+	* : Don't return values when doing inverse projections outside of the
+	mollweide map #304
+
+2015-09-08 Charles Karney <https://github.com/cffk>
+	* : Update Geodesic library from GeographicLib
+		* Improve accuracy of calculations by evaluating trigonometric
+		  functions more carefully and replacing the series for the reduced
+		  length with one with a smaller truncation error.
+		* The allowed ranges for longitudes and azimuths is now unlimited; it
+		  used to be [-540d, 540d).
+		* Enforce the restriction of latitude to [-90d, 90d] by returning NaNs
+		  if the latitude is outside this range.
+		* The inverse calculation sets s12 to zero for coincident points at
+		  pole (instead of returning a tiny quantity).
+		* This commit also includes a work-around for an inaccurate value for
+		  pi/180 in dmstor.c (see the definitions of DEG_IN and DEG_OUT in
+		  geod_interface.c).
+
+2015-09-06 Even Rouault <even.rouault@spatialys.com>
+	* re-add proj_def.dat which was missing from source distribution
+	https://github.com/OSGeo/proj.4/issues/274
+	https://github.com/OSGeo/proj.4/issues/296 and
+	https://github.com/OSGeo/proj.4/issues/297
+
+
+2015-07-27 Even Rouault <even.rouault@spatialys.com>
+	* : Remove setlocale() use in pj_init_ctx(), and replace uses of atof() &
+	strtod() by their locale safe variants pj_atof() and pj_strtod().
+	Proj versions from now advertize #define PJ_LOCALE_SAFE 1 in proj_api.h
+	and export pj_atof() & pj_strtod() (#226)
+
+2015-06-01 Charles Karney <https://github.com/cffk>
+	Make PJ_aeqd.c use geodesics for inverse and forward projection
+	modification so that the geodesic structure is not global
+	https://github.com/OSGeo/proj.4/pull/281
+
+2015-05-25 Elliott Sales de Andrade <https://github.com/QuLogic>
+	* : Fix inverse stereo projection on an ellipsoid
+	https://github.com/OSGeo/proj.4/pull/277
+
+2015-02-21 Even Rouault <even.rouault@spatialys.com>
+	* nad/epsg: regenerate nad/epsg with GDAL r28536 to avoid
+	precision loss in TOWGS84 parameters, e.g. on Amersfoort / RD
+	EPSG:4289 (#260)
+
+2015-02-21 Howard Butler <howard@hobu.co>
+	* cmake/Proj4Version.cmake src\lib_proj.cmake: Align
+	SOVERSION CMake configuration with autotools #263
+
+2015-02-21 Howard Butler <howard@hobu.co>
+	* src/lib_proj.cmake: define PROJ_LIB as part
+	of the compilation defines #261
+
+2015-02-21 Even Rouault <even.rouault@spatialys.com>
+	* src/lib_proj.cmake nad/CMakeLists.txt: cmake build: install
+	nad.lst, geodesic.h. But not emess.h and pj_list.h (from Charles Karney)
+
+2015-02-21 Even Rouault <even.rouault@spatialys.com>
+	* src/pj_gridinfo.c: remove trailing / from preprocessor line
+	 (from Charles Karney)
+
+2015-02-21 Even Rouault <even.rouault@spatialys.com>
+	* src/PJ_aitoff.c: define M_PI and M_PI_2 (needed for Windows)
+	 (from Charles Karney)
+
+2015-02-21 Even Rouault <even.rouault@spatialys.com>
+	* src/lib_proj.cmake: remove space from variable name to
+	suppress policy warning. (from Charles Karney)
+
+2015-02-21 Even Rouault <even.rouault@spatialys.com>
+	* src/bin_nad2bin.cmake: backward test for nad2nad warning.
+	bad directory specified for emess (from Charles Karney)
+
+2015-02-21 Even Rouault <even.rouault@spatialys.com>
+	* man/man1/proj.1 man/man1/cs2cs.1 man/man1/geod.1 man/man3/pj_init.3:
+	fix various issues (#259)
+
+2015-02-21 Even Rouault <even.rouault@spatialys.com>
+	* nad/Makefile.am: compatibility with proj-datumgrids-1.6RC1
+	(patch by sebastic, #249)
+
+2015-02-21 Even Rouault <even.rouault@spatialys.com>
+	* nad/Makefile.am: fix install target when no .lla files are in
+	nad subdirectory.
+
+2015-02-21 Even Rouault <even.rouault@spatialys.com>
+	* cmake/Makefile.am man/Makefile.am: install missing CMake support
+	files for dist-all target
+
+2015-02-20 Howard Butler <howard@hobu.co>
+	* CMakeLists.txt cmake/Proj4Mac.cmake
+	man/CMakeLists.txt src/bin_cs2cs.cmake
+	src/lib_proj.cmake: Adapt Charles Karney
+	CMake patches for smoother build #258
+
+2015-02-20 Howard Butler <howard@hobu.co>
+	* config.guess config.sub: #257 update very old config.guess
+	and config.sub
+
+2015-02-17 Howard Butler <howard@hobu.co>
+	* src/PJ_aitoff.c: #250 Inverse solution for Winkel Tripel
+	from Drazan Tutic
+
+2015-02-17 Howard Butler <howard@hobu.co>
+	* CMakeLists.txt cmake/policies.cmake src/lib_proj.cmake: #256
+	CMake tweaks to shut off some noisy policies, fix installation
+	of proj_config header, and shut off Framework building by
+	default on OSX
+
+2015-02-17 Howard Butler <howard@hobu.co>
+	* src/lib_proj.cmake CMakeLists: Fix #248 healpix compilation typo
+
+2015-02-16 Howard Butler <howard@hobu.co>
+	* src/pj_init.c: Fix #237 warning about initialization
+	ordering due to setlocale
+
+2015-02-16 Howard Butler <howard@hobu.co>
+	* nad/Makefile.am nad/Makefile.in and others in nad/: Fix #247 to
+	allow out-of-tree autoconf builds
+
+2014-09-17 Even Rouault <even.rouault@spatialys.com>
+
+	* src/pj_datums.c, src/pj_ellps.c: Add clrk80ign ellipsoid and use it
+	in carthage datum def (#245)
+
+2014-09-16  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Generate 4.9.0 RC2.
+
+	* nad/epsg: updated with Pulkova 1942(58) reverted, and vertical
+	coordinate system names coming through properly.
+
+	* src/pj_gridinfo.c, pj_apply_vgridshift.c, pj_apply_gridshift.c:
+	Fix problems with NTv2 files with improper parent structure (#177).
+
+2014-09-13  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Generate 4.9.0 release.
+
+2014-19-13 Howard Butler <hobu.inc@gmail.com>
+	* CMake: Implement CMake build system for proj.4 #243
+
+2014-09-13  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_datums.c: fix spelling of clrk80 in carthage datum def (#245)
+
+2014-19-13 Howard Butler <hobu.inc@gmail.com>
+	* pj_gridinfo.c: Don't crash when nad_ctable_init doesn't return
+	a ctx. #231
+
+2014-09-13  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/epsg: Updated to EPSG 8.5
+
+2014-19-08 Even Rouault <even.rouault@mines-paris.org>
+
+	* src/pj_gridinfo.c: Make pj_gridinfo_load() thread-safe (#228)
+
+2014-19-08 Howard Butler <hobu.inc@gmail.com>
+
+	* src/pj_init.c: apply fix specified in #229  -- pj_init_plus() with init
+	and other parms fails in 4.9.0beta
+
+2014-06-06 Even Rouault <even.rouault@mines-paris.org>
+
+	* src/PJ_omerc.c: mark no_off/no_uoff as used for round-tripping
+	pj_init_ctxt()/pj_get_def() (#239)
+
+2014-05-14 Even Rouault <even.rouault@mines-paris.org>
+
+	* nad/epsg: Upgraded to EPSG 8.4
+
+2013-12-09  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_geos.c, testvarious: reverse sense of sweep flag. (#146)
+
+2013-12-05  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_qsc.c: Add QSC projection (#179)
+
+2013-10-27  Frank Warmerdam  <warmerdam@gdal-c>
+
+	* Prepare 4.9.0beta2 release.
+
+2013-10-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_omerc.c: Change handling of values nearly 90degrees away from
+	the origin (#114).
+
+	* src/pj_datums.c: Switch to using EPSG:1618 COORD_OP_CODE to transform
+	hermannskogel to WGS84 (same as used to ETRS89) (#207).
+
+2013-10-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/Makefile.am: Given up on restricting access to projects.h, and
+	move it back into the list of files installed normally.
+
+	* configure.in: Add C_WFLAGS support, in particular use
+	-Wdeclaration-after-statement to warn about code that won't work
+	with MSVC (#224).
+
+	* src/cs2cs.c: Support -I when there is no +to projection.
+
+	* src/PJ_ob_tran.c: Propogate ctx into sub-projection (#225).
+
+2013-10-03  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_healpix.c: Fix healpix build on msvc. (#223)
+
+2013-10-01  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/epsg: Upgraded to EPSG 8.2.
+
+2013-07-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/proj_etmerc.c: Fix two errors in the n**5 coefficients.  Add
+	sixth order coefficients.  Fix rounding problems (#222)
+
+2013-07-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_healpix.c: major update for polar scaling and parms (#219)
+
+2013-07-12  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/geodesic.{c,h}: allow polygon vertices to be specified
+	incrementally for geodesic area (#221).
+
+2013-07-08  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_calcofi.c: Add Cal Coop Ocean Fish Invest Lines/Stations
+	projections (calcofi) (#135)
+
+2013-07-02  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/testvarious, nad/tv_out.dist: add new robinson forward test,
+	and backwards tests.
+
+	* src/PJ_robin.c: Applied new coefficients supplied by Ed Campbell
+	pretty much on faith. (#113)
+
+2013-06-26  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_open_lib.c: change filename and access args to const.
+
+2013-06-25  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/Makefile.am: add CH to pkgdata_DATA (#145).
+
+	* src/PJ_putp3.c: Fix putp3p usage line to remove "no inv" (#167).
+
+	* src/PJ_aitoff.c: note that aitoff and wintri projections have no
+	inverse (#160, #168).
+
+	* src/PJ_urm5.c: Note that there is no inverse, fix spelling of alpha
+	in the short description (#169).
+
+	* src/pj_ell_set.c: Ensure thread context is forwarded.
+
+	* src/multistresstest.c: add windows support (#199)
+
+	* src/pj_ctx.c: avoid race condition on setting of
+	default_context_initialized. (#199)
+
+	* config.guess, config.sub: updated to newer versions (#208).
+
+	* src/proj.def: add pj_get_spheroid_defn to proj.def. (#214)
+
+	* install-sh: upgrade to support multiple files (#217)
+
+2013-06-24  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/projects.h, src/proj_api.h: move pj_open_lib() into proj_api.h.
+
+	* src/projects.h: Do not define PROJ_LIB to "PROJ_LIB".
+
+2013-06-22  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Preparing for 4.9.0 beta release.
+
+	* src/geodesic.{c,h}: sync relative to GeographicLib 1.31. (#216)
+
+	* src/pj_fileapi.c, etc: Implement a virtual file api accessable
+	through the context for init file and grid shift file access.
+
+	* src/mk_cheby.c: reformat, add braces to avoid warnings.
+
+2013-06-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_healpix.c: correct various warnings about unused variables.
+
+2013-06-19  Frank Warmerdam  <warmerdam@google.com>
+
+	* src/pj_mutex.c, configure.in: Ensure that the core mutex lock
+	is created in recursive mode.  Results in -lpthread being required.
+
+2013-06-18  Frank Warmerdam  <warmerdam@google.com>
+
+	* src/PJ_healpix.c: rename sign() to pj_sign() and make it static.  No
+	need to risk conflicting with sign() in other packages like gctpc.
+
+2012-12-17  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_init.c: Recover gracefully if setlocale() returns NULL
+	like on Android (#204).
+
+2012-12-07  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/geod*: Replace geodesic implementation with one from
+	Charles Karney, add public interface (#197).
+
+2012-12-05  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/epsg: Upgraded to EPSG 8.0.
+
+2012-07-24  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_gridcatalog.c, src/makefile.vc: fixes for visual studio
+	builds (#182).
+
+2012-07-04  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_healpix.c: Incorporate a polar fix (#176).
+
+2012-06-27  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/nad2bin.c: Fix byte swapping for bigendian platforms (#157)
+
+2012-06-07  Frank Warmerdam  <warmerdam@google.com>
+
+	* src/pj_init.c: avoid leaking vgridlist_geoid (#175).
+
+2012-06-01  Martin Desruisseaux <martin.desruisseaux@geomatys.fr>
+
+	* Removed the old JNI wrappers from trunk. Those wrappers are
+	still present on the 4.8 branch as deprecated classes.
+
+2012-05-31  Martin Desruisseaux <martin.desruisseaux@geomatys.fr>
+
+	* Replaced usages of NAN C/C++ constant by the java.lang.Double.NaN
+	constant.  This was done because not all C/C++ compilers define the
+	NAN constant, and for making sure that the bits pattern is exactly the
+	one expected by Java.
+
+2012-03-25  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/Makefile.am: Add org_proj4_PJ.h to files to distribute.
+
+2012-03-13  Frank Warmerdam  <warmerdam@google.com>
+
+	* src/projects.h, src/pj_list.c: avoid using #include directly on a
+	macro expansion - it is unnecessary and makes for problems in my work
+	environment.
+
+2012-03-06  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Preparing 4.8.0 release candidate.
+
+	* nad/epsg: regenerate with +no_uoff for hotine oblique mercator (#104)
+
+	* src/PJ_sconics.c: Fix missing P->sig term in pconic forward
+	projection equation (#148).
+
+2012-03-03  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_omerc.c: Support +no_uoff and +no_off  (#128)
+
+	* src/PJ_stere.c: Cleanup odd code construct (#147)
+
+2012-02-26  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_geos.c, nad/testvarious: Added GEOS +sweep and add GEOS
+	to the test suite (#146)
+
+	* nad/CH: added swiss datum related definitions from strk (#145)
+
+	* src/Makefile.am, src/mutltistresstest.c: provide for building
+	multistresstest in the makefile, and slightly improve it.
+
+2012-02-25  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/epsg: regenerate with +datum (#122)
+
+2012-02-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Prepare 4.8.0 Beta1.
+
+	* src/PJ_isea.c: Add Icosahedral Snyder Equal Area projection (#111)
+
+	* src/nad2nad.c: completely removed as part of the ctable2 overhaul.
+
+	* src/cs2cs.c, src/pj_init.c, src/geod_set.c, src/nad2nad.c, src/geod.c:
+	Use parenthesis around assignments in if statements (#123).
+
+	* src/nad2bin.c: improve io error checking (#140).
+
+	* src/PJ_healpix.c: fix windows build issues (#133)
+
+2012-02-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_utils.c: Add pj_get_spheroid_defn() (#142)
+
+2012-02-08  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_apply_gridshift.c: Ensure that one amoung many points
+	falling outside the grid areas will not cause the remainder to not
+	be datum shifted in a way that is hard to diagnose. (#45)
+
+2012-02-01  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_apply_gridshift.c: ensure we try to use grids as long as we
+	are within epsilon of the edge (#141).
+
+2012-01-31  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/nad2bin.c: fix comparison test for -f flag (#139).
+
+2011-12-22  Frank Warmerdam  <warmerdam@google.com>
+
+	* src/pj_init.c; Only split arguments on pluses following spaces
+	in pj_init_plus() (#132)
+
+2011-12-14  Frank Warmerdam  <warmerdam@google.com>
+
+	* src/pj_open_lib.c: make sure we check errno before logging messages (#131).
+
+2011-12-13  Frank Warmerdam  <warmerdam@google.com>
+
+	* src/PJ_healpix.c, etc: added healpix support contributed by
+	Landcare in New Zealand.
+
+2011-11-22  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/nad_init.c, src/pj_gridinfo.c, src/nad2bin.c: Implement
+	support for "ctable2" format grid shift files.
+
+2011-11-18  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_mutex.c, src/pj_apply_vgridshift.c: avoid unused warnings.
+
+2011-11-13  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/nad2bin.c: Modified to write NTv2 format files.
+
+	* src/pj_init.c: avoid casting warning with old_locale.
+
+2011-09-28  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/epsg: Upgrade to EPSG 7.9.  Ideal datum selection rules also
+	changed a bit upstream.
+
+2011-09-01  Martin Desruisseaux <martin.desruisseaux@geomatys.fr>
+
+	* Updated jniwrap/build.xml Ant script and README file.
+
+2011-08-27  Martin Desruisseaux <martin.desruisseaux@geomatys.fr>
+
+	* Fixed some (but not all) memory leaks in org.proj4.Projections JNI bindings
+
+	* Deprecated org.proj4.Projections JNI bindings
+
+	* Added org.proj4.PJ JNI bindings in replacement of org.proj4.Projections
+
+2011-08-27  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* pj_pr_list.c, pj_sterrno.c: doc typo fixes from Martin.
+
+2011-08-07  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_datums.c: Updated Potsdam (DHDN) towgs84 parameters to match
+	EPSG 7 parameter list for EPSG:4314 (#115).
+
+	* src/pj_mutex.c: alter name of core_lock to avoid conflict on AIX (#55)
+
+2011-07-23    <warmerdam@pobox.com>
+
+	* configure.in, Makefile.am, proj.pc.in: Added pkg-config support (#3)
+
+2011-07-05  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_init.c, src/pj_gridinfo.c: Correct error handling for missing
+	grid shift files and defaults files (#116)
+
+2011-06-09  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_robin.c: fix mistaken constant value (#113).
+
+	* src/pj_init.c: fix for +axis validation (#87)
+
+	* nad/IGNF: addition/fix of Kerguelen, Amsterdam and St Paul, Terre Adélie,
+	INSPIRE CRSes in IGNF catalogue (#88)
+
+2011-05-31  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_igh.c: use project free instead of free() in FREEUP (#112).
+
+	* src/projects.h: memset PJ structure to zeros after allocation to
+	avoid problems getting everything initialized properly (#112).
+
+2011-05-23  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/esri.extra, nad/other.extra: moved 900913 definition from
+	esri.extra to other.extra since it has nothing to do with esri.
+
+	* nad/epsg: updated to EPSG 7.6.
+
+2011-05-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_sterea.c: ensure P->en is properly initialized (#109)
+
+2011-05-10  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/projects.h, src/pj_init.c, src/pj_transform.c: Implement
+	support for vto_meter and vunits vertical units transformation.
+
+2011-05-04  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_igh.c: Added goodes interrupted homolosine (#106).
+
+2011-03-28  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_gridlist.c: avoid possible buffer overflow.
+	https://bugs.meego.com/show_bug.cgi?id=14963
+
+2011-03-23  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_initcache.c: Fix reversed memcpy that causes a crash on the
+	16th item put in the initcache. (#100).
+
+2011-02-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_init.c: fix serious bug in locale handling, wasn't copying
+	the old locale so it would sometimes get corrupted.
+
+	* src/proj_etmerc.c: added extended transverse mercator impl. (#97)
+
+	* Rerun autogen.sh with the latest versions of automake, autoconf and
+	libtool.
+
+2011-02-10  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_gridinfo.c: fix debug bounds reported (#95).
+
+2011-02-08  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_cea.c: Fix particular CEA case  (#94).
+
+	* src/pj_auth.c: correct precision of constants (#93)
+
+	* src/pj_init.c, pj_malloc.c, jniproj.c: avoid C++ comments (#92)
+
+2011-01-11  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_goode.c: fix propogation of es and ctx to sub-projections.
+
+2010-10-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/proj_api.h, src/projects.h: move pj_clear_initcache() to public
+	api and update to 4.8.0 PJ_VERSION to identify when this is available.
+
+2010-08-31  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_gridinfo.c: Move grids in 180 to 360 region to -180 to 0.
+	Improve error/debug reporting.
+
+2010-08-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/test*: default to using ../src/cs2cs
+
+2010-07-31  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/epsg: updated from GDAL.  Adds TMSO projection definitions,
+	and replaces all named datums with fully defined datums.
+
+2010-07-05  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/projects.h: I_ERROR macro must set context errno.
+
+2010-06-10  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/*: Preliminary implementation of projCtx multithreading change.
+
+2010-05-11  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_apply_vgridshift.c (+more): preliminary addition of
+	vertical grid shifting support.
+
+2010-03-16  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_transform.c, src/pj_init.c, src/projects.h, src/pj_gridlist.c,
+	src/pj_apply_gridshit.c: rework the translation of nadgrids parameters
+	into a list of gridshift files to avoid use of static "lastnadgrids"
+	information which screws up multithreading.  Changes the PJ structure.
+
+	* src/multistresstest.c: new harnass for multithreaded testing.
+
+2010-03-03  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/*: fix a variety of warnings when -Wall is used.  Mostly
+	unused variables, and use of assignment results in an if statement
+	without extra brackets.
+
+	* src/*: treat most grid shift errors as not-transient, with the
+	exception of not having a grid shift file for the area of interest.
+	This is done by adding a new error code for no grid shift file for
+	target area.  Also ensure that cs2cs reports pj_transform() errors
+	via emess so we have a chance of seeing the error message.
+
+2010-02-28  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_init.c, src/pj_transform.c: added support for +axis setting
+	to control axis orientation (#18).
+
+	* nad/epsg: Regenerated from EPSG 7.4.1 with the big datum selection
+	upgrade.
+
+2010-02-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_omerc.c: wholesale update from libproj4.3 (20081120) (#62)
+
+2010-01-25  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_mutex.c: avoid conflict between pthread and win32 mutex
+	implementations on unix-like build environments on windows. (#56)
+
+	* src/pj_init,src/projects.h,src/pj_transform.c,nad/testvarious:
+	Correct seriously broken +lon_wrap implementation.  (#62)
+
+	* src/pj_mutex.c: fix creation of mutex on win32 to be in
+	unacquired state in pj_init_lock to avoid an extra reference. (#63)
+
+2009-10-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/ntf_r93.gsb: updated with file from IGN (#52).
+
+	* docs/*: files moved out of source tree (still in svn)
+
+2009-09-29  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nmake.opt: Update so that various items can be externally
+	overridden (#54).
+
+2009-09-24  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/Makefile.am: add ntv2 and ignf testing if grid shift files
+	are available.
+
+2009-09-23  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Preparing for 4.7.0 release.
+
+	* nad/makefile.vc: do not attempt to install ntf_r93.gsb by default.
+
+	* src/pj_init.c: Temporarily set locale to "C" to avoid locale
+	specific number parsing (#49).
+
+	* src/pj_rho.c: move rho out of structure, threadsafety issue (#41).
+
+	* nmake.opt: improve comments (#50).
+
+	* nad/epsg: regenerated - use more symbolic ellipsoid/datum names, and
+	fix EPSG 3857 and 3785 (#51).
+
+	* src/pj_gridlist.c: Implement mutex protection for grid loader/cacher.
+
+	* src/pj_mutex.c: fix up windows support.
+
+	* nad/ntf_r93.gsb: set mime-type to binary so it isn't corrupted on
+	windows systems.
+
+2009-06-17  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_mutex.c: Implement win32 and pthread mutex support.
+
+	* configure, src/Makefile.am: add --without-mutex support to configure
+
+2009-06-16  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* README: Update windows build instructions (#30).
+
+	* nad/epsg: Upgraded to EPSG 7.1.
+
+2009-05-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/testvarious,nad/testdatumfile: split datum file specific
+	stuff into testdatumfile, and add kav5 test in testvarious (#40).
+
+2009-05-18  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_sts.c: Remove duplicate division o lp.phi by P->C_p (#40).
+
+2009-05-13  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_imw_p.c: Correct handling of yc in loc_for() (#39).
+
+2009-04-02  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/Makefile.am: Changes to ensure grid shift files are processed
+	before running check-local, and to use the local grid shift files
+	if available, and to avoid testvarious if grid shift files are
+	not available.
+
+	* src: Fix various warnings.
+
+2009-03-11  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* man/man1: fix Snyder reference (#29)
+
+2009-03-10  Howard Butler <hobu.inc@gmail.com>
+	* autogen.sh: Use autogen.sh from libLAS for wider
+        platform (OSX, Solaris) compatibility
+	* config.guess config.log: remove autoconf temporary
+	files
+
+2009-03-10  Mateusz Loskot  <mateusz@loskot.net>
+
+	* makefile.vc: Added new files pj_mutex.c, pj_initcache.c.
+
+2009-03-09  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* pj_init.c, pj_mutex.c, pj_initcache.c: Introduced in-memory caching
+	of init file search results.
+
+2009-03-08	IGNF <didier.richard@ign.fr>
+
+	* src/PJ_gstmerc.c: Correction of a bug in inv() function :
+	the projected origin coordinates where descaled.
+
+	* nad/testIGNF: Add a comment on the mandatory existance of the world grid
+	in order to make the test.
+
+	* ChangeLog: this comments
+
+2009-01-26  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/*.c: Remove SCCSID and lint stuff from all source files.
+
+2009-01-23  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/biveval.c: Avoid use of static variables which interfere with
+	re-entrancy (#24)"
+
+2009-01-05  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src: Removed CVS log messages from various files since they are
+	not maintained by subversion.
+
+2008-09-16  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/{Makefile.am, Makefile.in}: Added '-no-undefined' option to
+	LDFLAGS. This is required to properly build a library in some
+	environments, MinGW in particular.
+
+2008-08-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Prepare 4.6.1RC2
+
+	* nad/td_out.dist: backed out erroneous changes in 4.6.0 that lost
+	datum shifts with grid shift files.  Added stere (#12) test.
+
+	* nmake.opt: Added /Op to avoid stere errors per ticket #12.
+
+2008-08-07  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nmake.opt, nad/makefile.vc: Make sure we use PROJ_LIB_DIR when
+	installing nad directory support files on windows.
+
+2008-07-28 IGNF <didier.richard@ign.fr>
+
+	* PJ_glabsgm.c : refactoring for better understanding of the projection's
+	formula.
+	* copy of PJ_glabsgm.c to PJ_gstmerc.c and make changes accordingly in src
+	and nad directories.
+
+2008-07-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Prepare 4.6.1 release.
+
+	* rename INSTALL.TXT to INSTALL since the damn distribution generator
+	won't stand for the alternate naming.  Change makefile.vc to use
+	install-all target instead of install.  What are the chances anyone
+	will think of trying that?  Not high.
+
+	* nad/epsg: regenerated from EPSG 6.17.  This should also correct the
+	odd precision problems in the last version or two caused by GDAL
+	numeric processing issues.
+
+2008-06-17  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_tmerc.c: Ensure that tmerc forward projection inputs are
+	within 90 degrees of the central meridian.  This should be considered
+	a preliminary patch until such time as Gerald comes up with a better
+	solution.  http://trac.osgeo.org/proj/ticket/5
+
+2008-04-24  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/cs2cs.c: Fix process() so it passes through extra text as the
+	docs claim.
+
+2008-03-15  Frank Warmerdam <warmerdam@pobox.com>
+
+	* rename INSTALL to INSTALL.TXT to avoid screwing up "make install"
+	* Rework win32 makefiles to support "make install", and better
+	knowledge of grid shift files,
+
+2008-01-18  IGNF  <didier.richard@ign.fr>
+
+	* PJ_eqc.c : Merged eqr and eqc after advise from Gerald. eqc is
+	now generalized (supports latitude of origin). Cleaned files
+	including eqr.
+	* IGNF catalogue : changed accordingly. Added proj_outIGN.dist-real
+	in nad directory to get real coordinates for unit tests.
+
+2008-01-05  IGNF  <didier.richard@ign.fr>
+
+	* PJ_eqr.c: src/PJ_eqr.c added. src/pj_list.h modified (added eqr).
+	src/Makefile.am, src/makefile.vc modified (added PJ_eqr.c and al).
+	As automake 1.10 is missing, src/Makefile.in modified by hand.
+	* PJ_glabsgm.c: src/PJ_glabsgm.c added. src/pj_list.h modified (added glabsgm).
+	src/Makefile.am, src/makefile.vc modified (added PJ_glabgsm.c and al).
+	As automake 1.10 is missing, src/Makefile.in modified by hand.
+	* IGNF catalogue: nad/IGNF added. nad/ntf_r93.gsb added, nad/Makefile.am
+	modified (added IGNF, ntf_r93.gsb little endian release)
+	nad/README modified (added IGNF, ntf_r93.gsb).
+	As automake 1.10 is missing, nad/Makefile.in modified by hand.
+	* Specific IGN release : configure.in
+	ChangeLog
+
+2007-12-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Prepare 4.6.0 final release.
+
+2007-12-21  Andrey Kiselv  <dron@ak4719.spb.edu>
+
+	* PJ_wag3.c: Added missed "lat_ts" parameter to projection description
+	string.
+
+2007-12-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* pj_list.h, Makefile.am, PJ_mpoly.c: Removed mpoly projection.  It
+	was just a dummy (no actual transformation).
+
+2007-12-06  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* pj_factors.c: in the case of phi=90, the derived should be calculated
+	at [90-delta,90] instead of at [90,90+delta] (the same is true for -90)
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=1605
+
+2007-12-03  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* pj_transform.c: Small improvement in WGS84_ES precision to avoid
+	an unnecessary trip through geocentric space (eg bug 1531).
+
+2007-11-30  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* add latlon and lonlat as aliases.
+
+2007-11-29  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Prepare 4.6.0beta1 release.
+
+	* nad/epsg: Upgrade to EPSG 6.13
+
+2007-11-25  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* pj_transform.c: Do ellipsoid comparisons using the _orig ellipse
+	values rather than the adjusted one.  Use these original values for
+	any conversion to/from geocentric coordinates.
+
+	Also, only do pj_datum_transform if neither the source nor destination
+	is PJD_UNKNOWN.  This means we will no longer attempt via-geocentric
+	adjustments for coordinate systems lacking a datum definition (having
+	only an ellipsoid.
+
+	* projects.h, pj_init.c: added a_orig and es_orig values in the PJ
+	structure so we can distinguish between the originally requested
+	ellipsoid, and the ellipsoid after adjustment for spherical projections
+
+	Todays changes courtesy of bug 1602.
+
+2007-09-28  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/esri.extra: Add "900913" code for google mercator.
+
+2007-09-11  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/gencent.c/h, src/pj_transform.c: Restructure so geocentric code
+	does not use static variables - reentrancy fix.
+
+	* src/nad_init.c: Improve error recovery if ctable datum shift files
+	fails to load.
+
+2007-08-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/proj_api.h: include void in arg list for prototypes with no
+	arguments to avoid warning about not being a function declaration.
+
+2007-07-06  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_open_lib.c: Per suggestion from Janne, ensure
+	pj_set_searchpath(0,NULL) clears the search path cleanly.
+
+2007-06-04  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/proj.c: pj_free() the definition to simplify leak testing.
+
+2007-04-04  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_laea.c: Fix memory leak of apa field.
+
+2007-04-03  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_gn_sinu.c: remove duplicate call to pj_enfn() (bug #1536)
+
+2007-03-12  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_utils.c: Removed duplicate appending of towgs84 parameter.
+
+2007-03-11  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/projects.h: Ensure that WIN32 is defined on win32 systems.
+
+	* src/pj_open_lib.c: support drive letter prefixes on absolute
+	paths.  Support either \ or / as a dir delimeter on windows (bug 1499)
+
+2007-03-07  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_krovak.c: info string change to report ellipsoidal instead
+	of spherical per email from Markus.
+
+2007-01-31  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_datum_set.cpp: Don't parse more datum shift parameters than
+	we have space to store in datum_params[].
+
+2006-11-02  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/rtodms.c: Fix computation of degree per bug described on the
+	mailing list.
+
+2006-10-22  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Prepare for 4.5.0 final release.
+
+2006-10-18  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/epsg: added polish zones (2172-2175) manually per request from
+	Maciek on the mailing list.
+
+	* Preparing 4.5.0 beta4 release.
+
+2006-10-17  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/proj_mdist.c, proj_rouss.c: Incorporated these from libproj4
+	for http://bugzilla.remotesensing.org/show_bug.cgi?id=967.
+
+	* nad/epsg: Regenerated from EPSG 6.11.1 with a few other
+	fixes (datum shift values) from several bug reports.
+
+2006-10-12  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Added experimental +lon_wrap argument to set a "center point" for
+	longitude wrapping of longitude values coming out of pj_transform().
+
+2006-10-10  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/proj.c,nad2nad.c,cs2cs.c: Increase MAX_LINE to 1000 per
+	request from Dan Scheirer.
+
+2006-10-01  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/Makefile.am: added test target.
+
+2006-09-23  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/epsg: upgraded to EPSG 6.11
+
+2006-09-22  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_init.c: removed static "start" variable to resolve
+	thread-safety problems (bug 1283).
+
+2006-09-14  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Produce 4.5.0beta2 release.
+
+	* src/PJ_krovak.c: Add +czech flag to apply non-useful sign reversal
+	that someone once apparently thought was a good idea.  By default work
+	like folks want.  Contributed by Martin Landa and Radim Blazek.
+	Bug 1133, and 147.
+
+2006-07-07  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Added esri.extra and other.extra to distributed and installed files
+	in nad/Makefile.am.
+
+	* autotools update.
+
+2006-06-23  Andrey Kiselev  <dron@ak4719.spb.edu>
+
+	* src/PJ_eqdc.c: Do not call pj_enfn() twice avoiding memory leak.
+
+2006-05-01  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_transform.c: Ensure that out-of-range lat/long values in
+	geodetic_to_geocentric are considered transient errors.
+
+Rel. 4.5.0 2006-04-21
+-------------------------------------------------------------------------
+
+2006-04-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/epsg: Upgraded using GDAL 1.3.2 with prime meridian fixes,
+	and reporting of deprecated PCSes.
+
+2006-04-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Fixed direction of Bogota meridian (west not east).
+
+2006-04-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Preparing 4.5.0 release.
+
+2006-03-30  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* projects.h, cs2cs.c, pj_strerrno.c, p_series.c, gen_cheb.c: Added
+	_CRT_SECURE_NO_DEPRECATE declaration for VC8+, and ensure projects.h
+	gets included first where needed.  Avoids loud warnings on VC8.
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=1145
+
+2006-03-29  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* pj_krovak.c: Removed MessageBox() DEBUG stuff.
+
+2006-03-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_transform.c: Return error -14 (latitude or longitude
+	exceeds bounds) for failed geodetic to geocentric (lat out of +-90).
+
+2006-03-10  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/epsg: updated to EPSG 6.9.
+
+2006-02-16  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_transform.c: Treat errno=33 (EDOM) and errno=34 (ERANGE)
+	as transient errors, and continue trying to transform the rest of
+	the points.
+
+2006-01-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/world: Fixed definition of <irish> as per:
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=1041
+
+2006-01-12  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* geocent.c: Make global variables static. Amoung other things
+	this avoids conflicts for apps that link in geotrans.
+
+2005-12-04  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_transform.c: improve code with some symbolic names.
+
+2005-11-08  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_datums.c: Added OSGB36 transformation to list.
+
+2005-07-06  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/Makefile.am: added .gsb installation logic to capture nz file.
+
+	* pj_gridinfo.c: fixed debug format string per:
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=886
+
+	* pj_utils.c: fixed precision of es encoding in pj_latlong_from_proj.
+	  http://bugzilla.remotesensing.org/show_bug.cgi?id=881
+
+2005-04-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* pj_apply_gridshift.c: Fixed problem that was resulted in points
+	after the first apparently succeeding to shift when a gridshift
+	file wasn't found.  Bug 834.
+
+2004-11-05  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_transform.c: Fixed pj_geocentric_to_geodetic() to not try
+	and process HUGE_VAL values (those that have failed some previous
+	transform step).  Related to bug:
+	  http://bugzilla.remotesensing.org/show_bug.cgi?id=642
+
+2004-10-30  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Improved --with-jni support in configure to allow specification
+	of an include directory.
+
+Rel. 4.4.9 2004-10-29
+-------------------------------------------------------------------------
+
+2004-10-29  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Preparing 4.4.9 release.
+
+	* src/pj_gridinfo.c: Fixed reported information in ctable debug msg.
+
+	* src/nad_cvt.c: Fixed problem with domai of tb.lam that caused
+	failure of eastern hemisphere locations to transform with null
+	grid (which is world sized).
+
+2004-10-28  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/makefile.vc: Changed to build executables against a proj.dll
+	by default.
+
+	* proj.def: added lots of methods, including some private ones used
+	only by proj.c, and geod.c.
+
+	* Added pj_get_*_ref() accessors for all the definition lists.
+
+	* Makefile.am: added jniwrap make support.
+
+	* configure.in: various updates, including use of AC_MAINTAINER_MODE,
+	and setting version to 4.4.9.  Fixes annoying .so problem.
+
+	* updated to latest libtoolish stuff.
+
+2004-10-25  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* fixtimes.sh: Run this after a CVS checkout to setup times of
+	various build files to avoid re-running automake and friends.
+
+	* src/geocent.c,geocent.h,pj_transform.c: Added pj_ prefix to
+	all Geotrans functions to avoid name conflict if both linked in.
+
+	* configure.in: added --with-jni option.
+
+	* Added src/jniproj.c, src/org_proj4_Projections.h.
+
+	* Added jniwrap subtree (actually Andrea Antonello).
+
+2004-10-21  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/makefile.vc: added support for new files.
+
+2004-10-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_gauss.c, src/PJ_geos.c, src/PJ_sterea.c: Incorporated
+	geos and sterea projections from Gerald's libproj4.
+
+2004-09-16  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_open_lib.c: added pj_set_searchpath() provided by Eric Miller.
+
+2004-09-14  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_pr_list.c: Ensure unused parameters are not included
+	in the returned string (provided by Eric Miller).
+
+2004-05-17  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* proj.spec: Change PACKAGE_NAME from "PROJ" to "proj".
+
+2004-05-12  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/epsg: update translation for potsdam datum.
+
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=566
+
+2004-05-04  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_init.c: Made sword[] larger in get_opt() so long +towgs84
+	parameters or long +nadgrids parameters aren't truncated.
+
+Rel. 4.4.8 2004-05-04
+-------------------------------------------------------------------------
+
+2004-05-04  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* 4.4.8 release re-issued.
+
+	* nad/epsg: regenerated with prime meridian problems corrected.
+
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=510
+
+2004-05-03  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Preparing 4.4.8 release.
+
+	* src/pj_datums.c: added nzgd49 datum definition
+
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=339
+
+	* nad/epsg: updated to EPSG 6.5.
+
+	* src/pj_transform.c: fixed so that raw ellipsoids are handled
+	in datum shifting as if they had a +towgs84=0,0,0.
+
+	* src/pj_transform.c: Fixed so that prime meridian offsets are
+	applied even if the coordinate system is not lat/long.
+
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=510
+
+	* src/geocent.c: Updated Geocentric_To_Geodetic computation to 	be
+	iterative to reduce error as per Wenzel, H.-G.(1985): Hochauflösende
+	Kugelfunktionsmodelle für das Gravitationspotential der Erde. Wiss.
+	Arb. Univ. Hannover Nr. 137, p. 130-131.  Fix adapted to geocent.c and
+	submitted by Lothar Gorling.
+
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=563
+
+2004-04-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/makefile.vc: Define HAVE_STRERROR.
+
+	* src/projects.h: PJD_ERR_GEOCENTRIC now -45, and added to
+	pj_strerrno.c.
+
+	* src/pj_release.c: added pj_get_release() function.
+
+2004-02-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/other.extra: updated from some WKT definition Daniel got from
+	CubeWerx.
+
+2004-01-24  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_transform.c: Ensure pj_transform() will try to transform all
+	points in provided list if even some might transform properly.
+
+2003-08-18  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/PJ_aea.c: fixed initialization of en variable.
+
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=380
+
+2003-06-27  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_init.c: changed tokenizing in pj_init_plus() so that if
+	a value has an exponent with a plus sign this won't trigger a brand
+	new token.  See bug 355 in bugzilla.
+
+2003-06-09  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_init.c: ensure start is initialized at the very beginning
+	of the function to avoid crashes in case where the input arg list
+	is empty.
+
+2003-04-24  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/geod.c: Don't emit an error message after listing ellipsoids
+	or units, as per request from Dan Jacobson.
+
+2003-04-09  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* man/man1/{proj,cs2cs}.1: moved -m option from cs2cs.1 to
+	proj.1 since it is only supported by proj.
+
+	* nad/Makefile.am: added DESTDIR in three missing places as per
+	bug report from Peter Galbraith - proj debian package manager.
+
+Rel. 4.4.7 2003-03-31
+-------------------------------------------------------------------------
+
+2003-03-31  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Prepare 4.4.7 Release.
+
+	* nad/esri: incorporated Paul Ramsey's update.  ESRI specific
+	coordinate systems in nad/esri.extra.
+
+	* nad/epsg: Regenerated with towgs84 parameters properly generated
+	for non-greenwich prime meridians.
+
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=304
+
+2003-03-28  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* config.guess, config.sub: updated from
+	ftp://ftp.gnu.org/pub/gnu/config/ in order to resolve Debian build
+	problems on MIPS architecture.
+
+	http://bugs.debian.org/cgi-bin/bugreport.cgi?archive=no&bug=186586
+
+	* src/pj_datums.c: fixed ire65 definition to refer to mod_airy, not
+	modif_airy as per:
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=312
+
+2003-03-26  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_transform.c: Added check that srcdefn->inv actually exists!
+
+	Per http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=301
+
+2003-03-25  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/cs2cs.c: modified so that -f formats are used for Z as well as
+	x and y values.
+	As per http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=169056
+
+	* src/man/man1/cs2cs.1: removed -V flag ... it is not supported.
+	As per http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=162331
+
+2003-03-17  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_datums.c: changed NAD27 definition to make everything
+	optional, and to include alaska, and ntv2_0.gsb.
+
+	nadgrids=@conus,@alaska,@ntv2_0.gsb,@ntv1_can.dat
+
+	* src/pj_grid*, src/pj_apply_gridshift.c, src/nad_init.c: Lots of
+	changes introducing the PJ_GRIDINFO structure, support for skippable
+	grids ('@' prefix), delayed grid data loading and support for NTv2
+	grids.
+
+2003-03-16  Frank Warmerdam  <warmerdam@pobox.com>
+
+	*  Modified get_opt() to terminate reading the definition when a new
+	definition (a word starting with '<') is encountered, in addition
+	to when the definition terminator '<>' is encountered, so that
+	unterminated definitions like those in the distributed esri file
+	will work properly.  Patch provided by Carl Anderson.
+
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=302
+
+2003-03-03  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Prepare 4.4.6 Release.
+
+	* nad/epsg: updated to EPSG 6.2.2.
+
+	* src/Makefile.am, nad/Makefile.am: a few fixes for Cygwin
+	compatibility, ensure /usr/local/share/proj get pre-created.
+
+	* Incorporate src/PJ_lcca.c, the new "alternate" LCC implementation
+	provided by Gerald for some old maps.  See his site for details.
+
+	* Rebuild dependent files with automake 1.6.3, libtool 1.4.2 and
+	autoconf 2.53.
+
+2003-01-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_datums.c: added some datums as suggested by the GRASS team.
+
+2002-12-14  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/projects.h, various others: updated header style in some files.
+
+	* src/pj_geocent.c, src/pj_transform.c, src/pj_list.h, src/projects.h:
+	added support for geocentric coordinates in pj_transform() api.
+
+	* src/pj_utils.c: Fixed pj_get_def() to return info on prime meridian.
+
+2002-12-08  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/cs2cs.c: added support for the -lm switch to report all
+	prime meridians.
+
+	* src/pj_init.c, pj_transform.c, pj_datum.c: added preliminary
+	support for the +pm switch to set the prime meridian.
+
+2002-12-01  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_transform.c: Applied fix for 7 parameter shifts in
+	pj_geocentric_from_wgs84() as per suggestion from Harald Lernbeiss in:
+
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=194
+
+2002-11-19  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/cs2cs.c: cleanup memory at end to facility memory leak testing.
+
+2002-07-29  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/esri: applied gradian related patches as per bug 184:
+
+	   http://bugzilla.remotesensing.org/show_bug.cgi?id=184
+
+2002-07-25  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* nad/esri: added new ESRI translation file.  Includes EPSG values
+	plus various ESRI extensions.
+
+2002-07-07  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/*.c, src/*.h, src/makefile.vc: *Many* changes to support
+	compiling all of the PROJ.4 source as C++ source.  Add /TP to CFLAGS
+	in makefile.vc to test this on Windows.  projects.h, and proj_api.h
+	attempt to export all externally visible functions with C linkage but
+	all code should now compile as C++.  Currently only tested with VC++ 6.
+
+2002-06-11  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_pr_list.c, proj.def, proj_api.h: Added the pj_get_def()
+	function to return an expanded definition from a projPJ handle,
+	including having the +init= section expanded.
+
+2002-05-30  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/geod/{geod.c,geod_for.c,geod_inv.c,geod_set.c,geodesic.h}:
+	Renamed a, S and f to geod_a, geod_S and geod_f to slightly reduce
+	the horrible naming conflict situations with geodesic.h.
+	   http://bugzilla.remotesensing.org/show_bug.cgi?id=148
+
+2002-04-30  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* html/faq.html: new
+
+	* src/pj_apply_gridshift.c,pj_open_lib.c,nad_init.c: try to improve
+	debug output when datum shifting fails.
+
+2002-04-16  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_list.c,src/PJ_krovak.c: Incorporated support for Krovak
+	projection as per submission by Thomas Fleming and Markus Neteler.
+
+2002-03-01  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/geod.c: Moved ctype.h up to avoid compile failure on MacOS X.
+
+2002-02-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* pj_transform.c: Provide zerod Z array in pj_datum_transform() if
+	none passed in.
+
+2002-01-23  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Added proj.spec file provided by Intevation (FreeGIS CD).
+
+Rel. 4.4.5 2002/01/09
+-------------------------------------------------------------------------
+
+2002-01-09  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/geocent.c: Fixed serious bug in Convert_Geodetic_To_Geocentric()
+	that essentially ruins all datum shifting (except NAD tables).  This
+	bug was introduced just in time for the PROJ 4.4.4 release.
+
+
+2001-11-05  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/proj.def: added pj_strerrno and pj_errno as per request from
+	Bernhard Herzog.
+
+
+Rel. 4.4.4 2001/09/15
+-------------------------------------------------------------------------
+
+2001-09-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/geocent.c: I have modified the Convert_Geodetic_To_Geocentric()
+	function to clamp Latitudes just a little out of the range
+	-PI/2 to PI/2 and to no longer do error checks on Longitudes since
+	they will be auto-wrapped by sin() and cos().
+
+	See http://bugzilla.remotesensing.org/show_bug.cgi?id=17
+
+	* nad/epsg: commited new updates with fixed units for us state plane
+	zones in feet, as reported by Marc-Andre.
+
+2001-08-23  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/makefile.vc: improved the setting of PROJ_LIB defaults.
+
+	* src/pj_open_lib.c: added the pj_set_finder() entry point.
+
+	* nad/epsg: fixed all LCC projections.  The parameters were badly
+	mixed up.
+
+2001-08-11  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/proj.c: Generate an error message if +proj=latlong is used with
+	this program.  As per bugzilla bug 70.
+
+2001-06-01  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* makefile.vc: emess.c directly linked into mainline programs.
+
+	* pj_errno.c: added pj_get_errno_ref().
+
+2001-05-14  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* upraded config.sub and config.guess as per debian bug report 97374.
+
+Rel. 4.4.3 2001/04/20
+-------------------------------------------------------------------------
+
+2001-04-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Don't install test files in /usr/local/share/proj.
+
+	* Made WGS84 the default in proj_def.dat
+
+	* nad/test27,test83: Use -b flag for diff to avoid differences on
+	Windows due to CR/LF issues.
+
+	* src/makefile.vc: default to building "all".
+
+	* src/pj_init.c: call pj_open_lib() with mode of "rt" to ensure
+	correct handling of def files on DOS based systems.
+
+	* Updated for 4.4.3 release (pj_release.c, Makefile.am, etc).
+
+2001-04-05  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Introduce proj_api.h as a public include file with projects.h
+	now intended to be private.
+
+	* pj_datums.c: added ntv1_can.dat to list for NAD27 datum.
+
+	* nad_init(): added support for loading NTv1 style datum shift files.
+
+	* cs2cs.c: use pj_latlong_from_proj()
+
+	* pj_init.c: added pj_init_plus().
+
+	* pj_utils.c: new with pj_is_latlong(), and pj_latlong_from_proj()
+	functions.
+
+	* pj_strerror.c: added error -43.
+
+2001-04-04  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* rewrote 7 param datum shift to match EPSG:9606, now works with
+	example.
+
+2001-03-20  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Added -DPROJ_LIB=\"C:/PROJ/\" in src/makefile.vc to provide for
+	a default proj data file search directory.
+
+	* Added HOWTO-RELEASE document in CVS.
+
+2001-03-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/pj_apply_gridshift.c: fixed bug in pj_load_nadgrids() which
+	would sometimes result in the load function failing because of a
+	buffer overrun in the grid list string.
+
+2001-03-14  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* added nad/epsg database of translations between EPSG PCS/GCS
+	codes and PROJ.4 definitions.
+
+2001-02-24  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Include +ellps in proj example as per suggestion from Michael
+	DeChaine.
+
+2001-02-07  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Cleaned up various warnings when compiled with -Wall.
+
+2001-02-03  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Added cs2cs.1 man page, and minor updates to nad2nad.1 and proj.1.
+
+	* Added pj_transform docs to pj_init.3.
+
+2001-01-25  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Fixed pj_init() check for WGS84 match as per Bart Adriaanse bug rep.
+
+2000-12-15  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* src/makefile.vc: only delete proj.lib if it exists.
+
+2000-12-01  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Added proj.def to extra_dist in src/Makefile.am.
+
+2000-11-29  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Changed strtod() to proj_strtod() in strtod.c, and make use
+	of it in dmstor() to avoid having stuff like "5d10" interpreted
+	as exponential notation on MSVC.
+
+2000-11-18  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Patch from Craig Bruce to adjlon.c to avoid wrong results,
+	and near-hangs when adjusting very large numbers.
+	http://bugzilla.remotesensing.org/show_bug.cgi?id=27
+
+Rel. 4.4.2 2000/09/22
+-------------------------------------------------------------------------
+
+2000-09-22  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Fixed src/Makefile.am install-exec-local target, and added
+	geocent.h, and emess.h.  Reissued 4.4.2 distribution files.
+
+	* Update version to 4.4.2, in preparation for 4.4.2 release.
+
+	* Ensure makefile.vc is distributed, and mention windows building
+	in README.
+
+	* Cast args to freev2() in bch2bps.c, and mk_cheby.c to avoid errors
+	on the Cray.
+
+2000-09-21  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Added "sphere" to pj_ellps.c.
+
+2000-07-06  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Fixed bug in nad_init() with path for datum shifting files.
+
+	* Implemented cs2cs program for transforming between coordinate systems
+	including datum shifts.
+
+	* Implemented proj=latlong pseudo-projection.
+
+	* Implemented pj_transform() to transform from one coordinate system
+	to another, including applying geocentric datum shifts, and NAD27
+	grid shifts.
+
+	* Implemented 3/7 parameter geocentric datum shift support.
+
+	* Added support for +datum, +towgs84, and +nadgrids parameters
+	when defining PJ's (for pj_init()).  Added datum_type, and datum_params
+	to PJ structure.
+
+2000-07-04  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Patched proj.c to handle binary io properly on Windows and DOS.
+	Patch submitted by Thomas Knudsen <thk@kms.dk>.
+
+2000-04-26  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Added #define USE_PROJUV to projects.h to allow apps to
+	work properly against old and new version.
+
+2000-04-04  Frank Warmerdam  <warmerda@rommel.atlsci.com>
+
+	* Patch from Craig Bruce (cbruce@cubewerx.com) for PJ_ortho.c
+	to make INVERSE() work well for points near zero.
+
+2000-03-29  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Added hard links for invproj->proj and invgeod->geod in
+	src/Makefile.{am,in}.
+
+Rel. 4.4.1 2000/03/27
+-------------------------------------------------------------------------
+
+2000-03-27  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Issued V4.4.1 Release.
+
+	* Re-added install target for NADCON data files when available.
+
+	* At the suggestion of John Evans, I have rolled the nad conversion
+	functions into the core library.
+
+	* Updated COPYING file to MIT style license.  Added man_proj.html
+	in html directory.
+
+	* Add rules to install nad data files in $(prefix)/share/proj.
+
+2000-03-21  Frank Warmerdam  <warmerda@rommel.atlsci.com>
+
+	* Converted to use libtool.
+
+	* Wrote new configure.in, and use automake to generate makefiles.
+
+	* Renamed UV to projUV to avoid conflicts on windows.
+
+	* Reorganize ChangeLog, and start work on 4.4.
+
+Rel. 4.3.2 94/10/30 Base-line
+-------------------------------------------------------------------------
+
+95/4/27
+	Corrected rf factor for GRS67.
+	Thanks to: Peter Shih tyshih@cc.nctu.edu.tw
+
+95/6/3
+	Gave an initializing value for pj_errno.  Someone's compiler ignored
+	the whole module because nothing happened(!!!).
+	Thanks to: Mark Crispin <MRC@Panda.COM>.
+
+95/7/6
+	Corrected function pj_inv_mlfn for improper derivative code.
+	Previous computations not in error but convergence was slower.
+	Thanks to: Tony Fisher fisher@minster.york.ac.uk.
+
+95/8/8
+	Added Swiss Oblique Mercator projection.  CH1903 Swiss grid system
+	parameters added to nad/world.  <CH1903> added to nad/world file
+	and N-somerc.ps.Z added to documentation notes.
+	Thanks to: Daniel Ebneter, ebneter@iap.unibe.ch.
+
+95/9/5
+	Changed declaration of "char c" to "int c" to more properly monitor
+	error return value in pj_init.c.
+	Thanks to: Alejo Hausner (ah@cs.princeton.edu)
+
+95/9/10
+	Some minor file/internal name changes to facilitate xport to primative
+	systems.  Documented entries unchanged.
+
+Rel. 4.3.1 94/2/16 Base-line
+-------------------------------------------------------------------------
+
+94/6/2
+	Transverse Mercator, spherical inverse fixed.  Misplaced parenthsis.
+
+94/10/5
+	Dropped dependency on FILENAME_MAX---too poorly defined in both
+	POSIX and ANSI standards.  Adopted MAX_PATH_FILENAME which is
+	set to 1024 (should be enough for most cases).  This should solve
+	problem with HP installations.
+
+94/10/29
+	Problems with ellipsoidal for of azimuthal equidistant (PJ_aeqd.c).
+	Some discrepancies remain on comparison with Snyder's examples
+	but felt due to his use of TI calculator.  Procedure should be
+	replaced with better geodesic routine.
+
+94/10/29
+	Corrected and added examples to geod.1 documentation.
+
+94/10/30
+	Added mkdir in nad/install otherwise nad2783 install may fail.
+
+Rel. 4.3 94/2/16 Base-line
+-------------------------------------------------------------------------
+
+94/3/13
+	Equidistant Conic forced es to 0, thus previous ellipsoid usage flawed.
+
+	Correction to sign of convergence angle and other details in
+	pj_factors.c.
+
+	Lambert Conf. conic corrected for +lat_0=90.
+
+	Convergence sign in pj_factors.c corrected to conform to Bomford's
+	definition.  Also procedure corrected for usage when projection
+	returns some of its own factors.
+
+94/3/17
+	Added procedure pj_phi12 to support library.  It gets and checks
+	standard parallels for some of the conics.
+
+	Added SPECIAL entry to conics Lambert, Albers and Equidistant.
+
+	Corrected nad/install.in test so as to only look for conus.lla.Z
+	as test for installation of NADCON datum matricies.
+
+94/3/19
+	Problems with MAPGEN's mapdef choking on call to proj.  Fixed
+	with PROJ.4.3-patch-01.
+
+94/3/22
+	Bumb mode of handling memory allocation for 2D arrays, so that
+	execution of -L may not work on some systems.  Interim corrections
+	distributed with PROJ.4.3-patch-02.
+
+	Patched Make.2 to properly use $(LIBS).  Not in patch.
+
+	Apple's Unix libc has problems---no strerror and no %n in ?format.
+
+94/5/22
+	Added several simple conics but not totally verified.
+
+	Corrected proj.c so that resultant earth figure comments in -V
+	are prefixed with # and do not blow *mapdef*.
+
+	Releasing current code without documentation on new conics pending
+	communications with Snyder on their veracity.  Release mainly to
+	clean up patches.
+
+Rel. 4.2.2 93/9/30 Base-line
+-------------------------------------------------------------------------
+
+93/11/14
+	1. Minor change to projects.h to correct prototype.
+	2. Changes to pj_init.c regarding ignoring failure to open
+	   proj_def.dat.
+	3. Alternate method of initializing automatic array.
+
+93/11/16
+	DOS distribution.
+
+93/11/28
+	Added "Final" figure line to begining of -V option ouput.  Allows
+	user to see results of +ellps and +R_V, etc. arguments.  "Feature,"
+	not an error.  Mod to proj.c.
+
+93/12/03
+	Removed non-ANSI usage of errno from PJ_laea.
+	Added test for previous definition of NULL in strtod.c.
+
+93/12/12
+	Made aatan2 (compensates for 0,0 args) global.
+
+93/12/30
+	Removed proj "error" message at end of -l option list.
+
+94/1
+	Major revision to projection structure to facilitate maintenance.
+	Introduced PROJ_HEAD macro that is defined in several ways
+	dependent upon use.  Allows generation of pj_list table from
+	`grep'ed projection files.  Structure PJ now contains pointer
+	to const string giving ascii description of projection.  Limited
+	application projection list much easier to generate with this system.
+
+	Many new pseudocylindrical projections added as well as a few new
+	miscellaneous projections.  Total projection count now 110.
+
+Rel. 4.2.1 93/9/30 Base-line
+-------------------------------------------------------------------------
+
+93/10/3
+	Geod incorrectly computed some forward values when geodesic on the
+	merdian.
+
+93/11/2
+	Projection stere fails for polar cases because of 0 lat_ts.  Fixed
+	by testing for lat_ts specification and setting to 90 degrees when
+	lat_ts not specified.  UPS not affected.
+
+93/11/5
+	Inverse polar stereographic also failed on 0 x xor y.  Corrected.
+
+93/11/10
+	Changed "install" to include "plain" system type for systems that
+	do not require special consideration.
+
+Rel. 4.2 93/8/25 Base-line
+-------------------------------------------------------------------------
+
+93/9/13
+	Improved bch2bps.c code.  Old code not in error.
+	Still problems with DEC native C compiler.
+
+93/9/28
+	Modified install script for DEC entry, forcing gcc for compilation.
+
+93/9/29
+	Problem with due South forward in geod.  Current version will not
+	be fixed as it is to be replaced with Vincente algorithm.
+
+93/9/30
+	Two corrections in src/Makefile.
+
+Rel. 4.1.3 93/4/15 Base-line
+-------------------------------------------------------------------------
+
+93/5/22
+	Extensively revised Chebychev approximation procedures and added
+	conversion to power series.
+
+93/6/8
+	Changed type of pj_param, plus mods to some other internal procedures.
+
+93/6/13
+	Modified pj_factors.  Principle mod was that calling program must
+	provide base for structure FACTORS.  Additional mods reflect
+	optional analytic input from projection modules (see next entry).
+
+	Modified base of PJ structure for projections to supply analytic
+	values of partial derivatives, scale factors and/or convergence
+	when formulary available.
+
+	Added -V option for proj so as to provide more complete, verbose
+	analysis of projection characteristics at selected geographic or
+	cartesian point.
+
+93/6/14
+	Pj_errno given its own module and projects.h declares it external.
+	To cover ANSI standards related to global variable.  SG linker should
+	stop complaining.
+
+93/7/15
+	Several additions and a couple of minor corrections to elliptical
+	tables.
+
+93/8/4
+	PJ_ocea.c error in applying k0.
+
+93/8/19
+	Minor general corrections.
+	Added nadcon conversion procedures and nad2nad program.
+	Projects.h modified to reflect nadcon prototypes and stuctures.
+	pj_open_lib extracted from pj_init and made global for use in nad_init.
+
+93/8/25
+	Corrected pj_open_lib open for both binary and text modes.  Mostly
+	for brain damaged DOS.  Also affected calls in pj_init.c and nad_init.c
+
+	Installs and other scripts updated.
+
+Rel. 4.1.2 93/4/4 Base-line
+-------------------------------------------------------------------------
+
+93/4/8
+	Corrected pj_inv so that errno and pj_errno are reset on entry.
+
+93/4/14
+	Added elliptical forms to Azimuthal Equidistant (aeqd).
+
+93/4/15
+	Corrected positive error return to negative in PJ_lcc.c .
+
+	Added Indian units conversions to pj_units.
+
+Rel. 4.1.1 93/3/26 Base-line
+-------------------------------------------------------------------------
+
+93/4/2
+	gen_cheby.c - added <stdio.h> header.
+
+93/4/3-4
+	gen_cheby.c, projects.h - corrected gen_cheby argument declarations
+		related to 'proj' argument and prototype.  Often signalled
+		warnings, but still managed to execute OK.
+
+	pj_init.c - local function get_init had insufficient storage
+		defined for copy of file name and id.  Added id define.
+		Strncat replaced with correct strncpy (amazingly did not
+		cause problems except of one system).
+
+	Proj now compiles on DOS Microsoft 5.0 C compiler.  MS suffers
+		same brain-damage as DEC, so requires local strtod function.
+
+	pj_strerrno prototype added to projects.h
+
+	DOS option in strtod.c for MS C's lack of standard macros in neaders.
+
+Rel. 4.1 93/3/8 Base-line --- @(#)CHANGE-LOG	4.14 95/09/23 GIE REL
+-------------------------------------------------------------------------
+93/3/20
+	pj_init -- added +k_0 as alternative to +k so as to match documentation.
+
+93/3/21
+	Laborde projection added.  Primarily for Madagascar grid.
+	Considered BETA at moment until info obtained to give adequate
+	documentation.
+
+93/3/26
+	Oblique Mercator modified to allow processing of Malasian Grid.
+	+no_uoff and +rot_conv options added.
+
+93/3/26
+	Corrected text in Interim Report:
+	p. 12 - +phi's changed to +lat's
+	p. 12 - added updated Oblique Mercator documentation
+
+Unresolved:
+
+Reports of errno 25 persist.  Do not know what platform.  Reviewed
+	code and can't see problem.
+Unknown platform has problem with pj_errno global and linker storage
+	allocation.  Seems similar to SG problem that was over come with
+	-common switch.
+

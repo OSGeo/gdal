@@ -1,0 +1,157 @@
+<HTML><HEAD><TITLE>Manpage of PJ_INIT</TITLE>
+</HEAD><BODY>
+<H1>PJ_INIT</H1>
+Section: Misc. Reference Manual Pages (3U)<BR>Updated: 2001/04/05 Rel. 4.4<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+pj_init - initialize cartographic projection
+<BR>
+
+pj_init_plus - initialize cartographic projection
+<BR>
+
+pj_fwd - forward cartographic projection
+<BR>
+
+pj_inv - inverse cartographic projection
+<BR>
+
+pj_transform - transform between coordinate systems
+<BR>
+
+pj_free - de-initialize projection
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+#include &lt;<A HREF="file:/usr/include/proj_api.h">proj_api.h</A>&gt;
+
+projPJ pj_init(int argc, char **argv)
+
+projPJ pj_init_plus(const char *defn)
+
+projUV pj_fwd(projUV val, projPJ proj)
+
+projUV pj_inv(projUV val, projPJ proj)
+
+int pj_transform(projPJ src_cs, projPJ dst_cs, long point_count, 
+                 double *x, double *y, double *z)
+               
+void pj_free(projPJ proj)
+
+</PRE><A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Procedure <B>pj_init</B> selects and initializes a cartographic projection
+with its argument control parameters.
+<B>Argc</B> is the number of elements in the array of control strings
+<B>argv</B> that each contain individual cartographic control keyword
+assignments (<TT>+</TT> <B>proj</B> arguments).
+The list must contain at least the <B>proj=</B><I>projection</I> and
+Earth's radius or elliptical parameters.
+If the initialization of the projection is successful a valid
+address is returned otherwise a NULL value.
+<P>
+The <B>pj_init_plus</B> function operates similarly to <B>pj_init</B> but
+takes a single string containing the definition, with each parameter
+prefixed with a plus sign.  For example &quot;+proj=utm +zone=11 +ellps=WGS84&quot;.
+<P>
+Once initialization is performed either forward or inverse
+projections can be performed with the returned value of <B>pj_init</B>
+used as the argument <B>proj</B>.
+The argument structure <B>projUV</B> values <B>u</B> and <B>v</B> contain
+respective longitude and latitude or x and y.
+Latitude and longitude are in radians.
+If a projection operation fails, both elements of <B>projUV</B> are
+set to HUGE_VAL (defined in <I>math.h</I>).
+<P>
+<B>Note:</B> all projections have a forward mode, but some do not have
+an inverse projection.
+If the projection does not have an inverse the projPJ structure element
+<I>inv</I> will be NULL.
+<P>
+The <B>pj_transform</B> function may be used to transform points between
+the two provided coordinate systems.  In addition to converting between
+cartographic projection coordinates and geographic coordinates, this function
+also takes care of datum shifts if possible between the source and destination
+coordinate system.  Unlike <B>pj_fwd</B> and <B>pj_inv</B> it is also allowable
+for the coordinate system definitions (<B>PJ *</B>) to be geographic coordinate
+systems (defined as +proj=latlong).  The <B>x</B>, <B>y</B> and <B>z</B> arrays
+contain the input values of the points, and are replaced with the output
+values.  The function returns zero on success, or the error number (also in
+pj_errno) on failure.
+<P>
+Memory associated with the projection may be freed with <B>pj_free</B>.
+<A NAME="lbAE">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The following program reads latitude and longitude values in decimal
+degress, performs Mercator projection with a Clarke 1866 ellipsoid and
+a 33&#176; latitude of true scale and prints the projected
+cartesian values in meters:
+<PRE>
+<TT>
+#include &lt;<A HREF="file:/usr/include/proj_api.h">proj_api.h</A>&gt;
+
+main(int argc, char **argv) {
+        char *args[] = { &quot;proj=merc&quot;, &quot;ellps=clrk66&quot;, &quot;lat_ts=33&quot; };
+        projUV p;
+        projPJ pj;
+
+        if (!(pj = pj_init(3, args)))
+           <A HREF="../man1/exit.1.html">exit</A>(1);
+        while (scanf(&quot;%lf %lf&quot;, &amp;p.v, &amp;p.u) == 2) {
+           p.u *= DEG_TO_RAD;
+           p.v *= DEG_TO_RAD;
+           p = pj_fwd(p, pj);
+           printf(&quot;%.2f\t%.2f\n&quot;, p.u, p.v);
+        }
+        exit(0);
+} </TT>
+<BR>
+</PRE>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>LIBRARY</H2>
+
+libproj.a - library of projections and support procedures
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1U/proj.1U.html">proj</A>(1U),</B>
+
+<BR>
+
+<I>Cartographic Projection Procedures for the UNIX Environment---A User's Manual,</I>
+
+(Evenden, 1990, Open-file report 90-284).
+<A NAME="lbAH">&nbsp;</A>
+<H2>HOME PAGE</H2>
+
+<A HREF="http://www.remotesensing.org/proj">http://www.remotesensing.org/proj</A>
+<P>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">EXAMPLE</A><DD>
+<DT><A HREF="#lbAF">LIBRARY</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">HOME PAGE</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 13:14:22 GMT, October 14, 2005
+</BODY>
+</HTML>

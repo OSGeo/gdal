@@ -1,0 +1,277 @@
+4.9.2 Release Notes
+-------------------
+
+ o proj_def.dat was missing from source distribution
+   see https://github.com/OSGeo/proj.4/issues/274 for more detail
+
+ o Update Geodesic library from GeographicLib
+
+ o Remove setlocale() use in pj_init_ctx()
+
+ o Renamed PVALUE in pj_param.c to prevent clash with Windows
+
+4.9.1 Release Notes
+-------------------
+
+ o 4.9.0RC2 release was abandoned because it was not promoted in a
+   timely fashion. Subsequent maintenance of tickets has continued,
+   and a new 4.9.1 release was issued in its place.
+
+ o Implement inverse solution for Winkel Tripel from Drazan Tutic #250
+
+ o More CMake configuration tweaks. The CMake configuration is probably
+   not at feature parity with the autotools builds at this point but it
+   is converging #256
+
+ o Tweak initialization ordering around setlocal which may have caused
+   issues #237
+
+ o Support out-of-tree autoconf builds more completely #247
+
+ o Fix NaN handling by geod_inverse and geod_polygon_addedge #251 & #253
+
+ o Update config.sub and config.guess #257
+
+ o Adapt Charles Karney's CMake patches for smoother build #258
+
+ o Define default PROJ_LIB location for CMake compilation #261
+
+ o Fix Windows compilation on PJ_aitoff.c
+
+ o Align CMake SOVERSION with autotools #263
+
+ o Regenerate nad/epsg with GDAL r28536 to avoid precision loss in TOWGS84
+   parameters, e.g. on Amersfoort / RD EPSG:4289 (#260)
+
+ o Add CMake project-config.cmake scripts (#264 from Charles Karney)
+
+ o Dial back test sensitivity #255
+
+4.9.0 Release Notes
+-------------------
+
+ o Implement CMake as an option for building PROJ.4
+
+ o Implement new virtual file api (projFileAPI) so that all access to grid
+   shift and init files can be hooked.
+
+ o Replace geodesic implementation with one from Charles Karney and add a
+   supported public interface (geodesic.h).
+
+ o Upgraded to EPSG 8.5.
+
+ o Removed old (deprecated) Java bindings in favor of the new api introduced
+   in 4.8.0.
+
+ o Implement the calcofi (Cal Coop Ocean Fish Invest Lines/Stations) projection
+
+ o Install projects.h again for applications that want access to internal
+   structures and functions despite the inherent fragility.
+
+ o Various bug fixes and cleanup.
+
+ o Added the CalCOFI pseudo-projection, #135
+
+4.8.0 Release Notes
+-------------------
+
+ o Added the Natural Earth projection.
+
+ o Added HEALPIX, rHEALPIX and Icosahedral Snyder Equal Area projections.
+
+ o nad2bin now produces "CTable2" format grid shift files by default which
+   are platform independent.
+
+ o nad2nad removed, use cs2cs for datum shift operations.
+
+ o projects.h no longer installed as a public include file.  Please try to
+   only use proj_api.h.
+
+ o Add pj_get_spheroid_defn() accessor.
+
+ o Added an alternate version of pj_init() that takes a projCtx (execution
+   context) structure to address multithreading issues with error management
+   and to provide a support for application hookable error reporting and
+   logging.
+
+ o Upgrade to EPSG 7.9.  Some changes in ideal datum selection.
+
+ o JNI bindings reworked, org.proj4.Projections deprecated in favor of
+   org.proj4.PJ.
+
+ o Added preliminary vertical datum support.
+
+ o Fix various multithreading issues, particular in datum grid handling code.
+
+ o Added support for the +axis= option for alternate axis orientations as
+   part of a coordinate system (used for TM South Orientated support).
+
+ o +proj=omerc implementatioin replaced with code from libproj4.  +rot_conv
+   flag no longer works, and some coordinate systems (ie. Malaysian) will
+   need to use +gamma instead.  "epsg" init file updated accordingly.
+
+
+4.7.0 Release Notes
+-------------------
+
+ o Added in memory caching of init file search results for substantial
+   acceleration in some application environments (like MapServer).
+
+ o Regenerated nad/epsg init file with EPSG 7.1 database, including new
+   support for Google Mercator (EPSG:3857).
+
+ o Various thread safety improvements, including preliminary support for
+   a mutex lock around some operations, like grid loading.
+
+
+4.6.1 Release Notes
+-------------------
+
+ o Upgraded to EPSG 6.17 version for nad/epsg.  Also corrected the precision
+   problem introduced in the last version.
+
+ o Added logic for tmerc projection to fail rather than return crazy results
+   if more than 90 degrees away from the central meridian (#5).  This change
+   may only be temporary till a more comprehensive solution is found.
+
+ o Fixed handling of extra text in cs2cs.
+
+ o Renamed INSTALL to INSTALL.TXT.
+
+ o The eqc projection has been generalized to include a latitude of origin.
+
+ o Added the glabsgm (Gauss Laborde / Sphere Geometric Mean) projection,
+   and gstmerc variation.
+
+ o nad/IGNF init catalogue created.
+
+ o added the ntf_r93.gsb datum shift file.
+
+ o Add /Op in nmake.opt compile options to avoid VC7 optimization bug (#12)
+
+ o Fix testvarious test script so it works properly when grid files available
+
+
+
+4.6.0 Release Notes
+-------------------
+
+ o MAJOR: Rework pj_transform() to avoid applying ellipsoid to ellipsoid
+   transformations as a datum shift when no datum info is available.
+
+ o Avoid applying "change of ellipsoid" during datum shifting based on
+   ellipsoids getting changed to spheres for spherical projections.
+
+ o Upgrade to EPSG 6.13
+
+ o Added "900913" "Google Mercator" code in nad/esri.extra.
+
+ o Avoid some static variable based multi-threading problems.
+
+ o Improve error recovery if ctable style datum shift grid fails to load.
+
+ o Support drive letters properly in PROJ_LIB paths for win32.
+
+ o Fix occasional problem with DMS parsing.
+
+ o Removed non-functional mpoly projection.
+
+ o add lonlat, and latlon as aliases for longlat.
+
+
+4.5.0 Release Notes
+-------------------
+
+ o Microsoft Visual Studio 8 compatibility changes.
+
+ o Upgraded to EPSG 6.11.1 database.
+
+ o Several bug fixes to pj_transform() to handle transient errors properly.
+
+ o Fix Krovak projection (include +czech flag)
+
+ o Added Roussilhe Stereographic projection from libproj4 (proj=rouss).
+
+ o Added experimental +lon_wrap flag for alternate pj_transform() longitude
+   wrapping behavior on output.
+
+
+4.4.9 Release Notes
+-------------------
+
+ o Win32 build uses proj.dll by default now.
+
+ o Added accessor functions for the datums, ellps, prime_meridians, units and
+   main projection definition lists so they can be used on windows where
+   data objects exported from the DLL don't work easily.
+
+ o Added JNI (Java Native Interface) support within the jniwrap directory,
+   and some supporting entry points directly in the proj dll/so.   See
+   --with-jni configure switch, and jniwrap/README.
+
+ o Added the proj=stereoa and proj=geos projections, incorporated from
+   Gerald's libproj4.
+
+ o A few other bug fixes.
+
+
+4.4.8 Release Notes
+-------------------
+
+ o Updated epsg file to EPSG 6.5, added other.extra pseudo-EPSG WMS definitions
+
+ o Made significant fixes to prime meridian support.
+
+ o Substantially change pj_datum_transform(), so it and pj_transform() will
+   work between coordinate systems with different ellipsoids but no datum
+   shift information (assume +towgs84=0,0,0).
+
+ o Added pj_get_release() function.
+
+ o Ensure pj_transform() will try to transform all points in provided list if
+   even some might transform properly.
+
+ o Improved the accuracy of Geocentric_To_Geodetic() via an iterative
+   solution.
+
+ o Various other bug fixes.
+
+
+4.4.7 Release Notes
+-------------------
+
+ o Added NTv2 (.gsb) grid shift file support.
+
+ o Modified datum shift support so that data file data is only loaded if
+   needed.  Also added 'null' grid as a fallback option, and support for
+   making grids optional (prefix with '@' in +nadgrids).
+
+ o Regenerated nad/epsg file with towgs84 parameters for non-greenwich prime
+   meridians.
+
+ o Updated nad/esri file with better generated form from Paul Ramsey.
+
+ o Various bug fixes.
+
+
+4.4.6 Release Notes
+-------------------
+
+ o Incorporated new lcca (Lambert Conformal Conic Alternate) projection from
+   Gerald.
+
+ o Updated 'espg' translation file for EPSG 6.2.2 with better support for
+   prime meridians.
+
+ o Added Prime Meridians via +pm command switch to cs2cs (and pj_transform).
+
+ o Fixed bug with 7 parameter transforms.
+
+ o Added 'esri' pseudo-epsg coordinate system file.
+
+ o Cleanup so that PROJ.4 compiles clean as C++ code.
+
+ o Added pj_get_def() to expand definitions of stuff like +init clauses.
+
+ o Added a Krovak implementation (proj=krov).  Note this may change again
+   in the next release.

@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioProject ProjectType="Visual C++" Version="8.00" Name="projce_lib" ProjectGUID="{E33BA2AA-25D9-48B1-A9FB-F77EB915AD72}" Keyword="Win32Proj">
+  <Platforms>
+    <Platform Name="Pocket PC 2003 (ARMV4)"/>
+    <Platform Name="Windows Mobile 5.0 Pocket PC SDK (ARMV4I)"/>
+  </Platforms>
+  <ToolFiles>
+	</ToolFiles>
+  <Configurations>
+    <Configuration Name="Debug|Pocket PC 2003 (ARMV4)" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="4" InheritedPropertySheets="..\projce_common.vsprops" CharacterSet="1">
+      <Tool Name="VCPreBuildEventTool"/>
+      <Tool Name="VCCustomBuildTool"/>
+      <Tool Name="VCXMLDataGeneratorTool"/>
+      <Tool Name="VCWebServiceProxyGeneratorTool"/>
+      <Tool Name="VCMIDLTool"/>
+      <Tool Name="VCCLCompilerTool" ExecutionBucket="7" Optimization="0" AdditionalIncludeDirectories="..\..\..\src" PreprocessorDefinitions="_DEBUG;_WIN32_WCE=$(CEVER);UNDER_CE;$(PLATFORMDEFINES);WINCE;DEBUG;_LIB;$(ARCHFAM);$(_ARCHFAM_);_UNICODE;UNICODE" IgnoreStandardIncludePath="false" GeneratePreprocessedFile="0" MinimalRebuild="true" RuntimeLibrary="1" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3"/>
+      <Tool Name="VCManagedResourceCompilerTool"/>
+      <Tool Name="VCResourceCompilerTool" PreprocessorDefinitions="_DEBUG;_WIN32_WCE=$(CEVER);UNDER_CE;$(PLATFORMDEFINES)" Culture="1033" AdditionalIncludeDirectories="$(IntDir)"/>
+      <Tool Name="VCPreLinkEventTool"/>
+      <Tool Name="VCLibrarianTool" AdditionalOptions=" /subsystem:windowsce,4.20 /machine:ARM" OutputFile="$(OutDir)/projced.lib"/>
+      <Tool Name="VCALinkTool"/>
+      <Tool Name="VCXDCMakeTool"/>
+      <Tool Name="VCBscMakeTool"/>
+      <Tool Name="VCCodeSignTool"/>
+      <Tool Name="VCPostBuildEventTool"/>
+      <DeploymentTool ForceDirty="-1" RemoteDirectory="" RegisterOutput="0" AdditionalFiles=""/>
+      <DebuggerTool/>
+    </Configuration>
+    <Configuration Name="Debug|Windows Mobile 5.0 Pocket PC SDK (ARMV4I)" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="4" InheritedPropertySheets="..\projce_common.vsprops" CharacterSet="1">
+      <Tool Name="VCPreBuildEventTool"/>
+      <Tool Name="VCCustomBuildTool"/>
+      <Tool Name="VCXMLDataGeneratorTool"/>
+      <Tool Name="VCWebServiceProxyGeneratorTool"/>
+      <Tool Name="VCMIDLTool"/>
+      <Tool Name="VCCLCompilerTool" ExecutionBucket="7" Optimization="0" AdditionalIncludeDirectories="..\..\..\src" PreprocessorDefinitions="_DEBUG;_WIN32_WCE=$(CEVER);UNDER_CE;$(PLATFORMDEFINES);WINCE;DEBUG;_LIB;$(ARCHFAM);$(_ARCHFAM_);_UNICODE;UNICODE" MinimalRebuild="true" RuntimeLibrary="1" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3"/>
+      <Tool Name="VCManagedResourceCompilerTool"/>
+      <Tool Name="VCResourceCompilerTool" PreprocessorDefinitions="_DEBUG;_WIN32_WCE=$(CEVER);UNDER_CE;$(PLATFORMDEFINES)" Culture="1033" AdditionalIncludeDirectories="$(IntDir)"/>
+      <Tool Name="VCPreLinkEventTool"/>
+      <Tool Name="VCLibrarianTool" AdditionalOptions=" /subsystem:windowsce,5.01" OutputFile="$(OutDir)/projced.lib"/>
+      <Tool Name="VCALinkTool"/>
+      <Tool Name="VCXDCMakeTool"/>
+      <Tool Name="VCBscMakeTool"/>
+      <Tool Name="VCCodeSignTool"/>
+      <Tool Name="VCPostBuildEventTool"/>
+      <DeploymentTool ForceDirty="-1" RemoteDirectory="" RegisterOutput="0" AdditionalFiles=""/>
+      <DebuggerTool/>
+    </Configuration>
+    <Configuration Name="Release|Pocket PC 2003 (ARMV4)" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="4" InheritedPropertySheets="..\projce_common.vsprops" CharacterSet="1">
+      <Tool Name="VCPreBuildEventTool"/>
+      <Tool Name="VCCustomBuildTool"/>
+      <Tool Name="VCXMLDataGeneratorTool"/>
+      <Tool Name="VCWebServiceProxyGeneratorTool"/>
+      <Tool Name="VCMIDLTool"/>
+      <Tool Name="VCCLCompilerTool" ExecutionBucket="7" Optimization="2" AdditionalIncludeDirectories="..\..\..\src" PreprocessorDefinitions="NDEBUG;_WIN32_WCE=$(CEVER);UNDER_CE;$(PLATFORMDEFINES);WINCE;_LIB;$(ARCHFAM);$(_ARCHFAM_);_UNICODE;UNICODE" RuntimeLibrary="0" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3"/>
+      <Tool Name="VCManagedResourceCompilerTool"/>
+      <Tool Name="VCResourceCompilerTool" PreprocessorDefinitions="NDEBUG;_WIN32_WCE=$(CEVER);UNDER_CE;$(PLATFORMDEFINES)" Culture="1033" AdditionalIncludeDirectories="$(IntDir)"/>
+      <Tool Name="VCPreLinkEventTool"/>
+      <Tool Name="VCLibrarianTool" AdditionalOptions=" /subsystem:windowsce,4.20 /machine:ARM" OutputFile="$(OutDir)/projce.lib"/>
+      <Tool Name="VCALinkTool"/>
+      <Tool Name="VCXDCMakeTool"/>
+      <Tool Name="VCBscMakeTool"/>
+      <Tool Name="VCCodeSignTool"/>
+      <Tool Name="VCPostBuildEventTool"/>
+      <DeploymentTool ForceDirty="-1" RemoteDirectory="" RegisterOutput="0" AdditionalFiles=""/>
+      <DebuggerTool/>
+    </Configuration>
+    <Configuration Name="Release|Windows Mobile 5.0 Pocket PC SDK (ARMV4I)" OutputDirectory="$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="$(PlatformName)\$(ConfigurationName)" ConfigurationType="4" InheritedPropertySheets="..\projce_common.vsprops" CharacterSet="1">
+      <Tool Name="VCPreBuildEventTool"/>
+      <Tool Name="VCCustomBuildTool"/>
+      <Tool Name="VCXMLDataGeneratorTool"/>
+      <Tool Name="VCWebServiceProxyGeneratorTool"/>
+      <Tool Name="VCMIDLTool"/>
+      <Tool Name="VCCLCompilerTool" ExecutionBucket="7" Optimization="2" AdditionalIncludeDirectories="..\..\..\src" PreprocessorDefinitions="NDEBUG;_WIN32_WCE=$(CEVER);UNDER_CE;$(PLATFORMDEFINES);WINCE;_LIB;$(ARCHFAM);$(_ARCHFAM_);_UNICODE;UNICODE" RuntimeLibrary="0" UsePrecompiledHeader="0" WarningLevel="3" DebugInformationFormat="3"/>
+      <Tool Name="VCManagedResourceCompilerTool"/>
+      <Tool Name="VCResourceCompilerTool" PreprocessorDefinitions="NDEBUG;_WIN32_WCE=$(CEVER);UNDER_CE;$(PLATFORMDEFINES)" Culture="1033" AdditionalIncludeDirectories="$(IntDir)"/>
+      <Tool Name="VCPreLinkEventTool"/>
+      <Tool Name="VCLibrarianTool" AdditionalOptions=" /subsystem:windowsce,5.01" OutputFile="$(OutDir)/projce.lib"/>
+      <Tool Name="VCALinkTool"/>
+      <Tool Name="VCXDCMakeTool"/>
+      <Tool Name="VCBscMakeTool"/>
+      <Tool Name="VCCodeSignTool"/>
+      <Tool Name="VCPostBuildEventTool"/>
+      <DeploymentTool ForceDirty="-1" RemoteDirectory="" RegisterOutput="0" AdditionalFiles=""/>
+      <DebuggerTool/>
+    </Configuration>
+  </Configurations>
+  <References>
+	</References>
+  <Files>
+    <Filter Name="proj">
+      <Filter Name="src">
+        <File RelativePath="..\..\..\src\aasincos.c">
+				</File>
+        <File RelativePath="..\..\..\src\adjlon.c">
+				</File>
+        <File RelativePath="..\..\..\src\bch2bps.c">
+				</File>
+        <File RelativePath="..\..\..\src\bchgen.c">
+				</File>
+        <File RelativePath="..\..\..\src\biveval.c">
+				</File>
+        <File RelativePath="..\..\..\src\dmstor.c">
+				</File>
+        <File RelativePath="..\..\..\src\emess.c">
+				</File>
+        <File RelativePath="..\..\..\src\emess.h">
+				</File>
+        <File RelativePath="..\..\..\src\gen_cheb.c">
+				</File>
+        <File RelativePath="..\..\..\src\geocent.c">
+				</File>
+        <File RelativePath="..\..\..\src\geocent.h">
+				</File>
+        <File RelativePath="..\..\..\src\geod_for.c">
+				</File>
+        <File RelativePath="..\..\..\src\geod_inv.c">
+				</File>
+        <File RelativePath="..\..\..\src\geod_set.c">
+				</File>
+        <File RelativePath="..\..\..\src\geodesic.h">
+				</File>
+        <File RelativePath="..\..\..\src\hypot.c">
+				</File>
+        <File RelativePath="..\..\..\src\jniproj.c">
+				</File>
+        <File RelativePath="..\..\..\src\mk_cheby.c">
+				</File>
+        <File RelativePath="..\..\..\src\nad_cvt.c">
+				</File>
+        <File RelativePath="..\..\..\src\nad_init.c">
+				</File>
+        <File RelativePath="..\..\..\src\nad_intr.c">
+				</File>
+        <File RelativePath="..\..\..\src\nad_list.h">
+				</File>
+        <File RelativePath="..\..\..\src\org_proj4_Projections.h">
+				</File>
+        <File RelativePath="..\..\..\src\p_series.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_aea.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_aeqd.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_airy.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_aitoff.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_apply_gridshift.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_august.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_auth.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_bacon.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_bipc.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_boggs.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_bonne.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_cass.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_cc.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_cea.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_chamb.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_collg.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_crast.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_datum_set.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_datums.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_denoy.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_deriv.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_eck1.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_eck2.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_eck3.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_eck4.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_eck5.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_ell_set.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_ellps.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_eqc.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_eqdc.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_errno.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_factors.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_fahey.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_fouc_s.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_fwd.c">
+                                </File>
+        <File RelativePath="..\..\..\src\pj_fwd3d.c">
+                                </File>
+        <File RelativePath="..\..\..\src\PJ_gall.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_gauss.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_geocent.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_geos.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_gins8.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_gn_sinu.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_gnom.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_goode.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_gridinfo.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_gridlist.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_hammer.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_hatano.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_imw_p.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_init.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_inv.c">
+                                </File>
+        <File RelativePath="..\..\..\src\pj_inv3d.c">
+                                </File>
+        <File RelativePath="..\..\..\src\PJ_krovak.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_labrd.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_laea.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_lagrng.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_larr.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_lask.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_latlong.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_lcc.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_lcca.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_list.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_list.h">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_loxim.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_lsat.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_malloc.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_mbt_fps.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_mbtfpp.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_mbtfpq.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_merc.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_mill.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_mlfn.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_mod_ster.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_moll.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_mpoly.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_msfn.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_nell.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_nell_h.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_nocol.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_nsper.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_nzmg.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_ob_tran.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_ocea.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_oea.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_omerc.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_open_lib.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_ortho.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_param.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_phi2.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_poly.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_pr_list.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_putp2.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_putp3.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_putp4p.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_putp5.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_putp6.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_qsfn.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_release.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_robin.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_rpoly.c">
+                                </File>
+        <File RelativePath="..\..\..\src\PJ_sch.c">
+                                </File>
+        <File RelativePath="..\..\..\src\PJ_sconics.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_somerc.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_stere.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_sterea.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_strerrno.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_sts.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_tcc.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_tcea.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_tmerc.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_tpeqd.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_transform.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_tsfn.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_units.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_urm5.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_urmfps.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_utils.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_vandg.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_vandg2.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_vandg4.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_wag2.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_wag3.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_wag7.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_wink1.c">
+				</File>
+        <File RelativePath="..\..\..\src\PJ_wink2.c">
+				</File>
+        <File RelativePath="..\..\..\src\pj_zpoly1.c">
+				</File>
+        <File RelativePath="..\..\..\src\proj_api.h">
+				</File>
+        <File RelativePath="..\..\..\src\proj_config.h">
+				</File>
+        <File RelativePath="..\..\..\src\proj_mdist.c">
+				</File>
+        <File RelativePath="..\..\..\src\proj_rouss.c">
+				</File>
+        <File RelativePath="..\..\..\src\projects.h">
+				</File>
+        <File RelativePath="..\..\..\src\rtodms.c">
+				</File>
+        <File RelativePath="..\..\..\src\vector1.c">
+				</File>
+      </Filter>
+    </Filter>
+  </Files>
+  <Globals>
+	</Globals>
+</VisualStudioProject>

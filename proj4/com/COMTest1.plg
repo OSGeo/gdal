@@ -1,0 +1,89 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: COMTest1 - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "midl.exe /tlb ".\PROJ4COM.tlb" /h "COMTest1.h" /iid "COMTest1_i.c" /Oicf "C:\warmerda\proj\com\COMTest1.idl""
+Creating command line "rc.exe /l 0x409 /fo"Debug/COMTest1.res" /d "_DEBUG" "C:\warmerda\proj\com\COMTest1.rc"" 
+Creating temporary file "C:\DOCUME~1\warmerda\LOCALS~1\Temp\RSP2F4.tmp" with contents
+[
+/nologo /MTd /W3 /Gm /ZI /Od /I "C:\warmerda\proj\src" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /Fp"Debug/COMTest1.pch" /Yu"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\warmerda\proj\com\COMTest1.cpp"
+"C:\warmerda\proj\com\ProjDef.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\warmerda\LOCALS~1\Temp\RSP2F4.tmp" 
+Creating temporary file "C:\DOCUME~1\warmerda\LOCALS~1\Temp\RSP2F5.tmp" with contents
+[
+/nologo /MTd /W3 /Gm /ZI /Od /I "C:\warmerda\proj\src" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /Fp"Debug/COMTest1.pch" /Yc"stdafx.h" /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\warmerda\proj\com\StdAfx.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\warmerda\LOCALS~1\Temp\RSP2F5.tmp" 
+Creating temporary file "C:\DOCUME~1\warmerda\LOCALS~1\Temp\RSP2F6.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib C:\warmerda\proj\src\proj_i.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"Debug/PROJ4COM.pdb" /debug /machine:I386 /def:".\COMTest1.def" /out:"Debug/PROJ4COM.dll" /implib:"Debug/PROJ4COM.lib" /pdbtype:sept 
+.\Debug\COMTest1.obj
+.\Debug\ProjDef.obj
+.\Debug\StdAfx.obj
+.\Debug\COMTest1.res
+]
+Creating command line "link.exe @C:\DOCUME~1\warmerda\LOCALS~1\Temp\RSP2F6.tmp"
+Creating temporary file "C:\DOCUME~1\warmerda\LOCALS~1\Temp\RSP2F7.bat" with contents
+[
+@echo off
+regsvr32 /s /c ".\Debug\PROJ4COM.dll"
+echo regsvr32 exec. time > ".\Debug\regsvr32.trg"
+]
+Creating command line "C:\DOCUME~1\warmerda\LOCALS~1\Temp\RSP2F7.bat"
+Creating Type Library...
+Microsoft (R) MIDL Compiler Version 5.01.0164  
+Copyright (c) Microsoft Corp 1991-1997. All rights reserved.
+Processing C:\warmerda\proj\com\COMTest1.idl
+COMTest1.idl
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\oaidl.idl
+oaidl.idl
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\objidl.idl
+objidl.idl
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\unknwn.idl
+unknwn.idl
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\wtypes.idl
+wtypes.idl
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\basetsd.h
+basetsd.h
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\guiddef.h
+guiddef.h
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\ocidl.idl
+ocidl.idl
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\oleidl.idl
+oleidl.idl
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\servprov.idl
+servprov.idl
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\urlmon.idl
+urlmon.idl
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\msxml.idl
+msxml.idl
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\oaidl.acf
+oaidl.acf
+Processing C:\PROGRAM FILES\MICROSOFT SDK\INCLUDE\ocidl.acf
+ocidl.acf
+Compiling resources...
+Compiling...
+StdAfx.cpp
+Compiling...
+COMTest1.cpp
+ProjDef.cpp
+Generating Code...
+Linking...
+   Creating library Debug/PROJ4COM.lib and object Debug/PROJ4COM.exp
+<h3>Output Window</h3>
+Performing registration
+
+
+
+<h3>Results</h3>
+PROJ4COM.dll - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

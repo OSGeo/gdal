@@ -1,0 +1,227 @@
+<html>
+<head>
+<title>PROJ.4 - Frequently Asked Questions</title>
+</head>
+<body BGCOLOR="#FFFFFF">
+<h1>PROJ.4 - Frequently Asked Questions</h1>
+
+<!-------------------------------------------------------------------------->
+
+<h2><a name="proj_docs">Where can I find the list of projections and their arguments?</a></h2>
+
+There is no simple single location to find all the required information. The
+PostScript/PDF documents listed on the <a href="index.html">main</a> PROJ.4
+page under documentation are the authoritative source but projections and
+options are spread over several documents in a form more related to their
+order of implementation than anything else.<pp>
+
+The <b>proj</b> command
+itself can report the list of projections using the <tt>-lp,</tt> option, 
+the list of ellipsoids with the <tt>-le</tt> option, the list of units with
+the <tt>-lu</tt> option, and the list of built-in datums with the <tt>-ld</tt>
+option.<p>
+
+The <a href="http://www.remotesensing.org/geotiff/proj_list/">GeoTIFF 
+Projections Pages</a> include most of the common PROJ.4 projections, and
+a definition of the projection specific options for each.<p>
+
+<!-------------------------------------------------------------------------->
+
+<h2><a name="nad2783">How do I do datum shifts between NAD27 and NAD83?</a></h2>
+
+While the <b>nad2nad</b> program can be used in some cases, the <b>cs2cs</b>
+is now the preferred mechanism.   The following example demonstrates using
+the default shift parameters for NAD27 to NAD83:<p>
+
+<pre>
+% cs2cs +proj=latlong +datum=NAD27 +to +proj=latlong +datum=NAD83 
+-117 30
+</pre>
+<p>
+
+producing:<p>
+
+<pre>
+117d0'2.901"W   30d0'0.407"N 0.000
+</pre>
+
+<p>
+In order for datum shifting to work properly the various grid shift files
+must be available.  See below.  More details are available in the 
+<a href="gen_parms.html#nadgrids">General Parameters</a> document.<p>
+
+<!-------------------------------------------------------------------------->
+
+<h2><a name="datumshifting">How do I build/configure PROJ.4 to support datum shifting.</a></h2>
+
+After downloading and unpacking the PROJ.4 source, also download and unpack
+the set of datum shift files.  This would be a file like
+<a href="ftp://ftp.remotesensing.org/pub/proj/proj-datumgrid-1.3.zip">
+ftp://ftp.remotesensing.org/pub/proj/proj-datumgrid-1.3.zip</a>.  This
+file should be unpacked <i>within</i> the <tt>proj/nad</tt> directory.
+Then proceed with the configuration, build and install.  This will ensure
+that the build system knows about the grid shift files, and applies the
+ascii to binary preprocessing step.<p>
+
+On Windows the extra <tt>nadshift</tt> target must be used.  For instance
+<tt>nmake /f makefile.vc nadshift</tt> in the <tt>proj/src</tt> directory.
+<p>
+
+A default build and install on Unix will normally build knowledge of the
+directory where the grid shift files are installed into the PROJ.4 library
+(usually /usr/local/share/proj).  On Windows the library is normally built
+thinking that C:\PROJ\NAD is the installed directory for the grid shift files.
+If the built in concept of the PROJ.4 data directory is incorrect, the PROJ_LIB
+environment can be defined with the correct directory.<p>
+
+<!-------------------------------------------------------------------------->
+
+<h2><a name="nad2783_debug">How do I debug problems with NAD27/NAD83 datum shifting?</a></h2>
+
+<ol>
+<li> Verify that you have the binary files (eg. /usr/local/share/proj/conus)
+installed on your system.  If not, see the previous question.
+<p>
+<li> Try a datum shifting operation in relative isolation, such as with the
+cs2cs command listed above.  Do you get reasonable results?  If not it is
+likely the grid shift files aren't being found.  Perhaps you need to define
+PROJ_LIB? <p>
+
+<li> The cs2cs command and the underlying pj_transform() API know how to 
+do a grid shift as part of a more complex coordinate transformation; however,
+it is imperative that both the source and destination coordinate system be
+defined with appropriate datum information.  That means that implicitly or
+explicitly there must be a +datum= clause, a +nadgrids= clause or
+a +towgs84= clause.  For instance "cs2cs +proj=latlong +datum=NAD27 +to 
++proj=latlong +ellps=WGS84" won't work because defining the output coordinate 
+system as using the ellipse WGS84 isn't the same as defining it to use the
+datum WGS84 (use +datum=WGS84).  If either the input or output are not 
+identified as having a datum, the datum shifting (and ellipsoid change) step
+is just quietly skipped!<p>
+
+<li> The PROJ_DEBUG environment can be defined (any value) to force extra 
+output from
+the PROJ.4 library to stderr (the text console normally) with information on
+what data files are being opened and in some cases why a transformation fails.
+Note that PROJ_DEBUG support is not yet very mature in the PROJ.4 library.<p>
+
+<li> The "-v" flag to cs2cs can be useful in establishing more detail on 
+what parameters being used internally for a coordinate system.  This will
+include expanding the definition of +datum clause. <p>
+
+</ol>
+
+<!-------------------------------------------------------------------------->
+
+<h2><a name="epsg">How do I use EPSG coordinate system codes with PROJ.4?</a></h2>
+
+There is somewhat imperfect translation between 2d geographic and
+projected coordinate system codes and PROJ.4 descriptions of the
+coordinate system available in the <tt>epsg</tt> definition file that
+normally lives in the <tt>proj/nad</tt> directory.  If installed (it is
+installed by default on Unix), it is possible to use EPSG numbers like this:
+
+<pre>
+% cs2cs -v +init=epsg:26711
+# ---- From Coordinate System ----
+#Universal Transverse Mercator (UTM)
+#       Cyl, Sph
+#       zone= south
+# +init=epsg:26711 +proj=utm +zone=11 +ellps=clrk66 +datum=NAD27 +units=m
+# +no_defs +nadgrids=conus,ntv1_can.dat
+#--- following specified but NOT used
+# +ellps=clrk66
+# ---- To Coordinate System ----
+#Lat/long (Geodetic)
+#
+# +proj=latlong +datum=NAD27 +ellps=clrk66 +nadgrids=conus,ntv1_can.dat
+</pre>
+
+The <tt>proj/nad/epsg</tt> file can be browsed and searched in a text editor 
+for coordinate systems.  There are known to be problems with some coordinate
+systems, and any coordinate systems with odd axes, a non-greenwich prime
+meridian or other quirkyness are unlikely to work properly.  Caveat Emptor!<p>
+
+<!-------------------------------------------------------------------------->
+
+<h2><a name="datum_37">How do I use 3 parameter and 7 parameter datum shifting</a></h2>
+
+Datum shifts can be approximated with 3 and 7 parameter transformations.  
+Their use is more fully described in the 
+<a href="gen_parms.html#towgs84">towgs84</a> discussions.<p>
+
+
+<!-------------------------------------------------------------------------->
+
+<h2><a name="locale">Does PROJ.4 work in different international numeric locales?</a></h2>
+
+No.  PROJ.4 makes extensive use of sprintf() and atof() internally to translate
+numeric values.  If a locale is in effect that modifies formatting of 
+numbers, altering the role of commas and periods in numbers, then PROJ.4
+will not work.  This problem is common in some European locales.<p>
+
+On unix-like platforms, this problem can be avoided by forcing the use
+of the default numeric locale by setting the LC_NUMERIC environment variable
+to C. <p>
+
+eg.
+<pre>
+$ export LC_NUMERIC=C
+$ proj ...
+</pre>
+
+<!-------------------------------------------------------------------------->
+
+<h2><a name="sphere_as_wgs84">Changing Ellipsoid / Why can't I convert from WGS84 to Virtual Earth Mercator?</a></h2>
+
+The coordinate system definition for Virtual Earth Mercator is as follows, 
+which uses a sphere as the earth model for the mercator projection. 
+
+<pre>
++proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 
+     +x_0=0.0 +y_0=0 +k=1.0 +units=m +no_defs
+</pre>
+
+But, if you do something like:
+
+<pre>
+cs2cs +proj=latlong +datum=WGS84 
+    +to +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 
+                   +x_0=0.0 +y_0=0 +k=1.0 +units=m +no_defs
+</pre>
+
+to convert between WGS84 and mercator on the sphere there will be substantial
+shifts in the Y mercator coordinates.  This is because internally cs2cs is
+having to adjust the lat/long coordinates from being on the sphere to being
+on the WGS84 datum which has a quite differently shaped ellipsoid.<p>
+
+In this case, and many other cases using spherical projections, the desired
+approach is to actually treat the lat/long locations on the sphere as if 
+they were on WGS84 without any adjustments when using them for converting
+to other coordinate systems.  The solution is to "trick" PROJ.4 into applying
+no change to the lat/long values when going to (and through) WGS84.  This
+can be accomplished by asking PROJ to use a <i>null</i> grid shift file 
+for switching from your spherical lat/long coordinates to WGS84.<p>
+
+<pre>
+cs2cs +proj=latlong +datum=WGS84 
+    +to +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 
+                   +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs
+</pre>
+
+Note the strategic addition of <tt>+nadgrids=@null</tt> to the spherical
+projection definition.<p>
+
+Similar issues apply with many other datasets distributed with projections
+based on a spherical earth model - such as many NASA datasets, and also
+(I think) the Google Maps mercator projection.<p>
+
+<!-------------------------------------------------------------------------->
+
+<hr>
+
+Requests to add items to the frequently asked questions list 
+<a href="http://bugzilla.remotesensing.org/enter_bug.cgi?product=PROJ.4">
+can be entered</a> in bugzilla.<p>
+</body>
+</html>

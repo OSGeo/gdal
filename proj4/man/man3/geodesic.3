@@ -1,0 +1,119 @@
+.\" @(#)geodesic.3
+.nr LL 7.0i
+.TH GEODESIC 3 "2016/02/16 Rel. 4.9.3"
+.ad b
+.hy 1
+.SH NAME
+.B geod_init
+\- initialize an ellipsoid
+.br
+.B geod_direct geod_gendirect
+\- the direct geodesic problem
+.br
+.B geod_inverse geod_geninverse
+\- the inverse geodesic problem
+.br
+.B geod_lineinit geod_directline geod_gendirectline geod_inverseline
+\- initialize a geodesic line
+.br
+.B geod_setdistance geod_gensetdistance
+\- set distance to reference point
+.br
+.B geod_position geod_genposition
+\- a position on a geodesic line
+.br
+.B geod_polygon_init
+\- initialize a polygon
+.br
+.B geod_addpoint geod_addedge
+\- add to a polygon
+.br
+.B geod_polygon_compute geod_polygon_testpoint geod_polygon_testedge
+\- compute properties of polygon
+.br
+.B geod_polygon_clear
+\- clear polygon
+.br
+.B geod_polygonarea
+\- the area of a polygon
+.br
+.SH SYNOPSIS
+.nf
+#include <geodesic.h>
+.br
+and link against the \fBproj\fR library.
+.SH DESCRIPTION
+This library is a port of the geodesic routines in the C++ library,
+GeographicLib, to C.  It solves the direct and inverse geodesic problems
+on an ellipsoid of revolution.  In addition, the reduced length of a
+geodesic and the area between a geodesic and the equator can be
+computed.  The results are accurate to round off for |\fIf\fR| < 1/50,
+where \fIf\fR is the flattening.  Note that the geodesic routines
+measure angles (latitudes, longitudes, and azimuths) in degrees, unlike
+the rest of the \fBproj\fR library, which uses radians.  The
+documentation for this library is included in geodesic.h.  A formatted
+version of the documentation is available at
+http://geographiclib.sf.net/1.46/C
+.SH EXAMPLE
+The following program reads in lines with the coordinates for two points
+in decimal degrees (\fIlat1\fR, \fIlon1\fR, \fIlat2\fR, \fIlon2\fR) and
+prints out \fIazi1\fR, \fIazi2\fR, \fIs12\fR for the geodesic line
+between each pair of points on the WGS84 ellipsoid.  (N.B. \fIazi2\fR is
+the forward azimuth at point 2.)
+.nf
+\f(CW
+
+#include <stdio.h>
+#include <geodesic.h>
+
+int main() {
+  double a = 6378137, f = 1/298.257223563; /* WGS84 */
+  double lat1, lon1, azi1, lat2, lon2, azi2, s12;
+  struct geod_geodesic g;
+
+  geod_init(&g, a, f);
+  while (scanf("%lf %lf %lf %lf",
+               &lat1, &lon1, &lat2, &lon2) == 4) {
+    geod_inverse(&g, lat1, lon1, lat2, lon2,
+                 &s12, &azi1, &azi2);
+    printf("%.8f %.8f %.3f\en", azi1, azi2, s12);
+  }
+  return 0;
+} \fR
+.br
+.fi
+.SH LIBRARY
+libproj.a \- library of projections and support procedures
+.SH SEE ALSO
+Full online documentation for \fBgeodesic(3)\fR,
+.br
+http://geographiclib.sf.net/1.46/C
+.PP
+.B geod(1)
+.PP
+\fBGeographicLib\fR, http://geographiclib.sf.net
+.PP
+The \fBGeodesicExact\fR class in GeographicLib solves the geodesic
+problems in terms of elliptic integrals; the results are accurate for
+arbitrary \fIf\fR.
+.PP
+C. F. F. Karney, \fIAlgorithms for Geodesics\fR,
+.br
+J. Geodesy \fB87\fR, 43-55 (2013);
+.br
+DOI: http://dx.doi.org/10.1007/s00190-012-0578-z
+.br
+http://geographiclib.sf.net/geod-addenda.html
+.PP
+\fIA geodesic bibliography\fR,
+.br
+http://geographiclib.sf.net/geodesic-papers/biblio.html
+.PP
+The Wikipedia page, \fIGeodesics on an ellipsoid\fR,
+.br
+https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
+.SH BUGS
+A list of known bugs can found at https://github.com/OSGeo/proj.4/issues
+where new bug reports can be submitted too.
+.SH HOME PAGE
+http://proj4.org/

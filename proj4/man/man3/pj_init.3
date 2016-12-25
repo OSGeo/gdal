@@ -1,0 +1,114 @@
+.\" @(#)pj_init.3 - 4.1
+.nr LL 5.5i
+.TH PJ_INIT 3U "2001/04/05 Rel. 4.4" 
+.ad b
+.hy 1
+.SH NAME
+pj_init \- initialize cartographic projection
+.br
+pj_init_plus \- initialize cartographic projection
+.br
+pj_fwd \- forward cartographic projection
+.br
+pj_inv \- inverse cartographic projection
+.br
+pj_transform \- transform between coordinate systems
+.br
+pj_free \- de-initialize projection
+.SH SYNOPSIS
+.nf
+#include <proj_api.h>
+
+projPJ pj_init(int argc, char **argv)
+
+projPJ pj_init_plus(const char *defn)
+
+projUV pj_fwd(projUV val, projPJ proj)
+
+projUV pj_inv(projUV val, projPJ proj)
+
+int pj_transform(projPJ src_cs, projPJ dst_cs, long point_count, 
+                 int point_offset, double *x, double *y, double *z)
+               
+void pj_free(projPJ proj)
+
+.SH DESCRIPTION
+Procedure \fBpj_init\fR selects and initializes a cartographic projection
+with its argument control parameters.
+\fBArgc\fR is the number of elements in the array of control strings
+\fBargv\fR that each contain individual cartographic control keyword
+assignments (\f(CW+\fR \fBproj\fR arguments).
+The list must contain at least the \fBproj=\fIprojection\fR and
+Earth's radius or elliptical parameters.
+If the initialization of the projection is successful a valid
+address is returned otherwise a NULL value.
+
+The \fBpj_init_plus\fR function operates similarly to \fBpj_init\fR but
+takes a single string containing the definition, with each parameter
+prefixed with a plus sign.  For example "+proj=utm +zone=11 +ellps=WGS84".
+
+Once initialization is performed either forward or inverse
+projections can be performed with the returned value of \fBpj_init\fR
+used as the argument \fBproj\fR.
+The argument structure \fBprojUV\fR values \fBu\fR and \fBv\fR contain
+respective longitude and latitude or x and y.
+Latitude and longitude are in radians.
+If a projection operation fails, both elements of \fBprojUV\fR are
+set to HUGE_VAL (defined in \fImath.h\fR).
+
+\fBNote:\fR all projections have a forward mode, but some do not have
+an inverse projection.
+If the projection does not have an inverse the projPJ structure element
+\fIinv\fR will be NULL.
+
+The \fBpj_transform\fR function may be used to transform points between
+the two provided coordinate systems.  In addition to converting between
+cartographic projection coordinates and geographic coordinates, this function
+also takes care of datum shifts if possible between the source and destination
+coordinate system.  Unlike \fBpj_fwd\fR and \fBpj_inv\fR it is also allowable
+for the coordinate system definitions (\fBPJ *\fR) to be geographic coordinate
+systems (defined as +proj=latlong).  The \fBx\fR, \fBy\fR and \fBz\fR arrays
+contain the input values of the points, and are replaced with the output
+values.  The \fBpoint_offset\fR should indicate the spacing the of \fBx,y,z\fR
+arrays, normally 1.  The function returns zero on success, or the error number (also in
+pj_errno) on failure.
+
+Memory associated with the projection may be freed with \fBpj_free\fR.
+.SH EXAMPLE
+The following program reads latitude and longitude values in decimal
+degrees, performs Mercator projection with a Clarke 1866 ellipsoid and
+a 33\(de latitude of true scale and prints the projected
+cartesian values in meters:
+.nf
+\f(CW
+#include <proj_api.h>
+
+main(int argc, char **argv) {
+	char *args[] = { "proj=merc", "ellps=clrk66", "lat_ts=33" };
+	projUV p;
+	projPJ pj;
+
+	if (!(pj = pj_init(3, args)))
+	   exit(1);
+	while (scanf("%lf %lf", &p.v, &p.u) == 2) {
+	   p.u *= DEG_TO_RAD;
+	   p.v *= DEG_TO_RAD;
+	   p = pj_fwd(p, pj);
+	   printf("%.2f\et%.2f\en", p.u, p.v);
+	}
+	exit(0);
+} \fR
+.br
+.fi
+.SH LIBRARY
+libproj.a \- library of projections and support procedures
+.SH SEE ALSO
+.B https://github.com/OSGeo/proj.4/wiki/ProjAPI, proj(1),
+.br
+.I "Cartographic Projection Procedures for the UNIX Environment\(emA User's Manual,"
+(Evenden, 1990, Open-file report 90\-284).
+.SH BUGS
+A list of known bugs can found at https://github.com/OSGeo/proj.4/issues
+where new bug reports can be submitted too.
+.SH HOME PAGE
+http://proj4.org/
