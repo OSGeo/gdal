@@ -574,12 +574,12 @@ void GDALDataset::RasterInitialize( int nXSize, int nYSize )
  * @return CE_None on success or CE_Failure on failure.
  */
 
-CPLErr GDALDataset::AddBand( GDALDataType /* eType */ ,
-                             char ** /* papszOptions */ )
+CPLErr GDALDataset::AddBand( CPL_UNUSED GDALDataType eType,
+                             CPL_UNUSED char **papszOptions )
 
 {
     ReportError( CE_Failure, CPLE_NotSupported,
-              "Dataset does not support the AddBand() method." );
+                 "Dataset does not support the AddBand() method." );
 
     return CE_Failure;
 }
