@@ -4839,6 +4839,9 @@ def ogr_shape_103():
     for (options, expected) in [ (['DBF_EOF_CHAR=YES'], True),
                                 ([], True),
                                 (['DBF_EOF_CHAR=NO'], False) ]:
+
+        options += [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ]
+
         # Create empty file
         ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
         lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = options)
@@ -4846,6 +4849,7 @@ def ogr_shape_103():
 
         if not check_EOF(filename, expected = expected):
             gdaltest.post_reason('fail')
+            print(options)
             return 'fail'
 
         # Add field
@@ -4977,11 +4981,11 @@ def ogr_shape_103():
 
     # Test appending to a file without a EOF marker
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
-    lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = ['DBF_EOF_CHAR=NO'])
+    lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = ['DBF_EOF_CHAR=NO'] + [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ])
     lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
     lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
     ds = None
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE)
+    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ])
     lyr = ds.GetLayer(0)
     lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
     ds.FlushCache()
@@ -4996,12 +5000,12 @@ def ogr_shape_103():
 
     # Test editing a record (that is not the last one ) in a file without a EOF marker
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
-    lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = ['DBF_EOF_CHAR=NO'])
+    lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = ['DBF_EOF_CHAR=NO'] + [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ])
     lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
     lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
     lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
     ds = None
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE)
+    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ])
     lyr = ds.GetLayer(0)
     lyr.SetFeature( lyr.GetNextFeature() )
     ds = None
