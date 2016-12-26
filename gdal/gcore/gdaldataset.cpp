@@ -901,11 +901,11 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
  * @return CE_Failure if an error occurs, otherwise CE_None.
  */
 
-CPLErr GDALDataset::SetProjection( const char * /*pszProjection*/ )
+CPLErr GDALDataset::SetProjection( CPL_UNUSED const char *pszProjection )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
-                  "Dataset does not support the SetProjection() method." );
+                     "Dataset does not support the SetProjection() method." );
     return CE_Failure;
 }
 
@@ -984,7 +984,8 @@ CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
  * @see GDALDataset::GetGeoTransform()
  */
 
-CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform )
+CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS,
+                                        double * padfTransform )
 
 {
     VALIDATE_POINTER1( hDS, "GDALGetGeoTransform", CE_Failure );
@@ -1012,12 +1013,12 @@ CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform
  * written.
  */
 
-CPLErr GDALDataset::SetGeoTransform( double* /*padfGeoTransform*/ )
+CPLErr GDALDataset::SetGeoTransform( CPL_UNUSED double *padfGeoTransform )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
-                  "SetGeoTransform() not supported for this dataset." );
+                     "SetGeoTransform() not supported for this dataset." );
 
     return( CE_Failure );
 }
@@ -1057,10 +1058,10 @@ GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
  * @return the desired handle value, or NULL if not recognized/supported.
  */
 
-void *GDALDataset::GetInternalHandle( const char * /*pszHandleName*/ )
+void *GDALDataset::GetInternalHandle( CPL_UNUSED const char *pszHandleName )
 
 {
-    return( NULL );
+    return NULL;
 }
 
 /************************************************************************/
@@ -1394,14 +1395,14 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
  * not supported for this format).
  */
 
-CPLErr GDALDataset::SetGCPs( int /* nGCPCount */,
-                             const GDAL_GCP * /* pasGCPList */,
-                             const char * /* pszGCPProjection */)
+CPLErr GDALDataset::SetGCPs( CPL_UNUSED int nGCPCount,
+                             CPL_UNUSED const GDAL_GCP *pasGCPList,
+                             CPL_UNUSED const char *pszGCPProjection)
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
-                  "Dataset does not support the SetGCPs() method." );
+                     "Dataset does not support the SetGCPs() method." );
 
     return CE_Failure;
 }
@@ -4557,7 +4558,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 
 */
 
-OGRErr GDALDataset::DeleteLayer( int /*iLayer*/ )
+OGRErr GDALDataset::DeleteLayer( CPL_UNUSED int iLayer )
 
 {
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -6008,7 +6009,7 @@ int GDALDataset::GetLayerCount()
  @return the layer, or NULL if iLayer is out of range or an error occurs.
 */
 
-OGRLayer* GDALDataset::GetLayer( int /*iLayer*/ )
+OGRLayer* GDALDataset::GetLayer( CPL_UNUSED int iLayer )
 {
     return NULL;
 }
@@ -6339,7 +6340,7 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature( GDALDatasetH hDS,
  @return TRUE if capability available otherwise FALSE.
 */
 
-int GDALDataset::TestCapability( const char * )
+int GDALDataset::TestCapability( CPL_UNUSED const char *pszCap )
 {
     return FALSE;
 }
@@ -6438,7 +6439,7 @@ int GDALDatasetTestCapability( GDALDatasetH hDS, const char *pszCap )
  @since GDAL 2.0
 */
 
-OGRErr GDALDataset::StartTransaction( int /* bForce */ )
+OGRErr GDALDataset::StartTransaction( CPL_UNUSED int bForce )
 {
     return OGRERR_UNSUPPORTED_OPERATION;
 }
