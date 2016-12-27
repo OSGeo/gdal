@@ -1524,13 +1524,13 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
                                              calloc(sizeof(double),nVertices);
         psObject->padfM = (double *) padfM && bHasM ? malloc(nSize) :
                                              calloc(sizeof(double),nVertices);
-        if( padfX != NULL && psObject->padfX != NULL)
+        if( padfX != NULL )
             memcpy(psObject->padfX, padfX, nSize);
-        if( padfY != NULL && psObject->padfY != NULL)
+        if( padfY != NULL )
             memcpy(psObject->padfY, padfY, nSize);
-        if( padfZ != NULL && bHasZ && psObject->padfZ != NULL)
+        if( padfZ != NULL && bHasZ )
             memcpy(psObject->padfZ, padfZ, nSize);
-        if( padfM != NULL && bHasM && psObject->padfM != NULL)
+        if( padfM != NULL && bHasM )
         {
             memcpy(psObject->padfM, padfM, nSize);
             psObject->bMeasureIsUsed = TRUE;
