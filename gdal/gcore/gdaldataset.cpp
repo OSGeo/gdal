@@ -128,8 +128,8 @@ class GDALDatasetPrivate
 
 typedef struct
 {
-    /* PID of the thread that mark the dataset as shared */
-    /* This may not be the actual PID, but the responsiblePID */
+    // PID of the thread that mark the dataset as shared
+    // This may not be the actual PID, but the responsiblePID.
     GIntBig      nPID;
     char        *pszDescription;
     GDALAccess   eAccess;
@@ -137,21 +137,21 @@ typedef struct
     GDALDataset *poDS;
 } SharedDatasetCtxt;
 
-/* Set of datasets opened as shared datasets (with GDALOpenShared) */
-/* The values in the set are of type SharedDatasetCtxt */
+// Set of datasets opened as shared datasets (with GDALOpenShared)
+// The values in the set are of type SharedDatasetCtxt.
 static CPLHashSet* phSharedDatasetSet = NULL;
 
-/* Set of all datasets created in the constructor of GDALDataset */
-/* In the case of a shared dataset, memorize the PID of the thread */
-/* that marked the dataset as shared, so that we can remove it from */
-/* the phSharedDatasetSet in the destructor of the dataset, even */
-/* if GDALClose is called from a different thread */
+// Set of all datasets created in the constructor of GDALDataset.
+// In the case of a shared dataset, memorize the PID of the thread
+// that marked the dataset as shared, so that we can remove it from
+// the phSharedDatasetSet in the destructor of the dataset, even
+// if GDALClose is called from a different thread.
 static std::map<GDALDataset*, GIntBig>* poAllDatasetMap = NULL;
 
 static CPLMutex *hDLMutex = NULL;
 
-/* Static array of all datasets. Used by GDALGetOpenDatasets */
-/* Not thread-safe. See GDALGetOpenDatasets */
+// Static array of all datasets. Used by GDALGetOpenDatasets.
+// Not thread-safe. See GDALGetOpenDatasets.
 static GDALDataset** ppDatasets = NULL;
 
 static unsigned long GDALSharedDatasetHashFunc(const void* elt)
@@ -180,13 +180,14 @@ static void GDALSharedDatasetFreeFunc(void* elt)
 /* Functions shared between gdalproxypool.cpp and gdaldataset.cpp */
 /************************************************************************/
 
-/* The open-shared mutex must be used by the ProxyPool too */
+// The open-shared mutex must be used by the ProxyPool too.
 CPLMutex** GDALGetphDLMutex()
 {
     return &hDLMutex;
 }
 
-/* The current thread will act in the behalf of the thread of PID responsiblePID */
+// The current thread will act in the behalf of the thread of PID
+// responsiblePID.
 void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID)
 {
     GIntBig* pResponsiblePID = (GIntBig*) CPLGetTLS(CTLS_RESPONSIBLEPID);
@@ -198,8 +199,8 @@ void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID)
     *pResponsiblePID = responsiblePID;
 }
 
-/* Get the PID of the thread that the current thread will act in the behalf of */
-/* By default : the current thread acts in the behalf of itself */
+// Get the PID of the thread that the current thread will act in the behalf of
+// By default : the current thread acts in the behalf of itself.
 GIntBig GDALGetResponsiblePIDForCurrentThread()
 {
     GIntBig* pResponsiblePID = (GIntBig*) CPLGetTLS(CTLS_RESPONSIBLEPID);
@@ -284,8 +285,8 @@ void GDALDataset::Init(bool bForceCachedIOIn)
  * zero.
  *
  * For Windows users, it is not recommended to use the delete operator on the
- * dataset object because of known issues when allocating and freeing memory across
- * module boundaries. Calling GDALClose() is then a better option.
+ * dataset object because of known issues when allocating and freeing memory
+ * across module boundaries. Calling GDALClose() is then a better option.
  */
 
 GDALDataset::~GDALDataset()
@@ -573,11 +574,8 @@ void GDALDataset::RasterInitialize( int nXSize, int nYSize )
  * @return CE_None on success or CE_Failure on failure.
  */
 
-/**/
-/**/
-
-CPLErr GDALDataset::AddBand( GDALDataType /* eType */ ,
-                             char ** /* papszOptions */ )
+CPLErr GDALDataset::AddBand( CPL_UNUSED GDALDataType eType,
+                             CPL_UNUSED char **papszOptions )
 
 {
     ReportError( CE_Failure, CPLE_NotSupported,
@@ -669,7 +667,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
     poBand->poDS = this;
     poBand->nRasterXSize = nRasterXSize;
     poBand->nRasterYSize = nRasterYSize;
-    poBand->eAccess = eAccess; /* default access to be same as dataset */
+    poBand->eAccess = eAccess;  // Default access to be same as dataset.
 }
 //! @endcond
 
@@ -903,10 +901,7 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
  * @return CE_Failure if an error occurs, otherwise CE_None.
  */
 
-/**/
-/**/
-
-CPLErr GDALDataset::SetProjection( const char * /*pszProjection*/ )
+CPLErr GDALDataset::SetProjection( CPL_UNUSED const char *pszProjection )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
         ReportError( CE_Failure, CPLE_NotSupported,
@@ -968,13 +963,13 @@ CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
 {
     CPLAssert( padfTransform != NULL );
 
-    padfTransform[0] = 0.0;     /* X Origin (top left corner) */
-    padfTransform[1] = 1.0;     /* X Pixel size */
+    padfTransform[0] = 0.0;  // X Origin (top left corner)
+    padfTransform[1] = 1.0;  // X Pixel size */
     padfTransform[2] = 0.0;
 
-    padfTransform[3] = 0.0;     /* Y Origin (top left corner) */
+    padfTransform[3] = 0.0;  // Y Origin (top left corner)
     padfTransform[4] = 0.0;
-    padfTransform[5] = 1.0;     /* Y Pixel Size */
+    padfTransform[5] = 1.0;  // Y Pixel Size
 
     return( CE_Failure );
 }
@@ -1010,17 +1005,14 @@ CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform
  *
  * This method does the same thing as the C GDALSetGeoTransform() function.
  *
- * @param padfTransform a six double buffer containing the transformation
+ * @param padfGeoTransform a six double buffer containing the transformation
  * coefficients to be written with the dataset.
  *
  * @return CE_None on success, or CE_Failure if this transform cannot be
  * written.
  */
 
-/**/
-/**/
-
-CPLErr GDALDataset::SetGeoTransform( double* /*padfGeoTransform*/)
+CPLErr GDALDataset::SetGeoTransform( CPL_UNUSED double *padfGeoTransform )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -1065,10 +1057,7 @@ GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
  * @return the desired handle value, or NULL if not recognized/supported.
  */
 
-/**/
-/**/
-
-void *GDALDataset::GetInternalHandle( const char * /*pszHandleName*/ )
+void *GDALDataset::GetInternalHandle( CPL_UNUSED const char *pszHandleName )
 
 {
     return( NULL );
@@ -1239,7 +1228,7 @@ void GDALDataset::MarkAsShared()
     GIntBig nPID = GDALGetResponsiblePIDForCurrentThread();
     SharedDatasetCtxt* psStruct;
 
-    /* Insert the dataset in the set of shared opened datasets */
+    // Insert the dataset in the set of shared opened datasets.
     CPLMutexHolderD( &hDLMutex );
     if (phSharedDatasetSet == NULL)
         phSharedDatasetSet = CPLHashSetNew(GDALSharedDatasetHashFunc, GDALSharedDatasetEqualFunc, GDALSharedDatasetFreeFunc);
@@ -1405,12 +1394,9 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
  * not supported for this format).
  */
 
-/**/
-/**/
-
-CPLErr GDALDataset::SetGCPs( int /* nGCPCount */,
-                             const GDAL_GCP * /* pasGCPList */,
-                             const char * /* pszGCPProjection */)
+CPLErr GDALDataset::SetGCPs( CPL_UNUSED int nGCPCount,
+                             CPL_UNUSED const GDAL_GCP *pasGCPList,
+                             CPL_UNUSED const char *pszGCPProjection )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -1650,11 +1636,11 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                 GDALRasterBand* poMaskBand = poBand->GetMaskBand();
                 if( nFirstMaskFlags == GMF_ALL_VALID && nMaskFlags == GMF_ALL_VALID )
                 {
-                    /* ok */
+                    // Ok.
                 }
                 else if( poFirstMaskBand == poMaskBand )
                 {
-                    /* ok */
+                    // Ok.
                 }
                 else
                 {
@@ -2220,8 +2206,8 @@ void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **ppahDSList, int *pnCount )
 /*                        GDALCleanOpenDatasetsList()                   */
 /************************************************************************/
 
-/* Useful when called from the child of a fork(), to avoid closing */
-/* the datasets of the parent at the child termination */
+// Useful when called from the child of a fork(), to avoid closing
+// the datasets of the parent at the child termination.
 void GDALNullifyOpenDatasetsList()
 {
     poAllDatasetMap = NULL;
@@ -2489,7 +2475,7 @@ CPLErr GDALDataset::CreateMaskBand( int nFlagsIn )
         if (eErr != CE_None)
             return eErr;
 
-        /* Invalidate existing raster band masks */
+        // Invalidate existing raster band masks.
         for( int i = 0; i < nBands; ++i )
         {
             GDALRasterBand* poBand = papoBands[i];
@@ -2710,7 +2696,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
         }
     }
 
-    /* If no driver kind is specified, assume all are to be probed */
+    // If no driver kind is specified, assume all are to be probed.
     if( (nOpenFlags & GDAL_OF_KIND_MASK) == 0 )
         nOpenFlags |= GDAL_OF_KIND_MASK;
 
@@ -2722,14 +2708,14 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
     VSIErrorReset();
     CPLAssert( NULL != poDM );
 
-    /* Build GDALOpenInfo just now to avoid useless file stat'ing if a */
-    /* shared dataset was asked before */
+    // Build GDALOpenInfo just now to avoid useless file stat'ing if a
+    // shared dataset was asked before.
     GDALOpenInfo oOpenInfo(pszFilename,
                            nOpenFlags,
                            (char**) papszSiblingFiles);
     oOpenInfo.papszAllowedDrivers = papszAllowedDrivers;
 
-    // Prevent infinite recursion
+    // Prevent infinite recursion.
     {
         int* pnRecCount = (int*)CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP );
         if( pnRecCount == NULL )
@@ -2747,7 +2733,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
         (*pnRecCount) ++;
     }
 
-    // Remove leading @ if present
+    // Remove leading @ if present.
     char** papszOpenOptionsCleaned = CSLDuplicate((char**)papszOpenOptions);
     for(char** papszIter = papszOpenOptionsCleaned;
                                         papszIter && *papszIter; ++papszIter)
@@ -2783,8 +2769,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == NULL )
             continue;
 
-        /* Remove general OVERVIEW_LEVEL open options from list before */
-        /* passing it to the driver, if it isn't a driver specific option already */
+        // Remove general OVERVIEW_LEVEL open options from list before passing
+        // it to the driver, if it isn't a driver specific option already.
         char** papszTmpOpenOptions = NULL;
         char** papszTmpOpenOptionsToValidate = NULL;
         char** papszOptionsToValidate = (char**) papszOpenOptions;
@@ -2880,8 +2866,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
                 }
             }
 
-            /* Deal with generic OVERVIEW_LEVEL open option, unless it is */
-            /* driver specific */
+            // Deal with generic OVERVIEW_LEVEL open option, unless it is
+            // driver specific.
             if( CSLFetchNameValue((char**) papszOpenOptions, "OVERVIEW_LEVEL") != NULL &&
                 (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) == NULL ||
                 CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST)).ifind("OVERVIEW_LEVEL") == std::string::npos) )
@@ -3083,8 +3069,8 @@ static int GDALDumpOpenDatasetsForeach(GDALDataset* poDS, FILE *fp)
 {
     const char *pszDriverName;
 
-    /* Don't list shared datasets. They have already been listed by */
-    /* GDALDumpOpenSharedDatasetsForeach */
+    // Don't list shared datasets. They have already been listed by
+    // GDALDumpOpenSharedDatasetsForeach.
     if (poDS->GetShared())
         return TRUE;
 
@@ -4277,8 +4263,8 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     for( int iField=0; iField < nSrcFieldCount; ++iField )
         panMap[iField] = -1;
 
-    /* Caution : at the time of writing, the MapInfo driver */
-    /* returns NULL until a field has been added */
+    // Caution: At the time of writing, the MapInfo driver
+    // returns NULL until a field has been added.
     OGRFeatureDefn* poDstFDefn = poDstLayer->GetLayerDefn();
     if (poDstFDefn)
         nDstFieldCount = poDstFDefn->GetFieldCount();
@@ -4287,7 +4273,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         OGRFieldDefn* poSrcFieldDefn = poSrcDefn->GetFieldDefn(iField);
         OGRFieldDefn oFieldDefn( poSrcFieldDefn );
 
-        /* The field may have been already created at layer creation */
+        // The field may have been already created at layer creation.
         int iDstField = -1;
         if (poDstFDefn)
             iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
@@ -4297,11 +4283,11 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         }
         else if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
         {
-            /* now that we've created a field, GetLayerDefn() won't return NULL */
+            // Now that we've created a field, GetLayerDefn() won't return NULL.
             if (poDstFDefn == NULL)
                 poDstFDefn = poDstLayer->GetLayerDefn();
 
-            /* Sanity check : if it fails, the driver is buggy */
+            // Sanity check: if it fails, the driver is buggy.
             if (poDstFDefn != NULL &&
                 poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
             {
@@ -4332,7 +4318,6 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
             return NULL;
         }
     }
-/*      Create geometry fields.                                         */
 /* -------------------------------------------------------------------- */
 /*      Create geometry fields.                                         */
 /* -------------------------------------------------------------------- */
@@ -4441,7 +4426,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     else
     {
       bool bStopTransfer = false;
-      int nFeatCount = 0; // Number of features in the temporary array
+      int nFeatCount = 0;  // Number of features in the temporary array.
       OGRFeature **papoDstFeature =
           (OGRFeature **)VSI_CALLOC_VERBOSE(sizeof(OGRFeature *), nGroupTransactions);
       if( papoDstFeature == NULL )
@@ -4572,10 +4557,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 
 */
 
-/**/
-/**/
-
-OGRErr GDALDataset::DeleteLayer( int /*iLayer*/ )
+OGRErr GDALDataset::DeleteLayer( CPL_UNUSED int iLayer )
 
 {
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -4613,7 +4595,7 @@ OGRLayer *GDALDataset::GetLayerByName( const char *pszName )
     if ( ! pszName )
         return NULL;
 
-    /* first a case sensitive check */
+    // First a case sensitive check.
     for( int i = 0; i < GetLayerCount(); ++i )
     {
         OGRLayer *poLayer = GetLayer(i);
@@ -4622,7 +4604,7 @@ OGRLayer *GDALDataset::GetLayerByName( const char *pszName )
             return poLayer;
     }
 
-    /* then case insensitive */
+    // Then case insensitive.
     for( int i = 0; i < GetLayerCount(); ++i )
     {
         OGRLayer *poLayer = GetLayer(i);
@@ -4999,7 +4981,7 @@ static OGRFieldType GDALDatasetParseSQLType(char* pszType, int& nWidth, int &nPr
 /*      The correct syntax for adding a column in the OGR SQL           */
 /*      dialect is:                                                     */
 /*                                                                      */
-/*          ALTER TABLE <layername> ADD [COLUMN] <columnname> <columntype>*/
+/*       ALTER TABLE <layername> ADD [COLUMN] <columnname> <columntype> */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -5574,12 +5556,12 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
                                                      poSelectParseOptions);
         if( poLayer == NULL )
         {
-            /* Each source layer owns an independent select info. */
+            // Each source layer owns an independent select info.
             for( int i = 0; i < nSrcLayers; ++i )
                 delete papoSrcLayers[i];
             CPLFree(papoSrcLayers);
 
-            /* So we just have to destroy the remaining select info */
+            // So we just have to destroy the remaining select info.
             delete psNextSelectInfo;
 
             return NULL;
@@ -5654,10 +5636,10 @@ void GDALDataset::DestroyParseInfo(GDALSQLParseInfo* psParseInfo )
         CPLFree( psParseInfo->sFieldList.table_ids );
         CPLFree( psParseInfo->sFieldList.ids );
 
-        /* Release the datasets we have opened with OGROpenShared() */
-        /* It is safe to do that as the 'new OGRGenSQLResultsLayer' itself */
-        /* has taken a reference on them, which it will release in its */
-        /* destructor */
+        // Release the datasets we have opened with OGROpenShared()
+        // It is safe to do that as the 'new OGRGenSQLResultsLayer' itself
+        // has taken a reference on them, which it will release in its
+        // destructor.
         for( int iEDS = 0; iEDS < psParseInfo->nExtraDSCount; ++iEDS )
             GDALClose( (GDALDatasetH)psParseInfo->papoExtraDS[iEDS] );
         CPLFree(psParseInfo->papoExtraDS);
@@ -5707,7 +5689,7 @@ GDALSQLParseInfo* GDALDataset::BuildParseInfo(swq_select* psSelectInfo,
                 return NULL;
             }
 
-            /* Keep in an array to release at the end of this function */
+            // Keep in an array to release at the end of this function.
             psParseInfo->papoExtraDS = (GDALDataset** )CPLRealloc(
                                psParseInfo->papoExtraDS,
                                sizeof(GDALDataset*) * (psParseInfo->nExtraDSCount + 1));
@@ -6026,10 +6008,7 @@ int GDALDataset::GetLayerCount()
  @return the layer, or NULL if iLayer is out of range or an error occurs.
 */
 
-/**/
-/**/
-
-OGRLayer* GDALDataset::GetLayer( int /*iLayer*/ )
+OGRLayer* GDALDataset::GetLayer( CPL_UNUSED int iLayer )
 {
     return NULL;
 }
@@ -6360,10 +6339,7 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature( GDALDatasetH hDS,
  @return TRUE if capability available otherwise FALSE.
 */
 
-/**/
-/**/
-
-int GDALDataset::TestCapability( const char * )
+int GDALDataset::TestCapability( CPL_UNUSED const char *pszCap )
 {
     return FALSE;
 }
@@ -6462,10 +6438,7 @@ int GDALDatasetTestCapability( GDALDatasetH hDS, const char *pszCap )
  @since GDAL 2.0
 */
 
-/**/
-/**/
-
-OGRErr GDALDataset::StartTransaction( int /* bForce */ )
+OGRErr GDALDataset::StartTransaction( CPL_UNUSED int bForce )
 {
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -6647,7 +6620,7 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
         {
             // In case dead-lock would occur, which is not impossible,
             // this can be used to prevent it, but at the risk of other
-            // issues
+            // issues.
             if( CPLTestBool(CPLGetConfigOption( "GDAL_ENABLE_READ_WRITE_MUTEX",
                                                 "YES") ) )
             {
@@ -6663,13 +6636,14 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
         {
             // There should be no race related to creating this mutex since
             // it should be first created through IWriteBlock() / IRasterIO()
-            // and then GDALRasterBlock might call it from another thread
+            // and then GDALRasterBlock might call it from another thread.
 #ifdef DEBUG_VERBOSE
             CPLDebug("GDAL", "[Thread " CPL_FRMT_GIB "] Acquiring RW mutex for %s",
                      CPLGetPID(), GetDescription());
 #endif
             CPLCreateOrAcquireMutex( &(psPrivate->hMutex), 1000.0 );
-            psPrivate->oMapThreadToMutexTakenCount[ CPLGetPID() ] ++; /* not sure if we can have recursive calls, so ...*/
+            // Not sure if we can have recursive calls, so...
+            psPrivate->oMapThreadToMutexTakenCount[ CPLGetPID() ] ++;
             return TRUE;
         }
     }
@@ -6715,10 +6689,10 @@ void GDALDataset::InitRWLock()
 /*                       DisableReadWriteMutex()                        */
 /************************************************************************/
 
-/* The mutex logic is broken in multi-threaded situations, for example */
-/* with 2 WarpedVRT datasets being read at the same time. In that */
-/* particular case, the mutex is not needed, so allow the VRTWarpedDataset code */
-/* to disable it. */
+// The mutex logic is broken in multi-threaded situations, for example
+// with 2 WarpedVRT datasets being read at the same time. In that
+// particular case, the mutex is not needed, so allow the VRTWarpedDataset code
+// to disable it.
 void GDALDataset::DisableReadWriteMutex()
 {
     GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
