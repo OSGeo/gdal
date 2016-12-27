@@ -1005,14 +1005,14 @@ CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform
  *
  * This method does the same thing as the C GDALSetGeoTransform() function.
  *
- * @param padfGeoTransform a six double buffer containing the transformation
+ * @param padfTransform a six double buffer containing the transformation
  * coefficients to be written with the dataset.
  *
  * @return CE_None on success, or CE_Failure if this transform cannot be
  * written.
  */
 
-CPLErr GDALDataset::SetGeoTransform( CPL_UNUSED double *padfGeoTransform )
+CPLErr GDALDataset::SetGeoTransform( CPL_UNUSED double *padfTransform )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
