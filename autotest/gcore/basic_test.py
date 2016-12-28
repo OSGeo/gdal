@@ -41,7 +41,7 @@ from osgeo import gdal
 # or empty names, or files that are not valid datasets...
 
 def matches_non_existing_error_msg(msg):
-    m1 = "does not exist in the file system,\nand is not recognized as a supported dataset name.\n" in msg
+    m1 = "does not exist in the file system, and is not recognized as a supported dataset name." in msg
     m2 = 'No such file or directory' in msg
     return m1 or m2
 
