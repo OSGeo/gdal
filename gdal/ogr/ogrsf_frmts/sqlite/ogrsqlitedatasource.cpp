@@ -321,8 +321,23 @@ OGRSQLiteDataSource::OGRSQLiteDataSource() :
     bSpatialite4Layout(FALSE),
     nUndefinedSRID(-1),  // Will be set to 0 if Spatialite >= 4.0 detected.
     nFileTimestamp(0),
-    bLastSQLCommandIsUpdateLayerStatistics(FALSE)
-{}
+    bLastSQLCommandIsUpdateLayerStatistics(FALSE),
+#ifdef HAVE_RASTERLITE2
+    m_nSectionId(-1),
+    m_pRL2Coverage(NULL),
+    m_bRL2MixedResolutions(false),
+#endif
+    m_bGeoTransformValid(false),
+    m_bPromote1BitAs8Bit(false),
+    m_poParentDS(NULL)
+{
+    m_adfGeoTransform[0] = 0.0;
+    m_adfGeoTransform[1] = 1.0;
+    m_adfGeoTransform[2] = 0.0;
+    m_adfGeoTransform[3] = 0.0;
+    m_adfGeoTransform[4] = 0.0;
+    m_adfGeoTransform[5] = 1.0;
+}
 
 /************************************************************************/
 /*                        ~OGRSQLiteDataSource()                        */
@@ -331,6 +346,17 @@ OGRSQLiteDataSource::OGRSQLiteDataSource() :
 OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
 {
+#ifdef HAVE_RASTERLITE2
+    if( m_pRL2Coverage != NULL )
+    {
+        rl2_destroy_coverage( m_pRL2Coverage );
+    }
+#endif
+    for( size_t i=0; i < m_apoOverviewDS.size(); ++i )
+    {
+        delete m_apoOverviewDS[i];
+    }
+
     if( nLayers > 0 || !apoInvisibleLayers.empty() )
     {
         // Close any remaining iterator
@@ -974,7 +1000,7 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
             return FALSE;
     }
 
-    return Open(m_pszFilename, TRUE, NULL);
+    return Open(m_pszFilename, TRUE, NULL, GDAL_OF_VECTOR);
 }
 
 /************************************************************************/
@@ -1201,7 +1227,7 @@ void OGRSQLiteDataSource::ReloadLayers()
     papoLayers = NULL;
     nLayers = 0;
 
-    Open(m_pszFilename, bUpdate, NULL);
+    Open(m_pszFilename, bUpdate, NULL, GDAL_OF_VECTOR);
 }
 
 /************************************************************************/
@@ -1209,15 +1235,37 @@ void OGRSQLiteDataSource::ReloadLayers()
 /************************************************************************/
 
 int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
-                               char** papszOpenOptionsIn)
+                               char** papszOpenOptionsIn, int nOpenFlagsIn)
 
 {
     CPLAssert( nLayers == 0 );
+    bUpdate = bUpdateIn;
+    nOpenFlags = nOpenFlagsIn;
+    SetDescription(pszNewName);
 
     if (m_pszFilename == NULL)
-        m_pszFilename = CPLStrdup( pszNewName );
-    SetDescription(m_pszFilename);
-    bUpdate = bUpdateIn;
+    {
+#ifdef HAVE_RASTERLITE2
+        if( STARTS_WITH_CI(pszNewName, "RASTERLITE2:") &&
+            (nOpenFlags & GDAL_OF_RASTER) != 0 )
+        {
+            char** papszTokens =
+                CSLTokenizeString2( pszNewName, ":", CSLT_HONOURSTRINGS );
+            if( CSLCount(papszTokens) < 2 )
+            {
+                CSLDestroy(papszTokens);
+                return FALSE;
+            }
+            m_pszFilename = CPLStrdup( OGRSQLiteParamsUnquote( papszTokens[1] ) );
+            CSLDestroy(papszTokens);
+        }
+        else
+#endif
+        {
+            m_pszFilename = CPLStrdup( pszNewName );
+        }
+    }
+    SetPhysicalFilename(m_pszFilename);
 
     VSIStatBufL sStat;
     if( VSIStatL( m_pszFilename, &sStat ) == 0 )
@@ -1231,16 +1279,20 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         papszOpenOptions = CSLDuplicate(papszOpenOptionsIn);
     }
 
-    int bListAllTables = CPLTestBool(CSLFetchNameValueDef(
-        papszOpenOptions, "LIST_ALL_TABLES",
-        CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "NO")));
+    bool bListVectorLayers = (nOpenFlags & GDAL_OF_VECTOR) != 0;
+
+    bool bListAllTables = bListVectorLayers &&
+        CPLTestBool(CSLFetchNameValueDef(
+            papszOpenOptions, "LIST_ALL_TABLES",
+            CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "NO")));
 
     // Don't list by default: there might be some security implications
     // if a user is provided with a file and doesn't know that there are
     // virtual OGR tables in it.
-    int bListVirtualOGRLayers = CPLTestBool(CSLFetchNameValueDef(
-        papszOpenOptions, "LIST_VIRTUAL_OGR",
-        CPLGetConfigOption("OGR_SQLITE_LIST_VIRTUAL_OGR", "NO")));
+    bool bListVirtualOGRLayers = bListVectorLayers &&
+        CPLTestBool(CSLFetchNameValueDef(
+            papszOpenOptions, "LIST_VIRTUAL_OGR",
+            CPLGetConfigOption("OGR_SQLITE_LIST_VIRTUAL_OGR", "NO")));
 
 /* -------------------------------------------------------------------- */
 /*      Try to open the sqlite database properly now.                   */
@@ -1258,6 +1310,14 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         InitNewSpatialite();
 #endif
     }
+
+#ifdef HAVE_RASTERLITE2
+    if( STARTS_WITH_CI(pszNewName, "RASTERLITE2:") &&
+        (nOpenFlags & GDAL_OF_RASTER) != 0 )
+    {
+        return OpenRasterSubDataset( pszNewName );
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      If we have a GEOMETRY_COLUMNS tables, initialize on the basis   */
@@ -1282,7 +1342,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
 
         bHaveGeometryColumns = TRUE;
 
-        for ( int iRow = 0; iRow < nRowCount; iRow++ )
+        for ( int iRow = 0; bListVectorLayers && iRow < nRowCount; iRow++ )
         {
             char **papszRow = papszResult + iRow * 6 + 6;
             const char* pszTableName = papszRow[0];
@@ -1294,7 +1354,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
             aoMapTableToSetOfGeomCols[pszTableName].insert(CPLString(pszGeomCol).tolower());
         }
 
-        for( int iRow = 0; iRow < nRowCount; iRow++ )
+        for( int iRow = 0; bListVectorLayers && iRow < nRowCount; iRow++ )
         {
             char **papszRow = papszResult + iRow * 6 + 6;
             const char* pszTableName = papszRow[0];
@@ -1355,6 +1415,13 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
             goto all_tables;
 
         CPLHashSetDestroy(hSet);
+
+        if( nOpenFlags & GDAL_OF_RASTER )
+        {
+            bool bRet = OpenRaster();
+            if( !bRet && !(nOpenFlags & GDAL_OF_VECTOR))
+                return FALSE;
+        }
 
         return TRUE;
     }
@@ -1423,7 +1490,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
                      (bSpatialite4Layout) ? " v4" : "");
         }
 
-        for ( int iRow = 0; iRow < nRowCount; iRow++ )
+        for ( int iRow = 0; bListVectorLayers && iRow < nRowCount; iRow++ )
         {
             char **papszRow = papszResult + iRow * 6 + 6;
             const char* pszTableName = papszRow[0];
@@ -1435,7 +1502,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
             aoMapTableToSetOfGeomCols[pszTableName].insert(CPLString(pszGeomCol).tolower());
         }
 
-        for ( int iRow = 0; iRow < nRowCount; iRow++ )
+        for ( int iRow = 0; bListVectorLayers && iRow < nRowCount; iRow++ )
         {
             char **papszRow = papszResult + iRow * 6 + 6;
             const char* pszTableName = papszRow[0];
@@ -1462,7 +1529,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
 
         if ( rc == SQLITE_OK )
         {
-            for( int iRow = 0; iRow < nRowCount; iRow++ )
+            for( int iRow = 0; bListVectorLayers && iRow < nRowCount; iRow++ )
             {
                 char **papszRow = papszResult + iRow * 2 + 2;
                 const char *pszName = papszRow[0];
@@ -1502,7 +1569,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
                                 &nColCount, NULL );
         if ( rc == SQLITE_OK )
         {
-            for( int iRow = 0; iRow < nRowCount; iRow++ )
+            for( int iRow = 0; bListVectorLayers && iRow < nRowCount; iRow++ )
             {
                 char **papszRow = papszResult + iRow * 5 + 5;
                 const char* pszViewName = papszRow[0];
@@ -1531,6 +1598,13 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
             goto all_tables;
 
         CPLHashSetDestroy(hSet);
+
+        if( nOpenFlags & GDAL_OF_RASTER )
+        {
+            bool bRet = OpenRaster();
+            if( !bRet && !(nOpenFlags & GDAL_OF_VECTOR))
+                return FALSE;
+        }
 
         return TRUE;
     }
@@ -1571,6 +1645,13 @@ all_tables:
 
     sqlite3_free_table(papszResult);
     CPLHashSetDestroy(hSet);
+
+    if( nOpenFlags & GDAL_OF_RASTER )
+    {
+        bool bRet = OpenRaster();
+        if( !bRet && !(nOpenFlags & GDAL_OF_VECTOR))
+            return FALSE;
+    }
 
     return TRUE;
 }

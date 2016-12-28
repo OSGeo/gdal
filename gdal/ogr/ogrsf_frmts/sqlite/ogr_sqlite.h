@@ -61,6 +61,8 @@
 #include "sqlite3.h"
 #endif
 
+#include "rasterlite2_header.h"
+
 #if SQLITE_VERSION_NUMBER >= 3006000
 #define HAVE_SQLITE_VFS
 #define HAVE_SQLITE3_PREPARE_V2
@@ -778,11 +780,33 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
 
     std::vector<OGRLayer*> apoInvisibleLayers;
 
+#ifdef HAVE_RASTERLITE2
+    CPLString           m_osCoverageName;
+    GIntBig             m_nSectionId;
+    rl2CoveragePtr      m_pRL2Coverage;
+    bool                m_bRL2MixedResolutions;
+#endif
+    CPLStringList       m_aosSubDatasets;
+    bool                m_bGeoTransformValid;
+    double              m_adfGeoTransform[6];
+    CPLString           m_osProjection;
+    bool                m_bPromote1BitAs8Bit;
+    bool                OpenRaster();
+    bool                OpenRasterSubDataset(const char* pszConnectionId);
+    OGRSQLiteDataSource* m_poParentDS;
+    std::vector<OGRSQLiteDataSource*> m_apoOverviewDS;
+
+#ifdef HAVE_RASTERLITE2
+    void                CreateRL2OverviewDatasetIfNeeded(double dfXRes,
+                                                      double dfYRes);
+#endif
+
   public:
                         OGRSQLiteDataSource();
                         virtual ~OGRSQLiteDataSource();
 
-    int                 Open( const char *, int bUpdateIn, char** papszOpenOptions );
+    int                 Open( const char *, int bUpdateIn,
+                              char** papszOpenOptions, int nOpenFlags );
     int                 Create( const char *, char **papszOptions );
 
     int                 OpenTable( const char *pszTableName,
@@ -817,6 +841,11 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
     virtual OGRErr      CommitTransaction() override;
     virtual OGRErr      RollbackTransaction() override;
 
+    virtual char**      GetMetadata(const char* pszDomain = "") override;
+
+    virtual CPLErr      GetGeoTransform( double* padfGeoTransform ) override;
+    virtual const char* GetProjectionRef() override;
+
     char               *LaunderName( const char * );
     int                 FetchSRSId( OGRSpatialReference * poSRS );
     OGRSpatialReference*FetchSRS( int nSRID );
@@ -840,7 +869,56 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
     int                 HasGeometryColumns() const { return bHaveGeometryColumns; }
 
     void                ReloadLayers();
+
+#ifdef HAVE_RASTERLITE2
+    rl2CoveragePtr      GetRL2CoveragePtr() const { return m_pRL2Coverage; }
+    GIntBig             GetSectionId() const { return m_nSectionId; }
+    const double*       GetGeoTransform() const { return m_adfGeoTransform; }
+    bool                IsRL2MixedResolutions() const { return m_bRL2MixedResolutions; }
+#endif
+    OGRSQLiteDataSource* GetParentDS() const { return m_poParentDS; }
+    const std::vector<OGRSQLiteDataSource*>& GetOverviews() const { return m_apoOverviewDS; }
+    bool                 HasPromote1BitAS8Bit() const { return m_bPromote1BitAs8Bit; }
 };
+
+#ifdef HAVE_RASTERLITE2
+/************************************************************************/
+/*                           RL2RasterBand                              */
+/************************************************************************/
+
+class RL2RasterBand CPL_FINAL: public GDALPamRasterBand
+{
+    bool            m_bHasNoData;
+    double          m_dfNoDataValue;
+    GDALColorInterp m_eColorInterp;
+    GDALColorTable* m_poCT;
+
+    public:
+                            RL2RasterBand( int nBandIn,
+                                           int nPixelType,
+                                           GDALDataType eDT,
+                                           int nBits,
+                                           bool bPromote1BitAs8Bit,
+                                           bool bSigned,
+                                           int nBlockXSizeIn,
+                                           int nBlockYSizeIn,
+                                           bool bHasNoDataIn,
+                                           double dfNoDataValueIn );
+                            RL2RasterBand( const RL2RasterBand* poOther );
+
+        virtual            ~RL2RasterBand();
+
+    protected:
+
+        virtual CPLErr      IReadBlock( int, int, void* ) override;
+        virtual GDALColorInterp GetColorInterpretation() override
+                                                    { return m_eColorInterp; }
+        virtual double      GetNoDataValue( int* pbSuccess = NULL ) override;
+        virtual GDALColorTable* GetColorTable() override;
+        virtual int         GetOverviewCount() override;
+        virtual GDALRasterBand* GetOverview(int) override;
+};
+#endif // HAVE_RASTERLITE2
 
 #endif /* DO_NOT_INCLUDE_SQLITE_CLASSES */
 

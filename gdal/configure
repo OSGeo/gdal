@@ -696,6 +696,8 @@ HAVE_IDB
 DWGDIRECT
 DWG_PLT
 HAVE_PCRE
+RASTERLITE2_CFLAGS
+HAVE_RASTERLITE2
 SQLITE_HAS_COLUMN_METADATA
 HAVE_SQLITE
 SQLITE_INC
@@ -1014,6 +1016,7 @@ with_xml2
 with_spatialite
 with_spatialite_soname
 with_sqlite3
+with_rasterlite2
 with_pcre
 with_dwgdirect
 with_idb
@@ -1794,6 +1797,7 @@ Optional Packages:
   --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatiliate=dlopen
   --with-sqlite3=[ARG]    use SQLite 3 library [default=yes], optionally
                           specify the prefix for sqlite3 library
+  --with-rasterlite2=ARG Include RasterLite2 support (ARG=no(default), yes or path)
   --with-pcre             Include libpcre support (REGEXP support for SQLite)
   --with-dwgdirect=path Include DWG direct support
   --with-dwg-plt=platform DWGdirect Platform, defaults to lnxX86
@@ -29617,6 +29621,148 @@ SQLITE_HAS_COLUMN_METADATA=$SQLITE_HAS_COLUMN_METADATA
 HAVE_SQLITE=$HAVE_SQLITE3
 
 
+
+# Check whether --with-rasterlite2 was given.
+if test "${with_rasterlite2+set}" = set; then :
+  withval=$with_rasterlite2;
+fi
+
+
+HAVE_RASTERLITE2=no
+RASTERLITE2_CFLAGS=
+
+if test -z "$with_rasterlite2" -o "$with_rasterlite2" = "no"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: rasterlite2 support disabled" >&5
+$as_echo "$as_me: rasterlite2 support disabled" >&6;}
+elif test "$with_rasterlite2" = "yes"; then
+    for ac_header in rasterlite2/rasterlite2.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "rasterlite2/rasterlite2.h" "ac_cv_header_rasterlite2_rasterlite2_h" "$ac_includes_default"
+if test "x$ac_cv_header_rasterlite2_rasterlite2_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_RASTERLITE2_RASTERLITE2_H 1
+_ACEOF
+
+fi
+
+done
+
+    if test "$ac_cv_header_rasterlite2_rasterlite2_h" = "yes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl2_version in -lrasterlite2" >&5
+$as_echo_n "checking for rl2_version in -lrasterlite2... " >&6; }
+if ${ac_cv_lib_rasterlite2_rl2_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrasterlite2  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char rl2_version ();
+int
+main ()
+{
+return rl2_version ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_rasterlite2_rl2_version=yes
+else
+  ac_cv_lib_rasterlite2_rl2_version=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rasterlite2_rl2_version" >&5
+$as_echo "$ac_cv_lib_rasterlite2_rl2_version" >&6; }
+if test "x$ac_cv_lib_rasterlite2_rl2_version" = xyes; then :
+  HAVE_RASTERLITE2=yes
+else
+  HAVE_RASTERLITE2=no
+fi
+
+        if test "$HAVE_RASTERLITE2" = "yes"; then
+            LIBS="$LIBS -lrasterlite2 -lsqlite3"
+        else
+            as_fn_error $? "did not find rl2_version" "$LINENO" 5
+        fi
+    else
+        as_fn_error $? "did not find rasterlite2.h" "$LINENO" 5
+    fi
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for include/rasterlite2/rasterlite2.h" >&5
+$as_echo_n "checking for include/rasterlite2/rasterlite2.h... " >&6; }
+    if test -f "$with_rasterlite2/include/rasterlite2/rasterlite2.h"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+$as_echo "found" >&6; }
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl2_version in -lrasterlite2" >&5
+$as_echo_n "checking for rl2_version in -lrasterlite2... " >&6; }
+if ${ac_cv_lib_rasterlite2_rl2_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrasterlite2 -L$with_rasterlite2/lib $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char rl2_version ();
+int
+main ()
+{
+return rl2_version ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_rasterlite2_rl2_version=yes
+else
+  ac_cv_lib_rasterlite2_rl2_version=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rasterlite2_rl2_version" >&5
+$as_echo "$ac_cv_lib_rasterlite2_rl2_version" >&6; }
+if test "x$ac_cv_lib_rasterlite2_rl2_version" = xyes; then :
+  HAVE_RASTERLITE2=yes
+else
+  HAVE_RASTERLITE2=no
+fi
+
+        if test "$HAVE_RASTERLITE2" = "yes"; then
+            RASTERLITE2_CFLAGS="-I$with_rasterlite2/include"
+            LIBS="$LIBS -L$with_rasterlite2/lib -lrasterlite2 -lsqlite3"
+        else
+            as_fn_error $? "did not find rl2_version" "$LINENO" 5
+        fi
+    else
+        as_fn_error $? "did not find rasterlite2.h" "$LINENO" 5
+    fi
+fi
+
+HAVE_RASTERLITE2=$HAVE_RASTERLITE2
+
+RASTERLITE2_CFLAGS=$RASTERLITE2_CFLAGS
+
+
+
 HAVE_PCRE=no
 
 
@@ -36337,6 +36483,9 @@ if test "x$SPATIALITE_SONAME" != "x"; then
 echo "  SpatiaLite shared obj name:${SPATIALITE_SONAME}"
 
 fi
+
+echo "  RasterLite2 support:       ${HAVE_RASTERLITE2}"
+
 
 echo "  DWGdirect support          ${HAVE_DWGDIRECT}"
 
