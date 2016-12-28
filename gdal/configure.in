@@ -3612,6 +3612,50 @@ AC_SUBST([SQLITE_HAS_COLUMN_METADATA], $SQLITE_HAS_COLUMN_METADATA)
 HAVE_SQLITE=$HAVE_SQLITE3
 
 dnl ---------------------------------------------------------------------------
+dnl Check for librasterlite2.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(rasterlite2,
+    [  --with-rasterlite2=ARG Include RasterLite2 support (ARG=no(default), yes or path)],
+    ,,)
+
+HAVE_RASTERLITE2=no
+RASTERLITE2_CFLAGS=
+
+if test -z "$with_rasterlite2" -o "$with_rasterlite2" = "no"; then
+    AC_MSG_NOTICE([rasterlite2 support disabled])
+elif test "$with_rasterlite2" = "yes"; then
+    AC_CHECK_HEADERS(rasterlite2/rasterlite2.h)
+    if test "$ac_cv_header_rasterlite2_rasterlite2_h" = "yes"; then
+        AC_CHECK_LIB(rasterlite2,rl2_version,HAVE_RASTERLITE2=yes,HAVE_RASTERLITE2=no,)
+        if test "$HAVE_RASTERLITE2" = "yes"; then
+            LIBS="$LIBS -lrasterlite2 -lsqlite3"
+        else
+            AC_MSG_ERROR([did not find rl2_version])
+        fi
+    else
+        AC_MSG_ERROR([did not find rasterlite2.h])
+    fi
+else
+    AC_MSG_CHECKING([for include/rasterlite2/rasterlite2.h])
+    if test -f "$with_rasterlite2/include/rasterlite2/rasterlite2.h"; then
+        AC_MSG_RESULT([found])
+        AC_CHECK_LIB(rasterlite2,rl2_version,HAVE_RASTERLITE2=yes,HAVE_RASTERLITE2=no,-L$with_rasterlite2/lib)
+        if test "$HAVE_RASTERLITE2" = "yes"; then
+            RASTERLITE2_CFLAGS="-I$with_rasterlite2/include"
+            LIBS="$LIBS -L$with_rasterlite2/lib -lrasterlite2 -lsqlite3"
+        else
+            AC_MSG_ERROR([did not find rl2_version])
+        fi
+    else
+        AC_MSG_ERROR([did not find rasterlite2.h])
+    fi
+fi
+
+AC_SUBST([HAVE_RASTERLITE2], $HAVE_RASTERLITE2)
+AC_SUBST([RASTERLITE2_CFLAGS], $RASTERLITE2_CFLAGS)
+
+dnl ---------------------------------------------------------------------------
 dnl Check for PCRE.
 dnl ---------------------------------------------------------------------------
 
@@ -5400,6 +5444,7 @@ LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])
 if test "x$SPATIALITE_SONAME" != "x"; then
 LOC_MSG([  SpatiaLite shared obj name:${SPATIALITE_SONAME}])
 fi
+LOC_MSG([  RasterLite2 support:       ${HAVE_RASTERLITE2}])
 LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])

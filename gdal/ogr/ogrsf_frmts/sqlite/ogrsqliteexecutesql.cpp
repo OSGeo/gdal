@@ -798,7 +798,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 
         poSQLiteDS = new OGRSQLiteDataSource();
         CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO");
-        const int nRet = poSQLiteDS->Open( pszTmpDBName, TRUE, NULL );
+        const int nRet = poSQLiteDS->Open( pszTmpDBName, TRUE, NULL, GDAL_OF_VECTOR );
         CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", pszOldVal);
         if( !nRet )
         {

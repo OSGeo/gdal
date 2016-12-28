@@ -1,0 +1,49 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>RasterLite2 - Rasters in SQLite DB</title>
+</head>
+
+<body>
+
+<h1>RasterLite2 - Rasters in SQLite DB</h1>
+
+<p>Starting with GDAL 2.2, the SQLite driver allows reading SQLite databases
+containing RasterLite2 coverages.</p>
+<p>
+  Those databases can be produced by the utilities of the
+  <a href="https://www.gaia-gis.it/fossil/libRasterLite2/home">RasterLite2</a> distribution,
+  such as rl2tools.<br>
+  The driver supports reading grayscale, paletted, RGB, multispectral images stored as tiles in the many compressed formats supported by libRasterLite2.
+  The driver also supports reading overviews/pyramids, spatial reference system and spatial extent.
+</p>
+
+<p>GDAL/OGR must be compiled with sqlite support and against librasterlite2 and libspatialite.</p>
+
+<p>The driver is implemented a unified SQLite / SpatiaLite / RasterLite2
+vector and raster capable driver./p>
+
+<h2>Opening syntax</h2>
+
+<p>A RasterLite2 filename can be specified as the connection string. If the
+file contains a single RasterLite2 coverage, this one will be exposed as the
+GDAL dataset. If the file contains multiple coverages, each one will be exposed
+as a subdataset with the syntax RASTERLITE2:filename:coverage_name. See
+<a href="https://www.gaia-gis.it/fossil/librasterlite2/wiki?name=basic_concepts">the
+basic concepts of RasterLite2</a>.</p>
+
+<p>If a coverage is made of several sections, they will be listed as subdatasets
+of the coverage dataset, so as to be accessed individually. By default, they
+will be exposed as a unified dataset. The syntax of section-based dataset is
+RASTERLITE2:filename:coverage_name:section_id:section_name.</p>
+
+<p>See Also:</p>
+
+<ul>
+<li><a href="https://www.gaia-gis.it/fossil/libRasterLite2/home">Rasterlite2 home page</a></li>
+<li><a href="drv_sqlite.html">OGR SQLite driver</a></li>
+</ul>
+
+</body>
+</html>

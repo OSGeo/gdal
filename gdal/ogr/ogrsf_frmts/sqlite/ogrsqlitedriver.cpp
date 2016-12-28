@@ -53,6 +53,11 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
         return TRUE;
     }
 
+#ifdef HAVE_RASTERLITE2
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "RASTERLITE2:") )
+        return poOpenInfo->nOpenFlags & GDAL_OF_RASTER;
+#endif
+
     if( EQUAL(poOpenInfo->pszFilename, ":memory:") )
         return TRUE;
 
@@ -150,7 +155,7 @@ static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
     OGRSQLiteDataSource *poDS = new OGRSQLiteDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update,
-                     poOpenInfo->papszOpenOptions ) )
+                     poOpenInfo->papszOpenOptions, poOpenInfo->nOpenFlags ) )
     {
         delete poDS;
         return NULL;
@@ -227,7 +232,12 @@ void RegisterOGRSQLite()
 
     poDriver->SetDescription( "SQLite" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+#ifdef HAVE_RASTERLITE2
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SQLite / Spatialite / RasterLite2" );
+#else
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "SQLite / Spatialite" );
+#endif
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_sqlite.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "sqlite db" );
 
@@ -235,6 +245,7 @@ void RegisterOGRSQLite()
 "<OpenOptionList>"
 "  <Option name='LIST_ALL_TABLES' type='boolean' description='Whether all tables, including non-spatial ones, should be listed' default='NO'/>"
 "  <Option name='LIST_VIRTUAL_OGR' type='boolean' description='Whether VirtualOGR virtual tables should be listed. Should only be enabled on trusted datasources to avoid potential safety issues' default='NO'/>"
+"  <Option name='1BIT_AS_8BIT' type='boolean' description='Whether to promote 1-bit monochrome raster as 8-bit, so as to have higher quality overviews' default='YES'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
