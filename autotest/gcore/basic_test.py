@@ -89,7 +89,7 @@ def basic_test_5():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('data/doctype.xml', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`data/doctype.xml\' not recognized as a supported file format.\n':
+    if ds is None and gdal.GetLastErrorMsg() == '`data/doctype.xml\' not recognized as a supported file format.':
         return 'success'
     else:
         return 'fail'
