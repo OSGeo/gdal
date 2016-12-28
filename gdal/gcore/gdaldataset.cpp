@@ -158,15 +158,16 @@ static unsigned long GDALSharedDatasetHashFunc( const void *elt )
 {
     SharedDatasetCtxt *psStruct =
         static_cast<SharedDatasetCtxt *>(const_cast<void *>(elt));
-    return static_cast<unsigned long>( CPLHashSetHashStr( psStruct->pszDescription ) ^
-                            psStruct->eAccess ^ psStruct->nPID );
+    return static_cast<unsigned long>(
+        CPLHashSetHashStr(psStruct->pszDescription) ^ psStruct->eAccess ^
+        psStruct->nPID);
 }
 
 static int GDALSharedDatasetEqualFunc( const void* elt1, const void* elt2 )
 {
-    SharedDatasetCtxt* psStruct1 =
+    SharedDatasetCtxt *psStruct1 =
         static_cast<SharedDatasetCtxt *>(const_cast<void *>(elt1));
-    SharedDatasetCtxt* psStruct2 =
+    SharedDatasetCtxt *psStruct2 =
         static_cast<SharedDatasetCtxt *>(const_cast<void *>(elt2));
     return strcmp(psStruct1->pszDescription, psStruct2->pszDescription) == 0 &&
            psStruct1->nPID == psStruct2->nPID &&
@@ -175,7 +176,7 @@ static int GDALSharedDatasetEqualFunc( const void* elt1, const void* elt2 )
 
 static void GDALSharedDatasetFreeFunc( void* elt )
 {
-    SharedDatasetCtxt* psStruct = static_cast<SharedDatasetCtxt *>(elt);
+    SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(elt);
     CPLFree(psStruct->pszDescription);
     CPLFree(psStruct);
 }
@@ -185,19 +186,17 @@ static void GDALSharedDatasetFreeFunc( void* elt )
 /************************************************************************/
 
 // The open-shared mutex must be used by the ProxyPool too.
-CPLMutex** GDALGetphDLMutex()
-{
-    return &hDLMutex;
-}
+CPLMutex **GDALGetphDLMutex() { return &hDLMutex; }
 
 // The current thread will act in the behalf of the thread of PID
 // responsiblePID.
 void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID)
 {
-    GIntBig* pResponsiblePID = static_cast<GIntBig *>(CPLGetTLS(CTLS_RESPONSIBLEPID));
-    if (pResponsiblePID == NULL)
+    GIntBig *pResponsiblePID =
+        static_cast<GIntBig *>(CPLGetTLS(CTLS_RESPONSIBLEPID));
+    if(pResponsiblePID == NULL)
     {
-        pResponsiblePID = static_cast<GIntBig*>(CPLMalloc(sizeof(GIntBig)));
+        pResponsiblePID = static_cast<GIntBig *>(CPLMalloc(sizeof(GIntBig)));
         CPLSetTLS(CTLS_RESPONSIBLEPID, pResponsiblePID, TRUE);
     }
     *pResponsiblePID = responsiblePID;
@@ -207,8 +206,9 @@ void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID)
 // By default : the current thread acts in the behalf of itself.
 GIntBig GDALGetResponsiblePIDForCurrentThread()
 {
-    GIntBig* pResponsiblePID = static_cast<GIntBig*>(CPLGetTLS(CTLS_RESPONSIBLEPID));
-    if (pResponsiblePID == NULL)
+    GIntBig *pResponsiblePID =
+        static_cast<GIntBig *>(CPLGetTLS(CTLS_RESPONSIBLEPID));
+    if( pResponsiblePID == NULL )
         return CPLGetPID();
     return *pResponsiblePID;
 }
@@ -239,8 +239,7 @@ GIntBig GDALGetResponsiblePIDForCurrentThread()
 GDALDataset::GDALDataset()
 
 {
-    Init( CPLTestBool(
-        CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") ) );
+    Init(CPLTestBool(CPLGetConfigOption("GDAL_FORCE_CACHING", "NO")));
 }
 
 GDALDataset::GDALDataset(int bForceCachedIOIn)
@@ -270,7 +269,7 @@ void GDALDataset::Init(bool bForceCachedIOIn)
     bForceCachedIO = bForceCachedIOIn;
 
     m_poStyleTable = NULL;
-    m_hPrivateData = new (std::nothrow) GDALDatasetPrivate;
+    m_hPrivateData = new(std::nothrow) GDALDatasetPrivate;
 }
 //! @endcond
 
@@ -298,16 +297,15 @@ GDALDataset::~GDALDataset()
 {
     // we don't want to report destruction of datasets that
     // were never really open or meant as internal
-    if( !bIsInternal && ( nBands != 0 || !EQUAL(GetDescription(),"") ) )
+    if( !bIsInternal && (nBands != 0 || !EQUAL(GetDescription(), "")) )
     {
         if( CPLGetPID() != GDALGetResponsiblePIDForCurrentThread() )
-            CPLDebug( "GDAL",
-                      "GDALClose(%s, this=%p) (pid=%d, responsiblePID=%d)", GetDescription(), this,
-                      static_cast<int>(CPLGetPID()),
-                      static_cast<int>(GDALGetResponsiblePIDForCurrentThread()) );
+            CPLDebug("GDAL",
+                     "GDALClose(%s, this=%p) (pid=%d, responsiblePID=%d)",
+                     GetDescription(), this, static_cast<int>(CPLGetPID()),
+                     static_cast<int>(GDALGetResponsiblePIDForCurrentThread()));
         else
-            CPLDebug( "GDAL",
-                      "GDALClose(%s, this=%p)", GetDescription(), this );
+            CPLDebug("GDAL", "GDALClose(%s, this=%p)", GetDescription(), this);
     }
 
     if( bSuppressOnClose )
@@ -318,29 +316,32 @@ GDALDataset::~GDALDataset()
 /* -------------------------------------------------------------------- */
     if( !bIsInternal )
     {
-        CPLMutexHolderD( &hDLMutex );
+        CPLMutexHolderD(&hDLMutex);
         if( poAllDatasetMap )
         {
-            std::map<GDALDataset*, GIntBig>::iterator oIter = poAllDatasetMap->find(this);
+            std::map<GDALDataset *, GIntBig>::iterator oIter =
+                poAllDatasetMap->find(this);
             CPLAssert(oIter != poAllDatasetMap->end());
             GIntBig nPIDCreatorForShared = oIter->second;
             poAllDatasetMap->erase(oIter);
 
-            if (bShared && phSharedDatasetSet != NULL)
+            if( bShared && phSharedDatasetSet != NULL )
             {
                 SharedDatasetCtxt sStruct;
                 sStruct.nPID = nPIDCreatorForShared;
                 sStruct.eAccess = eAccess;
                 sStruct.pszDescription = const_cast<char *>(GetDescription());
-                SharedDatasetCtxt* psStruct = static_cast<SharedDatasetCtxt *>(
+                SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
                     CPLHashSetLookup(phSharedDatasetSet, &sStruct));
-                if (psStruct && psStruct->poDS == this)
+                if( psStruct && psStruct->poDS == this )
                 {
                     CPLHashSetRemove(phSharedDatasetSet, psStruct);
                 }
                 else
                 {
-                    CPLDebug("GDAL", "Should not happen. Cannot find %s, this=%p in phSharedDatasetSet", GetDescription(), this);
+                    CPLDebug("GDAL", "Should not happen. Cannot find %s, "
+                                     "this=%p in phSharedDatasetSet",
+                             GetDescription(), this);
                 }
             }
 
@@ -368,7 +369,7 @@ GDALDataset::~GDALDataset()
             delete papoBands[i];
     }
 
-    CPLFree( papoBands );
+    CPLFree(papoBands);
 
     if ( m_poStyleTable )
     {
@@ -376,13 +377,13 @@ GDALDataset::~GDALDataset()
         m_poStyleTable = NULL;
     }
 
-    GDALDatasetPrivate* psPrivate =
+    GDALDatasetPrivate *psPrivate =
         static_cast<GDALDatasetPrivate *>(m_hPrivateData);
     if( psPrivate != NULL && psPrivate->hMutex != NULL )
-        CPLDestroyMutex( psPrivate->hMutex );
+        CPLDestroyMutex(psPrivate->hMutex);
     delete psPrivate;
 
-    CSLDestroy( papszOpenOptions );
+    CSLDestroy(papszOpenOptions);
 }
 
 /************************************************************************/
@@ -396,10 +397,10 @@ void GDALDataset::AddToDatasetOpenList()
 /* -------------------------------------------------------------------- */
     bIsInternal = false;
 
-    CPLMutexHolderD( &hDLMutex );
+    CPLMutexHolderD(&hDLMutex);
 
     if (poAllDatasetMap == NULL)
-        poAllDatasetMap = new std::map<GDALDataset*, GIntBig>;
+        poAllDatasetMap = new std::map<GDALDataset *, GIntBig>;
     (*poAllDatasetMap)[this] = -1;
 }
 
@@ -445,10 +446,10 @@ void GDALDataset::FlushCache()
     // cppcheck-suppress knownConditionTrueFalse
     if( nLayers > 0 )
     {
-        GDALDatasetPrivate* psPrivate =
+        GDALDatasetPrivate *psPrivate =
             static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-        CPLMutexHolderD( psPrivate ? &(psPrivate->hMutex) : NULL );
-        for( int i = 0; i < nLayers ; ++i )
+        CPLMutexHolderD(psPrivate ? &(psPrivate->hMutex) : NULL);
+        for( int i = 0; i < nLayers; ++i )
         {
             OGRLayer *poLayer = GetLayer(i);
 
@@ -473,7 +474,7 @@ void GDALDataset::FlushCache()
 void CPL_STDCALL GDALFlushCache( GDALDatasetH hDS )
 
 {
-    VALIDATE_POINTER0( hDS, "GDALFlushCache" );
+    VALIDATE_POINTER0(hDS, "GDALFlushCache");
 
     static_cast<GDALDataset *>(hDS)->FlushCache();
 }
@@ -493,7 +494,7 @@ void CPL_STDCALL GDALFlushCache( GDALDatasetH hDS )
 void GDALDataset::BlockBasedFlushCache()
 
 {
-    GDALRasterBand *poBand1 = GetRasterBand( 1 );
+    GDALRasterBand *poBand1 = GetRasterBand(1);
     if( poBand1 == NULL )
     {
         GDALDataset::FlushCache();
@@ -502,17 +503,17 @@ void GDALDataset::BlockBasedFlushCache()
 
     int nBlockXSize = 0;
     int nBlockYSize = 0;
-    poBand1->GetBlockSize( &nBlockXSize, &nBlockYSize );
+    poBand1->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
 /* -------------------------------------------------------------------- */
 /*      Verify that all bands match.                                    */
 /* -------------------------------------------------------------------- */
     for( int iBand = 1; iBand < nBands; ++iBand )
     {
-        GDALRasterBand *poBand = GetRasterBand( iBand + 1 );
+        GDALRasterBand *poBand = GetRasterBand(iBand + 1);
 
         int nThisBlockXSize, nThisBlockYSize;
-        poBand->GetBlockSize( &nThisBlockXSize, &nThisBlockYSize );
+        poBand->GetBlockSize(&nThisBlockXSize, &nThisBlockYSize);
         if( nThisBlockXSize != nBlockXSize && nThisBlockYSize != nBlockYSize )
         {
             GDALDataset::FlushCache();
@@ -529,9 +530,9 @@ void GDALDataset::BlockBasedFlushCache()
         {
             for( int iBand = 0; iBand < nBands; ++iBand )
             {
-                GDALRasterBand *poBand = GetRasterBand( iBand+1 );
+                GDALRasterBand *poBand = GetRasterBand(iBand + 1);
 
-                const CPLErr eErr = poBand->FlushBlock( iX, iY );
+                const CPLErr eErr = poBand->FlushBlock(iX, iY);
 
                 if( eErr != CE_None )
                     return;
@@ -549,7 +550,7 @@ void GDALDataset::BlockBasedFlushCache()
 void GDALDataset::RasterInitialize( int nXSize, int nYSize )
 
 {
-    CPLAssert( nXSize > 0 && nYSize > 0 );
+    CPLAssert(nXSize > 0 && nYSize > 0);
 
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
@@ -584,8 +585,8 @@ CPLErr GDALDataset::AddBand( CPL_UNUSED GDALDataType eType,
                              CPL_UNUSED char **papszOptions )
 
 {
-    ReportError( CE_Failure, CPLE_NotSupported,
-              "Dataset does not support the AddBand() method." );
+    ReportError(CE_Failure, CPLE_NotSupported,
+                "Dataset does not support the AddBand() method.");
 
     return CE_Failure;
 }
@@ -604,9 +605,9 @@ CPLErr CPL_STDCALL GDALAddBand( GDALDatasetH hDataset,
                                 GDALDataType eType, char **papszOptions )
 
 {
-    VALIDATE_POINTER1( hDataset, "GDALAddBand", CE_Failure );
+    VALIDATE_POINTER1(hDataset, "GDALAddBand", CE_Failure);
 
-    return static_cast<GDALDataset *>(hDataset)->AddBand( eType, papszOptions );
+    return static_cast<GDALDataset *>(hDataset)->AddBand(eType, papszOptions);
 }
 
 /************************************************************************/
@@ -627,20 +628,21 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 /* -------------------------------------------------------------------- */
 /*      Do we need to grow the bands list?                              */
 /* -------------------------------------------------------------------- */
-    if( nBands < nNewBand || papoBands == NULL ) {
-        GDALRasterBand** papoNewBands;
+    if( nBands < nNewBand || papoBands == NULL )
+    {
+        GDALRasterBand **papoNewBands = NULL;
 
         if( papoBands == NULL )
-            papoNewBands = static_cast<GDALRasterBand **>(
-                VSICalloc(sizeof(GDALRasterBand*), std::max(nNewBand, nBands)));
+            papoNewBands = static_cast<GDALRasterBand **>(VSICalloc(
+                sizeof(GDALRasterBand *), std::max(nNewBand, nBands)));
         else
             papoNewBands = static_cast<GDALRasterBand **>(
-                VSIRealloc(papoBands, sizeof(GDALRasterBand*) *
-                           std::max(nNewBand, nBands)));
+                VSIRealloc(papoBands, sizeof(GDALRasterBand *) *
+                                          std::max(nNewBand, nBands)));
         if (papoNewBands == NULL)
         {
             ReportError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate band array");
+                        "Cannot allocate band array");
             return;
         }
 
@@ -655,14 +657,14 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 /* -------------------------------------------------------------------- */
 /*      Set the band.  Resetting the band is currently not permitted.   */
 /* -------------------------------------------------------------------- */
-    if( papoBands[nNewBand-1] != NULL )
+    if( papoBands[nNewBand - 1] != NULL )
     {
         ReportError(CE_Failure, CPLE_NotSupported,
-                 "Cannot set band %d as it is already set", nNewBand);
+                    "Cannot set band %d as it is already set", nNewBand);
         return;
     }
 
-    papoBands[nNewBand-1] = poBand;
+    papoBands[nNewBand - 1] = poBand;
 
 /* -------------------------------------------------------------------- */
 /*      Set back reference information on the raster band.  Note        */
@@ -691,11 +693,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 
 */
 
-int GDALDataset::GetRasterXSize()
-
-{
-    return nRasterXSize;
-}
+int GDALDataset::GetRasterXSize() { return nRasterXSize; }
 
 /************************************************************************/
 /*                         GDALGetRasterXSize()                         */
@@ -710,7 +708,7 @@ int GDALDataset::GetRasterXSize()
 int CPL_STDCALL GDALGetRasterXSize( GDALDatasetH hDataset )
 
 {
-    VALIDATE_POINTER1( hDataset, "GDALGetRasterXSize", 0 );
+    VALIDATE_POINTER1(hDataset, "GDALGetRasterXSize", 0);
 
     return static_cast<GDALDataset *>(hDataset)->GetRasterXSize();
 }
@@ -729,11 +727,7 @@ int CPL_STDCALL GDALGetRasterXSize( GDALDatasetH hDataset )
 
 */
 
-int GDALDataset::GetRasterYSize()
-
-{
-    return nRasterYSize;
-}
+int GDALDataset::GetRasterYSize() { return nRasterYSize; }
 
 /************************************************************************/
 /*                         GDALGetRasterYSize()                         */
@@ -748,7 +742,7 @@ int GDALDataset::GetRasterYSize()
 int CPL_STDCALL GDALGetRasterYSize( GDALDatasetH hDataset )
 
 {
-    VALIDATE_POINTER1( hDataset, "GDALGetRasterYSize", 0 );
+    VALIDATE_POINTER1(hDataset, "GDALGetRasterYSize", 0);
 
     return static_cast<GDALDataset *>(hDataset)->GetRasterYSize();
 }
@@ -777,13 +771,13 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
     {
         if( nBandId < 1 || nBandId > nBands )
         {
-            ReportError( CE_Failure, CPLE_IllegalArg,
-                      "GDALDataset::GetRasterBand(%d) - Illegal band #\n",
-                      nBandId );
+            ReportError(CE_Failure, CPLE_IllegalArg,
+                        "GDALDataset::GetRasterBand(%d) - Illegal band #\n",
+                        nBandId);
             return NULL;
         }
-        else
-            return( papoBands[nBandId-1] );
+
+        return papoBands[nBandId - 1];
     }
     return NULL;
 }
@@ -800,7 +794,7 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
 GDALRasterBandH CPL_STDCALL GDALGetRasterBand( GDALDatasetH hDS, int nBandId )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALGetRasterBand", NULL );
+    VALIDATE_POINTER1(hDS, "GDALGetRasterBand", NULL);
 
     return static_cast<GDALRasterBandH>(
         static_cast<GDALDataset *>(hDS)->GetRasterBand(nBandId));
@@ -818,11 +812,7 @@ GDALRasterBandH CPL_STDCALL GDALGetRasterBand( GDALDatasetH hDS, int nBandId )
  * @return the number of raster bands.
  */
 
-int GDALDataset::GetRasterCount()
-
-{
-    return papoBands ? nBands : 0;
-}
+int GDALDataset::GetRasterCount() { return papoBands ? nBands : 0; }
 
 /************************************************************************/
 /*                         GDALGetRasterCount()                         */
@@ -837,7 +827,7 @@ int GDALDataset::GetRasterCount()
 int CPL_STDCALL GDALGetRasterCount( GDALDatasetH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALGetRasterCount", 0 );
+    VALIDATE_POINTER1(hDS, "GDALGetRasterCount", 0);
 
     return static_cast<GDALDataset *>(hDS)->GetRasterCount();
 }
@@ -864,11 +854,7 @@ int CPL_STDCALL GDALGetRasterCount( GDALDatasetH hDS )
  * @see http://www.gdal.org/osr_tutorial.html
  */
 
-const char *GDALDataset::GetProjectionRef()
-
-{
-    return( "" );
-}
+const char *GDALDataset::GetProjectionRef() { return (""); }
 
 /************************************************************************/
 /*                        GDALGetProjectionRef()                        */
@@ -883,7 +869,7 @@ const char *GDALDataset::GetProjectionRef()
 const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALGetProjectionRef", NULL );
+    VALIDATE_POINTER1(hDS, "GDALGetProjectionRef", NULL);
 
     return static_cast<GDALDataset *>(hDS)->GetProjectionRef();
 }
@@ -911,8 +897,8 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
 CPLErr GDALDataset::SetProjection( CPL_UNUSED const char *pszProjection )
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
-        ReportError( CE_Failure, CPLE_NotSupported,
-                  "Dataset does not support the SetProjection() method." );
+        ReportError(CE_Failure, CPLE_NotSupported,
+                    "Dataset does not support the SetProjection() method.");
     return CE_Failure;
 }
 
@@ -930,7 +916,7 @@ CPLErr CPL_STDCALL GDALSetProjection( GDALDatasetH hDS,
                                       const char * pszProjection )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALSetProjection", CE_Failure );
+    VALIDATE_POINTER1(hDS, "GDALSetProjection", CE_Failure);
 
     return static_cast<GDALDataset *>(hDS)->SetProjection(pszProjection);
 }
@@ -969,7 +955,7 @@ CPLErr CPL_STDCALL GDALSetProjection( GDALDatasetH hDS,
 CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
 
 {
-    CPLAssert( padfTransform != NULL );
+    CPLAssert(padfTransform != NULL);
 
     padfTransform[0] = 0.0;  // X Origin (top left corner)
     padfTransform[1] = 1.0;  // X Pixel size */
@@ -979,7 +965,7 @@ CPLErr GDALDataset::GetGeoTransform( double * padfTransform )
     padfTransform[4] = 0.0;
     padfTransform[5] = 1.0;  // Y Pixel Size
 
-    return( CE_Failure );
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -996,7 +982,7 @@ CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS,
                                         double * padfTransform )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALGetGeoTransform", CE_Failure );
+    VALIDATE_POINTER1(hDS, "GDALGetGeoTransform", CE_Failure);
 
     return static_cast<GDALDataset *>(hDS)->GetGeoTransform(padfTransform);
 }
@@ -1025,10 +1011,10 @@ CPLErr GDALDataset::SetGeoTransform( CPL_UNUSED double *padfTransform )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
-        ReportError( CE_Failure, CPLE_NotSupported,
-                  "SetGeoTransform() not supported for this dataset." );
+        ReportError(CE_Failure, CPLE_NotSupported,
+                    "SetGeoTransform() not supported for this dataset.");
 
-    return( CE_Failure );
+    return CE_Failure;
 }
 
 /************************************************************************/
@@ -1042,12 +1028,12 @@ CPLErr GDALDataset::SetGeoTransform( CPL_UNUSED double *padfTransform )
  */
 
 CPLErr CPL_STDCALL
-GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
+GDALSetGeoTransform( GDALDatasetH hDS, double *padfTransform )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALSetGeoTransform", CE_Failure );
+    VALIDATE_POINTER1(hDS, "GDALSetGeoTransform", CE_Failure);
 
-    return( static_cast<GDALDataset *>(hDS)->SetGeoTransform(padfTransform) );
+    return static_cast<GDALDataset *>(hDS)->SetGeoTransform(padfTransform);
 }
 
 /************************************************************************/
@@ -1086,7 +1072,7 @@ void * CPL_STDCALL
 GDALGetInternalHandle( GDALDatasetH hDS, const char * pszRequest )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALGetInternalHandle", NULL );
+    VALIDATE_POINTER1(hDS, "GDALGetInternalHandle", NULL);
 
     return static_cast<GDALDataset *>(hDS)->GetInternalHandle(pszRequest);
 }
@@ -1104,11 +1090,7 @@ GDALGetInternalHandle( GDALDatasetH hDS, const char * pszRequest )
  * GDALCreate().
  */
 
-GDALDriver * GDALDataset::GetDriver()
-
-{
-    return poDriver;
-}
+GDALDriver *GDALDataset::GetDriver() { return poDriver; }
 
 /************************************************************************/
 /*                        GDALGetDatasetDriver()                        */
@@ -1123,7 +1105,7 @@ GDALDriver * GDALDataset::GetDriver()
 GDALDriverH CPL_STDCALL GDALGetDatasetDriver( GDALDatasetH hDataset )
 
 {
-    VALIDATE_POINTER1( hDataset, "GDALGetDatasetDriver", NULL );
+    VALIDATE_POINTER1(hDataset, "GDALGetDatasetDriver", NULL);
 
     return static_cast<GDALDriverH>(
         static_cast<GDALDataset *>(hDataset)->GetDriver());
@@ -1143,11 +1125,7 @@ GDALDriverH CPL_STDCALL GDALGetDatasetDriver( GDALDatasetH hDataset )
  * @return the post-increment reference count.
  */
 
-int GDALDataset::Reference()
-
-{
-    return ++nRefCount;
-}
+int GDALDataset::Reference() { return ++nRefCount; }
 
 /************************************************************************/
 /*                        GDALReferenceDataset()                        */
@@ -1162,7 +1140,7 @@ int GDALDataset::Reference()
 int CPL_STDCALL GDALReferenceDataset( GDALDatasetH hDataset )
 
 {
-    VALIDATE_POINTER1( hDataset, "GDALReferenceDataset", 0 );
+    VALIDATE_POINTER1(hDataset, "GDALReferenceDataset", 0);
 
     return static_cast<GDALDataset *>(hDataset)->Reference();
 }
@@ -1182,11 +1160,7 @@ int CPL_STDCALL GDALReferenceDataset( GDALDatasetH hDataset )
  * @return the post-decrement reference count.
  */
 
-int GDALDataset::Dereference()
-
-{
-    return --nRefCount;
-}
+int GDALDataset::Dereference() { return --nRefCount; }
 
 /************************************************************************/
 /*                       GDALDereferenceDataset()                       */
@@ -1201,7 +1175,7 @@ int GDALDataset::Dereference()
 int CPL_STDCALL GDALDereferenceDataset( GDALDatasetH hDataset )
 
 {
-    VALIDATE_POINTER1( hDataset, "GDALDereferenceDataset", 0 );
+    VALIDATE_POINTER1(hDataset, "GDALDereferenceDataset", 0);
 
     return static_cast<GDALDataset *>(hDataset)->Dereference();
 }
@@ -1229,7 +1203,7 @@ int GDALDataset::GetShared() const { return bShared; }
 void GDALDataset::MarkAsShared()
 
 {
-    CPLAssert( !bShared );
+    CPLAssert(!bShared);
 
     bShared = true;
     if( bIsInternal )
@@ -1238,21 +1212,24 @@ void GDALDataset::MarkAsShared()
     GIntBig nPID = GDALGetResponsiblePIDForCurrentThread();
 
     // Insert the dataset in the set of shared opened datasets.
-    CPLMutexHolderD( &hDLMutex );
+    CPLMutexHolderD(&hDLMutex);
     if (phSharedDatasetSet == NULL)
-        phSharedDatasetSet = CPLHashSetNew(GDALSharedDatasetHashFunc, GDALSharedDatasetEqualFunc, GDALSharedDatasetFreeFunc);
+        phSharedDatasetSet =
+            CPLHashSetNew(GDALSharedDatasetHashFunc, GDALSharedDatasetEqualFunc,
+                          GDALSharedDatasetFreeFunc);
 
-    SharedDatasetCtxt* psStruct =
+    SharedDatasetCtxt *psStruct =
         static_cast<SharedDatasetCtxt *>(CPLMalloc(sizeof(SharedDatasetCtxt)));
     psStruct->poDS = this;
     psStruct->nPID = nPID;
     psStruct->eAccess = eAccess;
     psStruct->pszDescription = CPLStrdup(GetDescription());
-    if( CPLHashSetLookup(phSharedDatasetSet, psStruct) != NULL )
+    if(CPLHashSetLookup(phSharedDatasetSet, psStruct) != NULL)
     {
         CPLFree(psStruct);
         ReportError(CE_Failure, CPLE_AppDefined,
-                 "An existing shared dataset already has this description. This should not happen.");
+                    "An existing shared dataset already has this description. "
+                    "This should not happen.");
     }
     else
     {
@@ -1274,11 +1251,7 @@ void GDALDataset::MarkAsShared()
  * @return number of GCPs for this dataset.  Zero if there are none.
  */
 
-int GDALDataset::GetGCPCount()
-
-{
-    return 0;
-}
+int GDALDataset::GetGCPCount() { return 0; }
 
 /************************************************************************/
 /*                          GDALGetGCPCount()                           */
@@ -1293,7 +1266,7 @@ int GDALDataset::GetGCPCount()
 int CPL_STDCALL GDALGetGCPCount( GDALDatasetH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALGetGCPCount", 0 );
+    VALIDATE_POINTER1(hDS, "GDALGetGCPCount", 0);
 
     return static_cast<GDALDataset *>(hDS)->GetGCPCount();
 }
@@ -1313,11 +1286,7 @@ int CPL_STDCALL GDALGetGCPCount( GDALDatasetH hDS )
  *  It should not be altered, freed or expected to last for long.
  */
 
-const char *GDALDataset::GetGCPProjection()
-
-{
-    return "";
-}
+const char *GDALDataset::GetGCPProjection() { return ""; }
 
 /************************************************************************/
 /*                        GDALGetGCPProjection()                        */
@@ -1332,7 +1301,7 @@ const char *GDALDataset::GetGCPProjection()
 const char * CPL_STDCALL GDALGetGCPProjection( GDALDatasetH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALGetGCPProjection", NULL );
+    VALIDATE_POINTER1(hDS, "GDALGetGCPProjection", NULL);
 
     return static_cast<GDALDataset *>(hDS)->GetGCPProjection();
 }
@@ -1350,11 +1319,7 @@ const char * CPL_STDCALL GDALGetGCPProjection( GDALDatasetH hDS )
  * and may change on the next GDAL call.
  */
 
-const GDAL_GCP *GDALDataset::GetGCPs()
-
-{
-    return NULL;
-}
+const GDAL_GCP *GDALDataset::GetGCPs() { return NULL; }
 
 /************************************************************************/
 /*                            GDALGetGCPs()                             */
@@ -1369,7 +1334,7 @@ const GDAL_GCP *GDALDataset::GetGCPs()
 const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALGetGCPs", NULL );
+    VALIDATE_POINTER1(hDS, "GDALGetGCPs", NULL);
 
     return static_cast<GDALDataset *>(hDS)->GetGCPs();
 }
@@ -1410,8 +1375,8 @@ CPLErr GDALDataset::SetGCPs( CPL_UNUSED int nGCPCount,
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
-        ReportError( CE_Failure, CPLE_NotSupported,
-                  "Dataset does not support the SetGCPs() method." );
+        ReportError(CE_Failure, CPLE_NotSupported,
+                    "Dataset does not support the SetGCPs() method.");
 
     return CE_Failure;
 }
@@ -1431,10 +1396,10 @@ CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
                                 const char *pszGCPProjection )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALSetGCPs", CE_Failure );
+    VALIDATE_POINTER1(hDS, "GDALSetGCPs", CE_Failure);
 
-    return static_cast<GDALDataset *>(hDS)->
-        SetGCPs( nGCPCount, pasGCPList, pszGCPProjection );
+    return static_cast<GDALDataset *>(hDS)
+        ->SetGCPs(nGCPCount, pasGCPList, pszGCPProjection);
 }
 
 /************************************************************************/
@@ -1459,8 +1424,8 @@ CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
  * @param nOverviews number of overviews to build, or 0 to clean overviews.
  * @param panOverviewList the list of overview decimation factors to build, or
  *                        NULL if nOverviews == 0.
- * @param nListBands number of bands to build overviews for in panBandList.  Build
- * for all bands if this is 0.
+ * @param nListBands number of bands to build overviews for in panBandList.
+ * Build for all bands if this is 0.
  * @param panBandList list of band numbers.
  * @param pfnProgress a function to call to report progress, or NULL.
  * @param pProgressData application data to pass to the progress function.
@@ -1486,15 +1451,15 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
                                     void * pProgressData )
 
 {
-    CPLErr   eErr;
-    int      *panAllBandList = NULL;
+    int *panAllBandList = NULL;
 
     if( nListBands == 0 )
     {
         nListBands = GetRasterCount();
-        panAllBandList = static_cast<int *>(CPLMalloc(sizeof(int) * nListBands));
+        panAllBandList =
+            static_cast<int *>(CPLMalloc(sizeof(int) * nListBands));
         for( int i = 0; i < nListBands; ++i )
-            panAllBandList[i] = i+1;
+            panAllBandList[i] = i + 1;
 
         panBandList = panAllBandList;
     }
@@ -1502,11 +1467,12 @@ CPLErr GDALDataset::BuildOverviews( const char *pszResampling,
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
-    eErr = IBuildOverviews( pszResampling, nOverviews, panOverviewList,
-                            nListBands, panBandList, pfnProgress, pProgressData );
+    const CPLErr eErr =
+        IBuildOverviews(pszResampling, nOverviews, panOverviewList, nListBands,
+                        panBandList, pfnProgress, pProgressData);
 
     if( panAllBandList != NULL )
-        CPLFree( panAllBandList );
+        CPLFree(panAllBandList);
 
     return eErr;
 }
@@ -1529,11 +1495,11 @@ CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
                                        void * pProgressData )
 
 {
-    VALIDATE_POINTER1( hDataset, "GDALBuildOverviews", CE_Failure );
+    VALIDATE_POINTER1(hDataset, "GDALBuildOverviews", CE_Failure);
 
-    return static_cast<GDALDataset *>(hDataset)->BuildOverviews(
-        pszResampling, nOverviews, panOverviewList, nListBands, panBandList,
-        pfnProgress, pProgressData );
+    return static_cast<GDALDataset *>(hDataset)
+        ->BuildOverviews(pszResampling, nOverviews, panOverviewList, nListBands,
+                         panBandList, pfnProgress, pProgressData);
 }
 
 /************************************************************************/
@@ -1557,10 +1523,10 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
                                           pfnProgress, pProgressData );
     else
     {
-        ReportError( CE_Failure, CPLE_NotSupported,
-                  "BuildOverviews() not supported for this dataset." );
+        ReportError(CE_Failure, CPLE_NotSupported,
+                    "BuildOverviews() not supported for this dataset.");
 
-        return( CE_Failure );
+        return CE_Failure;
     }
 }
 //! @endcond
@@ -1586,19 +1552,18 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
 
 {
 
-    const char* pszInterleave = NULL;
+    const char *pszInterleave = NULL;
 
-    CPLAssert( NULL != pData );
+    CPLAssert(NULL != pData);
 
     if (nXSize == nBufXSize && nYSize == nBufYSize && nBandCount > 1 &&
         (pszInterleave = GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")) != NULL &&
         EQUAL(pszInterleave, "PIXEL"))
     {
-        return BlockBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                   pData, nBufXSize, nBufYSize,
-                                   eBufType, nBandCount, panBandMap,
-                                   nPixelSpace, nLineSpace, nBandSpace,
-                                   psExtraArg );
+        return BlockBasedRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
+                                  nBufXSize, nBufYSize, eBufType, nBandCount,
+                                  panBandMap, nPixelSpace, nLineSpace,
+                                  nBandSpace, psExtraArg);
     }
 
     if( eRWFlag == GF_Read &&
@@ -1610,11 +1575,11 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
     {
         GDALDataType eFirstBandDT = GDT_Unknown;
         int nFirstMaskFlags = 0;
-        GDALRasterBand* poFirstMaskBand = NULL;
+        GDALRasterBand *poFirstMaskBand = NULL;
         int nOKBands = 0;
         for( int i = 0; i < nBandCount; ++i )
         {
-            GDALRasterBand* poBand = GetRasterBand(panBandMap[i]);
+            GDALRasterBand *poBand = GetRasterBand(panBandMap[i]);
             if( (nBufXSize < nXSize || nBufYSize < nYSize) &&
                 poBand->GetOverviewCount() )
             {
@@ -1643,7 +1608,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                     break;
                 }
                 int nMaskFlags = poBand->GetMaskFlags();
-                GDALRasterBand* poMaskBand = poBand->GetMaskBand();
+                GDALRasterBand *poMaskBand = poBand->GetMaskBand();
                 if( nFirstMaskFlags == GMF_ALL_VALID && nMaskFlags == GMF_ALL_VALID )
                 {
                     // Ok.
@@ -1686,7 +1651,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
 
             if( nOKBands < nBandCount )
             {
-                GDALDestroyScaledProgress( psExtraArg->pProgressData );
+                GDALDestroyScaledProgress(psExtraArg->pProgressData);
             }
         }
         if( eErr == CE_None && nOKBands < nBandCount )
@@ -1701,14 +1666,14 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                 if( psExtraArg->pProgressData == NULL )
                     psExtraArg->pfnProgress = NULL;
             }
-            eErr = BandBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                   (GByte*)pData + nBandSpace * nOKBands, nBufXSize, nBufYSize,
-                                   eBufType, nBandCount - nOKBands, panBandMap + nOKBands,
-                                   nPixelSpace, nLineSpace, nBandSpace,
-                                   psExtraArg );
+            eErr = BandBasedRasterIO(
+                eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                (GByte *)pData + nBandSpace * nOKBands, nBufXSize, nBufYSize,
+                eBufType, nBandCount - nOKBands, panBandMap + nOKBands,
+                nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
             if( nOKBands > 0 )
             {
-                GDALDestroyScaledProgress( psExtraArg->pProgressData );
+                GDALDestroyScaledProgress(psExtraArg->pProgressData);
             }
         }
 
