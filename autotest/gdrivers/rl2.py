@@ -41,10 +41,12 @@ import gdaltest
 
 def rl2_1():
 
-    try:
-        gdaltest.rl2_drv = gdal.GetDriverByName( 'SQLite' )
-    except:
+    gdaltest.rl2_drv = gdal.GetDriverByName( 'SQLite' )
+    if gdaltest.rl2_drv is None:
+        return 'skip'
+    if gdaltest.rl2_drv.GetMetadataItem('DCAP_RASTER') is None:
         gdaltest.rl2_drv = None
+        return 'skip'
 
     return 'success'
 
