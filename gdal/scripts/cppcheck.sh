@@ -310,7 +310,7 @@ if [[ $? -eq 0 ]] ; then
     ret_code=1
 fi
 
-grep "functionStatic" ${LOG_FILE}
+grep "functionStatic" ${LOG_FILE} | grep -v "OGRSQLiteDataSource::OpenRaster" | grep -v "OGRSQLiteDataSource::OpenRasterSubDataset"
 if [[ $? -eq 0 ]] ; then
     echo "functionStatic check failed"
     ret_code=1
