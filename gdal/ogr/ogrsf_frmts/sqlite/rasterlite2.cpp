@@ -689,7 +689,9 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
                 double dfVariance = 0.0;
                 double dfStdDev = 0.0;
                 if( !(nBits == 1 && m_bPromote1BitAs8Bit) &&
-                    rl2_get_band_statistics( pStatistics, iBand - 1,
+                    rl2_get_band_statistics( pStatistics,
+                                             static_cast<unsigned char>
+                                                             (iBand - 1),
                                              &dfMin, &dfMax, &dfMean,
                                              &dfVariance,
                                              &dfStdDev ) == RL2_OK )
@@ -781,7 +783,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
                                &nSectionPaths,
                                &nSectionMD5,
                                &nSectionSummary);
-    m_bRL2MixedResolutions = nMixedResolutions;
+    m_bRL2MixedResolutions = CPL_TO_BOOL(nMixedResolutions);
     if( !nMixedResolutions || m_nSectionId >= 0 )
     {
         if( !nMixedResolutions )
