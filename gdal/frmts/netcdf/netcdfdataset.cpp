@@ -8766,6 +8766,32 @@ static bool NCDFIsVarProjectionY( int nCdfId, int nVarId, const char * pszVarNam
         else
             bVal = FALSE;
     }
+    else if ( bVal )
+    {
+        // Check that the units is not 'm'. See #6759
+        char *pszTemp = NULL;
+        if( NCDFGetAttr( nCdfId, nVarId, "units", &pszTemp ) == CE_None &&
+            pszTemp != NULL )
+        {
+            if( EQUAL( pszTemp, "m") )
+                bVal = false;
+            CPLFree( pszTemp );
+        }
+    }
+
+    else if ( bVal )
+    {
+        // Check that the units is not 'm'. See #6759
+        char *pszTemp = NULL;
+        if( NCDFGetAttr( nCdfId, nVarId, "units", &pszTemp ) == CE_None &&
+            pszTemp != NULL )
+        {
+            if( EQUAL( pszTemp, "m") )
+                bVal = false;
+            CPLFree( pszTemp );
+        }
+    }
+
     return CPL_TO_BOOL(bVal);
 }
 
