@@ -117,6 +117,7 @@ static const FilterFuncType apfGWKFilter[] =
     NULL,  // Q3
 };
 
+// TODO(schwehr): Can we make these functions have a const * const arg?
 static double GWKBilinear4Values(double* padfVals);
 static double GWKCubic4Values(double* padfVals);
 static double GWKBSpline4Values(double* padfVals);
