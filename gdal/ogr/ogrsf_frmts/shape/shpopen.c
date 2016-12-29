@@ -671,10 +671,8 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     pabyBuf = (uchar *) malloc(100);
     psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHP );
 
-    psSHP->nFileSize = ((unsigned int)pabyBuf[24] * 256 * 256 * 256
-                        + (unsigned int)pabyBuf[25] * 256 * 256
-                        + (unsigned int)pabyBuf[26] * 256
-                        + (unsigned int)pabyBuf[27]);
+    psSHP->nFileSize = ((unsigned int)pabyBuf[24]<<24)|(pabyBuf[25]<<16)|
+                        (pabyBuf[26]<<8)|pabyBuf[27];
     if( psSHP->nFileSize < 0xFFFFFFFFU / 2 )
         psSHP->nFileSize *= 2;
     else
@@ -697,8 +695,8 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         return( NULL );
     }
 
-    psSHP->nRecords = pabyBuf[27] + pabyBuf[26] * 256
-        + pabyBuf[25] * 256 * 256 + (pabyBuf[24] & 0x7F) * 256 * 256 * 256;
+    psSHP->nRecords = pabyBuf[27]|(pabyBuf[26]<<8)|(pabyBuf[25]<<16)|
+                      ((pabyBuf[24] & 0x7F)<<24);
     psSHP->nRecords = (psSHP->nRecords - 50) / 4;
 
     psSHP->nShapeType = pabyBuf[32];
@@ -1014,10 +1012,8 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     pabyBuf = (uchar *) malloc(100);
     psHooks->FRead( pabyBuf, 100, 1, fpSHP );
 
-    nSHPFilesize = ((unsigned int)pabyBuf[24] * 256 * 256 * 256
-                        + (unsigned int)pabyBuf[25] * 256 * 256
-                        + (unsigned int)pabyBuf[26] * 256
-                        + (unsigned int)pabyBuf[27]);
+    nSHPFilesize = ((unsigned int)pabyBuf[24]<<24)|(pabyBuf[25]<<16)|
+                   (pabyBuf[26]<<8)|pabyBuf[27];
     if( nSHPFilesize < 0xFFFFFFFFU / 2 )
         nSHPFilesize *= 2;
     else
