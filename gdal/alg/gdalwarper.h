@@ -515,6 +515,7 @@ int GWKGetFilterRadius(GDALResampleAlg eResampleAlg);
 typedef double (*FilterFuncType)(double dfX);
 FilterFuncType GWKGetFilterFunc(GDALResampleAlg eResampleAlg);
 
+// TODO(schwehr): Can padfVals be a const pointer?
 typedef double (*FilterFunc4ValuesType)(double* padfVals);
 FilterFunc4ValuesType GWKGetFilterFunc4Values(GDALResampleAlg eResampleAlg);
 /*! @endcond */
