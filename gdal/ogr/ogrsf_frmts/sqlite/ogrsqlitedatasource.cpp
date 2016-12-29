@@ -95,7 +95,7 @@ void OGRSQLiteDriverUnload(GDALDriver*)
 {
 }
 
-#else
+#else // defined(SPATIALITE_412_OR_LATER)
 
 #ifdef SPATIALITE_DLOPEN
 static CPLMutex* hMutexLoadSpatialiteSymbols = NULL;
@@ -217,7 +217,40 @@ void OGRSQLiteBaseDataSource::FinishNewSpatialite()
     }
 }
 
-#endif
+#endif // defined(SPATIALITE_412_OR_LATER)
+
+#ifdef HAVE_RASTERLITE2
+
+/************************************************************************/
+/*                          InitRasterLite2()                           */
+/************************************************************************/
+
+bool OGRSQLiteBaseDataSource::InitRasterLite2()
+{
+    CPLAssert(m_hRL2Ctxt == NULL);
+    m_hRL2Ctxt = rl2_alloc_private();
+    if( m_hRL2Ctxt != NULL )
+    {
+        rl2_init (hDB, m_hRL2Ctxt, 0);
+    }
+    return m_hRL2Ctxt != NULL;
+}
+
+/************************************************************************/
+/*                         FinishRasterLite2()                          */
+/************************************************************************/
+
+void OGRSQLiteBaseDataSource::FinishRasterLite2()
+{
+    if( m_hRL2Ctxt != NULL )
+    {
+        rl2_cleanup_private(m_hRL2Ctxt);
+        m_hRL2Ctxt = NULL;
+    }
+}
+
+#endif // HAVE_RASTERLITE2
+
 
 /************************************************************************/
 /*                          IsSpatialiteLoaded()                        */
@@ -263,6 +296,9 @@ OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource() :
 #ifdef SPATIALITE_412_OR_LATER
     hSpatialiteCtxt(NULL),
 #endif
+#ifdef HAVE_RASTERLITE2
+    m_hRL2Ctxt(NULL),
+#endif
     bUserTransactionActive(FALSE),
     nSoftTransactionLevel(0)
 {}
@@ -277,7 +313,9 @@ OGRSQLiteBaseDataSource::~OGRSQLiteBaseDataSource()
 #ifdef SPATIALITE_412_OR_LATER
     FinishNewSpatialite();
 #endif
-
+#ifdef HAVE_RASTERLITE2
+    FinishRasterLite2();
+#endif
     CloseDB();
     CPLFree(m_pszFilename);
 }
@@ -907,6 +945,9 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
             return FALSE;
         }
 #endif
+#ifdef HAVE_RASTERLITE2
+        InitRasterLite2();
+#endif
 
         /*
         / SpatiaLite full support: calling InitSpatialMetadata()
@@ -1308,6 +1349,9 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
 
 #ifdef SPATIALITE_412_OR_LATER
         InitNewSpatialite();
+#endif
+#ifdef HAVE_RASTERLITE2
+        InitRasterLite2();
 #endif
     }
 
