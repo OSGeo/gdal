@@ -4063,12 +4063,12 @@ static bool GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
         }
 
         // Calculate the Y weight.
-        double adfWeight[4] = {
-            (j - dfDeltaY) * dfYScale,
-            adfWeight[0] + dfYScale,
-            adfWeight[1] + dfYScale,
-            adfWeight[2] + dfYScale
-        };
+        const double dfWeight0 = (j - dfDeltaY) * dfYScale;
+        const double dfWeight1 = dfWeight0 + dfYScale;
+        const double dfWeight2 = dfWeight1 + dfYScale;
+        const double dfWeight3 = dfWeight2 + dfYScale;
+        double adfWeight[4] = { dfWeight0, dfWeight1, dfWeight2, dfWeight3 };
+
         dfAccumulatorWeightVertical += pfnGetWeight4Values(adfWeight);
         dfAccumulator += adfWeight[0] * dfAccumulatorLocal_1;
         dfAccumulator += adfWeight[1] * dfAccumulatorLocal_2;
