@@ -425,10 +425,10 @@ DBFUpdateHeader( DBFHandle psDBF )
     abyFileHeader[1] = (unsigned char) psDBF->nUpdateYearSince1900;
     abyFileHeader[2] = (unsigned char) psDBF->nUpdateMonth;
     abyFileHeader[3] = (unsigned char) psDBF->nUpdateDay;
-    abyFileHeader[4] = (unsigned char) (psDBF->nRecords % 256);
-    abyFileHeader[5] = (unsigned char) ((psDBF->nRecords/256) % 256);
-    abyFileHeader[6] = (unsigned char) ((psDBF->nRecords/(256*256)) % 256);
-    abyFileHeader[7] = (unsigned char) ((psDBF->nRecords/(256*256*256)) % 256);
+    abyFileHeader[4] = (unsigned char) (psDBF->nRecords & 0xFF);
+    abyFileHeader[5] = (unsigned char) ((psDBF->nRecords>>8) & 0xFF);
+    abyFileHeader[6] = (unsigned char) ((psDBF->nRecords>>16) & 0xFF);
+    abyFileHeader[7] = (unsigned char) ((psDBF->nRecords>>24) & 0xFF);
 
     psDBF->sHooks.FSeek( psDBF->fp, 0, 0 );
     psDBF->sHooks.FWrite( abyFileHeader, sizeof(abyFileHeader), 1, psDBF->fp );
@@ -563,10 +563,10 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
     DBFSetLastModifiedDate(psDBF, pabyBuf[1], pabyBuf[2], pabyBuf[3]);
 
     psDBF->nRecords =
-     pabyBuf[4] + pabyBuf[5]*256 + pabyBuf[6]*256*256 + (pabyBuf[7] & 0x7f) *256*256*256;
+     pabyBuf[4]|(pabyBuf[5]<<8)|(pabyBuf[6]<<16)|((pabyBuf[7]&0x7f)<<24);
 
-    psDBF->nHeaderLength = nHeadLen = pabyBuf[8] + pabyBuf[9]*256;
-    psDBF->nRecordLength = pabyBuf[10] + pabyBuf[11]*256;
+    psDBF->nHeaderLength = nHeadLen = pabyBuf[8]|(pabyBuf[9]<<8);
+    psDBF->nRecordLength = pabyBuf[10]|(pabyBuf[11]<<8);
     psDBF->iLanguageDriver = pabyBuf[29];
 
     if (psDBF->nRecordLength == 0 || nHeadLen < XBASE_FILEHDR_SZ)
