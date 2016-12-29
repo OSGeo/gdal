@@ -199,8 +199,8 @@ static GDALDataset *OGRSQLiteDriverCreate( const char * pszName,
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -255,6 +255,31 @@ void RegisterOGRSQLite()
 #endif
 "  <Option name='METADATA' type='boolean' description='Whether to create the geometry_columns and spatial_ref_sys tables' default='YES'/>"
 "  <Option name='INIT_WITH_EPSG' type='boolean' description='Whether to insert the content of the EPSG CSV files into the spatial_ref_sys table ' default='NO'/>"
+#ifdef HAVE_RASTERLITE2
+"  <Option name='APPEND_SUBDATASET' type='boolean' description='Whether to add the raster to the existing file' default='NO'/>"
+"  <Option name='COVERAGE' type='string' description='Coverage name'/>"
+"  <Option name='SECTION' type='string' description='Section name'/>"
+"  <Option name='COMPRESS' type='string-select' description='Raster compression' default='NONE'>"
+"    <Value>NONE</Value>"
+"    <Value>DEFLATE</Value>"
+"    <Value>LZMA</Value>"
+"    <Value>PNG</Value>"
+"    <Value>CCITTFAX4</Value>"
+"    <Value>JPEG</Value>"
+"    <Value>WEBP</Value>"
+"    <Value>CHARLS</Value>"
+"    <Value>JPEG2000</Value>"
+"  </Option>"
+"  <Option name='QUALITY' type='int' description='Image quality for JPEG, WEBP and JPEG2000 compressions'/>"
+"  <Option name='PIXEL_TYPE' type='string-select' description='Raster pixel type. Determines photometric interpretation'>"
+"    <Value>GRAYSCALE</Value>"
+"    <Value>RGB</Value>"
+"    <Value>MULTIBAND</Value>"
+"    <Value>DATAGRID</Value>"
+"  </Option>"
+"  <Option name='BLOCKXSIZE' type='int' description='Block width' default='512'/>"
+"  <Option name='BLOCKYSIZE' type='int' description='Block height' default='512'/>"
+#endif
 "</CreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
@@ -282,6 +307,11 @@ void RegisterOGRSQLite()
                                "Integer Integer64 Real String Date DateTime "
                                "Time Binary IntegerList Integer64List "
                                "RealList StringList" );
+#ifdef HAVE_RASTERLITE2
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                               "Byte UInt16 Int16 UInt32 Int32 Float32 "
+                               "Float64" );
+#endif
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
@@ -290,6 +320,9 @@ void RegisterOGRSQLite()
     poDriver->pfnOpen = OGRSQLiteDriverOpen;
     poDriver->pfnIdentify = OGRSQLiteDriverIdentify;
     poDriver->pfnCreate = OGRSQLiteDriverCreate;
+#ifdef HAVE_RASTERLITE2
+    poDriver->pfnCreateCopy = OGRSQLiteDriverCreateCopy;
+#endif
     poDriver->pfnDelete = OGRSQLiteDriverDelete;
     poDriver->pfnUnloadDriver = OGRSQLiteDriverUnload;
 

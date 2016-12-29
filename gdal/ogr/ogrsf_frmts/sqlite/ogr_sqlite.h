@@ -704,6 +704,11 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
     bool                InitNewSpatialite();
     void                FinishNewSpatialite();
 #endif
+#ifdef HAVE_RASTERLITE2
+    void               *m_hRL2Ctxt;
+    bool                InitRasterLite2();
+    void                FinishRasterLite2();
+#endif
 
     int                 bUserTransactionActive;
     int                 nSoftTransactionLevel;
@@ -944,5 +949,12 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData);
 void OGRSQLiteRegisterInflateDeflate(sqlite3* hDB);
 
 void OGRSQLiteDriverUnload(GDALDriver*);
+
+#ifdef HAVE_RASTERLITE2
+GDALDataset *OGRSQLiteDriverCreateCopy( const char *, GDALDataset *,
+                                        int, char **,
+                                        GDALProgressFunc pfnProgress,
+                                        void * pProgressData );
+#endif
 
 #endif /* ndef OGR_SQLITE_H_INCLUDED */

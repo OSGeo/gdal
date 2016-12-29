@@ -274,13 +274,36 @@ def rl2_5():
 
     return 'success'
 
+###############################################################################
+# Test CreateCopy()
+
+def rl2_6():
+
+    if gdaltest.rl2_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'SQLite', 'byte.tif', 1, 4672 )
+    return tst.testCreateCopy( vsimem = 1 )
+
+###############################################################################
+# Test CreateCopy()
+
+def rl2_7():
+
+    if gdaltest.rl2_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'SQLite', 'small_world.tif', 1, 30111, options = ['COMPRESS=PNG'] )
+    return tst.testCreateCopy( vsimem = 1 )
 
 gdaltest_list = [
     rl2_1,
     rl2_2,
     rl2_3,
     rl2_4,
-    rl2_5
+    rl2_5,
+    rl2_6,
+    rl2_7
 ]
 
 if __name__ == '__main__':
