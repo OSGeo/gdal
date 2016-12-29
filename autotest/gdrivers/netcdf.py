@@ -2849,6 +2849,23 @@ def netcdf_69():
     return 'success'
 
 ###############################################################################
+# Test that we don't erroneously identify non-longitude axis as longitude (#6759)
+
+def netcdf_70():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/test6759.nc')
+    gt = ds.GetGeoTransform()
+    expected_gt = [304250.0, 250.0, 0.0, 4952500.0, 0.0, -250.0]
+    if max(abs(gt[i] - expected_gt[i]) for i in range(6)) > 1e-3:
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -2927,7 +2944,8 @@ gdaltest_list = [
     netcdf_66_ncdump_check,
     netcdf_67,
     netcdf_68,
-    netcdf_69
+    netcdf_69,
+    netcdf_70
 ]
 
 ###############################################################################
