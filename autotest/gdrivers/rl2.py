@@ -565,8 +565,48 @@ def rl2_22():
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
+    ds = None
 
     gdal.Unlink('/vsimem/rl2_22.rl2')
+
+    return 'success'
+
+###############################################################################
+# Test BuildOverviews
+
+def rl2_23():
+
+    if gdaltest.rl2_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.tif')
+    src_ds = gdal.Translate('', src_ds, format = 'MEM', width = 2048, height = 2048)
+    ds = gdaltest.rl2_drv.CreateCopy('/vsimem/rl2_23.rl2', src_ds)
+    ret = ds.BuildOverviews('NEAR', [2])
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverviewCount() != 5:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOverviewCount())
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs == 0:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    ret = ds.BuildOverviews('NONE', [])
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open('/vsimem/rl2_23.rl2')
+    if ds.GetRasterBand(1).GetOverviewCount() == 5:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOverviewCount())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/rl2_23.rl2')
 
     return 'success'
 
@@ -592,7 +632,8 @@ gdaltest_list = [
     rl2_19,
     rl2_20,
     rl2_21,
-    rl2_22
+    rl2_22,
+    rl2_23
 ]
 
 if __name__ == '__main__':

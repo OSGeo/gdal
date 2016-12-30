@@ -296,6 +296,7 @@ void RegisterOGRSQLite()
 "  <Option name='BLOCKXSIZE' scope='raster' type='int' description='Block width' default='512'/>"
 "  <Option name='BLOCKYSIZE' scope='raster' type='int' description='Block height' default='512'/>"
 "  <Option name='NBITS' scope='raster' type='int' description='Force bit width. 1, 2 or 4 are supported'/>"
+"  <Option name='PYRAMIDIZE' scope='raster' type='boolean' description='Whether to automatically build relevant pyramids/overviews' default='NO'/>"
 #endif
 "</CreationOptionList>";
 

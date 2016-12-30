@@ -72,11 +72,33 @@ automatically determine an appropriate pixel type given the band characteristics
 <li> <b>NBITS</b>=1/2/4. Force bit width. This will be by default gotten from
 the NBITS metadata item in the IMAGE_STRUCTURE metadata domain of the source
 raster band.</li>
+<li> <b>PYRAMIDIZE</b>=YES/NO. Whether to build automatically build relevant
+pyramids/overviews. Defaults to NO. Pyramids can be built with the BuildOverviews() /
+gdaladdo.
 </ul>
 
 <h2>Examples</h2>
 
 <ul>
+
+<li>Reading a RasterLite2 database with a single coverage:
+
+<pre>
+gdalinfo my.rl2
+</pre>
+
+<li>Listing the subdatasets corresponding to the coverages of a RasterLite2
+database with several coverages:
+
+<pre>
+gdalinfo multiple_coverages.rl2
+</pre>
+
+<li>Reading a subdataset corresponding to a coverage:
+
+<pre>
+gdalinfo RASTERLITE2:multiple_coverages.rl2:my_coverage
+</pre>
 
 <li>Creating a RasterLite2 dataset from a grayscale image:
 
@@ -96,23 +118,10 @@ gdal_translate -f SQLite rgb.tif rgb.rl2 -co COMPRESS=JPEG
 gdal_translate -f SQLite rgb.tif rgb.rl2 -co APPEND_SUBDATASET=YES -co COVERAGE=rgb
 </pre>
 
-<li>Reading a RasterLite2 database with a single coverage:
+<li>Adding pyramids to a coverage:
 
 <pre>
-gdalinfo my.rl2
-</pre>
-
-<li>Listing the subdatasets corresponding to the coverages of a RasterLite2
-database with several coverages:
-
-<pre>
-gdalinfo multiple_coverages.rl2
-</pre>
-
-<li>Reading a subdataset corresponding to a coverage:
-
-<pre>
-gdalinfo RASTERLITE2:multiple_coverages.rl2:my_coverage
+gdaladdo rgb.rl2 2 4 8 16
 </pre>
 
 </ul>

@@ -802,6 +802,7 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
     std::vector<OGRSQLiteDataSource*> m_apoOverviewDS;
 
 #ifdef HAVE_RASTERLITE2
+    void                ListOverviews();
     void                CreateRL2OverviewDatasetIfNeeded(double dfXRes,
                                                       double dfYRes);
 #endif
@@ -880,6 +881,10 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
     GIntBig             GetSectionId() const { return m_nSectionId; }
     const double*       GetGeoTransform() const { return m_adfGeoTransform; }
     bool                IsRL2MixedResolutions() const { return m_bRL2MixedResolutions; }
+
+    virtual CPLErr IBuildOverviews( const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * ) override;
+
 #endif
     OGRSQLiteDataSource* GetParentDS() const { return m_poParentDS; }
     const std::vector<OGRSQLiteDataSource*>& GetOverviews() const { return m_apoOverviewDS; }
