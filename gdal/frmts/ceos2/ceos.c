@@ -48,7 +48,7 @@ void InitEmptyCeosRecord(CeosRecord_t *record, int32 sequence, CeosTypeCode_t ty
 
 	/* Setup values inside the CeosRecord_t header */
 	record->Sequence = sequence;
-	record->Flavour = 0;
+	record->Flavor = 0;
 	record->FileId = 0;
 	record->TypeCode = typecode;
 	record->Subsequence = 0;
@@ -307,7 +307,7 @@ void SetIntCeosField(CeosRecord_t *record, int32 start_byte, int32 length, int32
     SetCeosField(record,start_byte,total_len,&integer_value);
 }
 
-CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32 fileid, int32 flavour, int32 subsequence)
+CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32 fileid, int32 flavor, int32 subsequence)
 {
     Link_t *Link;
     CeosRecord_t *record;
@@ -318,7 +318,7 @@ CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32
 
 	if( (record->TypeCode.Int32Code == typecode.Int32Code)
 	    && ( ( fileid == -1 ) || ( record->FileId == fileid  ) )
-	    && ( ( flavour == -1 ) || ( record->Flavour == flavour ) )
+	    && ( ( flavor == -1 ) || ( record->Flavor == flavor ) )
 	    && ( ( subsequence == -1 ) || ( record->Subsequence == subsequence ) ) )
 	    return record;
     }
