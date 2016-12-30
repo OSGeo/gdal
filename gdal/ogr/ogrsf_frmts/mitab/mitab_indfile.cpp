@@ -574,7 +574,7 @@ int TABINDFile::SetIndexUnique(int nIndexNumber, GBool bUnique/*=TRUE*/)
  * next call to BuildKey().  (should not be freed by the caller).
  * Returns NULL if field index is invalid.
  *
- * The first flavour of the function handles integer type of values, this
+ * The first flavor of the function handles integer type of values, this
  * corresponds to MapInfo types: integer, smallint, logical and date
  **********************************************************************/
 GByte *TABINDFile::BuildKey(int nIndexNumber, GInt32 nValue)

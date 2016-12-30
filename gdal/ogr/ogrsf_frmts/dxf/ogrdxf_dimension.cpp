@@ -307,7 +307,7 @@ the approach is as above in all these cases.
 /*      feature for the next feature read.                              */
 /* -------------------------------------------------------------------- */
 
-    // a single space suppresses labelling.
+    // a single space suppresses labeling.
     if( osText == " " )
         return poFeature;
 

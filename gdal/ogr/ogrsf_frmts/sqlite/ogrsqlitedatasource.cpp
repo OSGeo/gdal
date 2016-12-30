@@ -3181,7 +3181,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle SpatiaLite (< 4) flavour of the spatial_ref_sys.         */
+/*      Handle SpatiaLite (< 4) flavor of the spatial_ref_sys.         */
 /* -------------------------------------------------------------------- */
     else
     {
@@ -3520,7 +3520,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Next try SpatiaLite flavour. SpatiaLite uses PROJ.4 strings     */
+/*      Next try SpatiaLite flavor. SpatiaLite uses PROJ.4 strings     */
 /*      in 'proj4text' column instead of WKT in 'srtext'. Note: recent  */
 /*      versions of spatialite have a srs_wkt column too                */
 /* -------------------------------------------------------------------- */

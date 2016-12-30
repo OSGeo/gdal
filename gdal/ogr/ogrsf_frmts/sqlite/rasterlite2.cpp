@@ -773,7 +773,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
         }
     }
 
-    // Instanciate overviews
+    // Instantiate overviews
     int nStrictResolution = 0;
     int nMixedResolutions = 0;
     int nSectionPaths = 0;

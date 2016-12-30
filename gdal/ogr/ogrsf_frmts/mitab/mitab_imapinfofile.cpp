@@ -199,7 +199,7 @@ int IMapInfoFile::Open(const char *pszFname, const char* pszAccess,
 /**********************************************************************
  *                   IMapInfoFile::SmartOpen()
  *
- * Use this static method to automatically open any flavour of MapInfo
+ * Use this static method to automatically open any flavor of MapInfo
  * dataset.  This method will detect the file type, create an object
  * of the right type, and open the file.
  *
