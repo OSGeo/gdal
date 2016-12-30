@@ -248,7 +248,7 @@ void RegisterOGRSQLite()
 "  <Option name='1BIT_AS_8BIT' type='boolean' description='Whether to promote 1-bit monochrome raster as 8-bit, so as to have higher quality overviews' default='YES'/>"
 "</OpenOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    CPLString osCreationOptions(
 "<CreationOptionList>"
 #ifdef HAVE_SPATIALITE
 "  <Option name='SPATIALITE' type='boolean' description='Whether to create a Spatialite database' default='NO'/>"
@@ -256,31 +256,50 @@ void RegisterOGRSQLite()
 "  <Option name='METADATA' type='boolean' description='Whether to create the geometry_columns and spatial_ref_sys tables' default='YES'/>"
 "  <Option name='INIT_WITH_EPSG' type='boolean' description='Whether to insert the content of the EPSG CSV files into the spatial_ref_sys table ' default='NO'/>"
 #ifdef HAVE_RASTERLITE2
-"  <Option name='APPEND_SUBDATASET' type='boolean' description='Whether to add the raster to the existing file' default='NO'/>"
-"  <Option name='COVERAGE' type='string' description='Coverage name'/>"
-"  <Option name='SECTION' type='string' description='Section name'/>"
-"  <Option name='COMPRESS' type='string-select' description='Raster compression' default='NONE'>"
+"  <Option name='APPEND_SUBDATASET' scope='raster' type='boolean' description='Whether to add the raster to the existing file' default='NO'/>"
+"  <Option name='COVERAGE' scope='raster' type='string' description='Coverage name'/>"
+"  <Option name='SECTION' scope='raster' type='string' description='Section name'/>"
+"  <Option name='COMPRESS' scope='raster' type='string-select' description='Raster compression' default='NONE'>"
 "    <Value>NONE</Value>"
-"    <Value>DEFLATE</Value>"
-"    <Value>LZMA</Value>"
-"    <Value>PNG</Value>"
-"    <Value>CCITTFAX4</Value>"
-"    <Value>JPEG</Value>"
-"    <Value>WEBP</Value>"
-"    <Value>CHARLS</Value>"
-"    <Value>JPEG2000</Value>"
+#endif
+    );
+#ifdef HAVE_RASTERLITE2
+    if( rl2_is_supported_codec( RL2_COMPRESSION_DEFLATE ) )
+        osCreationOptions += "    <Value>DEFLATE</Value>";
+    if( rl2_is_supported_codec( RL2_COMPRESSION_LZMA ) )
+        osCreationOptions += "    <Value>LZMA</Value>";
+    if( rl2_is_supported_codec( RL2_COMPRESSION_PNG ) )
+        osCreationOptions += "    <Value>PNG</Value>";
+    if( rl2_is_supported_codec( RL2_COMPRESSION_CCITTFAX4 ) )
+        osCreationOptions += "    <Value>CCITTFAX4</Value>";
+    if( rl2_is_supported_codec( RL2_COMPRESSION_JPEG ) )
+        osCreationOptions += "    <Value>JPEG</Value>";
+    if( rl2_is_supported_codec( RL2_COMPRESSION_LOSSY_WEBP ) )
+        osCreationOptions += "    <Value>WEBP</Value>";
+    if( rl2_is_supported_codec( RL2_COMPRESSION_CHARLS ) )
+        osCreationOptions += "    <Value>CHARLS</Value>";
+    if( rl2_is_supported_codec( RL2_COMPRESSION_LOSSY_JP2 ) )
+        osCreationOptions += "    <Value>JPEG2000</Value>";
+#endif
+    osCreationOptions +=
+#ifdef HAVE_RASTERLITE2
 "  </Option>"
-"  <Option name='QUALITY' type='int' description='Image quality for JPEG, WEBP and JPEG2000 compressions'/>"
-"  <Option name='PIXEL_TYPE' type='string-select' description='Raster pixel type. Determines photometric interpretation'>"
+"  <Option name='QUALITY' scope='raster' type='int' description='Image quality for JPEG, WEBP and JPEG2000 compressions'/>"
+"  <Option name='PIXEL_TYPE' scope='raster' type='string-select' description='Raster pixel type. Determines photometric interpretation'>"
+"    <Value>MONOCHROME</Value>"
+"    <Value>PALETTE</Value>"
 "    <Value>GRAYSCALE</Value>"
 "    <Value>RGB</Value>"
 "    <Value>MULTIBAND</Value>"
 "    <Value>DATAGRID</Value>"
 "  </Option>"
-"  <Option name='BLOCKXSIZE' type='int' description='Block width' default='512'/>"
-"  <Option name='BLOCKYSIZE' type='int' description='Block height' default='512'/>"
+"  <Option name='BLOCKXSIZE' scope='raster' type='int' description='Block width' default='512'/>"
+"  <Option name='BLOCKYSIZE' scope='raster' type='int' description='Block height' default='512'/>"
+"  <Option name='NBITS' scope='raster' type='int' description='Force bit width. 1, 2 or 4 are supported'/>"
 #endif
-"</CreationOptionList>");
+"</CreationOptionList>";
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, osCreationOptions);
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
