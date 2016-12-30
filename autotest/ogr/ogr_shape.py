@@ -5064,6 +5064,23 @@ def ogr_shape_104():
     return 'success'
 
 ###############################################################################
+# Test reading .dbf with substantial padding after last field definition.
+
+def ogr_shape_105():
+
+    ds = ogr.Open('data/padding_after_field_defns.dbf')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['id'] != '1' or f['foo'] != '2':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ogr_shape_cleanup():
 
     if gdaltest.shape_ds is None:
@@ -5211,6 +5228,7 @@ gdaltest_list = [
     ogr_shape_102,
     ogr_shape_103,
     ogr_shape_104,
+    ogr_shape_105,
     ogr_shape_cleanup ]
 
 # gdaltest_list = [ ogr_shape_104 ]

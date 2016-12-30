@@ -636,6 +636,11 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
 	unsigned char		*pabyFInfo;
 
 	pabyFInfo = pabyBuf+iField*XBASE_FLDHDR_SZ;
+        if( pabyFInfo[0] == HEADER_RECORD_TERMINATOR )
+        {
+            psDBF->nFields = iField;
+            break;
+        }
 
 	if( pabyFInfo[11] == 'N' || pabyFInfo[11] == 'F' )
 	{
