@@ -3627,11 +3627,11 @@ if test -z "$with_rasterlite2" -o "$with_rasterlite2" = "no"; then
 elif test "$with_rasterlite2" = "yes"; then
     AC_CHECK_HEADERS(rasterlite2/rasterlite2.h)
     if test "$ac_cv_header_rasterlite2_rasterlite2_h" = "yes"; then
-        AC_CHECK_LIB(rasterlite2,rl2_version,HAVE_RASTERLITE2=yes,HAVE_RASTERLITE2=no,)
+        AC_CHECK_LIB(rasterlite2,rl2_load_raw_tiles_into_dbms,HAVE_RASTERLITE2=yes,HAVE_RASTERLITE2=no,)
         if test "$HAVE_RASTERLITE2" = "yes"; then
             LIBS="$LIBS -lrasterlite2 -lsqlite3"
         else
-            AC_MSG_ERROR([did not find rl2_version])
+            AC_MSG_ERROR([did not find rl2_load_raw_tiles_into_dbms])
         fi
     else
         AC_MSG_ERROR([did not find rasterlite2.h])
@@ -3640,12 +3640,12 @@ else
     AC_MSG_CHECKING([for include/rasterlite2/rasterlite2.h])
     if test -f "$with_rasterlite2/include/rasterlite2/rasterlite2.h"; then
         AC_MSG_RESULT([found])
-        AC_CHECK_LIB(rasterlite2,rl2_version,HAVE_RASTERLITE2=yes,HAVE_RASTERLITE2=no,-L$with_rasterlite2/lib)
+        AC_CHECK_LIB(rasterlite2,rl2_load_raw_tiles_into_dbms,HAVE_RASTERLITE2=yes,HAVE_RASTERLITE2=no,-L$with_rasterlite2/lib)
         if test "$HAVE_RASTERLITE2" = "yes"; then
             RASTERLITE2_CFLAGS="-I$with_rasterlite2/include"
             LIBS="$LIBS -L$with_rasterlite2/lib -lrasterlite2 -lsqlite3"
         else
-            AC_MSG_ERROR([did not find rl2_version])
+            AC_MSG_ERROR([did not find rl2_load_raw_tiles_into_dbms])
         fi
     else
         AC_MSG_ERROR([did not find rasterlite2.h])
