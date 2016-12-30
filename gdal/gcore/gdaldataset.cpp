@@ -1908,11 +1908,11 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  * nLineSpace * nBufYSize implying band sequential organization
  * of the data buffer.
  *
- * @param psExtraArg (new in GDAL 2.0) pointer to a GDALRasterIOExtraArg structure with additional
- * arguments to specify resampling and progress callback, or NULL for default
- * behaviour. The GDAL_RASTERIO_RESAMPLING configuration option can also be defined
- * to override the default resampling to one of BILINEAR, CUBIC, CUBICSPLINE,
- * LANCZOS, AVERAGE or MODE.
+ * @param psExtraArg (new in GDAL 2.0) pointer to a GDALRasterIOExtraArg
+ * structure with additional arguments to specify resampling and progress
+ * callback, or NULL for default behaviour. The GDAL_RASTERIO_RESAMPLING
+ * configuration option can also be defined to override the default resampling
+ * to one of BILINEAR, CUBIC, CUBICSPLINE, LANCZOS, AVERAGE or MODE.
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
  */
@@ -2428,13 +2428,13 @@ char ** CPL_STDCALL GDALGetFileList( GDALDatasetH hDS )
  * level, where xx matches the band number of a band of the main dataset. The
  * value of those items will be the one of the nFlagsIn parameter.
  *
- * Note that if you got a mask band with a previous call to GetMaskBand(),
- * it might be invalidated by CreateMaskBand(). So you have to call GetMaskBand()
+ * Note that if you got a mask band with a previous call to GetMaskBand(), it
+ * might be invalidated by CreateMaskBand(). So you have to call GetMaskBand()
  * again.
  *
  * @since GDAL 1.5.0
  *
- * @param nFlagsIn 0 or combination of GMF_PER_DATASET / GMF_ALPHA. 
+ * @param nFlagsIn 0 or combination of GMF_PER_DATASET / GMF_ALPHA.
  *                 GMF_PER_DATASET will be always set, even if not explicitly
  *                 specified.
  * @return CE_None on success or CE_Failure on an error.
@@ -2503,19 +2503,20 @@ CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
  * <ul>
  * <li>If you open a dataset object with GA_Update access, it is not recommended
  * to open a new dataset on the same underlying file.</li>
- * <li>The returned dataset should only be accessed by one thread at a time. If you
- * want to use it from different threads, you must add all necessary code (mutexes, etc.)
- * to avoid concurrent use of the object. (Some drivers, such as GeoTIFF, maintain internal
- * state variables that are updated each time a new block is read, thus preventing concurrent
- * use.) </li>
+ * <li>The returned dataset should only be accessed by one thread at a time. If
+ * you want to use it from different threads, you must add all necessary code
+ * (mutexes, etc.)  to avoid concurrent use of the object. (Some drivers, such
+ * as GeoTIFF, maintain internal state variables that are updated each time a
+ * new block is read, thus preventing concurrent use.) </li>
  * </ul>
  *
- * For drivers supporting the VSI virtual file API, it is possible to open
- * a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
- * (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
+ * For drivers supporting the VSI virtual file API, it is possible to open a
+ * file in a .zip archive (see VSIInstallZipFileHandler()), in a
+ * .tar/.tar.gz/.tgz archive (see VSIInstallTarFileHandler()) or on a HTTP / FTP
+ * server (see VSIInstallCurlFileHandler())
  *
- * In some situations (dealing with unverified data), the datasets can be opened in another
- * process through the \ref gdal_api_proxy mechanism.
+ * In some situations (dealing with unverified data), the datasets can be opened
+ * in another process through the \ref gdal_api_proxy mechanism.
  *
  * \sa GDALOpenShared()
  * \sa GDALOpenEx()
@@ -2557,21 +2558,22 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  *
  * Several recommendations :
  * <ul>
- * <li>If you open a dataset object with GDAL_OF_UPDATE access, it is not recommended
- * to open a new dataset on the same underlying file.</li>
- * <li>The returned dataset should only be accessed by one thread at a time. If you
- * want to use it from different threads, you must add all necessary code (mutexes, etc.)
- * to avoid concurrent use of the object. (Some drivers, such as GeoTIFF, maintain internal
- * state variables that are updated each time a new block is read, thus preventing concurrent
- * use.) </li>
+ * <li>If you open a dataset object with GDAL_OF_UPDATE access, it is not
+ * recommended to open a new dataset on the same underlying file.</li>
+ * <li>The returned dataset should only be accessed by one thread at a time. If
+ * you want to use it from different threads, you must add all necessary code
+ * (mutexes, etc.)  to avoid concurrent use of the object. (Some drivers, such
+ * as GeoTIFF, maintain internal state variables that are updated each time a
+ * new block is read, thus preventing concurrent use.) </li>
  * </ul>
  *
- * For drivers supporting the VSI virtual file API, it is possible to open
- * a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
- * (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
+ * For drivers supporting the VSI virtual file API, it is possible to open a
+ * file in a .zip archive (see VSIInstallZipFileHandler()), in a
+ * .tar/.tar.gz/.tgz archive (see VSIInstallTarFileHandler()) or on a HTTP / FTP
+ * server (see VSIInstallCurlFileHandler())
  *
- * In some situations (dealing with unverified data), the datasets can be opened in another
- * process through the \ref gdal_api_proxy mechanism.
+ * In some situations (dealing with unverified data), the datasets can be opened
+ * in another process through the \ref gdal_api_proxy mechanism.
  *
  * In order to reduce the need for searches through the operating system
  * file system machinery, it is possible to give an optional list of files with
@@ -2587,30 +2589,31 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * information for the driver on how to access a dataset.  It should be in UTF-8
  * encoding.
  *
- * @param nOpenFlags a combination of GDAL_OF_ flags that may be combined through
- * logical or operator.
+ * @param nOpenFlags a combination of GDAL_OF_ flags that may be combined
+ * through logical or operator.
  * <ul>
- * <li>Driver kind: GDAL_OF_RASTER for raster drivers, GDAL_OF_VECTOR for vector drivers.
- *     If none of the value is specified, both kinds are implied.</li>
+ * <li>Driver kind: GDAL_OF_RASTER for raster drivers, GDAL_OF_VECTOR for vector
+ *     drivers.  If none of the value is specified, both kinds are implied.</li>
  * <li>Access mode: GDAL_OF_READONLY (exclusive)or GDAL_OF_UPDATE.</li>
- * <li>Shared mode: GDAL_OF_SHARED. If set, it allows the sharing of
- *  GDALDataset handles for a dataset with other callers that have set GDAL_OF_SHARED.
+ * <li>Shared mode: GDAL_OF_SHARED. If set, it allows the sharing of GDALDataset
+ * handles for a dataset with other callers that have set GDAL_OF_SHARED.
  * In particular, GDALOpenEx() will first consult its list of currently
  * open and shared GDALDataset's, and if the GetDescription() name for one
  * exactly matches the pszFilename passed to GDALOpenEx() it will be
  * referenced and returned, if GDALOpenEx() is called from the same thread.</li>
- * <li>Verbose error: GDAL_OF_VERBOSE_ERROR. If set, a failed attempt to open the
- * file will lead to an error message to be reported.</li>
+ * <li>Verbose error: GDAL_OF_VERBOSE_ERROR. If set, a failed attempt to open
+ * the file will lead to an error message to be reported.</li>
  * </ul>
  *
  * @param papszAllowedDrivers NULL to consider all candidate drivers, or a NULL
- * terminated list of strings with the driver short names that must be considered.
+ * terminated list of strings with the driver short names that must be
+ * considered.
  *
  * @param papszOpenOptions NULL, or a NULL terminated list of strings with open
  * options passed to candidate drivers. An option exists for all drivers,
  * OVERVIEW_LEVEL=level, to select a particular overview level of a dataset.
- * The level index starts at 0. The level number can be suffixed by "only" to specify that
- * only this overview level must be visible, and not sub-levels.
+ * The level index starts at 0. The level number can be suffixed by "only" to
+ * specify that only this overview level must be visible, and not sub-levels.
  * Open options are validated by default, and a warning is emitted in case the
  * option is not recognized. In some scenarios, it might be not desirable (e.g.
  * when not knowing which driver will open the file), so the special open option
@@ -2618,9 +2621,9 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * since GDAL 2.1, an option name can be preceded by the @ character to indicate
  * that it may not cause a warning if the driver doesn't declare this option.
  *
- * @param papszSiblingFiles  NULL, or a NULL terminated list of strings that are
- * filenames that are auxiliary to the main filename. If NULL is passed, a probing
- * of the file system will be done.
+ * @param papszSiblingFiles NULL, or a NULL terminated list of strings that are
+ * filenames that are auxiliary to the main filename. If NULL is passed, a
+ * probing of the file system will be done.
  *
  * @return A GDALDatasetH handle or NULL on failure.  For C++ applications
  * this handle can be cast to a GDALDataset *.
@@ -2776,8 +2779,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
         if ( poDriver->pfnOpen != NULL )
         {
             poDS = poDriver->pfnOpen( &oOpenInfo );
-            // If we couldn't determine for sure with Identify() (it returned -1)
-            // but that Open() managed to open the file, post validate options.
+            // If we couldn't determine for sure with Identify() (it returned
+            // -1), but Open() managed to open the file, post validate options.
             if( poDS != NULL && poDriver->pfnIdentify && !bIdentifyRes )
                 GDALValidateOpenOptions( poDriver, papszOptionsToValidate );
         }
@@ -2934,17 +2937,18 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
  * exactly matches the pszFilename passed to GDALOpenShared() it will be
  * referenced and returned.
  *
- * Starting with GDAL 1.6.0, if GDALOpenShared() is called on the same pszFilename
- * from two different threads, a different GDALDataset object will be returned as
- * it is not safe to use the same dataset from different threads, unless the user
- * does explicitly use mutexes in its code.
+ * Starting with GDAL 1.6.0, if GDALOpenShared() is called on the same
+ * pszFilename from two different threads, a different GDALDataset object will
+ * be returned as it is not safe to use the same dataset from different threads,
+ * unless the user does explicitly use mutexes in its code.
  *
- * For drivers supporting the VSI virtual file API, it is possible to open
- * a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
- * (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
+ * For drivers supporting the VSI virtual file API, it is possible to open a
+ * file in a .zip archive (see VSIInstallZipFileHandler()), in a
+ * .tar/.tar.gz/.tgz archive (see VSIInstallTarFileHandler()) or on a HTTP / FTP
+ * server (see VSIInstallCurlFileHandler())
  *
- * In some situations (dealing with unverified data), the datasets can be opened in another
- * process through the \ref gdal_api_proxy mechanism.
+ * In some situations (dealing with unverified data), the datasets can be opened
+ * in another process through the \ref gdal_api_proxy mechanism.
  *
  * \sa GDALOpen()
  * \sa GDALOpenEx()
@@ -3378,8 +3382,8 @@ void CPL_STDCALL GDALEndAsyncReader( GDALDatasetH hDS,
  * The driver implementation may choose to destroy its raster bands,
  * so be careful not to call any method on the raster bands afterwards.
  *
- * Basically the only safe action you can do after calling CloseDependentDatasets()
- * is to call the destructor.
+ * Basically the only safe action you can do after calling
+ * CloseDependentDatasets() is to call the destructor.
  *
  * Note: the only legitimate caller of CloseDependentDatasets() is
  * GDALDriverManager::~GDALDriverManager()
@@ -3495,10 +3499,10 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
  * \fn GDALDataset::SetMetadata( char ** papszMetadata, const char * pszDomain)
  * \brief Set metadata.
  *
- * CAUTION: depending on the format, older values of the updated information might
- * still be found in the file in a "ghost" state, even if no longer accessible
- * through the GDAL API. This is for example the case of the GTiff format (this is
- * not a exhaustive list)
+ * CAUTION: depending on the format, older values of the updated information
+ * might still be found in the file in a "ghost" state, even if no longer
+ * accessible through the GDAL API. This is for example the case of the GTiff
+ * format (this is not a exhaustive list)
  *
  * The C function GDALSetMetadata() does the same thing as this method.
  *
@@ -3512,13 +3516,14 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
  */
 
 /**
- * \fn GDALDataset::SetMetadataItem( const char * pszName, const char * pszValue, const char * pszDomain)
+ * \fn GDALDataset::SetMetadataItem( const char * pszName, const char *
+ * pszValue, const char * pszDomain)
  * \brief Set single metadata item.
  *
- * CAUTION: depending on the format, older values of the updated information might
- * still be found in the file in a "ghost" state, even if no longer accessible
- * through the GDAL API. This is for example the case of the GTiff format (this is
- * not a exhaustive list)
+ * CAUTION: depending on the format, older values of the updated information
+ * might still be found in the file in a "ghost" state, even if no longer
+ * accessible through the GDAL API. This is for example the case of the GTiff
+ * format (this is not a exhaustive list)
  *
  * The C function GDALSetMetadataItem() does the same thing as this method.
  *
@@ -3537,7 +3542,7 @@ char ** GDALDataset::GetMetadataDomainList()
 {
     char ** currentDomainList = CSLDuplicate(oMDMD.GetDomainList());
 
-    // Ensure that we do not duplicate DERIVED domain
+    // Ensure that we do not duplicate DERIVED domain.
     if(GetRasterCount()>0 && CSLFindString(currentDomainList,"DERIVED_SUBDATASETS")==-1)
     {
         currentDomainList = CSLAddString(currentDomainList,"DERIVED_SUBDATASETS");
@@ -3702,31 +3707,32 @@ OGRErr GDALDatasetDeleteLayer( GDALDatasetH hDS, int iLayer )
 /************************************************************************/
 
 /**
-\brief This method attempts to create a new layer on the dataset with the indicated name, coordinate system, geometry type.
+\brief This method attempts to create a new layer on the dataset with the
+indicated name, coordinate system, geometry type.
 
 The papszOptions argument
 can be used to control driver specific creation options.  These options are
 normally documented in the format specific documentation.
 
- In GDAL 2.0, drivers should extend the ICreateLayer() method and not CreateLayer().
- CreateLayer() adds validation of layer creation options, before delegating the
- actual work to ICreateLayer().
+In GDAL 2.0, drivers should extend the ICreateLayer() method and not
+CreateLayer().  CreateLayer() adds validation of layer creation options, before
+delegating the actual work to ICreateLayer().
 
- This method is the same as the C function GDALDatasetCreateLayer() and the
- deprecated OGR_DS_CreateLayer().
+This method is the same as the C function GDALDatasetCreateLayer() and the
+deprecated OGR_DS_CreateLayer().
 
- In GDAL 1.X, this method used to be in the OGRDataSource class.
+In GDAL 1.X, this method used to be in the OGRDataSource class.
 
- @param pszName the name for the new layer.  This should ideally not
+@param pszName the name for the new layer.  This should ideally not
 match any existing layer on the datasource.
- @param poSpatialRef the coordinate system to use for the new layer, or NULL if
+@param poSpatialRef the coordinate system to use for the new layer, or NULL if
 no coordinate system is available.
- @param eGType the geometry type for the layer.  Use wkbUnknown if there
+@param eGType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written.
- @param papszOptions a StringList of name=value options.  Options are driver
+@param papszOptions a StringList of name=value options.  Options are driver
 specific.
 
- @return NULL is returned on failure, or a new OGRLayer handle on success.
+@return NULL is returned on failure, or a new OGRLayer handle on success.
 
 <b>Example:</b>
 
@@ -3788,27 +3794,28 @@ OGRLayer *GDALDataset::CreateLayer( const char * pszName,
 /************************************************************************/
 
 /**
-\brief This function attempts to create a new layer on the dataset with the indicated name, coordinate system, geometry type.
+\brief This function attempts to create a new layer on the dataset with the
+indicated name, coordinate system, geometry type.
 
-The papszOptions argument
-can be used to control driver specific creation options.  These options are
-normally documented in the format specific documentation.
+The papszOptions argument can be used to control driver specific creation
+options.  These options are normally documented in the format specific
+documentation.
 
- This method is the same as the C++ method GDALDataset::CreateLayer().
+This method is the same as the C++ method GDALDataset::CreateLayer().
 
- @since GDAL 2.0
+@since GDAL 2.0
 
- @param hDS the dataset handle
- @param pszName the name for the new layer.  This should ideally not
+@param hDS the dataset handle
+@param pszName the name for the new layer.  This should ideally not
 match any existing layer on the datasource.
- @param hSpatialRef the coordinate system to use for the new layer, or NULL if
+@param hSpatialRef the coordinate system to use for the new layer, or NULL if
 no coordinate system is available.
- @param eGType the geometry type for the layer.  Use wkbUnknown if there
+@param eGType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written.
- @param papszOptions a StringList of name=value options.  Options are driver
+@param papszOptions a StringList of name=value options.  Options are driver
 specific.
 
- @return NULL is returned on failure, or a new OGRLayer handle on success.
+@return NULL is returned on failure, or a new OGRLayer handle on success.
 
 <b>Example:</b>
 
@@ -3929,10 +3936,11 @@ OGRLayerH GDALDatasetCopyLayer( GDALDatasetH hDS,
  @param hDS the dataset handle.
  @param pszStatement the SQL statement to execute.
  @param hSpatialFilter geometry which represents a spatial filter. Can be NULL.
+
  @param pszDialect allows control of the statement dialect. If set to NULL, the
-OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
-unless OGRSQL is explicitly passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
-can also be used.
+ OGR SQL engine will be used, except for RDBMS drivers that will use their
+ dedicated SQL engine, unless OGRSQL is explicitly passed as the
+ dialect. Starting with OGR 1.10, the SQLITE dialect can also be used.
 
  @return an OGRLayer containing the results of the query.  Deallocate with
  ReleaseResultSet().
@@ -3989,7 +3997,8 @@ OGRStyleTableH GDALDatasetGetStyleTable( GDALDatasetH hDS )
  This function operate exactly as GDALDatasetSetStyleTable() except that it
  assumes ownership of the passed table.
 
- This function is the same as the C++ method GDALDataset::SetStyleTableDirectly()
+ This function is the same as the C++ method
+ GDALDataset::SetStyleTableDirectly()
 
  @since GDAL 2.0
 
@@ -4015,8 +4024,8 @@ void GDALDatasetSetStyleTableDirectly( GDALDatasetH hDS,
 /**
  \brief Set dataset style table.
 
- This function operate exactly as GDALDatasetSetStyleTableDirectly() except that it
- assumes ownership of the passed table.
+ This function operate exactly as GDALDatasetSetStyleTableDirectly() except that
+ it assumes ownership of the passed table.
 
  This function is the same as the C++ method GDALDataset::SetStyleTable()
 
@@ -4063,7 +4072,8 @@ int GDALDataset::ValidateLayerCreationOptions( const char* const* papszLCO )
 /************************************************************************/
 
 /**
-\brief Drop a reference to this dataset, and if the reference count drops to one close (destroy) the dataset.
+\brief Drop a reference to this dataset, and if the reference count drops to one
+close (destroy) the dataset.
 
 This method is the same as the C function OGRReleaseDataSource().
 
@@ -4135,22 +4145,23 @@ int GDALDataset::GetSummaryRefCount() const
 /************************************************************************/
 
 /**
-\brief This method attempts to create a new layer on the dataset with the indicated name, coordinate system, geometry type.
+ \brief This method attempts to create a new layer on the dataset with the
+ indicated name, coordinate system, geometry type.
 
-This method is reserved to implementation by drivers.
+ This method is reserved to implementation by drivers.
 
-The papszOptions argument
-can be used to control driver specific creation options.  These options are
-normally documented in the format specific documentation.
+ The papszOptions argument can be used to control driver specific creation
+ options.  These options are normally documented in the format specific
+ documentation.
 
  @param pszName the name for the new layer.  This should ideally not
-match any existing layer on the datasource.
+ match any existing layer on the datasource.
  @param poSpatialRef the coordinate system to use for the new layer, or NULL if
-no coordinate system is available.
+ no coordinate system is available.
  @param eGType the geometry type for the layer.  Use wkbUnknown if there
-are no constraints on the types geometry to be written.
+ are no constraints on the types geometry to be written.
  @param papszOptions a StringList of name=value options.  Options are driver
-specific.
+ specific.
 
  @return NULL is returned on failure, or a new OGRLayer handle on success.
 
@@ -5403,9 +5414,9 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
  @param pszStatement the SQL statement to execute.
  @param poSpatialFilter geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
-OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
-unless OGRSQL is explicitly passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
-can also be used.
+ OGR SQL engine will be used, except for RDBMS drivers that will use their
+ dedicated SQL engine, unless OGRSQL is explicitly passed as the
+ dialect. Starting with OGR 1.10, the SQLITE dialect can also be used.
 
  @return an OGRLayer containing the results of the query.  Deallocate with
  ReleaseResultSet().
@@ -5918,8 +5929,8 @@ OGRStyleTable *GDALDataset::GetStyleTable() { return m_poStyleTable; }
  This method operate exactly as SetStyleTable() except that it
  assumes ownership of the passed table.
 
- This method is the same as the C function GDALDatasetSetStyleTableDirectly() and
- the deprecated OGR_DS_SetStyleTableDirectly().
+ This method is the same as the C function GDALDatasetSetStyleTableDirectly()
+ and the deprecated OGR_DS_SetStyleTableDirectly().
 
  In GDAL 1.X, this method used to be in the OGRDataSource class.
 
@@ -6112,8 +6123,8 @@ void CPL_DLL GDALDatasetResetReading( GDALDatasetH hDS )
                           On return, the pointed value might be negative if
                           determining the progress is not possible.
  @param pfnProgress       a progress callback to report progress (for
-                          GetNextFeature() calls that might have a long duration)
-                          and offer cancellation possibility, or NULL
+                          GetNextFeature() calls that might have a long
+                          duration) and offer cancellation possibility, or NULL.
  @param pProgressData     user data provided to pfnProgress, or NULL
  @return a feature, or NULL if no more features are available.
  @since GDAL 2.2
@@ -6280,8 +6291,8 @@ OGRFeature* GDALDataset::GetNextFeature( OGRLayer** ppoBelongingLayer,
                           On return, the pointed value might be negative if
                           determining the progress is not possible.
  @param pfnProgress       a progress callback to report progress (for
-                          GetNextFeature() calls that might have a long duration)
-                          and offer cancellation possibility, or NULL
+                          GetNextFeature() calls that might have a long
+                          duration) and offer cancellation possibility, or NULL
  @param pProgressData     user data provided to pfnProgress, or NULL
  @return a feature, or NULL if no more features are available.
  @since GDAL 2.2
@@ -6314,16 +6325,21 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature( GDALDatasetH hDS,
 
  <ul>
   <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.<p>
-  <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
+  <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing
+          layers.<p>
   <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
-        datasource support CreateGeomField() just after layer creation.<p>
-  <li> <b>ODsCCurveGeometries</b>: True if this datasource supports curve geometries.<p>
-  <li> <b>ODsCTransactions</b>: True if this datasource supports (efficient) transactions.<p>
-  <li> <b>ODsCEmulatedTransactions</b>: True if this datasource supports transactions through emulation.<p>
-  <li> <b>ODsCRandomLayerRead</b>: True if this datasource has a dedicated GetNextFeature() implementation,
-          potentially returning features from layers in a non sequential way.<p>
-  <li> <b>ODsCRandomLayerWrite</b>: True if this datasource supports calling CreateFeature() on
-         layers in a non sequential way.<p>
+          datasource support CreateGeomField() just after layer creation.<p>
+  <li> <b>ODsCCurveGeometries</b>: True if this datasource supports curve
+          geometries.<p>
+  <li> <b>ODsCTransactions</b>: True if this datasource supports (efficient)
+          transactions.<p>
+  <li> <b>ODsCEmulatedTransactions</b>: True if this datasource supports
+          transactions through emulation.<p>
+  <li> <b>ODsCRandomLayerRead</b>: True if this datasource has a dedicated
+          GetNextFeature() implementation, potentially returning features from
+          layers in a non sequential way.<p>
+  <li> <b>ODsCRandomLayerWrite</b>: True if this datasource supports calling
+         CreateFeature() on layers in a non sequential way.<p>
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
@@ -6354,16 +6370,21 @@ int GDALDataset::TestCapability(CPL_UNUSED const char *pszCap) { return FALSE; }
 
  <ul>
   <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.<p>
-  <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
+  <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing
+          layers.<p>
   <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
-        datasource support CreateGeomField() just after layer creation.<p>
-  <li> <b>ODsCCurveGeometries</b>: True if this datasource supports curve geometries.<p>
-  <li> <b>ODsCTransactions</b>: True if this datasource supports (efficient) transactions.<p>
-  <li> <b>ODsCEmulatedTransactions</b>: True if this datasource supports transactions through emulation.<p>
-  <li> <b>ODsCRandomLayerRead</b>: True if this datasource has a dedicated GetNextFeature() implementation,
-          potentially returning features from layers in a non sequential way.<p>
-  <li> <b>ODsCRandomLayerWrite</b>: True if this datasource supports calling CreateFeature() on
-         layers in a non sequential way.<p>
+          datasource support CreateGeomField() just after layer creation.<p>
+  <li> <b>ODsCCurveGeometries</b>: True if this datasource supports curve
+          geometries.<p>
+  <li> <b>ODsCTransactions</b>: True if this datasource supports (efficient)
+          transactions.<p>
+  <li> <b>ODsCEmulatedTransactions</b>: True if this datasource supports
+          transactions through emulation.<p>
+  <li> <b>ODsCRandomLayerRead</b>: True if this datasource has a dedicated
+          GetNextFeature() implementation, potentially returning features from
+          layers in a non sequential way.<p>
+  <li> <b>ODsCRandomLayerWrite</b>: True if this datasource supports calling
+          CreateFeature() on layers in a non sequential way.<p>
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
@@ -6402,29 +6423,32 @@ int GDALDatasetTestCapability( GDALDatasetH hDS, const char *pszCap )
 
  Nested transactions are not supported.
 
- All changes done after the start of the transaction are definitely applied in the
- datasource if CommitTransaction() is called. They may be canceled by calling
- RollbackTransaction() instead.
+ All changes done after the start of the transaction are definitely applied in
+ the datasource if CommitTransaction() is called. They may be canceled by
+ calling RollbackTransaction() instead.
 
  At the time of writing, transactions only apply on vector layers.
 
- Datasets that support transactions will advertise the ODsCTransactions capability.
- Use of transactions at dataset level is generally preferred to transactions at
- layer level, whose scope is rarely limited to the layer from which it was started.
+ Datasets that support transactions will advertise the ODsCTransactions
+ capability.  Use of transactions at dataset level is generally preferred to
+ transactions at layer level, whose scope is rarely limited to the layer from
+ which it was started.
 
- In case StartTransaction() fails, neither CommitTransaction() or 
+ In case StartTransaction() fails, neither CommitTransaction() or
  RollbackTransaction() should be called.
 
- If an error occurs after a successful StartTransaction(), the whole
- transaction may or may not be implicitly canceled, depending on drivers. (e.g.
- the PG driver will cancel it, SQLite/GPKG not). In any case, in the event of an
- error, an explicit call to RollbackTransaction() should be done to keep things balanced.
+ If an error occurs after a successful StartTransaction(), the whole transaction
+ may or may not be implicitly canceled, depending on drivers. (e.g.  the PG
+ driver will cancel it, SQLite/GPKG not). In any case, in the event of an error,
+ an explicit call to RollbackTransaction() should be done to keep things
+ balanced.
 
  By default, when bForce is set to FALSE, only "efficient" transactions will be
  attempted. Some drivers may offer an emulation of transactions, but sometimes
- with significant overhead, in which case the user must explicitly allow for such
- an emulation by setting bForce to TRUE. Drivers that offer emulated transactions
- should advertise the ODsCEmulatedTransactions capability (and not ODsCTransactions).
+ with significant overhead, in which case the user must explicitly allow for
+ such an emulation by setting bForce to TRUE. Drivers that offer emulated
+ transactions should advertise the ODsCEmulatedTransactions capability (and not
+ ODsCTransactions).
 
  This function is the same as the C function GDALDatasetStartTransaction().
 
@@ -6455,9 +6479,9 @@ OGRErr GDALDataset::StartTransaction( CPL_UNUSED int bForce )
 
  Nested transactions are not supported.
 
- All changes done after the start of the transaction are definitely applied in the
- datasource if CommitTransaction() is called. They may be canceled by calling
- RollbackTransaction() instead.
+ All changes done after the start of the transaction are definitely applied in
+ the datasource if CommitTransaction() is called. They may be canceled by
+ calling RollbackTransaction() instead.
 
  At the time of writing, transactions only apply on vector layers.
 
@@ -6478,9 +6502,10 @@ OGRErr GDALDataset::StartTransaction( CPL_UNUSED int bForce )
 
  By default, when bForce is set to FALSE, only "efficient" transactions will be
  attempted. Some drivers may offer an emulation of transactions, but sometimes
- with significant overhead, in which case the user must explicitly allow for such
- an emulation by setting bForce to TRUE. Drivers that offer emulated transactions
- should advertise the ODsCEmulatedTransactions capability (and not ODsCTransactions).
+ with significant overhead, in which case the user must explicitly allow for
+ such an emulation by setting bForce to TRUE. Drivers that offer emulated
+ transactions should advertise the ODsCEmulatedTransactions capability (and not
+ ODsCTransactions).
 
  This function is the same as the C++ method GDALDataset::StartTransaction()
 
