@@ -29648,9 +29648,9 @@ fi
 done
 
     if test "$ac_cv_header_rasterlite2_rasterlite2_h" = "yes"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl2_version in -lrasterlite2" >&5
-$as_echo_n "checking for rl2_version in -lrasterlite2... " >&6; }
-if ${ac_cv_lib_rasterlite2_rl2_version+:} false; then :
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl2_load_raw_tiles_into_dbms in -lrasterlite2" >&5
+$as_echo_n "checking for rl2_load_raw_tiles_into_dbms in -lrasterlite2... " >&6; }
+if ${ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -29664,27 +29664,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char rl2_version ();
+char rl2_load_raw_tiles_into_dbms ();
 int
 main ()
 {
-return rl2_version ();
+return rl2_load_raw_tiles_into_dbms ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_rasterlite2_rl2_version=yes
+  ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms=yes
 else
-  ac_cv_lib_rasterlite2_rl2_version=no
+  ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rasterlite2_rl2_version" >&5
-$as_echo "$ac_cv_lib_rasterlite2_rl2_version" >&6; }
-if test "x$ac_cv_lib_rasterlite2_rl2_version" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms" >&5
+$as_echo "$ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms" >&6; }
+if test "x$ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms" = xyes; then :
   HAVE_RASTERLITE2=yes
 else
   HAVE_RASTERLITE2=no
@@ -29693,7 +29693,7 @@ fi
         if test "$HAVE_RASTERLITE2" = "yes"; then
             LIBS="$LIBS -lrasterlite2 -lsqlite3"
         else
-            as_fn_error $? "did not find rl2_version" "$LINENO" 5
+            as_fn_error $? "did not find rl2_load_raw_tiles_into_dbms" "$LINENO" 5
         fi
     else
         as_fn_error $? "did not find rasterlite2.h" "$LINENO" 5
@@ -29704,9 +29704,9 @@ $as_echo_n "checking for include/rasterlite2/rasterlite2.h... " >&6; }
     if test -f "$with_rasterlite2/include/rasterlite2/rasterlite2.h"; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
 $as_echo "found" >&6; }
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl2_version in -lrasterlite2" >&5
-$as_echo_n "checking for rl2_version in -lrasterlite2... " >&6; }
-if ${ac_cv_lib_rasterlite2_rl2_version+:} false; then :
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl2_load_raw_tiles_into_dbms in -lrasterlite2" >&5
+$as_echo_n "checking for rl2_load_raw_tiles_into_dbms in -lrasterlite2... " >&6; }
+if ${ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -29720,27 +29720,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char rl2_version ();
+char rl2_load_raw_tiles_into_dbms ();
 int
 main ()
 {
-return rl2_version ();
+return rl2_load_raw_tiles_into_dbms ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_rasterlite2_rl2_version=yes
+  ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms=yes
 else
-  ac_cv_lib_rasterlite2_rl2_version=no
+  ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rasterlite2_rl2_version" >&5
-$as_echo "$ac_cv_lib_rasterlite2_rl2_version" >&6; }
-if test "x$ac_cv_lib_rasterlite2_rl2_version" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms" >&5
+$as_echo "$ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms" >&6; }
+if test "x$ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms" = xyes; then :
   HAVE_RASTERLITE2=yes
 else
   HAVE_RASTERLITE2=no
@@ -29750,7 +29750,7 @@ fi
             RASTERLITE2_CFLAGS="-I$with_rasterlite2/include"
             LIBS="$LIBS -L$with_rasterlite2/lib -lrasterlite2 -lsqlite3"
         else
-            as_fn_error $? "did not find rl2_version" "$LINENO" 5
+            as_fn_error $? "did not find rl2_load_raw_tiles_into_dbms" "$LINENO" 5
         fi
     else
         as_fn_error $? "did not find rasterlite2.h" "$LINENO" 5
