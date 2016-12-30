@@ -1534,6 +1534,46 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
                      (bSpatialite4Layout) ? " v4" : "");
         }
 
+        // List RasterLite2 coverages, so as to avoid listing corresponding
+        // technical tables
+        std::set<CPLString> aoSetTablesToIgnore;
+        if( bSpatialite4Layout )
+        {
+            char** papszResults2 = NULL;
+            int nRowCount2 = 0, nColCount2 = 0;
+            rc = sqlite3_get_table( hDB,
+                                "SELECT name FROM sqlite_master WHERE "
+                                "type = 'table' AND name = 'raster_coverages'",
+                                &papszResults2, &nRowCount2,
+                                &nColCount2, NULL );
+            sqlite3_free_table(papszResults2);
+            if( rc == SQLITE_OK && nRowCount2 == 1 )
+            {
+                papszResults2 = NULL;
+                nRowCount2 = 0;
+                nColCount2 = 0;
+                rc = sqlite3_get_table( hDB,
+                                "SELECT coverage_name FROM raster_coverages",
+                                &papszResults2, &nRowCount2,
+                                &nColCount2, NULL );
+                if( rc == SQLITE_OK )
+                {
+                    for(int i=0;i<nRowCount2;++i)
+                    {
+                        const char * const* papszRow = papszResults2 + i*1 + 1;
+                        if( papszRow[0] != NULL )
+                        {
+                            aoSetTablesToIgnore.insert(
+                                    CPLString(papszRow[0]) + "_sections" );
+                            aoSetTablesToIgnore.insert(
+                                    CPLString(papszRow[0]) + "_tiles" );
+                        }
+                    }
+                }
+                sqlite3_free_table(papszResults2);
+            }
+        }
+
         for ( int iRow = 0; bListVectorLayers && iRow < nRowCount; iRow++ )
         {
             char **papszRow = papszResult + iRow * 6 + 6;
@@ -1542,6 +1582,12 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
 
             if( pszTableName == NULL || pszGeomCol == NULL )
                 continue;
+            if( !bListAllTables &&
+                aoSetTablesToIgnore.find(pszTableName) !=
+                                                aoSetTablesToIgnore.end() )
+            {
+                continue;
+            }
 
             aoMapTableToSetOfGeomCols[pszTableName].insert(CPLString(pszGeomCol).tolower());
         }
@@ -1553,6 +1599,12 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
 
             if (pszTableName == NULL )
                 continue;
+            if( !bListAllTables &&
+                aoSetTablesToIgnore.find(pszTableName) !=
+                                                aoSetTablesToIgnore.end() )
+            {
+                continue;
+            }
 
             if( GDALDataset::GetLayerByName(pszTableName) == NULL )
                 OpenTable( pszTableName);
