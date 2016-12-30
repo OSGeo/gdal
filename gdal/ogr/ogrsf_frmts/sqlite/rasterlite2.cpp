@@ -786,9 +786,27 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
                                &nSectionMD5,
                                &nSectionSummary);
     m_bRL2MixedResolutions = CPL_TO_BOOL(nMixedResolutions);
-    if( !nMixedResolutions || m_nSectionId >= 0 )
+
+    ListOverviews();
+
+    return true;
+#else // !defined(HAVE_RASTERLITE2)
+    return false;
+#endif // HAVE_RASTERLITE2
+}
+
+#ifdef HAVE_RASTERLITE2
+
+/************************************************************************/
+/*                          ListOverviews()                             */
+/************************************************************************/
+
+void OGRSQLiteDataSource::ListOverviews()
+{
+    if( !m_bRL2MixedResolutions || m_nSectionId >= 0 )
     {
-        if( !nMixedResolutions )
+        char* pszSQL;
+        if( !m_bRL2MixedResolutions )
         {
             pszSQL = sqlite3_mprintf(
                 "SELECT x_resolution_1_1, y_resolution_1_1, "
@@ -810,11 +828,11 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
                 CPLSPrintf( "%s_section_levels", m_osCoverageName.c_str() ),
                 static_cast<int>(m_nSectionId) );
         }
-        papszResults = NULL;
-        nRowCount = 0;
-        nColCount = 0;
+        char** papszResults = NULL;
+        int nRowCount = 0;
+        int nColCount = 0;
         char* pszErrMsg = NULL;
-        rc = sqlite3_get_table( hDB, pszSQL,
+        int rc = sqlite3_get_table( hDB, pszSQL,
                                 &papszResults, &nRowCount,
                                 &nColCount, &pszErrMsg );
         sqlite3_free( pszSQL );
@@ -858,14 +876,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
             sqlite3_free_table(papszResults);
         }
     }
-
-    return true;
-#else // !defined(HAVE_RASTERLITE2)
-    return false;
-#endif // HAVE_RASTERLITE2
 }
-
-#ifdef HAVE_RASTERLITE2
 
 /************************************************************************/
 /*                    CreateRL2OverviewDatasetIfNeeded()                   */
@@ -2232,7 +2243,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
     CPLString osSectionName( CSLFetchNameValueDef(papszOptions,
                                                   "SECTION",
                                                   CPLGetBasename(pszName)) );
-    const bool bPyramidize = true;
+    const bool bPyramidize = CPLFetchBool( papszOptions, "PYRAMIDIZE", false );
     RasterLite2CallbackData cbk_data;
     cbk_data.poSrcDS = poSrcDS;
     cbk_data.nPixelType = nPixelType;
@@ -2276,6 +2287,118 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
                            EscapeNameAndQuoteIfNeeded(osCoverageName).c_str()),
                 TRUE, NULL, GDAL_OF_RASTER );
     return poDS;
+}
+
+/************************************************************************/
+/*                            IsPowerOfTwo()                            */
+/************************************************************************/
+
+static bool IsPowerOfTwo( unsigned int i )
+{
+    int nBitSet = 0;
+    while(i != 0)
+    {
+        if( i & 1 )
+            ++nBitSet;
+        i >>= 1;
+    }
+    return nBitSet == 1;
+}
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr OGRSQLiteDataSource::IBuildOverviews(
+    const char * pszResampling,
+    int nOverviews, int * panOverviewList,
+    int nBandsIn, int * /*panBandList */,
+    GDALProgressFunc /*pfnProgress*/, void * /*pProgressData*/ )
+
+{
+    if( nBandsIn != nBands )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Only build of all bands is supported");
+    }
+
+    if( nOverviews == 0 )
+    {
+        int ret;
+        if( m_bRL2MixedResolutions && m_nSectionId >= 0 )
+        {
+            ret = rl2_delete_section_pyramid (hDB, m_osCoverageName,
+                                              m_nSectionId);
+        }
+        else
+        {
+            ret = rl2_delete_all_pyramids (hDB, m_osCoverageName);
+        }
+        if( ret != RL2_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Deletion of pyramids failed");
+            return CE_Failure;
+        }
+    }
+    else
+    {
+        if( !STARTS_WITH_CI(pszResampling, "NEAR") )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                "Resampling method is ignored. Using librasterlite2 own method");
+        }
+        for( int i = 0; i < nOverviews; ++i )
+        {
+            if( !IsPowerOfTwo(panOverviewList[i]) )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Only power-of-two overview factors are supported");
+                return CE_Failure;
+            }
+        }
+
+        const int nMaxThreads = 1;
+        const int bForcedRebuild = 1;
+        const int bVerbose = 0;
+        const int bVirtualLevels = 1;
+        int ret;
+        if( m_bRL2MixedResolutions )
+        {
+            if( m_nSectionId >= 0 )
+            {
+                ret = rl2_build_section_pyramid( hDB, nMaxThreads,
+                                           m_osCoverageName, m_nSectionId,
+                                           bForcedRebuild, bVerbose);
+            }
+            else
+            {
+                ret = rl2_build_monolithic_pyramid (hDB, m_osCoverageName,
+                                                    bVirtualLevels,
+                                                    bVerbose);
+
+            }
+        }
+        else
+        {
+            ret = rl2_build_monolithic_pyramid (hDB, m_osCoverageName,
+                                                bVirtualLevels,
+                                                bVerbose);
+        }
+        if( ret != RL2_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Build of pyramids failed");
+            return CE_Failure;
+        }
+    }
+
+    for(size_t i=0;i<m_apoOverviewDS.size();++i)
+        delete m_apoOverviewDS[i];
+    m_apoOverviewDS.clear();
+    ListOverviews();
+
+    return CE_None;
 }
 
 #endif // HAVE_RASTERLITE2
