@@ -580,6 +580,7 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
 
     psDBF->nFields = nFields = (nHeadLen - XBASE_FILEHDR_SZ) / XBASE_FLDHDR_SZ;
 
+    /* coverity[tainted_data] */
     psDBF->pszCurrentRecord = (char *) malloc(psDBF->nRecordLength);
 
 /* -------------------------------------------------------------------- */
