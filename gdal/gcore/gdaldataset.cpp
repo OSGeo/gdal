@@ -1517,10 +1517,9 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
 
 {
     if( oOvManager.IsInitialized() )
-        return oOvManager.BuildOverviews( NULL, pszResampling,
-                                          nOverviews, panOverviewList,
-                                          nListBands, panBandList,
-                                          pfnProgress, pProgressData );
+        return oOvManager.BuildOverviews(
+            NULL, pszResampling, nOverviews, panOverviewList, nListBands,
+            panBandList, pfnProgress, pProgressData);
     else
     {
         ReportError(CE_Failure, CPLE_NotSupported,
@@ -1725,7 +1724,7 @@ CPLErr GDALDataset::BandBasedRasterIO( GDALRWFlag eRWFlag,
             break;
         }
 
-        pabyBandData = ((GByte *) pData) + iBandIndex * nBandSpace;
+        pabyBandData = ((GByte *)pData) + iBandIndex * nBandSpace;
 
         if( nBandCount > 1 )
         {
@@ -1941,8 +1940,8 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
-    GDALRasterIOExtraArgSetResampleAlg(psExtraArg, nXSize, nYSize,
-                                       nBufXSize, nBufYSize);
+    GDALRasterIOExtraArgSetResampleAlg(psExtraArg, nXSize, nYSize, nBufXSize,
+                                       nBufYSize);
 
     if( NULL == pData )
     {
@@ -1965,10 +1964,9 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     }
 
     int bStopProcessing = FALSE;
-    eErr = ValidateRasterIOOrAdviseReadParameters( "RasterIO()", &bStopProcessing,
-                                                    nXOff, nYOff, nXSize, nYSize,
-                                                    nBufXSize, nBufYSize,
-                                                    nBandCount, panBandMap);
+    eErr = ValidateRasterIOOrAdviseReadParameters(
+        "RasterIO()", &bStopProcessing, nXOff, nYOff, nXSize, nYSize, nBufXSize,
+        nBufYSize, nBandCount, panBandMap);
     if( eErr != CE_None || bStopProcessing )
         return eErr;
 
@@ -1977,7 +1975,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 /*      value assuming a packed buffer.                                 */
 /* -------------------------------------------------------------------- */
     if( nPixelSpace == 0 )
-        nPixelSpace = GDALGetDataTypeSizeBytes( eBufType );
+        nPixelSpace = GDALGetDataTypeSizeBytes(eBufType);
 
     if( nLineSpace == 0 )
     {
@@ -2092,15 +2090,12 @@ GDALDatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
  * @since GDAL 2.0
  */
 
-CPLErr CPL_STDCALL
-GDALDatasetRasterIOEx( GDALDatasetH hDS, GDALRWFlag eRWFlag,
-                       int nXOff, int nYOff, int nXSize, int nYSize,
-                       void * pData, int nBufXSize, int nBufYSize,
-                       GDALDataType eBufType,
-                       int nBandCount, int *panBandMap,
-                       GSpacing nPixelSpace, GSpacing nLineSpace,
-                       GSpacing nBandSpace,
-                       GDALRasterIOExtraArg* psExtraArg )
+CPLErr CPL_STDCALL GDALDatasetRasterIOEx(
+    GDALDatasetH hDS, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+    int nYSize, void *pData, int nBufXSize, int nBufYSize,
+    GDALDataType eBufType, int nBandCount, int *panBandMap,
+    GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
+    GDALRasterIOExtraArg *psExtraArg )
 
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetRasterIOEx", CE_Failure);
@@ -2170,7 +2165,7 @@ void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **ppahDSList, int *pnCount )
     VALIDATE_POINTER0(ppahDSList, "GDALGetOpenDatasets");
     VALIDATE_POINTER0(pnCount, "GDALGetOpenDatasets");
 
-    *ppahDSList = (GDALDatasetH *) GDALDataset::GetOpenDatasets( pnCount);
+    *ppahDSList = (GDALDatasetH *)GDALDataset::GetOpenDatasets(pnCount);
 }
 
 /************************************************************************/
@@ -2276,7 +2271,7 @@ CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
         GDALRasterBand *poBand;
 
         if( panBandMap == NULL )
-            poBand = GetRasterBand(iBand+1);
+            poBand = GetRasterBand(iBand + 1);
         else
             poBand = GetRasterBand(panBandMap[iBand]);
 
@@ -2624,11 +2619,11 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * @since GDAL 2.0
  */
 
-GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
-                                 unsigned int nOpenFlags,
-                                 const char* const* papszAllowedDrivers,
-                                 const char* const* papszOpenOptions,
-                                 const char* const* papszSiblingFiles )
+GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
+                                     unsigned int nOpenFlags,
+                                     const char *const *papszAllowedDrivers,
+                                     const char *const *papszOpenOptions,
+                                     const char *const *papszSiblingFiles )
 {
     VALIDATE_POINTER1(pszFilename, "GDALOpen", NULL);
 
@@ -2775,11 +2770,11 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
         GDALDataset *poDS = NULL;
         if ( poDriver->pfnOpen != NULL )
         {
-            poDS = poDriver->pfnOpen( &oOpenInfo );
+            poDS = poDriver->pfnOpen(&oOpenInfo);
             // If we couldn't determine for sure with Identify() (it returned
             // -1), but Open() managed to open the file, post validate options.
             if( poDS != NULL && poDriver->pfnIdentify && !bIdentifyRes )
-                GDALValidateOpenOptions( poDriver, papszOptionsToValidate );
+                GDALValidateOpenOptions(poDriver, papszOptionsToValidate);
         }
         else if( poDriver->pfnOpenWithDriverArg != NULL )
         {
@@ -2855,19 +2850,21 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
                 (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) == NULL ||
                 CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST)).ifind("OVERVIEW_LEVEL") == std::string::npos) )
             {
-                CPLString osVal(CSLFetchNameValue(papszOpenOptions, "OVERVIEW_LEVEL"));
+                CPLString osVal(
+                    CSLFetchNameValue(papszOpenOptions, "OVERVIEW_LEVEL"));
                 int nOvrLevel = atoi(osVal);
                 int bThisLevelOnly = osVal.ifind("only") != std::string::npos;
-                GDALDataset* poOvrDS = GDALCreateOverviewDataset(poDS, nOvrLevel, bThisLevelOnly, TRUE);
+                GDALDataset *poOvrDS = GDALCreateOverviewDataset(
+                    poDS, nOvrLevel, bThisLevelOnly, TRUE);
                 if( poOvrDS == NULL )
                 {
                     if( nOpenFlags & GDAL_OF_VERBOSE_ERROR )
                     {
-                        CPLError( CE_Failure, CPLE_OpenFailed,
-                                  "Cannot open overview level %d of %s",
-                                  nOvrLevel, pszFilename );
+                        CPLError(CE_Failure, CPLE_OpenFailed,
+                                 "Cannot open overview level %d of %s",
+                                 nOvrLevel, pszFilename);
                     }
-                    GDALClose( poDS );
+                    GDALClose(poDS);
                     poDS = NULL;
                 }
                 else
@@ -2878,12 +2875,12 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             VSIErrorReset();
 
             CSLDestroy(papszOpenOptionsCleaned);
-            return (GDALDatasetH) poDS;
+            return (GDALDatasetH)poDS;
         }
 
         if( CPLGetLastErrorNo() != 0 && CPLGetLastErrorType() > CE_Warning)
         {
-            int* pnRecCount =
+            int *pnRecCount =
                 static_cast<int *>(CPLGetTLS(CTLS_GDALDATASET_REC_PROTECT_MAP));
             if( pnRecCount )
                 (*pnRecCount)--;
@@ -2899,23 +2896,28 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
     {
         // Check to see if there was a filesystem error, and report it if so.
         // If not, return a more generic error.
-        if(!VSIToCPLError(CE_Failure, CPLE_OpenFailed)) {
+        if(!VSIToCPLError(CE_Failure, CPLE_OpenFailed))
+        {
             if( oOpenInfo.bStatOK )
-                CPLError( CE_Failure, CPLE_OpenFailed,
-                          "`%s' not recognized as a supported file format.",
-                          pszFilename );
-            else {
+            {
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "`%s' not recognized as a supported file format.",
+                         pszFilename);
+            }
+            else
+            {
                 // If Stat failed and no VSI error was set, assume it is because
                 // the file did not exist on the filesystem.
-                CPLError( CE_Failure, CPLE_OpenFailed,
-                          "`%s' does not exist in the file system, "
-                          "and is not recognized as a supported dataset name.",
-                          pszFilename );
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "`%s' does not exist in the file system, "
+                         "and is not recognized as a supported dataset name.",
+                         pszFilename);
             }
         }
     }
 
-    int* pnRecCount = static_cast<int *>(CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP ));
+    int *pnRecCount =
+        static_cast<int *>(CPLGetTLS(CTLS_GDALDATASET_REC_PROTECT_MAP));
     if( pnRecCount )
         (*pnRecCount)--;
 
@@ -2968,13 +2970,12 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
 GDALDatasetH CPL_STDCALL
 GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
 {
-    VALIDATE_POINTER1( pszFilename, "GDALOpenShared", NULL );
-    return GDALOpenEx( pszFilename,
-                       GDAL_OF_RASTER |
-                       (eAccess == GA_Update ? GDAL_OF_UPDATE : 0) |
-                       GDAL_OF_SHARED |
-                       GDAL_OF_VERBOSE_ERROR,
-                       NULL, NULL, NULL );
+    VALIDATE_POINTER1(pszFilename, "GDALOpenShared", NULL);
+    return GDALOpenEx(pszFilename,
+                      GDAL_OF_RASTER |
+                          (eAccess == GA_Update ? GDAL_OF_UPDATE : 0) |
+                          GDAL_OF_SHARED | GDAL_OF_VERBOSE_ERROR,
+                      NULL, NULL, NULL);
 }
 
 /************************************************************************/
@@ -3024,10 +3025,10 @@ void CPL_STDCALL GDALClose( GDALDatasetH hDS )
 /*                        GDALDumpOpenDataset()                         */
 /************************************************************************/
 
-static int GDALDumpOpenSharedDatasetsForeach(void* elt, void* user_data)
+static int GDALDumpOpenSharedDatasetsForeach(void *elt, void *user_data)
 {
-    SharedDatasetCtxt* psStruct = (SharedDatasetCtxt*) elt;
-    FILE *fp = (FILE*) user_data;
+    SharedDatasetCtxt *psStruct = (SharedDatasetCtxt *)elt;
+    FILE *fp = static_cast<FILE *>(user_data);
     const char *pszDriverName;
     GDALDataset *poDS = psStruct->poDS;
 
@@ -3037,20 +3038,17 @@ static int GDALDumpOpenSharedDatasetsForeach(void* elt, void* user_data)
         pszDriverName = poDS->GetDriver()->GetDescription();
 
     poDS->Reference();
-    CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "  %d %c %-6s %7d %dx%dx%d %s\n",
-                poDS->Dereference(),
-                poDS->GetShared() ? 'S' : 'N',
-                pszDriverName,
-                                   static_cast<int>(psStruct->nPID),
-                poDS->GetRasterXSize(),
-                poDS->GetRasterYSize(),
-                poDS->GetRasterCount(),
-                poDS->GetDescription() ));
+    CPL_IGNORE_RET_VAL(
+        VSIFPrintf(fp, "  %d %c %-6s %7d %dx%dx%d %s\n", poDS->Dereference(),
+                   poDS->GetShared() ? 'S' : 'N', pszDriverName,
+                   static_cast<int>(psStruct->nPID), poDS->GetRasterXSize(),
+                   poDS->GetRasterYSize(), poDS->GetRasterCount(),
+                   poDS->GetDescription()));
 
     return TRUE;
 }
 
-static int GDALDumpOpenDatasetsForeach(GDALDataset* poDS, FILE *fp)
+static int GDALDumpOpenDatasetsForeach(GDALDataset *poDS, FILE *fp)
 {
     const char *pszDriverName;
 
@@ -3065,15 +3063,11 @@ static int GDALDumpOpenDatasetsForeach(GDALDataset* poDS, FILE *fp)
         pszDriverName = poDS->GetDriver()->GetDescription();
 
     poDS->Reference();
-    CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "  %d %c %-6s %7d %dx%dx%d %s\n",
-                poDS->Dereference(),
-                poDS->GetShared() ? 'S' : 'N',
-                pszDriverName,
-                -1,
-                poDS->GetRasterXSize(),
-                poDS->GetRasterYSize(),
-                poDS->GetRasterCount(),
-                poDS->GetDescription() ));
+    CPL_IGNORE_RET_VAL(
+        VSIFPrintf(fp, "  %d %c %-6s %7d %dx%dx%d %s\n", poDS->Dereference(),
+                   poDS->GetShared() ? 'S' : 'N', pszDriverName, -1,
+                   poDS->GetRasterXSize(), poDS->GetRasterYSize(),
+                   poDS->GetRasterCount(), poDS->GetDescription()));
 
     return TRUE;
 }
@@ -3091,21 +3085,23 @@ static int GDALDumpOpenDatasetsForeach(GDALDataset* poDS, FILE *fp)
 int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
 
 {
-    VALIDATE_POINTER1( fp, "GDALDumpOpenDatasets", 0 );
+    VALIDATE_POINTER1(fp, "GDALDumpOpenDatasets", 0);
 
-    CPLMutexHolderD( &hDLMutex );
+    CPLMutexHolderD(&hDLMutex);
 
     if (poAllDatasetMap != NULL)
     {
-        CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "Open GDAL Datasets:\n" ));
-        std::map<GDALDataset*, GIntBig>::iterator oIter = poAllDatasetMap->begin();
+        CPL_IGNORE_RET_VAL(VSIFPrintf(fp, "Open GDAL Datasets:\n"));
+        std::map<GDALDataset *, GIntBig>::iterator oIter =
+            poAllDatasetMap->begin();
         for(; oIter != poAllDatasetMap->end(); ++oIter )
         {
             GDALDumpOpenDatasetsForeach(oIter->first, fp);
         }
         if (phSharedDatasetSet != NULL)
         {
-            CPLHashSetForeach(phSharedDatasetSet, GDALDumpOpenSharedDatasetsForeach, fp);
+            CPLHashSetForeach(phSharedDatasetSet,
+                              GDALDumpOpenSharedDatasetsForeach, fp);
         }
         return static_cast<int>(poAllDatasetMap->size());
     }
@@ -3193,25 +3189,17 @@ int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
  * @return The GDALAsyncReader object representing the request.
  */
 
-GDALAsyncReader*
-GDALDataset::BeginAsyncReader(int nXOff, int nYOff,
-                              int nXSize, int nYSize,
-                              void *pBuf,
-                              int nBufXSize, int nBufYSize,
-                              GDALDataType eBufType,
-                              int nBandCount, int* panBandMap,
-                              int nPixelSpace, int nLineSpace,
-                              int nBandSpace, char **papszOptions)
+GDALAsyncReader *GDALDataset::BeginAsyncReader(
+    int nXOff, int nYOff, int nXSize, int nYSize, void *pBuf, int nBufXSize,
+    int nBufYSize, GDALDataType eBufType, int nBandCount, int *panBandMap,
+    int nPixelSpace, int nLineSpace, int nBandSpace, char **papszOptions )
 {
     // See gdaldefaultasync.cpp
 
-    return
-        GDALGetDefaultAsyncReader( this,
-                                     nXOff, nYOff, nXSize, nYSize,
-                                     pBuf, nBufXSize, nBufYSize, eBufType,
-                                     nBandCount, panBandMap,
-                                     nPixelSpace, nLineSpace, nBandSpace,
-                                     papszOptions );
+    return GDALGetDefaultAsyncReader(this, nXOff, nYOff, nXSize, nYSize, pBuf,
+                                     nBufXSize, nBufYSize, eBufType, nBandCount,
+                                     panBandMap, nPixelSpace, nLineSpace,
+                                     nBandSpace, papszOptions);
 }
 
 /************************************************************************/
@@ -3306,15 +3294,12 @@ GDALBeginAsyncReader( GDALDatasetH hDS, int nXOff, int nYOff,
                       char **papszOptions )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALDataset", NULL );
+    VALIDATE_POINTER1(hDS, "GDALDataset", NULL);
     return static_cast<GDALAsyncReaderH>(
-        static_cast<GDALDataset *>(hDS)->
-            BeginAsyncReader(nXOff, nYOff,
-                             nXSize, nYSize,
-                             pBuf, nBufXSize, nBufYSize,
-                             eBufType, nBandCount, panBandMap,
-                             nPixelSpace, nLineSpace,
-                             nBandSpace, papszOptions));
+        static_cast<GDALDataset *>(hDS)->BeginAsyncReader(
+            nXOff, nYOff, nXSize, nYSize, pBuf, nBufXSize, nBufYSize, eBufType,
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace,
+            papszOptions));
 }
 
 /************************************************************************/
@@ -3332,10 +3317,7 @@ GDALBeginAsyncReader( GDALDatasetH hDS, int nXOff, int nYOff,
  * @param poARIO pointer to a GDALAsyncReader
  */
 
-void GDALDataset::EndAsyncReader(GDALAsyncReader *poARIO )
-{
-    delete poARIO;
-}
+void GDALDataset::EndAsyncReader(GDALAsyncReader *poARIO) { delete poARIO; }
 
 /************************************************************************/
 /*                        GDALEndAsyncReader()                        */
@@ -3356,10 +3338,10 @@ void GDALDataset::EndAsyncReader(GDALAsyncReader *poARIO )
 void CPL_STDCALL GDALEndAsyncReader( GDALDatasetH hDS,
                                      GDALAsyncReaderH hAsyncReaderH )
 {
-    VALIDATE_POINTER0( hDS, "GDALDataset" );
-    VALIDATE_POINTER0( hAsyncReaderH, "GDALAsyncReader" );
-    static_cast<GDALDataset *>(hDS)->
-        EndAsyncReader(static_cast<GDALAsyncReader *>(hAsyncReaderH));
+    VALIDATE_POINTER0(hDS, "GDALDataset");
+    VALIDATE_POINTER0(hAsyncReaderH, "GDALAsyncReader");
+    static_cast<GDALDataset *>(hDS)
+        ->EndAsyncReader(static_cast<GDALAsyncReader *>(hAsyncReaderH));
 }
 
 /************************************************************************/
@@ -3422,19 +3404,18 @@ void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *
     va_start(args, fmt);
 
     char szNewFmt[256];
-    const char* pszDSName = GetDescription();
+    const char *pszDSName = GetDescription();
     if (strlen(fmt) + strlen(pszDSName) + 3 >= sizeof(szNewFmt) - 1)
         pszDSName = CPLGetFilename(pszDSName);
     if (pszDSName[0] != '\0' &&
         strlen(fmt) + strlen(pszDSName) + 3 < sizeof(szNewFmt) - 1)
     {
-        snprintf(szNewFmt, sizeof(szNewFmt), "%s: %s",
-                 pszDSName, fmt);
-        CPLErrorV( eErrClass, err_no, szNewFmt, args );
+        snprintf(szNewFmt, sizeof(szNewFmt), "%s: %s", pszDSName, fmt);
+        CPLErrorV(eErrClass, err_no, szNewFmt, args);
     }
     else
     {
-        CPLErrorV( eErrClass, err_no, fmt, args );
+        CPLErrorV(eErrClass, err_no, fmt, args);
     }
     va_end(args);
 }
@@ -3449,14 +3430,15 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
         oDerivedMetadataList.Clear();
 
         // First condition: at least one raster band
-        if(GetRasterCount()>0)
+        if(GetRasterCount() > 0)
         {
             // Check if there is at least one complex band
             bool hasAComplexBand = false;
 
-            for(int rasterId = 1; rasterId <= GetRasterCount();++rasterId)
+            for(int rasterId = 1; rasterId <= GetRasterCount(); ++rasterId)
             {
-                if(GDALDataTypeIsComplex(GetRasterBand(rasterId)->GetRasterDataType()))
+                if(GDALDataTypeIsComplex(
+                       GetRasterBand(rasterId)->GetRasterDataType()))
                 {
                     hasAComplexBand = true;
                     break;
@@ -3464,28 +3446,32 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
             }
 
             unsigned int nbSupportedDerivedDS;
-            const DerivedDatasetDescription * poDDSDesc =
+            const DerivedDatasetDescription *poDDSDesc =
                 GDALGetDerivedDatasetDescriptions(&nbSupportedDerivedDS);
 
             int nNumDataset = 1;
-            for(unsigned int derivedId = 0; derivedId<nbSupportedDerivedDS;++derivedId)
+            for(unsigned int derivedId = 0; derivedId < nbSupportedDerivedDS;
+                ++derivedId)
             {
                 if(hasAComplexBand ||
-                    CPLString(poDDSDesc[derivedId].pszInputPixelType) != "complex")
+                   CPLString(poDDSDesc[derivedId].pszInputPixelType) !=
+                       "complex")
                 {
                     oDerivedMetadataList.SetNameValue(
-                        CPLSPrintf("DERIVED_SUBDATASET_%d_NAME",nNumDataset),
+                        CPLSPrintf("DERIVED_SUBDATASET_%d_NAME", nNumDataset),
                         CPLSPrintf("DERIVED_SUBDATASET:%s:%s",
-                                poDDSDesc[derivedId].pszDatasetName,GetDescription()));
+                                   poDDSDesc[derivedId].pszDatasetName,
+                                   GetDescription()));
 
-                    CPLString osDesc(CPLSPrintf("%s from %s",
-                                    poDDSDesc[derivedId].pszDatasetDescription,
-                                    GetDescription()));
+                    CPLString osDesc(
+                        CPLSPrintf("%s from %s",
+                                   poDDSDesc[derivedId].pszDatasetDescription,
+                                   GetDescription()));
                     oDerivedMetadataList.SetNameValue(
-                        CPLSPrintf("DERIVED_SUBDATASET_%d_DESC",nNumDataset),
+                        CPLSPrintf("DERIVED_SUBDATASET_%d_DESC", nNumDataset),
                         osDesc.c_str());
 
-                    nNumDataset ++;
+                    nNumDataset++;
                 }
             }
         }
@@ -3538,14 +3524,16 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
 /*                            GetMetadataDomainList()                   */
 /************************************************************************/
 
-char ** GDALDataset::GetMetadataDomainList()
+char **GDALDataset::GetMetadataDomainList()
 {
-    char ** currentDomainList = CSLDuplicate(oMDMD.GetDomainList());
+    char **currentDomainList = CSLDuplicate(oMDMD.GetDomainList());
 
     // Ensure that we do not duplicate DERIVED domain.
-    if(GetRasterCount()>0 && CSLFindString(currentDomainList,"DERIVED_SUBDATASETS")==-1)
+    if(GetRasterCount() > 0 &&
+       CSLFindString(currentDomainList, "DERIVED_SUBDATASETS") == -1)
     {
-        currentDomainList = CSLAddString(currentDomainList,"DERIVED_SUBDATASETS");
+        currentDomainList =
+            CSLAddString(currentDomainList, "DERIVED_SUBDATASETS");
     }
     return currentDomainList;
 }
@@ -3557,7 +3545,7 @@ char ** GDALDataset::GetMetadataDomainList()
 /** Return driver name.
  * @return driver name.
  */
-const char* GDALDataset::GetDriverName()
+const char *GDALDataset::GetDriverName()
 {
     if( poDriver )
         return poDriver->GetDescription();
@@ -3586,10 +3574,10 @@ const char* GDALDataset::GetDriverName()
 void GDALDatasetReleaseResultSet( GDALDatasetH hDS, OGRLayerH hLayer )
 
 {
-    VALIDATE_POINTER0( hDS, "GDALDatasetReleaseResultSet" );
+    VALIDATE_POINTER0(hDS, "GDALDatasetReleaseResultSet");
 
-    static_cast<GDALDataset *>(hDS)->
-        ReleaseResultSet(reinterpret_cast<OGRLayer *>(hLayer));
+    static_cast<GDALDataset *>(hDS)
+        ->ReleaseResultSet(reinterpret_cast<OGRLayer *>(hLayer));
 }
 
 /************************************************************************/
@@ -3610,7 +3598,7 @@ void GDALDatasetReleaseResultSet( GDALDatasetH hDS, OGRLayerH hLayer )
 int GDALDatasetGetLayerCount( GDALDatasetH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALDatasetH", 0 );
+    VALIDATE_POINTER1(hDS, "GDALDatasetH", 0);
 
     return static_cast<GDALDataset *>(hDS)->GetLayerCount();
 }
@@ -3638,7 +3626,7 @@ int GDALDatasetGetLayerCount( GDALDatasetH hDS )
 OGRLayerH GDALDatasetGetLayer( GDALDatasetH hDS, int iLayer )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALDatasetGetLayer", NULL );
+    VALIDATE_POINTER1(hDS, "GDALDatasetGetLayer", NULL);
 
     return reinterpret_cast<OGRLayerH>(
         static_cast<GDALDataset *>(hDS)->GetLayer(iLayer));
@@ -3667,10 +3655,10 @@ OGRLayerH GDALDatasetGetLayer( GDALDatasetH hDS, int iLayer )
 OGRLayerH GDALDatasetGetLayerByName( GDALDatasetH hDS, const char *pszName )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALDatasetGetLayerByName", NULL );
+    VALIDATE_POINTER1(hDS, "GDALDatasetGetLayerByName", NULL);
 
     return reinterpret_cast<OGRLayerH>(
-        static_cast<GDALDataset *>(hDS)->GetLayerByName( pszName ));
+        static_cast<GDALDataset *>(hDS)->GetLayerByName(pszName));
 }
 
 /************************************************************************/
@@ -3697,9 +3685,9 @@ OGRLayerH GDALDatasetGetLayerByName( GDALDatasetH hDS, const char *pszName )
 OGRErr GDALDatasetDeleteLayer( GDALDatasetH hDS, int iLayer )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALDatasetH", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1(hDS, "GDALDatasetH", OGRERR_INVALID_HANDLE);
 
-    return static_cast<GDALDataset *>(hDS)->DeleteLayer( iLayer );
+    return static_cast<GDALDataset *>(hDS)->DeleteLayer(iLayer);
 }
 
 /************************************************************************/
@@ -3768,21 +3756,22 @@ OGRLayer *GDALDataset::CreateLayer( const char * pszName,
                                       char **papszOptions )
 
 {
-    ValidateLayerCreationOptions( papszOptions );
+    ValidateLayerCreationOptions(papszOptions);
 
     if( OGR_GT_IsNonLinear(eGType) && !TestCapability(ODsCCurveGeometries) )
     {
         eGType = OGR_GT_GetLinear(eGType);
     }
 
-    OGRLayer* poLayer = ICreateLayer(pszName, poSpatialRef, eGType, papszOptions);
+    OGRLayer *poLayer =
+        ICreateLayer(pszName, poSpatialRef, eGType, papszOptions);
 #ifdef DEBUG
     if( poLayer != NULL && OGR_GT_IsNonLinear(poLayer->GetGeomType()) &&
         !poLayer->TestCapability(OLCCurveGeometries) )
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Inconsistent driver: Layer geometry type is non-linear, but "
-                  "TestCapability(OLCCurveGeometries) returns FALSE." );
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Inconsistent driver: Layer geometry type is non-linear, but "
+                 "TestCapability(OLCCurveGeometries) returns FALSE.");
     }
 #endif
 
@@ -3852,19 +3841,18 @@ OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
                               char ** papszOptions )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALDatasetCreateLayer", NULL );
+    VALIDATE_POINTER1(hDS, "GDALDatasetCreateLayer", NULL);
 
     if (pszName == NULL)
     {
-        CPLError ( CE_Failure, CPLE_ObjectNull, "Name was NULL in GDALDatasetCreateLayer");
+        CPLError(CE_Failure, CPLE_ObjectNull,
+                 "Name was NULL in GDALDatasetCreateLayer");
         return NULL;
     }
     return reinterpret_cast<OGRLayerH>(
-        static_cast<GDALDataset *>(hDS)->
-            CreateLayer(
-                pszName,
-                reinterpret_cast<OGRSpatialReference *>(hSpatialRef),
-                eGType, papszOptions ));
+        static_cast<GDALDataset *>(hDS)->CreateLayer(
+            pszName, reinterpret_cast<OGRSpatialReference *>(hSpatialRef),
+            eGType, papszOptions));
 }
 
 /************************************************************************/
@@ -3898,14 +3886,13 @@ OGRLayerH GDALDatasetCopyLayer( GDALDatasetH hDS,
                                 char **papszOptions )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_DS_CopyGDALDatasetCopyLayerLayer", NULL );
-    VALIDATE_POINTER1( hSrcLayer, "GDALDatasetCopyLayer", NULL );
-    VALIDATE_POINTER1( pszNewName, "GDALDatasetCopyLayer", NULL );
+    VALIDATE_POINTER1(hDS, "OGR_DS_CopyGDALDatasetCopyLayerLayer", NULL);
+    VALIDATE_POINTER1(hSrcLayer, "GDALDatasetCopyLayer", NULL);
+    VALIDATE_POINTER1(pszNewName, "GDALDatasetCopyLayer", NULL);
 
     return reinterpret_cast<OGRLayerH>(
-        static_cast<GDALDataset *>(hDS)->
-            CopyLayer(reinterpret_cast<OGRLayer *>(hSrcLayer),
-                      pszNewName, papszOptions));
+        static_cast<GDALDataset *>(hDS)->CopyLayer(
+            reinterpret_cast<OGRLayer *>(hSrcLayer), pszNewName, papszOptions));
 }
 
 /************************************************************************/
@@ -3953,13 +3940,12 @@ OGRLayerH GDALDatasetExecuteSQL( GDALDatasetH hDS,
                              const char *pszDialect )
 
 {
-    VALIDATE_POINTER1( hDS, "GDALDatasetExecuteSQL", NULL );
+    VALIDATE_POINTER1(hDS, "GDALDatasetExecuteSQL", NULL);
 
     return reinterpret_cast<OGRLayerH>(
-        static_cast<GDALDataset *>(hDS)->
-            ExecuteSQL(pszStatement,
-                       reinterpret_cast<OGRGeometry *>(hSpatialFilter),
-                       pszDialect));
+        static_cast<GDALDataset *>(hDS)->ExecuteSQL(
+            pszStatement, reinterpret_cast<OGRGeometry *>(hSpatialFilter),
+            pszDialect));
 }
 
 /************************************************************************/
@@ -3981,7 +3967,7 @@ OGRLayerH GDALDatasetExecuteSQL( GDALDatasetH hDS,
 OGRStyleTableH GDALDatasetGetStyleTable( GDALDatasetH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_DS_GetStyleTable", NULL );
+    VALIDATE_POINTER1(hDS, "OGR_DS_GetStyleTable", NULL);
 
     return reinterpret_cast<OGRStyleTableH>(
         static_cast<GDALDataset *>(hDS)->GetStyleTable());
@@ -4011,10 +3997,10 @@ void GDALDatasetSetStyleTableDirectly( GDALDatasetH hDS,
                                        OGRStyleTableH hStyleTable )
 
 {
-    VALIDATE_POINTER0( hDS, "OGR_DS_SetStyleTableDirectly" );
+    VALIDATE_POINTER0(hDS, "OGR_DS_SetStyleTableDirectly");
 
-    static_cast<GDALDataset *>(hDS)->
-        SetStyleTableDirectly(reinterpret_cast<OGRStyleTable *>(hStyleTable));
+    static_cast<GDALDataset *>(hDS)
+        ->SetStyleTableDirectly(reinterpret_cast<OGRStyleTable *>(hStyleTable));
 }
 
 /************************************************************************/
@@ -4039,11 +4025,11 @@ void GDALDatasetSetStyleTableDirectly( GDALDatasetH hDS,
 void GDALDatasetSetStyleTable( GDALDatasetH hDS, OGRStyleTableH hStyleTable )
 
 {
-    VALIDATE_POINTER0( hDS, "OGR_DS_SetStyleTable" );
-    VALIDATE_POINTER0( hStyleTable, "OGR_DS_SetStyleTable" );
+    VALIDATE_POINTER0(hDS, "OGR_DS_SetStyleTable");
+    VALIDATE_POINTER0(hStyleTable, "OGR_DS_SetStyleTable");
 
-    static_cast<GDALDataset *>(hDS)->
-        SetStyleTable(reinterpret_cast<OGRStyleTable *>(hStyleTable));
+    static_cast<GDALDataset *>(hDS)
+        ->SetStyleTable(reinterpret_cast<OGRStyleTable *>(hStyleTable));
 }
 
 /************************************************************************/
@@ -4053,7 +4039,8 @@ void GDALDatasetSetStyleTable( GDALDatasetH hDS, OGRStyleTableH hStyleTable )
 //! @cond Doxygen_Suppress
 int GDALDataset::ValidateLayerCreationOptions( const char* const* papszLCO )
 {
-    const char *pszOptionList = GetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST );
+    const char *pszOptionList =
+        GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST);
     if( pszOptionList == NULL && poDriver != NULL )
     {
         pszOptionList =
@@ -4103,11 +4090,7 @@ In GDAL 1.X, this method used to be in the OGRDataSource class.
 @return the current reference count for the datasource object itself.
 */
 
-int GDALDataset::GetRefCount() const
-
-{
-    return nRefCount;
-}
+int GDALDataset::GetRefCount() const { return nRefCount; }
 
 /************************************************************************/
 /*                         GetSummaryRefCount()                         */
@@ -4128,14 +4111,14 @@ In GDAL 1.X, this method used to be in the OGRDataSource class.
 int GDALDataset::GetSummaryRefCount() const
 
 {
-    GDALDatasetPrivate* psPrivate =
+    GDALDatasetPrivate *psPrivate =
         static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    CPLMutexHolderD( psPrivate ? &(psPrivate->hMutex) : NULL );
+    CPLMutexHolderD(psPrivate ? &(psPrivate->hMutex) : NULL);
     int nSummaryCount = nRefCount;
     GDALDataset *poUseThis = const_cast<GDALDataset *>(this);
 
     for( int iLayer = 0; iLayer < poUseThis->GetLayerCount(); ++iLayer )
-        nSummaryCount += poUseThis->GetLayer( iLayer )->GetRefCount();
+        nSummaryCount += poUseThis->GetLayer(iLayer)->GetRefCount();
 
     return nSummaryCount;
 }
@@ -4174,8 +4157,8 @@ OGRLayer *GDALDataset::ICreateLayer( const char * /* pszName */,
                                      char ** /* papszOptions */ )
 
 {
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "CreateLayer() not supported by this dataset." );
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "CreateLayer() not supported by this dataset.");
 
     return NULL;
 }
@@ -4222,34 +4205,34 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 /* -------------------------------------------------------------------- */
     if( !TestCapability( ODsCCreateLayer ) )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "This datasource does not support creation of layers." );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "This datasource does not support creation of layers.");
         return NULL;
     }
 
-    const char* pszSRSWKT = CSLFetchNameValue(papszOptions, "DST_SRSWKT");
+    const char *pszSRSWKT = CSLFetchNameValue(papszOptions, "DST_SRSWKT");
     OGRSpatialReference oDstSpaRef(pszSRSWKT);
 
     CPLErrorReset();
     if( poSrcDefn->GetGeomFieldCount() > 1 &&
         TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
     {
-        poDstLayer =ICreateLayer( pszNewName, NULL, wkbNone, papszOptions );
+        poDstLayer = ICreateLayer(pszNewName, NULL, wkbNone, papszOptions);
     }
     else
     {
         if(NULL == pszSRSWKT)
         {
-            poDstLayer =ICreateLayer( pszNewName, poSrcLayer->GetSpatialRef(),
-                                      poSrcDefn->GetGeomType(), papszOptions );
+            poDstLayer = ICreateLayer(pszNewName, poSrcLayer->GetSpatialRef(),
+                                      poSrcDefn->GetGeomType(), papszOptions);
         }
         else
         {
             // remove DST_WKT from option list to prevent warning from driver
             int nSRSPos = CSLFindName(papszOptions, "DST_SRSWKT");
             papszOptions = CSLRemoveStrings(papszOptions, nSRSPos, 1, NULL);
-            poDstLayer = ICreateLayer( pszNewName, &oDstSpaRef,
-                                  poSrcDefn->GetGeomType(), papszOptions );
+            poDstLayer = ICreateLayer(pszNewName, &oDstSpaRef,
+                                      poSrcDefn->GetGeomType(), papszOptions);
         }
     }
 
@@ -4262,23 +4245,23 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 /*      case the target datasource has altered it (e.g. Shapefile       */
 /*      limited to 10 char field names).                                */
 /* -------------------------------------------------------------------- */
-    int         nSrcFieldCount = poSrcDefn->GetFieldCount();
-    int         nDstFieldCount = 0;
+    int nSrcFieldCount = poSrcDefn->GetFieldCount();
+    int nDstFieldCount = 0;
 
     // Initialize the index-to-index map to -1's
     int *panMap = static_cast<int *>(CPLMalloc(sizeof(int) * nSrcFieldCount));
-    for( int iField=0; iField < nSrcFieldCount; ++iField )
+    for( int iField = 0; iField < nSrcFieldCount; ++iField )
         panMap[iField] = -1;
 
     // Caution: At the time of writing, the MapInfo driver
     // returns NULL until a field has been added.
-    OGRFeatureDefn* poDstFDefn = poDstLayer->GetLayerDefn();
+    OGRFeatureDefn *poDstFDefn = poDstLayer->GetLayerDefn();
     if (poDstFDefn)
         nDstFieldCount = poDstFDefn->GetFieldCount();
     for( int iField = 0; iField < nSrcFieldCount; ++iField )
     {
-        OGRFieldDefn* poSrcFieldDefn = poSrcDefn->GetFieldDefn(iField);
-        OGRFieldDefn oFieldDefn( poSrcFieldDefn );
+        OGRFieldDefn *poSrcFieldDefn = poSrcDefn->GetFieldDefn(iField);
+        OGRFieldDefn oFieldDefn(poSrcFieldDefn);
 
         // The field may have been already created at layer creation.
         int iDstField = -1;
@@ -4299,8 +4282,9 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                 poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "The output driver has claimed to have added the %s field, but it did not!",
-                         oFieldDefn.GetNameRef() );
+                         "The output driver has claimed to have added the %s "
+                         "field, but it did not!",
+                         oFieldDefn.GetNameRef());
             }
             else
             {
@@ -4316,11 +4300,12 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     if (sourceSRS != NULL && pszSRSWKT != NULL &&
             sourceSRS->IsSame(&oDstSpaRef) == FALSE)
     {
-        poCT = (OGRCoordinateTransformation*)OGRCreateCoordinateTransformation(sourceSRS, &oDstSpaRef);
+        poCT = (OGRCoordinateTransformation *)OGRCreateCoordinateTransformation(
+            sourceSRS, &oDstSpaRef);
         if(NULL == poCT)
         {
-            CPLError( CE_Failure, CPLE_NotSupported,
-                      "This input/output spatial reference is not supported." );
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "This input/output spatial reference is not supported.");
             CPLFree(panMap);
             return NULL;
         }
@@ -4336,13 +4321,14 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         for( int iField = 0; iField < nSrcGeomFieldCount; ++iField )
         {
             if(NULL == pszSRSWKT)
-        {
-            poDstLayer->CreateGeomField( poSrcDefn->GetGeomFieldDefn(iField) );
-        }
+            {
+                poDstLayer->CreateGeomField(
+                    poSrcDefn->GetGeomFieldDefn(iField));
+            }
             else
             {
-                OGRGeomFieldDefn* pDstGeomFieldDefn =
-                        poSrcDefn->GetGeomFieldDefn(iField);
+                OGRGeomFieldDefn *pDstGeomFieldDefn =
+                    poSrcDefn->GetGeomFieldDefn(iField);
                 pDstGeomFieldDefn->SetSpatialRef(&oDstSpaRef);
                 poDstLayer->CreateGeomField(pDstGeomFieldDefn);
             }
@@ -4360,7 +4346,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 /* -------------------------------------------------------------------- */
 /*      Transfer features.                                              */
 /* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature;
+    OGRFeature  *poFeature = NULL;
 
     poSrcLayer->ResetReading();
 
@@ -4368,7 +4354,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     {
       while( true )
       {
-        OGRFeature      *poDstFeature = NULL;
+        OGRFeature *poDstFeature = NULL;
 
         poFeature = poSrcLayer->GetNextFeature();
 
@@ -4413,9 +4399,9 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
             }
         }
 
-        poDstFeature->SetFID( poFeature->GetFID() );
+            poDstFeature->SetFID(poFeature->GetFID());
 
-        OGRFeature::DestroyFeature( poFeature );
+            OGRFeature::DestroyFeature(poFeature);
 
         CPLErrorReset();
         if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE )
@@ -4527,10 +4513,10 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
             }
         }
 
-        for( int i = 0; i < nFeatCount; ++i )
-            OGRFeature::DestroyFeature( papoDstFeature[i] );
-      }
-      CPLFree(papoDstFeature);
+            for( int i = 0; i < nFeatCount; ++i )
+                OGRFeature::DestroyFeature(papoDstFeature[i]);
+        }
+        CPLFree(papoDstFeature);
     }
 
     if(NULL != poCT)
@@ -4567,8 +4553,8 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 OGRErr GDALDataset::DeleteLayer( CPL_UNUSED int iLayer )
 
 {
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "DeleteLayer() not supported by this dataset." );
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "DeleteLayer() not supported by this dataset.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -4596,9 +4582,9 @@ OGRErr GDALDataset::DeleteLayer( CPL_UNUSED int iLayer )
 OGRLayer *GDALDataset::GetLayerByName( const char *pszName )
 
 {
-    GDALDatasetPrivate* psPrivate =
+    GDALDatasetPrivate *psPrivate =
         static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    CPLMutexHolderD( psPrivate ? &(psPrivate->hMutex) : NULL );
+    CPLMutexHolderD(psPrivate ? &(psPrivate->hMutex) : NULL);
 
     if ( ! pszName )
         return NULL;
@@ -4643,17 +4629,17 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 /*      Do some general syntax checking.                                */
 /* -------------------------------------------------------------------- */
     if( CSLCount(papszTokens) != 6
-        || !EQUAL(papszTokens[0],"CREATE")
-        || !EQUAL(papszTokens[1],"INDEX")
-        || !EQUAL(papszTokens[2],"ON")
-        || !EQUAL(papszTokens[4],"USING") )
+        || !EQUAL(papszTokens[0], "CREATE")
+        || !EQUAL(papszTokens[1], "INDEX")
+        || !EQUAL(papszTokens[2], "ON")
+        || !EQUAL(papszTokens[4], "USING") )
     {
-        CSLDestroy( papszTokens );
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Syntax error in CREATE INDEX command.\n"
-                  "Was '%s'\n"
-                  "Should be of form 'CREATE INDEX ON <table> USING <field>'",
-                  pszSQLCommand );
+        CSLDestroy(papszTokens);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Syntax error in CREATE INDEX command.\n"
+                 "Was '%s'\n"
+                 "Should be of form 'CREATE INDEX ON <table> USING <field>'",
+                 pszSQLCommand);
         return OGRERR_FAILURE;
     }
 
@@ -4663,9 +4649,9 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
     OGRLayer *poLayer = NULL;
 
     {
-        GDALDatasetPrivate* psPrivate =
+        GDALDatasetPrivate *psPrivate =
             static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-        CPLMutexHolderD( psPrivate ? &(psPrivate->hMutex) : NULL );
+        CPLMutexHolderD(psPrivate ? &(psPrivate->hMutex) : NULL);
 
         for( int i = 0; i < GetLayerCount(); ++i )
         {
@@ -4691,9 +4677,9 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
     if( poLayer->GetIndex() == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "CREATE INDEX ON not supported by this driver." );
-        CSLDestroy( papszTokens );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CREATE INDEX ON not supported by this driver.");
+        CSLDestroy(papszTokens);
         return OGRERR_FAILURE;
     }
 
@@ -4708,7 +4694,7 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
             break;
     }
 
-    CSLDestroy( papszTokens );
+    CSLDestroy(papszTokens);
 
     if( i >= poLayer->GetLayerDefn()->GetFieldCount() )
     {
@@ -4723,14 +4709,13 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
     OGRErr eErr;
 
-    eErr = poLayer->GetIndex()->CreateIndex( i );
+    eErr = poLayer->GetIndex()->CreateIndex(i);
     if( eErr == OGRERR_NONE )
-        eErr = poLayer->GetIndex()->IndexAllFeatures( i );
+        eErr = poLayer->GetIndex()->IndexAllFeatures(i);
     else
     {
         if( strlen(CPLGetLastErrorMsg()) == 0 )
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "Cannot '%s'", pszSQLCommand);
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot '%s'", pszSQLCommand);
     }
 
     return eErr;
@@ -4748,16 +4733,16 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
 
 {
-    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+    char **papszTokens = CSLTokenizeString(pszSQLCommand);
 
 /* -------------------------------------------------------------------- */
 /*      Do some general syntax checking.                                */
 /* -------------------------------------------------------------------- */
     if( (CSLCount(papszTokens) != 4 && CSLCount(papszTokens) != 6)
-        || !EQUAL(papszTokens[0],"DROP")
-        || !EQUAL(papszTokens[1],"INDEX")
-        || !EQUAL(papszTokens[2],"ON")
-        || (CSLCount(papszTokens) == 6 && !EQUAL(papszTokens[4],"USING")) )
+        || !EQUAL(papszTokens[0], "DROP")
+        || !EQUAL(papszTokens[1], "INDEX")
+        || !EQUAL(papszTokens[2], "ON")
+        || (CSLCount(papszTokens) == 6 && !EQUAL(papszTokens[4], "USING")) )
     {
         CSLDestroy(papszTokens);
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -4774,7 +4759,7 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
     OGRLayer *poLayer = NULL;
 
     {
-        GDALDatasetPrivate* psPrivate =
+        GDALDatasetPrivate *psPrivate =
             static_cast<GDALDatasetPrivate *>(m_hPrivateData);
         CPLMutexHolderD(psPrivate ? &(psPrivate->hMutex) : NULL);
 
@@ -4802,9 +4787,9 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
     if( poLayer->GetIndex() == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Indexes not supported by this driver." );
-        CSLDestroy( papszTokens );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Indexes not supported by this driver.");
+        CSLDestroy(papszTokens);
         return OGRERR_FAILURE;
     }
 
@@ -4881,8 +4866,8 @@ OGRErr GDALDataset::ProcessSQLDropTable( const char *pszSQLCommand )
 /*      Do some general syntax checking.                                */
 /* -------------------------------------------------------------------- */
     if( CSLCount(papszTokens) != 3
-        || !EQUAL(papszTokens[0],"DROP")
-        || !EQUAL(papszTokens[1],"TABLE") )
+        || !EQUAL(papszTokens[0], "DROP")
+        || !EQUAL(papszTokens[1], "TABLE") )
     {
         CSLDestroy(papszTokens);
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -5009,19 +4994,19 @@ OGRErr GDALDataset::ProcessSQLAlterTableAddColumn( const char *pszSQLCommand )
     int nTokens = CSLCount(papszTokens);
 
     if( nTokens >= 7
-        && EQUAL(papszTokens[0],"ALTER")
-        && EQUAL(papszTokens[1],"TABLE")
-        && EQUAL(papszTokens[3],"ADD")
-        && EQUAL(papszTokens[4],"COLUMN"))
+        && EQUAL(papszTokens[0], "ALTER")
+        && EQUAL(papszTokens[1], "TABLE")
+        && EQUAL(papszTokens[3], "ADD")
+        && EQUAL(papszTokens[4], "COLUMN"))
     {
         pszLayerName = papszTokens[2];
         pszColumnName = papszTokens[5];
         iTypeIndex = 6;
     }
     else if( nTokens >= 6
-             && EQUAL(papszTokens[0],"ALTER")
-             && EQUAL(papszTokens[1],"TABLE")
-             && EQUAL(papszTokens[3],"ADD"))
+             && EQUAL(papszTokens[0], "ALTER")
+             && EQUAL(papszTokens[1], "TABLE")
+             && EQUAL(papszTokens[3], "ADD"))
     {
         pszLayerName = papszTokens[2];
         pszColumnName = papszTokens[4];
@@ -5098,21 +5083,21 @@ OGRErr GDALDataset::ProcessSQLAlterTableDropColumn( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
 /*      Do some general syntax checking.                                */
 /* -------------------------------------------------------------------- */
-    const char* pszLayerName = NULL;
-    const char* pszColumnName = NULL;
+    const char *pszLayerName = NULL;
+    const char *pszColumnName = NULL;
     if( CSLCount(papszTokens) == 6
-        && EQUAL(papszTokens[0],"ALTER")
-        && EQUAL(papszTokens[1],"TABLE")
-        && EQUAL(papszTokens[3],"DROP")
-        && EQUAL(papszTokens[4],"COLUMN"))
+        && EQUAL(papszTokens[0], "ALTER")
+        && EQUAL(papszTokens[1], "TABLE")
+        && EQUAL(papszTokens[3], "DROP")
+        && EQUAL(papszTokens[4], "COLUMN"))
     {
         pszLayerName = papszTokens[2];
         pszColumnName = papszTokens[5];
     }
     else if( CSLCount(papszTokens) == 5
-             && EQUAL(papszTokens[0],"ALTER")
-             && EQUAL(papszTokens[1],"TABLE")
-             && EQUAL(papszTokens[3],"DROP"))
+             && EQUAL(papszTokens[0], "ALTER")
+             && EQUAL(papszTokens[1], "TABLE")
+             && EQUAL(papszTokens[3], "DROP"))
     {
         pszLayerName = papszTokens[2];
         pszColumnName = papszTokens[4];
@@ -5186,21 +5171,21 @@ OGRErr GDALDataset::ProcessSQLAlterTableRenameColumn( const char *pszSQLCommand 
     const char *pszOldColName = NULL;
     const char *pszNewColName = NULL;
     if( CSLCount(papszTokens) == 8
-        && EQUAL(papszTokens[0],"ALTER")
-        && EQUAL(papszTokens[1],"TABLE")
-        && EQUAL(papszTokens[3],"RENAME")
-        && EQUAL(papszTokens[4],"COLUMN")
-        && EQUAL(papszTokens[6],"TO"))
+        && EQUAL(papszTokens[0], "ALTER")
+        && EQUAL(papszTokens[1], "TABLE")
+        && EQUAL(papszTokens[3], "RENAME")
+        && EQUAL(papszTokens[4], "COLUMN")
+        && EQUAL(papszTokens[6], "TO"))
     {
         pszLayerName = papszTokens[2];
         pszOldColName = papszTokens[5];
         pszNewColName = papszTokens[7];
     }
     else if( CSLCount(papszTokens) == 7
-             && EQUAL(papszTokens[0],"ALTER")
-             && EQUAL(papszTokens[1],"TABLE")
-             && EQUAL(papszTokens[3],"RENAME")
-             && EQUAL(papszTokens[5],"TO"))
+             && EQUAL(papszTokens[0], "ALTER")
+             && EQUAL(papszTokens[1], "TABLE")
+             && EQUAL(papszTokens[3], "RENAME")
+             && EQUAL(papszTokens[5], "TO"))
     {
         pszLayerName = papszTokens[2];
         pszOldColName = papszTokens[4];
@@ -5248,7 +5233,8 @@ OGRErr GDALDataset::ProcessSQLAlterTableRenameColumn( const char *pszSQLCommand 
 /* -------------------------------------------------------------------- */
 /*      Rename column.                                                  */
 /* -------------------------------------------------------------------- */
-    OGRFieldDefn* poOldFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(nFieldIndex);
+    OGRFieldDefn *poOldFieldDefn =
+        poLayer->GetLayerDefn()->GetFieldDefn(nFieldIndex);
     OGRFieldDefn oNewFieldDefn(poOldFieldDefn);
     oNewFieldDefn.SetName(pszNewColName);
 
@@ -5282,21 +5268,21 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
     int nTokens = CSLCount(papszTokens);
 
     if( nTokens >= 8
-        && EQUAL(papszTokens[0],"ALTER")
-        && EQUAL(papszTokens[1],"TABLE")
-        && EQUAL(papszTokens[3],"ALTER")
-        && EQUAL(papszTokens[4],"COLUMN")
-        && EQUAL(papszTokens[6],"TYPE"))
+        && EQUAL(papszTokens[0], "ALTER")
+        && EQUAL(papszTokens[1], "TABLE")
+        && EQUAL(papszTokens[3], "ALTER")
+        && EQUAL(papszTokens[4], "COLUMN")
+        && EQUAL(papszTokens[6], "TYPE"))
     {
         pszLayerName = papszTokens[2];
         pszColumnName = papszTokens[5];
         iTypeIndex = 7;
     }
     else if( nTokens >= 7
-             && EQUAL(papszTokens[0],"ALTER")
-             && EQUAL(papszTokens[1],"TABLE")
-             && EQUAL(papszTokens[3],"ALTER")
-             && EQUAL(papszTokens[5],"TYPE"))
+             && EQUAL(papszTokens[0], "ALTER")
+             && EQUAL(papszTokens[1], "TABLE")
+             && EQUAL(papszTokens[3], "ALTER")
+             && EQUAL(papszTokens[5], "TYPE"))
     {
         pszLayerName = papszTokens[2];
         pszColumnName = papszTokens[4];
@@ -5423,19 +5409,20 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
 
 */
 
-OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
-                                      OGRGeometry *poSpatialFilter,
-                                      const char *pszDialect )
+OGRLayer *GDALDataset::ExecuteSQL( const char *pszStatement,
+                                   OGRGeometry *poSpatialFilter,
+                                   const char *pszDialect )
 
 {
     return ExecuteSQL(pszStatement, poSpatialFilter, pszDialect, NULL);
 }
 
 //! @cond Doxygen_Suppress
-OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
-                                    OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect,
-                                    swq_select_parse_options* poSelectParseOptions)
+OGRLayer *
+GDALDataset::ExecuteSQL( const char *pszStatement,
+                         OGRGeometry *poSpatialFilter,
+                         const char *pszDialect,
+                         swq_select_parse_options *poSelectParseOptions )
 
 {
     swq_select *psSelectInfo = NULL;
@@ -5556,10 +5543,8 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
         swq_select *psNextSelectInfo = psSelectInfo->poOtherSelect;
         psSelectInfo->poOtherSelect = NULL;
 
-        OGRLayer* poLayer = BuildLayerFromSelectInfo(psSelectInfo,
-                                                     poSpatialFilter,
-                                                     pszDialect,
-                                                     poSelectParseOptions);
+        OGRLayer *poLayer = BuildLayerFromSelectInfo(
+            psSelectInfo, poSpatialFilter, pszDialect, poSelectParseOptions);
         if( poLayer == NULL )
         {
             // Each source layer owns an independent select info.
@@ -5895,7 +5880,7 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
  @param poResultsSet the result of a previous ExecuteSQL() call.
 */
 
-void GDALDataset::ReleaseResultSet( OGRLayer * poResultsSet )
+void GDALDataset::ReleaseResultSet( OGRLayer *poResultsSet )
 
 {
     delete poResultsSet;
@@ -6039,7 +6024,7 @@ OGRLayer *GDALDataset::GetLayer(CPL_UNUSED int iLayer) { return NULL; }
 
  @since GDAL 2.2
 */
-void        GDALDataset::ResetReading()
+void GDALDataset::ResetReading()
 {
     GDALDatasetPrivate *psPrivate =
         static_cast<GDALDatasetPrivate *>(m_hPrivateData);
@@ -6130,10 +6115,10 @@ void CPL_DLL GDALDatasetResetReading( GDALDatasetH hDS )
  @since GDAL 2.2
 */
 
-OGRFeature* GDALDataset::GetNextFeature( OGRLayer** ppoBelongingLayer,
-                                         double* pdfProgressPct,
+OGRFeature *GDALDataset::GetNextFeature( OGRLayer **ppoBelongingLayer,
+                                         double *pdfProgressPct,
                                          GDALProgressFunc pfnProgress,
-                                         void* pProgressData )
+                                         void *pProgressData )
 {
     GDALDatasetPrivate *psPrivate =
         static_cast<GDALDatasetPrivate *>(m_hPrivateData);
@@ -6205,10 +6190,10 @@ OGRFeature* GDALDataset::GetNextFeature( OGRLayer** ppoBelongingLayer,
                     psPrivate->nTotalFeaturesInLayer = 0;
             }
         }
-        OGRFeature* poFeature = psPrivate->poCurrentLayer->GetNextFeature();
+        OGRFeature *poFeature = psPrivate->poCurrentLayer->GetNextFeature();
         if( poFeature == NULL )
         {
-            psPrivate->nCurrentLayerIdx ++;
+            psPrivate->nCurrentLayerIdx++;
             psPrivate->poCurrentLayer = NULL;
             continue;
         }
@@ -6298,10 +6283,10 @@ OGRFeature* GDALDataset::GetNextFeature( OGRLayer** ppoBelongingLayer,
  @since GDAL 2.2
 */
 OGRFeatureH CPL_DLL GDALDatasetGetNextFeature( GDALDatasetH hDS,
-                                               OGRLayerH* phBelongingLayer,
-                                               double* pdfProgressPct,
+                                               OGRLayerH *phBelongingLayer,
+                                               double *pdfProgressPct,
                                                GDALProgressFunc pfnProgress,
-                                               void* pProgressData )
+                                               void *pProgressData )
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetGetNextFeature", NULL);
 
@@ -6783,7 +6768,8 @@ void GDALDataset::ReacquireReadWriteLock()
         CPLAcquireMutex(psPrivate->hMutex, 1000.0);
         const int nCount = psPrivate->oMapThreadToMutexTakenCount[CPLGetPID()];
 #ifdef DEBUG_EXTRA
-        CPLAssert( nCount == psPrivate->oMapThreadToMutexTakenCountSaved[ CPLGetPID() ] );
+        CPLAssert(nCount ==
+                  psPrivate->oMapThreadToMutexTakenCountSaved[CPLGetPID()]);
 #endif
         if( nCount == 0 )
             CPLReleaseMutex(psPrivate->hMutex);
