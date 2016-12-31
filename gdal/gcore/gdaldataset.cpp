@@ -1582,14 +1582,14 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
             if( (nBufXSize < nXSize || nBufYSize < nYSize) &&
                 poBand->GetOverviewCount() )
             {
-                // Could be improved to select the appropriate overview
+                // Could be improved to select the appropriate overview.
                 break;
             }
             if( poBand->GetColorTable() != NULL )
             {
                 break;
             }
-            GDALDataType eDT = poBand->GetRasterDataType();
+            const GDALDataType eDT = poBand->GetRasterDataType();
             if( GDALDataTypeIsComplex(eDT) )
             {
                 break;
@@ -1716,7 +1716,6 @@ CPLErr GDALDataset::BandBasedRasterIO( GDALRWFlag eRWFlag,
          ++iBandIndex )
     {
         GDALRasterBand *poBand = GetRasterBand(panBandMap[iBandIndex]);
-        GByte *pabyBandData;
 
         if (poBand == NULL)
         {
@@ -1724,7 +1723,7 @@ CPLErr GDALDataset::BandBasedRasterIO( GDALRWFlag eRWFlag,
             break;
         }
 
-        pabyBandData = ((GByte *)pData) + iBandIndex * nBandSpace;
+        GByte *pabyBandData = ((GByte *)pData) + iBandIndex * nBandSpace;
 
         if( nBandCount > 1 )
         {
@@ -1924,9 +1923,6 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                               GDALRasterIOExtraArg* psExtraArg )
 
 {
-    bool bNeedToFreeBandMap = false;
-    CPLErr eErr = CE_None;
-
     GDALRasterIOExtraArg sExtraArg;
     if( psExtraArg == NULL )
     {
@@ -1964,7 +1960,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     }
 
     int bStopProcessing = FALSE;
-    eErr = ValidateRasterIOOrAdviseReadParameters(
+    CPLErr eErr = ValidateRasterIOOrAdviseReadParameters(
         "RasterIO()", &bStopProcessing, nXOff, nYOff, nXSize, nYSize, nBufXSize,
         nBufYSize, nBandCount, panBandMap);
     if( eErr != CE_None || bStopProcessing )
@@ -1987,6 +1983,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
         nBandSpace = nLineSpace * nBufYSize;
     }
 
+    bool bNeedToFreeBandMap = false;
     int anBandMap[] = { 1, 2, 3, 4 };
     if( panBandMap == NULL )
     {
@@ -2254,8 +2251,6 @@ CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                 char **papszOptions )
 
 {
-    int iBand;
-
 /* -------------------------------------------------------------------- */
 /*      Do some validation of parameters.                               */
 /* -------------------------------------------------------------------- */
@@ -2266,9 +2261,9 @@ CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
     if( eErr != CE_None || bStopProcessing )
         return eErr;
 
-    for( iBand = 0; iBand < nBandCount; ++iBand )
+    for( int iBand = 0; iBand < nBandCount; ++iBand )
     {
-        GDALRasterBand *poBand;
+        GDALRasterBand *poBand = NULL;
 
         if( panBandMap == NULL )
             poBand = GetRasterBand(iBand + 1);
@@ -2334,13 +2329,12 @@ char **GDALDataset::GetFileList()
 
 {
     CPLString osMainFilename = GetDescription();
-    int bMainFileReal;
     VSIStatBufL sStat;
 
 /* -------------------------------------------------------------------- */
 /*      Is the main filename even a real filesystem object?             */
 /* -------------------------------------------------------------------- */
-    bMainFileReal =
+    int bMainFileReal =
         VSIStatExL(osMainFilename, &sStat, VSI_STAT_EXISTS_FLAG) == 0;
 
 /* -------------------------------------------------------------------- */
@@ -2525,11 +2519,11 @@ GDALDatasetH CPL_STDCALL
 GDALOpen( const char * pszFilename, GDALAccess eAccess )
 
 {
-    return GDALOpenEx(pszFilename,
-                      GDAL_OF_RASTER |
-                          (eAccess == GA_Update ? GDAL_OF_UPDATE : 0) |
-                          GDAL_OF_VERBOSE_ERROR,
-                      NULL, NULL, NULL);
+    const int nUpdateFlag = eAccess == GA_Update ? GDAL_OF_UPDATE : 0;
+    const int nOpenFlags = GDAL_OF_RASTER | nUpdateFlag | GDAL_OF_VERBOSE_ERROR;
+    GDALDatasetH hDataset =
+        GDALOpenEx(pszFilename, nOpenFlags, NULL, NULL, NULL);
+    return hDataset;
 }
 
 /************************************************************************/
@@ -2705,8 +2699,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
     // Remove leading @ if present.
     char **papszOpenOptionsCleaned =
         CSLDuplicate(const_cast<char **>(papszOpenOptions));
-    for(char** papszIter = papszOpenOptionsCleaned;
-        papszIter && *papszIter; ++papszIter)
+    for(char **papszIter = papszOpenOptionsCleaned; papszIter && *papszIter;
+        ++papszIter)
     {
         char *pszOption = *papszIter;
         if( pszOption[0] == '@' )
@@ -2727,7 +2721,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
         {
             poDriver = poDM->GetDriver(iDriver);
             if (papszAllowedDrivers != NULL &&
-                CSLFindString((char**)papszAllowedDrivers, GDALGetDriverShortName(poDriver)) == -1)
+                CSLFindString((char **)papszAllowedDrivers,
+                             GDALGetDriverShortName(poDriver)) == -1)
                 continue;
         }
 
@@ -2745,9 +2740,11 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
         char **papszTmpOpenOptions = NULL;
         char **papszTmpOpenOptionsToValidate = NULL;
         char **papszOptionsToValidate = const_cast<char **>(papszOpenOptions);
-        if( CSLFetchNameValue(papszOpenOptionsCleaned, "OVERVIEW_LEVEL") != NULL &&
+        if( CSLFetchNameValue(papszOpenOptionsCleaned, "OVERVIEW_LEVEL") !=
+               NULL &&
             (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) == NULL ||
-             CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST)).ifind("OVERVIEW_LEVEL") == std::string::npos) )
+             CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST))
+                    .ifind("OVERVIEW_LEVEL") == std::string::npos) )
         {
             papszTmpOpenOptions = CSLDuplicate(papszOpenOptionsCleaned);
             papszTmpOpenOptions =
@@ -2811,7 +2808,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
             if( !(nOpenFlags & GDAL_OF_INTERNAL) )
             {
                 if( CPLGetPID() != GDALGetResponsiblePIDForCurrentThread() )
-                    CPLDebug("GDAL", "GDALOpen(%s, this=%p) succeeds as %s (pid=%d, responsiblePID=%d).",
+                    CPLDebug("GDAL",
+                             "GDALOpen(%s, this=%p) succeeds as %s (pid=%d, responsiblePID=%d).",
                              pszFilename, poDS, poDriver->GetDescription(),
                              static_cast<int>(CPLGetPID()),
                              static_cast<int>(
