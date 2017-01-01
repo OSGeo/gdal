@@ -1984,44 +1984,52 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
     else if( (psCtxt->bInNode || psCtxt->bInWay || psCtxt->bInRelation) &&
              strcmp(pszName, "tag") == 0 )
     {
-        if( psCtxt->nTags < psCtxt->nTagsAllocated )
+        if( psCtxt->nTags == psCtxt->nTagsAllocated )
         {
-            OSMTag* psTag = &(psCtxt->pasTags[psCtxt->nTags]);
-            psCtxt->nTags ++;
-
-            psTag->pszK = "";
-            psTag->pszV = "";
-
-            if( ppszIter )
+            psCtxt->nTagsAllocated =
+                psCtxt->nTagsAllocated * 2;
+            OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
+                psCtxt->pasTags,
+                psCtxt->nTagsAllocated * sizeof(OSMTag));
+            if( pasTagsNew == NULL )
             {
-                while( ppszIter[0] != NULL )
-                {
-                    if( ppszIter[0][0] == 'k' )
-                    {
-                        psTag->pszK = OSM_AddString(psCtxt, ppszIter[1]);
-                    }
-                    else if( ppszIter[0][0] == 'v' )
-                    {
-                        psTag->pszV = OSM_AddString(psCtxt, ppszIter[1]);
-                    }
-                    ppszIter += 2;
-                }
+                if( psCtxt->bInNode )
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Too many tags in node " CPL_FRMT_GIB,
+                            psCtxt->pasNodes[0].nID);
+                else if( psCtxt->bInWay )
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Too many tags in way " CPL_FRMT_GIB,
+                            psCtxt->sWay.nID);
+                else if( psCtxt->bInRelation )
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Too many tags in relation " CPL_FRMT_GIB,
+                            psCtxt->sRelation.nID);
+                return;
             }
+            psCtxt->pasTags = pasTagsNew;
         }
-        else
+
+        OSMTag* psTag = &(psCtxt->pasTags[psCtxt->nTags]);
+        psCtxt->nTags ++;
+
+        psTag->pszK = "";
+        psTag->pszV = "";
+
+        if( ppszIter )
         {
-            if( psCtxt->bInNode )
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Too many tags in node " CPL_FRMT_GIB,
-                         psCtxt->pasNodes[0].nID);
-            else if( psCtxt->bInWay )
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Too many tags in way " CPL_FRMT_GIB,
-                         psCtxt->sWay.nID);
-            else if( psCtxt->bInRelation )
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Too many tags in relation " CPL_FRMT_GIB,
-                         psCtxt->sRelation.nID);
+            while( ppszIter[0] != NULL )
+            {
+                if( ppszIter[0][0] == 'k' )
+                {
+                    psTag->pszK = OSM_AddString(psCtxt, ppszIter[1]);
+                }
+                else if( ppszIter[0][0] == 'v' )
+                {
+                    psTag->pszV = OSM_AddString(psCtxt, ppszIter[1]);
+                }
+                ppszIter += 2;
+            }
         }
     }
 }
