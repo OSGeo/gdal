@@ -2430,7 +2430,7 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation,
                 reinterpret_cast<GByte *>(oGeom.second),
                 &bIsArea, pasCoords, NULL, NULL, NULL );
             OGRLineString* poLS = NULL;
-            if( bIsArea )
+            if( bIsArea && !bMultiLineString )
             {
                 OGRLinearRing* poLR = new OGRLinearRing();
                 OGRPolygon* poPoly = new OGRPolygon();
