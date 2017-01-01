@@ -68,9 +68,7 @@ CPL_CVSID("$Id$");
 
 // #define VIZ_GEOREF_SPLINE_DEBUG 0
 
-#ifndef HAVE_ARMADILLO
 static int matrixInvert( int N, double input[], double output[] );
-#endif
 
 bool VizGeorefSpline2D::grow_points()
 
@@ -624,13 +622,11 @@ int VizGeorefSpline2D::solve()
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
-        if( !arma::solve(matCoefs, matA, matRHS) )
+        if( !arma::solve(matCoefs, matA, matRHS, arma::solve_opts::no_approx) )
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
 #pragma GCC diagnostic pop
 #endif
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "There is a problem inverting the interpolation matrix.");
             ret = 0;
         }
         else
@@ -642,31 +638,32 @@ int VizGeorefSpline2D::solve()
     }
     catch(...)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "There is a problem inverting the interpolation matrix.");
         ret = 0;
     }
-#else
-    const int status = matrixInvert( _nof_eqs, _AA, _Ainv );
-
-    if( !status )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "There is a problem inverting the interpolation matrix.");
-        ret = 0;
-    }
-    else
-    {
-        // calc the coefs
-        for( int v = 0; v < _nof_vars; v++ )
-            for( int r = 0; r < _nof_eqs; r++ )
-            {
-                coef[v][r] = 0.0;
-                for( int c = 0; c < _nof_eqs; c++ )
-                    coef[v][r] += Ainv(r, c) * rhs[v][c];
-            }
-    }
+    if( ret == 0 )
 #endif
+    {
+        const int status = matrixInvert( _nof_eqs, _AA, _Ainv );
+
+        if( !status )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "There is a problem inverting the interpolation matrix.");
+            ret = 0;
+        }
+        else
+        {
+            ret = 4;
+            // calc the coefs
+            for( int v = 0; v < _nof_vars; v++ )
+                for( int r = 0; r < _nof_eqs; r++ )
+                {
+                    coef[v][r] = 0.0;
+                    for( int c = 0; c < _nof_eqs; c++ )
+                        coef[v][r] += Ainv(r, c) * rhs[v][c];
+                }
+        }
+    }
 
     VSIFree(_AA);
     VSIFree(_Ainv);
@@ -784,7 +781,6 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py,
     return 1;
 }
 
-#ifndef HAVE_ARMADILLO
 static int matrixInvert( int N, double input[], double output[] )
 {
     // Receives an array of dimension NxN as input.  This is passed as a one-
@@ -916,6 +912,5 @@ static int matrixInvert( int N, double input[], double output[] )
 
     return true;
 }
-#endif
 
 /*! @endcond */
