@@ -139,7 +139,7 @@ def jp2kak_10():
         return 'skip'
 
     ds = gdal.Open('data/rgbwcmyk01_YeGeo_kakadu.jp2')
-    data = ds.ReadRaster( 0, 0, 800, 100, band_list = [2,3] )
+    data = ds.ReadRaster( 0, 0, 800, 100, band_list = [2,3] ).decode('latin1')
     ds = None
 
     expected = [ (0,0), (255,0), (0, 255), (255,255),
@@ -167,7 +167,7 @@ def jp2kak_11():
 
     ds = gdal.Open('data/gtsmall_11_int16.jp2')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 63475 and cs != 63472:
+    if cs != 63475 and cs != 63472 and cs != 63452:
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
@@ -184,7 +184,7 @@ def jp2kak_12():
 
     ds = gdal.Open('data/gtsmall_10_uint16.jp2')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 63360 and cs != 63357:
+    if cs != 63360 and cs != 63357 and cs != 63358:
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
