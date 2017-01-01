@@ -2854,7 +2854,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
                 CPLString osVal(
                     CSLFetchNameValue(papszOpenOptions, "OVERVIEW_LEVEL"));
                 const int nOvrLevel = atoi(osVal);
-                bool bThisLevelOnly = osVal.ifind("only") != std::string::npos;
+                const bool bThisLevelOnly =
+                    osVal.ifind("only") != std::string::npos;
                 GDALDataset *poOvrDS = GDALCreateOverviewDataset(
                     poDS, nOvrLevel, bThisLevelOnly, TRUE);
                 if( poOvrDS == NULL )
@@ -2876,7 +2877,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
             VSIErrorReset();
 
             CSLDestroy(papszOpenOptionsCleaned);
-            return /* (GDALDatasetH) */ poDS;
+            return poDS;
         }
 
         if( CPLGetLastErrorNo() != 0 && CPLGetLastErrorType() > CE_Warning)
@@ -3086,26 +3087,24 @@ int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
 
     CPLMutexHolderD(&hDLMutex);
 
-    if (poAllDatasetMap != NULL)
-    {
-        CPL_IGNORE_RET_VAL(VSIFPrintf(fp, "Open GDAL Datasets:\n"));
-        std::map<GDALDataset *, GIntBig>::iterator oIter =
-            poAllDatasetMap->begin();
-        for(; oIter != poAllDatasetMap->end(); ++oIter )
-        {
-            GDALDumpOpenDatasetsForeach(oIter->first, fp);
-        }
-        if (phSharedDatasetSet != NULL)
-        {
-            CPLHashSetForeach(phSharedDatasetSet,
-                              GDALDumpOpenSharedDatasetsForeach, fp);
-        }
-        return static_cast<int>(poAllDatasetMap->size());
-    }
-    else
-    {
+    if (poAllDatasetMap == NULL)
         return 0;
+
+    CPL_IGNORE_RET_VAL(VSIFPrintf(fp, "Open GDAL Datasets:\n"));
+
+    for( std::map<GDALDataset *, GIntBig>::iterator oIter =
+             poAllDatasetMap->begin();
+         oIter != poAllDatasetMap->end(); ++oIter )
+    {
+        GDALDumpOpenDatasetsForeach(oIter->first, fp);
     }
+
+    if (phSharedDatasetSet != NULL)
+    {
+        CPLHashSetForeach(phSharedDatasetSet,
+                          GDALDumpOpenSharedDatasetsForeach, fp);
+    }
+    return static_cast<int>(poAllDatasetMap->size());
 }
 
 /************************************************************************/
@@ -3421,7 +3420,7 @@ void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
 /************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
-char ** GDALDataset::GetMetadata(const char * pszDomain)
+char **GDALDataset::GetMetadata(const char *pszDomain)
 {
     if( pszDomain != NULL && EQUAL(pszDomain, "DERIVED_SUBDATASETS") )
     {
@@ -3443,7 +3442,7 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
                 }
             }
 
-            unsigned int nbSupportedDerivedDS;
+            unsigned int nbSupportedDerivedDS = 0;
             const DerivedDatasetDescription *poDDSDesc =
                 GDALGetDerivedDatasetDescriptions(&nbSupportedDerivedDS);
 
@@ -4042,13 +4041,13 @@ int GDALDataset::ValidateLayerCreationOptions( const char* const* papszLCO )
     if( pszOptionList == NULL && poDriver != NULL )
     {
         pszOptionList =
-             poDriver->GetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST );
+            poDriver->GetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST );
     }
     CPLString osDataset;
     osDataset.Printf("dataset %s", GetDescription());
-    return GDALValidateOptions( pszOptionList, papszLCO,
-                                "layer creation option",
-                                osDataset );
+    return GDALValidateOptions(pszOptionList, papszLCO,
+                               "layer creation option",
+                               osDataset);
 }
 //! @endcond
 
@@ -4070,7 +4069,7 @@ This method is the same as the C function OGRReleaseDataSource().
 OGRErr GDALDataset::Release()
 
 {
-    GDALClose( (GDALDatasetH) this );
+    GDALClose(/* (GDALDatasetH) */ this);
     return OGRERR_NONE;
 }
 
@@ -4191,13 +4190,10 @@ OGRLayer *GDALDataset::ICreateLayer( const char * /* pszName */,
 */
 
 OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
-                                    const char *pszNewName,
-                                    char **papszOptions )
+                                  const char *pszNewName,
+                                  char **papszOptions )
 
 {
-    OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
-    OGRLayer *poDstLayer = NULL;
-
 /* -------------------------------------------------------------------- */
 /*      Create the layer.                                               */
 /* -------------------------------------------------------------------- */
@@ -4210,6 +4206,8 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 
     const char *pszSRSWKT = CSLFetchNameValue(papszOptions, "DST_SRSWKT");
     OGRSpatialReference oDstSpaRef(pszSRSWKT);
+    OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
+    OGRLayer *poDstLayer = NULL;
 
     CPLErrorReset();
     if( poSrcDefn->GetGeomFieldCount() > 1 &&
@@ -4226,8 +4224,8 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         }
         else
         {
-            // remove DST_WKT from option list to prevent warning from driver
-            int nSRSPos = CSLFindName(papszOptions, "DST_SRSWKT");
+            // Remove DST_WKT from option list to prevent warning from driver.
+            const int nSRSPos = CSLFindName(papszOptions, "DST_SRSWKT");
             papszOptions = CSLRemoveStrings(papszOptions, nSRSPos, 1, NULL);
             poDstLayer = ICreateLayer(pszNewName, &oDstSpaRef,
                                       poSrcDefn->GetGeomType(), papszOptions);
@@ -4243,10 +4241,9 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 /*      case the target datasource has altered it (e.g. Shapefile       */
 /*      limited to 10 char field names).                                */
 /* -------------------------------------------------------------------- */
-    int nSrcFieldCount = poSrcDefn->GetFieldCount();
-    int nDstFieldCount = 0;
+    const int nSrcFieldCount = poSrcDefn->GetFieldCount();
 
-    // Initialize the index-to-index map to -1's
+    // Initialize the index-to-index map to -1's.
     int *panMap = static_cast<int *>(CPLMalloc(sizeof(int) * nSrcFieldCount));
     for( int iField = 0; iField < nSrcFieldCount; ++iField )
         panMap[iField] = -1;
@@ -4254,8 +4251,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     // Caution: At the time of writing, the MapInfo driver
     // returns NULL until a field has been added.
     OGRFeatureDefn *poDstFDefn = poDstLayer->GetLayerDefn();
-    if (poDstFDefn)
-        nDstFieldCount = poDstFDefn->GetFieldCount();
+    int nDstFieldCount = poDstFDefn ? poDstFDefn->GetFieldCount() : 0;
     for( int iField = 0; iField < nSrcFieldCount; ++iField )
     {
         OGRFieldDefn *poSrcFieldDefn = poSrcDefn->GetFieldDefn(iField);
@@ -4298,8 +4294,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     if (sourceSRS != NULL && pszSRSWKT != NULL &&
             sourceSRS->IsSame(&oDstSpaRef) == FALSE)
     {
-        poCT = (OGRCoordinateTransformation *)OGRCreateCoordinateTransformation(
-            sourceSRS, &oDstSpaRef);
+        poCT = OGRCreateCoordinateTransformation(sourceSRS, &oDstSpaRef);
         if(NULL == poCT)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
@@ -4311,7 +4306,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 /* -------------------------------------------------------------------- */
 /*      Create geometry fields.                                         */
 /* -------------------------------------------------------------------- */
-    int nSrcGeomFieldCount = poSrcDefn->GetGeomFieldCount();
+    const int nSrcGeomFieldCount = poSrcDefn->GetGeomFieldCount();
     if( nSrcGeomFieldCount > 1 &&
         TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
     {
@@ -4337,179 +4332,187 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 /*      Check if the destination layer supports transactions and set a  */
 /*      default number of features in a single transaction.             */
 /* -------------------------------------------------------------------- */
-    int nGroupTransactions = 0;
-    if( poDstLayer->TestCapability( OLCTransactions ) )
-        nGroupTransactions = 128;
+    const int nGroupTransactions =
+        poDstLayer->TestCapability(OLCTransactions) ? 128 : 0;
 
 /* -------------------------------------------------------------------- */
 /*      Transfer features.                                              */
 /* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature = NULL;
+    OGRFeature *poFeature = NULL;
 
     poSrcLayer->ResetReading();
 
     if( nGroupTransactions <= 0 )
     {
-      while( true )
-      {
-        OGRFeature *poDstFeature = NULL;
-
-        poFeature = poSrcLayer->GetNextFeature();
-
-        if( poFeature == NULL )
-            break;
-
-        CPLErrorReset();
-        poDstFeature = OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
-
-        if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to translate feature " CPL_FRMT_GIB " from layer %s.",
-                      poFeature->GetFID(), poSrcDefn->GetName() );
-            OGRFeature::DestroyFeature( poFeature );
-            CPLFree(panMap);
-            if(NULL != poCT)
-                OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)poCT);
-            return poDstLayer;
-        }
-
-        if(NULL != poCT)
-        {
-            for( int iField = 0; iField < nSrcGeomFieldCount; ++iField )
-            {
-                OGRGeometry* pGeom = poDstFeature->GetGeomFieldRef(iField);
-                if(NULL != pGeom)
-                {
-                    OGRErr eErr = pGeom->transform(poCT);
-                    if(eErr != OGRERR_NONE)
-                    {
-                        CPLError( CE_Failure, CPLE_AppDefined,
-                                  "Unable to transform geometry " CPL_FRMT_GIB
-                                  " from layer %s.",
-                                  poFeature->GetFID(), poSrcDefn->GetName() );
-                        OGRFeature::DestroyFeature( poFeature );
-                        CPLFree(panMap);
-                        OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)poCT);
-                        return poDstLayer;
-                    }
-                }
-            }
-        }
-
-            poDstFeature->SetFID(poFeature->GetFID());
-
-            OGRFeature::DestroyFeature(poFeature);
-
-        CPLErrorReset();
-        if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE )
-        {
-            OGRFeature::DestroyFeature( poDstFeature );
-            CPLFree(panMap);
-            if(NULL != poCT)
-                OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)poCT);
-            return poDstLayer;
-        }
-
-        OGRFeature::DestroyFeature( poDstFeature );
-      }
-    }
-    else
-    {
-      bool bStopTransfer = false;
-      int nFeatCount = 0;  // Number of features in the temporary array.
-      OGRFeature **papoDstFeature = static_cast<OGRFeature **>(
-          VSI_CALLOC_VERBOSE(sizeof(OGRFeature *), nGroupTransactions));
-      if( papoDstFeature == NULL )
-          bStopTransfer = true;
-      while( !bStopTransfer )
-      {
-/* -------------------------------------------------------------------- */
-/*      Fill the array with features                                    */
-/* -------------------------------------------------------------------- */
-        for( nFeatCount = 0; nFeatCount < nGroupTransactions; ++nFeatCount )
+        while( true )
         {
             poFeature = poSrcLayer->GetNextFeature();
 
             if( poFeature == NULL )
-            {
-                bStopTransfer = true;
                 break;
-            }
 
             CPLErrorReset();
-            papoDstFeature[nFeatCount] =
-                        OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
+            OGRFeature *poDstFeature =
+                OGRFeature::CreateFeature(poDstLayer->GetLayerDefn());
 
-            if( papoDstFeature[nFeatCount]->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
+            if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) !=
+                    OGRERR_NONE )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Unable to translate feature " CPL_FRMT_GIB " from layer %s.",
-                          poFeature->GetFID(), poSrcDefn->GetName() );
-                OGRFeature::DestroyFeature( poFeature );
-                poFeature = NULL;
-                bStopTransfer = true;
-                break;
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unable to translate feature " CPL_FRMT_GIB
+                         " from layer %s.",
+                         poFeature->GetFID(), poSrcDefn->GetName());
+                OGRFeature::DestroyFeature(poFeature);
+                CPLFree(panMap);
+                if(NULL != poCT)
+                    OCTDestroyCoordinateTransformation(
+                        reinterpret_cast<OGRCoordinateTransformationH>(poCT));
+                return poDstLayer;
             }
 
             if(NULL != poCT)
             {
                 for( int iField = 0; iField < nSrcGeomFieldCount; ++iField )
                 {
-                    OGRGeometry* pGeom = papoDstFeature[nFeatCount]->GetGeomFieldRef(iField);
-                    if(NULL != pGeom)
+                    OGRGeometry *pGeom = poDstFeature->GetGeomFieldRef(iField);
+                    if(NULL == pGeom)
+                        continue;
+
+                    const OGRErr eErr = pGeom->transform(poCT);
+                    if(eErr == OGRERR_NONE)
+                        continue;
+
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Unable to transform geometry " CPL_FRMT_GIB
+                        " from layer %s.",
+                        poFeature->GetFID(), poSrcDefn->GetName());
+                    OGRFeature::DestroyFeature(poFeature);
+                    CPLFree(panMap);
+                    OCTDestroyCoordinateTransformation(
+                        reinterpret_cast<OGRCoordinateTransformationH>(poCT));
+                    return poDstLayer;
+                }
+            }
+
+            poDstFeature->SetFID(poFeature->GetFID());
+
+            OGRFeature::DestroyFeature(poFeature);
+
+            CPLErrorReset();
+            if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE )
+            {
+                OGRFeature::DestroyFeature(poDstFeature);
+                CPLFree(panMap);
+                if(NULL != poCT)
+                    OCTDestroyCoordinateTransformation(
+                        reinterpret_cast<OGRCoordinateTransformationH>(poCT));
+                return poDstLayer;
+            }
+
+            OGRFeature::DestroyFeature(poDstFeature);
+        }
+    }
+    else
+    {
+        int nFeatCount = 0;  // Number of features in the temporary array.
+        OGRFeature **papoDstFeature = static_cast<OGRFeature **>(
+            VSI_CALLOC_VERBOSE(sizeof(OGRFeature *), nGroupTransactions));
+
+        bool bStopTransfer = papoDstFeature == NULL;
+        while( !bStopTransfer )
+        {
+/* -------------------------------------------------------------------- */
+/*      Fill the array with features.                                   */
+/* -------------------------------------------------------------------- */
+            for( nFeatCount = 0; nFeatCount < nGroupTransactions; ++nFeatCount )
+            {
+                poFeature = poSrcLayer->GetNextFeature();
+
+                if( poFeature == NULL )
+                {
+                    bStopTransfer = true;
+                    break;
+                }
+
+                CPLErrorReset();
+                papoDstFeature[nFeatCount] =
+                    OGRFeature::CreateFeature(poDstLayer->GetLayerDefn());
+
+                if( papoDstFeature[nFeatCount]->SetFrom(poFeature, panMap,
+                                                       TRUE) != OGRERR_NONE )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unable to translate feature " CPL_FRMT_GIB
+                             " from layer %s.",
+                             poFeature->GetFID(), poSrcDefn->GetName());
+                    OGRFeature::DestroyFeature( poFeature );
+                    poFeature = NULL;
+                    bStopTransfer = true;
+                    break;
+                }
+
+                if(NULL != poCT)
+                {
+                    for( int iField = 0; iField < nSrcGeomFieldCount; ++iField )
                     {
-                        OGRErr eErr = pGeom->transform(poCT);
-                        if(eErr != OGRERR_NONE)
-                        {
-                            CPLError( CE_Failure, CPLE_AppDefined,
-                                      "Unable to transform geometry " CPL_FRMT_GIB
-                                      " from layer %s.",
-                                      poFeature->GetFID(), poSrcDefn->GetName() );
-                            OGRFeature::DestroyFeature( poFeature );
-                            bStopTransfer = true;
-                            poFeature = NULL;
-                            break;
-                        }
+                        OGRGeometry *pGeom =
+                            papoDstFeature[nFeatCount]->GetGeomFieldRef(iField);
+                        if(NULL == pGeom)
+                            continue;
+
+                        const OGRErr eErr = pGeom->transform(poCT);
+                        if(eErr == OGRERR_NONE)
+                            continue;
+
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Unable to transform geometry " CPL_FRMT_GIB
+                            " from layer %s.",
+                            poFeature->GetFID(), poSrcDefn->GetName());
+                        OGRFeature::DestroyFeature(poFeature);
+                        bStopTransfer = true;
+                        poFeature = NULL;
+                        break;
                     }
                 }
-            }
 
-            if (poFeature)
-            {
-                papoDstFeature[nFeatCount]->SetFID( poFeature->GetFID() );
-                OGRFeature::DestroyFeature( poFeature );
-                poFeature = NULL;
-            }
-        }
-        int nFeaturesToAdd = nFeatCount;
-
-        CPLErrorReset();
-        bool bStopTransaction = false;
-        while( !bStopTransaction )
-        {
-            bStopTransaction = true;
-            if( poDstLayer->StartTransaction() != OGRERR_NONE )
-                break;
-            for( int i = 0; i < nFeaturesToAdd; ++i )
-            {
-                if( poDstLayer->CreateFeature( papoDstFeature[i] ) != OGRERR_NONE )
+                if (poFeature)
                 {
-                    nFeaturesToAdd = i;
-                    bStopTransfer = true;
-                    bStopTransaction = false;
+                    papoDstFeature[nFeatCount]->SetFID(poFeature->GetFID());
+                    OGRFeature::DestroyFeature(poFeature);
+                    poFeature = NULL;
                 }
             }
-            if( bStopTransaction )
+            int nFeaturesToAdd = nFeatCount;
+
+            CPLErrorReset();
+            bool bStopTransaction = false;
+            while( !bStopTransaction )
             {
-                if( poDstLayer->CommitTransaction() != OGRERR_NONE )
+                bStopTransaction = true;
+                if( poDstLayer->StartTransaction() != OGRERR_NONE )
                     break;
+                for( int i = 0; i < nFeaturesToAdd; ++i )
+                {
+                    if( poDstLayer->CreateFeature( papoDstFeature[i] ) !=
+                       OGRERR_NONE )
+                    {
+                        nFeaturesToAdd = i;
+                        bStopTransfer = true;
+                        bStopTransaction = false;
+                    }
+                }
+                if( bStopTransaction )
+                {
+                    if( poDstLayer->CommitTransaction() != OGRERR_NONE )
+                        break;
+                }
+                else
+                {
+                    poDstLayer->RollbackTransaction();
+                }
             }
-            else
-            {
-                poDstLayer->RollbackTransaction();
-            }
-        }
 
             for( int i = 0; i < nFeatCount; ++i )
                 OGRFeature::DestroyFeature(papoDstFeature[i]);
@@ -4518,7 +4521,8 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     }
 
     if(NULL != poCT)
-        OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)poCT);
+        OCTDestroyCoordinateTransformation(
+            reinterpret_cast<OGRCoordinateTransformationH>(poCT));
 
     CPLFree(panMap);
 
@@ -4621,7 +4625,7 @@ OGRLayer *GDALDataset::GetLayerByName( const char *pszName )
 OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 
 {
-    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+    char **papszTokens = CSLTokenizeString(pszSQLCommand);
 
 /* -------------------------------------------------------------------- */
 /*      Do some general syntax checking.                                */
@@ -4662,10 +4666,10 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 
         if( poLayer == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "CREATE INDEX ON failed, no such layer as `%s'.",
-                      papszTokens[3] );
-            CSLDestroy( papszTokens );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CREATE INDEX ON failed, no such layer as `%s'.",
+                     papszTokens[3]);
+            CSLDestroy(papszTokens);
             return OGRERR_FAILURE;
         }
     }
@@ -4696,20 +4700,20 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 
     if( i >= poLayer->GetLayerDefn()->GetFieldCount() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "`%s' failed, field not found.",
-                  pszSQLCommand );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "`%s' failed, field not found.",
+                 pszSQLCommand);
         return OGRERR_FAILURE;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Attempt to create the index.                                    */
 /* -------------------------------------------------------------------- */
-    OGRErr eErr;
-
-    eErr = poLayer->GetIndex()->CreateIndex(i);
+    OGRErr eErr = poLayer->GetIndex()->CreateIndex(i);
     if( eErr == OGRERR_NONE )
+    {
         eErr = poLayer->GetIndex()->IndexAllFeatures(i);
+    }
     else
     {
         if( strlen(CPLGetLastErrorMsg()) == 0 )
@@ -4794,8 +4798,6 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
 /*      If we were not given a field name, drop all indexes.            */
 /* -------------------------------------------------------------------- */
-    OGRErr eErr;
-
     if( CSLCount(papszTokens) == 4 )
     {
         for( int i = 0; i < poLayer->GetLayerDefn()->GetFieldCount(); ++i )
@@ -4805,7 +4807,7 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
             poAttrIndex = poLayer->GetIndex()->GetFieldIndex(i);
             if( poAttrIndex != NULL )
             {
-                eErr = poLayer->GetIndex()->DropIndex(i);
+                const OGRErr eErr = poLayer->GetIndex()->DropIndex(i);
                 if(eErr != OGRERR_NONE)
                 {
                     CSLDestroy(papszTokens);
@@ -4841,7 +4843,7 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
 /*      Attempt to drop the index.                                      */
 /* -------------------------------------------------------------------- */
-    eErr = poLayer->GetIndex()->DropIndex(i);
+    const OGRErr eErr = poLayer->GetIndex()->DropIndex(i);
 
     return eErr;
 }
@@ -4959,11 +4961,10 @@ static OGRFieldType GDALDatasetParseSQLType(char *pszType, int &nWidth,
              EQUAL(pszType, "DATETIME") /* unofficial alias */ )
         eType = OFTDateTime;
     else
-    {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "Unsupported column type '%s'. Defaulting to VARCHAR",
                  pszType);
-    }
+
     return eType;
 }
 
@@ -4987,9 +4988,8 @@ OGRErr GDALDataset::ProcessSQLAlterTableAddColumn( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
     const char *pszLayerName = NULL;
     const char *pszColumnName = NULL;
-    char *pszType = NULL;
     int iTypeIndex = 0;
-    int nTokens = CSLCount(papszTokens);
+    const int nTokens = CSLCount(papszTokens);
 
     if( nTokens >= 7
         && EQUAL(papszTokens[0], "ALTER")
@@ -5032,7 +5032,7 @@ OGRErr GDALDataset::ProcessSQLAlterTableAddColumn( const char *pszSQLCommand )
         osType += papszTokens[i];
         CPLFree(papszTokens[i]);
     }
-    pszType = papszTokens[iTypeIndex] = CPLStrdup(osType);
+    char *pszType = papszTokens[iTypeIndex] = CPLStrdup(osType);
     papszTokens[iTypeIndex + 1] = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -5157,7 +5157,8 @@ OGRErr GDALDataset::ProcessSQLAlterTableDropColumn( const char *pszSQLCommand )
 /*       ALTER TABLE <layername> RENAME [COLUMN] <oldname> TO <newname> */
 /************************************************************************/
 
-OGRErr GDALDataset::ProcessSQLAlterTableRenameColumn( const char *pszSQLCommand )
+OGRErr
+GDALDataset::ProcessSQLAlterTableRenameColumn( const char *pszSQLCommand )
 
 {
     char **papszTokens = CSLTokenizeString(pszSQLCommand);
@@ -5218,7 +5219,8 @@ OGRErr GDALDataset::ProcessSQLAlterTableRenameColumn( const char *pszSQLCommand 
 /*      Find the field.                                                 */
 /* -------------------------------------------------------------------- */
 
-    int nFieldIndex = poLayer->GetLayerDefn()->GetFieldIndex(pszOldColName);
+    const int nFieldIndex =
+        poLayer->GetLayerDefn()->GetFieldIndex(pszOldColName);
     if( nFieldIndex < 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -5261,9 +5263,8 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
     const char *pszLayerName = NULL;
     const char *pszColumnName = NULL;
-    char *pszType = NULL;
     int iTypeIndex = 0;
-    int nTokens = CSLCount(papszTokens);
+    const int nTokens = CSLCount(papszTokens);
 
     if( nTokens >= 8
         && EQUAL(papszTokens[0], "ALTER")
@@ -5308,7 +5309,7 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
         osType += papszTokens[i];
         CPLFree(papszTokens[i]);
     }
-    pszType = papszTokens[iTypeIndex] = CPLStrdup(osType);
+    char *pszType = papszTokens[iTypeIndex] = CPLStrdup(osType);
     papszTokens[iTypeIndex + 1] = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -5328,7 +5329,8 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
 /*      Find the field.                                                 */
 /* -------------------------------------------------------------------- */
 
-    int nFieldIndex = poLayer->GetLayerDefn()->GetFieldIndex(pszColumnName);
+    const int nFieldIndex =
+        poLayer->GetLayerDefn()->GetFieldIndex(pszColumnName);
     if( nFieldIndex < 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -5364,8 +5366,8 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
 
     if (l_nFlags == 0)
         return OGRERR_NONE;
-    else
-        return poLayer->AlterFieldDefn(nFieldIndex, &oNewFieldDefn, l_nFlags);
+
+    return poLayer->AlterFieldDefn(nFieldIndex, &oNewFieldDefn, l_nFlags);
 }
 //! @endcond
 
@@ -5423,8 +5425,6 @@ GDALDataset::ExecuteSQL( const char *pszStatement,
                          swq_select_parse_options *poSelectParseOptions )
 
 {
-    swq_select *psSelectInfo = NULL;
-
     if( pszDialect != NULL && EQUAL(pszDialect, "SQLite") )
     {
 #ifdef SQLITE_ENABLED
@@ -5432,7 +5432,8 @@ GDALDataset::ExecuteSQL( const char *pszStatement,
                                    pszDialect);
 #else
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "The SQLite driver needs to be compiled to support the SQLite SQL dialect");
+                 "The SQLite driver needs to be compiled to support the "
+                 "SQLite SQL dialect");
         return NULL;
 #endif
     }
@@ -5510,7 +5511,7 @@ GDALDataset::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      Preparse the SQL statement.                                     */
 /* -------------------------------------------------------------------- */
-    psSelectInfo = new swq_select();
+    swq_select *psSelectInfo = new swq_select();
     swq_custom_func_registrar *poCustomFuncRegistrar = NULL;
     if( poSelectParseOptions != NULL )
         poCustomFuncRegistrar = poSelectParseOptions->poCustomFuncRegistrar;
@@ -5613,25 +5614,24 @@ OGRLayer *GDALDataset::BuildLayerFromSelectInfo(
 //! @cond Doxygen_Suppress
 void GDALDataset::DestroyParseInfo(GDALSQLParseInfo *psParseInfo)
 {
-    if( psParseInfo != NULL )
-    {
-        CPLFree(psParseInfo->sFieldList.names);
-        CPLFree(psParseInfo->sFieldList.types);
-        CPLFree(psParseInfo->sFieldList.table_ids);
-        CPLFree(psParseInfo->sFieldList.ids);
+    if( psParseInfo == NULL )
+        return;
 
-        // Release the datasets we have opened with OGROpenShared()
-        // It is safe to do that as the 'new OGRGenSQLResultsLayer' itself
-        // has taken a reference on them, which it will release in its
-        // destructor.
-        for( int iEDS = 0; iEDS < psParseInfo->nExtraDSCount; ++iEDS )
-            GDALClose((GDALDatasetH)psParseInfo->papoExtraDS[iEDS]);
-        CPLFree(psParseInfo->papoExtraDS);
+    CPLFree(psParseInfo->sFieldList.names);
+    CPLFree(psParseInfo->sFieldList.types);
+    CPLFree(psParseInfo->sFieldList.table_ids);
+    CPLFree(psParseInfo->sFieldList.ids);
 
-        CPLFree(psParseInfo->pszWHERE);
+    // Release the datasets we have opened with OGROpenShared()
+    // It is safe to do that as the 'new OGRGenSQLResultsLayer' itself
+    // has taken a reference on them, which it will release in its
+    // destructor.
+    for( int iEDS = 0; iEDS < psParseInfo->nExtraDSCount; ++iEDS )
+        GDALClose((GDALDatasetH)psParseInfo->papoExtraDS[iEDS]);
 
-        CPLFree(psParseInfo);
-    }
+    CPLFree(psParseInfo->papoExtraDS);
+    CPLFree(psParseInfo->pszWHERE);
+    CPLFree(psParseInfo);
 }
 
 /************************************************************************/
@@ -5652,7 +5652,6 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
 /*      fields.                                                         */
 /* -------------------------------------------------------------------- */
     int nFieldCount = 0;
-    int iField;
 
     for( int iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
@@ -5696,8 +5695,9 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
         }
 
         nFieldCount += poSrcLayer->GetLayerDefn()->GetFieldCount();
-        if( iTable == 0 || (poSelectParseOptions &&
-                            poSelectParseOptions->bAddSecondaryTablesGeometryFields) )
+        if( iTable == 0 ||
+            (poSelectParseOptions &&
+            poSelectParseOptions->bAddSecondaryTablesGeometryFields) )
             nFieldCount += poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
     }
 
@@ -5735,15 +5735,15 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
         OGRLayer *poSrcLayer =
             poTableDS->GetLayerByName(psTableDef->table_name);
 
-        for( iField = 0;
+        for( int iField = 0;
              iField < poSrcLayer->GetLayerDefn()->GetFieldCount();
              iField++ )
         {
             OGRFieldDefn *poFDefn =
                 poSrcLayer->GetLayerDefn()->GetFieldDefn(iField);
-            int iOutField = psParseInfo->sFieldList.count++;
+            const int iOutField = psParseInfo->sFieldList.count++;
             psParseInfo->sFieldList.names[iOutField] =
-                (char *)poFDefn->GetNameRef();
+                const_cast<char *>(poFDefn->GetNameRef());
             if( poFDefn->GetType() == OFTInteger )
             {
                 if( poFDefn->GetSubType() == OFSTBoolean )
@@ -5781,18 +5781,18 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
         {
             nFIDIndex = psParseInfo->sFieldList.count;
 
-            for( iField = 0;
+            for( int iField = 0;
                  iField < poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
                  iField++ )
             {
                 OGRGeomFieldDefn *poFDefn =
                     poSrcLayer->GetLayerDefn()->GetGeomFieldDefn(iField);
-                int iOutField = psParseInfo->sFieldList.count++;
+                const int iOutField = psParseInfo->sFieldList.count++;
                 psParseInfo->sFieldList.names[iOutField] =
-                    (char *)poFDefn->GetNameRef();
+                    const_cast<char *>(poFDefn->GetNameRef());
                 if( *psParseInfo->sFieldList.names[iOutField] == '\0' )
                     psParseInfo->sFieldList.names[iOutField] =
-                        (char *)OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME;
+                        const_cast<char *>(OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME);
                 psParseInfo->sFieldList.types[iOutField] = SWQ_GEOMETRY;
 
                 psParseInfo->sFieldList.table_ids[iOutField] = iTable;
@@ -5812,7 +5812,7 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
 /* -------------------------------------------------------------------- */
 /*      Expand '*' in 'SELECT *' now before we add the pseudo fields    */
 /* -------------------------------------------------------------------- */
-    int bAlwaysPrefixWithTableName =
+    const bool bAlwaysPrefixWithTableName =
         poSelectParseOptions &&
         poSelectParseOptions->bAlwaysPrefixWithTableName;
     if( psSelectInfo->expand_wildcard(&psParseInfo->sFieldList,
@@ -5822,7 +5822,7 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
         return NULL;
     }
 
-    for (iField = 0; iField < SPECIAL_FIELD_COUNT; iField++)
+    for (int iField = 0; iField < SPECIAL_FIELD_COUNT; iField++)
     {
         psParseInfo->sFieldList.names[psParseInfo->sFieldList.count] =
             (char *)SpecialFieldNames[iField];
@@ -6200,7 +6200,7 @@ OGRFeature *GDALDataset::GetNextFeature( OGRLayer **ppoBelongingLayer,
         psPrivate->nFeatureReadInDataset++;
         if( pdfProgressPct != NULL || pfnProgress != NULL )
         {
-            double dfPct;
+            double dfPct = 0.0;
             if( psPrivate->nTotalFeatures > 0 )
             {
                 dfPct = 1.0 * psPrivate->nFeatureReadInDataset /
