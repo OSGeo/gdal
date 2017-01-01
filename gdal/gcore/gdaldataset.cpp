@@ -2674,7 +2674,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
 
     // Build GDALOpenInfo just now to avoid useless file stat'ing if a
     // shared dataset was asked before.
-    GDALOpenInfo oOpenInfo(pszFilename, nOpenFlags, (char **)papszSiblingFiles);
+    GDALOpenInfo oOpenInfo(pszFilename, nOpenFlags,
+                           const_cast<char **>(papszSiblingFiles));
     oOpenInfo.papszAllowedDrivers = papszAllowedDrivers;
 
     // Prevent infinite recursion.
@@ -2721,8 +2722,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
         {
             poDriver = poDM->GetDriver(iDriver);
             if (papszAllowedDrivers != NULL &&
-                CSLFindString((char **)papszAllowedDrivers,
-                             GDALGetDriverShortName(poDriver)) == -1)
+                CSLFindString(papszAllowedDrivers,
+                              GDALGetDriverShortName(poDriver)) == -1)
                 continue;
         }
 
@@ -2761,7 +2762,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
             poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0;
         if( bIdentifyRes )
         {
-            GDALValidateOpenOptions( poDriver, papszOptionsToValidate );
+            GDALValidateOpenOptions(poDriver, papszOptionsToValidate);
         }
 
         GDALDataset *poDS = NULL;
@@ -2809,7 +2810,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
             {
                 if( CPLGetPID() != GDALGetResponsiblePIDForCurrentThread() )
                     CPLDebug("GDAL",
-                             "GDALOpen(%s, this=%p) succeeds as %s (pid=%d, responsiblePID=%d).",
+                             "GDALOpen(%s, this=%p) succeeds as "
+                             "%s (pid=%d, responsiblePID=%d).",
                              pszFilename, poDS, poDriver->GetDescription(),
                              static_cast<int>(CPLGetPID()),
                              static_cast<int>(
@@ -2846,12 +2848,13 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
             // driver specific.
             if( CSLFetchNameValue(papszOpenOptions, "OVERVIEW_LEVEL") != NULL &&
                 (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) == NULL ||
-                CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST)).ifind("OVERVIEW_LEVEL") == std::string::npos) )
+                CPLString(poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST))
+                        .ifind("OVERVIEW_LEVEL") == std::string::npos) )
             {
                 CPLString osVal(
                     CSLFetchNameValue(papszOpenOptions, "OVERVIEW_LEVEL"));
-                int nOvrLevel = atoi(osVal);
-                int bThisLevelOnly = osVal.ifind("only") != std::string::npos;
+                const int nOvrLevel = atoi(osVal);
+                bool bThisLevelOnly = osVal.ifind("only") != std::string::npos;
                 GDALDataset *poOvrDS = GDALCreateOverviewDataset(
                     poDS, nOvrLevel, bThisLevelOnly, TRUE);
                 if( poOvrDS == NULL )
@@ -2873,7 +2876,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
             VSIErrorReset();
 
             CSLDestroy(papszOpenOptionsCleaned);
-            return (GDALDatasetH)poDS;
+            return /* (GDALDatasetH) */ poDS;
         }
 
         if( CPLGetLastErrorNo() != 0 && CPLGetLastErrorType() > CE_Warning)
@@ -3025,15 +3028,13 @@ void CPL_STDCALL GDALClose( GDALDatasetH hDS )
 
 static int GDALDumpOpenSharedDatasetsForeach(void *elt, void *user_data)
 {
-    SharedDatasetCtxt *psStruct = (SharedDatasetCtxt *)elt;
+    SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(elt);
     FILE *fp = static_cast<FILE *>(user_data);
-    const char *pszDriverName;
     GDALDataset *poDS = psStruct->poDS;
 
-    if( poDS->GetDriver() == NULL )
-        pszDriverName = "DriverIsNULL";
-    else
-        pszDriverName = poDS->GetDriver()->GetDescription();
+    const char *pszDriverName = poDS->GetDriver() == NULL
+                                    ? "DriverIsNULL"
+                                    : poDS->GetDriver()->GetDescription();
 
     poDS->Reference();
     CPL_IGNORE_RET_VAL(
@@ -3048,17 +3049,15 @@ static int GDALDumpOpenSharedDatasetsForeach(void *elt, void *user_data)
 
 static int GDALDumpOpenDatasetsForeach(GDALDataset *poDS, FILE *fp)
 {
-    const char *pszDriverName;
 
     // Don't list shared datasets. They have already been listed by
     // GDALDumpOpenSharedDatasetsForeach.
     if (poDS->GetShared())
         return TRUE;
 
-    if( poDS->GetDriver() == NULL )
-        pszDriverName = "DriverIsNULL";
-    else
-        pszDriverName = poDS->GetDriver()->GetDescription();
+    const char *pszDriverName = poDS->GetDriver() == NULL
+                                    ? "DriverIsNULL"
+                                    : poDS->GetDriver()->GetDescription();
 
     poDS->Reference();
     CPL_IGNORE_RET_VAL(
@@ -3395,13 +3394,14 @@ int GDALDataset::CloseDependentDatasets()
  * @since GDAL 1.9.0
  */
 
-void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)
+void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
+                              const char *fmt, ...)
 {
     va_list args;
 
     va_start(args, fmt);
 
-    char szNewFmt[256];
+    char szNewFmt[256] = {};
     const char *pszDSName = GetDescription();
     if (strlen(fmt) + strlen(pszDSName) + 3 >= sizeof(szNewFmt) - 1)
         pszDSName = CPLGetFilename(pszDSName);
@@ -3427,10 +3427,10 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
     {
         oDerivedMetadataList.Clear();
 
-        // First condition: at least one raster band
+        // First condition: at least one raster band.
         if(GetRasterCount() > 0)
         {
-            // Check if there is at least one complex band
+            // Check if there is at least one complex band.
             bool hasAComplexBand = false;
 
             for(int rasterId = 1; rasterId <= GetRasterCount(); ++rasterId)
@@ -3475,8 +3475,8 @@ char ** GDALDataset::GetMetadata(const char * pszDomain)
         }
         return oDerivedMetadataList.List();
     }
-    else
-        return GDALMajorObject::GetMetadata(pszDomain);
+
+    return GDALMajorObject::GetMetadata(pszDomain);
 }
 
 /**
