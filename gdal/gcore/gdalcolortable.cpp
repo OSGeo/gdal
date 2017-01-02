@@ -178,7 +178,8 @@ int GDALColorTable::GetColorEntryAsRGB( int i, GDALColorEntry *poEntry ) const
 /**
  * \brief Fetch a table entry in RGB format.
  *
- * This function is the same as the C++ method GDALColorTable::GetColorEntryAsRGB()
+ * This function is the same as the C++ method
+ * GDALColorTable::GetColorEntryAsRGB().
  */
 int CPL_STDCALL GDALGetColorEntryAsRGB( GDALColorTableH hTable, int i,
                             GDALColorEntry *poEntry )
@@ -378,10 +379,10 @@ GDALGetPaletteInterpretation( GDALColorTableH hTable )
  */
 
 int GDALColorTable::CreateColorRamp(
-            int nStartIndex, const GDALColorEntry *psStartColor,
-            int nEndIndex, const GDALColorEntry *psEndColor )
+    int nStartIndex, const GDALColorEntry *psStartColor,
+    int nEndIndex, const GDALColorEntry *psEndColor )
 {
-    /* validate indexes */
+    // Validate indexes.
 
     if( nStartIndex < 0 || nStartIndex > 255 ||
         nEndIndex < 0 || nEndIndex > 255 ||
@@ -390,31 +391,31 @@ int GDALColorTable::CreateColorRamp(
         return -1;
     }
 
-    /* validate color entries */
+    // Validate color entries.
 
     if( psStartColor == NULL || psEndColor == NULL )
     {
         return -1;
     }
 
-    /* calculate number of colors in-between */
+    // Calculate number of colors in-between.
 
     const int nColors = nEndIndex - nStartIndex;
 
-    /* set starting color */
+    // Set starting color.
 
     SetColorEntry( nStartIndex, psStartColor );
 
     if( nColors == 0 )
     {
-        return GetColorEntryCount(); /* it should not proceed */
+        return GetColorEntryCount();  // It should not proceed.
     }
 
-    /* set ending color */
+    // Set ending color.
 
     SetColorEntry( nEndIndex, psEndColor );
 
-    /* calculate the slope of the linear transformation */
+    // Calculate the slope of the linear transformation.
 
     const double dfSlope1 = ( psEndColor->c1 - psStartColor->c1 )
         / static_cast<double>( nColors );
@@ -425,7 +426,7 @@ int GDALColorTable::CreateColorRamp(
     const double dfSlope4 = ( psEndColor->c4 - psStartColor->c4 )
         / static_cast<double>( nColors );
 
-    /* loop through the new colors */
+    // Loop through the new colors.
 
     GDALColorEntry sColor = *psStartColor;
 
@@ -443,7 +444,7 @@ int GDALColorTable::CreateColorRamp(
         SetColorEntry( nStartIndex + i, &sColor );
     }
 
-    /* return the total number of colors */
+    // Return the total number of colors.
 
     return GetColorEntryCount();
 }
@@ -459,10 +460,10 @@ int GDALColorTable::CreateColorRamp(
  */
 void CPL_STDCALL
 GDALCreateColorRamp( GDALColorTableH hTable,
-            int nStartIndex, const GDALColorEntry *psStartColor,
-            int nEndIndex, const GDALColorEntry *psEndColor )
+                     int nStartIndex, const GDALColorEntry *psStartColor,
+                     int nEndIndex, const GDALColorEntry *psEndColor )
 {
-    VALIDATE_POINTER0( hTable, "GDALCreateColorRamp" );
+    VALIDATE_POINTER0(hTable, "GDALCreateColorRamp");
 
     reinterpret_cast<GDALColorTable *>( hTable )->
         CreateColorRamp( nStartIndex, psStartColor,
