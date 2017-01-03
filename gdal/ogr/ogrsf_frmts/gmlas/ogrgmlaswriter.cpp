@@ -331,69 +331,8 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
     std::vector<PairURIFilename> aoXSDs;
     std::map<CPLString, CPLString> oMapURIToPrefix;
     CPLString osGMLVersion;
-    if( osXSDFilenames.empty() )
-    {
-        // No explicit XSD creation option, then we assume that the source
-        // dataset contains all the metadata layers we need
-        OGRLayer* poOtherMetadataLayer =
-                            m_poSrcDS->GetLayerByName(szOGR_OTHER_METADATA);
-        if( poOtherMetadataLayer == NULL )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot establish schema since no %s creation option "
-                     "specified and no %s found in source "
-                     "dataset. One of them must be defined.",
-                     szINPUT_XSD_OPTION,
-                     szOGR_OTHER_METADATA);
-            return false;
-        }
-        std::map<int, CPLString> oMapToUri;
-        std::map<int, CPLString> oMapToLocation;
-        std::map<int, CPLString> oMapToPrefix;
-        while( true )
-        {
-            OGRFeature* poFeature = poOtherMetadataLayer->GetNextFeature();
-            if( poFeature == NULL )
-                break;
-            const char* pszKey = poFeature->GetFieldAsString(szKEY);
-            int i = 0;
-            if( sscanf( pszKey, szNAMESPACE_URI_FMT, &i ) == 1 && i > 0 )
-            {
-                oMapToUri[i] = poFeature->GetFieldAsString(szVALUE);
-            }
-            else if( sscanf( pszKey, szNAMESPACE_LOCATION_FMT, &i ) == 1 &&
-                     i > 0 )
-            {
-                oMapToLocation[i] = poFeature->GetFieldAsString(szVALUE);
-            }
-            else if( sscanf( pszKey, szNAMESPACE_PREFIX_FMT, &i ) == 1 &&
-                     i > 0 )
-            {
-                oMapToPrefix[i] = poFeature->GetFieldAsString(szVALUE);
-            }
-            else if( EQUAL(pszKey, szGML_VERSION) )
-            {
-                osGMLVersion = poFeature->GetFieldAsString(szVALUE);
-            }
-            delete poFeature;
-        }
-        poOtherMetadataLayer->ResetReading();
 
-        for( int i = 1; i <= static_cast<int>(oMapToUri.size()); ++i )
-        {
-            if( oMapToUri.find(i) != oMapToUri.end() )
-            {
-                const CPLString& osURI( oMapToUri[i] );
-                aoXSDs.push_back( PairURIFilename( osURI,
-                                                   oMapToLocation[i] ) );
-                if( oMapToPrefix.find(i) != oMapToPrefix.end() )
-                {
-                    oMapURIToPrefix[ osURI ] = oMapToPrefix[i];
-                }
-            }
-        }
-    }
-    else
+    if( !osXSDFilenames.empty() )
     {
         // Create a fake GMLAS dataset from the XSD= value
         m_poTmpDS = new OGRGMLASDataSource();
@@ -408,12 +347,25 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
         {
             return false;
         }
-        aoXSDs = m_poTmpDS->GetXSDsManuallyPassed();
-        oMapURIToPrefix = m_poTmpDS->GetMapURIToPrefix();
-        osGMLVersion = m_poTmpDS->GetGMLVersionFound();
     }
 
     GDALDataset* poQueryDS = m_poTmpDS ? m_poTmpDS : m_poSrcDS;
+
+    // No explicit XSD creation option, then we assume that the source
+    // dataset contains all the metadata layers we need
+    OGRLayer* poOtherMetadataLayer =
+                        poQueryDS->GetLayerByName(szOGR_OTHER_METADATA);
+    if( poOtherMetadataLayer == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot establish schema since no %s creation option "
+                    "specified and no %s found in source "
+                    "dataset. One of them must be defined.",
+                    szINPUT_XSD_OPTION,
+                    szOGR_OTHER_METADATA);
+        return false;
+    }
+
     m_poLayersMDLayer =
         poQueryDS->GetLayerByName(szOGR_LAYERS_METADATA);
     m_poFieldsMDLayer =
@@ -437,6 +389,52 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
         CPLError(CE_Failure, CPLE_AppDefined, "%s not found",
                  szOGR_LAYER_RELATIONSHIPS);
         return false;
+    }
+
+    std::map<int, CPLString> oMapToUri;
+    std::map<int, CPLString> oMapToLocation;
+    std::map<int, CPLString> oMapToPrefix;
+    while( true )
+    {
+        OGRFeature* poFeature = poOtherMetadataLayer->GetNextFeature();
+        if( poFeature == NULL )
+            break;
+        const char* pszKey = poFeature->GetFieldAsString(szKEY);
+        int i = 0;
+        if( sscanf( pszKey, szNAMESPACE_URI_FMT, &i ) == 1 && i > 0 )
+        {
+            oMapToUri[i] = poFeature->GetFieldAsString(szVALUE);
+        }
+        else if( sscanf( pszKey, szNAMESPACE_LOCATION_FMT, &i ) == 1 &&
+                    i > 0 )
+        {
+            oMapToLocation[i] = poFeature->GetFieldAsString(szVALUE);
+        }
+        else if( sscanf( pszKey, szNAMESPACE_PREFIX_FMT, &i ) == 1 &&
+                    i > 0 )
+        {
+            oMapToPrefix[i] = poFeature->GetFieldAsString(szVALUE);
+        }
+        else if( EQUAL(pszKey, szGML_VERSION) )
+        {
+            osGMLVersion = poFeature->GetFieldAsString(szVALUE);
+        }
+        delete poFeature;
+    }
+    poOtherMetadataLayer->ResetReading();
+
+    for( int i = 1; i <= static_cast<int>(oMapToUri.size()); ++i )
+    {
+        if( oMapToUri.find(i) != oMapToUri.end() )
+        {
+            const CPLString& osURI( oMapToUri[i] );
+            aoXSDs.push_back( PairURIFilename( osURI,
+                                                oMapToLocation[i] ) );
+            if( oMapToPrefix.find(i) != oMapToPrefix.end() )
+            {
+                oMapURIToPrefix[ osURI ] = oMapToPrefix[i];
+            }
+        }
     }
 
     if( !CollectLayers() )
