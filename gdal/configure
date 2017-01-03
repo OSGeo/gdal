@@ -1043,7 +1043,7 @@ with_pdfium_lib
 with_pdfium_extra_lib_for_test
 with_static_proj4
 with_gdal_ver
-with_
+with_macosx_framework
 with_perl
 with_php
 with_python
@@ -32845,9 +32845,9 @@ if test ! -z "`uname | grep Darwin`" ; then
 
   MACOSX_FRAMEWORK=no
 
-# Check whether --with- was given.
-if test "${with_+set}" = set; then :
-  withval=$with_;
+# Check whether --with-macosx-framework was given.
+if test "${with_macosx_framework+set}" = set; then :
+  withval=$with_macosx_framework;
 fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Mac OS X Framework build" >&5
