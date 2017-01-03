@@ -156,8 +156,8 @@ static GDALDataset **ppDatasets = NULL;
 
 static unsigned long GDALSharedDatasetHashFunc( const void *elt )
 {
-    SharedDatasetCtxt *psStruct =
-        static_cast<SharedDatasetCtxt *>(const_cast<void *>(elt));
+    const SharedDatasetCtxt *psStruct =
+        static_cast<const SharedDatasetCtxt *>(elt);
     return static_cast<unsigned long>(
         CPLHashSetHashStr(psStruct->pszDescription) ^ psStruct->eAccess ^
         psStruct->nPID);
@@ -165,10 +165,10 @@ static unsigned long GDALSharedDatasetHashFunc( const void *elt )
 
 static int GDALSharedDatasetEqualFunc( const void* elt1, const void* elt2 )
 {
-    SharedDatasetCtxt *psStruct1 =
-        static_cast<SharedDatasetCtxt *>(const_cast<void *>(elt1));
-    SharedDatasetCtxt *psStruct2 =
-        static_cast<SharedDatasetCtxt *>(const_cast<void *>(elt2));
+    const SharedDatasetCtxt *psStruct1 =
+        static_cast<const SharedDatasetCtxt *>(elt1);
+    const SharedDatasetCtxt *psStruct2 =
+        static_cast<const SharedDatasetCtxt *>(elt2);
     return strcmp(psStruct1->pszDescription, psStruct2->pszDescription) == 0 &&
            psStruct1->nPID == psStruct2->nPID &&
            psStruct1->eAccess == psStruct2->eAccess;
@@ -1556,7 +1556,8 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
     CPLAssert(NULL != pData);
 
     if (nXSize == nBufXSize && nYSize == nBufYSize && nBandCount > 1 &&
-        (pszInterleave = GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")) != NULL &&
+        (pszInterleave = GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")) !=
+            NULL &&
         EQUAL(pszInterleave, "PIXEL"))
     {
         return BlockBasedRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
@@ -1636,7 +1637,8 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
             {
                 psExtraArg->pfnProgress = GDALScaledProgress;
                 psExtraArg->pProgressData = GDALCreateScaledProgress(
-                    0.0, (double)nOKBands / nBandCount, pfnProgressGlobal,
+                    0.0, static_cast<double>(nOKBands) / nBandCount,
+                    pfnProgressGlobal,
                     pProgressDataGlobal);
                 if( psExtraArg->pProgressData == NULL )
                     psExtraArg->pfnProgress = NULL;
@@ -1658,14 +1660,16 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
             {
                 psExtraArg->pfnProgress = GDALScaledProgress;
                 psExtraArg->pProgressData = GDALCreateScaledProgress(
-                    (double)nOKBands / nBandCount, 1.0, pfnProgressGlobal,
+                    static_cast<double>(nOKBands) / nBandCount,
+                    1.0, pfnProgressGlobal,
                     pProgressDataGlobal);
                 if( psExtraArg->pProgressData == NULL )
                     psExtraArg->pfnProgress = NULL;
             }
             eErr = BandBasedRasterIO(
                 eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                (GByte *)pData + nBandSpace * nOKBands, nBufXSize, nBufYSize,
+                static_cast<GByte *>(pData) + nBandSpace * nOKBands,
+                nBufXSize, nBufYSize,
                 eBufType, nBandCount - nOKBands, panBandMap + nOKBands,
                 nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
             if( nOKBands > 0 )
@@ -1723,7 +1727,8 @@ CPLErr GDALDataset::BandBasedRasterIO( GDALRWFlag eRWFlag,
             break;
         }
 
-        GByte *pabyBandData = ((GByte *)pData) + iBandIndex * nBandSpace;
+        GByte *pabyBandData =
+            static_cast<GByte *>(pData) + iBandIndex * nBandSpace;
 
         if( nBandCount > 1 )
         {
@@ -1737,7 +1742,7 @@ CPLErr GDALDataset::BandBasedRasterIO( GDALRWFlag eRWFlag,
         }
 
         eErr = poBand->IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                 (void *)pabyBandData, nBufXSize, nBufYSize,
+                                 pabyBandData, nBufXSize, nBufYSize,
                                  eBufType, nPixelSpace, nLineSpace, psExtraArg);
 
         if( nBandCount > 1 )
