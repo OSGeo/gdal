@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.123 2016-01-23 21:20:34 erouault Exp $ */
+/* $Id: tif_jpeg.c,v 1.124 2017-01-03 17:22:49 erouault Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -2291,6 +2291,15 @@ static int JPEGInitializeLibJPEG( TIFF * tif, int decompress )
     } else {
         if (!TIFFjpeg_create_compress(sp))
             return (0);
+#ifndef TIFF_JPEG_MAX_MEMORY_TO_USE
+#define TIFF_JPEG_MAX_MEMORY_TO_USE (10 * 1024 * 1024)
+#endif
+        /* Increase the max memory usable. This helps when creating files */
+        /* with "big" tile, without using libjpeg temporary files. */
+        /* For example a 512x512 tile with 3 bands */
+        /* requires 1.5 MB which is above libjpeg 1MB default */
+        if( sp->cinfo.c.mem->max_memory_to_use < TIFF_JPEG_MAX_MEMORY_TO_USE )
+            sp->cinfo.c.mem->max_memory_to_use = TIFF_JPEG_MAX_MEMORY_TO_USE;
     }
 
     sp->cinfo_initialized = TRUE;

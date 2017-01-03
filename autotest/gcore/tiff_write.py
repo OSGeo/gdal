@@ -7427,6 +7427,25 @@ def tiff_write_161():
     return 'success'
 
 ###############################################################################
+# Test creating a JPEG compressed file with big tiles (#6757)
+
+def tiff_write_162():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 512, 3)
+
+    options = [ 'TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512', 'COMPRESS=JPEG' ]
+
+    gdaltest.tiff_drv.CreateCopy( '/vsimem/tiff_write_162.tif', src_ds,
+                                  options = options )
+
+    if gdal.GetLastErrorMsg() != '':
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete( '/vsimem/tiff_write_162.tif' )
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -7617,6 +7636,7 @@ gdaltest_list = [
     tiff_write_159,
     tiff_write_160,
     tiff_write_161,
+    tiff_write_162,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
