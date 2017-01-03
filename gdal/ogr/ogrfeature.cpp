@@ -335,6 +335,11 @@ OGRFeatureDefnH OGR_F_GetDefnRef( OGRFeatureH hFeat )
  *
  * This method is the same as the C function OGR_F_SetGeometryDirectly().
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param poGeomIn new geometry to apply to feature. Passing NULL value here
  * is correct and it will result in deallocation of currently assigned geometry
  * without assigning new one.
@@ -368,6 +373,11 @@ OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
  * This function is the same as the C++ method
  * OGRFeature::SetGeometryDirectly.
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param hFeat handle to the feature on which to apply the geometry.
  * @param hGeom handle to the new geometry to apply to feature.
  *
@@ -398,6 +408,11 @@ OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
  *
  * This method is the same as the C function OGR_F_SetGeometry().
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ * 
  * @param poGeomIn new geometry to apply to feature. Passing NULL value here
  * is correct and it will result in deallocation of currently assigned geometry
  * without assigning new one.
@@ -428,6 +443,11 @@ OGRErr OGRFeature::SetGeometry( const OGRGeometry * poGeomIn )
  * of the passed geometry, but instead makes a copy of it.
  *
  * This function is the same as the C++ OGRFeature::SetGeometry().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param hFeat handle to the feature on which new geometry is applied to.
  * @param hGeom handle to the new geometry to apply to feature.
@@ -2953,6 +2973,11 @@ char* OGRFeature::GetFieldAsSerializedJSon( int iField )
  * necessarily taking into account formatting constraints on this field.  Other
  * field types may be unaffected.
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param pszFName the name of the field to set.
  * @param nValue the value to assign.
  */
@@ -2966,6 +2991,11 @@ char* OGRFeature::GetFieldAsSerializedJSon( int iField )
  * field types may be unaffected.
  *
  * This method is the same as the C function OGR_F_SetFieldInteger().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  * @param nValue the value to assign.
@@ -3052,6 +3082,11 @@ void OGRFeature::SetField( int iField, int nValue )
  *
  * This function is the same as the C++ method OGRFeature::SetField().
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  * @param nValue the value to assign.
@@ -3077,6 +3112,11 @@ void OGR_F_SetFieldInteger( OGRFeatureH hFeat, int iField, int nValue )
  * necessarily taking into account formatting constraints on this field.  Other
  * field types may be unaffected.
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param pszFName the name of the field to set.
  * @param nValue the value to assign.
  */
@@ -3090,6 +3130,11 @@ void OGR_F_SetFieldInteger( OGRFeatureH hFeat, int iField, int nValue )
  * field types may be unaffected.
  *
  * This method is the same as the C function OGR_F_SetFieldInteger64().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  * @param nValue the value to assign.
@@ -3194,6 +3239,11 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
  *
  * This function is the same as the C++ method OGRFeature::SetField().
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  * @param nValue the value to assign.
@@ -3221,6 +3271,11 @@ void OGR_F_SetFieldInteger64( OGRFeatureH hFeat, int iField, GIntBig nValue )
  * necessarily taking into account formatting constraints on this field.  Other
  * field types may be unaffected.
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param pszFName the name of the field to set.
  * @param dfValue the value to assign.
  */
@@ -3234,6 +3289,11 @@ void OGR_F_SetFieldInteger64( OGRFeatureH hFeat, int iField, GIntBig nValue )
  * field types may be unaffected.
  *
  * This method is the same as the C function OGR_F_SetFieldDouble().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  * @param dfValue the value to assign.
@@ -3327,6 +3387,11 @@ void OGRFeature::SetField( int iField, double dfValue )
  *
  * This function is the same as the C++ method OGRFeature::SetField().
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  * @param dfValue the value to assign.
@@ -3353,6 +3418,11 @@ void OGR_F_SetFieldDouble( OGRFeatureH hFeat, int iField, double dfValue )
  * string.  OFTReal fields will be set based on an CPLAtof() conversion of the
  * string.  Other field types may be unaffected.
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param pszFName the name of the field to set.
  * @param pszValue the value to assign.
  */
@@ -3366,6 +3436,11 @@ void OGR_F_SetFieldDouble( OGRFeatureH hFeat, int iField, double dfValue )
  * string.  Other field types may be unaffected.
  *
  * This method is the same as the C function OGR_F_SetFieldString().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  * @param pszValue the value to assign.
@@ -3622,6 +3697,11 @@ void OGRFeature::SetField( int iField, const char * pszValue )
  *
  * This function is the same as the C++ method OGRFeature::SetField().
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  * @param pszValue the value to assign.
@@ -3646,6 +3726,11 @@ void OGR_F_SetFieldString( OGRFeatureH hFeat, int iField, const char *pszValue)
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List
  * and OFTRealList fields.
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param pszFName the name of the field to set.
  * @param nCount the number of values in the list being assigned.
  * @param panValues the values to assign.
@@ -3658,6 +3743,11 @@ void OGR_F_SetFieldString( OGRFeatureH hFeat, int iField, const char *pszValue)
  * and OFTRealList fields.
  *
  * This method is the same as the C function OGR_F_SetFieldIntegerList().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nCount the number of values in the list being assigned.
@@ -3757,6 +3847,11 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
  *
  * This function is the same as the C++ method OGRFeature::SetField().
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nCount the number of values in the list being assigned.
@@ -3785,6 +3880,11 @@ void OGR_F_SetFieldIntegerList( OGRFeatureH hFeat, int iField,
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List
  * and OFTRealList fields.
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param pszFName the name of the field to set.
  * @param nCount the number of values in the list being assigned.
  * @param panValues the values to assign.
@@ -3797,6 +3897,11 @@ void OGR_F_SetFieldIntegerList( OGRFeatureH hFeat, int iField,
  * and OFTRealList fields.
  *
  * This method is the same as the C function OGR_F_SetFieldIntege64rList().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nCount the number of values in the list being assigned.
@@ -3887,6 +3992,11 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
  *
  * This function is the same as the C++ method OGRFeature::SetField().
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nCount the number of values in the list being assigned.
@@ -3914,6 +4024,11 @@ void OGR_F_SetFieldInteger64List( OGRFeatureH hFeat, int iField,
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List,
  * OFTRealList fields.
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param pszFName the name of the field to set.
  * @param nCount the number of values in the list being assigned.
  * @param padfValues the values to assign.
@@ -3926,6 +4041,11 @@ void OGR_F_SetFieldInteger64List( OGRFeatureH hFeat, int iField,
  * OFTRealList fields.
  *
  * This method is the same as the C function OGR_F_SetFieldDoubleList().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nCount the number of values in the list being assigned.
@@ -4003,6 +4123,11 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
  *
  * This function is the same as the C++ method OGRFeature::SetField().
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nCount the number of values in the list being assigned.
@@ -4028,6 +4153,11 @@ void OGR_F_SetFieldDoubleList( OGRFeatureH hFeat, int iField,
  *
  * This method currently on has an effect of OFTStringList fields.
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param pszFName the name of the field to set.
  * @param papszValues the values to assign.
  */
@@ -4038,6 +4168,11 @@ void OGR_F_SetFieldDoubleList( OGRFeatureH hFeat, int iField,
  * This method currently on has an effect of OFTStringList fields.
  *
  * This method is the same as the C function OGR_F_SetFieldStringList().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param papszValues the values to assign.
@@ -4132,6 +4267,11 @@ void OGRFeature::SetField( int iField, char ** papszValues )
  *
  * This function is the same as the C++ method OGRFeature::SetField().
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param papszValues the values to assign.
@@ -4156,6 +4296,11 @@ void OGR_F_SetFieldStringList( OGRFeatureH hFeat, int iField,
  * This method currently on has an effect of OFTBinary fields.
  *
  * This method is the same as the C function OGR_F_SetFieldBinary().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nBytes bytes of data being set.
@@ -4204,6 +4349,11 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
  *
  * This function is the same as the C++ method OGRFeature::SetField().
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nBytes the number of bytes in pabyData array.
@@ -4232,6 +4382,11 @@ void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField,
  * This method currently only has an effect for OFTDate, OFTTime and OFTDateTime
  * fields.
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param pszFName the name of the field to set.
  * @param nYear (including century)
  * @param nMonth (1-12)
@@ -4249,6 +4404,11 @@ void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField,
  * fields.
  *
  * This method is the same as the C function OGR_F_SetFieldDateTime().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nYear (including century)
@@ -4315,6 +4475,11 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
  * This method currently only has an effect for OFTDate, OFTTime and OFTDateTime
  * fields.
  *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to set, from 0 to GetFieldCount()-1.
  * @param nYear (including century)
@@ -4350,6 +4515,11 @@ void OGR_F_SetFieldDateTime( OGRFeatureH hFeat, int iField,
  *
  * This method currently only has an effect for OFTDate, OFTTime and OFTDateTime
  * fields.
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to set, from 0 to GetFieldCount()-1.
@@ -4389,6 +4559,12 @@ void OGR_F_SetFieldDateTimeEx( OGRFeatureH hFeat, int iField,
  * target field, or an application crash may occur.  The passed value
  * is copied, and will not be affected.  It remains the responsibility of
  * the caller.
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
  * @param pszFName the name of the field to set.
  * @param puValue the value to assign.
  */
@@ -4402,6 +4578,11 @@ void OGR_F_SetFieldDateTimeEx( OGRFeatureH hFeat, int iField,
  * the caller.
  *
  * This method is the same as the C function OGR_F_SetFieldRaw().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
  * @param puValue the value to assign.
@@ -4623,6 +4804,11 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
  * the caller.
  *
  * This function is the same as the C++ method OGRFeature::SetField().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
