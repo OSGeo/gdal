@@ -72,7 +72,7 @@ static const unsigned char jpc_header[] = {0xff,0x4f};
 /*      The number of tiles at a time we will push through the          */
 /*      encoder per flush when writing jpeg2000 streams.                */
 /* -------------------------------------------------------------------- */
-#define TILE_CHUNK_SIZE  1024
+#define TILE_CHUNK_SIZE 1024
 
 /************************************************************************/
 /* ==================================================================== */
@@ -122,7 +122,8 @@ class JP2KAKDataset : public GDALJP2AbstractDataset
     virtual ~JP2KAKDataset();
 
     virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * ) override;
+                                    int, int *, GDALProgressFunc,
+                                    void * ) override;
 
     static void KakaduInitialize();
     static GDALDataset *Open( GDALOpenInfo * );
@@ -327,26 +328,30 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
         int nFMT = 0;
         if( oJP2Channels.get_num_colours() == 3 )
         {
-            oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex, nCSI, nFMT );
-            oJP2Channels.get_colour_mapping( 1, nGreenIndex, nLutIndex, nCSI, nFMT );
-            oJP2Channels.get_colour_mapping( 2, nBlueIndex, nLutIndex, nCSI, nFMT );
+            oJP2Channels.get_colour_mapping(0, nRedIndex, nLutIndex, nCSI,
+                                            nFMT);
+            oJP2Channels.get_colour_mapping(1, nGreenIndex, nLutIndex, nCSI,
+                                            nFMT);
+            oJP2Channels.get_colour_mapping(2, nBlueIndex, nLutIndex, nCSI,
+                                            nFMT);
         }
         else
         {
-            oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex, nCSI, nFMT );
+            oJP2Channels.get_colour_mapping(0, nRedIndex, nLutIndex, nCSI,
+                                            nFMT);
             if( nBand == 1 )
                 eInterp = GCI_GrayIndex;
         }
 #else
         if( oJP2Channels.get_num_colours() == 3 )
         {
-            oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex, nCSI );
-            oJP2Channels.get_colour_mapping( 1, nGreenIndex, nLutIndex, nCSI );
-            oJP2Channels.get_colour_mapping( 2, nBlueIndex, nLutIndex, nCSI );
+            oJP2Channels.get_colour_mapping(0, nRedIndex, nLutIndex, nCSI);
+            oJP2Channels.get_colour_mapping(1, nGreenIndex, nLutIndex, nCSI);
+            oJP2Channels.get_colour_mapping(2, nBlueIndex, nLutIndex, nCSI);
         }
         else
         {
-            oJP2Channels.get_colour_mapping( 0, nRedIndex, nLutIndex, nCSI );
+            oJP2Channels.get_colour_mapping(0, nRedIndex, nLutIndex, nCSI);
             if( nBand == 1 )
                 eInterp = GCI_GrayIndex;
         }
@@ -379,22 +384,22 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
 
                 // get_opacity_mapping sets that last 3 args by non-const refs.
 #if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 8)
-                if( oJP2Channels.get_opacity_mapping( color_idx, opacity_idx,
-                                                      lut_idx, nCSI, nFMT ) )
+                if(oJP2Channels.get_opacity_mapping(color_idx, opacity_idx,
+                                                    lut_idx, nCSI, nFMT))
 #else
-                if( oJP2Channels.get_opacity_mapping( color_idx, opacity_idx,
-                                                      lut_idx, nCSI ) )
+                if(oJP2Channels.get_opacity_mapping(color_idx, opacity_idx,
+                                                    lut_idx, nCSI))
 #endif
                 {
                     if( opacity_idx == nBand - 1 )
                         eInterp = GCI_AlphaBand;
                 }
 #if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 8)
-                if( oJP2Channels.get_premult_mapping( color_idx, opacity_idx,
-                                                      lut_idx, nCSI, nFMT ) )
+                if( oJP2Channels.get_premult_mapping(color_idx, opacity_idx,
+                                                     lut_idx, nCSI, nFMT) )
 #else
-                if( oJP2Channels.get_premult_mapping( color_idx, opacity_idx,
-                                                      lut_idx, nCSI ) )
+                if( oJP2Channels.get_premult_mapping(color_idx, opacity_idx,
+                                                     lut_idx, nCSI) )
 #endif
                 {
                     if( opacity_idx == nBand - 1 )
@@ -425,15 +430,15 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
 
         for( int nDiscard = 1; nDiscard < nResCount; nDiscard++ )
         {
-            nXSize = (nXSize+1) / 2;
-            nYSize = (nYSize+1) / 2;
+            nXSize = (nXSize + 1) / 2;
+            nYSize = (nYSize + 1) / 2;
 
             if( (nXSize+nYSize) < 128 || nXSize < 4 || nYSize < 4 )
                 continue; /* skip super reduced resolution layers */
 
-            oCodeStream.apply_input_restrictions( 0, 0, nDiscard, 0, NULL );
+            oCodeStream.apply_input_restrictions(0, 0, nDiscard, 0, NULL);
             kdu_dims dims;  // struct with default constructor.
-            oCodeStream.get_dims( 0, dims );
+            oCodeStream.get_dims(0, dims);
 
             if( (dims.size.x == nXSize || dims.size.x == nXSize-1)
                 && (dims.size.y == nYSize || dims.size.y == nYSize-1) )
@@ -2244,7 +2249,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
         delete poROIImage;
 
     return bRet;
-    // For some reason thinkgs that engines and lines are leaking
+    // For some reason cppcheck thinks that engines and lines are leaking.
     // cppcheck-suppress memleak
 }
 
