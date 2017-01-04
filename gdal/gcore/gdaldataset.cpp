@@ -2132,23 +2132,20 @@ GDALDataset **GDALDataset::GetOpenDatasets( int *pnCount )
 {
     CPLMutexHolderD(&hDLMutex);
 
-    if (poAllDatasetMap != NULL)
-    {
-        int i = 0;
-        *pnCount = static_cast<int>(poAllDatasetMap->size());
-        ppDatasets = static_cast<GDALDataset **>(
-            CPLRealloc(ppDatasets, (*pnCount) * sizeof(GDALDataset *)));
-        std::map<GDALDataset *, GIntBig>::iterator oIter =
-            poAllDatasetMap->begin();
-        for( ; oIter != poAllDatasetMap->end(); ++oIter, ++i )
-            ppDatasets[i] = oIter->first;
-        return ppDatasets;
-    }
-    else
+    if (poAllDatasetMap == NULL)
     {
         *pnCount = 0;
         return NULL;
     }
+
+    *pnCount = static_cast<int>(poAllDatasetMap->size());
+    ppDatasets = static_cast<GDALDataset **>(
+        CPLRealloc(ppDatasets, (*pnCount) * sizeof(GDALDataset *)));
+    std::map<GDALDataset *, GIntBig>::iterator oIter =
+        poAllDatasetMap->begin();
+    for( int i = 0; oIter != poAllDatasetMap->end(); ++oIter, ++i )
+        ppDatasets[i] = oIter->first;
+    return ppDatasets;
 }
 
 /************************************************************************/
@@ -4074,7 +4071,7 @@ This method is the same as the C function OGRReleaseDataSource().
 OGRErr GDALDataset::Release()
 
 {
-    GDALClose(/* (GDALDatasetH) */ this);
+    GDALClose(this);
     return OGRERR_NONE;
 }
 
@@ -4420,7 +4417,6 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     }
     else
     {
-        int nFeatCount = 0;  // Number of features in the temporary array.
         OGRFeature **papoDstFeature = static_cast<OGRFeature **>(
             VSI_CALLOC_VERBOSE(sizeof(OGRFeature *), nGroupTransactions));
 
@@ -4430,6 +4426,8 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 /* -------------------------------------------------------------------- */
 /*      Fill the array with features.                                   */
 /* -------------------------------------------------------------------- */
+            // Number of features in the temporary array.
+            int nFeatCount = 0;  // Used after for.
             for( nFeatCount = 0; nFeatCount < nGroupTransactions; ++nFeatCount )
             {
                 poFeature = poSrcLayer->GetNextFeature();
@@ -5632,7 +5630,7 @@ void GDALDataset::DestroyParseInfo(GDALSQLParseInfo *psParseInfo)
     // has taken a reference on them, which it will release in its
     // destructor.
     for( int iEDS = 0; iEDS < psParseInfo->nExtraDSCount; ++iEDS )
-        GDALClose((GDALDatasetH)psParseInfo->papoExtraDS[iEDS]);
+        GDALClose(psParseInfo->papoExtraDS[iEDS]);
 
     CPLFree(psParseInfo->papoExtraDS);
     CPLFree(psParseInfo->pszWHERE);
@@ -5830,7 +5828,7 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
     for (int iField = 0; iField < SPECIAL_FIELD_COUNT; iField++)
     {
         psParseInfo->sFieldList.names[psParseInfo->sFieldList.count] =
-            (char *)SpecialFieldNames[iField];
+            const_cast<char *>(SpecialFieldNames[iField]);
         psParseInfo->sFieldList.types[psParseInfo->sFieldList.count] =
             (iField == SPF_FID && bIsFID64) ? SWQ_INTEGER64
                                             : SpecialFieldTypes[iField];
