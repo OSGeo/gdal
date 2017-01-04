@@ -151,7 +151,7 @@ static GDALDataset *OGRTABDriverOpen( GDALOpenInfo* poOpenInfo )
 #endif
 
     OGRTABDataSource *poDS = new OGRTABDataSource();
-    if( poDS->Open( poOpenInfo, TRUE ) )
+    if( poDS->Open( poOpenInfo, FALSE ) )
         return poDS;
     else
     {

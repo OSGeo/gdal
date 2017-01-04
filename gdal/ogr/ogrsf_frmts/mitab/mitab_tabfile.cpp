@@ -1083,8 +1083,6 @@ int TABFile::WriteTABFile()
  **********************************************************************/
 int TABFile::Close()
 {
-    CPLErrorReset();
-
     // Commit the latest changes to the file...
 
     if (m_poMAPFile)
