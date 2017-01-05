@@ -14,6 +14,19 @@ import os
 
 from glob import glob
 
+# If CXX is defined in the environment, it will be used to link the .so
+# but distutils will be confused if it is made of several words like 'ccache g++'
+# and it will try to use only the first word.
+# See https://lists.osgeo.org/pipermail/gdal-dev/2016-July/044686.html
+# Note: in general when doing "make", CXX will not be defined, unless it is defined as
+# an environment variable, but in that case it is the value of GDALmake.opt that
+# will be set, not the one from the environment that started "make" !
+# If no CXX environment variable is defined, then the value of the CXX variable
+# in GDALmake.opt will not be set as an environment variable
+if 'CXX' in os.environ and os.environ['CXX'].strip().find(' ') >= 0:
+    print('WARNING: "CXX=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of distutils' % os.environ['CXX'])
+    del os.environ['CXX']
+
 # ---------------------------------------------------------------------------
 # Switches
 # ---------------------------------------------------------------------------
