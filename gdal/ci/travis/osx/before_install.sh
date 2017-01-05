@@ -3,6 +3,6 @@
 set -e
 
 brew update
-brew uninstall gdal
+brew uninstall postgis gdal
 brew install sqlite3
 brew install ccache
