@@ -198,12 +198,12 @@ class JP2KAKRasterBand : public GDALPamRasterBand
 
 class kdu_cpl_error_message : public kdu_thread_safe_message
 {
-public: // Member classes
+  public:  // Member classes
     using kdu_thread_safe_message::put_text;
 
     explicit kdu_cpl_error_message( CPLErr eErrClass ) :
-        m_eErrClass ( eErrClass ),
-        m_pszError ( NULL )
+        m_eErrClass(eErrClass),
+        m_pszError(NULL)
     {}
 
     void put_text(const char *string) override
@@ -212,25 +212,25 @@ public: // Member classes
             m_pszError = CPLStrdup( string );
         else
         {
-            m_pszError = (char *)
-                CPLRealloc(m_pszError, strlen(m_pszError) + strlen(string)+1 );
-            strcat( m_pszError, string );
+            m_pszError = (char *)CPLRealloc(m_pszError, strlen(m_pszError) +
+                                                            strlen(string) + 1);
+            strcat(m_pszError, string);
         }
     }
 
     class JP2KAKException {};
 
-    void flush(bool end_of_message=false) override
+    void flush(bool end_of_message = false) override
     {
         kdu_thread_safe_message::flush(end_of_message);
 
         if( m_pszError == NULL )
             return;
-        if( m_pszError[strlen(m_pszError)-1] == '\n' )
-            m_pszError[strlen(m_pszError)-1] = '\0';
+        if( m_pszError[strlen(m_pszError) - 1] == '\n' )
+            m_pszError[strlen(m_pszError) - 1] = '\0';
 
-        CPLError( m_eErrClass, CPLE_AppDefined, "%s", m_pszError );
-        CPLFree( m_pszError );
+        CPLError(m_eErrClass, CPLE_AppDefined, "%s", m_pszError);
+        CPLFree(m_pszError);
         m_pszError = NULL;
 
         if( end_of_message && m_eErrClass == CE_Failure )
@@ -239,7 +239,7 @@ public: // Member classes
         }
     }
 
-private:
+  private:
     CPLErr m_eErrClass;
     char *m_pszError;
 };
@@ -267,19 +267,19 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
 {
     nBand = nBandIn;  // From GDALRasterBand.
 
-    if( oCodeStream.get_bit_depth(nBand-1) > 8
-        && oCodeStream.get_bit_depth(nBand-1) <= 16
-        && oCodeStream.get_signed(nBand-1) )
+    if( oCodeStream.get_bit_depth(nBand - 1) > 8 &&
+        oCodeStream.get_bit_depth(nBand - 1) <= 16 &&
+        oCodeStream.get_signed(nBand - 1) )
         eDataType = GDT_Int16;
-    else if( oCodeStream.get_bit_depth(nBand-1) > 8
-             && oCodeStream.get_bit_depth(nBand-1) <= 16
-             && !oCodeStream.get_signed(nBand-1) )
+    else if( oCodeStream.get_bit_depth(nBand - 1) > 8 &&
+             oCodeStream.get_bit_depth(nBand - 1) <= 16 &&
+             !oCodeStream.get_signed(nBand - 1) )
         eDataType = GDT_UInt16;
     else
         eDataType = GDT_Byte;
 
-    oCodeStream.apply_input_restrictions( 0, 0, nDiscardLevels, 0, NULL );
-    oCodeStream.get_dims( 0, band_dims );
+    oCodeStream.apply_input_restrictions(0, 0, nDiscardLevels, 0, NULL);
+    oCodeStream.get_dims(0, band_dims);
 
     nRasterXSize = band_dims.size.x;
     nRasterYSize = band_dims.size.y;
@@ -287,15 +287,15 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
 /* -------------------------------------------------------------------- */
 /*      Capture some useful metadata.                                   */
 /* -------------------------------------------------------------------- */
-    if( oCodeStream.get_bit_depth(nBand-1) % 8 != 0 &&
+    if( oCodeStream.get_bit_depth(nBand - 1) % 8 != 0 &&
         !poBaseDSIn->bPromoteTo8Bit )
     {
-        SetMetadataItem( "NBITS",
-                         CPLString().Printf(
-                             "%d",oCodeStream.get_bit_depth(nBand-1)),
-                         "IMAGE_STRUCTURE" );
+        SetMetadataItem(
+            "NBITS",
+            CPLString().Printf("%d", oCodeStream.get_bit_depth(nBand - 1)),
+            "IMAGE_STRUCTURE");
     }
-    SetMetadataItem( "COMPRESSION", "JP2000", "IMAGE_STRUCTURE" );
+    SetMetadataItem("COMPRESSION", "JP2000", "IMAGE_STRUCTURE");
 
 /* -------------------------------------------------------------------- */
 /*      Use a 2048x128 "virtual" block size unless the file is small.    */
@@ -364,11 +364,11 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
             eInterp = GCI_PaletteIndex;
 
         // Establish color band this is.
-        else if( nRedIndex == nBand-1 )
+        else if( nRedIndex == nBand - 1 )
             eInterp = GCI_RedBand;
-        else if( nGreenIndex == nBand-1 )
+        else if( nGreenIndex == nBand - 1 )
             eInterp = GCI_GreenBand;
-        else if( nBlueIndex == nBand-1 )
+        else if( nBlueIndex == nBand - 1 )
             eInterp = GCI_BlueBand;
         else
             eInterp = GCI_Undefined;
@@ -440,23 +440,21 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
             kdu_dims dims;  // struct with default constructor.
             oCodeStream.get_dims(0, dims);
 
-            if( (dims.size.x == nXSize || dims.size.x == nXSize-1)
-                && (dims.size.y == nYSize || dims.size.y == nYSize-1) )
+            if( (dims.size.x == nXSize || dims.size.x == nXSize - 1) &&
+                (dims.size.y == nYSize || dims.size.y == nYSize - 1) )
             {
                 nOverviewCount++;
-                papoOverviewBand = static_cast<JP2KAKRasterBand **>(
-                    CPLRealloc( papoOverviewBand,
-                                sizeof(void*) * nOverviewCount ) );
-                papoOverviewBand[nOverviewCount-1] =
-                    new JP2KAKRasterBand( nBand, nDiscard, oCodeStream, 0,
-                                          jpip_client, oJP2Channels,
-                                          poBaseDS );
+                papoOverviewBand = static_cast<JP2KAKRasterBand **>(CPLRealloc(
+                    papoOverviewBand, sizeof(void *) * nOverviewCount));
+                papoOverviewBand[nOverviewCount - 1] =
+                    new JP2KAKRasterBand(nBand, nDiscard, oCodeStream, 0,
+                                         jpip_client, oJP2Channels, poBaseDS);
             }
             else
             {
-                CPLDebug( "GDAL", "Discard %dx%d JPEG2000 overview layer,\n"
-                          "expected %dx%d.",
-                          dims.size.x, dims.size.y, nXSize, nYSize );
+                CPLDebug("GDAL", "Discard %dx%d JPEG2000 overview layer,\n"
+                         "expected %dx%d.",
+                         dims.size.x, dims.size.y, nXSize, nYSize);
             }
         }
     }
@@ -472,7 +470,7 @@ JP2KAKRasterBand::~JP2KAKRasterBand()
     for( int i = 0; i < nOverviewCount; i++ )
         delete papoOverviewBand[i];
 
-    CPLFree( papoOverviewBand );
+    CPLFree(papoOverviewBand);
 }
 
 /************************************************************************/
@@ -496,7 +494,7 @@ GDALRasterBand *JP2KAKRasterBand::GetOverview( int iOverviewIndex )
 
 {
     if( GDALPamRasterBand::GetOverviewCount() > 0 )
-        return GDALPamRasterBand::GetOverview( iOverviewIndex );
+        return GDALPamRasterBand::GetOverview(iOverviewIndex);
 
     if( iOverviewIndex < 0 || iOverviewIndex >= nOverviewCount )
         return NULL;
@@ -511,14 +509,14 @@ GDALRasterBand *JP2KAKRasterBand::GetOverview( int iOverviewIndex )
 CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                      void * pImage )
 {
-    const int nWordSize = GDALGetDataTypeSizeBytes( eDataType );
+    const int nWordSize = GDALGetDataTypeSizeBytes(eDataType);
     int nOvMult = 1;
     int nLevelsLeft = nDiscardLevels;
     while( nLevelsLeft-- > 0 )
         nOvMult *= 2;
 
-    CPLDebug( "JP2KAK", "IReadBlock(%d,%d) on band %d.",
-              nBlockXOff, nBlockYOff, nBand );
+    CPLDebug("JP2KAK", "IReadBlock(%d,%d) on band %d.",
+             nBlockXOff, nBlockYOff, nBand);
 
 /* -------------------------------------------------------------------- */
 /*      Compute the normal window, and buffer size.                     */
@@ -551,7 +549,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     if( nXSize != nBlockXSize || nYSize != nBlockYSize )
-        memset( pImage, 0, nBlockXSize * nBlockYSize * nWordSize );
+        memset(pImage, 0, nBlockXSize * nBlockYSize * nWordSize);
 
 /* -------------------------------------------------------------------- */
 /*      By default we invoke just for the requested band, directly      */
@@ -580,26 +578,22 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     for( int iBand = 0; iBand < poBaseDS->GetRasterCount(); iBand++ )
     {
-        GDALRasterBand* poBand = poBaseDS->GetRasterBand(iBand+1);
+        GDALRasterBand *poBand = poBaseDS->GetRasterBand(iBand + 1);
         if ( poBand->GetRasterDataType() != eDataType )
           continue;
-        anBands.push_back(iBand+1);
+        anBands.push_back(iBand + 1);
     }
 
     GByte *pabyWrkBuffer = static_cast<GByte *>(
-        VSIMalloc3( nWordSize * anBands.size(), nBlockXSize, nBlockYSize ) );
+        VSIMalloc3(nWordSize * anBands.size(), nBlockXSize, nBlockYSize));
     if( pabyWrkBuffer == NULL )
         return CE_Failure;
 
-    eErr = poBaseDS->DirectRasterIO( GF_Read,
-                                     nWXOff, nWYOff, nWXSize, nWYSize,
-                                     pabyWrkBuffer, nXSize, nYSize,
-                                     eDataType,
-                                     static_cast<int>(anBands.size()),
-                                     &anBands[0],
-                                     nWordSize, nWordSize*nBlockXSize,
-                                     nWordSize*nBlockXSize*nBlockYSize,
-                                     &sExtraArg );
+    eErr = poBaseDS->DirectRasterIO(
+        GF_Read, nWXOff, nWYOff, nWXSize, nWYSize, pabyWrkBuffer, nXSize,
+        nYSize, eDataType, static_cast<int>(anBands.size()), &anBands[0],
+        nWordSize, nWordSize * nBlockXSize,
+        nWordSize * nBlockXSize * nBlockYSize, &sExtraArg);
 
     if( eErr == CE_None )
     {
@@ -610,18 +604,20 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( anBands[iBand] == nBand )
             {
                 // Application requested band.
-                memcpy( pImage, pabyWrkBuffer + nBandStart,
-                        nWordSize * nBlockXSize * nBlockYSize );
+                memcpy(pImage, pabyWrkBuffer + nBandStart,
+                       nWordSize * nBlockXSize * nBlockYSize);
             }
             else
             {
-                // all others are pushed into cache.
+                // All others are pushed into cache.
                 GDALRasterBand *poBaseBand =
                     poBaseDS->GetRasterBand(anBands[iBand]);
                 JP2KAKRasterBand *poBand = NULL;
 
                 if( nDiscardLevels == 0 )
+                {
                     poBand = (JP2KAKRasterBand *) poBaseBand;
+                }
                 else
                 {
                     int iOver = 0;  // Used after for.
@@ -631,27 +627,27 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                         poBand = dynamic_cast<JP2KAKRasterBand *>(
                             poBaseBand->GetOverview( iOver ) );
                         if( poBand == NULL )
-                            CPLError( CE_Fatal, CPLE_AppDefined,
-                                      "Dynamic cast failed" );
+                            CPLError(CE_Fatal, CPLE_AppDefined,
+                                     "Dynamic cast failed");
                         else if( poBand->nDiscardLevels == nDiscardLevels )
                             break;
                     }
                     if( iOver == poBaseBand->GetOverviewCount() )
                     {
-                        CPLAssert( false );
+                        CPLAssert(false);
                     }
                 }
 
                 GDALRasterBlock *poBlock = NULL;
 
                 if( poBand != NULL )
-                    poBlock = poBand->GetLockedBlockRef(
-                        nBlockXOff, nBlockYOff, TRUE );
+                    poBlock =
+                        poBand->GetLockedBlockRef(nBlockXOff, nBlockYOff, TRUE);
 
                 if( poBlock )
                 {
-                    memcpy( poBlock->GetDataRef(), pabyWrkBuffer + nBandStart,
-                            nWordSize * nBlockXSize * nBlockYSize );
+                    memcpy(poBlock->GetDataRef(), pabyWrkBuffer + nBandStart,
+                           nWordSize * nBlockXSize * nBlockYSize);
                     poBlock->DropLock();
                 }
             }
@@ -660,7 +656,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
-    VSIFree( pabyWrkBuffer );
+    VSIFree(pabyWrkBuffer);
     return eErr;
 }
 
@@ -726,9 +722,9 @@ void JP2KAKRasterBand::ApplyPalette( jp2_palette oJP2Palette )
 
     if( oJP2Palette.get_num_luts() < 3 )
     {
-        CPLDebug( "JP2KAK", "JP2KAKRasterBand::ApplyPalette()\n"
-                  "Odd get_num_luts() value (%d)",
-                  oJP2Palette.get_num_luts() );
+        CPLDebug("JP2KAK", "JP2KAKRasterBand::ApplyPalette()\n"
+                 "Odd get_num_luts() value (%d)",
+                 oJP2Palette.get_num_luts());
         return;
     }
 
@@ -738,8 +734,8 @@ void JP2KAKRasterBand::ApplyPalette( jp2_palette oJP2Palette )
 /* -------------------------------------------------------------------- */
     const int nCount = oJP2Palette.get_num_entries();
 
-    float * const pafLUT =
-        static_cast<float *>( CPLCalloc(sizeof(float)*4, nCount) );
+    float *const pafLUT =
+        static_cast<float *>(CPLCalloc(sizeof(float) * 4, nCount));
 
     const int nRed = 0;  // TODO(schwehr): Verify these constants are correct.
     const int nGreen = 1;
@@ -747,11 +743,11 @@ void JP2KAKRasterBand::ApplyPalette( jp2_palette oJP2Palette )
     const int nAlpha = 3;
     oJP2Palette.get_lut(nRed, pafLUT + 0);
     oJP2Palette.get_lut(nGreen, pafLUT + nCount);
-    oJP2Palette.get_lut(nBlue, pafLUT + nCount*2);
+    oJP2Palette.get_lut(nBlue, pafLUT + nCount * 2);
 
     if( oJP2Palette.get_num_luts() == 4 )
     {
-        oJP2Palette.get_lut( nAlpha, pafLUT + nCount * 3 );
+        oJP2Palette.get_lut(nAlpha, pafLUT + nCount * 3);
     }
     else
     {
@@ -764,23 +760,23 @@ void JP2KAKRasterBand::ApplyPalette( jp2_palette oJP2Palette )
 /* -------------------------------------------------------------------- */
 /*      Apply to GDAL colortable.                                       */
 /* -------------------------------------------------------------------- */
-    for( int iColor=0; iColor < nCount; iColor++ )
+    for( int iColor = 0; iColor < nCount; iColor++ )
     {
         GDALColorEntry sEntry = {
             static_cast<short>(
-                MAX(0,MIN(255,pafLUT[iColor + nCount*0]*256+128))),
+                MAX(0, MIN(255, pafLUT[iColor + nCount * 0] * 256 + 128))),
             static_cast<short>(
-                MAX(0,MIN(255,pafLUT[iColor + nCount*1]*256+128))),
+                MAX(0, MIN(255, pafLUT[iColor + nCount * 1] * 256 + 128))),
             static_cast<short>(
-                MAX(0,MIN(255,pafLUT[iColor + nCount*2]*256+128))),
+                MAX(0, MIN(255, pafLUT[iColor + nCount * 2] * 256 + 128))),
             static_cast<short>(
-                MAX(0,MIN(255,pafLUT[iColor + nCount*3]*256+128)))
+                MAX(0, MIN(255, pafLUT[iColor + nCount * 3] * 256 + 128)))
         };
 
-        oCT.SetColorEntry( iColor, &sEntry );
+        oCT.SetColorEntry(iColor, &sEntry);
     }
 
-    CPLFree( pafLUT );
+    CPLFree(pafLUT);
 
     eInterp = GCI_PaletteIndex;
 }
@@ -789,11 +785,7 @@ void JP2KAKRasterBand::ApplyPalette( jp2_palette oJP2Palette )
 /*                       GetColorInterpretation()                       */
 /************************************************************************/
 
-GDALColorInterp JP2KAKRasterBand::GetColorInterpretation()
-
-{
-    return eInterp;
-}
+GDALColorInterp JP2KAKRasterBand::GetColorInterpretation() { return eInterp; }
 
 /************************************************************************/
 /*                           GetColorTable()                            */
@@ -891,13 +883,13 @@ CPLErr JP2KAKDataset::IBuildOverviews( const char *pszResampling,
             dynamic_cast<JP2KAKRasterBand *>( GetRasterBand( iBand+1 ) );
         if( poBand == NULL )
         {
-            CPLError( CE_Fatal, CPLE_AppDefined, "Dynamic cast failed" );
+            CPLError(CE_Fatal, CPLE_AppDefined, "Dynamic cast failed");
             return CE_Failure;
         }
         for( int i = 0; i < poBand->nOverviewCount; i++ )
             delete poBand->papoOverviewBand[i];
 
-        CPLFree( poBand->papoOverviewBand );
+        CPLFree(poBand->papoOverviewBand);
         poBand->papoOverviewBand = NULL;
         poBand->nOverviewCount = 0;
     }
@@ -922,11 +914,11 @@ void JP2KAKDataset::KakaduInitialize()
     {
         kakadu_initialized = true;
 
-        kdu_cpl_error_message oErrHandler( CE_Failure );
-        kdu_cpl_error_message oWarningHandler( CE_Warning );
+        kdu_cpl_error_message oErrHandler(CE_Failure);
+        kdu_cpl_error_message oWarningHandler(CE_Warning);
 
-        kdu_customize_warnings(new kdu_cpl_error_message( CE_Warning ) );
-        kdu_customize_errors(new kdu_cpl_error_message( CE_Failure ) );
+        kdu_customize_warnings(new kdu_cpl_error_message(CE_Warning));
+        kdu_customize_errors(new kdu_cpl_error_message(CE_Failure));
     }
 }
 
@@ -964,18 +956,18 @@ int JP2KAKDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      extensions are supported for JPC files since the standard       */
 /*      prefix is so short (two bytes).                                 */
 /* -------------------------------------------------------------------- */
-    if( memcmp(poOpenInfo->pabyHeader,jp2_header,sizeof(jp2_header)) == 0 )
+    if( memcmp(poOpenInfo->pabyHeader, jp2_header, sizeof(jp2_header)) == 0 )
         return TRUE;
-    else if( memcmp( poOpenInfo->pabyHeader, jpc_header,
-                     sizeof(jpc_header) ) == 0 )
+    else if( memcmp(poOpenInfo->pabyHeader, jpc_header,
+                    sizeof(jpc_header)) == 0 )
     {
-        const char * const pszExtension =
-            CPLGetExtension( poOpenInfo->pszFilename );
+        const char *const pszExtension =
+            CPLGetExtension(poOpenInfo->pszFilename);
         if( EQUAL(pszExtension,"jpc")
-            || EQUAL(pszExtension,"j2k")
-            || EQUAL(pszExtension,"jp2")
-            || EQUAL(pszExtension,"jpx")
-            || EQUAL(pszExtension,"j2c") )
+            || EQUAL(pszExtension, "j2k")
+            || EQUAL(pszExtension, "jp2")
+            || EQUAL(pszExtension, "jpx")
+            || EQUAL(pszExtension, "j2c") )
            return TRUE;
 
         // We also want to handle jpc datastreams vis /vsisubfile.
@@ -993,7 +985,7 @@ int JP2KAKDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify( poOpenInfo ) )
+    if( !Identify(poOpenInfo) )
         return NULL;
 
     subfile_source *poRawInput = NULL;
@@ -1001,31 +993,30 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     bool bIsSubfile = false;
     GByte *pabyHeader = NULL;
 
-    const bool bResilient = CPLTestBool(
-        CPLGetConfigOption( "JP2KAK_RESILIENT", "NO" ) );
+    const bool bResilient =
+        CPLTestBool(CPLGetConfigOption("JP2KAK_RESILIENT", "NO"));
 
     /* Doesn't seem to bring any real performance gain on Linux */
-    const bool bBuffered = CPLTestBool(
-        CPLGetConfigOption( "JP2KAK_BUFFERED",
+    const bool bBuffered = CPLTestBool(CPLGetConfigOption("JP2KAK_BUFFERED",
 #ifdef WIN32
-                            "YES"
+                                                          "YES"
 #else
-                            "NO"
+                                                          "NO"
 #endif
-                            ) );
+                                                          ));
 
 /* -------------------------------------------------------------------- */
 /*      Handle setting up datasource for JPIP.                          */
 /* -------------------------------------------------------------------- */
     KakaduInitialize();
 
-    const char *pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
+    const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
     if( poOpenInfo->nHeaderBytes < 16 )
     {
         if( (STARTS_WITH_CI(poOpenInfo->pszFilename, "http://")
              || STARTS_WITH_CI(poOpenInfo->pszFilename, "https://")
              || STARTS_WITH_CI(poOpenInfo->pszFilename, "jpip://"))
-            && EQUAL(pszExtension,"jp2") )
+            && EQUAL(pszExtension, "jp2") )
         {
             bIsJPIP = true;
         }
@@ -1036,11 +1027,12 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             try
             {
                 poRawInput = new subfile_source;
-                poRawInput->open( poOpenInfo->pszFilename, bResilient, bBuffered );
-                poRawInput->seek( 0 );
+                poRawInput->open(poOpenInfo->pszFilename, bResilient,
+                                 bBuffered);
+                poRawInput->seek(0);
 
-                poRawInput->read( abySubfileHeader, 16 );
-                poRawInput->seek( 0 );
+                poRawInput->read(abySubfileHeader, 16);
+                poRawInput->seek(0);
             }
             catch( ... )
             {
@@ -1065,16 +1057,15 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      or if we want to operate in resilient (sequential) mode.        */
 /* -------------------------------------------------------------------- */
     VSIStatBuf sStat;
-    if( poRawInput == NULL
-        && !bIsJPIP
+    if( poRawInput == NULL && !bIsJPIP
         && (bBuffered || bResilient ||
             VSIStat(poOpenInfo->pszFilename, &sStat) != 0) )
     {
         try
         {
             poRawInput = new subfile_source;
-            poRawInput->open( poOpenInfo->pszFilename, bResilient, bBuffered );
-            poRawInput->seek( 0 );
+            poRawInput->open(poOpenInfo->pszFilename, bResilient, bBuffered);
+            poRawInput->seek(0);
         }
         catch( ... )
         {
@@ -1104,28 +1095,26 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         if( bIsJPIP )
         {
 #ifdef USE_JPIP
-            char *pszWrk = CPLStrdup(strstr(poOpenInfo->pszFilename,"://")+3);
-            char *pszRequest = strstr(pszWrk,"/");
+            char *pszWrk =
+                CPLStrdup(strstr(poOpenInfo->pszFilename, "://") + 3);
+            char *pszRequest = strstr(pszWrk, "/");
 
             if( pszRequest == NULL )
             {
-                CPLDebug( "JP2KAK",
-                          "Failed to parse JPIP server and request." );
-                CPLFree( pszWrk );
+                CPLDebug("JP2KAK", "Failed to parse JPIP server and request.");
+                CPLFree(pszWrk);
                 return NULL;
             }
 
             *(pszRequest++) = '\0';
 
-            CPLDebug( "JP2KAK", "server=%s, request=%s",
-                      pszWrk, pszRequest );
+            CPLDebug("JP2KAK", "server=%s, request=%s", pszWrk, pszRequest);
 
-            CPLSleep( 15.0 );
+            CPLSleep(15.0);
             jpip_client = new kdu_client;
-            jpip_client->connect( pszWrk, NULL, pszRequest, "http-tcp",
-                                  "" );
+            jpip_client->connect(pszWrk, NULL, pszRequest, "http-tcp", "");
 
-            CPLDebug( "JP2KAK", "After connect()" );
+            CPLDebug("JP2KAK", "After connect()");
 
             bool bin0_complete = false;
 
@@ -1135,21 +1124,23 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLSleep( 0.25 );
 
             family = new jp2_family_src;
-            family->open( jpip_client );
+            family->open(jpip_client);
 
             // TODO(schwehr): Check for memory leaks.
             jp2_source *jp2_src = new jp2_source;
-            jp2_src->open( family );
+            jp2_src->open(family);
             jp2_src->read_header();
 
             while( !jpip_client->is_idle() )
-                CPLSleep( 0.25 );
+                CPLSleep(0.25);
 
             if( jpip_client->is_alive() )
-                CPLDebug( "JP2KAK", "connect() seems to be complete." );
+            {
+                CPLDebug("JP2KAK", "connect() seems to be complete.");
+            }
             else
             {
-                CPLDebug( "JP2KAK", "connect() seems to have failed." );
+                CPLDebug("JP2KAK", "connect() seems to have failed.");
                 return NULL;
             }
 
@@ -1157,26 +1148,25 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
             poInput = jp2_src;
 #else
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "JPIP Protocol not supported by GDAL with Kakadu 3.4 or on Unix." );
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "JPIP Protocol not supported by GDAL with Kakadu 3.4 or on Unix.");
             return NULL;
 #endif
         }
-        else if( pszExtension != NULL
-                 && (EQUAL(pszExtension,"jp2") || EQUAL(pszExtension,"jpx")) )
+        else if( pszExtension != NULL &&
+                 (EQUAL(pszExtension, "jp2") || EQUAL(pszExtension, "jpx")) )
         {
             jp2_source *jp2_src;
 
             family = new jp2_family_src;
             if( poRawInput != NULL )
-                family->open( poRawInput );
+                family->open(poRawInput);
             else
-                family->open( poOpenInfo->pszFilename, true );
+                family->open(poOpenInfo->pszFilename, true);
             jp2_src = new jp2_source;
-            if( !jp2_src->open( family ) ||
-                !jp2_src->read_header() )
+            if( !jp2_src->open(family) || !jp2_src->read_header() )
             {
-                CPLDebug( "JP2KAK", "Cannot read JP2 boxes" );
+                CPLDebug("JP2KAK", "Cannot read JP2 boxes");
                 delete jp2_src;
                 delete family;
                 delete poRawInput;
@@ -1189,17 +1179,17 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             oJP2Channels = jp2_src->access_channels();
 
             jp2_colour oColors = jp2_src->access_colour();
-            if( oColors.get_space() != JP2_sRGB_SPACE
-                && oColors.get_space() != JP2_sLUM_SPACE )
+            if( oColors.get_space() != JP2_sRGB_SPACE &&
+                oColors.get_space() != JP2_sLUM_SPACE )
             {
-                CPLDebug( "JP2KAK",
-                          "Unusual ColorSpace=%d, not further interpreted.",
-                          static_cast<int>( oColors.get_space() ) );
+                CPLDebug("JP2KAK",
+                         "Unusual ColorSpace=%d, not further interpreted.",
+                         static_cast<int>(oColors.get_space()));
             }
         }
         else if( poRawInput == NULL )
         {
-            poInput = new kdu_simple_file_source( poOpenInfo->pszFilename );
+            poInput = new kdu_simple_file_source(poOpenInfo->pszFilename);
         }
         else
         {
@@ -1209,7 +1199,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     catch( ... )
     {
-        CPLDebug( "JP2KAK", "Trapped Kakadu exception." );
+        CPLDebug("JP2KAK", "Trapped Kakadu exception.");
         return NULL;
     }
 
@@ -1224,13 +1214,12 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->poInput = poInput;
         poDS->poRawInput = poRawInput;
-        poDS->oCodeStream.create( poInput );
+        poDS->oCodeStream.create(poInput);
         poDS->oCodeStream.set_persistent();
 
         poDS->bCached = bBuffered;
         poDS->bResilient = bResilient;
-        poDS->bFussy = CPLTestBool(
-            CPLGetConfigOption( "JP2KAK_FUSSY", "NO" ) );
+        poDS->bFussy = CPLTestBool(CPLGetConfigOption("JP2KAK_FUSSY", "NO"));
 
         if( poDS->bFussy )
             poDS->oCodeStream.set_fussy();
@@ -1244,7 +1233,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get overall image size.                                         */
 /* -------------------------------------------------------------------- */
-        poDS->oCodeStream.get_dims( 0, poDS->dims );
+        poDS->oCodeStream.get_dims(0, poDS->dims);
 
         poDS->nRasterXSize = poDS->dims.size.x;
         poDS->nRasterYSize = poDS->dims.size.y;
@@ -1265,9 +1254,9 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
                 if( dim_this_comp != poDS->dims )
                 {
-                    CPLError( CE_Warning, CPLE_AppDefined,
-                              "Some components have mismatched dimensions, "
-                              "ignoring all but first." );
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Some components have mismatched dimensions, "
+                             "ignoring all but first.");
                     poDS->nBands = 1;
                     break;
                 }
@@ -1277,9 +1266,9 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Setup the thread environment.                                   */
 /* -------------------------------------------------------------------- */
-        int nNumThreads = atoi(CPLGetConfigOption("JP2KAK_THREADS","-1"));
+        int nNumThreads = atoi(CPLGetConfigOption("JP2KAK_THREADS", "-1"));
         if( nNumThreads == -1 )
-            nNumThreads = kdu_get_num_processors()-1;
+            nNumThreads = kdu_get_num_processors() - 1;
 
         if( nNumThreads > 0 )
         {
@@ -1291,10 +1280,10 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 if( !poDS->poThreadEnv->add_thread() )
                     break;
             }
-            CPLDebug( "JP2KAK", "Using %d threads.", nNumThreads );
+            CPLDebug("JP2KAK", "Using %d threads.", nNumThreads);
         }
         else
-            CPLDebug( "JP2KAK", "Operating in singlethreaded mode." );
+            CPLDebug("JP2KAK", "Operating in singlethreaded mode.");
 
 /* -------------------------------------------------------------------- */
 /*      Is this a file with poor internal navigation that will end      */
@@ -1305,21 +1294,22 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         kdu_params *cod = siz->access_cluster(COD_params);
         bool use_precincts = false;
 
-        cod->get(Cuse_precincts,0,0,use_precincts);
+        cod->get(Cuse_precincts, 0, 0, use_precincts);
 
         const char *pszPersist = CPLGetConfigOption( "JP2KAK_PERSIST", "AUTO");
         if( EQUAL(pszPersist,"AUTO") )
         {
-            if( !use_precincts && !bIsJPIP
-                && (poDS->nRasterXSize * (double) poDS->nRasterYSize)
-                > 100000000.0 )
+            if( !use_precincts && !bIsJPIP &&
+                (poDS->nRasterXSize * static_cast<double>(poDS->nRasterYSize)) > 100000000.0 )
                 poDS->bPreferNPReads = true;
         }
         else
+        {
             poDS->bPreferNPReads = !CPLTestBool(pszPersist);
+        }
 
-        CPLDebug( "JP2KAK", "Cuse_precincts=%d, PreferNonPersistentReads=%d",
-                  use_precincts ? 1 : 0, poDS->bPreferNPReads ? 1 : 0 );
+        CPLDebug("JP2KAK", "Cuse_precincts=%d, PreferNonPersistentReads=%d",
+                 use_precincts ? 1 : 0, poDS->bPreferNPReads ? 1 : 0);
 
 /* -------------------------------------------------------------------- */
 /*      Deduce some other info about the dataset.                       */
@@ -1330,38 +1320,38 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( order == Corder_LRCP )
         {
-            CPLDebug( "JP2KAK", "order=LRCP" );
-            poDS->SetMetadataItem("Corder","LRCP");
+            CPLDebug("JP2KAK", "order=LRCP");
+            poDS->SetMetadataItem("Corder", "LRCP");
         }
         else if( order == Corder_RLCP )
         {
-            CPLDebug( "JP2KAK", "order=RLCP" );
-            poDS->SetMetadataItem("Corder","RLCP");
+            CPLDebug("JP2KAK", "order=RLCP");
+            poDS->SetMetadataItem("Corder", "RLCP");
         }
         else if( order == Corder_RPCL )
         {
-            CPLDebug( "JP2KAK", "order=RPCL" );
-            poDS->SetMetadataItem("Corder","RPCL");
+            CPLDebug("JP2KAK", "order=RPCL");
+            poDS->SetMetadataItem("Corder", "RPCL");
         }
         else if( order == Corder_PCRL )
         {
-            CPLDebug( "JP2KAK", "order=PCRL" );
-            poDS->SetMetadataItem("Corder","PCRL");
+            CPLDebug("JP2KAK", "order=PCRL");
+            poDS->SetMetadataItem("Corder", "PCRL");
         }
         else if( order == Corder_CPRL )
         {
-            CPLDebug( "JP2KAK", "order=CPRL" );
-            poDS->SetMetadataItem("Corder","CPRL");
+            CPLDebug("JP2KAK", "order=CPRL");
+            poDS->SetMetadataItem("Corder", "CPRL");
         }
         else
         {
-            CPLDebug( "JP2KAK", "order=%d, not recognized.", order );
+            CPLDebug("JP2KAK", "order=%d, not recognized.", order);
         }
 
         poDS->bUseYCC = false;
         cod->get(Cycc, 0, 0, poDS->bUseYCC);
         if( poDS->bUseYCC )
-            CPLDebug( "JP2KAK", "ycc=true" );
+            CPLDebug("JP2KAK", "ycc=true");
 
 /* -------------------------------------------------------------------- */
 /*      find out how many resolutions levels are available.             */
@@ -1373,7 +1363,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->nResCount = tile.access_component(0).get_num_resolutions();
         tile.close();
 
-        CPLDebug( "JP2KAK", "nResCount=%d", poDS->nResCount );
+        CPLDebug("JP2KAK", "nResCount=%d", poDS->nResCount);
 
 /* -------------------------------------------------------------------- */
 /*      Should we promote alpha channel to 8 bits ?                     */
@@ -1387,17 +1377,17 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLFetchBool(poOpenInfo->papszOpenOptions,
                          "1BIT_ALPHA_PROMOTION", true);
         if( poDS->bPromoteTo8Bit )
-            CPLDebug( "JP2KAK",
-                      "Fourth (alpha) band is promoted from 1 bit to 8 bit");
+            CPLDebug("JP2KAK",
+                     "Fourth (alpha) band is promoted from 1 bit to 8 bit");
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
         for( int iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
-            JP2KAKRasterBand *poBand =
-                new JP2KAKRasterBand(iBand,0,poDS->oCodeStream,poDS->nResCount,
-                                     jpip_client, oJP2Channels, poDS );
+            JP2KAKRasterBand *poBand = new JP2KAKRasterBand(
+                iBand, 0, poDS->oCodeStream, poDS->nResCount, jpip_client,
+                oJP2Channels, poDS);
 
             if( iBand == 1 && oJP2Palette.exists() )
                 poBand->ApplyPalette( oJP2Palette );
@@ -1421,14 +1411,14 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         if( bIsSubfile ||
             STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsisubfile/") )
         {
-            if( strstr(poOpenInfo->pszFilename,",") != NULL )
-                osPhysicalFilename = strstr(poOpenInfo->pszFilename,",") + 1;
+            if( strstr(poOpenInfo->pszFilename, ",") != NULL )
+                osPhysicalFilename = strstr(poOpenInfo->pszFilename, ",") + 1;
         }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-        poDS->SetDescription( poOpenInfo->pszFilename );
+        poDS->SetDescription(poOpenInfo->pszFilename);
         if( !bIsSubfile )
             poDS->TryLoadXML();
         else
@@ -1437,7 +1427,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
-        poDS->oOvManager.Initialize( poDS, osPhysicalFilename );
+        poDS->oOvManager.Initialize(poDS, osPhysicalFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -1445,10 +1435,10 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         if( poOpenInfo->eAccess == GA_Update )
         {
             delete poDS;
-            CPLError( CE_Failure, CPLE_NotSupported,
-                      "The JP2KAK driver does not support "
-                      "update access to existing"
-                      " datasets.\n" );
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "The JP2KAK driver does not support "
+                     "update access to existing"
+                     " datasets.");
             return NULL;
         }
 
@@ -1457,9 +1447,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
         if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
         {
-            poDS->LoadVectorLayers(
-                CPLFetchBool( poOpenInfo->papszOpenOptions,
-                              "OPEN_REMOTE_GML", false ) );
+            poDS->LoadVectorLayers(CPLFetchBool(poOpenInfo->papszOpenOptions,
+                                                "OPEN_REMOTE_GML", false));
 
             // If file opened in vector-only mode and there's no vector,
             // return
@@ -1479,7 +1468,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     catch( ... )
     {
-        CPLDebug( "JP2KAK", "JP2KAKDataset::Open() - caught exception." );
+        CPLDebug("JP2KAK", "JP2KAKDataset::Open() - caught exception.");
         if( poDS != NULL )
             delete poDS;
 
@@ -1505,9 +1494,8 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
     kdu_codestream *poCodeStream = &oCodeStream;
     const char *pszPersistency = "";
 
-    CPLAssert( eBufType == GDT_Byte
-               || eBufType == GDT_Int16
-               || eBufType == GDT_UInt16 );
+    CPLAssert(eBufType == GDT_Byte || eBufType == GDT_Int16 ||
+              eBufType == GDT_UInt16);
 
 /* -------------------------------------------------------------------- */
 /*      Do we want to do this non-persistently?  If so, we need to      */
@@ -1520,19 +1508,19 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
 
     if( bPreferNPReads )
     {
-        subfile_src.open( GetDescription(), bResilient, bCached );
+        subfile_src.open(GetDescription(), bResilient, bCached);
 
         if( family != NULL )
         {
-            wrk_family.open( &subfile_src );
-            wrk_jp2_src.open( &wrk_family );
+            wrk_family.open(&subfile_src);
+            wrk_jp2_src.open(&wrk_family);
             wrk_jp2_src.read_header();
 
-            oWCodeStream.create( &wrk_jp2_src );
+            oWCodeStream.create(&wrk_jp2_src);
         }
         else
         {
-            oWCodeStream.create( &subfile_src );
+            oWCodeStream.create(&subfile_src);
         }
 
         if( bFussy )
@@ -1565,17 +1553,15 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
     CPLErr eErr = CE_None;
 
     int *component_indices =
-        static_cast<int *>( CPLMalloc(sizeof(int) * nBandCount) );
+        static_cast<int *>(CPLMalloc(sizeof(int) * nBandCount));
     int *stripe_heights =
-        static_cast<int *>( CPLMalloc(sizeof(int) * nBandCount) );
+        static_cast<int *>(CPLMalloc(sizeof(int) * nBandCount));
     int *sample_offsets =
-        static_cast<int *>( CPLMalloc(sizeof(int) * nBandCount) );
-    int *sample_gaps =
-        static_cast<int *>( CPLMalloc(sizeof(int) * nBandCount) );
-    int *row_gaps = static_cast<int *>( CPLMalloc(sizeof(int) * nBandCount) );
-    int *precisions = static_cast<int *>( CPLMalloc(sizeof(int) * nBandCount) );
-    bool *is_signed =
-        static_cast<bool *>( CPLMalloc(sizeof(bool) * nBandCount) );
+        static_cast<int *>(CPLMalloc(sizeof(int) * nBandCount));
+    int *sample_gaps = static_cast<int *>(CPLMalloc(sizeof(int) * nBandCount));
+    int *row_gaps = static_cast<int *>(CPLMalloc(sizeof(int) * nBandCount));
+    int *precisions = static_cast<int *>(CPLMalloc(sizeof(int) * nBandCount));
+    bool *is_signed = static_cast<bool *>(CPLMalloc(sizeof(bool) * nBandCount));
 
     for( int i = 0; i < nBandCount; i++ )
         component_indices[i] = panBandMap[i] - 1;
@@ -1587,26 +1573,26 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
     try
     {
         kdu_dims l_dims;
-        poCodeStream->apply_input_restrictions( 0, 0, nDiscardLevels, 0, NULL );
-        poCodeStream->get_dims( 0, l_dims );
+        poCodeStream->apply_input_restrictions(0, 0, nDiscardLevels, 0, NULL);
+        poCodeStream->get_dims(0, l_dims);
         int nOvrXSize = l_dims.size.x;
         int nOvrYSize = l_dims.size.y;
 
-        l_dims.pos.x = l_dims.pos.x + nXOff/nResMult;
-        l_dims.pos.y = l_dims.pos.y + nYOff/nResMult;
-        l_dims.size.x = nXSize/nResMult;
-        l_dims.size.y = nYSize/nResMult;
+        l_dims.pos.x = l_dims.pos.x + nXOff / nResMult;
+        l_dims.pos.y = l_dims.pos.y + nYOff / nResMult;
+        l_dims.size.x = nXSize / nResMult;
+        l_dims.size.y = nYSize / nResMult;
 
         // Check if rounding helps detecting when data is being requested exactly
         // at the current resolution
         if( nBufXSize != l_dims.size.x &&
-            static_cast<int>(0.5 + static_cast<double>(nXSize)/nResMult)
+            static_cast<int>(0.5 + static_cast<double>(nXSize) / nResMult)
             == nBufXSize )
         {
             l_dims.size.x = nBufXSize;
         }
         if( nBufYSize != l_dims.size.y &&
-            static_cast<int>(0.5 + static_cast<double>(nYSize)/nResMult)
+            static_cast<int>(0.5 + static_cast<double>(nYSize) / nResMult)
             == nBufYSize )
         {
             l_dims.size.y = nBufYSize;
@@ -1618,10 +1604,10 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
 
         kdu_dims l_dims_roi;
 
-        poCodeStream->map_region( 0, l_dims, l_dims_roi );
-        poCodeStream->apply_input_restrictions( nBandCount, component_indices,
-                                              nDiscardLevels, 0, &l_dims_roi,
-                                              KDU_WANT_OUTPUT_COMPONENTS);
+        poCodeStream->map_region(0, l_dims, l_dims_roi);
+        poCodeStream->apply_input_restrictions(nBandCount, component_indices,
+                                               nDiscardLevels, 0, &l_dims_roi,
+                                               KDU_WANT_OUTPUT_COMPONENTS);
 
 /* -------------------------------------------------------------------- */
 /*      Special case where the data is being requested exactly at       */
@@ -1630,11 +1616,11 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
         if( nBufXSize == l_dims.size.x && nBufYSize == l_dims.size.y )
         {
             kdu_stripe_decompressor decompressor;
-            decompressor.start(*poCodeStream,false,false,poThreadEnv);
+            decompressor.start(*poCodeStream, false, false, poThreadEnv);
 
-            CPLDebug( "JP2KAK", "DirectRasterIO() for %d,%d,%d,%d -> %dx%d (no intermediate) %s",
-                      nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
-                      pszPersistency );
+            CPLDebug("JP2KAK", "DirectRasterIO() for %d,%d,%d,%d -> %dx%d (no intermediate) %s",
+                     nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+                     pszPersistency);
 
             for( int i = 0; i < nBandCount; i++ )
             {
@@ -1671,13 +1657,13 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
             }
 
             if( eBufType == GDT_Byte )
-                decompressor.pull_stripe( (kdu_byte *) pData, stripe_heights,
-                                          sample_offsets, sample_gaps, row_gaps,
-                                          precisions );
+                decompressor.pull_stripe((kdu_byte *)pData, stripe_heights,
+                                         sample_offsets, sample_gaps, row_gaps,
+                                         precisions );
             else
-                decompressor.pull_stripe( (kdu_int16 *) pData, stripe_heights,
-                                          sample_offsets, sample_gaps,row_gaps,
-                                          precisions, is_signed );
+                decompressor.pull_stripe((kdu_int16 *)pData, stripe_heights,
+                                         sample_offsets, sample_gaps, row_gaps,
+                                         precisions, is_signed);
             decompressor.finish();
         }
 
@@ -1687,20 +1673,17 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
         else
         {
             const int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
-            GByte *pabyIntermediate = static_cast<GByte *>(
-                VSI_MALLOC3_VERBOSE( l_dims.size.x, l_dims.size.y,
-                                     nDataTypeSize*nBandCount ) );
+            GByte *pabyIntermediate = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
+                l_dims.size.x, l_dims.size.y, nDataTypeSize * nBandCount));
             if( pabyIntermediate == NULL )
             {
                 return CE_Failure;
             }
 
-            CPLDebug( "JP2KAK",
-                      "DirectRasterIO() for %d,%d,%d,%d -> %dx%d -> %dx%d %s",
-                      nXOff, nYOff, nXSize, nYSize,
-                      l_dims.size.x, l_dims.size.y,
-                      nBufXSize, nBufYSize,
-                      pszPersistency );
+            CPLDebug("JP2KAK",
+                     "DirectRasterIO() for %d,%d,%d,%d -> %dx%d -> %dx%d %s",
+                     nXOff, nYOff, nXSize, nYSize, l_dims.size.x, l_dims.size.y,
+                     nBufXSize, nBufYSize, pszPersistency);
 
             kdu_stripe_decompressor decompressor;
             decompressor.start(*poCodeStream, false, false, poThreadEnv);
@@ -1721,14 +1704,12 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
 
             if( eBufType == GDT_Byte )
                 decompressor.pull_stripe(
-                    reinterpret_cast<kdu_byte *>( pabyIntermediate ),
-                    stripe_heights, NULL, NULL, NULL,
-                    precisions );
+                    reinterpret_cast<kdu_byte *>(pabyIntermediate),
+                    stripe_heights, NULL, NULL, NULL, precisions);
             else
                 decompressor.pull_stripe(
-                    reinterpret_cast<kdu_int16 *>( pabyIntermediate ),
-                    stripe_heights, NULL, NULL, NULL,
-                    precisions, is_signed );
+                    reinterpret_cast<kdu_int16 *>(pabyIntermediate),
+                    stripe_heights, NULL, NULL, NULL, precisions, is_signed);
 
             decompressor.finish();
 
@@ -1739,22 +1720,22 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
 /*      buffer into the final buffer in the desired output layout.      */
 /* -------------------------------------------------------------------- */
                 const double dfYRatio =
-                    l_dims.size.y / static_cast<double>( nBufYSize );
+                    l_dims.size.y / static_cast<double>(nBufYSize);
                 const double dfXRatio =
-                    l_dims.size.x / static_cast<double>( nBufXSize );
+                    l_dims.size.x / static_cast<double>(nBufXSize);
 
                 for( int iY = 0; iY < nBufYSize; iY++ )
                 {
-                    int iSrcY = (int) floor( (iY + 0.5) * dfYRatio );
+                    int iSrcY = (int)floor((iY + 0.5) * dfYRatio);
 
-                    iSrcY = MIN(iSrcY, l_dims.size.y-1);
+                    iSrcY = MIN(iSrcY, l_dims.size.y - 1);
 
                     for( int iX = 0; iX < nBufXSize; iX++ )
                     {
                         int iSrcX =
-                            static_cast<int>( floor( (iX + 0.5) * dfXRatio ) );
+                            static_cast<int>(floor((iX + 0.5) * dfXRatio));
 
-                        iSrcX = MIN(iSrcX, l_dims.size.x-1);
+                        iSrcX = MIN(iSrcX, l_dims.size.x - 1);
 
                         for( int i = 0; i < nBandCount; i++ )
                         {
@@ -1794,7 +1775,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
                         szBuffer, pabyIntermediate + i * nDataTypeSize,
                         sizeof(szBuffer) );
                     szBuffer[nRet] = 0;
-                    char** papszOptions =
+                    char **papszOptions =
                         CSLSetNameValue(NULL, "DATAPOINTER", szBuffer);
 
                     papszOptions = CSLSetNameValue(papszOptions, "PIXELOFFSET",
@@ -1811,12 +1792,12 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
                     poMEMDS->AddBand(eBufType, papszOptions);
                     CSLDestroy(papszOptions);
 
-                    const char* pszNBITS = GetRasterBand(i+1)->
-                        GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" );
+                    const char *pszNBITS =
+                        GetRasterBand(i + 1)
+                            ->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
                     if( pszNBITS )
-                        poMEMDS->GetRasterBand(i+1)->
-                            SetMetadataItem( "NBITS", pszNBITS,
-                                             "IMAGE_STRUCTURE");
+                        poMEMDS->GetRasterBand(i + 1)->SetMetadataItem(
+                            "NBITS", pszNBITS, "IMAGE_STRUCTURE");
                 }
 
                 GDALRasterIOExtraArg sExtraArgTmp;
@@ -1835,7 +1816,7 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
                 GDALClose(poMEMDS);
             }
 
-            CPLFree( pabyIntermediate );
+            CPLFree(pabyIntermediate);
         }
     }
 /* -------------------------------------------------------------------- */
@@ -1855,8 +1836,9 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
         {
             for( int i=0; i < nBufXSize; i++ )
             {
-                static_cast<GByte*>(
-                    pData)[j*nLineSpace+i*nPixelSpace+3*nBandSpace] *= 255;
+                static_cast<GByte *>(
+                    pData)[j * nLineSpace + i * nPixelSpace + 3 * nBandSpace] *=
+                    255;
             }
         }
     }
@@ -1871,13 +1853,13 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
         subfile_src.close();
     }
 
-    CPLFree( component_indices );
-    CPLFree( stripe_heights );
-    CPLFree( sample_offsets );
-    CPLFree( sample_gaps );
-    CPLFree( row_gaps );
-    CPLFree( precisions );
-    CPLFree( is_signed);
+    CPLFree(component_indices);
+    CPLFree(stripe_heights);
+    CPLFree(sample_offsets);
+    CPLFree(sample_gaps);
+    CPLFree(row_gaps);
+    CPLFree(precisions);
+    CPLFree(is_signed);
 
     return eErr;
 }
@@ -1908,7 +1890,7 @@ JP2KAKDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
     for( int i = 0; i < nBandCount; i++ )
     {
-        for( int j = i+1; j < nBandCount; j++ )
+        for( int j = i + 1; j < nBandCount; j++ )
             if( panBandList[j] == panBandList[i] )
                 return TRUE;
     }
@@ -1922,7 +1904,7 @@ JP2KAKDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
         return TRUE;
 
     JP2KAKRasterBand *poWrkBand =
-        dynamic_cast<JP2KAKRasterBand *>( GetRasterBand(1) );
+        dynamic_cast<JP2KAKRasterBand *>(GetRasterBand(1));
     if( poWrkBand == NULL )
     {
         CPLError( CE_Fatal, CPLE_AppDefined, "Dynamic cast failed" );
@@ -1930,16 +1912,15 @@ JP2KAKDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
     }
     if( poWrkBand->HasExternalOverviews() )
     {
-        int nXOff2=nXOff;
-        int nYOff2=nYOff;
-        int nXSize2=nXSize;
-        int nYSize2=nYSize;
+        int nXOff2 = nXOff;
+        int nYOff2 = nYOff;
+        int nXSize2 = nXSize;
+        int nYSize2 = nYSize;
 
         const int nOverview =
-            GDALBandGetBestOverviewLevel2( poWrkBand,
-                                           nXOff2, nYOff2, nXSize2, nYSize2,
-                                           nBufXSize, nBufYSize, NULL );
-        if (nOverview >= 0 )
+            GDALBandGetBestOverviewLevel2(poWrkBand, nXOff2, nYOff2, nXSize2,
+                                          nYSize2, nBufXSize, nBufYSize, NULL);
+        if( nOverview >= 0 )
             return TRUE;
     }
 
@@ -1957,7 +1938,7 @@ JP2KAKDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
     if( strlen(CPLGetConfigOption( "GDAL_ONE_BIG_READ", "")) > 0 )
         bUseBlockedIO =
-            !CPLTestBool(CPLGetConfigOption( "GDAL_ONE_BIG_READ", ""));
+            !CPLTestBool(CPLGetConfigOption("GDAL_ONE_BIG_READ", ""));
 
     return bUseBlockedIO;
 }
@@ -1979,8 +1960,8 @@ CPLErr JP2KAKDataset::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      We need various criteria to skip out to block based methods.    */
 /* -------------------------------------------------------------------- */
-    if( TestUseBlockIO( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
-                        eBufType, nBandCount, panBandMap ) )
+    if( TestUseBlockIO(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+                       eBufType, nBandCount, panBandMap) )
         return GDALPamDataset::IRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType,
@@ -2006,16 +1987,16 @@ static void JP2KAKWriteBox( jp2_target *jp2_out, GDALJP2Box *poBox )
         return;
 
     GUInt32 nBoxType = 0;
-    memcpy( &nBoxType, poBox->GetType(), sizeof(nBoxType) );
-    CPL_MSBPTR32( &nBoxType );
+    memcpy(&nBoxType, poBox->GetType(), sizeof(nBoxType));
+    CPL_MSBPTR32(&nBoxType);
 
 /* -------------------------------------------------------------------- */
 /*      Write to a box on the JP2 file.                                 */
 /* -------------------------------------------------------------------- */
-    jp2_out->open_next( nBoxType );
+    jp2_out->open_next(nBoxType);
 
-    jp2_out->write( const_cast<kdu_byte *>( poBox->GetWritableData() ),
-                    static_cast<int>( poBox->GetDataLength() ) );
+    jp2_out->write(const_cast<kdu_byte *>(poBox->GetWritableData()),
+                   static_cast<int>(poBox->GetDataLength()));
 
     jp2_out->close();
 
@@ -2060,17 +2041,17 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
 
         if( poROIImage != NULL )
         {
-            kdu_dims  dims;
+            kdu_dims dims;
 
             res.get_dims(dims);
-            roi_node = poROIImage->acquire_node(c,dims);
+            roi_node = poROIImage->acquire_node(c, dims);
         }
 #if KDU_MAJOR_VERSION >= 7
-        lines[c].pre_create(&allocator,nXSize,bReversible,bUseShorts,0,0);
+        lines[c].pre_create(&allocator, nXSize, bReversible, bUseShorts, 0, 0);
 #else
-        lines[c].pre_create(&allocator,nXSize,bReversible,bUseShorts);
+        lines[c].pre_create(&allocator, nXSize, bReversible, bUseShorts);
 #endif
-        engines[c] = kdu_analysis(res,&allocator,bUseShorts,1.0F,roi_node);
+        engines[c] = kdu_analysis(res, &allocator, bUseShorts, 1.0F, roi_node);
     }
 
     try
@@ -2087,9 +2068,9 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
     catch( ... )
     {
         // TODO(schwehr): Should this block do any cleanup?
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "allocate.finalize() failed, likely out of memory for "
-                  "compression information." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "allocate.finalize() failed, likely out of memory for "
+                 "compression information.");
         return FALSE;
     }
 
@@ -2102,19 +2083,19 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
 
     // TODO(schwehr): Making pabyBuffer void* should simplify the casting below.
     GByte *pabyBuffer = static_cast<GByte *>(
-        CPLMalloc(nXSize * (GDALGetDataTypeSize(eType)/8) ) );
+        CPLMalloc(nXSize * (GDALGetDataTypeSize(eType) / 8)));
 
-    CPLAssert( !oTile.get_ycc() );
+    CPLAssert(!oTile.get_ycc());
 
     bool bRet = true;
     for( int iLine = 0; iLine < nYSize && bRet; iLine += TILE_CHUNK_SIZE )
     {
         for( int c=0; c < num_components && bRet; c++ )
         {
-            GDALRasterBand *poBand = poSrcDS->GetRasterBand( c+1 );
+            GDALRasterBand *poBand = poSrcDS->GetRasterBand(c + 1);
 
             for( int iSubline = iLine;
-                 iSubline < iLine+TILE_CHUNK_SIZE && iSubline < nYSize;
+                 iSubline < iLine + TILE_CHUNK_SIZE && iSubline < nYSize;
                  iSubline++ )
             {
                 if( poBand->RasterIO( GF_Read,
@@ -2137,9 +2118,9 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                 else if( bReversible && eType == GDT_Int16 )
                 {
                     kdu_sample16 *dest = lines[c].get_buf16();
-                    GInt16 *sp = reinterpret_cast<GInt16 *>( pabyBuffer );
+                    GInt16 *sp = reinterpret_cast<GInt16 *>(pabyBuffer);
 
-                    for( int n=nXSize; n > 0; n--, dest++, sp++ )
+                    for( int n = nXSize; n > 0; n--, dest++, sp++ )
                         dest->ival = *sp;
                 }
                 else if( bReversible && eType == GDT_UInt16 )
@@ -2147,29 +2128,29 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                     // Ticket #4050 patch : use a 32 bits kdu_line_buf for
                     // GDT_UInt16 reversible compression
                     kdu_sample32 *dest = lines[c].get_buf32();
-                    GUInt16 *sp = reinterpret_cast<GUInt16 *>( pabyBuffer );
+                    GUInt16 *sp = reinterpret_cast<GUInt16 *>(pabyBuffer);
 
                     for( int n=nXSize; n > 0; n--, dest++, sp++ )
-                        dest->ival = static_cast<kdu_int32>(*sp)-32768;
+                        dest->ival = static_cast<kdu_int32>(*sp) - 32768;
                 }
                 else if( eType == GDT_Byte )
                 {
                     kdu_sample32 *dest = lines[c].get_buf32();
                     kdu_byte *sp = pabyBuffer;
-                    const int nOffset = 1 << (nBits-1);
+                    const int nOffset = 1 << (nBits - 1);
                     const float fScale = static_cast<float>(1.0 / (1 << nBits));
 
-                    for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->fval = static_cast<float>
-                            (((static_cast<kdu_int16>(*sp))-nOffset) * fScale);
+                    for (int n = nXSize; n > 0; n--, dest++, sp++)
+                        dest->fval = static_cast<float>(
+                            ((static_cast<kdu_int16>(*sp)) - nOffset) * fScale);
                 }
                 else if( eType == GDT_Int16 )
                 {
                     kdu_sample32 *dest = lines[c].get_buf32();
-                    GInt16 *sp = reinterpret_cast<GInt16 *>( pabyBuffer );
+                    GInt16 *sp = reinterpret_cast<GInt16 *>(pabyBuffer);
                     const float fScale = static_cast<float>(1.0 / (1 << nBits));
 
-                    for( int n=nXSize; n > 0; n--, dest++, sp++ )
+                    for( int n = nXSize; n > 0; n--, dest++, sp++ )
                         dest->fval = static_cast<float>
                             ((static_cast<kdu_int16>(*sp)) * fScale);
                 }
@@ -2177,20 +2158,20 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                 {
                     kdu_sample32 *dest = lines[c].get_buf32();
                     GUInt16 *sp = reinterpret_cast<GUInt16 *>(pabyBuffer);
-                    const int nOffset = 1 << (nBits-1);
+                    const int nOffset = 1 << (nBits - 1);
                     const float fScale = static_cast<float>(1.0 / (1 << nBits));
 
-                    for( int n=nXSize; n > 0; n--, dest++, sp++ )
+                    for( int n = nXSize; n > 0; n--, dest++, sp++ )
                         dest->fval = static_cast<float>
                             ((static_cast<int>(*sp) - nOffset) * fScale);
                 }
                 else if( eType == GDT_Float32 )
                 {
                     kdu_sample32 *dest = lines[c].get_buf32();
-                    float *sp = reinterpret_cast<float *>( pabyBuffer );
+                    float *sp = reinterpret_cast<float *>(pabyBuffer);
 
-                    for( int n=nXSize; n > 0; n--, dest++, sp++ )
-                        dest->fval = *sp;  /* scale it? */
+                    for( int n = nXSize; n > 0; n--, dest++, sp++ )
+                        dest->fval = *sp;  // Scale it?
                 }
 
 #if KDU_MAJOR_VERSION >= 7
@@ -2215,9 +2196,8 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
 
         if( oCodeStream.ready_for_flush() && bFlushEnabled )
         {
-            CPLDebug( "JP2KAK",
-                      "Calling oCodeStream.flush() at line %d",
-                      MIN(nYSize,iLine+TILE_CHUNK_SIZE) );
+            CPLDebug("JP2KAK", "Calling oCodeStream.flush() at line %d",
+                     MIN(nYSize, iLine + TILE_CHUNK_SIZE));
             try
             {
                 oCodeStream.flush( layer_bytes, layer_count, NULL,
@@ -2229,9 +2209,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
             }
         }
         else if( bFlushEnabled )
-            CPLDebug( "JP2KAK",
-                      "read_for_flush() is false at line %d.",
-                      iLine );
+            CPLDebug("JP2KAK", "read_for_flush() is false at line %d.", iLine);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2243,7 +2221,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
     delete[] engines;
     delete[] lines;
 
-    CPLFree( pabyBuffer );
+    CPLFree(pabyBuffer);
 
     if( poROIImage != NULL )
         delete poROIImage;
@@ -2265,8 +2243,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 {
     if( poSrcDS->GetRasterCount() == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Creating zero band files not supported by JP2KAK driver." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Creating zero band files not supported by JP2KAK driver.");
         return NULL;
     }
 
@@ -2277,11 +2255,11 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         kakadu_initialized = true;
 
-        kdu_cpl_error_message oErrHandler( CE_Failure );
-        kdu_cpl_error_message oWarningHandler( CE_Warning );
+        kdu_cpl_error_message oErrHandler(CE_Failure);
+        kdu_cpl_error_message oWarningHandler(CE_Warning);
 
-        kdu_customize_warnings(new kdu_cpl_error_message( CE_Warning ) );
-        kdu_customize_errors(new kdu_cpl_error_message( CE_Failure ) );
+        kdu_customize_warnings(new kdu_cpl_error_message(CE_Warning));
+        kdu_customize_errors(new kdu_cpl_error_message(CE_Failure));
     }
 
 /* -------------------------------------------------------------------- */
@@ -2291,21 +2269,21 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GDALRasterBand *poPrototypeBand = poSrcDS->GetRasterBand(1);
 
     GDALDataType eType = poPrototypeBand->GetRasterDataType();
-    if( eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_UInt16
-        && eType != GDT_Float32 )
+    if( eType != GDT_Byte && eType != GDT_Int16 && eType != GDT_UInt16 &&
+        eType != GDT_Float32 )
     {
         if( bStrict )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "JP2KAK (JPEG2000) driver does not support data type %s.",
-                      GDALGetDataTypeName( eType ) );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "JP2KAK (JPEG2000) driver does not support data type %s.",
+                     GDALGetDataTypeName(eType));
             return NULL;
         }
 
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "JP2KAK (JPEG2000) driver does not support data type %s, "
-                  "forcing to Float32.",
-                  GDALGetDataTypeName( eType ) );
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "JP2KAK (JPEG2000) driver does not support data type %s, "
+                 "forcing to Float32.",
+                 GDALGetDataTypeName(eType));
 
         eType = GDT_Float32;
     }
@@ -2313,8 +2291,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we want to write a pseudo-colored image?                     */
 /* -------------------------------------------------------------------- */
-    int bHaveCT = poPrototypeBand->GetColorTable() != NULL
-        && poSrcDS->GetRasterCount() == 1;
+    int bHaveCT = poPrototypeBand->GetColorTable() != NULL &&
+                  poSrcDS->GetRasterCount() == 1;
 
 /* -------------------------------------------------------------------- */
 /*      How many layers?                                                */
@@ -2322,9 +2300,9 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int layer_count = 12;
 
     if( CSLFetchNameValue(papszOptions,"LAYERS") != NULL )
-        layer_count = atoi(CSLFetchNameValue(papszOptions,"LAYERS"));
+        layer_count = atoi(CSLFetchNameValue(papszOptions, "LAYERS"));
     else if( CSLFetchNameValue(papszOptions,"Clayers") != NULL )
-        layer_count = atoi(CSLFetchNameValue(papszOptions,"Clayers"));
+        layer_count = atoi(CSLFetchNameValue(papszOptions, "Clayers"));
 
 /* -------------------------------------------------------------------- */
 /*      Establish how many bytes of data we want for each layer.        */
@@ -2335,19 +2313,19 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     bool bReversible = false;
     double dfQuality = 20.0;
 
-    kdu_long *layer_bytes = static_cast<kdu_long *>(
-        CPLCalloc(sizeof(kdu_long),layer_count) );
+    kdu_long *layer_bytes =
+        static_cast<kdu_long *>(CPLCalloc(sizeof(kdu_long), layer_count));
 
     if( CSLFetchNameValue(papszOptions,"QUALITY") != NULL )
     {
-        dfQuality = CPLAtof(CSLFetchNameValue(papszOptions,"QUALITY"));
+        dfQuality = CPLAtof(CSLFetchNameValue(papszOptions, "QUALITY"));
     }
 
     if( dfQuality < 0.01 || dfQuality > 100.0 )
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "QUALITY=%s is not a legal value in the range 0.01-100.",
-                  CSLFetchNameValue(papszOptions,"QUALITY") );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "QUALITY=%s is not a legal value in the range 0.01-100.",
+                 CSLFetchNameValue(papszOptions, "QUALITY"));
         CPLFree(layer_bytes);
         return NULL;
     }
@@ -2365,17 +2343,17 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if( dfLayerBytes > 2000000000.0 && sizeof(kdu_long) == 4 )
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Trimmming maximum size of file 2GB from %.1fGB\n"
-                      "to avoid overflow of kdu_long layer size.",
-                      dfLayerBytes / 1000000000.0 );
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Trimmming maximum size of file 2GB from %.1fGB\n"
+                     "to avoid overflow of kdu_long layer size.",
+                     dfLayerBytes / 1000000000.0);
             dfLayerBytes = 2000000000.0;
         }
 
-        layer_bytes[layer_count-1] = (kdu_long) dfLayerBytes;
+        layer_bytes[layer_count - 1] = (kdu_long)dfLayerBytes;
 
-        CPLDebug( "JP2KAK", "layer_bytes[] = %g\n",
-                  (double) layer_bytes[layer_count-1] );
+        CPLDebug("JP2KAK", "layer_bytes[] = %g\n",
+                 (double)layer_bytes[layer_count - 1]);
     }
     else
         bReversible = true;
@@ -2424,13 +2402,13 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( nTileXSize > nXSize ) nTileXSize = nXSize;
     if( nTileYSize > nYSize ) nTileYSize = nYSize;
 
-    CPLDebug( "JP2KAK", "Final JPEG2000 Tile Size is %dP x %dL.",
-              nTileXSize, nTileYSize );
+    CPLDebug("JP2KAK", "Final JPEG2000 Tile Size is %dP x %dL.",
+             nTileXSize, nTileYSize);
 
 /* -------------------------------------------------------------------- */
 /*      Do we want a comment segment emitted?                           */
 /* -------------------------------------------------------------------- */
-    const bool bComseg = CPLFetchBool( papszOptions, "COMSEG", true );
+    const bool bComseg = CPLFetchBool(papszOptions, "COMSEG", true);
 
 /* -------------------------------------------------------------------- */
 /*      Work out the precision.                                         */
@@ -2438,11 +2416,11 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int nBits = 0;
 
     if( CSLFetchNameValue( papszOptions, "NBITS" ) != NULL )
-        nBits = atoi(CSLFetchNameValue(papszOptions,"NBITS"));
-    else if( poPrototypeBand->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" )
+        nBits = atoi(CSLFetchNameValue(papszOptions, "NBITS"));
+    else if( poPrototypeBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE")
              != NULL )
-        nBits = atoi(poPrototypeBand->GetMetadataItem( "NBITS",
-                                                       "IMAGE_STRUCTURE" ));
+        nBits =
+            atoi(poPrototypeBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
     else
         nBits = GDALGetDataTypeSize(eType);
 
@@ -2451,21 +2429,21 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     siz_params oSizeParams;
 
-    oSizeParams.set( Scomponents, 0, 0, poSrcDS->GetRasterCount() );
-    oSizeParams.set( Sdims, 0, 0, nYSize );
-    oSizeParams.set( Sdims, 0, 1, nXSize );
-    oSizeParams.set( Sprecision, 0, 0, nBits );
+    oSizeParams.set(Scomponents, 0, 0, poSrcDS->GetRasterCount());
+    oSizeParams.set(Sdims, 0, 0, nYSize);
+    oSizeParams.set(Sdims, 0, 1, nXSize);
+    oSizeParams.set(Sprecision, 0, 0, nBits);
     if( eType == GDT_UInt16 || eType == GDT_Byte )
-        oSizeParams.set( Ssigned, 0, 0, false );
+        oSizeParams.set(Ssigned, 0, 0, false);
     else
-        oSizeParams.set( Ssigned, 0, 0, true );
+        oSizeParams.set(Ssigned, 0, 0, true);
 
     if( nTileXSize != nXSize || nTileYSize != nYSize )
     {
-        oSizeParams.set( Stiles, 0, 0, nTileYSize );
-        oSizeParams.set( Stiles, 0, 1, nTileXSize );
+        oSizeParams.set(Stiles, 0, 0, nTileYSize);
+        oSizeParams.set(Stiles, 0, 1, nTileXSize);
 
-        CPLDebug( "JP2KAK", "Stiles=%d,%d", nTileYSize, nTileXSize );
+        CPLDebug("JP2KAK", "Stiles=%d,%d", nTileYSize, nTileXSize);
     }
 
     kdu_params *poSizeRef = &oSizeParams;
@@ -2481,43 +2459,43 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #ifdef KAKADU_JPX
     jpx_family_tgt jpx_family;
     jpx_target jpx_out;
-    const bool bIsJPX = !EQUAL(CPLGetExtension(pszFilename),"jpf");
+    const bool bIsJPX = !EQUAL(CPLGetExtension(pszFilename), "jpf");
 #else
     const bool bIsJPX = false;
 #endif
 
     kdu_compressed_target *poOutputFile = NULL;
     jp2_target jp2_out;
-    const bool bIsJP2 = !EQUAL(CPLGetExtension(pszFilename),"jpc") && !bIsJPX;
+    const bool bIsJP2 = !EQUAL(CPLGetExtension(pszFilename), "jpc") && !bIsJPX;
     kdu_codestream oCodeStream;
 
     vsil_target oVSILTarget;
 
     try
     {
-        oVSILTarget.open( pszFilename, "w" );
+        oVSILTarget.open(pszFilename, "w");
 
         if( bIsJP2 )
         {
-            //family.open( pszFilename );
-            family.open( &oVSILTarget );
+            // family.open( pszFilename );
+            family.open(&oVSILTarget);
 
-            jp2_out.open( &family );
+            jp2_out.open(&family);
             poOutputFile = &jp2_out;
         }
 #ifdef KAKADU_JPX
         else if( bIsJPX )
         {
-            jpx_family.open( pszFilename );
+            jpx_family.open(pszFilename);
 
-            jpx_out.open( &jpx_family );
+            jpx_out.open(&jpx_family);
             jpx_out.add_codestream();
         }
 #endif
         else
             poOutputFile = &oVSILTarget;
 
-        oCodeStream.create(&oSizeParams, poOutputFile );
+        oCodeStream.create(&oSizeParams, poOutputFile);
     }
     catch( ... )
     {
@@ -2528,21 +2506,20 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Do we have a high res region of interest?                       */
 /* -------------------------------------------------------------------- */
     kdu_roi_image *poROIImage = NULL;
-    char **papszROIDefs = CSLFetchNameValueMultiple( papszOptions, "ROI" );
+    char **papszROIDefs = CSLFetchNameValueMultiple(papszOptions, "ROI");
 
     for( int iROI = 0;
          papszROIDefs != NULL && papszROIDefs[iROI] != NULL;
          ++iROI )
     {
         kdu_dims region;
-        char **papszTokens = CSLTokenizeStringComplex( papszROIDefs[iROI], ",",
-                                                       FALSE, FALSE );
+        char **papszTokens =
+            CSLTokenizeStringComplex(papszROIDefs[iROI], ",", FALSE, FALSE);
 
         if( CSLCount(papszTokens) != 4 )
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Skipping corrupt ROI def = \n%s",
-                      papszROIDefs[iROI] );
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Skipping corrupt ROI def = \n%s", papszROIDefs[iROI]);
             continue;
         }
 
@@ -2551,9 +2528,9 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         region.size.x = atoi(papszTokens[2]);
         region.size.y = atoi(papszTokens[3]);
 
-        CSLDestroy( papszTokens );
+        CSLDestroy(papszTokens);
 
-        poROIImage = new kdu_roi_rect(oCodeStream,region);
+        poROIImage = new kdu_roi_rect(oCodeStream, region);
     }
     CSLDestroy(papszROIDefs);
 
@@ -2593,19 +2570,19 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     for( int iParm = 0; apszParms[iParm] != NULL; iParm += 2 )
     {
         const char *pszValue =
-            CSLFetchNameValue( papszOptions, apszParms[iParm] );
+            CSLFetchNameValue(papszOptions, apszParms[iParm]);
 
         if( pszValue == NULL )
-            pszValue = apszParms[iParm+1];
+            pszValue = apszParms[iParm + 1];
 
         if( pszValue != NULL )
         {
             CPLString osOpt;
 
-            osOpt.Printf( "%s=%s", apszParms[iParm], pszValue );
+            osOpt.Printf("%s=%s", apszParms[iParm], pszValue);
             try
             {
-                oCodeStream.access_siz()->parse_string( osOpt );
+                oCodeStream.access_siz()->parse_string(osOpt);
             }
             catch( ... )
             {
@@ -2622,7 +2599,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 return NULL;
             }
 
-            CPLDebug( "JP2KAK", "parse_string(%s)", osOpt.c_str() );
+            CPLDebug("JP2KAK", "parse_string(%s)", osOpt.c_str());
         }
     }
 
@@ -2647,26 +2624,28 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  && poSrcDS->GetRasterBand(4)->GetColorInterpretation()
                  == GCI_AlphaBand )
         {
-            colour.init( JP2_sRGB_SPACE );
-            jp2_out.access_channels().init( 3 );
-            jp2_out.access_channels().set_colour_mapping(0,0);
-            jp2_out.access_channels().set_colour_mapping(1,1);
-            jp2_out.access_channels().set_colour_mapping(2,2);
-            jp2_out.access_channels().set_opacity_mapping(0,3);
-            jp2_out.access_channels().set_opacity_mapping(1,3);
-            jp2_out.access_channels().set_opacity_mapping(2,3);
+            colour.init(JP2_sRGB_SPACE);
+            jp2_out.access_channels().init(3);
+            jp2_out.access_channels().set_colour_mapping(0, 0);
+            jp2_out.access_channels().set_colour_mapping(1, 1);
+            jp2_out.access_channels().set_colour_mapping(2, 2);
+            jp2_out.access_channels().set_opacity_mapping(0, 3);
+            jp2_out.access_channels().set_opacity_mapping(1, 3);
+            jp2_out.access_channels().set_opacity_mapping(2, 3);
         }
         else if( poSrcDS->GetRasterCount() >= 2
                  && poSrcDS->GetRasterBand(2)->GetColorInterpretation()
                  == GCI_AlphaBand )
         {
-            colour.init( JP2_sLUM_SPACE );
-            jp2_out.access_channels().init( 1 );
-            jp2_out.access_channels().set_colour_mapping(0,0);
-            jp2_out.access_channels().set_opacity_mapping(0,1);
+            colour.init(JP2_sLUM_SPACE);
+            jp2_out.access_channels().init(1);
+            jp2_out.access_channels().set_colour_mapping(0, 0);
+            jp2_out.access_channels().set_opacity_mapping(0, 1);
         }
         else
+        {
             colour.init( JP2_sLUM_SPACE );
+        }
 
         // Resolution
         if( poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION") != NULL
@@ -2694,11 +2673,11 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
             if( dfXRes != 0.0 && dfYRes != 0.0 )
             {
-                if( fabs(dfXRes/dfYRes - 1.0) > 0.00001 )
-                    res.init( static_cast<float>(dfYRes/dfXRes) );
+                if( fabs(dfXRes / dfYRes - 1.0) > 0.00001 )
+                    res.init(static_cast<float>(dfYRes / dfXRes));
                 else
-                    res.init( 1.0 );
-                res.set_resolution( static_cast<float>(dfXRes), true );
+                    res.init(1.0);
+                res.set_resolution(static_cast<float>(dfXRes), true);
             }
         }
     }
@@ -2708,36 +2687,36 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     if( bIsJP2 && bHaveCT )
     {
-        GDALColorTable * const poCT = poPrototypeBand->GetColorTable();
+        GDALColorTable *const poCT = poPrototypeBand->GetColorTable();
         const int nCount = poCT->GetColorEntryCount();
-        kdu_int32 *panLUT = static_cast<kdu_int32 *>(
-            CPLMalloc(sizeof(kdu_int32) * nCount * 3) );
+        kdu_int32 *panLUT =
+            static_cast<kdu_int32 *>(CPLMalloc(sizeof(kdu_int32) * nCount * 3));
 
         jp2_palette oJP2Palette = jp2_out.access_palette();
-        oJP2Palette.init( 3, nCount );
+        oJP2Palette.init(3, nCount);
 
         for( int iColor = 0; iColor < nCount; iColor++ )
         {
             GDALColorEntry sEntry = { 0, 0, 0, 0 };
 
-            poCT->GetColorEntryAsRGB( iColor, &sEntry );
+            poCT->GetColorEntryAsRGB(iColor, &sEntry);
             panLUT[iColor + nCount * 0] = sEntry.c1;
             panLUT[iColor + nCount * 1] = sEntry.c2;
             panLUT[iColor + nCount * 2] = sEntry.c3;
         }
 
-        oJP2Palette.set_lut( 0, panLUT + nCount * 0, 8, false );
-        oJP2Palette.set_lut( 1, panLUT + nCount * 1, 8, false );
-        oJP2Palette.set_lut( 2, panLUT + nCount * 2, 8, false );
+        oJP2Palette.set_lut(0, panLUT + nCount * 0, 8, false);
+        oJP2Palette.set_lut(1, panLUT + nCount * 1, 8, false);
+        oJP2Palette.set_lut(2, panLUT + nCount * 2, 8, false);
 
-        CPLFree( panLUT );
+        CPLFree(panLUT);
 
         jp2_channels oJP2Channels = jp2_out.access_channels();
 
-        oJP2Channels.init( 3 );
-        oJP2Channels.set_colour_mapping( 0, 0, 0 );
-        oJP2Channels.set_colour_mapping( 1, 0, 1 );
-        oJP2Channels.set_colour_mapping( 2, 0, 2 );
+        oJP2Channels.init(3);
+        oJP2Channels.set_colour_mapping(0, 0, 0);
+        oJP2Channels.set_colour_mapping(1, 0, 1);
+        oJP2Channels.set_colour_mapping(2, 0, 2);
     }
 
     if( bIsJP2 )
@@ -2765,36 +2744,36 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if( poSrcDS->GetGCPCount() > 0 )
         {
-            oJP2MD.SetProjection( poSrcDS->GetGCPProjection() );
-            oJP2MD.SetGCPs( poSrcDS->GetGCPCount(), poSrcDS->GetGCPs() );
+            oJP2MD.SetProjection(poSrcDS->GetGCPProjection());
+            oJP2MD.SetGCPs(poSrcDS->GetGCPCount(), poSrcDS->GetGCPs());
         }
         else
         {
-            oJP2MD.SetProjection( poSrcDS->GetProjectionRef() );
-            oJP2MD.SetGeoTransform( adfGeoTransform );
+            oJP2MD.SetProjection(poSrcDS->GetProjectionRef());
+            oJP2MD.SetGeoTransform(adfGeoTransform);
         }
 
-        oJP2MD.SetRPCMD( poSrcDS->GetMetadata("RPC") );
+        oJP2MD.SetRPCMD(poSrcDS->GetMetadata("RPC"));
 
-        const char* const pszAreaOrPoint =
+        const char *const pszAreaOrPoint =
             poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
         oJP2MD.bPixelIsPoint =
             pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
 
-        if( CPLFetchBool( papszOptions, "GMLJP2", true ) )
+        if( CPLFetchBool(papszOptions, "GMLJP2", true) )
         {
-            const char* pszGMLJP2V2Def =
-                CSLFetchNameValue( papszOptions, "GMLJP2V2_DEF" );
+            const char *pszGMLJP2V2Def =
+                CSLFetchNameValue(papszOptions, "GMLJP2V2_DEF");
             if( pszGMLJP2V2Def != NULL )
                 JP2KAKWriteBox(
                     &jp2_out,
                     oJP2MD.CreateGMLJP2V2(
                         nXSize,nYSize,pszGMLJP2V2Def,poSrcDS) );
             else
-                JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2(nXSize,nYSize) );
+                JP2KAKWriteBox(&jp2_out, oJP2MD.CreateGMLJP2(nXSize, nYSize));
         }
-        if( CPLFetchBool( papszOptions, "GeoJP2", true ) )
-            JP2KAKWriteBox( &jp2_out, oJP2MD.CreateJP2GeoTIFF() );
+        if( CPLFetchBool(papszOptions, "GeoJP2", true) )
+            JP2KAKWriteBox(&jp2_out, oJP2MD.CreateJP2GeoTIFF());
     }
 
 /* -------------------------------------------------------------------- */
@@ -2804,18 +2783,18 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     for( int iBox = 0; true; iBox++ )
     {
         CPLString oName;
-        oName.Printf( "xml:BOX_%d", iBox );
-        char **papszMD = poSrcDS->GetMetadata( oName );
+        oName.Printf("xml:BOX_%d", iBox);
+        char **papszMD = poSrcDS->GetMetadata(oName);
 
         if( papszMD == NULL || CSLCount(papszMD) != 1 )
             break;
 
         GDALJP2Box *poXMLBox = new GDALJP2Box();
 
-        poXMLBox->SetType( "xml " );
-        poXMLBox->SetWritableData( static_cast<int>(strlen(papszMD[0])+1),
-                                   reinterpret_cast<GByte *>( papszMD[0] ) );
-        JP2KAKWriteBox( &jp2_out, poXMLBox );
+        poXMLBox->SetType("xml ");
+        poXMLBox->SetWritableData(static_cast<int>(strlen(papszMD[0]) + 1),
+                                  reinterpret_cast<GByte *>(papszMD[0]));
+        JP2KAKWriteBox(&jp2_out, poXMLBox);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2837,7 +2816,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         for( int iTileXOff = 0; iTileXOff < nXSize; iTileXOff += nTileXSize )
         {
             kdu_tile oTile = oCodeStream.open_tile(
-                kdu_coords(iTileXOff/nTileXSize,iTileYOff/nTileYSize));
+                kdu_coords(iTileXOff / nTileXSize, iTileYOff / nTileYSize));
             int nThisTileXSize = 0;
             int nThisTileYSize = 0;
 
@@ -2857,12 +2836,12 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             // Setup scaled progress monitor
 
             double dfPixelsDoneAfter =
-                dfPixelsDone + (nThisTileXSize * (double) nThisTileYSize);
+                dfPixelsDone + (nThisTileXSize * (double)nThisTileYSize);
 
-            void *pScaledProgressData =
-                GDALCreateScaledProgress( dfPixelsDone / dfPixelsTotal,
-                                          dfPixelsDoneAfter / dfPixelsTotal,
-                                          pfnProgress, pProgressData );
+            void *pScaledProgressData = GDALCreateScaledProgress(
+                dfPixelsDone / dfPixelsTotal, dfPixelsDoneAfter / dfPixelsTotal,
+                pfnProgress, pProgressData);
+
             if( !JP2KAKCreateCopy_WriteTile( poSrcDS, oTile, poROIImage,
                                              iTileXOff, iTileYOff,
                                              nThisTileXSize, nThisTileYSize,
@@ -2872,15 +2851,15 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                              GDALScaledProgress,
                                              pScaledProgressData, bComseg ) )
             {
-                GDALDestroyScaledProgress( pScaledProgressData );
+                GDALDestroyScaledProgress(pScaledProgressData);
 
                 oCodeStream.destroy();
                 poOutputFile->close();
-                VSIUnlink( pszFilename );
+                VSIUnlink(pszFilename);
                 return NULL;
             }
 
-            GDALDestroyScaledProgress( pScaledProgressData );
+            GDALDestroyScaledProgress(pScaledProgressData);
             dfPixelsDone = dfPixelsDoneAfter;
 
             oTile.close();
@@ -2893,7 +2872,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     oCodeStream.flush(layer_bytes, layer_count, NULL, true, bComseg );
     oCodeStream.destroy();
 
-    CPLFree( layer_bytes );
+    CPLFree(layer_bytes);
 
     if( bIsJP2 )
     {
@@ -2907,17 +2886,17 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     oVSILTarget.close();
 
-    if( !pfnProgress( 1.0, NULL, pProgressData ) )
+    if( !pfnProgress(1.0, NULL, pProgressData) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
-    GDALPamDataset *poDS = (GDALPamDataset*) JP2KAKDataset::Open(&oOpenInfo);
+    GDALPamDataset *poDS = (GDALPamDataset *)JP2KAKDataset::Open(&oOpenInfo);
 
     if( poDS )
-        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+        poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
 
     return poDS;
 }
@@ -2929,26 +2908,24 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_JP2KAK()
 
 {
-    if( !GDAL_CHECK_VERSION( "JP2KAK driver" ) )
+    if( !GDAL_CHECK_VERSION("JP2KAK driver") )
         return;
 
-    if( GDALGetDriverByName( "JP2KAK" ) != NULL )
+    if( GDALGetDriverByName("JP2KAK") != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "JP2KAK" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "JPEG-2000 (based on Kakadu "
-                               KDU_CORE_VERSION ")" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jp2kak.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte Int16 UInt16" );
-    poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription("JP2KAK");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_LONGNAME, "JPEG-2000 (based on Kakadu " KDU_CORE_VERSION ")");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_jp2kak.html");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte Int16 UInt16");
+    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/jp2");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jp2");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
@@ -2987,5 +2964,5 @@ void GDALRegister_JP2KAK()
     poDriver->pfnIdentify = JP2KAKDataset::Identify;
     poDriver->pfnCreateCopy = JP2KAKCreateCopy;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
