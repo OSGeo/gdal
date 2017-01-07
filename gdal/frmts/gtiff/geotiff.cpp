@@ -14021,6 +14021,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Streaming related code                                          */
 /* -------------------------------------------------------------------- */
+    const CPLString osOriFilename(pszFilename);
     bool bStreaming =
         strcmp(pszFilename, "/vsistdout/") == 0 ||
         CPLFetchBool(papszParmList, "STREAMABLE_OUTPUT", false);
@@ -14094,6 +14095,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     if( l_nCompression == COMPRESSION_NONE &&
         dfUncompressedImageSize >= 1e9 &&
         !CPLFetchBool(papszParmList, "SPARSE_OK", false) &&
+        osOriFilename != "/vsistdout/" &&
+        osOriFilename != "/vsistdout_redirect/" &&
         CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")) )
     {
         GIntBig nFreeDiskSpace =
