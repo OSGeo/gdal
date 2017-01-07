@@ -510,6 +510,22 @@ def vrtmisc_16():
 
     return "success"
 
+###############################################################################
+# Check that the serialized xml:VRT doesn't include itself (#6767)
+
+def vrtmisc_17():
+
+    ds = gdal.Open('data/byte.tif')
+    vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_17.vrt', ds)
+    xml_vrt = vrt_ds.GetMetadata('xml:VRT')[0]
+    vrt_ds = None
+
+    gdal.Unlink('/vsimem/vrtmisc_17.vrt')
+
+    if xml_vrt.find('xml:VRT') >= 0:
+        return 'fail'
+
+    return "success"
 
 ###############################################################################
 # Cleanup.
@@ -534,6 +550,7 @@ gdaltest_list = [
     vrtmisc_14,
     vrtmisc_15,
     vrtmisc_16,
+    vrtmisc_17,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':

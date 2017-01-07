@@ -55,7 +55,8 @@ VRTDataset::VRTDataset( int nXSize, int nYSize ) :
     m_bWritable(TRUE),
     m_pszVRTPath(NULL),
     m_poMaskBand(NULL),
-    m_bCompatibleForDatasetIO(-1)
+    m_bCompatibleForDatasetIO(-1),
+    m_papszXMLVRTMetadata(NULL)
 {
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
@@ -114,6 +115,7 @@ VRTDataset::~VRTDataset()
         delete m_apoOverviews[i];
     for(size_t i=0;i<m_apoOverviewsBak.size();i++)
         delete m_apoOverviewsBak[i];
+    CSLDestroy( m_papszXMLVRTMetadata );
 }
 
 /************************************************************************/
@@ -190,9 +192,11 @@ char** VRTDataset::GetMetadata( const char *pszDomain )
 
         CPLFree( l_pszVRTPath );
 
-        char* apszContent[2] = { pszXML, NULL };
-        GDALDataset::SetMetadata(apszContent, "xml:VRT");
-        CPLFree(pszXML);
+        CSLDestroy(m_papszXMLVRTMetadata);
+        m_papszXMLVRTMetadata = static_cast<char**>(CPLMalloc(2 * sizeof(char*)));
+        m_papszXMLVRTMetadata[0] = pszXML;
+        m_papszXMLVRTMetadata[1] = NULL;
+        return m_papszXMLVRTMetadata;
     }
 
     return GDALDataset::GetMetadata(pszDomain);
