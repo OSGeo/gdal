@@ -151,6 +151,7 @@ class CPL_DLL VRTDataset : public GDALDataset
     int            CheckCompatibleForDatasetIO();
     std::vector<GDALDataset*> m_apoOverviews;
     std::vector<GDALDataset*> m_apoOverviewsBak;
+    char         **m_papszXMLVRTMetadata;
 
   protected:
     virtual int         CloseDependentDatasets() CPL_OVERRIDE;
