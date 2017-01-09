@@ -2418,8 +2418,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      64K tiles.  There is a hard limit on the number of tiles        */
 /*      allowed in JPEG2000.                                            */
 /* -------------------------------------------------------------------- */
-    while( (double)nXSize*(double)nYSize
-           / (double)nTileXSize / (double)nTileYSize / 1024.0 >= 64.0 )
+    const double dfXbyY = static_cast<double>(nXSize * nYSize) / (1024 * 64);
+    while( dfXbyY >= static_cast<double>(nTileXSize * nTileYSize) )
     {
         nTileXSize *= 2;
         nTileYSize *= 2;
