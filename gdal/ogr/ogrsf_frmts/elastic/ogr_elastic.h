@@ -46,6 +46,21 @@ typedef enum
 
 class OGRElasticDataSource;
 
+
+class OGRESSortDesc
+{
+    public:
+        CPLString osColumn;
+        bool      bAsc;
+
+        OGRESSortDesc( const CPLString& osColumnIn, bool bAscIn ) :
+            osColumn(osColumnIn),
+            bAsc(bAscIn) {}
+        OGRESSortDesc(const OGRESSortDesc& other) :
+            osColumn(other.osColumn),
+            bAsc(other.bAsc) {}
+};
+
 /************************************************************************/
 /*                          OGRElasticLayer                             */
 /************************************************************************/
@@ -66,8 +81,10 @@ class OGRElasticLayer : public OGRLayer {
     char                               **m_papszStoredFields;
     char                               **m_papszNotAnalyzedFields;
     char                               **m_papszNotIndexedFields;
+    char                               **m_papszFieldsWithRawValue;
 
     CPLString                            m_osESSearch;
+    std::vector<OGRESSortDesc>           m_aoSortColumns;
 
     CPLString                            m_osBulkContent;
     int                                  m_nBulkUpload;
@@ -93,6 +110,8 @@ class OGRElasticLayer : public OGRLayer {
 
     json_object*                          m_poSpatialFilter;
     CPLString                             m_osJSONFilter;
+    bool                                  m_bFilterMustBeClientSideEvaluated;
+    json_object*                          m_poJSONFilter;
 
     bool                                  m_bIgnoreSourceID;
     bool                                  m_bDotAsNestedField;
@@ -129,6 +148,12 @@ class OGRElasticLayer : public OGRLayer {
                                             OGRwkbGeometryType eType,
                                             const std::vector<CPLString>& aosPath,
                                             int bIsGeoPoint );
+
+    CPLString                             BuildQuery(bool bCountOnly);
+    json_object*                          GetValue( int nFieldIdx,
+                                                    swq_expr_node* poValNode );
+    json_object*                          TranslateSQLToFilter(swq_expr_node* poNode);
+    json_object*                          BuildSort();
 
 public:
                         OGRElasticLayer( const char* pszLayerName,
@@ -177,6 +202,10 @@ public:
     void                SetDotAsNestedField( bool bFlag ) { m_bDotAsNestedField = bFlag; }
     void                SetFID(const CPLString& m_osFIDIn) { m_osFID = m_osFIDIn; }
     void                SetNextFID(GIntBig nNextFID) { m_nNextFID = nNextFID; }
+
+    OGRElasticLayer*    Clone() const;
+    void                SetOrderBy( const std::vector<OGRESSortDesc>& v ) 
+                                                        { m_aoSortColumns = v; }
 };
 
 /************************************************************************/
@@ -190,8 +219,10 @@ class OGRElasticDataSource : public GDALDataset {
 
     OGRElasticLayer   **m_papoLayers;
     int                 m_nLayers;
+    std::map<OGRLayer*, OGRLayer*> m_oMapResultSet;
 
     bool                CheckVersion();
+    int                 GetLayerIndex( const char* pszName );
 
 public:
                             OGRElasticDataSource();

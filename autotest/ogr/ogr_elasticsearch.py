@@ -517,7 +517,7 @@ def ogr_elasticsearch_4():
         return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'a_layer  \n')
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer?pretty""", """
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/_mapping?pretty""", """
 {
     "a_layer":
     {
@@ -828,7 +828,7 @@ def ogr_elasticsearch_4():
 
     lyr.SetSpatialFilterRect(1,48,3,50)
     lyr.ResetReading()
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "filtered" : { "query" : { "match_all" : {} }, "filter": { "geo_shape": { "a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 1.0, 50.0 ], [ 3.0, 48.0 ] ] } } } } } } }""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "geo_shape": { "a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 1.0, 50.0 ], [ 3.0, 48.0 ] ] } } } } } } }""", """{
     "hits":
     {
         "hits":[
@@ -850,7 +850,7 @@ def ogr_elasticsearch_4():
 
     lyr.SetSpatialFilterRect(1,1,48,3,50)
     lyr.ResetReading()
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "filtered" : { "query" : { "match_all" : {} }, "filter": { "geo_bounding_box": { "a_geopoint.coordinates": { "top_left": { "lat": 50.0, "lon": 1.0 }, "bottom_right": { "lat": 48.0, "lon": 3.0 } } } } } } }""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "geo_bounding_box": { "a_geopoint.coordinates": { "top_left": { "lat": 50.0, "lon": 1.0 }, "bottom_right": { "lat": 48.0, "lon": 3.0 } } } } } } }""", """{
     "hits":
     {
         "hits":[
@@ -870,7 +870,7 @@ def ogr_elasticsearch_4():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?pretty&POSTFIELDS={ "size": 0, "query": { "filtered" : { "query" : { "match_all" : {} }, "filter": { "geo_bounding_box": { "a_geopoint.coordinates": { "top_left": { "lat": 50.0, "lon": 1.0 }, "bottom_right": { "lat": 48.0, "lon": 3.0 } } } } } } }""","""{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?pretty&POSTFIELDS={ "size": 0, "query": { "constant_score" : { "filter": { "geo_bounding_box": { "a_geopoint.coordinates": { "top_left": { "lat": 50.0, "lon": 1.0 }, "bottom_right": { "lat": 48.0, "lon": 3.0 } } } } } } }""","""{
     "hits":
     {
         "total": 10
@@ -1077,7 +1077,7 @@ def ogr_elasticsearch_5():
     ds = None
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'non_geojson\n')
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson?pretty""", """
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/_mapping?pretty""", """
 {
     "non_geojson":
     {
@@ -1291,7 +1291,7 @@ def ogr_elasticsearch_6():
         return 'skip'
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'non_standard_geometries\n')
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_standard_geometries?pretty""", """
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_standard_geometries/_mapping?pretty""", """
 {
     "non_standard_geometries":
     {
@@ -1484,7 +1484,7 @@ def ogr_elasticsearch_9():
     gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch", """{"version":{"number":"5.0.0"}}""")
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'a_layer  \n')
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer?pretty""", """
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/_mapping?pretty""", """
 {
     "a_layer":
     {
@@ -1494,16 +1494,16 @@ def ogr_elasticsearch_9():
             {
                 "properties":
                 {
-                    "type": { "type": "string" },
+                    "type": { "type": "text" },
+                    "a_geoshape":
+                    {
+                        "type": "geo_shape",
+                    },
                     "properties" :
                     {
-                        "a_geoshape":
-                        {
-                            "type": "geo_shape",
-                        },
                         "properties":
                         {
-                            "str_field": { "type": "string"}
+                            "str_field": { "type": "text"}
                         }
                     }
                 }
@@ -1534,11 +1534,14 @@ def ogr_elasticsearch_9():
     }
 }""")
 
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&scroll_id=my_scrollid""", """{}""")
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/_search/scroll?scroll_id=my_scrollid&CUSTOMREQUEST=DELETE', '{}')
+
     ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
     lyr = ds.GetLayer(0)
     lyr.SetSpatialFilterRect(2, 49, 3, 50)
 
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_count?pretty&POSTFIELDS={ "query": { "bool": { "filter": { "geo_shape": { "properties.a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 2.0, 50.0 ], [ 3.0, 49.0 ] ] } } } } } } }""",
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_count?pretty&POSTFIELDS={ "query": { "constant_score" : { "filter": { "geo_shape": { "a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 2.0, 50.0 ], [ 3.0, 49.0 ] ] } } } } } } }""",
 """{
   "count" : 2
 }""")
@@ -1548,7 +1551,7 @@ def ogr_elasticsearch_9():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "bool": { "filter": { "geo_shape": { "properties.a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 2.0, 50.0 ], [ 3.0, 49.0 ] ] } } } } } } }""",
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "geo_shape": { "a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 2.0, 50.0 ], [ 3.0, 49.0 ] ] } } } } } } }""",
 """{
 "_scroll_id": "my_scrollid",
     "hits":
@@ -1576,13 +1579,644 @@ def ogr_elasticsearch_9():
 
     return 'success'
 
+###############################################################################
+# Test SQL
+
+def ogr_elasticsearch_10():
+    if ogrtest.elasticsearch_drv is None:
+        return 'skip'
+
+    ogr_elasticsearch_delete_files()
+
+    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch", """{"version":{"number":"5.0.0"}}""")
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'a_layer  \n')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/_mapping?pretty""", """
+{
+    "a_layer":
+    {
+        "mappings":
+        {
+            "FeatureCollection":
+            {
+                "properties":
+                {
+                    "type": { "type": "text" },
+                    "a_geoshape":
+                    {
+                        "type": "geo_shape",
+                    },
+                    "properties" :
+                    {
+                        "properties":
+                        {
+                            "text_field": { "type": "text"},
+                            "text_field_with_raw": { "type": "text", "fields" : { "raw" : { "type": "keyword" } } },
+                            "keyword_field": { "type": "keyword"},
+                            "int_field": { "type": "integer"},
+                            "long_field": { "type": "long"},
+                            "double_field": { "type": "double"},
+                            "dt_field": { "type": "date"},
+                            "date_field": { "type": "date", "format": "yyyy\/MM\/dd"},
+                            "time_field": { "type": "date", "format": "HH:mm:ss.SSS"},
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""", """{}""")
+
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/_search/scroll?scroll_id=my_scrollid&CUSTOMREQUEST=DELETE', '{}')
+
+    ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
+    lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter("keyword_field = 'foo' AND keyword_field IS NOT NULL")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "bool": { "must": [ { "term": { "properties.keyword_field": "foo" } }, { "exists": { "field": "properties.keyword_field" } } ] } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "keyword_field": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("text_field = 'foo'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "match": { "properties.text_field": "foo" } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "text_field": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("text_field_with_raw = 'foo'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "term": { "properties.text_field_with_raw.raw": "foo" } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "text_field_with_raw": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("\"_id\" = 'my_id2'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "ids": { "values": [ "my_id2" ] } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id2",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("keyword_field != 'foo'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "bool": { "must_not": { "term": { "properties.keyword_field": "foo" } } } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "keyword_field": "bar"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("keyword_field IS NULL")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "bool": { "must_not": { "exists": { "field": "properties.keyword_field" } } } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("keyword_field BETWEEN 'bar' AND 'foo'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "range": { "properties.keyword_field": { "gte": "bar", "lte": "foo" } } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "keyword_field": "baz"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("keyword_field IN ('foo', 'bar')")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "terms": { "properties.keyword_field": [ "foo", "bar" ] } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "keyword_field": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("text_field IN ('foo', 'bar')")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "bool": { "should": [ { "match": { "properties.text_field": "foo" } }, { "match": { "properties.text_field": "bar" } } ] } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "text_field": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("text_field_with_raw IN ('foo', 'bar')")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "terms": { "properties.text_field_with_raw.raw": [ "foo", "bar" ] } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "text_field_with_raw": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("\"_id\" IN ('my_id', 'bar')")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "ids": { "values": [ "my_id", "bar" ] } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "text_field": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("int_field >= 2 OR long_field >= 9876543210 OR double_field <= 3.5")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "bool": { "should": [ { "bool": { "should": [ { "range": { "properties.int_field": { "gte": 2 } } }, { "range": { "properties.long_field": { "gte": 9876543210 } } } ] } }, { "range": { "properties.double_field": { "lte": 3.500000 } } } ] } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "double_field": 3,
+                    "int_field": 2,
+                    "long_field": 9876543210
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt_field > '2016/01/01 12:34:56.123'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "range": { "properties.dt_field": { "gt": "2016\/01\/01 12:34:56.123" } } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "dt_field": '2016/01/01 12:34:56.124'
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("NOT dt_field < '2016/01/01 12:34:56.123'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "bool": { "must_not": { "range": { "properties.dt_field": { "lt": "2016\/01\/01 12:34:56.123" } } } } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "dt_field": '2016/01/01 12:34:56.123'
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("keyword_field LIKE '_o%'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "wildcard": { "properties.keyword_field": "?o*" } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "keyword_field": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Evaluated client-side since the pattern uses ? or *
+    lyr.SetAttributeFilter("text_field LIKE '?*'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "text_field": "?*"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Evaluated client-side since the field is analyzed
+    lyr.SetAttributeFilter("text_field LIKE '_Z%'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "text_field": "fZo"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("text_field_with_raw LIKE '_xo%' ESCAPE 'x'")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "wildcard": { "properties.text_field_with_raw.raw": "?o*" } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "text_field_with_raw": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("keyword_field = 'foo' AND 1 = 1")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "term": { "properties.keyword_field": "foo" } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "keyword_field": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("1 = 1 AND keyword_field = 'foo'")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("keyword_field = 'bar' OR 1 = 0")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "keyword_field": "bar"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("keyword_field = 'foo2'")
+    lyr.SetSpatialFilterRect(2,49,2,49)
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "bool" : { "must" : [{ "geo_shape": { "a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 2.0, 49.0 ], [ 2.0, 49.0 ] ] } } } }, { "term": { "properties.keyword_field": "foo2" } }] } } } } }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "keyword_field": "foo2"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # SQL with WHERE
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM a_layer WHERE keyword_field = 'foo'")
+    f = sql_lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # SQL with WHERE and ORDER BY
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM a_layer WHERE keyword_field = 'foo' ORDER BY keyword_field, int_field DESC, \"_id\"")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "term": { "properties.keyword_field": "foo" } } } }, "sort" : [ { "properties.keyword_field": { "order": "asc" } }, { "properties.int_field": { "order": "desc" } }, { "_uid": { "order": "asc" } } ] }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "keyword_field": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = sql_lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # SQL with ORDER BY only
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM a_layer ORDER BY keyword_field")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "sort": [ { "properties.keyword_field": { "order": "asc" } } ] }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "keyword_field": "foo"
+                }
+            }
+        }]
+    }
+}""")
+    f = sql_lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # SQL with ORDER BY on a text field with a raw sub-field
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM a_layer ORDER BY text_field_with_raw")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "sort": [ { "properties.text_field_with_raw.raw": { "order": "asc" } } ] }""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                }
+            }
+        }]
+    }
+}""")
+    f = sql_lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
 
 ###############################################################################
 # Cleanup
 
 def ogr_elasticsearch_delete_files():
 
-    for subdir in [ '_cat', 'no_srs', 'non_standard_geometries', 'other_srs', 'a_layer' ]:
+    for subdir in [ '_search', '_cat', 'no_srs', 'non_standard_geometries', 'other_srs', 'a_layer' ]:
         lst = gdal.ReadDir('/vsimem/fakeelasticsearch/' + subdir)
         if lst:
             for f in lst:
@@ -1624,8 +2258,11 @@ gdaltest_list = [
     ogr_elasticsearch_7,
     ogr_elasticsearch_8,
     ogr_elasticsearch_9,
+    ogr_elasticsearch_10,
     ogr_elasticsearch_cleanup,
     ]
+
+#gdaltest_list = [ ogr_elasticsearch_init, ogr_elasticsearch_10 ]
 
 if __name__ == '__main__':
 

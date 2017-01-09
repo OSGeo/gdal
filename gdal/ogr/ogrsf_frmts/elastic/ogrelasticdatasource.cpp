@@ -27,15 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-// What was this supposed to do?
-// #pragma warning( disable : 4251 )
-
 #include "ogr_elastic.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_csv.h"
 #include "cpl_http.h"
 #include "ogrgeojsonreader.h"
+#include "swq.h"
 
 CPL_CVSID("$Id$");
 
@@ -505,7 +503,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
 
         const char* pszIndexName = pszCur;
 
-        json_object* poRes = RunRequest((m_osURL + CPLString("/") + pszIndexName + CPLString("?pretty")).c_str());
+        json_object* poRes = RunRequest((m_osURL + CPLString("/") + pszIndexName + CPLString("/_mapping?pretty")).c_str());
         if( poRes )
         {
             json_object* poLayerObj = CPL_json_object_object_get(poRes, pszIndexName);
@@ -647,6 +645,25 @@ int OGRElasticDataSource::Create(const char *pszFilename,
 }
 
 /************************************************************************/
+/*                           GetLayerIndex()                            */
+/************************************************************************/
+
+int OGRElasticDataSource::GetLayerIndex( const char* pszName )
+{
+    for( int i=0; i < m_nLayers; ++i )
+    {
+        if( strcmp( m_papoLayers[i]->GetName(), pszName ) == 0 )
+            return i;
+    }
+    for( int i=0; i < m_nLayers; ++i )
+    {
+        if( EQUAL( m_papoLayers[i]->GetName(), pszName ) )
+            return i;
+    }
+    return -1;
+}
+
+/************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
@@ -689,17 +706,107 @@ OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
                                    this, papszOpenOptions,
                                    pszSQLCommand);
     }
-    else
+
+
+/* -------------------------------------------------------------------- */
+/*      Deal with "SELECT xxxx ORDER BY" statement                      */
+/* -------------------------------------------------------------------- */
+    if (STARTS_WITH_CI(pszSQLCommand, "SELECT"))
     {
-        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
+        swq_select* psSelectInfo = new swq_select();
+        if( psSelectInfo->preparse( pszSQLCommand, TRUE ) != CE_None )
+        {
+            delete psSelectInfo;
+            return NULL;
+        }
+
+        int iLayer = 0;
+        if( psSelectInfo->table_count == 1 &&
+            psSelectInfo->table_defs[0].data_source == NULL &&
+            (iLayer =
+                GetLayerIndex( psSelectInfo->table_defs[0].table_name )) >= 0 &&
+            psSelectInfo->join_count == 0 &&
+            psSelectInfo->order_specs > 0 &&
+            psSelectInfo->poOtherSelect == NULL )
+        {
+            OGRElasticLayer* poSrcLayer = m_papoLayers[iLayer];
+            std::vector<OGRESSortDesc> aoSortColumns;
+            int i = 0;  // Used after for.
+            for( ; i < psSelectInfo->order_specs; i++ )
+            {
+                int nFieldIndex = poSrcLayer->GetLayerDefn()->GetFieldIndex(
+                                        psSelectInfo->order_defs[i].field_name);
+                if (nFieldIndex < 0)
+                    break;
+
+                /* Make sure to have the right case */
+                const char* pszFieldName = poSrcLayer->GetLayerDefn()->
+                    GetFieldDefn(nFieldIndex)->GetNameRef();
+
+                OGRESSortDesc oSortDesc(pszFieldName,
+                    CPL_TO_BOOL(psSelectInfo->order_defs[i].ascending_flag));
+                aoSortColumns.push_back(oSortDesc);
+            }
+
+            if( i == psSelectInfo->order_specs )
+            {
+                OGRElasticLayer* poDupLayer = poSrcLayer->Clone();
+
+                poDupLayer->SetOrderBy(aoSortColumns);
+                int nBackup = psSelectInfo->order_specs;
+                psSelectInfo->order_specs = 0;
+                char* pszSQLWithoutOrderBy = psSelectInfo->Unparse();
+                CPLDebug("ES", "SQL without ORDER BY: %s", pszSQLWithoutOrderBy);
+                psSelectInfo->order_specs = nBackup;
+                delete psSelectInfo;
+                psSelectInfo = NULL;
+
+                /* Just set poDupLayer in the papoLayers for the time of the */
+                /* base ExecuteSQL(), so that the OGRGenSQLResultsLayer */
+                /* references  that temporary layer */
+                m_papoLayers[iLayer] = poDupLayer;
+
+                OGRLayer* poResLayer = GDALDataset::ExecuteSQL(
+                    pszSQLWithoutOrderBy, poSpatialFilter, pszDialect );
+                m_papoLayers[iLayer] = poSrcLayer;
+
+                CPLFree(pszSQLWithoutOrderBy);
+
+                if (poResLayer != NULL)
+                    m_oMapResultSet[poResLayer] = poDupLayer;
+                else
+                    delete poDupLayer;
+                return poResLayer;
+            }
+        }
+        delete psSelectInfo;
     }
+
+    return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
 }
 
 /************************************************************************/
 /*                          ReleaseResultSet()                          */
 /************************************************************************/
 
-void OGRElasticDataSource::ReleaseResultSet( OGRLayer * poLayer )
+void OGRElasticDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
 {
-    delete poLayer;
+    if (poResultsSet == NULL)
+        return;
+
+    std::map<OGRLayer*, OGRLayer*>::iterator oIter =
+                                        m_oMapResultSet.find(poResultsSet);
+    if (oIter != m_oMapResultSet.end())
+    {
+        /* Destroy first the result layer, because it still references */
+        /* the poDupLayer (oIter->second) */
+        delete poResultsSet;
+
+        delete oIter->second;
+        m_oMapResultSet.erase(oIter);
+    }
+    else
+    {
+        delete poResultsSet;
+    }
 }
