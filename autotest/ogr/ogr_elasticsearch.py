@@ -1885,8 +1885,8 @@ def ogr_elasticsearch_10():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    lyr.SetAttributeFilter("int_field >= 2 OR long_field >= 9876543210 OR double_field <= 3.5")
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "bool": { "should": [ { "bool": { "should": [ { "range": { "properties.int_field": { "gte": 2 } } }, { "range": { "properties.long_field": { "gte": 9876543210 } } } ] } }, { "range": { "properties.double_field": { "lte": 3.500000 } } } ] } } } } }""",
+    lyr.SetAttributeFilter("int_field >= 2 OR long_field >= 9876543210 OR double_field <= 3.123456")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "constant_score" : { "filter": { "bool": { "should": [ { "bool": { "should": [ { "range": { "properties.int_field": { "gte": 2 } } }, { "range": { "properties.long_field": { "gte": 9876543210 } } } ] } }, { "range": { "properties.double_field": { "lte": 3.123456 } } } ] } } } } }""",
 """{
 "_scroll_id": "my_scrollid",
     "hits":
