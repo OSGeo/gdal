@@ -323,7 +323,9 @@ AC_DEFUN([AC_LD_SHARED],
 
   if test "$with_ld_shared" != "" ; then
     if test "$with_ld_shared" = "no" ; then
-      echo "user disabled shared library support."	
+      echo "user disabled shared library support."
+    elif test "$with_ld_shared" = "yes" ; then
+      AC_MSG_ERROR([--with-ld-shared not supported])
     else
       echo "using user supplied .so link command ... $with_ld_shared"	
     fi
