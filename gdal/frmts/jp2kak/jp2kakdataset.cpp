@@ -2358,10 +2358,9 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( dfQuality < 99.5 )
     {
         double dfLayerBytes =
-            (nXSize * static_cast<double>(nYSize) * dfQuality / 100.0);
-
-        dfLayerBytes *= (GDALGetDataTypeSize(eType) / 8);
-        dfLayerBytes *= GDALGetRasterCount(poSrcDS);
+            (nXSize * static_cast<double>(nYSize) * dfQuality / 100.0)
+            * GDALGetDataTypeSizeBytes(eType)
+            * GDALGetRasterCount(poSrcDS);
 
         if( dfLayerBytes > 2000000000.0 && sizeof(kdu_long) == 4 )
         {
@@ -2372,10 +2371,10 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             dfLayerBytes = 2000000000.0;
         }
 
-        layer_bytes[layer_count - 1] = (kdu_long)dfLayerBytes;
+        layer_bytes[layer_count - 1] = static_cast<kdu_long>(dfLayerBytes);
 
         CPLDebug("JP2KAK", "layer_bytes[] = %g\n",
-                 (double)layer_bytes[layer_count - 1]);
+                 static_cast<double>(layer_bytes[layer_count - 1]));
     }
     else
         bReversible = true;
