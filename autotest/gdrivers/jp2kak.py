@@ -412,7 +412,7 @@ def jp2kak_20():
     fourth_band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize,
                            int(ds.RasterXSize / 16), int(ds.RasterYSize / 16))
 
-    tiff_drv = gdal.GetDriverByName('GTiff').
+    tiff_drv = gdal.GetDriverByName('GTiff')
     tmp_ds = tiff_drv.CreateCopy('/vsimem/jp2kak_20.tif', ds)
     fourth_band = tmp_ds.GetRasterBand(4)
     got_cs = fourth_band.Checksum()
