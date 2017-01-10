@@ -2284,7 +2284,7 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "EPSG PCS/GCS code %d not found in EPSG support files.  "
-                  "Is this a valid\nEPSG coordinate system?",
+                  "Is this a valid EPSG coordinate system?",
                   nCode );
     }
 
