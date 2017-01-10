@@ -273,6 +273,21 @@ def osr_epsg_10():
     return 'success'
 
 ###############################################################################
+# Test datum shift for EPSG:2065 (PCS based override)
+
+def osr_epsg_11():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 2065 )
+
+    if srs.ExportToWkt().find('TOWGS84[570.8,85.7,462.8,4.998,1.587,5.261,3.56]') == -1:
+        gdaltest.post_reason('did not get expected TOWGS84')
+        print(srs.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     osr_epsg_1,
@@ -285,6 +300,7 @@ gdaltest_list = [
     osr_epsg_8,
     osr_epsg_9,
     osr_epsg_10,
+    osr_epsg_11,
     None ]
 
 if __name__ == '__main__':
