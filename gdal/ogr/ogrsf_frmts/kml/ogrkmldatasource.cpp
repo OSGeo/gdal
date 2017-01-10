@@ -34,6 +34,7 @@
 #include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_vsi_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -313,11 +314,12 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 
     pszName_ = CPLStrdup( pszName );
 
-    fpOutput_ = VSIFOpenL( pszName, "wb" );
+    fpOutput_ = VSIFOpenExL( pszName, "wb", true );
     if( fpOutput_ == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to create KML file %s.", pszName );
+                  "Failed to create KML file %s: %s", pszName,
+                  VSIGetLastErrorMsg() );
         return FALSE;
     }
 

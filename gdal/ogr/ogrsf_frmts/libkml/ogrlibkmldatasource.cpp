@@ -33,6 +33,7 @@
 #include "ogr_libkml.h"
 #include "ogrlibkmlstyle.h"
 #include "ogr_p.h"
+#include "cpl_vsi_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -254,11 +255,12 @@ void OGRLIBKMLDataSource::WriteKml()
 
     if( !oKmlOut.empty() )
     {
-        VSILFILE* fp = VSIFOpenL( oKmlFilename.c_str(), "wb" );
+        VSILFILE* fp = VSIFOpenExL( oKmlFilename.c_str(), "wb", true );
         if( fp == NULL )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "ERROR writing %s", oKmlFilename.c_str() );
+                      "Error writing %s: %s", oKmlFilename.c_str(),
+                      VSIGetLastErrorMsg() );
             return;
         }
 
@@ -317,8 +319,9 @@ void OGRLIBKMLDataSource::WriteKmz()
 
     if( !hZIP )
     {
-        CPLError( CE_Failure, CPLE_NoWriteAccess, "ERROR creating %s",
-                  pszName );
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Error creating %s: %s",
+                  pszName, VSIGetLastErrorMsg() );
         return;
     }
 
@@ -465,11 +468,12 @@ void OGRLIBKMLDataSource::WriteDir()
 
         const char *pszOutfile = CPLFormFilename( pszName, "doc.kml", NULL );
 
-        VSILFILE* fp = VSIFOpenL( pszOutfile, "wb" );
+        VSILFILE* fp = VSIFOpenExL( pszOutfile, "wb", true );
         if( fp == NULL )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "ERROR Writing %s to %s", "doc.kml", pszName );
+                      "Error writing %s to %s: %s", "doc.kml", pszName,
+                      VSIGetLastErrorMsg() );
             return;
         }
 

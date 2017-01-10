@@ -712,9 +712,6 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
 
         if( hSHP == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Failed to open Shapefile `%s'.",
-                      pszFilename );
             CPLFree( pszFilename );
             CPLFree( pszFilenameWithoutExt );
             return NULL;
