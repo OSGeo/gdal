@@ -1,6 +1,6 @@
 <GDAL_WMS>
     <Service name="TMS">
-        <ServerUrl>http://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${x}</ServerUrl>>
+        <ServerUrl>http://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${x}</ServerUrl>
     </Service>
     <DataWindow>
         <UpperLeftX>-20037508.34</UpperLeftX>
