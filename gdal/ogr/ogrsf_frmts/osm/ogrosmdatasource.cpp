@@ -1859,6 +1859,12 @@ bool OGROSMDataSource::IsClosedWayTaggedAsPolygon( unsigned int nTags, const OSM
         {
             bIsArea = true;
         }
+        else if( aoSetClosedWaysArePolygons.find(
+                        pszK + std::string("=") + pasTags[i].pszV) !=
+                  aoSetClosedWaysArePolygons.end() )
+        {
+            bIsArea = true;
+        }
     }
     return bIsArea;
 }
@@ -3431,18 +3437,15 @@ bool OGROSMDataSource::ParseConf( char** papszOpenOptionsIn )
             continue;
         }
 
-        if( STARTS_WITH(pszLine, "closed_ways_are_polygons="))        {
-            char** papszTokens = CSLTokenizeString2(pszLine, "=", 0);
-            if( CSLCount(papszTokens) == 2)
+        if( STARTS_WITH(pszLine, "closed_ways_are_polygons="))
+        {
+            char** papszTokens2 = CSLTokenizeString2(
+                    pszLine + strlen("closed_ways_are_polygons="), ",", 0);
+            for(int i=0;papszTokens2[i] != NULL;i++)
             {
-                char** papszTokens2 = CSLTokenizeString2(papszTokens[1], ",", 0);
-                for(int i=0;papszTokens2[i] != NULL;i++)
-                {
-                    aoSetClosedWaysArePolygons.insert(papszTokens2[i]);
-                }
-                CSLDestroy(papszTokens2);
+                aoSetClosedWaysArePolygons.insert(papszTokens2[i]);
             }
-            CSLDestroy(papszTokens);
+            CSLDestroy(papszTokens2);
         }
 
         else if(STARTS_WITH(pszLine, "report_all_nodes="))
