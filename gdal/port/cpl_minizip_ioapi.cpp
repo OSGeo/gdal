@@ -48,7 +48,11 @@ voidpf ZCALLBACK fopen_file_func ( voidpf /* opaque */ ,
         mode_fopen = "r+b";
     else
     if (mode & ZLIB_FILEFUNC_MODE_CREATE)
+    {
         mode_fopen = "wb";
+        if( filename != NULL )
+            return VSIFOpenExL(filename, mode_fopen, true);
+    }
 
     if ((filename!=NULL) && (mode_fopen != NULL))
         file = VSIFOpenL(filename, mode_fopen);
