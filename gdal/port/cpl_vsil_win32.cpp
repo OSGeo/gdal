@@ -539,7 +539,7 @@ static bool VSIWin32IsLongFilename( const wchar_t* pwszFilename )
 
 VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
                                                    const char *pszAccess,
-                                                   bool /* bSetError */ )
+                                                   bool bSetError )
 
 {
     DWORD dwDesiredAccess;
@@ -654,7 +654,12 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 
     if( hFile == INVALID_HANDLE_VALUE )
     {
-        errno = ErrnoFromGetLastError(nLastError);
+        const int nError = ErrnoFromGetLastError(nLastError);
+        if( bSetError )
+        {
+            VSIError(VSIE_FileError, "%s: %s", pszFilename, strerror(nError));
+        }
+        errno = nError;
         return NULL;
     }
 
