@@ -2804,6 +2804,29 @@ def tiff_read_ycbcr_lzw():
     return 'success'
 
 ###############################################################################
+# Test reading band unit from VERT_CS unit (#6675)
+
+def tiff_read_unit_from_srs():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_read_unit_from_srs.tif', 1, 1)
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('EPSG:4326+3855')
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_read_unit_from_srs.tif')
+    unit = ds.GetRasterBand(1).GetUnitType()
+    if unit != 'metre':
+        gdaltest.post_reason('fail')
+        print(unit)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_read_unit_from_srs.tif')
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2893,6 +2916,8 @@ gdaltest_list.append( (tiff_read_jpeg_cloud_optimized) )
 gdaltest_list.append( (tiff_read_corrupted_jpeg_cloud_optimized) )
 
 gdaltest_list.append( (tiff_read_ycbcr_lzw) )
+
+gdaltest_list.append( (tiff_read_unit_from_srs) )
 
 # gdaltest_list = [ tiff_read_ycbcr_lzw ]
 

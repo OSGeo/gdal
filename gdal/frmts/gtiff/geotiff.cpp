@@ -274,6 +274,7 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     bool        bWriteErrorInFlushBlockBuf;
 
     char        *pszProjection;
+    CPLString   m_osVertUnit;
     bool        bLookedForProjection;
     bool        bLookedForMDAreaOrPoint;
 
@@ -4525,6 +4526,11 @@ const char* GTiffRasterBand::GetUnitType()
 
 {
     poGDS->LoadGeoreferencingAndPamIfNeeded();
+    if( osUnitType.empty() )
+    {
+        poGDS->LookForProjection();
+        return poGDS->m_osVertUnit.c_str();
+    }
 
     return osUnitType.c_str();
 }
@@ -11651,20 +11657,30 @@ void GTiffDataset::LookForProjection()
         {
             pszProjection = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
 
-            // Should we simplify away vertical CS stuff?
-            if( STARTS_WITH_CI(pszProjection, "COMPD_CS")
-                && !CPLTestBool( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
-                                                    "NO") ) )
+            if( STARTS_WITH_CI(pszProjection, "COMPD_CS") )
             {
                 OGRSpatialReference oSRS;
 
-                CPLDebug( "GTiff", "Got COMPD_CS, but stripping it." );
                 char *pszWKT = pszProjection;
                 oSRS.importFromWkt( &pszWKT );
-                CPLFree( pszProjection );
 
-                oSRS.StripVertical();
-                oSRS.exportToWkt( &pszProjection );
+                char* pszVertUnit = NULL;
+                oSRS.GetTargetLinearUnits("COMPD_CS|VERT_CS", &pszVertUnit);
+                if( pszVertUnit && !EQUAL(pszVertUnit, "unknown") )
+                {
+                    m_osVertUnit = pszVertUnit;
+                }
+
+                // Should we simplify away vertical CS stuff?
+                if( !CPLTestBool( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
+                                                    "NO") ) )
+                {
+                    CPLDebug( "GTiff", "Got COMPD_CS, but stripping it." );
+
+                    oSRS.StripVertical();
+                    CPLFree( pszProjection );
+                    oSRS.exportToWkt( &pszProjection );
+                }
             }
         }
 
