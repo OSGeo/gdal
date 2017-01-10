@@ -4532,7 +4532,7 @@ def ogr_shape_99():
     GEOGCS["GCS_CH1903",
         DATUM["CH1903",
             SPHEROID["Bessel_1841",6377397.155,299.1528128],
-            TOWGS84[674.4,15.1,405.3,0,0,0,0]],
+            TOWGS84[674.374,15.056,405.346,0,0,0,0]],
         PRIMEM["Greenwich",0.0],
         UNIT["Degree",0.0174532925199433]],
     PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],
