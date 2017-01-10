@@ -1273,7 +1273,12 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     fpSHP = psHooks->FOpen(pszFullname, "wb" );
     if( fpSHP == NULL )
     {
-        psHooks->Error( "Failed to create file .shp file." );
+        char szError[200];
+        snprintf( szError, sizeof(szError),
+                 "Failed to create file %s: %s",
+                  pszFullname, strerror(errno) );
+        psHooks->Error( szError );
+
         goto error;
     }
 
@@ -1281,7 +1286,11 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     fpSHX = psHooks->FOpen(pszFullname, "wb" );
     if( fpSHX == NULL )
     {
-        psHooks->Error( "Failed to create file .shx file." );
+        char szError[200];
+        snprintf( szError, sizeof(szError),
+                 "Failed to create file %s: %s",
+                  pszFullname, strerror(errno) );
+        psHooks->Error( szError );
         goto error;
     }
 

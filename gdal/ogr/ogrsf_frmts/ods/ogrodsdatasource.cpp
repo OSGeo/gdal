@@ -30,6 +30,7 @@
 #include "ogr_mem.h"
 #include "ogr_p.h"
 #include "cpl_conv.h"
+#include "cpl_vsi_error.h"
 #include "ods_formula.h"
 #include <set>
 
@@ -1623,7 +1624,7 @@ void OGRODSDataSource::FlushCache()
     if (hZIP == NULL)
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Cannot create %s", pszName);
+                  "Cannot create %s: %s", pszName, VSIGetLastErrorMsg() );
         return;
     }
 

@@ -31,6 +31,7 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_vsi_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -222,13 +223,13 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszFilename, "w+" );
+    fp = VSIFOpenExL( pszFilename, "w+", true );
 
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open '%s' for writing.",
-                  pszFilename );
+                  "Failed to open '%s' for writing: %s",
+                  pszFilename, VSIGetLastErrorMsg() );
         return FALSE;
     }
 

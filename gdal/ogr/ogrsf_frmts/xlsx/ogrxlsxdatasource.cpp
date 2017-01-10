@@ -30,6 +30,7 @@
 #include "ogr_p.h"
 #include "cpl_conv.h"
 #include "cpl_time.h"
+#include "cpl_vsi_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -2089,11 +2090,11 @@ void OGRXLSXDataSource::FlushCache()
     }
 
     /* Maintain new ZIP files opened */
-    VSILFILE* fpZIP = VSIFOpenL(CPLSPrintf("/vsizip/%s", pszName), "wb");
+    VSILFILE* fpZIP = VSIFOpenExL(CPLSPrintf("/vsizip/%s", pszName), "wb", true);
     if (fpZIP == NULL)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Cannot create %s", pszName);
+                 "Cannot create %s: %s", pszName, VSIGetLastErrorMsg());
         return;
     }
 

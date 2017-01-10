@@ -39,6 +39,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_http.h"
+#include "cpl_vsi_error.h"
 #include "gmlutils.h"
 #include "ogr_p.h"
 #include "gmlregistry.h"
@@ -1617,7 +1618,7 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
     if( strcmp(pszFilename,"/vsistdout/") == 0 ||
         STARTS_WITH(pszFilename, "/vsigzip/") )
     {
-        fpOutput = VSIFOpenL(pszFilename, "wb");
+        fpOutput = VSIFOpenExL(pszFilename, "wb", true);
         bFpOutputIsNonSeekable = true;
         bFpOutputSingleFile = true;
     }
@@ -1629,16 +1630,16 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
             pszName = CPLStrdup(CPLFormFilename(pszFilename, "out.gml", NULL));
         }
 
-        fpOutput = VSIFOpenL(pszName, "wb");
+        fpOutput = VSIFOpenExL(pszName, "wb", true);
         bFpOutputIsNonSeekable = true;
     }
     else
-        fpOutput = VSIFOpenL( pszFilename, "wb+" );
+        fpOutput = VSIFOpenExL( pszFilename, "wb+", true);
     if( fpOutput == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to create GML file %s.",
-                  pszFilename );
+                  "Failed to create GML file %s: %s",
+                  pszFilename, VSIGetLastErrorMsg() );
         return false;
     }
 

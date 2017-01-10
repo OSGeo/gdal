@@ -31,6 +31,7 @@
 #include "ogrgeojsonutils.h"
 #include "ogrgeojsonreader.h"
 #include "gdal_utils.h"
+#include "cpl_vsi_error.h"
 #include <cpl_http.h>
 #include <json.h> // JSON-C
 #include "ogrgeojsonwriter.h"
@@ -447,12 +448,12 @@ int OGRGeoJSONDataSource::Create( const char* pszName,
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
-    fpOut_ = VSIFOpenL( pszName, "w" );
+    fpOut_ = VSIFOpenExL( pszName, "w", true );
     if( NULL == fpOut_)
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to create GeoJSON datasource: %s.",
-                  pszName );
+                  "Failed to create GeoJSON datasource: %s: %s",
+                  pszName, VSIGetLastErrorMsg() );
         return FALSE;
     }
 
