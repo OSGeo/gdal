@@ -43,7 +43,8 @@ from osgeo import gdal
 def matches_non_existing_error_msg(msg):
     m1 = "does not exist in the file system, and is not recognized as a supported dataset name." in msg
     m2 = 'No such file or directory' in msg
-    return m1 or m2
+    m3 = 'Permission denied' in msg
+    return m1 or m2 or m3
 
 def basic_test_1():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
