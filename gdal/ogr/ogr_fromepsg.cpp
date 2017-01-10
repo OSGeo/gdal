@@ -39,6 +39,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_csv.h"
@@ -928,7 +929,8 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
 static bool
 EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
                 int *pnUOMLengthCode, int *pnUOMAngleCode,
-                int *pnGeogCS, int *pnTRFCode, int *pnCoordSysCode )
+                int *pnGeogCS, int *pnTRFCode, int *pnCoordSysCode,
+                double* adfTOWGS84 )
 
 {
 
@@ -1041,6 +1043,23 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 
     if( pnCoordSysCode != NULL )
         *pnCoordSysCode = nCSC;
+
+/* -------------------------------------------------------------------- */
+/*      Get the TOWGS84 (override) parameters                           */
+/* -------------------------------------------------------------------- */
+
+    const char *pszDX =
+        CSLGetField( papszRecord, CSVGetFileFieldId(pszFilename, "DX"));
+    if( pszDX[0] != '\0' )
+    {
+        adfTOWGS84[0] = CPLAtof(pszDX);
+        adfTOWGS84[1] = CPLAtof(CSLGetField( papszRecord, CSVGetFileFieldId(pszFilename, "DY")));
+        adfTOWGS84[2] = CPLAtof(CSLGetField( papszRecord, CSVGetFileFieldId(pszFilename, "DZ")));
+        adfTOWGS84[3] = CPLAtof(CSLGetField( papszRecord, CSVGetFileFieldId(pszFilename, "RX")));
+        adfTOWGS84[4] = CPLAtof(CSLGetField( papszRecord, CSVGetFileFieldId(pszFilename, "RY")));
+        adfTOWGS84[5] = CPLAtof(CSLGetField( papszRecord, CSVGetFileFieldId(pszFilename, "RZ")));
+        adfTOWGS84[6] = CPLAtof(CSLGetField( papszRecord, CSVGetFileFieldId(pszFilename, "DS")));
+    }
 
     return true;
 }
@@ -1411,10 +1430,17 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
     int nTRFCode = 0;
     int nCSC = 0;
     char *pszPCSName = NULL;
+    double adfTOWGS84[7] = { std::numeric_limits<double>::infinity(),
+                             std::numeric_limits<double>::infinity(),
+                             std::numeric_limits<double>::infinity(),
+                             std::numeric_limits<double>::infinity(),
+                             std::numeric_limits<double>::infinity(),
+                             std::numeric_limits<double>::infinity(),
+                             std::numeric_limits<double>::infinity() };
 
     if( !EPSGGetPCSInfo( nPCSCode, &pszPCSName,
                          &nUOMLength, &nUOMAngleCode,
-                         &nGCSCode, &nTRFCode, &nCSC ) )
+                         &nGCSCode, &nTRFCode, &nCSC, adfTOWGS84 ) )
     {
         CPLFree(pszPCSName);
         return OGRERR_UNSUPPORTED_SRS;
@@ -1432,6 +1458,21 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
         return nErr;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Set overridden TOWGS84 parameters                               */
+/* -------------------------------------------------------------------- */
+    if( adfTOWGS84[0] != std::numeric_limits<double>::infinity() )
+    {
+        poSRS->SetTOWGS84( adfTOWGS84[0],
+                           adfTOWGS84[1],
+                           adfTOWGS84[2],
+                           adfTOWGS84[3],
+                           adfTOWGS84[4],
+                           adfTOWGS84[5],
+                           adfTOWGS84[6] );
+    }
+
+    // Used by OGR_FP macro
     const double dfFromGreenwich = poSRS->GetPrimeMeridian();
 
 /* -------------------------------------------------------------------- */
