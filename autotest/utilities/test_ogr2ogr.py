@@ -2635,6 +2635,22 @@ def test_ogr2ogr_65():
 
     return 'success'
 
+###############################################################################
+# Test accidental overriding of dataset when dst and src filenames are the same (#1465)
+
+def test_ogr2ogr_66():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' ../ogr/data/poly.shp ../ogr/data/poly.shp')
+    if err.find("Source and destination datasets must be different in non-update mode") < 0:
+        gdaltest.post_reason('fail')
+        print(ret)
+        print(err)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2701,8 +2717,11 @@ gdaltest_list = [
     test_ogr2ogr_62,
     test_ogr2ogr_63,
     test_ogr2ogr_64,
-    test_ogr2ogr_65
+    test_ogr2ogr_65,
+    test_ogr2ogr_66
     ]
+
+# gdaltest_list = [ test_ogr2ogr_66 ]
 
 if __name__ == '__main__':
 

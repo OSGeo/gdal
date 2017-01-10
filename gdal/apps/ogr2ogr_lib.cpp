@@ -2049,6 +2049,15 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             return NULL;
         }
     }
+    else if( !bUpdate && strcmp(osDestFilename, poDS->GetDescription()) == 0 &&
+             !EQUAL(psOptions->pszFormat, "Memory") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Source and destination datasets must be different "
+                  "in non-update mode." );
+        GDALVectorTranslateOptionsFree(psOptions);
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the output datasource as an existing, writable      */
