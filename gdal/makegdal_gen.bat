@@ -73,6 +73,7 @@ if "%_vcver_%"=="14.0" (
 ::  *********************
 
 set _platf_=%2
+set _buildplatf_=x86
 set _winver_=Win32
 
 if not "%_platf_%"=="32" (
@@ -84,6 +85,7 @@ if not "%_platf_%"=="32" (
 
 if "%_platf_%"=="64" (
     set _winver_=x64
+    set _buildplatf_=x64
 )
 
 goto :continue
@@ -210,7 +212,7 @@ echo     ^<NMakeOutput^>^</NMakeOutput^>                                        
 echo     ^<NMakeCleanCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 WITH_PDB=1 clean^</NMakeCleanCommandLine^>      >> %_mainfile_%
 echo     ^<NMakeReBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 WITH_PDB=1 clean ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 WITH_PDB=1^</NMakeReBuildCommandLine^>  >> %_mainfile_%
 echo     ^<NMakePreprocessorDefinitions^>%_winver_%;_DEBUG;$(NMakePreprocessorDefinitions)^</NMakePreprocessorDefinitions^>   >> %_mainfile_%
-echo     ^<LibraryPath^>$(VC_LibraryPath_x%_platf_%);$(WindowsSDK_LibraryPath_x%_platf_%);$(VC_SourcePath);^</LibraryPath^>   >> %_mainfile_%
+echo     ^<LibraryPath^>$(VC_LibraryPath_%_buildplatf_%);$(WindowsSDK_LibraryPath_%_buildplatf_%);$(VC_SourcePath);^</LibraryPath^>   >> %_mainfile_%
 echo   ^</PropertyGroup^>                                                                   >> %_mainfile_%
 echo   ^<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|%_winver_%'"^>   >> %_mainfile_%
 echo     ^<NMakeBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_%^</NMakeBuildCommandLine^>            >> %_mainfile_%
@@ -218,7 +220,7 @@ echo     ^<NMakeOutput^>^</NMakeOutput^>                                        
 echo     ^<NMakeCleanCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% clean^</NMakeCleanCommandLine^>      >> %_mainfile_%
 echo     ^<NMakeReBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% clean ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_%^</NMakeReBuildCommandLine^>  >> %_mainfile_%
 echo     ^<NMakePreprocessorDefinitions^>%_winver_%;NDEBUG;$(NMakePreprocessorDefinitions)^</NMakePreprocessorDefinitions^>   >> %_mainfile_%
-echo     ^<LibraryPath^>$(VC_LibraryPath_x%_platf_%);$(WindowsSDK_LibraryPath_x%_platf_%);$(VC_SourcePath);^</LibraryPath^>   >> %_mainfile_%
+echo     ^<LibraryPath^>$(VC_LibraryPath_%_buildplatf_%);$(WindowsSDK_LibraryPath_%_buildplatf_%);$(VC_SourcePath);^</LibraryPath^>   >> %_mainfile_%
 echo   ^</PropertyGroup^>                                                                   >> %_mainfile_%
 echo   ^<ItemDefinitionGroup^>                                  >> %_mainfile_%
 echo   ^</ItemDefinitionGroup^>                                 >> %_mainfile_%
