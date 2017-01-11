@@ -385,6 +385,7 @@
 #define TIFFLastDirectory gdal_TIFFLastDirectory
 #define TIFFLinkDirectory gdal_TIFFLinkDirectory
 #define _TIFFmalloc gdal__TIFFmalloc
+#define _TIFFcalloc gdal__TIFFcalloc
 #define _tiffMapProc gdal__tiffMapProc
 #define _TIFFmemcmp gdal__TIFFmemcmp
 #define _TIFFmemcpy gdal__TIFFmemcpy

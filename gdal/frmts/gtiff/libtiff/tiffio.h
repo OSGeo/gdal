@@ -1,4 +1,4 @@
-/* $Id: tiffio.h,v 1.93 2016-12-17 22:33:11 erouault Exp $ */
+/* $Id: tiffio.h,v 1.94 2017-01-11 19:02:49 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -293,6 +293,7 @@ extern TIFFCodec* TIFFGetConfiguredCODECs(void);
  */
 
 extern void* _TIFFmalloc(tmsize_t s);
+extern void* _TIFFcalloc(tmsize_t nmemb, tmsize_t siz);
 extern void* _TIFFrealloc(void* p, tmsize_t s);
 extern void _TIFFmemset(void* p, int v, tmsize_t c);
 extern void _TIFFmemcpy(void* d, const void* s, tmsize_t c);
