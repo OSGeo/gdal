@@ -1,4 +1,4 @@
-/* $Id: tif_packbits.c,v 1.24 2016-09-04 21:32:56 erouault Exp $ */
+/* $Id: tif_packbits.c,v 1.25 2017-01-11 20:33:35 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -99,7 +99,7 @@ PackBitsEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 				slop = (long)(op - lastliteral);
 				tif->tif_rawcc += (tmsize_t)(lastliteral - tif->tif_rawcp);
 				if (!TIFFFlushData1(tif))
-					return (-1);
+					return (0);
 				op = tif->tif_rawcp;
 				while (slop-- > 0)
 					*op++ = *lastliteral++;
@@ -107,7 +107,7 @@ PackBitsEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 			} else {
 				tif->tif_rawcc += (tmsize_t)(op - tif->tif_rawcp);
 				if (!TIFFFlushData1(tif))
-					return (-1);
+					return (0);
 				op = tif->tif_rawcp;
 			}
 		}

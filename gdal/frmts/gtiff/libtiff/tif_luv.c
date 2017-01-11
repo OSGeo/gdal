@@ -1,4 +1,4 @@
-/* $Id: tif_luv.c,v 1.44 2016-12-02 23:05:51 erouault Exp $ */
+/* $Id: tif_luv.c,v 1.45 2017-01-11 20:33:35 erouault Exp $ */
 
 /*
  * Copyright (c) 1997 Greg Ward Larson
@@ -473,7 +473,7 @@ LogL16Encode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 				tif->tif_rawcp = op;
 				tif->tif_rawcc = tif->tif_rawdatasize - occ;
 				if (!TIFFFlushData1(tif))
-					return (-1);
+					return (0);
 				op = tif->tif_rawcp;
 				occ = tif->tif_rawdatasize - tif->tif_rawcc;
 			}
@@ -505,7 +505,7 @@ LogL16Encode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 					tif->tif_rawcp = op;
 					tif->tif_rawcc = tif->tif_rawdatasize - occ;
 					if (!TIFFFlushData1(tif))
-						return (-1);
+						return (0);
 					op = tif->tif_rawcp;
 					occ = tif->tif_rawdatasize - tif->tif_rawcc;
 				}
@@ -565,7 +565,7 @@ LogLuvEncode24(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 			tif->tif_rawcp = op;
 			tif->tif_rawcc = tif->tif_rawdatasize - occ;
 			if (!TIFFFlushData1(tif))
-				return (-1);
+				return (0);
 			op = tif->tif_rawcp;
 			occ = tif->tif_rawdatasize - tif->tif_rawcc;
 		}
@@ -624,7 +624,7 @@ LogLuvEncode32(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 				tif->tif_rawcp = op;
 				tif->tif_rawcc = tif->tif_rawdatasize - occ;
 				if (!TIFFFlushData1(tif))
-					return (-1);
+					return (0);
 				op = tif->tif_rawcp;
 				occ = tif->tif_rawdatasize - tif->tif_rawcc;
 			}
@@ -656,7 +656,7 @@ LogLuvEncode32(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 					tif->tif_rawcp = op;
 					tif->tif_rawcc = tif->tif_rawdatasize - occ;
 					if (!TIFFFlushData1(tif))
-						return (-1);
+						return (0);
 					op = tif->tif_rawcp;
 					occ = tif->tif_rawdatasize - tif->tif_rawcc;
 				}
