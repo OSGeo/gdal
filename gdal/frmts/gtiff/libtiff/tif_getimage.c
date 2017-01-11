@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.101 2016-12-18 22:28:42 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.102 2017-01-11 16:38:26 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -1302,7 +1302,7 @@ DECLAREContigPutFunc(putagreytile)
     while (h-- > 0) {
 	for (x = w; x-- > 0;)
         {
-            *cp++ = BWmap[*pp][0] & (*(pp+1) << 24 | ~A1);
+            *cp++ = BWmap[*pp][0] & ((uint32)*(pp+1) << 24 | ~A1);
             pp += samplesperpixel;
         }
 	cp += toskew;
