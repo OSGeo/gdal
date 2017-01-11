@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.51 2017-01-11 16:33:34 erouault Exp $ */
+/* $Id: tif_read.c,v 1.52 2017-01-11 17:48:11 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -420,7 +420,7 @@ TIFFReadRawStrip1(TIFF* tif, uint32 strip, void* buf, tmsize_t size,
 			return ((tmsize_t)(-1));
 		}
 	} else {
-		tmsize_t ma;
+		tmsize_t ma = 0;
 		tmsize_t n;
 		if ((td->td_stripoffset[strip] > (uint64)TIFF_TMSIZE_T_MAX)||
                     ((ma=(tmsize_t)td->td_stripoffset[strip])>tif->tif_size))
