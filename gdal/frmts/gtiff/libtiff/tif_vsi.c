@@ -159,6 +159,14 @@ _TIFFmalloc(tsize_t s)
     return VSIMalloc((size_t) s);
 }
 
+void* _TIFFcalloc(tmsize_t nmemb, tmsize_t siz)
+{
+    if( nmemb == 0 || siz == 0 )
+        return ((void *) NULL);
+
+    return VSICalloc((size_t) nmemb, (size_t)siz);
+}
+
 void
 _TIFFfree(tdata_t p)
 {

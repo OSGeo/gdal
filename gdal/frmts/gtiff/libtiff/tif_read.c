@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.52 2017-01-11 17:48:11 erouault Exp $ */
+/* $Id: tif_read.c,v 1.53 2017-01-11 19:02:49 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -985,7 +985,9 @@ TIFFReadBufferSetup(TIFF* tif, void* bp, tmsize_t size)
 				 "Invalid buffer size");
 		    return (0);
 		}
-		tif->tif_rawdata = (uint8*) _TIFFmalloc(tif->tif_rawdatasize);
+		/* Initialize to zero to avoid uninitialized buffers in case of */
+                /* short reads (http://bugzilla.maptools.org/show_bug.cgi?id=2651) */
+		tif->tif_rawdata = (uint8*) _TIFFcalloc(1, tif->tif_rawdatasize);
 		tif->tif_flags |= TIFF_MYBUFFER;
 	}
 	if (tif->tif_rawdata == NULL) {
