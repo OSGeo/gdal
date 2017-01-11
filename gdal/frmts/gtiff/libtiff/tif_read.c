@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.50 2016-12-02 21:56:56 erouault Exp $ */
+/* $Id: tif_read.c,v 1.51 2017-01-11 16:33:34 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -420,16 +420,25 @@ TIFFReadRawStrip1(TIFF* tif, uint32 strip, void* buf, tmsize_t size,
 			return ((tmsize_t)(-1));
 		}
 	} else {
-		tmsize_t ma,mb;
+		tmsize_t ma;
 		tmsize_t n;
-		ma=(tmsize_t)td->td_stripoffset[strip];
-		mb=ma+size;
-		if ((td->td_stripoffset[strip] > (uint64)TIFF_TMSIZE_T_MAX)||(ma>tif->tif_size))
-			n=0;
-		else if ((mb<ma)||(mb<size)||(mb>tif->tif_size))
-			n=tif->tif_size-ma;
-		else
-			n=size;
+		if ((td->td_stripoffset[strip] > (uint64)TIFF_TMSIZE_T_MAX)||
+                    ((ma=(tmsize_t)td->td_stripoffset[strip])>tif->tif_size))
+                {
+                    n=0;
+                }
+                else if( ma > TIFF_TMSIZE_T_MAX - size )
+                {
+                    n=0;
+                }
+                else
+                {
+                    tmsize_t mb=ma+size;
+                    if (mb>tif->tif_size)
+                            n=tif->tif_size-ma;
+                    else
+                            n=size;
+                }
 		if (n!=size) {
 #if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 			TIFFErrorExt(tif->tif_clientdata, module,
