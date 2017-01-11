@@ -2089,8 +2089,10 @@ void OGRGMLDataSource::InsertHeader()
     {
         if (IsGML32Output())
         {
+            // GML Simple Features profile v2.0 mentions gml:AbstractGML as substitutionGroup
+            // but using gml:AbstractFeature makes it usablable by GMLJP2 v2
             PrintLine( fpSchema,
-                        "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:AbstractGML\"/>",
+                        "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:AbstractFeature\"/>",
                         pszPrefix );
         }
         else if (IsGML3DeegreeOutput())
