@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.52 2016-09-04 21:32:56 erouault Exp $ */
+/* $Id: tif_lzw.c,v 1.53 2017-01-11 20:33:35 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -969,7 +969,8 @@ LZWEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 		 */
 		if (op > limit) {
 			tif->tif_rawcc = (tmsize_t)(op - tif->tif_rawdata);
-			TIFFFlushData1(tif);
+			if( !TIFFFlushData1(tif) )
+                            return 0;
 			op = tif->tif_rawdata;
 		}
 		PutNextCode(op, ent);
@@ -1054,7 +1055,8 @@ LZWPostEncode(TIFF* tif)
 
 	if (op > sp->enc_rawlimit) {
 		tif->tif_rawcc = (tmsize_t)(op - tif->tif_rawdata);
-		TIFFFlushData1(tif);
+		if( !TIFFFlushData1(tif) )
+                    return 0;
 		op = tif->tif_rawdata;
 	}
 	if (sp->enc_oldcode != (hcode_t) -1) {
