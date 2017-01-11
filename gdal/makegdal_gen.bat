@@ -274,7 +274,7 @@ echo ^</Project^>                                               >> %_mainfile_%
 
 echo Done!
 echo Edit nmake.local or nmake.opt:
-echo MSVCVER=%_clver_%
+echo MSVC_VER=%_clver_%
 if "%_platf_%"=="64" (
     echo WIN64=YES
 ) else (
