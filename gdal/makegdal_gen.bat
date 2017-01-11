@@ -49,15 +49,20 @@ if "%3"=="" (
 set _vcver_=%1
 
 set _clver_=1600
+set _vstoolset_=v100
 
 if "%_vcver_%"=="14.0" (
 	set _clver_=1900
+	set _vstoolset_=v140
 ) else ( if "%_vcver_%"=="12.0" (
 	set _clver_=1800
+	set _vstoolset_=v120
 ) else ( if "%_vcver_%"=="11.0" (
 	set _clver_=1700
+	set _vstoolset_=v110
 ) else ( if "%_vcver_%"=="10.0" (
 	set _clver_=1600
+	set _vstoolset_=v100
 ) else (
     echo Wrong value for parameter 1. See usage:
 	goto :usage
@@ -182,12 +187,12 @@ echo   ^<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" /^>  >> %
 echo   ^<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|%_winver_%'" Label="Configuration"^>    >> %_mainfile_%
 echo     ^<ConfigurationType^>Makefile^</ConfigurationType^>    >> %_mainfile_%
 echo     ^<UseDebugLibraries^>true^</UseDebugLibraries^>        >> %_mainfile_%
-echo     ^<PlatformToolset^>v120^</PlatformToolset^>            >> %_mainfile_%
+echo     ^<PlatformToolset^>%_vstoolset_%^</PlatformToolset^>            >> %_mainfile_%
 echo   ^</PropertyGroup^>                                       >> %_mainfile_%
 echo   ^<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|%_winver_%'" Label="Configuration"^>  >> %_mainfile_%
 echo     ^<ConfigurationType^>Makefile^</ConfigurationType^>    >> %_mainfile_%
 echo     ^<UseDebugLibraries^>true^</UseDebugLibraries^>        >> %_mainfile_%
-echo     ^<PlatformToolset^>v120^</PlatformToolset^>            >> %_mainfile_%
+echo     ^<PlatformToolset^>%_vstoolset_%^</PlatformToolset^>            >> %_mainfile_%
 echo   ^</PropertyGroup^>                                       >> %_mainfile_%
 echo   ^<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" /^>      >> %_mainfile_%
 echo   ^<ImportGroup Label="ExtensionSettings"^>                >> %_mainfile_%  
@@ -200,18 +205,18 @@ echo     ^<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" 
 echo   ^</ImportGroup^>                                         >> %_mainfile_%
 echo   ^<PropertyGroup Label="UserMacros" /^>                   >> %_mainfile_%
 echo   ^<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|%_winver_%'"^>     >> %_mainfile_%
-echo     ^<NMakeBuildCommandLine^>nmake -f makefile.vc^</NMakeBuildCommandLine^>            >> %_mainfile_%
+echo     ^<NMakeBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 WITH_PDB=1^</NMakeBuildCommandLine^>            >> %_mainfile_%
 echo     ^<NMakeOutput^>^</NMakeOutput^>                                                    >> %_mainfile_%
-echo     ^<NMakeCleanCommandLine^>nmake -f makefile.vc clean^</NMakeCleanCommandLine^>      >> %_mainfile_%
-echo     ^<NMakeReBuildCommandLine^>nmake -f makefile.vc clean ^&amp;^&amp; nmake -f makefile.vc^</NMakeReBuildCommandLine^>  >> %_mainfile_%
+echo     ^<NMakeCleanCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 WITH_PDB=1 clean^</NMakeCleanCommandLine^>      >> %_mainfile_%
+echo     ^<NMakeReBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 WITH_PDB=1 clean ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 WITH_PDB=1^</NMakeReBuildCommandLine^>  >> %_mainfile_%
 echo     ^<NMakePreprocessorDefinitions^>%_winver_%;_DEBUG;$(NMakePreprocessorDefinitions)^</NMakePreprocessorDefinitions^>   >> %_mainfile_%
 echo     ^<LibraryPath^>$(VC_LibraryPath_x%_platf_%);$(WindowsSDK_LibraryPath_x%_platf_%);$(VC_SourcePath);^</LibraryPath^>   >> %_mainfile_%
 echo   ^</PropertyGroup^>                                                                   >> %_mainfile_%
 echo   ^<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|%_winver_%'"^>   >> %_mainfile_%
-echo     ^<NMakeBuildCommandLine^>nmake -f makefile.vc^</NMakeBuildCommandLine^>            >> %_mainfile_%
+echo     ^<NMakeBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_%^</NMakeBuildCommandLine^>            >> %_mainfile_%
 echo     ^<NMakeOutput^>^</NMakeOutput^>                                                    >> %_mainfile_%
-echo     ^<NMakeCleanCommandLine^>nmake -f makefile.vc clean^</NMakeCleanCommandLine^>      >> %_mainfile_%
-echo     ^<NMakeReBuildCommandLine^>nmake -f makefile.vc clean ^&amp;^&amp; nmake -f makefile.vc^</NMakeReBuildCommandLine^>  >> %_mainfile_%
+echo     ^<NMakeCleanCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% clean^</NMakeCleanCommandLine^>      >> %_mainfile_%
+echo     ^<NMakeReBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% clean ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_%^</NMakeReBuildCommandLine^>  >> %_mainfile_%
 echo     ^<NMakePreprocessorDefinitions^>%_winver_%;NDEBUG;$(NMakePreprocessorDefinitions)^</NMakePreprocessorDefinitions^>   >> %_mainfile_%
 echo     ^<LibraryPath^>$(VC_LibraryPath_x%_platf_%);$(WindowsSDK_LibraryPath_x%_platf_%);$(VC_SourcePath);^</LibraryPath^>   >> %_mainfile_%
 echo   ^</PropertyGroup^>                                                                   >> %_mainfile_%
