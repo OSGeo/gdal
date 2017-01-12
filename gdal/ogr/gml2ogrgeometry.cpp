@@ -1390,7 +1390,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     if( poCC == NULL )
                     {
                         poCC = new OGRCompoundCurve();
-                        if( poCC->addCurveDirectly(poRing) != OGRERR_NONE )
+                        bool bIgnored = false;
+                        if( !GML2OGRGeometry_AddToCompositeCurve(poCC, poRing, bIgnored) )
                         {
                             delete poGeom;
                             delete poRing;
