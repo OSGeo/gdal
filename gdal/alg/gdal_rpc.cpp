@@ -54,6 +54,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 
+// #define DEBUG_VERBOSE_EXTRACT_DEM
 
 CPL_CVSID("$Id$");
 
@@ -606,6 +607,9 @@ retry:
                 return false;
             }
         }
+#ifdef DEBUG_VERBOSE_EXTRACT_DEM
+        CPLDebug("RPC_DEM", "X=%f, Y=%f -> Z=%f", dfX, dfY, dfDEMH);
+#endif
     }
 
     *pdfHeight = dfVDatumShift + (psTransform->dfHeightOffset +
@@ -1290,7 +1294,6 @@ double BiCubicKernel( double dfVal )
 /*                        GDALRPCExtractDEMWindow()                     */
 /************************************************************************/
 
-// #define DEBUG_VERBOSE_EXTRACT_DEM
 static bool GDALRPCExtractDEMWindow( GDALRPCTransformInfo *psTransform,
                                      int nX, int nY, int nWidth, int nHeight,
                                      double* padfOut )
