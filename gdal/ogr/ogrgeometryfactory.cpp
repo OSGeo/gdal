@@ -4847,7 +4847,7 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
                                     alpha0, alpha2, dfStep,
                                     bStealth);
 
-        if( bStealth )
+        if( bStealth && poLine->getNumPoints() > 6 )
         {
             // 'Hide' the angle of the intermediate point in the 8
             // low-significant bits of the x, y of the first 2 computed points
