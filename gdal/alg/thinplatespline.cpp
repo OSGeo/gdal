@@ -622,7 +622,14 @@ int VizGeorefSpline2D::solve()
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
+
+#if ARMA_VERSION_MAJOR > 6 || (ARMA_VERSION_MAJOR == 6 && ARMA_VERSION_MINOR >= 500 )
+        // Perhaps available in earlier versions, but didn't check
         if( !arma::solve(matCoefs, matA, matRHS, arma::solve_opts::no_approx) )
+#else
+        if( !arma::solve(matCoefs, matA, matRHS) )
+#endif
+
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
 #pragma GCC diagnostic pop
 #endif
