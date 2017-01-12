@@ -2919,7 +2919,7 @@ def jp2openjpeg_45():
     #print(gmljp2)
 
     myshape_gml = ds.GetMetadata_List("xml:myshape.gml")[0]
-    if myshape_gml.find("""<ogr:FeatureCollection gml:id="ID_GMLJP2_0_1_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/myshape.xsd" xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
+    if myshape_gml.find("""<ogr1:FeatureCollection gml:id="ID_GMLJP2_0_1_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/1 gmljp2://xml/myshape.xsd" xmlns:ogr1="http://ogr.maptools.org/1" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
         gdaltest.post_reason('fail')
         print(myshape_gml)
         return 'fail'
@@ -2929,13 +2929,13 @@ def jp2openjpeg_45():
         return 'fail'
 
     myshape_xsd = ds.GetMetadata_List("xml:myshape.xsd")[0]
-    if myshape_xsd.find("""<xs:schema targetNamespace="http://ogr.maptools.org/" xmlns:ogr="http://ogr.maptools.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlsf="http://www.opengis.net/gmlsf/2.0" elementFormDefault="qualified" version="1.0">""") < 0:
+    if myshape_xsd.find("""<xs:schema targetNamespace="http://ogr.maptools.org/1" xmlns:ogr1="http://ogr.maptools.org/1" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlsf="http://www.opengis.net/gmlsf/2.0" elementFormDefault="qualified" version="1.0">""") < 0:
         gdaltest.post_reason('fail')
         print(myshape_xsd)
         return 'fail'
 
     myshape2_gml = ds.GetMetadata_List("xml:myshape2.gml")[0]
-    if myshape2_gml.find("""<ogr:FeatureCollection gml:id="ID_GMLJP2_0_2_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
+    if myshape2_gml.find("""<ogr2:FeatureCollection gml:id="ID_GMLJP2_0_2_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" xmlns:ogr2="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
         gdaltest.post_reason('fail')
         print(myshape2_gml)
         return 'fail'
