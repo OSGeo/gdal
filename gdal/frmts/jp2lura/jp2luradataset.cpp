@@ -1340,6 +1340,11 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
             {
                 if (RATE == 0 && QUALITY != 0)
                 {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                        "Using QUALITY option will also affect the REVERSIBLE "
+                        "sign and exponent band, as the SDK can only apply "
+                        "the QUALITY parameter the whole image. Thus numeric "
+                        "Float pixels will be affected");
                     SetPropGeneral(cJP2_Prop_Rate_Quality, QUALITY);
                 }
                 if (QUALITY == 0 && RATE != 0)
@@ -1389,12 +1394,20 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
 
                 if (REVERSIBLE == 0)
                 {
-                    SetPropPerChannel(cJP2_Prop_Wavelet_Filter,
-                                      cJP2_Waveleta[channel], channel);
-                    if (cJP2_Waveleta[channel] == cJP2_Wavelet_9_7 )
+                    if(QUALITY==0 && RATE==0)
                     {
-                        SetPropPerChannel(cJP2_Prop_Quantization_Style,
-                                          cJP2_Quanta[channel], channel);
+                        SetPropPerChannel(cJP2_Prop_Wavelet_Filter,
+                                        cJP2_Waveleta[channel], channel);
+                        if (cJP2_Waveleta[channel] == cJP2_Wavelet_9_7 )
+                        {
+                            SetPropPerChannel(cJP2_Prop_Quantization_Style,
+                                            cJP2_Quanta[channel], channel);
+                        }
+                    }
+                    else
+                    {
+                        SetPropPerChannel(cJP2_Prop_Wavelet_Filter,
+                                          cJP2_Wavelet_9_7, channel);
                     }
                 }
                 else
