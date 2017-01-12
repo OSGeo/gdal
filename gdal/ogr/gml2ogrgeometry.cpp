@@ -1517,7 +1517,11 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                         CPLError(CE_Fatal, CPLE_AppDefined,
                                  "dynamic_cast failed.  Expected OGRCurve.");
                     }
-                    if( poCC->addCurveDirectly(poCurve) != OGRERR_NONE )
+
+                    bool bIgnored = false;
+                    if( !GML2OGRGeometry_AddToCompositeCurve( poCC,
+                                                              poCurve,
+                                                              bIgnored ) )
                     {
                         delete poGeom;
                         delete poCC;
