@@ -330,7 +330,8 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 
     VSIFPrintfL( fpOutput_,
                  "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n"
-                 "<Document id=\"root_doc\">\n" );
+                 "<Document id=\"%s\">\n",
+                 CSLFetchNameValueDef(papszOptions, "DOCUMENT_ID", "root_doc") );
 
     return TRUE;
 }
