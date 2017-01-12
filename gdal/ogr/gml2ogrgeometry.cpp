@@ -1184,7 +1184,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                         }
                     }
 
-                    if( poCC->addCurveDirectly((OGRCurve*)poGeom) != OGRERR_NONE )
+                    bool bIgnored = false;
+                    if( !GML2OGRGeometry_AddToCompositeCurve( poCC,
+                                                              poGeom,
+                                                              bIgnored ) )
                     {
                         delete poGeom;
                         delete poCC;
