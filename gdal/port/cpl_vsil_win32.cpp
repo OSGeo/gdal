@@ -655,7 +655,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     if( hFile == INVALID_HANDLE_VALUE )
     {
         const int nError = ErrnoFromGetLastError(nLastError);
-        if( bSetError )
+        if( bSetError && nError != 0 )
         {
             VSIError(VSIE_FileError, "%s: %s", pszFilename, strerror(nError));
         }
