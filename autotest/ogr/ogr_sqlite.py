@@ -1265,6 +1265,13 @@ def ogr_sqlite_25():
     if gdaltest.sl_ds is None:
         return 'skip'
 
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT sqlite_version()")
+    feat = sql_lyr.GetNextFeature()
+    ogrtest.sqlite_version = feat.GetFieldAsString(0)
+    print('SQLite version : %s' % ogrtest.sqlite_version)
+    feat = None
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
+
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
     except:
@@ -1272,13 +1279,6 @@ def ogr_sqlite_25():
 
     if drv is None:
         return 'skip'
-
-    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT sqlite_version()")
-    feat = sql_lyr.GetNextFeature()
-    ogrtest.sqlite_version = feat.GetFieldAsString(0)
-    print('SQLite version : %s' % ogrtest.sqlite_version)
-    feat = None
-    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
     # Check that we have SQLite VFS support
     gdal.PushErrorHandler('CPLQuietErrorHandler')
