@@ -51,7 +51,7 @@ def test_gdal2tiles_py_1():
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/0/0/0.png')
 
-    expected_cs = [ 25350, 28185, 6147, 59026 ]
+    expected_cs = [ 25314, 28114, 6148, 59026 ]
     for i in range(4):
         if ds.GetRasterBand(i+1).Checksum() != expected_cs[i]:
             gdaltest.post_reason('wrong checksum for band %d' % (i+1))
