@@ -1698,6 +1698,7 @@ class GMLJP2V2GMLFileDesc
         CPLString osFile;
         CPLString osRemoteResource;
         CPLString osNamespace;
+        CPLString osNamespacePrefix;
         CPLString osSchemaLocation;
         int       bInline;
         int       bParentCoverageCollection;
@@ -2169,6 +2170,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                 oDesc.osFile = pszFile;
                             else if( pszRemoteResource )
                                 oDesc.osRemoteResource = pszRemoteResource;
+
+                            json_object* poNamespacePrefix = CPL_json_object_object_get(poGMLFile, "namespace_prefix");
+                            if( poNamespacePrefix && json_object_get_type(poNamespacePrefix) == json_type_string )
+                                oDesc.osNamespacePrefix = json_object_get_string(poNamespacePrefix);
 
                             json_object* poNamespace = CPL_json_object_object_get(poGMLFile, "namespace");
                             if( poNamespace && json_object_get_type(poNamespace) == json_type_string )
@@ -2652,15 +2657,32 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                                         this,
                                                         i,
                                                         CPLGetBasename(aoGMLFiles[i].osFile));
-                        const char* apszOptions[3] = { NULL };
-                        apszOptions[0] = "FORMAT=GML3.2";
-                        apszOptions[1] = (bCRSURL) ? "SRSNAME_FORMAT=OGC_URL" :
-                                                     "SRSNAME_FORMAT=OGC_URN";
-                        apszOptions[2] = NULL;
+                        char ** papszOptions = NULL;
+                        papszOptions = CSLSetNameValue(papszOptions,
+                                                       "FORMAT", "GML3.2");
+                        papszOptions = CSLSetNameValue(papszOptions,
+                                "SRSNAME_FORMAT",
+                                (bCRSURL) ? "OGC_URL" : "OGC_URN");
+                        if( aoGMLFiles.size() > 1 ||
+                            !aoGMLFiles[i].osNamespace.empty() ||
+                            !aoGMLFiles[i].osNamespacePrefix.empty() )
+                        {
+                            papszOptions = CSLSetNameValue(papszOptions,
+                                "PREFIX",
+                                    aoGMLFiles[i].osNamespacePrefix.empty() ?
+                                        CPLSPrintf("ogr%d", i) :
+                                        aoGMLFiles[i].osNamespacePrefix.c_str());
+                            papszOptions = CSLSetNameValue(papszOptions,
+                                "TARGET_NAMESPACE",
+                                aoGMLFiles[i].osNamespace.empty() ?
+                                    CPLSPrintf("http://ogr.maptools.org/%d", i) :
+                                    aoGMLFiles[i].osNamespace.c_str());
+                        }
                         GDALDatasetH hDS = GDALCreateCopy(
                                     hGMLDrv, osTmpFile, hSrcDS,
                                     FALSE,
-                                    const_cast<char**>(apszOptions), NULL, NULL);
+                                    papszOptions, NULL, NULL);
+                        CSLDestroy(papszOptions);
                         if( hDS )
                         {
                             GDALClose(hDS);
