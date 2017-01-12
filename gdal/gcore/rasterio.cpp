@@ -626,6 +626,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         int nLimitBlockY = 0;
         const bool bByteCopy = eDataType == eBufType && nBandDataSize == 1;
         int nStartBlockX = -nBlockXSize;
+        const double EPS = 1e-10;
 
 /* -------------------------------------------------------------------- */
 /*      Read case                                                       */
@@ -633,8 +634,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
         for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
         {
-            dfSrcY = (iBufYOff+0.5) * dfSrcYInc + dfYOff;
-            dfSrcX = 0.5 * dfSrcXInc + dfXOff;
+            // Add small epsilon to avoid some numeric precision issues.
+            dfSrcY = (iBufYOff+0.5) * dfSrcYInc + dfYOff + EPS;
+            dfSrcX = 0.5 * dfSrcXInc + dfXOff + EPS;
             iSrcY = static_cast<int>(dfSrcY);
 
             GPtrDiff_t iBufOffset =
