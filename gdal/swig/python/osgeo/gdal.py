@@ -732,7 +732,7 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
         if trigonometric:
             new_options += ['-trigonometric' ]
         if zeroForFlat:
-            new_options += ['zero_for_flat' ]
+            new_options += ['-zero_for_flat' ]
 
     return (GDALDEMProcessingOptions(new_options), colorFilename, callback, callback_data)
 
