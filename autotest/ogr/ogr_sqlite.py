@@ -3395,6 +3395,42 @@ def ogr_sqlite_43():
     return 'success'
 
 ###############################################################################
+# Test WAL and opening in read-only (#6776)
+
+def ogr_sqlite_45():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+    
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_45.db')
+    sql_lyr = ds.ExecuteSQL('PRAGMA journal_mode = WAL')
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM sqlite_master')
+    ds.ReleaseResultSet(sql_lyr)
+    if not os.path.exists('tmp/ogr_sqlite_45.db-wal'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    shutil.copy('tmp/ogr_sqlite_45.db', 'tmp/ogr_sqlite_45_bis.db')
+    shutil.copy('tmp/ogr_sqlite_45.db-shm', 'tmp/ogr_sqlite_45_bis.db-shm')
+    shutil.copy('tmp/ogr_sqlite_45.db-wal', 'tmp/ogr_sqlite_45_bis.db-wal')
+    ds = None
+    if os.path.exists('tmp/ogr_sqlite_45.db-wal'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = ogr.Open('tmp/ogr_sqlite_45_bis.db')
+    ds = None
+    if os.path.exists('tmp/ogr_sqlite_45_bis.db-wal'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('tmp/ogr_sqlite_45.db')
+    gdal.Unlink('tmp/ogr_sqlite_45_bis.db')
+
+    return 'success'
+
+
+###############################################################################
 # Test creating unsupported geometry types
 
 def ogr_spatialite_11():
@@ -3607,6 +3643,7 @@ gdaltest_list = [
     ogr_sqlite_41,
     ogr_sqlite_42,
     ogr_sqlite_43,
+    ogr_sqlite_45,
     ogr_spatialite_11,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,

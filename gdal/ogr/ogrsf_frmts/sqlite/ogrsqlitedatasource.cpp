@@ -289,6 +289,31 @@ void OGRSQLiteBaseDataSource::CloseDB()
     {
         sqlite3_close( hDB );
         hDB = NULL;
+
+        // If we opened the DB in read-only mode, there might be spurious
+        // -wal and -shm files that we can make disappear by reopening in
+        // read-write
+        VSIStatBufL sStat;
+        if( eAccess == GA_ReadOnly &&
+            VSIStatL( CPLSPrintf("%s-wal", m_pszFilename), &sStat) == 0 )
+        {
+            CPL_IGNORE_RET_VAL( sqlite3_open( m_pszFilename, &hDB ) );
+            if( hDB != NULL )
+            {
+                // Dummy request
+                int nRowCount = 0, nColCount = 0;
+                char** papszResult = NULL;
+                sqlite3_get_table( hDB,
+                                    "SELECT name FROM sqlite_master WHERE 0",
+                                    &papszResult, &nRowCount, &nColCount,
+                                    NULL );
+                sqlite3_free_table( papszResult );
+
+                sqlite3_close( hDB );
+                hDB = NULL;
+            }
+        }
+
     }
 
 #ifdef HAVE_SQLITE_VFS
@@ -702,7 +727,8 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
 
     int nRowCount = 0, nColCount = 0;
     char** papszResult = NULL;
-    sqlite3_get_table( hDB,
+    char* pszErrMsg = NULL;
+    rc = sqlite3_get_table( hDB,
                        "SELECT name, sql FROM sqlite_master "
                        "WHERE (type = 'trigger' OR type = 'view') AND ("
                        "sql LIKE '%%ogr_geocode%%' OR "
@@ -710,7 +736,32 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
                        "sql LIKE '%%ogr_GetConfigOption%%' OR "
                        "sql LIKE '%%ogr_SetConfigOption%%' )",
                        &papszResult, &nRowCount, &nColCount,
-                       NULL );
+                       &pszErrMsg );
+    if( rc != SQLITE_OK )
+    {
+        bool bIsWAL = false;
+        VSILFILE* fp = VSIFOpenL(m_pszFilename, "rb");
+        if( fp != NULL )
+        {
+            GByte byVal = 0;
+            VSIFSeekL(fp, 18, SEEK_SET);
+            VSIFReadL(&byVal, 1, 1, fp);
+            bIsWAL = byVal == 2;
+        }
+        if( bIsWAL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "%s: this file is a WAL-enabled database. It cannot be opened "
+                "because it is presumably read-only or in a read-only directory.",
+                pszErrMsg);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrMsg);
+        }
+        sqlite3_free( pszErrMsg );
+        return FALSE;
+    }
 
     sqlite3_free_table(papszResult);
     papszResult = NULL;
@@ -731,7 +782,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
     const char* pszSqliteJournal = CPLGetConfigOption("OGR_SQLITE_JOURNAL", NULL);
     if (pszSqliteJournal != NULL)
     {
-        char* pszErrMsg = NULL;
+        pszErrMsg = NULL;
 
         const char* pszSQL = CPLSPrintf("PRAGMA journal_mode = %s",
                                         pszSqliteJournal);
@@ -755,7 +806,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
         char** papszTokens = CSLTokenizeString2( pszSqlitePragma, ",", CSLT_HONOURSTRINGS );
         for(int i=0; papszTokens[i] != NULL; i++ )
         {
-            char* pszErrMsg = NULL;
+            pszErrMsg = NULL;
 
             const char* pszSQL = CPLSPrintf("PRAGMA %s", papszTokens[i]);
 
