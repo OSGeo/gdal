@@ -1528,7 +1528,9 @@ void OGRLIBKMLDataSource::ParseDocumentOptions( KmlPtr poKml,
 {
     if( poKmlDocument != NULL )
     {
-        poKmlDocument->set_id("root_doc");
+        const char* pszDocumentId =
+            CSLFetchNameValueDef(m_papszOptions, "DOCUMENT_ID", "root_doc");
+        poKmlDocument->set_id(pszDocumentId);
 
         const char* pszAuthorName =
             CSLFetchNameValue(m_papszOptions, "AUTHOR_NAME");
@@ -1609,7 +1611,7 @@ void OGRLIBKMLDataSource::ParseDocumentOptions( KmlPtr poKml,
         CPLString osListStyleIconHref =
             CSLFetchNameValueDef(m_papszOptions, "LISTSTYLE_ICON_HREF", "");
         createkmlliststyle( m_poKmlFactory,
-                            "root_doc",
+                            pszDocumentId,
                             poKmlDocument,
                             poKmlDocument,
                             osListStyleType,
