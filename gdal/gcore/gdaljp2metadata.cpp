@@ -2906,9 +2906,17 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                                      this,
                                                      i,
                                                      CPLGetBasename(aoAnnotations[i].osFile));
+                    char** papszOptions = NULL;
+                    if( aoAnnotations.size() > 1 )
+                    {
+                        papszOptions = CSLSetNameValue(
+                            papszOptions, "DOCUMENT_ID",
+                            CPLSPrintf("root_doc_%d", i));
+                    }
                     GDALDatasetH hDS = GDALCreateCopy(hLIBKMLDrv ? hLIBKMLDrv : hKMLDrv,
                                                       osTmpFile, hSrcDS,
-                                                      FALSE, NULL, NULL, NULL);
+                                                      FALSE, papszOptions, NULL, NULL);
+                    CSLDestroy(papszOptions);
                     if( hDS )
                     {
                         GDALClose(hDS);

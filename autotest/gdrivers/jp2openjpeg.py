@@ -2876,7 +2876,7 @@ def jp2openjpeg_45():
     myshape2_gml_pos = gmljp2.find("""<gmljp2:feature xlink:href="gmljp2://xml/myshape2.gml" """)
     feature2_pos = gmljp2.find("""<gmljp2:feature xlink:href="gmljp2://xml/feature2.gml" """)
     feature3_pos = gmljp2.find("""<gmljp2:feature xlink:href="gmljp2://xml/feature3.gml" """)
-    myshape_kml_pos = gmljp2.find("""<Document id="root_doc">""")
+    myshape_kml_pos = gmljp2.find("""<Document id="root_doc_0">""")
     empty_kml_pos = gmljp2.find("""<Document id="empty_doc" />""")
     style1_pos = gmljp2.find("""<style1 xmlns="http://dummy" />""")
     style2_pos = gmljp2.find("""<mydummyns:style2 xmlns:mydummyns="http://dummy" />""")
