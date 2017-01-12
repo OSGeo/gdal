@@ -991,6 +991,9 @@ def ogr_sql_sqlite_start_webserver():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
+        
+    if gdal.GetDriverByName('HTTP') is None:
+        return 'skip'
 
     (ogrtest.webserver_process, ogrtest.webserver_port) = webserver.launch()
     if ogrtest.webserver_port == 0:
