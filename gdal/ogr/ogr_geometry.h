@@ -721,6 +721,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
                               int bTestEnvelope = TRUE ) const;
     OGRBoolean isPointOnRingBoundary( const OGRPoint* pt,
                                       int bTestEnvelope = TRUE ) const;
+    virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) CPL_OVERRIDE;
 
     // IWks Interface - Note this isn't really a first class object
     // for the purposes of WKB form.  These methods always fail since this
@@ -731,6 +732,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const CPL_OVERRIDE;
+        
 };
 
 /************************************************************************/
