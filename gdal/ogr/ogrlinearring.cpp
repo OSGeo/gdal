@@ -728,6 +728,33 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary( const OGRPoint* poPoint,
 }
 
 /************************************************************************/
+/*                             transform()                              */
+/************************************************************************/
+
+OGRErr OGRLinearRing::transform( OGRCoordinateTransformation *poCT )
+
+{
+    const bool bIsClosed = getNumPoints() > 2 && CPL_TO_BOOL(get_IsClosed());
+    OGRErr eErr = OGRLineString::transform(poCT);
+    if( bIsClosed && eErr == OGRERR_NONE && !get_IsClosed() )
+    {
+        CPLDebug("OGR", "Linearring is not closed after coordinate "
+                  "transformation. Forcing last point to be identical to "
+                  "first one");
+        // Force last point to be identical to first point.
+        // This is a safety belt in case the reprojection of the same coordinate
+        // isn't perfectly stable. This can for example happen in very rare cases
+        // when reprojecting a cutline with a RPC transform with a DEM that
+        // is a VRT whose sources are resampled...
+        OGRPoint oStartPoint;
+        StartPoint( &oStartPoint );
+
+        setPoint( getNumPoints()-1, &oStartPoint);
+    }
+    return eErr;
+}
+
+/************************************************************************/
 /*                          CastToLineString()                          */
 /************************************************************************/
 
