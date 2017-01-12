@@ -330,6 +330,31 @@ void OGRSQLiteBaseDataSource::CloseDB()
     {
         sqlite3_close( hDB );
         hDB = NULL;
+
+        // If we opened the DB in read-only mode, there might be spurious
+        // -wal and -shm files that we can make disappear by reopening in
+        // read-write
+        VSIStatBufL sStat;
+        if( eAccess == GA_ReadOnly &&
+            VSIStatL( CPLSPrintf("%s-wal", m_pszFilename), &sStat) == 0 )
+        {
+            CPL_IGNORE_RET_VAL( sqlite3_open( m_pszFilename, &hDB ) );
+            if( hDB != NULL )
+            {
+                // Dummy request
+                int nRowCount = 0, nColCount = 0;
+                char** papszResult = NULL;
+                sqlite3_get_table( hDB,
+                                    "SELECT name FROM sqlite_master WHERE 0",
+                                    &papszResult, &nRowCount, &nColCount,
+                                    NULL );
+                sqlite3_free_table( papszResult );
+
+                sqlite3_close( hDB );
+                hDB = NULL;
+            }
+        }
+
     }
 
 #ifdef HAVE_SQLITE_VFS
