@@ -1480,7 +1480,18 @@ static bool ValidateCutline(OGRGeometryH hGeom)
             char *pszWKT = NULL;
             OGR_G_ExportToWkt( hGeom, &pszWKT );
             CPLDebug("GDALWARP", "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
-            //fprintf(stderr, "WKT = \"%s\"\n", pszWKT ? pszWKT : "(null)");
+            const char* pszFile = CPLGetConfigOption("GDALWARP_DUMP_WKT_TO_FILE", NULL);
+            if( pszFile && pszWKT )
+            {
+                FILE* f = EQUAL(pszFile, "stderr") ? stderr : fopen(pszFile, "wb");
+                if( f )
+                {
+                    fprintf(f, "id,WKT\n");
+                    fprintf(f, "1,\"%s\"\n", pszWKT);
+                    if( !EQUAL(pszFile, "stderr") )
+                        fclose(f);
+                }
+            }
             CPLFree( pszWKT );
 
             if( CPLTestBool(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
@@ -1495,6 +1506,40 @@ static bool ValidateCutline(OGRGeometryH hGeom)
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Cutline not of polygon type." );
+        return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                     LooseValidateCutline()                           */
+/*                                                                      */
+/*  Same as OGR_G_IsValid() except that it processes polygon per polygon*/
+/*  without paying attention to MultiPolygon specific validity rules.   */
+/************************************************************************/
+
+static bool LooseValidateCutline(OGRGeometryH hGeom)
+{
+    OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
+    if( eType == wkbMultiPolygon )
+    {
+        for( int iGeom = 0; iGeom < OGR_G_GetGeometryCount( hGeom ); iGeom++ )
+        {
+            OGRGeometryH hPoly = OGR_G_GetGeometryRef(hGeom,iGeom);
+            if( !LooseValidateCutline(hPoly) )
+                return false;
+        }
+    }
+    else if( eType == wkbPolygon )
+    {
+        if( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hGeom) )
+        {
+            return false;
+        }
+    }
+    else
+    {
         return false;
     }
 
@@ -2404,8 +2449,17 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
                             reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    const bool bWasValidInitialy = OGR_G_IsValid(hMultiPolygon) != FALSE;
+    const bool bWasValidInitialy = LooseValidateCutline(hMultiPolygon);
     CPLPopErrorHandler();
+    if( !bWasValidInitialy )
+    {
+        CPLDebug("WARP", "Cutline is not valid after initial reprojection");
+        char *pszWKT = NULL;
+        OGR_G_ExportToWkt( hMultiPolygon, &pszWKT );
+        CPLDebug("GDALWARP", "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
+        CPLFree(pszWKT);
+    }
+
     bool bDensify = false;
     if( bMayNeedDensify && eErr == OGRERR_NONE && dfInitialMaxLengthInPixels > 1.0 )
     {
@@ -2451,7 +2505,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
                     // invalid polygon due to the non-linearity of RPC DEM transformation,
                     // so in those cases, try a less dense cutline
                     CPLPushErrorHandler(CPLQuietErrorHandler);
-                    const bool bIsValid = OGR_G_IsValid(hMultiPolygon) != FALSE;
+                    const bool bIsValid = LooseValidateCutline(hMultiPolygon);
                     CPLPopErrorHandler();
                     if( !bIsValid )
                     {
