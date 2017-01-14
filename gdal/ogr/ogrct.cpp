@@ -34,6 +34,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
+#include <cfloat>
 
 #ifdef PROJ_STATIC
 #include "proj_api.h"
@@ -156,6 +157,8 @@ class OGRProj4CT : public OGRCoordinateTransformation
     double     *padfTargetX;
     double     *padfTargetY;
     double     *padfTargetZ;
+
+    bool        bNoTransform;
 
 public:
                 OGRProj4CT();
@@ -855,20 +858,14 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         return FALSE;
     }
 
-    /* Determine if we really have a transformation to do */
-    bIdentityTransform = (strcmp(pszSrcProj4Defn, pszDstProj4Defn) == 0);
+    // Determine if we really have a transformation to do at the proj.4 level
+    // (but we may have a unit transformation to do)
+    bIdentityTransform = strcmp(pszSrcProj4Defn, pszDstProj4Defn) == 0;
 
-#if 0
-    /* In case of identity transform, under the following conditions, */
-    /* we can also avoid transforming from degrees <--> radians. */
-    if( bIdentityTransform && bSourceLatLong && !bSourceWrap &&
-        bTargetLatLong && !bTargetWrap &&
-        fabs(dfSourceToRadians * dfTargetFromRadians - 1.0) < 1e-10 )
-    {
-        /*bSourceLatLong = FALSE;
-        bTargetLatLong = FALSE;*/
-    }
-#endif
+    // Determine if we can skip the tranformation completely.
+    bNoTransform = bIdentityTransform && bSourceLatLong && !bSourceWrap &&
+                    bTargetLatLong && !bTargetWrap &&
+                    fabs(dfSourceToRadians * dfTargetFromRadians - 1.0) < DBL_EPSILON;
 
     CPLFree( pszSrcProj4Defn );
     CPLFree( pszDstProj4Defn );
@@ -946,6 +943,20 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                              int *pabSuccess )
 
 {
+    // Prevent any coordinate modification when possible
+    if ( bNoTransform )
+    {
+        if( pabSuccess )
+        {
+            for( int i = 0; i < nCount; i++ )
+            {
+                 pabSuccess[i] = TRUE;
+            }
+        }
+        return TRUE;
+    }
+
+
     int   err, i;
 
 /* -------------------------------------------------------------------- */
