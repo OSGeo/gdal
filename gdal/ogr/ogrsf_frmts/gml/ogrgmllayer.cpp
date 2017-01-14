@@ -341,12 +341,22 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             else
             {
                 CPLString osLastErrorMsg(CPLGetLastErrorMsg());
-                CPLError(CE_Failure, CPLE_AppDefined,
+               
+                const bool bGoOn =CPLTestBool(
+                    CPLGetConfigOption("GML_SKIP_CORRUPTED_FEATURES", "NO"));
+
+                CPLError(bGoOn ? CE_Warning : CE_Failure, CPLE_AppDefined,
                          "Geometry of feature " CPL_FRMT_GIB
-                         " %scannot be parsed: %s",
+                         " %scannot be parsed: %s%s",
                          nFID, pszGML_FID ? CPLSPrintf("%s ", pszGML_FID) : "",
-                         osLastErrorMsg.c_str());
+                         osLastErrorMsg.c_str(),
+                         bGoOn ? ". Skipping to next feature.":
+                         ". You may set the GML_SKIP_CORRUPTED_FEATURES "
+                         "configuration option to YES to skip to the next "
+                         "feature");
                 delete poGMLFeature;
+                if( bGoOn )
+                    continue;
                 return NULL;
             }
 
