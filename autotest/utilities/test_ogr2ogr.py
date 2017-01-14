@@ -2651,6 +2651,72 @@ def test_ogr2ogr_66():
 
     return 'success'
 
+def hexify_double(val):
+    val = hex(val)
+    # On 32bit Linux, we might get a trailing L
+    return val.rstrip('L').lstrip('0x').zfill(16).upper()
+
+def check_identity_transformation(x, y, srid):
+    import struct
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    #if not ogrtest.have_geos():
+    #    return 'skip'
+
+
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    try:
+        os.stat('tmp/output_point.shp')
+        shape_drv.DeleteDataSource('tmp/output_point.shp')
+    except:
+        pass
+
+    # Generate CSV file with test point
+    xy_wkb = '0101000000' + ''.join(hexify_double(q) for q in struct.unpack('>QQ', struct.pack("<dd",x,y)))
+    f = open('tmp/input_point.csv', 'wt')
+    f.write('id,wkb_geom\n')
+    f.write('1,' + xy_wkb + '\n')
+    f.close()
+
+    # To check that the transformed values are identical to the original ones we need
+    # to use a binary format with the same accuracy as the source (WKB).
+    # CSV cannot be used for this purpose because WKB is not supported as a geometry output format.
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + " tmp/output_point.shp tmp/input_point.csv -oo GEOM_POSSIBLE_NAMES=wkb_geom -s_srs EPSG:%(srid)d  -t_srs EPSG:%(srid)d"  % locals())
+
+    ds = ogr.Open('tmp/output_point.shp')
+    feat = ds.GetLayer(0).GetNextFeature()
+    ok = feat.GetGeometryRef().GetX() == x and feat.GetGeometryRef().GetY() == y
+
+    feat.Destroy()
+    ds.Destroy()
+
+    shape_drv.DeleteDataSource('tmp/output_point.shp')
+    os.remove('tmp/input_point.csv')
+
+    if ok:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test coordinates values are preserved for identity transformations
+
+def test_ogr2ogr_67():
+
+    # Test coordinates
+    # The x value is such that x * k * (1/k) != x with k the common factor used in degrees unit definition
+    # If the coordinates are converted to radians and back to degrees the value of x will be altered
+    x = float.fromhex('0x1.5EB3ED959A307p6')
+    y = 0.0
+
+    # Now we will check the value of x is preserved in a transformation with same target and source SRS,
+    # both as latitutude/longitude in degrees.
+    ret = check_identity_transformation(x, y, 4326)
+    return ret
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2718,7 +2784,8 @@ gdaltest_list = [
     test_ogr2ogr_63,
     test_ogr2ogr_64,
     test_ogr2ogr_65,
-    test_ogr2ogr_66
+    test_ogr2ogr_66,
+    test_ogr2ogr_67
     ]
 
 # gdaltest_list = [ test_ogr2ogr_66 ]

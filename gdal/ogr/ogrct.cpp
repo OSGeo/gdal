@@ -32,6 +32,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <cfloat>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -160,6 +161,8 @@ class OGRProj4CT : public OGRCoordinateTransformation
     double     *padfTargetZ;
 
     bool        m_bEmitErrors;
+
+    bool        bNoTransform;
 
 public:
                 OGRProj4CT();
@@ -515,7 +518,8 @@ OGRProj4CT::OGRProj4CT() :
     padfTargetX(NULL),
     padfTargetY(NULL),
     padfTargetZ(NULL),
-    m_bEmitErrors(true)
+    m_bEmitErrors(true),
+    bNoTransform(false)
 {
     if( pfn_pj_ctx_alloc != NULL )
         pjctx = pfn_pj_ctx_alloc();
@@ -882,8 +886,14 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         return FALSE;
     }
 
-    // Determine if we really have a transformation to do.
+    // Determine if we really have a transformation to do at the proj.4 level
+    // (but we may have a unit transformation to do)
     bIdentityTransform = strcmp(pszSrcProj4Defn, pszDstProj4Defn) == 0;
+
+    // Determine if we can skip the tranformation completely.
+    bNoTransform = bIdentityTransform && bSourceLatLong && !bSourceWrap &&
+                    bTargetLatLong && !bTargetWrap &&
+                    fabs(dfSourceToRadians * dfTargetFromRadians - 1.0) < DBL_EPSILON;
 
     CPLFree( pszSrcProj4Defn );
     CPLFree( pszDstProj4Defn );
@@ -979,6 +989,19 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                              int *pabSuccess )
 
 {
+    // Prevent any coordinate modification when possible
+    if ( bNoTransform )
+    {
+        if( pabSuccess )
+        {
+            for( int i = 0; i < nCount; i++ )
+            {
+                 pabSuccess[i] = TRUE;
+            }
+        }
+        return TRUE;
+    }
+
     // Workaround potential bugs in proj.4 such as
     // the one of https://github.com/OSGeo/proj.4/commit/
     //                              bc7453d1a75aab05bdff2c51ed78c908e3efa3cd
