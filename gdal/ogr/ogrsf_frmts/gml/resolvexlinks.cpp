@@ -409,7 +409,8 @@ static CPLErr Resolve( CPLXMLNode *psNode,
                        CPLXMLNode ***ppapsRoot,
                        char ***ppapszResourceHREF,
                        char **papszSkip,
-                       const int bStrict )
+                       const int bStrict,
+                       int nDepth )
 
 {
     // For each sibling.
@@ -439,12 +440,10 @@ static CPLErr Resolve( CPLXMLNode *psNode,
                 continue;
             }
 
-            // TODO(schwehr): DANGER!  Not thread safe.
-            static int i = 0;
-            if( i-- == 0 )
+            const int nDepthCheck = 256;
+            if( nDepth % nDepthCheck == 0 )
             {
                 // A way to track progress.
-                i = 256;
                 CPLDebug("GML",
                          "Resolving xlinks... (currently %s)",
                          psChild->psChild->pszValue);
@@ -518,7 +517,7 @@ static CPLErr Resolve( CPLXMLNode *psNode,
 
         // Recurse with the first child.
         eReturned = Resolve(psSibling->psChild, ppapsRoot, ppapszResourceHREF,
-                            papszSkip, bStrict);
+                            papszSkip, bStrict, nDepth + 1);
 
         if( eReturned == CE_Failure )
             return CE_Failure;
@@ -582,7 +581,7 @@ bool GMLReader::ResolveXlinks( const char *pszFile,
 
     // Call resolver.
     const CPLErr eReturned = Resolve(papsSrcTree[0], &papsSrcTree,
-                                     &papszResourceHREF, papszSkip, bStrict);
+                                     &papszResourceHREF, papszSkip, bStrict, 0);
 
     bool bReturn = true;
     if( eReturned != CE_Failure )
