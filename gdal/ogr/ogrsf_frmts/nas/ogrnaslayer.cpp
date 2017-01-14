@@ -158,10 +158,19 @@ OGRFeature *OGRNASLayer::GetNextFeature()
                     }
                 }
 
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Geometry of feature %d %scannot be parsed: %s",
-                         iNextNASId, osGMLId.c_str(), osLastErrorMsg.c_str());
+                const bool bGoOn =CPLTestBool(
+                    CPLGetConfigOption("NAS_SKIP_CORRUPTED_FEATURES", "NO"));
+                CPLError(bGoOn ? CE_Warning : CE_Failure, CPLE_AppDefined,
+                         "Geometry of feature %d %scannot be parsed: %s%s",
+                         iNextNASId, osGMLId.c_str(), osLastErrorMsg.c_str(),
+                         bGoOn ? ". Skipping to next feature.":
+                         ". You may set the NAS_SKIP_CORRUPTED_FEATURES "
+                         "configuration option to YES to skip to the next "
+                         "feature");
                 delete poNASFeature;
+                poNASFeature = NULL;
+                if( bGoOn )
+                    continue;
                 return NULL;
             }
 
