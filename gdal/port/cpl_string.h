@@ -396,7 +396,10 @@ public:
 
     /** Return last character (undefined behaviour if string is empty) */
     // Note: This is standard in C++11.
-    const char& back() const { return operator[](size()-1); }
+#ifndef HAVE_CXX11
+    char back() const { return operator[](size()-1); }
+    char back() { return operator[](size()-1); }
+#endif
 
     /** Clear the string */
     void Clear() { resize(0); }
