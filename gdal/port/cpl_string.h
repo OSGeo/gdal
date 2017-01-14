@@ -399,7 +399,7 @@ public:
     /** Return last character (undefined behaviour if string is empty) */
     char back() const { return operator[](size()-1); }
     /** Return last character (undefined behaviour if string is empty) */
-    char back() { return operator[](size()-1); }
+    char& back() { return operator[](size()-1); }
 #endif
 
     /** Clear the string */
