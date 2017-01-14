@@ -134,15 +134,33 @@ OGRFeature *OGRNASLayer::GetNextFeature()
             poNASFeature->GetGeometryList();
         if (papsGeometry[0] != NULL)
         {
+            CPLString osLastErrorMsg;
+            CPLPushErrorHandler(CPLQuietErrorHandler);
             poGeom = (OGRGeometry*) OGR_G_CreateFromGMLTree(papsGeometry[0]);
+            CPLPopErrorHandler();
+            if( poGeom == NULL )
+                osLastErrorMsg = CPLGetLastErrorMsg();
             poGeom = NASReader::ConvertGeometry(poGeom);
             poGeom = OGRGeometryFactory::forceTo(poGeom, GetGeomType());
             // poGeom->dumpReadable( 0, "NAS: " );
 
-            // We assume the OGR_G_CreateFromGMLTree() function would
-            // have already reported an error.
             if( poGeom == NULL )
             {
+                CPLString osGMLId;
+                if( poFClass->GetPropertyIndex("gml_id") == 0 )
+                {
+                     const GMLProperty *psGMLProperty =
+                            poNASFeature->GetProperty( 0 );
+                    if( psGMLProperty && psGMLProperty->nSubProperties == 1 )
+                    {
+                        osGMLId.Printf("(gml_id=%s) ",
+                                       psGMLProperty->papszSubProperties[0]);
+                    }
+                }
+
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Geometry of feature %d %scannot be parsed: %s",
+                         iNextNASId, osGMLId.c_str(), osLastErrorMsg.c_str());
                 delete poNASFeature;
                 return NULL;
             }
