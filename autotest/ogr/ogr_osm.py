@@ -289,13 +289,9 @@ def ogr_osm_2():
 ###############################################################################
 # Test ogr2ogr
 
-def ogr_osm_3(options = None):
+def ogr_osm_3(options = None, all_layers = False):
 
     if ogrtest.osm_drv is None:
-        return 'skip'
-
-    import test_cli_utilities
-    if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
 
     filepath = 'tmp/ogr_osm_3'
@@ -306,7 +302,12 @@ def ogr_osm_3(options = None):
         options = ' ' + options
     else:
         options = ''
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/ogr_osm_3 data/test.pbf points lines multipolygons multilinestrings -progress' + options)
+    if all_layers:
+        layers = ''
+    else:
+        layers = 'points lines multipolygons multilinestrings '
+    with gdaltest.error_handler():
+        gdal.VectorTranslate('tmp/ogr_osm_3', 'data/test.pbf', options = layers + options)
 
     ret = ogr_osm_1(filepath)
 
@@ -318,13 +319,25 @@ def ogr_osm_3(options = None):
 # Test ogr2ogr with --config OSM_USE_CUSTOM_INDEXING NO and -skip
 
 def ogr_osm_3_sqlite_nodes():
-    return ogr_osm_3(options = '-skip --config OSM_USE_CUSTOM_INDEXING NO')
+    gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'NO')
+    ret = ogr_osm_3(options = '-skip')
+    gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', None)
+    return ret
 
 ###############################################################################
 # Test ogr2ogr with --config OSM_COMPRESS_NODES YES
 
 def ogr_osm_3_custom_compress_nodes():
-    return ogr_osm_3(options = '--config OSM_COMPRESS_NODES YES')
+    gdal.SetConfigOption('OSM_COMPRESS_NODES', 'YES')
+    ret = ogr_osm_3()
+    gdal.SetConfigOption('OSM_COMPRESS_NODES', None)
+    return ret
+
+###############################################################################
+# Test ogr2ogr with all layers
+
+def ogr_osm_3_all_layers():
+    return ogr_osm_3(options = '-skip', all_layers = True)
 
 ###############################################################################
 # Test optimization when reading only the points layer through a SQL request
@@ -907,6 +920,7 @@ gdaltest_list = [
     ogr_osm_3,
     ogr_osm_3_sqlite_nodes,
     ogr_osm_3_custom_compress_nodes,
+    ogr_osm_3_all_layers,
     ogr_osm_4,
     ogr_osm_5,
     ogr_osm_6,
