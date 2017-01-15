@@ -890,7 +890,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     // (but we may have a unit transformation to do)
     bIdentityTransform = strcmp(pszSrcProj4Defn, pszDstProj4Defn) == 0;
 
-    // Determine if we can skip the tranformation completely.
+    // Determine if we can skip the transformation completely.
     bNoTransform = bIdentityTransform && bSourceLatLong && !bSourceWrap &&
                     bTargetLatLong && !bTargetWrap &&
                     fabs(dfSourceToRadians * dfTargetFromRadians - 1.0) < DBL_EPSILON;

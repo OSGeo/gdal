@@ -43,6 +43,8 @@ if ! test -d fix_typos; then
     cat codespell/data/dictionary.txt qgis.txt debian.txt | awk 'NF' > gdal_dict.txt
     echo "difered->deferred" >> gdal_dict.txt
     echo "differed->deferred" >> gdal_dict.txt
+    cat gdal_dict.txt | grep -v 404 > gdal_dict.txt.tmp
+    mv gdal_dict.txt.tmp gdal_dict.txt
     cd ..
 fi
 
