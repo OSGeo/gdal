@@ -30,6 +30,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "pcidsk_exception.h"
 #include "pcidsk_file.h"
 #include "segment/metadatasegment.h"
 #include <cassert>
@@ -58,7 +59,22 @@ MetadataSegment::MetadataSegment( PCIDSKFile *fileIn, int segmentIn,
 MetadataSegment::~MetadataSegment()
 
 {
-    Synchronize();
+    try
+    {
+        Synchronize();
+    }
+    catch( const PCIDSKException& ex )
+    {
+        fprintf( stderr, /*ok*/
+                 "Exception in MetadataSegment destructor: %s\n",
+                 ex.what() );
+    }
+    catch( ... )
+    {
+        fprintf( stderr, /*ok*/
+                 "PCIDSK SDK Failure in MetadataSegment destructor, "
+                 "unexpected exception.\n" );
+    }
 }
 
 /************************************************************************/
