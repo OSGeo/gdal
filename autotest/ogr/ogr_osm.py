@@ -914,6 +914,31 @@ attributes=foo:baar,foo:bar
 
     return 'success'
 
+###############################################################################
+# Test converting an empty OSM file (this essentially tests the behaviour of
+# GDALVectorTranslate() in random feature mode, when there is no feature)
+
+def ogr_osm_17():
+
+    if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        gdal.VectorTranslate('/vsimem/ogr_osm_17', 'data/empty.osm', options='-skip')
+
+    ds = ogr.Open('/vsimem/ogr_osm_17')
+    layer_count = ds.GetLayerCount()
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_osm_17')
+
+    if layer_count != 4:
+        gdaltest.post_reason('fail')
+        print(layer_count)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -936,6 +961,7 @@ gdaltest_list = [
     ogr_osm_14,
     ogr_osm_15,
     ogr_osm_16,
+    ogr_osm_17,
     ]
 
 if __name__ == '__main__':
