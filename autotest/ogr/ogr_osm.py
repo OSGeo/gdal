@@ -315,10 +315,10 @@ def ogr_osm_3(options = None):
     return ret
 
 ###############################################################################
-# Test ogr2ogr with --config OSM_USE_CUSTOM_INDEXING NO
+# Test ogr2ogr with --config OSM_USE_CUSTOM_INDEXING NO and -skip
 
 def ogr_osm_3_sqlite_nodes():
-    return ogr_osm_3(options = '--config OSM_USE_CUSTOM_INDEXING NO')
+    return ogr_osm_3(options = '-skip --config OSM_USE_CUSTOM_INDEXING NO')
 
 ###############################################################################
 # Test ogr2ogr with --config OSM_COMPRESS_NODES YES
