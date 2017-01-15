@@ -2702,10 +2702,11 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
                 int iLayer = oIter->second;
                 TargetLayerInfo *psInfo = pasAssocLayers[iLayer].psInfo;
-                if( !oTranslator.Translate( poFeature, psInfo,
+                if( (psInfo == NULL ||
+                     !oTranslator.Translate( poFeature, psInfo,
                                             0, NULL,
                                             nTotalEventsDone,
-                                            NULL, NULL, psOptions )
+                                            NULL, NULL, psOptions ))
                     && !psOptions->bSkipFailures )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
@@ -2716,6 +2717,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                     nRetCode = 1;
                     break;
                 }
+                if( psInfo == NULL )
+                    OGRFeature::DestroyFeature(poFeature);
             }
         }  // while true
 
@@ -3946,8 +3949,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // Commit when overwriting as this consumes a lot of PG resources
         // and could result in """out of shared memory.
         // You might need to increase max_locks_per_transaction."""" errors
-        if( m_poDstDS->CommitTransaction() != OGRERR_NONE ||
-            m_poDstDS->StartTransaction(psOptions->bForceTransaction) != OGRERR_NONE )
+        if( m_poDstDS->CommitTransaction() == OGRERR_FAILURE ||
+            m_poDstDS->StartTransaction(psOptions->bForceTransaction) == OGRERR_FAILURE )
         {
             VSIFree(panMap);
             return NULL;
@@ -4214,7 +4217,7 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
     {
         if( psOptions->nLayerTransaction )
         {
-            if( poDstLayer->StartTransaction() != OGRERR_NONE )
+            if( poDstLayer->StartTransaction() == OGRERR_FAILURE )
                 return false;
         }
     }
@@ -4272,8 +4275,8 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             if( psOptions->nLayerTransaction &&
                 ++nFeaturesInTransaction == psOptions->nGroupTransactions )
             {
-                if( poDstLayer->CommitTransaction() != OGRERR_NONE ||
-                    poDstLayer->StartTransaction() != OGRERR_NONE )
+                if( poDstLayer->CommitTransaction() == OGRERR_FAILURE ||
+                    poDstLayer->StartTransaction() == OGRERR_FAILURE )
                 {
                     OGRFeature::DestroyFeature( poFeature );
                     return false;
@@ -4284,8 +4287,8 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                      psOptions->nGroupTransactions >= 0 &&
                      ++nTotalEventsDone >= psOptions->nGroupTransactions )
             {
-                if( m_poODS->CommitTransaction() != OGRERR_NONE ||
-                        m_poODS->StartTransaction(psOptions->bForceTransaction) != OGRERR_NONE )
+                if( m_poODS->CommitTransaction() == OGRERR_FAILURE ||
+                        m_poODS->StartTransaction(psOptions->bForceTransaction) == OGRERR_FAILURE )
                 {
                     OGRFeature::DestroyFeature( poFeature );
                     return false;
