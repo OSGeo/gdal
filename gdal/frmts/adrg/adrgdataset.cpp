@@ -41,6 +41,7 @@ class ADRGDataset : public GDALPamDataset
 
     CPLString    osGENFileName;
     CPLString    osIMGFileName;
+    CPLString    osSRS;
 
     VSILFILE*        fdIMG;
     int*         TILEINDEX;
@@ -729,11 +730,7 @@ char **ADRGDataset::GetMetadata( const char *pszDomain )
 
 const char* ADRGDataset::GetProjectionRef()
 {
-    return
-        "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
-        "SPHEROID[\"WGS 84\",6378137,298.257223563]],"
-        "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
-        "AUTHORITY[\"EPSG\",\"4326\"]]";
+    return osSRS;
 }
 
 /************************************************************************/
@@ -1110,14 +1107,6 @@ ADRGDataset* ADRGDataset::OpenDataset(
         return NULL;
     }
 
-    if( ZNA == 9 || ZNA == 18 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Polar cases are not handled by ADRG driver");
-        VSIFCloseL(fdIMG);
-        delete[] TILEINDEX;
-        return NULL;
-    }
-
     /* Skip ISO8211 header of IMG file */
     int offsetInIMG = 0;
     char c;
@@ -1199,19 +1188,62 @@ ADRGDataset* ADRGDataset::OpenDataset(
     poDS->offsetInIMG = offsetInIMG;
     poDS->poOverviewDS = NULL;
 
-    poDS->adfGeoTransform[0] = LSO;
-    poDS->adfGeoTransform[1] = 360. / ARV;
-    poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[3] = PSO;
-    poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = - 360. / BRV;
+    if( ZNA == 9)
+    {
+        // North Polar Case
+        poDS->adfGeoTransform[0] = 111319.4907933 * (90.0 - PSO) * sin(LSO * M_PI / 180.0);
+        poDS->adfGeoTransform[1] = 40075016.68558 / ARV;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = -111319.4907933 * (90.0 - PSO) * cos(LSO * M_PI / 180.0);
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = -40075016.68558 / ARV;
+        poDS->osSRS =
+                "PROJCS[\"ARC_System_Zone_09\",GEOGCS[\"GCS_Sphere\","
+                "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
+                "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
+                "PROJECTION[\"Azimuthal_Equidistant\"],"
+                "PARAMETER[\"latitude_of_center\",90],"
+                "PARAMETER[\"longitude_of_center\",0],"
+                "PARAMETER[\"false_easting\",0],"
+                "PARAMETER[\"false_northing\",0]]";
+    }
+    else if (ZNA == 18)
+    {
+        // South Polar Case
+        poDS->adfGeoTransform[0] = 111319.4907933 * (90.0 + PSO) * sin(LSO * M_PI / 180.0);
+        poDS->adfGeoTransform[1] = 40075016.68558 / ARV;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = 111319.4907933 * (90.0 + PSO) * cos(LSO * M_PI / 180.0);
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = -40075016.68558 / ARV;
+        poDS->osSRS = "PROJCS[\"ARC_System_Zone_18\",GEOGCS[\"GCS_Sphere\","
+                "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
+                "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
+                "PROJECTION[\"Azimuthal_Equidistant\"],"
+                "PARAMETER[\"latitude_of_center\",-90],"
+                "PARAMETER[\"longitude_of_center\",0],"
+                "PARAMETER[\"false_easting\",0],"
+                "PARAMETER[\"false_northing\",0]]";
+    }
+    else
+    {
+        poDS->adfGeoTransform[0] = LSO;
+        poDS->adfGeoTransform[1] = 360. / ARV;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = PSO;
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = - 360. / BRV;
+        poDS->osSRS = SRS_WKT_WGS84;
+    }
 
     // if( isGIN )
     {
         char szValue[32];
         snprintf( szValue, sizeof(szValue), "%d", SCA);
         poDS->SetMetadataItem( "ADRG_SCA", szValue );
-    }
+        snprintf( szValue, sizeof(szValue), "%d", ZNA);
+        poDS->SetMetadataItem( "ADRG_ZNA", szValue );
+     }
 
     poDS->SetMetadataItem( "ADRG_NAM", osNAM.c_str() );
 
