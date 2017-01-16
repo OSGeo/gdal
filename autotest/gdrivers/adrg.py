@@ -159,6 +159,45 @@ def adrg_copy_vsimem():
 
     return 'success'
 
+###############################################################################
+# Test reading a fake North Polar dataset (#6560)
+
+def adrg_zna_9():
+
+    ds = gdal.Open( 'data/SMALL_ADRG_ZNA9/ABCDEF01.GEN' )
+    expected_gt = (-307675.73602473765, 100.09145391818853, 0.0, -179477.5051066006, 0.0, -100.09145391818853)
+    gt = ds.GetGeoTransform()
+    if max( abs(gt[i] - expected_gt[i]) for i in range(6) ) > 1e-5:
+        gdaltest.post_reason('Wrong geotransfsorm')
+        print(gt)
+        return 'fail'
+    wkt = ds.GetProjectionRef()
+    if wkt != """PROJCS["ARC_System_Zone_09",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""":
+        gdaltest.post_reason('Wrong WKT')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading a fake South Polar dataset (#6560)
+
+def adrg_zna_18():
+
+    ds = gdal.Open( 'data/SMALL_ADRG_ZNA18/ABCDEF01.GEN' )
+    expected_gt = (-307675.73602473765, 100.09145391818853, 0.0, 179477.5051066006, 0.0, -100.09145391818853)
+    gt = ds.GetGeoTransform()
+    if max( abs(gt[i] - expected_gt[i]) for i in range(6) ) > 1e-5:
+        gdaltest.post_reason('Wrong geotransfsorm')
+        print(gt)
+        return 'fail'
+    wkt = ds.GetProjectionRef()
+    if wkt != """PROJCS["ARC_System_Zone_18",GEOGCS["GCS_Sphere",DATUM["D_Sphere",SPHEROID["Sphere",6378137.0,0.0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Azimuthal_Equidistant"],PARAMETER["latitude_of_center",-90],PARAMETER["longitude_of_center",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]""":
+        gdaltest.post_reason('Wrong WKT')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 gdaltest_list = [
@@ -167,7 +206,9 @@ gdaltest_list = [
     adrg_read_subdataset_img,
     adrg_copy,
     adrg_2subdatasets,
-    adrg_copy_vsimem ]
+    adrg_copy_vsimem,
+    adrg_zna_9,
+    adrg_zna_18 ]
 
 if __name__ == '__main__':
 
