@@ -14,8 +14,6 @@ LD_SHARED	=	@LD_SHARED@
 
 LIBS	=	@LIBS@
 
-GRASSTABLES_DIR = @prefix@/share/gdal/grass
-
 AUTOLOAD_DIR	=	@AUTOLOAD_DIR@
 
 GLIBNAME =	gdal_GRASS.so
@@ -27,17 +25,6 @@ install:	default
 	install -d $(AUTOLOAD_DIR)
 	cp $(GLIBNAME) $(AUTOLOAD_DIR)
 	cp $(OLIBNAME) $(AUTOLOAD_DIR)
-	test -d ${GRASSTABLES_DIR} || mkdir ${GRASSTABLES_DIR}
-	test -d ${GRASSTABLES_DIR}/etc || mkdir ${GRASSTABLES_DIR}/etc
-	test ! -e @GRASS_GISBASE@/etc/ellipse.table || cp @GRASS_GISBASE@/etc/ellipse.table ${GRASSTABLES_DIR}/etc
-	test ! -e @GRASS_GISBASE@/etc/datum.table || cp @GRASS_GISBASE@/etc/datum.table ${GRASSTABLES_DIR}/etc
-	test ! -e @GRASS_GISBASE@/etc/datumtransform.table || cp @GRASS_GISBASE@/etc/datumtransform.table ${GRASSTABLES_DIR}/etc
-	test ! -e @GRASS_GISBASE@/etc/proj/ellipse.table || cp @GRASS_GISBASE@/etc/proj/ellipse.table ${GRASSTABLES_DIR}/etc
-	test ! -e @GRASS_GISBASE@/etc/proj/datum.table || cp @GRASS_GISBASE@/etc/proj/datum.table ${GRASSTABLES_DIR}/etc
-	test ! -e @GRASS_GISBASE@/etc/proj/datumtransform.table || cp @GRASS_GISBASE@/etc/proj/datumtransform.table ${GRASSTABLES_DIR}/etc
-	test -d ${GRASSTABLES_DIR}/driver || mkdir ${GRASSTABLES_DIR}/driver
-	test -d ${GRASSTABLES_DIR}/driver/db || mkdir ${GRASSTABLES_DIR}/driver/db
-	cp -r @GRASS_GISBASE@/driver/db/* ${GRASSTABLES_DIR}/driver/db/
 
 clean:
 	rm -f $(OLIBNAME) $(GLIBNAME) *.o
