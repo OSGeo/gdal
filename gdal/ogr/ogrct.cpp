@@ -34,7 +34,6 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
-#include <cfloat>
 
 #ifdef PROJ_STATIC
 #include "proj_api.h"
@@ -863,9 +862,11 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     bIdentityTransform = strcmp(pszSrcProj4Defn, pszDstProj4Defn) == 0;
 
     // Determine if we can skip the tranformation completely.
+    // Assume that source and target units are defined with at least
+    // 10 correct significant digits; hence the 1E-9 tolerance used.
     bNoTransform = bIdentityTransform && bSourceLatLong && !bSourceWrap &&
-                    bTargetLatLong && !bTargetWrap &&
-                    fabs(dfSourceToRadians * dfTargetFromRadians - 1.0) < DBL_EPSILON;
+                   bTargetLatLong && !bTargetWrap &&
+                   fabs(dfSourceToRadians * dfTargetFromRadians - 1.0) < 1E-9;
 
     CPLFree( pszSrcProj4Defn );
     CPLFree( pszDstProj4Defn );
