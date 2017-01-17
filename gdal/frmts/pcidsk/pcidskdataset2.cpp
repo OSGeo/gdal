@@ -1378,6 +1378,9 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
                   "Unable to set projection on read-only file." );
+        CPLFree( pszGeosys );
+        CPLFree( pszUnits );
+        CPLFree( padfPrjParams );
         return CE_Failure;
     }
 
