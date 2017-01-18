@@ -1891,7 +1891,7 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
     if( psInfo->pSrcTransformArg != NULL )
     {
         CPLXMLNode *psTransformer =
-            GDALSerializeTransformer( GDALGCPTransform,
+            GDALSerializeTransformer( psInfo->pSrcTransformer,
                                       psInfo->pSrcTransformArg);
         CPLXMLNode *psTransformerContainer =
             CPLCreateXMLNode( psTree, CXT_Element,
@@ -1934,7 +1934,7 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
     if( psInfo->pDstTransformArg != NULL )
     {
         CPLXMLNode *psTransformer =
-            GDALSerializeTransformer( GDALGCPTransform,
+            GDALSerializeTransformer( psInfo->pDstTransformer,
                                       psInfo->pDstTransformArg);
         CPLXMLNode *psTransformerContainer =
             CPLCreateXMLNode( psTree, CXT_Element,
