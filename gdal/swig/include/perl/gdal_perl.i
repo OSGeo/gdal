@@ -1159,6 +1159,7 @@ sub Rasterize {
     if ($b && $b eq 'Geo::GDAL::Dataset') {
         Geo::GDAL::wrapper_GDALRasterizeDestDS($dest, $self, $options, $progress, $progress_data);
     } else {
+        # TODO: options need to force a new raster be made, otherwise segfault
         return $self->stdout_redirection_wrapper(
             $dest,
             \&Geo::GDAL::wrapper_GDALRasterizeDestName,
