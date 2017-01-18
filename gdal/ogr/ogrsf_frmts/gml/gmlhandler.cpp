@@ -27,17 +27,36 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <ctype.h>
+#include "cpl_port.h"
+#include "gmlreader.h"
 #include "gmlreaderp.h"
+
+#include <climits>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "cpl_conv.h"
-#include "cpl_string.h"
+#include "cpl_error.h"
 #include "cpl_hash_set.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#ifdef HAVE_EXPAT
+#  include "expat.h"
+#  include "expat_external.h"
+#endif
+#include "ogr_core.h"
+#ifdef HAVE_XERCES
+#  include "ogr_xerces.h"
+#endif
 
 CPL_CVSID("$Id$");
 
 #ifdef HAVE_XERCES
-
-#include "ogr_xerces.h"
 
 /************************************************************************/
 /*                        GMLXercesHandler()                            */
@@ -299,7 +318,7 @@ void XMLCALL GMLExpatHandler::endElementCbk( void *pUserData,
 void XMLCALL GMLExpatHandler::dataHandlerCbk(void *pUserData, const char *data, int nLen)
 
 {
-    GMLExpatHandler* pThis = ((GMLExpatHandler*)pUserData);
+    GMLExpatHandler* pThis = static_cast<GMLExpatHandler *>(pUserData);
     if( pThis->m_bStopParsing )
         return;
 
@@ -1713,48 +1732,48 @@ OGRErr GMLHandler::endElementDefault()
 OGRErr GMLHandler::dataHandlerAttribute(const char *data, int nLen)
 
 {
+    if( !m_bInCurField )
+        return OGRERR_NONE;
+
     int nIter = 0;
 
-    if( m_bInCurField )
+    // Ignore white space.
+    if (m_nCurFieldLen == 0)
     {
-        // Ignore white space
-        if (m_nCurFieldLen == 0)
+        while (nIter < nLen)
         {
-            while (nIter < nLen)
-            {
-                char ch = data[nIter];
-                if( !(ch == ' ' || ch == 10 || ch == 13 || ch == '\t') )
-                    break;
-                nIter ++;
-            }
+            const char ch = data[nIter];
+            if( !(ch == ' ' || ch == 10 || ch == 13 || ch == '\t') )
+                break;
+            nIter++;
         }
+    }
 
-        int nCharsLen = nLen - nIter;
+    const int nCharsLen = nLen - nIter;
 
-        if( nCharsLen > INT_MAX - static_cast<int>(m_nCurFieldLen) - 1 )
+    if( nCharsLen > INT_MAX - static_cast<int>(m_nCurFieldLen) - 1 )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Too much data in a single element");
+        return OGRERR_NOT_ENOUGH_MEMORY;
+    }
+    if (m_nCurFieldLen + nCharsLen + 1 > m_nCurFieldAlloc)
+    {
+        if( m_nCurFieldAlloc < INT_MAX - m_nCurFieldAlloc / 3 - nCharsLen - 1 )
+            m_nCurFieldAlloc = m_nCurFieldAlloc + m_nCurFieldAlloc / 3 + nCharsLen + 1;
+        else
+            m_nCurFieldAlloc = m_nCurFieldLen + nCharsLen + 1;
+        char *pszNewCurField = static_cast<char *>(
+            VSI_REALLOC_VERBOSE(m_pszCurField, m_nCurFieldAlloc));
+        if (pszNewCurField == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                    "Too much data in a single element");
             return OGRERR_NOT_ENOUGH_MEMORY;
         }
-        if (m_nCurFieldLen + nCharsLen + 1 > m_nCurFieldAlloc)
-        {
-            if( m_nCurFieldAlloc < INT_MAX - m_nCurFieldAlloc / 3 - nCharsLen - 1 )
-                m_nCurFieldAlloc = m_nCurFieldAlloc + m_nCurFieldAlloc / 3 + nCharsLen + 1;
-            else
-                m_nCurFieldAlloc = m_nCurFieldLen + nCharsLen + 1;
-            char *pszNewCurField = (char *)
-                VSI_REALLOC_VERBOSE( m_pszCurField, m_nCurFieldAlloc );
-            if (pszNewCurField == NULL)
-            {
-                return OGRERR_NOT_ENOUGH_MEMORY;
-            }
-            m_pszCurField = pszNewCurField;
-        }
-        memcpy( m_pszCurField + m_nCurFieldLen, data + nIter, nCharsLen);
-        m_nCurFieldLen += nCharsLen;
-        m_pszCurField[m_nCurFieldLen] = '\0';
+        m_pszCurField = pszNewCurField;
     }
+    memcpy(m_pszCurField + m_nCurFieldLen, data + nIter, nCharsLen);
+    m_nCurFieldLen += nCharsLen;
+    m_pszCurField[m_nCurFieldLen] = '\0';
 
     return OGRERR_NONE;
 }
@@ -1776,11 +1795,11 @@ OGRErr GMLHandler::dataHandlerGeometry(const char *data, int nLen)
             char ch = data[nIter];
             if( !(ch == ' ' || ch == 10 || ch == 13 || ch == '\t') )
                 break;
-            nIter ++;
+            nIter++;
         }
     }
 
-    int nCharsLen = nLen - nIter;
+    const int nCharsLen = nLen - nIter;
     if (nCharsLen)
     {
         if( nCharsLen > INT_MAX - static_cast<int>(m_nGeomLen) - 1 )
@@ -1795,15 +1814,15 @@ OGRErr GMLHandler::dataHandlerGeometry(const char *data, int nLen)
                 m_nGeomAlloc = m_nGeomAlloc + m_nGeomAlloc / 3 + nCharsLen + 1;
             else
                 m_nGeomAlloc = m_nGeomAlloc + nCharsLen + 1;
-            char* pszNewGeometry = (char *)
-                VSI_REALLOC_VERBOSE( m_pszGeometry, m_nGeomAlloc);
+            char* pszNewGeometry = static_cast<char *>(
+                VSI_REALLOC_VERBOSE( m_pszGeometry, m_nGeomAlloc));
             if (pszNewGeometry == NULL)
             {
                 return OGRERR_NOT_ENOUGH_MEMORY;
             }
             m_pszGeometry = pszNewGeometry;
         }
-        memcpy( m_pszGeometry+m_nGeomLen, data + nIter, nCharsLen);
+        memcpy(m_pszGeometry+m_nGeomLen, data + nIter, nCharsLen);
         m_nGeomLen += nCharsLen;
         m_pszGeometry[m_nGeomLen] = '\0';
     }
@@ -1823,7 +1842,7 @@ bool GMLHandler::IsGeometryElement( const char *pszElement )
     unsigned long nHash = CPLHashSetHashStr(pszElement);
     do
     {
-        int nMiddle = (nFirst + nLast) / 2;
+        const int nMiddle = (nFirst + nLast) / 2;
         if (nHash == pasGeometryNames[nMiddle].nHash)
             return strcmp(pszElement, pasGeometryNames[nMiddle].pszName) == 0;
         if (nHash < pasGeometryNames[nMiddle].nHash)
