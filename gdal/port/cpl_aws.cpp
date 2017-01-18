@@ -126,6 +126,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
                                const CPLString& osAccessKeyId,
                                const CPLString& osAccessToken,
                                const CPLString& osAWSRegion,
+                               const CPLString& osRequestPayer,
                                const CPLString& osService,
                                const CPLString& osVerb,
                                const CPLString& osHost,
@@ -147,6 +148,12 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
         "host:" + osHost + "\n" +
         "x-amz-content-sha256:" + osXAMZContentSHA256 + "\n" +
         "x-amz-date:" + osTimestamp + "\n";
+    if( !osRequestPayer.empty() )
+    {
+        osCanonicalHeaders += "x-amz-request-payer:";
+        osCanonicalHeaders += osRequestPayer;
+        osCanonicalHeaders += "\n";
+    }
     if( !osAccessToken.empty() )
     {
         osCanonicalHeaders += "x-amz-security-token:";
@@ -157,6 +164,8 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
     osCanonicalRequest += osCanonicalHeaders + "\n";
 
     CPLString osSignedHeaders = "host;x-amz-content-sha256;x-amz-date";
+    if( !osRequestPayer.empty() )
+        osSignedHeaders += ";x-amz-request-payer";
     if( !osAccessToken.empty() )
         osSignedHeaders += ";x-amz-security-token";
     osCanonicalRequest += osSignedHeaders + "\n";
@@ -288,12 +297,12 @@ CPLString CPLGetAWS_SIGN4_Timestamp()
 /************************************************************************/
 /*                         VSIS3HandleHelper()                          */
 /************************************************************************/
-
 VSIS3HandleHelper::VSIS3HandleHelper( const CPLString& osSecretAccessKey,
                                       const CPLString& osAccessKeyId,
                                       const CPLString& osSessionToken,
                                       const CPLString& osAWSS3Endpoint,
                                       const CPLString& osAWSRegion,
+                                      const CPLString& osRequestPayer,
                                       const CPLString& osBucket,
                                       const CPLString& osObjectKey,
                                       bool bUseHTTPS,
@@ -305,6 +314,7 @@ VSIS3HandleHelper::VSIS3HandleHelper( const CPLString& osSecretAccessKey,
     m_osSessionToken(osSessionToken),
     m_osAWSS3Endpoint(osAWSS3Endpoint),
     m_osAWSRegion(osAWSRegion),
+    m_osRequestPayer(osRequestPayer),
     m_osBucket(osBucket),
     m_osObjectKey(osObjectKey),
     m_bUseHTTPS(bUseHTTPS),
@@ -427,6 +437,8 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
     const CPLString osAWSS3Endpoint =
         CPLGetConfigOption("AWS_S3_ENDPOINT", "s3.amazonaws.com");
     const CPLString osAWSRegion = CPLGetConfigOption("AWS_REGION", "us-east-1");
+    const CPLString osRequestPayer =
+        CPLGetConfigOption("AWS_REQUEST_PAYER", "");
     CPLString osBucket;
     CPLString osObjectKey;
     if( !GetBucketAndObjectKey(pszURI, pszFSPrefix, bAllowNoObject,
@@ -443,6 +455,7 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
     return new VSIS3HandleHelper(osSecretAccessKey, osAccessKeyId,
                                  osSessionToken,
                                  osAWSS3Endpoint, osAWSRegion,
+                                 osRequestPayer,
                                  osBucket, osObjectKey, bUseHTTPS,
                                  bUseVirtualHosting);
 }
@@ -503,6 +516,7 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         m_osAccessKeyId,
         m_osSessionToken,
         m_osAWSRegion,
+        m_osRequestPayer,
         "s3",
         osVerb,
         osHost,
@@ -523,6 +537,10 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         headers = curl_slist_append(
             headers,
             CPLSPrintf("X-Amz-Security-Token: %s", m_osSessionToken.c_str()));
+    if( !m_osRequestPayer.empty() )
+        headers = curl_slist_append(
+            headers,
+            CPLSPrintf("x-amz-request-payer: %s", m_osRequestPayer.c_str()));
     headers = curl_slist_append(
         headers, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
     return headers;
@@ -667,6 +685,16 @@ void VSIS3HandleHelper::SetAWSRegion( const CPLString &osStr )
 {
     m_osAWSRegion = osStr;
 }
+
+/************************************************************************/
+/*                           SetRequestPayer()                          */
+/************************************************************************/
+
+void VSIS3HandleHelper::SetRequestPayer( const CPLString &osStr )
+{
+    m_osRequestPayer = osStr;
+}
+
 /************************************************************************/
 /*                         SetVirtualHosting()                          */
 /************************************************************************/
