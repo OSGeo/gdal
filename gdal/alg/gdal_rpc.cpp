@@ -64,6 +64,7 @@ void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree );
 CPL_C_END
 
 static const int MAX_ABS_VALUE_WARNINGS = 20;
+static const double DEFAULT_PIX_ERR_THRESHOLD = 0.1;
 
 /************************************************************************/
 /*                            RPCInfoToMD()                             */
@@ -754,6 +755,7 @@ retry:
  * iterative solution of pixel/line to lat/long computations (the other way
  * is always exact given the equations). Starting with GDAL 2.1, this may also
  * be set through the RPC_PIXEL_ERROR_THRESHOLD transformer option.
+ * If a negative or null value is provided, then this defaults to 0.1 pixel.
  *
  * @param papszOptions Other transformer options (i.e. RPC_HEIGHT=z).
  *
@@ -780,7 +782,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
     else if( dfPixErrThreshold > 0 )
         psTransform->dfPixErrThreshold = dfPixErrThreshold;
     else
-        psTransform->dfPixErrThreshold = 0.1;
+        psTransform->dfPixErrThreshold = DEFAULT_PIX_ERR_THRESHOLD;
     psTransform->dfHeightOffset = 0.0;
     psTransform->dfHeightScale = 1.0;
 
@@ -2206,7 +2208,8 @@ void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree )
     const int bReversed = atoi(CPLGetXMLValue(psTree, "Reversed", "0"));
 
     const double dfPixErrThreshold =
-        CPLAtof(CPLGetXMLValue(psTree, "PixErrThreshold", "0.25"));
+        CPLAtof(CPLGetXMLValue(psTree, "PixErrThreshold",
+                               CPLSPrintf( "%f", DEFAULT_PIX_ERR_THRESHOLD )));
 
     papszOptions = CSLSetNameValue(papszOptions,  "RPC_HEIGHT",
                                    CPLGetXMLValue(psTree, "HeightOffset", "0"));
