@@ -4418,6 +4418,7 @@ void VSIS3FSHandler::UpdateMapFromHandle( VSIS3HandleHelper * poS3HandleHelper )
     oMapBucketsToS3Params[ poS3HandleHelper->GetBucket() ] =
         VSIS3UpdateParams ( poS3HandleHelper->GetAWSRegion(),
                       poS3HandleHelper->GetAWSS3Endpoint(),
+                      poS3HandleHelper->GetRequestPayer(),
                       poS3HandleHelper->GetVirtualHosting() );
 }
 
@@ -4435,6 +4436,7 @@ void VSIS3FSHandler::UpdateHandleFromMap( VSIS3HandleHelper * poS3HandleHelper )
     {
         poS3HandleHelper->SetAWSRegion(oIter->second.m_osAWSRegion);
         poS3HandleHelper->SetAWSS3Endpoint(oIter->second.m_osAWSS3Endpoint);
+        poS3HandleHelper->SetRequestPayer(oIter->second.m_osRequestPayer);
         poS3HandleHelper->SetVirtualHosting(oIter->second.m_bUseVirtualHosting);
     }
 }
@@ -4641,7 +4643,11 @@ void VSIInstallCurlFileHandler( void )
  * set to one of the supported
  * <a href="http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">S3
  * regions</a> and defaults to 'us-east-1' The AWS_S3_ENDPOINT configuration
- * option defaults to s3.amazonaws.com.
+ * option defaults to s3.amazonaws.com. Starting with GDAL 2.2, the
+ * AWS_REQUEST_PAYER configuration option may be set to "requester" to
+ * facilitate use with
+ * <a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/RequesterPaysBuckets.html">Requester
+ * Pays buckets</a>.
  *
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
  * options can be used to define a proxy server. The syntax to use is the one of

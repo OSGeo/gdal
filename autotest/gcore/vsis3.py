@@ -46,7 +46,7 @@ def open_for_read(uri):
 def vsis3_init():
 
     gdaltest.aws_vars = {}
-    for var in ('AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID', 'AWS_TIMESTAMP', 'AWS_HTTPS', 'AWS_VIRTUAL_HOSTING', 'AWS_S3_ENDPOINT'):
+    for var in ('AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID', 'AWS_TIMESTAMP', 'AWS_HTTPS', 'AWS_VIRTUAL_HOSTING', 'AWS_S3_ENDPOINT', 'AWS_REQUEST_PAYER'):
         gdaltest.aws_vars[var] = gdal.GetConfigOption(var)
         if gdaltest.aws_vars[var] is not None:
             gdal.SetConfigOption(var, "")
@@ -287,6 +287,19 @@ def vsis3_2():
     if f is not None or gdal.VSIGetLastErrorMsg().find('<Error>') < 0:
         gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
+        return 'fail'
+
+    # Test with requester pays
+    gdal.SetConfigOption('AWS_REQUEST_PAYER', 'requester')
+    f = open_for_read('/vsis3/s3_fake_bucket_with_requester_pays/resource')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = gdal.VSIFReadL(1, 3, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+    gdal.SetConfigOption('AWS_REQUEST_PAYER', None)
+    if data != 'foo':
+        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
