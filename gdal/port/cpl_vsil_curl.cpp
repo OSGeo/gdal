@@ -4643,7 +4643,10 @@ void VSIInstallCurlFileHandler( void )
  * set to one of the supported
  * <a href="http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">S3
  * regions</a> and defaults to 'us-east-1' The AWS_S3_ENDPOINT configuration
- * option defaults to s3.amazonaws.com.
+ * option defaults to s3.amazonaws.com. The AWS_REQUEST_PAYER configuration
+ * option may be set to "requester" to facilitate use with
+ * <a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/RequesterPaysBuckets.html">Requester
+ * Pays buckets</a>.
  *
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
  * options can be used to define a proxy server. The syntax to use is the one of
