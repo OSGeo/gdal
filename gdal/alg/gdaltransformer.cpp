@@ -1893,12 +1893,14 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
         CPLXMLNode *psTransformer =
             GDALSerializeTransformer( psInfo->pSrcTransformer,
                                       psInfo->pSrcTransformArg);
-        CPLXMLNode *psTransformerContainer =
-            CPLCreateXMLNode( psTree, CXT_Element,
+        if( psTransformer != NULL )
+        {
+            CPLXMLNode *psTransformerContainer =
+                CPLCreateXMLNode( psTree, CXT_Element,
                               CPLSPrintf("Src%s", psTransformer->pszValue) );
 
-        if( psTransformer != NULL )
             CPLAddXMLChild( psTransformerContainer, psTransformer );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1936,12 +1938,14 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
         CPLXMLNode *psTransformer =
             GDALSerializeTransformer( psInfo->pDstTransformer,
                                       psInfo->pDstTransformArg);
-        CPLXMLNode *psTransformerContainer =
-            CPLCreateXMLNode( psTree, CXT_Element,
+        if( psTransformer != NULL )
+        {
+            CPLXMLNode *psTransformerContainer =
+                CPLCreateXMLNode( psTree, CXT_Element,
                               CPLSPrintf("Dst%s", psTransformer->pszValue) );
 
-        if( psTransformer != NULL )
             CPLAddXMLChild( psTransformerContainer, psTransformer );
+        }
     }
 
 /* -------------------------------------------------------------------- */
