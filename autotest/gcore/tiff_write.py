@@ -3547,7 +3547,7 @@ def tiff_write_86():
 
 def tiff_write_87():
 
-    shutil.copy('data/utmsmall.tif', 'tmp/tiff_write_87_src.tif')
+    gdal.Translate('tmp/tiff_write_87_src.tif', 'data/utmsmall.tif', options = '-a_nodata 0')
 
     src_ds = gdal.Open('tmp/tiff_write_87_src.tif', gdal.GA_Update)
     src_ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )
@@ -3560,25 +3560,19 @@ def tiff_write_87():
     ds = gdal.Open('tmp/tiff_write_87_dst.tif')
     cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
     cs2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    ds = None
+    nodata_ovr_0 = ds.GetRasterBand(1).GetOverview(0).GetNoDataValue()
+    nodata_ovr_1 = ds.GetRasterBand(1).GetOverview(1).GetNoDataValue()
+    ifd_main = int(ds.GetRasterBand(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    ifd_ovr_0 = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    ifd_ovr_1 = int(ds.GetRasterBand(1).GetOverview(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    data_ovr_1 = int(ds.GetRasterBand(1).GetOverview(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
+    data_ovr_0 = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
+    data_main = int(ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
 
-    # We should also check that the IFDs are at the beginning of the file,
-    # that the smallest overview data is before the larger one which is
-    # before the full res data... but not possible to do that with GDAL API
-    # We'll just check the first IFD (whose position is at offset 4) is at offset 8
-    f = open('tmp/tiff_write_87_dst.tif', 'rb')
-    data = f.read(8)
-    f.close()
+    ds = None
 
     gdaltest.tiff_drv.Delete( 'tmp/tiff_write_87_src.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/tiff_write_87_dst.tif' )
-
-    import struct
-    ar = struct.unpack('B' * 8, data)
-    if ar[4] != 8 or ar[5] != 0 or ar[6] != 0 or ar[7] != 0:
-        gdaltest.post_reason('first IFD is not at offset 8')
-        print(ar)
-        return 'fail'
 
     # Check checksums
     if cs1 != expected_cs1 or cs2 != expected_cs2:
@@ -3587,6 +3581,17 @@ def tiff_write_87():
         print(cs2)
         print(expected_cs1)
         print(expected_cs2)
+        return 'fail'
+
+    if nodata_ovr_0 != 0 or nodata_ovr_1 != 0:
+        gdaltest.post_reason('did not get expected nodata values')
+        print(nodata_ovr_0)
+        print(nodata_ovr_1)
+        return 'fail'
+
+    if ifd_main != 8 and not(ifd_main < ifd_ovr_0 and ifd_ovr_0 < ifd_ovr_1 and ifd_ovr_1 < data_ovr_1 and data_ovr_1 < data_ovr_0 and data_ovr_0 < data_main):
+        gdaltest.post_reason('failure')
+        print(ifd_main, ifd_ovr_0, ifd_ovr_1, data_ovr_1, data_ovr_0, data_main)
         return 'fail'
 
     return 'success'

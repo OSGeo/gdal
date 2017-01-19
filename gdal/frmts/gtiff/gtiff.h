@@ -32,6 +32,7 @@
 #define GTIFF_H_INCLUDED
 
 #include "cpl_port.h"
+#include "cpl_string.h"
 
 #include "gdal.h"
 #include "tiffio.h"
@@ -56,6 +57,7 @@ void GTiffWriteJPEGTables( TIFF* hTIFF,
                            const char* pszPhotometric,
                            const char* pszJPEGQuality,
                            const char* pszJPEGTablesMode );
+CPLString GTiffFormatGDALNoDataTagValue( double dfNoData );
 
 const int knGTIFFJpegTablesModeDefault = 1; /* JPEGTABLESMODE_QUANT */
 
