@@ -1807,10 +1807,17 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 
 /* -------------------------------------------------------------------- */
 /*      Establish where we are going to put this record. If we are      */
-/*      rewriting and existing record, and it will fit, then put it     */
-/*      back where the original came from.  Otherwise write at the end. */
+/*      rewriting the last record of the file, then we can update it in */
+/*      place. Otherwise if rewriting an existing record, and it will   */
+/*      fit, then put it  back where the original came from.  Otherwise */
+/*      write at the end.                                               */
 /* -------------------------------------------------------------------- */
-    if( nShapeId == -1 || psSHP->panRecSize[nShapeId] < nRecordSize-8 )
+    if( nShapeId != -1 && psSHP->panRecOffset[nShapeId] +
+                        psSHP->panRecSize[nShapeId] + 8 == psSHP->nFileSize )
+    {
+        nRecordOffset = psSHP->panRecOffset[nShapeId];
+    }
+    else if( nShapeId == -1 || psSHP->panRecSize[nShapeId] < nRecordSize-8 )
     {
         unsigned int nExpectedSize = psSHP->nFileSize + nRecordSize;
         if( nExpectedSize < psSHP->nFileSize ) // due to unsigned int overflow
