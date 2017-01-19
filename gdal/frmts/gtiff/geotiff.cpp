@@ -9326,6 +9326,14 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
                 atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
         }
 
+        CPLString osNoData; // don't move this in inner scope
+        const char* pszNoData = NULL;
+        if( bNoDataSet )
+        {
+            osNoData = GTiffFormatGDALNoDataTagValue(dfNoDataValue);
+            pszNoData = osNoData.c_str();
+        }
+
         toff_t nOverviewOffset =
                 GTIFFWriteDirectory(hTIFF, FILETYPE_REDUCEDIMAGE,
                                     nOXSize, nOYSize,
@@ -9341,7 +9349,8 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
                                     osMetadata,
                                     nOvrJpegQuality >= 0 ?
                                         CPLSPrintf("%d", nOvrJpegQuality) : NULL,
-                                    CPLSPrintf("%d", nJpegTablesMode)
+                                    CPLSPrintf("%d", nJpegTablesMode),
+                                    pszNoData
                                    );
 
         if( nOverviewOffset == 0 )
@@ -9405,7 +9414,7 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                         SAMPLEFORMAT_UINT, PREDICTOR_NONE,
                         NULL, NULL, NULL, 0, NULL,
                         "",
-                        NULL, NULL );
+                        NULL, NULL, NULL );
 
                 if( nOverviewOffset == 0 )
                 {
@@ -9703,6 +9712,14 @@ CPLErr GTiffDataset::IBuildOverviews(
                     atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
             }
 
+            CPLString osNoData; // don't move this in inner scope
+            const char* pszNoData = NULL;
+            if( bNoDataSet )
+            {
+                osNoData = GTiffFormatGDALNoDataTagValue(dfNoDataValue);
+                pszNoData = osNoData.c_str();
+            }
+
             const toff_t nOverviewOffset =
                 GTIFFWriteDirectory(
                     hTIFF, FILETYPE_REDUCEDIMAGE,
@@ -9716,7 +9733,8 @@ CPLErr GTiffDataset::IBuildOverviews(
                     osMetadata,
                     nOvrJpegQuality >= 0 ?
                                 CPLSPrintf("%d", nOvrJpegQuality) : NULL,
-                    CPLSPrintf("%d", nJpegTablesMode) );
+                    CPLSPrintf("%d", nJpegTablesMode),
+                    pszNoData );
 
             if( nOverviewOffset == 0 )
                 eErr = CE_Failure;
@@ -10865,18 +10883,28 @@ char** GTiffDatasetReadRPCTag(TIFF* hTIFF)
 }
 
 /************************************************************************/
+/*                  GTiffFormatGDALNoDataTagValue()                     */
+/************************************************************************/
+
+CPLString GTiffFormatGDALNoDataTagValue( double dfNoData )
+{
+    CPLString osVal;
+    if( CPLIsNan(dfNoData) )
+        osVal = "nan";
+    else
+        osVal.Printf("%.18g", dfNoData);
+    return osVal;
+}
+
+/************************************************************************/
 /*                         WriteNoDataValue()                           */
 /************************************************************************/
 
 void GTiffDataset::WriteNoDataValue( TIFF *l_hTIFF, double dfNoData )
 
 {
-    char szVal[400] = {};
-    if( CPLIsNan(dfNoData) )
-        strcpy(szVal, "nan");
-    else
-        CPLsnprintf(szVal, sizeof(szVal), "%.18g", dfNoData);
-    TIFFSetField( l_hTIFF, TIFFTAG_GDAL_NODATA, szVal );
+    CPLString osVal( GTiffFormatGDALNoDataTagValue(dfNoData) );
+    TIFFSetField( l_hTIFF, TIFFTAG_GDAL_NODATA, osVal.c_str() );
 }
 
 /************************************************************************/
@@ -17193,7 +17221,8 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
                 nBlockXSize, nBlockYSize,
                 bIsTiled, l_nCompression,
                 PHOTOMETRIC_MASK, PREDICTOR_NONE,
-                SAMPLEFORMAT_UINT, NULL, NULL, NULL, 0, NULL, "", NULL, NULL);
+                SAMPLEFORMAT_UINT, NULL, NULL, NULL, 0, NULL, "", NULL, NULL,
+                NULL );
         if( nOffset == 0 )
             return CE_Failure;
 

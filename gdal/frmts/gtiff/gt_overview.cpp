@@ -65,7 +65,8 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             unsigned short *panExtraSampleValues,
                             const char *pszMetadata,
                             const char* pszJPEGQuality,
-                            const char* pszJPEGTablesMode )
+                            const char* pszJPEGTablesMode,
+                            const char* pszNoData )
 
 {
     const toff_t nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
@@ -144,6 +145,14 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                                                                 "MINISBLACK",
                               pszJPEGQuality,
                               pszJPEGTablesMode );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write no data value if we have one.                             */
+/* -------------------------------------------------------------------- */
+    if( pszNoData != NULL )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, pszNoData );
     }
 
 /* -------------------------------------------------------------------- */
@@ -705,6 +714,17 @@ GTIFFBuildOverviews( const char * pszFilename,
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
     GTIFFGetOverviewBlockSize(&nOvrBlockXSize, &nOvrBlockYSize);
+
+    CPLString osNoData; // don't move this in inner scope
+    const char* pszNoData = NULL;
+    int bNoDataSet = FALSE;
+    const double dfNoDataValue = papoBandList[0]->GetNoDataValue(&bNoDataSet);
+    if( bNoDataSet )
+    {
+        osNoData = GTiffFormatGDALNoDataTagValue(dfNoDataValue);
+        pszNoData = osNoData.c_str();
+    }
+
     for( iOverview = 0; iOverview < nOverviews; iOverview++ )
     {
         const int nOXSize = (nXSize + panOverviewList[iOverview] - 1)
@@ -722,7 +742,8 @@ GTIFFBuildOverviews( const char * pszFilename,
                              NULL, // TODO: How can we fetch extrasamples?
                              osMetadata,
                              CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ),
-                             CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", NULL )
+                             CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", NULL ),
+                             pszNoData
                            );
     }
 
