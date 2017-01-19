@@ -74,6 +74,12 @@ static void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree );
 
 static void GDALRefreshGenImgProjTransformer(void* hTransformArg);
 
+static void *
+GDALCreateApproxTransformer2( GDALTransformerFunc pfnRawTransformer,
+                              void *pRawTransformerArg,
+                              double dfMaxErrorForward,
+                              double dfMaxErrorReverse );
+
 /************************************************************************/
 /*                          GDALTransformFunc                           */
 /*                                                                      */
@@ -358,7 +364,8 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Setup sample points all around the edge of the input raster.    */
 /* -------------------------------------------------------------------- */
-    if( pfnTransformer == GDALGenImgProjTransform )
+    if( pfnTransformer == GDALGenImgProjTransform ||
+        pfnTransformer == GDALApproxTransform )
     {
         // In case CHECK_WITH_INVERT_PROJ has been modified.
         GDALRefreshGenImgProjTransformer(pTransformArg);
@@ -880,6 +887,7 @@ typedef struct {
     GDALTransformerFunc pSrcTransformer;
 
     void     *pReprojectArg;
+    GDALTransformerFunc pReproject;
 
     double   adfDstGeoTransform[6];
     double   adfDstInvGeoTransform[6];
@@ -1158,7 +1166,7 @@ static GDALGenImgProjTransformInfo* GDALCreateGenImgProjTransformerInternal()
  * GDALGCPTransform().  This stage is skipped if hDstDS is NULL when the
  * transformation is created.
  *
- * Supported Options:
+ * Supported Options (specified with the -to switch of gdalwarp for example):
  * <ul>
  * <li> SRC_SRS: WKT SRS to be used as an override for hSrcDS.
  * <li> DST_SRS: WKT SRS to be used as an override for hDstDS.
@@ -1186,7 +1194,40 @@ static GDALGenImgProjTransformInfo* GDALCreateGenImgProjTransformerInternal()
  * <li> INSERT_CENTER_LONG: May be set to FALSE to disable setting up a
  * CENTER_LONG value on the coordinate system to rewrap things around the
  * center of the image.
+ * <li> SRC_APPROX_ERROR_IN_SRS_UNIT=err_threshold_in_SRS_units. (GDAL &gt;= 2.2) Use an
+ * approximate transformer for the source transformer. Must be defined together
+ * with SRC_APPROX_ERROR_IN_PIXEL to be taken into account.
+ * <li> SRC_APPROX_ERROR_IN_PIXEL=err_threshold_in_pixel. (GDAL &gt;= 2.2) Use an
+ * approximate transformer for the source transformer.. Must be defined together
+ * with SRC_APPROX_ERROR_IN_SRS_UNIT to be taken into account.
+ * <li> DST_APPROX_ERROR_IN_SRS_UNIT=err_threshold_in_SRS_units. (GDAL &gt;= 2.2) Use an
+ * approximate transformer for the destination transformer. Must be defined together
+ * with DST_APPROX_ERROR_IN_PIXEL to be taken into account.
+ * <li> DST_APPROX_ERROR_IN_PIXEL=err_threshold_in_pixel. (GDAL &gt;= 2.2) Use an
+ * approximate transformer for the destination transformer. Must be defined together
+ * with DST_APPROX_ERROR_IN_SRS_UNIT to be taken into account.
+ * <li> REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT=err_threshold_in_src_SRS_units.
+ * (GDAL &gt;= 2.2) Use an approximate transformer for the coordinate reprojection.
+ * Must be used together with REPROJECTION_APPROX_ERROR_IN_DST_SRS_UNIT to be taken
+ * into account.
+ * <li> REPROJECTION_APPROX_ERROR_IN_DST_SRS_UNIT=err_threshold_in_dst_SRS_units.
+ * (GDAL &gt;= 2.2) Use an approximate transformer for the coordinate reprojection.
+ * Must be used together with REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT to be taken
+ * into account.
  * </ul>
+ * 
+ * The use case for the *_APPROX_ERROR_* options is when defining an approximate
+ * transformer on top of the GenImgProjTransformer globally is not practical.
+ * Such a use case is when the source dataset has RPC with a RPC DEM. In such
+ * case we don't want to use the approximate transformer on the RPC transformation,
+ * as the RPC DEM generally involves non-linearities that the approximate
+ * transformer will not detect. In such case, we must a non-approximated
+ * GenImgProjTransformer, but it might be worthwile to use approximate sub-
+ * transformers, for example on coordinate reprojection. For example if
+ * warping from a source dataset with RPC to a destination dataset with
+ * a UTM projection, since the inverse UTM transformation is rather costly.
+ * In which case, one can use the REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT and
+ * REPROJECTION_APPROX_ERROR_IN_DST_SRS_UNIT options.
  *
  * @param hSrcDS source dataset, or NULL.
  * @param hDstDS destination dataset (or NULL).
@@ -1374,6 +1415,33 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Handle optional source approximation transformer.               */
+/* -------------------------------------------------------------------- */
+    if( psInfo->pSrcTransformer )
+    {
+        const char* pszSrcApproxErrorFwd = CSLFetchNameValue( papszOptions,
+                                                "SRC_APPROX_ERROR_IN_SRS_UNIT" );
+        const char* pszSrcApproxErrorReverse = CSLFetchNameValue( papszOptions,
+                                                "SRC_APPROX_ERROR_IN_PIXEL" );
+        if( pszSrcApproxErrorFwd &&pszSrcApproxErrorReverse  )
+        {
+            void* pArg = GDALCreateApproxTransformer2( psInfo->pSrcTransformer,
+                                            psInfo->pSrcTransformArg,
+                                            CPLAtof(pszSrcApproxErrorFwd),
+                                            CPLAtof(pszSrcApproxErrorReverse) );
+            if( pArg == NULL )
+            {
+                GDALDestroyGenImgProjTransformer( psInfo );
+                return NULL;
+            }
+            psInfo->pSrcTransformArg = pArg;
+            psInfo->pSrcTransformer = GDALApproxTransform;
+            GDALApproxTransformerOwnsSubtransformer(psInfo->pSrcTransformArg,
+                                                    TRUE);
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Get forward and inverse geotransform for destination image.     */
 /*      If we have no destination use a unit transform.                 */
 /* -------------------------------------------------------------------- */
@@ -1485,6 +1553,33 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Handle optional source approximation transformer.               */
+/* -------------------------------------------------------------------- */
+    if( psInfo->pDstTransformer )
+    {
+        const char* pszDstApproxErrorFwd = CSLFetchNameValue( papszOptions,
+                                                "DST_APPROX_ERROR_IN_PIXEL" );
+        const char* pszDstApproxErrorReverse = CSLFetchNameValue( papszOptions,
+                                                "DST_APPROX_ERROR_IN_SRS_UNIT" );
+        if( pszDstApproxErrorFwd &&pszDstApproxErrorReverse  )
+        {
+            void* pArg = GDALCreateApproxTransformer2( psInfo->pDstTransformer,
+                                            psInfo->pDstTransformArg,
+                                            CPLAtof(pszDstApproxErrorFwd),
+                                            CPLAtof(pszDstApproxErrorReverse) );
+            if( pArg == NULL )
+            {
+                GDALDestroyGenImgProjTransformer( psInfo );
+                return NULL;
+            }
+            psInfo->pDstTransformArg = pArg;
+            psInfo->pDstTransformer = GDALApproxTransform;
+            GDALApproxTransformerOwnsSubtransformer(psInfo->pDstTransformArg,
+                                                    TRUE);
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Setup reprojection.                                             */
 /* -------------------------------------------------------------------- */
     if( pszSrcWKT != NULL && strlen(pszSrcWKT) > 0
@@ -1503,6 +1598,31 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             GDALDestroyGenImgProjTransformer( psInfo );
             return NULL;
         }
+        psInfo->pReproject = GDALReprojectionTransform;
+
+/* -------------------------------------------------------------------- */
+/*      Handle optional reprojection approximation transformer.         */
+/* -------------------------------------------------------------------- */
+        const char* psApproxErrorFwd = CSLFetchNameValue( papszOptions,
+                                    "REPROJECTION_APPROX_ERROR_IN_DST_SRS_UNIT" );
+        const char* psApproxErrorReverse = CSLFetchNameValue( papszOptions,
+                                    "REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT" );
+        if( psApproxErrorFwd && psApproxErrorReverse )
+        {
+            void* pArg = GDALCreateApproxTransformer2( psInfo->pReproject,
+                                                psInfo->pReprojectArg,
+                                                CPLAtof(psApproxErrorFwd),
+                                                CPLAtof(psApproxErrorReverse) );
+            if( pArg == NULL )
+            {
+                GDALDestroyGenImgProjTransformer( psInfo );
+                return NULL;
+            }
+            psInfo->pReprojectArg = pArg;
+            psInfo->pReproject = GDALApproxTransform;
+            GDALApproxTransformerOwnsSubtransformer(psInfo->pReprojectArg,
+                                                    TRUE);
+        }
     }
 
     return psInfo;
@@ -1520,9 +1640,12 @@ void GDALRefreshGenImgProjTransformer( void* hTransformArg )
     if( psInfo->pReprojectArg )
     {
         CPLXMLNode* psXML =
-            GDALSerializeReprojectionTransformer(psInfo->pReprojectArg);
-        GDALDestroyReprojectionTransformer(psInfo->pReprojectArg);
-        psInfo->pReprojectArg = GDALDeserializeReprojectionTransformer(psXML);
+            GDALSerializeTransformer(psInfo->pReproject,
+                                     psInfo->pReprojectArg);
+        GDALDestroyTransformer(psInfo->pReprojectArg);
+        GDALDeserializeTransformer(psXML,
+                                   &psInfo->pReproject,
+                                   &psInfo->pReprojectArg);
         CPLDestroyXMLNode(psXML);
     }
 }
@@ -1623,6 +1746,7 @@ GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
             GDALDestroyGenImgProjTransformer( psInfo );
             return NULL;
         }
+        psInfo->pReproject = GDALReprojectionTransform;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1817,9 +1941,9 @@ int GDALGenImgProjTransform( void *pTransformArgIn, int bDstToSrc,
 /* -------------------------------------------------------------------- */
     if( psInfo->pReprojectArg )
     {
-        if( !GDALReprojectionTransform( psInfo->pReprojectArg, bDstToSrc,
-                                        nPointCount, padfX, padfY, padfZ,
-                                        panSuccess ) )
+        if( !psInfo->pReproject( psInfo->pReprojectArg, bDstToSrc,
+                                 nPointCount, padfX, padfY, padfZ,
+                                 panSuccess ) )
             return FALSE;
     }
 
@@ -1984,8 +2108,8 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
             = CPLCreateXMLNode( psTree, CXT_Element, "ReprojectTransformer" );
 
         CPLXMLNode *psTransformer
-            = GDALSerializeTransformer( GDALReprojectionTransform,
-                                                  psInfo->pReprojectArg );
+            = GDALSerializeTransformer( psInfo->pReproject,
+                                        psInfo->pReprojectArg );
         if( psTransformer != NULL )
             CPLAddXMLChild( psTransformerContainer, psTransformer );
     }
@@ -2117,8 +2241,9 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
     CPLXMLNode* psSubtree = CPLGetXMLNode( psTree, "ReprojectTransformer" );
     if( psSubtree != NULL && psSubtree->psChild != NULL )
     {
-        psInfo->pReprojectArg =
-            GDALDeserializeReprojectionTransformer( psSubtree->psChild );
+        GDALDeserializeTransformer( psSubtree->psChild,
+                                    &psInfo->pReproject,
+                                    &psInfo->pReprojectArg );
     }
 
     return psInfo;
@@ -2376,7 +2501,8 @@ typedef struct
 
     GDALTransformerFunc pfnBaseTransformer;
     void *pBaseCBData;
-    double dfMaxError;
+    double dfMaxErrorForward;
+    double dfMaxErrorReverse;
 
     int bOwnSubtransformer;
 } ApproxTransformInfo;
@@ -2432,8 +2558,18 @@ GDALSerializeApproxTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
 /*      Attach max error.                                               */
 /* -------------------------------------------------------------------- */
-    CPLCreateXMLElementAndValue( psTree, "MaxError",
-                                 CPLString().Printf("%g", psInfo->dfMaxError) );
+    if( psInfo->dfMaxErrorForward == psInfo->dfMaxErrorReverse )
+    {
+        CPLCreateXMLElementAndValue( psTree, "MaxError",
+                        CPLString().Printf("%g", psInfo->dfMaxErrorForward) );
+    }
+    else
+    {
+        CPLCreateXMLElementAndValue( psTree, "MaxErrorForward",
+                        CPLString().Printf("%g", psInfo->dfMaxErrorForward) );
+        CPLCreateXMLElementAndValue( psTree, "MaxErrorReverse",
+                        CPLString().Printf("%g", psInfo->dfMaxErrorReverse) );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Capture underlying transformer.                                 */
@@ -2496,11 +2632,26 @@ void *GDALCreateApproxTransformer( GDALTransformerFunc pfnBaseTransformer,
                                    void *pBaseTransformArg, double dfMaxError)
 
 {
+    return GDALCreateApproxTransformer2(pfnBaseTransformer,
+                                        pBaseTransformArg,
+                                        dfMaxError,
+                                        dfMaxError);
+}
+
+
+static
+void *GDALCreateApproxTransformer2( GDALTransformerFunc pfnBaseTransformer,
+                                    void *pBaseTransformArg,
+                                    double dfMaxErrorForward,
+                                    double dfMaxErrorReverse)
+
+{
     ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(
         CPLMalloc(sizeof(ApproxTransformInfo)));
     psATInfo->pfnBaseTransformer = pfnBaseTransformer;
     psATInfo->pBaseCBData = pBaseTransformArg;
-    psATInfo->dfMaxError = dfMaxError;
+    psATInfo->dfMaxErrorForward = dfMaxErrorForward;
+    psATInfo->dfMaxErrorReverse = dfMaxErrorReverse;
     psATInfo->bOwnSubtransformer = FALSE;
 
     memcpy(psATInfo->sTI.abySignature,
@@ -2625,12 +2776,14 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
         fabs((ySMETransformed[0] + dfDeltaY * (x[nMiddle] - x[0])) -
              ySMETransformed[1]);
 
-    if( dfError > psATInfo->dfMaxError )
+    const double dfMaxError = (bDstToSrc) ? psATInfo->dfMaxErrorReverse :
+                                            psATInfo->dfMaxErrorForward;
+    if( dfError > dfMaxError )
     {
 #if DEBUG_VERBOSE
         CPLDebug( "GDAL", "ApproxTransformer - "
                   "error %g over threshold %g, subdivide %d points.",
-                  dfError, psATInfo->dfMaxError, nPoints );
+                  dfError, dfMaxError, nPoints );
 #endif
 
         double xMiddle[3] = {
@@ -2833,7 +2986,7 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
         z[i] = zSMETransformed[0] + dfDeltaZ * dfDist;
 #ifdef check_error
         const double dfError2 = fabs(x[i] - xtemp) + fabs(y[i] - ytemp);
-        if( dfError2 > 4 /*10 * psATInfo->dfMaxError*/ )
+        if( dfError2 > 4 /*10 * dfMaxError*/ )
         {
             /*ok*/printf("Error = %f on (%f, %f)\n", dfError2,  x_ori, y_ori);
         }
@@ -2877,7 +3030,8 @@ int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints,
     int bRet = FALSE;
     if( y[0] != y[nPoints-1] || y[0] != y[nMiddle]
         || x[0] == x[nPoints-1] || x[0] == x[nMiddle]
-        || psATInfo->dfMaxError == 0.0 || nPoints <= 5 )
+        || (psATInfo->dfMaxErrorForward == 0.0 &&
+            psATInfo->dfMaxErrorReverse == 0.0) || nPoints <= 5 )
     {
         bRet = psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
                                              nPoints, x, y, z, panSuccess );
@@ -2931,7 +3085,27 @@ static void *
 GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
 
 {
-    double dfMaxError = CPLAtof(CPLGetXMLValue( psTree, "MaxError",  "0.25" ));
+    double dfMaxErrorForward = 0.25;
+    double dfMaxErrorReverse = 0.25;
+    const char* pszMaxError = CPLGetXMLValue( psTree, "MaxError", NULL);
+    if( pszMaxError != NULL )
+    {
+        dfMaxErrorForward = CPLAtof(pszMaxError);
+        dfMaxErrorReverse = dfMaxErrorForward;
+    }
+    const char* pszMaxErrorForward =
+                    CPLGetXMLValue( psTree, "MaxErrorForward", NULL);
+    if( pszMaxErrorForward != NULL )
+    {
+        dfMaxErrorForward = CPLAtof(pszMaxErrorForward);
+    }
+    const char* pszMaxErrorReverse =
+                    CPLGetXMLValue( psTree, "MaxErrorReverse", NULL);
+    if( pszMaxErrorForward != NULL )
+    {
+        dfMaxErrorReverse = CPLAtof(pszMaxErrorReverse);
+    }
+
     GDALTransformerFunc pfnBaseTransform = NULL;
     void *pBaseCBData = NULL;
 
@@ -2951,9 +3125,10 @@ GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
         return NULL;
     }
 
-    void *pApproxCBData = GDALCreateApproxTransformer( pfnBaseTransform,
-                                                       pBaseCBData,
-                                                       dfMaxError );
+    void *pApproxCBData = GDALCreateApproxTransformer2( pfnBaseTransform,
+                                                        pBaseCBData,
+                                                        dfMaxErrorForward,
+                                                        dfMaxErrorReverse );
     GDALApproxTransformerOwnsSubtransformer( pApproxCBData, TRUE );
 
     return pApproxCBData;
