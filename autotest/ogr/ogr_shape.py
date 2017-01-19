@@ -3811,6 +3811,9 @@ def ogr_shape_81():
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,-1 -1)'))
+    lyr.CreateFeature(f)
     f = None
     ds = None
 
@@ -4634,6 +4637,45 @@ def ogr_shape_100():
     return 'success'
 
 
+###############################################################################
+# Test that rewriting the last shape reuses the space it took. (#6787)
+
+def ogr_shape_106():
+
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_106.shp')
+    lyr = ds.CreateLayer('ogr_shape_81')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    size = gdal.VSIStatL('/vsimem/ogr_shape_106.shp').size
+    if size != 188:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    ds = ogr.Open('/vsimem/ogr_shape_106.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    # Write larger shape
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(2 2,3 3,4 4)'))
+    lyr.SetFeature(f)
+    ds = None
+
+    size = gdal.VSIStatL('/vsimem/ogr_shape_106.shp').size
+    if size != 188 + 2 * 8:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_106.shp' )
+
+    return 'success'
+
+
 def ogr_shape_cleanup():
 
     if gdaltest.shape_ds is None:
@@ -4776,6 +4818,7 @@ gdaltest_list = [
     ogr_shape_97,
     ogr_shape_98,
     ogr_shape_100,
+    ogr_shape_106,
     ogr_shape_cleanup ]
 
 #gdaltest_list = [ ogr_shape_98 ]
