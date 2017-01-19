@@ -370,7 +370,7 @@ bool GMLReader::SetupParserExpat()
     XML_SetUserData(oParser, m_poGMLHandler);
 
     if (pabyBuf == NULL)
-        pabyBuf = (char*)VSI_MALLOC_VERBOSE(PARSER_BUF_SIZE);
+        pabyBuf = static_cast<char *>(VSI_MALLOC_VERBOSE(PARSER_BUF_SIZE));
     if (pabyBuf == NULL)
         return false;
 
@@ -549,16 +549,18 @@ GMLFeature *GMLReader::NextFeatureExpat()
     int nDone = 0;
     do
     {
-        /* Reset counter that is used to detect billion laugh attacks */
-        ((GMLExpatHandler*)m_poGMLHandler)->ResetDataHandlerCounter();
+        // Reset counter that is used to detect billion laugh attacks.
+        static_cast<GMLExpatHandler *>(m_poGMLHandler)->
+            ResetDataHandlerCounter();
 
-        unsigned int nLen =
-                (unsigned int)VSIFReadL( pabyBuf, 1, PARSER_BUF_SIZE, fpGML );
+        unsigned int nLen = static_cast<unsigned int>(
+            VSIFReadL(pabyBuf, 1, PARSER_BUF_SIZE, fpGML));
         nDone = VSIFEofL(fpGML);
 
-        /* Some files, such as APT_AIXM.xml from https://nfdc.faa.gov/webContent/56DaySub/2015-03-05/aixm5.1.zip */
-        /* end with trailing nul characters. This test is not fully bullet-proof in case */
-        /* the nul characters would occur at a buffer boundary */
+        // Some files, such as APT_AIXM.xml from
+        // https://nfdc.faa.gov/webContent/56DaySub/2015-03-05/aixm5.1.zip
+        // end with trailing nul characters. This test is not fully bullet-proof
+        // in case the nul characters would occur at a buffer boundary.
         while( nDone && nLen > 0 && pabyBuf[nLen-1] == '\0' )
             nLen--;
 
@@ -573,10 +575,11 @@ GMLFeature *GMLReader::NextFeatureExpat()
             m_bStopParsing = true;
         }
         if (!m_bStopParsing)
-            m_bStopParsing = ((GMLExpatHandler*)m_poGMLHandler)->HasStoppedParsing();
+            m_bStopParsing = static_cast<GMLExpatHandler*>(m_poGMLHandler)->
+                HasStoppedParsing();
     } while (!nDone && !m_bStopParsing && nFeatureTabLength == 0);
 
-    return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : NULL;
+    return nFeatureTabLength ? ppoFeatureTab[nFeatureTabIndex++] : NULL;
 }
 #endif
 
@@ -716,8 +719,10 @@ int GMLReader::GetFeatureElementIndex( const char *pszElement,
         }
         // End of OpenLS.
 
-        else if (nLenLast > 6 && strcmp(pszLast + nLenLast - 6, "_layer") == 0 &&
-                 nElementLength > 8 && strcmp(pszElement + nElementLength - 8, "_feature") == 0)
+        else if (nLenLast > 6 &&
+                 strcmp(pszLast + nLenLast - 6, "_layer") == 0 &&
+                 nElementLength > 8 &&
+                 strcmp(pszElement + nElementLength - 8, "_feature") == 0)
         {
             // GML answer of MapServer WMS GetFeatureInfo request.
         }
@@ -931,8 +936,8 @@ GMLFeatureClass *GMLReader::GetClass( int iClass ) const
 {
     if( iClass < 0 || iClass >= m_nClassCount )
         return NULL;
-    else
-        return m_papoClass[iClass];
+
+    return m_papoClass[iClass];
 }
 
 /************************************************************************/
@@ -961,8 +966,8 @@ int GMLReader::AddClass( GMLFeatureClass *poNewClass )
     CPLAssert( GetClass( poNewClass->GetName() ) == NULL );
 
     m_nClassCount++;
-    m_papoClass = (GMLFeatureClass **)
-        CPLRealloc( m_papoClass, sizeof(void*) * m_nClassCount );
+    m_papoClass = static_cast<GMLFeatureClass **>(
+        CPLRealloc(m_papoClass, sizeof(void*) * m_nClassCount));
     m_papoClass[m_nClassCount-1] = poNewClass;
 
     if( poNewClass->HasFeatureProperties() )
@@ -1062,7 +1067,9 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
                 }
             }
             else if( strchr(pszElement,'|') == NULL )
+            {
                 osFieldName = pszElement;
+            }
             else
             {
                 osFieldName = strrchr(pszElement,'|') + 1;
@@ -1137,10 +1144,10 @@ bool GMLReader::LoadClasses( const char *pszFile )
     }
 
     VSIFSeekL(fp, 0, SEEK_END);
-    int nLength = (int) VSIFTellL(fp);
+    int nLength = static_cast<int>(VSIFTellL(fp));
     VSIFSeekL(fp, 0, SEEK_SET);
 
-    char *pszWholeText = (char *) VSIMalloc(nLength+1);
+    char *pszWholeText = static_cast<char *>(VSIMalloc(nLength + 1));
     if( pszWholeText == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1351,8 +1358,8 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                 double dfYMax;
                 OGREnvelope sEnvelope;
 
-                OGRwkbGeometryType eGType = (OGRwkbGeometryType)
-                    poClass->GetGeometryProperty(0)->GetType();
+                OGRwkbGeometryType eGType = static_cast<OGRwkbGeometryType>(
+                    poClass->GetGeometryProperty(0)->GetType());
 
                 if( bAnalyzeSRSPerFeature )
                 {
@@ -1370,8 +1377,8 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                     eGType = wkbNone;
 
                 poClass->GetGeometryProperty(0)->SetType(
-                    (int) OGRMergeGeometryTypesEx(
-                        eGType, poGeometry->getGeometryType(), true ) );
+                    static_cast<int>(OGRMergeGeometryTypesEx(
+                        eGType, poGeometry->getGeometryType(), true)));
 
                 // Merge extents.
                 if (!poGeometry->IsEmpty())
@@ -1506,7 +1513,7 @@ void GMLReader::SetGlobalSRSName( const char* pszGlobalSRSName )
 bool GMLReader::SetFilteredClassName(const char* pszClassName)
 {
     CPLFree(m_pszFilteredClassName);
-    m_pszFilteredClassName = (pszClassName) ? CPLStrdup(pszClassName) : NULL;
+    m_pszFilteredClassName = pszClassName ? CPLStrdup(pszClassName) : NULL;
 
     m_nFilteredClassIndex = -1;
     if( m_pszFilteredClassName != NULL )
