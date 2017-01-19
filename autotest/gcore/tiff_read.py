@@ -2827,6 +2827,28 @@ def tiff_read_unit_from_srs():
     return 'success'
 
 ###############################################################################
+# Test reading ArcGIS 9.3 .aux.xml
+
+def tiff_read_arcgis93_geodataxform_gcp():
+
+    ds = gdal.Open('data/arcgis93_geodataxform_gcp.tif')
+    if ds.GetGCPProjection().find('26712') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetGCPCount() != 16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gcp = ds.GetGCPs()[0]
+    if abs(gcp.GCPPixel - 565) > 1e-5 or \
+       abs(gcp.GCPLine - 11041) > 1e-5 or \
+       abs(gcp.GCPX - 500000) > 1e-5 or \
+       abs(gcp.GCPY - 4705078.79016612) > 1e-5 or \
+       abs(gcp.GCPZ - 0) > 1e-5:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2918,6 +2940,7 @@ gdaltest_list.append( (tiff_read_corrupted_jpeg_cloud_optimized) )
 gdaltest_list.append( (tiff_read_ycbcr_lzw) )
 
 gdaltest_list.append( (tiff_read_unit_from_srs) )
+gdaltest_list.append( (tiff_read_arcgis93_geodataxform_gcp) )
 
 # gdaltest_list = [ tiff_read_ycbcr_lzw ]
 

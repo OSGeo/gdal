@@ -11877,6 +11877,80 @@ void GTiffDataset::ApplyPamInfo()
         bLookedForProjection = true;
     }
 
+    if( m_nPAMGeorefSrcIndex >= 0 && nGCPCount == 0 )
+    {
+        CPLXMLNode *psValueAsXML = NULL;
+        CPLXMLNode *psGeodataXform = NULL;
+        char** papszXML = oMDMD.GetMetadata( "xml:ESRI" );
+        if (CSLCount(papszXML) == 1)
+        {
+            psValueAsXML = CPLParseXMLString( papszXML[0] );
+            if( psValueAsXML )
+                psGeodataXform = CPLGetXMLNode(psValueAsXML, "=GeodataXform");
+        }
+
+        const char* pszTIFFTagResUnit = GetMetadataItem("TIFFTAG_RESOLUTIONUNIT");
+        const char* pszTIFFTagXRes = GetMetadataItem("TIFFTAG_XRESOLUTION");
+        const char* pszTIFFTagYRes = GetMetadataItem("TIFFTAG_YRESOLUTION");
+        if (psGeodataXform && pszTIFFTagResUnit &&pszTIFFTagXRes &&
+            pszTIFFTagYRes && atoi(pszTIFFTagResUnit) == 2 )
+        {
+            CPLXMLNode* psSourceGCPs = CPLGetXMLNode(psGeodataXform,
+                                                        "SourceGCPs");
+            CPLXMLNode* psTargetGCPs = CPLGetXMLNode(psGeodataXform,
+                                                        "TargetGCPs");
+            if( psSourceGCPs && psTargetGCPs )
+            {
+                std::vector<double> adfSourceGCPs, adfTargetGCPs;
+                for( CPLXMLNode* psIter = psSourceGCPs->psChild;
+                                    psIter != NULL;
+                                    psIter = psIter->psNext )
+                {
+                    if( psIter->eType == CXT_Element &&
+                        EQUAL(psIter->pszValue, "Double") )
+                    {
+                        adfSourceGCPs.push_back(
+                            CPLAtof( CPLGetXMLValue(psIter, NULL, "") ) );
+                    }
+                }
+                for( CPLXMLNode* psIter = psTargetGCPs->psChild;
+                                    psIter != NULL;
+                                    psIter = psIter->psNext )
+                {
+                    if( psIter->eType == CXT_Element &&
+                        EQUAL(psIter->pszValue, "Double") )
+                    {
+                        adfTargetGCPs.push_back(
+                            CPLAtof( CPLGetXMLValue(psIter, NULL, "") ) );
+                    }
+                }
+                if( adfSourceGCPs.size() == adfTargetGCPs.size() &&
+                    (adfSourceGCPs.size() % 2) == 0 )
+                {
+                    nGCPCount = static_cast<int>(
+                                            adfSourceGCPs.size() / 2);
+                    pasGCPList = static_cast<GDAL_GCP *>(
+                            CPLCalloc(sizeof(GDAL_GCP), nGCPCount) );
+                    for( int i = 0; i < nGCPCount; ++i )
+                    {
+                        pasGCPList[i].pszId = CPLStrdup("");
+                        pasGCPList[i].pszInfo = CPLStrdup("");
+                        // The origin used is the bottom left corner, 
+                        // and raw values are in inches !
+                        pasGCPList[i].dfGCPPixel = adfSourceGCPs[2*i] *
+                                                        CPLAtof(pszTIFFTagXRes);
+                        pasGCPList[i].dfGCPLine = nRasterYSize -
+                                adfSourceGCPs[2*i+1] * CPLAtof(pszTIFFTagYRes);
+                        pasGCPList[i].dfGCPX = adfTargetGCPs[2*i];
+                        pasGCPList[i].dfGCPY = adfTargetGCPs[2*i+1];
+                    }
+                }
+            }
+        }
+        if( psValueAsXML )
+            CPLDestroyXMLNode(psValueAsXML);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Copy any PAM metadata into our GeoTIFF context, and with        */
 /*      the PAM info overriding the GeoTIFF context.                    */
