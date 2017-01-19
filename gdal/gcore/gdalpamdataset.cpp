@@ -414,37 +414,56 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
     oMDMD.XMLInit( psTree, TRUE );
 
 /* -------------------------------------------------------------------- */
-/*      Try loading ESRI xml encoded projection                         */
+/*      Try loading ESRI xml encoded GeodataXform.                      */
 /* -------------------------------------------------------------------- */
     if (psPam->pszProjection == NULL)
     {
-        char** papszXML = oMDMD.GetMetadata( "xml:ESRI" );
-        if (CSLCount(papszXML) == 1)
+        // ArcGIS 9.3: GeodataXform as a root element
+        CPLXMLNode* psGeodataXform = CPLGetXMLNode(psTree, "=GeodataXform");
+        CPLXMLNode *psValueAsXML = NULL;
+        if( psGeodataXform != NULL )
         {
-            CPLXMLNode *psValueAsXML = CPLParseXMLString( papszXML[0] );
-            if (psValueAsXML)
+            char* apszMD[2];
+            apszMD[0] = CPLSerializeXMLTree(psGeodataXform);
+            apszMD[1] = NULL;
+            oMDMD.SetMetadata( apszMD, "xml:ESRI");
+            CPLFree(apszMD[0]);
+        }
+        else
+        {
+            // ArcGIS 10: GeodataXform as content of xml:ESRI metadata domain.
+            char** papszXML = oMDMD.GetMetadata( "xml:ESRI" );
+            if (CSLCount(papszXML) == 1)
             {
-                const char* pszESRI_WKT = CPLGetXMLValue(psValueAsXML,
-                                  "=GeodataXform.SpatialReference.WKT", NULL);
-                if (pszESRI_WKT)
-                {
-                    OGRSpatialReference* poSRS = new OGRSpatialReference(NULL);
-                    char* pszTmp = (char*)pszESRI_WKT;
-                    if (poSRS->importFromWkt(&pszTmp) == OGRERR_NONE &&
-                        poSRS->morphFromESRI() == OGRERR_NONE)
-                    {
-                        char* pszWKT = NULL;
-                        if (poSRS->exportToWkt(&pszWKT) == OGRERR_NONE)
-                        {
-                            psPam->pszProjection = CPLStrdup(pszWKT);
-                        }
-                        CPLFree(pszWKT);
-                    }
-                    delete poSRS;
-                }
-                CPLDestroyXMLNode(psValueAsXML);
+                psValueAsXML = CPLParseXMLString( papszXML[0] );
+                if( psValueAsXML )
+                    psGeodataXform = CPLGetXMLNode(psValueAsXML, "=GeodataXform");
             }
         }
+
+        if (psGeodataXform)
+        {
+            const char* pszESRI_WKT = CPLGetXMLValue(psGeodataXform,
+                                "SpatialReference.WKT", NULL);
+            if (pszESRI_WKT)
+            {
+                OGRSpatialReference* poSRS = new OGRSpatialReference(NULL);
+                char* pszTmp = (char*)pszESRI_WKT;
+                if (poSRS->importFromWkt(&pszTmp) == OGRERR_NONE &&
+                    poSRS->morphFromESRI() == OGRERR_NONE)
+                {
+                    char* pszWKT = NULL;
+                    if (poSRS->exportToWkt(&pszWKT) == OGRERR_NONE)
+                    {
+                        psPam->pszProjection = CPLStrdup(pszWKT);
+                    }
+                    CPLFree(pszWKT);
+                }
+                delete poSRS;
+            }
+        }
+        if( psValueAsXML )
+            CPLDestroyXMLNode(psValueAsXML);
     }
 
 /* -------------------------------------------------------------------- */
