@@ -144,8 +144,8 @@ CPL_UNUSED
     m_poRecycledState(NULL),
     m_bStopParsing(false),
     // Experimental. Not publicly advertized. See commented doc in drv_gml.html
-    m_bFetchAllGeometries(CPLTestBool(
-        CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO"))),
+    m_bFetchAllGeometries(
+        CPLTestBool(CPLGetConfigOption("GML_FETCH_ALL_GEOMETRIES", "NO"))),
     m_bInvertAxisOrderIfLatLong(bInvertAxisOrderIfLatLong),
     m_bConsiderEPSGAsURN(bConsiderEPSGAsURN),
     m_eSwapCoordinates(eSwapCoordinates),
@@ -1352,12 +1352,6 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
 
             if( poGeometry != NULL && poClass->GetGeometryPropertyCount() > 0 )
             {
-                double dfXMin;
-                double dfXMax;
-                double dfYMin;
-                double dfYMax;
-                OGREnvelope sEnvelope;
-
                 OGRwkbGeometryType eGType = static_cast<OGRwkbGeometryType>(
                     poClass->GetGeometryProperty(0)->GetType());
 
@@ -1383,6 +1377,13 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                 // Merge extents.
                 if (!poGeometry->IsEmpty())
                 {
+                    double dfXMin = 0.0;
+                    double dfXMax = 0.0;
+                    double dfYMin = 0.0;
+                    double dfYMax = 0.0;
+
+                    OGREnvelope sEnvelope;
+
                     poGeometry->getEnvelope( &sEnvelope );
                     if( poClass->GetExtents(&dfXMin, &dfXMax,
                                             &dfYMin, &dfYMax) )
