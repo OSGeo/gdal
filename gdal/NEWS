@@ -1,3 +1,122 @@
+= GDAL/OGR 2.1.3 Release Notes = 
+
+The 2.1.3 release is a bug fix release.
+
+== Build ==
+
+* Windows: include plugins in clean, oci: also clean dll
+* windows: makegdal_gen.bat: update script to generate most recent Visual C++ project files (#6635)
+
+== Port ==
+
+* CPLHTTPFetch(): add a CAINFO option to set the path to the CA bundle file. As a fallback also honour the CURL_CA_BUNDLE and SSL_CERT_FILE environment variables used by the curl binary, which makes this setting also available for /vsicurl/, /vsicurl_streaming/, /vsis3/ and /vsis3_streaming/ file systems (#6732)
+* Fix GetDiskFreeSpace() on 32bit Linux to avoid 32bit overflow when free disk space is above 4 GB (#6750)
+
+== GDAL algorithms ==
+
+* Warper: avoid undefined behaviour when doing floating point to int conversion, that may trigger exception with some compilers (LLVM 8) (#6753)
+* OpenCL wrapper: do not use CL_MEM_COPY_HOST_PTR flag as it is forbidden by the opencl spec for clGetSupportedImageFormats() use case. Fix for NVidia use case (#6624)
+* OpenCL wrapper: fix wrapping of Float32 data type with NVIDIA OpenCL (#6669)
+
+== Utilities ==
+
+* gdalinfo -json: fix order of points in wgs84Extent.coordinates (github #166)
+* gdal_rasterize: fix segfaults when rasterizing into an ungeoreferenced raster, or when doing 'gdal_rasterize my.shp my.tif' with a non existing my.tif (#6738)
+* gdal_calc.py: fix usage message
+
+== GDAL drivers ==
+
+ADRG driver:
+* handle north and south polar zones (ZNA 9 and 18) (#6783)
+
+DODS driver:
+* fix crash on URL that are not DODS servers (#6718)
+
+HDF4 driver:
+* include hdf4compat.h in hdf4dataset.cpp
+
+GRASS driver:
+* frmts/grass/pkg/configure: add support for GRASS 7.2 (#6785)
+* frmts/grass/pkg/Makefile.in: do not clone datum tables and drivers (#2953)
+
+GTiff driver:
+* fix creating an image with the Create() interface with BLOCKYSIZE > image height (#6743)
+* don't check free disk space when outputting to /vsistdout/ (#6768)
+
+Idrisi/RST driver:
+* on creation: use geotransform of source dataset even if it doesn't have a SRS (#6727)
+
+netCDF driver:
+* fix erroneous detection of a non-longitude X axis as a longitude axis that caused a shift of 360m on the georeferencing (#6759)
+
+OpenJPEG driver:
+* for single-line organized images, such as found in some GRIB2 JPEG2000 images, use a Wx1 block size to avoid huge performance issues (#6719)
+
+PCIDSK driver:
+* handle Exceptions returned from destructor and check access rights in setters (github #183)
+
+RMF driver:
+* fix reading nodata for non-double data type (github #174)
+
+Sentinel2 driver:
+* add support for new "Safe Compact" encoding of L1C products (#6745)
+
+VRT driver:
+* Fix linking error on VRTComplexSource::RasterIOInternal<float>() (#6748)
+
+== OGR core ==
+
+* GML geometry parsing: avoid 'Cannot add a compound curve inside a compound curve' error (#6777)
+* Avoid assertion when stroking degenerated arcs (#6778)
+* Coordinate transformation: prevent unnecessary coordinate transformations (github #184)
+
+== OGR drivers == 
+
+AmigoCloud driver:
+* add option to receive an AmigoCloud API key in the connection string, fix page size (github #137)
+
+GeoJSON driver:
+* fix segfaults on writing on NULL geometry with -lco WRITE_BBOX=YES (#6698)
+* support multilinestring from esriGeometryPolyline (#6773)
+
+GPKG driver:
+* don't show Spatialite vgpkg_ virtual tables (#6707)
+
+ILI1 driver:
+* make polygon reconstruction in Surface layers robust to curves not in natural order (#6728)
+
+MSSQL driver:
+* build optional mssql plugin with SQL Native Client support for MSSQL Bulk Copy
+
+NAS driver:
+* fix crash with enabled debugging
+
+SDE driver:
+* rename driver to OGR_SDE, and rename ICreateLayerFromRegInfo() as CreateLayerFromRegInfo() (#6714)
+
+Shape driver:
+* when rewriting the geometry of the last record in the .shp, do it at the file offset it previously used (#6787)
+
+SQLite driver:
+* Spatialite: do not report some BLOB columns as geometry columns of tables/views (when found before the geometry column(s)) (#6695, #6659)
+* fix update of features with multiple geometry columns (#6696)
+* Spatialite: avoid spatial views to cause layers 'layer_name(geometry_name)' to be publicly listed (#6740)
+* SQLite/GPKG: add explicit error message when trying to open a read-only WAL-enabled database, and make sure when closing a WAL-enabled database opened in read-only mode to reopen it in read-write mode so that the -wal and -shm files are removed (#6776)
+
+WFS driver:
+* fix potential nullptr dereference on dataset without layer (github #179)
+
+XLSX driver:
+* fix GDAL 2.1.2 regression regarding reading XLSX files whose sheet filenames are internally stored as 'absolute' (#6733)
+
+== Perl bindings ==
+* fix setting the geometry of a MultiLineString and MultiPolygon (#6786)
+
+== Python bindings ==
+* add outputType option to gdal.Rasterize() (#6710)
+* fix gdal.DEMProcessingOptions(zeroForFlat=True) (#6775)
+* swig/python/setup.py: fix build issues when CXX is defined in the environment (#6765)
+
 = GDAL/OGR 2.1.2 Release Notes = 
 
 The 2.1.2 release is a bug fix release.
