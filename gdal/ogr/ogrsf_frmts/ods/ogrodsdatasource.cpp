@@ -58,7 +58,7 @@ public:
 };
 
 /************************************************************************/
-/*                            OGRODSLayer()                            */
+/*                            OGRODSLayer()                             */
 /************************************************************************/
 
 OGRODSLayer::OGRODSLayer( OGRODSDataSource* poDSIn,
@@ -67,8 +67,18 @@ OGRODSLayer::OGRODSLayer( OGRODSDataSource* poDSIn,
     OGRMemLayer(pszName, NULL, wkbNone),
     poDS(poDSIn),
     bUpdated(CPL_TO_BOOL(bUpdatedIn)),
-    bHasHeaderLine(false)
+    bHasHeaderLine(false),
+    m_poAttrQueryODS(NULL)
 {}
+
+/************************************************************************/
+/*                            ~OGRODSLayer()                            */
+/************************************************************************/
+
+OGRODSLayer::~OGRODSLayer()
+{
+    delete m_poAttrQueryODS;
+}
 
 /************************************************************************/
 /*                             Updated()                                */
@@ -103,10 +113,19 @@ OGRErr OGRODSLayer::SyncToDisk()
 
 OGRFeature* OGRODSLayer::GetNextFeature()
 {
-    OGRFeature* poFeature = OGRMemLayer::GetNextFeature();
-    if (poFeature)
+    while(true)
+    {
+        OGRFeature* poFeature = OGRMemLayer::GetNextFeature();
+        if (poFeature == NULL )
+            return NULL;
         poFeature->SetFID(poFeature->GetFID() + 1 + (bHasHeaderLine ? 1 : 0));
-    return poFeature;
+        if( m_poAttrQueryODS == NULL
+               || m_poAttrQueryODS->Evaluate( poFeature ) )
+        {
+            return poFeature;
+        }
+        delete poFeature;
+    }
 }
 
 /************************************************************************/
@@ -120,6 +139,17 @@ OGRFeature* OGRODSLayer::GetFeature( GIntBig nFeatureId )
     if (poFeature)
         poFeature->SetFID(nFeatureId);
     return poFeature;
+}
+
+/************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
+
+GIntBig OGRODSLayer::GetFeatureCount( int bForce )
+{
+    if( m_poAttrQueryODS == NULL )
+        return OGRMemLayer::GetFeatureCount(bForce);
+    return OGRLayer::GetFeatureCount( bForce );
 }
 
 /************************************************************************/
@@ -148,6 +178,33 @@ OGRErr OGRODSLayer::DeleteFeature( GIntBig nFID )
 {
     SetUpdated();
     return OGRMemLayer::DeleteFeature(nFID - (1 + (bHasHeaderLine ? 1 : 0)));
+}
+
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
+
+OGRErr OGRODSLayer::SetAttributeFilter( const char *pszQuery )
+
+{
+    // Intercept attribute filter since we mess up with FIDs
+    OGRErr eErr = OGRLayer::SetAttributeFilter(pszQuery);
+    delete m_poAttrQueryODS;
+    m_poAttrQueryODS = m_poAttrQuery;
+    m_poAttrQuery = NULL;
+    return eErr;
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRODSLayer::TestCapability( const char * pszCap )
+
+{
+    if( EQUAL(pszCap,OLCFastFeatureCount) )
+        return m_poFilterGeom == NULL && m_poAttrQueryODS == NULL;
+    return OGRMemLayer::TestCapability(pszCap);
 }
 
 /************************************************************************/
