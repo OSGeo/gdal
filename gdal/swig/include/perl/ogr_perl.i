@@ -120,7 +120,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 %perlcode %{
 
 package Geo::OGR;
-our $VERSION = '2.0102'; # this needs to be the same as that in gdal_perl.i
+our $VERSION = '2.0103'; # this needs to be the same as that in gdal_perl.i
 
 sub Driver {
     return 'Geo::GDAL::Driver' unless @_;

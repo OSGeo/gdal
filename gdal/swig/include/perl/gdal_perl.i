@@ -140,8 +140,8 @@ use Geo::OSR;
 # Note that the 1/100000 digits may be used to create more than one
 # CPAN release from one GDAL release.
 
-our $VERSION = '2.0102';
-our $GDAL_VERSION = '2.1.2';
+our $VERSION = '2.0103';
+our $GDAL_VERSION = '2.1.3';
 
 =pod
 
