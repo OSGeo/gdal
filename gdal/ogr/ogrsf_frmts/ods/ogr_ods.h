@@ -52,11 +52,13 @@ class OGRODSLayer : public OGRMemLayer
     OGRODSDataSource* poDS;
     bool              bUpdated;
     bool              bHasHeaderLine;
+    OGRFeatureQuery  *m_poAttrQueryODS;
 
     public:
         OGRODSLayer( OGRODSDataSource* poDSIn,
                       const char * pszName,
                       bool bUpdateIn = FALSE);
+       ~OGRODSLayer();
 
     void                SetUpdated(bool bUpdatedIn = true);
 
@@ -72,6 +74,12 @@ class OGRODSLayer : public OGRMemLayer
     virtual OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
     virtual OGRErr              ISetFeature( OGRFeature *poFeature ) override;
     virtual OGRErr              DeleteFeature( GIntBig nFID ) override;
+
+    virtual GIntBig             GetFeatureCount( int ) override;
+
+    virtual OGRErr              SetAttributeFilter( const char *pszQuery ) override;
+
+    virtual int                 TestCapability( const char * pszCap ) override;
 
     /* For internal usage, for cell resolver */
     OGRFeature *        GetNextFeatureWithoutFIDHack() { return OGRMemLayer::GetNextFeature(); }
