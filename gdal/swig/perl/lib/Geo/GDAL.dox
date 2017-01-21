@@ -1284,7 +1284,12 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # - \a Mask A raster band, which is used as a mask to select polygonized areas. Default is undef.
 # - \a OutLayer A vector layer into which the polygons are written. If not given, an in-memory layer 'polygonized' is created and returned.
 # - \a PixValField The name of the field in the output layer into which the cell value of the polygon area is stored. Default is 'val'.
-# - \a Options Hash or list of options. Connectedness can be set to 4 to use 4-connectedness, otherwise 8-connectedness is used. ForceIntPixel can be set to 1 to force using a 32 bit int buffer for cell values in the process. If this is not set and the data type of this raster does not fit into a 32 bit int buffer, a 32 bit float buffer is used.
+# - \a Options Hash or list of options. Connectedness can be set to 8 (or any true value)
+to use 8-connectedness, otherwise 4-connectedness is
+used. ForceIntPixel can be set to 1 to force using a 32 bit int buffer
+for cell values in the process. If this is not set and the data type
+of this raster does not fit into a 32 bit int buffer, a 32 bit float
+buffer is used.
 # - \a Progress Progress function.
 # - \a ProgressData Additional parameter for the progress function.
 #
