@@ -1696,6 +1696,11 @@ sub RegenerateOverviews {
 sub Polygonize {
     my $self = shift;
     my $p = Geo::GDAL::named_parameters(\@_, Mask => undef, OutLayer => undef, PixValField => 'val', Options => undef, Progress => undef, ProgressData => undef);
+    my %known_options = (Connectedness => 1, ForceIntPixel => 1, DATASET_FOR_GEOREF => 1);
+    for my $option (keys %{$p->{options}}) {
+        Geo::GDAL::error(1, $option, \%known_options) unless exists $known_options{$option};
+    }
+
     my $dt = $self->DataType;
     my %leInt32 = (Byte => 1, Int16 => 1, Int32 => 1, UInt16 => 1);
     my $leInt32 = $leInt32{$dt};
