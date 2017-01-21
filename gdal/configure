@@ -16873,7 +16873,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-if test "x$CXX" == x ; then
+if test "x$CXX" = x ; then
   as_fn_error $? "\"You don't have a working C++ compiler.\"" "$LINENO" 5
 fi
 
