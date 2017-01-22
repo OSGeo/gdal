@@ -465,6 +465,9 @@ class Zoomify(object):
 # =============================================================================
 # =============================================================================
 
+class Gdal2TilesError(Exception):
+    pass
+
 class GDAL2Tiles(object):
 
     # -------------------------------------------------------------------------
@@ -1243,7 +1246,13 @@ gdal2tiles temp.vrt""" % self.input )
                 # to the native resolution (and return smaller query tile) for scaling
 
                 if self.options.profile in ('mercator','geodetic'):
-                    rb, wb = self.geo_query( ds, b[0], b[3], b[2], b[1])
+                    try:
+                        rb, wb = self.geo_query( ds, b[0], b[3], b[2], b[1])
+                    except Gdal2TilesError:
+                        if self.options.verbose:
+                            print("Nothing from the input to put in output ", b)
+                        continue
+
                     nativesize = wb[0]+wb[2] # Pixel size in the raster covering query geo extent
                     if self.options.verbose:
                         print("\tNative Extent (querysize",nativesize,"): ", rb, wb)
@@ -1429,11 +1438,13 @@ gdal2tiles temp.vrt""" % self.input )
 
     # -------------------------------------------------------------------------
     def geo_query(self, ds, ulx, uly, lrx, lry, querysize = 0):
-        """For given dataset and query in cartographic coordinates
-        returns parameters for ReadRaster() in raster coordinates and
-        x/y shifts (for border tiles). If the querysize is not given, the
-        extent is returned in the native resolution of dataset ds."""
+        """
+        For given dataset and query in cartographic coordinates returns parameters for ReadRaster()
+        in raster coordinates and x/y shifts (for border tiles). If the querysize is not given, the
+        extent is returned in the native resolution of dataset ds.
 
+        raises Gdal2TilesError if the dataset does not contain anything inside this geo_query
+        """
         geotran = ds.GetGeoTransform()
         rx= int((ulx - geotran[0]) / geotran[1] + 0.001)
         ry= int((uly - geotran[3]) / geotran[5] + 0.001)
@@ -1467,6 +1478,11 @@ gdal2tiles temp.vrt""" % self.input )
         if ry+rysize > ds.RasterYSize:
             wysize = int( wysize * (float(ds.RasterYSize - ry) / rysize) )
             rysize = ds.RasterYSize - ry
+
+        # Following rounding, it is possible that less than 1 pixel (a fraction of a pixel) is
+        # actually meant for the tile requested (can happen on tiles close to a border of the image)
+        if rxsize == 0 or rysize == 0:
+            raise Gdal2TilesError("Nothing in this dataset fits in that query")
 
         return (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize)
 
