@@ -1120,12 +1120,6 @@ CPL_C_END
 /*! @cond Doxygen_Suppress */
 #define CPL_CPU_REQUIRES_ALIGNED_ACCESS
 /*! @endcond */
-/** Returns whether a double fits on a int */
-#define CPL_IS_DOUBLE_A_INT(d)  ( (d) >= INT_MIN && (d) <= INT_MAX && (double)(int)(d) == (d) )
-#else
-/* This is technically unspecified behaviour if the double is out of range, but works OK on x86 */
-/** Returns whether a double fits on a int */
-#define CPL_IS_DOUBLE_A_INT(d)  ( (double)(int)(d) == (d) )
 #endif
 
 #ifdef __cplusplus

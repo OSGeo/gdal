@@ -49,6 +49,15 @@
 
 CPL_CVSID("$Id$");
 
+// Returns whether a double fits within an int.
+// Unable to put this in cpl_port.h as include limit breaks grib.
+inline bool CPLIsDoubleAnInt(double d)
+{
+    if (d > std::numeric_limits<int>::max()) return false;
+    if (d < std::numeric_limits<int>::min()) return false;
+    return d == static_cast<double>(static_cast<int>(d));
+}
+
 /************************************************************************/
 /*                        OGRFormatDouble()                             */
 /************************************************************************/
@@ -225,7 +234,7 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
     size_t nLenX = 0;
     size_t nLenY = 0;
 
-    if( CPL_IS_DOUBLE_A_INT(x) && CPL_IS_DOUBLE_A_INT(y) )
+    if( CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
     {
         snprintf( szX, bufSize, "%d", static_cast<int>(x) );
         snprintf( szY, bufSize, "%d", static_cast<int>(y) );
@@ -253,7 +262,7 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 
     if( nDimension == 3 )
     {
-        if( CPL_IS_DOUBLE_A_INT(z) )
+        if( CPLIsDoubleAnInt(z) )
         {
             snprintf( szZ, bufSize, "%d", static_cast<int>(z) );
         }
@@ -327,7 +336,7 @@ void OGRMakeWktCoordinateM( char *pszTarget,
     size_t nLenX = 0;
     size_t nLenY = 0;
 
-    if( CPL_IS_DOUBLE_A_INT(x) && CPL_IS_DOUBLE_A_INT(y) )
+    if( CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
     {
         snprintf( szX, bufSize, "%d", static_cast<int>(x) );
         snprintf( szY, bufSize, "%d", static_cast<int>(y) );
@@ -356,7 +365,7 @@ void OGRMakeWktCoordinateM( char *pszTarget,
 
     if( hasZ )
     {
-        if( CPL_IS_DOUBLE_A_INT(z) )
+        if( CPLIsDoubleAnInt(z) )
         {
             snprintf( szZ, bufSize, "%d", static_cast<int>(z) );
         }
@@ -369,7 +378,7 @@ void OGRMakeWktCoordinateM( char *pszTarget,
 
     if( hasM )
     {
-        if( CPL_IS_DOUBLE_A_INT(m) )
+        if( CPLIsDoubleAnInt(m) )
         {
             snprintf( szM, bufSize, "%d", static_cast<int>(m) );
         }
