@@ -27,13 +27,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "parsexsd.h"
-#include "cpl_error.h"
-#include "cpl_conv.h"
-#include "ogr_core.h"
-#include "cpl_string.h"
-#include "cpl_http.h"
+
+#include <cstdlib>
+#include <cstring>
 #include <set>
+#include <string>
+
+#include "ogr_core.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_http.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
