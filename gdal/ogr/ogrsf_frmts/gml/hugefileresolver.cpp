@@ -34,17 +34,16 @@
  *
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gmlreader.h"
-#include "cpl_error.h"
-
 #include "gmlreaderp.h"
-#include "gmlutils.h"
-#include "cpl_conv.h"
-#include "ogr_p.h"
-#include "cpl_string.h"
-#include "cpl_http.h"
 
-#include <stack>
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_http.h"
+#include "cpl_string.h"
+#include "gmlutils.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
