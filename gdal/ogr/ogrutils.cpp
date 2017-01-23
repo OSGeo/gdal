@@ -37,6 +37,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
