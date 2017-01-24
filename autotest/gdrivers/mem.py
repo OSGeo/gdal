@@ -690,6 +690,47 @@ def mem_11():
     return 'success'
 
 ###############################################################################
+# Test CreateMaskBand() and overviews.
+
+def mem_12():
+
+    # Test on per-band mask
+    ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 2 )
+    ds.GetRasterBand(1).CreateMaskBand(0)
+    ds.GetRasterBand(1).GetMaskBand().Fill(127)
+    ds.BuildOverviews('NEAR', [2])
+    cs = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
+    if cs != 267:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    # Default mask
+    cs = ds.GetRasterBand(2).GetOverview(0).GetMaskBand().Checksum()
+    if cs != 283:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    # Test on per-dataset mask
+    ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 2 )
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds.GetRasterBand(1).GetMaskBand().Fill(127)
+    ds.BuildOverviews('NEAR', [2])
+    cs = ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
+    if cs != 267:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    cs2 = ds.GetRasterBand(2).GetOverview(0).GetMaskBand().Checksum()
+    if cs2 != cs:
+        gdaltest.post_reason('fail')
+        print(cs2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def mem_cleanup():
@@ -709,6 +750,7 @@ gdaltest_list = [
     mem_9,
     mem_10,
     mem_11,
+    mem_12,
     mem_cleanup ]
 
 if __name__ == '__main__':

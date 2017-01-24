@@ -1198,16 +1198,52 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
             }
         }
 
+        // If the band has an explicit mask, we need to create overviews
+        // for it
+        MEMRasterBand* poMEMBand = reinterpret_cast<MEMRasterBand*>(poBand);
+        const bool bMustGenerateMaskOvr =
+                ( (poMEMBand->bOwnMask && poMEMBand->poMask != NULL) ||
+        // Or if it is a per-dataset mask, in which case just do it for the
+        // first band
+                  ((poMEMBand->nMaskFlags & GMF_PER_DATASET) != 0 && iBand == 0) );
+
         if( nNewOverviews > 0 )
         {
             void* pScaledProgress = GDALCreateScaledProgress(
-                    1.0 * iBand / nBands, 1.0 * (iBand+1) / nBands,
+                    1.0 * iBand / nBands, 1.0 * (iBand+
+                            (bMustGenerateMaskOvr ? 0.5 : 1)) / nBands,
                     pfnProgress, pProgressData );
             eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
                                             nNewOverviews,
                                             (GDALRasterBandH*)papoOverviewBands,
                                             pszResampling,
                                             GDALScaledProgress, pScaledProgress );
+            GDALDestroyScaledProgress( pScaledProgress );
+        }
+
+        if( nNewOverviews > 0 && eErr == CE_None && bMustGenerateMaskOvr )
+        {
+            for( int i = 0; i < nNewOverviews; i++ )
+            {
+                MEMRasterBand* poMEMOvrBand =
+                    reinterpret_cast<MEMRasterBand*>(papoOverviewBands[i]);
+                if( !(poMEMOvrBand->bOwnMask && poMEMOvrBand->poMask != NULL) &&
+                    (poMEMOvrBand->nMaskFlags & GMF_PER_DATASET) == 0 )
+                {
+                    poMEMOvrBand->CreateMaskBand( poMEMBand->nMaskFlags );
+                }
+                papoOverviewBands[i] = poMEMOvrBand->GetMaskBand();
+            }
+
+            void* pScaledProgress = GDALCreateScaledProgress(
+                    1.0 * (iBand+0.5) / nBands, 1.0 * (iBand+1) / nBands,
+                    pfnProgress, pProgressData );
+            eErr = GDALRegenerateOverviews(
+                                        (GDALRasterBandH) poBand->GetMaskBand(),
+                                        nNewOverviews,
+                                        (GDALRasterBandH*)papoOverviewBands,
+                                        pszResampling,
+                                        GDALScaledProgress, pScaledProgress );
             GDALDestroyScaledProgress( pScaledProgress );
         }
     }
