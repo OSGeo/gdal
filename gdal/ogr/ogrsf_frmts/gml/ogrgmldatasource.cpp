@@ -34,24 +34,23 @@
  *
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_gml.h"
-#include "parsexsd.h"
+
+#include <algorithm>
+#include <vector>
+
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_http.h"
 #include "cpl_vsi_error.h"
 #include "gmlutils.h"
-#include "ogr_p.h"
 #include "gmlregistry.h"
 #include "gmlreaderp.h"
-
-#include <algorithm>
-#include <vector>
+#include "parsexsd.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
-
-static bool ExtractSRSName(const char* pszXML, char* szSRSName,
-                           size_t sizeof_szSRSName);
 
 /************************************************************************/
 /*                   ReplaceSpaceByPct20IfNeeded()                      */
@@ -59,16 +58,17 @@ static bool ExtractSRSName(const char* pszXML, char* szSRSName,
 
 static CPLString ReplaceSpaceByPct20IfNeeded(const char* pszURL)
 {
-    /* Replace ' ' by '%20' */
+    // Replace ' ' by '%20'.
     CPLString osRet = pszURL;
     const char* pszNeedle = strstr(pszURL, "; ");
     if (pszNeedle)
     {
-        char* pszTmp = (char*)CPLMalloc(strlen(pszURL) + 2 +1);
-        int nBeforeNeedle = (int)(pszNeedle - pszURL);
+        char* pszTmp = static_cast<char*>(CPLMalloc(strlen(pszURL) + 2 + 1));
+        const int nBeforeNeedle = static_cast<int>(pszNeedle - pszURL);
         memcpy(pszTmp, pszURL, nBeforeNeedle);
         strcpy(pszTmp + nBeforeNeedle, ";%20");
-        strcpy(pszTmp + nBeforeNeedle + strlen(";%20"), pszNeedle + strlen("; "));
+        strcpy(pszTmp + nBeforeNeedle + strlen(";%20"),
+               pszNeedle + strlen("; "));
         osRet = pszTmp;
         CPLFree(pszTmp);
     }
@@ -119,9 +119,7 @@ OGRGMLDataSource::OGRGMLDataSource() :
 /************************************************************************/
 
 OGRGMLDataSource::~OGRGMLDataSource()
-
 {
-
     if( fpOutput != NULL )
     {
         if( nLayers == 0 )
@@ -150,24 +148,38 @@ OGRGMLDataSource::~OGRGMLDataSource()
                 bool bCoordSwap = false;
                 char* pszSRSName = NULL;
                 if (poWriteGlobalSRS)
-                    pszSRSName = GML_GetSRSName(poWriteGlobalSRS, eSRSNameFormat, &bCoordSwap);
+                    pszSRSName = GML_GetSRSName(
+                        poWriteGlobalSRS, eSRSNameFormat, &bCoordSwap);
                 else
                     pszSRSName = CPLStrdup("");
-                char szLowerCorner[75], szUpperCorner[75];
+                char szLowerCorner[75] = {};
+                char szUpperCorner[75] = {};
                 if (bCoordSwap)
                 {
-                    OGRMakeWktCoordinate(szLowerCorner, sBoundingRect.MinY, sBoundingRect.MinX, sBoundingRect.MinZ, (bBBOX3D) ? 3 : 2);
-                    OGRMakeWktCoordinate(szUpperCorner, sBoundingRect.MaxY, sBoundingRect.MaxX, sBoundingRect.MaxZ, (bBBOX3D) ? 3 : 2);
+                    OGRMakeWktCoordinate(
+                        szLowerCorner, sBoundingRect.MinY, sBoundingRect.MinX,
+                        sBoundingRect.MinZ, bBBOX3D ? 3 : 2);
+                    OGRMakeWktCoordinate(
+                        szUpperCorner, sBoundingRect.MaxY, sBoundingRect.MaxX,
+                        sBoundingRect.MaxZ, bBBOX3D ? 3 : 2);
                 }
                 else
                 {
-                    OGRMakeWktCoordinate(szLowerCorner, sBoundingRect.MinX, sBoundingRect.MinY, sBoundingRect.MinZ, (bBBOX3D) ? 3 : 2);
-                    OGRMakeWktCoordinate(szUpperCorner, sBoundingRect.MaxX, sBoundingRect.MaxY, sBoundingRect.MaxZ, (bBBOX3D) ? 3 : 2);
+                    OGRMakeWktCoordinate(
+                        szLowerCorner, sBoundingRect.MinX, sBoundingRect.MinY,
+                        sBoundingRect.MinZ, bBBOX3D ? 3 : 2);
+                    OGRMakeWktCoordinate(
+                        szUpperCorner, sBoundingRect.MaxX, sBoundingRect.MaxY,
+                        sBoundingRect.MaxZ, (bBBOX3D) ? 3 : 2);
                 }
                 if (bWriteSpaceIndentation)
                     VSIFPrintfL( fpOutput, "  ");
-                PrintLine( fpOutput, "<gml:boundedBy><gml:Envelope%s%s><gml:lowerCorner>%s</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner></gml:Envelope></gml:boundedBy>",
-                           (bBBOX3D) ? " srsDimension=\"3\"" : "", pszSRSName, szLowerCorner, szUpperCorner);
+                PrintLine(
+                    fpOutput,
+                    "<gml:boundedBy><gml:Envelope%s%s><gml:lowerCorner>%s"
+                    "</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner>"
+                    "</gml:Envelope></gml:boundedBy>",
+                    bBBOX3D ? " srsDimension=\"3\"" : "", pszSRSName, szLowerCorner, szUpperCorner);
                 CPLFree(pszSRSName);
             }
             else if (bWriteGlobalSRS && sBoundingRect.IsInit())
@@ -239,7 +251,8 @@ OGRGMLDataSource::~OGRGMLDataSource()
 
     delete poStoredGMLFeature;
 
-    if (osXSDFilename.compare(CPLSPrintf("/vsimem/tmp_gml_xsd_%p.xsd", this)) == 0)
+    if (osXSDFilename.compare(
+            CPLSPrintf("/vsimem/tmp_gml_xsd_%p.xsd", this)) == 0)
         VSIUnlink(osXSDFilename);
 }
 
@@ -255,7 +268,7 @@ bool OGRGMLDataSource::CheckHeader(const char* pszStr)
         return false;
     }
 
-    /* Ignore .xsd schemas */
+    // Ignore .xsd schemas.
     if( strstr(pszStr, "<schema") != NULL
         || strstr(pszStr, "<xs:schema") != NULL
         || strstr(pszStr, "<xsd:schema") != NULL )
@@ -263,26 +276,28 @@ bool OGRGMLDataSource::CheckHeader(const char* pszStr)
         return false;
     }
 
-    /* Ignore GeoRSS documents. They will be recognized by the GeoRSS driver */
-    if( strstr(pszStr, "<rss") != NULL && strstr(pszStr, "xmlns:georss") != NULL )
+    // Ignore GeoRSS documents. They will be recognized by the GeoRSS driver.
+    if( strstr(pszStr, "<rss") != NULL &&
+        strstr(pszStr, "xmlns:georss") != NULL )
     {
         return false;
     }
 
-    /* Ignore OpenJUMP .jml documents. They will be recognized by the OpenJUMP driver */
+    // Ignore OpenJUMP .jml documents.
+    // They will be recognized by the OpenJUMP driver.
     if( strstr(pszStr, "<JCSDataFile") != NULL )
     {
         return false;
     }
 
-    /* Ignore OGR WFS xml description files, or WFS Capabilities results */
+    // Ignore OGR WFS xml description files, or WFS Capabilities results.
     if( strstr(pszStr, "<OGRWFSDataSource>") != NULL ||
         strstr(pszStr, "<wfs:WFS_Capabilities") != NULL )
     {
         return false;
     }
 
-    /* Ignore WMTS capabilities results */
+    // Ignore WMTS capabilities results.
     if( strstr(pszStr, "http://www.opengis.net/wmts/1.0") != NULL )
     {
         return false;
@@ -292,20 +307,44 @@ bool OGRGMLDataSource::CheckHeader(const char* pszStr)
 }
 
 /************************************************************************/
+/*                          ExtractSRSName()                            */
+/************************************************************************/
+
+static bool ExtractSRSName(const char* pszXML, char* szSRSName,
+                           size_t sizeof_szSRSName)
+{
+    szSRSName[0] = '\0';
+
+    const char* pszSRSName = strstr(pszXML, "srsName=\"");
+    if( pszSRSName != NULL )
+    {
+        pszSRSName += 9;
+        const char* pszEndQuote = strchr(pszSRSName, '"');
+        if (pszEndQuote != NULL &&
+            (size_t)(pszEndQuote - pszSRSName) < sizeof_szSRSName)
+        {
+            memcpy(szSRSName, pszSRSName, pszEndQuote - pszSRSName);
+            szSRSName[pszEndQuote - pszSRSName] = '\0';
+            return true;
+        }
+    }
+    return false;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 
 {
-    char        szHeader[4096];
     GIntBig     nNumberOfFeatures = 0;
     CPLString   osWithVsiGzip;
     const char *pszSchemaLocation = NULL;
     bool bCheckAuxFile = true;
 
 /* -------------------------------------------------------------------- */
-/*      Extract XSD filename from connection string if present.          */
+/*      Extract XSD filename from connection string if present.         */
 /* -------------------------------------------------------------------- */
     osFilename = poOpenInfo->pszFilename;
     const char *pszXSDFilenameTmp = strstr(poOpenInfo->pszFilename, ",xsd=");
@@ -344,13 +383,11 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     bool bHintConsiderEPSGAsURN = false;
     bool bAnalyzeSRSPerFeature = true;
 
-    char szSRSName[128];
-    szSRSName[0] = '\0';
-
 /* -------------------------------------------------------------------- */
 /*      Load a header chunk and check for signs it is GML               */
 /* -------------------------------------------------------------------- */
 
+    char szHeader[4096] = {};
     size_t nRead = VSIFReadL( szHeader, 1, sizeof(szHeader)-1, fp );
     if (nRead == 0)
     {
@@ -495,9 +532,13 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     if (pszExposeFid)
         bExposeFid = CPLTestBool(pszExposeFid);
 
-    bHintConsiderEPSGAsURN = strstr(szPtr, "xmlns:fme=\"http://www.safe.com/gml/fme\"") != NULL;
+    bHintConsiderEPSGAsURN =
+        strstr(szPtr, "xmlns:fme=\"http://www.safe.com/gml/fme\"") != NULL;
 
-    /* MTKGML */
+    char szSRSName[128];
+    szSRSName[0] = '\0';
+
+    // MTKGML.
     if( strstr(szPtr, "<Maastotiedot") != NULL )
     {
         if( strstr(szPtr, "http://xml.nls.fi/XML/Namespace/Maastotietojarjestelma/SiirtotiedostonMalli/2011-02") == NULL )
@@ -539,7 +580,8 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         eReadMode = INTERLEAVED_LAYERS;
     else
     {
-        CPLDebug("GML", "Unrecognized value for GML_READ_MODE configuration option.");
+        CPLDebug("GML",
+                 "Unrecognized value for GML_READ_MODE configuration option.");
     }
 
     m_bInvertAxisOrderIfLatLong =
@@ -555,7 +597,8 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         m_bConsiderEPSGAsURN = CPLTestBool(pszConsiderEPSGAsURN);
     else if (bHintConsiderEPSGAsURN)
     {
-        /* GML produced by FME (at least CanVec GML) seem to honour EPSG axis ordering */
+        // GML produced by FME (at least CanVec GML) seem to honour EPSG axis
+        // ordering.
         CPLDebug("GML", "FME-produced GML --> consider that GML_CONSIDER_EPSG_AS_URN is set to YES");
         m_bConsiderEPSGAsURN = true;
     }
@@ -569,14 +612,15 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     m_eSwapCoordinates = EQUAL(pszSwapCoordinates, "AUTO") ? GML_SWAP_AUTO:
                          CPLTestBool(pszSwapCoordinates) ? GML_SWAP_YES: GML_SWAP_NO;
 
-    m_bGetSecondaryGeometryOption = CPLTestBool(CPLGetConfigOption("GML_GET_SECONDARY_GEOM", "NO"));
+    m_bGetSecondaryGeometryOption =
+        CPLTestBool(CPLGetConfigOption("GML_GET_SECONDARY_GEOM", "NO"));
 
-    /* EXPAT is faster than Xerces, so when it is safe to use it, use it ! */
-    /* The only interest of Xerces is for rare encodings that Expat doesn't handle */
-    /* but UTF-8 is well handled by Expat */
+    // EXPAT is faster than Xerces, so when it is safe to use it, use it!
+    // The only interest of Xerces is for rare encodings that Expat doesn't
+    // handle, but UTF-8 is well handled by Expat.
     bool bUseExpatParserPreferably = bExpatCompatibleEncoding;
 
-    /* Override default choice */
+    // Override default choice.
     const char* pszGMLParser = CPLGetConfigOption("GML_PARSER", NULL);
     if (pszGMLParser)
     {
@@ -631,14 +675,14 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     bool bHugeFile = false;
     if( pszOption != NULL && STARTS_WITH_CI(pszOption, "SAME") )
     {
-        // "SAME" will overwrite the existing gml file
+        // "SAME" will overwrite the existing gml file.
         pszXlinkResolvedFilename = CPLStrdup( pszFilename );
     }
     else if( pszOption != NULL &&
              CPLStrnlen( pszOption, 5 ) >= 5 &&
              STARTS_WITH_CI(pszOption - 4 + strlen( pszOption ), ".gml") )
     {
-        // Any string ending with ".gml" will try and write to it
+        // Any string ending with ".gml" will try and write to it.
         pszXlinkResolvedFilename = CPLStrdup( pszOption );
     }
     else
@@ -673,14 +717,15 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     char **papszSkip = NULL;
     if( EQUAL( pszSkipOption, "ALL" ) )
         bResolve = false;
-    else if( EQUAL( pszSkipOption, "HUGE" ) )//exactly as NONE, but intended for HUGE files
+    else if( EQUAL( pszSkipOption, "HUGE" ) )
+        // Exactly as NONE, but intended for HUGE files
         bHugeFile = true;
     else if( !EQUAL( pszSkipOption, "NONE" ) )//use this to resolve everything
         papszSkip = CSLTokenizeString2( pszSkipOption, ",",
                                            CSLT_STRIPLEADSPACES |
                                            CSLT_STRIPENDSPACES );
-    bool        bHaveSchema = false;
-    bool        bSchemaDone = false;
+    bool bHaveSchema = false;
+    bool bSchemaDone = false;
 
 /* -------------------------------------------------------------------- */
 /*      Is some GML Feature Schema (.gfs) TEMPLATE required ?           */
@@ -2585,31 +2630,6 @@ OGRLayer * OGRGMLDataSource::ExecuteSQL( const char *pszSQLCommand,
 void OGRGMLDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
 {
     delete poResultsSet;
-}
-
-/************************************************************************/
-/*                          ExtractSRSName()                            */
-/************************************************************************/
-
-static bool ExtractSRSName(const char* pszXML, char* szSRSName,
-                           size_t sizeof_szSRSName)
-{
-    szSRSName[0] = '\0';
-
-    const char* pszSRSName = strstr(pszXML, "srsName=\"");
-    if( pszSRSName != NULL )
-    {
-        pszSRSName += 9;
-        const char* pszEndQuote = strchr(pszSRSName, '"');
-        if (pszEndQuote != NULL &&
-            (size_t)(pszEndQuote - pszSRSName) < sizeof_szSRSName)
-        {
-            memcpy(szSRSName, pszSRSName, pszEndQuote - pszSRSName);
-            szSRSName[pszEndQuote - pszSRSName] = '\0';
-            return true;
-        }
-    }
-    return false;
 }
 
 /************************************************************************/
