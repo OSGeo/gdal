@@ -42,7 +42,6 @@ import test_py_scripts
 # Simple test
 
 def test_gdal2tiles_py_1():
-
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
         return 'skip'
@@ -90,9 +89,10 @@ def test_gdal2tiles_py_2():
 
     return 'success'
 
+
 def test_gdal2tiles_py_cleanup():
 
-    lst = [ 'tmp/out_gdal2tiles_smallworld' ]
+    lst = [ 'tmp/out_gdal2tiles_smallworld', 'tmp/out_gdal2tiles_bounds_approx' ]
     for filename in lst:
         try:
             shutil.rmtree(filename)
@@ -101,10 +101,45 @@ def test_gdal2tiles_py_cleanup():
 
     return 'success'
 
+
+def test_does_not_error_when_source_bounds_close_to_tiles_bound():
+    """
+    Case where the border coordinate of the input file is inside a tile T but the first pixel is
+    actually assigned to the tile next to T (nearest neighbour), meaning that when the query is done
+    to get the content of T, nothing is returned from the raster.
+    """
+    in_files = ['./data/test_bounds_close_to_tile_bounds_x.vrt',
+                './data/test_bounds_close_to_tile_bounds_y.vrt']
+    out_folder = 'tmp/out_gdal2tiles_bounds_approx'
+    try:
+        shutil.rmtree(out_folder)
+    except:
+        pass
+
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        return 'skip'
+
+    try:
+        for in_file in in_files:
+            test_py_scripts.run_py_script(
+                script_path,
+                'gdal2tiles',
+                '-q -z 21-21 %s %s' % (in_file, out_folder))
+    except TypeError:
+        gdaltest.post_reason(
+            'Case of tile not getting any data not handled properly '
+            '(tiles at the border of the image)')
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [
     test_gdal2tiles_py_1,
     test_gdal2tiles_py_2,
-    test_gdal2tiles_py_cleanup
+    test_does_not_error_when_source_bounds_close_to_tiles_bound,
+    test_gdal2tiles_py_cleanup,
     ]
 
 
