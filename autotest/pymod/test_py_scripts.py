@@ -124,13 +124,12 @@ def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
 
     ret = None
 
-    # Redirect stdout to file
-    fout = open('tmp/stdout.txt', 'wt')
-    ori_stdout = sys.stdout
-    sys.stdout = fout
+    try:
+        # Redirect stdout to file
+        fout = open('tmp/stdout.txt', 'wt')
+        ori_stdout = sys.stdout
+        sys.stdout = fout
 
-    #try:
-    if True:
         exec('import ' + script_name)
         has_imported_module = True
 
@@ -140,13 +139,10 @@ def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
         # If so, run it (otherwise the import has already run the script)
         if has_main:
             exec(script_name + '.main()')
-
-    #except:
-    #    pass
-
-    # Restore original stdout
-    fout.close()
-    sys.stdout = ori_stdout
+    finally:
+        # Restore original stdout
+        fout.close()
+        sys.stdout = ori_stdout
 
     fout = open('tmp/stdout.txt', 'rt')
     ret = fout.read()
