@@ -1,0 +1,24 @@
+<VRTDataset rasterXSize="802" rasterYSize="423">
+  <SRS>PROJCS["WGS 84 / UTM zone 31N",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","32631"]]</SRS>
+  <GeoTransform>  6.5614318824000005e+05,  2.4702942643333180e-02,  0.0000000000000000e+00,  6.5219694422600009e+06,  0.0000000000000000e+00, -2.4686193855448537e-02</GeoTransform>
+  <Metadata>
+    <MDI key="AREA_OR_POINT">Area</MDI>
+    <MDI key="TIFFTAG_SOFTWARE">pix4dmapper</MDI>
+  </Metadata>
+  <VRTRasterBand dataType="Byte" band="1">
+    <NoDataValue>-10000</NoDataValue>
+    <ColorInterp>Red</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <NoDataValue>-10000</NoDataValue>
+    <ColorInterp>Green</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3">
+    <NoDataValue>-10000</NoDataValue>
+    <ColorInterp>Blue</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="4">
+    <NoDataValue>-10000</NoDataValue>
+    <ColorInterp>Alpha</ColorInterp>
+  </VRTRasterBand>
+</VRTDataset>
