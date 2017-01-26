@@ -98,12 +98,12 @@ static volatile CPLSharedFileInfo *pasSharedFileList = NULL;
 // Used by CPLsetlocale().
 static CPLMutex *hSetLocaleMutex = NULL;
 
-/* Note: ideally this should be added in CPLSharedFileInfo* */
-/* but CPLSharedFileInfo is exposed in the API, hence that trick */
-/* to hide this detail */
+// Note: ideally this should be added in CPLSharedFileInfo*
+// but CPLSharedFileInfo is exposed in the API, hence that trick
+// to hide this detail.
 typedef struct
 {
-    GIntBig             nPID; // pid of opening thread
+    GIntBig nPID;  // pid of opening thread.
 } CPLSharedFileInfoExtra;
 
 static volatile CPLSharedFileInfoExtra *pasSharedFileListExtra = NULL;
@@ -135,8 +135,8 @@ void *CPLCalloc( size_t nCount, size_t nSize )
     if( nSize * nCount == 0 )
         return NULL;
 
-    void *pReturn = CPLMalloc( nCount * nSize );
-    memset( pReturn, 0, nCount * nSize );
+    void *pReturn = CPLMalloc(nCount * nSize);
+    memset(pReturn, 0, nCount * nSize);
     return pReturn;
 }
 
@@ -169,25 +169,25 @@ void *CPLMalloc( size_t nSize )
 
     if( static_cast<long>(nSize) < 0 )
     {
-        /* coverity[dead_error_begin] */
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "CPLMalloc(%ld): Silly size requested.",
-                  static_cast<long>(nSize) );
+        // coverity[dead_error_begin]
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLMalloc(%ld): Silly size requested.",
+                 static_cast<long>(nSize));
         return NULL;
     }
 
-    void *pReturn = VSIMalloc( nSize );
+    void *pReturn = VSIMalloc(nSize);
     if( pReturn == NULL )
     {
         if( nSize > 0 && nSize < 2000 )
         {
-            CPLEmergencyError( "CPLMalloc(): Out of memory allocating a small "
-                               "number of bytes." );
+            CPLEmergencyError("CPLMalloc(): Out of memory allocating a small "
+                              "number of bytes.");
         }
 
-        CPLError( CE_Fatal, CPLE_OutOfMemory,
-                  "CPLMalloc(): Out of memory allocating %ld bytes.",
-                  static_cast<long>(nSize) );
+        CPLError(CE_Fatal, CPLE_OutOfMemory,
+                 "CPLMalloc(): Out of memory allocating %ld bytes.",
+                 static_cast<long>(nSize));
     }
 
     return pReturn;
@@ -227,35 +227,37 @@ void * CPLRealloc( void * pData, size_t nNewSize )
 
     if( static_cast<long>(nNewSize) < 0 )
     {
-        /* coverity[dead_error_begin] */
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "CPLRealloc(%ld): Silly size requested.",
-                  static_cast<long>( nNewSize ) );
+        // coverity[dead_error_begin]
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLRealloc(%ld): Silly size requested.",
+                 static_cast<long>(nNewSize));
         return NULL;
     }
 
     void *pReturn = NULL;
 
     if( pData == NULL )
-        pReturn = VSIMalloc( nNewSize );
+        pReturn = VSIMalloc(nNewSize);
     else
-        pReturn = VSIRealloc( pData, nNewSize );
+        pReturn = VSIRealloc(pData, nNewSize);
 
     if( pReturn == NULL )
     {
         if( nNewSize > 0 && nNewSize < 2000 )
         {
-            char szSmallMsg[60];
+            char szSmallMsg[60] = {};
 
-            snprintf( szSmallMsg, sizeof(szSmallMsg),
-                      "CPLRealloc(): Out of memory allocating %ld bytes.",
-                      static_cast<long>( nNewSize ) );
-            CPLEmergencyError( szSmallMsg );
+            snprintf(szSmallMsg, sizeof(szSmallMsg),
+                     "CPLRealloc(): Out of memory allocating %ld bytes.",
+                     static_cast<long>(nNewSize));
+            CPLEmergencyError(szSmallMsg);
         }
         else
-            CPLError( CE_Fatal, CPLE_OutOfMemory,
-                      "CPLRealloc(): Out of memory allocating %ld bytes.",
-                      static_cast<long>( nNewSize ) );
+        {
+            CPLError(CE_Fatal, CPLE_OutOfMemory,
+                     "CPLRealloc(): Out of memory allocating %ld bytes.",
+                     static_cast<long>(nNewSize));
+        }
     }
 
     return pReturn;
@@ -289,16 +291,15 @@ char *CPLStrdup( const char * pszString )
     if( pszString == NULL )
         pszString = "";
 
-    char *pszReturn =
-        static_cast<char *>( CPLMalloc(strlen(pszString) + 1 ) );
+    char *pszReturn = static_cast<char *>(CPLMalloc(strlen(pszString) + 1));
     if( pszReturn == NULL )
     {
-        CPLError( CE_Fatal, CPLE_OutOfMemory,
-                  "CPLStrdup(): Out of memory allocating %ld bytes.",
-                  static_cast<long>( strlen(pszString) ) );
+        CPLError(CE_Fatal, CPLE_OutOfMemory,
+                 "CPLStrdup(): Out of memory allocating %ld bytes.",
+                 static_cast<long>(strlen(pszString)));
     }
 
-    strcpy( pszReturn, pszString );
+    strcpy(pszReturn, pszString);
     return pszReturn;
 }
 
@@ -326,7 +327,7 @@ char *CPLStrlwr( char *pszString )
 
     while( *pszTemp )
     {
-        *pszTemp = static_cast<char>( tolower (*pszTemp) );
+        *pszTemp = static_cast<char>(tolower(*pszTemp));
         pszTemp++;
     }
 
@@ -357,7 +358,7 @@ char *CPLStrlwr( char *pszString )
  * from the file or NULL if the error or end of file was encountered.
  */
 
-char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
+char *CPLFGets( char *pszBuffer, int nBufferSize, FILE *fp )
 
 {
     if( nBufferSize == 0 || pszBuffer == NULL || fp == NULL )
@@ -370,11 +371,11 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 /*      just the newline (LF).  If it is in binary mode it may well     */
 /*      have both.                                                      */
 /* -------------------------------------------------------------------- */
-    const long nOriginalOffset = VSIFTell( fp );
-    if( VSIFGets( pszBuffer, nBufferSize, fp ) == NULL )
+    const long nOriginalOffset = VSIFTell(fp);
+    if( VSIFGets(pszBuffer, nBufferSize, fp) == NULL )
         return NULL;
 
-    int nActuallyRead = static_cast<int>( strlen(pszBuffer) );
+    int nActuallyRead = static_cast<int>(strlen(pszBuffer));
     if( nActuallyRead == 0 )
         return NULL;
 
@@ -382,17 +383,17 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 /*      If we found \r and out buffer is full, it is possible there     */
 /*      is also a pending \n.  Check for it.                            */
 /* -------------------------------------------------------------------- */
-    if( nBufferSize == nActuallyRead+1
-        && pszBuffer[nActuallyRead-1] == 13 )
+    if( nBufferSize == nActuallyRead + 1 &&
+        pszBuffer[nActuallyRead - 1] == 13 )
     {
-        const int chCheck = fgetc( fp );
+        const int chCheck = fgetc(fp);
         if( chCheck != 10 )
         {
             // unget the character.
-            if( VSIFSeek( fp, nOriginalOffset+nActuallyRead, SEEK_SET ) == -1 )
+            if( VSIFSeek(fp, nOriginalOffset+nActuallyRead, SEEK_SET) == -1 )
             {
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Unable to unget a character");
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Unable to unget a character");
             }
         }
     }
@@ -401,16 +402,16 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 /*      Trim off \n, \r or \r\n if it appears at the end.  We don't     */
 /*      need to do any "seeking" since we want the newline eaten.       */
 /* -------------------------------------------------------------------- */
-    if( nActuallyRead > 1
-        && pszBuffer[nActuallyRead-1] == 10
-        && pszBuffer[nActuallyRead-2] == 13 )
+    if( nActuallyRead > 1 && 
+        pszBuffer[nActuallyRead-1] == 10 &&
+        pszBuffer[nActuallyRead-2] == 13 )
     {
-        pszBuffer[nActuallyRead-2] = '\0';
+        pszBuffer[nActuallyRead - 2] = '\0';
     }
-    else if( pszBuffer[nActuallyRead-1] == 10
-             || pszBuffer[nActuallyRead-1] == 13 )
+    else if( pszBuffer[nActuallyRead - 1] == 10 ||
+             pszBuffer[nActuallyRead - 1] == 13 )
     {
-        pszBuffer[nActuallyRead-1] = '\0';
+        pszBuffer[nActuallyRead - 1] = '\0';
     }
 
 /* -------------------------------------------------------------------- */
@@ -418,37 +419,35 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 /*      apparently), and if we find it we need to trim the string,      */
 /*      and seek back.                                                  */
 /* -------------------------------------------------------------------- */
-    char *pszExtraNewline = strchr( pszBuffer, 13 );
+    char *pszExtraNewline = strchr(pszBuffer, 13);
 
     if( pszExtraNewline != NULL )
     {
         nActuallyRead = static_cast<int>(pszExtraNewline - pszBuffer + 1);
 
         *pszExtraNewline = '\0';
-        if( VSIFSeek( fp, nOriginalOffset + nActuallyRead - 1, SEEK_SET ) != 0)
+        if( VSIFSeek(fp, nOriginalOffset + nActuallyRead - 1, SEEK_SET) != 0)
             return NULL;
 
-        /*
-         * This hackery is necessary to try and find our correct
-         * spot on win32 systems with text mode line translation going
-         * on.  Sometimes the fseek back overshoots, but it doesn't
-         * "realize it" till a character has been read. Try to read till
-         * we get to the right spot and get our CR.
-         */
-        int chCheck = fgetc( fp );
-        while( (chCheck != 13 && chCheck != EOF)
-               || VSIFTell(fp) < nOriginalOffset + nActuallyRead )
+        // This hackery is necessary to try and find our correct
+        // spot on win32 systems with text mode line translation going
+        // on.  Sometimes the fseek back overshoots, but it doesn't
+        // "realize it" till a character has been read. Try to read till
+        // we get to the right spot and get our CR.
+        int chCheck = fgetc(fp);
+        while( (chCheck != 13 && chCheck != EOF) ||
+               VSIFTell(fp) < nOriginalOffset + nActuallyRead )
         {
             static bool bWarned = false;
 
             if( !bWarned )
             {
                 bWarned = true;
-                CPLDebug( "CPL",
-                          "CPLFGets() correcting for DOS text mode translation "
-                          "seek problem." );
+                CPLDebug("CPL",
+                         "CPLFGets() correcting for DOS text mode translation "
+                         "seek problem.");
             }
-            chCheck = fgetc( fp );
+            chCheck = fgetc(fp);
         }
     }
 
@@ -475,11 +474,11 @@ static char *CPLReadLineBuffer( int nRequiredSize )
     if( nRequiredSize == -1 )
     {
         int bMemoryError = FALSE;
-        void* pRet = CPLGetTLSEx( CTLS_RLBUFFERINFO, &bMemoryError );
+        void *pRet = CPLGetTLSEx(CTLS_RLBUFFERINFO, &bMemoryError);
         if( pRet != NULL )
         {
-            CPLFree( pRet );
-            CPLSetTLS( CTLS_RLBUFFERINFO, NULL, FALSE );
+            CPLFree(pRet);
+            CPLSetTLS(CTLS_RLBUFFERINFO, NULL, FALSE);
         }
         return NULL;
     }
@@ -488,51 +487,51 @@ static char *CPLReadLineBuffer( int nRequiredSize )
 /*      If the buffer doesn't exist yet, create it.                     */
 /* -------------------------------------------------------------------- */
     int bMemoryError = FALSE;
-    GUInt32 *pnAlloc = reinterpret_cast<GUInt32 *>(
-        CPLGetTLSEx( CTLS_RLBUFFERINFO, &bMemoryError ) );
+    GUInt32 *pnAlloc = static_cast<GUInt32 *>(
+        CPLGetTLSEx(CTLS_RLBUFFERINFO, &bMemoryError));
     if( bMemoryError )
         return NULL;
 
     if( pnAlloc == NULL )
     {
-        pnAlloc = static_cast<GUInt32 *>( VSI_MALLOC_VERBOSE(200) );
+        pnAlloc = static_cast<GUInt32 *>(VSI_MALLOC_VERBOSE(200));
         if( pnAlloc == NULL )
             return NULL;
         *pnAlloc = 196;
-        CPLSetTLS( CTLS_RLBUFFERINFO, pnAlloc, TRUE );
+        CPLSetTLS(CTLS_RLBUFFERINFO, pnAlloc, TRUE);
     }
 
 /* -------------------------------------------------------------------- */
 /*      If it is too small, grow it bigger.                             */
 /* -------------------------------------------------------------------- */
-    if( static_cast<int>( *pnAlloc ) - 1 < nRequiredSize )
+    if( static_cast<int>(*pnAlloc) - 1 < nRequiredSize )
     {
         const int nNewSize = nRequiredSize + 4 + 500;
         if( nNewSize <= 0 )
         {
-            VSIFree( pnAlloc );
-            CPLSetTLS( CTLS_RLBUFFERINFO, NULL, FALSE );
-            CPLError( CE_Failure, CPLE_OutOfMemory,
-                      "CPLReadLineBuffer(): Trying to allocate more than "
-                      "2 GB." );
+            VSIFree(pnAlloc);
+            CPLSetTLS(CTLS_RLBUFFERINFO, NULL, FALSE);
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "CPLReadLineBuffer(): Trying to allocate more than "
+                     "2 GB.");
             return NULL;
         }
 
-        GUInt32* pnAllocNew = static_cast<GUInt32 *>(
-            VSI_REALLOC_VERBOSE( pnAlloc, nNewSize ) );
+        GUInt32 *pnAllocNew =
+            static_cast<GUInt32 *>(VSI_REALLOC_VERBOSE(pnAlloc, nNewSize));
         if( pnAllocNew == NULL )
         {
-            VSIFree( pnAlloc );
-            CPLSetTLS( CTLS_RLBUFFERINFO, NULL, FALSE );
+            VSIFree(pnAlloc);
+            CPLSetTLS(CTLS_RLBUFFERINFO, NULL, FALSE);
             return NULL;
         }
         pnAlloc = pnAllocNew;
 
         *pnAlloc = nNewSize - 4;
-        CPLSetTLS( CTLS_RLBUFFERINFO, pnAlloc, TRUE );
+        CPLSetTLS(CTLS_RLBUFFERINFO, pnAlloc, TRUE);
     }
 
-    return reinterpret_cast<char *>( pnAlloc + 1 );
+    return reinterpret_cast<char *>(pnAlloc + 1);
 }
 
 /************************************************************************/
@@ -569,7 +568,7 @@ const char *CPLReadLine( FILE * fp )
 /* -------------------------------------------------------------------- */
     if( fp == NULL )
     {
-        CPLReadLineBuffer( -1 );
+        CPLReadLineBuffer(-1);
         return NULL;
     }
 
@@ -578,7 +577,7 @@ const char *CPLReadLine( FILE * fp )
 /*      the line.                                                       */
 /* -------------------------------------------------------------------- */
     size_t nBytesReadThisTime = 0;
-    char* pszRLBuffer = NULL;
+    char *pszRLBuffer = NULL;
     size_t nReadSoFar = 0;
 
     do {
@@ -588,24 +587,24 @@ const char *CPLReadLine( FILE * fp )
 /*      instance for a _very large_ file with no newlines).             */
 /* -------------------------------------------------------------------- */
         if( nReadSoFar > 100 * 1024 * 1024 )
-             // It is dubious that we need to read a line longer than 100 MB.
+            // It is dubious that we need to read a line longer than 100 MB.
             return NULL;
-        pszRLBuffer = CPLReadLineBuffer( static_cast<int>(nReadSoFar) + 129 );
+        pszRLBuffer = CPLReadLineBuffer(static_cast<int>(nReadSoFar) + 129);
         if( pszRLBuffer == NULL )
             return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Do the actual read.                                             */
 /* -------------------------------------------------------------------- */
-        if( CPLFGets( pszRLBuffer+nReadSoFar, 128, fp ) == NULL
+        if( CPLFGets(pszRLBuffer + nReadSoFar, 128, fp) == NULL
             && nReadSoFar == 0 )
             return NULL;
 
-        nBytesReadThisTime = strlen(pszRLBuffer+nReadSoFar);
+        nBytesReadThisTime = strlen(pszRLBuffer + nReadSoFar);
         nReadSoFar += nBytesReadThisTime;
     } while( nBytesReadThisTime >= 127
-             && pszRLBuffer[nReadSoFar-1] != 13
-             && pszRLBuffer[nReadSoFar-1] != 10 );
+             && pszRLBuffer[nReadSoFar - 1] != 13
+             && pszRLBuffer[nReadSoFar - 1] != 10 );
 
     return pszRLBuffer;
 }
@@ -625,10 +624,7 @@ const char *CPLReadLine( FILE * fp )
  * from the file or NULL if the end of file was encountered.
  */
 
-const char *CPLReadLineL( VSILFILE * fp )
-{
-    return CPLReadLine2L( fp, -1, NULL );
-}
+const char *CPLReadLineL(VSILFILE *fp) { return CPLReadLine2L(fp, -1, NULL); }
 
 /************************************************************************/
 /*                           CPLReadLine2L()                            */
@@ -650,8 +646,8 @@ const char *CPLReadLineL( VSILFILE * fp )
  * @since GDAL 1.7.0
  */
 
-const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
-                           CPL_UNUSED const char * const * papszOptions )
+const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
+                           CPL_UNUSED const char *const *papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -659,7 +655,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
 /* -------------------------------------------------------------------- */
     if( fp == NULL )
     {
-        CPLReadLineBuffer( -1 );
+        CPLReadLineBuffer(-1);
         return NULL;
     }
 
@@ -683,9 +679,9 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
 /* -------------------------------------------------------------------- */
         if( nBufLength > INT_MAX - static_cast<int>(nChunkSize) - 1 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Too big line : more than 2 billion characters!." );
-            CPLReadLineBuffer( -1 );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too big line : more than 2 billion characters!.");
+            CPLReadLineBuffer(-1);
             return NULL;
         }
 
@@ -701,7 +697,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
             szChunk[0] = szChunk[nChunkBytesConsumed];
 
             nChunkBytesConsumed = 0;
-            nChunkBytesRead = VSIFReadL( szChunk+1, 1, nChunkSize-1, fp ) + 1;
+            nChunkBytesRead = VSIFReadL(szChunk + 1, 1, nChunkSize - 1, fp) + 1;
         }
         else
         {
@@ -743,8 +739,8 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
                 pszRLBuffer[nBufLength++] = szChunk[nChunkBytesConsumed++];
                 if( nMaxCars >= 0 && nBufLength == nMaxCars )
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                              "Maximum number of characters allowed reached." );
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Maximum number of characters allowed reached.");
                     return NULL;
                 }
             }
@@ -781,7 +777,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
     {
         const size_t nBytesToPush = nChunkBytesRead - nChunkBytesConsumed;
 
-        if( VSIFSeekL( fp, VSIFTellL( fp ) - nBytesToPush, SEEK_SET ) != 0 )
+        if( VSIFSeekL( fp, VSIFTellL(fp) - nBytesToPush, SEEK_SET ) != 0 )
             return NULL;
     }
 
@@ -821,25 +817,25 @@ char *CPLScanString( const char *pszString, int nMaxLength,
         return NULL;
 
     if( !nMaxLength )
-        return CPLStrdup( "" );
+        return CPLStrdup("");
 
-    char *pszBuffer = static_cast<char *>(CPLMalloc( nMaxLength + 1 ));
+    char *pszBuffer = static_cast<char *>(CPLMalloc(nMaxLength + 1));
     if( !pszBuffer )
         return NULL;
 
-    strncpy( pszBuffer, pszString, nMaxLength );
+    strncpy(pszBuffer, pszString, nMaxLength);
     pszBuffer[nMaxLength] = '\0';
 
     if( bTrimSpaces )
     {
-        size_t i = strlen( pszBuffer );
+        size_t i = strlen(pszBuffer);
         while( i-- > 0 && isspace(static_cast<unsigned char>(pszBuffer[i])) )
             pszBuffer[i] = '\0';
     }
 
     if( bNormalize )
     {
-        size_t i = strlen( pszBuffer );
+        size_t i = strlen(pszBuffer);
         while( i-- > 0 )
         {
             if( pszBuffer[i] == ':' )
@@ -870,12 +866,12 @@ char *CPLScanString( const char *pszString, int nMaxLength,
 
 long CPLScanLong( const char *pszString, int nMaxLength )
 {
-    CPLAssert( nMaxLength >= 0 );
+    CPLAssert(nMaxLength >= 0);
     if( pszString == NULL )
         return 0;
     const size_t nLength = CPLStrnlen(pszString, nMaxLength);
-    const std::string osValue( pszString, nLength );
-    return atol( osValue.c_str() );
+    const std::string osValue(pszString, nLength);
+    return atol(osValue.c_str());
 }
 
 /************************************************************************/
@@ -898,12 +894,12 @@ long CPLScanLong( const char *pszString, int nMaxLength )
 
 unsigned long CPLScanULong( const char *pszString, int nMaxLength )
 {
-    CPLAssert( nMaxLength >= 0 );
+    CPLAssert(nMaxLength >= 0);
     if( pszString == NULL )
         return 0;
     const size_t nLength = CPLStrnlen(pszString, nMaxLength);
-    const std::string osValue( pszString, nLength );
-    return strtoul( osValue.c_str(), NULL, 10 );
+    const std::string osValue(pszString, nLength);
+    return strtoul(osValue.c_str(), NULL, 10);
 }
 
 /************************************************************************/
@@ -928,21 +924,21 @@ unsigned long CPLScanULong( const char *pszString, int nMaxLength )
 
 GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 {
-    CPLAssert( nMaxLength >= 0 );
+    CPLAssert(nMaxLength >= 0);
     if( pszString == NULL )
         return 0;
     const size_t nLength = CPLStrnlen(pszString, nMaxLength);
-    const std::string osValue( pszString, nLength );
+    const std::string osValue(pszString, nLength);
 
 /* -------------------------------------------------------------------- */
 /*      Fetch out the result                                            */
 /* -------------------------------------------------------------------- */
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
-    return static_cast<GUIntBig>( _atoi64( osValue.c_str() ) );
-# elif HAVE_ATOLL
-    return atoll( osValue.c_str() );
+    return static_cast<GUIntBig>(_atoi64(osValue.c_str()));
+#elif HAVE_ATOLL
+    return atoll(osValue.c_str());
 #else
-    return = atol( osValue.c_str() );
+    return = atol(osValue.c_str());
 #endif
 }
 
@@ -961,11 +957,11 @@ GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 GIntBig CPLAtoGIntBig( const char* pszString )
 {
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
-    return _atoi64( pszString );
-# elif HAVE_ATOLL
-    return atoll( pszString );
+    return _atoi64(pszString);
+#elif HAVE_ATOLL
+    return atoll(pszString);
 #else
-    return atol( pszString );
+    return atol(pszString);
 #endif
 }
 
@@ -1004,7 +1000,8 @@ static int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
  *
  * @param pszString String containing 64 bit signed integer.
  * @param bWarn Issue a warning if an overflow occurs during conversion
- * @param pbOverflow Pointer to an integer to store if an overflow occurred, or NULL
+ * @param pbOverflow Pointer to an integer to store if an overflow occurred, or
+ *        NULL
  * @return 64 bit signed integer.
  * @since GDAL 2.0
  */
@@ -1013,11 +1010,11 @@ GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow )
 {
     errno = 0;
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
-    GIntBig nVal = _atoi64( pszString );
-# elif HAVE_ATOLL
-    GIntBig nVal = atoll( pszString );
+    GIntBig nVal = _atoi64(pszString);
+#elif HAVE_ATOLL
+    GIntBig nVal = atoll(pszString);
 #else
-    GIntBig nVal = atol( pszString );
+    GIntBig nVal = atol(pszString);
 #endif
     if( errno == ERANGE
 #if defined(__MINGW32__) || defined(__sun__)
@@ -1034,9 +1031,12 @@ GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow )
         }
         while( *pszString == ' ' )
             pszString++;
-        return (*pszString == '-' ) ? GINTBIG_MIN : GINTBIG_MAX;
+        return (*pszString == '-') ? GINTBIG_MIN : GINTBIG_MAX;
     }
-    else if( pbOverflow ) *pbOverflow = FALSE;
+    else if( pbOverflow )
+    {
+        *pbOverflow = FALSE;
+    }
     return nVal;
 }
 
@@ -1070,7 +1070,7 @@ void *CPLScanPointer( const char *pszString, int nMaxLength )
     if( nMaxLength > static_cast<int>( sizeof(szTemp) ) - 1 )
         nMaxLength = sizeof(szTemp) - 1;
 
-    strncpy( szTemp, pszString, nMaxLength );
+    strncpy(szTemp, pszString, nMaxLength);
     szTemp[nMaxLength] = '\0';
 
 /* -------------------------------------------------------------------- */
@@ -1082,23 +1082,23 @@ void *CPLScanPointer( const char *pszString, int nMaxLength )
         void *pResult = NULL;
 
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
-        sscanf( szTemp+2, "%p", &pResult );
+        sscanf(szTemp + 2, "%p", &pResult);
 #else
-        sscanf( szTemp, "%p", &pResult );
+        sscanf(szTemp, "%p", &pResult);
 
         /* Solaris actually behaves like MSVCRT... */
         if( pResult == NULL )
         {
-            sscanf( szTemp+2, "%p", &pResult );
+            sscanf(szTemp + 2, "%p", &pResult);
         }
 #endif
         return pResult;
     }
 
 #if SIZEOF_VOIDP == 8
-    return reinterpret_cast<void *>( CPLScanUIntBig( szTemp, nMaxLength ) );
+    return reinterpret_cast<void *>(CPLScanUIntBig(szTemp, nMaxLength));
 #else
-    return reinterpret_cast<void *>( CPLScanULong( szTemp, nMaxLength ) );
+    return reinterpret_cast<void *>(CPLScanULong(szTemp, nMaxLength));
 #endif
 }
 
@@ -1128,10 +1128,10 @@ double CPLScanDouble( const char *pszString, int nMaxLength )
     char szValue[32] = {};
     char *pszValue = NULL;
 
-    if( nMaxLength + 1 < static_cast<int>( sizeof(szValue) ) )
+    if( nMaxLength + 1 < static_cast<int>(sizeof(szValue)) )
         pszValue = szValue;
     else
-        pszValue = static_cast<char *>(CPLMalloc( nMaxLength + 1 ));
+        pszValue = static_cast<char *>(CPLMalloc(nMaxLength + 1));
 
 /* -------------------------------------------------------------------- */
 /*      Compute string into local buffer, and terminate it.             */
