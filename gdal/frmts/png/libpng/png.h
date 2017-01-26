@@ -1529,7 +1529,7 @@ PNG_FIXED_EXPORT(209, void, png_set_filter_heuristics_fixed,
  * 0 - 9, corresponding directly to the zlib compression levels 0 - 9
  * (0 - no compression, 9 - "maximal" compression).  Note that tests have
  * shown that zlib compression levels 3-6 usually perform as well as level 9
- * for PNG images, and do considerably fewer caclulations.  In the future,
+ * for PNG images, and do considerably fewer calculations.  In the future,
  * these values may not correspond directly to the zlib compression levels.
  */
 #ifdef PNG_WRITE_CUSTOMIZE_COMPRESSION_SUPPORTED

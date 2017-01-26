@@ -488,7 +488,7 @@ png_inflate(png_structrp png_ptr, png_uint_32 owner, int finish,
       png_alloc_size_t avail_out = *output_size_ptr;
       png_uint_32 avail_in = *input_size_ptr;
 
-      /* zlib can't necessarily handle more than 65535 bytes at once (i.e. it
+      /* zlib can't necessarily handle more than 65535 bytes at once (ie it
        * can't even necessarily handle 65536 bytes) because the type uInt is
        * "16 bits or more".  Consequently it is necessary to chunk the input to
        * zlib.  This code uses ZLIB_IO_MAX, from pngpriv.h, as the maximum (the
@@ -3019,7 +3019,7 @@ png_handle_unknown(png_structrp png_ptr, png_inforp info_ptr,
 
    /* Check for unhandled critical chunks */
    if (handled == 0 && PNG_CHUNK_CRITICAL(png_ptr->chunk_name))
-      png_chunk_error(png_ptr, "unhandled critical chunk");
+      png_chunk_warning(png_ptr, "unhandled critical chunk");
 }
 
 /* This function is called to verify that a chunk name is valid.
@@ -3046,7 +3046,7 @@ png_check_chunk_name(png_structrp png_ptr, png_uint_32 chunk_name)
       int c = chunk_name & 0xff;
 
       if (c < 65 || c > 122 || (c > 90 && c < 97))
-         png_chunk_error(png_ptr, "invalid chunk type");
+         png_chunk_warning(png_ptr, "invalid chunk type"); /* GDAL change : png_chunk_error -> png_chunk_warning */
 
       chunk_name >>= 8;
    }

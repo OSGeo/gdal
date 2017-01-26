@@ -87,7 +87,7 @@
  */
 
 /* The PNGARG macro was used in versions of libpng prior to 1.6.0 to protect
- * against legacy (pre ISOC90) compilers that did not understand function
+ * against legacy (pre ISOC90) compilers that didn't understand function
  * prototypes.  It is not required for modern C compilers.
  */
 #ifndef PNGARG
@@ -548,7 +548,7 @@ typedef ptrdiff_t png_ptrdiff_t;
  * encounter practical situations that require such conversions.
  *
  * PNG_SMALL_SIZE_T must be defined if the maximum value of size_t is less than
- * 4294967295 - i.e. less than the maximum value of png_uint_32.
+ * 4294967295 - ie less than the maximum value of png_uint_32.
  */
 #ifdef PNG_SMALL_SIZE_T
    typedef png_uint_32 png_alloc_size_t;
@@ -601,7 +601,7 @@ typedef double       * png_doublep;
 typedef const double * png_const_doublep;
 #endif
 
-/* Pointers to pointers; i.e. arrays */
+/* Pointers to pointers; ie arrays */
 typedef png_byte        * * png_bytepp;
 typedef png_uint_32     * * png_uint_32pp;
 typedef png_int_32      * * png_int_32pp;
@@ -614,7 +614,7 @@ typedef png_fixed_point * * png_fixed_point_pp;
 typedef double          * * png_doublepp;
 #endif
 
-/* Pointers to pointers to pointers; i.e., pointer to array */
+/* Pointers to pointers to pointers; ie, pointer to array */
 typedef char            * * * png_charppp;
 
 #endif /* PNG_BUILDING_SYMBOL_TABLE */

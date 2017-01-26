@@ -2977,7 +2977,7 @@ png_do_gray_to_rgb(png_row_infop row_info, png_bytep row)
  *  values this results in an implicit assumption that the original PNG RGB
  *  values were linear.
  *
- *  Other integer coefficents can be used via png_set_rgb_to_gray().  Because
+ *  Other integer coefficients can be used via png_set_rgb_to_gray().  Because
  *  the API takes just red and green coefficients the blue coefficient is
  *  calculated to make the sum 32768.  This will result in different rounding
  *  to that used above.

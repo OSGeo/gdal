@@ -460,7 +460,7 @@ png_free_buffer_list(png_structrp png_ptr, png_compression_bufferp *listp)
 /* This pair of functions encapsulates the operation of (a) compressing a
  * text string, and (b) issuing it later as a series of chunk data writes.
  * The compression_state structure is shared context for these functions
- * set up by the caller to allow access to the relevant local variables.
+ * set up by the caller to allow access to the relevent local variables.
  *
  * compression_buffer (new in 1.6.0) is just a linked list of zbuffer_size
  * temporary buffers.  From 1.6.0 it is retained in png_struct so that it will
@@ -1973,7 +1973,7 @@ png_write_start_row(png_structrp png_ptr)
    }
 }
 
-/* Internal use only.  Called when finished processing a row of data. */
+/* Internal use only.  Called when finished procesing a row of data. */
 void /* PRIVATE */
 png_write_finish_row(png_structrp png_ptr)
 {
