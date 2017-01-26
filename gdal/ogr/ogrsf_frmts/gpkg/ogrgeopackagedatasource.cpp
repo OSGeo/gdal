@@ -645,15 +645,40 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             "  FROM gpkg_geometry_columns g JOIN gpkg_contents c ON (g.table_name = c.table_name)"
             "  WHERE c.data_type = 'features' ";
 
-        if (HasGDALAspatialExtension()) {
+        if (HasGDALAspatialExtension())
+        {
+            // Was the only method available in OGR 2.0 and 2.1
             osSQL +=
                 "UNION ALL "
                 "SELECT table_name, identifier, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 1 AS is_gpkg_table "
                 "  FROM gpkg_contents"
                 "  WHERE data_type = 'aspatial' ";
         }
+        else
+        {
+            // GPKG 1.2 or later
+            osSQL +=
+                "UNION ALL "
+                "SELECT table_name, identifier, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 1 AS is_gpkg_table "
+                "  FROM gpkg_contents"
+                "  WHERE data_type = 'attributes' ";
+        }
 
-        if( CPLTestBool(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "YES")) )
+        const char* pszListAllTables = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "AUTO");
+        bool bHasASpatialOrAttributes = HasGDALAspatialExtension();
+        if( !bHasASpatialOrAttributes )
+        {
+            SQLResult oResultTable;
+            OGRErr err = SQLQuery(hDB,
+                "SELECT * FROM gpkg_contents WHERE "
+                "data_type = 'attributes' LIMIT 1",
+                &oResultTable);
+            bHasASpatialOrAttributes = ( err == OGRERR_NONE &&
+                                         oResultTable.nRowCount == 1 );
+            SQLResultFree(&oResultTable);
+        }
+        if( EQUAL(pszListAllTables, "YES") ||
+            (!bHasASpatialOrAttributes && EQUAL(pszListAllTables, "AUTO")) )
         {
             // vgpkg_ is Spatialite virtual table
             osSQL += "UNION ALL "
@@ -3610,8 +3635,23 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         CPLFetchBool(papszOptions, "TRUNCATE_FIELDS", false));
     if( eGType == wkbNone )
     {
-        poLayer->SetRegisterAsAspatial( CPLFetchBool(
-            (const char**)papszOptions,"REGISTER_AS_ASPATIAL",true) );
+        const char* pszASpatialVariant = CSLFetchNameValueDef(papszOptions,
+                                                            "ASPATIAL_VARIANT",
+                                                            "GPKG_ATTRIBUTES");
+        GPKGASpatialVariant eASPatialVariant = GPKG_ATTRIBUTES;
+        if( EQUAL(pszASpatialVariant, "GPKG_ATTRIBUTES") )
+            eASPatialVariant = GPKG_ATTRIBUTES;
+        else if( EQUAL(pszASpatialVariant, "OGR_ASPATIAL") )
+            eASPatialVariant = OGR_ASPATIAL;
+        else if( EQUAL(pszASpatialVariant, "NOT_REGISTERED") )
+            eASPatialVariant = NOT_REGISTERED;
+        else
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Unsupported value for ASPATIAL_VARIANT: %s",
+                     pszASpatialVariant);
+        }
+        poLayer->SetASpatialVariant( eASPatialVariant );
     }
 
     m_papoLayers = (OGRGeoPackageTableLayer**)CPLRealloc(m_papoLayers,  sizeof(OGRGeoPackageTableLayer*) * (m_nLayers+1));
