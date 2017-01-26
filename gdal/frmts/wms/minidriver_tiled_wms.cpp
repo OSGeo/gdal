@@ -320,67 +320,58 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
 {
     CPLErr ret = CE_None;
     CPLXMLNode *tileServiceConfig = NULL;
-    CPLHTTPResult *psResult = NULL;
     CPLXMLNode *TG = NULL;
 
     char **requests = NULL;
     char **substs = NULL;
     char **keys = NULL;
 
-    for (int once = 1; once; once--) { // Something to break out of
-        // Parse info from the service
-
-        m_end_url = CPLGetXMLValue(config, "AdditionalArgs", "");
+    try { // Parse info from the WMS Service node
+//        m_end_url = CPLGetXMLValue(config, "AdditionalArgs", "");
         m_base_url = CPLGetXMLValue(config, "ServerURL", "");
-        if (m_base_url.empty()) {
-            CPLError(ret = CE_Failure, CPLE_AppDefined, "%s ServerURL missing.", SIG);
-            break;
-        }
+
+        if (m_base_url.empty())
+            throw CPLOPrintf("%s ServerURL missing.", SIG);
 
         CPLString tiledGroupName(CPLGetXMLValue(config, "TiledGroupName", ""));
-        if (tiledGroupName.empty()) {
-            CPLError(ret = CE_Failure, CPLE_AppDefined, "%s TiledGroupName missing.", SIG);
-            break;
-        }
+        if (tiledGroupName.empty())
+            throw CPLOPrintf("%s TiledGroupName missing.", SIG);
 
         // Change strings, key is an attribute, value is the value of the Change node
         // Multiple substitutions are possible
         TG = CPLSearchXMLNode(config, "Change");
         while (TG != NULL) {
             CPLString name = CPLGetXMLValue(TG, "key", "");
-            if (name.empty()) {
-                CPLError(ret = CE_Failure, CPLE_AppDefined,
-                    "%s Change element needs a non-empty \"key\" attribute", SIG);
-                break;
-            }
+            if (name.empty())
+                throw CPLOPrintf("%s Change element needs a non-empty \"key\" attribute", SIG);
             substs = CSLSetNameValue(substs, name, CPLGetXMLValue(TG, "", ""));
             TG = SearchXMLSiblings(TG, "Change");
         }
-        if (ret != CE_None) break;
 
-        CPLString getTileServiceUrl = m_base_url + "request=GetTileService";
-        psResult = CPLHTTPFetch(getTileServiceUrl, NULL);
+        // Part of WMS config
+        const char *psconfig = CPLGetXMLValue(config, "Configuration", "");
 
-        if (NULL == psResult) {
-            CPLError(ret = CE_Failure, CPLE_AppDefined, "%s Can't use HTTP", SIG);
-            break;
+        CPLString buffer;
+
+        if (strlen(psconfig) != 0) {
+            // Probably XML encoded because it is XML itself
+            buffer = psconfig; // Make a copy, might be replaced by the decoded result
+            psconfig = WMSUtilDecode(buffer, CPLGetXMLValue(config, "Configuration.encoding", ""));
+        }
+        else { // Not inline, use the WMSdriver
+            CPLString getTileServiceUrl = m_base_url + "request=GetTileService";
+            // This returns a string from cache, not need to remove
+            psconfig = GDALWMSDataset::GetServerConfig(getTileServiceUrl);
+            if (psconfig == NULL)
+                throw CPLOPrintf("%s HTTP failure", SIG);
         }
 
-        if ((psResult->nStatus != 0) || (NULL == psResult->pabyData) || ('\0' == psResult->pabyData[0])) {
-            CPLError(ret = CE_Failure, CPLE_AppDefined, "%s Server response error on GetTileService.", SIG);
-            break;
-        }
+        // psconfig contains the GetTileService return now
+        if (NULL == (tileServiceConfig = CPLParseXMLString(psconfig)))
+            throw CPLOPrintf("%s Error parsing the GetTileService response", SIG);
 
-        if (NULL == (tileServiceConfig = CPLParseXMLString((const char*)psResult->pabyData))) {
-            CPLError(ret = CE_Failure, CPLE_AppDefined, "%s Error parsing the GetTileService response.", SIG);
-            break;
-        }
-
-        if (NULL == (TG = CPLSearchXMLNode(tileServiceConfig, "TiledPatterns"))) {
-            CPLError(ret = CE_Failure, CPLE_AppDefined,
-                "%s Can't locate TiledPatterns in server response.", SIG);
-            break;
-        }
+        if (NULL == (TG = CPLSearchXMLNode(tileServiceConfig, "TiledPatterns")))
+            throw CPLOPrintf("%s Can't locate TiledPatterns in server response.", SIG);
 
         // Get the global base_url and bounding box, these can be overwritten at the tileGroup level
         // They are just pointers into existing structures, cleanup is not required
@@ -388,20 +379,13 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         CPLXMLNode *global_latlonbbox = CPLGetXMLNode(tileServiceConfig, "TiledPatterns.LatLonBoundingBox");
         CPLXMLNode *global_bbox = CPLGetXMLNode(tileServiceConfig, "TiledPatterns.BoundingBox");
 
-        if (NULL == (TG = SearchLeafGroupName(TG->psChild, tiledGroupName))) {
-            CPLError(ret = CE_Failure, CPLE_AppDefined,
-                "%s Can't locate TiledGroup ""%s"" in server response.", SIG,
-                tiledGroupName.c_str());
-            break;
-        }
+        if (NULL == (TG = SearchLeafGroupName(TG->psChild, tiledGroupName)))
+            throw CPLOPrintf("%s No TiledGroup ""%s"" in server response.", SIG, tiledGroupName.c_str());
 
         int band_count = atoi(CPLGetXMLValue(TG, "Bands", "3"));
 
-        if (!GDALCheckBandCount(band_count, FALSE)) {
-            CPLError(ret = CE_Failure, CPLE_AppDefined, "%s%s", SIG,
-                "Invalid number of bands in server response");
-            break;
-        }
+        if (!GDALCheckBandCount(band_count, FALSE))
+            throw CPLOPrintf("%s Invalid number of bands in server response", SIG);
 
         // Collect all keys defined by this tileset
         if (NULL != CPLGetXMLNode(TG, "Key")) {
@@ -428,11 +412,8 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         m_projection_wkt = CPLGetXMLValue(TG, "Projection", "");
 
         m_base_url = CPLGetXMLValue(TG, "OnlineResource.xlink:href", global_base_url);
-        if (m_base_url[0] == '\0') {
-            CPLError(ret = CE_Failure, CPLE_AppDefined, "%s%s", SIG,
-                "Can't locate OnlineResource in the server response.");
-            break;
-        }
+        if (m_base_url[0] == '\0')
+            throw CPLOPrintf("%s Can't locate OnlineResource in the server response", SIG);
 
         // Bounding box, local, global, local lat-lon, global lat-lon, in this order
         CPLXMLNode *bbox = CPLGetXMLNode(TG, "BoundingBox");
@@ -440,22 +421,16 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         if (NULL == bbox) bbox = CPLGetXMLNode(TG, "LatLonBoundingBox");
         if (NULL == bbox) bbox = global_latlonbbox;
 
-        if (NULL == bbox) {
-            CPLError(ret = CE_Failure, CPLE_AppDefined, "%s%s", SIG,
-                "Can't locate the LatLonBoundingBox in server response.");
-            break;
-        }
+        if (NULL == bbox)
+            throw CPLOPrintf("%s Can't locate the LatLonBoundingBox in server response", SIG);
 
         m_data_window.m_x0 = CPLAtof(CPLGetXMLValue(bbox, "minx", "0"));
         m_data_window.m_x1 = CPLAtof(CPLGetXMLValue(bbox, "maxx", "-1"));
         m_data_window.m_y0 = CPLAtof(CPLGetXMLValue(bbox, "maxy", "0"));
         m_data_window.m_y1 = CPLAtof(CPLGetXMLValue(bbox, "miny", "-1"));
 
-        if ((m_data_window.m_x1 - m_data_window.m_x0) < 0) {
-            CPLError(ret = CE_Failure, CPLE_AppDefined, "%s%s", SIG,
-                "Coordinate order in BBox, problem in server response");
-            break;
-        }
+        if ((m_data_window.m_x1 - m_data_window.m_x0) < 0)
+            throw CPLOPrintf("%s Coordinate order in BBox problem in server response", SIG);
 
         // Is there a palette?
         //
@@ -476,7 +451,6 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         GDALColorTable *poColorTable = NULL;
 
         if ((band_count == 1) && CPLGetXMLNode(TG, "Palette")) {
-
             CPLXMLNode *node = CPLGetXMLNode(TG, "Palette");
 
             int entries = static_cast<int>(getXMLNum(node, "Size", "255"));
@@ -485,20 +459,19 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
             CPLString pModel = CPLGetXMLValue(node, "Model", "RGB");
             if (!pModel.empty() && pModel.find("RGB") != std::string::npos)
                 eInterp = GPI_RGB;
-            else {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "%s Palette Model %s is unknown, use RGB or RGBA",
-                    SIG, pModel.c_str());
-                return CE_Failure;
-            }
+            else
+                throw CPLOPrintf("%s Palette Model %s is unknown, use RGB or RGBA", SIG, pModel.c_str());
 
-            if ((entries > 0) && (entries < 257)) {
+            if ((entries < 1) || (entries > 256))
+                throw CPLOPrintf("%s Palette definition error", SIG);
+
+            // Create it and initialize it to nothing
+            try {
                 int start_idx;
                 int end_idx;
                 GDALColorEntry ce_start = { 0, 0, 0, 255 };
                 GDALColorEntry ce_end = { 0, 0, 0, 255 };
 
-                // Create it and initialize it to nothing
                 poColorTable = new GDALColorTable(eInterp);
                 poColorTable->CreateColorRamp(0, &ce_start, entries - 1, &ce_end);
                 // Read the values
@@ -507,36 +480,32 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
                     // Initialize the first entry
                     start_idx = static_cast<int>(getXMLNum(p, "idx", "0"));
                     ce_start = GetXMLColorEntry(p);
-                    if (start_idx < 0) {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                            "%s Palette index %d not allowed", SIG, start_idx);
-                        delete poColorTable;
-                        return CE_Failure;
-                    }
+
+                    if (start_idx < 0)
+                        throw CPLOPrintf("%s Palette index %d not allowed", SIG, start_idx);
+
                     poColorTable->SetColorEntry(start_idx, &ce_start);
                     while (NULL != (p = SearchXMLSiblings(p, "Entry"))) {
                         // For every entry, create a ramp
                         ce_end = GetXMLColorEntry(p);
-                        end_idx = static_cast<int>(getXMLNum(p, "idx", CPLString().FormatC(start_idx + 1).c_str()));
-                        if ((end_idx <= start_idx) || (start_idx >= entries)) {
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                "%s Index Error at index %d", SIG, end_idx);
-                            delete poColorTable;
-                            return CE_Failure;
-                        }
-                        poColorTable->CreateColorRamp(start_idx, &ce_start,
-                            end_idx, &ce_end);
+                        end_idx = static_cast<int>(getXMLNum(p, "idx", CPLOPrintf("%d", start_idx + 1)));
+                        if ((end_idx <= start_idx) || (start_idx >= entries))
+                            throw CPLOPrintf("%s Index Error at index %d", SIG, end_idx);
+
+                        poColorTable->CreateColorRamp(start_idx, &ce_start, end_idx, &ce_end);
                         ce_start = ce_end;
                         start_idx = end_idx;
                     }
                 }
+
+                // Dataset has ownership
                 m_parent_dataset->SetColorTable(poColorTable);
             }
-            else {
-                CPLError(CE_Failure, CPLE_AppDefined, "%s Palette definition error", SIG);
-                return CE_Failure;
+            catch (const CPLString &) {
+                delete poColorTable;
+                throw;
             }
-        }
+        } // If palette
 
         int overview_count = 0;
         CPLXMLNode *Pattern = TG->psChild;
@@ -546,25 +515,20 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         m_data_window.m_sx = 0;
         m_data_window.m_sy = 0;
 
-        for (int once2 = 1; once2; once2--) { // Something to break out of
-            while ((NULL != Pattern) && (NULL != (Pattern = SearchXMLSiblings(Pattern, "=TilePattern")))) {
-                int mbsx, mbsy;
+        while ((NULL != Pattern) && (NULL != (Pattern = SearchXMLSiblings(Pattern, "=TilePattern")))) {
+            int mbsx, mbsy, sx, sy;
+            double x, y, X, Y;
 
-                CPLString request;
-                FindChangePattern(Pattern->psChild->pszValue, substs, keys, request);
+            CPLString request;
+            FindChangePattern(Pattern->psChild->pszValue, substs, keys, request);
 
-                char **papszTokens = CSLTokenizeString2(request, "&", 0);
+            char **papszTokens = CSLTokenizeString2(request, "&", 0);
 
+            try {
                 const char* pszWIDTH = CSLFetchNameValue(papszTokens, "WIDTH");
                 const char* pszHEIGHT = CSLFetchNameValue(papszTokens, "HEIGHT");
                 if (pszWIDTH == NULL || pszHEIGHT == NULL)
-                {
-                    CPLError(ret = CE_Failure, CPLE_AppDefined, "%s%s", SIG,
-                        "Cannot find width and/or height parameters.");
-                    overview_count = 0;
-                    CSLDestroy(papszTokens);
-                    break;
-                }
+                    throw CPLOPrintf("%s Cannot find width or height parameters in %s", SIG, request.c_str());
 
                 mbsx = atoi(pszWIDTH);
                 mbsy = atoi(pszHEIGHT);
@@ -576,102 +540,94 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
 
                 if (-1 == m_bsx) m_bsx = mbsx;
                 if (-1 == m_bsy) m_bsy = mbsy;
-                if ((m_bsx != mbsx) || (m_bsy != mbsy)) {
-                    CPLError(ret = CE_Failure, CPLE_AppDefined, "%s%s", SIG,
-                        "Tileset uses different block sizes.");
-                    overview_count = 0;
-                    CSLDestroy(papszTokens);
-                    break;
-                }
+                if ((m_bsx != mbsx) || (m_bsy != mbsy))
+                    throw CPLOPrintf("%s Tileset uses different block sizes", SIG);
 
-                double x, y, X, Y;
                 if (CPLsscanf(CSLFetchNameValueDef(papszTokens, "BBOX", ""), "%lf,%lf,%lf,%lf", &x, &y, &X, &Y) != 4)
-                {
-                    CPLError(ret = CE_Failure, CPLE_AppDefined,
-                        "%s Error parsing BBOX, pattern %d\n", SIG, overview_count + 1);
-                    CSLDestroy(papszTokens);
-                    break;
-                }
+                    throw CPLOPrintf("%s Error parsing BBOX, pattern %d\n", SIG, overview_count + 1);
+
                 // Pick the largest size
-                int sx = static_cast<int>((m_data_window.m_x1 - m_data_window.m_x0) / (X - x)*m_bsx);
-                int sy = static_cast<int>(fabs((m_data_window.m_y1 - m_data_window.m_y0) / (Y - y)*m_bsy));
+                sx = static_cast<int>((m_data_window.m_x1 - m_data_window.m_x0) / (X - x)*m_bsx);
+                sy = static_cast<int>(fabs((m_data_window.m_y1 - m_data_window.m_y0) / (Y - y)*m_bsy));
                 if (sx > m_data_window.m_sx) m_data_window.m_sx = sx;
                 if (sy > m_data_window.m_sy) m_data_window.m_sy = sy;
+            }
+            catch (const CPLString &) {
                 CSLDestroy(papszTokens);
-
-                // Only use overlays where the top coordinate is within a pixel from the top of coverage
-                double pix_off, temp;
-                pix_off = m_bsy*modf(fabs((Y - m_data_window.m_y0) / (Y - y)), &temp);
-                if ((pix_off < 1) || ((m_bsy - pix_off) < 1)) {
-                    requests = CSLAddString(requests, request);
-                    overview_count++;
-                }
-                else
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                    "%s Overlay size %dX%d can't be used due to alignment", SIG, sx, sy);
-
-                Pattern = Pattern->psNext;
+                throw;
             }
 
-            // The tlevel is needed, the tx and ty are not used by this minidriver
-            m_data_window.m_tlevel = 0;
-            m_data_window.m_tx = 0;
-            m_data_window.m_ty = 0;
+            CSLDestroy(papszTokens);
 
-            // Make sure the parent_dataset values are set before creating the bands
-            m_parent_dataset->WMSSetBlockSize(m_bsx, m_bsy);
-            m_parent_dataset->WMSSetRasterSize(m_data_window.m_sx, m_data_window.m_sy);
-
-            m_parent_dataset->WMSSetDataWindow(m_data_window);
-            //m_parent_dataset->WMSSetOverviewCount(overview_count);
-            m_parent_dataset->WMSSetClamp(false);
-
-            // Ready for the Rasterband creation
-            for (int i = 0; i<overview_count; i++) {
-                CPLString request = GetLowestScale(requests, i);
-                double scale = Scale(request);
-
-                // Base scale should be very close to 1
-                if ((0 == i) && (fabs(scale - 1) > 1e-6)) {
-                    CPLError(ret = CE_Failure, CPLE_AppDefined, "%s%s", SIG,
-                        "Base resolution pattern missing.");
-                    break;
-                }
-
-                // Prepare the request and insert it back into the list
-                // Find returns an answer relative to the original string start!
-                size_t startBbox = FindBbox(request);
-                size_t endBbox = request.find('&', startBbox);
-                if (endBbox == std::string::npos) 
-                    endBbox = request.size();
-                request.replace(startBbox, endBbox - startBbox, "${GDAL_BBOX}");
-                requests = CSLInsertString(requests, i, request);
-
-                // Create the Rasterband or overview
-                for (int j = 1; j <= band_count; j++) {
-                    if (i != 0)
-                        m_parent_dataset->mGetBand(j)->AddOverview(scale);
-                    else { // Base resolution
-                        GDALWMSRasterBand *band = new
-                            GDALWMSRasterBand(m_parent_dataset, j, 1);
-                        if (poColorTable != NULL) band->SetColorInterpretation(GCI_PaletteIndex);
-                        else band->SetColorInterpretation(BandInterp(band_count, j));
-                        m_parent_dataset->mSetBand(j, band);
-                    };
-                }
+            // Only use overlays where the top coordinate is within a pixel from the top of coverage
+            double pix_off, temp;
+            pix_off = m_bsy * modf(fabs((Y - m_data_window.m_y0) / (Y - y)), &temp);
+            if ((pix_off < 1) || ((m_bsy - pix_off) < 1)) {
+                requests = CSLAddString(requests, request);
+                overview_count++;
             }
-            if ((overview_count == 0) || (m_bsx < 1) || (m_bsy < 1)) {
-                CPLError(ret = CE_Failure, CPLE_AppDefined,
-                    "%s No usable TilePattern elements found", SIG);
-                break;
+            else
+                CPLError(CE_Warning, CPLE_AppDefined, "%s Overlay size %dX%d can't be used due to alignment", SIG, sx, sy);
+
+            Pattern = Pattern->psNext;
+        } // Search for matching TilePattern
+
+        // The tlevel is needed, the tx and ty are not used by this minidriver
+        m_data_window.m_tlevel = 0;
+        m_data_window.m_tx = 0;
+        m_data_window.m_ty = 0;
+
+        // Make sure the parent_dataset values are set before creating the bands
+        m_parent_dataset->WMSSetBlockSize(m_bsx, m_bsy);
+        m_parent_dataset->WMSSetRasterSize(m_data_window.m_sx, m_data_window.m_sy);
+
+        m_parent_dataset->WMSSetDataWindow(m_data_window);
+        //m_parent_dataset->WMSSetOverviewCount(overview_count);
+        m_parent_dataset->WMSSetClamp(false);
+
+        // Ready for the Rasterband creation
+        for (int i = 0; i < overview_count; i++) {
+            CPLString request = GetLowestScale(requests, i);
+            double scale = Scale(request);
+
+            // Base scale should be very close to 1
+            if ((0 == i) && (fabs(scale - 1) > 1e-6))
+                throw CPLOPrintf("%s Base resolution pattern missing", SIG);
+
+            // Prepare the request and insert it back into the list
+            // Find returns an answer relative to the original string start!
+            size_t startBbox = FindBbox(request);
+            size_t endBbox = request.find('&', startBbox);
+            if (endBbox == std::string::npos)
+                endBbox = request.size();
+            request.replace(startBbox, endBbox - startBbox, "${GDAL_BBOX}");
+            requests = CSLInsertString(requests, i, request);
+
+            // Create the Rasterband or overview
+            for (int j = 1; j <= band_count; j++) {
+                if (i != 0)
+                    m_parent_dataset->mGetBand(j)->AddOverview(scale);
+                else { // Base resolution
+                    GDALWMSRasterBand *band = new
+                        GDALWMSRasterBand(m_parent_dataset, j, 1);
+                    if (poColorTable != NULL) band->SetColorInterpretation(GCI_PaletteIndex);
+                    else band->SetColorInterpretation(BandInterp(band_count, j));
+                    m_parent_dataset->mSetBand(j, band);
+                }
             }
         }
+
+        if ((overview_count == 0) || (m_bsx < 1) || (m_bsy < 1))
+            throw CPLOPrintf("%s No usable TilePattern elements found", SIG);
+    }
+    catch (const CPLString &msg) {
+        ret = CE_Failure;
+        CPLError(ret, CPLE_AppDefined, "%s", msg.c_str());
     }
 
     CSLDestroy(keys);
     CSLDestroy(substs);
     if (tileServiceConfig) CPLDestroyXMLNode(tileServiceConfig);
-    if (psResult) CPLHTTPDestroyResult(psResult);
 
     m_requests = requests;
     return ret;
@@ -688,6 +644,6 @@ CPLErr WMSMiniDriver_TiledWMS::TiledImageRequest(
     url += CSLGetField(m_requests, -tiri.m_level);
     URLSearchAndReplace(&url, "${GDAL_BBOX}", "%013.8f,%013.8f,%013.8f,%013.8f",
         iri.m_x0, iri.m_y1, iri.m_x1, iri.m_y0);
-    url += m_end_url;
+//    url += m_end_url;
     return CE_None;
 }

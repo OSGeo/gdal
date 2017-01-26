@@ -126,3 +126,45 @@ int URLSearchAndReplace (CPLString *base, const char *search, const char *fmt, .
     base->replace(start, strlen(search), tmp);
     return static_cast<int>(start);
 }
+
+// Decode s in place from base64 or XMLencoded.  Returns s->c_str() after decoding
+// If encoding is not "base64" or "XMLencoded", does nothing and returns s->c_str()
+const char *WMSUtilDecode(CPLString &s, const char *encoding) {
+    if (encoding == NULL || strlen(encoding) == 0 ||
+        (!EQUAL(encoding, "base64") && !EQUAL(encoding, "XMLencoded")))
+        return s.c_str();
+
+    // During decoding the size shrinks or stays the same, so conversion can be done in place
+    // Use a vector of char since changes in a string are not allowed by standard
+    std::vector<char> buffer(s.begin(), s.end());
+    buffer.push_back('\0');
+
+    if (EQUAL(encoding, "base64")) {
+        CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(buffer.data()));
+    }
+    else { // XMLencoded, copy-decode to buffer
+
+        const char *src = s.c_str();
+        char *dst = buffer.data();
+
+        while (*src) {
+            if (*src == '&') { // One of the five entities or unicode
+
+#define TestReplace(key, val, s, d) (EQUALN(s, key, strlen(key))) { *d++ = val; s += strlen(key); continue; }
+
+                if TestReplace("&quot;", '\"', src, dst)
+                else if TestReplace("&amp;", '&', src, dst)
+                else if TestReplace("&apos;", '\'', src, dst)
+                else if TestReplace("&lt;", '<', src, dst)
+                else if TestReplace("&gt;", '>', src, dst)
+                // likely unicode, fallthrough to straight copy
+            }
+            *dst++ = *src++;
+        }
+        *dst = *src; // Copy the final zero
+    }
+
+    // Put the converted data back in the string and return the C string
+    s = buffer.data();
+    return s.c_str();
+}
