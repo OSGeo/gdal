@@ -184,7 +184,10 @@ char** VRTDataset::GetMetadata( const char *pszDomain )
         /* ------------------------------------------------------------------ */
         /*      Convert tree to a single block of XML text.                   */
         /* ------------------------------------------------------------------ */
-        char *l_pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
+        const char* pszDescription = GetDescription();
+        char *l_pszVRTPath = CPLStrdup(
+            pszDescription[0] && !STARTS_WITH(pszDescription, "<VRTDataset") ?
+                CPLGetPath(pszDescription): "" );
         CPLXMLNode *psDSTree = SerializeToXML( l_pszVRTPath );
         char *pszXML = CPLSerializeXMLTree( psDSTree );
 

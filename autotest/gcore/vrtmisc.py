@@ -528,6 +528,26 @@ def vrtmisc_17():
     return "success"
 
 ###############################################################################
+# Check GetMetadata('xml:VRT') behaviour on a in-memory VRT copied from a VRT
+
+def vrtmisc_18():
+
+    ds = gdal.Open('data/byte.vrt')
+    vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
+    xml_vrt = vrt_ds.GetMetadata('xml:VRT')[0]
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    vrt_ds = None
+
+    if xml_vrt.find('<SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>') < 0:
+        gdaltest.post_reason('fail')
+        print(xml_vrt)
+        return 'fail'
+
+    return "success"
+
+###############################################################################
 # Cleanup.
 
 def vrtmisc_cleanup():
@@ -551,6 +571,7 @@ gdaltest_list = [
     vrtmisc_15,
     vrtmisc_16,
     vrtmisc_17,
+    vrtmisc_18,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':
