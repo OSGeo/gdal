@@ -540,7 +540,8 @@ def vrtmisc_18():
         return 'fail'
     vrt_ds = None
 
-    if xml_vrt.find('<SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>') < 0:
+    if xml_vrt.find('<SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>') < 0 and \
+       xml_vrt.find('<SourceFilename relativeToVRT="1">data\\byte.tif</SourceFilename>') < 0:
         gdaltest.post_reason('fail')
         print(xml_vrt)
         return 'fail'
