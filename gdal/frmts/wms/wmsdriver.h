@@ -36,6 +36,8 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <map>
+#include <utility>
 #include <curl/curl.h>
 
 #include "cpl_conv.h"
@@ -56,6 +58,11 @@ class GDALWMSRasterBand;
 /* -------------------------------------------------------------------- */
 CPLString MD5String(const char *s);
 CPLString ProjToWKT(const CPLString &proj);
+
+// Decode s in place from base64 or XMLencoded.  Returns s->c_str(), after decoding
+// If second param is not "base64" or "XMLencoded", immediately returns s->c_str()
+const char *WMSUtilDecode(CPLString &s, const char *encoding);
+
 // Ensure that the url ends in ? or &
 void URLPrepare(CPLString &url);
 // void URLAppend(CPLString *url, const char *s);
@@ -203,6 +210,7 @@ public:
 // Interface with the global mini driver manager
 WMSMiniDriver *NewWMSMiniDriver(const CPLString &name);
 void WMSRegisterMiniDriverFactory(WMSMiniDriverFactory *mdf);
+void WMSDeregister(GDALDriver *);
 void WMSDeregisterMiniDrivers(GDALDriver *);
 
 /************************************************************************/
@@ -346,6 +354,9 @@ public:
 
     const char * const * GetHTTPRequestOpts();
 
+    static const char *GetServerConfig(const char *URI);
+    static void DestroyConfigCache();
+
 protected:
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer,
                              int bsx, int bsy, GDALDataType bdt,
@@ -394,6 +405,11 @@ protected:
     bool m_bNeedsDataWindow;
 
     CPLString m_osXML;
+
+    // Per session cache of server configurations
+    typedef std::map<CPLString, CPLString> StringMap_t;
+    static CPLMutex *cfgmtx;
+    static StringMap_t cfg;
 };
 
 /************************************************************************/
