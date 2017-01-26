@@ -40,6 +40,13 @@
 #define UNKNOWN_SRID   -2
 #define DEFAULT_SRID    0
 
+typedef enum
+{
+    GPKG_ATTRIBUTES,
+    OGR_ASPATIAL,
+    NOT_REGISTERED,
+} GPKGASpatialVariant;
+
 /************************************************************************/
 /*                          GDALGeoPackageDataset                       */
 /************************************************************************/
@@ -323,7 +330,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     CPLString                   m_osIdentifierLCO;
     CPLString                   m_osDescriptionLCO;
     bool                        m_bHasReadMetadataFromStorage;
-    bool                        m_bRegisterAsAspatial;
+    GPKGASpatialVariant         m_eASPatialVariant;
 
     virtual OGRErr      ResetStatement() override;
 
@@ -382,8 +389,8 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
                                                const char* pszDescription );
     void                SetDeferredSpatialIndexCreation( bool bFlag )
                                 { m_bDeferredSpatialIndexCreation = bFlag; }
-    void                SetRegisterAsAspatial( bool bFlag )
-                                { m_bRegisterAsAspatial = bFlag; }
+    void                SetASpatialVariant( GPKGASpatialVariant eASPatialVariant )
+                                { m_eASPatialVariant = eASPatialVariant; }
 
     void                CreateSpatialIndexIfNecessary();
     bool                CreateSpatialIndex(const char* pszTableName = NULL);

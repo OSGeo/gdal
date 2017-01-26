@@ -111,8 +111,14 @@ The driver implements transactions at the database level, per
 
 The following open options are available:
 <ul>
-<li><b>LIST_ALL_TABLES</b>=YES/NO: (GDAL &gt;=2.2) Whether all tables, including
-those non listed in gpkg_contents, should be listed. Defaults to YES.</li>
+<li><b>LIST_ALL_TABLES</b>=AUTO/YES/NO: (GDAL &gt;=2.2) Whether all tables, including
+those non listed in gpkg_contents, should be listed. Defaults to AUTO.
+If AUTO, all tables including those non linsted in gpkg_contents will be listed,
+except if the aspatial extension is found or a table is registered as 'attributes'
+in gpkg_contents. If YES, all tables including those non linsted in gpkg_contents will be listed,
+in all cases. If NO, only tables registered as 'features', 'attributes' or 'aspatial'
+will be listed.
+</li>
 </ul>
 
 Note: open options are typically specified with "-oo name=value" syntax in
@@ -145,7 +151,18 @@ that exceed the maximum allowed width of text fields, and also to "fix" the pass
 to make it a valid UTF-8 string. If "NO" then the value is not truncated nor modified. The default is "NO".<p>
 <li><b>IDENTIFIER</b>=string: (GDAL &gt;=2.0) Identifier of the layer, as put in the contents table.<p>
 <li><b>DESCRIPTION</b>=string: (GDAL &gt;=2.0) Description of the layer, as put in the contents table.<p>
-<li><b>REGISTER_AS_ASPATIAL</b>=YES/NO: (GDAL &gt;=2.2) Whether non spatial tables should be registered as aspatial in gpkg_contents. Defaults to YES<p>
+<li><b>ASPATIAL_VARIANT</b>=GPKG_ATTRIBUTES/OGR_ASPATIAL/NOT_REGISTERED: (GDAL &gt;=2.2) How to register non spatial tables.
+Defaults to GPKG_ATTRIBUTES in GDAL 2.2 or later (behaviour in previous version
+was equivalent to OGR_ASPATIAL).
+Starting with GeoPackage 1.2, non spatial tables are part of the specification.
+They are recorded with data_type="attributes"
+in the gpkg_contents table. This is only compatible of GDAL 2.2 or later.
+Priorly, in OGR 2.0 and 2.1, the "aspatial" extension had
+been developed for similar purposes, so if selecting OGR_ASPATIAL, non spatial
+tables will be recorded with data_type="aspatial" and the "aspatial" extension
+was declared in the gpkg_extensions table. It is also possible to use the
+NOT_REGISTERED option, in which case the non spatial table is not registered at
+all in any GeoPackage system tables.<p>
 </ul>
 
 <h3>Metadata</h3>
