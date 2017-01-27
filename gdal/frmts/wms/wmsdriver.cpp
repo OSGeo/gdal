@@ -51,7 +51,7 @@ CPL_CVSID("$Id$");
 // A static map holding seen server GetTileService responses, per process
 // It makes opening and reopening rasters from the same server faster
 //
-GDALWMSDataset::StringMap_t* GDALWMSDataset::cfg = NULL;
+GDALWMSDataset::StringMap_t GDALWMSDataset::cfg;
 CPLMutex *GDALWMSDataset::cfgmtx = NULL;
 
 
@@ -952,12 +952,9 @@ const char *GDALWMSDataset::GetServerConfig(const char *URI)
 {
     CPLMutexHolder oHolder(&cfgmtx);
 
-    if( cfg == NULL )
-        cfg = new GDALWMSDataset::StringMap_t();
-
     // Might have it cached already
-    if (cfg->end() != cfg->find(URI))
-        return cfg->find(URI)->second;
+    if (cfg.end() != cfg.find(URI))
+        return cfg.find(URI)->second;
 
     CPLHTTPResult *psResult = CPLHTTPFetch(URI, NULL);
 
@@ -966,27 +963,24 @@ const char *GDALWMSDataset::GetServerConfig(const char *URI)
 
     // Capture the result in buffer, get rid of http result
     if ((psResult->nStatus == 0) && (NULL != psResult->pabyData) && ('\0' != psResult->pabyData[0]))
-        cfg->insert(make_pair(URI, static_cast<CPLString>(reinterpret_cast<const char *>(psResult->pabyData))));
+        cfg.insert(make_pair(URI, static_cast<CPLString>(reinterpret_cast<const char *>(psResult->pabyData))));
 
     CPLHTTPDestroyResult(psResult);
 
-    if (cfg->end() != cfg->find(URI))
-        return cfg->find(URI)->second;
+    if (cfg.end() != cfg.find(URI))
+        return cfg.find(URI)->second;
     else
         return NULL;
 }
 
-/************************************************************************/
-/*                             DestroyConfigMutex()                     */
-/************************************************************************/
-
-// Despite the name, it only empties the cache and removes the mutex
-// It will be created again if needed
-void GDALWMSDataset::DestroyConfigCache() {
+// Empties the server configuration cache and removes the mutex
+void GDALWMSDataset::ClearConfigCache() {
     // Obviously not thread safe, should only be called when no WMS files are being opened
-    if (cfg )
-        delete cfg;
-    cfg = NULL;
+    cfg.clear();
+    DestroyCfgMutex();
+}
+
+void GDALWMSDataset::DestroyCfgMutex() {
     if (cfgmtx)
         CPLDestroyMutex(cfgmtx);
     cfgmtx = NULL;
@@ -1031,8 +1025,7 @@ GDALDataset *GDALWMSDataset::CreateCopy( const char * pszFilename,
 }
 
 void WMSDeregister(GDALDriver *d) {
-    WMSDeregisterMiniDrivers(d);
-    GDALWMSDataset::DestroyConfigCache();
+    GDALWMSDataset::DestroyCfgMutex();
 }
 
 // Define a minidriver factory type, create one and register it
