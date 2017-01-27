@@ -1024,7 +1024,7 @@ GDALDataset *GDALWMSDataset::CreateCopy( const char * pszFilename,
     return Open(&oOpenInfo);
 }
 
-void WMSDeregister(GDALDriver *d) {
+void WMSDeregister(CPL_UNUSED GDALDriver *d) {
     GDALWMSDataset::DestroyCfgMutex();
 }
 
