@@ -210,8 +210,10 @@ public:
 // Interface with the global mini driver manager
 WMSMiniDriver *NewWMSMiniDriver(const CPLString &name);
 void WMSRegisterMiniDriverFactory(WMSMiniDriverFactory *mdf);
-void WMSDeregister(GDALDriver *);
 void WMSDeregisterMiniDrivers(GDALDriver *);
+
+// WARNING: Called by GDALDestructor, unsafe to use any static objects
+void WMSDeregister(GDALDriver *);
 
 /************************************************************************/
 /*                            GDALWMSCache                              */
@@ -355,7 +357,8 @@ public:
     const char * const * GetHTTPRequestOpts();
 
     static const char *GetServerConfig(const char *URI);
-    static void DestroyConfigCache();
+    static void DestroyCfgMutex();
+    static void ClearConfigCache();
 
 protected:
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer,
@@ -409,7 +412,7 @@ protected:
     // Per session cache of server configurations
     typedef std::map<CPLString, CPLString> StringMap_t;
     static CPLMutex *cfgmtx;
-    static StringMap_t *cfg;
+    static StringMap_t cfg;
 };
 
 /************************************************************************/
