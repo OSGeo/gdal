@@ -42,7 +42,8 @@
 
 %fragment("sv_to_utf8_string", "header") %{
     char *sv_to_utf8_string(SV *sv, U8 **tmpbuf) {
-        /* if tmpbuf, only tmpbuf is freed; if not, ret is freed*/
+        /* if tmpbuf is given, only tmpbuf needs to be freed, use Safefree!
+           if not, ret needs to be freed, use free! */
         char *ret;
         if (SvOK(sv)) {
             STRLEN len;
@@ -1019,7 +1020,7 @@
 %typemap(freearg) (char **ignorechange)
 {
     /* %typemap(freearg) (char **ignorechange) */
-    if (tmpbuf$argnum) free(tmpbuf$argnum);
+    if (tmpbuf$argnum) Safefree(tmpbuf$argnum);
 }
 
 /*
@@ -1095,7 +1096,7 @@
 %typemap(freearg) (tostring argin)
 {
     /* %typemap(freearg) (tostring argin) */
-    if (tmpbuf$argnum) free(tmpbuf$argnum);
+    if (tmpbuf$argnum) Safefree(tmpbuf$argnum);
 }
 
 /*
@@ -1524,7 +1525,7 @@ IF_UNDEF_NULL(const char *, target_key)
 %typemap(freearg) (const char* utf8_path)
 {
     /* %typemap(freearg) (const char* utf8_path) */
-    if (tmpbuf$argnum) free(tmpbuf$argnum);
+    if (tmpbuf$argnum) Safefree(tmpbuf$argnum);
 }
 
 %typemap(in, numinputs=1, fragment="sv_to_utf8_string") (const char* layer_name) (U8 *tmpbuf = NULL)
@@ -1535,7 +1536,7 @@ IF_UNDEF_NULL(const char *, target_key)
 %typemap(freearg) (const char* layer_name)
 {
     /* %typemap(freearg) (const char* layer_name) */
-    if (tmpbuf$argnum) free(tmpbuf$argnum);
+    if (tmpbuf$argnum) Safefree(tmpbuf$argnum);
 }
 
 %typemap(in, numinputs=1, fragment="sv_to_utf8_string") (const char* name) (U8 *tmpbuf = NULL)
@@ -1546,7 +1547,7 @@ IF_UNDEF_NULL(const char *, target_key)
 %typemap(freearg) (const char* name)
 {
     /* %typemap(freearg) (const char* name) */
-    if (tmpbuf$argnum) free(tmpbuf$argnum);
+    if (tmpbuf$argnum) Safefree(tmpbuf$argnum);
 }
 
 %typemap(in,numinputs=0) (int *pnBytes) (int bytes)
