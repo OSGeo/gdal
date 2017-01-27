@@ -1540,7 +1540,7 @@ static void CPLShowAccessedOptions()
 {
     std::set<CPLString>::iterator aoIter;
 
-    printf("Configuration options accessed in reading : "), /*ok*/
+    printf("Configuration options accessed in reading : "); /*ok*/
     aoIter = paoGetKeys->begin();
     while( aoIter != paoGetKeys->end() )
     {
