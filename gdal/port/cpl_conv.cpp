@@ -704,7 +704,7 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
             nChunkBytesConsumed = 0;
 
             // fresh read.
-            nChunkBytesRead = VSIFReadL( szChunk, 1, nChunkSize, fp );
+            nChunkBytesRead = VSIFReadL(szChunk, 1, nChunkSize, fp);
             if( nChunkBytesRead == 0 )
             {
                 if( nBufLength == 0 )
@@ -718,7 +718,7 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
 /*      copy over characters watching for end-of-line.                  */
 /* -------------------------------------------------------------------- */
         bool bBreak = false;
-        while( nChunkBytesConsumed < nChunkBytesRead-1 && !bBreak )
+        while( nChunkBytesConsumed < nChunkBytesRead - 1 && !bBreak )
         {
             if( (szChunk[nChunkBytesConsumed] == 13
                  && szChunk[nChunkBytesConsumed+1] == 10)
@@ -777,7 +777,7 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
     {
         const size_t nBytesToPush = nChunkBytesRead - nChunkBytesConsumed;
 
-        if( VSIFSeekL( fp, VSIFTellL(fp) - nBytesToPush, SEEK_SET ) != 0 )
+        if( VSIFSeekL(fp, VSIFTellL(fp) - nBytesToPush, SEEK_SET) != 0 )
             return NULL;
     }
 
@@ -1136,7 +1136,7 @@ double CPLScanDouble( const char *pszString, int nMaxLength )
 /* -------------------------------------------------------------------- */
 /*      Compute string into local buffer, and terminate it.             */
 /* -------------------------------------------------------------------- */
-    strncpy( pszValue, pszString, nMaxLength );
+    strncpy(pszValue, pszString, nMaxLength);
     pszValue[nMaxLength] = '\0';
 
 /* -------------------------------------------------------------------- */
@@ -1149,10 +1149,10 @@ double CPLScanDouble( const char *pszString, int nMaxLength )
 /* -------------------------------------------------------------------- */
 /*      The conversion itself.                                          */
 /* -------------------------------------------------------------------- */
-    const double dfValue = CPLAtof( pszValue );
+    const double dfValue = CPLAtof(pszValue);
 
     if( pszValue != szValue )
-        CPLFree( pszValue );
+        CPLFree(pszValue);
     return dfValue;
 }
 
@@ -1226,7 +1226,7 @@ int CPLPrintStringFill( char *pszDest, const char *pszSrc, int nMaxLen )
 
     if( !pszSrc )
     {
-        memset( pszDest, ' ', nMaxLen );
+        memset(pszDest, ' ', nMaxLen);
         return nMaxLen;
     }
 
@@ -1238,7 +1238,7 @@ int CPLPrintStringFill( char *pszDest, const char *pszSrc, int nMaxLen )
     }
 
     if( nMaxLen )
-        memset( pszTemp, ' ', nMaxLen );
+        memset(pszTemp, ' ', nMaxLen);
 
     return nMaxLen;
 }
@@ -1274,12 +1274,12 @@ int CPLPrintInt32( char *pszBuffer, GInt32 iValue, int nMaxLen )
     char szTemp[64] = {};
 
 #if UINT_MAX == 65535
-    snprintf( szTemp, sizeof(szTemp), "%*ld", nMaxLen, iValue );
+    snprintf(szTemp, sizeof(szTemp), "%*ld", nMaxLen, iValue);
 #else
-    snprintf( szTemp, sizeof(szTemp), "%*d", nMaxLen, iValue );
+    snprintf(szTemp, sizeof(szTemp), "%*d", nMaxLen, iValue);
 #endif
 
-    return CPLPrintString( pszBuffer, szTemp, nMaxLen );
+    return CPLPrintString(pszBuffer, szTemp, nMaxLen);
 }
 
 /************************************************************************/
@@ -1319,17 +1319,17 @@ int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
 #pragma GCC diagnostic ignored "-Wformat"
 #pragma GCC diagnostic ignored "-Wformat-extra-args"
 #endif
-    snprintf( szTemp, sizeof(szTemp), "%*I64u", nMaxLen, iValue );
+    snprintf(szTemp, sizeof(szTemp), "%*I64u", nMaxLen, iValue);
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
-# elif HAVE_LONG_LONG
-    snprintf( szTemp, sizeof(szTemp), "%*llu", nMaxLen, iValue );
+#elif HAVE_LONG_LONG
+    snprintf(szTemp, sizeof(szTemp), "%*llu", nMaxLen, iValue);
 #else
-    snprintf( szTemp, sizeof(szTemp), "%*lu", nMaxLen, iValue );
+    snprintf(szTemp, sizeof(szTemp), "%*lu", nMaxLen, iValue);
 #endif
 
-    return CPLPrintString( pszBuffer, szTemp, nMaxLen );
+    return CPLPrintString(pszBuffer, szTemp, nMaxLen);
 }
 
 /************************************************************************/
@@ -1362,16 +1362,16 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
 
     char szTemp[64] = {};
 
-    snprintf( szTemp, sizeof(szTemp), "%p", pValue );
+    snprintf(szTemp, sizeof(szTemp), "%p", pValue);
 
     // On windows, and possibly some other platforms the sprintf("%p")
     // does not prefix things with 0x so it is hard to know later if the
     // value is hex encoded.  Fix this up here.
 
     if( !STARTS_WITH_CI(szTemp, "0x") )
-        snprintf( szTemp, sizeof(szTemp), "0x%p", pValue );
+        snprintf(szTemp, sizeof(szTemp), "0x%p", pValue);
 
-    return CPLPrintString( pszBuffer, szTemp, nMaxLen );
+    return CPLPrintString(pszBuffer, szTemp, nMaxLen);
 }
 
 /************************************************************************/
@@ -1397,7 +1397,7 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
  */
 
 int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
-                    double dfValue, CPL_UNUSED const char * pszLocale )
+                    double dfValue, CPL_UNUSED const char *pszLocale )
 {
     if( !pszBuffer )
         return 0;
@@ -1405,7 +1405,7 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
     const int double_buffer_size = 64;
     char szTemp[double_buffer_size] = {};
 
-    CPLsnprintf( szTemp, double_buffer_size, pszFormat, dfValue );
+    CPLsnprintf(szTemp, double_buffer_size, pszFormat, dfValue);
     szTemp[double_buffer_size - 1] = '\0';
 
     for( int i = 0; szTemp[i] != '\0'; i++ )
@@ -1457,25 +1457,25 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
 int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
                   const struct tm *poBrokenTime, const char *pszLocale )
 {
-    char *pszTemp = static_cast<char *>(
-        CPLMalloc((nMaxLen + 1) * sizeof(char)));
+    char *pszTemp =
+        static_cast<char *>(CPLMalloc((nMaxLen + 1) * sizeof(char)));
 
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
     char *pszCurLocale = NULL;
 
-    if( pszLocale || EQUAL( pszLocale, "" ) )
+    if( pszLocale || EQUAL(pszLocale, "") )
     {
         // Save the current locale.
-        pszCurLocale = CPLsetlocale(LC_ALL, NULL );
+        pszCurLocale = CPLsetlocale(LC_ALL, NULL);
         // Set locale to the specified value.
-        CPLsetlocale( LC_ALL, pszLocale );
+        CPLsetlocale(LC_ALL, pszLocale);
     }
 #else
-    (void) pszLocale;
+    (void)pszLocale;
 #endif
 
-    if( !strftime( pszTemp, nMaxLen + 1, pszFormat, poBrokenTime ) )
-        memset( pszTemp, 0, nMaxLen + 1);
+    if( !strftime(pszTemp, nMaxLen + 1, pszFormat, poBrokenTime) )
+        memset(pszTemp, 0, nMaxLen + 1);
 
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
     // Restore stored locale back.
@@ -1483,9 +1483,9 @@ int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
         CPLsetlocale( LC_ALL, pszCurLocale );
 #endif
 
-    const int nChars = CPLPrintString( pszBuffer, pszTemp, nMaxLen );
+    const int nChars = CPLPrintString(pszBuffer, pszTemp, nMaxLen);
 
-    CPLFree( pszTemp );
+    CPLFree(pszTemp);
 
     return nChars;
 }
@@ -1507,9 +1507,9 @@ void CPLVerifyConfiguration()
 /* -------------------------------------------------------------------- */
 /*      Verify data types.                                              */
 /* -------------------------------------------------------------------- */
-    CPL_STATIC_ASSERT( sizeof(GInt32) == 4 );
-    CPL_STATIC_ASSERT( sizeof(GInt16) == 2 );
-    CPL_STATIC_ASSERT( sizeof(GByte) == 1 );
+    CPL_STATIC_ASSERT(sizeof(GInt32) == 4);
+    CPL_STATIC_ASSERT(sizeof(GInt16) == 2);
+    CPL_STATIC_ASSERT(sizeof(GByte) == 1);
 
 /* -------------------------------------------------------------------- */
 /*      Verify byte order                                               */
@@ -1517,20 +1517,20 @@ void CPLVerifyConfiguration()
     GInt32   nTest = 1;
 
 #ifdef CPL_LSB
-    if( reinterpret_cast<GByte *>( &nTest )[0] != 1 )
+    if( reinterpret_cast<GByte *>(&nTest)[0] != 1 )
 #endif
 #ifdef CPL_MSB
-    if( reinterpret_cast<GByte *>( &nTest )[3] != 1 )
+    if( reinterpret_cast<GByte *>(&nTest)[3] != 1 )
 #endif
-        CPLError( CE_Fatal, CPLE_AppDefined,
-                  "CPLVerifyConfiguration(): byte order set wrong." );
+        CPLError(CE_Fatal, CPLE_AppDefined,
+                 "CPLVerifyConfiguration(): byte order set wrong.");
 }
 
 #ifdef DEBUG_CONFIG_OPTIONS
 
-static void* hRegisterConfigurationOptionMutex = 0;
-static std::set<CPLString>* paoGetKeys = NULL;
-static std::set<CPLString>* paoSetKeys = NULL;
+static void *hRegisterConfigurationOptionMutex = 0;
+static std::set<CPLString> *paoGetKeys = NULL;
+static std::set<CPLString> *paoSetKeys = NULL;
 
 /************************************************************************/
 /*                      CPLShowAccessedOptions()                        */
@@ -1544,7 +1544,7 @@ static void CPLShowAccessedOptions()
     aoIter = paoGetKeys->begin();
     while( aoIter != paoGetKeys->end() )
     {
-        printf("%s, ", (*aoIter).c_str());/*ok*/
+        printf("%s, ", (*aoIter).c_str()); /*ok*/
         ++aoIter;
     }
     printf("\n");/*ok*/
@@ -1632,19 +1632,19 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 
     int bMemoryError = FALSE;
     char **papszTLConfigOptions = reinterpret_cast<char **>(
-        CPLGetTLSEx( CTLS_CONFIGOPTIONS, &bMemoryError ) );
+        CPLGetTLSEx(CTLS_CONFIGOPTIONS, &bMemoryError));
     if( papszTLConfigOptions != NULL )
-        pszResult = CSLFetchNameValue( papszTLConfigOptions, pszKey );
+        pszResult = CSLFetchNameValue(papszTLConfigOptions, pszKey);
 
     if( pszResult == NULL )
     {
-        CPLMutexHolderD( &hConfigMutex );
+        CPLMutexHolderD(&hConfigMutex);
 
-        pszResult = CSLFetchNameValue( (char **) papszConfigOptions, pszKey );
+        pszResult = CSLFetchNameValue((char **)papszConfigOptions, pszKey);
     }
 
     if( pszResult == NULL )
-        pszResult = getenv( pszKey );
+        pszResult = getenv(pszKey);
 
     if( pszResult == NULL )
         return pszDefault;
@@ -1670,9 +1670,9 @@ CPLGetThreadLocalConfigOption( const char *pszKey, const char *pszDefault )
 
     int bMemoryError = FALSE;
     char **papszTLConfigOptions = reinterpret_cast<char **>(
-        CPLGetTLSEx( CTLS_CONFIGOPTIONS, &bMemoryError ) );
+        CPLGetTLSEx(CTLS_CONFIGOPTIONS, &bMemoryError));
     if( papszTLConfigOptions != NULL )
-        pszResult = CSLFetchNameValue( papszTLConfigOptions, pszKey );
+        pszResult = CSLFetchNameValue(papszTLConfigOptions, pszKey);
 
     if( pszResult == NULL )
         return pszDefault;
@@ -1717,10 +1717,10 @@ CPLSetConfigOption( const char *pszKey, const char *pszValue )
 #ifdef DEBUG_CONFIG_OPTIONS
     CPLAccessConfigOption(pszKey, FALSE);
 #endif
-    CPLMutexHolderD( &hConfigMutex );
+    CPLMutexHolderD(&hConfigMutex);
 
     papszConfigOptions = (volatile char **)
-      CSLSetNameValue( (char **) papszConfigOptions, pszKey, pszValue );
+        CSLSetNameValue((char **)papszConfigOptions, pszKey, pszValue);
 }
 
 /************************************************************************/
@@ -1728,9 +1728,9 @@ CPLSetConfigOption( const char *pszKey, const char *pszValue )
 /************************************************************************/
 
 /* non-stdcall wrapper function for CSLDestroy() (#5590) */
-static void CPLSetThreadLocalTLSFreeFunc( void* pData )
+static void CPLSetThreadLocalTLSFreeFunc( void *pData )
 {
-    CSLDestroy( reinterpret_cast<char**>( pData ) );
+    CSLDestroy(reinterpret_cast<char **>(pData));
 }
 
 /************************************************************************/
@@ -1749,7 +1749,8 @@ static void CPLSetThreadLocalTLSFreeFunc( void* pData )
   *
   * This function can also be used to clear a setting by passing NULL as the
   * value (note: passing NULL will not unset an existing environment variable;
-  * it will just unset a value previously set by CPLSetThreadLocalConfigOption()).
+  * it will just unset a value previously set by
+  * CPLSetThreadLocalConfigOption()).
   *
   * @param pszKey the key of the option
   * @param pszValue the value of the option, or NULL to clear a setting.
@@ -1765,15 +1766,15 @@ CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
 
     int bMemoryError = FALSE;
     char **papszTLConfigOptions = reinterpret_cast<char **>(
-        CPLGetTLSEx( CTLS_CONFIGOPTIONS, &bMemoryError ) );
+        CPLGetTLSEx(CTLS_CONFIGOPTIONS, &bMemoryError));
     if( bMemoryError )
         return;
 
     papszTLConfigOptions =
-        CSLSetNameValue( papszTLConfigOptions, pszKey, pszValue );
+        CSLSetNameValue(papszTLConfigOptions, pszKey, pszValue);
 
-    CPLSetTLSWithFreeFunc( CTLS_CONFIGOPTIONS, papszTLConfigOptions,
-                           CPLSetThreadLocalTLSFreeFunc );
+    CPLSetTLSWithFreeFunc(CTLS_CONFIGOPTIONS, papszTLConfigOptions,
+                          CPLSetThreadLocalTLSFreeFunc);
 }
 
 /************************************************************************/
@@ -1784,21 +1785,21 @@ void CPL_STDCALL CPLFreeConfig()
 
 {
     {
-        CPLMutexHolderD( &hConfigMutex );
+        CPLMutexHolderD(&hConfigMutex);
 
-        CSLDestroy( (char **) papszConfigOptions);
+        CSLDestroy((char **)papszConfigOptions);
         papszConfigOptions = NULL;
 
         int bMemoryError = FALSE;
         char **papszTLConfigOptions = reinterpret_cast<char **>(
-            CPLGetTLSEx( CTLS_CONFIGOPTIONS, &bMemoryError ) );
+            CPLGetTLSEx(CTLS_CONFIGOPTIONS, &bMemoryError));
         if( papszTLConfigOptions != NULL )
         {
-            CSLDestroy( papszTLConfigOptions );
-            CPLSetTLS( CTLS_CONFIGOPTIONS, NULL, FALSE );
+            CSLDestroy(papszTLConfigOptions);
+            CPLSetTLS(CTLS_CONFIGOPTIONS, NULL, FALSE);
         }
     }
-    CPLDestroyMutex( hConfigMutex );
+    CPLDestroyMutex(hConfigMutex);
     hConfigMutex = NULL;
 }
 
@@ -1813,18 +1814,17 @@ int CPLStat( const char *pszPath, VSIStatBuf *psStatBuf )
 {
     if( strlen(pszPath) == 2 && pszPath[1] == ':' )
     {
-        char szAltPath[4] = { pszPath[0], pszPath[1], '\\', '\0' };
-        return VSIStat( szAltPath, psStatBuf );
+        char szAltPath[4] = {pszPath[0], pszPath[1], '\\', '\0'};
+        return VSIStat(szAltPath, psStatBuf);
     }
 
-    return VSIStat( pszPath, psStatBuf );
+    return VSIStat(pszPath, psStatBuf);
 }
 
 /************************************************************************/
 /*                            proj_strtod()                             */
 /************************************************************************/
-static double
-proj_strtod(char *nptr, char **endptr)
+static double proj_strtod(char *nptr, char **endptr)
 
 {
     char c = '\0';
@@ -1854,7 +1854,7 @@ proj_strtod(char *nptr, char **endptr)
 /*                            CPLDMSToDec()                             */
 /************************************************************************/
 
-static const char*sym = "NnEeSsWw";
+static const char *sym = "NnEeSsWw";
 static const double vm[] = { 1.0, 0.0166666666667, 0.00027777778 };
 
 /** CPLDMSToDec */
@@ -1871,20 +1871,21 @@ double CPLDMSToDec( const char *is )
     char work[64] = {};
     char *s = work;
     int n = sizeof(work);
-    for( ;
-         isgraph(*p) && --n; )
+    for( ; isgraph(*p) && --n; )
         *s++ = *p++;
     *s = '\0';
     // It is possible that a really odd input (like lots of leading
     // zeros) could be truncated in copying into work.  But...
     sign = *(s = work);
 
-    if( sign == '+' || sign == '-' ) s++;
-    else sign = '+';
+    if( sign == '+' || sign == '-' )
+        s++;
+    else
+        sign = '+';
 
     int nl = 0;
     double v = 0.0;
-    for( ; nl < 3 ; nl = n + 1 )
+    for( ; nl < 3; nl = n + 1 )
     {
         if( !(isdigit(*s) || *s == '.') ) break;
         const double tv = proj_strtod(s, &s);
@@ -1892,7 +1893,8 @@ double CPLDMSToDec( const char *is )
             return tv;
         switch( *s )
         {
-          case 'D': case 'd':
+          case 'D':
+          case 'd':
             n = 0; break;
           case '\'':
             n = 1; break;
@@ -1940,7 +1942,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
                          int nPrecision )
 
 {
-    VALIDATE_POINTER1( pszAxis, "CPLDecToDMS", "" );
+    VALIDATE_POINTER1(pszAxis, "CPLDecToDMS", "");
 
     if( CPLIsNan(dfAngle) )
         return "Invalid angle";
@@ -1954,7 +1956,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
 
     const int nDegrees = static_cast<int>(dfABSAngle);
     const int nMinutes = static_cast<int>((dfABSAngle - nDegrees) * 60);
-    double dfSeconds = dfABSAngle * 3600 - nDegrees*3600 - nMinutes*60;
+    double dfSeconds = dfABSAngle * 3600 - nDegrees * 3600 - nMinutes * 60;
 
     if( dfSeconds > dfEpsilon * 3600.0 )
         dfSeconds -= dfEpsilon * 3600.0;
@@ -1970,14 +1972,14 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
         pszHemisphere = "N";
 
     char szFormat[30] = {};
-    CPLsnprintf( szFormat, sizeof(szFormat),
-                 "%%3dd%%2d\'%%%d.%df\"%s",
-                 nPrecision+3, nPrecision, pszHemisphere );
+    CPLsnprintf(szFormat, sizeof(szFormat),
+                "%%3dd%%2d\'%%%d.%df\"%s",
+                nPrecision+3, nPrecision, pszHemisphere);
 
     static CPL_THREADLOCAL char szBuffer[50] = { 0 };
-    CPLsnprintf( szBuffer, sizeof(szBuffer),
-                 szFormat,
-                 nDegrees, nMinutes, dfSeconds );
+    CPLsnprintf(szBuffer, sizeof(szBuffer),
+                szFormat,
+                nDegrees, nMinutes, dfSeconds);
 
     return szBuffer;
 }
@@ -2031,14 +2033,14 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
 
 double CPLPackedDMSToDec( double dfPacked )
 {
-    const double dfSign = ( dfPacked < 0.0 )? -1 : 1;
+    const double dfSign = dfPacked < 0.0 ? -1 : 1;
 
-    double dfSeconds = std::abs( dfPacked );
+    double dfSeconds = std::abs(dfPacked);
     double dfDegrees = floor(dfSeconds / 1000000.0);
     dfSeconds -= dfDegrees * 1000000.0;
-    double dfMinutes = floor(dfSeconds / 1000.0);
+    const double dfMinutes = floor(dfSeconds / 1000.0);
     dfSeconds -= dfMinutes * 1000.0;
-    dfSeconds = dfSign * ( dfDegrees * 3600.0 + dfMinutes * 60.0 + dfSeconds);
+    dfSeconds = dfSign * (dfDegrees * 3600.0 + dfMinutes * 60.0 + dfSeconds);
     dfDegrees = dfSeconds / 3600.0;
 
     return dfDegrees;
@@ -2065,12 +2067,12 @@ double CPLPackedDMSToDec( double dfPacked )
 
 double CPLDecToPackedDMS( double dfDec )
 {
-    const double dfSign = ( dfDec < 0.0 ) ? -1 : 1;
+    const double dfSign = dfDec < 0.0 ? -1 : 1;
 
-    dfDec = std::abs( dfDec );
-    const double dfDegrees = floor( dfDec );
-    const double dfMinutes = floor( ( dfDec - dfDegrees ) * 60.0 );
-    const double dfSeconds = ( dfDec - dfDegrees ) * 3600.0 - dfMinutes * 60.0;
+    dfDec = std::abs(dfDec);
+    const double dfDegrees = floor(dfDec);
+    const double dfMinutes = floor((dfDec - dfDegrees) * 60.0);
+    const double dfSeconds = (dfDec - dfDegrees) * 3600.0 - dfMinutes * 60.0;
 
     return dfSign * (dfDegrees * 1000000.0 + dfMinutes * 1000.0 + dfSeconds);
 }
@@ -2146,7 +2148,7 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
                      int bLarge )
 
 {
-    CPLMutexHolderD( &hSharedFileMutex );
+    CPLMutexHolderD(&hSharedFileMutex);
     const GIntBig nPID = CPLGetPID();
 
 /* -------------------------------------------------------------------- */
@@ -2172,9 +2174,9 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
     FILE *fp = NULL;
 
     if( bLarge )
-        fp = reinterpret_cast<FILE *>( VSIFOpenL( pszFilename, pszAccess ) );
+        fp = reinterpret_cast<FILE *>(VSIFOpenL(pszFilename, pszAccess));
     else
-        fp = VSIFOpen( pszFilename, pszAccess );
+        fp = VSIFOpen(pszFilename, pszAccess);
 
     if( fp == NULL )
         return NULL;
@@ -2185,18 +2187,19 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
     nSharedFileCount++;
 
     pasSharedFileList = static_cast<CPLSharedFileInfo *>(
-        CPLRealloc( (void *) pasSharedFileList,
-                    sizeof(CPLSharedFileInfo) * nSharedFileCount ) );
+        CPLRealloc((void *)pasSharedFileList,
+                   sizeof(CPLSharedFileInfo) * nSharedFileCount));
     pasSharedFileListExtra = static_cast<CPLSharedFileInfoExtra *>(
-        CPLRealloc( (void *) pasSharedFileListExtra,
-                    sizeof(CPLSharedFileInfoExtra) * nSharedFileCount ) );
+        CPLRealloc((void *)pasSharedFileListExtra,
+                   sizeof(CPLSharedFileInfoExtra) * nSharedFileCount));
 
-    pasSharedFileList[nSharedFileCount-1].fp = fp;
-    pasSharedFileList[nSharedFileCount-1].nRefCount = 1;
-    pasSharedFileList[nSharedFileCount-1].bLarge = bLarge;
-    pasSharedFileList[nSharedFileCount-1].pszFilename =CPLStrdup(pszFilename);
-    pasSharedFileList[nSharedFileCount-1].pszAccess = CPLStrdup(pszAccess);
-    pasSharedFileListExtra[nSharedFileCount-1].nPID = nPID;
+    pasSharedFileList[nSharedFileCount - 1].fp = fp;
+    pasSharedFileList[nSharedFileCount - 1].nRefCount = 1;
+    pasSharedFileList[nSharedFileCount - 1].bLarge = bLarge;
+    pasSharedFileList[nSharedFileCount - 1].pszFilename =
+        CPLStrdup(pszFilename);
+    pasSharedFileList[nSharedFileCount - 1].pszAccess = CPLStrdup(pszAccess);
+    pasSharedFileListExtra[nSharedFileCount - 1].nPID = nPID;
 
     return fp;
 }
@@ -2218,7 +2221,7 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
 void CPLCloseShared( FILE * fp )
 
 {
-    CPLMutexHolderD( &hSharedFileMutex );
+    CPLMutexHolderD(&hSharedFileMutex);
 
 /* -------------------------------------------------------------------- */
 /*      Search for matching information.                                */
@@ -2228,9 +2231,9 @@ void CPLCloseShared( FILE * fp )
 
     if( i == nSharedFileCount )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to find file handle %p in CPLCloseShared().",
-                  fp );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to find file handle %p in CPLCloseShared().",
+                 fp);
         return;
     }
 
@@ -2245,31 +2248,33 @@ void CPLCloseShared( FILE * fp )
 /* -------------------------------------------------------------------- */
     if( pasSharedFileList[i].bLarge )
     {
-        if( VSIFCloseL( reinterpret_cast<VSILFILE *>( pasSharedFileList[i].fp ) ) != 0 )
+        if( VSIFCloseL(reinterpret_cast<VSILFILE *>(pasSharedFileList[i].fp)) != 0 )
         {
             CPLError(CE_Failure, CPLE_FileIO, "Error while closing %s",
-                     pasSharedFileList[i].pszFilename );
+                     pasSharedFileList[i].pszFilename);
         }
     }
     else
-        VSIFClose( pasSharedFileList[i].fp );
+    {
+        VSIFClose(pasSharedFileList[i].fp);
+    }
 
-    CPLFree( pasSharedFileList[i].pszFilename );
-    CPLFree( pasSharedFileList[i].pszAccess );
+    CPLFree(pasSharedFileList[i].pszFilename);
+    CPLFree(pasSharedFileList[i].pszAccess);
 
     nSharedFileCount--;
-    memmove( (void *) (pasSharedFileList + i),
-             (void *) (pasSharedFileList + nSharedFileCount),
-             sizeof(CPLSharedFileInfo) );
-    memmove( (void *) (pasSharedFileListExtra + i),
-             (void *) (pasSharedFileListExtra + nSharedFileCount),
-             sizeof(CPLSharedFileInfoExtra) );
+    memmove((void *)(pasSharedFileList + i),
+            (void *)(pasSharedFileList + nSharedFileCount),
+            sizeof(CPLSharedFileInfo));
+    memmove((void *)(pasSharedFileListExtra + i),
+            (void *)(pasSharedFileListExtra + nSharedFileCount),
+            sizeof(CPLSharedFileInfoExtra));
 
     if( nSharedFileCount == 0 )
     {
-        CPLFree( (void *) pasSharedFileList );
+        CPLFree((void *)pasSharedFileList);
         pasSharedFileList = NULL;
-        CPLFree( (void *) pasSharedFileListExtra );
+        CPLFree((void *)pasSharedFileListExtra);
         pasSharedFileListExtra = NULL;
     }
 }
@@ -2306,7 +2311,7 @@ CPLSharedFileInfo *CPLGetSharedList( int *pnCount )
     if( pnCount != NULL )
         *pnCount = nSharedFileCount;
 
-    return (CPLSharedFileInfo *) pasSharedFileList;
+    return (CPLSharedFileInfo *)pasSharedFileList;
 }
 
 /************************************************************************/
@@ -2328,26 +2333,26 @@ void CPLDumpSharedList( FILE *fp )
     if( nSharedFileCount > 0 )
     {
         if( fp == NULL )
-            CPLDebug( "CPL", "%d Shared files open.", nSharedFileCount );
+            CPLDebug("CPL", "%d Shared files open.", nSharedFileCount);
         else
-            fprintf( fp, "%d Shared files open.", nSharedFileCount );
+            fprintf(fp, "%d Shared files open.", nSharedFileCount);
     }
 
     for( int i = 0; i < nSharedFileCount; i++ )
     {
         if( fp == NULL )
-            CPLDebug( "CPL",
-                      "%2d %d %4s %s",
-                      pasSharedFileList[i].nRefCount,
-                      pasSharedFileList[i].bLarge,
-                      pasSharedFileList[i].pszAccess,
-                      pasSharedFileList[i].pszFilename );
-        else
-            fprintf( fp, "%2d %d %4s %s",
+            CPLDebug("CPL",
+                     "%2d %d %4s %s",
                      pasSharedFileList[i].nRefCount,
                      pasSharedFileList[i].bLarge,
                      pasSharedFileList[i].pszAccess,
-                     pasSharedFileList[i].pszFilename );
+                     pasSharedFileList[i].pszFilename);
+        else
+            fprintf(fp, "%2d %d %4s %s",
+                    pasSharedFileList[i].nRefCount,
+                    pasSharedFileList[i].bLarge,
+                    pasSharedFileList[i].pszAccess,
+                    pasSharedFileList[i].pszFilename);
     }
 }
 
@@ -2368,11 +2373,11 @@ int CPLUnlinkTree( const char *pszPath )
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
-    if( VSIStatL( pszPath, &sStatBuf ) != 0 )
+    if( VSIStatL(pszPath, &sStatBuf) != 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "It seems no file system object called '%s' exists.",
-                  pszPath );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "It seems no file system object called '%s' exists.",
+                 pszPath);
 
         return -1;
     }
@@ -2380,12 +2385,12 @@ int CPLUnlinkTree( const char *pszPath )
 /* -------------------------------------------------------------------- */
 /*      If it's a simple file, just delete it.                          */
 /* -------------------------------------------------------------------- */
-    if( VSI_ISREG( sStatBuf.st_mode ) )
+    if( VSI_ISREG(sStatBuf.st_mode) )
     {
-        if( VSIUnlink( pszPath ) != 0 )
+        if( VSIUnlink(pszPath) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "Failed to unlink %s.",
-                      pszPath );
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to unlink %s.",
+                     pszPath);
 
             return -1;
         }
@@ -2396,34 +2401,34 @@ int CPLUnlinkTree( const char *pszPath )
 /* -------------------------------------------------------------------- */
 /*      If it is a directory recurse then unlink the directory.         */
 /* -------------------------------------------------------------------- */
-    else if( VSI_ISDIR( sStatBuf.st_mode ) )
+    else if( VSI_ISDIR(sStatBuf.st_mode) )
     {
-        char **papszItems = VSIReadDir( pszPath );
+        char **papszItems = VSIReadDir(pszPath);
 
         for( int i = 0; papszItems != NULL && papszItems[i] != NULL; i++ )
         {
             if( EQUAL(papszItems[i], ".") || EQUAL(papszItems[i], "..") )
                 continue;
 
-            char *pszSubPath = CPLStrdup(
-                CPLFormFilename( pszPath, papszItems[i], NULL ) );
+            char *pszSubPath =
+                CPLStrdup(CPLFormFilename(pszPath, papszItems[i], NULL));
 
-            const int nErr = CPLUnlinkTree( pszSubPath );
-            CPLFree( pszSubPath );
+            const int nErr = CPLUnlinkTree(pszSubPath);
+            CPLFree(pszSubPath);
 
             if( nErr != 0 )
             {
-                CSLDestroy( papszItems );
+                CSLDestroy(papszItems);
                 return nErr;
             }
         }
 
-        CSLDestroy( papszItems );
+        CSLDestroy(papszItems);
 
-        if( VSIRmdir( pszPath ) != 0 )
+        if( VSIRmdir(pszPath) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "Failed to unlink %s.",
-                      pszPath );
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to unlink %s.",
+                     pszPath);
 
             return -1;
         }
@@ -2434,9 +2439,9 @@ int CPLUnlinkTree( const char *pszPath )
 /* -------------------------------------------------------------------- */
 /*      otherwise report an error.                                      */
 /* -------------------------------------------------------------------- */
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "Failed to unlink %s.\nUnrecognised filesystem object.",
-              pszPath );
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "Failed to unlink %s.\nUnrecognised filesystem object.",
+             pszPath);
     return 1000;
 }
 
@@ -2451,14 +2456,14 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 /* -------------------------------------------------------------------- */
 /*      Open old and new file.                                          */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fpOld = VSIFOpenL( pszOldPath, "rb" );
+    VSILFILE *fpOld = VSIFOpenL(pszOldPath, "rb");
     if( fpOld == NULL )
         return -1;
 
-    VSILFILE *fpNew = VSIFOpenL( pszNewPath, "wb" );
+    VSILFILE *fpNew = VSIFOpenL(pszNewPath, "wb");
     if( fpNew == NULL )
     {
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fpOld ));
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpOld));
         return -1;
     }
 
@@ -2469,8 +2474,8 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
     GByte *pabyBuffer = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nBufferSize));
     if( pabyBuffer == NULL )
     {
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fpNew ));
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fpOld ));
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpNew));
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpOld));
         return -1;
     }
 
@@ -2480,23 +2485,23 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
     size_t nBytesRead = 0;
     int nRet = 0;
     do {
-        nBytesRead = VSIFReadL( pabyBuffer, 1, nBufferSize, fpOld );
+        nBytesRead = VSIFReadL(pabyBuffer, 1, nBufferSize, fpOld);
         if( long(nBytesRead) < 0 )
             nRet = -1;
 
         if( nRet == 0
-            && VSIFWriteL( pabyBuffer, 1, nBytesRead, fpNew ) < nBytesRead )
+            && VSIFWriteL(pabyBuffer, 1, nBytesRead, fpNew) < nBytesRead )
             nRet = -1;
     } while( nRet == 0 && nBytesRead == nBufferSize );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    if( VSIFCloseL( fpNew ) != 0 )
+    if( VSIFCloseL(fpNew) != 0 )
         nRet = -1;
-    CPL_IGNORE_RET_VAL(VSIFCloseL( fpOld ));
+    CPL_IGNORE_RET_VAL(VSIFCloseL(fpOld));
 
-    CPLFree( pabyBuffer );
+    CPLFree(pabyBuffer);
 
     return nRet;
 }
@@ -2511,15 +2516,15 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
 {
     VSIStatBufL sStatBuf;
 
-    if( VSIStatL( pszOldPath, &sStatBuf ) != 0 )
+    if( VSIStatL(pszOldPath, &sStatBuf) != 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "It seems no file system object called '%s' exists.",
-                  pszOldPath );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "It seems no file system object called '%s' exists.",
+                 pszOldPath);
 
         return -1;
     }
-    if( VSIStatL( pszNewPath, &sStatBuf ) == 0 )
+    if( VSIStatL(pszNewPath, &sStatBuf) == 0 )
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -2529,18 +2534,18 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
         return -1;
     }
 
-    if( VSI_ISDIR( sStatBuf.st_mode ) )
+    if( VSI_ISDIR(sStatBuf.st_mode) )
     {
-        if( VSIMkdir( pszNewPath, 0755 ) != 0 )
+        if( VSIMkdir(pszNewPath, 0755) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "Cannot create directory '%s'.",
-                    pszNewPath );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create directory '%s'.",
+                     pszNewPath);
 
             return -1;
         }
 
-        char **papszItems = VSIReadDir( pszOldPath );
+        char **papszItems = VSIReadDir(pszOldPath);
 
         for( int i = 0; papszItems != NULL && papszItems[i] != NULL; i++ )
         {
@@ -2548,34 +2553,34 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
                 continue;
 
             char *pszNewSubPath = CPLStrdup(
-                CPLFormFilename( pszNewPath, papszItems[i], NULL ) );
+                CPLFormFilename(pszNewPath, papszItems[i], NULL));
             char *pszOldSubPath = CPLStrdup(
-                CPLFormFilename( pszOldPath, papszItems[i], NULL ) );
+                CPLFormFilename(pszOldPath, papszItems[i], NULL));
 
-            const int nErr = CPLCopyTree( pszNewSubPath, pszOldSubPath );
+            const int nErr = CPLCopyTree(pszNewSubPath, pszOldSubPath);
 
-            CPLFree( pszNewSubPath );
-            CPLFree( pszOldSubPath );
+            CPLFree(pszNewSubPath);
+            CPLFree(pszOldSubPath);
 
             if( nErr != 0 )
             {
-                CSLDestroy( papszItems );
+                CSLDestroy(papszItems);
                 return nErr;
             }
         }
-        CSLDestroy( papszItems );
+        CSLDestroy(papszItems);
 
         return 0;
     }
-    else if( VSI_ISREG( sStatBuf.st_mode ) )
+    else if( VSI_ISREG(sStatBuf.st_mode) )
     {
-        return CPLCopyFile( pszNewPath, pszOldPath );
+        return CPLCopyFile(pszNewPath, pszOldPath);
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unrecognized filesystem object : '%s'.",
-                  pszOldPath );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unrecognized filesystem object : '%s'.",
+                 pszOldPath);
         return -1;
     }
 }
@@ -2588,13 +2593,13 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
 int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 
 {
-    if( VSIRename( pszOldPath, pszNewPath ) == 0 )
+    if( VSIRename(pszOldPath, pszNewPath) == 0 )
         return 0;
 
-    const int nRet = CPLCopyFile( pszNewPath, pszOldPath );
+    const int nRet = CPLCopyFile(pszNewPath, pszOldPath);
 
     if( nRet == 0 )
-        VSIUnlink( pszOldPath );
+        VSIUnlink(pszOldPath);
     return nRet;
 }
 
@@ -2642,7 +2647,7 @@ CPLLocaleC::CPLLocaleC() :
         || EQUAL(pszOldLocale, "POSIX")
         || CPLsetlocale(LC_NUMERIC, "C") == NULL )
     {
-        CPLFree( pszOldLocale );
+        CPLFree(pszOldLocale);
         pszOldLocale = NULL;
     }
 }
@@ -2657,8 +2662,8 @@ CPLLocaleC::~CPLLocaleC()
     if( pszOldLocale == NULL )
         return;
 
-    CPLsetlocale( LC_NUMERIC, pszOldLocale );
-    CPLFree( pszOldLocale );
+    CPLsetlocale(LC_NUMERIC, pszOldLocale);
+    CPLFree(pszOldLocale);
 }
 
 /************************************************************************/
@@ -2684,7 +2689,7 @@ CPLThreadLocaleC::CPLThreadLocaleC()
         || EQUAL(pszOldLocale, "POSIX")
         || CPLsetlocale(LC_NUMERIC, "C") == NULL )
     {
-        CPLFree( pszOldLocale );
+        CPLFree(pszOldLocale);
         pszOldLocale = NULL;
     }
 #endif
@@ -2708,14 +2713,14 @@ CPLThreadLocaleC::~CPLThreadLocaleC()
     if( pszOldLocale != NULL )
     {
         setlocale(LC_NUMERIC, pszOldLocale);
-        CPLFree( pszOldLocale );
+        CPLFree(pszOldLocale);
     }
     _configthreadlocale(nOldValConfigThreadLocale);
 #else
     if( pszOldLocale != NULL )
     {
-        CPLsetlocale( LC_NUMERIC, pszOldLocale );
-        CPLFree( pszOldLocale );
+        CPLsetlocale(LC_NUMERIC, pszOldLocale);
+        CPLFree(pszOldLocale);
     }
 #endif
 
@@ -2750,7 +2755,7 @@ char* CPLsetlocale (int category, const char* locale)
         return pszRet;
 
     // Make it thread-locale storage.
-    return const_cast<char*>( CPLSPrintf("%s", pszRet) );
+    return const_cast<char*>(CPLSPrintf("%s", pszRet));
 }
 
 /************************************************************************/
@@ -2802,14 +2807,14 @@ int CPLCheckForFile( char *pszFilename, char **papszSiblingFiles )
     {
         VSIStatBufL sStatBuf;
 
-        return VSIStatL( pszFilename, &sStatBuf ) == 0;
+        return VSIStatL(pszFilename, &sStatBuf) == 0;
     }
 
 /* -------------------------------------------------------------------- */
 /*      We have sibling files, compare the non-path filename portion    */
 /*      of pszFilename too all entries.                                 */
 /* -------------------------------------------------------------------- */
-    const CPLString osFileOnly = CPLGetFilename( pszFilename );
+    const CPLString osFileOnly = CPLGetFilename(pszFilename);
 
     for( int i = 0; papszSiblingFiles[i] != NULL; i++ )
     {
@@ -2833,13 +2838,12 @@ int CPLCheckForFile( char *pszFilename, char **papszSiblingFiles )
 void *CPLCreateZip( const char *, char ** )
 
 {
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "This GDAL/OGR build does not include zlib and zip services." );
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "This GDAL/OGR build does not include zlib and zip services.");
     return NULL;
 }
 
-CPLErr CPLCreateFileInZip( void *, const char *,
-                           char ** )
+CPLErr CPLCreateFileInZip( void *, const char *, char ** )
 
 {
     return CE_Failure;
