@@ -292,6 +292,10 @@ InputSource* GMLASBaseEntityResolver::resolveEntity(
                                                 const XMLCh* const /*publicId*/,
                                                 const XMLCh* const systemId)
 {
+    // Can happen on things like <xs:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    if( systemId == NULL )
+        return NULL;
+
     CPLString osSystemId(transcode(systemId));
 
     if( osSystemId.find("/gml/2.1.2/") != std::string::npos )
