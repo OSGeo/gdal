@@ -409,7 +409,7 @@ protected:
     // Per session cache of server configurations
     typedef std::map<CPLString, CPLString> StringMap_t;
     static CPLMutex *cfgmtx;
-    static StringMap_t cfg;
+    static StringMap_t *cfg;
 };
 
 /************************************************************************/
