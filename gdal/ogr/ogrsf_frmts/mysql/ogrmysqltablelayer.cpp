@@ -468,8 +468,9 @@ void OGRMySQLTableLayer::BuildWhere()
                 sEnvelope.MinX, sEnvelope.MinY);
 
         snprintf( pszWHERE, nWHERELen,
-                 "WHERE MBRIntersects(GeomFromText('%s'), `%s`)",
+                 "WHERE MBRIntersects(GeomFromText('%s', '%d'), `%s`)",
                  szEnvelope,
+                 nSRSId,
                  pszGeomColumn);
     }
 

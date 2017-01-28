@@ -893,6 +893,9 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
     CPLDebug("MYSQL","Geometry Column Name %s.", pszGeomColumnName);
     CPLDebug("MYSQL","FID Column Name %s.", pszExpectedFIDName);
 
+    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
+    const bool bHasSI = ( eType != wkbNone && (pszSI == NULL || CPLTestBool(pszSI)) );
+
     if( wkbFlatten(eType) == wkbNone )
     {
         osCommand.Printf(
@@ -905,8 +908,9 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
         osCommand.Printf(
                  "CREATE TABLE `%s` ( "
                  "   %s %s UNIQUE NOT NULL AUTO_INCREMENT, "
-                 "   %s GEOMETRY NOT NULL )",
-                 pszLayerName, pszExpectedFIDName, pszFIDType, pszGeomColumnName );
+                 "   %s GEOMETRY %s)",
+                 pszLayerName, pszExpectedFIDName, pszFIDType, pszGeomColumnName,
+                 bHasSI ? "NOT NULL" : "");
     }
 
     if( CSLFetchNameValue( papszOptions, "ENGINE" ) != NULL )
@@ -1027,9 +1031,7 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
 /*      We're doing this before we add geometry and record to the table */
 /*      so this may not be exactly the best way to do it.               */
 /* -------------------------------------------------------------------- */
-    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-
-    if( eType != wkbNone && (pszSI == NULL || CPLTestBool(pszSI)) )
+    if( bHasSI )
     {
         osCommand.Printf(
                  "ALTER TABLE `%s` ADD SPATIAL INDEX(`%s`) ",
