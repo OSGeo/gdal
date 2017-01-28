@@ -234,7 +234,7 @@ GTiff driver:
  * make setting GCPs when geotransform is already set work (with warning about unsetting the geotransform), and vice-versa) (#6751)
  * correctly detect error return of TIFFReadRGBATile() and TIFFReadRGBAStrip()
  * in the YCBCR RGBA interface case, only expose RGB bands, as the alpha is always 255
- * don't check free disk space when outputing to /vsistdout/ (#6768)
+ * don't check free disk space when outputting to /vsistdout/ (#6768)
  * make GetUnitType() use VERT_CS unit as a fallback (#6675)
  * in COPY_SRC_OVERVIEWS=YES mode, set nodata value on overview bands
  * read GCPs in ESRI <GeodataXform> .aux.xml
