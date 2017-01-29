@@ -934,7 +934,7 @@ GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 #elif HAVE_ATOLL
     return atoll(osValue.c_str());
 #else
-    return = atol(osValue.c_str());
+    return atol(osValue.c_str());
 #endif
 }
 
