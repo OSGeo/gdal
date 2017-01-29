@@ -2418,11 +2418,10 @@ int CPLUnlinkTree( const char *pszPath )
             if( EQUAL(papszItems[i], ".") || EQUAL(papszItems[i], "..") )
                 continue;
 
-            char *pszSubPath =
-                CPLStrdup(CPLFormFilename(pszPath, papszItems[i], NULL));
+            const std::string osSubPath =
+                CPLFormFilename(pszPath, papszItems[i], NULL);
 
-            const int nErr = CPLUnlinkTree(pszSubPath);
-            CPLFree(pszSubPath);
+            const int nErr = CPLUnlinkTree(osSubPath.c_str());
 
             if( nErr != 0 )
             {
@@ -2561,15 +2560,14 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
             if( EQUAL(papszItems[i], ".") || EQUAL(papszItems[i], "..") )
                 continue;
 
-            char *pszNewSubPath =
-                CPLStrdup(CPLFormFilename(pszNewPath, papszItems[i], NULL));
-            char *pszOldSubPath =
-                CPLStrdup(CPLFormFilename(pszOldPath, papszItems[i], NULL));
+            const std::string osNewSubPath =
+                CPLFormFilename(pszNewPath, papszItems[i], NULL);
+            const std::string osOldSubPath =
+                CPLFormFilename(pszOldPath, papszItems[i], NULL);
 
-            const int nErr = CPLCopyTree(pszNewSubPath, pszOldSubPath);
+            const int nErr =
+                CPLCopyTree(osNewSubPath.c_str(), osOldSubPath.c_str());
 
-            CPLFree(pszNewSubPath);
-            CPLFree(pszOldSubPath);
 
             if( nErr != 0 )
             {
