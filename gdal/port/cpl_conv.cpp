@@ -2615,22 +2615,16 @@ int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 /************************************************************************/
 
 /** Create a symbolic link */
-int CPLSymlink( const char *
-#ifndef WIN32
-                pszOldPath
-#endif
-                , const char *
-#ifndef WIN32
-                pszNewPath
-#endif
-                , char** /* papszOptions */)
-{
 #ifdef WIN32
-    return -1;
+int CPLSymlink( const char *, const char *, char ** ) { return -1; }
 #else
+int CPLSymlink( const char *pszOldPath,
+                const char *pszNewPath,
+                char** /* papszOptions */ )
+{
     return symlink(pszOldPath, pszNewPath);
-#endif
 }
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
