@@ -1079,13 +1079,16 @@ void *CPLScanPointer( const char *pszString, int nMaxLength )
         void *pResult = NULL;
 
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
+        // cppcheck-suppress invalidscanf
         sscanf(szTemp + 2, "%p", &pResult);
 #else
+        // cppcheck-suppress invalidscanf
         sscanf(szTemp, "%p", &pResult);
 
-        /* Solaris actually behaves like MSVCRT... */
+        // Solaris actually behaves like MSVCRT.
         if( pResult == NULL )
         {
+            // cppcheck-suppress invalidscanf
             sscanf(szTemp + 2, "%p", &pResult);
         }
 #endif
@@ -1637,7 +1640,8 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
     {
         CPLMutexHolderD(&hConfigMutex);
 
-        pszResult = CSLFetchNameValue((char **)papszConfigOptions, pszKey);
+        pszResult =
+            CSLFetchNameValue(const_cast<char **>(papszConfigOptions), pszKey);
     }
 
     if( pszResult == NULL )
@@ -1716,8 +1720,9 @@ CPLSetConfigOption( const char *pszKey, const char *pszValue )
 #endif
     CPLMutexHolderD(&hConfigMutex);
 
-    papszConfigOptions = (volatile char **)
-        CSLSetNameValue((char **)papszConfigOptions, pszKey, pszValue);
+    papszConfigOptions = const_cast<volatile char **>(
+        CSLSetNameValue(
+            const_cast<char **>(papszConfigOptions), pszKey, pszValue));
 }
 
 /************************************************************************/
@@ -1784,7 +1789,7 @@ void CPL_STDCALL CPLFreeConfig()
     {
         CPLMutexHolderD(&hConfigMutex);
 
-        CSLDestroy((char **)papszConfigOptions);
+        CSLDestroy(const_cast<char **>(papszConfigOptions));
         papszConfigOptions = NULL;
 
         int bMemoryError = FALSE;
@@ -2138,16 +2143,17 @@ void CPL_DLL CPLStringToComplex( const char *pszString,
  *
  * @param pszFilename the name of the file to open.
  * @param pszAccess the normal fopen()/VSIFOpen() style access string.
- * @param bLarge If TRUE VSIFOpenL() (for large files) will be used instead of
+ * @param bLargeIn If TRUE VSIFOpenL() (for large files) will be used instead of
  * VSIFOpen().
  *
  * @return a file handle or NULL if opening fails.
  */
 
 FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
-                     int bLarge )
+                     int bLargeIn )
 
 {
+    const bool bLarge = CPL_TO_BOOL(bLargeIn);
     CPLMutexHolderD(&hSharedFileMutex);
     const GIntBig nPID = CPLGetPID();
 
@@ -2171,12 +2177,9 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    FILE *fp = NULL;
-
-    if( bLarge )
-        fp = reinterpret_cast<FILE *>(VSIFOpenL(pszFilename, pszAccess));
-    else
-        fp = VSIFOpen(pszFilename, pszAccess);
+    FILE *fp = bLarge
+        ? reinterpret_cast<FILE *>(VSIFOpenL(pszFilename, pszAccess))
+        : VSIFOpen(pszFilename, pszAccess);
 
     if( fp == NULL )
         return NULL;
@@ -2187,11 +2190,12 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
     nSharedFileCount++;
 
     pasSharedFileList = static_cast<CPLSharedFileInfo *>(
-        CPLRealloc((void *)pasSharedFileList,
+        CPLRealloc(const_cast<CPLSharedFileInfo *>(pasSharedFileList),
                    sizeof(CPLSharedFileInfo) * nSharedFileCount));
     pasSharedFileListExtra = static_cast<CPLSharedFileInfoExtra *>(
-        CPLRealloc((void *)pasSharedFileListExtra,
-                   sizeof(CPLSharedFileInfoExtra) * nSharedFileCount));
+        CPLRealloc(
+            const_cast<CPLSharedFileInfoExtra *>(pasSharedFileListExtra),
+            sizeof(CPLSharedFileInfoExtra) * nSharedFileCount));
 
     pasSharedFileList[nSharedFileCount - 1].fp = fp;
     pasSharedFileList[nSharedFileCount - 1].nRefCount = 1;
@@ -2264,18 +2268,21 @@ void CPLCloseShared( FILE * fp )
     CPLFree(pasSharedFileList[i].pszAccess);
 
     nSharedFileCount--;
-    memmove((void *)(pasSharedFileList + i),
-            (void *)(pasSharedFileList + nSharedFileCount),
-            sizeof(CPLSharedFileInfo));
-    memmove((void *)(pasSharedFileListExtra + i),
-            (void *)(pasSharedFileListExtra + nSharedFileCount),
-            sizeof(CPLSharedFileInfoExtra));
+    memmove(
+        const_cast<CPLSharedFileInfo *>(pasSharedFileList + i),
+        const_cast<CPLSharedFileInfo *>(pasSharedFileList + nSharedFileCount),
+        sizeof(CPLSharedFileInfo));
+    memmove(
+        const_cast<CPLSharedFileInfoExtra *>(pasSharedFileListExtra + i),
+        const_cast<CPLSharedFileInfoExtra *>(pasSharedFileListExtra +
+                                             nSharedFileCount),
+        sizeof(CPLSharedFileInfoExtra));
 
     if( nSharedFileCount == 0 )
     {
-        CPLFree((void *)pasSharedFileList);
+        CPLFree(const_cast<CPLSharedFileInfo *>(pasSharedFileList));
         pasSharedFileList = NULL;
-        CPLFree((void *)pasSharedFileListExtra);
+        CPLFree(const_cast<CPLSharedFileInfoExtra *>(pasSharedFileListExtra));
         pasSharedFileListExtra = NULL;
     }
 }
