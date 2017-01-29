@@ -2843,29 +2843,13 @@ void *CPLCreateZip( const char *, char ** )
     return NULL;
 }
 
-CPLErr CPLCreateFileInZip( void *, const char *, char ** )
+CPLErr CPLCreateFileInZip(void *, const char *, char **) { return CE_Failure; }
 
-{
-    return CE_Failure;
-}
+CPLErr CPLWriteFileInZip(void *, const void *, int) { return CE_Failure; }
 
-CPLErr CPLWriteFileInZip( void *, const void *, int )
+CPLErr CPLCloseFileInZip(void *) { return CE_Failure; }
 
-{
-    return CE_Failure;
-}
-
-CPLErr CPLCloseFileInZip( void * )
-
-{
-    return CE_Failure;
-}
-
-CPLErr CPLCloseZip( void * )
-
-{
-    return CE_Failure;
-}
+CPLErr CPLCloseZip(void *) { return CE_Failure; }
 
 void* CPLZLibDeflate( const void* , size_t , int ,
                       void* , size_t ,
@@ -2876,9 +2860,7 @@ void* CPLZLibDeflate( const void* , size_t , int ,
     return NULL;
 }
 
-void* CPLZLibInflate( const void* , size_t ,
-                      void* , size_t ,
-                      size_t* pnOutBytes )
+void *CPLZLibInflate( const void *, size_t, void *, size_t, size_t *pnOutBytes )
 {
     if( pnOutBytes != NULL )
         *pnOutBytes = 0;
