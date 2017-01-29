@@ -140,12 +140,12 @@ const char *WMSUtilDecode(CPLString &s, const char *encoding) {
     buffer.push_back('\0');
 
     if (EQUAL(encoding, "base64")) {
-        CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(buffer.data()));
+        CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(&buffer[0]));
     }
     else { // XMLencoded, copy-decode to buffer
 
         const char *src = s.c_str();
-        char *dst = buffer.data();
+        char *dst = &buffer[0];
 
         while (*src) {
             if (*src == '&') { // One of the five entities or unicode
@@ -165,6 +165,6 @@ const char *WMSUtilDecode(CPLString &s, const char *encoding) {
     }
 
     // Put the converted data back in the string and return the C string
-    s = buffer.data();
+    s = &buffer[0];
     return s.c_str();
 }
