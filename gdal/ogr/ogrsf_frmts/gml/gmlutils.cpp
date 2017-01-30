@@ -56,10 +56,11 @@ GML_ExtractSrsNameFromGeometry(const CPLXMLNode *const *papsGeometry,
     if (papsGeometry[0] != NULL && papsGeometry[1] == NULL)
     {
         const char *pszSRSName =
-            CPLGetXMLValue((CPLXMLNode*)papsGeometry[0], "srsName", NULL);
+            CPLGetXMLValue(const_cast<CPLXMLNode *>(papsGeometry[0]),
+                           "srsName", NULL);
         if(pszSRSName)
         {
-            int nLen = static_cast<int>(strlen(pszSRSName));
+            const int nLen = static_cast<int>(strlen(pszSRSName));
 
             if(STARTS_WITH(pszSRSName, "EPSG:") && bConsiderEPSGAsURN)
             {
@@ -96,7 +97,7 @@ bool GML_IsSRSLatLongOrder(const char *pszSRSName)
 
     if(STARTS_WITH(pszSRSName, "urn:") && strstr(pszSRSName, ":4326") != NULL)
     {
-        /* Shortcut ... */
+        // Shortcut.
         return true;
     }
     else if( !EQUALN(pszSRSName, "EPSG:", 5) )
@@ -109,10 +110,8 @@ bool GML_IsSRSLatLongOrder(const char *pszSRSName)
         }
         return false;
     }
-    else
-    {
-        return false;
-    }
+
+    return false;
 }
 
 /************************************************************************/
@@ -162,7 +161,8 @@ class SRSCache
         oLastDesc.osSRSName = osSRSName;
         oLastDesc.bAxisInvert = GML_IsSRSLatLongOrder(osSRSName.c_str());
         oLastDesc.poSRS = new OGRSpatialReference();
-        if( oLastDesc.poSRS->SetFromUserInput(osSRSName.c_str()) != OGRERR_NONE )
+        if( oLastDesc.poSRS->SetFromUserInput(osSRSName.c_str()) !=
+            OGRERR_NONE )
         {
             delete oLastDesc.poSRS;
             oLastDesc.poSRS = NULL;
@@ -180,35 +180,39 @@ void *GML_BuildOGRGeometryFromList_CreateCache() { return new SRSCache(); }
 
 void GML_BuildOGRGeometryFromList_DestroyCache(void *hCacheSRS)
 {
-    delete(SRSCache *)hCacheSRS;
+    delete static_cast<SRSCache *>(hCacheSRS);
 }
 
 /************************************************************************/
 /*                 GML_BuildOGRGeometryFromList()                       */
 /************************************************************************/
 
-OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode *const *papsGeometry,
-                                          bool bTryToMakeMultipolygons,
-                                          bool bInvertAxisOrderIfLatLong,
-                                          const char *pszDefaultSRSName,
-                                          bool bConsiderEPSGAsURN,
-                                          GMLSwapCoordinatesEnum eSwapCoordinates,
-                                          int nPseudoBoolGetSecondaryGeometryOption,
-                                          void *hCacheSRS,
-                                          bool bFaceHoleNegative)
+OGRGeometry* GML_BuildOGRGeometryFromList(
+    const CPLXMLNode *const *papsGeometry,
+    bool bTryToMakeMultipolygons,
+    bool bInvertAxisOrderIfLatLong,
+    const char *pszDefaultSRSName,
+    bool bConsiderEPSGAsURN,
+    GMLSwapCoordinatesEnum eSwapCoordinates,
+    int nPseudoBoolGetSecondaryGeometryOption,
+    void *hCacheSRS,
+    bool bFaceHoleNegative)
 {
     OGRGeometry *poGeom = NULL;
     OGRGeometryCollection *poCollection = NULL;
     for( int i = 0; papsGeometry[i] != NULL; i++ )
     {
-        OGRGeometry* poSubGeom = GML2OGRGeometry_XMLNode( papsGeometry[i],
-                                                          nPseudoBoolGetSecondaryGeometryOption,
-                                                          0, 0, false, true,
-                                                          bFaceHoleNegative );
+        OGRGeometry* poSubGeom = GML2OGRGeometry_XMLNode(
+            papsGeometry[i],
+            nPseudoBoolGetSecondaryGeometryOption,
+            0, 0, false, true,
+            bFaceHoleNegative);
         if (poSubGeom)
         {
             if (poGeom == NULL)
+            {
                 poGeom = poSubGeom;
+            }
             else
             {
                 if (poCollection == NULL)
@@ -230,7 +234,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode *const *papsGeometry,
                                 wkbPolygon)
                     {
                         OGRGeometryCollection *poGeomColl =
-                            (OGRGeometryCollection *)poGeom;
+                            static_cast<OGRGeometryCollection *>(poGeom);
                         poGeomColl->addGeometryDirectly(poSubGeom);
                     }
                     else if(bTryToMakeMultipolygons &&
@@ -240,9 +244,9 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode *const *papsGeometry,
                                 wkbMultiPolygon)
                     {
                         OGRGeometryCollection *poGeomColl =
-                            (OGRGeometryCollection *)poGeom;
+                            static_cast<OGRGeometryCollection *>(poGeom);
                         OGRGeometryCollection *poGeomColl2 =
-                            (OGRGeometryCollection *)poSubGeom;
+                            static_cast<OGRGeometryCollection *>(poSubGeom);
                         int nCount = poGeomColl2->getNumGeometries();
                         for(int j = 0; j < nCount; j++)
                         {
@@ -257,13 +261,14 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode *const *papsGeometry,
                     {
                         delete poGeom;
                         delete poSubGeom;
-                        return GML_BuildOGRGeometryFromList(papsGeometry, false,
-                                                            bInvertAxisOrderIfLatLong,
-                                                            pszDefaultSRSName,
-                                                            bConsiderEPSGAsURN,
-                                                            eSwapCoordinates,
-                                                            nPseudoBoolGetSecondaryGeometryOption,
-                                                            hCacheSRS);
+                        return GML_BuildOGRGeometryFromList(
+                            papsGeometry, false,
+                            bInvertAxisOrderIfLatLong,
+                            pszDefaultSRSName,
+                            bConsiderEPSGAsURN,
+                            eSwapCoordinates,
+                            nPseudoBoolGetSecondaryGeometryOption,
+                            hCacheSRS);
                     }
                     else
                     {
@@ -292,7 +297,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode *const *papsGeometry,
 
     if (pszNameLookup != NULL)
     {
-        SRSCache *poSRSCache = (SRSCache *)hCacheSRS;
+        SRSCache *poSRSCache = static_cast<SRSCache *>(hCacheSRS);
         SRSDesc &oSRSDesc = poSRSCache->Get(pszNameLookup);
         poGeom->assignSpatialReference(oSRSDesc.poSRS);
         if( (eSwapCoordinates == GML_SWAP_AUTO &&
@@ -322,10 +327,11 @@ char *GML_GetSRSName(const OGRSpatialReference *poSRS,
     const char *pszAuthCode = poSRS->GetAuthorityCode(pszTarget);
     if( NULL != pszAuthName && NULL != pszAuthCode )
     {
-        if ( EQUAL( pszAuthName, "EPSG" ) &&
+        if( EQUAL( pszAuthName, "EPSG" ) &&
             eSRSNameFormat != SRSNAME_SHORT &&
-            !(((OGRSpatialReference *)poSRS)->EPSGTreatsAsLatLong() ||
-              ((OGRSpatialReference *)poSRS)->EPSGTreatsAsNorthingEasting()))
+            !(const_cast<OGRSpatialReference *>(poSRS)->EPSGTreatsAsLatLong() ||
+              const_cast<OGRSpatialReference *>(poSRS)->
+                  EPSGTreatsAsNorthingEasting()))
         {
             OGRSpatialReference oSRS;
             if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
