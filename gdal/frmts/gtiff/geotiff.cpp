@@ -15495,59 +15495,63 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
-    const int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
     double dfExtraSpaceForOverviews = 0;
-    if( nSrcOverviews != 0 &&
-        CPLFetchBool(papszOptions, "COPY_SRC_OVERVIEWS", false) )
+    if( CPLFetchBool(papszOptions, "COPY_SRC_OVERVIEWS", false) )
     {
-        for( int j = 1; j <= l_nBands; ++j )
+        const int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
+        if( nSrcOverviews )
         {
-            if( poSrcDS->GetRasterBand(j)->GetOverviewCount() != nSrcOverviews )
+            for( int j = 1; j <= l_nBands; ++j )
             {
-                CPLError(
-                    CE_Failure, CPLE_NotSupported,
-                    "COPY_SRC_OVERVIEWS cannot be used when the bands have "
-                    "not the same number of overview levels." );
-                CSLDestroy(papszCreateOptions);
-                return NULL;
+                if( poSrcDS->GetRasterBand(j)->GetOverviewCount() !=
+                                                        nSrcOverviews )
+                {
+                    CPLError(
+                        CE_Failure, CPLE_NotSupported,
+                        "COPY_SRC_OVERVIEWS cannot be used when the bands have "
+                        "not the same number of overview levels." );
+                    CSLDestroy(papszCreateOptions);
+                    return NULL;
+                }
+                for( int i = 0; i < nSrcOverviews; ++i )
+                {
+                    GDALRasterBand* poOvrBand =
+                        poSrcDS->GetRasterBand(j)->GetOverview(i);
+                    if( poOvrBand == NULL )
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_NotSupported,
+                            "COPY_SRC_OVERVIEWS cannot be used when one "
+                            "overview band is NULL." );
+                        CSLDestroy(papszCreateOptions);
+                        return NULL;
+                    }
+                    GDALRasterBand* poOvrFirstBand =
+                        poSrcDS->GetRasterBand(1)->GetOverview(i);
+                    if( poOvrBand->GetXSize() != poOvrFirstBand->GetXSize() ||
+                        poOvrBand->GetYSize() != poOvrFirstBand->GetYSize() )
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_NotSupported,
+                            "COPY_SRC_OVERVIEWS cannot be used when the "
+                            "overview bands have not the same dimensions "
+                            "among bands." );
+                        CSLDestroy(papszCreateOptions);
+                        return NULL;
+                    }
+                }
             }
+
             for( int i = 0; i < nSrcOverviews; ++i )
             {
-                GDALRasterBand* poOvrBand =
-                    poSrcDS->GetRasterBand(j)->GetOverview(i);
-                if( poOvrBand == NULL )
-                {
-                    CPLError(
-                        CE_Failure, CPLE_NotSupported,
-                        "COPY_SRC_OVERVIEWS cannot be used when one "
-                        "overview band is NULL." );
-                    CSLDestroy(papszCreateOptions);
-                    return NULL;
-                }
-                GDALRasterBand* poOvrFirstBand =
-                    poSrcDS->GetRasterBand(1)->GetOverview(i);
-                if( poOvrBand->GetXSize() != poOvrFirstBand->GetXSize() ||
-                    poOvrBand->GetYSize() != poOvrFirstBand->GetYSize() )
-                {
-                    CPLError(
-                        CE_Failure, CPLE_NotSupported,
-                        "COPY_SRC_OVERVIEWS cannot be used when the "
-                        "overview bands have not the same dimensions "
-                        "among bands." );
-                    CSLDestroy(papszCreateOptions);
-                    return NULL;
-                }
+                dfExtraSpaceForOverviews +=
+                    static_cast<double>(
+                      poSrcDS->GetRasterBand(1)->GetOverview(i)->GetXSize() ) *
+                      poSrcDS->GetRasterBand(1)->GetOverview(i)->GetYSize();
             }
+            dfExtraSpaceForOverviews *=
+                                l_nBands * GDALGetDataTypeSizeBytes(eType);
         }
-
-        for( int i = 0; i < nSrcOverviews; ++i )
-        {
-            dfExtraSpaceForOverviews +=
-                static_cast<double>(
-                    poSrcDS->GetRasterBand(1)->GetOverview(i)->GetXSize() ) *
-                poSrcDS->GetRasterBand(1)->GetOverview(i)->GetYSize();
-        }
-        dfExtraSpaceForOverviews *= l_nBands * GDALGetDataTypeSizeBytes(eType);
     }
 
 /* -------------------------------------------------------------------- */
@@ -16283,80 +16287,83 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     double dfCurPixels = 0;
 
     if( eErr == CE_None &&
-        nSrcOverviews != 0 &&
         CPLFetchBool(papszOptions, "COPY_SRC_OVERVIEWS", false) )
     {
-        eErr = poDS->CreateOverviewsFromSrcOverviews(poSrcDS);
-
-        if( poDS->nOverviewCount != nSrcOverviews )
+        const int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
+        if( nSrcOverviews )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Did only manage to instantiate %d overview levels, "
-                      "whereas source contains %d",
-                      poDS->nOverviewCount, nSrcOverviews);
-            eErr = CE_Failure;
-        }
+            eErr = poDS->CreateOverviewsFromSrcOverviews(poSrcDS);
 
-        for( int i = 0; i < nSrcOverviews; ++i )
-        {
-            GDALRasterBand* poOvrBand =
-                poSrcDS->GetRasterBand(1)->GetOverview(i);
-            dfTotalPixels += static_cast<double>(poOvrBand->GetXSize()) *
-                             poOvrBand->GetYSize();
-        }
-
-        char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
-        if( l_nCompression != COMPRESSION_NONE )
-            papszCopyWholeRasterOptions[0] =
-                const_cast<char*>( "COMPRESSED=YES" );
-        // Now copy the imagery.
-        for( int i = 0; eErr == CE_None && i < nSrcOverviews; ++i )
-        {
-            // Begin with the smallest overview.
-            const int iOvrLevel = nSrcOverviews - 1 - i;
-
-            // Create a fake dataset with the source overview level so that
-            // GDALDatasetCopyWholeRaster can cope with it.
-            GDALDataset* poSrcOvrDS =
-                GDALCreateOverviewDataset(poSrcDS, iOvrLevel, TRUE, FALSE);
-
-            GDALRasterBand* poOvrBand =
-                    poSrcDS->GetRasterBand(1)->GetOverview(iOvrLevel);
-            double dfNextCurPixels =
-                dfCurPixels +
-                static_cast<double>(poOvrBand->GetXSize()) *
-                poOvrBand->GetYSize();
-
-            void* pScaledData =
-                GDALCreateScaledProgress( dfCurPixels / dfTotalPixels,
-                                          dfNextCurPixels / dfTotalPixels,
-                                          pfnProgress, pProgressData );
-
-            eErr =
-                GDALDatasetCopyWholeRaster(
-                    (GDALDatasetH) poSrcOvrDS,
-                    (GDALDatasetH) poDS->papoOverviewDS[iOvrLevel],
-                    papszCopyWholeRasterOptions,
-                    GDALScaledProgress, pScaledData );
-
-            dfCurPixels = dfNextCurPixels;
-            GDALDestroyScaledProgress(pScaledData);
-
-            delete poSrcOvrDS;
-            poSrcOvrDS = NULL;
-            poDS->papoOverviewDS[iOvrLevel]->FlushCache();
-
-            // Copy mask of the overview.
-            if( eErr == CE_None && poDS->poMaskDS != NULL )
+            if( poDS->nOverviewCount != nSrcOverviews )
             {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Did only manage to instantiate %d overview levels, "
+                        "whereas source contains %d",
+                        poDS->nOverviewCount, nSrcOverviews);
+                eErr = CE_Failure;
+            }
+
+            for( int i = 0; i < nSrcOverviews; ++i )
+            {
+                GDALRasterBand* poOvrBand =
+                    poSrcDS->GetRasterBand(1)->GetOverview(i);
+                dfTotalPixels += static_cast<double>(poOvrBand->GetXSize()) *
+                                poOvrBand->GetYSize();
+            }
+
+            char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
+            if( l_nCompression != COMPRESSION_NONE )
+                papszCopyWholeRasterOptions[0] =
+                    const_cast<char*>( "COMPRESSED=YES" );
+            // Now copy the imagery.
+            for( int i = 0; eErr == CE_None && i < nSrcOverviews; ++i )
+            {
+                // Begin with the smallest overview.
+                const int iOvrLevel = nSrcOverviews - 1 - i;
+
+                // Create a fake dataset with the source overview level so that
+                // GDALDatasetCopyWholeRaster can cope with it.
+                GDALDataset* poSrcOvrDS =
+                    GDALCreateOverviewDataset(poSrcDS, iOvrLevel, TRUE, FALSE);
+
+                GDALRasterBand* poOvrBand =
+                        poSrcDS->GetRasterBand(1)->GetOverview(iOvrLevel);
+                double dfNextCurPixels =
+                    dfCurPixels +
+                    static_cast<double>(poOvrBand->GetXSize()) *
+                    poOvrBand->GetYSize();
+
+                void* pScaledData =
+                    GDALCreateScaledProgress( dfCurPixels / dfTotalPixels,
+                                            dfNextCurPixels / dfTotalPixels,
+                                            pfnProgress, pProgressData );
+
                 eErr =
-                    GDALRasterBandCopyWholeRaster(
-                        poOvrBand->GetMaskBand(),
-                        poDS->papoOverviewDS[iOvrLevel]->
-                        poMaskDS->GetRasterBand(1),
+                    GDALDatasetCopyWholeRaster(
+                        (GDALDatasetH) poSrcOvrDS,
+                        (GDALDatasetH) poDS->papoOverviewDS[iOvrLevel],
                         papszCopyWholeRasterOptions,
-                        GDALDummyProgress, NULL);
-                poDS->papoOverviewDS[iOvrLevel]->poMaskDS->FlushCache();
+                        GDALScaledProgress, pScaledData );
+
+                dfCurPixels = dfNextCurPixels;
+                GDALDestroyScaledProgress(pScaledData);
+
+                delete poSrcOvrDS;
+                poSrcOvrDS = NULL;
+                poDS->papoOverviewDS[iOvrLevel]->FlushCache();
+
+                // Copy mask of the overview.
+                if( eErr == CE_None && poDS->poMaskDS != NULL )
+                {
+                    eErr =
+                        GDALRasterBandCopyWholeRaster(
+                            poOvrBand->GetMaskBand(),
+                            poDS->papoOverviewDS[iOvrLevel]->
+                            poMaskDS->GetRasterBand(1),
+                            papszCopyWholeRasterOptions,
+                            GDALDummyProgress, NULL);
+                    poDS->papoOverviewDS[iOvrLevel]->poMaskDS->FlushCache();
+                }
             }
         }
     }
