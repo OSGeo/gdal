@@ -445,7 +445,7 @@ def tiff_write_13():
         return 'fail'
 
     if md['LIBTIFF'] == 'INTERNAL':
-        if size > 22804:
+        if size > 22816:
             gdaltest.post_reason('fail: bad size')
             print(size)
             return 'fail'
