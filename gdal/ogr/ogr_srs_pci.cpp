@@ -209,8 +209,11 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 {
     Clear();
 
-    if( pszProj == NULL || CPLStrnlen(pszProj, knProjSize) < knProjSize )
+    if( pszProj == NULL ||
+        CPLStrnlen(pszProj, knProjSize) < static_cast<size_t>(knProjSize) )
+    {
         return OGRERR_CORRUPT_DATA;
+    }
 
     CPLDebug( "OSR_PCI", "Trying to import projection \"%s\"", pszProj );
 
