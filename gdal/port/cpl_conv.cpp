@@ -1865,7 +1865,7 @@ double CPLDMSToDec( const char *is )
 {
     int sign = 0;
 
-    // Copy sting into work space.
+    // Copy string into work space.
     while( isspace(static_cast<unsigned char>(sign = *is)) )
         ++is;
 
@@ -2319,7 +2319,7 @@ CPLSharedFileInfo *CPLGetSharedList( int *pnCount )
     if( pnCount != NULL )
         *pnCount = nSharedFileCount;
 
-    return (CPLSharedFileInfo *)pasSharedFileList;
+    return const_cast<CPLSharedFileInfo *>(pasSharedFileList);
 }
 
 /************************************************************************/
