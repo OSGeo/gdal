@@ -80,9 +80,10 @@ void GMLXercesHandler::startElement( const XMLCh* const /*uri*/,
 
     transcode(localname, m_osElement);
 
-    if( GMLHandler::startElement(m_osElement.c_str(),
-                                 static_cast<int>(m_osElement.size()),
-                                 (void*) &attrs) == OGRERR_NOT_ENOUGH_MEMORY )
+    if( GMLHandler::startElement(
+            m_osElement.c_str(),
+            static_cast<int>(m_osElement.size()),
+            const_cast<Attributes *>(&attrs)) == OGRERR_NOT_ENOUGH_MEMORY )
     {
         throw SAXNotSupportedException("Out of memory");
     }
@@ -191,10 +192,11 @@ CPLXMLNode* GMLXercesHandler::AddAttributes(CPLXMLNode* psNode, void* attr)
 
     for(unsigned int i=0; i < attrs->getLength(); i++)
     {
-        transcode( attrs->getQName(i), m_osAttrName );
-        transcode( attrs->getValue(i), m_osAttrValue );
+        transcode(attrs->getQName(i), m_osAttrName);
+        transcode(attrs->getValue(i), m_osAttrValue);
 
-        CPLXMLNode* psChild = CPLCreateXMLNode(NULL, CXT_Attribute, m_osAttrName.c_str());
+        CPLXMLNode* psChild =
+            CPLCreateXMLNode(NULL, CXT_Attribute, m_osAttrName.c_str());
         CPLCreateXMLNode(psChild, CXT_Text, m_osAttrValue.c_str() );
 
         if (psLastChild == NULL)
@@ -217,11 +219,11 @@ char* GMLXercesHandler::GetAttributeValue( void* attr,
     const Attributes* attrs = static_cast<const Attributes *>(attr);
     for( unsigned int i=0; i < attrs->getLength(); i++ )
     {
-        transcode( attrs->getQName(i), m_osAttrName );
-        if (strcmp(m_osAttrName.c_str(), pszAttributeName) == 0)
+        transcode(attrs->getQName(i), m_osAttrName);
+        if (m_osAttrName == pszAttributeName)
         {
-            transcode( attrs->getValue(i), m_osAttrValue );
-            return CPLStrdup( m_osAttrValue );
+            transcode(attrs->getValue(i), m_osAttrValue);
+            return CPLStrdup(m_osAttrValue);
         }
     }
     return NULL;
@@ -240,8 +242,8 @@ char* GMLXercesHandler::GetAttributeByIdx( void* attr, unsigned int idx,
         *ppszKey = NULL;
         return NULL;
     }
-    transcode( attrs->getQName(idx), m_osAttrName );
-    transcode( attrs->getValue(idx), m_osAttrValue );
+    transcode(attrs->getQName(idx), m_osAttrName);
+    transcode(attrs->getValue(idx), m_osAttrValue);
 
     *ppszKey = CPLStrdup( m_osAttrName );
     return CPLStrdup( m_osAttrValue );
@@ -266,7 +268,8 @@ GMLExpatHandler::GMLExpatHandler( GMLReader *poReader, XML_Parser oParser ) :
 /*                           startElementCbk()                          */
 /************************************************************************/
 
-void XMLCALL GMLExpatHandler::startElementCbk( void *pUserData, const char *pszName,
+void XMLCALL GMLExpatHandler::startElementCbk( void *pUserData,
+                                               const char *pszName,
                                                const char **ppszAttr )
 
 {
@@ -315,7 +318,8 @@ void XMLCALL GMLExpatHandler::endElementCbk( void *pUserData,
 /*                            dataHandlerCbk()                          */
 /************************************************************************/
 
-void XMLCALL GMLExpatHandler::dataHandlerCbk(void *pUserData, const char *data, int nLen)
+void XMLCALL
+GMLExpatHandler::dataHandlerCbk(void *pUserData, const char *data, int nLen)
 
 {
     GMLExpatHandler* pThis = static_cast<GMLExpatHandler *>(pUserData);
@@ -353,7 +357,7 @@ void XMLCALL GMLExpatHandler::dataHandlerCbk(void *pUserData, const char *data, 
 
 const char* GMLExpatHandler::GetFID(void* attr)
 {
-    const char** papszIter = (const char** )attr;
+    const char** papszIter = (const char**)attr;
     while(*papszIter)
     {
         if (strcmp(*papszIter, "fid") == 0 ||
@@ -372,13 +376,14 @@ const char* GMLExpatHandler::GetFID(void* attr)
 
 CPLXMLNode* GMLExpatHandler::AddAttributes(CPLXMLNode* psNode, void* attr)
 {
-    const char** papszIter = (const char** )attr;
+    const char** papszIter = static_cast<const char **>(attr);
 
     CPLXMLNode* psLastChild = NULL;
 
     while(*papszIter)
     {
-        CPLXMLNode* psChild = CPLCreateXMLNode(NULL, CXT_Attribute, papszIter[0]);
+        CPLXMLNode* psChild =
+            CPLCreateXMLNode(NULL, CXT_Attribute, papszIter[0]);
         CPLCreateXMLNode(psChild, CXT_Text, papszIter[1]);
 
         if (psLastChild == NULL)
@@ -397,7 +402,8 @@ CPLXMLNode* GMLExpatHandler::AddAttributes(CPLXMLNode* psNode, void* attr)
 /*                    GetAttributeValue()                               */
 /************************************************************************/
 
-char* GMLExpatHandler::GetAttributeValue(void* attr, const char* pszAttributeName)
+char *
+GMLExpatHandler::GetAttributeValue(void* attr, const char* pszAttributeName)
 {
     const char** papszIter = (const char** )attr;
     while(*papszIter)
@@ -415,9 +421,10 @@ char* GMLExpatHandler::GetAttributeValue(void* attr, const char* pszAttributeNam
 /*                    GetAttributeByIdx()                               */
 /************************************************************************/
 
-/* CAUTION: should be called with increasing idx starting from 0 and */
-/* no attempt to read beyond end of list */
-char* GMLExpatHandler::GetAttributeByIdx(void* attr, unsigned int idx, char** ppszKey)
+// CAUTION: should be called with increasing idx starting from 0 and
+// no attempt to read beyond end of list.
+char *
+GMLExpatHandler::GetAttributeByIdx(void* attr, unsigned int idx, char** ppszKey)
 {
     const char** papszIter = (const char** )attr;
     if( papszIter[2 * idx] == NULL )
@@ -462,8 +469,9 @@ static const char* const apszGMLGeometryElements[] =
     "TriangulatedSurface"
 };
 
-#define GML_GEOMETRY_TYPE_COUNT  \
-    (int)(sizeof(apszGMLGeometryElements) / sizeof(apszGMLGeometryElements[0]))
+#define GML_GEOMETRY_TYPE_COUNT \
+    static_cast<int>(sizeof(apszGMLGeometryElements) / \
+                     sizeof(apszGMLGeometryElements[0]))
 
 struct _GeometryNamesStruct {
     unsigned long nHash;
@@ -946,7 +954,9 @@ bool GMLHandler::IsConditionMatched(const char* pszCondition, void* attr)
     if( bSyntaxError )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Invalid condition : %s. Must be of the form @attrname[!]='attrvalue' [and|or other_cond]*. 'and' and 'or' operators cannot be mixed",
+                 "Invalid condition : %s. Must be of the form "
+                 "@attrname[!]='attrvalue' [and|or other_cond]*. "
+                 "'and' and 'or' operators cannot be mixed",
                  pszCondition);
         return false;
     }
@@ -954,8 +964,9 @@ bool GMLHandler::IsConditionMatched(const char* pszCondition, void* attr)
     char* pszVal = GetAttributeValue(attr, osCondAttr);
     if( pszVal == NULL )
         pszVal = CPLStrdup("");
-    bool bCondMet = ((bOpEqual && strcmp(pszVal, osCondVal) == 0 ) ||
-                    (!bOpEqual && strcmp(pszVal, osCondVal) != 0 ));
+    const bool bCondMet =
+        (bOpEqual && strcmp(pszVal, osCondVal) == 0) ||
+        (!bOpEqual && strcmp(pszVal, osCondVal) != 0);
     CPLFree(pszVal);
     if( *pszIter == '\0' )
         return bCondMet;
