@@ -177,7 +177,7 @@ def test_no_error_when_bad_lc_ctype_but_bad_content():
     if sys.version_info[0] >= 3:
         return 'skip'
 
-    lc_ctype_current = os.environ['LC_CTYPE']
+    lc_ctype_current = os.environ.get('LC_CTYPE', "")
     os.environ['LC_CTYPE'] = "fr_FR.latin-1"
 
     ret =  _test_utf8(should_raise_unicode=False, content_ok=False)

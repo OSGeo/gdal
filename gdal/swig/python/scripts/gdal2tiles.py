@@ -651,8 +651,15 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
         # KML generation
         self.kml = self.options.kml
 
-        # Output the results
+        # LC_CTYPE check
+        if 'UTF-8' not in os.environ.get("LC_CTYPE", ""):
+            if not self.options.quiet:
+                print("\nWARNING: "
+                      "You are running gdal2tiles.py with a LC_CTYPE environment variable that is "
+                      "not UTF-8 compatible. The generated sample googlemaps, openlayers or "
+                      "leaflet files might contain some invalid characters as a result\n")
 
+        # Output the results
         if self.options.verbose:
             print("Options:", self.options)
             print("Input:", self.input)
