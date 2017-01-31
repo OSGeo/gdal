@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gmlreaderp.h"
 #include "gmlreader.h"
 #include "cpl_error.h"
