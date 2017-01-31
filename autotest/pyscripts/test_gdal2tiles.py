@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
 import shutil
 
@@ -165,11 +166,89 @@ def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
     return 'success'
 
 
+def test_python2_handles_utf8_by_default():
+    if sys.version_info[0] >= 3:
+        return 'skip'
+
+    return _test_utf8(should_raise_unicode=False)
+
+
+def test_no_error_when_bad_lc_ctype_but_bad_content():
+    if sys.version_info[0] >= 3:
+        return 'skip'
+
+    lc_ctype_current = os.environ['LC_CTYPE']
+    os.environ['LC_CTYPE'] = "fr_FR.latin-1"
+
+    ret =  _test_utf8(should_raise_unicode=False, content_ok=False)
+
+    os.environ['LC_CTYPE'] = lc_ctype_current
+
+    return ret
+
+
+def test_python3_handle_utf8_by_default():
+    if sys.version_info[0] < 3:
+        return 'skip'
+
+    return _test_utf8(should_raise_unicode=False)
+
+
+def _test_utf8(should_raise_unicode=False, content_ok=True):
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        return 'skip'
+
+    in_file = "data/test_utf8_漢字.vrt"
+    out_folder = 'tmp/utf8_test'
+
+    try:
+        shutil.rmtree(out_folder)
+    except:
+        pass
+
+    args = '-q -z 21 %s %s' % (in_file, out_folder)
+
+    try:
+        test_py_scripts.run_py_script(script_path, 'gdal2tiles', args)
+    except UnicodeEncodeError:
+        if should_raise_unicode:
+            return 'success'
+        else:
+            gdaltest.post_reason(
+                'Should be handling filenames with utf8 characters in this context')
+            return 'fail'
+
+    if should_raise_unicode:
+        gdaltest.post_reason(
+            'Should not be handling filenames with utf8 characters in this context')
+        return 'fail'
+    else:
+        return 'success'
+
+    with open(os.path.join(out_folder, "googlemaps.html")) as f:
+        html_content = f.read()
+        found_content = in_file in html_content
+        if content_ok and not found_content:
+            gdaltest.post_reason(
+                "The filename should be properly written in the googlemaps.html output")
+            return 'fail'
+        if not content_ok and found_content:
+            gdaltest.post_reason(
+                "The filename should not be properly written in the googlemaps.html output")
+            return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [
     test_gdal2tiles_py_1,
     test_gdal2tiles_py_2,
     test_does_not_error_when_source_bounds_close_to_tiles_bound,
     test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile,
+    test_python3_handle_utf8_by_default,
+    test_python2_handles_utf8_by_default,
+    test_no_error_when_bad_lc_ctype_but_bad_content,
     test_gdal2tiles_py_cleanup,
     ]
 

@@ -1104,22 +1104,22 @@ gdal2tiles temp.vrt""" % self.input )
             # Generate googlemaps.html
             if self.options.webviewer in ('all','google') and self.options.profile == 'mercator':
                 if not self.options.resume or not os.path.exists(os.path.join(self.output, 'googlemaps.html')):
-                    f = open(os.path.join(self.output, 'googlemaps.html'), 'w')
-                    f.write( self.generate_googlemaps() )
+                    f = open(os.path.join(self.output, 'googlemaps.html'), 'wb')
+                    f.write( self.generate_googlemaps().encode('utf-8') )
                     f.close()
 
             # Generate openlayers.html
             if self.options.webviewer in ('all','openlayers'):
                 if not self.options.resume or not os.path.exists(os.path.join(self.output, 'openlayers.html')):
-                    f = open(os.path.join(self.output, 'openlayers.html'), 'w')
-                    f.write( self.generate_openlayers() )
+                    f = open(os.path.join(self.output, 'openlayers.html'), 'wb')
+                    f.write( self.generate_openlayers().encode('utf-8') )
                     f.close()
 
             # Generate leaflet.html
             if self.options.webviewer in ('all','leaflet'):
                 if not self.options.resume or not os.path.exists(os.path.join(self.output, 'leaflet.html')):
-                    f = open(os.path.join(self.output, 'leaflet.html'), 'w')
-                    f.write( self.generate_leaflet() )
+                    f = open(os.path.join(self.output, 'leaflet.html'), 'wb')
+                    f.write( self.generate_leaflet().encode('utf-8') )
                     f.close()
 
         elif self.options.profile == 'geodetic':
@@ -1133,8 +1133,8 @@ gdal2tiles temp.vrt""" % self.input )
             # Generate openlayers.html
             if self.options.webviewer in ('all','openlayers'):
                 if not self.options.resume or not os.path.exists(os.path.join(self.output, 'openlayers.html')):
-                    f = open(os.path.join(self.output, 'openlayers.html'), 'w')
-                    f.write( self.generate_openlayers() )
+                    f = open(os.path.join(self.output, 'openlayers.html'), 'wb')
+                    f.write( self.generate_openlayers().encode('utf-8') )
                     f.close()
 
         elif self.options.profile == 'raster':
@@ -1147,15 +1147,15 @@ gdal2tiles temp.vrt""" % self.input )
             # Generate openlayers.html
             if self.options.webviewer in ('all','openlayers'):
                 if not self.options.resume or not os.path.exists(os.path.join(self.output, 'openlayers.html')):
-                    f = open(os.path.join(self.output, 'openlayers.html'), 'w')
-                    f.write( self.generate_openlayers() )
+                    f = open(os.path.join(self.output, 'openlayers.html'), 'wb')
+                    f.write(self.generate_openlayers().encode('utf-8'))
                     f.close()
 
 
         # Generate tilemapresource.xml.
         if not self.options.resume or not os.path.exists(os.path.join(self.output, 'tilemapresource.xml')):
-            f = open(os.path.join(self.output, 'tilemapresource.xml'), 'w')
-            f.write( self.generate_tilemapresource())
+            f = open(os.path.join(self.output, 'tilemapresource.xml'), 'wb')
+            f.write( self.generate_tilemapresource().encode('utf-8') )
             f.close()
 
         if self.kml:
@@ -1169,8 +1169,8 @@ gdal2tiles temp.vrt""" % self.input )
             # Generate Root KML
             if self.kml:
                 if not self.options.resume or not os.path.exists(os.path.join(self.output, 'doc.kml')):
-                    f = open(os.path.join(self.output, 'doc.kml'), 'w')
-                    f.write( self.generate_kml( None, None, None, children) )
+                    f = open(os.path.join(self.output, 'doc.kml'), 'wb')
+                    f.write( self.generate_kml( None, None, None, children).encode('utf-8') )
                     f.close()
 
     # -------------------------------------------------------------------------
@@ -1336,8 +1336,8 @@ gdal2tiles temp.vrt""" % self.input )
                 if self.kml:
                     kmlfilename = os.path.join(self.output, str(tz), str(tx), '%d.kml' % ty)
                     if not self.options.resume or not os.path.exists(kmlfilename):
-                        f = open( kmlfilename, 'w')
-                        f.write( self.generate_kml( tx, ty, tz ))
+                        f = open( kmlfilename, 'wb')
+                        f.write(self.generate_kml( tx, ty, tz ).encode('utf-8'))
                         f.close()
 
                 if not self.options.verbose and not self.options.quiet:
@@ -1431,8 +1431,8 @@ gdal2tiles temp.vrt""" % self.input )
 
                     # Create a KML file for this tile.
                     if self.kml:
-                        f = open( os.path.join(self.output, '%d/%d/%d.kml' % (tz, tx, ty)), 'w')
-                        f.write( self.generate_kml( tx, ty, tz, children ) )
+                        f = open( os.path.join(self.output, '%d/%d/%d.kml' % (tz, tx, ty)), 'wb')
+                        f.write( self.generate_kml( tx, ty, tz, children ).encode('utf-8') )
                         f.close()
 
                     if not self.options.verbose and not self.options.quiet:
