@@ -145,6 +145,13 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                                                                 "MINISBLACK",
                               pszJPEGQuality,
                               pszJPEGTablesMode );
+
+        if( nPhotometric == PHOTOMETRIC_YCBCR )
+        {
+            // Explicitly register the subsampling so that JPEGFixupTags
+            // is a no-op (helps for cloud optimized geotiffs)
+            TIFFSetField( hTIFF, TIFFTAG_YCBCRSUBSAMPLING, 2, 2 );
+        }
     }
 
 /* -------------------------------------------------------------------- */
