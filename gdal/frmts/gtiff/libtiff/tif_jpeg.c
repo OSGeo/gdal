@@ -697,9 +697,11 @@ static int
 JPEGFixupTags(TIFF* tif)
 {
 #ifdef CHECK_JPEG_YCBCR_SUBSAMPLING
+        JPEGState* sp = JState(tif);
 	if ((tif->tif_dir.td_photometric==PHOTOMETRIC_YCBCR)&&
 	    (tif->tif_dir.td_planarconfig==PLANARCONFIG_CONTIG)&&
-	    (tif->tif_dir.td_samplesperpixel==3))
+	    (tif->tif_dir.td_samplesperpixel==3) &&
+            !sp->ycbcrsampling_fetched)
 		JPEGFixupTagsSubsampling(tif);
 #endif
         
