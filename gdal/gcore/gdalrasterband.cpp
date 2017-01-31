@@ -595,11 +595,11 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
  * \brief Read a block of data.
  *
  * Default internal implementation ... to be overridden by
- * subclasses that support writing.
+ * subclasses that support reading.
  * @param nBlockXOff Block X Offset
  * @param nBlockYOff Block Y Offset
- * @param pData Pixel buffer to write
- * @return error code.
+ * @param pData Pixel buffer into which to place read data.
+ * @return CE_None on success or CE_Failure on an error.
  */
 
 /************************************************************************/
@@ -615,7 +615,7 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
  * @param nBlockXOff Block X Offset
  * @param nBlockYOff Block Y Offset
  * @param pData Pixel buffer to write
- * @return error code.
+ * @return CE_None on success or CE_Failure on an error.
  */
 
 /**/
