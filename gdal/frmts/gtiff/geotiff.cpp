@@ -14528,6 +14528,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
             TIFFSetField( l_hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_YCBCR );
             nSamplesAccountedFor = 3;
+
+            // Explicitly register the subsampling so that JPEGFixupTags
+            // is a no-op (helps for cloud optimized geotiffs)
+            TIFFSetField( l_hTIFF, TIFFTAG_YCBCRSUBSAMPLING, 2, 2 );
         }
         else if( EQUAL( pszValue, "CIELAB" ))
         {
