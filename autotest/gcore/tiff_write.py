@@ -35,6 +35,7 @@ import shutil
 from osgeo import osr
 
 sys.path.append( '../pymod' )
+sys.path.append('../../gdal/swig/python/samples')
 
 import gdaltest
 
@@ -3570,6 +3571,13 @@ def tiff_write_87():
     data_main = int(ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
 
     ds = None
+
+    import validate_cloud_optimized_geotiff
+    try:
+        validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled = False)
+    except:
+        gdaltest.post_reason('validate_cloud_optimized_geotiff failed')
+        return 'fail'
 
     gdaltest.tiff_drv.Delete( 'tmp/tiff_write_87_src.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/tiff_write_87_dst.tif' )
