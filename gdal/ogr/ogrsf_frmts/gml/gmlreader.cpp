@@ -27,10 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifdef DEBUG_BOOL
-#define DO_NOT_USE_DEBUG_BOOL
-#endif
-
 #include "cpl_port.h"
 
 #include "gmlreaderp.h"
