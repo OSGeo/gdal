@@ -572,6 +572,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
     {
         int nLength = 0;
         GIntBig *panFIDs = NULL;
+        nFIDCount = 0;
 
         for( int iIN = 1; iIN < psExpr->nSubExprCount; iIN++ )
         {
@@ -607,7 +608,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
                 return NULL;
             }
 
-            int nFIDCount32 = 0;
+            int nFIDCount32 = static_cast<int>(nFIDCount);
             panFIDs = poIndex->GetAllMatches( &sValue, panFIDs,
                                               &nFIDCount32, &nLength );
             nFIDCount = nFIDCount32;
