@@ -2842,6 +2842,41 @@ def ogr_gpkg_39():
     return 'success'
 
 ###############################################################################
+# Test tables without integer primary key (#6799), and unrecognized column type
+
+def ogr_gpkg_41():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_41.gpkg')
+    ds.ExecuteSQL('CREATE TABLE foo (mycol VARCHAR_ILLEGAL)')
+    ds.ExecuteSQL("INSERT INTO foo VALUES ('myval')")
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_41.gpkg')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['mycol'] != 'myval' or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_41.gpkg')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetFeature(1)
+    if f['mycol'] != 'myval' or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_41.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -2900,6 +2935,7 @@ gdaltest_list = [
     ogr_gpkg_37,
     ogr_gpkg_38,
     ogr_gpkg_39,
+    ogr_gpkg_41,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
