@@ -195,7 +195,7 @@ class OGRGMLDataSource : public OGRDataSource
     bool                IsGML3DeegreeOutput() const { return bIsOutputGML3Deegree; }
     bool                IsGML32Output() const { return bIsOutputGML32; }
     OGRGMLSRSNameFormat GetSRSNameFormat() const { return eSRSNameFormat; }
-    int                 WriteSpaceIndentation() const { return bWriteSpaceIndentation; }
+    bool                WriteSpaceIndentation() const { return bWriteSpaceIndentation; }
     const char         *GetGlobalSRSName();
 
     bool                GetInvertAxisOrderIfLatLong() const { return m_bInvertAxisOrderIfLatLong; }
