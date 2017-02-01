@@ -716,7 +716,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         OGRBoolean bFid = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord);
         OGRFieldSubType eSubType;
         int nMaxWidth = 0;
-        const OGRFieldType oType = GPkgFieldToOGR(pszType, eSubType, nMaxWidth);
+        OGRFieldType oType = GPkgFieldToOGR(pszType, eSubType, nMaxWidth);
 
         /* Not a standard field type... */
         if ( (oType > OFTMaxType && !osGeomColsType.empty() ) || EQUAL(osGeomColumnName, pszName) )
@@ -774,6 +774,15 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         }
         else
         {
+            if( oType > OFTMaxType )
+            {
+                CPLDebug("GPKG",
+                         "For table %s, unrecognized type name %s for "
+                         "column %s. Using string type",
+                         m_pszTableName, pszType, pszName);
+                oType = OFTString;
+            }
+
             /* Is this the FID column? */
             if ( bFid && (oType == OFTInteger || oType == OFTInteger64) )
             {
@@ -1557,10 +1566,6 @@ OGRFeature* OGRGeoPackageTableLayer::GetNextFeature()
 
 OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
 {
-    /* No FID, no answer. */
-    if (nFID == OGRNullFID || m_pszFidColumn == NULL )
-        return NULL;
-
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return NULL;
 
@@ -1574,7 +1579,7 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
     soSQL.Printf("SELECT %s FROM \"%s\" WHERE \"%s\" = " CPL_FRMT_GIB,
                  m_soColumns.c_str(),
                  SQLEscapeDoubleQuote(m_pszTableName).c_str(),
-                 SQLEscapeDoubleQuote(m_pszFidColumn).c_str(), nFID);
+                 m_pszFidColumn ? SQLEscapeDoubleQuote(m_pszFidColumn).c_str() : "_rowid_", nFID);
 
     int err = sqlite3_prepare(m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
     if ( err != SQLITE_OK )
