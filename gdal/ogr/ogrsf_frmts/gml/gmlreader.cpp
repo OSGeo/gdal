@@ -28,18 +28,21 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
-
 #include "gmlreaderp.h"
 #include "gmlreader.h"
+
+#include <climits>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
+#include <string>
+
+#include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "gmlutils.h"
-#include "cpl_conv.h"
-#include <map>
-#include "cpl_multiproc.h"
 #include "ogr_geometry.h"
-
-#include <algorithm>
 
 CPL_CVSID("$Id$");
 
