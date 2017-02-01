@@ -1183,6 +1183,25 @@ def ogr_geojson_25():
         return 'fail'
     ds = None
 
+    ds = ogr.Open('data/topojson3.topojson')
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'a_layer':
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (0 0,10 0,0 10,10 0,0 0)') != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    lyr = ds.GetLayer(1)
+    if lyr.GetName() != 'TopoJSON':
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat, 'LINESTRING (0 0,10 0,0 10,10 0,0 0)') != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
     return 'success'
 
 ###############################################################################

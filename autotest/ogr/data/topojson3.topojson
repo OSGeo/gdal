@@ -1,0 +1,11 @@
+{
+"type":"Topology",
+"arcs": [
+[[0.0, 0.0], [10, 0], [0, 10]]
+],
+"objects": {
+"a_layer" : {"type": "GeometryCollection", "geometries" : [ {"type": "LineString", "arcs": [0, -1] } ] },
+"foo" : {"type": "LineString", "arcs": [0, -1], "id" : "1" }
+}
+}
+
