@@ -41,14 +41,14 @@
 #include <vector>
 
 #include "cpl_conv.h"
-#include "cpl_string.h"
 #include "cpl_http.h"
+#include "cpl_string.h"
 #include "cpl_vsi_error.h"
-#include "gmlutils.h"
-#include "gmlregistry.h"
 #include "gmlreaderp.h"
-#include "parsexsd.h"
+#include "gmlregistry.h"
+#include "gmlutils.h"
 #include "ogr_p.h"
+#include "parsexsd.h"
 
 CPL_CVSID("$Id$");
 
@@ -56,14 +56,14 @@ CPL_CVSID("$Id$");
 /*                   ReplaceSpaceByPct20IfNeeded()                      */
 /************************************************************************/
 
-static CPLString ReplaceSpaceByPct20IfNeeded(const char* pszURL)
+static CPLString ReplaceSpaceByPct20IfNeeded(const char *pszURL)
 {
     // Replace ' ' by '%20'.
     CPLString osRet = pszURL;
-    const char* pszNeedle = strstr(pszURL, "; ");
+    const char *pszNeedle = strstr(pszURL, "; ");
     if (pszNeedle)
     {
-        char* pszTmp = static_cast<char*>(CPLMalloc(strlen(pszURL) + 2 + 1));
+        char *pszTmp = static_cast<char *>(CPLMalloc(strlen(pszURL) + 2 + 1));
         const int nBeforeNeedle = static_cast<int>(pszNeedle - pszURL);
         memcpy(pszTmp, pszURL, nBeforeNeedle);
         strcpy(pszTmp + nBeforeNeedle, ";%20");
@@ -125,7 +125,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
         if( nLayers == 0 )
             WriteTopElements();
 
-        const char* pszPrefix = GetAppPrefix();
+        const char *pszPrefix = GetAppPrefix();
         if( RemoveAppPrefix() )
             PrintLine(fpOutput, "</FeatureCollection>");
         else
@@ -146,7 +146,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
             if (bWriteGlobalSRS && sBoundingRect.IsInit()  && IsGML3Output())
             {
                 bool bCoordSwap = false;
-                char* pszSRSName = NULL;
+                char *pszSRSName = NULL;
                 if (poWriteGlobalSRS)
                     pszSRSName = GML_GetSRSName(
                         poWriteGlobalSRS, eSRSNameFormat, &bCoordSwap);
@@ -179,7 +179,8 @@ OGRGMLDataSource::~OGRGMLDataSource()
                     "<gml:boundedBy><gml:Envelope%s%s><gml:lowerCorner>%s"
                     "</gml:lowerCorner><gml:upperCorner>%s</gml:upperCorner>"
                     "</gml:Envelope></gml:boundedBy>",
-                    bBBOX3D ? " srsDimension=\"3\"" : "", pszSRSName, szLowerCorner, szUpperCorner);
+                    bBBOX3D ? " srsDimension=\"3\"" : "", pszSRSName,
+                    szLowerCorner, szUpperCorner);
                 CPLFree(pszSRSName);
             }
             else if (bWriteGlobalSRS && sBoundingRect.IsInit())
@@ -222,9 +223,11 @@ OGRGMLDataSource::~OGRGMLDataSource()
                 if (bWriteSpaceIndentation)
                     VSIFPrintfL(fpOutput, "  ");
                 if (IsGML3Output())
-                    PrintLine(fpOutput, "<gml:boundedBy><gml:Null /></gml:boundedBy>");
+                    PrintLine(fpOutput,
+                              "<gml:boundedBy><gml:Null /></gml:boundedBy>");
                 else
-                    PrintLine(fpOutput, "<gml:boundedBy><gml:null>missing</gml:null></gml:boundedBy>");
+                    PrintLine(fpOutput,
+                              "<gml:boundedBy><gml:null>missing</gml:null></gml:boundedBy>");
             }
         }
 
@@ -260,7 +263,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
 /*                            CheckHeader()                             */
 /************************************************************************/
 
-bool OGRGMLDataSource::CheckHeader(const char* pszStr)
+bool OGRGMLDataSource::CheckHeader(const char *pszStr)
 {
     if( strstr(pszStr, "opengis.net/gml") == NULL &&
         strstr(pszStr, "<csw:GetRecordsResponse") == NULL )
@@ -269,9 +272,9 @@ bool OGRGMLDataSource::CheckHeader(const char* pszStr)
     }
 
     // Ignore .xsd schemas.
-    if( strstr(pszStr, "<schema") != NULL
-        || strstr(pszStr, "<xs:schema") != NULL
-        || strstr(pszStr, "<xsd:schema") != NULL )
+    if( strstr(pszStr, "<schema") != NULL ||
+        strstr(pszStr, "<xs:schema") != NULL ||
+        strstr(pszStr, "<xsd:schema") != NULL )
     {
         return false;
     }
@@ -310,18 +313,18 @@ bool OGRGMLDataSource::CheckHeader(const char* pszStr)
 /*                          ExtractSRSName()                            */
 /************************************************************************/
 
-static bool ExtractSRSName(const char* pszXML, char* szSRSName,
+static bool ExtractSRSName(const char *pszXML, char *szSRSName,
                            size_t sizeof_szSRSName)
 {
     szSRSName[0] = '\0';
 
-    const char* pszSRSName = strstr(pszXML, "srsName=\"");
+    const char *pszSRSName = strstr(pszXML, "srsName=\"");
     if( pszSRSName != NULL )
     {
         pszSRSName += 9;
-        const char* pszEndQuote = strchr(pszSRSName, '"');
+        const char *pszEndQuote = strchr(pszSRSName, '"');
         if (pszEndQuote != NULL &&
-            (size_t)(pszEndQuote - pszSRSName) < sizeof_szSRSName)
+            static_cast<size_t>(pszEndQuote - pszSRSName) < sizeof_szSRSName)
         {
             memcpy(szSRSName, pszSRSName, pszEndQuote - pszSRSName);
             szSRSName[pszEndQuote - pszSRSName] = '\0';
@@ -335,11 +338,11 @@ static bool ExtractSRSName(const char* pszXML, char* szSRSName,
 /*                                Open()                                */
 /************************************************************************/
 
-bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
+bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
 
 {
-    GIntBig     nNumberOfFeatures = 0;
-    CPLString   osWithVsiGzip;
+    GIntBig nNumberOfFeatures = 0;
+    CPLString osWithVsiGzip;
     const char *pszSchemaLocation = NULL;
     bool bCheckAuxFile = true;
 
@@ -352,14 +355,17 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         osXSDFilename = pszXSDFilenameTmp + strlen(",xsd=");
     }
     else
-        osXSDFilename = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "XSD", "");
+    {
+        osXSDFilename =
+            CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "XSD", "");
+    }
 
     const char *pszFilename = osFilename.c_str();
 
     pszName = CPLStrdup(poOpenInfo->pszFilename);
 
     // Open the source file.
-    VSILFILE* fpToClose = NULL;
+    VSILFILE *fpToClose = NULL;
     VSILFILE *fp = NULL;
     if( poOpenInfo->fpL != NULL )
     {
@@ -379,11 +385,9 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     bool bHintConsiderEPSGAsURN = false;
     bool bAnalyzeSRSPerFeature = true;
 
-
     // Load a header chunk and check for signs it is GML.
-
     char szHeader[4096] = {};
-    size_t nRead = VSIFReadL(szHeader, 1, sizeof(szHeader)-1, fp);
+    size_t nRead = VSIFReadL(szHeader, 1, sizeof(szHeader) - 1, fp);
     if (nRead == 0)
     {
         if( fpToClose )
@@ -425,26 +429,28 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     // Add BOM detection for other encodings.
 
     // Used to skip to actual beginning of XML data
-    char* szPtr = szHeader;
+    char *szPtr = szHeader;
 
-    if( ((unsigned char)szHeader[0] == 0xEF)
-        && ((unsigned char)szHeader[1] == 0xBB)
-        && ((unsigned char)szHeader[2] == 0xBF) )
+    if( (static_cast<unsigned char>(szHeader[0]) == 0xEF) &&
+        (static_cast<unsigned char>(szHeader[1]) == 0xBB) &&
+        (static_cast<unsigned char>(szHeader[2]) == 0xBF) )
     {
         szPtr += 3;
     }
 
-    const char* pszEncoding = strstr(szPtr, "encoding=");
+    const char *pszEncoding = strstr(szPtr, "encoding=");
     if (pszEncoding)
-        bExpatCompatibleEncoding = (pszEncoding[9] == '\'' || pszEncoding[9] == '"') &&
-                                    (STARTS_WITH_CI(pszEncoding + 10, "UTF-8") ||
-                                    STARTS_WITH_CI(pszEncoding + 10, "ISO-8859-15") ||
-                                    (STARTS_WITH_CI(pszEncoding + 10, "ISO-8859-1") &&
-                                        pszEncoding[20] == pszEncoding[9])) ;
+        bExpatCompatibleEncoding =
+            (pszEncoding[9] == '\'' || pszEncoding[9] == '"') &&
+            (STARTS_WITH_CI(pszEncoding + 10, "UTF-8") ||
+             STARTS_WITH_CI(pszEncoding + 10, "ISO-8859-15") ||
+             (STARTS_WITH_CI(pszEncoding + 10, "ISO-8859-1") &&
+              pszEncoding[20] == pszEncoding[9]));
     else
         bExpatCompatibleEncoding = true;  // utf-8 is the default.
 
-    bHas3D = strstr(szPtr, "srsDimension=\"3\"") != NULL || strstr(szPtr, "<gml:Z>") != NULL;
+    bHas3D = strstr(szPtr, "srsDimension=\"3\"") != NULL ||
+             strstr(szPtr, "<gml:Z>") != NULL;
 
     // Here, we expect the opening chevrons of GML tree root element.
     if( szPtr[0] != '<' || !CheckHeader(szPtr) )
@@ -461,7 +467,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     // Small optimization: if we parse a <wfs:FeatureCollection> and
     // that numberOfFeatures is set, we can use it to set the FeatureCount
     // but *ONLY* if there's just one class.
-    const char* pszFeatureCollection = strstr(szPtr, "wfs:FeatureCollection");
+    const char *pszFeatureCollection = strstr(szPtr, "wfs:FeatureCollection");
     if (pszFeatureCollection == NULL)
         // GML 3.2.1 output.
         pszFeatureCollection = strstr(szPtr, "gml:FeatureCollection");
@@ -469,29 +475,33 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     {
         // Deegree WFS 1.0.0 output.
         pszFeatureCollection = strstr(szPtr, "<FeatureCollection");
-        if (pszFeatureCollection && strstr(szPtr, "xmlns:wfs=\"http://www.opengis.net/wfs\"") == NULL)
+        if (pszFeatureCollection &&
+            strstr(szPtr, "xmlns:wfs=\"http://www.opengis.net/wfs\"") == NULL)
             pszFeatureCollection = NULL;
     }
     if (pszFeatureCollection)
     {
         bExposeGMLId = true;
         bIsWFS = true;
-        const char* pszNumberOfFeatures = strstr(szPtr, "numberOfFeatures=");
+        const char *pszNumberOfFeatures = strstr(szPtr, "numberOfFeatures=");
         if (pszNumberOfFeatures)
         {
             pszNumberOfFeatures += 17;
             char ch = pszNumberOfFeatures[0];
-            if ((ch == '\'' || ch == '"') && strchr(pszNumberOfFeatures + 1, ch) != NULL)
+            if ((ch == '\'' || ch == '"') &&
+                strchr(pszNumberOfFeatures + 1, ch) != NULL)
             {
                 nNumberOfFeatures = CPLAtoGIntBig(pszNumberOfFeatures + 1);
             }
         }
-        else if ((pszNumberOfFeatures = strstr(szPtr, "numberReturned=")) != NULL)
+        else if ((pszNumberOfFeatures = strstr(szPtr, "numberReturned=")) !=
+                 NULL)
         {
             // WFS 2.0.0
             pszNumberOfFeatures += 15;
             char ch = pszNumberOfFeatures[0];
-            if ((ch == '\'' || ch == '"') && strchr(pszNumberOfFeatures + 1, ch) != NULL)
+            if ((ch == '\'' || ch == '"') &&
+                strchr(pszNumberOfFeatures + 1, ch) != NULL)
             {
                 // 'unknown' might be a valid value in a corrected version of
                 // WFS 2.0 but it will also evaluate to 0, that is considered as
@@ -850,7 +860,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             if( oRegistry.Parse() )
             {
                 CPLString osHeader(szHeader);
-                for( size_t iNS = 0; iNS < oRegistry.aoNamespaces.size(); iNS ++ )
+                for( size_t iNS = 0; iNS < oRegistry.aoNamespaces.size(); iNS++ )
                 {
                     GMLRegistryNamespace& oNamespace = oRegistry.aoNamespaces[iNS];
                     const char* pszNSToFind =
@@ -1074,7 +1084,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                             const char* pszTypeName = *papszIter;
                             if (strcmp(pszTypeName, poClass->GetName()) == 0)
                                 bAddClass = true;
-                            papszIter ++;
+                            papszIter++;
                         }
 
                         // Retry by removing prefixes.
@@ -1094,7 +1104,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                         bAddClass = true;
                                     }
                                 }
-                                papszIter ++;
+                                papszIter++;
                             }
                         }
                     }
@@ -1348,7 +1358,8 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
         size_t iPos = osPrefixClass.find('.');
         if( iPos != std::string::npos )
             osPrefixClass.resize(iPos);
-        aapoGeomProps.push_back(std::pair<CPLString, std::vector<GMLGeometryPropertyDefn *>>
+        // Need to leave a space between > > for -Werror=c++0x-compat.
+        aapoGeomProps.push_back(std::pair<CPLString, std::vector<GMLGeometryPropertyDefn *> >
                 (osPrefixClass, std::vector<GMLGeometryPropertyDefn*>()));
         for( int iField = 0;
              iField < static_cast<int>(aapoProps[iSubClass].size());
@@ -1381,7 +1392,7 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
     }
     poClass->StealGeometryProperties();
     for( int iSubClass = 0; iSubClass < static_cast<int>(aapoGeomProps.size());
-         iSubClass ++ )
+         iSubClass++ )
     {
         for( int iField = 0;
              iField < static_cast<int>(aapoGeomProps[iSubClass].second.size());
@@ -2517,7 +2528,7 @@ OGRFeature * OGRGMLSingleFeatureLayer::GetNextFeature()
 
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
     poFeature->SetField(0, nVal);
-    poFeature->SetFID(iNextShapeId ++);
+    poFeature->SetFID(iNextShapeId++);
     return poFeature;
 }
 
@@ -2575,7 +2586,7 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE* fp)
 
         if (pszStartTag != NULL)
         {
-            pszStartTag ++;
+            pszStartTag++;
             const char* pszEndTag = strchr(pszStartTag, ' ');
             if (pszEndTag != NULL && pszEndTag - pszStartTag < 128 )
             {
@@ -2609,7 +2620,7 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE* fp)
         l_pszName = strchr(l_pszName, '>');
     if( l_pszName )
     {
-        l_pszName ++;
+        l_pszName++;
         const char* pszEndName = strstr(l_pszName, "</gml:name>");
         if( pszEndName )
         {
