@@ -145,7 +145,7 @@ def RATValuesIONumPyRead(*args, **kwargs):
   return _gdal_array.RATValuesIONumPyRead(*args, **kwargs)
 RATValuesIONumPyRead = _gdal_array.RATValuesIONumPyRead
 import numpy
-import _gdal_array
+from . import _gdal_array
 
 import gdalconst
 import gdal
