@@ -159,7 +159,7 @@ def RATValuesIONumPyRead(poRAT, nField, nStart, nLength):
     return _gdal_array.RATValuesIONumPyRead(poRAT, nField, nStart, nLength)
 
 import numpy
-import _gdal_array
+from . import _gdal_array
 
 import gdalconst
 import gdal
