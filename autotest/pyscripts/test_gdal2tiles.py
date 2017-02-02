@@ -36,8 +36,8 @@ import shutil
 sys.path.append('../pymod')
 
 from osgeo import gdal      # noqa
-import gdaltest             # noqa
-import test_py_scripts      # noqa
+import gdaltest             # noqa  # pylint: disable=E0401
+import test_py_scripts      # noqa  # pylint: disable=E0401
 
 
 def test_gdal2tiles_py_1():
@@ -99,7 +99,7 @@ def test_gdal2tiles_py_cleanup():
     for filename in lst:
         try:
             shutil.rmtree(filename)
-        except:
+        except Exception:
             pass
 
     return 'success'
@@ -116,7 +116,7 @@ def test_does_not_error_when_source_bounds_close_to_tiles_bound():
     out_folder = 'tmp/out_gdal2tiles_bounds_approx'
     try:
         shutil.rmtree(out_folder)
-    except:
+    except Exception:
         pass
 
     script_path = test_py_scripts.get_py_script('gdal2tiles')
