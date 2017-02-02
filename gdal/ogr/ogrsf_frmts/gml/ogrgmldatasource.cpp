@@ -149,7 +149,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
                 char *pszSRSName = poWriteGlobalSRS
                     ? GML_GetSRSName(
                         poWriteGlobalSRS, eSRSNameFormat, &bCoordSwap)
-                    : pszSRSName = CPLStrdup("");
+                    : CPLStrdup("");
                 char szLowerCorner[75] = {};
                 char szUpperCorner[75] = {};
                 if (bCoordSwap)
