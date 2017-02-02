@@ -3661,6 +3661,10 @@ char **NITFDataset::GetFileList()
 {
     char **papszFileList = GDALPamDataset::GetFileList();
 
+    // Small optimization to avoid useless file probing.
+    if( CSLCount(papszFileList) == 0 )
+        return papszFileList;
+
 /* -------------------------------------------------------------------- */
 /*      Check for .imd file.                                            */
 /* -------------------------------------------------------------------- */
