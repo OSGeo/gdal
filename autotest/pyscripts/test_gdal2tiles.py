@@ -33,25 +33,26 @@ import os
 import sys
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
-from osgeo import gdal
-import gdaltest
-import test_py_scripts
+from osgeo import gdal      # noqa
+import gdaltest             # noqa
+import test_py_scripts      # noqa
 
-###############################################################################
-# Simple test
 
 def test_gdal2tiles_py_1():
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
         return 'skip'
 
-    test_py_scripts.run_py_script(script_path, 'gdal2tiles', '-q ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+    test_py_scripts.run_py_script(
+        script_path,
+        'gdal2tiles',
+        '-q ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/0/0/0.png')
 
-    expected_cs = [ 25314, 28114, 6148, 59026 ]
+    expected_cs = [25314, 28114, 6148, 59026]
     for i in range(4):
         if ds.GetRasterBand(i+1).Checksum() != expected_cs[i]:
             gdaltest.post_reason('wrong checksum for band %d' % (i+1))
@@ -63,8 +64,6 @@ def test_gdal2tiles_py_1():
 
     return 'success'
 
-###############################################################################
-# Test -z option
 
 def test_gdal2tiles_py_2():
 
@@ -74,11 +73,14 @@ def test_gdal2tiles_py_2():
 
     shutil.rmtree('tmp/out_gdal2tiles_smallworld')
 
-    test_py_scripts.run_py_script(script_path, 'gdal2tiles', '-q -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+    test_py_scripts.run_py_script(
+        script_path,
+        'gdal2tiles',
+        '-q -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/1/0/0.png')
 
-    expected_cs = [ 8130, 10496, 65274, 63715 ]
+    expected_cs = [8130, 10496, 65274, 63715]
     for i in range(4):
         if ds.GetRasterBand(i+1).Checksum() != expected_cs[i]:
             gdaltest.post_reason('wrong checksum for band %d' % (i+1))
@@ -93,7 +95,7 @@ def test_gdal2tiles_py_2():
 
 def test_gdal2tiles_py_cleanup():
 
-    lst = [ 'tmp/out_gdal2tiles_smallworld', 'tmp/out_gdal2tiles_bounds_approx' ]
+    lst = ['tmp/out_gdal2tiles_smallworld', 'tmp/out_gdal2tiles_bounds_approx']
     for filename in lst:
         try:
             shutil.rmtree(filename)
@@ -290,8 +292,6 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdal2tiles_py' )
-
-    gdaltest.run_tests( gdaltest_list )
-
+    gdaltest.setup_run('test_gdal2tiles_py')
+    gdaltest.run_tests(gdaltest_list)
     gdaltest.summarize()
