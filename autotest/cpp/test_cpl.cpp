@@ -1000,4 +1000,38 @@ namespace tut
         }
     }
 
+/************************************************************************/
+/*             CPLGetConfigOptions() / CPLSetConfigOptions()            */
+/************************************************************************/
+    template<>
+    template<>
+    void object::test<18>()
+    {
+        CPLSetConfigOption("FOOFOO", "BAR");
+        char** options = CPLGetConfigOptions();
+        ensure_equals (CSLFetchNameValue(options, "FOOFOO"), "BAR");
+        CPLSetConfigOptions(NULL);
+        ensure_equals (CPLGetConfigOption("FOOFOO", "i_dont_exist"), "i_dont_exist");
+        CPLSetConfigOptions(options);
+        ensure_equals (CPLGetConfigOption("FOOFOO", "i_dont_exist"), "BAR");
+        CSLDestroy(options);
+    }
+
+/************************************************************************/
+/*  CPLGetThreadLocalConfigOptions() / CPLSetThreadLocalConfigOptions() */
+/************************************************************************/
+    template<>
+    template<>
+    void object::test<19>()
+    {
+        CPLSetThreadLocalConfigOption("FOOFOO", "BAR");
+        char** options = CPLGetThreadLocalConfigOptions();
+        ensure_equals (CSLFetchNameValue(options, "FOOFOO"), "BAR");
+        CPLSetThreadLocalConfigOptions(NULL);
+        ensure_equals (CPLGetThreadLocalConfigOption("FOOFOO", "i_dont_exist"), "i_dont_exist");
+        CPLSetThreadLocalConfigOptions(options);
+        ensure_equals (CPLGetThreadLocalConfigOption("FOOFOO", "i_dont_exist"), "BAR");
+        CSLDestroy(options);
+    }
+
 } // namespace tut
