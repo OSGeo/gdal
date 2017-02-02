@@ -262,8 +262,8 @@ OGRGMLDataSource::~OGRGMLDataSource()
 
 bool OGRGMLDataSource::CheckHeader(const char* pszStr)
 {
-    if( strstr(pszStr,"opengis.net/gml") == NULL &&
-        strstr(pszStr,"<csw:GetRecordsResponse") == NULL )
+    if( strstr(pszStr, "opengis.net/gml") == NULL &&
+        strstr(pszStr, "<csw:GetRecordsResponse") == NULL )
     {
         return false;
     }
@@ -512,9 +512,9 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     else
     {
         bExposeGMLId = strstr(szPtr, " gml:id=\"") != NULL ||
-                        strstr(szPtr, " gml:id='") != NULL;
+                       strstr(szPtr, " gml:id='") != NULL;
         bExposeFid = strstr(szPtr, " fid=\"") != NULL ||
-                        strstr(szPtr, " fid='") != NULL;
+                     strstr(szPtr, " fid='") != NULL;
     }
 
     const char* pszExposeGMLId = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
@@ -639,11 +639,11 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     }
 
     poReader->SetSourceFile(pszFilename);
-    ((GMLReader*)poReader)->SetIsWFSJointLayer(bIsWFSJointLayer);
+    ((GMLReader *)poReader)->SetIsWFSJointLayer(bIsWFSJointLayer);
     bEmptyAsNull =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "EMPTY_AS_NULL", true);
-    ((GMLReader*)poReader)->SetEmptyAsNull(bEmptyAsNull);
-    ((GMLReader*)poReader)->SetReportAllAttributes(
+    ((GMLReader *)poReader)->SetEmptyAsNull(bEmptyAsNull);
+    ((GMLReader *)poReader)->SetReportAllAttributes(
         CPLFetchBool(poOpenInfo->papszOpenOptions, "GML_ATTRIBUTES_TO_OGR_FIELDS",
             CPLTestBool(CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"))));
 
@@ -937,7 +937,9 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
              strchr(pszSchemaLocation + 1, pszSchemaLocation[0]) != NULL )
         {
             char* pszSchemaLocationTmp1 = CPLStrdup(pszSchemaLocation + 1);
-            int nTruncLen = (int)(strchr(pszSchemaLocation + 1, pszSchemaLocation[0]) - (pszSchemaLocation + 1));
+            int nTruncLen = static_cast<int>(
+                strchr(pszSchemaLocation + 1,
+                       pszSchemaLocation[0]) - (pszSchemaLocation + 1));
             pszSchemaLocationTmp1[nTruncLen] = '\0';
             char* pszSchemaLocationTmp2 = CPLUnescapeString(
                 pszSchemaLocationTmp1, NULL, CPLES_XML);
@@ -956,7 +958,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                 int nTokens = CSLCount(papszTokens);
                 if ((nTokens % 2) == 0)
                 {
-                    for(int i=0;i<nTokens;i+=2)
+                    for(int i = 0; i < nTokens; i += 2)
                     {
                         const char* pszEscapedURL = papszTokens[i+1];
                         char* pszLocation = CPLUnescapeString(pszEscapedURL, NULL, CPLES_URL);
@@ -1195,8 +1197,8 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     }
 
     // Translate the GMLFeatureClasses into layers.
-    papoLayers = (OGRGMLLayer **)
-        CPLCalloc(sizeof(OGRGMLLayer *), poReader->GetClassCount());
+    papoLayers = static_cast<OGRGMLLayer **>(
+        CPLCalloc(sizeof(OGRGMLLayer *), poReader->GetClassCount()));
     nLayers = 0;
 
     if (poReader->GetClassCount() == 1 && nNumberOfFeatures != 0)
@@ -1232,14 +1234,14 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 void OGRGMLDataSource::BuildJointClassFromXSD()
 {
     CPLString osJointClassName = "join";
-    for(int i=0;i<poReader->GetClassCount();i++)
+    for(int i = 0; i <poReader->GetClassCount(); i++)
     {
         osJointClassName += "_";
         osJointClassName += poReader->GetClass(i)->GetName();
     }
     GMLFeatureClass* poJointClass = new GMLFeatureClass(osJointClassName);
     poJointClass->SetElementName("Tuple");
-    for(int i=0;i<poReader->GetClassCount();i++)
+    for(int i = 0; i < poReader->GetClassCount(); i++)
     {
         GMLFeatureClass* poClass = poReader->GetClass(i);
 
@@ -1309,7 +1311,7 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
     GMLFeatureClass *poClass = poReader->GetClass(0);
     CPLString osJointClassName = "join";
 
-    for( int iField = 0; iField < poClass->GetPropertyCount(); iField ++ )
+    for( int iField = 0; iField < poClass->GetPropertyCount(); iField++ )
     {
         GMLPropertyDefn* poProp = poClass->GetProperty(iField);
         CPLString osPrefix(poProp->GetName());
@@ -1317,7 +1319,7 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
         if( iPos != std::string::npos )
             osPrefix.resize(iPos);
         int iSubClass = 0;  // Used after for.
-        for( ; iSubClass < (int)aapoProps.size(); iSubClass ++ )
+        for( ; iSubClass < static_cast<int>(aapoProps.size()); iSubClass++ )
         {
             CPLString osPrefixClass(aapoProps[iSubClass][0]->GetName());
             iPos = osPrefixClass.find('.');
@@ -1326,7 +1328,7 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
             if( osPrefix == osPrefixClass )
                 break;
         }
-        if( iSubClass == (int)aapoProps.size() )
+        if( iSubClass == static_cast<int>(aapoProps.size()) )
         {
             osJointClassName += "_";
             osJointClassName += osPrefix;
@@ -1339,7 +1341,8 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
 
     poClass->StealProperties();
     std::vector< std::pair< CPLString, std::vector<GMLGeometryPropertyDefn*> > > aapoGeomProps;
-    for( int iSubClass = 0; iSubClass < (int)aapoProps.size(); iSubClass++ )
+    for( int iSubClass = 0; iSubClass < static_cast<int>(aapoProps.size());
+         iSubClass++ )
     {
         CPLString osPrefixClass(aapoProps[iSubClass][0]->GetName());
         size_t iPos = osPrefixClass.find('.');
@@ -1347,7 +1350,9 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
             osPrefixClass.resize(iPos);
         aapoGeomProps.push_back(std::pair<CPLString, std::vector<GMLGeometryPropertyDefn *>>
                 (osPrefixClass, std::vector<GMLGeometryPropertyDefn*>()));
-        for( int iField = 0; iField < (int)aapoProps[iSubClass].size(); iField++ )
+        for( int iField = 0;
+             iField < static_cast<int>(aapoProps[iSubClass].size());
+             iField++ )
         {
             poClass->AddProperty(aapoProps[iSubClass][iField]);
         }
@@ -1363,21 +1368,24 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
         if( iPos != std::string::npos )
             osPrefix.resize(iPos);
         int iSubClass = 0;  // Used after for.
-        for( ; iSubClass < (int)aapoGeomProps.size(); iSubClass++ )
+        for( ; iSubClass < static_cast<int>(aapoGeomProps.size()); iSubClass++ )
         {
             if( osPrefix == aapoGeomProps[iSubClass].first )
                 break;
         }
-        if( iSubClass == (int)aapoGeomProps.size() )
+        if( iSubClass == static_cast<int>(aapoGeomProps.size()) )
             aapoGeomProps.push_back(
                 std::pair< CPLString, std::vector<GMLGeometryPropertyDefn*> >(
                     osPrefix, std::vector<GMLGeometryPropertyDefn*>()) );
         aapoGeomProps[iSubClass].second.push_back(poProp);
     }
     poClass->StealGeometryProperties();
-    for( int iSubClass = 0; iSubClass < (int)aapoGeomProps.size(); iSubClass ++ )
+    for( int iSubClass = 0; iSubClass < static_cast<int>(aapoGeomProps.size());
+         iSubClass ++ )
     {
-        for( int iField = 0; iField < (int)aapoGeomProps[iSubClass].second.size(); iField++ )
+        for( int iField = 0;
+             iField < static_cast<int>(aapoGeomProps[iSubClass].second.size());
+             iField++ )
         {
             poClass->AddGeometryProperty(aapoGeomProps[iSubClass].second[iField]);
         }
@@ -1529,7 +1537,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
 
         OGRFieldDefn oField(poProperty->GetName(), eFType);
         if ( STARTS_WITH_CI(oField.GetNameRef(), "ogr:") )
-          oField.SetName(poProperty->GetName()+4);
+          oField.SetName(poProperty->GetName() + 4);
         if( poProperty->GetWidth() > 0 )
             oField.SetWidth(poProperty->GetWidth());
         if( poProperty->GetPrecision() > 0 )
@@ -1579,7 +1587,7 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
         return false;
     }
 
-    if( strcmp(pszFilename,"/dev/stdout") == 0 )
+    if( strcmp(pszFilename, "/dev/stdout") == 0 )
         pszFilename = "/vsistdout/";
 
     // Read options.
@@ -1663,7 +1671,7 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
               "<?xml version=\"1.0\" encoding=\"utf-8\" ?>");
 
     if (!bFpOutputIsNonSeekable)
-        nSchemaInsertLocation = (int) VSIFTellL(fpOutput);
+        nSchemaInsertLocation = static_cast<int>(VSIFTellL(fpOutput));
 
     const char* pszPrefix = GetAppPrefix();
     const char* pszTargetNameSpace = CSLFetchNameValueDef(papszOptions,"TARGET_NAMESPACE", "http://ogr.maptools.org/");
@@ -1682,7 +1690,7 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
     }
 
     // Write out schema info if provided in creation options.
-    const char *pszSchemaURI = CSLFetchNameValue(papszOptions,"XSISCHEMAURI");
+    const char *pszSchemaURI = CSLFetchNameValue(papszOptions, "XSISCHEMAURI");
     const char *pszSchemaOpt = CSLFetchNameValue(papszOptions, "XSISCHEMA");
 
     if( pszSchemaURI != NULL )
@@ -1693,7 +1701,7 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
                   "     xsi:schemaLocation=\"%s\"",
                   pszSchemaURI);
     }
-    else if( pszSchemaOpt == NULL || EQUAL(pszSchemaOpt,"EXTERNAL") )
+    else if( pszSchemaOpt == NULL || EQUAL(pszSchemaOpt, "EXTERNAL") )
     {
         char *pszBasename = CPLStrdup(CPLGetBasename(pszName));
 
@@ -1757,7 +1765,7 @@ void OGRGMLDataSource::WriteTopElements()
     {
         if (!bFpOutputIsNonSeekable )
         {
-            nBoundedByLocation = (int) VSIFTellL(fpOutput);
+            nBoundedByLocation = static_cast<int>(VSIFTellL(fpOutput));
 
             if( nBoundedByLocation != -1 )
                 PrintLine(fpOutput, "%350s", "");
@@ -1799,7 +1807,7 @@ OGRGMLDataSource::ICreateLayer(const char * pszLayerName,
     char *pszCleanLayerName = CPLStrdup(pszLayerName);
 
     CPLCleanXMLElementName(pszCleanLayerName);
-    if( strcmp(pszCleanLayerName,pszLayerName) != 0 )
+    if( strcmp(pszCleanLayerName, pszLayerName) != 0 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Layer name '%s' adjusted to '%s' for XML validity.",
@@ -1851,8 +1859,8 @@ OGRGMLDataSource::ICreateLayer(const char * pszLayerName,
     CPLFree(pszCleanLayerName);
 
     // Add layer to data source layer list.
-    papoLayers = (OGRGMLLayer **)
-        CPLRealloc(papoLayers,  sizeof(OGRGMLLayer *) * (nLayers+1));
+    papoLayers = static_cast<OGRGMLLayer **>(
+        CPLRealloc(papoLayers, sizeof(OGRGMLLayer *) * (nLayers + 1)));
 
     papoLayers[nLayers++] = poLayer;
 
@@ -1930,7 +1938,7 @@ void OGRGMLDataSource::InsertHeader()
         return;
 
     VSILFILE *fpSchema = NULL;
-    if( pszSchemaOpt == NULL || EQUAL(pszSchemaOpt,"EXTERNAL") )
+    if( pszSchemaOpt == NULL || EQUAL(pszSchemaOpt, "EXTERNAL") )
     {
         const char *pszXSDFilename = CPLResetExtension(pszName, "xsd");
 
@@ -1948,7 +1956,7 @@ void OGRGMLDataSource::InsertHeader()
     {
         if (fpOutput == NULL)
             return;
-        nSchemaStart = (int) VSIFTellL(fpOutput);
+        nSchemaStart = static_cast<int>(VSIFTellL(fpOutput));
         fpSchema = fpOutput;
     }
     else
@@ -1982,7 +1990,7 @@ void OGRGMLDataSource::InsertHeader()
     const char* pszPrefix = GetAppPrefix();
     if( pszPrefix[0] == '\0' )
         pszPrefix = "ogr";
-    const char* pszTargetNameSpace = CSLFetchNameValueDef(papszCreateOptions,"TARGET_NAMESPACE", "http://ogr.maptools.org/");
+    const char* pszTargetNameSpace = CSLFetchNameValueDef(papszCreateOptions, "TARGET_NAMESPACE", "http://ogr.maptools.org/");
 
     if (IsGML3Output())
     {
@@ -2392,8 +2400,8 @@ void OGRGMLDataSource::InsertHeader()
     if( fpSchema == fpOutput )
     {
         // Read the schema into memory.
-        int nSchemaSize = (int) VSIFTellL(fpOutput) - nSchemaStart;
-        char *pszSchema = (char *) CPLMalloc(nSchemaSize+1);
+        int nSchemaSize = static_cast<int>(VSIFTellL(fpOutput) - nSchemaStart);
+        char *pszSchema = static_cast<char *>(CPLMalloc(nSchemaSize + 1));
 
         VSIFSeekL(fpOutput, nSchemaStart, SEEK_SET);
 
@@ -2402,8 +2410,8 @@ void OGRGMLDataSource::InsertHeader()
 
         // Move file data down by "schema size" bytes from after <?xml> header
         // so we have room insert the schema.  Move in pretty big chunks.
-        int nChunkSize = std::min(nSchemaStart-nSchemaInsertLocation,250000);
-        char *pszChunk = (char *) CPLMalloc(nChunkSize);
+        int nChunkSize = std::min(nSchemaStart - nSchemaInsertLocation, 250000);
+        char *pszChunk = static_cast<char *>(CPLMalloc(nChunkSize));
 
         for( int nEndOfUnmovedData = nSchemaStart;
              nEndOfUnmovedData > nSchemaInsertLocation; )
@@ -2554,9 +2562,9 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE* fp)
     // boundedBy element, so as to be able to parse it easily.
 
     char szStartTag[128];
-    char* pszXML = (char*)CPLMalloc(8192 + 128 + 3 + 1);
+    char* pszXML = static_cast<char *>(CPLMalloc(8192 + 128 + 3 + 1));
     VSIFSeekL(fp, 0, SEEK_SET);
-    int nRead = (int)VSIFReadL(pszXML, 1, 8192, fp);
+    int nRead = static_cast<int>(VSIFReadL(pszXML, 1, 8192, fp));
     pszXML[nRead] = 0;
 
     const char* pszStartTag = strchr(pszXML, '<');
@@ -2689,7 +2697,7 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE* fp)
                     {
                         std::string osWork;
                         osWork.assign("EPSG:", 5);
-                        osWork.append(pszSRSName+40);
+                        osWork.append(pszSRSName + 40);
                         poReader->SetGlobalSRSName(osWork.c_str());
                     }
                     else
