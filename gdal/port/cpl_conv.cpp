@@ -398,7 +398,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE *fp )
 /*      Trim off \n, \r or \r\n if it appears at the end.  We don't     */
 /*      need to do any "seeking" since we want the newline eaten.       */
 /* -------------------------------------------------------------------- */
-    if( nActuallyRead > 1 && 
+    if( nActuallyRead > 1 &&
         pszBuffer[nActuallyRead-1] == 10 &&
         pszBuffer[nActuallyRead-2] == 13 )
     {
@@ -1664,7 +1664,7 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
   *
   * Options that through environment variables or with
   * CPLSetThreadLocalConfigOption() will *not* be listed.
-  * 
+  *
   * @return a copy of the list, to be freed with CSLDestroy().
   * @since GDAL 2.2
   */
@@ -1684,14 +1684,14 @@ char** CPLGetConfigOptions(void)
   *
   * This has the same effect of clearing the existing list, and setting
   * individually each pair with the CPLSetConfigOption() API.
-  * 
+  *
   * This does not affect options set through environment variables or with
   * CPLSetThreadLocalConfigOption().
-  * 
+  *
   * The passed list is copied by the funtion.
   *
   * @param papszConfigOptions the new list (or NULL).
-  * 
+  *
   * @since GDAL 2.2
   */
 void CPLSetConfigOptions(const char* const * papszConfigOptions)
@@ -1837,7 +1837,7 @@ CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
   *
   * Options that through environment variables or with
   * CPLSetConfigOption() will *not* be listed.
-  * 
+  *
   * @return a copy of the list, to be freed with CSLDestroy().
   * @since GDAL 2.2
   */
@@ -1861,14 +1861,14 @@ char** CPLGetThreadLocalConfigOptions(void)
   *
   * This has the same effect of clearing the existing list, and setting
   * individually each pair with the CPLSetThreadLocalConfigOption() API.
-  * 
+  *
   * This does not affect options set through environment variables or with
   * CPLSetConfigOption().
-  * 
+  *
   * The passed list is copied by the funtion.
   *
   * @param papszConfigOptions the new list (or NULL).
-  * 
+  *
   * @since GDAL 2.2
   */
 void CPLSetThreadLocalConfigOptions(const char* const * papszConfigOptions)
