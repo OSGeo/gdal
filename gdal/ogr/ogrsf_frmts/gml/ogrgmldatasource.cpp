@@ -343,9 +343,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     const char *pszSchemaLocation = NULL;
     bool bCheckAuxFile = true;
 
-/* -------------------------------------------------------------------- */
-/*      Extract XSD filename from connection string if present.         */
-/* -------------------------------------------------------------------- */
+    // Extract XSD filename from connection string if present.
     osFilename = poOpenInfo->pszFilename;
     const char *pszXSDFilenameTmp = strstr(poOpenInfo->pszFilename, ",xsd=");
     if (pszXSDFilenameTmp != NULL)
@@ -360,9 +358,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 
     pszName = CPLStrdup( poOpenInfo->pszFilename );
 
-/* -------------------------------------------------------------------- */
-/*      Open the source file.                                           */
-/* -------------------------------------------------------------------- */
+    // Open the source file.
     VSILFILE* fpToClose = NULL;
     VSILFILE *fp = NULL;
     if( poOpenInfo->fpL != NULL )
@@ -383,9 +379,8 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     bool bHintConsiderEPSGAsURN = false;
     bool bAnalyzeSRSPerFeature = true;
 
-/* -------------------------------------------------------------------- */
-/*      Load a header chunk and check for signs it is GML               */
-/* -------------------------------------------------------------------- */
+
+    // Load a header chunk and check for signs it is GML.
 
     char szHeader[4096] = {};
     size_t nRead = VSIFReadL( szHeader, 1, sizeof(szHeader)-1, fp );
@@ -397,8 +392,8 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     }
     szHeader[nRead] = '\0';
 
-    /* Might be a OS-Mastermap gzipped GML, so let be nice and try to open */
-    /* it transparently with /vsigzip/ */
+    // Might be a OS-Mastermap gzipped GML, so let be nice and try to open
+    // it transparently with /vsigzip/.
     if ( ((GByte*)szHeader)[0] == 0x1f && ((GByte*)szHeader)[1] == 0x8b &&
             EQUAL(CPLGetExtension(pszFilename), "gz") &&
             !STARTS_WITH(pszFilename, "/vsigzip/") )
@@ -424,12 +419,10 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         szHeader[nRead] = '\0';
     }
 
-/* -------------------------------------------------------------------- */
-/*      Check for a UTF-8 BOM and skip if found                         */
-/*                                                                      */
-/*      TODO: BOM is variable-length parameter and depends on encoding. */
-/*            Add BOM detection for other encodings.                    */
-/* -------------------------------------------------------------------- */
+    // Check for a UTF-8 BOM and skip if found.
+
+    // TODO: BOM is variable-length parameter and depends on encoding. */
+    // Add BOM detection for other encodings.
 
     // Used to skip to actual beginning of XML data
     char* szPtr = szHeader;
@@ -449,13 +442,11 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                     (STARTS_WITH_CI(pszEncoding + 10, "ISO-8859-1") &&
                                         pszEncoding[20] == pszEncoding[9])) ;
     else
-        bExpatCompatibleEncoding = true; /* utf-8 is the default */
+        bExpatCompatibleEncoding = true;  // utf-8 is the default.
 
     bHas3D = strstr(szPtr, "srsDimension=\"3\"") != NULL || strstr(szPtr, "<gml:Z>") != NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Here, we expect the opening chevrons of GML tree root element   */
-/* -------------------------------------------------------------------- */
+    // Here, we expect the opening chevrons of GML tree root element.
     if( szPtr[0] != '<' || !CheckHeader(szPtr) )
     {
         if( fpToClose )
@@ -463,19 +454,21 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         return false;
     }
 
-    /* Now we definitely own the file descriptor */
+    // Now we definitely own the file descriptor.
     if( fp == poOpenInfo->fpL )
         poOpenInfo->fpL = NULL;
 
-    /* Small optimization: if we parse a <wfs:FeatureCollection>  and */
-    /* that numberOfFeatures is set, we can use it to set the FeatureCount */
-    /* but *ONLY* if there's just one class ! */
+    // Small optimization: if we parse a <wfs:FeatureCollection> and
+    // that numberOfFeatures is set, we can use it to set the FeatureCount
+    // but *ONLY* if there's just one class.
     const char* pszFeatureCollection = strstr(szPtr, "wfs:FeatureCollection");
     if (pszFeatureCollection == NULL)
-        pszFeatureCollection = strstr(szPtr, "gml:FeatureCollection"); /* GML 3.2.1 output */
+        // GML 3.2.1 output.
+        pszFeatureCollection = strstr(szPtr, "gml:FeatureCollection");
     if (pszFeatureCollection == NULL)
     {
-        pszFeatureCollection = strstr(szPtr, "<FeatureCollection"); /* Deegree WFS 1.0.0 output */
+        // Deegree WFS 1.0.0 output.
+        pszFeatureCollection = strstr(szPtr, "<FeatureCollection");
         if (pszFeatureCollection && strstr(szPtr, "xmlns:wfs=\"http://www.opengis.net/wfs\"") == NULL)
             pszFeatureCollection = NULL;
     }
@@ -493,24 +486,26 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                 nNumberOfFeatures = CPLAtoGIntBig(pszNumberOfFeatures + 1);
             }
         }
-        else if ((pszNumberOfFeatures = strstr(szPtr, "numberReturned=")) != NULL) /* WFS 2.0.0 */
+        else if ((pszNumberOfFeatures = strstr(szPtr, "numberReturned=")) != NULL)
         {
+            // WFS 2.0.0
             pszNumberOfFeatures += 15;
             char ch = pszNumberOfFeatures[0];
             if ((ch == '\'' || ch == '"') && strchr(pszNumberOfFeatures + 1, ch) != NULL)
             {
-                /* 'unknown' might be a valid value in a corrected version of WFS 2.0 */
-                /* but it will also evaluate to 0, that is considered as unknown, so nothing */
-                /* particular to do */
+                // 'unknown' might be a valid value in a corrected version of
+                // WFS 2.0 but it will also evaluate to 0, that is considered as
+                // unknown, so nothing particular to do.
                 nNumberOfFeatures = CPLAtoGIntBig(pszNumberOfFeatures + 1);
             }
         }
     }
     else if (STARTS_WITH(pszFilename, "/vsimem/tempwfs_"))
     {
-        /* http://regis.intergraph.com/wfs/dcmetro/request.asp? returns a <G:FeatureCollection> */
-        /* Who knows what servers can return ? Ok, so when in the context of the WFS driver */
-        /* always expose the gml:id to avoid later crashes */
+        // http://regis.intergraph.com/wfs/dcmetro/request.asp? returns a
+        // <G:FeatureCollection> Who knows what servers can return?  When
+        // in the context of the WFS driver always expose the gml:id to avoid
+        // later crashes.
         bExposeGMLId = true;
         bIsWFS = true;
     }
@@ -563,10 +558,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     if( bIsWFSJointLayer )
         bExposeGMLId = false;
 
-/* -------------------------------------------------------------------- */
-/*      We assume now that it is GML.  Instantiate a GMLReader on it.   */
-/* -------------------------------------------------------------------- */
-
+    // We assume now that it is GML.  Instantiate a GMLReader on it.
     const char* pszReadMode = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
             "READ_MODE",
             CPLGetConfigOption("GML_READ_MODE", "AUTO"));
@@ -655,20 +647,14 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         CPLFetchBool(poOpenInfo->papszOpenOptions, "GML_ATTRIBUTES_TO_OGR_FIELDS",
             CPLTestBool(CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"))));
 
-/* -------------------------------------------------------------------- */
-/*      Find <gml:description>, <gml:name> and <gml:boundedBy>          */
-/* -------------------------------------------------------------------- */
-
+    // Find <gml:description>, <gml:name> and <gml:boundedBy>
     FindAndParseTopElements(fp);
 
     if( szSRSName[0] != '\0' )
         poReader->SetGlobalSRSName(szSRSName);
 
-/* -------------------------------------------------------------------- */
-/*      Resolve the xlinks in the source file and save it with the      */
-/*      extension ".resolved.gml". The source file will to set to that. */
-/* -------------------------------------------------------------------- */
-
+    // Resolve the xlinks in the source file and save it with the
+    // extension ".resolved.gml". The source file will to set to that.
     char *pszXlinkResolvedFilename = NULL;
     const char *pszOption = CPLGetConfigOption("GML_SAVE_RESOLVED_TO", NULL);
     bool bResolve = true;
@@ -727,15 +713,13 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     bool bHaveSchema = false;
     bool bSchemaDone = false;
 
-/* -------------------------------------------------------------------- */
-/*      Is some GML Feature Schema (.gfs) TEMPLATE required ?           */
-/* -------------------------------------------------------------------- */
+    // Is some GML Feature Schema (.gfs) TEMPLATE required?
     const char *pszGFSTemplateName =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "GFS_TEMPLATE",
                 CPLGetConfigOption( "GML_GFS_TEMPLATE", NULL));
     if( pszGFSTemplateName != NULL )
     {
-        /* attempting to load the GFS TEMPLATE */
+        // Attempt to load the GFS TEMPLATE.
         bHaveSchema = poReader->LoadClasses( pszGFSTemplateName );
     }
 
@@ -751,9 +735,9 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                             bSqliteIsTempFile,
                                             iSqliteCacheMB ) == false )
             {
-                // we assume an errors have been reported.
+                // Assume an error has been reported.
                 VSIFCloseL(fp);
-                CPLFree( pszXlinkResolvedFilename );
+                CPLFree(pszXlinkResolvedFilename);
                 return false;
             }
         }
@@ -770,22 +754,22 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     CSLDestroy( papszSkip );
     papszSkip = NULL;
 
-    /* If the source filename for the reader is still the GML filename, then */
-    /* we can directly provide the file pointer. Otherwise we close it */
+    // If the source filename for the reader is still the GML filename, then
+    // we can directly provide the file pointer. Otherwise close it.
     if (strcmp(poReader->GetSourceFileName(), pszFilename) == 0)
         poReader->SetFP(fp);
     else
         VSIFCloseL(fp);
     fp = NULL;
 
-    /* Is a prescan required ? */
+    // Is a prescan required?
     if( bHaveSchema && !bSchemaDone )
     {
-        /* We must detect which layers are actually present in the .gml */
-        /* and how many features they have */
+        // We must detect which layers are actually present in the .gml
+        // and how many features they have.
         if( !poReader->PrescanForTemplate() )
         {
-            // we assume an errors have been reported.
+            // Assume an error has been reported.
             return false;
         }
     }
@@ -794,9 +778,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     if (STARTS_WITH(osGFSFilename, "/vsigzip/"))
         osGFSFilename = osGFSFilename.substr(strlen("/vsigzip/"));
 
-/* -------------------------------------------------------------------- */
-/*      Can we find a GML Feature Schema (.gfs) for the input file?     */
-/* -------------------------------------------------------------------- */
+    // Can we find a GML Feature Schema (.gfs) for the input file?
     if( !bHaveSchema && osXSDFilename.empty())
     {
         VSIStatBufL sGFSStatBuf;
@@ -828,12 +810,11 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Can we find an xsd which might conform to tbe GML3 Level 0      */
-/*      profile?  We really ought to look for it based on the rules     */
-/*      schemaLocation in the GML feature collection but for now we     */
-/*      just hopes it is in the same director with the same name.       */
-/* -------------------------------------------------------------------- */
+    // Can we find an xsd which might conform to tbe GML3 Level 0
+    // profile?  We really ought to look for it based on the rules
+    // schemaLocation in the GML feature collection but for now we
+    // just hopes it is in the same director with the same name.
+
     bool bHasFoundXSD = false;
 
     if( !bHaveSchema )
@@ -859,8 +840,8 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             }
         }
 
-        /* If not found, try if there is a schema in the gml_registry.xml */
-        /* that might match a declared namespace and featuretype */
+        // If not found, try if there is a schema in the gml_registry.xml
+        // that might match a declared namespace and featuretype.
         if( !bHasFoundXSD )
         {
             GMLRegistry oRegistry(CSLFetchNameValueDef(
@@ -876,8 +857,8 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                 CPLSPrintf("xmlns:%s", oNamespace.osPrefix.c_str());
                     const char* pszURIToFind =
                                 CPLSPrintf("\"%s\"", oNamespace.osURI.c_str());
-                    /* Case sensitive comparison since below test that also */
-                    /* uses the namespace prefix is case sensitive */
+                    // Case sensitive comparison since below test that also
+                    // uses the namespace prefix is case sensitive.
                     if( osHeader.find(pszNSToFind) != std::string::npos &&
                         strstr(szHeader, pszURIToFind) != NULL )
                     {
@@ -903,9 +884,10 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                                               oNamespace.osPrefix.c_str(),
                                                               oFeatureType.osElementName.c_str());
 
-                            /* Case sensitive test since in a CadastralParcel feature */
-                            /* there is a property basicPropertyUnit xlink, not to be */
-                            /* confused with a top-level BasicPropertyUnit feature... */
+                            // Case sensitive test since in a CadastralParcel
+                            // feature there is a property basicPropertyUnit
+                            // xlink, not to be confused with a top-level
+                            // BasicPropertyUnit feature.
                             if( osHeader.find(pszElementToFind) != std::string::npos )
                             {
                                 if( !oFeatureType.osSchemaLocation.empty() )
@@ -964,10 +946,12 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             pszSchemaLocationTmp2 = CPLStrdup(osEscaped);
             if (pszSchemaLocationTmp2)
             {
-                /* pszSchemaLocationTmp2 is of the form : */
-                /* http://namespace1 http://namespace1_schema_location http://namespace2 http://namespace1_schema_location2 */
-                /* So we try to find http://namespace1_schema_location that contains hints that it is the WFS application */
-                /* schema, i.e. if it contains typename= and request=DescribeFeatureType */
+                // pszSchemaLocationTmp2 is of the form:
+                // http://namespace1 http://namespace1_schema_location http://namespace2 http://namespace1_schema_location2
+                // So we try to find http://namespace1_schema_location that
+                // contains hints that it is the WFS application */ schema,
+                // i.e. if it contains typename= and
+                // request=DescribeFeatureType.
                 char** papszTokens = CSLTokenizeString2(pszSchemaLocationTmp2, " \r\n", 0);
                 int nTokens = CSLCount(papszTokens);
                 if ((nTokens % 2) == 0)
@@ -1064,9 +1048,9 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                     GMLFeatureClass* poClass = *oIter;
                     ++ oIter;
 
-                    /* We have no way of knowing if the geometry type is 25D */
-                    /* when examining the xsd only, so if there was a hint */
-                    /* it is, we force to 25D */
+                    // We have no way of knowing if the geometry type is 25D
+                    // when examining the xsd only, so if there was a hint
+                    // it is, we force to 25D.
                     if (bHas3D && poClass->GetGeometryPropertyCount() == 1)
                     {
                         poClass->GetGeometryProperty(0)->SetType(
@@ -1074,10 +1058,11 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                     }
 
                     bool bAddClass = true;
-                    /* If typenames are declared, only register the matching classes, in case */
-                    /* the XSD contains more layers, but not if feature classes contain */
-                    /* feature properties, in which case we will have embedded features that */
-                    /* will be reported as top-level features */
+                    // If typenames are declared, only register the matching
+                    // classes, in case the XSD contains more layers, but not if
+                    // feature classes contain feature properties, in which case
+                    // we will have embedded features that will be reported as
+                    // top-level features.
                     if( papszTypeNames != NULL && !bHasFeatureProperties )
                     {
                         bAddClass = false;
@@ -1090,7 +1075,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                             papszIter ++;
                         }
 
-                        /* Retry by removing prefixes */
+                        // Retry by removing prefixes.
                         if (!bAddClass)
                         {
                             papszIter = papszTypeNames;
@@ -1129,15 +1114,15 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                 BuildJointClassFromXSD();
             }
 
-            /* For WFS, we can assume sequential layers */
+            // For WFS, we can assume sequential layers.
             if (poReader->GetClassCount() > 1 && pszReadMode == NULL &&
                 !bHasFeatureProperties)
             {
                 CPLDebug("GML", "WFS output. Using SEQUENTIAL_LAYERS read mode");
                 eReadMode = SEQUENTIAL_LAYERS;
             }
-            /* Sometimes the returned schema contains only <xs:include> that we don't resolve */
-            /* so ignore it */
+            // Sometimes the returned schema contains only <xs:include> that we
+            // don't resolve so ignore it.
             else if (poReader->GetClassCount() == 0)
                 bHaveSchema = false;
         }
@@ -1145,11 +1130,8 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         CSLDestroy(papszTypeNames);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Force a first pass to establish the schema.  Eventually we      */
-/*      will have mechanisms for remembering the schema and related     */
-/*      information.                                                    */
-/* -------------------------------------------------------------------- */
+    // Force a first pass to establish the schema.  Eventually we will have
+    // mechanisms for remembering the schema and related information.
     if( !bHaveSchema ||
         CPLFetchBool(poOpenInfo->papszOpenOptions, "FORCE_SRS_DETECTION",
                      false) )
@@ -1158,7 +1140,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         if( !poReader->PrescanForSchema( true, bAnalyzeSRSPerFeature,
                                          bOnlyDetectSRS ) )
         {
-            // we assume an errors have been reported.
+            // Assume an error was reported.
             return false;
         }
         if( !bHaveSchema )
@@ -1183,10 +1165,10 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         eReadMode = SEQUENTIAL_LAYERS;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Save the schema file if possible.  Don't make a fuss if we      */
-/*      can't ... could be read-only directory or something.            */
-/* -------------------------------------------------------------------- */
+
+    // Save the schema file if possible.  Don't make a fuss if we
+    // can't.  It could be read-only directory or something.
+
     if( !bHaveSchema && !poReader->HasStoppedParsing() &&
         !STARTS_WITH_CI(pszFilename, "/vsitar/") &&
         !STARTS_WITH_CI(pszFilename, "/vsizip/") &&
@@ -1212,9 +1194,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Translate the GMLFeatureClasses into layers.                    */
-/* -------------------------------------------------------------------- */
+    // Translate the GMLFeatureClasses into layers.
     papoLayers = (OGRGMLLayer **)
         CPLCalloc( sizeof(OGRGMLLayer *), poReader->GetClassCount());
     nLayers = 0;
@@ -1323,8 +1303,8 @@ void OGRGMLDataSource::BuildJointClassFromXSD()
 
 void OGRGMLDataSource::BuildJointClassFromScannedSchema()
 {
-    /* Make sure that all properties of a same base feature type are */
-    /* consecutive. If not, reorder */
+    // Make sure that all properties of a same base feature type are
+    // consecutive. If not, reorder.
     std::vector< std::vector<GMLPropertyDefn*> > aapoProps;
     GMLFeatureClass *poClass = poReader->GetClass(0);
     CPLString osJointClassName = "join";
@@ -1411,10 +1391,7 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
 OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Create an empty layer.                                          */
-/* -------------------------------------------------------------------- */
-
+    // Create an empty layer.
     const char* pszSRSName = poClass->GetSRSName();
     OGRSpatialReference* poSRS = NULL;
     if (pszSRSName)
@@ -1470,7 +1447,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         }
     }
 
-    /* Report a COMPD_CS only if GML_REPORT_COMPD_CS is explicitly set to TRUE */
+    // Report a COMPD_CS only if GML_REPORT_COMPD_CS is explicitly set to TRUE.
     if( poSRS != NULL &&
         !CPLTestBool(CPLGetConfigOption("GML_REPORT_COMPD_CS", "FALSE")) )
     {
@@ -1489,9 +1466,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
 
     OGRGMLLayer *poLayer = new OGRGMLLayer( poClass->GetName(), false, this );
 
-/* -------------------------------------------------------------------- */
-/*      Added attributes (properties).                                  */
-/* -------------------------------------------------------------------- */
+    // Added attributes (properties).
     if (bExposeGMLId)
     {
         OGRFieldDefn oField( "gml_id", OFTString );
@@ -1607,10 +1582,7 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
     if( strcmp(pszFilename,"/dev/stdout") == 0 )
         pszFilename = "/vsistdout/";
 
-/* -------------------------------------------------------------------- */
-/*      Read options                                                    */
-/* -------------------------------------------------------------------- */
-
+    // Read options.
     CSLDestroy(papszCreateOptions);
     papszCreateOptions = CSLDuplicate(papszOptions);
 
@@ -1622,7 +1594,7 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
         bIsOutputGML3 = true;
 
     eSRSNameFormat = (bIsOutputGML3) ? SRSNAME_OGC_URN : SRSNAME_SHORT;
-    if( bIsOutputGML3 ) 
+    if( bIsOutputGML3 )
     {
         const char* pszLongSRS = CSLFetchNameValue(papszCreateOptions, "GML3_LONGSRS");
         const char* pszSRSNameFormat = CSLFetchNameValue(papszCreateOptions, "SRSNAME_FORMAT");
@@ -1654,9 +1626,7 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
     bWriteSpaceIndentation =
         CPLTestBool(CSLFetchNameValueDef(papszCreateOptions, "SPACE_INDENTATION", "YES"));
 
-/* -------------------------------------------------------------------- */
-/*      Create the output file.                                         */
-/* -------------------------------------------------------------------- */
+    // Create the output file.
     pszName = CPLStrdup( pszFilename );
     osFilename = pszName;
 
@@ -1688,9 +1658,7 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
         return false;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Write out "standard" header.                                    */
-/* -------------------------------------------------------------------- */
+    // Write out "standard" header.
     PrintLine( fpOutput, "%s",
                 "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" );
 
@@ -1713,9 +1681,7 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
         CPLFree(pszGMLId);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Write out schema info if provided in creation options.          */
-/* -------------------------------------------------------------------- */
+    // Write out schema info if provided in creation options.
     const char *pszSchemaURI = CSLFetchNameValue(papszOptions,"XSISCHEMAURI");
     const char *pszSchemaOpt = CSLFetchNameValue( papszOptions, "XSISCHEMA" );
 
@@ -1785,10 +1751,8 @@ void OGRGMLDataSource::WriteTopElements()
         CPLFree(pszTmp);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Should we initialize an area to place the boundedBy element?    */
-/*      We will need to seek back to fill it in.                        */
-/* -------------------------------------------------------------------- */
+    // Should we initialize an area to place the boundedBy element?
+    // We will need to seek back to fill it in.
     nBoundedByLocation = -1;
     if( CPLFetchBool( papszCreateOptions , "BOUNDEDBY", true ))
     {
@@ -1821,9 +1785,7 @@ OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
                                 OGRwkbGeometryType eType,
                                 CPL_UNUSED char ** papszOptions )
 {
-/* -------------------------------------------------------------------- */
-/*      Verify we are in update mode.                                   */
-/* -------------------------------------------------------------------- */
+    // Verify we are in update mode.
     if( fpOutput == NULL )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
@@ -1834,9 +1796,7 @@ OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Ensure name is safe as an element name.                         */
-/* -------------------------------------------------------------------- */
+    // Ensure name is safe as an element name.
     char *pszCleanLayerName = CPLStrdup( pszLayerName );
 
     CPLCleanXMLElementName( pszCleanLayerName );
@@ -1847,9 +1807,7 @@ OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
                   pszLayerName, pszCleanLayerName );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set or check validity of global SRS.                            */
-/* -------------------------------------------------------------------- */
+    // Set or check validity of global SRS.
     if (nLayers == 0)
     {
         WriteTopElements();
@@ -1875,9 +1833,7 @@ OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create the layer object.                                        */
-/* -------------------------------------------------------------------- */
+    // Create the layer object.
     OGRGMLLayer *poLayer = new OGRGMLLayer( pszCleanLayerName, true, this );
     poLayer->GetLayerDefn()->SetGeomType(eType);
     if( eType != wkbNone )
@@ -1885,8 +1841,8 @@ OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
         poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetName("geometryProperty");
         if( poSRS != NULL )
         {
-            /* Clone it since mapogroutput assumes that it can destroys */
-            /* the SRS it has passed to use, instead of dereferencing it. */
+            // Clone it since mapogroutput assumes that it can destroys
+            // the SRS it has passed to use, instead of dereferencing it.
             poSRS = poSRS->Clone();
             poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
             poSRS->Dereference();
@@ -1895,9 +1851,7 @@ OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
 
     CPLFree( pszCleanLayerName );
 
-/* -------------------------------------------------------------------- */
-/*      Add layer to data source layer list.                            */
-/* -------------------------------------------------------------------- */
+    // Add layer to data source layer list.
     papoLayers = (OGRGMLLayer **)
         CPLRealloc( papoLayers,  sizeof(OGRGMLLayer *) * (nLayers+1) );
 
@@ -1966,10 +1920,8 @@ void OGRGMLDataSource::InsertHeader()
     if( bFpOutputSingleFile )
         return;
 
-/* -------------------------------------------------------------------- */
-/*      Do we want to write the schema within the GML instance doc      */
-/*      or to a separate file?  For now we only support external.       */
-/* -------------------------------------------------------------------- */
+    // Do we want to write the schema within the GML instance doc
+    // or to a separate file?  For now we only support external.
     const char *pszSchemaURI = CSLFetchNameValue(papszCreateOptions,
                                                  "XSISCHEMAURI");
     const char *pszSchemaOpt = CSLFetchNameValue( papszCreateOptions,
@@ -2003,15 +1955,11 @@ void OGRGMLDataSource::InsertHeader()
     else
         return;
 
-/* ==================================================================== */
-/*      Write the schema section at the end of the file.  Once          */
-/*      complete, we will read it back in, and then move the whole      */
-/*      file "down" enough to insert the schema at the beginning.       */
-/* ==================================================================== */
+    // Write the schema section at the end of the file.  Once
+    // complete, we will read it back in, and then move the whole
+    // file "down" enough to insert the schema at the beginning.
 
-/* ==================================================================== */
-/*      Detect if there are fields of List types.                       */
-/* ==================================================================== */
+    // Detect if there are fields of List types.
     bool bHasListFields = false;
 
     for( int iLayer = 0; !bHasListFields && iLayer < GetLayerCount(); iLayer++ )
@@ -2028,12 +1976,10 @@ void OGRGMLDataSource::InsertHeader()
             {
                 bHasListFields = true;
             }
-        } /* next field */
-    } /* next layer */
+        }
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Emit the start of the schema section.                           */
-/* -------------------------------------------------------------------- */
+    // Emit the start of the schema section.
     const char* pszPrefix = GetAppPrefix();
     if( pszPrefix[0] == '\0' )
         pszPrefix = "ogr";
@@ -2127,9 +2073,7 @@ void OGRGMLDataSource::InsertHeader()
                     "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.opengis.net/gml/2.1.2/feature.xsd\"/>" );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Define the FeatureCollection                                    */
-/* -------------------------------------------------------------------- */
+    // Define the FeatureCollection.
     if (IsGML3Output())
     {
         if (IsGML32Output())
@@ -2207,17 +2151,12 @@ void OGRGMLDataSource::InsertHeader()
         PrintLine( fpSchema, "</xs:complexType>" );
     }
 
-/* ==================================================================== */
-/*      Define the schema for each layer.                               */
-/* ==================================================================== */
-
+    // Define the schema for each layer.
     for( int iLayer = 0; iLayer < GetLayerCount(); iLayer++ )
     {
         OGRFeatureDefn *poFDefn = papoLayers[iLayer]->GetLayerDefn();
 
-/* -------------------------------------------------------------------- */
-/*      Emit initial stuff for a feature type.                          */
-/* -------------------------------------------------------------------- */
+        // Emit initial stuff for a feature type.
         if( IsGML32Output() )
         {
             PrintLine(
@@ -2242,9 +2181,7 @@ void OGRGMLDataSource::InsertHeader()
         {
             OGRGeomFieldDefn *poFieldDefn = poFDefn->GetGeomFieldDefn(iGeomField);
 
-    /* -------------------------------------------------------------------- */
-    /*      Define the geometry attribute.                                  */
-    /* -------------------------------------------------------------------- */
+            // Define the geometry attribute.
             const char* pszGeometryTypeName = "GeometryPropertyType";
             const char* pszComment = "";
             OGRwkbGeometryType eGType = wkbFlatten(poFieldDefn->GetType());
@@ -2324,9 +2261,7 @@ void OGRGMLDataSource::InsertHeader()
                        poFieldDefn->GetNameRef(), pszGeometryTypeName, nMinOccurs, pszComment );
         }
 
-/* -------------------------------------------------------------------- */
-/*      Emit each of the attributes.                                    */
-/* -------------------------------------------------------------------- */
+        // Emit each of the attributes.
         for( int iField = 0; iField < poFDefn->GetFieldCount(); iField++ )
         {
             OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn(iField);
@@ -2451,29 +2386,23 @@ void OGRGMLDataSource::InsertHeader()
             }
             else
             {
-                /* TODO */
+                // TODO.
             }
-        } /* next field */
+        }  // Next field.
 
-/* -------------------------------------------------------------------- */
-/*      Finish off feature type.                                        */
-/* -------------------------------------------------------------------- */
+        // Finish off feature type.
         PrintLine( fpSchema, "      </xs:sequence>");
         PrintLine( fpSchema, "    </xs:extension>");
         PrintLine( fpSchema, "  </xs:complexContent>");
         PrintLine( fpSchema, "</xs:complexType>" );
-    } /* next layer */
+    }  // Next layer.
 
     PrintLine( fpSchema, "</xs:schema>" );
 
-/* ==================================================================== */
-/*      Move schema to the start of the file.                           */
-/* ==================================================================== */
+    // Move schema to the start of the file.
     if( fpSchema == fpOutput )
     {
-/* -------------------------------------------------------------------- */
-/*      Read the schema into memory.                                    */
-/* -------------------------------------------------------------------- */
+        // Read the schema into memory.
         int nSchemaSize = (int) VSIFTellL( fpOutput ) - nSchemaStart;
         char *pszSchema = (char *) CPLMalloc(nSchemaSize+1);
 
@@ -2482,11 +2411,8 @@ void OGRGMLDataSource::InsertHeader()
         VSIFReadL( pszSchema, 1, nSchemaSize, fpOutput );
         pszSchema[nSchemaSize] = '\0';
 
-/* -------------------------------------------------------------------- */
-/*      Move file data down by "schema size" bytes from after <?xml>    */
-/*      header so we have room insert the schema.  Move in pretty       */
-/*      big chunks.                                                     */
-/* -------------------------------------------------------------------- */
+        // Move file data down by "schema size" bytes from after <?xml> header
+        // so we have room insert the schema.  Move in pretty big chunks.
         int nChunkSize = std::min(nSchemaStart-nSchemaInsertLocation,250000);
         char *pszChunk = (char *) CPLMalloc(nChunkSize);
 
@@ -2508,9 +2434,7 @@ void OGRGMLDataSource::InsertHeader()
 
         CPLFree( pszChunk );
 
-/* -------------------------------------------------------------------- */
-/*      Write the schema in the opened slot.                            */
-/* -------------------------------------------------------------------- */
+        // Write the schema in the opened slot.
         VSIFSeekL( fpOutput, nSchemaInsertLocation, SEEK_SET );
         VSIFWriteL( pszSchema, 1, nSchemaSize, fpOutput );
 
@@ -2520,11 +2444,10 @@ void OGRGMLDataSource::InsertHeader()
 
         CPLFree(pszSchema);
     }
-/* -------------------------------------------------------------------- */
-/*      Close external schema files.                                    */
-/* -------------------------------------------------------------------- */
+
     else
     {
+        // Close external schema files.
         VSIFCloseL( fpSchema );
     }
 }
@@ -2638,8 +2561,8 @@ void OGRGMLDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
 
 void OGRGMLDataSource::FindAndParseTopElements(VSILFILE* fp)
 {
-    /* Build a shortened XML file that contain only the global */
-    /* boundedBy element, so as to be able to parse it easily */
+    // Build a shortened XML file that contain only the global
+    // boundedBy element, so as to be able to parse it easily.
 
     char szStartTag[128];
     char* pszXML = (char*)CPLMalloc(8192 + 128 + 3 + 1);
@@ -2715,9 +2638,9 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE* fp)
 
         szSRSName[0] = '\0';
 
-        /* Find a srsName somewhere for some WFS 2.0 documents */
-        /* that have not it set at the <wfs:boundedBy> element */
-        /* e.g. http://geoserv.weichand.de:8080/geoserver/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAME=bvv:gmd_ex */
+        // Find a srsName somewhere for some WFS 2.0 documents that have not it
+        // set at the <wfs:boundedBy> element. e.g.
+        // http://geoserv.weichand.de:8080/geoserver/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAME=bvv:gmd_ex
         if( bIsWFS )
         {
             ExtractSRSName(pszXML, szSRSName, sizeof(szSRSName));
