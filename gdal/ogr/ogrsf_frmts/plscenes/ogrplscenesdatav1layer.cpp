@@ -680,7 +680,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
                 json_object* poConfig = json_object_new_array();
                 json_object_array_add(poConfig,
                     (poNode->papoSubExpr[1]->field_type == SWQ_INTEGER) ?
-                        json_object_new_int(poNode->papoSubExpr[1]->int_value) :
+                        json_object_new_int64(poNode->papoSubExpr[1]->int_value) :
                         json_object_new_double(poNode->papoSubExpr[1]->float_value));
                 json_object_object_add(poFilter, "config", poConfig);
             }
@@ -721,7 +721,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
             json_object_object_add(poConfig,
                 GetOperatorText(poNode->nOperation),
                 (poNode->papoSubExpr[1]->field_type == SWQ_INTEGER) ?
-                    json_object_new_int(poNode->papoSubExpr[1]->int_value) :
+                    json_object_new_int64(poNode->papoSubExpr[1]->int_value) :
                     json_object_new_double(poNode->papoSubExpr[1]->float_value));
             json_object_object_add(poFilter, "config", poConfig);
             return poFilter;
@@ -803,7 +803,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
                     m_bFilterMustBeClientSideEvaluated = true;
                     return NULL;
                 }
-                json_object_array_add(poConfig, json_object_new_int(
+                json_object_array_add(poConfig, json_object_new_int64(
                                     poNode->papoSubExpr[i]->int_value));
             }
             return poFilter;
