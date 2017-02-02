@@ -353,14 +353,13 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
 
         CPLString buffer;
 
-        if (strlen(psconfig) != 0) {
-            // Probably XML encoded because it is XML itself
-            buffer = psconfig; // Make a copy, might be replaced by the decoded result
+        if (strlen(psconfig) != 0) { // Probably XML encoded because it is XML itself
+            buffer = psconfig; // The copy will be replaced by the decoded result
             psconfig = WMSUtilDecode(buffer, CPLGetXMLValue(config, "Configuration.encoding", ""));
         }
         else { // Not inline, use the WMSdriver
             CPLString getTileServiceUrl = m_base_url + "request=GetTileService";
-            // This returns a string from cache, not need to remove
+            // This returns a string managed by the cfg cache
             psconfig = GDALWMSDataset::GetServerConfig(getTileServiceUrl);
             if (psconfig == NULL)
                 throw CPLOPrintf("%s HTTP failure", SIG);
@@ -619,6 +618,34 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
 
         if ((overview_count == 0) || (m_bsx < 1) || (m_bsy < 1))
             throw CPLOPrintf("%s No usable TilePattern elements found", SIG);
+
+        // Do we need to embed the server configuration in the prototype XML
+        if (CPLGetXMLValue(config, "Configuration", NULL) == NULL) {
+            // Get the proposed XML, it will exist at this point
+            CPLXMLNode *cfg_root = CPLParseXMLString(m_parent_dataset->GetMetadataItem("XML", "WMS"));
+
+            if (cfg_root && CPLGetXMLNode(cfg_root, "Cache")) { // Only if there is a cache node
+
+                char *server_xml = CPLSerializeXMLTree(tileServiceConfig);
+
+                int len = static_cast<int>(strlen(server_xml));
+                char *encoded_server_xml = CPLEscapeString(server_xml, len, CPLES_XML);
+                CPLFree(server_xml);
+
+                // It doesn't have a Service.Configuration element, safe to add one
+                CPLXMLNode *service_node = CPLGetXMLNode(cfg_root, "Service");
+                CPLXMLNode *scfg = CPLCreateXMLElementAndValue(service_node, "Configuration", encoded_server_xml);
+                CPLAddXMLAttributeAndValue(scfg, "encoding", "XMLencoded");
+                CPLFree(encoded_server_xml);
+
+                char * osXML = CPLSerializeXMLTree(cfg_root);
+
+                m_parent_dataset->SetXML(osXML);
+                CPLFree(osXML);
+            }
+
+            CPLDestroyXMLNode(cfg_root);
+        }
     }
     catch (const CPLString &msg) {
         ret = CE_Failure;
@@ -644,6 +671,5 @@ CPLErr WMSMiniDriver_TiledWMS::TiledImageRequest(
     url += CSLGetField(m_requests, -tiri.m_level);
     URLSearchAndReplace(&url, "${GDAL_BBOX}", "%013.8f,%013.8f,%013.8f,%013.8f",
         iri.m_x0, iri.m_y1, iri.m_x1, iri.m_y0);
-//    url += m_end_url;
     return CE_None;
 }

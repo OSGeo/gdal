@@ -127,44 +127,31 @@ int URLSearchAndReplace (CPLString *base, const char *search, const char *fmt, .
     return static_cast<int>(start);
 }
 
-// Decode s in place from base64 or XMLencoded.  Returns s->c_str() after decoding
-// If encoding is not "base64" or "XMLencoded", does nothing and returns s->c_str()
+// decode s from base64, XMLencoded or read from the file name s
 const char *WMSUtilDecode(CPLString &s, const char *encoding) {
-    if (encoding == NULL || strlen(encoding) == 0 ||
-        (!EQUAL(encoding, "base64") && !EQUAL(encoding, "XMLencoded")))
-        return s.c_str();
-
-    // During decoding the size shrinks or stays the same, so conversion can be done in place
-    // Use a vector of char since changes in a string are not allowed by standard
-    std::vector<char> buffer(s.begin(), s.end());
-    buffer.push_back('\0');
-
     if (EQUAL(encoding, "base64")) {
+        std::vector<char> buffer(s.begin(), s.end());
+        buffer.push_back('\0');
         CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(&buffer[0]));
+        s.assign(&buffer[0], strlen(&buffer[0]));
     }
-    else { // XMLencoded, copy-decode to buffer
-
-        const char *src = s.c_str();
-        char *dst = &buffer[0];
-
-        while (*src) {
-            if (*src == '&') { // One of the five entities or unicode
-
-#define TestReplace(key, val, s, d) (EQUALN(s, key, strlen(key))) { *d++ = val; s += strlen(key); continue; }
-
-                if TestReplace("&quot;", '\"', src, dst)
-                else if TestReplace("&amp;", '&', src, dst)
-                else if TestReplace("&apos;", '\'', src, dst)
-                else if TestReplace("&lt;", '<', src, dst)
-                else if TestReplace("&gt;", '>', src, dst)
-                // likely unicode, fallthrough to straight copy
-            }
-            *dst++ = *src++;
+    else if (EQUAL(encoding, "XMLencoded")) {
+        int len = static_cast<int>(s.size());
+        char *result = CPLUnescapeString(s.c_str(), &len, CPLES_XML);
+        s.assign(result, static_cast<size_t>(len));
+        CPLFree(result);
+    }
+    else if (EQUAL(encoding, "file")) { // Not an encoding but an external file
+        VSILFILE *f = VSIFOpenL(s.c_str(), "rb");
+        s.clear(); // Return an empty string if file can't be opened or read
+        if (f) {
+            VSIFSeekL(f, 0, SEEK_END);
+            size_t size = static_cast<size_t>(VSIFTellL(f));
+            VSIFSeekL(f, 0, SEEK_SET);
+            std::vector<char> buffer(size);
+            if (VSIFReadL(reinterpret_cast<void *>(&buffer[0]), size, 1, f))
+                s.assign(&buffer[0], buffer.size());
         }
-        *dst = *src; // Copy the final zero
     }
-
-    // Put the converted data back in the string and return the C string
-    s = &buffer[0];
     return s.c_str();
 }
