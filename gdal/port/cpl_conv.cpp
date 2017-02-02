@@ -84,7 +84,7 @@
 CPL_CVSID("$Id$");
 
 static CPLMutex *hConfigMutex = NULL;
-static volatile char **papszConfigOptions = NULL;
+static volatile char **g_papszConfigOptions = NULL;
 
 // Used by CPLOpenShared() and friends.
 static CPLMutex *hSharedFileMutex = NULL;
@@ -1641,7 +1641,7 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
         CPLMutexHolderD(&hConfigMutex);
 
         pszResult =
-            CSLFetchNameValue(const_cast<char **>(papszConfigOptions), pszKey);
+            CSLFetchNameValue(const_cast<char **>(g_papszConfigOptions), pszKey);
     }
 
     if( pszResult == NULL )
@@ -1651,6 +1651,55 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
         return pszDefault;
 
     return pszResult;
+}
+
+/************************************************************************/
+/*                         CPLGetConfigOptions()                        */
+/************************************************************************/
+
+/**
+  * Return the list of configuration options as KEY=VALUE pairs.
+  *
+  * The list is the one set through the CPLSetConfigOption() API.
+  *
+  * Options that through environment variables or with
+  * CPLSetThreadLocalConfigOption() will *not* be listed.
+  * 
+  * @return a copy of the list, to be freed with CSLDestroy().
+  * @since GDAL 2.2
+  */
+char** CPLGetConfigOptions(void)
+{
+    CPLMutexHolderD(&hConfigMutex);
+    return CSLDuplicate(const_cast<char**>(g_papszConfigOptions));
+}
+
+/************************************************************************/
+/*                         CPLSetConfigOptions()                        */
+/************************************************************************/
+
+/**
+  * Replace the full list of configuration options with the passed list of
+  * KEY=VALUE pairs.
+  *
+  * This has the same effect of clearing the existing list, and setting
+  * individually each pair with the CPLSetConfigOption() API.
+  * 
+  * This does not affect options set through environment variables or with
+  * CPLSetThreadLocalConfigOption().
+  * 
+  * The passed list is copied by the funtion.
+  *
+  * @param papszConfigOptions the new list (or NULL).
+  * 
+  * @since GDAL 2.2
+  */
+void CPLSetConfigOptions(const char* const * papszConfigOptions)
+{
+    CPLMutexHolderD(&hConfigMutex);
+    CSLDestroy(const_cast<char**>(g_papszConfigOptions));
+    g_papszConfigOptions = const_cast<volatile char**>(
+            CSLDuplicate(const_cast<char**>(papszConfigOptions)));
 }
 
 /************************************************************************/
@@ -1720,9 +1769,9 @@ CPLSetConfigOption( const char *pszKey, const char *pszValue )
 #endif
     CPLMutexHolderD(&hConfigMutex);
 
-    papszConfigOptions = const_cast<volatile char **>(
+    g_papszConfigOptions = const_cast<volatile char **>(
         CSLSetNameValue(
-            const_cast<char **>(papszConfigOptions), pszKey, pszValue));
+            const_cast<char **>(g_papszConfigOptions), pszKey, pszValue));
 }
 
 /************************************************************************/
@@ -1780,6 +1829,62 @@ CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
 }
 
 /************************************************************************/
+/*                   CPLGetThreadLocalConfigOptions()                   */
+/************************************************************************/
+
+/**
+  * Return the list of thread local configuration options as KEY=VALUE pairs.
+  *
+  * Options that through environment variables or with
+  * CPLSetConfigOption() will *not* be listed.
+  * 
+  * @return a copy of the list, to be freed with CSLDestroy().
+  * @since GDAL 2.2
+  */
+char** CPLGetThreadLocalConfigOptions(void)
+{
+    int bMemoryError = FALSE;
+    char **papszTLConfigOptions = reinterpret_cast<char **>(
+        CPLGetTLSEx(CTLS_CONFIGOPTIONS, &bMemoryError));
+    if( bMemoryError )
+        return NULL;
+    return CSLDuplicate(papszTLConfigOptions);
+}
+
+/************************************************************************/
+/*                   CPLSetThreadLocalConfigOptions()                   */
+/************************************************************************/
+
+/**
+  * Replace the full list of thread local configuration options with the
+  * passed list of KEY=VALUE pairs.
+  *
+  * This has the same effect of clearing the existing list, and setting
+  * individually each pair with the CPLSetThreadLocalConfigOption() API.
+  * 
+  * This does not affect options set through environment variables or with
+  * CPLSetConfigOption().
+  * 
+  * The passed list is copied by the funtion.
+  *
+  * @param papszConfigOptions the new list (or NULL).
+  * 
+  * @since GDAL 2.2
+  */
+void CPLSetThreadLocalConfigOptions(const char* const * papszConfigOptions)
+{
+    int bMemoryError = FALSE;
+    char **papszTLConfigOptions = reinterpret_cast<char **>(
+        CPLGetTLSEx(CTLS_CONFIGOPTIONS, &bMemoryError));
+    if( bMemoryError )
+        return;
+    CSLDestroy(papszTLConfigOptions);
+    papszTLConfigOptions = CSLDuplicate(const_cast<char**>(papszConfigOptions));
+    CPLSetTLSWithFreeFunc(CTLS_CONFIGOPTIONS, papszTLConfigOptions,
+                          CPLSetThreadLocalTLSFreeFunc);
+}
+
+/************************************************************************/
 /*                           CPLFreeConfig()                            */
 /************************************************************************/
 
@@ -1789,8 +1894,8 @@ void CPL_STDCALL CPLFreeConfig()
     {
         CPLMutexHolderD(&hConfigMutex);
 
-        CSLDestroy(const_cast<char **>(papszConfigOptions));
-        papszConfigOptions = NULL;
+        CSLDestroy(const_cast<char **>(g_papszConfigOptions));
+        g_papszConfigOptions = NULL;
 
         int bMemoryError = FALSE;
         char **papszTLConfigOptions = reinterpret_cast<char **>(

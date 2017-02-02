@@ -62,6 +62,10 @@ void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption( const char *pszKey,
 /*! @cond Doxygen_Suppress */
 void CPL_DLL CPL_STDCALL CPLFreeConfig(void);
 /*! @endcond */
+char CPL_DLL** CPLGetConfigOptions(void);
+void CPL_DLL   CPLSetConfigOptions(const char* const * papszConfigOptions);
+char CPL_DLL** CPLGetThreadLocalConfigOptions(void);
+void CPL_DLL   CPLSetThreadLocalConfigOptions(const char* const * papszConfigOptions);
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */
