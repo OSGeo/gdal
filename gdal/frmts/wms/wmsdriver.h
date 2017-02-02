@@ -59,8 +59,9 @@ class GDALWMSRasterBand;
 CPLString MD5String(const char *s);
 CPLString ProjToWKT(const CPLString &proj);
 
-// Decode s in place from base64 or XMLencoded.  Returns s->c_str(), after decoding
-// If second param is not "base64" or "XMLencoded", immediately returns s->c_str()
+// Decode s from encoding "base64" or "XMLencoded".
+// If encoding is "file", s is the file name on input and file content on output
+// If encoding is not recognized, does nothing
 const char *WMSUtilDecode(CPLString &s, const char *encoding);
 
 // Ensure that the url ends in ? or &
@@ -344,6 +345,12 @@ public:
 
     void WMSSetMaxValue(const char * pszMax) {
         list2vec(vMax,pszMax);
+    }
+
+    void SetXML(const char *psz) {
+        m_osXML.clear();
+        if (psz)
+            m_osXML = psz;
     }
 
     static GDALDataset* Open(GDALOpenInfo *poOpenInfo);
