@@ -1205,7 +1205,8 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
 /*      Find the file(s) at this location.                              */
 /* -------------------------------------------------------------------- */
         char **papszFileList = NULL;
-        int nListSize = 0;
+        int nListSize = 0; // keep it in this scope
+        int nListMaxSize = 0; // keep it in this scope
         CPLHashSet* hSetFiles = CPLHashSetNew(CPLHashSetHashStr,
                                               CPLHashSetEqualStr,
                                               NULL);
@@ -1230,7 +1231,6 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
                                          &nOutXSize, &nOutYSize ) )
                 continue;
 
-            int nListMaxSize = 0;
             poSrc->GetFileList( &papszFileList, &nListSize, &nListMaxSize,
                                 hSetFiles );
         }
