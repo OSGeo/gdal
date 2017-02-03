@@ -413,7 +413,8 @@ GDALDataset* OGRPLScenesDataV1Dataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
                 !EQUAL(pszKey, "catalog") &&
                 !EQUAL(pszKey, "itemtypes") &&
                 !EQUAL(pszKey, "version") &&
-                !EQUAL(pszKey, "follow_links"))
+                !EQUAL(pszKey, "follow_links") &&
+                !EQUAL(pszKey, "metadata"))
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option %s", pszKey);
                 CPLFree(pszKey);
@@ -612,47 +613,51 @@ retry:
     CSLDestroy(papszAllowedDrivers);
     if( poOutDS )
     {
-        OGRLayer* poLayer = GetLayerByName(pszCatalog);
-        if( poLayer != NULL )
+        if( CPLFetchBool(papszOptions, "metadata",
+                CPLFetchBool(poOpenInfo->papszOpenOptions, "METADATA", true)) )
         {
-            // Set a dummy name so that PAM goes here
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            poOutDS->SetDescription("/vsimem/tmp/ogrplscenesDataV1");
-
-            /* Attach scene metadata. */
-            poLayer->SetAttributeFilter(CPLSPrintf("id = '%s'", osScene.c_str()));
-            OGRFeature* poFeat = poLayer->GetNextFeature();
-            if( poFeat )
+            OGRLayer* poLayer = GetLayerByName(pszCatalog);
+            if( poLayer != NULL )
             {
-                for(int i=0;i<poFeat->GetFieldCount();i++)
+                // Set a dummy name so that PAM goes here
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                poOutDS->SetDescription("/vsimem/tmp/ogrplscenesDataV1");
+
+                /* Attach scene metadata. */
+                poLayer->SetAttributeFilter(CPLSPrintf("id = '%s'", osScene.c_str()));
+                OGRFeature* poFeat = poLayer->GetNextFeature();
+                if( poFeat )
                 {
-                    if( poFeat->IsFieldSet(i) )
+                    for(int i=0;i<poFeat->GetFieldCount();i++)
                     {
-                        const char* pszKey = poFeat->GetFieldDefnRef(i)->GetNameRef();
-                        const char* pszVal = poFeat->GetFieldAsString(i);
-                        if( strncmp(pszKey, "asset_", strlen("asset_")) == 0 ||
-                            strstr(pszVal, "https://") != NULL ||
-                            strcmp(pszKey, "columns") == 0 ||
-                            strcmp(pszKey, "rows") == 0 ||
-                            strcmp(pszKey, "epsg_code") == 0 ||
-                            strcmp(pszKey, "origin_x") == 0 ||
-                            strcmp(pszKey, "origin_y") == 0 ||
-                            strcmp(pszKey, "permissions") == 0 ||
-                            strcmp(pszKey, "acquired") == 0 // Redundant with TIFFTAG_DATETIME
-                        )
+                        if( poFeat->IsFieldSet(i) )
                         {
-                            continue;
+                            const char* pszKey = poFeat->GetFieldDefnRef(i)->GetNameRef();
+                            const char* pszVal = poFeat->GetFieldAsString(i);
+                            if( strncmp(pszKey, "asset_", strlen("asset_")) == 0 ||
+                                strstr(pszVal, "https://") != NULL ||
+                                strcmp(pszKey, "columns") == 0 ||
+                                strcmp(pszKey, "rows") == 0 ||
+                                strcmp(pszKey, "epsg_code") == 0 ||
+                                strcmp(pszKey, "origin_x") == 0 ||
+                                strcmp(pszKey, "origin_y") == 0 ||
+                                strcmp(pszKey, "permissions") == 0 ||
+                                strcmp(pszKey, "acquired") == 0 // Redundant with TIFFTAG_DATETIME
+                            )
+                            {
+                                continue;
+                            }
+                            poOutDS->SetMetadataItem(pszKey, pszVal);
                         }
-                        poOutDS->SetMetadataItem(pszKey, pszVal);
                     }
                 }
-            }
-            delete poFeat;
+                delete poFeat;
 
-            poOutDS->FlushCache();
-            VSIUnlink("/vsimem/tmp/ogrplscenesDataV1");
-            VSIUnlink("/vsimem/tmp/ogrplscenesDataV1.aux.xml");
-            CPLPopErrorHandler();
+                poOutDS->FlushCache();
+                VSIUnlink("/vsimem/tmp/ogrplscenesDataV1");
+                VSIUnlink("/vsimem/tmp/ogrplscenesDataV1.aux.xml");
+                CPLPopErrorHandler();
+            }
         }
 
         CPLErrorReset();
