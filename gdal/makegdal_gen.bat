@@ -75,6 +75,7 @@ if "%_vcver_%"=="14.0" (
 set _platf_=%2
 set _buildplatf_=x86
 set _winver_=Win32
+set _nmake_opt_win64_=
 
 if not "%_platf_%"=="32" (
     if not "%_platf_%"=="64" (
@@ -86,6 +87,7 @@ if not "%_platf_%"=="32" (
 if "%_platf_%"=="64" (
     set _winver_=x64
     set _buildplatf_=x64
+    set _nmake_opt_win64_=WIN64=1
 )
 
 goto :continue
@@ -207,18 +209,18 @@ echo     ^<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" 
 echo   ^</ImportGroup^>                                         >> %_mainfile_%
 echo   ^<PropertyGroup Label="UserMacros" /^>                   >> %_mainfile_%
 echo   ^<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|%_winver_%'"^>     >> %_mainfile_%
-echo     ^<NMakeBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 WITH_PDB=1^</NMakeBuildCommandLine^>            >> %_mainfile_%
+echo     ^<NMakeBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% %_nmake_opt_win64_% DEBUG=1 WITH_PDB=1^</NMakeBuildCommandLine^>            >> %_mainfile_%
 echo     ^<NMakeOutput^>^</NMakeOutput^>                                                    >> %_mainfile_%
-echo     ^<NMakeCleanCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 WITH_PDB=1 clean^</NMakeCleanCommandLine^>      >> %_mainfile_%
-echo     ^<NMakeReBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 WITH_PDB=1 clean ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% DEBUG=1 WITH_PDB=1^</NMakeReBuildCommandLine^>  >> %_mainfile_%
+echo     ^<NMakeCleanCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% %_nmake_opt_win64_% DEBUG=1 WITH_PDB=1 clean^</NMakeCleanCommandLine^>      >> %_mainfile_%
+echo     ^<NMakeReBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% %_nmake_opt_win64_% DEBUG=1 WITH_PDB=1 clean ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_% %_nmake_opt_win64_% DEBUG=1 WITH_PDB=1^</NMakeReBuildCommandLine^>  >> %_mainfile_%
 echo     ^<NMakePreprocessorDefinitions^>%_winver_%;_DEBUG;$(NMakePreprocessorDefinitions)^</NMakePreprocessorDefinitions^>   >> %_mainfile_%
 echo     ^<LibraryPath^>$(VC_LibraryPath_%_buildplatf_%);$(WindowsSDK_LibraryPath_%_buildplatf_%);$(VC_SourcePath);^</LibraryPath^>   >> %_mainfile_%
 echo   ^</PropertyGroup^>                                                                   >> %_mainfile_%
 echo   ^<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|%_winver_%'"^>   >> %_mainfile_%
-echo     ^<NMakeBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_%^</NMakeBuildCommandLine^>            >> %_mainfile_%
+echo     ^<NMakeBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% %_nmake_opt_win64_% ^</NMakeBuildCommandLine^>            >> %_mainfile_%
 echo     ^<NMakeOutput^>^</NMakeOutput^>                                                    >> %_mainfile_%
-echo     ^<NMakeCleanCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% clean^</NMakeCleanCommandLine^>      >> %_mainfile_%
-echo     ^<NMakeReBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% clean ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_%^</NMakeReBuildCommandLine^>  >> %_mainfile_%
+echo     ^<NMakeCleanCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% %_nmake_opt_win64_% clean^</NMakeCleanCommandLine^>      >> %_mainfile_%
+echo     ^<NMakeReBuildCommandLine^>nmake -f makefile.vc MSVC_VER=%_clver_% %_nmake_opt_win64_% clean ^&amp;^&amp; nmake -f makefile.vc MSVC_VER=%_clver_%^</NMakeReBuildCommandLine^>  >> %_mainfile_%
 echo     ^<NMakePreprocessorDefinitions^>%_winver_%;NDEBUG;$(NMakePreprocessorDefinitions)^</NMakePreprocessorDefinitions^>   >> %_mainfile_%
 echo     ^<LibraryPath^>$(VC_LibraryPath_%_buildplatf_%);$(WindowsSDK_LibraryPath_%_buildplatf_%);$(VC_SourcePath);^</LibraryPath^>   >> %_mainfile_%
 echo   ^</PropertyGroup^>                                                                   >> %_mainfile_%
@@ -275,13 +277,6 @@ echo   ^<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/^>  >> %_mainfi
 echo ^</Project^>                                               >> %_mainfile_%
 
 echo Done!
-echo Edit nmake.local or nmake.opt:
-echo MSVC_VER=%_clver_%
-if "%_platf_%"=="64" (
-    echo WIN64=YES
-) else (
-    echo #WIN64=YES
-)
 
 :: **********************************************
 :: The end
