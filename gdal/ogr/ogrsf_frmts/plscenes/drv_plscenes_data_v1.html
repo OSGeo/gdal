@@ -37,6 +37,8 @@ Optional for vector layer access. Mandatory for raster accessI.</li>
 If the option is not specified and the 'visual' asset category does not exist for the scene
 (or if the value is set to 'list'), the returned dataset will have subdatasets
 for the available asset categories.</li>
+<li> <b>medata</b>=YES/NO: (Raster only) Whether scene metadata should be
+fetch from the API and attached to the raster dataset. Defaults to YES.</li>
 </ul>
 
 If several parameters are specified, they must be separated by a comma.<p>
@@ -64,6 +66,8 @@ for the available asset categories.</li>
 Default is YES.</li>
 <li><b>ACTIVATION_TIMEOUT</b>=int: Number of seconds during which to wait for
 asset activation (raster). Default is 3600.</li>
+<li> <b>METADATA</b>=YES/NO: (Raster only) Whether scene metadata should be
+fetched from the API and attached to the raster dataset. Defaults to YES.</li>
 </ul>
 
 <h2>Configuration options</h2>

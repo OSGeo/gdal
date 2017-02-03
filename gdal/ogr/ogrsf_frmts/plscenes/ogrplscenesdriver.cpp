@@ -97,6 +97,7 @@ void RegisterOGRPLSCENES()
 "  <Option name='RANDOM_ACCESS' type='boolean' description='Whether raster should be accessed in random access mode (but with potentially not optimal throughput). If no, in-memory ingestion is done' default='YES'/>"
 "  <Option name='ACTIVATION_TIMEOUT' type='int' description='Number of seconds during which to wait for asset activation (API v1 / data v1 only, raster)' default='3600'/>"
 "  <Option name='FILTER' type='string' description='Custom filter (API v1 / data v1 only)'/>"
+"  <Option name='METADATA' type='boolean' description='(Raster only, API Data V1) Whether scene metadata should be fetched from the API and attached to the raster dataset' default='YES'/>"
 "</OpenOptionList>");
 
     poDriver->pfnOpen = OGRPLScenesOpen;
