@@ -615,8 +615,6 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
         }
         else
         {
-            if( poFilter1 )
-                json_object_put(poFilter1);
             return NULL;
         }
     }
@@ -639,8 +637,6 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
             }
             else
             {
-                if( poFilter1 )
-                    json_object_put(poFilter1);
                 return NULL;
             }
         }
