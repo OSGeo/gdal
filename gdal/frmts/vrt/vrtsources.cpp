@@ -772,7 +772,7 @@ void VRTSimpleSource::GetFileList( char*** ppapszFileList, int *pnSize,
 /* -------------------------------------------------------------------- */
         if( *pnSize + 1 >= *pnMaxSize )
         {
-            *pnMaxSize = 2 + 2 * (*pnMaxSize);
+            *pnMaxSize = std::max(*pnSize + 2, 2 + 2 * (*pnMaxSize));
             *ppapszFileList = static_cast<char **>( CPLRealloc(
                 *ppapszFileList, sizeof(char*) * (*pnMaxSize) ) );
         }
