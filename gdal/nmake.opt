@@ -8,11 +8,13 @@
 # nmake -f makefile.vc MSVC_VER=1500 DEBUG=1
 # nmake -f makefile.vc MSVC_VER=1600 DEBUG=1 ANALYZE=1
 # nmake -f makefile.vc MSVC_VER=1600 DEBUG=1 ANALYZE=1 WITH_PDB=1
+# nmake -f makefile.vc MSVC_VER=1400 WIN64=1
 #
 # Options:
 #    DEBUG - set to disable optimizations and link with debug runtimes; also implies WITH_PDB.
 #  ANALYZE - set to enable code analysis output.
 # WITH_PDB - set to enable output of PDB files, supported for both debug and release modes.
+#    WIN64 - set to target 64-bit architecture.
 #
 ###############################################################################
 # For convenience, user may put custom settings in a local settings file
@@ -198,6 +200,10 @@ LDEBUG= /debug
 # (x64). You'll need to have PATH, INCLUDE and LIB set up for 64-bit
 # compiles.
 #WIN64=YES
+# Capture WIN64=1 if specified in NMAKE command line
+!IFDEF WIN64
+WIN64=YES
+!ENDIF
 
 # If you don't want some entry points to have STDCALL conventions, 
 # comment out the following and add -DCPL_DISABLE_STDCALL in OPTFLAGS.
