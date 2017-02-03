@@ -151,6 +151,7 @@ const char *WMSUtilDecode(CPLString &s, const char *encoding) {
             std::vector<char> buffer(size);
             if (VSIFReadL(reinterpret_cast<void *>(&buffer[0]), size, 1, f))
                 s.assign(&buffer[0], buffer.size());
+            VSIFCloseL(f);
         }
     }
     return s.c_str();
