@@ -27,15 +27,27 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "rawdataset.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
 
+#include <limits.h>
 #include <cmath>
+#include <string.h>
 #include <cstddef>
 #include <cstdlib>
-
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 #include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_virtualmem.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
