@@ -27,9 +27,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_port.h"
+#include "cpl_progress.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gdal_priv.h"
 #include "../raw/rawdataset.h"
 
 CPL_CVSID("$Id$");
@@ -349,11 +364,10 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     // Do we need to route the file through the decompression machinery?
+    const bool bCompressed =
+        memcmp(poOpenInfo->pabyHeader, "\037\213\b", 3) == 0;
     const CPLString osAdjustedFilename =
-        std::string(memcmp(poOpenInfo->pabyHeader, "\037\213\b", 3) == 0
-                        ? "/vsigzip/"
-                        : "") +
-        poOpenInfo->pszFilename;
+        std::string(bCompressed ? "/vsigzip/" : "") + poOpenInfo->pszFilename;
 
     // Establish this as a dataset and open the file using VSI*L.
     RDataset *poDS = new RDataset();
