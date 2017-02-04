@@ -27,10 +27,32 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
-#include "gdal_frmts.h"
-#include "ogr_spatialref.h"
+#include "cpl_port.h"
 #include "rawdataset.h"
+
+#include <cctype>
+#include <cerrno>
+#include <climits>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -57,14 +79,14 @@ class EHdrDataset : public RawDataset
 
     CPLString   osHeaderExt;
 
-    int         bGotTransform;
+    bool        bGotTransform;
     double      adfGeoTransform[6];
     char       *pszProjection;
 
-    int         bHDRDirty;
+    bool        bHDRDirty;
     char      **papszHDR;
 
-    int         bCLRDirty;
+    bool        bCLRDirty;
 
     CPLErr      ReadSTX();
     CPLErr      RewriteSTX();
@@ -111,7 +133,7 @@ class EHdrRasterBand : public RawRasterBand
     int            nPixelOffsetBits;
     vsi_l_offset   nLineOffsetBits;
 
-    int            bNoDataSet;
+    int            bNoDataSet;  // TODO(schwehr): Convert to bool.
     double         dfNoData;
     double         dfMin;
     double         dfMax;
@@ -460,11 +482,11 @@ static const char*OSR_GDS( char* pszResult, int nResultLen,
 EHdrDataset::EHdrDataset() :
     fpImage(NULL),
     osHeaderExt("hdr"),
-    bGotTransform(FALSE),
+    bGotTransform(false),
     pszProjection(CPLStrdup("")),
-    bHDRDirty(FALSE),
+    bHDRDirty(false),
     papszHDR(NULL),
-    bCLRDirty(FALSE)
+    bCLRDirty(false)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -565,13 +587,13 @@ void EHdrDataset::ResetKeyValue( const char *pszKey, const char *pszValue )
             {
                 CPLFree(papszHDR[i]);
                 papszHDR[i] = CPLStrdup(szNewLine);
-                bHDRDirty = TRUE;
+                bHDRDirty = true;
             }
             return;
         }
     }
 
-    bHDRDirty = TRUE;
+    bHDRDirty = true;
     papszHDR = CSLAddString(papszHDR, szNewLine);
 }
 
@@ -724,7 +746,7 @@ CPLErr EHdrDataset::SetGeoTransform( double *padfGeoTransform )
 /* -------------------------------------------------------------------- */
 /*      Record new geotransform.                                        */
 /* -------------------------------------------------------------------- */
-    bGotTransform = TRUE;
+    bGotTransform = true;
     memcpy(adfGeoTransform, padfGeoTransform, sizeof(double) * 6);
 
 /* -------------------------------------------------------------------- */
@@ -799,7 +821,7 @@ CPLErr EHdrDataset::RewriteHDR()
         }
     }
 
-    bHDRDirty = FALSE;
+    bHDRDirty = false;
 
     if( VSIFCloseL(fp) != 0 )
         return CE_Failure;
@@ -1495,7 +1517,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
     {
-        poDS->bGotTransform = TRUE;
+        poDS->bGotTransform = true;
 
         if( bCenter )
         {
@@ -1518,14 +1540,14 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     if( !poDS->bGotTransform )
-        poDS->bGotTransform =
+        poDS->bGotTransform = CPL_TO_BOOL(
             GDALReadWorldFile(poOpenInfo->pszFilename, NULL,
-                              poDS->adfGeoTransform);
+                              poDS->adfGeoTransform));
 
     if( !poDS->bGotTransform )
-        poDS->bGotTransform =
+        poDS->bGotTransform = CPL_TO_BOOL(
             GDALReadWorldFile(poOpenInfo->pszFilename, "wld",
-                              poDS->adfGeoTransform);
+                              poDS->adfGeoTransform));
 
 /* -------------------------------------------------------------------- */
 /*      Check for a .prj file.                                          */
@@ -1780,7 +1802,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             poBand->SetColorInterpretation(GCI_PaletteIndex);
         }
 
-        poDS->bCLRDirty = FALSE;
+        poDS->bCLRDirty = false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2121,7 +2143,7 @@ CPLErr EHdrRasterBand::SetColorTable( GDALColorTable *poNewCT )
     if( err != CE_None )
         return err;
 
-    reinterpret_cast<EHdrDataset *>(poDS)->bCLRDirty = TRUE;
+    reinterpret_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
 
     return CE_None;
 }
