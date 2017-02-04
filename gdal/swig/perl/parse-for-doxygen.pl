@@ -4,11 +4,11 @@ use Modern::Perl;
 
 my @pm = qw(lib/Geo/GDAL.pm lib/Geo/OGR.pm lib/Geo/OSR.pm lib/Geo/GDAL/Const.pm lib/Geo/GNM.pm);
 
-my %internal_methods = map {$_=>1} qw/TIEHASH CLEAR FIRSTKEY NEXTKEY FETCH STORE 
+my %internal_methods = map {$_=>1} qw/TIEHASH CLEAR FIRSTKEY NEXTKEY FETCH STORE
                                       DESTROY DISOWN ACQUIRE RELEASE_PARENTS
                                       UseExceptions DontUseExceptions this AllRegister RegisterAll
                                       callback_d_cp_vp/;
-my %private_methods = map {$_=>1} qw/PushErrorHandler PopErrorHandler Error ErrorReset 
+my %private_methods = map {$_=>1} qw/PushErrorHandler PopErrorHandler Error ErrorReset
                                      GetLastErrorNo GetLastErrorType GetLastErrorMsg/;
 my %constant_prefixes = map {$_=>1} qw/DCAP_/;
 
@@ -238,7 +238,7 @@ for my $package (sort keys %package) {
         next if $sub =~ /^SRS_UL_/;
         next if $sub =~ /^SRS_UA_/;
         next if $sub =~ /^SRS_DN_/;
-        
+
         my $at = $package{$package}{dox}{$sub}{at} // '';
         next if $internal_methods{$sub} && !$at; # skip non-documented internal methods
 
@@ -319,5 +319,5 @@ sub fix_indentation {
                 $_ =~ s/^ //;
             }
         }
-    } 
+    }
 }

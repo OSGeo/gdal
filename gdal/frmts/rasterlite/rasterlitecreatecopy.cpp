@@ -144,7 +144,7 @@ static int RasterliteInsertSRID(OGRDataSourceH hDS, const char* pszWKT)
 
     CPLString osSQL;
     int nSRSId = -1;
-    if (nAuthorityCode != 0 && osAuthorityName.size() != 0)
+    if (nAuthorityCode != 0 && !osAuthorityName.empty())
     {
         osSQL.Printf   ("SELECT srid FROM spatial_ref_sys WHERE auth_srid = %d", nAuthorityCode);
         OGRLayerH hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
@@ -152,7 +152,7 @@ static int RasterliteInsertSRID(OGRDataSourceH hDS, const char* pszWKT)
         {
             nSRSId = nAuthorityCode;
 
-            if ( osProjCS.size() != 0 )
+            if ( !osProjCS.empty() )
                 osSQL.Printf(
                     "INSERT INTO spatial_ref_sys "
                     "(srid, auth_name, auth_srid, ref_sys_name, proj4text) "
@@ -188,7 +188,7 @@ static int RasterliteInsertSRID(OGRDataSourceH hDS, const char* pszWKT)
 /*                     RasterliteCreateTables ()                        */
 /************************************************************************/
 
-static 
+static
 OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableName,
                                       int nSRSId, int bWipeExistingData)
 {
@@ -434,7 +434,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSIStatBuf sBuf;
     const bool bExists = (VSIStat(osDBName.c_str(), &sBuf) == 0);
 
-    if (osTableName.size() == 0)
+    if (osTableName.empty())
     {
         if (bExists)
         {
@@ -588,7 +588,8 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Create in-memory tile                                           */
 /* -------------------------------------------------------------------- */
-            int nReqXSize = nBlockXSize, nReqYSize = nBlockYSize;
+            int nReqXSize = nBlockXSize;
+            int nReqYSize = nBlockYSize;
             if ((nBlockXOff+1) * nBlockXSize > nXSize)
                 nReqXSize = nXSize - nBlockXOff * nBlockXSize;
             if ((nBlockYOff+1) * nBlockYSize > nYSize)
@@ -607,7 +608,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
 
             GDALDatasetH hMemDS = GDALCreate(hMemDriver, "MEM:::",
-                                              nReqXSize, nReqYSize, 0, 
+                                              nReqXSize, nReqYSize, 0,
                                               eDataType, NULL);
             if (hMemDS == NULL)
             {

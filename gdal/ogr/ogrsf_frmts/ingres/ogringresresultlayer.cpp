@@ -50,6 +50,7 @@ OGRIngresResultLayer::OGRIngresResultLayer( OGRIngresDataSource *poDSIn,
     BuildFullQueryStatement();
 
     poFeatureDefn = ReadResultDefinition();
+    nFeatureCount = 0;
 }
 
 /************************************************************************/

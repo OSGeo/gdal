@@ -57,7 +57,6 @@ AODataSource::~AODataSource()
         delete m_layers[i];
 }
 
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -84,7 +83,6 @@ int AODataSource::Open(IWorkspace* pWorkspace, const char * pszNewName, int bUpd
     {
       return AOErr(hr, "Failed Opening Workspace Layers");
     }
-
 
     return LoadLayers(ipEnumDataset);
 }
@@ -129,7 +127,7 @@ bool AODataSource::LoadLayers(IEnumDataset* pEnumDataset)
       continue; //skip
 
     AOLayer* pLayer = new AOLayer;
-    
+
     ITablePtr ipTable = ipFC;
 
     if (!pLayer->Initialize(ipTable))
@@ -139,15 +137,13 @@ bool AODataSource::LoadLayers(IEnumDataset* pEnumDataset)
     }
 
     m_layers.push_back(pLayer);
-
   }
 
-  if (errEncountered && m_layers.size() == 0)
+  if (errEncountered && m_layers.empty())
     return false; //all of the ones we tried had errors
   else
     return true; //at least one worked
 }
-
 
 /************************************************************************/
 /*                            DeleteLayer()                             */
@@ -173,12 +169,12 @@ OGRErr AODataSource::DeleteLayer( int iLayer )
   IDatasetPtr ipDataset = ipTable;
 
   HRESULT hr;
-  
+
   if (FAILED(hr = ipDataset->Delete()))
   {
     CPLError( CE_Warning, CPLE_AppDefined, "%s was not deleted however it has been closed", name.c_str());
     AOErr(hr, "Failed deleting dataset");
-   
+
     return OGRERR_FAILURE;
   }
   else
@@ -211,7 +207,7 @@ int AODataSource::TestCapability( const char * pszCap )
 /************************************************************************/
 
 OGRLayer *AODataSource::GetLayer( int iLayer )
-{ 
+{
   int count = static_cast<int>(m_layers.size());
 
   if( iLayer < 0 || iLayer >= count )

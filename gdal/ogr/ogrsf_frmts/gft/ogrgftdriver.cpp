@@ -76,7 +76,6 @@ OGRDataSource *OGRGFTDriver::Open( const char * pszFilename, int bUpdate )
     return poDS;
 }
 
-
 /************************************************************************/
 /*                          CreateDataSource()                          */
 /************************************************************************/

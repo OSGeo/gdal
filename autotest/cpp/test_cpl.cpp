@@ -478,7 +478,9 @@ namespace tut
             bool bOK = (memcmp(pszDecodedString, oReferenceString.szString,
                            nLength) == 0);
             // FIXME Some tests fail on Mac. Not sure why, but do not error out just for that
-            if( !bOK && ((getenv("TRAVIS") && getenv("TRAVIS_XCODE_SDK")) || getenv("DO_NOT_FAIL_ON_RECODE_ERRORS")))
+            if( !bOK && (strstr(CPLGetConfigOption("TRAVIS_OS_NAME", ""), "osx") != NULL ||
+                         strstr(CPLGetConfigOption("BUILD_NAME", ""), "osx") != NULL ||
+                         getenv("DO_NOT_FAIL_ON_RECODE_ERRORS") != NULL))
             {
                 fprintf(stderr, "Recode from %s failed\n", oTestString.szEncoding);
             }
@@ -996,6 +998,40 @@ namespace tut
             ensure( ptr == NULL );
 #endif
         }
+    }
+
+/************************************************************************/
+/*             CPLGetConfigOptions() / CPLSetConfigOptions()            */
+/************************************************************************/
+    template<>
+    template<>
+    void object::test<18>()
+    {
+        CPLSetConfigOption("FOOFOO", "BAR");
+        char** options = CPLGetConfigOptions();
+        ensure_equals (CSLFetchNameValue(options, "FOOFOO"), "BAR");
+        CPLSetConfigOptions(NULL);
+        ensure_equals (CPLGetConfigOption("FOOFOO", "i_dont_exist"), "i_dont_exist");
+        CPLSetConfigOptions(options);
+        ensure_equals (CPLGetConfigOption("FOOFOO", "i_dont_exist"), "BAR");
+        CSLDestroy(options);
+    }
+
+/************************************************************************/
+/*  CPLGetThreadLocalConfigOptions() / CPLSetThreadLocalConfigOptions() */
+/************************************************************************/
+    template<>
+    template<>
+    void object::test<19>()
+    {
+        CPLSetThreadLocalConfigOption("FOOFOO", "BAR");
+        char** options = CPLGetThreadLocalConfigOptions();
+        ensure_equals (CSLFetchNameValue(options, "FOOFOO"), "BAR");
+        CPLSetThreadLocalConfigOptions(NULL);
+        ensure_equals (CPLGetThreadLocalConfigOption("FOOFOO", "i_dont_exist"), "i_dont_exist");
+        CPLSetThreadLocalConfigOptions(options);
+        ensure_equals (CPLGetThreadLocalConfigOption("FOOFOO", "i_dont_exist"), "BAR");
+        CSLDestroy(options);
     }
 
 } // namespace tut

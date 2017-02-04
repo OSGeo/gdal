@@ -1086,8 +1086,8 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
 #ifdef DEBUG
    printf ("nbit %d, ibit %d, jbit %d, kbit %d\n", nbit, ibit, jbit, kbit);
    if ((t_numBytes + ceil (t_numBits / 8.)) != sectLen) {
-      printf ("Caution: # bytes in groups %d (%d + %d / 8) != "
-              "sectLen %d\n", (sInt4) (t_numBytes + ceil (t_numBits / 8.)),
+      printf ("Caution: # bytes in groups %d (%u + %u / 8) != "
+              "sectLen %u\n", (sInt4) (t_numBytes + ceil (t_numBits / 8.)),
               t_numBytes, t_numBits, sectLen);
    }
 #endif
@@ -1195,9 +1195,9 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
                   if ((grp[i].bit == 0) && (grp[i].min != 0)) {
 #ifdef DEBUG
                      printf ("This doesn't happen often.\n");
-                     printf ("%d %d %d\n", (int) i, grp[i].bit, grp[i].min);
+                     printf ("%d %u %d\n", (int) i, grp[i].bit, grp[i].min);
 #endif
-                     myAssert (1 == 2);
+                     myAssert (0);
                      f_missing = 0;
                   }
                }
@@ -1394,8 +1394,8 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
                   if ((grp[i].bit == 0) && (grp[i].min != 0)) {
 #ifdef DEBUG
                      printf ("This doesn't happen often.\n");
-                     printf ("%d %d %d\n", (int) i, grp[i].bit, grp[i].min);
-                     myAssert (1 == 2);
+                     printf ("%d %u %d\n", (int) i, grp[i].bit, grp[i].min);
+                     myAssert (0);
 #endif
                      f_missing = 0;
                   }
@@ -1453,7 +1453,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
       }
    }
    meta->gridAttrib.numMiss = dataCnt - numVal;
-   meta->gridAttrib.refVal = minVal * scale;
+   meta->gridAttrib.refVal = (float)(minVal * scale);
 
    free (grp);
    return 0;
@@ -3217,7 +3217,9 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
    if (f_secMiss) {
       /* 11 = primMiss 10 = secMiss 01, 00 = data. */
       minBit = 2;
-   } else if (f_primMiss) {
+   }
+   // cppcheck-suppress duplicateBranch
+   else if (f_primMiss) {
       /* 1 = primMiss 0 = data. */
       /* might try minBit = 1 here. */
       minBit = 1;
@@ -3621,10 +3623,10 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
                Data[i] -= OverallMin;
                // Check if we accidentally adjusted to prim or sec, if so add 1.
                if ((Data[i] == li_secMiss) || (Data[i] == li_primMiss)) {
-                  myAssert (1 == 2);
+                  myAssert (0);
                   Data[i]++;
                   if ((Data[i] == li_secMiss) || (Data[i] == li_primMiss)) {
-                     myAssert (1 == 2);
+                     myAssert (0);
                      Data[i]++;
                   }
                }
@@ -3636,7 +3638,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
                Data[i] -= OverallMin;
                // Check if we accidentally adjusted to prim or sec, if so add 1.
                if (Data[i] == li_primMiss) {
-                  myAssert (1 == 2);
+                  myAssert (0);
                   Data[i]++;
                }
             }

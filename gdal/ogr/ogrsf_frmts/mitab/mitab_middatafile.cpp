@@ -89,20 +89,21 @@ CPL_CVSID("$Id$");
  *
  *====================================================================*/
 
-MIDDATAFile::MIDDATAFile()
+MIDDATAFile::MIDDATAFile() :
+    m_fp(NULL),
+    m_pszDelimiter("\t"), // Encom 2003 (was NULL)
+    m_pszFname(NULL),
+    m_eAccessMode(TABRead),
+    // TODO(schwehr): m_szLastRead({}),
+    // TODO(schwehr): m_szSavedLine({}),
+    m_dfXMultiplier(1.0),
+    m_dfYMultiplier(1.0),
+    m_dfXDisplacement(0.0),
+    m_dfYDisplacement(0.0),
+    m_bEof(FALSE)
 {
-    m_fp = NULL;
     m_szLastRead[0] = '\0';
     m_szSavedLine[0] = '\0';
-    m_pszDelimiter = "\t"; // Encom 2003 (was NULL)
-
-    m_dfXMultiplier = 1.0;
-    m_dfYMultiplier = 1.0;
-    m_dfXDisplacement = 0.0;
-    m_dfYDisplacement = 0.0;
-    m_pszFname = NULL;
-    m_eAccessMode = TABRead;
-    m_bEof = FALSE;
 }
 
 MIDDATAFile::~MIDDATAFile()
@@ -198,7 +199,6 @@ int MIDDATAFile::Close()
     m_pszFname = NULL;
 
     return 0;
-
 }
 
 const char *MIDDATAFile::GetLine()
@@ -267,10 +267,8 @@ void MIDDATAFile::WriteLine(const char *pszFormat,...)
     }
 }
 
-
-void MIDDATAFile::SetTranslation(double dfXMul,double dfYMul,
-                                 double dfXTran,
-                                 double dfYTran)
+void MIDDATAFile::SetTranslation( double dfXMul,double dfYMul,
+                                  double dfXTran, double dfYTran )
 {
     m_dfXMultiplier = dfXMul;
     m_dfYMultiplier = dfYMul;
@@ -288,14 +286,9 @@ double MIDDATAFile::GetYTrans(double dfY)
     return (dfY * m_dfYMultiplier) + m_dfYDisplacement;
 }
 
-
 GBool MIDDATAFile::IsValidFeature(const char *pszString)
 {
-    char **papszToken ;
-
-    papszToken = CSLTokenizeString(pszString);
-
-    //   printf("%s\n",pszString);
+    char **papszToken = CSLTokenizeString(pszString);
 
     if (CSLCount(papszToken) == 0)
     {
@@ -316,15 +309,12 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
 
     CSLDestroy(papszToken);
     return FALSE;
-
 }
-
 
 GBool MIDDATAFile::GetEof()
 {
     return m_bEof;
 }
-
 
 void MIDDATAFile::SetEof(GBool bEof)
 {

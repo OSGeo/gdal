@@ -31,7 +31,7 @@
 
 CPL_CVSID("$Id$");
 
-#define FILE_CODE "P"
+static const char FILE_CODE[] = "P";
 
 static const TigerFieldInfo rtP_2002_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
@@ -65,7 +65,6 @@ static const TigerRecordInfo rtP_info =
     sizeof(rtP_fields) / sizeof(TigerFieldInfo),
     44
   };
-
 
 /************************************************************************/
 /*                              TigerPIP()                              */

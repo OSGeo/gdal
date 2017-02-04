@@ -36,20 +36,18 @@ CPL_CVSID("$Id$");
  * GNMGenericLayer
  */
 GNMGenericLayer::GNMGenericLayer(OGRLayer* poLayer,
-                                 GNMGenericNetwork* poNetwork) : OGRLayer()
+                                 GNMGenericNetwork* poNetwork) :
+    OGRLayer(),
+    m_soLayerName( poLayer->GetName() ),
+    m_poLayer( poLayer ),
+    m_poNetwork( poNetwork )
 {
-    m_poLayer = poLayer;
-    m_poNetwork = poNetwork;
-    m_soLayerName = poLayer->GetName();
 }
 
 /**
  * ~GNMGenericLayer
  */
-GNMGenericLayer::~GNMGenericLayer()
-{
-
-}
+GNMGenericLayer::~GNMGenericLayer() {}
 
 const char *GNMGenericLayer::GetFIDColumn()
 {

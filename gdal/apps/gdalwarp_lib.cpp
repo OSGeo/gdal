@@ -29,17 +29,33 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdalwarper.h"
-#include "cpl_string.h"
+#include "cpl_port.h"
+#include "gdal_utils.h"
+#include "gdal_utils_priv.h"
+
+#include <cctype>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include <algorithm>
+#include <vector>
+
+#include "commonutils.h"
+#include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "gdal.h"
+#include "gdal_alg.h"
+#include "gdal_priv.h"
+#include "gdalwarper.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
-#include "ogr_api.h"
-#include "commonutils.h"
-#include "gdal_priv.h"
-#include <vector>
-#include <algorithm>
-#include "gdal_utils_priv.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -299,6 +315,21 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDAL
 
         if( pszProjection == NULL || pszProjection[0] == '\0' )
         {
+            if( pszThisTargetSRS == NULL && hCutlineSRS == NULL )
+            {
+                OGREnvelope sEnvelope;
+                OGR_G_GetEnvelope(hCutlineGeom, &sEnvelope);
+
+                dfMinX = sEnvelope.MinX;
+                dfMinY = sEnvelope.MinY;
+                dfMaxX = sEnvelope.MaxX;
+                dfMaxY = sEnvelope.MaxY;
+
+                OGR_G_DestroyGeometry(hCutlineGeom);
+
+                return CE_None;
+            }
+
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
             OGR_G_DestroyGeometry(hCutlineGeom);
             return CE_Failure;
@@ -312,7 +343,6 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDAL
             OGR_G_DestroyGeometry(hCutlineGeom);
             return CE_Failure;
         }
-
     }
 
     if ( pszThisTargetSRS != NULL )
@@ -400,7 +430,6 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDAL
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                          GDALWarpAppOptionsClone()                   */
@@ -629,7 +658,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /*      If not, we need to create it.                                   */
 /* -------------------------------------------------------------------- */
     void* hUniqueTransformArg = NULL;
-    int bInitDestSetByUser = ( CSLFetchNameValue( psOptions->papszWarpOptions, "INIT_DEST" ) != NULL );
+    const bool bInitDestSetByUser = ( CSLFetchNameValue( psOptions->papszWarpOptions, "INIT_DEST" ) != NULL );
 
     const char* pszWarpThreads = CSLFetchNameValue(psOptions->papszWarpOptions, "NUM_THREADS");
     if( pszWarpThreads != NULL )
@@ -1087,8 +1116,13 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
             CSLDestroy( papszTokens );
 
-            psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
+            if( psWO->nBandCount > 1 &&
+                CSLFetchNameValue(psWO->papszWarpOptions, "UNIFIED_SRC_NODATA") == NULL )
+            {
+                CPLDebug("WARP", "Set UNIFIED_SRC_NODATA=YES");
+                psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
                                                "UNIFIED_SRC_NODATA", "YES" );
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -1349,7 +1383,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             CPLString osDstFilename(GDALGetDescription(hDstDS));
 
             char** papszContent = NULL;
-            if( osDstFilename.size() == 0 )
+            if( osDstFilename.empty() )
                 papszContent = CSLDuplicate(GDALGetMetadata(hDstDS, "xml:VRT"));
 
             GDALClose(hDstDS);
@@ -1424,6 +1458,95 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 }
 
 /************************************************************************/
+/*                          ValidateCutline()                           */
+/************************************************************************/
+
+static bool ValidateCutline(OGRGeometryH hGeom)
+{
+    OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
+    if( eType == wkbMultiPolygon )
+    {
+        for( int iGeom = 0; iGeom < OGR_G_GetGeometryCount( hGeom ); iGeom++ )
+        {
+            OGRGeometryH hPoly = OGR_G_GetGeometryRef(hGeom,iGeom);
+            if( !ValidateCutline(hPoly) )
+                return false;
+        }
+    }
+    else if( eType == wkbPolygon )
+    {
+        if( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hGeom) )
+        {
+            char *pszWKT = NULL;
+            OGR_G_ExportToWkt( hGeom, &pszWKT );
+            CPLDebug("GDALWARP", "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
+            const char* pszFile = CPLGetConfigOption("GDALWARP_DUMP_WKT_TO_FILE", NULL);
+            if( pszFile && pszWKT )
+            {
+                FILE* f = EQUAL(pszFile, "stderr") ? stderr : fopen(pszFile, "wb");
+                if( f )
+                {
+                    fprintf(f, "id,WKT\n");
+                    fprintf(f, "1,\"%s\"\n", pszWKT);
+                    if( !EQUAL(pszFile, "stderr") )
+                        fclose(f);
+                }
+            }
+            CPLFree( pszWKT );
+
+            if( CPLTestBool(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
+                CPLError(CE_Warning, CPLE_AppDefined, "Cutline polygon is invalid.");
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cutline polygon is invalid.");
+                return false;
+            }
+        }
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Cutline not of polygon type." );
+        return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                     LooseValidateCutline()                           */
+/*                                                                      */
+/*  Same as OGR_G_IsValid() except that it processes polygon per polygon*/
+/*  without paying attention to MultiPolygon specific validity rules.   */
+/************************************************************************/
+
+static bool LooseValidateCutline(OGRGeometryH hGeom)
+{
+    OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
+    if( eType == wkbMultiPolygon )
+    {
+        for( int iGeom = 0; iGeom < OGR_G_GetGeometryCount( hGeom ); iGeom++ )
+        {
+            OGRGeometryH hPoly = OGR_G_GetGeometryRef(hGeom,iGeom);
+            if( !LooseValidateCutline(hPoly) )
+                return false;
+        }
+    }
+    else if( eType == wkbPolygon )
+    {
+        if( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hGeom) )
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*                            LoadCutline()                             */
 /*                                                                      */
 /*      Load blend cutline from OGR datasource.                         */
@@ -1494,6 +1617,12 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
             goto error;
         }
 
+        if( !ValidateCutline(hGeom) )
+        {
+            OGR_F_Destroy( hFeat );
+            goto error;
+        }
+
         OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
 
         if( eType == wkbPolygon )
@@ -1507,12 +1636,6 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
                 OGR_G_AddGeometry( hMultiPolygon,
                                    OGR_G_GetGeometryRef(hGeom,iGeom) );
             }
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, "Cutline not of polygon type." );
-            OGR_F_Destroy( hFeat );
-            goto error;
         }
 
         OGR_F_Destroy( hFeat );
@@ -1567,7 +1690,6 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                       void ** phTransformArg,
                       bool bSetColorInterpretation,
                       GDALWarpAppOptions *psOptions)
-
 
 {
     GDALDriverH hDriver;
@@ -1712,7 +1834,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                 pszThisSourceSRS = "";
         }
 
-        if( osThisTargetSRS.size() == 0 )
+        if( osThisTargetSRS.empty() )
             osThisTargetSRS = pszThisSourceSRS;
 
 /* -------------------------------------------------------------------- */
@@ -1822,16 +1944,17 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                 dfWrkMaxY = adfExtent[3];
                 dfWrkMinY = adfExtent[1];
                 dfWrkResX = adfThisGeoTransform[1];
-                dfWrkResY = ABS(adfThisGeoTransform[5]);
+                dfWrkResY = std::abs(adfThisGeoTransform[5]);
             }
             else
             {
-                dfWrkMinX = MIN(dfWrkMinX,adfExtent[0]);
-                dfWrkMaxX = MAX(dfWrkMaxX,adfExtent[2]);
-                dfWrkMaxY = MAX(dfWrkMaxY,adfExtent[3]);
-                dfWrkMinY = MIN(dfWrkMinY,adfExtent[1]);
-                dfWrkResX = MIN(dfWrkResX,adfThisGeoTransform[1]);
-                dfWrkResY = MIN(dfWrkResY,ABS(adfThisGeoTransform[5]));
+                dfWrkMinX = std::min(dfWrkMinX, adfExtent[0]);
+                dfWrkMaxX = std::max(dfWrkMaxX, adfExtent[2]);
+                dfWrkMaxY = std::max(dfWrkMaxY, adfExtent[3]);
+                dfWrkMinY = std::min(dfWrkMinY,adfExtent[1]);
+                dfWrkResX = std::min(dfWrkResX,adfThisGeoTransform[1]);
+                dfWrkResY =
+                    std::min(dfWrkResY, std::abs(adfThisGeoTransform[5]));
             }
         }
 
@@ -1998,18 +2121,24 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
     if( psOptions->bEnableDstAlpha )
         nDstBandCount++;
 
+    if( EQUAL(pszFormat, "GTiff") )
+    {
+
 /* -------------------------------------------------------------------- */
 /*      Automatically set PHOTOMETRIC=RGB for GTiff when appropriate    */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszFormat, "GTiff") &&
-        apeColorInterpretations.size() >= 3 &&
-        apeColorInterpretations[0] == GCI_RedBand &&
-        apeColorInterpretations[1] == GCI_GreenBand &&
-        apeColorInterpretations[2] == GCI_BlueBand &&
-        CSLFetchNameValue( *ppapszCreateOptions, "PHOTOMETRIC" ) == NULL )
-    {
-        *ppapszCreateOptions = CSLSetNameValue(*ppapszCreateOptions,
-                                               "PHOTOMETRIC", "RGB");
+        if ( apeColorInterpretations.size() >= 3 &&
+            apeColorInterpretations[0] == GCI_RedBand &&
+            apeColorInterpretations[1] == GCI_GreenBand &&
+            apeColorInterpretations[2] == GCI_BlueBand &&
+            CSLFetchNameValue( *ppapszCreateOptions, "PHOTOMETRIC" ) == NULL )
+        {
+            *ppapszCreateOptions = CSLSetNameValue(*ppapszCreateOptions,
+                                                "PHOTOMETRIC", "RGB");
+        }
+
+        /* The GTiff driver now supports writing band color interpretation */
+        /* in the TIFF_GDAL_METADATA tag */
         bSetColorInterpretation = true;
     }
 
@@ -2045,8 +2174,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
     }
     else
     {
-        adfDstGeoTransform[0] = 0.0;
-        adfDstGeoTransform[3] = 0.0;
+        adfDstGeoTransform[3] += adfDstGeoTransform[5] * nLines;
         adfDstGeoTransform[5] = fabs(adfDstGeoTransform[5]);
     }
 
@@ -2108,11 +2236,11 @@ public:
 
     void         *hSrcImageTransformer;
 
-    virtual OGRSpatialReference *GetSourceCS() { return NULL; }
-    virtual OGRSpatialReference *GetTargetCS() { return NULL; }
+    virtual OGRSpatialReference *GetSourceCS() override { return NULL; }
+    virtual OGRSpatialReference *GetTargetCS() override { return NULL; }
 
     virtual int Transform( int nCount,
-                           double *x, double *y, double *z = NULL ) {
+                           double *x, double *y, double *z = NULL ) override {
         int nResult;
 
         int *pabSuccess = (int *) CPLCalloc(sizeof(int),nCount);
@@ -2124,7 +2252,7 @@ public:
 
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
-                             int *pabSuccess = NULL ) {
+                             int *pabSuccess = NULL ) override {
         return GDALGenImgProjTransform( hSrcImageTransformer, TRUE,
                                         nCount, x, y, z, pabSuccess );
     }
@@ -2174,7 +2302,7 @@ double GetMaximumSegmentLength( OGRGeometry* poGeom )
         }
 
         default:
-            CPLAssert(0);
+            CPLAssert(false);
             return 0.0;
     }
 }
@@ -2190,14 +2318,13 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
 
 {
     OGRGeometryH hMultiPolygon = OGR_G_Clone( (OGRGeometryH) hCutline );
-    char **papszTO = CSLDuplicate( papszTO_In );
 
 /* -------------------------------------------------------------------- */
 /*      Checkout that if there's a cutline SRS, there's also a raster   */
 /*      one.                                                            */
 /* -------------------------------------------------------------------- */
     OGRSpatialReferenceH  hRasterSRS = NULL;
-    const char *pszProjection = CSLFetchNameValue( papszTO, "SRC_SRS" );
+    const char *pszProjection = CSLFetchNameValue( papszTO_In, "SRC_SRS" );
     if( pszProjection == NULL )
     {
         char** papszMD;
@@ -2223,7 +2350,35 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Extract the cutline SRS.                                        */
+/* -------------------------------------------------------------------- */
     OGRSpatialReferenceH hCutlineSRS = OGR_G_GetSpatialReference( hMultiPolygon );
+
+/* -------------------------------------------------------------------- */
+/*      Detect if there's no transform at all involved, in which case   */
+/*      we can avoid densification.                                     */
+/* -------------------------------------------------------------------- */
+    bool bMayNeedDensify = true;
+    if( hRasterSRS != NULL && hCutlineSRS != NULL &&
+        OSRIsSame(hRasterSRS, hCutlineSRS) &&
+        GDALGetGCPCount( hSrcDS ) == 0 &&
+        GDALGetMetadata( hSrcDS, "RPC" ) == NULL &&
+        GDALGetMetadata( hSrcDS, "GEOLOCATION" ) == NULL )
+    {
+        char **papszTOTmp = CSLDuplicate( papszTO_In );
+        papszTOTmp = CSLSetNameValue(papszTOTmp, "SRC_SRS", NULL);
+        papszTOTmp = CSLSetNameValue(papszTOTmp, "DST_SRS", NULL);
+        if( CSLCount(papszTOTmp) == 0 )
+        {
+            bMayNeedDensify = false;
+        }
+        CSLDestroy(papszTOTmp);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Compare source raster SRS and cutline SRS                       */
+/* -------------------------------------------------------------------- */
     if( hRasterSRS != NULL && hCutlineSRS != NULL )
     {
         /* OK, we will reproject */
@@ -2245,9 +2400,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     if( hRasterSRS != NULL )
         OSRDestroySpatialReference(hRasterSRS);
 
-/* -------------------------------------------------------------------- */
-/*      Extract the cutline SRS WKT.                                    */
-/* -------------------------------------------------------------------- */
+    char **papszTO = CSLDuplicate( papszTO_In );
     if( hCutlineSRS != NULL )
     {
         char *pszCutlineSRS_WKT = NULL;
@@ -2296,10 +2449,19 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
                             reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    const bool bWasValidInitialy = OGR_G_IsValid(hMultiPolygon) != FALSE;
+    const bool bWasValidInitialy = LooseValidateCutline(hMultiPolygon);
     CPLPopErrorHandler();
+    if( !bWasValidInitialy )
+    {
+        CPLDebug("WARP", "Cutline is not valid after initial reprojection");
+        char *pszWKT = NULL;
+        OGR_G_ExportToWkt( hMultiPolygon, &pszWKT );
+        CPLDebug("GDALWARP", "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
+        CPLFree(pszWKT);
+    }
+
     bool bDensify = false;
-    if( eErr == OGRERR_NONE && dfInitialMaxLengthInPixels > 1.0 )
+    if( bMayNeedDensify && eErr == OGRERR_NONE && dfInitialMaxLengthInPixels > 1.0 )
     {
         const char* pszDensifyCutline = CPLGetConfigOption("GDALWARP_DENSIFY_CUTLINE", "YES");
         if( EQUAL(pszDensifyCutline, "ONLY_IF_INVALID") )
@@ -2343,7 +2505,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
                     // invalid polygon due to the non-linearity of RPC DEM transformation,
                     // so in those cases, try a less dense cutline
                     CPLPushErrorHandler(CPLQuietErrorHandler);
-                    const bool bIsValid = OGR_G_IsValid(hMultiPolygon) != FALSE;
+                    const bool bIsValid = LooseValidateCutline(hMultiPolygon);
                     CPLPopErrorHandler();
                     if( !bIsValid )
                     {
@@ -2374,22 +2536,10 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
             return CE_Failure;
         }
     }
-    else if( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hMultiPolygon) )
+    else if( !ValidateCutline(hMultiPolygon) )
     {
-        char *pszWKT = NULL;
-        OGR_G_ExportToWkt( hMultiPolygon, &pszWKT );
-        CPLDebug("GDALWARP", "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
-        //fprintf(stderr, "WKT = \"%s\"\n", pszWKT ? pszWKT : "(null)");
-        CPLFree( pszWKT );
-
-        if( CPLTestBool(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
-            CPLError(CE_Warning, CPLE_AppDefined, "Cutline is not valid after transformation");
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cutline is not valid after transformation");
-            OGR_G_DestroyGeometry( hMultiPolygon );
-            return CE_Failure;
-        }
+        OGR_G_DestroyGeometry( hMultiPolygon );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2536,7 +2686,7 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
     int argc = CSLCount(papszArgv);
-    for( int i = 0; i < argc; i++ )
+    for( int i = 0; papszArgv != NULL && i < argc; i++ )
     {
         if( EQUAL(papszArgv[i],"-tps") || EQUAL(papszArgv[i],"-rpc") || EQUAL(papszArgv[i],"-geoloc")  )
         {

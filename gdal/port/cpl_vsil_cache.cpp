@@ -27,8 +27,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_vsi_virtual.h"
+
+#include <cstddef>
+#include <cstring>
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
+#include <algorithm>
 #include <map>
+#include <utility>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
+#include "cpl_vsi_virtual.h"
 
 //! @cond Doxygen_Suppress
 
@@ -50,7 +65,7 @@ public:
       poLRUNext(NULL),
       nDataFilled(0),
       pabyData(NULL)
-    { }
+    {}
 
     virtual ~VSICacheChunk()
     {
@@ -110,14 +125,16 @@ class VSICachedFile CPL_FINAL : public VSIVirtualHandle
 
     bool           bEOF;
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Flush();
-    virtual int       Close();
-    virtual void     *GetNativeFileDescriptor()
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize,
+                            size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize,
+                             size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Flush() override;
+    virtual int       Close() override;
+    virtual void     *GetNativeFileDescriptor() override
         { return poBase->GetNativeFileDescriptor(); }
 };
 
@@ -138,7 +155,7 @@ VSICachedFile::VSICachedFile( VSIVirtualHandle *poBaseHandle, size_t nChunkSize,
 {
     m_nChunkSize = nChunkSize;
 
-    if ( nCacheSize == 0 )
+    if( nCacheSize == 0 )
         nCacheMax = CPLScanUIntBig(
              CPLGetConfigOption( "VSI_CACHE_SIZE", "25000000" ), 40 );
 
@@ -188,14 +205,12 @@ int VSICachedFile::Seek( vsi_l_offset nReqOffset, int nWhence )
 
     if( nWhence == SEEK_SET )
     {
-        // use offset directly.
+        // Use offset directly.
     }
-
     else if( nWhence == SEEK_CUR )
     {
         nReqOffset += nOffset;
     }
-
     else if( nWhence == SEEK_END )
     {
         nReqOffset += nFileSize;
@@ -307,7 +322,7 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
                       SEEK_SET );
 
         VSICacheChunk *poBlock = new VSICacheChunk();
-        if ( !poBlock || !poBlock->Allocate( m_nChunkSize ) )
+        if( !poBlock || !poBlock->Allocate( m_nChunkSize ) )
         {
             delete poBlock;
             return FALSE;
@@ -367,7 +382,7 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
     for( size_t i = 0; i < nBlockCount; i++ )
     {
         VSICacheChunk *poBlock = new VSICacheChunk();
-        if ( !poBlock || !poBlock->Allocate( m_nChunkSize ) )
+        if( !poBlock || !poBlock->Allocate( m_nChunkSize ) )
         {
             delete poBlock;
             return FALSE;
@@ -443,11 +458,11 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
         VSICacheChunk * poBlock = oMapOffsetToCache[iBlock];
         if( poBlock == NULL )
         {
-            /* We can reach that point when the amount to read exceeds */
-            /* the cache size */
-            LoadBlocks( iBlock, 1,
-                        static_cast<GByte *>(pBuffer) + nAmountCopied,
-                        MIN(nSize * nCount - nAmountCopied, m_nChunkSize) );
+            // We can reach that point when the amount to read exceeds
+            // the cache size.
+            LoadBlocks(iBlock, 1,
+                       static_cast<GByte *>(pBuffer) + nAmountCopied,
+                       std::min(nSize * nCount - nAmountCopied, m_nChunkSize));
             poBlock = oMapOffsetToCache[iBlock];
             CPLAssert(poBlock != NULL);
         }
@@ -481,7 +496,7 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
         FlushLRU();
 
     const size_t nRet = nAmountCopied / nSize;
-    if (nRet != nCount)
+    if( nRet != nCount )
         bEOF = true;
     return nRet;
 }

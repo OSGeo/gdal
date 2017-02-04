@@ -60,7 +60,7 @@ WriteAttrRecordToDBF( DBFHandle hDBF, int nRecord,
 static void Usage()
 
 {
-    printf( "Usage: sdts2shp CATD_filename [-o shapefile_name]\n"
+    printf( "Usage: sdts2shp CATD_filename [-o shapefile_name]\n" /*ok*/
             "                [-m module_name] [-v]\n"
             "\n"
             "Modules include `LE01', `PC01', `NP01' and `ARDF'\n" );
@@ -100,7 +100,7 @@ int main( int nArgc, char ** papszArgv )
             bVerbose = TRUE;
         else
         {
-            printf( "Incomplete, or unsupported option `%s'\n\n",
+            printf( "Incomplete, or unsupported option `%s'\n\n",/*ok*/
                     papszArgv[i] );
             Usage();
         }
@@ -137,16 +137,16 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( bVerbose )
     {
-        printf( "Layers:\n" );
+        printf( "Layers:\n" );/*ok*/
         for( i = 0; i < oTransfer.GetLayerCount(); i++ )
         {
             int         iCATDEntry = oTransfer.GetLayerCATDEntry(i);
 
-            printf( "  %s: `%s'\n",
+            printf( "  %s: `%s'\n",/*ok*/
                     oTransfer.GetCATD()->GetEntryModule(iCATDEntry),
                     oTransfer.GetCATD()->GetEntryTypeDesc(iCATDEntry) );
         }
-        printf( "\n" );
+        printf( "\n" );/*ok*/
     }
 
 /* -------------------------------------------------------------------- */
@@ -178,7 +178,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      If the module is a point one, dump to Shapefile.                */
 /* -------------------------------------------------------------------- */
-    else if( pszMODN[0] == 'N' || pszMODN[0] == 'N' )
+    else if( pszMODN[0] == 'N' || pszMODN[0] == 'n' )
     {
         WritePointShapefile( pszShapefile, &oTransfer, pszMODN );
     }
@@ -295,22 +295,22 @@ static void WriteLineShapefile( const char * pszShapefile,
         DBFWriteIntegerAttribute( hDBF, iShape, nSDTSRecordField,
                                   poRawLine->oModId.nRecord );
 
-        sprintf( szID, "%s:%ld",
+        sprintf( szID, "%s:%d",
                  poRawLine->oLeftPoly.szModule,
                  poRawLine->oLeftPoly.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nLeftPolyField, szID );
 
-        sprintf( szID, "%s:%ld",
+        sprintf( szID, "%s:%d",
                  poRawLine->oRightPoly.szModule,
                  poRawLine->oRightPoly.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nRightPolyField, szID );
 
-        sprintf( szID, "%s:%ld",
+        sprintf( szID, "%s:%d",
                  poRawLine->oStartNode.szModule,
                  poRawLine->oStartNode.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nStartNodeField, szID );
 
-        sprintf( szID, "%s:%ld",
+        sprintf( szID, "%s:%d",
                  poRawLine->oEndNode.szModule,
                  poRawLine->oEndNode.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nEndNodeField, szID );
@@ -417,7 +417,7 @@ static void WritePointShapefile( const char * pszShapefile,
         DBFWriteIntegerAttribute( hDBF, iShape, nSDTSRecordField,
                                   poRawPoint->oModId.nRecord );
 
-        sprintf( szID, "%s:%ld",
+        sprintf( szID, "%s:%d",
                  poRawPoint->oAreaId.szModule,
                  poRawPoint->oAreaId.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nAreaField, szID );
@@ -643,7 +643,7 @@ AddPrimaryAttrToDBFSchema( DBFHandle hDBF, SDTSTransfer *poTransfer,
 
         if( poAttrReader == NULL )
         {
-            printf( "Unable to open attribute module %s, skipping.\n" ,
+            printf( "Unable to open attribute module %s, skipping.\n" ,/*ok*/
                     papszModuleList[iModule] );
             continue;
         }
@@ -725,7 +725,6 @@ AddPrimaryAttrToDBFSchema( DBFHandle hDBF, SDTSTransfer *poTransfer,
 
         if( !poAttrReader->IsIndexed() )
             delete poAttrFeature;
-
     } /* next module */
 }
 

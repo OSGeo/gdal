@@ -617,7 +617,7 @@ def ogr_wfs_geoserver_wfst():
 
     # Retrieve inserted features
     print('Retrieving created features gml:id')
-    sql_lyr = ds.ExecuteSQL("SELECT _LAST_INSERTED_FIDS_ FROM za:za_points");
+    sql_lyr = ds.ExecuteSQL("SELECT _LAST_INSERTED_FIDS_ FROM za:za_points")
     feat = sql_lyr.GetNextFeature()
     while feat is not None:
         gml_id = feat.GetFieldAsString(0)
@@ -4455,7 +4455,7 @@ def ogr_wfs_vsimem_wfs200_multipart():
 """Content-Type: multipart/mixed; boundary="my_boundary"
 \r
 \r
---my_boundary 
+--my_boundary
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: attachment; filename=my.json
 \r
@@ -4493,7 +4493,7 @@ Content-Disposition: attachment; filename=my.json
 """Content-Type: multipart/mixed; boundary="my_boundary"
 \r
 \r
---my_boundary 
+--my_boundary
 \r
 {
 "type":"FeatureCollection",
@@ -5352,7 +5352,7 @@ def ogr_wfs_vsimem_cleanup():
 
     return 'success'
 
-gdaltest_live_list = [ 
+gdaltest_live_list = [
     #ogr_wfs_mapserver,
     #ogr_wfs_geoserver, #FIXME: re-enable after adapting test
     #ogr_wfs_geoserver_json, #FIXME: re-enable after adapting test

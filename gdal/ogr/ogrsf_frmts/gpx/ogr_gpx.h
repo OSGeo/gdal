@@ -38,7 +38,6 @@
 
 class OGRGPXDataSource;
 
-
 typedef enum
 {
     GPX_NONE,
@@ -128,7 +127,7 @@ class OGRGPXLayer : public OGRLayer
 #ifdef HAVE_EXPAT
     void               AddStrToSubElementValue(const char* pszStr);
 #endif
-    int                OGRGPX_WriteXMLExtension(const char* pszTagName,
+    bool               OGRGPX_WriteXMLExtension(const char* pszTagName,
                                                 const char* pszContent);
 
   public:
@@ -139,15 +138,15 @@ class OGRGPXLayer : public OGRLayer
                                     int bWriteMode = FALSE);
                         ~OGRGPXLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
-    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK );
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
+    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
 #ifdef HAVE_EXPAT
     void                startElementCbk(const char *pszName, const char **ppszAttr);
@@ -217,17 +216,17 @@ class OGRGPXDataSource : public OGRDataSource
     int                 Create( const char *pszFilename,
                               char **papszOptions );
 
-    const char*         GetName() { return pszName; }
+    const char*         GetName() override { return pszName; }
 
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer*           GetLayer( int );
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer*           GetLayer( int ) override;
 
     OGRLayer *          ICreateLayer( const char * pszLayerName,
                                     OGRSpatialReference *poSRS,
                                     OGRwkbGeometryType eType,
-                                    char ** papszOptions );
+                                    char ** papszOptions ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     VSILFILE *              GetOutputFP() { return fpOutput; }
     void                SetLastGPXGeomTypeWritten(GPXGeometryType gpxGeomType)

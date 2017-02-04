@@ -11,6 +11,13 @@
  * 26 Jun 96 - Version 3.0 by Eric S. Raymond (Full GIF89 support)
  *****************************************************************************/
 
+#if defined(__sun__) && __STDC_VERSION__ >= 201112L && _XOPEN_SOURCE < 600
+#ifdef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE
+#endif
+#define _XOPEN_SOURCE 600
+#endif
+
 #if defined(_MSC_VER) || defined(__MSDOS__)
 #  include <io.h>
 #  include <sys\stat.h>
@@ -25,7 +32,7 @@
 #  endif
 #endif /* _MSC_VER || __MSDOS__ */
 
-#ifdef unix
+#if defined(unix) || defined(__unix__) || defined(__sun__) || defined(__APPLE__)
 #include <unistd.h>
 #endif
 

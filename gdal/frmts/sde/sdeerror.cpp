@@ -52,8 +52,9 @@ void IssueSDEExtendedError ( int nErrorCode,
                    pszFunction, nErrorCode, szErrorMsg,
                    err.sde_error, err.ext_error,
                    err.err_msg1, err.err_msg2 );
-
-    } else {
+    }
+    else
+    {
         CPLError ( CE_Failure, CPLE_AppDefined,
            "%s: %d/%s",
            pszFunction, nErrorCode, szErrorMsg );

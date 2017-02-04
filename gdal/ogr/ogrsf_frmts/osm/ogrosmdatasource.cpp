@@ -46,78 +46,103 @@
 
 static const int LIMIT_IDS_PER_REQUEST = 200;
 
-#define MAX_NODES_PER_WAY 2000
+static const int MAX_NODES_PER_WAY = 2000;
 
-#define IDX_LYR_POINTS           0
-#define IDX_LYR_LINES            1
-#define IDX_LYR_MULTILINESTRINGS 2
-#define IDX_LYR_MULTIPOLYGONS    3
-#define IDX_LYR_OTHER_RELATIONS  4
+static const int IDX_LYR_POINTS = 0;
+static const int IDX_LYR_LINES = 1;
+static const int IDX_LYR_MULTILINESTRINGS = 2;
+static const int IDX_LYR_MULTIPOLYGONS = 3;
+static const int IDX_LYR_OTHER_RELATIONS = 4;
 
-#define DBL_TO_INT(x)            (int)floor((x) * 1e7 + 0.5)
-#define INT_TO_DBL(x)            ((x) / 1e7)
+static int DBL_TO_INT( double x )
+{
+  return static_cast<int>(floor(x * 1.0e7 + 0.5));
+}
+static double INT_TO_DBL( int x ) { return x / 1.0e7; }
 
-#define MAX_COUNT_FOR_TAGS_IN_WAY   255  /* must fit on 1 byte */
-#define MAX_SIZE_FOR_TAGS_IN_WAY    1024
+static const int MAX_COUNT_FOR_TAGS_IN_WAY = 255;  // Must fit on 1 byte.
+static const int MAX_SIZE_FOR_TAGS_IN_WAY = 1024;
 
-/* 5 bytes for encoding a int : really the worst case scenario ! */
-#define WAY_BUFFER_SIZE (1 /*is_area*/ + 1 + MAX_NODES_PER_WAY * 2 * 5 + MAX_SIZE_FOR_TAGS_IN_WAY)
+// 5 bytes for encoding a int : really the worst case scenario!
+static const int WAY_BUFFER_SIZE =
+    1 /*is_area*/ + 1 + MAX_NODES_PER_WAY * 2 * 5 + MAX_SIZE_FOR_TAGS_IN_WAY;
 
-#define NODE_PER_BUCKET     65536
+static const int NODE_PER_BUCKET = 65536;
 
- /* Initial Maximum count of buckets */
-#define INIT_BUCKET_COUNT        65536
+// Initial Maximum count of buckets.
+static const int INIT_BUCKET_COUNT = 65536;
 
-#define VALID_ID_FOR_CUSTOM_INDEXING(_id) ((_id) >= 0 && (_id / NODE_PER_BUCKET) < INT_MAX)
+static bool VALID_ID_FOR_CUSTOM_INDEXING( GIntBig _id )
+{
+    return
+        _id >= 0 &&
+        _id / NODE_PER_BUCKET < INT_MAX;
+}
 
-/* Minimum size of data written on disk, in *uncompressed* case */
-#define SECTOR_SIZE         512
-/* Which represents, 64 nodes */
-/* #define NODE_PER_SECTOR     SECTOR_SIZE / (2 * 4) */
-#define NODE_PER_SECTOR     64
-#define NODE_PER_SECTOR_SHIFT   6
+// Minimum size of data written on disk, in *uncompressed* case.
+static const int SECTOR_SIZE = 512;
+// Which represents, 64 nodes
+// static const int NODE_PER_SECTOR = SECTOR_SIZE / (2 * 4);
+static const int NODE_PER_SECTOR = 64;
+static const int NODE_PER_SECTOR_SHIFT = 6;
 
-/* Per bucket, we keep track of the absence/presence of sectors */
-/* only, to reduce memory usage */
-/* #define BUCKET_BITMAP_SIZE  NODE_PER_BUCKET / (8 * NODE_PER_SECTOR) */
-#define BUCKET_BITMAP_SIZE  128
+// Per bucket, we keep track of the absence/presence of sectors
+// only, to reduce memory usage.
+// #define BUCKET_BITMAP_SIZE  NODE_PER_BUCKET / (8 * NODE_PER_SECTOR)
+static const int BUCKET_BITMAP_SIZE = 128;
 
-/* #define BUCKET_SECTOR_SIZE_ARRAY_SIZE  NODE_PER_BUCKET / NODE_PER_SECTOR */
-/* Per bucket, we keep track of the real size of the sector. Each sector */
-/* size is encoded in a single byte, whose value is : */
-/* (sector_size in bytes - 8 ) / 2, minus 8. 252 means uncompressed */
-#define BUCKET_SECTOR_SIZE_ARRAY_SIZE   1024
+// #define BUCKET_SECTOR_SIZE_ARRAY_SIZE  NODE_PER_BUCKET / NODE_PER_SECTOR
+// Per bucket, we keep track of the real size of the sector. Each sector
+// size is encoded in a single byte, whose value is:
+// (sector_size in bytes - 8 ) / 2, minus 8. 252 means uncompressed
+static const int BUCKET_SECTOR_SIZE_ARRAY_SIZE = 1024;
 
-/* Must be a multiple of both BUCKET_BITMAP_SIZE and BUCKET_SECTOR_SIZE_ARRAY_SIZE */
-#define PAGE_SIZE   4096
+// Must be a multiple of both BUCKET_BITMAP_SIZE and
+// BUCKET_SECTOR_SIZE_ARRAY_SIZE
+static const int PAGE_SIZE = 4096;
 
-/* compressSize should not be greater than 512, so COMPRESS_SIZE_TO_BYTE() fits on a byte */
-#define COMPRESS_SIZE_TO_BYTE(nCompressSize)  (GByte)(((nCompressSize) - 8) / 2)
-#define ROUND_COMPRESS_SIZE(nCompressSize)    (((nCompressSize) + 1) / 2) * 2;
-#define COMPRESS_SIZE_FROM_BYTE(byte_on_size) ((byte_on_size) * 2 + 8)
+// compressSize should not be greater than 512, so COMPRESS_SIZE_TO_BYTE() fits
+// on a byte.
+static GByte COMPRESS_SIZE_TO_BYTE( size_t nCompressSize )
+{
+    return static_cast<GByte>((nCompressSize - 8) / 2);
+}
 
-/* Max number of features that are accumulated in pasWayFeaturePairs */
-#define MAX_DELAYED_FEATURES        75000
-/* Max number of tags that are accumulated in pasAccumulatedTags */
-#define MAX_ACCUMULATED_TAGS        MAX_DELAYED_FEATURES * 5
-/* Max size of the string with tag values that are accumulated in pabyNonRedundantValues */
-#define MAX_NON_REDUNDANT_VALUES    MAX_DELAYED_FEATURES * 10
-/* Max number of features that are accumulated in panUnsortedReqIds */
-#define MAX_ACCUMULATED_NODES       1000000
+template<typename T> static T ROUND_COMPRESS_SIZE( T nCompressSize )
+{
+    return ((nCompressSize + 1) / 2) * 2;
+}
+static int COMPRESS_SIZE_FROM_BYTE( GByte byte_on_size )
+{
+    return static_cast<int>(byte_on_size) * 2 + 8;
+}
+
+// Max number of features that are accumulated in pasWayFeaturePairs.
+static const int MAX_DELAYED_FEATURES = 75000;
+// Max number of tags that are accumulated in pasAccumulatedTags.
+static const int MAX_ACCUMULATED_TAGS  = MAX_DELAYED_FEATURES * 5;
+// Max size of the string with tag values that are accumulated in
+// pabyNonRedundantValues.
+static const int MAX_NON_REDUNDANT_VALUES = MAX_DELAYED_FEATURES * 10;
+// Max number of features that are accumulated in panUnsortedReqIds
+static const int MAX_ACCUMULATED_NODES = 1000000;
 
 #ifdef ENABLE_NODE_LOOKUP_BY_HASHING
-/* Size of panHashedIndexes array. Must be in the list at */
-/* http://planetmath.org/goodhashtableprimes , and greater than MAX_ACCUMULATED_NODES */
-#define HASHED_INDEXES_ARRAY_SIZE   3145739
-//#define HASHED_INDEXES_ARRAY_SIZE   1572869
-#define COLLISION_BUCKET_ARRAY_SIZE ((MAX_ACCUMULATED_NODES / 100) * 40)
-/* hash function = identity ! */
+// Size of panHashedIndexes array. Must be in the list at
+// http://planetmath.org/goodhashtableprimes , and greater than
+// MAX_ACCUMULATED_NODES.
+static const int HASHED_INDEXES_ARRAY_SIZE = 3145739;
+// #define HASHED_INDEXES_ARRAY_SIZE   1572869
+static const int COLLISION_BUCKET_ARRAY_SIZE =
+    (MAX_ACCUMULATED_NODES / 100) * 40;
+
+// hash function = identity
 #define HASH_ID_FUNC(x)             ((GUIntBig)(x))
 #endif // ENABLE_NODE_LOOKUP_BY_HASHING
 
-//#define FAKE_LOOKUP_NODES
+// #define FAKE_LOOKUP_NODES
 
-//#define DEBUG_MEM_USAGE
+// #define DEBUG_MEM_USAGE
 #ifdef DEBUG_MEM_USAGE
 size_t GetMaxTotalAllocs();
 #endif
@@ -142,8 +167,8 @@ static std::vector<DSToBeOpened>  oListDSToBeOpened;
 /*                    AddInterestLayersForDSName()                      */
 /************************************************************************/
 
-static void AddInterestLayersForDSName(const CPLString& osDSName,
-                                       const CPLString& osInterestLayers)
+static void AddInterestLayersForDSName( const CPLString& osDSName,
+                                        const CPLString& osInterestLayers )
 {
     CPLMutexHolder oMutexHolder(&hMutex);
     DSToBeOpened oDSToBeOpened;
@@ -157,7 +182,7 @@ static void AddInterestLayersForDSName(const CPLString& osDSName,
 /*                    GetInterestLayersForDSName()                      */
 /************************************************************************/
 
-static CPLString GetInterestLayersForDSName(const CPLString& osDSName)
+static CPLString GetInterestLayersForDSName( const CPLString& osDSName )
 {
     CPLMutexHolder oMutexHolder(&hMutex);
     GIntBig nPID = CPLGetPID();
@@ -255,7 +280,8 @@ OGROSMDataSource::OGROSMDataSource() :
     pabySector(NULL),
     papsBuckets(NULL),
     nBuckets(0),
-    bNeedsToSaveWayInfo(false)
+    bNeedsToSaveWayInfo(false),
+    m_nFileSize(FILESIZE_NOT_INIT)
 {}
 
 /************************************************************************/
@@ -287,7 +313,7 @@ OGROSMDataSource::~OGROSMDataSource()
         sqlite3_close(hDBForComputedAttributes);
 
 #ifdef HAVE_SQLITE_VFS
-    if (pMyVFS)
+    if( pMyVFS )
     {
         sqlite3_vfs_unregister(pMyVFS);
         CPLFree(pMyVFS->pAppData);
@@ -295,7 +321,7 @@ OGROSMDataSource::~OGROSMDataSource()
     }
 #endif
 
-    if( osTmpDBName.size() && bMustUnlink )
+    if( !osTmpDBName.empty() && bMustUnlink )
     {
         const char* pszVal = CPLGetConfigOption("OSM_UNLINK_TMPFILE", "YES");
         if( !EQUAL(pszVal, "NOT_EVEN_AT_END") )
@@ -342,7 +368,7 @@ OGROSMDataSource::~OGROSMDataSource()
 
     if( fpNodes )
         VSIFCloseL(fpNodes);
-    if( osNodesFilename.size() && bMustUnlinkNodesFile )
+    if( !osNodesFilename.empty() && bMustUnlinkNodesFile )
     {
         const char* pszVal = CPLGetConfigOption("OSM_UNLINK_TMPFILE", "YES");
         if( !EQUAL(pszVal, "NOT_EVEN_AT_END") )
@@ -449,10 +475,10 @@ static const GByte abyBitsCount[] = {
 4,5,5,6,5,6,6,7,5,6,6,7,6,7,7,8
 };
 
-int OGROSMDataSource::IndexPoint(OSMNode* psNode)
+bool OGROSMDataSource::IndexPoint( OSMNode* psNode )
 {
     if( !bIndexPoints )
-        return TRUE;
+        return true;
 
     if( bCustomIndexing)
         return IndexPointCustom(psNode);
@@ -464,7 +490,7 @@ int OGROSMDataSource::IndexPoint(OSMNode* psNode)
 /*                          IndexPointSQLite()                          */
 /************************************************************************/
 
-int OGROSMDataSource::IndexPointSQLite(OSMNode* psNode)
+bool OGROSMDataSource::IndexPointSQLite(OSMNode* psNode)
 {
     sqlite3_bind_int64( hInsertNodeStmt, 1, psNode->nID );
 
@@ -475,7 +501,7 @@ int OGROSMDataSource::IndexPointSQLite(OSMNode* psNode)
     sqlite3_bind_blob( hInsertNodeStmt, 2, &sLonLat, sizeof(sLonLat),
                        SQLITE_STATIC );
 
-    int rc = sqlite3_step( hInsertNodeStmt );
+    const int rc = sqlite3_step( hInsertNodeStmt );
     sqlite3_reset( hInsertNodeStmt );
     if( !(rc == SQLITE_OK || rc == SQLITE_DONE) )
     {
@@ -484,7 +510,7 @@ int OGROSMDataSource::IndexPointSQLite(OSMNode* psNode)
             psNode->nID, sqlite3_errmsg(hDB));
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -507,7 +533,7 @@ bool OGROSMDataSource::FlushCurrentSector()
 /*                            AllocBucket()                             */
 /************************************************************************/
 
-bool OGROSMDataSource::AllocBucket(int iBucket)
+bool OGROSMDataSource::AllocBucket( int iBucket )
 {
     if( bCompressNodes )
     {
@@ -551,11 +577,11 @@ bool OGROSMDataSource::AllocBucket(int iBucket)
 /*                         AllocMoreBuckets()                           */
 /************************************************************************/
 
-bool OGROSMDataSource::AllocMoreBuckets(int nNewBucketIdx, bool bAllocBucket)
+bool OGROSMDataSource::AllocMoreBuckets( int nNewBucketIdx, bool bAllocBucket )
 {
     CPLAssert(nNewBucketIdx >= nBuckets);
 
-    const int nNewBuckets = MAX(nBuckets + nBuckets / 2, nNewBucketIdx);
+    const int nNewBuckets = std::max(nBuckets + nBuckets / 2, nNewBucketIdx);
 
     size_t nNewSize = sizeof(Bucket) * nNewBuckets;
     if( static_cast<GUIntBig>(nNewSize) !=
@@ -576,8 +602,8 @@ bool OGROSMDataSource::AllocMoreBuckets(int nNewBucketIdx, bool bAllocBucket)
     papsBuckets = papsNewBuckets;
 
     bool bOOM = false;
-    int i;
-    for(i = nBuckets; i < nNewBuckets && !bOOM; i++)
+    int i = nBuckets;  // Used after for.
+    for( ; i < nNewBuckets && !bOOM; i++)
     {
         papsBuckets[i].nOff = -1;
         if( bAllocBucket )
@@ -653,8 +679,8 @@ bool OGROSMDataSource::FlushCurrentSectorCompressedCase()
     abyOutBuffer[nCompressSize] = 0;
 
     nCompressSize = ROUND_COMPRESS_SIZE(nCompressSize);
-    GByte* pabyToWrite;
-    if(nCompressSize >= SECTOR_SIZE)
+    GByte* pabyToWrite = NULL;
+    if( nCompressSize >= static_cast<size_t>(SECTOR_SIZE) )
     {
         nCompressSize = SECTOR_SIZE;
         pabyToWrite = pabySector;
@@ -695,7 +721,8 @@ bool OGROSMDataSource::FlushCurrentSectorCompressedCase()
 
 bool OGROSMDataSource::FlushCurrentSectorNonCompressedCase()
 {
-    if( VSIFWriteL(pabySector, 1, SECTOR_SIZE, fpNodes) == SECTOR_SIZE )
+    if( VSIFWriteL(pabySector, 1, static_cast<size_t>(SECTOR_SIZE),
+                   fpNodes) == static_cast<size_t>(SECTOR_SIZE) )
     {
         memset(pabySector, 0, SECTOR_SIZE);
         nNodesFileSize += SECTOR_SIZE;
@@ -796,7 +823,7 @@ bool OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
 /*                             NotifyNodes()                            */
 /************************************************************************/
 
-void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
+void OGROSMDataSource::NotifyNodes( unsigned int nNodes, OSMNode* pasNodes )
 {
     const OGREnvelope* psEnvelope =
         papoLayers[IDX_LYR_POINTS]->GetSpatialFilterEnvelope();
@@ -828,7 +855,7 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
                 const char* pszK = pasTags[j].pszK;
                 if( papoLayers[IDX_LYR_POINTS]->IsSignificantKey(pszK) )
                 {
-                    bInterestingTag = TRUE;
+                    bInterestingTag = true;
                     break;
                 }
             }
@@ -843,7 +870,7 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
                 new OGRPoint(pasNodes[i].dfLon, pasNodes[i].dfLat));
 
             papoLayers[IDX_LYR_POINTS]->SetFieldsFromTags(
-                poFeature, pasNodes[i].nID, FALSE, pasNodes[i].nTags,
+                poFeature, pasNodes[i].nID, false, pasNodes[i].nTags,
                 pasTags, &pasNodes[i].sInfo );
 
             int bFilteredOut = FALSE;
@@ -854,7 +881,7 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
                 bStopParsing = true;
                 break;
             }
-            else if (!bFilteredOut)
+            else if( !bFilteredOut )
                 bFeatureAdded = true;
         }
     }
@@ -903,7 +930,7 @@ void OGROSMDataSource::LookupNodes( )
 #ifdef DEBUG_COLLISIONS
                 nCollisions ++;
 #endif
-                int iBucket;
+                int iBucket = 0;
                 if( nIdx >= 0 )
                 {
                     if(iNextFreeBucket == COLLISION_BUCKET_ARRAY_SIZE)
@@ -920,7 +947,9 @@ void OGROSMDataSource::LookupNodes( )
                     iNextFreeBucket ++;
                 }
                 else
+                {
                     iBucket = -nIdx - 2;
+                }
                 if(iNextFreeBucket == COLLISION_BUCKET_ARRAY_SIZE)
                 {
                     CPLDebug("OSM", "Too many collisions. Disabling hashed indexing");
@@ -962,7 +991,8 @@ void OGROSMDataSource::LookupNodes( )
 
 void OGROSMDataSource::LookupNodesSQLite( )
 {
-    CPLAssert(nUnsortedReqIds <= MAX_ACCUMULATED_NODES);
+    CPLAssert(
+        nUnsortedReqIds <= static_cast<unsigned int>(MAX_ACCUMULATED_NODES));
 
     nReqIds = 0;
     for( unsigned int i = 0; i < nUnsortedReqIds; i++)
@@ -977,7 +1007,7 @@ void OGROSMDataSource::LookupNodesSQLite( )
     unsigned int j = 0;
     for( unsigned int i = 0; i < nReqIds; i++)
     {
-        if (!(i > 0 && panReqIds[i] == panReqIds[i-1]))
+        if( !(i > 0 && panReqIds[i] == panReqIds[i-1]) )
             panReqIds[j++] = panReqIds[i];
     }
     nReqIds = j;
@@ -1030,7 +1060,7 @@ static GIntBig ReadVarSInt64(GByte** ppabyPtr)
 /*                           DecompressSector()                         */
 /************************************************************************/
 
-static int DecompressSector(GByte* pabyIn, int nSectorSize, GByte* pabyOut)
+static bool DecompressSector( GByte* pabyIn, int nSectorSize, GByte* pabyOut )
 {
     GByte* pabyPtr = pabyIn;
     LonLat* pasLonLatOut = (LonLat*) pabyOut;
@@ -1067,7 +1097,7 @@ static int DecompressSector(GByte* pabyIn, int nSectorSize, GByte* pabyOut)
 
     int nRead = (int)(pabyPtr - pabyIn);
     nRead = ROUND_COMPRESS_SIZE(nRead);
-    return( nRead == nSectorSize );
+    return nRead == nSectorSize;
 }
 
 /************************************************************************/
@@ -1089,11 +1119,10 @@ void OGROSMDataSource::LookupNodesCustom( )
         nBucketOld = -1;
     }
 
-    unsigned int i;
+    CPLAssert(
+        nUnsortedReqIds <= static_cast<unsigned int>(MAX_ACCUMULATED_NODES));
 
-    CPLAssert(nUnsortedReqIds <= MAX_ACCUMULATED_NODES);
-
-    for(i = 0; i < nUnsortedReqIds; i++)
+    for( unsigned int i = 0; i < nUnsortedReqIds; i++ )
     {
         GIntBig id = panUnsortedReqIds[i];
 
@@ -1129,16 +1158,16 @@ void OGROSMDataSource::LookupNodesCustom( )
     std::sort(panReqIds, panReqIds + nReqIds);
 
     /* Remove duplicates */
-    unsigned int j = 0;
-    for(i = 0; i < nReqIds; i++)
+    unsigned int j = 0;  // Used after for.
+    for( unsigned int i = 0; i < nReqIds; i++)
     {
-        if (!(i > 0 && panReqIds[i] == panReqIds[i-1]))
+        if( !(i > 0 && panReqIds[i] == panReqIds[i-1]) )
             panReqIds[j++] = panReqIds[i];
     }
     nReqIds = j;
 
 #ifdef FAKE_LOOKUP_NODES
-    for(i = 0; i < nReqIds; i++)
+    for( unsigned int i = 0; i < nReqIds; i++)
     {
         pasLonLatArray[i].nLon = 0;
         pasLonLatArray[i].nLat = 0;
@@ -1157,9 +1186,7 @@ void OGROSMDataSource::LookupNodesCustom( )
 
 void OGROSMDataSource::LookupNodesCustomCompressedCase()
 {
-    unsigned int i;
-    unsigned int j = 0;
-#define SECURITY_MARGIN     (8 + 8 + 2 * NODE_PER_SECTOR)
+    static const int SECURITY_MARGIN = 8 + 8 + 2 * NODE_PER_SECTOR;
     GByte abyRawSector[SECTOR_SIZE + SECURITY_MARGIN];
     memset(abyRawSector + SECTOR_SIZE, 0, SECURITY_MARGIN);
 
@@ -1168,14 +1195,15 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
     int k = 0;
     int nOffFromBucketStart = 0;
 
-    for(i = 0; i < nReqIds; i++)
+    unsigned int j = 0;  // Used after for.
+    for( unsigned int i = 0; i < nReqIds; i++ )
     {
-        GIntBig id = panReqIds[i];
-
-        int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
-        int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
-        int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
-        int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
+        const GIntBig id = panReqIds[i];
+        const int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
+        const int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
+        const int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
+        const int nOffInBucketReducedRemainer =
+            nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
         if( nBucket != l_nBucketOld )
         {
@@ -1184,7 +1212,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
             nOffFromBucketStart = 0;
         }
 
-        if ( nOffInBucketReduced != l_nOffInBucketReducedOld )
+        if( nOffInBucketReduced != l_nOffInBucketReducedOld )
         {
             if( nBucket >= nBuckets )
             {
@@ -1201,20 +1229,25 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
                 continue;
                 // FIXME ?
             }
-            int nSectorSize = COMPRESS_SIZE_FROM_BYTE(psBucket->u.panSectorSize[nOffInBucketReduced]);
+            const int nSectorSize =
+                COMPRESS_SIZE_FROM_BYTE(
+                    psBucket->u.panSectorSize[nOffInBucketReduced]);
 
             /* If we stay in the same bucket, we can reuse the previously */
             /* computed offset, instead of starting from bucket start */
-            for(; k < nOffInBucketReduced; k++)
+            for( ; k < nOffInBucketReduced; k++ )
             {
                 if( psBucket->u.panSectorSize[k] )
-                    nOffFromBucketStart += COMPRESS_SIZE_FROM_BYTE(psBucket->u.panSectorSize[k]);
+                    nOffFromBucketStart +=
+                        COMPRESS_SIZE_FROM_BYTE(psBucket->u.panSectorSize[k]);
             }
 
             VSIFSeekL(fpNodes, psBucket->nOff + nOffFromBucketStart, SEEK_SET);
             if( nSectorSize == SECTOR_SIZE )
             {
-                if( VSIFReadL(pabySector, 1, SECTOR_SIZE, fpNodes) != SECTOR_SIZE )
+                if( VSIFReadL(pabySector, 1,
+                              static_cast<size_t>(SECTOR_SIZE),
+                              fpNodes) != static_cast<size_t>(SECTOR_SIZE) )
                 {
                     CPLError(CE_Failure,  CPLE_AppDefined,
                             "Cannot read node " CPL_FRMT_GIB, id);
@@ -1224,7 +1257,8 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
             }
             else
             {
-                if( (int)VSIFReadL(abyRawSector, 1, nSectorSize, fpNodes) != nSectorSize )
+                if( static_cast<int>(VSIFReadL(abyRawSector, 1, nSectorSize,
+                                               fpNodes)) != nSectorSize )
                 {
                     CPLError(CE_Failure,  CPLE_AppDefined,
                             "Cannot read sector for node " CPL_FRMT_GIB, id);
@@ -1264,20 +1298,19 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
 
 void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
 {
-    unsigned int i;
-    unsigned int j = 0;
+    unsigned int j = 0;  // Used after for.
 
-    for(i = 0; i < nReqIds; i++)
+    for( unsigned int i = 0; i < nReqIds; i++ )
     {
-        GIntBig id = panReqIds[i];
+        const GIntBig id = panReqIds[i];
+        const int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
+        const int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
+        const int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
+        const int nOffInBucketReducedRemainer =
+            nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
-        int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
-        int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
-        int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
-        int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
-
-        int nBitmapIndex = nOffInBucketReduced / 8;
-        int nBitmapRemainer = nOffInBucketReduced % 8;
+        const int nBitmapIndex = nOffInBucketReduced / 8;
+        const int nBitmapRemainer = nOffInBucketReduced % 8;
 
         if( nBucket >= nBuckets )
         {
@@ -1295,15 +1328,21 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
             // FIXME ?
         }
 
-        int k;
         int nSector = 0;
-        for(k = 0; k < nBitmapIndex; k++)
+        for( int k = 0; k < nBitmapIndex; k++ )
             nSector += abyBitsCount[psBucket->u.pabyBitmap[k]];
-        if (nBitmapRemainer)
-            nSector += abyBitsCount[psBucket->u.pabyBitmap[nBitmapIndex] & ((1 << nBitmapRemainer) - 1)];
+        if( nBitmapRemainer )
+            nSector +=
+                abyBitsCount[psBucket->u.pabyBitmap[nBitmapIndex] &
+                             ((1 << nBitmapRemainer) - 1)];
 
-        VSIFSeekL(fpNodes, psBucket->nOff + nSector * SECTOR_SIZE + nOffInBucketReducedRemainer * sizeof(LonLat), SEEK_SET);
-        if( VSIFReadL(pasLonLatArray + j, 1, sizeof(LonLat), fpNodes) != sizeof(LonLat) )
+        VSIFSeekL(
+            fpNodes,
+            psBucket->nOff + nSector * SECTOR_SIZE +
+            nOffInBucketReducedRemainer * sizeof(LonLat),
+            SEEK_SET);
+        if( VSIFReadL(pasLonLatArray + j, 1,
+                      sizeof(LonLat), fpNodes) != sizeof(LonLat) )
         {
             CPLError(CE_Failure,  CPLE_AppDefined,
                      "Cannot read node " CPL_FRMT_GIB, id);
@@ -1323,7 +1362,7 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
 /*                            WriteVarInt()                             */
 /************************************************************************/
 
-static void WriteVarInt(unsigned int nVal, GByte** ppabyData)
+static void WriteVarInt( unsigned int nVal, GByte** ppabyData )
 {
     GByte* pabyData = *ppabyData;
     while( true )
@@ -1345,7 +1384,7 @@ static void WriteVarInt(unsigned int nVal, GByte** ppabyData)
 /*                           WriteVarInt64()                            */
 /************************************************************************/
 
-static void WriteVarInt64(GUIntBig nVal, GByte** ppabyData)
+static void WriteVarInt64( GUIntBig nVal, GByte** ppabyData )
 {
     GByte* pabyData = *ppabyData;
     while( true )
@@ -1367,13 +1406,11 @@ static void WriteVarInt64(GUIntBig nVal, GByte** ppabyData)
 /*                           WriteVarSInt64()                           */
 /************************************************************************/
 
-static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData)
+static void WriteVarSInt64( GIntBig nSVal, GByte** ppabyData )
 {
-    GIntBig nVal;
-    if( nSVal >= 0 )
-        nVal = nSVal << 1;
-    else
-        nVal = ((-1-nSVal) << 1) + 1;
+    GIntBig nVal = nSVal >= 0
+        ? nSVal << 1
+        : ((-1-nSVal) << 1) + 1;
 
     GByte* pabyData = *ppabyData;
     while( true )
@@ -1387,7 +1424,7 @@ static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData)
 
         *pabyData = 0x80 | (GByte)(nVal & 0x7f);
         nVal >>= 7;
-        pabyData ++;
+        pabyData++;
     }
 }
 
@@ -1395,31 +1432,34 @@ static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData)
 /*                             CompressWay()                            */
 /************************************************************************/
 
-int OGROSMDataSource::CompressWay ( bool bIsArea, unsigned int nTags, IndexedKVP* pasTags,
+int OGROSMDataSource::CompressWay ( bool bIsArea, unsigned int nTags,
+                                    IndexedKVP* pasTags,
                                     int nPoints, LonLat* pasLonLatPairs,
                                     OSMInfo* psInfo,
                                     GByte* pabyCompressedWay )
 {
     GByte* pabyPtr = pabyCompressedWay;
     *pabyPtr = (bIsArea) ? 1 : 0;
-    pabyPtr ++;
-    pabyPtr ++; // skip tagCount
+    pabyPtr++;
+    pabyPtr++; // skip tagCount
 
     int nTagCount = 0;
-    CPLAssert(nTags < MAX_COUNT_FOR_TAGS_IN_WAY);
-    for(unsigned int iTag = 0; iTag < nTags; iTag++)
+    CPLAssert(nTags < static_cast<unsigned int>(MAX_COUNT_FOR_TAGS_IN_WAY));
+    for( unsigned int iTag = 0; iTag < nTags; iTag++ )
     {
-        if ((int)(pabyPtr - pabyCompressedWay) + 2 >= MAX_SIZE_FOR_TAGS_IN_WAY)
+        if( static_cast<int>(pabyPtr - pabyCompressedWay) + 2 >=
+            MAX_SIZE_FOR_TAGS_IN_WAY )
         {
             break;
         }
 
         WriteVarInt(pasTags[iTag].nKeyIndex, &pabyPtr);
 
-        /* to fit in 2 bytes, the theoretical limit would be 127 * 128 + 127 */
+        // To fit in 2 bytes, the theoretical limit would be 127 * 128 + 127.
         if( pasTags[iTag].bVIsIndex )
         {
-            if ((int)(pabyPtr - pabyCompressedWay) + 2 >= MAX_SIZE_FOR_TAGS_IN_WAY)
+            if( static_cast<int>(pabyPtr - pabyCompressedWay) + 2 >=
+                MAX_SIZE_FOR_TAGS_IN_WAY )
             {
                 break;
             }
@@ -1432,7 +1472,8 @@ int OGROSMDataSource::CompressWay ( bool bIsArea, unsigned int nTags, IndexedKVP
                 pasTags[iTag].u.nOffsetInpabyNonRedundantValues;
 
             int nLenV = static_cast<int>(strlen(pszV)) + 1;
-            if ((int)(pabyPtr - pabyCompressedWay) + 2 + nLenV >= MAX_SIZE_FOR_TAGS_IN_WAY)
+            if( static_cast<int>(pabyPtr - pabyCompressedWay) +
+                2 + nLenV >= MAX_SIZE_FOR_TAGS_IN_WAY )
             {
                 break;
             }
@@ -1472,9 +1513,8 @@ int OGROSMDataSource::CompressWay ( bool bIsArea, unsigned int nTags, IndexedKVP
     pabyPtr += sizeof(LonLat);
     for(int i=1;i<nPoints;i++)
     {
-        GIntBig nDiff64;
-
-        nDiff64 = (GIntBig)pasLonLatPairs[i].nLon - (GIntBig)pasLonLatPairs[i-1].nLon;
+        GIntBig nDiff64 =
+            (GIntBig)pasLonLatPairs[i].nLon - (GIntBig)pasLonLatPairs[i-1].nLon;
         WriteVarSInt64(nDiff64, &pabyPtr);
 
         nDiff64 = pasLonLatPairs[i].nLat - pasLonLatPairs[i-1].nLat;
@@ -1501,10 +1541,10 @@ int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
     unsigned int nTags = *pabyPtr;
     pabyPtr ++;
 
-    if (pnTags)
+    if( pnTags )
         *pnTags = nTags;
 
-    /* TODO? : some additional safety checks */
+    // TODO: Some additional safety checks.
     for(unsigned int iTag = 0; iTag < nTags; iTag++)
     {
         int nK = ReadVarInt32(&pabyPtr);
@@ -1522,8 +1562,10 @@ int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
         {
             CPLAssert(nK >= 0 && nK < (int)asKeys.size());
             pasTags[iTag].pszK = asKeys[nK]->pszK;
-            CPLAssert(nV == 0 || (nV > 0 && nV < (int)asKeys[nK]->asValues.size()));
-            pasTags[iTag].pszV = nV ? asKeys[nK]->asValues[nV] : (const char*) pszV;
+            CPLAssert(nV == 0 ||
+                      (nV > 0 && nV < (int)asKeys[nK]->asValues.size()));
+            pasTags[iTag].pszV =
+                nV ? asKeys[nK]->asValues[nV] : (const char*) pszV;
         }
     }
 
@@ -1663,7 +1705,7 @@ void OGROSMDataSource::ProcessWaysBatch()
                          panReqIds[nIdx] != psWayFeaturePairs->panNodeRefs[i] )
                     nIdx = -1;
 
-                if (nIdx >= 0)
+                if( nIdx >= 0 )
                 {
                     pasLonLatCache[nFound].nLon = pasLonLatArray[nIdx].nLon;
                     pasLonLatCache[nFound].nLat = pasLonLatArray[nIdx].nLat;
@@ -1688,7 +1730,7 @@ void OGROSMDataSource::ProcessWaysBatch()
                 }
                 else
                     nIdx = FindNode( psWayFeaturePairs->panNodeRefs[i] );
-                if (nIdx >= 0)
+                if( nIdx >= 0 )
                 {
                     pasLonLatCache[nFound].nLon = pasLonLatArray[nIdx].nLon;
                     pasLonLatCache[nFound].nLat = pasLonLatArray[nIdx].nLat;
@@ -1756,7 +1798,7 @@ void OGROSMDataSource::ProcessWaysBatch()
                                                    &bFilteredOut,
                                                    !bFeatureAdded) )
             bStopParsing = true;
-        else if (!bFilteredOut)
+        else if( !bFilteredOut )
             bFeatureAdded = true;
     }
 
@@ -1817,6 +1859,12 @@ bool OGROSMDataSource::IsClosedWayTaggedAsPolygon( unsigned int nTags, const OSM
         {
             bIsArea = true;
         }
+        else if( aoSetClosedWaysArePolygons.find(
+                        pszK + std::string("=") + pasTags[i].pszV) !=
+                  aoSetClosedWaysArePolygons.end() )
+        {
+            bIsArea = true;
+        }
     }
     return bIsArea;
 }
@@ -1825,14 +1873,15 @@ bool OGROSMDataSource::IsClosedWayTaggedAsPolygon( unsigned int nTags, const OSM
 /*                              NotifyWay()                             */
 /************************************************************************/
 
-void OGROSMDataSource::NotifyWay (OSMWay* psWay)
+void OGROSMDataSource::NotifyWay( OSMWay* psWay )
 {
     nWaysProcessed++;
-    if( (nWaysProcessed % 10000) == 0 )
+    if( nWaysProcessed % 10000 == 0 )
     {
         CPLDebug("OSM", "Ways processed : %d", nWaysProcessed);
 #ifdef DEBUG_MEM_USAGE
-        CPLDebug("OSM", "GetMaxTotalAllocs() = " CPL_FRMT_GUIB, (GUIntBig)GetMaxTotalAllocs());
+        CPLDebug("OSM", "GetMaxTotalAllocs() = " CPL_FRMT_GUIB,
+                 static_cast<GUIntBig>(GetMaxTotalAllocs()));
 #endif
     }
 
@@ -1840,7 +1889,7 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
         return;
 
     //printf("way %d : %d nodes\n", (int)psWay->nID, (int)psWay->nRefs);
-    if( psWay->nRefs > MAX_NODES_PER_WAY )
+    if( psWay->nRefs > static_cast<unsigned int>(MAX_NODES_PER_WAY) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Ways with more than %d nodes are not supported",
@@ -1878,18 +1927,21 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
 
     OGRFeature* poFeature = NULL;
     bool bAttrFilterAlreadyEvaluated = false;
-    if( !bIsArea && papoLayers[IDX_LYR_LINES]->IsUserInterested() && bInterestingTag )
+    if( !bIsArea && papoLayers[IDX_LYR_LINES]->IsUserInterested() &&
+        bInterestingTag )
     {
         poFeature = new OGRFeature(papoLayers[IDX_LYR_LINES]->GetLayerDefn());
 
         papoLayers[IDX_LYR_LINES]->SetFieldsFromTags(
-            poFeature, psWay->nID, FALSE, psWay->nTags, psWay->pasTags, &psWay->sInfo );
+            poFeature, psWay->nID, false, psWay->nTags, psWay->pasTags,
+            &psWay->sInfo );
 
-        /* Optimization : if we have an attribute filter, that does not require geometry, */
-        /* and if we don't need to index ways, then we can just evaluate the attribute */
-        /* filter without the geometry */
+        // Optimization: if we have an attribute filter, that does not require
+        // geometry, and if we don't need to index ways, then we can just
+        // evaluate the attribute filter without the geometry.
         if( papoLayers[IDX_LYR_LINES]->HasAttributeFilter() &&
-            !papoLayers[IDX_LYR_LINES]->AttributeFilterEvaluationNeedsGeometry() &&
+            !papoLayers[IDX_LYR_LINES]->
+                AttributeFilterEvaluationNeedsGeometry() &&
             !bIndexWays )
         {
             if( !papoLayers[IDX_LYR_LINES]->EvaluateAttributeFilter(poFeature) )
@@ -1905,9 +1957,11 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
         return;
     }
 
-    if( nUnsortedReqIds + psWay->nRefs > MAX_ACCUMULATED_NODES ||
+    if( nUnsortedReqIds + psWay->nRefs >
+        static_cast<unsigned int>(MAX_ACCUMULATED_NODES) ||
         nWayFeaturePairs == MAX_DELAYED_FEATURES ||
-        nAccumulatedTags + psWay->nTags > MAX_ACCUMULATED_TAGS ||
+        nAccumulatedTags + psWay->nTags >
+        static_cast<unsigned int>(MAX_ACCUMULATED_TAGS) ||
         nNonRedundantValuesLen + 1024 > MAX_NON_REDUNDANT_VALUES )
     {
         ProcessWaysBatch();
@@ -1920,7 +1974,8 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
     psWayFeaturePairs->panNodeRefs = panUnsortedReqIds + nUnsortedReqIds;
     psWayFeaturePairs->poFeature = poFeature;
     psWayFeaturePairs->bIsArea = bIsArea;
-    psWayFeaturePairs->bAttrFilterAlreadyEvaluated = bAttrFilterAlreadyEvaluated;
+    psWayFeaturePairs->bAttrFilterAlreadyEvaluated =
+        bAttrFilterAlreadyEvaluated;
 
     if( bIsArea && papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() )
     {
@@ -1934,7 +1989,7 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
             else
             {
                 OGRField sField;
-                if (OGRParseXMLDateTime(psWay->sInfo.ts.pszTimeStamp, &sField))
+                if( OGRParseXMLDateTime(psWay->sInfo.ts.pszTimeStamp, &sField) )
                 {
                     struct tm brokendown;
                     brokendown.tm_year = sField.Date.Year - 1900;
@@ -1972,25 +2027,25 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
             const char* pszK = psWay->pasTags[iTag].pszK;
             const char* pszV = psWay->pasTags[iTag].pszV;
 
-            if (strcmp(pszK, "area") == 0)
+            if( strcmp(pszK, "area") == 0 )
                 continue;
-            if (strcmp(pszK, "created_by") == 0)
+            if( strcmp(pszK, "created_by") == 0 )
                 continue;
-            if (strcmp(pszK, "converted_by") == 0)
+            if( strcmp(pszK, "converted_by") == 0 )
                 continue;
-            if (strcmp(pszK, "note") == 0)
+            if( strcmp(pszK, "note") == 0 )
                 continue;
-            if (strcmp(pszK, "todo") == 0)
+            if( strcmp(pszK, "todo") == 0 )
                 continue;
-            if (strcmp(pszK, "fixme") == 0)
+            if( strcmp(pszK, "fixme") == 0 )
                 continue;
-            if (strcmp(pszK, "FIXME") == 0)
+            if( strcmp(pszK, "FIXME") == 0 )
                 continue;
 
             std::map<const char*, KeyDesc*, ConstCharComp>::iterator oIterK =
                 aoMapIndexedKeys.find(pszK);
-            KeyDesc* psKD;
-            if (oIterK == aoMapIndexedKeys.end())
+            KeyDesc* psKD = NULL;
+            if( oIterK == aoMapIndexedKeys.end() )
             {
                 if( nNextKeyIndex >= 32768 ) /* somewhat arbitrary */
                 {
@@ -2022,8 +2077,8 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
             {
                 std::map<const char*, int, ConstCharComp>::iterator oIterV;
                 oIterV = psKD->anMapV.find(pszV);
-                int nValueIndex;
-                if (oIterV == psKD->anMapV.end())
+                int nValueIndex = 0;
+                if( oIterV == psKD->anMapV.end() )
                 {
                     char* pszVDup = CPLStrdup(pszV);
                     nValueIndex = (int)psKD->asValues.size();
@@ -2102,12 +2157,12 @@ unsigned int OGROSMDataSource::LookupWays( std::map< GIntBig,
 {
     unsigned int nFound = 0;
     unsigned int iCur = 0;
-    unsigned int i;
 
     while( iCur < psRelation->nMembers )
     {
         unsigned int nToQuery = 0;
-        for(i=iCur;i<psRelation->nMembers;i++)
+        unsigned int i = iCur;  // Used after for.
+        for( ; i < psRelation->nMembers; i++ )
         {
             if( psRelation->pasMembers[i].eType == MEMBER_WAY &&
                 strcmp(psRelation->pasMembers[i].pszRole, "subarea") != 0 )
@@ -2168,13 +2223,12 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
                                                  unsigned int* pnTags,
                                                  OSMTag* pasTags)
 {
-
     std::map< GIntBig, std::pair<int,void*> > aoMapWays;
     LookupWays( aoMapWays, psRelation );
 
     bool bMissing = false;
-    unsigned int i;
-    for(i = 0; i < psRelation->nMembers; i ++ )
+
+    for( unsigned int i = 0; i < psRelation->nMembers; i++ )
     {
         if( psRelation->pasMembers[i].eType == MEMBER_WAY &&
             strcmp(psRelation->pasMembers[i].pszRole, "subarea") != 0 )
@@ -2206,7 +2260,7 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
     if( pnTags != NULL )
         *pnTags = 0;
 
-    for(i = 0; i < psRelation->nMembers; i ++ )
+    for( unsigned int i = 0; i < psRelation->nMembers; i++ )
     {
         if( psRelation->pasMembers[i].eType == MEMBER_WAY &&
             strcmp(psRelation->pasMembers[i].pszRole, "subarea") != 0  )
@@ -2214,7 +2268,7 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
             const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
 
             LonLat* pasCoords = (LonLat*) pasLonLatCache;
-            int nPoints;
+            int nPoints = 0;
 
             if( pnTags != NULL && *pnTags == 0 &&
                 strcmp(psRelation->pasMembers[i].pszRole, "outer") == 0 )
@@ -2234,10 +2288,10 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
                                          NULL, NULL, NULL);
             }
 
-            OGRLineString* poLS;
+            OGRLineString* poLS = NULL;
 
-            if ( pasCoords[0].nLon == pasCoords[nPoints - 1].nLon &&
-                 pasCoords[0].nLat == pasCoords[nPoints - 1].nLat )
+            if( pasCoords[0].nLon == pasCoords[nPoints - 1].nLon &&
+                pasCoords[0].nLat == pasCoords[nPoints - 1].nLat )
             {
                 OGRPolygon* poPoly = new OGRPolygon();
                 OGRLinearRing* poRing = new OGRLinearRing();
@@ -2265,7 +2319,6 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
                                 INT_TO_DBL(pasCoords[j].nLon),
                                 INT_TO_DBL(pasCoords[j].nLat) );
             }
-
         }
     }
 
@@ -2279,7 +2332,9 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
         if( hPoly != NULL && OGR_G_GetGeometryType(hPoly) == wkbPolygon )
         {
             OGRPolygon* poSuperPoly = (OGRPolygon* ) hPoly;
-            for(i = 0; i < 1 + (unsigned int)poSuperPoly->getNumInteriorRings(); i++)
+            for( unsigned int i = 0;
+                 i < 1 + (unsigned int)poSuperPoly->getNumInteriorRings();
+                 i++ )
             {
                 OGRLinearRing* poRing =  (i == 0) ? poSuperPoly->getExteriorRing() :
                                                     poSuperPoly->getInteriorRing(i - 1);
@@ -2380,8 +2435,8 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation,
                 oGeom.first,
                 reinterpret_cast<GByte *>(oGeom.second),
                 &bIsArea, pasCoords, NULL, NULL, NULL );
-            OGRLineString* poLS;
-            if( bIsArea )
+            OGRLineString* poLS = NULL;
+            if( bIsArea && !bMultiLineString )
             {
                 OGRLinearRing* poLR = new OGRLinearRing();
                 OGRPolygon* poPoly = new OGRPolygon();
@@ -2402,7 +2457,6 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation,
                                 INT_TO_DBL(pasCoords[j].nLon),
                                 INT_TO_DBL(pasCoords[j].nLat) );
             }
-
         }
     }
 
@@ -2464,15 +2518,17 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
                 bMultiLineString = true;
             }
         }
-        else if ( strcmp(pszK, "created_by") != 0 )
+        else if( strcmp(pszK, "created_by") != 0 )
             bInterestingTagFound = true;
     }
 
-    /* Optimization : if we have an attribute filter, that does not require geometry, */
-    /* then we can just evaluate the attribute filter without the geometry */
-    int iCurLayer = (bMultiPolygon) ?    IDX_LYR_MULTIPOLYGONS :
-                    (bMultiLineString) ? IDX_LYR_MULTILINESTRINGS :
-                                         IDX_LYR_OTHER_RELATIONS;
+    // Optimization: If we have an attribute filter, that does not require
+    // geometry, then we can just evaluate the attribute filter without the
+    // geometry.
+    const int iCurLayer =
+        bMultiPolygon ?    IDX_LYR_MULTIPOLYGONS :
+        bMultiLineString ? IDX_LYR_MULTILINESTRINGS :
+        IDX_LYR_OTHER_RELATIONS;
     if( !papoLayers[iCurLayer]->IsUserInterested() )
         return;
 
@@ -2488,7 +2544,7 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
 
         papoLayers[iCurLayer]->SetFieldsFromTags( poFeature,
                                                   psRelation->nID,
-                                                  FALSE,
+                                                  false,
                                                   psRelation->nTags,
                                                   psRelation->pasTags,
                                                   &psRelation->sInfo);
@@ -2500,7 +2556,7 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
         }
     }
 
-    OGRGeometry* poGeom;
+    OGRGeometry* poGeom = NULL;
 
     unsigned int nExtraTags = 0;
     OSMTag pasExtraTags[1 + MAX_COUNT_FOR_TAGS_IN_WAY];
@@ -2510,7 +2566,8 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
         if( !bInterestingTagFound )
         {
             poGeom = BuildMultiPolygon(psRelation, &nExtraTags, pasExtraTags);
-            CPLAssert(nExtraTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
+            CPLAssert(nExtraTags <=
+                      static_cast<unsigned int>(MAX_COUNT_FOR_TAGS_IN_WAY));
             pasExtraTags[nExtraTags].pszK = "type";
             pasExtraTags[nExtraTags].pszV = pszTypeV;
             nExtraTags ++;
@@ -2531,7 +2588,7 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
             papoLayers[iCurLayer]->SetFieldsFromTags(
                 poFeature,
                 psRelation->nID,
-                FALSE,
+                false,
                 nExtraTags ? nExtraTags : psRelation->nTags,
                 nExtraTags ? pasExtraTags : psRelation->pasTags,
                 &psRelation->sInfo);
@@ -2547,11 +2604,13 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
                                                 &bFilteredOut,
                                                 !bFeatureAdded ) )
             bStopParsing = true;
-        else if (!bFilteredOut)
+        else if( !bFilteredOut )
             bFeatureAdded = true;
     }
     else
+    {
         delete poFeature;
+    }
 }
 
 static void OGROSMNotifyRelation ( OSMRelation *psRelation,
@@ -2560,7 +2619,6 @@ static void OGROSMNotifyRelation ( OSMRelation *psRelation,
 {
     static_cast<OGROSMDataSource *>(user_data)->NotifyRelation(psRelation);
 }
-
 
 /************************************************************************/
 /*                      ProcessPolygonsStandalone()                     */
@@ -2607,8 +2665,8 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             const int nPoints = UncompressWay(
                 nBlobSize, reinterpret_cast<GByte *>(const_cast<void *>(blob)),
                 NULL, pasCoords, &nTags, pasTags, &sInfo );
-            CPLAssert(nTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
-
+            CPLAssert(
+                nTags <= static_cast<unsigned int>(MAX_COUNT_FOR_TAGS_IN_WAY));
 
             OGRMultiPolygon* poMulti = new OGRMultiPolygon();
             OGRPolygon* poPoly = new OGRPolygon();
@@ -2631,7 +2689,7 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
 
             papoLayers[IDX_LYR_MULTIPOLYGONS]->SetFieldsFromTags( poFeature,
                                                                   id,
-                                                                  TRUE,
+                                                                  true,
                                                                   nTags,
                                                                   pasTags,
                                                                   &sInfo);
@@ -2647,11 +2705,13 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
                 bStopParsing = true;
                 break;
             }
-            else if (!bFilteredOut)
+            else if( !bFilteredOut )
+            {
                 bFeatureAdded = true;
-
+            }
         }
-        else {
+        else
+        {
             CPLAssert(false);
         }
 
@@ -2666,8 +2726,8 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
 /*                             NotifyBounds()                           */
 /************************************************************************/
 
-void OGROSMDataSource::NotifyBounds (double dfXMin, double dfYMin,
-                                     double dfXMax, double dfYMax)
+void OGROSMDataSource::NotifyBounds ( double dfXMin, double dfYMin,
+                                      double dfXMax, double dfYMax )
 {
     sExtent.MinX = dfXMin;
     sExtent.MinY = dfYMin;
@@ -2676,7 +2736,7 @@ void OGROSMDataSource::NotifyBounds (double dfXMin, double dfYMin,
     bExtentValid = true;
 
     CPLDebug( "OSM", "Got bounds : minx=%f, miny=%f, maxx=%f, maxy=%f",
-              dfXMin, dfYMin, dfXMax, dfYMax);
+              dfXMin, dfYMin, dfXMax, dfYMax );
 }
 
 static void OGROSMNotifyBounds( double dfXMin, double dfYMin,
@@ -2809,7 +2869,7 @@ int OGROSMDataSource::Open( const char * pszFilename,
         "MAX_TMPFILE_SIZE", CPLGetConfigOption("OSM_MAX_TMPFILE_SIZE", "100")));
     GIntBig nSize =
         static_cast<GIntBig>(nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
-    if (nSize < 0 || (GIntBig)(size_t)nSize != nSize)
+    if( nSize < 0 || (GIntBig)(size_t)nSize != nSize )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid value for OSM_MAX_TMPFILE_SIZE. Using 100 instead." );
@@ -2877,13 +2937,13 @@ int OGROSMDataSource::Open( const char * pszFilename,
         }
     }
 
-    const int bRet = CreateTempDB();
+    const bool bRet = CreateTempDB();
     if( bRet )
     {
         CPLString osInterestLayers = GetInterestLayersForDSName(GetName());
-        if( osInterestLayers.size() )
+        if( !osInterestLayers.empty() )
         {
-            ExecuteSQL( osInterestLayers, NULL, NULL );
+            delete ExecuteSQL( osInterestLayers, NULL, NULL );
         }
     }
     return bRet;
@@ -2893,7 +2953,7 @@ int OGROSMDataSource::Open( const char * pszFilename,
 /*                             CreateTempDB()                           */
 /************************************************************************/
 
-int OGROSMDataSource::CreateTempDB()
+bool OGROSMDataSource::CreateTempDB()
 {
     char* pszErrMsg = NULL;
 
@@ -2903,7 +2963,7 @@ int OGROSMDataSource::CreateTempDB()
 
 #ifdef HAVE_SQLITE_VFS
     const char* pszExistingTmpFile = CPLGetConfigOption("OSM_EXISTING_TMPFILE", NULL);
-    if ( pszExistingTmpFile != NULL )
+    if( pszExistingTmpFile != NULL )
     {
         bSuccess = true;
         bIsExisting = true;
@@ -2983,12 +3043,12 @@ int OGROSMDataSource::CreateTempDB()
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "sqlite3_open(%s) failed: %s",
                   osTmpDBName.c_str(), sqlite3_errmsg( hDB ) );
-        return FALSE;
+        return false;
     }
 
     if( !SetDBOptions() )
     {
-        return FALSE;
+        return false;
     }
 
     if( !bIsExisting )
@@ -3002,7 +3062,7 @@ int OGROSMDataSource::CreateTempDB()
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to create table nodes : %s", pszErrMsg );
             sqlite3_free( pszErrMsg );
-            return FALSE;
+            return false;
         }
 
         rc = sqlite3_exec(
@@ -3014,7 +3074,7 @@ int OGROSMDataSource::CreateTempDB()
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to create table ways : %s", pszErrMsg );
             sqlite3_free( pszErrMsg );
-            return FALSE;
+            return false;
         }
 
         rc = sqlite3_exec(
@@ -3027,12 +3087,13 @@ int OGROSMDataSource::CreateTempDB()
                       "Unable to create table polygons_standalone : %s",
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
-            return FALSE;
+            return false;
         }
     }
 
     return CreatePreparedStatements();
 }
+
 /************************************************************************/
 /*                            SetDBOptions()                            */
 /************************************************************************/
@@ -3090,13 +3151,13 @@ bool OGROSMDataSource::SetCacheSize()
 {
     const char* pszSqliteCacheMB = CPLGetConfigOption("OSM_SQLITE_CACHE", NULL);
 
-    if (pszSqliteCacheMB == NULL)
+    if( pszSqliteCacheMB == NULL )
         return true;
 
     char* pszErrMsg = NULL;
-    char **papszResult;
-    int nRowCount;
-    int nColCount;
+    char **papszResult = NULL;
+    int nRowCount = 0;
+    int nColCount = 0;
     int iSqlitePageSize = -1;
     const int iSqliteCacheBytes = atoi( pszSqliteCacheMB ) * 1024 * 1024;
 
@@ -3106,8 +3167,7 @@ bool OGROSMDataSource::SetCacheSize()
                                 &pszErrMsg );
     if( rc == SQLITE_OK )
     {
-        int iRow;
-        for (iRow = 1; iRow <= nRowCount; iRow++)
+        for( int iRow = 1; iRow <= nRowCount; iRow++ )
         {
             iSqlitePageSize = atoi( papszResult[(iRow * nColCount) + 0] );
         }
@@ -3312,7 +3372,7 @@ void OGROSMDataSource::AddComputedAttributes(
 {
     for(size_t i=0; i<oAttributes.size();i++)
     {
-        if( oAttributes[i].osSQL.size() )
+        if( !oAttributes[i].osSQL.empty() )
         {
             papoLayers[iCurLayer]->AddComputedAttribute(oAttributes[i].osName,
                                                         oAttributes[i].eType,
@@ -3325,7 +3385,7 @@ void OGROSMDataSource::AddComputedAttributes(
 /*                           ParseConf()                                */
 /************************************************************************/
 
-bool OGROSMDataSource::ParseConf(char** papszOpenOptionsIn)
+bool OGROSMDataSource::ParseConf( char** papszOpenOptionsIn )
 {
     const char *pszFilename =
         CSLFetchNameValueDef(papszOpenOptionsIn, "CONFIG_FILE",
@@ -3343,7 +3403,7 @@ bool OGROSMDataSource::ParseConf(char** papszOpenOptionsIn)
     if( fpConf == NULL )
         return false;
 
-    const char* pszLine;
+    const char* pszLine = NULL;
     int iCurLayer = -1;
     std::vector<OGROSMComputedAttribute> oAttributes;
 
@@ -3377,18 +3437,15 @@ bool OGROSMDataSource::ParseConf(char** papszOpenOptionsIn)
             continue;
         }
 
-        if( STARTS_WITH(pszLine, "closed_ways_are_polygons="))        {
-            char** papszTokens = CSLTokenizeString2(pszLine, "=", 0);
-            if( CSLCount(papszTokens) == 2)
+        if( STARTS_WITH(pszLine, "closed_ways_are_polygons="))
+        {
+            char** papszTokens2 = CSLTokenizeString2(
+                    pszLine + strlen("closed_ways_are_polygons="), ",", 0);
+            for(int i=0;papszTokens2[i] != NULL;i++)
             {
-                char** papszTokens2 = CSLTokenizeString2(papszTokens[1], ",", 0);
-                for(int i=0;papszTokens2[i] != NULL;i++)
-                {
-                    aoSetClosedWaysArePolygons.insert(papszTokens2[i]);
-                }
-                CSLDestroy(papszTokens2);
+                aoSetClosedWaysArePolygons.insert(papszTokens2[i]);
             }
-            CSLDestroy(papszTokens);
+            CSLDestroy(papszTokens2);
         }
 
         else if(STARTS_WITH(pszLine, "report_all_nodes="))
@@ -3497,37 +3554,45 @@ bool OGROSMDataSource::ParseConf(char** papszOpenOptionsIn)
                     papoLayers[iCurLayer]->AddField("osm_user", OFTString);
                 }
             }
-            else if( CSLCount(papszTokens) == 2 && strcmp(papszTokens[0], "osm_changeset") == 0 )
+            else if( CSLCount(papszTokens) == 2 &&
+                     strcmp(papszTokens[0], "osm_changeset") == 0 )
             {
                 if( strcmp(papszTokens[1], "no") == 0 )
                     papoLayers[iCurLayer]->SetHasChangeset(false);
                 else if( strcmp(papszTokens[1], "yes") == 0 )
                 {
                     papoLayers[iCurLayer]->SetHasChangeset(true);
-                    papoLayers[iCurLayer]->AddField("osm_changeset", OFTInteger);
+                    papoLayers[iCurLayer]->AddField("osm_changeset",
+                                                    OFTInteger);
                 }
             }
-            else if( CSLCount(papszTokens) == 2 && strcmp(papszTokens[0], "attributes") == 0 )
+            else if( CSLCount(papszTokens) == 2 &&
+                     strcmp(papszTokens[0], "attributes") == 0 )
             {
-                char** papszTokens2 = CSLTokenizeString2(papszTokens[1], ",", 0);
+                char** papszTokens2 =
+                    CSLTokenizeString2(papszTokens[1], ",", 0);
                 for(int i=0;papszTokens2[i] != NULL;i++)
                 {
                     papoLayers[iCurLayer]->AddField(papszTokens2[i], OFTString);
                 }
                 CSLDestroy(papszTokens2);
             }
-            else if ( CSLCount(papszTokens) == 2 && strcmp(papszTokens[0], "unsignificant") == 0 )
+            else if( CSLCount(papszTokens) == 2 &&
+                     strcmp(papszTokens[0], "unsignificant") == 0 )
             {
-                char** papszTokens2 = CSLTokenizeString2(papszTokens[1], ",", 0);
+                char** papszTokens2 =
+                    CSLTokenizeString2(papszTokens[1], ",", 0);
                 for(int i=0;papszTokens2[i] != NULL;i++)
                 {
                     papoLayers[iCurLayer]->AddUnsignificantKey(papszTokens2[i]);
                 }
                 CSLDestroy(papszTokens2);
             }
-            else if ( CSLCount(papszTokens) == 2 && strcmp(papszTokens[0], "ignore") == 0 )
+            else if( CSLCount(papszTokens) == 2 &&
+                     strcmp(papszTokens[0], "ignore") == 0 )
             {
-                char** papszTokens2 = CSLTokenizeString2(papszTokens[1], ",", 0);
+                char** papszTokens2 =
+                    CSLTokenizeString2(papszTokens[1], ",", 0);
                 for(int i=0;papszTokens2[i] != NULL;i++)
                 {
                     papoLayers[iCurLayer]->AddIgnoreKey(papszTokens2[i]);
@@ -3535,18 +3600,23 @@ bool OGROSMDataSource::ParseConf(char** papszOpenOptionsIn)
                 }
                 CSLDestroy(papszTokens2);
             }
-            else if ( CSLCount(papszTokens) == 2 && strcmp(papszTokens[0], "computed_attributes") == 0 )
+            else if( CSLCount(papszTokens) == 2 &&
+                     strcmp(papszTokens[0], "computed_attributes") == 0 )
             {
-                char** papszTokens2 = CSLTokenizeString2(papszTokens[1], ",", 0);
+                char** papszTokens2 =
+                    CSLTokenizeString2(papszTokens[1], ",", 0);
                 oAttributes.resize(0);
                 for(int i=0;papszTokens2[i] != NULL;i++)
                 {
-                    oAttributes.push_back(OGROSMComputedAttribute(papszTokens2[i]));
+                    oAttributes.push_back(
+                        OGROSMComputedAttribute(papszTokens2[i]));
                 }
                 CSLDestroy(papszTokens2);
             }
-            else if ( CSLCount(papszTokens) == 2 && strlen(papszTokens[0]) >= 5 &&
-                      strcmp(papszTokens[0] + strlen(papszTokens[0]) - 5, "_type") == 0 )
+            else if( CSLCount(papszTokens) == 2 &&
+                     strlen(papszTokens[0]) >= 5 &&
+                     strcmp(papszTokens[0] + strlen(papszTokens[0]) - 5,
+                            "_type") == 0 )
             {
                 CPLString osName(papszTokens[0]);
                 osName.resize(strlen(papszTokens[0]) - 5);
@@ -3578,41 +3648,47 @@ bool OGROSMDataSource::ParseConf(char** papszOpenOptionsIn)
                 }
                 if( !bFound )
                 {
-                    int idx = papoLayers[iCurLayer]->GetLayerDefn()->GetFieldIndex(osName);
+                    const int idx =
+                        papoLayers[iCurLayer]->
+                            GetLayerDefn()->GetFieldIndex(osName);
                     if( idx >= 0 )
                     {
-                        papoLayers[iCurLayer]->GetLayerDefn()->GetFieldDefn(idx)->SetType(eType);
+                        papoLayers[iCurLayer]->
+                            GetLayerDefn()->GetFieldDefn(idx)->SetType(eType);
                         bFound = true;
                     }
                 }
                 if( !bFound )
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined, "Undeclared attribute : %s",
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Undeclared attribute : %s",
                              osName.c_str());
                 }
             }
-            else if ( CSLCount(papszTokens) >= 2 && strlen(papszTokens[0]) >= 4 &&
-                      strcmp(papszTokens[0] + strlen(papszTokens[0]) - 4, "_sql") == 0 )
+            else if( CSLCount(papszTokens) >= 2 &&
+                     strlen(papszTokens[0]) >= 4 &&
+                     strcmp(papszTokens[0] + strlen(papszTokens[0]) - 4,
+                            "_sql") == 0 )
             {
                 CPLString osName(papszTokens[0]);
                 osName.resize(strlen(papszTokens[0]) - 4);
-                size_t i;
-                for(i = 0; i < oAttributes.size(); i++ )
+                size_t i = 0;  // Used after for.
+                for( ; i < oAttributes.size(); i++ )
                 {
                     if( oAttributes[i].osName == osName )
                     {
                         const char* pszSQL = strchr(pszLine, '=') + 1;
                         while( *pszSQL == ' ' )
                             pszSQL ++;
-                        int bInQuotes = FALSE;
+                        bool bInQuotes = false;
                         if( *pszSQL == '"' )
                         {
-                            bInQuotes = TRUE;
+                            bInQuotes = true;
                             pszSQL ++;
                         }
                         oAttributes[i].osSQL = pszSQL;
                         if( bInQuotes && oAttributes[i].osSQL.size() > 1 &&
-                            oAttributes[i].osSQL[oAttributes[i].osSQL.size()-1] == '"' )
+                            oAttributes[i].osSQL.back() == '"' )
                             oAttributes[i].osSQL.resize(oAttributes[i].osSQL.size()-1);
                         break;
                     }
@@ -3651,10 +3727,10 @@ bool OGROSMDataSource::ParseConf(char** papszOpenOptionsIn)
 }
 
 /************************************************************************/
-/*                           ResetReading()                            */
+/*                          MyResetReading()                            */
 /************************************************************************/
 
-int OGROSMDataSource::ResetReading()
+int OGROSMDataSource::MyResetReading()
 {
     if( hDB == NULL )
         return FALSE;
@@ -3692,6 +3768,9 @@ int OGROSMDataSource::ResetReading()
         return FALSE;
     }
     bHasRowInPolygonsStandalone = false;
+
+    if( hSelectPolygonsStandaloneStmt != NULL )
+        sqlite3_reset( hSelectPolygonsStandaloneStmt );
 
     {
         for( int i = 0; i < nWayFeaturePairs; i++)
@@ -3750,15 +3829,95 @@ int OGROSMDataSource::ResetReading()
     }
 
     bStopParsing = false;
+    poCurrentLayer = NULL;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                             ResetReading()                           */
+/************************************************************************/
+
+void OGROSMDataSource::ResetReading()
+{
+    MyResetReading();
+}
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature* OGROSMDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
+                                              double* pdfProgressPct,
+                                              GDALProgressFunc pfnProgress,
+                                              void* pProgressData )
+{
+    bInterleavedReading = TRUE;
+
+    if( poCurrentLayer == NULL )
+    {
+        poCurrentLayer = papoLayers[0];
+    }
+    if( pdfProgressPct != NULL || pfnProgress != NULL )
+    {
+        if( m_nFileSize == FILESIZE_NOT_INIT )
+        {
+            VSIStatBufL sStat;
+            if( VSIStatL( pszName, &sStat ) == 0 )
+            {
+                m_nFileSize = static_cast<GIntBig>(sStat.st_size);
+            }
+            else
+            {
+                m_nFileSize = FILESIZE_INVALID;
+            }
+        }
+    }
+
+    while( true )
+    {
+        OGROSMLayer* poNewCurLayer = NULL;
+        CPLAssert( poCurrentLayer != NULL );
+        OGRFeature* poFeature = poCurrentLayer->MyGetNextFeature(&poNewCurLayer,
+                                                                 pfnProgress,
+                                                                 pProgressData);
+        poCurrentLayer = poNewCurLayer;
+        if( poFeature == NULL)
+        {
+            if( poCurrentLayer != NULL )
+                continue;
+            if( ppoBelongingLayer != NULL )
+                *ppoBelongingLayer = NULL;
+            if( pdfProgressPct != NULL )
+                *pdfProgressPct = 1.0;
+            return NULL;
+        }
+        if( ppoBelongingLayer != NULL )
+            *ppoBelongingLayer = poCurrentLayer;
+        if( pdfProgressPct != NULL )
+        {
+            if( m_nFileSize != FILESIZE_INVALID )
+            {
+                *pdfProgressPct = 1.0 * OSM_GetBytesRead(psParser) /
+                                        m_nFileSize;
+            }
+            else
+            {
+                *pdfProgressPct = -1.0;
+            }
+        }
+
+        return poFeature;
+    }
 }
 
 /************************************************************************/
 /*                           ParseNextChunk()                           */
 /************************************************************************/
 
-bool OGROSMDataSource::ParseNextChunk(int nIdxLayer)
+bool OGROSMDataSource::ParseNextChunk( int nIdxLayer,
+                                       GDALProgressFunc pfnProgress,
+                                       void* pProgressData )
 {
     if( bStopParsing )
         return false;
@@ -3770,12 +3929,30 @@ bool OGROSMDataSource::ParseNextChunk(int nIdxLayer)
 #ifdef DEBUG_MEM_USAGE
         static int counter = 0;
         counter ++;
-        if ((counter % 1000) == 0)
+        if( (counter % 1000) == 0 )
             CPLDebug("OSM", "GetMaxTotalAllocs() = " CPL_FRMT_GUIB,
                      static_cast<GUIntBig>(GetMaxTotalAllocs()));
 #endif
 
         OSMRetCode eRet = OSM_ProcessBlock(psParser);
+        if( pfnProgress != NULL )
+        {
+            double dfPct = -1.0;
+            if( m_nFileSize != FILESIZE_INVALID )
+            {
+                dfPct = 1.0 * OSM_GetBytesRead(psParser) / m_nFileSize;
+            }
+            if( !pfnProgress( dfPct, "", pProgressData ) )
+            {
+                bStopParsing = true;
+                for(int i=0;i<nLayers;i++)
+                {
+                    papoLayers[i]->ForceResetReading();
+                }
+                return false;
+            }
+        }
+
         if( eRet == OSM_EOF || eRet == OSM_ERROR )
         {
             if( eRet == OSM_EOF )
@@ -3920,7 +4097,6 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
             CloseDB();
 
             CPLString osNewTmpDBName;
-            int rc;
 
             osNewTmpDBName = CPLGenerateTempFilename("osm_tmp");
 
@@ -3942,11 +4118,12 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
             osTmpDBName = osNewTmpDBName;
 
 #ifdef HAVE_SQLITE_VFS
-            rc = sqlite3_open_v2( osTmpDBName.c_str(), &hDB,
-                                  SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX,
-                                  NULL );
+            const int rc =
+                sqlite3_open_v2( osTmpDBName.c_str(), &hDB,
+                                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX,
+                                 NULL );
 #else
-            rc = sqlite3_open( osTmpDBName.c_str(), &hDB );
+            const int rc = sqlite3_open( osTmpDBName.c_str(), &hDB );
 #endif
             if( rc != SQLITE_OK )
             {
@@ -3985,9 +4162,9 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROSMDataSource::TestCapability( const char * /* pszCap */ )
+int OGROSMDataSource::TestCapability( const char * pszCap )
 {
-    return FALSE;
+    return EQUAL(pszCap, ODsCRandomLayerRead);
 }
 
 /************************************************************************/
@@ -4009,13 +4186,13 @@ OGRLayer *OGROSMDataSource::GetLayer( int iLayer )
 
 OGRErr OGROSMDataSource::GetExtent( OGREnvelope *psExtent )
 {
-    if (!bHasParsedFirstChunk)
+    if( !bHasParsedFirstChunk )
     {
         bHasParsedFirstChunk = true;
         OSM_ProcessBlock(psParser);
     }
 
-    if (bExtentValid)
+    if( bExtentValid )
     {
         memcpy(psExtent, &sExtent, sizeof(sExtent));
         return OGRERR_NONE;
@@ -4023,7 +4200,6 @@ OGRErr OGROSMDataSource::GetExtent( OGREnvelope *psExtent )
 
     return OGRERR_FAILURE;
 }
-
 
 /************************************************************************/
 /*                   OGROSMSingleFeatureLayer                           */
@@ -4039,17 +4215,16 @@ class OGROSMSingleFeatureLayer : public OGRLayer
 
   public:
                         OGROSMSingleFeatureLayer( const char* pszLayerName,
-                                                     int nVal );
+                                                  int nVal );
                         OGROSMSingleFeatureLayer( const char* pszLayerName,
-                                                     const char *pszVal );
-                        ~OGROSMSingleFeatureLayer();
+                                                  const char *pszVal );
+                        virtual ~OGROSMSingleFeatureLayer();
 
-    virtual void        ResetReading() { iNextShapeId = 0; }
-    virtual OGRFeature *GetNextFeature();
-    virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
-    virtual int         TestCapability( const char * ) { return FALSE; }
+    virtual void        ResetReading() override { iNextShapeId = 0; }
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
+    virtual int         TestCapability( const char * ) override { return FALSE; }
 };
-
 
 /************************************************************************/
 /*                    OGROSMSingleFeatureLayer()                        */
@@ -4081,7 +4256,6 @@ OGROSMSingleFeatureLayer::OGROSMSingleFeatureLayer( const char* pszLayerName,
     poFeatureDefn->Reference();
     OGRFieldDefn oField( pszLayerName, OFTString );
     poFeatureDefn->AddFieldDefn( &oField );
-
 }
 
 /************************************************************************/
@@ -4100,11 +4274,11 @@ OGROSMSingleFeatureLayer::~OGROSMSingleFeatureLayer()
 
 OGRFeature * OGROSMSingleFeatureLayer::GetNextFeature()
 {
-    if (iNextShapeId != 0)
+    if( iNextShapeId != 0 )
         return NULL;
 
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
-    if (pszVal)
+    if( pszVal )
         poFeature->SetField(0, pszVal);
     else
         poFeature->SetField(0, nVal);
@@ -4129,7 +4303,7 @@ class OGROSMResultLayerDecorator : public OGRLayerDecorator
                                         osDSName(osDSNameIn),
                                         osInterestLayers(osInterestLayersIn) {}
 
-        virtual GIntBig     GetFeatureCount( int bForce = TRUE )
+        virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override
         {
             /* When we run GetFeatureCount() with SQLite SQL dialect, */
             /* the OSM dataset will be re-opened. Make sure that it is */
@@ -4151,9 +4325,9 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special GetBytesRead() command                                  */
 /* -------------------------------------------------------------------- */
-    if (strcmp(pszSQLCommand, "GetBytesRead()") == 0)
+    if( strcmp(pszSQLCommand, "GetBytesRead()") == 0 )
     {
-        char szVal[64];
+        char szVal[64] = {};
         snprintf( szVal, sizeof(szVal), CPL_FRMT_GUIB,
                   OSM_GetBytesRead(psParser) );
         return new OGROSMSingleFeatureLayer( "GetBytesRead", szVal );
@@ -4169,7 +4343,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special SET interest_layers = command                           */
 /* -------------------------------------------------------------------- */
-    if (STARTS_WITH(pszSQLCommand, "SET interest_layers ="))
+    if( STARTS_WITH(pszSQLCommand, "SET interest_layers =") )
     {
         char** papszTokens =
             CSLTokenizeString2(pszSQLCommand + 21, ",",
@@ -4252,7 +4426,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
             for(; oIter != oSetLayers.end(); ++oIter)
             {
                 const LayerDesc& oLayerDesc = *oIter;
-                if( oLayerDesc.osDSName.size() == 0 )
+                if( oLayerDesc.osDSName.empty() )
                 {
                     if( bLayerAlreadyAdded ) osInterestLayers += ",";
                     bLayerAlreadyAdded = true;
@@ -4304,9 +4478,9 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
             bUseWaysIndexBackup = bUseWaysIndex;
 
             /* Update optimization parameters */
-            ExecuteSQL(osInterestLayers, NULL, NULL);
+            delete ExecuteSQL(osInterestLayers, NULL, NULL);
 
-            ResetReading();
+            MyResetReading();
 
             /* Run the request */
             poResultSetLayer = OGRDataSource::ExecuteSQL( pszSQLCommand,

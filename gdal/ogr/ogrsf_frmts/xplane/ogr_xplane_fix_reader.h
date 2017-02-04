@@ -37,7 +37,6 @@
 /*                           OGRXPlaneFIXLayer                          */
 /************************************************************************/
 
-
 class OGRXPlaneFIXLayer : public OGRXPlaneLayer
 {
   public:
@@ -61,12 +60,12 @@ class OGRXPlaneFixReader : public OGRXPlaneReader
         void                     ParseRecord();
 
     protected:
-        virtual void             Read();
+        virtual void             Read() override;
 
     public:
-                                 OGRXPlaneFixReader( OGRXPlaneDataSource* poDataSource );
-        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer);
-        virtual int              IsRecognizedVersion( const char* pszVersionString);
+        explicit                 OGRXPlaneFixReader( OGRXPlaneDataSource* poDataSource );
+        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer) override;
+        virtual int              IsRecognizedVersion( const char* pszVersionString) override;
 };
 
 #endif

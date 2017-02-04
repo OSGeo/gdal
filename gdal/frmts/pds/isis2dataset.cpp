@@ -81,12 +81,12 @@ class ISIS2Dataset : public RawDataset
 
 public:
     ISIS2Dataset();
-    ~ISIS2Dataset();
+    virtual ~ISIS2Dataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -144,7 +144,7 @@ char **ISIS2Dataset::GetFileList()
 {
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    if( strlen(osExternalCube) > 0 )
+    if( !osExternalCube.empty() )
         papszFileList = CSLAddString( papszFileList, osExternalCube );
 
     return papszFileList;
@@ -157,7 +157,7 @@ char **ISIS2Dataset::GetFileList()
 const char *ISIS2Dataset::GetProjectionRef()
 
 {
-    if( strlen(osProjection) > 0 )
+    if( !osProjection.empty() )
         return osProjection;
 
     return GDALPamDataset::GetProjectionRef();
@@ -182,7 +182,6 @@ CPLErr ISIS2Dataset::GetGeoTransform( double * padfTransform )
 /************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
-
 
 int ISIS2Dataset::Identify( GDALOpenInfo * poOpenInfo )
 {
@@ -648,7 +647,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->nBands = nBands;;
+    poDS->nBands = nBands;
     for( int i = 0; i < poDS->nBands; i++ )
     {
         RawRasterBand *poBand =
@@ -732,7 +731,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -788,8 +787,8 @@ void ISIS2Dataset::CleanString( CPLString &osInput )
 
 {
    if(  ( osInput.size() < 2 ) ||
-        ((osInput.at(0) != '"'   || osInput.at(osInput.size()-1) != '"' ) &&
-        ( osInput.at(0) != '\'' || osInput.at(osInput.size()-1) != '\'')) )
+        ((osInput.at(0) != '"'   || osInput.back() != '"' ) &&
+        ( osInput.at(0) != '\'' || osInput.back() != '\'')) )
         return;
 
     char *pszWrk = CPLStrdup(osInput.c_str() + 1);
@@ -919,7 +918,6 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
 
     return reinterpret_cast<GDALDataset *>( GDALOpen( osOutFile, GA_Update ) );
 }
-
 
 /************************************************************************/
 /*                            WriteRaster()                             */

@@ -67,7 +67,6 @@ public:
                               int nXSize, int nYSize, int nBands,
                               GDALDataType eType,
                               char** papszParmList );
-
 };
 
 /************************************************************************/
@@ -83,23 +82,22 @@ class FITSRasterBand : public GDALPamRasterBand {
 public:
 
   FITSRasterBand(FITSDataset*, int);
-  ~FITSRasterBand();
+  virtual ~FITSRasterBand();
 
-  virtual CPLErr IReadBlock( int, int, void * );
-  virtual CPLErr IWriteBlock( int, int, void * );
+  virtual CPLErr IReadBlock( int, int, void * ) override;
+  virtual CPLErr IWriteBlock( int, int, void * ) override;
 };
-
 
 /************************************************************************/
 /*                          FITSRasterBand()                           */
 /************************************************************************/
 
-FITSRasterBand::FITSRasterBand(FITSDataset *poDSIn, int nBandIn) {
-
-  this->poDS = poDSIn;
-  this->nBand = nBandIn;
+FITSRasterBand::FITSRasterBand( FITSDataset *poDSIn, int nBandIn )
+{
+  poDS = poDSIn;
+  nBand = nBandIn;
   eDataType = poDSIn->gdalDataType;
-  nBlockXSize = poDSIn->nRasterXSize;;
+  nBlockXSize = poDSIn->nRasterXSize;
   nBlockYSize = 1;
 }
 
@@ -107,7 +105,8 @@ FITSRasterBand::FITSRasterBand(FITSDataset *poDSIn, int nBandIn) {
 /*                          ~FITSRasterBand()                           */
 /************************************************************************/
 
-FITSRasterBand::~FITSRasterBand() {
+FITSRasterBand::~FITSRasterBand()
+{
     FlushCache();
 }
 
@@ -223,14 +222,13 @@ static bool isIgnorableFITSHeader(const char* name) {
   return false;
 }
 
-
 /************************************************************************/
 /*                            FITSDataset()                            */
 /************************************************************************/
 
-FITSDataset::FITSDataset() {
-  hFITS = NULL;
-}
+FITSDataset::FITSDataset():
+    hFITS(NULL)
+{}
 
 /************************************************************************/
 /*                           ~FITSDataset()                            */
@@ -239,9 +237,13 @@ FITSDataset::FITSDataset() {
 FITSDataset::~FITSDataset() {
 
   int status;
-  if (hFITS) {
-    if(eAccess == GA_Update) {   // Only do this if we've successfully opened the file and  update capability
-      // Write any meta data to the file that's compatible with FITS
+  if( hFITS )
+  {
+    if(eAccess == GA_Update)
+    {
+      // Only do this if we've successfully opened the file and update
+      // capability.  Write any meta data to the file that's compatible with
+      // FITS.
       status = 0;
       fits_movabs_hdu(hFITS, 1, NULL, &status);
       fits_write_key_longwarn(hFITS, &status);
@@ -302,10 +304,8 @@ FITSDataset::~FITSDataset() {
     // Close the FITS handle - ignore the error status
     status = 0;
     fits_close_file(hFITS, &status);
-
   }
 }
-
 
 /************************************************************************/
 /*                           Init()                                     */
@@ -405,7 +405,8 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   char key[100];
   char value[100];
 
-  int nKeys = 0, nMoreKeys = 0;
+  int nKeys = 0;
+  int nMoreKeys = 0;
   fits_get_hdrspace(hFITS, &nKeys, &nMoreKeys, &status);
   for(keyNum = 1; keyNum <= nKeys; keyNum++)
   {
@@ -458,8 +459,6 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
 
   return CE_None;
 }
-
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -516,7 +515,6 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
       return dataset;
   }
 }
-
 
 /************************************************************************/
 /*                               Create()                               */
@@ -596,7 +594,6 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
     return dataset;
   }
 }
-
 
 /************************************************************************/
 /*                          GDALRegister_FITS()                         */

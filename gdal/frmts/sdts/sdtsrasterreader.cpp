@@ -46,6 +46,11 @@ SDTSRasterReader::SDTSRasterReader() :
     nYStart(0)
 {
     strcpy( szINTR, "CE" );
+    memset( szModule, 0, sizeof(szModule) );
+    memset( adfTransform, 0, sizeof(adfTransform) );
+    memset( szFMT, 0, sizeof(szFMT) );
+    memset( szUNITS, 0, sizeof(szUNITS) );
+    memset( szLabel, 0, sizeof(szLabel) );
 }
 
 /************************************************************************/
@@ -75,8 +80,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
                             const char * pszModule )
 
 {
-    strncpy( szModule, pszModule, sizeof(szModule) );
-    szModule[sizeof(szModule) - 1] = '\0';
+    snprintf( szModule, sizeof(szModule), "%s", pszModule );
 
 /* ==================================================================== */
 /*      Search the LDEF module for the requested cell module.           */
@@ -328,7 +332,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /* -------------------------------------------------------------------- */
 /*      Open the cell file.                                             */
 /* -------------------------------------------------------------------- */
-    return( oDDFModule.Open( poCATD->GetModuleFilePath(pszModule) ) );
+    return oDDFModule.Open( poCATD->GetModuleFilePath(pszModule) );
 }
 
 /************************************************************************/

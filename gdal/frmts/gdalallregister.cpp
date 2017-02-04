@@ -259,6 +259,11 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_JPIPKAK();
 #endif
 
+#ifdef FRMT_jp2lura
+    // JPEG2000 support using Lurawave library
+    GDALRegister_JP2Lura();
+#endif
+
 #ifdef FRMT_ecw
     GDALRegister_ECW();
     GDALRegister_JP2ECW();
@@ -547,12 +552,17 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_IRIS();
 #endif
 
+<<<<<<< HEAD
 #ifdef FRMT_cnsdtf
     GDALRegister_CNSDTF();
 #endif
 
 #ifdef FRMT_landsat
 	GDALRegister_LANDSAT();
+=======
+#ifdef FRMT_prf
+    GDALRegister_PRF();
+>>>>>>> refs/remotes/OSGeo/trunk
 #endif
 
 #ifdef GNM_ENABLED

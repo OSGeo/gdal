@@ -13,33 +13,33 @@ FAQ</a> has some good background on ISO 8211 formatted files.  I will briefly
 introduce it here, with reference to the library classes representing
 the components.<p>
 
-An 8211 file (DDFModule) 
+An 8211 file (DDFModule)
 consists of a series of logical records.  The first record
 is special, and is called the DDR (Data Description Record).  It basically
-contains definitions of all the data objects (fields or DDFFieldDefn objects) 
+contains definitions of all the data objects (fields or DDFFieldDefn objects)
 that can occur on the following data records.<p>
 
 The remainder of the records are known as DRs (data records - DDFRecord).  They
-each contain one or more field (DDFField) instances.  What fields appear 
-on what records is not defined by ISO 8211, though more specific requirements 
+each contain one or more field (DDFField) instances.  What fields appear
+on what records is not defined by ISO 8211, though more specific requirements
 may be implied by a particular data standard such as SDTS or S-57.<p>
 
-Each field instance has a name, and consists of a series of subfields.  A 
-given 
+Each field instance has a name, and consists of a series of subfields.  A
+given
 field always has the same subfields in each field instance, and these subfields
-are defined in the DDR (DDFSubfieldDefn), in association with their 
+are defined in the DDR (DDFSubfieldDefn), in association with their
 field definition (DDFFieldDefn).  A field may appear 0, 1, or many times in a DR. <p>
 
-Each subfield has a name, format (from the DDFSubfieldDefn) and 
-actual subfield data for a particular DR.  
+Each subfield has a name, format (from the DDFSubfieldDefn) and
+actual subfield data for a particular DR.
 Some fields contain an <i>array</i> of their group of
-subfields.  For instance a <i>coordinate field</i> may have X and Y 
-subfields, and they may repeat many times within one coordinate field 
+subfields.  For instance a <i>coordinate field</i> may have X and Y
+subfields, and they may repeat many times within one coordinate field
 indicating a series of points.<p>
 
-<i>This would be a real good place for a UML diagram of ISO 8211, and 
+<i>This would be a real good place for a UML diagram of ISO 8211, and
 the corresponding library classes!</i><p>
- 
+
 <h2>Development Information</h2>
 
 The <b>iso8211.h</b> contains the definitions for all public ISO8211Lib
@@ -50,13 +50,13 @@ and then use the DDFModule::Open() method.  This will read the DDR, and
 establish all the DDFFieldDefn, and DDFSubfieldDefn objects which can be
 queried off the DDFModule.<p>
 
-The use DDFModule::ReadRecord() to fetch data records (DDFRecord).  When 
-a record is read, a list of field objects (DDFField) on that record are 
+The use DDFModule::ReadRecord() to fetch data records (DDFRecord).  When
+a record is read, a list of field objects (DDFField) on that record are
 created.  They can be queried with various DDFRecord methods.<P>
 
-Data pointers for individual subfields of a DDFField can be fetched with 
+Data pointers for individual subfields of a DDFField can be fetched with
 DDFField::GetSubfieldData().  The interpreted value can then be extracted
-with the appropriate one of DDFSubfieldDefn::ExtractIntValue(), 
+with the appropriate one of DDFSubfieldDefn::ExtractIntValue(),
 DDFSubfieldDefn::ExtractStringValue(), or DDFSubfieldDefn::ExtractFloatValue().
 Note that there is no object instantiated for individual subfields of a
 DDFField.  Instead the application extracts a pointer to the subfields
@@ -77,17 +77,17 @@ cleanup all records, definitions and related objects.<p>
 <li> DDFField class.
 </ul>
 
-A complete <a href="example.html">Example Reader</a> should clarify 
+A complete <a href="example.html">Example Reader</a> should clarify
 simple use of ISO8211Lib.<p>
 
 <h2>Related Information</h2>
 
 <ul>
 
-<li> The ISO 8211 standard can be ordered through 
+<li> The ISO 8211 standard can be ordered through
 <a href="http://www.iso.ch/">ISO</a>.  It cost me about $200CDN.<p>
 
-<li> The <a href="http://user.icx.net/~brooks/iso8211.html">ISO/IEC 8211/DDFS 
+<li> The <a href="http://user.icx.net/~brooks/iso8211.html">ISO/IEC 8211/DDFS
 Home Page</a> contains tutorials and some code by Dr. Alfred A.
 Brooks, one of the originators of the 8211 standard.<p>
 
@@ -96,13 +96,13 @@ ISO/IEC 8211 Home Page</a> has some python code for parsing 8211 files, and
 some other useful background.<p>
 
 <li> The <a href="http://mcmcweb.er.usgs.gov/sdts/sdtsxx/index.html">SDTS++</a>
-library from the USGS 
-includes support for ISO 8211.  It doesn't include some of the 
-1994 additions to ISO 8211, but it is sufficient for SDTS, and quite 
+library from the USGS
+includes support for ISO 8211.  It doesn't include some of the
+1994 additions to ISO 8211, but it is sufficient for SDTS, and quite
 elegantly done.  Also supports writing ISO 8211 files.<p>
 
-<li> The USGS also has an older 
-<a href="ftp://sdts.er.usgs.gov/pub/sdts/software/fips123/">FIPS123</a> 
+<li> The USGS also has an older
+<a href="ftp://sdts.er.usgs.gov/pub/sdts/software/fips123/">FIPS123</a>
 library which supports the older profile of ISO 8211 (to some extent).<p>
 
 </ul>
@@ -143,7 +143,7 @@ The precise license text is:<p>
 <ol>
 
 <li> First, fetch the source.  The most recent source should be accessible at
-an url such as 
+an url such as
 <a href="http://home.gdal.org/projects/iso8211/iso8211lib-1.4.zip">
 http://home.gdal.org/projects/iso8211/iso8211lib-1.4.zip</a>.<p>
 
@@ -152,7 +152,7 @@ http://home.gdal.org/projects/iso8211/iso8211lib-1.4.zip</a>.<p>
 % unzip iso8211lib-1.4.zip
 </code>
 
-<li> On unix you can now type ``configure'' to establish configuration 
+<li> On unix you can now type ``configure'' to establish configuration
 options.<p>
 
 <li> On unix you can now type make to build libiso8211.a, and the sample
@@ -163,15 +163,15 @@ mainline 8211view.<p>
 Windows developers will have to create their own makefile/project but
 can base it on the very simple Makefile.in provided.  As well, you would
 need to copy cpl_config.h.in to cpl_config.h, and modify as needed.  The
-default will likely work OK, but may result in some compiler warnings.  
-Let me know if you are having difficulties, and I will prepare a VC++ 
+default will likely work OK, but may result in some compiler warnings.
+Let me know if you are having difficulties, and I will prepare a VC++
 makefile.<p>
 
 <h2>Author and Acknowledgements</h2>
 
 The primary author of ISO8211Lib is <a href="http://pobox.com/~warmerdam">
-Frank Warmerdam</a>, and I can be reached at 
-<a href="mailto:warmerdam@pobox.com">warmerdam@pobox.com</a>.  I am eager to 
+Frank Warmerdam</a>, and I can be reached at
+<a href="mailto:warmerdam@pobox.com">warmerdam@pobox.com</a>.  I am eager to
 receive bug reports, and also open to praise or suggestions.<p>
 
 I would like to thank:<p>
@@ -181,7 +181,7 @@ I would like to thank:<p>
 who funded development of this library, and agreed for it to be Open Source.<p>
 
 <li> Mark Colletti, a primary author of SDTS++ from
-which I derived most of what I know about ISO 8211 and who was very 
+which I derived most of what I know about ISO 8211 and who was very
 supportive, answering a variety of questions.<p>
 
 <li> Tony J Ibbs, author of the ISO/IEC 8211 home page who answered
@@ -193,9 +193,9 @@ length fields (from S-57).<p>
 
 </ul>
 
-I would also like to dedicate this library to the memory of Sol Katz.  
+I would also like to dedicate this library to the memory of Sol Katz.
 Sol released a variety of SDTS (and hence ISO8211) translators, at substantial
-personal effort, to the GIS community along with the many other generous 
+personal effort, to the GIS community along with the many other generous
 contributions he made to the community.  His example has been an inspiration
 to me, and I hope similar efforts on my part will contribute to his memory.<p>
 

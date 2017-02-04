@@ -31,6 +31,7 @@
 #include "shp_vsi.h"
 #include "cpl_error.h"
 #include "cpl_conv.h"
+#include "cpl_vsi_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -73,7 +74,7 @@ SAFile VSI_SHP_OpenInternal( const char *pszFilename, const char *pszAccess,
 
 {
     OGRSHPDBFFile* pFile;
-    VSILFILE* fp = VSIFOpenL( pszFilename, pszAccess );
+    VSILFILE* fp = VSIFOpenExL( pszFilename, pszAccess, TRUE );
     if( fp == NULL )
         return NULL;
     pFile = (OGRSHPDBFFile* )CPLCalloc(1,sizeof(OGRSHPDBFFile));

@@ -148,30 +148,30 @@ class CPL_DLL GDALPamDataset : public GDALDataset
   public:
     virtual     ~GDALPamDataset();
 
-    virtual void FlushCache(void);
+    virtual void FlushCache(void) CPL_OVERRIDE;
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
+    virtual const char *GetProjectionRef(void) CPL_OVERRIDE;
+    virtual CPLErr SetProjection( const char * ) CPL_OVERRIDE;
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual CPLErr GetGeoTransform( double * ) CPL_OVERRIDE;
+    virtual CPLErr SetGeoTransform( double * ) CPL_OVERRIDE;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() CPL_OVERRIDE;
+    virtual const char *GetGCPProjection() CPL_OVERRIDE;
+    virtual const GDAL_GCP *GetGCPs() CPL_OVERRIDE;
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
+                            const char *pszGCPProjection ) CPL_OVERRIDE;
 
     virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                     const char * pszDomain = "" );
+                                     const char * pszDomain = "" ) CPL_OVERRIDE;
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
-                                         const char * pszDomain = "" );
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) CPL_OVERRIDE;
+    virtual char      **GetMetadata( const char * pszDomain = "" ) CPL_OVERRIDE;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) CPL_OVERRIDE;
 
-    virtual char      **GetFileList(void);
+    virtual char      **GetFileList(void) CPL_OVERRIDE;
 
 //! @cond Doxygen_Suppress
     virtual CPLErr CloneInfo( GDALDataset *poSrcDS, int nCloneInfoFlags );
@@ -180,7 +180,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
                                     int nOverviews, int *panOverviewList,
                                     int nListBands, int *panBandList,
                                     GDALProgressFunc pfnProgress,
-                                    void * pProgressData );
+                                    void * pProgressData ) CPL_OVERRIDE;
 
     // "semi private" methods.
     void   MarkPamDirty() { nPamFlags |= GPF_DIRTY; }
@@ -190,7 +190,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 //! @endcond
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALPamDataset);
+    CPL_DISALLOW_COPY_ASSIGN(GDALPamDataset)
 };
 
 //! @cond Doxygen_Suppress
@@ -255,54 +255,54 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
   public:
                 GDALPamRasterBand();
 //! @cond Doxygen_Suppress
-                GDALPamRasterBand(int bForceCachedIO);
+    explicit    GDALPamRasterBand(int bForceCachedIO);
 //! @endcond
     virtual     ~GDALPamRasterBand();
 
-    virtual void        SetDescription( const char * );
+    virtual void        SetDescription( const char * ) CPL_OVERRIDE;
 
-    virtual CPLErr SetNoDataValue( double );
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual CPLErr DeleteNoDataValue();
+    virtual CPLErr SetNoDataValue( double ) CPL_OVERRIDE;
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) CPL_OVERRIDE;
+    virtual CPLErr DeleteNoDataValue() CPL_OVERRIDE;
 
-    virtual CPLErr SetColorTable( GDALColorTable * );
-    virtual GDALColorTable *GetColorTable();
+    virtual CPLErr SetColorTable( GDALColorTable * ) CPL_OVERRIDE;
+    virtual GDALColorTable *GetColorTable() CPL_OVERRIDE;
 
-    virtual CPLErr SetColorInterpretation( GDALColorInterp );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr SetColorInterpretation( GDALColorInterp ) CPL_OVERRIDE;
+    virtual GDALColorInterp GetColorInterpretation() CPL_OVERRIDE;
 
-    virtual const char *GetUnitType();
-    CPLErr SetUnitType( const char * );
+    virtual const char *GetUnitType() CPL_OVERRIDE;
+    CPLErr SetUnitType( const char * ) CPL_OVERRIDE;
 
-    virtual char **GetCategoryNames();
-    virtual CPLErr SetCategoryNames( char ** );
+    virtual char **GetCategoryNames() CPL_OVERRIDE;
+    virtual CPLErr SetCategoryNames( char ** ) CPL_OVERRIDE;
 
-    virtual double GetOffset( int *pbSuccess = NULL );
-    CPLErr SetOffset( double );
-    virtual double GetScale( int *pbSuccess = NULL );
-    CPLErr SetScale( double );
+    virtual double GetOffset( int *pbSuccess = NULL ) CPL_OVERRIDE;
+    CPLErr SetOffset( double ) CPL_OVERRIDE;
+    virtual double GetScale( int *pbSuccess = NULL ) CPL_OVERRIDE;
+    CPLErr SetScale( double ) CPL_OVERRIDE;
 
     virtual CPLErr  GetHistogram( double dfMin, double dfMax,
                           int nBuckets, GUIntBig * panHistogram,
                           int bIncludeOutOfRange, int bApproxOK,
-                          GDALProgressFunc, void *pProgressData );
+                          GDALProgressFunc, void *pProgressData ) CPL_OVERRIDE;
 
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                         int *pnBuckets, GUIntBig ** ppanHistogram,
                                         int bForce,
-                                        GDALProgressFunc, void *pProgressData);
+                                        GDALProgressFunc, void *pProgressData) CPL_OVERRIDE;
 
     virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
-                                        int nBuckets, GUIntBig *panHistogram );
+                                        int nBuckets, GUIntBig *panHistogram ) CPL_OVERRIDE;
 
     virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                     const char * pszDomain = "" );
+                                     const char * pszDomain = "" ) CPL_OVERRIDE;
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) CPL_OVERRIDE;
 
-    virtual GDALRasterAttributeTable *GetDefaultRAT();
-    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
+    virtual GDALRasterAttributeTable *GetDefaultRAT() CPL_OVERRIDE;
+    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * ) CPL_OVERRIDE;
 
 //! @cond Doxygen_Suppress
     // new in GDALPamRasterBand.
@@ -312,7 +312,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     GDALRasterBandPamInfo *GetPamInfo() { return psPam; }
 //! @endcond
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALPamRasterBand);
+    CPL_DISALLOW_COPY_ASSIGN(GDALPamRasterBand)
 };
 
 //! @cond Doxygen_Suppress

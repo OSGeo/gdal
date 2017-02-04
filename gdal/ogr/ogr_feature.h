@@ -31,9 +31,9 @@
 #ifndef OGR_FEATURE_H_INCLUDED
 #define OGR_FEATURE_H_INCLUDED
 
-#include "ogr_geometry.h"
-#include "ogr_featurestyle.h"
 #include "cpl_atomic_ops.h"
+#include "ogr_featurestyle.h"
+#include "ogr_geometry.h"
 
 /**
  * \file ogr_feature.h
@@ -74,11 +74,9 @@ class CPL_DLL OGRFieldDefn
 
     int                 bNullable;
 
-    void                Initialize( const char *, OGRFieldType );
-
   public:
                         OGRFieldDefn( const char *, OGRFieldType );
-                        OGRFieldDefn( OGRFieldDefn * );
+               explicit OGRFieldDefn( OGRFieldDefn * );
                         ~OGRFieldDefn();
 
     void                SetName( const char * );
@@ -119,7 +117,7 @@ class CPL_DLL OGRFieldDefn
     int                 IsSame( const OGRFieldDefn * ) const;
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(OGRFieldDefn);
+    CPL_DISALLOW_COPY_ASSIGN(OGRFieldDefn)
 };
 
 /************************************************************************/
@@ -157,7 +155,7 @@ protected:
 public:
                             OGRGeomFieldDefn( const char *pszNameIn,
                                               OGRwkbGeometryType eGeomTypeIn );
-                            OGRGeomFieldDefn( OGRGeomFieldDefn * );
+                  explicit OGRGeomFieldDefn( OGRGeomFieldDefn * );
         virtual            ~OGRGeomFieldDefn();
 
         void                SetName( const char * );
@@ -179,7 +177,7 @@ public:
         int                 IsSame( OGRGeomFieldDefn * );
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(OGRGeomFieldDefn);
+    CPL_DISALLOW_COPY_ASSIGN(OGRGeomFieldDefn)
 };
 
 /************************************************************************/
@@ -224,7 +222,7 @@ class CPL_DLL OGRFeatureDefn
 //! @endcond
 
   public:
-                OGRFeatureDefn( const char * pszName = NULL );
+       explicit OGRFeatureDefn( const char * pszName = NULL );
     virtual    ~OGRFeatureDefn();
 
     virtual const char  *GetName();
@@ -267,7 +265,7 @@ class CPL_DLL OGRFeatureDefn
     static void         DestroyFeatureDefn( OGRFeatureDefn * );
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(OGRFeatureDefn);
+    CPL_DISALLOW_COPY_ASSIGN(OGRFeatureDefn)
 };
 
 /************************************************************************/
@@ -293,13 +291,13 @@ class CPL_DLL OGRFeature
 
   protected:
 //! @cond Doxygen_Suppress
-    char *              m_pszStyleString;
+    char                *m_pszStyleString;
     OGRStyleTable       *m_poStyleTable;
-    char *              m_pszTmpFieldValue;
+    char                *m_pszTmpFieldValue;
 //! @endcond
 
   public:
-                        OGRFeature( OGRFeatureDefn * );
+    explicit            OGRFeature( OGRFeatureDefn * );
     virtual            ~OGRFeature();
 
     OGRFeatureDefn     *GetDefnRef() { return poDefn; }
@@ -359,6 +357,7 @@ class CPL_DLL OGRFeature
                                             int *pnHour, int *pnMinute,
                                             float *pfSecond,
                                             int *pnTZFlag );
+    char               *GetFieldAsSerializedJSon( int i );
 
     int                 GetFieldAsInteger( const char *pszFName )
                       { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
@@ -451,7 +450,7 @@ class CPL_DLL OGRFeature
     virtual const char *GetStyleString();
     virtual void        SetStyleString( const char * );
     virtual void        SetStyleStringDirectly( char * );
-    
+
     /** Return style table.
      * @return style table.
      */
@@ -469,7 +468,7 @@ class CPL_DLL OGRFeature
     static void         DestroyFeature( OGRFeature * );
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(OGRFeature);
+    CPL_DISALLOW_COPY_ASSIGN(OGRFeature)
 };
 
 /************************************************************************/
@@ -487,24 +486,24 @@ class CPL_DLL OGRFeatureQuery
     OGRFeatureDefn *poTargetDefn;
     void           *pSWQExpr;
 
-    char          **FieldCollector( void *, char ** );
+    char      **FieldCollector( void *, char ** );
 
-    GIntBig       *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *,
+    GIntBig    *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *,
                                            GIntBig& nFIDCount );
 
     int         CanUseIndex( swq_expr_node*, OGRLayer * );
 
   public:
                 OGRFeatureQuery();
-                ~OGRFeatureQuery();
+               ~OGRFeatureQuery();
 
     OGRErr      Compile( OGRFeatureDefn *, const char *,
                          int bCheck = TRUE,
                          swq_custom_func_registrar*
-                             poCustomFuncRegistrar = NULL );
+                         poCustomFuncRegistrar = NULL );
     int         Evaluate( OGRFeature * );
 
-    GIntBig       *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
+    GIntBig    *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
 
     int         CanUseIndex( OGRLayer * );
 

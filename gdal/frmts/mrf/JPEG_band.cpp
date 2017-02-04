@@ -33,8 +33,6 @@
 * limitations under the License.
 */
 
-
-
 /*
  * JPEG band
  * JPEG page compression and decompression functions, gets compiled twice
@@ -93,14 +91,13 @@ static void errorExit(j_common_ptr cinfo)
     longjmp(psErrorStruct->setjmpBuffer, 1);
 }
 
-
 /**
-*\Brief Do nothing stub function for JPEG library, called
+*\brief Do nothing stub function for JPEG library, called
 */
 static void stub_source_dec(j_decompress_ptr /*cinfo*/) {}
 
 /**
-*\Brief: This function is supposed to do refilling of the input buffer,
+*\brief: This function is supposed to do refilling of the input buffer,
 * but as we provided everything at the beginning, if it is called, then
 * we have an error.
 */
@@ -113,7 +110,7 @@ static boolean fill_input_buffer_dec(j_decompress_ptr cinfo)
 }
 
 /**
-*\Brief: Do nothing stub function for JPEG library, not called
+*\brief: Do nothing stub function for JPEG library, not called
 */
 static void skip_input_data_dec(j_decompress_ptr /*cinfo*/, long /*l*/) {};
 
@@ -127,7 +124,7 @@ static boolean empty_output_buffer(j_compress_ptr /*cinfo*/) {
 }
 
 /*
-*\Brief Compress a JPEG page in memory
+*\brief Compress a JPEG page in memory
 *
 * It handles byte or 12 bit data, grayscale, RGB, CMYK, multispectral
 *
@@ -228,7 +225,6 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     return CE_None;
 }
 
-
 /**
 *\brief In memory decompression of JPEG file
 *
@@ -260,7 +256,8 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
 
     src.next_input_byte = (JOCTET *)isrc.buffer;
     src.bytes_in_buffer = isrc.size;
-    src.term_source = src.init_source = stub_source_dec;
+    src.term_source = stub_source_dec;
+    src.init_source = stub_source_dec;
     src.skip_input_data = skip_input_data_dec;
     src.fill_input_buffer = fill_input_buffer_dec;
     src.resync_to_restart = jpeg_resync_to_restart;
@@ -340,23 +337,29 @@ CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 }
 
 // PHOTOMETRIC == MULTISPECTRAL turns off YCbCr conversion and downsampling
-JPEG_Band::JPEG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
-GDALMRFRasterBand(pDS, image, b, int(level)), codec(image)
+JPEG_Band::JPEG_Band( GDALMRFDataset *pDS, const ILImage &image,
+                      int b, int level ) :
+    GDALMRFRasterBand(pDS, image, b, int(level)),
+    codec(image)
 {
-    int nbands = image.pagesize.c;
+    const int nbands = image.pagesize.c;
     // Check behavior on signed 16bit.  Does the libjpeg sign extend?
 #if defined(LIBJPEG_12_H)
-    if (GDT_Byte != image.dt && GDT_UInt16 != image.dt) {
+    if (GDT_Byte != image.dt && GDT_UInt16 != image.dt)
 #else
-    if (GDT_Byte != image.dt) {
+    if (GDT_Byte != image.dt)
 #endif
-        CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF JPEG");
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Data type not supported by MRF JPEG");
         return;
     }
 
-    if (nbands == 3) { // Only the 3 band JPEG has storage flavors
+    if( nbands == 3 )
+    { // Only the 3 band JPEG has storage flavors
         CPLString const &pm = pDS->GetPhotometricInterpretation();
-        if (pm == "RGB" || pm == "MULTISPECTRAL") { // Explicit RGB or MS
+        if (pm == "RGB" || pm == "MULTISPECTRAL")
+        { // Explicit RGB or MS
             codec.rgb = TRUE;
             codec.sameres = TRUE;
         }
@@ -364,7 +367,7 @@ GDALMRFRasterBand(pDS, image, b, int(level)), codec(image)
             codec.sameres = TRUE;
     }
 
-    if (GDT_Byte == image.dt)
+    if( GDT_Byte == image.dt )
         codec.optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE) != FALSE;
     else
         codec.optimize = true; // Required for 12bit

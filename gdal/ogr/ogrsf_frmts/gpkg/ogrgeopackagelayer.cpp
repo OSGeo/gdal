@@ -42,7 +42,7 @@ OGRGeoPackageLayer::OGRGeoPackageLayer(GDALGeoPackageDataset *poDS) :
     m_poFeatureDefn(NULL),
     iNextShapeId(0),
     m_poQueryStatement(NULL),
-    bDoStep(TRUE),
+    bDoStep(true),
     m_pszFidColumn(NULL),
     iFIDCol(-1),
     iGeomCol(-1),
@@ -66,7 +66,6 @@ OGRGeoPackageLayer::~OGRGeoPackageLayer()
     if ( m_poFeatureDefn )
         m_poFeatureDefn->Release();
 }
-
 
 /************************************************************************/
 /*                            ResetReading()                            */
@@ -132,7 +131,9 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
             }
         }
         else
-            bDoStep = TRUE;
+        {
+            bDoStep = true;
+        }
 
         OGRFeature *poFeature = TranslateFeature(m_poQueryStatement);
         if( poFeature == NULL )
@@ -183,6 +184,7 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
         {
             OGRSpatialReference* poSrs = poGeomFieldDefn->GetSpatialRef();
             int iGpkgSize = sqlite3_column_bytes(hStmt, iGeomCol);
+            // coverity[tainted_data_return]
             GByte *pabyGpkg = (GByte *)sqlite3_column_blob(hStmt, iGeomCol);
             OGRGeometry *poGeom = GPkgGeometryToOGR(pabyGpkg, iGpkgSize, poSrs);
             if ( ! poGeom )
@@ -232,9 +234,11 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             case OFTBinary:
             {
                 const int nBytes = sqlite3_column_bytes( hStmt, iRawField );
-
+                // coverity[tainted_data_return]
+                const GByte* pabyData = reinterpret_cast<const GByte*>(
+                    sqlite3_column_blob( hStmt, iRawField ) );
                 poFeature->SetField( iField, nBytes,
-                    (GByte*)sqlite3_column_blob( hStmt, iRawField ) );
+                                     const_cast<GByte*>(pabyData) );
                 break;
             }
 
@@ -356,10 +360,11 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
             const int nBytes = sqlite3_column_bytes( hStmt, iCol );
             if( nBytes >= 8 )
             {
+                // coverity[tainted_data_return]
                 const GByte* pabyGpkg = (const GByte*)sqlite3_column_blob( hStmt, iCol  );
                 GPkgHeader oHeader;
                 OGRGeometry* poGeom = NULL;
-                int nSRID;
+                int nSRID = 0;
                 if( GPkgHeaderFromWKB(pabyGpkg, nBytes, &oHeader) == OGRERR_NONE &&
                     (poGeom = GPkgGeometryToOGR(pabyGpkg, nBytes, NULL)) != NULL )
                 {
@@ -457,8 +462,9 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         if (pszDeclType != NULL)
         {
             OGRFieldSubType eSubType;
-            int nMaxWidth;
-            OGRFieldType eFieldType = GPkgFieldToOGR(pszDeclType, eSubType, nMaxWidth);
+            int nMaxWidth = 0;
+            const OGRFieldType eFieldType =
+                GPkgFieldToOGR(pszDeclType, eSubType, nMaxWidth);
             if( (int)eFieldType <= OFTMaxType )
             {
                 oField.SetType(eFieldType);
@@ -470,5 +476,4 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         m_poFeatureDefn->AddFieldDefn( &oField );
         panFieldOrdinals[m_poFeatureDefn->GetFieldCount() - 1] = iCol;
     }
-
 }

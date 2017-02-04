@@ -68,10 +68,8 @@ OGRMDBDataSource::~OGRMDBDataSource()
         delete papoLayersInvisible[i];
     CPLFree( papoLayersInvisible );
 
-
     delete poDB;
 }
-
 
 /************************************************************************/
 /*                              OpenGDB()                               */

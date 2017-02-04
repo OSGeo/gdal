@@ -27,8 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gnm.h"
 #include "commonutils.h"
+#include "gnm.h"
+#include "gnm_priv.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
@@ -361,7 +362,7 @@ static void ReportOnLayer( OGRLayer * poLayer, int bVerbose )
     do { if (iArg + nExtraArg >= nArgc) \
         Usage(CPLSPrintf("%s option requires %d argument(s)", papszArgv[iArg], \
                 nExtraArg)); \
-        } while(0)
+        } while( false )
 
 int main( int nArgc, char ** papszArgv )
 
@@ -404,8 +405,6 @@ int main( int nArgc, char ** papszArgv )
     {
         exit( -nArgc );
     }
-
-
 
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {

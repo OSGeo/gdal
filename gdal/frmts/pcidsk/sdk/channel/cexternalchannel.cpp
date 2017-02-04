@@ -186,7 +186,7 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Do a direct call for the simpliest case of 1:1 block mapping.   */
+/*      Do a direct call for the simplest case of 1:1 block mapping.   */
 /* -------------------------------------------------------------------- */
     if( exoff == 0 && eyoff == 0 
         && exsize == db->GetWidth()

@@ -409,7 +409,7 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
                     {
                         std::string sTmp( pszData + nLineStartPos,
                                           nPos - nLineStartPos);
-                        if( sDataWithoutNL.size() > 0 )
+                        if( !sDataWithoutNL.empty() )
                             sDataWithoutNL += " ";
                         sDataWithoutNL += sTmp;
                         bLineStart = true;
@@ -429,7 +429,7 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
                 {
                     std::string sTmp( pszData + nLineStartPos,
                                       nPos - nLineStartPos);
-                    if (sDataWithoutNL.size() > 0)
+                    if( !sDataWithoutNL.empty() )
                         sDataWithoutNL += " ";
                     sDataWithoutNL += sTmp;
                 }
@@ -579,7 +579,7 @@ int KML::getNumLayers() const
 }
 
 bool KML::selectLayer(int nNum) {
-    if(this->nNumLayers_ < 1 || nNum >= this->nNumLayers_)
+    if( nNumLayers_ < 1 || nNum >= nNumLayers_ )
         return false;
     poCurrent_ = papoLayers_[nNum];
     return true;

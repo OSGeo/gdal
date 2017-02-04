@@ -26,6 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
+#include "cpl_port.h"  // Must be first.
 
 #include "gdal_frmts.h"
 #include "msgdataset.h"
@@ -33,9 +34,9 @@
 #include "xritheaderparser.h"
 #include "reflectancecalculator.h"
 
-#include "PublicDecompWT/COMP/WT/Inc/CWTDecoder.h"
-#include "PublicDecompWT/DISE/CDataField.h" // Util namespace
+#include "PublicDecompWT_headers.h"
 
+#include <memory>
 #include <vector>
 
 #if _MSC_VER > 1000
@@ -53,6 +54,7 @@ const double MSGDataset::rB[12] = {-1, -1, -1, 3.471, 2.219, 0.485, 0.181, 0.060
 const int MSGDataset::iCentralPixelVIS_IR = 1856; // center pixel VIS and IR
 const int MSGDataset::iCentralPixelHRV = 5566; // center pixel HRV
 int MSGDataset::iCurrentSatellite = 1; // satellite number 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
+const char *MSGDataset::metadataDomain = "msg"; // the metadata domain
 
 #define MAX_SATELLITES 4
 
@@ -93,7 +95,7 @@ MSGDataset::~MSGDataset()
 const char *MSGDataset::GetProjectionRef()
 
 {
-  return ( pszProjection );
+  return pszProjection;
 }
 
 /************************************************************************/
@@ -106,7 +108,6 @@ CPLErr MSGDataset::SetProjection( const char * pszNewProjection )
     pszProjection = CPLStrdup( pszNewProjection );
 
     return CE_None;
-
 }
 
 /************************************************************************/
@@ -117,7 +118,7 @@ CPLErr MSGDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -184,12 +185,11 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        std::string sErr = "The prologue of the data set could not be found at the location specified:\n" + sPrologueFileName + "\n";
+        std::string l_sErr = "The prologue of the data set could not be found at the location specified:\n" + sPrologueFileName + "\n";
         CPLError( CE_Failure, CPLE_AppDefined, "%s",
-                  sErr.c_str() );
+                  l_sErr.c_str() );
         return FALSE;
     }
-
 
 // We're confident the string is formatted as an MSG command_line
 
@@ -318,7 +318,14 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    return( poDS );
+/* -------------------------------------------------------------------- */
+/*                 Set DataSet metadata information                    */
+/* -------------------------------------------------------------------- */
+    CPLString metadataValue;
+    metadataValue.Printf("%d", poDS->iCurrentSatellite);
+    poDS->SetMetadataItem("satellite_number", metadataValue.c_str(), metadataDomain);
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -327,58 +334,58 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 const double MSGRasterBand::rRTOA[12] = {20.76, 23.24, 19.85, -1, -1, -1, -1, -1, -1, -1, -1, 25.11};
 
-MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
+MSGRasterBand::MSGRasterBand( MSGDataset *poDSIn, int nBandIn )
 : fScanNorth(false)
 , iLowerShift(0)
 , iSplitLine(0)
 , iLowerWestColumnPlanned(0)
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     // Find if we're dealing with MSG1, MSG2, MSG3 or MSG4
     // Doing this per band is the only way to guarantee time-series when the satellite is changed
 
-    std::string sPrologueFileName = poDS->command.sPrologueFileName(poDS->iCurrentSatellite, nBand);
+    std::string sPrologueFileName = poDSIn->command.sPrologueFileName(poDSIn->iCurrentSatellite, nBand);
     bool fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
 
     // Make sure we're testing for MSG1,2,3 or 4 exactly once, start with the most recently used, and remember it in the static member for the next round.
     if (!fPrologueExists)
     {
-      poDS->iCurrentSatellite = 1 + poDS->iCurrentSatellite % MAX_SATELLITES;
-      sPrologueFileName = poDS->command.sPrologueFileName(poDS->iCurrentSatellite, nBand);
+      poDSIn->iCurrentSatellite = 1 + poDSIn->iCurrentSatellite % MAX_SATELLITES;
+      sPrologueFileName = poDSIn->command.sPrologueFileName(poDSIn->iCurrentSatellite, nBand);
       fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
       int iTries = 2;
       while (!fPrologueExists && (iTries < MAX_SATELLITES))
       {
-        poDS->iCurrentSatellite = 1 + poDS->iCurrentSatellite % MAX_SATELLITES;
-        sPrologueFileName = poDS->command.sPrologueFileName(poDS->iCurrentSatellite, nBand);
+        poDSIn->iCurrentSatellite = 1 + poDSIn->iCurrentSatellite % MAX_SATELLITES;
+        sPrologueFileName = poDSIn->command.sPrologueFileName(poDSIn->iCurrentSatellite, nBand);
         fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
         ++iTries;
       }
       if (!fPrologueExists) // assume missing prologue file, keep original satellite number
       {
-        poDS->iCurrentSatellite = 1 + poDS->iCurrentSatellite % MAX_SATELLITES;
-        sPrologueFileName = poDS->command.sPrologueFileName(poDS->iCurrentSatellite, nBand);
+        poDSIn->iCurrentSatellite = 1 + poDSIn->iCurrentSatellite % MAX_SATELLITES;
+        sPrologueFileName = poDSIn->command.sPrologueFileName(poDSIn->iCurrentSatellite, nBand);
       }
     }
 
-    iSatellite = poDS->iCurrentSatellite; // From here on, the satellite that corresponds to this band is settled to the current satellite
+    iSatellite = poDSIn->iCurrentSatellite; // From here on, the satellite that corresponds to this band is settled to the current satellite
 
-    nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = poDS->GetRasterYSize();
+    nBlockXSize = poDSIn->GetRasterXSize();
+    nBlockYSize = poDSIn->GetRasterYSize();
 
 /* -------------------------------------------------------------------- */
 /*      Open an input file and capture the header for the nr. of bits.  */
 /* -------------------------------------------------------------------- */
     int iStrip = 1;
-    int iChannel = poDS->command.iChannel(1 + ((nBand - 1) % poDS->command.iNrChannels()));
-    std::string input_file = poDS->command.sFileName(iSatellite, nBand, iStrip);
-    while ((access(input_file.c_str(), 0) != 0) && (iStrip <= poDS->command.iNrStrips(iChannel))) // compensate for missing strips
-      input_file = poDS->command.sFileName(iSatellite, nBand, ++iStrip);
+    int iChannel = poDSIn->command.iChannel(1 + ((nBand - 1) % poDSIn->command.iNrChannels()));
+    std::string input_file = poDSIn->command.sFileName(iSatellite, nBand, iStrip);
+    while ((access(input_file.c_str(), 0) != 0) && (iStrip <= poDSIn->command.iNrStrips(iChannel))) // compensate for missing strips
+      input_file = poDSIn->command.sFileName(iSatellite, nBand, ++iStrip);
 
-    if (iStrip <= poDS->command.iNrStrips(iChannel))
+    if (iStrip <= poDSIn->command.iNrStrips(iChannel))
     {
       std::ifstream i_file (input_file.c_str(), std::ios::in|std::ios::binary);
 
@@ -392,9 +399,9 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
           eDataType = GDT_Byte; // default .. always works
           if (xhp.nrBitsPerPixel() > 8)
           {
-            if (poDS->command.cDataConversion == 'N')
+            if (poDSIn->command.cDataConversion == 'N')
               eDataType = GDT_UInt16; // normal case: MSG 10 bits data
-            else if (poDS->command.cDataConversion == 'B')
+            else if (poDSIn->command.cDataConversion == 'B')
               eDataType = GDT_Byte; // output data type Byte
             else
               eDataType = GDT_Float32; // Radiometric calibration
@@ -414,7 +421,7 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
     else if (nBand > 1)
     {
       // missing entire band .. take data from first band
-      MSGRasterBand* pFirstRasterBand = (MSGRasterBand*)poDS->GetRasterBand(1);
+      MSGRasterBand* pFirstRasterBand = (MSGRasterBand*)poDSIn->GetRasterBand(1);
       eDataType = pFirstRasterBand->eDataType;
       nBlockYSize = pFirstRasterBand->nBlockYSize;
       fScanNorth = pFirstRasterBand->fScanNorth;
@@ -422,16 +429,15 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
     else // also first band is missing .. do something for fail-safety
     {
       eDataType = GDT_Byte; // default .. always works
-      if (poDS->command.cDataConversion == 'N')
+      if (poDSIn->command.cDataConversion == 'N')
         eDataType = GDT_UInt16; // normal case: MSG 10 bits data
-      else if (poDS->command.cDataConversion == 'B')
+      else if (poDSIn->command.cDataConversion == 'B')
         eDataType = GDT_Byte; // output data type Byte
       else
         eDataType = GDT_Float32; // Radiometric calibration
 
       // nBlockYSize : default
       // fScanNorth : default
-
     }
 /* -------------------------------------------------------------------- */
 /*      For the HRV band, read the prologue for shift and splitline.    */
@@ -458,10 +464,21 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
 /*  Initialize the ReflectanceCalculator with the band-dependent info.  */
 /* -------------------------------------------------------------------- */
 
-    int iCycle = 1 + (nBand - 1) / poDS->command.iNrChannels();
-    std::string sTimeStamp = poDS->command.sCycle(iCycle);
+    int iCycle = 1 + (nBand - 1) / poDSIn->command.iNrChannels();
+    std::string sTimeStamp = poDSIn->command.sCycle(iCycle);
 
     m_rc = new ReflectanceCalculator(sTimeStamp, rRTOA[iChannel-1]);
+
+/* -------------------------------------------------------------------- */
+/*  Set DataSet metadata information                                   */
+/* -------------------------------------------------------------------- */
+    CPLString metadataValue;
+    metadataValue.Printf("%.10f", poDSIn->rCalibrationOffset[iChannel - 1]);
+    SetMetadataItem("calibration_offset", metadataValue.c_str(), poDSIn->metadataDomain);
+    metadataValue.Printf("%.10f", poDSIn->rCalibrationSlope[iChannel - 1]);
+    SetMetadataItem("calibration_slope", metadataValue.c_str(), poDSIn->metadataDomain);
+    metadataValue.Printf("%d", iChannel);
+    SetMetadataItem("channel_number", metadataValue.c_str(), poDSIn->metadataDomain);
 }
 
 /************************************************************************/
@@ -475,7 +492,7 @@ MSGRasterBand::~MSGRasterBand()
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
-CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr MSGRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
                                   void * pImage )
 
 {
@@ -519,7 +536,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           unsigned short chunk_bpp = xhp.nrBitsPerPixel();
           unsigned short chunk_width = xhp.nrColumns();
           unsigned __int8 NR = (unsigned __int8)chunk_bpp;
-          unsigned int nb_ibytes = xhp.dataSize();
+          unsigned int nb_ibytes = static_cast<unsigned int>(xhp.dataSize());
           int iShift = 0;
           bool fSplitStrip = false; // in the split strip the "shift" only happens before the split "row"
           int iSplitRow = 0;
@@ -539,18 +556,17 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             // iShift > 0 means upper image moves to the right
           }
 
-          std::auto_ptr< unsigned char > ibuf( new unsigned char[nb_ibytes]);
-
-          if (ibuf.get() == 0)
+          unsigned char* ibuf = new (std::nothrow) unsigned char[nb_ibytes];
+          if (ibuf == NULL )
           {
              CPLError( CE_Failure, CPLE_AppDefined,
                   "Not enough memory to perform wavelet decompression\n");
             return CE_Failure;
           }
 
-          i_file.read( (char *)(ibuf.get()), nb_ibytes);
+          i_file.read( (char *)ibuf, nb_ibytes);
 
-          Util::CDataFieldCompressedImage  img_compressed(ibuf.release(),
+          Util::CDataFieldCompressedImage  img_compressed(ibuf,
                                   nb_ibytes*8,
                                   (unsigned char)chunk_bpp,
                                   chunk_width,
@@ -715,6 +731,8 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int
 
                         double cc2 = rC2 * poGDS->rVc[iIndex];
                         double cc1 = rC1 * pow(poGDS->rVc[iIndex], 3) / rRadiance;
+                        // cppcheck suggests using log1p() but not sure how portable this would be
+                        // cppcheck-suppress unpreciseMathCall
                         double rTemperature = ((cc2 / log(cc1 + 1)) - poGDS->rB[iIndex]) / poGDS->rA[iIndex];
                         return rTemperature;
                 }

@@ -40,10 +40,12 @@ CPL_CVSID("$Id$");
 OGROCILayer::OGROCILayer()
 
 {
+    poFeatureDefn = NULL;
     poDS = NULL;
     poStatement = NULL;
 
     pszQueryStatement = NULL;
+    nResultOffset = 0;
     pszGeomName = NULL;
     iGeomColumn = -1;
     pszFIDName = NULL;
@@ -513,7 +515,6 @@ OGROCILayer::LoadElementInfo( int iElement, int nElemCount, int nTotalOrdCount,
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                      TranslateGeometryElement()                      */
 /************************************************************************/
@@ -797,7 +798,6 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
 
                 delete poElemLS;
             }
-
         }
 
         *piElement -= 3;
@@ -876,7 +876,6 @@ int OGROCILayer::TestCapability( const char * pszCap )
     else
         return FALSE;
 }
-
 
 /************************************************************************/
 /*                          LookupTableSRID()                           */

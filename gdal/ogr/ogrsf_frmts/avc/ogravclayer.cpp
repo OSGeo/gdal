@@ -370,11 +370,11 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 /*                        MatchesSpatialFilter()                        */
 /************************************************************************/
 
-int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
+bool OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
 
 {
     if( m_poFilterGeom == NULL )
-        return TRUE;
+        return true;
 
     switch( eSectionType )
     {
@@ -402,10 +402,10 @@ int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
                       && psV2->y > m_sFilterEnvelope.MaxY) )
                   /* This segment is completely outside extents */;
               else
-                  return TRUE;
+                  return true;
           }
 
-          return FALSE;
+          return false;
       }
 
 /* ==================================================================== */
@@ -423,9 +423,9 @@ int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
               || psPAL->sMax.x < m_sFilterEnvelope.MinX
               || psPAL->sMin.y > m_sFilterEnvelope.MaxY
               || psPAL->sMax.y < m_sFilterEnvelope.MinY )
-              return FALSE;
+              return false;
           else
-              return TRUE;
+              return true;
       }
 
 /* ==================================================================== */
@@ -439,9 +439,9 @@ int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
               || psCNT->sCoord.x > m_sFilterEnvelope.MaxX
               || psCNT->sCoord.y < m_sFilterEnvelope.MinY
               || psCNT->sCoord.y > m_sFilterEnvelope.MaxY )
-              return FALSE;
+              return false;
           else
-              return TRUE;
+              return true;
       }
 
 /* ==================================================================== */
@@ -455,9 +455,9 @@ int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
               || psLAB->sCoord1.x > m_sFilterEnvelope.MaxX
               || psLAB->sCoord1.y < m_sFilterEnvelope.MinY
               || psLAB->sCoord1.y > m_sFilterEnvelope.MaxY )
-              return FALSE;
+              return false;
           else
-              return TRUE;
+              return true;
       }
 
 /* ==================================================================== */
@@ -469,19 +469,19 @@ int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
           AVCTxt *psTXT = static_cast<AVCTxt *>( pFeature );
 
           if( psTXT->numVerticesLine == 0 )
-              return TRUE;
+              return true;
 
           if( psTXT->pasVertices[0].x < m_sFilterEnvelope.MinX
               || psTXT->pasVertices[0].x > m_sFilterEnvelope.MaxX
               || psTXT->pasVertices[0].y < m_sFilterEnvelope.MinY
               || psTXT->pasVertices[0].y > m_sFilterEnvelope.MaxY )
-              return FALSE;
+              return false;
 
-          return TRUE;
+          return true;
       }
 
       default:
-        return TRUE;
+        return true;
     }
 }
 
@@ -492,7 +492,7 @@ int OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
 /*      definition from the coverage.                                   */
 /************************************************************************/
 
-int OGRAVCLayer::AppendTableDefinition( AVCTableDef *psTableDef )
+bool OGRAVCLayer::AppendTableDefinition( AVCTableDef *psTableDef )
 
 {
     for( int iField = 0; iField < psTableDef->numFields; iField++ )
@@ -541,7 +541,7 @@ int OGRAVCLayer::AppendTableDefinition( AVCTableDef *psTableDef )
 /*                        TranslateTableFields()                        */
 /************************************************************************/
 
-int OGRAVCLayer::TranslateTableFields( OGRFeature *poFeature,
+bool OGRAVCLayer::TranslateTableFields( OGRFeature *poFeature,
                                        int nFieldBase,
                                        AVCTableDef *psTableDef,
                                        AVCField *pasFields )
@@ -596,9 +596,9 @@ int OGRAVCLayer::TranslateTableFields( OGRFeature *poFeature,
         else
         {
             CPLAssert( false );
-            return FALSE;
+            return false;
         }
     }
 
-    return TRUE;
+    return true;
 }

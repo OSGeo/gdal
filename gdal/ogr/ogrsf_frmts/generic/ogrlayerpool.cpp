@@ -36,12 +36,12 @@ CPL_CVSID("$Id$");
 /*                      OGRAbstractProxiedLayer()                       */
 /************************************************************************/
 
-OGRAbstractProxiedLayer::OGRAbstractProxiedLayer(OGRLayerPool* poPoolIn) :
+OGRAbstractProxiedLayer::OGRAbstractProxiedLayer( OGRLayerPool* poPoolIn ) :
     poPrevLayer(NULL),
-    poNextLayer(NULL)
+    poNextLayer(NULL),
+    poPool(poPoolIn)
 {
     CPLAssert(poPoolIn != NULL);
-    poPool = poPoolIn;
 }
 
 /************************************************************************/
@@ -54,8 +54,6 @@ OGRAbstractProxiedLayer::~OGRAbstractProxiedLayer()
     poPool->UnchainLayer(this);
 }
 
-
-
 /************************************************************************/
 /*                            OGRLayerPool()                            */
 /************************************************************************/
@@ -63,10 +61,9 @@ OGRAbstractProxiedLayer::~OGRAbstractProxiedLayer()
 OGRLayerPool::OGRLayerPool(int nMaxSimultaneouslyOpenedIn) :
     poMRULayer(NULL),
     poLRULayer(NULL),
-    nMRUListSize(0)
-{
-    nMaxSimultaneouslyOpened = nMaxSimultaneouslyOpenedIn;
-}
+    nMRUListSize(0),
+    nMaxSimultaneouslyOpened(nMaxSimultaneouslyOpenedIn)
+{}
 
 /************************************************************************/
 /*                           ~OGRLayerPool()                            */
@@ -149,25 +146,23 @@ void OGRLayerPool::UnchainLayer(OGRAbstractProxiedLayer* poLayer)
     poLayer->poNextLayer = NULL;
 }
 
-
-
 /************************************************************************/
 /*                          OGRProxiedLayer()                           */
 /************************************************************************/
 
-OGRProxiedLayer::OGRProxiedLayer(OGRLayerPool* poPoolIn,
-                                 OpenLayerFunc pfnOpenLayerIn,
-                                 FreeUserDataFunc pfnFreeUserDataIn,
-                                 void* pUserDataIn) : OGRAbstractProxiedLayer(poPoolIn)
+OGRProxiedLayer::OGRProxiedLayer( OGRLayerPool* poPoolIn,
+                                  OpenLayerFunc pfnOpenLayerIn,
+                                  FreeUserDataFunc pfnFreeUserDataIn,
+                                  void* pUserDataIn ) :
+    OGRAbstractProxiedLayer(poPoolIn),
+    pfnOpenLayer(pfnOpenLayerIn),
+    pfnFreeUserData(pfnFreeUserDataIn),
+    pUserData(pUserDataIn),
+    poUnderlyingLayer(NULL),
+    poFeatureDefn(NULL),
+    poSRS(NULL)
 {
     CPLAssert(pfnOpenLayerIn != NULL);
-
-    pfnOpenLayer = pfnOpenLayerIn;
-    pfnFreeUserData = pfnFreeUserDataIn;
-    pUserData = pUserDataIn;
-    poUnderlyingLayer = NULL;
-    poFeatureDefn = NULL;
-    poSRS = NULL;
 }
 
 /************************************************************************/

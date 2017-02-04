@@ -64,7 +64,6 @@ CPL_C_START
 #define AVC_CODE_JAP_SHIFTJIS   1
 #define AVC_CODE_JAP_EUC        2
 
-
 /*---------------------------------------------------------------------
  * We use the following structure to keep track of DBCS info.
  *--------------------------------------------------------------------*/

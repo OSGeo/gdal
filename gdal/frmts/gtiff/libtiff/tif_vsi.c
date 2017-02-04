@@ -112,9 +112,10 @@ TIFFOpen(const char* name, const char* mode)
         char          szAccess[32];
         VSILFILE          *fp;
         TIFF          *tif;
+        char         *pszAccess = szAccess;
 
         a_out = 0;
-        szAccess[0] = '\0';
+        pszAccess[0] = '\0';
         for( i = 0; mode[i] != '\0'; i++ )
         {
             if( mode[i] == 'r'
@@ -156,6 +157,14 @@ void*
 _TIFFmalloc(tsize_t s)
 {
     return VSIMalloc((size_t) s);
+}
+
+void* _TIFFcalloc(tmsize_t nmemb, tmsize_t siz)
+{
+    if( nmemb == 0 || siz == 0 )
+        return ((void *) NULL);
+
+    return VSICalloc((size_t) nmemb, (size_t)siz);
 }
 
 void

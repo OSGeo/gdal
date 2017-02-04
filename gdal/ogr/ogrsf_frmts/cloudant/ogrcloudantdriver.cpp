@@ -72,7 +72,6 @@ OGRDataSource *OGRCloudantDriver::Open( const char * pszFilename, int bUpdate )
     return poDS;
 }
 
-
 /************************************************************************/
 /*                          CreateDataSource()                          */
 /************************************************************************/

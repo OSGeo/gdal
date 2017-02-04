@@ -81,35 +81,31 @@ class JPEGLSRasterBand : public GDALPamRasterBand
   public:
 
                 JPEGLSRasterBand( JPEGLSDataset * poDS, int nBand);
-                ~JPEGLSRasterBand();
+    virtual ~JPEGLSRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
-
 
 /************************************************************************/
 /*                        JPEGLSRasterBand()                            */
 /************************************************************************/
 
-JPEGLSRasterBand::JPEGLSRasterBand( JPEGLSDataset *poDSIn, int nBandIn)
+JPEGLSRasterBand::JPEGLSRasterBand( JPEGLSDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->eDataType = (poDSIn->nBitsPerSample <= 8) ? GDT_Byte : GDT_Int16;
-    this->nBlockXSize = poDSIn->nRasterXSize;
-    this->nBlockYSize = poDSIn->nRasterYSize;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eDataType = (poDSIn->nBitsPerSample <= 8) ? GDT_Byte : GDT_Int16;
+    nBlockXSize = poDSIn->nRasterXSize;
+    nBlockYSize = poDSIn->nRasterYSize;
 }
 
 /************************************************************************/
 /*                      ~JPEGLSRasterBand()                             */
 /************************************************************************/
 
-JPEGLSRasterBand::~JPEGLSRasterBand()
-{
-}
-
+JPEGLSRasterBand::~JPEGLSRasterBand() {}
 
 /************************************************************************/
 /*                    JPEGLSGetErrorAsString()                          */
@@ -220,12 +216,12 @@ GDALColorInterp JPEGLSRasterBand::GetColorInterpretation()
 /*                        JPEGLSDataset()                          */
 /************************************************************************/
 
-JPEGLSDataset::JPEGLSDataset()
-{
-    pabyUncompressedData = NULL;
-    bHasUncompressed = FALSE;
-    nBitsPerSample = 0;
-}
+JPEGLSDataset::JPEGLSDataset() :
+    pabyUncompressedData(NULL),
+    bHasUncompressed(FALSE),
+    nBitsPerSample(0),
+    nOffset(0)
+{}
 
 /************************************************************************/
 /*                         ~JPEGLSDataset()                        */
@@ -276,7 +272,6 @@ CPLErr JPEGLSDataset::Uncompress()
         VSIFree(pabyCompressedData);
         return CE_Failure;
     }
-
 
     JLS_ERROR eError = JpegLsDecode( pabyUncompressedData, nUncompressedSize,
                                      pabyCompressedData, nFileSize, NULL);
@@ -480,7 +475,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

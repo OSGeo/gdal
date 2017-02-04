@@ -95,7 +95,7 @@ g2int g2_unpack5(unsigned char *cgrib,g2int *iofst,g2int *ndpts,g2int *idrsnum,
          ierr=6;
          *mapdrslen=0;
          *idrstmpl=0;     //NULL
-         if ( mapdrs != 0 ) free(mapdrs);
+         free(mapdrs);
          return(ierr);
       }
       else {

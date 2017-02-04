@@ -565,7 +565,7 @@ def test_ogr2ogr_py_18():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/wrapdateline_src.shp')
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(32660);
+    srs.ImportFromEPSG(32660)
     lyr = ds.CreateLayer('wrapdateline_src', srs = srs)
     feat = ogr.Feature(lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt('POLYGON((700000 4000000,800000 4000000,800000 3000000,700000 3000000,700000 4000000))')

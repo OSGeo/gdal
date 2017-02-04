@@ -27,7 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "reader_kompsat.h"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "gdal_mdreader.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -35,17 +45,17 @@ CPL_CVSID("$Id$");
  * GDALMDReaderKompsat()
  */
 GDALMDReaderKompsat::GDALMDReaderKompsat(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
+                                         char **papszSiblingFiles) :
+    GDALMDReaderBase(pszPath, papszSiblingFiles),
+    m_osIMDSourceFilename ( GDALFindAssociatedFile( pszPath, "TXT",
+                                                    papszSiblingFiles, 0 ) ),
+    m_osRPBSourceFilename ( GDALFindAssociatedFile( pszPath, "RPC",
+                                                    papszSiblingFiles, 0 ) )
 {
-    m_osIMDSourceFilename = GDALFindAssociatedFile( pszPath, "TXT",
-                                                         papszSiblingFiles, 0 );
-    m_osRPBSourceFilename = GDALFindAssociatedFile( pszPath, "RPC",
-                                                         papszSiblingFiles, 0 );
-
-    if(m_osIMDSourceFilename.size())
+    if( !m_osIMDSourceFilename.empty() )
         CPLDebug( "MDReaderDigitalGlobe", "IMD Filename: %s",
               m_osIMDSourceFilename.c_str() );
-    if(m_osRPBSourceFilename.size())
+    if( !m_osRPBSourceFilename.empty() )
         CPLDebug( "MDReaderDigitalGlobe", "RPB Filename: %s",
               m_osRPBSourceFilename.c_str() );
 }
@@ -224,7 +234,7 @@ char** GDALMDReaderKompsat::ReadTxtToList()
         }
 
         // trim
-        while( pszLine[j] == ' ' && pszLine[j] != 0) j++;
+        while( pszLine[j] == ' ' ) j++;
 
         if(soGroupName.empty())
         {
@@ -235,7 +245,6 @@ char** GDALMDReaderKompsat::ReadTxtToList()
             papszIMD = CSLAddNameValue(papszIMD, CPLSPrintf("%s.%s",
                                        soGroupName.c_str(), szName), pszLine + j);
         }
-
     }
 
     CSLDestroy(papszLines);

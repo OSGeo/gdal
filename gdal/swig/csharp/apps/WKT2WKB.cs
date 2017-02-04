@@ -45,17 +45,17 @@ using OSGeo.OGR;
 
 /// <summary>
 /// A C# based sample for demonstrating the usage of ExportToWkb.
-/// </summary> 
+/// </summary>
 
 class WKT2WKB {
-	
-	public static void usage() 
 
-	{ 
+	public static void usage()
+
+	{
 		Console.WriteLine("usage example: wkt2wkb \"POINT(47.0 19.2)\"");
 		System.Environment.Exit(-1);
 	}
- 
+
 	public static void Main(string[] args) {
 
 		if (args.Length != 1) usage();
@@ -66,14 +66,14 @@ class WKT2WKB {
         Ogr.RegisterAll();
 
         Geometry geom = Geometry.CreateFromWkt(args[0]);
-        
+
 		int wkbSize = geom.WkbSize();
-        if (wkbSize > 0) 
+        if (wkbSize > 0)
         {
             byte[] wkb = new byte[wkbSize];
             geom.ExportToWkb( wkb );
             Console.WriteLine( "wkt-->wkb: " + BitConverter.ToString(wkb) );
-			
+
 			// wkb --> wkt (reverse test)
 			Geometry geom2 = Geometry.CreateFromWkb(wkb);
 			string geom_wkt;

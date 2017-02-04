@@ -1,0 +1,18 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:other_ns="http://other_ns"
+           xmlns:gml="http://fake_gml"
+           targetNamespace="http://other_ns"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+<xs:import namespace="http://fake_gml" schemaLocation="gmlas_test_targetelement_fake_gml.xsd"/>
+
+<xs:element name="existing_target_elt" substitutionGroup="gml:_Feature">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="attr" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

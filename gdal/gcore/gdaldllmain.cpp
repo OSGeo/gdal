@@ -27,16 +27,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal.h"
-#include "ogr_api.h"
-#include "cpl_multiproc.h"
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "ogr_api.h"
 
-static int bInGDALGlobalDestructor = FALSE;
-extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
 
-int GDALIsInGlobalDestructor(void)
+static bool bInGDALGlobalDestructor = false;
+extern "C" int CPL_DLL GDALIsInGlobalDestructor();
+
+int GDALIsInGlobalDestructor()
 {
     return bInGDALGlobalDestructor;
 }
@@ -69,11 +73,11 @@ void GDALDestroy(void)
     bGDALDestroyAlreadyCalled = true;
 
     CPLDebug("GDAL", "In GDALDestroy - unloading GDAL shared library.");
-    bInGDALGlobalDestructor = TRUE;
+    bInGDALGlobalDestructor = true;
     GDALDestroyDriverManager();
 
     OGRCleanupAll();
-    bInGDALGlobalDestructor = FALSE;
+    bInGDALGlobalDestructor = false;
 
     /* See https://trac.osgeo.org/gdal/ticket/6139 */
     /* Needed in case no driver manager has been instantiated. */
@@ -123,7 +127,6 @@ static void GDALDestructor(void)
 }
 
 #endif // __GNUC__
-
 
 /************************************************************************/
 /*  The library set-up/clean-up routine implemented as DllMain entry    */

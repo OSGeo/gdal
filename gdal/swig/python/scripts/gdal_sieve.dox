@@ -13,11 +13,11 @@ gdal_sieve.py [-q] [-st threshold] [-4] [-8] [-o name=value]
 \section gdal_sieve_description DESCRIPTION
 
 The gdal_sieve.py script removes raster polygons smaller than a provided
-threshold size (in pixels) and replaces replaces them with the pixel value 
-of the largest neighbour polygon.  The result can be written back to the 
-existing raster band, or copied into a new file. 
+threshold size (in pixels) and replaces replaces them with the pixel value
+of the largest neighbour polygon.  The result can be written back to the
+existing raster band, or copied into a new file.
 
-Additional details on the algorithm are available in the GDALSieveFilter() 
+Additional details on the algorithm are available in the GDALSieveFilter()
 docs.
 
 <dl>
@@ -27,7 +27,7 @@ The script runs in quiet mode.  The progress monitor is suppressed and routine
 messages are not displayed.
 
 <dt> <b>-st</b> <i>threshold</i>:</dt><dd>
-Set the size threshold in pixels.  Only raster polygons smaller than this size 
+Set the size threshold in pixels.  Only raster polygons smaller than this size
 will be removed.
 
 <dt> <b>-o</b> <i>name=value</i>:</dt><dd>
@@ -35,25 +35,25 @@ Specify a special argument to the algorithm.  Currently none are supported.
 </dd>
 
 <dt> <b>-4</b>:</dt><dd>
-Four connectedness should be used when determining polygons.  That is 
+Four connectedness should be used when determining polygons.  That is
 diagonal pixels are not considered directly connected.  This is the default.
 </dd>
 
 <dt> <b>-8</b>:</dt><dd>
-Eight connectedness should be used when determining polygons.  That is 
+Eight connectedness should be used when determining polygons.  That is
 diagonal pixels are considered directly connected.
 </dd>
 
 <dt> <i>srcfile</i></dt><dd> The source raster file used to identify target pixels.  Only the first band is used.</dd>
 
 <dt> <b>-nomask</b>:</dt><dd>
-Do not use the default validity mask for the input band (such as nodata, or 
-alpha masks). 
+Do not use the default validity mask for the input band (such as nodata, or
+alpha masks).
 </dd>
 
 <dt> <b>-mask</b> <i>filename</i>:</dt><dd>
-Use the first band of the specified file as a validity mask (zero is invalid, 
-non-zero is valid). 
+Use the first band of the specified file as a validity mask (zero is invalid,
+non-zero is valid).
 </dd>
 
 <dt> <i>dstfile</i></dt><dd> The new file to create with the filtered result.  If not provided, the source band is updated in place.</dd>

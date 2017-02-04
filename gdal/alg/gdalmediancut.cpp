@@ -36,19 +36,39 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "cpl_port.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
+
+#include <climits>
+#include <cstring>
+
+#include <algorithm>
 #include <limits>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
-#define HISTOGRAM(h,n,r,g,b) h[((r)*(n)+(g))*(n)+(b)]
+template<typename T> static T* HISTOGRAM( T *h, int n, int r, int g, int b )
+{
+    const int index = (r * n + g) * n + b;
+    return &h[index];
+}
 
-#define MAKE_COLOR_CODE(r,g,b) ((r)+(g)*256+(b)*256*256)
+static int MAKE_COLOR_CODE( int r, int g, int b )
+{
+    return r + g * 256 + b * 256 * 256;
+}
 
-/* NOTE: if changing the size of this structure, edit */
-/* MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536 in gdal_alg_priv.h and take into account ColorIndex in gdaldither.cpp */
+// NOTE: If changing the size of this structure, edit
+// MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536 in gdal_alg_priv.h and take into
+// account ColorIndex in gdaldither.cpp.
 typedef struct
 {
     GUInt32 nColorCode;
@@ -68,20 +88,20 @@ typedef struct colorbox {
 } Colorbox;
 
 template<class T>
-static void splitbox(Colorbox* ptr, const T* histogram,
-                     const HashHistogram* psHashHistogram,
-                     int nCLevels,
-                     Colorbox **pfreeboxes, Colorbox **pusedboxes,
-                     GByte* pabyRedBand,
-                     GByte* pabyGreenBand,
-                     GByte* pabyBlueBand, T nPixels);
+static void splitbox( Colorbox* ptr, const T* histogram,
+                      const HashHistogram* psHashHistogram,
+                      int nCLevels,
+                      Colorbox **pfreeboxes, Colorbox **pusedboxes,
+                      GByte* pabyRedBand,
+                      GByte* pabyGreenBand,
+                      GByte* pabyBlueBand, T nPixels );
 
 template<class T>
-static void shrinkbox(Colorbox* box,
-                      const T* histogram,
-                      int nCLevels);
+static void shrinkbox( Colorbox* box,
+                       const T* histogram,
+                       int nCLevels );
 
-static Colorbox* largest_box(Colorbox *usedboxes);
+static Colorbox* largest_box( Colorbox *usedboxes );
 
 /************************************************************************/
 /*                      GDALComputeMedianCutPCT()                       */
@@ -127,7 +147,7 @@ extern "C" int CPL_STDCALL
 GDALComputeMedianCutPCT( GDALRasterBandH hRed,
                          GDALRasterBandH hGreen,
                          GDALRasterBandH hBlue,
-                         int (*pfnIncludePixel)(int,int,void*),
+                         int (*pfnIncludePixel)(int, int, void*),
                          int nColors,
                          GDALColorTableH hColorTable,
                          GDALProgressFunc pfnProgress,
@@ -135,42 +155,44 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
 
 {
     VALIDATE_POINTER1( hRed, "GDALComputeMedianCutPCT", CE_Failure );
-    int nXSize = GDALGetRasterBandXSize( hRed );
-    int nYSize = GDALGetRasterBandYSize( hRed );
+    const int nXSize = GDALGetRasterBandXSize( hRed );
+    const int nYSize = GDALGetRasterBandYSize( hRed );
     if( nYSize == 0 )
         return CE_Failure;
-    if( (GUInt32)nXSize < UINT_MAX / (GUInt32)nYSize )
+    if( static_cast<GUInt32>(nXSize) < UINT_MAX / static_cast<GUInt32>(nYSize) )
     {
         return GDALComputeMedianCutPCTInternal(hRed, hGreen, hBlue,
-                                        NULL, NULL, NULL,
-                                        pfnIncludePixel, nColors,
-                                        5,
-                                        (GUInt32*)NULL,
-                                        hColorTable,
-                                        pfnProgress, pProgressArg);
+                                               NULL, NULL, NULL,
+                                               pfnIncludePixel, nColors,
+                                               5,
+                                               static_cast<GUInt32 *>(NULL),
+                                               hColorTable,
+                                               pfnProgress, pProgressArg);
     }
     else
     {
+#ifdef CPL_HAS_GINT64
         return GDALComputeMedianCutPCTInternal(hRed, hGreen, hBlue,
-                                        NULL, NULL, NULL,
-                                        pfnIncludePixel, nColors,
-                                        5,
-                                        (GUIntBig*)NULL,
-                                        hColorTable,
-                                        pfnProgress, pProgressArg);
+                                               NULL, NULL, NULL,
+                                               pfnIncludePixel, nColors,
+                                               5,
+                                               static_cast<GUIntBig * >(NULL),
+                                               hColorTable,
+                                               pfnProgress, pProgressArg);
+#else
+        return CE_Failure;
+#endif
     }
 }
 
-/*static int nMaxCollisions = 0;*/
-
-static inline int FindColorCount(const HashHistogram* psHashHistogram,
-                                 GUInt32 nColorCode)
+static inline int FindColorCount( const HashHistogram* psHashHistogram,
+                                  GUInt32 nColorCode )
 {
+
     GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
-    /*int nCollisions = 0; */
     while( true )
     {
-        if( (int)psHashHistogram[nIdx].nColorCode < 0 )
+        if( static_cast<int>(psHashHistogram[nIdx].nColorCode) < 0 )
         {
             return 0;
         }
@@ -178,7 +200,7 @@ static inline int FindColorCount(const HashHistogram* psHashHistogram,
         {
             return psHashHistogram[nIdx].nCount;
         }
-        if( (int)psHashHistogram[nIdx].nColorCode2 < 0 )
+        if( static_cast<int>(psHashHistogram[nIdx].nColorCode2) < 0 )
         {
             return 0;
         }
@@ -186,7 +208,7 @@ static inline int FindColorCount(const HashHistogram* psHashHistogram,
         {
             return psHashHistogram[nIdx].nCount2;
         }
-        if( (int)psHashHistogram[nIdx].nColorCode3 < 0 )
+        if( static_cast<int>(psHashHistogram[nIdx].nColorCode3) < 0 )
         {
             return 0;
         }
@@ -197,38 +219,30 @@ static inline int FindColorCount(const HashHistogram* psHashHistogram,
 
         do
         {
-            /*nCollisions ++;*/
-            nIdx+=257;
+            nIdx += 257;
             if( nIdx >= PRIME_FOR_65536 )
                 nIdx -= PRIME_FOR_65536;
         }
-        while( (int)psHashHistogram[nIdx].nColorCode >= 0 &&
-                psHashHistogram[nIdx].nColorCode != nColorCode &&
-                (int)psHashHistogram[nIdx].nColorCode2 >= 0 &&
-                psHashHistogram[nIdx].nColorCode2 != nColorCode&&
-                (int)psHashHistogram[nIdx].nColorCode3 >= 0 &&
-                psHashHistogram[nIdx].nColorCode3 != nColorCode );
-        /*if( nCollisions > nMaxCollisions )
-        {
-            nMaxCollisions = nCollisions;
-            printf("median cut: nCollisions = %d for R=%d,G=%d,B=%d\n",
-                    nCollisions, nColorCode&0xFF, (nColorCode>>8)&0xFF, (nColorCode>>16)&0xFF);
-        }*/
+        while( static_cast<int>(psHashHistogram[nIdx].nColorCode) >= 0 &&
+               psHashHistogram[nIdx].nColorCode != nColorCode &&
+               static_cast<int>(psHashHistogram[nIdx].nColorCode2) >= 0 &&
+               psHashHistogram[nIdx].nColorCode2 != nColorCode&&
+               static_cast<int>(psHashHistogram[nIdx].nColorCode3) >= 0 &&
+               psHashHistogram[nIdx].nColorCode3 != nColorCode );
     }
 }
 
-static inline int* FindAndInsertColorCount(HashHistogram* psHashHistogram,
-                           GUInt32 nColorCode)
+static inline int*
+FindAndInsertColorCount( HashHistogram* psHashHistogram, GUInt32 nColorCode )
 {
     GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
-    /*int nCollisions = 0;*/
     while( true )
     {
         if( psHashHistogram[nIdx].nColorCode == nColorCode )
         {
             return &(psHashHistogram[nIdx].nCount);
         }
-        if( (int)psHashHistogram[nIdx].nColorCode < 0 )
+        if( static_cast<int>(psHashHistogram[nIdx].nColorCode) < 0 )
         {
             psHashHistogram[nIdx].nColorCode = nColorCode;
             psHashHistogram[nIdx].nCount = 0;
@@ -238,7 +252,7 @@ static inline int* FindAndInsertColorCount(HashHistogram* psHashHistogram,
         {
             return &(psHashHistogram[nIdx].nCount2);
         }
-        if( (int)psHashHistogram[nIdx].nColorCode2 < 0 )
+        if( static_cast<int>(psHashHistogram[nIdx].nColorCode2) < 0 )
         {
             psHashHistogram[nIdx].nColorCode2 = nColorCode;
             psHashHistogram[nIdx].nCount2 = 0;
@@ -248,7 +262,7 @@ static inline int* FindAndInsertColorCount(HashHistogram* psHashHistogram,
         {
             return &(psHashHistogram[nIdx].nCount3);
         }
-        if( (int)psHashHistogram[nIdx].nColorCode3 < 0 )
+        if( static_cast<int>(psHashHistogram[nIdx].nColorCode3) < 0 )
         {
             psHashHistogram[nIdx].nColorCode3 = nColorCode;
             psHashHistogram[nIdx].nCount3 = 0;
@@ -257,87 +271,82 @@ static inline int* FindAndInsertColorCount(HashHistogram* psHashHistogram,
 
         do
         {
-            /*nCollisions ++;*/
             nIdx+=257;
             if( nIdx >= PRIME_FOR_65536 )
                 nIdx -= PRIME_FOR_65536;
         }
-        while( (int)psHashHistogram[nIdx].nColorCode >= 0 &&
-                psHashHistogram[nIdx].nColorCode != nColorCode &&
-                (int)psHashHistogram[nIdx].nColorCode2 >= 0 &&
-                psHashHistogram[nIdx].nColorCode2 != nColorCode&&
-                (int)psHashHistogram[nIdx].nColorCode3 >= 0 &&
-                psHashHistogram[nIdx].nColorCode3 != nColorCode );
-        /*if( nCollisions > nMaxCollisions )
-        {
-            nMaxCollisions = nCollisions;
-            printf("median cut: nCollisions = %d for R=%d,G=%d,B=%d\n",
-                    nCollisions, nColorCode&0xFF, (nColorCode>>8)&0xFF, (nColorCode>>16)&0xFF);
-        }*/
+        while( static_cast<int>(psHashHistogram[nIdx].nColorCode) >= 0 &&
+               psHashHistogram[nIdx].nColorCode != nColorCode &&
+               static_cast<int>(psHashHistogram[nIdx].nColorCode2) >= 0 &&
+               psHashHistogram[nIdx].nColorCode2 != nColorCode&&
+               static_cast<int>(psHashHistogram[nIdx].nColorCode3) >= 0 &&
+               psHashHistogram[nIdx].nColorCode3 != nColorCode );
     }
 }
 
 template<class T> int
-GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
-                           GDALRasterBandH hGreen,
-                           GDALRasterBandH hBlue,
-                           GByte* pabyRedBand,
-                           GByte* pabyGreenBand,
-                           GByte* pabyBlueBand,
-                           int (*pfnIncludePixel)(int,int,void*),
-                           int nColors,
-                           int nBits,
-                           T* panHistogram, /* NULL, or at least of size (1<<nBits)^3 * sizeof(T) bytes */
-                           GDALColorTableH hColorTable,
-                           GDALProgressFunc pfnProgress,
-                           void * pProgressArg )
+GDALComputeMedianCutPCTInternal(
+    GDALRasterBandH hRed,
+    GDALRasterBandH hGreen,
+    GDALRasterBandH hBlue,
+    GByte* pabyRedBand,
+    GByte* pabyGreenBand,
+    GByte* pabyBlueBand,
+    int (*pfnIncludePixel)(int, int, void*),
+    int nColors,
+    int nBits,
+    T* panHistogram,  // NULL, or >= size (1<<nBits)^3 * sizeof(T) bytes.
+    GDALColorTableH hColorTable,
+    GDALProgressFunc pfnProgress,
+    void * pProgressArg )
 
 {
     VALIDATE_POINTER1( hRed, "GDALComputeMedianCutPCT", CE_Failure );
     VALIDATE_POINTER1( hGreen, "GDALComputeMedianCutPCT", CE_Failure );
     VALIDATE_POINTER1( hBlue, "GDALComputeMedianCutPCT", CE_Failure );
 
-    int nXSize, nYSize;
     CPLErr err = CE_None;
 
 /* -------------------------------------------------------------------- */
 /*      Validate parameters.                                            */
 /* -------------------------------------------------------------------- */
-    nXSize = GDALGetRasterBandXSize( hRed );
-    nYSize = GDALGetRasterBandYSize( hRed );
+    const int nXSize = GDALGetRasterBandXSize( hRed );
+    const int nYSize = GDALGetRasterBandYSize( hRed );
 
     if( GDALGetRasterBandXSize( hGreen ) != nXSize
         || GDALGetRasterBandYSize( hGreen ) != nYSize
         || GDALGetRasterBandXSize( hBlue ) != nXSize
         || GDALGetRasterBandYSize( hBlue ) != nYSize )
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "Green or blue band doesn't match size of red band.\n" );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Green or blue band doesn't match size of red band.");
 
         return CE_Failure;
     }
 
     if( pfnIncludePixel != NULL )
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "GDALComputeMedianCutPCT() doesn't currently support "
-                  " pfnIncludePixel function." );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "GDALComputeMedianCutPCT() doesn't currently support "
+                 "pfnIncludePixel function.");
 
         return CE_Failure;
     }
 
-    if ( nColors <= 0 )
+    if( nColors <= 0 )
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "GDALComputeMedianCutPCT() : nColors must be strictly greater than 1." );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "GDALComputeMedianCutPCT(): "
+                 "nColors must be strictly greater than 1.");
 
         return CE_Failure;
     }
 
-    if ( nColors > 256 )
+    if( nColors > 256 )
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "GDALComputeMedianCutPCT() : nColors must be lesser than or equal to 256." );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "GDALComputeMedianCutPCT(): "
+                 "nColors must be lesser than or equal to 256.");
 
         return CE_Failure;
     }
@@ -348,40 +357,38 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
 /*      STEP 1: create empty boxes.                                     */
 /* ==================================================================== */
-    int i;
-    Colorbox *box_list, *ptr;
-    T* histogram;
-    Colorbox *freeboxes;
-    Colorbox *usedboxes;
-    int nCLevels = 1 << nBits;
-    int nColorShift = 8 - nBits;
-    int nColorCounter = 0;
-    GByte anRed[256], anGreen[256], anBlue[256];
-    T nPixels = 0;
-    HashHistogram* psHashHistogram = NULL;
-
-    if( (GUInt32)nXSize > std::numeric_limits<T>::max() / (GUInt32)nYSize )
+    if( static_cast<GUInt32>(nXSize) >
+        std::numeric_limits<T>::max() / static_cast<GUInt32>(nYSize) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "GDALComputeMedianCutPCTInternal() not called with large enough type");
+                 "GDALComputeMedianCutPCTInternal() not called "
+                 "with large enough type");
     }
 
+    T nPixels = 0;
     if( nBits == 8 && pabyRedBand != NULL && pabyGreenBand != NULL &&
-        pabyBlueBand != NULL && (GUInt32)nXSize <= std::numeric_limits<T>::max() / (GUInt32)nYSize )
+        pabyBlueBand != NULL &&
+        static_cast<GUInt32>(nXSize) <=
+        std::numeric_limits<T>::max() / static_cast<GUInt32>(nYSize) )
     {
-        nPixels = (T)nXSize * (T)nYSize;
+      nPixels = static_cast<T>(nXSize) * static_cast<T>(nYSize);
     }
 
+    const int nCLevels = 1 << nBits;
+    T* histogram = NULL;
+    HashHistogram* psHashHistogram = NULL;
     if( panHistogram )
     {
-        if( nBits == 8 && (GUIntBig)nXSize * nYSize <= 65536 )
+        if( nBits == 8 && static_cast<GUIntBig>(nXSize) * nYSize <= 65536 )
         {
-            /* If the image is small enough, then the number of colors */
-            /* will be limited and using a hashmap, rather than a full table */
-            /* will be more efficient */
+            // If the image is small enough, then the number of colors
+            // will be limited and using a hashmap, rather than a full table
+            // will be more efficient.
             histogram = NULL;
             psHashHistogram = (HashHistogram*)panHistogram;
-            memset(psHashHistogram, 0xFF, sizeof(HashHistogram) * PRIME_FOR_65536);
+            memset(psHashHistogram,
+                   0xFF,
+                   sizeof(HashHistogram) * PRIME_FOR_65536);
         }
         else
         {
@@ -391,17 +398,20 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
     }
     else
     {
-        histogram = (T*) VSI_CALLOC_VERBOSE(nCLevels*nCLevels*nCLevels,sizeof(T));
+        histogram = static_cast<T*>(
+            VSI_CALLOC_VERBOSE(nCLevels * nCLevels * nCLevels, sizeof(T)));
         if( histogram == NULL )
         {
             return CE_Failure;
         }
     }
-    usedboxes = NULL;
-    box_list = freeboxes = (Colorbox *)CPLMalloc(nColors*sizeof (Colorbox));
+    Colorbox *box_list =
+        static_cast<Colorbox *>(CPLMalloc(nColors*sizeof (Colorbox)));
+    Colorbox *freeboxes = box_list;
     freeboxes[0].next = &freeboxes[1];
     freeboxes[0].prev = NULL;
-    for (i = 1; i < nColors-1; ++i) {
+    for( int i = 1; i < nColors-1; ++i )
+    {
         freeboxes[i].next = &freeboxes[i+1];
         freeboxes[i].prev = &freeboxes[i-1];
     }
@@ -411,43 +421,54 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
 /*      Build histogram.                                                */
 /* ==================================================================== */
-    GByte *pabyRedLine, *pabyGreenLine, *pabyBlueLine;
-    int iLine, iPixel;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the box datastructures.                              */
 /* -------------------------------------------------------------------- */
-    ptr = freeboxes;
+    Colorbox *ptr = freeboxes;
     freeboxes = ptr->next;
-    if (freeboxes)
+    if( freeboxes )
         freeboxes->prev = NULL;
+    Colorbox *usedboxes = NULL;  // TODO(schwehr): What?
     ptr->next = usedboxes;
     usedboxes = ptr;
-    if (ptr->next)
+    if( ptr->next )
         ptr->next->prev = ptr;
 
-    ptr->rmin = ptr->gmin = ptr->bmin = 999;
-    ptr->rmax = ptr->gmax = ptr->bmax = -1;
-    ptr->total = (GUIntBig)nXSize * (GUIntBig)nYSize;
+    ptr->rmin = 999;
+    ptr->gmin = 999;
+    ptr->bmin = 999;
+    ptr->rmax = -1;
+    ptr->gmax = -1;
+    ptr->bmax = -1;
+    ptr->total = static_cast<GUIntBig>(nXSize) * static_cast<GUIntBig>(nYSize);
 
 /* -------------------------------------------------------------------- */
 /*      Collect histogram.                                              */
 /* -------------------------------------------------------------------- */
-    pabyRedLine = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
-    pabyGreenLine = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
-    pabyBlueLine = (GByte *) VSI_MALLOC_VERBOSE(nXSize);
 
-    if (pabyRedLine == NULL ||
+    // TODO(schwehr): Move these closer to usage after removing gotos.
+    const int nColorShift = 8 - nBits;
+    int nColorCounter = 0;
+    GByte anRed[256] = {};
+    GByte anGreen[256] = {};
+    GByte anBlue[256] = {};
+
+    GByte *pabyRedLine = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
+    GByte *pabyGreenLine = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
+    GByte *pabyBlueLine = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
+
+    if( pabyRedLine == NULL ||
         pabyGreenLine == NULL ||
-        pabyBlueLine == NULL)
+        pabyBlueLine == NULL )
     {
         err = CE_Failure;
         goto end_and_cleanup;
     }
 
-    for( iLine = 0; iLine < nYSize; iLine++ )
+    for( int iLine = 0; iLine < nYSize; iLine++ )
     {
-        if( !pfnProgress( iLine / (double) nYSize,
+        if( !pfnProgress( iLine / static_cast<double>(nYSize),
                           "Generating Histogram", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User Terminated" );
@@ -466,20 +487,18 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
         if( err != CE_None )
             goto end_and_cleanup;
 
-        for( iPixel = 0; iPixel < nXSize; iPixel++ )
+        for( int iPixel = 0; iPixel < nXSize; iPixel++ )
         {
-            int nRed, nGreen, nBlue;
+            const int nRed = pabyRedLine[iPixel] >> nColorShift;
+            const int nGreen = pabyGreenLine[iPixel] >> nColorShift;
+            const int nBlue = pabyBlueLine[iPixel] >> nColorShift;
 
-            nRed = pabyRedLine[iPixel] >> nColorShift;
-            nGreen = pabyGreenLine[iPixel] >> nColorShift;
-            nBlue = pabyBlueLine[iPixel] >> nColorShift;
-
-            ptr->rmin = MIN(ptr->rmin, nRed);
-            ptr->gmin = MIN(ptr->gmin, nGreen);
-            ptr->bmin = MIN(ptr->bmin, nBlue);
-            ptr->rmax = MAX(ptr->rmax, nRed);
-            ptr->gmax = MAX(ptr->gmax, nGreen);
-            ptr->bmax = MAX(ptr->bmax, nBlue);
+            ptr->rmin = std::min(ptr->rmin, nRed);
+            ptr->gmin = std::min(ptr->gmin, nGreen);
+            ptr->bmin = std::min(ptr->bmin, nBlue);
+            ptr->rmax = std::max(ptr->rmax, nRed);
+            ptr->gmax = std::max(ptr->gmax, nGreen);
+            ptr->bmax = std::max(ptr->bmax, nBlue);
 
             bool bFirstOccurrence;
             if( psHashHistogram )
@@ -487,13 +506,14 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
                 int* pnColor = FindAndInsertColorCount(psHashHistogram,
                                          MAKE_COLOR_CODE(nRed, nGreen, nBlue));
                 bFirstOccurrence = ( *pnColor == 0 );
-                (*pnColor) ++;
+                (*pnColor)++;
             }
             else
             {
-                T* pnColor = &HISTOGRAM(histogram, nCLevels, nRed, nGreen, nBlue);
+                T* pnColor =
+                    HISTOGRAM(histogram, nCLevels, nRed, nGreen, nBlue);
                 bFirstOccurrence = ( *pnColor == 0 );
-                (*pnColor) ++;
+                (*pnColor)++;
             }
             if( bFirstOccurrence)
             {
@@ -517,14 +537,18 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 
     if( nColorShift == 0 && nColorCounter <= nColors )
     {
-        //CPLDebug("MEDIAN_CUT", "%d colors found <= %d", nColorCounter, nColors);
-        for(int iColor = 0;iColor<nColorCounter;iColor++)
+#if DEBUG_VERBOSE
+        CPLDebug("MEDIAN_CUT", "%d colors found <= %d", nColorCounter, nColors);
+#endif
+        for( int iColor = 0; iColor < nColorCounter; iColor++ )
         {
-            GDALColorEntry  sEntry;
-            sEntry.c1 = (GByte) anRed[iColor];
-            sEntry.c2 = (GByte) anGreen[iColor];
-            sEntry.c3 = (GByte) anBlue[iColor];
-            sEntry.c4 = 255;
+            const GDALColorEntry sEntry =
+            {
+                static_cast<GByte>(anRed[iColor]),
+                static_cast<GByte>(anGreen[iColor]),
+                static_cast<GByte>(anBlue[iColor]),
+                255
+            };
             GDALSetColorEntry( hColorTable, iColor, &sEntry );
         }
         goto end_and_cleanup;
@@ -534,10 +558,12 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /*      STEP 3: continually subdivide boxes until no more free          */
 /*      boxes remain or until all colors assigned.                      */
 /* ==================================================================== */
-    while (freeboxes != NULL) {
+    while( freeboxes != NULL )
+    {
         ptr = largest_box(usedboxes);
-        if (ptr != NULL)
-            splitbox(ptr, histogram, psHashHistogram, nCLevels, &freeboxes, &usedboxes,
+        if( ptr != NULL )
+            splitbox(ptr, histogram, psHashHistogram, nCLevels,
+                     &freeboxes, &usedboxes,
                      pabyRedBand, pabyGreenBand, pabyBlueBand, nPixels);
         else
             freeboxes = NULL;
@@ -546,14 +572,15 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
 /*      STEP 4: assign colors to all boxes                              */
 /* ==================================================================== */
-    for (i = 0, ptr = usedboxes; ptr != NULL; ++i, ptr = ptr->next)
+    ptr = usedboxes;
+    for( int i = 0; ptr != NULL; ++i, ptr = ptr->next )
     {
-        GDALColorEntry sEntry;
-
-        sEntry.c1 = (GByte) (((ptr->rmin + ptr->rmax) << nColorShift) / 2);
-        sEntry.c2 = (GByte) (((ptr->gmin + ptr->gmax) << nColorShift) / 2);
-        sEntry.c3 = (GByte) (((ptr->bmin + ptr->bmax) << nColorShift) / 2);
-        sEntry.c4 = 255;
+        const GDALColorEntry sEntry = {
+            static_cast<GByte>(((ptr->rmin + ptr->rmax) << nColorShift) / 2),
+            static_cast<GByte>(((ptr->gmin + ptr->gmax) << nColorShift) / 2),
+            static_cast<GByte>(((ptr->bmin + ptr->bmax) << nColorShift) / 2),
+            255
+        };
         GDALSetColorEntry( hColorTable, i, &sEntry );
     }
 
@@ -562,9 +589,10 @@ end_and_cleanup:
     CPLFree( pabyGreenLine );
     CPLFree( pabyBlueLine );
 
-    /* We're done with the boxes now */
+    // We're done with the boxes now.
     CPLFree(box_list);
-    freeboxes = usedboxes = NULL;
+    freeboxes = NULL;
+    usedboxes = NULL;
 
     if( panHistogram == NULL )
         CPLFree( histogram );
@@ -577,34 +605,37 @@ end_and_cleanup:
 /************************************************************************/
 
 static Colorbox *
-largest_box(Colorbox *usedboxes)
+largest_box( Colorbox *usedboxes )
 {
     Colorbox *b = NULL;
 
-    for (Colorbox* p = usedboxes; p != NULL; p = p->next)
+    for( Colorbox* p = usedboxes; p != NULL; p = p->next )
     {
-        if ((p->rmax > p->rmin || p->gmax > p->gmin ||
-             p->bmax > p->bmin) && (b == NULL || p->total > b->total))
+        if( (p->rmax > p->rmin || p->gmax > p->gmin ||
+             p->bmax > p->bmin) && (b == NULL || p->total > b->total) )
         {
             b = p;
         }
     }
-    return (b);
+    return b;
 }
 
-static void shrinkboxFromBand(Colorbox* ptr,
-                              const GByte* pabyRedBand,
-                              const GByte* pabyGreenBand,
-                              const GByte* pabyBlueBand, GUIntBig nPixels)
+static void shrinkboxFromBand( Colorbox* ptr,
+                               const GByte* pabyRedBand,
+                               const GByte* pabyGreenBand,
+                               const GByte* pabyBlueBand, GUIntBig nPixels )
 {
-    int rmin_new = 255, rmax_new = 0,
-        gmin_new = 255, gmax_new = 0,
-        bmin_new = 255, bmax_new = 0;
-    for(GUIntBig i=0;i<nPixels;i++)
+    int rmin_new = 255;
+    int rmax_new = 0;
+    int gmin_new = 255;
+    int gmax_new = 0;
+    int bmin_new = 255;
+    int bmax_new = 0;
+    for( GUIntBig i = 0; i < nPixels; i++ )
     {
-        int iR = pabyRedBand[i];
-        int iG = pabyGreenBand[i];
-        int iB = pabyBlueBand[i];
+        const int iR = pabyRedBand[i];
+        const int iG = pabyGreenBand[i];
+        const int iB = pabyBlueBand[i];
         if( iR >= ptr->rmin && iR <= ptr->rmax &&
             iG >= ptr->gmin && iG <= ptr->gmax &&
             iB >= ptr->bmin && iB <= ptr->bmax )
@@ -618,9 +649,12 @@ static void shrinkboxFromBand(Colorbox* ptr,
         }
     }
 
-    CPLAssert(rmin_new >= ptr->rmin && rmin_new <= rmax_new && rmax_new <= ptr->rmax);
-    CPLAssert(gmin_new >= ptr->gmin && gmin_new <= gmax_new && gmax_new <= ptr->gmax);
-    CPLAssert(bmin_new >= ptr->bmin && bmin_new <= bmax_new && bmax_new <= ptr->bmax);
+    CPLAssert(rmin_new >= ptr->rmin && rmin_new <= rmax_new &&
+              rmax_new <= ptr->rmax);
+    CPLAssert(gmin_new >= ptr->gmin && gmin_new <= gmax_new &&
+              gmax_new <= ptr->gmax);
+    CPLAssert(bmin_new >= ptr->bmin && bmin_new <= bmax_new &&
+              bmax_new <= ptr->bmax);
     ptr->rmin = rmin_new;
     ptr->rmax = rmax_new;
     ptr->gmin = gmin_new;
@@ -629,21 +663,20 @@ static void shrinkboxFromBand(Colorbox* ptr,
     ptr->bmax = bmax_new;
 }
 
-static void shrinkboxFromHashHistogram(Colorbox* box,
-                                       const HashHistogram* psHashHistogram)
+static void shrinkboxFromHashHistogram( Colorbox* box,
+                                        const HashHistogram* psHashHistogram )
 {
-    int ir, ig, ib;
-    //int count_iter;
-
-    if (box->rmax > box->rmin) {
-        //count_iter = 0;
-        for (ir = box->rmin; ir <= box->rmax; ++ir) {
-            for (ig = box->gmin; ig <= box->gmax; ++ig) {
-                for (ib = box->bmin; ib <= box->bmax; ++ib) {
-                    //count_iter ++;
-                    if (FindColorCount(psHashHistogram,
-                                       MAKE_COLOR_CODE(ir, ig, ib)) != 0) {
-                        //if( count_iter > 65536 ) printf("iter rmin=%d\n", count_iter);
+    if( box->rmax > box->rmin )
+    {
+        for( int ir = box->rmin; ir <= box->rmax; ++ir )
+        {
+            for( int ig = box->gmin; ig <= box->gmax; ++ig )
+            {
+                for( int ib = box->bmin; ib <= box->bmax; ++ib )
+                {
+                    if( FindColorCount(psHashHistogram,
+                                       MAKE_COLOR_CODE(ir, ig, ib)) != 0 )
+                    {
                         box->rmin = ir;
                         goto have_rmin;
                     }
@@ -652,16 +685,17 @@ static void shrinkboxFromHashHistogram(Colorbox* box,
         }
     }
     have_rmin:
-    if (box->rmax > box->rmin) {
-        //count_iter = 0;
-        for (ir = box->rmax; ir >= box->rmin; --ir) {
-            for (ig = box->gmin; ig <= box->gmax; ++ig) {
-                ib = box->bmin;
-                for (; ib <= box->bmax; ++ib) {
-                    //count_iter ++;
-                    if (FindColorCount(psHashHistogram,
-                                       MAKE_COLOR_CODE(ir, ig, ib)) != 0) {
-                        //if( count_iter > 65536 ) printf("iter rmax=%d\n", count_iter);
+    if( box->rmax > box->rmin )
+    {
+        for( int ir = box->rmax; ir >= box->rmin; --ir )
+        {
+            for( int ig = box->gmin; ig <= box->gmax; ++ig )
+            {
+                for( int ib = box->bmin; ib <= box->bmax; ++ib )
+                {
+                    if( FindColorCount(psHashHistogram,
+                                       MAKE_COLOR_CODE(ir, ig, ib)) != 0 )
+                    {
                         box->rmax = ir;
                         goto have_rmax;
                     }
@@ -671,15 +705,17 @@ static void shrinkboxFromHashHistogram(Colorbox* box,
     }
 
     have_rmax:
-    if (box->gmax > box->gmin) {
-        //count_iter = 0;
-        for (ig = box->gmin; ig <= box->gmax; ++ig) {
-            for (ir = box->rmin; ir <= box->rmax; ++ir) {
-                for (ib = box->bmin; ib <= box->bmax; ++ib) {
-                    //count_iter ++;
-                    if (FindColorCount(psHashHistogram,
-                                       MAKE_COLOR_CODE(ir, ig, ib)) != 0) {
-                        //if( count_iter > 65536 ) printf("iter gmin=%d\n", count_iter);
+    if( box->gmax > box->gmin )
+    {
+        for( int ig = box->gmin; ig <= box->gmax; ++ig )
+        {
+            for( int ir = box->rmin; ir <= box->rmax; ++ir )
+            {
+                for( int ib = box->bmin; ib <= box->bmax; ++ib )
+                {
+                    if( FindColorCount(psHashHistogram,
+                                       MAKE_COLOR_CODE(ir, ig, ib)) != 0 )
+                    {
                         box->gmin = ig;
                         goto have_gmin;
                     }
@@ -689,16 +725,18 @@ static void shrinkboxFromHashHistogram(Colorbox* box,
     }
 
     have_gmin:
-    if (box->gmax > box->gmin) {
-        //count_iter = 0;
-        for (ig = box->gmax; ig >= box->gmin; --ig) {
-            for (ir = box->rmin; ir <= box->rmax; ++ir) {
-                ib = box->bmin;
-                for (; ib <= box->bmax; ++ib) {
-                    //count_iter ++;
-                    if (FindColorCount(psHashHistogram,
-                                       MAKE_COLOR_CODE(ir, ig, ib)) != 0) {
-                        //if( count_iter > 65536 ) printf("iter gmax=%d\n", count_iter);
+    if( box->gmax > box->gmin )
+    {
+        for( int ig = box->gmax; ig >= box->gmin; --ig)
+        {
+            for( int ir = box->rmin; ir <= box->rmax; ++ir )
+            {
+                int ib = box->bmin;
+                for( ; ib <= box->bmax; ++ib )
+                {
+                    if( FindColorCount(psHashHistogram,
+                                       MAKE_COLOR_CODE(ir, ig, ib)) != 0 )
+                    {
                         box->gmax = ig;
                         goto have_gmax;
                     }
@@ -708,15 +746,17 @@ static void shrinkboxFromHashHistogram(Colorbox* box,
     }
 
     have_gmax:
-    if (box->bmax > box->bmin) {
-        //count_iter = 0;
-        for (ib = box->bmin; ib <= box->bmax; ++ib) {
-            for (ir = box->rmin; ir <= box->rmax; ++ir) {
-                for (ig = box->gmin; ig <= box->gmax; ++ig) {
-                    //count_iter ++;
-                    if (FindColorCount(psHashHistogram,
-                                       MAKE_COLOR_CODE(ir, ig, ib)) != 0) {
-                        //if( count_iter > 65536 ) printf("iter bmin=%d\n", count_iter);
+    if( box->bmax > box->bmin )
+    {
+        for( int ib = box->bmin; ib <= box->bmax; ++ib )
+        {
+            for( int ir = box->rmin; ir <= box->rmax; ++ir )
+            {
+                for( int ig = box->gmin; ig <= box->gmax; ++ig )
+                {
+                    if( FindColorCount(psHashHistogram,
+                                       MAKE_COLOR_CODE(ir, ig, ib)) != 0 )
+                    {
                         box->bmin = ib;
                         goto have_bmin;
                     }
@@ -726,16 +766,17 @@ static void shrinkboxFromHashHistogram(Colorbox* box,
     }
 
     have_bmin:
-    if (box->bmax > box->bmin) {
-        //count_iter = 0;
-        for (ib = box->bmax; ib >= box->bmin; --ib) {
-            for (ir = box->rmin; ir <= box->rmax; ++ir) {
-                ig = box->gmin;
-                for (; ig <= box->gmax; ++ig) {
-                    //count_iter ++;
-                    if (FindColorCount(psHashHistogram,
-                                       MAKE_COLOR_CODE(ir, ig, ib)) != 0) {
-                        //if( count_iter > 65536 ) printf("iter bmax=%d\n", count_iter);
+    if( box->bmax > box->bmin )
+    {
+        for( int ib = box->bmax; ib >= box->bmin; --ib )
+        {
+            for( int ir = box->rmin; ir <= box->rmax; ++ir )
+            {
+                for( int ig = box->gmin; ig <= box->gmax; ++ig )
+                {
+                    if( FindColorCount(psHashHistogram,
+                                       MAKE_COLOR_CODE(ir, ig, ib)) != 0 )
+                    {
                         box->bmax = ib;
                         goto have_bmax;
                     }
@@ -760,45 +801,41 @@ splitbox(Colorbox* ptr, const T* histogram,
          GByte* pabyGreenBand,
          GByte* pabyBlueBand, T nPixels)
 {
-    T hist2[256];
-    int first=0, last=0;
-    Colorbox *new_cb;
-    const T *iptr;
-    T *histp;
-    int i, j;
-    int ir,ig,ib;
-    T sum, sum1, sum2;
+    T hist2[256] = {};
+    int first = 0;
+    int last = 0;
     enum { RED, GREEN, BLUE } axis;
 
-    /*
-     * See which axis is the largest, do a histogram along that
-     * axis.  Split at median point.  Contract both new boxes to
-     * fit points and return
-     */
-    i = ptr->rmax - ptr->rmin;
-    if (i >= ptr->gmax - ptr->gmin  && i >= ptr->bmax - ptr->bmin)
-        axis = RED;
-    else if (ptr->gmax - ptr->gmin >= ptr->bmax - ptr->bmin)
-        axis = GREEN;
-    else
-        axis = BLUE;
-    /* get histogram along longest axis */
-    GUInt32 nIters = (ptr->rmax - ptr->rmin + 1) * (ptr->gmax - ptr->gmin + 1) *
-                 (ptr->bmax - ptr->bmin + 1);
-    //printf("nIters = %d\n", nIters);
-    switch (axis) {
+    // See which axis is the largest, do a histogram along that axis.  Split at
+    // median point.  Contract both new boxes to fit points and return.
+    {
+        int i = ptr->rmax - ptr->rmin;
+        if( i >= ptr->gmax - ptr->gmin  && i >= ptr->bmax - ptr->bmin )
+            axis = RED;
+        else if( ptr->gmax - ptr->gmin >= ptr->bmax - ptr->bmin )
+            axis = GREEN;
+        else
+            axis = BLUE;
+    }
+    // Get histogram along longest axis.
+    const GUInt32 nIters =
+        (ptr->rmax - ptr->rmin + 1) *
+        (ptr->gmax - ptr->gmin + 1) *
+        (ptr->bmax - ptr->bmin + 1);
+
+    switch( axis )
+    {
       case RED:
       {
         if( nPixels != 0 && nIters > nPixels )
         {
-            memset(hist2, 0, sizeof(hist2));
-            const int           rmin = ptr->rmin,
-                                rmax = ptr->rmax,
-                                gmin = ptr->gmin,
-                                gmax = ptr->gmax,
-                                bmin = ptr->bmin,
-                                bmax = ptr->bmax;
-            for(T iPixel=0;iPixel<nPixels;iPixel++)
+            const int rmin = ptr->rmin;
+            const int rmax = ptr->rmax;
+            const int gmin = ptr->gmin;
+            const int gmax = ptr->gmax;
+            const int bmin = ptr->bmin;
+            const int bmax = ptr->bmax;
+            for( T iPixel = 0; iPixel < nPixels; iPixel++ )
             {
                 int iR = pabyRedBand[iPixel];
                 int iG = pabyGreenBand[iPixel];
@@ -807,20 +844,22 @@ splitbox(Colorbox* ptr, const T* histogram,
                     iG >= gmin && iG <= gmax &&
                     iB >= bmin && iB <= bmax )
                 {
-                    hist2[iR] ++;
+                    hist2[iR]++;
                 }
             }
         }
         else if( psHashHistogram )
         {
-            histp = &hist2[ptr->rmin];
-            for (ir = ptr->rmin; ir <= ptr->rmax; ++ir) {
+            T *histp = &hist2[ptr->rmin];
+            for( int ir = ptr->rmin; ir <= ptr->rmax; ++ir )
+            {
                 *histp = 0;
-                for (ig = ptr->gmin; ig <= ptr->gmax; ++ig) {
-                    for (ib = ptr->bmin; ib <= ptr->bmax; ++ib)
+                for( int ig = ptr->gmin; ig <= ptr->gmax; ++ig )
+                {
+                    for( int ib = ptr->bmin; ib <= ptr->bmax; ++ib )
                     {
                         *histp += FindColorCount(psHashHistogram,
-                                       MAKE_COLOR_CODE(ir, ig, ib));
+                                                 MAKE_COLOR_CODE(ir, ig, ib));
                     }
                 }
                 histp++;
@@ -828,12 +867,15 @@ splitbox(Colorbox* ptr, const T* histogram,
         }
         else
         {
-            histp = &hist2[ptr->rmin];
-            for (ir = ptr->rmin; ir <= ptr->rmax; ++ir) {
+            T *histp = &hist2[ptr->rmin];
+            for( int ir = ptr->rmin; ir <= ptr->rmax; ++ir )
+            {
                 *histp = 0;
-                for (ig = ptr->gmin; ig <= ptr->gmax; ++ig) {
-                    iptr = &HISTOGRAM(histogram,nCLevels,ir,ig,ptr->bmin);
-                    for (ib = ptr->bmin; ib <= ptr->bmax; ++ib)
+                for( int ig = ptr->gmin; ig <= ptr->gmax; ++ig )
+                {
+                    const T *iptr =
+                        HISTOGRAM(histogram, nCLevels, ir, ig, ptr->bmin);
+                    for( int ib = ptr->bmin; ib <= ptr->bmax; ++ib )
                         *histp += *iptr++;
                 }
                 histp++;
@@ -847,36 +889,37 @@ splitbox(Colorbox* ptr, const T* histogram,
       {
         if( nPixels != 0 && nIters > nPixels )
         {
-            memset(hist2, 0, sizeof(hist2));
-            const int           rmin = ptr->rmin,
-                                rmax = ptr->rmax,
-                                gmin = ptr->gmin,
-                                gmax = ptr->gmax,
-                                bmin = ptr->bmin,
-                                bmax = ptr->bmax;
-            for(T iPixel=0;iPixel<nPixels;iPixel++)
+            const int rmin = ptr->rmin;
+            const int rmax = ptr->rmax;
+            const int gmin = ptr->gmin;
+            const int gmax = ptr->gmax;
+            const int bmin = ptr->bmin;
+            const int bmax = ptr->bmax;
+            for( T iPixel = 0; iPixel < nPixels; iPixel++ )
             {
-                int iR = pabyRedBand[iPixel];
-                int iG = pabyGreenBand[iPixel];
-                int iB = pabyBlueBand[iPixel];
+                const int iR = pabyRedBand[iPixel];
+                const int iG = pabyGreenBand[iPixel];
+                const int iB = pabyBlueBand[iPixel];
                 if( iR >= rmin && iR <= rmax &&
                     iG >= gmin && iG <= gmax &&
                     iB >= bmin && iB <= bmax )
                 {
-                    hist2[iG] ++;
+                    hist2[iG]++;
                 }
             }
         }
         else if( psHashHistogram )
         {
-            histp = &hist2[ptr->gmin];
-            for (ig = ptr->gmin; ig <= ptr->gmax; ++ig) {
+            T *histp = &hist2[ptr->gmin];
+            for( int ig = ptr->gmin; ig <= ptr->gmax; ++ig )
+            {
                 *histp = 0;
-                for (ir = ptr->rmin; ir <= ptr->rmax; ++ir) {
-                    for (ib = ptr->bmin; ib <= ptr->bmax; ++ib)
+                for( int ir = ptr->rmin; ir <= ptr->rmax; ++ir )
+                {
+                    for( int ib = ptr->bmin; ib <= ptr->bmax; ++ib )
                     {
                         *histp += FindColorCount(psHashHistogram,
-                                       MAKE_COLOR_CODE(ir, ig, ib));
+                                                 MAKE_COLOR_CODE(ir, ig, ib));
                     }
                 }
                 histp++;
@@ -884,12 +927,15 @@ splitbox(Colorbox* ptr, const T* histogram,
         }
         else
         {
-            histp = &hist2[ptr->gmin];
-            for (ig = ptr->gmin; ig <= ptr->gmax; ++ig) {
+            T *histp = &hist2[ptr->gmin];
+            for( int ig = ptr->gmin; ig <= ptr->gmax; ++ig )
+            {
                 *histp = 0;
-                for (ir = ptr->rmin; ir <= ptr->rmax; ++ir) {
-                    iptr = &HISTOGRAM(histogram,nCLevels,ir,ig,ptr->bmin);
-                    for (ib = ptr->bmin; ib <= ptr->bmax; ++ib)
+                for( int ir = ptr->rmin; ir <= ptr->rmax; ++ir )
+                {
+                    const T *iptr =
+                        HISTOGRAM(histogram, nCLevels, ir, ig, ptr->bmin);
+                    for( int ib = ptr->bmin; ib <= ptr->bmax; ++ib )
                         *histp += *iptr++;
                 }
                 histp++;
@@ -903,35 +949,37 @@ splitbox(Colorbox* ptr, const T* histogram,
       {
         if( nPixels != 0 && nIters > nPixels )
         {
-            memset(hist2, 0, sizeof(hist2));
-            const int           rmin = ptr->rmin,
-                                rmax = ptr->rmax,
-                                gmin = ptr->gmin,
-                                gmax = ptr->gmax,
-                                bmin = ptr->bmin,
-                                bmax = ptr->bmax;
-            for(T iPixel=0;iPixel<nPixels;iPixel++)
+            const int rmin = ptr->rmin;
+            const int rmax = ptr->rmax;
+            const int gmin = ptr->gmin;
+            const int gmax = ptr->gmax;
+            const int bmin = ptr->bmin;
+            const int bmax = ptr->bmax;
+            for( T iPixel = 0; iPixel < nPixels; iPixel++ )
             {
-                int iR = pabyRedBand[iPixel];
-                int iG = pabyGreenBand[iPixel];
-                int iB = pabyBlueBand[iPixel];
+                const int iR = pabyRedBand[iPixel];
+                const int iG = pabyGreenBand[iPixel];
+                const int iB = pabyBlueBand[iPixel];
                 if( iR >= rmin && iR <= rmax &&
                     iG >= gmin && iG <= gmax &&
                     iB >= bmin && iB <= bmax )
                 {
-                    hist2[iB] ++;
+                    hist2[iB]++;
                 }
             }
         }
         else if( psHashHistogram )
         {
-            histp = &hist2[ptr->bmin];
-            for (ib = ptr->bmin; ib <= ptr->bmax; ++ib) {
+            T *histp = &hist2[ptr->bmin];
+            for( int ib = ptr->bmin; ib <= ptr->bmax; ++ib )
+            {
                 *histp = 0;
-                for (ir = ptr->rmin; ir <= ptr->rmax; ++ir) {
-                    for (ig = ptr->gmin; ig <= ptr->gmax; ++ig) {
+                for( int ir = ptr->rmin; ir <= ptr->rmax; ++ir )
+                {
+                    for( int ig = ptr->gmin; ig <= ptr->gmax; ++ig )
+                    {
                         *histp += FindColorCount(psHashHistogram,
-                                       MAKE_COLOR_CODE(ir, ig, ib));
+                                                 MAKE_COLOR_CODE(ir, ig, ib));
                     }
                 }
                 histp++;
@@ -939,12 +987,16 @@ splitbox(Colorbox* ptr, const T* histogram,
         }
         else
         {
-            histp = &hist2[ptr->bmin];
-            for (ib = ptr->bmin; ib <= ptr->bmax; ++ib) {
+            T *histp = &hist2[ptr->bmin];
+            for( int ib = ptr->bmin; ib <= ptr->bmax; ++ib )
+            {
                 *histp = 0;
-                for (ir = ptr->rmin; ir <= ptr->rmax; ++ir) {
-                    iptr = &HISTOGRAM(histogram,nCLevels,ir,ptr->gmin,ib);
-                    for (ig = ptr->gmin; ig <= ptr->gmax; ++ig) {
+                for( int ir = ptr->rmin; ir <= ptr->rmax; ++ir )
+                {
+                    const T *iptr =
+                        HISTOGRAM(histogram, nCLevels, ir, ptr->gmin, ib);
+                    for( int ig = ptr->gmin; ig <= ptr->gmax; ++ig )
+                    {
                         *histp += *iptr;
                         iptr += nCLevels;
                     }
@@ -957,58 +1009,68 @@ splitbox(Colorbox* ptr, const T* histogram,
         break;
       }
     }
-    /* find median point */
-    sum2 = static_cast<T>(ptr->total / 2);
-    histp = &hist2[first];
-    sum = 0;
-    for (i = first; i <= last && (sum += *histp++) < sum2; ++i)
-        ;
-    if (i == first)
+    // Find median point.
+    T *histp = &hist2[first];
+    int i = first;  // TODO(schwehr): Rename i.
+    {
+        T sum = 0;
+        T sum2 = static_cast<T>(ptr->total / 2);
+        for( ; i <= last && (sum += *histp++) < sum2; ++i )
+            {}
+    }
+    if( i == first )
         i++;
 
-    /* Create new box, re-allocate points */
-    new_cb = *pfreeboxes;
+    // Create new box, re-allocate points.
+    Colorbox *new_cb = *pfreeboxes;
     *pfreeboxes = new_cb->next;
-    if (*pfreeboxes)
+    if( *pfreeboxes )
         (*pfreeboxes)->prev = NULL;
-    if (*pusedboxes)
+    if( *pusedboxes )
         (*pusedboxes)->prev = new_cb;
     new_cb->next = *pusedboxes;
     *pusedboxes = new_cb;
 
     histp = &hist2[first];
-    for (sum1 = 0, j = first; j < i; j++)
-        sum1 += *histp++;
-    for (sum2 = 0, j = i; j <= last; j++)
-        sum2 += *histp++;
-    new_cb->total = sum1;
-    ptr->total = sum2;
-
+    {
+        T sum1 = 0;
+        for( int j = first; j < i; j++ )
+            sum1 += *histp++;
+        T sum2 = 0;
+        for( int j = i; j <= last; j++ )
+            sum2 += *histp++;
+        new_cb->total = sum1;
+        ptr->total = sum2;
+    }
     new_cb->rmin = ptr->rmin;
     new_cb->rmax = ptr->rmax;
     new_cb->gmin = ptr->gmin;
     new_cb->gmax = ptr->gmax;
     new_cb->bmin = ptr->bmin;
     new_cb->bmax = ptr->bmax;
-    switch (axis) {
+    switch( axis )
+    {
       case RED:
-        new_cb->rmax = i-1;
+        new_cb->rmax = i - 1;
         ptr->rmin = i;
         break;
       case GREEN:
-        new_cb->gmax = i-1;
+        new_cb->gmax = i - 1;
         ptr->gmin = i;
         break;
       case BLUE:
-        new_cb->bmax = i-1;
+        new_cb->bmax = i - 1;
         ptr->bmin = i;
         break;
     }
+
     if( nPixels != 0 &&
-        (T)(new_cb->rmax - new_cb->rmin + 1) * (T)(new_cb->gmax - new_cb->gmin + 1) *
-        (T)(new_cb->bmax - new_cb->bmin + 1) > nPixels )
+        static_cast<T>(new_cb->rmax - new_cb->rmin + 1) *
+        static_cast<T>(new_cb->gmax - new_cb->gmin + 1) *
+        static_cast<T>(new_cb->bmax - new_cb->bmin + 1) > nPixels )
     {
-        shrinkboxFromBand(new_cb, pabyRedBand, pabyGreenBand, pabyBlueBand, nPixels);
+        shrinkboxFromBand(new_cb, pabyRedBand, pabyGreenBand, pabyBlueBand,
+                          nPixels);
     }
     else if( psHashHistogram != NULL )
     {
@@ -1018,11 +1080,14 @@ splitbox(Colorbox* ptr, const T* histogram,
     {
         shrinkbox(new_cb, histogram, nCLevels);
     }
+
     if( nPixels != 0 &&
-        (T)(ptr->rmax - ptr->rmin + 1) * (T)(ptr->gmax - ptr->gmin + 1) *
-        (T)(ptr->bmax - ptr->bmin + 1) > nPixels )
+        static_cast<T>(ptr->rmax - ptr->rmin + 1) *
+        static_cast<T>(ptr->gmax - ptr->gmin + 1) *
+        static_cast<T>(ptr->bmax - ptr->bmin + 1) > nPixels )
     {
-        shrinkboxFromBand(ptr, pabyRedBand, pabyGreenBand, pabyBlueBand, nPixels);
+        shrinkboxFromBand(ptr, pabyRedBand, pabyGreenBand, pabyBlueBand,
+                          nPixels);
     }
     else if( psHashHistogram != NULL )
     {
@@ -1038,21 +1103,20 @@ splitbox(Colorbox* ptr, const T* histogram,
 /*                             shrinkbox()                              */
 /************************************************************************/
 template<class T> static void
-shrinkbox(Colorbox* box, const T* histogram, int nCLevels)
+shrinkbox( Colorbox* box, const T* histogram, int nCLevels )
 {
-    const T *histp;
-    int ir, ig, ib;
-    //int count_iter;
-
-    if (box->rmax > box->rmin) {
-        //count_iter = 0;
-        for (ir = box->rmin; ir <= box->rmax; ++ir) {
-            for (ig = box->gmin; ig <= box->gmax; ++ig) {
-                histp = &HISTOGRAM(histogram, nCLevels, ir, ig, box->bmin);
-                for (ib = box->bmin; ib <= box->bmax; ++ib) {
-                    //count_iter ++;
-                    if (*histp++ != 0) {
-                        //if( count_iter > 65536 ) printf("iter rmin=%d\n", count_iter);
+    if( box->rmax > box->rmin )
+    {
+        for( int ir = box->rmin; ir <= box->rmax; ++ir )
+        {
+            for( int ig = box->gmin; ig <= box->gmax; ++ig )
+            {
+                const T *histp =
+                    HISTOGRAM(histogram, nCLevels, ir, ig, box->bmin);
+                for( int ib = box->bmin; ib <= box->bmax; ++ib )
+                {
+                    if( *histp++ != 0 )
+                    {
                         box->rmin = ir;
                         goto have_rmin;
                     }
@@ -1061,16 +1125,18 @@ shrinkbox(Colorbox* box, const T* histogram, int nCLevels)
         }
     }
     have_rmin:
-    if (box->rmax > box->rmin) {
-        //count_iter = 0;
-        for (ir = box->rmax; ir >= box->rmin; --ir) {
-            for (ig = box->gmin; ig <= box->gmax; ++ig) {
-                histp = &HISTOGRAM(histogram, nCLevels, ir, ig, box->bmin);
-                ib = box->bmin;
-                for (; ib <= box->bmax; ++ib) {
-                    //count_iter ++;
-                    if (*histp++ != 0) {
-                        //if( count_iter > 65536 ) printf("iter rmax=%d\n", count_iter);
+    if( box->rmax > box->rmin )
+    {
+        for( int ir = box->rmax; ir >= box->rmin; --ir )
+        {
+            for( int ig = box->gmin; ig <= box->gmax; ++ig )
+            {
+                const T *histp =
+                    HISTOGRAM(histogram, nCLevels, ir, ig, box->bmin);
+                for( int ib = box->bmin; ib <= box->bmax; ++ib )
+                {
+                    if( *histp++ != 0 )
+                    {
                         box->rmax = ir;
                         goto have_rmax;
                     }
@@ -1080,15 +1146,18 @@ shrinkbox(Colorbox* box, const T* histogram, int nCLevels)
     }
 
     have_rmax:
-    if (box->gmax > box->gmin) {
-        //count_iter = 0;
-        for (ig = box->gmin; ig <= box->gmax; ++ig) {
-            for (ir = box->rmin; ir <= box->rmax; ++ir) {
-                histp = &HISTOGRAM(histogram, nCLevels, ir, ig, box->bmin);
-                for (ib = box->bmin; ib <= box->bmax; ++ib) {
-                    //count_iter ++;
-                    if (*histp++ != 0) {
-                        //if( count_iter > 65536 ) printf("iter gmin=%d\n", count_iter);
+    if( box->gmax > box->gmin )
+    {
+        for( int ig = box->gmin; ig <= box->gmax; ++ig )
+        {
+            for( int ir = box->rmin; ir <= box->rmax; ++ir )
+            {
+                const T *histp =
+                    HISTOGRAM(histogram, nCLevels, ir, ig, box->bmin);
+                for( int ib = box->bmin; ib <= box->bmax; ++ib )
+                {
+                    if( *histp++ != 0 )
+                    {
                         box->gmin = ig;
                         goto have_gmin;
                     }
@@ -1098,16 +1167,18 @@ shrinkbox(Colorbox* box, const T* histogram, int nCLevels)
     }
 
     have_gmin:
-    if (box->gmax > box->gmin) {
-        //count_iter = 0;
-        for (ig = box->gmax; ig >= box->gmin; --ig) {
-            for (ir = box->rmin; ir <= box->rmax; ++ir) {
-                histp = &HISTOGRAM(histogram, nCLevels, ir, ig, box->bmin);
-                ib = box->bmin;
-                for (; ib <= box->bmax; ++ib) {
-                    //count_iter ++;
-                    if (*histp++ != 0) {
-                        //if( count_iter > 65536 ) printf("iter gmax=%d\n", count_iter);
+    if( box->gmax > box->gmin )
+    {
+        for( int ig = box->gmax; ig >= box->gmin; --ig )
+        {
+            for( int ir = box->rmin; ir <= box->rmax; ++ir )
+            {
+                const T *histp =
+                    HISTOGRAM(histogram, nCLevels, ir, ig, box->bmin);
+                for( int ib = box->bmin; ib <= box->bmax; ++ib )
+                {
+                    if( *histp++ != 0 )
+                    {
                         box->gmax = ig;
                         goto have_gmax;
                     }
@@ -1117,15 +1188,18 @@ shrinkbox(Colorbox* box, const T* histogram, int nCLevels)
     }
 
     have_gmax:
-    if (box->bmax > box->bmin) {
-        //count_iter = 0;
-        for (ib = box->bmin; ib <= box->bmax; ++ib) {
-            for (ir = box->rmin; ir <= box->rmax; ++ir) {
-                histp = &HISTOGRAM(histogram, nCLevels, ir, box->gmin, ib);
-                for (ig = box->gmin; ig <= box->gmax; ++ig) {
-                    //count_iter ++;
-                    if (*histp != 0) {
-                        //if( count_iter > 65536 ) printf("iter bmin=%d\n", count_iter);
+    if( box->bmax > box->bmin )
+    {
+        for( int ib = box->bmin; ib <= box->bmax; ++ib )
+        {
+            for( int ir = box->rmin; ir <= box->rmax; ++ir )
+            {
+                const T *histp =
+                    HISTOGRAM(histogram, nCLevels, ir, box->gmin, ib);
+                for( int ig = box->gmin; ig <= box->gmax; ++ig )
+                {
+                    if( *histp != 0 )
+                    {
                         box->bmin = ib;
                         goto have_bmin;
                     }
@@ -1136,16 +1210,18 @@ shrinkbox(Colorbox* box, const T* histogram, int nCLevels)
     }
 
     have_bmin:
-    if (box->bmax > box->bmin) {
-        //count_iter = 0;
-        for (ib = box->bmax; ib >= box->bmin; --ib) {
-            for (ir = box->rmin; ir <= box->rmax; ++ir) {
-                histp = &HISTOGRAM(histogram, nCLevels, ir, box->gmin, ib);
-                ig = box->gmin;
-                for (; ig <= box->gmax; ++ig) {
-                    //count_iter ++;
-                    if (*histp != 0) {
-                        //if( count_iter > 65536 ) printf("iter bmax=%d\n", count_iter);
+    if( box->bmax > box->bmin )
+    {
+        for( int ib = box->bmax; ib >= box->bmin; --ib )
+        {
+            for( int ir = box->rmin; ir <= box->rmax; ++ir )
+            {
+                const T *histp =
+                    HISTOGRAM(histogram, nCLevels, ir, box->gmin, ib);
+                for( int ig = box->gmin; ig <= box->gmax; ++ig )
+                {
+                    if( *histp != 0 )
+                    {
                         box->bmax = ib;
                         goto have_bmax;
                     }
@@ -1159,32 +1235,35 @@ shrinkbox(Colorbox* box, const T* histogram, int nCLevels)
     ;
 }
 
-/* Explicitly instantiate template functions */
+// Explicitly instantiate template functions.
 template int
-GDALComputeMedianCutPCTInternal<GUInt32>( GDALRasterBandH hRed,
-                           GDALRasterBandH hGreen,
-                           GDALRasterBandH hBlue,
-                           GByte* pabyRedBand,
-                           GByte* pabyGreenBand,
-                           GByte* pabyBlueBand,
-                           int (*pfnIncludePixel)(int,int,void*),
-                           int nColors,
-                           int nBits,
-                           GUInt32* panHistogram,
-                           GDALColorTableH hColorTable,
-                           GDALProgressFunc pfnProgress,
-                           void * pProgressArg );
+GDALComputeMedianCutPCTInternal<GUInt32>(
+    GDALRasterBandH hRed,
+    GDALRasterBandH hGreen,
+    GDALRasterBandH hBlue,
+    GByte* pabyRedBand,
+    GByte* pabyGreenBand,
+    GByte* pabyBlueBand,
+    int (*pfnIncludePixel)(int, int, void*),
+    int nColors,
+    int nBits,
+    GUInt32* panHistogram,
+    GDALColorTableH hColorTable,
+    GDALProgressFunc pfnProgress,
+    void * pProgressArg );
+
 template int
-GDALComputeMedianCutPCTInternal<GUIntBig>( GDALRasterBandH hRed,
-                           GDALRasterBandH hGreen,
-                           GDALRasterBandH hBlue,
-                           GByte* pabyRedBand,
-                           GByte* pabyGreenBand,
-                           GByte* pabyBlueBand,
-                           int (*pfnIncludePixel)(int,int,void*),
-                           int nColors,
-                           int nBits,
-                           GUIntBig* panHistogram,
-                           GDALColorTableH hColorTable,
-                           GDALProgressFunc pfnProgress,
-                           void * pProgressArg );
+GDALComputeMedianCutPCTInternal<GUIntBig>(
+    GDALRasterBandH hRed,
+    GDALRasterBandH hGreen,
+    GDALRasterBandH hBlue,
+    GByte* pabyRedBand,
+    GByte* pabyGreenBand,
+    GByte* pabyBlueBand,
+    int (*pfnIncludePixel)(int, int, void*),
+    int nColors,
+    int nBits,
+    GUIntBig* panHistogram,
+    GDALColorTableH hColorTable,
+    GDALProgressFunc pfnProgress,
+    void * pProgressArg );

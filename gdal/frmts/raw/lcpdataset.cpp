@@ -64,9 +64,9 @@ class LCPDataset : public RawDataset
                 LCPDataset();
     virtual ~LCPDataset();
 
-    virtual char **GetFileList(void);
+    virtual char **GetFileList(void) override;
 
-    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr GetGeoTransform( double * ) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -75,7 +75,7 @@ class LCPDataset : public RawDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-    virtual const char *GetProjectionRef(void);
+    virtual const char *GetProjectionRef(void) override;
 
     int bHaveProjection;
 };
@@ -161,12 +161,12 @@ int LCPDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
 
     /* check if first three fields have valid data */
-    if( (CPL_LSBINT32PTR(poOpenInfo->pabyHeader) != 20
-          && CPL_LSBINT32PTR(poOpenInfo->pabyHeader) != 21)
-        || (CPL_LSBINT32PTR(poOpenInfo->pabyHeader+4) != 20
-          && CPL_LSBINT32PTR(poOpenInfo->pabyHeader+4) != 21)
-        || (CPL_LSBINT32PTR(poOpenInfo->pabyHeader+8) < -90
-             || CPL_LSBINT32PTR(poOpenInfo->pabyHeader+8) > 90) )
+    if( (CPL_LSBSINT32PTR(poOpenInfo->pabyHeader) != 20
+          && CPL_LSBSINT32PTR(poOpenInfo->pabyHeader) != 21)
+        || (CPL_LSBSINT32PTR(poOpenInfo->pabyHeader+4) != 20
+          && CPL_LSBSINT32PTR(poOpenInfo->pabyHeader+4) != 21)
+        || (CPL_LSBSINT32PTR(poOpenInfo->pabyHeader+8) < -90
+             || CPL_LSBSINT32PTR(poOpenInfo->pabyHeader+8) > 90) )
     {
         return FALSE;
     }
@@ -236,8 +236,8 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
        return NULL;
    }
 
-   const int nWidth = CPL_LSBINT32PTR( poDS->pachHeader + 4164);
-   const int nHeight = CPL_LSBINT32PTR( poDS->pachHeader + 4168);
+   const int nWidth = CPL_LSBSINT32PTR( poDS->pachHeader + 4164);
+   const int nHeight = CPL_LSBSINT32PTR( poDS->pachHeader + 4168);
 
    poDS->nRasterXSize = nWidth;
    poDS->nRasterYSize = nHeight;
@@ -251,10 +251,10 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
    // Crown fuels = canopy height, canopy base height, canopy bulk density.
    // 21 = have them, 20 = do not have them
    const bool bHaveCrownFuels =
-       CPL_TO_BOOL( CPL_LSBINT32PTR (poDS->pachHeader + 0) - 20 );
+       CPL_TO_BOOL( CPL_LSBSINT32PTR (poDS->pachHeader + 0) - 20 );
    // Ground fuels = duff loading, coarse woody.
    const bool bHaveGroundFuels =
-       CPL_TO_BOOL( CPL_LSBINT32PTR (poDS->pachHeader + 4) - 20 );
+       CPL_TO_BOOL( CPL_LSBSINT32PTR (poDS->pachHeader + 4) - 20 );
 
    int nBands = 0;
    if( bHaveCrownFuels )
@@ -274,12 +274,12 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 
    // Add dataset-level metadata.
 
-   int nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 8);
+   int nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 8);
    char szTemp[32] = { '\0' };
    snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
    poDS->SetMetadataItem( "LATITUDE", szTemp );
 
-   nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 4204);
+   nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 4204);
    if ( nTemp == 0 )
       poDS->SetMetadataItem( "LINEAR_UNIT", "Meters" );
    if ( nTemp == 1 )
@@ -287,7 +287,6 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 
    poDS->pachHeader[LCP_HEADER_SIZE-1] = '\0';
    poDS->SetMetadataItem( "DESCRIPTION", poDS->pachHeader + 6804 );
-
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -324,7 +323,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
         case 1:
            poBand->SetDescription("Elevation");
 
-           nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4224);
+           nTemp = CPL_LSBUINT16PTR (poDS->pachHeader + 4224);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ELEVATION_UNIT", szTemp );
 
@@ -333,15 +332,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            if ( nTemp == 1 )
               poBand->SetMetadataItem( "ELEVATION_UNIT_NAME", "Feet" );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 44);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 44);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ELEVATION_MIN", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 48);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 48);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ELEVATION_MAX", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 52);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 52);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ELEVATION_NUM_CLASSES", szTemp );
 
@@ -353,7 +352,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
         case 2:
            poBand->SetDescription("Slope");
 
-           nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4226);
+           nTemp = CPL_LSBUINT16PTR (poDS->pachHeader + 4226);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "SLOPE_UNIT", szTemp );
 
@@ -362,15 +361,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            if ( nTemp == 1 )
               poBand->SetMetadataItem( "SLOPE_UNIT_NAME", "Percent" );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 456);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 456);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "SLOPE_MIN", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 460);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 460);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "SLOPE_MAX", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 464);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 464);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "SLOPE_NUM_CLASSES", szTemp );
 
@@ -382,7 +381,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
         case 3:
            poBand->SetDescription("Aspect");
 
-           nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4228);
+           nTemp = CPL_LSBUINT16PTR (poDS->pachHeader + 4228);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ASPECT_UNIT", szTemp );
 
@@ -393,15 +392,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            if ( nTemp == 2 )
               poBand->SetMetadataItem( "ASPECT_UNIT_NAME", "Azimuth degrees" );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 868);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 868);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ASPECT_MIN", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 872);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 872);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ASPECT_MAX", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 876);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 876);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "ASPECT_NUM_CLASSES", szTemp );
 
@@ -414,7 +413,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
         {
            poBand->SetDescription("Fuel models");
 
-           nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4230);
+           nTemp = CPL_LSBUINT16PTR (poDS->pachHeader + 4230);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "FUEL_MODEL_OPTION", szTemp );
 
@@ -435,15 +434,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
                   "FUEL_MODEL_OPTION_DESC",
                   "custom models AND conversion file needed" );
 
-           const int nMinFM = CPL_LSBINT32PTR (poDS->pachHeader + 1280);
+           const int nMinFM = CPL_LSBSINT32PTR (poDS->pachHeader + 1280);
            snprintf( szTemp, sizeof(szTemp), "%d", nMinFM);
            poBand->SetMetadataItem( "FUEL_MODEL_MIN", szTemp );
 
-           const int nMaxFM = CPL_LSBINT32PTR (poDS->pachHeader + 1284);
+           const int nMaxFM = CPL_LSBSINT32PTR (poDS->pachHeader + 1284);
            snprintf( szTemp, sizeof(szTemp), "%d", nMaxFM);
            poBand->SetMetadataItem( "FUEL_MODEL_MAX", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 1288);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 1288);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "FUEL_MODEL_NUM_CLASSES", szTemp );
 
@@ -451,7 +450,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               strcpy(pszList, "");
               for ( int i = 0; i <= nTemp; i++ ) {
                   const int nTemp2 =
-                      CPL_LSBINT32PTR( poDS->pachHeader + (1292+(i*4)) );
+                      CPL_LSBSINT32PTR( poDS->pachHeader + (1292+(i*4)) );
                   if ( nTemp2 >= nMinFM && nTemp2 <= nMaxFM ) {
                      snprintf( szTemp, sizeof(szTemp), "%d", nTemp2);
                      strcat(pszList, szTemp);
@@ -471,7 +470,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
         case 5:
            poBand->SetDescription("Canopy cover");
 
-           nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4232);
+           nTemp = CPL_LSBUINT16PTR (poDS->pachHeader + 4232);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CANOPY_COV_UNIT", szTemp );
 
@@ -481,15 +480,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            if ( nTemp == 1 )
               poBand->SetMetadataItem( "CANOPY_COV_UNIT_NAME", "Percent" );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 1692);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 1692);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CANOPY_COV_MIN", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 1696);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 1696);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CANOPY_COV_MAX", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 1700);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 1700);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CANOPY_COV_NUM_CLASSES", szTemp );
 
@@ -502,7 +501,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            if(bHaveCrownFuels) {
               poBand->SetDescription("Canopy height");
 
-              nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4234);
+              nTemp = CPL_LSBUINT16PTR (poDS->pachHeader + 4234);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CANOPY_HT_UNIT", szTemp );
 
@@ -515,15 +514,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               if ( nTemp == 4 )
                  poBand->SetMetadataItem( "CANOPY_HT_UNIT_NAME", "Feet x 10" );
 
-              nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2104);
+              nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 2104);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CANOPY_HT_MIN", szTemp );
 
-              nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2108);
+              nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 2108);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CANOPY_HT_MAX", szTemp );
 
-              nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2112);
+              nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 2112);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CANOPY_HT_NUM_CLASSES", szTemp );
 
@@ -535,7 +534,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            {
               poBand->SetDescription("Duff");
 
-              nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4240);
+              nTemp = CPL_LSBUINT16PTR (poDS->pachHeader + 4240);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "DUFF_UNIT", szTemp );
 
@@ -544,15 +543,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               if ( nTemp == 2 )
                  poBand->SetMetadataItem( "DUFF_UNIT_NAME", "t/ac" );
 
-              nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3340);
+              nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 3340);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "DUFF_MIN", szTemp );
 
-              nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3344);
+              nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 3344);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "DUFF_MAX", szTemp );
 
-              nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3348);
+              nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 3348);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "DUFF_NUM_CLASSES", szTemp );
 
@@ -565,7 +564,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            if(bHaveCrownFuels) {
               poBand->SetDescription("Canopy base height");
 
-              nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4236);
+              nTemp = CPL_LSBUINT16PTR (poDS->pachHeader + 4236);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CBH_UNIT", szTemp );
 
@@ -578,15 +577,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               if ( nTemp == 4 )
                  poBand->SetMetadataItem( "CBH_UNIT_NAME", "Feet x 10" );
 
-              nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2516);
+              nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 2516);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CBH_MIN", szTemp );
 
-              nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2520);
+              nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 2520);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CBH_MAX", szTemp );
 
-              nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2524);
+              nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 2524);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CBH_NUM_CLASSES", szTemp );
 
@@ -597,7 +596,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            {
               poBand->SetDescription( "Coarse woody debris" );
 
-              nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4242);
+              nTemp = CPL_LSBUINT16PTR (poDS->pachHeader + 4242);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CWD_OPTION", szTemp );
 
@@ -606,15 +605,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
               //if ( nTemp == 2 )
               //   poBand->SetMetadataItem( "CWD_UNIT_DESC", "?" );
 
-              nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3752);
+              nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 3752);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CWD_MIN", szTemp );
 
-              nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3756);
+              nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 3756);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CWD_MAX", szTemp );
 
-              nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3760);
+              nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 3760);
               snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
               poBand->SetMetadataItem( "CWD_NUM_CLASSES", szTemp );
 
@@ -626,7 +625,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
         case 8:
            poBand->SetDescription("Canopy bulk density");
 
-           nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4238);
+           nTemp = CPL_LSBUINT16PTR (poDS->pachHeader + 4238);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CBD_UNIT", szTemp );
 
@@ -639,15 +638,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            if ( nTemp == 4 )
               poBand->SetMetadataItem( "CBD_UNIT_NAME", "lb/ft^3 x 1000" );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2928);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 2928);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CBD_MIN", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2932);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 2932);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CBD_MAX", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 2936);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 2936);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CBD_NUM_CLASSES", szTemp );
 
@@ -659,7 +658,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
         case 9:
            poBand->SetDescription("Duff");
 
-           nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4240);
+           nTemp = CPL_LSBUINT16PTR (poDS->pachHeader + 4240);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "DUFF_UNIT", szTemp );
 
@@ -668,15 +667,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            if ( nTemp == 2 )
               poBand->SetMetadataItem( "DUFF_UNIT_NAME", "t/ac" );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3340);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 3340);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "DUFF_MIN", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3344);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 3344);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "DUFF_MAX", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3348);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 3348);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "DUFF_NUM_CLASSES", szTemp );
 
@@ -688,7 +687,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
         case 10:
            poBand->SetDescription("Coarse woody debris");
 
-           nTemp = CPL_LSBINT16PTR (poDS->pachHeader + 4242);
+           nTemp = CPL_LSBUINT16PTR (poDS->pachHeader + 4242);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CWD_OPTION", szTemp );
 
@@ -697,15 +696,15 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
            //if ( nTemp == 2 )
            //   poBand->SetMetadataItem( "CWD_UNIT_DESC", "?" );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3752);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 3752);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CWD_MIN", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3756);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 3756);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CWD_MAX", szTemp );
 
-           nTemp = CPL_LSBINT32PTR (poDS->pachHeader + 3760);
+           nTemp = CPL_LSBSINT32PTR (poDS->pachHeader + 3760);
            snprintf( szTemp, sizeof(szTemp), "%d", nTemp);
            poBand->SetMetadataItem( "CWD_NUM_CLASSES", szTemp );
 
@@ -1476,7 +1475,6 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     CPLFree( padfMax );
     CPLFree( panFound );
     CPLFree( panClasses );
-
 
     // Should be at one of 3 locations, 2104, 3340, or 4164.
     CPLAssert( VSIFTellL( fp ) == 2104  ||

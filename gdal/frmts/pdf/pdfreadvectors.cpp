@@ -274,11 +274,11 @@ void PDFDataset::ExploreTree(GDALPDFObject* poObj, int nRecLevel)
             poArray->Get(0)->GetDictionary()->Get("K")->GetType() == PDFObjectType_Int)
         {
             CPLString osLayerName;
-            if (osT.size())
+            if (!osT.empty() )
                 osLayerName = osT;
             else
             {
-                if (osS.size())
+                if (!osS.empty() )
                     osLayerName = osS;
                 else
                     osLayerName = CPLSPrintf("Layer%d", nLayers + 1);
@@ -573,10 +573,11 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
             memcpy(aszTokenStack[nTokenStackSize ++], str, strlen + 1); \
         else \
         { \
-            CPLError(CE_Failure, CPLE_AppDefined, "Max token stack size reached");\
+            CPLError(CE_Failure, CPLE_AppDefined, \
+                     "Max token stack size reached"); \
             return NULL; \
         }; \
-    } while(0)
+    } while( false )
 
 #define ADD_CHAR(szToken, c) \
     do \
@@ -591,7 +592,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
             CPLError(CE_Failure, CPLE_AppDefined, "Max token size reached");\
             return NULL; \
         }; \
-    } while(0)
+    } while( false )
 
     char szToken[MAX_TOKEN_SIZE];
     int nTokenSize = 0;
@@ -850,9 +851,9 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 else if (EQUAL1(szToken, "b") || /* closepath, fill, stroke */
                          EQUAL2(szToken, "b*")   /* closepath, eofill, stroke */)
                 {
-                    if (!(oCoords.size() > 0 &&
+                    if (!(!oCoords.empty() &&
                           oCoords[oCoords.size() - 2] == CLOSE_SUBPATH &&
-                          oCoords[oCoords.size() - 1] == CLOSE_SUBPATH))
+                          oCoords.back() == CLOSE_SUBPATH))
                     {
                         oCoords.push_back(CLOSE_SUBPATH);
                         oCoords.push_back(CLOSE_SUBPATH);
@@ -877,9 +878,9 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 }
                 else if (EQUAL1(szToken, "h")) /* close subpath */
                 {
-                    if (!(oCoords.size() > 0 &&
+                    if (!(!oCoords.empty() &&
                           oCoords[oCoords.size() - 2] == CLOSE_SUBPATH &&
-                          oCoords[oCoords.size() - 1] == CLOSE_SUBPATH))
+                          oCoords.back() == CLOSE_SUBPATH))
                     {
                         oCoords.push_back(CLOSE_SUBPATH);
                         oCoords.push_back(CLOSE_SUBPATH);
@@ -891,9 +892,9 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 }
                 else if (EQUAL1(szToken, "s")) /* close and stroke */
                 {
-                    if (!(oCoords.size() > 0 &&
+                    if (!(!oCoords.empty() &&
                           oCoords[oCoords.size() - 2] == CLOSE_SUBPATH &&
-                          oCoords[oCoords.size() - 1] == CLOSE_SUBPATH))
+                          oCoords.back() == CLOSE_SUBPATH))
                     {
                         oCoords.push_back(CLOSE_SUBPATH);
                         oCoords.push_back(CLOSE_SUBPATH);
@@ -916,7 +917,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
 
                     if (EQUAL1(szToken, "m"))
                     {
-                        if (oCoords.size() != 0)
+                        if (!oCoords.empty())
                             bHasMultiPart = TRUE;
                         oCoords.push_back(NEW_SUBPATH);
                         oCoords.push_back(NEW_SUBPATH);
@@ -967,7 +968,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                     oGS.ApplyMatrix(adfCoords);
                     oGS.ApplyMatrix(adfCoords + 2);
 
-                    if (oCoords.size() != 0)
+                    if (!oCoords.empty())
                         bHasMultiPart = TRUE;
                     oCoords.push_back(NEW_SUBPATH);
                     oCoords.push_back(NEW_SUBPATH);
@@ -1119,7 +1120,8 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 if( bEmitFeature && poCurLayer != NULL)
                 {
                     OGRGeometry* poGeom = BuildGeometry(oCoords, bHasFoundFill, bHasMultiPart);
-                    bHasFoundFill = bHasMultiPart = FALSE;
+                    bHasFoundFill = FALSE;
+                    bHasMultiPart = FALSE;
                     if (poGeom)
                     {
                         OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());

@@ -27,8 +27,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "iso8211.h"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
@@ -38,27 +49,19 @@ static const int nLeaderSize = 24;
 /*                             DDFRecord()                              */
 /************************************************************************/
 
-DDFRecord::DDFRecord( DDFModule * poModuleIn )
-
-{
-    poModule = poModuleIn;
-
-    nReuseHeader = FALSE;
-
-    nFieldOffset = 0;
-
-    nDataSize = 0;
-    pachData = NULL;
-
-    nFieldCount = 0;
-    paoFields = NULL;
-
-    bIsClone = FALSE;
-
-    _sizeFieldTag = poModuleIn->GetSizeFieldTag();
-    _sizeFieldPos = 5;
-    _sizeFieldLength = 5;
-}
+DDFRecord::DDFRecord( DDFModule * poModuleIn ) :
+    poModule(poModuleIn),
+    nReuseHeader(FALSE),
+    nFieldOffset(0),
+    _sizeFieldTag(poModuleIn->GetSizeFieldTag()),
+    _sizeFieldPos(5),
+    _sizeFieldLength(5),
+    nDataSize(0),
+    pachData(NULL),
+    nFieldCount(0),
+    paoFields(NULL),
+    bIsClone(FALSE)
+{}
 
 /************************************************************************/
 /*                             ~DDFRecord()                             */
@@ -124,7 +127,7 @@ int DDFRecord::Read()
 /* -------------------------------------------------------------------- */
     if( !nReuseHeader )
     {
-        return( ReadHeader() );
+        return ReadHeader();
     }
 
 /* -------------------------------------------------------------------- */
@@ -893,7 +896,7 @@ DDFRecord::GetStringSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     *pnSuccess = TRUE;
 
-    return( poSFDefn->ExtractStringData( l_pachData, nBytesRemaining, NULL ) );
+    return poSFDefn->ExtractStringData( l_pachData, nBytesRemaining, NULL );
 }
 
 /************************************************************************/
@@ -1009,7 +1012,6 @@ DDFRecord *DDFRecord::CloneOn( DDFModule *poTargetModule )
 
     return poClone;
 }
-
 
 /************************************************************************/
 /*                            DeleteField()                             */

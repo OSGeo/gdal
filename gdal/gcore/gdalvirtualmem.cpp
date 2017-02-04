@@ -27,10 +27,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
-#include "cpl_virtualmem.h"
+#include "cpl_port.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+
+#include <cstddef>
+#include <cstring>
+
+#include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_virtualmem.h"
 
 // To be changed if we go to 64-bit RasterIO coordinates and spacing.
 typedef int coord_type;
@@ -274,7 +282,7 @@ void GDALVirtualMem::DoIOPixelInterleaved(
 
     GetXYBand(nOffset, x, y, band);
 #ifdef DEBUG_VERBOSE
-    fprintf(stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",
+    fprintf(stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",/*ok*/
             eRWFlag, static_cast<int>(nOffset), x, y, band);
 #endif
 
@@ -459,7 +467,7 @@ void GDALVirtualMem::DoIOBandSequential(
     int band = 0;
     GetXYBand(nOffset, x, y, band);
 #if DEBUG_VERBOSE
-    fprintf( stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",
+    fprintf( stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",/*ok*/
              eRWFlag, static_cast<int>(nOffset), x, y, band );
 #endif
 
@@ -1236,10 +1244,10 @@ void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
     size_t nYTile = nTile / nTilesPerRow;
     size_t nXTile = nTile - nYTile * nTilesPerRow;
 
-    int nReqXSize = MIN( nTileXSize,
-                         nXSize - static_cast<int>(nXTile * nTileXSize) );
-    int nReqYSize = MIN( nTileYSize,
-                         nYSize - static_cast<int>(nYTile * nTileYSize) );
+    int nReqXSize = std::min( nTileXSize,
+                              nXSize - static_cast<int>(nXTile * nTileXSize) );
+    int nReqYSize = std::min( nTileYSize,
+                              nYSize - static_cast<int>(nYTile * nTileYSize) );
     if( eRWFlag == GF_Read && (nReqXSize < nTileXSize ||
                                nReqYSize < nTileYSize) )
         memset(pPage, 0, nBytes);

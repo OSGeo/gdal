@@ -248,7 +248,6 @@ static void DumpBand( GDALDatasetH hBaseDS, GDALRasterBandH hSrcOver,
                           "GDALRasterIO read failed at %d.", iLine );
         }
 
-
         const CPLErr err =
             GDALRasterIO( GDALGetRasterBand( hDstDS, 1 ), GF_Write,
                           0, iLine, nXSize, 1,

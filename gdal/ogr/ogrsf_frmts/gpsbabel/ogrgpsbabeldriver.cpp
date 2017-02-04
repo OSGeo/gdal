@@ -92,7 +92,7 @@ static bool OGRGPSBabelDriverIdentifyInternal(
             const char* const apszArgs[] = { "gpsbabel", "-V", NULL };
             CPLString osTmpFileName("/vsimem/gpsbabel_tmp.tmp");
             VSILFILE* tmpfp = VSIFOpenL(osTmpFileName, "wb");
-            bGPSBabelFound = (CPLSpawn(apszArgs, NULL, tmpfp, FALSE) == 0);
+            bGPSBabelFound = CPLSpawn(apszArgs, NULL, tmpfp, FALSE) == 0;
             VSIFCloseL(tmpfp);
             VSIUnlink(osTmpFileName);
         }

@@ -175,7 +175,6 @@ OGROCIStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                OGROCIStrokeArcToOGRGeometry_Points()                 */
 /************************************************************************/

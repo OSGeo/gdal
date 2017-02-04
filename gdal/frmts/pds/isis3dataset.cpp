@@ -74,7 +74,7 @@ class ISISTiledBand : public GDALPamRasterBand
                                int bNativeOrder );
     virtual     ~ISISTiledBand() {}
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -87,18 +87,18 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
                               GIntBig nFirstTileOffsetIn,
                               GIntBig nXTileOffsetIn,
                               GIntBig nYTileOffsetIn,
-                              int bNativeOrderIn )
-
+                              int bNativeOrderIn ) :
+    fpVSIL(fpVSILIn),
+    nFirstTileOffset(0),
+    nXTileOffset(nXTileOffsetIn),
+    nYTileOffset(nYTileOffsetIn),
+    bNativeOrder(bNativeOrderIn)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->fpVSIL = fpVSILIn;
-    this->bNativeOrder = bNativeOrderIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     eDataType = eDT;
     nBlockXSize = nTileXSize;
     nBlockYSize = nTileYSize;
-    this->nXTileOffset = nXTileOffsetIn;
-    this->nYTileOffset = nYTileOffsetIn;
 
     const int l_nBlocksPerRow =
             (poDS->GetRasterXSize() + nTileXSize - 1) / nTileXSize;
@@ -107,13 +107,14 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
 
     if( nXTileOffset == 0 && nYTileOffset == 0 )
     {
-        nXTileOffset = static_cast<GIntBig>(GDALGetDataTypeSize(eDT)/8) * nTileXSize * nTileYSize;
+        nXTileOffset =
+            static_cast<GIntBig>(GDALGetDataTypeSizeBytes(eDT)) *
+            nTileXSize * nTileYSize;
         nYTileOffset = nXTileOffset * l_nBlocksPerRow;
     }
 
-    this->nFirstTileOffset = nFirstTileOffsetIn
+    nFirstTileOffset = nFirstTileOffsetIn
         + (nBand-1) * nYTileOffset * l_nBlocksPerColumn;
-
 }
 
 /************************************************************************/
@@ -184,12 +185,12 @@ class ISIS3Dataset : public RawDataset
 
 public:
     ISIS3Dataset();
-    ~ISIS3Dataset();
+    virtual ~ISIS3Dataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -197,7 +198,6 @@ public:
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
 };
-
 
 /************************************************************************/
 /*                            ISIS3Dataset()                            */
@@ -236,7 +236,7 @@ char **ISIS3Dataset::GetFileList()
 {
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    if( strlen(osExternalCube) > 0 )
+    if( !osExternalCube.empty() )
         papszFileList = CSLAddString( papszFileList, osExternalCube );
 
     return papszFileList;
@@ -249,7 +249,7 @@ char **ISIS3Dataset::GetFileList()
 const char *ISIS3Dataset::GetProjectionRef()
 
 {
-    if( strlen(osProjection) > 0 )
+    if( !osProjection.empty() )
         return osProjection;
 
     return GDALPamDataset::GetProjectionRef();
@@ -701,7 +701,9 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
     const int nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int nLineOffset=0, nPixelOffset=0, nBandOffset=0;
+    int nLineOffset = 0;
+    int nPixelOffset = 0;
+    int nBandOffset = 0;
 
     if( EQUAL(szLayout,"BSQ") )
     {
@@ -816,7 +818,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -860,7 +862,6 @@ const char *ISIS3Dataset::GetKeywordSub( const char *pszPath,
     CSLDestroy( papszTokens );
     return pszDefault;
 }
-
 
 /************************************************************************/
 /*                         GDALRegister_ISIS3()                         */

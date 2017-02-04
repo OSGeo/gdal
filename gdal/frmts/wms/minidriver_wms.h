@@ -28,33 +28,36 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-H_GDALWMSMiniDriverFactory(WMS)
+/*
+ * Base class for a WMS minidriver.
+ * At least Initialize() and one of the ImageRequest() or TiledImageRequest() has to be provided
+ * All minidrivers are instantiated in wmsdriver.cpp, in GDALRegister_WMS()
+ */
 
-class GDALWMSMiniDriver_WMS : public GDALWMSMiniDriver {
-
-    void    BuildURL(CPLString *url, const GDALWMSImageRequestInfo &iri, const char* pszRequest);
+class WMSMiniDriver_WMS : public WMSMiniDriver {
+public:
+    WMSMiniDriver_WMS();
+    virtual ~WMSMiniDriver_WMS();
 
 public:
-    GDALWMSMiniDriver_WMS();
-    virtual ~GDALWMSMiniDriver_WMS();
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
 
-public:
-    virtual CPLErr Initialize(CPLXMLNode *config);
-    virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
-    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
-    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
-    virtual void GetTiledImageInfo(CPLString *url,
-                                              const GDALWMSImageRequestInfo &iri,
-                                              const GDALWMSTiledImageRequestInfo &tiri,
-                                              int nXInBlock,
-                                              int nYInBlock);
-    virtual const char *GetProjectionInWKT();
+    // Return error message in request.Error
+    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request,
+                                        const GDALWMSImageRequestInfo &iri, 
+                                        const GDALWMSTiledImageRequestInfo &tiri) override;
 
-protected:
-    double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what);
+    virtual void GetTiledImageInfo(CPLString &url,
+                                        const GDALWMSImageRequestInfo &iri,
+                                        const GDALWMSTiledImageRequestInfo &tiri,
+                                        int nXInBlock,
+                                        int nYInBlock) override;
 
 protected:
-    CPLString m_base_url;
+    void   BuildURL(CPLString &url, const GDALWMSImageRequestInfo &iri, const char* pszRequest);
+
+protected:
     CPLString m_version;
     int m_iversion;
     CPLString m_layers;
@@ -62,7 +65,7 @@ protected:
     CPLString m_srs;
     CPLString m_crs;
     CPLString m_image_format;
-    CPLString m_projection_wkt;
+    CPLString m_info_format;
     CPLString m_bbox_order;
     CPLString m_transparent;
 };

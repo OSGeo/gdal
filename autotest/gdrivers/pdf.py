@@ -1190,7 +1190,8 @@ def pdf_set_neatline(geo_encoding, dpi = 300):
     gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', None)
 
     for i in range(6):
-        if abs(got_gt[i] - expected_gt[i]) > 1e-7:
+        if (expected_gt[i] == 0 and abs(got_gt[i] - expected_gt[i]) > 1e-7) or \
+           (expected_gt[i] != 0 and abs((got_gt[i] - expected_gt[i])/expected_gt[i]) > 1e-7):
             gdaltest.post_reason('did not get expected gt')
             print(got_gt)
             return 'fail'
@@ -2041,7 +2042,7 @@ def pdf_pam_georef():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Now disable internal georeferencing, so georef should go to PAM 
+    # Now disable internal georeferencing, so georef should go to PAM
     gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds, options = ['GEO_ENCODING=NONE'] )
     if not os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
         gdaltest.post_reason('fail')

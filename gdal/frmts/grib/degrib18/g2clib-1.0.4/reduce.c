@@ -168,7 +168,8 @@
     jj = 0;
 
 /* Computing MIN */
-    i__1 = 30, i__2 = *kbit - 1;
+    i__1 = 30;
+    i__2 = *kbit - 1;
     /*for (j = min(i__1,i__2); j >= 2; --j) {*/
     for (j = (i__1 < i__2) ? i__1 : i__2; j >= 2; --j) {
 /*           VALUES GE KBIT WILL NOT REQUIRE SPLITS.  ONCE THE TOTAL */

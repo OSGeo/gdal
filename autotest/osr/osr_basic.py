@@ -188,6 +188,21 @@ def osr_basic_3():
         gdaltest.post_reason( 'Didnt get Foot linear units' )
         return 'fail'
 
+    if srs.GetLinearUnits() != 0.3048006096012192:
+        gdaltest.post_reason( 'Didnt get Foot linear units' )
+        print('%.16g' % srs.GetLinearUnits())
+        return 'fail'
+
+    if srs.GetTargetLinearUnits('PROJCS') != 0.3048006096012192:
+        gdaltest.post_reason( 'Didnt get Foot linear units' )
+        print('%.16g' % srs.GetTargetLinearUnits('PROJCS'))
+        return 'fail'
+
+    if srs.GetTargetLinearUnits(None) != 0.3048006096012192:
+        gdaltest.post_reason( 'Didnt get Foot linear units' )
+        print('%.16g' % srs.GetTargetLinearUnits(None))
+        return 'fail'
+
     return 'success'
 
 

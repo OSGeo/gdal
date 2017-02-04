@@ -402,7 +402,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
 
     resPerProj = {}
 
-    dsTiff =  gdal.Open( os.path.join(inPath, origTiff), gdal.GA_ReadOnly );
+    dsTiff = gdal.Open( os.path.join(inPath, origTiff), gdal.GA_ReadOnly )
     s_srs_wkt = dsTiff.GetProjection()
 
     #objects to hold the various tests
@@ -433,9 +433,9 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         t_srs_wkt = srs.ExportToWkt()
         if not silent:
             print("going to warp file "+origTiff+"\n" + s_srs_wkt + "\ninto file "+projRaster + "\n" + t_srs_wkt)
-        dswarp = gdal.AutoCreateWarpedVRT( dsTiff, s_srs_wkt, t_srs_wkt, gdal.GRA_NearestNeighbour, 0 );
-        drv_inter = gdal.GetDriverByName(intFmt);
-        drv_netcdf = gdal.GetDriverByName("netcdf");
+        dswarp = gdal.AutoCreateWarpedVRT( dsTiff, s_srs_wkt, t_srs_wkt, gdal.GRA_NearestNeighbour, 0 )
+        drv_inter = gdal.GetDriverByName(intFmt)
+        drv_netcdf = gdal.GetDriverByName("netcdf")
         dsw = drv_inter.CreateCopy(projRaster, dswarp, 0)
         if not silent:
             print("Warped %s to %s" % (proj[0], projRaster))

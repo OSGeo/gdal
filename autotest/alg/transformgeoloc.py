@@ -35,7 +35,8 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-from osgeo import gdal, osr
+from osgeo import gdal
+from osgeo import osr
 
 ###############################################################################
 # Test a fairly default case.
@@ -43,23 +44,19 @@ from osgeo import gdal, osr
 def transformgeoloc_1():
 
     try:
-        from osgeo import gdalnumeric
-        gdalnumeric.zeros
-    except:
-        try:
-            import osgeo.gdal_array as gdalnumeric
-        except ImportError:
-            return 'skip'
+        import numpy
+    except ImportError:
+        return 'skip'
 
     # Setup 2x2 geolocation arrays in a memory dataset with lat/long values.
 
     drv = gdal.GetDriverByName('MEM')
     geoloc_ds = drv.Create('geoloc_1',2,2,3,gdal.GDT_Float64)
 
-    lon_array = gdalnumeric.asarray([[-117.0,-116.0],
-                                     [-116.5, -115.5]])
-    lat_array = gdalnumeric.asarray([[45.0, 45.5],
-                                     [44.0, 44.5]])
+    lon_array = numpy.asarray([[-117.0,-116.0],
+                               [-116.5, -115.5]])
+    lat_array = numpy.asarray([[45.0, 45.5],
+                               [44.0, 44.5]])
 
     geoloc_ds.GetRasterBand(1).WriteArray(lon_array)
     geoloc_ds.GetRasterBand(2).WriteArray(lat_array)

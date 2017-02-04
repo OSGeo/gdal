@@ -967,7 +967,7 @@ void Clock_Print (char *buffer, int n, double l_clock, const char *format,
             j++;
             buffer[j] = '\0';
          } else {
-            Clock_FormatParse (locBuff, sec, floatSec, totDay, year, month,
+            Clock_FormatParse (locBuff, sec, (float)floatSec, totDay, year, month,
                                day, format[i]);
             buffer[j] = '\0';
             strncat (buffer, locBuff, n - j);
@@ -1053,7 +1053,7 @@ void Clock_Print2 (char *buffer, int n, double l_clock, char *format,
             j++;
             buffer[j] = '\0';
          } else {
-            Clock_FormatParse (locBuff, sec, floatSec, totDay, year, month,
+            Clock_FormatParse (locBuff, sec, (float)floatSec, totDay, year, month,
                                day, format[i]);
             buffer[j] = '\0';
             strncat (buffer, locBuff, n - j);

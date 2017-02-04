@@ -70,7 +70,7 @@ class CPL_DLL OGR_SRSNode
     OGRErr      importFromWkt( char **, int nRecLevel, int* pnNodes );
 
   public:
-                OGR_SRSNode(const char * = NULL);
+    explicit     OGR_SRSNode(const char * = NULL);
                 ~OGR_SRSNode();
 
     /** Return whether this is a leaf node.
@@ -154,7 +154,7 @@ class CPL_DLL OGRSpatialReference
                                   const char* pszURN);
   public:
                 OGRSpatialReference(const OGRSpatialReference&);
-                OGRSpatialReference(const char * = NULL);
+    explicit    OGRSpatialReference(const char * = NULL);
 
     virtual    ~OGRSpatialReference();
 
@@ -189,7 +189,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromESRI( char ** );
     OGRErr      importFromPCI( const char *, const char * = NULL,
                                double * = NULL );
-      
+
 #define USGS_ANGLE_DECIMALDEGREES 0     /**< Angle is in decimal degrees. */
 #define USGS_ANGLE_PACKEDDMS      TRUE  /**< Angle is in packed degree minute second. */
 #define USGS_ANGLE_RADIANS        2     /**< Angle is in radians. */
@@ -228,7 +228,7 @@ class CPL_DLL OGRSpatialReference
                          OGRAxisOrientation eYAxisOrientation );
 
     // Machinery for accessing parse nodes
-    
+
     //! Return root node
     OGR_SRSNode *GetRoot() { return poRoot; }
     //! Return root node
@@ -563,7 +563,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      ImportFromESRIStatePlaneWKT(
         int nCode, const char* pszDatumName, const char* pszUnitsName,
         int nPCSCode, const char* pszCSName = NULL );
-    
+
     /** ImportFromESRIWisconsinWKT */
     OGRErr      ImportFromESRIWisconsinWKT(
         const char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin,
@@ -603,6 +603,12 @@ public:
     /** Fetch internal target coordinate system. */
     virtual OGRSpatialReference *GetTargetCS() = 0;
 
+    /** Whether the transformer will emit CPLError */
+    virtual bool GetEmitErrors() { return false; }
+
+    /** Set if the transformer must emit CPLError */
+    virtual void SetEmitErrors(bool /*bEmitErrors*/) {}
+
     // From CT_MathTransform
 
     /**
@@ -641,7 +647,6 @@ public:
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
                              int *pabSuccess = NULL ) = 0;
-
 };
 
 OGRCoordinateTransformation CPL_DLL *

@@ -161,7 +161,11 @@
 {
   /* %typemap(out) OGRErr */
   if ( result != 0 && bUseExceptions) {
-    PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+    const char* pszMessage = CPLGetLastErrorMsg();
+    if( pszMessage[0] != '\0' )
+        PyErr_SetString( PyExc_RuntimeError, pszMessage );
+    else
+        PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
     SWIG_fail;
   }
 }
@@ -600,7 +604,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap argout used in Feature::GetFieldAsIntegerList()
  */
-%typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen, int *pList)
+%typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen = 0, int *pList = NULL)
 {
   /* %typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen, int *pList) */
   $1 = &nLen;
@@ -622,36 +626,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap argout used in Feature::GetFieldAsInteger64List()
  */
-%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList)
-{
-  /* %typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList) */
-  $1 = &nLen;
-  $2 = &pList;
-}
-
-%typemap(argout) (int *nLen, const GIntBig **pList )
-{
-  /* %typemap(argout) (int *nLen, const GIntBig **pList ) */
-  Py_DECREF($result);
-  PyObject *out = PyList_New( *$1 );
-  for( int i=0; i<*$1; i++ ) {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, (*$2)[i]);
-    PyObject* val;
-%#if PY_VERSION_HEX>=0x03000000
-    val = PyLong_FromString(szTmp, NULL, 10);
-%#else
-    val = PyInt_FromString(szTmp, NULL, 10);
-%#endif
-    PyList_SetItem( out, i, val );
-  }
-  $result = out;
-}
-
-/*
- * Typemap argout used in Feature::GetFieldAsInteger64List()
- */
-%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList)
+%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen = 0, GIntBig *pList = NULL)
 {
   /* %typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList) */
   $1 = &nLen;
@@ -680,7 +655,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap argout used in Feature::GetFieldAsDoubleList()
  */
-%typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen, double *pList)
+%typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen = 0, double *pList = NULL)
 {
   /* %typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen, double *pList) */
   $1 = &nLen;
@@ -1132,7 +1107,12 @@ static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
     CPLXMLNode *psChild;
     char       *pszText = NULL;
 
-    nChildCount = PyList_Size(pyList) - 2;
+    if( PyList_Size(pyList) > INT_MAX )
+    {
+        PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );
+        return NULL;
+    }
+    nChildCount = static_cast<int>(PyList_Size(pyList)) - 2;
     if( nChildCount < 0 )
     {
         PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );
@@ -1904,4 +1884,78 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
 %#else
   PyErr_SetString( PyExc_RuntimeError, "needs Python 2.7 or later" );
 %#endif
+}
+
+
+
+%typemap(in,numinputs=0) (int *pnxvalid, int *pnyvalid, int* pisvalid) ( int nxvalid = 0, int nyvalid = 0, int isvalid = 0  )
+{
+  /* %typemap(in) (int *pnxvalid, int *pnyvalid, int* pisvalid) */
+  $1 = &nxvalid;
+  $2 = &nyvalid;
+  $3 = &isvalid;
+}
+
+%typemap(argout) (int *pnxvalid, int *pnyvalid, int* pisvalid)
+{
+   /* %typemap(argout) (int *pnxvalid, int *pnyvalid, int* pisvalid)  */
+  PyObject *r;
+  if ( !*$3 ) {
+    Py_INCREF(Py_None);
+    r = Py_None;
+  }
+  else {
+    r = PyTuple_New( 2 );
+    PyTuple_SetItem( r, 0, PyLong_FromLong(*$1) );
+    PyTuple_SetItem( r, 1, PyLong_FromLong(*$2) );
+  }
+  $result = t_output_helper($result,r);
+}
+
+%typemap(in,numinputs=0) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct) ( OGRLayerShadow* poBelongingLayer = NULL, double dfProgressPct = 0 )
+{
+  /* %typemap(in) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)  */
+  $1 = &poBelongingLayer;
+  $2 = &dfProgressPct;
+}
+
+%typemap(check) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)
+{
+   /* %typemap(check) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)  */
+  if( !arg3 )
+    $2 = NULL;
+}
+
+%typemap(argout) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)
+{
+   /* %typemap(argout) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)  */
+
+  if( arg2 )
+  {
+    if( $result == Py_None )
+    {
+        $result = PyList_New(1);
+        PyList_SetItem($result, 0, Py_None);
+    }
+
+    if ( !*$1 ) {
+        Py_INCREF(Py_None);
+        $result = SWIG_Python_AppendOutput($result, Py_None);
+    }
+    else {
+        $result = SWIG_Python_AppendOutput($result,
+            SWIG_NewPointerObj(SWIG_as_voidptr( *$1), SWIGTYPE_p_OGRLayerShadow, 0 ));
+    }
+  }
+
+  if( arg3 )
+  {
+    if( $result == Py_None )
+    {
+        $result = PyList_New(1);
+        PyList_SetItem($result, 0, Py_None);
+    }
+    $result = SWIG_Python_AppendOutput($result, PyFloat_FromDouble( *$2));
+  }
+
 }

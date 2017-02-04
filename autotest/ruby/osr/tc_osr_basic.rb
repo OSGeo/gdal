@@ -9,7 +9,7 @@ class TestOsrBasic < Test::Unit::TestCase
     utm_srs.set_utm(11)
     utm_srs.set_well_known_geog_cs('WGS84')
 
-    parm_list = [ 
+    parm_list = [
                  [Gdal::Osr::SRS_PP_CENTRAL_MERIDIAN, -117.0],
                  [Gdal::Osr::SRS_PP_LATITUDE_OF_ORIGIN, 0.0],
                  [Gdal::Osr::SRS_PP_SCALE_FACTOR, 0.9996],
@@ -21,7 +21,7 @@ class TestOsrBasic < Test::Unit::TestCase
       value = utm_srs.get_proj_parm(parm[0], -1111)
       assert_in_delta(value, parm[1], 0.0000000000001)
     end
-   
+
     auth_list = [ ['GEOGCS', '4326'], ['DATUM', '6326'] ]
 
     auth_list.each() do |auth|
@@ -29,7 +29,7 @@ class TestOsrBasic < Test::Unit::TestCase
       assert_equal(utm_srs.get_authority_code(auth[0]), auth[1])
     end
   end
-  
+
   # Test simple default NAD83 State Plane zone.
   def test_nad83_state_plane()
     srs = Gdal::Osr::SpatialReference.new()
@@ -48,7 +48,7 @@ class TestOsrBasic < Test::Unit::TestCase
       value = srs.get_proj_parm(parm[0], -1111)
       assert_in_delta(parm[1], value, 0.0000001)
     end
-    
+
     auth_list = [ ['GEOGCS', '4269'],
                   ['DATUM', '6269'],
                   ['PROJCS', '26943'],
@@ -80,7 +80,7 @@ class TestOsrBasic < Test::Unit::TestCase
       value = srs.get_proj_parm(parm[0], -1111)
       assert_in_delta(parm[1], value, 0.0000001)
     end
-    
+
     auth_list = [ ['GEOGCS', '4269'],
                   ['DATUM', '6269']
                 ]
@@ -102,15 +102,15 @@ class TestOsrBasic < Test::Unit::TestCase
   def test_translate_nad_shift()
     srs = Gdal::Osr::SpatialReference.new()
     srs.set_gs(-117.0, 100000.0, 100000)
-    srs.set_geog_cs('Test GCS', 'Test Datum', 'WGS84', 
-                    Gdal::Osr::SRS_WGS84_SEMIMAJOR, 
+    srs.set_geog_cs('Test GCS', 'Test Datum', 'WGS84',
+                    Gdal::Osr::SRS_WGS84_SEMIMAJOR,
                     Gdal::Osr::SRS_WGS84_INVFLATTENING)
-    
+
     srs.set_towgs84(1, 2, 3)
 
     assert_equal(srs.get_towgs84(), [1,2,3,0,0,0,0])
     proj4 = srs.export_to_proj4()
-    
+
     srs2 = Gdal::Osr::SpatialReference.new()
     srs2.import_from_proj4(proj4)
 

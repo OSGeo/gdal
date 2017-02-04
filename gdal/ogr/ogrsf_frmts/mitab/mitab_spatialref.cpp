@@ -210,6 +210,8 @@
 
 #include "mitab.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 /* -------------------------------------------------------------------- */
@@ -273,7 +275,7 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 6236, 39, "Hu_Tzu_Shan",                 4, -634, -549, -201,0, 0, 0, 0, 0},
 { 0,    40, "Indian_Thailand_Vietnam",     11,214,  836,  303, 0, 0, 0, 0, 0},
 { 0,    41, "Indian_Bangladesh",           11,289,  734,  257, 0, 0, 0, 0, 0},
-{ 0,    42, "Ireland_1965",                13,506,  -122, 611, 0, 0, 0, 0, 0},
+{ 6299, 42, "Ireland_1965",                13,506,  -122, 611, 0, 0, 0, 0, 0},
 { 0,    43, "ISTS_073_Astro_1969",         4, 208,  -435, -229,0, 0, 0, 0, 0},
 { 6725, 44, "Johnston_Island_1961",        4, 191,  -77,  -204,0, 0, 0, 0, 0},
 { 6244, 45, "Kandawala",                   11,-97,  787,  86,  0, 0, 0, 0, 0},
@@ -405,7 +407,7 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 6301, 1015,"Tokyo",                      10, -146.414, 507.337, 680.507,0,0,0,0,0},
 { 0,    1016,"Finnish_KKJ",                4, -96.062, -82.428, -121.754, -4.801, -0.345, 1.376, 1.496, 0},
 { 6610, 1017,"Xian 1980",                  53, 24, -123, -94, -0.02, -0.25, 0.13, 1.1, 0},
-{ 0,    1018,"Lithuanian Pulkovo 1942",	   4, -40.59527, -18.54979, -69.33956, -2.508, -1.8319, 2.6114, -4.2991, 0},
+{ 0,    1018,"Lithuanian Pulkovo 1942",    4, -40.59527, -18.54979, -69.33956, -2.508, -1.8319, 2.6114, -4.2991, 0},
 { 0,    1019,"Belgian 1972 7 Parameter",   4, -99.059, 53.322, -112.486, -0.419, 0.83, -1.885, 0.999999, 0},
 { 6818, 1020,"S-JTSK with Ferro prime meridian", 10, 589, 76, 480, 0, 0, 0, 0, -17.666666666667},
 
@@ -822,7 +824,6 @@ OGRSpatialReference *TABFile::GetSpatialRef()
     if (m_poSpatialRef != NULL)
         return m_poSpatialRef;
 
-
     /*-----------------------------------------------------------------
      * Fetch the parameters from the header.
      *----------------------------------------------------------------*/
@@ -844,6 +845,12 @@ OGRSpatialReference *TABFile::GetSpatialRef()
 /**********************************************************************
  *                   TABFile::GetSpatialRefFromTABProj()
  **********************************************************************/
+
+static bool TAB_EQUAL( double a, double b )
+{
+    // TODO(schwehr): Use std::abs.
+    return (a < b ? (b - a) : (a - b)) < 1.0e-10;
+}
 
 OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABProj)
 {
@@ -1243,7 +1250,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
                                    sTABProj.adProjParams[0],   // dfCenterLong
                                    sTABProj.adProjParams[3],   // dfAzimuth
                                    sTABProj.adProjParams[2],   // dfPseudoStdParallelLat
-                                   1.0,					     // dfScale
+                                   1.0,                        // dfScale
                                    sTABProj.adProjParams[4],   // dfFalseEasting
                                    sTABProj.adProjParams[5] ); // dfFalseNorthing
         break;
@@ -1291,12 +1298,9 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
      * were in the order of 1e-150 when they should have actually been zeros,
      * we will use an epsilon in our scan instead of looking for equality.
      *----------------------------------------------------------------*/
-#define TAB_EQUAL(a, b) (((a)<(b) ? ((b)-(a)) : ((a)-(b))) < 1e-10)
-    char        szDatumName[160];
-    int         iDatumInfo;
     const MapInfoDatumInfo *psDatumInfo = NULL;
 
-    for( iDatumInfo = 0;
+    for( int iDatumInfo = 0;
          asDatumInfoList[iDatumInfo].nMapInfoDatumID != -1;
          iDatumInfo++ )
     {
@@ -1319,6 +1323,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
         psDatumInfo = NULL;
     }
 
+    char szDatumName[160] = {};
     if( psDatumInfo == NULL )
     {
         if( sTABProj.adDatumParams[0] == 0.0
@@ -1328,7 +1333,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
             && sTABProj.adDatumParams[4] == 0.0 )
         {
             snprintf( szDatumName, sizeof(szDatumName),
-                     "MIF 999,%d,%.15g,%.15g,%.15g",
+                     "MIF 999,%u,%.15g,%.15g,%.15g",
                      sTABProj.nEllipsoidId,
                      sTABProj.dDatumShiftX,
                      sTABProj.dDatumShiftY,
@@ -1337,7 +1342,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
         else
         {
             snprintf( szDatumName, sizeof(szDatumName),
-                     "MIF 9999,%d,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g",
+                     "MIF 9999,%u,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g",
                      sTABProj.nEllipsoidId,
                      sTABProj.dDatumShiftX,
                      sTABProj.dDatumShiftY,
@@ -1400,7 +1405,8 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     /*-----------------------------------------------------------------
      * Set the spheroid.
      *----------------------------------------------------------------*/
-    double      dfSemiMajor=0.0, dfInvFlattening=0.0;
+    double dfSemiMajor = 0.0;
+    double dfInvFlattening = 0.0;
     const char *pszSpheroidName = NULL;
 
     for( int i = 0; asSpheroidInfoList[i].nMapInfoId != -1; i++ )
@@ -1536,8 +1542,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
 
     m_poSpatialRef = poSpatialRef->Clone();
 
-    TABProjInfo     sTABProj;
-    int             nParmCount;
+    TABProjInfo sTABProj;
+    int nParmCount = 0;
     GetTABProjFromSpatialRef(poSpatialRef, sTABProj, nParmCount);
 
     /*-----------------------------------------------------------------
@@ -1632,7 +1638,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         parms[2] = 90.0;
         nParmCount = 3;
 
-        if( ABS((ABS(parms[1]) - 90)) > 0.001 )
+        if( std::abs((std::abs(parms[1]) - 90)) > 0.001 )
             sTABProj.nProjId = 28;
     }
 
@@ -1697,7 +1703,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         parms[2] = 90.0;
         nParmCount = 3;
 
-        if( ABS((ABS(parms[1]) - 90)) > 0.001 )
+        if( std::abs((std::abs(parms[1]) - 90)) > 0.001 )
             sTABProj.nProjId = 29;
     }
 
@@ -1919,7 +1925,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
 
     if (pszDatumCode && pszDatumAuthority && EQUAL(pszDatumAuthority, "EPSG"))
     {
-    	nDatumEPSGCode = atoi(pszDatumCode);
+        nDatumEPSGCode = atoi(pszDatumCode);
     }
 
     /*-----------------------------------------------------------------
@@ -2005,12 +2011,10 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
      *----------------------------------------------------------------*/
     else
     {
-        int     i;
-
-        for( i = 0; asDatumInfoList[i].nMapInfoDatumID != -1; i++ )
+        for( int i = 0; asDatumInfoList[i].nMapInfoDatumID != -1; i++ )
         {
-        	if ( (nDatumEPSGCode > 0 && asDatumInfoList[i].nDatumEPSGCode == nDatumEPSGCode) ||
-        		   EQUAL(pszWKTDatum,asDatumInfoList[i].pszOGCDatumName) )
+            if ( (nDatumEPSGCode > 0 && asDatumInfoList[i].nDatumEPSGCode == nDatumEPSGCode) ||
+                 EQUAL(pszWKTDatum,asDatumInfoList[i].pszOGCDatumName) )
             {
                 psDatumInfo = asDatumInfoList + i;
                 break;

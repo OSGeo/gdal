@@ -76,10 +76,20 @@ effect of this option will be less efficient. This option consumes addionnal 60 
 
 <h3>Interleaved reading</h3>
 
+<p>
 Due to the nature of OSM files and how the driver works internally,
-the default reading mode might not work correctly, because too many
+the default reading mode that works per-layer might not work correctly, because too many
 features will accumulate in the layers before being consumed by the
-user application.  For large files, applications should set the
+user application.
+</p>
+
+<p>
+Starting with GDAL 2.2, applications should use the GDALDataset::GetNextFeature()
+API to iterate over features in the order they are produced.
+</p>
+
+<p>
+For earlier versions, for large files, applications should set the
 OGR_INTERLEAVED_READING=YES configuration option to turn on a special
 reading mode where the following reading pattern must be used:
 
@@ -103,6 +113,7 @@ reading mode where the following reading pattern must be used:
     }
     while( bHasLayersNonEmpty );
 </pre>
+</p>
 
 <p>
 

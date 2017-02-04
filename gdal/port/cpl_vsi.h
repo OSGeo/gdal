@@ -91,7 +91,7 @@ size_t CPL_DLL  VSIFRead( void *, size_t, size_t, FILE * ) EXPERIMENTAL_CPL_WARN
 size_t CPL_DLL  VSIFWrite( const void *, size_t, size_t, FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 char CPL_DLL   *VSIFGets( char *, int, FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIFPuts( const char *, FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
-int CPL_DLL     VSIFPrintf( FILE *, const char *, ... ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT CPL_PRINT_FUNC_FORMAT(2, 3);
+int CPL_DLL     VSIFPrintf( FILE *, CPL_FORMAT_STRING(const char *), ... ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT CPL_PRINT_FUNC_FORMAT(2, 3);
 
 int CPL_DLL     VSIFGetc( FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIFPutc( int, FILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
@@ -166,11 +166,11 @@ size_t CPL_DLL  VSIFWriteL( const void *, size_t, size_t, VSILFILE * ) EXPERIMEN
 int CPL_DLL     VSIFEofL( VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIFTruncateL( VSILFILE *, vsi_l_offset ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL     VSIFFlushL( VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
-int CPL_DLL     VSIFPrintfL( VSILFILE *, const char *, ... ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT CPL_PRINT_FUNC_FORMAT(2, 3);
+int CPL_DLL     VSIFPrintfL( VSILFILE *, CPL_FORMAT_STRING(const char *), ... ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT CPL_PRINT_FUNC_FORMAT(2, 3);
 int CPL_DLL     VSIFPutcL( int, VSILFILE * ) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 
 /** Range status */
-typedef enum 
+typedef enum
 {
     VSI_RANGE_STATUS_UNKNOWN, /**< Unknown */
     VSI_RANGE_STATUS_DATA,    /**< Data present */
@@ -277,7 +277,6 @@ void CPL_DLL   *VSIReallocVerbose(  void* pOldPtr, size_t nNewSize, const char* 
 char CPL_DLL   *VSIStrdupVerbose(  const char* pszStr, const char* pszFile, int nLine ) CPL_WARN_UNUSED_RESULT;
 /** VSI_STRDUP_VERBOSE */
 #define VSI_STRDUP_VERBOSE( pszStr ) VSIStrdupVerbose(pszStr,__FILE__,__LINE__)
-
 
 GIntBig CPL_DLL CPLGetPhysicalRAM(void);
 GIntBig CPL_DLL CPLGetUsablePhysicalRAM(void);

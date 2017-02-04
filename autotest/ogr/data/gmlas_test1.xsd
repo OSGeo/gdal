@@ -1,0 +1,472 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:otherns="http://other_ns"
+           xmlns:myns="http://myns" 
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:import namespace="http://other_ns" schemaLocation="gmlas_test1_otherns.xsd"/>
+
+<xs:element name="an_abstract_element" abstract="true"/>
+
+<xs:element name="an_abstract_element_without_realizations" abstract="true"/>
+
+<xs:element name="abstract_element_realization1" substitutionGroup="myns:an_abstract_element">
+  <xs:complexType>
+        <xs:sequence>
+             <xs:element name="a_int" type="xs:int"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="abstract_element_realization2" substitutionGroup="myns:an_abstract_element">
+  <xs:complexType>
+        <xs:sequence>
+             <xs:element name="b_int" type="xs:int"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+ <xs:complexType name="myBaseType">
+        <xs:annotation><xs:documentation>Doc of myBaseType</xs:documentation></xs:annotation>
+        <xs:sequence>
+             <xs:element name="base_int" type="xs:int"/>
+        </xs:sequence>
+        <!-- id attribute -->
+        <xs:attribute name="id" type="xs:string">
+        </xs:attribute>
+  </xs:complexType>
+
+<xs:element name="main_elt">
+  <xs:annotation><xs:documentation>Doc of main_elt</xs:documentation></xs:annotation>
+  <xs:complexType>
+    <xs:annotation><xs:documentation>Doc of main_elt complex type</xs:documentation></xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="myns:myBaseType">
+         <xs:sequence>
+            <!-- id element -->
+            <xs:element name="id"  type="xs:string"/>
+
+            <!-- all primitive types -->
+            <xs:element name="string"  type="xs:string"/>
+            <xs:element name="string_array"  type="xs:string" maxOccurs="unbounded"/>
+            <xs:element name="int"  type="xs:int"/>
+            <xs:element name="int_array"  type="xs:int" maxOccurs="2"/>
+            <xs:element name="long"  type="xs:long"/>
+            <xs:element name="long_array"  type="xs:long" maxOccurs="unbounded"/>
+            <xs:element name="float"  type="xs:float"/>
+            <xs:element name="float_array"  type="xs:float" maxOccurs="unbounded"/>
+            <xs:element name="double"  type="xs:double"/>
+            <xs:element name="double_array"  type="xs:double" maxOccurs="unbounded"/>
+            <xs:element name="decimal"  type="xs:decimal"/>
+            <xs:element name="byte"  type="xs:byte"/>
+            <xs:element name="short"  type="xs:short"/>
+            <xs:element name="positiveInteger"  type="xs:positiveInteger"/>
+            <xs:element name="dt"  type="xs:dateTime"/>
+            <xs:element name="dt_array"  type="xs:dateTime" maxOccurs="unbounded"/>
+            <xs:element name="date"  type="xs:date"/>
+            <xs:element name="time"  type="xs:time"/>
+            <xs:element name="boolean"  type="xs:boolean"/>
+            <xs:element name="boolean_array" maxOccurs="2">
+                <xs:annotation><xs:documentation>Doc of boolean_array</xs:documentation></xs:annotation>
+                <xs:simpleType>
+                    <xs:annotation><xs:documentation>Doc of boolean_array simple type</xs:documentation></xs:annotation>
+                    <xs:restriction base="xs:boolean"/>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="base64Binary"  type="xs:base64Binary"/>
+            <xs:element name="hexBinary"  type="xs:hexBinary"/>
+
+            <!-- complex type with simple content (attributes) -->
+            <xs:element name="myint"  type="myns:myint"/>
+            <xs:element name="myint_repeated"  type="myns:myint" minOccurs="0" maxOccurs="2"/>
+
+            <xs:element name="required_elt_with_only_optional_attr">
+                <xs:complexType>
+                    <xs:sequence/>
+                    <xs:attribute name="attr" type="xs:string">
+                        <xs:annotation><xs:documentation>Doc of attr</xs:documentation></xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="optional_elt_with_only_req_attr" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence/>
+                    <xs:attribute name="attr" type="xs:string" use="required"/>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- test nillability -->
+            <xs:element name="int_min_occurs_0"  type="xs:int" minOccurs="0"/>
+            <xs:element name="int_nillable"  type="xs:int" nillable="true"/>
+            <xs:element name="int_min_occurs_0_nillable"  type="xs:int" nillable="true" minOccurs="0"/>
+            <xs:element name="int_min_occurs_0_nillable_bis"  type="xs:int" nillable="true" minOccurs="0"/>
+            <xs:element name="simpleContent_extension_min_occurs_0_nillable" minOccurs="0" nillable="true">
+                <xs:complexType>
+                    <xs:simpleContent>
+                        <xs:extension base="xs:string">
+                            <xs:attribute name="nilReason" type="xs:string"/>
+                        </xs:extension>
+                    </xs:simpleContent>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="anonymous_type">
+                <xs:simpleType>
+                <xs:restriction base="xs:int"/>
+                </xs:simpleType>
+            </xs:element>
+
+            <xs:element name="union">
+                <xs:simpleType>
+                    <xs:union memberTypes="myns:positiveIntegerMax42 myns:enumerationOfStrings xs:dateTime" />
+                </xs:simpleType>
+            </xs:element>
+
+            <xs:element name="list_of_string">
+                <xs:simpleType>
+                    <xs:restriction>
+                        <xs:simpleType>
+                            <xs:list itemType="xs:string" />
+                        </xs:simpleType>
+                        <xs:maxLength value="20"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+
+            <xs:element name="list_of_boolean">
+                <xs:simpleType>
+                    <xs:list itemType="xs:boolean" />
+                </xs:simpleType>
+            </xs:element>
+
+            <xs:element name="list_of_integer">
+                <xs:simpleType>
+                    <xs:list itemType="xs:integer" />
+                </xs:simpleType>
+            </xs:element>
+
+            <xs:element name="list_of_integer64">
+                <xs:simpleType>
+                    <xs:list itemType="xs:long" />
+                </xs:simpleType>
+            </xs:element>
+
+            <xs:element name="list_of_real">
+                <xs:simpleType>
+                    <xs:list itemType="xs:double" />
+                </xs:simpleType>
+            </xs:element>
+
+            <xs:element name="list_of_datetime">
+                <xs:simpleType>
+                    <xs:list itemType="xs:dateTime" />
+                </xs:simpleType>
+            </xs:element>
+
+            <xs:element name="elt_with_list_of_integer_attr">
+                <xs:complexType>
+                    <xs:sequence/>
+                    <xs:attribute name="attr">
+                        <xs:simpleType>
+                            <xs:list itemType="xs:integer" />
+                        </xs:simpleType>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- can be inlined into main table -->
+            <xs:element name="compound_simplifiable">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="subelement" type="xs:string" minOccurs="0"/>
+                        <xs:element name="subelement2" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- optional element but with a required attribute -->
+            <xs:element name="compound_simplifiable_optional" minOccurs="0">
+                <xs:complexType>
+                    <xs:simpleContent>
+                        <xs:extension base="xs:string">
+                            <xs:attribute name="attr" type="xs:string" use="required"/>
+                        </xs:extension>
+                    </xs:simpleContent>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- can be simplified as a string list -->
+            <xs:element name="sequence_1_string_unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="subelement" type="xs:string" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- can be simplified as a string list -->
+            <xs:element name="sequence_unbounded_string_1">
+                <xs:complexType>
+                    <xs:sequence maxOccurs="unbounded">
+                        <xs:element name="subelement" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="unbounded_sequence_1_dt" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="subelement" type="xs:dateTime"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="sequence_1_dt_unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="subelement" type="xs:dateTime" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="sequence_unbounded_dt_1">
+                <xs:complexType>
+                    <xs:sequence maxOccurs="unbounded">
+                        <xs:element name="subelement" type="xs:dateTime"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="sequence_sequence">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="subsequence" maxOccurs="unbounded">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="subelement" type="xs:dateTime" maxOccurs="unbounded"/>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="sequence_1_unbounded_with_2_subelts">
+                <xs:complexType>
+                    <xs:sequence maxOccurs="unbounded">
+                        <xs:element name="subelement" type="xs:string"/>
+                        <xs:element name="subelement2" type="xs:string" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="sequence_1_unbounded_non_simplifiable" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence maxOccurs="unbounded">
+                        <xs:element name="subelement" type="xs:string"/>
+                    </xs:sequence>
+                    <xs:attribute name="id" type="xs:string"/>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="sequence_unbounded_1_with_2_subelts" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="subelement" type="xs:string"/>
+                        <xs:element name="subelement2" type="xs:string" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="sequence_with_attr_unbounded" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="subelement" type="xs:string"/>
+                        <xs:element name="subelement2" type="xs:string" minOccurs="0"/>
+                    </xs:sequence>
+                    <xs:attribute name="id" type="xs:string"/>
+                </xs:complexType>
+            </xs:element>
+
+            <!-- a not so complex type -->
+            <xs:element name="int_complex_simplifiable" maxOccurs="2">
+                <xs:complexType>
+                    <xs:simpleContent>
+                        <xs:extension base="xs:int"/>
+                    </xs:simpleContent>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element ref="myns:an_abstract_element_without_realizations" minOccurs="0"/>
+            <xs:element ref="myns:an_abstract_element" maxOccurs="unbounded"/>
+            <xs:element ref="otherns:an_abstract_element_in_other_ns"/>
+
+            <xs:element name="any_type" type="xs:anyType"/>
+            <xs:element name="any_type_repeated" type="xs:anyType" maxOccurs="2"/>
+            <xs:element name="any_type_optional" minOccurs="0"/>
+            <xs:element name="any_attr" type="myns:int_with_any_attr"/>
+            <xs:element name="any_attr_no_attr" type="myns:int_with_any_attr"/>
+
+            <xs:group ref="myns:group1" maxOccurs="unbounded"/>
+            <xs:group ref="myns:group2"/>
+            <xs:group ref="myns:group3" maxOccurs="unbounded"/>
+            <!-- simplifiable as string list -->
+            <xs:group ref="myns:group4" maxOccurs="unbounded"/>
+
+            <xs:element ref="myns:rec_A" minOccurs="0"/>
+
+            <xs:element name="myext" type="myns:superExtensionType"/>
+            <xs:element name="myext2" type="myns:superExtensionType" minOccurs="0"/>
+
+          </xs:sequence>
+
+        <xs:attribute name="optionalStrAttr" type="xs:string"/>
+        <xs:attribute name="fixedValUnset" type="xs:string" fixed="fixed_value"/>
+        <xs:attribute name="fixedValSet" type="xs:string" fixed="fixed_value"/>
+        <xs:attribute name="defaultValUnset" type="xs:string" default="default_value"/>
+        <xs:attribute name="defaultValSet" type="xs:string" default="default_value"/>
+        <xs:attribute ref="otherns:id" use="required"/>
+        <xs:attributeGroup ref="myns:myAttributeGroup"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:attributeGroup name="myAttributeGroup">
+  <xs:attribute name="myAttributeGroupAttr1" type="xs:string"/>
+  <xs:attribute name="myAttributeGroupAttr2" type="xs:integer" use="required"/>
+</xs:attributeGroup>
+
+<!-- complex type with simple content (attributes) -->
+<xs:complexType name="myint">
+    <xs:annotation><xs:documentation>Doc myint</xs:documentation></xs:annotation>
+    <xs:simpleContent>
+        <xs:extension base="xs:int">
+            <xs:attribute name="myAttr" type="otherns:myAttrType">
+                <xs:annotation><xs:documentation>Doc myAttr</xs:documentation></xs:annotation>
+            </xs:attribute>
+        </xs:extension>
+    </xs:simpleContent>
+</xs:complexType>
+
+<!-- This models swe:CategoryType and swe:AbstractSWEType -->
+<xs:complexType name="superExtensionType">
+    <xs:complexContent>
+        <xs:extension base="myns:extensionType">
+        </xs:extension>
+    </xs:complexContent>
+</xs:complexType>
+
+<xs:complexType name="extensionType">
+    <xs:sequence>
+        <xs:element name="extension" type="xs:anyType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID" use="optional"/>
+</xs:complexType>
+
+<xs:element name="rec_A">
+    <xs:complexType>
+        <xs:sequence minOccurs="0">
+            <xs:element ref="myns:rec_B" minOccurs="0"/>
+            <xs:element name="elt_A" minOccurs="0" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+
+<xs:element name="rec_B">
+    <xs:complexType>
+        <xs:sequence minOccurs="0">
+            <xs:element ref="myns:rec_A" minOccurs="0"/>
+            <xs:element name="elt_B" minOccurs="0" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+
+<xs:complexType name="int_with_any_attr">
+    <xs:simpleContent>
+        <xs:extension base="xs:int">
+            <xs:anyAttribute processContents="lax"/>
+        </xs:extension>
+    </xs:simpleContent>
+</xs:complexType>
+
+<xs:element name="other_top_level_elt" type="xs:string"/>
+
+<xs:simpleType name="positiveIntegerMax42">
+  <xs:restriction base="xs:positiveInteger">
+    <xs:maxInclusive value="42"/>
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="enumerationOfStrings">
+  <xs:restriction base="xs:string">
+    <xs:enumeration value="small"/>
+    <xs:enumeration value="medium"/>
+    <xs:enumeration value="large"/>
+  </xs:restriction>
+</xs:simpleType> 
+
+<xs:simpleType name="myCustomType">
+ <xs:restriction base="xs:int"/>
+</xs:simpleType>
+
+<xs:group name="group1">
+  <xs:annotation><xs:documentation>Doc of group1</xs:documentation></xs:annotation>
+  <xs:choice>
+      <xs:element name="group1_elt_1"  type="xs:string" maxOccurs="2"/>
+      <xs:element name="group1_elt_2"  type="xs:string"/>
+  </xs:choice>
+</xs:group>
+
+<xs:group name="group2">
+  <xs:annotation><xs:documentation>Doc of group2</xs:documentation></xs:annotation>
+  <xs:sequence>
+      <xs:element name="group2_elt"  type="xs:string"/>
+  </xs:sequence>
+</xs:group>
+
+<xs:group name="group3">
+  <xs:annotation><xs:documentation>Doc of group3</xs:documentation></xs:annotation>
+  <xs:sequence>
+      <xs:element name="group3_elt1" type="xs:string"/>
+      <xs:element name="group3_elt1bis" type="xs:string" minOccurs="0"/>
+      <xs:element name="group3_elt2" minOccurs="0">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="b"  type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="group3_elt2bis" minOccurs="0">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="b"  type="xs:string"/>
+            </xs:sequence>
+            <xs:attribute name="attr" type="xs:string"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="group3_elt2ter" minOccurs="0">
+        <xs:complexType>
+            <xs:sequence/>
+            <xs:attribute name="attr" type="xs:string"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="group3_elt3" minOccurs="0">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="b2"  type="xs:dateTime" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+  </xs:sequence>
+</xs:group>
+
+<xs:group name="group4">
+  <xs:annotation><xs:documentation>Doc of group4</xs:documentation></xs:annotation>
+  <xs:sequence>
+      <xs:element name="group4_elt"  type="xs:string"/>
+  </xs:sequence>
+</xs:group>
+
+</xs:schema>

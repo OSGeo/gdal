@@ -577,7 +577,7 @@ int fillSect3 (enGribMeta *en, uShort2 tmplNum, double majEarth,
  * NOTES
  *****************************************************************************
  */
-static int getCodedTime (uChar timeCode, double time, sInt4 *ans)
+static int getCodedTime (uChar timeCode, double l_time, sInt4 *ans)
 {
    /* Following is a lookup table for unit conversion (see code table 4.4). */
    static const sInt4 unit2sec[] = {
@@ -588,7 +588,7 @@ static int getCodedTime (uChar timeCode, double time, sInt4 *ans)
 
    if (timeCode < 14) {
       if (unit2sec[timeCode] != 0) {
-         *ans = NearestInt (time / unit2sec[timeCode]);
+         *ans = NearestInt (l_time / unit2sec[timeCode]);
          return 0;
       }
    }

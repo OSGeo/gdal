@@ -100,7 +100,7 @@ void CPCIDSK_ARRAY::Load()
             std::string oMsg = oStream.str();
             return ThrowPCIDSKException("%s", oMsg.c_str());
         }
-		moSizes.push_back( nSize );
+        moSizes.push_back( nSize );
     }
 
     //calculate the total number of elements in the array.

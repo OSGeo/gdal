@@ -4,7 +4,7 @@
 <title>SDTS Abstraction Library Tutorial</title>
 </center>
 
-This page is a walk through of the polygon layer portion of the 
+This page is a walk through of the polygon layer portion of the
 <a href="sdts2shp.cpp.html">sdts2shp.cpp</a> example application.  It is should
 give sufficient information to utilize the SDTS_AL library to read SDTS
 files.<p>
@@ -16,7 +16,7 @@ passed to SDTSTransfer::Open() should be the name of the catalog file,
 such as <tt>palo_alto/SC01CATD.DDF</tt>.  The Open() method returns FALSE
 if it fails for any reason.  In addition to the message we print out ourselves,
 the SDTSTransfer::Open() method will also emit it's own error message using
-CPLError().  See the cpl_error.h page for more information on how to 
+CPLError().  See the cpl_error.h page for more information on how to
 capture and control CPLError() style error reporting.<p>
 
 <pre>
@@ -40,12 +40,12 @@ capture and control CPLError() style error reporting.<p>
 Once an SDTSTransfer has been opened, it is possible to establish what
 layers are available.  The sdts2shp example problem includes a -v argument
 to dump a list of available layers.  It isn't normally necessary to use the
-SDTS_CATD (catalog) from an application to access SDTS files; however, in 
+SDTS_CATD (catalog) from an application to access SDTS files; however, in
 this example we use it to fetch a module name, and description for each
 of the available layers.<p>
 
 In particular, the SDTSTransfer::GetLayerCount() method returns the
-number of feature layers in the transfer and the 
+number of feature layers in the transfer and the
 SDTSTransfer::GetLayerCATDEntry() is used to translate layer indexes into
 SDTS_CATD compatible CATD indexes.<p>
 
@@ -54,7 +54,7 @@ SDTS_CATD compatible CATD indexes.<p>
         for( i = 0; i < oTransfer.GetLayerCount(); i++ )
         {
             int		iCATDEntry = oTransfer.GetLayerCATDEntry(i);
-            
+
             printf( "  %s: `%s'\n",
                     oTransfer.GetCATD()->GetEntryModule(iCATDEntry),
                     oTransfer.GetCATD()->GetEntryTypeDesc(iCATDEntry) );
@@ -84,21 +84,21 @@ Layers:
 
 In order to read polygon features, it is necessary to instantiate a polygon
 reader on the desired layer.  The sdts2shp.cpp program allow the user to
-select a module name (such as PC01, stored in pszMODN) to write to shape 
+select a module name (such as PC01, stored in pszMODN) to write to shape
 format.  Other application might just search for, and operate on all known
 layers of a desired type.<p>
 
 The SDTSTransfer::GetLayerIndexedReader() method instantiates a reader of
-the desired type.  In this case we know we are instantiating a 
-SDTSPolygonReader so we can safely cast the returned SDTSIndexedReader 
+the desired type.  In this case we know we are instantiating a
+SDTSPolygonReader so we can safely cast the returned SDTSIndexedReader
 pointer to the more specific type SDTSPolygonReader.<p>
 
 <pre>
     SDTSPolygonReader *poPolyReader;
 
-    poPolyReader = (SDTSPolygonReader *) 
+    poPolyReader = (SDTSPolygonReader *)
         poTransfer->GetLayerIndexedReader( poTransfer->FindLayer( pszMODN ) );
-    
+
     if( poPolyReader == NULL )
     {
         fprintf( stderr, "Failed to open %s.\n",
@@ -123,7 +123,7 @@ method.  This method will scan all SLTLine layers in the transfer, indexing
 them and attaching their line work to the polygons.  Then it assembles the
 line work into rings.  It also ensures that the outer ring comes first, that
 the outer ring is counter-clockwise and that the inner ring(s) are
-clockwise. 
+clockwise.
 
 <pre>
     poPolyReader->AssembleRings( poTransfer );
@@ -138,8 +138,8 @@ list of edges that form their border.<p>
 
 In order to create the schema for the output shapefile dataset, it is
 necessary to identify the attributes associated with the polygons.  There
-are two types of attributes which can occur.  The first are hardcoded 
-attributes specific to the feature type, and the second are generic 
+are two types of attributes which can occur.  The first are hardcoded
+attributes specific to the feature type, and the second are generic
 user attributes stored in a separate primary attribute layer.<p>
 
 In the case of SDTSRawPolygon, there is only one attribute of interest,
@@ -156,19 +156,19 @@ the polygon within this module/layer.<p>
 Identification of user attributes is more complicated.  Any feature in a
 layer can have associates with 0, 1, 2 or potentially more attribute records
 in other primary attribute layers.  In order to establish a schema for the
-layer it is necessary to build up a list of all attribute layers (tables) 
+layer it is necessary to build up a list of all attribute layers (tables)
 to which references appear.  The SDTSIndexedReader::ScanModuleReferences()
 method can be used to scan a whole module for references to attribute modules
 via the ATID field.  The return result is a list of referenced modules in the
 form of a string list.  In a typical case this is one or two modules, such
-as "ASCF".<p>  
+as "ASCF".<p>
 
 <pre>
     char  **papszModRefs = poPolyReader->ScanModuleReferences();
 </pre>
 
 In sdts2shp.cpp, a subroutine (AddPrimaryAttrToDBFSchema()) is defined
-to add all the fields of all references attribute layers to the DBF file. 
+to add all the fields of all references attribute layers to the DBF file.
 For each module in the list the following steps are executed.<p>
 
 <h3>Fetch an Attribute Module Reader</h3>
@@ -210,12 +210,12 @@ the sdts2shp program fetches a prototype record from the attribute module.
             fprintf( stderr,
                      "Didn't find any meaningful attribute records in %s.\n",
                      papszModuleList[iModule] );
-        
+
             continue;
         }
 </pre>
 
-When no longer needed, the attribute record may need to be explicitly 
+When no longer needed, the attribute record may need to be explicitly
 deleted if it is not part of an indexed cached.<p>
 
 <pre>
@@ -228,7 +228,7 @@ deleted if it is not part of an indexed cached.<p>
 
 The Shapefile DBF fields are defined based on the information available for
 each of the subfields of the attribute records ATTR DDFField (the poATTR
-data member).  The following code loops over each of the subfields, 
+data member).  The following code loops over each of the subfields,
 getting a pointer to the DDBSubfieldDefn containing information about that
 subfield.<p>
 
@@ -236,14 +236,14 @@ subfield.<p>
         DDFFieldDefn 	*poFDefn = poAttrFeature->poATTR->GetFieldDefn();
         int		iSF;
         DDFField	*poSR = poAttrFeature->poATTR;
-    
+
         for( iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
         {
             DDFSubfieldDefn	*poSFDefn = poFDefn->GetSubfield( iSF );
 </pre>
 
 Then each of the significant ISO8211 field types is translated to an
-appropriate DBF field type.  In cases where the nWidth field is zero, 
+appropriate DBF field type.  In cases where the nWidth field is zero,
 indicating that the field is variable width, we use the length of the
 field in the prototype record.  Ideally we would scan the whole file to find
 the longest value for each field, but that would be a significant amount of
@@ -258,14 +258,14 @@ work. <p>
                 if( nWidth == 0 )
                 {
                     int		nMaxBytes;
-                
+
                     const char * pachData = poSR->GetSubfieldData(poSFDefn,
                                                                   &nMaxBytes);
 
                     nWidth = strlen(poSFDefn->ExtractStringData(pachData,
                                                                 nMaxBytes, NULL ));
                 }
-            
+
                 DBFAddField( hDBF, poSFDefn->GetName(), FTString, nWidth, 0 );
                 break;
 
@@ -302,7 +302,7 @@ delete it, if and only if the layer does not have an index cache.<p>
 
 <pre>
     SDTSRawPolygon	*poRawPoly;
-        
+
     poPolyReader->Rewind();
     while( (poRawPoly = (SDTSRawPolygon *) poPolyReader->GetNextFeature())
            != NULL )
@@ -319,18 +319,18 @@ delete it, if and only if the layer does not have an index cache.<p>
 In an earlier step we used the SDTSPolygonReader::AssembleRings() method to
 build ring geometry on the polygons from the linework in the line layers.<p>
 
-Coincidently (well, ok, maybe it isn't a coincidence) it so happens that the 
-ring organization exactly matches what is needed for the shapefile api.  
+Coincidently (well, ok, maybe it isn't a coincidence) it so happens that the
+ring organization exactly matches what is needed for the shapefile api.
 The following call creates a polygon from the ring information in the
-SDTSRawPolygon.  See the SDTSRawPolygon reference help for a fuller 
+SDTSRawPolygon.  See the SDTSRawPolygon reference help for a fuller
 definition of the nRings, panRingStart, nVertices, and vertex fields.<p>
 
 <pre>
         psShape = SHPCreateObject( SHPT_POLYGON, -1, poRawPoly->nRings,
                                    poRawPoly->panRingStart, NULL,
                                    poRawPoly->nVertices,
-                                   poRawPoly->padfX, 
-                                   poRawPoly->padfY, 
+                                   poRawPoly->padfX,
+                                   poRawPoly->padfY,
                                    poRawPoly->padfZ,
                                    NULL );
 </pre>
@@ -339,7 +339,7 @@ definition of the nRings, panRingStart, nVertices, and vertex fields.<p>
 
 The following call is used to write out the record number of the polygon,
 fetched from the SDTSIndexedFeature::oModId data member.  The szModule value
-in this data field will always match the module name for the whole layer. 
+in this data field will always match the module name for the whole layer.
 While not shown here, there is also an szOBRP field on oModId which have
 different values depending on whether the polygon is a universe or regular
 polygon.<p>
@@ -353,10 +353,10 @@ polygon.<p>
 
 In keeping with the setting up of the schema, accessing the user records
 is somewhat complicated.  In sdts2shp, the primary attribute records associated
-with any feature (including SDTSRawPolygons) can be fetched with the 
+with any feature (including SDTSRawPolygons) can be fetched with the
 WriteAttrRecordToDBF() function defined as follows.<p>
 
-In particular, the poFeature->nAttributes member indicates how many 
+In particular, the poFeature->nAttributes member indicates how many
 associated attribute records there are.  The poFeature->aoATID[] array
 contains the SDTSModId's for each record.  This SDTSModId can be passed
 to SDTSTransfer::GetAttr() to fetch the DDFField pointer for the user
@@ -365,13 +365,13 @@ and will be define later.<p>
 
 <pre>
     int		iAttrRecord;
-    
+
     for( iAttrRecord = 0; iAttrRecord < poFeature->nAttributes; iAttrRecord++)
     {
         DDFField	*poSR;
 
         poSR = poTransfer->GetAttr( poFeature->aoATID+iAttrRecord );
-          
+
         WriteAttrRecordToDBF( hDBF, iRecord, poTransfer, poSR );
     }
 </pre>
@@ -389,7 +389,7 @@ page.<p>
 /*      Process each subfield in the record.                            */
 /* -------------------------------------------------------------------- */
     DDFFieldDefn 	*poFDefn = poSR->GetFieldDefn();
-        
+
     for( int iSF=0; iSF < poFDefn->GetSubfieldCount(); iSF++ )
     {
         DDFSubfieldDefn	*poSFDefn = poFDefn->GetSubfield( iSF );
@@ -410,7 +410,7 @@ page.<p>
 
         if( iField == hDBF->nFields )
             iField = -1;
-            
+
 /* -------------------------------------------------------------------- */
 /*      Handle each of the types.                                       */
 /* -------------------------------------------------------------------- */

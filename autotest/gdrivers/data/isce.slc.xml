@@ -25,6 +25,14 @@
         <factorymodule>isceobj.Image</factorymodule>
         <factoryname>createCoordinate</factoryname>
         <doc>First coordinate of a 2D image (witdh).</doc>
+        <property name="startingValue">
+            <value>14.259166666666667</value>
+        </property>
+        <property name="delta">
+            <value>0.0008333333333333334</value>
+            <doc>{'doc': 'Coordinate quantization.'}</doc>
+            <units>{}</units>
+        </property>
         <property name="name">
             <value>ImageCoordinate_name</value>
             <doc>{'doc': 'Instance name'}</doc>
@@ -45,6 +53,14 @@
         <factorymodule>isceobj.Image</factorymodule>
         <factoryname>createCoordinate</factoryname>
         <doc>Second coordinate of a 2D image (length).</doc>
+        <property name="startingValue">
+            <value>38.22083333333333</value>
+        </property>
+        <property name="delta">
+            <value>-0.0008333333333333334</value>
+            <doc>{'doc': 'Coordinate quantization.'}</doc>
+            <units>{}</units>
+        </property>
         <property name="name">
             <value>ImageCoordinate_name</value>
             <doc>{'doc': 'Instance name'}</doc>

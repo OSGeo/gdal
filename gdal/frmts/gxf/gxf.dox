@@ -7,16 +7,16 @@
 <h2>Introduction</h2>
 
 The GXF-3 library is intended to make correct implementation of GXF-3 file
-format readers easy.  It consists of free (OpenSource) C source code for 
-functions to read GXF-3 raster files, and an example program using them to 
+format readers easy.  It consists of free (OpenSource) C source code for
+functions to read GXF-3 raster files, and an example program using them to
 convert GXF data to GeoTIFF format.<p>
 
-GXF (Grid eXchange File) is a standard ASCII file format for exchanging 
-gridded data among different software systems. Software that supports the 
-GXF standard will be able to import properly formatted GXF files and export 
+GXF (Grid eXchange File) is a standard ASCII file format for exchanging
+gridded data among different software systems. Software that supports the
+GXF standard will be able to import properly formatted GXF files and export
 grids in GXF format.  GXF-3 is an adopted standard format of the
 Gravity/Magnetics Committee of the Society of Exploration Geophysicists (SEG).
-GXF-3 is the primary gridded data interchange format for 
+GXF-3 is the primary gridded data interchange format for
 <a href="http://www.Geosoft.com/">Geosoft</a>.<p>
 
 <h2>Resources</h2>
@@ -61,18 +61,18 @@ The precise license text is:<p>
 
 <h2>Building the Source</h2>
 
-Unix developers should be able to unpack the .tar.gz file, run configure, 
+Unix developers should be able to unpack the .tar.gz file, run configure,
 and type make to build the library (libgxf3.a), and a simple test program
 (gxftest.c).<p>
 
-Windows developers should unpack the .zip file, and type 
+Windows developers should unpack the .zip file, and type
 <tt>nmake /f makefile.vc</tt> to build with VC++. <p>
 
 <h2>Author and Acknowledgements</h2>
 
-The primary author of the GXF3 library is 
-<a href="http://pobox.com/warmerdam">Frank Warmerdam</a>, 
-and I can be reached at 
+The primary author of the GXF3 library is
+<a href="http://pobox.com/warmerdam">Frank Warmerdam</a>,
+and I can be reached at
 <a href="mailto:warmerdam@pobox.com">warmerdam@pobox.com</a>.  I am open to
 bug reports, and suggestions.<p>
 
@@ -80,7 +80,7 @@ I would like to thank:<p>
 
 <ul>
 <li> <a href="http://www.globalgeo.com/">Global Geomatics</a>
-who funded development the majority of the work on this library, 
+who funded development the majority of the work on this library,
 and agreed for it to be Open Source.<p>
 
 <li> Ian Macleod of Geosoft who answered a number of questions I had,

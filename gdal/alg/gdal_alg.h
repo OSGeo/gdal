@@ -234,7 +234,6 @@ int  CPL_DLL GDALApproxTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
-
 int CPL_DLL CPL_STDCALL
 GDALSimpleImageWarp( GDALDatasetH hSrcDS,
                      GDALDatasetH hDstDS,
@@ -389,7 +388,6 @@ GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
                         void *pTransformArg, double dfBurnValue,
                         char **papszOptions, GDALProgressFunc pfnProgress,
                         void *pProgressArg );
-
 
 /************************************************************************/
 /*  Gridding interface.                                                 */
@@ -548,7 +546,6 @@ typedef struct
     double  dfNoDataValue;
 } GDALGridLinearOptions;
 
-
 CPLErr CPL_DLL
 GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,
                 const double *, const double *, const double *,
@@ -592,7 +589,7 @@ typedef struct
 } GDALTriFacet;
 
 /** Triangle barycentric coefficients.
- * 
+ *
  * Conversion from cartesian (x,y) to barycentric (l1,l2,l3) with :
  *  l1 = dfMul1X * (x - dfCxtX) + dfMul1Y * (y - dfCstY)
  *  l2 = dfMul2X * (x - dfCxtX) + dfMul2Y * (y - dfCstY)

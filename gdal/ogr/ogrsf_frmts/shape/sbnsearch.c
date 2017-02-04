@@ -9,7 +9,7 @@
  * Copyright (c) 2012-2014, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * This software is available under the following "MIT Style" license,
- * or at the option of the licensee under the LGPL (see LICENSE.LGPL).  This
+ * or at the option of the licensee under the LGPL (see COPYING).  This
  * option is discussed in more detail in shapelib.html.
  *
  * --
@@ -45,6 +45,18 @@ SHP_CVSID("$Id$")
 #ifndef TRUE
 #  define TRUE 1
 #  define FALSE 0
+#endif
+
+#ifndef USE_CPL
+#if defined(_MSC_VER)
+# if _MSC_VER < 1900
+#     define snprintf _snprintf
+# endif
+#elif defined(WIN32) || defined(_WIN32)
+#  ifndef snprintf
+#     define snprintf _snprintf
+#  endif
+#endif
 #endif
 
 #define READ_MSB_INT(ptr) \
@@ -700,8 +712,8 @@ static int SBNSearchDiskInternal( SearchStruct* psSearch,
                         bMaxX < bNodeMinX || bMaxY < bNodeMinY ||
                         bMinX > bNodeMaxX || bMinY > bNodeMaxY )
                     {
-                        /*printf("shape %d %d %d %d\n", bMinX, bMinY, bMaxX, bMaxY);
-                        printf("node  %d %d %d %d\n", bNodeMinX, bNodeMinY, bNodeMaxX, bNodeMaxY);*/
+                        /* printf("shape %d %d %d %d\n", bMinX, bMinY, bMaxX, bMaxY);*/
+                        /* printf("node  %d %d %d %d\n", bNodeMinX, bNodeMinY, bNodeMaxX, bNodeMaxY);*/
                         hSBN->sHooks.Error(
                             "Invalid shape bounding box in bin" );
                         free(psNode->pabyShapeDesc);
@@ -918,7 +930,7 @@ int* SBNSearchDiskTreeInteger( SBNSearchHandle hSBN,
     if( bMinX > bMaxX || bMinY > bMaxY )
         return NULL;
 
-    if( bMaxX < 0 || bMaxY < 0 || bMinX > 255 || bMinX > 255 )
+    if( bMaxX < 0 || bMaxY < 0 || bMinX > 255 || bMinY > 255 )
         return NULL;
 
     if( hSBN->nShapeCount == 0 )
@@ -926,6 +938,7 @@ int* SBNSearchDiskTreeInteger( SBNSearchHandle hSBN,
 /* -------------------------------------------------------------------- */
 /*      Run the search.                                                 */
 /* -------------------------------------------------------------------- */
+    memset( &sSearch, 0, sizeof(sSearch) );
     sSearch.hSBN = hSBN;
     sSearch.bMinX = (coord) (bMinX >= 0 ? bMinX : 0);
     sSearch.bMinY = (coord) (bMinY >= 0 ? bMinY : 0);

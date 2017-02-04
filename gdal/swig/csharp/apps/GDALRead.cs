@@ -47,18 +47,18 @@ using OSGeo.GDAL;
 
 /// <summary>
 /// A C# based sample to read GDAL raster data.
-/// </summary> 
+/// </summary>
 
 class GDALRead {
-	
-	public static void usage() 
 
-	{ 
+	public static void usage()
+
+	{
 		Console.WriteLine("usage: gdalread {GDAL dataset name} {output file name} {overview}");
 		System.Environment.Exit(-1);
 	}
- 
-    public static void Main(string[] args) 
+
+    public static void Main(string[] args)
     {
         int iOverview = -1;
         if (args.Length < 2) usage();
@@ -67,7 +67,7 @@ class GDALRead {
         // Using early initialization of System.Console
         Console.WriteLine("");
 
-        try 
+        try
         {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
@@ -78,8 +78,8 @@ class GDALRead {
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
             Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly );
-		
-            if (ds == null) 
+
+            if (ds == null)
             {
                 Console.WriteLine("Can't open " + args[0]);
                 System.Environment.Exit(-1);
@@ -89,24 +89,24 @@ class GDALRead {
             Console.WriteLine("  Projection: " + ds.GetProjectionRef());
             Console.WriteLine("  RasterCount: " + ds.RasterCount);
             Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
-            
+
             /* -------------------------------------------------------------------- */
             /*      Get driver                                                      */
-            /* -------------------------------------------------------------------- */	
+            /* -------------------------------------------------------------------- */
             Driver drv = ds.GetDriver();
 
-            if (drv == null) 
+            if (drv == null)
             {
                 Console.WriteLine("Can't get driver.");
                 System.Environment.Exit(-1);
             }
-            
+
             Console.WriteLine("Using driver " + drv.LongName);
 
             /* -------------------------------------------------------------------- */
             /*      Get raster band                                                 */
             /* -------------------------------------------------------------------- */
-            for (int iBand = 1; iBand <= ds.RasterCount; iBand++) 
+            for (int iBand = 1; iBand <= ds.RasterCount; iBand++)
             {
                 Band band = ds.GetRasterBand(iBand);
                 Console.WriteLine("Band " + iBand + " :");
@@ -128,19 +128,19 @@ class GDALRead {
             /*      Processing the raster                                           */
             /* -------------------------------------------------------------------- */
             SaveBitmapBuffered(ds, args[1], iOverview);
-            
+
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             Console.WriteLine("Application error: " + e.Message);
         }
     }
 
-    private static void SaveBitmapBuffered(Dataset ds, string filename, int iOverview) 
+    private static void SaveBitmapBuffered(Dataset ds, string filename, int iOverview)
     {
         // Get the GDAL Band objects from the Dataset
         Band redBand = ds.GetRasterBand(1);
-        
+
 		if (redBand.GetRasterColorInterpretation() == ColorInterp.GCI_PaletteIndex)
 		{
 			SaveBitmapPaletteBuffered(ds, filename, iOverview);
@@ -155,42 +155,42 @@ class GDALRead {
 
 		if (redBand.GetRasterColorInterpretation() != ColorInterp.GCI_RedBand)
 		{
-            Console.WriteLine("Non RGB images are not supported by this sample! ColorInterp = " + 
+            Console.WriteLine("Non RGB images are not supported by this sample! ColorInterp = " +
                 redBand.GetRasterColorInterpretation().ToString());
 			return;
 		}
 
-		if (ds.RasterCount < 3) 
+		if (ds.RasterCount < 3)
 		{
 			Console.WriteLine("The number of the raster bands is not enough to run this sample");
 			System.Environment.Exit(-1);
 		}
 
-        if (iOverview >= 0 && redBand.GetOverviewCount() > iOverview) 
+        if (iOverview >= 0 && redBand.GetOverviewCount() > iOverview)
             redBand = redBand.GetOverview(iOverview);
 
         Band greenBand = ds.GetRasterBand(2);
-        
+
 		if (greenBand.GetRasterColorInterpretation() != ColorInterp.GCI_GreenBand)
 		{
-            Console.WriteLine("Non RGB images are not supported by this sample! ColorInterp = " + 
+            Console.WriteLine("Non RGB images are not supported by this sample! ColorInterp = " +
                 greenBand.GetRasterColorInterpretation().ToString());
 			return;
 		}
 
-        if (iOverview >= 0 && greenBand.GetOverviewCount() > iOverview) 
+        if (iOverview >= 0 && greenBand.GetOverviewCount() > iOverview)
             greenBand = greenBand.GetOverview(iOverview);
 
         Band blueBand = ds.GetRasterBand(3);
-        
+
 		if (blueBand.GetRasterColorInterpretation() != ColorInterp.GCI_BlueBand)
 		{
-            Console.WriteLine("Non RGB images are not supported by this sample! ColorInterp = " + 
+            Console.WriteLine("Non RGB images are not supported by this sample! ColorInterp = " +
                 blueBand.GetRasterColorInterpretation().ToString());
 			return;
 		}
 
-        if (iOverview >= 0 && blueBand.GetOverviewCount() > iOverview) 
+        if (iOverview >= 0 && blueBand.GetOverviewCount() > iOverview)
             blueBand = blueBand.GetOverview(iOverview);
 
         // Get the width and height of the raster
@@ -201,7 +201,7 @@ class GDALRead {
         Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppRgb);
 
         DateTime start = DateTime.Now;
-        
+
         byte[] r = new byte[width * height];
         byte[] g = new byte[width * height];
         byte[] b = new byte[width * height];
@@ -213,7 +213,7 @@ class GDALRead {
         Console.WriteLine("SaveBitmapBuffered fetch time: " + renderTime.TotalMilliseconds + " ms");
 
         int i, j;
-        for (i = 0; i< width; i++) 
+        for (i = 0; i< width; i++)
         {
             for (j=0; j<height; j++)
             {
@@ -225,11 +225,11 @@ class GDALRead {
         bitmap.Save(filename);
     }
 
-	private static void SaveBitmapPaletteBuffered(Dataset ds, string filename, int iOverview) 
+	private static void SaveBitmapPaletteBuffered(Dataset ds, string filename, int iOverview)
 	{
 		// Get the GDAL Band objects from the Dataset
 		Band band = ds.GetRasterBand(1);
-        if (iOverview >= 0 && band.GetOverviewCount() > iOverview) 
+        if (iOverview >= 0 && band.GetOverviewCount() > iOverview)
             band = band.GetOverview(iOverview);
 
 		ColorTable ct = band.GetRasterColorTable();
@@ -253,15 +253,15 @@ class GDALRead {
 		Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppRgb);
 
 		DateTime start = DateTime.Now;
-        
+
 		byte[] r = new byte[width * height];
-		
+
 		band.ReadRaster(0, 0, width, height, r, width, height, 0, 0);
 		TimeSpan renderTime = DateTime.Now - start;
 		Console.WriteLine("SaveBitmapBuffered fetch time: " + renderTime.TotalMilliseconds + " ms");
 
 		int i, j;
-		for (i = 0; i< width; i++) 
+		for (i = 0; i< width; i++)
 		{
 			for (j=0; j<height; j++)
 			{
@@ -274,11 +274,11 @@ class GDALRead {
 		bitmap.Save(filename);
 	}
 
-	private static void SaveBitmapGrayBuffered(Dataset ds, string filename, int iOverview) 
+	private static void SaveBitmapGrayBuffered(Dataset ds, string filename, int iOverview)
 	{
 		// Get the GDAL Band objects from the Dataset
 		Band band = ds.GetRasterBand(1);
-        if (iOverview >= 0 && band.GetOverviewCount() > iOverview) 
+        if (iOverview >= 0 && band.GetOverviewCount() > iOverview)
             band = band.GetOverview(iOverview);
 
 		// Get the width and height of the Dataset
@@ -289,15 +289,15 @@ class GDALRead {
 		Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppRgb);
 
 		DateTime start = DateTime.Now;
-        
+
 		byte[] r = new byte[width * height];
-		
+
 		band.ReadRaster(0, 0, width, height, r, width, height, 0, 0);
 		TimeSpan renderTime = DateTime.Now - start;
 		Console.WriteLine("SaveBitmapBuffered fetch time: " + renderTime.TotalMilliseconds + " ms");
 
 		int i, j;
-		for (i = 0; i< width; i++) 
+		for (i = 0; i< width; i++)
 		{
 			for (j=0; j<height; j++)
 			{

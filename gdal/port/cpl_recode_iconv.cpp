@@ -25,6 +25,8 @@
 
 #include "cpl_port.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 #ifdef CPL_RECODE_ICONV
@@ -36,7 +38,7 @@ CPL_CVSID("$Id$");
 #define ICONV_CPP_CONST ICONV_CONST
 #endif
 
-#define CPL_RECODE_DSTBUF_SIZE 32768
+static const size_t CPL_RECODE_DSTBUF_SIZE = 32768;
 
  /* used by cpl_recode.cpp */
 extern void CPLClearRecodeIconvWarningFlags();
@@ -85,7 +87,7 @@ char *CPLRecodeIconv( const char *pszSource,
 
     sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
 
-    if ( sConv == (iconv_t)-1 )
+    if( sConv == (iconv_t)-1 )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Recode from %s to %s failed with the error: \"%s\".",
@@ -101,42 +103,45 @@ char *CPLRecodeIconv( const char *pszSource,
 /*      as a const char**. Handle it with the ICONV_CPP_CONST macro here.   */
 /* -------------------------------------------------------------------- */
     ICONV_CPP_CONST char *pszSrcBuf = (ICONV_CPP_CONST char *)pszSource;
-    size_t  nSrcLen = strlen( pszSource );
-    size_t  nDstCurLen = MAX(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
-    size_t  nDstLen = nDstCurLen;
-    char    *pszDestination = (char *)CPLCalloc( nDstCurLen, sizeof(char) );
-    char    *pszDstBuf = pszDestination;
+    size_t nSrcLen = strlen( pszSource );
+    size_t nDstCurLen = std::max(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
+    size_t nDstLen = nDstCurLen;
+    char *pszDestination =
+        static_cast<char *>(CPLCalloc(nDstCurLen, sizeof(char)));
+    char *pszDstBuf = pszDestination;
 
-    while ( nSrcLen > 0 )
+    while( nSrcLen > 0 )
     {
-        size_t  nConverted =
+        size_t nConverted =
             iconv( sConv, &pszSrcBuf, &nSrcLen, &pszDstBuf, &nDstLen );
 
-        if ( nConverted == (size_t)-1 )
+        if( nConverted == static_cast<size_t>(-1) )
         {
-            if ( errno == EILSEQ )
+            if( errno == EILSEQ )
             {
                 // Skip the invalid sequence in the input string.
-                if (!bHaveWarned1)
+                if( !bHaveWarned1 )
                 {
                     bHaveWarned1 = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
-                            "One or several characters couldn't be converted correctly from %s to %s.\n"
-                            "This warning will not be emitted anymore",
+                             "One or several characters couldn't be converted "
+                             "correctly from %s to %s.  "
+                             "This warning will not be emitted anymore",
                              pszSrcEncoding, pszDstEncoding);
                 }
-                nSrcLen--, pszSrcBuf++;
+                nSrcLen--;
+                pszSrcBuf++;
                 continue;
             }
 
-            else if ( errno == E2BIG )
+            else if( errno == E2BIG )
             {
                 // We are running out of the output buffer.
                 // Dynamically increase the buffer size.
                 size_t nTmp = nDstCurLen;
                 nDstCurLen *= 2;
                 pszDestination =
-                    (char *)CPLRealloc( pszDestination, nDstCurLen );
+                    static_cast<char *>(CPLRealloc(pszDestination, nDstCurLen));
                 pszDstBuf = pszDestination + nTmp - nDstLen;
                 nDstLen += nDstCurLen - nTmp;
                 continue;
@@ -185,9 +190,9 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 /* -------------------------------------------------------------------- */
 /*      What is the source length.                                      */
 /* -------------------------------------------------------------------- */
-    size_t  nSrcLen = 0;
+    size_t nSrcLen = 0;
 
-    while ( pwszSource[nSrcLen] != 0 )
+    while( pwszSource[nSrcLen] != 0 )
         nSrcLen++;
 
 /* -------------------------------------------------------------------- */
@@ -197,7 +202,7 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 /*      source is UTF16 then we need to pack down into 2 byte           */
 /*      characters before passing to iconv().                           */
 /* -------------------------------------------------------------------- */
-    int nTargetCharWidth = CPLEncodingCharSize( pszSrcEncoding );
+    const int nTargetCharWidth = CPLEncodingCharSize( pszSrcEncoding );
 
     if( nTargetCharWidth < 1 )
     {
@@ -208,14 +213,16 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
         return CPLStrdup("");
     }
 
-    GByte *pszIconvSrcBuf = (GByte*) CPLCalloc((nSrcLen+1),nTargetCharWidth);
+    GByte *pszIconvSrcBuf =
+        static_cast<GByte *>(CPLCalloc((nSrcLen + 1), nTargetCharWidth));
 
     for( unsigned int iSrc = 0; iSrc <= nSrcLen; iSrc++ )
     {
         if( nTargetCharWidth == 1 )
-            pszIconvSrcBuf[iSrc] = (GByte) pwszSource[iSrc];
+            pszIconvSrcBuf[iSrc] = static_cast<GByte>(pwszSource[iSrc]);
         else if( nTargetCharWidth == 2 )
-            ((short *)pszIconvSrcBuf)[iSrc] = (short) pwszSource[iSrc];
+            ((short *)pszIconvSrcBuf)[iSrc] =
+                static_cast<short>(pwszSource[iSrc]);
         else if( nTargetCharWidth == 4 )
             ((GInt32 *)pszIconvSrcBuf)[iSrc] = pwszSource[iSrc];
     }
@@ -227,7 +234,7 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 
     sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
 
-    if ( sConv == (iconv_t)-1 )
+    if( sConv == (iconv_t)-1 )
     {
         CPLFree( pszIconvSrcBuf );
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -251,42 +258,44 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 /* -------------------------------------------------------------------- */
 /*      Allocate destination buffer.                                    */
 /* -------------------------------------------------------------------- */
-    size_t  nDstCurLen = MAX(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
-    size_t  nDstLen = nDstCurLen;
-    char    *pszDestination = (char *)CPLCalloc( nDstCurLen, sizeof(char) );
-    char    *pszDstBuf = pszDestination;
+    size_t nDstCurLen = std::max(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
+    size_t nDstLen = nDstCurLen;
+    char *pszDestination =
+        static_cast<char *>(CPLCalloc(nDstCurLen, sizeof(char)));
+    char *pszDstBuf = pszDestination;
 
-    while ( nSrcLen > 0 )
+    while( nSrcLen > 0 )
     {
-        size_t  nConverted =
+        const size_t nConverted =
             iconv( sConv, &pszSrcBuf, &nSrcLen, &pszDstBuf, &nDstLen );
 
-        if ( nConverted == (size_t)-1 )
+        if( nConverted == static_cast<size_t>(-1) )
         {
-            if ( errno == EILSEQ )
+            if( errno == EILSEQ )
             {
                 // Skip the invalid sequence in the input string.
                 nSrcLen--;
                 pszSrcBuf += sizeof(wchar_t);
-                if (!bHaveWarned2)
+                if( !bHaveWarned2 )
                 {
                     bHaveWarned2 = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
-                            "One or several characters couldn't be converted correctly from %s to %s.\n"
-                            "This warning will not be emitted anymore",
+                             "One or several characters couldn't be converted "
+                             "correctly from %s to %s.  "
+                             "This warning will not be emitted anymore",
                              pszSrcEncoding, pszDstEncoding);
                 }
                 continue;
             }
 
-            else if ( errno == E2BIG )
+            else if( errno == E2BIG )
             {
                 // We are running out of the output buffer.
                 // Dynamically increase the buffer size.
                 size_t nTmp = nDstCurLen;
                 nDstCurLen *= 2;
                 pszDestination =
-                    (char *)CPLRealloc( pszDestination, nDstCurLen );
+                    static_cast<char *>(CPLRealloc(pszDestination, nDstCurLen));
                 pszDstBuf = pszDestination + nTmp - nDstLen;
                 nDstLen += nDstCurLen - nTmp;
                 continue;

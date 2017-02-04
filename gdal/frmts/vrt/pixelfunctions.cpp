@@ -148,7 +148,6 @@ static CPLErr RealPixelFunc( void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // RealPixelFunc
 
-
 static CPLErr ImagPixelFunc( void **papoSources, int nSources, void *pData,
                              int nXSize, int nYSize,
                              GDALDataType eSrcType, GDALDataType eBufType,
@@ -195,7 +194,6 @@ static CPLErr ImagPixelFunc( void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ImagPixelFunc
 
-
 static CPLErr ComplexPixelFunc( void **papoSources, int nSources, void *pData,
                                 int nXSize, int nYSize,
                                 GDALDataType eSrcType, GDALDataType eBufType,
@@ -225,7 +223,6 @@ static CPLErr ComplexPixelFunc( void **papoSources, int nSources, void *pData,
     /* ---- Return success ---- */
     return CE_None;
 }  // MakeComplexPixelFunc
-
 
 static CPLErr ModulePixelFunc( void **papoSources, int nSources, void *pData,
                                int nXSize, int nYSize,
@@ -278,7 +275,6 @@ static CPLErr ModulePixelFunc( void **papoSources, int nSources, void *pData,
     /* ---- Return success ---- */
     return CE_None;
 }  // ModulePixelFunc
-
 
 static CPLErr PhasePixelFunc( void **papoSources, int nSources, void *pData,
                               int nXSize, int nYSize,
@@ -333,7 +329,6 @@ static CPLErr PhasePixelFunc( void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // PhasePixelFunc
 
-
 static CPLErr ConjPixelFunc( void **papoSources, int nSources, void *pData,
                              int nXSize, int nYSize,
                              GDALDataType eSrcType, GDALDataType eBufType,
@@ -375,7 +370,6 @@ static CPLErr ConjPixelFunc( void **papoSources, int nSources, void *pData,
     /* ---- Return success ---- */
     return CE_None;
 }  // ConjPixelFunc
-
 
 static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
                     int nXSize, int nYSize,
@@ -436,7 +430,6 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 } /* SumPixelFunc */
 
-
 static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
                              int nXSize, int nYSize,
                              GDALDataType eSrcType, GDALDataType eBufType,
@@ -494,7 +487,6 @@ static CPLErr DiffPixelFunc( void **papoSources, int nSources, void *pData,
     /* ---- Return success ---- */
     return CE_None;
 }  // DiffPixelFunc
-
 
 static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
@@ -561,7 +553,6 @@ static CPLErr MulPixelFunc( void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // MulPixelFunc
 
-
 static CPLErr CMulPixelFunc( void **papoSources, int nSources, void *pData,
                              int nXSize, int nYSize,
                              GDALDataType eSrcType, GDALDataType eBufType,
@@ -624,7 +615,6 @@ static CPLErr CMulPixelFunc( void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // CMulPixelFunc
 
-
 static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize,
                             GDALDataType eSrcType, GDALDataType eBufType,
@@ -678,7 +668,6 @@ static CPLErr InvPixelFunc( void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // InvPixelFunc
 
-
 static CPLErr IntensityPixelFunc( void **papoSources, int nSources, void *pData,
                                   int nXSize, int nYSize,
                                   GDALDataType eSrcType, GDALDataType eBufType,
@@ -731,7 +720,6 @@ static CPLErr IntensityPixelFunc( void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // IntensityPixelFunc
 
-
 static CPLErr SqrtPixelFunc( void **papoSources, int nSources, void *pData,
                              int nXSize, int nYSize,
                              GDALDataType eSrcType, GDALDataType eBufType,
@@ -758,7 +746,6 @@ static CPLErr SqrtPixelFunc( void **papoSources, int nSources, void *pData,
     /* ---- Return success ---- */
     return CE_None;
 }  // SqrtPixelFunc
-
 
 static CPLErr Log10PixelFuncHelper( void **papoSources, int nSources,
                                     void *pData,
@@ -876,7 +863,6 @@ static CPLErr dB2AmpPixelFunc( void **papoSources, int nSources, void *pData,
                               nPixelSpace, nLineSpace, 10.0, 20.0);
 }  // dB2AmpPixelFunc
 
-
 static CPLErr dB2PowPixelFunc( void **papoSources, int nSources, void *pData,
                                int nXSize, int nYSize,
                                GDALDataType eSrcType, GDALDataType eBufType,
@@ -886,7 +872,6 @@ static CPLErr dB2PowPixelFunc( void **papoSources, int nSources, void *pData,
                               nXSize, nYSize, eSrcType, eBufType,
                               nPixelSpace, nLineSpace, 10.0, 10.0);
 }  // dB2PowPixelFunc
-
 
 /************************************************************************/
 /*                     GDALRegisterDefaultPixelFunc()                   */

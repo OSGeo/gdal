@@ -39,7 +39,6 @@
 /*                   OGRXPlaneAirwaySegmentLayer                        */
 /************************************************************************/
 
-
 class OGRXPlaneAirwaySegmentLayer : public OGRXPlaneLayer
 {
   public:
@@ -67,13 +66,13 @@ class OGRXPlaneAirwayIntersectionLayer : public OGRXPlaneLayer
 
   public:
                         OGRXPlaneAirwayIntersectionLayer();
-                        ~OGRXPlaneAirwayIntersectionLayer();
+                        virtual ~OGRXPlaneAirwayIntersectionLayer();
 
     OGRFeature*         AddFeature(const char* pszIntersectionName,
                                    double dfLat,
                                    double dfLon);
 
-    virtual void        ResetReading();
+    virtual void        ResetReading() override;
 };
 
 /************************************************************************/
@@ -91,12 +90,12 @@ class OGRXPlaneAwyReader : public OGRXPlaneReader
         void                     ParseRecord();
 
     protected:
-        virtual void             Read();
+        virtual void             Read() override;
 
     public:
-                                 OGRXPlaneAwyReader( OGRXPlaneDataSource* poDataSource );
-        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer);
-        virtual int              IsRecognizedVersion( const char* pszVersionString);
+        explicit                 OGRXPlaneAwyReader( OGRXPlaneDataSource* poDataSource );
+        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer) override;
+        virtual int              IsRecognizedVersion( const char* pszVersionString) override;
 };
 
 #endif

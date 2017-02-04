@@ -173,7 +173,6 @@ int KEADataset::Identify( GDALOpenInfo * poOpenInfo )
         return 0;
 }
 
-
 // static function
 H5::H5File *KEADataset::CreateLL( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
@@ -400,7 +399,6 @@ GDALDataset *KEADataset::CreateCopy( const char * pszFilename, GDALDataset *pSrc
                   pszFilename, e.what() );
         return NULL;
     }
-
 }
 
 // constructor
@@ -745,7 +743,6 @@ CPLErr KEADataset::AddBand(GDALDataType eType, char **papszOptions)
     return CE_None;
 }
 
-
 int KEADataset::GetGCPCount()
 {
     try
@@ -756,7 +753,6 @@ int KEADataset::GetGCPCount()
     {
         return 0;
     }
-
 }
 
 const char* KEADataset::GetGCPProjection()
@@ -844,7 +840,7 @@ CPLErr KEADataset::SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char
         result = CE_Failure;
     }
 
-    for( std::vector<kealib::KEAImageGCP*>::iterator itr = pKEAGCPs->begin(); itr != pKEAGCPs->end(); itr++)
+    for( std::vector<kealib::KEAImageGCP*>::iterator itr = pKEAGCPs->begin(); itr != pKEAGCPs->end(); ++itr)
     {
         kealib::KEAImageGCP *pKEA = (*itr);
         delete pKEA;

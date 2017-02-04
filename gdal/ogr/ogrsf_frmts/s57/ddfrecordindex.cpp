@@ -190,7 +190,7 @@ DDFRecord * DDFRecordIndex::FindRecordByObjl( int nObjl )
 /*                            RemoveRecord()                            */
 /************************************************************************/
 
-int DDFRecordIndex::RemoveRecord( int nKey )
+bool DDFRecordIndex::RemoveRecord( int nKey )
 
 {
     if( !bSorted )
@@ -216,7 +216,7 @@ int DDFRecordIndex::RemoveRecord( int nKey )
     }
 
     if( nMinIndex > nMaxIndex )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Delete this record.                                             */
@@ -233,7 +233,7 @@ int DDFRecordIndex::RemoveRecord( int nKey )
 
     nRecordCount--;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/

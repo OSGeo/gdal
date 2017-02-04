@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// ncsjpcbuffer.h needs the min and max macros.
+#undef NOMINMAX
+
 #include "gdal_ecw.h"
 #include "gdaljp2metadata.h"
 #include "ogr_spatialref.h"
@@ -82,14 +85,14 @@ class GDALECWCompressor : public CNCSFile {
 public:
     GDALECWCompressor();
     virtual ~GDALECWCompressor();
-    virtual CNCSError WriteReadLine(UINT32 nNextLine, void **ppInputArray);
+    virtual CNCSError WriteReadLine(UINT32 nNextLine, void **ppInputArray) override;
 #if ECWSDK_VERSION>=50
-    virtual void WriteStatus(IEEE4 fPercentComplete, const NCS::CString &sStatusText, const CompressionCounters &Counters);
+    virtual void WriteStatus(IEEE4 fPercentComplete, const NCS::CString &sStatusText, const CompressionCounters &Counters) override;
 #else
-    virtual void WriteStatus(UINT32 nCurrentLine);
+    virtual void WriteStatus(UINT32 nCurrentLine) override;
 #endif
 
-    virtual bool WriteCancel();
+    virtual bool WriteCancel() override;
 
     CPLErr  Initialize( const char *pszFilename, char **papszOptions,
                         int nXSize, int nYSize, int nBands, const char * const * papszBandDescriptions, int bRGBColorSpace,
@@ -104,9 +107,11 @@ public:
     CPLErr  WriteJP2Box( GDALJP2Box * );
     void    WriteXMLBoxes();
     CPLErr  ourWriteLineBIL(UINT16 nBands, void **ppOutputLine, UINT32 *pLineSteps = NULL);
-    virtual NCSEcwCellType WriteReadLineGetCellType() {
+#if ECWSDK_VERSION>=50
+    virtual NCSEcwCellType WriteReadLineGetCellType() override {
         return sFileInfo.eCellType;
     }
+#endif
 #ifdef ECW_FW
     CNCSJP2File::CNCSJPXAssocBox  m_oGMLAssoc;
 #endif
@@ -718,11 +723,13 @@ CPLErr GDALECWCompressor::Initialize(
             bSigned = TRUE;
             break;
 
+#if ECWSDK_VERSION >= 40
         case GDT_Float64:
             psClient->eCellType = NCSCT_IEEE8;
             nBits = 64;
             bSigned = TRUE;
             break;
+#endif
 
         default:
             // We treat complex types as float.
@@ -1071,7 +1078,7 @@ CPLErr GDALECWCompressor::Initialize(
             psClient->pFileMetaData->sCompany = NCSStrDupT(NCS::CString(pszECWCompany).c_str());
         }
         CPLString osCompressionSoftware = GetCompressionSoftwareName();
-        if ( osCompressionSoftware.size() > 0 ) {
+        if ( !osCompressionSoftware.empty() ) {
             psClient->pFileMetaData->sCompressionSoftware = NCSStrDupT(NCS::CString(osCompressionSoftware.c_str()).c_str());
         }
         if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_COPYRIGHT")!=NULL){
@@ -1480,7 +1487,9 @@ ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS,
         && eDataType != GDT_Int32
         && eDataType != GDT_UInt32
         && eDataType != GDT_Float32
+#if ECWSDK_VERSION >= 40
         && eDataType != GDT_Float64
+#endif
         && bStrict )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -1608,12 +1617,12 @@ class ECWWriteDataset : public GDALDataset
                                  int );
             ~ECWWriteDataset();
 
-    virtual void   FlushCache( void );
+    virtual void   FlushCache( void ) override;
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char* GetProjectionRef();
-    virtual CPLErr SetGeoTransform( double * );
-    virtual CPLErr SetProjection( const char *pszWKT );
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char* GetProjectionRef() override;
+    virtual CPLErr SetGeoTransform( double * ) override;
+    virtual CPLErr SetProjection( const char *pszWKT ) override;
 
 #ifdef OPTIMIZED_FOR_GDALWARP
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
@@ -1623,7 +1632,7 @@ class ECWWriteDataset : public GDALDataset
                               int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
-                              GDALRasterIOExtraArg* psExtraArg);
+                              GDALRasterIOExtraArg* psExtraArg) override;
 #endif
 };
 
@@ -1651,17 +1660,17 @@ class ECWWriteRasterBand : public GDALRasterBand
                    ECWWriteRasterBand( ECWWriteDataset *, int );
                   ~ECWWriteRasterBand();
 
-    virtual CPLErr SetColorInterpretation( GDALColorInterp eInterpIn )
+    virtual CPLErr SetColorInterpretation( GDALColorInterp eInterpIn ) override
         { eInterp = eInterpIn;
           if( strlen(GetDescription()) == 0 )
               SetDescription(ECWGetColorInterpretationName(eInterp, nBand-1));
           return CE_None;
         }
-    virtual GDALColorInterp GetColorInterpretation()
+    virtual GDALColorInterp GetColorInterpretation() override
         { return eInterp; }
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 
 #ifdef OPTIMIZED_FOR_GDALWARP
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
@@ -1669,7 +1678,7 @@ class ECWWriteRasterBand : public GDALRasterBand
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg);
+                              GDALRasterIOExtraArg* psExtraArg) override;
 #endif
 };
 
@@ -1799,7 +1808,6 @@ CPLErr ECWWriteDataset::SetProjection( const char *pszWKT )
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                             Crystalize()                             */
 /************************************************************************/
@@ -1870,7 +1878,6 @@ CPLErr ECWWriteDataset::FlushLine()
         for( int i = 0; i < nBands; i++ )
             papOutputLine[i] =
                 (void *) (pabyBILBuffer + i * nWordSize * nRasterXSize);
-
 
         eErr =  oCompressor.ourWriteLineBIL( (UINT16) nBands, papOutputLine );
         CPLFree( papOutputLine );

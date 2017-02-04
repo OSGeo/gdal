@@ -28,9 +28,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal_priv.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
 #include "cpl_string.h"
 #include "gdal_pam.h"
-#include <map>
 
 CPL_CVSID("$Id$");
 
@@ -72,7 +79,6 @@ void GDALMultiDomainMetadata::Clear()
     CPLFree( papoMetadataLists );
     papoMetadataLists = NULL;
 }
-
 
 /************************************************************************/
 /*                            GetMetadata()                             */
@@ -192,7 +198,8 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, int /* bMerge */ )
 /*      Process all <Metadata> elements, each for one domain.           */
 /* ==================================================================== */
     for( psMetadata = psTree->psChild;
-         psMetadata != NULL; psMetadata = psMetadata->psNext )
+         psMetadata != NULL;
+         psMetadata = psMetadata->psNext )
     {
         if( psMetadata->eType != CXT_Element
             || !EQUAL(psMetadata->pszValue,"Metadata") )

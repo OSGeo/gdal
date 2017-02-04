@@ -408,8 +408,8 @@ def wms_9():
 
     tms = """<GDAL_WMS>
     <Service name="TiledWMS">
-	<ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl>
-	<TiledGroupName>Global SRTM Elevation</TiledGroupName>
+        <ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl>
+        <TiledGroupName>Global SRTM Elevation</TiledGroupName>
     </Service>
 </GDAL_WMS>
 """
@@ -596,11 +596,11 @@ def wms_14():
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    if abs(gt[0]- -20037508.339999999850988) > 0.00001 \
-       or abs(gt[3]- 20037508.339999999850988) > 0.00001 \
-       or abs(gt[1] - 0.298582141697407) > 0.00001 \
+    if abs(gt[0]- -20037508.34278924,) > 0.00001 \
+       or abs(gt[3]- 20037508.34278924,) > 0.00001 \
+       or abs(gt[1] - 0.2985821417389697) > 0.00001 \
        or abs(gt[2] - 0) > 0.00001 \
-       or abs(gt[5] - -0.298582141697407) > 0.00001 \
+       or abs(gt[5] - -0.2985821417389697,) > 0.00001 \
        or abs(gt[4] - 0) > 0.00001:
         gdaltest.post_reason( 'wrong geotransform' )
         print(gt)

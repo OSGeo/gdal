@@ -348,7 +348,7 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
     }
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -445,7 +445,6 @@ static void CreatePath( HDF5GroupObjects *poH5Object )
                 osUnderscoreSpaceInName.append( papszPath[ i ] );
             }
             CSLDestroy(papszPath);
-
         }
 
         // -1 to give room for NUL in C strings.
@@ -509,7 +508,6 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
     if( H5Gget_objinfo( hHDF5, pszObjName, FALSE, &oStatbuf ) < 0  )
         return -1;
 
-
 /* -------------------------------------------------------------------- */
 /*      Look for next child                                             */
 /* -------------------------------------------------------------------- */
@@ -558,7 +556,8 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
         {
             hid_t hGroupID = H5I_INVALID_HID;  // Identifier of group.
             if( ( hGroupID = H5Gopen( hHDF5, pszObjName ) ) == -1  ) {
-                printf( "Error: unable to access \"%s\" group.\n",
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "unable to access \"%s\" group.\n",
                         pszObjName );
                 return -1;
             }
@@ -596,7 +595,8 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
         {
             hid_t hDatasetID = H5I_INVALID_HID;  // Identifier of dataset.
             if( ( hDatasetID = H5Dopen( hHDF5, pszObjName ) ) == -1  ) {
-                printf( "Error: unable to access \"%s\" dataset.\n",
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "unable to access \"%s\" dataset.\n",
                         pszObjName );
                 return -1;
             }
@@ -653,7 +653,6 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
 
     return 0;
 }
-
 
 /************************************************************************/
 /*                          HDF5AttrIterate()                           */
@@ -852,7 +851,6 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
             }
         }
         CPLFree( buf );
-
     }
     H5Sclose(hAttrSpace);
     H5Tclose(hAttrNativeType);
@@ -913,7 +911,6 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                       HDF5FindDatasetObjectsbyPath()                 */
 /*      Find object by name                                             */
@@ -925,7 +922,7 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjectsbyPath
         EQUAL( poH5Objects->pszUnderscorePath,pszDatasetPath ) ) {
 
 #ifdef DEBUG_VERBOSE
-      printf("found it! %p\n", poH5Objects);
+        printf("found it! %p\n", poH5Objects); /*ok*/
 #endif
         return poH5Objects;
     }
@@ -951,7 +948,6 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjectsbyPath
     return NULL;
 }
 
-
 /************************************************************************/
 /*                       HDF5FindDatasetObjects()                       */
 /*      Find object by name                                             */
@@ -963,7 +959,7 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
         EQUAL( poH5Objects->pszName,pszDatasetName ) ) {
 
 #ifdef DEBUG_VERBOSE
-        printf("found it! %p\n", poH5Objects);
+        printf("found it! %p\n", poH5Objects); /*ok*/
 #endif
         return poH5Objects;
     }
@@ -981,7 +977,6 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
 /* -------------------------------------------------------------------- */
             if( poObjectsFound != NULL )
                 return poObjectsFound;
-
         }
     }
 /* -------------------------------------------------------------------- */
@@ -989,7 +984,6 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
 /* -------------------------------------------------------------------- */
     return NULL;
 }
-
 
 /************************************************************************/
 /*                        HDF5ListGroupObjects()                        */
@@ -1005,7 +999,6 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
         for( hsize_t i=0; i < poRootGroup->nbObjs; i++ ) {
             poDS->HDF5ListGroupObjects( poRootGroup->poHchild+i, bSUBDATASET );
         }
-
 
     if( poRootGroup->nType == H5G_GROUP ) {
         CreateMetadata( poRootGroup, H5G_GROUP );
@@ -1045,7 +1038,6 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
 
         default:
             return CE_None;
-
         }
         strcat( szDim,szTemp );
 
@@ -1068,12 +1060,10 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
                         poRootGroup->pszUnderscorePath,
                         poDS->GetDataTypeName
                         ( poRootGroup->native ) ) );
-
     }
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                       ReadGlobalAttributes()                         */
@@ -1091,7 +1081,7 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
     poRootGroup->pszUnderscorePath = NULL;
 
     if( hHDF5 < 0 )  {
-        printf( "hHDF5 <0!!\n" );
+        CPLError(CE_Failure, CPLE_AppDefined, "hHDF5 <0!!" );
         return CE_None;
     }
 
@@ -1106,7 +1096,7 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
         H5Gclose( hGroupID );
     hGroupID = H5Gopen( hHDF5, "/" );
     if( hGroupID < 0 ){
-        printf( "hGroupID <0!!\n" );
+        CPLError(CE_Failure, CPLE_AppDefined, "hGroupId <0!!" );
         return CE_None;
     }
 
@@ -1126,7 +1116,6 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
     HDF5ListGroupObjects( poRootGroup, bSUBDATASET );
     return CE_None;
 }
-
 
 /**
  * Reads an array of double attributes from the HDF5 metadata.

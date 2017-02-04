@@ -29,8 +29,27 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal_pam.h"
+
+#include <cerrno>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
@@ -267,7 +286,6 @@ void GDALPamProxyDB::SaveDB()
     if( hLock )
         CPLUnlockFile( hLock );
 }
-
 
 /************************************************************************/
 /*                            InitProxyDB()                             */

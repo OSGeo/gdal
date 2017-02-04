@@ -152,9 +152,19 @@ OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /FC /DDEBUG
 # 4100: 'identifier' : unreferenced formal parameter
 # 4245: 'conversion' : conversion from 'type1' to 'type2', signed/unsigned mismatch
 # 4206: nonstandard extension used : translation unit is empty (only applies to C source code)
+# 4351: new behavior: elements of array 'array' will be default initialized (needed for https://trac.osgeo.org/gdal/changeset/35593)
 # 4611: interaction between '_setjmp' and C++ object destruction is non-portable
 # 
-WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4611
+WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4351 /wd4611
+
+!IF $(MSVC_VER) >= 1500
+!IF $(MSVC_VER) < 1700
+# VS 2008 / MSVC_VER = 1500 and VS 2010 / MSVC_VER = 1600 recognizes override, but as an extension.
+# warning C4481: nonstandard extension used: override specifier 'override'
+WARNFLAGS = $(WARNFLAGS) /wd4481
+!ENDIF
+!ENDIF
+
 !ENDIF
 
 # 
@@ -162,6 +172,7 @@ WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4611
 # 
 !IFNDEF SSEFLAGS
 SSEFLAGS = /DHAVE_SSE_AT_COMPILE_TIME
+SSSE3FLAGS = /DHAVE_SSSE3_AT_COMPILE_TIME
 #SSE_ARCH_FLAGS = /arch:SSE
 !ENDIF
 
@@ -214,7 +225,7 @@ INCLUDE_OGR_FRMTS = YES
 
 # Enable all GNM formats?  Comment out to disable
 # gnm formats.
-#INCLUDE_GNM_FRMTS = YES
+INCLUDE_GNM_FRMTS = YES
 
 # To be enabled defined to point to setargv.obj from the Visual C++ directory,
 # when you want the utility programs to be able to expand wildcards. 
@@ -315,6 +326,18 @@ ECWLIB  = 	$(ECWDIR)\lib\vc90\win32\NCSEcw4_RO.lib \
 # resulting DLLs to an appropriate place.
 ECW_PLUGIN = YES
 
+
+# Uncomment the following and update to enable JP2Lura driver
+#LURATECH_CFLAGS = -Ic:\jp2_csdk_2.16_win64\include
+#LURATECH_LIB = c:\jp2_csdk_2.16_win64\library\lwf_jp2.lib
+
+# To build JP2Lura support as a plugin uncomment the following, and make sure
+# to do "nmake /f makefile.vc plugin" in gdal/frmts/jp2lura and copy the two
+# resulting DLLs to an appropriate place.
+#JP2LURA_PLUGIN = YES
+
+
+
 # Uncomment the following and update to enable ECW support with the 3.3 SDK.
 # Significant adaption may be needed.
 #ECWDIR  = 	C:\warmerda\libecwj2-3.3
@@ -350,11 +373,17 @@ EXPAT_INCLUDE = -I$(EXPAT_DIR)/include
 EXPAT_LIB = $(EXPAT_DIR)/x86/libexpat.lib
 
 # Uncomment for Xerces based GML and ILI support.
+<<<<<<< HEAD
 XERCES_DIR =	"F:\Work\GDAL\gdal_need\xerces-c"
 XERCES_INCLUDE = -I$(XERCES_DIR)/include -I$(XERCES_DIR)/include/xercesc
 XERCES_LIB = $(XERCES_DIR)/x86/xerces-c_3.lib
+=======
+#XERCES_DIR =	c:\warmerda\supportlibs\xerces-c_3_1_3
+#XERCES_INCLUDE = -I$(XERCES_DIR)/include -I$(XERCES_DIR)/include/xercesc
+#XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_3.lib
+>>>>>>> refs/remotes/OSGeo/trunk
 
-# Uncomment the following for Interlis support.  Note that a Xercex 2.x
+# Uncomment the following for Interlis support.  Note that a Xercex 3.x
 # is also required (see above).  Also, Interlis support only works with
 # Visual Studio.NET or newer, not VC6.
 #ILI_ENABLED = YES
@@ -448,7 +477,9 @@ SQLITE_LIB=F:\Work\GDAL\gdal_need\SQLite3\lib_x86\sqlite3.lib
 # For spatialite support, try this instead (assuming you grab the libspatialite-amalgamation-2.3.1 and installed it in osgeo4w):
 # The -DSPATIALITE_AMALGAMATION, which cause "spatialite/sqlite3.h" to be included instead of "sqlite3.h" might not be necessary
 # depending on the layout of the include directories. In case of compilation errors, remove it.
+# For RasterLite2 support, add something like -Ic:\install-rl2\include -DHAVE_RASTERLITE2
 #SQLITE_INC=-IC:\osgeo4w\include -DHAVE_SPATIALITE -DSPATIALITE_AMALGAMATION
+# For RasterLite2 support, add something like c:\install-rl2\lib\librasterlite2.lib
 #SQLITE_LIB=C:\osgeo4w\lib\spatialite_i.lib
 # Uncomment following line if libsqlite3 has been compiled with SQLITE_HAS_COLUMN_METADATA=yes
 #SQLITE_HAS_COLUMN_METADATA=yes
@@ -569,6 +600,11 @@ OPENJPEG_CFLAGS = -IF:\Work\GDAL\gdal_need\openjpeg-2.0.0-win32-x86\include
 OPENJPEG_LIB = F:\Work\GDAL\gdal_need\openjpeg-2.0.0-win32-x86\lib\openjp2.lib
 # For OpenJpeg >= 2.1, uncomment
 #OPENJPEG_VERSION = 20100
+
+#if using an external zlib uncomment the following lines
+#ZLIB_EXTERNAL_LIB = 1
+#ZLIB_INC = -IC:\projects\zlib
+#ZLIB_LIB = C:\projects\lib\Release\zlib.lib
 
 # Uncomment for PDF support
 # Uncomment POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES for Poppler >= 0.16.0
@@ -757,8 +793,13 @@ GNM_FLAG = -DGNM_ENABLED
 LINKER_FLAGS = $(EXTRA_LINKER_FLAGS) $(MSVC_VLD_LIB) $(LDEBUG)
 
 
+<<<<<<< HEAD
 CFLAGS	= $(OPTFLAGS) $(WARNFLAGS) $(USER_DEFS) $(SSEFLAGS) $(INC) $(AVXFLAGS) $(EXTRAFLAGS) $(OGR_FLAG) $(GNM_FLAG) $(MSVC_VLD_FLAGS) $(OPENCL_FLAG) $(DEBUG_VSIMALLOC_FLAG) -DGDAL_COMPILATION
 CPPFLAGS = $(CFLAGS) 
+=======
+CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(USER_DEFS) $(SSEFLAGS) $(SSSE3FLAGS) $(INC) $(AVXFLAGS) $(EXTRAFLAGS) $(OGR_FLAG) $(GNM_FLAG) $(MSVC_VLD_FLAGS) -DGDAL_COMPILATION
+CPPFLAGS = $(CFLAGS) -DNOMINMAX
+>>>>>>> refs/remotes/OSGeo/trunk
 MAKE	=	nmake /nologo
 
 !IFNDEF CC
@@ -802,6 +843,14 @@ MRSID_LIDAR_LIB_LINK=
 ECW_LIB_LINK= $(ECWLIB)
 !ELSE
 ECW_LIB_LINK=
+!ENDIF
+!ENDIF
+
+!IFDEF LURATECH_CFLAGS
+!IF "$(JP2LURA_PLUGIN)" != "YES"
+LURATECH_LIB_LINK= $(LURATECH_LIB)
+!ELSE
+LURATECH_LIB_LINK=
 !ENDIF
 !ENDIF
 
@@ -906,7 +955,11 @@ SYM_PREFIX=_
 !ENDIF
 
 EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
+<<<<<<< HEAD
 	$(ECW_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) $(MRSID_LIDAR_LIB_LINK) \
+=======
+	$(ECW_LIB_LINK) $(LURATECH_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) \
+>>>>>>> refs/remotes/OSGeo/trunk
 	$(FITS_LIB_LINK) $(JPEG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
 	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(SDE_LIB) $(ARCOBJECTS_LIB) $(DWG_LIB) \
@@ -915,4 +968,8 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
 	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(CRYPTOPP_LIB) ws2_32.lib \
+<<<<<<< HEAD
 	$(SQLNCLI_LIB) $(PG_LIB_LINK) $(OPENCL_LIB) /NODEFAULTLIB:LIBCMT
+=======
+    kernel32.lib psapi.lib
+>>>>>>> refs/remotes/OSGeo/trunk

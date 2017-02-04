@@ -34,6 +34,7 @@
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 #include "cpl_minixml.h"
+#include "gmlutils.h"
 
 #include <vector>
 
@@ -167,9 +168,9 @@ class CPL_DLL GMLFeatureClass
     char       *m_pszSRSName;
     bool        m_bSRSNameConsistent;
 
-public:
-            GMLFeatureClass( const char *pszName = "" );
-           ~GMLFeatureClass();
+  public:
+    explicit  GMLFeatureClass( const char *pszName = "" );
+             ~GMLFeatureClass();
 
     const char *GetElementName() const;
     size_t      GetElementNameLen() const;
@@ -239,7 +240,7 @@ class CPL_DLL GMLFeature
     char           **m_papszOBProperties;
 
 public:
-                    GMLFeature( GMLFeatureClass * );
+    explicit        GMLFeature( GMLFeatureClass * );
                    ~GMLFeature();
 
     GMLFeatureClass*GetClass() const { return m_poClass; }
@@ -270,7 +271,7 @@ public:
 /************************************************************************/
 class CPL_DLL IGMLReader
 {
-public:
+  public:
     virtual     ~IGMLReader();
 
     virtual bool IsClassListLocked() const = 0;
@@ -305,7 +306,7 @@ public:
     virtual bool PrescanForSchema( bool bGetExtents = true,
                                   bool bAnalyzeSRSPerFeature = true,
                                   bool bOnlyDetectSRS = false ) = 0;
-    virtual bool PrescanForTemplate( void ) = 0;
+    virtual bool PrescanForTemplate() = 0;
 
     virtual bool HasStoppedParsing() = 0;
 
@@ -322,7 +323,7 @@ public:
 IGMLReader *CreateGMLReader(bool bUseExpatParserPreferably,
                             bool bInvertAxisOrderIfLatLong,
                             bool bConsiderEPSGAsURN,
+                            GMLSwapCoordinatesEnum eSwapCoordinates,
                             bool bGetSecondaryGeometryOption);
-
 
 #endif /* GMLREADER_H_INCLUDED */

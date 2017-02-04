@@ -52,7 +52,7 @@ private:
 
 public:
     IntergraphDataset();
-    ~IntergraphDataset();
+    virtual ~IntergraphDataset();
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static GDALDataset *Create( const char *pszFilename,
@@ -68,7 +68,7 @@ public:
         GDALProgressFunc pfnProgress,
         void * pProgressData );
 
-    virtual CPLErr GetGeoTransform( double *padfTransform );
-    virtual CPLErr SetGeoTransform( double *padfTransform );
-    virtual CPLErr SetProjection( const char *pszProjString );
+    virtual CPLErr GetGeoTransform( double *padfTransform ) override;
+    virtual CPLErr SetGeoTransform( double *padfTransform ) override;
+    virtual CPLErr SetProjection( const char *pszProjString ) override;
 };

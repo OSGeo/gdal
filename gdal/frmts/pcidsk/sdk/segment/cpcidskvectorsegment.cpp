@@ -870,7 +870,7 @@ void CPCIDSKVectorSegment::PushLoadedIndexIntoMap()
 /* -------------------------------------------------------------------- */
     int loaded_page = shape_index_start / shapeid_page_size;
 
-    if( shapeid_map_active && shape_index_ids.size() > 0 )
+    if( shapeid_map_active && !shape_index_ids.empty() )
     {
         unsigned int i;
 

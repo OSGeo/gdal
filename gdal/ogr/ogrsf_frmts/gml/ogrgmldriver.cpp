@@ -34,17 +34,6 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                        OGRGMLDriverUnload()                          */
-/************************************************************************/
-
-static void OGRGMLDriverUnload(CPL_UNUSED GDALDriver* poDriver)
-{
-    if( GMLReader::hMutex != NULL )
-        CPLDestroyMutex( GMLReader::hMutex );
-    GMLReader::hMutex = NULL;
-}
-
-/************************************************************************/
 /*                         OGRGMLDriverIdentify()                       */
 /************************************************************************/
 
@@ -168,6 +157,13 @@ void RegisterOGRGML()
 "    <Value>YES</Value>"
 "    <Value>NO</Value>"
 "  </Option>"
+"  <Option name='SWAP_COORDINATES' type='string-select' "
+    "description='Whether the order of geometry coordinates should be inverted.' "
+    "default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"  </Option>"
 "  <Option name='READ_MODE' type='string-select' description='Read mode' default='AUTO'>"
 "    <Value>AUTO</Value>"
 "    <Value>STANDARD</Value>"
@@ -206,6 +202,11 @@ void RegisterOGRGML()
 "    <Value>GML3Deegree</Value>"
 "  </Option>"
 "  <Option name='GML3_LONGSRS' type='boolean' description='Whether to write SRS with \"urn:ogc:def:crs:EPSG::\" prefix with GML3* versions' default='YES'/>"
+"  <Option name='SRSNAME_FORMAT' type='string-select' description='Format of srsName (for GML3* versions)' default='OGC_URL'>"
+"    <Value>SHORT</Value>"
+"    <Value>OGC_URN</Value>"
+"    <Value>OGC_URL</Value>"
+"  </Option>"
 "  <Option name='WRITE_FEATURE_BOUNDED_BY' type='boolean' description='Whether to write <gml:boundedBy> element for each feature with GML3* versions' default='YES'/>"
 "  <Option name='SPACE_INDENTATION' type='boolean' description='Whether to indent the output for readability' default='YES'/>"
 "  <Option name='SRSDIMENSION_LOC' type='string-select' description='(only valid for FORMAT=GML3xx) Location where to put srsDimension attribute' default='POSLIST'>"
@@ -227,7 +228,6 @@ void RegisterOGRGML()
     poDriver->pfnOpen = OGRGMLDriverOpen;
     poDriver->pfnIdentify = OGRGMLDriverIdentify;
     poDriver->pfnCreate = OGRGMLDriverCreate;
-    poDriver->pfnUnloadDriver = OGRGMLDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

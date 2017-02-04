@@ -27,8 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
+#include "cpl_port.h"
 #include "gdal_priv.h"
+
+#include <cstdarg>
+#include <cstddef>
+
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
@@ -297,7 +304,14 @@ CPLErr GDALMajorObject::SetMetadata( char ** papszMetadataIn,
 /**
  * \brief Set metadata.
  *
- * @see GDALMajorObject::SetMetadata()
+ * CAUTION: when using this function on a GDALDatasetH or GDALRasterBandH,
+ * depending on the format, older values of the updated information might
+ * still be found in the file in a "ghost" state, even if no longer accessible
+ * through the GDAL API. This is for example the case of the GTiff format (this is
+ * not a exhaustive list)
+ *
+ * @see GDALMajorObject::SetMetadata(), GDALDataset::SetMetadata(),
+ *      GDALRasterBand::SetMetadata()
  */
 
 CPLErr CPL_STDCALL
@@ -310,7 +324,6 @@ GDALSetMetadata( GDALMajorObjectH hObject, char **papszMD,
     return static_cast<GDALMajorObject *>(hObject)->
         SetMetadata( papszMD, pszDomain );
 }
-
 
 /************************************************************************/
 /*                          GetMetadataItem()                           */
@@ -388,7 +401,14 @@ CPLErr GDALMajorObject::SetMetadataItem( const char * pszName,
 /**
  * \brief Set single metadata item.
  *
- * @see GDALMajorObject::SetMetadataItem()
+ * CAUTION: when using this function on a GDALDatasetH or GDALRasterBandH,
+ * depending on the format, older values of the updated information might
+ * still be found in the file in a "ghost" state, even if no longer accessible
+ * through the GDAL API. This is for example the case of the GTiff format (this is
+ * not a exhaustive list)
+ *
+ * @see GDALMajorObject::SetMetadataItem(), GDALDataset::SetMetadataItem(),
+ *      GDALRasterBand::SetMetadataItem()
  */
 
 CPLErr CPL_STDCALL

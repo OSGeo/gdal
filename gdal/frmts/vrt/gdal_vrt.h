@@ -46,10 +46,6 @@
 
 CPL_C_START
 
-/*! @cond Doxygen_Suppress */
-void GDALRegister_VRT();
-/*! @endcond */
-
 /** Type for a function that returns the pixel data in a provided window */
 typedef CPLErr
 (*VRTImageReadFunc)( void *hCBData,

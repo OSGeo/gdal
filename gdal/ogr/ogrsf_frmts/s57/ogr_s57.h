@@ -60,20 +60,20 @@ class OGRS57Layer : public OGRLayer
                                      int nOBJL = -1 );
     virtual             ~OGRS57Layer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
     OGRFeature *        GetNextUnfilteredFeature();
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-    int                 TestCapability( const char * );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+    int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -102,7 +102,7 @@ class OGRS57DataSource : public OGRDataSource
     OGREnvelope         oExtents;
 
   public:
-                        OGRS57DataSource(char** papszOpenOptions = NULL);
+    explicit            OGRS57DataSource(char** papszOpenOptions = NULL);
                         ~OGRS57DataSource();
 
     void                SetOptionList( char ** );
@@ -111,11 +111,11 @@ class OGRS57DataSource : public OGRDataSource
     int                 Open( const char * pszName );
     int                 Create( const char *pszName, char **papszOptions );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
     void                AddLayer( OGRS57Layer * );
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
 

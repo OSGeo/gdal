@@ -35,16 +35,14 @@ CPL_CVSID("$Id$");
 /*                          OGRXPlaneDataSource()                          */
 /************************************************************************/
 
-OGRXPlaneDataSource::OGRXPlaneDataSource()
-
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-    poReader = NULL;
-    bReadWholeFile = TRUE;
-    bWholeFiledReadingDone = FALSE;
-}
+OGRXPlaneDataSource::OGRXPlaneDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    poReader(NULL),
+    bReadWholeFile(true),
+    bWholeFiledReadingDone(false)
+{}
 
 /************************************************************************/
 /*                         ~OGRXPlaneDataSource()                       */
@@ -113,7 +111,7 @@ int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFileIn )
 {
     Reset();
 
-    this->bReadWholeFile = bReadWholeFileIn;
+    bReadWholeFile = CPL_TO_BOOL(bReadWholeFileIn);
 
     const char* pszShortFilename = CPLGetFilename(pszFilename);
     if (EQUAL(pszShortFilename, "nav.dat") ||
@@ -136,16 +134,16 @@ int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFileIn )
         poReader = OGRXPlaneCreateAwyFileReader(this);
     }
 
-    if (poReader && poReader->StartParsing(pszFilename) == FALSE)
+    if( poReader && !poReader->StartParsing(pszFilename) )
     {
         delete poReader;
         poReader = NULL;
     }
-    if (poReader)
+    if( poReader )
     {
         pszName = CPLStrdup(pszFilename);
 
-        if ( !bReadWholeFile )
+        if( !bReadWholeFile )
         {
             for( int i = 0; i < nLayers; i++ )
                 papoLayers[i]->SetReader(poReader->CloneForLayer(papoLayers[i]));
@@ -171,11 +169,11 @@ int OGRXPlaneDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 
 void OGRXPlaneDataSource::ReadWholeFileIfNecessary()
 {
-    if (bReadWholeFile && !bWholeFiledReadingDone)
+    if( bReadWholeFile && !bWholeFiledReadingDone )
     {
         poReader->ReadWholeFile();
         for( int i = 0; i < nLayers; i++ )
             papoLayers[i]->AutoAdjustColumnsWidth();
-        bWholeFiledReadingDone = TRUE;
+        bWholeFiledReadingDone = true;
     }
 }

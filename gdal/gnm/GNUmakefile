@@ -1,6 +1,8 @@
 
 include ../GDALmake.opt
 
+INST_H_FILES	=	gnm.h gnm_api.h gnmgraph.h
+
 OBJ	=	gnmnetwork.o gnmgenericnetwork.o gnmlayer.o gnmrule.o gnmresultlayer.o \
         gnmgraph.o
 
@@ -18,14 +20,16 @@ very-clean: clean
 
 lib:	sublibs $(OBJ:.o=.$(OBJ_EXT))
 
-$(OBJ): gnm.h gnm_priv.h 
+$(OBJ): gnm.h gnm_priv.h
 
 obj:	$(OBJ)
 
 sublibs:
 	(cd gnm_frmts; $(MAKE))
-	
-install:	;
+
+install:
+	for f in $(INST_H_FILES) ; \
+	    do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; \
+	done
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
-	

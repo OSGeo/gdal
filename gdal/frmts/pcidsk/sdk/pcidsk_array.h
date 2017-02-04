@@ -41,15 +41,15 @@ namespace PCIDSK
     class PCIDSK_DLL PCIDSK_ARRAY
     {
     public:
-        virtual	~PCIDSK_ARRAY() {}
+        virtual ~PCIDSK_ARRAY() {}
 
         //ARRAY functions
-        virtual	unsigned char GetDimensionCount() const =0;
-        virtual	void SetDimensionCount(unsigned char nDim) =0;
-        virtual	const std::vector<unsigned int>& GetSizes() const =0;
-        virtual	void SetSizes(const std::vector<unsigned int>& oSizes) =0;
-        virtual	const std::vector<double>& GetArray() const =0;
-        virtual	void SetArray(const std::vector<double>& oArray) =0;
+        virtual unsigned char GetDimensionCount() const =0;
+        virtual void SetDimensionCount(unsigned char nDim) =0;
+        virtual const std::vector<unsigned int>& GetSizes() const =0;
+        virtual void SetSizes(const std::vector<unsigned int>& oSizes) =0;
+        virtual const std::vector<double>& GetArray() const =0;
+        virtual void SetArray(const std::vector<double>& oArray) =0;
     };
 } // end namespace PCIDSK
 

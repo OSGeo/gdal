@@ -170,19 +170,24 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     if( poSR == NULL )
         return NULL;
 
-    TABProjInfo     sTABProj;
-    int             nParmCount;
+    TABProjInfo sTABProj;
+    int nParmCount = 0;
     TABFile::GetTABProjFromSpatialRef(poSR, sTABProj, nParmCount);
 
 /* -------------------------------------------------------------------- */
 /*      Do coordsys lookup                                              */
 /* -------------------------------------------------------------------- */
-    double dXMin = 0.0, dYMin = 0.0, dXMax = 0.0, dYMax = 0.0;
-    int bHasBounds = FALSE;
-    if (sTABProj.nProjId > 1 &&
-        MITABLookupCoordSysBounds(&sTABProj, dXMin, dYMin, dXMax, dYMax, TRUE) == TRUE)
+    double dXMin = 0.0;
+    double dYMin = 0.0;
+    double dXMax = 0.0;
+    double dYMax = 0.0;
+    bool bHasBounds = false;
+    if( sTABProj.nProjId > 1 &&
+        MITABLookupCoordSysBounds(&sTABProj,
+                                  dXMin, dYMin,
+                                  dXMax, dYMax, true) )
     {
-        bHasBounds = TRUE;
+        bHasBounds = true;
     }
 
 /*-----------------------------------------------------------------
@@ -200,7 +205,6 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         osCoordSys.Printf(
                  "Earth Projection %d",
                  sTABProj.nProjId );
-
     }
     else
         osCoordSys.Printf(
@@ -256,7 +260,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 /* -------------------------------------------------------------------- */
 /*      Append user bounds                                              */
 /* -------------------------------------------------------------------- */
-    if (bHasBounds)
+    if( bHasBounds )
     {
         if( fabs(dXMin - (int)floor(dXMin+0.5)) < 1e-8 &&
             fabs(dYMin - (int)floor(dYMin+0.5)) < 1e-8 &&
@@ -287,24 +291,23 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         CPLFree( pszWKT );
     }
 
-    return( CPLStrdup( osCoordSys.c_str() ) );
+    return CPLStrdup( osCoordSys.c_str() );
 }
-
 
 /************************************************************************/
 /*                      MITABExtractCoordSysBounds                      */
 /*                                                                      */
-/* Return TRUE if MIF coordsys string contains a BOUNDS parameter and   */
+/* Return true if MIF coordsys string contains a BOUNDS parameter and   */
 /* Set x/y min/max values.                                              */
 /************************************************************************/
 
-GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
-                                  double &dXMin, double &dYMin,
-                                  double &dXMax, double &dYMax )
+bool MITABExtractCoordSysBounds( const char * pszCoordSys,
+                                 double &dXMin, double &dYMin,
+                                 double &dXMax, double &dYMax )
 
 {
     if( pszCoordSys == NULL )
-        return FALSE;
+        return false;
 
     char **papszFields =
         CSLTokenizeStringComplex( pszCoordSys, " ,()", TRUE, FALSE );
@@ -318,13 +321,12 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
         dXMax = CPLAtof(papszFields[++iBounds]);
         dYMax = CPLAtof(papszFields[++iBounds]);
         CSLDestroy( papszFields );
-        return TRUE;
+        return true;
     }
 
     CSLDestroy( papszFields );
-    return FALSE;
+    return false;
 }
-
 
 /**********************************************************************
  *                     MITABCoordSys2TABProjInfo()
@@ -437,10 +439,10 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     /*-----------------------------------------------------------------
      * Find the datum, and collect it's parameters if possible.
      *----------------------------------------------------------------*/
-        int         iDatum;
         const MapInfoDatumInfo *psDatumInfo = NULL;
 
-        for(iDatum=0; asDatumInfoList[iDatum].nMapInfoDatumID != -1; iDatum++)
+        int iDatum = 0;  // Used after for.
+        for( ; asDatumInfoList[iDatum].nMapInfoDatumID != -1; iDatum++ )
         {
             if( asDatumInfoList[iDatum].nMapInfoDatumID == nDatum )
             {

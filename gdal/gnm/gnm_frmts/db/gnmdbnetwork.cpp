@@ -250,8 +250,6 @@ int GNMDatabaseNetwork::CheckNetworkExist(const char *pszFilename, char **papszO
     {
         return TRUE;
     }
-
-    return FALSE;
 }
 
 CPLErr GNMDatabaseNetwork::DeleteMetadataLayer()
@@ -448,7 +446,6 @@ OGRLayer *GNMDatabaseNetwork::ICreateLayer(const char *pszName,
         CPLError( CE_Failure, CPLE_FileIO, "Creating global identificator field failed." );
         return NULL;
     }
-
 
     OGRFieldDefn oFieldBlock(GNM_SYSFIELD_BLOCKED, OFTInteger);
     if( poLayer->CreateField( &oFieldBlock ) != OGRERR_NONE )

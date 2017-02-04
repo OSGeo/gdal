@@ -37,6 +37,13 @@ endif
 
 ifeq ($(HAVE_PDFIUM),yes)
 CPPFLAGS +=  -DHAVE_PDFIUM
+# -Wzero-as-null-pointer-constant -DNULL_AS_NULLPTR isn't compatible of pdfium headers
+# /home/even/pdfium/install/include/pdfium/third_party/base/numerics/safe_conversions.h: In instantiation of ‘Dst pdfium::base::checked_cast(Src) [with Dst = int; Src = long unsigned int]’:
+# /home/even/pdfium/install/include/pdfium/core/include/fxcrt/fx_string.h:43:26:   required from here
+# /home/even/pdfium/install/include/pdfium/third_party/base/numerics/safe_conversions.h:29:3: erreur: invalid cast from type ‘std::nullptr_t’ to type ‘volatile char*’
+#    CHECK(IsValueInRangeForNumericType<Dst>(value));
+CXX := $(subst -Wzero-as-null-pointer-constant,,${CXX})
+CXX := $(subst -DNULL_AS_NULLPTR,,${CXX})
 endif
 
 $(O_OBJ):       pdfobject.h pdfio.h pdfcreatecopy.h gdal_pdf.h ../../ogr/ogrsf_frmts/mem/ogr_mem.h

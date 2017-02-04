@@ -51,15 +51,15 @@ class GDALMDReaderPleiades: public GDALMDReaderBase
 public:
     GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderPleiades();
-    virtual bool HasRequiredFiles() const;
-    virtual char** GetMetadataFiles() const;
+    virtual bool HasRequiredFiles() const override;
+    virtual char** GetMetadataFiles() const override;
 
     static GDALMDReaderPleiades* CreateReaderForRPC(const char* pszRPCSourceFilename);
 
     char** LoadRPCXmlFile();
 
 protected:
-    virtual void LoadMetadata();
+    virtual void LoadMetadata() override;
 protected:
     CPLString m_osBaseFilename;
     CPLString m_osIMDSourceFilename;

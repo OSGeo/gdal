@@ -26,7 +26,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "iso8211.h"
+
+#include <cstdlib>
+#include <cstring>
+
 #include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
@@ -41,7 +46,7 @@ CPL_CVSID("$Id$");
 int DDFScanInt( const char * pszString, int nMaxChars )
 
 {
-    char        szWorking[33];
+    char szWorking[33] = {};
 
     if( nMaxChars > 32 || nMaxChars == 0 )
         nMaxChars = 32;
@@ -49,7 +54,7 @@ int DDFScanInt( const char * pszString, int nMaxChars )
     memcpy( szWorking, pszString, nMaxChars );
     szWorking[nMaxChars] = '\0';
 
-    return( atoi(szWorking) );
+    return atoi(szWorking);
 }
 
 /************************************************************************/
@@ -64,7 +69,7 @@ int DDFScanVariable( const char *pszRecord, int nMaxChars, int nDelimChar )
 {
     int i = 0;  // Used after for.
 
-    for( ; i < nMaxChars-1 && pszRecord[i] != nDelimChar; i++ ) {}
+    for( ; i < nMaxChars - 1 && pszRecord[i] != nDelimChar; i++ ) {}
 
     return i;
 }
@@ -93,7 +98,7 @@ char * DDFFetchVariable( const char *pszRecord, int nMaxChars,
         && (pszRecord[i] == nDelimChar1 || pszRecord[i] == nDelimChar2) )
         (*pnConsumedChars)++;
 
-    char  *pszReturn = (char *) CPLMalloc(i+1);
+    char *pszReturn = static_cast<char *>(CPLMalloc(i + 1));
     pszReturn[i] = '\0';
     strncpy( pszReturn, pszRecord, i );
 

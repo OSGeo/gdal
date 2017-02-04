@@ -51,7 +51,7 @@ namespace PCIDSK
         virtual ~PCIDSKException() throw();
 
         void vPrintf( const char *fmt, std::va_list list );
-        virtual const char *what() const throw() { return message.c_str(); }
+        virtual const char *what() const throw() override { return message.c_str(); }
     private:
         std::string   message;
     };

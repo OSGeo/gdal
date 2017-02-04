@@ -1,7 +1,7 @@
 /*
  *  EPSG/POSC Datum database -- GeoTIFF Rev. 0.2
  */
-
+ 
 /* C database for Geotiff include files.   */
 /* the macro ValuePair() must be defined   */
 /* by the enclosing include file           */

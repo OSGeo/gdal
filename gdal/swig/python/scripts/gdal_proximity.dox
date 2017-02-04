@@ -6,18 +6,18 @@ produces a raster proximity map
 \section gdal_proximity_synopsis SYNOPSIS
 
 \verbatim
-gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n] 
+gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
                   [-of format] [-co name=value]*
                   [-ot Byte/Int16/Int32/Float32/etc]
                   [-values n,n,n] [-distunits PIXEL/GEO]
                   [-maxdist n] [-nodata n] [-use_input_nodata YES/NO]
-                  [-fixed-buf-val n] 
+                  [-fixed-buf-val n]
 \endverbatim
 
 \section gdal_proximity_description DESCRIPTION
 
 The gdal_proximity.py script generates a raster proximity map indicating
-the distance from the center of each pixel to the center of the nearest 
+the distance from the center of each pixel to the center of the nearest
 pixel identified as a target pixel.  Target pixels are those in the source
 raster for which the raster pixel value is in the set of target pixel values.
 
@@ -37,11 +37,11 @@ the output format driver. Multiple <b>-co</b> options may be listed. See
 format specific documentation for legal creation options for each format.
 </dd>
 
-<dt> <b>-ot</b> <i>datatype</i>:</dt><dd> 
+<dt> <b>-ot</b> <i>datatype</i>:</dt><dd>
 Force the output image bands to have a specific type. Use type names (i.e. Byte, Int16,...)
 </dd>
 
-<dt> <b>-values</b> <i>n,n,n</i>:</dt><dd> 
+<dt> <b>-values</b> <i>n,n,n</i>:</dt><dd>
 A list of target pixel values in the source image to be considered target
 pixels. If not specified, all non-zero pixels will be considered target pixels.
 </dd>

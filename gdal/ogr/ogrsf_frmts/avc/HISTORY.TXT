@@ -1,6 +1,6 @@
 AVCE00 library - Revision History
 =================================
- 
+
 
 Current Version:
 ----------------
@@ -12,7 +12,7 @@ Version 2.0.1 (CVS):
 - Fixed GCC 4.1.x compile warnings related to use of char vs unsigned char
   (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2495)
 
-- Fixed VC++ WIN32 build problems in GDAL/OGR environment 
+- Fixed VC++ WIN32 build problems in GDAL/OGR environment
   (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2500)
 
 - Detect compressed E00 input files and refuse to open them instead of
@@ -35,7 +35,7 @@ Version 2.0.0 (2006-08-17):
     void             AVCE00ReadCloseE00(AVCE00ReadE00Ptr psRead);
     int              AVCE00ReadRewindE00(AVCE00ReadE00Ptr psRead);
     int              AVCE00ReadSeekE00(AVCE00ReadE00Ptr psRead,
-                                       int nOffset, int nWhence); 
+                                       int nOffset, int nWhence);
     void            *AVCE00ReadNextObjectE00(AVCE00ReadE00Ptr psRead,
                                              int bContinue);
 
@@ -44,7 +44,7 @@ Version 2.0.0 (2006-08-17):
 
 - Accept empty subclass names for TX6/TX7 sections (bug 1261)
 
-- Applied patch to remove any embedded '\0' from data line in 
+- Applied patch to remove any embedded '\0' from data line in
   AVCE00GenTableRec()
 
 - Support for reading standalone info tables (just tables, no coverage
@@ -60,15 +60,15 @@ Version 1.3.0 (2005-06-02):
   to discover filename "case" on Unix in AVCAdjustCaseSensitiveFilename.
   http://bugzilla.remotesensing.org/show_bug.cgi?id=314
 
-- Fixed leak in AVCE00ReadOpen() when trying to open something that's 
+- Fixed leak in AVCE00ReadOpen() when trying to open something that's
   not a coverage (bug513)
 
-- Added AVCBinReadObject() to randomly read an object using the index file. 
+- Added AVCBinReadObject() to randomly read an object using the index file.
   Currently only works for Arcs, info records and polygons.  NFW
 
-- Fixed up AVCBinReadObject() to work properly for PC Arc/Info style 
+- Fixed up AVCBinReadObject() to work properly for PC Arc/Info style
   coverages.  Also fixed to use upper/lower case 'X' for index based on
-  base file type. NFW  OGR Bug#493. 
+  base file type. NFW  OGR Bug#493.
 
 - avc_e00write.c: modified to use VSIMkdir().
 
@@ -95,23 +95,23 @@ Version 1.2.1 (2000-11-25):
 - Fixed E00 parsing to properly handle PAL entries with 0 arcs which happen
   to contain a single "0 0 0" entry.
 
-- Fixed E00 generation to correctly format 0-arc PAL records so that 
+- Fixed E00 generation to correctly format 0-arc PAL records so that
   they have a single "0 0 0" (filler) arc record (bug#597)
 
 - Fixed reading of type 40 fields from E00: when a type 40 field is not
-  stored in exponent format then a decimal format may be used but the 
-  decimal position is shifted to the right in the E00 value.  So we have 
-  to shift the decimal point to the left (i.e. divide by 10) as we 
+  stored in exponent format then a decimal format may be used but the
+  decimal position is shifted to the right in the E00 value.  So we have
+  to shift the decimal point to the left (i.e. divide by 10) as we
   interpret the value (bug#599).  Really odd!
 
-- Added a hack to remap type 40 fields bigger than 8 digits to double 
-  precision binary floats while generating E00 output (bug#599).  
-  In E00 format, type 40 fields bigger than 8 digits would lose some 
-  digits of precision and double precision floats can carry up to 18 
-  digits of precision. 
+- Added a hack to remap type 40 fields bigger than 8 digits to double
+  precision binary floats while generating E00 output (bug#599).
+  In E00 format, type 40 fields bigger than 8 digits would lose some
+  digits of precision and double precision floats can carry up to 18
+  digits of precision.
   This hack is enabled using "-DAVC_MAP_TYPE40_TO_DOUBLE" in OPTFLAGS.
 
-- Fixed problem with info/arc####.dat files coming from Windows that 
+- Fixed problem with info/arc####.dat files coming from Windows that
   contained '\\' in the data file path.  Remap '\\' in path to '/' on Unix.
   This problem seems to be new with Arc8 on Windows.
 
@@ -124,7 +124,7 @@ Version 1.2.0 (2000-10-17):
 
 - Added Japanese (multibyte characters) support.
 
-- Made validation on new coverage name more flexible (used to accept only 
+- Made validation on new coverage name more flexible (used to accept only
   isalnum() chars and '_')
 
 - Added a case to treat pal.adf files with nPrecision==1011 as double prec.
@@ -180,7 +180,7 @@ Version 0.6 (1999-08-26):
 - Fixed some memory leaks.
 
 - Fixed a Windows-specific bug: the arc.dir was sometimes overwritten when
-  several coverages were created by the same process... likely a buffering 
+  several coverages were created by the same process... likely a buffering
   issue.
 
 Version 0.5 (1999-06-10):
@@ -189,10 +189,10 @@ Version 0.5 (1999-06-10):
 - Overwrite existing arc.dir entries when necessary while creating INFO
   tables.
   The problem was that when same coverage name was used twice with the
-  same info directory... we ended up with 2 sets of tables with the 
+  same info directory... we ended up with 2 sets of tables with the
   same names.
   This happened if a user deleted a coverage directory using "rm".
-  In this case, IMPORT71 reuses and overwrites the old table entry with 
+  In this case, IMPORT71 reuses and overwrites the old table entry with
   the same name in the ARC.DIR... our lib now does the same.
 
 - Created NMAKE makefile.vc for Windows
@@ -207,7 +207,7 @@ Version 0.4 (1999-05-17):
 
 - Added RXP write support
 
-- Fixed problem with double precision RPL sections: the second PAL 
+- Fixed problem with double precision RPL sections: the second PAL
   termination line confused the parser.
 
 - The write library now detects the E00's precision and generate
@@ -219,7 +219,7 @@ Version 0.4 (1999-05-17):
   a new one.  Also force name to contain only alnum() and '_'.
 
 - INFO TABLES: the name of the system attributes (COVER#/COVER-ID) are
-               now changed to the new coverage name when creating a new 
+               now changed to the new coverage name when creating a new
 	       info table.
 
 - Fixed problem parsing an E00 INFO table that contains 0 records
@@ -229,7 +229,7 @@ Version 0.4 (1999-05-17):
 Version 0.3 (1999-05-10):
 -------------------------
 
-- Added support to create coverages from E00 (alpha version).  Most file 
+- Added support to create coverages from E00 (alpha version).  Most file
   types are supported, but only single precision has been tested on Linux.
   There are still a number of known problems with the write support.
 
@@ -240,15 +240,15 @@ Version 0.3 (1999-05-10):
   floats in double-precision tables.
 
 - Fixed the following problem:
-   In some cases, the "number of records" field for a table in the 
-   arc.dir does not correspond to the real number of records 
+   In some cases, the "number of records" field for a table in the
+   arc.dir does not correspond to the real number of records
    in the data file.  In this kind of situation, the number of
    records returned by Arc/Info in an E00 file will be based
    on the real data file size, and not on the value from the arc.dir.
 
 - Tested on a CPL_MSB system
 
- 
+
 Version 0.2 (1999-02-24):
 -------------------------
 
@@ -261,8 +261,8 @@ Version 0.2 (1999-02-24):
 
 - Tested with routes coverage
 
-- Added support for "par.adf": Double precision coverages have their 
-  tolerances stored in a file named "par.adf" which is different from 
+- Added support for "par.adf": Double precision coverages have their
+  tolerances stored in a file named "par.adf" which is different from
   the "tol.adf" we find in single precision coverages...
 
 - PRJ section: remove '\r' at end of lines when coverage generated on
@@ -274,12 +274,12 @@ Version 0.2 (1999-02-24):
   we should probably do it as well!
 
 - Changed AVCE00ReadOpen() so that the coverage name does not absolutely
-  have to be terminated by a "/".  Now, you can either pass the name of 
+  have to be terminated by a "/".  Now, you can either pass the name of
   the coverage directory (with or without a '/' at the end), or the path
-  to one of the files in the coverage directory. 
+  to one of the files in the coverage directory.
 
 - Added extra line after the end of PAL sections in double precision
-  coverages: 
+  coverages:
         -1         0         0         0         0         0         0
  0.00000000000000E+00 0.00000000000000E+00
   Even if I consider this second line to be a glitch, I guess I have to
@@ -294,7 +294,7 @@ Version 0.2 (1999-02-24):
 Version 0.1 (1999-01-31):
 -------------------------
 
-First version, supports the most common file types, still several 
+First version, supports the most common file types, still several
 know problems.
 
 

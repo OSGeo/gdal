@@ -7,17 +7,17 @@
 GDALProcessFunc is a typedef defining the signature of functions to be
 used with GDAL as callbacks to report the progress of long running processes.
 Typically these are functions that would update a GUI progress bar showing how
-much of a process is done. 
+much of a process is done.
 
 A number of GDAL functions and methods accept GDALProcessFunc arguments along
-with an opaque application supplied data item (pProgressArg) which are then 
+with an opaque application supplied data item (pProgressArg) which are then
 used to implement progress reporting.  The GDALDataset::BuildOverviews(), and
 GDALDriver::CreateCopy() methods are examples of two methods that utilize
 the progress semantics.
 
 \code
-  int (*GDALProgressFunc)(double dfComplete, const char *pszMessage, 
-		          void *pProgressArg);
+  int (*GDALProgressFunc)(double dfComplete, const char *pszMessage,
+                          void *pProgressArg);
 \endcode
 
 @param dfComplete The ratio of completeness of the process from 0.0 for just
@@ -25,8 +25,8 @@ started to 1.0 for completed.
 
 @param pszMessage An optional message string to display.  This is usually NULL.
 
-@param pProgressArg Application supplied opaque data normally used by the 
-callback to display the result. 
+@param pProgressArg Application supplied opaque data normally used by the
+callback to display the result.
 
 @return TRUE if the operation should continue or FALSE if the user has
 requested a cancel.
@@ -44,7 +44,7 @@ text progress reporting mechanism, using pData to pass a default message:
                  (char) pData );
      else
          printf( "%d%% complete.\n", (int) (dfComplete*100) );
-     
+
      return TRUE;
  }
 \endcode
@@ -55,22 +55,22 @@ this:
 \code
       int       anOverviewList[3] = {2, 4, 8};
 
-      poDataset->BuildOverviews( "NEAREST", 3, anOverviewList, 0, NULL, 
+      poDataset->BuildOverviews( "NEAREST", 3, anOverviewList, 0, NULL,
                                  MyTextProgress, "building overviews" );
 \endcode
 
 In addition to reporting progress to the user, the GDALProcessFunc mechanism
 also provides a mechanism for a user interface to return a request from the
 user to cancel the operation to the algorithm via the return value.  If FALSE
-is returned, the algorithm should terminate the operation and return as 
+is returned, the algorithm should terminate the operation and return as
 quickly as possible.
- 
-More often that implementing custom progress functions, applications 
-will just use existing progress functions like GDALDummyProgress(), 
-GDALTermProgress() and GDALScaledProgress().  Python scripts also can pass 
+
+More often that implementing custom progress functions, applications
+will just use existing progress functions like GDALDummyProgress(),
+GDALTermProgress() and GDALScaledProgress().  Python scripts also can pass
 progress functions.
 
-Application code implementing GDALProgressFunc semantics should remember 
+Application code implementing GDALProgressFunc semantics should remember
 a few things:
 <ol>
 <li> Be wary of NULL progress functions being passed in.  The pfnProgress
@@ -80,7 +80,7 @@ argument can be set to GDALDummyProgress() in this case for simplicity.
 operation should be terminated.
 
 <li> The ratio of completeness should vary from 0.0 to 1.0.  Please ensure the
-exact value 1.0 is always returned at the end of the algorithm as some 
-GUI display mechanisms use this as a clue to pop down the progress monitor. 
+exact value 1.0 is always returned at the end of the algorithm as some
+GUI display mechanisms use this as a clue to pop down the progress monitor.
 
 */

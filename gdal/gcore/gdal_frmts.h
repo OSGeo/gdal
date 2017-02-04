@@ -188,10 +188,15 @@ void CPL_DLL GDALRegister_SENTINEL2(void);
 void CPL_DLL GDALRegister_mrf(void);
 void CPL_DLL GDALRegister_RRASTER(void);
 void CPL_DLL GDALRegister_Derived(void);
+<<<<<<< HEAD
 
 void CPL_DLL GDALRegister_TFATMBTiles(void);
 void CPL_DLL GDALRegister_CNSDTF(void);
 void CPL_DLL GDALRegister_LANDSAT(void);
+=======
+void CPL_DLL GDALRegister_JP2Lura(void);
+void CPL_DLL GDALRegister_PRF(void);
+>>>>>>> refs/remotes/OSGeo/trunk
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

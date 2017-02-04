@@ -27,8 +27,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_proxy.h"
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_hash_set.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 //! @cond Doxygen_Suppress
 
@@ -88,7 +100,7 @@ class GDALDatasetPool
 
         /* Caution : to be sure that we don't run out of entries, size must be at */
         /* least greater or equal than the maximum number of threads */
-        GDALDatasetPool(int maxSize);
+        explicit GDALDatasetPool(int maxSize);
         ~GDALDatasetPool();
         GDALProxyPoolCacheEntry* _RefDataset(const char* pszFileName,
                                              GDALAccess eAccess,
@@ -96,8 +108,11 @@ class GDALDatasetPool
                                              int bShared);
         void _CloseDataset(const char* pszFileName, GDALAccess eAccess);
 
+#ifdef DEBUG_PROXY_POOL
+        // cppcheck-suppress unusedPrivateFunction
         void ShowContent();
         void CheckLinks();
+#endif
 
     public:
         static void Ref();
@@ -112,7 +127,6 @@ class GDALDatasetPool
         static void PreventDestroy();
         static void ForceDestroy();
 };
-
 
 /************************************************************************/
 /*                         GDALDatasetPool()                            */
@@ -152,6 +166,7 @@ GDALDatasetPool::~GDALDatasetPool()
     GDALSetResponsiblePIDForCurrentThread(responsiblePID);
 }
 
+#ifdef DEBUG_PROXY_POOL
 /************************************************************************/
 /*                            ShowContent()                             */
 /************************************************************************/
@@ -162,7 +177,7 @@ void GDALDatasetPool::ShowContent()
     int i = 0;
     while(cur)
     {
-        printf("[%d] pszFileName=%s, refCount=%d, responsiblePID=%d\n",
+        printf("[%d] pszFileName=%s, refCount=%d, responsiblePID=%d\n",/*ok*/
                i, cur->pszFileName, cur->refCount, (int)cur->responsiblePID);
         i++;
         cur = cur->next;
@@ -187,6 +202,7 @@ void GDALDatasetPool::CheckLinks()
     }
     CPLAssert(i == currentSize);
 }
+#endif
 
 /************************************************************************/
 /*                            _RefDataset()                             */
@@ -269,7 +285,7 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
         if (lastEntryWithZeroRefCount->prev)
             lastEntryWithZeroRefCount->prev->next = lastEntryWithZeroRefCount->next;
         else {
-            CPLAssert(0);
+            CPLAssert(false);
         }
         if (lastEntryWithZeroRefCount->next)
             lastEntryWithZeroRefCount->next->prev = lastEntryWithZeroRefCount->prev;
@@ -389,7 +405,6 @@ void GDALDatasetPoolPreventDestroy()
     GDALDatasetPool::PreventDestroy();
 }
 
-
 /************************************************************************/
 /*                               Unref()                                */
 /************************************************************************/
@@ -399,7 +414,7 @@ void GDALDatasetPool::Unref()
     CPLMutexHolderD( GDALGetphDLMutex() );
     if (! singleton)
     {
-        CPLAssert(0);
+        CPLAssert(false);
         return;
     }
     if (singleton->refCountOfDisableRefCount == 0)
@@ -498,7 +513,6 @@ void free_func_get_metadata(void* _elt)
     CSLDestroy(elt->papszMetadata);
     CPLFree(elt);
 }
-
 
 typedef struct
 {
@@ -980,7 +994,6 @@ GDALProxyPoolRasterBand::~GDALProxyPoolRasterBand()
         delete poProxyMaskBand;
 }
 
-
 /************************************************************************/
 /*                 AddSrcMaskBandDescription()                          */
 /************************************************************************/
@@ -1278,7 +1291,6 @@ void GDALProxyPoolOverviewRasterBand::UnrefUnderlyingRasterBand(
     poMainBand->UnrefUnderlyingRasterBand(poUnderlyingMainRasterBand);
     nRefCountUnderlyingMainRasterBand --;
 }
-
 
 /* ******************************************************************** */
 /*                     GDALProxyPoolMaskBand()                          */

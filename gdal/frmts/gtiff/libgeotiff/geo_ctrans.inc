@@ -2,7 +2,7 @@
  * $Id: geo_ctrans.inc 2209 2012-05-09 01:34:58Z warmerdam $
  *
  * Project:  libgeotiff
- * Purpose:  GeoTIFF Projection Method codes.
+ * Purpose:  GeoTIFF Projection Method codes. 
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -38,8 +38,8 @@
 /* by the enclosing include file           */
 
 /*
- *  Revised 12 Jul 1995   NDR -- changed South Oriented to a code
- *  Revised 28 Sep 1995   NDR -- Added Rev. 1.0 aliases.
+ *  Revised 12 Jul 1995   NDR -- changed South Oriented to a code 
+ *  Revised 28 Sep 1995   NDR -- Added Rev. 1.0 aliases. 
  */
 
 ValuePair(CT_TransverseMercator,	1)

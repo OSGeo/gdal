@@ -153,375 +153,389 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     void *io_handle = interfaces->io->Open( filename, "w+" );
 
     assert( io_handle != NULL );
-
+    try
+    {
 /* ==================================================================== */
 /*      Establish some key file layout information.                     */
 /* ==================================================================== */
-    int image_header_start = 1;                    // in blocks
-    uint64 image_data_start, image_data_size=0;    // in blocks
-    uint64 segment_ptr_start, segment_ptr_size=64; // in blocks
-    int pixel_group_size, line_size;               // in bytes
-    int image_header_count = channel_count;
+        int image_header_start = 1;                    // in blocks
+        uint64 image_data_start, image_data_size=0;    // in blocks
+        uint64 segment_ptr_start, segment_ptr_size=64; // in blocks
+        int pixel_group_size, line_size;               // in bytes
+        int image_header_count = channel_count;
 
 /* -------------------------------------------------------------------- */
 /*      Pixel interleaved.                                              */
 /* -------------------------------------------------------------------- */
-    if( strcmp(interleaving,"PIXEL") == 0 )
-    {
-        pixel_group_size = 
-            channels[0] + // CHN_8U
-            channels[1] * DataTypeSize(CHN_16U) + 
-            channels[2] * DataTypeSize(CHN_16S) + 
-            channels[3] * DataTypeSize(CHN_32R) +
-            channels[4] * DataTypeSize(CHN_C16U) +
-            channels[5] * DataTypeSize(CHN_C16S) +
-            channels[6] * DataTypeSize(CHN_C32R);
-            //channels[0] + channels[1]*2 + channels[2]*2 + channels[3]*4;
-        line_size = ((pixel_group_size * pixels + 511) / 512) * 512;
-        image_data_size = (((uint64)line_size) * lines) / 512;
+        if( strcmp(interleaving,"PIXEL") == 0 )
+        {
+            pixel_group_size = 
+                channels[0] + // CHN_8U
+                channels[1] * DataTypeSize(CHN_16U) + 
+                channels[2] * DataTypeSize(CHN_16S) + 
+                channels[3] * DataTypeSize(CHN_32R) +
+                channels[4] * DataTypeSize(CHN_C16U) +
+                channels[5] * DataTypeSize(CHN_C16S) +
+                channels[6] * DataTypeSize(CHN_C32R);
+                //channels[0] + channels[1]*2 + channels[2]*2 + channels[3]*4;
+            line_size = ((pixel_group_size * pixels + 511) / 512) * 512;
+            image_data_size = (((uint64)line_size) * lines) / 512;
 
-        // TODO: Old code enforces a 1TB limit for some reason.
-    }
+            // TODO: Old code enforces a 1TB limit for some reason.
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Band interleaved.                                               */
 /* -------------------------------------------------------------------- */
-    else if( strcmp(interleaving,"BAND") == 0 )
-    {
-        pixel_group_size = 
-            channels[0] + // CHN_8U
-            channels[1] * DataTypeSize(CHN_16U) + 
-            channels[2] * DataTypeSize(CHN_16S) + 
-            channels[3] * DataTypeSize(CHN_32R) +
-            channels[4] * DataTypeSize(CHN_C16U) +
-            channels[5] * DataTypeSize(CHN_C16S) +
-            channels[6] * DataTypeSize(CHN_C32R);
-        // BAND interleaved bands are tightly packed.
-        image_data_size = 
-            (((uint64)pixel_group_size) * pixels * lines + 511) / 512;
+        else if( strcmp(interleaving,"BAND") == 0 )
+        {
+            pixel_group_size = 
+                channels[0] + // CHN_8U
+                channels[1] * DataTypeSize(CHN_16U) + 
+                channels[2] * DataTypeSize(CHN_16S) + 
+                channels[3] * DataTypeSize(CHN_32R) +
+                channels[4] * DataTypeSize(CHN_C16U) +
+                channels[5] * DataTypeSize(CHN_C16S) +
+                channels[6] * DataTypeSize(CHN_C32R);
+            // BAND interleaved bands are tightly packed.
+            image_data_size = 
+                (((uint64)pixel_group_size) * pixels * lines + 511) / 512;
 
-        // TODO: Old code enforces a 1TB limit for some reason.
-    }
+            // TODO: Old code enforces a 1TB limit for some reason.
+        }
 
 /* -------------------------------------------------------------------- */
 /*      FILE/Tiled.                                                     */
 /* -------------------------------------------------------------------- */
-    else if( strcmp(interleaving,"FILE") == 0 )
-    {
-        // For some reason we reserve extra space, but only for FILE.
-        if( channel_count < 64 )
-            image_header_count = 64;
+        else if( strcmp(interleaving,"FILE") == 0 )
+        {
+            // For some reason we reserve extra space, but only for FILE.
+            if( channel_count < 64 )
+                image_header_count = 64;
 
-        image_data_size = 0;
+            image_data_size = 0;
 
-        // TODO: Old code enforces a 1TB limit on the fattest band.
-    }
+            // TODO: Old code enforces a 1TB limit on the fattest band.
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Place components.                                               */
 /* -------------------------------------------------------------------- */
-    segment_ptr_start = image_header_start + image_header_count*2;
-    image_data_start = segment_ptr_start + segment_ptr_size;
+        segment_ptr_start = image_header_start + image_header_count*2;
+        image_data_start = segment_ptr_start + segment_ptr_size;
 
 /* ==================================================================== */
 /*      Prepare the file header.                                        */
 /* ==================================================================== */
-    PCIDSKBuffer fh(512);
+        PCIDSKBuffer fh(512);
 
-    char current_time[17];
-    GetCurrentDateTime( current_time );
+        char current_time[17];
+        GetCurrentDateTime( current_time );
 
-    // Initialize everything to spaces.
-    fh.Put( "", 0, 512 );
+        // Initialize everything to spaces.
+        fh.Put( "", 0, 512 );
 
 /* -------------------------------------------------------------------- */
 /*      File Type, Version, and Size                                    */
-/* 	Notice: we get the first 4 characters from PCIVERSIONAME.	*/
+/*      Notice: we get the first 4 characters from PCIVERSIONAME.       */
 /* -------------------------------------------------------------------- */
-    // FH1 - magic format string.
-    fh.Put( "PCIDSK", 0, 8 );
+        // FH1 - magic format string.
+        fh.Put( "PCIDSK", 0, 8 );
 
-    // FH2 - TODO: Allow caller to pass this in.
-    fh.Put( "SDK V1.0", 8, 8 );
+        // FH2 - TODO: Allow caller to pass this in.
+        fh.Put( "SDK V1.0", 8, 8 );
 
-    // FH3 - file size later.
-    fh.Put( (image_data_start + image_data_size), 16, 16 );
-    
-    // FH4 - 16 characters reserved - spaces.
+        // FH3 - file size later.
+        fh.Put( (image_data_start + image_data_size), 16, 16 );
+        
+        // FH4 - 16 characters reserved - spaces.
 
-    // FH5 - Description
-    fh.Put( filename.c_str(), 48, 64 );
+        // FH5 - Description
+        fh.Put( filename.c_str(), 48, 64 );
 
-    // FH6 - Facility
-    fh.Put( "PCI Inc., Richmond Hill, Canada", 112, 32 );
+        // FH6 - Facility
+        fh.Put( "PCI Inc., Richmond Hill, Canada", 112, 32 );
 
-    // FH7.1 / FH7.2 - left blank (64+64 bytes @ 144)
+        // FH7.1 / FH7.2 - left blank (64+64 bytes @ 144)
 
-    // FH8 Creation date/time
-    fh.Put( current_time, 272, 16 );
+        // FH8 Creation date/time
+        fh.Put( current_time, 272, 16 );
 
-    // FH9 Update date/time
-    fh.Put( current_time, 288, 16 );
+        // FH9 Update date/time
+        fh.Put( current_time, 288, 16 );
 
 /* -------------------------------------------------------------------- */
 /*      Image Data                                                      */
 /* -------------------------------------------------------------------- */
-    // FH10 - start block of image data
-    fh.Put( image_data_start+1, 304, 16 );
+        // FH10 - start block of image data
+        fh.Put( image_data_start+1, 304, 16 );
 
-    // FH11 - number of blocks of image data.
-    fh.Put( image_data_size, 320, 16 );
+        // FH11 - number of blocks of image data.
+        fh.Put( image_data_size, 320, 16 );
 
-    // FH12 - start block of image headers.
-    fh.Put( image_header_start+1, 336, 16 );
+        // FH12 - start block of image headers.
+        fh.Put( image_header_start+1, 336, 16 );
 
-    // FH13 - number of blocks of image headers.
-    fh.Put( image_header_count*2, 352, 8);
+        // FH13 - number of blocks of image headers.
+        fh.Put( image_header_count*2, 352, 8);
 
-    // FH14 - interleaving.
-    fh.Put( interleaving, 360, 8);
+        // FH14 - interleaving.
+        fh.Put( interleaving, 360, 8);
 
-    // FH15 - reserved - MIXED is for some ancient backwards compatibility.
-    fh.Put( "MIXED", 368, 8);
+        // FH15 - reserved - MIXED is for some ancient backwards compatibility.
+        fh.Put( "MIXED", 368, 8);
 
-    // FH16 - number of image bands.
-    fh.Put( channel_count, 376, 8 );
+        // FH16 - number of image bands.
+        fh.Put( channel_count, 376, 8 );
 
-    // FH17 - width of image in pixels.
-    fh.Put( pixels, 384, 8 );
+        // FH17 - width of image in pixels.
+        fh.Put( pixels, 384, 8 );
 
-    // FH18 - height of image in pixels.
-    fh.Put( lines, 392, 8 );
+        // FH18 - height of image in pixels.
+        fh.Put( lines, 392, 8 );
 
-    // FH19 - pixel ground size interpretation.
-    fh.Put( "METRE", 400, 8 );
+        // FH19 - pixel ground size interpretation.
+        fh.Put( "METRE", 400, 8 );
 
-    // TODO:
-    //PrintDouble( fh->XPixelSize, "%16.9f", 1.0 );
-    //PrintDouble( fh->YPixelSize, "%16.9f", 1.0 );
-    fh.Put( "1.0", 408, 16 );
-    fh.Put( "1.0", 424, 16 );
+        // TODO:
+        //PrintDouble( fh->XPixelSize, "%16.9f", 1.0 );
+        //PrintDouble( fh->YPixelSize, "%16.9f", 1.0 );
+        fh.Put( "1.0", 408, 16 );
+        fh.Put( "1.0", 424, 16 );
 
 /* -------------------------------------------------------------------- */
 /*      Segment Pointers                                                */
 /* -------------------------------------------------------------------- */
-    // FH22 - start block of segment pointers.
-    fh.Put( segment_ptr_start+1, 440, 16 );
+        // FH22 - start block of segment pointers.
+        fh.Put( segment_ptr_start+1, 440, 16 );
 
-    // fH23 - number of blocks of segment pointers.
-    fh.Put( segment_ptr_size, 456, 8 );
+        // fH23 - number of blocks of segment pointers.
+        fh.Put( segment_ptr_size, 456, 8 );
 
 /* -------------------------------------------------------------------- */
 /*      Number of different types of Channels                           */
 /* -------------------------------------------------------------------- */
-    // FH24.1 - 8U bands.
-    fh.Put( channels[0], 464, 4 );
+        // FH24.1 - 8U bands.
+        fh.Put( channels[0], 464, 4 );
 
-    // FH24.2 - 16S bands.
-    fh.Put( channels[1], 468, 4 );
+        // FH24.2 - 16S bands.
+        fh.Put( channels[1], 468, 4 );
 
-    // FH24.3 - 16U bands.
-    fh.Put( channels[2], 472, 4 );
+        // FH24.3 - 16U bands.
+        fh.Put( channels[2], 472, 4 );
 
-    // FH24.4 - 32R bands.
-    fh.Put( channels[3], 476, 4 );
-    
-    // FH24.5 - C16U bands
-    fh.Put( channels[4], 480, 4 );
-    
-    // FH24.6 - C16S bands
-    fh.Put( channels[5], 484, 4 );
-    
-    // FH24.7 - C32R bands
-    fh.Put( channels[6], 488, 4 );
+        // FH24.4 - 32R bands.
+        fh.Put( channels[3], 476, 4 );
+        
+        // FH24.5 - C16U bands
+        fh.Put( channels[4], 480, 4 );
+        
+        // FH24.6 - C16S bands
+        fh.Put( channels[5], 484, 4 );
+        
+        // FH24.7 - C32R bands
+        fh.Put( channels[6], 488, 4 );
 
 /* -------------------------------------------------------------------- */
 /*      Write out the file header.                                      */
 /* -------------------------------------------------------------------- */
-    interfaces->io->Write( fh.buffer, 512, 1, io_handle );
+        interfaces->io->Write( fh.buffer, 512, 1, io_handle );
 
 /* ==================================================================== */
 /*      Write out the image headers.                                    */
 /* ==================================================================== */
-    PCIDSKBuffer ih( 1024 );
+        PCIDSKBuffer ih( 1024 );
 
-    ih.Put( " ", 0, 1024 );
+        ih.Put( " ", 0, 1024 );
 
-    // IHi.1 - Text describing Channel Contents
-    ih.Put( "Contents Not Specified", 0, 64 );
+        // IHi.1 - Text describing Channel Contents
+        ih.Put( "Contents Not Specified", 0, 64 );
 
-    // IHi.2 - Filename storing image.
-    if( STARTS_WITH(interleaving, "FILE") )
-        ih.Put( "<unintialized>", 64, 64 );  // TODO: Spelling?
-    
-    if( externallink )
-    {
-        // IHi.6.7 - IHi.6.10
-        ih.Put( 0, 250, 8 ); 
-        ih.Put( 0, 258, 8 );
-        ih.Put( pixels, 266, 8 );
-        ih.Put( lines, 274, 8 );
-    }
-
-    // IHi.3 - Creation time and date.
-    ih.Put( current_time, 128, 16 );
-
-    // IHi.4 - Creation time and date.
-    ih.Put( current_time, 144, 16 );
-
-    interfaces->io->Seek( io_handle, image_header_start*512, SEEK_SET );
-
-    for( chan_index = 0; chan_index < channel_count; chan_index++ )
-    {
-        ih.Put(DataTypeName(channel_types[chan_index]).c_str(), 160, 8);    
-
-        if( STARTS_WITH(options.c_str(), "TILED") )
+        // IHi.2 - Filename storing image.
+        if( STARTS_WITH(interleaving, "FILE") )
+            ih.Put( "<unintialized>", 64, 64 );  // TODO: Spelling?
+        
+        if( externallink )
         {
-            char sis_filename[65];
-            snprintf( sis_filename, sizeof(sis_filename), "/SIS=%d", chan_index );
-            ih.Put( sis_filename, 64, 64 );
-
             // IHi.6.7 - IHi.6.10
             ih.Put( 0, 250, 8 ); 
             ih.Put( 0, 258, 8 );
             ih.Put( pixels, 266, 8 );
             ih.Put( lines, 274, 8 );
-
-            // IHi.6.11
-            ih.Put( 1, 282, 8 );
         }
 
-        interfaces->io->Write( ih.buffer, 1024, 1, io_handle );
-    }
+        // IHi.3 - Creation time and date.
+        ih.Put( current_time, 128, 16 );
 
-    for( chan_index = channel_count; 
-         chan_index < image_header_count; 
-         chan_index++ )
-    {
-        ih.Put( "", 160, 8 );
-        ih.Put( "<unintialized>", 64, 64 );  // TODO: Spelling?
-        ih.Put( "", 250, 40 );
+        // IHi.4 - Creation time and date.
+        ih.Put( current_time, 144, 16 );
 
-        interfaces->io->Write( ih.buffer, 1024, 1, io_handle );
-    }
+        interfaces->io->Seek( io_handle, image_header_start*512, SEEK_SET );
+
+        for( chan_index = 0; chan_index < channel_count; chan_index++ )
+        {
+            ih.Put(DataTypeName(channel_types[chan_index]).c_str(), 160, 8);    
+
+            if( STARTS_WITH(options.c_str(), "TILED") )
+            {
+                char sis_filename[65];
+                snprintf( sis_filename, sizeof(sis_filename), "/SIS=%d", chan_index );
+                ih.Put( sis_filename, 64, 64 );
+
+                // IHi.6.7 - IHi.6.10
+                ih.Put( 0, 250, 8 ); 
+                ih.Put( 0, 258, 8 );
+                ih.Put( pixels, 266, 8 );
+                ih.Put( lines, 274, 8 );
+
+                // IHi.6.11
+                ih.Put( 1, 282, 8 );
+            }
+
+            interfaces->io->Write( ih.buffer, 1024, 1, io_handle );
+        }
+
+        for( chan_index = channel_count; 
+            chan_index < image_header_count; 
+            chan_index++ )
+        {
+            ih.Put( "", 160, 8 );
+            ih.Put( "<unintialized>", 64, 64 );  // TODO: Spelling?
+            ih.Put( "", 250, 40 );
+
+            interfaces->io->Write( ih.buffer, 1024, 1, io_handle );
+        }
 
 /* ==================================================================== */
 /*      Write out the segment pointers, all spaces.                     */
 /* ==================================================================== */
-    PCIDSKBuffer segment_pointers( (int) (segment_ptr_size*512) );
-    segment_pointers.Put( " ", 0, (int) (segment_ptr_size*512) );
+        PCIDSKBuffer segment_pointers( (int) (segment_ptr_size*512) );
+        segment_pointers.Put( " ", 0, (int) (segment_ptr_size*512) );
 
-    interfaces->io->Seek( io_handle, segment_ptr_start*512, SEEK_SET );
-    interfaces->io->Write( segment_pointers.buffer, segment_ptr_size, 512, 
-                           io_handle );
+        interfaces->io->Seek( io_handle, segment_ptr_start*512, SEEK_SET );
+        interfaces->io->Write( segment_pointers.buffer, segment_ptr_size, 512, 
+                            io_handle );
 
 /* -------------------------------------------------------------------- */
 /*      Ensure we write out something at the end of the image data      */
 /*      to force the file size.                                         */
 /* -------------------------------------------------------------------- */
-    if( image_data_size > 0 )
-    {
-        interfaces->io->Seek( io_handle, (image_data_start + image_data_size)*512-1,
-                              SEEK_SET );
-        interfaces->io->Write( "\0", 1, 1, io_handle );
-    }
+        if( image_data_size > 0 )
+        {
+            interfaces->io->Seek( io_handle, (image_data_start + image_data_size)*512-1,
+                                SEEK_SET );
+            interfaces->io->Write( "\0", 1, 1, io_handle );
+        }
     
 /* -------------------------------------------------------------------- */
 /*      Close the raw file, and reopen as a pcidsk file.                */
 /* -------------------------------------------------------------------- */
-    interfaces->io->Close( io_handle );
+        interfaces->io->Close( io_handle );
+    }
+    catch( const PCIDSKException& )
+    {
+        interfaces->io->Close( io_handle );
+        throw;
+    }
 
     PCIDSKFile *file = Open( filename, "r+", interfaces );
-
+    try
+    {
 /* -------------------------------------------------------------------- */
 /*      Create a default georeferencing segment.                        */
 /* -------------------------------------------------------------------- */
-    file->CreateSegment( "GEOref", 
-                         "Master Georeferencing Segment for File",
-                         SEG_GEO, 6 );
+        file->CreateSegment( "GEOref", 
+                            "Master Georeferencing Segment for File",
+                            SEG_GEO, 6 );
 
 /* -------------------------------------------------------------------- */
 /*      If the dataset is tiled, create the file band data.             */
 /* -------------------------------------------------------------------- */
-    if( STARTS_WITH(options.c_str(), "TILED") )
-    {
-        file->SetMetadataValue( "_DBLayout", options ); 
-
-        // For sizing the SysBMDir we want an approximate size of the
-        // the imagery.
-        uint64 rough_image_size = 
-            (channels[0] + // CHN_8U
-             channels[1] * DataTypeSize(CHN_16U) + 
-             channels[2] * DataTypeSize(CHN_16S) + 
-             channels[3] * DataTypeSize(CHN_32R) +
-             channels[4] * DataTypeSize(CHN_C16U) +
-             channels[5] * DataTypeSize(CHN_C16S) +
-             channels[6] * DataTypeSize(CHN_C32R)) 
-            * (pixels * (uint64) lines);
-        uint64 sysbmdir_size = ((rough_image_size / 8192) * 28) / 512;
-
-        sysbmdir_size = (int) (sysbmdir_size * 1.1 + 100);
-        int segment = file->CreateSegment( "SysBMDir", 
-                                           "System Block Map Directory - Do not modify.",
-                                           SEG_SYS, static_cast<int>(sysbmdir_size) );
-        
-        SysBlockMap *bm = 
-            dynamic_cast<SysBlockMap *>(file->GetSegment( segment ));
-
-        for( chan_index = 0; chan_index < channel_count; chan_index++ )
+        if( STARTS_WITH(options.c_str(), "TILED") )
         {
-            bm->CreateVirtualImageFile( pixels, lines, blocksize, blocksize,
-                                        channel_types[chan_index], 
-                                        compression );
+            file->SetMetadataValue( "_DBLayout", options ); 
+
+            // For sizing the SysBMDir we want an approximate size of the
+            // the imagery.
+            uint64 rough_image_size = 
+                (channels[0] + // CHN_8U
+                channels[1] * DataTypeSize(CHN_16U) + 
+                channels[2] * DataTypeSize(CHN_16S) + 
+                channels[3] * DataTypeSize(CHN_32R) +
+                channels[4] * DataTypeSize(CHN_C16U) +
+                channels[5] * DataTypeSize(CHN_C16S) +
+                channels[6] * DataTypeSize(CHN_C32R)) 
+                * (pixels * (uint64) lines);
+            uint64 sysbmdir_size = ((rough_image_size / 8192) * 28) / 512;
+
+            sysbmdir_size = (int) (sysbmdir_size * 1.1 + 100);
+            int segment = file->CreateSegment( "SysBMDir", 
+                                            "System Block Map Directory - Do not modify.",
+                                            SEG_SYS, static_cast<int>(sysbmdir_size) );
+            
+            SysBlockMap *bm = 
+                dynamic_cast<SysBlockMap *>(file->GetSegment( segment ));
+
+            for( chan_index = 0; chan_index < channel_count; chan_index++ )
+            {
+                bm->CreateVirtualImageFile( pixels, lines, blocksize, blocksize,
+                                            channel_types[chan_index], 
+                                            compression );
+            }
         }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      If we have a non-tiled FILE interleaved file, should we         */
 /*      create external band files now?                                 */
 /* -------------------------------------------------------------------- */
-    if( STARTS_WITH(interleaving, "FILE") 
-        && !STARTS_WITH(options.c_str(), "TILED") 
-        && !nocreate )
-    {
-        for( chan_index = 0; chan_index < channel_count; chan_index++ )
+        if( STARTS_WITH(interleaving, "FILE") 
+            && !STARTS_WITH(options.c_str(), "TILED") 
+            && !nocreate )
         {
-            PCIDSKChannel *channel = file->GetChannel( chan_index + 1 );
-            int pixel_size = DataTypeSize(channel->GetType());
-
-            // build a band filename that uses the basename of the PCIDSK
-            // file, and adds ".nnn" based on the band. 
-            std::string band_filename = filename;
-            char ext[5];
-            snprintf( ext, sizeof(ext), ".%03d", chan_index+1 );
-            
-            size_t last_dot = band_filename.find_last_of(".");
-            if( last_dot != std::string::npos 
-                && (band_filename.find_last_of("/\\:") == std::string::npos
-                    || band_filename.find_last_of("/\\:") < last_dot) )
+            for( chan_index = 0; chan_index < channel_count; chan_index++ )
             {
-                band_filename.resize( last_dot );
+                PCIDSKChannel *channel = file->GetChannel( chan_index + 1 );
+                int pixel_size = DataTypeSize(channel->GetType());
+
+                // build a band filename that uses the basename of the PCIDSK
+                // file, and adds ".nnn" based on the band. 
+                std::string band_filename = filename;
+                char ext[5];
+                CPLsnprintf( ext, sizeof(ext), ".%03d", chan_index+1 );
+
+                size_t last_dot = band_filename.find_last_of(".");
+                if( last_dot != std::string::npos 
+                    && (band_filename.find_last_of("/\\:") == std::string::npos
+                        || band_filename.find_last_of("/\\:") < last_dot) )
+                {
+                    band_filename.resize( last_dot );
+                }
+
+                band_filename += ext;
+
+                // Now build a version without a path. 
+                std::string relative_band_filename;
+                size_t path_div = band_filename.find_last_of( "/\\:" );
+                if( path_div == std::string::npos )
+                    relative_band_filename = band_filename;
+                else
+                    relative_band_filename = band_filename.c_str() + path_div + 1;
+                
+                // create the file - ought we write the whole file?
+                void *band_io_handle = interfaces->io->Open( band_filename, "w" );
+                interfaces->io->Write( "\0", 1, 1, band_io_handle );
+                interfaces->io->Close( band_io_handle );
+
+                // Set the channel header information.
+                channel->SetChanInfo( relative_band_filename, 0, pixel_size, 
+                                    pixel_size * pixels, true );
             }
-
-            band_filename += ext;
-
-            // Now build a version without a path. 
-            std::string relative_band_filename;
-            size_t path_div = band_filename.find_last_of( "/\\:" );
-            if( path_div == std::string::npos )
-                relative_band_filename = band_filename;
-            else
-                relative_band_filename = band_filename.c_str() + path_div + 1;
-            
-            // create the file - ought we write the whole file?
-            void *band_io_handle = interfaces->io->Open( band_filename, "w" );
-            interfaces->io->Write( "\0", 1, 1, band_io_handle );
-            interfaces->io->Close( band_io_handle );
-
-            // Set the channel header information.
-            channel->SetChanInfo( relative_band_filename, 0, pixel_size, 
-                                  pixel_size * pixels, true );
         }
+    }
+    catch( const PCIDSKException& )
+    {
+        delete file;
+        throw;
     }
 
     return file;

@@ -27,9 +27,33 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal.h"
 #include "gdal_priv.h"
 #include "gdal_rat.h"
+
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
+
+#include <algorithm>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include "json.h"
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 #include "ogrgeojsonwriter.h"
 
 CPL_CVSID("$Id$");
@@ -299,7 +323,7 @@ void GDALRasterAttributeTable::SetRowCount( CPL_UNUSED int nNewCount ) {}
  *
  * This function is the same as the C++ method
  * GDALRasterAttributeTable::SetRowCount()
- * 
+ *
  * @param hRAT RAT handle.
  * @param nNewCount the new number of rows.
  */
@@ -317,6 +341,7 @@ GDALRATSetRowCount( GDALRasterAttributeTableH hRAT, int nNewCount )
 /************************************************************************/
 
 /**
+ * \fn GDALRasterAttributeTable::GetRowOfValue(double) const
  * \brief Get row for pixel value.
  *
  * Given a raw pixel value, the raster attribute table is scanned to
@@ -329,6 +354,9 @@ GDALRATSetRowCount( GDALRasterAttributeTableH hRAT, int nNewCount )
  *
  * @return the row index or -1 if no row is appropriate.
  */
+
+/**/
+/**/
 
 int GDALRasterAttributeTable::GetRowOfValue( double /* dfValue */ ) const
 {
@@ -365,9 +393,9 @@ GDALRATGetRowOfValue( GDALRasterAttributeTableH hRAT, double dfValue )
  * Given a raw pixel value, the raster attribute table is scanned to
  * determine which row in the table applies to the pixel value.  The
  * row index is returned.
- * 
+ *
  * Int arg for now just converted to double.  Perhaps we will
- * handle this in a special way some day?    
+ * handle this in a special way some day?
  *
  * This method is the same as the C function GDALRATGetRowOfValue().
  *
@@ -387,6 +415,7 @@ int GDALRasterAttributeTable::GetRowOfValue( int nValue ) const
 /************************************************************************/
 
 /**
+ * \fn GDALRasterAttributeTable::CreateColumn(const char*, GDALRATFieldType, GDALRATFieldUsage)
  * \brief Create new column.
  *
  * If the table already has rows, all row values for the new column will
@@ -402,6 +431,9 @@ int GDALRasterAttributeTable::GetRowOfValue( int nValue ) const
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
+
+/**/
+/**/
 
 CPLErr GDALRasterAttributeTable::CreateColumn(
     const char * /* pszFieldName */, GDALRATFieldType /* eFieldType */,
@@ -527,7 +559,6 @@ GDALRATGetLinearBinning( GDALRasterAttributeTableH hRAT,
 /*                             Serialize()                              */
 /************************************************************************/
 
-
 /** Serialize as a XML tree.
  * @return XML tree.
  */
@@ -642,7 +673,6 @@ void *GDALRasterAttributeTable::SerializeJSON() const
 
     if( ( GetColumnCount() == 0 ) && ( GetRowCount() == 0 ) )
         return poRAT;
-
 
 /* -------------------------------------------------------------------- */
 /*      Add attributes with regular binning info if appropriate.        */
@@ -802,7 +832,6 @@ CPLErr GDALRasterAttributeTable::XMLInit( CPLXMLNode *psTree,
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                      InitializeFromColorTable()                      */
 /************************************************************************/
@@ -934,13 +963,14 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
             return NULL;
 
         for( int iRow = 0; iRow < GetRowCount(); iRow++ )
-            nEntryCount = MAX(nEntryCount, GetValueAsInt(iRow, iMaxCol) + 1);
+            nEntryCount =
+                std::max(nEntryCount, GetValueAsInt(iRow, iMaxCol) + 1);
 
         if( nEntryCount < 0 )
             return NULL;
 
         // Restrict our number of entries to something vaguely sensible.
-        nEntryCount = MIN(65535, nEntryCount);
+        nEntryCount = std::min(65535, nEntryCount);
     }
 
 /* -------------------------------------------------------------------- */
@@ -991,7 +1021,6 @@ GDALRATTranslateToColorTable( GDALRasterAttributeTableH hRAT,
         TranslateToColorTable( nEntryCount );
 }
 
-
 /************************************************************************/
 /*                            DumpReadable()                            */
 /************************************************************************/
@@ -1041,7 +1070,6 @@ GDALRATDumpReadable( GDALRasterAttributeTableH hRAT, FILE *fp )
 
     static_cast<GDALRasterAttributeTable *>(hRAT)->DumpReadable( fp );
 }
-
 
 /* \class GDALDefaultRasterAttributeTable
  *

@@ -526,7 +526,8 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
         {
             if( nMin == DEM_NODATA )
             {
-                nMin = nMax = psWInfo->panData[i];
+                nMin = psWInfo->panData[i];
+                nMax = nMin;
             }
             else
             {
@@ -765,7 +766,6 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
         USGSDEMPrintDouble( achBuffer +  48, psWInfo->dfLLY );
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Local vertical datum offset.                                    */
 /* -------------------------------------------------------------------- */
@@ -785,7 +785,8 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
         {
             if( nMin == DEM_NODATA )
             {
-                nMin = nMax = psWInfo->panData[iData];
+                nMin = psWInfo->panData[iData];
+                nMax = nMin;
             }
             else
             {
@@ -888,8 +889,8 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
             continue;
         }
 
-        if( ABS(dfULLong - CPLAtof(papszTokens[2])) < 0.01
-            && ABS(dfULLat - CPLAtof(papszTokens[3])) < 0.01 )
+        if( std::abs(dfULLong - CPLAtof(papszTokens[2])) < 0.01
+            && std::abs(dfULLat - CPLAtof(papszTokens[3])) < 0.01 )
         {
             bGotHit = true;
             strncpy( pszTile, papszTokens[0], 7 );
@@ -1028,8 +1029,8 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         dfULY = CPLDMSToDec( papszTokens[1] );
         CSLDestroy( papszTokens );
 
-        if( ABS(dfULX*4-floor(dfULX*4+0.00005)) > 0.0001
-            || ABS(dfULY*4-floor(dfULY*4+0.00005)) > 0.0001 )
+        if( std::abs(dfULX*4-floor(dfULX*4+0.00005)) > 0.0001
+            || std::abs(dfULY*4-floor(dfULY*4+0.00005)) > 0.0001 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "TOPLEFT must be on a 15\" boundary for CDED50K, but is not." );
@@ -1319,6 +1320,7 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
     char *apszOptions[] = { szDataPointer, NULL };
 
     memset( szDataPointer, 0, sizeof(szDataPointer) );
+    // cppcheck-suppress redundantCopy
     snprintf( szDataPointer, sizeof(szDataPointer), "DATAPOINTER=" );
     CPLPrintPointer( szDataPointer+strlen(szDataPointer),
                      psWInfo->panData,
@@ -1390,7 +1392,6 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
 
     return eErr == CE_None;
 }
-
 
 /************************************************************************/
 /*                             CreateCopy()                             */
@@ -1513,7 +1514,6 @@ USGSDEMCreateCopy( const char *pszFilename,
         USGSDEMWriteCleanup( &sWInfo );
         return NULL;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Read the whole area of interest into memory.                    */

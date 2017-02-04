@@ -37,7 +37,7 @@ CPL_CVSID("$Id$");
 
 OGRDWGBlocksLayer::OGRDWGBlocksLayer( OGRDWGDataSource *poDSIn ) :
     poDS(poDSIn),
-    poFeatureDefn(new OGRFeatureDefn( "blocks" )),
+    poFeatureDefn(new OGRFeatureDefn( "blocks" ))
 {
     ResetReading();
 
@@ -102,7 +102,7 @@ OGRFeature *OGRDWGBlocksLayer::GetNextUnfilteredFeature()
 
     if( iNextSubFeature >= nSubFeatureCount )
     {
-        oIt++;
+        ++oIt;
 
         iNextSubFeature = 0;
 

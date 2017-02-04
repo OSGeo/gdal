@@ -73,7 +73,7 @@ def ogr_oci_2():
 
     ######################################################
     # Create Oracle Layer
-    gdaltest.oci_lyr = gdaltest.oci_ds.CreateLayer( 'tpoly' )
+    gdaltest.oci_lyr = gdaltest.oci_ds.CreateLayer( 'tpoly', options = ['DIM=3'] )
 
     ######################################################
     # Setup Schema

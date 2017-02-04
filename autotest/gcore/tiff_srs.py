@@ -390,6 +390,71 @@ def tiff_srs_epsg_2853_with_us_feet():
 
     return 'success'
 
+###############################################################################
+# Test reading a SRS with a PCSCitationGeoKey = "LUnits = ..."
+
+def tiff_srs_PCSCitationGeoKey_LUnits():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_PCSCitationGeoKey_LUnits.tif', 1, 1)
+    ds.SetProjection("""PROJCS["UTM Zone 32, Northern Hemisphere",
+    GEOGCS["GRS 1980(IUGG, 1980)",
+        DATUM["unknown",
+            SPHEROID["GRS80",6378137,298.257222101],
+            TOWGS84[0,0,0,0,0,0,0]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",9],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",50000000],
+    PARAMETER["false_northing",0],
+    UNIT["Centimeter",0.01]]""")
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_srs_PCSCitationGeoKey_LUnits.tif')
+    wkt = ds.GetProjectionRef()
+    if wkt != 'PROJCS["UTM Zone 32, Northern Hemisphere",GEOGCS["GRS 1980(IUGG, 1980)",DATUM["unknown",SPHEROID["GRS80",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",9],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",50000000],PARAMETER["false_northing",0],UNIT["Centimeter",0.01]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_srs_PCSCitationGeoKey_LUnits.tif')
+
+    return 'success'
+
+###############################################################################
+# Test reading a geotiff key ProjectionGeoKey (Short,1): Unknown-3856
+
+def tiff_srs_projection_3856():
+
+    ds = gdal.Open('data/projection_3856.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    if wkt.find('EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading a geotiff with a LOCAL_CS and a Imagine citation
+
+def tiff_srs_imagine_localcs_citation():
+
+    ds = gdal.Open('data/imagine_localcs_citation.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    if wkt != 'LOCAL_CS["Projection Name = UTM Units = meters GeoTIFF Units = meters",UNIT["unknown",1]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = []
 
 tiff_srs_list = [ 2758, #tmerc
@@ -461,6 +526,9 @@ gdaltest_list.append( tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere )
 gdaltest_list.append( tiff_srs_angular_units )
 gdaltest_list.append( tiff_custom_datum_known_ellipsoid )
 gdaltest_list.append( tiff_srs_epsg_2853_with_us_feet )
+gdaltest_list.append( tiff_srs_PCSCitationGeoKey_LUnits )
+gdaltest_list.append( tiff_srs_projection_3856 )
+gdaltest_list.append( tiff_srs_imagine_localcs_citation )
 
 if __name__ == '__main__':
 

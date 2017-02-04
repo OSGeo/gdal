@@ -50,13 +50,13 @@ class GDALMDReaderResursDK1: public GDALMDReaderBase
 public:
     GDALMDReaderResursDK1(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderResursDK1();
-    virtual bool HasRequiredFiles() const;
-    virtual char** GetMetadataFiles() const;
+    virtual bool HasRequiredFiles() const override;
+    virtual char** GetMetadataFiles() const override;
 protected:
-    virtual void LoadMetadata();
-    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime);
+    virtual void LoadMetadata() override;
+    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime) override;
     virtual char** AddXMLNameValueToList(char** papszList, const char *pszName,
-                                         const char *pszValue);
+                                         const char *pszValue) override;
 protected:
     CPLString m_osXMLSourceFilename;
 };

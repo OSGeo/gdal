@@ -46,17 +46,17 @@ using OSGeo.OSR;
 
 /// <summary>
 /// A C# based sample to dump information from a data source.
-/// </summary> 
+/// </summary>
 
 class OGRInfo {
-	
-	public static void usage() 
 
-	{ 
+	public static void usage()
+
+	{
 		Console.WriteLine("usage: ogrinfo {data source name}");
 		System.Environment.Exit(-1);
 	}
- 
+
 	public static void Main(string[] args) {
 
 		if (args.Length != 1) usage();
@@ -73,7 +73,7 @@ class OGRInfo {
 		/*      Open data source.                                               */
 		/* -------------------------------------------------------------------- */
 		DataSource ds = Ogr.Open( args[0], 0 );
-		
+
 		if (ds == null) {
 			Console.WriteLine("Can't open " + args[0]);
 			System.Environment.Exit(-1);
@@ -81,10 +81,10 @@ class OGRInfo {
 
 		/* -------------------------------------------------------------------- */
 		/*      Get driver                                                      */
-		/* -------------------------------------------------------------------- */	
+		/* -------------------------------------------------------------------- */
 		Driver drv = ds.GetDriver();
 
-		if (drv == null) 
+		if (drv == null)
 		{
 			Console.WriteLine("Can't get driver.");
 			System.Environment.Exit(-1);
@@ -94,7 +94,7 @@ class OGRInfo {
 
 		/* -------------------------------------------------------------------- */
 		/*      Iterating through the layers                                    */
-		/* -------------------------------------------------------------------- */	
+		/* -------------------------------------------------------------------- */
 
 		for( int iLayer = 0; iLayer < ds.GetLayerCount(); iLayer++ )
 		{
@@ -118,13 +118,13 @@ class OGRInfo {
 		layer.GetExtent(ext, 1);
 		Console.WriteLine( "Extent: " + ext.MinX + "," + ext.MaxX + "," +
 			ext.MinY + "," + ext.MaxY);
-		
+
 		/* -------------------------------------------------------------------- */
 		/*      Reading the spatial reference                                   */
 		/* -------------------------------------------------------------------- */
         OSGeo.OSR.SpatialReference sr = layer.GetSpatialRef();
 		string srs_wkt;
-		if ( sr != null ) 
+		if ( sr != null )
 		{
 			sr.ExportToPrettyWkt( out srs_wkt, 1 );
 		}
@@ -141,8 +141,8 @@ class OGRInfo {
 		for( int iAttr = 0; iAttr < def.GetFieldCount(); iAttr++ )
 		{
 			FieldDefn fdef = def.GetFieldDefn( iAttr );
-            
-			Console.WriteLine( fdef.GetNameRef() + ": " + 
+
+			Console.WriteLine( fdef.GetNameRef() + ": " +
 				fdef.GetFieldTypeName( fdef.GetFieldType() ) + " (" +
 				fdef.GetWidth() + "." +
 				fdef.GetPrecision() + ")");
@@ -166,7 +166,7 @@ class OGRInfo {
 		for( int iField = 0; iField < feat.GetFieldCount(); iField++ )
 		{
 			FieldDefn fdef = def.GetFieldDefn( iField );
-            
+
 			Console.Write( fdef.GetNameRef() + " (" +
 				fdef.GetFieldTypeName(fdef.GetFieldType()) + ") = ");
 
@@ -206,16 +206,16 @@ class OGRInfo {
             }
 			else
 				Console.WriteLine( "(null)" );
-            
+
 		}
 
 		if( feat.GetStyleString() != null )
 			Console.WriteLine( "  Style = " + feat.GetStyleString() );
-    
+
 		Geometry geom = feat.GetGeometryRef();
-		if( geom != null ) 
+		if( geom != null )
 		{
-			Console.WriteLine( "  " + geom.GetGeometryName() + 
+			Console.WriteLine( "  " + geom.GetGeometryName() +
 				"(" + geom.GetGeometryType() + ")" );
 			Geometry sub_geom;
 			for (int i = 0; i < geom.GetGeometryCount(); i++)
@@ -223,7 +223,7 @@ class OGRInfo {
 				sub_geom = geom.GetGeometryRef(i);
 				if ( sub_geom != null )
 				{
-					Console.WriteLine( "  subgeom" + i + ": " + sub_geom.GetGeometryName() + 
+					Console.WriteLine( "  subgeom" + i + ": " + sub_geom.GetGeometryName() +
 						"(" + sub_geom.GetGeometryType() + ")" );
 				}
 			}

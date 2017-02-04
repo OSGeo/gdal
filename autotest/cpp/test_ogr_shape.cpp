@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id: test_ogr_shape.cpp,v 1.3 2006/12/06 15:39:13 mloskot Exp $
+// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Shapefile driver testing. Ported from ogr/ogr_shape.py.

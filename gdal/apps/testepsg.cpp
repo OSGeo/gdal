@@ -26,12 +26,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_spatialref.h"
-#include "ogr_core.h"
 #include "cpl_conv.h"
-#include "cpl_string.h"
-#include "ogr_p.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "ogr_core.h"
+#include "ogr_p.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -50,8 +50,7 @@ int main( int nArgc, char ** papszArgv )
 
 {
     OGRSpatialReference oSRS;
-    int i;
-    int bReportXML = FALSE;
+    bool bReportXML = false;
 
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
@@ -61,17 +60,17 @@ int main( int nArgc, char ** papszArgv )
     if( nArgc < 2 )
         Usage();
 
-    for( i = 1; i < nArgc; i++ )
+    for( int i = 1; i < nArgc; i++ )
     {
         if( EQUAL(papszArgv[i],"-xml") )
-            bReportXML = TRUE;
+            bReportXML = true;
 
         else if( EQUAL(papszArgv[i],"-t") && i < nArgc - 4 )
         {
-            OGRSpatialReference oSourceSRS, oTargetSRS;
+            OGRSpatialReference oSourceSRS;
+            OGRSpatialReference oTargetSRS;
             OGRCoordinateTransformation *poCT;
-            double                      x, y, z_orig, z;
-            int                         nArgsUsed = 4;
+            int nArgsUsed = 4;
 
             if( oSourceSRS.SetFromUserInput(papszArgv[i+1]) != OGRERR_NONE )
             {
@@ -90,8 +89,10 @@ int main( int nArgc, char ** papszArgv )
 
             poCT = OGRCreateCoordinateTransformation( &oSourceSRS,
                                                       &oTargetSRS );
-            x = CPLAtof( papszArgv[i+3] );
-            y = CPLAtof( papszArgv[i+4] );
+            double x = CPLAtof( papszArgv[i+3] );
+            double y = CPLAtof( papszArgv[i+4] );
+            double z_orig = 0.0;
+            double z = 0.0;
             if( i < nArgc - 5
                 && (CPLAtof(papszArgv[i+5]) > 0.0 || papszArgv[i+5][0] == '0') )
             {
@@ -99,7 +100,9 @@ int main( int nArgc, char ** papszArgv )
                 nArgsUsed++;
             }
             else
+            {
                 z_orig = z = 0;
+            }
 
             if( poCT == NULL || !poCT->Transform( 1, &x, &y, &z ) )
                 printf( "Transformation failed.\n" );
@@ -165,10 +168,9 @@ int main( int nArgc, char ** papszArgv )
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
 
-
                 if( bReportXML )
                 {
-                    char       *pszRawXML;
+                    char *pszRawXML = NULL;
                     if( oSRS.exportToXML(&pszRawXML) == OGRERR_NONE )
                     {
                         printf( "XML[%s] =\n%s\n",

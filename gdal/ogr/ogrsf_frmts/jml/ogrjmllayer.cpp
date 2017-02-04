@@ -94,7 +94,6 @@ OGRJMLLayer::~OGRJMLLayer()
         delete poFeature;
 }
 
-
 /************************************************************************/
 /*                            GetLayerDefn()                            */
 /************************************************************************/
@@ -192,7 +191,7 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 
             if( oColumn.bIsBody )
             {
-                if( oColumn.osAttributeName.size() &&
+                if( !oColumn.osAttributeName.empty() &&
                     ppszAttr != NULL &&
                     oColumn.osAttributeName.compare(ppszAttr[0]) == 0 &&
                     oColumn.osAttributeValue.compare(ppszAttr[1]) == 0 )
@@ -204,7 +203,7 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                     iAttr = (i < 0) ? iAttr + 1 : i;
                     break;
                 }
-                else if( oColumn.osAttributeName.size() == 0 )
+                else if( oColumn.osAttributeName.empty() )
                 {
                     /* <osElementName>value</osElementName> */
 
@@ -214,7 +213,7 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                     break;
                 }
             }
-            else if( oColumn.osAttributeName.size() &&
+            else if( !oColumn.osAttributeName.empty() &&
                       ppszAttr != NULL &&
                       oColumn.osAttributeName.compare(ppszAttr[0]) == 0 )
             {
@@ -322,9 +321,9 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
         /* Builds a style string from R_G_B if we don't already have a */
         /* style string */
         OGRGeometry* poGeom = poFeature->GetGeometryRef();
-        int R;
-        int G;
-        int B;
+        unsigned int R = 0;
+        unsigned int G = 0;
+        unsigned int B = 0;
         if( iRGBField >= 0 && poFeature->IsFieldSet(iRGBField) &&
             poFeature->GetStyleString() == NULL && poGeom != NULL &&
             sscanf(poFeature->GetFieldAsString(iRGBField),
@@ -459,7 +458,7 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
 
     nWithoutEventCounter = 0;
 
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -525,7 +524,7 @@ void OGRJMLLayer::LoadSchema()
     VSIFSeekL( fp, 0, SEEK_SET );
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -556,8 +555,8 @@ void OGRJMLLayer::LoadSchema()
         bStopParsing = true;
     }
 
-    if( osCollectionElement.size() == 0 || osFeatureElement.size() == 0 ||
-        osGeometryElement.size() == 0 )
+    if( osCollectionElement.empty() || osFeatureElement.empty() ||
+        osGeometryElement.empty() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Missing CollectionElement, FeatureElement or "
@@ -567,7 +566,6 @@ void OGRJMLLayer::LoadSchema()
 
     ResetReading();
 }
-
 
 /************************************************************************/
 /*                  startElementLoadSchemaCbk()                         */
@@ -705,19 +703,19 @@ void OGRJMLLayer::endElementLoadSchemaCbk( const char * /* pszName */ )
     else if( nColumnDepth == currentDepth )
     {
         bool bIsOK = true;
-        if( oCurColumn.osName.size() == 0 )
+        if( oCurColumn.osName.empty() )
             bIsOK = false;
-        if( oCurColumn.osType.size() == 0 )
+        if( oCurColumn.osType.empty() )
             bIsOK = false;
-        if( oCurColumn.osElementName.size() == 0 )
+        if( oCurColumn.osElementName.empty() )
             bIsOK = false;
         if( oCurColumn.bIsBody )
         {
-            if( oCurColumn.osAttributeName.size() == 0 &&
-                oCurColumn.osAttributeValue.size() != 0 )
+            if( oCurColumn.osAttributeName.empty() &&
+                !oCurColumn.osAttributeValue.empty() )
                 bIsOK = false;
-            if( oCurColumn.osAttributeName.size() != 0 &&
-                oCurColumn.osAttributeValue.size() == 0 )
+            if( !oCurColumn.osAttributeName.empty() &&
+                oCurColumn.osAttributeValue.empty() )
                 bIsOK = false;
             /* Only 2 valid possibilities : */
             /* <osElementName osAttributeName="osAttributeValue">value</osElementName> */
@@ -726,9 +724,9 @@ void OGRJMLLayer::endElementLoadSchemaCbk( const char * /* pszName */ )
         else
         {
             /* <osElementName osAttributeName="value"></osElementName> */
-            if( oCurColumn.osAttributeName.size() == 0 )
+            if( oCurColumn.osAttributeName.empty() )
                 bIsOK = false;
-            if( oCurColumn.osAttributeValue.size() != 0 )
+            if( !oCurColumn.osAttributeValue.empty() )
                 bIsOK = false;
         }
 

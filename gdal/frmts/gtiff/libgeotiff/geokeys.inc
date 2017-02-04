@@ -68,7 +68,7 @@ ValuePair(  ProjStraightVertPoleLongGeoKey, 3095) /* GeogAngularUnit */
 ValuePair(  ProjRectifiedGridAngleGeoKey, 3096)   /* GeogAngularUnit */
 
 /* 6.2.4 Vertical CS Keys */
-
+   
 ValuePair(  VerticalCSTypeGeoKey,	4096)  /* Section 6.3.4.1 codes   */
 ValuePair(  VerticalCitationGeoKey,	4097)  /* documentation */
 ValuePair(  VerticalDatumGeoKey,	4098)  /* Section 6.3.4.2 codes   */

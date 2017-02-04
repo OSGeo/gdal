@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.45 2016-06-28 15:37:33 erouault Exp $ */
+/* $Id: tif_pixarlog.c,v 1.49 2016-12-02 23:05:51 erouault Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -983,17 +983,14 @@ horizontalDifferenceF(float *ip, int n, int stride, uint16 *wp, uint16 *FromLT2)
 		a1 = (int32) CLAMP(ip[3]); wp[3] = (uint16)((a1-a2) & mask); a2 = a1;
 	    }
 	} else {
-	    ip += n - 1;	/* point to last one */
-	    wp += n - 1;	/* point to last one */
-	    n -= stride;
-	    while (n > 0) {
-		REPEAT(stride, wp[0] = (uint16) CLAMP(ip[0]);
-				wp[stride] -= wp[0];
-				wp[stride] &= mask;
-				wp--; ip--)
-		n -= stride;
-	    }
-	    REPEAT(stride, wp[0] = (uint16) CLAMP(ip[0]); wp--; ip--)
+        REPEAT(stride, wp[0] = (uint16) CLAMP(ip[0]); wp++; ip++)
+        n -= stride;
+        while (n > 0) {
+            REPEAT(stride,
+                wp[0] = (uint16)(((int32)CLAMP(ip[0])-(int32)CLAMP(ip[-stride])) & mask);
+                wp++; ip++)
+            n -= stride;
+        }
 	}
     }
 }
@@ -1036,17 +1033,14 @@ horizontalDifference16(unsigned short *ip, int n, int stride,
 		a1 = CLAMP(ip[3]); wp[3] = (uint16)((a1-a2) & mask); a2 = a1;
 	    }
 	} else {
-	    ip += n - 1;	/* point to last one */
-	    wp += n - 1;	/* point to last one */
+        REPEAT(stride, wp[0] = CLAMP(ip[0]); wp++; ip++)
 	    n -= stride;
 	    while (n > 0) {
-		REPEAT(stride, wp[0] = CLAMP(ip[0]);
-				wp[stride] -= wp[0];
-				wp[stride] &= mask;
-				wp--; ip--)
-		n -= stride;
-	    }
-	    REPEAT(stride, wp[0] = CLAMP(ip[0]); wp--; ip--)
+            REPEAT(stride,
+                wp[0] = (uint16)((CLAMP(ip[0])-CLAMP(ip[-stride])) & mask);
+                wp++; ip++)
+            n -= stride;
+        }
 	}
     }
 }
@@ -1089,18 +1083,15 @@ horizontalDifference8(unsigned char *ip, int n, int stride,
 		ip += 4;
 	    }
 	} else {
-	    wp += n + stride - 1;	/* point to last one */
-	    ip += n + stride - 1;	/* point to last one */
-	    n -= stride;
-	    while (n > 0) {
-		REPEAT(stride, wp[0] = CLAMP(ip[0]);
-				wp[stride] -= wp[0];
-				wp[stride] &= mask;
-				wp--; ip--)
-		n -= stride;
-	    }
-	    REPEAT(stride, wp[0] = CLAMP(ip[0]); wp--; ip--)
-	}
+        REPEAT(stride, wp[0] = CLAMP(ip[0]); wp++; ip++)
+        n -= stride;
+        while (n > 0) {
+            REPEAT(stride,
+                wp[0] = (uint16)((CLAMP(ip[0])-CLAMP(ip[-stride])) & mask);
+                wp++; ip++)
+            n -= stride;
+        }
+    }
     }
 }
 
@@ -1141,6 +1132,13 @@ PixarLogEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	}
 
 	llen = sp->stride * td->td_imagewidth;
+    /* Check against the number of elements (of size uint16) of sp->tbuf */
+    if( n > (tmsize_t)(td->td_rowsperstrip * llen) )
+    {
+        TIFFErrorExt(tif->tif_clientdata, module,
+                     "Too many input bytes provided");
+        return 0;
+    }
 
 	for (i = 0, up = sp->tbuf; i < n; i += llen, up += llen) {
 		switch (sp->user_datafmt)  {
@@ -1235,8 +1233,10 @@ PixarLogPostEncode(TIFF* tif)
 static void
 PixarLogClose(TIFF* tif)
 {
+        PixarLogState* sp = (PixarLogState*) tif->tif_data;
 	TIFFDirectory *td = &tif->tif_dir;
 
+	assert(sp != 0);
 	/* In a really sneaky (and really incorrect, and untruthful, and
 	 * troublesome, and error-prone) maneuver that completely goes against
 	 * the spirit of TIFF, and breaks TIFF, on close, we covertly
@@ -1245,8 +1245,19 @@ PixarLogClose(TIFF* tif)
 	 * readers that don't know about PixarLog, or how to set
 	 * the PIXARLOGDATFMT pseudo-tag.
 	 */
-	td->td_bitspersample = 8;
-	td->td_sampleformat = SAMPLEFORMAT_UINT;
+
+        if (sp->state&PLSTATE_INIT) {
+            /* We test the state to avoid an issue such as in
+             * http://bugzilla.maptools.org/show_bug.cgi?id=2604
+             * What appends in that case is that the bitspersample is 1 and
+             * a TransferFunction is set. The size of the TransferFunction
+             * depends on 1<<bitspersample. So if we increase it, an access
+             * out of the buffer will happen at directory flushing.
+             * Another option would be to clear those targs. 
+             */
+            td->td_bitspersample = 8;
+            td->td_sampleformat = SAMPLEFORMAT_UINT;
+        }
 }
 
 static void

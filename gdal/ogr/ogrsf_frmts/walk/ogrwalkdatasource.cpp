@@ -38,9 +38,8 @@ CPL_CVSID("$Id$");
 OGRWalkDataSource::OGRWalkDataSource() :
     pszName(NULL),
     papoLayers(NULL),
-    nLayers(0),
-    bDSUpdate(FALSE)
-{ }
+    nLayers(0)
+{}
 
 /************************************************************************/
 /*                        ~OGRWalkDataSource()                          */
@@ -64,17 +63,19 @@ OGRWalkDataSource::~OGRWalkDataSource()
 /*                              Open()                                  */
 /************************************************************************/
 
-int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
+int OGRWalkDataSource::Open( const char * pszNewName, int /* bUpdate */ )
 {
 /* -------------------------------------------------------------------- */
 /*      If this is the name of an MDB file, then construct the          */
 /*      appropriate connection string.  Otherwise clip of WALK: to      */
 /*      get the DSN.                                                    */
 /* -------------------------------------------------------------------- */
-    char *pszDSN;
+    char *pszDSN = NULL;
 
     if( STARTS_WITH_CI(pszNewName, "WALK:") )
+    {
         pszDSN = CPLStrdup( pszNewName + 5 );
+    }
     else
     {
         const char *pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
@@ -102,8 +103,6 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
     CPLFree( pszDSN );
 
     pszName = CPLStrdup( pszNewName );
-
-    bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
 /*      Collect list of layers and their attributes.                    */
@@ -136,12 +135,10 @@ int OGRWalkDataSource::Open( const char * pszNewName, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Create a layer for each spatial table.                          */
 /* -------------------------------------------------------------------- */
-    unsigned int iTable;
-
     papoLayers = (OGRWalkLayer **) CPLCalloc(apapszGeomColumns.size(),
                                              sizeof( void * ));
 
-    for( iTable = 0; iTable < apapszGeomColumns.size(); iTable++ )
+    for( unsigned int iTable = 0; iTable < apapszGeomColumns.size(); iTable++ )
     {
         char **papszRecord = apapszGeomColumns[iTable];
 

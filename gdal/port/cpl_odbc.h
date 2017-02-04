@@ -70,7 +70,6 @@ class CPL_DLL CPLODBCDriverInstaller
     // Default constructor.
     CPLODBCDriverInstaller();
 
-
     /**
      * Installs ODBC driver or updates definition of already installed driver.
      * Interanally, it calls ODBC's SQLInstallDriverEx function.
@@ -109,17 +108,14 @@ class CPL_DLL CPLODBCDriverInstaller
      */
     int RemoveDriver( const char* pszDriverName, int fRemoveDSN = FALSE );
 
-
     /** The usage count of the driver after this function has been called */
     int GetUsageCount() const {  return m_nUsageCount; }
-
 
     /** Path of the target directory where the driver should be installed.
      * For details, see ODBC API Reference and lpszPathOut
      * parameter of SQLInstallDriverEx
      */
     const char* GetPathOut() const { return m_szPathOut; }
-
 
     /** If InstallDriver returns FALSE, then GetLastError then
      * error message can be obtained by calling this function.
@@ -153,7 +149,7 @@ class CPLODBCStatement;
 #else
 #  define CPL_SQLULEN SQLUINTEGER
 #  define CPL_SQLLEN  SQLINTEGER
-#endif	/* ifdef SQLULEN */
+#endif  /* ifdef SQLULEN */
 /*! @endcond */
 
 /**
@@ -231,7 +227,7 @@ class CPL_DLL CPLODBCStatement {
     size_t         m_nStatementLen;
 
   public:
-    CPLODBCStatement( CPLODBCSession * );
+    explicit CPLODBCStatement( CPLODBCSession * );
     ~CPLODBCStatement();
 
     /** Return statement handle */
@@ -243,7 +239,7 @@ class CPL_DLL CPLODBCStatement {
     void           Append( const char * );
     void           Append( int );
     void           Append( double );
-    int            Appendf( const char *, ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
+    int            Appendf( CPL_FORMAT_STRING(const char *), ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
     /** Return statement string */
     const char    *GetCommand() { return m_pszStatement; }
 

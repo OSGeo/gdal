@@ -68,11 +68,11 @@ static GDALDataset *OGRAmigoCloudDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRAmigoCloudDriverCreate( const char * pszName,
-                                            CPL_UNUSED int nBands,
-                                            CPL_UNUSED int nXSize,
-                                            CPL_UNUSED int nYSize,
-                                            CPL_UNUSED GDALDataType eDT,
-                                            CPL_UNUSED char **papszOptions )
+                                               CPL_UNUSED int nBands,
+                                               CPL_UNUSED int nXSize,
+                                               CPL_UNUSED int nYSize,
+                                               CPL_UNUSED GDALDataType eDT,
+                                               CPL_UNUSED char **papszOptions )
 
 {
     OGRAmigoCloudDataSource   *poDS = new OGRAmigoCloudDataSource();

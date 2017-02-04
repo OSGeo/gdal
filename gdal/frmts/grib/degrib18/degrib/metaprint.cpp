@@ -828,7 +828,7 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
                 sect4->upperLimit.value *
                 pow (10.0, -1 * sect4->upperLimit.factor), buffer);
          /* Intentionally fall through. */
-         // CPL_FALLTHROUGH
+         CPL_FALLTHROUGH
       case GS4_STATISTIC:
 /*         strftime (buffer, 100, "%m/%d/%Y %H:%M:%S UTC",
                    gmtime (&(sect4->validTime)));*/

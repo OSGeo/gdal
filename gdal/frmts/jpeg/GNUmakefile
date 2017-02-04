@@ -16,7 +16,7 @@ OBJ	=	\
 XTRA_OPT	=	-Ilibjpeg -DDEFAULT_MAX_MEM=500000000L
 else
 OBJ	=	jpgdataset.o vsidataio.o
-XTRA_OPT	=	
+XTRA_OPT	=
 endif
 
 ifeq ($(JPEG12_ENABLED),yes)

@@ -35,24 +35,38 @@ CPL_CVSID("$Id$");
 class DerivedDataset : public VRTDataset
 {
     public:
-        DerivedDataset(int nXSize, int nYSize);
-        ~DerivedDataset();
+        DerivedDataset( int nXSize, int nYSize );
+       ~DerivedDataset() {};
 
+        static int Identify( GDALOpenInfo * );
         static GDALDataset *Open( GDALOpenInfo * );
 };
 
-
-DerivedDataset::DerivedDataset(int nXSize, int nYSize) : VRTDataset(nXSize,nYSize)
+DerivedDataset::DerivedDataset(int nXSize, int nYSize) :
+    VRTDataset(nXSize, nYSize)
 {
     poDriver = NULL;
     SetWritable(FALSE);
 }
 
-DerivedDataset::~DerivedDataset()
+int DerivedDataset::Identify(GDALOpenInfo * poOpenInfo)
 {
+    /* Try to open original dataset */
+    CPLString filename(poOpenInfo->pszFilename);
+
+    /* DERIVED_SUBDATASET should be first domain */
+    const size_t dsds_pos = filename.find("DERIVED_SUBDATASET:");
+
+    if (dsds_pos != 0)
+    {
+        /* Unable to Open in this case */
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
-GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
+GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     /* Try to open original dataset */
     CPLString filename(poOpenInfo->pszFilename);
@@ -61,21 +75,21 @@ GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
     const size_t dsds_pos = filename.find("DERIVED_SUBDATASET:");
     const size_t nPrefixLen = strlen("DERIVED_SUBDATASET:");
 
-    if (dsds_pos == std::string::npos)
+    if (dsds_pos != 0)
     {
         /* Unable to Open in this case */
         return NULL;
     }
 
     /* Next, we need to now which derived dataset to compute */
-    const size_t alg_pos = filename.find(":",dsds_pos+nPrefixLen+1);
+    const size_t alg_pos = filename.find(":",nPrefixLen+1);
     if (alg_pos == std::string::npos)
     {
         /* Unable to Open if we do not find the name of the derived dataset */
         return NULL;
     }
 
-    CPLString odDerivedName = filename.substr(dsds_pos+nPrefixLen,alg_pos-dsds_pos-nPrefixLen);
+    CPLString odDerivedName = filename.substr(nPrefixLen,alg_pos-nPrefixLen);
 
     CPLDebug("DerivedDataset::Open","Derived dataset requested: %s",odDerivedName.c_str());
 
@@ -172,6 +186,17 @@ GDALDataset * DerivedDataset::Open(GDALOpenInfo * poOpenInfo)
     }
 
     GDALClose(poTmpDS);
+
+    // If dataset is a real file, initialize overview manager
+    VSIStatBufL  sStat;
+    if( VSIStatL( odFilename, &sStat ) == 0 )
+    {
+        CPLString path = CPLGetPath(odFilename);
+        CPLString ovrFileName = "DERIVED_DATASET_"+odDerivedName+"_"+CPLGetFilename(odFilename);
+        CPLString ovrFilePath = CPLFormFilename(path,ovrFileName,NULL);
+
+        poDS->oOvManager.Initialize( poDS, ovrFilePath );
+    }
 
     return poDS;
 }

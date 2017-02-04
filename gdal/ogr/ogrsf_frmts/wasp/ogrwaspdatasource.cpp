@@ -40,12 +40,10 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRWAsPDataSource::OGRWAsPDataSource( const char * pszName,
-                                      VSILFILE * hFileHandle )
-    : sFilename( pszName )
-    , hFile( hFileHandle )
-
-{
-}
+                                      VSILFILE * hFileHandle ) :
+    sFilename(pszName),
+    hFile(hFileHandle)
+{}
 
 /************************************************************************/
 /*                         ~OGRWAsPDataSource()                          */
@@ -168,13 +166,11 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-
 OGRLayer *OGRWAsPDataSource::GetLayer( int iLayer )
 
 {
     return ( iLayer == 0 ) ? oLayer.get() : NULL;
 }
-
 
 /************************************************************************/
 /*                             ICreateLayer()                           */
@@ -317,7 +313,7 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
 
     char * ppszWktSpatialRef = NULL ;
     if ( poSpatialRef
-            && poSpatialRef->exportToProj4( &ppszWktSpatialRef ) == OGRERR_NONE )
+         && poSpatialRef->exportToProj4( &ppszWktSpatialRef ) == OGRERR_NONE )
     {
         VSIFPrintfL( hFile, "%s\n", ppszWktSpatialRef );
     }
@@ -325,7 +321,7 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
     {
         VSIFPrintfL( hFile, "no spatial ref sys\n" );
     }
-    OGRFree( ppszWktSpatialRef );
+    CPLFree( ppszWktSpatialRef );
 
     VSIFPrintfL( hFile, "  0.0 0.0 0.0 0.0\n" );
     VSIFPrintfL( hFile, "  1.0 0.0 1.0 0.0\n" );

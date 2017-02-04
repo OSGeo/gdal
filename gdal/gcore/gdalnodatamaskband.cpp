@@ -28,7 +28,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_priv.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
@@ -265,7 +273,6 @@ CPLErr GDALNoDataMaskBand::IRasterIO( GDALRWFlag eRWFlag,
         for( int i = nBufXSize * nBufYSize - 1; i >= 0; --i )
         {
             pabyData[i] = pabyData[i] == byNoData ? 0 : 255;
-
         }
         return CE_None;
     }

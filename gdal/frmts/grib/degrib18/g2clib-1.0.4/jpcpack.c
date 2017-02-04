@@ -69,7 +69,7 @@ void jpcpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
 //$$$
 {
       g2int  *ifld;
-      const g2float alog2=0.69314718;       //  ln(2.0)
+      const g2float alog2=0.69314718f;       //  ln(2.0)
       g2int  j,nbits,imin,imax,maxdif;
       g2int  ndpts,nbytes,nsize,retry;
       g2float  bscale,dscale,rmax,rmin,temp;
@@ -77,8 +77,8 @@ void jpcpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
       
       ifld=0;
       ndpts=width*height;
-      bscale=int_power(2.0,-idrstmpl[1]);
-      dscale=int_power(10.0,idrstmpl[2]);
+      bscale=(float)int_power(2.0,-idrstmpl[1]);
+      dscale=(float)int_power(10.0,idrstmpl[2]);
 //
 //  Find max and min values in the data
 //
@@ -112,7 +112,7 @@ void jpcpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
            imin=(g2int)RINT(rmin*dscale);
            imax=(g2int)RINT(rmax*dscale);
            maxdif=imax-imin;
-           temp=log((double)(maxdif+1))/alog2;
+           temp=(float)(log((double)(maxdif+1))/alog2);
            nbits=(g2int)ceil(temp);
            rmin=(g2float)imin;
            //   scale data
@@ -127,7 +127,7 @@ void jpcpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
            rmin=rmin*dscale;
            rmax=rmax*dscale;
            maxdif=(g2int)RINT((rmax-rmin)*bscale);
-           temp=log((double)(maxdif+1))/alog2;
+           temp=(float)(log((double)(maxdif+1))/alog2);
            nbits=(g2int)ceil(temp);
            //   scale data
            for (j=0;j<ndpts;j++)

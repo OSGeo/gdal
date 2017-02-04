@@ -6,7 +6,7 @@ require 'gdal/osr'
 class TestOsrPCI < Test::Unit::TestCase
   def test_import_from_pci
     srs = Gdal::Osr::SpatialReference.new()
-    srs.import_from_pci('EC          E015', 'METRE', 
+    srs.import_from_pci('EC          E015', 'METRE',
           [0.0, 0.0, 45.0, 54.5, 47.0, 62.0, 0.0, 0.0, 0.0, 0.0,
            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 

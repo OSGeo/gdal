@@ -248,6 +248,16 @@ ogrinfo -ro PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
 </pre>
 </li>
 
+<li>
+<p>
+This example shows use of PRELUDE_STATEMENTS and CLOSING_STATEMENTS as
+destination open options of ogr2ogr.<p>
+
+<pre>
+ogrinfo "pg:dbname=mydb" poly.shp -doo "PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO '1h';" -doo CLOSING_STATEMENTS=COMMIT
+</pre>
+</li>
+
 </ul>
 
 <h3>FAQs</h3>

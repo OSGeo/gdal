@@ -163,6 +163,9 @@ void OGRRegisterAllInternal()
 #ifdef DXF_ENABLED
     RegisterOGRDXF();
 #endif
+#ifdef CAD_ENABLED
+    RegisterOGRCAD();
+#endif
 #ifdef GRASS_ENABLED
     RegisterOGRGRASS();
 #endif
@@ -286,6 +289,9 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef VDV_ENABLED
     RegisterOGRVDV();
+#endif
+#ifdef GMLAS_ENABLED
+    RegisterOGRGMLAS();
 #endif
 
 /* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */

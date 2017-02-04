@@ -30,7 +30,7 @@ gnmmanage [--help][-q][-quiet][--long-usage]
           [delete]
           [change [-bl gfid][-unbl gfid][-unblall]]
           gnm_name [layer [layer ...]]
-          
+
 \endverbatim
 
 \section gnmmanage_description DESCRIPTION
@@ -109,7 +109,7 @@ gnmanalyse [--help][-q][-quiet][--long-usage]
 
 \section gnmanalyse_description DESCRIPTION
 
-The gnmanalyse program provides analysing capabilities of geographical networks in GDAL. The results of calculations are return in an OGRLayer format or as a console text output if such layer is undefined. All calculations are made considering the blocking state of features. 
+The gnmanalyse program provides analysing capabilities of geographical networks in GDAL. The results of calculations are return in an OGRLayer format or as a console text output if such layer is undefined. All calculations are made considering the blocking state of features.
 
 <dl>
 
@@ -133,7 +133,7 @@ The gnmanalyse program provides analysing capabilities of geographical networks 
 </dl>
 
 \if man
-\section gnmmanage_author AUTHORS
+\section gnmanalyse_author AUTHORS
 Mikhail Gusev <gusevmihs@gmail.com>
 Dmitry Baryshnikov <polimax@mail.ru>
 \endif

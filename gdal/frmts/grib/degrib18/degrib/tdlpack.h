@@ -17,7 +17,6 @@ typedef struct {
    const char *data;
 } TDLP_TableType;
 
-
 int TDLP_Inventory (DataSource &fp, sInt4 tdlpLen, inventoryType * inv);
 int TDLP_RefTime (DataSource &fp, sInt4 tdlpLen, double * refTime);
 int ReadTDLPRecord (DataSource &fp, double **TDLP_Data, uInt4 *tdlp_DataLen,

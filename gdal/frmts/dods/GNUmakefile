@@ -2,7 +2,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	dodsdataset2.o 
+OBJ	=	dodsdataset2.o
 
 CPPFLAGS	:=	 $(CPPFLAGS) $(DODS_INC)
 
@@ -17,7 +17,7 @@ using_dods: using_dods.$(OBJ_EXT) dodsdataset.$(OBJ_EXT)
 
 # There's a note in GDALmake.opt that local programs should link against
 # CONFIG_LIBS, but that doesn't work here, maybe because dodsdataset_test
-# links statically (which it needs to do to run in a debugger). 10/31/03 jhrg 
+# links statically (which it needs to do to run in a debugger). 10/31/03 jhrg
 dodsdataset_test: dodsdataset_test.$(OBJ_EXT) dodsdataset.$(OBJ_EXT)
 	$(LD) $(LNK_FLAGS) -static -g3 $^ $(XTRAOBJ) $(LIBS) $(LIBGDAL) \
 		-lcppunit -lxml2 -o $@$(EXE)

@@ -27,18 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-H_GDALWMSMiniDriverFactory(IIP)
-
-class GDALWMSMiniDriver_IIP : public GDALWMSMiniDriver {
+class WMSMiniDriver_IIP : public WMSMiniDriver {
 public:
-    GDALWMSMiniDriver_IIP();
-    virtual ~GDALWMSMiniDriver_IIP();
+    WMSMiniDriver_IIP();
+    virtual ~WMSMiniDriver_IIP();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config);
-    virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
-    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
-
-protected:
-    CPLString m_base_url;
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request, 
+                                     const GDALWMSImageRequestInfo &iri,
+                                     const GDALWMSTiledImageRequestInfo &tiri) override;
 };

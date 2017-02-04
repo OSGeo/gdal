@@ -42,12 +42,10 @@ static GDALDataset* OGRPGDumpDriverCreate( const char * pszName,
                                            CPL_UNUSED GDALDataType eDT,
                                            char ** papszOptions )
 {
-    OGRPGDumpDataSource     *poDS;
-
     if (strcmp(pszName, "/dev/stdout") == 0)
         pszName = "/vsistdout/";
 
-    poDS = new OGRPGDumpDataSource(pszName, papszOptions);
+    OGRPGDumpDataSource *poDS = new OGRPGDumpDataSource(pszName, papszOptions);
     if( !poDS->Log("SET standard_conforming_strings = OFF") )
     {
         delete poDS;

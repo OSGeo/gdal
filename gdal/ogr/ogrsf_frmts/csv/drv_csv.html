@@ -45,6 +45,11 @@ accordingly with the <a href="http://giswiki.hsr.ch/GeoCSV">GeoCSV specification
 the "CoordX" or "Point(X)" type can be used to specify a column with longitude/easting values,
 "CoordY" or "Point(Y)" for latitude/northing values and "WKT" for geometries encoded in WKT </p>
 
+<p>Starting with GDAL 2.2, the "JSonStringList", "JSonIntegerList", "JSonInteger64List"
+and "JSonRealList" types can be used in .csvt to map to the corresponding OGR StringList,
+IntegerList, Integer64List and RealList types. The field values are then encoded as
+JSon arrays, with proper CSV escaping.</p>
+
 <p>Starting with GDAL 2.0, automatic field type guessing can also be done if
 specifying the open options described in the below "Open options" section.</p>
 

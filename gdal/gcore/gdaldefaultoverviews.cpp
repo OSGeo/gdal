@@ -28,8 +28,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_priv.h"
+
+#include <cstdlib>
+#include <cstring>
+
+#include <algorithm>
+#include <string>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
@@ -353,7 +367,6 @@ int GDALDefaultOverviews::GetOverviewCount( int nBand )
     if( poBand == NULL )
         return 0;
 
-
     if( bOvrIsAux )
         return poBand->GetOverviewCount();
 
@@ -411,7 +424,6 @@ int GDALOvLevelAdjust( int nOvLevel, int nXSize )
     return (int) (0.5 + nXSize / (double) nOXSize);
 }
 
-
 int GDALOvLevelAdjust2( int nOvLevel, int nXSize, int nYSize )
 
 {
@@ -424,7 +436,6 @@ int GDALOvLevelAdjust2( int nOvLevel, int nXSize, int nYSize )
 
         return static_cast<int>(0.5 + nXSize / static_cast<double>(nOXSize));
     }
-
 
     const int nOYSize = (nYSize + nOvLevel - 1) / nOvLevel;
 
@@ -447,7 +458,6 @@ int GDALComputeOvFactor( int nOvrXSize, int nRasterXSize,
     }
 
     return static_cast<int>(0.5 + nRasterYSize / static_cast<double>(nOvrYSize));
-
 }
 
 /************************************************************************/
@@ -629,6 +639,8 @@ GDALDefaultOverviews::BuildOverviews(
     int nNewOverviews = 0;
     int *panNewOverviewList = static_cast<int *>(
         CPLCalloc(sizeof(int), nOverviews) );
+    double dfAreaNewOverviews = 0;
+    double dfAreaRefreshedOverviews = 0;
     for( int i = 0; i < nOverviews && poBand != NULL; i++ )
     {
         for( int j = 0; j < poBand->GetOverviewCount(); j++ )
@@ -647,11 +659,18 @@ GDALDefaultOverviews::BuildOverviews(
                 || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
                                                    poBand->GetXSize(),
                                                    poBand->GetYSize() ) )
+            {
                 panOverviewList[i] *= -1;
+            }
         }
 
+        const double dfArea = 1.0 / (panOverviewList[i] * panOverviewList[i]);
+        dfAreaRefreshedOverviews += dfArea;
         if( panOverviewList[i] > 0 )
+        {
+            dfAreaNewOverviews += dfArea;
             panNewOverviewList[nNewOverviews++] = panOverviewList[i];
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -671,6 +690,9 @@ GDALDefaultOverviews::BuildOverviews(
 
     CPLErr eErr = CE_None;
 
+    void* pScaledProgress = GDALCreateScaledProgress(
+            0, dfAreaNewOverviews / dfAreaRefreshedOverviews,
+            pfnProgress, pProgressData );
     if( bOvrIsAux )
     {
         if( nNewOverviews == 0 )
@@ -686,7 +708,7 @@ GDALDefaultOverviews::BuildOverviews(
                                      nBands, panBandList,
                                      nNewOverviews, panNewOverviewList,
                                      pszResampling,
-                                     pfnProgress, pProgressData );
+                                     GDALScaledProgress, pScaledProgress );
         }
         for( int j = 0; j < nOverviews; j++ )
         {
@@ -709,7 +731,8 @@ GDALDefaultOverviews::BuildOverviews(
 
         eErr = GTIFFBuildOverviews( osOvrFilename, nBands, pahBands,
                                     nNewOverviews, panNewOverviewList,
-                                    pszResampling, pfnProgress, pProgressData );
+                                    pszResampling,
+                                    GDALScaledProgress, pScaledProgress );
 
         // Probe for proxy overview filename.
         if( eErr == CE_Failure )
@@ -723,7 +746,7 @@ GDALDefaultOverviews::BuildOverviews(
                 eErr = GTIFFBuildOverviews( osOvrFilename, nBands, pahBands,
                                             nNewOverviews, panNewOverviewList,
                                             pszResampling,
-                                            pfnProgress, pProgressData );
+                                            GDALScaledProgress, pScaledProgress );
             }
         }
 
@@ -735,6 +758,8 @@ GDALDefaultOverviews::BuildOverviews(
                 eErr = CE_Failure;
         }
     }
+
+    GDALDestroyScaledProgress( pScaledProgress );
 
 /* -------------------------------------------------------------------- */
 /*      Refresh old overviews that were listed.                         */
@@ -781,11 +806,18 @@ GDALDefaultOverviews::BuildOverviews(
 
         if( nNewOverviews > 0 )
         {
+            const double dfOffset = dfAreaNewOverviews / dfAreaRefreshedOverviews;
+            const double dfScale = 1.0 - dfOffset;
+            pScaledProgress = GDALCreateScaledProgress(
+                    dfOffset + dfScale * iBand / nBands,
+                    dfOffset + dfScale * (iBand+1) / nBands,
+                    pfnProgress, pProgressData );
             eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
                                             nNewOverviews,
                                             (GDALRasterBandH*)papoOverviewBands,
                                             pszResampling,
-                                            pfnProgress, pProgressData );
+                                            GDALScaledProgress, pScaledProgress );
+            GDALDestroyScaledProgress( pScaledProgress );
         }
     }
 
@@ -897,7 +929,7 @@ CPLErr GDALDefaultOverviews::CreateMaskBand( int nFlags, int nBand )
         if( poTBand == NULL )
             return CE_Failure;
 
-        const int nBands = nFlags & GMF_PER_DATASET ?
+        const int nBands = (nFlags & GMF_PER_DATASET) ?
             1 : poDS->GetRasterCount();
 
         char **papszOpt = CSLSetNameValue( NULL, "COMPRESS", "DEFLATE" );
@@ -962,12 +994,15 @@ CPLErr GDALDefaultOverviews::CreateMaskBand( int nFlags, int nBand )
 /*                            GetMaskBand()                             */
 /************************************************************************/
 
+// Secret code meaning we don't handle this band.
+static const int MISSING_FLAGS = 0x8000;
+
 GDALRasterBand *GDALDefaultOverviews::GetMaskBand( int nBand )
 
 {
     const int nFlags = GetMaskFlags( nBand );
 
-    if( nFlags == 0x8000 )  // Secret code meaning we don't handle this band.
+    if( nFlags == MISSING_FLAGS )
         return NULL;
 
     if( nFlags & GMF_PER_DATASET )
@@ -995,10 +1030,10 @@ int GDALDefaultOverviews::GetMaskFlags( int nBand )
 
     const char *pszValue =
         poMaskDS->GetMetadataItem(
-            CPLString().Printf( "INTERNAL_MASK_FLAGS_%d", MAX(nBand,1)) );
+            CPLString().Printf( "INTERNAL_MASK_FLAGS_%d", std::max(nBand, 1)) );
 
     if( pszValue == NULL )
-        return 0x8000;
+        return MISSING_FLAGS;
 
     return atoi(pszValue);
 }

@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// ncsjpcbuffer.h needs the min and max macros.
+#undef NOMINMAX
+
 #include "cpl_minixml.h"
 #include "gdal_ecw.h"
 #include "gdal_frmts.h"
@@ -207,7 +210,7 @@ ECWRasterBand::~ECWRasterBand()
 {
     FlushCache();
 
-    while( apoOverviews.size() > 0 )
+    while( !apoOverviews.empty() )
     {
         delete apoOverviews.back();
         apoOverviews.pop_back();
@@ -716,7 +719,8 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
 /*      The ECW SDK doesn't supersample, so adjust for this case.       */
 /* -------------------------------------------------------------------- */
 
-    int          nNewXSize = nBufXSize, nNewYSize = nBufYSize;
+    int nNewXSize = nBufXSize;
+    int nNewYSize = nBufYSize;
 
     if ( nXSize < nBufXSize )
         nNewXSize = nXSize;
@@ -935,7 +939,6 @@ CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage 
 /* ==================================================================== */
 /************************************************************************/
 
-
 /************************************************************************/
 /*                            ECWDataset()                              */
 /************************************************************************/
@@ -1135,7 +1138,6 @@ NCS::CError ECWDataset::StatisticsWrite()
     bStatisticsDirty = FALSE;
 
     return error;
-
 }
 
 /************************************************************************/
@@ -1404,7 +1406,7 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
                 osNewMetadata.AddString(*papszIter);
             papszIter ++;
         }
-        if (osNewMetadata.size() != 0)
+        if (!osNewMetadata.empty())
             return GDALPamDataset::SetMetadata(osNewMetadata.List(), pszDomain);
         else
             return CE_None;
@@ -2855,7 +2857,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         }
     }
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -2922,7 +2924,7 @@ void ECWDataset::ReadFileMetaDataFromFile()
     if (psFileInfo->pFileMetaData == NULL) return;
 
     if (psFileInfo->pFileMetaData->sClassification != NULL )
-        GDALDataset::SetMetadataItem("FILE_METADATA_CLASSIFICATION", NCS::CString(psFileInfo->pFileMetaData->sClassification).a_str());
+        GDALDataset::SetMetadataItem("FILE_METADATA_CLASSIFICATION", NCS::CString(psFileInfo->pFileMetaData->sClassification));
     if (psFileInfo->pFileMetaData->sAcquisitionDate != NULL )
         GDALDataset::SetMetadataItem("FILE_METADATA_ACQUISITION_DATE", NCS::CString(psFileInfo->pFileMetaData->sAcquisitionDate));
     if (psFileInfo->pFileMetaData->sAcquisitionSensorName != NULL )
@@ -3147,7 +3149,6 @@ int ECWTranslateFromWKT( const char *pszWKT,
 
         NCSFree( pszEPSGProj );
         NCSFree( pszEPSGDatum );
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -3376,7 +3377,6 @@ void ECWInitialize()
         NCSecwSetConfig( NCSCFG_TEXTURE_DITHER,
                          (BOOLEAN) CPLTestBool( pszOpt ) );
 
-
     pszOpt = CPLGetConfigOption( "ECW_FORCE_FILE_REOPEN", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_FORCE_FILE_REOPEN,
@@ -3396,7 +3396,6 @@ void ECWInitialize()
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR,
                          (BOOLEAN) CPLTestBool( pszOpt ) );
-
 
     pszOpt = CPLGetConfigOption( "ECW_RESILIENT_DECODING", NULL );
     if( pszOpt )
@@ -3584,7 +3583,12 @@ void GDALRegister_JP2ECW()
     poDriver->pfnCreateCopy = ECWCreateCopyJPEG2000;
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 "
-                               "Float32 Float64" );
+                               "Float32 "
+#if ECWSDK_VERSION >= 40
+    // Crashes for sure with 3.3. Didn't try other versions
+                               "Float64"
+#endif
+                              );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"

@@ -27,7 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_priv.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
@@ -124,7 +132,6 @@ GDALAsyncReader::~GDALAsyncReader()
 /*                     GDALARGetNextUpdatedRegion()                     */
 /************************************************************************/
 
-
 /**
  * \brief Get async IO update
  *
@@ -146,7 +153,7 @@ GDALAsyncReader::~GDALAsyncReader()
  * be ended.
  * - GARIO_COMPLETE: An update has occurred and there is no more pending work
  * on this request. The request should be ended and the buffer used.
- * 
+ *
  * This is the same as GDALAsyncReader::GetNextUpdatedRegion()
  *
  * @param hARIO handle to the async reader.
@@ -180,6 +187,7 @@ GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double dfTimeout,
 /************************************************************************/
 
 /**
+ * \fn GDALAsyncReader::LockBuffer(double)
  * \brief Lock image buffer.
  *
  * Locks the image buffer passed into GDALDataset::BeginAsyncReader().
@@ -194,11 +202,13 @@ GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double dfTimeout,
  * @return TRUE if successful, or FALSE on an error.
  */
 
+/**/
+/**/
+
 int GDALAsyncReader::LockBuffer( double /* dfTimeout */ )
 {
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                          GDALARLockBuffer()                          */
@@ -211,7 +221,7 @@ int GDALAsyncReader::LockBuffer( double /* dfTimeout */ )
  * This is useful to ensure the image buffer is not being modified while
  * it is being used by the application.  UnlockBuffer() should be used
  * to release this lock when it is no longer needed.
- * 
+ *
  * This is the same as GDALAsyncReader::LockBuffer()
  *
  * @param hARIO handle to async reader.
@@ -247,12 +257,11 @@ void GDALAsyncReader::UnlockBuffer()
 /*                          GDALARUnlockBuffer()                        */
 /************************************************************************/
 
-
 /**
  * \brief Unlock image buffer.
  *
  * Releases a lock on the image buffer previously taken with LockBuffer().
- * 
+ *
  * This is the same as GDALAsyncReader::UnlockBuffer()
  *
  * @param hARIO handle to async reader.
@@ -285,13 +294,13 @@ class GDALDefaultAsyncReader : public GDALAsyncReader
                              int nBandCount, int* panBandMap,
                              int nPixelSpace, int nLineSpace,
                              int nBandSpace, char **papszOptions);
-    ~GDALDefaultAsyncReader();
+    virtual ~GDALDefaultAsyncReader();
 
     virtual GDALAsyncStatusType GetNextUpdatedRegion(double dfTimeout,
                                                      int* pnBufXOff,
                                                      int* pnBufYOff,
                                                      int* pnBufXSize,
-                                                     int* pnBufYSize);
+                                                     int* pnBufYSize) override;
 };
 
 /************************************************************************/

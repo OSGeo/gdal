@@ -55,28 +55,29 @@ class OGRCSWLayer : public OGRLayer
     int                 nFeatureRead;
     int                 nFeaturesInCurrentPage;
 
-    CPLString           osQuery, osCSWWhere;
+    CPLString           osQuery;
+    CPLString           osCSWWhere;
 
     GDALDataset*        FetchGetRecords();
     GIntBig             GetFeatureCountWithHits();
     void                BuildQuery();
 
   public:
-                        OGRCSWLayer(OGRCSWDataSource* poDS);
-                        ~OGRCSWLayer();
+               explicit OGRCSWLayer( OGRCSWDataSource* poDS );
+               virtual ~OGRCSWLayer();
 
-    virtual void                ResetReading();
-    virtual OGRFeature*         GetNextFeature();
-    virtual GIntBig             GetFeatureCount(int bForce = FALSE);
+    virtual void                ResetReading() override;
+    virtual OGRFeature*         GetNextFeature() override;
+    virtual GIntBig             GetFeatureCount( int bForce = FALSE ) override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual int                 TestCapability( const char * ) { return FALSE; }
+    virtual int                 TestCapability( const char * ) override { return FALSE; }
 
-    virtual void                SetSpatialFilter( OGRGeometry * );
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+    virtual void                SetSpatialFilter( OGRGeometry * ) override;
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
-    virtual OGRErr              SetAttributeFilter( const char * );
+    virtual OGRErr              SetAttributeFilter( const char * ) override;
 };
 
 /************************************************************************/
@@ -93,23 +94,23 @@ class OGRCSWDataSource : public OGRDataSource
     int                 nMaxRecords;
 
     OGRCSWLayer*        poLayer;
-    int                 bFullExtentRecordsAsNonSpatial;
+    bool                bFullExtentRecordsAsNonSpatial;
 
     CPLHTTPResult*      SendGetCapabilities();
 
   public:
                         OGRCSWDataSource();
-                        ~OGRCSWDataSource();
+               virtual ~OGRCSWDataSource();
 
     int                 Open( const char * pszFilename,
                               char** papszOpenOptions );
 
-    virtual const char*         GetName() { return pszName; }
+    virtual const char*         GetName() override { return pszName; }
 
-    virtual int                 GetLayerCount() { return poLayer != NULL; }
-    virtual OGRLayer*           GetLayer( int );
+    virtual int                 GetLayerCount() override { return poLayer != NULL; }
+    virtual OGRLayer*           GetLayer( int ) override;
 
-    virtual int                 TestCapability( const char * ) { return FALSE; }
+    virtual int                 TestCapability( const char * ) override { return FALSE; }
 
     CPLHTTPResult*              HTTPFetch( const char* pszURL, const char* pszPost );
 
@@ -117,7 +118,7 @@ class OGRCSWDataSource : public OGRDataSource
     const CPLString&            GetVersion() { return osVersion; }
     const CPLString&            GetElementSetName() { return osElementSetName; }
     const CPLString&            GetOutputSchema() { return osOutputSchema; }
-    int                         FullExtentRecordsAsNonSpatial() { return bFullExtentRecordsAsNonSpatial; }
+    bool                        FullExtentRecordsAsNonSpatial() { return bFullExtentRecordsAsNonSpatial; }
     int                         GetMaxRecords() { return nMaxRecords; }
 };
 
@@ -125,7 +126,7 @@ class OGRCSWDataSource : public OGRDataSource
 /*                           OGRCSWLayer()                              */
 /************************************************************************/
 
-OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDSIn) :
+OGRCSWLayer::OGRCSWLayer( OGRCSWDataSource* poDSIn ) :
     poDS(poDSIn),
     poFeatureDefn(new OGRFeatureDefn("records")),
     poBaseDS(NULL),
@@ -208,7 +209,7 @@ OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDSIn) :
         OGRFieldDefn oField("anytext", OFTString);
         poFeatureDefn->AddFieldDefn(&oField);
     }
-    if( poDS->GetOutputSchema().size() )
+    if( !poDS->GetOutputSchema().empty() )
     {
         OGRFieldDefn oField("raw_xml", OFTString);
         poFeatureDefn->AddFieldDefn(&oField);
@@ -355,7 +356,7 @@ OGRFeature* OGRCSWLayer::GetNextFeature()
         poNewFeature->SetFID(nFeatureRead);
         delete poSrcFeature;
 
-        if( osCSWWhere.size() == 0 &&
+        if( osCSWWhere.empty() &&
             m_poAttrQuery != NULL &&
             !m_poAttrQuery->Evaluate( poNewFeature ) )
         {
@@ -440,7 +441,7 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
     CPLHTTPResult* psResult = NULL;
 
     CPLString osOutputSchema = poDS->GetOutputSchema();
-    if( osOutputSchema.size() )
+    if( !osOutputSchema.empty() )
         osOutputSchema = " outputSchema=\"" + osOutputSchema + "\"";
 
     CPLString osPost = CPLSPrintf(
@@ -499,7 +500,7 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
     osTmpFileName = osTmpDirName + "/file.gml";
 
     VSILFILE *fp = VSIFileFromMemBuffer( osTmpFileName, pabyData,
-                                    nDataLen, TRUE);
+                                         nDataLen, TRUE);
     VSIFCloseL(fp);
     psResult->pabyData = NULL;
 
@@ -507,7 +508,7 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
 
     GDALDataset* l_poBaseDS = NULL;
 
-    if( poDS->GetOutputSchema().size() )
+    if( !poDS->GetOutputSchema().empty() )
     {
         GDALDriver* poDrv = (GDALDriver*)GDALGetDriverByName("Memory");
         if( poDrv == NULL )
@@ -589,12 +590,13 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
                     CPLFree(psBBox->pszValue);
                     psBBox->pszValue = CPLStrdup("gml:Envelope");
                     CPLString osSRS = CPLGetXMLValue(psBBox, "crs", "");
-                    OGRGeometry* poGeom = GML2OGRGeometry_XMLNode( psBBox,
-                                                          FALSE,
-                                                          0, 0, false, true,
-                                                          false );
+                    OGRGeometry* poGeom =
+                        GML2OGRGeometry_XMLNode( psBBox,
+                                                 FALSE,
+                                                 0, 0, false, true,
+                                                 false );
                     bool bLatLongOrder = true;
-                    if( osSRS.size() )
+                    if( !osSRS.empty() )
                         bLatLongOrder = GML_IsSRSLatLongOrder(osSRS);
                     if( bLatLongOrder && CPLTestBool(
                             CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES")) )
@@ -773,7 +775,7 @@ OGRErr OGRCSWLayer::SetAttributeFilter( const char * pszFilter )
     else
         osCSWWhere = "";
 
-    if (m_poAttrQuery != NULL && osCSWWhere.size() == 0)
+    if (m_poAttrQuery != NULL && osCSWWhere.empty())
     {
         CPLDebug("CSW", "Using client-side only mode for filter \"%s\"", pszFilter);
         OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
@@ -793,11 +795,11 @@ OGRErr OGRCSWLayer::SetAttributeFilter( const char * pszFilter )
 
 void OGRCSWLayer::BuildQuery()
 {
-    if( m_poFilterGeom != NULL || osCSWWhere.size() != 0 )
+    if( m_poFilterGeom != NULL || !osCSWWhere.empty() )
     {
         osQuery = "<csw:Constraint version=\"1.1.0\">";
         osQuery += "<ogc:Filter>";
-        if( m_poFilterGeom != NULL && osCSWWhere.size() != 0 )
+        if( m_poFilterGeom != NULL && !osCSWWhere.empty() )
             osQuery += "<ogc:And>";
         if( m_poFilterGeom != NULL )
         {
@@ -821,7 +823,7 @@ void OGRCSWLayer::BuildQuery()
             osQuery += "</ogc:BBOX>";
         }
         osQuery += osCSWWhere;
-        if( m_poFilterGeom != NULL && osCSWWhere.size() != 0 )
+        if( m_poFilterGeom != NULL && !osCSWWhere.empty() )
             osQuery += "</ogc:And>";
         osQuery += "</ogc:Filter>";
         osQuery += "</csw:Constraint>";
@@ -838,7 +840,7 @@ OGRCSWDataSource::OGRCSWDataSource() :
     pszName(NULL),
     nMaxRecords(500),
     poLayer(NULL),
-    bFullExtentRecordsAsNonSpatial(FALSE)
+    bFullExtentRecordsAsNonSpatial(false)
 {}
 
 /************************************************************************/

@@ -118,8 +118,10 @@ int sprintbuf(struct printbuf *p, const char *msg, ...)
 
   /* user stack buffer first */
   va_start(ap, msg);
-  if((size = CPLVASPrintf(&t, msg, ap)) == -1) return -1;
+  size = CPLVASPrintf(&t, msg, ap);
   va_end(ap);
+  if( size == -1 )
+      return -1;
 
   if (strcmp(msg, "%f") == 0)
   {

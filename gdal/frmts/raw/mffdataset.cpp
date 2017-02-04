@@ -34,6 +34,7 @@
 #include "rawdataset.h"
 
 #include <cctype>
+#include <cmath>
 #include <algorithm>
 
 CPL_CVSID("$Id$");
@@ -74,14 +75,14 @@ class MFFDataset : public RawDataset
 
     VSILFILE        **pafpBandFiles;
 
-    virtual char** GetFileList();
+    virtual char** GetFileList() override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef();
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -92,7 +93,6 @@ class MFFDataset : public RawDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-
 };
 
 /************************************************************************/
@@ -114,9 +114,8 @@ class MFFTiledBand : public GDALRasterBand
                                  GDALDataType, int );
     virtual ~MFFTiledBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
-
 
 /************************************************************************/
 /*                            MFFTiledBand()                            */
@@ -150,7 +149,6 @@ MFFTiledBand::~MFFTiledBand()
     }
 }
 
-
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
@@ -163,7 +161,8 @@ CPLErr MFFTiledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     const int nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     const int nBlockSize = nWordSize * nBlockXSize * nBlockYSize;
 
-    const long nOffset = nBlockSize * (nBlockXOff + nBlockYOff*nTilesPerRow);
+    const vsi_l_offset nOffset = nBlockSize * (nBlockXOff +
+                        static_cast<vsi_l_offset>(nBlockYOff)*nTilesPerRow);
 
     if( VSIFSeekL( fpRaw, nOffset, SEEK_SET ) == -1
         || VSIFReadL( pImage, 1, nBlockSize, fpRaw ) < 1 )
@@ -288,7 +287,6 @@ MFFDataset::~MFFDataset()
     CPLFree( pszProjection );
     CPLFree( pszGCPProjection );
     CSLDestroy( m_papszFileList );
-
 }
 
 /************************************************************************/
@@ -644,7 +642,6 @@ void MFFDataset::ScanForProjectionInfo()
             {
                 pasGCPList[gcp_index].dfGCPX = dfPrjX[gcp_index];
                 pasGCPList[gcp_index].dfGCPY = dfPrjY[gcp_index];
-
             }
             transform_ok =
                 CPL_TO_BOOL(
@@ -681,7 +678,6 @@ void MFFDataset::ScanForProjectionInfo()
 
     delete mffEllipsoids;
 }
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -1182,15 +1178,15 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
         char szExtension[4] = { '\0' };
 
         if( eType == GDT_Byte )
-            snprintf( szExtension, sizeof(szExtension), "b%02d", iBand );
+            CPLsnprintf( szExtension, sizeof(szExtension), "b%02d", iBand );
         else if( eType == GDT_UInt16 )
-            snprintf( szExtension, sizeof(szExtension), "i%02d", iBand );
+            CPLsnprintf( szExtension, sizeof(szExtension), "i%02d", iBand );
         else if( eType == GDT_Float32 )
-            snprintf( szExtension, sizeof(szExtension),  "r%02d", iBand );
+            CPLsnprintf( szExtension, sizeof(szExtension),  "r%02d", iBand );
         else if( eType == GDT_CInt16 )
-            snprintf( szExtension, sizeof(szExtension), "j%02d", iBand );
+            CPLsnprintf( szExtension, sizeof(szExtension), "j%02d", iBand );
         else if( eType == GDT_CFloat32 )
-            snprintf( szExtension, sizeof(szExtension), "x%02d", iBand );
+            CPLsnprintf( szExtension, sizeof(szExtension), "x%02d", iBand );
 
         pszFilename = CPLFormFilename( NULL, pszBaseFilename, szExtension );
         fp = VSIFOpenL( pszFilename, "wb" );
@@ -1397,7 +1393,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
           && (tempGeoTransform[0] != 0.0 || tempGeoTransform[1] != 1.0
           || tempGeoTransform[2] != 0.0 || tempGeoTransform[3] != 0.0
               || tempGeoTransform[4] != 0.0
-              || ABS(tempGeoTransform[5]) != 1.0 ) )
+              || std::abs(tempGeoTransform[5]) != 1.0 ) )
       {
           padfTiepoints[0] =
               tempGeoTransform[0] + tempGeoTransform[1]*0.5 +
@@ -1629,7 +1625,6 @@ MFFDataset::CreateCopy( const char * pszFilename,
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                         GDALRegister_MFF()                           */

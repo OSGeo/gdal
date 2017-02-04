@@ -136,6 +136,7 @@ void RegisterOGRKML()
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
+"  <Option name='DOCUMENT_ID' type='string' description='Id of the root &lt;Document&gt; node' default='root_doc'/>'"
 "  <Option name='GPX_USE_EXTENSIONS' type='boolean' description='Whether to write non-GPX attributes in an <extensions> tag' default='NO'/>"
 "  <Option name='NameField' type='string' description='Field to use to fill the KML <name> element' default='Name'/>"
 "  <Option name='DescriptionField' type='string' description='Field to use to fill the KML <description> element' default='Description'/>"

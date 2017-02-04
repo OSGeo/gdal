@@ -92,12 +92,12 @@ OWConnection::OWConnection( const char* pszUserIn,
     //  Initialize Environment handler
     // ------------------------------------------------------
 
-    if( OCIEnvCreate( &hEnv,
+    if( CheckError( OCIEnvCreate( &hEnv,
         (ub4) ( OCI_DEFAULT | OCI_OBJECT | OCI_THREADED ),
         (dvoid *) 0, (dvoid * (*)(dvoid *, size_t)) 0,
         (dvoid * (*)(dvoid *, dvoid *, size_t)) 0,
         (void (*)(dvoid *, dvoid *)) 0, (size_t) 0,
-        (dvoid **) 0), NULL )
+        (dvoid **) 0), NULL ) )
     {
         return;
     }
@@ -483,7 +483,6 @@ bool OWConnection::GetNextField( OCIParam* phTable,
     *pnScale     = (signed short) nOCIScale;
 
     return true;
-
 }
 
 bool OWConnection::StartTransaction()
@@ -518,6 +517,7 @@ OWStatement::OWStatement( OWConnection* pConnect, const char* pszStatement )
     nNextCol        = 0;
     nNextBnd        = 0;
     hError          = poConnection->hError;
+    nFetchCount     = 0;
 
     //  -----------------------------------------------------------
     //  Create Statement handler
@@ -589,7 +589,6 @@ bool OWStatement::Execute( int nRows )
     {
         return false;
     }
-
 
     if( nStatus == OCI_SUCCESS_WITH_INFO || nStatus == OCI_NO_DATA )
     {
@@ -747,7 +746,6 @@ void OWStatement::Bind( sdo_geometry** pphData )
     (dvoid**) 0,
         (ub4*) 0),
         hError );
-
 }
 
 void OWStatement::Bind( OCILobLocator** pphLocator )
@@ -804,7 +802,6 @@ void OWStatement::Bind( OCIArray** pphData, OCIType* type )
         (dvoid **)0,
         (ub4 *)0 ),
         hError);
-
 }
 
 void OWStatement::Bind( char* pszData, int nSize )
@@ -1319,7 +1316,7 @@ bool OWStatement::WriteBlob( OCILobLocator* phLocator,
         return false;
     }
 
-    return ( nAmont == (ub4) nSize );
+    return nAmont == (ub4) nSize;
 }
 
 char* OWStatement::ReadCLob( OCILobLocator* phLocator )
@@ -1751,7 +1748,6 @@ bool CheckError( sword nStatus, OCIError* hError )
             CPLError( CE_Failure, CPLE_AppDefined, "%.*s",
                 static_cast<int>(sizeof(szMsg)), szMsg );
             break;
-
     }
 
     return true;

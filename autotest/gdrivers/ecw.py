@@ -1529,13 +1529,13 @@ def ecw_39():
     ds = gdal.Open( 'data/jrc.ecw' )
 
     dswr = gdaltest.ecw_drv.CreateCopy( 'tmp/jrcstats.ecw', ds, options = ['ECW_FORMAT_VERSION=3','TARGET=75'] )
-    ds = None;
+    ds = None
     hist = (0, 255, 2, [3, 4])
 
     dswr.GetRasterBand(1).SetDefaultHistogram( 0, 255, [3, 4] )
     dswr = None
 
-    ds = gdal.Open( 'tmp/jrcstats.ecw');
+    ds = gdal.Open( 'tmp/jrcstats.ecw')
 
     result = (hist == ds.GetRasterBand(1).GetDefaultHistogram(force=0))
 
@@ -2296,7 +2296,8 @@ def ecw_online_6():
     except:
         dods_drv = None
 
-    ds = gdal.Open('http://download.osgeo.org/gdal/data/ecw/spif83.ecw')
+    url = 'http://download.osgeo.org/gdal/data/ecw/spif83.ecw'
+    ds = gdal.Open(url)
 
     if dods_drv is not None:
         dods_drv.Register()
@@ -2306,6 +2307,13 @@ def ecw_online_6():
         # to writing to /tmp, which doesn't work on Windows
         if sys.platform == 'win32':
             return 'skip'
+
+        conn = gdaltest.gdalurlopen(url)
+        if conn is None:
+            print('cannot open URL')
+            return 'skip'
+        conn.close()
+
         return 'fail'
     ds = None
 

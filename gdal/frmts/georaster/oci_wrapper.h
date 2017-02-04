@@ -329,7 +329,6 @@ public:
     bool                Commit(); // OCITransCommit()
     bool                StartTransaction(); //  //OCITransStart()
     bool                EndTransaction() {return Commit(); }
-
 };
 
 /***************************************************************************/

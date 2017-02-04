@@ -180,10 +180,46 @@ def test_gdal_polygonize_3():
         gdaltest.post_reason( 'GetGeomType() returned %d instead of %d or %d (ogr.wkbPolygon or ogr.wkbMultiPolygon)' % (geom_type, ogr.wkbPolygon, ogr.wkbMultiPolygon ))
         return 'fail'
 
+###############################################################################
+# Test -b mask
+
+def test_gdal_polygonize_4():
+
+    script_path = test_py_scripts.get_py_script('gdal_polygonize')
+    if script_path is None:
+        return 'skip'
+
+    # Test mask syntax
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask ../gcore/data/byte.tif tmp/out.gml')
+
+    content = open('tmp/out.gml', 'rt').read()
+
+    os.unlink('tmp/out.gml')
+
+    if content.find('<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    # Test mask,1 syntax
+    test_py_scripts.run_py_script(script_path, 'gdal_polygonize', '-q -f GML -b mask,1 ../gcore/data/byte.tif tmp/out.gml')
+
+    content = open('tmp/out.gml', 'rt').read()
+
+    os.unlink('tmp/out.gml')
+
+    if content.find('<ogr:geometryProperty><gml:Polygon srsName="EPSG:26711"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>440720,3751320 440720,3750120 441920,3750120 441920,3751320 440720,3751320</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometryProperty>') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_gdal_polygonize_1,
     test_gdal_polygonize_2,
-    test_gdal_polygonize_3
+    test_gdal_polygonize_3,
+    test_gdal_polygonize_4
     ]
 
 if __name__ == '__main__':

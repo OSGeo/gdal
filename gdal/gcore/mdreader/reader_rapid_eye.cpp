@@ -29,6 +29,13 @@
 
 #include "reader_rapid_eye.h"
 
+#include <ctime>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+
 CPL_CVSID("$Id$");
 
 /**
@@ -58,7 +65,7 @@ GDALMDReaderRapidEye::GDALMDReaderRapidEye(const char *pszPath,
         }
     }
 
-    if(m_osXMLSourceFilename.size())
+    if(!m_osXMLSourceFilename.empty() )
         CPLDebug( "MDReaderRapidEye", "XML Filename: %s",
               m_osXMLSourceFilename.c_str() );
 }
@@ -152,5 +159,4 @@ void GDALMDReaderRapidEye::LoadMetadata()
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_CLOUDCOVER, pszCC);
     }
-
 }

@@ -33,7 +33,6 @@
 * limitations under the License.
 */
 
-
 /******************************************************************************
 *
 * Project:  Meta Raster File Format Driver Implementation, RasterBand
@@ -63,27 +62,25 @@ NAMESPACE_MRF_START
 // Count is the number of items that need to be copied
 // These are separate to allow for optimization
 
-template <typename T> void cpy_stride_in(
-    void *dst, const void *src, int c, int stride )
+template <typename T> static void cpy_stride_in(void *dst, void *src, int c, int stride)
 {
-    T *s=(T *)src;
-    T *d=(T *)dst;
+    T *s = reinterpret_cast<T *>(src);
+    T *d = reinterpret_cast<T *>(dst);
 
     while (c--) {
-        *d++=*s;
-        s+=stride;
+        *d++ = *s;
+        s += stride;
     }
 }
 
-template <typename T> void cpy_stride_out(
-    void *dst, const void *src, int c, int stride )
+template <typename T> static void cpy_stride_out(void *dst, void *src, int c, int stride)
 {
-    T *s=(T *)src;
-    T *d=(T *)dst;
+    T *s = reinterpret_cast<T *>(src);
+    T *d = reinterpret_cast<T *>(dst);
 
     while (c--) {
-        *d=*s++;
-        d+=stride;
+        *d = *s++;
+        d += stride;
     }
 }
 
@@ -91,7 +88,7 @@ template <typename T> void cpy_stride_out(
 template<typename T> inline int isAllVal(const T *b, size_t bytecount, double ndv)
 
 {
-    T val = (T)(ndv);
+    T val = static_cast<T>(ndv);
     size_t count = bytecount / sizeof(T);
     while (count--) {
         if (*(b++) != val) {
@@ -108,9 +105,9 @@ static int isAllVal(GDALDataType gt, void *b, size_t bytecount, double ndv)
     int isempty = false;
 
     // A case branch in a temporary macro, conversion from gdal enum to type
-#define TEST_T(GType, type)\
+#define TEST_T(GType, T)\
     case GType: \
-        isempty = isAllVal((type *)b, bytecount, ndv);\
+        isempty = isAllVal(reinterpret_cast<T *>(b), bytecount, ndv);\
         break
 
     switch (gt) {
@@ -200,15 +197,18 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
 // itself is not set.  This allows for PNG features to be controlled, as well
 // as any other bands that use zlib by itself
 //
-GDALMRFRasterBand::GDALMRFRasterBand(GDALMRFDataset *parent_dataset,
-                                     const ILImage &image, int band, int ov)
+GDALMRFRasterBand::GDALMRFRasterBand( GDALMRFDataset *parent_dataset,
+                                      const ILImage &image, int band, int ov ) :
+    poDS(parent_dataset),
+    deflatep(GetOptlist().FetchBoolean("DEFLATE", FALSE)),
+    // Bring the quality to 0 to 9
+    deflate_flags(image.quality / 10),
+    m_l(ov),
+    img(image),
+    overview(0)
 {
-    poDS=parent_dataset;
-    nBand=band;
-    m_band=band-1;
-    m_l=ov;
-    img=image;
-    eDataType=parent_dataset->current.dt;
+    nBand = band;
+    eDataType = parent_dataset->current.dt;
     nRasterXSize = img.size.x;
     nRasterYSize = img.size.y;
     nBlockXSize = img.pagesize.x;
@@ -217,17 +217,15 @@ GDALMRFRasterBand::GDALMRFRasterBand(GDALMRFDataset *parent_dataset,
     nBlocksPerColumn = img.pagecount.y;
     img.NoDataValue = GetNoDataValue(&img.hasNoData);
 
-    deflatep = GetOptlist().FetchBoolean("DEFLATE", FALSE);
-    // Bring the quality to 0 to 9
-    deflate_flags = img.quality / 10;
     // Pick up the twists, aka GZ, RAWZ headers
-    if (GetOptlist().FetchBoolean("GZ", FALSE))
+    if( GetOptlist().FetchBoolean("GZ", FALSE) )
         deflate_flags |= ZFLAG_GZ;
-    else if (GetOptlist().FetchBoolean("RAWZ", FALSE))
+    else if( GetOptlist().FetchBoolean("RAWZ", FALSE) )
         deflate_flags |= ZFLAG_RAW;
     // And Pick up the ZLIB strategy, if any
     const char *zstrategy = GetOptlist().FetchNameValueDef("Z_STRATEGY", NULL);
-    if (zstrategy) {
+    if( zstrategy )
+    {
         int zv = Z_DEFAULT_STRATEGY;
         if (EQUAL(zstrategy, "Z_HUFFMAN_ONLY"))
             zv = Z_HUFFMAN_ONLY;
@@ -239,14 +237,14 @@ GDALMRFRasterBand::GDALMRFRasterBand(GDALMRFDataset *parent_dataset,
             zv = Z_FIXED;
         deflate_flags |= (zv << 6);
     }
-    overview = 0;
 }
 
 // Clean up the overviews if they exist
 GDALMRFRasterBand::~GDALMRFRasterBand()
 {
-    while (0!=overviews.size()) {
-        delete overviews[overviews.size()-1];
+    while( !overviews.empty() )
+    {
+        delete overviews.back();
         overviews.pop_back();
     };
 }
@@ -280,7 +278,7 @@ CPLErr  GDALMRFRasterBand::SetNoDataValue(double val)
     }
     if (GInt32(poDS->vNoData.size()) < nBand)
         poDS->vNoData.resize(nBand);
-    poDS->vNoData[m_band] = val;
+    poDS->vNoData[nBand - 1] = val;
     // We also need to set it for this band
     img.NoDataValue = val;
     img.hasNoData = true;
@@ -290,32 +288,32 @@ CPLErr  GDALMRFRasterBand::SetNoDataValue(double val)
 double GDALMRFRasterBand::GetNoDataValue(int *pbSuccess)
 {
     std::vector<double> &v=poDS->vNoData;
-    if (v.size() == 0)
+    if (v.empty())
         return GDALPamRasterBand::GetNoDataValue(pbSuccess);
     if (pbSuccess) *pbSuccess=TRUE;
-    return getBandValue(v, m_band);
+    return getBandValue(v, nBand - 1);
 }
 
 double GDALMRFRasterBand::GetMinimum(int *pbSuccess)
 {
     std::vector<double> &v=poDS->vMin;
-    if (v.size() == 0)
+    if (v.empty())
         return GDALPamRasterBand::GetMinimum(pbSuccess);
     if (pbSuccess) *pbSuccess=TRUE;
-    return getBandValue(v, m_band);
+    return getBandValue(v, nBand - 1);
 }
 
 double GDALMRFRasterBand::GetMaximum(int *pbSuccess)
 {
     std::vector<double> &v=poDS->vMax;
-    if (v.size() == 0)
+    if (v.empty())
         return GDALPamRasterBand::GetMaximum(pbSuccess);
     if (pbSuccess) *pbSuccess=TRUE;
-    return getBandValue(v, m_band);
+    return getBandValue(v, nBand - 1);
 }
 
-// Fill, with ndv
-template<typename T> CPLErr buff_fill(void *b, size_t count, const T ndv)
+// Fill with typed ndv, count is always in bytes
+template<typename T> static CPLErr buff_fill(void *b, size_t count, const T ndv)
 {
     T *buffer = static_cast<T*>(b);
     count /= sizeof(T);
@@ -368,7 +366,7 @@ CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr /*src*/, void *buffer) 
 
     for (int i = 0; i < poDS->nBands; i++) {
         GDALRasterBand *b = poDS->GetRasterBand(i+1);
-        if (b->GetOverviewCount() && m_l)
+        if (b->GetOverviewCount() && 0 != m_l)
             b = b->GetOverview(m_l-1);
 
         void *ob = buffer;
@@ -383,11 +381,11 @@ CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr /*src*/, void *buffer) 
         }
 
 // Just the right mix of templates and macros make deinterleaving tidy
-#define CpySI(T) cpy_stride_in<T> (ob, (T *)poDS->GetPBuffer() + i,\
+#define CpySI(T) cpy_stride_in<T> (ob, reinterpret_cast<T *>(poDS->GetPBuffer()) + i,\
     blockSizeBytes()/sizeof(T), img.pagesize.c)
 
         // Page is already in poDS->pbuffer, not empty
-        // There are only four cases, since only the real data type matters
+        // There are only four cases, since only the data size matters
         switch (GDALGetDataTypeSize(eDataType)/8)
         {
         case 1: CpySI(GByte); break;
@@ -406,26 +404,24 @@ CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr /*src*/, void *buffer) 
     return CE_None;
 }
 
-
 /**
 *\brief Fetch a block from the backing store dataset and keep a copy in the cache
 *
-* @xblk The X block number, zero based
-* @yblk The Y block number, zero based
-* @param tinfo The return, updated tinfo for this specific tile
+* @param xblk The X block number, zero based
+* @param yblk The Y block number, zero based
+* @param buffer buffer
 *
 */
 CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
-
 {
     assert(!poDS->source.empty());
-    CPLDebug("MRF_IB", "FetchBlock %d,%d,0,%d, level  %d\n", xblk, yblk, m_band, m_l);
+    CPLDebug("MRF_IB", "FetchBlock %d,%d,0,%d, level  %d\n", xblk, yblk, nBand, m_l);
 
     if (poDS->clonedSource)  // This is a clone
         return FetchClonedBlock(xblk, yblk, buffer);
 
     const GInt32 cstride = img.pagesize.c; // 1 if band separate
-    ILSize req(xblk, yblk, 0, m_band / cstride, m_l);
+    ILSize req(xblk, yblk, 0, (nBand-1) / cstride, m_l);
     GUIntBig infooffset = IdxOffset(req, img);
 
     GDALDataset *poSrcDS = NULL;
@@ -542,19 +538,18 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
     return RB(xblk, yblk, filesrc, buffer);
 }
 
-
 /**
 *\brief Fetch for a cloned MRF
 *
-* @xblk The X block number, zero based
-* @yblk The Y block number, zero based
-* @param tinfo The return, updated tinfo for this specific tile
+* @param xblk The X block number, zero based
+* @param yblk The Y block number, zero based
+* @param buffer buffer
 *
 */
 
 CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
 {
-    CPLDebug("MRF_IB","FetchClonedBlock %d,%d,0,%d, level  %d\n", xblk, yblk, m_band, m_l);
+    CPLDebug("MRF_IB","FetchClonedBlock %d,%d,0,%d, level  %d\n", xblk, yblk, nBand, m_l);
 
     // Paranoid check
     assert(poDS->clonedSource);
@@ -576,7 +571,7 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
         return b->IReadBlock(xblk,yblk,buffer);
     }
 
-    ILSize req(xblk, yblk, 0, m_band/img.pagesize.c , m_l);
+    ILSize req(xblk, yblk, 0, (nBand-1)/img.pagesize.c , m_l);
     ILIdx tinfo;
 
     // Get the cloned source tile info
@@ -636,7 +631,6 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
     return IReadBlock(xblk, yblk, buffer);
 }
 
-
 /**
 *\brief read a block in the provided buffer
 *
@@ -650,9 +644,9 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 {
     ILIdx tinfo;
     GInt32 cstride = img.pagesize.c;
-    ILSize req(xblk, yblk, 0, m_band / cstride, m_l);
+    ILSize req(xblk, yblk, 0, (nBand-1)/cstride, m_l);
     CPLDebug("MRF_IB", "IReadBlock %d,%d,0,%d, level %d, idxoffset " CPL_FRMT_GIB "\n",
-        xblk, yblk, m_band, m_l, IdxOffset(req,img));
+        xblk, yblk, nBand-1, m_l, IdxOffset(req,img));
 
     // If this is a caching file and bypass is on, just do the fetch
     if (poDS->bypass_cache && !poDS->source.empty())
@@ -690,12 +684,15 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     // valgrind gdalinfo -checksum out.mrf
     // Invalid read of size 4
     // at BitStuffer::read(unsigned char**, std::vector<unsigned int, std::allocator<unsigned int> >&) const (BitStuffer.cpp:153)
-    if( tinfo.size <= 0 || tinfo.size > INT_MAX - 3 )
+
+    // No stored tile should be larger than twice the raw size.
+    if( tinfo.size <= 0 || tinfo.size > poDS->pbsize * 2 )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Too big tile size: " CPL_FRMT_GIB, tinfo.size);
+                 "Stored tile is too large: " CPL_FRMT_GIB, tinfo.size);
         return CE_Failure;
     }
+
     void *data = VSIMalloc(static_cast<size_t>(tinfo.size + 3));
     if( data == NULL )
     {
@@ -785,7 +782,6 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     return RB(xblk, yblk, dst, buffer);
 }
 
-
 /**
 *\brief Write a block from the provided buffer
 *
@@ -800,11 +796,11 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
 {
     GInt32 cstride = img.pagesize.c;
-    ILSize req(xblk, yblk, 0, m_band/cstride, m_l);
+    ILSize req(xblk, yblk, 0, (nBand-1)/cstride, m_l);
     GUIntBig infooffset = IdxOffset(req, img);
 
     CPLDebug("MRF_IB", "IWriteBlock %d,%d,0,%d, level  %d, stride %d\n", xblk, yblk,
-        m_band, m_l, cstride);
+        nBand, m_l, cstride);
 
     if (1 == cstride) {     // Separate bands, we can write it as is
         // Empty page skip
@@ -858,23 +854,22 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     // Get the other bands from the block cache
     for (int iBand=0; iBand < poDS->nBands; iBand++ )
     {
-        const char *pabyThisImage=NULL;
-        GDALRasterBlock *poBlock=NULL;
+        char *pabyThisImage = NULL;
+        GDALRasterBlock *poBlock = NULL;
 
-        if (iBand == m_band)
+        if (iBand == nBand-1)
         {
-            pabyThisImage = (char *) buffer;
+            pabyThisImage = reinterpret_cast<char *>(buffer);
             poDS->bdirty |= bandbit();
         } else {
             GDALRasterBand *band = poDS->GetRasterBand(iBand +1);
             // Pick the right overview
             if (m_l) band = band->GetOverview(m_l -1);
-            poBlock = ((GDALMRFRasterBand *)band)
-                ->TryGetLockedBlockRef(xblk, yblk);
+            poBlock = (reinterpret_cast<GDALMRFRasterBand *>(band))->TryGetLockedBlockRef(xblk, yblk);
             if (NULL==poBlock) continue;
             // This is where the image data is for this band
 
-            pabyThisImage = (char*) poBlock->GetDataRef();
+            pabyThisImage = reinterpret_cast<char*>(poBlock->GetDataRef());
             poDS->bdirty |= bandbit(iBand);
         }
 
@@ -882,14 +877,13 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
         int success;
         double val = GetNoDataValue(&success);
         if (!success) val = 0.0;
-        if (isAllVal(eDataType, (char *)pabyThisImage, blockSizeBytes(), val))
+        if (isAllVal(eDataType, pabyThisImage, blockSizeBytes(), val))
             empties |= bandbit(iBand);
 
         // Copy the data into the dataset buffer here
         // Just the right mix of templates and macros make this real tidy
-#define CpySO(T) cpy_stride_out<T> (((T *)tbuffer)+iBand, pabyThisImage,\
+#define CpySO(T) cpy_stride_out<T> ((reinterpret_cast<T *>(tbuffer))+iBand, pabyThisImage,\
                 blockSizeBytes()/sizeof(T), cstride)
-
 
         // Build the page in tbuffer
         switch (GDALGetDataTypeSize(eDataType)/8)

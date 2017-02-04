@@ -229,7 +229,7 @@ This allows the compiler to do the register allocation and various other
 optimizations (such as re-ordering), which is a huge win over coding directly
 in assembly. The Intel intrinsics guide is a useful resource to find the
 appropriate intrinsics :
-https://software.intel.com/sites/landingpage/IntrinsicsGuide/# 
+https://software.intel.com/sites/landingpage/IntrinsicsGuide/#
 
 So a temptative vectorized version of our algorithm would be :
 
@@ -493,7 +493,7 @@ of a uint16 is 65535*65535, this limits to rasters of 2^64/(65535*65535) ~=
 One oddity of the SSE2 instruction set is that it includes only a _mm_min_epi16()/_mm_max_epi16()
 mnemonics, that is to say that operates on signed int16. The _mm_min_epu16() that
 operates on uint16 has been introduced in the later SSE4.1 instruction set (that is
-quite commonly found in not so recent CPUs). 
+quite commonly found in not so recent CPUs).
 
 There are tricks to emulate _mm_min_epu16() in pure SSE2 using saturated
 subtraction and masking :
@@ -502,7 +502,7 @@ subtraction and masking :
     mask = _mm_cmpeq_epi16( _mm_subs_epu16(x, y), zero )
 
     // select bits from x when mask is 1, y otherwise
-    min(x,y) = _mm_or_si128(_mm_and_si128(mask, x), _mm_andnot_si128(mask, y)); 
+    min(x,y) = _mm_or_si128(_mm_and_si128(mask, x), _mm_andnot_si128(mask, y));
 
 Another way is to shift the unsigned values by -32768, so as to operate on
 signed 16bit values.

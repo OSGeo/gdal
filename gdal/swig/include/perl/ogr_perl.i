@@ -1731,13 +1731,13 @@ sub Points {
             }
         } elsif ($t eq 'MultiLineString') {
             for my $l (@$points) {
-                my $linestring = Geo::OGR::Geometry->new('Point'.$postfix);
+                my $linestring = Geo::OGR::Geometry->new('LineString'.$postfix);
                 $linestring->Points($l);
                 $self->AddGeometryDirectly($linestring);
             }
         } elsif ($t eq 'MultiPolygon') {
             for my $p (@$points) {
-                my $polygon = Geo::OGR::Geometry->new('Point'.$postfix);
+                my $polygon = Geo::OGR::Geometry->new('Polygon'.$postfix);
                 $polygon->Points($p);
                 $self->AddGeometryDirectly($polygon);
             }

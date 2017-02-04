@@ -120,7 +120,7 @@ class RIKDataset : public GDALPamDataset
 
     VSILFILE        *fp;
 
-    double      fTransform[6];
+    double      adfTransform[6];
 
     GUInt32     nBlockXSize;
     GUInt32     nBlockYSize;
@@ -133,13 +133,14 @@ class RIKDataset : public GDALPamDataset
     GDALColorTable *poColorTable;
 
   public:
+     RIKDataset();
     ~RIKDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
-    CPLErr      GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 /************************************************************************/
@@ -156,9 +157,9 @@ class RIKRasterBand : public GDALPamRasterBand
 
     RIKRasterBand( RIKDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
 };
 
 /************************************************************************/
@@ -223,7 +224,7 @@ static int GetNextLZWCode( int codeBits,
     }
 
 #if RIK_PIXEL_DEBUG
-    printf( "c%03X\n", ret );
+    printf( "c%03X\n", ret );/*ok*/
 #endif
 
     return ret;
@@ -248,7 +249,7 @@ static void OutputPixel( GByte pixel,
     imagePos++;
 
 #if RIK_PIXEL_DEBUG
-    printf( "_%02X %d\n", pixel, imagePos );
+    printf( "_%02X %d\n", pixel, imagePos );/*ok*/
 #endif
 
     // Check if we need to change line
@@ -256,7 +257,7 @@ static void OutputPixel( GByte pixel,
     if( imagePos == lineBreak )
     {
 #if RIK_PIXEL_DEBUG
-        printf( "\n%d\n", imageLine );
+        printf( "\n%d\n", imageLine );/*ok*/
 #endif
 
         imagePos = 0;
@@ -600,6 +601,25 @@ GDALColorTable *RIKRasterBand::GetColorTable()
 /************************************************************************/
 
 /************************************************************************/
+/*                             RIKDataset()                             */
+/************************************************************************/
+
+RIKDataset::RIKDataset() :
+    fp( NULL ),
+    nBlockXSize( 0 ),
+    nBlockYSize( 0 ),
+    nHorBlocks( 0 ),
+    nVertBlocks( 0 ),
+    nFileSize( 0 ),
+    pOffsets( NULL ),
+    options( 0 ),
+    poColorTable( NULL )
+
+{
+    memset( adfTransform, 0, sizeof(adfTransform) );
+}
+
+/************************************************************************/
 /*                            ~RIKDataset()                             */
 /************************************************************************/
 
@@ -620,7 +640,7 @@ RIKDataset::~RIKDataset()
 CPLErr RIKDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform, &fTransform, sizeof(double) * 6 );
+    memcpy( padfTransform, &adfTransform, sizeof(double) * 6 );
 
     return CE_None;
 }
@@ -1173,12 +1193,12 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
 
-    poDS->fTransform[0] = header.fWest - metersPerPixel / 2.0;
-    poDS->fTransform[1] = metersPerPixel;
-    poDS->fTransform[2] = 0.0;
-    poDS->fTransform[3] = header.fNorth + metersPerPixel / 2.0;
-    poDS->fTransform[4] = 0.0;
-    poDS->fTransform[5] = -metersPerPixel;
+    poDS->adfTransform[0] = header.fWest - metersPerPixel / 2.0;
+    poDS->adfTransform[1] = metersPerPixel;
+    poDS->adfTransform[2] = 0.0;
+    poDS->adfTransform[3] = header.fNorth + metersPerPixel / 2.0;
+    poDS->adfTransform[4] = 0.0;
+    poDS->adfTransform[5] = -metersPerPixel;
 
     poDS->nBlockXSize = header.iBlockWidth;
     poDS->nBlockYSize = header.iBlockHeight;
@@ -1235,7 +1255,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

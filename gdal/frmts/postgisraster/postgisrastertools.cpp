@@ -74,17 +74,16 @@ char * ReplaceSingleQuotes(const char * pszInput, int nLength) {
 
     pszOutput = (char*) CPLCalloc(nLength + 1, sizeof (char));
 
-    for (i = 0; i < nLength; i++) {
+    for (i = 0; i < nLength; i++)
+    {
         if (pszInput[i] == '\'')
             pszOutput[i] = '"';
         else
             pszOutput[i] = pszInput[i];
-
     }
 
     return pszOutput;
 }
-
 
 /***********************************************************************
  * \brief Split connection string into user, password, host, database...

@@ -524,7 +524,7 @@ public class ogr2ogr
     /* -------------------------------------------------------------------- */
         if( poDS == null )
         {
-            System.err.println("FAILURE:\n" + 
+            System.err.println("FAILURE:\n" +
                     "Unable to open datasource ` " + pszDataSource + "' with the following drivers.");
 
             for( int iDriver = 0; iDriver < ogr.GetDriverCount(); iDriver++ )
@@ -682,7 +682,7 @@ public class ogr2ogr
             if( papszLayers.size() > 0 )
                 System.err.println( "layer names ignored in combination with -sql." );
 
-            poResultSet = poDS.ExecuteSQL( pszSQLStatement, poSpatialFilter, 
+            poResultSet = poDS.ExecuteSQL( pszSQLStatement, poSpatialFilter,
                                             null );
 
             if( poResultSet != null )
@@ -720,7 +720,7 @@ public class ogr2ogr
                     }
                 }
 
-                if( !TranslateLayer( poDS, poResultSet, poODS, papszLCO, 
+                if( !TranslateLayer( poDS, poResultSet, poODS, papszLCO,
                                     pszNewLayerName, bTransform, poOutputSRS,
                                     poSourceSRS, papszSelFields, bAppend, eGType,
                                     bOverwrite, eGeomOp, dfGeomOpParam, papszFieldTypesToString,
@@ -749,8 +749,8 @@ public class ogr2ogr
                 nLayerCount = poDS.GetLayerCount();
                 papoLayers = new Layer[nLayerCount];
 
-                for( int iLayer = 0; 
-                    iLayer < nLayerCount; 
+                for( int iLayer = 0;
+                    iLayer < nLayerCount;
                     iLayer++ )
                 {
                     Layer        poLayer = poDS.GetLayer(iLayer);
@@ -772,8 +772,8 @@ public class ogr2ogr
                 nLayerCount = papszLayers.size();
                 papoLayers = new Layer[nLayerCount];
 
-                for( int iLayer = 0; 
-                    iLayer < papszLayers.size(); 
+                for( int iLayer = 0;
+                    iLayer < papszLayers.size();
                     iLayer++ )
                 {
                     Layer        poLayer = poDS.GetLayerByName((String)papszLayers.get(iLayer));
@@ -811,8 +811,8 @@ public class ogr2ogr
             long nAccCountFeatures = 0;
 
             /* First pass to apply filters and count all features if necessary */
-            for( int iLayer = 0; 
-                iLayer < nLayerCount; 
+            for( int iLayer = 0;
+                iLayer < nLayerCount;
                 iLayer++ )
             {
                 Layer        poLayer = papoLayers[iLayer];
@@ -846,8 +846,8 @@ public class ogr2ogr
             }
 
             /* Second pass to do the real job */
-            for( int iLayer = 0; 
-                iLayer < nLayerCount; 
+            for( int iLayer = 0;
+                iLayer < nLayerCount;
                 iLayer++ )
             {
                 Layer        poLayer = papoLayers[iLayer];
@@ -862,12 +862,12 @@ public class ogr2ogr
 
                 nAccCountFeatures += panLayerCountFeatures[iLayer];
 
-                if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
+                if( !TranslateLayer( poDS, poLayer, poODS, papszLCO,
                                     pszNewLayerName, bTransform, poOutputSRS,
                                     poSourceSRS, papszSelFields, bAppend, eGType,
                                     bOverwrite, eGeomOp, dfGeomOpParam, papszFieldTypesToString,
                                     panLayerCountFeatures[iLayer], poClipSrc, poClipDst, bExplodeCollections,
-                                    pszZField, pszWHERE, pfnProgress) 
+                                    pszZField, pszWHERE, pfnProgress)
                     && !bSkipFailures )
                 {
                     System.err.println(
@@ -897,7 +897,7 @@ public class ogr2ogr
     {
         System.out.print( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update] [-gt n]\n" +
                 "               [-select field_list] [-where restricted_where] \n" +
-                "               [-progress] [-sql <sql statement>] \n" + 
+                "               [-progress] [-sql <sql statement>] \n" +
                 "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n" +
                 "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n" +
                 "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n" +
@@ -922,8 +922,8 @@ public class ogr2ogr
                 " -update: Open existing output datasource in update mode\n" +
                 " -progress: Display progress on terminal. Only works if input layers have the \"fast feature count\" capability\n" +
                 " -select field_list: Comma-delimited list of fields from input layer to\n" +
-                "                     copy to the new layer (defaults to all)\n" + 
-                " -where restricted_where: Attribute query (like SQL WHERE)\n" + 
+                "                     copy to the new layer (defaults to all)\n" +
+                " -where restricted_where: Attribute query (like SQL WHERE)\n" +
                 " -sql statement: Execute given SQL statement and save result.\n" +
                 " -skipfailures: skip features or layers that fail to convert\n" +
                 " -gt n: group n features per transaction (default 200)\n" +
@@ -946,7 +946,7 @@ public class ogr2ogr
         System.out.print(" -a_srs srs_def: Assign an output SRS\n" +
             " -t_srs srs_def: Reproject/transform to this SRS on output\n" +
             " -s_srs srs_def: Override source SRS\n" +
-            "\n" + 
+            "\n" +
             " Srs_def can be a full WKT definition (hard to escape properly),\n" +
             " or a well known definition (i.e. EPSG:4326) or a file with a WKT\n" +
             " definition.\n" );
@@ -996,7 +996,7 @@ public class ogr2ogr
             return null;
 
         if (pszSQL != null)
-            poLyr = poDS.ExecuteSQL( pszSQL, null, null ); 
+            poLyr = poDS.ExecuteSQL( pszSQL, null, null );
         else if (pszLyr != null)
             poLyr = poDS.GetLayerByName(pszLyr);
         else
@@ -1102,12 +1102,12 @@ public class ogr2ogr
     /*                           TranslateLayer()                           */
     /************************************************************************/
 
-    static boolean TranslateLayer( DataSource poSrcDS, 
+    static boolean TranslateLayer( DataSource poSrcDS,
                             Layer poSrcLayer,
                             DataSource poDstDS,
                             Vector papszLCO,
                             String pszNewLayerName,
-                            boolean bTransform, 
+                            boolean bTransform,
                             SpatialReference poOutputSRS,
                             SpatialReference poSourceSRS,
                             Vector papszSelFields,

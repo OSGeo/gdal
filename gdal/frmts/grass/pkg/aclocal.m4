@@ -6,14 +6,14 @@ AC_DEFUN(AC_COMPILER_LOCALHACK,
   echo 'int main() { int i = 1; if( *((unsigned char *) &i) == 0 ) printf( "BIGENDIAN"); return 0; }' >> conftest.c
   ${CC} $CPPFLAGS $EXTRA_INCLUDES -o conftest conftest.c 2> comp.out
   COMP_CHECK=`grep "system directory" comp.out | grep /usr/local/include`
-  if test -z "$COMP_CHECK" ; then 
+  if test -z "$COMP_CHECK" ; then
      AC_MSG_RESULT([no, everything is ok])
   else
      AC_MSG_RESULT([yes, stripping extras])
      CXXFLAGS=`echo "$CXXFLAGS " | sed "s/-I\/usr\/local\/include //"`
      CFLAGS=`echo "$CFLAGS " | sed "s/-I\/usr\/local\/include //"`
      EXTRA_INCLUDES=`echo "$EXTRA_INCLUDES " | sed "s/-I\/usr\/local\/include //"`
-  fi 
+  fi
   rm -f comp.out
 ])
 
@@ -61,7 +61,7 @@ AC_DEFUN(AC_COMPILER_PIC,
 dnl
 dnl Try to find something to link shared libraries with.  Use "c++ -shared"
 dnl in preference to "ld -shared" because it will link in required c++
-dnl run time support for us. 
+dnl run time support for us.
 dnl
 AC_DEFUN(AC_LD_SHARED,
 [
@@ -84,9 +84,9 @@ AC_DEFUN(AC_LD_SHARED,
 
   if test "$with_ld_shared" != "" ; then
     if test "$with_ld_shared" = "no" ; then
-      echo "user disabled shared library support."	
+      echo "user disabled shared library support."
     else
-      echo "using user supplied .so link command ... $with_ld_shared"	
+      echo "using user supplied .so link command ... $with_ld_shared"
     fi
     LD_SHARED="$with_ld_shared"
   fi
@@ -113,7 +113,7 @@ AC_DEFUN(AC_LD_SHARED,
     fi
   fi
 
-  dnl Test special MacOS (Darwin) case. 
+  dnl Test special MacOS (Darwin) case.
 
   if test ! -z "`uname | grep Darwin`" \
           -a "$LD_SHARED" = "/bin/true" \
@@ -157,7 +157,7 @@ AC_DEFUN(AC_LD_SHARED,
     else
       echo "checking for ${CXX} -shared ... no(2)"
     fi
-  else 
+  else
     if test "$LD_SHARED" = "/bin/true" ; then
       echo "checking for ${CXX} -shared ... no(1)"
     fi
@@ -195,7 +195,7 @@ AC_DEFUN(AC_LD_SHARED,
     fi
   fi
 
-  rm -f conftest* libconftest* 
+  rm -f conftest* libconftest*
 
   AC_SUBST(LD_SHARED,$LD_SHARED)
   AC_SUBST(SO_EXT,$SO_EXT)

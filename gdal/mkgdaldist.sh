@@ -30,7 +30,7 @@ fi
 GDAL_VERSION=$1
 COMPRESSED_VERSION=`echo $GDAL_VERSION | tr -d .`
 
-if test "$2" = "-date" ; then 
+if test "$2" = "-date" ; then
   forcedate=$3
   shift
   shift
@@ -45,7 +45,7 @@ if test "$2" = "-branch"; then
 else
   forcebranch="trunk"
 fi
- 
+
 if test "$2" = "-rc"; then
   RC=$3
   shift
@@ -53,12 +53,12 @@ if test "$2" = "-rc"; then
 else
   RC=""
 fi
- 
+
 #
 # Checkout GDAL sources from the repository
 #
 echo "* Downloading GDAL sources from SVN..."
-rm -rf dist_wrk  
+rm -rf dist_wrk
 mkdir dist_wrk
 cd dist_wrk
 
@@ -87,7 +87,7 @@ fi
 echo "* Updating release date..."
 if test "$forcedate" != "no" ; then
   echo "Forcing Date To: $forcedate"
-  rm -f gdal/gcore/gdal_new.h  
+  rm -f gdal/gcore/gdal_new.h
   sed -e "/define GDAL_RELEASE_DATE/s/20[0-9][0-9][0-9][0-9][0-9][0-9]/$forcedate/" gdal/gcore/gdal.h > gdal/gcore/gdal_new.h
   mv gdal/gcore/gdal_new.h gdal/gcore/gdal.h
 fi
@@ -118,14 +118,18 @@ fi
 
 cd ${CWD}
 
+# They currently require SWIG 1.3.X, which is not convenient as we need
+# newer SWIG for newer Python versions
+echo "SWIG C# interfaces *NOT* generated !"
+
 #
 # Generate SWIG interface for C#
 #
-echo "* Generating SWIG C# interfaces..."
-CWD=${PWD}
-cd gdal/swig/csharp
-./mkinterface.sh
-cd ${CWD}
+#echo "* Generating SWIG C# interfaces..."
+#CWD=${PWD}
+#cd gdal/swig/csharp
+#./mkinterface.sh
+#cd ${CWD}
 
 #
 # Generate SWIG interface for Perl

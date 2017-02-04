@@ -85,7 +85,6 @@ static int VSIGIFWriteFunc( GifFileType *psGFile,
     return static_cast<int>(VSIFWriteL( pabyBuffer, 1, nBytesToWrite, fp ));
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                                  GIFDataset                          */
@@ -121,7 +120,7 @@ class GIFRasterBand : public GIFAbstractRasterBand
   public:
 
                    GIFRasterBand( GIFDataset *, int, SavedImage *, int );
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -163,7 +162,6 @@ CPLErr GIFRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                             GIFDataset                               */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            GIFDataset()                            */
@@ -584,7 +582,6 @@ GIFDataset::CreateCopy(
             {
                 goto error;
             }
-
         }
     }
     else

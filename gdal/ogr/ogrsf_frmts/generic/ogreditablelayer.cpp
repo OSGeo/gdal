@@ -37,35 +37,37 @@ CPL_CVSID("$Id$");
 /*                  ~IOGREditableLayerSynchronizer()                    */
 /************************************************************************/
 
-IOGREditableLayerSynchronizer::~IOGREditableLayerSynchronizer()
-{
-}
+IOGREditableLayerSynchronizer::~IOGREditableLayerSynchronizer() {}
 
 /************************************************************************/
 /*                          OGREditableLayer()                          */
 /************************************************************************/
 
-OGREditableLayer::OGREditableLayer(OGRLayer* poDecoratedLayer,
-                                   bool bTakeOwnershipDecoratedLayer,
-                                   IOGREditableLayerSynchronizer* poSynchronizer,
-                                   bool bTakeOwnershipSynchronizer):
+OGREditableLayer::OGREditableLayer(
+    OGRLayer* poDecoratedLayer,
+    bool bTakeOwnershipDecoratedLayer,
+    IOGREditableLayerSynchronizer* poSynchronizer,
+    bool bTakeOwnershipSynchronizer) :
     OGRLayerDecorator(poDecoratedLayer,
                       bTakeOwnershipDecoratedLayer),
     m_poSynchronizer(poSynchronizer),
     m_bTakeOwnershipSynchronizer(bTakeOwnershipSynchronizer),
+    m_poEditableFeatureDefn(poDecoratedLayer->GetLayerDefn()->Clone()),
     m_nNextFID(0),
+    m_poMemLayer(new OGRMemLayer( "", NULL, wkbNone )),
     m_bStructureModified(false),
     m_bSupportsCreateGeomField(false),
     m_bSupportsCurveGeometries(false)
 {
-    m_poEditableFeatureDefn = poDecoratedLayer->GetLayerDefn()->Clone();
     m_poEditableFeatureDefn->Reference();
 
-    m_poMemLayer = new OGRMemLayer( "", NULL, wkbNone );
-    for(int i=0;i<m_poEditableFeatureDefn->GetFieldCount();i++)
+    for( int i = 0; i < m_poEditableFeatureDefn->GetFieldCount(); i++ )
         m_poMemLayer->CreateField(m_poEditableFeatureDefn->GetFieldDefn(i));
-    for(int i=0;i<m_poEditableFeatureDefn->GetGeomFieldCount();i++)
-        m_poMemLayer->CreateGeomField(m_poEditableFeatureDefn->GetGeomFieldDefn(i));
+
+    for( int i = 0; i < m_poEditableFeatureDefn->GetGeomFieldCount(); i++ )
+        m_poMemLayer->
+            CreateGeomField(m_poEditableFeatureDefn->GetGeomFieldDefn(i));
+
     m_oIter = m_oSetCreated.begin();
 }
 
@@ -279,9 +281,9 @@ OGRFeature *OGREditableLayer::GetNextFeature()
 OGRErr      OGREditableLayer::SetNextByIndex( GIntBig nIndex )
 {
     if( m_poDecoratedLayer != NULL &&
-        m_oSetCreated.size() == 0 &&
-        m_oSetDeleted.size() == 0 &&
-        m_oSetEdited.size() == 0 )
+        m_oSetCreated.empty() &&
+        m_oSetDeleted.empty() &&
+        m_oSetEdited.empty() )
     {
         return m_poDecoratedLayer->SetNextByIndex(nIndex);
     }
@@ -400,11 +402,13 @@ OGRErr      OGREditableLayer::DeleteFeature( GIntBig nFID )
     {
         eErr = OGRERR_NON_EXISTING_FEATURE;
     }
+    // cppcheck-suppress redundantIfRemove
     else if( m_oSetCreated.find(nFID) != m_oSetCreated.end() )
     {
         m_oSetCreated.erase(nFID);
         eErr = m_poMemLayer->DeleteFeature(nFID);
     }
+    // cppcheck-suppress redundantIfRemove
     else if( m_oSetEdited.find(nFID) != m_oSetEdited.end() )
     {
         m_oSetEdited.erase(nFID);
@@ -515,8 +519,8 @@ void        OGREditableLayer::SetSpatialFilter( int iGeomField, OGRGeometry * po
 /*                         SetSpatialFilterRect()                       */
 /************************************************************************/
 
-void        OGREditableLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
-                                                    double dfMaxX, double dfMaxY )
+void OGREditableLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
+                                             double dfMaxX, double dfMaxY )
 {
    return OGRLayer::SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
@@ -525,23 +529,25 @@ void        OGREditableLayer::SetSpatialFilterRect( double dfMinX, double dfMinY
 /*                         SetSpatialFilterRect()                       */
 /************************************************************************/
 
-void        OGREditableLayer::SetSpatialFilterRect(
-                                  int iGeomField, double dfMinX, double dfMinY,
-                                  double dfMaxX, double dfMaxY )
+void OGREditableLayer::SetSpatialFilterRect(
+    int iGeomField, double dfMinX, double dfMinY,
+    double dfMaxX, double dfMaxY )
 {
-    return OGRLayer::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
+    return
+      OGRLayer::SetSpatialFilterRect(iGeomField,
+                                     dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
 
 /************************************************************************/
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig         OGREditableLayer::GetFeatureCount( int bForce )
+GIntBig OGREditableLayer::GetFeatureCount( int bForce )
 {
     if( !m_poDecoratedLayer ) return 0;
     if( m_poAttrQuery == NULL && m_poFilterGeom == NULL &&
-        m_oSetDeleted.size() == 0 &&
-        m_oSetEdited.size() == 0 )
+        m_oSetDeleted.empty() &&
+        m_oSetEdited.empty() )
     {
         GIntBig nFC = m_poDecoratedLayer->GetFeatureCount(bForce);
         if( nFC >= 0 )
@@ -571,8 +577,8 @@ OGRErr      OGREditableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
     int iSrcGeomFieldIdx = GetSrcGeomFieldIndex(iGeomField);
-    if( iSrcGeomFieldIdx >= 0 && m_oSetEdited.size() == 0 &&
-        m_oSetDeleted.size() == 0 )
+    if( iSrcGeomFieldIdx >= 0 && m_oSetEdited.empty() &&
+        m_oSetDeleted.empty() )
     {
         OGRErr eErr = m_poDecoratedLayer->GetExtent(iSrcGeomFieldIdx, psExtent,
                                                     bForce);
@@ -761,8 +767,8 @@ OGRErr      OGREditableLayer::SyncToDisk()
     OGRErr eErr = m_poDecoratedLayer->SyncToDisk();
     if( eErr == OGRERR_NONE )
     {
-        if( m_oSetCreated.size() == 0 && m_oSetEdited.size() == 0 &&
-            m_oSetDeleted.size() == 0 && !m_bStructureModified )
+        if( m_oSetCreated.empty() && m_oSetEdited.empty() &&
+            m_oSetDeleted.empty() && !m_bStructureModified )
         {
             return OGRERR_NONE;
         }

@@ -134,6 +134,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
+#include <algorithm>
+
 #ifdef __HP_aCC
 #  include <wchar.h>      /* iswspace() */
 #else
@@ -147,14 +149,12 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-IMapInfoFile::IMapInfoFile()
-{
-    m_nCurFeatureId = 0;
-    m_poCurFeature = NULL;
-    m_bBoundsSet = FALSE;
-    m_pszCharset = NULL;
-}
-
+IMapInfoFile::IMapInfoFile() :
+    m_nCurFeatureId(0),
+    m_poCurFeature(NULL),
+    m_bBoundsSet(FALSE),
+    m_pszCharset(NULL)
+{}
 
 /**********************************************************************
  *                   IMapInfoFile::~IMapInfoFile()
@@ -163,7 +163,7 @@ IMapInfoFile::IMapInfoFile()
  **********************************************************************/
 IMapInfoFile::~IMapInfoFile()
 {
-    if (m_poCurFeature)
+    if( m_poCurFeature )
     {
         delete m_poCurFeature;
         m_poCurFeature = NULL;
@@ -183,6 +183,7 @@ IMapInfoFile::~IMapInfoFile()
 int IMapInfoFile::Open(const char *pszFname, const char* pszAccess,
                        GBool bTestOpenNoError)
 {
+    // cppcheck-suppress nullPointer
     if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead, bTestOpenNoError);
     else if( STARTS_WITH_CI(pszAccess, "w") )
@@ -198,7 +199,7 @@ int IMapInfoFile::Open(const char *pszFname, const char* pszAccess,
 /**********************************************************************
  *                   IMapInfoFile::SmartOpen()
  *
- * Use this static method to automatically open any flavour of MapInfo
+ * Use this static method to automatically open any flavor of MapInfo
  * dataset.  This method will detect the file type, create an object
  * of the right type, and open the file.
  *
@@ -232,7 +233,9 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
          * We have to read the .tab header to find out.
          *------------------------------------------------------------*/
         char *pszAdjFname = CPLStrdup(pszFname);
-        GBool bFoundFields = FALSE, bFoundView=FALSE, bFoundSeamless=FALSE;
+        GBool bFoundFields = FALSE;
+        GBool bFoundView = FALSE;
+        GBool bFoundSeamless = FALSE;
 
         TABAdjustFilenameExtension(pszAdjFname);
         VSILFILE *fp = VSIFOpenL(pszAdjFname, "r");
@@ -278,8 +281,6 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
 
     return poFile;
 }
-
-
 
 /**********************************************************************
  *                   IMapInfoFile::GetNextFeature()
@@ -391,11 +392,12 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
       case wkbMultiPoint:
       {
           OGRErr eStatus = OGRERR_NONE;
-          int i;
           OGRGeometryCollection *poColl = (OGRGeometryCollection*)poGeom;
           OGRFeature *poTmpFeature = poFeature->Clone();
 
-          for (i=0; eStatus==OGRERR_NONE && i<poColl->getNumGeometries(); i++)
+          for( int i = 0;
+               eStatus==OGRERR_NONE && i<poColl->getNumGeometries();
+               i++)
           {
               poTmpFeature->SetFID(OGRNullFID);
               poTmpFeature->SetGeometry(poColl->getGeometryRef(i));
@@ -403,7 +405,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
           }
           delete poTmpFeature;
           return NULL;
-        }
+      }
         break;
       /*-------------------------------------------------------------
        * Unsupported type.... convert to MapInfo geometry NONE
@@ -544,7 +546,7 @@ int IMapInfoFile::GetTABType( OGRFieldDefn *poField,
         if( nWidth == 0 )
             nWidth = 254;
         else
-            nWidth = MIN(254,nWidth);
+            nWidth = std::min(254, nWidth);
     }
     else
     {
@@ -573,9 +575,9 @@ int IMapInfoFile::GetTABType( OGRFieldDefn *poField,
 OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
-    TABFieldType        eTABType;
-    int                 nWidth;
-    int                 nPrecision;
+    TABFieldType eTABType;
+    int nWidth = 0;
+    int nPrecision = 0;
 
     if( GetTABType( poField, &eTABType, &nWidth, &nPrecision ) < 0 )
         return OGRERR_FAILURE;
@@ -583,10 +585,9 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
     if( AddFieldNative( poField->GetNameRef(), eTABType,
                         nWidth, nPrecision, FALSE, FALSE, bApproxOK ) > -1 )
         return OGRERR_NONE;
-    else
-        return OGRERR_FAILURE;
-}
 
+    return OGRERR_FAILURE;
+}
 
 /**********************************************************************
  *                   IMapInfoFile::SetCharset()

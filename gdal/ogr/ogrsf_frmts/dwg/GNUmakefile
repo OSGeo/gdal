@@ -44,10 +44,10 @@ default:	$(O_OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o $(O_OBJ) $(PLUGIN_SO)
 
-$(O_OBJ) $(OBJ):	ogr_dwg.h 
+$(O_OBJ) $(OBJ):	ogr_dwg.h
 
 plugin: $(PLUGIN_SO)
 
-$(PLUGIN_SO):	$(OBJ) 
+$(PLUGIN_SO):	$(OBJ)
 	gcc -shared $(LNK_FLAGS) $(OBJ) $(CONFIG_LIBS_INS) $(EXTRA_LIBS) $(TD_LIBS) \
 		-o $(PLUGIN_SO)

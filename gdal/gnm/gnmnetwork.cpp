@@ -33,15 +33,9 @@
 
 CPL_CVSID("$Id$");
 
-GNMNetwork::GNMNetwork() : GDALDataset()
-{
+GNMNetwork::GNMNetwork() : GDALDataset() {}
 
-}
-
-GNMNetwork::~GNMNetwork()
-{
-
-}
+GNMNetwork::~GNMNetwork() {}
 
 const char *GNMNetwork::GetName() const
 {
@@ -79,7 +73,6 @@ CPLErr CPL_STDCALL GNMDisconnectAll (GNMNetworkH hNet)
     VALIDATE_POINTER1( hNet, "GNMDisconnectAll", CE_Failure );
 
     return ((GNMNetwork*)hNet)->DisconnectAll();
-
 }
 
 OGRFeatureH CPL_STDCALL GNMGetFeatureByGlobalFID (GNMNetworkH hNet, GNMGFID nGFID)

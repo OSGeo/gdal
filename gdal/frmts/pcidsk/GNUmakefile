@@ -54,7 +54,7 @@ SDKOBJ 	=	\
 	cpcidskbinarysegment.o \
 	cpcidsk_array.o \
 	cpcidskephemerissegment.o \
-	cpcidskads40model.o 
+	cpcidskads40model.o
 
 else
 CPPFLAGS	:=	 $(PCIDSK_INCLUDE) $(CPPFLAGS)

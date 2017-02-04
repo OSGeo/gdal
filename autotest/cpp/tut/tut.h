@@ -147,7 +147,7 @@ namespace tut
      * Constructor.
      */
     test_result(const std::string& grp, int pos,
-    	const std::string& test_name, result_type res)
+        const std::string& test_name, result_type res)
       : group(grp), test(pos), name(test_name), result(res)
     {
     }
@@ -156,7 +156,7 @@ namespace tut
      * Constructor with exception.
      */
     test_result(const std::string& grp,int pos,
-    	const std::string& test_name, result_type res,
+        const std::string& test_name, result_type res,
         const std::exception& ex)
       : group(grp), test(pos), name(test_name), result(res),
         message(ex.what()),exception_typeid(typeid(ex).name())
@@ -411,8 +411,8 @@ namespace tut
         test_result tr = i->second->run_next();
         callback_->test_completed(tr);
 
-	if( tr.result == test_result::ex_ctor )
-	{
+        if( tr.result == test_result::ex_ctor )
+        {
           throw no_more_tests();
         }
       }
@@ -460,12 +460,12 @@ namespace tut
 
     void set_test_name(const std::string& current_test_name)
     {
-    	current_test_name_ = current_test_name;
+        current_test_name_ = current_test_name;
     }
 
     const std::string& get_test_name() const
     {
-    	return current_test_name_;
+        return current_test_name_;
     }
 
     /**
@@ -479,7 +479,7 @@ namespace tut
 
     private:
 
-    	std::string current_test_name_;
+        std::string current_test_name_;
   };
 
   namespace
@@ -809,7 +809,7 @@ namespace tut
      */
     test_result run_test_(const tests_iterator& ti,safe_holder<object>& obj)
     {
-	  std::string current_test_name;
+      std::string current_test_name;
       try
       {
         if( run_test_seh_(ti->second,obj,current_test_name) == false )
@@ -822,42 +822,42 @@ namespace tut
       catch(const warning& ex)
       {
         // test ok, but destructor failed
-		  if (obj.get()) current_test_name = obj->get_test_name();
+        if (obj.get()) current_test_name = obj->get_test_name();
         test_result tr(name_,ti->first, current_test_name, test_result::warn,ex);
         return tr;
       }
       catch(const failure& ex)
       {
         // test failed because of ensure() or similar method
-		  if (obj.get()) current_test_name = obj->get_test_name();
+        if (obj.get()) current_test_name = obj->get_test_name();
         test_result tr(name_,ti->first, current_test_name, test_result::fail,ex);
         return tr;
       }
       catch(const seh& ex)
       {
         // test failed with sigsegv, divide by zero, etc
-		  if (obj.get()) current_test_name = obj->get_test_name();
+        if (obj.get()) current_test_name = obj->get_test_name();
         test_result tr(name_,ti->first, current_test_name, test_result::term,ex);
         return tr;
       }
       catch(const bad_ctor& ex)
       {
         // test failed because test ctor failed; stop the whole group
-		  if (obj.get()) current_test_name = obj->get_test_name();
+        if (obj.get()) current_test_name = obj->get_test_name();
         test_result tr(name_,ti->first, current_test_name, test_result::ex_ctor,ex);
         return tr;
       }
       catch(const std::exception& ex)
       {
         // test failed with std::exception
-		  if (obj.get()) current_test_name = obj->get_test_name();
+        if (obj.get()) current_test_name = obj->get_test_name();
         test_result tr(name_,ti->first, current_test_name, test_result::ex,ex);
         return tr;
       }
       catch(...)
       {
         // test failed with unknown exception
-		  if (obj.get()) current_test_name = obj->get_test_name();
+        if (obj.get()) current_test_name = obj->get_test_name();
         test_result tr(name_,ti->first, current_test_name, test_result::ex);
         return tr;
       }
@@ -870,15 +870,15 @@ namespace tut
     /**
      * Runs one under SEH if platform supports it.
      */
-	bool run_test_seh_(testmethod tm,safe_holder<object>& obj, std::string& current_test_name)    {
+    bool run_test_seh_(testmethod tm,safe_holder<object>& obj, std::string& current_test_name)    {
 #if defined(TUT_USE_SEH)
       __try
       {
 #endif
         if( obj.get() == 0 )
-	{
+        {
           reset_holder_(obj);
-	}
+        }
         obj->called_method_was_a_dummy_test_ = false;
 
 #if defined(TUT_USE_SEH)
@@ -891,7 +891,7 @@ namespace tut
         __except(handle_seh_(::GetExceptionCode()))
         {
           // throw seh("SEH");
-			current_test_name = obj->get_test_name();
+          current_test_name = obj->get_test_name();
           return false;
         }
 #endif
@@ -902,7 +902,7 @@ namespace tut
           throw no_such_test();
         }
 
-		current_test_name = obj->get_test_name();
+        current_test_name = obj->get_test_name();
         obj.permit_throw();
         obj.release();
 #if defined(TUT_USE_SEH)

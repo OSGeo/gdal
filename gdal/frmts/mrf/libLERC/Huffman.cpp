@@ -267,7 +267,7 @@ bool Huffman::BuildTreeFromCodes(int& numBitsLUT)
     }
   }
 
-  int numNodesCreated = 1;
+  /* int numNodesCreated = 1; */
   Node emptyNode((short)-1, 0);
 
   if (!m_root)
@@ -291,7 +291,7 @@ bool Huffman::BuildTreeFromCodes(int& numBitsLUT)
           if (!node->child1)
           {
             node->child1 = new Node(emptyNode);
-            numNodesCreated++;
+            /* numNodesCreated++; */
           }
           node = node->child1;
         }
@@ -300,7 +300,7 @@ bool Huffman::BuildTreeFromCodes(int& numBitsLUT)
           if (!node->child0)
           {
             node->child0 = new Node(emptyNode);
-            numNodesCreated++;
+            /* numNodesCreated++; */
           }
           node = node->child0;
         }
@@ -485,6 +485,7 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, int i0, int i1)
       if (32 - bitPos >= len)
       {
         bitPos += len;
+        // cppcheck-suppress shiftTooManyBits
         if (bitPos == 32)
         {
           bitPos = 0;

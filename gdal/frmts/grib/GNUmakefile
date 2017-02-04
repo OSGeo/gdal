@@ -10,8 +10,17 @@ OBJ	=	gribdataset.o \
                 degrib2.o inventory.o metaname.o myerror.o tdlpack.o filedatasource.o memorydatasource.o grib1tab.o myutil.o metaparse.o weather.o metaprint.o engribapi.o grib2api.o myassert.o scan.o memendian.o fileendian.o gridtemplates.o drstemplates.o pdstemplates.o gbits.o g2_free.o g2_unpack1.o g2_unpack2.o g2_unpack3.o g2_unpack4.o g2_unpack5.o g2_unpack6.o g2_unpack7.o g2_info.o g2_getfld.o simunpack.o comunpack.o pack_gp.o reduce.o specpack.o specunpack.o rdieee.o mkieee.o int_power.o simpack.o compack.o cmplxpack.o misspack.o g2_create.o g2_addlocal.o g2_addgrid.o g2_addfield.o g2_gribend.o getdim.o g2_miss.o getpoly.o seekgb.o \
 		dec_jpeg2000.o jpcunpack.o jpcpack.o enc_jpeg2000.o
 
-ifeq ($(HAVE_JASPER),yes)
-EXTRAFLAGS	:= 	$(EXTRAFLAGS) -DHAVE_JASPER
+ifeq ($(PNG_SETTING),internal)
+EXTRAFLAGS      :=      $(EXTRAFLAGS) -I../png/libpng -DUSE_PNG
+ifeq ($(LIBZ_SETTING),internal)
+EXTRAFLAGS      :=      $(EXTRAFLAGS) -I../zlib
+endif
+OBJ     :=      $(OBJ) pngpack.o pngunpack.o enc_png.o dec_png.o
+endif
+
+ifeq ($(PNG_SETTING),external)
+EXTRAFLAGS      :=      $(EXTRAFLAGS) -DUSE_PNG
+OBJ     :=      $(OBJ) pngpack.o pngunpack.o enc_png.o dec_png.o
 endif
 
 CPPFLAGS	:=	 $(CPPFLAGS) $(EXTRAFLAGS)

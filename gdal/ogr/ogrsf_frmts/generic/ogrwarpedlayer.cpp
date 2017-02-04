@@ -41,24 +41,20 @@ OGRWarpedLayer::OGRWarpedLayer( OGRLayer* poDecoratedLayer,
                                 int bTakeOwnership,
                                 OGRCoordinateTransformation* poCT,
                                 OGRCoordinateTransformation* poReversedCT ) :
-                                      OGRLayerDecorator(poDecoratedLayer,
-                                                        bTakeOwnership),
-                                      m_iGeomField(iGeomField),
-                                      m_poCT(poCT),
-                                      m_poReversedCT(poReversedCT)
+    OGRLayerDecorator(poDecoratedLayer, bTakeOwnership),
+    m_poFeatureDefn(NULL),
+    m_iGeomField(iGeomField),
+    m_poCT(poCT),
+    m_poReversedCT(poReversedCT),
+    m_poSRS(m_poCT->GetTargetCS())
 {
     CPLAssert(poCT != NULL);
     SetDescription( poDecoratedLayer->GetDescription() );
 
-    m_poFeatureDefn = NULL;
-
-    if( m_poCT->GetTargetCS() != NULL )
+    if( m_poSRS != NULL )
     {
-        m_poSRS = m_poCT->GetTargetCS();
         m_poSRS->Reference();
     }
-    else
-        m_poSRS = NULL;
 }
 
 /************************************************************************/
@@ -163,7 +159,6 @@ void OGRWarpedLayer::SetSpatialFilterRect( int iGeomField, double dfMinX, double
     OGRLayer::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
 
-
 /************************************************************************/
 /*                     SrcFeatureToWarpedFeature()                      */
 /************************************************************************/
@@ -185,7 +180,6 @@ OGRFeature *OGRWarpedLayer::SrcFeatureToWarpedFeature(OGRFeature* poSrcFeature)
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                     WarpedFeatureToSrcFeature()                      */
@@ -296,7 +290,6 @@ OGRErr      OGRWarpedLayer::ICreateFeature( OGRFeature *poFeature )
     return eErr;
 }
 
-
 /************************************************************************/
 /*                            GetLayerDefn()                           */
 /************************************************************************/
@@ -383,11 +376,11 @@ OGRErr      OGRWarpedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
 /************************************************************************/
 
 static double TransformAndUpdateBBAndReturnX(
-                                   OGRCoordinateTransformation* poCT,
-                                   double dfX, double dfY,
-                                   double& dfMinX, double& dfMinY, double& dfMaxX, double& dfMaxY)
+    OGRCoordinateTransformation* poCT,
+    double dfX, double dfY,
+    double& dfMinX, double& dfMinY, double& dfMaxX, double& dfMaxY )
 {
-    int bSuccess;
+    int bSuccess = FALSE;
     poCT->TransformEx( 1, &dfX, &dfY, NULL, &bSuccess );
     if( bSuccess )
     {
@@ -397,8 +390,8 @@ static double TransformAndUpdateBBAndReturnX(
         if( dfY > dfMaxY ) dfMaxY = dfY;
         return dfX;
     }
-    else
-        return 0.0;
+
+    return 0.0;
 }
 
 /************************************************************************/
@@ -433,7 +426,7 @@ static void FindXDiscontinuity(OGRCoordinateTransformation* poCT,
 int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
                                        OGRCoordinateTransformation* poCT )
 {
-#define NSTEP   20
+    const int NSTEP = 20;
     double dfXStep = (psEnvelope->MaxX - psEnvelope->MinX) / NSTEP;
     double dfYStep = (psEnvelope->MaxY - psEnvelope->MinY) / NSTEP;
 
@@ -474,7 +467,8 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
         {
             double dfXOld = 0.0;
             double dfDXOld = 0.0;
-            int iOld = -1, iOldOld = -1;
+            int iOld = -1;
+            int iOldOld = -1;
             for( int i = 0; i <= NSTEP; i++ )
             {
                 if( pabSuccess[j * (NSTEP + 1) + i] )
@@ -484,8 +478,10 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
 
                     if( !bSet )
                     {
-                        dfMinX = dfMaxX = dfX;
-                        dfMinY = dfMaxY = dfY;
+                        dfMinX = dfX;
+                        dfMaxX = dfX;
+                        dfMinY = dfY;
+                        dfMaxY = dfY;
                         bSet = TRUE;
                     }
                     else
@@ -513,7 +509,6 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
                     dfXOld = dfX;
                     iOldOld = iOld;
                     iOld = i;
-
                 }
             }
         }

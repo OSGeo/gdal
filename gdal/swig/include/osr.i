@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifdef SWIGPYTHON
+%nothread;
+#endif
+
 %include constraints.i
 
 #ifdef PERL_CPAN_NAMESPACE
@@ -352,6 +356,11 @@ public:
 
   OGRErr SetLinearUnitsAndUpdateParameters( const char*name, double to_meters) {
     return OSRSetLinearUnitsAndUpdateParameters( self, name, to_meters );
+  }
+
+  double GetTargetLinearUnits( const char *target_key ) {
+    // Return code ignored.
+    return OSRGetTargetLinearUnits( self, target_key, 0 );
   }
 
   double GetLinearUnits() {
@@ -1017,3 +1026,8 @@ public:
     return obj;
 }
 %}
+
+
+#ifdef SWIGPYTHON
+%thread;
+#endif

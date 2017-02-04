@@ -377,7 +377,7 @@ def check_oi_rg_consistency(filename, serialized_oi_rg, error_report):
         if proj4 != oi_proj4:
             error_report.EmitError('INSPIRE_TG', 'Inconsistent SRS between OrthoImagery (wkt=%s, proj4=%s) and GMLJP2/GeoJP2 (wkt=%s, proj4=%s)' % (wkt, proj4, oi_wkt, oi_proj4), conformance_class = 'A.8.8')
 
-def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, datatype = 'imagery', error_report = None):
+def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, datatype = 'imagery', error_report = None, expected_ftyp_branding = None):
 
     if error_report is None:
         error_report = ErrorReport()
@@ -459,8 +459,15 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
         if ftyp:
             JP2CLFound = False
             JPXCLFound = False
-            if get_field_val(ftyp, 'BR') != 'jp2 ':
-                error_report.EmitError('GENERAL', 'ftyp.BR = "%s" instead of "jp2 "' % get_field_val(ftyp, 'BR'))
+
+            if expected_ftyp_branding is None:
+                if gmljp2_found and gmljp2.find('gmljp2:GMLJP2CoverageCollection') >= 0:
+                    expected_ftyp_branding = 'jpx '
+                else:
+                    expected_ftyp_branding = 'jp2 '
+
+            if get_field_val(ftyp, 'BR') != expected_ftyp_branding:
+                error_report.EmitError('GENERAL', 'ftyp.BR = "%s" instead of "%s"' % (get_field_val(ftyp, 'BR'), expected_ftyp_branding))
 
             if get_field_val(ftyp, 'MinV') != '0':
                 error_report.EmitError('GENERAL', 'ftyp.MinV = "%s" instead of 0' % get_field_val(ftyp, 'MinV'))

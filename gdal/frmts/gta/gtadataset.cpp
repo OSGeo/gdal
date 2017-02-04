@@ -148,7 +148,7 @@ class GTAIO : public gta::custom_io
     int open( const char *pszFilename, const char *pszMode )
     {
         fp = VSIFOpenL( pszFilename, pszMode );
-        return ( fp == NULL ? -1 : 0 );
+        return fp == NULL ? -1 : 0;
     }
 
     void close( )
@@ -165,7 +165,7 @@ class GTAIO : public gta::custom_io
         return VSIFTellL( fp );
     }
 
-    virtual size_t read(void *buffer, size_t size, bool *error) throw ()
+    virtual size_t read(void *buffer, size_t size, bool *error) throw () override
     {
         size_t s;
         s = VSIFReadL( buffer, 1, size, fp );
@@ -177,7 +177,7 @@ class GTAIO : public gta::custom_io
         return size;
     }
 
-    virtual size_t write(const void *buffer, size_t size, bool *error) throw ()
+    virtual size_t write(const void *buffer, size_t size, bool *error) throw () override
     {
         size_t s;
         s = VSIFWriteL( buffer, 1, size, fp );
@@ -189,12 +189,12 @@ class GTAIO : public gta::custom_io
         return size;
     }
 
-    virtual bool seekable() throw ()
+    virtual bool seekable() throw () override
     {
         return true;
     }
 
-    virtual void seek(intmax_t offset, int whence, bool *error) throw ()
+    virtual void seek(intmax_t offset, int whence, bool *error) throw () override
     {
         int r;
         r = VSIFSeekL( fp, offset, whence );
@@ -245,16 +245,16 @@ class GTADataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr      GetGeoTransform( double * padfTransform );
-    CPLErr      SetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
+    CPLErr      SetGeoTransform( double * padfTransform ) override;
 
-    const char *GetProjectionRef( );
-    CPLErr      SetProjection( const char *pszProjection );
+    const char *GetProjectionRef( ) override;
+    CPLErr      SetProjection( const char *pszProjection ) override;
 
-    int         GetGCPCount( );
-    const char *GetGCPProjection( );
-    const GDAL_GCP *GetGCPs( );
-    CPLErr      SetGCPs( int, const GDAL_GCP *, const char * );
+    int         GetGCPCount( ) override;
+    const char *GetGCPProjection( ) override;
+    const GDAL_GCP *GetGCPs( ) override;
+    CPLErr      SetGCPs( int, const GDAL_GCP *, const char * ) override;
 };
 
 /************************************************************************/
@@ -280,25 +280,25 @@ class GTARasterBand : public GDALPamRasterBand
                 GTARasterBand( GTADataset *, int );
                 ~GTARasterBand( );
 
-    CPLErr      IReadBlock( int, int, void * );
-    CPLErr      IWriteBlock( int, int, void * );
+    CPLErr      IReadBlock( int, int, void * ) override;
+    CPLErr      IWriteBlock( int, int, void * ) override;
 
-    char      **GetCategoryNames( );
-    CPLErr      SetCategoryNames( char ** );
+    char      **GetCategoryNames( ) override;
+    CPLErr      SetCategoryNames( char ** ) override;
 
-    double      GetMinimum( int * );
-    double      GetMaximum( int * );
+    double      GetMinimum( int * ) override;
+    double      GetMaximum( int * ) override;
 
-    double      GetNoDataValue( int * );
-    CPLErr      SetNoDataValue( double );
-    double      GetOffset( int * );
-    CPLErr      SetOffset( double );
-    double      GetScale( int * );
-    CPLErr      SetScale( double );
-    const char *GetUnitType( );
-    CPLErr      SetUnitType( const char * );
-    GDALColorInterp GetColorInterpretation( );
-    CPLErr      SetColorInterpretation( GDALColorInterp );
+    double      GetNoDataValue( int * ) override;
+    CPLErr      SetNoDataValue( double ) override;
+    double      GetOffset( int * ) override;
+    CPLErr      SetOffset( double ) override;
+    double      GetScale( int * ) override;
+    CPLErr      SetScale( double ) override;
+    const char *GetUnitType( ) override;
+    CPLErr      SetUnitType( const char * ) override;
+    GDALColorInterp GetColorInterpretation( ) override;
+    CPLErr      SetColorInterpretation( GDALColorInterp ) override;
 };
 
 /************************************************************************/
@@ -774,6 +774,7 @@ GTADataset::GTADataset()
     nLastBlockYOff = -1;
     pBlock = NULL;
     DataOffset = 0;
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
 
 /************************************************************************/
@@ -930,7 +931,7 @@ const char *GTADataset::GetProjectionRef()
 
 {
     const char *p = oHeader.global_taglist().get("GDAL/PROJECTION");
-    return ( p ? p : "" );
+    return p ? p : "";
 }
 
 /************************************************************************/
@@ -1247,7 +1248,7 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

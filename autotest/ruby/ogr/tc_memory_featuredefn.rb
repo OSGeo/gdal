@@ -10,10 +10,10 @@ class TestMemoryFeatureDefn < Test::Unit::TestCase
   def open_ds
     # Get the pat to the file
     file_name = File.join(data_directory, 'poly.shp')
-    
+
     # Open datasource in update mode
     return Gdal::Ogr.open(file_name, 1)
-  end   
+  end
 
   def test_owns_field_defn
     ds = open_ds

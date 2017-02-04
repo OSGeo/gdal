@@ -42,7 +42,6 @@ int CPL_DLL RECReadRecord( FILE *fp, char *pszRecBuf, int nRecordLength  );
 const char CPL_DLL *RECGetField( const char *pszSrc, int nStart, int nWidth );
 CPL_C_END
 
-
 /************************************************************************/
 /*                             OGRRECLayer                              */
 /************************************************************************/
@@ -69,15 +68,14 @@ class OGRRECLayer : public OGRLayer
                                      int nFieldCount );
                         ~OGRRECLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     int                 IsValid() { return bIsValid; }
-
 };
 
 /************************************************************************/
@@ -96,10 +94,10 @@ class OGRRECDataSource : public OGRDataSource
 
     int                 Open( const char * pszFilename );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return 1; }
-    OGRLayer            *GetLayer( int );
-    int                 TestCapability( const char * );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return 1; }
+    OGRLayer            *GetLayer( int ) override;
+    int                 TestCapability( const char * ) override;
 };
 
 #endif /* ndef OGR_REC_H_INCLUDED */

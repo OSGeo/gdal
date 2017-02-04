@@ -190,7 +190,6 @@ CPLErr OGRIDBTableLayer::Initialize( const char *pszTableName,
         }*/
     }
 
-
     return CE_None;
 }
 
@@ -539,7 +538,6 @@ OGRErr OGRIDBTableLayer::ISetFeature( OGRFeature *poFeature )
             CPLDebug("OGR_IDB", "SetFeature(): Unknown geometry type. Geometry will not be updated.");
     }
 
-
     // Create query
     CPLString osSql;
     CPLString osFields;
@@ -756,8 +754,9 @@ OGRErr OGRIDBTableLayer::ISetFeature( OGRFeature *poFeature )
         }
     }
     else
+    {
         bUpdateGeom = FALSE;
-
+    }
 
     // Create query
     CPLString osSql;

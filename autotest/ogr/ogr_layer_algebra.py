@@ -63,7 +63,7 @@ def print_layer(A):
         if f is None:
             return
         g = f.GetGeometryRef()
-        print g.ExportToWkt()
+        print(g.ExportToWkt())
 
 def is_same(A,B):
 
@@ -186,7 +186,7 @@ def algebra_intersection():
     f1 = (ogr.Geometry(wkt = 'POLYGON ((2 3,3 3,3 2,2 2,2 3))'),1,'first')
     f2 = (ogr.Geometry(wkt = 'POLYGON ((5 2,5 3,6 3,6 2,5 2))'),2,'first')
 
-    C.ResetReading();
+    C.ResetReading()
     while 1:
         feat = C.GetNextFeature()
         if not feat: break
@@ -222,7 +222,7 @@ def algebra_intersection():
     f1 = (ogr.Geometry(wkt='MULTIPOLYGON (((2 3,3 3,3 2,2 2,2 3)))'),1,'first')
     f2 = (ogr.Geometry(wkt='MULTIPOLYGON (((5 2,5 3,6 3,6 2,5 2)))'),2,'first')
 
-    C.ResetReading();
+    C.ResetReading()
     while 1:
         feat = C.GetNextFeature()
         if not feat: break

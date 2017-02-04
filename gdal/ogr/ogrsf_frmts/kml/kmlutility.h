@@ -54,10 +54,13 @@ struct Coordinate
     double dfLongitude;
     double dfLatitude;
     double dfAltitude;
-    int    bHasZ;
+    bool   bHasZ;
 
-    Coordinate()
-        : dfLongitude(0), dfLatitude(0), dfAltitude(0), bHasZ(FALSE)
+    Coordinate() :
+        dfLongitude(0),
+        dfLatitude(0),
+        dfAltitude(0),
+        bHasZ(false)
     {}
 };
 

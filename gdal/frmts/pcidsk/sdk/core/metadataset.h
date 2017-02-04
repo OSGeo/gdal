@@ -41,7 +41,7 @@ namespace PCIDSK
     /************************************************************************/
 
     class MetadataSet 
-    {									
+    {
     public:
         MetadataSet();
         ~MetadataSet();

@@ -53,6 +53,7 @@ OGROCIWritableLayer::OGROCIWritableLayer()
     panElemInfo = NULL;
 
     bLaunderColumnNames = TRUE;
+    bPreservePrecision = FALSE;
     bTruncationReported = FALSE;
     poSRS = NULL;
 

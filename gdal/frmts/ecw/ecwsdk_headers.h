@@ -35,7 +35,6 @@
 #pragma GCC system_header
 #endif
 
-
 // The following is needed on 4.x+ to enable rw support.
 #if defined(HAVE_COMPRESS)
 # ifndef ECW_COMPRESS_RW_SDK_VERSION

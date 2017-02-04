@@ -31,7 +31,7 @@
 
 CPL_CVSID("$Id$");
 
-#define FILE_CODE       "T"
+static const char FILE_CODE[] = "T";
 
 static const TigerFieldInfo rtT_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
@@ -66,5 +66,4 @@ TigerZeroCellID::TigerZeroCellID( OGRTigerDataSource * poDSIn,
 /* -------------------------------------------------------------------- */
 
     AddFieldDefns( psRTInfo, poFeatureDefn );
-
 }

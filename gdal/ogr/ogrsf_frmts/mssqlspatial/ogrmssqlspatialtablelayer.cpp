@@ -82,7 +82,8 @@ void OGRMSSQLAppendEscaped( CPLODBCStatement* poStatement, const char* pszStrVal
 
 OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource *poDSIn ) :
     bLaunderColumnNames(FALSE),
-    bPreservePrecision(FALSE)
+    bPreservePrecision(FALSE),
+    eGeomType(wkbNone)
 {
     poDS = poDSIn;
 
@@ -99,8 +100,6 @@ OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource 
     pszTableName = NULL;
     pszLayerName = NULL;
     pszSchemaName = NULL;
-
-    eGeomType = wkbNone;
 
     bNeedSpatialIndex = FALSE;
 #ifdef SQL_SS_UDT
@@ -310,7 +309,6 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 
     if (eType != wkbNone)
         eGeomType = eType;
-
 
 /* -------------------------------------------------------------------- */
 /*             Try to find out the spatial reference                    */
@@ -564,7 +562,6 @@ CPLODBCStatement *OGRMSSQLSpatialTableLayer::GetStatement()
     return poStmt;
 }
 
-
 /************************************************************************/
 /*                           BuildStatement()                           */
 /************************************************************************/
@@ -698,7 +695,6 @@ OGRErr OGRMSSQLSpatialTableLayer::SetAttributeFilter( const char *pszQueryIn )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
@@ -713,7 +709,7 @@ int OGRMSSQLSpatialTableLayer::TestCapability( const char * pszCap )
             return TRUE;
 
         else if( EQUAL(pszCap,OLCRandomWrite) )
-            return (pszFIDColumn != NULL);
+            return pszFIDColumn != NULL;
     }
 
 #if (ODBCVER >= 0x0300)
@@ -728,7 +724,7 @@ int OGRMSSQLSpatialTableLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     if( EQUAL(pszCap,OLCRandomRead) )
-        return (pszFIDColumn != NULL);
+        return pszFIDColumn != NULL;
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return TRUE;
     else
@@ -761,7 +757,6 @@ GIntBig OGRMSSQLSpatialTableLayer::GetFeatureCount( int bForce )
     delete poStatement;
     return nRet;
 }
-
 
 /************************************************************************/
 /*                            CreateField()                             */
@@ -931,7 +926,6 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
                   "Unable to update features in tables without\n"
                   "a recognised FID column.");
         return eErr;
-
     }
 
     ClearStatement();
@@ -955,7 +949,6 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
     int nFieldCount = poFeatureDefn->GetFieldCount();
     int bind_num = 0;
     void** bind_buffer = (void**)CPLMalloc(sizeof(void*) * nFieldCount);
-
 
     int bNeedComma = FALSE;
     SQLLEN nWKBLenBindParameter;
@@ -1329,12 +1322,9 @@ void OGRMSSQLSpatialTableLayer::CloseBCP()
     }
 }
 
-
-
 /************************************************************************/
 /*                            CreateFeatureBCP()                        */
 /************************************************************************/
-
 
 OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
 
@@ -1703,7 +1693,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 }
                 else
                 {
-                    int	pnYear;
+                    int pnYear;
                     int pnMonth;
                     int pnDay;
                     int pnHour;
@@ -1732,7 +1722,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 }
                 else
                 {
-                    int	pnYear;
+                    int pnYear;
                     int pnMonth;
                     int pnDay;
                     int pnHour;
@@ -1761,7 +1751,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 }
                 else
                 {
-                    int	pnYear;
+                    int pnYear;
                     int pnMonth;
                     int pnDay;
                     int pnHour;

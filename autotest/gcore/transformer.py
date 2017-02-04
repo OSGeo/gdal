@@ -876,6 +876,36 @@ def transformer_15():
 
     return 'success'
 
+###############################################################################
+# Test approximate sub-transformers in GenImgProjTransformer
+# (we mostly test that the parameters are well recognized and serialized)
+
+def transformer_16():
+
+    gdal.Translate('/vsimem/transformer_16.tif', 'data/byte.tif', options = "-gcp 0 0 440720.000 3751320.000 -gcp 0 20 440720.000 3750120.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 -a_srs EPSG:26711")
+    gdal.Warp('/vsimem/transformer_16.vrt', '/vsimem/transformer_16.tif', options = '-of VRT -t_srs EPSG:4326 -et 0 -to SRC_APPROX_ERROR_IN_SRS_UNIT=6.05 -to SRC_APPROX_ERROR_IN_PIXEL=0.1 -to REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT=6.1 -to REPROJECTION_APPROX_ERROR_IN_DST_SRS_UNIT=0.0001')
+    f = gdal.VSIFOpenL('/vsimem/transformer_16.vrt', 'rb')
+    if f is not None:
+        content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
+        gdal.VSIFCloseL(f)
+    if content.find('<MaxErrorForward>6.05</MaxErrorForward>') < 0 or \
+       content.find('<MaxErrorReverse>0.1</MaxErrorReverse>') < 0 or \
+       content.find('<MaxErrorForward>0.0001</MaxErrorForward>') < 0 or \
+       content.find('<MaxErrorReverse>6.1</MaxErrorReverse>') < 0:
+           gdaltest.post_reason('fail')
+           print(content)
+           return 'fail'
+    ds = gdal.Translate('', '/vsimem/transformer_16.vrt', format = 'MEM')
+    if ds.GetRasterBand(1).Checksum() != 4727:
+        gdaltest.post_reason( 'failure' )
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/transformer_16.tif')
+    gdal.Unlink('/vsimem/transformer_16.vrt')
+
+    return 'success'
+
 gdaltest_list = [
     transformer_1,
     transformer_2,
@@ -891,7 +921,8 @@ gdaltest_list = [
     transformer_12,
     transformer_13,
     transformer_14,
-    transformer_15
+    transformer_15,
+    transformer_16
     ]
 
 disabled_gdaltest_list = [

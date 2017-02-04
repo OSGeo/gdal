@@ -16,7 +16,7 @@ Files
  Makefile: Simple Unix style makefile for building bsb2raw program.
 
 NOTE: It may be necessary to fool with the cpl_config.h include file for
-different platforms. In particular, change the #undef WORDS_BIGENDIAN to 
+different platforms. In particular, change the #undef WORDS_BIGENDIAN to
 a #define WORDS_BIGENDIAN for big endian systems (Sparc, SGI, etc).  Some
 changes may be needed in cpl_config.h for Windows.
 
@@ -24,7 +24,7 @@ changes may be needed in cpl_config.h for Windows.
 License
 -------
 
-MIT/X license ... see header of bsb_read.c. 
+MIT/X license ... see header of bsb_read.c.
 
 On the Web
 ----------
@@ -34,7 +34,7 @@ http://gdal.velocet.ca/projects/bsb/
 GDAL
 ----
 
-Note that this BSB code is normally incorporated into the larger GDAL 
+Note that this BSB code is normally incorporated into the larger GDAL
 library.  To convert BSB to other common formats like GeoTIFF, PNG, etc
 consider using the GDAL utilities at:
 

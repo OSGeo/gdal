@@ -4,11 +4,14 @@ OBJ =	ogrgeometryfactory.o \
 	ogrlinestring.o \
 	ogrlinearring.o \
 	ogrpolygon.o \
+	ogrtriangle.o \
 	ogrutils.o \
 	ogrgeometry.o \
 	ogrgeometrycollection.o \
 	ogrmultipolygon.o \
 	ogrsurface.o \
+	ogrpolyhedralsurface.o \
+	ogrtriangulatedsurface.o \
 	ogrmultipoint.o \
 	ogrmultilinestring.o \
     ogrcircularstring.o \
@@ -54,4 +57,5 @@ OBJ =	ogrgeometryfactory.o \
     osr_cs_wkt.o \
 	osr_cs_wkt_parser.o \
     ogrgeomfielddefn.o \
-    ograpispy.o
+    ograpispy.o \
+    ogr_xerces.o

@@ -102,7 +102,7 @@ OGRFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 
     if( iNextSubFeature >= nSubFeatureCount )
     {
-        oIt++;
+        ++oIt;
 
         iNextSubFeature = 0;
 
@@ -178,8 +178,5 @@ OGRFeature *OGRDXFBlocksLayer::GetNextFeature()
 int OGRDXFBlocksLayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCStringsAsUTF8) )
-        return TRUE;
-    else
-        return FALSE;
+    return EQUAL(pszCap, OLCStringsAsUTF8);
 }

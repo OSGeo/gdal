@@ -66,22 +66,20 @@ CPL_CVSID("$Id$");
  *                      class TABMAPToolBlock
  *====================================================================*/
 
-#define MAP_TOOL_HEADER_SIZE   8
+static const int MAP_TOOL_HEADER_SIZE = 8;
 
 /**********************************************************************
  *                   TABMAPToolBlock::TABMAPToolBlock()
  *
  * Constructor.
  **********************************************************************/
-TABMAPToolBlock::TABMAPToolBlock(TABAccess eAccessMode /*= TABRead*/):
-    TABRawBinBlock(eAccessMode, TRUE)
-{
-    m_nNextToolBlock = m_numDataBytes = 0;
-
-    m_numBlocksInChain = 1;  // Current block counts as 1
-
-    m_poBlockManagerRef = NULL;
-}
+TABMAPToolBlock::TABMAPToolBlock( TABAccess eAccessMode /*= TABRead*/ ) :
+    TABRawBinBlock(eAccessMode, TRUE),
+    m_numDataBytes(0),
+    m_nNextToolBlock(0),
+    m_numBlocksInChain(1),  // Current block counts as 1
+    m_poBlockManagerRef(NULL)
+{}
 
 /**********************************************************************
  *                   TABMAPToolBlock::~TABMAPToolBlock()
@@ -89,7 +87,6 @@ TABMAPToolBlock::TABMAPToolBlock(TABAccess eAccessMode /*= TABRead*/):
  * Destructor.
  **********************************************************************/
 TABMAPToolBlock::~TABMAPToolBlock() {}
-
 
 /**********************************************************************
  *                   TABMAPToolBlock::EndOfChain()
@@ -125,13 +122,12 @@ int     TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf,
                                            VSILFILE *fpSrc /* = NULL */,
                                            int nOffset /* = 0 */)
 {
-    int nStatus;
-
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
      *----------------------------------------------------------------*/
-    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf, nBlockSize, nSizeUsed,
-                                                bMakeCopy, fpSrc, nOffset);
+    const int nStatus =
+        TABRawBinBlock::InitBlockFromData(pabyBuf, nBlockSize, nSizeUsed,
+                                          bMakeCopy, fpSrc, nOffset);
     if (nStatus != 0)
         return nStatus;
 
@@ -312,7 +308,6 @@ void TABMAPToolBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
     m_poBlockManagerRef = poBlockMgr;
 };
 
-
 /**********************************************************************
  *                   TABMAPToolBlock::ReadBytes()
  *
@@ -335,13 +330,12 @@ void TABMAPToolBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
  **********************************************************************/
 int     TABMAPToolBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
 {
-    int nStatus;
-
     if (m_pabyBuf &&
         m_nCurPos >= (m_numDataBytes+MAP_TOOL_HEADER_SIZE) &&
         m_nNextToolBlock > 0)
     {
-        if ( (nStatus=GotoByteInFile(m_nNextToolBlock)) != 0)
+        int nStatus = GotoByteInFile(m_nNextToolBlock);
+        if( nStatus != 0 )
         {
             // Failed.... an error has already been reported.
             return nStatus;
@@ -441,9 +435,6 @@ int  TABMAPToolBlock::CheckAvailableSpace(int nToolType)
 
     return 0;
 }
-
-
-
 
 /**********************************************************************
  *                   TABMAPToolBlock::Dump()

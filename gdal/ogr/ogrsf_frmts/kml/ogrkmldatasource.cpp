@@ -34,6 +34,7 @@
 #include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_vsi_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -81,7 +82,7 @@ OGRKMLDataSource::~OGRKMLDataSource()
                     papoLayers_[i]->nWroteFeatureCount_ != 0 )
                 {
                     CPLString osRet = papoLayers_[i]->WriteSchema();
-                    if( osRet.size() )
+                    if( !osRet.empty() )
                         VSIFPrintfL( fpOutput_, "%s", osRet.c_str() );
                 }
             }
@@ -313,11 +314,12 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 
     pszName_ = CPLStrdup( pszName );
 
-    fpOutput_ = VSIFOpenL( pszName, "wb" );
+    fpOutput_ = VSIFOpenExL( pszName, "wb", true );
     if( fpOutput_ == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to create KML file %s.", pszName );
+                  "Failed to create KML file %s: %s", pszName,
+                  VSIGetLastErrorMsg() );
         return FALSE;
     }
 
@@ -328,7 +330,8 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 
     VSIFPrintfL( fpOutput_,
                  "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n"
-                 "<Document id=\"root_doc\">\n" );
+                 "<Document id=\"%s\">\n",
+                 CSLFetchNameValueDef(papszOptions, "DOCUMENT_ID", "root_doc") );
 
     return TRUE;
 }

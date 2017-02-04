@@ -82,7 +82,6 @@ int CPL_DLL CPLAtomicAdd(volatile int* ptr, int increment);
   */
 #define CPLAtomicDec(ptr) CPLAtomicAdd(ptr, -1)
 
-
 /** Compares *ptr with oldval. If *ptr == oldval, then *ptr is assigned
   * newval and TRUE is returned. Otherwise nothing is done, and FALSE is returned.
   *

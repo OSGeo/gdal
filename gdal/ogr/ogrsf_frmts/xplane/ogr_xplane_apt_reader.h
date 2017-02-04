@@ -37,7 +37,6 @@
 /*                           OGRXPlaneAPTLayer                          */
 /************************************************************************/
 
-
 class OGRXPlaneAPTLayer : public OGRXPlaneLayer
 {
   public:
@@ -49,14 +48,13 @@ class OGRXPlaneAPTLayer : public OGRXPlaneLayer
                                    const char* pszAptName,
                                    int nAPTType,
                                    double dfElevation,
-                                   int bHasCoordinates = FALSE,
+                                   bool bHasCoordinates = false,
                                    double dfLat = 0,
                                    double dfLon = 0,
-                                   int bHasTower = FALSE,
+                                   bool bHasTower = false,
                                    double dfHeightTower = 0,
                                    const char* pszTowerName = NULL);
 };
-
 
 /************************************************************************/
 /*                   OGRXPlaneRunwayThresholdLayer                      */
@@ -183,7 +181,7 @@ class OGRXPlaneRunwayThresholdLayer : public OGRXPlaneLayer
                                    const char* pszREIL);
 
     /* Set a few computed values */
-    void                 SetRunwayLengthAndHeading(OGRFeature* poFeature,
+    static void                 SetRunwayLengthAndHeading(OGRFeature* poFeature,
                                                    double dfLength,
                                                    double dfHeading);
 
@@ -193,7 +191,6 @@ class OGRXPlaneRunwayThresholdLayer : public OGRXPlaneLayer
 /************************************************************************/
 /*                          OGRXPlaneRunwayLayer                        */
 /************************************************************************/
-
 
 class OGRXPlaneRunwayLayer : public OGRXPlaneLayer
 {
@@ -216,11 +213,9 @@ class OGRXPlaneRunwayLayer : public OGRXPlaneLayer
                                    int bHasDistanceRemainingSigns);
 };
 
-
 /************************************************************************/
 /*                        OGRXPlaneStopwayLayer                         */
 /************************************************************************/
-
 
 class OGRXPlaneStopwayLayer : public OGRXPlaneLayer
 {
@@ -240,7 +235,6 @@ class OGRXPlaneStopwayLayer : public OGRXPlaneLayer
 /*                   OGRXPlaneWaterRunwayThresholdLayer                 */
 /************************************************************************/
 
-
 class OGRXPlaneWaterRunwayThresholdLayer : public OGRXPlaneLayer
 {
   public:
@@ -254,11 +248,10 @@ class OGRXPlaneWaterRunwayThresholdLayer : public OGRXPlaneLayer
                                    int bBuoys);
 
     /* Set a few computed values */
-    void                 SetRunwayLengthAndHeading(OGRFeature* poFeature,
+    static void                 SetRunwayLengthAndHeading(OGRFeature* poFeature,
                                                    double dfLength,
                                                    double dfHeading);
 };
-
 
 /************************************************************************/
 /*                         OGRXPlaneWaterRunwayLayer                    */
@@ -281,7 +274,6 @@ class OGRXPlaneWaterRunwayLayer : public OGRXPlaneLayer
                                    double dfWidth,
                                    int bBuoys);
 };
-
 
 /************************************************************************/
 /*                        OGRXPlaneHelipadLayer                         */
@@ -320,7 +312,6 @@ class OGRXPlaneHelipadLayer : public OGRXPlaneLayer
 /*                     OGRXPlaneHelipadPolygonLayer                     */
 /************************************************************************/
 
-
 class OGRXPlaneHelipadPolygonLayer : public OGRXPlaneLayer
 {
   public:
@@ -340,11 +331,9 @@ class OGRXPlaneHelipadPolygonLayer : public OGRXPlaneLayer
                                    const char* pszEdgeLighing);
 };
 
-
 /************************************************************************/
 /*                    OGRXPlaneTaxiwayRectangleLayer                    */
 /************************************************************************/
-
 
 class OGRXPlaneTaxiwayRectangleLayer : public OGRXPlaneLayer
 {
@@ -362,11 +351,9 @@ class OGRXPlaneTaxiwayRectangleLayer : public OGRXPlaneLayer
                                    int bBlueEdgeLights);
 };
 
-
 /************************************************************************/
 /*                          OGRXPlanePavementLayer                      */
 /************************************************************************/
-
 
 class OGRXPlanePavementLayer : public OGRXPlaneLayer
 {
@@ -385,7 +372,6 @@ class OGRXPlanePavementLayer : public OGRXPlaneLayer
 /*                       OGRXPlaneAPTBoundaryLayer                      */
 /************************************************************************/
 
-
 class OGRXPlaneAPTBoundaryLayer : public OGRXPlaneLayer
 {
   public:
@@ -396,11 +382,9 @@ class OGRXPlaneAPTBoundaryLayer : public OGRXPlaneLayer
                                    OGRPolygon* poPolygon);
 };
 
-
 /************************************************************************/
 /*                 OGRXPlaneAPTLinearFeatureLayer                       */
 /************************************************************************/
-
 
 class OGRXPlaneAPTLinearFeatureLayer : public OGRXPlaneLayer
 {
@@ -411,7 +395,6 @@ class OGRXPlaneAPTLinearFeatureLayer : public OGRXPlaneLayer
                                    const char* pszLinearFeatureName,
                                    OGRMultiLineString* poMultilineString);
 };
-
 
 /************************************************************************/
 /*                         OGRXPlaneATCFreqLayer                         */
@@ -427,7 +410,6 @@ class OGRXPlaneATCFreqLayer : public OGRXPlaneLayer
                                    const char* pszATCFreqName,
                                    double dfFrequency);
 };
-
 
 /************************************************************************/
 /*                     OGRXPlaneStartupLocationLayer                    */
@@ -448,7 +430,6 @@ class OGRXPlaneStartupLocationLayer : public OGRXPlaneLayer
 /************************************************************************/
 /*                     OGRXPlaneAPTLightBeaconLayer                     */
 /************************************************************************/
-
 
 static const sEnumerationElement APTLightBeaconColorType[] =
 {
@@ -488,7 +469,6 @@ class OGRXPlaneAPTWindsockLayer : public OGRXPlaneLayer
                                    double dfLon,
                                    int bIsIllumnited);
 };
-
 
 /************************************************************************/
 /*                       OGRXPlaneTaxiwaySignLayer                      */
@@ -597,8 +577,6 @@ enum
     APT_TAXI_LOCATION          = 1300, /* added in V_1000 */
 };
 
-
-
 /************************************************************************/
 /*                           OGRXPlaneAptReader                         */
 /************************************************************************/
@@ -637,15 +615,16 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
         CPLString osAptName;
         int       nAPTType;
 
-        int       bTowerFound;
+        bool      bTowerFound;
         double    dfLatTower, dfLonTower;
         double    dfHeightTower;
         CPLString osTowerName;
 
-        int     bRunwayFound;
-        double  dfLatFirstRwy , dfLonFirstRwy;
+        bool    bRunwayFound;
+        double  dfLatFirstRwy;
+        double  dfLonFirstRwy;
 
-        int     bResumeLine;
+        bool    bResumeLine;
 
     private:
                 OGRXPlaneAptReader();
@@ -668,8 +647,9 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
         void    ParseTaxiLocation();
 
         OGRGeometry* FixPolygonTopology(OGRPolygon& polygon);
-        int     ParsePolygonalGeometry(OGRGeometry** ppoGeom);
-        int     ParseLinearGeometry(OGRMultiLineString& multilinestring, int* pbIsValid);
+        bool    ParsePolygonalGeometry(OGRGeometry** ppoGeom);
+        bool    ParseLinearGeometry(
+                    OGRMultiLineString& multilinestring, int* pbIsValid );
 
         static void    AddBezierCurve (OGRLineString& lineString,
                                 double dfLatA, double dfLonA,
@@ -682,13 +662,13 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
                                 double dfLatB, double dfLonB);
 
     protected:
-        virtual void             Read();
+        virtual void             Read() override;
 
     public:
-                                 OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSource );
-        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer);
-        virtual int              IsRecognizedVersion( const char* pszVersionString);
-        virtual void             Rewind();
+        explicit                 OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSource );
+        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer) override;
+        virtual int              IsRecognizedVersion( const char* pszVersionString) override;
+        virtual void             Rewind() override;
 };
 
 #endif

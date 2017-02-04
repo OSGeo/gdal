@@ -162,7 +162,7 @@ std::vector<std::string> MetadataSet::GetMetadataKeys()
     std::vector<std::string> keys;
     std::map<std::string,std::string>::iterator it;
 
-    for( it = md_set.begin(); it != md_set.end(); it++ )
+    for( it = md_set.begin(); it != md_set.end(); ++it )
     {
         keys.push_back( (*it).first );
     }

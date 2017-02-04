@@ -86,21 +86,19 @@ CPL_CVSID("$Id$");
 /*                         OGRTABDataSource()                           */
 /************************************************************************/
 
-OGRTABDataSource::OGRTABDataSource()
-
-{
-    m_pszName = NULL;
-    m_pszDirectory = NULL;
-    m_nLayerCount = 0;
-    m_papoLayers = NULL;
-    m_papszOptions = NULL;
-    m_bCreateMIF = FALSE;
-    m_bSingleFile = FALSE;
-    m_bSingleLayerAlreadyCreated = FALSE;
-    m_bQuickSpatialIndexMode = -1;
-    m_nBlockSize = 512;
-    m_bUpdate = FALSE;
-}
+OGRTABDataSource::OGRTABDataSource() :
+    m_pszName(NULL),
+    m_pszDirectory(NULL),
+    m_nLayerCount(0),
+    m_papoLayers(NULL),
+    m_papszOptions(NULL),
+    m_bCreateMIF(FALSE),
+    m_bSingleFile(FALSE),
+    m_bSingleLayerAlreadyCreated(FALSE),
+    m_bQuickSpatialIndexMode(-1),
+    m_bUpdate(FALSE),
+    m_nBlockSize(512)
+{}
 
 /************************************************************************/
 /*                         ~OGRTABDataSource()                          */
@@ -410,7 +408,6 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
             poFile = poTABFile;
         }
 
-
         m_nLayerCount++;
         m_papoLayers = (IMapInfoFile **)
             CPLRealloc(m_papoLayers,sizeof(void*)*m_nLayerCount);
@@ -482,6 +479,8 @@ int OGRTABDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return m_bUpdate && (!m_bSingleFile || !m_bSingleLayerAlreadyCreated);
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return m_bUpdate;
     else
         return FALSE;
 }
@@ -501,9 +500,8 @@ char **OGRTABDataSource::GetFileList()
         static const char * const apszExtensions[] =
             { "mif", "mid", "tab", "map", "ind", "dat", "id", NULL };
         char **papszDirEntries = VSIReadDir( m_pszName );
-        int  iFile;
 
-        for( iFile = 0;
+        for( int iFile = 0;
              papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
              iFile++ )
         {
@@ -522,7 +520,7 @@ char **OGRTABDataSource::GetFileList()
     {
         static const char* const apszMIFExtensions[] = { "mif", "mid", NULL };
         static const char* const apszTABExtensions[] = { "tab", "map", "ind", "dat", "id", NULL };
-        const char* const * papszExtensions;
+        const char* const * papszExtensions = NULL;
         if( EQUAL(CPLGetExtension(m_pszName), "mif") ||
             EQUAL(CPLGetExtension(m_pszName), "mid") )
         {

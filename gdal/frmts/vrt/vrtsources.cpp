@@ -33,6 +33,8 @@
 #include "gdal_proxy.h"
 #include "vrtdataset.h"
 
+#include <algorithm>
+
 /*! @cond Doxygen_Suppress */
 
 // #define DEBUG_VERBOSE 1
@@ -166,7 +168,6 @@ void VRTSimpleSource::SetSrcBand( GDALRasterBand *poNewSrcBand )
     m_poRasterBand = poNewSrcBand;
 }
 
-
 /************************************************************************/
 /*                          SetSrcMaskBand()                            */
 /************************************************************************/
@@ -273,7 +274,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     CPLXMLNode * const psSrc =
         CPLCreateXMLNode( NULL, CXT_Element, "SimpleSource" );
 
-    if( m_osResampling.size() )
+    if( !m_osResampling.empty() )
     {
         CPLCreateXMLNode(
             CPLCreateXMLNode( psSrc, CXT_Attribute, "resampling" ),
@@ -579,7 +580,8 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     // TODO(schwehr): What is the difference between 0 (GDT_Unknown) and -1?
     // Does there need to be a GDT_Uninitialized?
     GDALDataType eDataType = static_cast<GDALDataType>(-1);
-    int nBlockXSize = 0, nBlockYSize = 0;
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
     if( psSrcProperties )
     {
         nRasterXSize =
@@ -913,7 +915,6 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     double dfRXSize = nXSize;
     double dfRYSize = nYSize;
 
-
     if( bDstWinSet )
     {
         if( dfRXOff < m_dfDstXOff )
@@ -1084,7 +1085,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
             dfOutRightXOff = INT_MAX;
         *pnOutXSize = (int) ceil(dfOutRightXOff) - *pnOutXOff;
 
-        *pnOutXOff = MAX(0,*pnOutXOff);
+        *pnOutXOff = std::max(0, *pnOutXOff);
         if( *pnOutXSize > INT_MAX - *pnOutXOff ||
             *pnOutXOff + *pnOutXSize > nBufXSize )
             *pnOutXSize = nBufXSize - *pnOutXOff;
@@ -1110,7 +1111,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
             dfOutTopYOff = INT_MAX;
         *pnOutYSize = static_cast<int>( ceil(dfOutTopYOff) ) - *pnOutYOff;
 
-        *pnOutYOff = MAX(0,*pnOutYOff);
+        *pnOutYOff = std::max(0, *pnOutYOff);
         if( *pnOutYSize > INT_MAX - *pnOutYOff ||
             *pnOutYOff + *pnOutYSize > nBufYSize )
             *pnOutYSize = nBufYSize - *pnOutYOff;
@@ -1200,7 +1201,7 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Actually perform the IO request.                                */
 /* -------------------------------------------------------------------- */
-    if( m_osResampling.size() )
+    if( !m_osResampling.empty() )
     {
         psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
     }
@@ -1524,7 +1525,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
     if( poDS == NULL )
         return CE_Failure;
 
-    if( m_osResampling.size() )
+    if( !m_osResampling.empty() )
     {
         psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
     }
@@ -1602,9 +1603,7 @@ void VRTSimpleSource::SetResampling( const char* pszResampling )
 /*                         VRTAveragedSource()                          */
 /************************************************************************/
 
-VRTAveragedSource::VRTAveragedSource()
-{
-}
+VRTAveragedSource::VRTAveragedSource() {}
 
 /************************************************************************/
 /*                           SerializeToXML()                           */
@@ -1677,7 +1676,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Load it.                                                        */
 /* -------------------------------------------------------------------- */
-    if( m_osResampling.size() )
+    if( !m_osResampling.empty() )
     {
         psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
     }
@@ -1798,7 +1797,8 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
             if( eBufType == GDT_Byte )
                 *pDstLocation =
-                    static_cast<GByte>( MIN(255,MAX(0,dfOutputValue + 0.5)) );
+                    static_cast<GByte>(
+                        std::min(255.0, std::max(0.0, dfOutputValue + 0.5)) );
             else
                 GDALCopyWords( &dfOutputValue, GDT_Float32, 4,
                                pDstLocation, eBufType, 8, 1 );
@@ -2300,7 +2300,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         nOutXOff, nOutYOff, nOutXSize, nOutYSize );
 #endif
 
-    if( m_osResampling.size() )
+    if( !m_osResampling.empty() )
     {
         psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
     }
@@ -2314,14 +2314,33 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     psExtraArg->dfXSize = dfReqXSize;
     psExtraArg->dfYSize = dfReqYSize;
 
-    const CPLErr eErr =
-        RasterIOInternal(
-            nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-            static_cast<GByte *>(pData) + nPixelSpace * nOutXOff
-                + static_cast<GPtrDiff_t>(nLineSpace) * nOutYOff,
-            nOutXSize, nOutYSize,
-            eBufType,
-            nPixelSpace, nLineSpace, psExtraArg );
+    const bool bIsComplex = CPL_TO_BOOL( GDALDataTypeIsComplex(eBufType) );
+    CPLErr eErr;
+    // For Int32, float32 isn't sufficiently precise as working data type
+    if( eBufType == GDT_CInt32 || eBufType == GDT_CFloat64 ||
+        eBufType == GDT_Int32 || eBufType == GDT_UInt32 ||
+        eBufType == GDT_Float64 )
+    {
+        eErr = RasterIOInternal<double>(
+                nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                static_cast<GByte *>(pData) + nPixelSpace * nOutXOff
+                    + static_cast<GPtrDiff_t>(nLineSpace) * nOutYOff,
+                nOutXSize, nOutYSize,
+                eBufType,
+                nPixelSpace, nLineSpace, psExtraArg,
+                bIsComplex ? GDT_CFloat64 : GDT_Float64);
+    }
+    else
+    {
+        eErr = RasterIOInternal<float>(
+                nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                static_cast<GByte *>(pData) + nPixelSpace * nOutXOff
+                    + static_cast<GPtrDiff_t>(nLineSpace) * nOutYOff,
+                nOutXSize, nOutYSize,
+                eBufType,
+                nPixelSpace, nLineSpace, psExtraArg,
+                bIsComplex ? GDT_CFloat32 : GDT_Float32);
+    }
 
     return eErr;
 }
@@ -2332,6 +2351,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
 // nReqXOff, nReqYOff, nReqXSize, nReqYSize are expressed in source band
 // referential.
+template <class WorkingDT>
 CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                                            int nReqXSize, int nReqYSize,
                                            void *pData,
@@ -2339,19 +2359,19 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                                            GDALDataType eBufType,
                                            GSpacing nPixelSpace,
                                            GSpacing nLineSpace,
-                                           GDALRasterIOExtraArg* psExtraArg )
+                                           GDALRasterIOExtraArg* psExtraArg,
+                                           GDALDataType eWrkDataType )
 {
 /* -------------------------------------------------------------------- */
 /*      Read into a temporary buffer.                                   */
 /* -------------------------------------------------------------------- */
     GDALColorTable* poColorTable = NULL;
     const bool bIsComplex = CPL_TO_BOOL( GDALDataTypeIsComplex(eBufType) );
-    const GDALDataType eWrkDataType = bIsComplex ? GDT_CFloat32 : GDT_Float32;
     const int nWordSize = GDALGetDataTypeSizeBytes(eWrkDataType);
     const bool bNoDataSetIsNan = m_bNoDataSet && CPLIsNan(m_dfNoDataValue);
     const bool bNoDataSetAndNotNan = m_bNoDataSet && !CPLIsNan(m_dfNoDataValue);
 
-    float *pafData = NULL;
+    WorkingDT *pafData = NULL;
     if( m_eScalingType == VRT_SCALING_LINEAR &&
         m_bNoDataSet == FALSE &&
         m_dfScaleRatio == 0 )
@@ -2365,7 +2385,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
     }
     else
     {
-        pafData = static_cast<float *>(
+        pafData = static_cast<WorkingDT *>(
             VSI_MALLOC3_VERBOSE(nOutXSize,nOutYSize,nWordSize) );
         if( pafData == NULL )
         {
@@ -2373,7 +2393,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
         }
 
         const GDALRIOResampleAlg eResampleAlgBack = psExtraArg->eResampleAlg;
-        if( m_osResampling.size() )
+        if( !m_osResampling.empty() )
         {
             psExtraArg->eResampleAlg =
                 GDALRasterIOGetResampleAlg(m_osResampling);
@@ -2390,7 +2410,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                                       nWordSize *
                                       static_cast<GSpacing>(nOutXSize),
                                       psExtraArg );
-        if( m_osResampling.size() )
+        if( !m_osResampling.empty() )
             psExtraArg->eResampleAlg = eResampleAlgBack;
 
         if( eErr != CE_None )
@@ -2427,7 +2447,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
 
             if( pafData && !bIsComplex )
             {
-                float fResult = pafData[iX + iY * nOutXSize];
+                WorkingDT fResult = pafData[iX + iY * nOutXSize];
                 if( bNoDataSetIsNan && CPLIsNan(fResult) )
                     continue;
                 if( bNoDataSetAndNotNan &&
@@ -2465,7 +2485,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
 
                 if( m_eScalingType == VRT_SCALING_LINEAR )
                 {
-                    fResult = static_cast<float>(
+                    fResult = static_cast<WorkingDT>(
                         fResult * m_dfScaleRatio + m_dfScaleOff );
                 }
                 else if( m_eScalingType == VRT_SCALING_EXPONENTIAL )
@@ -2501,36 +2521,39 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                         dfPowVal = 0.0;
                     else if( dfPowVal > 1.0 )
                         dfPowVal = 1.0;
-                    fResult = static_cast<float>(
+                    fResult = static_cast<WorkingDT>(
                         (m_dfDstMax - m_dfDstMin) *
                         pow( dfPowVal, m_dfExponent ) +
                         m_dfDstMin);
                 }
 
                 if( m_nLUTItemCount )
-                    fResult = static_cast<float>(LookupValue( fResult ));
+                    fResult = static_cast<WorkingDT>(LookupValue( fResult ));
 
                 if( m_nMaxValue != 0 && fResult > m_nMaxValue )
-                    fResult = static_cast<float>(m_nMaxValue);
+                    fResult = static_cast<WorkingDT>(m_nMaxValue);
 
                 if( eBufType == GDT_Byte )
-                    *pDstLocation = (GByte) MIN(255,MAX(0,fResult + 0.5));
+                    *pDstLocation = static_cast<GByte>(
+                        std::min(255.0f,
+                                 std::max(0.0f,
+                                          static_cast<float>(fResult) + 0.5f)));
                 else
-                    GDALCopyWords( &fResult, GDT_Float32, 0,
+                    GDALCopyWords( &fResult, eWrkDataType, 0,
                                 pDstLocation, eBufType, 0, 1 );
             }
             else if( pafData && bIsComplex )
             {
-                float afResult[2] = {
+                WorkingDT afResult[2] = {
                     pafData[2 * (iX + iY * nOutXSize)],
                     pafData[2 * (iX + iY * nOutXSize) + 1] };
 
                 // Do not use color table.
                 if( m_eScalingType == VRT_SCALING_LINEAR )
                 {
-                    afResult[0] = static_cast<float>(
+                    afResult[0] = static_cast<WorkingDT>(
                         afResult[0] * m_dfScaleRatio + m_dfScaleOff );
-                    afResult[1] = static_cast<float>(
+                    afResult[1] = static_cast<WorkingDT>(
                         afResult[1] * m_dfScaleRatio + m_dfScaleOff );
                 }
 
@@ -2538,29 +2561,28 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
 
                 if( eBufType == GDT_Byte )
                     *pDstLocation = static_cast<GByte>(
-                        MIN(255,MAX(0,afResult[0] + 0.5) ) );
+                        std::min(255.0, std::max(0.0, afResult[0] + 0.5) ) );
                 else
-                    GDALCopyWords( afResult, GDT_CFloat32, 0,
+                    GDALCopyWords( afResult, eWrkDataType, 0,
                                    pDstLocation, eBufType, 0, 1 );
             }
             else
             {
-                float fResult = static_cast<float>(m_dfScaleOff);
+                WorkingDT fResult = static_cast<WorkingDT>(m_dfScaleOff);
 
                 if( m_nLUTItemCount )
-                    fResult = static_cast<float>(LookupValue( fResult ));
+                    fResult = static_cast<WorkingDT>(LookupValue( fResult ));
 
                 if( m_nMaxValue != 0 && fResult > m_nMaxValue )
-                    fResult = static_cast<float>(m_nMaxValue);
+                    fResult = static_cast<WorkingDT>(m_nMaxValue);
 
                 if( eBufType == GDT_Byte )
                     *pDstLocation = static_cast<GByte>(
-                        MIN(255,MAX(0,fResult + 0.5)) );
+                        std::min(255.0, std::max(0.0, fResult + 0.5)) );
                 else
-                    GDALCopyWords( &fResult, GDT_Float32, 0,
+                    GDALCopyWords( &fResult, eWrkDataType, 0,
                                    pDstLocation, eBufType, 0, 1 );
             }
-
         }
     }
 
@@ -2568,6 +2590,16 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
 
     return CE_None;
 }
+
+// Explicitly instantiate template method, as it is used in another file.
+template
+CPLErr VRTComplexSource::RasterIOInternal<float>( int nReqXOff, int nReqYOff,
+                                    int nReqXSize, int nReqYSize,
+                                    void *pData, int nOutXSize, int nOutYSize,
+                                    GDALDataType eBufType,
+                                    GSpacing nPixelSpace, GSpacing nLineSpace,
+                                    GDALRasterIOExtraArg* psExtraArg,
+                                    GDALDataType eWrkDataType );
 
 /************************************************************************/
 /*                             GetMinimum()                             */
@@ -2719,8 +2751,9 @@ VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     }
     else
     {
-        // TODO(schwehr): Why not use CPLError?  Or at least fprintf(stderr?
-        printf( "%d,%d  %d,%d, %d,%d %d,%d %d,%d\n",
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "VRTFuncSource::RasterIO() - Irregular request." );
+        CPLDebug("VRT", "Irregular request: %d,%d  %d,%d, %d,%d %d,%d %d,%d",
                 static_cast<int>(nPixelSpace)*8,
                 GDALGetDataTypeSize(eBufType),
                 static_cast<int>(nLineSpace),
@@ -2729,8 +2762,7 @@ VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                 nBufYSize, nYSize,
                 static_cast<int>(eBufType),
                 static_cast<int>(eType) );
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "VRTFuncSource::RasterIO() - Irregular request." );
+
         return CE_Failure;
     }
 }

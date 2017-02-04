@@ -23,9 +23,15 @@ OBJ = \
 
 GDAL_ROOT	=	..\..\..
 
-EXTRAFLAGS = 	-I..\..\zlib /wd4267 /wd4310 
-
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF ZLIB_EXTERNAL_LIB
+ZLIB_FLAGS = $(ZLIB_INC)
+!ELSE
+ZLIB_FLAGS = -I..\..\zlib
+!ENDIF
+
+EXTRAFLAGS = 	$(ZLIB_FLAGS) /wd4267 /wd4310 
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\..\o

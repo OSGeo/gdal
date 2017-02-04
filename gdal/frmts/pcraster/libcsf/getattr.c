@@ -4,7 +4,7 @@
 /* read an attribute (LIBRARY_INTERNAL)
  * MgetAttribute reads an attribute if it is available.
  * Be aware that you can't pass a simple pointer to some 
- * (array of) structure(s) due to allignment en endian problems.
+ * (array of) structure(s) due to alignment en endian problems.
  * At some time there will be a separate get function for each attribute
  * returns 0 if the attribute is not found, arg id if
  * the attribute is found.

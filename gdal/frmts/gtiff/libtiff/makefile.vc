@@ -44,7 +44,7 @@ GDAL_ROOT	=	..\..\..
 # /wd4324 silents warning C4324: '<unnamed-tag>' : structure was padded due to __declspec(align())
 # in tif_jpeg.c:147 and tif_ojpeg.c:248
 
-EXTRAFLAGS = 	-I..\..\zlib -DZIP_SUPPORT -DPIXARLOG_SUPPORT \
+EXTRAFLAGS = 	$(ZLIB_FLAGS) -DZIP_SUPPORT -DPIXARLOG_SUPPORT \
 		$(JPEG_FLAGS) $(JPEG12_FLAGS) $(LZMA_FLAGS) /wd4324
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
@@ -55,6 +55,12 @@ JPEG_FLAGS =	-I$(JPEGDIR) -DJPEG_SUPPORT  -DOJPEG_SUPPORT
 !ELSE
 JPEG_FLAGS =	-I..\..\jpeg\libjpeg -DJPEG_SUPPORT -DOJPEG_SUPPORT
 !ENDIF
+!ENDIF
+
+!IFDEF ZLIB_EXTERNAL_LIB
+ZLIB_FLAGS = $(ZLIB_INC)
+!ELSE
+ZLIB_FLAGS = -I..\..\zlib
 !ENDIF
 
 !IFDEF JPEG12_SUPPORTED

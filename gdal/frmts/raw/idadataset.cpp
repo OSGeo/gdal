@@ -48,7 +48,7 @@ static double tp2c( GByte *r )
         return 0.0;
 
     // Extract sign: bit 7 of byte 5.
-    const int sign = r[5] & 0x80 ? -1 : 1;
+    const int sign = (r[5] & 0x80) ? -1 : 1;
 
     // Extract mantissa from first bit of byte 1 to bit 7 of byte 5.
     double mant = 0.0;
@@ -149,19 +149,18 @@ class IDADataset : public RawDataset
                 IDADataset();
     virtual ~IDADataset();
 
-    virtual void FlushCache();
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
+    virtual void FlushCache() override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr SetProjection( const char * ) override;
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr SetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType,
                                 char ** /* papszParmList */ );
-
 };
 
 /************************************************************************/
@@ -181,14 +180,14 @@ class IDARasterBand : public RawRasterBand
                  IDARasterBand( IDADataset *poDSIn, VSILFILE *fpRaw, int nXSize );
     virtual     ~IDARasterBand();
 
-    virtual GDALRasterAttributeTable *GetDefaultRAT();
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-    virtual double GetOffset( int *pbSuccess = NULL );
-    virtual CPLErr SetOffset( double dfNewValue );
-    virtual double GetScale( int *pbSuccess = NULL );
-    virtual CPLErr SetScale( double dfNewValue );
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual GDALRasterAttributeTable *GetDefaultRAT() override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
+    virtual double GetOffset( int *pbSuccess = NULL ) override;
+    virtual CPLErr SetOffset( double dfNewValue ) override;
+    virtual double GetScale( int *pbSuccess = NULL ) override;
+    virtual CPLErr SetScale( double dfNewValue ) override;
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 };
 
 /************************************************************************/
@@ -645,7 +644,7 @@ void IDADataset::ReadColorTable()
 /*      Decide what .clr file to look for and try to open.              */
 /* -------------------------------------------------------------------- */
     CPLString osCLRFilename = CPLGetConfigOption( "IDA_COLOR_FILE", "" );
-    if( strlen(osCLRFilename) == 0 )
+    if( osCLRFilename.empty() )
         osCLRFilename = CPLResetExtension(GetDescription(), "clr" );
 
     VSILFILE *fp = VSIFOpenL( osCLRFilename, "r" );

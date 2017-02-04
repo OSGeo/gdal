@@ -41,7 +41,7 @@ class OGRARCGENLayer : public OGRLayer
     OGRFeatureDefn*    poFeatureDefn;
 
     VSILFILE*          fp;
-    int                bEOF;
+    bool               bEOF;
 
     int                nNextFID;
 
@@ -50,15 +50,14 @@ class OGRARCGENLayer : public OGRLayer
   public:
                         OGRARCGENLayer(const char* pszFilename,
                                     VSILFILE* fp, OGRwkbGeometryType eType);
-                        ~OGRARCGENLayer();
+                        virtual ~OGRARCGENLayer();
 
+    virtual void                ResetReading() override;
+    virtual OGRFeature *        GetNextFeature() override;
 
-    virtual void                ResetReading();
-    virtual OGRFeature *        GetNextFeature();
+    virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -74,16 +73,16 @@ class OGRARCGENDataSource : public OGRDataSource
 
   public:
                         OGRARCGENDataSource();
-                        ~OGRARCGENDataSource();
+               virtual ~OGRARCGENDataSource();
 
     int                 Open( const char * pszFilename );
 
-    virtual const char*         GetName() { return pszName; }
+    virtual const char*         GetName() override { return pszName; }
 
-    virtual int                 GetLayerCount() { return nLayers; }
-    virtual OGRLayer*           GetLayer( int );
+    virtual int                 GetLayerCount() override { return nLayers; }
+    virtual OGRLayer*           GetLayer( int ) override;
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 };
 
 #endif /* ndef OGR_ARCGEN_H_INCLUDED */

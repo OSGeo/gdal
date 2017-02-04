@@ -51,16 +51,12 @@ OGRSFDriverRegistrar::OGRSFDriverRegistrar() {}
 /*                       ~OGRSFDriverRegistrar()                        */
 /************************************************************************/
 
-OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
-
-{
-}
+OGRSFDriverRegistrar::~OGRSFDriverRegistrar() {}
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
 /*                           GetRegistrar()                             */
 /************************************************************************/
-
 
 OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar()
 {
@@ -175,7 +171,6 @@ int OGRSFDriverRegistrar::GetOpenDSCount()
     CPLError(CE_Failure, CPLE_AppDefined, "Stub implementation in GDAL 2.0");
     return 0;
 }
-
 
 /************************************************************************/
 /*                         OGRGetOpenDSCount()                          */

@@ -32,7 +32,6 @@
 
 #include "ogrsf_frmts.h"
 
-
 typedef struct
 {
     const char* pszFieldName;
@@ -49,8 +48,6 @@ typedef struct
     int              nLonStartCol; /* starting at 1 */
 } RecordDesc;
 
-
-
 /************************************************************************/
 /*                         OGRAeronavFAALayer                           */
 /************************************************************************/
@@ -62,7 +59,7 @@ protected:
     OGRSpatialReference *poSRS;
 
     VSILFILE*          fpAeronavFAA;
-    int                bEOF;
+    bool               bEOF;
 
     int                nNextFID;
 
@@ -72,15 +69,14 @@ protected:
 
   public:
                         OGRAeronavFAALayer(VSILFILE* fp, const char* pszLayerName);
-                        ~OGRAeronavFAALayer();
+                        virtual ~OGRAeronavFAALayer();
 
+    virtual void                ResetReading() override;
+    virtual OGRFeature *        GetNextFeature() override;
 
-    virtual void                ResetReading();
-    virtual OGRFeature *        GetNextFeature();
+    virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -90,10 +86,10 @@ protected:
 class OGRAeronavFAADOFLayer : public OGRAeronavFAALayer
 {
   private:
-    int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
+    static int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
 
   protected:
-    virtual OGRFeature *       GetNextRawFeature();
+    virtual OGRFeature *       GetNextRawFeature() override;
 
   public:
                         OGRAeronavFAADOFLayer(VSILFILE* fp, const char* pszLayerName);
@@ -106,10 +102,10 @@ class OGRAeronavFAADOFLayer : public OGRAeronavFAALayer
 class OGRAeronavFAANAVAIDLayer : public OGRAeronavFAALayer
 {
   private:
-    int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
+    static int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
 
   protected:
-    virtual OGRFeature *       GetNextRawFeature();
+    virtual OGRFeature *       GetNextRawFeature() override;
 
   public:
                         OGRAeronavFAANAVAIDLayer(VSILFILE* fp, const char* pszLayerName);
@@ -126,15 +122,15 @@ class OGRAeronavFAARouteLayer : public OGRAeronavFAALayer
     CPLString osLastReadLine;
     CPLString osAPTName;
     CPLString osStateName;
-    int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
+    static int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
 
   protected:
-    virtual OGRFeature *       GetNextRawFeature();
+    virtual OGRFeature *       GetNextRawFeature() override;
 
   public:
                         OGRAeronavFAARouteLayer(VSILFILE* fp, const char* pszLayerName, int bIsDPOrSTARS);
 
-    virtual void                ResetReading();
+    virtual void                ResetReading() override;
 };
 
 /************************************************************************/
@@ -148,15 +144,15 @@ class OGRAeronavFAAIAPLayer : public OGRAeronavFAALayer
     CPLString osStateName;
     CPLString osAPTName;
     CPLString osAPTId;
-    int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
+    static int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
 
   protected:
-    virtual OGRFeature *       GetNextRawFeature();
+    virtual OGRFeature *       GetNextRawFeature() override;
 
   public:
                         OGRAeronavFAAIAPLayer(VSILFILE* fp, const char* pszLayerName);
 
-    virtual void                ResetReading();
+    virtual void                ResetReading() override;
 };
 
 /************************************************************************/
@@ -172,17 +168,16 @@ class OGRAeronavFAADataSource : public OGRDataSource
 
   public:
                         OGRAeronavFAADataSource();
-                        ~OGRAeronavFAADataSource();
+                        virtual ~OGRAeronavFAADataSource();
 
     int                 Open( const char * pszFilename );
 
-    virtual const char*         GetName() { return pszName; }
+    virtual const char*         GetName() override { return pszName; }
 
-    virtual int                 GetLayerCount() { return nLayers; }
-    virtual OGRLayer*           GetLayer( int );
+    virtual int                 GetLayerCount() override { return nLayers; }
+    virtual OGRLayer*           GetLayer( int ) override;
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 };
-
 
 #endif /* ndef OGR_AeronavFAA_H_INCLUDED */

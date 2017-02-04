@@ -1,4 +1,3 @@
-
 include GDALmake.opt
 
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
@@ -149,13 +148,20 @@ docs:
 	(cd doc/ru ; doxygen ; cp html/*.* ../../html/. )
 	(cd doc/br ; doxygen ; cp html/*.* ../../html/. )
 # Generate HTML docs
-	doxygen Doxyfile
+# Current DoxygenLayout.xml works only with Doxygen >= 1.8
+	@if [ `doxygen --version | awk -F . '{print $$1}'` -eq "1" ] && [ `doxygen --version | awk -F . '{print $$2}'` -lt "8" ]; then \
+	  echo "Using deprecated doxygen version. Removing custom layout"; \
+	  (cat Doxyfile; echo "LAYOUT_FILE=/dev/null") | doxygen -; \
+	else \
+	  doxygen Doxyfile; \
+	fi
 	cp data/gdalicon.png html
 	cp doc/images/*.* html
 	cp doc/grid/*.png html
 	cp frmts/*.html frmts/*/frmt_*.html html
 	cp frmts/openjpeg/*.xml html
 	cp frmts/wms/frmt_*.xml html
+	cp ogr/ogrsf_frmts/*/frmt_*.html html
 	cp ogr/ogrsf_frmts/*/drv_*.html html
 	cp ogr/ogrsf_frmts/ogr_formats.html html
 	cp ogr/ogr_feature_style.html html
@@ -166,7 +172,7 @@ docs:
 
 man:
 # Generate man pages
-	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
+	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES" ; echo "LAYOUT_FILE=/dev/null") | doxygen -
 # Remove "Directory reference" file. Not sure if there's a better way of doing it.
 	 @find man -name '_home_*_gdal_apps_.1' -exec rm {} \;
 
@@ -267,11 +273,9 @@ install-lib:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)
 	$(INSTALL_LIB) $(GDAL_LIB) $(DESTDIR)$(INST_LIB)
 
-endif # HAVE_LD_SHARED=no 
+endif # HAVE_LD_SHARED=no
 
-
-endif # HAVE_LIBTOOL=no 
-
+endif # HAVE_LIBTOOL=no
 
 gdal.pc:	gdal.pc.in GDALmake.opt ./GNUmakefile VERSION
 	rm -f gdal.pc

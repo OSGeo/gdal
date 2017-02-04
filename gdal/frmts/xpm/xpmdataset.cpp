@@ -32,6 +32,9 @@
 #include "memdataset.h"
 #include "gdal_frmts.h"
 
+#include <cstdlib>
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static unsigned char *ParseXPM( const char *pszInput,
@@ -264,7 +267,7 @@ XPMCreateCopy( const char * pszFilename,
 
     int  anPixelMapping[256];
     GDALColorEntry asPixelColor[256];
-    int nActiveColors = MIN(poCT->GetColorEntryCount(),256);
+    int nActiveColors = std::min(poCT->GetColorEntryCount(),256);
 
     // Setup initial colortable and pixel value mapping.
     memset( anPixelMapping+0, 0, sizeof(int) * 256 );
@@ -295,9 +298,12 @@ XPMCreateCopy( const char * pszFilename,
                     nDistance = 0;
                 else
                     nDistance =
-                        ABS(asPixelColor[iColor1].c1-asPixelColor[iColor2].c1)
-                      + ABS(asPixelColor[iColor1].c2-asPixelColor[iColor2].c2)
-                      + ABS(asPixelColor[iColor1].c3-asPixelColor[iColor2].c3);
+                        std::abs(asPixelColor[iColor1].c1 -
+                                 asPixelColor[iColor2].c1)
+                        + std::abs(asPixelColor[iColor1].c2 -
+                                   asPixelColor[iColor2].c2)
+                        + std::abs(asPixelColor[iColor1].c3 -
+                                   asPixelColor[iColor2].c3);
 
                 if( nDistance < nClosestDistance )
                 {
@@ -586,7 +592,7 @@ ParseXPM( const char *pszInput,
         anCharLookup[*(reinterpret_cast<GByte*>(papszXPMList[iColor+1]))] = iColor;
 
         GDALColorEntry sColor;
-        int nRed, nGreen, nBlue;
+        unsigned int nRed, nGreen, nBlue;
 
         if( EQUAL(papszTokens[1],"None") )
         {
@@ -646,10 +652,10 @@ ParseXPM( const char *pszInput,
             return NULL;
         }
 
-        for( int iPixel = 0;
-             pabyInLine[iPixel] != '\0' && iPixel < *pnXSize;
-             iPixel++ )
+        for( int iPixel = 0; iPixel < *pnXSize; iPixel++ )
         {
+            if( pabyInLine[iPixel] == '\0' )
+                break;
             const int nPixelValue
                 = anCharLookup[pabyInLine[iPixel]];
             if( nPixelValue != -1 )

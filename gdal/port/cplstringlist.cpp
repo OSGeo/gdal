@@ -27,8 +27,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_string.h"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include <algorithm>
 #include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -85,9 +96,9 @@ CPLStringList::CPLStringList( const CPLStringList &oOther )
 /*                             operator=()                              */
 /************************************************************************/
 
-CPLStringList &CPLStringList::operator=(const CPLStringList& oOther)
+CPLStringList &CPLStringList::operator=( const CPLStringList& oOther )
 {
-    if (this != &oOther)
+    if( this != &oOther )
     {
         Assign( oOther.papszList, FALSE );
 
@@ -197,12 +208,13 @@ int CPLStringList::Count() const
     {
         if( papszList == NULL )
         {
-            nCount = nAllocation = 0;
+            nCount = 0;
+            nAllocation = 0;
         }
         else
         {
             nCount = CSLCount( papszList );
-            nAllocation = MAX(nCount+1,nAllocation);
+            nAllocation = std::max(nCount + 1, nAllocation);
         }
     }
 
@@ -247,7 +259,7 @@ void CPLStringList::EnsureAllocation( int nMaxList )
 
     if( nAllocation <= nMaxList )
     {
-        nAllocation = MAX(nAllocation*2 + 20,nMaxList+1);
+        nAllocation = std::max(nAllocation * 2 + 20, nMaxList + 1);
         if( papszList == NULL )
         {
             papszList = static_cast<char **>(
@@ -324,11 +336,11 @@ CPLStringList &CPLStringList::AddString( const char *pszNewString )
  * @param pszValue the key value to add.
  */
 
-CPLStringList &CPLStringList::AddNameValue( const char  *pszKey,
+CPLStringList &CPLStringList::AddNameValue( const char *pszKey,
                                             const char *pszValue )
 
 {
-    if (pszKey == NULL || pszValue==NULL)
+    if( pszKey == NULL || pszValue==NULL )
         return *this;
 
     MakeOurOwnCopy();
@@ -473,7 +485,6 @@ char **CPLStringList::StealList()
     return papszRetList;
 }
 
-
 static int CPLCompareKeyValueString(const char* pszKVa, const char* pszKVb)
 {
     const char* pszItera = pszKVa;
@@ -501,8 +512,8 @@ static int CPLCompareKeyValueString(const char* pszKVa, const char* pszKVb)
             return -1;
         else if( cha > chb )
             return 1;
-        pszItera ++;
-        pszIterb ++;
+        pszItera++;
+        pszIterb++;
     }
 }
 
@@ -580,11 +591,11 @@ int CPLStringList::FindName( const char *pszKey ) const
         const int iMiddle = (iEnd + iStart) / 2;
         const char *pszMiddle = papszList[iMiddle];
 
-        if (EQUALN(pszMiddle, pszKey, nKeyLen)
+        if( EQUALN(pszMiddle, pszKey, nKeyLen )
             && (pszMiddle[nKeyLen] == '=' || pszMiddle[nKeyLen] == ':') )
             return iMiddle;
 
-        if( CPLCompareKeyValueString(pszKey,pszMiddle) < 0 )
+        if( CPLCompareKeyValueString(pszKey, pszMiddle) < 0 )
             iEnd = iMiddle-1;
         else
             iStart = iMiddle+1;
@@ -726,7 +737,6 @@ const char *CPLStringList::FetchNameValueDef( const char *pszName,
  * @param pszNewLine to the line to insert.  This string will be copied.
  */
 
-
 /************************************************************************/
 /*                        InsertStringDirectly()                        */
 /************************************************************************/
@@ -783,26 +793,26 @@ int CPLStringList::FindSortedInsertionPoint( const char *pszLine )
 {
     CPLAssert( IsSorted() );
 
-    int iStart=0;
-    int iEnd=nCount-1;
+    int iStart = 0;
+    int iEnd = nCount - 1;
 
     while( iStart <= iEnd )
     {
-        int iMiddle = (iEnd+iStart)/2;
+        const int iMiddle = (iEnd + iStart) / 2;
         const char *pszMiddle = papszList[iMiddle];
 
-        if( CPLCompareKeyValueString(pszLine,pszMiddle) < 0 )
-            iEnd = iMiddle-1;
+        if( CPLCompareKeyValueString(pszLine, pszMiddle) < 0 )
+            iEnd = iMiddle - 1;
         else
-            iStart = iMiddle+1;
+            iStart = iMiddle + 1;
     }
 
     iEnd++;
     CPLAssert( iEnd >= 0 && iEnd <= nCount );
     CPLAssert( iEnd == 0
-               || CPLCompareKeyValueString(pszLine,papszList[iEnd-1]) >= 0 );
+               || CPLCompareKeyValueString(pszLine, papszList[iEnd-1]) >= 0 );
     CPLAssert( iEnd == nCount
-               || CPLCompareKeyValueString(pszLine,papszList[iEnd]) <= 0 );
+               || CPLCompareKeyValueString(pszLine, papszList[iEnd]) <= 0 );
 
     return iEnd;
 }

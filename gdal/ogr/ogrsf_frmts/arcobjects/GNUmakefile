@@ -13,4 +13,4 @@ clean:
 
 $(O_OBJ):	ogr_ao.h
 
-install-obj:    $(O_OBJ:.o=.$(OBJ_EXT)) 
+install-obj:    $(O_OBJ:.o=.$(OBJ_EXT))

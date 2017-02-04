@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.125 2016-01-23 21:20:34 erouault Exp $ */
+/* $Id: tif_dir.c,v 1.129 2017-01-11 16:09:02 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -31,6 +31,7 @@
  * (and also some miscellaneous stuff)
  */
 #include "tiffiop.h"
+#include <float.h>
 
 /*
  * These are used in the backwards compatibility code...
@@ -43,8 +44,10 @@
 static void
 setByteArray(void** vpp, void* vp, size_t nmemb, size_t elem_size)
 {
-	if (*vpp)
-		_TIFFfree(*vpp), *vpp = 0;
+	if (*vpp) {
+		_TIFFfree(*vpp);
+		*vpp = 0;
+	}
 	if (vp) {
 		tmsize_t bytes = (tmsize_t)(nmemb * elem_size);
 		if (elem_size && bytes / elem_size == nmemb)
@@ -152,6 +155,15 @@ bad:
 	return (0);
 }
 
+static float TIFFClampDoubleToFloat( double val )
+{
+    if( val > FLT_MAX )
+        return FLT_MAX;
+    if( val < -FLT_MAX )
+        return -FLT_MAX;
+    return (float)val;
+}
+
 static int
 _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 {
@@ -254,6 +266,28 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		v = (uint16) va_arg(ap, uint16_vap);
 		if (v == 0)
 			goto badvalue;
+        if( v != td->td_samplesperpixel )
+        {
+            /* See http://bugzilla.maptools.org/show_bug.cgi?id=2500 */
+            if( td->td_sminsamplevalue != NULL )
+            {
+                TIFFWarningExt(tif->tif_clientdata,module,
+                    "SamplesPerPixel tag value is changing, "
+                    "but SMinSampleValue tag was read with a different value. Cancelling it");
+                TIFFClrFieldBit(tif,FIELD_SMINSAMPLEVALUE);
+                _TIFFfree(td->td_sminsamplevalue);
+                td->td_sminsamplevalue = NULL;
+            }
+            if( td->td_smaxsamplevalue != NULL )
+            {
+                TIFFWarningExt(tif->tif_clientdata,module,
+                    "SamplesPerPixel tag value is changing, "
+                    "but SMaxSampleValue tag was read with a different value. Cancelling it");
+                TIFFClrFieldBit(tif,FIELD_SMAXSAMPLEVALUE);
+                _TIFFfree(td->td_smaxsamplevalue);
+                td->td_smaxsamplevalue = NULL;
+            }
+        }
 		td->td_samplesperpixel = (uint16) v;
 		break;
 	case TIFFTAG_ROWSPERSTRIP:
@@ -288,13 +322,13 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
         dblval = va_arg(ap, double);
         if( dblval < 0 )
             goto badvaluedouble;
-		td->td_xresolution = (float) dblval;
+		td->td_xresolution = TIFFClampDoubleToFloat( dblval );
 		break;
 	case TIFFTAG_YRESOLUTION:
         dblval = va_arg(ap, double);
         if( dblval < 0 )
             goto badvaluedouble;
-		td->td_yresolution = (float) dblval;
+		td->td_yresolution = TIFFClampDoubleToFloat( dblval );
 		break;
 	case TIFFTAG_PLANARCONFIG:
 		v = (uint16) va_arg(ap, uint16_vap);
@@ -303,10 +337,10 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		td->td_planarconfig = (uint16) v;
 		break;
 	case TIFFTAG_XPOSITION:
-		td->td_xposition = (float) va_arg(ap, double);
+		td->td_xposition = TIFFClampDoubleToFloat( va_arg(ap, double) );
 		break;
 	case TIFFTAG_YPOSITION:
-		td->td_yposition = (float) va_arg(ap, double);
+		td->td_yposition = TIFFClampDoubleToFloat( va_arg(ap, double) );
 		break;
 	case TIFFTAG_RESOLUTIONUNIT:
 		v = (uint16) va_arg(ap, uint16_vap);
@@ -830,6 +864,32 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 	if( fip == NULL ) /* cannot happen since TIFFGetField() already checks it */
 	    return 0;
 	
+        if( tag == TIFFTAG_NUMBEROFINKS )
+        {
+            int i;
+            for (i = 0; i < td->td_customValueCount; i++) {
+                uint16 val;
+                TIFFTagValue *tv = td->td_customValues + i;
+                if (tv->info->field_tag != tag)
+                    continue;
+                val = *(uint16 *)tv->value;
+                /* Truncate to SamplesPerPixel, since the */
+                /* setting code for INKNAMES assume that there are SamplesPerPixel */
+                /* inknames. */
+                /* Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2599 */
+                if( val > td->td_samplesperpixel )
+                {
+                    TIFFWarningExt(tif->tif_clientdata,"_TIFFVGetField",
+                                   "Truncating NumberOfInks from %u to %u",
+                                   val, td->td_samplesperpixel);
+                    val = td->td_samplesperpixel;
+                }
+                *va_arg(ap, uint16*) = val;
+                return 1;
+            }
+            return 0;
+        }
+
 	/*
 	 * We want to force the custom code to be used for custom
 	 * fields even if the tag happens to match a well known 

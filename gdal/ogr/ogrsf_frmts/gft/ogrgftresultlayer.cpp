@@ -34,13 +34,14 @@ CPL_CVSID("$Id$");
 /*                        OGRGFTResultLayer()                           */
 /************************************************************************/
 
-OGRGFTResultLayer::OGRGFTResultLayer(OGRGFTDataSource* poDSIn,
-                                     const char* pszSQL) : OGRGFTLayer(poDSIn)
-
+OGRGFTResultLayer::OGRGFTResultLayer( OGRGFTDataSource* poDSIn,
+                                      const char* pszSQL ) :
+    OGRGFTLayer(poDSIn),
+    osSQL( CPLString() ),
+    bGotAllRows(FALSE)
 {
+    // cppcheck-suppress useInitializationList
     osSQL = PatchSQL(pszSQL);
-
-    bGotAllRows = FALSE;
 
     poFeatureDefn = new OGRFeatureDefn( "result" );
     poFeatureDefn->Reference();
@@ -197,7 +198,7 @@ int OGRGFTResultLayer::RunSQL()
             poTableDefn = poTableLayer->GetLayerDefn();
 
         if (poTableLayer != NULL &&
-            poTableLayer->GetTableId().size() &&
+            !poTableLayer->GetTableId().empty() &&
             !EQUAL(osTableId, poTableLayer->GetTableId()))
         {
             osChangedSQL = osSQL;
@@ -220,7 +221,8 @@ int OGRGFTResultLayer::RunSQL()
     }
     else
     {
-        bGotAllRows = bEOF = TRUE;
+        bGotAllRows = TRUE;
+        bEOF = TRUE;
         poFeatureDefn->SetGeomType( wkbNone );
     }
 
@@ -243,7 +245,7 @@ int OGRGFTResultLayer::RunSQL()
         STARTS_WITH_CI(osSQL.c_str(), "DESCRIBE"))
     {
         ParseCSVResponse(pszLine, aosRows);
-        if (aosRows.size() > 0)
+        if (!aosRows.empty())
         {
             char** papszTokens = OGRGFTCSVSplitLine(aosRows[0], ',');
             for(int i=0;papszTokens && papszTokens[i];i++)
@@ -281,9 +283,15 @@ int OGRGFTResultLayer::RunSQL()
         }
 
         if (bHasSetLimit)
-            bGotAllRows = bEOF = (int)aosRows.size() < GetFeaturesToFetch();
+        {
+            bEOF = (int)aosRows.size() < GetFeaturesToFetch();
+            bGotAllRows = bEOF;
+        }
         else
-            bGotAllRows = bEOF = TRUE;
+        {
+            bGotAllRows = TRUE;
+            bEOF = TRUE;
+        }
     }
 
     SetGeomFieldName();

@@ -56,17 +56,17 @@ class WEBPDataset : public GDALPamDataset
 
   public:
                  WEBPDataset();
-                 ~WEBPDataset();
+    virtual ~WEBPDataset();
 
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
                                    int, int *,
                                    GSpacing nPixelSpace, GSpacing nLineSpace,
                                    GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg* psExtraArg);
+                                   GDALRasterIOExtraArg* psExtraArg) override;
 
-    virtual char      **GetMetadataDomainList();
-    virtual char  **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadataDomainList() override;
+    virtual char  **GetMetadata( const char * pszDomain = "" ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -90,8 +90,8 @@ class WEBPRasterBand : public GDALPamRasterBand
   public:
                    WEBPRasterBand( WEBPDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/
@@ -154,7 +154,6 @@ GDALColorInterp WEBPRasterBand::GetColorInterpretation()
 /*                             WEBPDataset                               */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            WEBPDataset()                              */

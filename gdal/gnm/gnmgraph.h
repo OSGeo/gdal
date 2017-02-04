@@ -29,13 +29,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gnm_priv.h"
-#include <vector>
+#include "cpl_port.h"
+#include <map>
 #include <queue>
 #include <set>
+#include <vector>
+
+// Alias for some big data type to store identificators.
+#define GNMGFID GIntBig
+// Graph constants
+#define GNM_EDGE_DIR_BOTH       0   // bidirectional
+#define GNM_EDGE_DIR_SRCTOTGT   1   // from source to target
+#define GNM_EDGE_DIR_TGTTOSRC   2   // from target to source
 
 // Types declarations.
-
 typedef std::vector<GNMGFID> GNMVECTOR, *LPGNMVECTOR;
 typedef const std::vector<GNMGFID> GNMCONSTVECTOR;
 typedef const std::vector<GNMGFID>* LPGNMCONSTVECTOR;
@@ -210,8 +217,8 @@ protected:
      *
      * @param nFID - Vertex identificator from which to start tree building
      * @param mstEdges - TODO
-     * @param mnPathTree - means < vertex id, edge id >
-     * @return std::map where the first is vertex identificator and the second
+     * @param mnPathTree - means < vertex id, edge id >.
+     * std::map where the first is vertex identificator and the second
      * is the edge identificator, which is the best way to the current vertex.
      * The identificator to the start vertex is -1. If the vertex is isolated
      * the returned map will be empty.

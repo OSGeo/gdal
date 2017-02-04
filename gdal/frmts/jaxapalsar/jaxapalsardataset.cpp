@@ -46,17 +46,17 @@ CPL_CVSID("$Id$");
         do { \
                 VSIFReadL( &(x), 4, 1, (f) ); \
                 (x) = CPL_SWAP32( (x) ); \
-        } while (0);
+        } while ( false );
 #define READ_SHORT(f, x) \
         do { \
                 VSIFReadL( &(x), 2, 1, (f) ); \
                 (x) = CPL_SWAP16( (x) ); \
-        } while (0);
+        } while ( false );
 #else
-#define READ_WORD(f, x) do { VSIFReadL( &(x), 4, 1, (f) ); } while (0);
-#define READ_SHORT(f, x) do { VSIFReadL( &(x), 2, 1, (f) ); } while (0);
+#define READ_WORD(f, x) do { VSIFReadL( &(x), 4, 1, (f) ); } while ( false);
+#define READ_SHORT(f, x) do { VSIFReadL( &(x), 2, 1, (f) ); } while ( false );
 #endif /* def CPL_LSB */
-#define READ_BYTE(f, x) do { VSIFReadL( &(x), 1, 1, (f) ); } while (0);
+#define READ_BYTE(f, x) do { VSIFReadL( &(x), 1, 1, (f) ); } while ( false );
 
 /* read floating point value stored as ASCII */
 #define READ_CHAR_FLOAT(n, l, f) \
@@ -65,7 +65,7 @@ CPL_CVSID("$Id$");
                 psBuf[(l)] = '\0'; \
                 VSIFReadL( &psBuf, (l), 1, (f) );\
                 (n) = CPLAtof( psBuf );\
-        } while (0);
+        } while( false );
 
 /* read numbers stored as ASCII */
 #define READ_CHAR_VAL(x, n, f) \
@@ -74,7 +74,7 @@ CPL_CVSID("$Id$");
                 psBuf[(n)] = '\0';\
                 VSIFReadL( &psBuf, (n), 1, (f) ); \
                 (x) = atoi(psBuf); \
-        } while (0);
+        } while( false );
 
 /* read string fields
  * note: string must be size of field to be extracted + 1
@@ -83,7 +83,7 @@ CPL_CVSID("$Id$");
         do { \
                 VSIFReadL( &(s), 1, (n), (f) ); \
                 (s)[(n)] = '\0'; \
-        } while (0);
+        } while( false );
 
 /*************************************************************************/
 /* a few key offsets in the volume directory file */
@@ -165,8 +165,8 @@ public:
     PALSARJaxaDataset();
     ~PALSARJaxaDataset();
 
-    int GetGCPCount();
-    const GDAL_GCP *GetGCPs();
+    int GetGCPCount() override;
+    const GDAL_GCP *GetGCPs() override;
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static int Identify( GDALOpenInfo *poOpenInfo );
@@ -177,7 +177,7 @@ PALSARJaxaDataset::PALSARJaxaDataset() :
     pasGCPList(NULL),
     nGCPCount(0),
     nFileType(level_unknown)
-{ }
+{}
 
 PALSARJaxaDataset::~PALSARJaxaDataset()
 {
@@ -196,8 +196,6 @@ PALSARJaxaDataset::~PALSARJaxaDataset()
 
 class PALSARJaxaRasterBand : public GDALRasterBand {
     VSILFILE *fp;
-    int nRasterXSize;
-    int nRasterYSize;
     ePolarization nPolarization;
     eFileType nFileType;
     int nBitsPerSample;
@@ -208,7 +206,7 @@ public:
     PALSARJaxaRasterBand( PALSARJaxaDataset *poDS, int nBand, VSILFILE *fp );
     ~PALSARJaxaRasterBand();
 
-    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage ) override;
 };
 
 /************************************************************************/
@@ -217,16 +215,17 @@ public:
 
 PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDSIn,
                                             int nBandIn, VSILFILE *fpIn ) :
-    nPolarization(hh)
+    fp(fpIn),
+    nPolarization(hh),
+    nBitsPerSample(0),
+    nSamplesPerGroup(0),
+    nRecordSize(0)
 {
     poDS = poDSIn;
     nBand = nBandIn;
-    this->fp = fpIn;
 
     /* Read image options record to determine the type of data */
     VSIFSeekL( fp, BITS_PER_SAMPLE_OFFSET, SEEK_SET );
-    nBitsPerSample = 0;
-    nSamplesPerGroup = 0;
     READ_CHAR_VAL( nBitsPerSample, BITS_PER_SAMPLE_LENGTH, fp );
     READ_CHAR_VAL( nSamplesPerGroup, SAMPLES_PER_GROUP_LENGTH, fp );
 
@@ -250,19 +249,19 @@ PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDSIn,
     READ_CHAR_VAL( nRasterYSize, NUMBER_LINES_LENGTH, fp );
     VSIFSeekL( fp, SAR_DATA_RECORD_LENGTH_OFFSET, SEEK_SET );
     READ_CHAR_VAL( nRecordSize, SAR_DATA_RECORD_LENGTH_LENGTH, fp );
-    int nDenom = ((nBitsPerSample / 8) * nSamplesPerGroup);
-    if( nDenom == 0 )
-        nRasterXSize = 0;
-    else
-        nRasterXSize = (nRecordSize -
-                    (nFileType != level_15 ? SIG_DAT_REC_OFFSET : PROC_DAT_REC_OFFSET))
-        / nDenom;
+    const int nDenom = ((nBitsPerSample / 8) * nSamplesPerGroup);
+    if( nDenom != 0 )
+        nRasterXSize =
+            (nRecordSize -
+             (nFileType != level_15 ? SIG_DAT_REC_OFFSET : PROC_DAT_REC_OFFSET))
+            / nDenom;
 
     poDSIn->nRasterXSize = nRasterXSize;
     poDSIn->nRasterYSize = nRasterYSize;
 
     /* Polarization */
-    switch (nBand) {
+    switch( nBand )
+    {
       case 0:
         nPolarization = hh;
         SetMetadataItem( "POLARIMETRIC_INTERP", "HH" );
@@ -332,7 +331,6 @@ CPLErr PALSARJaxaRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     return CE_None;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                      PALSARJaxaDataset                               */
@@ -347,7 +345,6 @@ int PALSARJaxaDataset::GetGCPCount() {
     return nGCPCount;
 }
 
-
 /************************************************************************/
 /*                             GetGCPs()                                */
 /************************************************************************/
@@ -355,7 +352,6 @@ int PALSARJaxaDataset::GetGCPCount() {
 const GDAL_GCP *PALSARJaxaDataset::GetGCPs() {
     return pasGCPList;
 }
-
 
 /************************************************************************/
 /*                            ReadMetadata()                            */
@@ -468,7 +464,6 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
         /* PALSAR data is only available from JAXA in Scattering Matrix form */
         poDS->SetMetadataItem( "MATRIX_REPRESENTATION", "SCATTERING" );
     }
-
 }
 
 /************************************************************************/
@@ -585,7 +580,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     VSILFILE *fpVV = VSIFOpenL( pszImgFile, "rb" );
     if (fpVV != NULL) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 3, fpVV ) );
-        nBandNum++;
+        /* nBandNum++; */
     }
 
     VSIFree( pszImgFile );

@@ -28,7 +28,6 @@
 
   For uncompress .zip file, look at unzip.h
 
-
    I WAIT FEEDBACK at mail info@winimage.com
    Visit also http://www.winimage.com/zLibDll/unzip.html for evolution
 
@@ -49,8 +48,6 @@
   2. Altered source versions must be plainly marked as such, and must not be
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
-
-
 */
 
 /* for more info about .ZIP format, see
@@ -132,7 +129,6 @@ typedef struct
 
 typedef const char* zipcharpc;
 
-
 #define APPEND_STATUS_CREATE        (0)
 #define APPEND_STATUS_CREATEAFTER   (1)
 #define APPEND_STATUS_ADDINZIP      (2)
@@ -185,7 +181,6 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip (zipFile file,
   level contain the level of compression (can be Z_DEFAULT_COMPRESSION)
 */
 
-
 extern int ZEXPORT cpl_zipOpenNewFileInZip2 (zipFile file,
                                              const char* filename,
                                              const zip_fileinfo* zipfi,
@@ -225,7 +220,6 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (zipFile file,
     password : crypting password (NULL for no crypting)
     crcForCtypting : crc of file to compress (needed for crypting)
  */
-
 
 extern int ZEXPORT cpl_zipWriteInFileInZip (zipFile file,
                                             const void* buf,

@@ -51,7 +51,7 @@ class MerisL2FlagBand : public GDALPamRasterBand
   public:
     MerisL2FlagBand( GDALDataset *, int, VSILFILE*, vsi_l_offset, int );
     virtual ~MerisL2FlagBand();
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
   private:
     vsi_l_offset nImgOffset;
@@ -67,28 +67,26 @@ class MerisL2FlagBand : public GDALPamRasterBand
 /*                        MerisL2FlagBand()                       */
 /************************************************************************/
 MerisL2FlagBand::MerisL2FlagBand( GDALDataset *poDSIn, int nBandIn,
-                                  VSILFILE* fpImageIn, vsi_l_offset nImgOffsetIn,
+                                  VSILFILE* fpImageIn,
+                                  vsi_l_offset nImgOffsetIn,
                                   int nPrefixBytesIn ) :
-    nBytePerPixel(3)
+    nImgOffset(nImgOffsetIn),
+    nPrefixBytes(nPrefixBytesIn),
+    nBytePerPixel(3),
+    nRecordSize(nPrefixBytesIn + nBlockXSize * nBytePerPixel),
+    nDataSize(nBlockXSize * nBytePerPixel),
+    pReadBuf(static_cast<GByte *>(CPLMalloc(nRecordSize)))
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
-    this->fpImage = fpImageIn;
-    this->nImgOffset = nImgOffsetIn;
-    this->nPrefixBytes = nPrefixBytesIn;
+    fpImage = fpImageIn;
 
     eDataType = GDT_UInt32;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
-
-    nDataSize = nBlockXSize * nBytePerPixel;
-    nRecordSize = nPrefixBytes + nDataSize;
-
-    pReadBuf = (GByte *) CPLMalloc( nRecordSize );
 }
-
 
 /************************************************************************/
 /*                        ~MerisL2FlagBand()                       */
@@ -127,9 +125,10 @@ CPLErr MerisL2FlagBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         return CE_Failure;
     }
 
+    const unsigned int nUInt32Size = 4;
     for( unsigned iImg = 0, iBuf = 0;
-         iImg < nBlockXSize * (unsigned)sizeof(GDT_UInt32);
-         iImg += (unsigned)sizeof(GDT_UInt32), iBuf += (unsigned)nBytePerPixel )
+         iImg < nBlockXSize * nUInt32Size;
+         iImg += nUInt32Size, iBuf += (unsigned)nBytePerPixel )
     {
 #ifdef CPL_LSB
         ((GByte*) pImage)[iImg] = pReadBuf[iBuf + 2];
@@ -146,7 +145,6 @@ CPLErr MerisL2FlagBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -175,14 +173,13 @@ class EnvisatDataset : public RawDataset
 
   public:
                 EnvisatDataset();
-                ~EnvisatDataset();
+    virtual ~EnvisatDataset();
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
-    virtual char      **GetMetadataDomainList();
-    virtual char **GetMetadata( const char * pszDomain );
-
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
+    virtual char      **GetMetadataDomainList() override;
+    virtual char **GetMetadata( const char * pszDomain ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -203,8 +200,7 @@ EnvisatDataset::EnvisatDataset() :
     nGCPCount(0),
     pasGCPList(NULL),
     papszTempMD(NULL)
-{
-}
+{}
 
 /************************************************************************/
 /*                            ~EnvisatDataset()                         */
@@ -302,9 +298,10 @@ void EnvisatDataset::ScanForGCPs_ASAR()
 /* -------------------------------------------------------------------- */
 /*      Collect the first GCP set from each record.                     */
 /* -------------------------------------------------------------------- */
-    GByte       abyRecord[521];
-    int         nRange=0, nRangeOffset=0;
-    GUInt32     unValue;
+    GByte abyRecord[521];
+    int nRange = 0;
+    int nRangeOffset = 0;
+    GUInt32 unValue;
 
     nGCPCount = 0;
     pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),(nNumDSR+1) * 11);
@@ -1137,7 +1134,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

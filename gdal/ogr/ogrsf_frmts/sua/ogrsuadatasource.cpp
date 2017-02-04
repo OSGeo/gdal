@@ -36,14 +36,11 @@ CPL_CVSID("$Id$");
 /*                          OGRSUADataSource()                          */
 /************************************************************************/
 
-OGRSUADataSource::OGRSUADataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-}
+OGRSUADataSource::OGRSUADataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0)
+{}
 
 /************************************************************************/
 /*                         ~OGRSUADataSource()                          */

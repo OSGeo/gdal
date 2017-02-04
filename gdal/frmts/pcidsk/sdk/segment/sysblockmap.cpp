@@ -86,7 +86,7 @@ SysBlockMap::~SysBlockMap()
     }
     catch( const PCIDSKException& e )
     {
-        fprintf(stderr, "Exception in SysBlockMap::~SysBlockMap(): %s\n",
+        fprintf(stderr, "Exception in SysBlockMap::~SysBlockMap(): %s\n",/*ok*/
                 e.what());
     }
 }
@@ -112,7 +112,7 @@ void SysBlockMap::Initialize()
     WriteToFile( init_data.buffer, 0, init_data.buffer_size );
 #ifdef notdef
     // arbitrarily grow the segment a bit to avoid having to move it too soon.
-    WriteToFile( "\0", 8191, 1 );				       
+    WriteToFile( "\0", 8191, 1 );
 #endif
 }
 

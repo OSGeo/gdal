@@ -58,14 +58,12 @@
 /* Pull parsers.  */
 #define YYPULL 1
 
-
 /* Substitute the variable and function names.  */
 #define yyparse         ods_formulaparse
 #define yylex           ods_formulalex
 #define yyerror         ods_formulaerror
 #define yydebug         ods_formuladebug
 #define yynerrs         ods_formulanerrs
-
 
 /* Copy the first part of user declarations.  */
 #line 1 "ods_formula_parser.y" /* yacc.c:339  */
@@ -119,7 +117,6 @@ static void ods_formulaerror( ods_formula_parse_context * /* context */,
     CPLError( CE_Failure, CPLE_AppDefined,
               "Formula Parsing Error: %s", msg );
 }
-
 
 #line 126 "ods_formula_parser.cpp" /* yacc.c:339  */
 

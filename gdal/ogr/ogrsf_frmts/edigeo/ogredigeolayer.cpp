@@ -40,17 +40,15 @@ CPL_CVSID("$Id$");
 
 OGREDIGEOLayer::OGREDIGEOLayer( OGREDIGEODataSource* poDSIn,
                                 const char* pszName, OGRwkbGeometryType eType,
-                                OGRSpatialReference* poSRSIn )
-
+                                OGRSpatialReference* poSRSIn ) :
+    poDS(poDSIn),
+    poFeatureDefn(new OGRFeatureDefn( pszName )),
+    poSRS(poSRSIn),
+    nNextFID(0)
 {
-    this->poDS = poDSIn;
-    nNextFID = 0;
-
-    this->poSRS = poSRSIn;
-    if (poSRS)
+    if( poSRS )
         poSRS->Reference();
 
-    poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eType );
     if( poFeatureDefn->GetGeomFieldCount() != 0 )
@@ -74,7 +72,6 @@ OGREDIGEOLayer::~OGREDIGEOLayer()
         poSRS->Release();
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -84,7 +81,6 @@ void OGREDIGEOLayer::ResetReading()
 {
     nNextFID = 0;
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -220,7 +216,7 @@ void OGREDIGEOLayer::AddFieldDefn(const CPLString& osName,
                                   OGRFieldType eType,
                                   const CPLString& osRID)
 {
-    if (osRID.size() != 0)
+    if (!osRID.empty())
         mapAttributeToIndex[osRID] = poFeatureDefn->GetFieldCount();
 
     OGRFieldDefn oFieldDefn(osName, eType);

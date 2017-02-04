@@ -23,6 +23,8 @@
 #ifndef DOXYGEN_SKIP
 
 #include "cpl_vsi.h"
+#include "zlib.h"
+
 #define uLong64 vsi_l_offset
 
 #define ZLIB_FILEFUNC_SEEK_CUR (1)
@@ -77,7 +79,6 @@ void cpl_fill_fopen_filefunc (zlib_filefunc_def* pzlib_filefunc_def);
 #define ZSEEK(filefunc,filestream,pos,mode) ((*((filefunc).zseek_file))((filefunc).opaque,filestream,pos,mode))
 #define ZCLOSE(filefunc,filestream) ((*((filefunc).zclose_file))((filefunc).opaque,filestream))
 #define ZERROR(filefunc,filestream) ((*((filefunc).zerror_file))((filefunc).opaque,filestream))
-
 
 #ifdef __cplusplus
 }

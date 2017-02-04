@@ -26,7 +26,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdaljp2metadata.h"
+
+#include <cmath>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 static void AddField(CPLXMLNode* psParent, const char* pszFieldName,
                      int nFieldSize, const char* pszValue,
@@ -36,7 +53,7 @@ static void AddField(CPLXMLNode* psParent, const char* pszFieldName,
                                     psParent, "Field", pszValue );
     CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
     CPLAddXMLAttributeAndValue(psField, "type", "string" );
-    CPLAddXMLAttributeAndValue(psField, "size", CPLSPrintf("%d", nFieldSize )  );
+    CPLAddXMLAttributeAndValue(psField, "size", CPLSPrintf("%d", nFieldSize ) );
     if( pszDescription )
         CPLAddXMLAttributeAndValue(psField, "description", pszDescription );
 }
@@ -49,7 +66,7 @@ static void AddHexField(CPLXMLNode* psParent, const char* pszFieldName,
                                     psParent, "Field", pszValue );
     CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
     CPLAddXMLAttributeAndValue(psField, "type", "hexint" );
-    CPLAddXMLAttributeAndValue(psField, "size", CPLSPrintf("%d", nFieldSize )  );
+    CPLAddXMLAttributeAndValue(psField, "size", CPLSPrintf("%d", nFieldSize ) );
     if( pszDescription )
         CPLAddXMLAttributeAndValue(psField, "description", pszDescription );
 }
@@ -558,7 +575,12 @@ static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
-        GUInt16 nNumV = 0, nNumH = 0, nDenomV = 1, nDenomH = 1, nExpV = 0, nExpH = 0;
+        GUInt16 nNumV = 0;
+        GUInt16 nNumH = 0;
+        GUInt16 nDenomV = 1;
+        GUInt16 nDenomH = 1;
+        GUInt16 nExpV = 0;
+        GUInt16 nExpH = 0;
         if( nRemainingLength >= 2 )
         {
             GUInt16 nVal;
@@ -916,7 +938,6 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         GUInt16 nRemainingMarkerSize = nMarkerSize - 2;
         GUInt32 nLastVal = 0;
 
-
 #define READ_MARKER_FIELD_UINT8_COMMENT(name, comment) \
         do { if( nRemainingMarkerSize >= 1 ) { \
             nLastVal = *pabyMarkerDataIter; \
@@ -928,7 +949,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 AddError(psMarker, CPLSPrintf("Cannot read field %s", name)); \
                 nLastVal = 0; \
             } \
-        } while(0)
+        } while( false )
 
 #define READ_MARKER_FIELD_UINT8(name) \
         READ_MARKER_FIELD_UINT8_COMMENT(name, NULL)
@@ -947,7 +968,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 AddError(psMarker, CPLSPrintf("Cannot read field %s", name)); \
                 nLastVal = 0; \
             } \
-        } while(0)
+        } while( false )
 
 #define READ_MARKER_FIELD_UINT16(name) \
         READ_MARKER_FIELD_UINT16_COMMENT(name, NULL)
@@ -966,7 +987,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 AddError(psMarker, CPLSPrintf("Cannot read field %s", name)); \
                 nLastVal = 0; \
             } \
-        } while(0)
+        } while( false )
 
 #define READ_MARKER_FIELD_UINT32(name) \
         READ_MARKER_FIELD_UINT32_COMMENT(name, NULL)
@@ -1125,7 +1146,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         else if( abyMarker[1] == 0x55 ) /* TLM */
         {
             READ_MARKER_FIELD_UINT8("Ztlm");
-            int ST = 0, SP = 0;
+            int ST = 0;
+            int SP = 0;
             READ_MARKER_FIELD_UINT8_COMMENT("Stlm",
                     CPLSPrintf("ST=%d SP=%d",
                                (ST = (nLastVal >> 4) & 3),

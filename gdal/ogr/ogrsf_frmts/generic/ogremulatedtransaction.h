@@ -91,7 +91,6 @@ class CPL_DLL IOGRTransactionBehaviour
                                           int& bOutHasReopenedDS) = 0;
 };
 
-
 /** Returns a new datasource object that adds transactional behaviour to an existing datasource.
  *
  * The provided poTransactionBehaviour object should implement driver-specific

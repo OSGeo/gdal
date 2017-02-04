@@ -261,6 +261,7 @@ extern void CPL_DLL json_object_object_add(struct json_object* obj, const char *
  * @param obj the json_object instance
  * @param key the object field name
  * @returns the json_object associated with the given field name
+ * @deprecated Please use json_object_object_get_ex
  */
 extern struct json_object* json_object_object_get(struct json_object* obj,
 						  const char *key);

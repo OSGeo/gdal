@@ -32,6 +32,8 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -66,13 +68,13 @@ class PAuxDataset : public RawDataset
     char        **papszAuxLines;
     int         bAuxUpdated;
 
-    virtual const char *GetProjectionRef();
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr SetGeoTransform( double * ) override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -88,8 +90,6 @@ class PAuxDataset : public RawDataset
 
 class PAuxRasterBand : public RawRasterBand
 {
-    GDALColorTable *poCT;
-
   public:
 
                  PAuxRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
@@ -99,13 +99,13 @@ class PAuxRasterBand : public RawRasterBand
 
     virtual ~PAuxRasterBand();
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual CPLErr SetNoDataValue( double );
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual CPLErr SetNoDataValue( double ) override;
 
-    virtual GDALColorTable *GetColorTable();
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable() override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual void SetDescription( const char *pszNewDescription );
+    virtual void SetDescription( const char *pszNewDescription ) override;
 };
 
 /************************************************************************/
@@ -118,8 +118,7 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDSIn, int nBandIn,
                                 GDALDataType eDataTypeIn, int bNativeOrderIn ) :
     RawRasterBand( poDSIn, nBandIn, fpRawIn,
                    nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn,
-                   eDataTypeIn, bNativeOrderIn, TRUE ),
-    poCT(NULL)
+                   eDataTypeIn, bNativeOrderIn, TRUE )
 {
     PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>( poDS );
 
@@ -181,8 +180,6 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDSIn, int nBandIn,
 PAuxRasterBand::~PAuxRasterBand()
 
 {
-    if( poCT != NULL )
-        delete poCT;
 }
 
 /************************************************************************/
@@ -264,7 +261,6 @@ void PAuxRasterBand::SetDescription( const char *pszNewDescription )
     GDALRasterBand::SetDescription( pszNewDescription );
 }
 
-
 /************************************************************************/
 /*                           GetColorTable()                            */
 /************************************************************************/
@@ -321,7 +317,6 @@ PAuxDataset::~PAuxDataset()
     {
         CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
     }
-
 
     if( bAuxUpdated )
     {
@@ -562,8 +557,8 @@ CPLErr PAuxDataset::SetGeoTransform( double * padfGeoTransform )
     char szLoRightX[128] = { '\0' };
     char szLoRightY[128] = { '\0' };
 
-    if( ABS(padfGeoTransform[0]) < 181
-        && ABS(padfGeoTransform[1]) < 1 )
+    if( std::abs(padfGeoTransform[0]) < 181
+        && std::abs(padfGeoTransform[1]) < 1 )
     {
         CPLsnprintf( szUpLeftX, sizeof(szUpLeftX), "%.12f",
                      padfGeoTransform[0] );
@@ -921,7 +916,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     char *pszAuxFilename = static_cast<char *>(
         CPLMalloc( strlen( pszFilename ) + 5 ) );
-    strcpy( pszAuxFilename, pszFilename );;
+    strcpy( pszAuxFilename, pszFilename );
 
     for( int i = static_cast<int>(strlen(pszAuxFilename))-1; i > 0; i-- )
     {

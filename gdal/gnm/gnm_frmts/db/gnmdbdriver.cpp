@@ -65,7 +65,6 @@ static GDALDataset *GNMDBDriverOpen( GDALOpenInfo* poOpenInfo )
     return poFN;
 }
 
-
 static GDALDataset *GNMDBDriverCreate( const char * pszName,
                                         CPL_UNUSED int nBands,
                                         CPL_UNUSED int nXSize,

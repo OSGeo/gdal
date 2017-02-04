@@ -32,7 +32,6 @@
 #define DEGRIB_NO_RETURN
 #endif
 
-
 CPL_C_START
    void _myAssert (const char *file, int lineNum) DEGRIB_NO_RETURN;
 CPL_C_END

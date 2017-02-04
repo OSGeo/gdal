@@ -26,7 +26,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include "ogr_ingres.h"
 
 #include "cpl_conv.h"
@@ -44,8 +43,8 @@ SetConnParam(II_PTR *connHandle,
              II_LONG paramID,
              const II_PTR paramValue)
 {
-    IIAPI_SETCONPRMPARM	setconnParm;
-    IIAPI_WAITPARM	waitParm = { -1 };
+    IIAPI_SETCONPRMPARM setconnParm;
+    IIAPI_WAITPARM      waitParm = { -1 };
 
     setconnParm.sc_genParm.gp_callback = NULL;
     setconnParm.sc_genParm.gp_closure = NULL;
@@ -70,7 +69,7 @@ SetConnParam(II_PTR *connHandle,
         *connHandle = setconnParm.sc_connHandle;
     }
 
-    return (setconnParm.sc_genParm.gp_status);
+    return setconnParm.sc_genParm.gp_status;
 }
 
 /************************************************************************/
@@ -89,6 +88,8 @@ OGRIngresDataSource::OGRIngresDataSource()
     panSRID = NULL;
     papoSRS = NULL;
     poActiveLayer = NULL;
+    bDSUpdate = FALSE;
+    bNewIngres = FALSE;
 }
 
 /************************************************************************/
@@ -127,7 +128,6 @@ OGRIngresDataSource::~OGRIngresDataSource()
 
 int OGRIngresDataSource::Open( const char *pszFullName,
                                char **papszOptions, int bUpdate )
-
 
 {
     CPLAssert( nLayers == 0 );
@@ -238,9 +238,9 @@ int OGRIngresDataSource::Open( const char *pszFullName,
         && strlen(pszDBpwd) > 0 )
     {
         if (SetConnParam(&hConn, IIAPI_CP_EFFECTIVE_USER,
-			(II_PTR)pszEffuser) != IIAPI_ST_SUCCESS
+                        (II_PTR)pszEffuser) != IIAPI_ST_SUCCESS
             || SetConnParam(&hConn, IIAPI_CP_DBMS_PASSWORD,
-			(II_PTR)pszDBpwd) != IIAPI_ST_SUCCESS )
+                        (II_PTR)pszDBpwd) != IIAPI_ST_SUCCESS )
         {
             return FALSE;
         }
@@ -249,8 +249,8 @@ int OGRIngresDataSource::Open( const char *pszFullName,
 /* -------------------------------------------------------------------- */
 /*      Try to connect to the database.                                 */
 /* -------------------------------------------------------------------- */
-    IIAPI_CONNPARM	connParm;
-    IIAPI_WAITPARM	waitParm = { -1 };
+    IIAPI_CONNPARM connParm;
+    IIAPI_WAITPARM waitParm = { -1 };
 
     memset( &connParm, 0, sizeof(connParm) );
     connParm.co_genParm.gp_callback = NULL;
@@ -270,7 +270,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
     IIapi_connect( &connParm );
 
     while( connParm.co_genParm.gp_completed == FALSE )
-	IIapi_wait( &waitParm );
+        IIapi_wait( &waitParm );
 
     hConn = connParm.co_connHandle;
 
@@ -288,24 +288,24 @@ int OGRIngresDataSource::Open( const char *pszFullName,
 
     // Check for new or old Ingres spatial library
     {
-    	OGRIngresStatement oStmt( hConn );
+        OGRIngresStatement oStmt( hConn );
 
-    	if( oStmt.ExecuteSQL("SELECT COUNT(*) FROM iicolumns WHERE table_name = 'iiattribute' AND column_name = 'attgeomtype'" ) )
-    	{
-    		char **papszFields;
-    		while( (papszFields = oStmt.GetRow()) )
-    		{
-    			CPLString osCount = papszFields[0];
-    			if( osCount[0] == '0' )
-    			{
-    				bNewIngres = FALSE;
-    			}
-    			else
-    			{
-    				bNewIngres = TRUE;
-    			}
-    		}
-    	}
+        if( oStmt.ExecuteSQL("SELECT COUNT(*) FROM iicolumns WHERE table_name = 'iiattribute' AND column_name = 'attgeomtype'" ) )
+        {
+            char **papszFields;
+            while( (papszFields = oStmt.GetRow()) )
+            {
+                CPLString osCount = papszFields[0];
+                if( osCount[0] == '0' )
+                {
+                    bNewIngres = FALSE;
+                }
+                else
+                {
+                    bNewIngres = TRUE;
+                }
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -398,7 +398,6 @@ OGRLayer *OGRIngresDataSource::GetLayer( int iLayer )
         return papoLayers[iLayer];
 }
 
-
 /************************************************************************/
 /*                      InitializeMetadataTables()                      */
 /*                                                                      */
@@ -411,8 +410,8 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
 
 {
 #ifdef notdef
-    char            szCommand[1024];
-    OGRErr	    eErr = OGRERR_NONE;
+    char   szCommand[1024];
+    OGRErr eErr = OGRERR_NONE;
 
     sprintf( szCommand, "DESCRIBE geometry_columns" );
     if( ingres_query(GetConn(), szCommand ) )
@@ -545,8 +544,6 @@ OGRSpatialReference *OGRIngresDataSource::FetchSRS( int nId )
     return poSRS;
 }
 
-
-
 /************************************************************************/
 /*                             FetchSRSId()                             */
 /*                                                                      */
@@ -567,7 +564,7 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     int nSRSId = 0;
 
     /* -------------------------------------------------------------------- */
-    /*  If it is a EPSG	Spatial Reference, search with special type.        */
+    /*  If it is a EPSG Spatial Reference, search with special type.        */
     /* -------------------------------------------------------------------- */
     const char *pszAuthName = poSRS->GetAuthorityName(NULL);
     const char *pszAuthID = poSRS->GetAuthorityCode(NULL);
@@ -577,7 +574,6 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
          sprintf( szCommand,
              "SELECT srid FROM spatial_ref_sys WHERE auth_name = 'EPSG' and auth_srid= %s",
              pszAuthID );
-
 
         OGRIngresStatement  oStateSRID(GetConn());
         oStateSRID.ExecuteSQL(szCommand);
@@ -658,7 +654,6 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
             {
                 nSRSId = *((II_INT4 *)papszRow[0]) + 1;
             }
-
         }
         else
             nSRSId = USER_DEFINED_SR_START+1;
@@ -818,8 +813,8 @@ int OGRIngresDataSource::DeleteLayer( int iLayer)
 /* -------------------------------------------------------------------- */
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
-    char        	szCommand[1024];
-    OGRIngresStatement  oStmt( hConn );
+    char               szCommand[1024];
+    OGRIngresStatement oStmt( hConn );
 
     sprintf( szCommand,
              "DROP TABLE %s ",
@@ -834,8 +829,6 @@ int OGRIngresDataSource::DeleteLayer( int iLayer)
         return OGRERR_FAILURE;
 }
 
-
-
 /************************************************************************/
 /*                           ICreateLayer()                             */
 /************************************************************************/
@@ -847,7 +840,7 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
                                    char ** papszOptions )
 
 {
-    int                 nDimension = 3; // Ingres only supports 2d currently
+    //int                 nDimension = 3; // Ingres only supports 2d currently
 
     char *pszLayerName = NULL;
     if( CPLFetchBool(papszOptions, "LAUNDER", true) )
@@ -855,8 +848,8 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
     else
         pszLayerName = CPLStrdup( pszLayerNameIn );
 
-    if( wkbFlatten(eType) == eType )
-        nDimension = 2;
+    //if( wkbFlatten(eType) == eType )
+    //    nDimension = 2;
 
     CPLDebug("INGRES","Creating layer %s.", pszLayerName);
 
@@ -921,55 +914,55 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
     }
     else if( wkbFlatten(eType) == wkbLineString)
     {
-    	if( IsNewIngres() )
-    	{
+        if( IsNewIngres() )
+        {
             pszGeometryType = "LINESTRING";
-    	}
-    	else
-    	{
+        }
+        else
+        {
             pszGeometryType = "LONG LINE";
-    	}
+        }
     }
 
     else if( wkbFlatten(eType) == wkbPolygon )
     {
-    	if( IsNewIngres() )
-    	{
+        if( IsNewIngres() )
+        {
             pszGeometryType = "POLYGON";
-    	}
-    	else
-    	{
+        }
+        else
+        {
             pszGeometryType = "LONG POLYGON";
-    	}
+        }
     }
 
     else if( wkbFlatten(eType) == wkbMultiPolygon )
     {
-    	if( IsNewIngres() )
+        if( IsNewIngres() )
             pszGeometryType = "MULTIPOLYGON";
     }
 
     else if( wkbFlatten(eType) == wkbMultiLineString )
     {
-    	if( IsNewIngres() )
+        if( IsNewIngres() )
             pszGeometryType = "MULTILINESTRING";
     }
 
     else if( wkbFlatten(eType) == wkbMultiPoint )
     {
-    	if( IsNewIngres() )
+        if( IsNewIngres() )
             pszGeometryType = "MULTIPOINT";
     }
 
     else if( wkbFlatten(eType) == wkbGeometryCollection )
     {
-    	if( IsNewIngres() )
+        if( IsNewIngres() )
             pszGeometryType = "GEOMETRYCOLLECTION";
     }
 
     else if( wkbFlatten(eType) == wkbUnknown )
     {
-    	if( IsNewIngres() )
+        if( IsNewIngres() )
             // this is also used as the generic geometry type.
             pszGeometryType = "GEOMETRYCOLLECTION";
     }
@@ -1078,5 +1071,5 @@ void OGRIngresDataSource::EstablishActiveLayer( OGRIngresLayer *poNewLayer )
 
 int OGRIngresDataSource::IsNewIngres()
 {
-	return bNewIngres;
+    return bNewIngres;
 }

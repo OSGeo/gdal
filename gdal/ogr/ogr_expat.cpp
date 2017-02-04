@@ -28,9 +28,14 @@
 
 #ifdef HAVE_EXPAT
 
-#include "cpl_error.h"
 #include "cpl_port.h"
 #include "ogr_expat.h"
+
+#include <cstddef>
+#include <cstdlib>
+
+#include "cpl_error.h"
+
 
 CPL_CVSID("$Id$");
 

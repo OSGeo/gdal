@@ -64,7 +64,6 @@ int SDEDataset::GetRasterYSize( void )
     return nRasterYSize;
 }
 
-
 /************************************************************************/
 /*                          ComputeRasterInfo()                         */
 /************************************************************************/
@@ -192,7 +191,6 @@ CPLErr SDEDataset::ComputeRasterInfo() {
         return CE_Fatal;
     }
 
-
     for (int i=0; i < nBands; i++) {
         SetBand( i+1, new SDERasterBand( this, i+1, -1, &(paohSDERasterBands[i]) ));
     }
@@ -205,7 +203,6 @@ CPLErr SDEDataset::ComputeRasterInfo() {
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                          GetGeoTransform()                           */
@@ -250,13 +247,13 @@ const char *SDEDataset::GetProjectionRef()
     if (!hRasterColumn){
         CPLError ( CE_Failure, CPLE_AppDefined,
                    "Raster Column not defined");
-        return ("");
+        return "";
     }
 
     nSDEErr = SE_rascolinfo_get_coordref(hRasterColumn, coordref);
 
     if (nSDEErr == SE_NO_COORDREF) {
-        return ("");
+        return "";
     }
 
     if( nSDEErr != SE_SUCCESS )
@@ -299,8 +296,6 @@ SDEDataset::SDEDataset(  )
     hStream             = NULL;
     hRasterColumn       = NULL;
     pszWKT              = NULL;
-    pszLayerName        = NULL;
-    pszColumnName       = NULL;
     nBands              = 0;
     nRasterXSize        = 0;
     nRasterYSize        = 0;
@@ -310,10 +305,7 @@ SDEDataset::SDEDataset(  )
     dfMaxX              = 0.0;
     dfMaxY              = 0.0;
     SE_rascolinfo_create(&hRasterColumn);
-
 }
-
-
 
 /************************************************************************/
 /*                            ~SDEDataset()                             */
@@ -348,7 +340,6 @@ SDEDataset::~SDEDataset()
         CPLFree(pszColumnName);
 }
 
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -374,7 +365,6 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLDebug(   "SDERASTER", "Open(\"%s\") revealed %d tokens.",
                 poOpenInfo->pszFilename,
                 CSLCount( papszTokens ) );
-
 
     if( CSLCount( papszTokens ) < 5 || CSLCount( papszTokens ) > 7 )
     {
@@ -410,7 +400,6 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
         IssueSDEError( nSDEErr, "SE_connection_create" );
         return NULL;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Set unprotected concurrency policy, suitable for single         */
@@ -463,9 +452,6 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
         poDS->ComputeRasterInfo();
-
-
-
     } else {
 
         nSDEErr = SE_rastercolumn_get_info_list(poDS->hConnection,
@@ -502,7 +488,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
     return NULL;
     }
     CSLDestroy( papszTokens);
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

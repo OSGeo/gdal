@@ -90,7 +90,6 @@ OGRDataSource *OGRIngresDriver::Open( const char * pszFilename,
     return poDS;
 }
 
-
 /************************************************************************/
 /*                          CreateDataSource()                          */
 /************************************************************************/
@@ -122,7 +121,6 @@ OGRDataSource *OGRIngresDriver::CreateDataSource( const char * pszName,
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                           TestCapability()                           */

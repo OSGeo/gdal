@@ -456,7 +456,7 @@ int main( int nArgc, char ** papszArgv )
                 printf( "  Location Table\n" );
                 for( i = 0; i < psImage->nLocCount; i++ )
                 {
-                    printf( "    LocName=%s, LocId=%d, Offset=%d, Size=%d\n",
+                    printf( "    LocName=%s, LocId=%d, Offset=%u, Size=%u\n",
                             GetLocationNameFromId(psImage->pasLocations[i].nLocId),
                             psImage->pasLocations[i].nLocId,
                             psImage->pasLocations[i].nLocOffset,
@@ -682,7 +682,7 @@ int main( int nArgc, char ** papszArgv )
                     printf( "  Location Table\n" );
                     for( i = 0; i < nLocCount; i++ )
                     {
-                        printf( "    LocName=%s, LocId=%d, Offset=%d, Size=%d\n",
+                        printf( "    LocName=%s, LocId=%d, Offset=%u, Size=%u\n",
                                 GetLocationNameFromId(pasLocations[i].nLocId),
                                 pasLocations[i].nLocId,
                                 pasLocations[i].nLocOffset,

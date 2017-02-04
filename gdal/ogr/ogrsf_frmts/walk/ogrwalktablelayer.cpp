@@ -35,12 +35,10 @@ CPL_CVSID("$Id$");
 /*                          OGRWalkTableLayer()                         */
 /************************************************************************/
 
-OGRWalkTableLayer::OGRWalkTableLayer( OGRWalkDataSource *poDSIn )
-
+OGRWalkTableLayer::OGRWalkTableLayer( OGRWalkDataSource *poDSIn ) :
+    pszQuery(NULL)
 {
     poDS = poDSIn;
-
-    pszQuery = NULL;
 
     iNextShapeId = 0;
     poFeatureDefn = NULL;
@@ -172,7 +170,7 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
         {
             if( CPLODBCStatement::GetTypeMapping(
                     oGetCol.GetColType( iColumn )) == SQL_C_BINARY )
-                bGeomColumnWKB = TRUE;
+                bGeomColumnWKB = true;
         }
     }
 
@@ -288,21 +286,20 @@ OGRErr OGRWalkTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQueryIn) ? CPLStrdup(pszQueryIn) : NULL;
+    m_pszAttrQueryString = pszQueryIn ? CPLStrdup(pszQueryIn) : NULL;
 
-    if( (pszQueryIn == NULL && this->pszQuery == NULL)
-        || (pszQueryIn != NULL && this->pszQuery != NULL
-            && EQUAL(pszQueryIn,this->pszQuery)) )
+    if( (pszQueryIn == NULL && pszQuery == NULL)
+        || (pszQueryIn != NULL && pszQuery != NULL
+            && EQUAL(pszQueryIn, pszQuery)) )
         return OGRERR_NONE;
 
-    CPLFree( this->pszQuery );
-    this->pszQuery = (pszQueryIn != NULL ) ? CPLStrdup( pszQueryIn ) : NULL;
+    CPLFree( pszQuery );
+    pszQuery = pszQueryIn != NULL ? CPLStrdup( pszQueryIn ) : NULL;
 
     ClearStatement();
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                           TestCapability()                           */
@@ -314,8 +311,7 @@ int OGRWalkTableLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
 
-    else
-        return OGRWalkLayer::TestCapability( pszCap );
+    return OGRWalkLayer::TestCapability( pszCap );
 }
 
 /************************************************************************/

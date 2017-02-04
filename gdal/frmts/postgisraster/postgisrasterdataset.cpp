@@ -38,6 +38,8 @@
 #include "postgisraster.h"
 #include <math.h>
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 #ifdef _WIN32
@@ -94,40 +96,61 @@ CPL_CVSID("$Id$");
 /************************
  * \brief Constructor
  ************************/
-PostGISRasterDataset::PostGISRasterDataset():VRTDataset(0, 0) {
-
-    papszSubdatasets = NULL;
-    nSrid = -1;
-    nOverviewFactor = 1;
-    nBandsToCreate = 0;
-    poConn = NULL;
-    bRegularBlocking = false;
-    bAllTilesSnapToSameGrid = false;
-
-    bCheckAllTiles = CPLTestBool(
-        CPLGetConfigOption("PR_ALLOW_WHOLE_TABLE_SCAN", "YES"));
-
-    pszSchema = NULL;
-    pszTable = NULL;
-    pszColumn = NULL;
-    pszWhere = NULL;
-    pszProjection = NULL;
+PostGISRasterDataset::PostGISRasterDataset() :
+    VRTDataset(0, 0),
+    papszSubdatasets(NULL),
+    nSrid(-1),
+    nOverviewFactor(1),
+    nBandsToCreate(0),
+    poConn(NULL),
+    bRegularBlocking(false),
+    bAllTilesSnapToSameGrid(false),
+    bCheckAllTiles(CPLTestBool(
+        CPLGetConfigOption("PR_ALLOW_WHOLE_TABLE_SCAN", "YES"))),
+    pszSchema(NULL),
+    pszTable(NULL),
+    pszColumn(NULL),
+    pszWhere(NULL),
+    pszPrimaryKeyName(NULL),
+    bIsFastPK(false),
+    bHasTriedFetchingPrimaryKeyName(false),
+    pszProjection(NULL),
+    // Default
+    resolutionStrategy(AVERAGE_APPROX_RESOLUTION),
+    nMode(NO_MODE),
+    m_nTiles(0),
+    xmin(0.0),
+    ymin(0.0),
+    xmax(0.0),
+    ymax(0.0),
+    papoSourcesHolders(NULL),
+    hQuadTree(NULL),
+    bHasBuiltOverviews(false),
+    nOverviewCount(0),
+    poParentDS(NULL),
+    papoOverviewDS(NULL),
+    bAssumeMultiBandReadPattern(true),
+    nNextExpectedBand(1),
+    nXOffPrev(0),
+    nYOffPrev(0),
+    nXSizePrev(0),
+    nYSizePrev(0),
+    bHasTriedHasSpatialIndex(false),
+    bHasSpatialIndex(false),
+    bBuildQuadTreeDynamically(false),
+    bTilesSameDimension(false),
+    nTileWidth(0),
+  nTileHeight(0)
+{
 
     adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = 0.0;
     adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0.0;
     adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = 0.0;
     adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0.0;
-    adfGeoTransform[GEOTRSFRM_WE_RES] = 0;
-    adfGeoTransform[GEOTRSFRM_NS_RES] = 0;
-
     adfGeoTransform[GEOTRSFRM_WE_RES] =
         CPLAtof(CPLGetConfigOption("PR_WE_RES", NO_VALID_RES));
-
     adfGeoTransform[GEOTRSFRM_NS_RES] =
         CPLAtof(CPLGetConfigOption("PR_NS_RES", NO_VALID_RES));
-
-    // Default
-    resolutionStrategy = AVERAGE_APPROX_RESOLUTION;
 
     const char * pszTmp = NULL;
     // We ignore this option if we provided the desired resolution
@@ -152,10 +175,9 @@ PostGISRasterDataset::PostGISRasterDataset():VRTDataset(0, 0) {
 
         else if (EQUAL(pszTmp, "AVERAGE"))
             resolutionStrategy = AVERAGE_RESOLUTION;
-
     }
-
-    else {
+    else
+    {
         resolutionStrategy = USER_RESOLUTION;
 #ifdef DEBUG_VERBOSE
         pszTmp = "USER";
@@ -167,50 +189,18 @@ PostGISRasterDataset::PostGISRasterDataset():VRTDataset(0, 0) {
                 "STRATEGY = %s", pszTmp);
 #endif
 
-    m_nTiles = 0;
-    nMode = NO_MODE;
     poDriver = NULL;
 
-    nRasterXSize = nRasterYSize = 0;
-    pszPrimaryKeyName = NULL;
-    bIsFastPK = false;
-    bHasTriedFetchingPrimaryKeyName = false;
-
-    papoSourcesHolders = NULL;
-    hQuadTree = NULL;
-
-    bHasBuiltOverviews = false;
-    nOverviewCount = 0;
-    papoOverviewDS = NULL;
-    poParentDS = NULL;
-
-    bAssumeMultiBandReadPattern = true;
-    nNextExpectedBand = 1;
-    nXOffPrev = 0;
-    nYOffPrev = 0;
-    nXSizePrev = 0;
-    nYSizePrev = 0;
-
-    bHasTriedHasSpatialIndex = false;
-    bHasSpatialIndex = false;
-
-    bBuildQuadTreeDynamically = false;
-
-    bTilesSameDimension = false;
-    nTileWidth = 0;
-    nTileHeight = 0;
+    nRasterXSize = 0;
+    nRasterYSize = 0;
 
     SetWritable(false);
 
-
-    /**
-     * TODO: Parametrize bAllTilesSnapToSameGrid. It controls if all the
-     * raster rows, in ONE_RASTER_PER_TABLE mode, must be checked to
-     * test if they snap to the same grid and have the same SRID. It can
-     * be the user decision, if he/she's sure all the rows pass the
-     * test and want more speed.
-     **/
-
+    // TODO: Parametrize bAllTilesSnapToSameGrid. It controls if all the
+    // raster rows, in ONE_RASTER_PER_TABLE mode, must be checked to
+    // test if they snap to the same grid and have the same SRID. It can
+    // be the user decision, if he/she's sure all the rows pass the
+    // test and want more speed.
 }
 
 /************************
@@ -265,12 +255,13 @@ PostGISRasterDataset::~PostGISRasterDataset() {
     // of the deleting the source holders just below.
     CloseDependentDatasets();
 
-    if (papoSourcesHolders) {
+    if (papoSourcesHolders)
+    {
         int i;
-        for(i = 0; i < m_nTiles; i++) {
+        for(i = 0; i < m_nTiles; i++)
+        {
             if (papoSourcesHolders[i])
                 delete papoSourcesHolders[i];
-
         }
 
         VSIFree(papoSourcesHolders);
@@ -441,13 +432,11 @@ const char * PostGISRasterDataset::GetPrimaryKeyRef()
             pszSchema, pszTable);
 
             pszPrimaryKeyName = NULL; // Just in case
-
         }
-
-        else {
+        else
+        {
             pszPrimaryKeyName = CPLStrdup(PQgetvalue(poResult, 0, 0));
         }
-
     }
 
     // Ok, get the primary key
@@ -460,7 +449,6 @@ const char * PostGISRasterDataset::GetPrimaryKeyRef()
 
     return pszPrimaryKeyName;
 }
-
 
 /***********************************************************************
  * \brief Look for raster tables in database and store them as
@@ -488,7 +476,6 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
     PGresult * poResult = NULL;
     CPLString osCommand;
 
-
     /*************************************************************
      * Fetch all the raster tables and store them as subdatasets
      *************************************************************/
@@ -515,7 +502,6 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
             return false;
         }
 
-
         nTuples = PQntuples(poResult);
         for (i = 0; i < nTuples; i++) {
             l_pszSchema = PQgetvalue(poResult, i, 0);
@@ -535,13 +521,13 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
         }
 
         PQclear(poResult);
-
     }
         /***************************************************************
          * Fetch all the schema's raster tables and store them as
          * subdatasets
          **************************************************************/
-    else {
+    else
+    {
         osCommand.Printf("select pg_class.relname as table, "
             "pg_attribute.attname as column from pg_class, "
             "pg_namespace,pg_attribute, pg_type where "
@@ -566,7 +552,6 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
             return false;
         }
 
-
         nTuples = PQntuples(poResult);
         for (i = 0; i < nTuples; i++) {
             l_pszTable = PQgetvalue(poResult, i, 0);
@@ -589,7 +574,6 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
 
     return true;
 }
-
 
 /***********************************************************************
  * \brief Look for overview tables for the bands of the current dataset
@@ -664,7 +648,6 @@ PROverview * PostGISRasterDataset::GetOverviewTables(int * pnOverviews)
 
         poOV[iOVerview].nFactor =
             atoi(PQgetvalue(poResult, iOVerview, 1));
-
     }
 
     if (pnOverviews)
@@ -1092,7 +1075,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
             }
             if( bFetchTile )
             {
-                if( osIDsToFetch.size() != 0 )
+                if( !osIDsToFetch.empty() )
                     osIDsToFetch += ",";
                 osIDsToFetch += "'";
                 osIDsToFetch += pszPKID;
@@ -1103,7 +1086,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
         PQclear(poResult);
     }
 
-    if( bFetchAll || osIDsToFetch.size() != 0 || osSpatialFilter.size() != 0 )
+    if( bFetchAll || !osIDsToFetch.empty() || !osSpatialFilter.empty() )
     {
         osCommand.Printf("SELECT %s, ST_Metadata(%s)",
                          pszPrimaryKeyName, pszColumn);
@@ -1116,7 +1099,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
         }
         osCommand += CPLSPrintf(" FROM %s.%s",
                                 pszSchema, pszTable);
-        if( osIDsToFetch.size() != 0 )
+        if( !osIDsToFetch.empty() )
         {
             osCommand += " WHERE ";
             osCommand += pszPrimaryKeyName;
@@ -1124,7 +1107,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
             osCommand += osIDsToFetch;
             osCommand += ")";
         }
-        else if ( osSpatialFilter.size() != 0 )
+        else if ( !osSpatialFilter.empty() )
         {
             osCommand += " WHERE ";
             osCommand += osSpatialFilter;
@@ -1254,7 +1237,6 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
         return NULL;
     }
 
-
     int iBand = 0;
 
     for(iBand = 0; iBand < nTuples; iBand++) {
@@ -1309,7 +1291,6 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
     PQclear(poResult);
 
     return poBMD;
-
 }
 
 /***********************************************************************
@@ -1455,7 +1436,6 @@ PostGISRasterTileDataset* PostGISRasterDataset::BuildRasterTileDataset(const cha
     return poRTDS;
 }
 
-
 /********************************************************
  * \brief Updates components GEOTRSFRM_WE_RES and GEOTRSFRM_NS_RES
  *        of dataset adfGeoTransform
@@ -1472,7 +1452,7 @@ void PostGISRasterDataset::UpdateGlobalResolutionWithTileResolution(
 
     else if (resolutionStrategy == HIGHEST_RESOLUTION)  {
         adfGeoTransform[GEOTRSFRM_WE_RES] =
-            MIN(adfGeoTransform[GEOTRSFRM_WE_RES],
+            std::min(adfGeoTransform[GEOTRSFRM_WE_RES],
                 tilePixelSizeX);
 
         /**
@@ -1490,29 +1470,28 @@ void PostGISRasterDataset::UpdateGlobalResolutionWithTileResolution(
             **/
         if (tilePixelSizeY < 0.0)
             adfGeoTransform[GEOTRSFRM_NS_RES] =
-                MAX(adfGeoTransform[GEOTRSFRM_NS_RES],
+                std::max(adfGeoTransform[GEOTRSFRM_NS_RES],
                 tilePixelSizeY);
         else
             adfGeoTransform[GEOTRSFRM_NS_RES] =
-                MIN(adfGeoTransform[GEOTRSFRM_NS_RES],
+                std::min(adfGeoTransform[GEOTRSFRM_NS_RES],
                 tilePixelSizeY);
     }
 
     else if (resolutionStrategy == LOWEST_RESOLUTION) {
         adfGeoTransform[GEOTRSFRM_WE_RES] =
-            MAX(adfGeoTransform[GEOTRSFRM_WE_RES],
+            std::max(adfGeoTransform[GEOTRSFRM_WE_RES],
                 tilePixelSizeX);
 
         if (tilePixelSizeY < 0.0)
             adfGeoTransform[GEOTRSFRM_NS_RES] =
-                MIN(adfGeoTransform[GEOTRSFRM_NS_RES],
+                std::min(adfGeoTransform[GEOTRSFRM_NS_RES],
                 tilePixelSizeY);
         else
             adfGeoTransform[GEOTRSFRM_NS_RES] =
-                MAX(adfGeoTransform[GEOTRSFRM_NS_RES],
+                std::max(adfGeoTransform[GEOTRSFRM_NS_RES],
                 tilePixelSizeY);
     }
-
 }
 
 /***********************************************************************
@@ -1676,7 +1655,6 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
             CPLAtof(papszParams[POS_SCALEY]);
 
         CSLDestroy(papszParams);
-
     }
 
     /**
@@ -1733,7 +1711,6 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
             }
 
             papoSourcesHolders[nValidTiles++] = poRTDS;
-
         } // end for
 
         l_nTiles = nValidTiles;
@@ -1748,7 +1725,6 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
             adfGeoTransform[GEOTRSFRM_WE_RES] /= l_nTiles;
             adfGeoTransform[GEOTRSFRM_NS_RES] /= l_nTiles;
         }
-
     } // end else
 
     /**
@@ -1832,8 +1808,6 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
 
     return true;
 }
-
-
 
 /***********************************************************************
  * \brief Construct subdatasets and show them.
@@ -1933,8 +1907,6 @@ const char * pszValidConnectionString)
     return true;
 }
 
-
-
 /***********************************************************************
  * \brief Set the general raster properties.
  *
@@ -2025,13 +1997,12 @@ GBool PostGISRasterDataset::SetRasterProperties
         // Query execution error
         if(poResult == NULL ||
             PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-            PQntuples(poResult) < 0) {
-
+            PQntuples(poResult) < 0)
+        {
             bNeedToCheckWholeTable = true;
 
             if (poResult)
                 PQclear(poResult);
-
         }
 
         /**
@@ -2073,7 +2044,8 @@ GBool PostGISRasterDataset::SetRasterProperties
         }
 
         // We should check whole table but we can't
-        if (bNeedToCheckWholeTable && !bCheckAllTiles) {
+        if (bNeedToCheckWholeTable && !bCheckAllTiles)
+        {
             ReportError(CE_Failure, CPLE_AppDefined, "Cannot find "
             "information about %s.%s table in raster_columns view. "
             "Please, execute AddRasterConstraints PostGIS function to "
@@ -2088,7 +2060,6 @@ GBool PostGISRasterDataset::SetRasterProperties
             PQclear(poResult);
 
             return false;
-
         }
 
         // We should check the whole table and we can
@@ -2140,7 +2111,6 @@ GBool PostGISRasterDataset::SetRasterProperties
 
         return false;
     }
-
 
     /**
      * Found more than one SRID value in the table. Not allowed.
@@ -2412,7 +2382,6 @@ GBool PostGISRasterDataset::SetRasterProperties
         return res;
     }
 
-
     /***************************************************************
      * One raster per row: collect subdatasets
      **************************************************************/
@@ -2502,7 +2471,6 @@ GetConnectionInfo(const char * pszFilename,
         if (tmp == 2) {
             *nMode = ONE_RASTER_PER_TABLE;
         }
-
 
         /* Remove the mode from connection string */
         papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
@@ -2796,11 +2764,11 @@ int PostGISRasterDataset::Identify(GDALOpenInfo* poOpenInfo)
 /***********************************************************************
  * \brief Open a connection with PostgreSQL. The connection string will
  * have the PostgreSQL accepted format, plus the next key=value pairs:
- *  schema = <schema_name>
- *  table = <table_name>
- *  column = <column_name>
- *  where = <SQL where>
- *  mode = <working mode> (1 or 2)
+ *  schema = &lt;schema_name&gt;
+ *  table = &lt;table_name&gt;
+ *  column = &lt;column_name&gt;
+ *  where = &lt;SQL where&gt;
+ *  mode = &lt;working mode&gt; (1 or 2)
  *
  * These pairs are used for selecting the right raster table.
  **********************************************************************/
@@ -2833,7 +2801,6 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         CPLFree(pszWhere);
         return NULL;
     }
-
 
     /*******************************************************************
      * No table will be read. Only shows information about the existent
@@ -2911,7 +2878,6 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
 
     CPLFree(pszConnectionString);
     return poDS;
-
 }
 
 /************************************************************************/
@@ -3004,7 +2970,6 @@ CPLErr PostGISRasterDataset::SetProjection(const char * pszProjectionRef) {
 
         // update class attribute
         nSrid = nFetchedSrid;
-
 
         // update raster_columns table
         osCommand.Printf("UPDATE raster_columns SET srid=%d WHERE \
@@ -3100,7 +3065,6 @@ CPLErr PostGISRasterDataset::GetGeoTransform(double * padfGeoTransform) {
 
     return CE_None;
 }
-
 
 /*********************************************************
  * \brief Fetch files forming dataset.

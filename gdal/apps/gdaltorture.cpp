@@ -183,7 +183,6 @@ static void TortureDS(const char *pszTarget, int bReadWriteOperations)
     GDALClose(hDS);
 }
 
-
 /************************************************************************/
 /*                       ProcessTortureTarget()                         */
 /************************************************************************/

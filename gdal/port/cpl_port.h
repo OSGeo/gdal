@@ -82,7 +82,6 @@
 #error "Unexpected value for SIZEOF_VOIDP"
 #endif
 
-
 /* ==================================================================== */
 /*      This will disable most WIN32 stuff in a Cygnus build which      */
 /*      defines unix to 1.                                              */
@@ -92,6 +91,7 @@
 #  undef WIN32
 #endif
 
+/*! @cond Doxygen_Suppress */
 #if defined(VSI_NEED_LARGEFILE64_SOURCE) && !defined(_LARGEFILE64_SOURCE)
 #  define _LARGEFILE64_SOURCE 1
 #endif
@@ -102,7 +102,6 @@
 /*      faster than iconv() for encodings it supports.                  */
 /* ==================================================================== */
 
-/*! @cond Doxygen_Suppress */
 #if defined(HAVE_ICONV)
 #  define CPL_RECODE_ICONV
 #endif
@@ -121,6 +120,14 @@
 #ifndef __MSVCRT_VERSION__
 #define __MSVCRT_VERSION__ 0x0700
 #endif
+#endif
+
+/* Needed for std=c11 on Solaris to have strcasecmp() */
+#if defined(GDAL_COMPILATION) && defined(__sun__) && __STDC_VERSION__ >= 201112L && _XOPEN_SOURCE < 600
+#ifdef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE
+#endif
+#define _XOPEN_SOURCE 600
 #endif
 
 /* ==================================================================== */
@@ -177,7 +184,7 @@
 #    define HAVE_CXX11 1
 #  endif
 /* TODO(schwehr): What are the correct tests for C++ 14 and 17? */
-#endif  /* __cpluscplus */
+#endif  /* __cplusplus */
 
 /*---------------------------------------------------------------------
  *        types for 16 and 32 bits integers, etc...
@@ -225,11 +232,24 @@ typedef unsigned __int64 GUIntBig;
 /** Maximum GUIntBig value */
 #define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
+#define CPL_HAS_GINT64 1
+
+/** Signed 64 bit integer type */
+typedef GIntBig          GInt64;
+/** Unsigned 64 bit integer type */
+typedef GUIntBig         GUInt64;
+
+#define GINT64_MIN      GINTBIG_MIN
+#define GINT64_MAX      GINTBIG_MAX
+#define GUINT64_MAX     GUINTBIG_MAX
+
 #elif HAVE_LONG_LONG
 
-/** 64-bit integer type */
+/** Large signed integer type (generally 64-bit integer type).
+ *  Use GInt64 when exactly 64 bit is needed */
 typedef long long        GIntBig;
-/** 64-bit unsigned integer type */
+/** Large unsigned integer type (generally 64-bit unsigned integer type).
+ *  Use GUInt64 when exactly 64 bit is needed */
 typedef unsigned long long GUIntBig;
 
 /** Minimum GIntBig value */
@@ -239,7 +259,27 @@ typedef unsigned long long GUIntBig;
 /** Maximum GUIntBig value */
 #define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
+/*! @cond Doxygen_Suppress */
+#define CPL_HAS_GINT64 1
+/*! @endcond */
+
+/* Note: we might want to use instead int64_t / uint64_t if they are available */
+
+/** Signed 64 bit integer type */
+typedef GIntBig          GInt64;
+/** Unsigned 64 bit integer type */
+typedef GUIntBig         GUInt64;
+
+/** Minimum GInt64 value */
+#define GINT64_MIN      GINTBIG_MIN
+/** Maximum GInt64 value */
+#define GINT64_MAX      GINTBIG_MAX
+/** Minimum GUInt64 value */
+#define GUINT64_MAX     GUINTBIG_MAX
+
 #else
+
+// NOTE: we don't really support such platforms ! Many things might break
 
 typedef long             GIntBig;
 typedef unsigned long    GUIntBig;
@@ -255,6 +295,22 @@ typedef GIntBig          GPtrDiff_t;
 #else
 /** Integer type large enough to hold the difference between 2 addresses */
 typedef int              GPtrDiff_t;
+#endif
+
+#ifdef GDAL_COMPILATION
+#if HAVE_UINTPTR_T
+#if !defined(_MSC_VER) || _MSC_VER > 1500
+#include <stdint.h>
+#endif
+typedef uintptr_t GUIntptr_t;
+#elif SIZEOF_VOIDP == 8
+typedef GUIntBig GUIntptr_t;
+#else
+typedef unsigned int  GUIntptr_t;
+#endif
+
+#define CPL_IS_ALIGNED(ptr, quant) (((GUIntptr_t)(ptr) % (quant)) == 0)
+
 #endif
 
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
@@ -411,7 +467,7 @@ extern "C++" {
 
 #ifndef M_PI
 /** PI definition */
-# define M_PI		3.14159265358979323846
+# define M_PI 3.14159265358979323846
 /* 3.1415926535897932384626433832795 */
 #endif
 
@@ -597,7 +653,18 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #  define CPLIsNan(x) _isnan(x)
 #  define CPLIsInf(x) (!_isnan(x) && !_finite(x))
 #  define CPLIsFinite(x) _finite(x)
-#elif defined(HAVE_CXX11) && HAVE_CXX11 && defined(__GNUC__)
+#elif defined(__cplusplus) && defined(__MINGW32__) &&  __GNUC__ == 4 && __GNUC_MINOR__ == 2
+/* Hack for compatibility with ancient i586-mingw32msvc toolchain */
+extern "C++" {
+#include <cmath>
+static inline int CPLIsNan(float f) { return std::isnan(f); }
+static inline int CPLIsNan(double f) { return std::isnan(f); }
+static inline int CPLIsInf(float f) { return std::isinf(f); }
+static inline int CPLIsInf(double f) { return std::isinf(f); }
+static inline int CPLIsFinite(float f) { return std::isfinite(f); }
+static inline int CPLIsFinite(double f) { return std::isfinite(f); }
+}
+#elif defined(__GNUC__) && ( __GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 4 ) )
 /* When including <cmath> in C++11 the isnan() macro is undefined, so that */
 /* std::isnan() can work (#6489). This is a GCC specific workaround for now. */
 #  define CPLIsNan(x)    __builtin_isnan(x)
@@ -605,8 +672,20 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #  define CPLIsFinite(x) __builtin_isfinite(x)
 #else
 /** Return whether a floating-pointer number is NaN */
+#if defined(__cplusplus) && defined(__GNUC__) && defined(__linux) && !defined(__ANDROID__)
+/* so to not get warning about conversion from double to float with */
+/* gcc -Wfloat-conversion when using isnan()/isinf() macros */
+extern "C++" {
+static inline int CPLIsNan(float f) { return __isnanf(f); }
+static inline int CPLIsNan(double f) { return __isnan(f); }
+static inline int CPLIsInf(float f) { return __isinff(f); }
+static inline int CPLIsInf(double f) { return __isinf(f); }
+static inline int CPLIsFinite(float f) { return !__isnanf(f) && !__isinff(f); }
+static inline int CPLIsFinite(double f) { return !__isnan(f) && !__isinf(f); }
+}
+#else
 #  define CPLIsNan(x) isnan(x)
-#  ifdef isinf
+#  if defined(isinf) || defined(__FreeBSD__)
 /** Return whether a floating-pointer number is +/- infinty */
 #    define CPLIsInf(x) isinf(x)
 /** Return whether a floating-pointer number is finite */
@@ -619,6 +698,7 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #    define CPLIsInf(x)    (0)
 #    define CPLIsFinite(x) (!isnan(x))
 #  endif
+#endif
 #endif
 
 /*! @cond Doxygen_Suppress */
@@ -681,13 +761,11 @@ template<> struct CPLStaticAssert<true>
 #include <x86intrin.h>
 /** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x) ((GUInt32)(__builtin_bswap32((GUInt32)(x))))
-/* Note: CPL_SWAP64 is not available on every platform. Use #ifdef CPL_SWAP64 */
 /** Byte-swap a 64bit unsigned integer */
-#define CPL_SWAP64(x) ((GUIntBig)(__builtin_bswap64((GUIntBig)(x))))
+#define CPL_SWAP64(x) ((GUInt64)(__builtin_bswap64((GUInt64)(x))))
 #elif defined(_MSC_VER)
 #define CPL_SWAP32(x) ((GUInt32)(_byteswap_ulong((GUInt32)(x))))
-/* Note: CPL_SWAP64 is not available on every platform. Use #ifdef CPL_SWAP64 */
-#define CPL_SWAP64(x) ((GUIntBig)(_byteswap_uint64((GUIntBig)(x))))
+#define CPL_SWAP64(x) ((GUInt64)(_byteswap_uint64((GUInt64)(x))))
 #else
 /** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x) \
@@ -696,6 +774,12 @@ template<> struct CPLStaticAssert<true>
             (((GUInt32)(x) & (GUInt32)0x0000ff00UL) <<  8) | \
             (((GUInt32)(x) & (GUInt32)0x00ff0000UL) >>  8) | \
             (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
+
+/** Byte-swap a 64bit unsigned integer */
+#define CPL_SWAP64(x) \
+            (((GUInt64)(CPL_SWAP32((GUInt32)(x))) << 32) | \
+             (GUInt64)(CPL_SWAP32((GUInt32)((GUInt64)(x) >> 32))))
+
 #endif
 
 /** Byte-swap a 16 bit pointer */
@@ -708,6 +792,8 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[0] = _pabyDataT[1];                                \
     _pabyDataT[1] = byTemp;                                       \
 }
+
+#if defined(MAKE_SANITIZE_HAPPY) || !(defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
 
 /** Byte-swap a 32 bit pointer */
 #define CPL_SWAP32PTR(x) \
@@ -743,22 +829,25 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[4] = byTemp;                                       \
 }
 
+#else
 
-/* Until we have a safe 64 bits integer data type defined, we'll replace
- * this version of the CPL_SWAP64() macro with a less efficient one.
- */
-/*
-#define CPL_SWAP64(x) \
-        ((uint64)( \
-            (uint64)(((uint64)(x) & (uint64)0x00000000000000ffULL) << 56) | \
-            (uint64)(((uint64)(x) & (uint64)0x000000000000ff00ULL) << 40) | \
-            (uint64)(((uint64)(x) & (uint64)0x0000000000ff0000ULL) << 24) | \
-            (uint64)(((uint64)(x) & (uint64)0x00000000ff000000ULL) << 8) | \
-            (uint64)(((uint64)(x) & (uint64)0x000000ff00000000ULL) >> 8) | \
-            (uint64)(((uint64)(x) & (uint64)0x0000ff0000000000ULL) >> 24) | \
-            (uint64)(((uint64)(x) & (uint64)0x00ff000000000000ULL) >> 40) | \
-            (uint64)(((uint64)(x) & (uint64)0xff00000000000000ULL) >> 56) ))
-*/
+/** Byte-swap a 32 bit pointer */
+#define CPL_SWAP32PTR(x) \
+{                                                                           \
+    GUInt32 *_pn32ptr = (GUInt32 *) (x);                                    \
+    CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4); \
+    *_pn32ptr = CPL_SWAP32(*_pn32ptr);                                      \
+}
+
+/** Byte-swap a 64 bit pointer */
+#define CPL_SWAP64PTR(x) \
+{                                                                           \
+    GUInt64 *_pn64ptr = (GUInt64 *) (x);                                    \
+    CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8); \
+    *_pn64ptr = CPL_SWAP64(*_pn64ptr);                                      \
+}
+
+#endif
 
 /** Byte-swap a 64 bit pointer */
 #define CPL_SWAPDOUBLE(p) CPL_SWAP64PTR(p)
@@ -797,10 +886,14 @@ template<> struct CPLStaticAssert<true>
 #  define CPL_MSBPTR64(x)       CPL_SWAP64PTR(x)
 #endif
 
-/** Return a Int16 from the 2 bytes ordered in LSB order at address x */
+/** Return a Int16 from the 2 bytes ordered in LSB order at address x.
+ * @deprecated Use rather CPL_LSBSINT16PTR or CPL_LSBUINT16PTR for explicit
+ * signedness. */
 #define CPL_LSBINT16PTR(x)    ((*(GByte*)(x)) | (*(((GByte*)(x))+1) << 8))
 
-/** Return a Int32 from the 4 bytes ordered in LSB order at address x */
+/** Return a Int32 from the 4 bytes ordered in LSB order at address x.
+ * @deprecated Use rather CPL_LSBSINT32PTR or CPL_LSBUINT32PTR for explicit
+ * signedness. */
 #define CPL_LSBINT32PTR(x)    ((*(GByte*)(x)) | (*(((GByte*)(x))+1) << 8) | \
                               (*(((GByte*)(x))+2) << 16) | (*(((GByte*)(x))+3) << 24))
 
@@ -869,6 +962,28 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #define CPL_SCAN_FUNC_FORMAT( format_idx, arg_idx )
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER >= 1400 && (defined(GDAL_COMPILATION) || defined(CPL_ENABLE_MSVC_ANNOTATIONS))
+#include <sal.h>
+# if _MSC_VER > 1400
+/** Macro into which to wrap the format argument of a printf-like function.
+ * Only used if ANALYZE=1 is specified to nmake */
+#  define CPL_FORMAT_STRING(arg) _Printf_format_string_ arg
+/** Macro into which to wrap the format argument of a sscanf-like function.
+ * Only used if ANALYZE=1 is specified to nmake */
+#  define CPL_SCANF_FORMAT_STRING(arg) _Scanf_format_string_ arg
+# else
+/** Macro into which to wrap the format argument of a printf-like function */
+#  define CPL_FORMAT_STRING(arg) __format_string arg
+/** Macro into which to wrap the format argument of a sscanf-like function. */
+#  define CPL_SCANF_FORMAT_STRING(arg) arg
+# endif
+#else
+/** Macro into which to wrap the format argument of a printf-like function */
+# define CPL_FORMAT_STRING(arg) arg
+/** Macro into which to wrap the format argument of a sscanf-like function. */
+# define CPL_SCANF_FORMAT_STRING(arg) arg
+#endif /* defined(_MSC_VER) && _MSC_VER >= 1400 && defined(GDAL_COMPILATION) */
+
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
 /** Qualifier to warn when the return value of a function is not used */
 #define CPL_WARN_UNUSED_RESULT                        __attribute__((warn_unused_result))
@@ -899,16 +1014,16 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #ifndef __has_attribute
   #define __has_attribute(x) 0  // Compatibility with non-clang compilers.
 #endif
+
 /*! @endcond */
 
-#if ((defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))) || __has_attribute(returns_nonnull)) && !defined(DOXYGEN_SKIP)
+#if ((defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))) || __has_attribute(returns_nonnull)) && !defined(DOXYGEN_SKIP) && !defined(__INTEL_COMPILER)
 /** Qualifier for a function that does not return NULL */
 #  define CPL_RETURNS_NONNULL __attribute__((returns_nonnull))
 #else
 /** Qualifier for a function that does not return NULL */
 #  define CPL_RETURNS_NONNULL
 #endif
-
 
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
 /** restrict keyword to declare that pointers do not alias */
@@ -920,9 +1035,29 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 
 #ifdef __cplusplus
 
+#if HAVE_CXX11 || _MSC_VER >= 1500
+
+/** To be used in public headers only. For non-public headers or .cpp files,
+ * use override directly. */
+#  define CPL_OVERRIDE override
+
+#else
+
+/** To be used in public headers only. For non-public headers or .cpp files,
+ * use override directly. */
+#  define CPL_OVERRIDE
+
+/* For GDAL source compilation only, ignore override if non C++11 compiler */
+#ifdef GDAL_COMPILATION
+#  define override
+#endif
+
+#endif /* HAVE_CXX11 || _MSC_VER >= 1500 */
+
 #if HAVE_CXX11
 /** C++11 final qualifier */
 #  define CPL_FINAL final
+
 /** Helper to remove the copy and assignment constructors so that the compiler
    will not generate the default versions.
 
@@ -934,6 +1069,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #else
 /** C++11 final qualifier */
 #  define CPL_FINAL
+
 /** Helper to remove the copy and assignment constructors so that the compiler
    will not generate the default versions.
 
@@ -961,15 +1097,22 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #endif
 #endif
 
-#if !defined(_MSC_VER) && !defined(__APPLE__)
+#if !defined(_MSC_VER) && !defined(__APPLE__) && !defined(_FORTIFY_SOURCE)
 CPL_C_START
-#ifdef WARN_STANDARD_PRINTF
-int vsnprintf(char *str, size_t size, const char* fmt, va_list args) CPL_WARN_DEPRECATED("Use CPLvsnprintf() instead");
-int snprintf(char *str, size_t size, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(3,4) CPL_WARN_DEPRECATED("Use CPLsnprintf() instead");
-int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use CPLsnprintf() instead");
-#elif defined(GDAL_COMPILATION) && !defined(DONT_DEPRECATE_SPRINTF)
-int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use snprintf() or CPLsnprintf() instead");
-#endif
+#  if defined(GDAL_COMPILATION) && defined(WARN_STANDARD_PRINTF)
+int vsnprintf(char *str, size_t size, const char* fmt, va_list args)
+    CPL_WARN_DEPRECATED("Use CPLvsnprintf() instead");
+int snprintf(char *str, size_t size, const char* fmt, ...)
+    CPL_PRINT_FUNC_FORMAT(3,4)
+    CPL_WARN_DEPRECATED("Use CPLsnprintf() instead");
+int sprintf(char *str, const char* fmt, ...)
+    CPL_PRINT_FUNC_FORMAT(2, 3)
+    CPL_WARN_DEPRECATED("Use CPLsnprintf() instead");
+#  elif defined(GDAL_COMPILATION) && !defined(DONT_DEPRECATE_SPRINTF)
+int sprintf(char *str, const char* fmt, ...)
+    CPL_PRINT_FUNC_FORMAT(2, 3)
+    CPL_WARN_DEPRECATED("Use snprintf() or CPLsnprintf() instead");
+#  endif /* defined(GDAL_COMPILATION) && defined(WARN_STANDARD_PRINTF) */
 CPL_C_END
 #endif /* !defined(_MSC_VER) && !defined(__APPLE__) */
 
@@ -977,12 +1120,6 @@ CPL_C_END
 /*! @cond Doxygen_Suppress */
 #define CPL_CPU_REQUIRES_ALIGNED_ACCESS
 /*! @endcond */
-/** Returns whether a double fits on a int */
-#define CPL_IS_DOUBLE_A_INT(d)  ( (d) >= INT_MIN && (d) <= INT_MAX && (double)(int)(d) == (d) )
-#else
-/* This is technically unspecified behaviour if the double is out of range, but works OK on x86 */
-/** Returns whether a double fits on a int */
-#define CPL_IS_DOUBLE_A_INT(d)  ( (double)(int)(d) == (d) )
 #endif
 
 #ifdef __cplusplus
@@ -1006,7 +1143,7 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 #define HAVE_GCC_SYSTEM_HEADER
 #endif
 
-#if defined(__clang__)
+#if ((defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))) || __GNUC__ >= 7) && HAVE_CXX11
 /** Macro for fallthrough in a switch case construct */
 #  define CPL_FALLTHROUGH [[clang::fallthrough]];
 #else

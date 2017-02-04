@@ -413,7 +413,6 @@ void field2kml(
                     CPLFree( pszUTF8String );
 
                     continue;
-
                 }
                 /***** end *****/
                 else if( EQUAL( name, oFC.endfield ) )
@@ -1121,14 +1120,14 @@ static void ogrkmlSetAltitudeMode( OGRFeature* poOgrFeat, int iField,
 /*                            TrimSpaces()                              */
 /************************************************************************/
 
-static const char* TrimSpaces( string& oText )
+static const char* TrimSpaces( CPLString& oText )
 {
     // SerializePretty() adds a new line before the data
     // ands trailing spaces. I believe this is wrong
     // as it breaks round-tripping.
 
     // Trim trailing spaces.
-    while( oText.size() != 0 && oText[oText.size()-1] == ' ' )
+    while( !oText.empty() && oText.back() == ' ' )
         oText.resize(oText.size()-1);
 
     // Skip leading newline and spaces.
@@ -1425,7 +1424,6 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
                 case kmldom::ALTITUDEMODE_ABSOLUTE:
                     poOgrFeat->SetField( iField, "absolute" );
                     break;
-
                 }
             } else if( poKmlGroundOverlay->has_gx_altitudemode() )
             {
@@ -1456,7 +1454,7 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
 
     if( poKmlFeature->has_snippet() )
     {
-        string oText = poKmlFeature->get_snippet()->get_text();
+        CPLString oText = poKmlFeature->get_snippet()->get_text();
 
         iField = poOgrFeat->GetFieldIndex( oFC.snippetfield );
 
@@ -1509,7 +1507,7 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
 
                 if( iField > -1 && poKmlSimpleData->has_text() )
                 {
-                    string oText = poKmlSimpleData->get_text();
+                    CPLString oText = poKmlSimpleData->get_text();
 
                     poOgrFeat->SetField( iField, TrimSpaces(oText) );
                 }
@@ -1648,10 +1646,9 @@ void kml2FeatureDef(
     SchemaPtr poKmlSchema,
     OGRFeatureDefn * poOgrFeatureDefn )
 {
-    size_t nSimpleFields = poKmlSchema->get_simplefield_array_size();
-    size_t iSimpleField;
+    const size_t nSimpleFields = poKmlSchema->get_simplefield_array_size();
 
-    for( iSimpleField = 0; iSimpleField < nSimpleFields; iSimpleField++ )
+    for( size_t iSimpleField = 0; iSimpleField < nSimpleFields; iSimpleField++ )
     {
         SimpleFieldPtr poKmlSimpleField =
             poKmlSchema->get_simplefield_array_at( iSimpleField );

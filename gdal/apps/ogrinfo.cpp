@@ -35,6 +35,8 @@
 #include "cpl_multiproc.h"
 #include "commonutils.h"
 
+#include <set>
+
 CPL_CVSID("$Id$");
 
 int     bReadOnly = FALSE;
@@ -77,7 +79,8 @@ static void RemoveBOM(GByte* pabyData)
 
 #define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
     do { if (iArg + nExtraArg >= nArgc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", papszArgv[iArg], nExtraArg)); } while(0)
+        Usage(CPLSPrintf("%s option requires %d argument(s)", \
+                         papszArgv[iArg], nExtraArg)); } while( false )
 
 int main( int nArgc, char ** papszArgv )
 
@@ -96,6 +99,7 @@ int main( int nArgc, char ** papszArgv )
     int                 bListMDD = FALSE;
     int                  bShowMetadata = TRUE;
     int         bFeatureCount = TRUE, bExtent = TRUE;
+    bool        bDatasetGetNextFeature = false;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -253,6 +257,8 @@ int main( int nArgc, char ** papszArgv )
             bFeatureCount = FALSE;
         else if( EQUAL(papszArgv[iArg], "-noextent") )
             bExtent = FALSE;
+        else if( EQUAL(papszArgv[iArg],"-rl"))
+            bDatasetGetNextFeature = true;
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
@@ -271,6 +277,11 @@ int main( int nArgc, char ** papszArgv )
 
     if( pszDialect != NULL && pszWHERE != NULL && pszSQLStatement == NULL )
         printf("Warning: -dialect is ignored with -where. Use -sql instead");
+
+    if( bDatasetGetNextFeature && pszSQLStatement )
+    {
+        Usage("-rl is incompatible with -sql");
+    }
 
 #ifdef __AFL_HAVE_MANUAL_CONTROL
     while (__AFL_LOOP(1000)) {
@@ -341,10 +352,88 @@ int main( int nArgc, char ** papszArgv )
                             bShowMetadata,
                             papszExtraMDDomains );
 
+    if( bDatasetGetNextFeature )
+    {
+        nRepeatCount = 0;  // skip layer reporting.
+
+/* -------------------------------------------------------------------- */
+/*      Set filters if provided.                                        */
+/* -------------------------------------------------------------------- */
+        if( pszWHERE != NULL || poSpatialFilter != NULL )
+        {
+            for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
+            {
+                OGRLayer        *poLayer = poDS->GetLayer(iLayer);
+
+                if( poLayer == NULL )
+                {
+                    printf( "FAILURE: Couldn't fetch advertised layer %d!\n",
+                            iLayer );
+                    exit( 1 );
+                }
+
+                if( pszWHERE != NULL )
+                {
+                    if (poLayer->SetAttributeFilter( pszWHERE ) != OGRERR_NONE )
+                    {
+                        printf( "WARNING: SetAttributeFilter(%s) failed on layer %s.\n",
+                                pszWHERE, poLayer->GetName() );
+                    }
+                }
+
+                if( poSpatialFilter != NULL )
+                {
+                    if( pszGeomField != NULL )
+                    {
+                        OGRFeatureDefn      *poDefn = poLayer->GetLayerDefn();
+                        int iGeomField = poDefn->GetGeomFieldIndex(pszGeomField);
+                        if( iGeomField >= 0 )
+                            poLayer->SetSpatialFilter( iGeomField, poSpatialFilter );
+                        else
+                            printf("WARNING: Cannot find geometry field %s.\n",
+                                pszGeomField);
+                    }
+                    else
+                        poLayer->SetSpatialFilter( poSpatialFilter );
+                }
+            }
+        }
+
+        std::set<OGRLayer*> oSetLayers;
+        while( true )
+        {
+            OGRLayer* poLayer = NULL;
+            OGRFeature* poFeature = poDS->GetNextFeature( &poLayer, NULL,
+                                                          NULL, NULL );
+            if( poFeature == NULL )
+                break;
+            if( papszLayers == NULL || poLayer == NULL ||
+                CSLFindString(papszLayers, poLayer->GetName()) >= 0 )
+            {
+                if( bVerbose && poLayer != NULL &&
+                    oSetLayers.find(poLayer) == oSetLayers.end() )
+                {
+                    oSetLayers.insert(poLayer);
+                    int bSummaryOnlyBackup = bSummaryOnly;
+                    bSummaryOnly = TRUE;
+                    ReportOnLayer( poLayer, NULL, NULL, NULL,
+                                   bListMDD, bShowMetadata,
+                                   papszExtraMDDomains,
+                                   bFeatureCount,
+                                   bExtent );
+                    bSummaryOnly = bSummaryOnlyBackup;
+                }
+                if( !bSuperQuiet && !bSummaryOnly )
+                    poFeature->DumpReadable( NULL, papszOptions );
+            }
+            OGRFeature::DestroyFeature( poFeature );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Special case for -sql clause.  No source layers required.       */
 /* -------------------------------------------------------------------- */
-    if( pszSQLStatement != NULL )
+    else if( pszSQLStatement != NULL )
     {
         nRepeatCount = 0;  // skip layer reporting.
 
@@ -506,7 +595,7 @@ static void Usage(const char* pszErrorMsg)
 {
     printf( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where|@filename]\n"
             "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
-            "               [-sql statement|@filename] [-dialect sql_dialect] [-al] [-so] [-fields={YES/NO}]\n"
+            "               [-sql statement|@filename] [-dialect sql_dialect] [-al] [-rl] [-so] [-fields={YES/NO}]\n"
             "               [-geom={YES/NO/SUMMARY}] [-formats] [[-oo NAME=VALUE] ...]\n"
             "               [-nomd] [-listmdd] [-mdd domain|`all`]*\n"
             "               [-nocount] [-noextent]\n"
@@ -827,5 +916,4 @@ static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
 
         CSLDestroy(papszExtraMDDomainsExpanded);
     }
-
 }

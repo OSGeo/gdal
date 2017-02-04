@@ -104,7 +104,7 @@ def dted_4():
 
 def dted_5():
 
-    driver = gdal.GetDriverByName( "GTiff" );
+    driver = gdal.GetDriverByName( "GTiff" )
     ds = driver.Create( 'tmp/n43.dt1.tif', 1201, 1201, 1, gdal.GDT_Int16 )
     ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
     ref_geotransform = (-80.0004166666666663, 0.0008333333333333, 0, 44.0004166666666670, 0, -0.0008333333333333)
@@ -127,7 +127,7 @@ def dted_5():
 
 def dted_6():
 
-    driver = gdal.GetDriverByName( "GTiff" );
+    driver = gdal.GetDriverByName( "GTiff" )
     ds = driver.Create( 'tmp/n43.dt2.tif', 3601, 3601, 1, gdal.GDT_Int16 )
     ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
     ref_geotransform = (-80.0001388888888888888, 0.0002777777777777777, 0, 44.0001388888888888, 0, -0.0002777777777777777)
@@ -204,7 +204,7 @@ def dted_9():
 
     bandSrc = ds.GetRasterBand(1)
 
-    driver = gdal.GetDriverByName( "GTiff" );
+    driver = gdal.GetDriverByName( "GTiff" )
     dsDst = driver.Create( 'tmp/n53.dt1.tif', 601, 1201, 1, gdal.GDT_Int16 )
     dsDst.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
     dsDst.SetGeoTransform((-80.0008333333333333, 0.001666666666667, 0, 54.0004166666666670, 0, -0.0008333333333333))
@@ -221,7 +221,7 @@ def dted_9():
     dsDst = None
 
     ds = gdal.Open( 'tmp/n53.dt1.tif' )
-    driver = gdal.GetDriverByName( "DTED" );
+    driver = gdal.GetDriverByName( "DTED" )
     dsDst = driver.CreateCopy( 'tmp/n53.dt1', ds)
 
     band = dsDst.GetRasterBand(1)

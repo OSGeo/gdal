@@ -28,21 +28,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-H_GDALWMSMiniDriverFactory(TileService)
-
-class GDALWMSMiniDriver_TileService : public GDALWMSMiniDriver {
+class WMSMiniDriver_TileService : public WMSMiniDriver {
 public:
-    GDALWMSMiniDriver_TileService();
-    virtual ~GDALWMSMiniDriver_TileService();
+    WMSMiniDriver_TileService();
+    virtual ~WMSMiniDriver_TileService();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config);
-    virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
-    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
-    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
-
-protected:
-    CPLString m_base_url;
-    CPLString m_version;
-    CPLString m_dataset;
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request, 
+                                const GDALWMSImageRequestInfo &iri, 
+                                const GDALWMSTiledImageRequestInfo &tiri) override;
 };

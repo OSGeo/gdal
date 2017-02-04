@@ -37,8 +37,8 @@ CPL_CVSID("$Id$");
 
 int main(int nArgc, char* papszArgv[])
 {
-    const char  *pszFilename = NULL, *pszOutFilename = NULL;
-    DDFModule  oModule;
+    const char *pszFilename = NULL;
+    const char *pszOutFilename = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Check arguments.                                                */
@@ -72,7 +72,8 @@ int main(int nArgc, char* papszArgv[])
     CPLXMLNode* poXMLDDFModule = CPLSearchXMLNode(poRoot, "=DDFModule");
     if( poXMLDDFModule == NULL )
     {
-        fprintf(stderr, "Cannot find DDFModule node in XML file '%s'\n", pszFilename);
+        fprintf(stderr, "Cannot find DDFModule node in XML file '%s'\n",
+                pszFilename);
         exit( 1 );
     }
 
@@ -97,26 +98,45 @@ int main(int nArgc, char* papszArgv[])
     }
 
     char chInterchangeLevel = '3';
+    chInterchangeLevel =
+        CPLGetXMLValue(poXMLDDFModule, "_interchangeLevel",
+                       CPLSPrintf("%c", chInterchangeLevel))[0];
+
     char chLeaderIden = 'L';
+    chLeaderIden =
+        CPLGetXMLValue(poXMLDDFModule, "_leaderIden",
+                       CPLSPrintf("%c", chLeaderIden))[0];
+
     char chCodeExtensionIndicator = 'E';
+    chCodeExtensionIndicator =
+        CPLGetXMLValue(poXMLDDFModule, "_inlineCodeExtensionIndicator",
+                       CPLSPrintf("%c", chCodeExtensionIndicator))[0];
+
     char chVersionNumber = '1';
+    chVersionNumber = CPLGetXMLValue(poXMLDDFModule, "_versionNumber",
+                                     CPLSPrintf("%c", chVersionNumber))[0];
+
     char chAppIndicator = ' ';
+    chAppIndicator = CPLGetXMLValue(poXMLDDFModule, "_appIndicator",
+                                    CPLSPrintf("%c", chAppIndicator))[0];
+
     const char *pszExtendedCharSet = " ! ";
-    int nSizeFieldLength = 3;
-    int nSizeFieldPos = 4;
-
-    chInterchangeLevel = CPLGetXMLValue(poXMLDDFModule, "_interchangeLevel", CPLSPrintf("%c", chInterchangeLevel))[0];
-    chLeaderIden = CPLGetXMLValue(poXMLDDFModule, "_leaderIden", CPLSPrintf("%c", chLeaderIden))[0];
-    chCodeExtensionIndicator = CPLGetXMLValue(poXMLDDFModule, "_inlineCodeExtensionIndicator", CPLSPrintf("%c", chCodeExtensionIndicator))[0];
-    chVersionNumber = CPLGetXMLValue(poXMLDDFModule, "_versionNumber", CPLSPrintf("%c", chVersionNumber))[0];
-    chAppIndicator = CPLGetXMLValue(poXMLDDFModule, "_appIndicator", CPLSPrintf("%c", chAppIndicator))[0];
     char szExtendedCharSet[4];
-    snprintf(szExtendedCharSet, sizeof(szExtendedCharSet), "%s", CPLGetXMLValue(poXMLDDFModule, "_extendedCharSet", pszExtendedCharSet));
+    snprintf(szExtendedCharSet, sizeof(szExtendedCharSet), "%s",
+             CPLGetXMLValue(poXMLDDFModule, "_extendedCharSet",
+                            pszExtendedCharSet));
     pszExtendedCharSet = szExtendedCharSet;
-    nSizeFieldLength = atoi(CPLGetXMLValue(poXMLDDFModule, "_sizeFieldLength", CPLSPrintf("%d", nSizeFieldLength)));
-    nSizeFieldPos = atoi(CPLGetXMLValue(poXMLDDFModule, "_sizeFieldPos", CPLSPrintf("%d", nSizeFieldPos)));
-    nSizeFieldTag = atoi(CPLGetXMLValue(poXMLDDFModule, "_sizeFieldTag", CPLSPrintf("%d", nSizeFieldTag)));
+    int nSizeFieldLength = 3;
+    nSizeFieldLength = atoi(CPLGetXMLValue(poXMLDDFModule, "_sizeFieldLength",
+                                           CPLSPrintf("%d", nSizeFieldLength)));
 
+    int nSizeFieldPos = 4;
+    nSizeFieldPos = atoi(CPLGetXMLValue(poXMLDDFModule, "_sizeFieldPos",
+                                        CPLSPrintf("%d", nSizeFieldPos)));
+    nSizeFieldTag = atoi(CPLGetXMLValue(poXMLDDFModule, "_sizeFieldTag",
+                                        CPLSPrintf("%d", nSizeFieldTag)));
+
+    DDFModule oModule;
     oModule.Initialize(chInterchangeLevel,
                        chLeaderIden,
                        chCodeExtensionIndicator,
@@ -126,11 +146,13 @@ int main(int nArgc, char* papszArgv[])
                        nSizeFieldLength,
                        nSizeFieldPos,
                        nSizeFieldTag);
-    oModule.SetFieldControlLength(atoi(CPLGetXMLValue(poXMLDDFModule, "_fieldControlLength", CPLSPrintf("%d", oModule.GetFieldControlLength()))));
+    oModule.SetFieldControlLength(atoi(
+        CPLGetXMLValue(poXMLDDFModule, "_fieldControlLength",
+                       CPLSPrintf("%d", oModule.GetFieldControlLength()))));
 
-    int bCreated = FALSE;
+    bool bCreated = false;
 
-    /* Create DDFFieldDefn and DDFRecord elements */
+    // Create DDFFieldDefn and DDFRecord elements.
     psIter = poXMLDDFModule->psChild;
     while( psIter != NULL )
     {
@@ -140,27 +162,42 @@ int main(int nArgc, char* papszArgv[])
             DDFFieldDefn* poFDefn = new DDFFieldDefn();
 
             DDF_data_struct_code eStructCode = dsc_elementary;
-            const char* pszStructCode = CPLGetXMLValue(psIter, "dataStructCode", "");
-            if( strcmp(pszStructCode, "elementary") == 0 ) eStructCode = dsc_elementary;
-            else if( strcmp(pszStructCode, "vector") == 0 ) eStructCode = dsc_vector;
-            else if( strcmp(pszStructCode, "array") == 0 ) eStructCode = dsc_array;
-            else if( strcmp(pszStructCode, "concatenated") == 0 ) eStructCode = dsc_concatenated;
+            const char* pszStructCode =
+                CPLGetXMLValue(psIter, "dataStructCode", "");
+            if( strcmp(pszStructCode, "elementary") == 0 )
+                eStructCode = dsc_elementary;
+            else if( strcmp(pszStructCode, "vector") == 0 )
+                eStructCode = dsc_vector;
+            else if( strcmp(pszStructCode, "array") == 0 )
+                eStructCode = dsc_array;
+            else if( strcmp(pszStructCode, "concatenated") == 0 )
+                eStructCode = dsc_concatenated;
 
             DDF_data_type_code eTypeCode = dtc_char_string;
-            const char* pszTypeCode = CPLGetXMLValue(psIter, "dataTypeCode", "");
-            if( strcmp(pszTypeCode, "char_string") == 0 ) eTypeCode = dtc_char_string;
-            else if( strcmp(pszTypeCode, "implicit_point") == 0 ) eTypeCode = dtc_implicit_point;
-            else if( strcmp(pszTypeCode, "explicit_point") == 0 ) eTypeCode = dtc_explicit_point;
-            else if( strcmp(pszTypeCode, "explicit_point_scaled") == 0 ) eTypeCode = dtc_explicit_point_scaled;
-            else if( strcmp(pszTypeCode, "char_bit_string") == 0 ) eTypeCode = dtc_char_bit_string;
-            else if( strcmp(pszTypeCode, "bit_string") == 0 ) eTypeCode = dtc_bit_string;
-            else if( strcmp(pszTypeCode, "mixed_data_type") == 0 ) eTypeCode = dtc_mixed_data_type;
+            const char* pszTypeCode =
+                CPLGetXMLValue(psIter, "dataTypeCode", "");
+            if( strcmp(pszTypeCode, "char_string") == 0 )
+                eTypeCode = dtc_char_string;
+            else if( strcmp(pszTypeCode, "implicit_point") == 0 )
+                eTypeCode = dtc_implicit_point;
+            else if( strcmp(pszTypeCode, "explicit_point") == 0 )
+                eTypeCode = dtc_explicit_point;
+            else if( strcmp(pszTypeCode, "explicit_point_scaled") == 0 )
+                eTypeCode = dtc_explicit_point_scaled;
+            else if( strcmp(pszTypeCode, "char_bit_string") == 0 )
+                eTypeCode = dtc_char_bit_string;
+            else if( strcmp(pszTypeCode, "bit_string") == 0 )
+                eTypeCode = dtc_bit_string;
+            else if( strcmp(pszTypeCode, "mixed_data_type") == 0 )
+                eTypeCode = dtc_mixed_data_type;
 
-            const char* pszFormatControls = CPLGetXMLValue(psIter, "formatControls", NULL);
+            const char* pszFormatControls =
+                CPLGetXMLValue(psIter, "formatControls", NULL);
             if( eStructCode != dsc_elementary )
                 pszFormatControls = NULL;
 
-            const char* pszArrayDescr = CPLGetXMLValue(psIter, "arrayDescr", "");
+            const char* pszArrayDescr =
+                CPLGetXMLValue(psIter, "arrayDescr", "");
             if( eStructCode == dsc_vector )
                 pszArrayDescr = "";
             else if( eStructCode == dsc_array )
@@ -178,8 +215,9 @@ int main(int nArgc, char* papszArgv[])
                 if( psSubIter->eType == CXT_Element &&
                     strcmp(psSubIter->pszValue, "DDFSubfieldDefn") == 0 )
                 {
-                    poFDefn->AddSubfield( CPLGetXMLValue(psSubIter, "name", ""),
-                                          CPLGetXMLValue(psSubIter, "format", "") );
+                    poFDefn->AddSubfield(
+                        CPLGetXMLValue(psSubIter, "name", ""),
+                        CPLGetXMLValue(psSubIter, "format", "") );
                 }
                 psSubIter = psSubIter->psNext;
             }
@@ -193,21 +231,29 @@ int main(int nArgc, char* papszArgv[])
         else if( psIter->eType == CXT_Element &&
                  strcmp(psIter->pszValue, "DDFRecord") == 0 )
         {
-            //const bool bFirstRecord = !bCreated;
+            // const bool bFirstRecord = !bCreated;
             if( !bCreated )
             {
                 oModule.Create( pszOutFilename );
-                bCreated = TRUE;
+                bCreated = true;
             }
 
             DDFRecord *poRec = new DDFRecord( &oModule );
             std::map<std::string, int> oMapField;
 
-            //if( !bFirstRecord )
-            //    poRec->SetReuseHeader(atoi(CPLGetXMLValue(psIter, "reuseHeader", CPLSPrintf("%d", poRec->GetReuseHeader()))));
-            poRec->SetSizeFieldLength(atoi(CPLGetXMLValue(psIter, "_sizeFieldLength", CPLSPrintf("%d", poRec->GetSizeFieldLength()))));
-            poRec->SetSizeFieldPos(atoi(CPLGetXMLValue(psIter, "_sizeFieldPos", CPLSPrintf("%d", poRec->GetSizeFieldPos()))));
-            poRec->SetSizeFieldTag(atoi(CPLGetXMLValue(psIter, "_sizeFieldTag", CPLSPrintf("%d", poRec->GetSizeFieldTag()))));
+            // if( !bFirstRecord )
+            //     poRec->SetReuseHeader(atoi(
+            //         CPLGetXMLValue(psIter, "reuseHeader",
+            //         CPLSPrintf("%d", poRec->GetReuseHeader()))));
+            poRec->SetSizeFieldLength(atoi(
+                CPLGetXMLValue(psIter, "_sizeFieldLength",
+                               CPLSPrintf("%d", poRec->GetSizeFieldLength()))));
+            poRec->SetSizeFieldPos(atoi(
+                CPLGetXMLValue(psIter, "_sizeFieldPos",
+                               CPLSPrintf("%d", poRec->GetSizeFieldPos()))));
+            poRec->SetSizeFieldTag(atoi(
+                CPLGetXMLValue(psIter, "_sizeFieldTag",
+                               CPLSPrintf("%d", poRec->GetSizeFieldTag()))));
 
             CPLXMLNode* psSubIter = psIter->psChild;
             while( psSubIter != NULL )
@@ -215,11 +261,14 @@ int main(int nArgc, char* papszArgv[])
                 if( psSubIter->eType == CXT_Element &&
                     strcmp(psSubIter->pszValue, "DDFField") == 0 )
                 {
-                    const char* pszFieldName = CPLGetXMLValue(psSubIter, "name", "");
-                    DDFFieldDefn* poFieldDefn = oModule.FindFieldDefn( pszFieldName );
+                    const char* pszFieldName =
+                        CPLGetXMLValue(psSubIter, "name", "");
+                    DDFFieldDefn* poFieldDefn =
+                        oModule.FindFieldDefn( pszFieldName );
                     if( poFieldDefn == NULL )
                     {
-                        fprintf(stderr, "Can't find field '%s'\n", pszFieldName );
+                        fprintf(stderr, "Can't find field '%s'\n",
+                                pszFieldName );
                         exit(1);
                     }
 
@@ -227,11 +276,12 @@ int main(int nArgc, char* papszArgv[])
                     oMapField[pszFieldName] ++ ;
 
                     DDFField *poField = poRec->AddField( poFieldDefn );
-                    const char* pszValue = CPLGetXMLValue(psSubIter, "value", NULL);
+                    const char* pszValue =
+                        CPLGetXMLValue(psSubIter, "value", NULL);
                     if( pszValue != NULL && STARTS_WITH(pszValue, "0x") )
                     {
                         pszValue += 2;
-                        int nDataLen = (int)strlen(pszValue)  / 2;
+                        int nDataLen = (int)strlen(pszValue) / 2;
                         char* pabyData = (char*) malloc(nDataLen);
                         for(int i=0;i<nDataLen;i++)
                         {
@@ -249,7 +299,8 @@ int main(int nArgc, char* papszArgv[])
                                 nLow = c - '0';
                             pabyData[i] = (nHigh << 4) + nLow;
                         }
-                        poRec->SetFieldRaw( poField, nFieldOcc, (const char *) pabyData, nDataLen );
+                        poRec->SetFieldRaw( poField, nFieldOcc,
+                                            (const char *) pabyData, nDataLen );
                         free(pabyData);
                     }
                     else
@@ -259,39 +310,53 @@ int main(int nArgc, char* papszArgv[])
                         while( psSubfieldIter != NULL )
                         {
                             if( psSubfieldIter->eType == CXT_Element &&
-                                strcmp(psSubfieldIter->pszValue, "DDFSubfield") == 0 )
+                                strcmp(psSubfieldIter->pszValue,
+                                       "DDFSubfield") == 0 )
                             {
-                                const char* pszSubfieldName = CPLGetXMLValue(psSubfieldIter, "name", "");
-                                const char* pszSubfieldType = CPLGetXMLValue(psSubfieldIter, "type", "");
-                                const char* pszSubfieldValue = CPLGetXMLValue(psSubfieldIter, NULL, "");
+                                const char* pszSubfieldName =
+                                    CPLGetXMLValue(psSubfieldIter, "name", "");
+                                const char* pszSubfieldType =
+                                    CPLGetXMLValue(psSubfieldIter, "type", "");
+                                const char* pszSubfieldValue =
+                                    CPLGetXMLValue(psSubfieldIter, NULL, "");
                                 int nOcc = oMapSubfield[pszSubfieldName];
                                 oMapSubfield[pszSubfieldName] ++ ;
                                 if( strcmp(pszSubfieldType, "float") == 0 )
                                 {
-                                    poRec->SetFloatSubfield( pszFieldName, nFieldOcc, pszSubfieldName, nOcc,
-                                                           CPLAtof(pszSubfieldValue) );
+                                    poRec->SetFloatSubfield(
+                                        pszFieldName, nFieldOcc,
+                                        pszSubfieldName, nOcc,
+                                        CPLAtof(pszSubfieldValue) );
                                 }
-                                else if( strcmp(pszSubfieldType, "integer") == 0 )
+                                else if( strcmp(pszSubfieldType,
+                                                "integer") == 0 )
                                 {
-                                    poRec->SetIntSubfield( pszFieldName, nFieldOcc, pszSubfieldName, nOcc,
-                                                           atoi(pszSubfieldValue) );
+                                    poRec->SetIntSubfield(
+                                        pszFieldName, nFieldOcc,
+                                        pszSubfieldName, nOcc,
+                                        atoi(pszSubfieldValue) );
                                 }
-                                else if( strcmp(pszSubfieldType, "string") == 0 )
+                                else if( strcmp(pszSubfieldType,
+                                                "string") == 0 )
                                 {
-                                    poRec->SetStringSubfield( pszFieldName, nFieldOcc, pszSubfieldName, nOcc,
-                                                              pszSubfieldValue );
+                                    poRec->SetStringSubfield(
+                                        pszFieldName, nFieldOcc,
+                                        pszSubfieldName, nOcc,
+                                        pszSubfieldValue );
                                 }
-                                else if( strcmp(pszSubfieldType, "binary") == 0 &&
+                                else if( strcmp(pszSubfieldType,
+                                                "binary") == 0 &&
                                          STARTS_WITH(pszSubfieldValue, "0x") )
                                 {
                                     pszSubfieldValue += 2;
-                                    int nDataLen = (int)strlen(pszSubfieldValue) / 2;
+                                    int nDataLen =
+                                        (int)strlen(pszSubfieldValue) / 2;
                                     char* pabyData = (char*) malloc(nDataLen);
                                     for(int i=0;i<nDataLen;i++)
                                     {
-                                        char c;
-                                        int nHigh, nLow;
-                                        c = pszSubfieldValue[2*i];
+                                        int nHigh;
+                                        int nLow;
+                                        char c = pszSubfieldValue[2*i];
                                         if( c >= 'A' && c <= 'F' )
                                             nHigh = 10 + c - 'A';
                                         else
@@ -303,8 +368,10 @@ int main(int nArgc, char* papszArgv[])
                                             nLow = c - '0';
                                         pabyData[i] = (nHigh << 4) + nLow;
                                     }
-                                    poRec->SetStringSubfield( pszFieldName, nFieldOcc, pszSubfieldName, nOcc,
-                                                              pabyData, nDataLen );
+                                    poRec->SetStringSubfield(
+                                        pszFieldName, nFieldOcc,
+                                        pszSubfieldName, nOcc,
+                                        pabyData, nDataLen );
                                     free(pabyData);
                                 }
                             }

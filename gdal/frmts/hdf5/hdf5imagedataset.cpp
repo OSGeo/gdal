@@ -48,6 +48,8 @@
 #include "hdf5dataset.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /* release 1.6.3 or 1.6.4 changed the type of count in some api functions */
@@ -110,11 +112,11 @@ public:
     static GDALDataset  *Open( GDALOpenInfo * );
     static int           Identify( GDALOpenInfo * );
 
-    const char          *GetProjectionRef();
-    virtual int         GetGCPCount( );
-    virtual const char  *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs( );
-    virtual CPLErr GetGeoTransform( double * padfTransform );
+    const char          *GetProjectionRef() override;
+    virtual int         GetGCPCount( ) override;
+    virtual const char  *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs( ) override;
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
 
     Hdf5ProductType GetSubdatasetType() const {return iSubdatasetType;}
     HDF5CSKProductEnum GetCSKProductType() const {return iCSKProductType;}
@@ -174,6 +176,7 @@ HDF5ImageDataset::HDF5ImageDataset() :
     pszGCPProjection(NULL),
     pasGCPList(NULL),
     nGCPCount(0),
+    oSRS( OGRSpatialReference() ),
     dims(NULL),
     maxdims(NULL),
     poH5Objects(NULL),
@@ -245,11 +248,11 @@ class HDF5ImageRasterBand : public GDALPamRasterBand
 public:
 
     HDF5ImageRasterBand( HDF5ImageDataset *, int, GDALDataType );
-    ~HDF5ImageRasterBand();
+    virtual ~HDF5ImageRasterBand();
 
-    virtual CPLErr      IReadBlock( int, int, void * );
-    virtual double      GetNoDataValue( int * );
-    virtual CPLErr      SetNoDataValue( double );
+    virtual CPLErr      IReadBlock( int, int, void * ) override;
+    virtual double      GetNoDataValue( int * ) override;
+    virtual CPLErr      SetNoDataValue( double ) override;
     /*  virtual CPLErr          IWriteBlock( int, int, void * ); */
 };
 
@@ -384,15 +387,15 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     count[poGDS->GetXIndex()]  = nBlockXSize;
 
     const int nSizeOfData = static_cast<int>(H5Tget_size( poGDS->native ));
-    memset( pImage,0,nBlockXSize*nBlockYSize*nSizeOfData );
+    memset( pImage, 0, nBlockXSize * nBlockYSize * nSizeOfData );
 
     /*  blocksize may not be a multiple of imagesize */
-    count[poGDS->GetYIndex()]  = MIN( size_t(nBlockYSize),
-                                    poDS->GetRasterYSize() -
-                                    offset[poGDS->GetYIndex()]);
-    count[poGDS->GetXIndex()]  = MIN( size_t(nBlockXSize),
-                                    poDS->GetRasterXSize()-
-                                    offset[poGDS->GetXIndex()]);
+    count[poGDS->GetYIndex()] =
+        std::min(hsize_t(nBlockYSize),
+                 poDS->GetRasterYSize() - offset[poGDS->GetYIndex()]);
+    count[poGDS->GetXIndex()] =
+        std::min(hsize_t(nBlockXSize),
+                 poDS->GetRasterXSize()- offset[poGDS->GetXIndex()]);
 
 /* -------------------------------------------------------------------- */
 /*      Select block from file space                                    */
@@ -476,7 +479,6 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    /* printf("poOpenInfo->pszFilename %s\n",poOpenInfo->pszFilename); */
     char **papszName =
         CSLTokenizeString2(  poOpenInfo->pszFilename,
                              ":", CSLT_HONOURSTRINGS|CSLT_PRESERVEESCAPES );
@@ -624,7 +626,6 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                        GDALRegister_HDF5Image()                      */
@@ -824,7 +825,7 @@ CPLErr HDF5ImageDataset::CreateProjections()
     /* -------------------------------------------------------------------- */
     /*  Fill the GCPs list.                                                 */
     /* -------------------------------------------------------------------- */
-        nGCPCount = nRasterYSize/nDeltaLat * nRasterXSize/nDeltaLon;
+        nGCPCount = (nRasterYSize/nDeltaLat) * (nRasterXSize/nDeltaLon);
 
         pasGCPList = static_cast<GDAL_GCP *>(
             CPLCalloc( nGCPCount, sizeof( GDAL_GCP ) ) );
@@ -834,12 +835,41 @@ CPLErr HDF5ImageDataset::CreateProjections()
 
         const int nYLimit = (static_cast<int>(nRasterYSize)/nDeltaLat) * nDeltaLat;
         const int nXLimit = (static_cast<int>(nRasterXSize)/nDeltaLon) * nDeltaLon;
+
+        // The original code in https://trac.osgeo.org/gdal/changeset/8066
+        // always add +180 to the longitudes, but without justification
+        // I suspect this might be due to handling products crossing the
+        // antimeridian. Trying to do it just when needed through a heuristics.
+        bool bHasLonNearMinus180 = false;
+        bool bHasLonNearPlus180 = false;
+        bool bHasLonNearZero = false;
         for( int j = 0; j < nYLimit; j+=nDeltaLat )
         {
             for( int i = 0; i < nXLimit; i+=nDeltaLon )
             {
                 const int iGCP =  j * nRasterXSize + i;
-                pasGCPList[k].dfGCPX = static_cast<double>(Longitude[iGCP])+180.0;
+                if( Longitude[iGCP] > 170 && Longitude[iGCP] <= 180 )
+                    bHasLonNearPlus180 = true;
+                if( Longitude[iGCP] < -170 && Longitude[iGCP] >= -180 )
+                    bHasLonNearMinus180 = true;
+                if( fabs(Longitude[iGCP]) < 90 )
+                    bHasLonNearZero = true;
+            }
+        }
+        const char* pszShiftGCP =
+                CPLGetConfigOption("HDF5_SHIFT_GCPX_BY_180", NULL);
+        const bool bAdd180 = (bHasLonNearPlus180 && bHasLonNearMinus180 &&
+                              !bHasLonNearZero && pszShiftGCP == NULL) ||
+                             (pszShiftGCP != NULL && CPLTestBool(pszShiftGCP));
+
+        for( int j = 0; j < nYLimit; j+=nDeltaLat )
+        {
+            for( int i = 0; i < nXLimit; i+=nDeltaLon )
+            {
+                const int iGCP =  j * nRasterXSize + i;
+                pasGCPList[k].dfGCPX = static_cast<double>(Longitude[iGCP]);
+                if( bAdd180 )
+                    pasGCPList[k].dfGCPX += 180.0;
                 pasGCPList[k].dfGCPY = static_cast<double>(Latitude[iGCP]);
 
                 pasGCPList[k].dfGCPPixel = i + 0.5;
@@ -1136,7 +1166,6 @@ void HDF5ImageDataset::CaptureCSKGeoTransform(int iProductType)
         }
     }
 }
-
 
 /************************************************************************/
 /*                          CaptureCSKGCPs()                            */

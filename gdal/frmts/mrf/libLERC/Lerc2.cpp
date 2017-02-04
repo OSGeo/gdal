@@ -103,7 +103,7 @@ bool Lerc2::Set(const BitMask2& bitMask)
 
 // -------------------------------------------------------------------------- ;
 
-unsigned int Lerc2::ComputeNumBytesHeader() const
+unsigned int Lerc2::ComputeNumBytesHeader()
 {
   // header
   unsigned int numBytes = (unsigned int)FileKey().length();
@@ -292,14 +292,14 @@ bool Lerc2::ReadMask(const Byte** ppByte)
 }
 
 void Lerc2::SortQuantArray(const vector<unsigned int>& quantVec,
-    vector<Quant>& sortedQuantVec) const
+    vector<Quant>& sortedQuantVec)
 {
     int numElem = (int)quantVec.size();
     sortedQuantVec.resize(numElem);
 
     for (int i = 0; i < numElem; i++) {
-	sortedQuantVec[i].first = quantVec[i];
-	sortedQuantVec[i].second = i;
+        sortedQuantVec[i].first = quantVec[i];
+        sortedQuantVec[i].second = i;
     }
     sort(sortedQuantVec.begin(), sortedQuantVec.end());
 }

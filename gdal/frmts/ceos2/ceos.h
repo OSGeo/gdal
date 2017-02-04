@@ -27,7 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #ifndef CEOS_H
 #define CEOS_H
 
@@ -41,8 +40,8 @@ CPL_C_START
 
 typedef struct Link_t_struct
 {
-  struct Link_t_struct	*next;
-  void		*object;
+  struct Link_t_struct *next;
+  void          *object;
 } Link_t;
 
 #define HMalloc CPLMalloc
@@ -142,7 +141,6 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 #define CEOS_RADAR_FLIP_DATE 19980101
 #define CEOS_RADAR_FACILITY "CDPF-RSAT"
 
-
 typedef union
 {
     int32          Int32Code;
@@ -160,7 +158,7 @@ typedef struct
     int32          Sequence;
     CeosTypeCode_t TypeCode;
     int32          Length;
-    int32          Flavour;
+    int32          Flavor;
     int32          Subsequence;
     int32          FileId;
     uchar *        Buffer;
@@ -192,7 +190,7 @@ struct CeosSARImageDesc
 
 typedef struct
 {
-    int32          Flavour;
+    int32          Flavor;
     int32          Sensor;
     int32          ProductType;
     int32          FileNamingConvention;
@@ -222,12 +220,10 @@ typedef struct
     int            Type;
 } CeosRecipeType_t;
 
-
 typedef struct
 {
     CeosRecipeType_t *Recipe;
 } CeosSARImageDescRecipe_t;
-
 
 typedef struct
 {
@@ -256,7 +252,6 @@ typedef struct
     TBool PossiblyFlipped;
 } CeosRadarCalibration_t;
 
-
 /* Function prototypes */
 
 void InitEmptyCeosRecord(CeosRecord_t *record, int32 sequence, CeosTypeCode_t typecode, int32 length);
@@ -279,7 +274,7 @@ void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *va
 
 void SetIntCeosField(CeosRecord_t *record, int32 start_byte, int32 length, int32 value);
 
-CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32 fileid, int32 flavour, int32 subsequence);
+CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32 fileid, int32 flavor, int32 subsequence);
 
 void SerializeCeosRecordsToFile(Link_t *record_list, VSILFILE *fp);
 
@@ -305,7 +300,7 @@ void RegisterRecipes(void);
 void FreeRecipes(void);
 
 void AddRecipe( int ( *function )( CeosSARVolume_t *volume, const void *token ),
-		const void *token, const char *name );
+                const void *token, const char *name );
 
 int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token );
 int ScanSARRecipeFCN( CeosSARVolume_t *volume, const void *token );

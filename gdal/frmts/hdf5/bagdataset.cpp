@@ -35,6 +35,8 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
@@ -63,10 +65,10 @@ public:
     BAGDataset();
     virtual ~BAGDataset();
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef(void);
-    virtual char      **GetMetadataDomainList();
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual char      **GetMetadataDomainList() override;
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
     static GDALDataset  *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -97,11 +99,11 @@ public:
 
     bool                    Initialize( hid_t hDataset, const char *pszName );
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual double          GetNoDataValue( int * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual double          GetNoDataValue( int * ) override;
 
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum( int *pbSuccess = NULL );
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum( int *pbSuccess = NULL ) override;
 };
 
 /************************************************************************/
@@ -318,9 +320,11 @@ double BAGRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 {
+    const int nXOff = nBlockXOff * nBlockXSize;
     H5OFFSET_TYPE offset[3] = {
-      static_cast<H5OFFSET_TYPE>(MAX(0, nRasterYSize - (nBlockYOff+1)*nBlockYSize)),
-      static_cast<H5OFFSET_TYPE>(nBlockXOff * nBlockXSize),
+      static_cast<H5OFFSET_TYPE>(
+          std::max(0, nRasterYSize - (nBlockYOff + 1) * nBlockYSize)),
+      static_cast<H5OFFSET_TYPE>(nXOff),
       static_cast<H5OFFSET_TYPE>(0)
     };
 
@@ -329,9 +333,9 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     //  Blocksize may not be a multiple of imagesize.
     hsize_t count[3] = {
-      MIN( size_t(nBlockYSize), GetYSize() - offset[0] ),
-      MIN( size_t(nBlockXSize), GetXSize() - offset[1] ),
-      static_cast<hsize_t>(0)
+        std::min(static_cast<hsize_t>(nBlockYSize), GetYSize() - offset[0]),
+        std::min(static_cast<hsize_t>(nBlockXSize), GetXSize() - offset[1]),
+        static_cast<hsize_t>(0)
     };
 
     if( nRasterYSize - (nBlockYOff+1)*nBlockYSize < 0 )

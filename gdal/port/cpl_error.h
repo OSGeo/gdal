@@ -33,6 +33,9 @@
 
 #include "cpl_port.h"
 
+#include <stdarg.h>
+#include <stddef.h>
+
 /*=====================================================================
                    Error handling functions (cpl_error.c)
  =====================================================================*/
@@ -134,7 +137,7 @@ typedef int CPLErrorNum;
 
 #endif
 
-void CPL_DLL CPLError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (3, 4);
+void CPL_DLL CPLError(CPLErr eErrClass, CPLErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ...)  CPL_PRINT_FUNC_FORMAT (3, 4);
 void CPL_DLL CPLErrorV(CPLErr, CPLErrorNum, const char *, va_list );
 void CPL_DLL CPLEmergencyError( const char * ) CPL_NO_RETURN;
 void CPL_DLL CPL_STDCALL CPLErrorReset( void );
@@ -153,16 +156,22 @@ typedef void (CPL_STDCALL *CPLErrorHandler)(CPLErr, CPLErrorNum, const char*);
 void CPL_DLL CPL_STDCALL CPLLoggingErrorHandler( CPLErr, CPLErrorNum, const char * );
 void CPL_DLL CPL_STDCALL CPLDefaultErrorHandler( CPLErr, CPLErrorNum, const char * );
 void CPL_DLL CPL_STDCALL CPLQuietErrorHandler( CPLErr, CPLErrorNum, const char * );
-void CPLTurnFailureIntoWarning(int bOn );
+void CPLTurnFailureIntoWarning( int bOn );
 
-CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandler(CPLErrorHandler);
-CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandlerEx(CPLErrorHandler, void*);
+CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandler( CPLErrorHandler );
+CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandlerEx( CPLErrorHandler, void* );
 void CPL_DLL CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler );
 void CPL_DLL CPL_STDCALL CPLPushErrorHandlerEx( CPLErrorHandler, void* );
 void CPL_DLL CPL_STDCALL CPLSetCurrentErrorHandlerCatchDebug( int bCatchDebug );
 void CPL_DLL CPL_STDCALL CPLPopErrorHandler(void);
 
-void CPL_DLL CPL_STDCALL CPLDebug( const char *, const char *, ... )  CPL_PRINT_FUNC_FORMAT (2, 3);
+#ifdef WITHOUT_CPLDEBUG
+#define CPLDebug(...)  /* Eat all CPLDebug calls. */
+#else
+void CPL_DLL CPL_STDCALL CPLDebug(const char *, CPL_FORMAT_STRING(const char *), ...)
+    CPL_PRINT_FUNC_FORMAT(2, 3);
+#endif
+
 void CPL_DLL CPL_STDCALL _CPLAssert( const char *, const char *, int ) CPL_NO_RETURN;
 
 #ifdef DEBUG

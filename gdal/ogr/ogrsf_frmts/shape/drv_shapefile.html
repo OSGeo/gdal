@@ -83,6 +83,15 @@ the driver will look at the first shape and if it has M values it will expose th
 layer as having a M dimension. By specifying
 ALL_SHAPES, the driver will iterate over features until a shape with a valid
 M value is found to decide the appropriate layer type.</li>
+
+<li> <b>AUTO_REPACK=</b><i>YES/NO</i>: (OGR &gt;= 2.2) Default to YES in GDAL 2.2.
+Whether the shapefile should be automatically repacked when needed, at dataset
+closing or at FlushCache()/SyncToDisk() time.</li>
+
+<li> <b>DBF_EOF_CHAR=</b><i>YES/NO</i>: (OGR &gt;= 2.2) Default to YES in GDAL 2.2.
+Whether the .DBF should be terminated by a 0x1A end-of-file character, as in the
+DBF spec and done by other software vendors. Previous GDAL versions did not write one.</li>
+
 </ul>
 
 <h2>Spatial and Attribute Indexing</h2>
@@ -195,6 +204,9 @@ the datasource ExecuteSQL() method.</p>
 <p>Starting with GDAL 2.0, REPACK will also result in .shp being rewritten if
 a feature geometry has been modified with SetFeature() and resulted in a change
 of the size the binary encoding of the geometry in the .shp file.</p>
+<p>Starting with GDAL 2.2, REPACK is also done automatically at file closing,
+or at FlushCache()/SyncToDisk() time, since shapefiles with holes can cause
+interoperability issues with other software.</p>
 
 <h2>Field sizes</h2>
 
@@ -246,11 +258,11 @@ emitted when the 2GB limit is reached.</p>
 
 <li><b>SHPT=type</b>: Override the type of shapefile created.  Can be
 one of NULL for a simple .dbf file with no .shp file, POINT, ARC,
-POLYGON or MULTIPOINT for 2D; POINTZ, ARCZ, POLYGONZ or MULTIPOINTZ
+POLYGON or MULTIPOINT for 2D; POINTZ, ARCZ, POLYGONZ, MULTIPOINTZ or MULTIPATCH
 for 3D; POINTM, ARCM, POLYGONM or MULTIPOINTM for measured geometries;
 and POINTZM, ARCZM, POLYGONZM or MULTIPOINTZM for 3D measured
 geometries. The measure support was added in GDAL 2.1. MULTIPATCH
-files are not supported.</li>
+files are supported since GDAL 2.2.</li>
 
 <li> <b>ENCODING=</b><i>value</i>: set the encoding value in the DBF file. The
 default value is "LDID/87".  It is not clear what other values may be
@@ -267,6 +279,14 @@ for .SHP or .DBF files. Defaults to NO.</li>
 <li> <b>DBF_DATE_LAST_UPDATE=</b><i>YYYY-MM-DD</i>: (OGR &gt;= 2.0) Modification
 date to write in DBF header with year-month-day format. If not specified, current date is used.
 Note: behaviour of past GDAL releases was to write 1995-07-26</li>
+
+<li> <b>AUTO_REPACK=</b><i>YES/NO</i>: (OGR &gt;= 2.2) Default to YES in GDAL 2.2.
+Whether the shapefile should be automatically repacked when needed, at dataset
+closing or at FlushCache()/SyncToDisk() time.</li>
+
+<li> <b>DBF_EOF_CHAR=</b><i>YES/NO</i>: (OGR &gt;= 2.2) Default to YES in GDAL 2.2.
+Whether the .DBF should be terminated by a 0x1A end-of-file character, as in the
+DBF spec and done by other software vendors. Previous GDAL versions did not write one.</li>
 
 </ul>
 

@@ -60,6 +60,10 @@ The following open option is available:
 Defaults to YES.</li>
 <li><p><b>GEOREF_SOURCES=string</b>: (GDAL &gt; 2.2) Define which georeferencing sources are
 allowed and their priority order. See <a href="#georeferencing"><i>Georeferencing</i></a> paragraph.</li>
+<li><p><b>USE_TILE_AS_BLOCK=YES/NO</b>: (GDAL &gt; 2.2) Whether to always use the JPEG-2000 block size as the GDAL block size
+Defaults to NO. Setting this option can be useful when doing whole image
+decompression and the image is single-tiled. Note however that the tile size
+must not exceed 2 GB since that's the limit supported by GDAL.</li>
 </ul>
 
 <h2>Creation Options</h2>
@@ -75,12 +79,17 @@ file. Unless GMLJP2V2_DEF is used, the version of the GMLJP2 box will be
 version 1. Defaults to YES.<p>
 
 <li> <b>GMLJP2V2_DEF=filename</b>: (Starting with GDAL 2.0) Indicates whether a GML box
-conforming to the <a href="http://docs.opengeospatial.org/is/08-085r4/08-085r4.html">
-OGC GML in JPEG2000, version 2</a> specification should be included in the
+conforming to the <a href="http://docs.opengeospatial.org/is/08-085r5/08-085r5.html">
+OGC GML in JPEG2000, version 2.0.1</a> specification should be included in the
 file. <i>filename</i> must point to a file with a JSon content that defines how
 the GMLJP2 v2 box should be built. See below section for the syntax of the JSon configuration file.
 It is also possible to directly pass the JSon content inlined as a string.
-If filename is just set to YES, a minimal instance will be built.<p>
+If filename is just set to YES, a minimal instance will be built.
+Note: GDAL 2.0 and 2.1 use the older <a href="http://docs.opengeospatial.org/is/08-085r4/08-085r4.html">
+OGC GML in JPEG2000, version 2.0</a> specification, that differ essentially
+by the content of the gml:domainSet, gml:rangeSet and gmlcov:rangeType elements
+of gmljp2:GMLJP2CoverageCollection.
+<p>
 
 <li> <b>GeoJP2=YES/NO</b>: (Starting with GDAL 1.10) Indicates whether a
 UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification
@@ -274,6 +283,21 @@ the below syntax (elements starting with "#" are documentation, and can be omitt
             "If not specified, GDAL will auto-generate a GMLJP2RectifiedGridCoverage" ],
         "grid_coverage_file": "gmljp2gridcoverage.xml",
 
+        "#grid_coverage_range_type_field_predefined_name_doc": [
+            "New in GDAL 2.2",
+            "One of Color, Elevation_meter or Panchromatic ",
+            "to fill gmlcov:rangeType/swe:DataRecord/swe:field",
+            "Only used if grid_coverage_file is not defined.",
+            "Exclusive with grid_coverage_range_type_file" ],
+        "grid_coverage_range_type_field_predefined_name": "Color",
+
+        "#grid_coverage_range_type_file_doc": [
+            "New in GDAL 2.2",
+            "File that is XML content to put under gml:RectifiedGrid/gmlcov:rangeType",
+            "Only used if grid_coverage_file is not defined.",
+            "Exclusive with grid_coverage_range_type_field_predefined_name" ],
+        "grid_coverage_range_type_file": "grid_coverage_range_type.xml",
+
         "#crs_url_doc": [
             "true for http://www.opengis.net/def/crs/EPSG/0/XXXX CRS URL.",
             "If false, use CRS URN. Default value is true",
@@ -324,14 +348,17 @@ the below syntax (elements starting with "#" are documentation, and can be omitt
         ],
 
         "#gml_filelist_doc" :[
-            "An array of GML files. Can be either GML filenames, ",
+            "An array of GML files or vector files that will be on-the-fly converted",
+            "to GML 3.2. Can be either GML filenames (or other OGR datasource names), ",
             "or a more complete description" ],
         "gml_filelist": [
 
             "my.gml",
 
+            "my.shp",
+
             {
-                "#file_doc": "Can use relative or absolute paths. Exclusive of remote_resource",
+                "#file_doc": "OGR datasource. Can use relative or absolute paths. Exclusive of remote_resource",
                 "file": "converted/test_0.gml",
 
                 "#remote_resource_doc": "URL of a feature collection that must be referenced through a xlink:href",
@@ -359,7 +386,7 @@ the below syntax (elements starting with "#" are documentation, and can be omitt
         ],
 
 
-        "#styles_doc: [ "An array of styles. For example SLD files" ],
+        "#styles_doc": [ "An array of styles. For example SLD files" ],
         "styles" : [
             {
                 "#file_doc": "Can use relative or absolute paths.",
@@ -371,7 +398,7 @@ the below syntax (elements starting with "#" are documentation, and can be omitt
             }
         ],
 
-        "#extensions_doc: [ "An array of extensions." ],
+        "#extensions_doc": [ "An array of extensions." ],
         "extensions" : [
             {
                 "#file_doc": "Can use relative or absolute paths.",
@@ -444,7 +471,8 @@ OPEN_REMOTE_GML is set to YES.</p>
 <li><p> Implemented as <tt>gdal/frmts/openjpeg/openjpegdataset.cpp</tt>.</p></li>
 <li><p> <a href="http://www.jpeg.org/jpeg2000/index.html">Official JPEG-2000 page<a></p></li>
 <li><p> <a href="https://github.com/uclouvain/openjpeg">The OpenJPEG library home page</a></p></li>
-<li><p> <a href="http://docs.opengeospatial.org/is/08-085r4/08-085r4.html">OGC GML in JPEG2000, version 2</a></p></li>
+<li><p> <a href="http://docs.opengeospatial.org/is/08-085r4/08-085r4.html">OGC GML in JPEG2000, version 2.0</a> (GDAL 2.0 and 2.1)</p></li>
+<li><p> <a href="http://docs.opengeospatial.org/is/08-085r5/08-085r5.html">OGC GML in JPEG2000, version 2.0.1</a> (GDAL 2.2 and above)</p></li>
 <li><p> <a href="http://inspire.ec.europa.eu/documents/Data_Specifications/INSPIRE_DataSpecification_OI_v3.0.pdf">
 Inspire Data Specification on Orthoimagery - Technical Guidelines</a></p></li>
 </ul>

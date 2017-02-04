@@ -2942,6 +2942,72 @@ def gpkg_36():
     return 'success'
 
 ###############################################################################
+# Test that we don't crash when generating big overview factors on rasters with big dimensions
+# due to issues in comparing the factor of overviews with the user specified
+# factors
+
+def gpkg_37():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdal.GetDriverByName('GPKG').Create('/vsimem/gpkg_37.gpkg',205000, 200000)
+    ds.SetGeoTransform([100,0.000001,0,100,0,-0.000001])
+    ds = None
+
+    ds = gdal.Open('/vsimem/gpkg_37.gpkg', gdal.GA_Update)
+    ret = ds.BuildOverviews('NONE', [2,4,8,16,32,64,128,256,512,1024,2048])
+    if ret != 0 or gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/gpkg_37.gpkg')
+    return 'success'
+
+###############################################################################
+# Test generating more than 1000 tiles
+
+def gpkg_38():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    # Without padding, immediately after create copy
+    src_ds = gdal.Open('data/small_world.tif')
+    gdaltest.gpkg_dr.CreateCopy('/vsimem/gpkg_38.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=8'] )
+
+    ds = gdal.Open('/vsimem/gpkg_38.gpkg')
+    if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    filesize = gdal.VSIStatL('/vsimem/gpkg_38.gpkg').size
+    gdal.Unlink('/vsimem/gpkg_38.gpkg')
+
+    filename = '/vsimem/||maxlength=%d||gpkg_38.gpkg' % (filesize-100000)
+    with gdaltest.error_handler():
+        ds = gdaltest.gpkg_dr.CreateCopy(filename, src_ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=8'] )
+        ds_is_none = ds is None
+        ds = None
+    gdal.Unlink(filename)
+    if not ds_is_none and gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    filename = '/vsimem/||maxlength=%d||gpkg_38.gpkg' % (filesize-1)
+    with gdaltest.error_handler():
+        ds = gdaltest.gpkg_dr.CreateCopy(filename, src_ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=8'] )
+        ds_is_none = ds is None
+        ds = None
+    gdal.Unlink(filename)
+    if not ds_is_none and gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -2999,9 +3065,11 @@ gdaltest_list = [
     gpkg_34,
     gpkg_35,
     gpkg_36,
+    gpkg_37,
+    gpkg_38,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_35, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_38, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )

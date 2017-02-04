@@ -39,8 +39,8 @@ this file is only about 3k of object code.  */
 
 #include <string.h>  /* for memcpy() and memset() */
 
-#include "md5.h"
 #include "cpl_port.h"
+#include "md5.h"
 
 CPL_CVSID("$Id$");
 
@@ -52,7 +52,7 @@ surprised if they were a performance bottleneck for MD5.  */
 
 static cvs_uint32 getu32(const unsigned char *addr)
 {
-    return (((((unsigned long)addr[3] << 8) | addr[2]) << 8)
+    return (((((cvs_uint32)addr[3] << 8) | addr[2]) << 8)
         | addr[1]) << 8 | addr[0];
 }
 

@@ -176,7 +176,6 @@ static void JPEG2000_VSIL_jas_stream_destroy(jas_stream_t *stream)
     jas_free(stream);
 }
 
-
 /******************************************************************************\
 * Buffer initialization code.
 \******************************************************************************/

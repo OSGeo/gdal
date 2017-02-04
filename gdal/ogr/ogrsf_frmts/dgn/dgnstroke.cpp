@@ -27,11 +27,11 @@
  ****************************************************************************/
 
 #include "dgnlibp.h"
-#include <math.h>
+#include <cmath>
 
 CPL_CVSID("$Id$");
 
-#define DEG_TO_RAD (M_PI/180.0)
+static const double DEG_TO_RAD = M_PI / 180.0;
 
 /************************************************************************/
 /*                         ComputePointOnArc()                          */
@@ -43,10 +43,10 @@ static void ComputePointOnArc2D( double dfPrimary, double dfSecondary,
 
 {
     // dfAxisRotation and dfAngle are supposed to be in Radians
-    double      dfCosRotation = cos(dfAxisRotation);
-    double      dfSinRotation = sin(dfAxisRotation);
-    double      dfEllipseX = dfPrimary * cos(dfAngle);
-    double      dfEllipseY = dfSecondary * sin(dfAngle);
+    const double dfCosRotation = cos(dfAxisRotation);
+    const double dfSinRotation = sin(dfAxisRotation);
+    const double dfEllipseX = dfPrimary * cos(dfAngle);
+    const double dfEllipseY = dfSecondary * sin(dfAngle);
 
     *pdfX = dfEllipseX * dfCosRotation - dfEllipseY * dfSinRotation;
     *pdfY = dfEllipseX * dfSinRotation + dfEllipseY * dfCosRotation;
@@ -75,9 +75,6 @@ int DGNStrokeArc( CPL_UNUSED DGNHandle hFile,
                   DGNElemArc *psArc,
                   int nPoints, DGNPoint * pasPoints )
 {
-    double      dfAngleStep, dfAngle;
-    int         i;
-
     if( nPoints < 2 )
         return FALSE;
 
@@ -88,10 +85,10 @@ int DGNStrokeArc( CPL_UNUSED DGNHandle hFile,
         return FALSE;
     }
 
-    dfAngleStep = psArc->sweepang / (nPoints - 1);
-    for( i = 0; i < nPoints; i++ )
+    const double dfAngleStep = psArc->sweepang / (nPoints - 1);
+    for( int i = 0; i < nPoints; i++ )
     {
-        dfAngle = (psArc->startang + dfAngleStep * i) * DEG_TO_RAD;
+        const double dfAngle = (psArc->startang + dfAngleStep * i) * DEG_TO_RAD;
 
         ComputePointOnArc2D( psArc->primary_axis,
                              psArc->secondary_axis,
@@ -141,11 +138,16 @@ int DGNStrokeCurve( CPL_UNUSED DGNHandle hFile,
 /* -------------------------------------------------------------------- */
 /*      Compute the Compute the slopes/distances of the segments.       */
 /* -------------------------------------------------------------------- */
-    double *padfMx = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
-    double *padfMy = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
-    double *padfD  = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
-    double *padfTx = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
-    double *padfTy = (double *) CPLMalloc(sizeof(double) * nDGNPoints);
+    double *padfMx = static_cast<double *>(
+        CPLMalloc(sizeof(double) * nDGNPoints));
+    double *padfMy = static_cast<double *>(
+        CPLMalloc(sizeof(double) * nDGNPoints));
+    double *padfD  = static_cast<double *>(
+        CPLMalloc(sizeof(double) * nDGNPoints));
+    double *padfTx = static_cast<double *>(
+        CPLMalloc(sizeof(double) * nDGNPoints));
+    double *padfTy = static_cast<double *>(
+        CPLMalloc(sizeof(double) * nDGNPoints));
 
     double dfTotalD = 0.0;
 
@@ -188,7 +190,8 @@ int DGNStrokeCurve( CPL_UNUSED DGNHandle hFile,
         {
             padfTx[k] = (padfMx[k-1] * fabs( padfMx[k+1] - padfMx[k])
                     + padfMx[k] * fabs( padfMx[k-1] - padfMx[k-2] ))
-           / (ABS(padfMx[k+1] - padfMx[k]) + ABS(padfMx[k-1] - padfMx[k-2]));
+           / (std::abs(padfMx[k+1] - padfMx[k]) +
+              std::abs(padfMx[k-1] - padfMx[k-2]));
         }
 
         if( fabs(padfMy[k+1] - padfMy[k]) == 0.0
@@ -200,7 +203,8 @@ int DGNStrokeCurve( CPL_UNUSED DGNHandle hFile,
         {
             padfTy[k] = (padfMy[k-1] * fabs( padfMy[k+1] - padfMy[k])
                     + padfMy[k] * fabs( padfMy[k-1] - padfMy[k-2] ))
-            / (ABS(padfMy[k+1] - padfMy[k]) + ABS(padfMy[k-1] - padfMy[k-2]));
+            / (std::abs(padfMy[k+1] - padfMy[k]) +
+               std::abs(padfMy[k-1] - padfMy[k-2]));
         }
     }
 
@@ -303,23 +307,24 @@ int main( int argc, char ** argv )
 {
     if( argc != 5 )
     {
-        printf( "Usage: stroke primary_axis secondary_axis axis_rotation angle\n" );
+        printf(  // ok
+            "Usage: stroke primary_axis secondary_axis axis_rotation angle\n");
         exit( 1 );
     }
 
-    double      dfX, dfY, dfPrimary, dfSecondary, dfAxisRotation, dfAngle;
+    const double dfPrimary = CPLAtof(argv[1]);
+    const double dfSecondary = CPLAtof(argv[2]);
+    const double dfAxisRotation = CPLAtof(argv[3]) / 180 * M_PI;
+    const double dfAngle = CPLAtof(argv[4]) / 180 * M_PI;
 
-    dfPrimary = CPLAtof(argv[1]);
-    dfSecondary = CPLAtof(argv[2]);
-    dfAxisRotation = CPLAtof(argv[3]) / 180 * M_PI;
-    dfAngle = CPLAtof(argv[4]) / 180 * M_PI;
-
+    double dfX = 0.0;
+    double dfY = 0.0;
     ComputePointOnArc2D( dfPrimary, dfSecondary, dfAxisRotation, dfAngle,
                          &dfX, &dfY );
 
-    printf( "X=%.2f, Y=%.2f\n", dfX, dfY );
+    printf( "X=%.2f, Y=%.2f\n", dfX, dfY );  // ok
 
-    exit( 0 );
+    return 0;
 }
 
 #endif

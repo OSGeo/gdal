@@ -48,7 +48,7 @@ CPLErr OGRDB2DataSource::FlushMetadata()
     CPLDebug("OGRDB2DataSource::FlushMetadata","Write Metadata");
     m_bMetadataDirty = FALSE;
 
-    if( m_osRasterTable.size() )
+    if( !m_osRasterTable.empty() )
     {
         const char* pszIdentifier = GetMetadataItem("IDENTIFIER");
         const char* pszDescription = GetMetadataItem("DESCRIPTION");
@@ -65,12 +65,11 @@ CPLErr OGRDB2DataSource::FlushMetadata()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Set identifier failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 return CE_Failure;
             }
-
         }
         if( !m_bDescriptionAsCO && pszDescription != NULL &&
                 pszDescription != m_osDescription )
@@ -85,7 +84,7 @@ CPLErr OGRDB2DataSource::FlushMetadata()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Set description failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 return CE_Failure;
@@ -129,7 +128,7 @@ CPLErr OGRDB2DataSource::FlushMetadata()
 
     WriteMetadata(psXMLNode, m_osRasterTable.c_str() );
 
-    if( m_osRasterTable.size() )
+    if( !m_osRasterTable.empty() )
     {
         char** papszGeopackageMD = GetMetadata("GEOPACKAGE");
 
@@ -163,12 +162,12 @@ CPLErr OGRDB2DataSource::FlushMetadata()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Set identifier failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 CPLDebug("OGRDB2DataSource::FlushMetadata",
                          "Set identifier failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 return CE_Failure;
@@ -185,12 +184,12 @@ CPLErr OGRDB2DataSource::FlushMetadata()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Set description failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 CPLDebug("OGRDB2DataSource::FlushMetadata",
                          "Set description failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 return CE_Failure;
@@ -233,7 +232,6 @@ CPLErr OGRDB2DataSource::FlushMetadata()
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                            WriteMetadata()                           */
 /************************************************************************/
@@ -241,8 +239,6 @@ CPLErr OGRDB2DataSource::FlushMetadata()
 void OGRDB2DataSource::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed by the method */
                                      const char* pszTableName)
 {
-
-
     int bIsEmpty = (psXMLNode == NULL);
     char *pszXML = NULL;
     if( !bIsEmpty )
@@ -253,6 +249,7 @@ void OGRDB2DataSource::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed
         pszXML = CPLSerializeXMLTree(psMasterXMLNode);
         CPLDestroyXMLNode(psMasterXMLNode);
     }
+    // cppcheck-suppress uselessAssignmentPtrArg
     psXMLNode = NULL;
     CPLDebug("OGRDB2DataSource::WriteMetadata",
              "pszTableName: %s; bIsEmpty: %d", pszTableName, bIsEmpty);
@@ -369,9 +366,9 @@ void OGRDB2DataSource::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed
             else
             {
                 oStatement.Appendf("INSERT INTO gpkg.metadata_reference "
-                                   "(reference_scope, table_name, md_file_id) "
-                                   "VALUES ('table', '%s', %d)",
-                                   pszTableName, nNewId);
+                                   "(reference_scope, md_file_id) "
+                                   "VALUES ('geopackage', %d)",
+                                   nNewId);
             }
         }
         else
@@ -393,7 +390,6 @@ void OGRDB2DataSource::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed
              "exiting");
     return;
 }
-
 
 /************************************************************************/
 /*                        CreateMetadataTables()                        */
@@ -547,8 +543,6 @@ int OGRDB2DataSource::CreateMetadataTables()
     if ( bCreateTriggers && OGRERR_NONE != SQLCommand(hDB, pszMetadataTriggers) )
         return FALSE;
 #endif
-
-
 
     /* From C.11. gpkg_metadata_reference Table 36. gpkg_metadata_reference Table Definition SQL */
     oStatement.Clear();
@@ -715,7 +709,6 @@ int OGRDB2DataSource::HasMetadataTables()
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                      GetMetadataDomainList()                         */
 /************************************************************************/
@@ -724,7 +717,7 @@ char **OGRDB2DataSource::GetMetadataDomainList()
 {
     CPLDebug("OGRDB2DataSource::GetMetadataDomainList","Entering");
     GetMetadata();
-    if( m_osRasterTable.size() != 0 )
+    if( !m_osRasterTable.empty() )
         GetMetadata("GEOPACKAGE");
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
@@ -739,7 +732,7 @@ const char* OGRDB2DataSource::CheckMetadataDomain( const char* pszDomain )
 {
     DB2_DEBUG_ENTER("OGRDB2DataSource::CheckMetadataDomain");
     if( pszDomain != NULL && EQUAL(pszDomain, "GEOPACKAGE") &&
-            m_osRasterTable.size() == 0 )
+            m_osRasterTable.empty() )
     {
         CPLError(CE_Warning, CPLE_IllegalArg,
                  "Using GEOPACKAGE for a non-raster geopackage is not supported. "
@@ -748,7 +741,6 @@ const char* OGRDB2DataSource::CheckMetadataDomain( const char* pszDomain )
     }
     return pszDomain;
 }
-
 
 /************************************************************************/
 /*                            GetMetadata()                             */
@@ -771,7 +763,7 @@ char **OGRDB2DataSource::GetMetadata( const char *pszDomain )
         return GDALPamDataset::GetMetadata( pszDomain );
 
     OGRDB2Statement oStatement( GetSession() );
-    if( m_osRasterTable.size() )
+    if( !m_osRasterTable.empty() )
     {
 
         oStatement.Appendf(
@@ -820,7 +812,7 @@ char **OGRDB2DataSource::GetMetadata( const char *pszDomain )
             {
                 GDALMultiDomainMetadata oLocalMDMD;
                 oLocalMDMD.XMLInit(psXMLNode, FALSE);
-                if( m_osRasterTable.size() && bIsGPKGScope )
+                if( !m_osRasterTable.empty() && bIsGPKGScope )
                 {
                     oMDMD.SetMetadata( oLocalMDMD.GetMetadata(), "GEOPACKAGE" );
                 }
@@ -863,7 +855,7 @@ char **OGRDB2DataSource::GetMetadata( const char *pszDomain )
                 pszMimeType != NULL && EQUAL(pszMimeType, "text/xml") )
             continue;
 
-        if( m_osRasterTable.size() && bIsGPKGScope )
+        if( !m_osRasterTable.empty() && bIsGPKGScope )
         {
             oMDMD.SetMetadataItem( CPLSPrintf("GPKG_METADATA_ITEM_%d", nNonGDALMDIGeopackage),
                                    pszMetadata,
@@ -888,9 +880,7 @@ char **OGRDB2DataSource::GetMetadata( const char *pszDomain )
 #endif
 
     return GDALPamDataset::GetMetadata(pszDomain);
-
 }
-
 
 /************************************************************************/
 /*                          GetMetadataItem()                           */

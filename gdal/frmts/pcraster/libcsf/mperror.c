@@ -12,7 +12,7 @@ static const char * const errolist[ERRORNO]={
 "Illegal cell representation constant",
 "Access denied",
 "Row number to big",
-"Collumn number to big",
+"Column number to big",
 "Map is not a raster file",
 "Illegal conversion",
 "No space on device to write",

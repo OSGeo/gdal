@@ -36,10 +36,9 @@ CPL_CVSID("$Id$");
 /************************
  * \brief Constructor
  ************************/
-PostGISRasterDriver::PostGISRasterDriver()
-{
-    hMutex = NULL;
-}
+PostGISRasterDriver::PostGISRasterDriver() :
+    hMutex(NULL)
+{}
 
 /************************
  * \brief Destructor
@@ -94,7 +93,6 @@ PGconn* PostGISRasterDriver::GetConnection(const char* pszConnectionString,
     std::map<CPLString, PGconn*>::iterator oIter = oMapConnection.find(osKey);
     if( oIter != oMapConnection.end() )
         return oIter->second;
-
 
     /**
      * There's no existing connection. Create a new one.

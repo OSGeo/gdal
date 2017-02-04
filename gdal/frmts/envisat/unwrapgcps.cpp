@@ -79,9 +79,11 @@ static double _suggest_flip_point( const int cnt, GDAL_GCP *gcp )
         hist[idx] += 1 ;
     }
 
-    // find a middle of at least NEMPTY consecutive empty bins and get its middle
-    int i0 = -1 , i1 = -1 , last_is_empty = 0 ;
-    for( int i = 0 ; i < (2*NBIN-1) ; i++ )
+    // Find middle of at least NEMPTY consecutive empty bins and get its middle.
+    int i0 = -1;
+    int i1 = -1;
+    int last_is_empty = 0;
+    for( int i = 0; i < (2*NBIN-1); i++ )
     {
         if ( 0 == hist[i%NBIN] ) // empty
         {
@@ -111,9 +113,8 @@ static double _suggest_flip_point( const int cnt, GDAL_GCP *gcp )
 
     double tmp = ((i1-i0)*0.5+i0)/((float)NBIN) ;
 
-    return (tmp-floor(tmp))*XDIF + XMIN ;
+    return (tmp-floor(tmp))*XDIF + XMIN;
 }
-
 
 void EnvisatUnwrapGCPs( int cnt, GDAL_GCP *gcp )
 {
@@ -128,13 +129,18 @@ void EnvisatUnwrapGCPs( int cnt, GDAL_GCP *gcp )
     double x0_dif , x1_dif ;
 
     {
-        double x0_min, x0_max, x1_min, x1_max ;
+        double x0_min;
+        double x0_max;
+        double x1_min;
+        double x1_max;
 
         {
-            double x0 = gcp[0].dfGCPX ;
+            double x0 = gcp[0].dfGCPX;
             int  flip = (x0>x_flip) ;
-            x0_min = x0_max = x0 ;
-            x1_min = x1_max = x0 - flip*XDIF ;
+            x0_min = x0;
+            x0_max = x0;
+            x1_min = x0 - flip*XDIF;
+            x1_max = x1_min;
             cnt_flip += flip ; // count the flipped values
         }
 

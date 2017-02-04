@@ -27,10 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal.h"
 #include "commonutils.h"
 #include "cpl_string.h"
+#include "gdal.h"
 #include "gnm.h"
+#include "gnm_priv.h"
 
 //#include "ogr_p.h"
 //#include "gnm.h"
@@ -153,14 +154,14 @@ static void Usage(int bShort = TRUE)
     Usage(NULL, bShort);
 }
 
-
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
 #define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
     do { if (iArg + nExtraArg >= nArgc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", papszArgv[iArg], nExtraArg)); } while(0)
+        Usage(CPLSPrintf("%s option requires %d argument(s)", \
+                         papszArgv[iArg], nExtraArg)); } while( false )
 
 int main( int nArgc, char ** papszArgv )
 
@@ -387,7 +388,11 @@ int main( int nArgc, char ** papszArgv )
             exit(1);
         }
 
-        CPLAssert( poDriver != NULL);
+        if( poDriver == NULL )
+        {
+            CPLAssert( false );
+            exit(1);
+        }
 
         printf( "INFO: Open of `%s'\n      using driver `%s' successful.\n",
                     pszDataSource, poDriver->GetDescription() );
@@ -469,7 +474,6 @@ int main( int nArgc, char ** papszArgv )
                 }
             }
         }
-
     }
     else if(stOper == op_create)
     {
@@ -534,7 +538,6 @@ int main( int nArgc, char ** papszArgv )
                    "new dataset at %s\n", CPLFormFilename(pszPath,
                     pszNetworkName, NULL));
         }
-
     }
     else if(stOper == op_import)
     {
@@ -543,7 +546,6 @@ int main( int nArgc, char ** papszArgv )
 
         if(pszInputDataset == NULL)
             Usage("No input dataset name provided");
-
 
         // open
         poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
@@ -786,7 +788,6 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("Features connected successfully\n");
         }
-
     }
     else if(stOper == op_delete)
     {

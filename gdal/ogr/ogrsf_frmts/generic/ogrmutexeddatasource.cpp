@@ -33,21 +33,21 @@
 
 CPL_CVSID("$Id$");
 
-OGRMutexedDataSource::OGRMutexedDataSource(OGRDataSource* poBaseDataSource,
-                                           int bTakeOwnership,
-                                           CPLMutex* hMutexIn,
-                                           int bWrapLayersInMutexedLayer) :
-            m_poBaseDataSource(poBaseDataSource),
-            m_bHasOwnership(bTakeOwnership),
-            m_hGlobalMutex(hMutexIn),
-            m_bWrapLayersInMutexedLayer(bWrapLayersInMutexedLayer)
-{
-}
+OGRMutexedDataSource::OGRMutexedDataSource( OGRDataSource* poBaseDataSource,
+                                            int bTakeOwnership,
+                                            CPLMutex* hMutexIn,
+                                            int bWrapLayersInMutexedLayer ) :
+    m_poBaseDataSource(poBaseDataSource),
+    m_bHasOwnership(bTakeOwnership),
+    m_hGlobalMutex(hMutexIn),
+    m_bWrapLayersInMutexedLayer(bWrapLayersInMutexedLayer)
+{}
 
 OGRMutexedDataSource::~OGRMutexedDataSource()
 {
-    std::map<OGRLayer*, OGRMutexedLayer*>::iterator oIter = m_oMapLayers.begin();
-    for(; oIter != m_oMapLayers.end(); ++oIter )
+    std::map<OGRLayer*, OGRMutexedLayer*>::iterator oIter =
+        m_oMapLayers.begin();
+    for( ; oIter != m_oMapLayers.end(); ++oIter )
         delete oIter->second;
 
     if( m_bHasOwnership )

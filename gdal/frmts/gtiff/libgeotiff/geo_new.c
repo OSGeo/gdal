@@ -79,7 +79,7 @@ GTIF *GTIFNewSimpleTags( void *tif )
 
 GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
 {
-    GTIF* gt=(GTIF*)0;
+    GTIF* gt;
     int count,bufcount,nIndex;
     GeoKey *keyptr;
     pinfo_t *data;

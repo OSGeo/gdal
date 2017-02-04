@@ -66,7 +66,9 @@ class CPGDataset : public RawDataset
     static int  AdjustFilename( char **, const char *, const char * );
     static int FindType1( const char *pszWorkname );
     static int FindType2( const char *pszWorkname );
+#ifdef notdef
     static int FindType3( const char *pszWorkname );
+#endif
     static GDALDataset *InitializeType1Or2Dataset( const char *pszWorkname );
 #ifdef notdef
     static GDALDataset *InitializeType3Dataset( const char *pszWorkname );
@@ -77,12 +79,12 @@ class CPGDataset : public RawDataset
                 CPGDataset();
     virtual ~CPGDataset();
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -151,7 +153,7 @@ class SIRC_QSLCRasterBand : public GDALRasterBand
                    SIRC_QSLCRasterBand( CPGDataset *, int, GDALDataType );
     virtual ~SIRC_QSLCRasterBand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 static const int M11 = 0;
@@ -181,16 +183,15 @@ class CPG_STOKESRasterBand : public GDALRasterBand
 {
     friend class CPGDataset;
 
-    int nBand;
     int bNativeOrder;
 
   public:
-                   CPG_STOKESRasterBand( GDALDataset *poDS, int nBand,
+                   CPG_STOKESRasterBand( GDALDataset *poDS,
                                          GDALDataType eType,
                                          int bNativeOrder );
     virtual ~CPG_STOKESRasterBand() {};
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -298,6 +299,7 @@ int CPGDataset::FindType2( const char *pszFilename )
   return !bNotFound;
 }
 
+#ifdef notdef
 int CPGDataset::FindType3( const char *pszFilename )
 {
   const int nNameLen = static_cast<int>(strlen( pszFilename ));
@@ -318,6 +320,7 @@ int CPGDataset::FindType3( const char *pszFilename )
 
   return !bNotFound;
 }
+#endif
 
 /************************************************************************/
 /*                        LoadStokesLine()                              */
@@ -384,7 +387,6 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
                 padfStokesMatrix = NULL;
                 nLoadedStokesLine = -1;
                 return CE_Failure;
-
             }
         }
     }
@@ -410,7 +412,6 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
                 padfStokesMatrix = NULL;
                 nLoadedStokesLine = -1;
                 return CE_Failure;
-
             }
         }
     }
@@ -442,13 +443,19 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
 
     /* Parameters required for pseudo-geocoding.  GCPs map */
     /* slant range to ground range at 16 points.           */
-    int iGeoParamsFound = 0, itransposed = 0;
-    double dfaltitude = 0.0, dfnear_srd = 0.0;
-    double dfsample_size = 0.0, dfsample_size_az = 0.0;
+    int iGeoParamsFound = 0;
+    int itransposed = 0;
+    double dfaltitude = 0.0;
+    double dfnear_srd = 0.0;
+    double dfsample_size = 0.0;
+    double dfsample_size_az = 0.0;
 
     /* Parameters in geogratis geocoded images */
-    int iUTMParamsFound = 0, iUTMZone=0 /* , iCorner=0 */;
-    double dfnorth = 0.0, dfeast = 0.0;
+    int iUTMParamsFound = 0;
+    int iUTMZone = 0;
+    // int iCorner = 0;
+    double dfnorth = 0.0;
+    double dfeast = 0.0;
 
     char* pszWorkname = CPLStrdup(pszFilename);
     AdjustFilename( &pszWorkname, "hh", "hdr" );
@@ -655,7 +662,8 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
         double dfnorth_center;
         if (itransposed == 1)
         {
-            printf( "Warning: did not have a convair SIRC-style test dataset\n"
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Did not have a convair SIRC-style test dataset\n"
                     "with transposed=1 for testing.  Georeferencing may be "
                     "wrong.\n" );
             dfnorth_center = dfnorth - nSamples*dfsample_size/2.0;
@@ -716,7 +724,6 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
                 /* -1 so that 0,0 maps to largest Y */
                 dfgcpY = -1*sqrt( dftemp*dftemp - dfaltitude*dfaltitude );
                 dfgcpX = dfgcpPixel*dfsample_size_az;
-
             }
             else
             {
@@ -734,7 +741,6 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
                 dftemp = dfnear_srd + (dfsample_size*dfgcpPixel);
                 dfgcpX = sqrt( dftemp*dftemp - dfaltitude*dfaltitude );
                 dfgcpY = (nLines - dfgcpLine)*dfsample_size_az;
-
             }
             poDS->pasGCPList[ngcp].dfGCPX = dfgcpX;
             poDS->pasGCPList[ngcp].dfGCPY = dfgcpY;
@@ -745,14 +751,12 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
 
             CPLFree(poDS->pasGCPList[ngcp].pszId);
             poDS->pasGCPList[ngcp].pszId = CPLStrdup( szID );
-
         }
 
         CPLFree(poDS->pszGCPProjection);
         poDS->pszGCPProjection = CPLStrdup(
             "LOCAL_CS[\"Ground range view / unreferenced meters\","
             "UNIT[\"Meter\",1.0]]");
-
     }
 
     CPLFree(pszWorkname);
@@ -763,14 +767,22 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
 #ifdef notdef
 GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
 {
-    int iBytesPerPixel = 0, iInterleave=-1;
-    int nLines = 0, nSamples = 0, nBands = 0;
+    int iBytesPerPixel = 0;
+    int iInterleave = -1;
+    int nLines = 0;
+    int nSamples = 0;
+    int nBands = 0;
     int nError = 0;
 
     /* Parameters in geogratis geocoded images */
-    int iUTMParamsFound = 0, iUTMZone=0;
-    double dfnorth = 0.0, dfeast = 0.0, dfOffsetX = 0.0, dfOffsetY = 0.0;
-    double dfxsize = 0.0, dfysize = 0.0;
+    int iUTMParamsFound = 0;
+    int iUTMZone = 0;
+    double dfnorth = 0.0;
+    double dfeast = 0.0;
+    double dfOffsetX = 0.0;
+    double dfOffsetY = 0.0;
+    double dfxsize = 0.0;
+    double dfysize = 0.0;
 
     char* pszWorkname = CPLStrdup(pszFilename);
     AdjustFilename( &pszWorkname, "stokes", "img_def" );
@@ -974,7 +986,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
     for( int iBand = 0; iBand < 16; iBand++ )
     {
         CPG_STOKESRasterBand *poBand
-            = new CPG_STOKESRasterBand( poDS, iBand+1, GDT_CFloat32,
+            = new CPG_STOKESRasterBand( poDS, GDT_CFloat32,
                                         !CPL_IS_LSB );
         poDS->SetBand( iBand+1, poBand );
     }
@@ -1322,28 +1334,28 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                        CPG_STOKESRasterBand()                        */
 /************************************************************************/
 
-CPG_STOKESRasterBand::CPG_STOKESRasterBand( GDALDataset *poDSIn, int nBandIn,
+CPG_STOKESRasterBand::CPG_STOKESRasterBand( GDALDataset *poDSIn,
                                             GDALDataType eType,
                                             int bNativeOrderIn ) :
-    nBand(nBandIn),
     bNativeOrder(bNativeOrderIn)
 {
-    static const char * const apszPolarizations[16] = { "Covariance_11",
-                                                 "Covariance_12",
-                                                 "Covariance_13",
-                                                 "Covariance_14",
-                                                 "Covariance_21",
-                                                 "Covariance_22",
-                                                 "Covariance_23",
-                                                 "Covariance_24",
-                                                 "Covariance_31",
-                                                 "Covariance_32",
-                                                 "Covariance_33",
-                                                 "Covariance_34",
-                                                 "Covariance_41",
-                                                 "Covariance_42",
-                                                 "Covariance_43",
-                                                 "Covariance_44" };
+    static const char * const apszPolarizations[16] = {
+        "Covariance_11",
+        "Covariance_12",
+        "Covariance_13",
+        "Covariance_14",
+        "Covariance_21",
+        "Covariance_22",
+        "Covariance_23",
+        "Covariance_24",
+        "Covariance_31",
+        "Covariance_32",
+        "Covariance_33",
+        "Covariance_34",
+        "Covariance_41",
+        "Covariance_42",
+        "Covariance_43",
+        "Covariance_44" };
 
     poDS = poDSIn;
     eDataType = eType;
@@ -1550,7 +1562,6 @@ CPLErr CPG_STOKESRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             m33 += step;
             m44 += step;
         }
-
     }
     else if ( nBand == 12 ) /* C34 */
     {

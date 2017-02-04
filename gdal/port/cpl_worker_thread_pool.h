@@ -57,7 +57,7 @@ typedef struct
     CPLWorkerThreadPool *poTP;
     CPLJoinableThread   *hThread;
     int                  bMarkedAsWaiting;
-    //CPLWorkerThreadJob  *psNextJob;
+    // CPLWorkerThreadJob  *psNextJob;
 
     CPLMutex            *hMutex;
     CPLCond             *hCond;
@@ -69,7 +69,7 @@ typedef enum
     CPLWTS_STOP,
     CPLWTS_ERROR
 } CPLWorkerThreadState;
-#endif
+#endif  // ndef DOXYGEN_SKIP
 
 /** Pool of worker threads */
 class CPL_DLL CPLWorkerThreadPool

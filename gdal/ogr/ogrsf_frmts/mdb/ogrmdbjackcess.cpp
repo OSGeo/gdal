@@ -30,6 +30,11 @@
 
 CPL_CVSID("$Id$");
 
+#if JVM_LIB_DLOPEN
+#include <limits.h>
+#include <stdio.h>
+#endif
+
 static JavaVM *jvm_static = NULL;
 static JNIEnv *env_static = NULL;
 
@@ -148,7 +153,9 @@ OGRMDBJavaEnv::~OGRMDBJavaEnv()
     }
 }
 
-#define CHECK(x, y) do {x = y; if (!x) { CPLError(CE_Failure, CPLE_AppDefined, #y " failed"); return FALSE;} } while(0)
+#define CHECK(x, y) do {x = y; if (!x) { \
+      CPLError(CE_Failure, CPLE_AppDefined, #y " failed"); \
+      return FALSE;} } while( false )
 
 /************************************************************************/
 /*                              Init()                                  */
@@ -160,9 +167,65 @@ int OGRMDBJavaEnv::Init()
     {
         JavaVM* vmBuf[1];
         jsize nVMs;
+        int ret = 0;
+
+#if JVM_LIB_DLOPEN
+#  if defined(__APPLE__) && defined(__MACH__)
+#    define SO_EXT "dylib"
+#  else
+#    define SO_EXT "so"
+#  endif
+        const char *jvmLibPtr = "libjvm." SO_EXT;
+        char jvmLib[PATH_MAX];
+
+        /* libjvm.so's location is hard to predict so
+           ${JAVA_HOME}/bin/java -XshowSettings is executed to find
+           its location. If JAVA_HOME is not set then java is executed
+           from the PATH instead. This is POSIX-compliant code. */
+        FILE *javaCmd = popen("\"${JAVA_HOME}${JAVA_HOME:+/bin/}java\" -XshowSettings 2>&1 | grep 'sun.boot.library.path'", "r");
+
+        if (javaCmd != NULL)
+        {
+            char szTmp[PATH_MAX];
+            size_t javaCmdRead = fread(szTmp, 1, sizeof(szTmp), javaCmd);
+            ret = pclose(javaCmd);
+
+            if (ret == 0 && javaCmdRead >= 2)
+            {
+                /* Chomp the new line */
+                szTmp[javaCmdRead - 1] = '\0';
+                const char* pszPtr = strchr(szTmp, '=');
+                if( pszPtr )
+                {
+                    pszPtr ++;
+                    while( *pszPtr == ' ' )
+                        pszPtr ++;
+                    snprintf(jvmLib, sizeof(jvmLib), "%s/server/libjvm." SO_EXT, pszPtr);
+                    jvmLibPtr = jvmLib;
+                }
+            }
+        }
+
+        CPLDebug("MDB", "Trying %s", jvmLibPtr);
+        jint (*pfnJNI_GetCreatedJavaVMs)(JavaVM **, jsize, jsize *);
+        pfnJNI_GetCreatedJavaVMs = (jint (*)(JavaVM **, jsize, jsize *))
+            CPLGetSymbol(jvmLibPtr, "JNI_GetCreatedJavaVMs");
+
+        if (pfnJNI_GetCreatedJavaVMs == NULL)
+        {
+            CPLDebug("MDB", "Cannot find JNI_GetCreatedJavaVMs function");
+            return FALSE;
+        }
+        else
+        {
+            ret = pfnJNI_GetCreatedJavaVMs(vmBuf, 1, &nVMs);
+        }
+#else
+        ret = JNI_GetCreatedJavaVMs(vmBuf, 1, &nVMs);
+#endif
 
         /* Are we already called from Java ? */
-        if (JNI_GetCreatedJavaVMs(vmBuf, 1, &nVMs) == JNI_OK && nVMs == 1)
+        if (ret == JNI_OK && nVMs == 1)
         {
             jvm = vmBuf[0];
             if (jvm->GetEnv((void **)&env, JNI_VERSION_1_2) == JNI_OK)
@@ -193,11 +256,22 @@ int OGRMDBJavaEnv::Init()
                 args.nOptions = 0;
             args.ignoreUnrecognized = JNI_FALSE;
 
-            int ret = JNI_CreateJavaVM(&jvm, (void **)&env, &args);
+#if JVM_LIB_DLOPEN
+            jint (*pfnJNI_CreateJavaVM)(JavaVM **, void **, void *);
+            pfnJNI_CreateJavaVM = (jint (*)(JavaVM **, void **, void *))
+                CPLGetSymbol(jvmLibPtr, "JNI_CreateJavaVM");
+
+            if (pfnJNI_CreateJavaVM == NULL)
+                return FALSE;
+            else
+                ret = pfnJNI_CreateJavaVM(&jvm, (void **)&env, &args);
+#else
+            ret = JNI_CreateJavaVM(&jvm, (void **)&env, &args);
+#endif
 
             CPLFree(pszClassPathOption);
 
-            if (ret != 0 || jvm == NULL || env == NULL)
+            if (ret != JNI_OK || jvm == NULL || env == NULL)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "JNI_CreateJavaVM failed (%d)", ret);
                 return FALSE;
@@ -277,7 +351,6 @@ int OGRMDBJavaEnv::Init()
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                       ExceptionOccurred()                             */
 /************************************************************************/
@@ -293,7 +366,6 @@ int OGRMDBJavaEnv::ExceptionOccurred()
     }
     return FALSE;
 }
-
 
 /************************************************************************/
 /*                           OGRMDBDatabase()                           */
@@ -413,12 +485,13 @@ OGRMDBTable* OGRMDBDatabase::GetTable(const char* pszTableName)
 /*                           OGRMDBTable()                              */
 /************************************************************************/
 
-OGRMDBTable::OGRMDBTable(OGRMDBJavaEnv* envIn, OGRMDBDatabase* poDBIn, jobject tableIn, const char* pszTableName )
+OGRMDBTable::OGRMDBTable(OGRMDBJavaEnv* envIn, OGRMDBDatabase* poDBIn,
+                         jobject tableIn, const char* pszTableName ) :
+    osTableName( pszTableName )
 {
     this->env = envIn;
     this->poDB = poDBIn;
     this->table = tableIn;
-    osTableName = pszTableName;
     table_iterator_obj = NULL;
     row = NULL;
 }
@@ -494,7 +567,7 @@ int OGRMDBTable::FetchColumns()
         else
             apoColumnLengths.push_back(0);
 
-        //CPLDebug("MDB", "Column %s, type = %d", apoColumnNames[apoColumnNames.size()-1].c_str(), type);
+        //CPLDebug("MDB", "Column %s, type = %d", apoColumnNames.back().c_str(), type);
 
         env->env->DeleteLocalRef(column_type);
 
@@ -690,34 +763,34 @@ void OGRMDBTable::DumpTable()
     int nCols = static_cast<int>(apoColumnNames.size());
     while(GetNextRow())
     {
-        printf("Row = %d\n", iRow ++);
+        printf("Row = %d\n", iRow ++);/*ok*/
         for(int i=0;i<nCols;i++)
         {
-            printf("%s = ", apoColumnNames[i].c_str());
+            printf("%s = ", apoColumnNames[i].c_str());/*ok*/
             if (apoColumnTypes[i] == MDB_Float ||
                 apoColumnTypes[i] == MDB_Double)
             {
-                printf("%.15f\n", GetColumnAsDouble(i));
+                printf("%.15f\n", GetColumnAsDouble(i));/*ok*/
             }
             else if (apoColumnTypes[i] == MDB_Boolean ||
                      apoColumnTypes[i] == MDB_Byte ||
                      apoColumnTypes[i] == MDB_Short ||
                      apoColumnTypes[i] == MDB_Int)
             {
-                printf("%d\n", GetColumnAsInt(i));
+                printf("%d\n", GetColumnAsInt(i));/*ok*/
             }
             else if (apoColumnTypes[i] == MDB_Binary ||
                      apoColumnTypes[i] == MDB_OLE)
             {
                 int nBytes;
                 GByte* pData = GetColumnAsBinary(i, &nBytes);
-                printf("(%d bytes)\n", nBytes);
+                printf("(%d bytes)\n", nBytes);/*ok*/
                 CPLFree(pData);
             }
             else
             {
                 char* val = GetColumnAsString(i);
-                printf("'%s'\n", val);
+                printf("'%s'\n", val);/*ok*/
                 CPLFree(val);
             }
         }

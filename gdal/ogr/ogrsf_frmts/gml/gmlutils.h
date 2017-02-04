@@ -36,6 +36,20 @@
 
 #include "ogr_geometry.h"
 
+typedef enum
+{
+    GML_SWAP_AUTO,
+    GML_SWAP_YES,
+    GML_SWAP_NO,
+} GMLSwapCoordinatesEnum;
+
+typedef enum
+{
+    SRSNAME_SHORT,
+    SRSNAME_OGC_URN,
+    SRSNAME_OGC_URL
+} OGRGMLSRSNameFormat;
+
 const char* GML_ExtractSrsNameFromGeometry(const CPLXMLNode* const * papsGeometry,
                                      std::string& osWork,
                                      bool bConsiderEPSGAsURN);
@@ -50,10 +64,11 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
                                           bool bInvertAxisOrderIfLatLong,
                                           const char* pszDefaultSRSName,
                                           bool bConsiderEPSGAsURN,
+                                          GMLSwapCoordinatesEnum eSwapCoordinates,
                                           int nPseudoBoolGetSecondaryGeometryOption,
                                           void* hCacheSRS,
                                           bool bFaceHoleNegative = false );
 
-char* GML_GetSRSName(const OGRSpatialReference* poSRS, bool bLongSRS, bool *pbCoordSwap);
+char* GML_GetSRSName(const OGRSpatialReference* poSRS, OGRGMLSRSNameFormat eSRSNameFormat, bool *pbCoordSwap);
 
 #endif /* _CPL_GMLREADERP_H_INCLUDED */

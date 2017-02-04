@@ -147,8 +147,6 @@ double PCRasterRasterBand::GetMinimum(
   return result;
 }
 
-
-
 double PCRasterRasterBand::GetMaximum(
          int* success)
 {
@@ -213,8 +211,6 @@ double PCRasterRasterBand::GetMaximum(
   return result;
 }
 
-
-
 CPLErr PCRasterRasterBand::IReadBlock(
     CPL_UNUSED int nBlockXoff,
     int nBlockYoff,
@@ -234,7 +230,6 @@ CPLErr PCRasterRasterBand::IReadBlock(
   return CE_None;
 }
 
-
 CPLErr PCRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag,
                                      int nXOff, int nYOff, int nXSize,
                                      int nYSize, void * pData,
@@ -250,7 +245,8 @@ CPLErr PCRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nPixelSpace, nLineSpace, psExtraArg);
   }
-  else{
+  else
+  {
     // the datatype of the incoming data can be of different type than the
     // cell representation used in the raster
     // 'remember' the GDAL type to distinguish it later on in iWriteBlock
@@ -258,11 +254,8 @@ CPLErr PCRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     return GDALRasterBand::IRasterIO(GF_Write, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nPixelSpace, nLineSpace, psExtraArg);
-
   }
 }
-
-
 
 CPLErr PCRasterRasterBand::IWriteBlock(
     CPL_UNUSED int nBlockXoff,
@@ -358,7 +351,6 @@ CPLErr PCRasterRasterBand::IWriteBlock(
 
   return CE_None;
 }
-
 
 CPLErr PCRasterRasterBand::SetNoDataValue(double nodata)
 {

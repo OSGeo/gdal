@@ -31,7 +31,7 @@ else
 OBJ	=	pngdataset.o
 endif
 
-ifeq ($(LIBZ_SETTING),internal) 
+ifeq ($(LIBZ_SETTING),internal)
 XTRA_OPT	:=	$(XTRA_OPT) -I../zlib
 endif
 

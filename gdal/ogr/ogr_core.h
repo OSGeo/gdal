@@ -153,7 +153,6 @@ typedef struct
 } OGREnvelope;
 #endif
 
-
 /**
  * Simple container for a bounding region in 3D.
  */
@@ -285,11 +284,11 @@ typedef struct
 CPL_C_START
 
 /*! @cond Doxygen_Suppress */
-void CPL_DLL *OGRMalloc( size_t );
-void CPL_DLL *OGRCalloc( size_t, size_t );
-void CPL_DLL *OGRRealloc( void *, size_t );
-char CPL_DLL *OGRStrdup( const char * );
-void CPL_DLL OGRFree( void * );
+void CPL_DLL *OGRMalloc( size_t ) CPL_WARN_DEPRECATED("Use CPLMalloc instead.");
+void CPL_DLL *OGRCalloc( size_t, size_t ) CPL_WARN_DEPRECATED("Use CPLCalloc instead.");
+void CPL_DLL *OGRRealloc( void *, size_t ) CPL_WARN_DEPRECATED("Use CPLRealloc instead.");
+char CPL_DLL *OGRStrdup( const char * ) CPL_WARN_DEPRECATED("Use CPLStrdup instead.");
+void CPL_DLL OGRFree( void * ) CPL_WARN_DEPRECATED("Use CPLFree instead.");
 /*! @endcond */
 
 #ifdef STRICT_OGRERR_TYPE
@@ -449,7 +448,6 @@ typedef enum
     wkbVariantPostGIS1 /**< PostGIS 1.X has different codes for CurvePolygon, MultiCurve and MultiSurface */
 } OGRwkbVariant;
 
-
 #ifndef GDAL_COMPILATION
 /** @deprecated in GDAL 2.0. Use wkbHasZ() or wkbSetZ() instead */
 #define wkb25DBit 0x80000000
@@ -557,7 +555,6 @@ typedef enum
  * Used by OGR_L_AlterFieldDefn().
  */
 #define ALTER_ALL_FLAG             (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG | ALTER_NULLABLE_FLAG | ALTER_DEFAULT_FLAG)
-
 
 /** Validate that fields respect not-null constraints.
  * Used by OGR_F_Validate().
@@ -760,6 +757,8 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define ODsCTransactions       "Transactions"       /**< Dataset capability for dataset transcations */
 #define ODsCEmulatedTransactions "EmulatedTransactions" /**< Dataset capability for emulated dataset transactions */
 #define ODsCMeasuredGeometries "MeasuredGeometries"     /**< Dataset capability for measured geometries support */
+#define ODsCRandomLayerRead     "RandomLayerRead"   /**< Dataset capability for GetNextFeature() returning features from random layers */
+#define ODsCRandomLayerWrite    "RandomLayerWrite " /**< Dataset capability for supporting CreateFeature on layer in random order */
 
 #define ODrCCreateDataSource   "CreateDataSource"   /**< Driver capability for datasource creation */
 #define ODrCDeleteDataSource   "DeleteDataSource"   /**< Driver capability for datasource deletion */
@@ -840,7 +839,6 @@ typedef enum ogr_style_tool_param_brush_id
 #endif
 
 } OGRSTBrushParam;
-
 
 /**
  * List of parameters for use with OGRStyleSymbol.

@@ -45,10 +45,10 @@ using OSGeo.OGR;
 
 /// <summary>
 /// A C# based sample for testing the OGR GEOS support.
-/// </summary> 
+/// </summary>
 
 class OGRGEOS {
-	
+
 	public static void Main(string[] args) {
         Console.WriteLine("");
 
@@ -105,7 +105,7 @@ class OGRGEOS {
             Console.WriteLine("Intersect: wrong result (got true)");
             return -1;
         }
-        
+
         Console.WriteLine("Intersect test OK");
         return 0;
     }

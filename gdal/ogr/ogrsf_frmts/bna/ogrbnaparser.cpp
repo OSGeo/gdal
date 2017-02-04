@@ -65,17 +65,19 @@ const char* BNA_FeatureTypeToStr(BNAFeatureType featureType)
   }
 }
 
+#ifdef DEBUG_VERBOSE
 void BNA_Display(BNARecord* record)
 {
-  fprintf(stderr, "\"%s\", \"%s\", \"%s\", %s\n",
+  fprintf(stderr, "\"%s\", \"%s\", \"%s\", %s\n", /*ok*/
           record->ids[0] ? record->ids[0] : "",
           record->ids[1] ? record->ids[1] : "",
           record->ids[2] ? record->ids[2] : "",
           BNA_FeatureTypeToStr(record->featureType));
   for( int i = 0; i < record->nCoords; i++ )
-    fprintf( stderr, "%f, %f\n", record->tabCoords[i][0],
+    fprintf( stderr, "%f, %f\n", record->tabCoords[i][0], /*ok*/
              record->tabCoords[i][1] );
 }
+#endif
 
 /*
 For a description of the format, see http://www.softwright.com/faq/support/boundary_file_bna_format.html
@@ -159,17 +161,17 @@ static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], VSILFILE* f)
         return BNA_LINE_EOF;
     }
 
-    int bFoundEOL = FALSE;
+    bool bFoundEOL = false;
     while (*ptrCurLine)
     {
         if (*ptrCurLine == 0x0d || *ptrCurLine == 0x0a)
         {
-            bFoundEOL = TRUE;
+            bFoundEOL = true;
             break;
         }
         ptrCurLine ++;
     }
-    if (!bFoundEOL)
+    if( !bFoundEOL )
     {
         if (nRead < LINE_BUFFER_SIZE)
             return BNA_LINE_OK;
@@ -181,11 +183,11 @@ static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], VSILFILE* f)
     {
         if (ptrCurLine == szLineBuffer + LINE_BUFFER_SIZE - 1)
         {
-            char c;
+            char c = '\0';
             nRead = static_cast<int>(VSIFReadL(&c, 1, 1, f));
-            if (nRead == 1)
+            if( nRead == 1 )
             {
-                if (c == 0x0a)
+                if( c == 0x0a )
                 {
                     /* Do nothing */
                 }
@@ -225,7 +227,6 @@ static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], VSILFILE* f)
     return BNA_LINE_OK;
 }
 
-
 BNARecord* BNA_GetNextRecord(VSILFILE* f,
                              int* ok,
                              int* curLine,
@@ -255,7 +256,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
       numChar = 0;
       (*curLine)++;
 
-      int retGetLine = BNA_GetLine(szLineBuffer, f);
+      const int retGetLine = BNA_GetLine(szLineBuffer, f);
       if (retGetLine == BNA_LINE_TOO_LONG)
       {
           detailedErrorMsg = LINE_TOO_LONG;
@@ -278,7 +279,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
         numChar = static_cast<int>(ptrCurLine - ptrBeginLine);
         char c = *ptrCurLine;
         if (c == 0) c = 10;
-        if (inQuotes)
+        if( inQuotes )
         {
           if (c == 10)
           {
@@ -298,7 +299,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
           }
           else if (c == '"')
           {
-            inQuotes = FALSE;
+            inQuotes = false;
           }
           else
           {
@@ -404,7 +405,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
           }
           else if (numField == NB_MIN_BNA_IDS + nbExtraId)
           {
-            int nCoords;
+            int nCoords = 0;
             if (ptrBeginningOfNumber == NULL)
             {
               detailedErrorMsg = INTEGER_NUMBER_EXPECTED;
@@ -419,22 +420,26 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
             }
             else if (nCoords == 1)
             {
-              currentFeatureType = record->featureType = BNA_POINT;
+              currentFeatureType = BNA_POINT;
+              record->featureType = BNA_POINT;
               record->nCoords = 1;
             }
             else if (nCoords == 2)
             {
-              currentFeatureType = record->featureType = BNA_ELLIPSE;
+              currentFeatureType = BNA_ELLIPSE;
+              record->featureType = BNA_ELLIPSE;
               record->nCoords = 2;
             }
             else if (nCoords > 0)
             {
-              currentFeatureType = record->featureType = BNA_POLYGON;
+              currentFeatureType = BNA_POLYGON;
+              record->featureType = BNA_POLYGON;
               record->nCoords = nCoords;
             }
             else
             {
-              currentFeatureType = record->featureType = BNA_POLYLINE;
+              currentFeatureType = BNA_POLYLINE;
+              record->featureType = BNA_POLYLINE;
               record->nCoords = -nCoords;
             }
 
@@ -447,7 +452,8 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
               {
                 if (tmpBufferLength[i] && tmpBuffer[i][0])
                 {
-                  record->ids[i] = (char*)CPLMalloc(tmpBufferLength[i] + 1);
+                  record->ids[i] = static_cast<char *>(
+                      CPLMalloc(tmpBufferLength[i] + 1));
                   tmpBuffer[i][tmpBufferLength[i]] = 0;
                   memcpy(record->ids[i], tmpBuffer[i], tmpBufferLength[i] + 1);
                 }
@@ -512,7 +518,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
         {
           if (numField < NB_MIN_BNA_IDS)
           {
-            inQuotes = TRUE;
+            inQuotes = true;
           }
           else if ( numField >= NB_MIN_BNA_IDS
                     && currentFeatureType == BNA_UNKNOWN)
@@ -525,7 +531,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
                 goto error;
               }
               nbExtraId ++;
-              inQuotes = TRUE;
+              inQuotes = true;
             }
             else
             {

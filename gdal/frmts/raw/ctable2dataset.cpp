@@ -51,10 +51,10 @@ class CTable2Dataset : public RawDataset
                 CTable2Dataset();
     virtual ~CTable2Dataset();
 
-    virtual CPLErr SetGeoTransform( double * padfTransform );
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef();
-    virtual void   FlushCache(void);
+    virtual CPLErr SetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef() override;
+    virtual void   FlushCache(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -75,7 +75,9 @@ class CTable2Dataset : public RawDataset
 
 CTable2Dataset::CTable2Dataset() :
     fpImage(NULL)
-{}
+{
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
+}
 
 /************************************************************************/
 /*                            ~CTable2Dataset()                          */
@@ -313,7 +315,6 @@ CPLErr CTable2Dataset::SetGeoTransform( double * padfTransform )
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */

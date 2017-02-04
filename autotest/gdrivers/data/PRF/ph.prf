@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE phini SYSTEM "phini4.dtd">
+<phini>
+ <!--NIITP tovi0-->
+ <i n="Width" v="201"/>
+ <i n="Height" v="268"/>
+ <i n="QChans" v="1"/>
+ <i n="BytesPS" v="2"/>
+ <i n="SizeX" v="128"/>
+ <i n="SizeY" v="128"/>
+ <i n="CountX" v="2"/>
+ <i n="CountY" v="3"/>
+ <i n="RemindX" v="73"/>
+ <i n="RemindY" v="12"/>
+ <i n="CompressMode" v="2"/>
+ <i n="JpegQuality" v="75"/>
+ <x n="ChannelsInfo">
+  <s n="type" v="U"/>
+  <i n="bytes_ps" v="2"/>
+  <s n="channels" v="L"/>
+ </x>
+ <i n="IsGeoRef" v="1"/>
+ <x n="GeoRef">
+  <d n="A_0" v="1"/>
+  <d n="A_1" v="2"/>
+  <d n="A_2" v="3"/>
+  <d n="B_0" v="4"/>
+  <d n="B_1" v="5"/>
+  <d n="B_2" v="6"/>
+ </x>
+ <x n="Resolution">
+  <x>
+   <d n="x" v="2.5400000000000000e+02"/>
+   <d n="y" v="2.5400000000000000e+02"/>
+  </x>
+ </x>
+ <s n="parts_ext" v="tif"/>
+ <x n="ph_0_0">
+  <i n="Width" v="128"/>
+  <i n="Height" v="128"/>
+  <i n="DispX" v="0"/>
+  <i n="DispY" v="0"/>
+ </x>
+ <x n="ph_0_1">
+  <i n="Width" v="73"/>
+  <i n="Height" v="128"/>
+  <i n="DispX" v="128"/>
+  <i n="DispY" v="0"/>
+ </x>
+ <x n="ph_1_0">
+  <i n="Width" v="128"/>
+  <i n="Height" v="128"/>
+  <i n="DispX" v="0"/>
+  <i n="DispY" v="128"/>
+ </x>
+ <x n="ph_1_1">
+  <i n="Width" v="73"/>
+  <i n="Height" v="128"/>
+  <i n="DispX" v="128"/>
+  <i n="DispY" v="128"/>
+ </x>
+ <x n="ph_2_0">
+  <i n="Width" v="128"/>
+  <i n="Height" v="12"/>
+  <i n="DispX" v="0"/>
+  <i n="DispY" v="256"/>
+ </x>
+ <x n="ph_2_1">
+  <i n="Width" v="73"/>
+  <i n="Height" v="12"/>
+  <i n="DispX" v="128"/>
+  <i n="DispY" v="256"/>
+ </x>
+</phini>

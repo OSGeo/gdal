@@ -64,7 +64,7 @@ def doq2_1():
         gdaltest.post_reason('wrong geotransform')
         return 'fail'
 
-    md = ds.GetMetadata();
+    md = ds.GetMetadata()
     if md['QUADRANGLE_NAME'] != 'NORFOLK SOUTH 3.45 or 7.5-min. name*':
         gdaltest.post_reason('wrong metadata')
         return 'fail'

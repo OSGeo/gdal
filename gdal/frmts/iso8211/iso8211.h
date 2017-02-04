@@ -98,7 +98,7 @@ class CPL_ODLL DDFModule
 
     void        Dump( FILE * fp );
 
-    DDFRecord   *ReadRecord( void );
+    DDFRecord   *ReadRecord();
     void        Rewind( long nOffset = -1 );
 
     DDFFieldDefn *FindFieldDefn( const char * );
@@ -128,7 +128,6 @@ class CPL_ODLL DDFModule
     char        GetAppIndicator() const { return _appIndicator; }
     const char* GetExtendedCharSet() const { return _extendedCharSet; }
     void        SetFieldControlLength(int nVal) { _fieldControlLength = nVal; }
-
 
   private:
     VSILFILE    *fpDDF;
@@ -352,11 +351,9 @@ typedef enum {
     FloatComplex=5
 } DDFBinaryFormat;
 
-    DDFBinaryFormat GetBinaryFormat(void) const { return eBinaryFormat; }
-
+    DDFBinaryFormat GetBinaryFormat() const { return eBinaryFormat; }
 
 private:
-
   char      *pszName;   // a.k.a. subfield mnemonic
   char      *pszFormatString;
 
@@ -396,7 +393,7 @@ private:
 class CPL_ODLL DDFRecord
 {
   public:
-                DDFRecord( DDFModule * );
+    explicit     DDFRecord( DDFModule * );
                 ~DDFRecord();
 
     DDFRecord  *Clone();
@@ -514,6 +511,8 @@ class CPL_ODLL DDFRecord
 class CPL_ODLL DDFField
 {
   public:
+    DDFField() : poDefn(NULL), nDataSize(0), pachData(NULL) {}
+
     void                Initialize( DDFFieldDefn *, const char *pszData,
                                     int nSize );
 
@@ -545,6 +544,5 @@ class CPL_ODLL DDFField
 
     const char          *pachData;
 };
-
 
 #endif /* ndef ISO8211_H_INCLUDED */

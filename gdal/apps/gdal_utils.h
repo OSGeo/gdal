@@ -57,7 +57,6 @@ void CPL_DLL GDALInfoOptionsFree( GDALInfoOptions *psOptions );
 
 char CPL_DLL *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions );
 
-
 /*! Options for GDALTranslate(). Opaque type */
 typedef struct GDALTranslateOptions GDALTranslateOptions;
 
@@ -118,7 +117,6 @@ void CPL_DLL GDALVectorTranslateOptionsSetProgress( GDALVectorTranslateOptions *
 GDALDatasetH CPL_DLL GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                                GDALDatasetH *pahSrcDS,
                                const GDALVectorTranslateOptions *psOptions, int *pbUsageError );
-
 
 /*! Options for GDALDEMProcessing(). Opaque type */
 typedef struct GDALDEMProcessingOptions GDALDEMProcessingOptions;

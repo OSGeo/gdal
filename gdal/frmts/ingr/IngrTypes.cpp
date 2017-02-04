@@ -637,7 +637,6 @@ void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
 
     CPLFree( pabyBuf );
 
-
 #if defined(CPL_MSB)
     for ( unsigned int i = 0; i < nEntries; i++)
     {
@@ -669,7 +668,7 @@ void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
 
     real32 fNormFactor  = ( fMaxRed > fMaxGreen ? fMaxRed : fMaxGreen );
     fNormFactor  = ( fNormFactor > fMaxBlues ? fNormFactor : fMaxBlues );
-    if (fNormFactor)
+    if (fNormFactor != 0.0f )
         fNormFactor = 255 / fNormFactor;
 
     // -------------------------------------------------------------
@@ -802,7 +801,7 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
     {
     case JPEGRGB:
         nJPGComponents = 3;
-        // fallthrough
+        CPL_FALLTHROUGH
     case JPEGGRAY:
         {
             GByte *pabyHeader = (GByte*) CPLCalloc( 1, 2048 );
@@ -986,7 +985,7 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
         }
         else if( cAtomHead < 0 )
         {
-            const unsigned int nRun = abs( cAtomHead );
+            const unsigned int nRun = -cAtomHead;
 
             if (pabyDstData)
             {
@@ -1178,8 +1177,7 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
             bHeader = false;
 
         // Fall through. We have a valid scanline header... probably.
-
-    } while(0);
+    } while( false );
 
     if( bHeader )
         iInput+=4; // 0x5900 tag, line id, line data size, skip offset
@@ -1225,7 +1223,6 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
             iInput--;
     }
 
-
     if( pnBytesConsumed != NULL )
         *pnBytesConsumed = iInput * 2;
 
@@ -1255,7 +1252,6 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
     unsigned short nRun = 0;
     unsigned char  nValue = 0;
     unsigned short previous = 0;
-
 
     if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
     {

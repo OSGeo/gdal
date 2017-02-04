@@ -32,6 +32,8 @@
 #include "cpl_string.h"
 #include "vicarkeywordhandler.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -48,7 +50,7 @@ VICARKeywordHandler::VICARKeywordHandler() :
     papszKeywordList(NULL),
     pszHeaderNext(NULL),
     LabelSize(0)
-{ }
+{}
 
 /************************************************************************/
 /*                        ~VICARKeywordHandler()                        */
@@ -90,8 +92,10 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         return FALSE;
 
     char keyval[100];
-    strncpy( keyval, pch1, MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 ) );
-    keyval[MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
+    strncpy( keyval, pch1, std::min(static_cast<size_t>(pch2 - pch1),
+                                    sizeof(keyval) - 1) );
+    keyval[std::min(static_cast<size_t>(pch2 - pch1),
+                    sizeof(keyval) - 1)] = '\0';
     LabelSize = atoi( keyval );
     if( LabelSize <= 0 || LabelSize > 10 * 1024 * 124 )
         return FALSE;
@@ -182,8 +186,9 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
         return FALSE;
     }
-    strncpy( keyval, pch1, MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 ) );
-    keyval[MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
+    strncpy( keyval, pch1, std::min(static_cast<size_t>(pch2 - pch1),
+                                    sizeof(keyval) - 1 ) );
+    keyval[std::min( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
 
     int EOLabelSize = atoi( keyval );
     if( EOLabelSize <= 0 || EOLabelSize > 100 * 1024 * 1024 )
@@ -228,7 +233,6 @@ int VICARKeywordHandler::ReadGroup( CPL_UNUSED const char *pszPathPrefix ) {
     }
 }
 
-
 /************************************************************************/
 /*                              ReadPair()                              */
 /*                                                                      */
@@ -264,7 +268,7 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
         {
             osValue += osWord;
             if ( osWord.size() < 2 ) continue;
-            if( osWord[osWord.size()-1] == ')' && osWord[osWord.size()-2] == '\'' ) break;
+            if( osWord.back() == ')' && osWord[osWord.size()-2] == '\'' ) break;
         }
     }
 
@@ -277,15 +281,13 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
             SkipWhite();
 
             osValue += osWord;
-            if( osWord.size() && osWord[osWord.size()-1] == ')'  ) break;
+            if( !osWord.empty() && osWord.back() == ')'  ) break;
         }
     }
-
     else
     {
         if( !ReadWord( osValue ) )
             return FALSE;
-
     }
 
     SkipWhite();

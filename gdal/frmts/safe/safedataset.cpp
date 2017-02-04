@@ -57,7 +57,7 @@ class SAFEDataset : public GDALPamDataset
     char        **papszExtraFiles;
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
     static CPLXMLNode * GetMetaDataObject(CPLXMLNode *, const char *);
 
@@ -68,20 +68,20 @@ class SAFEDataset : public GDALPamDataset
 
   public:
             SAFEDataset();
-           ~SAFEDataset();
+    virtual ~SAFEDataset();
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 
 #ifdef notdef
     virtual char      **GetMetadataDomainList();
     virtual char **GetMetadata( const char * pszDomain = "" );
 #endif
-    virtual char **GetFileList(void);
+    virtual char **GetFileList(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
@@ -107,7 +107,7 @@ class SAFERasterBand : public GDALPamRasterBand
                                GDALDataset *poBandFile );
     virtual     ~SAFERasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -117,14 +117,13 @@ class SAFERasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 SAFERasterBand::SAFERasterBand( SAFEDataset *poDSIn,
-                              GDALDataType eDataTypeIn,
-                              const char *pszSwath,
-                              const char *pszPolarisation,
-                              GDALDataset *poBandFileIn )
-
+                                GDALDataType eDataTypeIn,
+                                const char *pszSwath,
+                                const char *pszPolarisation,
+                                GDALDataset *poBandFileIn ) :
+    poBandFile(poBandFileIn)
 {
     poDS = poDSIn;
-    poBandFile = poBandFileIn;
 
     GDALRasterBand *poSrcBand = poBandFile->GetRasterBand( 1 );
 
@@ -482,7 +481,6 @@ int SAFEDataset::Identify( GDALOpenInfo *poOpenInfo )
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -681,22 +679,26 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
                 //check object type
                 pszRepId = CPLGetXMLValue( psDO, "repID", "" );
 
-                if ( EQUAL(pszRepId, "s1Level1ProductSchema") ) {
+                if( EQUAL(pszRepId, "s1Level1ProductSchema") )
+                {
                     /* Get annotation filename */
                     pszAnnotation = CPLGetXMLValue(
                             psDO, "byteStream.fileLocation.href", "");
-                    if( *pszAnnotation == '\0' ) {
+                    if( *pszAnnotation == '\0' )
+                    {
                         continue;
                     }
-
-                } else if ( EQUAL(pszRepId, "s1Level1CalibrationSchema") ) {
+                }
+                else if( EQUAL(pszRepId, "s1Level1CalibrationSchema") )
+                {
                     pszCalibration = CPLGetXMLValue(
                             psDO, "byteStream.fileLocation.href", "");
                     if( *pszCalibration == '\0' ) {
                         continue;
                     }
-
-                } else {
+                }
+                else
+                {
                     continue;
                 }
             }
@@ -1098,9 +1100,8 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
 
-    return( poDS );
+    return poDS;
 }
-
 
 /************************************************************************/
 /*                            AddSubDataset()                           */
@@ -1147,14 +1148,13 @@ const GDAL_GCP *SAFEDataset::GetGCPs()
     return pasGCPList;
 }
 
-
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
 const char *SAFEDataset::GetProjectionRef()
 {
-    return( pszProjection );
+    return pszProjection;
 }
 
 /************************************************************************/

@@ -28,7 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include <string>
 #include "ogr_mysql.h"
 
@@ -40,7 +39,15 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include <my_sys.h>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
 #pragma GCC diagnostic pop
 #endif
@@ -66,7 +73,7 @@ OGRMySQLDataSource::OGRMySQLDataSource() :
     panSRID(NULL),
     papoSRS(NULL),
     poLongResultLayer(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                        ~OGRMySQLDataSource()                         */
@@ -138,7 +145,7 @@ int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptionsIn
         const char* pszVal = CSLFetchNameValue(papszOpenOptionsIn, apszOpenOptions[i]);
         if( pszVal )
         {
-            if( osNewName[osNewName.size()-1] != ':' )
+            if( osNewName.back() != ':' )
                 osNewName += ",";
             if( i > 0 )
             {
@@ -299,9 +306,7 @@ int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptionsIn
 /* -------------------------------------------------------------------- */
 /*      Get the schema of the available tables.                         */
 /* -------------------------------------------------------------------- */
-    int iRecord;
-
-    for( iRecord = 0;
+    for( int iRecord = 0;
          papszTableNames != NULL && papszTableNames[iRecord] != NULL;
          iRecord++ )
     {
@@ -354,6 +359,8 @@ int OGRMySQLDataSource::TestCapability( const char * pszCap )
         return TRUE;
     if( EQUAL(pszCap, ODsCDeleteLayer))
         return TRUE;
+    if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return TRUE;
     else
         return FALSE;
 }
@@ -371,7 +378,6 @@ OGRLayer *OGRMySQLDataSource::GetLayer( int iLayer )
         return papoLayers[iLayer];
 }
 
-
 /************************************************************************/
 /*                      InitializeMetadataTables()                      */
 /*                                                                      */
@@ -385,7 +391,7 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
 {
     const char*      pszCommand;
     MYSQL_RES       *hResult;
-    OGRErr	    eErr = OGRERR_NONE;
+    OGRErr          eErr = OGRERR_NONE;
 
     pszCommand = "DESCRIBE geometry_columns";
     if( mysql_query(GetConn(), pszCommand ) )
@@ -455,19 +461,13 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
 
 OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
 {
-    char         szCommand[128];
-    char           **papszRow;
-    MYSQL_RES       *hResult;
-
     if( nId < 0 )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      First, we look through our SRID cache, is it there?             */
 /* -------------------------------------------------------------------- */
-    int  i;
-
-    for( i = 0; i < nKnownSRID; i++ )
+    for( int i = 0; i < nKnownSRID; i++ )
     {
         if( panSRID[i] == nId )
             return papoSRS[i];
@@ -476,21 +476,21 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
     OGRSpatialReference *poSRS = NULL;
 
     // make sure to attempt to free any old results
-    hResult = mysql_store_result( GetConn() );
+    MYSQL_RES *hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
     hResult = NULL;
 
+    char szCommand[128] = {};
     snprintf( szCommand, sizeof(szCommand),
-         "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
-         nId );
+              "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
+              nId );
 
     if( !mysql_query( GetConn(), szCommand ) )
         hResult = mysql_store_result( GetConn() );
 
     char  *pszWKT = NULL;
-    papszRow = NULL;
-
+    char **papszRow = NULL;
 
     if( hResult != NULL )
         papszRow = mysql_fetch_row( hResult );
@@ -527,8 +527,6 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
     return poSRS;
 }
 
-
-
 /************************************************************************/
 /*                             FetchSRSId()                             */
 /*                                                                      */
@@ -539,29 +537,25 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
 int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
 {
-    char           **papszRow;
-    MYSQL_RES       *hResult=NULL;
-
-    CPLString            osCommand;
-    char                *pszWKT = NULL;
-    int                 nSRSId;
-
     if( poSRS == NULL )
         return -1;
 
 /* -------------------------------------------------------------------- */
 /*      Translate SRS to WKT.                                           */
 /* -------------------------------------------------------------------- */
+    char *pszWKT = NULL;
     if( poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
         return -1;
 
 /* -------------------------------------------------------------------- */
 /*      Try to find in the existing table.                              */
 /* -------------------------------------------------------------------- */
+    CPLString osCommand;
     osCommand.Printf(
              "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
              pszWKT );
 
+    MYSQL_RES *hResult = NULL;
     if( !mysql_query( GetConn(), osCommand ) )
         hResult = mysql_store_result( GetConn() );
 
@@ -571,13 +565,13 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         mysql_free_result( hResult );
         hResult = NULL;
     }
-    papszRow = NULL;
+    char **papszRow = NULL;
     if( hResult != NULL )
         papszRow = mysql_fetch_row( hResult );
 
     if( papszRow != NULL && papszRow[0] != NULL )
     {
-        nSRSId = atoi(papszRow[0]);
+        const int nSRSId = atoi(papszRow[0]);
         if( hResult != NULL )
             mysql_free_result( hResult );
         hResult = NULL;
@@ -601,12 +595,9 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         papszRow = mysql_fetch_row( hResult );
     }
 
-    if( papszRow != NULL && papszRow[0] != NULL )
-    {
-        nSRSId = atoi(papszRow[0]) + 1;
-    }
-    else
-        nSRSId = 1;
+    const int nSRSId = papszRow != NULL && papszRow[0] != NULL
+        ? atoi(papszRow[0]) + 1
+        : 1;
 
     if( hResult != NULL )
         mysql_free_result( hResult );
@@ -734,10 +725,9 @@ void OGRMySQLDataSource::ReleaseResultSet( OGRLayer * poLayer )
 char *OGRMySQLDataSource::LaunderName( const char *pszSrcName )
 
 {
-    char    *pszSafeName = CPLStrdup( pszSrcName );
-    int     i;
+    char *pszSafeName = CPLStrdup( pszSrcName );
 
-    for( i = 0; pszSafeName[i] != '\0'; i++ )
+    for( int i = 0; pszSafeName[i] != '\0'; i++ )
     {
         pszSafeName[i] = (char) tolower( pszSafeName[i] );
         if( pszSafeName[i] == '-' || pszSafeName[i] == '#' )
@@ -781,7 +771,6 @@ void OGRMySQLDataSource::InterruptLongResult()
     }
 }
 
-
 /************************************************************************/
 /*                            DeleteLayer()                             */
 /************************************************************************/
@@ -824,7 +813,6 @@ OGRErr OGRMySQLDataSource::DeleteLayer( int iLayer)
         ReportError( osCommand );
         return OGRERR_FAILURE;
     }
-
 }
 
 /************************************************************************/
@@ -838,20 +826,18 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
                               char ** papszOptions )
 
 {
-    MYSQL_RES           *hResult=NULL;
-    CPLString            osCommand;
-    const char          *pszGeometryType;
-    const char		*pszGeomColumnName;
-    const char		*pszExpectedFIDName;
-    char                *pszLayerName;
-    // int                 nDimension = 3; // MySQL only supports 2d currently
-
+    MYSQL_RES  *hResult=NULL;
+    CPLString   osCommand;
+    const char *pszGeometryType;
+    const char *pszGeomColumnName;
+    const char *pszExpectedFIDName;
+    char       *pszLayerName;
+    // int        nDimension = 3; // MySQL only supports 2d currently
 
 /* -------------------------------------------------------------------- */
 /*      Make sure there isn't an active transaction already.            */
 /* -------------------------------------------------------------------- */
     InterruptLongResult();
-
 
     if( CPLFetchBool(papszOptions, "LAUNDER", true) )
         pszLayerName = LaunderName( pszLayerNameIn );
@@ -868,8 +854,7 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
 
-    int iLayer;
-    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
         {
@@ -908,6 +893,9 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
     CPLDebug("MYSQL","Geometry Column Name %s.", pszGeomColumnName);
     CPLDebug("MYSQL","FID Column Name %s.", pszExpectedFIDName);
 
+    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
+    const bool bHasSI = ( eType != wkbNone && (pszSI == NULL || CPLTestBool(pszSI)) );
+
     if( wkbFlatten(eType) == wkbNone )
     {
         osCommand.Printf(
@@ -920,8 +908,9 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
         osCommand.Printf(
                  "CREATE TABLE `%s` ( "
                  "   %s %s UNIQUE NOT NULL AUTO_INCREMENT, "
-                 "   %s GEOMETRY NOT NULL )",
-                 pszLayerName, pszExpectedFIDName, pszFIDType, pszGeomColumnName );
+                 "   %s GEOMETRY %s)",
+                 pszLayerName, pszExpectedFIDName, pszFIDType, pszGeomColumnName,
+                 bHasSI ? "NOT NULL" : "");
     }
 
     if( CSLFetchNameValue( papszOptions, "ENGINE" ) != NULL )
@@ -992,11 +981,7 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     if( eType != wkbNone )
     {
-        int nCoordDimension;
-        if( eType == wkbFlatten(eType) )
-            nCoordDimension = 2;
-        else
-            nCoordDimension = 3;
+        const int nCoordDimension = eType == wkbFlatten(eType) ? 2 : 3;
 
         pszGeometryType = OGRToOGCGeomType(eType);
 
@@ -1046,9 +1031,7 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
 /*      We're doing this before we add geometry and record to the table */
 /*      so this may not be exactly the best way to do it.               */
 /* -------------------------------------------------------------------- */
-    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-
-    if( eType != wkbNone && (pszSI == NULL || CPLTestBool(pszSI)) )
+    if( bHasSI )
     {
         osCommand.Printf(
                  "ALTER TABLE `%s` ADD SPATIAL INDEX(`%s`) ",

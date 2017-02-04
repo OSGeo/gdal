@@ -9,7 +9,7 @@ SysBMap:
 block map entries:
   - each is 28 bytes
   - 4 bytes for SysBData Segment - often 1023.
-  - 8 bytes for absolute block index (zero based, within SysBData). 
+  - 8 bytes for absolute block index (zero based, within SysBData).
   - 8 bytes for "image" number (-1 means unallocated)
   - 8 bytes for the next absolute block in this images block chain
     (-1 means end of chain)
@@ -28,17 +28,17 @@ Virtual tiled images:
  - 8 bytes: image width
  - 8 bytes: image height
  - 8 bytes: tile width
- - 8 bytes: tile height 
- - 3 bytes: tile pixel data type. 
+ - 8 bytes: tile height
+ - 3 bytes: tile pixel data type.
  - some spaces
  - compression type (normally NONE)
  - some spaces.
 
 Tilemap:
- - 12 bytes per tile containing offset within virtual file. 
+ - 12 bytes per tile containing offset within virtual file.
 
 Tile Size map:
- - 8 bytes per tile containing size of tile data. 
+ - 8 bytes per tile containing size of tile data.
 
 Tile Data:
- - Absolute data. 
+ - Absolute data.

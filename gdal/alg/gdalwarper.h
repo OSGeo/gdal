@@ -280,7 +280,6 @@ CPL_C_END
 /*                            GDALWarpKernel                            */
 /*                                                                      */
 
-
 /** This is the number of dummy pixels that must be reserved in source arrays
  * in order to satisfy assumptions made in GWKResample(), and more specifically
  * by GWKGetPixelRow() that always read a even number of pixels. So if we are
@@ -289,7 +288,7 @@ CPL_C_END
 #define WARP_EXTRA_ELTS    1
 
 /** This class represents the lowest level of abstraction of warping.
- * 
+ *
  * It holds the imagery for one "chunk" of a warp, and the
  * pre-prepared masks.  All IO is done before and after its
  * operation.  This class is not normally used by the
@@ -429,7 +428,7 @@ private:
                                          int *pnSrcXExtraSize, int *pnSrcYExtraSize,
                                          double* pdfSrcFillRatio );
 
-    CPLErr          CreateKernelMask( GDALWarpKernel *, int iBand,
+    static CPLErr          CreateKernelMask( GDALWarpKernel *, int iBand,
                                       const char *pszType );
 
     CPLMutex        *hIOMutex;
@@ -516,6 +515,7 @@ int GWKGetFilterRadius(GDALResampleAlg eResampleAlg);
 typedef double (*FilterFuncType)(double dfX);
 FilterFuncType GWKGetFilterFunc(GDALResampleAlg eResampleAlg);
 
+// TODO(schwehr): Can padfVals be a const pointer?
 typedef double (*FilterFunc4ValuesType)(double* padfVals);
 FilterFunc4ValuesType GWKGetFilterFunc4Values(GDALResampleAlg eResampleAlg);
 /*! @endcond */

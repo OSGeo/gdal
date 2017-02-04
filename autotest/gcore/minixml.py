@@ -281,6 +281,7 @@ def minixml_7():
     )
 
     for xml_str in test_strings:
+        gdal.ErrorReset()
         tree = gdal.ParseXMLString( xml_str )
 
         found = gdal.GetLastErrorMsg()

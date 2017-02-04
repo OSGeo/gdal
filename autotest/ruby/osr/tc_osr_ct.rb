@@ -6,7 +6,7 @@ require 'gdal/ogr'
 
 class TestOsrCt < Test::Unit::TestCase
   def setup
-    # Verify that we have PROJ.4 available. 
+    # Verify that we have PROJ.4 available.
     utm_srs = Gdal::Osr::SpatialReference.new()
     utm_srs.set_utm(11)
     utm_srs.set_well_known_geog_cs('WGS84')
@@ -20,7 +20,7 @@ class TestOsrCt < Test::Unit::TestCase
       @have_proj4 = false
       puts e
     end
-    
+
     @have_proj4 = true
   end
 
@@ -42,7 +42,7 @@ class TestOsrCt < Test::Unit::TestCase
     assert_in_delta(result[2], 0.0, 0.01)
   end
 
-  
+
   # Transform an OGR geometry ... this is mostly aimed at ensuring that
   # the OGRCoordinateTransformation target SRS isn't deleted till the output
   # geometry which also uses it is deleted.
@@ -63,7 +63,7 @@ class TestOsrCt < Test::Unit::TestCase
 
     out_srs = pnt.get_spatial_reference().export_to_pretty_wkt()
 
-    assert_equal(out_srs[0..5], 'PROJCS', 
+    assert_equal(out_srs[0..5], 'PROJCS',
                  'output srs corrupt, ref counting issue?')
-  end    
+  end
 end

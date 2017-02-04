@@ -71,7 +71,7 @@ class XYZDataset : public GDALPamDataset
                  XYZDataset();
     virtual     ~XYZDataset();
 
-    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -96,12 +96,11 @@ class XYZRasterBand : public GDALPamRasterBand
 
                 XYZRasterBand( XYZDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum( int *pbSuccess = NULL );
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 };
-
 
 /************************************************************************/
 /*                           XYZRasterBand()                            */
@@ -261,7 +260,9 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             char ch;
             nCol = 0;
             bLastWasSep = true;
-            double dfX = 0.0, dfY = 0.0, dfZ = 0.0;
+            double dfX = 0.0;
+            double dfY = 0.0;
+            double dfZ = 0.0;
             int nUsefulColsFound = 0;
             while((ch = *pszPtr) != '\0')
             {
@@ -449,7 +450,7 @@ XYZDataset::XYZDataset() :
     nZIndex(-1),
     nMinTokens(0),
     nLineNum(0),
-    nDataLineNum(((GIntBig)0x7FFFFFFF) << 32 | 0xFFFFFFFF),
+    nDataLineNum(GINTBIG_MAX),
     bSameNumberOfValuesPerLine(TRUE),
     dfMinZ(0),
     dfMaxZ(0)
@@ -487,7 +488,6 @@ int XYZDataset::Identify( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 /*                            IdentifyEx()                              */
 /************************************************************************/
-
 
 int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
                             int& bHasHeaderLine,
@@ -656,7 +656,9 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             VSICreateBufferedReaderHandle(
                 reinterpret_cast<VSIVirtualHandle *>( fp ) ) );
 
-    int nXIndex = -1, nYIndex = -1, nZIndex = -1;
+    int nXIndex = -1;
+    int nYIndex = -1;
+    int nZIndex = -1;
     int nMinTokens = 0;
 
     for( int i = 0; i < nCommentLineCount; i++ )
@@ -710,7 +712,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             nYIndex = 1;
             nZIndex = 2;
         }
-        nMinTokens = 1 + MAX(MAX(nXIndex, nYIndex), nZIndex);
+        nMinTokens = 1 + std::max(std::max(nXIndex, nYIndex), nZIndex);
     }
     else
     {
@@ -726,11 +728,19 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 
     GIntBig nLineNum = 0;
     GIntBig nDataLineNum = 0;
-    double dfX = 0, dfY = 0, dfZ = 0;
-    double dfMinX = 0, dfMinY = 0, dfMaxX = 0, dfMaxY = 0;
-    double dfMinZ = 0, dfMaxZ = 0;
-    double dfLastX = 0, dfLastY = 0;
-    std::vector<double> adfStepX, adfStepY;
+    double dfX = 0.0;
+    double dfY = 0.0;
+    double dfZ = 0.0;
+    double dfMinX = 0.0;
+    double dfMinY = 0.0;
+    double dfMaxX = 0.0;
+    double dfMaxY = 0.0;
+    double dfMinZ = 0.0;
+    double dfMaxZ = 0.0;
+    double dfLastX = 0.0;
+    double dfLastY = 0.0;
+    std::vector<double> adfStepX;
+    std::vector<double> adfStepY;
     GDALDataType eDT = GDT_Byte;
     bool bSameNumberOfValuesPerLine = true;
     char chDecimalSep = '\0';
@@ -817,11 +827,19 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                     {
                         dfZ = CPLAtofDelim(pszPtr, chLocalDecimalSep);
                         if( nDataLineNum == 0 )
-                            dfMinZ = dfMaxZ = dfZ;
-                        else if( dfZ < dfMinZ )
+                        {
                             dfMinZ = dfZ;
-                        else if( dfZ > dfMaxZ )
                             dfMaxZ = dfZ;
+                        }
+                        else if( dfZ < dfMinZ )
+                        {
+                            dfMinZ = dfZ;
+                        }
+                        else if( dfZ > dfMaxZ )
+                        {
+                            dfMaxZ = dfZ;
+                        }
+
                         if( dfZ < INT_MIN || dfZ > INT_MAX )
                         {
                             eDT = GDT_Float32;
@@ -866,15 +884,17 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if (nDataLineNum == 1)
         {
-            dfMinX = dfMaxX = dfX;
-            dfMinY = dfMaxY = dfY;
+            dfMinX = dfX;
+            dfMaxX = dfX;
+            dfMinY = dfY;
+            dfMaxY = dfY;
         }
         else
         {
             double dfStepY = dfY - dfLastY;
             if( dfStepY == 0.0 )
             {
-                double dfStepX = dfX - dfLastX;
+                const double dfStepX = dfX - dfLastX;
                 if( dfStepX <= 0 )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -886,21 +906,23 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                 if( std::find(adfStepX.begin(), adfStepX.end(), dfStepX) == adfStepX.end() )
                 {
                     bool bAddNewValue = true;
-                    // TODO: Danger!  Erase called on the iterator.
                     std::vector<double>::iterator oIter = adfStepX.begin();
+                    std::vector<double> adfStepXNew;
                     while( oIter != adfStepX.end() )
                     {
                         if( fabs(( dfStepX - *oIter ) / dfStepX ) < RELATIVE_ERROR )
                         {
+                            double dfNewVal = *oIter;
                             if( nCountStepX > 0 )
                             {
                                 // Update mean step
                                 /* n * mean(n) = (n-1) * mean(n-1) + val(n)
                                 mean(n) = mean(n-1) + (val(n) - mean(n-1)) / n */
                                 nCountStepX ++;
-                                *oIter += ( dfStepX - *oIter ) / nCountStepX;
+                                dfNewVal += ( dfStepX - *oIter ) / nCountStepX;
                             }
 
+                            adfStepXNew.push_back( dfNewVal );
                             bAddNewValue = false;
                             break;
                         }
@@ -908,20 +930,22 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                                  fabs(*oIter - static_cast<int>(*oIter / dfStepX + 0.5) * dfStepX) / dfStepX < RELATIVE_ERROR )
                         {
                             nCountStepX = -1; // disable update of mean
-                            adfStepX.erase(oIter);
                         }
                         else if( dfStepX > *oIter &&
                                  fabs(dfStepX - static_cast<int>(dfStepX / *oIter + 0.5) * (*oIter)) / dfStepX < RELATIVE_ERROR )
                         {
                             nCountStepX = -1; // disable update of mean
                             bAddNewValue = false;
+                            adfStepXNew.push_back( *oIter );
                             break;
                         }
                         else
                         {
+                            adfStepXNew.push_back( *oIter );
                             ++ oIter;
                         }
                     }
+                    adfStepX = adfStepXNew;
                     if( bAddNewValue )
                     {
                         CPLDebug("XYZ", "New stepX=%.15f", dfStepX);
@@ -959,7 +983,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 if( bNewStepYSign < 0 ) dfStepY = -dfStepY;
                 nCountStepY ++;
-                if( adfStepY.size() == 0 )
+                if( adfStepY.empty() )
                 {
                     adfStepY.push_back(dfStepY);
                 }
@@ -1084,7 +1108,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -1274,7 +1298,7 @@ CPLErr XYZDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/

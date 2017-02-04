@@ -6,16 +6,16 @@ require 'ogrtest'
 class TestOgrCsv < Test::Unit::TestCase
   def setup
     @csv_ds = Gdal::Ogr.open(File.join(data_directory, 'prime_meridian.csv'))
-  end   
-  
+  end
+
   def teardown
     begin
       @csv_ds = nil
       GC.start
     end
-    
+
     delete_temp_ds
-  end 
+  end
 
   def temp_dir
     File.join(Dir.tmpdir, 'csvwrk')
@@ -26,14 +26,14 @@ class TestOgrCsv < Test::Unit::TestCase
     csv_tmpds = csv_driver.create_data_source(temp_dir)
 
     # Create layer (.csv file)
-    if not options.nil?  
+    if not options.nil?
       csv_lyr = csv_tmpds.create_layer(layer_name, # name
                                         nil,        # srs
                                         Gdal::Ogr::WkbUNKNOWN, # geom type
                                         options)    # options
     else
       csv_lyr = csv_tmpds.create_layer(layer_name)
-    end        
+    end
 
     # Setup Schema
     quick_create_layer_def(csv_lyr,
@@ -52,16 +52,16 @@ class TestOgrCsv < Test::Unit::TestCase
 
     return csv_tmpds
   end
-  
+
   def delete_temp_ds
     if File.exist?(temp_dir)
       # Using GDAL doesn't seem to work on Windows
       Gdal::Ogr.get_driver_by_name('CSV').delete_data_source(temp_dir)
     end
   end
-  
+
   def test_open()
-    assert_not_nil(@csv_ds, "Could not open csv file")    
+    assert_not_nil(@csv_ds, "Could not open csv file")
   end
 
   def test_verify_attributes()
@@ -69,7 +69,7 @@ class TestOgrCsv < Test::Unit::TestCase
     lyr = @csv_ds.get_layer('prime_meridian')
 
     expect = ['8901', '8902', '8903', '8904']
-    
+
     assert(check_features_against_list( lyr,'PRIME_MERIDIAN_CODE',expect))
 
     lyr.reset_reading()
@@ -77,12 +77,12 @@ class TestOgrCsv < Test::Unit::TestCase
     expect = [ '', 'Instituto Geografico e Cadastral; Lisbon',
                'Institut Geographique National (IGN), Paris',
                'Instituto Geografico "Augustin Cadazzi" (IGAC); Bogota' ]
-    
+
     assert(check_features_against_list( lyr,'INFORMATION_SOURCE',expect))
 
     lyr.reset_reading()
   end
-  
+
 
   # Verify the some attributes read properly.
   #
@@ -94,15 +94,15 @@ class TestOgrCsv < Test::Unit::TestCase
     lyr = ds.get_layer(0)
 
     expect = [8901, 8902, 8903, 8904 ]
-    
+
     assert(check_features_against_list( lyr,'PRIME_MERIDIAN_CODE',expect))
-    
+
     lyr.reset_reading()
 
     expect = [ '', 'Instituto Geografico e Cadastral; Lisbon',
                'Institut Geographique National (IGN), Paris',
                'Instituto Geografico "Augustin Cadazzi" (IGAC); Bogota' ]
-    
+
     assert(check_features_against_list( lyr,'INFORMATION_SOURCE',expect))
 
     # Let go of the temp dataset
@@ -117,21 +117,21 @@ class TestOgrCsv < Test::Unit::TestCase
     lyr = ds.get_layer(0)
 
     expect = [8901, 8902, 8903, 8904 ]
-    
+
     assert(check_features_against_list( lyr,'PRIME_MERIDIAN_CODE',expect))
-    
+
     lyr.reset_reading()
 
     expect = [ '', 'Instituto Geografico e Cadastral; Lisbon',
                'Institut Geographique National (IGN), Paris',
                'Instituto Geografico "Augustin Cadazzi" (IGAC); Bogota' ]
-    
+
     assert(check_features_against_list( lyr,'INFORMATION_SOURCE',expect))
-    
+
     # Let go of the temp dataset
     lyr = nil
     ds = nil
-  end      
+  end
 
   def test_delete_layer
     ds = create_temp_ds('pm1')
@@ -145,11 +145,11 @@ class TestOgrCsv < Test::Unit::TestCase
 
     assert_equal(ds.get_layer_count, 0,
                  'Layer not destroyed properly?')
-    
+
     lyr = nil
     ds = nil
   end
-  
+
 
 ###############################################################################
 # Verify the some attributes read properly.
@@ -163,7 +163,7 @@ class TestOgrCsv < Test::Unit::TestCase
 
     puts "cccc"
     puts lyr.test_capability( 'SequentialWrite')
-    
+
     assert_equal(false, lyr.test_capability( 'SequentialWrite'),
                  'should not have write access to readonly layer')
 
@@ -177,7 +177,7 @@ class TestOgrCsv < Test::Unit::TestCase
                  'CSV files do not support fast feature count')
 
     driver = Gdal::Ogr.get_driver_by_name('CSV')
-        
+
     assert_equal(false, driver.test_capability( 'DeleteDataSource'),
                  'CSV files do support DeleteDataSource' )
 

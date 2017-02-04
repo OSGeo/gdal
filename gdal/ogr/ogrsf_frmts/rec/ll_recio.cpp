@@ -76,7 +76,9 @@ int RECGetFieldDefinition( FILE *fp, char *pszFieldname,
     // Is this an real, integer or string field?  Default to string.
     int nTypeCode = atoi(RECGetField(pszLine,33,4));
     if( nTypeCode == 0 )
+    {
         eFType = OFTInteger;
+    }
     else if( nTypeCode > 100 && nTypeCode < 120 )
     {
         eFType = OFTReal;
@@ -89,15 +91,19 @@ int RECGetFieldDefinition( FILE *fp, char *pszFieldname,
             eFType = OFTReal;
     }
     else
-        eFType = OFTString;
+    {
+      eFType = OFTString;
+    }
 
-    *pnType = (int) eFType;
+    *pnType = static_cast<int>(eFType);
 
     strcpy( pszFieldname, RECGetField( pszLine, 2, 10 ) );
     *pnPrecision = 0;
 
     if( nTypeCode > 100 && nTypeCode < 120 )
-        *pnPrecision = nTypeCode - 100;
+    {
+      *pnPrecision = nTypeCode - 100;
+    }
     else if( eFType == OFTReal )
     {
         *pnPrecision = *pnWidth - 1;
@@ -115,13 +121,12 @@ int RECGetFieldDefinition( FILE *fp, char *pszFieldname,
 const char *RECGetField( const char *pszSrc, int nStart, int nWidth )
 
 {
-    static char szWorkField[128];
-    int         i;
+    static char szWorkField[128] = {};
 
-    strncpy( szWorkField, pszSrc+nStart-1, nWidth );
+    strncpy( szWorkField, pszSrc + nStart - 1, nWidth );
     szWorkField[nWidth] = '\0';
 
-    i = (int)strlen(szWorkField)-1;
+    int i = static_cast<int>(strlen(szWorkField)) - 1;
 
     while( i >= 0 && szWorkField[i] == ' ' )
         szWorkField[i--] = '\0';
@@ -136,12 +141,11 @@ const char *RECGetField( const char *pszSrc, int nStart, int nWidth )
 int RECReadRecord( FILE *fp, char *pszRecord, int nRecordLength )
 
 {
-    int        nDataLen = 0;
+    int nDataLen = 0;
 
     while( nDataLen < nRecordLength )
     {
         const char *pszLine = CPLReadLine( fp );
-        int         iSegLen;
 
         nNextRecLine++;
 
@@ -152,7 +156,7 @@ int RECReadRecord( FILE *fp, char *pszRecord, int nRecordLength )
             return FALSE;
 
         // If the end-of-line markers is '?' the record is deleted.
-        iSegLen = (int)strlen(pszLine);
+        int iSegLen = (int)strlen(pszLine);
         if( pszLine[iSegLen-1] == '?' )
         {
             pszRecord[0] = '\0';

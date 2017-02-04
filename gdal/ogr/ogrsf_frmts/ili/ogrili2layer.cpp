@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRILI2Layer::OGRILI2Layer( OGRFeatureDefn* poFeatureDefnIn,
-                            GeomFieldInfos oGeomFieldInfosIn,
+                            const GeomFieldInfos& oGeomFieldInfosIn,
                             OGRILI2DataSource *poDSIn ) :
     poFeatureDefn(poFeatureDefnIn),
     oGeomFieldInfos(oGeomFieldInfosIn),
@@ -66,7 +66,6 @@ OGRILI2Layer::~OGRILI2Layer()
       delete poFeature;
     }
 }
-
 
 /************************************************************************/
 /*                             ISetFeature()                             */
@@ -262,7 +261,6 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
             if( !OGR2ILIGeometryAppend( poMember, fp, NULL, "" ) )
                 return FALSE;
         }
-
     }
 
     else

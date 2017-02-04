@@ -38,14 +38,13 @@ CPL_C_START
 typedef struct {
     VSILFILE   *fp;
 
-
     GByte       *pabyBuffer;
     int         nBufferOffset;
     int         nBufferSize;
     int         nBufferAllocation;
     int         nSavedCharacter;
 
-    int		nXSize;
+    int         nXSize;
     int         nYSize;
 
     int         nPCTSize;
@@ -53,11 +52,11 @@ typedef struct {
 
     char        **papszHeader;
 
-    int		*panLineOffset;
+    int         *panLineOffset;
 
     int         nColorSize;
 
-    int		nVersion; /* times 100 */
+    int         nVersion; /* times 100 */
 
     int         bNO1;
 

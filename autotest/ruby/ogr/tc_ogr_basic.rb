@@ -9,23 +9,23 @@ class TestOgrBasic < Test::Unit::TestCase
   def setup
     file_name = File.join(data_directory, 'poly.shp')
     @ds = Gdal::Ogr.open(file_name)
-  end   
-  
+  end
+
   def teardown
     @ds = nil
-  end 
-  
+  end
+
   def test_ogr_basic_1
-    assert_not_nil(@ds)  
+    assert_not_nil(@ds)
   end
 
   def test_feature_counting
     expected_count = 10
-  
+
     layer = @ds.get_layer('poly')
     layer.get_feature_count
     assert_equal(expected_count, layer.get_feature_count)
-  
+
     # Now actually iterate through counting the features and ensure they agree.
     layer.reset_reading()
 
@@ -78,7 +78,7 @@ class TestOgrBasic < Test::Unit::TestCase
 
     assert_not_nil(feat1)
     assert_nil(feat2)
-    
+
     layer.set_spatial_filter(nil)
 
     assert_equal(10, layer.get_feature_count)

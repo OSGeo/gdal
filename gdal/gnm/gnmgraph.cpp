@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "gnmgraph.h"
+#include "gnm_priv.h"
 #include <algorithm>
 #include <limits>
 #include <set>
@@ -36,14 +37,9 @@
 CPL_CVSID("$Id$");
 
 //! @cond Doxygen_Suppress
-GNMGraph::GNMGraph()
-{
-}
+GNMGraph::GNMGraph() {}
 
-GNMGraph::~GNMGraph()
-{
-
-}
+GNMGraph::~GNMGraph() {}
 
 void GNMGraph::AddVertex(GNMGFID nFID)
 {
@@ -246,7 +242,7 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
     // A will be sorted by the path costs' descending.
     std::vector<GNMPATH> A;
 
-    if (nK <= 0)
+    if (nK == 0)
         return A; // return empty array if K is incorrect.
 
     // Temporary array for storing paths-candidates.

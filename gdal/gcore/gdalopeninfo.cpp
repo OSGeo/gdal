@@ -28,18 +28,25 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"  // Must be included first for mingw VSIStatBufL.
-#include "cpl_conv.h"
-#include "cpl_vsi.h"
+#include "cpl_port.h"
 
+#include <cstdlib>
+#include <cstring>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
+#include <algorithm>
 #include <vector>
 
-CPL_CVSID("$Id$");
+#include "cpl_config.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
 
-using std::vector;
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
@@ -69,7 +76,8 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
     bIsDirectory(FALSE),
     fpL(NULL),
     nHeaderBytes(0),
-    pabyHeader(NULL)
+    pabyHeader(NULL),
+    papszAllowedDrivers(NULL)
 {
 
 /* -------------------------------------------------------------------- */
@@ -190,13 +198,13 @@ retry:  // TODO(schwehr): Stop using goto.
             // my_remote_utm.tif.  This helps a lot for GDAL based readers that
             // only provide file explorers to open datasets.
             const int nBufSize = 2048;
-            vector<char> oFilename(nBufSize);
+            std::vector<char> oFilename(nBufSize);
             char *szPointerFilename = &oFilename[0];
             int nBytes = static_cast<int>(
                 readlink( pszFilename, szPointerFilename, nBufSize ) );
             if (nBytes != -1)
             {
-                szPointerFilename[MIN(nBytes, nBufSize - 1)] = 0;
+                szPointerFilename[std::min(nBytes, nBufSize - 1)] = 0;
                 CPLFree(pszFilename);
                 pszFilename = CPLStrdup(szPointerFilename);
                 papszSiblingsIn = NULL;

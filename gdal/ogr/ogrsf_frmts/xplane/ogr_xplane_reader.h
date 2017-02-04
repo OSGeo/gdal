@@ -55,7 +55,7 @@ class OGRXPlaneReader
         int             nTokens;
         VSILFILE*       fp;
         char*           pszFilename;
-        int             bEOF;
+        bool            bEOF;
         OGRXPlaneLayer* poInterestLayer;
 
                                  OGRXPlaneReader();
@@ -65,22 +65,26 @@ class OGRXPlaneReader
 
         virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer) = 0;
         virtual int              IsRecognizedVersion( const char* pszVersionString) = 0;
-        virtual int              StartParsing( const char * pszFilename );
+        virtual bool             StartParsing( const char * pszFilename );
         virtual void             Read() = 0;
-        virtual int              ReadWholeFile();
+        virtual bool             ReadWholeFile();
         virtual int              GetNextFeature();
         virtual void             Rewind();
 
-        int         assertMinCol(int nMinColNum);
-        int         readDouble(double* pdfValue, int iToken, const char* pszTokenDesc);
-        int         readDoubleWithBounds(double* pdfValue, int iToken, const char* pszTokenDesc,
-                                         double dfLowerBound, double dfUpperBound);
-        int         readDoubleWithBoundsAndConversion(double* pdfValue, int iToken, const char* pszTokenDesc,
-                                                      double dfFactor, double dfLowerBound, double dfUpperBound);
+        bool        assertMinCol( int nMinColNum) const;
+        bool        readDouble( double* pdfValue, int iToken,
+                                const char* pszTokenDesc) const;
+        bool        readDoubleWithBounds(
+                        double* pdfValue, int iToken, const char* pszTokenDesc,
+                        double dfLowerBound, double dfUpperBound ) const;
+        bool        readDoubleWithBoundsAndConversion(
+                        double* pdfValue, int iToken, const char* pszTokenDesc,
+                        double dfFactor,
+                        double dfLowerBound, double dfUpperBound) const;
         CPLString   readStringUntilEnd(int iFirstToken);
 
-        int         readLatLon(double* pdfLat, double* pdfLon, int iToken);
-        int         readTrueHeading(double* pdfTrueHeading, int iToken, const char* pszTokenDesc = "true heading");
+        bool        readLatLon(double* pdfLat, double* pdfLon, int iToken);
+        bool        readTrueHeading(double* pdfTrueHeading, int iToken, const char* pszTokenDesc = "true heading");
 };
 
 /************************************************************************/
@@ -113,7 +117,6 @@ class OGRXPlaneEnumeration
 #define DEFINE_XPLANE_ENUMERATION(enumerationName, enumerationValues) \
 static OGRXPlaneEnumeration enumerationName( #enumerationName, enumerationValues, \
                     sizeof( enumerationValues ) / sizeof( enumerationValues[0] ) );
-
 
 /***********************************************************************/
 /*                 OGRXPlaneCreateAptFileReader                        */

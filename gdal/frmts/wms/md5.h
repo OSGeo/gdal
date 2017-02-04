@@ -8,7 +8,12 @@
 bits instead of 64 is not important; speed is considerably more
 important.  ANSI guarantees that "unsigned long" will be big enough,
 and always using it seems to have few disadvantages.  */
+#if defined(CPL_BASE_H_INCLUDED)
+// Alias cvs_uint32 to GUInt32
+#define cvs_uint32 GUInt32
+#else
 typedef unsigned long cvs_uint32;
+#endif
 
 struct cvs_MD5Context {
     cvs_uint32 buf[4];

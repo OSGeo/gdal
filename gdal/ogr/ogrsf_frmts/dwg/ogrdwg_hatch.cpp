@@ -42,7 +42,6 @@
 
 CPL_CVSID("$Id$");
 
-
 static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
                                       OGRGeometryCollection *poGC );
 

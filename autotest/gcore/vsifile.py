@@ -543,7 +543,6 @@ abc***NEWFILE***:""")
 # Test generic Truncate implementation for file extension
 
 def vsifile_11():
-  
     f = gdal.VSIFOpenL('/vsimem/vsifile_11', 'wb')
     gdal.VSIFCloseL(f)
 

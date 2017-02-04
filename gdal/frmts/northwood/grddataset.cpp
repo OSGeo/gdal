@@ -93,12 +93,11 @@ public:
             GDALDataset * poSrcDS, int bStrict, char **papszOptions,
             GDALProgressFunc pfnProgress, void * pProgressData);
 
-    CPLErr GetGeoTransform(double *padfTransform);
-    CPLErr SetGeoTransform(double *padfTransform);
-    void FlushCache();
-    const char *GetProjectionRef();
-    CPLErr SetProjection(const char *pszProjection);
-
+    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr SetGeoTransform(double *padfTransform) override;
+    void FlushCache() override;
+    const char *GetProjectionRef() override;
+    CPLErr SetProjection(const char *pszProjection) override;
 };
 
 /************************************************************************/
@@ -119,21 +118,26 @@ public:
 
     NWT_GRDRasterBand(NWT_GRDDataset *, int, int);
 
-    virtual CPLErr IReadBlock(int, int, void *);
-    virtual CPLErr IWriteBlock(int, int, void *);
-    virtual double GetNoDataValue(int *pbSuccess);
-    virtual CPLErr SetNoDataValue(double dfNoData);
+    virtual CPLErr IReadBlock(int, int, void *) override;
+    virtual CPLErr IWriteBlock(int, int, void *) override;
+    virtual double GetNoDataValue(int *pbSuccess) override;
+    virtual CPLErr SetNoDataValue(double dfNoData) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/
 /*                           NWT_GRDRasterBand()                        */
 /************************************************************************/
-NWT_GRDRasterBand::NWT_GRDRasterBand(NWT_GRDDataset * poDSIn, int nBandIn, int nBands) {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->dfNoData = 0.0;
+NWT_GRDRasterBand::NWT_GRDRasterBand( NWT_GRDDataset * poDSIn, int nBandIn,
+                                      int nBands ) :
+    bHaveOffsetScale(FALSE),
+    dfOffset(0.0),
+    dfScale(1.0),
+    dfNoData(0.0)
+{
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     /*
     * If nBand = 4 we have opened in read mode and have created the 3 'virtual' RGB bands.
@@ -153,7 +157,9 @@ NWT_GRDRasterBand::NWT_GRDRasterBand(NWT_GRDDataset * poDSIn, int nBandIn, int n
             dfScale = (poDSIn->pGrd->fZMax - poDSIn->pGrd->fZMin)
                     / (double) SCALE32BIT;
         }
-    } else {
+    }
+    else
+    {
         bHaveOffsetScale = FALSE;
         dfOffset = 0;
         dfScale = 1.0;
@@ -376,9 +382,13 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 NWT_GRDDataset::NWT_GRDDataset() :
-        fp(NULL), pGrd(NULL), bUpdateHeader(false) {
+    fp(NULL),
+    pGrd(NULL),
+    bUpdateHeader(false)
+{
     //poCT = NULL;
-    for (size_t i = 0; i < CPL_ARRAYSIZE(ColorMap); ++i) {
+    for( size_t i = 0; i < CPL_ARRAYSIZE(ColorMap); ++i )
+    {
         ColorMap[i].r = 0;
         ColorMap[i].g = 0;
         ColorMap[i].b = 0;
@@ -401,7 +411,6 @@ NWT_GRDDataset::~NWT_GRDDataset() {
 
     if (fp != NULL)
         VSIFCloseL(fp);
-
 }
 
 /************************************************************************/
@@ -611,7 +620,7 @@ GDALDataset *NWT_GRDDataset::Open(GDALOpenInfo * poOpenInfo) {
     poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename,
             poOpenInfo->GetSiblingFiles());
 
-    return (poDS);
+    return poDS;
 }
 
 /************************************************************************/
@@ -709,7 +718,8 @@ int NWT_GRDDataset::UpdateHeader() {
     delete poHeaderBlock;
 
     // Update the TAB file to catch any changes
-    WriteTab();
+    if( WriteTab() != 0 )
+        iStatus = -1;
 
     return iStatus;
 }
@@ -726,84 +736,86 @@ int NWT_GRDDataset::WriteTab() {
         return -1;
     }
 
-    VSIFPrintfL(tabfp, "!table\n");
-    VSIFPrintfL(tabfp, "!version 500\n");
-    VSIFPrintfL(tabfp, "!charset %s\n", "Neutral");
-    VSIFPrintfL(tabfp, "\n");
+    bool bOK = true;
+    bOK &= VSIFPrintfL(tabfp, "!table\n") > 0;
+    bOK &= VSIFPrintfL(tabfp, "!version 500\n") > 0;
+    bOK &= VSIFPrintfL(tabfp, "!charset %s\n", "Neutral") > 0;
+    bOK &= VSIFPrintfL(tabfp, "\n") > 0;
 
-    VSIFPrintfL(tabfp, "Definition Table\n");
+    bOK &= VSIFPrintfL(tabfp, "Definition Table\n") > 0;
     const std::string path(pGrd->szFileName);
     const std::string basename = path.substr(path.find_last_of("/\\") + 1);
-    VSIFPrintfL(tabfp, "  File \"%s\"\n", basename.c_str());
-    VSIFPrintfL(tabfp, "  Type \"RASTER\"\n");
+    bOK &= VSIFPrintfL(tabfp, "  File \"%s\"\n", basename.c_str()) > 0;
+    bOK &= VSIFPrintfL(tabfp, "  Type \"RASTER\"\n") > 0;
 
     double dMapUnitsPerPixel =
         (pGrd->dfMaxX - pGrd->dfMinX) /
         (static_cast<double>(pGrd->nXSide) - 1);
     double dShift = dMapUnitsPerPixel / 2.0;
 
-    VSIFPrintfL(tabfp, "  (%f,%f) (%d,%d) Label \"Pt 1\",\n",
-                pGrd->dfMinX - dShift, pGrd->dfMaxY + dShift, 0, 0);
-    VSIFPrintfL(tabfp, "  (%f,%f) (%d,%d) Label \"Pt 2\",\n",
+    bOK &= VSIFPrintfL(tabfp, "  (%f,%f) (%d,%d) Label \"Pt 1\",\n",
+                pGrd->dfMinX - dShift, pGrd->dfMaxY + dShift, 0, 0) > 0;
+    bOK &= VSIFPrintfL(tabfp, "  (%f,%f) (%d,%d) Label \"Pt 2\",\n",
                 pGrd->dfMaxX - dShift, pGrd->dfMinY + dShift, pGrd->nXSide - 1,
-                pGrd->nYSide - 1);
-    VSIFPrintfL(tabfp, "  (%f,%f) (%d,%d) Label \"Pt 3\"\n",
+                pGrd->nYSide - 1) > 0;
+    bOK &= VSIFPrintfL(tabfp, "  (%f,%f) (%d,%d) Label \"Pt 3\"\n",
                 pGrd->dfMinX - dShift, pGrd->dfMinY + dShift, 0,
-                pGrd->nYSide - 1);
+                pGrd->nYSide - 1) > 0;
 
-    VSIFPrintfL(tabfp, "  CoordSys %s\n",pGrd->cMICoordSys);
-    VSIFPrintfL(tabfp, "  Units \"m\"\n");
+    bOK &= VSIFPrintfL(tabfp, "  CoordSys %s\n",pGrd->cMICoordSys) > 0;
+    bOK &= VSIFPrintfL(tabfp, "  Units \"m\"\n") > 0;
 
     // Raster Styles.
 
     // Raster is a grid, which is style 6.
-    VSIFPrintfL(tabfp, "  RasterStyle 6 1\n");
+    bOK &= VSIFPrintfL(tabfp, "  RasterStyle 6 1\n") > 0;
 
     // Brightness - style 1
     if( pGrd->style.iBrightness > 0 )
     {
-        VSIFPrintfL(tabfp, "  RasterStyle 1 %d\n",pGrd->style.iBrightness);
+        bOK &= VSIFPrintfL(tabfp, "  RasterStyle 1 %d\n",pGrd->style.iBrightness) > 0;
     }
 
     // Contrast - style 2
     if( pGrd->style.iContrast > 0 )
     {
-        VSIFPrintfL(tabfp, "  RasterStyle 2 %d\n",pGrd->style.iContrast);
+        bOK &= VSIFPrintfL(tabfp, "  RasterStyle 2 %d\n",pGrd->style.iContrast) > 0;
     }
 
     // Greyscale - style 3; only need to write if TRUE
     if( pGrd->style.bGreyscale == TRUE )
     {
-        VSIFPrintfL(tabfp, "  RasterStyle 3 1\n");
+        bOK &= VSIFPrintfL(tabfp, "  RasterStyle 3 1\n") > 0;
     }
 
     // Flag to render one colour transparent - style 4
     if( pGrd->style.bTransparent == TRUE )
     {
-        VSIFPrintfL(tabfp, "  RasterStyle 4 1\n");
+        bOK &= VSIFPrintfL(tabfp, "  RasterStyle 4 1\n") > 0;
         if( pGrd->style.iTransColour > 0 )
         {
-            VSIFPrintfL(tabfp, "  RasterStyle 7 %d\n",pGrd->style.iTransColour);
+            bOK &= VSIFPrintfL(tabfp, "  RasterStyle 7 %d\n",pGrd->style.iTransColour) > 0;
         }
     }
 
     // Transparency of immage
     if( pGrd->style.iTranslucency > 0 )
     {
-        VSIFPrintfL(tabfp, "  RasterStyle 8 %d\n",pGrd->style.iTranslucency);
+        bOK &= VSIFPrintfL(tabfp, "  RasterStyle 8 %d\n",pGrd->style.iTranslucency) > 0;
     }
 
-    VSIFPrintfL(tabfp, "begin_metadata\n");
-    VSIFPrintfL(tabfp, "\"\\MapInfo\" = \"\"\n");
-    VSIFPrintfL(tabfp, "\"\\Vm\" = \"\"\n");
-    VSIFPrintfL(tabfp, "\"\\Vm\\Grid\" = \"Numeric\"\n");
-    VSIFPrintfL(tabfp, "\"\\Vm\\GridName\" = \"%s\"\n", basename.c_str());
-    VSIFPrintfL(tabfp, "\"\\IsReadOnly\" = \"FALSE\"\n");
-    VSIFPrintfL(tabfp, "end_metadata\n");
+    bOK &= VSIFPrintfL(tabfp, "begin_metadata\n") > 0;
+    bOK &= VSIFPrintfL(tabfp, "\"\\MapInfo\" = \"\"\n") > 0;
+    bOK &= VSIFPrintfL(tabfp, "\"\\Vm\" = \"\"\n") > 0;
+    bOK &= VSIFPrintfL(tabfp, "\"\\Vm\\Grid\" = \"Numeric\"\n") > 0;
+    bOK &= VSIFPrintfL(tabfp, "\"\\Vm\\GridName\" = \"%s\"\n", basename.c_str()) > 0;
+    bOK &= VSIFPrintfL(tabfp, "\"\\IsReadOnly\" = \"FALSE\"\n") > 0;
+    bOK &= VSIFPrintfL(tabfp, "end_metadata\n") > 0;
 
-    VSIFCloseL(tabfp);
+    if( VSIFCloseL(tabfp) != 0 )
+        bOK = false;
 
-    return 0;
+    return (bOK) ? 0 : -1;
 }
 
 /************************************************************************/
@@ -985,10 +997,13 @@ GDALDataset * NWT_GRDDataset::CreateCopy(const char * pszFilename,
     /*
     * Compute the statistics if ZMAX and ZMIN are not provided
     */
-    double dfMin = 0.0, dfMax = 0.0, dfMean = 0.0, dfStdDev = 0.0;
+    double dfMin = 0.0;
+    double dfMax = 0.0;
+    double dfMean = 0.0;
+    double dfStdDev = 0.0;
     GDALRasterBand *pBand = poSrcDS->GetRasterBand(1);
-    char sMax[10];
-    char sMin[10];
+    char sMax[10] = {};
+    char sMin[10] = {};
 
     if ((CSLFetchNameValue(papszOptions, "ZMAX") == NULL)
             || (CSLFetchNameValue(papszOptions, "ZMIN") == NULL)) {

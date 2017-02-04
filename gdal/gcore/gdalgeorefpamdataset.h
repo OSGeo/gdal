@@ -63,25 +63,23 @@ class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
         GDALGeorefPamDataset();
         virtual ~GDALGeorefPamDataset();
 
-    virtual CPLErr TryLoadXML(char **papszSiblingFiles = NULL);
+    virtual CPLErr TryLoadXML(char **papszSiblingFiles = NULL) CPL_OVERRIDE;
 
-    virtual CPLErr          GetGeoTransform( double * );
-    virtual const char     *GetProjectionRef();
+    virtual CPLErr          GetGeoTransform( double * ) CPL_OVERRIDE;
+    virtual const char     *GetProjectionRef() CPL_OVERRIDE;
 
-    virtual int             GetGCPCount();
-    virtual const char     *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int             GetGCPCount() CPL_OVERRIDE;
+    virtual const char     *GetGCPProjection() CPL_OVERRIDE;
+    virtual const GDAL_GCP *GetGCPs() CPL_OVERRIDE;
 
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadata( const char * pszDomain = "" ) CPL_OVERRIDE;
     virtual const char *GetMetadataItem( const char * pszName,
-                                          const char * pszDomain = "" );
+                                          const char * pszDomain = "" ) CPL_OVERRIDE;
     virtual CPLErr      SetMetadata( char ** papszMetadata,
-                             const char * pszDomain = "" );
+                             const char * pszDomain = "" ) CPL_OVERRIDE;
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                  const char * pszValue,
-                                 const char * pszDomain = "" );
-
-
+                                 const char * pszDomain = "" ) CPL_OVERRIDE;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

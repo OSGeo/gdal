@@ -60,7 +60,6 @@ typedef struct
     size_t szHeader;
 } GPkgHeader;
 
-
 OGRErr              SQLCommand(sqlite3 *poDb, const char * pszSQL);
 int                 SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err);
 GIntBig             SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err);
@@ -83,5 +82,9 @@ OGRGeometry*        GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRS
 OGRErr              GPkgEnvelopeToOGR(GByte *pabyGpkg, size_t szGpkg, OGREnvelope *poEnv);
 
 OGRErr              GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHeader);
+
+CPLString           SQLEscapeDoubleQuote(const char* pszStr);
+CPLString           SQLUnescapeDoubleQuote(const char* pszStr);
+char**              SQLTokenize( const char* pszSQL );
 
 #endif

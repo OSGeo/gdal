@@ -26,8 +26,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_api.h"
+#include "cpl_port.h"
 #include "ogr_geometry.h"
+
+#include <cstddef>
+
+#include "cpl_error.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
@@ -96,7 +102,7 @@ OGRwkbGeometryType OGRMultiCurve::getGeometryType() const
 {
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
         return wkbMultiCurveZM;
-    else if( flags & OGR_G_MEASURED  )
+    else if( flags & OGR_G_MEASURED )
         return wkbMultiCurveM;
     else if( flags & OGR_G_3D )
         return wkbMultiCurveZ;

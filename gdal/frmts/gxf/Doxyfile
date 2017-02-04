@@ -10,19 +10,19 @@
 #---------------------------------------------------------------------------
 
 # The PROJECT_NAME tag is a single word (or a sequence of word surrounded
-# by quotes) that should identify the project. 
+# by quotes) that should identify the project.
 
 PROJECT_NAME         =	GXF
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number.
-# This could be handy for archiving the generated documentation or 
+# This could be handy for archiving the generated documentation or
 # if some version control system is used.
 
-PROJECT_NUMBER       =	
+PROJECT_NUMBER       =
 
-# The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
-# base path where the generated documentation will be put. 
-# If a relative path is entered, it will be relative to the location 
+# The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute)
+# base path where the generated documentation will be put.
+# If a relative path is entered, it will be relative to the location
 # where doxygen was started. If left blank the current directory will be used.
 
 OUTPUT_DIRECTORY     =
@@ -39,14 +39,14 @@ HTML_OUTPUT          =
 
 LATEX_OUTPUT          =
 
-# The HTML_HEADER tag can be used to specify a personal HTML header for 
-# each generated HTML page. If it is left blank doxygen will generate a 
+# The HTML_HEADER tag can be used to specify a personal HTML header for
+# each generated HTML page. If it is left blank doxygen will generate a
 # standard header.
 
 HTML_HEADER          =
 
-# The HTML_FOOTER tag can be used to specify a personal HTML footer for 
-# each generated HTML page. If it is left blank doxygen will generate a 
+# The HTML_FOOTER tag can be used to specify a personal HTML footer for
+# each generated HTML page. If it is left blank doxygen will generate a
 # standard footer.
 
 HTML_FOOTER          =
@@ -94,7 +94,7 @@ GENERATE_LATEX       = NO
 GENERATE_HTML        = YES
 
 # If the BRIEF_MEMBER_DESC tag is set to YES (the default) Doxygen will
-# include brief member descriptions after the members that are listed in 
+# include brief member descriptions after the members that are listed in
 # the file and class documentation (similar to JavaDoc).
 # Set to NO to disable this.
 
@@ -110,22 +110,22 @@ FULL_PATH_NAMES = NO
 # configuration options related to the input files
 #---------------------------------------------------------------------------
 
-# The INPUT tag is used to specify the files and/or directories that contain 
-# documented source files. You may enter file names like "myfile.cpp" or 
-# directories like "/usr/src/myproject". Separate the files or directories 
+# The INPUT tag is used to specify the files and/or directories that contain
+# documented source files. You may enter file names like "myfile.cpp" or
+# directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
 INPUT            =	gxfopen.c gxfopen.h gxf_proj4.c gxf.dox gxf_ogcwkt.c
 
-# If the value of the INPUT tag contains directories, you can use the 
-# FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp 
-# and *.h) to filter out the source-files in the directories. If left 
+# If the value of the INPUT tag contains directories, you can use the
+# FILE_PATTERNS tag to specify one or more wildcard patterns (like *.cpp
+# and *.h) to filter out the source-files in the directories. If left
 # blank all files are included.
 
 FILE_PATTERNS    =	*.*
 
-# The EXAMPLE_PATH tag can be used to specify one or more files or 
-# directories that contain example code fragments that are included (see 
+# The EXAMPLE_PATH tag can be used to specify one or more files or
+# directories that contain example code fragments that are included (see
 # the \include command).
 
 EXAMPLE_PATH     = .
@@ -137,16 +137,16 @@ EXAMPLE_PATH     = .
 RECURSIVE        = NO
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
-# invoke to filter for each input file. Doxygen will invoke the filter program 
+# invoke to filter for each input file. Doxygen will invoke the filter program
 # by executing (via popen()) the command <filter> <input-file>, where <filter>
 # is the value of the INPUT_FILTER tag, and <input-file> is the name of an
 # input file. Doxygen will then use the output that the filter program writes
 # to standard output.
 
-INPUT_FILTER     = 
+INPUT_FILTER     =
 
 #---------------------------------------------------------------------------
-# Configuration options related to the preprocessor 
+# Configuration options related to the preprocessor
 #---------------------------------------------------------------------------
 
 # If the ENABLE_PREPROCESSING tag is set to YES (the default) Doxygen will
@@ -156,7 +156,7 @@ INPUT_FILTER     =
 ENABLE_PREPROCESSING = YES
 
 # If the MACRO_EXPANSION tag is set to YES Doxygen will expand all macro
-# names in the source code. If set to NO (the default) only conditional 
+# names in the source code. If set to NO (the default) only conditional
 # compilation will be performed.
 
 MACRO_EXPANSION = NO
@@ -187,10 +187,10 @@ PREDEFINED =
 EXPAND_ONLY_PREDEF = NO
 
 #---------------------------------------------------------------------------
-# Configuration options related to external references 
+# Configuration options related to external references
 #---------------------------------------------------------------------------
 
-# The TAGFILES tag can be used to specify one or more tagfiles. 
+# The TAGFILES tag can be used to specify one or more tagfiles.
 
 TAGFILES         =
 
@@ -211,10 +211,10 @@ ALLEXTERNALS     = NO
 PERL_PATH        = /usr/local/bin/perl
 
 #---------------------------------------------------------------------------
-# Configuration options related to the search engine 
+# Configuration options related to the search engine
 #---------------------------------------------------------------------------
 
-# The SEARCHENGINE tag specifies whether or not a search engine should be 
+# The SEARCHENGINE tag specifies whether or not a search engine should be
 # used. If set to NO the values of all tags below this one will be ignored.
 
 SEARCHENGINE     = NO
@@ -226,13 +226,13 @@ SEARCHENGINE     = NO
 CGI_NAME         = search.cgi
 
 # The CGI_URL tag should be the absolute URL to the directory where the
-# cgi binaries are located. See the documentation of your http daemon for 
+# cgi binaries are located. See the documentation of your http daemon for
 # details.
 
 CGI_URL          =
 
 # The DOC_URL tag should be the absolute URL to the directory where the
-# documentation is located. If left blank the absolute path to the 
+# documentation is located. If left blank the absolute path to the
 # documentation, with file:// prepended to it, will be used.
 
 DOC_URL          =
@@ -248,7 +248,7 @@ DOC_ABSPATH      =
 
 BIN_ABSPATH      = /usr/local/bin/
 
-# The EXT_DOC_PATHS tag can be used to specify one or more paths to 
+# The EXT_DOC_PATHS tag can be used to specify one or more paths to
 # documentation generated for other projects. This allows doxysearch to search
 # the documentation for these projects as well.
 

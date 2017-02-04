@@ -28,20 +28,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-H_GDALWMSMiniDriverFactory(VirtualEarth)
-
-class GDALWMSMiniDriver_VirtualEarth : public GDALWMSMiniDriver {
+class WMSMiniDriver_VirtualEarth : public WMSMiniDriver {
 public:
-    GDALWMSMiniDriver_VirtualEarth();
-    virtual ~GDALWMSMiniDriver_VirtualEarth();
+    WMSMiniDriver_VirtualEarth();
+    virtual ~WMSMiniDriver_VirtualEarth();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config);
-    virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
-    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
-    virtual const char* GetProjectionInWKT();
-
-protected:
-    CPLString m_base_url;
-    CPLString m_projection_wkt;
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request,
+                                        const GDALWMSImageRequestInfo &iri,
+                                        const GDALWMSTiledImageRequestInfo &tiri) override;
 };

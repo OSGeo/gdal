@@ -39,7 +39,6 @@ static GPKGTileFormat GetTileFormat(const char* pszTF );
 #define DB2LAYERSTATUS_CREATED  2
 #define DB2LAYERSTATUS_DISABLED 3
 
-
 /************************************************************************/
 /*                             Tiling schemes                           */
 /************************************************************************/
@@ -188,7 +187,7 @@ OGRDB2DataSource::OGRDB2DataSource()
     m_pabyHugeColorArray = NULL;
     m_poCT = NULL;
     m_bInWriteTile = FALSE;
-    m_hTempDB = NULL;
+    //m_hTempDB = NULL;
     m_bInFlushCache = FALSE;
     m_nTileInsertionCount = 0;
     m_osTilingScheme = "CUSTOM";
@@ -215,7 +214,7 @@ OGRDB2DataSource::~OGRDB2DataSource()
 
     if (!m_bIsVector)
     {
-        if( m_poParentDS == NULL && m_osRasterTable.size() &&
+        if( m_poParentDS == NULL && !m_osRasterTable.empty() &&
                 !m_bGeoTransformValid )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -238,7 +237,6 @@ OGRDB2DataSource::~OGRDB2DataSource()
         if( m_papoSRS[i] != NULL )
             CPLDebug("OGRDB2DataSource::~OGRDB2DataSource","m_papoSRS[%d] is not null", i);
 //LATER            m_papoSRS[i]->Release(); //fails for some reason
-
     }
     CPLFree( m_panSRID );
     CPLFree( m_papoSRS );
@@ -274,6 +272,8 @@ int OGRDB2DataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) || EQUAL(pszCap,ODsCDeleteLayer) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return TRUE;
     else
         return FALSE;
@@ -345,7 +345,6 @@ OGRLayer *OGRDB2DataSource::GetLayerByName( const char* pszLayerName )
     return poLayer;
 }
 
-
 /************************************************************************/
 /*                    DeleteLayer(OGRDB2TableLayer * poLayer)           */
 /************************************************************************/
@@ -399,7 +398,6 @@ int OGRDB2DataSource::DeleteLayer( OGRDB2TableLayer * poLayer )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                            DeleteLayer(int iLayer)                   */
 /************************************************************************/
@@ -411,7 +409,6 @@ int OGRDB2DataSource::DeleteLayer( int iLayer )
         return OGRERR_FAILURE;
 
     return DeleteLayer(m_papoLayers[iLayer]);
-
 }
 
 /************************************************************************/
@@ -453,7 +450,6 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
 
         /* For now, always convert layer name to uppercase table name*/
         pszTableName = ToUpper( pszDotPos + 1 );
-
     }
     else
     {
@@ -467,7 +463,6 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
         CPLFree(pszSchemaName);
         pszSchemaName = CPLStrdup(CSLFetchNameValue(papszOptions, "SCHEMA"));
     }
-
 
     /* -------------------------------------------------------------------- */
     /*      Do we already have this layer?  If so, should we blow it        */
@@ -518,7 +513,6 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
     pszGeomColumn =  CSLFetchNameValue( papszOptions, "GEOM_NAME");
     if (!pszGeomColumn)
         pszGeomColumn = "OGR_geometry";
-
 
     /* -------------------------------------------------------------------- */
     /*      Try to get the SRS Id of this spatial reference system,         */
@@ -613,7 +607,6 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
 
     m_papoLayers[m_nLayers++] = poLayer;
 
-
     return poLayer;
 }
 
@@ -651,7 +644,6 @@ int OGRDB2DataSource::OpenTable( const char *pszSchemaName,
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                       GetLayerCount()                                */
@@ -745,10 +737,10 @@ int OGRDB2DataSource::Create( const char * pszFilename,
         }
     }
 
-    int bFileExists = FALSE;
+    //int bFileExists = FALSE;
     if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
     {
-        bFileExists = TRUE;
+        //bFileExists = TRUE;
         if( nBandsIn == 0 ||
                 !CPLTestBool(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) )
         {
@@ -814,7 +806,7 @@ int OGRDB2DataSource::Create( const char * pszFilename,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Error creating layer: %s", GetSession()->GetLastError() );
             CPLDebug("OGR_DB2DataSource::Create", "create failed");
-            return NULL;
+            return FALSE;
         }
 
         // Remove entries from raster catalog tables - will cascade
@@ -855,7 +847,7 @@ int OGRDB2DataSource::Create( const char * pszFilename,
         CPLDebug("OGR_DB2DataSource::Create","setting metadata PIXEL");
         GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
         GDALPamDataset::SetMetadataItem("IDENTIFIER", m_osIdentifier);
-        if( m_osDescription.size() )
+        if( !m_osDescription.empty() )
             GDALPamDataset::SetMetadataItem("DESCRIPTION", m_osDescription);
 
         const char* pszTF = CSLFetchNameValue(papszOptions, "TILE_FORMAT");
@@ -911,12 +903,7 @@ int OGRDB2DataSource::Create( const char * pszFilename,
     }
     CPLDebug("OGR_DB2DataSource::Create","exiting");
     return TRUE;
-
-
 }
-
-
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -963,7 +950,7 @@ int OGRDB2DataSource::Open( GDALOpenInfo* poOpenInfo )
         if( CSLFetchNameValue( poOpenInfo->papszOpenOptions, "TABLE") ) {
             osSubdatasetTableName = CSLFetchNameValue( poOpenInfo->papszOpenOptions, "TABLE");
         }
-        if( osSubdatasetTableName.size() )
+        if( !osSubdatasetTableName.empty() )
         {
             oStatement.Appendf(" AND c.table_name='%s'", osSubdatasetTableName.c_str());
             SetPhysicalFilename( osFilename.c_str() ); //LATER
@@ -1083,8 +1070,6 @@ int OGRDB2DataSource::InitializeSession( const char * pszNewName,
 
     m_pszName = CPLStrdup(pszNewName);
 
-
-
     // if the table parameter was specified, pull out the table names
     if( pszTableSpec != NULL )
     {
@@ -1092,7 +1077,6 @@ int OGRDB2DataSource::InitializeSession( const char * pszNewName,
         int             i;
 
         papszTableList = CSLTokenizeString2( pszTableSpec, ",", 0 );
-
 
         for( i = 0; i < CSLCount(papszTableList); i++ )
         {
@@ -1283,7 +1267,6 @@ int OGRDB2DataSource::Open( const char * pszNewName,
         }
     }
 
-
     /* Determine the available tables if not specified. */
     if (m_papszTableNames == NULL)
     {
@@ -1375,7 +1358,7 @@ int OGRDB2DataSource::Open( const char * pszNewName,
                             && oStatement2.Fetch() )
                     {
                         if ( oStatement2.GetColData( 0 ) )
-                            pszSRText = CPLStrdup(oStatement2.GetColData( 0 ));;
+                            pszSRText = CPLStrdup(oStatement2.GetColData( 0 ));
                     }
                 }
                 if (nSRId < 0) { // something went wrong - didn't find srid - use default
@@ -1459,7 +1442,6 @@ OGRLayer * OGRDB2DataSource::ExecuteSQL( const char *pszSQLCommand,
 
     CPLDebug( "OGRDB2DataSource::ExecuteSQL", "ExecuteSQL(%s) called.",
               pszSQLCommand );
-
 
     /* Execute the command natively */
     OGRDB2Statement *poStatement = new OGRDB2Statement( &m_oSession );
@@ -1562,9 +1544,7 @@ OGRErr OGRDB2DataSource::InitializeMetadataTables()
               "Dynamically creating DB2 spatial metadata tables is "
               "not supported" );
     return OGRERR_FAILURE;
-
 }
-
 
 /************************************************************************/
 /*                              FetchSRS()                              */
@@ -1668,6 +1648,7 @@ int OGRDB2DataSource::FetchSRSId( OGRSpatialReference * poSRS)
         return 0;
 
     OGRSpatialReference oSRS(*poSRS);
+    // cppcheck-suppress uselessAssignmentPtrArg
     poSRS = NULL;
 
     pszAuthorityName = oSRS.GetAuthorityName(NULL);
@@ -2005,7 +1986,6 @@ int OGRDB2DataSource::OpenRaster( const char* pszTableName,
         pszContentsMinY = osContentsMinY.c_str();
         pszContentsMaxX = osContentsMaxX.c_str();
         pszContentsMaxY = osContentsMaxY.c_str();
-
     }
 
     if(! InitRaster ( NULL, pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
@@ -2077,7 +2057,6 @@ int OGRDB2DataSource::OpenRaster( const char* pszTableName,
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                         InitRaster()                                 */
 /************************************************************************/
@@ -2103,7 +2082,6 @@ int OGRDB2DataSource::InitRaster ( OGRDB2DataSource* poParentDS,
     if (nIdxInResult > 0) {
         CPLDebug("OGRDB2DataSource::InitRaster1",
                  "Serious problem as we don't support nIdxInResult");
-
     }
     int nZoomLevel = atoi(oStatement->GetColData( 0));
     double dfPixelXSize = CPLAtof(oStatement->GetColData( 1));
@@ -2218,7 +2196,6 @@ int OGRDB2DataSource::InitRaster ( OGRDB2DataSource* poParentDS,
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                         GetTileFormat()                              */
 /************************************************************************/
@@ -2266,12 +2243,11 @@ int OGRDB2DataSource::RegisterWebPExtension()
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                    CheckUnknownExtensions()                          */
 /************************************************************************/
 
-void OGRDB2DataSource::CheckUnknownExtensions(int bCheckRasterTable)
+void OGRDB2DataSource::CheckUnknownExtensions(int /*bCheckRasterTable*/)
 {
     if( !HasExtensionsTable() )
         return;
@@ -2367,7 +2343,6 @@ void OGRDB2DataSource::ParseCompressionOptions(char** papszOptions)
         m_bDither = CPLTestBool(pszDither);
 }
 
-
 /************************************************************************/
 /*                      ComputeTileAndPixelShifts()                     */
 /************************************************************************/
@@ -2385,9 +2360,7 @@ void OGRDB2DataSource::ComputeTileAndPixelShifts()
     int nShiftYPixels = (int)floor(0.5 + (m_adfGeoTransform[3] - m_dfTMSMaxY) /  m_adfGeoTransform[5]);
     m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
     m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
-
 }
-
 
 /************************************************************************/
 /*                  CreateExtensionsTableIfNecessary()                  */
@@ -2420,7 +2393,6 @@ OGRErr OGRDB2DataSource::CreateExtensionsTableIfNecessary()
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                         HasExtensionsTable()                         */
 /************************************************************************/
@@ -2449,7 +2421,6 @@ void OGRDB2DataSource::FlushCache()
     DB2_DEBUG_ENTER("OGRDB2DataSource::FlushCache");
     FlushCacheWithErrCode();
     DB2_DEBUG_EXIT("OGRDB2DataSource::FlushCache");
-
 }
 
 CPLErr OGRDB2DataSource::FlushCacheWithErrCode()
@@ -2500,9 +2471,7 @@ CPLErr OGRDB2DataSource::FlushCacheWithErrCode()
     CPLDebug("OGRDB2DataSource::FlushCacheWithErrCode","exiting; eErr: %d", eErr);
 
     return eErr;
-
 }
-
 
 /************************************************************************/
 /*                         SoftStartTransaction()                       */
@@ -2514,8 +2483,6 @@ int OGRDB2DataSource::SoftStartTransaction()
     return m_oSession.BeginTransaction();
 }
 
-
-
 /************************************************************************/
 /*                         SoftCommitTransaction()                      */
 /************************************************************************/
@@ -2526,8 +2493,6 @@ int OGRDB2DataSource::SoftCommitTransaction()
     return m_oSession.CommitTransaction();
 }
 
-
-
 /************************************************************************/
 /*                         SoftRollbackTransaction()                    */
 /************************************************************************/
@@ -2537,8 +2502,6 @@ int OGRDB2DataSource::SoftRollbackTransaction()
     CPLDebug("OGRDB2DataSource::SoftRollbackTransaction", "enter");
     return m_oSession.RollbackTransaction();
 }
-
-
 
 /************************************************************************/
 /*                            CreateCopy()                              */
@@ -2560,7 +2523,7 @@ static const WarpResamplingAlg asResamplingAlg[] =
     { "AVERAGE", GRA_Average },
 };
 
-void DumpStringList(char **papszStrList)
+static void DumpStringList(char **papszStrList)
 {
     if (papszStrList == NULL)
         return ;
@@ -2572,8 +2535,6 @@ void DumpStringList(char **papszStrList)
     }
     return ;
 }
-
-
 
 GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
         GDALDataset *poSrcDS,
@@ -2869,7 +2830,6 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
     return poDS;
 }
 
-
 /************************************************************************/
 /*                         GetProjectionRef()                           */
 /************************************************************************/
@@ -2911,7 +2871,6 @@ CPLErr OGRDB2DataSource::SetProjection( const char* pszProjection )
         if( oSRS.SetFromUserInput(pszProjection) != OGRERR_NONE )
             return CE_Failure;
         nSRID = FetchSRSId( &oSRS );
-        nSRID = FetchSRSId( &oSRS );
     }
 
     for(size_t iScheme = 0;
@@ -2947,12 +2906,12 @@ CPLErr OGRDB2DataSource::SetProjection( const char* pszProjection )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Set projection failed in gpkg.contents "
-                     "for table %s; ",
+                     "for table %s: %s",
                      m_osRasterTable.c_str(),
                      GetSession()->GetLastError());
             CPLDebug("OGRDB2DataSource::SetProjection",
                      "Set projection failed in gpkg.contents "
-                     "for table %s; ",
+                     "for table %s: %s",
                      m_osRasterTable.c_str(),
                      GetSession()->GetLastError());
             return CE_Failure;
@@ -2966,12 +2925,12 @@ CPLErr OGRDB2DataSource::SetProjection( const char* pszProjection )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Set projection in gpkg.tile_matrix_set failed "
-                     "for table %s; ",
+                     "for table %s: %s",
                      m_osRasterTable.c_str(),
                      GetSession()->GetLastError());
             CPLDebug("OGRDB2DataSource::SetProjection",
                      "Set projection in gpkg.tile_matrix_set failed "
-                     "for table %s; ",
+                     "for table %s: %s",
                      m_osRasterTable.c_str(),
                      GetSession()->GetLastError());
             return CE_Failure;
@@ -3229,8 +3188,6 @@ CPLErr OGRDB2DataSource::FinalizeRasterRegistration()
     return CE_None;
 }
 
-
-
 /************************************************************************/
 /*                          IBuildOverviews()                           */
 /************************************************************************/
@@ -3421,12 +3378,12 @@ CPLErr OGRDB2DataSource::IBuildOverviews(
                         SoftRollbackTransaction();
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "updating tile_matrix failed "
-                                 "for table %s; ",
+                                 "for table %s: %s ",
                                  m_osRasterTable.c_str(),
                                  GetSession()->GetLastError());
                         CPLDebug("OGRDB2DataSource::IBuildOverviews",
                                  "updating tile_matrix failed "
-                                 "for table %s; ",
+                                 "for table %s: %s ",
                                  m_osRasterTable.c_str(),
                                  GetSession()->GetLastError());
                         return CE_Failure;
@@ -3447,12 +3404,12 @@ CPLErr OGRDB2DataSource::IBuildOverviews(
                         SoftRollbackTransaction();
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "update failed "
-                                 "for table %s; ",
+                                 "for table %s: %s ",
                                  m_osRasterTable.c_str(),
                                  GetSession()->GetLastError());
                         CPLDebug("OGRDB2DataSource::IBuildOverviews",
                                  "update failed "
-                                 "for table %s; ",
+                                 "for table %s: %s ",
                                  m_osRasterTable.c_str(),
                                  GetSession()->GetLastError());
                         return CE_Failure;
@@ -3485,12 +3442,12 @@ CPLErr OGRDB2DataSource::IBuildOverviews(
                     SoftRollbackTransaction();
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "insert into tile_matrix failed "
-                             "for table %s; ",
+                             "for table %s: %s ",
                              m_osRasterTable.c_str(),
                              GetSession()->GetLastError());
                     CPLDebug("OGRDB2DataSource::IBuildOverviews",
                              "insert into tile_matrix failed "
-                             "for table %s; ",
+                             "for table %s: %s ",
                              m_osRasterTable.c_str(),
                              GetSession()->GetLastError());
                     return CE_Failure;
@@ -3571,7 +3528,6 @@ CPLErr OGRDB2DataSource::IBuildOverviews(
 
     return eErr;
 }
-
 
 /************************************************************************/
 /*                       RegisterZoomOtherExtension()                   */

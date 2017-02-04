@@ -75,7 +75,7 @@ class DataSet
     }
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(DataSet);
+    CPL_DISALLOW_COPY_ASSIGN(DataSet)
 } ;
 
 /* -------------------------------------------------------------------- */
@@ -84,8 +84,10 @@ class DataSet
  *
  */
 
-ADSRangeLastAfter::ADSRangeLastAfter( EnvisatFile & envfile,
-    int  ads_idx , int mds_idx, const TimeDelta & line_interval )
+ADSRangeLastAfter::ADSRangeLastAfter(
+      EnvisatFile & envfile,
+      int  ads_idx , int mds_idx,
+      const TimeDelta & line_interval )
 {
     /* abs.time tolerance */
     TimeDelta atol = line_interval * 0.5 ;

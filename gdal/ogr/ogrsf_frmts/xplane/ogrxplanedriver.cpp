@@ -48,7 +48,7 @@ const char *OGRXPlaneDriver::GetName()
 OGRDataSource *OGRXPlaneDriver::Open( const char * pszFilename, int bUpdate )
 
 {
-    if ( bUpdate )
+    if( bUpdate )
     {
         return NULL;
     }
@@ -56,7 +56,7 @@ OGRDataSource *OGRXPlaneDriver::Open( const char * pszFilename, int bUpdate )
     if( !EQUAL(CPLGetExtension(pszFilename), "dat") )
         return NULL;
 
-    OGRXPlaneDataSource   *poDS = new OGRXPlaneDataSource();
+    OGRXPlaneDataSource *poDS = new OGRXPlaneDataSource();
 
     bool bReadWholeFile = CPLTestBool(
         CPLGetConfigOption("OGR_XPLANE_READ_WHOLE_FILE", "TRUE"));

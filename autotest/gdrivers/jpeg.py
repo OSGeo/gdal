@@ -460,7 +460,7 @@ def jpeg_11():
         return 'fail'
     ds = None
 
-    gdal.GetDriverByName('JPEG').Delete('tmp/jpeg11.jpg');
+    gdal.GetDriverByName('JPEG').Delete('tmp/jpeg11.jpg')
 
     return 'success'
 

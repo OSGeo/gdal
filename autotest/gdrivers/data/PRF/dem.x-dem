@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE phini SYSTEM "phini4.dtd">
+<phini><!-- artificial example -->
+  <i n="Width" v="4330"/>
+  <i n="Height" v="4663"/>
+  <i n="QChans" v="1"/>
+  <i n="BytesPS" v="4"/>
+  <i n="SizeX" v="4096"/>
+  <i n="SizeY" v="4096"/>
+  <i n="CountX" v="2"/>
+  <i n="CountY" v="2"/>
+  <i n="RemindX" v="234"/>
+  <i n="RemindY" v="567"/>
+  <i n="CompressMode" v="0"/>
+  <i n="JpegQuality" v="75"/>
+  <x n="ChannelsInfo">
+    <s n="type" v="F"/>
+    <i n="bytes_ps" v="4"/>
+    <s n="channels" v="#Z"/>
+  </x>
+  <d n="XR_0" v="1"/>
+  <d n="XR_1" v="2"/>
+  <d n="YR_0" v="3"/>
+  <d n="YR_1" v="4"/>
+  <d n="ZR_0" v="5"/>
+  <d n="ZR_1" v="6"/>
+  <d n="BadZ" v="-1.1111110000000000e+006"/>
+  <x n="DemShift"><d n="x" v="0.0000000000000000e+000"/><d n="y" v="0.0000000000000000e+000"/><d n="z" v="0.0000000000000000e+000"/></x>
+  <x n="dem_0_0">
+    <i n="Width" v="4096"/>
+    <i n="Height" v="4096"/>
+    <i n="DispX" v="0"/>
+    <i n="DispY" v="0"/>
+  </x>
+  <x n="dem_0_1">
+    <i n="Width" v="234"/>
+    <i n="Height" v="4096"/>
+    <i n="DispX" v="4096"/>
+    <i n="DispY" v="0"/>
+  </x>
+  <x n="dem_1_0">
+    <i n="Width" v="4096"/>
+    <i n="Height" v="567"/>
+    <i n="DispX" v="0"/>
+    <i n="DispY" v="4096"/>
+  </x>
+  <x n="dem_1_1">
+    <i n="Width" v="234"/>
+    <i n="Height" v="567"/>
+    <i n="DispX" v="4096"/>
+    <i n="DispY" v="4096"/>
+  </x>
+  <i n="IsPyramid" v="1"/>
+  <x n="Pyramid">
+    <i n="Width" v="1082"/>
+    <i n="Height" v="1165"/>
+    <i n="Scale" v="2"/>
+  </x>
+</phini>

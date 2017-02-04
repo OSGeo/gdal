@@ -83,7 +83,6 @@ void OGRDWGDriver::Initialize()
     OdString iniFile = oServices.findFile(OD_T("adinit.dat"));
     if (!iniFile.isEmpty())
       OdCharMapper::initialize(iniFile);
-
 }
 
 /************************************************************************/

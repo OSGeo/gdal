@@ -49,7 +49,8 @@ def dither_1():
     g_band = src_ds.GetRasterBand(2)
     b_band = src_ds.GetRasterBand(3)
 
-    dst_ds = drv.Create('tmp/rgbsmall.tif', src_ds.RasterXSize, src_ds.RasterYSize, 1, gdal.GDT_Byte )
+    dst_ds = drv.Create('tmp/rgbsmall.tif', src_ds.RasterXSize,
+                        src_ds.RasterYSize, 1, gdal.GDT_Byte )
     dst_band = dst_ds.GetRasterBand(1)
 
     ct = gdal.ColorTable()
@@ -71,8 +72,8 @@ def dither_1():
         gdaltest.post_reason( 'color table size wrong' )
         return 'fail'
 
-    ref_ct = [ (36,48,32,255), (92,120,20,255), (88,96,20,255), (92,132,56,255),
-               (0,0,0,255), (96,152,24,255), (60,112,32,255), (164,164,108,255) ]
+    ref_ct = [(36,48,32,255), (92,120,20,255), (88,96,20,255), (92,132,56,255),
+              (0,0,0,255), (96,152,24,255), (60,112,32,255), (164,164,108,255)]
 
     for i in range(nColors):
         ct_data = ct.GetColorEntry( i )
@@ -87,26 +88,24 @@ def dither_1():
                     print(ref_ct[k])
                 return 'fail'
 
-    if cs == cs_expected \
-       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+    if cs == cs_expected or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
         drv.Delete( 'tmp/rgbsmall.tif' )
 
     if cs != cs_expected:
         print('Got: ', cs)
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
-    else:
-        return 'success'
+
+    return 'success'
+
 
 gdaltest_list = [
     dither_1
     ]
 
+
 if __name__ == '__main__':
-
     gdaltest.setup_run( 'dither' )
-
     gdaltest.run_tests( gdaltest_list )
-
     gdaltest.summarize()
 

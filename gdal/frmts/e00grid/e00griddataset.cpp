@@ -106,8 +106,8 @@ class E00GRIDDataset : public GDALPamDataset
                  E00GRIDDataset();
     virtual     ~E00GRIDDataset();
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char* GetProjectionRef();
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char* GetProjectionRef() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -124,20 +124,18 @@ class E00GRIDRasterBand : public GDALPamRasterBand
     friend class E00GRIDDataset;
 
   public:
-
                 E00GRIDRasterBand( E00GRIDDataset *, int, GDALDataType );
 
-    virtual CPLErr      IReadBlock( int, int, void * );
+    virtual CPLErr      IReadBlock( int, int, void * ) override;
 
-    virtual double      GetNoDataValue( int *pbSuccess = NULL );
-    virtual const char *GetUnitType();
-    virtual double      GetMinimum( int *pbSuccess = NULL );
-    virtual double      GetMaximum( int *pbSuccess = NULL );
+    virtual double      GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual const char *GetUnitType() override;
+    virtual double      GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double      GetMaximum( int *pbSuccess = NULL ) override;
     virtual CPLErr      GetStatistics( int bApproxOK, int bForce,
                                        double *pdfMin, double *pdfMax,
-                                       double *pdfMean, double *padfStdDev );
+                                       double *pdfMean, double *padfStdDev ) override;
 };
-
 
 /************************************************************************/
 /*                         E00GRIDRasterBand()                          */
@@ -147,8 +145,8 @@ E00GRIDRasterBand::E00GRIDRasterBand( E00GRIDDataset *poDSIn, int nBandIn,
                                       GDALDataType eDT )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = eDT;
 
@@ -669,7 +667,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -681,9 +679,8 @@ CPLErr E00GRIDDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
-    return( CE_None );
+    return CE_None;
 }
-
 
 /************************************************************************/
 /*                             ReadLine()                               */

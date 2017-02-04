@@ -3933,6 +3933,155 @@ def ogr_gml_76():
     return 'success'
 
 ###############################################################################
+# Test interpretation of http://www.opengis.net/def/crs/EPSG/0/ URLs (#6678)
+
+def ogr_gml_77():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    gdal.FileFromMemBuffer("/vsimem/ogr_gml_77.xml",
+    """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <ogr:featureMember>
+    <ogr:point gml:id="point.0">
+      <ogr:geometryProperty><gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/4326"><gml:pos>49 2</gml:pos></gml:Point></ogr:geometryProperty>
+      <ogr:id>1</ogr:id>
+    </ogr:point>
+  </ogr:featureMember>
+</ogr:FeatureCollection>
+""")
+
+    ds = ogr.Open('/vsimem/ogr_gml_77.xml')
+    lyr = ds.GetLayer(0)
+    if lyr.GetSpatialRef().ExportToWkt().find('AXIS') >= 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.OpenEx('/vsimem/ogr_gml_77.xml', open_options = ['SWAP_COORDINATES=YES'] )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.OpenEx('/vsimem/ogr_gml_77.xml', open_options = ['SWAP_COORDINATES=NO'] )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gml_77.xml')
+    gdal.Unlink('/vsimem/ogr_gml_77.gfs')
+
+    return 'success'
+
+###############################################################################
+# Test effect of SWAP_COORDINATES (#6678)
+
+def ogr_gml_78():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    gdal.FileFromMemBuffer("/vsimem/ogr_gml_78.xml",
+    """<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <ogr:featureMember>
+    <ogr:point gml:id="point.0">
+      <ogr:geometryProperty><gml:Point srsName="EPSG:4326"><gml:pos>2 49</gml:pos></gml:Point></ogr:geometryProperty>
+      <ogr:id>1</ogr:id>
+    </ogr:point>
+  </ogr:featureMember>
+</ogr:FeatureCollection>
+""")
+
+    ds = ogr.Open('/vsimem/ogr_gml_78.xml')
+    lyr = ds.GetLayer(0)
+    if lyr.GetSpatialRef().ExportToWkt().find('AXIS') >= 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.OpenEx('/vsimem/ogr_gml_78.xml', open_options = ['SWAP_COORDINATES=YES'] )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.OpenEx('/vsimem/ogr_gml_78.xml', open_options = ['SWAP_COORDINATES=NO'] )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gml_78.xml')
+    gdal.Unlink('/vsimem/ogr_gml_78.gfs')
+
+    return 'success'
+
+###############################################################################
+# Test SRSNAME_FORMAT
+
+def ogr_gml_79():
+
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+
+    tests = [ [ 'SHORT', 'EPSG:4326', '2 49' ],
+              [ 'OGC_URN', 'urn:ogc:def:crs:EPSG::4326', '49 2'],
+              [ 'OGC_URL', 'http://www.opengis.net/def/crs/EPSG/0/4326', '49 2']
+            ]
+    for (srsname_format, expected_srsname, expected_coords) in tests:
+
+        ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_79.xml', \
+                options = ['FORMAT=GML3', 'SRSNAME_FORMAT='+srsname_format] )
+        lyr = ds.CreateLayer('firstlayer', srs = sr)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
+        feat.SetGeometry(geom)
+        lyr.CreateFeature(feat)
+        ds = None
+
+        f = gdal.VSIFOpenL("/vsimem/ogr_gml_79.xml", "rb")
+        if f is not None:
+            data = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
+            gdal.VSIFCloseL(f)
+
+        if data.find(expected_srsname) < 0 or data.find(expected_coords) < 0:
+            gdaltest.post_reason('fail')
+            print(srsname_format)
+            print(data)
+            return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gml_79.xml')
+    gdal.Unlink('/vsimem/ogr_gml_79.xsd')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -4140,12 +4289,15 @@ gdaltest_list = [
     ogr_gml_74,
     ogr_gml_75,
     ogr_gml_76,
+    ogr_gml_77,
+    ogr_gml_78,
+    ogr_gml_79,
     ogr_gml_cleanup ]
 
 disabled_gdaltest_list = [
     ogr_gml_clean_files,
     ogr_gml_1,
-    ogr_gml_71,
+    ogr_gml_79,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':

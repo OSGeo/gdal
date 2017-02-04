@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifdef SWIGPYTHON
+%nothread;
+#endif
+
 #ifndef FROM_GDAL_I
 %include "exception.i"
 #endif
@@ -99,6 +103,8 @@ typedef enum
                                *   ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTIN = 16,              /**< a PolyhedralSurface consisting only of Triangle patches
                                *    ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbTriangle = 17,       /**< A Triangle is a polygon with 3 distinct, non-collinear vertices and no
+                                 interior boundary. GDAL &gt;= 2.2 */
 
     wkbNone = 100,          /**< non-standard, for pure attribute records */
     wkbLinearRing = 101,    /**< non-standard, just for createGeometry() */
@@ -112,6 +118,7 @@ typedef enum
     wkbSurfaceZ = 1014,         /**< wkbSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbPolyhedralSurfaceZ = 1015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTINZ = 1016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbTriangleZ = 1017,         /**< wkbTriangle with Z component. GDAL &gt;= 2.2 */
 
     wkbPointM = 2001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbLineStringM = 2002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
@@ -129,6 +136,7 @@ typedef enum
     wkbSurfaceM = 2014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTINM = 2016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbTriangleM = 2017,            /**<  GDAL &gt;= 2.2 */
 
     wkbPointZM = 3001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbLineStringZM = 3002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
@@ -146,6 +154,7 @@ typedef enum
     wkbSurfaceZM = 3014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
+    wkbTriangleZM = 3017,           /**<  GDAL &gt;= 2.2 */
 
     wkbPoint25D = -2147483647,   /* 2.5D extensions as per 99-402 */
     wkbLineString25D = -2147483646,
@@ -279,6 +288,7 @@ typedef void retGetPoints;
 %constant wkbSurface = 14;
 %constant wkbPolyhedralSurface = 15;
 %constant wkbTIN = 16;
+%constant wkbTriangle = 17;
 
 %constant wkbNone = 100;
 %constant wkbLinearRing = 101;
@@ -292,6 +302,7 @@ typedef void retGetPoints;
 %constant wkbSurfaceZ = 1014;
 %constant wkbPolyhedralSurfaceZ = 1015;
 %constant wkbTINZ = 1016;
+%constant wkbTriangleZ = 1017;
 
 %constant wkbPointM = 2001;
 %constant wkbLineStringM = 2002;
@@ -309,6 +320,7 @@ typedef void retGetPoints;
 %constant wkbSurfaceM = 2014;
 %constant wkbPolyhedralSurfaceM = 2015;
 %constant wkbTINM = 2016;
+%constant wkbTriangleM = 2017;
 
 %constant wkbPointZM = 3001;
 %constant wkbLineStringZM = 3002;
@@ -326,6 +338,7 @@ typedef void retGetPoints;
 %constant wkbSurfaceZM = 3014;
 %constant wkbPolyhedralSurfaceZM = 3015;
 %constant wkbTINZM = 3016;
+%constant wkbTriangleZM = 3017;
 
 %constant wkbPoint25D =              0x80000001;
 %constant wkbLineString25D =         0x80000002;
@@ -403,6 +416,8 @@ typedef void retGetPoints;
 %constant char *ODsCTransactions       = "Transactions";
 %constant char *ODsCEmulatedTransactions = "EmulatedTransactions";
 %constant char *ODsCMeasuredGeometries = "MeasuredGeometries";
+%constant char *ODsCRandomLayerRead    = "RandomLayerRead";
+%constant char *ODsCRandomLayerWrite   = "RandomLayerWrite";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";
@@ -443,6 +458,8 @@ typedef int OGRErr;
 #define ODsCTransactions       "Transactions"
 #define ODsCEmulatedTransactions "EmulatedTransactions"
 #define ODsCMeasuredGeometries  "MeasuredGeometries";
+#define ODsCRandomLayerRead    "RandomLayerRead";
+#define ODsCRandomLayerWrite   "RandomLayerWrite";
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
@@ -617,6 +634,9 @@ public:
 %mutable;
 
 %newobject CreateDataSource;
+#ifdef SWIGPYTHON
+%thread;
+#endif
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CreateDataSource;
 #endif
@@ -625,8 +645,14 @@ public:
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, utf8_path, options);
     return ds;
   }
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 %newobject CopyDataSource;
+#ifdef SWIGPYTHON
+%thread;
+#endif
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CopyDataSource;
 #endif
@@ -636,8 +662,14 @@ public:
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, utf8_path, options);
     return ds;
   }
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 %newobject Open;
+#ifdef SWIGPYTHON
+%thread;
+#endif
 #ifndef SWIGJAVA
 %feature( "kwargs" ) Open;
 #endif
@@ -657,6 +689,9 @@ public:
     }
     return ds;
   }
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 #ifdef SWIGJAVA
   OGRErr DeleteDataSource( const char *utf8_path ) {
@@ -1851,6 +1886,11 @@ public:
             case wkbCurvePolygon:
             case wkbMultiCurve:
             case wkbMultiSurface:
+            case wkbCurve:
+            case wkbSurface:
+            case wkbTriangle:
+            case wkbTIN:
+            case wkbPolyhedralSurface:
             case wkbNone:
             /*case wkbLinearRing:*/
             case wkbCircularStringZ:
@@ -1858,6 +1898,11 @@ public:
             case wkbCurvePolygonZ:
             case wkbMultiCurveZ:
             case wkbMultiSurfaceZ:
+            case wkbCurveZ:
+            case wkbSurfaceZ:
+            case wkbTriangleZ:
+            case wkbTINZ:
+            case wkbPolyhedralSurfaceZ:
             case wkbPoint25D:
             case wkbLineString25D:
             case wkbPolygon25D:
@@ -1877,6 +1922,11 @@ public:
             case wkbCurvePolygonM:
             case wkbMultiCurveM:
             case wkbMultiSurfaceM:
+            case wkbCurveM:
+            case wkbSurfaceM:
+            case wkbTriangleM:
+            case wkbTINM:
+            case wkbPolyhedralSurfaceM:
             case wkbPointZM:
             case wkbLineStringZM:
             case wkbPolygonZM:
@@ -1889,6 +1939,11 @@ public:
             case wkbCurvePolygonZM:
             case wkbMultiCurveZM:
             case wkbMultiSurfaceZM:
+            case wkbCurveZM:
+            case wkbSurfaceZM:
+            case wkbTriangleZM:
+            case wkbTINZM:
+            case wkbPolyhedralSurfaceZM:
                 return TRUE;
             default:
                 CPLError(CE_Failure, CPLE_IllegalArg, "Illegal geometry type value");
@@ -2881,6 +2936,10 @@ public:
   double Distance( OGRGeometryShadow* other) {
     return OGR_G_Distance(self, other);
   }
+  
+  double Distance3D( OGRGeometryShadow* other) {
+    return OGR_G_Distance3D(self, other);
+  }
 %clear OGRGeometryShadow* other;
 
   void Empty () {
@@ -3196,6 +3255,9 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
 
 #if !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON)))
 
+#ifdef SWIGPYTHON
+%thread;
+#endif
 %newobject Open;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) Open;
@@ -3216,7 +3278,13 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
     return ds;
   }
 %}
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
+#ifdef SWIGPYTHON
+%thread;
+#endif
 %newobject OpenShared;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) OpenShared;
@@ -3234,6 +3302,9 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
     return ds;
   }
 %}
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 #endif /* !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON))) */
 
@@ -3363,4 +3434,9 @@ int GDALTermProgress( double, const char *, void * );
 
 #ifdef SWIGJAVA
 %include "ogr_java_extend.i"
+#endif
+
+
+#ifdef SWIGPYTHON
+%thread;
 #endif

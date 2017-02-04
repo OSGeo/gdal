@@ -28,8 +28,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_multiproc.h"
+#include "cpl_port.h"
+#include "gdal.h"
 #include "gdal_priv.h"
+
+#include <climits>
+#include <cstring>
+
+#include "cpl_atomic_ops.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
@@ -109,7 +120,6 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSizeInBytes )
     GDALSetCacheMax64(nNewSizeInBytes);
 }
 
-
 /************************************************************************/
 /*                        GDALSetCacheMax64()                           */
 /************************************************************************/
@@ -143,7 +153,7 @@ void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
 
     {
         INITIALIZE_LOCK;
-    }   
+    }
     bCacheMaxInitialized = true;
     nCacheMax = nNewSizeInBytes;
 
@@ -584,7 +594,8 @@ void GDALRasterBlock::RecycleFor( int nXOffIn, int nYOffIn )
     bDirty = false;
     nLockCount = 0;
 
-    poNext = poPrevious = NULL;
+    poNext = NULL;
+    poPrevious = NULL;
 
     nXOff = nXOffIn;
     nYOff = nYOffIn;
@@ -720,17 +731,17 @@ void GDALRasterBlock::CheckNonOrphanedBlocks( GDALRasterBand* poBand )
     {
         if ( poBlock->GetBand() == poBand )
         {
-            printf("Cache has still blocks of band %p\n", poBand);
-            printf("Band : %d\n", poBand->GetBand());
-            printf("nRasterXSize = %d\n", poBand->GetXSize());
-            printf("nRasterYSize = %d\n", poBand->GetYSize());
+            printf("Cache has still blocks of band %p\n", poBand);/*ok*/
+            printf("Band : %d\n", poBand->GetBand());/*ok*/
+            printf("nRasterXSize = %d\n", poBand->GetXSize());/*ok*/
+            printf("nRasterYSize = %d\n", poBand->GetYSize());/*ok*/
             int nBlockXSize, nBlockYSize;
             poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-            printf("nBlockXSize = %d\n", nBlockXSize);
-            printf("nBlockYSize = %d\n", nBlockYSize);
-            printf("Dataset : %p\n", poBand->GetDataset());
+            printf("nBlockXSize = %d\n", nBlockXSize);/*ok*/
+            printf("nBlockYSize = %d\n", nBlockYSize);/*ok*/
+            printf("Dataset : %p\n", poBand->GetDataset());/*ok*/
             if( poBand->GetDataset() )
-                printf("Dataset : %s\n",
+                printf("Dataset : %s\n",/*ok*/
                        poBand->GetDataset()->GetDescription());
         }
     }
@@ -794,7 +805,6 @@ void GDALRasterBlock::Touch()
     TAKE_LOCK;
     Touch_unlocked();
 }
-
 
 void GDALRasterBlock::Touch_unlocked()
 
@@ -1005,7 +1015,12 @@ CPLErr GDALRasterBlock::Internalize()
  * to disk before it can be flushed.
  */
 
-void GDALRasterBlock::MarkDirty() { bDirty = true; }
+void GDALRasterBlock::MarkDirty()
+{
+    bDirty = true;
+    if( poBand )
+        poBand->InitRWLock();
+}
 
 /************************************************************************/
 /*                             MarkClean()                              */
@@ -1119,26 +1134,26 @@ void GDALRasterBlock::DumpAll()
          poBlock != NULL;
          poBlock = poBlock->poNext )
     {
-        printf("Block %d\n", iBlock);
+        printf("Block %d\n", iBlock);/*ok*/
         poBlock->DumpBlock();
-        printf("\n");
+        printf("\n");/*ok*/
         iBlock++;
     }
 }
 
 void GDALRasterBlock::DumpBlock()
 {
-    printf("  Lock count = %d\n", nLockCount);
-    printf("  bDirty = %d\n", static_cast<int>(bDirty));
-    printf("  nXOff = %d\n", nXOff);
-    printf("  nYOff = %d\n", nYOff);
-    printf("  nXSize = %d\n", nXSize);
-    printf("  nYSize = %d\n", nYSize);
-    printf("  eType = %d\n", eType);
-    printf("  Band %p\n", GetBand());
-    printf("  Band %d\n", GetBand()->GetBand());
+    printf("  Lock count = %d\n", nLockCount);/*ok*/
+    printf("  bDirty = %d\n", static_cast<int>(bDirty));/*ok*/
+    printf("  nXOff = %d\n", nXOff);/*ok*/
+    printf("  nYOff = %d\n", nYOff);/*ok*/
+    printf("  nXSize = %d\n", nXSize);/*ok*/
+    printf("  nYSize = %d\n", nYSize);/*ok*/
+    printf("  eType = %d\n", eType);/*ok*/
+    printf("  Band %p\n", GetBand());/*ok*/
+    printf("  Band %d\n", GetBand()->GetBand());/*ok*/
     if( GetBand()->GetDataset() )
-        printf("  Dataset = %s\n",
+        printf("  Dataset = %s\n",/*ok*/
                GetBand()->GetDataset()->GetDescription());
 }
 #endif  // if 0

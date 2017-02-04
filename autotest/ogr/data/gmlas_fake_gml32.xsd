@@ -1,0 +1,157 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:gml="http://fake_gml32"
+           targetNamespace="http://fake_gml32"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+<xs:attribute name="id" type="xs:ID"/>
+
+<xs:element name="AbstractGML" abstract="true"/>
+
+<xs:complexType name="AbstractFeatureMemberType" abstract="true">
+    <xs:sequence/>
+</xs:complexType>
+
+<xs:complexType name="AbstractFeatureType" abstract="true">
+    <xs:sequence/>
+    <xs:attribute ref="gml:id"/>
+</xs:complexType>
+
+<xs:element name="AbstractFeature" type="gml:AbstractFeatureType" abstract="true" substitutionGroup="gml:AbstractGML"/>
+
+<xs:complexType name="AbstractGeometryType" abstract="true">
+    <xs:sequence/>
+    <xs:attribute ref="gml:id"/>
+</xs:complexType>
+
+<xs:element name="AbstractGeometry" type="gml:AbstractGeometryType" abstract="true" substitutionGroup="gml:AbstractGML"/>
+
+<xs:element name="Point" substitutionGroup="gml:AbstractGeometry">
+    <xs:complexType>
+        <xs:complexContent>
+            <xs:extension base="gml:AbstractGeometryType">
+                <xs:sequence>
+                    <xs:any processContents="lax"/>
+                </xs:sequence>
+                <xs:attribute name="srsName" type="xs:string"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+</xs:element>
+
+<xs:element name="Polygon" substitutionGroup="gml:AbstractGeometry">
+    <xs:complexType>
+        <xs:complexContent>
+            <xs:extension base="gml:AbstractGeometryType">
+                <xs:sequence>
+                    <xs:any processContents="lax"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+</xs:element>
+
+<xs:complexType name="GeometryPropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="PointPropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="LineStringPropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="PolygonPropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="MultiPointPropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="MultiLineStringPropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="MultiPolygonPropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="MultiGeometryPropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="MultiCurvePropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="MultiSurfacePropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="MultiSolidPropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="CurvePropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="SurfacePropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="CompositeCurvePropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="CompositeSurfacePropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="CompositeSolidPropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="GeometricComplexPropertyType">
+    <xs:sequence>
+        <xs:any processContents="lax"/>
+    </xs:sequence>
+</xs:complexType>
+
+
+</xs:schema>

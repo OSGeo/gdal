@@ -553,7 +553,7 @@ def test_ogr2ogr_18():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/wrapdateline_src.shp')
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(32660);
+    srs.ImportFromEPSG(32660)
     lyr = ds.CreateLayer('wrapdateline_src', srs = srs)
     feat = ogr.Feature(lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt('POLYGON((700000 4000000,800000 4000000,800000 3000000,700000 3000000,700000 4000000))')
@@ -564,11 +564,13 @@ def test_ogr2ogr_18():
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -wrapdateline -t_srs EPSG:4326 tmp/wrapdateline_dst.shp tmp/wrapdateline_src.shp')
 
-    expected_wkt = 'MULTIPOLYGON (((179.222391385437419 36.124095832129363,180.0 36.10605558800065,180.0 27.090340569400169,179.017505655195095 27.107979523625211,179.222391385437419 36.124095832129363)),((-180.0 36.10605558800065,-179.667822828781084 36.098349195413753,-179.974688335419557 27.089886143076747,-180.0 27.090340569400169,-180.0 36.10605558800065)))'
+    expected_wkt = 'MULTIPOLYGON (((-179.667822828781 36.0983491954137,-179.974688335419 27.0898861430767,-180.0 27.0904291236983,-180.0 36.1071354433546,-179.667822828781 36.0983491954137)),((180.0 27.0904291237411,179.017505655195 27.1079795236252,179.222391385437 36.1240958321293,180.0 36.1071354433546,180.0 27.0904291237411)))'
+
     expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
     ds = ogr.Open('tmp/wrapdateline_dst.shp')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
+    got_wkt = feat.GetGeometryRef().ExportToWkt()
     ret = ogrtest.check_feature_geometry(feat, expected_geom)
     feat.Destroy()
     expected_geom.Destroy()
@@ -580,6 +582,7 @@ def test_ogr2ogr_18():
     if ret == 0:
         return 'success'
     else:
+        print(got_wkt)
         return 'fail'
 
 ###############################################################################
@@ -950,7 +953,7 @@ def test_ogr2ogr_28():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/wrapdateline_src.shp')
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326);
+    srs.ImportFromEPSG(4326)
     lyr = ds.CreateLayer('wrapdateline_src', srs = srs)
     feat = ogr.Feature(lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt('LINESTRING(160 0,165 1,170 2,175 3,177 4,-177 5,-175 6,-170 7,-177 8,177 9,170 10)')
@@ -1005,7 +1008,7 @@ def test_ogr2ogr_29():
 
         ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/wrapdateline_src.shp')
         srs = osr.SpatialReference()
-        srs.ImportFromEPSG(4326);
+        srs.ImportFromEPSG(4326)
         lyr = ds.CreateLayer('wrapdateline_src', srs = srs)
         feat = ogr.Feature(lyr.GetLayerDefn())
 
@@ -2632,6 +2635,98 @@ def test_ogr2ogr_65():
 
     return 'success'
 
+###############################################################################
+# Test accidental overriding of dataset when dst and src filenames are the same (#1465)
+
+def test_ogr2ogr_66():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' ../ogr/data/poly.shp ../ogr/data/poly.shp')
+    if err.find("Source and destination datasets must be different in non-update mode") < 0:
+        gdaltest.post_reason('fail')
+        print(ret)
+        print(err)
+        return 'fail'
+
+    return 'success'
+
+def hexify_double(val):
+    val = hex(val)
+    # On 32bit Linux, we might get a trailing L
+    return val.rstrip('L').lstrip('0x').zfill(16).upper()
+
+def check_identity_transformation(x, y, srid):
+    import struct
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    for output_shp in ['tmp/output_point.shp', 'tmp/output_point2.shp']:
+        try:
+            os.stat(output_shp)
+            shape_drv.DeleteDataSource(output_shp)
+        except:
+            pass
+
+    # Generate CSV file with test point
+    xy_wkb = '0101000000' + ''.join(hexify_double(q) for q in struct.unpack('>QQ', struct.pack("<dd",x,y)))
+    f = open('tmp/input_point.csv', 'wt')
+    f.write('id,wkb_geom\n')
+    f.write('1,' + xy_wkb + '\n')
+    f.close()
+
+    # To check that the transformed values are identical to the original ones we need
+    # to use a binary format with the same accuracy as the source (WKB).
+    # CSV cannot be used for this purpose because WKB is not supported as a geometry output format.
+
+    # Note that when transforming CSV to SHP the same internal definition of EPSG:srid is being used for source and target,
+    # so that this transformation will have identically defined input and output units
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + " tmp/output_point.shp tmp/input_point.csv -oo GEOM_POSSIBLE_NAMES=wkb_geom -s_srs EPSG:%(srid)d  -t_srs EPSG:%(srid)d"  % locals())
+
+    ds = ogr.Open('tmp/output_point.shp')
+    feat = ds.GetLayer(0).GetNextFeature()
+    ok = feat.GetGeometryRef().GetX() == x and feat.GetGeometryRef().GetY() == y
+    feat.Destroy()
+    ds.Destroy()
+
+    if ok:
+        # Now, transforming SHP to SHP will have a different definition of the SRS (EPSG:srid) which comes from the previouly saved .prj file
+        # For angular units in degrees the .prj is saved with greater precision than the internally used value.
+        # We perform this additional transformation to exercise the case of units defined with different precision
+        gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + " tmp/output_point2.shp tmp/output_point.shp -t_srs EPSG:%(srid)d"  % locals())
+        ds = ogr.Open('tmp/output_point2.shp')
+        feat = ds.GetLayer(0).GetNextFeature()
+        ok = feat.GetGeometryRef().GetX() == x and feat.GetGeometryRef().GetY() == y
+        feat.Destroy()
+        ds.Destroy()
+        shape_drv.DeleteDataSource('tmp/output_point2.shp')
+
+    shape_drv.DeleteDataSource('tmp/output_point.shp')
+    os.remove('tmp/input_point.csv')
+
+    if ok:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test coordinates values are preserved for identity transformations
+
+def test_ogr2ogr_67():
+
+    # Test coordinates
+    # The x value is such that x * k * (1/k) != x with k the common factor used in degrees unit definition
+    # If the coordinates are converted to radians and back to degrees the value of x will be altered
+    x = float.fromhex('0x1.5EB3ED959A307p6')
+    y = 0.0
+
+    # Now we will check the value of x is preserved in a transformation with same target and source SRS,
+    # both as latitutude/longitude in degrees.
+    ret = check_identity_transformation(x, y, 4326)
+    return ret
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2698,8 +2793,12 @@ gdaltest_list = [
     test_ogr2ogr_62,
     test_ogr2ogr_63,
     test_ogr2ogr_64,
-    test_ogr2ogr_65
+    test_ogr2ogr_65,
+    test_ogr2ogr_66,
+    test_ogr2ogr_67
     ]
+
+# gdaltest_list = [ test_ogr2ogr_66 ]
 
 if __name__ == '__main__':
 

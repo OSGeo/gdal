@@ -67,8 +67,8 @@ class NWT_GRCDataset : public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * poOpenInfo );
 
-    CPLErr GetGeoTransform( double *padfTransform );
-    const char *GetProjectionRef();
+    CPLErr GetGeoTransform( double *padfTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 /************************************************************************/
@@ -86,14 +86,13 @@ class NWT_GRCRasterBand : public GDALPamRasterBand
     NWT_GRCRasterBand( NWT_GRCDataset *, int );
     virtual ~NWT_GRCRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual double GetNoDataValue( int *pbSuccess );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual double GetNoDataValue( int *pbSuccess ) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual char **GetCategoryNames();
-    virtual GDALColorTable *GetColorTable();
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual char **GetCategoryNames() override;
+    virtual GDALColorTable *GetColorTable() override;
 };
-
 
 /************************************************************************/
 /*                           NWT_GRCRasterBand()                        */
@@ -101,8 +100,8 @@ class NWT_GRCRasterBand : public GDALPamRasterBand
 
 NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     NWT_GRCDataset *poGDS = reinterpret_cast<NWT_GRCDataset *>( poDS );
 
     if( poGDS->pGrd->nBitsPerPixel == 8 )
@@ -118,12 +117,9 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
     // load the color table and might as well to the ClassNames
     poGDS->poColorTable = new GDALColorTable();
 
-    GDALColorEntry oEntry;
+    GDALColorEntry oEntry = { 255, 255, 255, 255 };
     // null value = 0 is transparent
-    oEntry.c1 = 255;
-    oEntry.c2 = 255;
-    oEntry.c3 = 255;
-    oEntry.c4 = 255;                // alpha 255 = transparent
+    // alpha 255 = transparent
 
     poGDS->poColorTable->SetColorEntry( 0, &oEntry );
 
@@ -174,7 +170,6 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
         }
         if( i >= static_cast<int>( poGDS->pGrd->stClassDict->nNumClassifiedItems ) )
             poGDS->papszCategories = CSLAddString( poGDS->papszCategories, "" );
-
     }
 }
 
@@ -247,10 +242,14 @@ CPLErr NWT_GRCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* ==================================================================== */
 /************************************************************************/
 NWT_GRCDataset::NWT_GRCDataset() :
-    fp(NULL), pGrd(NULL), papszCategories(NULL), pszProjection(NULL),
+    fp(NULL),
+    pGrd(NULL),
+    papszCategories(NULL),
+    pszProjection(NULL),
     poColorTable(NULL)
-{ }
-
+{
+    memset(abyHeader, 0, sizeof(abyHeader) );
+}
 
 /************************************************************************/
 /*                            ~NWT_GRCDataset()                         */
@@ -301,7 +300,7 @@ const char *NWT_GRCDataset::GetProjectionRef()
             poSpatialRef->Release();
         }
     }
-    return ( (const char *) pszProjection );
+    return (const char *) pszProjection;
 }
 
 /************************************************************************/
@@ -393,9 +392,8 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
                                  poOpenInfo->pszFilename,
                                  poOpenInfo->GetSiblingFiles() );
 
-    return (poDS);
+    return poDS;
 }
-
 
 /************************************************************************/
 /*                          GDALRegister_GRC()                          */

@@ -35,7 +35,7 @@ void seekgb(FILE *lugb,g2int iseek,g2int mseek,g2int *lskip,g2int *lgrib)
 //$$$
 {
       // g2int  ret;
-      g2int k,k4,ipos,nread,lim,start,vers,end,lengrib;
+      g2int k,k4,ipos,nread,lim,start,vers,end = 0,lengrib;
       unsigned char *cbuf;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

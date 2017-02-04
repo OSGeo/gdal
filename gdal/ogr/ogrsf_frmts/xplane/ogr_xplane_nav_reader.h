@@ -37,7 +37,6 @@
 /*                           OGRXPlaneILSLayer                          */
 /************************************************************************/
 
-
 class OGRXPlaneILSLayer : public OGRXPlaneLayer
 {
   public:
@@ -58,7 +57,6 @@ class OGRXPlaneILSLayer : public OGRXPlaneLayer
 /*                           OGRXPlaneVORLayer                          */
 /************************************************************************/
 
-
 class OGRXPlaneVORLayer : public OGRXPlaneLayer
 {
   public:
@@ -78,7 +76,6 @@ class OGRXPlaneVORLayer : public OGRXPlaneLayer
 /*                           OGRXPlaneNDBLayer                          */
 /************************************************************************/
 
-
 class OGRXPlaneNDBLayer : public OGRXPlaneLayer
 {
   public:
@@ -96,7 +93,6 @@ class OGRXPlaneNDBLayer : public OGRXPlaneLayer
 /************************************************************************/
 /*                           OGRXPlaneGSLayer                          */
 /************************************************************************/
-
 
 class OGRXPlaneGSLayer : public OGRXPlaneLayer
 {
@@ -118,7 +114,6 @@ class OGRXPlaneGSLayer : public OGRXPlaneLayer
 /*                          OGRXPlaneMarkerLayer                        */
 /************************************************************************/
 
-
 class OGRXPlaneMarkerLayer : public OGRXPlaneLayer
 {
   public:
@@ -136,7 +131,6 @@ class OGRXPlaneMarkerLayer : public OGRXPlaneLayer
 /*                         OGRXPlaneDMEILSLayer                         */
 /************************************************************************/
 
-
 class OGRXPlaneDMEILSLayer : public OGRXPlaneLayer
 {
   public:
@@ -152,11 +146,9 @@ class OGRXPlaneDMEILSLayer : public OGRXPlaneLayer
                                    double dfDMEBias);
 };
 
-
 /************************************************************************/
 /*                           OGRXPlaneDMELayer                          */
 /************************************************************************/
-
 
 class OGRXPlaneDMELayer : public OGRXPlaneLayer
 {
@@ -173,7 +165,6 @@ class OGRXPlaneDMELayer : public OGRXPlaneLayer
                                    double dfDMEBias);
 };
 
-
 enum
 {
     NAVAID_NDB            = 2,
@@ -187,7 +178,6 @@ enum
     NAVAID_DME_COLOC      = 12, /* DME (including the DME element of an ILS, VORTAC or VOR-DME) */
     NAVAID_DME_STANDALONE = 13, /* DME (including the DME element of an NDB-DME) */
 };
-
 
 /************************************************************************/
 /*                           OGRXPlaneNavReader                         */
@@ -209,12 +199,12 @@ class OGRXPlaneNavReader : public OGRXPlaneReader
         void                     ParseRecord(int nType);
 
     protected:
-        virtual void             Read();
+        virtual void             Read() override;
 
     public:
-                                 OGRXPlaneNavReader( OGRXPlaneDataSource* poDataSource );
-        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer);
-        virtual int              IsRecognizedVersion( const char* pszVersionString);
+        explicit                 OGRXPlaneNavReader( OGRXPlaneDataSource* poDataSource );
+        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer) override;
+        virtual int              IsRecognizedVersion( const char* pszVersionString) override;
 };
 
 #endif

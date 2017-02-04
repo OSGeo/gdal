@@ -209,7 +209,7 @@ public class GDALProximity {
 
             WorkProximityDriver = gdal.GetDriverByName(OutputFormat);
 
-            WorkProximityDataset = WorkProximityDriver.Create(OutputFilename, 
+            WorkProximityDataset = WorkProximityDriver.Create(OutputFilename,
                     SourceDataset.getRasterXSize(), SourceDataset.getRasterYSize(),
                     SourceDataset.getRasterCount(), gdal.GetDataTypeByName(OutputType),
                     Options.split(";"));
@@ -292,7 +292,7 @@ public class GDALProximity {
 
         String tempFilename = null;
 
-        if (ProxType == gdalconstConstants.GDT_Byte 
+        if (ProxType == gdalconstConstants.GDT_Byte
                 || ProxType == gdalconstConstants.GDT_UInt16
                 || ProxType == gdalconstConstants.GDT_UInt32) {
             tempFilename = "/vsimem/proximity_" + String.valueOf(System.currentTimeMillis()) + ".tif";

@@ -27,7 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "reader_rdk1.h"
+
+#include <cstdio>
+
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -35,11 +43,12 @@ CPL_CVSID("$Id$");
  * GDALMDReaderResursDK1()
  */
 GDALMDReaderResursDK1::GDALMDReaderResursDK1(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
+                                             char **papszSiblingFiles) :
+    GDALMDReaderBase(pszPath, papszSiblingFiles),
+    m_osXMLSourceFilename( GDALFindAssociatedFile( pszPath, "XML",
+                                                    papszSiblingFiles, 0 ) )
 {
-    m_osXMLSourceFilename = GDALFindAssociatedFile( pszPath, "XML",
-                                                         papszSiblingFiles, 0 );
-    if( m_osXMLSourceFilename.size() )
+    if( !m_osXMLSourceFilename.empty() )
         CPLDebug( "MDReaderResursDK1", "XML Filename: %s",
                   m_osXMLSourceFilename.c_str() );
 }
@@ -116,7 +125,6 @@ void GDALMDReaderResursDK1::LoadMetadata()
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
                                            CPLStripQuotes(pszSatId));
     }
-
 
     const char* pszDate = CSLFetchNameValue(m_papszIMDMD,
                                             "MSP_ROOT.Normal.dSceneDate");

@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>RasterLite2 - Rasters in SQLite DB</title>
+</head>
+
+<body>
+
+<h1>RasterLite2 - Rasters in SQLite DB</h1>
+
+<p>Starting with GDAL 2.2, the SQLite driver allows reading and writing SQLite
+databases containing RasterLite2 coverages.</p>
+<p>
+  Those databases can be produced by the utilities of the
+  <a href="https://www.gaia-gis.it/fossil/librasterlite2/home">RasterLite2</a> distribution,
+  such as rl2tools.<br>
+  The driver supports reading grayscale, paletted, RGB, multispectral images stored as tiles in the many compressed formats supported by libRasterLite2.
+  The driver also supports reading overviews/pyramids, spatial reference system and spatial extent.
+</p>
+
+<p>GDAL/OGR must be compiled with sqlite support and against librasterlite2 and libspatialite.</p>
+
+<p>The driver is implemented a unified SQLite / SpatiaLite / RasterLite2
+vector and raster capable driver./p>
+
+<h2>Opening syntax</h2>
+
+<p>A RasterLite2 filename can be specified as the connection string. If the
+file contains a single RasterLite2 coverage, this one will be exposed as the
+GDAL dataset. If the file contains multiple coverages, each one will be exposed
+as a subdataset with the syntax RASTERLITE2:filename:coverage_name. See
+<a href="https://www.gaia-gis.it/fossil/librasterlite2/wiki?name=basic_concepts">the
+basic concepts of RasterLite2</a>.</p>
+
+<p>If a coverage is made of several sections, they will be listed as subdatasets
+of the coverage dataset, so as to be accessed individually. By default, they
+will be exposed as a unified dataset. The syntax of section-based dataset is
+RASTERLITE2:filename:coverage_name:section_id:section_name.</p>
+
+<h2>Creation</h2>
+
+The driver supports creating new databases from scratch, adding new coverages to
+an existing database and adding sections to an existing coverage.
+
+<h2>Creation options</h2>
+
+<ul>
+<li> <b>APPEND_SUBDATASET</b>=YES/NO: Whether to add the raster to the existing
+file. If set to YES, COVERAGE must be specified. Default is NO (ie overwrite
+existing file)</li>
+<li> <b>COVERAGE</b>=string: Coverage name. If not specified, the basename of
+the output file is used.</li>
+<li> <b>SECTION</b>=string: Section name. If not specified, the basename of
+the output file is used.</li>
+<li> <b>COMPRESS</b>=NONE/DEFLATE/LZMA/PNG/CCITTFAX4/JPEG/WEBP/CHARS/JPEG2000:
+Compression method. Default is NONE. See the
+<a href="https://www.gaia-gis.it/fossil/librasterlite2/wiki?name=codecs">
+information about supported codecs</a>. Note that some codecs may not be
+available depending on how librasterlite2 has been built.</li>
+<li> <b>QUALITY</b>=0 to 100: Image quality for JPEG, WEBP and JPEG2000
+compressions. Exact meaning depends on the compression method. For WEBP and
+JPEG2000, the value 100 triggers the use of their lossless variants.</li>
+<li> <b>PIXEL_TYPE</b>=MONOCHROME/PALETTE/GRAYSCALE/RGB/MULTIBAND/DATAGRID:
+Raster pixel type. Determines the photometric interpretation. See the
+<a href="https://www.gaia-gis.it/fossil/librasterlite2/wiki?name=reference_table">
+information about supported pixel types</a>. The driver will
+automatically determine an appropriate pixel type given the band characteristics.
+</li>
+<li> <b>BLOCKXSIZE</b>=int_value. Block width. Defaults to 512.</li>
+<li> <b>BLOCKYSIZE</b>=int_value. Block height. Defaults to 512.</li>
+<li> <b>NBITS</b>=1/2/4. Force bit width. This will be by default gotten from
+the NBITS metadata item in the IMAGE_STRUCTURE metadata domain of the source
+raster band.</li>
+<li> <b>PYRAMIDIZE</b>=YES/NO. Whether to build automatically build relevant
+pyramids/overviews. Defaults to NO. Pyramids can be built with the BuildOverviews() /
+gdaladdo.
+</ul>
+
+<h2>Examples</h2>
+
+<ul>
+
+<li>Reading a RasterLite2 database with a single coverage:
+
+<pre>
+gdalinfo my.rl2
+</pre>
+
+<li>Listing the subdatasets corresponding to the coverages of a RasterLite2
+database with several coverages:
+
+<pre>
+gdalinfo multiple_coverages.rl2
+</pre>
+
+<li>Reading a subdataset corresponding to a coverage:
+
+<pre>
+gdalinfo RASTERLITE2:multiple_coverages.rl2:my_coverage
+</pre>
+
+<li>Creating a RasterLite2 dataset from a grayscale image:
+
+<pre>
+gdal_translate -f SQLite byte.tif byte.rl2
+</pre>
+
+<li>Creating a RasterLite2 dataset from a RGB image, and using JPEG compression:
+
+<pre>
+gdal_translate -f SQLite rgb.tif rgb.rl2 -co COMPRESS=JPEG
+</pre>
+
+<li>Adding a RasterLite2 coverage to an existing SpatiaLite/RasterLite2 database:
+
+<pre>
+gdal_translate -f SQLite rgb.tif rgb.rl2 -co APPEND_SUBDATASET=YES -co COVERAGE=rgb
+</pre>
+
+<li>Adding pyramids to a coverage:
+
+<pre>
+gdaladdo rgb.rl2 2 4 8 16
+</pre>
+
+</ul>
+
+<p>See Also:</p>
+
+<ul>
+<li><a href="https://www.gaia-gis.it/fossil/libRasterLite2/home">Rasterlite2 home page</a></li>
+<li><a href="drv_sqlite.html">OGR SQLite driver</a></li>
+</ul>
+
+</body>
+</html>

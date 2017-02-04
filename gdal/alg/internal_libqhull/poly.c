@@ -661,7 +661,7 @@ facetT *qh_makenew_simplicial(facetT *visible, vertexT *apex, int *numnew) {
   facetT *neighbor, **neighborp, *newfacet= NULL;
   setT *vertices;
   boolT flip, toporient;
-  int horizonskip=0, visibleskip;
+  int horizonskip=0, visibleskip=0;
 
   FOREACHneighbor_(visible) {
     if (!neighbor->seen && !neighbor->visible) {

@@ -69,9 +69,9 @@ static int OGRCSVDriverIdentify( GDALOpenInfo* poOpenInfo )
               STARTS_WITH_CI(osBaseFilename, "NationalFedCodes_") ||
               STARTS_WITH_CI(osBaseFilename, "AllStates_") ||
               STARTS_WITH_CI(osBaseFilename, "AllStatesFedCodes_") ||
-              (strlen(osBaseFilename) > 2
+              (osBaseFilename.size() > 2
                && STARTS_WITH_CI(osBaseFilename+2, "_Features_")) ||
-              (strlen(osBaseFilename) > 2
+              (osBaseFilename.size()
                && STARTS_WITH_CI(osBaseFilename+2, "_FedCodes_"))) &&
              (EQUAL(osExt, "txt") || EQUAL(osExt, "zip")) )
         {
@@ -133,7 +133,7 @@ void OGRCSVDriverRemoveFromMap(const char* pszName, GDALDataset* poDS)
 static GDALDataset *OGRCSVDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( OGRCSVDriverIdentify(poOpenInfo) == FALSE )
+    if( !OGRCSVDriverIdentify(poOpenInfo) )
         return NULL;
 
     if( poMap != NULL )
@@ -266,7 +266,6 @@ static CPLErr OGRCSVDriverDelete( const char *pszFilename )
     return CE_Failure;
 }
 
-
 /************************************************************************/
 /*                           OGRCSVDriverUnload()                       */
 /************************************************************************/
@@ -370,7 +369,7 @@ void RegisterOGRCSV()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date DateTime "
-                               "Time" );
+                               "Time IntegerList Integer64List RealList StringList" );
 
     poDriver->pfnOpen = OGRCSVDriverOpen;
     poDriver->pfnIdentify = OGRCSVDriverIdentify;

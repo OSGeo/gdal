@@ -32,6 +32,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
+#include <cmath>
 #include <algorithm>
 
 using std::fill;
@@ -87,9 +88,9 @@ class DIPExDataset : public GDALPamDataset
                  DIPExDataset();
     virtual ~DIPExDataset();
 
-    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr GetGeoTransform( double * ) override;
 
-    virtual const char *GetProjectionRef( void );
+    virtual const char *GetProjectionRef( void ) override;
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -99,11 +100,9 @@ class DIPExDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-
 /************************************************************************/
 /*                            DIPExDataset()                             */
 /************************************************************************/
-
 
 DIPExDataset::DIPExDataset() :
     fp(NULL),
@@ -310,7 +309,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[2] = 0.0;
         poDS->adfGeoTransform[3] = poDS->sHeader.YOffset;
         poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = -1.0 * ABS(poDS->sHeader.YPixSize);
+        poDS->adfGeoTransform[5] = -1.0 * std::abs(poDS->sHeader.YPixSize);
 
         poDS->adfGeoTransform[0] -= poDS->adfGeoTransform[1] * 0.5;
         poDS->adfGeoTransform[3] -= poDS->adfGeoTransform[5] * 0.5;

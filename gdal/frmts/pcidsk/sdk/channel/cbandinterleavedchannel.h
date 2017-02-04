@@ -61,15 +61,15 @@ namespace PCIDSK
 
         virtual int ReadBlock( int block_index, void *buffer,
             int xoff=-1, int yoff=-1,
-            int xsize=-1, int ysize=-1 );
-        virtual int WriteBlock( int block_index, void *buffer );
+            int xsize=-1, int ysize=-1 ) override;
+        virtual int WriteBlock( int block_index, void *buffer ) override;
 
         virtual void GetChanInfo( std::string &filename, uint64 &image_offset, 
                                   uint64 &pixel_offset, uint64 &line_offset, 
-                                  bool &little_endian ) const;
+                                  bool &little_endian ) const override;
         virtual void SetChanInfo( std::string filename, uint64 image_offset, 
                                   uint64 pixel_offset, uint64 line_offset, 
-                                  bool little_endian );
+                                  bool little_endian ) override;
 
     private:
     // raw file layout - internal or external

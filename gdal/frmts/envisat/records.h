@@ -37,7 +37,6 @@ extern "C"
 {
 #endif
 
-
 #define MJD_FIELD_SIZE 12
 
 /*! Field data types */
@@ -76,7 +75,6 @@ const EnvisatRecordDescr* EnvisatFile_GetRecordDescriptor(const char* pszProduct
                                               const char* pszDataset);
 
 CPLErr EnvisatFile_GetFieldAsString(const void*, int, const EnvisatFieldDescr*, char*, size_t);
-
 
 #ifdef __cplusplus
 } /* extern "C" */

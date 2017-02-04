@@ -219,7 +219,7 @@ void qh_check_maxout(void) {
         }
         if (dist > qh TRACEdist || (bestfacet && bestfacet == qh tracefacet))
           qh_fprintf(qh ferr, 8094, "qh_check_maxout: p%d is %.2g above f%d\n",
-                     qh_pointid(point), dist, bestfacet ? bestfacet->id : -1);
+                     qh_pointid(point), dist, bestfacet ? (int)bestfacet->id : -1);
       }
     }
   }while
@@ -552,7 +552,7 @@ void qh_checkconvex(facetT *facetlist, int fault) {
     if non-simplicial, at least as many ridges as neighbors
     neighbors are not duplicated
     ridges are not duplicated
-    in 3-d, ridges=verticies
+    in 3-d, ridges=vertices
     (qh.hull_dim-1) ridge vertices
     neighbors are reciprocated
     ridge neighbors are facet neighbors and a ridge for every neighbor
@@ -1197,6 +1197,7 @@ facetT *qh_findbestfacet(pointT *point, boolT bestoutside,
     bestfacet= qh_findfacet_all(point, bestdist, isoutside, &numpart);
     totpart += numpart;
     if ((isoutside && bestoutside)
+    /* cppcheck-suppress nullPointerRedundantCheck */
     || (!isoutside && bestfacet->upperdelaunay)) {
       bestfacet= qh_findbest(point, bestfacet,
                             bestoutside, False, bestoutside,

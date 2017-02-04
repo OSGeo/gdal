@@ -341,9 +341,9 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     if( poDS_->GetLayerCount() == 1 && nWroteFeatureCount_ == 0 )
     {
         CPLString osRet = WriteSchema();
-        if( osRet.size() )
+        if( !osRet.empty() )
             VSIFPrintfL( fp, "%s", osRet.c_str() );
-        bSchemaWritten_ = TRUE;
+        bSchemaWritten_ = true;
 
         VSIFPrintfL( fp, "<Folder><name>%s</name>\n", pszName_);
     }
@@ -417,8 +417,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         {
             oSM.InitFromFeature( poFeature );
 
-            int i;
-            for(i=0; i<oSM.GetPartCount();i++)
+            for( int i = 0; i < oSM.GetPartCount(); i++ )
             {
                 OGRStyleTool *poTool = oSM.GetPart(i);
                 if (poTool && poTool->GetType() == OGRSTCPen )
@@ -542,7 +541,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     {
         char* pszGeometry = NULL;
         OGREnvelope sGeomBounds;
-        OGRGeometry* poWGS84Geom;
+        OGRGeometry *poWGS84Geom = NULL;
 
         if (NULL != poCT_)
         {
@@ -559,8 +558,15 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         pszGeometry =
             OGR_G_ExportToKML( (OGRGeometryH)poWGS84Geom,
                                poDS_->GetAltitudeMode());
-
-        VSIFPrintfL( fp, "      %s\n", pszGeometry );
+        if( pszGeometry != NULL )
+        {
+            VSIFPrintfL( fp, "      %s\n", pszGeometry );
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Export of geometry to KML failed");
+        }
         CPLFree( pszGeometry );
 
         poWGS84Geom->getEnvelope( &sGeomBounds );

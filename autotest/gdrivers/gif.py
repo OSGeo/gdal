@@ -48,7 +48,7 @@ def gif_1():
 
     # Move the BIGGIF driver after the GIF driver.
     drv = gdal.GetDriverByName( 'BIGGIF' )
-    drv.Deregister();
+    drv.Deregister()
     drv.Register()
 
     drv_md = gdaltest.gif_drv.GetMetadata()
@@ -161,7 +161,7 @@ def gif_7():
 
     # Move the GIF driver after the BIGGIF driver.
     drv = gdal.GetDriverByName( 'GIF' )
-    drv.Deregister();
+    drv.Deregister()
     drv.Register()
 
     tst = gdaltest.GDALTest( 'BIGGIF', 'bug407.gif', 1, 57921 )
@@ -185,7 +185,7 @@ def gif_8():
 
     # Move the BIGGIF driver after the GIF driver.
     drv = gdal.GetDriverByName( 'BIGGIF' )
-    drv.Deregister();
+    drv.Deregister()
     drv.Register()
 
     ds = gdal.Open('data/fakebig.gif')

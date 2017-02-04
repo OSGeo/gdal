@@ -88,7 +88,6 @@ GDALDataType cellRepresentation2GDALType(
   return type;
 }
 
-
 CSF_VS string2ValueScale(
          std::string const& string)
 {
@@ -126,7 +125,6 @@ CSF_VS string2ValueScale(
 
   return valueScale;
 }
-
 
 std::string valueScale2String(
          CSF_VS valueScale)
@@ -180,7 +178,6 @@ std::string valueScale2String(
   return result;
 }
 
-
 std::string cellRepresentation2String(
          CSF_CR cellRepresentation)
 {
@@ -230,7 +227,6 @@ std::string cellRepresentation2String(
   return result;
 }
 
-
 //! Converts GDAL data type to PCRaster value scale.
 /*!
   \param     type GDAL data type.
@@ -278,7 +274,6 @@ CSF_VS GDALType2ValueScale(
 
   return valueScale;
 }
-
 
 //! Converts a GDAL type to a PCRaster cell representation.
 /*!
@@ -338,7 +333,6 @@ CSF_CR GDALType2CellRepresentation(
 
   return cellRepresentation;
 }
-
 
 //! Determines a missing value to use for data of \a cellRepresentation.
 /*!
@@ -404,7 +398,6 @@ double missingValue(
   return missingValue;
 }
 
-
 //! Opens the raster in \a filename using mode \a mode.
 /*!
   \param     filename Filename of raster to open.
@@ -421,7 +414,6 @@ MAP* mapOpen(
 
   return map;
 }
-
 
 void alterFromStdMV(
          void* buffer,
@@ -487,7 +479,6 @@ void alterFromStdMV(
   }
 }
 
-
 void alterToStdMV(
          void* buffer,
          size_t size,
@@ -551,7 +542,6 @@ void alterToStdMV(
     }
   }
 }
-
 
 CSF_VS fitValueScale(
          CSF_VS valueScale,
@@ -619,7 +609,6 @@ CSF_VS fitValueScale(
   return result;
 }
 
-
 void castValuesToBooleanRange(
          void* buffer,
          size_t size,
@@ -683,7 +672,6 @@ void castValuesToBooleanRange(
   }
 }
 
-
 void castValuesToDirectionRange(
          void* buffer,
          size_t size)
@@ -692,7 +680,6 @@ void castValuesToDirectionRange(
        static_cast<REAL4*>(buffer) + size,
        CastToDirection());
 }
-
 
 void castValuesToLddRange(
          void* buffer,

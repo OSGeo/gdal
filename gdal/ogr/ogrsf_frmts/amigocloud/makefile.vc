@@ -1,5 +1,5 @@
 OBJ	=	ogramigoclouddriver.obj ogramigoclouddatasource.obj ogramigocloudlayer.obj ogramigocloudtablelayer.obj ogramigocloudresultlayer.obj
-EXTRAFLAGS =	-I.. -I..\.. -I..\geojson\libjson -I..\pgdump 
+EXTRAFLAGS =	-I.. -I..\.. -I..\geojson -I..\geojson\libjson -I..\pgdump 
 
 GDAL_ROOT	=	..\..\..
 

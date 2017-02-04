@@ -81,6 +81,10 @@ swig/perl/gdalconst_wrap.c
 swig/perl/ogr_wrap.cpp
 swig/perl/osr_wrap.cpp
 swig/perl/pm_to_blib
+swig/csharp/osr
+swig/csharp/ogr
+swig/csharp/gdal
+swig/csharp/const
 man/
 html/
 nmake.local

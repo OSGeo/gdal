@@ -170,11 +170,9 @@ void SDTSRawLine::Dump( FILE * fp )
 /*                           SDTSLineReader()                           */
 /************************************************************************/
 
-SDTSLineReader::SDTSLineReader( SDTS_IREF * poIREFIn )
-
-{
-    poIREF = poIREFIn;
-}
+SDTSLineReader::SDTSLineReader( SDTS_IREF * poIREFIn ) :
+    poIREF(poIREFIn)
+{}
 
 /************************************************************************/
 /*                             ~SDTSLineReader()                        */
@@ -205,7 +203,7 @@ void SDTSLineReader::Close()
 int SDTSLineReader::Open( const char * pszFilename )
 
 {
-    return( oDDFModule.Open( pszFilename ) );
+    return oDDFModule.Open( pszFilename );
 }
 
 /************************************************************************/
@@ -238,7 +236,7 @@ SDTSRawLine *SDTSLineReader::GetNextLine()
 
     if( poRawLine->Read( poIREF, poRecord ) )
     {
-        return( poRawLine );
+        return poRawLine;
     }
 
     delete poRawLine;

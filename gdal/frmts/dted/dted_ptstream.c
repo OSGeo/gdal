@@ -101,9 +101,7 @@ void *DTEDCreatePtStream( const char *pszPath, int nLevel )
         psStream->dfPixelSize = 1.0 / 120.0;
     else if( nLevel == 1 )
         psStream->dfPixelSize = 1.0 / 1200.0;
-    else if( nLevel == 2 )
-        psStream->dfPixelSize = 1.0 / 3600.0;
-    else
+    else /* if( nLevel == 2 ) */
         psStream->dfPixelSize = 1.0 / 3600.0;
 
     return (void *) psStream;

@@ -10,6 +10,12 @@
 *  3 Sep 90 - Version 1.1 by Gershon Elber (Support for Gif89, Unique names). *
 ******************************************************************************/
 
+#if defined(__sun__) && __STDC_VERSION__ >= 201112L && _XOPEN_SOURCE < 600
+#ifdef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE
+#endif
+#define _XOPEN_SOURCE 600
+#endif
 
 #if (defined(_MSC_VER) || defined(__MSDOS__)) && !defined(__DJGPP__) && !defined(__GNUC__)
 #  include <io.h>
@@ -23,7 +29,7 @@
 #  include <sys/stat.h>
 #endif /* _MSC_VER || __MSDOS__ */
 
-#ifdef unix
+#if defined(unix) || defined(__unix__) || defined(__sun__) || defined(__APPLE__)
 #include <unistd.h>
 #endif
 

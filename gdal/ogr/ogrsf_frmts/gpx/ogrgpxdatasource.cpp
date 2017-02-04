@@ -240,7 +240,6 @@ void OGRGPXDataSource::startElementValidateCbk(
     }
 }
 
-
 /************************************************************************/
 /*                      dataHandlerValidateCbk()                        */
 /************************************************************************/
@@ -256,7 +255,6 @@ void OGRGPXDataSource::dataHandlerValidateCbk(CPL_UNUSED const char *data,
         XML_StopParser(oCurrentParser, XML_FALSE);
     }
 }
-
 
 static void XMLCALL startElementValidateCbk(
     void *pUserData, const char *pszName, const char **ppszAttr)
@@ -310,8 +308,8 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
 
     char aBuf[BUFSIZ];
-    int nDone;
-    unsigned int nLen;
+    int nDone = 0;
+    unsigned int nLen = 0;
     int nCount = 0;
 
     /* Begin to parse the file and look for the <gpx> element */
@@ -403,7 +401,7 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         papoLayers[4] = new OGRGPXLayer( pszName, "track_points", GPX_TRACK_POINT, this, FALSE );
     }
 
-    return (validity == GPX_VALIDITY_VALID);
+    return validity == GPX_VALIDITY_VALID;
 #else
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");
     if (fp)
@@ -421,7 +419,6 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     return FALSE;
 #endif
 }
-
 
 /************************************************************************/
 /*                               Create()                               */

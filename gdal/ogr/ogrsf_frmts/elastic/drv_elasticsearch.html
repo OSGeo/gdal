@@ -7,9 +7,13 @@
 
 <h1>ElasticSearch:  Geographically Encoded Objects for ElasticSearch</h1>
 
-(Driver available in GDAL 1.10 or later)</br>
+(Driver available in GDAL 1.10 or later)<br/>
 
-Driver is read-write starting with GDAL 2.1 (was write only in GDAL 2.0 or earlier)
+Driver is read-write starting with GDAL 2.1 (was write only in GDAL 2.0 or earlier)<br/>
+
+As of GDAL 2.1, ElasticSearch 1.X and, partially, 2.X versions are supported
+(5.0 known not to work). GDAL 2.2 adds supports for ElasticSearch 2.X and 5.X<br/>
+
 <p>
 
 <a href="http://elasticsearch.org/">ElasticSearch</a> is an Enterprise-level
@@ -69,7 +73,7 @@ Note that this will properly work only if only one single layer is created.
 Starting with GDAL 2.1, the <b>WRITE_MAPPING</b> layer creation option should rather be used.<br>
 <li> <b>ES_META</b>=/path/to/mapfile.txt. Tells the driver to the user-defined
 field mappings. Starting with GDAL 2.1, the <b>MAPPING</b> layer creation option should rather be used.<br>
-<li> <b>ES_BULK</b>=10000. Identifies the maximum size in bytes of the buffer
+<li> <b>ES_BULK</b>=5000000. Identifies the maximum size in bytes of the buffer
 to store documents to be inserted at a time. Lower record counts help with
 memory consumption within ElasticSearch but take longer to insert.
 Starting with GDAL 2.1, the <b>BULK_SIZE</b> layer creation option should rather be used.<br>
@@ -94,14 +98,17 @@ by ElasticSearch and will be approximated to their linear equivalents).
 
 The driver will forward any spatial filter set with SetSpatialFilter() to the server.<p>
 
-However, in the current state, SQL attribute filters set with SetAttributeFilter()
-are evaluated only on client-side. To enable server-side filtering, the string
-passed to SetAttributeFilter() must be a JSon object in the
-<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html">ElasticSearch filter syntax</a>.
-e.g. <pre>{ "filter": { "term": { "EAS_ID": 169 } } }</pre>
+Starting with GDAL 2.2, SQL attribute filters set with SetAttributeFilter() are
+converted to <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html">
+ElasticSearch filter syntax</a>.
+They will be combined with the potentially defined spatial filter.<p>
+
+It is also possible to directly use a ElasticSearch filter by setting the string
+passed to SetAttributeFilter() as a JSon serialized object, e.g.
+<pre>{ "post_filter": { "term": { "properties.EAS_ID": 169 } } }</pre>
 <p>
 
-Note: if defining an Elastic Search JSon filter, the spatial filter specified
+Note: if defining directly an Elastic Search JSon filter, the spatial filter specified
 through SetSpatialFilter() will be ignored, and must thus be included in the JSon
 filter if needed.<p>
 
@@ -138,7 +145,10 @@ stable at all.<p>
 
 <h2>ExecuteSQL() interface</h2>
 
-If specifying "ES" as the dialect of ExecuteSQL(), a JSon string with a
+Starting with GDAL 2.2, SQL requests, involving a single layer, with WHERE and
+ORDER BY statements will be translated as ElasticSearch queries.<p>
+
+Otherwise, if specifying "ES" as the dialect of ExecuteSQL(), a JSon string with a
 serialized <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html">Elastic Search filter</a>
 can be passed. The search will be done on all indices and types, unless the
 filter itself restricts the search. The returned layer will be a union of the
@@ -146,7 +156,8 @@ types returned by the FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN first documents. I
 will also contain the _index and _type special fields to indicate the provenance
 of the features.<p>
 
-The following filter can be used to restrict the search to the "poly" index and its "FeatureCollection" type mapping:
+The following filter can be used to restrict the search to the "poly" index and
+its "FeatureCollection" type mapping (ElasticSearch 1.X and 2.X)
 <pre>
 { "filter": {
     "indices" : {
@@ -155,7 +166,7 @@ The following filter can be used to restrict the search to the "poly" index and 
         "filter": {
            "and" : [
              { "type": { "value": "FeatureCollection" } },
-             { "term" : { "EAS_ID" : 158.0 } }
+             { "term" : { "properties.EAS_ID" : 158.0 } }
            ]
         }
       }
@@ -163,9 +174,26 @@ The following filter can be used to restrict the search to the "poly" index and 
 }
 </pre>
 
-Aggregations are not supported.<p>
+For ElasticSearch 5.X (works also with 2.X) :
+<pre>
+{ "post_filter": {
+    "indices" : {
+        "no_match_query": "none",
+        "index": "poly",
+        "query": {
+          "bool": {
+            "must" : [
+              { "type": { "value": "FeatureCollection" } },
+              { "term" : { "properties.EAS_ID" : 158.0 } }
+            ]
+          }
+        }
+      }
+    }
+}
+</pre>
 
-Standard SQL requests will be executed on client-side.<p>
+Aggregations are not supported.<p>
 
 <h2>Getting metadata</h2>
 
@@ -203,8 +231,15 @@ mapping, or mapping as serialized JSon.</li>
 <li><b>WRITE_MAPPING</b>=filename. Creates a mapping file that can be modified
 by the user prior to insert in to the index. No feature will be written.
 This option is exclusive with MAPPING.</li>
-<li><b>OVERWRITE</b>=YES/NO. Whether to overwrite an existing collection with
+<li><b>OVERWRITE</b>=YES/NO. Whether to overwrite an existing type mapping with
 the layer name to be created. Defaults to NO.</li>
+<li><b>OVERWRITE_INDEX</b>=YES/NO. (GDAL &gt;= 2.2) Whether to overwrite the whole index to which
+the layer belongs to. Defaults to NO. This option is stronger than OVERWRITE.
+OVERWRITE will only proceed if the type mapping corresponding to the layer
+is the single type mapping of the index. In case there are several type mappings,
+the whole index need to be destroyed (it is unsafe to destroy a mapping and the
+documents that use it, since they might be used by other mappings. This was
+possible in ElasticSearch 1.X, but no longer in later versions).</li>
 <li><b>GEOMETRY_NAME</b>=name. Name of geometry column. Defaults to 'geometry'.</li>
 <li><b>GEOM_MAPPING_TYPE</b>=AUTO/GEO_POINT/GEO_SHAPE. Mapping type for geometry fields. Defaults to AUTO.
 GEO_POINT uses the <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html">geo_point</a>
@@ -229,11 +264,18 @@ This option is without effect if MAPPING is specified.</li>
 Those fields will have their <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html">"index" property</a> of the field mapping set to "not_analyzed"
 (the default in ElasticSearch is "analyzed"). A same field should not be
 specified both in NOT_ANALYZED_FIELDS and NOT_INDEXED_FIELDS.
+Starting with GDAL 2.2, the {ALL} value can be used to designate all fields.
 This option is without effect if MAPPING is specified.</li>
 <li><b>NOT_INDEXED_FIELDS</b>=List of comma separated field names that should not be indexed.
 Those fields will have their <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html">"index" property</a> of the field mapping set to "no"
 (the default in ElasticSearch is "analyzed"). A same field should not be
 specified both in NOT_ANALYZED_FIELDS and NOT_INDEXED_FIELDS.
+This option is without effect if MAPPING is specified.</li>
+<li><b>FIELDS_WITH_RAW_VALUE</b>=(GDAL &gt; 2.2) List of comma separated field
+names (of type string) that should be created with an additional raw/not_analyzed
+sub-field, or {ALL} to designate all string analyzed fields.
+This is needed for sorting on those columns, and can improve performance when
+filtering with SQL operators.
 This option is without effect if MAPPING is specified.</li>
 <li><b>BULK_INSERT</b>=YES/NO. Whether to use bulk insert for feature creation. Defaults to YES.</li>
 <li><b>BULK_SIZE</b>=value. Size in bytes of the buffer for bulk upload. Defaults to 1000000 (1 million).</li>
@@ -256,13 +298,13 @@ ogrinfo ES:http://example.com:9200
 
 <b>Filtering on a Elastic Search field:</b><br>
 <pre>
-ogrinfo -ro ES: my_type -where '{ "filter": { "term": { "EAS_ID": 168 } } }'
+ogrinfo -ro ES: my_type -where '{ "post_filter": { "term": { "properties.EAS_ID": 168 } } }'
 </pre>
 
 <b>Using "match" query on Windows:</b><br>
 On Windows the query must be between double quotes and double quotes inside the query must be escaped.
 <pre>
-C:\GDAL_on_Windows>ogrinfo ES: my_type -where "{\"query\": { \"match\": { \"NAME\": \"Helsinki\" } } }"
+C:\GDAL_on_Windows>ogrinfo ES: my_type -where "{\"query\": { \"match\": { \"properties.NAME\": \"Helsinki\" } } }"
 </pre>
 <b>Load an ElasticSearch index with a shapefile:</b> </br>
 <pre>
@@ -294,14 +336,15 @@ ogr2ogr -progress -lco MAPPING=/path/to/file/map.txt -f "ElasticSearch" http://l
 </pre>
 
 <b>Bulk Uploading (for larger datasets):</b> </br>
-Bulk loading helps when uploading a lot of data. The integer value is the number of bytes that are collection before being inserted.
+Bulk loading helps when uploading a lot of data. The integer value is the number of bytes that are collected before being inserted.
+<a href="https://www.elastic.co/guide/en/elasticsearch/guide/current/bulk.html#_how_big_is_too_big">Bulk size considerations</a>
 </br>
 <pre>
-ogr2ogr -progress --config ES_BULK 10000 -f "ElasticSearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
+ogr2ogr -progress --config ES_BULK 5000000 -f "ElasticSearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
 </pre>
 or (GDAL &gt;= 2.1):
 <pre>
-ogr2ogr -progress -lco BULK_SIZE=10000 -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
+ogr2ogr -progress -lco BULK_SIZE=5000000 -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
 </pre>
 
 <b>Overwrite the current Index:</b> </br>

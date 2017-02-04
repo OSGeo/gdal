@@ -1,0 +1,33 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://other_ns"
+           targetNamespace="http://other_ns"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+ <!-- for fun, but this is insane, we name ourselves xmlns:myns here ! -->
+ 
+<xs:element name="otherns_element" type="xs:string"/>
+
+<xs:simpleType name="myAttrType">
+    <xs:annotation>
+        <xs:documentation>Doc myAttrType</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+        <xs:length value="8"/>
+    </xs:restriction >
+</xs:simpleType>
+
+<xs:element name="an_abstract_element_in_other_ns" abstract="true"/>
+
+<xs:element name="an_abstract_element_in_other_ns_realization1"
+            substitutionGroup="myns:an_abstract_element_in_other_ns">
+  <xs:complexType>
+        <xs:sequence>
+             <xs:element name="a_int" type="xs:int"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<!-- simulate gml:id -->
+<xs:attribute name="id" type="xs:ID"/>
+
+</xs:schema>

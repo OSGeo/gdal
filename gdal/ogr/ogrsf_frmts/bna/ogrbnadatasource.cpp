@@ -42,16 +42,16 @@ OGRBNADataSource::OGRBNADataSource() :
     pszName(NULL),
     papoLayers(NULL),
     nLayers(0),
-    bUpdate(FALSE),
+    bUpdate(false),
     fpOutput(NULL),
-    bUseCRLF(FALSE),
+    bUseCRLF(false),
     bMultiLine(FALSE),
     nbOutID(0),
-    bEllipsesAsEllipses(FALSE),
+    bEllipsesAsEllipses(false),
     nbPairPerLine(FALSE),
     coordinatePrecision(0),
     pszCoordinateSeparator(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                         ~OGRBNADataSource()                          */
@@ -156,7 +156,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
     int ok = FALSE;
 
     pszName = CPLStrdup( pszFilename );
-    bUpdate = bUpdateIn;
+    bUpdate = CPL_TO_BOOL(bUpdateIn);
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if (fp)
@@ -176,8 +176,8 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
             nLayers = 4;
 
             papoLayers = static_cast<OGRBNALayer **>(
-                CPLMalloc(nLayers * sizeof(OGRBNALayer*) ) );
-            for(i=0;i<4;i++)
+                CPLMalloc(nLayers * sizeof(OGRBNALayer*)));
+            for( i = 0; i < 4; i++ )
                 papoLayers[i] = new OGRBNALayer(
                     pszFilename,
                     layerRadixName[i],
@@ -188,7 +188,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
         int nFeatures[4] = { 0, 0, 0, 0 };
         OffsetAndLine* offsetAndLineFeaturesTable[4] = { NULL, NULL, NULL, NULL };
         int nIDs[4] = {0, 0, 0, 0};
-        int partialIndexTable = TRUE;
+        bool partialIndexTable = true;
 
         BNARecord* record = NULL;
         while(1)
@@ -209,7 +209,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
                 ok = TRUE;
 
                 /* and we have finally build the whole index table */
-                partialIndexTable = FALSE;
+                partialIndexTable = false;
                 break;
             }
 
@@ -255,7 +255,6 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
     return ok;
 }
 
-
 /************************************************************************/
 /*                               Create()                               */
 /************************************************************************/
@@ -300,24 +299,24 @@ int OGRBNADataSource::Create( const char *pszFilename,
     if( pszCRLFFormat == NULL )
     {
 #ifdef WIN32
-        bUseCRLF = TRUE;
+        bUseCRLF = true;
 #else
-        bUseCRLF = FALSE;
+        bUseCRLF = false;
 #endif
     }
     else if( EQUAL(pszCRLFFormat,"CRLF") )
-        bUseCRLF = TRUE;
+        bUseCRLF = true;
     else if( EQUAL(pszCRLFFormat,"LF") )
-        bUseCRLF = FALSE;
+        bUseCRLF = false;
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "LINEFORMAT=%s not understood, use one of CRLF or LF.",
                   pszCRLFFormat );
 #ifdef WIN32
-        bUseCRLF = TRUE;
+        bUseCRLF = true;
 #else
-        bUseCRLF = FALSE;
+        bUseCRLF = false;
 #endif
     }
 

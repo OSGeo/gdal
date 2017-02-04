@@ -43,6 +43,11 @@
 #include <vector>
 #include <string>
 
+// To avoid aliasing to GetDiskFreeSpace to GetDiskFreeSpaceA on Windows
+#ifdef GetDiskFreeSpace
+#undef GetDiskFreeSpace
+#endif
+
 /************************************************************************/
 /*                           VSIVirtualHandle                           */
 /************************************************************************/
@@ -53,12 +58,15 @@ class CPL_DLL VSIVirtualHandle {
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) = 0;
     virtual vsi_l_offset Tell() = 0;
     virtual size_t    Read( void *pBuffer, size_t nSize, size_t nCount ) = 0;
-    virtual int       ReadMultiRange( int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes );
+    virtual int       ReadMultiRange( int nRanges, void ** ppData,
+                                      const vsi_l_offset* panOffsets,
+                                      const size_t* panSizes );
     virtual size_t    Write( const void *pBuffer, size_t nSize,size_t nCount)=0;
     virtual int       Eof() = 0;
     virtual int       Flush() {return 0;}
     virtual int       Close() = 0;
-    virtual int       Truncate( vsi_l_offset nNewSize ); // base implementation that only supports file extension
+    // Base implementation that only supports file extension.
+    virtual int       Truncate( vsi_l_offset nNewSize );
     virtual void     *GetNativeFileDescriptor() { return NULL; }
     virtual VSIRangeStatus GetRangeStatus( CPL_UNUSED vsi_l_offset nOffset,
                                            CPL_UNUSED vsi_l_offset nLength )
@@ -196,12 +204,12 @@ public:
     VSIArchiveFilesystemHandler();
     virtual ~VSIArchiveFilesystemHandler();
 
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
-    virtual int      Unlink( const char *pszFilename );
-    virtual int      Rename( const char *oldpath, const char *newpath );
-    virtual int      Mkdir( const char *pszDirname, long nMode );
-    virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) CPL_OVERRIDE;
+    virtual int      Unlink( const char *pszFilename ) CPL_OVERRIDE;
+    virtual int      Rename( const char *oldpath, const char *newpath ) CPL_OVERRIDE;
+    virtual int      Mkdir( const char *pszDirname, long nMode ) CPL_OVERRIDE;
+    virtual int      Rmdir( const char *pszDirname ) CPL_OVERRIDE;
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) CPL_OVERRIDE;
 
     virtual const VSIArchiveContent* GetContentOfArchive(const char* archiveFilename, VSIArchiveReader* poReader = NULL);
     virtual char* SplitFilename(const char *pszFilename, CPLString &osFileInArchive, int bCheckMainFileExists);

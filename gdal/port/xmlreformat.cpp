@@ -29,19 +29,22 @@
 #include "cpl_minixml.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 int main( int argc, char **argv )
 
 {
-    static char  szXML[20000000];
-    FILE       *fp;
+    // TODO(schwehr): Switch to using std::string.
+    static char szXML[20000000] = {};
+    FILE *fp = NULL;
 
     if( argc == 1 )
+    {
         fp = stdin;
+    }
     else if( argv[1][0] == '-' )
     {
-        printf( "Usage: xmlreformat [filename]\n" );
+        printf( "Usage: xmlreformat [filename]\n" );/*ok*/
         exit( 0 );
     }
     else
@@ -49,16 +52,17 @@ int main( int argc, char **argv )
         fp = fopen( argv[1], "rt" );
         if( fp == NULL )
         {
-            printf( "Failed to open file %s.\n", argv[1] );
+            printf( "Failed to open file %s.\n", argv[1] );/*ok*/
             exit( 1 );
         }
     }
 
-    int nLen = fread( szXML, 1, sizeof(szXML), fp );
-    if( nLen >= (int) sizeof(szXML)-2 ) {
+    const int nLen = static_cast<int>(fread(szXML, 1, sizeof(szXML), fp));
+    if( nLen >= static_cast<int>(sizeof(szXML)) - 2 )
+    {
         fprintf( stderr,
                  "xmlreformat fixed sized buffer (%d bytes) exceeded.\n",
-                 (int) sizeof(szXML) );
+                 static_cast<int>(sizeof(szXML)) );
         exit(1);
     }
 
@@ -71,7 +75,7 @@ int main( int argc, char **argv )
     if( poTree != NULL )
     {
         char *pszRawXML = CPLSerializeXMLTree( poTree );
-        printf( "%s", pszRawXML );
+        printf( "%s", pszRawXML );/*ok*/
         CPLFree( pszRawXML );
         CPLDestroyXMLNode( poTree );
     }

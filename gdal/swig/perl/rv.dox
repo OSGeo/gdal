@@ -22,8 +22,8 @@ $datasource = Geo::GDAL::OpenEx($dsname);
 $layer = $datasource->Layer($lname);
 
 $layer->ResetReading();
-while ($feature = $layer->GetNextFeature()) {  
-    my $geom = $feature->GetGeometry(); 
+while ($feature = $layer->GetNextFeature()) {
+    my $geom = $feature->GetGeometry();
     my $value = $feature->GetField($field);
     my $extent = $geom->GetEnvelope();
     $data{$value}{width} = $extent->[1] - $extent->[0];

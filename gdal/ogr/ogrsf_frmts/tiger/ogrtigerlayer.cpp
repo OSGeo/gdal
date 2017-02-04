@@ -38,19 +38,15 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRTigerLayer::OGRTigerLayer( OGRTigerDataSource *poDSIn,
-                              TigerFileBase * poReaderIn )
-
+                              TigerFileBase * poReaderIn ) :
+    poReader(poReaderIn),
+    poDS(poDSIn),
+    nFeatureCount(0),
+    panModuleFCount(NULL),
+    panModuleOffset(NULL),
+    iLastFeatureId(0),
+    iLastModule(-1)
 {
-    poDS = poDSIn;
-    poReader = poReaderIn;
-
-    iLastFeatureId = 0;
-    iLastModule = -1;
-
-    nFeatureCount = 0;
-    panModuleFCount = NULL;
-    panModuleOffset = NULL;
-
 /* -------------------------------------------------------------------- */
 /*      Setup module feature counts.                                    */
 /* -------------------------------------------------------------------- */
@@ -145,9 +141,7 @@ OGRFeature *OGRTigerLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Fetch the feature associated with the record.                   */
 /* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature;
-
-    poFeature =
+    OGRFeature  *poFeature =
         poReader->GetFeature( (int)nFeatureId-panModuleOffset[iLastModule]-1 );
 
     if( poFeature != NULL )
@@ -165,7 +159,6 @@ OGRFeature *OGRTigerLayer::GetFeature( GIntBig nFeatureId )
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */

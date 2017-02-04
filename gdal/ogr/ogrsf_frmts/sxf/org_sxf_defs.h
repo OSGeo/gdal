@@ -214,13 +214,11 @@ typedef struct
 
 } SXFMapDescription;
 
-
 enum SXFCoordinateType
 {
     SXF_CT_RECTANGULAR = 0,
     SXF_CT_GEODETIC
 };
-
 
 /*
  * List of SXF file format geometry types.
@@ -316,7 +314,6 @@ typedef struct
     GByte nFormatVersion[4]; //the format version (e.g. 4)
     GUInt32 nCheckSum; //check sum
 }  SXFHeader;
-
 
 /************************************************************************/
 /*                         RSCInfo                                      */

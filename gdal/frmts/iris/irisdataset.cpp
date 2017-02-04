@@ -70,19 +70,19 @@ class IRISDataset : public GDALPamDataset
     double                adfGeoTransform[6];
     bool                  bHasLoadedProjection;
     void                  LoadProjection();
-    std::pair<double, double> GeodesicCalculation(
+    static std::pair<double, double> GeodesicCalculation(
         float fLat, float fLon, float fAngle, float fDist,
         float fEquatorialRadius, float fPolarRadius, float fFlattening );
 
 public:
     IRISDataset();
-    ~IRISDataset();
+    virtual ~IRISDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
-    CPLErr GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 const char* const IRISDataset::aszProductNames[] = {
@@ -155,12 +155,11 @@ public:
     IRISRasterBand( IRISDataset *, int );
     virtual ~IRISRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
-    virtual double          GetNoDataValue( int * );
-    virtual CPLErr          SetNoDataValue( double );
+    virtual double          GetNoDataValue( int * ) override;
+    virtual CPLErr          SetNoDataValue( double ) override;
 };
-
 
 /************************************************************************/
 /*                           IRISRasterBand()                           */
@@ -339,7 +338,6 @@ CPLErr IRISRasterBand::IReadBlock( int /* nBlockXOff */,
                 fVal = (fVal - 128.0f) * 0.2f;
             ((float *) pImage)[i] = fVal;
         }
-
     }
 
     return CE_None;
@@ -379,7 +377,6 @@ double IRISRasterBand::GetNoDataValue( int * pbSuccess )
 
     return GDALPamRasterBand::GetNoDataValue( pbSuccess );
 }
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -463,14 +460,14 @@ void IRISDataset::LoadProjection()
 
     // TODO(schwehr): Document 4294967295.
     const float fCenterLon =
-        CPL_LSBUINT32PTR(abyHeader+112+320+12) * 360.0f / 4294967295LL;
+        static_cast<float>(CPL_LSBUINT32PTR(abyHeader+112+320+12) * 360.0 / 4294967295UL);
     const float fCenterLat =
-        CPL_LSBUINT32PTR(abyHeader+108+320+12) * 360.0f / 4294967295LL;
+        static_cast<float>(CPL_LSBUINT32PTR(abyHeader+108+320+12) * 360.0 / 4294967295UL);
 
     const float fProjRefLon =
-        CPL_LSBUINT32PTR(abyHeader+244+320+12) * 360.0f / 4294967295LL;
+        static_cast<float>(CPL_LSBUINT32PTR(abyHeader+244+320+12) * 360.0 / 4294967295UL);
     const float fProjRefLat =
-        CPL_LSBUINT32PTR(abyHeader+240+320+12) * 360.0f / 4294967295LL;
+        static_cast<float>(CPL_LSBUINT32PTR(abyHeader+240+320+12) * 360.0 / 4294967295UL);
 
     const float fRadarLocX = CPL_LSBSINT32PTR(abyHeader + 112 + 12 ) / 1000.0f;
     const float fRadarLocY = CPL_LSBSINT32PTR(abyHeader + 116 + 12 ) / 1000.0f;
@@ -782,54 +779,54 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nProductCode = CPL_LSBUINT16PTR(poDS->abyHeader + 12 + 12);
     poDS->SetMetadataItem( "PRODUCT_ID",
                            CPLString().Printf("%d", poDS->nProductCode ));
-    if( poDS->nProductCode >= CPL_ARRAYSIZE(poDS->aszProductNames) )
+    if( poDS->nProductCode >= CPL_ARRAYSIZE(aszProductNames) )
     {
         delete poDS;
         return NULL;
     }
 
-    poDS->SetMetadataItem("PRODUCT", poDS->aszProductNames[poDS->nProductCode]);
+    poDS->SetMetadataItem("PRODUCT", aszProductNames[poDS->nProductCode]);
 
     poDS->nDataTypeCode = CPL_LSBUINT16PTR(poDS->abyHeader+130+12);
-    if( poDS->nDataTypeCode >= CPL_ARRAYSIZE(poDS->aszDataTypeCodes) )
+    if( poDS->nDataTypeCode >= CPL_ARRAYSIZE(aszDataTypeCodes) )
     {
         delete poDS;
         return NULL;
     }
     poDS->SetMetadataItem("DATA_TYPE_CODE",
-                          poDS->aszDataTypeCodes[poDS->nDataTypeCode]);
+                          aszDataTypeCodes[poDS->nDataTypeCode]);
 
-    if( poDS->nDataTypeCode >= CPL_ARRAYSIZE(poDS->aszDataTypes) )
+    if( poDS->nDataTypeCode >= CPL_ARRAYSIZE(aszDataTypes) )
     {
         delete poDS;
         return NULL;
     }
     poDS->SetMetadataItem("DATA_TYPE",
-                          poDS->aszDataTypes[poDS->nDataTypeCode]);
+                          aszDataTypes[poDS->nDataTypeCode]);
 
     const unsigned short nDataTypeInputCode =
         CPL_LSBUINT16PTR(poDS->abyHeader+144+12);
-    if( nDataTypeInputCode >= CPL_ARRAYSIZE(poDS->aszDataTypeCodes) )
+    if( nDataTypeInputCode >= CPL_ARRAYSIZE(aszDataTypeCodes) )
     {
         delete poDS;
         return NULL;
     }
     poDS->SetMetadataItem("DATA_TYPE_INPUT_CODE",
-                          poDS->aszDataTypeCodes[nDataTypeInputCode]);
+                          aszDataTypeCodes[nDataTypeInputCode]);
 
     const unsigned short nDataTypeInput =
         CPL_LSBUINT16PTR(poDS->abyHeader+144+12);
-    if( nDataTypeInput >= CPL_ARRAYSIZE(poDS->aszDataTypes) )
+    if( nDataTypeInput >= CPL_ARRAYSIZE(aszDataTypes) )
     {
         delete poDS;
         return NULL;
     }
     poDS->SetMetadataItem("DATA_TYPE_INPUT",
-                          poDS->aszDataTypes[nDataTypeInput]);
+                          aszDataTypes[nDataTypeInput]);
 
     poDS->nProjectionCode =
         * static_cast<unsigned char *>(poDS->abyHeader+146+12);
-    if( poDS->nProjectionCode >= CPL_ARRAYSIZE(poDS->aszProjections) )
+    if( poDS->nProjectionCode >= CPL_ARRAYSIZE(aszProjections) )
     {
         delete poDS;
         return NULL;
@@ -956,7 +953,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
     // at the product header) See point 3.2.30 at page 3.19 of the
     // manual.
     // See point 3.2.25 at page 3.12 of the manual.
-    if( EQUAL(poDS->aszProductNames[poDS->nProductCode], "PPI") )
+    if( EQUAL(aszProductNames[poDS->nProductCode], "PPI") )
     {
         // Degrees = 360 * (Binary Angle)*2^N
         const float fElevation =
@@ -964,13 +961,13 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->SetMetadataItem("PPI_ELEVATION_ANGLE",
                               CPLString().Printf("%f", fElevation));
-        if( EQUAL(poDS->aszDataTypeCodes[poDS->nDataTypeCode],"dBZ") )
+        if( EQUAL(aszDataTypeCodes[poDS->nDataTypeCode],"dBZ") )
             poDS->SetMetadataItem( "DATA_TYPE_UNITS", "dBZ");
         else
             poDS->SetMetadataItem("DATA_TYPE_UNITS", "m/s");
         // See point 3.2.2 at page 3.2 of the manual.
     }
-    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode], "CAPPI") )
+    else if( EQUAL(aszProductNames[poDS->nProductCode], "CAPPI") )
     {
         const float fElevation =
             CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12) / 100.0f;
@@ -986,14 +983,14 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem(
             "MAX_AGE_FOR_SHEAR_VVP_CORRECTION",
             CPLString().Printf("%d s", nMaxAgeVVPCorrection));
-        if( EQUAL(poDS->aszDataTypeCodes[poDS->nDataTypeCode], "dBZ") )
+        if( EQUAL(aszDataTypeCodes[poDS->nDataTypeCode], "dBZ") )
             poDS->SetMetadataItem( "DATA_TYPE_UNITS", "dBZ");
         else
             poDS->SetMetadataItem( "DATA_TYPE_UNITS", "m/s");
         // See point 3.2.32 at page 3.19 of the manual.
     }
-    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"RAIN1") ||
-             EQUAL(poDS->aszProductNames[poDS->nProductCode],"RAINN") )
+    else if( EQUAL(aszProductNames[poDS->nProductCode],"RAIN1") ||
+             EQUAL(aszProductNames[poDS->nProductCode],"RAINN") )
     {
         const short nNumProducts = CPL_LSBSINT16PTR(poDS->abyHeader+170+320+12);
         poDS->SetMetadataItem("NUM_FILES_USED",
@@ -1024,7 +1021,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem("INPUT_PRODUCT_NAME",
                               CPLString().Printf("%s", szInputProductName));
 
-        if( EQUAL(poDS->aszProductNames[poDS->nProductCode], "RAINN") )
+        if( EQUAL(aszProductNames[poDS->nProductCode], "RAINN") )
              poDS->SetMetadataItem(
                  "NUM_HOURS_ACCUMULATE",
                  CPLString().Printf(
@@ -1032,7 +1029,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // See point 3.2.73 at page 3.36 of the manual.
     }
-    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode], "VIL") )
+    else if( EQUAL(aszProductNames[poDS->nProductCode], "VIL") )
     {
         const float fBottomHeightInterval =
             CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12) / 100.0f;
@@ -1049,7 +1046,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem("DATA_TYPE_UNITS","mm");
     // See point 3.2.68 at page 3.36 of the manual
     }
-    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode], "TOPS") )
+    else if( EQUAL(aszProductNames[poDS->nProductCode], "TOPS") )
     {
         const float fZThreshold =
             CPL_LSBSINT16PTR(poDS->abyHeader+4+164+12) / 16.0f;
@@ -1059,7 +1056,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem("DATA_TYPE_UNITS", "km");
     // See point 3.2.20 at page 3.10 of the manual.
     }
-    else if( EQUAL(poDS->aszProductNames[poDS->nProductCode], "MAX") )
+    else if( EQUAL(aszProductNames[poDS->nProductCode], "MAX") )
     {
         const float fBottomInterval =
             CPL_LSBSINT32PTR(poDS->abyHeader+4+164+12) / 100.0f;
@@ -1096,7 +1093,7 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->GetRasterBand(iBandNum)->SetNoDataValue(-9999);
         // Calculating the band height to include it in the band metadata.  Only
         // for the CAPPI product.
-        if( EQUAL(poDS->aszProductNames[poDS->nProductCode],"CAPPI") )
+        if( EQUAL(aszProductNames[poDS->nProductCode],"CAPPI") )
         {
             const float fScaleZ =
                 CPL_LSBSINT32PTR(poDS->abyHeader + 96 + 12) / 100.0f;

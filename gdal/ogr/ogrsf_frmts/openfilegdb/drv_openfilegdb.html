@@ -11,10 +11,12 @@
 
 <p>
 The OpenFileGDB driver provides read access to File Geodatabases
-(.gdb directories) created by ArcGIS 9 and above.
+(.gdb directories) created by ArcGIS 9 and above. The dataset name must be
+the directory/folder name, and it must end with the .gdb extension.
 </p>
 <p>
-It can also read directly zipped .gdb directories (.gdb.zip)
+It can also read directly zipped .gdb directories (with .gdb.zip extension),
+provided they contain a .gdb directory at their first level.
 </p>
 <p>
 A specific .gdbtable file (including "system" tables) can also be opened

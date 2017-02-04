@@ -29,14 +29,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/*
- * TIFF Library UNIX-specific Routines.
- */
-#include "cpl_conv.h"
-#include "cpl_vsi.h"
+// TIFF Library UNIX-specific Routines.
+
+#include "cpl_port.h"
 #include "tifvsi.h"
 
+#include <string.h>
 #include <cerrno>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include "cpl_conv.h"
+#include "cpl_vsi.h"
 
 // We avoid including xtiffio.h since it drags in the libgeotiff version
 // of the VSI functions.
@@ -98,7 +103,7 @@ _tiffWriteProc( thandle_t th, tdata_t buf, tsize_t size )
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle *>( th );
 
     // If we have a write buffer and are at end of file, then accumulate
-    // the bytes until the buffer is full
+    // the bytes until the buffer is full.
     if( psGTH->bAtEndOfFile && psGTH->abyWriteBuffer )
     {
         const GByte* pabyData = reinterpret_cast<GByte *>( buf );

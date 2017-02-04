@@ -57,7 +57,6 @@ typedef enum {
 
 const char CPL_DLL *OSRAxisEnumToName( OGRAxisOrientation eOrientation );
 
-
 /* -------------------------------------------------------------------- */
 /*      Datum types (corresponds to CS_DatumType).                      */
 /* -------------------------------------------------------------------- */
@@ -485,7 +484,6 @@ typedef void *OGRCoordinateTransformationH;
 #endif
 
 #endif
-
 
 OGRSpatialReferenceH CPL_DLL CPL_STDCALL
       OSRNewSpatialReference( const char * /* = NULL */);
@@ -915,7 +913,6 @@ OGRErr CPL_DLL OSRSetQSC( OGRSpatialReferenceH hSRS,
 OGRErr CPL_DLL OSRSetSCH( OGRSpatialReferenceH hSRS,
                               double dfPegLat, double dfPegLong,
                               double dfPegHeading, double dfPegHgt);
-
 
 double CPL_DLL OSRCalcInvFlattening( double dfSemiMajor, double dfSemiMinor );
 double CPL_DLL OSRCalcSemiMinorFromInvFlattening( double dfSemiMajor, double dfInvFlattening );

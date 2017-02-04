@@ -45,25 +45,25 @@ using OSGeo.GDAL;
 
 /// <summary>
 /// A C# based sample to create GDAL raster overviews.
-/// </summary> 
+/// </summary>
 
 class GDALOverviews {
-	
-	public static void usage() 
 
-	{ 
+	public static void usage()
+
+	{
 		Console.WriteLine("usage: gdaloverviews {GDAL dataset name} {resamplealg} {level1} {level2} ....");
 		Console.WriteLine("example: gdaloverviews sample.tif \"NEAREST\" 2 4");
 		System.Environment.Exit(-1);
 	}
- 
-    public static void Main(string[] args) 
+
+    public static void Main(string[] args)
     {
         if (args.Length <= 2) usage();
-        
+
         Console.WriteLine("");
 
-        try 
+        try
         {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
@@ -74,8 +74,8 @@ class GDALOverviews {
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
             Dataset ds = Gdal.Open( args[0], Access.GA_Update );
-		
-            if (ds == null) 
+
+            if (ds == null)
             {
                 Console.WriteLine("Can't open " + args[0]);
                 System.Environment.Exit(-1);
@@ -85,26 +85,26 @@ class GDALOverviews {
             Console.WriteLine("  Projection: " + ds.GetProjectionRef());
             Console.WriteLine("  RasterCount: " + ds.RasterCount);
             Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
-            
+
             int[] levels = new int[args.Length -2];
 
             Console.WriteLine(levels.Length);
-           
+
             for (int i = 2; i < args.Length; i++)
             {
                 levels[i-2] = int.Parse(args[i]);
             }
-			
+
             if (ds.BuildOverviews(args[1], levels, new Gdal.GDALProgressFuncDelegate(ProgressFunc), "Sample Data") != (int)CPLErr.CE_None)
             {
                 Console.WriteLine("The BuildOverviews operation doesn't work");
                 System.Environment.Exit(-1);
             }
- 
+
             /* -------------------------------------------------------------------- */
             /*      Displaying the raster parameters                                */
             /* -------------------------------------------------------------------- */
-            for (int iBand = 1; iBand <= ds.RasterCount; iBand++) 
+            for (int iBand = 1; iBand <= ds.RasterCount; iBand++)
             {
                 Band band = ds.GetRasterBand(iBand);
                 Console.WriteLine("Band " + iBand + " :");
@@ -124,7 +124,7 @@ class GDALOverviews {
             Console.WriteLine("Completed.");
             Console.WriteLine("Use:  gdalread " + args[0] + " outfile.png [overview] to extract a particular overview!" );
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             Console.WriteLine("Application error: " + e.Message);
         }
@@ -137,7 +137,7 @@ class GDALOverviews {
 			Console.Write(" Message:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Message));
 		if (Data != IntPtr.Zero)
 			Console.Write(" Data:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Data));
-	
+
 		Console.WriteLine("");
 		return 1;
 	}

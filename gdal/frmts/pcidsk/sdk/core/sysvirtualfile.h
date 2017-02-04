@@ -106,7 +106,7 @@ namespace PCIDSK
         void                   FlushDirtyBlock();
         void                   WriteBlocks(int first_block, int block_count,
                                            void* const buffer);
-        void                   LoadBMEntrysTo( int block_index );
+        void                   LoadBMEntriesTo( int block_index );
     };
 }
 

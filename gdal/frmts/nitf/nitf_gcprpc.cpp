@@ -104,7 +104,6 @@ void NITFDensifyGCPs( GDAL_GCP **psGCPs, int *pnGCPCount )
             psDensifiedGCPs[count+3].dfGCPY = yRightPt;
 
             count += *pnGCPCount;
-
         }
         catch (...)
         {
@@ -139,7 +138,8 @@ static bool RPCTransform( NITFRPC00BInfo *psRPCInfo,
                           int             nGCPCount )
 {
     if( (psRPCInfo == NULL) || (pGCPXCoord == NULL) ||
-        (pGCPYCoord == NULL) || (nGCPCount <= 0) ) return (false);
+        (pGCPYCoord == NULL) || (nGCPCount <= 0) )
+        return false;
 
     bool   ok = true;
     double H  = 0.0;
@@ -173,7 +173,7 @@ static bool RPCTransform( NITFRPC00BInfo *psRPCInfo,
         }
     }
 
-    return (ok);
+    return ok;
 }
 
 /************************************************************************/

@@ -40,5 +40,4 @@ int OGRXPlane_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
                              double dfDistance, double dfHeading,
                              double* pdfLatB_deg, double* pdfLonB_deg);
 
-
 #endif /* ndef OGR_XPLANE_GEO_UTILS_H_INCLUDED */

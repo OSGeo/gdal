@@ -570,6 +570,7 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
 {
     int	 bIndexed = FALSE;
     int  nObjectOffset, nRecordSize=0, nRecordStart = 0, nLen;
+    /* cppcheck-suppress unreadVariable */
     char szExt[4] = {0,0,0,0};
     char *pszExt = szExt;
 
@@ -1863,6 +1864,7 @@ char **AVCBinReadListTables(const char *pszInfoPath, const char *pszCoverName,
      * letters extension.
      *----------------------------------------------------------------*/
     if (pszCoverName != NULL)
+        // cppcheck-suppress bufferAccessOutOfBounds
         snprintf(szNameToFind, sizeof(szNameToFind), "%-.28s.", pszCoverName);
     nLen = (int)strlen(szNameToFind);
 
@@ -1940,6 +1942,8 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     int            i;
     size_t         nFnameLen;
 
+    memset(&sTableDef, 0, sizeof(sTableDef));
+    sTableDef.numFields = 0;
     sTableDef.pasFieldDef = NULL;
 
     /* Alloc a buffer big enough for the longest possible filename...
@@ -1983,6 +1987,14 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to open table %s", pszTableName);
+        CPLFree(pszFname);
+        return NULL;
+    }
+    /* To please Coverity */
+    if( sTableDef.numFields < 0 || sTableDef.numFields >= 32767 )
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Invalid numFields in %s", pszTableName);
         CPLFree(pszFname);
         return NULL;
     }

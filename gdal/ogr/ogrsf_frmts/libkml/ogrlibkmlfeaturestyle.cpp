@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 
 using kmldom::FeaturePtr;
 using kmldom::IconStylePtr;
-using kmldom::KmlFactory;;
+using kmldom::KmlFactory;
 using kmldom::LabelStylePtr;
 using kmldom::LineStylePtr;
 using kmldom::PolyStylePtr;
@@ -166,7 +166,6 @@ void featurestyle2kml(
     }
 }
 
-
 /******************************************************************************
  function to read a kml style into ogr's featurestyle
 ******************************************************************************/
@@ -276,7 +275,6 @@ void kml2featurestyle(
 
                             szbuf[nRead] = '\0';
                             oStyle.append( szbuf );
-
                         } while( !VSIFEofL(fp) );
 
                         VSIFCloseL(fp);

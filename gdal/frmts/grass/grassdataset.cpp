@@ -71,8 +71,8 @@ class GRASSDataset : public GDALDataset
                  GRASSDataset();
                  ~GRASSDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -104,14 +104,13 @@ class GRASSRasterBand : public GDALRasterBand
                                     const char *, const char * );
     virtual        ~GRASSRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum( int *pbSuccess = NULL );
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 };
-
 
 /************************************************************************/
 /*                          GRASSRasterBand()                           */
@@ -187,7 +186,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
         dfNoData = -12345.0;
     }
 
-    nBlockXSize = poDS->nRasterXSize;;
+    nBlockXSize = poDS->nRasterXSize;
     nBlockYSize = 1;
 
     hCell = G_open_cell_old((char *) pszCellName, (char *) pszMapset);
@@ -244,7 +243,6 @@ GRASSRasterBand::~GRASSRasterBand()
     if( hCell >= 0 )
         G_close_cell( hCell );
 }
-
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -386,7 +384,6 @@ double GRASSRasterBand::GetNoDataValue( int *pbSuccess )
 /*                             GRASSDataset                             */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            GRASSDataset()                            */

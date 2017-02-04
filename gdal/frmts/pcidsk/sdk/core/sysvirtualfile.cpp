@@ -116,7 +116,7 @@ uint16 SysVirtualFile::GetBlockSegment( int requested_block )
                               requested_block );
 
     if( requested_block >= blocks_loaded )
-        LoadBMEntrysTo( requested_block );
+        LoadBMEntriesTo( requested_block );
 
     if( regular_blocks )
         // regular blocks are all in one segment.
@@ -141,7 +141,7 @@ int SysVirtualFile::GetBlockIndexInSegment( int requested_block )
                               requested_block );
 
     if( requested_block >= blocks_loaded )
-        LoadBMEntrysTo( requested_block );
+        LoadBMEntriesTo( requested_block );
 
     if( regular_blocks )
         // regular blocks all follow the first block in order.
@@ -209,7 +209,7 @@ void SysVirtualFile::SetBlockInfo( int requested_block,
     while( (int) xblock_segment.size() < blocks_loaded )
     {
         xblock_segment.push_back( xblock_segment[0] );
-        xblock_index.push_back( xblock_index[xblock_index.size()-1]+1 );
+        xblock_index.push_back( xblock_index.back()+1 );
     }
 
     xblock_segment.push_back( new_block_segment );
@@ -282,7 +282,7 @@ void SysVirtualFile::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 
     uint64 buffer_offset = 0;
 #if 0
-    printf("Requesting region at %llu of size %llu\n", offset, size);
+    printf("Requesting region at %llu of size %llu\n", offset, size);/*ok*/
 #endif
     while( buffer_offset < size )
     {
@@ -350,7 +350,7 @@ void SysVirtualFile::LoadBlock( int requested_block )
 /* -------------------------------------------------------------------- */
 /*      Load the requested block.                                       */
 /* -------------------------------------------------------------------- */
-    LoadBMEntrysTo( requested_block );
+    LoadBMEntriesTo( requested_block );
     PCIDSKSegment *data_seg_obj =
         file->GetSegment( GetBlockSegment( requested_block ) );
     if( data_seg_obj == NULL )
@@ -394,7 +394,7 @@ void SysVirtualFile::FlushDirtyBlock(void)
 /************************************************************************/
 void SysVirtualFile::GrowVirtualFile(std::ptrdiff_t requested_block)
 {
-    LoadBMEntrysTo( static_cast<int>(requested_block) );
+    LoadBMEntriesTo( static_cast<int>(requested_block) );
 
     if( requested_block == blocks_loaded )
     {
@@ -443,7 +443,7 @@ void SysVirtualFile::WriteBlocks(int first_block,
     std::size_t blocks_written = 0;
     std::size_t current_first_block = first_block;
     while (blocks_written < (std::size_t) block_count) {
-        LoadBMEntrysTo( static_cast<int>(current_first_block+1) );
+        LoadBMEntriesTo( static_cast<int>(current_first_block+1) );
 
         unsigned int cur_segment = GetBlockSegment( static_cast<int>(current_first_block) );
         unsigned int cur_block = static_cast<unsigned int>(current_first_block);
@@ -451,7 +451,7 @@ void SysVirtualFile::WriteBlocks(int first_block,
                (unsigned int) GetBlockSegment(cur_block + 1) == cur_segment)
         {
             cur_block++;
-            LoadBMEntrysTo( static_cast<int>(current_first_block+1) );
+            LoadBMEntriesTo( static_cast<int>(current_first_block+1) );
         }
         
         // Find largest span of contiguous blocks we can write
@@ -509,7 +509,7 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
     
     while (blocks_read < (unsigned int)requested_block_count) {
         // Coalesce blocks that are in the same segment
-        LoadBMEntrysTo( current_start+1 );
+        LoadBMEntriesTo( current_start+1 );
         unsigned int cur_segment = GetBlockSegment(current_start); // segment of current
                 // first block
         unsigned int cur_block = current_start; // starting block ID
@@ -518,7 +518,7 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
             // this block is in the same segment as the previous one we
             // wanted to read.
             cur_block++;
-            LoadBMEntrysTo( cur_block+1 );
+            LoadBMEntriesTo( cur_block+1 );
         }
         
         // now attempt to determine if the region of blocks (from current_start
@@ -541,7 +541,7 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
             GrowVirtualFile(i + current_start);
         }
 
-        printf("Coalescing the read of %d blocks\n", count_to_read);
+        printf("Coalescing the read of %d blocks\n", count_to_read);/*ok*/
 #endif
 
         // Perform the actual read
@@ -551,7 +551,7 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
         std::size_t data_size = block_size * count_to_read;
 
 #if 0
-        printf("Reading %d bytes at offset %d in buffer\n", data_size, buffer_off);
+        printf("Reading %d bytes at offset %d in buffer\n", data_size, buffer_off);/*ok*/
 #endif
 
         data_seg_obj->ReadFromFile( ((uint8*)buffer) + buffer_off,
@@ -576,7 +576,7 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
 /*      are available.                                                  */
 /************************************************************************/
 
-void SysVirtualFile::LoadBMEntrysTo( int target_index )
+void SysVirtualFile::LoadBMEntriesTo( int target_index )
 
 {
     if( target_index > 0 )

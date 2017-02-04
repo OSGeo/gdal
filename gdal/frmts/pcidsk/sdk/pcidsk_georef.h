@@ -48,7 +48,7 @@ namespace PCIDSK
     class PCIDSK_DLL PCIDSKGeoref
     {
     public:
-        virtual	~PCIDSKGeoref() {}
+        virtual ~PCIDSKGeoref() {}
 
 /**
 \brief Get georeferencing transformation.

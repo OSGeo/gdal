@@ -67,8 +67,7 @@ CPL_CVSID("$Id$");
 NASAKeywordHandler::NASAKeywordHandler() :
     papszKeywordList(NULL),
     pszHeaderNext(NULL)
-{
-}
+{}
 
 /************************************************************************/
 /*                        ~NASAKeywordHandler()                         */
@@ -207,7 +206,7 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
             SkipWhite();
 
             osValue += osWord;
-            if( osWord[strlen(osWord)-1] == ')' )
+            if( osWord.back() == ')' )
                 break;
         }
     }
@@ -222,7 +221,7 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
             SkipWhite();
 
             osValue += osWord;
-            if( osWord[strlen(osWord)-1] == '}' )
+            if( osWord.back() == '}' )
                 break;
         }
     }
@@ -250,7 +249,7 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
         SkipWhite();
 
         osValue += osWord;
-        if( osWord[strlen(osWord)-1] == '>' )
+        if( osWord.back() == '>' )
             break;
     }
 

@@ -48,7 +48,7 @@ void InitEmptyCeosRecord(CeosRecord_t *record, int32 sequence, CeosTypeCode_t ty
 
 	/* Setup values inside the CeosRecord_t header */
 	record->Sequence = sequence;
-	record->Flavour = 0;
+	record->Flavor = 0;
 	record->FileId = 0;
 	record->TypeCode = typecode;
 	record->Subsequence = 0;
@@ -227,7 +227,7 @@ void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *va
 {
     int field_size;
     char * temp_buf = NULL;
-    char printf_format[ 20 ];
+    char szPrintfFormat[ 20 ];
 
     field_size = 0;
     sscanf(&format[1], "%d", &field_size);
@@ -263,22 +263,22 @@ void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *va
     case 'i':
     case 'I':
 	/* Integer data type */
-	snprintf( printf_format, sizeof(printf_format), "%%%s%c",format+1, 'd');
-	snprintf( temp_buf, field_size+1, printf_format, *(int *) value);
+	snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c",format+1, 'd');
+	snprintf( temp_buf, field_size+1, szPrintfFormat, *(int *) value);
 	break;
 
     case 'f':
     case 'F':
 	/* Double precision floating point data type */
-	snprintf( printf_format, sizeof(printf_format), "%%%s%c", format+1, 'g');
-	snprintf( temp_buf, field_size+1, printf_format, *(double *)value);
+	snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c", format+1, 'g');
+	snprintf( temp_buf, field_size+1, szPrintfFormat, *(double *)value);
 	break;
 
     case 'e':
     case 'E':
 	/* Double precision floating point data type (forced exponent) */
-	snprintf( printf_format, sizeof(printf_format), "%%%s%c", format+1, 'e');
-	snprintf( temp_buf, field_size+1, printf_format, *(double *)value);
+	snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c", format+1, 'e');
+	snprintf( temp_buf, field_size+1, szPrintfFormat, *(double *)value);
 	break;
 
     case 'a':
@@ -307,7 +307,7 @@ void SetIntCeosField(CeosRecord_t *record, int32 start_byte, int32 length, int32
     SetCeosField(record,start_byte,total_len,&integer_value);
 }
 
-CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32 fileid, int32 flavour, int32 subsequence)
+CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32 fileid, int32 flavor, int32 subsequence)
 {
     Link_t *Link;
     CeosRecord_t *record;
@@ -318,7 +318,7 @@ CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32
 
 	if( (record->TypeCode.Int32Code == typecode.Int32Code)
 	    && ( ( fileid == -1 ) || ( record->FileId == fileid  ) )
-	    && ( ( flavour == -1 ) || ( record->Flavour == flavour ) )
+	    && ( ( flavor == -1 ) || ( record->Flavor == flavor ) )
 	    && ( ( subsequence == -1 ) || ( record->Subsequence == subsequence ) ) )
 	    return record;
     }

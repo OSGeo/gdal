@@ -66,7 +66,7 @@ public:
   template<class T>
   unsigned int ComputeNumBytesNeededToWrite(const T* arr, double maxZError, bool encodeMask);
 
-  unsigned int ComputeNumBytesHeader() const;
+  static unsigned int ComputeNumBytesHeader();
 
   static unsigned int NumExtraBytesToAllocate()  { return BitStuffer2::NumExtraBytesToAllocate(); }
 
@@ -112,7 +112,7 @@ private:
   mutable std::vector<std::pair<short, unsigned int> > m_huffmanCodes;    // <= 256 codes, 1.5 kB
 
 private:
-  std::string FileKey() const  { return "Lerc2 "; }
+  static std::string FileKey() { return "Lerc2 "; }
   void Init();
   bool WriteHeader(Byte** ppByte) const;
   bool ReadHeader(const Byte** ppByte, struct HeaderInfo& headerInfo) const;
@@ -135,7 +135,7 @@ private:
   bool ComputeStats(const T* data, int i0, int i1, int j0, int j1,
                     T& zMinA, T& zMaxA, int& numValidPixelA, bool& tryLutA) const;
 
-  double ComputeMaxVal(double zMin, double zMax, double maxZError) const;
+  static double ComputeMaxVal(double zMin, double zMax, double maxZError);
 
   template<class T>
   bool NeedToQuantize(int numValidPixel, T zMin, T zMax) const;
@@ -163,17 +163,17 @@ private:
 
   DataType GetDataTypeUsed(int typeCode) const;
 
-  bool WriteVariableDataType(Byte** ppByte, double z, DataType dtUsed) const;
+  static bool WriteVariableDataType(Byte** ppByte, double z, DataType dtUsed);
 
-  double ReadVariableDataType(const Byte** ppByte, DataType dtUsed) const;
+  static double ReadVariableDataType(const Byte** ppByte, DataType dtUsed);
 
-  template<class T>
-  DataType GetDataType(T z) const;
+  // cppcheck-suppress functionStatic
+  template<class T> DataType GetDataType(T z) const;
 
-  unsigned int GetMaxValToQuantize(DataType dt) const;
+  static unsigned int GetMaxValToQuantize(DataType dt);
 
-  void SortQuantArray(const std::vector<unsigned int>& quantVec,
-                      std::vector<Quant>& sortedQuantVec) const;
+  static void SortQuantArray(const std::vector<unsigned int>& quantVec,
+                      std::vector<Quant>& sortedQuantVec);
 
   template<class T>
   bool ComputeHistoForHuffman(const T* data, std::vector<int>& histo) const;
@@ -183,7 +183,6 @@ private:
 
   template<class T>
   bool DecodeHuffman(const Byte** ppByte, T* data) const;
-
 };
 
 // -------------------------------------------------------------------------- ;
@@ -517,7 +516,7 @@ bool Lerc2::WriteTiles(const T* data, Byte** ppByte, int& numBytes, double& zMin
       bool tryLut = false;
 
       if (!ComputeStats(data, i0, i0 + tileH, j0, j0 + tileW, zMin, zMax,
-	  numValidPixel, tryLut))
+            numValidPixel, tryLut))
         return false;
 
       if (numValidPixel > 0)
@@ -693,7 +692,7 @@ bool Lerc2::ComputeStats(const T* data, int i0, int i1, int j0, int j1,
 
 // -------------------------------------------------------------------------- ;
 
-inline double Lerc2::ComputeMaxVal(double zMin, double zMax, double maxZError) const
+inline double Lerc2::ComputeMaxVal(double zMin, double zMax, double maxZError)
 {
   double fac = 1 / (2 * maxZError);
   return (zMax - zMin) * fac;
@@ -1027,13 +1026,13 @@ int Lerc2::TypeCode(T z, DataType& dtUsed) const
       char c = (char)z;
       int tc = (T)c == z ? 2 : (T)b == z ? 1 : 0;
       dtUsed = (DataType)(dt - tc);
-		  return tc;
+      return tc;
     }
     case DT_UShort:
     {
       int tc = (T)b == z ? 1 : 0;
       dtUsed = (DataType)(dt - 2 * tc);
-		  return tc;
+      return tc;
     }
     case DT_Int:
     {
@@ -1096,7 +1095,7 @@ Lerc2::DataType Lerc2::GetDataTypeUsed(int tc) const
 // -------------------------------------------------------------------------- ;
 
 inline
-bool Lerc2::WriteVariableDataType(Byte** ppByte, double z, DataType dtUsed) const
+bool Lerc2::WriteVariableDataType(Byte** ppByte, double z, DataType dtUsed)
 {
   Byte* ptr = *ppByte;
 
@@ -1136,7 +1135,7 @@ bool Lerc2::WriteVariableDataType(Byte** ppByte, double z, DataType dtUsed) cons
 // -------------------------------------------------------------------------- ;
 
 inline
-double Lerc2::ReadVariableDataType(const Byte** ppByte, DataType dtUsed) const
+double Lerc2::ReadVariableDataType(const Byte** ppByte, DataType dtUsed)
 {
   const Byte* ptr = *ppByte;
 
@@ -1227,7 +1226,7 @@ Lerc2::DataType Lerc2::GetDataType(T z) const
 // -------------------------------------------------------------------------- ;
 
 inline
-unsigned int Lerc2::GetMaxValToQuantize(Lerc2::DataType dt) const
+unsigned int Lerc2::GetMaxValToQuantize(Lerc2::DataType dt)
 {
   switch (dt)
   {
@@ -1337,9 +1336,9 @@ bool Lerc2::EncodeHuffman(const T* data, Byte** ppByte, T& zMinA, T& zMaxA) cons
         T delta = val;
 
         if (val < zMinA)
-	    zMinA = val;
+            zMinA = val;
         if (val > zMaxA)
-	    zMaxA = val;
+            zMaxA = val;
 
         if (j > 0 && m_bitMask.IsValid(k - 1))
         {
@@ -1466,7 +1465,6 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, T* data) const
 }
 
 // -------------------------------------------------------------------------- ;
-
 
 NAMESPACE_LERC_END
 #endif

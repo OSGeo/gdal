@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	fitsdataset.o
 
-FITS_OPTS	=	
+FITS_OPTS	=
 
 CPPFLAGS	:=	 $(FITS_OPTS) $(CPPFLAGS)
 

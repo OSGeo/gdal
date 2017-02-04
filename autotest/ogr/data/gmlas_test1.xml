@@ -1,0 +1,224 @@
+<?xml version="1.0" ?>
+<!-- for fun we use MYNS instead of myns as in the .xsd -->
+<MYNS:main_elt   xmlns:MYNS="http://myns"
+                 xmlns:otherns="http://other_ns"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://myns gmlas_test1.xsd"
+
+                    id="attr_id"
+                    otherns:id="otherns_id"
+                    myAttributeGroupAttr2="3"
+                    fixedValSet="fixed_value"
+                    defaultValSet="mydefaultValSet">
+
+    <MYNS:base_int>12</MYNS:base_int>
+    <MYNS:id>element_id</MYNS:id>
+
+    <!-- all primitive types -->
+    <MYNS:string>element_string</MYNS:string>
+    <MYNS:string_array>element_string_array</MYNS:string_array>
+    <MYNS:string_array>2nd element_string_array</MYNS:string_array>
+    <MYNS:int>3</MYNS:int>
+    <MYNS:int_array>3</MYNS:int_array>
+    <MYNS:int_array>4</MYNS:int_array>
+    <MYNS:long>123456789012</MYNS:long>
+    <MYNS:long_array>123456789012</MYNS:long_array>
+    <MYNS:long_array>123456789013</MYNS:long_array>
+    <MYNS:float>1.23</MYNS:float>
+    <MYNS:float_array>2.34</MYNS:float_array>
+    <MYNS:float_array>3.45</MYNS:float_array>
+    <MYNS:double>1.23456789012</MYNS:double>
+    <MYNS:double_array>2.3456</MYNS:double_array>
+    <MYNS:double_array>3.4578</MYNS:double_array>
+    <MYNS:decimal>1.23456789012</MYNS:decimal>
+    <MYNS:byte>-128</MYNS:byte>
+    <MYNS:short>-32768</MYNS:short>
+    <MYNS:positiveInteger>1</MYNS:positiveInteger>
+    <MYNS:dt>2012-01-01T12:34:56Z</MYNS:dt>
+    <MYNS:dt_array>2012-01-01T12:34:56Z</MYNS:dt_array>
+    <MYNS:dt_array>2012-01-02T12:34:56Z</MYNS:dt_array>
+    <MYNS:date>2012-01-01</MYNS:date>
+    <MYNS:time>12:34:56</MYNS:time>
+    <MYNS:boolean>true</MYNS:boolean>
+    <MYNS:boolean_array>true</MYNS:boolean_array>
+    <MYNS:boolean_array>false</MYNS:boolean_array>
+    <MYNS:base64Binary>YmFzZTY0QmluYXJ5</MYNS:base64Binary>
+    <MYNS:hexBinary>68657842696E617279</MYNS:hexBinary>
+
+    <!-- complex type with simple content (attributes) -->
+    <MYNS:myint myAttr="12345678">10</MYNS:myint>
+    <MYNS:myint_repeated myAttr="12345678">1</MYNS:myint_repeated>
+    <MYNS:myint_repeated>2</MYNS:myint_repeated>
+
+    <MYNS:required_elt_with_only_optional_attr attr="attr_value"/>
+
+    <!-- test nillability -->
+    <!-- no element_int_min_occurs_0_nillable -->
+    <MYNS:int_nillable xsi:nil="true"/>
+    <!-- no element int_min_occurs_0_nillable -->
+    <MYNS:int_min_occurs_0_nillable_bis xsi:nil="true"/>
+    <MYNS:simpleContent_extension_min_occurs_0_nillable xsi:nil="true" nilReason="unknown"/>
+
+    <MYNS:anonymous_type>3</MYNS:anonymous_type>
+    <MYNS:union>42</MYNS:union>
+
+    <MYNS:list_of_string>a b c</MYNS:list_of_string>
+    <MYNS:list_of_boolean>true false</MYNS:list_of_boolean>
+    <MYNS:list_of_integer>1 2 3</MYNS:list_of_integer>
+    <MYNS:list_of_integer64>123456789012 2 3</MYNS:list_of_integer64>
+    <MYNS:list_of_real>1.25 2.5 5.0</MYNS:list_of_real>
+    <MYNS:list_of_datetime>2012-01-01T12:34:56Z 2012-01-02T12:34:56Z</MYNS:list_of_datetime>
+    <MYNS:elt_with_list_of_integer_attr attr="1 2 3"/>
+
+    <!-- can be inlined into main table -->
+    <MYNS:compound_simplifiable>
+        <MYNS:subelement2>element_compound_simplifiable_subelement2</MYNS:subelement2>
+    </MYNS:compound_simplifiable>
+
+    <!-- can be simplified as a string list -->
+    <MYNS:sequence_1_string_unbounded>
+        <MYNS:subelement>sequence_1_string_unbounded_1</MYNS:subelement>
+        <MYNS:subelement>sequence_1_string_unbounded_2</MYNS:subelement>
+    </MYNS:sequence_1_string_unbounded>
+
+    <!-- can be simplified as a string list -->
+    <MYNS:sequence_unbounded_string_1>
+        <MYNS:subelement>sequence_unbounded_string_1</MYNS:subelement>
+        <MYNS:subelement>sequence_unbounded_string_2</MYNS:subelement>
+    </MYNS:sequence_unbounded_string_1>
+
+
+    <MYNS:unbounded_sequence_1_dt>
+        <MYNS:subelement>2012-01-01T12:34:56Z</MYNS:subelement>
+    </MYNS:unbounded_sequence_1_dt>
+    <MYNS:unbounded_sequence_1_dt>
+        <MYNS:subelement>2012-01-02T12:34:56Z</MYNS:subelement>
+    </MYNS:unbounded_sequence_1_dt>
+
+    <MYNS:sequence_1_dt_unbounded>
+        <MYNS:subelement>2012-01-01T12:34:56Z</MYNS:subelement>
+        <MYNS:subelement>2012-01-02T12:34:56Z</MYNS:subelement>
+    </MYNS:sequence_1_dt_unbounded>
+
+    <MYNS:sequence_unbounded_dt_1>
+        <MYNS:subelement>2012-01-03T12:34:56Z</MYNS:subelement>
+        <MYNS:subelement>2012-01-04T12:34:56Z</MYNS:subelement>
+    </MYNS:sequence_unbounded_dt_1>
+
+    <MYNS:sequence_sequence>
+        <MYNS:subsequence>
+            <MYNS:subelement>2016-01-01T12:34:56Z</MYNS:subelement>
+            <MYNS:subelement>2016-01-02T12:34:56Z</MYNS:subelement>
+        </MYNS:subsequence>
+        <MYNS:subsequence>
+            <MYNS:subelement>2016-01-03T12:34:56Z</MYNS:subelement>
+            <MYNS:subelement>2016-01-04T12:34:56Z</MYNS:subelement>
+        </MYNS:subsequence>
+    </MYNS:sequence_sequence>
+
+    <MYNS:sequence_1_unbounded_with_2_subelts>
+        <MYNS:subelement>sequence_1_unbounded_with_2_subelts_1</MYNS:subelement>
+        <MYNS:subelement>sequence_1_unbounded_with_2_subelts_2</MYNS:subelement>
+    </MYNS:sequence_1_unbounded_with_2_subelts>
+
+    <MYNS:sequence_1_unbounded_non_simplifiable id="id1">
+        <MYNS:subelement>sequence_1_unbounded_non_simplifiable_1_1</MYNS:subelement>
+        <MYNS:subelement>sequence_1_unbounded_non_simplifiable_1_2</MYNS:subelement>
+    </MYNS:sequence_1_unbounded_non_simplifiable>
+    <MYNS:sequence_1_unbounded_non_simplifiable id="id2">
+        <MYNS:subelement>sequence_1_unbounded_non_simplifiable_2_1</MYNS:subelement>
+        <MYNS:subelement>sequence_1_unbounded_non_simplifiable_2_2</MYNS:subelement>
+    </MYNS:sequence_1_unbounded_non_simplifiable>
+
+    <MYNS:sequence_unbounded_1_with_2_subelts>
+        <MYNS:subelement>sequence_unbounded_1_with_2_subelts_1</MYNS:subelement>
+    </MYNS:sequence_unbounded_1_with_2_subelts>
+    <MYNS:sequence_unbounded_1_with_2_subelts>
+        <MYNS:subelement>sequence_unbounded_1_with_2_subelts_2</MYNS:subelement>
+    </MYNS:sequence_unbounded_1_with_2_subelts>
+
+    <MYNS:sequence_with_attr_unbounded id="id1">
+        <MYNS:subelement>sequence_with_attr_unbounded_1</MYNS:subelement>
+    </MYNS:sequence_with_attr_unbounded>
+    <MYNS:sequence_with_attr_unbounded id="id2">
+        <MYNS:subelement>sequence_with_attr_unbounded_2</MYNS:subelement>
+    </MYNS:sequence_with_attr_unbounded>
+
+    <MYNS:int_complex_simplifiable>10</MYNS:int_complex_simplifiable>
+    <MYNS:int_complex_simplifiable>20</MYNS:int_complex_simplifiable>
+
+    <MYNS:abstract_element_realization1><MYNS:a_int>3</MYNS:a_int></MYNS:abstract_element_realization1>
+    <MYNS:abstract_element_realization2><MYNS:b_int>4</MYNS:b_int></MYNS:abstract_element_realization2>
+    <MYNS:abstract_element_realization1><MYNS:a_int>5</MYNS:a_int></MYNS:abstract_element_realization1>
+    <otherns:an_abstract_element_in_other_ns_realization1><otherns:a_int>3</otherns:a_int></otherns:an_abstract_element_in_other_ns_realization1>
+
+    <MYNS:any_type foo="bar">A&lt;<foo bar="baz&quot;&gt;">blow</foo><MYNS:blo/>C</MYNS:any_type>
+    <MYNS:any_type_repeated><bar/></MYNS:any_type_repeated>
+    <MYNS:any_type_repeated><baz/></MYNS:any_type_repeated>
+    <MYNS:any_type_optional><baw/></MYNS:any_type_optional>
+    <MYNS:any_attr foo="bar">1</MYNS:any_attr>
+    <MYNS:any_attr_no_attr>2</MYNS:any_attr_no_attr>
+
+    <MYNS:group1_elt_1>group1_elt_1_1_1</MYNS:group1_elt_1>
+    <MYNS:group1_elt_1>group1_elt_1_1_2</MYNS:group1_elt_1>
+    <MYNS:group1_elt_2>group1_elt_2_1_1</MYNS:group1_elt_2>
+    <MYNS:group1_elt_1>group1_elt_1_2_1</MYNS:group1_elt_1>
+    <MYNS:group1_elt_2>group1_elt_2_2_1</MYNS:group1_elt_2>
+
+    <MYNS:group2_elt>group2_elt_1</MYNS:group2_elt>
+
+    <MYNS:group3_elt1>sixthelement</MYNS:group3_elt1>
+    <MYNS:group3_elt1bis>sixthelementbis</MYNS:group3_elt1bis>
+    <MYNS:group3_elt2><MYNS:b>sixthelement_a_b</MYNS:b></MYNS:group3_elt2>
+    <MYNS:group3_elt2bis><MYNS:b>sixthelement_a_b2</MYNS:b></MYNS:group3_elt2bis>
+    <MYNS:group3_elt2ter/>
+    <MYNS:group3_elt3><MYNS:b2>2016-01-01T12:34:56Z</MYNS:b2>
+                       <MYNS:b2>2016-01-02T12:34:56Z</MYNS:b2>
+    </MYNS:group3_elt3>
+
+    <MYNS:group3_elt1>sixthelement2</MYNS:group3_elt1>
+
+    <MYNS:group3_elt1>sixthelement3</MYNS:group3_elt1>
+    <MYNS:group3_elt2><MYNS:b>sixthelement3_a_b</MYNS:b></MYNS:group3_elt2>
+    <MYNS:group3_elt2bis attr="foo"><MYNS:b>sixthelement_a_b2</MYNS:b></MYNS:group3_elt2bis>
+    <MYNS:group3_elt2ter attr="bar"/>
+
+    <MYNS:group3_elt1>sixthelement4</MYNS:group3_elt1>
+    <MYNS:group3_elt3><MYNS:b2>2016-01-03T12:34:56Z</MYNS:b2>
+                <MYNS:b2>2016-01-04T12:34:56Z</MYNS:b2></MYNS:group3_elt3>
+
+    <MYNS:group4_elt>group4_elt_1</MYNS:group4_elt>
+    <MYNS:group4_elt>group4_elt_2</MYNS:group4_elt>
+
+    <MYNS:rec_A>
+        <MYNS:rec_B>
+            <MYNS:rec_A>
+                <MYNS:rec_B>
+                    <MYNS:rec_A>
+                        <MYNS:rec_B>
+                            <MYNS:rec_A>
+                                <MYNS:elt_A>elt_A4</MYNS:elt_A>
+                            </MYNS:rec_A>
+                            <MYNS:elt_B>elt_B3</MYNS:elt_B>
+                        </MYNS:rec_B>
+                        <MYNS:elt_A>elt_A3</MYNS:elt_A>
+                    </MYNS:rec_A>
+                    <MYNS:elt_B>elt_B2</MYNS:elt_B>
+                </MYNS:rec_B>
+                <MYNS:elt_A>elt_A2</MYNS:elt_A>
+            </MYNS:rec_A>
+            <MYNS:elt_B>elt_B</MYNS:elt_B>
+        </MYNS:rec_B>
+        <MYNS:elt_A>elt_A</MYNS:elt_A>
+    </MYNS:rec_A>
+
+    <MYNS:myext>
+      <MYNS:extension>
+        <foo/>
+      </MYNS:extension>
+      <MYNS:extension>
+        <bar/>
+      </MYNS:extension>
+    </MYNS:myext>
+
+</MYNS:main_elt>

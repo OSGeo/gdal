@@ -105,7 +105,6 @@ int OGRMDBDriver::TestCapability( CPL_UNUSED const char * pszCap )
     return FALSE;
 }
 
-
 /************************************************************************/
 /*                           RegisterOGRMDB()                           */
 /************************************************************************/

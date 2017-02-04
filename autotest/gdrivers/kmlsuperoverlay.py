@@ -296,6 +296,34 @@ def kmlsuperoverlay_6():
     return 'success'
 
 ###############################################################################
+# Test raster KML with single Overlay (such as https://trac.osgeo.org/gdal/ticket/6712)
+
+def kmlsuperoverlay_7():
+
+    ds = gdal.Open('data/small_world.kml')
+    if ds.GetProjectionRef().find('WGS_1984') < 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    got_gt = ds.GetGeoTransform()
+    ref_gt = [ -180.0, 0.9, 0.0, 90.0, 0.0, -0.9 ]
+    for i in range(6):
+        if abs(got_gt[i] - ref_gt[i]) > 1e-6:
+            gdaltest.post_reason('failure')
+            print(got_gt)
+            return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 30111:
+        print(cs)
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def  kmlsuperoverlay_cleanup():
@@ -310,6 +338,7 @@ gdaltest_list = [
     kmlsuperoverlay_4,
     kmlsuperoverlay_5,
     kmlsuperoverlay_6,
+    kmlsuperoverlay_7,
     kmlsuperoverlay_cleanup ]
 
 if __name__ == '__main__':

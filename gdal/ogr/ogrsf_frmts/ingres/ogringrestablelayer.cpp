@@ -51,17 +51,14 @@ OGRIngresTableLayer::OGRIngresTableLayer( OGRIngresDataSource *poDSIn,
 
     poFeatureDefn = NULL;
     bLaunderColumnNames = TRUE;
+    bPreservePrecision = FALSE;
 }
 
 /************************************************************************/
 /*                        ~OGRIngresTableLayer()                         */
 /************************************************************************/
 
-OGRIngresTableLayer::~OGRIngresTableLayer()
-
-{
-}
-
+OGRIngresTableLayer::~OGRIngresTableLayer() {}
 
 /************************************************************************/
 /*                        Initialize()                                  */
@@ -140,7 +137,7 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
 
         OGRFieldDefn    oField(osFieldName, OFTString);
 
-        if( osGeomColumn.size() == 0
+        if( osGeomColumn.empty()
             && (EQUAL(osInternalType,"POINT")
                 || EQUAL(osInternalType,"IPOINT")
                 || EQUAL(osInternalType,"BOX")
@@ -171,14 +168,14 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
                      || strstr(osInternalType, "LINESTRING"))
                 poDefn->SetGeomType( wkbLineString );
             else if( strstr(osInternalType,"MULTIPOINT"))
-            	poDefn->SetGeomType(wkbMultiPoint);
+                poDefn->SetGeomType(wkbMultiPoint);
             else if( strstr(osInternalType,"MULTIPOLYGON"))
-            	poDefn->SetGeomType(wkbMultiPolygon);
+                poDefn->SetGeomType(wkbMultiPolygon);
             else if( strstr(osInternalType,"MULTILINESTRING"))
-            	poDefn->SetGeomType(wkbMultiLineString);
+                poDefn->SetGeomType(wkbMultiLineString);
             // Oddly this is the standin for a generic geometry type.
             else if( strstr(osInternalType,"GEOMETRYCOLLECTION"))
-            	poDefn->SetGeomType(wkbUnknown);
+                poDefn->SetGeomType(wkbUnknown);
             else
                 poDefn->SetGeomType( wkbPolygon );
             continue;
@@ -232,7 +229,7 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
 #endif
 
         // Is this an integer primary key field?
-        if( osFIDColumn.size() == 0
+        if( osFIDColumn.empty()
             && oField.GetType() == OFTInteger
             && EQUAL(oField.GetNameRef(),"ogr_fid") )
         {
@@ -243,7 +240,7 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
         poDefn->AddFieldDefn( &oField );
     }
 
-    if( osFIDColumn.size() )
+    if( !osFIDColumn.empty() )
         CPLDebug( "Ingres", "table %s has FID column %s.",
                   pszTable, osFIDColumn.c_str() );
     else
@@ -311,13 +308,12 @@ void OGRIngresTableLayer::BuildWhere()
         osWHERE.Printf( "WHERE MBRIntersects(GeomFromText('%s'), %s)",
                         szEnvelope,
                         osGeomColumn.c_str() );
-
     }
 #endif
 
-    if( osQuery.size() > 0 )
+    if( !osQuery.empty() )
     {
-        if( osWHERE.size() == 0 )
+        if( osWHERE.empty() )
             osWHERE = "WHERE " + osQuery;
         else
             osWHERE += "&& " + osQuery;
@@ -374,7 +370,7 @@ char *OGRIngresTableLayer::BuildFields()
         && poFeatureDefn->GetFieldIndex( osFIDColumn ) == -1 )
         sprintf( pszFieldList, "%s", osFIDColumn.c_str() );
 
-    if( osGeomColumn.size() )
+    if( !osGeomColumn.empty() )
     {
         if( strlen(pszFieldList) > 0 )
             strcat( pszFieldList, ", " );
@@ -437,7 +433,7 @@ int OGRIngresTableLayer::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,OLCRandomRead) )
-        return osFIDColumn.size() != 0;
+        return !osFIDColumn.empty();
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return TRUE;
@@ -449,10 +445,10 @@ int OGRIngresTableLayer::TestCapability( const char * pszCap )
         return bUpdateAccess;
 
     else if( EQUAL(pszCap,OLCRandomWrite) )
-        return bUpdateAccess && osFIDColumn.size() != 0;
+        return bUpdateAccess && !osFIDColumn.empty();
 
     else if( EQUAL(pszCap,OLCDeleteFeature) )
-        return bUpdateAccess && osFIDColumn.size() != 0;
+        return bUpdateAccess && !osFIDColumn.empty();
 
     else
         return OGRIngresLayer::TestCapability( pszCap );
@@ -498,14 +494,13 @@ OGRErr OGRIngresTableLayer::DeleteFeature( GIntBig nFID )
 /*      We can only delete features if we have a well defined FID       */
 /*      column to target.                                               */
 /* -------------------------------------------------------------------- */
-    if( osFIDColumn.size() == 0 )
+    if( osFIDColumn.empty() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "DeleteFeature(%ld) failed.  Unable to delete features "
                   "in tables without\n a recognised FID column.",
                   nFID );
         return OGRERR_FAILURE;
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -735,7 +730,7 @@ OGRErr OGRIngresTableLayer::PrepareNewStyleGeometry(
     OGRGeometry *poGeom, CPLString &osRetGeomText )
 
 {
-	OGRErr eErr = OGRERR_NONE;
+    OGRErr eErr = OGRERR_NONE;
     osRetGeomText = "";
 
     if( poGeom == NULL )
@@ -774,21 +769,21 @@ OGRErr OGRIngresTableLayer::PrepareNewStyleGeometry(
 /* -------------------------------------------------------------------- */
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
     {
-    	osRetGeomText.Printf("MLINEFROMWKB( ~V , %d)", nSRSId);
+        osRetGeomText.Printf("MLINEFROMWKB( ~V , %d)", nSRSId);
     }
 /* -------------------------------------------------------------------- */
 /*      Multipolygon                                                    */
 /* -------------------------------------------------------------------- */
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
     {
-    	osRetGeomText.Printf("MPOLYFROMWKB( ~V , %d)", nSRSId);
+        osRetGeomText.Printf("MPOLYFROMWKB( ~V , %d)", nSRSId);
     }
 /* -------------------------------------------------------------------- */
 /*      Geometry collection.                                            */
 /* -------------------------------------------------------------------- */
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
     {
-    	osRetGeomText.Printf("GEOMCOLLFROMWKB( ~V , %d)", nSRSId);
+        osRetGeomText.Printf("GEOMCOLLFROMWKB( ~V , %d)", nSRSId);
     }
 /* -------------------------------------------------------------------- */
 /*      Fallback generic geometry handling.                             */
@@ -800,7 +795,7 @@ OGRErr OGRIngresTableLayer::PrepareNewStyleGeometry(
             "Unexpected geometry type (%s), attempting to treat generically.",
             poGeom->getGeometryName() );
 
-    	osRetGeomText.Printf("GEOMETRYFROMWKB( ~V , %d)", nSRSId);
+        osRetGeomText.Printf("GEOMETRYFROMWKB( ~V , %d)", nSRSId);
     }
 
     return eErr;
@@ -821,17 +816,16 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     osCommand.Printf( "INSERT INTO %s (", poFeatureDefn->GetName() );
 
-
 /* -------------------------------------------------------------------- */
 /*      Accumulate fields to be inserted.                               */
 /* -------------------------------------------------------------------- */
-    if( poFeature->GetGeometryRef() != NULL && osGeomColumn.size() )
+    if( poFeature->GetGeometryRef() != NULL && !osGeomColumn.empty() )
     {
         osCommand = osCommand + osGeomColumn + " ";
         bNeedComma = TRUE;
     }
 
-    if( poFeature->GetFID() != OGRNullFID && osFIDColumn.size() )
+    if( poFeature->GetFID() != OGRNullFID && !osFIDColumn.empty() )
     {
         if( bNeedComma )
             osCommand += ", ";
@@ -863,18 +857,18 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     // Set the geometry
     bNeedComma = FALSE;
-    if( poFeature->GetGeometryRef() != NULL && osGeomColumn.size() )
+    if( poFeature->GetGeometryRef() != NULL && !osGeomColumn.empty() )
     {
         bNeedComma = TRUE;
         OGRErr localErr;
 
         if( poDS->IsNewIngres() )
         {
-        	localErr = PrepareNewStyleGeometry( poFeature->GetGeometryRef(), osGeomText );
+            localErr = PrepareNewStyleGeometry( poFeature->GetGeometryRef(), osGeomText );
         }
         else
         {
-        	localErr = PrepareOldStyleGeometry( poFeature->GetGeometryRef(), osGeomText );
+            localErr = PrepareOldStyleGeometry( poFeature->GetGeometryRef(), osGeomText );
         }
         if( localErr == OGRERR_NONE )
         {
@@ -892,8 +886,8 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
             }
             else
             {
-            	osCommand += osGeomText;
-            	//osGeomText = "";
+                osCommand += osGeomText;
+                // osGeomText = "";
             }
         }
         else
@@ -906,7 +900,7 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Set the FID                                                     */
 /* -------------------------------------------------------------------- */
-    if( poFeature->GetFID() != OGRNullFID && osFIDColumn.size() )
+    if( poFeature->GetFID() != OGRNullFID && !osFIDColumn.empty() )
     {
         if( bNeedComma )
             osCommand += ", ";
@@ -978,7 +972,6 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
         {
             osCommand += pszStrValue;
         }
-
     }
 
     osCommand += ")";
@@ -991,31 +984,30 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     oStmt.bDebug = FALSE;
 
-    if( osGeomText.size() > 0  && poDS->IsNewIngres() == FALSE )
+    if( !osGeomText.empty()  && poDS->IsNewIngres() == FALSE )
         oStmt.addInputParameter( IIAPI_LVCH_TYPE, osGeomText.size(),
                                  (GByte *) osGeomText.c_str() );
-    if( osGeomText.size() > 0 && poDS->IsNewIngres() == TRUE )
+    if( !osGeomText.empty() && poDS->IsNewIngres() == TRUE )
     {
-    	GByte * pabyWKB;
-    	int nSize = poFeature->GetGeometryRef()->WkbSize();
-    	pabyWKB = (GByte *) CPLMalloc(nSize);
+        GByte * pabyWKB;
+        int nSize = poFeature->GetGeometryRef()->WkbSize();
+        pabyWKB = (GByte *) CPLMalloc(nSize);
 
-    	poFeature->GetGeometryRef()->exportToWkb(wkbNDR, pabyWKB);
+        poFeature->GetGeometryRef()->exportToWkb(wkbNDR, pabyWKB);
 
-    	oStmt.addInputParameter( IIAPI_LBYTE_TYPE, nSize, pabyWKB );
-    	CPLFree(pabyWKB);
+        oStmt.addInputParameter( IIAPI_LBYTE_TYPE, nSize, pabyWKB );
+        CPLFree(pabyWKB);
 /*
  * Test code
-     	char * pszWKT;
-    	poFeature->GetGeometryRef()->exportToWkt(&pszWKT);
-    	oStmt.addInputParameter(IIAPI_LVCH_TYPE, strlen(pszWKT), (GByte *) pszWKT);*/
+        char * pszWKT;
+        poFeature->GetGeometryRef()->exportToWkt(&pszWKT);
+        oStmt.addInputParameter(IIAPI_LVCH_TYPE, strlen(pszWKT), (GByte *) pszWKT);*/
     }
 
     if( !oStmt.ExecuteSQL( osCommand ) )
         return OGRERR_FAILURE;
 
     return OGRERR_NONE;
-
 }
 
 /************************************************************************/
@@ -1193,7 +1185,7 @@ OGRFeature *OGRIngresTableLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
     if( hResultSet != NULL )
         ingres_free_result( hResultSet );
- 		hResultSet = NULL;
+    hResultSet = NULL;
 
     return poFeature;
 }
@@ -1248,24 +1240,24 @@ GIntBig OGRIngresTableLayer::GetFeatureCount( int bForce )
 
     if( hResultSet != NULL )
         ingres_free_result( hResultSet );
- 		hResultSet = NULL;
+    hResultSet = NULL;
 
     return nCount;
 }
 #endif
 
 /************************************************************************/
-/*                          GetExtent()					*/
+/*                          GetExtent()                                 */
 /*                                                                      */
-/*      Retrieve the MBR of the Ingres table.  This should be made more  */
-/*      in the future when Ingres adds support for a single MBR query    */
-/*      like PostgreSQL.						*/
+/*      Retrieve the MBR of the Ingres table.  This should be made more */
+/*      in the future when Ingres adds support for a single MBR query   */
+/*      like PostgreSQL.                                                */
 /************************************************************************/
 #ifdef notdef
 OGRErr OGRIngresTableLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 
 {
-	if( GetLayerDefn()->GetGeomType() == wkbNone )
+    if( GetLayerDefn()->GetGeomType() == wkbNone )
     {
         psExtent->MinX = 0.0;
         psExtent->MaxX = 0.0;
@@ -1275,68 +1267,68 @@ OGRErr OGRIngresTableLayer::GetExtent(OGREnvelope *psExtent, int bForce )
         return OGRERR_FAILURE;
     }
 
-	OGREnvelope oEnv;
-	CPLString   osCommand;
-	GBool       bExtentSet = FALSE;
+    OGREnvelope oEnv;
+    CPLString   osCommand;
+    GBool       bExtentSet = FALSE;
 
-	osCommand.Printf( "SELECT Envelope(%s) FROM %s;", pszGeomColumn, pszGeomColumnTable);
+    osCommand.Printf( "SELECT Envelope(%s) FROM %s;", pszGeomColumn, pszGeomColumnTable);
 
-	if (ingres_query(poDS->GetConn(), osCommand) == 0)
-	{
-		INGRES_RES* result = ingres_use_result(poDS->GetConn());
-		if ( result == NULL )
+    if (ingres_query(poDS->GetConn(), osCommand) == 0)
+    {
+        INGRES_RES* result = ingres_use_result(poDS->GetConn());
+        if ( result == NULL )
         {
             poDS->ReportError( "ingres_use_result() failed on extents query." );
             return OGRERR_FAILURE;
         }
 
-		INGRES_ROW row;
-		unsigned long *panLengths = NULL;
-		while ((row = ingres_fetch_row(result)))
-		{
-			if (panLengths == NULL)
-			{
-				panLengths = ingres_fetch_lengths( result );
-				if ( panLengths == NULL )
-				{
-					poDS->ReportError( "ingres_fetch_lengths() failed on extents query." );
-					return OGRERR_FAILURE;
-				}
-			}
+        INGRES_ROW row;
+        unsigned long *panLengths = NULL;
+        while ((row = ingres_fetch_row(result)))
+        {
+            if (panLengths == NULL)
+            {
+                panLengths = ingres_fetch_lengths( result );
+                if ( panLengths == NULL )
+                {
+                    poDS->ReportError( "ingres_fetch_lengths() failed on extents query." );
+                    return OGRERR_FAILURE;
+                }
+            }
 
-			OGRGeometry *poGeometry = NULL;
-			// Geometry columns will have the first 4 bytes contain the SRID.
-			OGRGeometryFactory::createFromWkb(((GByte *)row[0]) + 4,
-											  NULL,
-											  &poGeometry,
-											  panLengths[0] - 4 );
+            OGRGeometry *poGeometry = NULL;
+            // Geometry columns will have the first 4 bytes contain the SRID.
+            OGRGeometryFactory::createFromWkb(((GByte *)row[0]) + 4,
+                                              NULL,
+                                              &poGeometry,
+                                              panLengths[0] - 4 );
 
-			if ( poGeometry != NULL )
-			{
-				if (poGeometry && !bExtentSet)
-				{
-					poGeometry->getEnvelope(psExtent);
-					bExtentSet = TRUE;
-				}
-				else if (poGeometry)
-				{
-					poGeometry->getEnvelope(&oEnv);
-					if (oEnv.MinX < psExtent->MinX)
-						psExtent->MinX = oEnv.MinX;
-					if (oEnv.MinY < psExtent->MinY)
-						psExtent->MinY = oEnv.MinY;
-					if (oEnv.MaxX > psExtent->MaxX)
-						psExtent->MaxX = oEnv.MaxX;
-					if (oEnv.MaxY > psExtent->MaxY)
-						psExtent->MaxY = oEnv.MaxY;
-				}
-				delete poGeometry;
-			}
-		}
+            if ( poGeometry != NULL )
+            {
+                if (poGeometry && !bExtentSet)
+                {
+                    poGeometry->getEnvelope(psExtent);
+                    bExtentSet = TRUE;
+                }
+                else if (poGeometry)
+                {
+                    poGeometry->getEnvelope(&oEnv);
+                    if (oEnv.MinX < psExtent->MinX)
+                        psExtent->MinX = oEnv.MinX;
+                    if (oEnv.MinY < psExtent->MinY)
+                        psExtent->MinY = oEnv.MinY;
+                    if (oEnv.MaxX > psExtent->MaxX)
+                        psExtent->MaxX = oEnv.MaxX;
+                    if (oEnv.MaxY > psExtent->MaxY)
+                        psExtent->MaxY = oEnv.MaxY;
+                }
+                delete poGeometry;
+            }
+        }
 
-		ingres_free_result(result);
-	}
+        ingres_free_result(result);
+    }
 
-	return (bExtentSet ? OGRERR_NONE : OGRERR_FAILURE);
+    return bExtentSet ? OGRERR_NONE : OGRERR_FAILURE;
 }
 #endif

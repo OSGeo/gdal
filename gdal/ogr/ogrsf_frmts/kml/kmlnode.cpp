@@ -96,12 +96,12 @@ Coordinate* ParseCoordinate(std::string const& text)
     // Z coordinate
     if(pszStr[pos - 1] != ',')
     {
-        psTmp->bHasZ = FALSE;
+        psTmp->bHasZ = false;
         psTmp->dfAltitude = 0;
         return psTmp;
     }
 
-    psTmp->bHasZ = TRUE;
+    psTmp->bHasZ = true;
     psTmp->dfAltitude = CPLAtof(pszStr + pos);
 
     return psTmp;
@@ -254,8 +254,9 @@ int KMLNode::classify(KML* poKML, int nRecLevel)
         eType_ = Empty;
     else if(sName_.compare("coordinates") == 0)
     {
-        unsigned int nCountP;
-        for(nCountP = 0; nCountP < pvsContent_->size(); nCountP++)
+        for( unsigned int nCountP = 0;
+             nCountP < pvsContent_->size();
+             nCountP++ )
         {
             const char* pszCoord = (*pvsContent_)[nCountP].c_str();
             int nComma = 0;
@@ -435,7 +436,7 @@ void KMLNode::addContent(std::string const& text)
 
 void KMLNode::appendContent(std::string const& text)
 {
-    std::string& tmp = (*pvsContent_)[pvsContent_->size() - 1];
+    std::string& tmp = pvsContent_->back();
     tmp += text;
 }
 
@@ -544,7 +545,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                     psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
                     if(psCoord != NULL)
                     {
-                        if (psCoord->bHasZ)
+                        if( psCoord->bHasZ )
                             poGeom = new OGRPoint(psCoord->dfLongitude,
                                                   psCoord->dfLatitude,
                                                   psCoord->dfAltitude);
@@ -575,7 +576,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                     psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
                     if(psCoord != NULL)
                     {
-                        if (psCoord->bHasZ)
+                        if( psCoord->bHasZ )
                             ((OGRLineString*)poGeom)->addPoint(psCoord->dfLongitude,
                                                                psCoord->dfLatitude,
                                                                psCoord->dfAltitude);
@@ -597,7 +598,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
         for(unsigned int nCount = 0; nCount < pvpoChildren_->size(); nCount++)
         {
             if((*pvpoChildren_)[nCount]->sName_.compare("outerBoundaryIs") == 0 &&
-               (*pvpoChildren_)[nCount]->pvpoChildren_->size() > 0)
+               !(*pvpoChildren_)[nCount]->pvpoChildren_->empty())
             {
                 poCoor = (*(*pvpoChildren_)[nCount]->pvpoChildren_)[0];
             }
@@ -627,7 +628,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                         {
                             poLinearRing = new OGRLinearRing();
                         }
-                        if (psCoord->bHasZ)
+                        if( psCoord->bHasZ )
                             poLinearRing->addPoint(psCoord->dfLongitude,
                                                    psCoord->dfLatitude,
                                                    psCoord->dfAltitude);
@@ -662,7 +663,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                     ((OGRPolygon*)poGeom)->addRingDirectly(poLinearRing);
                 poLinearRing = NULL;
 
-                if ((*pvpoChildren_)[nCount2]->pvpoChildren_->size() == 0)
+                if ((*pvpoChildren_)[nCount2]->pvpoChildren_->empty())
                     continue;
 
                 poLinearRing = new OGRLinearRing();
@@ -682,7 +683,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                             psCoord = ParseCoordinate((*(*poCoor->pvpoChildren_)[nCount]->pvsContent_)[nCountP]);
                             if(psCoord != NULL)
                             {
-                                if (psCoord->bHasZ)
+                                if( psCoord->bHasZ )
                                     poLinearRing->addPoint(psCoord->dfLongitude,
                                                         psCoord->dfLatitude,
                                                         psCoord->dfAltitude);
@@ -724,18 +725,18 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
 
 Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
 {
-    if(nNum >= this->getNumFeatures())
+    if( nNum >= getNumFeatures() )
         return NULL;
 
-    unsigned int nCount;
+    unsigned int nCount = 0;
     unsigned int nCountP = 0;
     KMLNode* poFeat = NULL;
     KMLNode* poTemp = NULL;
 
     if (nLastAsked + 1 != static_cast<int>(nNum ))
     {
-        nCount = 0;
-        nCountP = 0;
+        // nCount = 0;
+        // nCountP = 0;
     }
     else
     {

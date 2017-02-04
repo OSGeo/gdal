@@ -27,13 +27,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal_priv.h"
+
+#include <cstring>
+#include <map>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_alg.h"
 #include "gdal_alg_priv.h"
+#include "gdal.h"
 #include "gdal_pam.h"
-#include "gdal_priv.h"
 #include "ogr_srs_api.h"
+#include "ogr_xerces.h"
 
 #ifdef _MSC_VER
 #  ifdef MSVC_USE_VLD
@@ -42,9 +53,10 @@
 #  endif
 #endif
 
-#if HAVE_CXX11
-#include <mutex>
-#endif
+// FIXME: Disabled following code as it crashed on OSX CI test.
+//#if HAVE_CXX11
+//#include <mutex>
+//#endif
 
 CPL_CVSID("$Id$");
 
@@ -57,9 +69,10 @@ CPL_CVSID("$Id$");
 static volatile GDALDriverManager *poDM = NULL;
 static CPLMutex *hDMMutex = NULL;
 
-#if HAVE_CXX11
-static std::mutex oDeleteMutex;
-#endif
+// FIXME: Disale following code as it crashed on OSX CI test.
+//#if HAVE_CXX11
+//static std::mutex oDeleteMutex;
+//#endif
 
 CPLMutex** GDALGetphDMMutex() { return &hDMMutex; }
 
@@ -234,6 +247,8 @@ GDALDriverManager::~GDALDriverManager()
 /*      related subsystem.                                              */
 /* -------------------------------------------------------------------- */
     OSRCleanup();
+
+    OGRCleanupXercesMutex();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup VSIFileManager.                                         */
@@ -491,7 +506,6 @@ int CPL_STDCALL GDALRegisterDriver( GDALDriverH hDriver )
         RegisterDriver( static_cast<GDALDriver *>( hDriver ) );
 }
 
-
 /************************************************************************/
 /*                          DeregisterDriver()                          */
 /************************************************************************/
@@ -548,7 +562,6 @@ void CPL_STDCALL GDALDeregisterDriver( GDALDriverH hDriver )
 
     GetGDALDriverManager()->DeregisterDriver( (GDALDriver *) hDriver );
 }
-
 
 /************************************************************************/
 /*                          GetDriverByName()                           */
@@ -754,7 +767,6 @@ void GDALDriverManager::AutoLoadDrivers()
                                      num2str(GDAL_VERSION_MAJOR) "."
                                      num2str(GDAL_VERSION_MINOR) "/PlugIns" );
    #endif
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -845,7 +857,6 @@ void GDALDriverManager::AutoLoadDrivers()
     CSLDestroy( papszSearchPath );
 
 #endif  // GDAL_NO_AUTOLOAD
-
 }
 
 /************************************************************************/
@@ -868,9 +879,10 @@ void CPL_STDCALL GDALDestroyDriverManager( void )
     // needs to be reacquired within the destructor during driver
     // deregistration.
 
-#if HAVE_CXX11
-    std::lock_guard<std::mutex> oLock(oDeleteMutex);
-#endif
+// FIXME: Disale following code as it crashed on OSX CI test.
+//#if HAVE_CXX11
+//    std::lock_guard<std::mutex> oLock(oDeleteMutex);
+//#endif
 
     if( poDM != NULL )
     {

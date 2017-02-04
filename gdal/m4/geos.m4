@@ -33,16 +33,16 @@ dnl
 dnl GEOS_INIT (MINIMUM_VERSION)
 dnl
 dnl Test for GEOS: define HAVE_GEOS, GEOS_LIBS, GEOS_CFLAGS, GEOS_VERSION
-dnl 
+dnl
 dnl Call as GEOS_INIT or GEOS_INIT(minimum version) in configure.in. Test
-dnl HAVE_GEOS (yes|no) afterwards. If yes, all other vars above can be 
+dnl HAVE_GEOS (yes|no) afterwards. If yes, all other vars above can be
 dnl used in program.
 dnl
 
 AC_DEFUN([GEOS_INIT],[
   AC_SUBST(GEOS_LIBS)
   AC_SUBST(GEOS_CFLAGS)
-  AC_SUBST(HAVE_GEOS) 
+  AC_SUBST(HAVE_GEOS)
   AC_SUBST(GEOS_VERSION)
 
   AC_ARG_WITH(geos,
@@ -96,7 +96,7 @@ AC_DEFUN([GEOS_INIT],[
        sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*/\2/'`
     req_micro=`echo $min_geos_version | \
        sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*/\3/'`
-      
+
     version_ok="no"
     ac_req_version=`expr $req_major \* 100000 \+  $req_minor \* 100 \+ $req_micro`
     ac_geos_version=`expr $geos_major_version \* 100000 \+  $geos_minor_version \* 100 \+ $geos_micro_version`
@@ -118,7 +118,7 @@ AC_DEFUN([GEOS_INIT],[
       fi
 
     else
-      
+
       HAVE_GEOS="no"
 
       GEOS_LIBS="`${GEOS_CONFIG} --ldflags` -lgeos_c"

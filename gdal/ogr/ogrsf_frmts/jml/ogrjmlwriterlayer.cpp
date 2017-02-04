@@ -29,6 +29,8 @@
 #include "cpl_conv.h"
 #include "ogr_p.h"
 
+#include <cstdlib>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -60,7 +62,6 @@ OGRJMLWriterLayer::OGRJMLWriterLayer( const char* pszLayerName,
                     "<FeatureElement>feature</FeatureElement>\n"
                     "<GeometryElement>geometry</GeometryElement>\n"
                     "<ColumnDefinitions>\n");
-
 }
 
 /************************************************************************/
@@ -172,13 +173,13 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
             }
             else if( eType == OFTDateTime )
             {
-                int nYear;
-                int nMonth;
-                int nDay;
-                int nHour;
-                int nMinute;
-                int nTZFlag;
-                float fSecond;
+                int nYear = 0;
+                int nMonth = 0;
+                int nDay = 0;
+                int nHour = 0;
+                int nMinute = 0;
+                int nTZFlag = 0;
+                float fSecond = 0.0f;
                 poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
                                               &nHour, &nMinute, &fSecond, &nTZFlag);
                 /* When writing time zone, OpenJUMP expects .XXX seconds */
@@ -195,12 +196,12 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
                 {
                     int nOffset = (nTZFlag - 100) * 15;
                     int nHours = (int) (nOffset / 60);  // round towards zero
-                    int nMinutes = ABS(nOffset - nHours * 60);
+                    int nMinutes = std::abs(nOffset - nHours * 60);
 
                     if( nOffset < 0 )
                     {
                         VSIFPrintfL(fp, "-" );
-                        nHours = ABS(nHours);
+                        nHours = std::abs(nHours);
                     }
                     else
                         VSIFPrintfL(fp, "+" );

@@ -437,6 +437,32 @@ def hdf5_12():
     return 'success'
 
 ###############################################################################
+# Test MODIS L2 HDF5 GCPs (#6666)
+
+def hdf5_13():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://oceandata.sci.gsfc.nasa.gov/cgi/getfile/A2016273115000.L2_LAC_OC.nc', 'A2016273115000.L2_LAC_OC.nc'):
+        return 'skip'
+
+    ds = gdal.Open( 'HDF5:"tmp/cache/A2016273115000.L2_LAC_OC.nc"://geophysical_data/Kd_490' )
+
+    got_gcps = ds.GetGCPs()
+    if len(got_gcps) != 3030:
+           gdaltest.post_reason('fail')
+           return 'fail'
+
+    if abs(got_gcps[0].GCPPixel - 0.5) > 1e-5 or abs(got_gcps[0].GCPLine - 0.5) > 1e-5 or \
+       abs(got_gcps[0].GCPX - 33.1655693) > 1e-5 or abs(got_gcps[0].GCPY - 39.3207207) > 1e-5:
+           gdaltest.post_reason('fail')
+           print(got_gcps[0])
+           return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 class TestHDF5:
     def __init__( self, downloadURL, fileName, subdatasetname, checksum, download_size ):
@@ -474,7 +500,8 @@ gdaltest_list = [
     hdf5_9,
     hdf5_10,
     hdf5_11,
-    hdf5_12
+    hdf5_12,
+    hdf5_13
 ]
 
 hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',

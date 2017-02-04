@@ -41,12 +41,12 @@ static char* GByteArrayToHexString( const GByte* pabyData, int nLen);
 /*                      GDALDB2RasterBand()                      */
 /************************************************************************/
 
-GDALDB2RasterBand::GDALDB2RasterBand(OGRDB2DataSource* poDS,
-                                     int nBand,
+GDALDB2RasterBand::GDALDB2RasterBand(OGRDB2DataSource* poDSIn,
+                                     int nBandIn,
                                      int nTileWidth, int nTileHeight)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
     eDataType = GDT_Byte;
     nBlockXSize = nTileWidth;
     nBlockYSize = nTileHeight;
@@ -141,6 +141,17 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
                                   4,
                                   0);
 
+            if (nRetCode != SQL_SUCCESS)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed fetching tile_data; error: %s",
+                         oSession->GetLastError());
+                CPLDebug("OGRDB2DataSource::ReadTile",
+                         "Failed fetching tile_data; error: %s",
+                         oSession->GetLastError());
+                return NULL;
+            }
+
 // Allocate a buffer to read the tile BLOB into based on the
 // length(tile_data) value
             GByte* pabyBlob = (GByte*) VSIMalloc(nDataLen);
@@ -191,7 +202,6 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
     }
 
     return poGDS->m_poCT;
-
 }
 
 /************************************************************************/
@@ -563,7 +573,7 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
                        "WHERE zoom_level = %d AND tile_row = %d "
                        "AND tile_column = %d%s",
                        m_osRasterTable.c_str(), m_nZoomLevel, nRow, nCol,
-                       m_osWHERE.size() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
+                       !m_osWHERE.empty() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
 
 #ifdef DEBUG_SQL
     CPLDebug("OGRDB2DataSource::ReadTile2",
@@ -604,6 +614,17 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
                               (SQLPOINTER) &nDataLen,
                               4,
                               0);
+
+        if (nRetCode != SQL_SUCCESS)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed fetching tile_data; error: %s",
+                     GetSession()->GetLastError());
+            CPLDebug("OGRDB2DataSource::ReadTile",
+                     "Failed fetching tile_data; error: %s",
+                     GetSession()->GetLastError());
+            return NULL;
+        }
 
 // Allocate a buffer to read the tile BLOB into based on the
 // length(tile_data) value
@@ -646,6 +667,7 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
     {
         oStatement.Clear();
 
+#ifdef LATER
         if( m_hTempDB && (m_nShiftXPixelsMod || m_nShiftYPixelsMod) )
         {
             oStatement.Appendf(
@@ -728,6 +750,7 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
             }
         }
         else
+#endif
         {
             memset(pabyData, 0, nBands * nBlockSize );
         }
@@ -792,7 +815,6 @@ CPLErr GDALDB2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         poGDS->m_asCachedTilesDesc[3].nCol = nColMin + 1;
         poGDS->m_asCachedTilesDesc[1].nIdxWithinTileData = -1;
         poGDS->m_asCachedTilesDesc[3].nIdxWithinTileData = -1;
-
     }
 
     for(int nRow = nRowMin; nRow <= nRowMax; nRow ++)
@@ -875,7 +897,6 @@ CPLErr GDALDB2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
                 if( poBlock )
                     poBlock->DropLock();
-
             }
         }
     }
@@ -1133,11 +1154,11 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
     }
     else
     {
-        CPLAssert(0);
+        CPLAssert(false);
     }
 
-    GDALDriver* poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
-    if( poDriver != NULL)
+    GDALDriver* l_poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
+    if( l_poDriver != NULL)
     {
         GDALDataset* poMEMDS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
                                0, GDT_Byte, NULL);
@@ -1352,7 +1373,7 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
         VSIStatBufL sStat;
         CPLAssert(VSIStatL(osMemFileName, &sStat) != 0);
 #endif
-        GDALDataset* poOutDS = poDriver->CreateCopy(osMemFileName, poMEMDS,
+        GDALDataset* poOutDS = l_poDriver->CreateCopy(osMemFileName, poMEMDS,
                                FALSE, papszDriverOptions, NULL, NULL);
         CSLDestroy( papszDriverOptions );
         if( poOutDS )
@@ -1521,7 +1542,7 @@ CPLErr OGRDB2DataSource::FlushRemainingShiftedTiles()
                 char* pszNewSQL = sqlite3_mprintf("SELECT tile_data FROM '%q' "
                                                   "WHERE zoom_level = %d AND tile_row = %d AND tile_column = %d%s",
                                                   m_osRasterTable.c_str(), m_nZoomLevel, nRow, nCol,
-                                                  m_osWHERE.size() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
+                                                  !m_osWHERE.empty() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
 #ifdef DEBUG_VERBOSE
                 CPLDebug("GPKG", "%s", pszNewSQL);
 #endif
@@ -1640,9 +1661,9 @@ CPLErr OGRDB2DataSource::FlushRemainingShiftedTiles()
 /*                         WriteShiftedTile()                           */
 /************************************************************************/
 
-CPLErr OGRDB2DataSource::WriteShiftedTile(int nRow, int nCol, int nBand,
-        int nDstXOffset, int nDstYOffset,
-        int nDstXSize, int nDstYSize)
+CPLErr OGRDB2DataSource::WriteShiftedTile(int /*nRow*/, int /*nCol*/, int /*nBand*/,
+        int /*nDstXOffset*/, int /*nDstYOffset*/,
+        int /*nDstXSize*/, int /*nDstYSize*/)
 {
 #ifdef LATER
     CPLAssert( m_nShiftXPixelsMod || m_nShiftYPixelsMod );
@@ -2037,9 +2058,12 @@ CPLErr GDALDB2RasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                 if( poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0 )
                     poGDS->m_asCachedTilesDesc[0].abBandDirty[iBand - 1] = TRUE;
 
-                int nDstXOffset = 0, nDstXSize = nBlockXSize,
-                    nDstYOffset = 0, nDstYSize = nBlockYSize;
-                int nSrcXOffset = 0, nSrcYOffset = 0;
+                int nDstXOffset = 0;
+                int nDstXSize = nBlockXSize;
+                int nDstYOffset = 0;
+                int nDstYSize = nBlockYSize;
+                int nSrcXOffset = 0;
+                int nSrcYOffset = 0;
                 // Composite block data into tile data
                 if( poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0 )
                 {
@@ -2142,8 +2166,9 @@ GDALRasterBand* GDALDB2RasterBand::GetOverview(int nIdx)
 static char* GByteArrayToHexString( const GByte* pabyData, int nLen)
 {
     char* pszTextBuf;
+    const size_t nBufLen = nLen*2+3;
 
-    pszTextBuf = (char *) CPLMalloc(nLen*2+3);
+    pszTextBuf = (char *) CPLMalloc(nBufLen);
 
     int  iSrc, iDst=0;
 
@@ -2151,12 +2176,12 @@ static char* GByteArrayToHexString( const GByte* pabyData, int nLen)
     {
         if( iSrc == 0 )
         {
-            sprintf( pszTextBuf+iDst, "0x%02x", pabyData[iSrc] );
+            snprintf( pszTextBuf+iDst, nBufLen - iDst, "0x%02x", pabyData[iSrc] );
             iDst += 4;
         }
         else
         {
-            sprintf( pszTextBuf+iDst, "%02x", pabyData[iSrc] );
+            snprintf( pszTextBuf+iDst, nBufLen - iDst, "%02x", pabyData[iSrc] );
             iDst += 2;
         }
     }

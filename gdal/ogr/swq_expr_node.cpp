@@ -30,11 +30,20 @@
 
 #ifndef DOXYGEN_SKIP
 
-#include "cpl_conv.h"
-#include "cpl_multiproc.h"
+#include "cpl_port.h"
 #include "swq.h"
-#include "ogr_geometry.h"
+
+#include <cctype>
+#include <cstdio>
+#include <cstring>
+#include <string>
 #include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "ogr_geometry.h"
 
 CPL_CVSID("$Id$");
 
@@ -125,7 +134,7 @@ swq_expr_node::swq_expr_node( swq_op eOp )
 
     eNodeType = SNT_OPERATION;
 
-    nOperation = (int) eOp;
+    nOperation = static_cast<int>(eOp);
     nSubExprCount = 0;
     papoSubExpr = NULL;
 }
@@ -178,8 +187,8 @@ void swq_expr_node::PushSubExpression( swq_expr_node *child )
 
 {
     nSubExprCount++;
-    papoSubExpr = (swq_expr_node **)
-        CPLRealloc( papoSubExpr, sizeof(void*) * nSubExprCount );
+    papoSubExpr = static_cast<swq_expr_node **>(
+        CPLRealloc( papoSubExpr, sizeof(void*) * nSubExprCount ));
 
     papoSubExpr[nSubExprCount-1] = child;
 }
@@ -193,11 +202,7 @@ void swq_expr_node::ReverseSubExpressions()
 {
     for( int i = 0; i < nSubExprCount / 2; i++ )
     {
-        swq_expr_node *temp;
-
-        temp = papoSubExpr[i];
-        papoSubExpr[i] = papoSubExpr[nSubExprCount - i - 1];
-        papoSubExpr[nSubExprCount - i - 1] = temp;
+        std::swap(papoSubExpr[i], papoSubExpr[nSubExprCount - i - 1]);
     }
 }
 
@@ -207,10 +212,11 @@ void swq_expr_node::ReverseSubExpressions()
 /*      Check argument types, etc.                                      */
 /************************************************************************/
 
-swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
-                                     int bAllowFieldsInSecondaryTables,
-                                     int bAllowMismatchTypeOnFieldComparison,
-                                     swq_custom_func_registrar* poCustomFuncRegistrar )
+swq_field_type
+swq_expr_node::Check( swq_field_list *poFieldList,
+                      int bAllowFieldsInSecondaryTables,
+                      int bAllowMismatchTypeOnFieldComparison,
+                      swq_custom_func_registrar* poCustomFuncRegistrar )
 
 {
 /* -------------------------------------------------------------------- */
@@ -245,9 +251,10 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
 
         if( !bAllowFieldsInSecondaryTables && table_index != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Cannot use field '%s' of a secondary table in this context",
-                      string_value );
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Cannot use field '%s' of a secondary table in this context",
+                string_value );
             return SWQ_ERROR;
         }
     }
@@ -302,10 +309,10 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
 void swq_expr_node::Dump( FILE * fp, int depth )
 
 {
-    char        spaces[60];
-    int         i;
+    char spaces[60] = {};
 
-    for( i = 0; i < depth*2 && i < (int) sizeof(spaces) - 1; i++ )
+    int i = 0;  // Used after for.
+    for( ; i < depth*2 && i < (int) sizeof(spaces) - 1; i++ )
         spaces[i] = ' ';
     spaces[i] = '\0';
 
@@ -352,14 +359,14 @@ void swq_expr_node::Dump( FILE * fp, int depth )
         papoSubExpr[i]->Dump( fp, depth+1 );
 }
 
-
 /************************************************************************/
 /*                       QuoteIfNecessary()                             */
 /*                                                                      */
 /*      Add quoting if necessary to unparse a string.                   */
 /************************************************************************/
 
-CPLString swq_expr_node::QuoteIfNecessary( const CPLString &osExpr, char chQuote )
+CPLString swq_expr_node::QuoteIfNecessary( const CPLString &osExpr,
+                                           char chQuote )
 
 {
     if( osExpr[0] == '_' )
@@ -367,16 +374,16 @@ CPLString swq_expr_node::QuoteIfNecessary( const CPLString &osExpr, char chQuote
     if( osExpr == "*" )
         return osExpr;
 
-    for( int i = 0; i < (int) osExpr.size(); i++ )
+    for( int i = 0; i < static_cast<int>(osExpr.size()); i++ )
     {
         char ch = osExpr[i];
-        if ((!(isalnum((int)ch) || ch == '_')) || ch == '.')
+        if( (!(isalnum(static_cast<int>(ch)) || ch == '_')) || ch == '.' )
         {
             return Quote(osExpr, chQuote);
         }
     }
 
-    if (swq_is_reserved_keyword(osExpr))
+    if( swq_is_reserved_keyword(osExpr) )
     {
         return Quote(osExpr, chQuote);
     }
@@ -397,7 +404,7 @@ CPLString swq_expr_node::Quote( const CPLString &osTarget, char chQuote )
 
     osNew += chQuote;
 
-    for( int i = 0; i < (int) osTarget.size(); i++ )
+    for( int i = 0; i < static_cast<int>(osTarget.size()); i++ )
     {
         if( osTarget[i] == chQuote )
         {
@@ -426,7 +433,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
 /* -------------------------------------------------------------------- */
     if( eNodeType == SNT_CONSTANT )
     {
-        if (is_null)
+        if( is_null )
             return CPLStrdup("NULL");
 
         if( field_type == SWQ_INTEGER || field_type == SWQ_INTEGER64 ||
@@ -435,10 +442,10 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         else if( field_type == SWQ_FLOAT )
         {
             osExpr.Printf( "%.15g", float_value );
-            /* Make sure this is interpreted as a floating point value */
-            /* and not as an integer later */
-            if (strchr(osExpr, '.') == NULL && strchr(osExpr, 'e') == NULL  &&
-                strchr(osExpr, 'E') == NULL)
+            // Make sure this is interpreted as a floating point value
+            // and not as an integer later.
+            if( strchr(osExpr, '.') == NULL && strchr(osExpr, 'e') == NULL &&
+                strchr(osExpr, 'E') == NULL )
                 osExpr += '.';
         }
         else
@@ -457,18 +464,20 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         if( field_list == NULL )
         {
             if( table_name )
-                osExpr.Printf( "%s.%s",
-                               QuoteIfNecessary(table_name, chColumnQuote).c_str(),
-                               QuoteIfNecessary(string_value, chColumnQuote).c_str() );
+                osExpr.Printf(
+                    "%s.%s",
+                    QuoteIfNecessary(table_name, chColumnQuote).c_str(),
+                    QuoteIfNecessary(string_value, chColumnQuote).c_str() );
             else
-                osExpr.Printf( "%s",
-                               QuoteIfNecessary(string_value, chColumnQuote).c_str() );
+                osExpr.Printf(
+                    "%s",
+                    QuoteIfNecessary(string_value, chColumnQuote).c_str() );
         }
         else if( field_index != -1
             && table_index < field_list->table_count
             && table_index > 0 )
         {
-            for(int i = 0; i < field_list->count; i++ )
+            for( int i = 0; i < field_list->count; i++ )
             {
                 if( field_list->table_ids[i] == table_index &&
                     field_list->ids[i] == field_index )
@@ -482,7 +491,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         }
         else if( field_index != -1 )
         {
-            for(int i = 0; i < field_list->count; i++ )
+            for( int i = 0; i < field_list->count; i++ )
             {
                 if( field_list->table_ids[i] == table_index &&
                     field_list->ids[i] == field_index )
@@ -493,12 +502,13 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
             }
         }
 
-        if( osExpr.size() == 0 )
+        if( osExpr.empty() )
         {
             return CPLStrdup(CPLSPrintf("%c%c", chColumnQuote, chColumnQuote));
         }
 
-        /* The string is just alphanum and not a reserved SQL keyword, no needs to quote and escape */
+        // The string is just alphanum and not a reserved SQL keyword,
+        // no needs to quote and escape.
         return CPLStrdup(osExpr.c_str());
     }
 
@@ -543,7 +553,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
 
     switch( nOperation )
     {
-        // binary infix operators.
+      // Binary infix operators.
       case SWQ_OR:
       case SWQ_AND:
       case SWQ_EQ:
@@ -559,8 +569,8 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
       case SWQ_DIVIDE:
       case SWQ_MODULUS:
         CPLAssert( nSubExprCount >= 2 );
-        if (papoSubExpr[0]->eNodeType == SNT_COLUMN ||
-            papoSubExpr[0]->eNodeType == SNT_CONSTANT)
+        if( papoSubExpr[0]->eNodeType == SNT_COLUMN ||
+            papoSubExpr[0]->eNodeType == SNT_CONSTANT )
         {
             osExpr += apszSubExpr[0];
         }
@@ -573,8 +583,8 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
         osExpr += " ";
         osExpr += poOp->pszName;
         osExpr += " ";
-        if (papoSubExpr[1]->eNodeType == SNT_COLUMN ||
-            papoSubExpr[1]->eNodeType == SNT_CONSTANT)
+        if( papoSubExpr[1]->eNodeType == SNT_COLUMN ||
+            papoSubExpr[1]->eNodeType == SNT_CONSTANT )
         {
             osExpr += apszSubExpr[1];
         }
@@ -629,9 +639,10 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
             else if( i > 2 )
                 osExpr += ", ";
 
-            int nLen = (int)strlen(apszSubExpr[i]);
+            const int nLen = static_cast<int>(strlen(apszSubExpr[i]));
             if( (i == 1 &&
-                (apszSubExpr[i][0] == '\'' && nLen > 2 && apszSubExpr[i][nLen-1] == '\'')) ||
+                (apszSubExpr[i][0] == '\'' &&
+                 nLen > 2 && apszSubExpr[i][nLen-1] == '\'')) ||
                 (i == 2 && EQUAL(apszSubExpr[1], "'GEOMETRY")) )
             {
                 apszSubExpr[i][nLen-1] = '\0';
@@ -642,7 +653,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
 
             if( i == 1 && nSubExprCount > 2)
                 osExpr += "(";
-            else if (i > 1 && i == nSubExprCount - 1)
+            else if( i > 1 && i == nSubExprCount - 1 )
                 osExpr += ")";
         }
         osExpr += ")";
@@ -682,9 +693,9 @@ swq_expr_node *swq_expr_node::Clone()
     {
         poRetNode->nOperation = nOperation;
         poRetNode->nSubExprCount = nSubExprCount;
-        poRetNode->papoSubExpr = (swq_expr_node **)
-                CPLMalloc( sizeof(void*) * nSubExprCount );
-        for(int i=0;i<nSubExprCount;i++)
+        poRetNode->papoSubExpr = static_cast<swq_expr_node **>(
+                CPLMalloc( sizeof(void*) * nSubExprCount ));
+        for( int i = 0; i < nSubExprCount; i++ )
             poRetNode->papoSubExpr[i] = papoSubExpr[i]->Clone();
     }
     else if( eNodeType == SNT_COLUMN )
@@ -751,7 +762,8 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
         }
         else
         {
-            swq_expr_node* poSubExprVal = papoSubExpr[i]->Evaluate(pfnFetcher,pRecord);
+            swq_expr_node* poSubExprVal =
+                papoSubExpr[i]->Evaluate(pfnFetcher, pRecord);
             if( poSubExprVal == NULL )
                 bError = true;
             else
@@ -776,9 +788,10 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
                         "Evaluate(): Unable to find definition for operator %s.",
                         string_value );
             else
-                CPLError( CE_Failure, CPLE_AppDefined,
-                        "Evaluate(): Unable to find definition for operator %d.",
-                        nOperation );
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Evaluate(): Unable to find definition for operator %d.",
+                    nOperation );
             poRetNode = NULL;
         }
         else
@@ -788,7 +801,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < (int) apoValues.size(); i++ )
+    for( int i = 0; i < static_cast<int>(apoValues.size()); i++ )
     {
         if( anValueNeedsFree[i] )
             delete apoValues[i];
@@ -808,7 +821,7 @@ void swq_expr_node::ReplaceBetweenByGEAndLERecurse()
 
     if( nOperation != SWQ_BETWEEN )
     {
-        for(int i=0;i<nSubExprCount;i++)
+        for( int i = 0; i < nSubExprCount; i++ )
             papoSubExpr[i]->ReplaceBetweenByGEAndLERecurse();
         return;
     }
@@ -830,4 +843,4 @@ void swq_expr_node::ReplaceBetweenByGEAndLERecurse()
     papoSubExpr[1]->PushSubExpression(poExpr2);
 }
 
-#endif /* #ifndef DOXYGEN_SKIP */
+#endif  // #ifndef DOXYGEN_SKIP

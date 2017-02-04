@@ -117,14 +117,14 @@ class OGRJMLLayer : public OGRLayer
                                          VSILFILE* fp );
                         ~OGRJMLLayer();
 
-    const char         *GetName() { return poFeatureDefn->GetName(); }
+    const char         *GetName() override { return poFeatureDefn->GetName(); }
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
 
-    OGRFeatureDefn *    GetLayerDefn();
+    OGRFeatureDefn *    GetLayerDefn() override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     void                startElementCbk(const char *pszName, const char **ppszAttr);
     void                endElementCbk(const char *pszName);
@@ -162,15 +162,15 @@ class OGRJMLWriterLayer : public OGRLayer
                                            bool bClassicGML );
                         ~OGRJMLWriterLayer();
 
-    void                ResetReading() {}
-    OGRFeature *        GetNextFeature() { return NULL; }
+    void                ResetReading() override {}
+    OGRFeature *        GetNextFeature() override { return NULL; }
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
-    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK );
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
+    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -188,15 +188,15 @@ class OGRJMLDataset : public GDALDataset
                         OGRJMLDataset();
                         ~OGRJMLDataset();
 
-    int                 GetLayerCount() { return poLayer != NULL ? 1 : 0; }
-    OGRLayer*           GetLayer( int );
+    int                 GetLayerCount() override { return poLayer != NULL ? 1 : 0; }
+    OGRLayer*           GetLayer( int ) override;
 
     OGRLayer *          ICreateLayer( const char * pszLayerName,
                                     OGRSpatialReference *poSRS,
                                     OGRwkbGeometryType eType,
-                                    char ** papszOptions );
+                                    char ** papszOptions ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     static int          Identify( GDALOpenInfo* poOpenInfo );
     static GDALDataset* Open( GDALOpenInfo* poOpenInfo );

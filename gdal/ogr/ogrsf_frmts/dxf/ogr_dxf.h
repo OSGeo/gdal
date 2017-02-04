@@ -73,15 +73,15 @@ class OGRDXFBlocksLayer : public OGRLayer
     std::map<CPLString,DXFBlockDefinition>::iterator oIt;
 
   public:
-    OGRDXFBlocksLayer( OGRDXFDataSource *poDS );
+    explicit OGRDXFBlocksLayer( OGRDXFDataSource *poDS );
     ~OGRDXFBlocksLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     OGRFeature *        GetNextUnfilteredFeature();
 };
@@ -131,15 +131,15 @@ class OGRDXFLayer : public OGRLayer
     CPLString           TextUnescape( const char * );
 
   public:
-    OGRDXFLayer( OGRDXFDataSource *poDS );
+    explicit OGRDXFLayer( OGRDXFDataSource *poDS );
     ~OGRDXFLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     OGRFeature *        GetNextUnfilteredFeature();
 };
@@ -182,7 +182,6 @@ public:
     void                ResetReadPointer( int iNewOffset );
 };
 
-
 /************************************************************************/
 /*                           OGRDXFDataSource                           */
 /************************************************************************/
@@ -207,7 +206,7 @@ class OGRDXFDataSource : public OGRDataSource
 
     std::map<CPLString,CPLString> oLineTypeTable;
 
-    int                 bInlineBlocks;
+    bool                bInlineBlocks;
 
     OGRDXFReader        oReader;
 
@@ -217,16 +216,16 @@ class OGRDXFDataSource : public OGRDataSource
 
     int                 Open( const char * pszFilename, int bHeaderOnly=FALSE );
 
-    const char          *GetName() { return osName; }
+    const char          *GetName() override { return osName; }
 
-    int                 GetLayerCount() { return static_cast<int>(apoLayers.size()); }
-    OGRLayer            *GetLayer( int );
+    int                 GetLayerCount() override { return static_cast<int>(apoLayers.size()); }
+    OGRLayer            *GetLayer( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     // The following is only used by OGRDXFLayer
 
-    int                 InlineBlocks() { return bInlineBlocks; }
+    bool                InlineBlocks() { return bInlineBlocks; }
     void                AddStandardFields( OGRFeatureDefn *poDef );
 
     // Implemented in ogrdxf_blockmap.cpp
@@ -287,8 +286,8 @@ class OGRDXFWriterLayer : public OGRLayer
     OGRErr              WriteINSERT( OGRFeature* );
 
     static CPLString    TextEscape( const char * );
-    int                 ColorStringToDXFColor( const char * );
-    CPLString           PrepareLineTypeDefinition( OGRFeature*, OGRStyleTool* );
+    static int          ColorStringToDXFColor( const char * );
+    static CPLString    PrepareLineTypeDefinition( OGRFeature*, OGRStyleTool* );
 
     std::map<CPLString,CPLString> oNewLineTypes;
     int                 nNextAutoID;
@@ -298,15 +297,15 @@ class OGRDXFWriterLayer : public OGRLayer
     OGRDXFWriterLayer( OGRDXFWriterDS *poDS, VSILFILE *fp );
     ~OGRDXFWriterLayer();
 
-    void                ResetReading() {}
-    OGRFeature         *GetNextFeature() { return NULL; }
+    void                ResetReading() override {}
+    OGRFeature         *GetNextFeature() override { return NULL; }
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
+    int                 TestCapability( const char * ) override;
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
     OGRErr              CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 
     void                ResetFP( VSILFILE * );
 
@@ -322,18 +321,18 @@ class OGRDXFBlocksWriterLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
 
   public:
-    OGRDXFBlocksWriterLayer( OGRDXFWriterDS *poDS );
+    explicit OGRDXFBlocksWriterLayer( OGRDXFWriterDS *poDS );
     ~OGRDXFBlocksWriterLayer();
 
-    void                ResetReading() {}
-    OGRFeature         *GetNextFeature() { return NULL; }
+    void                ResetReading() override {}
+    OGRFeature         *GetNextFeature() override { return NULL; }
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
+    int                 TestCapability( const char * ) override;
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
     OGRErr              CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 
     std::vector<OGRFeature*> apoBlocks;
     OGRFeature          *FindBlock( const char * );
@@ -371,13 +370,13 @@ class OGRDXFWriterDS : public OGRDataSource
     void                ScanForEntities( const char *pszFilename,
                                          const char *pszTarget );
 
-    int                 WriteNewLineTypeRecords( VSILFILE *fp );
-    int                 WriteNewBlockRecords( VSILFILE * );
-    int                 WriteNewBlockDefinitions( VSILFILE * );
-    int                 WriteNewLayerDefinitions( VSILFILE * );
-    int                 TransferUpdateHeader( VSILFILE * );
-    int                 TransferUpdateTrailer( VSILFILE * );
-    int                 FixupHANDSEED( VSILFILE * );
+    bool                WriteNewLineTypeRecords( VSILFILE *fp );
+    bool                WriteNewBlockRecords( VSILFILE * );
+    bool                WriteNewBlockDefinitions( VSILFILE * );
+    bool                WriteNewLayerDefinitions( VSILFILE * );
+    bool                TransferUpdateHeader( VSILFILE * );
+    bool                TransferUpdateTrailer( VSILFILE * );
+    bool                FixupHANDSEED( VSILFILE * );
 
     OGREnvelope         oGlobalEnvelope;
 
@@ -388,19 +387,19 @@ class OGRDXFWriterDS : public OGRDataSource
     int                 Open( const char * pszFilename,
                               char **papszOptions );
 
-    const char          *GetName() { return osName; }
+    const char          *GetName() override { return osName; }
 
-    int                 GetLayerCount();
-    OGRLayer            *GetLayer( int );
+    int                 GetLayerCount() override;
+    OGRLayer            *GetLayer( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     OGRLayer           *ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL );
+                                     char ** papszOptions = NULL ) override;
 
-    int                 CheckEntityID( const char *pszEntityID );
+    bool                CheckEntityID( const char *pszEntityID );
     long                WriteEntityID( VSILFILE * fp,
                                        long nPreferredFID = OGRNullFID );
 

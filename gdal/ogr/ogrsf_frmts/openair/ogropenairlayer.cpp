@@ -52,13 +52,13 @@ OGROpenAirLayer::OGROpenAirLayer( VSILFILE* fp ) :
     poFeatureDefn->SetGeomType( wkbPolygon );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
-    OGRFieldDefn    oField1( "CLASS", OFTString);
+    OGRFieldDefn oField1( "CLASS", OFTString);
     poFeatureDefn->AddFieldDefn( &oField1 );
-    OGRFieldDefn    oField2( "NAME", OFTString);
+    OGRFieldDefn oField2( "NAME", OFTString);
     poFeatureDefn->AddFieldDefn( &oField2 );
-    OGRFieldDefn    oField3( "FLOOR", OFTString);
+    OGRFieldDefn oField3( "FLOOR", OFTString);
     poFeatureDefn->AddFieldDefn( &oField3 );
-    OGRFieldDefn    oField4( "CEILING", OFTString);
+    OGRFieldDefn oField4( "CEILING", OFTString);
     poFeatureDefn->AddFieldDefn( &oField4 );
 }
 
@@ -84,7 +84,6 @@ OGROpenAirLayer::~OGROpenAirLayer()
     VSIFCloseL( fpOpenAir );
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -97,7 +96,6 @@ void OGROpenAirLayer::ResetReading()
     bHasLastLine = false;
     VSIFSeekL( fpOpenAir, 0, SEEK_SET );
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -137,10 +135,12 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
     CPLString osFLOOR;
     CPLString osCEILING;
     OGRLinearRing oLR;
-    /* double dfLastLat = 0, dfLastLon = 0; */
+    // double dfLastLat = 0.0;
+    // double dfLastLon = 0.0;
     bool bFirst = true;
     bool bClockWise = true;
-    double dfCenterLat = 0, dfCenterLon = 0;
+    double dfCenterLat = 0.0;
+    double dfCenterLon = 0.0;
     bool bHasCenter = false;
     OpenAirStyle sStyle;
     sStyle.penStyle = -1;
@@ -165,7 +165,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 if (oLR.getNumPoints() == 0)
                     return NULL;
 
-                if (osCLASS.size() != 0 &&
+                if (!osCLASS.empty() &&
                     oStyleMap.find(osCLASS) != oStyleMap.end())
                 {
                     memcpy(&sStyle, oStyleMap[osCLASS], sizeof(sStyle));
@@ -181,13 +181,13 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
 
         if (STARTS_WITH_CI(pszLine, "AC ") || STARTS_WITH_CI(pszLine, "AC,"))
         {
-            if (osCLASS.size() != 0)
+            if (!osCLASS.empty())
             {
                 if (sStyle.penStyle != -1 || sStyle.fillR != -1)
                 {
                     if (oLR.getNumPoints() == 0)
                     {
-                        OpenAirStyle* psStyle;
+                        OpenAirStyle* psStyle = NULL;
                         if (oStyleMap.find(osCLASS) == oStyleMap.end())
                         {
                             psStyle = (OpenAirStyle*)CPLMalloc(
@@ -219,7 +219,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         }
         else if (STARTS_WITH_CI(pszLine, "AN "))
         {
-            if (osNAME.size() != 0)
+            if (!osNAME.empty())
                 break;
             osNAME = pszLine + 3;
         }
@@ -233,7 +233,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         }
         else if (STARTS_WITH_CI(pszLine, "SP "))
         {
-            if (osCLASS.size() != 0)
+            if (!osCLASS.empty())
             {
                 char** papszTokens = CSLTokenizeString2(pszLine+3, ", ", 0);
                 if (CSLCount(papszTokens) == 5)
@@ -249,7 +249,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         }
         else if (STARTS_WITH_CI(pszLine, "SB "))
         {
-            if (osCLASS.size() != 0)
+            if (!osCLASS.empty())
             {
                 char** papszTokens = CSLTokenizeString2(pszLine+3, ", ", 0);
                 if (CSLCount(papszTokens) == 3)
@@ -265,8 +265,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         {
             pszLine += 3;
 
-            double dfLat;
-            double dfLon;
+            double dfLat = 0.0;
+            double dfLon = 0.0;
             if (!OGROpenAirGetLatLon(pszLine, dfLat, dfLon))
                 continue;
 
@@ -297,8 +297,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 const double dfStartDistance = dfRadius;
                 const double dfEndDistance = dfRadius;
                 const int nSign = (bClockWise) ? 1 : -1;
-                double dfLat;
-                double dfLon;
+                double dfLat = 0.0;
+                double dfLon = 0.0;
                 for(double dfAngle = dfStartAngle;
                     (dfAngle - dfEndAngle) * nSign < 0;
                     dfAngle += nSign)
@@ -328,15 +328,15 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
             char* pszStar = strchr(const_cast<char *>(pszLine), '*');
             if (pszStar) *pszStar = 0;
             char** papszTokens = CSLTokenizeString2(pszLine, ",", 0);
-            double dfFirstLat;
-            double dfFirstLon;
-            double dfSecondLat;
-            double dfSecondLon;
+            double dfFirstLat = 0.0;
+            double dfFirstLon = 0.0;
+            double dfSecondLat = 0.0;
+            double dfSecondLon = 0.0;
             if (bHasCenter && CSLCount(papszTokens) == 2 &&
                 OGROpenAirGetLatLon(papszTokens[0], dfFirstLat, dfFirstLon) &&
                 OGROpenAirGetLatLon(papszTokens[1], dfSecondLat, dfSecondLon))
             {
-                const double dfStartDistance =OGRXPlane_Distance(dfCenterLat,
+                const double dfStartDistance = OGRXPlane_Distance(dfCenterLat,
                         dfCenterLon, dfFirstLat, dfFirstLon);
                 const double dfEndDistance = OGRXPlane_Distance(dfCenterLat,
                         dfCenterLon, dfSecondLat, dfSecondLon);
@@ -355,8 +355,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                     (dfAngle - dfEndAngle) * nSign < 0;
                     dfAngle += nSign)
                 {
-                    double dfLat;
-                    double dfLon;
+                    double dfLat = 0.0;
+                    double dfLon = 0.0;
                     const double pct = (dfAngle - dfStartAngle) /
                         (dfEndAngle - dfStartAngle);
                     const double dfDist = dfStartDistance * (1-pct) +
@@ -388,9 +388,9 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 pszLine += 3;
 
                 const double dfRADIUS = CPLAtof(pszLine) * 1852;
-                double dfLat;
-                double dfLon;
-                for(double dfAngle = 0; dfAngle < 360; dfAngle += 1)
+                double dfLat = 0.0;
+                double dfLon = 0.0;
+                for( double dfAngle = 0; dfAngle < 360; dfAngle += 1.0 )
                 {
                     OGRXPlane_ExtendPosition(dfCenterLat, dfCenterLon,
                                              dfRADIUS, dfAngle, &dfLat, &dfLon);
@@ -443,18 +443,18 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         }
         if (sStyle.fillR != -1)
         {
-            if (osStyle.size() != 0)
+            if (!osStyle.empty())
                 osStyle += ";";
             osStyle += CPLString().Printf("BRUSH(fc:#%02X%02X%02X)",
                                  sStyle.fillR, sStyle.fillG, sStyle.fillB);
         }
         else
         {
-            if (osStyle.size() != 0)
+            if (!osStyle.empty())
                 osStyle += ";";
             osStyle += "BRUSH(fc:#00000000,id:\"ogr-brush-1\")";
         }
-        if (osStyle.size() != 0)
+        if (!osStyle.empty())
             poFeature->SetStyleString(osStyle);
     }
 

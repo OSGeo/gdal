@@ -18,7 +18,7 @@
 %typemap(out) GIntBig
 {
     char temp[256];
-    sprintf(temp, ""CPL_FRMT_GIB"", $1);
+    sprintf(temp, "" CPL_FRMT_GIB "", $1);
     $result = sv_2mortal(newSVpv(temp, 0));
     argvi++;
 }
@@ -31,7 +31,7 @@
 %typemap(out) GUIntBig
 {
     char temp[256];
-    sprintf(temp, ""CPL_FRMT_GUIB"", $1);
+    sprintf(temp, "" CPL_FRMT_GUIB "", $1);
     $result = sv_2mortal(newSVpv(temp, 0));
     argvi++;
 }
@@ -41,9 +41,11 @@
 %apply (double *OUTPUT) { double *defaultval };
 
 %fragment("sv_to_utf8_string", "header") %{
-    char *sv_to_utf8_string(SV *sv, U8 **tmpbuf) {
-        /* if tmpbuf, only tmpbuf is freed; if not, ret is freed*/
+    char *sv_to_utf8_string(SV *sv, U8 **tmpbuf, bool *safefree = NULL) {
+        /* if tmpbuf is given, only tmpbuf needs to be freed, use Safefree!
+           if not, ret needs to be freed, if safefree use Safefree else use free! */
         char *ret;
+        if (safefree) *safefree = false;
         if (SvOK(sv)) {
             STRLEN len;
             ret = SvPV(sv, len);
@@ -54,6 +56,7 @@
                 } else {
                     ret = (char *)bytes_to_utf8((const U8*)ret, &len);
                 }
+                if (safefree) *safefree = true;
             } else {
                 if (!tmpbuf)
                     ret = strdup(ret);
@@ -512,6 +515,8 @@
         do_confess(NEED_ARRAY_REF, 1);
     $1 = argin;
     AV *av = (AV*)(SvRV($input));
+    if (av_len(av)+1 < $dim0)
+      do_confess(NOT_ENOUGH_ELEMENTS, 1);
     for (unsigned int i=0; i<$dim0; i++) {
         SV *sv = *av_fetch(av, i, 0);
         if (!SvOK(sv))
@@ -960,9 +965,10 @@
                 AV *av = (AV*)(SvRV($input));
                 for (int i = 0; i < av_len(av)+1; i++) {
                     SV *sv = *(av_fetch(av, i, 0));
-                    char *tmp = sv_to_utf8_string(sv, NULL);
+                    bool sf;
+                    char *tmp = sv_to_utf8_string(sv, NULL, &sf);
                     $1 = CSLAddString($1, tmp);
-                    free(tmp);
+                    if (sf) Safefree(tmp); else free(tmp);
                 }
             } else if (SvTYPE(SvRV($input))==SVt_PVHV) {
                 HV *hv = (HV*)SvRV($input);
@@ -972,9 +978,10 @@
                 $1 = NULL;
                 hv_iterinit(hv);
                 while(sv = hv_iternextsv(hv, &key, &klen)) {
-                    char *tmp = sv_to_utf8_string(sv, NULL);
+                    bool sf;
+                    char *tmp = sv_to_utf8_string(sv, NULL, &sf);
                     $1 = CSLAddNameValue($1, key, tmp);
-                    free(tmp);
+                    if (sf) Safefree(tmp); else free(tmp);
                 }
             } else
                 do_confess(NEED_REF, 1);
@@ -1019,7 +1026,7 @@
 %typemap(freearg) (char **ignorechange)
 {
     /* %typemap(freearg) (char **ignorechange) */
-    if (tmpbuf$argnum) free(tmpbuf$argnum);
+    if (tmpbuf$argnum) Safefree(tmpbuf$argnum);
 }
 
 /*
@@ -1095,7 +1102,7 @@
 %typemap(freearg) (tostring argin)
 {
     /* %typemap(freearg) (tostring argin) */
-    if (tmpbuf$argnum) free(tmpbuf$argnum);
+    if (tmpbuf$argnum) Safefree(tmpbuf$argnum);
 }
 
 /*
@@ -1148,9 +1155,10 @@
 
         nType = SvIV(*(av_fetch(av,0,0)));
         SV *sv = *(av_fetch(av,1,0));
-        char *tmp = sv_to_utf8_string(sv, NULL);
+        bool sf;
+        char *tmp = sv_to_utf8_string(sv, NULL, &sf);
         psThisNode = CPLCreateXMLNode(NULL, (CPLXMLNodeType)nType, tmp);
-        free(tmp);
+        if (sf) Safefree(tmp); else free(tmp);
 
         for( iChild = 0; iChild < nChildCount; iChild++ )
         {
@@ -1185,9 +1193,9 @@
     if ( !$1 ) {
         switch (err) {
         case 1:
-            do_confess(ARRAY_TO_XML_FAILED" "NEED_DEF, 1);
+            do_confess(ARRAY_TO_XML_FAILED " " NEED_DEF, 1);
         case 2:
-            do_confess(ARRAY_TO_XML_FAILED" "NEED_ARRAY_REF, 1);
+            do_confess(ARRAY_TO_XML_FAILED " " NEED_ARRAY_REF, 1);
         }
     }
 }
@@ -1524,7 +1532,7 @@ IF_UNDEF_NULL(const char *, target_key)
 %typemap(freearg) (const char* utf8_path)
 {
     /* %typemap(freearg) (const char* utf8_path) */
-    if (tmpbuf$argnum) free(tmpbuf$argnum);
+    if (tmpbuf$argnum) Safefree(tmpbuf$argnum);
 }
 
 %typemap(in, numinputs=1, fragment="sv_to_utf8_string") (const char* layer_name) (U8 *tmpbuf = NULL)
@@ -1535,7 +1543,7 @@ IF_UNDEF_NULL(const char *, target_key)
 %typemap(freearg) (const char* layer_name)
 {
     /* %typemap(freearg) (const char* layer_name) */
-    if (tmpbuf$argnum) free(tmpbuf$argnum);
+    if (tmpbuf$argnum) Safefree(tmpbuf$argnum);
 }
 
 %typemap(in, numinputs=1, fragment="sv_to_utf8_string") (const char* name) (U8 *tmpbuf = NULL)
@@ -1546,7 +1554,7 @@ IF_UNDEF_NULL(const char *, target_key)
 %typemap(freearg) (const char* name)
 {
     /* %typemap(freearg) (const char* name) */
-    if (tmpbuf$argnum) free(tmpbuf$argnum);
+    if (tmpbuf$argnum) Safefree(tmpbuf$argnum);
 }
 
 %typemap(in,numinputs=0) (int *pnBytes) (int bytes)

@@ -34,6 +34,8 @@
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -78,7 +80,8 @@ static void Usage(const char* pszErrorMsg)
 
 #define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
     do { if (iArg + nExtraArg >= argc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[iArg], nExtraArg)); } while(0)
+        Usage(CPLSPrintf("%s option requires %d argument(s)", \
+                         argv[iArg], nExtraArg)); } while( false )
 
 typedef enum
 {
@@ -454,7 +457,7 @@ int main( int argc, char *argv[] )
         if( adfGeoTransform[0] == 0.0
             && adfGeoTransform[1] == 1.0
             && adfGeoTransform[3] == 0.0
-            && ABS(adfGeoTransform[5]) == 1.0 )
+            && std::abs(adfGeoTransform[5]) == 1.0 )
         {
             fprintf( stderr,
                      "It appears no georeferencing is available for\n"

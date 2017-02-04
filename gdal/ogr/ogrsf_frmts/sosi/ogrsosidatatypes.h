@@ -2737,7 +2737,6 @@
 
       addSimpleType(&oTypes, "PRODUKT_LINK", "produktLink", OFTString);
 
-
 OGRSOSIDataType ADRESSEBRUKSENHETType = OGRSOSIDataType(3);
 
 OGRSOSIDataType ADRESSEKOMMENTARType = OGRSOSIDataType(5);

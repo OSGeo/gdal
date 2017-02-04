@@ -33,7 +33,6 @@
 * limitations under the License.
 */
 
-
 /**
  *
  *  Functions used by the driver, should have prototypes in the header file
@@ -160,7 +159,7 @@ void ppmWrite(const char *fname, const char *data, const ILSize &sz) {
         fwrite(data,sz.x,sz.y,fp);
         break;
     default:
-        fprintf(stderr,"Can't write ppm file with %d bands\n",sz.c);
+        fprintf(stderr,"Can't write ppm file with %d bands\n",sz.c);/*ok*/
         return;
     }
     fclose(fp);
@@ -183,22 +182,22 @@ GIntBig IdxSize(const ILImage &full, const int scale) {
     return sz*sizeof(ILIdx);
 }
 
-ILImage::ILImage()
-{
-    dataoffset = idxoffset = 0;
-    quality = 85;
-    size = ILSize(1, 1, 1, 1, 0);
-    pagesize = ILSize(384, 384, 1, 1, 0);
-    pagecount = pcount(size, pagesize);
-    comp = IL_PNG;
-    order = IL_Interleaved;
-    ci = GCI_Undefined;
-    pageSizeBytes = 0;
-    nbo = 0;
-    hasNoData = FALSE;
-    NoDataValue = 0.0;
-    dt = GDT_Unknown;
-}
+ILImage::ILImage() :
+    dataoffset(0),
+    idxoffset(0),
+    quality(85),
+    pageSizeBytes(0),
+    size(ILSize(1, 1, 1, 1, 0)),
+    pagesize(ILSize(384, 384, 1, 1, 0)),
+    pagecount(pcount(size, pagesize)),
+    comp(IL_PNG),
+    order(IL_Interleaved),
+    nbo(0),
+    hasNoData(FALSE),
+    NoDataValue(0.0),
+    dt(GDT_Unknown),
+    ci(GCI_Undefined)
+{}
 
 /**
  *\brief Get a file name by replacing the extension.
@@ -235,7 +234,7 @@ CPLString getFname(const CPLString &in, const char *ext)
 CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, const char *def)
 {
     CPLString fn = CPLGetXMLValue(node, token, "");
-    if (fn.size() == 0) // Not provided
+    if (fn.empty()) // Not provided
         return getFname(in, def);
     size_t slashPos = fn.find_first_of("\\/");
 
@@ -243,16 +242,16 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
     if (slashPos == 0                               // Starts with slash
         || (slashPos == 2 && fn[1] == ':')          // Starts with disk letter column
         || !(slashPos == fn.find_first_not_of('.')) // Does not start with dots and then slash
-        || in.find_first_of("\\/") == in.npos)      // We con't get a basename from in
+        || EQUALN(in,"<MRF_META>",10)               // XML string input
+        || in.find_first_of("\\/") == in.npos)      // We can't get a basename from in
         return fn;
 
     // Relative path, prepand the path from the in file name
     return in.substr(0, in.find_last_of("\\/")+1) + fn;
 }
 
-
 /**
- *\Brief Extracts a numerical value from a XML node
+ *\brief Extracts a numerical value from a XML node
  * It works like CPLGetXMLValue except for the default value being
  * a number instead of a string
  */
@@ -320,20 +319,20 @@ GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, i
 }
 
 /**
- *\Brief log in a given base
+ *\brief log in a given base
  */
-double logb(double val, double base) {
-    return log(val)/log(base);
+double logbase(double val, double base) {
+    return log(val) / log(base);
 }
 
 /**
- *\Brief Is logb(val) an integer?
+ *\brief Is logbase(val, base) an integer?
  *
  */
 
 int IsPower(double value, double base) {
-    double v=logb(value, base);
-    return CPLIsEqual(v, int(v+0.5));
+    double v = logbase(value, base);
+    return CPLIsEqual(v, int(v + 0.5));
 }
 
 /************************************************************************/
@@ -341,7 +340,7 @@ int IsPower(double value, double base) {
 /************************************************************************/
 
 /**
- *\Brief Search for a sibling of the root node with a given name.
+ *\brief Search for a sibling of the root node with a given name.
  *
  * Searches only the next siblings of the node passed in for the named element or attribute.
  * If the first character of the pszElement is '=', the search includes the psRoot node
@@ -472,7 +471,7 @@ GDALColorEntry GetXMLColorEntry(CPLXMLNode *p) {
 }
 
 /**
- *\Brief Verify or make a file that big
+ *\brief Verify or make a file that big
  *
  * @return true if size is OK or if extend succeeded
  */
@@ -616,11 +615,18 @@ void GDALRegister_mrf()
         "   <Option name='BLOCKSIZE' type='int' description='Block size, both x and y, default 512'/>\n"
         "   <Option name='BLOCKXSIZE' type='int' description='Block x size, default=512'/>\n"
         "   <Option name='BLOCKYSIZE' type='int' description='Block y size, default=512'/>\n"
-        "   <Option name='NETBYTEORDER' type='boolean' description='Force endian for certain compress options, default is host order'/>\n"
-        "   <Option name='CACHEDSOURCE' type='string' description='The source raster, if this is a cache'/>\n"
+        "   <Option name='NETBYTEORDER' type='boolean' "
+                    "description='Force endian for certain compress options, default is host order'/>\n"
+        "   <Option name='CACHEDSOURCE' type='string' "
+                    "description='The source raster, if this is a cache'/>\n"
         "   <Option name='UNIFORM_SCALE' type='int' description='Scale of overlays in MRF, usually 2'/>\n"
         "   <Option name='NOCOPY' type='boolean' description='Leave created MRF empty, default=no'/>\n"
-        "   <Option name='PHOTOMETRIC' type='string-select' default='DEFAULT' description='Band interpretation, may affect block encoding'>\n"
+        "   <Option name='DATANAME' type='string' description='Data file name'/>\n"
+        "   <Option name='INDEXNAME' type='string' description='Index file name'/>\n"
+        "   <Option name='SPACING' type='int' "
+                    "description='Leave this many unused bytes before each tile, default=0'/>\n"
+        "   <Option name='PHOTOMETRIC' type='string-select' default='DEFAULT' "
+                    "description='Band interpretation, may affect block encoding'>\n"
         "       <Value>MULTISPECTRAL</Value>"
         "       <Value>RGB</Value>"
         "       <Value>YCC</Value>"

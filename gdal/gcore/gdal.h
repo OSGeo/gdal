@@ -357,10 +357,15 @@ GDALCreateCopy( GDALDriverH, const char *, GDALDatasetH,
 
 GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriver( const char * pszFilename,
                                             char ** papszFileList );
+
+GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriverEx( const char* pszFilename,
+                                                      unsigned int nIdentifyFlags,
+                                                      const char* const* papszAllowedDrivers,
+                                                      const char* const* papszFileList );
+
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALOpen( const char *pszFilename, GDALAccess eAccess ) CPL_WARN_UNUSED_RESULT;
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_WARN_UNUSED_RESULT;
-
 
 /* Note: we define GDAL_OF_READONLY and GDAL_OF_UPDATE to be on purpose */
 /* equals to GA_ReadOnly and GA_Update */
@@ -394,7 +399,6 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
  * @since GDAL 2.0
  */
 #define     GDAL_OF_VECTOR          0x04
-
 
 /** Allow gnm drivers to be used.
  * Used by GDALOpenEx().
@@ -661,6 +665,12 @@ OGRLayerH CPL_DLL GDALDatasetCreateLayer( GDALDatasetH, const char *,
                                       char ** );
 OGRLayerH CPL_DLL GDALDatasetCopyLayer( GDALDatasetH, OGRLayerH, const char *,
                                         char ** );
+void CPL_DLL GDALDatasetResetReading( GDALDatasetH );
+OGRFeatureH CPL_DLL GDALDatasetGetNextFeature( GDALDatasetH hDS,
+                                               OGRLayerH* phBelongingLayer,
+                                               double* pdfProgressPct,
+                                               GDALProgressFunc pfnProgress,
+                                               void* pProgressData );
 int    CPL_DLL GDALDatasetTestCapability( GDALDatasetH, const char * );
 OGRLayerH CPL_DLL GDALDatasetExecuteSQL( GDALDatasetH, const char *,
                                      OGRGeometryH, const char * );
@@ -671,7 +681,6 @@ void   CPL_DLL GDALDatasetSetStyleTable( GDALDatasetH, OGRStyleTableH );
 OGRErr CPL_DLL GDALDatasetStartTransaction(GDALDatasetH hDS, int bForce);
 OGRErr CPL_DLL GDALDatasetCommitTransaction(GDALDatasetH hDS);
 OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
-
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
@@ -716,6 +725,10 @@ typedef CPLErr
 GDALDataType CPL_DLL CPL_STDCALL GDALGetRasterDataType( GDALRasterBandH );
 void CPL_DLL CPL_STDCALL
 GDALGetBlockSize( GDALRasterBandH, int * pnXSize, int * pnYSize );
+
+CPLErr CPL_DLL CPL_STDCALL
+GDALGetActualBlockSize( GDALRasterBandH, int nXBlockOff, int nYBlockOff,
+                        int *pnXValid, int *pnYValid );
 
 CPLErr CPL_DLL CPL_STDCALL GDALRasterAdviseRead( GDALRasterBandH hRB,
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
@@ -1107,7 +1120,6 @@ void CPL_DLL* CPL_STDCALL
     GDALRATSerializeJSON( GDALRasterAttributeTableH ) CPL_WARN_UNUSED_RESULT;
 
 int CPL_DLL CPL_STDCALL GDALRATGetRowOfValue( GDALRasterAttributeTableH, double );
-
 
 /* ==================================================================== */
 /*      GDAL Cache Management                                           */

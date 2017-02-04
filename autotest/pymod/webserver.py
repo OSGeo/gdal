@@ -321,6 +321,24 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.server.stop_requested = True
                 return
 
+            if self.path.startswith('/vsimem/'):
+                from osgeo import gdal
+                f = gdal.VSIFOpenL(self.path, "rb")
+                if f is None:
+                    self.send_response(404)
+                    self.end_headers()
+                else:
+                    gdal.VSIFSeekL(f, 0, 2)
+                    size = gdal.VSIFTellL(f)
+                    gdal.VSIFSeekL(f, 0, 0)
+                    content = gdal.VSIFReadL(1, size, f)
+                    gdal.VSIFCloseL(f)
+                    self.protocol_version = 'HTTP/1.0'
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(content)
+                return
+
             # First signed URL
             if self.path.startswith('/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires='):
                 if 'Range' in self.headers:
@@ -443,6 +461,32 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write("""foo""".encode('ascii'))
                 return
+
+            if self.path == '/s3_fake_bucket_with_requester_pays/resource':
+                self.protocol_version = 'HTTP/1.1'
+
+                if 'x-amz-request-payer' not in self.headers:
+                    sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                    self.send_response(403)
+                    return
+                expected_authorization_8080 = 'AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-request-payer,Signature=cf713a394e1b629ac0e468d60d3d4a12f5236fd72d21b6005c758b0dfc7049cd'
+                expected_authorization_8081 = 'AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-request-payer,Signature=4756166679008a1a40cd6ff91dbbef670a71c11bf8e3c998dd7385577c3ac4d9'
+                if self.headers['Authorization'] != expected_authorization_8080 and self.headers['Authorization'] != expected_authorization_8081:
+                    sys.stderr.write("Bad Authorization: '%s'\n" % str(self.headers['Authorization']))
+                    self.send_response(403)
+                    return
+                if self.headers['x-amz-request-payer'] != 'requester':
+                    sys.stderr.write("Bad x-amz-request-payer: '%s'\n" % str(self.headers['x-amz-request-payer']))
+                    self.send_response(403)
+                    return
+
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Length', 3)
+                self.end_headers()
+                self.wfile.write("""foo""".encode('ascii'))
+                return
+
 
             if self.path == '/s3_fake_bucket/resource2.bin':
                 self.protocol_version = 'HTTP/1.1'
@@ -1009,6 +1053,8 @@ class GDAL_ThreadedHttpServer(Thread):
 
     def stop(self):
         self.server.stop_server()
+        # Explicitly destroy the object so that the socket is really closed
+        del self.server
 
     def run_server(self, timeout):
         if not self.server.running:
@@ -1021,7 +1067,15 @@ class GDAL_ThreadedHttpServer(Thread):
             count = count + 0.5
         self.stop()
 
-def launch():
+def launch(fork_process = True):
+    if not fork_process:
+        try:
+            server = GDAL_ThreadedHttpServer(GDAL_Handler)
+            server.start_and_wait_ready()
+            return (server, server.getPort())
+        except:
+            return (None, 0)
+
     python_exe = sys.executable
     if sys.platform == 'win32':
         python_exe = python_exe.replace('\\', '/')
@@ -1043,6 +1097,11 @@ def launch():
     return (process, port)
 
 def server_stop(process, port):
+
+    if isinstance(process, GDAL_ThreadedHttpServer):
+        process.stop()
+        return
+
     gdaltest.gdalurlopen('http://127.0.0.1:%d/shutdown' % port)
     gdaltest.wait_process(process)
 

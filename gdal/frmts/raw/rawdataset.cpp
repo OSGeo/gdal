@@ -228,7 +228,6 @@ RawRasterBand::~RawRasterBand()
     CPLFree( pLineBuffer );
 }
 
-
 /************************************************************************/
 /*                             SetAccess()                              */
 /************************************************************************/
@@ -251,7 +250,10 @@ CPLErr RawRasterBand::FlushCache()
 {
     CPLErr eErr = GDALRasterBand::FlushCache();
     if( eErr != CE_None )
+    {
+        bDirty = FALSE;
         return eErr;
+    }
 
     // If we have unflushed raw, flush it to disk now.
     if ( bDirty )
@@ -306,7 +308,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to scanline %d @ " CPL_FRMT_GUIB ".",
-                  iLine, nImgOffset + (vsi_l_offset)iLine * nLineOffset );
+                  iLine, nReadStart );
             return CE_Failure;
         }
         else
@@ -1009,7 +1011,6 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                        nPixelOffset );
                     }
                 }
-
             }
 
             bDirty = TRUE;
@@ -1205,7 +1206,6 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
 /*      RawDataset                                                      */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            RawDataset()                              */

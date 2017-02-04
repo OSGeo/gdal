@@ -50,7 +50,7 @@ static void Usage(const char* pszErrorMsg = NULL)
             "     gdaldem hillshade input_dem output_hillshade \n"
             "                 [-z ZFactor (default=1)] [-s scale* (default=1)] \n"
             "                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]\n"
-            "                 [-alg ZevenbergenThorne] [-combined]\n"
+            "                 [-alg ZevenbergenThorne] [-combined | -multidirectional]\n"
             "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generates a slope map from any GDAL-supported elevation raster :\n\n"
@@ -100,14 +100,16 @@ static void Usage(const char* pszErrorMsg = NULL)
 
 static GDALDEMProcessingOptionsForBinary *GDALDEMProcessingOptionsForBinaryNew(void)
 {
-    return (GDALDEMProcessingOptionsForBinary*) CPLCalloc(  1, sizeof(GDALDEMProcessingOptionsForBinary) );
+    return static_cast<GDALDEMProcessingOptionsForBinary *>(
+        CPLCalloc(  1, sizeof(GDALDEMProcessingOptionsForBinary) ));
 }
 
 /************************************************************************/
 /*                       GDALDEMProcessingOptionsForBinaryFree()            */
 /************************************************************************/
 
-static void GDALDEMProcessingOptionsForBinaryFree( GDALDEMProcessingOptionsForBinary* psOptionsForBinary )
+static void GDALDEMProcessingOptionsForBinaryFree(
+    GDALDEMProcessingOptionsForBinary* psOptionsForBinary )
 {
     if( psOptionsForBinary )
     {
@@ -127,7 +129,7 @@ int main( int argc, char ** argv )
 
 {
     /* Check strict compilation and runtime library version as we use C++ API */
-    if (! GDAL_CHECK_VERSION(argv[0]))
+    if( ! GDAL_CHECK_VERSION(argv[0]) )
         exit(1);
 
     EarlySetConfigOptions(argc, argv);
@@ -143,7 +145,8 @@ int main( int argc, char ** argv )
         Usage("Not enough arguments.");
     }
 
-    if( EQUAL(argv[1], "--utility_version") || EQUAL(argv[1], "--utility-version") )
+    if( EQUAL(argv[1], "--utility_version") ||
+        EQUAL(argv[1], "--utility-version") )
     {
         printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
                 argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
@@ -153,8 +156,10 @@ int main( int argc, char ** argv )
     else if( EQUAL(argv[1],"--help") )
         Usage();
 
-    GDALDEMProcessingOptionsForBinary* psOptionsForBinary = GDALDEMProcessingOptionsForBinaryNew();
-    GDALDEMProcessingOptions *psOptions = GDALDEMProcessingOptionsNew(argv + 1, psOptionsForBinary);
+    GDALDEMProcessingOptionsForBinary* psOptionsForBinary =
+        GDALDEMProcessingOptionsForBinaryNew();
+    GDALDEMProcessingOptions *psOptions =
+        GDALDEMProcessingOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );
 
     if( psOptions == NULL )
@@ -171,7 +176,8 @@ int main( int argc, char ** argv )
     {
         Usage("Missing source.");
     }
-    if ( EQUAL(psOptionsForBinary->pszProcessing, "color-relief") && psOptionsForBinary->pszColorFilename == NULL )
+    if ( EQUAL(psOptionsForBinary->pszProcessing, "color-relief") &&
+         psOptionsForBinary->pszColorFilename == NULL )
     {
         Usage("Missing color file.");
     }
@@ -180,11 +186,16 @@ int main( int argc, char ** argv )
         Usage("Missing destination.");
     }
 
-    if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
-        CheckExtensionConsistency(psOptionsForBinary->pszDstFilename, psOptionsForBinary->pszFormat);
+    if( !psOptionsForBinary->bQuiet &&
+        !psOptionsForBinary->bFormatExplicitlySet)
+    {
+        CheckExtensionConsistency(psOptionsForBinary->pszDstFilename,
+                                  psOptionsForBinary->pszFormat);
+    }
 
-    // Open Dataset and get raster band
-    GDALDatasetH hSrcDataset = GDALOpen( psOptionsForBinary->pszSrcFilename, GA_ReadOnly );
+    // Open Dataset and get raster band.
+    GDALDatasetH hSrcDataset =
+        GDALOpen( psOptionsForBinary->pszSrcFilename, GA_ReadOnly );
 
     if( hSrcDataset == NULL )
     {
@@ -196,13 +207,14 @@ int main( int argc, char ** argv )
     }
 
     int bUsageError = FALSE;
-    GDALDatasetH hOutDS = GDALDEMProcessing(psOptionsForBinary->pszDstFilename, hSrcDataset,
-                               psOptionsForBinary->pszProcessing,
-                               psOptionsForBinary->pszColorFilename,
-                               psOptions, &bUsageError);
-    if(bUsageError == TRUE)
+    GDALDatasetH hOutDS =
+        GDALDEMProcessing(psOptionsForBinary->pszDstFilename, hSrcDataset,
+                          psOptionsForBinary->pszProcessing,
+                          psOptionsForBinary->pszColorFilename,
+                          psOptions, &bUsageError);
+    if( bUsageError )
         Usage();
-    int nRetCode = (hOutDS) ? 0 : 1;
+    const int nRetCode = hOutDS ? 0 : 1;
 
     GDALClose(hSrcDataset);
     GDALClose(hOutDS);

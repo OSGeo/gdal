@@ -295,7 +295,6 @@ class CPL_DLL OGRSFDriver : public GDALDriver
 //! @endcond
 };
 
-
 /************************************************************************/
 /*                         OGRSFDriverRegistrar                         */
 /************************************************************************/
@@ -331,13 +330,19 @@ class CPL_DLL OGRSFDriverRegistrar
 //! @cond Doxygen_Suppress
     static OGRSFDriverRegistrar *GetRegistrar() OGR_DEPRECATED("Use GDALDriverManager class instead");
 
+    // cppcheck-suppress functionStatic
     void        RegisterDriver( OGRSFDriver * poDriver ) OGR_DEPRECATED("Use GDALDriverManager class instead");
 
+    // cppcheck-suppress functionStatic
     int         GetDriverCount( void ) OGR_DEPRECATED("Use GDALDriverManager class instead");
+    // cppcheck-suppress functionStatic
     GDALDriver *GetDriver( int iDriver ) OGR_DEPRECATED("Use GDALDriverManager class instead");
+    // cppcheck-suppress functionStatic
     GDALDriver *GetDriverByName( const char * ) OGR_DEPRECATED("Use GDALDriverManager class instead");
 
+    // cppcheck-suppress functionStatic
     int         GetOpenDSCount() OGR_DEPRECATED("Use GDALDriverManager class instead");
+    // cppcheck-suppress functionStatic
     OGRDataSource *GetOpenDS( int ) OGR_DEPRECATED("Use GDALDriverManager class instead");
 //! @endcond
 };
@@ -387,6 +392,7 @@ void CPL_DLL RegisterOGRGRASS();
 void CPL_DLL RegisterOGRPGeo();
 void CPL_DLL RegisterOGRDXFDWG();
 void CPL_DLL RegisterOGRDXF();
+void CPL_DLL RegisterOGRCAD();
 void CPL_DLL RegisterOGRDWG();
 void CPL_DLL RegisterOGRSDE();
 void CPL_DLL RegisterOGRIDB();
@@ -437,6 +443,7 @@ void CPL_DLL RegisterOGRPLSCENES();
 void CPL_DLL RegisterOGRCSW();
 void CPL_DLL RegisterOGRMongoDB();
 void CPL_DLL RegisterOGRVDV();
+void CPL_DLL RegisterOGRGMLAS();
 // @endcond
 
 CPL_C_END

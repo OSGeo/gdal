@@ -70,7 +70,7 @@ void OGRDWGDataSource::ReadBlocksSection()
         // We aggregate the geometries of the features into a multi-geometry,
         // but throw away other stuff attached to the features.
 
-        OGRFeature *poFeature;
+        OGRFeature *poFeature = NULL;
         OGRGeometryCollection *poColl = new OGRGeometryCollection();
         std::vector<OGRFeature*> apoFeatures;
 
@@ -94,7 +94,7 @@ void OGRDWGDataSource::ReadBlocksSection()
         else
             oBlockMap[osBlockName].poGeometry = SimplifyBlockGeometry(poColl);
 
-        if( apoFeatures.size() > 0 )
+        if( !apoFeatures.empty() )
             oBlockMap[osBlockName].apoFeatures = apoFeatures;
     }
 

@@ -1311,7 +1311,7 @@ static const char* StateNames[] = {
     int t;								\
     NeedBits8(wid,eoflab);						\
     TabEnt = tab + GetBits(wid);					\
-    printf("%08lX/%d: %s%5d\t", (long) BitAcc, BitsAvail,		\
+    printf("%08lX/%d: %s%5d\t", (long) BitAcc, BitsAvail,/*ok*/ 	\
 	   StateNames[TabEnt->State], TabEnt->Param);			\
     for (t = 0; t < TabEnt->Width; t++)					\
 	DEBUG_SHOW;							\
@@ -1323,7 +1323,7 @@ static const char* StateNames[] = {
     int t;								\
     NeedBits16(wid,eoflab);						\
     TabEnt = tab + GetBits(wid);					\
-    printf("%08lX/%d: %s%5d\t", (long) BitAcc, BitsAvail,		\
+    printf("%08lX/%d: %s%5d\t", (long) BitAcc, BitsAvail,/*ok*/ 	\
 	   StateNames[TabEnt->State], TabEnt->Param);			\
     for (t = 0; t < TabEnt->Width; t++)					\
 	DEBUG_SHOW;							\
@@ -1334,7 +1334,7 @@ static const char* StateNames[] = {
 
 #define SETVAL(x) do {							\
     *pa++ = RunLength + (x);						\
-    printf("SETVAL: %d\t%d\n", RunLength + (x), a0);			\
+    printf("SETVAL: %d\t%d\n", RunLength + (x), a0);	/*ok*/     	\
     a0 += x;								\
     RunLength = 0;							\
 } while (0)
@@ -1584,6 +1584,12 @@ Fax3PrematureEOF()
  * this is <8 bytes.  We optimize the code here to reflect the
  * machine characteristics.
  */
+
+#if __GNUC__ >= 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
+
 #if SIZEOF_UNSIGNED_LONG == 8
 #define FILL(n, cp)							    \
     switch (n) {							    \
@@ -1658,13 +1664,13 @@ aig_TIFFFax3fillruns(unsigned char* buf, GUInt32* runs, GUInt32* erun,
 			     */
 			    for (; n && !isAligned(cp, long); n--)
 				    *cp++ = 0x00;
-			    lp = (long*) cp;
+			    lp = (long*) (void*) cp;
 			    nw = (GInt32)(n / sizeof (long));
 			    n -= nw * sizeof (long);
 			    do {
 				    *lp++ = 0L;
 			    } while (--nw);
-			    cp = (unsigned char*) lp;
+			    cp = (unsigned char*) (void*) lp;
 			}
 			ZERO(n, cp);
 			run &= 7;
@@ -1693,13 +1699,13 @@ aig_TIFFFax3fillruns(unsigned char* buf, GUInt32* runs, GUInt32* erun,
 			     */
 			    for (; n && !isAligned(cp, long); n--)
 				*cp++ = 0xff;
-			    lp = (long*) cp;
+			    lp = (long*) (void*) cp;
 			    nw = (GInt32)(n / sizeof (long));
 			    n -= nw * sizeof (long);
 			    do {
 				*lp++ = -1L;
 			    } while (--nw);
-			    cp = (unsigned char*) lp;
+			    cp = (unsigned char*) (void*) lp;
 			}
 			FILL(n, cp);
 			run &= 7;
@@ -1715,6 +1721,10 @@ aig_TIFFFax3fillruns(unsigned char* buf, GUInt32* runs, GUInt32* erun,
 }
 #undef	ZERO
 #undef	FILL
+
+#if __GNUC__ >= 7
+#pragma GCC diagnostic pop
+#endif
 
 /************************************************************************/
 /*                           Fax3DecodeRLE()                            */
@@ -1741,8 +1751,8 @@ Fax3DecodeRLE(Fax3BaseState* tif, unsigned char *buf, int occ,
         RunLength = 0;
         pa = thisrun;
 #ifdef FAX3_DEBUG
-        printf("\nBitAcc=%08X, BitsAvail = %d\n", BitAcc, BitsAvail);
-        printf("-------------------- \n");
+        printf("\nBitAcc=%08X, BitsAvail = %d\n", BitAcc, BitsAvail);/*ok*/
+        printf("-------------------- \n");/*ok*/
         fflush(stdout);
 #endif
 

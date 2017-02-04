@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
+ #include "cpl_port.h"  // Must be first.
+
 #include "reflectancecalculator.h"
 #include <cmath>
 #include <cstdlib>
@@ -58,15 +60,12 @@ ReflectanceCalculator::ReflectanceCalculator(std::string sTimeStamp, double rRTO
         m_rHours = iHours + iMins / 60.0;
 }
 
-ReflectanceCalculator::~ReflectanceCalculator()
-{
-
-}
+ReflectanceCalculator::~ReflectanceCalculator() {}
 
 double ReflectanceCalculator::rGetReflectance(double rRadiance, double rLat, double rLon) const
 {
   double phi = rLat * M_PI / 180;
-  double lam = rLon * M_PI / 180;
+  //double lam = rLon * M_PI / 180;
   double rSunDist = rSunDistance();
   double ReflectanceNumerator = rRadiance*rSunDist*rSunDist;
   double zenithAngle = rZenithAngle(phi, rDeclination(), rHourAngle(rLon));
@@ -75,15 +74,15 @@ double ReflectanceCalculator::rGetReflectance(double rRadiance, double rLat, dou
   return Reflectance;
 }
 
-double ReflectanceCalculator::rZenithAngle(double phi, double rDeclin, double rHourAngle) const
+double ReflectanceCalculator::rZenithAngle(double phi, double rDeclin, double l_rHourAngle)
 {
   double rCosZen = (sin(phi) * sin(rDeclin) + cos(phi)
-          * cos(rDeclin) * cos(rHourAngle));
+          * cos(rDeclin) * cos(l_rHourAngle));
   double zenithAngle = acos(rCosZen) * 180 / M_PI;
   return zenithAngle;
 }
 
-const double ReflectanceCalculator::rDeclination() const
+double ReflectanceCalculator::rDeclination() const
 {
   double rJulianDay = m_iDay - 1;
   double yearFraction = (rJulianDay + m_rHours / 24) / iDaysInYear(m_iYear);
@@ -115,7 +114,7 @@ double ReflectanceCalculator::rHourAngle(double rLon) const
   return hourAngle;
 }
 
-const double ReflectanceCalculator::rSunDistance() const
+double ReflectanceCalculator::rSunDistance() const
 {
   int iJulianDay = m_iDay - 1;
   double theta = 2*M_PI *(iJulianDay - 3) / 365.25;
@@ -125,7 +124,7 @@ const double ReflectanceCalculator::rSunDistance() const
   return 1 / sqrt(rE0);
 }
 
-int ReflectanceCalculator::iDaysInYear(int iYear) const
+int ReflectanceCalculator::iDaysInYear(int iYear)
 {
   bool fLeapYear = iDaysInMonth(2, iYear) == 29;
 
@@ -135,7 +134,7 @@ int ReflectanceCalculator::iDaysInYear(int iYear) const
       return 365;
 }
 
-int ReflectanceCalculator::iDaysInMonth(int iMonth, int iYear) const
+int ReflectanceCalculator::iDaysInMonth(int iMonth, int iYear)
 {
   int iDays;
 

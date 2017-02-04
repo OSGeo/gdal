@@ -63,12 +63,12 @@ class ROIPACDataset : public RawDataset
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char **papszOptions );
 
-    virtual void        FlushCache( void );
-    CPLErr              GetGeoTransform( double *padfTransform );
-    virtual CPLErr      SetGeoTransform( double *padfTransform );
-    const char         *GetProjectionRef( void );
-    virtual CPLErr      SetProjection( const char *pszNewProjection );
-    virtual char      **GetFileList( void );
+    virtual void        FlushCache( void ) override;
+    CPLErr              GetGeoTransform( double *padfTransform ) override;
+    virtual CPLErr      SetGeoTransform( double *padfTransform ) override;
+    const char         *GetProjectionRef( void ) override;
+    virtual CPLErr      SetProjection( const char *pszNewProjection ) override;
+    virtual char      **GetFileList( void ) override;
 };
 
 /************************************************************************/
@@ -376,6 +376,11 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
             }
         }
     }
+#ifdef CPL_LSB
+    const bool bNativeOrder = true;
+#else
+    const bool bNativeOrder = false;
+#endif
     poDS->nBands = nBands;
     for( int b = 0; b < nBands; b++ )
     {
@@ -383,7 +388,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
                        new ROIPACRasterBand( poDS, b + 1, poDS->fpImage,
                                              nBandOffset * b,
                                              nPixelOffset, nLineOffset,
-                                             eDataType, TRUE,
+                                             eDataType, bNativeOrder,
                                              TRUE, FALSE ) );
     }
 
@@ -464,7 +469,6 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
             poBand->SetScale( dfScale );
         }
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Set all the other header metadata into the ROI_PAC domain       */

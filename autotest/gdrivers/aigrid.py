@@ -102,6 +102,7 @@ def aigrid_4():
 
     tst = gdaltest.GDALTest( 'AIG', 'ABC3X1UC', 1, 3 )
     return tst.testOpen()
+
 ###############################################################################
 # Verify the colormap, and nodata setting for test file with names of coverage directory and all files in it in all uppercase. Additionally also test for case where clr file resides in parent directory of coverage.
 
@@ -119,6 +120,23 @@ def aigrid_5():
 
     if ds.GetRasterBand(1).GetNoDataValue() != 255.0:
         gdaltest.post_reason( 'Wrong nodata value.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Verify dataset whose sta.adf is 24 bytes
+
+def aigrid_6():
+
+    ds = gdal.Open( 'data/aigrid_sta_24bytes/teststa' )
+
+    if ds.GetRasterBand(1).GetMinimum() != 0.0:
+        gdaltest.post_reason( 'Wrong minimum' )
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetMaximum() != 2.0:
+        gdaltest.post_reason( 'Wrong maximum' )
         return 'fail'
 
     return 'success'
@@ -226,6 +244,7 @@ gdaltest_list = [
     aigrid_3,
     aigrid_4,
     aigrid_5,
+    aigrid_6,
     aigrid_online_1 ]
 
 if __name__ == '__main__':

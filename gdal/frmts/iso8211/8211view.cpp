@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include "iso8211.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static void ViewRecordField( DDFField * poField );
@@ -166,8 +168,9 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
         if( poSFDefn->GetBinaryFormat() == DDFSubfieldDefn::UInt )
             printf( "        %s = %u\n",
                     poSFDefn->GetName(),
-                    poSFDefn->ExtractIntData( pachFieldData, nBytesRemaining,
-                                              &nBytesConsumed ) );
+                    static_cast<unsigned int>(
+                        poSFDefn->ExtractIntData( pachFieldData, nBytesRemaining,
+                                              &nBytesConsumed )) );
         else
             printf( "        %s = %d\n",
                     poSFDefn->GetName(),
@@ -204,7 +207,7 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
                                            &nBytesConsumed );
 
           printf( "        %s = 0x", poSFDefn->GetName() );
-          for( i = 0; i < MIN(nBytesConsumed,24); i++ )
+          for( i = 0; i < std::min(nBytesConsumed, 24); i++ )
               printf( "%02X", pabyBString[i] );
 
           if( nBytesConsumed > 24 )
@@ -216,7 +219,7 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
               vrid_rcnm=pabyBString[0];
               vrid_rcid=pabyBString[1] + (pabyBString[2]*256)+
                   (pabyBString[3]*65536)+ (pabyBString[4]*16777216);
-              printf("\tVRID RCNM = %d,RCID = %u",vrid_rcnm,vrid_rcid);
+              printf("\tVRID RCNM = %d,RCID = %d",vrid_rcnm,vrid_rcid);
           }
           else if ( EQUAL(poSFDefn->GetName(),"LNAM") )
           {
@@ -224,14 +227,13 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
               foid_find=pabyBString[2] + (pabyBString[3]*256)+
                   (pabyBString[4]*65536)+ (pabyBString[5]*16777216);
               foid_fids=pabyBString[6] + (pabyBString[7]*256);
-              printf("\tFOID AGEN = %u,FIDN = %u,FIDS = %u",
+              printf("\tFOID AGEN = %d,FIDN = %d,FIDS = %d",
                      foid_agen,foid_find,foid_fids);
           }
 
           printf( "\n" );
       }
       break;
-
     }
 
     return nBytesConsumed;

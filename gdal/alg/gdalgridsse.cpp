@@ -173,5 +173,4 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
     return CE_None;
 }
 
-
 #endif /* HAVE_SSE_AT_COMPILE_TIME */

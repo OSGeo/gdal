@@ -39,11 +39,10 @@
 
 CPL_CVSID("$Id$");
 
-
 class OGRGenSQLGeomFieldDefn: public OGRGeomFieldDefn
 {
     public:
-        OGRGenSQLGeomFieldDefn(OGRGeomFieldDefn* poGeomFieldDefn) :
+        explicit OGRGenSQLGeomFieldDefn(OGRGeomFieldDefn* poGeomFieldDefn) :
             OGRGeomFieldDefn(poGeomFieldDefn->GetNameRef(),
                              poGeomFieldDefn->GetType()), bForceGeomType(FALSE)
         {
@@ -90,15 +89,23 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
                                               OGRGeometry *poSpatFilter,
                                               const char *pszWHEREIn,
                                               const char *pszDialect ) :
-    poSrcLayer(NULL), pszWHERE(NULL), papoTableLayers(NULL), poDefn(NULL),
-    panGeomFieldToSrcGeomField(NULL), nIndexSize(0),
-    panFIDIndex(NULL), bOrderByValid(FALSE), nNextIndexFID(0),
-    poSummaryFeature(NULL), iFIDFieldIndex(), nExtraDSCount(0), papoExtraDS(NULL)
+    poSrcDS(poSrcDSIn),
+    poSrcLayer(NULL),
+    pSelectInfo(pSelectInfoIn),
+    pszWHERE(NULL),
+    papoTableLayers(NULL),
+    poDefn(NULL),
+    panGeomFieldToSrcGeomField(NULL),
+    nIndexSize(0),
+    panFIDIndex(NULL),
+    bOrderByValid(FALSE),
+    nNextIndexFID(0),
+    poSummaryFeature(NULL),
+    iFIDFieldIndex(),
+    nExtraDSCount(0),
+    papoExtraDS(NULL)
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfoIn;
-
-    poSrcDS = poSrcDSIn;
-    pSelectInfo = pSelectInfoIn;
 
 /* -------------------------------------------------------------------- */
 /*      Identify all the layers involved in the SELECT.                 */
@@ -179,7 +186,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
     iFIDFieldIndex = poSrcDefn->GetFieldCount();
 
     /* + 1 since we can add an implicit geometry field */
-    panGeomFieldToSrcGeomField = (int*) CPLMalloc(sizeof(int) * (1 + psSelectInfo->result_columns));
+    panGeomFieldToSrcGeomField = static_cast<int *>(
+        CPLMalloc(sizeof(int) * (1 + psSelectInfo->result_columns)));
 
     for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
     {
@@ -221,7 +229,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
         if( strlen(psColDef->field_name) == 0 && !bIsGeometry )
         {
             CPLFree( psColDef->field_name );
-            psColDef->field_name = (char *) CPLMalloc(40);
+            psColDef->field_name = static_cast<char *>(CPLMalloc(40));
             snprintf( psColDef->field_name, 40, "FIELD_%d", poDefn->GetFieldCount()+1 );
         }
 
@@ -548,11 +556,10 @@ void OGRGenSQLResultsLayer::ClearFilters()
 /*      Clear any attribute filter installed on the joined layers.      */
 /* -------------------------------------------------------------------- */
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
-    int iJoin;
 
     if( psSelectInfo != NULL )
     {
-        for( iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
+        for( int iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
         {
             swq_join_def *psJoinInfo = psSelectInfo->join_defs + iJoin;
             OGRLayer *poJoinLayer =
@@ -883,11 +890,10 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 /* -------------------------------------------------------------------- */
     const char *pszError = NULL;
     OGRFeature *poSrcFeature = NULL;
-    int iField;
 
     while( (poSrcFeature = poSrcLayer->GetNextFeature()) != NULL )
     {
-        for( iField = 0; iField < psSelectInfo->result_columns; iField++ )
+        for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
 
@@ -963,7 +969,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 /* -------------------------------------------------------------------- */
     if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD )
     {
-        for( iField = 0; iField < psSelectInfo->result_columns; iField++ )
+        for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
             if (psSelectInfo->column_summary != NULL)
@@ -987,7 +993,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
             poSummaryFeature->SetFID( 0 );
         }
 
-        for( iField = 0; iField < psSelectInfo->result_columns; iField++ )
+        for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
             if (psSelectInfo->column_summary != NULL)
@@ -1232,7 +1238,7 @@ static CPLString GetFilterForJoin(swq_expr_node* poExpr, OGRFeature* poSrcFeat,
         {
             CPLString osSubExpr = GetFilterForJoin(poExpr->papoSubExpr[i], poSrcFeat,
                                                    poJoinLayer, secondary_table);
-            if( osSubExpr.size() == 0 )
+            if( osSubExpr.empty() )
             {
                 for( --i; i >=0; i-- )
                     CPLFree( apszSubExpr[i] );
@@ -1275,9 +1281,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
 /* -------------------------------------------------------------------- */
 /*      Fetch the corresponding features from any jointed tables.       */
 /* -------------------------------------------------------------------- */
-    int iJoin;
-
-    for( iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
+    for( int iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
     {
         CPLString osFilter;
 
@@ -1295,7 +1299,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
         //CPLDebug("OGR", "Filter = %s\n", osFilter.c_str());
 
         // if source key is null, we can't do join.
-        if( osFilter.size() == 0 )
+        if( osFilter.empty() )
         {
             apoFeatures.push_back( NULL );
             continue;
@@ -1487,7 +1491,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
                 break;
 
               case SWQ_GEOMETRY:
-                  CPLAssert(0);
+                  CPLAssert(false);
                   break;
 
               default:
@@ -1501,7 +1505,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
 /* -------------------------------------------------------------------- */
 /*      Copy values from any joined tables.                             */
 /* -------------------------------------------------------------------- */
-    for( iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
+    for( int iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
     {
         CPLString osFilter;
 
@@ -1743,10 +1747,10 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     size_t nFeaturesAlloc = 100;
 
     panFIDIndex = NULL;
-    OGRField *pasIndexFields = (OGRField *)
-        CPLCalloc(sizeof(OGRField), nOrderItems * nFeaturesAlloc);
-    GIntBig *panFIDList = (GIntBig *)
-        CPLMalloc(sizeof(GIntBig) * nFeaturesAlloc);
+    OGRField *pasIndexFields = static_cast<OGRField *>(
+        CPLCalloc(sizeof(OGRField), nOrderItems * nFeaturesAlloc));
+    GIntBig *panFIDList = static_cast<GIntBig *>(
+        CPLMalloc(sizeof(GIntBig) * nFeaturesAlloc));
 
 /* -------------------------------------------------------------------- */
 /*      Read in all the key values.                                     */
@@ -2128,7 +2132,6 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
     return nResult;
 }
 
-
 /************************************************************************/
 /*                         AddFieldDefnToSet()                          */
 /************************************************************************/
@@ -2211,9 +2214,10 @@ void OGRGenSQLResultsLayer::FindAndSetIgnoredFields()
     {
         OGRLayer* poLayer = papoTableLayers[iTable];
         OGRFeatureDefn *poSrcFDefn = poLayer->GetLayerDefn();
-        int iSrcField;
         char** papszIgnoredFields = NULL;
-        for(iSrcField=0;iSrcField<poSrcFDefn->GetFieldCount();iSrcField++)
+        for( int iSrcField = 0;
+             iSrcField<poSrcFDefn->GetFieldCount();
+             iSrcField++ )
         {
             OGRFieldDefn* poFDefn = poSrcFDefn->GetFieldDefn(iSrcField);
             if (CPLHashSetLookup(hSet,poFDefn) == NULL)

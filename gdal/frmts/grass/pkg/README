@@ -2,11 +2,11 @@ Standalone GRASS Drivers for GDAL and OGR
 =========================================
 
 This package contains standalone drivers for GRASS raster and vector
-files that can be built after GDAL has been built and installed as an 
-"autoload" driver.  
+files that can be built after GDAL has been built and installed as an
+"autoload" driver.
 
 This is particularly useful in resolving problems with GRASS depending
-on GDAL, but GDAL with GRASS support depending on GRASS.  With this 
+on GDAL, but GDAL with GRASS support depending on GRASS.  With this
 package you can configure and install GDAL normally (--without-grass), then
 build and install GRASS normally and finally build and install this driver.
 
@@ -52,12 +52,12 @@ libraries not found?
 
 Answer:
 
-Your problem is likely to be solved by editing /etc/ld.so.conf to 
-include the locations of proj, gdal, grass, and geos. Specifically, 
-the full path to both gdal-config and geos-config, and the full paths 
+Your problem is likely to be solved by editing /etc/ld.so.conf to
+include the locations of proj, gdal, grass, and geos. Specifically,
+the full path to both gdal-config and geos-config, and the full paths
 to the library locations of proj (often /usr/local/lib) and grass (/
-usr/local/grass-6.0.1/lib). After editing ld.so.conf, run ldconfig, 
+usr/local/grass-6.0.1/lib). After editing ld.so.conf, run ldconfig,
 and you should be good to go.
 
-I ran into this problem this weekend (and posted for help to this 
-list), so it seems to be a pretty common issue. 
+I ran into this problem this weekend (and posted for help to this
+list), so it seems to be a pretty common issue.

@@ -28,8 +28,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
+#include "cpl_port.h"
 #include "swq.h"
+
+#include <cstddef>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -82,7 +87,7 @@ const swq_operation *swq_op_registrar::GetOperator( const char *pszName )
 {
     for( unsigned int i = 0; i < N_OPERATIONS; ++i )
     {
-        if( EQUAL(pszName,swq_apsOperations[i].pszName) )
+        if( EQUAL(pszName, swq_apsOperations[i].pszName) )
             return &(swq_apsOperations[i]);
     }
 
@@ -118,7 +123,7 @@ static swq_field_type SWQColumnFuncChecker(
     swq_expr_node *poNode, int /* bAllowMismatchTypeOnFieldComparison */ )
 {
     const swq_operation *poOp =
-            swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
+        swq_op_registrar::GetOperator(static_cast<swq_op>(poNode->nOperation));
     CPLError( CE_Failure, CPLE_AppDefined,
               "Column Summary Function '%s' found in an inappropriate context.",
               poOp != NULL ? poOp->pszName : "" );

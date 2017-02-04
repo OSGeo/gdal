@@ -239,15 +239,19 @@ The default is FALSE.</p></li>
 
 <p>GeoTIFF files can be created with any GDAL defined band type, including
 the complex types.  Created files may have any number of bands.  Files
-with exactly 3 bands will be
-given a photometric interpretation of RGB, files with exactly four bands
+of type Byte with exactly 3 bands will be given a photometric interpretation
+of RGB, files of type Byte with exactly four bands
 will have a photometric interpretation of RGBA, while all other combinations
-will have a photometric interpretation of MIN_IS_WHITE.  Files with
-pseudo-color tables, or GCPs can currently only be created when creating from
-an existing GDAL dataset with those objects (GDALDriver::CreateCopy()).</p>
+will have a photometric interpretation of MIN_IS_BLACK. Starting with GDAL 2.2,
+non-standard (regarding to the intrinsics TIFF capabilities) band color
+interpretation, such as BGR ordering, will be handled in creation and reading,
+by storing them in the GDAL internal metadata TIFF tag.</p>
 
 <p>Note that the GeoTIFF format does not support parametric description of datums,
 so TOWGS84 parameters in coordinate systems are lost in GeoTIFF format.</p>
+
+<p>You may want to read hints to <a href="https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF">
+generate and read cloud optimized GeoTIFF files</a></p>
 
 <h3>Creation Options</h3>
 
@@ -279,7 +283,10 @@ option can be used to force creation of tiled TIFF files.</p></li>
 <li><p><b>BLOCKYSIZE=n</b>: Set tile or strip height.  Tile height defaults to
 256, strip height defaults to a value such that one strip is 8K or less. </p></li>
 
-<li><p><b>NBITS=n</b>: Create a file with less than 8 bits per sample by passing a value from 1 to 7.  The apparent pixel type should be Byte. From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted. </p></li>
+<li><p><b>NBITS=n</b>: Create a file with less than 8 bits per sample by passing
+a value from 1 to 7.  The apparent pixel type should be Byte.
+From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted.
+From GDAL 2.2, n=16 is accepted for Float32 type to generate half-precision floating point values.</p></li>
 
 <li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/NONE]</b>:
 Set the compression to use.  JPEG should generally only be used with Byte data (8 bit per channel).
@@ -509,6 +516,11 @@ in priority, and if not possible, the later is tried.
 <li>GDAL_GEOREF_SOURCES=comma-separated list with one or several of
 PAM, INTERNAL, TABFILE or WORLDFILE. (GDAL &gt;= 2.2).
 See <a href="#georeferencing"><i>Georeferencing</i></a> paragraph.
+<li>GDAL_NUM_THREADS=number_of_threads/ALL_CPUS: (GDAL &gt;= 2.1)
+Enable multi-threaded compression by specifying the number of worker threads.
+Worth it for slow compression algorithms such as DEFLATE or LZMA. Will be
+ignored for JPEG.  Default is compression in the main thread. Note: this
+configuration option also apply to other parts to GDAL (warping, gridding, ...).</li>
 </ul>
 </p>
 
@@ -521,6 +533,8 @@ See <a href="#georeferencing"><i>Georeferencing</i></a> paragraph.
 <li> <a href="http://www.remotesensing.org/libtiff/">libtiff Page</a></li>
 <li> <a href="http://www.awaresystems.be/imaging/tiff/bigtiff.html">
         Details on BigTIFF file format</a></li>
+<li> <a href="https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF">
+        How to generate and read cloud optimized GeoTIFF files</a></li>
 
 </ul>
 

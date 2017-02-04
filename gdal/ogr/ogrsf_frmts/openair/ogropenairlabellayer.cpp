@@ -49,13 +49,13 @@ OGROpenAirLabelLayer::OGROpenAirLabelLayer( VSILFILE* fp ) :
     poFeatureDefn->SetGeomType( wkbPoint );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
-    OGRFieldDefn    oField1( "CLASS", OFTString);
+    OGRFieldDefn oField1( "CLASS", OFTString);
     poFeatureDefn->AddFieldDefn( &oField1 );
-    OGRFieldDefn    oField2( "NAME", OFTString);
+    OGRFieldDefn oField2( "NAME", OFTString);
     poFeatureDefn->AddFieldDefn( &oField2 );
-    OGRFieldDefn    oField3( "FLOOR", OFTString);
+    OGRFieldDefn oField3( "FLOOR", OFTString);
     poFeatureDefn->AddFieldDefn( &oField3 );
-    OGRFieldDefn    oField4( "CEILING", OFTString);
+    OGRFieldDefn oField4( "CEILING", OFTString);
     poFeatureDefn->AddFieldDefn( &oField4 );
 }
 
@@ -74,7 +74,6 @@ OGROpenAirLabelLayer::~OGROpenAirLabelLayer()
     VSIFCloseL( fpOpenAir );
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -85,7 +84,6 @@ void OGROpenAirLabelLayer::ResetReading()
     nNextFID = 0;
     VSIFSeekL( fpOpenAir, 0, SEEK_SET );
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -132,7 +130,7 @@ OGRFeature *OGROpenAirLabelLayer::GetNextRawFeature()
 
         if (STARTS_WITH_CI(pszLine, "AC "))
         {
-            if (osCLASS.size() != 0)
+            if (!osCLASS.empty())
             {
                 osNAME = "";
                 osCEILING = "";

@@ -30,7 +30,7 @@ Contributors:  Thomas Maurer
 
 NAMESPACE_LERC_START
 
-/**	Base class for all image classes
+/**     Base class for all image classes
  *
  */
 
@@ -55,7 +55,7 @@ public:
     Last_Type_
   };
 
-  bool isType(Type t) const	 { return t == type_; }
+  bool isType(Type t) const      { return t == type_; }
   Type getType() const           { return type_; }
   int getWidth() const          { return width_; }
   int getHeight() const         { return height_; }
@@ -77,11 +77,10 @@ protected:
   {
       return type_ == img.type_ && width_ == img.width_ && height_ == img.height_;
   }
-  bool operator != (const Image& img) const	{ return !operator==(img); };
+  bool operator != (const Image& img) const     { return !operator==(img); };
 
   Type type_;
   int width_, height_;
-
 };
 
 NAMESPACE_LERC_END

@@ -35,7 +35,6 @@ CPL_C_START
 #include "jerror.h"
 CPL_C_END
 
-
 /* Expanded data source object for stdio input */
 
 typedef struct {
@@ -66,7 +65,6 @@ init_source (j_decompress_ptr cinfo)
    */
   src->start_of_file = TRUE;
 }
-
 
 /*
  * Fill the input buffer --- called whenever buffer is emptied.
@@ -107,9 +105,12 @@ fill_input_buffer (j_decompress_ptr cinfo)
   my_src_ptr src = (my_src_ptr) cinfo->src;
   size_t nbytes = VSIFReadL(src->buffer, 1, INPUT_BUF_SIZE, src->infile);
 
-  if (nbytes <= 0) {
+  if (nbytes == 0) {
     if (src->start_of_file)  /* Treat empty input file as fatal error */
-      ERREXIT(cinfo, JERR_INPUT_EMPTY);
+    {
+        cinfo->err->msg_code = JERR_INPUT_EMPTY;
+        cinfo->err->error_exit((j_common_ptr) (cinfo));
+    }
     WARNMS(cinfo, JWRN_JPEG_EOF);
     /* Insert a fake EOI marker */
     src->buffer[0] = (JOCTET) 0xFF;
@@ -280,7 +281,6 @@ void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile)
   src->pub.next_input_byte = NULL; /* until buffer loaded */
 }
 
-
 /* ==================================================================== */
 /*      The rest was derived from jdatadst.c                            */
 /* ==================================================================== */
@@ -317,7 +317,6 @@ init_destination (j_compress_ptr cinfo)
   dest->pub.next_output_byte = dest->buffer;
   dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
 }
-
 
 /*
  * Empty the output buffer --- called whenever buffer fills up.
@@ -360,7 +359,10 @@ empty_output_buffer (j_compress_ptr cinfo)
 #endif
 
   if (VSIFWriteL(dest->buffer, 1, bytes_to_write, dest->outfile) != bytes_to_write)
-    ERREXIT(cinfo, JERR_FILE_WRITE);
+  {
+      cinfo->err->msg_code = JERR_FILE_WRITE;
+      cinfo->err->error_exit((j_common_ptr) (cinfo));
+  }
 
   dest->pub.next_output_byte = dest->buffer;
   dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
@@ -386,12 +388,17 @@ term_destination (j_compress_ptr cinfo)
   /* Write any data remaining in the buffer */
   if (datacount > 0) {
     if (VSIFWriteL(dest->buffer, 1, datacount, dest->outfile) != datacount)
-      ERREXIT(cinfo, JERR_FILE_WRITE);
+    {
+        cinfo->err->msg_code = JERR_FILE_WRITE;
+        cinfo->err->error_exit((j_common_ptr) (cinfo));
+    }
   }
   if( VSIFFlushL(dest->outfile) != 0 )
-    ERREXIT(cinfo, JERR_FILE_WRITE);
+  {
+      cinfo->err->msg_code = JERR_FILE_WRITE;
+      cinfo->err->error_exit((j_common_ptr) (cinfo));
+  }
 }
-
 
 /*
  * Prepare for output to a stdio stream.

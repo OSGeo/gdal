@@ -80,7 +80,7 @@ class AirSARRasterBand : public GDALPamRasterBand
                 AirSARRasterBand( AirSARDataset *, int );
     virtual     ~AirSARRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /* locations of stokes matrix values within padfMatrix ... same order as they
@@ -105,8 +105,8 @@ AirSARRasterBand::AirSARRasterBand( AirSARDataset *poDSIn,
                                     int nBandIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
@@ -272,7 +272,7 @@ AirSARDataset::AirSARDataset() :
     padfMatrix(NULL),
     nDataStart(0),
     nRecordLength(0)
-{ }
+{}
 
 /************************************************************************/
 /*                           ~AirSARDataset()                           */
@@ -491,12 +491,10 @@ char ** AirSARDataset::ReadHeader( VSILFILE * fp, int nFileOffset,
 
         papszHeadInfo =
             CSLSetNameValue( papszHeadInfo, szPrefixedKeyName, szLine+iValue );
-
     }
 
     return papszHeadInfo;
 }
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -624,7 +622,7 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

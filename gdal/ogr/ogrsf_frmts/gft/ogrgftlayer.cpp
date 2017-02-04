@@ -35,26 +35,19 @@ CPL_CVSID("$Id$");
 /*                            OGRGFTLayer()                             */
 /************************************************************************/
 
-OGRGFTLayer::OGRGFTLayer(OGRGFTDataSource* poDSIn)
-
-{
-    this->poDS = poDSIn;
-
-    nNextInSeq = 0;
-
-    poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
-
-    poFeatureDefn = NULL;
-
-    nOffset = 0;
-    bEOF = FALSE;
-
-    iLatitudeField = iLongitudeField = -1;
-    iGeometryField = -1;
-    bHiddenGeometryField = FALSE;
-
-    bFirstTokenIsFID = FALSE;
-}
+OGRGFTLayer::OGRGFTLayer(OGRGFTDataSource* poDSIn) :
+    poDS(poDSIn),
+    poFeatureDefn(NULL),
+    poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    nNextInSeq(0),
+    iGeometryField(-1),
+    iLatitudeField(-1),
+    iLongitudeField(-1),
+    bHiddenGeometryField(FALSE),
+    nOffset(0),
+    bEOF(FALSE),
+    bFirstTokenIsFID(FALSE)
+{}
 
 /************************************************************************/
 /*                            ~OGRGFTLayer()                            */
@@ -335,7 +328,7 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
         else if (eType == wkbPolygon)
             poColl = new OGRMultiPolygon();
         else {
-            CPLAssert(0);
+            CPLAssert(false);
         }
 
         for(psIter = psXML->psChild; psIter; psIter = psIter->psNext)
@@ -371,7 +364,6 @@ static OGRGeometry* ParseKMLGeometry(const char* pszKML)
     CPLDestroyXMLNode(psXML);
     return poGeom;
 }
-
 
 /************************************************************************/
 /*                         BuildFeatureFromSQL()                        */

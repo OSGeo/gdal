@@ -93,33 +93,33 @@ class OGRLIBKMLLayer:public OGRLayer
                                 int bUpdate );
     virtual ~OGRLIBKMLLayer();
 
-    void                      ResetReading() { iFeature = 0; nFID = 1; };
-    OGRFeature               *GetNextFeature();
+    void                      ResetReading() override { iFeature = 0; nFID = 1; };
+    OGRFeature               *GetNextFeature() override;
     OGRFeature               *GetNextRawFeature();
-    OGRFeatureDefn           *GetLayerDefn() { return m_poOgrFeatureDefn; };
+    OGRFeatureDefn           *GetLayerDefn() override { return m_poOgrFeatureDefn; };
     // OGRErr                    SetAttributeFilter(const char * );
-    OGRErr                    ICreateFeature( OGRFeature * poOgrFeat );
-    OGRErr                    ISetFeature( OGRFeature * poOgrFeat );
-    OGRErr                    DeleteFeature( GIntBig nFID );
+    OGRErr                    ICreateFeature( OGRFeature * poOgrFeat ) override;
+    OGRErr                    ISetFeature( OGRFeature * poOgrFeat ) override;
+    OGRErr                    DeleteFeature( GIntBig nFID ) override;
 
-    GIntBig                   GetFeatureCount( int bForce = TRUE );
+    GIntBig                   GetFeatureCount( int bForce = TRUE ) override;
     OGRErr                    GetExtent( OGREnvelope * psExtent,
-                                         int bForce = TRUE );
-    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                                         int bForce = TRUE ) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     //const char               *GetInfo( const char * );
 
     OGRErr                    CreateField( OGRFieldDefn * poField,
-                                           int bApproxOK = TRUE );
+                                           int bApproxOK = TRUE ) override;
 
-    OGRErr                    SyncToDisk();
+    OGRErr                    SyncToDisk() override;
 
-    OGRStyleTable            *GetStyleTable();
-    void                  SetStyleTableDirectly( OGRStyleTable * poStyleTable );
-    void                      SetStyleTable( OGRStyleTable * poStyleTable );
-    const char               *GetName() { return m_pszName; };
-    int                       TestCapability( const char * );
+    OGRStyleTable            *GetStyleTable() override;
+    void                  SetStyleTableDirectly( OGRStyleTable * poStyleTable ) override;
+    void                      SetStyleTable( OGRStyleTable * poStyleTable ) override;
+    const char               *GetName() override { return m_pszName; };
+    int                       TestCapability( const char * ) override;
     kmldom::ContainerPtr      GetKmlLayer() { return m_poKmlLayer; };
     kmldom::ElementPtr        GetKmlLayerRoot() { return m_poKmlLayerRoot; };
     kmldom::SchemaPtr         GetKmlSchema() { return m_poKmlSchema; };
@@ -221,33 +221,32 @@ class OGRLIBKMLDataSource:public OGRDataSource
         kmldom::DocumentPtr poKmlDocument );
 
   public:
-    OGRLIBKMLDataSource       ( kmldom::KmlFactory *poKmlFactory );
+    explicit OGRLIBKMLDataSource       ( kmldom::KmlFactory *poKmlFactory );
     ~OGRLIBKMLDataSource      ();
 
-    const char               *GetName() { return pszName; };
+    const char               *GetName() override { return pszName; };
 
-    int                       GetLayerCount() { return nLayers; }
-    OGRLayer                 *GetLayer( int );
-    OGRLayer                 *GetLayerByName( const char * );
-    OGRErr                    DeleteLayer( int );
-
+    int                       GetLayerCount() override { return nLayers; }
+    OGRLayer                 *GetLayer( int ) override;
+    OGRLayer                 *GetLayerByName( const char * ) override;
+    OGRErr                    DeleteLayer( int ) override;
 
     OGRLayer                 *ICreateLayer( const char *pszName,
                                             OGRSpatialReference * poSpatialRef = NULL,
                                             OGRwkbGeometryType eGType = wkbUnknown,
-                                            char **papszOptions = NULL );
+                                            char **papszOptions = NULL ) override;
 
-    OGRStyleTable            *GetStyleTable();
-    void                      SetStyleTableDirectly( OGRStyleTable * poStyleTable );
-    void                      SetStyleTable( OGRStyleTable * poStyleTable );
+    OGRStyleTable            *GetStyleTable() override;
+    void                      SetStyleTableDirectly( OGRStyleTable * poStyleTable ) override;
+    void                      SetStyleTable( OGRStyleTable * poStyleTable ) override;
 
     int                       Open( const char *pszFilename,
                                      int bUpdate );
     int                       Create( const char *pszFilename,
                                       char **papszOptions );
 
-    void                      FlushCache();
-    int                       TestCapability(const char * );
+    void                      FlushCache() override;
+    int                       TestCapability(const char * ) override;
 
     kmldom::KmlFactory       *GetKmlFactory() { return m_poKmlFactory; };
 

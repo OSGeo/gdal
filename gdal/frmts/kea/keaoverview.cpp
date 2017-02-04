@@ -45,10 +45,7 @@ KEAOverview::KEAOverview(KEADataset *pDataset, int nSrcBand, GDALAccess eAccessI
     this->nRasterYSize = static_cast<int>(nYSize);
 }
 
-KEAOverview::~KEAOverview()
-{
-
-}
+KEAOverview::~KEAOverview() {}
 
 // overridden implementation - calls readFromOverview instead
 CPLErr KEAOverview::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage )

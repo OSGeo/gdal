@@ -97,7 +97,6 @@ static GDALDataset *OGRLIBKMLDriverOpen( GDALOpenInfo* poOpenInfo )
     return poDS;
 }
 
-
 /************************************************************************/
 /*                               Create()                               */
 /************************************************************************/
@@ -206,6 +205,7 @@ void RegisterOGRLIBKML()
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
+"  <Option name='DOCUMENT_ID' type='string' description='Id of the root &lt;Document&gt; node' default='root_doc'/>'"
 "  <Option name='AUTHOR_NAME' type='string' description='Name in <atom:Author> element'/>"
 "  <Option name='AUTHOR_URI' type='string' description='URI in <atom:Author> element'/>"
 "  <Option name='AUTHOR_EMAIL' type='string' description='Email in <atom:Author> element'/>"

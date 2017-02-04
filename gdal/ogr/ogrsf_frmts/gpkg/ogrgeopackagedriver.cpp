@@ -32,7 +32,6 @@ CPL_CVSID("$Id$");
 
 // g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal
 
-
 /* "GP10" in ASCII bytes */
 static const char aGpkgId[4] = {0x47, 0x50, 0x31, 0x30};
 // static const size_t szGpkgIdPos = 68;
@@ -40,7 +39,6 @@ static const char aGpkgId[4] = {0x47, 0x50, 0x31, 0x30};
 /************************************************************************/
 /*                       OGRGeoPackageDriverIdentify()                  */
 /************************************************************************/
-
 
 static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarning )
 {
@@ -246,7 +244,11 @@ void RegisterOGRGeoPackage()
 "  <Option name='DITHER' type='boolean' description='Whether to apply Floyd-Steinberg dithering (for TILE_FORMAT=PNG8)' default='NO'/>"
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
-"  <Option name='LIST_ALL_TABLES' type='boolean' description='Whether all tables, including those non listed in gpkg_contents, should be listed' default='YES' />"
+"  <Option name='LIST_ALL_TABLES' type='string-select' description='Whether all tables, including those non listed in gpkg_contents, should be listed' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"  </Option>"
 "  <Option name='TABLE' type='string' description='Name of tile user-table'/>"
 "  <Option name='ZOOM_LEVEL' type='integer' description='Zoom level of full resolution. If not specified, maximum non-empty zoom level'/>"
 "  <Option name='BAND_COUNT' type='int' min='1' max='4' description='Number of raster bands' default='4'/>"
@@ -303,7 +305,11 @@ COMPRESSION_OPTIONS
 "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
 "  <Option name='IDENTIFIER' type='string' description='Identifier of the layer, as put in the contents table'/>"
 "  <Option name='DESCRIPTION' type='string' description='Description of the layer, as put in the contents table'/>"
-"  <Option name='REGISTER_AS_ASPATIAL' type='boolean' description='Whether non spatial tables should be registered as aspatial in gpkg_contents' default='YES'/>"
+"  <Option name='ASPATIAL_VARIANT' type='string-select' description='How to register non spatial tables' default='GPKG_ATTRIBUTES'>"
+"     <Value>GPKG_ATTRIBUTES</Value>"
+"     <Value>OGR_ASPATIAL</Value>"
+"     <Value>NOT_REGISTERED</Value>"
+"  </Option>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,

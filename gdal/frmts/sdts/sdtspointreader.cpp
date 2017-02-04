@@ -117,7 +117,6 @@ void SDTSRawPoint::Dump( FILE * fp )
     fprintf( fp, "  Vertex = (%.2f,%.2f,%.2f)\n", dfX, dfY, dfZ );
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                             SDTSPointReader                          */
@@ -160,7 +159,7 @@ void SDTSPointReader::Close()
 int SDTSPointReader::Open( const char * pszFilename )
 
 {
-    return( oDDFModule.Open( pszFilename ) );
+    return oDDFModule.Open( pszFilename );
 }
 
 /************************************************************************/
@@ -190,7 +189,7 @@ SDTSRawPoint * SDTSPointReader::GetNextPoint()
 
     if( poRawPoint->Read( poIREF, poRecord ) )
     {
-        return( poRawPoint );
+        return poRawPoint;
     }
 
     delete poRawPoint;

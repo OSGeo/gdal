@@ -123,12 +123,12 @@ class FASTDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr      GetGeoTransform( double * );
-    const char  *GetProjectionRef();
+    CPLErr      GetGeoTransform( double * ) override;
+    const char  *GetProjectionRef() override;
     VSILFILE    *FOpenChannel( const char *, int iBand, int iFASTBand );
     void        TryEuromap_IRS_1C_1D_ChannelNameConvention();
 
-    virtual  char** GetFileList();
+    virtual  char** GetFileList() override;
 };
 
 /************************************************************************/
@@ -145,7 +145,6 @@ class FASTRasterBand : public RawRasterBand
                 FASTRasterBand( FASTDataset *, int, VSILFILE *, vsi_l_offset,
                                 int, int, GDALDataType, int );
 };
-
 
 /************************************************************************/
 /*                           FASTRasterBand()                           */
@@ -242,7 +241,7 @@ char** FASTDataset::GetFileList()
 
     for( int i = 0; i < 6; i++ )
     {
-        if (apoChannelFilenames[i].size() > 0)
+        if (!apoChannelFilenames[i].empty())
             papszFileList =
                 CSLAddString(papszFileList, apoChannelFilenames[i].c_str());
     }
@@ -265,7 +264,6 @@ int FASTDataset::OpenChannel( const char *pszFilenameIn, int iBand )
 /************************************************************************/
 /*                             FOpenChannel()                           */
 /************************************************************************/
-
 
 VSILFILE *FASTDataset::FOpenChannel( const char *pszBandname,
                                      int iBand, int iFASTBand )
@@ -908,6 +906,12 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->SetMetadataItem( CPLSPrintf(pszFirst, i ), pszValue );
             CPLFree( pszValue );
         }
+        else
+        {
+            CPLFree(pszHeader);
+            delete poDS;
+            return NULL;
+        }
         pszTemp += nValueLen;
         pszTemp = strpbrk( pszTemp, "-.0123456789" );
         if ( pszTemp )
@@ -918,6 +922,12 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
                                TRUE, TRUE );
             poDS->SetMetadataItem( CPLSPrintf(pszSecond, i ), pszValue );
             CPLFree( pszValue );
+        }
+        else
+        {
+            CPLFree(pszHeader);
+            delete poDS;
+            return NULL;
         }
         pszTemp += nValueLen;
     }
@@ -969,8 +979,16 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             pszTemp = strpbrk( pszTemp, "-.0123456789" );
             if ( pszTemp )
+            {
                 adfProjParms[i] = CPLScanDouble( pszTemp, VALUE_SIZE );
-            pszTemp = strpbrk( pszTemp, " \t" );
+                pszTemp = strpbrk( pszTemp, " \t" );
+            }
+            if (pszTemp == NULL )
+            {
+                CPLFree(pszHeader);
+                delete poDS;
+                return NULL;
+            }
         }
     }
 

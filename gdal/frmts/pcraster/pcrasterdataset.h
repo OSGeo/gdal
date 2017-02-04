@@ -40,11 +40,7 @@ namespace gdal {
   class PCRasterDatasetTest;
 }
 
-
-
 // namespace {
-
-
 
 //! This class specialises the GDALDataset class for PCRaster datasets.
 /*!
@@ -117,7 +113,7 @@ public:
   // CREATORS
   //----------------------------------------------------------------------------
 
-                   PCRasterDataset     (MAP* map);
+  explicit          PCRasterDataset     (MAP* map);
 
   /* virtual */    ~PCRasterDataset    ();
 
@@ -125,24 +121,18 @@ public:
   // MANIPULATORS
   //----------------------------------------------------------------------------
 
-  CPLErr           SetGeoTransform     (double* transform);
+  CPLErr           SetGeoTransform     (double* transform) override;
 
   //----------------------------------------------------------------------------
   // ACCESSORS
   //----------------------------------------------------------------------------
 
   MAP*             map                 () const;
-
-  CPLErr           GetGeoTransform     (double* transform);
-
+  CPLErr           GetGeoTransform     (double* transform) override;
   CSF_CR           cellRepresentation  () const;
-
   CSF_VS           valueScale          () const;
-
   double           defaultNoDataValue  () const;
-
   bool             location_changed    () const;
-
 };
 // } // namespace
 

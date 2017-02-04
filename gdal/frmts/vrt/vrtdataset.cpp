@@ -31,6 +31,7 @@
 
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 
 #include <algorithm>
@@ -54,7 +55,8 @@ VRTDataset::VRTDataset( int nXSize, int nYSize ) :
     m_bWritable(TRUE),
     m_pszVRTPath(NULL),
     m_poMaskBand(NULL),
-    m_bCompatibleForDatasetIO(-1)
+    m_bCompatibleForDatasetIO(-1),
+    m_papszXMLVRTMetadata(NULL)
 {
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
@@ -84,7 +86,7 @@ VRTDataset::VRTDataset( int nXSize, int nYSize ) :
 VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize)
 
 {
-    return ( new VRTDataset(nXSize, nYSize) );
+    return new VRTDataset(nXSize, nYSize);
 }
 
 /*! @cond Doxygen_Suppress */
@@ -113,6 +115,7 @@ VRTDataset::~VRTDataset()
         delete m_apoOverviews[i];
     for(size_t i=0;i<m_apoOverviewsBak.size();i++)
         delete m_apoOverviewsBak[i];
+    CSLDestroy( m_papszXMLVRTMetadata );
 }
 
 /************************************************************************/
@@ -181,7 +184,10 @@ char** VRTDataset::GetMetadata( const char *pszDomain )
         /* ------------------------------------------------------------------ */
         /*      Convert tree to a single block of XML text.                   */
         /* ------------------------------------------------------------------ */
-        char *l_pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
+        const char* pszDescription = GetDescription();
+        char *l_pszVRTPath = CPLStrdup(
+            pszDescription[0] && !STARTS_WITH(pszDescription, "<VRTDataset") ?
+                CPLGetPath(pszDescription): "" );
         CPLXMLNode *psDSTree = SerializeToXML( l_pszVRTPath );
         char *pszXML = CPLSerializeXMLTree( psDSTree );
 
@@ -189,9 +195,11 @@ char** VRTDataset::GetMetadata( const char *pszDomain )
 
         CPLFree( l_pszVRTPath );
 
-        char* apszContent[2] = { pszXML, NULL };
-        GDALDataset::SetMetadata(apszContent, "xml:VRT");
-        CPLFree(pszXML);
+        CSLDestroy(m_papszXMLVRTMetadata);
+        m_papszXMLVRTMetadata = static_cast<char**>(CPLMalloc(2 * sizeof(char*)));
+        m_papszXMLVRTMetadata[0] = pszXML;
+        m_papszXMLVRTMetadata[1] = NULL;
+        return m_papszXMLVRTMetadata;
     }
 
     return GDALDataset::GetMetadata(pszDomain);
@@ -976,7 +984,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
             new VRTRawRasterBand( this, GetRasterCount() + 1, eType );
 
         char* l_pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
-        if EQUAL(l_pszVRTPath, "")
+        if( EQUAL(l_pszVRTPath, "") )
         {
             CPLFree(l_pszVRTPath);
             l_pszVRTPath = NULL;
@@ -1617,7 +1625,7 @@ void VRTDataset::BuildVirtualOverviews()
     // Currently we expose virtual overviews only if the dataset is made of
     // a single SimpleSource/ComplexSource, in each band.
     // And if the underlying sources have overviews of course
-    if( m_apoOverviews.size() || m_apoOverviewsBak.size() )
+    if( !m_apoOverviews.empty() || !m_apoOverviewsBak.empty() )
         return;
 
     int nOverviews = 0;
@@ -1726,7 +1734,7 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
     // Make implicit overviews invisible, but do not destroy them in case they
     // are already used.  Should the client do that?  Behaviour might undefined
     // in GDAL API?
-    if( m_apoOverviews.size() )
+    if( !m_apoOverviews.empty() )
     {
         m_apoOverviewsBak = m_apoOverviews;
         m_apoOverviews.resize(0);

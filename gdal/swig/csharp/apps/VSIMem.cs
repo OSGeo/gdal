@@ -47,17 +47,17 @@ using OSGeo.GDAL;
 
 /// <summary>
 /// A C# based sample for demonstrating the in-memory virtual file support.
-/// </summary> 
+/// </summary>
 
 class VSIMem {
-	
-	public static void usage() 
 
-	{ 
+	public static void usage()
+
+	{
 		Console.WriteLine("usage example: vsimem [image file]");
 		System.Environment.Exit(-1);
 	}
- 
+
 	public static void Main(string[] args) {
 
 		if (args.Length != 1) usage();

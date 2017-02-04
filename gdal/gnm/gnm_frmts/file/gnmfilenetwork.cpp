@@ -44,6 +44,15 @@ GNMFileNetwork::~GNMFileNetwork()
 {
     FlushCache();
 
+    for (std::map<OGRLayer*, GDALDataset*>::iterator
+            it = m_mpLayerDatasetMap.begin();
+            it != m_mpLayerDatasetMap.end(); ++it)
+    {
+            GDALClose(it->second);
+    }
+
+    m_mpLayerDatasetMap.clear();
+
     GDALClose(m_pGraphDS);
     GDALClose(m_pFeaturesDS);
     GDALClose(m_pMetadataDS);
@@ -546,7 +555,6 @@ OGRLayer *GNMFileNetwork::ICreateLayer(const char *pszName,
         GDALClose(poDS);
         return NULL;
     }
-
 
     OGRFieldDefn oFieldBlock(GNM_SYSFIELD_BLOCKED, OFTInteger);
     if( poLayer->CreateField( &oFieldBlock ) != OGRERR_NONE )

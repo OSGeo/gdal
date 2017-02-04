@@ -38,41 +38,41 @@
 class XRITHeaderParser
 {
 public:
-  XRITHeaderParser(std::ifstream & ifile);
+  explicit XRITHeaderParser(std::ifstream & ifile);
 
   virtual ~XRITHeaderParser();
 
-  const bool isValid() {
+  bool isValid() const {
     return m_isValid;
   }
 
-  const bool isPrologue() {
+  bool isPrologue() const {
     return m_isPrologue;
   }
 
-  const long dataSize() {
+  long dataSize() const {
     return m_dataSize;
   }
 
-  const int nrRows() {
+  int nrRows() const {
     return m_nrRows;
   }
 
-  const int nrColumns() {
+  int nrColumns() const {
     return m_nrColumns;
   }
 
-  const int nrBitsPerPixel() {
+  int nrBitsPerPixel() const {
     return m_nrBitsPerPixel;
   }
 
-  const bool isScannedNorth() {
+  bool isScannedNorth() const {
     return m_scanNorth;
   }
 
 private:
-  int parseInt16(unsigned char * num);
-  long parseInt32(unsigned char * num);
+  static int parseInt16(unsigned char * num);
+  static long parseInt32(unsigned char * num);
   void parseHeader(unsigned char * buf, long totalHeaderLength);
 
   bool m_isValid;

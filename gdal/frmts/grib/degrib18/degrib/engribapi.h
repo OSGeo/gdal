@@ -75,7 +75,6 @@ int fillSect3 (enGribMeta *en, uShort2 tmplNum, double majEarth,
                double meshLat, double orientLon, double scaleLat1,
                double scaleLat2, double southLat, double southLon);
 
-
 int fillSect4_0 (enGribMeta *en, uShort2 tmplNum, uChar cat, uChar subCat,
                  uChar genProcess, uChar bgGenID, uChar genID,
                  uChar f_valCutOff, sInt4 cutOff, uChar timeCode,

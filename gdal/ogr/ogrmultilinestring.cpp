@@ -27,7 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_geometry.h"
+
+#include <cstddef>
+
+#include "cpl_error.h"
+#include "ogr_core.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
@@ -78,7 +84,8 @@ OGRMultiLineString::~OGRMultiLineString() {}
  * @since GDAL 2.1
  */
 
-OGRMultiLineString& OGRMultiLineString::operator=( const OGRMultiLineString& other )
+OGRMultiLineString &
+OGRMultiLineString::operator=( const OGRMultiLineString& other )
 {
     if( this != &other )
     {
@@ -86,7 +93,6 @@ OGRMultiLineString& OGRMultiLineString::operator=( const OGRMultiLineString& oth
     }
     return *this;
 }
-
 
 /************************************************************************/
 /*                          getGeometryType()                           */
@@ -97,7 +103,7 @@ OGRwkbGeometryType OGRMultiLineString::getGeometryType() const
 {
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
         return wkbMultiLineStringZM;
-    else if( flags & OGR_G_MEASURED  )
+    else if( flags & OGR_G_MEASURED )
         return wkbMultiLineStringM;
     else if( flags & OGR_G_3D )
         return wkbMultiLineString25D;
@@ -119,7 +125,8 @@ const char * OGRMultiLineString::getGeometryName() const
 /*                          isCompatibleSubType()                       */
 /************************************************************************/
 
-OGRBoolean OGRMultiLineString::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
+OGRBoolean
+OGRMultiLineString::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 {
     return wkbFlatten(eGeomType) == wkbLineString;
 }

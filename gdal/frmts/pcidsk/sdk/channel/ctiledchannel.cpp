@@ -182,7 +182,7 @@ void CTiledChannel::EstablishAccess() const
 void CTiledChannel::LoadTileInfoBlock( int block )
 
 {
-    assert( tile_offsets[block].size() == 0 );
+    assert( tile_offsets[block].empty() );
 
 /* -------------------------------------------------------------------- */
 /*      How many tiles in this block?                                   */
@@ -236,7 +236,7 @@ void CTiledChannel::LoadTileInfoBlock( int block )
 void CTiledChannel::SaveTileInfoBlock( int block )
 
 {
-    assert( tile_offsets[block].size() != 0 );
+    assert( !tile_offsets[block].empty() );
     int tiles_in_block = static_cast<int>(tile_offsets[block].size());
 
 /* -------------------------------------------------------------------- */
@@ -278,7 +278,7 @@ void CTiledChannel::GetTileInfo( int tile_index, uint64 &offset, int &size )
     int block = tile_index / tile_block_size;
     int index_within_block = tile_index - block * tile_block_size;
 
-    if( tile_offsets[block].size() == 0 )
+    if( tile_offsets[block].empty() )
         LoadTileInfoBlock( block );
 
     offset = tile_offsets[block][index_within_block];
@@ -295,7 +295,7 @@ void CTiledChannel::SetTileInfo( int tile_index, uint64 offset, int size )
     int block = tile_index / tile_block_size;
     int index_within_block = tile_index - block * tile_block_size;
 
-    if( tile_offsets[block].size() == 0 )
+    if( tile_offsets[block].empty() )
         LoadTileInfoBlock( block );
 
     if( offset != tile_offsets[block][index_within_block]
@@ -317,7 +317,7 @@ void CTiledChannel::SetTileInfo( int tile_index, uint64 offset, int size )
 void CTiledChannel::Synchronize()
 
 {
-    if( tile_info_dirty.size() == 0 )
+    if( tile_info_dirty.empty() )
         return;
 
     int i;
@@ -385,7 +385,7 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
     }
 
 /* -------------------------------------------------------------------- */
-/*      The simpliest case it an uncompressed direct and complete       */
+/*      The simplest case it an uncompressed direct and complete       */
 /*      tile read into the destination buffer.                          */
 /* -------------------------------------------------------------------- */
     if( xoff == 0 && xsize == GetBlockWidth() 
@@ -537,7 +537,7 @@ int CTiledChannel::WriteBlock( int block_index, void *buffer )
     GetTileInfo( block_index, tile_offset, tile_size );
 
 /* -------------------------------------------------------------------- */
-/*      The simpliest case it an uncompressed direct and complete       */
+/*      The simplest case it an uncompressed direct and complete       */
 /*      tile read into the destination buffer.                          */
 /* -------------------------------------------------------------------- */
     if( compression == "NONE" 
@@ -783,19 +783,19 @@ void CTiledChannel::RLECompressBlock( PCIDSKBuffer &oUncompressedData,
 /* -------------------------------------------------------------------- */
     while( src_offset < src_bytes )
     {
-        bool	bGotARun = false;
+        bool    bGotARun = false;
 
 /* -------------------------------------------------------------------- */
-/*	Establish the run length, and emit if greater than 3. 		*/
+/*      Establish the run length, and emit if greater than 3.           */
 /* -------------------------------------------------------------------- */
         if( src_offset + 3*pixel_size < src_bytes )
         {
-            int		count = 1;
+            int         count = 1;
 
             while( count < 127
                    && src_offset + count*pixel_size < src_bytes )
             {
-                bool	bWordMatch = true;
+                bool    bWordMatch = true;
 
                 for( i = 0; i < pixel_size; i++ )
                 {
@@ -829,18 +829,18 @@ void CTiledChannel::RLECompressBlock( PCIDSKBuffer &oUncompressedData,
         }
         
 /* -------------------------------------------------------------------- */
-/*      Otherwise emit a literal till we encounter at least a three	*/
-/*	word series.							*/
+/*      Otherwise emit a literal till we encounter at least a three     */
+/*      word series.                                                    */
 /* -------------------------------------------------------------------- */
         if( !bGotARun )
         {
-            int		count = 1;
-            int		match_count = 0;
+            int         count = 1;
+            int         match_count = 0;
 
             while( count < 127
                    && src_offset + count*pixel_size < src_bytes )
             {
-                bool	bWordMatch = true;
+                bool    bWordMatch = true;
 
                 for( i = 0; i < pixel_size; i++ )
                 {

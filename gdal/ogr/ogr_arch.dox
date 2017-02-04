@@ -10,49 +10,49 @@ simple features inspired API.<p>
 
 Because OGR is modeled on the OpenGIS simple features data model, it is
 very helpful to review the SFCOM, or other simple features interface
-specifications which can be retrieved from the 
+specifications which can be retrieved from the
 <a href="http://www.opengeospatial.org">Open Geospatial Consortium</a> web site.  Data
-types, and method names are modeled on those from the interface 
+types, and method names are modeled on those from the interface
 specifications.<p>
 
 \section ogr_arch_overview Class Overview
 
 <ul>
-<li> <b>Geometry</b> (<a href="ogr__geometry_8h_source.html">ogr_geometry.h</a>): 
-The geometry classes (OGRGeometry, etc) encapsulate the OpenGIS model vector 
+<li> <b>Geometry</b> (<a href="ogr__geometry_8h_source.html">ogr_geometry.h</a>):
+The geometry classes (OGRGeometry, etc) encapsulate the OpenGIS model vector
 data as well as providing some geometry operations, and translation to/from
 well known binary and text format.  A geometry includes a spatial reference
 system (projection).<p>
 
-<li> <b>Spatial Reference</b> 
+<li> <b>Spatial Reference</b>
 (<a href="ogr__spatialref_8h_source.html">ogr_spatialref.h</a>):
-An OGRSpatialReference encapsulates the definition of a projection and 
+An OGRSpatialReference encapsulates the definition of a projection and
 datum.<p>
 
 <li> <b>Feature</b> (<a href="ogr__feature_8h_source.html">ogr_feature.h</a>):
-The OGRFeature encapsulates the definition of a whole feature, that is a 
+The OGRFeature encapsulates the definition of a whole feature, that is a
 geometry and a set of attributes.<p>
 
 <li> <b>Feature Class Definition</b>
-(<a href="ogr__feature_8h_source.html">ogr_feature.h</a>): 
+(<a href="ogr__feature_8h_source.html">ogr_feature.h</a>):
 The OGRFeatureDefn class captures the schema (set of field definitions) for
 a group of related features (normally a whole layer).<p>
 
 <li> <b>Layer</b>
-(<a href="ogrsf__frmts_8h_source.html">ogrsf_frmts.h</a>): 
-OGRLayer is an abstract base class represent a layer of features in an 
+(<a href="ogrsf__frmts_8h_source.html">ogrsf_frmts.h</a>):
+OGRLayer is an abstract base class represent a layer of features in an
 GDALDataset.<p>
 
 <li> <b>Dataset</b>
-(<a href="gdal__priv_8h_source.html">gdal_priv.h</a>): 
+(<a href="gdal__priv_8h_source.html">gdal_priv.h</a>):
 A GDALDataset is an abstract base class
 representing a file or database containing one or more OGRLayer
 objects.<p>
 
-<li> <b>Drivers</b> 
+<li> <b>Drivers</b>
 (<a href="gdal__priv_8h_source.html">gdal_priv.h</a>):
 A GDALDriver represents a translator for a specific
-format, opening GDALDataset objects.  All available drivers are managed 
+format, opening GDALDataset objects.  All available drivers are managed
 by the GDALDriverManager.<p>
 
 </ul>
@@ -60,9 +60,9 @@ by the GDALDriverManager.<p>
 \section ogr_arch_geometry Geometry
 
 The geometry classes are represent various kinds of vector geometry.  All
-the geometry classes derived from OGRGeometry which defines the common 
+the geometry classes derived from OGRGeometry which defines the common
 services of all geometries.  Types of geometry include OGRPoint, OGRLineString,
-OGRPolygon, OGRGeometryCollection, OGRMultiPolygon, OGRMultiPoint, 
+OGRPolygon, OGRGeometryCollection, OGRMultiPolygon, OGRMultiPoint,
 and OGRMultiLineString.
 
 GDAL 2.0 extends those geometry type with non-linear geometries with the
@@ -71,9 +71,9 @@ OGRMultiSurface classes.
 
 Additional intermediate abstract base classes contain functionality that
 could eventually be implemented by other geometry types.  These include
-OGRCurve (base class for OGRLineString) and OGRSurface (base class for 
+OGRCurve (base class for OGRLineString) and OGRSurface (base class for
 OGRPolygon).  Some intermediate interfaces modeled in the simple features
-abstract model and SFCOM are not modeled in OGR at this time.  In most 
+abstract model and SFCOM are not modeled in OGR at this time.  In most
 cases the methods are aggregated into other classes.<p>
 
 The OGRGeometryFactory is used to convert well known text, and well known
@@ -82,8 +82,8 @@ formats for representing all the types of simple features geometries.<p>
 
 In a manner based on the geometry object in SFCOM, the OGRGeometry includes
 a reference to an OGRSpatialReference object, defining the spatial reference
-system of that geometry.  This is normally a reference to a shared 
-spatial reference object with reference counting for each of the 
+system of that geometry.  This is normally a reference to a shared
+spatial reference object with reference counting for each of the
 OGRGeometry objects using it.<p>
 
 Many of the spatial analysis methods (such as computing overlaps and so
@@ -109,39 +109,39 @@ also converted to their linear approximation if necessary.
 
 The OGRSpatialReference class is intended to store an OpenGIS Spatial
 Reference System definition.  Currently local, geographic and projected
-coordinate systems are supported.  Vertical coordinate systems, geocentric 
+coordinate systems are supported.  Vertical coordinate systems, geocentric
 coordinate systems, and compound (horizontal + vertical) coordinate systems
 are as well supported in recent GDAL versions.<p>
 
 The spatial coordinate system data model is inherited from the OpenGIS
 <b>Well Known Text</b> format.  A simple form of this is defined in the
-Simple Features specifications.  A more sophisticated form is found in 
+Simple Features specifications.  A more sophisticated form is found in
 the Coordinate Transformation specification.  The OGRSpatialReference is
 built on the features of the Coordinate Transformation specification but
 is intended to be compatible with the earlier simple features form.<p>
 
 There is also an associated OGRCoordinateTransformation class that
 encapsulates use of PROJ.4 for converting between different coordinate
-systems.  There is a <a href="osr_tutorial.html">tutorial</a> available 
+systems.  There is a <a href="osr_tutorial.html">tutorial</a> available
 describing how to use the OGRSpatialReference class.<p>
 
 \section ogr_arch_feature Feature / Feature Definition
 
-The OGRGeometry captures the geometry of a vector feature ... the 
-spatial position/region of a feature.  The OGRFeature contains this 
-geometry, and adds feature attributes, feature id, 
+The OGRGeometry captures the geometry of a vector feature ... the
+spatial position/region of a feature.  The OGRFeature contains this
+geometry, and adds feature attributes, feature id,
 and a feature class identifier. Starting with OGR 1.11,
 <a href="http://trac.osgeo.org/gdal/wiki/rfc41_multiple_geometry_fields">
 several geometries</a> can be associated to a OGRFeature.<p>
 
 The set of attributes, their types, names and so forth is represented
 via the OGRFeatureDefn class.  One OGRFeatureDefn normally exists for a
-layer of features.  The same definition is shared in a reference counted 
+layer of features.  The same definition is shared in a reference counted
 manner by the feature of that type (or feature class).<p>
 
 The feature id (FID) of a feature is intended to be a unique identifier for
 the feature within the layer it is a member of.  Freestanding features, or
-features not yet written to a layer may have a null (OGRNullFID) feature id. 
+features not yet written to a layer may have a null (OGRNullFID) feature id.
 The feature ids are modeled in OGR as a 64-bit integer (GDAL 2.0 or later);
 however, this is not sufficiently expressive to model the natural feature ids in some
 formats.  For instance, the GML feature id is a string.<p>
@@ -158,16 +158,16 @@ class. Each geometry field has its own indicator of geometry type allowed,
 returned by OGRGeomFieldDefn::GetType(), and its spatial reference system,
 returned by OGRGeomFieldDefn::GetSpatialRef().
 
-The OGRFeatureDefn also contains a feature class name (normally 
+The OGRFeatureDefn also contains a feature class name (normally
 used as a layer name).<p>
 
 
 \section ogr_arch_layer Layer
 
-An OGRLayer represents a layer of features within a data source.  All 
-features in an OGRLayer share a common schema and are of the same 
-OGRFeatureDefn.  An OGRLayer class also contains methods for reading 
-features from the data source. 
+An OGRLayer represents a layer of features within a data source.  All
+features in an OGRLayer share a common schema and are of the same
+OGRFeatureDefn.  An OGRLayer class also contains methods for reading
+features from the data source.
 The OGRLayer can be thought of as a gateway for reading and
 writing features from an underlying data source, normally a file format.
 In SFCOM and other table based simple features implementation an OGRLayer
@@ -184,7 +184,7 @@ One flaw in the
 current OGR architecture is that the spatial filter is set directly on
 the OGRLayer which is intended to be the only representative of a given
 layer in a data source.  This means it isn't possible to have multiple
-read operations active at one time with different spatial filters on 
+read operations active at one time with different spatial filters on
 each.  This aspect may be revised in the future to introduce an OGRLayerView
 class or something similar.<p>
 
@@ -202,26 +202,26 @@ layer in a data store. <p>
 fixed schema the way that the SFCOM and SFSQL models do.  The fact that
 features belong to a feature collection that is potentially not directly
 related to their current feature grouping may be important to implementing
-SFCORBA support using OGR. 
+SFCORBA support using OGR.
 
 </ol>
 
-The OGRLayer class is an abstract base class.  An implementation is 
-expected to be subclassed for each file format driver implemented. 
+The OGRLayer class is an abstract base class.  An implementation is
+expected to be subclassed for each file format driver implemented.
 OGRLayers are normally owned directly by their GDALDataset, and aren't
 instantiated or destroyed directly.<p>
 
 \section ogr_arch_dataset Dataset
 
-A GDALDataset represents a set of OGRLayer objects.  This usually 
+A GDALDataset represents a set of OGRLayer objects.  This usually
 represents a single file, set of files, database or gateway.  A GDALDataset
 has a list of OGRLayers which it owns but can return references to.<p>
 
-GDALDataset is an abstract base class.  An implementation is 
+GDALDataset is an abstract base class.  An implementation is
 expected to be subclassed for each file format driver implemented.
 GDALDataset objects are not normally instantiated directly but rather with
 the assistance of an GDALDriver.  Deleting an GDALDataset closes access
-to the underlying persistent data source, but does not normally result in 
+to the underlying persistent data source, but does not normally result in
 deletion of that file.<p>
 
 A GDALDataset has a name (usually a filename) that can be used to reopen
@@ -236,13 +236,13 @@ datasource. <p>
 
 \section ogr_arch_drivers Drivers
 
-A GDALDriver object is instantiated for each file format supported.  
+A GDALDriver object is instantiated for each file format supported.
 The GDALDriver objects are registered with the GDALDriverManager, a
 singleton class that is normally used to open new datasets.<p>
 
 It is intended that a new GDALDriver object is instantiated and define function
 pointers for operations like Identify(), Open() for each
-file format to be supported (along with a file format specific 
+file format to be supported (along with a file format specific
 GDALDataset, and OGRLayer classes).<p>
 
 On application startup registration

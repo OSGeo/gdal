@@ -141,34 +141,30 @@ int TABGenerateArc(OGRLineString *poLine, int numPoints,
                    double dXRadius, double dYRadius,
                    double dStartAngle, double dEndAngle)
 {
-    double dX, dY, dAngleStep, dAngle=0.0;
-    int i;
-
     // Adjust angles to go counterclockwise
     if (dEndAngle < dStartAngle)
         dEndAngle += 2.0*M_PI;
 
-    dAngleStep = (dEndAngle-dStartAngle)/(numPoints-1.0);
+    const double dAngleStep = (dEndAngle - dStartAngle) / (numPoints - 1.0);
 
-    for(i=0; i<numPoints; i++)
+    double dAngle = 0.0;
+    for( int i = 0; i<numPoints; i++ )
     {
-        dAngle = (dStartAngle + (double)i*dAngleStep);
-        dX = dCenterX + dXRadius*cos(dAngle);
-        dY = dCenterY + dYRadius*sin(dAngle);
+        dAngle = dStartAngle + (double)i*dAngleStep;
+        const double dX = dCenterX + dXRadius*cos(dAngle);
+        const double dY = dCenterY + dYRadius*sin(dAngle);
         poLine->addPoint(dX, dY);
     }
 
     // Complete the arc with the last EndAngle, to make sure that
     // the arc is correctly closed.
 
-    dX = dCenterX + dXRadius*cos(dAngle);
-    dY = dCenterY + dYRadius*sin(dAngle);
+    const double dX = dCenterX + dXRadius*cos(dAngle);
+    const double dY = dCenterY + dYRadius*sin(dAngle);
     poLine->addPoint(dX,dY);
-
 
     return 0;
 }
-
 
 /**********************************************************************
  *                       TABCloseRing()
@@ -327,15 +323,12 @@ static GBool TABAdjustCaseSensitiveFilename(char *
 #endif
 }
 
-
-
-
 /**********************************************************************
  *                       TABAdjustFilenameExtension()
  *
  * Because Unix filenames are case sensitive and MapInfo datasets often have
  * mixed cases filenames, we use this function to find the right filename
- * to use ot open a specific file.
+ * to use to open a specific file.
  *
  * This function works directly on the source string, so the filename it
  * contains at the end of the call is the one that should be used.
@@ -347,7 +340,6 @@ static GBool TABAdjustCaseSensitiveFilename(char *
 GBool TABAdjustFilenameExtension(char *pszFname)
 {
     VSIStatBufL  sStatBuf;
-    int         i;
 
     /*-----------------------------------------------------------------
      * First try using filename as provided
@@ -360,7 +352,9 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     /*-----------------------------------------------------------------
      * Try using uppercase extension (we assume that fname contains a '.')
      *----------------------------------------------------------------*/
-    for(i = static_cast<int>(strlen(pszFname))-1; i >= 0 && pszFname[i] != '.'; i--)
+    for( int i = static_cast<int>(strlen(pszFname))-1;
+         i >= 0 && pszFname[i] != '.';
+         i-- )
     {
         pszFname[i] = (char)toupper(pszFname[i]);
     }
@@ -373,7 +367,9 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     /*-----------------------------------------------------------------
      * Try using lowercase extension
      *----------------------------------------------------------------*/
-    for(i = static_cast<int>(strlen(pszFname))-1; i >= 0 && pszFname[i] != '.'; i--)
+    for( int i = static_cast<int>(strlen(pszFname))-1;
+         i >= 0 && pszFname[i] != '.';
+         i-- )
     {
         pszFname[i] = (char)tolower(pszFname[i]);
     }
@@ -389,8 +385,6 @@ GBool TABAdjustFilenameExtension(char *pszFname)
      *----------------------------------------------------------------*/
     return TABAdjustCaseSensitiveFilename(pszFname);
 }
-
-
 
 /**********************************************************************
  *                       TABGetBasename()
@@ -420,8 +414,7 @@ char *TABGetBasename(const char *pszFname)
      * Now allocate our own copy and remove extension
      *----------------------------------------------------------------*/
     char *pszBasename = CPLStrdup(pszTmp);
-    int i;
-    for(i=static_cast<int>(strlen(pszBasename))-1; i >= 0; i-- )
+    for( int i = static_cast<int>(strlen(pszBasename))-1; i >= 0; i-- )
     {
         if (pszBasename[i] == '.')
         {
@@ -432,8 +425,6 @@ char *TABGetBasename(const char *pszFname)
 
     return pszBasename;
 }
-
-
 
 /**********************************************************************
  *                       TAB_CSLLoad()
@@ -467,8 +458,6 @@ char **TAB_CSLLoad(const char *pszFname)
 
     return papszStrList;
 }
-
-
 
 /**********************************************************************
  *                       TABUnEscapeString()
@@ -518,7 +507,6 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
         // We'll work on the original.
         pszWorkString = pszString;
     }
-
 
     while (pszString[i])
     {
@@ -650,7 +638,7 @@ char *TABCleanFieldName(const char *pszSrcName)
     for( int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++ )
     {
         if ( pszSrcName[i]=='#' )
-	{
+        {
             if (i == 0)
             {
                 pszNewName[i] = '_';
@@ -677,7 +665,6 @@ char *TABCleanFieldName(const char *pszSrcName)
 
     return pszNewName;
 }
-
 
 /**********************************************************************
  * MapInfo Units string to numeric ID conversion
@@ -707,7 +694,6 @@ static const MapInfoUnitsInfo gasUnitsList[] =
     {32, "rd"},
     {-1, NULL}
 };
-
 
 /**********************************************************************
  *                       TABUnitIdToString()
@@ -755,7 +741,6 @@ int TABUnitIdFromString(const char *pszName)
 
     return -1;
 }
-
 
 /**********************************************************************
  *                       TABSaturatedAdd()

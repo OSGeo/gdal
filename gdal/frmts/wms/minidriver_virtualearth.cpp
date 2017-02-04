@@ -30,69 +30,53 @@
 #include "wmsdriver.h"
 #include "minidriver_virtualearth.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
-CPP_GDALWMSMiniDriverFactory(VirtualEarth)
+// These should be global, they are used all over the place
+const double SPHERICAL_RADIUS = 6378137.0;
+const double MAX_GM = SPHERICAL_RADIUS * M_PI;  // 20037508.342789244
 
-GDALWMSMiniDriver_VirtualEarth::GDALWMSMiniDriver_VirtualEarth()
+WMSMiniDriver_VirtualEarth::WMSMiniDriver_VirtualEarth() {}
+
+WMSMiniDriver_VirtualEarth::~WMSMiniDriver_VirtualEarth() {}
+
+CPLErr WMSMiniDriver_VirtualEarth::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions)
 {
-}
+    m_base_url = CPLGetXMLValue(config, "ServerURL", "");
+    if (m_base_url.empty()) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "GDALWMS, VirtualEarth mini-driver: ServerURL missing.");
+        return CE_Failure;
+    }
 
-GDALWMSMiniDriver_VirtualEarth::~GDALWMSMiniDriver_VirtualEarth()
-{
-}
-
-CPLErr GDALWMSMiniDriver_VirtualEarth::Initialize(CPLXMLNode *config)
-{
-    CPLErr ret = CE_None;
-
-    if (ret == CE_None) {
-        const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
-        if (base_url[0] != '\0') {
-            m_base_url = base_url;
-            if (m_base_url.find("${quadkey}") == std::string::npos) {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "GDALWMS, VirtualEarth mini-driver: ${quadkey} missing in ServerURL.");
-                ret = CE_Failure;
-            }
-        } else {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "GDALWMS, VirtualEarth mini-driver: ServerURL missing.");
-            ret = CE_Failure;
-        }
+    if (m_base_url.find("${quadkey}") == std::string::npos) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "GDALWMS, VirtualEarth mini-driver: ${quadkey} missing in ServerURL.");
+        return CE_Failure;
     }
 
     m_parent_dataset->WMSSetDefaultBlockSize(256, 256);
-    m_parent_dataset->WMSSetDefaultDataWindowCoordinates(-20037508.34,20037508.34,20037508.34,-20037508.34);
+    m_parent_dataset->WMSSetDefaultDataWindowCoordinates(-MAX_GM, MAX_GM, MAX_GM, -MAX_GM);
     m_parent_dataset->WMSSetDefaultTileLevel(19);
     m_parent_dataset->WMSSetDefaultOverviewCount(18);
     m_parent_dataset->WMSSetNeedsDataWindow(FALSE);
-
-    m_projection_wkt=ProjToWKT("EPSG:900913");
-
-    return ret;
+    m_projection_wkt = ProjToWKT("EPSG:900913");
+    return CE_None;
 }
 
-void GDALWMSMiniDriver_VirtualEarth::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
+CPLErr WMSMiniDriver_VirtualEarth::TiledImageRequest(WMSHTTPRequest &request,
+                                                CPL_UNUSED const GDALWMSImageRequestInfo &iri,
+                                                const GDALWMSTiledImageRequestInfo &tiri)
 {
-    caps->m_capabilities_version = 1;
-    caps->m_has_arb_overviews = 0;
-    caps->m_has_image_request = 0;
-    caps->m_has_tiled_image_requeset = 1;
-    caps->m_max_overview_count = 32;
-}
-
-void GDALWMSMiniDriver_VirtualEarth::TiledImageRequest(CPLString *url,
-                                                       CPL_UNUSED const GDALWMSImageRequestInfo &iri,
-                                                       const GDALWMSTiledImageRequestInfo &tiri)
-{
-
-    *url = m_base_url;
+    CPLString &url = request.URL;
+    url = m_base_url;
 
     char szTileNumber[64];
     int x = tiri.m_x;
     int y = tiri.m_y;
-    int z = MIN(32,tiri.m_level);
+    int z = std::min(32, tiri.m_level);
 
     for(int i = 0; i < z; i ++)
     {
@@ -106,11 +90,8 @@ void GDALWMSMiniDriver_VirtualEarth::TiledImageRequest(CPLString *url,
     }
     szTileNumber[z] = 0;
 
-    URLSearchAndReplace(url, "${quadkey}", "%s", szTileNumber);
-    URLSearchAndReplace(url, "${server_num}", "%d",
-                        (tiri.m_x + tiri.m_y + z) % 4);
-}
-
-const char *GDALWMSMiniDriver_VirtualEarth::GetProjectionInWKT() {
-    return m_projection_wkt.c_str();
+    URLSearchAndReplace(&url, "${quadkey}", "%s", szTileNumber);
+    // Sounds like this should be random
+    URLSearchAndReplace(&url, "${server_num}", "%d", (tiri.m_x + tiri.m_y + z) % 4);
+    return CE_None;
 }

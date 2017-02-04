@@ -37,10 +37,7 @@ CPL_CVSID("$Id$");
 /*                           ~OGRDataSource()                           */
 /************************************************************************/
 
-OGRDataSource::OGRDataSource()
-
-{
-}
+OGRDataSource::OGRDataSource() {}
 
 /************************************************************************/
 /*                         DestroyDataSource()                          */

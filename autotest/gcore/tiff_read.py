@@ -249,6 +249,14 @@ def tiff_read_ojpeg():
         print('Expected checksum = %d. Got = %d' % (expected_cs, got_cs))
         return 'fail'
 
+    #
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('data/zackthecat_corrupted.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    gdal.PopErrorHandler()
+    if cs != 0:
+        print('Should be 0 with internal libtiff')
+
     return 'success'
 
 ###############################################################################
@@ -1960,7 +1968,6 @@ def tiff_read_md5():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    print metadata
     if len(metadata) != 5:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
@@ -2706,6 +2713,141 @@ def tiff_read_aux():
 
     return 'success'
 
+
+def tiff_read_one_band_from_two_bands():
+
+    gdal.Translate('/vsimem/tiff_read_one_band_from_two_bands.tif', 'data/byte.tif', options = '-b 1 -b 1')
+    gdal.Translate('/vsimem/tiff_read_one_band_from_two_bands_dst.tif', '/vsimem/tiff_read_one_band_from_two_bands.tif', options = '-b 1')
+
+    ds = gdal.Open('/vsimem/tiff_read_one_band_from_two_bands_dst.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/tiff_read_one_band_from_two_bands.tif')
+    gdal.Unlink('/vsimem/tiff_read_one_band_from_two_bands_dst.tif')
+
+    return 'success'
+
+
+def tiff_read_jpeg_cloud_optimized():
+
+    for i in range(4):
+        ds = gdal.Open('data/byte_ovr_jpeg_tablesmode%d.tif' % i)
+        cs0 = ds.GetRasterBand(1).Checksum()
+        cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+        if cs0 != 4743 or cs1 != 1133:
+            gdaltest.post_reason('failure')
+            print(i)
+            print(cs0)
+            print(cs1)
+            return 'fail'
+        ds = None
+
+    return 'success'
+
+# This one was generated with a buggy code that emit JpegTables with mode == 1
+# when creating the overview directory but failed to properly set this mode while
+# writing the imagery. libjpeg-6b emits a 'JPEGLib:Huffman table 0x00 was not defined'
+# error while jpeg-8 works fine
+def tiff_read_corrupted_jpeg_cloud_optimized():
+
+    ds = gdal.Open('data/byte_ovr_jpeg_tablesmode_not_correctly_set_on_ovr.tif')
+    cs0 = ds.GetRasterBand(1).Checksum()
+    if cs0 != 4743:
+        gdaltest.post_reason('failure')
+        print(cs0)
+        return 'fail'
+
+    with gdaltest.error_handler():
+        cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs1 == 0:
+        print('Expected error while writing overview with libjpeg-6b')
+    elif cs1 != 1133:
+        gdaltest.post_reason('failure')
+        print(cs1)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading YCbCr images with LZW compression
+
+def tiff_read_ycbcr_lzw():
+
+    tests = [ ('ycbcr_11_lzw.tif', 13459, 12939, 12414),
+              ('ycbcr_12_lzw.tif', 13565, 13105, 12660),
+              ('ycbcr_14_lzw.tif', 0, 0, 0), # not supported
+              ('ycbcr_21_lzw.tif', 13587, 13297, 12760),
+              ('ycbcr_22_lzw.tif', 13393, 13137, 12656),
+              ('ycbcr_24_lzw.tif', 0, 0, 0), # not supported
+              ('ycbcr_41_lzw.tif', 13218, 12758, 12592),
+              ('ycbcr_42_lzw.tif', 13277, 12779, 12614),
+              ('ycbcr_42_lzw_optimized.tif', 19918, 20120, 19087),
+              ('ycbcr_44_lzw.tif', 12994, 13229, 12149),
+              ('ycbcr_44_lzw_optimized.tif', 19666, 19860, 18836) ]
+
+    for (filename, cs1, cs2, cs3) in tests:
+        ds = gdal.Open('data/' + filename)
+        if cs1 == 0:
+            gdal.PushErrorHandler()
+        got_cs1 = ds.GetRasterBand(1).Checksum()
+        got_cs2 = ds.GetRasterBand(2).Checksum()
+        got_cs3 = ds.GetRasterBand(3).Checksum()
+        if cs1 == 0:
+            gdal.PopErrorHandler()
+        if got_cs1 != cs1 or got_cs2 != cs2 or got_cs3 != cs3:
+            gdaltest.post_reason('failure')
+            print(filename, got_cs1, got_cs2, got_cs3)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading band unit from VERT_CS unit (#6675)
+
+def tiff_read_unit_from_srs():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_read_unit_from_srs.tif', 1, 1)
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('EPSG:4326+3855')
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_read_unit_from_srs.tif')
+    unit = ds.GetRasterBand(1).GetUnitType()
+    if unit != 'metre':
+        gdaltest.post_reason('fail')
+        print(unit)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_read_unit_from_srs.tif')
+
+    return 'success'
+
+###############################################################################
+# Test reading ArcGIS 9.3 .aux.xml
+
+def tiff_read_arcgis93_geodataxform_gcp():
+
+    ds = gdal.Open('data/arcgis93_geodataxform_gcp.tif')
+    if ds.GetGCPProjection().find('26712') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetGCPCount() != 16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gcp = ds.GetGCPs()[0]
+    if abs(gcp.GCPPixel - 565) > 1e-5 or \
+       abs(gcp.GCPLine - 11041) > 1e-5 or \
+       abs(gcp.GCPX - 500000) > 1e-5 or \
+       abs(gcp.GCPY - 4705078.79016612) > 1e-5 or \
+       abs(gcp.GCPZ - 0) > 1e-5:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success'
+
 ###############################################################################
 
 for item in init_list:
@@ -2790,7 +2932,17 @@ gdaltest_list.append( (tiff_read_gcp_internal_and_auxxml) )
 
 gdaltest_list.append( (tiff_read_aux) )
 
-#gdaltest_list = [ tiff_read_aux ]
+gdaltest_list.append( (tiff_read_one_band_from_two_bands) )
+
+gdaltest_list.append( (tiff_read_jpeg_cloud_optimized) )
+gdaltest_list.append( (tiff_read_corrupted_jpeg_cloud_optimized) )
+
+gdaltest_list.append( (tiff_read_ycbcr_lzw) )
+
+gdaltest_list.append( (tiff_read_unit_from_srs) )
+gdaltest_list.append( (tiff_read_arcgis93_geodataxform_gcp) )
+
+# gdaltest_list = [ tiff_read_ycbcr_lzw ]
 
 if __name__ == '__main__':
 

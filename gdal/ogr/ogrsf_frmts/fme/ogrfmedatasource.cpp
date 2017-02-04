@@ -173,6 +173,8 @@ OGRFMEDataSource::OGRFMEDataSource()
     poUserDirectives = NULL;
 
     bUseCaching = FALSE;
+    poFMEString = NULL;
+    bCoordSysOverride = FALSE;
 }
 
 /************************************************************************/
@@ -599,7 +601,6 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
 
             psMatchDS = CPLCloneXMLTree( psMatchDS );
             oCacheIndex.Unlock();
-
         }
         else
         {
@@ -1514,7 +1515,6 @@ IFMESession *OGRFMEDataSource::AcquireSession()
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Something has gone wonky with createStringArray() on the IFMESession.\n"
                       "Is it possible you built with gcc 3.2 on Linux?  This seems problematic." );
-
         }
         else
         {

@@ -48,7 +48,7 @@ using kmldom::HotSpotPtr;
 using kmldom::ItemIconPtr;
 using kmldom::IconStyleIconPtr;
 using kmldom::IconStylePtr;
-using kmldom::KmlFactory;;
+using kmldom::KmlFactory;
 using kmldom::KmlPtr;
 using kmldom::LabelStylePtr;
 using kmldom::LineStylePtr;
@@ -179,8 +179,6 @@ StylePtr addstylestring2kml(
                                  static_cast<GByte>(nG),
                                  static_cast<GByte>(nR) ) );
                 }
-
-
                 break;
             }
             case OGRSTCSymbol:
@@ -830,11 +828,9 @@ static ContainerPtr MyGetContainerFromRoot(
     return poKmlContainer;
 }
 
-
-
 static StyleSelectorPtr StyleFromStyleURL(
     const StyleMapPtr& stylemap,
-    const string styleurl,
+    const string& styleurl,
     OGRStyleTable * poStyleTable )
 {
     // TODO:: Parse the styleURL.
@@ -936,7 +932,6 @@ static StyleSelectorPtr StyleFromStyleURL(
                 /***** if found copy it to the table as a new style *****/
                 if( pszTest )
                     poStyleTable->AddStyle(pszStyleMapId, pszTest);
-
             }
             CPLFree(pszUrlTmp);
         }
@@ -1206,7 +1201,6 @@ void styletable2kml(
     }
 }
 
-
 /******************************************************************************
  Function to add a ListStyle and select it to a container.
 ******************************************************************************/
@@ -1219,7 +1213,7 @@ void createkmlliststyle(
     const CPLString& osListStyleType,
     const CPLString& osListStyleIconHref)
 {
-    if( osListStyleType.size() || osListStyleIconHref.size() )
+    if( !osListStyleType.empty() || !osListStyleIconHref.empty() )
     {
         StylePtr poKmlStyle = poKmlFactory->CreateStyle();
 
@@ -1230,7 +1224,7 @@ void createkmlliststyle(
 
         ListStylePtr poKmlListStyle = poKmlFactory->CreateListStyle();
         poKmlStyle->set_liststyle( poKmlListStyle );
-        if( osListStyleType.size() )
+        if( !osListStyleType.empty() )
         {
             if( EQUAL(osListStyleType, "check") )
                 poKmlListStyle->set_listitemtype( kmldom::LISTITEMTYPE_CHECK );
@@ -1254,7 +1248,7 @@ void createkmlliststyle(
             }
         }
 
-        if( osListStyleIconHref.size() )
+        if( !osListStyleIconHref.empty() )
         {
             ItemIconPtr poItemIcon = poKmlFactory->CreateItemIcon();
             poItemIcon->set_href( osListStyleIconHref.c_str() );
