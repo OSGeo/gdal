@@ -48,7 +48,7 @@ try:
     from PIL import Image
     import numpy
     import osgeo.gdal_array as gdalarray
-except:
+except Exception:
     # 'antialias' resampling is not available
     pass
 
@@ -98,7 +98,7 @@ MAXZOOMLEVEL = 32
 
 
 class GlobalMercator(object):
-    """
+    r"""
     TMS Global Mercator Profile
     ---------------------------
 
@@ -313,7 +313,7 @@ class GlobalMercator(object):
 
 
 class GlobalGeodetic(object):
-    """
+    r"""
     TMS Global Geodetic Profile
     ---------------------------
 
@@ -517,6 +517,25 @@ class GDAL2Tiles(object):
 
     def __init__(self, arguments):
         """Constructor function - initialization"""
+        self.out_drv = None
+        self.mem_drv = None
+        self.in_ds = None
+        self.out_ds = None
+        self.out_srs = None
+        self.nativezoom = None
+        self.tminmax = None
+        self.tsize = None
+        self.mercator = None
+        self.geodetic = None
+        self.alphaband = None
+        self.dataBandsCount = None
+        self.out_gt = None
+        self.tileswne = None
+        self.swne = None
+        self.ominx = None
+        self.omaxx = None
+        self.omaxy = None
+        self.ominy = None
 
         self.stopped = False
         self.input = None
@@ -556,7 +575,7 @@ class GDAL2Tiles(object):
             if ((self.options.verbose and self.options.resampling == 'near') or
                     gdal.TermProgress_nocb):
                 pass
-        except:
+        except Exception:
             self.error("This version of GDAL is not supported. Please upgrade to 1.6+.")
 
         # Is output directory the last argument?
@@ -598,15 +617,15 @@ class GDAL2Tiles(object):
             try:
                 if gdal.RegenerateOverview:
                     pass
-            except:
+            except Exception:
                 self.error("'average' resampling algorithm is not available.",
                            "Please use -r 'near' argument or upgrade to newer version of GDAL.")
 
         elif self.options.resampling == 'antialias':
             try:
-                if numpy:
+                if numpy:     # pylint:disable=W0125
                     pass
-            except:
+            except Exception:
                 self.error("'antialias' resampling algorithm is not available.",
                            "Install PIL (Python Imaging Library) and numpy.")
 
@@ -633,12 +652,12 @@ class GDAL2Tiles(object):
         if self.options.zoom:
             minmax = self.options.zoom.split('-', 1)
             minmax.extend([''])
-            min, max = minmax[:2]
-            self.tminz = int(min)
-            if max:
-                self.tmaxz = int(max)
+            zoom_min, zoom_max = minmax[:2]
+            self.tminz = int(zoom_min)
+            if zoom_max:
+                self.tmaxz = int(zoom_max)
             else:
-                self.tmaxz = int(min)
+                self.tmaxz = int(zoom_min)
 
         # KML generation
         self.kml = self.options.kml
@@ -724,7 +743,7 @@ class GDAL2Tiles(object):
         g.add_option("-g", "--googlekey", dest='googlekey',
                      help="Google Maps API key from http://code.google.com/apis/maps/signup.html")
         g.add_option("-b", "--bingkey", dest='bingkey',
-                     help="Bing Maps API key from https://www.bingmapsportal.com/"),
+                     help="Bing Maps API key from https://www.bingmapsportal.com/")
         p.add_option_group(g)
 
         p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
@@ -775,38 +794,38 @@ class GDAL2Tiles(object):
                        "gdal2tiles temp.vrt" % self.input)
 
         # Get NODATA value
-        self.in_nodata = []
+        in_nodata = []
         for i in range(1, self.in_ds.RasterCount+1):
             if self.in_ds.GetRasterBand(i).GetNoDataValue() is not None:
-                self.in_nodata.append(self.in_ds.GetRasterBand(i).GetNoDataValue())
+                in_nodata.append(self.in_ds.GetRasterBand(i).GetNoDataValue())
         if self.options.srcnodata:
             nds = list(map(float, self.options.srcnodata.split(',')))
             if len(nds) < self.in_ds.RasterCount:
-                self.in_nodata = (nds * self.in_ds.RasterCount)[:self.in_ds.RasterCount]
+                in_nodata = (nds * self.in_ds.RasterCount)[:self.in_ds.RasterCount]
             else:
-                self.in_nodata = nds
+                in_nodata = nds
 
         if self.options.verbose:
-            print("NODATA: %s" % self.in_nodata)
+            print("NODATA: %s" % in_nodata)
 
         if self.options.verbose:
             print("Preprocessed file:",
                   "( %sP x %sL - %s bands)" % (self.in_ds.RasterXSize, self.in_ds.RasterYSize,
                                                self.in_ds.RasterCount))
 
-        self.in_srs = None
+        in_srs = None
 
         if self.options.s_srs:
-            self.in_srs = osr.SpatialReference()
-            self.in_srs.SetFromUserInput(self.options.s_srs)
-            self.in_srs_wkt = self.in_srs.ExportToWkt()
+            in_srs = osr.SpatialReference()
+            in_srs.SetFromUserInput(self.options.s_srs)
+            in_srs_wkt = in_srs.ExportToWkt()
         else:
-            self.in_srs_wkt = self.in_ds.GetProjection()
-            if not self.in_srs_wkt and self.in_ds.GetGCPCount() != 0:
-                self.in_srs_wkt = self.in_ds.GetGCPProjection()
-            if self.in_srs_wkt:
-                self.in_srs = osr.SpatialReference()
-                self.in_srs.ImportFromWkt(self.in_srs_wkt)
+            in_srs_wkt = self.in_ds.GetProjection()
+            if not in_srs_wkt and self.in_ds.GetGCPCount() != 0:
+                in_srs_wkt = self.in_ds.GetGCPProjection()
+            if in_srs_wkt:
+                in_srs = osr.SpatialReference()
+                in_srs.ImportFromWkt(in_srs_wkt)
 
         self.out_srs = osr.SpatialReference()
 
@@ -815,7 +834,7 @@ class GDAL2Tiles(object):
         elif self.options.profile == 'geodetic':
             self.out_srs.ImportFromEPSG(4326)
         else:
-            self.out_srs = self.in_srs
+            self.out_srs = in_srs
 
         # Are the reference systems the same? Reproject if necessary.
 
@@ -830,13 +849,13 @@ class GDAL2Tiles(object):
                            "Either gdal2tiles with parameter -p 'raster' or use another GIS "
                            "software for georeference e.g. gdal_transform -gcp / -a_ullr / -a_srs")
 
-            if self.in_srs:
-                if ((self.in_srs.ExportToProj4() != self.out_srs.ExportToProj4()) or
+            if in_srs:
+                if ((in_srs.ExportToProj4() != self.out_srs.ExportToProj4()) or
                         (self.in_ds.GetGCPCount() != 0)):
                     # Generation of VRT dataset in tile projection,
                     # default 'nearest neighbour' warping
                     self.out_ds = gdal.AutoCreateWarpedVRT(
-                        self.in_ds, self.in_srs_wkt, self.out_srs.ExportToWkt())
+                        self.in_ds, in_srs_wkt, self.out_srs.ExportToWkt())
 
                     if self.options.verbose:
                         print("Warping of the raster by AutoCreateWarpedVRT "
@@ -844,7 +863,7 @@ class GDAL2Tiles(object):
                         self.out_ds.GetDriver().CreateCopy("tiles.vrt", self.out_ds)
 
                     # Correction of AutoCreateWarpedVRT for NODATA values
-                    if self.in_nodata != []:
+                    if in_nodata != []:
                         tempfilename = self.gettempfilename('-gdal2tiles.vrt')
                         self.out_ds.GetDriver().CreateCopy(tempfilename, self.out_ds)
                         # open as a text file
@@ -858,7 +877,7 @@ class GDAL2Tiles(object):
       <Option name="UNIFIED_SRC_NODATA">YES</Option>
                             """)
                         # replace BandMapping tag for NODATA bands....
-                        for i in range(len(self.in_nodata)):
+                        for i in range(len(in_nodata)):
                             s = s.replace(
                                 '<BandMapping src="%i" dst="%i"/>' % ((i+1), (i+1)),
                                 """
@@ -868,7 +887,7 @@ class GDAL2Tiles(object):
           <DstNoDataReal>%i</DstNoDataReal>
           <DstNoDataImag>0</DstNoDataImag>
         </BandMapping>
-                                """ % ((i+1), (i+1), self.in_nodata[i], self.in_nodata[i]))
+                                """ % ((i+1), (i+1), in_nodata[i], in_nodata[i]))
                         # save the corrected VRT
                         open(tempfilename, "w").write(s)
                         # open by GDAL as self.out_ds
@@ -878,7 +897,7 @@ class GDAL2Tiles(object):
 
                         # set NODATA_VALUE metadata
                         self.out_ds.SetMetadataItem(
-                            'NODATA_VALUES', ' '.join([str(i) for i in self.in_nodata]))
+                            'NODATA_VALUES', ' '.join([str(i) for i in in_nodata]))
 
                         if self.options.verbose:
                             print("Modified warping result saved into 'tiles1.vrt'")
@@ -887,7 +906,7 @@ class GDAL2Tiles(object):
                     # Correction of AutoCreateWarpedVRT for Mono (1 band) and RGB (3 bands) files
                     # without NODATA:
                     # equivalent of gdalwarp -dstalpha
-                    if self.in_nodata == [] and self.out_ds.RasterCount in [1, 3]:
+                    if in_nodata == [] and self.out_ds.RasterCount in [1, 3]:
                         tempfilename = self.gettempfilename('-gdal2tiles.vrt')
                         self.out_ds.GetDriver().CreateCopy(tempfilename, self.out_ds)
                         # open as a text file
@@ -951,12 +970,12 @@ class GDAL2Tiles(object):
             self.dataBandsCount = self.out_ds.RasterCount
 
         # KML test
-        self.isepsg4326 = False
+        isepsg4326 = False
         srs4326 = osr.SpatialReference()
         srs4326.ImportFromEPSG(4326)
         if self.out_srs and srs4326.ExportToProj4() == self.out_srs.ExportToProj4():
             self.kml = True
-            self.isepsg4326 = True
+            isepsg4326 = True
             if self.options.verbose:
                 print("KML autotest OK!")
 
@@ -1090,8 +1109,8 @@ class GDAL2Tiles(object):
                 self.tminmax[tz] = (tminx, tminy, tmaxx, tmaxy)
 
             # Function which generates SWNE in LatLong for given tile
-            if self.kml and self.in_srs_wkt:
-                self.ct = osr.CoordinateTransformation(self.in_srs, srs4326)
+            if self.kml and in_srs_wkt:
+                ct = osr.CoordinateTransformation(in_srs, srs4326)
 
                 def rastertileswne(x, y, z):
                     pixelsizex = (2**(self.tmaxz-z) * self.out_gt[1])       # X-pixel size in level
@@ -1099,10 +1118,10 @@ class GDAL2Tiles(object):
                     east = west + self.tilesize*pixelsizex
                     south = self.ominy + y*self.tilesize*pixelsizex
                     north = south + self.tilesize*pixelsizex
-                    if not self.isepsg4326:
+                    if not isepsg4326:
                         # Transformation to EPSG:4326 (WGS84 datum)
-                        west, south = self.ct.TransformPoint(west, south)[:2]
-                        east, north = self.ct.TransformPoint(east, north)[:2]
+                        west, south = ct.TransformPoint(west, south)[:2]
+                        east, north = ct.TransformPoint(east, north)[:2]
                     return south, west, north, east
 
                 self.tileswne = rastertileswne
@@ -1262,7 +1281,7 @@ class GDAL2Tiles(object):
                 # Don't scale up by nearest neighbour, better change the querysize
                 # to the native resolution (and return smaller query tile) for scaling
 
-                if self.options.profile in ('mercator','geodetic'):
+                if self.options.profile in ('mercator', 'geodetic'):
                     rb, wb = self.geo_query(ds, b[0], b[3], b[2], b[1])
 
                     # Pixel size in the raster covering query geo extent
@@ -1318,7 +1337,8 @@ class GDAL2Tiles(object):
                 # Read the source raster if anything is going inside the tile as per the computed
                 # geo_query
                 if rxsize != 0 and rysize != 0 and wxsize != 0 and wysize != 0:
-                    data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize, band_list=list(range(1,self.dataBandsCount+1)))
+                    data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize,
+                                         band_list=list(range(1, self.dataBandsCount+1)))
                     alpha = self.alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
 
                 # The tile in memory is a transparent file by default. Write pixel values into it if
@@ -1326,17 +1346,22 @@ class GDAL2Tiles(object):
                 if data:
                     if self.tilesize == querysize:
                         # Use the ReadRaster result directly in tiles ('nearest neighbour' query)
-                        dstile.WriteRaster(wx, wy, wxsize, wysize, data, band_list=list(range(1,self.dataBandsCount+1)))
+                        dstile.WriteRaster(wx, wy, wxsize, wysize, data,
+                                           band_list=list(range(1, self.dataBandsCount+1)))
                         dstile.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
 
-                        # Note: For source drivers based on WaveLet compression (JPEG2000, ECW, MrSID)
-                        # the ReadRaster function returns high-quality raster (not ugly nearest neighbour)
+                        # Note: For source drivers based on WaveLet compression (JPEG2000, ECW,
+                        # MrSID) the ReadRaster function returns high-quality raster (not ugly
+                        # nearest neighbour)
                         # TODO: Use directly 'near' for WaveLet files
                     else:
-                        # Big ReadRaster query in memory scaled to the tilesize - all but 'near' algo
+                        # Big ReadRaster query in memory scaled to the tilesize - all but 'near'
+                        # algo
                         dsquery = self.mem_drv.Create('', querysize, querysize, tilebands)
-                        # TODO: fill the null value in case a tile without alpha is produced (now only png tiles are supported)
-                        dsquery.WriteRaster(wx, wy, wxsize, wysize, data, band_list=list(range(1,self.dataBandsCount+1)))
+                        # TODO: fill the null value in case a tile without alpha is produced (now
+                        # only png tiles are supported)
+                        dsquery.WriteRaster(wx, wy, wxsize, wysize, data,
+                                            band_list=list(range(1, self.dataBandsCount+1)))
                         dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
 
                         self.scale_query_to_tile(dsquery, dstile, tilefilename)
@@ -1597,10 +1622,13 @@ class GDAL2Tiles(object):
     """
         return s
 
-    def generate_kml(self, tx, ty, tz, children=[], **args):
+    def generate_kml(self, tx, ty, tz, children=None, **args):
         """
         Template for the KML. Returns filled string.
         """
+        if not children:
+            children = []
+
         args['tx'], args['ty'], args['tz'] = tx, ty, tz
         args['tileformat'] = self.tileext
         if 'tilesize' not in args:
@@ -1722,7 +1750,7 @@ class GDAL2Tiles(object):
         args['publishurl'] = self.options.url
         args['copyright'] = self.options.copyright
 
-        s = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+        s = r"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
             <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml">
               <head>
                 <title>%(title)s</title>
@@ -2158,7 +2186,7 @@ class GDAL2Tiles(object):
             args['rasterzoomlevels'] = self.tmaxz+1
             args['rastermaxresolution'] = 2**(self.nativezoom) * self.out_gt[1]
 
-        s = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+        s = r"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
         <html xmlns="http://www.w3.org/1999/xhtml"
           <head>
             <title>%(title)s</title>
