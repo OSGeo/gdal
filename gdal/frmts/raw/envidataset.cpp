@@ -261,9 +261,9 @@ class ENVIDataset : public RawDataset
 
     CPLString   osStaFilename;
 
-    int         ReadHeader( VSILFILE * );
-    int         ProcessMapinfo( const char * );
-    void        ProcessRPCinfo( const char * ,int ,int);
+    bool        ReadHeader( VSILFILE * );
+    bool        ProcessMapinfo( const char * );
+    void        ProcessRPCinfo( const char *, int, int);
     void        ProcessStatsFile();
     static int         byteSwapInt(int);
     static float       byteSwapFloat(float);
@@ -271,10 +271,10 @@ class ENVIDataset : public RawDataset
     static void        SetENVIDatum( OGRSpatialReference *, const char * );
     static void        SetENVIEllipse( OGRSpatialReference *, char ** );
     void        WriteProjectionInfo();
-    int         ParseRpcCoeffsMetaDataString( const char *psName,
+    bool        ParseRpcCoeffsMetaDataString( const char *psName,
                                               char *papszVal[], int& idx );
-    int         WriteRpcInfo();
-    int         WritePseudoGcpInfo();
+    bool        WriteRpcInfo();
+    bool        WritePseudoGcpInfo();
 
     void        SetFillFile() { bFillFile = true; }
 
@@ -1038,17 +1038,17 @@ void ENVIDataset::WriteProjectionInfo()
 /*                ParseRpcCoeffsMetaDataString()                        */
 /************************************************************************/
 
-int ENVIDataset::ParseRpcCoeffsMetaDataString(
+bool ENVIDataset::ParseRpcCoeffsMetaDataString(
     const char *psName, char **papszVal, int &idx)
 {
     // Separate one string with 20 coefficients into an array of 20 strings.
     const char *psz20Vals = GetMetadataItem(psName, "RPC");
     if (!psz20Vals)
-        return FALSE;
+        return false;
 
     char **papszArr = CSLTokenizeString2(psz20Vals, " ", 0);
     if (!papszArr)
-        return FALSE;
+        return false;
 
     int x = 0;
     while ( (x < 20) && (papszArr[x] != NULL) )
@@ -1075,7 +1075,7 @@ static char *CPLStrdupIfNotNull( const char *pszString )
 /************************************************************************/
 
 // TODO: This whole function needs to be cleaned up.
-int ENVIDataset::WriteRpcInfo()
+bool ENVIDataset::WriteRpcInfo()
 {
     // Write out 90 rpc coeffs into the envi header plus 3 envi specific rpc
     // values returns 0 if the coeffs are not present or not valid.
@@ -1165,14 +1165,14 @@ end:
 /*                        WritePseudoGcpInfo()                          */
 /************************************************************************/
 
-int ENVIDataset::WritePseudoGcpInfo()
+bool ENVIDataset::WritePseudoGcpInfo()
 {
     // Write out gcps into the envi header
     // returns 0 if the gcps are not present.
 
     const int iNum = GetGCPCount();
     if (iNum == 0)
-        return FALSE;
+        return false;
 
     const GDAL_GCP *pGcpStructs = GetGCPs();
 
@@ -1428,7 +1428,7 @@ void ENVIDataset::SetENVIEllipse( OGRSpatialReference *poSRS,
 /*      the header.                                                     */
 /************************************************************************/
 
-int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
+bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 
 {
     char **papszFields = SplitList(pszMapinfo);
@@ -1437,7 +1437,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     if( nCount < 7 )
     {
         CSLDestroy(papszFields);
-        return FALSE;
+        return false;
     }
 
     // Check if we have coordinate system string, and if so parse it.
@@ -1666,7 +1666,7 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 
     CSLDestroy(papszFields);
     CSLDestroy(papszPI);
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -1892,7 +1892,8 @@ double ENVIDataset::byteSwapDouble(double swapMe)
 /*                             ReadHeader()                             */
 /************************************************************************/
 
-int ENVIDataset::ReadHeader( VSILFILE *fpHdr )
+// Always returns true.
+bool ENVIDataset::ReadHeader( VSILFILE *fpHdr )
 
 {
     CPLReadLineL(fpHdr);
@@ -1958,7 +1959,7 @@ int ENVIDataset::ReadHeader( VSILFILE *fpHdr )
         CPLFree(pszWorkingLine);
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
