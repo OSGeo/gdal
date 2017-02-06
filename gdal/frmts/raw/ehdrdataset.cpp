@@ -201,7 +201,8 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
     if (nBits < 8)
     {
         int nSkipBytes = atoi(poEDS->GetKeyValue("SKIPBYTES"));
-        if( nSkipBytes < 0 || nSkipBytes > std::numeric_limits<int>::max() / 8 )
+        if( nSkipBytes < 0 ||
+            nSkipBytes > std::numeric_limits<int>::max() / 8 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid SKIPBYTES: %d", nSkipBytes);
@@ -276,7 +277,8 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     const vsi_l_offset nLineBytesBig =
         (static_cast<vsi_l_offset>(nPixelOffsetBits) * nBlockXSize + 7) / 8;
-    if( nLineBytesBig > std::numeric_limits<int>::max() )
+    if( nLineBytesBig >
+        static_cast<vsi_l_offset>(std::numeric_limits<int>::max()) )
         return CE_Failure;
     const unsigned int nLineBytes = static_cast<unsigned int>(nLineBytesBig);
     const vsi_l_offset nLineStart =
@@ -343,7 +345,8 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     const vsi_l_offset nLineBytesBig =
         (static_cast<vsi_l_offset>(nPixelOffsetBits) * nBlockXSize + 7) / 8;
-    if( nLineBytesBig > std::numeric_limits<int>::max() )
+    if( nLineBytesBig >
+        static_cast<vsi_l_offset>(std::numeric_limits<int>::max()) )
         return CE_Failure;
     const unsigned int nLineBytes = static_cast<unsigned int>(nLineBytesBig);
     const vsi_l_offset nLineStart =
