@@ -407,6 +407,7 @@ JPEG12_SUPPORTED = 1
 #HDF4_PLUGIN = NO
 #HDF4_DIR =	D:\warmerda\HDF41r5
 #HDF4_LIB =	/LIBPATH:$(HDF4_DIR)\lib Ws2_32.lib
+#HDF4_INCLUDE = $(HDF4_DIR)\include
 # HDF4 library newer than 4.2.5 has a SDreset_maxopenfiles/SDget_maxopenfiles
 # interface which allows opening many HDF files simultaneously (the max
 # number of files was previously hardcoded and too low, smth. like 32).
