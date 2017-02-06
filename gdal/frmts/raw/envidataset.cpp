@@ -753,15 +753,15 @@ void ENVIDataset::WriteProjectionInfo()
         osDatum = "Nouvelle Triangulation Francaise IGN";
 
     const CPLString osCommaDatum =
-      osDatum.empty() ? "" : ("," + osDatum);
+        osDatum.empty() ? "" : ("," + osDatum);
 
     const double dfA = oSRS.GetSemiMajor();
     const double dfB = oSRS.GetSemiMinor();
 
     // Do we have unusual linear units?
-    CPLString osOptionalUnits;
-    if( fabs(oSRS.GetLinearUnits() - 0.3048) < 0.0001 )
-        osOptionalUnits = ", units=Feet";
+    const CPLString osOptionalUnits =
+        fabs(oSRS.GetLinearUnits() - 0.3048) < 0.0001
+        ? ", units=Feet" : "";
 
     // Handle UTM case.
     const char *pszProjName = oSRS.GetAttrValue("PROJECTION");
