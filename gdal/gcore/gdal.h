@@ -358,10 +358,9 @@ GDALCreateCopy( GDALDriverH, const char *, GDALDatasetH,
 GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriver( const char * pszFilename,
                                             char ** papszFileList );
 
-GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriverEx( const char* pszFilename,
-                                                      unsigned int nIdentifyFlags,
-                                                      const char* const* papszAllowedDrivers,
-                                                      const char* const* papszFileList );
+GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriverEx(
+    const char *pszFilename, unsigned int nIdentifyFlags,
+    const char *const *papszAllowedDrivers, const char *const *papszFileList);
 
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALOpen( const char *pszFilename, GDALAccess eAccess ) CPL_WARN_UNUSED_RESULT;
@@ -963,29 +962,29 @@ int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
 
 /** Strucutre to store Rational Polynomial Coefficients / Rigorous Projection
  * Model. See http://geotiff.maptools.org/rpc_prop.html */
-typedef struct {
-    /*! Line offset */         double      dfLINE_OFF;
-    /*! Sample/Pixel offset */ double      dfSAMP_OFF;
-    /*! Latitude offset */     double      dfLAT_OFF;
-    /*! Longitude offset */    double      dfLONG_OFF;
-    /*! Height offset */       double      dfHEIGHT_OFF;
+typedef struct
+{
+    double dfLINE_OFF;   /*!< Line offset */
+    double dfSAMP_OFF;   /*!< Sample/Pixel offset */
+    double dfLAT_OFF;    /*!< Latitude offset */
+    double dfLONG_OFF;   /*!< Longitude offset */
+    double dfHEIGHT_OFF; /*!< Height offset */
 
-     /*! Line scale */         double      dfLINE_SCALE;
-    /*! Sample/Pixel scale */  double      dfSAMP_SCALE;
-    /*! Latitude scale */      double      dfLAT_SCALE;
-    /*! Longitude scale */     double      dfLONG_SCALE;
-    /*! Height scale */        double      dfHEIGHT_SCALE;
+    double dfLINE_SCALE;   /*!< Line scale */
+    double dfSAMP_SCALE;   /*!< Sample/Pixel scale */
+    double dfLAT_SCALE;    /*!< Latitude scale */
+    double dfLONG_SCALE;   /*!< Longitude scale */
+    double dfHEIGHT_SCALE; /*!< Height scale */
 
-     /*! Line Numerator Coefficients */          double  adfLINE_NUM_COEFF[20];
-    /*! Line Denominator Coefficients */         double  adfLINE_DEN_COEFF[20];
-    /*! Sample/Pixel Numerator Coefficients */   double  adfSAMP_NUM_COEFF[20];
-    /*! Sample/Pixel Denominator Coefficients */ double  adfSAMP_DEN_COEFF[20];
+    double adfLINE_NUM_COEFF[20]; /*!< Line Numerator Coefficients */
+    double adfLINE_DEN_COEFF[20]; /*!< Line Denominator Coefficients */
+    double adfSAMP_NUM_COEFF[20]; /*!< Sample/Pixel Numerator Coefficients */
+    double adfSAMP_DEN_COEFF[20]; /*!< Sample/Pixel Denominator Coefficients */
 
-    /*! Minimum longitude */   double      dfMIN_LONG;
-    /*! Minimum latitude */    double      dfMIN_LAT;
-    /*! Maximum longitude */   double      dfMAX_LONG;
-    /*! Maximum latitude */    double      dfMAX_LAT;
-
+    double dfMIN_LONG; /*!< Minimum longitude */
+    double dfMIN_LAT;  /*!< Minimum latitude */
+    double dfMAX_LONG; /*!< Maximum longitude */
+    double dfMAX_LAT;  /*!< Maximum latitude */
 } GDALRPCInfo;
 
 int CPL_DLL CPL_STDCALL GDALExtractRPCInfo( char **, GDALRPCInfo * );
