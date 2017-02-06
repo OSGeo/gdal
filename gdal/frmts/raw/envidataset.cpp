@@ -484,9 +484,8 @@ void ENVIDataset::FlushCache()
             GDALColorTable *colorTable = band->GetColorTable();
             if (NULL != colorTable)
             {
-                int nrColors = colorTable->GetColorEntryCount();
-                if (nrColors > nrClasses)
-                    nrColors = nrClasses;
+                const int nrColors =
+                    std::min(nrClasses, colorTable->GetColorEntryCount());
                 bOK &= VSIFPrintfL(fp, "class lookup = {\n") >= 0;
                 for (int i = 0; i < nrColors; ++i)
                 {
@@ -753,9 +752,8 @@ void ENVIDataset::WriteProjectionInfo()
     else if( nEPSG_GCS == 4275 )
         osDatum = "Nouvelle Triangulation Francaise IGN";
 
-    CPLString osCommaDatum;
-    if( osDatum != "" )
-        osCommaDatum.Printf(",%s", osDatum.c_str());
+    const CPLString osCommaDatum =
+      osDatum.empty() ? "" : ("," + osDatum);
 
     const double dfA = oSRS.GetSemiMajor();
     const double dfB = oSRS.GetSemiMinor();
@@ -766,17 +764,13 @@ void ENVIDataset::WriteProjectionInfo()
         osOptionalUnits = ", units=Feet";
 
     // Handle UTM case.
-    const char *pszHemisphere = NULL;
     const char *pszProjName = oSRS.GetAttrValue("PROJECTION");
     int bNorth = FALSE;
     const int iUTMZone = oSRS.GetUTMZone(&bNorth);
     bool bOK = true;
     if ( iUTMZone )
     {
-        if ( bNorth )
-            pszHemisphere = "North";
-        else
-            pszHemisphere = "South";
+        const char *pszHemisphere = bNorth ? "North" : "South";
 
         bOK &= VSIFPrintfL(fp, "map info = {UTM, %s, %d, %s%s%s}\n",
                            osLocation.c_str(), iUTMZone, pszHemisphere,
