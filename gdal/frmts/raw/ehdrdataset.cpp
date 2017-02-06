@@ -183,7 +183,7 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
                                 GDALDataType eDataTypeIn, int bNativeOrderIn,
                                 int nBitsIn) :
   RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                 nLineOffsetIn, eDataTypeIn, bNativeOrderIn, TRUE),
+                nLineOffsetIn, eDataTypeIn, bNativeOrderIn, TRUE),
   nBits(nBitsIn),
   nStartBit(0),
   nPixelOffsetBits(0),
@@ -285,7 +285,6 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         static_cast<int>((nStartBit + nLineOffsetBits * nBlockYOff) % 8);
 
     // Read data into buffer.
-/* -------------------------------------------------------------------- */
     GByte *pabyBuffer = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nLineBytes));
     if( pabyBuffer == NULL )
         return CE_Failure;
@@ -683,9 +682,7 @@ CPLErr EHdrDataset::SetProjection( const char *pszSRS )
     if( fp != NULL )
     {
         size_t nCount = VSIFWriteL(pszESRI_SRS, strlen(pszESRI_SRS), 1, fp);
-        nCount += VSIFWriteL(
-            reinterpret_cast<void *>(const_cast<char *>("\n")),
-            1, 1, fp);
+        nCount += VSIFWriteL("\n", 1, 1, fp);
         if( VSIFCloseL(fp) != 0 || nCount != 2 )
         {
             CPLFree(pszESRI_SRS);
@@ -787,9 +784,7 @@ CPLErr EHdrDataset::RewriteHDR()
     for( int i = 0; papszHDR[i] != NULL; i++ )
     {
         size_t nCount = VSIFWriteL(papszHDR[i], strlen(papszHDR[i]), 1, fp);
-        nCount += VSIFWriteL(
-            reinterpret_cast<void *>(const_cast<char *>("\n")),
-            1, 1, fp);
+        nCount += VSIFWriteL("\n", 1, 1, fp);
         if( nCount != 2 )
         {
             CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
@@ -933,7 +928,7 @@ CPLErr EHdrDataset::ReadSTX()
 // For the specification of SPDF (in French), see
 //   http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download
 
-CPLString EHdrDataset::GetImageRepFilename(const char* pszFilename)
+CPLString EHdrDataset::GetImageRepFilename(const char *pszFilename)
 {
 
     const CPLString osPath = CPLGetPath(pszFilename);
@@ -942,7 +937,7 @@ CPLString EHdrDataset::GetImageRepFilename(const char* pszFilename)
 
     VSIStatBufL sStatBuf;
     if( VSIStatExL(
-            osREPFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+            osREPFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0 )
         return osREPFilename;
 
     if (EQUAL(CPLGetFilename(pszFilename), "imspatio.bil") ||
@@ -950,7 +945,7 @@ CPLString EHdrDataset::GetImageRepFilename(const char* pszFilename)
     {
         CPLString osImageRepFilename(CPLFormCIFilename(osPath, "image", "rep"));
         if( VSIStatExL(
-                osImageRepFilename.c_str(), &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+                osImageRepFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0 )
             return osImageRepFilename;
 
         // Try in the upper directories if not found in the BIL image directory.
