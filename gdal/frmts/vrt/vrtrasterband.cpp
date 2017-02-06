@@ -27,11 +27,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "vrtdataset.h"
-#include "cpl_minixml.h"
-#include "cpl_string.h"
 
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
+#include <memory>
+#include <vector>
+
+#include "gdal.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_hash_set.h"
+#include "cpl_minixml.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 /*! @cond Doxygen_Suppress */
 
