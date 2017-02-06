@@ -39,6 +39,7 @@
 #  include <fcntl.h>
 #endif
 #include <algorithm>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -172,7 +173,8 @@ void RawRasterBand::Initialize()
 
     // Allocate working scanline.
     nLoadedScanline = -1;
-    if (nBlockXSize <= 0 || std::abs(nPixelOffset) > INT_MAX / nBlockXSize)
+    if (nBlockXSize <= 0 ||
+        std::abs(nPixelOffset) > std::numeric_limits<int>::max() / nBlockXSize)
     {
         nLineSize = 0;
         pLineBuffer = NULL;
@@ -291,7 +293,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
             : nImgOffset + static_cast<vsi_l_offset>(iLine) * nLineOffset -
                   std::abs(nPixelOffset) * (nBlockXSize - 1);
 
-    // Seek to the right line.
+    // Seek to the correct line.
     if( Seek(nReadStart, SEEK_SET) == -1 )
     {
         if (poDS != NULL && poDS->GetAccess() == GA_ReadOnly)
@@ -764,9 +766,8 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 }
             }
 
-
             // Seek to the correct block.
-            vsi_l_offset nOffset =
+            const vsi_l_offset nOffset =
                 nImgOffset + static_cast<vsi_l_offset>(nYOff) * nLineOffset +
                 nXOff;
             if( Seek(nOffset, SEEK_SET) == -1 )
@@ -1099,12 +1100,10 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
         return GDALRasterBand::GetVirtualMemAuto(eRWFlag, pnPixelSpace,
                                                  pnLineSpace, papszOptions);
     }
-    else
-    {
-        *pnPixelSpace = nPixelOffset;
-        *pnLineSpace = nLineOffset;
-        return pVMem;
-    }
+
+    *pnPixelSpace = nPixelOffset;
+    *pnLineSpace = nLineOffset;
+    return pVMem;
 }
 
 /************************************************************************/
@@ -1150,7 +1149,8 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
     // BlockBasedRasterIO, but rather used our optimized path in
     // RawRasterBand::IRasterIO().
     if (nXSize == nBufXSize && nYSize == nBufYSize && nBandCount > 1 &&
-        (pszInterleave = GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE")) != NULL &&
+        (pszInterleave = GetMetadataItem("INTERLEAVE",
+                                         "IMAGE_STRUCTURE")) != NULL &&
         EQUAL(pszInterleave, "PIXEL"))
     {
         int iBandIndex = 0;
@@ -1158,15 +1158,15 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
         {
             RawRasterBand *poBand = static_cast<RawRasterBand *>(
                 GetRasterBand(panBandMap[iBandIndex]));
-            if( !poBand->CanUseDirectIO(nXOff, nYOff, nXSize, nYSize, eBufType) )
+            if( !poBand->CanUseDirectIO(nXOff, nYOff,
+                                        nXSize, nYSize, eBufType) )
             {
                 break;
             }
         }
         if( iBandIndex == nBandCount )
         {
-
-            GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
+            GDALProgressFunc pfnProgressGlobal = psExtraArg->pfnProgress;
             void *pProgressDataGlobal = psExtraArg->pProgressData;
 
             CPLErr eErr = CE_None;
