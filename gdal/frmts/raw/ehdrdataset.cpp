@@ -42,6 +42,8 @@
 #  include <fcntl.h>
 #endif
 
+#include <limits>
+
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_progress.h"
@@ -199,7 +201,7 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
     if (nBits < 8)
     {
         int nSkipBytes = atoi(poEDS->GetKeyValue("SKIPBYTES"));
-        if( nSkipBytes < 0 || nSkipBytes > INT_MAX / 8 )
+        if( nSkipBytes < 0 || nSkipBytes > std::numeric_limits<int>::max() / 8 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid SKIPBYTES: %d", nSkipBytes);
@@ -274,7 +276,7 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     const vsi_l_offset nLineBytesBig =
         (static_cast<vsi_l_offset>(nPixelOffsetBits) * nBlockXSize + 7) / 8;
-    if( nLineBytesBig > INT_MAX )
+    if( nLineBytesBig > std::numeric_limits<int>::max() )
         return CE_Failure;
     const unsigned int nLineBytes = static_cast<unsigned int>(nLineBytesBig);
     const vsi_l_offset nLineStart =
@@ -341,7 +343,7 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     const vsi_l_offset nLineBytesBig =
         (static_cast<vsi_l_offset>(nPixelOffsetBits) * nBlockXSize + 7) / 8;
-    if( nLineBytesBig > INT_MAX )
+    if( nLineBytesBig > std::numeric_limits<int>::max() )
         return CE_Failure;
     const unsigned int nLineBytes = static_cast<unsigned int>(nLineBytesBig);
     const vsi_l_offset nLineStart =
@@ -1427,7 +1429,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( EQUAL(szLayout, "BIP") )
     {
-        if (nCols > INT_MAX / (nItemSize * nBands))
+        if (nCols > std::numeric_limits<int>::max() / (nItemSize * nBands))
         {
             delete poDS;
             poDS = NULL;
@@ -1440,7 +1442,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else if( EQUAL(szLayout, "BSQ") )
     {
-        if (nCols > INT_MAX / nItemSize)
+        if (nCols > std::numeric_limits<int>::max() / nItemSize)
         {
             delete poDS;
             poDS = NULL;
@@ -1453,7 +1455,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else /* assume BIL */
     {
-        if (nCols > INT_MAX / (nItemSize * nBands))
+        if (nCols > std::numeric_limits<int>::max() / (nItemSize * nBands))
         {
             delete poDS;
             poDS = NULL;
