@@ -32,15 +32,36 @@
 
 #undef ENABLE_LIBJPEG_NO_RETURN
 
-#include "cpl_string.h"
-#include "gdal_frmts.h"
-#include "gdal_pam.h"
-#include "gdalexif.h"
-#include "memdataset.h"
+#include "cpl_port.h"
 
+#include <cerrno>
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 #include <setjmp.h>
 
+#include <string>
 #include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "gdalexif.h"
+#include "jconfig.h"
+#include "jmorecfg.h"
+#include "memdataset.h"
+#include "vsidataio.h"
 
 CPL_CVSID("$Id$");
 
