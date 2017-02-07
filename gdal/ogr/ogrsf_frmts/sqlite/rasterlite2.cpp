@@ -2172,11 +2172,12 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
     {
         const double dfXRes = adfGeoTransform[1];
         const double dfYRes = fabs(adfGeoTransform[5]);
-        bool bStrictResolution = true;
-        bool bMixedResolutions = false;
-        bool bSectionPaths = false;
-        bool bSectionMD5 = false;
-        bool bSectionSummary = false;
+        const bool bStrictResolution = true;
+        const bool bMixedResolutions = false;
+        const bool bSectionPaths = false;
+        const bool bSectionMD5 = false;
+        const bool bSectionSummary = false;
+        const bool bIsQueryable = false;
 
         rl2PixelPtr pNoData =
             CreateNoData( nSampleType, nPixelType, nBandCount, poSrcDS );
@@ -2206,7 +2207,8 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
                                     bMixedResolutions,
                                     bSectionPaths,
                                     bSectionMD5,
-                                    bSectionSummary) != RL2_OK )
+                                    bSectionSummary,
+                                    bIsQueryable) != RL2_OK )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "rl2_create_dbms_coverage() failed");
