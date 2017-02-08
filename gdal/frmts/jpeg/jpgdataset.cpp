@@ -58,7 +58,15 @@
 #include "gdal_pam.h"
 #include "gdal_priv.h"
 #include "gdalexif.h"
+CPL_C_START
+#ifdef LIBJPEG_12_PATH
+#  include LIBJPEG_12_PATH
+#else
+#  include "jpeglib.h"
+#endif
+CPL_C_END
 #include "memdataset.h"
+#include "vsidataio.h"
 
 CPL_CVSID("$Id$");
 
@@ -80,14 +88,6 @@ typedef struct {
         GUInt16  tiff_version;   /* TIFF version number */
         GUInt32  tiff_diroff;    /* byte offset to first directory */
 } TIFFHeader;
-
-CPL_C_START
-#ifdef LIBJPEG_12_PATH
-#  include LIBJPEG_12_PATH
-#else
-#  include "jpeglib.h"
-#endif
-CPL_C_END
 
 // we believe it is ok to use setjmp() in this situation.
 #ifdef _MSC_VER
@@ -112,8 +112,6 @@ GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 #endif
-
-#include "vsidataio.h"
 
 /*
 * Do we want to do special processing suitable for when JSAMPLE is a
