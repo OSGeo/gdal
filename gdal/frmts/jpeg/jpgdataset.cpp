@@ -34,13 +34,22 @@
 
 #include "cpl_port.h"
 
+#include <cerrno>
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+#include <setjmp.h>
+
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdalexif.h"
 #include "memdataset.h"
-
-#include <setjmp.h>
 
 #include <algorithm>
 
