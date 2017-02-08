@@ -232,6 +232,9 @@ char** OGRPLScenesDataV1Dataset::GetBaseHTTPOptions()
         CSLAddString(papszOptions,
                      CPLSPrintf("HEADERS=Authorization: api-key %s",
                                 m_osAPIKey.c_str()));
+    // We don't want .netrc auth getting mixed up with explicit auth.
+    papszOptions = CSLAddString(papszOptions,"NETRC=NO");
+
     return papszOptions;
 }
 
