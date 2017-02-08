@@ -649,14 +649,14 @@ static int ENVIGetEPSGGeogCS( OGRSpatialReference *poThis )
         return -1;
 
     // Is this a "well known" geographic coordinate system?
-    const bool bWGS = strstr(pszGEOGCS, "WGS") != NULL ||
+    const bool bWGS = strstr(pszGEOGCS, "WGS") ||
                       strstr(pszDatum, "WGS") ||
                       strstr(pszGEOGCS, "World Geodetic System") ||
                       strstr(pszGEOGCS, "World_Geodetic_System") ||
                       strstr(pszDatum, "World Geodetic System") ||
                       strstr(pszDatum, "World_Geodetic_System");
 
-    const bool bNAD = strstr(pszGEOGCS, "NAD") != NULL ||
+    const bool bNAD = strstr(pszGEOGCS, "NAD") ||
                       strstr(pszDatum, "NAD") ||
                       strstr(pszGEOGCS, "North American") ||
                       strstr(pszGEOGCS, "North_American") ||
