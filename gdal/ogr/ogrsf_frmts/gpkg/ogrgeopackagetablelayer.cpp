@@ -2656,7 +2656,7 @@ CPLString OGRGeoPackageTableLayer::GetColumnsOfCreateTable(const std::vector<OGR
     bool bNeedComma = false;
     if( m_pszFidColumn != NULL )
     {
-        pszSQL = sqlite3_mprintf("\"%w\" INTEGER PRIMARY KEY AUTOINCREMENT",
+        pszSQL = sqlite3_mprintf("\"%w\" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL",
                                 m_pszFidColumn);
         osSQL += pszSQL;
         sqlite3_free(pszSQL);
