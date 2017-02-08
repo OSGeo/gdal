@@ -45,13 +45,20 @@
 #endif
 #include <setjmp.h>
 
+#include <algorithm>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gdal_priv.h"
 #include "gdalexif.h"
 #include "memdataset.h"
-
-#include <algorithm>
 
 CPL_CVSID("$Id$");
 
