@@ -2824,7 +2824,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
         /* From C.7. sample_tile_pyramid (Informative) Table 31. EXAMPLE: tiles table Create Table SQL (Informative) */
         char* pszSQL = sqlite3_mprintf("CREATE TABLE \"%w\" ("
-          "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+          "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
           "zoom_level INTEGER NOT NULL,"
           "tile_column INTEGER NOT NULL,"
           "tile_row INTEGER NOT NULL,"
