@@ -28,44 +28,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_tabseamless.cpp,v $
- * Revision 1.10  2010-07-07 19:00:15  aboudreault
- * Cleanup Win32 Compile Warnings (GDAL bug #2930)
- *
- * Revision 1.9  2009-03-10 13:50:02  aboudreault
- * Fixed Overflow of FIDs in Seamless tables (bug 2015)
- *
- * Revision 1.8  2009-03-04 21:22:44  dmorissette
- * Set m_nCurFeatureId=-1 in TABSeamless::ResetReading() (bug 2017)
- *
- * Revision 1.7  2007-06-21 14:00:23  dmorissette
- * Added missing cast in isspace() calls to avoid failed assertion on Windows
- * (MITAB bug 1737, GDAL ticket 1678))
- *
- * Revision 1.6  2004/06/30 20:29:04  dmorissette
- * Fixed refs to old address danmo@videotron.ca
- *
- * Revision 1.5  2004/03/12 16:29:05  dmorissette
- * Fixed 2 memory leaks (bug 283)
- *
- * Revision 1.4  2002/06/28 18:32:37  julien
- * Add SetSpatialFilter() in TABSeamless class (Bug 164, MapServer)
- * Use double for comparison in Coordsys2Int() in mitab_mapheaderblock.cpp
- *
- * Revision 1.3  2001/09/19 14:21:36  daniel
- * On Unix: replace '\\' in file path read from tab index with '/'
- *
- * Revision 1.2  2001/03/15 03:57:51  daniel
- * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
- *
- * Revision 1.1  2001/03/09 04:38:04  danmo
- * Update from master - version 1.1.0
- *
- * Revision 1.1  2001/03/09 04:16:02  daniel
- * Added TABSeamless for reading seamless TAB files
- *
  **********************************************************************/
 
 #include "mitab.h"

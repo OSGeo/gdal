@@ -28,46 +28,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_rawbinblock.cpp,v $
- * Revision 1.11  2007-06-11 14:40:03  dmorissette
- * Fixed another issue related to attempting to read past EOF while writing
- * collections (bug 1657)
- *
- * Revision 1.10  2007/02/22 18:35:53  dmorissette
- * Fixed problem writing collections where MITAB was sometimes trying to
- * read past EOF in write mode (bug 1657).
- *
- * Revision 1.9  2006/11/28 18:49:08  dmorissette
- * Completed changes to split TABMAPObjectBlocks properly and produce an
- * optimal spatial index (bug 1585)
- *
- * Revision 1.8  2005/10/06 19:15:31  dmorissette
- * Collections: added support for reading/writing pen/brush/symbol ids and
- * for writing collection objects to .TAB/.MAP (bug 1126)
- *
- * Revision 1.7  2004/12/01 18:25:03  dmorissette
- * Fixed potential memory leaks in error conditions (bug 881)
- *
- * Revision 1.6  2004/06/30 20:29:04  dmorissette
- * Fixed refs to old address danmo@videotron.ca
- *
- * Revision 1.5  2000/02/28 17:06:06  daniel
- * Added m_bModified flag
- *
- * Revision 1.4  2000/01/15 22:30:45  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.3  1999/09/26 14:59:37  daniel
- * Implemented write support
- *
- * Revision 1.2  1999/09/16 02:39:17  daniel
- * Completed read support for most feature types
- *
- * Revision 1.1  1999/07/12 04:18:25  daniel
- * Initial checkin
- *
  **********************************************************************/
 
 #include "mitab.h"
