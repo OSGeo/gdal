@@ -29,20 +29,20 @@
 
 #include <vector>
 
-//
+namespace WMSMiniDriver_MRF_ns {
+
+    //
 // Almost like pread, but no thread safety
 // Unlike pread, the first argument is a pointer to an opaque structure
 // Return of zero means an error occurred (could be end of file)
 //
-typedef size_t (*pread_t)(void *user_data, void *buff, size_t count, off_t offset);
+typedef size_t(*pread_t)(void *user_data, void *buff, size_t count, off_t offset);
 
 //
 // A sector cache, for up to N sectors of a fixed size M
 // N has to be at least two, the user specifies extras
 // Used for session caching the remote index
 //
-namespace WMSMiniDriver_MRF_ns {
-
 class SectorCache {
 public:
     SectorCache(void *user_data,
@@ -83,9 +83,6 @@ struct ILSize {
 
 }; // namespace WMSMiniDriver_MRF
 
-using WMSMiniDriver_MRF_ns::SectorCache;
-using WMSMiniDriver_MRF_ns::ILSize;
-
 class WMSMiniDriver_MRF : public WMSMiniDriver {
 public:
     WMSMiniDriver_MRF();
@@ -111,10 +108,10 @@ private:
 
     VSILFILE *fp; // If index is a file
     WMSHTTPRequest *m_request; // If index is an URL
-    SectorCache *index_cache;
+    WMSMiniDriver_MRF_ns::SectorCache *index_cache;
 
     // Per level index offsets, level 0 being the full resolution
     std::vector<GUIntBig> offsets;
     // Matching pagecounts
-    std::vector<ILSize> pages;
+    std::vector<WMSMiniDriver_MRF_ns::ILSize> pages;
 };

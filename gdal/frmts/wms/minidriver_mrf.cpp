@@ -24,10 +24,18 @@
 * limitations under the License.
 ****************************************************************************/
 
+/*
+ A WMS style minidriver that allows an MRF or an Esri bundle to be read from a URL, using one range request per tile
+ All parameters have to be defined in the WMS file, especially for the MRF, so only simple MRF files work.
+ For a bundle, the size is assumed to be 128 tiles of 256 pixels each, which is the standard size.
+ */
+
 #include "wmsdriver.h"
 #include "minidriver_mrf.h"
 
 CPL_CVSID("$Id$");
+
+using namespace WMSMiniDriver_MRF_ns;
 
 // Copied from frmts/mrf
 
@@ -154,6 +162,9 @@ WMSMiniDriver_MRF::~WMSMiniDriver_MRF() {
 }
 
 CPLErr WMSMiniDriver_MRF::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
+    // This gets called before the rest of the WMS driver gets initialized
+    // The MRF reader only works if all datawindow is defined within the WMS file
+
     m_base_url = CPLGetXMLValue(config, "ServerURL", "");
     if (m_base_url.empty()) {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, MRF: ServerURL missing.");
@@ -164,22 +175,21 @@ CPLErr WMSMiniDriver_MRF::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
     m_idxname = CPLGetXMLValue(config, "index", "");
 
     CPLString osType(CPLGetXMLValue(config, "type", ""));
-    if (!osType.empty()) {
-        if (EQUAL(osType, "bundle")) {
-            m_type = tBundle;
-            m_parent_dataset->WMSSetDefaultOverviewCount(0);
-            m_parent_dataset->WMSSetDefaultTileCount(128, 128);
-            m_parent_dataset->WMSSetDefaultBlockSize(256, 256);
-            m_parent_dataset->WMSSetDefaultTileLevel(0);
-            m_parent_dataset->WMSSetNeedsDataWindow(FALSE);
-        }
-    }
 
-    // Type dependent initializations
-    if (m_type == tBundle)
+    if (EQUAL(osType, "bundle"))
+        m_type = tBundle;
+
+    if (m_type == tBundle) {
+        m_parent_dataset->WMSSetDefaultOverviewCount(0);
+        m_parent_dataset->WMSSetDefaultTileCount(128, 128);
+        m_parent_dataset->WMSSetDefaultBlockSize(256, 256);
+        m_parent_dataset->WMSSetDefaultTileLevel(0);
+        m_parent_dataset->WMSSetNeedsDataWindow(FALSE);
         offsets.push_back(64);
-    else
+    }
+    else { // MRF
         offsets.push_back(0);
+    }
 
     return CE_None;
 }
@@ -194,7 +204,7 @@ int inline static is_url(const CPLString &value) {
         );
 }
 
-// Called after the dataset is initialized
+// Called after the dataset is initialized by the main WMS driver
 CPLErr WMSMiniDriver_MRF::EndInit() {
     int index_is_url = 1;
     if (!m_idxname.empty() ) { // Provided, could be path or URL
@@ -229,6 +239,11 @@ CPLErr WMSMiniDriver_MRF::EndInit() {
     int psx, psy;
     m_parent_dataset->GetRasterBand(1)->GetBlockSize(&psx, &psy);
     ILSize pagesize(psx, psy, 1, 1, 1);
+
+    if (m_type == tBundle) { // A bundle contains 128x128 pages, regadless of the raster size
+        size.x = psx * 128;
+        size.y = psy * 128;
+    }
 
     for (GIntBig l = size.l; l >= 0; l--) {
         ILSize pagecount = pcount(size, pagesize);
