@@ -28,47 +28,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_ogr_driver.cpp,v $
- * Revision 1.11  2005-05-21 03:15:18  fwarmerdam
- * Removed unused stat buffer.
- *
- * Revision 1.10  2004/02/27 21:06:03  fwarmerdam
- * Better support for "single file" creation ... don't allow other layers to
- * be created.  But *do* single file to satisfy the first layer creation request
- * made.  Also, allow creating a datasource "on" an existing directory.
- *
- * Revision 1.9  2003/03/20 15:57:46  warmerda
- * Added delete datasource support
- *
- * Revision 1.8  2001/01/22 16:03:58  warmerda
- * expanded tabs
- *
- * Revision 1.7  2000/01/26 18:17:00  warmerda
- * reimplement OGR driver
- *
- * Revision 1.6  2000/01/15 22:30:44  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.5  1999/12/15 17:05:24  warmerda
- * Only create OGRTABDataSource if SmartOpen() result is non-NULL.
- *
- * Revision 1.4  1999/12/15 16:28:17  warmerda
- * fixed a few type problems
- *
- * Revision 1.3  1999/12/14 02:22:29  daniel
- * Merged TAB+MIF DataSource/Driver into ane using IMapInfoFile class
- *
- * Revision 1.2  1999/11/12 02:44:36  stephane
- * added comment, change Register name.
- *
- * Revision 1.1  1999/11/08 21:05:51  svillene
- * first revision
- *
- * Revision 1.1  1999/11/08 04:16:07  stephane
- * First Revision
- *
  **********************************************************************/
 
 #include "mitab_ogr_driver.h"

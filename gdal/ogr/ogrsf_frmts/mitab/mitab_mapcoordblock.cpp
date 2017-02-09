@@ -28,68 +28,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_mapcoordblock.cpp,v $
- * Revision 1.18  2010-07-07 19:00:15  aboudreault
- * Cleanup Win32 Compile Warnings (GDAL bug #2930)
- *
- * Revision 1.17  2008-02-01 19:36:31  dmorissette
- * Initial support for V800 REGION and MULTIPLINE (bug 1496)
- *
- * Revision 1.16  2007/02/23 18:56:44  dmorissette
- * Fixed another problem writing collections when the header of objects
- * part of a collection were split on multiple blocks. Fix WriteBytes()
- * to reload next coord block in TABReadWrite mode if there is one (bug 1663)
- *
- * Revision 1.15  2006/11/28 18:49:08  dmorissette
- * Completed changes to split TABMAPObjectBlocks properly and produce an
- * optimal spatial index (bug 1585)
- *
- * Revision 1.14  2005/10/06 19:15:31  dmorissette
- * Collections: added support for reading/writing pen/brush/symbol ids and
- * for writing collection objects to .TAB/.MAP (bug 1126)
- *
- * Revision 1.13  2004/06/30 20:29:04  dmorissette
- * Fixed refs to old address danmo@videotron.ca
- *
- * Revision 1.12  2002/08/27 17:18:23  warmerda
- * improved CPL error testing
- *
- * Revision 1.11  2001/11/17 21:54:06  daniel
- * Made several changes in order to support writing objects in 16 bits coordinate format.
- * New TABMAPObjHdr-derived classes are used to hold object info in mem until block is full.
- *
- * Revision 1.10  2001/05/09 17:45:12  daniel
- * Support reading and writing data blocks > 512 bytes (for text objects).
- *
- * Revision 1.9  2000/10/10 19:05:12  daniel
- * Fixed ReadBytes() to allow strings overlapping on 2 blocks
- *
- * Revision 1.8  2000/02/28 16:58:55  daniel
- * Added V450 object types with num_points > 32767 and pen width in points
- *
- * Revision 1.7  2000/01/15 22:30:44  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.6  1999/11/08 04:29:31  daniel
- * Fixed problem with compressed coord. offset for regions and multiplines
- *
- * Revision 1.5  1999/10/06 15:19:11  daniel
- * Do not automatically init. curr. feature MBR when block is initialized
- *
- * Revision 1.4  1999/10/06 13:18:55  daniel
- * Fixed uninitialized class members
- *
- * Revision 1.3  1999/09/29 04:25:42  daniel
- * Fixed typo in GetFeatureMBR()
- *
- * Revision 1.2  1999/09/26 14:59:36  daniel
- * Implemented write support
- *
- * Revision 1.1  1999/07/12 04:18:24  daniel
- * Initial checkin
- *
  **********************************************************************/
 
 #include "mitab.h"

@@ -26,34 +26,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_bounds.cpp,v $
- * Revision 1.8  2008-01-29 20:53:10  dmorissette
- * Added bounds for PSAD56 (Patch from AJD sent for bug #1754)
- *
- * Revision 1.7  2005/09/29 18:31:28  dmorissette
- * New bounds entry for Finnish KKJ and Swedish projections (AJD, bug 1155)
- *
- * Revision 1.6  2005/03/31 22:00:38  dmorissette
- * Added bounds entry to match datum 1011 based on MapInfo's "Svenska
- * rikssystemet, 2,5 gon väst (RT 90 7 parametrar)" (bug 997)
- *
- * Revision 1.5  2005/03/22 23:24:54  dmorissette
- * Added support for datum id in .MAP header (bug 910)
- *
- * Revision 1.4  2004/06/30 20:29:03  dmorissette
- * Fixed refs to old address danmo@videotron.ca
- *
- * Revision 1.3  2001/02/14 21:17:33  daniel
- * Check only if first char is "#" for comments in MITABLoadCoordSysTable()
- *
- * Revision 1.2  2001/01/23 22:06:50  daniel
- * Added MITABCoordSysTableLoaded()
- *
- * Revision 1.1  2001/01/23 21:23:41  daniel
- * Added projection bounds lookup table, called from TABFile::SetProjInfo()
- *
  **********************************************************************/
 
 #include "mitab.h"

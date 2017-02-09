@@ -27,30 +27,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_tooldef.cpp,v $
- * Revision 1.7  2010-07-07 19:00:15  aboudreault
- * Cleanup Win32 Compile Warnings (GDAL bug #2930)
- *
- * Revision 1.6  2004-06-30 20:29:04  dmorissette
- * Fixed refs to old address danmo@videotron.ca
- *
- * Revision 1.5  2000/11/15 04:13:50  daniel
- * Fixed writing of TABMAPToolBlock to allocate a new block when full
- *
- * Revision 1.4  2000/02/28 17:06:54  daniel
- * Support pen width in points and V450 check
- *
- * Revision 1.3  2000/01/15 22:30:45  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.2  1999/10/18 15:39:21  daniel
- * Handle case of "no pen" or "no brush" in AddPen/BrushRef()
- *
- * Revision 1.1  1999/09/26 14:59:37  daniel
- * Implemented write support
- *
  **********************************************************************/
 
 #include "mitab.h"

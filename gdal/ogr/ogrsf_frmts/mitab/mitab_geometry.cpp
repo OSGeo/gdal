@@ -27,25 +27,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_geometry.cpp,v $
- * Revision 1.5  2004-06-30 20:29:04  dmorissette
- * Fixed refs to old address danmo@videotron.ca
- *
- * Revision 1.4  2001/12/18 23:42:28  daniel
- * Added a test in OGRPolygonLabelPoint() to prevent returning a point
- * outside of the polygon MBR (bug 673).
- *
- * Revision 1.3  2001/01/22 16:03:58  warmerda
- * expanded tabs
- *
- * Revision 1.2  2000/09/28 16:39:44  warmerda
- * Avoid warnings for unused, and uninitialized variables
- *
- * Revision 1.1  2000/09/19 17:19:40  daniel
- * Initial Revision
- *
  **********************************************************************/
 
 #include <cmath>

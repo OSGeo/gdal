@@ -28,53 +28,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_indfile.cpp,v $
- * Revision 1.14  2010-07-07 19:00:15  aboudreault
- * Cleanup Win32 Compile Warnings (GDAL bug #2930)
- *
- * Revision 1.13  2008-01-29 20:46:32  dmorissette
- * Added support for v9 Time and DateTime fields (byg 1754)
- *
- * Revision 1.12  2007/12/11 03:43:03  dmorissette
- * Added reporting access mode to error message in TABINDFile::Open()
- * (GDAL changeset r12460, ticket 1620)
- *
- * Revision 1.11  2005/04/29 19:08:56  dmorissette
- * Produce an error if m_nSubtreeDepth > 255 when creating a .IND (OGR bug 839)
- *
- * Revision 1.10  2004/06/30 20:29:04  dmorissette
- * Fixed refs to old address danmo@videotron.ca
- *
- * Revision 1.9  2003/07/24 02:45:57  daniel
- * Fixed problem scanning node in TABINDNode::FindNext() - bug 2176, FW
- *
- * Revision 1.8  2001/05/01 03:38:23  daniel
- * Added update support (allows creating new index in existing IND files).
- *
- * Revision 1.7  2000/11/13 22:17:57  daniel
- * When a (child) node's first entry is replaced by InsertEntry() then make
- * sure that node's key is updated in its parent node.
- *
- * Revision 1.6  2000/03/01 00:32:00  daniel
- * Added support for float keys, and completed support for generating indexes
- *
- * Revision 1.5  2000/02/28 16:57:42  daniel
- * Added support for writing indexes
- *
- * Revision 1.4  2000/01/15 22:30:44  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.3  1999/12/14 05:52:05  daniel
- * Fixed compile error on Windows
- *
- * Revision 1.2  1999/12/14 02:19:42  daniel
- * Completed .IND support for simple TABViews
- *
- * Revision 1.1  1999/11/20 15:49:07  daniel
- * Initial version
- *
  **********************************************************************/
 
 #include "mitab.h"

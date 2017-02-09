@@ -28,46 +28,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_ogr_datasource.cpp,v $
- * Revision 1.12  2007-03-22 20:01:36  dmorissette
- * Added SPATIAL_INDEX_MODE=QUICK creation option (MITAB bug 1669)
- *
- * Revision 1.11  2006/01/27 14:27:35  fwarmerdam
- * fixed ogr bounds setting problems (bug 1198)
- *
- * Revision 1.9  2004/10/15 01:52:30  fwarmerdam
- * ModifiedICreateLayer() to use  -1000,-1000,1000,1000 bounds for GEOGCS
- * much like in mitab_bounds.cpp.  This ensures that geographic files in
- * the range 0-360 works as well as -180 to 180.
- *
- * Revision 1.8  2004/07/07 15:42:46  fwarmerdam
- * fixed up some single layer creation issues
- *
- * Revision 1.7  2004/02/27 21:06:03  fwarmerdam
- * Better support for "single file" creation ... don't allow other layers to
- * be created.  But *do* single file to satisfy the first layer creation request
- * made.  Also, allow creating a datasource "on" an existing directory.
- *
- * Revision 1.6  2003/03/21 14:20:49  warmerda
- * fixed email
- *
- * Revision 1.5  2002/02/08 16:52:16  warmerda
- * added support for FORMAT=MIF option for creating layers
- *
- * Revision 1.4  2001/02/06 22:13:54  warmerda
- * fixed memory leak in OGRTABDataSource::ICreateLayer()
- *
- * Revision 1.3  2001/01/22 16:03:58  warmerda
- * expanded tabs
- *
- * Revision 1.2  2000/07/04 01:46:23  warmerda
- * Avoid warnings on unused arguments.
- *
- * Revision 1.1  2000/01/26 18:17:09  warmerda
- * New
- *
  **********************************************************************/
 
 #include "mitab_ogr_driver.h"

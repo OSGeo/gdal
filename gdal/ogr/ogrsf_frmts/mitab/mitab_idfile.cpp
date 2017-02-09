@@ -28,34 +28,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_idfile.cpp,v $
- * Revision 1.8  2006-11-28 18:49:08  dmorissette
- * Completed changes to split TABMAPObjectBlocks properly and produce an
- * optimal spatial index (bug 1585)
- *
- * Revision 1.7  2004/06/30 20:29:04  dmorissette
- * Fixed refs to old address danmo@videotron.ca
- *
- * Revision 1.6  2000/01/18 22:08:56  daniel
- * Allow opening of 0-size .ID file (dataset with 0 features)
- *
- * Revision 1.5  2000/01/15 22:30:44  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.4  1999/09/26 14:59:36  daniel
- * Implemented write support
- *
- * Revision 1.3  1999/09/20 18:43:01  daniel
- * Use binary access to open file.
- *
- * Revision 1.2  1999/09/16 02:39:16  daniel
- * Completed read support for most feature types
- *
- * Revision 1.1  1999/07/12 04:18:24  daniel
- * Initial checkin
- *
  **********************************************************************/
 
 #include "mitab.h"

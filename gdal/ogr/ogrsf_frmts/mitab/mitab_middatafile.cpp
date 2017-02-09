@@ -27,57 +27,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_middatafile.cpp,v $
- * Revision 1.15  2010-10-12 19:02:40  aboudreault
- * Fixed incomplete patch to handle differently indented lines in MIF
- * files (gdal #3694).
- *
- * Revision 1.14  2006-01-27 13:54:06  fwarmerdam
- * fixed memory leak
- *
- * Revision 1.13  2005/10/04 19:36:10  dmorissette
- * Added support for reading collections from MIF files (bug 1126)
- *
- * Revision 1.12  2005/09/29 19:46:55  dmorissette
- * Use "\t" as default delimiter in constructor (Anthony D - bugs 1155 and 37)
- *
- * Revision 1.11  2004/05/20 13:50:06  fwarmerdam
- * Call CPLReadLine(NULL) in Close() method to clean up working buffer.
- *
- * Revision 1.10  2002/04/26 14:16:49  julien
- * Finishing the implementation of Multipoint (support for MIF)
- *
- * Revision 1.9  2002/04/24 18:37:39  daniel
- * Added return statement at end of GetLastLine()
- *
- * Revision 1.8  2002/04/22 13:49:09  julien
- * Add EOF validation in MIDDATAFile::GetLastLine() (Bug 819)
- *
- * Revision 1.7  2001/09/19 14:49:49  warmerda
- * use VSIRewind() instead of rewind()
- *
- * Revision 1.6  2001/01/22 16:03:58  warmerda
- * expanded tabs
- *
- * Revision 1.5  2000/01/15 22:30:44  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.4  1999/12/19 17:41:29  daniel
- * Fixed a memory leak
- *
- * Revision 1.3  1999/11/14 17:43:32  stephane
- * Add ifdef to remove CPLError if OGR is define
- *
- * Revision 1.2  1999/11/11 01:22:05  stephane
- * Remove DebugFeature call, Point Reading error, add IsValidFeature() to
- * test correctly if we are on a feature
- *
- * Revision 1.1  1999/11/08 04:16:07  stephane
- * First Revision
- *
- *
  **********************************************************************/
 
 #include "mitab.h"
