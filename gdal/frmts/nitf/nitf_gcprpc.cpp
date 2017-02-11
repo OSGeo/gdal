@@ -26,8 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
+#include "cpl_port.h"
 #include "nitflib.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 

@@ -43,10 +43,20 @@
  ******************************************************************************
  */
 
+#include "cpl_port.h"
 #include "rpftoclib.h"
-#include "cpl_vsi.h"
+
+#include <climits>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "nitflib.h"
 
 CPL_CVSID("$Id$");
 

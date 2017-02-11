@@ -28,13 +28,28 @@
 
 // g++ -g -Wall -fPIC frmts/nitf/ecrgtocdataset.cpp -shared -o gdal_ECRGTOC.so -Iport -Igcore -Iogr -Ifrmts/vrt -L. -lgdal
 
+#include "cpl_port.h"
+
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "gdal.h"
 #include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
 #include "gdal_proxy.h"
 #include "ogr_srs_api.h"
 #include "vrtdataset.h"
-
-#include <vector>
 
 CPL_CVSID("$Id$");
 

@@ -30,11 +30,29 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "nitfdataset.h"
-#include "cpl_string.h"
-#include "cpl_csv.h"
 
+#include <climits>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 #include <algorithm>
+#include <map>
+#include <utility>
+
+#include "cpl_conv.h"
+#include "cpl_csv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "nitflib.h"
+
 
 CPL_CVSID("$Id$");
 
