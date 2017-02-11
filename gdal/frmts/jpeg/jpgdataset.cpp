@@ -214,7 +214,7 @@ class JPGDatasetCommon : public GDALPamDataset
     virtual int GetDataPrecision() = 0;
     virtual int GetOutColorSpace() = 0;
 
-    int    EXIFInit(VSILFILE *);
+    bool   EXIFInit(VSILFILE *);
     void   ReadICCProfile();
 
     void   CheckForMask();
@@ -285,7 +285,7 @@ class JPGDataset : public JPGDatasetCommon
 {
     GDALJPEGErrorStruct sErrorStruct;
 
-    int ErrorOutOnNonFatalError();
+    bool ErrorOutOnNonFatalError();
 
     static void EmitMessage(j_common_ptr cinfo, int msg_level);
 
@@ -303,8 +303,8 @@ class JPGDataset : public JPGDatasetCommon
 #endif
     void   SetScaleNumAndDenom();
 
-    static GDALDataset*  OpenStage2( JPGDatasetOpenArgs *psArgs,
-                                     JPGDataset *&poDS );
+    static GDALDataset *OpenStage2( JPGDatasetOpenArgs *psArgs,
+                                    JPGDataset *&poDS );
 
   public:
                  JPGDataset();
@@ -340,7 +340,7 @@ class JPGRasterBand : public GDALPamRasterBand
     // For example for a JPGRasterBand that is set to a NITFDataset.
     // In other words, this->poDS doesn't necessary point to a JPGDataset
     // See ticket #1807.
-    JPGDatasetCommon   *poGDS;
+    JPGDatasetCommon *poGDS;
 
   public:
     JPGRasterBand(JPGDatasetCommon *, int);
@@ -714,12 +714,12 @@ void JPGDatasetCommon::ReadICCProfile()
 /*                                                                      */
 /*           Create Metadata from Information file directory APP1       */
 /************************************************************************/
-int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
+bool JPGDatasetCommon::EXIFInit(VSILFILE *fp)
 {
     if( nTiffDirStart == 0 )
-        return FALSE;
+        return false;
     if( nTiffDirStart > 0 )
-        return TRUE;
+        return true;
     nTiffDirStart = 0;
 
     // TODO(schwehr): Do a compile time endian check.
@@ -733,10 +733,10 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
     while(true)
     {
         if( VSIFSeekL(fp, nChunkLoc, SEEK_SET) != 0 )
-            return FALSE;
+            return false;
 
         if( VSIFReadL(abyChunkHeader, sizeof(abyChunkHeader), 1, fp) != 1 )
-            return FALSE;
+            return false;
 
         const int nChunkLength = abyChunkHeader[2] * 256 + abyChunkHeader[3];
         // COM marker
@@ -776,7 +776,7 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
     }
 
     if( nTIFFHEADER < 0 )
-        return FALSE;
+        return false;
 
     // Read TIFF header.
     TIFFHeader hdr = { 0, 0, 0 };
@@ -787,7 +787,7 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
         CPLError(CE_Failure, CPLE_FileIO,
                  "Failed to read %d byte from image header.",
                  static_cast<int>(sizeof(hdr)));
-        return FALSE;
+        return false;
     }
 
     if (hdr.tiff_magic != TIFF_BIGENDIAN && hdr.tiff_magic != TIFF_LITTLEENDIAN)
@@ -795,7 +795,7 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Not a TIFF file, bad magic number %u (%#x)",
                  hdr.tiff_magic, hdr.tiff_magic);
-        return FALSE;
+        return false;
     }
 
     if (hdr.tiff_magic == TIFF_BIGENDIAN)    bSwabflag = !bigendian;
@@ -811,7 +811,7 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Not a TIFF file, bad version number %u (%#x)",
                  hdr.tiff_version, hdr.tiff_version);
-        return FALSE;
+        return false;
     }
     nTiffDirStart = hdr.tiff_diroff;
 
@@ -820,7 +820,7 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
              hdr.tiff_magic == TIFF_BIGENDIAN ? "big" : "little",
              hdr.tiff_version );
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -1084,7 +1084,8 @@ GDALRasterBand *JPGRasterBand::GetMaskBand()
     if( poGDS->pabyCMask )
     {
         if( poGDS->poMaskBand == NULL )
-            poGDS->poMaskBand = new JPGMaskBand((JPGDataset *)poDS);
+            poGDS->poMaskBand =
+                new JPGMaskBand(static_cast<JPGDataset *>(poDS));
 
         return poGDS->poMaskBand;
     }
@@ -1578,14 +1579,14 @@ JPGDataset::~JPGDataset()
 /*                      ErrorOutOnNonFatalError()                       */
 /************************************************************************/
 
-int JPGDataset::ErrorOutOnNonFatalError()
+bool JPGDataset::ErrorOutOnNonFatalError()
 {
     if( sErrorStruct.bNonFatalErrorEncountered )
     {
         sErrorStruct.bNonFatalErrorEncountered = false;
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -1882,14 +1883,20 @@ CPLErr JPGDataset::Restart()
     // The following errors could happen when "recycling" an existing dataset
     // particularly when triggered by the implicit overviews of JPEG-in-TIFF
     // with a corrupted TIFF file.
-    if( nRasterXSize != (int)(sDInfo.image_width + nScaleFactor - 1) / nScaleFactor ||
-        nRasterYSize != (int)(sDInfo.image_height + nScaleFactor - 1) / nScaleFactor )
+    if( nRasterXSize !=
+           static_cast<int>(sDInfo.image_width + nScaleFactor - 1) /
+               nScaleFactor ||
+        nRasterYSize !=
+           static_cast<int>(sDInfo.image_height + nScaleFactor - 1) /
+               nScaleFactor )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unexpected image dimension (%d x %d), "
                  "where as (%d x %d) was expected",
-                 (int)(sDInfo.image_width + nScaleFactor - 1) / nScaleFactor,
-                 (int)(sDInfo.image_height + nScaleFactor - 1) / nScaleFactor,
+                 static_cast<int>(sDInfo.image_width + nScaleFactor - 1) /
+                     nScaleFactor,
+                 static_cast<int>(sDInfo.image_height + nScaleFactor - 1) /
+                     nScaleFactor,
                  nRasterXSize, nRasterYSize);
         bHasDoneJpegStartDecompress = false;
     }
