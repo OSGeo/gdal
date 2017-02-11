@@ -441,7 +441,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
         return;
 
     // Save current position to avoid disturbing JPEG stream decoding.
-    vsi_l_offset nCurOffset = VSIFTellL(fpImage);
+    const vsi_l_offset nCurOffset = VSIFTellL(fpImage);
 
     // Search for APP1 chunk.
     // TODO(schwehr): What are these constants?
@@ -489,7 +489,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
                     pszXMP[nXMPLength - 2 - 29] = '\0';
 
                     // Avoid setting the PAM dirty bit just for that.
-                    int nOldPamFlags = nPamFlags;
+                    const int nOldPamFlags = nPamFlags;
 
                     char *apszMDList[2] = { pszXMP, NULL };
                     SetMetadata(apszMDList, "xml:XMP");
@@ -566,7 +566,7 @@ void JPGDatasetCommon::ReadICCProfile()
         return;
     bHasReadICCMetadata = true;
 
-    vsi_l_offset nCurOffset = VSIFTellL(fpImage);
+    const vsi_l_offset nCurOffset = VSIFTellL(fpImage);
 
     int nTotalSize = 0;
     int nChunkCount = -1;
@@ -599,7 +599,7 @@ void JPGDatasetCommon::ReadICCProfile()
             continue;
         }
 
-        int nChunkLength = abyChunkHeader[2] * 256 + abyChunkHeader[3];
+        const int nChunkLength = abyChunkHeader[2] * 256 + abyChunkHeader[3];
 
         if( abyChunkHeader[1] == 0xe2 &&
             memcmp(reinterpret_cast<char *>(abyChunkHeader) + 4,
@@ -688,7 +688,7 @@ void JPGDatasetCommon::ReadICCProfile()
             CPLBase64Encode(nTotalSize, reinterpret_cast<GByte *>(pBuffer));
 
         // Avoid setting the PAM dirty bit just for that.
-        int nOldPamFlags = nPamFlags;
+        const int nOldPamFlags = nPamFlags;
 
         // Set ICC profile metadata.
         SetMetadataItem("SOURCE_ICC_PROFILE", pszBase64Profile,
@@ -718,7 +718,7 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
 {
     if( nTiffDirStart == 0 )
         return FALSE;
-    else if( nTiffDirStart > 0 )
+    if( nTiffDirStart > 0 )
         return TRUE;
     nTiffDirStart = 0;
 
@@ -738,7 +738,7 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
         if( VSIFReadL(abyChunkHeader, sizeof(abyChunkHeader), 1, fp) != 1 )
             return FALSE;
 
-        int nChunkLength = abyChunkHeader[2] * 256 + abyChunkHeader[3];
+        const int nChunkLength = abyChunkHeader[2] * 256 + abyChunkHeader[3];
         // COM marker
         if( abyChunkHeader[0] == 0xFF && abyChunkHeader[1] == 0xFE &&
             nChunkLength >= 2 )
@@ -765,7 +765,8 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
                 break;  // Not an APP chunk.
 
             if( abyChunkHeader[1] == 0xe1 &&
-                STARTS_WITH((const char *) abyChunkHeader + 4, "Exif") )
+                STARTS_WITH(reinterpret_cast<char *>(abyChunkHeader) + 4,
+                            "Exif") )
             {
                 nTIFFHEADER = nChunkLoc + 10;
             }
@@ -1323,7 +1324,7 @@ GDALDataset* JPGDatasetCommon::InitEXIFOverview()
     for( int i = 0; i < nEntryCount; i ++ )
     {
         GDALEXIFTIFFDirEntry sEntry;
-        if( VSIFReadL(&sEntry, 1, sizeof(sEntry),fpImage) != sizeof(sEntry) )
+        if( VSIFReadL(&sEntry, 1, sizeof(sEntry), fpImage) != sizeof(sEntry) )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Cannot read entry %d of IFD1", i);
@@ -1410,7 +1411,7 @@ void JPGDatasetCommon::InitInternalOverviews()
         GDALDataset *poEXIFOverview = NULL;
         if( nRasterXSize > 512 || nRasterYSize > 512 )
         {
-            vsi_l_offset nCurOffset = VSIFTellL(fpImage);
+            const vsi_l_offset nCurOffset = VSIFTellL(fpImage);
             poEXIFOverview = InitEXIFOverview();
             if( poEXIFOverview != NULL )
             {
@@ -1439,7 +1440,9 @@ void JPGDatasetCommon::InitInternalOverviews()
         // For the needs of the implicit JPEG-in-TIFF overview mechanism.
         if( CPLTestBool(
                CPLGetConfigOption("JPEG_FORCE_INTERNAL_OVERVIEWS", "NO")) )
+        {
             nImplicitOverviews = 3;
+        }
         else
         {
             for( int i = 2; i >= 0; i--)
