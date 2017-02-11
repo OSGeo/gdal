@@ -23,8 +23,8 @@ Additional optional parameters can be specified after the ':' sign.
 Currently the following one is supported :<p>
 
 <ul>
-<li> <b>tables=dataset_id1[,dataset_id2]*</b>: A list of AmigoCloud dataset IDs.
-This is necessary when you need to access a particular AmigoCloud datasets.
+<li> <b>datasets=dataset_id1[,dataset_id2, ..]</b>: A list of AmigoCloud dataset IDs.
+This is necessary when you need to access a particular AmigoCloud dataset.
 </ul>
 
 If several parameters are specified, they must be separated by a space.<p>
@@ -35,8 +35,6 @@ The following configuration options are available :
 <ul>
 <li>AMIGOCLOUD_API_URL: defaults to https://www.amigocloud.com/api/v1.
 Can be used to point to another server.</li>
-<li>AMIGOCLOUD_HTTPS: can be set to NO to use http:// protocol instead of
-https:// (only if AMIGOCLOUD_API_URL is not defined).</li>
 <li>AMIGOCLOUD_API_KEY: see following paragraph.</li>
 </ul>
 
@@ -59,12 +57,6 @@ layer, following RFC 41.
 The driver will forward any spatial filter set with SetSpatialFilter() to
 the server. It also makes the same for attribute
 filters set with SetAttributeFilter().<p>
-
-<h2>Paging</h2>
-
-Features are retrieved from the server by chunks of 500 by default.
-This number can be altered with the AMIGOCLOUD_PAGE_SIZE
-configuration option.<p>
 
 <h2>Write support</h2>
 
@@ -107,7 +99,7 @@ can be NULL. Defaults to YES.</li>
 <li>
 Acceccing data from a public table:
 <pre>
-ogrinfo -ro "AmigoCloud:1234 tables=1234,1235"
+ogrinfo -ro "AmigoCloud:1234 datasets=1234,1235"
 </pre>
 <p>
 
