@@ -31,14 +31,35 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
-#include "cpl_csv.h"
-#include "cpl_string.h"
-#include "gdal_frmts.h"
 #include "nitfdataset.h"
+
 #include "gdal_mdreader.h"
 
+#include <cmath>
+#include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 #include <algorithm>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_csv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_frmts.h"
+#include "gdal_priv.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 

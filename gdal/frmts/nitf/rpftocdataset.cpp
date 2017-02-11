@@ -26,13 +26,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "rpftoclib.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gdal_priv.h"
 #include "gdal_proxy.h"
 #include "ogr_spatialref.h"
-#include "rpftoclib.h"
+#include "nitflib.h"
 #include "vrtdataset.h"
 
 CPL_CVSID("$Id$");
