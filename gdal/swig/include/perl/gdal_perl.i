@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+%include init.i
+
 %init %{
   /* gdal_perl.i %init code */
   UseExceptions();
@@ -342,7 +344,7 @@ sub string2int {
     $string2int_hash->{$string};
 }
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
 }
 
 sub FindFile {
@@ -450,7 +452,11 @@ sub Drivers {
 
 sub Driver {
     return 'Geo::GDAL::Driver' unless @_;
-    return GetDriver(@_);
+    my $name = shift;
+    my $driver = GetDriver($name);
+    error("Driver \"$name\" not found. Is it built in? Check with Geo::GDAL::Drivers or Geo::OGR::Drivers.") 
+        unless $driver;
+    return $driver;
 }
 
 sub AccessTypes {
@@ -749,18 +755,21 @@ use Scalar::Util 'blessed';
 use Carp;
 use Exporter 'import';
 
-use vars qw/@EXPORT @DOMAINS @CAPABILITIES %CAPABILITIES %BANDS %LAYERS %RESULT_SET/;
+use vars qw/@EXPORT @DOMAINS @CAPABILITIES %CAPABILITIES/;
+ 
 @EXPORT = qw/BuildVRT/;
 @DOMAINS = qw/IMAGE_STRUCTURE SUBDATASETS GEOLOCATION/;
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
     my $self = shift;
-    delete $BANDS{$self};
+    Geo::GDAL::unkeep($self);
 }
+
+*Driver = *GetDriver;
 
 sub Dataset {
     my $self = shift;
-    return $BANDS{tied(%$self)};
+    Geo::GDAL::parent($self);
 }
 
 sub Domains {
@@ -793,8 +802,7 @@ sub GetRasterBand {
     $index //= 1;
     my $band = _GetRasterBand($self, $index);
     Geo::GDAL::error(2, $index, 'Band') unless $band;
-    $BANDS{tied(%{$band})} = $self;
-    return $band;
+    Geo::GDAL::keep($band, $self);
 }
 *Band = *GetRasterBand;
 
@@ -814,9 +822,8 @@ sub CreateMaskBand {
 sub ExecuteSQL {
     my $self = shift;
     my $layer = $self->_ExecuteSQL(@_);
-    $LAYERS{tied(%$layer)} = $self;
-    $RESULT_SET{tied(%$layer)} = 1;
-    return $layer;
+    Geo::GDAL::note($layer, "is result set");
+    Geo::GDAL::keep($layer, $self);
 }
 
 sub ReleaseResultSet {
@@ -828,8 +835,7 @@ sub GetLayer {
     my $layer = defined $name ? GetLayerByName($self, "$name") : GetLayerByIndex($self, 0);
     $name //= '';
     Geo::GDAL::error(2, $name, 'Layer') unless $layer;
-    $LAYERS{tied(%$layer)} = $self;
-    return $layer;
+    Geo::GDAL::keep($layer, $self);
 }
 *Layer = *GetLayer;
 
@@ -864,18 +870,18 @@ sub CreateLayer {
     $p->{fields} = [] unless ref($p->{fields}) eq 'ARRAY';
     # if fields contains spatial fields, then do not create default one
     for my $f (@{$p->{fields}}) {
-        if ($f->{GeometryType} or exists $Geo::OGR::Geometry::TYPE_STRING2INT{$f->{Type}}) {
+        Geo::GDAL::error("Field definitions must be hash references.") unless ref $f eq 'HASH';
+        if ($f->{GeometryType} || ($f->{Type} && exists $Geo::OGR::Geometry::TYPE_STRING2INT{$f->{Type}})) {
             $p->{geometrytype} = 'None';
             last;
         }
     }
     my $gt = Geo::GDAL::string2int($p->{geometrytype}, \%Geo::OGR::Geometry::TYPE_STRING2INT);
     my $layer = _CreateLayer($self, $p->{name}, $p->{srs}, $gt, $p->{options});
-    $LAYERS{tied(%$layer)} = $self;
     for my $f (@{$p->{fields}}) {
         $layer->CreateField($f);
     }
-    return $layer;
+    Geo::GDAL::keep($layer, $self);
 }
 
 sub DeleteLayer {
@@ -1114,8 +1120,7 @@ sub Warped {
     }
     $p->{resamplealg} = Geo::GDAL::string2int($p->{resamplealg}, \%Geo::GDAL::RESAMPLING_STRING2INT);
     my $warped = Geo::GDAL::_AutoCreateWarpedVRT($self, $p->{srcsrs}, $p->{dstsrs}, $p->{resamplealg}, $p->{maxerror});
-    $BANDS{tied(%{$warped})} = $self if $warped; # self must live as long as warped
-    return $warped;
+    Geo::GDAL::keep($warped, $self) if $warped; # self must live as long as warped
 }
 
 sub Warp {
@@ -1271,11 +1276,12 @@ use POSIX;
 use Carp;
 use Scalar::Util 'blessed';
 
-use vars qw/ %RATS
+use vars qw/
     @COLOR_INTERPRETATIONS
     %COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
     %MASK_FLAGS %DATATYPE2PDL %PDL2DATATYPE
     /;
+
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
     push(@COLOR_INTERPRETATIONS, $1), next if /^GCI_(\w+)/;
@@ -1341,17 +1347,17 @@ sub DESTROY {
     if (exists $OWNER{$self}) {
         delete $OWNER{$self};
     }
-    $self->RELEASE_PARENTS();
+    $self->RELEASE_PARENT;
 }
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
     my $self = shift;
-    delete $Geo::GDAL::Dataset::BANDS{$self};
+    Geo::GDAL::unkeep($self);
 }
 
 sub Dataset {
     my $self = shift;
-    return $Geo::GDAL::Dataset::BANDS{tied(%{$self})};
+    Geo::GDAL::parent($self);
 }
 
 sub Size {
@@ -1430,6 +1436,8 @@ sub WriteTile {
     my($self, $data, $xoff, $yoff) = @_;
     $xoff //= 0;
     $yoff //= 0;
+    Geo::GDAL::error('usage: $band->WriteTile($arrayref, $xoff, $yoff)') 
+        unless ref $data eq 'ARRAY' && ref $data->[0] eq 'ARRAY';
     my $xsize = @{$data->[0]};
     if ($xsize > $self->{XSize} - $xoff) {
         warn "Buffer XSize too large ($xsize) for this raster band (width = $self->{XSize}, offset = $xoff).";
@@ -1477,8 +1485,7 @@ sub AttributeTable {
     SetDefaultRAT($self, $_[0]) if @_ and defined $_[0];
     return unless defined wantarray;
     my $r = GetDefaultRAT($self);
-    $RATS{tied(%$r)} = $self if $r;
-    return $r;
+    Geo::GDAL::keep($r, $self) if $r;
 }
 *RasterAttributeTable = *AttributeTable;
 
@@ -1668,15 +1675,13 @@ sub Piddle {
 sub GetMaskBand {
     my $self = shift;
     my $band = _GetMaskBand($self);
-    $Geo::GDAL::Dataset::BANDS{tied(%{$band})} = $self;
-    return $band;
+    Geo::GDAL::keep($band, $self);
 }
 
 sub GetOverview {
     my ($self, $index) = @_;
     my $band = _GetOverview($self, $index);
-    $Geo::GDAL::Dataset::BANDS{tied(%{$band})} = $self;
-    return $band;
+    Geo::GDAL::keep($band, $self);
 }
 
 sub RegenerateOverview {
@@ -1867,14 +1872,14 @@ sub FieldUsages {
     return @FIELD_USAGES;
 }
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
     my $self = shift;
-    delete $Geo::GDAL::Band::RATS{$self};
+    Geo::GDAL::unkeep($self);
 }
 
 sub Band {
     my $self = shift;
-    return $Geo::GDAL::Band::RATS{tied(%$self)};
+    Geo::GDAL::parent($self);
 }
 
 sub GetUsageOfCol {
