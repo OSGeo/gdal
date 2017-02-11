@@ -100,8 +100,8 @@ typedef struct
     VSILFILE *fpLin;
     char **papszSiblingFiles;
     int nScaleFactor;
-    int bDoPAMInitialize;
-    int bUseInternalOverviews;
+    bool bDoPAMInitialize;
+    bool bUseInternalOverviews;
 } JPGDatasetOpenArgs;
 
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
@@ -148,10 +148,10 @@ void JPGAddICCProfile( void *pInfo,
 typedef struct GDALJPEGErrorStruct
 {
     jmp_buf     setjmp_buffer;
-    int         bNonFatalErrorEncountered;
+    bool        bNonFatalErrorEncountered;
     void      (*p_previous_emit_message)(j_common_ptr cinfo, int msg_level);
     GDALJPEGErrorStruct() :
-        bNonFatalErrorEncountered(FALSE),
+        bNonFatalErrorEncountered(false),
         p_previous_emit_message(NULL)
     {
         memset(&setjmp_buffer, 0, sizeof(setjmp_buffer));
@@ -174,7 +174,7 @@ class JPGDatasetCommon : public GDALPamDataset
     friend class JPGMaskBand;
 
     int           nScaleFactor;
-    int           bHasInitInternalOverviews;
+    bool          bHasInitInternalOverviews;
     int           nInternalOverviewsCurrent;
     int           nInternalOverviewsToFree;
     GDALDataset **papoInternalOverviews;
@@ -182,7 +182,7 @@ class JPGDatasetCommon : public GDALPamDataset
     GDALDataset  *InitEXIFOverview();
 
     char   *pszProjection;
-    int    bGeoTransformValid;
+    bool   bGeoTransformValid;
     double adfGeoTransform[6];
     int    nGCPCount;
     GDAL_GCP *pasGCPList;
@@ -193,20 +193,20 @@ class JPGDatasetCommon : public GDALPamDataset
     int    nLoadedScanline;
     GByte  *pabyScanline;
 
-    int    bHasReadEXIFMetadata;
-    int    bHasReadXMPMetadata;
-    int    bHasReadICCMetadata;
+    bool   bHasReadEXIFMetadata;
+    bool   bHasReadXMPMetadata;
+    bool   bHasReadICCMetadata;
     char   **papszMetadata;
     char   **papszSubDatasets;
-    int    bigendian;
+    bool   bigendian;
     int    nExifOffset;
     int    nInterOffset;
     int    nGPSOffset;
-    int    bSwabflag;
+    bool   bSwabflag;
     int    nTiffDirStart;
     int    nTIFFHEADER;
-    int    bHasDoneJpegCreateDecompress;
-    int    bHasDoneJpegStartDecompress;
+    bool   bHasDoneJpegCreateDecompress;
+    bool   bHasDoneJpegStartDecompress;
 
     virtual CPLErr LoadScanline(int) = 0;
     virtual CPLErr Restart() = 0;
@@ -223,10 +223,10 @@ class JPGDatasetCommon : public GDALPamDataset
     void   ReadEXIFMetadata();
     void   ReadXMPMetadata();
 
-    int    bHasCheckedForMask;
+    bool   bHasCheckedForMask;
     JPGMaskBand *poMaskBand;
     GByte  *pabyBitMask;
-    int     bMaskLSBOrder;
+    bool   bMaskLSBOrder;
 
     GByte  *pabyCMask;
     int    nCMaskSize;
@@ -235,8 +235,8 @@ class JPGDatasetCommon : public GDALPamDataset
     // the out_color_space of JPEG library.
     J_COLOR_SPACE eGDALColorSpace;
 
-    int    bIsSubfile;
-    int    bHasTriedLoadWorldFileOrTab;
+    bool   bIsSubfile;
+    bool   bHasTriedLoadWorldFileOrTab;
     void   LoadWorldFileOrTab();
     CPLString osWldFilename;
 
@@ -385,7 +385,7 @@ void JPGDatasetCommon::ReadEXIFMetadata()
     CPLAssert(papszMetadata == NULL);
 
     // Save current position to avoid disturbing JPEG stream decoding.
-    vsi_l_offset nCurOffset = VSIFTellL(fpImage);
+    const vsi_l_offset nCurOffset = VSIFTellL(fpImage);
 
     if(EXIFInit(fpImage))
     {
@@ -414,7 +414,7 @@ void JPGDatasetCommon::ReadEXIFMetadata()
         }
 
         // Avoid setting the PAM dirty bit just for that.
-        int nOldPamFlags = nPamFlags;
+        const int nOldPamFlags = nPamFlags;
 
         // Append metadata from PAM after EXIF metadata.
         papszMetadata = CSLMerge(papszMetadata, GDALPamDataset::GetMetadata());
@@ -425,7 +425,7 @@ void JPGDatasetCommon::ReadEXIFMetadata()
 
     VSIFSeekL(fpImage, nCurOffset, SEEK_SET);
 
-    bHasReadEXIFMetadata = TRUE;
+    bHasReadEXIFMetadata = true;
 }
 
 /************************************************************************/
@@ -447,7 +447,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
     // TODO(schwehr): What are these constants?
     GByte abyChunkHeader[2 + 2 + 29] = {};
     int nChunkLoc = 2;
-    int bFoundXMP = FALSE;
+    bool bFoundXMP = false;
 
     while(true)
     {
@@ -470,7 +470,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
             STARTS_WITH(reinterpret_cast<char *>(abyChunkHeader) + 4,
                         "http://ns.adobe.com/xap/1.0/") )
         {
-            bFoundXMP = TRUE;
+            bFoundXMP = true;
             break;  // APP1 - XMP.
         }
     }
@@ -503,7 +503,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
 
     VSIFSeekL(fpImage, nCurOffset, SEEK_SET);
 
-    bHasReadXMPMetadata = TRUE;
+    bHasReadXMPMetadata = true;
 }
 
 /************************************************************************/
@@ -564,7 +564,7 @@ void JPGDatasetCommon::ReadICCProfile()
 {
     if (bHasReadICCMetadata)
         return;
-    bHasReadICCMetadata = TRUE;
+    bHasReadICCMetadata = true;
 
     vsi_l_offset nCurOffset = VSIFTellL(fpImage);
 
@@ -1078,7 +1078,7 @@ GDALRasterBand *JPGRasterBand::GetMaskBand()
     {
         if( CPLTestBool(CPLGetConfigOption("JPEG_READ_MASK", "YES")))
             poGDS->CheckForMask();
-        poGDS->bHasCheckedForMask = TRUE;
+        poGDS->bHasCheckedForMask = true;
     }
     if( poGDS->pabyCMask )
     {
@@ -1150,41 +1150,41 @@ int JPGRasterBand::GetOverviewCount()
 
 JPGDatasetCommon::JPGDatasetCommon() :
     nScaleFactor(1),
-    bHasInitInternalOverviews(FALSE),
+    bHasInitInternalOverviews(false),
     nInternalOverviewsCurrent(0),
     nInternalOverviewsToFree(0),
     papoInternalOverviews(NULL),
     pszProjection(NULL),
-    bGeoTransformValid(FALSE),
+    bGeoTransformValid(false),
     nGCPCount(0),
     pasGCPList(NULL),
     fpImage(NULL),
     nSubfileOffset(0),
     nLoadedScanline(-1),
     pabyScanline(NULL),
-    bHasReadEXIFMetadata(FALSE),
-    bHasReadXMPMetadata(FALSE),
-    bHasReadICCMetadata(FALSE),
+    bHasReadEXIFMetadata(false),
+    bHasReadXMPMetadata(false),
+    bHasReadICCMetadata(false),
     papszMetadata(NULL),
     papszSubDatasets(NULL),
-    bigendian(1),
+    bigendian(true),
     nExifOffset(-1),
     nInterOffset(-1),
     nGPSOffset(-1),
-    bSwabflag(FALSE),
+    bSwabflag(false),
     nTiffDirStart(-1),
     nTIFFHEADER(-1),
-    bHasDoneJpegCreateDecompress(FALSE),
-    bHasDoneJpegStartDecompress(FALSE),
-    bHasCheckedForMask(FALSE),
+    bHasDoneJpegCreateDecompress(false),
+    bHasDoneJpegStartDecompress(false),
+    bHasCheckedForMask(false),
     poMaskBand(NULL),
     pabyBitMask(NULL),
-    bMaskLSBOrder(TRUE),
+    bMaskLSBOrder(true),
     pabyCMask(NULL),
     nCMaskSize(0),
     eGDALColorSpace(JCS_UNKNOWN),
-    bIsSubfile(FALSE),
-    bHasTriedLoadWorldFileOrTab(FALSE)
+    bIsSubfile(false),
+    bHasTriedLoadWorldFileOrTab(false)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -1388,8 +1388,8 @@ GDALDataset* JPGDatasetCommon::InitEXIFOverview()
     sArgs.fpLin = NULL;
     sArgs.papszSiblingFiles = NULL;
     sArgs.nScaleFactor = 1;
-    sArgs.bDoPAMInitialize = FALSE;
-    sArgs.bUseInternalOverviews = FALSE;
+    sArgs.bDoPAMInitialize = false;
+    sArgs.bUseInternalOverviews = false;
     return JPGDataset::Open(&sArgs);
 }
 
@@ -1401,7 +1401,7 @@ void JPGDatasetCommon::InitInternalOverviews()
 {
     if( bHasInitInternalOverviews )
         return;
-    bHasInitInternalOverviews = TRUE;
+    bHasInitInternalOverviews = true;
 
     // Instantiate on-the-fly overviews (if no external ones).
     if( nScaleFactor == 1 && GetRasterBand(1)->GetOverviewCount() == 0 )
@@ -1469,8 +1469,8 @@ void JPGDatasetCommon::InitInternalOverviews()
                 sArgs.fpLin = NULL;
                 sArgs.papszSiblingFiles = NULL;
                 sArgs.nScaleFactor = 1 << (i + 1);
-                sArgs.bDoPAMInitialize = FALSE;
-                sArgs.bUseInternalOverviews = FALSE;
+                sArgs.bDoPAMInitialize = false;
+                sArgs.bUseInternalOverviews = false;
                 GDALDataset *poImplicitOverview = JPGDataset::Open(&sArgs);
                 if( poImplicitOverview == NULL )
                     break;
@@ -1509,7 +1509,7 @@ CPLErr JPGDatasetCommon::IBuildOverviews( const char *pszResampling,
                                           GDALProgressFunc pfnProgress,
                                           void * pProgressData )
 {
-    bHasInitInternalOverviews = TRUE;
+    bHasInitInternalOverviews = true;
     nInternalOverviewsCurrent = 0;
 
     return GDALPamDataset::IBuildOverviews(pszResampling,
@@ -1579,7 +1579,7 @@ int JPGDataset::ErrorOutOnNonFatalError()
 {
     if( sErrorStruct.bNonFatalErrorEncountered )
     {
-        sErrorStruct.bNonFatalErrorEncountered = FALSE;
+        sErrorStruct.bNonFatalErrorEncountered = false;
         return TRUE;
     }
     return FALSE;
@@ -1602,7 +1602,7 @@ CPLErr JPGDataset::LoadScanline( int iLine )
     if (!bHasDoneJpegStartDecompress)
     {
         jpeg_start_decompress(&sDInfo);
-        bHasDoneJpegStartDecompress = TRUE;
+        bHasDoneJpegStartDecompress = true;
     }
 
     if( pabyScanline == NULL )
@@ -1888,19 +1888,19 @@ CPLErr JPGDataset::Restart()
                  (int)(sDInfo.image_width + nScaleFactor - 1) / nScaleFactor,
                  (int)(sDInfo.image_height + nScaleFactor - 1) / nScaleFactor,
                  nRasterXSize, nRasterYSize);
-        bHasDoneJpegStartDecompress = FALSE;
+        bHasDoneJpegStartDecompress = false;
     }
     else if( jpegColorSpace != sDInfo.jpeg_color_space )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unexpected jpeg color space : %d",
                  sDInfo.jpeg_color_space);
-        bHasDoneJpegStartDecompress = FALSE;
+        bHasDoneJpegStartDecompress = false;
     }
     else
     {
         jpeg_start_decompress(&sDInfo);
-        bHasDoneJpegStartDecompress = TRUE;
+        bHasDoneJpegStartDecompress = true;
     }
 
     return CE_None;
@@ -2179,7 +2179,7 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo *poOpenInfo )
     sArgs.fpLin = fpL;
     sArgs.papszSiblingFiles = poOpenInfo->GetSiblingFiles();
     sArgs.nScaleFactor = 1;
-    sArgs.bDoPAMInitialize = TRUE;
+    sArgs.bDoPAMInitialize = true;
     sArgs.bUseInternalOverviews =
         CPLFetchBool(poOpenInfo->papszOpenOptions,
                      "USE_INTERNAL_OVERVIEWS", true);
@@ -2224,8 +2224,8 @@ GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
     VSILFILE *fpLin = psArgs->fpLin;
     char **papszSiblingFiles = psArgs->papszSiblingFiles;
     const int nScaleFactor = psArgs->nScaleFactor;
-    const int bDoPAMInitialize = psArgs->bDoPAMInitialize;
-    const int bUseInternalOverviews = psArgs->bUseInternalOverviews;
+    const bool bDoPAMInitialize = psArgs->bDoPAMInitialize;
+    const bool bUseInternalOverviews = psArgs->bUseInternalOverviews;
 
     // If it is a subfile, read the JPEG header.
     bool bIsSubfile = false;
@@ -2295,7 +2295,7 @@ GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
                  CPL_FRMT_GUIB "\n",
                  real_filename, subfile_offset, subfile_size);
 
-        bIsSubfile = TRUE;
+        bIsSubfile = true;
     }
 
     // Open the file using the large file api if necessary.
@@ -2336,7 +2336,7 @@ GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
     poDS->sDInfo.client_data = &(poDS->sErrorStruct);
 
     jpeg_create_decompress(&(poDS->sDInfo));
-    poDS->bHasDoneJpegCreateDecompress = TRUE;
+    poDS->bHasDoneJpegCreateDecompress = true;
 
     // This is to address bug related in ticket #1795.
     if( CPLGetConfigOption("JPEGMEM", NULL) == NULL )
@@ -2471,7 +2471,7 @@ GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
         poDS->oOvManager.Initialize(poDS, real_filename, papszSiblingFiles);
 
         if( !bUseInternalOverviews )
-            poDS->bHasInitInternalOverviews = TRUE;
+            poDS->bHasInitInternalOverviews = true;
 
         // In the case of a file downloaded through the HTTP driver, this one
         // will unlink the temporary /vsimem file just after GDALOpen(), so
@@ -2504,7 +2504,7 @@ void JPGDatasetCommon::LoadWorldFileOrTab()
         return;
     if (bHasTriedLoadWorldFileOrTab)
         return;
-    bHasTriedLoadWorldFileOrTab = TRUE;
+    bHasTriedLoadWorldFileOrTab = true;
 
     char *pszWldFilename = NULL;
 
@@ -2529,7 +2529,7 @@ void JPGDatasetCommon::LoadWorldFileOrTab()
             &pasGCPList, oOvManager.GetSiblingFiles(), &pszWldFilename));
 
         if( bTabFileOK && nGCPCount == 0 )
-            bGeoTransformValid = TRUE;
+            bGeoTransformValid = true;
     }
 
     if (pszWldFilename)
@@ -2648,9 +2648,9 @@ void JPGDatasetCommon::DecompressMask()
     const char *pszJPEGMaskBitOrder =
         CPLGetConfigOption("JPEG_MASK_BIT_ORDER", "AUTO");
     if( EQUAL(pszJPEGMaskBitOrder, "LSB") )
-        bMaskLSBOrder = TRUE;
+        bMaskLSBOrder = true;
     else if( EQUAL(pszJPEGMaskBitOrder, "MSB") )
-        bMaskLSBOrder = FALSE;
+        bMaskLSBOrder = false;
     else if( nRasterXSize > 8 && nRasterYSize > 1 )
     {
         // Test MSB ordering hypothesis in a very restrictive case where it is
@@ -2703,16 +2703,16 @@ void JPGDatasetCommon::DecompressMask()
         {
             CPLDebug("JPEG",
                      "Bit ordering in mask is guessed to be msb (unusual)");
-            bMaskLSBOrder = FALSE;
+            bMaskLSBOrder = false;
         }
         else
         {
-            bMaskLSBOrder = TRUE;
+            bMaskLSBOrder = true;
         }
     }
     else
     {
-        bMaskLSBOrder = TRUE;
+        bMaskLSBOrder = true;
     }
 }
 
@@ -2776,7 +2776,7 @@ void JPGDataset::EmitMessage(j_common_ptr cinfo, int msg_level)
             if( CPLTestBool(
                    CPLGetConfigOption("GDAL_ERROR_ON_LIBJPEG_WARNING", "NO")) )
             {
-                psErrorStruct->bNonFatalErrorEncountered = TRUE;
+                psErrorStruct->bNonFatalErrorEncountered = true;
                 CPLError(CE_Failure, CPLE_AppDefined, "libjpeg: %s", buffer);
             }
             else
@@ -2883,7 +2883,7 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
     // to be able to generate a unusual LSB ordered mask (#5102).
     const char *pszJPEGMaskBitOrder =
         CPLGetConfigOption("JPEG_WRITE_MASK_BIT_ORDER", "LSB");
-    int bMaskLSBOrder = EQUAL(pszJPEGMaskBitOrder, "LSB");
+    const bool bMaskLSBOrder = EQUAL(pszJPEGMaskBitOrder, "LSB");
 
     // Set bit buffer from mask band, scanline by scanline.
     GUInt32 iBit = 0;
@@ -3286,7 +3286,7 @@ JPGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 
     VSILFILE *fpImage = NULL;
     GDALJPEGErrorStruct sErrorStruct;
-    sErrorStruct.bNonFatalErrorEncountered = FALSE;
+    sErrorStruct.bNonFatalErrorEncountered = false;
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
 #if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
@@ -3639,8 +3639,8 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
         sArgs.fpLin = NULL;
         sArgs.papszSiblingFiles = NULL;
         sArgs.nScaleFactor = 1;
-        sArgs.bDoPAMInitialize = TRUE;
-        sArgs.bUseInternalOverviews = TRUE;
+        sArgs.bDoPAMInitialize = true;
+        sArgs.bUseInternalOverviews = true;
 
         JPGDataset *poDS = dynamic_cast<JPGDataset *>(Open(&sArgs));
         CPLPopErrorHandler();
