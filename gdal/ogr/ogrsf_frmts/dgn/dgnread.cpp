@@ -36,6 +36,16 @@ static DGNElemCore *DGNParseTCB( DGNInfo * );
 static DGNElemCore *DGNParseColorTable( DGNInfo * );
 static DGNElemCore *DGNParseTagSet( DGNInfo * );
 
+
+/************************************************************************/
+/*                             DGN_INT16()                              */
+/************************************************************************/
+
+static short int DGN_INT16(const GByte *p)
+{
+    return static_cast<short>(p[0] | (p[1] << 8));
+}
+
 /************************************************************************/
 /*                           DGNGotoElement()                           */
 /************************************************************************/
@@ -421,6 +431,22 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           psElement->stype = DGNST_MULTIPOINT;
           DGNParseCore( psDGN, psElement );
 
+          int deltaLength = 0, deltaStart = 0;
+          if (psLine->core.properties & DGNPF_ATTRIBUTES)
+          {
+            for (int iAttr = 0; iAttr<psLine->core.attr_bytes - 3; iAttr++)
+            {
+                if (psLine->core.attr_data[iAttr] == 0xA9 &&
+                    psLine->core.attr_data[iAttr + 1] == 0x51)
+                {
+                    deltaLength = (psLine->core.attr_data[iAttr + 2] +
+                                   psLine->core.attr_data[iAttr + 3] * 256) * 2;
+                    deltaStart = iAttr + 6;
+                    break;
+                } 
+            }
+          }
+
           psLine->num_vertices = 2;
           if( psDGN->dimension == 2 )
           {
@@ -438,6 +464,18 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               psLine->vertices[1].y = DGN_INT32( psDGN->abyElem + 52 );
               psLine->vertices[1].z = DGN_INT32( psDGN->abyElem + 56 );
           }
+
+          if (deltaStart && deltaLength)
+          {
+              for (int i=0; i<2; i++)
+              {
+                 int dx = DGN_INT16(psLine->core.attr_data + deltaStart + i * 4);
+                 int dy = DGN_INT16(psLine->core.attr_data + deltaStart + i * 4 + 2);
+                 psLine->vertices[i].x += dx / 32767.0;
+                 psLine->vertices[i].y += dy / 32767.0;
+              }
+          }
+
           DGNTransformPoint( psDGN, psLine->vertices + 0 );
           DGNTransformPoint( psDGN, psLine->vertices + 1 );
       }
@@ -479,6 +517,21 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
                         count );
               count = new_count;
           }
+          int deltaLength=0,deltaStart=0;
+          if (psLine->core.properties & DGNPF_ATTRIBUTES)
+          {
+              for (int iAttr=0; iAttr<psLine->core.attr_bytes-3; iAttr++)
+              {
+                    if (psLine->core.attr_data[iAttr] == 0xA9 &&
+                        psLine->core.attr_data[iAttr+1] == 0x51)
+                    {
+                        deltaLength = (psLine->core.attr_data[iAttr + 2] +
+                            psLine->core.attr_data[iAttr + 3] * 256) * 2;
+                        deltaStart = iAttr + 6;
+                        break;
+                    }
+              }
+          }
           psLine->num_vertices = count;
           for( int i = 0; i < psLine->num_vertices; i++ )
           {
@@ -489,7 +542,13 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               if( psDGN->dimension == 3 )
                   psLine->vertices[i].z =
                       DGN_INT32( psDGN->abyElem + 46 + i*pntsize );
-
+              if (deltaStart && deltaLength)
+              {
+                int dx = DGN_INT16(psLine->core.attr_data + deltaStart + i * 4);
+                int dy = DGN_INT16(psLine->core.attr_data + deltaStart + i * 4 + 2);
+                psLine->vertices[i].x += dx / 32767.0;
+                psLine->vertices[i].y += dy / 32767.0;
+              }
               DGNTransformPoint( psDGN, psLine->vertices + i );
           }
       }
@@ -941,6 +1000,21 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           psElement->stype = DGNST_BSPLINE_SURFACE_BOUNDARY;
           DGNParseCore( psDGN, psElement );
 
+          int deltaLength=0,deltaStart=0;
+          if (psBounds->core.properties & DGNPF_ATTRIBUTES)
+          {
+              for (int iAttr=0; iAttr<psBounds->core.attr_bytes-3; iAttr++)
+              {
+                    if (psBounds->core.attr_data[iAttr] == 0xA9 &&
+                        psBounds->core.attr_data[iAttr+1] == 0x51)
+                    {
+                        deltaLength = (psBounds->core.attr_data[iAttr + 2] +
+                            psBounds->core.attr_data[iAttr + 3] * 256) * 2;
+                        deltaStart = iAttr + 6;
+                        break;
+                    }
+              }
+          }
           // Read B-Spline surface boundary
           psBounds->number = psDGN->abyElem[36] + psDGN->abyElem[37]*256;
           psBounds->numverts = numverts;
@@ -949,6 +1023,13 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
             psBounds->vertices[i].x = DGN_INT32( psDGN->abyElem + 40 + i*8 );
             psBounds->vertices[i].y = DGN_INT32( psDGN->abyElem + 44 + i*8 );
             psBounds->vertices[i].z = 0;
+            if (deltaStart && deltaLength)
+            {
+                int dx = DGN_INT16(psBounds->core.attr_data + deltaStart + i * 4);
+                int dy = DGN_INT16(psBounds->core.attr_data + deltaStart + i * 4 + 2);
+                psBounds->vertices[i].x += dx / 32767.0;
+                psBounds->vertices[i].y += dy / 32767.0;
+            }
           }
         }
       break;
