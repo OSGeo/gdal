@@ -37,15 +37,16 @@ CPL_C_END
 
 // Expanded data source object for stdio input.
 
-typedef struct {
-  struct jpeg_source_mgr pub;   // public fields.
+typedef struct
+{
+    struct jpeg_source_mgr pub;  // public fields.
 
-  VSILFILE * infile;            // Source stream.
-  JOCTET * buffer;              // Start of buffer.
-  boolean start_of_file;        // Have we gotten any data yet?
+    VSILFILE *infile;       // Source stream.
+    JOCTET *buffer;         // Start of buffer.
+    boolean start_of_file;  // Have we gotten any data yet?
 } my_source_mgr;
 
-typedef my_source_mgr * my_src_ptr;
+typedef my_source_mgr *my_src_ptr;
 
 // Choose an efficiently fread'able size.
 static const size_t INPUT_BUF_SIZE = 4096;
@@ -54,16 +55,15 @@ static const size_t INPUT_BUF_SIZE = 4096;
 // before any data is actually read.
 
 METHODDEF(void)
-init_source (j_decompress_ptr cinfo)
+init_source(j_decompress_ptr cinfo)
 {
-  my_src_ptr src = (my_src_ptr) cinfo->src;
+    my_src_ptr src = (my_src_ptr)cinfo->src;
 
-  // We reset the empty-input-file flag for each image,
-  // but we don't clear the input buffer.
-  // This is correct behavior for reading a series of images from one source.
-  src->start_of_file = TRUE;
+    // We reset the empty-input-file flag for each image,
+    // but we don't clear the input buffer.
+    // This is correct behavior for reading a series of images from one source.
+    src->start_of_file = TRUE;
 }
-
 
 // Fill the input buffer --- called whenever buffer is emptied.
 //
@@ -97,30 +97,31 @@ init_source (j_decompress_ptr cinfo)
 // the front of the buffer rather than discarding it.
 
 METHODDEF(boolean)
-fill_input_buffer (j_decompress_ptr cinfo)
+fill_input_buffer(j_decompress_ptr cinfo)
 {
-  my_src_ptr src = (my_src_ptr) cinfo->src;
-  size_t nbytes = VSIFReadL(src->buffer, 1, INPUT_BUF_SIZE, src->infile);
+    my_src_ptr src = (my_src_ptr)cinfo->src;
+    size_t nbytes = VSIFReadL(src->buffer, 1, INPUT_BUF_SIZE, src->infile);
 
-  if (nbytes == 0) {
-    if (src->start_of_file)
+    if(nbytes == 0)
     {
-        // Treat empty input file as fatal error.
-        cinfo->err->msg_code = JERR_INPUT_EMPTY;
-        cinfo->err->error_exit((j_common_ptr) (cinfo));
+        if(src->start_of_file)
+        {
+            // Treat empty input file as fatal error.
+            cinfo->err->msg_code = JERR_INPUT_EMPTY;
+            cinfo->err->error_exit((j_common_ptr)(cinfo));
+        }
+        WARNMS(cinfo, JWRN_JPEG_EOF);
+        // Insert a fake EOI marker.
+        src->buffer[0] = (JOCTET)0xFF;
+        src->buffer[1] = (JOCTET)JPEG_EOI;
+        nbytes = 2;
     }
-    WARNMS(cinfo, JWRN_JPEG_EOF);
-    // Insert a fake EOI marker.
-    src->buffer[0] = (JOCTET) 0xFF;
-    src->buffer[1] = (JOCTET) JPEG_EOI;
-    nbytes = 2;
-  }
 
-  src->pub.next_input_byte = src->buffer;
-  src->pub.bytes_in_buffer = nbytes;
-  src->start_of_file = FALSE;
+    src->pub.next_input_byte = src->buffer;
+    src->pub.bytes_in_buffer = nbytes;
+    src->start_of_file = FALSE;
 
-  return TRUE;
+    return TRUE;
 }
 
 // The Intel IPP performance libraries do not necessarily read the
@@ -129,38 +130,45 @@ fill_input_buffer (j_decompress_ptr cinfo)
 // then fills up the rest with new data.
 #ifdef IPPJ_HUFF
 METHODDEF(boolean)
-fill_input_buffer_ipp (j_decompress_ptr cinfo)
+fill_input_buffer_ipp(j_decompress_ptr cinfo)
 {
-  my_src_ptr src = (my_src_ptr) cinfo->src;
-  size_t bytes_left = src->pub.bytes_in_buffer;
-  size_t bytes_to_read = INPUT_BUF_SIZE - bytes_left;
+    my_src_ptr src = (my_src_ptr)cinfo->src;
+    size_t bytes_left = src->pub.bytes_in_buffer;
+    size_t bytes_to_read = INPUT_BUF_SIZE - bytes_left;
 
-  if(src->start_of_file || cinfo->progressive_mode)
-  {
-    return fill_input_buffer(cinfo);
-  }
-
-  memmove(src->buffer,src->pub.next_input_byte,bytes_left);
-
-  size_t nbytes
-      = VSIFReadL(src->buffer + bytes_left, 1, bytes_to_read, src->infile);
-
-  if(nbytes <= 0)
-  {
-    if(src->start_of_file)
+    if(src->start_of_file || cinfo->progressive_mode)
     {
-      // Treat empty input file as fatal error.
-      ERREXIT(cinfo, JERR_INPUT_EMPTY);
+        return fill_input_buffer(cinfo);
     }
 
-    if(src->pub.bytes_in_buffer == 0 && cinfo->unread_marker == 0)
-    {
-      WARNMS(cinfo, JWRN_JPEG_EOF);
+    memmove(src->buffer, src->pub.next_input_byte, bytes_left);
 
-      // Insert a fake EOI marker.
-      src->buffer[0] = (JOCTET)0xFF;
-      src->buffer[1] = (JOCTET)JPEG_EOI;
-      nbytes = 2;
+    size_t nbytes =
+        VSIFReadL(src->buffer + bytes_left, 1, bytes_to_read, src->infile);
+
+    if(nbytes <= 0)
+    {
+        if(src->start_of_file)
+        {
+            // Treat empty input file as fatal error.
+            ERREXIT(cinfo, JERR_INPUT_EMPTY);
+        }
+
+        if(src->pub.bytes_in_buffer == 0 && cinfo->unread_marker == 0)
+        {
+            WARNMS(cinfo, JWRN_JPEG_EOF);
+
+            // Insert a fake EOI marker.
+            src->buffer[0] = (JOCTET)0xFF;
+            src->buffer[1] = (JOCTET)JPEG_EOI;
+            nbytes = 2;
+        }
+
+        src->pub.next_input_byte = src->buffer;
+        src->pub.bytes_in_buffer = bytes_left + nbytes;
+        src->start_of_file = FALSE;
+
+        return TRUE;
     }
 
     src->pub.next_input_byte = src->buffer;
@@ -168,13 +176,6 @@ fill_input_buffer_ipp (j_decompress_ptr cinfo)
     src->start_of_file = FALSE;
 
     return TRUE;
-  }
-
-  src->pub.next_input_byte = src->buffer;
-  src->pub.bytes_in_buffer = bytes_left + nbytes;
-  src->start_of_file = FALSE;
-
-  return TRUE;
 }
 #endif  // IPPJ_HUFF
 
@@ -189,23 +190,25 @@ fill_input_buffer_ipp (j_decompress_ptr cinfo)
 // buffer is the application writer's problem.
 
 METHODDEF(void)
-skip_input_data (j_decompress_ptr cinfo, long num_bytes)
+skip_input_data(j_decompress_ptr cinfo, long num_bytes)
 {
-  my_src_ptr src = (my_src_ptr) cinfo->src;
+    my_src_ptr src = (my_src_ptr)cinfo->src;
 
-  // Just a dumb implementation for now.  Could use fseek() except
-  // it doesn't work on pipes.  Not clear that being smart is worth
-  // any trouble anyway --- large skips are infrequent.
-  if (num_bytes > 0) {
-    while (num_bytes > (long) src->pub.bytes_in_buffer) {
-      num_bytes -= (long) src->pub.bytes_in_buffer;
-      (void) fill_input_buffer(cinfo);
-      // note we assume that fill_input_buffer will never return FALSE,
-      // so suspension need not be handled.
+    // Just a dumb implementation for now.  Could use fseek() except
+    // it doesn't work on pipes.  Not clear that being smart is worth
+    // any trouble anyway --- large skips are infrequent.
+    if(num_bytes > 0)
+    {
+        while(num_bytes > (long)src->pub.bytes_in_buffer)
+        {
+            num_bytes -= (long)src->pub.bytes_in_buffer;
+            (void)fill_input_buffer(cinfo);
+            // note we assume that fill_input_buffer will never return FALSE,
+            // so suspension need not be handled.
+        }
+        src->pub.next_input_byte += (size_t)num_bytes;
+        src->pub.bytes_in_buffer -= (size_t)num_bytes;
     }
-    src->pub.next_input_byte += (size_t) num_bytes;
-    src->pub.bytes_in_buffer -= (size_t) num_bytes;
-  }
 }
 
 // An additional method that can be provided by data source modules is the
@@ -222,7 +225,7 @@ skip_input_data (j_decompress_ptr cinfo, long num_bytes)
 // for error exit.
 
 METHODDEF(void)
-term_source (CPL_UNUSED j_decompress_ptr cinfo)
+term_source(CPL_UNUSED j_decompress_ptr cinfo)
 {
     // No work necessary here.
 }
@@ -231,40 +234,40 @@ term_source (CPL_UNUSED j_decompress_ptr cinfo)
 // The caller must have already opened the stream, and is responsible
 // for closing it after finishing decompression.
 
-void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile)
+void jpeg_vsiio_src(j_decompress_ptr cinfo, VSILFILE *infile)
 {
-  my_src_ptr src;
+    my_src_ptr src;
 
-  // The source object and input buffer are made permanent so that a series
-  // of JPEG images can be read from the same file by calling jpeg_stdio_src
-  // only before the first one.  (If we discarded the buffer at the end of
-  // one image, we'd likely lose the start of the next one.)
-  // This makes it unsafe to use this manager and a different source
-  // manager serially with the same JPEG object.  Caveat programmer.
-  if (cinfo->src == NULL) {
-    // First time for this JPEG object?
-    cinfo->src = (struct jpeg_source_mgr *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-                                  sizeof(my_source_mgr));
-    src = (my_src_ptr) cinfo->src;
-    src->buffer = (JOCTET *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-                                  INPUT_BUF_SIZE * sizeof(JOCTET));
-  }
+    // The source object and input buffer are made permanent so that a series
+    // of JPEG images can be read from the same file by calling jpeg_stdio_src
+    // only before the first one.  (If we discarded the buffer at the end of
+    // one image, we'd likely lose the start of the next one.)
+    // This makes it unsafe to use this manager and a different source
+    // manager serially with the same JPEG object.  Caveat programmer.
+    if(cinfo->src == NULL)
+    {
+        // First time for this JPEG object?
+        cinfo->src = (struct jpeg_source_mgr *)(*cinfo->mem->alloc_small)(
+            (j_common_ptr)cinfo, JPOOL_PERMANENT, sizeof(my_source_mgr));
+        src = (my_src_ptr)cinfo->src;
+        src->buffer = (JOCTET *)(*cinfo->mem->alloc_small)(
+            (j_common_ptr)cinfo, JPOOL_PERMANENT,
+            INPUT_BUF_SIZE * sizeof(JOCTET));
+    }
 
-  src = (my_src_ptr) cinfo->src;
-  src->pub.init_source = init_source;
+    src = (my_src_ptr)cinfo->src;
+    src->pub.init_source = init_source;
 #ifdef IPPJ_HUFF
-  src->pub.fill_input_buffer = fill_input_buffer_ipp;
+    src->pub.fill_input_buffer = fill_input_buffer_ipp;
 #else
-  src->pub.fill_input_buffer = fill_input_buffer;
+    src->pub.fill_input_buffer = fill_input_buffer;
 #endif
-  src->pub.skip_input_data = skip_input_data;
-  src->pub.resync_to_restart = jpeg_resync_to_restart;  // Use default method.
-  src->pub.term_source = term_source;
-  src->infile = infile;
-  src->pub.bytes_in_buffer = 0;  // Forces fill_input_buffer on first read.
-  src->pub.next_input_byte = NULL; // Until buffer loaded.
+    src->pub.skip_input_data = skip_input_data;
+    src->pub.resync_to_restart = jpeg_resync_to_restart;  // Use default method.
+    src->pub.term_source = term_source;
+    src->infile = infile;
+    src->pub.bytes_in_buffer = 0;     // Forces fill_input_buffer on first read.
+    src->pub.next_input_byte = NULL;  // Until buffer loaded.
 }
 
 /* ==================================================================== */
@@ -273,14 +276,15 @@ void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile)
 
 // Expanded data destination object for stdio output.
 
-typedef struct {
-  struct jpeg_destination_mgr pub;  // Public fields.
+typedef struct
+{
+    struct jpeg_destination_mgr pub;  // Public fields.
 
-  VSILFILE * outfile;           // Target stream.
-  JOCTET * buffer;              // Start of buffer.
+    VSILFILE *outfile;  // Target stream.
+    JOCTET *buffer;     // Start of buffer.
 } my_destination_mgr;
 
-typedef my_destination_mgr * my_dest_ptr;
+typedef my_destination_mgr *my_dest_ptr;
 
 // choose an efficiently fwrite'able size.
 static const size_t OUTPUT_BUF_SIZE = 4096;
@@ -289,17 +293,16 @@ static const size_t OUTPUT_BUF_SIZE = 4096;
 // before any data is actually written.
 
 METHODDEF(void)
-init_destination (j_compress_ptr cinfo)
+init_destination(j_compress_ptr cinfo)
 {
-  my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
+    my_dest_ptr dest = (my_dest_ptr)cinfo->dest;
 
-  // Allocate the output buffer --- it will be released when done with image.
-  dest->buffer = (JOCTET *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-                                  OUTPUT_BUF_SIZE * sizeof(JOCTET));
+    // Allocate the output buffer --- it will be released when done with image.
+    dest->buffer = (JOCTET *)(*cinfo->mem->alloc_small)(
+        (j_common_ptr)cinfo, JPOOL_IMAGE, OUTPUT_BUF_SIZE * sizeof(JOCTET));
 
-  dest->pub.next_output_byte = dest->buffer;
-  dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
+    dest->pub.next_output_byte = dest->buffer;
+    dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
 }
 
 // Empty the output buffer --- called whenever buffer fills up.
@@ -324,30 +327,32 @@ init_destination (j_compress_ptr cinfo)
 // write it out when emptying the buffer externally.
 
 METHODDEF(boolean)
-empty_output_buffer (j_compress_ptr cinfo)
+empty_output_buffer(j_compress_ptr cinfo)
 {
-  my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
-  size_t bytes_to_write = OUTPUT_BUF_SIZE;
+    my_dest_ptr dest = (my_dest_ptr)cinfo->dest;
+    size_t bytes_to_write = OUTPUT_BUF_SIZE;
 
 #ifdef IPPJ_HUFF
-  // The Intel IPP performance libraries do not necessarily fill up
-  // the whole output buffer with each compression pass, so we only
-  // want to write out the parts of the buffer that are full.
-  if(! cinfo->progressive_mode) {
-    bytes_to_write -= dest->pub.free_in_buffer;
-  }
+    // The Intel IPP performance libraries do not necessarily fill up
+    // the whole output buffer with each compression pass, so we only
+    // want to write out the parts of the buffer that are full.
+    if(!cinfo->progressive_mode)
+    {
+        bytes_to_write -= dest->pub.free_in_buffer;
+    }
 #endif
 
-  if (VSIFWriteL(dest->buffer, 1, bytes_to_write, dest->outfile) != bytes_to_write)
-  {
-      cinfo->err->msg_code = JERR_FILE_WRITE;
-      cinfo->err->error_exit((j_common_ptr) (cinfo));
-  }
+    if(VSIFWriteL(dest->buffer, 1, bytes_to_write, dest->outfile) !=
+       bytes_to_write)
+    {
+        cinfo->err->msg_code = JERR_FILE_WRITE;
+        cinfo->err->error_exit((j_common_ptr)(cinfo));
+    }
 
-  dest->pub.next_output_byte = dest->buffer;
-  dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
+    dest->pub.next_output_byte = dest->buffer;
+    dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
 
-  return TRUE;
+    return TRUE;
 }
 
 // Terminate destination --- called by jpeg_finish_compress
@@ -357,50 +362,50 @@ empty_output_buffer (j_compress_ptr cinfo)
 // application must deal with any cleanup that should happen even
 // for error exit.
 METHODDEF(void)
-term_destination (j_compress_ptr cinfo)
+term_destination(j_compress_ptr cinfo)
 {
-  my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
-  size_t datacount = OUTPUT_BUF_SIZE - dest->pub.free_in_buffer;
+    my_dest_ptr dest = (my_dest_ptr)cinfo->dest;
+    size_t datacount = OUTPUT_BUF_SIZE - dest->pub.free_in_buffer;
 
-  // Write any data remaining in the buffer.
-  if (datacount > 0) {
-    if (VSIFWriteL(dest->buffer, 1, datacount, dest->outfile) != datacount)
+    // Write any data remaining in the buffer.
+    if(datacount > 0)
+    {
+        if(VSIFWriteL(dest->buffer, 1, datacount, dest->outfile) != datacount)
+        {
+            cinfo->err->msg_code = JERR_FILE_WRITE;
+            cinfo->err->error_exit((j_common_ptr)(cinfo));
+        }
+    }
+    if( VSIFFlushL(dest->outfile) != 0 )
     {
         cinfo->err->msg_code = JERR_FILE_WRITE;
-        cinfo->err->error_exit((j_common_ptr) (cinfo));
+        cinfo->err->error_exit((j_common_ptr)(cinfo));
     }
-  }
-  if( VSIFFlushL(dest->outfile) != 0 )
-  {
-      cinfo->err->msg_code = JERR_FILE_WRITE;
-      cinfo->err->error_exit((j_common_ptr) (cinfo));
-  }
 }
 
 // Prepare for output to a stdio stream.
 // The caller must have already opened the stream, and is responsible
 // for closing it after finishing compression.
 
-void
-jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile)
+void jpeg_vsiio_dest(j_compress_ptr cinfo, VSILFILE *outfile)
 {
-  my_dest_ptr dest;
+    my_dest_ptr dest;
 
-  // The destination object is made permanent so that multiple JPEG images
-  // can be written to the same file without re-executing jpeg_stdio_dest.
-  // This makes it dangerous to use this manager and a different destination
-  // manager serially with the same JPEG object, because their private object
-  // sizes may be different.  Caveat programmer.
-  if (cinfo->dest == NULL) {
-    // First time for this JPEG object?
-    cinfo->dest = (struct jpeg_destination_mgr *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-                                  sizeof(my_destination_mgr));
-  }
+    // The destination object is made permanent so that multiple JPEG images
+    // can be written to the same file without re-executing jpeg_stdio_dest.
+    // This makes it dangerous to use this manager and a different destination
+    // manager serially with the same JPEG object, because their private object
+    // sizes may be different.  Caveat programmer.
+    if(cinfo->dest == NULL)
+    {
+        // First time for this JPEG object?
+        cinfo->dest = (struct jpeg_destination_mgr *)(*cinfo->mem->alloc_small)(
+            (j_common_ptr)cinfo, JPOOL_PERMANENT, sizeof(my_destination_mgr));
+    }
 
-  dest = (my_dest_ptr) cinfo->dest;
-  dest->pub.init_destination = init_destination;
-  dest->pub.empty_output_buffer = empty_output_buffer;
-  dest->pub.term_destination = term_destination;
-  dest->outfile = outfile;
+    dest = (my_dest_ptr)cinfo->dest;
+    dest->pub.init_destination = init_destination;
+    dest->pub.empty_output_buffer = empty_output_buffer;
+    dest->pub.term_destination = term_destination;
+    dest->outfile = outfile;
 }
