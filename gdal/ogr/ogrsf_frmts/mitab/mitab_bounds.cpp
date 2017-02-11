@@ -28,7 +28,20 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
+#include "cpl_port.h"
 #include "mitab.h"
+#include "mitab_priv.h"
+
+#include <cmath>
+#include <cstring>
+#if HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
