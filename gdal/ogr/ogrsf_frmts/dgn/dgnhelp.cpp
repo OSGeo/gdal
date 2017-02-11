@@ -1283,9 +1283,9 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
                 nEntityNum = psElement->attr_data[nAttrOffset+6]
                     + psElement->attr_data[nAttrOffset+7] * 256;
                 nMSLink = psElement->attr_data[nAttrOffset+8]
-                    + psElement->attr_data[nAttrOffset+9] * 256
-                    + psElement->attr_data[nAttrOffset+10] * 65536
-                    + psElement->attr_data[nAttrOffset+11] * 65536 * 256;
+                    | (psElement->attr_data[nAttrOffset+9] << 8)
+                    | (psElement->attr_data[nAttrOffset+10] << 16)
+                    | (psElement->attr_data[nAttrOffset+11] << 24);
             }
 
             if( pnLinkageType != NULL )
