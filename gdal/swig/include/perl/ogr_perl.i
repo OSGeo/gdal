@@ -209,7 +209,8 @@ use strict;
 use warnings;
 use Carp;
 use Scalar::Util 'blessed';
-use vars qw /@CAPABILITIES %CAPABILITIES %DEFNS %FEATURES/;
+use vars qw /@CAPABILITIES %CAPABILITIES/;
+
 for (keys %Geo::OGR::) {
     push(@CAPABILITIES, $1), next if /^OLC(\w+)/;
 }
@@ -225,25 +226,25 @@ sub DESTROY {
         $self = tied(%{$self});
         return unless defined $self;
     }
-    if ($Geo::GDAL::Dataset::RESULT_SET{$self}) {
-        $Geo::GDAL::Dataset::LAYERS{$self}->_ReleaseResultSet($self);
-        delete $Geo::GDAL::Dataset::RESULT_SET{$self}
+    if (Geo::GDAL::note($self, 'is result set')) {
+        Geo::GDAL::parent($self)->_ReleaseResultSet($self);
+        Geo::GDAL::unnote($self);
     }
     delete $ITERATORS{$self};
     if (exists $OWNER{$self}) {
         delete $OWNER{$self};
     }
-    $self->RELEASE_PARENTS();
+    $self->RELEASE_PARENT;
 }
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
     my $self = shift;
-    delete $Geo::GDAL::Dataset::LAYERS{$self};
+    Geo::GDAL::unkeep($self);
 }
 
 sub Dataset {
     my $self = shift;
-    return $Geo::GDAL::Dataset::LAYERS{tied(%$self)};
+    Geo::GDAL::parent($self);
 }
 
 sub Capabilities {
@@ -263,15 +264,14 @@ sub TestCapability {
 
 sub GetDataSource {
     my $self = shift;
-    return $Geo::GDAL::Dataset::LAYERS{tied(%$self)};
+    Geo::GDAL::parent($self);
 }
 *DataSource = *GetDataSource;
 
 sub GetDefn {
     my $self = shift;
     my $defn = $self->GetLayerDefn;
-    $DEFNS{tied(%$defn)} = $self;
-    return $defn;
+    Geo::GDAL::keep($defn, $self);
 }
 
 sub CreateField {
@@ -295,6 +295,19 @@ sub CreateField {
     } elsif (blessed($_[0]) and $params{Defn}->isa('Geo::OGR::GeomFieldDefn')) {
         $self->CreateGeomField($params{Defn}, $params{ApproxOK});
     } else {
+        # if Name and Type are missing, assume Name => Type
+        if (!(exists $params{Name} && exists $params{Type})) {
+            for my $key (sort keys %params) {
+                if (exists $Geo::OGR::FieldDefn::TYPE_STRING2INT{$params{$key}} ||
+                    exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{$key}}) 
+                {
+                    $params{Name} = $key;
+                    $params{Type} = $params{$key};
+                    delete $params{$key};
+                    last;
+                }
+            }
+        }
         my $a = $params{ApproxOK};
         delete $params{ApproxOK};
         if (exists $params{GeometryType}) {
@@ -307,8 +320,12 @@ sub CreateField {
         } elsif (exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{Type}}) {
             my $fd = Geo::OGR::GeomFieldDefn->new(%params);
             CreateGeomField($self, $fd, $a);
-        } else {
+        } elsif ($params{Type} ) {
             Geo::GDAL::error("Invalid field type: $params{Type}.")
+        } elsif ($params{Name} ) {
+            Geo::GDAL::error("Missing type for field: $params{Name}.")
+        } else {
+            Geo::GDAL::error("Missing name and type for a field.")
         }
     }
 }
@@ -395,30 +412,47 @@ sub SpatialFilter {
     $self->GetSpatialFilter;
 }
 
+*FeatureCount = *GetFeatureCount;
+
 sub InsertFeature {
     my $self = shift;
     my $feature = shift;
     Geo::GDAL::error("Usage: \$feature->InsertFeature(reference to a hash or array).") unless ref($feature);
-    my $new = Geo::OGR::Feature->new($self->GetDefn);
-    if (ref($feature) eq 'HASH') {
-        $new->Row(%$feature);
-    } elsif (ref($feature) eq 'ARRAY') {
-        $new->Tuple(@$feature);
-    } elsif (blessed($feature) and $feature->isa('Geo::OGR::Feature')) {
-        $new->Row($feature->Row);
-    }
+    my $new = Geo::OGR::Feature->new(Schema => $self, Values => $feature);
     $self->CreateFeature($new);
     return unless defined wantarray;
-    $FEATURES{tied(%$new)} = $self;
-    return $new;
+    Geo::GDAL::keep($new, $self);
 }
 
 sub GetFeature {
     my ($self, $fid) = @_;
     $fid //= 0;
     my $f = $self->_GetFeature($fid);
-    $FEATURES{tied(%$f)} = $self;
-    return $f;
+    Geo::GDAL::error(2, "FID=$fid", '"Feature') unless ref $f eq 'Geo::OGR::Feature';
+    Geo::GDAL::keep($f, $self);
+}
+
+sub Feature {
+    my $self = shift;
+    my $x = shift;
+    return $self->GetFeature($x) unless $x && ref $x;
+    # Insert or Set depending on the FID
+    my $fid;
+    if (ref $x eq 'ARRAY') {
+        # FID is the first item in the array
+        $fid = $x->[0];
+    } elsif (ref $x eq 'HASH') {
+        # FID is FID
+        $fid = $x->{FID};
+    } else {
+        $fid = $x->FID;
+    }
+    # OGRNullFID is -1
+    if (!defined $fid || $fid < 0) {
+        $self->InsertFeature($x);
+    } else {
+        $self->SetFeature($x);
+    }
 }
 
 sub ForFeatures {
@@ -427,7 +461,7 @@ sub ForFeatures {
     my $in_place = shift;
     $self->ResetReading;
     while (my $f = $self->GetNextFeature) {
-        $FEATURES{tied(%$f)} = $self;
+        Geo::GDAL::keep($f, $self);
         $code->($f);
         $self->SetFeature($f) if $in_place;
     };
@@ -503,15 +537,14 @@ use Encode;
 use Carp;
 use Scalar::Util 'blessed';
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
     my $self = shift;
-    delete $Geo::OGR::Feature::DEFNS{$self};
-    delete $Geo::OGR::Layer::DEFNS{$self};
+    Geo::GDAL::unkeep($self);
 }
 
 sub Feature {
     my $self = shift;
-    return $Geo::OGR::Feature::DEFNS{tied(%$self)};
+    return Geo::GDAL::parent($self);
 }
 %}
 
@@ -544,7 +577,22 @@ sub new {
     for my $fd (@{$fields}) {
         my $d = $fd;
         if (ref($fd) eq 'HASH') {
-            if ($fd->{GeometryType} or exists $Geo::OGR::Geometry::TYPE_STRING2INT{$fd->{Type}}) {
+
+            # if Name and Type are missing, assume Name => Type
+            if (!(exists $fd->{Name} && exists $fd->{Type})) {
+                for my $key (sort keys %$fd) {
+                    if (exists $Geo::OGR::FieldDefn::TYPE_STRING2INT{$fd->{$key}} ||
+                        exists $Geo::OGR::Geometry::TYPE_STRING2INT{$fd->{$key}}) 
+                    {
+                        $fd->{Name} = $key;
+                        $fd->{Type} = $fd->{$key};
+                        delete $fd->{$key};
+                        last;
+                    }
+                }
+            }
+            
+            if ($fd->{GeometryType} or ($fd->{Type} && exists $Geo::OGR::Geometry::TYPE_STRING2INT{$fd->{Type}})) {
                 $d = Geo::OGR::GeomFieldDefn->new(%$fd);
             } else {
                 $d = Geo::OGR::FieldDefn->new(%$fd);
@@ -618,7 +666,7 @@ sub GetSchema {
 
 sub AddField {
     my $self = shift;
-    Geo::GDAL::error("Read-only definition.") if $Geo::OGR::Feature::DEFNS{tied(%$self)} || $Geo::OGR::Layer::DEFNS{tied(%$self)};
+    Geo::GDAL::error("Read-only definition.") if Geo::GDAL::parent($self);
     my %params;
     if (@_ == 0) {
     } elsif (ref($_[0]) eq 'HASH') {
@@ -638,7 +686,7 @@ sub AddField {
 
 sub DeleteField {
     my ($self, $name) = @_;
-    Geo::GDAL::error("Read-only definition.") if $Geo::OGR::Feature::DEFNS{tied(%$self)} || $Geo::OGR::Layer::DEFNS{tied(%$self)};
+    Geo::GDAL::error("Read-only definition.") if Geo::GDAL::parent($self);
     for my $i (0..$self->GetFieldCount-1) {
         Geo::GDAL::error("Non-spatial fields cannot be deleted.") if $self->_GetFieldDefn($i)->Name eq $name;
     }
@@ -674,7 +722,7 @@ sub GetGeomFieldDefn {
 
 sub GeomType {
     my ($self, $type) = @_;
-    Geo::GDAL::error("Read-only definition.") if $Geo::OGR::Feature::DEFNS{tied(%$self)} || $Geo::OGR::Layer::DEFNS{tied(%$self)};
+    Geo::GDAL::error("Read-only definition.") if Geo::GDAL::parent($self);
     if (defined $type) {
         $type = Geo::GDAL::string2int($type, \%Geo::OGR::Geometry::TYPE_STRING2INT);
         SetGeomType($self, $type);
@@ -701,7 +749,6 @@ sub StyleIgnored {
 package Geo::OGR::Feature;
 use strict;
 use warnings;
-use vars qw /%GEOMETRIES %DEFNS/;
 use Carp;
 use Encode;
 use Scalar::Util 'blessed';
@@ -712,28 +759,70 @@ use Scalar::Util 'blessed';
 use Carp;
 sub new {
     my $pkg = shift;
-    my $arg = blessed($_[0]);
-    my $defn;
-    if ($arg && $arg eq 'Geo::OGR::FeatureDefn') {
-        $defn = $_[0];
+    my $arg;
+    if (ref $_[0]) {
+        if (ref $_[0] eq 'HASH' && $_[0]->{Schema}) {
+            $arg = $_[0];
+        } else {
+            $arg = {Schema => $_[0]};
+        }
+    } elsif (@_ and @_ % 2 == 0) {
+        %$arg = @_;
+        unless ($arg->{Schema}) {
+            my %tmp = @_;
+            $arg->{Schema} = \%tmp;
+        }
     } else {
-        $defn = Geo::OGR::FeatureDefn->new(@_);
+        Geo::GDAL::error("The argument must be either a schema or a hash.");
+    }
+    Geo::GDAL::error("Missing schema.") unless $arg->{Schema};
+    my $defn;
+    for (ref $arg->{Schema}) {
+        (/Geo::OGR::Layer$/ || /Geo::OGR::Feature$/) && do {
+            $defn = $arg->{Schema}->GetDefn;
+            last;
+        };
+        /Geo::OGR::FeatureDefn$/ && do {
+            $defn = $arg->{Schema};
+            last;
+        };
+        $defn = Geo::OGR::FeatureDefn->new($arg->{Schema});
     }
     my $self = Geo::OGRc::new_Feature($defn);
-    bless $self, $pkg if defined($self);
+    Geo::GDAL::error("Feature creation failed.") unless $self;
+    bless $self, $pkg;
+    for (ref $arg->{Values}) {
+        /ARRAY/  && do {
+            $self->Tuple($arg->{Values});
+            last;
+        };
+        /HASH/ && do {
+            $self->Row($arg->{Values});
+            last;
+        };
+        /Geo::OGR::Feature$/ && do {
+            $self->Tuple($arg->{Values}->Tuple);
+            last;
+        };
+        /^$/ && do {
+            last;
+        };
+        Geo::GDAL::error("Value parameter must be an array, hash, or another feature. Not $_.");
+    }
+    return $self;
 }
 %}
 
 %perlcode %{
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
     my $self = shift;
-    delete $Geo::OGR::Layer::FEATURES{$self};
+    Geo::GDAL::unkeep($self);
 }
 
 sub Layer {
     my $self = shift;
-    return $Geo::OGR::Layer::FEATURES{tied(%$self)};
+    Geo::GDAL::parent($self);
 }
 
 sub FETCH {
@@ -880,10 +969,10 @@ sub Tuple {
     my $nf = $self->GetFieldCount;
     my $ngf = $self->GetGeomFieldCount;
     if (@_) {
+        my $values = ref $_[0] ? $_[0] : \@_;
         my $FID;
-        $FID = shift if @_ == $nf + $ngf + 1;
+        $FID = shift @$values if @$values == $nf + $ngf + 1;
         $self->SetFID($FID) if defined $FID;
-        my $values = \@_;
         if (@$values != $nf + $ngf) {
             my $n = $nf + $ngf;
             Geo::GDAL::error("Too many or too few attribute values for a feature (need $n).");
@@ -912,8 +1001,7 @@ sub Tuple {
 sub GetDefn {
     my $self = shift;
     my $defn = $self->GetDefnRef;
-    $DEFNS{tied(%$defn)} = $self;
-    return $defn;
+    Geo::GDAL::keep($defn, $self);
 }
 
 *GetFieldNames = *Geo::OGR::Layer::GetFieldNames;
@@ -1016,7 +1104,8 @@ sub SetField {
         }
         else {
             $type = $Geo::OGR::FieldDefn::TYPE_INT2STRING{$type};
-            Geo::GDAL::error("Expected one non-reference argument for this field of type '$type'.");
+            my $name = $self->GetFieldDefnRef($field)->Name;
+            Geo::GDAL::error("'$arg' is not a suitable value for field $name($type).");
         }
     } else {
         if ($type == $Geo::OGR::OFTBinary) {
@@ -1033,7 +1122,8 @@ sub SetField {
         }
         else {
             $type = $Geo::OGR::FieldDefn::TYPE_INT2STRING{$type};
-            Geo::GDAL::error("Expected more than one argument or a reference argument for this field of type '$type'.");
+            my $name = $self->GetFieldDefnRef($field)->Name;
+            Geo::GDAL::error("'$arg' is not a suitable value for field $name($type).");
         }
     }
 }
@@ -1084,8 +1174,7 @@ sub Geometry {
     return unless defined wantarray;
     $geometry = $self->GetGeomFieldRef($field);
     return unless $geometry;
-    $GEOMETRIES{tied(%$geometry)} = $self;
-    return $geometry;
+    Geo::GDAL::keep($geometry, $self);
 }
 *GetGeometry = *Geometry;
 *SetGeometry = *Geometry;
@@ -1418,14 +1507,14 @@ sub GeometryTypes {
     return @GEOMETRY_TYPES;
 }
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
     my $self = shift;
-    delete $Geo::OGR::Feature::GEOMETRIES{$self};
+    Geo::GDAL::unkeep($self);
 }
 
 sub Feature {
     my $self = shift;
-    return $Geo::OGR::Feature::GEOMETRIES{tied(%$self)};
+    Geo::GDAL::parent($self);
 }
 %}
 
@@ -1892,7 +1981,7 @@ sub GeometryTypeTest {
     Geo::GDAL::error(1, $test, {HasZ => 1, IsSubClassOf => 1, IsCurve => 1, IsSurface => 1, IsNonLinear => 1});
 }
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
 }
 
 *ByteOrders = *Geo::OGR::Geometry::ByteOrders;

@@ -560,7 +560,8 @@
 ## @method @Size()
 # @return (width, height)
 
-## @method Geo::GDAL::Driver GetDriver()
+## @method Geo::GDAL::Driver Driver()
+# @note a.k.a. GetDriver
 # @return a Geo::GDAL::Driver object that was used to open or create this dataset.
 
 ## @ignore GetRasterBand

@@ -56,7 +56,7 @@ sub Datums {
     return keys %DATUMS;
 }
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
 }
 
 
