@@ -43,7 +43,7 @@
 #include "cpl_vsi.h"
 
 #if defined(_WIN32) && !defined(unix)
-#  include <mbctype.h>  /* Multibyte chars stuff */
+#  include <mbctype.h>  // Multibyte chars stuff.
 #endif
 
 CPL_CVSID("$Id$");
@@ -86,7 +86,6 @@ int TABGenerateArc(OGRLineString *poLine, int numPoints,
 
     // Complete the arc with the last EndAngle, to make sure that
     // the arc is correctly closed.
-
     const double dX = dCenterX + dXRadius*cos(dAngle);
     const double dY = dCenterY + dYRadius*sin(dAngle);
     poLine->addPoint(dX,dY);
@@ -131,32 +130,24 @@ static GBool TABAdjustCaseSensitiveFilename(char *
 {
 
 #ifdef _WIN32
-    /*-----------------------------------------------------------------
-     * Nothing to do on Windows
-     *----------------------------------------------------------------*/
+    // Nothing to do on Windows.
     return TRUE;
 
 #else
-    /*-----------------------------------------------------------------
-     * Unix case.
-     *----------------------------------------------------------------*/
+    // Unix case.
     VSIStatBufL  sStatBuf;
     char        *pszTmpPath = NULL;
     int         nTotalLen, iTmpPtr;
     GBool       bValidPath;
 
-    /*-----------------------------------------------------------------
-     * First check if the filename is OK as is.
-     *----------------------------------------------------------------*/
+    // First check if the filename is OK as is.
     if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
     }
 
-    /*-----------------------------------------------------------------
-     * OK, file either does not exist or has the wrong cases... we'll
-     * go backwards until we find a portion of the path that is valid.
-     *----------------------------------------------------------------*/
+    // File either does not exist or has the wrong cases.
+    // Go backwards until we find a portion of the path that is valid.
     pszTmpPath = CPLStrdup(pszFname);
     nTotalLen = static_cast<int>(strlen(pszTmpPath));
     iTmpPtr = nTotalLen;
@@ -164,9 +155,7 @@ static GBool TABAdjustCaseSensitiveFilename(char *
 
     while(iTmpPtr > 0 && !bValidPath)
     {
-        /*-------------------------------------------------------------
-         * Move back to the previous '/' separator
-         *------------------------------------------------------------*/
+        // Move back to the previous '/' separator.
         pszTmpPath[--iTmpPtr] = '\0';
         while( iTmpPtr > 0 && pszTmpPath[iTmpPtr-1] != '/' )
         {
@@ -179,18 +168,14 @@ static GBool TABAdjustCaseSensitiveFilename(char *
 
     CPLAssert(iTmpPtr >= 0);
 
-    /*-----------------------------------------------------------------
-     * Assume that CWD is valid... so an empty path is a valid path
-     *----------------------------------------------------------------*/
+    // Assume that CWD is valid.  Therefor an empty path is a valid.
     if (iTmpPtr == 0)
         bValidPath = TRUE;
 
-    /*-----------------------------------------------------------------
-     * OK, now that we have a valid base, reconstruct the whole path
-     * by scanning all the sub-directories.
-     * If we get to a point where a path component does not exist then
-     * we simply return the rest of the path as is.
-     *----------------------------------------------------------------*/
+    // Now that we have a valid base, reconstruct the whole path
+    // by scanning all the sub-directories.
+    // If we get to a point where a path component does not exist then
+    // we simply return the rest of the path as is.
     while(bValidPath && (int)strlen(pszTmpPath) < nTotalLen)
     {
         char    **papszDir=NULL;
@@ -199,9 +184,7 @@ static GBool TABAdjustCaseSensitiveFilename(char *
         iLastPartStart = iTmpPtr;
         papszDir = VSIReadDir(pszTmpPath);
 
-        /*-------------------------------------------------------------
-         * Add one component to the current path
-         *------------------------------------------------------------*/
+        // Add one component to the current path.
         pszTmpPath[iTmpPtr] = pszFname[iTmpPtr];
         iTmpPtr++;
         for( ; pszFname[iTmpPtr] != '\0' && pszFname[iTmpPtr]!='/'; iTmpPtr++)
@@ -212,14 +195,12 @@ static GBool TABAdjustCaseSensitiveFilename(char *
         while(iLastPartStart < iTmpPtr && pszTmpPath[iLastPartStart] == '/')
             iLastPartStart++;
 
-        /*-------------------------------------------------------------
-         * And do a case insensitive search in the current dir...
-         *------------------------------------------------------------*/
+        // And do a case insensitive search in the current dir.
         for(iEntry=0; papszDir && papszDir[iEntry]; iEntry++)
         {
             if (EQUAL(pszTmpPath+iLastPartStart, papszDir[iEntry]))
             {
-                /* Fount it! */
+                // Fount it.
                 strcpy(pszTmpPath+iLastPartStart, papszDir[iEntry]);
                 break;
             }
@@ -231,18 +212,14 @@ static GBool TABAdjustCaseSensitiveFilename(char *
         CSLDestroy(papszDir);
     }
 
-    /*-----------------------------------------------------------------
-     * We reached the last valid path component... just copy the rest
-     * of the path as is.
-     *----------------------------------------------------------------*/
+    // We reached the last valid path component... just copy the rest
+    // of the path as is.
     if (iTmpPtr < nTotalLen-1)
     {
         strncpy(pszTmpPath+iTmpPtr, pszFname+iTmpPtr, nTotalLen-iTmpPtr);
     }
 
-    /*-----------------------------------------------------------------
-     * Update the source buffer and return.
-     *----------------------------------------------------------------*/
+    // Update the source buffer and return.
     strcpy(pszFname, pszTmpPath);
     CPLFree(pszTmpPath);
 
@@ -269,17 +246,13 @@ GBool TABAdjustFilenameExtension(char *pszFname)
 {
     VSIStatBufL  sStatBuf;
 
-    /*-----------------------------------------------------------------
-     * First try using filename as provided
-     *----------------------------------------------------------------*/
+    // First try using filename as provided
     if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return TRUE;
     }
 
-    /*-----------------------------------------------------------------
-     * Try using uppercase extension (we assume that fname contains a '.')
-     *----------------------------------------------------------------*/
+    // Try using uppercase extension (we assume that fname contains a '.')
     for( int i = static_cast<int>(strlen(pszFname))-1;
          i >= 0 && pszFname[i] != '.';
          i-- )
@@ -292,9 +265,7 @@ GBool TABAdjustFilenameExtension(char *pszFname)
         return TRUE;
     }
 
-    /*-----------------------------------------------------------------
-     * Try using lowercase extension
-     *----------------------------------------------------------------*/
+    // Try using lowercase extension.
     for( int i = static_cast<int>(strlen(pszFname))-1;
          i >= 0 && pszFname[i] != '.';
          i-- )
@@ -307,10 +278,8 @@ GBool TABAdjustFilenameExtension(char *pszFname)
         return TRUE;
     }
 
-    /*-----------------------------------------------------------------
-     * None of the extensions worked!
-     * Try adjusting cases in the whole path and filename
-     *----------------------------------------------------------------*/
+    // None of the extensions worked.
+    // Try adjusting cases in the whole path and filename.
     return TABAdjustCaseSensitiveFilename(pszFname);
 }
 
@@ -326,10 +295,7 @@ char *TABGetBasename(const char *pszFname)
 {
     const char *pszTmp = NULL;
 
-    /*-----------------------------------------------------------------
-     * Skip leading path or use whole name if no path dividers are
-     * encountered.
-     *----------------------------------------------------------------*/
+    // Skip leading path or use whole name if no path dividers are encountered.
     pszTmp = pszFname + strlen(pszFname) - 1;
     while ( pszTmp != pszFname
             && *pszTmp != '/' && *pszTmp != '\\' )
@@ -338,9 +304,7 @@ char *TABGetBasename(const char *pszFname)
     if( pszTmp != pszFname )
         pszTmp++;
 
-    /*-----------------------------------------------------------------
-     * Now allocate our own copy and remove extension
-     *----------------------------------------------------------------*/
+    // Now allocate our own copy and remove extension.
     char *pszBasename = CPLStrdup(pszTmp);
     for( int i = static_cast<int>(strlen(pszBasename))-1; i >= 0; i-- )
     {
@@ -402,24 +366,19 @@ char **TAB_CSLLoad(const char *pszFname)
  **********************************************************************/
 char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
 {
-
-    /*-----------------------------------------------------------------
-     * First check if we need to do any replacement
-     *----------------------------------------------------------------*/
+    // First check if we need to do any replacement.
     if (pszString == NULL || strstr(pszString, "\\n") == NULL)
     {
         return pszString;
     }
 
-    /*-----------------------------------------------------------------
-     * Yes, we need to replace at least one "\n"
-     * We try to work on the original buffer unless we have bSrcIsConst=TRUE
-     *
-     * Note that we do not worry about freeing the source buffer when we
-     * return a copy... it is up to the caller to decide if the source needs
-     * to be freed based on context and by comparing pszString with
-     * the returned pointer (pszWorkString) to see if they are identical.
-     *----------------------------------------------------------------*/
+    // Yes, we need to replace at least one "\n".
+    // We try to work on the original buffer unless we have bSrcIsConst=TRUE.
+    //
+    // Note that we do not worry about freeing the source buffer when we
+    // return a copy.  It is up to the caller to decide if the source needs
+    // to be freed based on context and by comparing pszString with
+    // the returned pointer (pszWorkString) to see if they are identical.
     char *pszWorkString = NULL;
     int i =0;
     int j =0;
@@ -476,18 +435,14 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
  **********************************************************************/
 char *TABEscapeString(char *pszString)
 {
-    /*-----------------------------------------------------------------
-     * First check if we need to do any replacement
-     *----------------------------------------------------------------*/
+    // First check if we need to do any replacement
     if (pszString == NULL || strchr(pszString, '\n') == NULL)
     {
         return pszString;
     }
 
-    /*-----------------------------------------------------------------
-     * OK, we need to do some replacements... alloc a copy big enough
-     * to hold the worst possible case
-     *----------------------------------------------------------------*/
+    // Need to do some replacements.  Alloc a copy big enough
+    // to hold the worst possible case.
     char *pszWorkString = (char *)CPLMalloc(2*sizeof(char) *
                                             (strlen(pszString) +1));
 
@@ -540,28 +495,24 @@ char *TABCleanFieldName(const char *pszSrcName)
     }
 
 #if defined(_WIN32) && !defined(unix)
-    /*-----------------------------------------------------------------
-     * On Windows, check if we're using a double-byte codepage, and
-     * if so then just keep the field name as is...
-     *----------------------------------------------------------------*/
+    // On Windows, check if we're using a double-byte codepage, and
+    // if so then just keep the field name as is.
     if (_getmbcp() != 0)
         return pszNewName;
 #endif
 
-    /*-----------------------------------------------------------------
-     * According to the MapInfo User's Guide (p. 240, v5.5)
-     * New Table Command:
-     *  Name:
-     * Displays the field name in the name box. You can also enter new field
-     * names here. Defaults are Field1, Field2, etc. A field name can contain
-     * up to 31 alphanumeric characters. Use letters, numbers, and the
-     * underscore. Do not use spaces; instead, use the underscore character
-     * (_) to separate words in a field name. Use upper and lower case for
-     * legibility, but MapInfo is not case-sensitive.
-     *
-     * It was also verified that extended chars with accents are also
-     * accepted.
-     *----------------------------------------------------------------*/
+    // According to the MapInfo User's Guide (p. 240, v5.5).
+    // New Table Command:
+    //  Name:
+    // Displays the field name in the name box. You can also enter new field
+    // names here. Defaults are Field1, Field2, etc. A field name can contain
+    // up to 31 alphanumeric characters. Use letters, numbers, and the
+    // underscore. Do not use spaces; instead, use the underscore character
+    // (_) to separate words in a field name. Use upper and lower case for
+    // legibility, but MapInfo is not case-sensitive.
+    //
+    // It was also verified that extended chars with accents are also
+    // accepted.
     int numInvalidChars = 0;
     for( int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++ )
     {
