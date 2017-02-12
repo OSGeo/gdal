@@ -336,6 +336,9 @@ struct GDALVectorTranslateOptions
 
     /*! Whether layer and feature native data must be transferred. */
     bool bNativeData;
+
+    /*! Maximum number of features, or -1 if no limit. */
+    GIntBig nLimit;
 };
 
 typedef struct
@@ -418,6 +421,7 @@ public:
     OGRGeometry                  *m_poClipDst;
     bool                          m_bExplodeCollections;
     bool                          m_bNativeData;
+    GIntBig                       m_nLimit;
 
     int                 Translate(OGRFeature* poFeatureIn,
                                   TargetLayerInfo* psInfo,
@@ -1693,6 +1697,11 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
         CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-noNativeData");
         return NULL;
     }
+    if( psOptions->nLimit >= 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-limit");
+        return NULL;
+    }
     if( psOptions->papszMetadataOptions )
     {
         CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-mo");
@@ -2376,6 +2385,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oTranslator.m_poClipDst = (OGRGeometry *)psOptions->hClipDst;
     oTranslator.m_bExplodeCollections = psOptions->bExplodeCollections;
     oTranslator.m_bNativeData = psOptions->bNativeData;
+    oTranslator.m_nLimit = psOptions->nLimit;
 
     if( psOptions->nGroupTransactions )
     {
@@ -4233,6 +4243,8 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             poFeature = poSrcLayer->GetFeature(psOptions->nFIDToFetch);
         else
             poFeature = poSrcLayer->GetNextFeature();
+        if( m_nLimit >= 0 && psInfo->nFeaturesRead >= m_nLimit )
+            break;
 
         if( poFeature == NULL )
             break;
@@ -4705,6 +4717,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     psOptions->nTransformOrder = 0;  /* Default to 0 for now... let the lib decide */
     psOptions->hSpatialFilter = NULL;
     psOptions->bNativeData = true;
+    psOptions->nLimit = -1;
 
     int nArgc = CSLCount(papszArgv);
     for( int i = 0; papszArgv != NULL && i < nArgc; i++ )
@@ -5282,6 +5295,10 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         {
             psOptions->papszMetadataOptions = CSLAddString( psOptions->papszMetadataOptions,
                                                  papszArgv[++i] );
+        }
+        else if( EQUAL(papszArgv[i],"-limit") && i+1 < nArgc )
+        {
+            psOptions->nLimit = CPLAtoGIntBig( papszArgv[++i] );
         }
         else if( papszArgv[i][0] == '-' )
         {

@@ -336,7 +336,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
     printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]\n"
             "               [-select field_list] [-where restricted_where|@filename]\n"
             "               [-progress] [-sql <sql statement>|@filename] [-dialect dialect]\n"
-            "               [-preserve_fid] [-fid FID]\n"
+            "               [-preserve_fid] [-fid FID] [-limit nb_features]\n"
             "               [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]\n"
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"

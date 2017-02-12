@@ -245,7 +245,7 @@ Usage:
 Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
                [-select field_list] [-where restricted_where|\@filename]
                [-progress] [-sql <sql statement>|\@filename] [-dialect dialect]
-               [-preserve_fid] [-fid FID]
+               [-preserve_fid] [-fid FID] [-limit nb_features]
                [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
@@ -361,6 +361,8 @@ id will be reported.  Operates exclusive of the spatial or attribute
 queries.  Note: if you want to select several features based on their feature id, you can
 also use the fact the 'fid' is a special field recognized by OGR SQL. So, '-where "fid in (1,3,5)"'
 would select features 1, 3 and 5.</dd>
+<dt> <b>-limit</b> <i>nb_features</i>:</dt><dd> (starting with GDAL 2.2): to
+limit the number of features, per layer.</dd>
 </dl>
 
 Srs_def can be a full WKT definition (hard to escape properly), or a well
