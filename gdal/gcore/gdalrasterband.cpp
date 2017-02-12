@@ -3249,8 +3249,13 @@ CPLErr
     }
 
     *pnBuckets = nBuckets;
-    return GetHistogram( *pdfMin, *pdfMax, *pnBuckets, *ppanHistogram,
+    CPLErr eErr = GetHistogram( *pdfMin, *pdfMax, *pnBuckets, *ppanHistogram,
                          TRUE, FALSE, pfnProgress, pProgressData );
+    if( eErr != CE_None )
+    {
+        *pnBuckets = 0;
+    }
+    return eErr;
 }
 
 /************************************************************************/
