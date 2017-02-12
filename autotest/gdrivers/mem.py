@@ -572,6 +572,50 @@ def mem_10():
         print(cs)
         return 'fail'
 
+    # Test that average in one or several steps give the same result
+    ds.GetRasterBand(1).GetOverview(0).Fill(0)
+    ds.GetRasterBand(1).GetOverview(1).Fill(0)
+
+    ret = ds.BuildOverviews('AVERAGE', [2, 4])
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverviewCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 1152:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs != 240:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    ds.GetRasterBand(1).GetOverview(0).Fill(0)
+    ds.GetRasterBand(1).GetOverview(1).Fill(0)
+
+    ret = ds.BuildOverviews('AVERAGE', [2])
+    ret = ds.BuildOverviews('AVERAGE', [4])
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverviewCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 1152:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs != 240:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
     ds = None
 
     # Multiple band case
