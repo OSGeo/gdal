@@ -35,6 +35,7 @@
 #include <climits>
 #include <cmath>
 #include <cstring>
+#include <limits>
 
 #include "mitab.h"
 #include "cpl_conv.h"
@@ -78,7 +79,7 @@ int TABGenerateArc(OGRLineString *poLine, int numPoints,
     double dAngle = 0.0;
     for( int i = 0; i<numPoints; i++ )
     {
-        dAngle = dStartAngle + (double)i*dAngleStep;
+        dAngle = dStartAngle + i * dAngleStep;
         const double dX = dCenterX + dXRadius*cos(dAngle);
         const double dY = dCenterY + dYRadius*sin(dAngle);
         poLine->addPoint(dX, dY);
@@ -122,36 +123,30 @@ int TABCloseRing(OGRLineString *poRing)
  * This function works on the original buffer and returns a reference to it.
  * It does nothing on Windows systems where filenames are not case sensitive.
  **********************************************************************/
-static GBool TABAdjustCaseSensitiveFilename(char *
-#ifndef _WIN32
-                                            pszFname
-#endif
-                                            )
-{
-
 #ifdef _WIN32
+static bool TABAdjustCaseSensitiveFilename(char * /* pszFname */ )
+{
     // Nothing to do on Windows.
-    return TRUE;
-
+    return true;
+}
 #else
-    // Unix case.
-    VSIStatBufL  sStatBuf;
-    char        *pszTmpPath = NULL;
-    int         nTotalLen, iTmpPtr;
-    GBool       bValidPath;
+// Unix case.
+static bool TABAdjustCaseSensitiveFilename(char *pszFname)
+{
+    VSIStatBufL sStatBuf;
 
     // First check if the filename is OK as is.
     if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
-        return TRUE;
+        return true;
     }
 
     // File either does not exist or has the wrong cases.
     // Go backwards until we find a portion of the path that is valid.
-    pszTmpPath = CPLStrdup(pszFname);
-    nTotalLen = static_cast<int>(strlen(pszTmpPath));
-    iTmpPtr = nTotalLen;
-    bValidPath = FALSE;
+    char *pszTmpPath = CPLStrdup(pszFname);
+    const int nTotalLen = static_cast<int>(strlen(pszTmpPath));
+    int iTmpPtr = nTotalLen;
+    GBool bValidPath = false;
 
     while(iTmpPtr > 0 && !bValidPath)
     {
@@ -163,14 +158,14 @@ static GBool TABAdjustCaseSensitiveFilename(char *
         }
 
         if (iTmpPtr > 0 && VSIStatL(pszTmpPath, &sStatBuf) == 0)
-            bValidPath = TRUE;
+            bValidPath = true;
     }
 
     CPLAssert(iTmpPtr >= 0);
 
     // Assume that CWD is valid.  Therefor an empty path is a valid.
     if (iTmpPtr == 0)
-        bValidPath = TRUE;
+        bValidPath = true;
 
     // Now that we have a valid base, reconstruct the whole path
     // by scanning all the sub-directories.
@@ -178,11 +173,8 @@ static GBool TABAdjustCaseSensitiveFilename(char *
     // we simply return the rest of the path as is.
     while(bValidPath && (int)strlen(pszTmpPath) < nTotalLen)
     {
-        char    **papszDir=NULL;
-        int     iEntry, iLastPartStart;
-
-        iLastPartStart = iTmpPtr;
-        papszDir = VSIReadDir(pszTmpPath);
+        int iLastPartStart = iTmpPtr;
+        char **papszDir = VSIReadDir(pszTmpPath);
 
         // Add one component to the current path.
         pszTmpPath[iTmpPtr] = pszFname[iTmpPtr];
@@ -196,9 +188,9 @@ static GBool TABAdjustCaseSensitiveFilename(char *
             iLastPartStart++;
 
         // And do a case insensitive search in the current dir.
-        for(iEntry=0; papszDir && papszDir[iEntry]; iEntry++)
+        for(int iEntry = 0; papszDir && papszDir[iEntry]; iEntry++)
         {
-            if (EQUAL(pszTmpPath+iLastPartStart, papszDir[iEntry]))
+            if (EQUAL(pszTmpPath + iLastPartStart, papszDir[iEntry]))
             {
                 // Fount it.
                 strcpy(pszTmpPath+iLastPartStart, papszDir[iEntry]);
@@ -207,7 +199,7 @@ static GBool TABAdjustCaseSensitiveFilename(char *
         }
 
         if (iTmpPtr > 0 && VSIStatL(pszTmpPath, &sStatBuf) != 0)
-            bValidPath = FALSE;
+            bValidPath = false;
 
         CSLDestroy(papszDir);
     }
@@ -224,9 +216,8 @@ static GBool TABAdjustCaseSensitiveFilename(char *
     CPLFree(pszTmpPath);
 
     return bValidPath;
-
-#endif
 }
+#endif // Not win32.
 
 /**********************************************************************
  *                       TABAdjustFilenameExtension()
@@ -253,11 +244,11 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     }
 
     // Try using uppercase extension (we assume that fname contains a '.')
-    for( int i = static_cast<int>(strlen(pszFname))-1;
+    for( int i = static_cast<int>(strlen(pszFname)) - 1;
          i >= 0 && pszFname[i] != '.';
          i-- )
     {
-        pszFname[i] = (char)toupper(pszFname[i]);
+        pszFname[i] = static_cast<char>(toupper(pszFname[i]));
     }
 
     if (VSIStatL(pszFname, &sStatBuf) == 0)
@@ -270,7 +261,7 @@ GBool TABAdjustFilenameExtension(char *pszFname)
          i >= 0 && pszFname[i] != '.';
          i-- )
     {
-        pszFname[i] = (char)tolower(pszFname[i]);
+        pszFname[i] = static_cast<char>(tolower(pszFname[i]));
     }
 
     if (VSIStatL(pszFname, &sStatBuf) == 0)
@@ -293,10 +284,8 @@ GBool TABAdjustFilenameExtension(char *pszFname)
  **********************************************************************/
 char *TABGetBasename(const char *pszFname)
 {
-    const char *pszTmp = NULL;
-
     // Skip leading path or use whole name if no path dividers are encountered.
-    pszTmp = pszFname + strlen(pszFname) - 1;
+    const char *pszTmp = pszFname + strlen(pszFname) - 1;
     while ( pszTmp != pszFname
             && *pszTmp != '/' && *pszTmp != '\\' )
         pszTmp--;
@@ -380,21 +369,20 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
     // to be freed based on context and by comparing pszString with
     // the returned pointer (pszWorkString) to see if they are identical.
     char *pszWorkString = NULL;
-    int i =0;
-    int j =0;
-
     if (bSrcIsConst)
     {
         // We have to create a copy to work on.
-        pszWorkString = (char *)CPLMalloc(sizeof(char) *
-                                          (strlen(pszString) +1));
+        pszWorkString = static_cast<char *>(
+            CPLMalloc(sizeof(char) * (strlen(pszString) +1)));
     }
     else
     {
-        // We'll work on the original.
+        // Work on the original.
         pszWorkString = pszString;
     }
 
+    int i = 0;
+    int j = 0;
     while (pszString[i])
     {
         if (pszString[i] =='\\' &&
@@ -443,11 +431,11 @@ char *TABEscapeString(char *pszString)
 
     // Need to do some replacements.  Alloc a copy big enough
     // to hold the worst possible case.
-    char *pszWorkString = (char *)CPLMalloc(2*sizeof(char) *
-                                            (strlen(pszString) +1));
+    char *pszWorkString = static_cast<char *>(CPLMalloc(2*sizeof(char) *
+                                                        (strlen(pszString) +1)));
 
-    int i =0;
-    int j =0;
+    int i = 0;
+    int j = 0;
 
     while (pszString[i])
     {
@@ -483,15 +471,15 @@ char *TABEscapeString(char *pszString)
  **********************************************************************/
 char *TABCleanFieldName(const char *pszSrcName)
 {
-
     char *pszNewName = CPLStrdup(pszSrcName);
 
     if (strlen(pszNewName) > 31)
     {
         pszNewName[31] = '\0';
-        CPLError(CE_Warning, (CPLErrorNum)TAB_WarningInvalidFieldName,
-                 "Field name '%s' is longer than the max of 31 characters. "
-                 "'%s' will be used instead.", pszSrcName, pszNewName);
+        CPLError(
+            CE_Warning, static_cast<CPLErrorNum>(TAB_WarningInvalidFieldName),
+            "Field name '%s' is longer than the max of 31 characters. "
+            "'%s' will be used instead.", pszSrcName, pszNewName);
     }
 
 #if defined(_WIN32) && !defined(unix)
@@ -524,11 +512,11 @@ char *TABCleanFieldName(const char *pszSrcName)
                 numInvalidChars++;
             }
         }
-        else if ( !( pszSrcName[i] == '_' ||
-                     (i!=0 && pszSrcName[i]>='0' && pszSrcName[i]<='9') ||
-                     (pszSrcName[i]>='a' && pszSrcName[i]<='z') ||
-                     (pszSrcName[i]>='A' && pszSrcName[i]<='Z') ||
-                     (GByte)pszSrcName[i]>=192 ) )
+        else if ( !(pszSrcName[i] == '_' ||
+                    (i!=0 && pszSrcName[i]>='0' && pszSrcName[i]<='9') ||
+                    (pszSrcName[i]>='a' && pszSrcName[i]<='z') ||
+                    (pszSrcName[i]>='A' && pszSrcName[i]<='Z') ||
+                    static_cast<GByte>(pszSrcName[i])>=192) )
         {
             pszNewName[i] = '_';
             numInvalidChars++;
@@ -537,9 +525,10 @@ char *TABCleanFieldName(const char *pszSrcName)
 
     if (numInvalidChars > 0)
     {
-        CPLError(CE_Warning, (CPLErrorNum)TAB_WarningInvalidFieldName,
-                 "Field name '%s' contains invalid characters. "
-                 "'%s' will be used instead.", pszSrcName, pszNewName);
+        CPLError(
+            CE_Warning, static_cast<CPLErrorNum>(TAB_WarningInvalidFieldName),
+            "Field name '%s' contains invalid characters. "
+            "'%s' will be used instead.", pszSrcName, pszNewName);
     }
 
     return pszNewName;
@@ -605,10 +594,10 @@ const char *TABUnitIdToString(int nId)
  **********************************************************************/
 int TABUnitIdFromString(const char *pszName)
 {
-    const MapInfoUnitsInfo *psList = gasUnitsList;
-
     if( pszName == NULL )
         return 13;
+
+    const MapInfoUnitsInfo *psList = gasUnitsList;
 
     while(psList->nUnitId != -1)
     {
@@ -627,12 +616,15 @@ int TABUnitIdFromString(const char *pszName)
 
 void TABSaturatedAdd(GInt32& nVal, GInt32 nAdd)
 {
-    if( nAdd >= 0 && nVal > INT_MAX - nAdd )
-        nVal = INT_MAX;
-    else if( nAdd == INT_MIN && nVal < 0 )
-        nVal = INT_MIN;
-    else if( nAdd != INT_MIN && nAdd < 0 && nVal < INT_MIN - nAdd )
-        nVal = INT_MIN;
+    const GInt32 int_max = std::numeric_limits<GInt32>::max();
+    const GInt32 int_min = std::numeric_limits<GInt32>::min();
+
+    if( nAdd >= 0 && nVal > int_max - nAdd )
+        nVal = int_max;
+    else if( nAdd == int_min && nVal < 0 )
+        nVal = int_min;
+    else if( nAdd != int_min && nAdd < 0 && nVal < int_min - nAdd )
+        nVal = int_min;
     else
         nVal += nAdd;
 }
