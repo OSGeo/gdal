@@ -1036,6 +1036,7 @@ with_jvm_lib_add_rpath
 with_rasdaman
 with_armadillo
 with_cryptopp
+with_mrf
 '
       ac_precious_vars='build_alias
 host_alias
@@ -31840,9 +31841,9 @@ USE_ONLY_CRYPTODLL_ALG=$USE_ONLY_CRYPTODLL_ALG
 
 
 
-# Check whether --with-grib was given.
-if test "${with_grib+set}" = set; then :
-  withval=$with_grib;
+# Check whether --with-mrf was given.
+if test "${with_mrf+set}" = set; then :
+  withval=$with_mrf;
 fi
 
 
