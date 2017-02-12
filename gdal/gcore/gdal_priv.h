@@ -1425,7 +1425,8 @@ typedef CPLErr (*GDALResampleFunction)
                         const char * pszResampling,
                         int bHasNoData, float fNoDataValue,
                         GDALColorTable* poColorTable,
-                        GDALDataType eSrcDataType);
+                        GDALDataType eSrcDataType,
+                        bool bPropagateNoData );
 
 GDALResampleFunction GDALGetResampleFunction(const char* pszResampling,
                                                  int* pnRadius);

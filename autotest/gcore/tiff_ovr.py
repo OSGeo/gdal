@@ -1948,6 +1948,23 @@ def tiff_ovr_48():
             print(i)
             return 'fail'
 
+
+    # But if we define GDAL_OVR_PROPAGATE_NODATA, a nodata value in source
+    # samples will cause the target pixel to be zeroed.
+    shutil.copy('data/rgba_with_alpha_0_and_255.tif', 'tmp')
+    ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif')
+    gdal.SetConfigOption('GDAL_OVR_PROPAGATE_NODATA', 'YES')
+    ds.BuildOverviews('AVERAGE', [2])
+    gdal.SetConfigOption('GDAL_OVR_PROPAGATE_NODATA', None)
+    ds = None
+
+    ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif.ovr')
+    for i in range(4):
+        cs = ds.GetRasterBand(i+1).Checksum()
+        if cs != 0:
+            print(i)
+            return 'fail'
+
     return 'success'
 
 ###############################################################################
