@@ -274,6 +274,10 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
             nReturn = SWQT_UNION;
         else if( EQUAL(osToken, "ALL") )
             nReturn = SWQT_ALL;
+        else if( EQUAL(osToken, "LIMIT") )
+            nReturn = SWQT_LIMIT;
+        else if( EQUAL(osToken, "OFFSET") )
+            nReturn = SWQT_OFFSET;
 
         // Unhandled by OGR SQL.
         else if( EQUAL(osToken, "LIMIT") ||

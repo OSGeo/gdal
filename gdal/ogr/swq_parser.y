@@ -86,6 +86,8 @@ CPL_CVSID("$Id$");
 %token SWQT_CAST                "CAST"
 %token SWQT_UNION               "UNION"
 %token SWQT_ALL                 "ALL"
+%token SWQT_LIMIT               "LIMIT"
+%token SWQT_OFFSET              "OFFSET"
 
 %token SWQT_VALUE_START
 %token SWQT_SELECT_START
@@ -555,12 +557,12 @@ select_statement:
     | '(' select_core ')' opt_union_all
 
 select_core:
-    SWQT_SELECT select_field_list SWQT_FROM table_def opt_joins opt_where opt_order_by
+    SWQT_SELECT select_field_list SWQT_FROM table_def opt_joins opt_where opt_order_by opt_limit opt_offset
     {
         delete $4;
     }
 
-    | SWQT_SELECT SWQT_DISTINCT select_field_list SWQT_FROM table_def opt_joins opt_where opt_order_by
+    | SWQT_SELECT SWQT_DISTINCT select_field_list SWQT_FROM table_def opt_joins opt_where opt_order_by opt_limit opt_offset
     {
         context->poCurSelect->query_mode = SWQM_DISTINCT_LIST;
         delete $5;
@@ -811,6 +813,22 @@ sort_spec:
             delete $1;
             $1 = NULL;
         }
+
+opt_limit:
+    | SWQT_LIMIT SWQT_INTEGER_NUMBER
+    {
+        context->poCurSelect->SetLimit( $2->int_value );
+        delete $2;
+        $2 = NULL;
+    }
+
+opt_offset:
+    | SWQT_OFFSET SWQT_INTEGER_NUMBER
+    {
+        context->poCurSelect->SetOffset( $2->int_value );
+        delete $2;
+        $2 = NULL;
+    }
 
 table_def:
     SWQT_IDENTIFIER

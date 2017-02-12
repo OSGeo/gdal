@@ -1313,6 +1313,119 @@ def ogr_rfc28_46():
     return 'success'
 
 ###############################################################################
+# Test 
+
+def ogr_rfc28_47():
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY LIMIT 0" )
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY LIMIT 1" )
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [168] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY WHERE EAS_ID = 168 LIMIT 11" )
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [168] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY WHERE EAS_ID = 168 OFFSET 0" )
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [168] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY WHERE EAS_ID = 168 OFFSET 1" )
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY OFFSET 10" )
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY OFFSET 8" )
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [165,170] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY LIMIT 1 OFFSET 8" )
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [165] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY LIMIT 2 OFFSET 8" )
+    lyr.SetNextByIndex(1)
+    f = lyr.GetNextFeature()
+    if f['EAS_ID'] != 170:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY ORDER BY EAS_ID DESC LIMIT 2" )
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [179,173] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY ORDER BY EAS_ID DESC LIMIT 1 OFFSET 1" )
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [173] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT DISTINCT EAS_ID FROM POLY ORDER BY EAS_ID DESC LIMIT 2 OFFSET 3" )
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [171,170] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
@@ -1371,6 +1484,7 @@ gdaltest_list = [
     ogr_rfc28_44,
     ogr_rfc28_45,
     ogr_rfc28_46,
+    ogr_rfc28_47,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':

@@ -33,6 +33,7 @@
 #include "cpl_string.h"
 #include "ogr_api.h"
 #include "cpl_time.h"
+#include <algorithm>
 #include <vector>
 
 //! @cond Doxygen_Suppress
@@ -103,7 +104,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
     poSummaryFeature(NULL),
     iFIDFieldIndex(),
     nExtraDSCount(0),
-    papoExtraDS(NULL)
+    papoExtraDS(NULL),
+    nIteratedFeatures(-1)
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfoIn;
 
@@ -632,7 +634,8 @@ void OGRGenSQLResultsLayer::ResetReading()
         ApplyFiltersToSource();
     }
 
-    nNextIndexFID = 0;
+    nNextIndexFID = psSelectInfo->offset;
+    nIteratedFeatures = -1;
 }
 
 /************************************************************************/
@@ -645,7 +648,12 @@ void OGRGenSQLResultsLayer::ResetReading()
 OGRErr OGRGenSQLResultsLayer::SetNextByIndex( GIntBig nIndex )
 
 {
+    if( nIndex < 0 )
+        return OGRERR_FAILURE;
+
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
+
+    nIteratedFeatures = 0;
 
     CreateOrderByIndex();
 
@@ -653,12 +661,12 @@ OGRErr OGRGenSQLResultsLayer::SetNextByIndex( GIntBig nIndex )
         || psSelectInfo->query_mode == SWQM_DISTINCT_LIST
         || panFIDIndex != NULL )
     {
-        nNextIndexFID = nIndex;
+        nNextIndexFID = nIndex + psSelectInfo->offset;
         return OGRERR_NONE;
     }
     else
     {
-        return poSrcLayer->SetNextByIndex( nIndex );
+        return poSrcLayer->SetNextByIndex( nIndex + psSelectInfo->offset );
     }
 }
 
@@ -709,6 +717,7 @@ GIntBig OGRGenSQLResultsLayer::GetFeatureCount( int bForce )
 
     CreateOrderByIndex();
 
+    GIntBig nRet = 0;
     if( psSelectInfo->query_mode == SWQM_DISTINCT_LIST )
     {
         if( !PrepareSummary() )
@@ -719,14 +728,23 @@ GIntBig OGRGenSQLResultsLayer::GetFeatureCount( int bForce )
         if( psSummary == NULL )
             return 0;
 
-        return psSummary->count;
+        nRet = psSummary->count;
     }
     else if( psSelectInfo->query_mode != SWQM_RECORDSET )
         return 1;
     else if( m_poAttrQuery == NULL && !MustEvaluateSpatialFilterOnGenSQL() )
-        return poSrcLayer->GetFeatureCount( bForce );
+    {
+        nRet = poSrcLayer->GetFeatureCount( bForce );
+    }
     else
-        return OGRLayer::GetFeatureCount( bForce );
+    {
+        nRet = OGRLayer::GetFeatureCount( bForce );
+    }
+
+    nRet = std::max(static_cast<GIntBig>(0), nRet - psSelectInfo->offset);
+    if( psSelectInfo->limit >= 0 )
+        nRet = std::min(nRet, psSelectInfo->limit);
+    return nRet;
 }
 
 /************************************************************************/
@@ -1548,14 +1566,29 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
 
+    if( psSelectInfo->limit >= 0 &&
+        (nIteratedFeatures < 0 ? 0 : nIteratedFeatures) >= psSelectInfo->limit )
+        return NULL;
+
     CreateOrderByIndex();
+    if( panFIDIndex == NULL &&
+        nIteratedFeatures < 0 && psSelectInfo->offset > 0 &&
+        psSelectInfo->query_mode == SWQM_RECORDSET )
+    {
+        poSrcLayer->SetNextByIndex(psSelectInfo->offset);
+    }
+    if( nIteratedFeatures < 0 )
+        nIteratedFeatures = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Handle summary sets.                                            */
 /* -------------------------------------------------------------------- */
     if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD
         || psSelectInfo->query_mode == SWQM_DISTINCT_LIST )
+    {
+        nIteratedFeatures ++;
         return GetFeature( nNextIndexFID++ );
+    }
 
     int bEvaluateSpatialFilter = MustEvaluateSpatialFilterOnGenSQL();
 
@@ -1586,7 +1619,10 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
             || m_poAttrQuery->Evaluate( poFeature )) &&
             (!bEvaluateSpatialFilter ||
              FilterGeometry( poFeature->GetGeomFieldRef(m_iGeomFieldFilter) )) )
+        {
+            nIteratedFeatures ++;
             return poFeature;
+        }
 
         delete poFeature;
     }
