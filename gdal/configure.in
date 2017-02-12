@@ -5329,7 +5329,7 @@ dnl ---------------------------------------------------------------------------
 dnl Whether to include MRF in the build
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH([grib],
+AC_ARG_WITH([mrf],
             AS_HELP_STRING([--without-mrf],
                [Disable MRF driver]),,)
 
