@@ -359,7 +359,7 @@ is as a fraction of the input image size. Starting with GDAL 2.0, if one of the
 while maintaining the aspect ratio of the source dataset.</dd>
 <dt> <b>-tr</b> xres yres :</dt><dd>  (starting with GDAL 2.0)
 set target resolution. The values must be expressed in georeferenced units.
-Both must be positive values. This is exclusive with -outsize and -a_ullr.
+Both must be positive values. This is mutually exclusive with -outsize and -a_ullr.
 </dd>
 <dt> <b>-r</b>
 <i>{nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode}</i>:</dt><dd>
