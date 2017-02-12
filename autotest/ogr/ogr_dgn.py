@@ -285,6 +285,27 @@ def ogr_dgn_8():
     return 'success'
 
 ###############################################################################
+# Test delta encoding (#6806)
+
+def ogr_dgn_online_1():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/dgn/DGNSample_v7.dgn', 'DGNSample_v7.dgn'):
+        return 'skip'
+
+    ds = ogr.Open( 'tmp/cache/DGNSample_v7.dgn' )
+    if ds is None:
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetFeature(35)
+    wkt = 'LINESTRING (82.9999500717185 23.2084166997284,83.0007450788903 23.2084495986816,83.00081490524 23.2068095339824,82.9999503769036 23.2067737968078)'
+
+    if ogrtest.check_feature_geometry( feat, wkt):
+        return 'fail'
+
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_dgn_cleanup():
@@ -305,6 +326,7 @@ gdaltest_list = [
     ogr_dgn_6,
     ogr_dgn_7,
     ogr_dgn_8,
+    ogr_dgn_online_1,
     ogr_dgn_cleanup ]
 
 if __name__ == '__main__':
