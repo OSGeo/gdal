@@ -183,7 +183,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
         poFile = NULL;
     }
 
-    if (!bTestOpenNoError && poFile == NULL)
+    if (!bTestOpenNoError && poFile == NULL && CPLGetLastErrorNo() == CPLE_None)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "%s could not be opened as a MapInfo dataset.", pszFname);
