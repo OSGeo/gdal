@@ -50,7 +50,7 @@ CPL_CVSID("$Id$");
 
 MIDDATAFile::MIDDATAFile() :
     m_fp(NULL),
-    m_pszDelimiter("\t"), // Encom 2003 (was NULL)
+    m_pszDelimiter("\t"),  // Encom 2003 (was NULL).
     m_pszFname(NULL),
     m_eAccessMode(TABRead),
     // TODO(schwehr): m_szLastRead({}),
@@ -65,44 +65,36 @@ MIDDATAFile::MIDDATAFile() :
     m_szSavedLine[0] = '\0';
 }
 
-MIDDATAFile::~MIDDATAFile()
-{
-    Close();
-}
+MIDDATAFile::~MIDDATAFile() { Close(); }
 
 void MIDDATAFile::SaveLine(const char *pszLine)
 {
-    if (pszLine == NULL)
+    if(pszLine == NULL)
     {
         m_szSavedLine[0] = '\0';
     }
     else
     {
-        CPLStrlcpy(m_szSavedLine,pszLine,MIDMAXCHAR);
+        CPLStrlcpy(m_szSavedLine, pszLine, MIDMAXCHAR);
     }
 }
 
-const char *MIDDATAFile::GetSavedLine()
-{
-    return m_szSavedLine;
-}
+const char *MIDDATAFile::GetSavedLine() { return m_szSavedLine; }
 
 int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
 {
-   if (m_fp)
-   {
-       return -1;
-   }
+    if(m_fp)
+    {
+        return -1;
+    }
 
-    /*-----------------------------------------------------------------
-     * Validate access mode and make sure we use Text access.
-     *----------------------------------------------------------------*/
-    if (STARTS_WITH_CI(pszAccess, "r"))
+    // Validate access mode and make sure we use Text access.
+    if(STARTS_WITH_CI(pszAccess, "r"))
     {
         m_eAccessMode = TABRead;
         pszAccess = "rt";
     }
-    else if (STARTS_WITH_CI(pszAccess, "w"))
+    else if(STARTS_WITH_CI(pszAccess, "w"))
     {
         m_eAccessMode = TABWrite;
         pszAccess = "wt";
@@ -112,13 +104,11 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
         return -1;
     }
 
-    /*-----------------------------------------------------------------
-     * Open file for reading
-     *----------------------------------------------------------------*/
+    // Open file for reading.
     m_pszFname = CPLStrdup(pszFname);
     m_fp = VSIFOpenL(m_pszFname, pszAccess);
 
-    if (m_fp == NULL)
+    if(m_fp == NULL)
     {
         CPLFree(m_pszFname);
         m_pszFname = NULL;
@@ -131,7 +121,7 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
 
 int MIDDATAFile::Rewind()
 {
-    if (m_fp == NULL || m_eAccessMode == TABWrite)
+    if(m_fp == NULL || m_eAccessMode == TABWrite)
         return -1;
 
     else
@@ -144,7 +134,7 @@ int MIDDATAFile::Rewind()
 
 int MIDDATAFile::Close()
 {
-    if (m_fp == NULL)
+    if(m_fp == NULL)
         return 0;
 
     // Close file
@@ -152,7 +142,7 @@ int MIDDATAFile::Close()
     m_fp = NULL;
 
     // clear readline buffer.
-    CPLReadLineL( NULL );
+    CPLReadLineL(NULL);
 
     CPLFree(m_pszFname);
     m_pszFname = NULL;
@@ -162,62 +152,67 @@ int MIDDATAFile::Close()
 
 const char *MIDDATAFile::GetLine()
 {
-    if (m_eAccessMode == TABRead)
+    if(m_eAccessMode != TABRead)
     {
-        const char *pszLine = CPLReadLineL(m_fp);
+        CPLAssert(false);
+        return NULL;
+    }
 
-        if (pszLine == NULL)
-        {
-            SetEof(TRUE);
-            m_szLastRead[0] = '\0';
-        }
-        else
-        {
-            // skip leading spaces and tabs (except is the delimiter is tab)
-            while(pszLine && (*pszLine == ' ' || (*m_pszDelimiter != '\t' && *pszLine == '\t')) )
-                    pszLine++;
+    const char *pszLine = CPLReadLineL(m_fp);
 
-            CPLStrlcpy(m_szLastRead,pszLine,MIDMAXCHAR);
-        }
-        //if (pszLine)
-        //  printf("%s\n",pszLine);
-        return pszLine;
+    if(pszLine == NULL)
+    {
+        SetEof(TRUE);
+        m_szLastRead[0] = '\0';
     }
     else
     {
-      CPLAssert(false);
+        // Skip leading spaces and tabs except if the delimiter is tab.
+        while(pszLine && (*pszLine == ' ' ||
+                          (*m_pszDelimiter != '\t' && *pszLine == '\t')))
+            pszLine++;
+
+        CPLStrlcpy(m_szLastRead, pszLine, MIDMAXCHAR);
     }
-    return NULL;
+
+#if DEBUG_VERBOSE
+    if(pszLine)
+        CPLDebug("MITAB", "pszLine: %s", pszLine);
+#endif
+
+    return pszLine;
 }
 
 const char *MIDDATAFile::GetLastLine()
 {
-    // Return NULL if EOF
+    // Return NULL if EOF.
     if(GetEof())
     {
         return NULL;
     }
-    else if (m_eAccessMode == TABRead)
+    if(m_eAccessMode == TABRead)
     {
-        // printf("%s\n",m_szLastRead);
+#if DEBUG_VERBOSE
+        CPLDebug("MITAB", "m_szLastRead: %s", m_szLastRead);
+#endif
         return m_szLastRead;
     }
 
-    // We should never get here (Read/Write mode not implemented)
+    // We should never get here.  Read/Write mode not implemented.
     CPLAssert(false);
     return NULL;
 }
 
-void MIDDATAFile::WriteLine(const char *pszFormat,...)
+void MIDDATAFile::WriteLine(const char *pszFormat, ...)
 {
     va_list args;
 
-    if (m_eAccessMode == TABWrite  && m_fp)
+    if(m_eAccessMode == TABWrite && m_fp)
     {
         va_start(args, pszFormat);
         CPLString osStr;
-        osStr.vPrintf( pszFormat, args );
-        VSIFWriteL( osStr.c_str(), 1, osStr.size(), m_fp);
+        osStr.vPrintf(pszFormat, args);
+        VSIFWriteL(osStr.c_str(), 1, osStr.size(), m_fp);
         va_end(args);
     }
     else
@@ -249,18 +244,18 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
 {
     char **papszToken = CSLTokenizeString(pszString);
 
-    if (CSLCount(papszToken) == 0)
+    if(CSLCount(papszToken) == 0)
     {
         CSLDestroy(papszToken);
         return FALSE;
     }
 
-    if (EQUAL(papszToken[0],"NONE")      || EQUAL(papszToken[0],"POINT") ||
-        EQUAL(papszToken[0],"LINE")      || EQUAL(papszToken[0],"PLINE") ||
-        EQUAL(papszToken[0],"REGION")    || EQUAL(papszToken[0],"ARC") ||
-        EQUAL(papszToken[0],"TEXT")      || EQUAL(papszToken[0],"RECT") ||
-        EQUAL(papszToken[0],"ROUNDRECT") || EQUAL(papszToken[0],"ELLIPSE") ||
-        EQUAL(papszToken[0],"MULTIPOINT")|| EQUAL(papszToken[0],"COLLECTION") )
+    if(EQUAL(papszToken[0], "NONE") || EQUAL(papszToken[0], "POINT") ||
+       EQUAL(papszToken[0], "LINE") || EQUAL(papszToken[0], "PLINE") ||
+       EQUAL(papszToken[0], "REGION") || EQUAL(papszToken[0], "ARC") ||
+       EQUAL(papszToken[0], "TEXT") || EQUAL(papszToken[0], "RECT") ||
+       EQUAL(papszToken[0], "ROUNDRECT") || EQUAL(papszToken[0], "ELLIPSE") ||
+       EQUAL(papszToken[0], "MULTIPOINT") || EQUAL(papszToken[0], "COLLECTION"))
     {
         CSLDestroy(papszToken);
         return TRUE;
@@ -270,12 +265,6 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
     return FALSE;
 }
 
-GBool MIDDATAFile::GetEof()
-{
-    return m_bEof;
-}
+GBool MIDDATAFile::GetEof() { return m_bEof; }
 
-void MIDDATAFile::SetEof(GBool bEof)
-{
-    m_bEof = bEof;
-}
+void MIDDATAFile::SetEof(GBool bEof) { m_bEof = bEof; }
