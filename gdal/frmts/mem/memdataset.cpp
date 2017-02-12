@@ -1094,6 +1094,50 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Force cascading. Help to get accurate results when masks are    */
+/*      involved.                                                       */
+/* -------------------------------------------------------------------- */
+    if( nOverviews > 1 &&
+        (STARTS_WITH_CI(pszResampling, "AVER") |
+         STARTS_WITH_CI(pszResampling, "GAUSS") ||
+         EQUAL(pszResampling, "CUBIC") ||
+         EQUAL(pszResampling, "CUBICSPLINE") ||
+         EQUAL(pszResampling, "LANCZOS") ||
+         EQUAL(pszResampling, "BILINEAR")) )
+    {
+        double dfTotalPixels = 0;
+        for( int i = 0; i < nOverviews; i++ )
+        {
+            dfTotalPixels +=
+                static_cast<double>(nRasterXSize) * nRasterYSize /
+                    (panOverviewList[i] * panOverviewList[i]);
+        }
+
+        double dfAccPixels = 0;
+        for( int i = 0; i < nOverviews; i++ )
+        {
+            double dfPixels =
+                static_cast<double>(nRasterXSize) * nRasterYSize /
+                    (panOverviewList[i] * panOverviewList[i]);
+            void* pScaledProgress = GDALCreateScaledProgress(
+                    dfAccPixels / dfTotalPixels,
+                    (dfAccPixels + dfPixels) / dfTotalPixels,
+                    pfnProgress, pProgressData );
+            CPLErr eErr = IBuildOverviews(
+                                    pszResampling,
+                                    1, &panOverviewList[i],
+                                    nListBands, panBandList,
+                                    GDALScaledProgress,
+                                    pScaledProgress );
+            GDALDestroyScaledProgress( pScaledProgress );
+            dfAccPixels += dfPixels;
+            if( eErr == CE_Failure )
+                return eErr;
+        }
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Establish which of the overview levels we already have, and     */
 /*      which are new.                                                  */
 /* -------------------------------------------------------------------- */
@@ -1128,6 +1172,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
         if( !bExisting )
         {
             MEMDataset* poOvrDS = new MEMDataset();
+            poOvrDS->eAccess = GA_Update;
             poOvrDS->nRasterXSize = (nRasterXSize + panOverviewList[i] - 1)
                                             / panOverviewList[i];
             poOvrDS->nRasterYSize = (nRasterYSize + panOverviewList[i] - 1)
@@ -1161,6 +1206,8 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
 /*      Refresh overviews that were listed.                             */
 /* -------------------------------------------------------------------- */
     GDALRasterBand **papoOverviewBands = static_cast<GDALRasterBand **>(
+        CPLCalloc(sizeof(void*), nOverviews) );
+    GDALRasterBand **papoMaskOverviewBands = static_cast<GDALRasterBand **>(
         CPLCalloc(sizeof(void*), nOverviews) );
 
     CPLErr eErr = CE_None;
@@ -1207,21 +1254,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
         // first band
                   ((poMEMBand->nMaskFlags & GMF_PER_DATASET) != 0 && iBand == 0) );
 
-        if( nNewOverviews > 0 )
-        {
-            void* pScaledProgress = GDALCreateScaledProgress(
-                    1.0 * iBand / nBands, 1.0 * (iBand+
-                            (bMustGenerateMaskOvr ? 0.5 : 1)) / nBands,
-                    pfnProgress, pProgressData );
-            eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
-                                            nNewOverviews,
-                                            (GDALRasterBandH*)papoOverviewBands,
-                                            pszResampling,
-                                            GDALScaledProgress, pScaledProgress );
-            GDALDestroyScaledProgress( pScaledProgress );
-        }
-
-        if( nNewOverviews > 0 && eErr == CE_None && bMustGenerateMaskOvr )
+        if( nNewOverviews > 0 && bMustGenerateMaskOvr )
         {
             for( int i = 0; i < nNewOverviews; i++ )
             {
@@ -1232,18 +1265,44 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
                 {
                     poMEMOvrBand->CreateMaskBand( poMEMBand->nMaskFlags );
                 }
-                papoOverviewBands[i] = poMEMOvrBand->GetMaskBand();
+                papoMaskOverviewBands[i] = poMEMOvrBand->GetMaskBand();
             }
 
             void* pScaledProgress = GDALCreateScaledProgress(
-                    1.0 * (iBand+0.5) / nBands, 1.0 * (iBand+1) / nBands,
+                    1.0 * iBand / nBands,
+                    1.0 * (iBand+0.5) / nBands,
                     pfnProgress, pProgressData );
+
+            MEMRasterBand* poMaskBand = reinterpret_cast<MEMRasterBand*>(
+                                                        poBand->GetMaskBand());
+            // Make the mask band to be its own mask, similarly to what is
+            // done for alpha bands in GDALRegenerateOverviews() (#5640)
+            poMaskBand->InvalidateMaskBand();
+            poMaskBand->bOwnMask = false;
+            poMaskBand->poMask = poMaskBand;
+            poMaskBand->nMaskFlags = 0;
             eErr = GDALRegenerateOverviews(
-                                        (GDALRasterBandH) poBand->GetMaskBand(),
+                                        (GDALRasterBandH) poMaskBand,
                                         nNewOverviews,
-                                        (GDALRasterBandH*)papoOverviewBands,
+                                        (GDALRasterBandH*)papoMaskOverviewBands,
                                         pszResampling,
                                         GDALScaledProgress, pScaledProgress );
+            poMaskBand->InvalidateMaskBand();
+            GDALDestroyScaledProgress( pScaledProgress );
+        }
+
+        // Generate overview of bands *AFTER* mask overviews
+        if( nNewOverviews > 0 && eErr == CE_None  )
+        {
+            void* pScaledProgress = GDALCreateScaledProgress(
+                    1.0 * (iBand+(bMustGenerateMaskOvr ? 0.5 : 1)) / nBands,
+                    1.0 * (iBand+1)/ nBands,
+                    pfnProgress, pProgressData );
+            eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
+                                            nNewOverviews,
+                                            (GDALRasterBandH*)papoOverviewBands,
+                                            pszResampling,
+                                            GDALScaledProgress, pScaledProgress );
             GDALDestroyScaledProgress( pScaledProgress );
         }
     }
@@ -1252,6 +1311,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
     CPLFree( papoOverviewBands );
+    CPLFree( papoMaskOverviewBands );
     CPLFree( pahBands );
 
     return eErr;
