@@ -61,6 +61,8 @@ swq_select::swq_select() :
     where_expr(NULL),
     order_specs(0),
     order_defs(NULL),
+    limit(-1),
+    offset(0),
     poOtherSelect(NULL)
 {}
 
@@ -793,6 +795,26 @@ void swq_select::PushUnionAll( swq_select* poOtherSelectIn )
 {
     CPLAssert(poOtherSelect == NULL);
     poOtherSelect = poOtherSelectIn;
+}
+
+/************************************************************************/
+/*                             SetLimit()                               */
+/************************************************************************/
+
+void swq_select::SetLimit( GIntBig nLimit )
+
+{
+    limit = nLimit;
+}
+
+/************************************************************************/
+/*                            SetOffset()                               */
+/************************************************************************/
+
+void swq_select::SetOffset( GIntBig nOffset )
+
+{
+    offset = nOffset;
 }
 
 /************************************************************************/

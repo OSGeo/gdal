@@ -78,6 +78,8 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     int         nExtraDSCount;
     GDALDataset **papoExtraDS;
 
+    GIntBig     nIteratedFeatures;
+
     int         PrepareSummary();
 
     OGRFeature *TranslateFeature( OGRFeature * );

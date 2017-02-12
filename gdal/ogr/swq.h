@@ -359,6 +359,12 @@ public:
     int         order_specs;
     swq_order_def *order_defs;
 
+    void        SetLimit( GIntBig nLimit );
+    GIntBig     limit;
+
+    void        SetOffset( GIntBig nOffset );
+    GIntBig     offset;
+
     swq_select *poOtherSelect;
     void        PushUnionAll( swq_select* poOtherSelectIn );
 
