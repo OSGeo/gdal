@@ -28,12 +28,19 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
-#include "mitab.h"
+#include "cpl_port.h"
 #include "mitab_utils.h"
-#include "cpl_conv.h"
 
-#include <math.h>       /* sin()/cos() */
-#include <ctype.h>      /* toupper()/tolower() */
+#include <cctype>
+#include <climits>
+#include <cmath>
+#include <cstring>
+
+#include "mitab.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 #if defined(_WIN32) && !defined(unix)
 #  include <mbctype.h>  /* Multibyte chars stuff */
