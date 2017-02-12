@@ -29,8 +29,20 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
+#include "cpl_port.h"
 #include "mitab.h"
 #include "mitab_utils.h"
+
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "mitab_priv.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
