@@ -1184,6 +1184,7 @@ CPLErr GDALRasterBand::RasterIOResampled(
 
                 if( !bSkipResample && eErr == CE_None )
                 {
+                    const bool bPropagateNoData = false;
                     eErr = pfnResampleFunc(
                         dfXRatioDstToSrc,
                         dfYRatioDstToSrc,
@@ -1204,7 +1205,8 @@ CPLErr GDALRasterBand::RasterIOResampled(
                         pszResampling,
                         bHasNoData, fNoDataValue,
                         GetColorTable(),
-                        eDataType );
+                        eDataType,
+                        bPropagateNoData);
                 }
 
                 nBlocksDone ++;
@@ -1674,6 +1676,7 @@ CPLErr GDALDataset::RasterIOResampled(
                          i < nBandCount && !bSkipResample && eErr == CE_None;
                          i++ )
                     {
+                        const bool bPropagateNoData = false;
                         eErr = pfnResampleFunc(
                             dfXRatioDstToSrc,
                             dfYRatioDstToSrc,
@@ -1695,7 +1698,8 @@ CPLErr GDALDataset::RasterIOResampled(
                             FALSE /*bHasNoData*/,
                             0.f /* fNoDataValue */,
                             NULL /* color table*/,
-                            eDataType );
+                            eDataType,
+                            bPropagateNoData );
                     }
                 }
 
