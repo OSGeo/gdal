@@ -29,11 +29,15 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
+#include "cpl_port.h"
+#include "mitab_geometry.h"
+
 #include <cmath>
+#include <cstdlib>
 #include <algorithm>
 #include <utility>
 
-#include "mitab_geometry.h"
+#include "ogr_core.h"
 
 CPL_CVSID("$Id$");
 
