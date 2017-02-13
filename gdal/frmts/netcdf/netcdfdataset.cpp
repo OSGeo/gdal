@@ -3049,6 +3049,13 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                     oSRS.SetLinearUnits( "kilometre", 1000.0 );
                     oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9036 );
                 }
+                else if( EQUAL(pszUnits, "US_survey_foot") ||
+                         EQUAL(pszUnits, "US_survey_feet") )
+                {
+                    oSRS.SetLinearUnits( "US survey foot",
+                                         CPLAtof(SRS_UL_US_FOOT_CONV) );
+                    oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9003 );
+                }
                 // TODO: check for other values.
                 // else
                 //     oSRS.SetLinearUnits(pszUnits, 1.0);
@@ -3308,7 +3315,9 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                 if( oSRSGDAL.GetAttrNode( "GEOGCS" ) )
                     oSRSGDAL.GetAttrNode( "GEOGCS" )->GetChild(0)->SetValue( "unknown" );
                 oSRSGDAL.GetRoot()->StripNodes( "UNIT" );
-                if( oSRS.IsSame(&oSRSGDAL) )
+                OGRSpatialReference oSRSForComparison(oSRS);
+                oSRSForComparison.GetRoot()->StripNodes( "UNIT" );
+                if( oSRSForComparison.IsSame(&oSRSGDAL) )
                 {
                     // printf("ARE SAME, using GDAL WKT\n");
                     bGotGdalSRS = true;
@@ -3882,14 +3891,21 @@ void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
                                       OGRSpatialReference* poSRS)
 {
     int status;
-    const char *pszUnits = NULL;
+    char *pszUnits = NULL;
     const char *pszUnitsToWrite = "";
 
-    pszUnits = poSRS->GetAttrValue("PROJCS|UNIT", 1);
-    if( pszUnits == NULL || EQUAL(pszUnits, "1") )
+    const double dfUnits = poSRS->GetLinearUnits(&pszUnits);
+    if( fabs(dfUnits - 1.0) < 1e-15 || pszUnits == NULL ||
+        EQUAL(pszUnits, "m") || EQUAL(pszUnits, "metre") )
         pszUnitsToWrite = "m";
-    else if( EQUAL(pszUnits, "1000") )
+    else if( fabs(dfUnits - 1000.0) < 1e-15 )
         pszUnitsToWrite = "km";
+    else if( fabs(dfUnits - CPLAtof(SRS_UL_US_FOOT_CONV)) < 1e-15 ||
+             EQUAL(pszUnits, SRS_UL_US_FOOT) ||
+             EQUAL(pszUnits, "US survey foot") )
+    {
+        pszUnitsToWrite = "US_survey_foot";
+    }
 
     status = nc_put_att_text( cdfid, nVarXID, CF_STD_NAME,
                         strlen(CF_PROJ_X_COORD),
