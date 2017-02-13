@@ -27,10 +27,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_csv.h"
-#include "cpl_conv.h"
-#include "cpl_multiproc.h"
+
+#include <cerrno>
+#include <cstring>
 #include <map>
+#include <string>
+#include <utility>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
