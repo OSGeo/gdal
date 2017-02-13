@@ -232,8 +232,6 @@ char** OGRPLScenesDataV1Dataset::GetBaseHTTPOptions()
         CSLAddString(papszOptions,
                      CPLSPrintf("HEADERS=Authorization: api-key %s",
                                 m_osAPIKey.c_str()));
-    // We don't want .netrc auth getting mixed up with explicit auth.
-    papszOptions = CSLAddString(papszOptions,"NETRC=NO");
 
     return papszOptions;
 }
@@ -254,9 +252,10 @@ json_object* OGRPLScenesDataV1Dataset::RunRequest(const char* pszURL,
     papszOptions = CSLSetNameValue(papszOptions, "CUSTOMREQUEST", pszHTTPVerb);
     if( pszPostContent != NULL )
     {
-        CPLString osHeaders = "Content-Type: application/json";
-        osHeaders += "\r\n";
-        osHeaders += CPLSPrintf("Authorization: api-key %s", m_osAPIKey.c_str());
+        CPLString osHeaders = CSLFetchNameValueDef(papszOptions, "HEADERS", "");
+        if( !osHeaders.empty() )
+            osHeaders += "\r\n";
+        osHeaders += "Content-Type: application/json";
         papszOptions = CSLSetNameValue(papszOptions, "HEADERS", osHeaders);
         papszOptions = CSLSetNameValue(papszOptions, "POSTFIELDS", pszPostContent);
     }
