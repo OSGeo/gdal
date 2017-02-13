@@ -26,7 +26,7 @@ install:
 - set SDK_INC=%CD%\sdk\%SDK%\include
 - set SDK_LIB=%CD%\sdk\%SDK%\lib
 - set SDK_BIN=%CD%\sdk\%SDK%\bin
-- copy %SDK_INC%\hdf4\*.h %SDK_INC%
+#- copy %SDK_INC%\hdf4\*.h %SDK_INC%
 #- ps: Start-FileDownload http://download.osgeo.org/proj/proj-4.9.1.tar.gz
 #- 7z x proj-4.9.1.tar.gz
 #- 7z x proj-4.9.1.tar
