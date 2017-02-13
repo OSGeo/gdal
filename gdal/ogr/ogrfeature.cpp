@@ -2010,7 +2010,7 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
 {
     const int ms = OGR_GET_MS(fSecond);
     if( ms != 0 )
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+        CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE,
                   "%04d/%02d/%02d %02d:%02d:%06.3f",
                   nYear,
                   nMonth,
