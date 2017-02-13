@@ -26,9 +26,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <cpl_conv.h>
-#include <cpl_http.h>
+#include "cpl_port.h"
 #include "ogr_geojson.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_http.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+// #include "json_object.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogrgeojsonutils.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
 

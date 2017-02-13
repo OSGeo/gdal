@@ -29,11 +29,26 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogrgeojsonreader.h"
+
+#include <limits.h>
+#include <stddef.h>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "json.h"
+// #include "json_object.h"
+// #include "json_tokener.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_geometry.h"
+#include "ogr_spatialref.h"
+#include "ogr_geojson.h"
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonutils.h"
-#include "ogr_geojson.h"
-#include <json.h> // JSON-C
-#include <ogr_api.h>
+// #include "symbol_renames.h"
 
 CPL_CVSID("$Id$");
 
