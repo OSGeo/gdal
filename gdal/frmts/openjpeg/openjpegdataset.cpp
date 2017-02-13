@@ -74,6 +74,17 @@ static void JP2OpenJPEGDataset_ErrorCallback(const char *pszMsg, CPL_UNUSED void
 
 static void JP2OpenJPEGDataset_WarningCallback(const char *pszMsg, CPL_UNUSED void *unused)
 {
+    if( strcmp(pszMsg, "No incltree created.\n") == 0 ||
+        strcmp(pszMsg, "No imsbtree created.\n") == 0 ||
+        strcmp(pszMsg,
+               "tgt_create tree->numnodes == 0, no tree created.\n") == 0 )
+    {
+        // Ignore warnings related to empty tag-trees. There's nothing wrong
+        // about that.
+        // Fixed submitted upstream with
+        // https://github.com/uclouvain/openjpeg/pull/893
+        return;
+    }
     if( strcmp(pszMsg, "Empty SOT marker detected: Psot=12.\n") == 0 )
     {
         static int bWarningEmitted = FALSE;
