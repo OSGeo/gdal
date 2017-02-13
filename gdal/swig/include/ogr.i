@@ -1617,6 +1617,40 @@ public:
 #endif
   /* ------------------------------------------- */
 
+  /* ---- IsFieldNull --------------------------- */
+  bool IsFieldNull(int id) {
+    return (OGR_F_IsFieldNull(self, id) > 0);
+  }
+
+#ifndef SWIGPERL
+  bool IsFieldNull(const char* name) {
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+	  return (OGR_F_IsFieldNull(self, i) > 0);
+      return false;
+  }
+#endif
+  /* ------------------------------------------- */
+
+  /* ---- IsFieldSetAndNotNull --------------------------- */
+  bool IsFieldSetAndNotNull(int id) {
+    return (OGR_F_IsFieldSetAndNotNull(self, id) > 0);
+  }
+
+#ifndef SWIGPERL
+  bool IsFieldSetAndNotNull(const char* name) {
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+	  return (OGR_F_IsFieldSetAndNotNull(self, i) > 0);
+      return false;
+  }
+#endif
+  /* ------------------------------------------- */
+
   int GetFieldIndex(const char* name) {
       // Do not issue an error if the field doesn't exist. It is intended to be silent
       return OGR_F_GetFieldIndex(self, name);
@@ -1650,6 +1684,20 @@ public:
           CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
       else
           OGR_F_UnsetField(self, i);
+  }
+#endif
+
+  void SetFieldNull(int id) {
+    OGR_F_SetFieldNull(self, id);
+  }
+
+#ifndef SWIGPERL
+  void SetFieldNull(const char* name) {
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, name);
+      else
+          OGR_F_SetFieldNull(self, i);
   }
 #endif
 

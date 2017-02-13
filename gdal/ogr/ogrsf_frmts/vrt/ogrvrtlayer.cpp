@@ -1443,7 +1443,7 @@ retry:
 /* -------------------------------------------------------------------- */
     if( iStyleField != -1 )
     {
-        if( poSrcFeat->IsFieldSet(iStyleField) )
+        if( poSrcFeat->IsFieldSetAndNotNull(iStyleField) )
             poDstFeat->SetStyleString(
                 poSrcFeat->GetFieldAsString(iStyleField) );
     }
@@ -1606,7 +1606,7 @@ retry:
         OGRFieldDefn *poDstDefn = poFeatureDefn->GetFieldDefn( iVRTField );
         OGRFieldDefn *poSrcDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( anSrcField[iVRTField] );
 
-        if( !poSrcFeat->IsFieldSet( anSrcField[iVRTField] ) || poDstDefn->IsIgnored() )
+        if( !poSrcFeat->IsFieldSetAndNotNull( anSrcField[iVRTField] ) || poDstDefn->IsIgnored() )
             continue;
 
         if( abDirectCopy[iVRTField]

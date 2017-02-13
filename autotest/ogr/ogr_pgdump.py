@@ -950,6 +950,35 @@ def ogr_pgdump_14():
     return 'success'
 
 ###############################################################################
+# NULL vs unset
+
+def ogr_pgdump_15():
+
+    ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_15.sql', options = [ 'LINEFORMAT=LF' ] )
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldNull(0)
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_15.sql', 'rb')
+    sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/ogr_pgdump_15.sql')
+
+    if sql.find('INSERT INTO "public"."test" ("str") VALUES (NULL)') < 0 and \
+       sql.find('INSERT INTO "public"."test" DEFAULT VALUES') < 0:
+        print(sql)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_pgdump_cleanup():
@@ -979,6 +1008,7 @@ gdaltest_list = [
     ogr_pgdump_12,
     ogr_pgdump_13,
     ogr_pgdump_14,
+    ogr_pgdump_15,
     ogr_pgdump_cleanup ]
 
 

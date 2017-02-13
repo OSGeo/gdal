@@ -504,12 +504,6 @@ def ogr_pg_9():
         gdaltest.post_reason( 'Geometry update failed' )
         return 'fail'
 
-    try:
-        ogr.OLCStringsAsUTF8
-    except:
-        # With OG-python bindings SetGeometryDirectly(None) doesn't work
-        return 'success'
-
     feat.SetGeometryDirectly( None )
 
     if gdaltest.pg_lyr.SetFeature( feat ) != 0:
@@ -523,6 +517,13 @@ def ogr_pg_9():
     if feat.GetGeometryRef() != None:
         print(feat.GetGeometryRef())
         gdaltest.post_reason( 'Geometry update failed. null geometry expected' )
+        return 'fail'
+
+    feat.SetFieldNull('SHORTNAME')
+    gdaltest.pg_lyr.SetFeature( feat )
+    feat = gdaltest.pg_lyr.GetFeature( fid )
+    if not feat.IsFieldNull('SHORTNAME'):
+        gdaltest.post_reason( 'SHORTNAME update failed. null value expected' )
         return 'fail'
 
     # Test updating non-existing feature
@@ -3273,7 +3274,7 @@ def ogr_pg_61():
     lyr = ds.GetLayerByName('ogr_pg_61')
 
     feat = lyr.GetFeature(10)
-    if feat.IsFieldSet(0):
+    if not feat.IsFieldNull(0):
         gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
         feat.DumpReadable()
         return 'fail'
@@ -4162,7 +4163,7 @@ def ogr_pg_74():
     lyr.CreateField(field_defn)
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetField('field_string', '')
+    f.SetFieldNull('field_string')
     f.SetField('field_int', 456)
     f.SetField('field_real', 4.56)
     f.SetField('field_datetime', '2015/06/30 12:34:56')
@@ -4227,7 +4228,7 @@ def ogr_pg_74():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f.GetField('field_string') != '':
+    if not f.IsFieldNull('field_string'):
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -4235,7 +4236,7 @@ def ogr_pg_74():
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
        f.GetField('field_real') != 1.23 or \
-       f.IsFieldSet('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
+       not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56+00' or \
        f.GetField('field_datetime3') != '2015/06/30 12:34:56.123+00' or \
        not f.IsFieldSet('field_date') or not f.IsFieldSet('field_time'):

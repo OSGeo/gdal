@@ -4361,7 +4361,7 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             if( bPreserveFID )
                 poDstFeature->SetFID( poFeature->GetFID() );
             else if( psInfo->iSrcFIDField >= 0 &&
-                     poFeature->IsFieldSet(psInfo->iSrcFIDField))
+                     poFeature->IsFieldSetAndNotNull(psInfo->iSrcFIDField))
                 poDstFeature->SetFID( poFeature->GetFieldAsInteger64(psInfo->iSrcFIDField) );
 
             /* Erase native data if asked explicitly */
@@ -4531,7 +4531,7 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             {
                 nFeaturesWritten ++;
                 if( (bPreserveFID && poDstFeature->GetFID() != poFeature->GetFID()) ||
-                    (!bPreserveFID && psInfo->iSrcFIDField >= 0 && poFeature->IsFieldSet(psInfo->iSrcFIDField) &&
+                    (!bPreserveFID && psInfo->iSrcFIDField >= 0 && poFeature->IsFieldSetAndNotNull(psInfo->iSrcFIDField) &&
                      poDstFeature->GetFID() != poFeature->GetFieldAsInteger64(psInfo->iSrcFIDField)) )
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,

@@ -726,6 +726,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
 
     GMLASSchemaAnalyzer oAnalyzer(m_oIgnoredXPathMatcher);
     oAnalyzer.SetUseArrays(m_oConf.m_bUseArrays);
+    oAnalyzer.SetUseNullState(m_oConf.m_bUseNullState);
     oAnalyzer.SetInstantiateGMLFeaturesOnly(
                                         m_oConf.m_bInstantiateGMLFeaturesOnly);
     oAnalyzer.SetIdentifierMaxLength(m_oConf.m_nIdentifierMaxLength);

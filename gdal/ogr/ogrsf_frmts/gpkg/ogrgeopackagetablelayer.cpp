@@ -189,8 +189,7 @@ bool OGRGeoPackageTableLayer::IsGeomFieldSet( OGRFeature *poFeature )
 OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                                                        sqlite3_stmt *poStmt,
                                                        int *pnColCount,
-                                                       bool bAddFID,
-                                                       bool bBindNullFields )
+                                                       bool bAddFID )
 {
     if ( ! (poFeature && poStmt && pnColCount) )
         return OGRERR_FAILURE;
@@ -251,9 +250,12 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
     {
         if( i == m_iFIDAsRegularColumnIndex )
             continue;
+        if( !poFeature->IsFieldSet(i) )
+            continue;
+
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
 
-        if( poFeature->IsFieldSet(i) )
+        if( !poFeature->IsFieldNull(i) )
         {
             switch(SQLiteFieldFromOGR(poFieldDefn->GetType()))
             {
@@ -357,8 +359,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
         }
         else
         {
-            if( bBindNullFields )
-                err = sqlite3_bind_null(poStmt, nColCount++);
+            err = sqlite3_bind_null(poStmt, nColCount++);
         }
     }
 
@@ -379,7 +380,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindUpdateParameters( OGRFeature *poFeatu
 
     int nColCount = 0;
     const OGRErr err =
-        FeatureBindParameters( poFeature, poStmt, &nColCount, false, true );
+        FeatureBindParameters( poFeature, poStmt, &nColCount, false );
     if ( err != OGRERR_NONE )
         return err;
 
@@ -406,13 +407,12 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindUpdateParameters( OGRFeature *poFeatu
 //
 OGRErr OGRGeoPackageTableLayer::FeatureBindInsertParameters( OGRFeature *poFeature,
                                                              sqlite3_stmt *poStmt,
-                                                             bool bAddFID,
-                                                             bool bBindNullFields )
+                                                             bool bAddFID )
 {
     int nColCount = 0;
     return
         FeatureBindParameters( poFeature, poStmt, &nColCount,
-                               bAddFID, bBindNullFields );
+                               bAddFID );
 }
 
 //----------------------------------------------------------------------
@@ -426,8 +426,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindInsertParameters( OGRFeature *poFeatu
 // column ordering.
 //
 CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeature,
-                                                             bool bAddFID,
-                                                             bool bBindNullFields )
+                                                             bool bAddFID )
 {
     bool bNeedComma = false;
     OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
@@ -475,7 +474,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
     {
         if( i == m_iFIDAsRegularColumnIndex )
             continue;
-        if( !bBindNullFields && !poFeature->IsFieldSet(i) )
+        if( !poFeature->IsFieldSet(i) )
             continue;
 
         if( !bNeedComma )
@@ -540,6 +539,8 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
     {
         if( i == m_iFIDAsRegularColumnIndex )
             continue;
+        if( !poFeature->IsFieldSet(i) )
+            continue;
         if( !bNeedComma )
             bNeedComma = true;
         else
@@ -550,6 +551,8 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
         osUpdate += osSQLColumn;
         osUpdate += "=?";
     }
+    if( !bNeedComma )
+        return CPLString();
 
     CPLString osWhere;
     osWhere.Printf(" WHERE \"%s\" = ?",
@@ -1213,7 +1216,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
     {
         if( poFeature->GetFID() == OGRNullFID )
         {
-            if( poFeature->IsFieldSet( m_iFIDAsRegularColumnIndex ) )
+            if( poFeature->IsFieldSetAndNotNull( m_iFIDAsRegularColumnIndex ) )
             {
                 poFeature->SetFID(
                     poFeature->GetFieldAsInteger64(m_iFIDAsRegularColumnIndex));
@@ -1221,7 +1224,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
         else
         {
-            if( !poFeature->IsFieldSet( m_iFIDAsRegularColumnIndex ) ||
+            if( !poFeature->IsFieldSetAndNotNull( m_iFIDAsRegularColumnIndex ) ||
                 poFeature->GetFieldAsInteger64(m_iFIDAsRegularColumnIndex) != poFeature->GetFID() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1245,7 +1248,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         /* Only work with fields that are set */
         /* Do not stick values into SQL, use placeholder and bind values later */
         m_bInsertStatementWithFID = poFeature->GetFID() != OGRNullFID;
-        CPLString osCommand = FeatureGenerateInsertSQL(poFeature, m_bInsertStatementWithFID, !bHasDefaultValue);
+        CPLString osCommand = FeatureGenerateInsertSQL(poFeature, m_bInsertStatementWithFID);
 
         /* Prepare the SQL into a statement */
         sqlite3 *poDb = m_poDS->GetDB();
@@ -1261,7 +1264,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     /* Bind values onto the statement now */
     OGRErr errOgr = FeatureBindInsertParameters(poFeature, m_poInsertStatement,
-                                                m_bInsertStatementWithFID, !bHasDefaultValue);
+                                                m_bInsertStatementWithFID);
     if ( errOgr != OGRERR_NONE )
     {
         sqlite3_reset(m_poInsertStatement);
@@ -1346,7 +1349,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
     /* In case the FID column has also been created as a regular field */
     if( m_iFIDAsRegularColumnIndex >= 0 )
     {
-        if( !poFeature->IsFieldSet( m_iFIDAsRegularColumnIndex ) ||
+        if( !poFeature->IsFieldSetAndNotNull( m_iFIDAsRegularColumnIndex ) ||
             poFeature->GetFieldAsInteger64(m_iFIDAsRegularColumnIndex) != poFeature->GetFID() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1390,7 +1393,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
             return errOgr;
 
         /* Bind values onto the statement now */
-        errOgr = FeatureBindInsertParameters(poFeature, m_poUpdateStatement, true, true);
+        errOgr = FeatureBindInsertParameters(poFeature, m_poUpdateStatement, true);
         if ( errOgr != OGRERR_NONE )
             return errOgr;
     }
@@ -1403,6 +1406,8 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
             /* Only work with fields that are set */
             /* Do not stick values into SQL, use placeholder and bind values later */
             CPLString osCommand = FeatureGenerateUpdateSQL(poFeature);
+            if( osCommand.empty() )
+                return OGRERR_NONE;
 
             /* Prepare the SQL into a statement */
             int err = sqlite3_prepare_v2(m_poDS->GetDB(), osCommand, -1, &m_poUpdateStatement, NULL);

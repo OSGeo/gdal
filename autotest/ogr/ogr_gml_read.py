@@ -4082,6 +4082,59 @@ def ogr_gml_79():
     return 'success'
 
 ###############################################################################
+# Test null / unset
+
+def ogr_gml_80():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_80.xml')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    lyr.CreateField( ogr.FieldDefn('int_field', ogr.OFTInteger) )
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['int_field'] = 4
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldNull('int_field')
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gml_80.xml')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['int_field'] != 4:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['int_field'] != None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f.IsFieldSet('int_field'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = None
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gml_80.xml')
+    gdal.Unlink('/vsimem/ogr_gml_80.xsd')
+
+    return 'success'
+
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -4292,6 +4345,7 @@ gdaltest_list = [
     ogr_gml_77,
     ogr_gml_78,
     ogr_gml_79,
+    ogr_gml_80,
     ogr_gml_cleanup ]
 
 disabled_gdaltest_list = [

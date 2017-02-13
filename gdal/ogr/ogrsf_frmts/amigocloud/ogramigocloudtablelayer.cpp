@@ -473,13 +473,15 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
             amigo_id_value = value;
             continue;
         }
+        if( !poFeature->IsFieldSet(i) )
+            continue;
 
         if(counter > 0)
             record << ",";
 
         record << OGRAMIGOCLOUDEscapeIdentifier(name.c_str()) << ":";
 
-        if(!value.empty())
+        if( !poFeature->IsFieldNull(i) )
         {
             OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
             if( eType == OFTString || eType == OFTDateTime || eType == OFTDate || eType == OFTTime )
@@ -550,6 +552,9 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
         bool bMustComma = false;
         for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         {
+            if( !poFeature->IsFieldSet(i) )
+                continue;
+
             if( bMustComma )
                 osSQL += ", ";
             else
@@ -558,7 +563,7 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
             osSQL += OGRAMIGOCLOUDEscapeIdentifier(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
             osSQL += " = ";
 
-            if(!poFeature->IsFieldSet(i))
+            if(poFeature->IsFieldNull(i))
             {
                 osSQL += "NULL";
             }
@@ -610,6 +615,9 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
                 CPLFree(pszEWKB);
             }
         }
+
+        if( !bMustComma ) // nothing to do
+            return OGRERR_NONE;
 
         osSQL += CPLSPrintf(" WHERE %s = '%s'",
                             OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),

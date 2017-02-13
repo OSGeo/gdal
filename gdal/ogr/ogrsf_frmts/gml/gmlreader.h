@@ -38,6 +38,9 @@
 
 #include <vector>
 
+// Special value to map to a NULL field
+#define OGR_GML_NULL "___OGR_GML_NULL___"
+
 typedef enum {
     GMLPT_Untyped = 0,
     GMLPT_String = 1,

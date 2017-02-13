@@ -221,6 +221,7 @@ GMLASSchemaAnalyzer::GMLASSchemaAnalyzer(
                             GMLASXPathMatcher& oIgnoredXPathMatcher )
     : m_oIgnoredXPathMatcher(oIgnoredXPathMatcher)
     , m_bUseArrays(true)
+    , m_bUseNullState(false)
     , m_bInstantiateGMLFeaturesOnly(true)
     , m_nIdentifierMaxLength(0)
     , m_bCaseInsensitiveIdentifier(CASE_INSENSITIVE_IDENTIFIER_DEFAULT)
@@ -2628,7 +2629,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     // need an extra field to be able to distinguish between the
                     // case of the missing element or the element with
                     // xsi:nil="true"
-                    if( nMinOccurs == 0 && poElt->getNillable() )
+                    if( nMinOccurs == 0 && poElt->getNillable() && !m_bUseNullState )
                     {
                         GMLASField oFieldNil;
                         oFieldNil.SetName( osEltName + "_" + szNIL );
@@ -2771,7 +2772,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         // need an extra field to be able to distinguish between the
                         // case of the missing element or the element with
                         // xsi:nil="true"
-                        if( nMinOccurs == 0 && poElt->getNillable() )
+                        if( nMinOccurs == 0 && poElt->getNillable() && !m_bUseNullState )
                         {
                             GMLASField oFieldNil;
                             oFieldNil.SetName( osEltName + "_" + szNIL );
@@ -2899,7 +2900,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             // need an extra field to be able to distinguish between the
                             // case of the missing element or the element with
                             // xsi:nil="true"
-                            if( poElt->getNillable() )
+                            if( poElt->getNillable() && !m_bUseNullState )
                             {
                                 GMLASField oFieldNil;
                                 oFieldNil.SetName( osEltName + "_" + szNIL );
@@ -2931,7 +2932,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             // need an extra field to be able to distinguish between the
                             // case of the missing element or the element with
                             // xsi:nil="true"
-                            if( poElt->getNillable() )
+                            if( poElt->getNillable() && !m_bUseNullState )
                             {
                                 GMLASField oFieldNil;
                                 oFieldNil.SetName( osEltName + "_" + szNIL );

@@ -832,7 +832,11 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
 
         const char *pszStrValue = poFeature->GetFieldAsString(i);
 
-        if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
+        if( poFeature->IsFieldNull(i) )
+        {
+            osCommand += "NULL";
+        }
+        else if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
                  && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger64
                  && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal
                  && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTBinary )

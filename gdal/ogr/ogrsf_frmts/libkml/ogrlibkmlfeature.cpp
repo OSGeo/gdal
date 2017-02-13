@@ -78,12 +78,12 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
 
     const bool bNeedCamera =
         iCameraLongitudeField >= 0 &&
-        poOgrFeat->IsFieldSet(iCameraLongitudeField) &&
+        poOgrFeat->IsFieldSetAndNotNull(iCameraLongitudeField) &&
         iCameraLatitudeField >= 0 &&
-        poOgrFeat->IsFieldSet(iCameraLatitudeField) &&
-        ((iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading)) ||
-        (iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt)) ||
-        (iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll)));
+        poOgrFeat->IsFieldSetAndNotNull(iCameraLatitudeField) &&
+        ((iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading)) ||
+        (iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt)) ||
+        (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll)));
 
     if( !bNeedCamera )
         return NULL;
@@ -95,7 +95,7 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
     int nAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
 
     if( iCameraAltitudeModeField >= 0 &&
-        poOgrFeat->IsFieldSet(iCameraAltitudeModeField) )
+        poOgrFeat->IsFieldSetAndNotNull(iCameraAltitudeModeField) )
     {
         nAltitudeMode = kmlAltitudeModeFromString(
             poOgrFeat->GetFieldAsString(iCameraAltitudeModeField), isGX);
@@ -109,7 +109,7 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
     }
 
     if( iCameraAltitudeField >= 0 &&
-        poOgrFeat->IsFieldSet(iCameraAltitudeField))
+        poOgrFeat->IsFieldSetAndNotNull(iCameraAltitudeField))
     {
         camera->set_altitude(poOgrFeat->GetFieldAsDouble(iCameraAltitudeField));
     }
@@ -121,11 +121,11 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
         camera->set_altitude(0.0);
     }
 
-    if( iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading) )
+    if( iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading) )
         camera->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
-    if( iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt) )
+    if( iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt) )
         camera->set_tilt(poOgrFeat->GetFieldAsDouble(iTilt));
-    if( iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll) )
+    if( iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll) )
         camera->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
 
     return camera;
@@ -253,7 +253,7 @@ FeaturePtr feat2kml(
     CameraPtr camera = NULL;
 
     // PhotoOverlay.
-    if( iPhotoOverlay >= 0 && poOgrFeat->IsFieldSet(iPhotoOverlay) &&
+    if( iPhotoOverlay >= 0 && poOgrFeat->IsFieldSetAndNotNull(iPhotoOverlay) &&
         poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
         wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint &&
         (camera = feat2kmlcamera(oFC, iHeading, iTilt, iRoll,
@@ -289,7 +289,7 @@ FeaturePtr feat2kml(
             bIsTiledPhotoOverlay = true;
             bool bErrorEmitted = false;
             if( iImagePyramidTileSize < 0 ||
-                !poOgrFeat->IsFieldSet(iImagePyramidTileSize) )
+                !poOgrFeat->IsFieldSetAndNotNull(iImagePyramidTileSize) )
             {
                 CPLDebug("LIBKML",
                          "Missing ImagePyramid tileSize. Computing it");
@@ -334,9 +334,9 @@ FeaturePtr feat2kml(
             if( nTileSize > 0 )
             {
                 if( iImagePyramidMaxWidth < 0 ||
-                    !poOgrFeat->IsFieldSet(iImagePyramidMaxWidth) ||
+                    !poOgrFeat->IsFieldSetAndNotNull(iImagePyramidMaxWidth) ||
                     iImagePyramidMaxHeight < 0 ||
-                    !poOgrFeat->IsFieldSet(iImagePyramidMaxHeight) )
+                    !poOgrFeat->IsFieldSetAndNotNull(iImagePyramidMaxHeight) )
                 {
                     CPLDebug(
                         "LIBKML",
@@ -363,7 +363,7 @@ FeaturePtr feat2kml(
             }
 
             if( iImagePyramidGridOrigin >= 0 &&
-                poOgrFeat->IsFieldSet(iImagePyramidGridOrigin) )
+                poOgrFeat->IsFieldSetAndNotNull(iImagePyramidGridOrigin) )
             {
                 const char* pszGridOrigin =
                     poOgrFeat->GetFieldAsString(iImagePyramidGridOrigin);
@@ -388,13 +388,13 @@ FeaturePtr feat2kml(
         else
         {
             if( (iImagePyramidTileSize >= 0 &&
-                 poOgrFeat->IsFieldSet(iImagePyramidTileSize)) ||
+                 poOgrFeat->IsFieldSetAndNotNull(iImagePyramidTileSize)) ||
                 (iImagePyramidMaxWidth >= 0 &&
-                 poOgrFeat->IsFieldSet(iImagePyramidMaxWidth)) ||
+                 poOgrFeat->IsFieldSetAndNotNull(iImagePyramidMaxWidth)) ||
                 (iImagePyramidMaxHeight >= 0 &&
-                 poOgrFeat->IsFieldSet(iImagePyramidMaxHeight)) ||
+                 poOgrFeat->IsFieldSetAndNotNull(iImagePyramidMaxHeight)) ||
                 (iImagePyramidGridOrigin >= 0 &&
-                 poOgrFeat->IsFieldSet(iImagePyramidGridOrigin)) )
+                 poOgrFeat->IsFieldSetAndNotNull(iImagePyramidGridOrigin)) )
             {
                 CPLError(
                     CE_Warning, CPLE_AppDefined,
@@ -408,10 +408,10 @@ FeaturePtr feat2kml(
 
         if( (!bIsTiledPhotoOverlay ||
              (nTileSize > 0 && nMaxWidth > 0 && nMaxHeight > 0)) &&
-            iLeftFovField >= 0 && poOgrFeat->IsFieldSet(iLeftFovField) &&
-            iRightFovField >= 0 && poOgrFeat->IsFieldSet(iRightFovField) &&
-            iBottomFovField >= 0 && poOgrFeat->IsFieldSet(iBottomFovField) &&
-            iTopFovField >= 0 && poOgrFeat->IsFieldSet(iTopFovField) &&
+            iLeftFovField >= 0 && poOgrFeat->IsFieldSetAndNotNull(iLeftFovField) &&
+            iRightFovField >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRightFovField) &&
+            iBottomFovField >= 0 && poOgrFeat->IsFieldSetAndNotNull(iBottomFovField) &&
+            iTopFovField >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTopFovField) &&
             iNearField >= 0 &&
             (dfNear = poOgrFeat->GetFieldAsDouble(iNearField)) > 0 )
         {
@@ -458,7 +458,7 @@ FeaturePtr feat2kml(
             const int iPhotoOverlayShapeField =
                 poOgrFeat->GetFieldIndex(oFC.photooverlay_shape_field);
             if( iPhotoOverlayShapeField >= 0 &&
-                poOgrFeat->IsFieldSet(iPhotoOverlayShapeField) )
+                poOgrFeat->IsFieldSetAndNotNull(iPhotoOverlayShapeField) )
             {
                 const char* pszShape =
                     poOgrFeat->GetFieldAsString(iPhotoOverlayShapeField);
@@ -478,7 +478,7 @@ FeaturePtr feat2kml(
 
     // NetworkLink.
     if( poKmlFeature == NULL && iNetworkLink >= 0 &&
-        poOgrFeat->IsFieldSet(iNetworkLink) )
+        poOgrFeat->IsFieldSetAndNotNull(iNetworkLink) )
     {
         const NetworkLinkPtr poKmlNetworkLink =
             poKmlFactory->CreateNetworkLink();
@@ -488,7 +488,7 @@ FeaturePtr feat2kml(
             poOgrFeat->GetFieldIndex(oFC.networklink_refreshvisibility_field);
 
         if( iRefreshVisibility >= 0 &&
-            poOgrFeat->IsFieldSet(iRefreshVisibility) )
+            poOgrFeat->IsFieldSetAndNotNull(iRefreshVisibility) )
         {
             poKmlNetworkLink->set_refreshvisibility(CPL_TO_BOOL(
                 poOgrFeat->GetFieldAsInteger(iRefreshVisibility)));
@@ -497,7 +497,7 @@ FeaturePtr feat2kml(
         const int iFlyToView =
             poOgrFeat->GetFieldIndex(oFC.networklink_flytoview_field);
 
-        if( iFlyToView >= 0 && poOgrFeat->IsFieldSet(iFlyToView) )
+        if( iFlyToView >= 0 && poOgrFeat->IsFieldSetAndNotNull(iFlyToView) )
             poKmlNetworkLink->set_flytoview(CPL_TO_BOOL(
                 poOgrFeat->GetFieldAsInteger(iFlyToView)));
 
@@ -521,7 +521,7 @@ FeaturePtr feat2kml(
             poOgrFeat->GetFieldIndex(oFC.networklink_httpQuery_field);
 
         double dfRefreshInterval = 0.0;
-        if( iRefreshInterval >= 0 && poOgrFeat->IsFieldSet(iRefreshInterval) )
+        if( iRefreshInterval >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRefreshInterval) )
         {
             dfRefreshInterval = poOgrFeat->GetFieldAsDouble(iRefreshInterval);
             if( dfRefreshInterval < 0 )
@@ -529,7 +529,7 @@ FeaturePtr feat2kml(
         }
 
         double dfViewRefreshTime = 0.0;
-        if( iViewRefreshTime >= 0 && poOgrFeat->IsFieldSet(iViewRefreshTime) )
+        if( iViewRefreshTime >= 0 && poOgrFeat->IsFieldSetAndNotNull(iViewRefreshTime) )
         {
             dfViewRefreshTime = poOgrFeat->GetFieldAsDouble(iViewRefreshTime);
             if( dfViewRefreshTime < 0 )
@@ -538,7 +538,7 @@ FeaturePtr feat2kml(
 
         if( dfRefreshInterval > 0 )  // ATC 51
             poKmlLink->set_refreshmode(kmldom::REFRESHMODE_ONINTERVAL);
-        else if( iRefreshMode >= 0 && poOgrFeat->IsFieldSet(iRefreshMode) )
+        else if( iRefreshMode >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRefreshMode) )
         {
             const char * const pszRefreshMode =
                 poOgrFeat->GetFieldAsString(iRefreshMode);
@@ -556,7 +556,7 @@ FeaturePtr feat2kml(
         if( dfViewRefreshTime > 0 )  // ATC 51
             poKmlLink->set_viewrefreshmode(kmldom::VIEWREFRESHMODE_ONSTOP);
         else if( iViewRefreshMode >= 0 &&
-                 poOgrFeat->IsFieldSet(iViewRefreshMode) )
+                 poOgrFeat->IsFieldSetAndNotNull(iViewRefreshMode) )
         {
             const char * const pszViewRefreshMode =
                 poOgrFeat->GetFieldAsString(iViewRefreshMode);
@@ -575,7 +575,7 @@ FeaturePtr feat2kml(
         if( dfViewRefreshTime > 0 ) // ATC 9
             poKmlLink->set_viewrefreshtime(dfViewRefreshTime);
 
-        if( iViewBoundScale >= 0 && poOgrFeat->IsFieldSet(iViewBoundScale) )
+        if( iViewBoundScale >= 0 && poOgrFeat->IsFieldSetAndNotNull(iViewBoundScale) )
         {
             const double dfViewBoundScale =
                 poOgrFeat->GetFieldAsDouble(iViewBoundScale);
@@ -583,7 +583,7 @@ FeaturePtr feat2kml(
                 poKmlLink->set_viewboundscale(dfViewBoundScale);
         }
 
-        if( iViewFormat >= 0 && poOgrFeat->IsFieldSet(iViewFormat) )
+        if( iViewFormat >= 0 && poOgrFeat->IsFieldSetAndNotNull(iViewFormat) )
         {
             const char * const pszViewFormat =
                 poOgrFeat->GetFieldAsString(iViewFormat);
@@ -591,7 +591,7 @@ FeaturePtr feat2kml(
                 poKmlLink->set_viewformat(pszViewFormat);
         }
 
-        if( iHttpQuery >= 0 && poOgrFeat->IsFieldSet(iHttpQuery) )
+        if( iHttpQuery >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHttpQuery) )
         {
             const char* const pszHttpQuery =
                 poOgrFeat->GetFieldAsString(iHttpQuery);
@@ -608,7 +608,7 @@ FeaturePtr feat2kml(
     // Model.
     else if( poKmlFeature == NULL &&
              iModel >= 0 &&
-             poOgrFeat->IsFieldSet(iModel) &&
+             poOgrFeat->IsFieldSetAndNotNull(iModel) &&
              poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
              wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint )
     {
@@ -634,7 +634,7 @@ FeaturePtr feat2kml(
         const int iAltitudeMode =
             poOgrFeat->GetFieldIndex(oFC.altitudeModefield);
         int nAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
-        if( iAltitudeMode >= 0 && poOgrFeat->IsFieldSet(iAltitudeMode) )
+        if( iAltitudeMode >= 0 && poOgrFeat->IsFieldSetAndNotNull(iAltitudeMode) )
         {
             nAltitudeMode = kmlAltitudeModeFromString(
                 poOgrFeat->GetFieldAsString(iAltitudeMode), isGX);
@@ -651,22 +651,22 @@ FeaturePtr feat2kml(
             }
         }
 
-        if( (iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading)) ||
-            (iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt)) ||
-            (iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll)) )
+        if( (iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading)) ||
+            (iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt)) ||
+            (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll)) )
         {
             OrientationPtr const orientation =
                 poKmlFactory->CreateOrientation();
             model->set_orientation(orientation);
-            if( iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading) )
+            if( iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading) )
                 orientation->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
             else
                 orientation->set_heading(0);
-            if( iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt) )
+            if( iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt) )
                 orientation->set_tilt(poOgrFeat->GetFieldAsDouble(iTilt));
             else
                 orientation->set_tilt(0);
-            if( iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll) )
+            if( iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll) )
                 orientation->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
             else
                 orientation->set_roll(0);
@@ -677,15 +677,15 @@ FeaturePtr feat2kml(
 
         const ScalePtr scale = poKmlFactory->CreateScale();
         model->set_scale(scale);
-        if( iScaleX >= 0 && poOgrFeat->IsFieldSet(iScaleX) )
+        if( iScaleX >= 0 && poOgrFeat->IsFieldSetAndNotNull(iScaleX) )
             scale->set_x(poOgrFeat->GetFieldAsDouble(iScaleX));
         else
             scale->set_x(1.0);
-        if( iScaleY >= 0 && poOgrFeat->IsFieldSet(iScaleY) )
+        if( iScaleY >= 0 && poOgrFeat->IsFieldSetAndNotNull(iScaleY) )
             scale->set_y(poOgrFeat->GetFieldAsDouble(iScaleY));
         else
             scale->set_y(1.0);
-        if( iScaleZ >= 0 && poOgrFeat->IsFieldSet(iScaleZ) )
+        if( iScaleZ >= 0 && poOgrFeat->IsFieldSetAndNotNull(iScaleZ) )
             scale->set_z(poOgrFeat->GetFieldAsDouble(iScaleZ));
         else
             scale->set_z(1.0);
@@ -776,9 +776,9 @@ FeaturePtr feat2kml(
              !poOgrGeom->IsEmpty() &&
              wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint &&
              poOgrFeat->GetFieldIndex(oFC.camera_longitude_field) < 0 &&
-             ((iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading)) ||
-              (iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt)) ||
-              (iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll))) )
+             ((iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading)) ||
+              (iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt)) ||
+              (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll))) )
     {
         const PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
         poKmlFeature = poKmlPlacemark;
@@ -797,7 +797,7 @@ FeaturePtr feat2kml(
         const int iAltitudeMode =
             poOgrFeat->GetFieldIndex(oFC.altitudeModefield);
         int nAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
-        if( iAltitudeMode >= 0 && poOgrFeat->IsFieldSet(iAltitudeMode) )
+        if( iAltitudeMode >= 0 && poOgrFeat->IsFieldSetAndNotNull(iAltitudeMode) )
         {
             nAltitudeMode = kmlAltitudeModeFromString(
                 poOgrFeat->GetFieldAsString(iAltitudeMode), isGX);
@@ -822,11 +822,11 @@ FeaturePtr feat2kml(
             camera->set_altitude(0.0);
         }
 
-        if( iHeading >= 0 && poOgrFeat->IsFieldSet(iHeading) )
+        if( iHeading >= 0 && poOgrFeat->IsFieldSetAndNotNull(iHeading) )
             camera->set_heading(poOgrFeat->GetFieldAsDouble(iHeading));
-        if( iTilt >= 0 && poOgrFeat->IsFieldSet(iTilt) )
+        if( iTilt >= 0 && poOgrFeat->IsFieldSetAndNotNull(iTilt) )
             camera->set_tilt(poOgrFeat->GetFieldAsDouble(iTilt));
-        if( iRoll >= 0 && poOgrFeat->IsFieldSet(iRoll) )
+        if( iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll) )
             camera->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
         poKmlPlacemark->set_abstractview(camera);
     }

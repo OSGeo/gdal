@@ -323,7 +323,7 @@ void field2kml(
             continue;
 
         /***** If the field isn't set just bail now *****/
-        if( !poOgrFeat->IsFieldSet( i ) )
+        if( !poOgrFeat->IsFieldSetAndNotNull( i ) )
             continue;
 
         OGRFieldDefn *poOgrFieldDef = poOgrFeat->GetFieldDefnRef( i );

@@ -1344,7 +1344,7 @@ def ogr_sql_sqlite_24():
     # Test inflating a random binary blob
     sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate(x'0203')", dialect = 'SQLite')
     feat = sql_lyr.GetNextFeature()
-    if feat.IsFieldSet(0):
+    if not feat.IsFieldNull(0):
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
@@ -1363,7 +1363,7 @@ def ogr_sql_sqlite_24():
     # Error case
     sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate('a', 'b')", dialect = 'SQLite')
     feat = sql_lyr.GetNextFeature()
-    if feat.IsFieldSet(0):
+    if not feat.IsFieldNull(0):
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
@@ -1382,7 +1382,7 @@ def ogr_sql_sqlite_24():
     # Error case
     sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate('a')", dialect = 'SQLite')
     feat = sql_lyr.GetNextFeature()
-    if feat.IsFieldSet(0):
+    if not feat.IsFieldNull(0):
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
@@ -1410,7 +1410,7 @@ def ogr_sql_sqlite_25_test_errors(ds, fct):
     for val in [ 'null', "'foo'", "x'00010203'" ]:
         sql_lyr = ds.ExecuteSQL("SELECT %s(%s)" % (fct, val), dialect = 'SQLite')
         feat = sql_lyr.GetNextFeature()
-        if feat.IsFieldSet(0):
+        if not feat.IsFieldNull(0):
             feat.DumpReadable()
             ds.ReleaseResultSet(sql_lyr)
             print(val)
@@ -1693,7 +1693,7 @@ def ogr_sql_sqlite_28():
                  "SELECT hstore_get_value('a=>b','c')" ]:
         sql_lyr = ds.ExecuteSQL( sql, dialect = 'SQLite' )
         f = sql_lyr.GetNextFeature()
-        if f.IsFieldSet(0):
+        if not f.IsFieldNull(0):
             gdaltest.post_reason('fail')
             print(sql)
             f.DumpReadable()

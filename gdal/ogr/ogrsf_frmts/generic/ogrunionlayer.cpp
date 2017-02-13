@@ -790,7 +790,7 @@ OGRErr OGRUnionLayer::ICreateFeature( OGRFeature* poFeature )
         return OGRERR_FAILURE;
     }
 
-    if( !poFeature->IsFieldSet(0) )
+    if( !poFeature->IsFieldSetAndNotNull(0) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "CreateFeature() not supported when '%s' field is not set",
@@ -849,7 +849,7 @@ OGRErr OGRUnionLayer::ISetFeature( OGRFeature* poFeature )
         return OGRERR_FAILURE;
     }
 
-    if( !poFeature->IsFieldSet(0) )
+    if( !poFeature->IsFieldSetAndNotNull(0) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "SetFeature() not supported when '%s' field is not set",

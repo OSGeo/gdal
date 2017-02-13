@@ -1852,7 +1852,7 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
         VSIFPrintfL(fp, "<row r=\"%d\">\n", iRow);
         for( int j=0;j<poFeature->GetFieldCount();j++)
         {
-            if (poFeature->IsFieldSet(j))
+            if (poFeature->IsFieldSetAndNotNull(j))
             {
                 char szCol[5];
                 BuildColString(szCol, j);

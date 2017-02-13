@@ -334,6 +334,12 @@ class CPL_DLL OGRFeature
 
     void                UnsetField( int iField );
 
+    bool                IsFieldNull( int iField );
+
+    void                SetFieldNull( int iField );
+
+    bool                IsFieldSetAndNotNull( int iField );
+
     OGRField           *GetRawFieldRef( int i ) { return pauFields + i; }
 
     int                 GetFieldAsInteger( int i );

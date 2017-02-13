@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  CouchDB Translator
- * Purpose:  Implements OGRCouchDBDriver.
+ * Purpose:  Implements OGRCloudantDriver.
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
  ******************************************************************************
@@ -33,37 +33,32 @@ CPL_CVSID("$Id$");
 extern "C" void RegisterOGRCloudant();
 
 /************************************************************************/
-/*                         ~OGRCloudantDriver()                          */
+/*                   OGRCloudantDriverIdentify()                        */
 /************************************************************************/
 
-OGRCloudantDriver::~OGRCloudantDriver()
+static int OGRCloudantDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "Cloudant:"))
+        return 1;
+    else
+        return 0;
+
 }
 
 /************************************************************************/
-/*                              GetName()                               */
+/*                  OGRCloudantDriverOpen()                             */
 /************************************************************************/
 
-const char *OGRCloudantDriver::GetName()
+static GDALDataset* OGRCloudantDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    return "Cloudant";
-}
-
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
-
-OGRDataSource *OGRCloudantDriver::Open( const char * pszFilename, int bUpdate )
-
-{
-    if (!STARTS_WITH_CI(pszFilename, "cloudant:"))
+    if( OGRCloudantDriverIdentify(poOpenInfo) == 0 )
         return NULL;
 
     OGRCloudantDataSource   *poDS = new OGRCloudantDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         poDS = NULL;
@@ -76,8 +71,12 @@ OGRDataSource *OGRCloudantDriver::Open( const char * pszFilename, int bUpdate )
 /*                          CreateDataSource()                          */
 /************************************************************************/
 
-OGRDataSource *OGRCloudantDriver::CreateDataSource( const char * pszName,
-                                                   CPL_UNUSED char **papszOptions )
+static GDALDataset* OGRCloudantDriverCreate( const char * pszName,
+                                            int /* nXSize */,
+                                            int /* nYSize */,
+                                            int /* nBands */,
+                                            GDALDataType /* eDT */,
+                                            char ** /* papszOptions */ )
 {
     OGRCloudantDataSource   *poDS = new OGRCloudantDataSource();
 
@@ -91,26 +90,40 @@ OGRDataSource *OGRCloudantDriver::CreateDataSource( const char * pszName,
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRCloudantDriver::TestCapability( const char * pszCap )
-
-{
-    if (EQUAL(pszCap, ODrCCreateDataSource))
-        return TRUE;
-
-    return FALSE;
-}
-
-/************************************************************************/
-/*                         RegisterOGRCloudant()                         */
+/*                         RegisterOGRCloudant()                        */
 /************************************************************************/
 
 void RegisterOGRCloudant()
 
 {
-    OGRSFDriver* poDriver = new OGRCloudantDriver;
+    if( GDALGetDriverByName( "Cloudant" ) != NULL )
+      return;
+
+    GDALDriver  *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "Cloudant" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Cloudant / CouchDB" );
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_cloudant.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "Cloudant:" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+                               "<CreationOptionList/>");
+
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    "<LayerCreationOptionList>"
+    "  <Option name='UPDATE_PERMISSIONS' type='string' description='Update permissions for the new layer.'/>"
+    "  <Option name='GEOJSON ' type='boolean' description='Whether to write documents as GeoJSON documents.' default='YES'/>"
+    "  <Option name='COORDINATE_PRECISION' type='int' description='Maximum number of figures after decimal separator to write in coordinates.' default='15'/>"
+    "</LayerCreationOptionList>");
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String Date DateTime "
+                               "Time IntegerList Integer64List RealList "
+                               "StringList Binary" );
+
+    poDriver->pfnIdentify = OGRCloudantDriverIdentify;
+    poDriver->pfnOpen = OGRCloudantDriverOpen;
+    poDriver->pfnCreate = OGRCloudantDriverCreate;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

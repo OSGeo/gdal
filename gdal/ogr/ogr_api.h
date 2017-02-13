@@ -401,7 +401,17 @@ int    CPL_DLL OGR_F_GetFieldIndex( OGRFeatureH, const char * );
 
 int    CPL_DLL OGR_F_IsFieldSet( OGRFeatureH, int );
 void   CPL_DLL OGR_F_UnsetField( OGRFeatureH, int );
+
+int    CPL_DLL OGR_F_IsFieldNull( OGRFeatureH, int );
+int    CPL_DLL OGR_F_IsFieldSetAndNotNull( OGRFeatureH, int );
+void   CPL_DLL OGR_F_SetFieldNull( OGRFeatureH, int );
+
 OGRField CPL_DLL *OGR_F_GetRawFieldRef( OGRFeatureH, int );
+
+int    CPL_DLL OGR_RawField_IsUnset( const OGRField* );
+int    CPL_DLL OGR_RawField_IsNull( const OGRField* );
+void   CPL_DLL OGR_RawField_SetUnset( OGRField* );
+void   CPL_DLL OGR_RawField_SetNull( OGRField* );
 
 int    CPL_DLL OGR_F_GetFieldAsInteger( OGRFeatureH, int );
 GIntBig CPL_DLL OGR_F_GetFieldAsInteger64( OGRFeatureH, int );

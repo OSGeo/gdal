@@ -605,12 +605,12 @@ OGRErr OGRMemLayer::DeleteField( int iField )
     while( (poFeature = poIter->Next()) != NULL )
     {
         OGRField* poFieldRaw = poFeature->GetRawFieldRef(iField);
-        if( poFeature->IsFieldSet(iField) )
+        if( poFeature->IsFieldSetAndNotNull(iField) &&
+            !poFeature->IsFieldNull(iField) )
         {
             /* Little trick to unallocate the field */
             OGRField sField;
-            sField.Set.nMarker1 = OGRUnsetMarker;
-            sField.Set.nMarker2 = OGRUnsetMarker;
+            OGR_RawField_SetUnset(&sField);
             poFeature->SetField(iField, &sField);
         }
 
@@ -707,7 +707,8 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
             while( (poFeature = poIter->Next()) != NULL )
             {
                 OGRField* poFieldRaw = poFeature->GetRawFieldRef(iField);
-                if( poFeature->IsFieldSet(iField) )
+                if( poFeature->IsFieldSetAndNotNull(iField) &&
+                    !poFeature->IsFieldNull(iField) )
                 {
                     poFieldRaw->Integer64 = poFieldRaw->Integer;
                 }
@@ -726,7 +727,8 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
             while( (poFeature = poIter->Next()) != NULL )
             {
                 OGRField* poFieldRaw = poFeature->GetRawFieldRef(iField);
-                if( poFeature->IsFieldSet(iField) )
+                if( poFeature->IsFieldSetAndNotNull(iField) &&
+                    !poFeature->IsFieldNull(iField) )
                 {
                     poFieldRaw->Real = poFieldRaw->Integer;
                 }
@@ -745,7 +747,8 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
             while( (poFeature = poIter->Next()) != NULL )
             {
                 OGRField* poFieldRaw = poFeature->GetRawFieldRef(iField);
-                if( poFeature->IsFieldSet(iField) )
+                if( poFeature->IsFieldSetAndNotNull(iField) &&
+                    !poFeature->IsFieldNull(iField) )
                 {
                     poFieldRaw->Real =
                         static_cast<double>( poFieldRaw->Integer64 );
@@ -772,15 +775,15 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
             while( (poFeature = poIter->Next()) != NULL )
             {
                 OGRField* poFieldRaw = poFeature->GetRawFieldRef(iField);
-                if( poFeature->IsFieldSet(iField) )
+                if( poFeature->IsFieldSetAndNotNull(iField) &&
+                    !poFeature->IsFieldNull(iField) )
                 {
                     char* pszVal =
                         CPLStrdup(poFeature->GetFieldAsString(iField));
 
                     /* Little trick to unallocate the field */
                     OGRField sField;
-                    sField.Set.nMarker1 = OGRUnsetMarker;
-                    sField.Set.nMarker2 = OGRUnsetMarker;
+                    OGR_RawField_SetUnset(&sField);
                     poFeature->SetField(iField, &sField);
 
                     poFieldRaw->String = pszVal;

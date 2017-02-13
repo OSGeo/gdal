@@ -305,7 +305,7 @@ bool MBTilesDataset::HasNonEmptyGrids()
         return false;
 
     hFeat = OGR_L_GetNextFeature(hSQLLyr);
-    if (hFeat == NULL || !OGR_F_IsFieldSet(hFeat, 0))
+    if (hFeat == NULL || !OGR_F_IsFieldSetAndNotNull(hFeat, 0))
     {
         OGR_F_Destroy(hFeat);
         OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
@@ -381,7 +381,7 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
         return NULL;
 
     hFeat = OGR_L_GetNextFeature(hSQLLyr);
-    if (hFeat == NULL || !OGR_F_IsFieldSet(hFeat, 0))
+    if (hFeat == NULL || !OGR_F_IsFieldSetAndNotNull(hFeat, 0))
     {
         OGR_F_Destroy(hFeat);
         OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
@@ -650,7 +650,7 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
                 if (hSQLLyr)
                 {
                     hFeat = OGR_L_GetNextFeature(hSQLLyr);
-                    if (hFeat != NULL && OGR_F_IsFieldSet(hFeat, 0))
+                    if (hFeat != NULL && OGR_F_IsFieldSetAndNotNull(hFeat, 0))
                     {
                         const char* pszJSon = OGR_F_GetFieldAsString(hFeat, 0);
                         //CPLDebug("MBTILES", "JSon = %s", pszJSon);
@@ -1202,7 +1202,7 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
     OGRFeatureH hFeat;
     while( (hFeat = OGR_L_GetNextFeature(hSQLLyr)) != NULL )
     {
-        if (OGR_F_IsFieldSet(hFeat, 0) && OGR_F_IsFieldSet(hFeat, 1))
+        if (OGR_F_IsFieldSetAndNotNull(hFeat, 0) && OGR_F_IsFieldSetAndNotNull(hFeat, 1))
         {
             const char* pszName = OGR_F_GetFieldAsString(hFeat, 0);
             const char* pszValue = OGR_F_GetFieldAsString(hFeat, 1);
@@ -1279,7 +1279,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
         if (hFeat)
         {
             int bHasMinLevel = FALSE;
-            if (OGR_F_IsFieldSet(hFeat, 0))
+            if (OGR_F_IsFieldSetAndNotNull(hFeat, 0))
             {
                 nMinLevel = OGR_F_GetFieldAsInteger(hFeat, 0);
                 bHasMinLevel = TRUE;
@@ -1291,7 +1291,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
                 hFeat = OGR_L_GetNextFeature(hSQLLyr);
                 if (hFeat)
                 {
-                    if (OGR_F_IsFieldSet(hFeat, 0))
+                    if (OGR_F_IsFieldSetAndNotNull(hFeat, 0))
                     {
                         nMaxLevel = OGR_F_GetFieldAsInteger(hFeat, 0);
                         bHasMinMaxLevel = TRUE;
@@ -1366,7 +1366,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
             return FALSE;
         }
 
-        if (OGR_F_IsFieldSet(hFeat, 0) && OGR_F_IsFieldSet(hFeat, 1))
+        if (OGR_F_IsFieldSetAndNotNull(hFeat, 0) && OGR_F_IsFieldSetAndNotNull(hFeat, 1))
         {
             nMinLevel = OGR_F_GetFieldAsInteger(hFeat, 0);
             nMaxLevel = OGR_F_GetFieldAsInteger(hFeat, 1);
@@ -1481,10 +1481,10 @@ bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds,
             return false;
         }
 
-        if (OGR_F_IsFieldSet(hFeat, 0) &&
-            OGR_F_IsFieldSet(hFeat, 1) &&
-            OGR_F_IsFieldSet(hFeat, 2) &&
-            OGR_F_IsFieldSet(hFeat, 3))
+        if (OGR_F_IsFieldSetAndNotNull(hFeat, 0) &&
+            OGR_F_IsFieldSetAndNotNull(hFeat, 1) &&
+            OGR_F_IsFieldSetAndNotNull(hFeat, 2) &&
+            OGR_F_IsFieldSetAndNotNull(hFeat, 3))
         {
             int nMinTileCol = OGR_F_GetFieldAsInteger(hFeat, 0);
             int nMaxTileCol = OGR_F_GetFieldAsInteger(hFeat, 1);
@@ -1645,7 +1645,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
             hFeat = OGR_L_GetNextFeature(hSQLLyr);
             if (hFeat)
             {
-                if (OGR_F_IsFieldSet(hFeat, 0))
+                if (OGR_F_IsFieldSetAndNotNull(hFeat, 0))
                 {
                     const char* pszPointer = OGR_F_GetFieldAsString(hFeat, 0);
                     fpCURLOGR = (VSILFILE* )CPLScanPointer( pszPointer, static_cast<int>(strlen(pszPointer)) );
@@ -1857,7 +1857,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
                 hFeat = OGR_L_GetNextFeature(hSQLLyr);
                 if (hFeat)
                 {
-                    if (OGR_F_IsFieldSet(hFeat, 0))
+                    if (OGR_F_IsFieldSetAndNotNull(hFeat, 0))
                     {
                         bHasMap = strcmp(OGR_F_GetFieldAsString(hFeat, 0),
                                          "view") == 0;

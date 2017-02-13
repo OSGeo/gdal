@@ -751,7 +751,7 @@ OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
         /* If there's a geometry, let's use it in priority over the textual */
         /* content of the field. */
         if (iGeometryField != iLatitudeField && iField == iGeometryField &&
-            (iField == nFieldCount || poGeom != NULL || !poFeature->IsFieldSet( iField )))
+            (iField == nFieldCount || poGeom != NULL || !poFeature->IsFieldSetAndNotNull( iField )))
         {
             if (poGeom == NULL)
                 osCommand += "''";
@@ -778,7 +778,7 @@ OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
             continue;
         }
 
-        if( !poFeature->IsFieldSet( iField ) )
+        if( !poFeature->IsFieldSetAndNotNull( iField ) )
         {
             osCommand += "''";
         }
@@ -932,7 +932,7 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
 
         OGRGeometry* poGeom = poFeature->GetGeometryRef();
         if (iGeometryField != iLatitudeField && iField == iGeometryField &&
-            (iField == nFieldCount || poGeom != NULL || !poFeature->IsFieldSet( iField )))
+            (iField == nFieldCount || poGeom != NULL || !poFeature->IsFieldSetAndNotNull( iField )))
         {
             if (poGeom == NULL)
                 osCommand += "''";
@@ -959,7 +959,7 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
             continue;
         }
 
-        if( !poFeature->IsFieldSet( iField ) )
+        if( !poFeature->IsFieldSetAndNotNull( iField ) )
         {
             osCommand += "''";
         }

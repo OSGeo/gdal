@@ -660,8 +660,21 @@ typedef enum
 
 /** Special value for a unset FID */
 #define OGRNullFID            -1
-/** Special value for OGRField.Set.nMarker1 and nMarker2 */
+
+/** Special value set in OGRField.Set.nMarker1, nMarker2 and nMarker3 for
+ *  a unset field.
+ *  Direct use of this value is strongly discouraged.
+ *  Use OGR_RawField_SetUnset() or OGR_RawField_IsUnset() instead.
+ */
 #define OGRUnsetMarker        -21121
+
+/** Special value set in OGRField.Set.nMarker1, nMarker2 and nMarker3 for
+ *  a null field.
+ *  Direct use of this value is strongly discouraged.
+ *  Use OGR_RawField_SetNull() or OGR_RawField_IsNull() instead.
+ *  @since GDAL 2.2
+ */
+#define OGRNullMarker         -21122
 
 /************************************************************************/
 /*                               OGRField                               */
@@ -706,6 +719,7 @@ typedef union {
     struct {
         int     nMarker1;
         int     nMarker2;
+        int     nMarker3;
     } Set;
 
     struct {

@@ -644,7 +644,7 @@ def ogr_gmlas_geometryproperty():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    if f.IsFieldSet('geometryPropertyEmpty_xml'):
+    if not f.IsFieldNull('geometryPropertyEmpty_xml'):
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'

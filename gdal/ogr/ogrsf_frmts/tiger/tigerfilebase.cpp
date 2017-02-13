@@ -287,7 +287,7 @@ bool TigerFileBase::WriteField( OGRFeature *poFeature, const char *pszField,
 
     CPLAssert( nEnd - nStart + 1 < (int) sizeof(szValue)-1 );
 
-    if( iField < 0 || !poFeature->IsFieldSet( iField ) )
+    if( iField < 0 || !poFeature->IsFieldSetAndNotNull( iField ) )
         return false;
 
     char szFormat[32];

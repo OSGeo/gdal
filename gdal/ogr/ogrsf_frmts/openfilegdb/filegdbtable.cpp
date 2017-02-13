@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
+#include "ogr_api.h" // for OGR_RawField_xxxxx()
 #include "ogrpgeogeometry.h" /* SHPT_ constants and OGRCreateFromMultiPatchPart() */
 
 CPL_CVSID("$Id$");
@@ -838,8 +839,7 @@ int FileGDBTable::Open(const char* pszFilename,
             }
 
             OGRField sDefault;
-            sDefault.Set.nMarker1 = OGRUnsetMarker;
-            sDefault.Set.nMarker2 = OGRUnsetMarker;
+            OGR_RawField_SetUnset(&sDefault);
             if( (flags & 4) != 0 )
             {
                 /* Default value */
@@ -857,11 +857,13 @@ int FileGDBTable::Open(const char* pszFilename,
                     {
                         sDefault.Integer = GetInt16(pabyIter, 0);
                         sDefault.Set.nMarker2 = 0;
+                        sDefault.Set.nMarker3 = 0;
                     }
                     else if( eType == FGFT_INT32 && defaultValueLength == 4 )
                     {
                         sDefault.Integer = GetInt32(pabyIter, 0);
                         sDefault.Set.nMarker2 = 0;
+                        sDefault.Set.nMarker3 = 0;
                     }
                     else if( eType == FGFT_FLOAT32 && defaultValueLength == 4 )
                     {
@@ -1590,8 +1592,7 @@ const OGRField* FileGDBTable::GetFieldValue(int iCol)
             /* GInt32 nVal = GetInt32(pabyIterVals, 0); */
 
             /* eCurFieldType = OFTBinary; */
-            sCurField.Set.nMarker1 = OGRUnsetMarker;
-            sCurField.Set.nMarker2 = OGRUnsetMarker;
+            OGR_RawField_SetUnset(&sCurField);
 
             pabyIterVals += sizeof(GInt32);
             /* CPLDebug("OpenFileGDB", "Field %d, row %d: %d", iCol, nCurRow, sCurField.Integer); */
@@ -2007,8 +2008,7 @@ FileGDBField::FileGDBField( FileGDBTable* poParentIn ) :
     nMaxWidth(0),
     poIndex(NULL)
 {
-    sDefault.Set.nMarker1 = OGRUnsetMarker;
-    sDefault.Set.nMarker2 = OGRUnsetMarker;
+    OGR_RawField_SetUnset(&sDefault);
 }
 
 /************************************************************************/
@@ -2018,8 +2018,8 @@ FileGDBField::FileGDBField( FileGDBTable* poParentIn ) :
 FileGDBField::~FileGDBField()
 {
     if( eType == FGFT_STRING &&
-        !(sDefault.Set.nMarker1 == OGRUnsetMarker &&
-          sDefault.Set.nMarker2 == OGRUnsetMarker) )
+        !OGR_RawField_IsUnset(&sDefault) &&
+        !OGR_RawField_IsNull(&sDefault) )
         CPLFree(sDefault.String);
 }
 

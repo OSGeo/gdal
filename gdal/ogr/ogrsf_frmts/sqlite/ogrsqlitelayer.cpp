@@ -717,7 +717,10 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 
         int nSQLite3Type = sqlite3_column_type( hStmt, iRawField );
         if( nSQLite3Type == SQLITE_NULL )
+        {
+            poFeature->SetFieldNull( iField );
             continue;
+        }
 
         switch( poFieldDefn->GetType() )
         {

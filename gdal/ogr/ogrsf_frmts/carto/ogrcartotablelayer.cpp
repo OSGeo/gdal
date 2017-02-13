@@ -196,7 +196,7 @@ OGRFeatureDefn * OGRCARTOTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object
                 int bNotNull = poFeat->GetFieldAsInteger("attnotnull");
                 int bIsPrimary = poFeat->GetFieldAsInteger("indisprimary");
                 int iDefaultExpr = poLyr->GetLayerDefn()->GetFieldIndex("defaultexpr");
-                const char* pszDefault = (iDefaultExpr >= 0 && poFeat->IsFieldSet(iDefaultExpr)) ?
+                const char* pszDefault = (iDefaultExpr >= 0 && poFeat->IsFieldSetAndNotNull(iDefaultExpr)) ?
                             poFeat->GetFieldAsString(iDefaultExpr) : NULL;
 
                 if( bIsPrimary &&
@@ -221,7 +221,7 @@ OGRFeatureDefn * OGRCARTOTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object
                         int nDim = poFeat->GetFieldAsInteger("dim");
                         int nSRID = poFeat->GetFieldAsInteger("srid");
                         const char* pszGeomType = poFeat->GetFieldAsString("geomtyp");
-                        const char* pszSRText = (poFeat->IsFieldSet(
+                        const char* pszSRText = (poFeat->IsFieldSetAndNotNull(
                             poLyr->GetLayerDefn()->GetFieldIndex("srtext"))) ?
                                     poFeat->GetFieldAsString("srtext") : NULL;
                         OGRwkbGeometryType eType = OGRFromOGCGeomType(pszGeomType);
@@ -735,7 +735,11 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
                 bMustComma = true;
 
             OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
-            if( eType == OFTString || eType == OFTDateTime || eType == OFTDate || eType == OFTTime )
+            if( poFeature->IsFieldNull(i) )
+            {
+                osSQL += "NULL";
+            }
+            else if( eType == OFTString || eType == OFTDateTime || eType == OFTDate || eType == OFTTime )
             {
                 osSQL += "'";
                 osSQL += OGRCARTOEscapeLiteral(poFeature->GetFieldAsString(i));
@@ -937,6 +941,9 @@ OGRErr OGRCARTOTableLayer::ISetFeature( OGRFeature *poFeature )
     bool bMustComma = false;
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
+        if( !poFeature->IsFieldSet(i) )
+            continue;
+
         if( bMustComma )
             osSQL += ", ";
         else
@@ -945,7 +952,7 @@ OGRErr OGRCARTOTableLayer::ISetFeature( OGRFeature *poFeature )
         osSQL += OGRCARTOEscapeIdentifier(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
         osSQL += " = ";
 
-        if( !poFeature->IsFieldSet(i) )
+        if( poFeature->IsFieldNull(i) )
         {
             osSQL += "NULL";
         }
@@ -999,6 +1006,9 @@ OGRErr OGRCARTOTableLayer::ISetFeature( OGRFeature *poFeature )
             CPLFree(pszEWKB);
         }
     }
+
+    if( !bMustComma ) // nothing to do
+        return OGRERR_NONE;
 
     osSQL += CPLSPrintf(" WHERE %s = " CPL_FRMT_GIB,
                     OGRCARTOEscapeIdentifier(osFIDColName).c_str(),

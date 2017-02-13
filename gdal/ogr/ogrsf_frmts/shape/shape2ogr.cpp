@@ -1291,22 +1291,35 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                 else
                     poFeature->SetField( iField, pszFieldVal );
               }
+              else
+              {
+                  poFeature->SetFieldNull(iField);
+              }
               break;
           }
           case OFTInteger:
           case OFTInteger64:
           case OFTReal:
           {
-              if( !DBFIsAttributeNULL( hDBF, iShape, iField ) )
+              if( DBFIsAttributeNULL( hDBF, iShape, iField ) )
+              {
+                  poFeature->SetFieldNull(iField);
+              }
+              else
+              {
                   poFeature->SetField(
                       iField,
                       DBFReadStringAttribute( hDBF, iShape, iField ) );
+              }
               break;
           }
           case OFTDate:
           {
               if( DBFIsAttributeNULL( hDBF, iShape, iField ) )
+              {
+                  poFeature->SetFieldNull(iField);
                   continue;
+              }
 
               const char* const pszDateValue =
                   DBFReadStringAttribute(hDBF,iShape,iField);
@@ -1471,7 +1484,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /* -------------------------------------------------------------------- */
     for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
     {
-        if( !poFeature->IsFieldSet( iField ) )
+        if( !poFeature->IsFieldSetAndNotNull( iField ) )
         {
             DBFWriteNULLAttribute(
                 hDBF, static_cast<int>(poFeature->GetFID()), iField );

@@ -570,7 +570,7 @@ def ogr_shape_16_1():
         gdaltest.post_reason( 'Got wrong EAS_ID' )
         return 'fail'
 
-    if feat.IsFieldSet( 'NEWFLD' ):
+    if not feat.IsFieldNull( 'NEWFLD' ):
         gdaltest.post_reason( 'Expected NULL NEWFLD value!' )
         return 'fail'
 

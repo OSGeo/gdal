@@ -1206,7 +1206,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature* poFeature)
         poProfileToLookup->SetFID(-1);
         for(int i=0;i<m_poFeatureDefn->GetFieldCount();i++)
         {
-            if( !(poProfileToLookup->IsFieldSet(i)) ||
+            if( !(poProfileToLookup->IsFieldSetAndNotNull(i)) ||
                 m_aoFieldDesc[i].nMainDimId != m_nProfileDimID )
             {
                 poProfileToLookup->UnsetField(i);
@@ -1304,7 +1304,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature* poFeature, int nMainDimId, size
         if( m_aoFieldDesc[i].nMainDimId != nMainDimId )
             continue;
 
-        if( !(poFeature->IsFieldSet(i)) )
+        if( !(poFeature->IsFieldSetAndNotNull(i)) )
         {
 #ifdef NETCDF_HAS_NC4
             if( m_bNCDumpCompat && m_aoFieldDesc[i].nType == NC_STRING )

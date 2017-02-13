@@ -825,7 +825,7 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                         {
                             if (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), "ele" ) == 0)
                             {
-                                if( poFeature->IsFieldSet( iField ) )
+                                if( poFeature->IsFieldSetAndNotNull( iField ) )
                                 {
                                     double val =  poFeature->GetFieldAsDouble( iField);
                                     ((OGRPoint*)poFeature->GetGeometryRef())->setZ(val);
@@ -1235,7 +1235,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
     for( ; i < nGPXFields; i++ )
     {
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
-        if( poFeatureIn->IsFieldSet( i ) )
+        if( poFeatureIn->IsFieldSetAndNotNull( i ) )
         {
             const char* pszName = poFieldDefn->GetNameRef();
             if (strcmp(pszName, "time") == 0)
@@ -1251,9 +1251,9 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
                 {
                     AddIdent(fp, nIdentLevel);
                     VSIFPrintfL(fp, "<link href=\"%s\">", poFeatureIn->GetFieldAsString( i ));
-                    if( poFeatureIn->IsFieldSet( i + 1 ) )
+                    if( poFeatureIn->IsFieldSetAndNotNull( i + 1 ) )
                         VSIFPrintfL(fp, "<text>%s</text>", poFeatureIn->GetFieldAsString( i + 1 ));
-                    if( poFeatureIn->IsFieldSet( i + 2 ) )
+                    if( poFeatureIn->IsFieldSetAndNotNull( i + 2 ) )
                         VSIFPrintfL(fp, "<type>%s</type>", poFeatureIn->GetFieldAsString( i + 2 ));
                     poDS->PrintLine("</link>");
                 }
@@ -1286,7 +1286,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
         for(;i<n;i++)
         {
             OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
-            if( poFeatureIn->IsFieldSet( i ) )
+            if( poFeatureIn->IsFieldSetAndNotNull( i ) )
             {
                 char* compatibleName =
                         OGRGPX_GetXMLCompatibleTagName(pszExtensionsNS, poFieldDefn->GetNameRef());
@@ -1686,7 +1686,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             return OGRERR_FAILURE;
         }
 
-        if ( !poFeatureIn->IsFieldSet(FLD_ROUTE_FID) )
+        if ( !poFeatureIn->IsFieldSetAndNotNull(FLD_ROUTE_FID) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Field %s must be set.", poFeatureDefn->GetFieldDefn(FLD_ROUTE_FID)->GetNameRef() );
@@ -1708,7 +1708,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
                 poDS->PrintLine("</rte>");
             }
             poDS->PrintLine("<rte>");
-            if ( poFeatureIn->IsFieldSet(FLD_ROUTE_NAME) )
+            if ( poFeatureIn->IsFieldSetAndNotNull(FLD_ROUTE_NAME) )
             {
                 char* pszValue =
                             OGRGetXML_UTF8_EscapedString(poFeatureIn->GetFieldAsString( FLD_ROUTE_NAME ));
@@ -1754,7 +1754,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             return OGRERR_FAILURE;
         }
 
-        if ( !poFeatureIn->IsFieldSet(FLD_TRACK_FID) )
+        if ( !poFeatureIn->IsFieldSetAndNotNull(FLD_TRACK_FID) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Field %s must be set.", poFeatureDefn->GetFieldDefn(FLD_TRACK_FID)->GetNameRef() );
@@ -1766,7 +1766,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
                       "Invalid value for field %s.", poFeatureDefn->GetFieldDefn(FLD_TRACK_FID)->GetNameRef() );
             return OGRERR_FAILURE;
         }
-        if ( !poFeatureIn->IsFieldSet(FLD_TRACK_SEG_ID) )
+        if ( !poFeatureIn->IsFieldSetAndNotNull(FLD_TRACK_SEG_ID) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Field %s must be set.", poFeatureDefn->GetFieldDefn(FLD_TRACK_SEG_ID)->GetNameRef() );
@@ -1790,7 +1790,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             }
             poDS->PrintLine("<trk>");
 
-            if ( poFeatureIn->IsFieldSet(FLD_TRACK_NAME) )
+            if ( poFeatureIn->IsFieldSetAndNotNull(FLD_TRACK_NAME) )
             {
                 char* pszValue =
                             OGRGetXML_UTF8_EscapedString(poFeatureIn->GetFieldAsString( FLD_TRACK_NAME ));

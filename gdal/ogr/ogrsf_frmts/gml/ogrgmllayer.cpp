@@ -396,6 +396,12 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             if( psGMLProperty == NULL || psGMLProperty->nSubProperties == 0 )
                 continue;
 
+            if( EQUAL(psGMLProperty->papszSubProperties[0], OGR_GML_NULL) )
+            {
+                poOGRFeature->SetFieldNull( iDstField );
+                continue;
+            }
+
             switch( poFClass->GetProperty(iField)->GetType() )
             {
               case GMLPT_Real:
@@ -718,7 +724,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
     if (bIsGML3Output)
     {
         nGMLIdIndex = poFeatureDefn->GetFieldIndex("gml_id");
-        if (nGMLIdIndex >= 0 && poFeature->IsFieldSet(nGMLIdIndex) )
+        if (nGMLIdIndex >= 0 && poFeature->IsFieldSetAndNotNull(nGMLIdIndex) )
             poDS->PrintLine(fp, "%s gml:id=\"%s\">",
                             poFeatureDefn->GetName(),
                             poFeature->GetFieldAsString(nGMLIdIndex));
@@ -737,7 +743,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                             poFeatureDefn->GetName(),
                             poFeature->GetFID());
         }
-        else if (nGMLIdIndex >= 0 && poFeature->IsFieldSet( nGMLIdIndex ) )
+        else if (nGMLIdIndex >= 0 && poFeature->IsFieldSetAndNotNull( nGMLIdIndex ) )
         {
             poDS->PrintLine(fp, "%s fid=\"%s\">",
                             poFeatureDefn->GetName(),
@@ -911,9 +917,26 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
     // Write all "set" fields.
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
-        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
+        if( iField == nGMLIdIndex )
+            continue;
+        OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( iField );
 
-        if( poFeature->IsFieldSet(iField) && iField != nGMLIdIndex )
+        if( poFeature->IsFieldNull( iField ) )
+        {
+            const char* pszFieldName = poFieldDefn->GetNameRef();
+
+            if (bWriteSpaceIndentation)
+                VSIFPrintfL(fp, "      ");
+
+            if( bRemoveAppPrefix )
+                poDS->PrintLine( fp, "<%s xsi:nil=\"true\"/>",
+                                pszFieldName);
+            else
+                poDS->PrintLine( fp, "<%s:%s xsi:nil=\"true\"/>",
+                                pszPrefix,
+                                pszFieldName);
+        }
+        else if( poFeature->IsFieldSet( iField ) )
         {
             OGRFieldType eType = poFieldDefn->GetType();
             if (eType == OFTStringList )

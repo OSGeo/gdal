@@ -1230,7 +1230,7 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
         const std::string & strFieldType = m_vOGRFieldToESRIFieldType[i];
 
         /* Set empty fields to NULL */
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
         {
             if( strFieldType == "esriFieldTypeGlobalID" )
                 continue;
@@ -3203,7 +3203,8 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
 
         if (isNull)
         {
-            continue; //leave as unset
+            pOutFeature->SetFieldNull(i);
+            continue;
         }
 
         //

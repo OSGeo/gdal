@@ -282,7 +282,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
 #ifdef MITAB_USE_OFTDATETIME
           case OFTTime:
           {
-              if (!IsFieldSet(iField))
+              if (!IsFieldSetAndNotNull(iField))
               {
                  szBuffer[0] = '\0';
               }
@@ -298,7 +298,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
           }
           case OFTDate:
           {
-              if (!IsFieldSet(iField))
+              if (!IsFieldSetAndNotNull(iField))
               {
                  szBuffer[0] = '\0';
               }
@@ -313,7 +313,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
           }
           case OFTDateTime:
           {
-              if (!IsFieldSet(iField))
+              if (!IsFieldSetAndNotNull(iField))
               {
                  szBuffer[0] = '\0';
               }

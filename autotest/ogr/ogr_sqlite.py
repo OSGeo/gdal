@@ -2953,7 +2953,7 @@ def ogr_sqlite_38():
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
        f.GetField('field_real') != 1.23 or \
-       f.IsFieldSet('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
+       not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56' or \
        f.GetField('field_datetime4') != '2015/06/30 12:34:56.123' or \
        not f.IsFieldSet('field_datetime3') or \

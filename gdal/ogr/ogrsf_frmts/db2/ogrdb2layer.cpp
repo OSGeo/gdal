@@ -309,7 +309,7 @@ OGRFeature *OGRDB2Layer::GetNextRawFeature()
         const char *pszValue = m_poStmt->GetColData( iSrcField );
 
         if( pszValue == NULL )
-            /* no value */;
+            poFeature->SetFieldNull( iField );
         else if( poFeature->GetFieldDefnRef(iField)->GetType() == OFTBinary )
             poFeature->SetField( iField,
                                  m_poStmt->GetColDataLength(iSrcField),

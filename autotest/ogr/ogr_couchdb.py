@@ -31,11 +31,13 @@
 
 import os
 import sys
+import uuid
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
+from osgeo import gdal
 from osgeo import ogr
 
 ###############################################################################
@@ -56,8 +58,8 @@ def ogr_couchdb_init():
     if 'COUCHDB_TEST_SERVER' in os.environ:
         ogrtest.couchdb_test_server = os.environ['COUCHDB_TEST_SERVER']
     else:
-        ogrtest.couchdb_test_server = 'http://gdalautotest.iriscouch.com'
-    ogrtest.couchdb_test_layer = 'poly'
+        ogrtest.couchdb_test_server = 'http://127.0.0.1:5984'
+    ogrtest.couchdb_temp_layer_name = 'layer_' + str(uuid.uuid1()).replace('-', '_')
 
     if gdaltest.gdalurlopen(ogrtest.couchdb_test_server) is None:
         print('cannot open %s' % ogrtest.couchdb_test_server)
@@ -67,319 +69,99 @@ def ogr_couchdb_init():
     return 'success'
 
 ###############################################################################
-# Test GetFeatureCount()
+# Basic test
 
-def ogr_couchdb_GetFeatureCount():
+def ogr_couchdb_1():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
+    gdal.VectorTranslate('CouchDB:' + ogrtest.couchdb_test_server, 'data/poly.shp',
+                         format = 'CouchDB',
+                         layerName = ogrtest.couchdb_temp_layer_name,
+                         layerCreationOptions = ['UPDATE_PERMISSIONS=ALL'])
+    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update = 1)
     if ds is None:
         return 'fail'
-
-    lyr = ds.GetLayer(0)
-    if lyr is None:
+    lyr = ds.GetLayerByName(ogrtest.couchdb_temp_layer_name)
+    f = lyr.GetNextFeature()
+    if f['AREA'] != 215229.266 or f['EAS_ID'] != '168' or f.GetGeometryRef() is None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
         return 'fail'
-
-    count = lyr.GetFeatureCount()
-    if count != 10:
-        gdaltest.post_reason('did not get expected feature count')
-        print(count)
-        return 'fail'
+    ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
 
     return 'success'
 
 ###############################################################################
-# Test GetNextFeature()
+# Test null / unset
 
-def ogr_couchdb_GetNextFeature():
+def ogr_couchdb_2():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
+    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update = 1)
     if ds is None:
         return 'fail'
+    lyr = ds.CreateLayer(ogrtest.couchdb_temp_layer_name, geom_type = ogr.wkbNone, options = ['UPDATE_PERMISSIONS=ALL'])
+    lyr.CreateField( ogr.FieldDefn('str_field', ogr.OFTString) )
 
-    lyr = ds.GetLayer(0)
-    if lyr is None:
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['str_field'] = 'foo'
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldNull('str_field')
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    f = lyr.GetNextFeature()
+    if f['str_field'] != 'foo':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
         return 'fail'
 
-    feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('did not get expected feature')
+    f = lyr.GetNextFeature()
+    if f['str_field'] != None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
         return 'fail'
-    if feat.GetField('EAS_ID') != 168:
-        gdaltest.post_reason('did not get expected feature')
-        feat.DumpReadable()
+
+    f = lyr.GetNextFeature()
+    if f.IsFieldSet('str_field'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
         return 'fail'
 
     return 'success'
 
-###############################################################################
-# Test GetFeature()
 
-def ogr_couchdb_GetFeature():
+###############################################################################
+# Cleanup
+
+def ogr_couchdb_cleanup():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
+    ds = ogr.Open('couchdb:%s' % ogrtest.couchdb_test_server, update = 1)
     if ds is None:
         return 'fail'
-
-    lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
-
-    feat = lyr.GetFeature(0)
-    if feat is None:
-        gdaltest.post_reason('did not get expected feature')
-        return 'fail'
-    if feat.GetField('EAS_ID') != 168:
-        gdaltest.post_reason('did not get expected feature')
-        feat.DumpReadable()
-        return 'fail'
+    ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
 
     return 'success'
 
-###############################################################################
-# Test GetSpatialRef()
-
-def ogr_couchdb_GetSpatialRef():
-    if ogrtest.couchdb_drv is None:
-        return 'skip'
-
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
-    if ds is None:
-        return 'fail'
-
-    lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
-
-    sr = lyr.GetSpatialRef()
-    if ogrtest.couchdb_test_layer == 'poly_nongeojson':
-        if sr is not None:
-            gdaltest.post_reason('got a srs but did not expect one')
-            return 'fail'
-        return 'success'
-
-    if sr is None:
-        gdaltest.post_reason('did not get expected srs')
-        return 'fail'
-
-    txt = sr.ExportToWkt()
-    if txt.find('OSGB') == -1:
-        gdaltest.post_reason('did not get expected srs')
-        print(txt)
-        return 'fail'
-
-    return 'success'
-
-###############################################################################
-# Test GetExtent()
-
-def ogr_couchdb_GetExtent():
-    if ogrtest.couchdb_drv is None:
-        return 'skip'
-
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
-    if ds is None:
-        return 'fail'
-
-    lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
-
-    extent = lyr.GetExtent()
-    if extent is None:
-        gdaltest.post_reason('did not get expected extent')
-        return 'fail'
-
-    if extent != (478315.53125, 481645.3125, 4762880.5, 4765610.5):
-        gdaltest.post_reason('did not get expected extent')
-        print(extent)
-        return 'fail'
-
-    return 'success'
-
-###############################################################################
-# Test SetSpatialFilter()
-
-def ogr_couchdb_SetSpatialFilter():
-    if ogrtest.couchdb_drv is None:
-        return 'skip'
-
-    if not ogrtest.have_geos():
-        return 'skip'
-
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
-    if ds is None:
-        return 'fail'
-
-    lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
-
-    lyr.SetSpatialFilterRect( 479647, 4764856.5, 480389.6875, 4765610.5 )
-
-    feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('did not get expected feature')
-        return 'fail'
-    if feat.GetField('EAS_ID') != 168:
-        gdaltest.post_reason('did not get expected feature')
-        feat.DumpReadable()
-        return 'fail'
-
-    count = 0
-    while feat is not None:
-        count = count + 1
-        feat = lyr.GetNextFeature()
-
-    if count != 5:
-        gdaltest.post_reason('did not get expected feature count (1)')
-        print(count)
-        return 'fail'
-
-    count = lyr.GetFeatureCount()
-    if count != 5:
-        gdaltest.post_reason('did not get expected feature count (2)')
-        print(count)
-        return 'fail'
-
-    return 'success'
-
-###############################################################################
-# Test SetAttributeFilter()
-
-def ogr_couchdb_SetAttributeFilter():
-    if ogrtest.couchdb_drv is None:
-        return 'skip'
-
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
-    if ds is None:
-        return 'fail'
-
-    lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
-
-    lyr.SetAttributeFilter( 'EAS_ID = 170' )
-
-    feat = lyr.GetNextFeature()
-    if feat is None:
-        gdaltest.post_reason('did not get expected feature')
-        return 'fail'
-    if feat.GetField('EAS_ID') != 170:
-        gdaltest.post_reason('did not get expected feature')
-        feat.DumpReadable()
-        return 'fail'
-
-    count = 0
-    while feat is not None:
-        count = count + 1
-        feat = lyr.GetNextFeature()
-
-    if count != 1:
-        gdaltest.post_reason('did not get expected feature count (1)')
-        print(count)
-        return 'fail'
-
-    count = lyr.GetFeatureCount()
-    if count != 1:
-        gdaltest.post_reason('did not get expected feature count (2)')
-        print(count)
-        return 'fail'
-
-    return 'success'
-
-###############################################################################
-# Test ExecuteSQLStats()
-
-def ogr_couchdb_ExecuteSQLStats():
-    if ogrtest.couchdb_drv is None:
-        return 'skip'
-
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
-    if ds is None:
-        return 'fail'
-
-    lyr = ds.ExecuteSQL('SELECT MIN(EAS_ID), MAX(EAS_ID), AVG(EAS_ID), SUM(EAS_ID), COUNT(*) FROM POLY')
-    feat = lyr.GetNextFeature()
-    if feat.GetField('MIN_EAS_ID') != 158 or \
-       feat.GetField('MAX_EAS_ID') != 179 or \
-       feat.GetField('AVG_EAS_ID') != 169.1 or \
-       feat.GetField('SUM_EAS_ID') != 1691 or \
-       feat.GetField('COUNT_*') != 10:
-        gdaltest.post_reason('did not get expected values')
-        feat.DumpReadable()
-        return 'fail'
-    ds.ReleaseResultSet(lyr)
-
-    return 'success'
-
-###############################################################################
-# Test a row layer()
-
-def ogr_couchdb_RowLayer():
-    if ogrtest.couchdb_drv is None:
-        return 'skip'
-
-    ds = ogr.Open('couchdb:%s/poly/_design/ogr_filter_EAS_ID/_view/filter?include_docs=true' % ogrtest.couchdb_test_server)
-    if ds is None:
-        return 'fail'
-
-    lyr = ds.GetLayer(0)
-    if lyr is None:
-        return 'fail'
-
-    feat = lyr.GetFeature(0)
-    if feat is None:
-        gdaltest.post_reason('did not get expected feature')
-        return 'fail'
-    if feat.GetField('EAS_ID') != 168:
-        gdaltest.post_reason('did not get expected feature')
-        feat.DumpReadable()
-        return 'fail'
-
-    return 'success'
-
-###############################################################################
-# ogr_couchdb_changeLayer
-
-def ogr_couchdb_changeLayer():
-    ogrtest.couchdb_test_layer = 'poly_nongeojson'
-    return 'success'
-
-gdaltest_list = []
-
-disabled_gdaltest_list = [
+gdaltest_list = [
     ogr_couchdb_init,
-    ogr_couchdb_GetFeatureCount,
-    ogr_couchdb_GetNextFeature,
-    ogr_couchdb_GetFeature,
-    ogr_couchdb_GetSpatialRef,
-    ogr_couchdb_GetExtent,
-    ogr_couchdb_SetSpatialFilter,
-    ogr_couchdb_SetAttributeFilter,
-    ogr_couchdb_ExecuteSQLStats,
-    ogr_couchdb_RowLayer,
-    ogr_couchdb_changeLayer,
-    ogr_couchdb_GetFeatureCount,
-    ogr_couchdb_GetNextFeature,
-    ogr_couchdb_GetFeature,
-    ogr_couchdb_GetSpatialRef,
-    ogr_couchdb_GetExtent,
-    ogr_couchdb_SetSpatialFilter,
-    ogr_couchdb_SetAttributeFilter
+    ogr_couchdb_1,
+    ogr_couchdb_2,
+    ogr_couchdb_cleanup
     ]
 
 if __name__ == '__main__':
 
-    print('Tests are disabled due to test account no longer available apparently')
+    gdaltest.setup_run( 'ogr_couchdb' )
 
-    #gdaltest.setup_run( 'ogr_couchdb' )
+    gdaltest.run_tests( gdaltest_list )
 
-    #gdaltest.run_tests( gdaltest_list )
-
-    #gdaltest.summarize()
+    gdaltest.summarize()

@@ -187,6 +187,8 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
     {
         if( papszResult[iField] != NULL )
             poFeature->SetField( iField, papszResult[iField] );
+        else
+            poFeature->SetFieldNull( iField );
     }
 
 /* -------------------------------------------------------------------- */

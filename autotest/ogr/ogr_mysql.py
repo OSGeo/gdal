@@ -862,6 +862,10 @@ def ogr_mysql_26():
     field_defn.SetDefault("'a''b'")
     lyr.CreateField(field_defn)
 
+    field_defn = ogr.FieldDefn( 'field_string_null', ogr.OFTString )
+    field_defn.SetDefault("'a''b'")
+    lyr.CreateField(field_defn)
+
     field_defn = ogr.FieldDefn( 'field_int', ogr.OFTInteger )
     field_defn.SetDefault('123')
     lyr.CreateField(field_defn)
@@ -890,6 +894,7 @@ def ogr_mysql_26():
     #lyr.CreateField(field_defn)
 
     f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldNull('field_string_null')
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
     lyr.CreateFeature(f)
     f = None
@@ -926,7 +931,8 @@ def ogr_mysql_26():
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
        f.GetField('field_real') != 1.23 or \
-       f.IsFieldSet('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
+       not f.IsFieldNull('field_string_null') or \
+       not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56':
         gdaltest.post_reason('fail')
         f.DumpReadable()

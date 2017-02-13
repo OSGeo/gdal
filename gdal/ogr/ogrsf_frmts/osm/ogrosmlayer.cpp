@@ -683,7 +683,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
         {
             if( oAttr.anIndexToBind[j] >= 0 )
             {
-                if( !poFeature->IsFieldSet(oAttr.anIndexToBind[j]) )
+                if( !poFeature->IsFieldSetAndNotNull(oAttr.anIndexToBind[j]) )
                 {
                     sqlite3_bind_null( oAttr.hStmt, j + 1 );
                 }
