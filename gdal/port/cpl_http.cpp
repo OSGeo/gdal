@@ -371,7 +371,10 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
     if( pszHeaders != NULL ) {
         CPLDebug ("HTTP", "These HTTP headers were set: %s", pszHeaders);
-        headers = curl_slist_append(headers, pszHeaders);
+        char** papszTokensHeaders = CSLTokenizeString2(pszHeaders, "\r\n", 0);
+        for( int i=0; papszTokensHeaders[i] != NULL; ++i )
+            headers = curl_slist_append(headers, papszTokensHeaders[i]);
+        CSLDestroy(papszTokensHeaders);
         curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
     }
 
