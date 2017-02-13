@@ -318,7 +318,7 @@ OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
 
         OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
 
-        if( poFeature->IsFieldSet( iField ) )
+        if( poFeature->IsFieldSetAndNotNull( iField ) )
         {
             const char *pszRaw = poFeature->GetFieldAsString( iField );
             VSIFPrintfL(fp, "<%s>%s</%s>\n", poField->GetNameRef(), pszRaw, poField->GetNameRef());

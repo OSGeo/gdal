@@ -284,7 +284,7 @@ OGRFeature* OGRCSWLayer::GetNextFeature()
             /* http://www.paikkatietohakemisto.fi/geonetwork/srv/en/csw returns URI ... */
             if( iSrcField < 0 && strcmp(pszFieldname, "references") == 0 )
                 iSrcField = poSrcFeature->GetFieldIndex("URI");
-            if( iSrcField >= 0 && poSrcFeature->IsFieldSet(iSrcField) )
+            if( iSrcField >= 0 && poSrcFeature->IsFieldSetAndNotNull(iSrcField) )
             {
                 OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
                 OGRFieldType eSrcType = poSrcFeature->GetFieldDefnRef(iSrcField)->GetType();

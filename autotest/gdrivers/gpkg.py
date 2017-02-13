@@ -2141,11 +2141,11 @@ def gpkg_21():
         feat = sql_lyr.GetNextFeature()
         if feat.GetField('reference_scope') != 'table' or \
         feat.GetField('table_name') != 'tmp' or \
-        feat.IsFieldSet('column_name') or \
-        feat.IsFieldSet('row_id_value') or \
+        not feat.IsFieldNull('column_name') or \
+        not feat.IsFieldNull('row_id_value') or \
         not feat.IsFieldSet('timestamp') or \
         feat.GetField('md_file_id') != 1 or \
-        feat.IsFieldSet('md_parent_id'):
+        not feat.IsFieldNull('md_parent_id'):
             gdaltest.post_reason('fail')
             print(i)
             feat.DumpReadable()
@@ -2244,12 +2244,12 @@ def gpkg_21():
     sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata_reference')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField('reference_scope') != 'geopackage' or \
-        feat.IsFieldSet('table_name') or \
-        feat.IsFieldSet('column_name') or \
-        feat.IsFieldSet('row_id_value') or \
+        not feat.IsFieldNull('table_name') or \
+        not feat.IsFieldNull('column_name') or \
+        not feat.IsFieldNull('row_id_value') or \
         not feat.IsFieldSet('timestamp') or \
         feat.GetField('md_file_id') != 1 or \
-        feat.IsFieldSet('md_parent_id'):
+        not feat.IsFieldNull('md_parent_id'):
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         out_ds.ReleaseResultSet(sql_lyr)

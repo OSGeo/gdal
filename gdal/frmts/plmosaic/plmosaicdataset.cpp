@@ -1370,7 +1370,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
             {
                 for(int i=0;i<poFeat->GetFieldCount();i++)
                 {
-                    if( poFeat->IsFieldSet(i) )
+                    if( poFeat->IsFieldSetAndNotNull(i) )
                     {
                         CPLXMLNode* psItem = CPLCreateXMLNode(psQuad,
                             CXT_Element, poFeat->GetFieldDefnRef(i)->GetNameRef());
@@ -1434,7 +1434,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
                     CPLXMLNode* psScene = CPLCreateXMLNode(psScenes, CXT_Element, "Scene");
                     for(int i=0;i<poFeat->GetFieldCount();i++)
                     {
-                        if( poFeat->IsFieldSet(i) )
+                        if( poFeat->IsFieldSetAndNotNull(i) )
                         {
                             CPLXMLNode* psItem = CPLCreateXMLNode(psScene,
                                 CXT_Element, poFeat->GetFieldDefnRef(i)->GetNameRef());

@@ -362,7 +362,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         {
             OGRFieldDefn *poField = poFeatureDefn_->GetFieldDefn( iField );
 
-            if( poFeature->IsFieldSet( iField )
+            if( poFeature->IsFieldSetAndNotNull( iField )
                 && EQUAL(poField->GetNameRef(), poDS_->GetNameField()) )
             {
                 const char *pszRaw = poFeature->GetFieldAsString( iField );
@@ -385,7 +385,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         {
             OGRFieldDefn *poField = poFeatureDefn_->GetFieldDefn( iField );
 
-            if( poFeature->IsFieldSet( iField )
+            if( poFeature->IsFieldSetAndNotNull( iField )
                 && EQUAL(poField->GetNameRef(), poDS_->GetDescriptionField()) )
             {
                 const char *pszRaw = poFeature->GetFieldAsString( iField );
@@ -494,7 +494,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     {
         OGRFieldDefn *poField = poFeatureDefn_->GetFieldDefn( iField );
 
-        if( poFeature->IsFieldSet( iField ))
+        if( poFeature->IsFieldSetAndNotNull( iField ))
         {
             if (NULL != poDS_->GetNameField() &&
                 EQUAL(poField->GetNameRef(), poDS_->GetNameField()) )

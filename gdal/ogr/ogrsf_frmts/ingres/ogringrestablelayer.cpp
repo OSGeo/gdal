@@ -836,7 +836,7 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
             continue;
 
         if( !bNeedComma )
@@ -913,7 +913,7 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
             continue;
 
         if( bNeedComma )

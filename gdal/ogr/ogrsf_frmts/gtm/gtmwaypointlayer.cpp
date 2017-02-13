@@ -117,7 +117,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
     for (int i = 0; i < poFeatureDefn->GetFieldCount(); ++i)
     {
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
-        if( poFeature->IsFieldSet( i ) )
+        if( poFeature->IsFieldSetAndNotNull( i ) )
         {
             const char* l_pszName = poFieldDefn->GetNameRef();
             /* Waypoint name */

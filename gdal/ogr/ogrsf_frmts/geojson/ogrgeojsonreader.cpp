@@ -831,8 +831,11 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer,
                 int nFldIndex = poDefn->GetFieldIndex( it.key );
                 if( -1 == nFldIndex )
                 {
-                    OGRFieldDefn fldDefn( it.key, OFTString );
-                    poDefn->AddFieldDefn( &fldDefn );
+                    OGRGeoJSONReaderAddOrUpdateField(poDefn, it.key, it.val,
+                                                    bFlattenNestedAttributes_,
+                                                    chNestedAttributeSeparator_,
+                                                    bArrayAsString_,
+                                                    aoSetUndeterminedTypeFields_);
                 }
             }
         }
@@ -978,7 +981,7 @@ void OGRGeoJSONReaderSetField( OGRLayer* poLayer,
 
     if( poVal == NULL)
     {
-        // Nothing to do.
+        poFeature->SetFieldNull( nField );
     }
     else if( OFTInteger == eType )
     {
@@ -1146,7 +1149,10 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer,
             const int nFldIndex = poFeature->GetFieldIndex(it.key);
             if( nFldIndex >= 0 )
             {
-                poFeature->SetField(nFldIndex, json_object_get_string(it.val) );
+                if( it.val )
+                    poFeature->SetField(nFldIndex, json_object_get_string(it.val) );
+                else
+                    poFeature->SetFieldNull(nFldIndex );
             }
         }
     }

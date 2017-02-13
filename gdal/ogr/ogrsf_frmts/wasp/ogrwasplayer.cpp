@@ -637,7 +637,7 @@ OGRErr OGRWAsPLayer::ICreateFeature( OGRFeature * poFeature )
     double z1 = 0.0;
     if ( -1 != iFirstFieldIdx )
     {
-        if (!poFeature->IsFieldSet(iFirstFieldIdx))
+        if (!poFeature->IsFieldSetAndNotNull(iFirstFieldIdx))
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Field %d %s is NULL", iFirstFieldIdx, sFirstField.c_str() );
             return OGRERR_FAILURE;
@@ -660,7 +660,7 @@ OGRErr OGRWAsPLayer::ICreateFeature( OGRFeature * poFeature )
     double z2 = 0.0;
     if ( -1 != iSecondFieldIdx )
     {
-        if (!poFeature->IsFieldSet(iSecondFieldIdx))
+        if (!poFeature->IsFieldSetAndNotNull(iSecondFieldIdx))
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Field %d %s is NULL", iSecondFieldIdx, sSecondField.c_str() );
             return OGRERR_FAILURE;

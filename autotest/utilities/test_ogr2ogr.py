@@ -1918,7 +1918,7 @@ def test_ogr2ogr_50():
     ds = ogr.Open('tmp/test_ogr2ogr_50.dbf')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
-    if feat.GetField('field1') != 'foo' or feat.IsFieldSet('field2'):
+    if feat.GetField('field1') != 'foo' or not feat.IsFieldNull('field2'):
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'

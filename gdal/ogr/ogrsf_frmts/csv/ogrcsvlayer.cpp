@@ -1602,7 +1602,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
             {
                 poFeature->SetField( iOGRField, papszTokens[iAttr] );
                 if( !bWarningBadTypeOrWidth &&
-                    !poFeature->IsFieldSet(iOGRField) )
+                    !poFeature->IsFieldSetAndNotNull(iOGRField) )
                 {
                     bWarningBadTypeOrWidth = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -1612,10 +1612,13 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                 }
             }
         }
-        else
+        else if( !poFieldDefn->IsIgnored() )
         {
-            if( !poFieldDefn->IsIgnored() &&
-                (!bEmptyStringNull || papszTokens[iAttr][0] != '\0') )
+            if( bEmptyStringNull && papszTokens[iAttr][0] == '\0' )
+            {
+                poFeature->SetFieldNull( iOGRField );
+            }
+            else
             {
                 poFeature->SetField( iOGRField, papszTokens[iAttr] );
                 if( !bWarningBadTypeOrWidth && poFieldDefn->GetWidth() > 0 &&
@@ -2314,7 +2317,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
             if ( eType == OFTReal)
             {
                 if( poFeatureDefn->GetFieldDefn(iField)->GetSubType() == OFSTFloat32 &&
-                    poNewFeature->IsFieldSet(iField) )
+                    poNewFeature->IsFieldSetAndNotNull(iField) )
                 {
                     pszEscaped = CPLStrdup(CPLSPrintf("%.8g", poNewFeature->GetFieldAsDouble(iField)));
                 }

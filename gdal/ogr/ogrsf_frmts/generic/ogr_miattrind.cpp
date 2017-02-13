@@ -629,7 +629,7 @@ OGRErr OGRMILayerAttrIndex::AddToIndex( OGRFeature *poFeature,
         if( iTargetField != -1 && iTargetField != iField )
             continue;
 
-        if( !poFeature->IsFieldSet( iField ) )
+        if( !poFeature->IsFieldSetAndNotNull( iField ) )
             continue;
 
         eErr =

@@ -2210,6 +2210,140 @@ def ogr_elasticsearch_10():
 
     return 'success'
 
+###############################################################################
+# Test isnull and unset
+
+def ogr_elasticsearch_11():
+    if ogrtest.elasticsearch_drv is None:
+        return 'skip'
+
+    ogr_elasticsearch_delete_files()
+
+    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch", """{"version":{"number":"5.0.0"}}""")
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'a_layer  \n')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/_mapping?pretty""", """
+{
+    "a_layer":
+    {
+        "mappings":
+        {
+            "FeatureCollection":
+            {
+                "properties":
+                {
+                    "type": { "type": "text" },
+                    "properties" :
+                    {
+                        "properties":
+                        {
+                            "str_field": { "type": "text"}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""", """{}""")
+
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/_search/scroll?scroll_id=my_scrollid&CUSTOMREQUEST=DELETE', '{}')
+
+    ds = ogr.Open('ES:/vsimem/fakeelasticsearch', update = 1)
+    lyr = ds.GetLayer(0)
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""",
+"""{
+"_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "str_field": "foo"
+                }
+            }
+        },
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "str_field": null
+                }
+            }
+        },
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                }
+            }
+        }
+        ]
+    }
+}""")
+
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&scroll_id=my_scrollid', '{}')
+
+    f = lyr.GetNextFeature()
+    if f['str_field'] != 'foo':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['str_field'] != None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f.IsFieldSet('str_field'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_count?pretty""", """{
+    "hits":
+    {
+        "count": 0
+    }
+}""")
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_bulk&POSTFIELDS={"index" :{"_index":"a_layer", "_type":"FeatureCollection"}}
+{ "properties": { "str_field": null } }
+
+{"index" :{"_index":"a_layer", "_type":"FeatureCollection"}}
+{ "properties": { } }
+
+""", '{}')
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldNull('str_field')
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    if lyr.SyncToDisk() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 
 ###############################################################################
 # Cleanup
@@ -2259,6 +2393,7 @@ gdaltest_list = [
     ogr_elasticsearch_8,
     ogr_elasticsearch_9,
     ogr_elasticsearch_10,
+    ogr_elasticsearch_11,
     ogr_elasticsearch_cleanup,
     ]
 

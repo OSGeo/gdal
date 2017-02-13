@@ -2332,7 +2332,7 @@ OGRErr OGRSQLiteTableLayer::ReorderFields( int* panMap )
 
 OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                                         sqlite3_stmt* hStmtIn,
-                                        int bBindNullValues )
+                                        bool bBindUnsetAsNull )
 {
     sqlite3 *hDB = poDS->GetDB();
 
@@ -2388,10 +2388,7 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
         }
         else
         {
-            if (bBindNullValues)
-                rc = sqlite3_bind_null( hStmtIn, nBindField++ );
-            else
-                rc = SQLITE_OK;
+            rc = sqlite3_bind_null( hStmtIn, nBindField++ );
         }
 
         if( rc != SQLITE_OK )
@@ -2411,15 +2408,15 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
     {
         if( iField == iFIDAsRegularColumnIndex )
             continue;
+        if( !bBindUnsetAsNull && !poFeature->IsFieldSet(iField) )
+            continue;
 
         int rc = SQLITE_OK;
 
-        if( !poFeature->IsFieldSet( iField ) )
+        if( (bBindUnsetAsNull && !poFeature->IsFieldSet(iField)) ||
+            poFeature->IsFieldNull( iField ) )
         {
-            if (bBindNullValues)
-                rc = sqlite3_bind_null( hStmtIn, nBindField++ );
-            else
-                rc = SQLITE_OK;
+            rc = sqlite3_bind_null( hStmtIn, nBindField++ );
         }
         else
         {
@@ -2597,7 +2594,7 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
     /* In case the FID column has also been created as a regular field */
     if( iFIDAsRegularColumnIndex >= 0 )
     {
-        if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+        if( !poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) ||
             poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -2647,6 +2644,8 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
     {
         if( iField == iFIDAsRegularColumnIndex )
             continue;
+        if( !poFeature->IsFieldSet(iField) )
+            continue;
         if( bNeedComma )
             osCommand += ",";
 
@@ -2689,7 +2688,7 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Bind values.                                                   */
 /* -------------------------------------------------------------------- */
-    OGRErr eErr = BindValues( poFeature, hUpdateStmt, TRUE );
+    OGRErr eErr = BindValues( poFeature, hUpdateStmt, false );
     if (eErr != OGRERR_NONE)
     {
         sqlite3_finalize( hUpdateStmt );
@@ -2947,7 +2946,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
     {
         if( poFeature->GetFID() == OGRNullFID )
         {
-            if( poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) )
+            if( poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) )
             {
                 poFeature->SetFID(
                     poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex));
@@ -2955,7 +2954,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
         else
         {
-            if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+            if( !poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) ||
                 poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,

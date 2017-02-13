@@ -978,9 +978,8 @@ static void OGRMongoDBReaderSetField( OGRLayer* poLayer,
     BSONType eBSONType = poElt->type();
     OGRFieldType eType = poFieldDefn->GetType();
     if( eBSONType == jstNULL )
-        return;
-
-    if( eBSONType == NumberInt )
+        poFeature->SetFieldNull( nField );
+    else if( eBSONType == NumberInt )
         poFeature->SetField( nField, poElt->Int() );
     else if( eBSONType == NumberLong )
         poFeature->SetField( nField, poElt->Long() );
@@ -1439,7 +1438,11 @@ void OGRMongoDBLayer::SerializeField(BSONObjBuilder& b,
                                      const char* pszJSonField)
 {
     OGRFieldType eType = m_poFeatureDefn->GetFieldDefn(iField)->GetType();
-    if( eType == OFTInteger )
+    if( poFeature->IsFieldNull(iField) )
+    {
+        b.appendNull( pszJSonField );
+    }
+    else if( eType == OFTInteger )
     {
         if( m_poFeatureDefn->GetFieldDefn(iField)->GetSubType() == OFSTBoolean )
             b.append( pszJSonField, CPL_TO_BOOL(poFeature->GetFieldAsInteger(iField)) );
@@ -1636,7 +1639,7 @@ BSONObj OGRMongoDBLayer::BuildBSONObjFromFeature(OGRFeature* poFeature, int bUpd
     BSONObjBuilder b;
 
     int nJSonFieldIndex = m_poFeatureDefn->GetFieldIndex("_json");
-    if( nJSonFieldIndex >= 0 && poFeature->IsFieldSet(nJSonFieldIndex) )
+    if( nJSonFieldIndex >= 0 && poFeature->IsFieldSetAndNotNull(nJSonFieldIndex) )
     {
         CPLString osJSon(poFeature->GetFieldAsString(nJSonFieldIndex));
 
@@ -1677,7 +1680,7 @@ BSONObj OGRMongoDBLayer::BuildBSONObjFromFeature(OGRFeature* poFeature, int bUpd
 
     CPLAssert((int)m_aaosFieldPaths.size() == m_poFeatureDefn->GetFieldCount());
 
-    if( !poFeature->IsFieldSet(0) || (!bUpdate && m_bIgnoreSourceID) )
+    if( !poFeature->IsFieldSetAndNotNull(0) || (!bUpdate && m_bIgnoreSourceID) )
     {
         const OID generated = OID::gen();
         b.append("_id", generated);
@@ -1802,7 +1805,7 @@ OGRErr OGRMongoDBLayer::ISetFeature( OGRFeature *poFeature )
     if( m_poBulkBuilder )
         SyncToDisk();
 
-    if( !poFeature->IsFieldSet(0) )
+    if( !poFeature->IsFieldSetAndNotNull(0) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "_id field not set");
         return OGRERR_FAILURE;

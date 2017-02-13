@@ -1161,6 +1161,7 @@ def ogr_geojson_25():
             gdaltest.post_reason('failure at feat index %d' % i)
             feat.DumpReadable()
             print(expected_results[i])
+            print(feat.GetField('name'))
             return 'fail'
     ds = None
 
@@ -3382,6 +3383,51 @@ def ogr_geojson_59():
 
     return 'success'
 
+###############################################################################
+# Test null vs unset field
+
+def ogr_geojson_60():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = gdal.OpenEx("""{ "type": "FeatureCollection", "features": [
+{ "type": "Feature", "properties" : { "foo" : "bar" } },
+{ "type": "Feature", "properties" : { "foo": null } },
+{ "type": "Feature", "properties" : {  } } ] }""")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['foo'] != 'bar':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if not f.IsFieldNull('foo'):
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.IsFieldSet('foo'):
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+
+    # Test writing side
+    gdal.VectorTranslate('/vsimem/ogr_geojson_60.json', ds, format = 'GeoJSON')
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_60.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink('/vsimem/ogr_geojson_60.json')
+    if data.find('"properties": { "foo": "bar" }') < 0 or \
+       data.find('"properties": { "foo": null }') < 0 or \
+       data.find('"properties": { }') < 0:
+        gdaltest.post_reason('failure')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_geojson_1,
     ogr_geojson_2,
@@ -3442,6 +3488,7 @@ gdaltest_list = [
     ogr_geojson_57,
     ogr_geojson_58,
     ogr_geojson_59,
+    ogr_geojson_60,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

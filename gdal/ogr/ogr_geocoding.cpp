@@ -570,7 +570,7 @@ static char* OGRGeocodeGetFromCache( OGRGeocodingSessionH hSession,
     OGRFeature* poFeature = poLayer->GetNextFeature();
     if( poFeature != NULL )
     {
-        if( poFeature->IsFieldSet(nIdxBlob) )
+        if( poFeature->IsFieldSetAndNotNull(nIdxBlob) )
             pszRet = CPLStrdup(poFeature->GetFieldAsString(nIdxBlob));
         OGRFeature::DestroyFeature(poFeature);
     }
@@ -997,7 +997,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo( CPLXMLNode* psResultSet,
                     poFDefn->GetFieldIndex(CPLSPrintf("line%d", i));
                 if( nIdx < 0 )
                     break;
-                if( poFeature->IsFieldSet(nIdx) )
+                if( poFeature->IsFieldSetAndNotNull(nIdx) )
                 {
                     if( !osDisplayName.empty() )
                         osDisplayName += ", ";

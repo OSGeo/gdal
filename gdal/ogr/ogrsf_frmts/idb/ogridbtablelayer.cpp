@@ -617,7 +617,7 @@ OGRErr OGRIDBTableLayer::ISetFeature( OGRFeature *poFeature )
             return eErr;
         }
 
-        if ( ! poFeature->IsFieldSet( i ) )
+        if ( ! poFeature->IsFieldSetAndNotNull( i ) )
         {
             if ( ! par->SetNull() )
             {
@@ -789,7 +789,7 @@ OGRErr OGRIDBTableLayer::ISetFeature( OGRFeature *poFeature )
         osFields += pszFieldName;
         osFields += "=";
 
-        if ( ! poFeature->IsFieldSet( i ) )
+        if ( ! poFeature->IsFieldSetAndNotNull( i ) )
         {
             osFields += "NULL";
             continue;
@@ -943,7 +943,7 @@ OGRErr OGRIDBTableLayer::ICreateFeature( OGRFeature *poFeature )
         const char * pszFieldName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
         // Skip NULL fields
-        if ( ! poFeature->IsFieldSet( i ) )
+        if ( ! poFeature->IsFieldSetAndNotNull( i ) )
         {
             continue;
         }

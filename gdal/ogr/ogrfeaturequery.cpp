@@ -247,7 +247,7 @@ static swq_expr_node *OGRFeatureFetcher( swq_expr_node *op, void *pFeatureIn )
         break;
     }
 
-    poRetNode->is_null = !(poFeature->IsFieldSet(op->field_index));
+    poRetNode->is_null = !(poFeature->IsFieldSetAndNotNull(op->field_index));
 
     return poRetNode;
 }

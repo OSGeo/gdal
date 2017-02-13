@@ -813,7 +813,7 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
     {
         OGRFieldDefn   *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
 
-        if( !poFeature->IsFieldSet(i) )
+        if( !poFeature->IsFieldSetAndNotNull(i) )
             continue;
 
         // Skip FID and Geometry columns

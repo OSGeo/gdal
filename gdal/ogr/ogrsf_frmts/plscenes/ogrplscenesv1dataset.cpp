@@ -639,7 +639,7 @@ retry:
             {
                 for(int i=0;i<poFeat->GetFieldCount();i++)
                 {
-                    if( poFeat->IsFieldSet(i) )
+                    if( poFeat->IsFieldSetAndNotNull(i) )
                     {
                         const char* pszKey = poFeat->GetFieldDefnRef(i)->GetNameRef();
                         const char* pszVal = poFeat->GetFieldAsString(i);

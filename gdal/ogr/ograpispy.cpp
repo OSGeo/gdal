@@ -805,7 +805,11 @@ static void OGRAPISpyDumpFeature( OGRFeatureH hFeat )
         fprintf(fpSpyFile, "f.SetFID(" CPL_FRMT_GIB ")\n", poFeature->GetFID());
     for( int i = 0; i < poFeature->GetFieldCount(); i++ )
     {
-        if( poFeature->IsFieldSet(i) )
+        if( poFeature->IsFieldNull(i) )
+        {
+            fprintf(fpSpyFile, "f.SetFieldNull(%d)\n", i);
+        }
+        else if( poFeature->IsFieldSet(i) )
         {
             switch( poFeature->GetFieldDefnRef(i)->GetType())
             {

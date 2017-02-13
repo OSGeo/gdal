@@ -1210,7 +1210,18 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
                 }
                 m_bInCurField = true;
 
-                DealWithAttributes(pszName, nLenName, attr);
+                char* pszXSINil = GetAttributeValue( attr, "xsi:nil" );
+                if( pszXSINil )
+                {
+                    if( EQUAL(pszXSINil, "true") )
+                        m_poReader->SetFeaturePropertyDirectly(pszName,
+                                        CPLStrdup(OGR_GML_NULL), -1 );
+                    CPLFree(pszXSINil);
+                }
+                else
+                {
+                    DealWithAttributes(pszName, nLenName, attr);
+                }
 
                 if (stateStack[nStackDepth] != STATE_PROPERTY)
                 {

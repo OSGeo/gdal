@@ -1943,10 +1943,13 @@ bool GMLASWriter::WriteFieldRegular(
     const bool bEmptyContent =
         nFieldIdx < 0 || 
           ((bIsGeometryField && !poFeature->GetGeomFieldRef(nFieldIdx)) ||
-           (!bIsGeometryField && !poFeature->IsFieldSet(nFieldIdx)));
-
-    bool bMustBeEmittedEvenIfEmpty = oField.GetMinOccurs() > 0;
-    if( oField.GetMinOccurs() == 0 && bEmptyContent &&
+           (!bIsGeometryField && !poFeature->IsFieldSetAndNotNull(nFieldIdx)));
+    const bool bIsNull = m_oConf.m_bUseNullState  &&
+                         (!bIsGeometryField && nFieldIdx >= 0 &&
+                           poFeature->IsFieldNull(nFieldIdx));
+    bool bMustBeEmittedEvenIfEmpty = oField.GetMinOccurs() > 0 || bIsNull;
+    if( !m_oConf.m_bUseNullState &&
+        oField.GetMinOccurs() == 0 && bEmptyContent &&
         nCommonLength + 1 == aoCurComponents.size() &&
         IsAttr(aoCurComponents.back()) &&
         nCommonLength == aoFieldComponents.size() &&
@@ -2099,7 +2102,7 @@ bool GMLASWriter::WriteFieldRegular(
         const int nFieldXMLIdx = oLayerDesc.GetOGRIdxFromFieldName
                                                 (oField.GetName() + "_xml");
         if( nFieldXMLIdx >= 0 &&
-            poFeature->IsFieldSet(nFieldXMLIdx) )
+            poFeature->IsFieldSetAndNotNull(nFieldXMLIdx) )
         {
             if( poFeature->GetFieldDefnRef(nFieldXMLIdx)->GetType() ==
                                                                 OFTStringList )
@@ -2555,7 +2558,7 @@ bool GMLASWriter::WriteFieldNoLink(
                     oLayerDesc.osName.c_str());
         return true;
     }
-    if( !poFeature->IsFieldSet( nParentPKIDIdx ) )
+    if( !poFeature->IsFieldSetAndNotNull( nParentPKIDIdx ) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Missing value of %s field for feature "
@@ -2790,7 +2793,7 @@ bool GMLASWriter::WriteFieldWithLink(
                     oLayerDesc.osName.c_str());
         return true;
     }
-    if( !poFeature->IsFieldSet(nFieldIdx) )
+    if( !poFeature->IsFieldSetAndNotNull(nFieldIdx) )
     {
         // Not an error (unless the field is required)
         return true;
@@ -2959,7 +2962,7 @@ bool GMLASWriter::WriteFieldJunctionTable(
                     oLayerDesc.osName.c_str());
         return true;
     }
-    if( !poFeature->IsFieldSet(nIndexPKID) )
+    if( !poFeature->IsFieldSetAndNotNull(nIndexPKID) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Field '%s' in layer %s is not set for "

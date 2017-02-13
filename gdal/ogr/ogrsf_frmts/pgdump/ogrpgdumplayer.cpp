@@ -150,7 +150,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
     {
         if( poFeature->GetFID() == OGRNullFID )
         {
-            if( poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) )
+            if( poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) )
             {
                 poFeature->SetFID(
                     poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex));
@@ -158,7 +158,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
         }
         else
         {
-            if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+            if( !poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) ||
                 poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -189,7 +189,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
         const int nFieldCount = poFeatureDefn->GetFieldCount();
         for( int iField = 0; iField < nFieldCount; iField++ )
         {
-            if( !poFeature->IsFieldSet( iField ) &&
+            if( !poFeature->IsFieldSetAndNotNull( iField ) &&
                 poFeature->GetFieldDefnRef(iField)->GetDefault() != NULL )
             {
                 bHasDefaultValue = true;
@@ -514,7 +514,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
             osCommand += "\t";
         bAddTab = true;
 
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
         {
             osCommand += "\\N" ;
 
@@ -951,6 +951,12 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
                                  OGRPGCommonEscapeStringCbk pfnEscapeString,
                                  void* userdata)
 {
+    if( poFeature->IsFieldNull(i) )
+    {
+        osCommand += "NULL";
+        return;
+    }
+
     OGRFeatureDefn* poFeatureDefn = poFeature->GetDefnRef();
     OGRFieldType nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
     OGRFieldSubType eSubType = poFeatureDefn->GetFieldDefn(i)->GetSubType();

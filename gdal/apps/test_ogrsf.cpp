@@ -2196,7 +2196,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS, OGRLayer *poLayer 
     for(i=0;i<poTargetFeature->GetFieldCount();i++)
     {
         eType = poTargetFeature->GetFieldDefnRef(i)->GetType();
-        if (poTargetFeature->IsFieldSet(i) &&
+        if (poTargetFeature->IsFieldSetAndNotNull(i) &&
             (eType == OFTString || eType == OFTInteger || eType == OFTReal))
         {
             break;
@@ -2908,7 +2908,7 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
         {
             for(int i=0;i<poFeature->GetFieldCount();i++)
             {
-                if( poFeature->IsFieldSet(i) )
+                if( poFeature->IsFieldSetAndNotNull(i) )
                 {
                     iFieldNonEmpty = i;
                     break;
@@ -2919,7 +2919,7 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
         {
             for(int i=0;i<poFeature->GetFieldCount();i++)
             {
-                if( i != iFieldNonEmpty && poFeature->IsFieldSet(i) )
+                if( i != iFieldNonEmpty && poFeature->IsFieldSetAndNotNull(i) )
                 {
                     iFieldNonEmpty2 = i;
                     break;
@@ -2965,7 +2965,7 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
     LOG_ACTION(poLayer->ResetReading());
     while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
     {
-        if( iFieldNonEmpty >= 0 && poFeature->IsFieldSet(iFieldNonEmpty) )
+        if( iFieldNonEmpty >= 0 && poFeature->IsFieldSetAndNotNull(iFieldNonEmpty) )
         {
             delete poFeature;
             printf( "ERROR: After SetIgnoredFields(), found a non empty field that should have been ignored.\n" );
@@ -2973,7 +2973,7 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
             return FALSE;
         }
 
-        if( iFieldNonEmpty2 >= 0 && poFeature->IsFieldSet(iFieldNonEmpty2) )
+        if( iFieldNonEmpty2 >= 0 && poFeature->IsFieldSetAndNotNull(iFieldNonEmpty2) )
             bFoundNonEmpty2 = TRUE;
 
         if( bGeomNonEmpty && poFeature->GetGeometryRef() != NULL)

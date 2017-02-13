@@ -930,7 +930,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                     else
                         pszError = NULL;
                 }
-                else if (poSrcFeature->IsFieldSet(psColDef->field_index))
+                else if (poSrcFeature->IsFieldSetAndNotNull(psColDef->field_index))
                     pszError = swq_select_summarize( psSelectInfo, iField, poSrcFeature->GetFieldAsString(
                                                 psColDef->field_index ) );
                 else
@@ -939,7 +939,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
             else
             {
                 const char* pszVal = NULL;
-                if (poSrcFeature->IsFieldSet(psColDef->field_index))
+                if (poSrcFeature->IsFieldSetAndNotNull(psColDef->field_index))
                     pszVal = poSrcFeature->GetFieldAsString(
                                                 psColDef->field_index );
                 pszError = swq_select_summarize( psSelectInfo, iField, pszVal );
@@ -1106,7 +1106,7 @@ static swq_expr_node *OGRMultiFeatureFetcher( swq_expr_node *op,
       case SWQ_INTEGER:
       case SWQ_BOOLEAN:
         if( poFeature == NULL
-            || !poFeature->IsFieldSet(op->field_index) )
+            || !poFeature->IsFieldSetAndNotNull(op->field_index) )
         {
             poRetNode = new swq_expr_node(0);
             poRetNode->is_null = TRUE;
@@ -1118,7 +1118,7 @@ static swq_expr_node *OGRMultiFeatureFetcher( swq_expr_node *op,
 
       case SWQ_INTEGER64:
         if( poFeature == NULL
-            || !poFeature->IsFieldSet(op->field_index) )
+            || !poFeature->IsFieldSetAndNotNull(op->field_index) )
         {
             poRetNode = new swq_expr_node((GIntBig)0);
             poRetNode->is_null = TRUE;
@@ -1130,7 +1130,7 @@ static swq_expr_node *OGRMultiFeatureFetcher( swq_expr_node *op,
 
       case SWQ_FLOAT:
         if( poFeature == NULL
-            || !poFeature->IsFieldSet(op->field_index) )
+            || !poFeature->IsFieldSetAndNotNull(op->field_index) )
         {
             poRetNode = new swq_expr_node( 0.0 );
             poRetNode->is_null = TRUE;
@@ -1156,7 +1156,7 @@ static swq_expr_node *OGRMultiFeatureFetcher( swq_expr_node *op,
 
       default:
         if( poFeature == NULL
-            || !poFeature->IsFieldSet(op->field_index) )
+            || !poFeature->IsFieldSetAndNotNull(op->field_index) )
         {
             poRetNode = new swq_expr_node("");
             poRetNode->is_null = TRUE;
@@ -1193,7 +1193,7 @@ static CPLString GetFilterForJoin(swq_expr_node* poExpr, OGRFeature* poSrcFeat,
         if( poExpr->table_index == 0 )
         {
             // if source key is null, we can't do join.
-            if( !poSrcFeat->IsFieldSet( poExpr->field_index ) )
+            if( !poSrcFeat->IsFieldSetAndNotNull( poExpr->field_index ) )
             {
                 return "";
             }
@@ -1881,7 +1881,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
                 memcpy( psDstField, psSrcField, sizeof(OGRField) );
             else if( poFDefn->GetType() == OFTString )
             {
-                if( poSrcFeat->IsFieldSet( psKeyDef->field_index ) )
+                if( poSrcFeat->IsFieldSetAndNotNull( psKeyDef->field_index ) )
                     psDstField->String = CPLStrdup( psSrcField->String );
                 else
                     memcpy( psDstField, psSrcField, sizeof(OGRField) );
@@ -1967,8 +1967,8 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             {
                 OGRField *psField = pasIndexFields + iKey + i * nOrderItems;
 
-                if( psField->Set.nMarker1 != OGRUnsetMarker
-                    || psField->Set.nMarker2 != OGRUnsetMarker )
+                if( !OGR_RawField_IsUnset(psField) &&
+                    !OGR_RawField_IsNull(psField) )
                     CPLFree( psField->String );
             }
         }
@@ -2086,17 +2086,17 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
             poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn(
                 psKeyDef->field_index );
 
-        if( pasFirstTuple[iKey].Set.nMarker1 == OGRUnsetMarker
-             && pasFirstTuple[iKey].Set.nMarker2 == OGRUnsetMarker )
+        if( OGR_RawField_IsUnset(&pasFirstTuple[iKey]) ||
+            OGR_RawField_IsNull(&pasFirstTuple[iKey]) )
         {
-            if( pasSecondTuple[iKey].Set.nMarker1 == OGRUnsetMarker
-                && pasSecondTuple[iKey].Set.nMarker2 == OGRUnsetMarker )
+            if( OGR_RawField_IsUnset(&pasSecondTuple[iKey]) ||
+                OGR_RawField_IsNull(&pasSecondTuple[iKey]) )
                 nResult = 0;
             else
                 nResult = -1;
         }
-        else if ( pasSecondTuple[iKey].Set.nMarker1 == OGRUnsetMarker
-                && pasSecondTuple[iKey].Set.nMarker2 == OGRUnsetMarker )
+        else if ( OGR_RawField_IsUnset(&pasSecondTuple[iKey]) ||
+                  OGR_RawField_IsNull(&pasSecondTuple[iKey]) )
         {
             nResult = 1;
         }

@@ -212,7 +212,10 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
         const int iRawField = panFieldOrdinals[iField];
 
         if( sqlite3_column_type( hStmt, iRawField ) == SQLITE_NULL )
+        {
+            poFeature->SetFieldNull( iField );
             continue;
+        }
 
         switch( poFieldDefn->GetType() )
         {

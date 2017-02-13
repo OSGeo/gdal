@@ -843,7 +843,10 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
             continue;
 
         if( PQgetisnull( hResult, iRecord, iField ) )
+        {
+            poFeature->SetFieldNull( iOGRField );
             continue;
+        }
 
         OGRFieldType eOGRType =
             poFeatureDefn->GetFieldDefn(iOGRField)->GetType();

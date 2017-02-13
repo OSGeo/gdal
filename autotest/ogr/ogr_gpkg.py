@@ -625,7 +625,7 @@ def ogr_gpkg_13():
     feat = None
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if feat.IsFieldSet('fld_integer'):
+    if not feat.IsFieldNull('fld_integer'):
         feat.DumpReadable()
         gdaltest.post_reason('fail')
         return 'fail'
@@ -651,7 +651,7 @@ def ogr_gpkg_13():
         gdaltest.post_reason('fail')
         return 'fail'
     feat = lyr.GetNextFeature()
-    if feat.IsFieldSet('fld_integer'):
+    if not feat.IsFieldNull('fld_integer'):
         gdaltest.post_reason('fail')
         return 'fail'
     feat = lyr.GetNextFeature()
@@ -734,8 +734,8 @@ def ogr_gpkg_15():
         'SELECT ST_IsEmpty(geom), ST_SRID(geom), ST_GeometryType(geom), ' + \
         'ST_MinX(geom), ST_MinY(geom), ST_MaxX(geom), ST_MaxY(geom) FROM tbl_linestring_renamed WHERE geom IS NULL')
     feat = sql_lyr.GetNextFeature()
-    if feat.IsFieldSet(0) or feat.IsFieldSet(1) or feat.IsFieldSet(2) or \
-       feat.IsFieldSet(3) or feat.IsFieldSet(4) or feat.IsFieldSet(5) or feat.IsFieldSet(6):
+    if not feat.IsFieldNull(0) or not feat.IsFieldNull(1) or not feat.IsFieldNull(2) or \
+       not feat.IsFieldNull(3) or not feat.IsFieldNull(4) or not feat.IsFieldNull(5) or not feat.IsFieldNull(6):
         feat.DumpReadable()
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1614,7 +1614,7 @@ def ogr_gpkg_24():
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
        f.GetField('field_real') != 1.23 or \
-       f.IsFieldSet('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
+       not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56+00' or \
        f.GetField('field_datetime4') != '2015/06/30 12:34:56.123+00' or \
        not f.IsFieldSet('field_datetime3') or \

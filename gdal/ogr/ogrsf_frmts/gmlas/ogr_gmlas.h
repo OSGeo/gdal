@@ -309,6 +309,9 @@ class GMLASConfiguration
             OGR array types. */
         bool            m_bUseArrays;
 
+        /** Whether OGR field null state should be used. */
+        bool            m_bUseNullState;
+
         /** Whether geometries should be stored as XML in a OGR string field. */
         bool            m_bIncludeGeometryXML;
 
@@ -766,6 +769,9 @@ class GMLASSchemaAnalyzer
             OGR array types. */
         bool m_bUseArrays;
 
+        /** Whether OGR field null state should be used. */
+        bool            m_bUseNullState;
+
         /** Whether, when dealing with schemas that import the
             GML namespace, and that at least one of them has
             elements that derive from gml:_Feature or
@@ -893,6 +899,7 @@ class GMLASSchemaAnalyzer
     public:
         explicit GMLASSchemaAnalyzer( GMLASXPathMatcher& oIgnoredXPathMatcher );
         void SetUseArrays(bool b) { m_bUseArrays = b; }
+        void SetUseNullState(bool b) { m_bUseNullState = b; }
         void SetInstantiateGMLFeaturesOnly(bool b)
                                     { m_bInstantiateGMLFeaturesOnly = b; }
         void SetIdentifierMaxLength(int nLength)

@@ -329,7 +329,7 @@ void OGR2SQLITE_ogr_geocode_set_result(sqlite3_context* pContext,
             }
         }
         else if( (nIdx = poFDefn->GetFieldIndex(pszField)) >= 0 &&
-                 poFeature->IsFieldSet(nIdx) )
+                 poFeature->IsFieldSetAndNotNull(nIdx) )
         {
             OGRFieldType eType = poFDefn->GetFieldDefn(nIdx)->GetType();
             if( eType == OFTInteger )

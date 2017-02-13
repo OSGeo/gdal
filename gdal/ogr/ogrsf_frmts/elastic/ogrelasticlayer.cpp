@@ -1218,6 +1218,9 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
         {
             switch( json_object_get_type(it.val) )
             {
+                case json_type_null:
+                    poFeature->SetFieldNull( oIter->second );
+                    break;
                 case json_type_boolean:
                     poFeature->SetField( oIter->second, json_object_get_boolean(it.val));
                     break;
@@ -1992,7 +1995,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
 
     CPLString fields;
     int nJSonFieldIndex = m_poFeatureDefn->GetFieldIndex("_json");
-    if( nJSonFieldIndex >= 0 && poFeature->IsFieldSet(nJSonFieldIndex) )
+    if( nJSonFieldIndex >= 0 && poFeature->IsFieldSetAndNotNull(nJSonFieldIndex) )
     {
         fields = poFeature->GetFieldAsString(nJSonFieldIndex);
     }
@@ -2097,6 +2100,13 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
 
             json_object* poContainer = GetContainerForFeature(fieldObject, m_aaosFieldPaths[i], oMap);
             const char* pszLastComponent = m_aaosFieldPaths[i].back();
+
+            if( poFeature->IsFieldNull(i) )
+            {
+                json_object_object_add(poContainer,
+                                       pszLastComponent, NULL);
+                continue;
+            }
 
             switch (m_poFeatureDefn->GetFieldDefn(i)->GetType()) {
                 case OFTInteger:
@@ -2254,7 +2264,7 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
     CPLString osFields(BuildJSonFromFeature(poFeature));
 
     const char* pszId = NULL;
-    if( poFeature->IsFieldSet(0) && !m_bIgnoreSourceID )
+    if( poFeature->IsFieldSetAndNotNull(0) && !m_bIgnoreSourceID )
         pszId = poFeature->GetFieldAsString(0);
 
     // Check to see if we're using bulk uploading
@@ -2312,7 +2322,7 @@ OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
 
     FinalizeFeatureDefn();
 
-    if( !poFeature->IsFieldSet(0) )
+    if( !poFeature->IsFieldSetAndNotNull(0) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "_id field not set");
         return OGRERR_FAILURE;

@@ -1269,7 +1269,7 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
     {
         return SQLITE_ERROR;
     }
-    else if( !poFeature->IsFieldSet(nCol) )
+    else if( !poFeature->IsFieldSetAndNotNull(nCol) )
     {
         sqlite3_result_null(pContext);
         return SQLITE_OK;
@@ -1427,6 +1427,9 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
     {
         switch( sqlite3_value_type(argv[2 + i]) )
         {
+            case SQLITE_NULL:
+                poFeature->SetFieldNull(i);
+                break;
             case SQLITE_INTEGER:
                 poFeature->SetField(i, sqlite3_value_int64(argv[2 + i]));
                 break;

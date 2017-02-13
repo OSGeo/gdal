@@ -3936,6 +3936,22 @@ class Feature(_object):
         return _ogr.Feature_IsFieldSet(self, *args)
 
 
+    def IsFieldNull(self, *args):
+        """
+        IsFieldNull(Feature self, int id) -> bool
+        IsFieldNull(Feature self, char const * name) -> bool
+        """
+        return _ogr.Feature_IsFieldNull(self, *args)
+
+
+    def IsFieldSetAndNotNull(self, *args):
+        """
+        IsFieldSetAndNotNull(Feature self, int id) -> bool
+        IsFieldSetAndNotNull(Feature self, char const * name) -> bool
+        """
+        return _ogr.Feature_IsFieldSetAndNotNull(self, *args)
+
+
     def GetFieldIndex(self, *args):
         """
         GetFieldIndex(Feature self, char const * name) -> int
@@ -4089,6 +4105,14 @@ class Feature(_object):
         iField:  the field to unset. 
         """
         return _ogr.Feature_UnsetField(self, *args)
+
+
+    def SetFieldNull(self, *args):
+        """
+        SetFieldNull(Feature self, int id)
+        SetFieldNull(Feature self, char const * name)
+        """
+        return _ogr.Feature_SetFieldNull(self, *args)
 
 
     def SetFieldInteger64(self, *args):
@@ -4723,7 +4747,7 @@ class Feature(_object):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise ValueError("Illegal field requested in GetField()")
-        if not (self.IsFieldSet(fld_index)):
+        if not (self.IsFieldSet(fld_index)) or self.IsFieldNull(fld_index):
             return None
         fld_type = self.GetFieldType(fld_index)
         if fld_type == OFTInteger:
@@ -4765,6 +4789,9 @@ class Feature(_object):
             int minute, int second, int tzflag)
         """
 
+        if len(args) == 2 and args[1] is None:
+            return _ogr.Feature_SetFieldNull(self, args[0])
+
         if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
             fld_index = args[0]
             if isinstance(fld_index, str):
@@ -4787,12 +4814,12 @@ class Feature(_object):
             raise ValueError("Illegal field requested in SetField2()")
 
         if value is None:
-            self.UnsetField( fld_index )
+            self.SetFieldNull( fld_index )
             return
 
         if isinstance(value,list):
             if len(value) == 0:
-                self.UnsetField( fld_index )
+                self.SetFieldNull( fld_index )
                 return
             if isinstance(value[0],type(1)) or isinstance(value[0],type(12345678901234)):
                 self.SetFieldInteger64List(fld_index,value)

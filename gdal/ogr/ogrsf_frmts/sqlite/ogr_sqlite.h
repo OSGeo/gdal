@@ -369,8 +369,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                       const char* pszNewFieldList,
                                       const char* pszGenericErrorMessage);
     OGRErr              BindValues( OGRFeature *poFeature,
-                                        sqlite3_stmt* hStmt,
-                                        int bBindNullValues );
+                                    sqlite3_stmt* hStmt,
+                                    bool bBindUnsetAsNull );
 
     int                 CheckSpatialIndexTable(int iGeomCol);
 

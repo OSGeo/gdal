@@ -526,8 +526,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             oFieldDefn.SetWidth(nWidth);
         oFieldDefn.SetNullable(poGDBField->IsNullable());
         const OGRField* psDefault = poGDBField->GetDefault();
-        if( !(psDefault->Set.nMarker1 == OGRUnsetMarker &&
-              psDefault->Set.nMarker2 == OGRUnsetMarker) )
+        if( !OGR_RawField_IsUnset(psDefault) && !OGR_RawField_IsNull(psDefault) )
         {
             if( eType == OFTString )
             {
@@ -1383,10 +1382,14 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
             if( !m_poFeatureDefn->GetFieldDefn(iOGRIdx)->IsIgnored() )
             {
                 const OGRField* psField = m_poLyrTable->GetFieldValue(iGDBIdx);
-                if( psField != NULL )
+                if( poFeature == NULL )
+                    poFeature = new OGRFeature(m_poFeatureDefn);
+                if( psField == NULL )
                 {
-                    if( poFeature == NULL )
-                        poFeature = new OGRFeature(m_poFeatureDefn);
+                    poFeature->SetFieldNull(iOGRIdx);
+                }
+                else
+                {
 
                     if( iGDBIdx == m_iFieldToReadAsBinary )
                         poFeature->SetField(iOGRIdx, (const char*) psField->Binary.paData);

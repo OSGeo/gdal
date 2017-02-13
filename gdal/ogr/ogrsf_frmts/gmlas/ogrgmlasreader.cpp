@@ -1794,14 +1794,36 @@ void GMLASReader::ProcessAttributes(const Attributes& attrs)
             }
         }
 
+        else if( osAttrNSPrefix == szXSI_PREFIX &&
+                 osAttrLocalname == szNIL )
+        {
+            if( osAttrValue == "true" )
+            {
+                const int nMainAttrIdx = m_oCurCtxt.m_poLayer->
+                                        GetOGRFieldIndexFromXPath(m_osCurSubXPath);
+                if( nMainAttrIdx >= 0 )
+                {
+                    m_oCurCtxt.m_poFeature->SetFieldNull( nMainAttrIdx );
+                }
+                else
+                {
+                    const int nHrefAttrIdx = m_oCurCtxt.m_poLayer->
+                            GetOGRFieldIndexFromXPath(m_osCurSubXPath +
+                                        "/@" + szXLINK_PREFIX + ":" + szHREF);
+                    if( nHrefAttrIdx >= 0 )
+                    {
+                        m_oCurCtxt.m_poFeature->SetFieldNull( nHrefAttrIdx );
+                    }
+                }
+            }
+        }
+
         else if( osAttrNSPrefix != szXMLNS_PREFIX &&
                  osAttrLocalname != szXMLNS_PREFIX &&
                     !(osAttrNSPrefix == szXSI_PREFIX &&
                         osAttrLocalname == szSCHEMA_LOCATION) &&
                     !(osAttrNSPrefix == szXSI_PREFIX &&
                         osAttrLocalname == szNO_NAMESPACE_SCHEMA_LOCATION) &&
-                    !(osAttrNSPrefix == szXSI_PREFIX &&
-                        osAttrLocalname == szNIL) &&
                     // Do not warn about fixed attributes on geometry properties
                     !(m_nCurGeomFieldIdx >= 0 && (
                     (osAttrNSPrefix == szXLINK_PREFIX &&
@@ -1900,7 +1922,7 @@ void GMLASReader::ProcessAttributes(const Attributes& attrs)
                 if( osFixedDefaultValue.empty() )
                     osFixedDefaultValue = aoFields[nFCIdx].GetDefaultValue();
                 if( !osFixedDefaultValue.empty() &&
-                    !m_oCurCtxt.m_poFeature->IsFieldSet(i) )
+                    !m_oCurCtxt.m_poFeature->IsFieldSetAndNotNull(i) )
                 {
                     SetField( m_oCurCtxt.m_poFeature,
                                 m_oCurCtxt.m_poLayer,
@@ -2084,7 +2106,7 @@ void GMLASReader::ExploreXMLDoc( const CPLString& osAttrXPath,
             osVal = pszContent;
             CPLFree(pszContent);
         }
-        if( m_oCurCtxt.m_poFeature->IsFieldSet(nAttrIdx) &&
+        if( m_oCurCtxt.m_poFeature->IsFieldSetAndNotNull(nAttrIdx) &&
             m_oCurCtxt.m_poFeature->GetFieldDefnRef(nAttrIdx)->GetType() == OFTString )
         {
             osVal = m_oCurCtxt.m_poFeature->GetFieldAsString(nAttrIdx) +
@@ -2808,7 +2830,7 @@ bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
             int nFieldCount = poFDefn->GetFieldCount();
             for(int j=0; j< nFieldCount; j++ )
             {
-                if( poFeature->IsFieldSet(j) )
+                if( poFeature->IsFieldSetAndNotNull(j) )
                     oSetUnusedFields.erase(j);
             }
         }

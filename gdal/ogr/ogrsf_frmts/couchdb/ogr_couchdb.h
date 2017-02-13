@@ -305,20 +305,4 @@ class OGRCouchDBDataSource : public OGRDataSource
                                         const char* pszErrorMsg);
 };
 
-/************************************************************************/
-/*                           OGRCouchDBDriver                           */
-/************************************************************************/
-
-class OGRCouchDBDriver : public OGRSFDriver
-{
-  public:
-    virtual ~OGRCouchDBDriver();
-
-    virtual const char*         GetName() override;
-    virtual OGRDataSource*      Open( const char *, int ) override;
-    virtual OGRDataSource*      CreateDataSource( const char * pszName,
-                                                  char **papszOptions ) override;
-    virtual int                 TestCapability( const char * ) override;
-};
-
 #endif /* ndef OGR_COUCHDB_H_INCLUDED */

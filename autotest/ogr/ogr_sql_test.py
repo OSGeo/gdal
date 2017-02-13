@@ -1499,7 +1499,7 @@ def ogr_sql_47():
     sql_lyr = ds.ExecuteSQL('SELECT * FROM sort_test ORDER BY text_value')
     prec_val = ''
     for f in sql_lyr:
-        if f.IsFieldSet('text_value'):
+        if f.IsFieldSetAndNotNull('text_value'):
             new_val = f['text_value']
         else:
             new_val = ''

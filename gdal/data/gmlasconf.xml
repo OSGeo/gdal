@@ -20,6 +20,7 @@
         <RemoveUnusedLayers>false</RemoveUnusedLayers>
         <RemoveUnusedFields>false</RemoveUnusedFields>
         <UseArrays>true</UseArrays>
+        <UseNullState>false</UseNullState>
         <GML>
             <IncludeGeometryXML>false</IncludeGeometryXML>
             <InstantiateGMLFeaturesOnly>true</InstantiateGMLFeaturesOnly>

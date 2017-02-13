@@ -1228,7 +1228,7 @@ OGRErr OGRVDVWriterLayer::ICreateFeature(OGRFeature* poFeature)
     {
         if( i > 0)
             bOK &= VSIFPrintfL(m_fpL, "; ") > 0;
-        if( poFeature->IsFieldSet(i) )
+        if( poFeature->IsFieldSetAndNotNull(i) )
         {
             const OGRFieldType eType = m_poFeatureDefn->GetFieldDefn(i)->GetType();
             if( eType == OFTInteger || eType == OFTInteger64 )

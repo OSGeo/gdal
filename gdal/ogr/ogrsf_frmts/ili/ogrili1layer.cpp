@@ -389,7 +389,7 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
     // Write all fields.
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
-        if ( poFeature->IsFieldSet( iField ) )
+        if ( poFeature->IsFieldSetAndNotNull( iField ) )
         {
           const char *pszRaw = poFeature->GetFieldAsString( iField );
           if (poFeatureDefn->GetFieldDefn( iField )->GetType() == OFTString) {

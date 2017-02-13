@@ -722,7 +722,7 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
                 {
                     for( int i = 0; i < poFeature->GetFieldCount(); i++ )
                     {
-                        if (poFeature->IsFieldSet(i) &&
+                        if (poFeature->IsFieldSetAndNotNull(i) &&
                             poFeature->GetFieldDefnRef(i)->GetType() == OFTString)
                         {
                             const char* pszVal = poFeature->GetFieldAsString(i);
@@ -1502,7 +1502,7 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
         VSIFPrintfL(fp, "<table:table-row>\n");
         for( int j=0; j<poFeature->GetFieldCount(); j++ )
         {
-            if (poFeature->IsFieldSet(j))
+            if (poFeature->IsFieldSetAndNotNull(j))
             {
                 const OGRFieldType eType = poFDefn->GetFieldDefn(j)->GetType();
 
@@ -1976,7 +1976,7 @@ int ODSCellEvaluator::EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
 
         for(int nCol = nCol1; nCol <= nCol2; nCol++)
         {
-            if (!poFeature->IsFieldSet(nCol))
+            if (!poFeature->IsFieldSetAndNotNull(nCol))
             {
                 aoOutValues.push_back(ods_formula_node());
             }
@@ -2013,7 +2013,7 @@ int ODSCellEvaluator::EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
                     poLayer->SetNextByIndex(nRow);
                     poFeature = poLayer->GetNextFeatureWithoutFIDHack();
 
-                    if (!poFeature->IsFieldSet(nCol))
+                    if (!poFeature->IsFieldSetAndNotNull(nCol))
                     {
                         aoOutValues.push_back(ods_formula_node());
                     }
@@ -2082,7 +2082,7 @@ int ODSCellEvaluator::Evaluate(int nRow, int nCol)
     }
 
     OGRFeature* poFeature = poLayer->GetNextFeatureWithoutFIDHack();
-    if (poFeature->IsFieldSet(nCol) &&
+    if (poFeature->IsFieldSetAndNotNull(nCol) &&
         poFeature->GetFieldDefnRef(nCol)->GetType() == OFTString)
     {
         const char* pszVal = poFeature->GetFieldAsString(nCol);

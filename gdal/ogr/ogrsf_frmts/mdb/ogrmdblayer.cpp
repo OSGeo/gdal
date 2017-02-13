@@ -260,7 +260,7 @@ OGRFeature *OGRMDBLayer::GetNextRawFeature()
         OGRFieldType eType = poFeature->GetFieldDefnRef(iField)->GetType();
 
         if( pszValue == NULL )
-            /* no value */;
+            poFeature->SetFieldNull( iField );
         else if( eType == OFTBinary )
         {
             int nBytes = 0;

@@ -640,7 +640,7 @@ OGRFeature* OGRPLScenesLayer::GetNextRawFeature()
         OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
         OGRFieldType eType = poFieldDefn->GetType();
         int iSrcField = poGeoJSONFeature->GetFieldIndex(poFieldDefn->GetNameRef());
-        if( iSrcField >= 0 && poGeoJSONFeature->IsFieldSet(iSrcField) )
+        if( iSrcField >= 0 && poGeoJSONFeature->IsFieldSetAndNotNull(iSrcField) )
         {
             if( eType == OFTInteger )
                 poFeature->SetField(i,

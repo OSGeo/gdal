@@ -528,6 +528,7 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
     const char* pszNativeMediaType = poFeature->GetNativeMediaType();
     json_object* poNativeGeom = NULL;
     json_object* poNativeId = NULL;
+    bool bHasProperties = true;
     if( pszNativeMediaType &&
         EQUAL(pszNativeMediaType, "application/vnd.geo+json") )
     {
@@ -541,11 +542,16 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
             it.val = NULL;
             it.entry = NULL;
             CPLString osNativeData;
+            bHasProperties = false;
             json_object_object_foreachC(poNativeJSon, it)
             {
-                if( strcmp(it.key, "type") == 0 ||
-                    strcmp(it.key, "properties") == 0 )
+                if( strcmp(it.key, "type") == 0 )
                 {
+                    continue;
+                }
+                if( strcmp(it.key, "properties") == 0 )
+                {
+                    bHasProperties = true;
                     continue;
                 }
                 if( strcmp(it.key, "bbox") == 0 )
@@ -621,9 +627,13 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
             bWriteIdIfFoundInAttributes = false;
         }
     }
-    json_object* poObjProps
-        = OGRGeoJSONWriteAttributes( poFeature, bWriteIdIfFoundInAttributes, oOptions );
-    json_object_object_add( poObj, "properties", poObjProps );
+
+    if( bHasProperties )
+    {
+        json_object* poObjProps
+            = OGRGeoJSONWriteAttributes( poFeature, bWriteIdIfFoundInAttributes, oOptions );
+        json_object_object_add( poObj, "properties", poObjProps );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write feature geometry to GeoJSON "geometry" object.            */
@@ -700,6 +710,11 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature,
     OGRFeatureDefn* poDefn = poFeature->GetDefnRef();
     for( int nField = 0; nField < poDefn->GetFieldCount(); ++nField )
     {
+        if( !poFeature->IsFieldSet(nField) )
+        {
+            continue;
+        }
+
         OGRFieldDefn* poFieldDefn = poDefn->GetFieldDefn( nField );
         CPLAssert( NULL != poFieldDefn );
         OGRFieldType eType = poFieldDefn->GetType();
@@ -713,7 +728,7 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature,
 
         json_object* poObjProp = NULL;
 
-        if( !poFeature->IsFieldSet(nField) )
+        if( poFeature->IsFieldNull(nField) )
         {
             // poObjProp = NULL;
         }

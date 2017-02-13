@@ -384,7 +384,7 @@ OGRErr OGRGeoconceptLayer::ICreateFeature( OGRFeature* poFeature )
                   nextField = WriteFeatureFieldAsString_GCIO(
                       _gcFeature,
                       nextField,
-                      poFeature->IsFieldSet(iF)?
+                      poFeature->IsFieldSetAndNotNull(iF)?
                       poFeature->GetFieldAsString(iF) : NULL);
                   break;
                 }
