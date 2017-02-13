@@ -2740,7 +2740,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     const float fNoDataValue =
         static_cast<float>( poSrcBand->GetNoDataValue(&bHasNoData) );
     const bool bPropagateNoData =
-        CPLTestBoolean( CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO") );
+        CPLTestBool( CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO") );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image operating on chunks.                            */
@@ -3130,7 +3130,7 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
             papoSrcBands[iBand]->GetNoDataValue(&pabHasNoData[iBand]) );
     }
     const bool bPropagateNoData =
-        CPLTestBoolean( CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO") );
+        CPLTestBool( CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO") );
 
     // Second pass to do the real job.
     double dfCurPixelCount = 0;
