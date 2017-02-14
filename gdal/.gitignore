@@ -23,6 +23,14 @@ cpl_config.h
 *.la
 .libs
 *.pyc
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+/[Dd]ebug
+/[Rr]elease
+/.vs
+/.vscode
 frmts/jpeg/libjpeg12/*.c
 frmts/jpeg/libjpeg12/*.h
 libgdal.a
