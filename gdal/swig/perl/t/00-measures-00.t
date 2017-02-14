@@ -7,15 +7,13 @@ BEGIN { use_ok('Geo::GDAL') };
 
 # test geometry types
 
-my @t = @Geo::OGR::Geometry::GEOMETRY_TYPES;
-my %t2i = %Geo::OGR::Geometry::TYPE_STRING2INT;
-my %i2t = %Geo::OGR::Geometry::TYPE_INT2STRING;
+my @t = Geo::OGR::Geometry->GeometryTypes;
 
 for my $geom (@t) {
     next if $geom eq 'Unknown';
     next if $geom eq 'None';
 
-    my $i = $t2i{$geom};
+    my $i = Geo::GDAL::s2i(geometry_type => $geom);
 
     my $j = Geo::OGR::GT_Flatten($i);
     ok(!Geo::OGR::GT_HasZ($j), "$geom, no Z after GT_Flatten");

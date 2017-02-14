@@ -43,7 +43,7 @@ eval {
 ok((@list > 0 and $@ eq ''), "DataTypes, got $@");
 
 for my $type (Geo::GDAL::DataTypes()) {
-    my $nr = $Geo::GDAL::TYPE_STRING2INT{$type};
+    my $nr = Geo::GDAL::s2i(data_type => $type);
     my $c = Geo::GDAL::GetDataTypeName($nr);
     ok($type eq $c, "Data type $type");
     eval {
