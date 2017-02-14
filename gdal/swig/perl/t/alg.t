@@ -97,7 +97,7 @@ BEGIN { use_ok('Geo::GDAL') };
     my $dest = '/vsimem/tmp';
     my $result;
     eval {
-        $result = Geo::GDAL::Dataset::Warp([$d], $dest, {to => 'SRC_METHOD=NO_GEOTRANSFORM'});
+        $result = Geo::GDAL::Dataset::Warp([$d], $dest, {-to => 'SRC_METHOD=NO_GEOTRANSFORM'});
         $result = blessed($result);
     };
     ok($@ eq '' && $result && $result eq 'Geo::GDAL::Dataset', "Warp datasets ($result) $@");
