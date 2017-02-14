@@ -23,6 +23,7 @@ cpl_config.h
 *.la
 .libs
 *.pyc
+*.sdf
 *.sln
 *.vcxproj
 *.vcxproj.filters
