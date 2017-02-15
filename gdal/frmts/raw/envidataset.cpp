@@ -211,6 +211,7 @@ static const int anUsgsEsriZones[] =
 static int ITTVISToUSGSZone( int nITTVISZone )
 
 {
+    // TODO(schwehr): int anUsgsEsriZones[] -> a std::set and std::map.
     const int nPairs = sizeof(anUsgsEsriZones) / (2 * sizeof(int));
 
     // Default is to use the zone as-is, as long as it is in the
@@ -705,9 +706,10 @@ void ENVIDataset::WriteProjectionInfo()
 
     // Minimal case - write out simple geotransform if we have a
     // non-default geotransform.
+    const std::string osLocalCs = "LOCAL_CS";
     if( pszProjection == NULL || strlen(pszProjection) == 0  ||
-        (strlen(pszProjection) >= 8 &&
-         STARTS_WITH(pszProjection, "LOCAL_CS")) )
+        (strlen(pszProjection) >= osLocalCs.size() &&
+         STARTS_WITH(pszProjection, osLocalCs.c_str())) )
     {
         if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
             adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
@@ -759,8 +761,9 @@ void ENVIDataset::WriteProjectionInfo()
     const double dfB = oSRS.GetSemiMinor();
 
     // Do we have unusual linear units?
+    const double dfFeetPerMeter = 0.3048;
     const CPLString osOptionalUnits =
-        fabs(oSRS.GetLinearUnits() - 0.3048) < 0.0001
+        fabs(oSRS.GetLinearUnits() - dfFeetPerMeter) < 0.0001
         ? ", units=Feet" : "";
 
     // Handle UTM case.
@@ -1074,6 +1077,7 @@ bool ENVIDataset::WriteRpcInfo()
     // Write out 90 rpc coeffs into the envi header plus 3 envi specific rpc
     // values returns 0 if the coeffs are not present or not valid.
     int idx = 0;
+    // TODO(schwehr): Make 93 a constant.
     char *papszVal[93] = { NULL };
 
     papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LINE_OFF", "RPC"));
@@ -1466,6 +1470,7 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[4] = 0.0;
 
+    // TODO(schwehr): Symbolic constants for the fields.
     // Capture projection.
     OGRSpatialReference oSRS;
     if ( oSRS.importFromESRI(papszCSS) != OGRERR_NONE )
@@ -1818,6 +1823,7 @@ void ENVIDataset::ProcessStatsFile()
         nb = nBands;
     }
 
+    // TODO(schwehr): What are 1, 4, 8, and 40?
     int lOffset = 0;
     if( VSIFSeekL(fpStaFile, 40+(nb+1)*4, SEEK_SET) == 0 &&
         VSIFReadL(&lOffset, sizeof(int), 1, fpStaFile) == 1 &&
@@ -1834,7 +1840,8 @@ void ENVIDataset::ProcessStatsFile()
                 for( int i = 0; i < nb; i++ )
                 {
                     GetRasterBand(i + 1)->SetStatistics(
-                        byteSwapFloat(fStats[i]), byteSwapFloat(fStats[nb + i]),
+                        byteSwapFloat(fStats[i]),
+                        byteSwapFloat(fStats[nb + i]),
                         byteSwapFloat(fStats[2 * nb + i]),
                         byteSwapFloat(fStats[3 * nb + i]));
                 }
@@ -2607,12 +2614,12 @@ GDALDataset *ENVIDataset::Create( const char *pszFilename,
 
     // Just write out a couple of bytes to establish the binary
     // file, and then close it.
-    bool bRet = VSIFWriteL(static_cast<void *>(const_cast<char *>("\0\0")), 2,
-                           1, fp) == 1;
-    if( VSIFCloseL(fp) != 0 )
-        bRet = false;
-    if( !bRet )
-        return NULL;
+    {
+        const bool bRet = VSIFWriteL(
+            static_cast<void *>(const_cast<char *>("\0\0")), 2, 1, fp) == 1;
+        if( VSIFCloseL(fp) != 0 || !bRet )
+            return NULL;
+    }
 
     // Create the .hdr filename.
     const char *pszHDRFilename = NULL;
@@ -2639,7 +2646,7 @@ GDALDataset *ENVIDataset::Create( const char *pszFilename,
     const int iBigEndian = 1;
 #endif
 
-    bRet = VSIFPrintfL(fp, "ENVI\n") > 0;
+    bool bRet = VSIFPrintfL(fp, "ENVI\n") > 0;
     bRet &= VSIFPrintfL(fp, "samples = %d\nlines   = %d\nbands   = %d\n",
                         nXSize, nYSize, nBands) > 0;
     bRet &=
@@ -2656,14 +2663,13 @@ GDALDataset *ENVIDataset::Create( const char *pszFilename,
             pszInterleaving = "bsq";  // band sequential by default
     }
     else
+    {
         pszInterleaving = "bsq";
+    }
     bRet &= VSIFPrintfL(fp, "interleave = %s\n", pszInterleaving) > 0;
     bRet &= VSIFPrintfL(fp, "byte order = %d\n", iBigEndian) > 0;
 
-    if( VSIFCloseL(fp) != 0 )
-        bRet = false;
-
-    if( !bRet )
+    if( VSIFCloseL(fp) != 0 || !bRet )
         return NULL;
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
