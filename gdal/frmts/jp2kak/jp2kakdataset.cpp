@@ -32,6 +32,7 @@
 #endif
 
 #include "cpl_port.h"
+#include "jp2kakdataset.h"
 
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
@@ -43,11 +44,16 @@
 
 #include "jp2kak_headers.h"
 
+#include "kdu_google.h"
+
 #include "subfile_source.h"
 #include "vsil_target.h"
 
-#include <cmath>
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
+#include <cmath>
+#include <vector>
 
 CPL_CVSID("$Id$");
 
@@ -77,171 +83,6 @@ static const unsigned char jpc_header[] = {0xff, 0x4f};
 /*      encoder per flush when writing jpeg2000 streams.                */
 /* -------------------------------------------------------------------- */
 static const int TILE_CHUNK_SIZE = 1024;
-
-/************************************************************************/
-/* ==================================================================== */
-/*                            JP2KAKDataset                             */
-/* ==================================================================== */
-/************************************************************************/
-
-class JP2KAKDataset : public GDALJP2AbstractDataset
-{
-    friend class JP2KAKRasterBand;
-
-    kdu_codestream oCodeStream;
-    kdu_compressed_source *poInput;
-    kdu_compressed_source *poRawInput;
-    jp2_family_src  *family;
-    kdu_client      *jpip_client;
-    kdu_dims dims;
-    int            nResCount;
-    bool           bPreferNPReads;
-    kdu_thread_env *poThreadEnv;
-
-    bool           bCached;
-    bool           bResilient;
-    bool           bFussy;
-    bool           bUseYCC;
-
-    bool           bPromoteTo8Bit;
-
-    bool        TestUseBlockIO( int, int, int, int, int, int,
-                                GDALDataType, int, int * );
-    CPLErr      DirectRasterIO( GDALRWFlag, int, int, int, int,
-                                void *, int, int, GDALDataType,
-                                int, int *,
-                                GSpacing nPixelSpace, GSpacing nLineSpace,
-                                GSpacing nBandSpace,
-                                GDALRasterIOExtraArg* psExtraArg);
-
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              int, int *,
-                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GSpacing nBandSpace,
-                              GDALRasterIOExtraArg* psExtraArg) override;
-
-  public:
-             JP2KAKDataset();
-    virtual ~JP2KAKDataset() override;
-
-    virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc,
-                                    void * ) override;
-
-    static void KakaduInitialize();
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                            JP2KAKRasterBand                          */
-/* ==================================================================== */
-/************************************************************************/
-
-class JP2KAKRasterBand : public GDALPamRasterBand
-{
-    friend class JP2KAKDataset;
-
-    JP2KAKDataset *poBaseDS;
-
-    int         nDiscardLevels;
-    kdu_dims    band_dims;
-    int         nOverviewCount;
-    JP2KAKRasterBand **papoOverviewBand;
-
-    kdu_client      *jpip_client;
-    kdu_codestream oCodeStream;
-
-    GDALColorTable oCT;
-    GDALColorInterp eInterp;
-
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg) override;
-
-    bool           HasExternalOverviews()
-                   { return GDALPamRasterBand::GetOverviewCount() != 0; }
-
-  public:
-                JP2KAKRasterBand( int, int, kdu_codestream, int, kdu_client *,
-                                  jp2_channels, JP2KAKDataset * );
-    virtual ~JP2KAKRasterBand() override;
-
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-
-    virtual int    GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview( int ) override;
-
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
-
-    // Internal.
-
-    void        ApplyPalette( jp2_palette oJP2Palette );
-    void        ProcessYCbCrTile( kdu_tile tile, GByte *pabyBuffer,
-                                  int nBlockXOff, int nBlockYOff,
-                                  int nTileOffsetX, int nTileOffsetY );
-    void        ProcessTile(kdu_tile tile, GByte *pabyBuffer );
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                     Set up messaging services                        */
-/* ==================================================================== */
-/************************************************************************/
-
-class kdu_cpl_error_message : public kdu_thread_safe_message
-{
-  public:  // Member classes.
-    using kdu_thread_safe_message::put_text;
-
-    explicit kdu_cpl_error_message( CPLErr eErrClass ) :
-        m_eErrClass(eErrClass),
-        m_pszError(NULL)
-    {}
-
-    void put_text(const char *string) override
-    {
-        if( m_pszError == NULL )
-        {
-            m_pszError = CPLStrdup(string);
-        }
-        else
-        {
-            m_pszError = static_cast<char *>(CPLRealloc(
-                m_pszError, strlen(m_pszError) + strlen(string) + 1));
-            strcat(m_pszError, string);
-        }
-    }
-
-    class JP2KAKException {};
-
-    void flush(bool end_of_message = false) override
-    {
-        kdu_thread_safe_message::flush(end_of_message);
-
-        if( m_pszError == NULL )
-            return;
-        if( m_pszError[strlen(m_pszError) - 1] == '\n' )
-            m_pszError[strlen(m_pszError) - 1] = '\0';
-
-        CPLError(m_eErrClass, CPLE_AppDefined, "%s", m_pszError);
-        CPLFree(m_pszError);
-        m_pszError = NULL;
-
-        if( end_of_message && m_eErrClass == CE_Failure )
-        {
-            throw JP2KAKException();
-        }
-    }
-
-  private:
-    CPLErr m_eErrClass;
-    char *m_pszError;
-};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1297,7 +1138,11 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             for( int iThread=0; iThread < nNumThreads; iThread++ )
             {
                 if( !poDS->poThreadEnv->add_thread() )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "JP2KAK_THREADS: Unable to create thread.");
                     break;
+                }
             }
             CPLDebug("JP2KAK", "Using %d threads.", nNumThreads);
         }
@@ -1607,8 +1452,8 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
         l_dims.size.x = nXSize / nResMult;
         l_dims.size.y = nYSize / nResMult;
 
-        // Check if rounding helps detecting when data is being requested exactly
-        // at the current resolution.
+        // Check if rounding helps detecting when data is being requested
+        // exactly at the current resolution.
         if( nBufXSize != l_dims.size.x &&
             static_cast<int>(0.5 + static_cast<double>(nXSize) / nResMult)
             == nBufXSize )
