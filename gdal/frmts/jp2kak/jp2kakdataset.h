@@ -45,9 +45,7 @@
 #include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
 #include "jp2kak_headers.h"
-#include "kdu_google.h"
 #include "subfile_source.h"
-#include "vsil_target.h"
 
 // Before v7.5 Kakadu does not advertise its version well
 // After v7.5 Kakadu has KDU_{MAJOR,MINOR,PATCH}_VERSION defines so it's easier

@@ -44,8 +44,6 @@
 
 #include "jp2kak_headers.h"
 
-#include "kdu_google.h"
-
 #include "subfile_source.h"
 #include "vsil_target.h"
 

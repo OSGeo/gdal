@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef VSIL_TARGET_H
+#define VSIL_TARGET_H
+
 #include "kdu_file_io.h"
 #include "cpl_error.h"
 #include "cpl_vsi.h"
@@ -98,3 +101,5 @@ public:
 private: // Data
     VSILFILE *file;
 };
+
+#endif // VSIL_TARGET_H
