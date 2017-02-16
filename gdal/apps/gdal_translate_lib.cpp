@@ -1471,7 +1471,13 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                 bSignedByte = true;
             int bClamped = FALSE, bRounded = FALSE;
             double dfVal;
-            if( bSignedByte )
+            if( eBandType == GDT_Float32 && CPLIsInf(psOptions->dfNoDataReal) )
+            {
+                dfVal = std::numeric_limits<float>::infinity();
+                if( psOptions->dfNoDataReal < 0 )
+                    dfVal = -dfVal;
+            }
+            else if( bSignedByte )
             {
                 if( psOptions->dfNoDataReal < -128 )
                 {
