@@ -377,7 +377,7 @@ def ogr_plscenes_v0_1():
         return 'fail'
 
     # Filter that can be - partly - passed to server side
-    filterstring = "fid = 1 AND \"camera.color_mode\" = 'RGB' AND acquired = '2015/03/27 12:34:56' AND \"cloud_cover.estimated\" > 0.2 AND \"camera.bit_depth\" <= 12 AND \"camera.bit_depth\" >= 12 AND \"camera.bit_depth\" < 13"
+    filterstring = "fid = 1 AND \"camera.color_mode\" = 'RGB' AND acquired >= '2015/03/27 12:34:56' AND acquired < '2015/03/27 12:34:57' AND \"cloud_cover.estimated\" > 0.2 AND \"camera.bit_depth\" <= 12 AND \"camera.bit_depth\" >= 12 AND \"camera.bit_depth\" < 13"
     lyr.SetAttributeFilter(filterstring)
     if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
@@ -409,13 +409,13 @@ def ogr_plscenes_v0_1():
         return 'fail'
 
     # Filters on image_statistics.image_quality that must be transformed
-    filterstring = "\"image_statistics.image_quality\" = 'target' AND acquired = '2015/03/27 12:34:56'"
+    filterstring = "\"image_statistics.image_quality\" = 'target' AND acquired >= '2015/03/27 12:34:56' AND acquired < '2015/03/27 12:34:57'"
     lyr.SetAttributeFilter(filterstring)
     if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    filterstring = "\"image_statistics.image_quality\" != 'standard' AND acquired = '2015/03/27 12:34:56'"
+    filterstring = "\"image_statistics.image_quality\" != 'standard' AND acquired >= '2015/03/27 12:34:56' AND acquired < '2015/03/27 12:34:57'"
     lyr.SetAttributeFilter(filterstring)
     if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
@@ -1938,7 +1938,7 @@ def ogr_plscenes_v1_nominal():
         return 'fail'
 
     # Test attribute filter fully evaluated on server side.
-    lyr.SetAttributeFilter("float >= 0 AND int32 < 3 AND float <= 1 AND string = 'foo' AND int32 > 1 AND created = '2016/02/11 12:34:56'")
+    lyr.SetAttributeFilter("float >= 0 AND int32 < 3 AND float <= 1 AND string = 'foo' AND int32 > 1 AND created >= '2016/02/11 12:34:56' AND created < '2016/02/11 12:34:57'")
     gdal.FileFromMemBuffer('/vsimem/v1/catalogs/my_catalog/items/?_page_size=100&_permissions=assets.visual:download&created=[2016-02-11T12:34:56Z:2016-02-11T12:34:57Z]&catalog::float=[0.00000000:1.00000000]&catalog::string=foo&catalog::int32=[1:3]',
 """{
     "features" : [
