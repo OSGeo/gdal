@@ -114,6 +114,7 @@ public:
     ~swq_expr_node();
 
     void           Initialize();
+    void           MarkAsTimestamp();
     CPLString      UnparseOperationFromUnparsedSubExpr(char** apszSubExpr);
     char          *Unparse( swq_field_list *, char chColumnQuote );
     void           Dump( FILE *fp, int depth );

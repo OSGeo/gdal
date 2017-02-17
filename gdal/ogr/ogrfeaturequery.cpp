@@ -241,6 +241,12 @@ static swq_expr_node *OGRFeatureFetcher( swq_expr_node *op, void *pFeatureIn )
             poFeature->GetFieldAsDouble(op->field_index) );
         break;
 
+      case SWQ_TIMESTAMP:
+        poRetNode = new swq_expr_node(
+            poFeature->GetFieldAsString(op->field_index) );
+        poRetNode->MarkAsTimestamp();
+        break;
+        
       default:
         poRetNode = new swq_expr_node(
             poFeature->GetFieldAsString(op->field_index) );

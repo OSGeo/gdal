@@ -42,6 +42,7 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "ogr_geometry.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
@@ -267,6 +268,26 @@ char* OGRHStoreGetValue(const char* pszHStore, const char* pszSearchedKey)
     CPLFree(pszHStoreDup);
     return pszRet;
 }
+
+#ifdef DEBUG_VERBOSE
+/************************************************************************/
+/*                         OGRFormatDate()                              */
+/************************************************************************/
+
+static const char * OGRFormatDate(const OGRField *psField)
+{
+    CPLString osResult;
+
+    osResult.Printf("%04d/%02d/%02d %02d:%02d:%06.3f",
+                    psField->Date.Year,
+                    psField->Date.Month,
+                    psField->Date.Day,
+                    psField->Date.Hour,
+                    psField->Date.Minute,
+                    psField->Date.Second );
+    return CPLSPrintf(osResult);
+}
+#endif
 
 /************************************************************************/
 /*                        SWQGeneralEvaluator()                         */
@@ -557,6 +578,89 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                 poRet->int_value = sub_node_values[0]->int_value
                     % sub_node_values[1]->int_value;
             break;
+
+          default:
+            CPLAssert( false );
+            delete poRet;
+            poRet = NULL;
+            break;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      datetime                                                        */
+/* -------------------------------------------------------------------- */
+    else if( sub_node_values[0]->field_type == SWQ_TIMESTAMP
+             && (node->nOperation == SWQ_EQ
+                 || node->nOperation == SWQ_GT
+                 || node->nOperation == SWQ_GE
+                 || node->nOperation == SWQ_LT
+                 || node->nOperation == SWQ_LE
+                 || node->nOperation == SWQ_BETWEEN) )
+    {
+        OGRField sField0, sField1;
+        poRet = new swq_expr_node(0);
+        poRet->field_type = node->field_type;
+
+        if( !OGRParseDate(sub_node_values[0]->string_value, &sField0, 0))
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Failed to parse date '%s' evaluating OGR WHERE expression",
+                sub_node_values[0]->string_value);
+            delete poRet;
+            return NULL;
+        }
+        if( !OGRParseDate(sub_node_values[1]->string_value, &sField1, 0))
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Failed to parse date '%s' evaluating OGR WHERE expression",
+                sub_node_values[1]->string_value);
+            delete poRet;
+            return NULL;
+        }
+
+        switch( (swq_op) node->nOperation )
+        {
+          case SWQ_GT:
+            poRet->int_value = OGRCompareDate(&sField0, &sField1) > 0;
+            break;
+
+          case SWQ_GE:
+            poRet->int_value = OGRCompareDate(&sField0, &sField1) >= 0;
+            break;
+
+          case SWQ_LT:
+            poRet->int_value = OGRCompareDate(&sField0, &sField1) < 0;
+            break;
+
+          case SWQ_LE:
+            poRet->int_value = OGRCompareDate(&sField0, &sField1) <= 0;
+            break;
+
+          case SWQ_EQ:
+            poRet->int_value = OGRCompareDate(&sField0, &sField1) == 0;
+            break;
+
+          case SWQ_BETWEEN:
+          {
+              OGRField sField2;
+              if( !OGRParseDate(sub_node_values[2]->string_value, &sField2, 0) )
+              {
+                  CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Failed to parse date '%s' evaluating OGR WHERE expression",
+                    sub_node_values[2]->string_value);
+                  delete poRet;
+                  return NULL;
+              }
+
+              poRet->int_value =
+                  (OGRCompareDate(&sField0, &sField1) >= 0)
+                  && (OGRCompareDate(&sField0, &sField2) <= 0);
+          }
+          break;
 
           default:
             CPLAssert( false );
