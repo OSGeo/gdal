@@ -30,6 +30,7 @@ cpl_config.h
 *.vcxproj.user
 /[Dd]ebug
 /[Rr]elease
+/x64
 /.vs
 /.vscode
 frmts/jpeg/libjpeg12/*.c
