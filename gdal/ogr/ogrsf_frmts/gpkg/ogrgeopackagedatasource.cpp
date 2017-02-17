@@ -565,8 +565,12 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         return FALSE;
 
     OGRErr eErr;
-    m_nApplicationId = SQLGetInteger(hDB, "PRAGMA application_id", &eErr);
-    m_nUserVersion = SQLGetInteger(hDB, "PRAGMA user_version", &eErr);
+    int nTmp = SQLGetInteger(hDB, "PRAGMA application_id", &eErr);
+    if( eErr == OGRERR_NONE )
+        m_nApplicationId = nTmp;
+    nTmp = SQLGetInteger(hDB, "PRAGMA user_version", &eErr);
+    if( eErr == OGRERR_NONE )
+        m_nUserVersion = nTmp;
 
     /* Requirement 6: The SQLite PRAGMA integrity_check SQL command SHALL return “ok” */
     /* http://opengis.github.io/geopackage/#_file_integrity */
