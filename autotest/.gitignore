@@ -6,6 +6,11 @@ cpp/*.exp
 cpp/*.ilk
 cpp/*.lib
 cpp/*.pdb
+cpp/*.vcxproj
+cpp/*.vcxproj.filters
+cpp/*.vcxproj.user
+cpp/[Dd]ebug
+cpp/[Rr]elease
 ogr/tmp
 ogr/data/delete_nas.gfs
 ogr/data/replace_nas.gfs
