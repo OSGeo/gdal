@@ -3057,8 +3057,10 @@ def gpkg_39():
 
     gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', noData = 1, creationOptions = ['TILING_SCHEME=GoogleMapsCompatible'])
     ds = gdal.Open('/vsimem/gpkg_39.gpkg')
-    if ds.GetRasterBand(1).Checksum() != 4118:
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4118 and cs != 4077:
         gdaltest.post_reason('fail')
+        print(cs)
         return 'fail'
 
     gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', width = 1024, height = 1024)
