@@ -352,7 +352,8 @@ int  GenerateChildKml(std::string filename,
         maxLodPix = 2048;
 
         bool hasChildKML = false;
-        for ( std::vector<std::pair<std::pair<int,int>,bool> >::iterator it=childTiles.begin() ; it < childTiles.end(); it++ )
+        for ( std::vector<std::pair<std::pair<int,int>,bool> >::iterator it=
+                            childTiles.begin() ; it < childTiles.end(); ++it )
         {
             if ((*it).second) {
                 hasChildKML = true;
@@ -444,7 +445,8 @@ int  GenerateChildKml(std::string filename,
     }
     VSIFPrintfL(fp, "\t\t</GroundOverlay>\n");
 
-    for ( std::vector<std::pair<std::pair<int,int>,bool> >::iterator it=childTiles.begin() ; it < childTiles.end(); it++ )
+    for ( std::vector<std::pair<std::pair<int,int>,bool> >::iterator it=
+                            childTiles.begin() ; it < childTiles.end(); ++it )
     {
         int cx = (*it).first.first;
         int cy = (*it).first.second;
