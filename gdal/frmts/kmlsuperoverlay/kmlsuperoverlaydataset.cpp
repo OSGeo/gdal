@@ -944,7 +944,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
                 parentXYKey = std::make_pair(ix / 2, iy / 2);
 
                 // only create child KML if there are child tiles
-                bool hasChildKML = (bool)childTiles[childXYKey].size();
+                bool hasChildKML = !childTiles[childXYKey].empty();
                 if (!currentTiles.count(parentXYKey)) {
                     currentTiles[parentXYKey] = std::vector<std::pair<std::pair<int,int>,bool> >();
                 }
