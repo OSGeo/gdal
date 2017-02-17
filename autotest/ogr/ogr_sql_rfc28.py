@@ -1426,6 +1426,119 @@ def ogr_rfc28_47():
     return 'success'
 
 ###############################################################################
+# Test date/datetime comparisons (#6810)
+
+def ogr_rfc28_48():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('lyr')
+    fld_defn = ogr.FieldDefn('dt', ogr.OFTDateTime)
+    lyr.CreateField(fld_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('dt', '2017/02/17 11:06:34')
+    lyr.CreateFeature(feat)
+
+    with gdaltest.error_handler():
+        if lyr.SetAttributeFilter('dt >= 2500000000') == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    lyr.SetAttributeFilter("dt >= 'a'")
+    with gdaltest.error_handler():
+        if lyr.GetFeatureCount() != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    lyr.SetAttributeFilter("'a' <= dt")
+    with gdaltest.error_handler():
+        if lyr.GetFeatureCount() != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    lyr.SetAttributeFilter("dt BETWEEN dt AND 'a'")
+    with gdaltest.error_handler():
+        if lyr.GetFeatureCount() != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    lyr.SetAttributeFilter("dt >= '2017/02/17 11:06:34'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt >= '2017/02/17'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt >= '2017/02/17 11:06:35'")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt > '2017/02/17 11:06:33'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt > '2017/02/17 11:06:34'")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt <= '2017/02/17 11:06:34'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt <= '2017/02/17 11:06:33'")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt < '2017/02/17 11:06:35'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt < '2017/02/17 11:06:34'")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt = '2017/02/17 11:06:34'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt = '2017/02/17 11:06:34.001'")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt BETWEEN dt AND dt")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt BETWEEN '2017/02/17 11:06:33.999' AND '2017/02/17 11:06:34.001'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt BETWEEN '2017/02/17 11:06:34.001' AND dt")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt BETWEEN dt AND '2017/02/17 11:06:33.999'")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
@@ -1485,6 +1598,7 @@ gdaltest_list = [
     ogr_rfc28_45,
     ogr_rfc28_46,
     ogr_rfc28_47,
+    ogr_rfc28_48,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':

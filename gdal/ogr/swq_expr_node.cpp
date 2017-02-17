@@ -180,6 +180,18 @@ swq_expr_node::~swq_expr_node()
 }
 
 /************************************************************************/
+/*                          MarkAsTimestamp()                           */
+/************************************************************************/
+
+void swq_expr_node::MarkAsTimestamp()
+
+{
+    CPLAssert( eNodeType == SNT_CONSTANT );
+    CPLAssert( field_type == SWQ_STRING );
+    field_type = SWQ_TIMESTAMP;
+}
+
+/************************************************************************/
 /*                         PushSubExpression()                          */
 /************************************************************************/
 
