@@ -52,7 +52,10 @@ set _vcver_=%1
 set _clver_=1600
 set _vstoolset_=v100
 
-if "%_vcver_%"=="14.0" (
+if "%_vcver_%"=="15.0" (
+	set _clver_=1910
+	set _vstoolset_=v141
+) else if "%_vcver_%"=="14.0" (
 	set _clver_=1900
 	set _vstoolset_=v140
 ) else ( if "%_vcver_%"=="12.0" (
@@ -107,6 +110,7 @@ echo    generate_vcxproj 10.1 32 gdal_vs2010
 echo    generate_vcxproj 11.0 64 gdal_vs2012
 echo    generate_vcxproj 12.0 64 gdal_vs2013
 echo    generate_vcxproj 14.0 64 gdal_vs2015
+echo    generate_vcxproj 15.0 64 gdal_vs2017
 
 goto :end
 
