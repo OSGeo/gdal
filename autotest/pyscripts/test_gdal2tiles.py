@@ -135,10 +135,41 @@ def test_does_not_error_when_source_bounds_close_to_tiles_bound():
     return 'success'
 
 
+def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile():
+    """
+    Case when the highest zoom level asked is actually too low for any pixel of the raster to be
+    selected
+    """
+    in_file = './data/test_bounds_close_to_tile_bounds_x.vrt'
+    out_folder = 'tmp/out_gdal2tiles_bounds_approx'
+    try:
+        shutil.rmtree(out_folder)
+    except:
+        pass
+
+    script_path = test_py_scripts.get_py_script('gdal2tiles')
+    if script_path is None:
+        return 'skip'
+
+    try:
+        test_py_scripts.run_py_script(
+            script_path,
+            'gdal2tiles',
+            '-q -z 10 %s %s' % (in_file, out_folder))
+    except TypeError:
+        gdaltest.post_reason(
+            'Case of low level tile not getting any data not handled properly '
+            '(tile at a zoom level too low)')
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [
     test_gdal2tiles_py_1,
     test_gdal2tiles_py_2,
     test_does_not_error_when_source_bounds_close_to_tiles_bound,
+    test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile,
     test_gdal2tiles_py_cleanup,
     ]
 

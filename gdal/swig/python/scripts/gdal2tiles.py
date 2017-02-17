@@ -1246,12 +1246,7 @@ gdal2tiles temp.vrt""" % self.input )
                 # to the native resolution (and return smaller query tile) for scaling
 
                 if self.options.profile in ('mercator','geodetic'):
-                    try:
-                        rb, wb = self.geo_query( ds, b[0], b[3], b[2], b[1])
-                    except Gdal2TilesError:
-                        if self.options.verbose:
-                            print("Nothing from the input to put in output ", b)
-                        continue
+                    rb, wb = self.geo_query( ds, b[0], b[3], b[2], b[1])
 
                     nativesize = wb[0]+wb[2] # Pixel size in the raster covering query geo extent
                     if self.options.verbose:
@@ -1298,28 +1293,36 @@ gdal2tiles temp.vrt""" % self.input )
 
                 # Tile dataset in memory
                 dstile = self.mem_drv.Create('', self.tilesize, self.tilesize, tilebands)
-                data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize, band_list=list(range(1,self.dataBandsCount+1)))
-                alpha = self.alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
 
-                if self.tilesize == querysize:
-                    # Use the ReadRaster result directly in tiles ('nearest neighbour' query)
-                    dstile.WriteRaster(wx, wy, wxsize, wysize, data, band_list=list(range(1,self.dataBandsCount+1)))
-                    dstile.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
+                data = alpha = None
+                # Read the source raster if anything is going inside the tile as per the computed
+                # geo_query
+                if rxsize != 0 and rysize != 0 and wxsize != 0 and wysize != 0:
+                    data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize, band_list=list(range(1,self.dataBandsCount+1)))
+                    alpha = self.alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
 
-                    # Note: For source drivers based on WaveLet compression (JPEG2000, ECW, MrSID)
-                    # the ReadRaster function returns high-quality raster (not ugly nearest neighbour)
-                    # TODO: Use directly 'near' for WaveLet files
-                else:
-                    # Big ReadRaster query in memory scaled to the tilesize - all but 'near' algo
-                    dsquery = self.mem_drv.Create('', querysize, querysize, tilebands)
-                    # TODO: fill the null value in case a tile without alpha is produced (now only png tiles are supported)
-                    #for i in range(1, tilebands+1):
-                    #   dsquery.GetRasterBand(1).Fill(tilenodata)
-                    dsquery.WriteRaster(wx, wy, wxsize, wysize, data, band_list=list(range(1,self.dataBandsCount+1)))
-                    dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
+                # The tile in memory is a transparent file by default. Write pixel values into it if
+                # any
+                if data:
+                    if self.tilesize == querysize:
+                        # Use the ReadRaster result directly in tiles ('nearest neighbour' query)
+                        dstile.WriteRaster(wx, wy, wxsize, wysize, data, band_list=list(range(1,self.dataBandsCount+1)))
+                        dstile.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
 
-                    self.scale_query_to_tile(dsquery, dstile, tilefilename)
-                    del dsquery
+                        # Note: For source drivers based on WaveLet compression (JPEG2000, ECW, MrSID)
+                        # the ReadRaster function returns high-quality raster (not ugly nearest neighbour)
+                        # TODO: Use directly 'near' for WaveLet files
+                    else:
+                        # Big ReadRaster query in memory scaled to the tilesize - all but 'near' algo
+                        dsquery = self.mem_drv.Create('', querysize, querysize, tilebands)
+                        # TODO: fill the null value in case a tile without alpha is produced (now only png tiles are supported)
+                        #for i in range(1, tilebands+1):
+                        #   dsquery.GetRasterBand(1).Fill(tilenodata)
+                        dsquery.WriteRaster(wx, wy, wxsize, wysize, data, band_list=list(range(1,self.dataBandsCount+1)))
+                        dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
+
+                        self.scale_query_to_tile(dsquery, dstile, tilefilename)
+                        del dsquery
 
                 del data
 
@@ -1478,11 +1481,6 @@ gdal2tiles temp.vrt""" % self.input )
         if ry+rysize > ds.RasterYSize:
             wysize = int( wysize * (float(ds.RasterYSize - ry) / rysize) )
             rysize = ds.RasterYSize - ry
-
-        # Following rounding, it is possible that less than 1 pixel (a fraction of a pixel) is
-        # actually meant for the tile requested (can happen on tiles close to a border of the image)
-        if rxsize == 0 or rysize == 0:
-            raise Gdal2TilesError("Nothing in this dataset fits in that query")
 
         return (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize)
 
