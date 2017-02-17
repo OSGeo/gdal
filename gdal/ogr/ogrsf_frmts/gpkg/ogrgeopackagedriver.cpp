@@ -32,10 +32,6 @@ CPL_CVSID("$Id$");
 
 // g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal
 
-/* "GP10" in ASCII bytes */
-static const char aGpkgId[4] = {0x47, 0x50, 0x31, 0x30};
-// static const size_t szGpkgIdPos = 68;
-
 /************************************************************************/
 /*                       OGRGeoPackageDriverIdentify()                  */
 /************************************************************************/
@@ -62,12 +58,17 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
     const char* pszExt = CPLGetExtension(poOpenInfo->pszFilename);
     const bool bIsRecognizedExtension = EQUAL(pszExt, "GPKG") || EQUAL(pszExt, "GPKX");
 
-    /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) */
-    /* in the application id */
+    /* Requirement 2: application id */
     /* http://opengis.github.io/geopackage/#_file_format */
     /* Be tolerant since some datasets don't actually follow that requirement */
+    const GUInt32 nGP10ApplicationIdMSB = CPL_MSBWORD32(GP10_APPLICATION_ID);
+    const GUInt32 nGP11ApplicationIdMSB = CPL_MSBWORD32(GP11_APPLICATION_ID);
+    const GUInt32 nGPKGApplicationIdMSB = CPL_MSBWORD32(GPKG_APPLICATION_ID);
+    const GUInt32 nVersionGPKG12MSB = CPL_MSBWORD32(GPKG_1_2_VERSION);
     if( poOpenInfo->nHeaderBytes < 68 + 4 ||
-        memcmp(poOpenInfo->pabyHeader + 68, aGpkgId, 4) != 0 )
+        (memcmp(poOpenInfo->pabyHeader + 68, &nGP10ApplicationIdMSB, 4) != 0 &&
+         memcmp(poOpenInfo->pabyHeader + 68, &nGP11ApplicationIdMSB, 4) != 0 &&
+         memcmp(poOpenInfo->pabyHeader + 68, &nGPKGApplicationIdMSB, 4) != 0) )
     {
 #ifdef DEBUG
         if( EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")  )
@@ -80,45 +81,61 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
 
         if( bEmitWarning )
         {
-            char szSignature[4+1];
-            memcpy(szSignature, poOpenInfo->pabyHeader + 68, 4);
-            szSignature[4] = '\0';
+            GByte abySignature[4+1];
+            memcpy(abySignature, poOpenInfo->pabyHeader + 68, 4);
+            abySignature[4] = '\0';
 
             /* Is this a GPxx version ? */
             const bool bWarn = CPLTestBool(CPLGetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "YES"));
-            if( szSignature[0] == 'G' && szSignature[1] == 'P' &&
-                szSignature[2] >= '0' && szSignature[2] <= '9' &&
-                szSignature[3] >= '0' && szSignature[3] <= '9' )
+            if( bWarn )
             {
-                if( bWarn )
-                {
-                    CPLError( CE_Warning, CPLE_AppDefined,
-                              "GPKG: '%s' has version '%s' with may be partially supported by this driver",
-                              poOpenInfo->pszFilename, szSignature );
-                }
-                else
-                {
-                    CPLDebug( "GPKG",
-                              "'%s' has version '%s' with may be partially supported by this driver",
-                              poOpenInfo->pszFilename, szSignature );
-                }
+                CPLError( CE_Warning, CPLE_AppDefined,
+                            "GPKG: bad application_id 0x%02X%02X%02X%02X on '%s'",
+                            abySignature[0], abySignature[1], abySignature[2], abySignature[3],
+                            poOpenInfo->pszFilename );
             }
             else
             {
-                if( bWarn )
-                {
-                    CPLError( CE_Warning, CPLE_AppDefined,
-                              "GPKG: bad application_id 0x%02X%02X%02X%02X on '%s'",
-                              szSignature[0], szSignature[1], szSignature[2], szSignature[3],
-                              poOpenInfo->pszFilename );
-                }
-                else
-                {
-                    CPLDebug( "GPKG",
-                              "bad application_id 0x%02X%02X%02X%02X on '%s'",
-                              szSignature[0], szSignature[1], szSignature[2], szSignature[3],
-                              poOpenInfo->pszFilename );
-                }
+                CPLDebug( "GPKG",
+                            "bad application_id 0x%02X%02X%02X%02X on '%s'",
+                            abySignature[0], abySignature[1], abySignature[2], abySignature[3],
+                            poOpenInfo->pszFilename );
+            }
+        }
+    }
+    else if( poOpenInfo->nHeaderBytes >= 68 + 4 &&
+             memcmp(poOpenInfo->pabyHeader + 68, &nGPKGApplicationIdMSB, 4) == 0 &&
+             memcmp(poOpenInfo->pabyHeader + 60, &nVersionGPKG12MSB, 4) != 0 )
+    {
+#ifdef DEBUG
+        if( EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")  )
+        {
+            return FALSE;
+        }
+#endif
+        if( !bIsRecognizedExtension )
+            return FALSE;
+
+        if( bEmitWarning )
+        {
+            GByte abySignature[4+1];
+            memcpy(abySignature, poOpenInfo->pabyHeader + 60, 4);
+            abySignature[4] = '\0';
+
+            const bool bWarn = CPLTestBool(CPLGetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "YES"));
+            if( bWarn )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                            "GPKG: bad user_version 0x%02X%02X%02X%02X on '%s'",
+                            abySignature[0], abySignature[1], abySignature[2], abySignature[3],
+                            poOpenInfo->pszFilename );
+            }
+            else
+            {
+                CPLDebug( "GPKG",
+                            "bad user_version 0x%02X%02X%02X%02X on '%s'",
+                            abySignature[0], abySignature[1], abySignature[2], abySignature[3],
+                            poOpenInfo->pszFilename );
             }
         }
     }
@@ -229,15 +246,17 @@ void RegisterOGRGeoPackage()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoPackage" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gpkg" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_geopackage.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16 UInt16 Float32" );
 
 #define COMPRESSION_OPTIONS \
-"  <Option name='TILE_FORMAT' type='string-select' description='Format to use to create tiles' default='PNG_JPEG'>" \
+"  <Option name='TILE_FORMAT' type='string-select' description='Format to use to create tiles' default='AUTO'>" \
+"    <Value>AUTO</Value>" \
 "    <Value>PNG_JPEG</Value>" \
 "    <Value>PNG</Value>" \
 "    <Value>PNG8</Value>" \
 "    <Value>JPEG</Value>" \
 "    <Value>WEBP</Value>" \
+"    <Value>TIFF</Value>" \
 "  </Option>" \
 "  <Option name='QUALITY' type='int' min='1' max='100' description='Quality for JPEG and WEBP tiles' default='75'/>" \
 "  <Option name='ZLEVEL' type='int' min='1' max='9' description='DEFLATE compression level for PNG tiles' default='6'/>" \
@@ -291,6 +310,13 @@ COMPRESSION_OPTIONS
 "    <Value>LANCZOS</Value>"
 "    <Value>MODE</Value>"
 "    <Value>AVERAGE</Value>"
+"  </Option>"
+"  <Option name='PRECISION' type='float' description='Smallest significant value. Only used for tiled gridded elevation datasets' default='1'/>"
+"  <Option name='VERSION' type='string-select' description='Set GeoPackage version (for application_id and user_version fields)' default='AUTO'>"
+"     <Value>AUTO</Value>"
+"     <Value>1.0</Value>"
+"     <Value>1.1</Value>"
+"     <Value>1.2</Value>"
 "  </Option>"
 "</CreationOptionList>");
 

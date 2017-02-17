@@ -48,7 +48,9 @@ typedef enum
     GPKG_TF_PNG,
     GPKG_TF_PNG8,
     GPKG_TF_JPEG,
-    GPKG_TF_WEBP
+    GPKG_TF_WEBP,
+    GPKG_TF_PNG_16BIT, // For GPKG elevation data
+    GPKG_TF_TIFF_32BIT_FLOAT // For GPKG elevation data
 } GPKGTileFormat;
 
 GPKGTileFormat GDALGPKGMBTilesGetTileFormat(const char* pszTF );
@@ -62,6 +64,11 @@ class GDALGPKGMBTilesLikePseudoDataset
     bool                m_bHasModifiedTiles;
 
     CPLString           m_osRasterTable;
+    GDALDataType        m_eDT;
+    int                 m_nDTSize;
+    double              m_dfOffset;
+    double              m_dfScale;
+    double              m_dfPrecision;
     int                 m_nZoomLevel;
     GByte              *m_pabyCachedTiles;
     CachedTileDesc      m_asCachedTilesDesc[4];
@@ -98,15 +105,31 @@ class GDALGPKGMBTilesLikePseudoDataset
 
     GDALGPKGMBTilesLikePseudoDataset* m_poParentDS;
 
+  private:
         bool                    m_bInWriteTile;
         CPLErr                  WriteTileInternal(); /* should only be called by WriteTile() */
+        GIntBig                 GetTileId(int nRow, int nCol);
+        bool                    DeleteTile(int nRow, int nCol);
+        bool                    DeleteFromGriddedTileAncillary(GIntBig nTileId);
+        void                    GetTileOffsetAndScale(
+                                    GIntBig nTileId,
+                                    double& dfTileOffset, double& dfTileScale);
+        void                    FillBuffer(GByte* pabyData, size_t nPixels);
+        void                    FillEmptyTile(GByte* pabyData);
+        void                    FillEmptyTileSingleBand(GByte* pabyData);
 
   public:
                                 GDALGPKGMBTilesLikePseudoDataset();
         virtual                ~GDALGPKGMBTilesLikePseudoDataset();
 
+        void                    SetDataType(GDALDataType eDT);
+        void                    SetGlobalOffsetScale(double dfOffset,
+                                                     double dfScale);
+
         CPLErr                  ReadTile(const CPLString& osMemFileName,
                                          GByte* pabyTileData,
+                                         double dfTileOffset,
+                                         double dfTileScale,
                                          bool* pbIsLossyFormat = NULL);
         GByte*                  ReadTile(int nRow, int nCol);
         GByte*                  ReadTile(int nRow, int nCol, GByte* pabyData,
@@ -136,6 +159,9 @@ class GDALGPKGMBTilesLikePseudoDataset
 class GDALGPKGMBTilesLikeRasterBand: public GDALPamRasterBand
 {
     GDALGPKGMBTilesLikePseudoDataset* m_poTPD;
+    int                               m_nDTSize;
+    bool                              m_bHasNoData;
+    double                            m_dfNoDataValue;
 
     public:
                                 GDALGPKGMBTilesLikeRasterBand(GDALGPKGMBTilesLikePseudoDataset* poTPD,
@@ -152,6 +178,9 @@ class GDALGPKGMBTilesLikeRasterBand: public GDALPamRasterBand
 
         virtual GDALColorInterp GetColorInterpretation() override;
         virtual CPLErr          SetColorInterpretation( GDALColorInterp ) override;
+
+        virtual double          GetNoDataValue( int* pbSuccess = NULL ) override;
+        void                    SetNoDataValueInternal( double dfNoDataValue );
 
     protected:
         friend class GDALGPKGMBTilesLikePseudoDataset;

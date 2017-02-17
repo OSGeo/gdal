@@ -3008,6 +3008,223 @@ def gpkg_38():
     return 'success'
 
 ###############################################################################
+# Test tile gridded elevation data
+
+def gpkg_39():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/int16.tif')
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG')
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_Int16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    sql_lyr = ds.ExecuteSQL('SELECT scale, offset FROM gpkg_2d_gridded_tile_ancillary')
+    f = sql_lyr.GetNextFeature()
+    if f['scale'] != 1.0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
+    f = sql_lyr.GetNextFeature()
+    if f['application_id'] != 1196444487:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
+    f = sql_lyr.GetNextFeature()
+    if f['user_version'] != 10200:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', noData = 1)
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', noData = 1, creationOptions = ['TILING_SCHEME=GoogleMapsCompatible'])
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetRasterBand(1).Checksum() != 4118:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', outputType = gdal.GDT_UInt16)
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    sql_lyr = ds.ExecuteSQL('SELECT scale, offset FROM gpkg_2d_gridded_tile_ancillary')
+    f = sql_lyr.GetNextFeature()
+    if f['scale'] != 1.0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', outputType = gdal.GDT_UInt16, noData = 1)
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    src_ds = gdal.Open('data/float32.tif')
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG')
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_Float32:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    sql_lyr = ds.ExecuteSQL('SELECT scale, offset FROM gpkg_2d_gridded_tile_ancillary')
+    f = sql_lyr.GetNextFeature()
+    if f.IsFieldSetAndNotNull('scale'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', noData = 1)
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', creationOptions = ['TILE_FORMAT=PNG'])
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_Float32:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    sql_lyr = ds.ExecuteSQL('SELECT scale, offset FROM gpkg_2d_gridded_tile_ancillary')
+    f = sql_lyr.GetNextFeature()
+    if f['scale'] == 1.0 or not f.IsFieldSetAndNotNull('scale'):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', noData = 1, creationOptions = ['TILE_FORMAT=PNG'])
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/gpkg_39.gpkg')
+
+    return 'success'
+
+###############################################################################
+# Test VERSION
+
+def gpkg_40():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.tif')
+    # Should default to 1.0
+    gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format = 'GPKG')
+    ds = gdal.Open('/vsimem/gpkg_40.gpkg')
+    sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
+    f = sql_lyr.GetNextFeature()
+    if f['application_id'] != 1196437808:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
+    f = sql_lyr.GetNextFeature()
+    if f['user_version'] != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Should default to 1.2 if we didn't override it.
+    gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format = 'GPKG',
+                   outputType = gdal.GDT_Int16, creationOptions = ['VERSION=1.0'])
+    ds = gdal.Open('/vsimem/gpkg_40.gpkg')
+    sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
+    f = sql_lyr.GetNextFeature()
+    if f['application_id'] != 1196437808:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
+    f = sql_lyr.GetNextFeature()
+    if f['user_version'] != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format = 'GPKG',
+                   creationOptions = ['VERSION=1.1'])
+    ds = gdal.Open('/vsimem/gpkg_40.gpkg')
+    sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
+    f = sql_lyr.GetNextFeature()
+    if f['application_id'] != 1196437809:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
+    f = sql_lyr.GetNextFeature()
+    if f['user_version'] != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format = 'GPKG',
+                   creationOptions = ['VERSION=1.2'])
+    ds = gdal.Open('/vsimem/gpkg_40.gpkg')
+    sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
+    f = sql_lyr.GetNextFeature()
+    if f['application_id'] != 1196444487:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
+    f = sql_lyr.GetNextFeature()
+    if f['user_version'] != 10200:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    gdal.Unlink('/vsimem/gpkg_40.gpkg')
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -3067,9 +3284,11 @@ gdaltest_list = [
     gpkg_36,
     gpkg_37,
     gpkg_38,
+    gpkg_39,
+    gpkg_40,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_38, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_40, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )

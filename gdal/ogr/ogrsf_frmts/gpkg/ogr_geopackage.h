@@ -47,6 +47,15 @@ typedef enum
     NOT_REGISTERED,
 } GPKGASpatialVariant;
 
+// Requirement 2
+static const int GP10_APPLICATION_ID = 0x47503130;
+static const int GP11_APPLICATION_ID = 0x47503131;
+static const int GPKG_APPLICATION_ID = 0x47504B47;
+static const GUInt32 GPKG_1_2_VERSION = 0x000027D8; // 10200
+
+static const size_t knGpkgIdPos = 68;
+static const size_t knUserVersionPos = 60;
+
 /************************************************************************/
 /*                          GDALGeoPackageDataset                       */
 /************************************************************************/
@@ -58,6 +67,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
     friend class GDALGeoPackageRasterBand;
     friend class OGRGeoPackageTableLayer;
 
+    int                 m_nApplicationId;
+    int                 m_nUserVersion;
     OGRGeoPackageTableLayer** m_papoLayers;
     int                 m_nLayers;
     bool                m_bUtf8;
@@ -129,6 +140,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
                             const char* pszContentsMinY,
                             const char* pszContentsMaxX,
                             const char* pszContentsMaxY,
+                            bool bIsTiles,
                             char** papszOptions );
         CPLErr   FinalizeRasterRegistration();
 
@@ -144,6 +156,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
         CPLErr                  FlushMetadata();
 
         int                     FindLayerIndex(const char* pszLayerName);
+
+        bool                    CreateTileGriddedTable(char** papszOptions);
 
     public:
                             GDALGeoPackageDataset();
@@ -233,7 +247,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
     private:
 
         OGRErr              PragmaCheck(const char * pszPragma, const char * pszExpected, int nRowsExpected);
-        OGRErr              SetApplicationId();
+        OGRErr              SetApplicationAndUserVersionId();
         bool                ReOpenDB();
         bool                OpenOrCreateDB( int flags );
         bool                HasGDALAspatialExtension();
@@ -251,6 +265,8 @@ class GDALGeoPackageRasterBand CPL_FINAL: public GDALGPKGMBTilesLikeRasterBand
 
         virtual int             GetOverviewCount() override;
         virtual GDALRasterBand* GetOverview(int nIdx) override;
+
+        virtual CPLErr          SetNoDataValue( double dfNoDataValue ) override;
 };
 
 /************************************************************************/
