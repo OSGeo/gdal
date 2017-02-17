@@ -130,13 +130,16 @@ the appropriate compression. All of this is transparent to the user of GDAL API/
 
 <h3><a id="tile_formats">Tile formats</a></h3>
 
+<h4>Tiled rasters</h4>
+
 <p>GeoPackage can store tiles in different formats, PNG and/or JPEG for the baseline
 specification, and WebP for extended GeoPackage. Support for those tile formats
 depend if the underlying drivers are available in GDAL, which is generally the
 case for PNG and JPEG, but not necessarily for WebP since it requires GDAL to
 be compiled against the optional libwebp.<p>
 
-<p>By default, GDAL will use a mix of PNG and JPEG tiles. PNG tiles will be used
+<p>By default, GDAL will use a mix of PNG and JPEG tiles (PNG_JPEG tile format,
+or AUTO). PNG tiles will be used
 to store tiles that are not completely opaque, either because input dataset has
 an alpha channel with non fully opaque content, or because tiles are partial due
 to clipping at the right or bottom edges of the raster, or when a dataset is opened
@@ -162,6 +165,20 @@ as the median-cut algorithm currently implemented to compute the optimal color
 table does not support alpha channel (even if PNG8 format would potentially allow
 color table with transparency). So when selecting PNG8, non fully opaque tiles
 will be stored as 32-bit PNG.</p>
+
+<h4>Tiled gridded elevation data</h4>
+
+<p>Since GeoPackage v1.2 and GDAL 2.2,
+<a href="http://www.geopackage.org/spec/#extension_tiled_gridded_elevation_data">
+tiled gridded elevation data</a> can be stored using
+PNG unsigned 16bit tiles (with potential offset and scaling so as to be able
+to represent floating point data) or TIFF 32-bit floating-point LZW compressed
+tiles.</p>
+
+<p>When converting a GDAL Int16 or UInt16 dataset, PNG tiles will be used.
+When converting a GDAL Float32 dataset, TIFF tiles will be used by default, unless
+PNG is explictly selected, in which case scaling and offsetting will be
+automatically computed for each tile.</p>
 
 <h3><a id="tiling_schemes">Tiling schemes</a></h3>
 
@@ -238,8 +255,8 @@ Defaults to 256. Maximum supported is 4096. Should not be set when using a non-c
 Defaults to 256. Maximum supported is 4096.</li>
 <li><b>BLOCKYSIZE</b>=integer. Block height in pixels.
 Defaults to 256. Maximum supported is 4096.</li>
-<li><b>TILE_FORMAT</b>=PNG_JPEG/PNG/PNG8/JPEG/WEBP: Format used to store tiles. See
-<a href="#tile_formats">Tile formats</a> section. Defaults to PNG_JPEG.</li>
+<li><b>TILE_FORMAT</b>=PNG_JPEG/PNG/PNG8/JPEG/WEBP/TIFF/AUTO: Format used to store tiles. See
+<a href="#tile_formats">Tile formats</a> section. Defaults to AUTO.</li>
 <li><b>QUALITY</b>=1-100: Quality setting for JPEG and WEBP compression. Default to 75.</li>
 <li><b>ZLEVEL</b>=1-9: DEFLATE compression level for PNG tiles. Default to 6.</li>
 <li><b>DITHER</b>=YES/NO: Whether to use Floyd-Steinberg dithering (for TILE_FORMAT=PNG8).
@@ -255,6 +272,12 @@ zoom level.</li>
 <li><b>RESAMPLING</b>=NEAREST/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/AVERAGE.
 Resampling algorithm. Only used for TILING_SCHEME is different from CUSTOM. Defaults
 to BILINEAR.</li>
+<li><b>PRECISION</b>=floating_point_value_in_vertical_units: Smallest significant value.
+Only used for tile gridded elevation data. Defaults to 1.</li>
+<li><b>VERSION</b>=AUTO/1.0/1.1/1.2: (GDAL &gt; 2.2) Set GeoPackage version
+(for application_id and user_version fields). In AUTO mode, this will be equivalent
+to 1.0, unless a tile gridded elevation dataset is created, in which case 1.2 will
+be used.</li>
 </ul>
 
 <h2>Overviews</h2>
@@ -296,6 +319,9 @@ although it can be through direct SQL commands).</p>
 <p>The specific DESCRIPTION and IDENTIFIER metadata item of the default metadata
 domain can be used in read/write to read from/update the corresponding columns of
 the gpkg_contents table.</p>
+
+<p>You can set the CREATE_METADATA_TABLES configuration option to NO to avoid
+creating and filling the metadata tables.</p>
 
 <h2>Examples</h2>
 
