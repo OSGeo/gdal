@@ -3251,7 +3251,6 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue( double dfNoDataValue )
     char* pszSQL = sqlite3_mprintf(
         "UPDATE gpkg_2d_gridded_coverage_ancillary SET data_null = ? "
         "WHERE tile_matrix_set_name = '%q'",
-        dfNoDataValue,
         poGDS->m_osRasterTable.c_str());
     sqlite3_stmt* hStmt = NULL;
     int rc = sqlite3_prepare(poGDS->IGetDB(), pszSQL, -1, &hStmt, NULL);
