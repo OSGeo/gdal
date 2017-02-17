@@ -418,7 +418,7 @@ void GDALGPKGMBTilesLikePseudoDataset::FillBuffer(GByte* pabyData,
     {
         GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
                       pabyData, m_eDT, m_nDTSize,
-                      nPixels);
+                      static_cast<int>(nPixels));
     }
 }
 
@@ -1721,7 +1721,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             {
                 ProcessInt16UInt16Tile<GInt16>( m_pabyCachedTiles,
                                                 nBlockXSize * nBlockYSize,
-                                                bHasNoData,
+                                                CPL_TO_BOOL(bHasNoData),
                                                 dfNoDataValue,
                                                 m_dfOffset,
                                                 m_dfScale,
@@ -1738,7 +1738,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             {
                 ProcessInt16UInt16Tile<GUInt16>( m_pabyCachedTiles,
                                                 nBlockXSize * nBlockYSize,
-                                                bHasNoData,
+                                                CPL_TO_BOOL(bHasNoData),
                                                 dfNoDataValue,
                                                 m_dfOffset,
                                                 m_dfScale,
