@@ -3061,6 +3061,19 @@ def gpkg_39():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', width = 1024, height = 1024)
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg', gdal.GA_Update)
+    ds.BuildOverviews('NEAR', [2, 4])
+    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 37308:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOverview(0).Checksum())
+        return 'fail'
+    ds.BuildOverviews('NONE', [])
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetRasterBand(1).GetOverviewCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', outputType = gdal.GDT_UInt16)
     ds = gdal.Open('/vsimem/gpkg_39.gpkg')
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
