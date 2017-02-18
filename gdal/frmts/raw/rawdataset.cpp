@@ -287,11 +287,12 @@ CPLErr RawRasterBand::AccessLine( int iLine )
         return CE_None;
 
     // Figure out where to start reading.
+    // Negative nPixelOffset is used to specify the offset.
+    const vsi_l_offset nPixelOffsetActual =
+        nPixelOffset >= 0 ? 0 : -nPixelOffset * (nBlockXSize - 1);
     const vsi_l_offset nReadStart =
-        nPixelOffset >= 0
-            ? nImgOffset + static_cast<vsi_l_offset>(iLine) * nLineOffset
-            : nImgOffset + static_cast<vsi_l_offset>(iLine) * nLineOffset -
-                  std::abs(nPixelOffset) * (nBlockXSize - 1);
+        nImgOffset + static_cast<vsi_l_offset>(iLine) * nLineOffset +
+        nPixelOffsetActual;
 
     // Seek to the correct line.
     if( Seek(nReadStart, SEEK_SET) == -1 )
@@ -426,11 +427,12 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
     }
 
     // Figure out where to start writing.
+    // Negative nPixelOffset is used to specify the offset.
+    const vsi_l_offset nPixelOffsetActual =
+        nPixelOffset >= 0 ? 0 : -nPixelOffset * (nBlockXSize - 1);
     const vsi_l_offset nWriteStart =
-        nPixelOffset >= 0
-            ? nImgOffset + static_cast<vsi_l_offset>(nBlockYOff) * nLineOffset
-            : nImgOffset + static_cast<vsi_l_offset>(nBlockYOff) * nLineOffset -
-                  std::abs(nPixelOffset) * (nBlockXSize - 1);
+        nImgOffset + static_cast<vsi_l_offset>(nBlockYOff) * nLineOffset +
+        nPixelOffsetActual;
 
     // Seek to correct location.
     if( Seek(nWriteStart, SEEK_SET) == -1 )
