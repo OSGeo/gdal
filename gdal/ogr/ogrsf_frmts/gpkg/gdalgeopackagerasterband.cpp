@@ -1326,6 +1326,7 @@ bool GDALGPKGMBTilesLikePseudoDataset::DeleteFromGriddedTileAncillary(
 template<class T>
 static void ProcessInt16UInt16Tile( const void* pabyData,
                                     int nPixels,
+                                    bool bIsInt16,
                                     bool bHasNoData,
                                     double dfNoDataValue,
                                     GUInt16 usGPKGNull,
@@ -1398,7 +1399,7 @@ static void ProcessInt16UInt16Tile( const void* pabyData,
         dfTileOffset = 0.0;
         dfTileScale = 1.0;
     }
-    else if( bHasNoData && std::numeric_limits<T>::min() == -32768 &&
+    else if( bHasNoData && bIsInt16 &&
              dfNoDataValue == -32768.0 && usGPKGNull == 65535 &&
              m_dfOffset == -32768.0 && m_dfScale == 1.0 )
     {
@@ -1764,6 +1765,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             {
                 ProcessInt16UInt16Tile<GInt16>( m_pabyCachedTiles,
                                                 nBlockXSize * nBlockYSize,
+                                                true,
                                                 CPL_TO_BOOL(bHasNoData),
                                                 dfNoDataValue,
                                                 m_usGPKGNull,
@@ -1782,6 +1784,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             {
                 ProcessInt16UInt16Tile<GUInt16>( m_pabyCachedTiles,
                                                 nBlockXSize * nBlockYSize,
+                                                false,
                                                 CPL_TO_BOOL(bHasNoData),
                                                 dfNoDataValue,
                                                 m_usGPKGNull,
