@@ -9,7 +9,7 @@
 The following utility programs are distributed with GDAL.
 
 <ul>
-<li> \ref gdalinfo - report information about a file.
+<li> \ref gdalinfo - Report information about a file.
 <li> \ref gdal_translate - Copy a raster file, with control of output format.
 <li> \ref gdaladdo - Add overviews to a file.
 <li> \ref gdalwarp - Warp an image into a new coordinate system.
@@ -183,9 +183,14 @@ $Id$
 */
 
 *******************************************************************************
-/*! \page gdalinfo gdalinfo
+/*!
+\if man
+\page gdalinfo
+\else
+\page gdalinfo gdalinfo
+\endif
 
-lists information about a raster dataset
+Lists information about a raster dataset.
 
 \section gdalinfo_synopsis SYNOPSIS
 
@@ -297,9 +302,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 */
 
 *******************************************************************************
-/*! \page gdal_translate gdal_translate
+/*!
+\if man
+\page gdal_translate
+\else
+\page gdal_translate gdal_translate
+\endif
 
-converts raster data between different formats
+Converts raster data between different formats.
 
 \section gdal_translate_synopsis SYNOPSIS
 
@@ -474,9 +484,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 */
 
 *******************************************************************************
-/*! \page gdaladdo gdaladdo
+/*!
+\if man
+\page gdaladdo
+\else
+\page gdaladdo gdaladdo
+\endif
 
-builds or rebuilds overview images
+Builds or rebuilds overview images.
 
 \section gdaladdo_synopsis SYNOPSIS
 
@@ -622,9 +637,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 */
 
 *******************************************************************************
-/*! \page gdaltindex gdaltindex
+/*!
+\if man
+\page gdaltindex
+\else
+\page gdaltindex gdaltindex
+\endif
 
-Builds a shapefile as a raster tileindex
+Builds a shapefile as a raster tileindex.
 
 \section gdaltindex_synopsis SYNOPSIS
 
@@ -705,9 +725,14 @@ Frank Warmerdam <warmerdam@pobox.com>
 
 
 *******************************************************************************
-/*! \page gdalbuildvrt gdalbuildvrt
+/*!
+\if man
+\page gdalbuildvrt
+\else
+\page gdalbuildvrt gdalbuildvrt
+\endif
 
-Builds a VRT from a list of datasets. (compiled by default since GDAL 1.6.1)
+Builds a VRT from a list of datasets.
 
 \section gdalbuildvrt_synopsis SYNOPSIS
 
@@ -890,9 +915,14 @@ Even Rouault <even.rouault@mines-paris.org>
 */
 
 *******************************************************************************
-/*! \page gdal_contour gdal_contour
+/*!
+\if man
+\page gdal_contour
+\else
+\page gdal_contour gdal_contour
+\endif
 
-builds vector contour lines from a raster elevation model
+Builds vector contour lines from a raster elevation model.
 
 \section gdal_contour_synopsis SYNOPSIS
 
@@ -967,9 +997,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 */
 
 *******************************************************************************
-/*! \page gdal_rasterize gdal_rasterize
+/*!
+\if man
+\page gdal_rasterize
+\else
+\page gdal_rasterize gdal_rasterize
+\endif
 
-burns vector geometries into a raster
+Burns vector geometries into a raster.
 
 \section gdal_rasterize_synopsis SYNOPSIS
 
@@ -1132,9 +1167,14 @@ Frank Warmerdam <warmerdam@pobox.com>
 */
 
 *******************************************************************************
-/*! \page rgb2pct rgb2pct.py
+/*!
+\if man
+\page rgb2pct
+\else
+\page rgb2pct rgb2pct.py
+\endif
 
-Convert a 24bit RGB image to 8bit paletted
+Convert a 24bit RGB image to 8bit paletted.
 
 \section rgb2pct_synopsis SYNOPSIS
 
@@ -1198,9 +1238,14 @@ Frank Warmerdam <warmerdam@pobox.com>
 */
 
 *******************************************************************************
-/*! \page pct2rgb pct2rgb.py
+/*!
+\if man
+\page pct2rgb
+\else
+\page pct2rgb pct2rgb.py
+\endif
 
-Convert an 8bit paletted image to 24bit RGB
+Convert an 8bit paletted image to 24bit RGB.
 
 \section pct2rgb_synopsis SYNOPSIS
 
@@ -1239,9 +1284,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 */
 
 *******************************************************************************
-/*! \page gdaltransform gdaltransform
+/*!
+\if man
+\page gdaltransform
+\else
+\page gdaltransform gdaltransform
+\endif
 
-transforms coordinates
+Transforms coordinates.
 
 \section gdaltransform_synopsis SYNOPSIS
 
@@ -1337,9 +1387,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Jan Hartmann <j.l.h.hartmann@uva.nl>
 \endif
 */
 *******************************************************************************
-/*! \page nearblack nearblack
+/*!
+\if man
+\page nearblack
+\else
+\page nearblack nearblack
+\endif
 
-convert nearly black/white borders to black
+Convert nearly black/white borders to black.
 
 \section nearblack_synopsis SYNOPSIS
 
@@ -1420,9 +1475,14 @@ Frank Warmerdam <warmerdam@pobox.com>
 */
 
 *******************************************************************************
-/*! \page gdal_merge gdal_merge.py
+/*!
+\if man
+\page gdal_merge
+\else
+\page gdal_merge gdal_merge.py
+\endif
 
-mosaics a set of images
+Mosaics a set of images.
 
 \section gdal_merge_synopsis SYNOPSIS
 
@@ -1518,9 +1578,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 */
 
 *******************************************************************************
-/*! \page gdal2tiles gdal2tiles.py
+/*!
+\if man
+\page gdal2tiles
+\else
+\page gdal2tiles gdal2tiles.py
+\endif
 
-generates directory with TMS tiles, KMLs and simple web viewers
+Generates directory with TMS tiles, KMLs and simple web viewers.
 
 \section gdal2tiles_synopsis SYNOPSIS
 
@@ -1608,9 +1673,14 @@ Klokan Petr Pridal <klokan@klokan.cz> as a Google SoC 2007 Project.
 */
 
 *******************************************************************************
-/*! \page gdal-config gdal-config
+/*!
+\if man
+\page gdal-config
+\else
+\page gdal-config gdal-config
+\endif
 
-determines various information about a GDAL installation
+Determines various information about a GDAL installation.
 
 \section gdal_config_synopsis SYNOPSIS
 
@@ -1650,9 +1720,14 @@ to stdout.
 */
 
 *******************************************************************************
-/*! \page gdal_retile gdal_retile.py
+/*!
+\if man
+\page gdal_retile
+\else
+\page gdal_retile gdal_retile.py
+\endif
 
-gdal_retile.py retiles a set of tiles and/or build tiled pyramid levels
+Retiles a set of tiles and/or build tiled pyramid levels.
 
 \if man
 \section retile_synopsis SYNOPSIS
@@ -1769,9 +1844,14 @@ Christian Mueller <christian.mueller@nvoe.at>
 */
 
 *******************************************************************************
-/*! \page gdal_grid gdal_grid
+/*!
+\if man
+\page gdal_grid
+\else
+\page gdal_grid gdal_grid
+\endif
 
-creates regular grid from the scattered data
+Creates regular grid from the scattered data.
 
 \section gdal_grid_synopsis SYNOPSIS
 
@@ -2141,9 +2221,14 @@ Andrey Kiselev <dron@ak4719.spb.edu>
 
 
 *******************************************************************************
-/*! \page gdaldem gdaldem
+/*!
+\if man
+\page gdaldem
+\else
+\page gdaldem gdaldem
+\endif
 
-Tools to analyze and visualize DEMs. (since GDAL 1.7.0)
+Tools to analyze and visualize DEMs.
 
 \section gdaldem_synopsis SYNOPSIS
 
@@ -2394,9 +2479,14 @@ http://grass.osgeo.org/grass64/manuals/html64_user/r.colors.html
 
 
 *******************************************************************************
-/*! \page gdalsrsinfo gdalsrsinfo
+/*!
+\if man
+\page gdalsrsinfo
+\else
+\page gdalsrsinfo gdalsrsinfo
+\endif
 
-lists info about a given SRS in number of formats (WKT, PROJ.4, etc.)
+Lists info about a given SRS in number of formats (WKT, PROJ.4, etc.)
 
 \section gdalsrsinfo_synopsis SYNOPSIS
 
@@ -2546,9 +2636,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Etienne Tourigny <etourigny.dev-at-gmail-
 */
 
 *******************************************************************************
-/*! \page gdalmanage gdalmanage
+/*!
+\if man
+\page gdalmanage
+\else
+\page gdalmanage gdalmanage
+\endif
 
-Identify, delete, rename and copy raster data files
+Identify, delete, rename and copy raster data files.
 
 \section gdalmanage_synopsis SYNOPSIS
 
@@ -2636,7 +2731,12 @@ Tyler Mitchell <spatialguru@shaw.ca>
 */
 
 *******************************************************************************
-/*! \page gdal_pansharpen gdal_pansharpen.py
+/*!
+\if man
+\page gdal_pansharpen
+\else
+\page gdal_pansharpen gdal_pansharpen.py
+\endif
 
 Perform a pansharpen operation.
 
