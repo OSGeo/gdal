@@ -1,7 +1,12 @@
 
-/*! \page gdal_calc gdal_calc.py
+/*!
+\if man
+\page gdal_calc
+\else
+\page gdal_calc gdal_calc.py
+\endif
 
-Command line raster calculator with numpy syntax
+Command line raster calculator with numpy syntax.
 
 \section gdal_calc_synopsis SYNOPSIS
 

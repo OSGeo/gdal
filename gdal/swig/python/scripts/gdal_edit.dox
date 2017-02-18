@@ -1,7 +1,12 @@
 
-/*! \page gdal_edit gdal_edit.py
+/*!
+\if man
+\page gdal_edit
+\else
+\page gdal_edit gdal_edit.py
+\endif
 
-Edit in place various information of an existing GDAL dataset
+Edit in place various information of an existing GDAL dataset.
 
 \section gdal_edit_synopsis SYNOPSIS
 

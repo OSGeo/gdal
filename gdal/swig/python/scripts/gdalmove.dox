@@ -1,7 +1,12 @@
 
-/*! \page gdalmove gdalmove.py
+/*!
+\if man
+\page gdalmove
+\else
+\page gdalmove gdalmove.py
+\endif
 
-Transform georeferencing of raster file in place
+Transform georeferencing of raster file in place.
 
 \section gdalmove_synopsis SYNOPSIS
 
