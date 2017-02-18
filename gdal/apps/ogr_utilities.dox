@@ -64,9 +64,14 @@ and exit.
 
 */
 
-/*! \page ogrinfo ogrinfo
+/*!
+\if man
+\page ogrinfo
+\else
+\page ogrinfo ogrinfo
+\endif
 
-lists information about an OGR supported data source
+Lists information about an OGR supported data source.
 
 \section ogrinfo_synopsis SYNOPSIS
 
@@ -227,9 +232,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
 
-/*! \page ogr2ogr ogr2ogr
+/*!
+\if man
+\page ogr2ogr
+\else
+\page ogr2ogr ogr2ogr
+\endif
 
-converts simple features data between file formats
+Converts simple features data between file formats.
 
 \section ogr2ogr_synopsis SYNOPSIS
 
@@ -502,9 +512,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
 
-/*! \page ogrtindex ogrtindex
+/*!
+\if man
+\page ogrtindex
+\else
+\page ogrtindex ogrtindex
+\endif
 
-creates a tileindex
+Creates a tileindex.
 
 \section ogrtindex_synopsis SYNOPSIS
 
@@ -571,7 +586,12 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 
 */
 
-/*! \page ogrlineref ogrlineref
+/*!
+\if man
+\page ogrlineref
+\else
+\page ogrlineref ogrlineref
+\endif
 
 The utility can be used for:
 - create linear reference file from input data

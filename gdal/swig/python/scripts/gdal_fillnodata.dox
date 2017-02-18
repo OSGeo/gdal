@@ -1,7 +1,12 @@
 
-/*! \page gdal_fillnodata gdal_fillnodata.py
+/*!
+\if man
+\page gdal_fillnodata
+\else
+\page gdal_fillnodata gdal_fillnodata.py
+\endif
 
-fill raster regions by interpolation from edges
+Fill raster regions by interpolation from edges.
 
 \section gdal_fillnodata_synopsis SYNOPSIS
 

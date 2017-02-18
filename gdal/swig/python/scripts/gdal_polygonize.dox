@@ -1,7 +1,12 @@
 
-/*! \page gdal_polygonize gdal_polygonize.py
+/*!
+\if man
+\page gdal_polygonize
+\else
+\page gdal_polygonize gdal_polygonize.py
+\endif
 
-produces a polygon feature layer from a raster 
+Produces a polygon feature layer from a raster.
 
 \section gdal_polygonize_synopsis SYNOPSIS
 
