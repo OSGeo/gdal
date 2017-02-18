@@ -31,6 +31,7 @@
 #include "gdal_alg_priv.h"
 
 #include <algorithm>
+#include <limits>
 
 CPL_CVSID("$Id$");
 
@@ -50,6 +51,7 @@ GDALGPKGMBTilesLikePseudoDataset::GDALGPKGMBTilesLikePseudoDataset() :
     m_dfOffset(0.0),
     m_dfScale(1.0),
     m_dfPrecision(1.0),
+    m_usGPKGNull(0),
     m_nZoomLevel(-1),
     m_pabyCachedTiles(NULL),
     m_nShiftXTiles(0),
@@ -521,6 +523,9 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
 
     if( m_eDT != GDT_Byte )
     {
+        int bHasNoData = FALSE;
+        const double dfNoDataValue =
+                            IGetRasterBand(1)->GetNoDataValue(&bHasNoData);
         if( m_eDT == GDT_Int16 )
         {
             CPLAssert( eRequestDT == GDT_UInt16 );
@@ -531,6 +536,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                                                 i * sizeof(GUInt16));
                 double dfVal = floor((nVal * dfTileScale + dfTileOffset) *
                                             m_dfScale + m_dfOffset + 0.5);
+                if( bHasNoData && nVal == m_usGPKGNull )
+                    dfVal = dfNoDataValue;
                 if( dfVal > 32767 )
                     dfVal = 32767;
                 else if( dfVal < -32768 )
@@ -551,6 +558,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                                                 i * sizeof(GUInt16));
                 double dfVal = floor((nVal * dfTileScale + dfTileOffset) *
                                             m_dfScale + m_dfOffset + 0.5);
+                if( bHasNoData && nVal == m_usGPKGNull )
+                    dfVal = dfNoDataValue;
                 if( dfVal > 65535 )
                     dfVal = 65535;
                 else if( dfVal < 0 )
@@ -572,6 +581,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                                             m_dfScale + m_dfOffset;
                 if( m_dfPrecision == 1.0 )
                     dfVal = floor(dfVal + 0.5);
+                if( bHasNoData && nVal == m_usGPKGNull )
+                    dfVal = dfNoDataValue;
                 *reinterpret_cast<float*>(pabyTileData + i * sizeof(float)) =
                     static_cast<float>(dfVal);
             }
@@ -1317,6 +1328,7 @@ static void ProcessInt16UInt16Tile( const void* pabyData,
                                     int nPixels,
                                     bool bHasNoData,
                                     double dfNoDataValue,
+                                    GUInt16 usGPKGNull,
                                     double m_dfOffset,
                                     double m_dfScale,
                                     GUInt16* pTempTileBuffer,
@@ -1358,33 +1370,61 @@ static void ProcessInt16UInt16Tile( const void* pabyData,
     if( nValidPixels )
         dfTileStdDev = sqrt( dfM2 / nValidPixels );
 
-    if( bHasNoData && nValidPixels < nPixels )
-    {
-        nMin = std::min( nMin, static_cast<T>(dfNoDataValue) );
-        nMax = std::max( nMax, static_cast<T>(dfNoDataValue) );
-    }
     double dfGlobalMin = (nMin - m_dfOffset) / m_dfScale;
     double dfGlobalMax = (nMax - m_dfOffset) / m_dfScale;
-    if( dfGlobalMax - dfGlobalMin > 65535.0 )
+    double dfRange = 65535.0;
+    if( bHasNoData && usGPKGNull == 65535 &&
+        dfGlobalMax - dfGlobalMin >= dfRange)
     {
-        dfTileScale = (dfGlobalMax - dfGlobalMin) / 65535.0;
+        dfRange = 65534.0;
+    }
+
+    if( dfGlobalMax - dfGlobalMin > dfRange )
+    {
+        dfTileScale = (dfGlobalMax - dfGlobalMin) / dfRange;
     }
     if( dfGlobalMin < 0.0 )
     {
         dfTileOffset = -dfGlobalMin;
     }
-    else if( dfGlobalMax / dfTileScale > 65535.0 )
+    else if( dfGlobalMax / dfTileScale > dfRange )
     {
-        dfTileOffset = dfGlobalMax - 65535.0 * dfTileScale;
+        dfTileOffset = dfGlobalMax - dfRange * dfTileScale;
+    }
+
+    if( bHasNoData && std::numeric_limits<T>::min() == 0 &&
+        m_dfOffset == 0.0 && m_dfScale == 1.0 )
+    {
+        dfTileOffset = 0.0;
+        dfTileScale = 1.0;
+    }
+    else if( bHasNoData && std::numeric_limits<T>::min() == -32768 &&
+             dfNoDataValue == -32768.0 && usGPKGNull == 65535 &&
+             m_dfOffset == -32768.0 && m_dfScale == 1.0 )
+    {
+        dfTileOffset = 1.0;
+        dfTileScale = 1.0;
     }
 
     for( int i = 0; i < nPixels; i++ )
     {
         const T nVal = pSrc[i];
-        double dfVal =  ((nVal - m_dfOffset) / m_dfScale -
-                                        dfTileOffset) / dfTileScale;
-        CPLAssert( dfVal >= 0.0 && dfVal < 65535.5);
-        pTempTileBuffer[i] = static_cast<GUInt16>(dfVal+0.5);
+        if( bHasNoData && nVal == dfNoDataValue )
+            pTempTileBuffer[i] = usGPKGNull;
+        else
+        {
+            double dfVal =  ((nVal - m_dfOffset) / m_dfScale -
+                                            dfTileOffset) / dfTileScale;
+            CPLAssert( dfVal >= 0.0 && dfVal < 65535.5);
+            pTempTileBuffer[i] = static_cast<GUInt16>(dfVal+0.5);
+            if( bHasNoData && pTempTileBuffer[i] == usGPKGNull )
+            {
+                if( usGPKGNull > 0 )
+                    pTempTileBuffer[i] --;
+                else
+                    pTempTileBuffer[i] ++;;
+            }
+        }
     }
 }
 
@@ -1726,6 +1766,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                                                 nBlockXSize * nBlockYSize,
                                                 CPL_TO_BOOL(bHasNoData),
                                                 dfNoDataValue,
+                                                m_usGPKGNull,
                                                 m_dfOffset,
                                                 m_dfScale,
                                                 pTempTileBuffer,
@@ -1743,6 +1784,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                                                 nBlockXSize * nBlockYSize,
                                                 CPL_TO_BOOL(bHasNoData),
                                                 dfNoDataValue,
+                                                m_usGPKGNull,
                                                 m_dfOffset,
                                                 m_dfScale,
                                                 pTempTileBuffer,
@@ -1798,26 +1840,61 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 if( nValidPixels )
                     dfTileStdDev = sqrt( dfM2 / nValidPixels );
 
-                if( bHasNoData && CPLIsFinite(dfNoDataValue) &&
-                    nValidPixels < nBlockXSize * nBlockYSize )
-                {
-                    fMin = std::min( fMin, static_cast<float>(dfNoDataValue) );
-                    fMax = std::max( fMax, static_cast<float>(dfNoDataValue) );
-                }
                 double dfGlobalMin = (fMin - m_dfOffset) / m_dfScale;
                 double dfGlobalMax = (fMax - m_dfOffset) / m_dfScale;
                 if( dfGlobalMax > dfGlobalMin )
-                    dfTileScale = (dfGlobalMax - dfGlobalMin) / 65535.0;
-                dfTileOffset = dfGlobalMin;
+                {
+                    if( bHasNoData && m_usGPKGNull == 65535 &&
+                        dfGlobalMax - dfGlobalMin >= 65535.0 )
+                    {
+                        dfTileOffset = dfGlobalMin;
+                        dfTileScale = (dfGlobalMax - dfGlobalMin) / 65534.0;
+                    }
+                    else if( bHasNoData && m_usGPKGNull == 0 &&
+                             (dfNoDataValue - m_dfOffset) / m_dfScale != 0 )
+                    {
+                        dfTileOffset = (65535.0 * dfGlobalMin - dfGlobalMax) / 65534.0;
+                        dfTileScale = dfGlobalMin - dfTileOffset;
+                    }
+                    else
+                    {
+                        dfTileOffset = dfGlobalMin;
+                        dfTileScale = (dfGlobalMax - dfGlobalMin) / 65535.0;
+                    }
+                }
+
                 for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
                 {
                     const float fVal = pSrc[i];
+                    if( bHasNanNoData )
+                    {
+                        if( CPLIsNan(fVal) )
+                        {
+                            pTempTileBuffer[i] = m_usGPKGNull;
+                            continue;
+                        }
+                    }
+                    else if( bHasNoData )
+                    {
+                        if( fVal == static_cast<float>(dfNoDataValue) )
+                        {
+                            pTempTileBuffer[i] = m_usGPKGNull;
+                            continue;
+                        }
+                    }
                     double dfVal = CPLIsFinite(fVal) ?
                         ((fVal - m_dfOffset) / m_dfScale -
                                     dfTileOffset) / dfTileScale :
                         (fVal > 0) ? 65535 : 0;
                     CPLAssert( dfVal >= 0.0 && dfVal < 65535.5);
                     pTempTileBuffer[i] = static_cast<GUInt16>(dfVal+0.5);
+                    if( bHasNoData && pTempTileBuffer[i] == m_usGPKGNull )
+                    {
+                        if( m_usGPKGNull > 0 )
+                            pTempTileBuffer[i] --;
+                        else
+                            pTempTileBuffer[i] ++;
+                    }
                 }
             }
 
@@ -3259,7 +3336,26 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue( double dfNoDataValue )
     int rc = sqlite3_prepare(poGDS->IGetDB(), pszSQL, -1, &hStmt, NULL);
     if( rc == SQLITE_OK )
     {
-        sqlite3_bind_double( hStmt, 1, dfNoDataValue );
+        if( poGDS->m_eTF == GPKG_TF_PNG_16BIT )
+        {
+            if( eDataType == GDT_UInt16 && poGDS->m_dfOffset == 0.0 &&
+                poGDS->m_dfScale == 1.0 &&
+                dfNoDataValue >= 0 && dfNoDataValue <= 65535 &&
+                static_cast<GUInt16>(dfNoDataValue) == dfNoDataValue )
+            {
+                poGDS->m_usGPKGNull = static_cast<GUInt16>(dfNoDataValue);
+            }
+            else
+            {
+                poGDS->m_usGPKGNull = 65535;
+            }
+            sqlite3_bind_double( hStmt, 1, poGDS->m_usGPKGNull );
+        }
+        else
+        {
+            sqlite3_bind_double( hStmt, 1,
+                                 static_cast<float>(dfNoDataValue) );
+        }
         rc = sqlite3_step(hStmt);
         sqlite3_finalize(hStmt);
     }

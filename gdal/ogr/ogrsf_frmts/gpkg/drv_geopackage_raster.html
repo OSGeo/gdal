@@ -236,6 +236,46 @@ regarding interoperability with TMS.</li>
 <p>In all the above tiling schemes, consecutive zoom levels defer by a resolution
 of a factor of two.</p>
 
+<h3><a>Nodata value</a></h3>
+
+<p>The concept of the nodata value is only supported for tiled gridded elevation
+datasets. For regular tiled rasters, the alpha band must rather be used.</p>
+
+<p>For Float32 datasets with TIFF tiles, the concepts of nodata in GDAL
+and null_value in the GeoPackage internasl perfectly match.</p>
+
+<p>For Int16, UInt16 or Float32 with PNG tiles, GDAL will generally remap the
+input nodata value to another value.</p>
+
+<p>On writing, for PNG tiles, the behaviour is the following one:</p>
+
+<table border="1">
+<tr><td>GDAL data type</td><td>Input GDAL nodata value</td><td>null_value in GPKG gpkg_2d_gridded_coverage_ancillary</td></tr>
+<tr><td>Int16</td><td>Any</td><td>65535</td></tr>
+<tr><td>UInt16</td><td>X (if coverage offset == 0 and coverage scale == 1)</td><td>X</td></tr>
+<tr><td>Float32</td><td>Any</td><td>65535</td></tr>
+</table>
+
+<p>On reading, for PNG tiles, the behaviour is the following one:</p>
+
+<table border="1">
+<tr><td>GDAL data type</td><td>null_value in GPKG gpkg_2d_gridded_coverage_ancillary</td><td>Exposed GDAL nodata value</td></tr>
+<tr><td>Int16</td><td>&gt;= 32768</td><td>-32768</td></tr>
+<tr><td>Int16</td><td>X &lt;= 32767</td><td>X</td></tr>
+<tr><td>UInt16</td><td>X</td><td>X</td></tr>
+<tr><td>Float32</td><td>X</td><td>X</td></tr>
+</table>
+
+<p>Thus, perfect roundtripping is achieved in the following cases:</p>
+
+<table border="1">
+<tr><td>GDAL data type</td><td>GDAL nodata value</td><td>null_value in GPKG gpkg_2d_gridded_coverage_ancillary</td></tr>
+<tr><td>Int16</td><td>-32768</td><td>65535</td></tr>
+<tr><td>UInt16</td><td>X (if coverage offset == 0 and coverage scale == 1)</td><td>X</td></tr>
+<tr><td>Float32</td><td>65535</td><td>65535</td></tr>
+</table>
+
+
 <h3>Creation options</h3>
 
 <p>The following creation options are available:</p>

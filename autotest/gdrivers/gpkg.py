@@ -3052,7 +3052,19 @@ def gpkg_39():
     if ds.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetRasterBand(1).GetNoDataValue() != 1:
+    if ds.GetRasterBand(1).GetNoDataValue() != -32768.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', noData = 74)
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4649:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != -32768.0:
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetNoDataValue())
         return 'fail'
@@ -3098,8 +3110,21 @@ def gpkg_39():
     if ds.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetRasterBand(1).GetNoDataValue() != 1:
+    if ds.GetRasterBand(1).GetNoDataValue() != 1.0:
         gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', outputType = gdal.GDT_UInt16, noData = 74)
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4672:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != 74.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetNoDataValue())
         return 'fail'
 
     src_ds = gdal.Open('data/float32.tif')
@@ -3142,14 +3167,88 @@ def gpkg_39():
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
-    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', noData = 1, creationOptions = ['TILE_FORMAT=PNG'])
+    # Particular case with nodata = -32768 for Int16
+    gdal.FileFromMemBuffer('/vsimem/gpkg_39.asc',
+"""ncols        6
+nrows        1
+xllcorner    440720
+yllcorner    3750120
+cellsize     60
+NODATA_value -32768
+ -32768 -32767 -32766 0 32766 32767""")
+    gdal.Translate('/vsimem/gpkg_39.gpkg', '/vsimem/gpkg_39.asc', format = 'GPKG', outputType = gdal.GDT_Int16)
+    src_ds = gdal.Open('/vsimem/gpkg_39.asc')
     ds = gdal.Open('/vsimem/gpkg_39.gpkg')
-    if ds.GetRasterBand(1).Checksum() != 4672:
+    if ds.GetRasterBand(1).DataType != gdal.GDT_Int16:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetRasterBand(1).GetNoDataValue() != 1:
+    if ds.GetRasterBand(1).GetNoDataValue() != -32768.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+    ds = None
+    src_ds = None
+    gdal.Unlink('/vsimem/gpkg_39.asc')
+
+
+    # Particular case with nodata = 65535 for UInt16
+    gdal.FileFromMemBuffer('/vsimem/gpkg_39.asc',
+"""ncols        6
+nrows        1
+xllcorner    440720
+yllcorner    3750120
+cellsize     60
+NODATA_value 65535
+0 1 2 65533 65534 65535""")
+    gdal.Translate('/vsimem/gpkg_39.gpkg', '/vsimem/gpkg_39.asc', format = 'GPKG', outputType = gdal.GDT_UInt16)
+    src_ds = gdal.Open('/vsimem/gpkg_39.asc')
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
         gdaltest.post_reason('fail')
         return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != 65535.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+    ds = None
+    src_ds = None
+    gdal.Unlink('/vsimem/gpkg_39.asc')
+
+    # Particular case with nodata = 0 for UInt16
+    gdal.FileFromMemBuffer('/vsimem/gpkg_39.asc',
+"""ncols        6
+nrows        1
+xllcorner    440720
+yllcorner    3750120
+cellsize     60
+NODATA_value 0
+0 1 2 65533 65534 65535""")
+    gdal.Translate('/vsimem/gpkg_39.gpkg', '/vsimem/gpkg_39.asc', format = 'GPKG', outputType = gdal.GDT_UInt16)
+    src_ds = gdal.Open('/vsimem/gpkg_39.asc')
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() != 0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+    ds = None
+    src_ds = None
+    gdal.Unlink('/vsimem/gpkg_39.asc')
+
 
     # Test that we can delete an existing tile
     ds = gdaltest.gpkg_dr.Create('/vsimem/gpkg_39.gpkg', 256, 256, 1, gdal.GDT_UInt16)
@@ -3328,7 +3427,7 @@ gdaltest_list = [
     gpkg_40,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_40, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_39, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )
