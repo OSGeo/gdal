@@ -1848,7 +1848,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 if( dfGlobalMax > dfGlobalMin )
                 {
                     if( bHasNoData && m_usGPKGNull == 65535 &&
-                        dfGlobalMax - dfGlobalMin >= 65535.0 )
+                        dfGlobalMax - dfGlobalMin >= 65534.0 )
                     {
                         dfTileOffset = dfGlobalMin;
                         dfTileScale = (dfGlobalMax - dfGlobalMin) / 65534.0;
