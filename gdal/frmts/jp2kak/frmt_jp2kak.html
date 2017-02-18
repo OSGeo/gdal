@@ -175,7 +175,29 @@ to better understand their meaning.<p>
 <li> <b>Rweight</b>: Kakadu library default used.
 </ul>
 
-See Also:<p>
+<h2>Known Kakadu Issues</h2>
+
+<h3>Alpha Channel Writing in v7.8</h3>
+
+Kakadu v7.8 has a bug in jp2_channels::set_opacity_mapping that can
+cause an error when writing images with an alpha channel.  Please
+upgrade to version 7.9.
+
+<pre>
+Error: GdalIO: Error in Kakadu File Format Support: Attempting to
+create a Component Mapping (cmap) box, one of whose channels refers to
+a non-existent image component or palette lookup table. (code = 1)
+</pre>
+
+<h3>kdu_get_num_processors always returns 0 for some platforms</h3>
+
+On non-windows / non-mac installs (e.g. Linux), Kakadu might not
+include unistd.h in kdu_arch.cpp.  This means that
+_SC_NPROCESSORS_ONLN and _SC_NPROCESSORS_CONF are not defined and
+kdu_get_num_processors will always return 0.  Therefore the jp2kak
+driver might not default to creating worker threads.
+
+<h2>See Also:</h2>
 
 <ul>
 
