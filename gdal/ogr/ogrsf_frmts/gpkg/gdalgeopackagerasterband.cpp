@@ -1298,9 +1298,12 @@ bool GDALGPKGMBTilesLikePseudoDataset::DeleteFromGriddedTileAncillary(
         m_osRasterTable.c_str());
     sqlite3_stmt* hStmt = NULL;
     int rc = sqlite3_prepare(IGetDB(), pszSQL, -1, &hStmt, NULL);
-    sqlite3_bind_int64( hStmt, 1, nTileId );
-    sqlite3_step( hStmt );
-    sqlite3_finalize(hStmt);
+    if( rc == SQLITE_OK )
+    {
+        sqlite3_bind_int64( hStmt, 1, nTileId );
+        rc = sqlite3_step( hStmt );
+        sqlite3_finalize(hStmt);
+    }
     sqlite3_free(pszSQL);
     return rc == SQLITE_OK;
 }
@@ -3257,10 +3260,10 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue( double dfNoDataValue )
     if( rc == SQLITE_OK )
     {
         sqlite3_bind_double( hStmt, 1, dfNoDataValue );
-        sqlite3_step(hStmt);
+        rc = sqlite3_step(hStmt);
         sqlite3_finalize(hStmt);
     }
     sqlite3_free(pszSQL);
 
-    return CE_None;
+    return (rc == SQLITE_OK) ? CE_None : CE_Failure;
 }
