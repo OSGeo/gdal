@@ -972,6 +972,7 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
         m_dfScale = poParentDS->m_dfScale;
         m_dfOffset = poParentDS->m_dfOffset;
         m_dfPrecision = poParentDS->m_dfPrecision;
+        m_usGPKGNull = poParentDS->m_usGPKGNull;
         m_nQuality = poParentDS->m_nQuality;
         m_nZLevel = poParentDS->m_nZLevel;
         m_bDither = poParentDS->m_bDither;
@@ -1084,6 +1085,8 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         const char* pszOffset = SQLResultGetValue(&oResult, 2, 0);
         const char* pszDataNull = SQLResultGetValue(&oResult, 3, 0);
         const char* pszPrecision = SQLResultGetValue(&oResult, 4, 0);
+        if( pszDataNull )
+            osDataNull = pszDataNull;
         if( pszDataType == NULL ||
             (!EQUAL(pszDataType, "integer") && !EQUAL(pszDataType, "float")) )
         {
@@ -1118,17 +1121,41 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
                 {
                     SetDataType(GDT_Int16);
                 }
+                else if( dfOffset == -32767.0 && !osDataNull.empty() &&
+                         CPLAtof(osDataNull) == 65535.0 )
+                    // Given that we will map the nodata value to -32768
+                {
+                    SetDataType(GDT_Int16);
+                }
             }
 
             // Check that the tile offset and scales are compatible of a
             // final integer result.
             if( m_eDT != GDT_Float32 )
             {
-                pszSQL = sqlite3_mprintf(
-                    "SELECT 1 FROM "
-                    "gpkg_2d_gridded_tile_ancillary WHERE tpudt_name = '%q' "
-                    "AND NOT (offset = 0.0 AND scale = 1.0) LIMIT 1",
-                    pszTableName);
+                if( dfScale == 1.0 && dfOffset == -32768.0 &&
+                    !osDataNull.empty() &&
+                    CPLAtof(osDataNull) == 65535.0 )
+                {
+                    // Given that we will map the nodata value to -32768
+                    pszSQL = sqlite3_mprintf(
+                        "SELECT 1 FROM "
+                        "gpkg_2d_gridded_tile_ancillary WHERE "
+                        "tpudt_name = '%q' "
+                        "AND NOT ((offset = 0.0 or offset = 1.0) "
+                        "AND scale = 1.0) "
+                        "LIMIT 1",
+                        pszTableName);
+                }
+                else
+                {
+                    pszSQL = sqlite3_mprintf(
+                        "SELECT 1 FROM "
+                        "gpkg_2d_gridded_tile_ancillary WHERE "
+                        "tpudt_name = '%q' "
+                        "AND NOT (offset = 0.0 AND scale = 1.0) LIMIT 1",
+                        pszTableName);
+                }
                 sqlite3_stmt* hSQLStmt = NULL;
                 int rc = sqlite3_prepare( hDB, pszSQL, -1,
                                           &hSQLStmt, NULL );
@@ -1151,8 +1178,6 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
 
             SetGlobalOffsetScale(dfOffset, dfScale);
         }
-        if( pszDataNull )
-            osDataNull = pszDataNull;
         if( pszPrecision )
             m_dfPrecision = CPLAtof(pszPrecision);
         SQLResultFree(&oResult);
@@ -1271,8 +1296,31 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
 
     if( !osDataNull.empty() )
     {
-        reinterpret_cast<GDALGeoPackageRasterBand*>(GetRasterBand(1))->
-                                SetNoDataValueInternal( CPLAtof(osDataNull) );
+        double dfGPKGNoDataValue = CPLAtof(osDataNull);
+        if( m_eTF == GPKG_TF_PNG_16BIT )
+        {
+            if( dfGPKGNoDataValue < 0 ||
+                dfGPKGNoDataValue > 65535 ||
+                static_cast<int>(dfGPKGNoDataValue) != dfGPKGNoDataValue )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "data_null = %.18g is invalid for integer data_type",
+                         dfGPKGNoDataValue);
+            }
+            else
+            {
+                m_usGPKGNull = static_cast<int>(dfGPKGNoDataValue);
+                if( m_eDT == GDT_Int16 && m_usGPKGNull > 32767 )
+                    dfGPKGNoDataValue = -32768.0;
+                reinterpret_cast<GDALGeoPackageRasterBand*>(GetRasterBand(1))->
+                                SetNoDataValueInternal(dfGPKGNoDataValue);
+            }
+        }
+        else
+        {
+            reinterpret_cast<GDALGeoPackageRasterBand*>(GetRasterBand(1))->
+                SetNoDataValueInternal(static_cast<float>(dfGPKGNoDataValue));
+        }
     }
 
     CheckUnknownExtensions(true);
