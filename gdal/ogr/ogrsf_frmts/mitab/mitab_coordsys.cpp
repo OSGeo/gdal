@@ -62,20 +62,18 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
     TABProjInfo sTABProj;
     if(MITABCoordSys2TABProjInfo(pszCoordSys, &sTABProj) < 0 )
         return NULL;
-    OGRSpatialReference* poSR = TABFile::GetSpatialRefFromTABProj(sTABProj);
+    OGRSpatialReference *poSR = TABFile::GetSpatialRefFromTABProj(sTABProj);
 
-/* -------------------------------------------------------------------- */
-/*      Report on translation.                                          */
-/* -------------------------------------------------------------------- */
+    // Report on translation.
     char *pszWKT = NULL;
 
-    poSR->exportToWkt( &pszWKT );
+    poSR->exportToWkt(&pszWKT);
     if( pszWKT != NULL )
     {
-        CPLDebug( "MITAB",
-                  "This CoordSys value:\n%s\nwas translated to:\n%s\n",
-                  pszCoordSys, pszWKT );
-        CPLFree( pszWKT );
+        CPLDebug("MITAB",
+                 "This CoordSys value:\n%s\nwas translated to:\n%s",
+                 pszCoordSys, pszWKT);
+        CPLFree(pszWKT);
     }
 
     return poSR;
@@ -101,9 +99,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     int nParmCount = 0;
     TABFile::GetTABProjFromSpatialRef(poSR, sTABProj, nParmCount);
 
-/* -------------------------------------------------------------------- */
-/*      Do coordsys lookup                                              */
-/* -------------------------------------------------------------------- */
+    // Do coordsys lookup.
     double dXMin = 0.0;
     double dYMin = 0.0;
     double dXMax = 0.0;
@@ -117,85 +113,69 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         bHasBounds = true;
     }
 
-/*-----------------------------------------------------------------
- * Translate the units
- *----------------------------------------------------------------*/
-    const char  *pszMIFUnits = TABUnitIdToString(sTABProj.nUnitsId);
+    // Translate the units.
+    const char *pszMIFUnits = TABUnitIdToString(sTABProj.nUnitsId);
 
-/* -------------------------------------------------------------------- */
-/*      Build coordinate system definition.                             */
-/* -------------------------------------------------------------------- */
+    // Build coordinate system definition.
     CPLString osCoordSys;
 
     if( sTABProj.nProjId != 0 )
     {
-        osCoordSys.Printf(
-                 "Earth Projection %d",
-                 sTABProj.nProjId );
+        osCoordSys.Printf("Earth Projection %d", sTABProj.nProjId);
     }
     else
-        osCoordSys.Printf(
-                 "NonEarth Units" );
+    {
+        osCoordSys.Printf("NonEarth Units");
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Append Datum                                                    */
-/* -------------------------------------------------------------------- */
+    // Append Datum.
     if( sTABProj.nProjId != 0 )
     {
-        osCoordSys += CPLSPrintf(
-                 ", %d",
-                 sTABProj.nDatumId );
+        osCoordSys += CPLSPrintf(", %d", sTABProj.nDatumId);
 
         if( sTABProj.nDatumId == 999 || sTABProj.nDatumId == 9999 )
         {
-            osCoordSys += CPLSPrintf(
-                     ", %d, %.15g, %.15g, %.15g",
-                     sTABProj.nEllipsoidId,
-                     sTABProj.dDatumShiftX, sTABProj.dDatumShiftY, sTABProj.dDatumShiftZ );
+            osCoordSys +=
+                CPLSPrintf(", %d, %.15g, %.15g, %.15g", sTABProj.nEllipsoidId,
+                           sTABProj.dDatumShiftX, sTABProj.dDatumShiftY,
+                           sTABProj.dDatumShiftZ);
         }
 
         if( sTABProj.nDatumId == 9999 )
         {
-            osCoordSys += CPLSPrintf(
-                     ", %.15g, %.15g, %.15g, %.15g, %.15g",
-                     sTABProj.adDatumParams[0], sTABProj.adDatumParams[1], sTABProj.adDatumParams[2],
-                     sTABProj.adDatumParams[3], sTABProj.adDatumParams[4] );
+            osCoordSys +=
+                CPLSPrintf(", %.15g, %.15g, %.15g, %.15g, %.15g",
+                           sTABProj.adDatumParams[0], sTABProj.adDatumParams[1],
+                           sTABProj.adDatumParams[2], sTABProj.adDatumParams[3],
+                           sTABProj.adDatumParams[4]);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Append units.                                                   */
-/* -------------------------------------------------------------------- */
+    // Append units.
     if( sTABProj.nProjId != 1 && pszMIFUnits != NULL )
     {
         if( sTABProj.nProjId != 0 )
-            osCoordSys += "," ;
+            osCoordSys += ",";
 
-        osCoordSys += CPLSPrintf(
-                 " \"%s\"",
-                 pszMIFUnits );
+        osCoordSys += CPLSPrintf(" \"%s\"", pszMIFUnits);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Append Projection Parms.                                        */
-/* -------------------------------------------------------------------- */
+    // Append Projection Parms.
     for( int iParm = 0; iParm < nParmCount; iParm++ )
-        osCoordSys += CPLSPrintf(
-                 ", %.15g",
-                 sTABProj.adProjParams[iParm] );
+        osCoordSys += CPLSPrintf(", %.15g", sTABProj.adProjParams[iParm]);
 
-/* -------------------------------------------------------------------- */
-/*      Append user bounds                                              */
-/* -------------------------------------------------------------------- */
+    // Append user bounds.
     if( bHasBounds )
     {
-        if( fabs(dXMin - (int)floor(dXMin+0.5)) < 1e-8 &&
-            fabs(dYMin - (int)floor(dYMin+0.5)) < 1e-8 &&
-            fabs(dXMax - (int)floor(dXMax+0.5)) < 1e-8 &&
-            fabs(dYMax - (int)floor(dYMax+0.5)) < 1e-8 )
+        if( fabs(dXMin - floor(dXMin + 0.5)) < 1e-8 &&
+            fabs(dYMin - floor(dYMin + 0.5)) < 1e-8 &&
+            fabs(dXMax - floor(dXMax + 0.5)) < 1e-8 &&
+            fabs(dYMax - floor(dYMax + 0.5)) < 1e-8 )
         {
-            osCoordSys += CPLSPrintf(" Bounds (%d, %d) (%d, %d)",
-                                     (int)dXMin, (int)dYMin, (int)dXMax, (int)dYMax);
+            osCoordSys +=
+                CPLSPrintf(" Bounds (%d, %d) (%d, %d)",
+                           static_cast<int>(dXMin), static_cast<int>(dYMin),
+                           static_cast<int>(dXMax), static_cast<int>(dYMax));
         }
         else
         {
@@ -204,21 +184,19 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Report on translation                                           */
-/* -------------------------------------------------------------------- */
-    char        *pszWKT = NULL;
+    // Report on translation.
+    char *pszWKT = NULL;
 
-    poSR->exportToWkt( &pszWKT );
+    poSR->exportToWkt(&pszWKT);
     if( pszWKT != NULL )
     {
-        CPLDebug( "MITAB",
-                  "This WKT Projection:\n%s\n\ntranslates to:\n%s\n",
-                  pszWKT, osCoordSys.c_str() );
-        CPLFree( pszWKT );
+        CPLDebug("MITAB",
+                 "This WKT Projection:\n%s\n\ntranslates to:\n%s",
+                 pszWKT, osCoordSys.c_str());
+        CPLFree(pszWKT);
     }
 
-    return CPLStrdup( osCoordSys.c_str() );
+    return CPLStrdup(osCoordSys.c_str());
 }
 
 /************************************************************************/
@@ -237,9 +215,9 @@ bool MITABExtractCoordSysBounds( const char * pszCoordSys,
         return false;
 
     char **papszFields =
-        CSLTokenizeStringComplex( pszCoordSys, " ,()", TRUE, FALSE );
+        CSLTokenizeStringComplex(pszCoordSys, " ,()", TRUE, FALSE);
 
-    int iBounds = CSLFindString( papszFields, "Bounds" );
+    int iBounds = CSLFindString(papszFields, "Bounds");
 
     if (iBounds >= 0 && iBounds + 4 < CSLCount(papszFields))
     {
@@ -247,11 +225,11 @@ bool MITABExtractCoordSysBounds( const char * pszCoordSys,
         dYMin = CPLAtof(papszFields[++iBounds]);
         dXMax = CPLAtof(papszFields[++iBounds]);
         dYMax = CPLAtof(papszFields[++iBounds]);
-        CSLDestroy( papszFields );
+        CSLDestroy(papszFields);
         return true;
     }
 
-    CSLDestroy( papszFields );
+    CSLDestroy(papszFields);
     return false;
 }
 
@@ -271,20 +249,17 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     if( pszCoordSys == NULL )
         return -1;
 
-    /*-----------------------------------------------------------------
-     * Parse the passed string into words.
-     *----------------------------------------------------------------*/
-    while(*pszCoordSys == ' ') pszCoordSys++;  // Eat leading spaces
+    // Parse the passed string into words.
+    while(*pszCoordSys == ' ')
+        pszCoordSys++;  // Eat leading spaces.
     if( STARTS_WITH_CI(pszCoordSys, "CoordSys") )
         pszCoordSys += 9;
 
     char **papszFields =
-        CSLTokenizeStringComplex( pszCoordSys, " ,", TRUE, FALSE );
+        CSLTokenizeStringComplex(pszCoordSys, " ,", TRUE, FALSE);
 
-    /*-----------------------------------------------------------------
-     * Clip off Bounds information.
-     *----------------------------------------------------------------*/
-    int iBounds = CSLFindString( papszFields, "Bounds" );
+    // Clip off Bounds information.
+    int iBounds = CSLFindString(papszFields, "Bounds");
 
     while( iBounds != -1 && papszFields[iBounds] != NULL )
     {
@@ -293,31 +268,29 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
         iBounds++;
     }
 
-    /*-----------------------------------------------------------------
-     * Fetch the projection.
-     *----------------------------------------------------------------*/
+    // Fetch the projection.
     char **papszNextField = NULL;
 
-    if( CSLCount( papszFields ) >= 3
-        && EQUAL(papszFields[0],"Earth")
-        && EQUAL(papszFields[1],"Projection") )
+    if( CSLCount(papszFields) >= 3 &&
+        EQUAL(papszFields[0], "Earth") &&
+        EQUAL(papszFields[1], "Projection") )
     {
         int nProjId = atoi(papszFields[2]);
-        if (nProjId>=3000) nProjId -=3000;
-        else if (nProjId>=2000) nProjId -=2000;
-        else if (nProjId>=1000) nProjId -=1000;
+        if (nProjId >= 3000) nProjId -= 3000;
+        else if (nProjId >= 2000) nProjId -= 2000;
+        else if (nProjId >= 1000) nProjId -= 1000;
 
-        psProj->nProjId = (GByte)nProjId;
+        psProj->nProjId = static_cast<GByte>(nProjId);
         papszNextField = papszFields + 3;
     }
-    else if (CSLCount( papszFields ) >= 2
-             && EQUAL(papszFields[0],"NonEarth") )
+    else if (CSLCount(papszFields) >= 2 &&
+             EQUAL(papszFields[0],"NonEarth") )
     {
         // NonEarth Units "..." Bounds (x, y) (x, y)
         psProj->nProjId = 0;
         papszNextField = papszFields + 2;
 
-        if( papszNextField[0] != NULL && EQUAL(papszNextField[0],"Units") )
+        if( papszNextField[0] != NULL && EQUAL(papszNextField[0], "Units") )
             papszNextField++;
     }
     else
@@ -330,10 +303,8 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
         return -1;
     }
 
-    /*-----------------------------------------------------------------
-     * Fetch the datum information.
-     *----------------------------------------------------------------*/
-    int         nDatum = 0;
+    // Fetch the datum information.
+    int nDatum = 0;
 
     if( psProj->nProjId != 0 && CSLCount(papszNextField) > 0 )
     {
@@ -341,17 +312,17 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
         papszNextField++;
     }
 
-    if( (nDatum == 999 || nDatum == 9999)
-        && CSLCount(papszNextField) >= 4 )
+    if( (nDatum == 999 || nDatum == 9999) &&
+        CSLCount(papszNextField) >= 4 )
     {
-        psProj->nEllipsoidId = (GByte)atoi(papszNextField[0]);
+        psProj->nEllipsoidId = static_cast<GByte>(atoi(papszNextField[0]));
         psProj->dDatumShiftX = CPLAtof(papszNextField[1]);
         psProj->dDatumShiftY = CPLAtof(papszNextField[2]);
         psProj->dDatumShiftZ = CPLAtof(papszNextField[3]);
         papszNextField += 4;
 
-        if( nDatum == 9999
-            && CSLCount(papszNextField) >= 5 )
+        if( nDatum == 9999 &&
+            CSLCount(papszNextField) >= 5 )
         {
             psProj->adDatumParams[0] = CPLAtof(papszNextField[0]);
             psProj->adDatumParams[1] = CPLAtof(papszNextField[1]);
@@ -363,9 +334,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     }
     else if (nDatum != 999 && nDatum != 9999)
     {
-    /*-----------------------------------------------------------------
-     * Find the datum, and collect it's parameters if possible.
-     *----------------------------------------------------------------*/
+        // Find the datum, and collect it's parameters if possible.
         const MapInfoDatumInfo *psDatumInfo = NULL;
 
         int iDatum = 0;  // Used after for.
@@ -378,17 +347,18 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
             }
         }
 
-        if( asDatumInfoList[iDatum].nMapInfoDatumID == -1
-            && nDatum != 999 && nDatum != 9999 )
+        if( asDatumInfoList[iDatum].nMapInfoDatumID == -1 &&
+            nDatum != 999 && nDatum != 9999 )
         {
-            /* use WGS84 */
+            // Use WGS84.
             psDatumInfo = asDatumInfoList + 0;
         }
 
         if( psDatumInfo != NULL )
         {
-            psProj->nEllipsoidId = (GByte)psDatumInfo->nEllipsoid;
-            psProj->nDatumId = (GInt16)psDatumInfo->nMapInfoDatumID;
+            psProj->nEllipsoidId = static_cast<GByte>(psDatumInfo->nEllipsoid);
+            psProj->nDatumId =
+                static_cast<GInt16>(psDatumInfo->nMapInfoDatumID);
             psProj->dDatumShiftX = psDatumInfo->dfShiftX;
             psProj->dDatumShiftY = psDatumInfo->dfShiftY;
             psProj->dDatumShiftZ = psDatumInfo->dfShiftZ;
@@ -400,19 +370,16 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
         }
     }
 
-    /*-----------------------------------------------------------------
-     * Fetch the units string.
-     *----------------------------------------------------------------*/
+    // Fetch the units string.
     if( CSLCount(papszNextField) > 0 )
     {
-        psProj->nUnitsId = (GByte)TABUnitIdFromString(papszNextField[0]);
+        psProj->nUnitsId =
+            static_cast<GByte>(TABUnitIdFromString(papszNextField[0]));
         papszNextField++;
     }
 
-    /*-----------------------------------------------------------------
-     * Finally the projection parameters.
-     *----------------------------------------------------------------*/
-    for(int iParam=0; iParam < 6 && CSLCount(papszNextField) > 0; iParam++)
+    // Finally the projection parameters.
+    for(int iParam = 0; iParam < 6 && CSLCount(papszNextField) > 0; iParam++)
     {
         psProj->adProjParams[iParam] = CPLAtof(papszNextField[0]);
         papszNextField++;
