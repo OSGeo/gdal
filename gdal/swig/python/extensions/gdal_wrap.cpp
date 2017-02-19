@@ -4559,8 +4559,8 @@ SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDataset
             else
             {
                 int nRes = 1 << nLevel;
-                buf_xsize = ceil(xSize / (1.0 * nRes));
-                buf_ysize = ceil(ySize / (1.0 * nRes));
+                buf_xsize = static_cast<int>(ceil(xSize / (1.0 * nRes)));
+                buf_ysize = static_cast<int>(ceil(ySize / (1.0 * nRes)));
             }
         }
     }
@@ -5231,8 +5231,8 @@ SWIGINTERN int GDALRasterBandShadow_GetDataCoverageStatus(GDALRasterBandShadow *
                                          pdfDataPct);
     }
 SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,int *buf_type=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL){
-    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
-    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    int nxsize = (buf_xsize==0) ? static_cast<int>(xsize) : *buf_xsize;
+    int nysize = (buf_ysize==0) ? static_cast<int>(ysize) : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
                                         : (GDALDataType)*buf_type;
     GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;

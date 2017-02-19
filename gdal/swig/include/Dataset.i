@@ -617,8 +617,8 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
             else
             {
                 int nRes = 1 << nLevel;
-                buf_xsize = ceil(xSize / (1.0 * nRes));
-                buf_ysize = ceil(ySize / (1.0 * nRes));
+                buf_xsize = static_cast<int>(ceil(xSize / (1.0 * nRes)));
+                buf_ysize = static_cast<int>(ceil(ySize / (1.0 * nRes)));
             }
         }
     }
