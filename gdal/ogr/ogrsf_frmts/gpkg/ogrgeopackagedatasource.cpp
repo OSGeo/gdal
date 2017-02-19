@@ -1309,7 +1309,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
             }
             else
             {
-                m_usGPKGNull = static_cast<int>(dfGPKGNoDataValue);
+                m_usGPKGNull = static_cast<GUInt16>(dfGPKGNoDataValue);
                 if( m_eDT == GDT_Int16 && m_usGPKGNull > 32767 )
                     dfGPKGNoDataValue = -32768.0;
                 reinterpret_cast<GDALGeoPackageRasterBand*>(GetRasterBand(1))->
