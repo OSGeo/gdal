@@ -173,16 +173,48 @@ def test_python2_handles_utf8_by_default():
     return _test_utf8(should_raise_unicode=False)
 
 
-def test_no_error_when_bad_lc_ctype_but_bad_content():
+def test_python2_gives_warning_if_bad_lc_ctype_and_non_ascii_chars():
     if sys.version_info[0] >= 3:
         return 'skip'
 
-    lc_ctype_current = os.environ.get('LC_CTYPE', "")
-    os.environ['LC_CTYPE'] = "fr_FR.latin-1"
+    lc_ctype = os.environ.get("LC_CTYPE", "")
+    os.environ['LC_CTYPE'] = 'fr_FR.latin-1'
 
-    ret =  _test_utf8(should_raise_unicode=False, content_ok=False)
+    ret = _test_utf8(should_raise_unicode=False, quiet=False, should_display_warning=True)
 
-    os.environ['LC_CTYPE'] = lc_ctype_current
+    os.environ['LC_CTYPE'] = lc_ctype
+
+    return ret
+
+
+def test_python2_does_not_give_warning_if_bad_lc_ctype_and_all_ascii_chars():
+    if sys.version_info[0] >= 3:
+        return 'skip'
+
+    lc_ctype = os.environ.get("LC_CTYPE", "")
+    os.environ['LC_CTYPE'] = 'fr_FR.latin-1'
+
+    ret = _test_utf8(should_raise_unicode=False,
+                     quiet=False, should_display_warning=False,
+                     input_file='./data/test_bounds_close_to_tile_bounds_x.vrt')
+
+    os.environ['LC_CTYPE'] = lc_ctype
+
+    return ret
+
+
+def test_python2_does_not_give_warning_if_bad_lc_ctype_and_non_ascii_chars_in_folder():
+    if sys.version_info[0] >= 3:
+        return 'skip'
+
+    lc_ctype = os.environ.get("LC_CTYPE", "")
+    os.environ['LC_CTYPE'] = 'fr_FR.latin-1'
+
+    ret = _test_utf8(should_raise_unicode=False,
+                     quiet=False, should_display_warning=False,
+                     input_file='./data/漢字/test_bounds_close_to_tile_bounds_x.vrt')
+
+    os.environ['LC_CTYPE'] = lc_ctype
 
     return ret
 
@@ -194,12 +226,14 @@ def test_python3_handle_utf8_by_default():
     return _test_utf8(should_raise_unicode=False)
 
 
-def _test_utf8(should_raise_unicode=False, content_ok=True):
+def _test_utf8(should_raise_unicode=False,
+               quiet=True,
+               should_display_warning=False,
+               input_file="data/test_utf8_漢字.vrt"):
     script_path = test_py_scripts.get_py_script('gdal2tiles')
     if script_path is None:
         return 'skip'
 
-    in_file = "data/test_utf8_漢字.vrt"
     out_folder = 'tmp/utf8_test'
 
     try:
@@ -207,10 +241,12 @@ def _test_utf8(should_raise_unicode=False, content_ok=True):
     except:
         pass
 
-    args = '-q -z 21 %s %s' % (in_file, out_folder)
+    args = '-z 21 %s %s' % (input_file, out_folder)
+    if quiet:
+        args = "-q " + args
 
     try:
-        test_py_scripts.run_py_script(script_path, 'gdal2tiles', args)
+        ret = test_py_scripts.run_py_script(script_path, 'gdal2tiles', args)
     except UnicodeEncodeError:
         if should_raise_unicode:
             return 'success'
@@ -223,19 +259,16 @@ def _test_utf8(should_raise_unicode=False, content_ok=True):
         gdaltest.post_reason(
             'Should not be handling filenames with utf8 characters in this context')
         return 'fail'
-    else:
-        return 'success'
 
-    with open(os.path.join(out_folder, "googlemaps.html")) as f:
-        html_content = f.read()
-        found_content = in_file in html_content
-        if content_ok and not found_content:
+    if should_display_warning:
+        if "WARNING" not in ret or "LC_CTYPE" not in ret:
             gdaltest.post_reason(
-                "The filename should be properly written in the googlemaps.html output")
+                'Should display a warning message about LC_CTYPE variable')
             return 'fail'
-        if not content_ok and found_content:
+    else:
+        if "WARNING" in ret and "LC_CTYPE" in ret:
             gdaltest.post_reason(
-                "The filename should not be properly written in the googlemaps.html output")
+                'Should not display a warning message about LC_CTYPE variable')
             return 'fail'
 
     return 'success'
@@ -248,7 +281,9 @@ gdaltest_list = [
     test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile,
     test_python3_handle_utf8_by_default,
     test_python2_handles_utf8_by_default,
-    test_no_error_when_bad_lc_ctype_but_bad_content,
+    test_python2_gives_warning_if_bad_lc_ctype_and_non_ascii_chars,
+    test_python2_does_not_give_warning_if_bad_lc_ctype_and_all_ascii_chars,
+    test_python2_does_not_give_warning_if_bad_lc_ctype_and_non_ascii_chars_in_folder,
     test_gdal2tiles_py_cleanup,
     ]
 

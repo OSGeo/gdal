@@ -651,12 +651,21 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
         # KML generation
         self.kml = self.options.kml
 
+        # Check if the input filename is full ascii or not
+        try:
+          os.path.basename(self.input).encode('ascii')
+        except UnicodeEncodeError:
+          full_ascii = False
+        else:
+          full_ascii = True
+
         # LC_CTYPE check
-        if 'UTF-8' not in os.environ.get("LC_CTYPE", ""):
+        if not full_ascii and 'UTF-8' not in os.environ.get("LC_CTYPE", ""):
             if not self.options.quiet:
                 print("\nWARNING: "
                       "You are running gdal2tiles.py with a LC_CTYPE environment variable that is "
-                      "not UTF-8 compatible. The generated sample googlemaps, openlayers or "
+                      "not UTF-8 compatible, and your input file contains non-ascii characters. "
+                      "The generated sample googlemaps, openlayers or "
                       "leaflet files might contain some invalid characters as a result\n")
 
         # Output the results
