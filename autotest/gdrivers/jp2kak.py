@@ -484,6 +484,38 @@ def jp2kak_21():
     return 'success'
 
 ###############################################################################
+# Test RGBA datasets
+
+def jp2kak_22():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+
+
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options = ['QUALITY=100'])
+    ds = gdal.Open('/vsimem/jp2kak_22.jp2')
+    for i in range(4):
+        ref_cs = src_ds.GetRasterBand(1).Checksum()
+        cs = ds.GetRasterBand(1).Checksum()
+        if ref_cs != cs:
+            gdaltest.post_reason('fail')
+            print(i)
+            print(cs)
+            print(ref_cs)
+            return 'fail'
+        if src_ds.GetRasterBand(1).GetColorInterpretation() != ds.GetRasterBand(1).GetColorInterpretation():
+            gdaltest.post_reason('fail')
+            print(i)
+            return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/jp2kak_22.jp2')
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup.
 
 def jp2kak_cleanup():
@@ -512,6 +544,7 @@ gdaltest_list = [
     jp2kak_19,
     jp2kak_20,
     jp2kak_21,
+    jp2kak_22,
     jp2kak_cleanup ]
 
 if __name__ == '__main__':

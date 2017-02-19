@@ -2594,7 +2594,17 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( bIsJP2 )
     {
-        jp2_out.write_header();
+        try
+        {
+            jp2_out.write_header();
+        }
+        catch( ... )
+        {
+            CPLDebug("JP2KAK", "jp2_out.write_header() - caught exception.");
+            oCodeStream.destroy();
+            CPLFree(layer_bytes);
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
