@@ -93,17 +93,18 @@ TABDATFile::TABDATFile() :
 #if HAVE_CXX11
     , m_szBuffer{}
 #endif
-{}
+{
+#ifndef HAVE_CXX11
+  memset(m_szBuffer, 0, sizeof(m_szBuffer));
+#endif
+}
 
 /**********************************************************************
  *                   TABDATFile::~TABDATFile()
  *
  * Destructor.
  **********************************************************************/
-TABDATFile::~TABDATFile()
-{
-    Close();
-}
+TABDATFile::~TABDATFile() { Close(); }
 
 /**********************************************************************
  *                   TABDATFile::Open()
@@ -112,13 +113,18 @@ TABDATFile::~TABDATFile()
  * Return 0 on success, -1 in case of failure.
  **********************************************************************/
 
-int TABDATFile::Open(const char *pszFname, const char* pszAccess, TABTableType eTableType)
+int TABDATFile::Open(const char *pszFname, const char *pszAccess,
+                     TABTableType eTableType)
 {
     // cppcheck-suppress nullPointer
     if( STARTS_WITH_CI(pszAccess, "r") )
+    {
         return Open(pszFname, TABRead, eTableType);
+    }
     else if( STARTS_WITH_CI(pszAccess, "w") )
+    {
         return Open(pszFname, TABWrite, eTableType);
+    }
     else
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -148,43 +154,39 @@ int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
         return -1;
     }
 
-    /*-----------------------------------------------------------------
-     * Validate access mode and make sure we use binary access.
-     *----------------------------------------------------------------*/
-    const char* pszAccess = NULL;
-    if (eAccess == TABRead && (eTableType==TABTableNative ||
-                                      eTableType==TABTableDBF)  )
+    // Validate access mode and make sure we use binary access.
+    const char *pszAccess = NULL;
+    if(eAccess == TABRead &&
+       (eTableType == TABTableNative || eTableType == TABTableDBF))
     {
         pszAccess = "rb";
     }
-    else if (eAccess == TABWrite && eTableType==TABTableNative)
+    else if (eAccess == TABWrite && eTableType == TABTableNative)
     {
         pszAccess = "wb+";
     }
-    else if (eAccess == TABReadWrite && eTableType==TABTableNative)
+    else if (eAccess == TABReadWrite && eTableType == TABTableNative)
     {
         pszAccess = "rb+";
     }
     else
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed: access mode \"%d\" not supported with eTableType=%d",
+                 "Open() failed: access mode \"%d\" "
+                 "not supported with eTableType=%d",
                  eAccess, eTableType);
         return -1;
     }
     m_eAccessMode = eAccess;
 
-    /*-----------------------------------------------------------------
-     * Open file for reading
-     *----------------------------------------------------------------*/
+    // Open file for reading.
     m_pszFname = CPLStrdup(pszFname);
     m_fp = VSIFOpenL(m_pszFname, pszAccess);
     m_eTableType = eTableType;
 
     if (m_fp == NULL)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed for %s", m_pszFname);
+        CPLError(CE_Failure, CPLE_FileIO, "Open() failed for %s", m_pszFname);
         CPLFree(m_pszFname);
         m_pszFname = NULL;
         return -1;
@@ -192,22 +194,20 @@ int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
 
     if (m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite)
     {
-        /*------------------------------------------------------------
-         * READ ACCESS:
-         * Read .DAT file header (record size, num records, etc...)
-         * m_poHeaderBlock will be reused later to read field definition
-         *-----------------------------------------------------------*/
+        // READ ACCESS:
+        // Read .DAT file header (record size, num records, etc...)
+        // m_poHeaderBlock will be reused later to read field definition
         m_poHeaderBlock = new TABRawBinBlock(m_eAccessMode, TRUE);
         CPL_IGNORE_RET_VAL(m_poHeaderBlock->ReadFromFile(m_fp, 0, 32));
 
-        m_poHeaderBlock->ReadByte();       // Table type ??? 0x03
-        m_poHeaderBlock->ReadByte();       // Last update year
-        m_poHeaderBlock->ReadByte();       // Last update month
-        m_poHeaderBlock->ReadByte();       // Last update day
+        m_poHeaderBlock->ReadByte();  // Table type ??? 0x03
+        m_poHeaderBlock->ReadByte();  // Last update year
+        m_poHeaderBlock->ReadByte();  // Last update month
+        m_poHeaderBlock->ReadByte();  // Last update day
 
-        m_numRecords      = m_poHeaderBlock->ReadInt32();
+        m_numRecords = m_poHeaderBlock->ReadInt32();
         m_nFirstRecordPtr = m_poHeaderBlock->ReadInt16();
-        m_nRecordSize     = m_poHeaderBlock->ReadInt16();
+        m_nRecordSize = m_poHeaderBlock->ReadInt16();
         if( m_nFirstRecordPtr < 32 || m_nRecordSize <= 0 || m_numRecords < 0 )
         {
             VSIFCloseL(m_fp);
@@ -218,39 +218,38 @@ int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
             m_poHeaderBlock = NULL;
             return -1;
         }
-        m_numFields = m_nFirstRecordPtr/32 - 1;
+        m_numFields = m_nFirstRecordPtr / 32 - 1;
 
-        /*-------------------------------------------------------------
-         * Read the field definitions
-         * First 32 bytes field definition starts at byte 32 in file
-         *------------------------------------------------------------*/
-        m_pasFieldDef = (TABDATFieldDef*)CPLCalloc(m_numFields,
-                                                   sizeof(TABDATFieldDef));
+        // Read the field definitions.
+        // First 32 bytes field definition starts at byte 32 in file.
+        m_pasFieldDef = static_cast<TABDATFieldDef*>(
+            CPLCalloc(m_numFields, sizeof(TABDATFieldDef)));
 
         for( int i = 0; i < m_numFields; i++ )
         {
-            m_poHeaderBlock->GotoByteInFile((i+1)*32);
-            m_poHeaderBlock->ReadBytes(11, (GByte*)m_pasFieldDef[i].szName);
+            m_poHeaderBlock->GotoByteInFile((i + 1) * 32);
+            m_poHeaderBlock->ReadBytes(
+                11, reinterpret_cast<GByte *>(m_pasFieldDef[i].szName));
             m_pasFieldDef[i].szName[10] = '\0';
-            m_pasFieldDef[i].cType = (char)m_poHeaderBlock->ReadByte();
+            m_pasFieldDef[i].cType =
+                static_cast<char>(m_poHeaderBlock->ReadByte());
 
-            m_poHeaderBlock->ReadInt32();       // Skip Bytes 12-15
+            m_poHeaderBlock->ReadInt32();  // Skip Bytes 12-15
             m_pasFieldDef[i].byLength = m_poHeaderBlock->ReadByte();
             m_pasFieldDef[i].byDecimals = m_poHeaderBlock->ReadByte();
 
             m_pasFieldDef[i].eTABType = TABFUnknown;
         }
 
-        /*-------------------------------------------------------------
-         * Establish a good record block size to use based on record size, and
-         * then create m_poRecordBlock
-         * Record block size has to be a multiple of record size.
-         *------------------------------------------------------------*/
-        m_nBlockSize = ((1024/m_nRecordSize)+1)*m_nRecordSize;
+        // Establish a good record block size to use based on record size, and
+        // then create m_poRecordBlock.
+        // Record block size has to be a multiple of record size.
+        m_nBlockSize = ((1024 / m_nRecordSize) + 1) * m_nRecordSize;
         if( m_numRecords < INT_MAX / m_nRecordSize )
-            m_nBlockSize = std::min(m_nBlockSize, (m_numRecords*m_nRecordSize));
+            m_nBlockSize =
+                std::min(m_nBlockSize, (m_numRecords * m_nRecordSize));
 
-        CPLAssert( m_poRecordBlock == NULL );
+        CPLAssert(m_poRecordBlock == NULL);
         m_poRecordBlock = new TABRawBinBlock(m_eAccessMode, FALSE);
         m_poRecordBlock->InitNewBlock(m_fp, m_nBlockSize);
         m_poRecordBlock->SetFirstBlockPtr(m_nFirstRecordPtr);
@@ -259,17 +258,15 @@ int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
     }
     else
     {
-        /*------------------------------------------------------------
-         * WRITE ACCESS:
-         * Set acceptable defaults for all class members.
-         * The real header initialization will be done when the first
-         * record is written
-         *-----------------------------------------------------------*/
+        // WRITE ACCESS:
+        // Set acceptable defaults for all class members.
+        // The real header initialization will be done when the first
+        // record is written.
         m_poHeaderBlock = NULL;
 
-        m_numRecords      = 0;
+        m_numRecords = 0;
         m_nFirstRecordPtr = 0;
-        m_nRecordSize     = 0;
+        m_nRecordSize = 0;
         m_numFields = 0;
         m_pasFieldDef = NULL;
         m_bWriteHeaderInitialized = FALSE;
@@ -290,10 +287,8 @@ int TABDATFile::Close()
     if (m_fp == NULL)
         return 0;
 
-    /*----------------------------------------------------------------
-     * Write access: Update the header with number of records, etc.
-     * and add a CTRL-Z char at the end of the file.
-     *---------------------------------------------------------------*/
+    // Write access: Update the header with number of records, etc.
+    // and add a CTRL-Z char at the end of the file.
     if (m_eAccessMode != TABRead )
     {
         SyncToDisk();
@@ -368,15 +363,13 @@ int TABDATFile::SyncToDisk()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int  TABDATFile::InitWriteHeader()
+int TABDATFile::InitWriteHeader()
 {
     if (m_eAccessMode == TABRead || m_bWriteHeaderInitialized)
         return 0;
 
-    /*------------------------------------------------------------
-     * Compute values for Record size, header size, etc.
-     *-----------------------------------------------------------*/
-    m_nFirstRecordPtr = (m_numFields+1)*32 + 1;
+    // Compute values for Record size, header size, etc.
+    m_nFirstRecordPtr = (m_numFields + 1) * 32 + 1;
 
     m_nRecordSize = 1;
     for( int i = 0; i < m_numFields; i++ )
@@ -384,19 +377,15 @@ int  TABDATFile::InitWriteHeader()
         m_nRecordSize += m_pasFieldDef[i].byLength;
     }
 
-    /*-------------------------------------------------------------
-     * Create m_poRecordBlock the size of a data record.
-     *------------------------------------------------------------*/
+    // Create m_poRecordBlock the size of a data record.
     m_nBlockSize = m_nRecordSize;
 
-    CPLAssert( m_poRecordBlock == NULL );
+    CPLAssert(m_poRecordBlock == NULL);
     m_poRecordBlock = new TABRawBinBlock(TABReadWrite, FALSE);
     m_poRecordBlock->InitNewBlock(m_fp, m_nBlockSize);
     m_poRecordBlock->SetFirstBlockPtr(m_nFirstRecordPtr);
 
-    /*-------------------------------------------------------------
-     * Make sure this init. will be performed only once
-     *------------------------------------------------------------*/
+    // Make sure this init. will be performed only once.
     m_bWriteHeaderInitialized = TRUE;
 
     return 0;
@@ -422,53 +411,44 @@ int  TABDATFile::WriteHeader()
     if (!m_bWriteHeaderInitialized)
         InitWriteHeader();
 
-    /*------------------------------------------------------------
-     * Create a single block that will be used to generate the whole header.
-     *-----------------------------------------------------------*/
+    // Create a single block that will be used to generate the whole header.
     if (m_poHeaderBlock == NULL)
         m_poHeaderBlock = new TABRawBinBlock(m_eAccessMode, TRUE);
     m_poHeaderBlock->InitNewBlock(m_fp, m_nFirstRecordPtr, 0);
 
-    /*------------------------------------------------------------
-     * First 32 bytes: main header block
-     *-----------------------------------------------------------*/
+    // First 32 bytes: main header block.
     m_poHeaderBlock->WriteByte(0x03);  // Table type ??? 0x03
 
     // __TODO__ Write the correct update date value
-    m_poHeaderBlock->WriteByte(99);    // Last update year
-    m_poHeaderBlock->WriteByte(9);     // Last update month
-    m_poHeaderBlock->WriteByte(9);     // Last update day
+    m_poHeaderBlock->WriteByte(99);  // Last update year
+    m_poHeaderBlock->WriteByte(9);   // Last update month
+    m_poHeaderBlock->WriteByte(9);   // Last update day
 
     m_poHeaderBlock->WriteInt32(m_numRecords);
-    m_poHeaderBlock->WriteInt16((GInt16)m_nFirstRecordPtr);
-    m_poHeaderBlock->WriteInt16((GInt16)m_nRecordSize);
+    m_poHeaderBlock->WriteInt16(static_cast<GInt16>(m_nFirstRecordPtr));
+    m_poHeaderBlock->WriteInt16(static_cast<GInt16>(m_nRecordSize));
 
-    m_poHeaderBlock->WriteZeros(20);    // Pad rest with zeros
+    m_poHeaderBlock->WriteZeros(20);  // Pad rest with zeros.
 
-    /*-------------------------------------------------------------
-     * Field definitions follow.  Each field def is 32 bytes.
-     *------------------------------------------------------------*/
+    // Field definitions follow.  Each field def is 32 bytes.
     for( int i = 0; i < m_numFields; i++ )
     {
-        m_poHeaderBlock->WriteBytes(11, (GByte*)m_pasFieldDef[i].szName);
+        m_poHeaderBlock->WriteBytes(
+            11, reinterpret_cast<GByte *>(m_pasFieldDef[i].szName));
         m_poHeaderBlock->WriteByte(m_pasFieldDef[i].cType);
 
-        m_poHeaderBlock->WriteInt32(0);       // Skip Bytes 12-15
+        m_poHeaderBlock->WriteInt32(0);  // Skip Bytes 12-15
 
         m_poHeaderBlock->WriteByte(m_pasFieldDef[i].byLength);
         m_poHeaderBlock->WriteByte(m_pasFieldDef[i].byDecimals);
 
-        m_poHeaderBlock->WriteZeros(14);    // Pad rest with zeros
+        m_poHeaderBlock->WriteZeros(14);  // Pad rest with zeros
     }
 
-    /*-------------------------------------------------------------
-     * Header ends with a 0x0d character.
-     *------------------------------------------------------------*/
+    // Header ends with a 0x0d character.
     m_poHeaderBlock->WriteByte(0x0d);
 
-    /*-------------------------------------------------------------
-     * Write the block to the file and return.
-     *------------------------------------------------------------*/
+    // Write the block to the file and return.
     return m_poHeaderBlock->CommitToFile();
 }
 
@@ -479,10 +459,7 @@ int  TABDATFile::WriteHeader()
  *
  * Returns a value >= 0 on success, -1 on error.
  **********************************************************************/
-int  TABDATFile::GetNumFields()
-{
-    return m_numFields;
-}
+int TABDATFile::GetNumFields() { return m_numFields; }
 
 /**********************************************************************
  *                   TABDATFile::GetNumRecords()
@@ -491,10 +468,7 @@ int  TABDATFile::GetNumFields()
  *
  * Returns a value >= 0 on success, -1 on error.
  **********************************************************************/
-int  TABDATFile::GetNumRecords()
-{
-    return m_numRecords;
-}
+int TABDATFile::GetNumRecords() { return m_numRecords; }
 
 /**********************************************************************
  *                   TABDATFile::GetRecordBlock()
@@ -522,14 +496,11 @@ TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
 
     if (m_eAccessMode == TABRead || nRecordId <= m_numRecords)
     {
-        /*-------------------------------------------------------------
-         * READ ACCESS
-         *------------------------------------------------------------*/
-        const int nFileOffset = m_nFirstRecordPtr+(nRecordId-1)*m_nRecordSize;
+        // READ ACCESS
+        const int nFileOffset =
+            m_nFirstRecordPtr + (nRecordId - 1) * m_nRecordSize;
 
-        /*-------------------------------------------------------------
-         * Move record block pointer to the right location
-         *------------------------------------------------------------*/
+        // Move record block pointer to the right location.
         if ( m_poRecordBlock == NULL ||
              nRecordId < 1 || nRecordId > m_numRecords ||
              m_poRecordBlock->GotoByteInFile(nFileOffset) != 0 )
@@ -540,13 +511,11 @@ TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
             return NULL;
         }
 
-        /*-------------------------------------------------------------
-         * The first char of the record is a ' ' for an active record, or
-         * '*' for a deleted one.
-         * In the case of a deleted record, we simply return default
-         * values for each attribute... this is what MapInfo seems to do
-         * when it takes a .TAB with deleted records and exports it to .MIF
-         *------------------------------------------------------------*/
+        // The first char of the record is a ' ' for an active record, or
+        // '*' for a deleted one.
+        // In the case of a deleted record, we simply return default
+        // values for each attribute... this is what MapInfo seems to do
+        // when it takes a .TAB with deleted records and exports it to .MIF
         if (m_poRecordBlock->ReadByte() != ' ')
         {
             m_bCurRecordDeletedFlag = TRUE;
@@ -554,15 +523,11 @@ TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
     }
     else if (nRecordId > 0)
     {
-        /*-------------------------------------------------------------
-         * WRITE ACCESS
-         *------------------------------------------------------------*/
+        // WRITE ACCESS
 
-        /*-------------------------------------------------------------
-         * Before writing the first record, we must generate the file
-         * header.  We will also initialize class members such as record
-         * size, etc. and will create m_poRecordBlock.
-         *------------------------------------------------------------*/
+        // Before writing the first record, we must generate the file
+        // header.  We will also initialize class members such as record
+        // size, etc. and will create m_poRecordBlock.
         if (!m_bWriteHeaderInitialized)
         {
             WriteHeader();
@@ -574,14 +539,13 @@ TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
         if( nRecordId == m_numRecords )
             m_bWriteEOF = TRUE;
 
-        const int nFileOffset = m_nFirstRecordPtr+(nRecordId-1)*m_nRecordSize;
+        const int nFileOffset =
+            m_nFirstRecordPtr + (nRecordId - 1) * m_nRecordSize;
 
         m_poRecordBlock->InitNewBlock(m_fp, m_nRecordSize, nFileOffset);
 
-        /*-------------------------------------------------------------
-         * The first char of the record is the active/deleted flag.
-         * Automatically set it to ' ' (active).
-         *------------------------------------------------------------*/
+        // The first char of the record is the active/deleted flag.
+        // Automatically set it to ' ' (active).
         m_poRecordBlock->WriteByte(' ');
     }
 
@@ -600,7 +564,7 @@ TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int  TABDATFile::CommitRecordToFile()
+int TABDATFile::CommitRecordToFile()
 {
     if (m_eAccessMode == TABRead || m_poRecordBlock == NULL)
         return -1;
@@ -608,7 +572,7 @@ int  TABDATFile::CommitRecordToFile()
     if (m_poRecordBlock->CommitToFile() != 0)
         return -1;
 
-    /* If this is the end of file, write EOF character */
+    // If this is the end of file, write EOF character.
     if (m_bWriteEOF)
     {
         m_bWriteEOF = FALSE;
@@ -630,7 +594,8 @@ int TABDATFile::MarkAsDeleted()
     if (m_eAccessMode == TABRead || m_poRecordBlock == NULL)
         return -1;
 
-    const int nFileOffset = m_nFirstRecordPtr+(m_nCurRecordId-1)*m_nRecordSize;
+    const int nFileOffset =
+        m_nFirstRecordPtr + (m_nCurRecordId - 1) * m_nRecordSize;
 
     if (m_poRecordBlock->GotoByteInFile(nFileOffset) != 0)
         return -1;
@@ -656,7 +621,8 @@ int TABDATFile::MarkRecordAsExisting()
     if (m_eAccessMode == TABRead || m_poRecordBlock == NULL)
         return -1;
 
-    const int nFileOffset = m_nFirstRecordPtr+(m_nCurRecordId-1)*m_nRecordSize;
+    const int nFileOffset =
+        m_nFirstRecordPtr + (m_nCurRecordId - 1) * m_nRecordSize;
 
     if (m_poRecordBlock->GotoByteInFile(nFileOffset) != 0)
         return -1;
@@ -696,23 +662,23 @@ int  TABDATFile::ValidateFieldInfoFromTAB(int iField, const char *pszName,
 
     if (m_pasFieldDef == NULL || iField < 0 || iField >= m_numFields)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-          "Invalid field %d (%s) in .TAB header. %s contains only %d fields.",
-                 iField+1, pszName, m_pszFname, m_pasFieldDef? m_numFields:0);
+        CPLError(
+            CE_Failure, CPLE_FileIO,
+            "Invalid field %d (%s) in .TAB header. %s contains only %d fields.",
+            iField + 1, pszName, m_pszFname, m_pasFieldDef ? m_numFields : 0);
         return -1;
     }
 
-    /*-----------------------------------------------------------------
-     * We used to check that the .TAB field name matched the .DAT
-     * name stored internally, but apparently some tools that rename table
-     * field names only update the .TAB file and not the .DAT, so we won't
-     * do that name validation any more... we'll just check the type.
-     *
-     * With TABTableNative, we have to validate the field sizes as well
-     * because .DAT files use char fields to store binary values.
-     * With TABTableDBF, no need to validate field type since all
-     * fields are stored as strings internally.
-     *----------------------------------------------------------------*/
+    // We used to check that the .TAB field name matched the .DAT
+    // name stored internally, but apparently some tools that rename table
+    // field names only update the .TAB file and not the .DAT, so we won't
+    // do that name validation any more... we'll just check the type.
+    //
+    // With TABTableNative, we have to validate the field sizes as well
+    // because .DAT files use char fields to store binary values.
+    // With TABTableDBF, no need to validate field type since all
+    // fields are stored as strings internally.
+
     if ((m_eTableType == TABTableNative &&
          ((eType == TABFChar && (m_pasFieldDef[i].cType != 'C' ||
                                 m_pasFieldDef[i].byLength != nWidth )) ||
@@ -737,7 +703,7 @@ int  TABDATFile::ValidateFieldInfoFromTAB(int iField, const char *pszName,
         CPLError(CE_Failure, CPLE_FileIO,
                  "Definition of field %d (%s) from .TAB file does not match "
                  "what is found in %s (name=%s, type=%c, width=%d, prec=%d)",
-                 iField+1, pszName, m_pszFname,
+                 iField + 1, pszName, m_pszFname,
                  m_pasFieldDef[i].szName, m_pasFieldDef[i].cType,
                  m_pasFieldDef[i].byLength, m_pasFieldDef[i].byDecimals);
         return -1;
@@ -752,14 +718,11 @@ int  TABDATFile::ValidateFieldInfoFromTAB(int iField, const char *pszName,
  *                  TABDATFileSetFieldDefinition()
  *
  **********************************************************************/
-static int TABDATFileSetFieldDefinition(TABDATFieldDef* psFieldDef,
+static int TABDATFileSetFieldDefinition(TABDATFieldDef *psFieldDef,
                                         const char *pszName, TABFieldType eType,
                                         int nWidth, int nPrecision)
 {
-
-    /*-----------------------------------------------------------------
-     * Validate field width... must be <= 254
-     *----------------------------------------------------------------*/
+    // Validate field width.
     if (nWidth > 254)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
@@ -768,57 +731,55 @@ static int TABDATFileSetFieldDefinition(TABDATFieldDef* psFieldDef,
         return -1;
     }
 
-    /*-----------------------------------------------------------------
-     * Map fields with width=0 (variable length in OGR) to a valid default
-     *----------------------------------------------------------------*/
+    // Map fields with width=0 (variable length in OGR) to a valid default.
     if (eType == TABFDecimal && nWidth == 0)
-        nWidth=20;
+        nWidth = 20;
     else if (nWidth == 0)
-        nWidth=254; /* char fields */
+        nWidth = 254;  // char fields.
 
-    strncpy(psFieldDef->szName, pszName, sizeof(psFieldDef->szName)-1);
-    psFieldDef->szName[sizeof(psFieldDef->szName)-1] = '\0';
+    strncpy(psFieldDef->szName, pszName, sizeof(psFieldDef->szName) - 1);
+    psFieldDef->szName[sizeof(psFieldDef->szName) - 1] = '\0';
     psFieldDef->eTABType = eType;
-    psFieldDef->byLength = (GByte)nWidth;
-    psFieldDef->byDecimals = (GByte)nPrecision;
+    psFieldDef->byLength = static_cast<GByte>(nWidth);
+    psFieldDef->byDecimals = static_cast<GByte>(nPrecision);
 
     switch(eType)
     {
-      case TABFChar:
+    case TABFChar:
         psFieldDef->cType = 'C';
         break;
-      case TABFDecimal:
+    case TABFDecimal:
         psFieldDef->cType = 'N';
         break;
-      case TABFInteger:
+    case TABFInteger:
         psFieldDef->cType = 'C';
         psFieldDef->byLength = 4;
         break;
-      case TABFSmallInt:
+    case TABFSmallInt:
         psFieldDef->cType = 'C';
         psFieldDef->byLength = 2;
         break;
-      case TABFFloat:
+    case TABFFloat:
         psFieldDef->cType = 'C';
         psFieldDef->byLength = 8;
         break;
-      case TABFDate:
+    case TABFDate:
         psFieldDef->cType = 'C';
         psFieldDef->byLength = 4;
         break;
-      case TABFTime:
+    case TABFTime:
         psFieldDef->cType = 'C';
         psFieldDef->byLength = 4;
         break;
-      case TABFDateTime:
+    case TABFDateTime:
         psFieldDef->cType = 'C';
         psFieldDef->byLength = 8;
         break;
-      case TABFLogical:
+    case TABFLogical:
         psFieldDef->cType = 'L';
         psFieldDef->byLength = 1;
         break;
-      default:
+    default:
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unsupported field type for field `%s'", pszName);
         return -1;
@@ -836,13 +797,14 @@ static int TABDATFileSetFieldDefinition(TABDATFieldDef* psFieldDef,
  *
  * Returns the new field index (a value >= 0) if OK, -1 on error.
  **********************************************************************/
-int  TABDATFile::AddField(const char *pszName, TABFieldType eType,
-                          int nWidth, int nPrecision /*=0*/)
+int TABDATFile::AddField(const char *pszName, TABFieldType eType,
+                         int nWidth, int nPrecision /* =0 */)
 {
     if (m_eAccessMode == TABRead || m_eTableType != TABTableNative)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Operation not supported on read-only files or on non-native table.");
+                 "Operation not supported on read-only files or "
+                 "on non-native table.");
         return -1;
     }
 
@@ -855,13 +817,13 @@ int  TABDATFile::AddField(const char *pszName, TABFieldType eType,
         m_numFields = 0;
 
     m_numFields++;
-    m_pasFieldDef = (TABDATFieldDef*)CPLRealloc(m_pasFieldDef,
-                                          m_numFields*sizeof(TABDATFieldDef));
-    memcpy(&m_pasFieldDef[m_numFields-1], &sFieldDef, sizeof(sFieldDef));
+    m_pasFieldDef = static_cast<TABDATFieldDef *>(
+        CPLRealloc(m_pasFieldDef, m_numFields * sizeof(TABDATFieldDef)));
+    memcpy(&m_pasFieldDef[m_numFields - 1], &sFieldDef, sizeof(sFieldDef));
 
-    /* If there are already records, we cannot update in place */
-    /* so create a temporary .dat.tmp in which we create the new structure */
-    /* and then copy the widen records */
+    // If there are already records, we cannot update in place.
+    // Create a temporary .dat.tmp in which we create the new structure
+    // and then copy the widen records.
     if( m_numRecords > 0 )
     {
         TABDATFile oTempFile;
@@ -871,22 +833,21 @@ int  TABDATFile::AddField(const char *pszName, TABFieldType eType,
         if( oTempFile.Open( osTmpFile.c_str(), TABWrite ) != 0 )
             return -1;
 
-        /* Create field structure */
+        // Create field structure.
         for( int i = 0; i < m_numFields; i++ )
         {
-            oTempFile.AddField(m_pasFieldDef[i].szName,
-                               m_pasFieldDef[i].eTABType,
-                               m_pasFieldDef[i].byLength,
-                               m_pasFieldDef[i].byDecimals);
+            oTempFile.AddField(
+                m_pasFieldDef[i].szName, m_pasFieldDef[i].eTABType,
+                m_pasFieldDef[i].byLength, m_pasFieldDef[i].byDecimals);
         }
 
-        GByte* pabyRecord = (GByte*)CPLMalloc(m_nRecordSize);
+        GByte *pabyRecord = static_cast<GByte *>(CPLMalloc(m_nRecordSize));
 
-        /* Copy records */
+        // Copy records.
         for(int j = 0; j < m_numRecords; j++)
         {
-            if( GetRecordBlock(1+j) == NULL ||
-                oTempFile.GetRecordBlock(1+j) == NULL )
+            if( GetRecordBlock(1 + j) == NULL ||
+                oTempFile.GetRecordBlock(1 + j) == NULL )
             {
                 CPLFree(pabyRecord);
                 oTempFile.Close();
@@ -899,8 +860,8 @@ int  TABDATFile::AddField(const char *pszName, TABFieldType eType,
             }
             else
             {
-                if( m_poRecordBlock->ReadBytes(m_nRecordSize-1, pabyRecord) != 0 ||
-                    oTempFile.m_poRecordBlock->WriteBytes(m_nRecordSize-1, pabyRecord) != 0 ||
+                if( m_poRecordBlock->ReadBytes(m_nRecordSize - 1, pabyRecord) != 0 ||
+                    oTempFile.m_poRecordBlock->WriteBytes(m_nRecordSize - 1, pabyRecord) != 0 ||
                     oTempFile.m_poRecordBlock->WriteZeros(m_pasFieldDef[m_numFields-1].byLength) != 0 )
                 {
                     CPLFree(pabyRecord);
@@ -914,27 +875,28 @@ int  TABDATFile::AddField(const char *pszName, TABFieldType eType,
 
         CPLFree(pabyRecord);
 
-        /* Close temporary file */
+        // Close temporary file.
         oTempFile.Close();
 
-        /* Backup field definitions as we will need to set the TABFieldType */
-        TABDATFieldDef* pasFieldDefTmp = (TABDATFieldDef*)CPLMalloc(m_numFields*sizeof(TABDATFieldDef));
-        memcpy(pasFieldDefTmp, m_pasFieldDef, m_numFields*sizeof(TABDATFieldDef));
+        // Backup field definitions as we will need to set the TABFieldType.
+        TABDATFieldDef *pasFieldDefTmp = static_cast<TABDATFieldDef *>(
+            CPLMalloc(m_numFields * sizeof(TABDATFieldDef)));
+        memcpy(pasFieldDefTmp, m_pasFieldDef,
+               m_numFields * sizeof(TABDATFieldDef));
 
-        /* Close ourselves */
-        m_numFields--; /* so that Close() doesn't see the new field */
+        m_numFields--;  // So that Close() doesn't see the new field.
         Close();
 
-        /* Move temporary file as main .data file and reopen it */
+        // Move temporary file as main .data file and reopen it.
         VSIUnlink(osOriginalFile);
         VSIRename(osTmpFile, osOriginalFile);
-        if( Open( osOriginalFile, TABReadWrite ) < 0 )
+        if( Open(osOriginalFile, TABReadWrite) < 0 )
         {
             CPLFree(pasFieldDefTmp);
             return -1;
         }
 
-        /* Restore saved TABFieldType */
+        // Restore saved TABFieldType.
         for( int i = 0; i < m_numFields; i++ )
         {
             m_pasFieldDef[i].eTABType = pasFieldDefTmp[i].eTABType;
@@ -954,68 +916,74 @@ int TABDATFile::DeleteField( int iField )
     if (m_eAccessMode == TABRead || m_eTableType != TABTableNative)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Operation not supported on read-only files or on non-native table.");
+                 "Operation not supported on read-only files or "
+                 "on non-native table.");
         return -1;
     }
 
     if( iField < 0 || iField >= m_numFields )
     {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid field index: %d", iField);
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid field index: %d",
+                 iField);
         return -1;
     }
 
-    /* If no records have been written, then just remove from the field */
-    /* definition array */
+    // If no records have been written, then just remove from the field
+    // definition array.
     if( m_numRecords <= 0 )
     {
-        if( iField < m_numFields-1 )
+        if( iField < m_numFields - 1 )
         {
             memmove(m_pasFieldDef + iField, m_pasFieldDef + iField + 1,
-                    (m_numFields-1-iField)*sizeof(TABDATFieldDef));
+                    (m_numFields - 1 - iField) * sizeof(TABDATFieldDef));
         }
-        m_numFields --;
+        m_numFields--;
         return 0;
     }
 
     if( m_numFields == 1 )
     {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Cannot delete the single remaining field.");
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Cannot delete the single remaining field.");
         return -1;
     }
 
-    /* Otherwise we need to do a temporary file */
+    // Otherwise we need to do a temporary file.
     TABDATFile oTempFile;
     CPLString osOriginalFile(m_pszFname);
     CPLString osTmpFile(m_pszFname);
     osTmpFile += ".tmp";
-    if( oTempFile.Open( osTmpFile.c_str(), TABWrite ) != 0 )
+    if( oTempFile.Open(osTmpFile.c_str(), TABWrite) != 0 )
         return -1;
 
-    /* Create field structure */
+    // Create field structure.
     int nRecordSizeBefore = 0;
     int nRecordSizeAfter = 0;
     for( int i = 0; i < m_numFields; i++ )
     {
         if( i != iField )
         {
-            if( i < iField ) nRecordSizeBefore += m_pasFieldDef[i].byLength;
-            else if( i > iField ) nRecordSizeAfter += m_pasFieldDef[i].byLength;
-            oTempFile.AddField(m_pasFieldDef[i].szName,
-                                m_pasFieldDef[i].eTABType,
-                                m_pasFieldDef[i].byLength,
-                                m_pasFieldDef[i].byDecimals);
+            if( i < iField )
+                nRecordSizeBefore += m_pasFieldDef[i].byLength;
+            else if( i > iField )
+                nRecordSizeAfter += m_pasFieldDef[i].byLength;
+            oTempFile.AddField(
+                m_pasFieldDef[i].szName, m_pasFieldDef[i].eTABType,
+                m_pasFieldDef[i].byLength, m_pasFieldDef[i].byDecimals);
         }
     }
 
-    CPLAssert(nRecordSizeBefore + m_pasFieldDef[iField].byLength + nRecordSizeAfter == m_nRecordSize - 1);
+    CPLAssert(nRecordSizeBefore + m_pasFieldDef[iField].byLength +
+                  nRecordSizeAfter ==
+              m_nRecordSize - 1);
 
-    GByte* pabyRecord = (GByte*)CPLMalloc(m_nRecordSize);
+    GByte *pabyRecord = static_cast<GByte *>(CPLMalloc(m_nRecordSize));
 
-    /* Copy records */
+    // Copy records.
     for(int j = 0; j < m_numRecords; j++)
     {
-        if( GetRecordBlock(1+j) == NULL ||
-            oTempFile.GetRecordBlock(1+j) == NULL )
+        if( GetRecordBlock(1 + j) == NULL ||
+            oTempFile.GetRecordBlock(1 + j) == NULL )
         {
             CPLFree(pabyRecord);
             oTempFile.Close();
@@ -1044,32 +1012,32 @@ int TABDATFile::DeleteField( int iField )
 
     CPLFree(pabyRecord);
 
-    /* Close temporary file */
+    // Close temporary file.
     oTempFile.Close();
 
-    /* Backup field definitions as we will need to set the TABFieldType */
-    TABDATFieldDef* pasFieldDefTmp = (TABDATFieldDef*)CPLMalloc(m_numFields*sizeof(TABDATFieldDef));
-    memcpy(pasFieldDefTmp, m_pasFieldDef, m_numFields*sizeof(TABDATFieldDef));
+    // Backup field definitions as we will need to set the TABFieldType.
+    TABDATFieldDef *pasFieldDefTmp = static_cast<TABDATFieldDef *>(
+        CPLMalloc(m_numFields * sizeof(TABDATFieldDef)));
+    memcpy(pasFieldDefTmp, m_pasFieldDef, m_numFields * sizeof(TABDATFieldDef));
 
-    /* Close ourselves */
     Close();
 
-    /* Move temporary file as main .data file and reopen it */
+    // Move temporary file as main .data file and reopen it.
     VSIUnlink(osOriginalFile);
     VSIRename(osTmpFile, osOriginalFile);
-    if( Open( osOriginalFile, TABReadWrite ) < 0 )
+    if( Open(osOriginalFile, TABReadWrite) < 0 )
     {
         CPLFree(pasFieldDefTmp);
         return -1;
     }
 
-    /* Restore saved TABFieldType */
+    // Restore saved TABFieldType.
     for( int i = 0; i < m_numFields; i++ )
     {
         if( i < iField )
             m_pasFieldDef[i].eTABType = pasFieldDefTmp[i].eTABType;
         else
-            m_pasFieldDef[i].eTABType = pasFieldDefTmp[i+1].eTABType;
+            m_pasFieldDef[i].eTABType = pasFieldDefTmp[i + 1].eTABType;
     }
     CPLFree(pasFieldDefTmp);
 
@@ -1080,12 +1048,13 @@ int TABDATFile::DeleteField( int iField )
 /*                           ReorderFields()                            */
 /************************************************************************/
 
-int TABDATFile::ReorderFields( int* panMap )
+int TABDATFile::ReorderFields( int *panMap )
 {
     if (m_eAccessMode == TABRead || m_eTableType != TABTableNative)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Operation not supported on read-only files or on non-native table.");
+                 "Operation not supported on read-only files or "
+                 "on non-native table.");
         return -1;
     }
 
@@ -1096,12 +1065,14 @@ int TABDATFile::ReorderFields( int* panMap )
     if (eErr != OGRERR_NONE)
         return -1;
 
-    /* If no records have been written, then just reorder the field */
-    /* definition array */
+    // If no records have been written, then just reorder the field
+    // definition array.
     if( m_numRecords <= 0 )
     {
-        TABDATFieldDef* pasFieldDefTmp = (TABDATFieldDef*)CPLMalloc(m_numFields*sizeof(TABDATFieldDef));
-        memcpy(pasFieldDefTmp, m_pasFieldDef, m_numFields*sizeof(TABDATFieldDef));
+        TABDATFieldDef *pasFieldDefTmp = static_cast<TABDATFieldDef *>(
+            CPLMalloc(m_numFields * sizeof(TABDATFieldDef)));
+        memcpy(pasFieldDefTmp, m_pasFieldDef,
+               m_numFields * sizeof(TABDATFieldDef));
         for(int i = 0; i < m_numFields; i++)
         {
             memcpy(m_pasFieldDef + i, pasFieldDefTmp + panMap[i],
@@ -1118,31 +1089,33 @@ int TABDATFile::ReorderFields( int* panMap )
     CPLString osOriginalFile(m_pszFname);
     CPLString osTmpFile(m_pszFname);
     osTmpFile += ".tmp";
-    if( oTempFile.Open( osTmpFile.c_str(), TABWrite ) != 0 )
+    if( oTempFile.Open(osTmpFile.c_str(), TABWrite) != 0 )
         return -1;
 
-    /* Create field structure */
-    int* panOldOffset = (int*)CPLMalloc(m_numFields * sizeof(int));
+    // Create field structure.
+    int *panOldOffset =
+        static_cast<int *>(CPLMalloc(m_numFields * sizeof(int)));
     for( int i = 0; i < m_numFields; i++ )
     {
         int iBefore = panMap[i];
         if( i == 0 )
             panOldOffset[i] = 0;
         else
-            panOldOffset[i] = panOldOffset[i-1] + m_pasFieldDef[i-1].byLength;
+            panOldOffset[i] =
+                panOldOffset[i - 1] + m_pasFieldDef[i - 1].byLength;
         oTempFile.AddField(m_pasFieldDef[iBefore].szName,
                             m_pasFieldDef[iBefore].eTABType,
                             m_pasFieldDef[iBefore].byLength,
                             m_pasFieldDef[iBefore].byDecimals);
     }
 
-    GByte* pabyRecord = (GByte*)CPLMalloc(m_nRecordSize);
+    GByte *pabyRecord = static_cast<GByte *>(CPLMalloc(m_nRecordSize));
 
-    /* Copy records */
+    // Copy records.
     for(int j = 0; j < m_numRecords; j++)
     {
-        if( GetRecordBlock(1+j) == NULL ||
-            oTempFile.GetRecordBlock(1+j) == NULL )
+        if( GetRecordBlock(1 + j) == NULL ||
+            oTempFile.GetRecordBlock(1 + j) == NULL )
         {
             CPLFree(pabyRecord);
             CPLFree(panOldOffset);
@@ -1156,7 +1129,7 @@ int TABDATFile::ReorderFields( int* panMap )
         }
         else
         {
-            if( m_poRecordBlock->ReadBytes(m_nRecordSize-1, pabyRecord) != 0 )
+            if( m_poRecordBlock->ReadBytes(m_nRecordSize - 1, pabyRecord) != 0 )
             {
                 CPLFree(pabyRecord);
                 CPLFree(panOldOffset);
@@ -1168,7 +1141,8 @@ int TABDATFile::ReorderFields( int* panMap )
             {
                 int iBefore = panMap[i];
                 if( oTempFile.m_poRecordBlock->WriteBytes(
-                        m_pasFieldDef[iBefore].byLength, pabyRecord + panOldOffset[iBefore]) != 0 )
+                        m_pasFieldDef[iBefore].byLength,
+                        pabyRecord + panOldOffset[iBefore]) != 0 )
                 {
                     CPLFree(pabyRecord);
                     CPLFree(panOldOffset);
@@ -1185,26 +1159,26 @@ int TABDATFile::ReorderFields( int* panMap )
     CPLFree(pabyRecord);
     CPLFree(panOldOffset);
 
-    /* Close temporary file */
     oTempFile.Close();
 
-    /* Backup field definitions as we will need to set the TABFieldType */
-    TABDATFieldDef* pasFieldDefTmp = (TABDATFieldDef*)CPLMalloc(m_numFields*sizeof(TABDATFieldDef));
-    memcpy(pasFieldDefTmp, m_pasFieldDef, m_numFields*sizeof(TABDATFieldDef));
+    // Backup field definitions as we will need to set the TABFieldType.
+    TABDATFieldDef *pasFieldDefTmp = static_cast<TABDATFieldDef *>(
+        CPLMalloc(m_numFields * sizeof(TABDATFieldDef)));
+    memcpy(pasFieldDefTmp, m_pasFieldDef, m_numFields * sizeof(TABDATFieldDef));
 
-    /* Close ourselves */
+    // Close ourselves.
     Close();
 
-    /* Move temporary file as main .data file and reopen it */
+    // Move temporary file as main .data file and reopen it.
     VSIUnlink(osOriginalFile);
     VSIRename(osTmpFile, osOriginalFile);
-    if( Open( osOriginalFile, TABReadWrite ) < 0 )
+    if( Open(osOriginalFile, TABReadWrite) < 0 )
     {
         CPLFree(pasFieldDefTmp);
         return -1;
     }
 
-    /* Restore saved TABFieldType */
+    // Restore saved TABFieldType.
     for( int i = 0; i < m_numFields; i++ )
     {
         int iBefore = panMap[i];
@@ -1219,35 +1193,40 @@ int TABDATFile::ReorderFields( int* panMap )
 /*                           AlterFieldDefn()                           */
 /************************************************************************/
 
-int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn *poNewFieldDefn,
+                                int nFlags )
 {
     if (m_eAccessMode == TABRead || m_eTableType != TABTableNative)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Operation not supported on read-only files or on non-native table.");
+                 "Operation not supported on read-only files or "
+                 "on non-native table.");
         return -1;
     }
 
     if( iField < 0 || iField >= m_numFields )
     {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid field index: %d", iField);
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Invalid field index: %d", iField);
         return -1;
     }
 
     TABFieldType eTABType = m_pasFieldDef[iField].eTABType;
-    int nWidth = m_pasFieldDef[iField].byLength ;
-    int nPrecision = m_pasFieldDef[iField].byDecimals ;
+    int nWidth = m_pasFieldDef[iField].byLength;
+    int nPrecision = m_pasFieldDef[iField].byDecimals;
     int nWidthDummy = 0;
     int nPrecisionDummy = 0;
     if( nFlags & ALTER_TYPE_FLAG )
     {
-        if( IMapInfoFile::GetTABType( poNewFieldDefn, &eTABType, &nWidthDummy, &nPrecisionDummy ) < 0 )
+        if( IMapInfoFile::GetTABType(poNewFieldDefn, &eTABType, &nWidthDummy,
+                                     &nPrecisionDummy) < 0 )
             return -1;
     }
-    if( (nFlags & ALTER_WIDTH_PRECISION_FLAG) )
+    if( nFlags & ALTER_WIDTH_PRECISION_FLAG )
     {
         TABFieldType eTABTypeDummy;
-        if( IMapInfoFile::GetTABType( poNewFieldDefn, &eTABTypeDummy, &nWidth, &nPrecision ) < 0 )
+        if( IMapInfoFile::GetTABType(poNewFieldDefn, &eTABTypeDummy, &nWidth,
+                                     &nPrecision) < 0 )
             return -1;
     }
 
@@ -1256,8 +1235,8 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
     {
         if ( eTABType != TABFChar )
         {
-            CPLError( CE_Failure, CPLE_NotSupported,
-                      "Can only convert to OFTString");
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Can only convert to OFTString");
             return -1;
         }
         if( (nFlags & ALTER_WIDTH_PRECISION_FLAG) == 0 )
@@ -1268,8 +1247,8 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
     {
         if( eTABType != TABFChar && nWidth != m_pasFieldDef[iField].byLength )
         {
-            CPLError( CE_Failure, CPLE_NotSupported,
-                      "Resizing only supported on String fields");
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Resizing only supported on String fields");
             return -1;
         }
     }
@@ -1277,10 +1256,10 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
     if (nFlags & ALTER_NAME_FLAG)
     {
         strncpy(m_pasFieldDef[iField].szName, poNewFieldDefn->GetNameRef(),
-                sizeof(m_pasFieldDef[iField].szName)-1);
-        m_pasFieldDef[iField].szName[
-                            sizeof(m_pasFieldDef[iField].szName)-1] = '\0';
-        /* If renaming is the only operation, then nothing more to do */
+                sizeof(m_pasFieldDef[iField].szName) - 1);
+        m_pasFieldDef[iField].szName[sizeof(m_pasFieldDef[iField].szName) - 1] =
+            '\0';
+        // If renaming is the only operation, then nothing more to do.
         if( nFlags == ALTER_NAME_FLAG )
         {
             m_bUpdated = TRUE;
@@ -1302,21 +1281,21 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
         }
         if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
         {
-            m_pasFieldDef[iField].byLength = (GByte)nWidth;
-            m_pasFieldDef[iField].byDecimals = (GByte)nPrecision;
+            m_pasFieldDef[iField].byLength = static_cast<GByte>(nWidth);
+            m_pasFieldDef[iField].byDecimals = static_cast<GByte>(nPrecision);
         }
         return 0;
     }
 
-    /* Otherwise we need to do a temporary file */
+    // Otherwise we need to do a temporary file.
     TABDATFile oTempFile;
     CPLString osOriginalFile(m_pszFname);
     CPLString osTmpFile(m_pszFname);
     osTmpFile += ".tmp";
-    if( oTempFile.Open( osTmpFile.c_str(), TABWrite ) != 0 )
+    if( oTempFile.Open(osTmpFile.c_str(), TABWrite) != 0 )
         return -1;
 
-    /* Create field structure */
+    // Create field structure.
     int nRecordSizeBefore = 0;
     int nRecordSizeAfter = 0;
     TABDATFieldDef sFieldDef;
@@ -1333,9 +1312,9 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
             if( i < iField ) nRecordSizeBefore += m_pasFieldDef[i].byLength;
             else if( i > iField ) nRecordSizeAfter += m_pasFieldDef[i].byLength;
             oTempFile.AddField(m_pasFieldDef[i].szName,
-                                m_pasFieldDef[i].eTABType,
-                                m_pasFieldDef[i].byLength,
-                                m_pasFieldDef[i].byDecimals);
+                               m_pasFieldDef[i].eTABType,
+                               m_pasFieldDef[i].byLength,
+                               m_pasFieldDef[i].byDecimals);
         }
         else
         {
@@ -1346,14 +1325,14 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
         }
     }
 
-    GByte* pabyRecord = (GByte*)CPLMalloc(m_nRecordSize);
-    char* pabyNewField = (char*)CPLMalloc(sFieldDef.byLength + 1);
+    GByte *pabyRecord = static_cast<GByte *>(CPLMalloc(m_nRecordSize));
+    char *pabyNewField = static_cast<char *>(CPLMalloc(sFieldDef.byLength + 1));
 
-    /* Copy records */
+    // Copy records.
     for(int j = 0; j < m_numRecords; j++)
     {
-        if( GetRecordBlock(1+j) == NULL ||
-            oTempFile.GetRecordBlock(1+j) == NULL )
+        if( GetRecordBlock(1 + j) == NULL ||
+            oTempFile.GetRecordBlock(1 + j) == NULL )
         {
             CPLFree(pabyRecord);
             CPLFree(pabyNewField);
@@ -1381,45 +1360,63 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
             memset(pabyNewField, 0, sFieldDef.byLength + 1);
             if( m_pasFieldDef[iField].eTABType == TABFChar )
             {
-                strncpy(pabyNewField, ReadCharField(m_pasFieldDef[iField].byLength), sFieldDef.byLength);
+                strncpy(pabyNewField,
+                        ReadCharField(m_pasFieldDef[iField].byLength),
+                        sFieldDef.byLength);
             }
             else if( m_pasFieldDef[iField].eTABType == TABFInteger )
             {
-                snprintf(pabyNewField, sFieldDef.byLength, "%d", ReadIntegerField(m_pasFieldDef[iField].byLength));
+                snprintf(pabyNewField, sFieldDef.byLength, "%d",
+                         ReadIntegerField(m_pasFieldDef[iField].byLength));
             }
             else if( m_pasFieldDef[iField].eTABType == TABFSmallInt )
             {
-                snprintf(pabyNewField, sFieldDef.byLength, "%d", ReadSmallIntField(m_pasFieldDef[iField].byLength));
+                snprintf(pabyNewField, sFieldDef.byLength, "%d",
+                         ReadSmallIntField(m_pasFieldDef[iField].byLength));
             }
             else if( m_pasFieldDef[iField].eTABType == TABFFloat )
             {
-                CPLsnprintf(pabyNewField, sFieldDef.byLength, "%.18f", ReadFloatField(m_pasFieldDef[iField].byLength));
+                CPLsnprintf(pabyNewField, sFieldDef.byLength, "%.18f",
+                            ReadFloatField(m_pasFieldDef[iField].byLength));
             }
             else if( m_pasFieldDef[iField].eTABType == TABFDecimal )
             {
-                CPLsnprintf(pabyNewField, sFieldDef.byLength, "%.18f", ReadFloatField(m_pasFieldDef[iField].byLength));
+                CPLsnprintf(pabyNewField, sFieldDef.byLength, "%.18f",
+                            ReadFloatField(m_pasFieldDef[iField].byLength));
             }
             else if( m_pasFieldDef[iField].eTABType == TABFLogical )
             {
-                strncpy(pabyNewField, ReadLogicalField(m_pasFieldDef[iField].byLength), sFieldDef.byLength);
+                strncpy(pabyNewField,
+                        ReadLogicalField(m_pasFieldDef[iField].byLength),
+                        sFieldDef.byLength);
             }
             else if( m_pasFieldDef[iField].eTABType == TABFDate )
             {
-                strncpy(pabyNewField, ReadDateField(m_pasFieldDef[iField].byLength), sFieldDef.byLength);
+                strncpy(pabyNewField,
+                        ReadDateField(m_pasFieldDef[iField].byLength),
+                        sFieldDef.byLength);
             }
             else if( m_pasFieldDef[iField].eTABType == TABFTime )
             {
-                strncpy(pabyNewField, ReadTimeField(m_pasFieldDef[iField].byLength), sFieldDef.byLength);
+                strncpy(pabyNewField,
+                        ReadTimeField(m_pasFieldDef[iField].byLength),
+                        sFieldDef.byLength);
             }
             else if( m_pasFieldDef[iField].eTABType == TABFDateTime )
             {
-                strncpy(pabyNewField, ReadDateTimeField(m_pasFieldDef[iField].byLength), sFieldDef.byLength);
+                strncpy(pabyNewField,
+                        ReadDateTimeField(m_pasFieldDef[iField].byLength),
+                        sFieldDef.byLength);
             }
 
-            if( oTempFile.m_poRecordBlock->WriteBytes(sFieldDef.byLength, (GByte*)pabyNewField) != 0 ||
+            if( oTempFile.m_poRecordBlock->WriteBytes(
+                    sFieldDef.byLength,
+                    reinterpret_cast<GByte*>(pabyNewField)) != 0 ||
                 (nRecordSizeAfter > 0 &&
-                (m_poRecordBlock->ReadBytes(nRecordSizeAfter, pabyRecord) != 0 ||
-                 oTempFile.m_poRecordBlock->WriteBytes(nRecordSizeAfter, pabyRecord) != 0)) )
+                (m_poRecordBlock->ReadBytes(nRecordSizeAfter,
+                                            pabyRecord) != 0 ||
+                 oTempFile.m_poRecordBlock->WriteBytes(nRecordSizeAfter,
+                                                       pabyRecord) != 0)) )
             {
                 CPLFree(pabyRecord);
                 CPLFree(pabyNewField);
@@ -1434,26 +1431,25 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
     CPLFree(pabyRecord);
     CPLFree(pabyNewField);
 
-    /* Close temporary file */
     oTempFile.Close();
 
-    /* Backup field definitions as we will need to set the TABFieldType */
-    TABDATFieldDef* pasFieldDefTmp = (TABDATFieldDef*)CPLMalloc(m_numFields*sizeof(TABDATFieldDef));
-    memcpy(pasFieldDefTmp, m_pasFieldDef, m_numFields*sizeof(TABDATFieldDef));
+    // Backup field definitions as we will need to set the TABFieldType.
+    TABDATFieldDef *pasFieldDefTmp = static_cast<TABDATFieldDef *>(
+        CPLMalloc(m_numFields * sizeof(TABDATFieldDef)));
+    memcpy(pasFieldDefTmp, m_pasFieldDef, m_numFields * sizeof(TABDATFieldDef));
 
-    /* Close ourselves */
     Close();
 
-    /* Move temporary file as main .data file and reopen it */
+    // Move temporary file as main .data file and reopen it.
     VSIUnlink(osOriginalFile);
     VSIRename(osTmpFile, osOriginalFile);
-    if( Open( osOriginalFile, TABReadWrite ) < 0 )
+    if( Open(osOriginalFile, TABReadWrite) < 0 )
     {
         CPLFree(pasFieldDefTmp);
         return -1;
     }
 
-    /* Restore saved TABFieldType */
+    // Restore saved TABFieldType.
     for( int i = 0; i < m_numFields; i++ )
     {
         if( i != iField )
@@ -1550,7 +1546,8 @@ const char *TABDATFile::ReadCharField(int nWidth)
         return "";
     }
 
-    if (m_poRecordBlock->ReadBytes(nWidth, (GByte*)m_szBuffer) != 0)
+    if (m_poRecordBlock->ReadBytes(nWidth,
+                                   reinterpret_cast<GByte *>(m_szBuffer)) != 0)
         return "";
 
     m_szBuffer[nWidth] = '\0';
@@ -1559,8 +1556,8 @@ const char *TABDATFile::ReadCharField(int nWidth)
     // with spaces... get rid of the trailing spaces.
     if (m_eTableType == TABTableDBF)
     {
-        int nLen = static_cast<int>(strlen(m_szBuffer))-1;
-        while(nLen>=0 && m_szBuffer[nLen] == ' ')
+        int nLen = static_cast<int>(strlen(m_szBuffer)) - 1;
+        while(nLen >= 0 && m_szBuffer[nLen] == ' ')
             m_szBuffer[nLen--] = '\0';
     }
 
@@ -1622,7 +1619,7 @@ GInt16 TABDATFile::ReadSmallIntField(int nWidth)
     }
 
     if (m_eTableType == TABTableDBF)
-        return (GInt16)atoi(ReadCharField(nWidth));
+        return static_cast<GInt16>(atoi(ReadCharField(nWidth)));
 
     return m_poRecordBlock->ReadInt16();
 }
@@ -1726,7 +1723,8 @@ const char *TABDATFile::ReadDateField(int nWidth)
     if ( status == -1)
        return "";
 
-    snprintf(m_szBuffer, sizeof(m_szBuffer), "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
+    snprintf(m_szBuffer, sizeof(m_szBuffer), "%4.4d%2.2d%2.2d", nYear, nMonth,
+             nDay);
 
     return m_szBuffer;
 }
@@ -1749,17 +1747,17 @@ int TABDATFile::ReadDateField(int nWidth, int *nYear, int *nMonth, int *nDay)
     // stored in YYYYMMDD format according to DBF specs.
     if (m_eTableType == TABTableDBF)
     {
-       strcpy(m_szBuffer,ReadCharField(nWidth));
-       sscanf(m_szBuffer, "%4d%2d%2d", nYear, nMonth, nDay);
+        strcpy(m_szBuffer, ReadCharField(nWidth));
+        sscanf(m_szBuffer, "%4d%2d%2d", nYear, nMonth, nDay);
     }
     else
     {
-       *nYear  = m_poRecordBlock->ReadInt16();
-       *nMonth = m_poRecordBlock->ReadByte();
-       *nDay   = m_poRecordBlock->ReadByte();
+        *nYear = m_poRecordBlock->ReadInt16();
+        *nMonth = m_poRecordBlock->ReadByte();
+        *nDay = m_poRecordBlock->ReadByte();
     }
 
-    if (CPLGetLastErrorNo() != 0 || (*nYear==0 && *nMonth==0 && *nDay==0))
+    if (CPLGetLastErrorNo() != 0 || (*nYear == 0 && *nMonth == 0 && *nDay == 0))
        return -1;
 
     return 0;
@@ -1793,7 +1791,8 @@ const char *TABDATFile::ReadTimeField(int nWidth)
     if (status == -1)
        return "";
 
-    snprintf(m_szBuffer, sizeof(m_szBuffer), "%2.2d%2.2d%2.2d%3.3d", nHour, nMinute, nSecond, nMS);
+    snprintf(m_szBuffer, sizeof(m_szBuffer), "%2.2d%2.2d%2.2d%3.3d", nHour,
+             nMinute, nSecond, nMS);
 
     return m_szBuffer;
 }
@@ -1818,9 +1817,8 @@ int TABDATFile::ReadTimeField(int nWidth, int *nHour, int *nMinute,
     // HHMMSSMMM format according to DBF specs.
     if (m_eTableType == TABTableDBF)
     {
-       strcpy(m_szBuffer,ReadCharField(nWidth));
-       sscanf(m_szBuffer,"%2d%2d%2d%3d",
-              nHour, nMinute, nSecond, nMS);
+        strcpy(m_szBuffer, ReadCharField(nWidth));
+        sscanf(m_szBuffer, "%2d%2d%2d%3d", nHour, nMinute, nSecond, nMS);
     }
     else
     {
@@ -1828,13 +1826,13 @@ int TABDATFile::ReadTimeField(int nWidth, int *nHour, int *nMinute,
     }
 
     // nS is set to -1 when the value is 'not set'
-    if (CPLGetLastErrorNo() != 0 || nS < 0 || (nS>86400000))
-       return -1;
+    if (CPLGetLastErrorNo() != 0 || nS < 0 || (nS > 86400000))
+        return -1;
 
-    *nHour = int(nS/3600000);
-    *nMinute  = int((nS/1000 - *nHour*3600)/60);
-    *nSecond  = int(nS/1000 - *nHour*3600 - *nMinute*60);
-    *nMS   = int(nS-*nHour*3600000-*nMinute*60000-*nSecond*1000);
+    *nHour = int(nS / 3600000);
+    *nMinute = int((nS / 1000 - *nHour * 3600) / 60);
+    *nSecond = int(nS / 1000 - *nHour * 3600 - *nMinute * 60);
+    *nMS = int(nS - *nHour * 3600000 - *nMinute * 60000 - *nSecond * 1000);
 
     return 0;
 }
@@ -1867,19 +1865,21 @@ const char *TABDATFile::ReadDateTimeField(int nWidth)
     int nSecond = 0;
     int nMS = 0;
     int status = ReadDateTimeField(nWidth, &nYear, &nMonth, &nDay, &nHour,
-                                    &nMinute, &nSecond, &nMS);
+                                   &nMinute, &nSecond, &nMS);
 
     if ( status == -1)
        return "";
 
-    snprintf(m_szBuffer, sizeof(m_szBuffer), "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d%3.3d",
-            nYear, nMonth, nDay, nHour, nMinute, nSecond, nMS);
+    snprintf(m_szBuffer, sizeof(m_szBuffer),
+             "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d%3.3d", nYear, nMonth, nDay, nHour,
+             nMinute, nSecond, nMS);
 
     return m_szBuffer;
 }
 
-int TABDATFile::ReadDateTimeField(int nWidth, int *nYear, int *nMonth, int *nDay,
-                                 int *nHour, int *nMinute, int *nSecond, int *nMS)
+int TABDATFile::ReadDateTimeField(int nWidth, int *nYear, int *nMonth,
+                                  int *nDay, int *nHour, int *nMinute,
+                                  int *nSecond, int *nMS)
 {
     GInt32 nS = 0;
     // If current record has been deleted, then return an acceptable
@@ -1898,26 +1898,26 @@ int TABDATFile::ReadDateTimeField(int nWidth, int *nYear, int *nMonth, int *nDay
     // YYYYMMDD format according to DBF specs.
     if (m_eTableType == TABTableDBF)
     {
-       strcpy(m_szBuffer,ReadCharField(nWidth));
-       sscanf(m_szBuffer, "%4d%2d%2d%2d%2d%2d%3d",
-              nYear, nMonth, nDay, nHour, nMinute, nSecond, nMS);
+        strcpy(m_szBuffer, ReadCharField(nWidth));
+        sscanf(m_szBuffer, "%4d%2d%2d%2d%2d%2d%3d", nYear, nMonth, nDay, nHour,
+               nMinute, nSecond, nMS);
     }
     else
     {
-       *nYear  = m_poRecordBlock->ReadInt16();
-       *nMonth = m_poRecordBlock->ReadByte();
-       *nDay   = m_poRecordBlock->ReadByte();
-       nS      = m_poRecordBlock->ReadInt32();
+        *nYear = m_poRecordBlock->ReadInt16();
+        *nMonth = m_poRecordBlock->ReadByte();
+        *nDay = m_poRecordBlock->ReadByte();
+        nS = m_poRecordBlock->ReadInt32();
     }
 
     if (CPLGetLastErrorNo() != 0 ||
-        (*nYear==0 && *nMonth==0 && *nDay==0) || (nS>86400000))
+        (*nYear == 0 && *nMonth == 0 && *nDay == 0) || (nS > 86400000))
         return -1;
 
-    *nHour = int(nS/3600000);
-    *nMinute  = int((nS/1000 - *nHour*3600)/60);
-    *nSecond  = int(nS/1000 - *nHour*3600 - *nMinute*60);
-    *nMS   = int(nS-*nHour*3600000-*nMinute*60000-*nSecond*1000);
+    *nHour = int(nS / 3600000);
+    *nMinute = int((nS / 1000 - *nHour * 3600) / 60);
+    *nSecond = int(nS / 1000 - *nHour * 3600 - *nMinute * 60);
+    *nMS = int(nS - *nHour * 3600000 - *nMinute * 60000 - *nSecond * 1000);
 
     return 0;
 }
@@ -1968,7 +1968,8 @@ int TABDATFile::WriteCharField(const char *pszStr, int nWidth,
 {
     if (m_poRecordBlock == NULL)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
+        CPLError(
+            CE_Failure, CPLE_AssertionFailed,
             "Can't write field value: GetRecordBlock() has not been called.");
         return -1;
     }
@@ -1988,8 +1989,10 @@ int TABDATFile::WriteCharField(const char *pszStr, int nWidth,
     //
     const int nLen = std::min(static_cast<int>(strlen(pszStr)), nWidth);
 
-    if ((nLen>0 && m_poRecordBlock->WriteBytes(nLen, (GByte*)pszStr) != 0) ||
-        (nWidth-nLen > 0 && m_poRecordBlock->WriteZeros(nWidth-nLen)!=0) )
+    if((nLen > 0 &&
+        m_poRecordBlock->WriteBytes(
+            nLen, reinterpret_cast<const GByte *>(pszStr)) != 0) ||
+       (nWidth - nLen > 0 && m_poRecordBlock->WriteZeros(nWidth - nLen) != 0))
         return -1;
 
     // Update Index
@@ -2016,7 +2019,8 @@ int TABDATFile::WriteIntegerField(GInt32 nValue,
 {
     if (m_poRecordBlock == NULL)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
+        CPLError(
+            CE_Failure, CPLE_AssertionFailed,
             "Can't write field value: GetRecordBlock() has not been called.");
         return -1;
     }
@@ -2045,7 +2049,8 @@ int TABDATFile::WriteSmallIntField(GInt16 nValue,
 {
     if (m_poRecordBlock == NULL)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
+        CPLError(
+            CE_Failure, CPLE_AssertionFailed,
             "Can't write field value: GetRecordBlock() has not been called.");
         return -1;
     }
@@ -2074,7 +2079,8 @@ int TABDATFile::WriteFloatField( double dValue,
 {
     if (m_poRecordBlock == NULL)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
+        CPLError(
+            CE_Failure, CPLE_AssertionFailed,
             "Can't write field value: GetRecordBlock() has not been called.");
         return -1;
     }
@@ -2118,7 +2124,7 @@ int TABDATFile::WriteLogicalField(const char *pszValue,
     // Update Index
     if (poINDFile && nIndexNo > 0)
     {
-        GByte *pKey = poINDFile->BuildKey(nIndexNo, (int)bValue);
+        GByte *pKey = poINDFile->BuildKey(nIndexNo, static_cast<int>(bValue));
         if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
             return -1;
     }
@@ -2146,29 +2152,23 @@ int TABDATFile::WriteDateField(const char *pszValue,
 {
     char **papszTok = NULL;
 
-    /*-----------------------------------------------------------------
-     * Get rid of leading spaces.
-     *----------------------------------------------------------------*/
+    // Get rid of leading spaces.
     while ( *pszValue == ' ' ) { pszValue++; }
 
-    /*-----------------------------------------------------------------
-     * Try to automagically detect date format, one of:
-     * "YYYY/MM/DD", "DD/MM/YYYY", or "YYYYMMDD"
-     *----------------------------------------------------------------*/
+    // Try to automagically detect date format, one of:
+    // "YYYY/MM/DD", "DD/MM/YYYY", or "YYYYMMDD"
     int nDay = 0;
     int nMonth = 0;
     int nYear = 0;
 
     if (strlen(pszValue) == 8)
     {
-        /*-------------------------------------------------------------
-         * "YYYYMMDD"
-         *------------------------------------------------------------*/
-        char szBuf[9];
+        // "YYYYMMDD"
+        char szBuf[9] = {};
         strcpy(szBuf, pszValue);
-        nDay = atoi(szBuf+6);
+        nDay = atoi(szBuf + 6);
         szBuf[6] = '\0';
-        nMonth = atoi(szBuf+4);
+        nMonth = atoi(szBuf + 4);
         szBuf[4] = '\0';
         nYear = atoi(szBuf);
     }
@@ -2178,9 +2178,7 @@ int TABDATFile::WriteDateField(const char *pszValue,
              CSLCount(papszTok) == 3 &&
              (strlen(papszTok[0]) == 4 || strlen(papszTok[2]) == 4) )
     {
-        /*-------------------------------------------------------------
-         * Either "YYYY/MM/DD" or "DD/MM/YYYY"
-         *------------------------------------------------------------*/
+        // Either "YYYY/MM/DD" or "DD/MM/YYYY"
         if (strlen(papszTok[0]) == 4)
         {
             nYear = atoi(papszTok[0]);
@@ -2219,14 +2217,15 @@ int TABDATFile::WriteDateField(int nYear, int nMonth, int nDay,
 {
     if (m_poRecordBlock == NULL)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
-                 "Can't write field value: GetRecordBlock() has not been called.");
+        CPLError(
+            CE_Failure, CPLE_AssertionFailed,
+            "Can't write field value: GetRecordBlock() has not been called.");
         return -1;
     }
 
-    m_poRecordBlock->WriteInt16((GInt16)nYear);
-    m_poRecordBlock->WriteByte((GByte)nMonth);
-    m_poRecordBlock->WriteByte((GByte)nDay);
+    m_poRecordBlock->WriteInt16(static_cast<GInt16>(nYear));
+    m_poRecordBlock->WriteByte(static_cast<GByte>(nMonth));
+    m_poRecordBlock->WriteByte(static_cast<GByte>(nDay));
 
     if (CPLGetLastErrorNo() != 0)
         return -1;
@@ -2234,8 +2233,8 @@ int TABDATFile::WriteDateField(int nYear, int nMonth, int nDay,
     // Update Index
     if (poINDFile && nIndexNo > 0)
     {
-        GByte *pKey = poINDFile->BuildKey(nIndexNo, (nYear*0x10000 +
-                                                     nMonth * 0x100 + nDay));
+        GByte *pKey = poINDFile->BuildKey(
+            nIndexNo, (nYear * 0x10000 + nMonth * 0x100 + nDay));
         if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
             return -1;
     }
@@ -2261,15 +2260,11 @@ int TABDATFile::WriteDateField(int nYear, int nMonth, int nDay,
 int TABDATFile::WriteTimeField(const char *pszValue,
                                TABINDFile *poINDFile, int nIndexNo)
 {
-    /*-----------------------------------------------------------------
-     * Get rid of leading spaces.
-     *----------------------------------------------------------------*/
+    // Get rid of leading spaces.
     while ( *pszValue == ' ' ) { pszValue++; }
 
-    /*-----------------------------------------------------------------
-     * Try to automagically detect time format, one of:
-     * "HH:MM:SS", or "HHMMSSmmm"
-     *----------------------------------------------------------------*/
+    // Try to automagically detect time format, one of:
+    // "HH:MM:SS", or "HHMMSSmmm"
     int nHour = 0;
     int nMin = 0;
     int nSec = 0;
@@ -2277,42 +2272,38 @@ int TABDATFile::WriteTimeField(const char *pszValue,
 
     if (strlen(pszValue) == 8)
     {
-        /*-------------------------------------------------------------
-         * "HH:MM:SS"
-         *------------------------------------------------------------*/
-        char szBuf[9];
+        // "HH:MM:SS"
+        char szBuf[9] = {};
         strcpy(szBuf, pszValue);
-        szBuf[2]=0;
-        szBuf[5]=0;
+        szBuf[2] = 0;
+        szBuf[5] = 0;
         nHour = atoi(szBuf);
-        nMin  = atoi(szBuf+3);
-        nSec  = atoi(szBuf+6);
-        nMS   = 0;
+        nMin = atoi(szBuf + 3);
+        nSec = atoi(szBuf + 6);
+        nMS = 0;
     }
     else if (strlen(pszValue) == 9)
     {
-        /*-------------------------------------------------------------
-         * "HHMMSSmmm"
-         *------------------------------------------------------------*/
-        char szBuf[4];
+        // "HHMMSSmmm"
+        char szBuf[4] = {};
         const int HHLength = 2;
-        strncpy(szBuf,pszValue,HHLength);
-        szBuf[HHLength]=0;
+        strncpy(szBuf, pszValue, HHLength);
+        szBuf[HHLength] = 0;
         nHour = atoi(szBuf);
 
         const int MMLength = 2;
-        strncpy(szBuf,pszValue+HHLength,MMLength);
-        szBuf[MMLength]=0;
+        strncpy(szBuf, pszValue + HHLength, MMLength);
+        szBuf[MMLength] = 0;
         nMin = atoi(szBuf);
 
         const int SSLength = 2;
-        strncpy(szBuf,pszValue+HHLength+MMLength,SSLength);
-        szBuf[SSLength]=0;
+        strncpy(szBuf, pszValue + HHLength + MMLength, SSLength);
+        szBuf[SSLength] = 0;
         nSec = atoi(szBuf);
 
         const int mmmLength = 3;
-        strncpy(szBuf,pszValue+HHLength+MMLength+SSLength,mmmLength);
-        szBuf[mmmLength]=0;
+        strncpy(szBuf, pszValue + HHLength + MMLength + SSLength, mmmLength);
+        szBuf[mmmLength] = 0;
         nMS = atoi(szBuf);
     }
     else if (strlen(pszValue) == 0)
@@ -2342,14 +2333,15 @@ int TABDATFile::WriteTimeField(int nHour, int nMinute, int nSecond, int nMS,
 
     if (m_poRecordBlock == NULL)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
+        CPLError(
+            CE_Failure, CPLE_AssertionFailed,
             "Can't write field value: GetRecordBlock() has not been called.");
         return -1;
     }
 
-    nS = (nHour*3600+nMinute*60+nSecond)*1000+nMS;
-    if (nS < 0)
-       nS = -1;
+    nS = (nHour * 3600 + nMinute * 60 + nSecond) * 1000 + nMS;
+    if(nS < 0)
+        nS = -1;
     m_poRecordBlock->WriteInt32(nS);
 
     if (CPLGetLastErrorNo() != 0)
@@ -2387,36 +2379,38 @@ d by 1 byte for the month, and 2 bytes for the year.
 int TABDATFile::WriteDateTimeField(const char *pszValue,
                                    TABINDFile *poINDFile, int nIndexNo)
 {
-    /*-----------------------------------------------------------------
-     * Get rid of leading spaces.
-     *----------------------------------------------------------------*/
+    // Get rid of leading spaces.
     while ( *pszValue == ' ' ) { pszValue++; }
 
     /*-----------------------------------------------------------------
      * Try to automagically detect date format, one of:
      * "YYYY/MM/DD HH:MM:SS", "DD/MM/YYYY HH:MM:SS", or "YYYYMMDDhhmmssmmm"
      *----------------------------------------------------------------*/
-    int nDay, nMonth, nYear, nHour, nMin, nSec, nMS;
+    int nDay = 0;
+    int nMonth = 0;
+    int nYear = 0;
+    int nHour = 0;
+    int nMin = 0;
+    int nSec = 0;
+    int nMS = 0;
     char **papszTok = NULL;
 
     if (strlen(pszValue) == 17)
     {
-        /*-------------------------------------------------------------
-         * "YYYYMMDDhhmmssmmm"
-         *------------------------------------------------------------*/
-        char szBuf[18];
+        // "YYYYMMDDhhmmssmmm"
+        char szBuf[18] = {};
         strcpy(szBuf, pszValue);
-        nMS  = atoi(szBuf+14);
-        szBuf[14]=0;
-        nSec = atoi(szBuf+12);
-        szBuf[12]=0;
-        nMin = atoi(szBuf+10);
-        szBuf[10]=0;
-        nHour = atoi(szBuf+8);
-        szBuf[8]=0;
-        nDay = atoi(szBuf+6);
+        nMS = atoi(szBuf + 14);
+        szBuf[14] = 0;
+        nSec = atoi(szBuf + 12);
+        szBuf[12] = 0;
+        nMin = atoi(szBuf + 10);
+        szBuf[10] = 0;
+        nHour = atoi(szBuf + 8);
+        szBuf[8] = 0;
+        nDay = atoi(szBuf + 6);
         szBuf[6] = 0;
-        nMonth = atoi(szBuf+4);
+        nMonth = atoi(szBuf + 4);
         szBuf[4] = 0;
         nYear = atoi(szBuf);
     }
@@ -2426,28 +2420,26 @@ int TABDATFile::WriteDateTimeField(const char *pszValue,
              CSLCount(papszTok) == 6 &&
              (strlen(papszTok[0]) == 4 || strlen(papszTok[2]) == 4) )
     {
-        /*-------------------------------------------------------------
-         * Either "YYYY/MM/DD HH:MM:SS" or "DD/MM/YYYY HH:MM:SS"
-         *------------------------------------------------------------*/
-        if (strlen(papszTok[0]) == 4)
+        // Either "YYYY/MM/DD HH:MM:SS" or "DD/MM/YYYY HH:MM:SS"
+        if(strlen(papszTok[0]) == 4)
         {
             nYear = atoi(papszTok[0]);
-            nMonth= atoi(papszTok[1]);
-            nDay  = atoi(papszTok[2]);
+            nMonth = atoi(papszTok[1]);
+            nDay = atoi(papszTok[2]);
             nHour = atoi(papszTok[3]);
-            nMin  = atoi(papszTok[4]);
-            nSec  = atoi(papszTok[5]);
-            nMS   = 0;
+            nMin = atoi(papszTok[4]);
+            nSec = atoi(papszTok[5]);
+            nMS = 0;
         }
         else
         {
             nYear = atoi(papszTok[2]);
-            nMonth= atoi(papszTok[1]);
-            nDay  = atoi(papszTok[0]);
+            nMonth = atoi(papszTok[1]);
+            nDay = atoi(papszTok[0]);
             nHour = atoi(papszTok[3]);
-            nMin  = atoi(papszTok[4]);
-            nSec  = atoi(papszTok[5]);
-            nMS   = 0;
+            nMin = atoi(papszTok[4]);
+            nSec = atoi(papszTok[5]);
+            nMS = 0;
         }
     }
     else if (strlen(pszValue) == 0)
@@ -2480,18 +2472,19 @@ int TABDATFile::WriteDateTimeField(int nYear, int nMonth, int nDay,
                                    int nHour, int nMinute, int nSecond, int nMS,
                                    TABINDFile *poINDFile, int nIndexNo)
 {
-    GInt32 nS = (nHour*3600+nMinute*60+nSecond)*1000+nMS;
+    GInt32 nS = (nHour * 3600 + nMinute * 60 + nSecond) * 1000 + nMS;
 
     if (m_poRecordBlock == NULL)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
+        CPLError(
+            CE_Failure, CPLE_AssertionFailed,
             "Can't write field value: GetRecordBlock() has not been called.");
         return -1;
     }
 
-    m_poRecordBlock->WriteInt16((GInt16)nYear);
-    m_poRecordBlock->WriteByte((GByte)nMonth);
-    m_poRecordBlock->WriteByte((GByte)nDay);
+    m_poRecordBlock->WriteInt16(static_cast<GInt16>(nYear));
+    m_poRecordBlock->WriteByte(static_cast<GByte>(nMonth));
+    m_poRecordBlock->WriteByte(static_cast<GByte>(nDay));
     m_poRecordBlock->WriteInt32(nS);
 
     if (CPLGetLastErrorNo() != 0)
@@ -2504,8 +2497,8 @@ int TABDATFile::WriteDateTimeField(int nYear, int nMonth, int nDay,
         // Indexing on DateTime Fields not currently supported, that will
         // require passing the 8 bytes datetime value to BuildKey() here...
         CPLAssert(false);
-        GByte *pKey = poINDFile->BuildKey(nIndexNo, (nYear*0x10000 +
-                                                     nMonth * 0x100 + nDay));
+        GByte *pKey = poINDFile->BuildKey(
+            nIndexNo, (nYear * 0x10000 + nMonth * 0x100 + nDay));
         if (poINDFile->AddEntry(nIndexNo, pKey, m_nCurRecordId) != 0)
             return -1;
     }
@@ -2529,11 +2522,11 @@ int TABDATFile::WriteDateTimeField(int nYear, int nMonth, int nDay,
 int TABDATFile::WriteDecimalField(double dValue, int nWidth, int nPrec,
                                   TABINDFile *poINDFile, int nIndexNo)
 {
-    char szFormat[10];
+    char szFormat[10] = {};
 
     snprintf(szFormat, sizeof(szFormat), "%%%d.%df", nWidth, nPrec);
     const char *pszVal = CPLSPrintf(szFormat, dValue);
-    if ((int)strlen(pszVal) > nWidth)
+    if (static_cast<int>(strlen(pszVal)) > nWidth)
         pszVal += strlen(pszVal) - nWidth;
 
     // Update Index
@@ -2544,7 +2537,8 @@ int TABDATFile::WriteDecimalField(double dValue, int nWidth, int nPrec,
             return -1;
     }
 
-    return m_poRecordBlock->WriteBytes(nWidth, (GByte*)pszVal);
+    return m_poRecordBlock->WriteBytes(nWidth,
+                                       reinterpret_cast<const GByte *>(pszVal));
 }
 
 /**********************************************************************
@@ -2554,7 +2548,7 @@ int TABDATFile::WriteDecimalField(double dValue, int nWidth, int nPrec,
  **********************************************************************/
 #ifdef DEBUG
 
-void TABDATFile::Dump(FILE *fpOut /*=NULL*/)
+void TABDATFile::Dump(FILE *fpOut /* =NULL */)
 {
     if (fpOut == NULL)
         fpOut = stdout;
