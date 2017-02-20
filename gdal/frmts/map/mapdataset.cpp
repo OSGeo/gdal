@@ -239,15 +239,16 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      details like the band count and types.                          */
 /* -------------------------------------------------------------------- */
     poDS->osImgFilename = papszLines[2];
-    VSIStatBufL sStat;
-    if (VSIStatL(poDS->osImgFilename, &sStat) != 0)
+
+    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+    if (CPLIsFilenameRelative(poDS->osImgFilename))
     {
-        const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
-        if (CPLIsFilenameRelative(poDS->osImgFilename))
-        {
-            poDS->osImgFilename = CPLFormCIFilename(osPath, poDS->osImgFilename, NULL);
-        }
-        else
+        poDS->osImgFilename = CPLFormCIFilename(osPath, poDS->osImgFilename, NULL);
+    }
+    else
+    {
+        VSIStatBufL sStat;
+        if (VSIStatL(poDS->osImgFilename, &sStat) != 0)
         {
             poDS->osImgFilename = CPLGetFilename(poDS->osImgFilename);
             poDS->osImgFilename = CPLFormCIFilename(osPath, poDS->osImgFilename, NULL);
