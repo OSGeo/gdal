@@ -429,7 +429,11 @@ JPIPKAKDataset::JPIPKAKDataset()
 /*****************************************/
 JPIPKAKDataset::~JPIPKAKDataset()
 {
-    CPLHTTPCleanup();
+    char** papszOptions = NULL;
+    papszOptions = CSLSetNameValue(papszOptions,
+                        "CLOSE_PERSISTENT", CPLSPrintf("JPIPKAK:%p", this));
+    CPLHTTPFetch("", papszOptions);
+    CSLDestroy(papszOptions);
 
     Deinitialize();
 
