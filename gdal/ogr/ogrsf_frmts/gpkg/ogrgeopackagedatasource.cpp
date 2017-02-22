@@ -1566,8 +1566,6 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 
     int nTileWidth, nTileHeight;
     GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
-    m_nTileMatrixWidth = (nRasterXSize + nTileWidth - 1) / nTileWidth;
-    m_nTileMatrixHeight = (nRasterYSize + nTileHeight - 1) / nTileHeight;
 
     if( m_nZoomLevel < 0 )
     {
@@ -1595,11 +1593,11 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
             dfPixelYSizeZoomLevel0 = asTilingShemes[iScheme].dfPixelYSizeZoomLevel0;
             nTileXCountZoomLevel0 = asTilingShemes[iScheme].nTileXCountZoomLevel0;
             nTileYCountZoomLevel0 = asTilingShemes[iScheme].nTileYCountZoomLevel0;
-            m_nTileMatrixWidth = nTileXCountZoomLevel0 * (1 << m_nZoomLevel);
-            m_nTileMatrixHeight = nTileYCountZoomLevel0 * (1 << m_nZoomLevel);
             break;
         }
     }
+    m_nTileMatrixWidth = nTileXCountZoomLevel0 * (1 << m_nZoomLevel);
+    m_nTileMatrixHeight = nTileYCountZoomLevel0 * (1 << m_nZoomLevel);
 
     ComputeTileAndPixelShifts();
 
@@ -1657,16 +1655,15 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
         {
             dfPixelXSizeZoomLevel = m_adfGeoTransform[1] * (1 << (m_nZoomLevel-i));
             dfPixelYSizeZoomLevel = fabs(m_adfGeoTransform[5]) * (1 << (m_nZoomLevel-i));
-            nTileMatrixWidth = ((nRasterXSize >> (m_nZoomLevel-i)) + nTileWidth - 1) / nTileWidth;
-            nTileMatrixHeight = ((nRasterYSize >> (m_nZoomLevel-i)) + nTileHeight - 1) / nTileHeight;
         }
         else
         {
             dfPixelXSizeZoomLevel = dfPixelXSizeZoomLevel0 / (1 << i);
             dfPixelYSizeZoomLevel = dfPixelYSizeZoomLevel0 / (1 << i);
-            nTileMatrixWidth = nTileXCountZoomLevel0 * (1 << i);
-            nTileMatrixHeight = nTileYCountZoomLevel0 * (1 << i);
         }
+        nTileMatrixWidth = nTileXCountZoomLevel0 * (1 << i);
+        nTileMatrixHeight = nTileYCountZoomLevel0 * (1 << i);
+
         pszSQL = sqlite3_mprintf("INSERT INTO gpkg_tile_matrix "
                 "(table_name,zoom_level,matrix_width,matrix_height,tile_width,tile_height,pixel_x_size,pixel_y_size) VALUES "
                 "('%q',%d,%d,%d,%d,%d,%.18g,%.18g)",
