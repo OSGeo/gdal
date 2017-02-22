@@ -388,6 +388,8 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     const char *pszUserAgent = CPLGetXMLValue(config, "UserAgent", "");
     if (pszUserAgent[0] != '\0')
         m_osUserAgent = pszUserAgent;
+    else
+        m_osUserAgent = CPLGetConfigOption("GDAL_HTTP_USERAGENT", "");
 
     const char *pszReferer = CPLGetXMLValue(config, "Referer", "");
     if (pszReferer[0] != '\0')
