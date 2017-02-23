@@ -2488,11 +2488,20 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
 
         // Densify and reproject with the aim of having a 1 pixel density
         double dfSegmentSize = dfMaxLengthInSpatUnits / dfInitialMaxLengthInPixels;
-        for(int i=0;i<10;i++)
+        const int MAX_ITERATIONS = 10;
+        for(int i=0;i<MAX_ITERATIONS;i++)
         {
             OGR_G_DestroyGeometry( hMultiPolygon );
             hMultiPolygon = OGR_G_Clone( (OGRGeometryH) hCutline );
             OGR_G_Segmentize(hMultiPolygon, dfSegmentSize);
+            if( i == MAX_ITERATIONS - 1 )
+            {
+                char* pszWKT = NULL;
+                OGR_G_ExportToWkt(hMultiPolygon, &pszWKT);
+                CPLDebug("WARP", "WKT of polygon after densification with segment size = %f: %s",
+                         dfSegmentSize, pszWKT);
+                CPLFree(pszWKT);
+            }
             eErr = OGR_G_Transform( hMultiPolygon,
                         (OGRCoordinateTransformationH) &oTransformer );
             if( eErr == OGRERR_NONE )
@@ -2509,6 +2518,19 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
                     CPLPopErrorHandler();
                     if( !bIsValid )
                     {
+                        if( i == MAX_ITERATIONS - 1 )
+                        {
+                            char* pszWKT = NULL;
+                            OGR_G_ExportToWkt(hMultiPolygon, &pszWKT);
+                            CPLDebug("WARP",
+                                     "After densification, cutline maximum "
+                                     "segment size is now %.0f pixel, "
+                                     "but cutline is invalid. %s",
+                                     dfMaxLengthInPixels,
+                                     pszWKT);
+                            CPLFree(pszWKT);
+                            break;
+                        }
                         CPLDebug("WARP", "After densification, cutline maximum segment size is now %.0f pixel, "
                                  "but cutline is invalid. So trying a less dense cutline.",
                                  dfMaxLengthInPixels);
