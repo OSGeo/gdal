@@ -423,6 +423,8 @@ typedef struct
     double  dfPower;
     /*! The radius of search circle. */
     double  dfRadius;
+    /*! Smoothing parameter. */
+    double  dfSmoothing;
 
     /*! Maximum number of data points to use.
      *

@@ -2012,6 +2012,7 @@ max_points is used. It has following parameters:
 
 <dl>
 <dt><i>power</i>:</dt> <dd>Weighting power (default 2.0).</dd>
+<dt><i>smoothing</i>:</dt> <dd>Smoothing parameter (default 0.0).</dd>
 <dt><i>radius</i>:</dt> <dd>The radius of the search circle, which should be
 non-zero. Default is 1.0.</dd>
 <dt><i>max_points</i>:</dt> <dd>Maximum number of data points to use. Do not
