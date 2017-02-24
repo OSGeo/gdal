@@ -1782,7 +1782,7 @@ void JPGDataset::LoadDefaultTables( int n )
 
     if (sDInfo.quant_tbl_ptrs[n] == NULL)
         sDInfo.quant_tbl_ptrs[n] =
-            jpeg_alloc_quant_table(reinterpret_cast<j_common_ptr>(&(sDInfo)));
+            jpeg_alloc_quant_table(reinterpret_cast<j_common_ptr>(&sDInfo));
 
     quant_ptr = sDInfo.quant_tbl_ptrs[n];  // quant_ptr is JQUANT_TBL.
     for (int i = 0; i < 64; i++) {
@@ -2027,7 +2027,7 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
        (pData != NULL) &&
        (panBandMap != NULL) &&
        (panBandMap[0] == 1) && (panBandMap[1] == 2) && (panBandMap[2] == 3) &&
-       // Those color spaces need transformation to RGB.
+       // These color spaces need to be transformed to RGB.
        GetOutColorSpace() != JCS_YCCK && GetOutColorSpace() != JCS_CMYK )
     {
         Restart();
@@ -2339,13 +2339,13 @@ GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
 
     poDS->eAccess = GA_ReadOnly;
 
-    poDS->sDInfo.err = jpeg_std_error(&(poDS->sJErr));
+    poDS->sDInfo.err = jpeg_std_error(&poDS->sJErr);
     poDS->sJErr.error_exit = JPGDataset::ErrorExit;
     poDS->sErrorStruct.p_previous_emit_message = poDS->sJErr.emit_message;
     poDS->sJErr.emit_message = JPGDataset::EmitMessage;
-    poDS->sDInfo.client_data = &(poDS->sErrorStruct);
+    poDS->sDInfo.client_data = &poDS->sErrorStruct;
 
-    jpeg_create_decompress(&(poDS->sDInfo));
+    jpeg_create_decompress(&poDS->sDInfo);
     poDS->bHasDoneJpegCreateDecompress = true;
 
     // This is to address bug related in ticket #1795.
@@ -2369,8 +2369,8 @@ GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs *psArgs,
     // Read pre-image data after ensuring the file is rewound.
     VSIFSeekL(poDS->fpImage, poDS->nSubfileOffset, SEEK_SET);
 
-    jpeg_vsiio_src(&(poDS->sDInfo), poDS->fpImage);
-    jpeg_read_header(&(poDS->sDInfo), TRUE);
+    jpeg_vsiio_src(&poDS->sDInfo, poDS->fpImage);
+    jpeg_read_header(&poDS->sDInfo, TRUE);
 
     if( poDS->sDInfo.data_precision != 8
         && poDS->sDInfo.data_precision != 12 )
@@ -3302,7 +3302,7 @@ JPGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 #if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
     if( eDT != GDT_Byte && eDT != GDT_UInt16 )
     {
-        CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
+        CPLError(bStrict ? CE_Failure : CE_Warning, CPLE_NotSupported,
                  "JPEG driver doesn't support data type %s. "
                  "Only eight and twelve bit bands supported (Mk1 libjpeg).\n",
                  GDALGetDataTypeName(
@@ -3320,17 +3320,17 @@ JPGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
                                        pfnProgress, pProgressData);
 #else
         eDT = GDT_UInt16;
-#endif
+#endif  // defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
     }
     else
     {
         eDT = GDT_Byte;
     }
 
-#else
+#else  // !(defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12))
     if( eDT != GDT_Byte )
     {
-        CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
+        CPLError(bStrict ? CE_Failure : CE_Warning, CPLE_NotSupported,
                  "JPEG driver doesn't support data type %s. "
                  "Only eight bit byte bands supported.\n",
                  GDALGetDataTypeName(
@@ -3341,7 +3341,7 @@ JPGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     }
 
     eDT = GDT_Byte;  // force to 8bit.
-#endif
+#endif  // !(defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12))
 
     // What options has the caller selected?
     int nQuality = 75;
@@ -3414,7 +3414,7 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
     sJErr.error_exit = JPGDataset::ErrorExit;
     sErrorStruct.p_previous_emit_message = sJErr.emit_message;
     sJErr.emit_message = JPGDataset::EmitMessage;
-    sCInfo.client_data = &(sErrorStruct);
+    sCInfo.client_data = &sErrorStruct;
 
     jpeg_create_compress(&sCInfo);
 
