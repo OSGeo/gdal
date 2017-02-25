@@ -160,14 +160,12 @@ for orderly cleanup of layers.
 
 \code
 OGRSPFDataSource::OGRSPFDataSource()
-
 {
     papoLayers = NULL;
     nLayers = 0;
 }
 
 OGRSPFDataSource::~OGRSPFDataSource()
-
 {
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
@@ -191,12 +189,11 @@ so we always fail if bUpdate is FALSE.
 
 \code
 int  OGRSPFDataSource::Open( const char *pszFilename, int bUpdate )
-
 {
     if( bUpdate )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Update access not supported by the SPF driver." );
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Update access not supported by the SPF driver.");
         return FALSE;
     }
 
@@ -217,7 +214,6 @@ is created in the Open() this is just a lookup with some safety testing.
 
 \code
 OGRLayer *OGRSPFDataSource::GetLayer( int iLayer )
-
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
@@ -237,9 +233,7 @@ this:
 class OGRSPFLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
-
     FILE               *fp;
-
     int                 nNextFID;
 
   public:
@@ -262,13 +256,12 @@ system for the layer.  In the SPF format the set of fields is fixed - a
 single string field and we have no coordinate system info to set.
 
 Pay particular attention to the reference counting of the OGRFeatureDefn.
-As OGRFeature's for this layer will also take a reference to this definition
+As OGRFeature's for this layer will also take a reference to this definition,
 it is important that we also establish a reference on behalf of the layer
 itself.
 
 \code
 OGRSPFLayer::OGRSPFLayer( const char *pszFilename )
-
 {
     nNextFID = 0;
 
@@ -295,7 +288,6 @@ be destroyed here (which is good!).
 
 \code
 OGRSPFLayer::~OGRSPFLayer()
-
 {
     poFeatureDefn->Release();
     if( fp != NULL )
@@ -313,7 +305,6 @@ the SPF text file and establishing the x, y and name for the line.
 
 \code
 OGRFeature *OGRSPFLayer::GetNextFeature()
-
 {
     // Loop till we find a feature matching our requirements.
     while( true )
@@ -324,7 +315,7 @@ OGRFeature *OGRSPFLayer::GetNextFeature()
         if( pszLine == NULL )
             return NULL;
 
-        double dfX = atof(pszLine);
+        const double dfX = atof(pszLine);
 
         pszLine = strstr(pszLine,"|");
         if( pszLine == NULL )
@@ -332,7 +323,7 @@ OGRFeature *OGRSPFLayer::GetNextFeature()
         else
             pszLine++;
 
-        double dfY = atof(pszLine);
+        const double dfY = atof(pszLine);
 
         pszLine = strstr(pszLine,"|");
 
@@ -348,7 +339,7 @@ we assign a linearly incremented feature id.  In our case we started at
 zero for the first feature, though some drivers start at 1.
 
 \code
-        OGRFeature *poFeature = new OGRFeature(poFeatureDefn );
+        OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
 
         poFeature->SetGeometryDirectly(new OGRPoint(dfX, dfY));
         poFeature->SetField(0, pszName);
