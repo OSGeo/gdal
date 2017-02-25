@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.102 2017-01-11 16:38:26 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.103 2017-02-25 17:05:12 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -1133,11 +1133,15 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 #define	REPEAT2(op)	op; op
 #define	CASE8(x,op)			\
     switch (x) {			\
-    case 7: op; case 6: op; case 5: op;	\
-    case 4: op; case 3: op; case 2: op;	\
+    case 7: op; /*-fallthrough*/ \
+    case 6: op; /*-fallthrough*/ \
+    case 5: op; /*-fallthrough*/ \
+    case 4: op; /*-fallthrough*/ \
+    case 3: op; /*-fallthrough*/ \
+    case 2: op; /*-fallthrough*/ \
     case 1: op;				\
     }
-#define	CASE4(x,op)	switch (x) { case 3: op; case 2: op; case 1: op; }
+#define	CASE4(x,op)	switch (x) { case 3: op; /*-fallthrough*/ case 2: op; /*-fallthrough*/ case 1: op; }
 #define	NOP
 
 #define	UNROLL8(w, op1, op2) {		\
@@ -2043,9 +2047,9 @@ DECLAREContigPutFunc(putcontig8bitYCbCr41tile)
 	    int32 Cr = pp[5];
 
             switch( (w&3) ) {
-              case 3: YCbCrtoRGB(cp [2], pp[2]);
-              case 2: YCbCrtoRGB(cp [1], pp[1]);
-              case 1: YCbCrtoRGB(cp [0], pp[0]);
+              case 3: YCbCrtoRGB(cp [2], pp[2]); /*-fallthrough*/
+              case 2: YCbCrtoRGB(cp [1], pp[1]); /*-fallthrough*/
+              case 1: YCbCrtoRGB(cp [0], pp[0]); /*-fallthrough*/
               case 0: break;
             }
 
