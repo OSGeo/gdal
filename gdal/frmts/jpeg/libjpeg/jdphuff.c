@@ -198,9 +198,11 @@ start_pass_phuff_decoder (j_decompress_ptr cinfo)
  * On some machines, a shift and add will be faster than a table lookup.
  */
 
+#define NEG_1 ((unsigned)-1)
+
 #ifdef AVOID_TABLES
 
-#define HUFF_EXTEND(x,s)  ((x) < (1<<((s)-1)) ? (x) + (((-1)<<(s)) + 1) : (x))
+#define HUFF_EXTEND(x,s)  ((x) < (1<<((s)-1)) ? (x) + (((NEG_1)<<(s)) + 1) : (x))
 
 #else
 
@@ -490,7 +492,7 @@ decode_mcu_AC_refine (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
   phuff_entropy_ptr entropy = (phuff_entropy_ptr) cinfo->entropy;
   int Se = cinfo->Se;
   int p1 = 1 << cinfo->Al;	/* 1 in the bit position being coded */
-  int m1 = (-1) << cinfo->Al;	/* -1 in the bit position being coded */
+  int m1 = (NEG_1) << cinfo->Al;	/* -1 in the bit position being coded */
   register int s, k, r;
   unsigned int EOBRUN;
   JBLOCKROW block;
