@@ -15273,7 +15273,9 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     // so that the end result can be memory mapped without knowledge of each
     // strip offset.
     if( CPLTestBool( CSLFetchNameValueDef( papszParmList,
-                              "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
+                              "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) ||
+         CPLTestBool( CSLFetchNameValueDef( papszParmList,
+                              "@WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
     {
         poDS->bWriteEmptyTiles = true;
     }
@@ -16539,7 +16541,10 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         // strip offset
         if( CPLTestBool( CSLFetchNameValueDef(
                              papszOptions,
-                             "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
+                             "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) ||
+           CPLTestBool( CSLFetchNameValueDef(
+                             papszOptions,
+                             "@WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
         {
             poDS->bWriteEmptyTiles = true;
         }
