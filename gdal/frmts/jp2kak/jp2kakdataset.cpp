@@ -1023,6 +1023,9 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     catch( ... )
     {
         CPLDebug("JP2KAK", "Trapped Kakadu exception.");
+        delete family;
+        delete poRawInput;
+        delete poInput;
         return NULL;
     }
 
@@ -1035,6 +1038,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->poInput = poInput;
         poDS->poRawInput = poRawInput;
+        poDS->family = family;
         poDS->oCodeStream.create(poInput);
         poDS->oCodeStream.set_persistent();
 
@@ -1048,8 +1052,6 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->oCodeStream.set_resilient();
 
         poDS->jpip_client = jpip_client;
-
-        poDS->family = family;
 
         // Get overall image size.
         poDS->oCodeStream.get_dims(0, poDS->dims);
