@@ -143,7 +143,7 @@ int GMLFeatureClass::GetPropertyIndex( const char *pszName ) const
 
 {
     for( int i = 0; i < m_nPropertyCount; i++ )
-        if( EQUAL(pszName,m_papoProperty[i]->GetName()) )
+        if( EQUAL(pszName, m_papoProperty[i]->GetName()) )
             return i;
 
     return -1;
@@ -396,7 +396,7 @@ void GMLFeatureClass::SetSRSName( const char* pszSRSName )
 /*                           MergeSRSName()                             */
 /************************************************************************/
 
-void GMLFeatureClass::MergeSRSName( const char* pszSRSName )
+void GMLFeatureClass::MergeSRSName( const char *pszSRSName )
 
 {
     if(!m_bSRSNameConsistent)
@@ -426,10 +426,7 @@ void GMLFeatureClass::MergeSRSName( const char* pszSRSName )
 bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Do some rudimentary checking that this is a well formed         */
-/*      node.                                                           */
-/* -------------------------------------------------------------------- */
+    // Do some rudimentary checking that this is a well formed node.
     if( psRoot == NULL || psRoot->eType != CXT_Element ||
         !EQUAL(psRoot->pszValue, "GMLFeatureClass") )
     {
@@ -446,18 +443,14 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
         return false;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Collect base info.                                              */
-/* -------------------------------------------------------------------- */
+    // Collect base info.
     CPLFree(m_pszName);
     m_pszName = CPLStrdup(CPLGetXMLValue(psRoot, "Name", NULL));
     n_nNameLen = static_cast<int>(strlen(m_pszName));
 
     SetElementName(CPLGetXMLValue(psRoot, "ElementPath", m_pszName));
 
-/* -------------------------------------------------------------------- */
-/*      Collect geometry properties.                                    */
-/* -------------------------------------------------------------------- */
+    // Collect geometry properties.
     bool bHasValidGeometryName = false;
     bool bHasValidGeometryElementPath = false;
     bool bHasFoundGeomType = false;
@@ -599,9 +592,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 
     SetSRSName(CPLGetXMLValue(psRoot, "SRSName", NULL));
 
-/* -------------------------------------------------------------------- */
-/*      Collect dataset specific info.                                  */
-/* -------------------------------------------------------------------- */
+    // Collect dataset specific info.
     CPLXMLNode *psDSI = CPLGetXMLNode(psRoot, "DatasetSpecificInfo");
     if( psDSI != NULL )
     {
@@ -626,9 +617,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Collect property definitions.                                   */
-/* -------------------------------------------------------------------- */
+    // Collect property definitions.
     for( psThis = psRoot->psChild; psThis != NULL; psThis = psThis->psNext )
     {
         if( psThis->eType == CXT_Element &&
@@ -758,9 +747,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 CPLXMLNode *GMLFeatureClass::SerializeToXML()
 
 {
-/* -------------------------------------------------------------------- */
-/*      Set feature class and core information.                         */
-/* -------------------------------------------------------------------- */
+    // Set feature class and core information.
     CPLXMLNode *psRoot = CPLCreateXMLNode(NULL, CXT_Element, "GMLFeatureClass");
 
     CPLCreateXMLElementAndValue(psRoot, "Name", GetName());
@@ -839,9 +826,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         CPLCreateXMLElementAndValue(psRoot, "SRSName", pszSRSName);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Write out dataset specific information.                         */
-/* -------------------------------------------------------------------- */
+    // Write out dataset specific information.
     if( m_bHaveExtents || m_nFeatureCount != -1 || m_pszExtraInfo != NULL )
     {
         CPLXMLNode *psDSI =
@@ -880,9 +865,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             CPLCreateXMLElementAndValue(psDSI, "ExtraInfo", m_pszExtraInfo);
     }
 
-/* -------------------------------------------------------------------- */
-/*      emit property information.                                      */
-/* -------------------------------------------------------------------- */
+    // Emit property information.
     for( int iProperty = 0; iProperty < GetPropertyCount(); iProperty++ )
     {
         GMLPropertyDefn *poPDefn = GetProperty(iProperty);
