@@ -1589,7 +1589,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     char *pszCleanName = NULL;
     int nStatus = 0;
     char szNewFieldName[31+1]; /* 31 is the max characters for a field name*/
-    int nRenameNum = 1;
+    unsigned int nRenameNum = 1;
 
     /*-----------------------------------------------------------------
      * Check that call happens at the right time in dataset's life.
@@ -1652,10 +1652,16 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     szNewFieldName[sizeof(szNewFieldName)-1] = '\0';
 
     while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 10)
-      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1d", pszCleanName, nRenameNum++ );
+    {
+      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1u", pszCleanName, nRenameNum );
+      nRenameNum ++;
+    }
 
     while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 100)
-      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s%.2d", pszCleanName, nRenameNum++ );
+    {
+      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s%.2u", pszCleanName, nRenameNum );
+      nRenameNum ++;
+    }
 
     if (m_poDefn->GetFieldIndex(szNewFieldName) >= 0)
     {
