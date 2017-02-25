@@ -1093,7 +1093,7 @@ int OGRGMLLayer::TestCapability( const char * pszCap )
         return poFClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax);
     }
 
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+    else if( EQUAL(pszCap, OLCFastFeatureCount) )
     {
         if( poFClass == NULL ||
             m_poFilterGeom != NULL ||
