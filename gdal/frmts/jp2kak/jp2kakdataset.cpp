@@ -809,8 +809,11 @@ int JP2KAKDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    // During fuzzing, do not use Identify to reject crazy content.
     if( !Identify(poOpenInfo) )
         return NULL;
+#endif
 
     subfile_source *poRawInput = NULL;
     bool bIsJPIP = false;
