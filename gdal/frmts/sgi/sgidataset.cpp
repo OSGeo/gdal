@@ -110,7 +110,10 @@ static void ConvertLong(GUInt32* array, GInt32 length)
 {
    GUInt32* ptr = reinterpret_cast<GUInt32*>( array );
    while(length--)
-     CPL_SWAP32PTR(ptr++);
+   {
+     CPL_SWAP32PTR(ptr);
+     ptr ++;
+   }
 }
 #else
 static void ConvertLong(GUInt32* /*array*/, GInt32 /*length */)

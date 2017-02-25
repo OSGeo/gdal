@@ -835,20 +835,22 @@ template<> struct CPLStaticAssert<true>
 #define CPL_SWAP32PTR(x) \
 {                                                                           \
     GUInt32 _n32;                                                           \
-    memcpy(&_n32, x, 4);                                                    \
+    void* _lx = x;                                                          \
+    memcpy(&_n32, _lx, 4);                                                  \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4); \
     _n32 = CPL_SWAP32(_n32);                                                \
-    memcpy(x, &_n32, 4);                                                    \
+    memcpy(_lx, &_n32, 4);                                                  \
 }
 
 /** Byte-swap a 64 bit pointer */
 #define CPL_SWAP64PTR(x) \
 {                                                                           \
     GUInt64 _n64;                                                           \
-    memcpy(&_n64, x, 8);                                                    \
+    void* _lx = x;                                                          \
+    memcpy(&_n64, _lx, 8);                                                    \
     CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8); \
     _n64 = CPL_SWAP64(_n64);                                                \
-    memcpy(x, &_n64, 8);                                                    \
+    memcpy(_lx, &_n64, 8);                                                    \
 }
 
 #endif
