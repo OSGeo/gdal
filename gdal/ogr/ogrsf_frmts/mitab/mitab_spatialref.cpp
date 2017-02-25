@@ -1156,7 +1156,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
         psDatumInfo = NULL;
     }
 
-    char szDatumName[160] = {};
+    char szDatumName[200] = {};
     if( psDatumInfo == NULL )
     {
         if( sTABProj.adDatumParams[0] == 0.0
