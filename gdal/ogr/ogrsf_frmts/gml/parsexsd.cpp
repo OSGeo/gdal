@@ -148,7 +148,7 @@ bool GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         return true;
     }
 
-    else if( EQUAL(pszBase,"short") )
+    else if( EQUAL(pszBase, "short") )
     {
         *pGMLType = GMLPT_Short;
         return true;
@@ -307,8 +307,8 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
     for( ; psThis != NULL; psThis = psThis->psNext )
     {
         if( psThis->eType == CXT_Element &&
-            EQUAL(psThis->pszValue,"complexType") &&
-            EQUAL(CPLGetXMLValue(psThis,"name",""),pszType) )
+            EQUAL(psThis->pszValue, "complexType") &&
+            EQUAL(CPLGetXMLValue(psThis, "name", ""), pszType) )
         {
             break;
         }
@@ -367,7 +367,7 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         </xs:choice>
         as found in https://downloadagiv.blob.core.windows.net/overstromingsgebieden-en-oeverzones/2014_01/Overstromingsgebieden_en_oeverzones_2014_01_GML.zip
         */
-        if( strcmp(psAttrDef->pszValue,"choice") == 0 )
+        if( strcmp(psAttrDef->pszValue, "choice") == 0 )
         {
             CPLXMLNode *psChild = psAttrDef->psChild;
             bool bPolygon = false;
@@ -1016,9 +1016,9 @@ bool GMLParseXSD( const char *pszFile,
                          strlen(pszType) - 4) == 0 )        {
         }
 
-        else if( !EQUALN(pszType,pszName,strlen(pszName))
-            || !(EQUAL(pszType+strlen(pszName),"_Type") ||
-                    EQUAL(pszType+strlen(pszName),"Type")) )
+        else if( !EQUALN(pszType, pszName, strlen(pszName))
+            || !(EQUAL(pszType + strlen(pszName), "_Type") ||
+                    EQUAL(pszType + strlen(pszName), "Type")) )
         {
             continue;
         }
