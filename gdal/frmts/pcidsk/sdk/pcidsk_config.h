@@ -99,7 +99,7 @@ namespace PCIDSK {
 #endif
 
 #ifndef GDAL_PCIDSK_DRIVER
-#ifdef PCIDSK_INTERNAL
+#if defined(PCIDSK_INTERNAL) && !defined(ALIAS_CPLSNPRINTF_AS_SNPRINTF)
 #include <stdlib.h>
 extern "C" double CPLAtof(const char*);
 extern "C" int CPLsprintf(char *str, const char* fmt, ...) PCIDSK_PRINT_FUNC_FORMAT(2,3);

@@ -1303,6 +1303,8 @@ int CPLvsnprintf( char *str, size_t size,
 /*                           CPLsnprintf()                              */
 /************************************************************************/
 
+#if !defined(ALIAS_CPLSNPRINTF_AS_SNPRINTF)
+
 #if defined(__clang__) && __clang_major__ == 3 && __clang_minor__ <= 2
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
@@ -1334,6 +1336,8 @@ int CPLsnprintf( char *str, size_t size,
     va_end( args );
     return ret;
 }
+
+#endif //  !defined(ALIAS_CPLSNPRINTF_AS_SNPRINTF)
 
 /************************************************************************/
 /*                           CPLsprintf()                               */
