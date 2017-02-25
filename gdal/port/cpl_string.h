@@ -242,9 +242,17 @@ int CPL_DLL CPLvsnprintf( char *str, size_t size,
                           CPL_FORMAT_STRING(const char* fmt),
                           va_list args )
     CPL_PRINT_FUNC_FORMAT(3, 0 );
+
+/* ALIAS_CPLSNPRINTF_AS_SNPRINTF might be defined to enable GCC 7 */
+/* -Wformat-truncation= warnings, but shouldn't be set for normal use */
+#if defined(ALIAS_CPLSNPRINTF_AS_SNPRINTF)
+#define CPLsnprintf snprintf
+#else
 int CPL_DLL CPLsnprintf( char *str, size_t size,
                          CPL_FORMAT_STRING(const char* fmt), ... )
     CPL_PRINT_FUNC_FORMAT(3, 4);
+#endif
+
 /*! @cond Doxygen_Suppress */
 #if defined(GDAL_COMPILATION) && !defined(DONT_DEPRECATE_SPRINTF)
 int CPL_DLL CPLsprintf( char *str, CPL_FORMAT_STRING(const char* fmt), ... )
