@@ -914,7 +914,7 @@ void OGRSQLiteDataSource::CreateRL2OverviewDatasetIfNeeded( double dfXRes,
     const double dfMinY = dfMaxY + m_adfGeoTransform[5] * nRasterYSize;
     poOvrDS->nRasterXSize = static_cast<int>(0.5 + (dfMaxX - dfMinX) / dfXRes);
     poOvrDS->nRasterYSize = static_cast<int>(0.5 + (dfMaxY - dfMinY) / dfYRes);
-    if( poOvrDS->nRasterXSize <= 1 || poOvrDS->nRasterXSize <= 1 ||
+    if( poOvrDS->nRasterXSize <= 1 || poOvrDS->nRasterYSize <= 1 ||
         (poOvrDS->nRasterXSize < 64 && poOvrDS->nRasterYSize < 64 &&
         !CPLTestBool(CPLGetConfigOption("RL2_SHOW_ALL_PYRAMID_LEVELS", "NO"))) )
     {
