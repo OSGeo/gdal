@@ -7,7 +7,7 @@
  ******************************************************************************
  *
  * CREDITS: The RasterLite2 module has been completely funded by:
- * Regione Toscana - Settore Sistema Informativo Territoriale ed 
+ * Regione Toscana - Settore Sistema Informativo Territoriale ed
  * Ambientale (GDAL/RasterLite2 driver)
  * CIG: 644544015A
  *

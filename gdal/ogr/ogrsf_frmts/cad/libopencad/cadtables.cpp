@@ -131,7 +131,7 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
         {
             DebugMsg( "Entity object is null\n" );
             break;
-        } 
+        }
         else if ( dCurrentEntHandle == dLastEntHandle )
         {
             FillLayer( spEntityObj.get() );

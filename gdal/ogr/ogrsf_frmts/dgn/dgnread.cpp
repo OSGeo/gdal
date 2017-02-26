@@ -443,7 +443,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
                                    psLine->core.attr_data[iAttr + 3] * 256) * 2;
                     deltaStart = iAttr + 6;
                     break;
-                } 
+                }
             }
           }
 

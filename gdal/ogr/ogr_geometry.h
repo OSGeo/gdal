@@ -732,7 +732,6 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const CPL_OVERRIDE;
-        
 };
 
 /************************************************************************/

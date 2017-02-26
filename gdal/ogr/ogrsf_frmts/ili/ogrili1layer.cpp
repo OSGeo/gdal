@@ -556,7 +556,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
 
             OGRPoint endPointCC;
             OGRCompoundCurve* poCC = new OGRCompoundCurve();
- 
+
             bool bFirst = true;
             while( true )
             {

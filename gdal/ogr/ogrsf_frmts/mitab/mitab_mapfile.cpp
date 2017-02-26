@@ -1655,7 +1655,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         const int nNextDepth = m_poSpIndex->GetCurMaxDepth() + 1;
         m_poHeader->m_nMaxSpIndexDepth = static_cast<GByte>(
             std::max(static_cast<int>(m_poHeader->m_nMaxSpIndexDepth), nNextDepth));
-  
+
         /*-------------------------------------------------------------
          * Delete second object block, no need to commit to file first since
          * it's already been committed to disk by Split()

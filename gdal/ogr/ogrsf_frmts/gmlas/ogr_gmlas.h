@@ -825,7 +825,7 @@ class GMLASSchemaAnalyzer
 
         /** Set of schemas opened */
         std::set<CPLString> m_oSetSchemaURLs;
-        
+
         static bool IsSame( const XSModelGroup* poModelGroup1,
                                   const XSModelGroup* poModelGroup2 );
         XSModelGroupDefinition* GetGroupDefinition( const XSModelGroup* poModelGroup );

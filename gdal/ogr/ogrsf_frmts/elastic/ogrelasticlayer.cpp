@@ -977,7 +977,7 @@ CPLString OGRElasticLayer::BuildQuery(bool bCountOnly)
     if( !bCountOnly && !m_aoSortColumns.empty() )
     {
         json_object* poSort = BuildSort();
-        osRet += CPLSPrintf(", \"sort\" : %s", 
+        osRet += CPLSPrintf(", \"sort\" : %s",
                             json_object_to_json_string(poSort));
         json_object_put(poSort);
     }
@@ -1452,7 +1452,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
         else if( json_object_get_type(it.val) == json_type_object &&
                  !m_poDS->m_bFlattenNestedAttributes )
         {
-            if( m_aosMapToGeomFieldIndex.find(osCurPath + ".coordinates") 
+            if( m_aosMapToGeomFieldIndex.find(osCurPath + ".coordinates")
                                             != m_aosMapToGeomFieldIndex.end() )
             {
                 BuildFeature(poFeature, it.val, osCurPath);

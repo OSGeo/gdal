@@ -197,10 +197,9 @@ CPLString CADRecode( const CPLString& sString, int CADEncoding )
         /* 43 ANSI_1200 */ "UTF-16",
         /* 44 ANSI_1258 */ "CP1258"
     };
-    
 
-    if( CADEncoding > 0 && 
-        CADEncoding < static_cast<int>(sizeof(pszSource) / sizeof(pszSource[0])) && 
+    if( CADEncoding > 0 &&
+        CADEncoding < static_cast<int>(sizeof(pszSource) / sizeof(pszSource[0])) &&
         CADEncoding != 4 )
     {
         char* pszRecoded = CPLRecode( sString, pszSource[CADEncoding], CPL_ENC_UTF8 );
