@@ -851,7 +851,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
     std::pair<int,int> childXYKey;
     std::pair<int,int> parentXYKey;
     for (zoom = maxzoom; zoom >= 0; --zoom)
-    {   
+    {
         int rmaxxsize = tilexsize * (1 << (maxzoom-zoom));
         int rmaxysize = tileysize * (1 << (maxzoom-zoom));
 
@@ -903,7 +903,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
                         poOutputTileDriver = poPngOutputTileDriver;
                         isJpegDriver = false;
                     }
-                    else 
+                    else
                     {
                         poOutputTileDriver = poJpegOutputTileDriver;
                         isJpegDriver = true;
