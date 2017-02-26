@@ -1258,7 +1258,7 @@ do {                                                                    \
                 abyHeader + 248, sizeof(poDS->sHeader.abyInvisibleColors) );
         RMF_READ_DOUBLE( abyHeader, poDS->sHeader.adfElevMinMax[0], 280 );
         RMF_READ_DOUBLE( abyHeader, poDS->sHeader.adfElevMinMax[1], 288 );
-        RMF_READ_DOUBLE(abyHeader, poDS->sHeader.dfNoData, 296);        
+        RMF_READ_DOUBLE(abyHeader, poDS->sHeader.dfNoData, 296);
 
         RMF_READ_ULONG( abyHeader, poDS->sHeader.iElevationUnit, 304 );
         poDS->sHeader.iElevationType = *(abyHeader + 308);
