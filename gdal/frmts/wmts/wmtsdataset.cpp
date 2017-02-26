@@ -1972,7 +1972,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             const WMTSTileMatrix& oTM = oTMS.aoTM[i];
             int nRasterXSize = int(0.5 + poDS->nRasterXSize / oTM.dfPixelSize * poDS->adfGT[1]);
             int nRasterYSize = int(0.5 + poDS->nRasterYSize / oTM.dfPixelSize * poDS->adfGT[1]);
-            if( !poDS->apoDatasets.empty() && 
+            if( !poDS->apoDatasets.empty() &&
                 (nRasterXSize < 128 || nRasterYSize < 128) )
             {
                 break;
