@@ -169,15 +169,13 @@ RCreateCopy( const char * pszFilename,
 
         for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
         {
-            int iValue;
-
             eErr = poBand->RasterIO(GF_Read, 0, iLine, nXSize, 1,
                                     padfScanline, nXSize, 1, GDT_Float64,
                                     sizeof(double), 0, NULL);
 
             if( bASCII )
             {
-                for( iValue = 0; iValue < nXSize; iValue++ )
+                for( int iValue = 0; iValue < nXSize; iValue++ )
                 {
                     char szValue[128] = { '\0' };
                     CPLsnprintf(szValue, sizeof(szValue), "%.16g\n",
@@ -187,13 +185,13 @@ RCreateCopy( const char * pszFilename,
             }
             else
             {
-                for( iValue = 0; iValue < nXSize; iValue++ )
+                for( int iValue = 0; iValue < nXSize; iValue++ )
                     CPL_MSBPTR64(padfScanline + iValue);
 
                 VSIFWriteL(padfScanline, 8, nXSize, fp);
             }
 
-            if( eErr == CE_None && 
+            if( eErr == CE_None &&
                 !pfnProgress((iLine + 1) / static_cast<double>(nYSize),
                              NULL, pProgressData) )
             {
