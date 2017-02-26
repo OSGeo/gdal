@@ -27,7 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "vsidataio.h"
+
+#include <cstddef>
 
 CPL_CVSID("$Id$");
 
