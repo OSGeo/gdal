@@ -1092,6 +1092,6 @@ int VFKDataBlockSQLite::GetGeometrySQLType() const
         return 2;
     else if (m_nGeometryType == wkbPoint)
         return 1;
-    
+
     return 0; /* unknown geometry type */
 }

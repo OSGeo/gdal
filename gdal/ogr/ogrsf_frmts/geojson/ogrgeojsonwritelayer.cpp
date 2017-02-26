@@ -219,7 +219,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
             {
                 if( bEnvelopeLayerCrossAM )
                 {
-                    sEnvelopeLayer.MinX = std::min(sEnvelopeLayer.MinX, 
+                    sEnvelopeLayer.MinX = std::min(sEnvelopeLayer.MinX,
                                                    sEnvelope.MinX);
                     sEnvelopeLayer.MaxX = std::max(sEnvelopeLayer.MaxX,
                                                    sEnvelope.MaxX);
@@ -254,7 +254,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
                 }
                 else if( sEnvelope.MaxX < 0 )
                 {
-                    sEnvelopeLayer.MaxX = std::max(sEnvelopeLayer.MaxX, 
+                    sEnvelopeLayer.MaxX = std::max(sEnvelopeLayer.MaxX,
                                                    sEnvelope.MaxX);
                 }
                 else

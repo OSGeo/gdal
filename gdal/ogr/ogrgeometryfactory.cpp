@@ -2030,7 +2030,7 @@ OGRGeometryFactory::createFromGEOS(
 
     return poGeometry;
 
-#endif  // HAVE_GEOS 
+#endif  // HAVE_GEOS
 }
 
 /************************************************************************/
@@ -3135,7 +3135,7 @@ static OGRGeometry* TransformBeforePolarToWGS84(
         poDstGeom->Contains(&oNearPoleAntimeridian));
 
     // Does the geometry touches the pole (but not intersect the antimeridian) ?
-    const bool bRegularTouchesPole = 
+    const bool bRegularTouchesPole =
         !bContainsPole &&
         !bContainsNearPoleAntimeridian &&
         CPL_TO_BOOL(poDstGeom->Touches(&oPole));

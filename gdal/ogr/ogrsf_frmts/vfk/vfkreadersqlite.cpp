@@ -213,7 +213,7 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
     if( m_bNewDb )
     {
         OGRSpatialReference *poSRS;
-            
+
         /* new DB, create support metadata tables */
         osCommand.Printf(
             "CREATE TABLE %s (file_name text, file_size integer, "
@@ -606,7 +606,7 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
                          "('%s', '%s', %d, 2, 5514, 'WKB')",
                          VFK_DB_GEOMETRY_TABLE, pszBlockName, GEOM_COLUMN, geom_type);
         ExecuteSQL(osCommand.c_str());
-        
+
         sqlite3_finalize(hStmt);
     }
 

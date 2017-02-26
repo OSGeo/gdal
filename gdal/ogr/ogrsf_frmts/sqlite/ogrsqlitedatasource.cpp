@@ -802,15 +802,15 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
     if( CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_READ", "NO")) ) {
         int nRowCount = 0, nColCount = 0;
         char** papszResult = NULL;
-        
+
         sqlite3_get_table( hDB,
                            "SELECT name FROM sqlite_master "
                            "WHERE type = 'table' AND name = 'vfk_tables'",
                            &papszResult, &nRowCount, &nColCount,
                            NULL );
-        
+
         sqlite3_free_table( papszResult );
-        
+
         if( nRowCount > 0 )
             return FALSE;  /* DB is valid VFK datasource */
     }

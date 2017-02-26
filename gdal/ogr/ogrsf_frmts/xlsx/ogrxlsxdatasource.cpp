@@ -1271,7 +1271,7 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszNameIn,
             if( !oMapRelsIdToTarget[pszId].empty() &&
                 oMapRelsIdToTarget[pszId][0] == '/' )
             {
-                // Is it an "absolute" path ? 
+                // Is it an "absolute" path ?
                 osFilename = "/vsizip/" + CPLString(pszName) +
                              oMapRelsIdToTarget[pszId];
             }
