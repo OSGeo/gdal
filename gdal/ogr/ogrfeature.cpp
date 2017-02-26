@@ -411,7 +411,7 @@ OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
  * this object comes from a layer and the modifications must be serialized back
  * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
  * a new feature, OGR_L_CreateFeature() must be used afterwards.
- * 
+ *
  * @param poGeomIn new geometry to apply to feature. Passing NULL value here
  * is correct and it will result in deallocation of currently assigned geometry
  * without assigning new one.
@@ -6709,7 +6709,7 @@ void OGR_F_SetNativeMediaType( OGRFeatureH hFeat,
  *
  * Note: this function is rather low-level and should be rarely used in client
  * code. Use instead OGR_F_IsFieldSet().
- * 
+ *
  * @param puField pointer to raw field.
  * @since GDAL 2.2
  */
@@ -6730,7 +6730,7 @@ int OGR_RawField_IsUnset( const OGRField* puField )
  *
  * Note: this function is rather low-level and should be rarely used in client
  * code. Use instead OGR_F_IsFieldNull().
- * 
+ *
  * @param puField pointer to raw field.
  * @since GDAL 2.2
  */
