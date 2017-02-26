@@ -550,7 +550,7 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
             config = LERC_Band::GetMRFConfig(poOpenInfo);
 #endif
 
-    } 
+    }
     else {
         if (EQUALN(pszFileName, "<MRF_META>", 10)) // Content as file name
             config = CPLParseXMLString(pszFileName);
@@ -650,7 +650,7 @@ CPLErr GDALMRFDataset::LevelInit(const int l) {
         return CE_Failure;
     }
 
-    GDALMRFRasterBand *srcband = 
+    GDALMRFRasterBand *srcband =
         reinterpret_cast<GDALMRFRasterBand *>(cds->GetRasterBand(1)->GetOverview(l));
 
     // Copy the sizes from this level
