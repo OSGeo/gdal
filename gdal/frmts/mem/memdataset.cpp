@@ -776,7 +776,7 @@ CPLErr MEMRasterBand::CreateMaskBand( int nFlagsIn )
     {
         for( int i = 2; i <= poMemDS->GetRasterCount(); ++i )
         {
-            MEMRasterBand* poOtherBand = 
+            MEMRasterBand* poOtherBand =
                 reinterpret_cast<MEMRasterBand*>(poMemDS->GetRasterBand(i));
             poOtherBand->InvalidateMaskBand();
             poOtherBand->nMaskFlags = nFlagsIn;
