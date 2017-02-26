@@ -130,7 +130,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Failed to initialize minidriver.");
         delete m_mini_driver;
         m_mini_driver = NULL;
-        ret = CE_Failure;    
+        ret = CE_Failure;
     }
     else
     {

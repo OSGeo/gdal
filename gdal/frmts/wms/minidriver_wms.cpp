@@ -156,9 +156,9 @@ void WMSMiniDriver_WMS::GetCapabilities(WMSMiniDriverCapabilities *caps) {
     caps->m_has_getinfo = 1;
 }
 
-void WMSMiniDriver_WMS::BuildURL(CPLString &url, 
-                                    const GDALWMSImageRequestInfo &iri, 
-                                    const char* pszRequest) 
+void WMSMiniDriver_WMS::BuildURL(CPLString &url,
+                                    const GDALWMSImageRequestInfo &iri,
+                                    const char* pszRequest)
 {
     // http://onearth.jpl.nasa.gov/wms.cgi?request=GetMap&width=1000&height=500&layers=modis,global_mosaic&styles=&srs=EPSG:4326&format=image/jpeg&bbox=-180.000000,-90.000000,180.000000,090.000000
     url = m_base_url;
@@ -171,22 +171,22 @@ void WMSMiniDriver_WMS::BuildURL(CPLString &url,
         url += "&service=WMS";
 
     url += CPLOPrintf("&version=%s&layers=%s&styles=%s&format=%s&width=%d&height=%d&bbox=%.8f,%.8f,%.8f,%.8f",
-                        m_version.c_str(), 
-                        m_layers.c_str(), 
+                        m_version.c_str(),
+                        m_layers.c_str(),
                         m_styles.c_str(),
                         m_image_format.c_str(),
-                        iri.m_sx, 
+                        iri.m_sx,
                         iri.m_sy,
-                        GetBBoxCoord(iri, m_bbox_order[0]), 
+                        GetBBoxCoord(iri, m_bbox_order[0]),
                         GetBBoxCoord(iri, m_bbox_order[1]),
-                        GetBBoxCoord(iri, m_bbox_order[2]), 
+                        GetBBoxCoord(iri, m_bbox_order[2]),
                         GetBBoxCoord(iri, m_bbox_order[3]));
 
-    if (!m_srs.empty()) 
+    if (!m_srs.empty())
         url += CPLOPrintf("&srs=%s", m_srs.c_str());
-    if (!m_crs.empty()) 
+    if (!m_crs.empty())
         url += CPLOPrintf("&crs=%s", m_crs.c_str());
-    if (!m_transparent.empty()) 
+    if (!m_transparent.empty())
         url += CPLOPrintf("&transparent=%s", m_transparent.c_str());
 
 }
@@ -207,7 +207,7 @@ void WMSMiniDriver_WMS::GetTiledImageInfo(CPLString &url,
                                               int nYInBlock)
 {
     BuildURL(url, iri, "GetFeatureInfo");
-    url += CPLOPrintf("&query_layers=%s&x=%d&y=%d&info_format=%s", 
+    url += CPLOPrintf("&query_layers=%s&x=%d&y=%d&info_format=%s",
                         m_layers.c_str(),
                         nXInBlock,
                         nYInBlock,

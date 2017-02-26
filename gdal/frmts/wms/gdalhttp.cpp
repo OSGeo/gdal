@@ -54,7 +54,7 @@ static size_t CPLHTTPWriteFunc(void *buffer, size_t count, size_t nmemb, void *r
         if (pabyNewData == NULL) {
             VSIFree(psRequest->pabyData);
             psRequest->pabyData = NULL;
-            psRequest->Error.Printf("Out of memory allocating %u bytes for HTTP data buffer.", 
+            psRequest->Error.Printf("Out of memory allocating %u bytes for HTTP data buffer.",
                 static_cast<unsigned int>(new_size));
             psRequest->nDataAlloc = 0;
             psRequest->nDataLen = 0;
@@ -84,7 +84,7 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
     if (!psRequest->Range.empty())
         curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_RANGE, psRequest->Range.c_str());
 
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_URL, psRequest->URL.c_str()); 
+    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_URL, psRequest->URL.c_str());
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEDATA, psRequest);
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEFUNCTION, CPLHTTPWriteFunc);
 
@@ -126,7 +126,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
     {
         for(i = 0; i< nRequestCount;i++)
         {
-            CPLHTTPResult* psResult = CPLHTTPFetch(pasRequest[i].URL.c_str(), 
+            CPLHTTPResult* psResult = CPLHTTPFetch(pasRequest[i].URL.c_str(),
                                                     const_cast<char**>(pasRequest[i].options));
             pasRequest[i].pabyData = psResult->pabyData;
             pasRequest[i].nDataLen = psResult->nDataLen;
@@ -154,7 +154,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
     // add at most max_conn requests
     for (conn_i = 0; conn_i < std::min(nRequestCount, max_conn); ++conn_i) {
         WMSHTTPRequest *const psRequest = &pasRequest[conn_i];
-        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, nRequestCount, 
+        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, nRequestCount,
             pasRequest[conn_i].URL.c_str());
         curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);
     }
@@ -171,11 +171,11 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         do {
             msg = curl_multi_info_read(curl_multi, &msgs_in_queue);
             if (msg != NULL) {
-                if (msg->msg == CURLMSG_DONE) { 
+                if (msg->msg == CURLMSG_DONE) {
                     // transfer completed, add more handles if available
                     if (conn_i < nRequestCount) {
                         WMSHTTPRequest *const psRequest = &pasRequest[conn_i];
-                        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, 
+                        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1,
                                     nRequestCount, pasRequest[conn_i].URL.c_str());
                         curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);
                         ++conn_i;

@@ -45,7 +45,7 @@ public:
 
     // Return error message in request.Error
     virtual CPLErr TiledImageRequest(WMSHTTPRequest &request,
-                                        const GDALWMSImageRequestInfo &iri, 
+                                        const GDALWMSImageRequestInfo &iri,
                                         const GDALWMSTiledImageRequestInfo &tiri) override;
 
     virtual void GetTiledImageInfo(CPLString &url,

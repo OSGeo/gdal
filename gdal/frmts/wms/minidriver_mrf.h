@@ -91,8 +91,8 @@ public:
     virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
     virtual CPLErr EndInit() override;
 
-    virtual CPLErr TiledImageRequest(WMSHTTPRequest &url, 
-                                    const GDALWMSImageRequestInfo &iri, 
+    virtual CPLErr TiledImageRequest(WMSHTTPRequest &url,
+                                    const GDALWMSImageRequestInfo &iri,
                                     const GDALWMSTiledImageRequestInfo &tiri) override;
 
     enum { tMRF, tBundle, tEND };

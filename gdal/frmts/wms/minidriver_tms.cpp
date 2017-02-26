@@ -66,8 +66,8 @@ CPLErr WMSMiniDriver_TMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
     return ret;
 }
 
-CPLErr WMSMiniDriver_TMS::TiledImageRequest(WMSHTTPRequest &request, 
-                                            const GDALWMSImageRequestInfo &iri, 
+CPLErr WMSMiniDriver_TMS::TiledImageRequest(WMSHTTPRequest &request,
+                                            const GDALWMSImageRequestInfo &iri,
                                             const GDALWMSTiledImageRequestInfo &tiri)
 {
     CPLString &url = request.URL;
