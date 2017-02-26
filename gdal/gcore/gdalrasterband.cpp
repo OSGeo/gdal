@@ -6171,7 +6171,7 @@ GDALRasterBandH CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand )
  * a band, then the other rules explained above will be used to generate a
  * on-the-fly mask band.
  * \see CreateMaskBand() for the characteristics of .msk files created by GDAL.
- * 
+ *
  * This method is the same as the C function GDALGetMaskFlags().
  *
  * @since GDAL 1.5.0
