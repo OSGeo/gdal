@@ -62,7 +62,7 @@ class LayerDescription
         bool      bIsTopLevel;
         bool      bIsJunction;
         // map a field sequential number to a field
-        std::map< int, GMLASField > oMapIdxToField; 
+        std::map< int, GMLASField > oMapIdxToField;
         // map a field xpath to its sequential number
         std::map< CPLString, int > oMapFieldXPathToIdx;
         std::map< CPLString, int > oMapFieldNameToOGRIdx;
@@ -563,7 +563,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
                                              szSRSNAME_FORMAT_OPTION,
                                              m_oConf.m_osSRSNameFormat);
 
-    CPLString osLineFormat = CSLFetchNameValueDef(m_papszOptions, 
+    CPLString osLineFormat = CSLFetchNameValueDef(m_papszOptions,
                                                   szLINEFORMAT_OPTION,
                                                   m_oConf.m_osLineFormat);
     if( !osLineFormat.empty() )
@@ -697,7 +697,7 @@ bool GMLASWriter::WriteXSD( const CPLString& osXSDFilenameIn,
     PrintLine( fpXSD,
                "    elementFormDefault=\"qualified\" version=\"1.0\" >");
 
-    // Those imports are not really needed, since the schemaLocation are 
+    // Those imports are not really needed, since the schemaLocation are
     // already specified in the .xml file, but that helps validating the
     // document with libxml2/xmllint since it can only accept one single main
     // schema.
@@ -1882,7 +1882,7 @@ bool GMLASWriter::GetCoordSwap( const OGRSpatialReference* poSRS )
         return oIter->second;
 
     bool bCoordSwap = false;
-    const char* pszTarget = poSRS->IsProjected() ? 
+    const char* pszTarget = poSRS->IsProjected() ?
                                                 "PROJCS" : "GEOGCS";
     const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
     const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
@@ -1941,7 +1941,7 @@ bool GMLASWriter::WriteFieldRegular(
         FindCommonPrefixLength( aoCurComponents, aoFieldComponents );
 
     const bool bEmptyContent =
-        nFieldIdx < 0 || 
+        nFieldIdx < 0 ||
           ((bIsGeometryField && !poFeature->GetGeomFieldRef(nFieldIdx)) ||
            (!bIsGeometryField && !poFeature->IsFieldSetAndNotNull(nFieldIdx)));
     const bool bIsNull = m_oConf.m_bUseNullState  &&
@@ -2318,7 +2318,7 @@ bool GMLASWriter::WriteFieldRegular(
                         if( j > 0 )
                             PrintMultipleValuesSeparator(oField,
                                                             aoFieldComponents);
-                        VSIFPrintfL(m_fpXML, 
+                        VSIFPrintfL(m_fpXML,
                                     panValues[j] ? "true" : "false");
                     }
                 }
