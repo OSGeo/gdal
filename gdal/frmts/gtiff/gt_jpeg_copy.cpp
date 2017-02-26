@@ -26,8 +26,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi.h"
+#include "cpl_port.h"
 #include "gt_jpeg_copy.h"
+
+#include "cpl_vsi.h"
+
 #if defined(JPEG_DIRECT_COPY) || defined(HAVE_LIBJPEG)
 #  include "vrt/vrtdataset.h"
 #endif

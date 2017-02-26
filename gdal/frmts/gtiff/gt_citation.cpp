@@ -29,13 +29,21 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
-#include "cpl_string.h"
-
-#include "geovalues.h"
 #include "gt_citation.h"
-#include "gt_wkt_srs_priv.h"
 
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_string.h"
+#include "geokeys.h"
+#include "geotiff.h"
+#include "geovalues.h"
+#include "gt_wkt_srs_priv.h"
+#include "ogr_core.h"
 
 CPL_CVSID("$Id$");
 
