@@ -418,7 +418,7 @@ GMLASReader::~GMLASReader()
     for( size_t i = 0; i < m_aoStackContext.size(); i++ )
     {
         if( i == 0 ||
-            (i > 0 && m_aoStackContext[i].m_poFeature != 
+            (i > 0 && m_aoStackContext[i].m_poFeature !=
                                         m_aoStackContext[i-1].m_poFeature) )
         {
             CPLDebug("GMLAS",
@@ -1377,7 +1377,7 @@ void GMLASReader::startElement(
                 CPLError(CE_Failure, CPLE_AppDefined,
                             "Inconsistent m_poLayer / m_poFeature state");
                 m_bParsingError = true;
-                return; 
+                return;
             }
 
             bool bPushNewFeature = false;
