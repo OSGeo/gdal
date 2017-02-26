@@ -36,43 +36,74 @@
 #endif
 
 #include "cpl_port.h"  // Must be first.
+#include "gtiff.h"
 
+// TODO(schwehr): Move this to cpl_port.h?
+#if HAVE_CXX11 && !defined(__MINGW32__)
+#define HAVE_CXX11_MUTEX 1
+#endif
+
+#include <cerrno>
+#include <climits>
+#include <cmath>
+#include <cstdarg>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+#if HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+
+#include <algorithm>
+#include <memory>
+#if HAVE_CXX11_MUTEX
+#  include <mutex>
+#endif
+#include <set>
+#include <string>
+#include <vector>
+
+#include "cpl_config.h"
+#include "cpl_conv.h"
 #include "cpl_csv.h"
-#include "cplkeywordparser.h"
+#include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "cpl_port.h"
+#include "cpl_progress.h"
 #include "cpl_string.h"
+#include "cpl_virtualmem.h"
+#include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
+#include "cplkeywordparser.h"
+#include "gdal.h"
 #include "gdal_csv.h"
 #include "gdal_frmts.h"
 #include "gdal_mdreader.h"
 #include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "geo_normalize.h"
+#include "geotiff.h"
 #include "geovalues.h"
 #include "gt_jpeg_copy.h"
 #include "gt_overview.h"
 #include "gt_wkt_srs.h"
 #include "gt_wkt_srs_priv.h"
-#include "gtiff.h"
 #include "ogr_spatialref.h"
+#include "tiff.h"
 #include "tif_float.h"
+#include "tiffio.h"
 #ifdef INTERNAL_LIBTIFF
 #  include "tiffiop.h"
 #endif
+#include "tiffvers.h"
 #include "tifvsi.h"
 #include "xtiffio.h"
-
-#include <cmath>
-#include <algorithm>
-#include <set>
-
-#if HAVE_CXX11 && !defined(__MINGW32__)
-#define HAVE_CXX11_MUTEX 1
-#endif
-
-#if HAVE_CXX11_MUTEX
-#include <mutex>
-#endif
 
 
 CPL_CVSID("$Id$");
@@ -11935,8 +11966,8 @@ void GTiffDataset::ApplyPamInfo()
                     {
                         pasGCPList[i].pszId = CPLStrdup("");
                         pasGCPList[i].pszInfo = CPLStrdup("");
-                        // The origin used is the bottom left corner, 
-                        // and raw values are in inches !
+                        // The origin used is the bottom left corner,
+                        // and raw values are in inches!
                         pasGCPList[i].dfGCPPixel = adfSourceGCPs[2*i] *
                                                         CPLAtof(pszTIFFTagXRes);
                         pasGCPList[i].dfGCPLine = nRasterYSize -
