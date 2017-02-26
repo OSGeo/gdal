@@ -35,7 +35,7 @@
 #include "cpl_http.h"
 
 struct WMSHTTPRequest {
-    WMSHTTPRequest() 
+    WMSHTTPRequest()
         :options(NULL), nStatus(0), pabyData(NULL), nDataLen(0), nDataAlloc(0), m_curl_handle(NULL), x(0), y(0) {};
     ~WMSHTTPRequest();
 

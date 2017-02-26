@@ -35,8 +35,8 @@ public:
     virtual ~WMSMiniDriver_TiledWMS();
 
     virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
-    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request, 
-                                const GDALWMSImageRequestInfo &iri, 
+    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request,
+                                const GDALWMSImageRequestInfo &iri,
                                 const GDALWMSTiledImageRequestInfo &tiri) override;
 
 protected:

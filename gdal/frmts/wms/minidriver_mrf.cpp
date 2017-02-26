@@ -75,10 +75,10 @@ static size_t pread_VSIL(void *user_data, void *buff, size_t count, off_t offset
 static size_t pread_curl(void *user_data, void *buff, size_t count, off_t offset) {
     // Use a copy of the provided request, which has the options and the URL preset
     WMSHTTPRequest request(*(reinterpret_cast<WMSHTTPRequest *>(user_data)));
-    request.Range.Printf(CPL_FRMT_GUIB "-" CPL_FRMT_GUIB, 
-                            static_cast<GUIntBig>(offset), 
+    request.Range.Printf(CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+                            static_cast<GUIntBig>(offset),
                             static_cast<GUIntBig>(offset + count - 1));
-    WMSHTTPInitializeRequest(&request);    
+    WMSHTTPInitializeRequest(&request);
     if (WMSHTTPFetchMulti(&request) != CE_None) {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS_MRF: failed to retrieve index data");
         return 0;
@@ -272,8 +272,8 @@ size_t WMSMiniDriver_MRF::GetIndexAddress(const GDALWMSTiledImageRequestInfo &ti
 
 // Signal errors and return error message
 CPLErr WMSMiniDriver_MRF::TiledImageRequest(WMSHTTPRequest &request,
-    CPL_UNUSED const GDALWMSImageRequestInfo &iri, 
-    const GDALWMSTiledImageRequestInfo &tiri) 
+    CPL_UNUSED const GDALWMSImageRequestInfo &iri,
+    const GDALWMSTiledImageRequestInfo &tiri)
 {
     CPLString &url = request.URL;
     url = m_base_url;
