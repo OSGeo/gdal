@@ -7,7 +7,7 @@
  ******************************************************************************
  *
  * CREDITS: The RasterLite2 module has been completely funded by:
- * Regione Toscana - Settore Sistema Informativo Territoriale ed 
+ * Regione Toscana - Settore Sistema Informativo Territoriale ed
  * Ambientale (GDAL/RasterLite2 driver)
  * CIG: 644544015A
  *
@@ -93,7 +93,7 @@ bool OGRSQLiteDataSource::OpenRaster()
         const char* pszAbstract = papszRow[2];
         if( pszCoverageName != NULL )
         {
-            rl2CoveragePtr cvg = rl2_create_coverage_from_dbms( hDB, 
+            rl2CoveragePtr cvg = rl2_create_coverage_from_dbms( hDB,
                                                             pszCoverageName );
             if( cvg != NULL )
             {
@@ -165,7 +165,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
 
     CSLDestroy(papszTokens);
 
-    m_pRL2Coverage = rl2_create_coverage_from_dbms( hDB, 
+    m_pRL2Coverage = rl2_create_coverage_from_dbms( hDB,
                                                     m_osCoverageName );
     if( m_pRL2Coverage == NULL )
     {
@@ -1044,7 +1044,7 @@ GDALColorTable* RL2RasterBand::GetColorTable()
                     sEntry.c3 = pabyB[i];
                     sEntry.c4 =
                             (m_bHasNoData && i == m_dfNoDataValue) ? 0 : 255;
-                    m_poCT->SetColorEntry( i, &sEntry ); 
+                    m_poCT->SetColorEntry( i, &sEntry );
                 }
                 rl2_free(pabyR);
                 rl2_free(pabyG);
@@ -1105,7 +1105,7 @@ double RL2RasterBand::GetNoDataValue( int* pbSuccess )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr RL2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void* pData) 
+CPLErr RL2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void* pData)
 {
     OGRSQLiteDataSource* poGDS = reinterpret_cast<OGRSQLiteDataSource*>(poDS);
 #ifdef DEBUG_VERBOSE
@@ -1126,7 +1126,7 @@ CPLErr RL2RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void* pData)
 
     sqlite3* hDB = poGDS->GetParentDS() ? poGDS->GetParentDS()->GetDB() :
                                           poGDS->GetDB();
-    rl2CoveragePtr cov = poGDS->GetParentDS() ? 
+    rl2CoveragePtr cov = poGDS->GetParentDS() ?
                                     poGDS->GetParentDS()->GetRL2CoveragePtr():
                                     poGDS->GetRL2CoveragePtr();
     unsigned char nSampleType = 0;
@@ -2201,7 +2201,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
                                     nSRSId,
                                     dfXRes,
                                     dfYRes,
-                                    pNoData, 
+                                    pNoData,
                                     pPalette,
                                     bStrictResolution,
                                     bMixedResolutions,
@@ -2259,7 +2259,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
     if( rl2_load_raw_tiles_into_dbms(poDS->GetDB(), cvg,
                                      osSectionName,
                                      poSrcDS->GetRasterXSize(),
-                                     poSrcDS->GetRasterYSize(), 
+                                     poSrcDS->GetRasterYSize(),
                                      nSRSId,
                                      dfXMin, dfYMin, dfXMax, dfYMax,
                                      RasterLite2Callback,
