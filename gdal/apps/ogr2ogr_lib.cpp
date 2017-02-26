@@ -1322,7 +1322,7 @@ GDALVectorTranslateWrappedLayer* GDALVectorTranslateWrappedLayer::New(
                         CPLFree(pszWKT);
 
                         poOutputSRS->exportToPrettyWkt( &pszWKT, FALSE );
-                        CPLError( CE_Failure, CPLE_AppDefined, 
+                        CPLError( CE_Failure, CPLE_AppDefined,
                                   "Target:\n%s", pszWKT );
                         CPLFree(pszWKT);
 
