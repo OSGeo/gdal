@@ -1215,7 +1215,7 @@ static GDALGenImgProjTransformInfo* GDALCreateGenImgProjTransformerInternal()
  * Must be used together with REPROJECTION_APPROX_ERROR_IN_SRC_SRS_UNIT to be taken
  * into account.
  * </ul>
- * 
+ *
  * The use case for the *_APPROX_ERROR_* options is when defining an approximate
  * transformer on top of the GenImgProjTransformer globally is not practical.
  * Such a use case is when the source dataset has RPC with a RPC DEM. In such
