@@ -1732,21 +1732,17 @@ CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode()
             pszSQL = sqlite3_mprintf(
                         "UPDATE gpkg_contents SET "
                         "last_change = '%q'"
-                        "WHERE table_name = '%q' AND "
-                        "Lower(data_type) = '%q'",
+                        "WHERE table_name = '%q'",
                         pszCurrentDate,
-                        m_osRasterTable.c_str(),
-                        (m_eDT == GDT_Byte) ? "tiles" : "2d-gridded-coverage");
+                        m_osRasterTable.c_str());
         }
         else
         {
             pszSQL = sqlite3_mprintf(
                         "UPDATE gpkg_contents SET "
                         "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now')"
-                        "WHERE table_name = '%q' AND "
-                        "Lower(data_type) = '%q'",
-                        m_osRasterTable.c_str(),
-                        (m_eDT == GDT_Byte) ? "tiles" : "2d-gridded-coverage");
+                        "WHERE table_name = '%q'",
+                        m_osRasterTable.c_str());
         }
 
         CPL_IGNORE_RET_VAL(SQLCommand(hDB, pszSQL));
