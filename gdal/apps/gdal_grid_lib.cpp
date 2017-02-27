@@ -135,9 +135,10 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
         case GGA_InverseDistanceToAPowerNearestNeighbor:
             printf( "Algorithm name: \"%s\".\n", szAlgNameInvDistNearestNeighbor );
             CPLprintf( "Options are "
-                        "\"power=%f:radius=%f"
+                        "\"power=%f:smoothing=%f:radius=%f"
                     ":max_points=%lu:min_points=%lu:nodata=%f\"\n",
                 ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfPower,
+                ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfSmoothing,
                 ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfRadius,
                 (unsigned long)((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->nMaxPoints,
                 (unsigned long)((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->nMinPoints,
