@@ -93,8 +93,7 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
         pszSQL = sqlite3_mprintf(
                     "UPDATE gpkg_contents SET "
                     "last_change = '%q'"
-                    "WHERE table_name = '%q' AND "
-                    "Lower(data_type) IN ('features', 'gdal_aspatial')",
+                    "WHERE table_name = '%q'",
                     m_pszTableName, pszCurrentDate);
     }
     else
@@ -102,8 +101,7 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
         pszSQL = sqlite3_mprintf(
                     "UPDATE gpkg_contents SET "
                     "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now')"
-                    "WHERE table_name = '%q' AND "
-                    "Lower(data_type) IN ('features', 'gdal_aspatial')",
+                    "WHERE table_name = '%q'",
                     m_pszTableName);
     }
 
