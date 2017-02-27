@@ -695,6 +695,16 @@
 ## @method $GetGCPProjection()
 # @return projection string.
 
+## @method Geo::GDAL::Extent Extent()
+# @return A new Geo::GDAL::Extent object that represents the area that this raster covers.
+
+## @method Tile(Geo::GDAL::Extent e)
+# Compute the top left cell coordinates and width and height of the
+# tile that covers the given extent.
+# @param e The extent whose tile is needed.
+# @note Requires that the raster is a strictly north up one.
+# @return A list ($xoff, $yoff, $xsize, $ysize).
+
 ## @method FlushCache()
 # Write cached data to disk. There is usually no need to call this
 # method.
@@ -902,6 +912,31 @@
 my $d = Geo::GDAL::Open('pic.jpg');
 Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 \endcode
+
+
+
+
+## @class Geo::GDAL::Extent
+# @brief A rectangular area in projection coordinates: xmin, ymin, xmax, ymax.
+
+## @sub Geo::GDAL::Extent new($xmin, $ymin, $xmax, $ymax)
+# @return A new Extent object.
+
+## @sub @Size()
+# @return A list ($width, $height).
+
+## @sub $Overlaps($extent)
+# @param extent Another Geo::GDAL::Extent object.
+# @return True if this extent overlaps the other extent, false otherwise.
+
+## @sub $Overlap($extent)
+# @param extent Another Geo::GDAL::Extent object.
+# @return A new Geo::GDAL::Extent object, which represents the joint area of the two extents.
+
+## @sub ExpandToInclude($extent)
+# Extends this extent to include the other extent.
+# @param extent Another Geo::GDAL::Extent object.
+
 
 
 
