@@ -34,6 +34,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 #include <algorithm>
+#include <cmath>
 
 CPL_CVSID("$Id$");
 
@@ -1479,12 +1480,27 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 
 {
     char **papszFields = SplitList( pszMapinfo );
+    char *units = NULL;
+    double rotation = 0.0;
+    const double PI = atan(1.0) * 4;
     const int nCount = CSLCount(papszFields);
 
     if( nCount < 7 )
     {
         CSLDestroy( papszFields );
         return FALSE;
+    } else if( nCount > 10 )
+    {
+        // Retrieve named values
+        for (int i=10; i<nCount; ++i)
+        {
+            if (strncmp(papszFields[i], "units=", strlen("units=")) == 0)
+            {
+                units = papszFields[i] + strlen("units=");
+            } else if (strncmp(papszFields[i], "rotation=", strlen("rotation=")) == 0) {
+                rotation = CPLAtof(papszFields[i] + strlen("rotation=")) * (PI/180) * -1;
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1513,18 +1529,19 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 /* -------------------------------------------------------------------- */
 /*      Capture geotransform.                                           */
 /* -------------------------------------------------------------------- */
-    adfGeoTransform[1] = CPLAtof(papszFields[5]);  // Pixel width
-    adfGeoTransform[5] = -CPLAtof(papszFields[6]);  // Pixel height
-    // Upper left X coordinate.
-    adfGeoTransform[0] =
-        CPLAtof(papszFields[3]) -
-        (CPLAtof(papszFields[1]) - 1) * adfGeoTransform[1];
-    // Upper left Y coordinate.
-    adfGeoTransform[3] =
-        CPLAtof(papszFields[4]) -
-        (CPLAtof(papszFields[2]) - 1) * adfGeoTransform[5];
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[4] = 0.0;
+    double xReference = CPLAtof(papszFields[1]);
+    double yReference = CPLAtof(papszFields[2]);
+    double pixelEasting = CPLAtof(papszFields[3]);
+    double pixelNorthing = CPLAtof(papszFields[4]);
+    double xPixelSize = CPLAtof(papszFields[5]);
+    double yPixelSize = -CPLAtof(papszFields[6]);
+
+    adfGeoTransform[0] = pixelEasting - (xReference - 1) * xPixelSize;
+    adfGeoTransform[1] = cos(rotation) * xPixelSize;
+    adfGeoTransform[2] = -sin(rotation) * xPixelSize;
+    adfGeoTransform[3] = pixelNorthing - (yReference - 1) * yPixelSize;
+    adfGeoTransform[4] = sin(rotation) * yPixelSize;
+    adfGeoTransform[5] = cos(rotation) * yPixelSize;
 
 /* -------------------------------------------------------------------- */
 /*      Capture projection.                                             */
@@ -1668,28 +1685,28 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 /* -------------------------------------------------------------------- */
 /*      Try to process specialized units.                               */
 /* -------------------------------------------------------------------- */
-    if( STARTS_WITH_CI(papszFields[nCount-1], "units"))
+    if( units != NULL )
     {
         /* Handle linear units first. */
-        if( EQUAL(papszFields[nCount-1], "units=Feet") )
+        if( EQUAL(units, "Feet") )
             oSRS.SetLinearUnitsAndUpdateParameters(
                 SRS_UL_FOOT, CPLAtof(SRS_UL_FOOT_CONV) );
-        else if( EQUAL(papszFields[nCount-1], "units=Meters") )
+        else if( EQUAL(units, "Meters") )
             oSRS.SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1. );
-        else if( EQUAL(papszFields[nCount-1], "units=Km") )
+        else if( EQUAL(units, "Km") )
             oSRS.SetLinearUnitsAndUpdateParameters( "Kilometer", 1000.  );
-        else if( EQUAL(papszFields[nCount-1], "units=Yards") )
+        else if( EQUAL(units, "Yards") )
             oSRS.SetLinearUnitsAndUpdateParameters( "Yard", .9144 );
-        else if( EQUAL(papszFields[nCount-1], "units=Miles") )
+        else if( EQUAL(units, "Miles") )
             oSRS.SetLinearUnitsAndUpdateParameters( "Mile", 1609.344 );
-        else if( EQUAL(papszFields[nCount-1], "units=Nautical Miles") )
+        else if( EQUAL(units, "Nautical Miles") )
             oSRS.SetLinearUnitsAndUpdateParameters(
                 SRS_UL_NAUTICAL_MILE, CPLAtof(SRS_UL_NAUTICAL_MILE_CONV) );
 
         /* Only handle angular units if we know the projection is geographic. */
         if (oSRS.IsGeographic())
         {
-            if (EQUAL(papszFields[nCount-1], "units=Radians") )
+            if (EQUAL(units, "Radians") )
             {
                 oSRS.SetAngularUnits( SRS_UA_RADIAN, 1. );
             }
@@ -1701,9 +1718,9 @@ int ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
                     SRS_UA_DEGREE, CPLAtof(SRS_UA_DEGREE_CONV));
 
                 double conversionFactor = 1.0;
-                if( EQUAL(papszFields[nCount-1], "units=Minutes") )
+                if( EQUAL(units, "Minutes") )
                     conversionFactor = 60.0;
-                else if( EQUAL(papszFields[nCount-1], "units=Seconds") )
+                else if( EQUAL(units, "Seconds") )
                     conversionFactor = 3600.0;
                 adfGeoTransform[0] /= conversionFactor;
                 adfGeoTransform[1] /= conversionFactor;
