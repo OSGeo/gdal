@@ -780,8 +780,9 @@ def isis_23():
     mem_ds = gdal.Translate('', 'data/byte.tif', format = 'MEM')
     mem_ds.SetProjection('')
     mem_ds.SetGeoTransform([0,1,0,0,0,1])
+    mem_ds.GetRasterBand(1).SetNoDataValue(74)
     ref_data = mem_ds.GetRasterBand(1).ReadRaster()
-    gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds, noData = 74,
+    gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds,
                    format = 'ISIS3')
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     if ref_data == ds.GetRasterBand(1).ReadRaster():
@@ -790,8 +791,8 @@ def isis_23():
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
-    gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds, noData = 74,
-                   format = 'ISIS3', options = [ 'DATA_LOCATION=GeoTIFF'] )
+    gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds,
+                   format = 'ISIS3', creationOptions = [ 'DATA_LOCATION=GeoTIFF'] )
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     if ref_data == ds.GetRasterBand(1).ReadRaster():
         gdaltest.post_reason('fail')
@@ -799,8 +800,8 @@ def isis_23():
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
-    gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds, noData = 74,
-                   format = 'ISIS3', options = [ 'TILED=YES'] )
+    gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds,
+                   format = 'ISIS3', creationOptions = [ 'TILED=YES'] )
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     if ref_data == ds.GetRasterBand(1).ReadRaster():
         gdaltest.post_reason('fail')
@@ -813,8 +814,9 @@ def isis_23():
         mem_ds = gdal.Translate('', 'data/byte.tif', format = 'MEM', outputType = dt)
         mem_ds.SetProjection('')
         mem_ds.SetGeoTransform([0,1,0,0,0,1])
+        mem_ds.GetRasterBand(1).SetNoDataValue(74)
         ref_data = mem_ds.GetRasterBand(1).ReadRaster()
-        gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds, noData = 74,
+        gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds,
                     format = 'ISIS3')
         ds = gdal.Open('/vsimem/isis_tmp.lbl')
         if ref_data == ds.GetRasterBand(1).ReadRaster():

@@ -928,7 +928,7 @@ CPLErr ISISTiledBand::IWriteBlock( int nXBlock, int nYBlock, void *pImage )
     {
         GByte* pabyImage = static_cast<GByte*>(pImage);
         int nXStart = nRasterXSize % nBlockXSize;
-        for( int iY = 0; iY < nBlockXSize; iY++ )
+        for( int iY = 0; iY < nBlockYSize; iY++ )
         {
             GDALCopyWords( &m_dfNoData, GDT_Float64, 0,
                            pabyImage + (iY * nBlockXSize + nXStart) * nDTSize,
@@ -3704,6 +3704,7 @@ GDALDataset* ISIS3Dataset::CreateCopy( const char *pszFilename,
     poDS->m_bInitToNodata = false;
     CPLErr eErr = GDALDatasetCopyWholeRaster( poSrcDS, poDS,
                                            NULL, pfnProgress, pProgressData );
+    poDS->FlushCache();
     poDS->m_bHasSrcNoData = false;
     if( eErr != CE_None )
     {
