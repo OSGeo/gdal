@@ -3358,7 +3358,7 @@ static void GDALPythonFreeCStr(void* ptr, int bToFree)
 
 unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int nMembCount, VSILFILE *fp)
 {
-    GUIntBig buf_size = (GUIntBig)nMembSize * nMembCount;
+    size_t buf_size = static_cast<size_t>(nMembSize) * nMembCount;
     if( buf_size > 0xFFFFFFFFU )
    {
         CPLError(CE_Failure, CPLE_AppDefined, "Too big request");
@@ -4839,9 +4839,13 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
     GIntBig band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
 
     int ntypesize = GDALGetDataTypeSize( ntype ) / 8;
-    GIntBig buf_size = ComputeDatasetRasterIOSize (nxsize, nysize, ntypesize,
-                                               band_list ? band_list : GDALGetRasterCount(self), pband_list, band_list,
-                                               pixel_space, line_space, band_space, FALSE);
+    size_t buf_size = static_cast<size_t>(
+        ComputeDatasetRasterIOSize (nxsize, nysize, ntypesize,
+                                    band_list ? band_list :
+                                        GDALGetRasterCount(self),
+                                    pband_list, band_list,
+                                    pixel_space, line_space, band_space,
+                                    FALSE));
     if (buf_size == 0)
     {
         *buf = NULL;
@@ -5238,8 +5242,10 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,do
     GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
     GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
 
-    GIntBig buf_size = ComputeBandRasterIOSize( nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
-                                            pixel_space, line_space, FALSE );
+    size_t buf_size = static_cast<size_t>(
+        ComputeBandRasterIOSize( nxsize, nysize,
+                                 GDALGetDataTypeSize( ntype ) / 8,
+                                 pixel_space, line_space, FALSE ) );
     if (buf_size == 0)
     {
         *buf = NULL;
@@ -5306,7 +5312,8 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadBlock(GDALRasterBandShadow *self,int 
     int nBlockXSize, nBlockYSize;
     GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
     int nDataTypeSize = (GDALGetDataTypeSize(GDALGetRasterDataType(self)) / 8);
-    GIntBig buf_size = (GIntBig)nBlockXSize * nBlockYSize * nDataTypeSize;
+    size_t buf_size = static_cast<size_t>(nBlockXSize) *
+                                                nBlockYSize * nDataTypeSize;
 
 #if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
