@@ -1252,6 +1252,8 @@ class GDAL2Tiles(object):
         tcount = (1+abs(tmaxx-tminx)) * (1+abs(tmaxy-tminy))
         ti = 0
 
+        tile_details = []
+
         tz = self.tmaxz
         for ty in range(tmaxy, tminy-1, -1):
             for tx in range(tminx, tmaxx+1):
@@ -1326,68 +1328,105 @@ class GDAL2Tiles(object):
                     if wysize != self.tilesize:
                         wy = self.tilesize - wysize
 
-                if self.options.verbose:
-                    print("\tReadRaster Extent: ",
-                          (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize))
-
-                # Query is in 'nearest neighbour' but can be bigger in then the tilesize
-                # We scale down the query to the tilesize by supplied algorithm.
-
-                # Tile dataset in memory
-                dstile = self.mem_drv.Create('', self.tilesize, self.tilesize, tilebands)
-
-                data = alpha = None
                 # Read the source raster if anything is going inside the tile as per the computed
                 # geo_query
-                if rxsize != 0 and rysize != 0 and wxsize != 0 and wysize != 0:
-                    data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize,
-                                         band_list=list(range(1, self.dataBandsCount+1)))
-                    alpha = self.alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
+                tile_details.append({
+                    "tx": tx,
+                    "ty": ty,
+                    "tz": tz,
+                    "rx": rx,
+                    "ry": ry,
+                    "rxsize": rxsize,
+                    "rysize": rysize,
+                    "wx": wx,
+                    "wy": wy,
+                    "wxsize": wxsize,
+                    "wysize": wysize,
+                    "querysize": querysize,
+                })
 
-                # The tile in memory is a transparent file by default. Write pixel values into it if
-                # any
-                if data:
-                    if self.tilesize == querysize:
-                        # Use the ReadRaster result directly in tiles ('nearest neighbour' query)
-                        dstile.WriteRaster(wx, wy, wxsize, wysize, data,
-                                           band_list=list(range(1, self.dataBandsCount+1)))
-                        dstile.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
+        self.create_base_tiles(tile_details)
 
-                        # Note: For source drivers based on WaveLet compression (JPEG2000, ECW,
-                        # MrSID) the ReadRaster function returns high-quality raster (not ugly
-                        # nearest neighbour)
-                        # TODO: Use directly 'near' for WaveLet files
-                    else:
-                        # Big ReadRaster query in memory scaled to the tilesize - all but 'near'
-                        # algo
-                        dsquery = self.mem_drv.Create('', querysize, querysize, tilebands)
-                        # TODO: fill the null value in case a tile without alpha is produced (now
-                        # only png tiles are supported)
-                        dsquery.WriteRaster(wx, wy, wxsize, wysize, data,
-                                            band_list=list(range(1, self.dataBandsCount+1)))
-                        dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
+    def create_base_tiles(self, tiles_info):
+        for tile_info in tiles_info:
+            tx = tile_info['tx']
+            ty = tile_info['ty']
+            tz = tile_info['tz']
+            rx = tile_info['rx']
+            ry = tile_info['ry']
+            rxsize = tile_info['rxsize']
+            rysize = tile_info['rysize']
+            wx = tile_info['wx']
+            wy = tile_info['wy']
+            wxsize = tile_info['wxsize']
+            wysize = tile_info['wysize']
+            querysize = tile_info['querysize']
 
-                        self.scale_query_to_tile(dsquery, dstile, tilefilename)
-                        del dsquery
+            # Tile dataset in memory
+            tilebands = self.dataBandsCount + 1
+            ds = self.out_ds
+            tilefilename = os.path.join(
+                self.output, str(tz), str(tx), "%s.%s" % (ty, self.tileext))
+            dstile = self.mem_drv.Create('', self.tilesize, self.tilesize, tilebands)
 
-                del data
+            data = alpha = None
 
-                if self.options.resampling != 'antialias':
-                    # Write a copy of tile to png/jpg
-                    self.out_drv.CreateCopy(tilefilename, dstile, strict=0)
+            if self.options.verbose:
+                print("\tReadRaster Extent: ",
+                      (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize))
 
-                del dstile
+            # Query is in 'nearest neighbour' but can be bigger in then the tilesize
+            # We scale down the query to the tilesize by supplied algorithm.
 
-                # Create a KML file for this tile.
-                if self.kml:
-                    kmlfilename = os.path.join(self.output, str(tz), str(tx), '%d.kml' % ty)
-                    if not self.options.resume or not os.path.exists(kmlfilename):
-                        f = open(kmlfilename, 'wb')
-                        f.write(self.generate_kml(tx, ty, tz).encode('utf-8'))
-                        f.close()
+            if rxsize != 0 and rysize != 0 and wxsize != 0 and wysize != 0:
+                data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize,
+                                     band_list=list(range(1, self.dataBandsCount+1)))
+                alpha = self.alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
 
-                if not self.options.verbose and not self.options.quiet:
-                    self.progressbar(ti / float(tcount))
+            # The tile in memory is a transparent file by default. Write pixel values into it if
+            # any
+            if data:
+                if self.tilesize == querysize:
+                    # Use the ReadRaster result directly in tiles ('nearest neighbour' query)
+                    dstile.WriteRaster(wx, wy, wxsize, wysize, data,
+                                       band_list=list(range(1, self.dataBandsCount+1)))
+                    dstile.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
+
+                    # Note: For source drivers based on WaveLet compression (JPEG2000, ECW,
+                    # MrSID) the ReadRaster function returns high-quality raster (not ugly
+                    # nearest neighbour)
+                    # TODO: Use directly 'near' for WaveLet files
+                else:
+                    # Big ReadRaster query in memory scaled to the tilesize - all but 'near'
+                    # algo
+                    dsquery = self.mem_drv.Create('', querysize, querysize, tilebands)
+                    # TODO: fill the null value in case a tile without alpha is produced (now
+                    # only png tiles are supported)
+                    dsquery.WriteRaster(wx, wy, wxsize, wysize, data,
+                                        band_list=list(range(1, self.dataBandsCount+1)))
+                    dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
+
+                    self.scale_query_to_tile(dsquery, dstile, tilefilename)
+                    del dsquery
+
+            del data
+
+            if self.options.resampling != 'antialias':
+                # Write a copy of tile to png/jpg
+                self.out_drv.CreateCopy(tilefilename, dstile, strict=0)
+
+            del dstile
+
+            # Create a KML file for this tile.
+            if self.kml:
+                kmlfilename = os.path.join(self.output, str(tz), str(tx), '%d.kml' % ty)
+                if not self.options.resume or not os.path.exists(kmlfilename):
+                    f = open(kmlfilename, 'wb')
+                    f.write(self.generate_kml(tx, ty, tz).encode('utf-8'))
+                    f.close()
+
+            # if not self.options.verbose and not self.options.quiet:
+            #     self.progressbar(ti / float(tcount))
 
     def generate_overview_tiles(self):
         """Generation of the overview tiles (higher in the pyramid) based on existing tiles"""
