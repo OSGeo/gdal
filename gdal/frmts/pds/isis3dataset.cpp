@@ -249,7 +249,7 @@ class CPLJsonObject
                 return *(m_oList[ oIter->second ].second);
             m_oList.push_back( std::pair<CPLString,CPLJsonObject*>(
                                                 pszKey, new CPLJsonObject()) );
-            m_oMap[pszKey] = m_oList.size() - 1;
+            m_oMap[pszKey] = static_cast<int>(m_oList.size()) - 1;
             return *(m_oList.back().second);
         }
 
@@ -3204,7 +3204,7 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
                     osIndentation.size() + strlen(it.key) + osPadding.size() +
                     strlen(" = ") < WIDTH )
                 {
-                    int nFirstPos = osIndentation.size() + strlen(it.key) +
+                    size_t nFirstPos = osIndentation.size() + strlen(it.key) +
                                      osPadding.size() + strlen(" = ");
                     VSIFPrintfL(fp, "%s%s%s = ",
                                 osIndentation.c_str(), it.key,
@@ -3216,7 +3216,7 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
                         if( nCurPos == WIDTH && pszVal[i+1] != '\0' )
                         {
                             VSIFPrintfL( fp, "-\n" );
-                            for( int j=0;j<nFirstPos;j++ )
+                            for( size_t j=0;j<nFirstPos;j++ )
                             {
                                 const char chSpace = ' ';
                                 VSIFWriteL(&chSpace, 1, 1, fp);
