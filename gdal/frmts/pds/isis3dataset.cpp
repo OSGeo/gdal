@@ -1874,8 +1874,9 @@ CPLErr ISIS3Dataset::SetMetadata( char** papszMD, const char* pszDomain )
 int ISIS3Dataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    if( poOpenInfo->pabyHeader != NULL
-        && strstr((const char *)poOpenInfo->pabyHeader,"IsisCube") != NULL )
+    if( poOpenInfo->fpL != NULL &&
+        poOpenInfo->pabyHeader != NULL &&
+        strstr((const char *)poOpenInfo->pabyHeader,"IsisCube") != NULL )
         return TRUE;
 
     return FALSE;
@@ -1896,22 +1897,19 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the file using the large file API.                         */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fpQube = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-
-    if( fpQube == NULL )
-        return NULL;
-
     ISIS3Dataset *poDS = new ISIS3Dataset();
 
-    if( ! poDS->m_oKeywords.Ingest( fpQube, 0 ) )
+    if( ! poDS->m_oKeywords.Ingest( poOpenInfo->fpL, 0 ) )
     {
-        VSIFCloseL( fpQube );
+        VSIFCloseL( poOpenInfo->fpL );
+        poOpenInfo->fpL = NULL;
         delete poDS;
         return NULL;
     }
     poDS->m_poJSonLabel = poDS->m_oKeywords.StealJSon();
 
-    VSIFCloseL( fpQube );
+    VSIFCloseL( poOpenInfo->fpL );
+    poOpenInfo->fpL = NULL;
 
 /* -------------------------------------------------------------------- */
 /* Assume user is pointing to label (i.e. .lbl) file for detached option */
@@ -2023,7 +2021,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "%s layout type not supported.", itype);
+                  "%s pixel type not supported.", itype);
         delete poDS;
         return NULL;
     }
