@@ -124,6 +124,14 @@ def isis_4():
         gdaltest.post_reason('fail')
         print(lbl)
         return 'fail'
+    if ds.GetRasterBand(1).GetMaskFlags() != 0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetMaskFlags())
+        return 'fail'
+    if ds.GetRasterBand(1).GetMaskBand().Checksum() != 12220:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetMaskBand().Checksum())
+        return 'fail'
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
@@ -411,25 +419,53 @@ def isis_15():
 # Test Create() without anything else
 def isis_16():
 
-    for dt, cs in [ [gdal.GDT_Byte, 0],
-                    [gdal.GDT_Int16, 65525],
-                    [gdal.GDT_UInt16, 0],
-                    [gdal.GDT_Float32, 65534] ]:
+    for read_before_write in [ False, True ]:
+        for init_nd in [ False, True ]:
+            for dt, cs, nd, options in [
+                                    [gdal.GDT_Byte, 0, 0, []],
+                                    [gdal.GDT_Byte, 0, 0, ['TILED=YES']],
+                                    [gdal.GDT_Byte, 0, 0, ['DATA_LOCATION=GEOTIFF']],
+                                    [gdal.GDT_Int16, 65525, -32768, []],
+                                    [gdal.GDT_UInt16, 0, 0, []],
+                                    [gdal.GDT_Float32, 65534, -3.4028226550889045e+38, []]
+            ]:
 
-        ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl',
-                                                  1, 2, 1, dt)
-        ds = None
-        ds = gdal.Open('/vsimem/isis_tmp.lbl')
-        if ds.GetRasterBand(1).Checksum() != cs:
-            gdaltest.post_reason('fail')
-            print(ds.GetRasterBand(1).Checksum())
-            return 'fail'
-        if ds.GetRasterBand(1).GetMaskBand().Checksum() != 0:
-            gdaltest.post_reason('fail')
-            print(ds.GetRasterBand(1).GetMaskBand().Checksum())
-            return 'fail'
-        ds = None
-        gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
+                ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl',
+                                                        1, 2, 1, dt, options = options)
+                ds.GetRasterBand(1).SetOffset(10)
+                ds.GetRasterBand(1).SetScale(20)
+                if read_before_write:
+                    ds.GetRasterBand(1).ReadRaster()
+                if init_nd:
+                    ds.GetRasterBand(1).Fill(nd)
+                ds = None
+                ds = gdal.Open('/vsimem/isis_tmp.lbl')
+                if ds.GetRasterBand(1).Checksum() != cs:
+                    gdaltest.post_reason('fail')
+                    print(dt, cs, nd, options, init_nd, ds.GetRasterBand(1).Checksum())
+                    return 'fail'
+                if ds.GetRasterBand(1).GetMaskFlags() != 0:
+                    gdaltest.post_reason('fail')
+                    print(dt, cs, nd, options, init_nd, ds.GetRasterBand(1).GetMaskFlags())
+                    return 'fail'
+                if ds.GetRasterBand(1).GetMaskBand().Checksum() != 0:
+                    gdaltest.post_reason('fail')
+                    print(dt, cs, nd, options, init_nd, ds.GetRasterBand(1).GetMaskBand().Checksum())
+                    return 'fail'
+                if ds.GetRasterBand(1).GetOffset() != 10:
+                    gdaltest.post_reason('fail')
+                    print(dt, cs, nd, options, init_nd, ds.GetRasterBand(1).GetOffset())
+                    return 'fail'
+                if ds.GetRasterBand(1).GetScale() != 20:
+                    gdaltest.post_reason('fail')
+                    print(dt, cs, nd, options, init_nd, ds.GetRasterBand(1).GetScale())
+                    return 'fail'
+                if ds.GetRasterBand(1).GetNoDataValue() != nd:
+                    gdaltest.post_reason('fail')
+                    print(dt, cs, nd, options, init_nd, ds.GetRasterBand(1).GetNoDataValue())
+                    return 'fail'
+                ds = None
+                gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
     return 'success'
 
@@ -753,6 +789,40 @@ def isis_23():
         return 'fail'
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
+
+    gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds, noData = 74,
+                   format = 'ISIS3', options = [ 'DATA_LOCATION=GeoTIFF'] )
+    ds = gdal.Open('/vsimem/isis_tmp.lbl')
+    if ref_data == ds.GetRasterBand(1).ReadRaster():
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
+
+    gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds, noData = 74,
+                   format = 'ISIS3', options = [ 'TILED=YES'] )
+    ds = gdal.Open('/vsimem/isis_tmp.lbl')
+    if ref_data == ds.GetRasterBand(1).ReadRaster():
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
+
+
+    for dt in [ gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Float32 ]:
+        mem_ds = gdal.Translate('', 'data/byte.tif', format = 'MEM', outputType = dt)
+        mem_ds.SetProjection('')
+        mem_ds.SetGeoTransform([0,1,0,0,0,1])
+        ref_data = mem_ds.GetRasterBand(1).ReadRaster()
+        gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds, noData = 74,
+                    format = 'ISIS3')
+        ds = gdal.Open('/vsimem/isis_tmp.lbl')
+        if ref_data == ds.GetRasterBand(1).ReadRaster():
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = None
+        gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
+
 
     return 'success'
 

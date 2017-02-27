@@ -2023,7 +2023,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "%s layout type not supported. Abort\n\n", itype);
+                  "%s layout type not supported.", itype);
         delete poDS;
         return NULL;
     }
@@ -2602,6 +2602,12 @@ json_object* ISIS3Dataset::BuildLabel()
     {
         if( m_poExternalDS && m_bGeoTIFFAsRegularExternal )
         {
+            if( !m_bGeoTIFFInitDone )
+            {
+                reinterpret_cast<ISIS3WrapperRasterBand*>(GetRasterBand(1))->
+                    InitFile();
+            }
+
             const char* pszOffset = m_poExternalDS->GetRasterBand(1)->
                                 GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF");
             if( pszOffset )
