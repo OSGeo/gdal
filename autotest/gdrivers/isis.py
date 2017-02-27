@@ -873,15 +873,15 @@ def isis_24():
         return 'fail'
 
     # no GTiff driver
-    with gdaltest.error_handler():
-        gtiff_drv = gdal.GetDriverByName('GTiff')
-        gtiff_drv.Deregister()
-        ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/error.lbl', 1, 1,
-            options = ['DATA_LOCATION=GEOTIFF' ])
-        gtiff_drv.Register()
-    if ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    #with gdaltest.error_handler():
+    #    gtiff_drv = gdal.GetDriverByName('GTiff')
+    #    gtiff_drv.Deregister()
+    #    ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/error.lbl', 1, 1,
+    #        options = ['DATA_LOCATION=GEOTIFF' ])
+    #    gtiff_drv.Register()
+    #if ds is not None:
+    #    gdaltest.post_reason('fail')
+    #    return 'fail'
 
     # cannot create GeoTIFF
     with gdaltest.error_handler():
