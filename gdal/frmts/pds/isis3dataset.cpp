@@ -745,7 +745,7 @@ class ISISMaskBand : public GDALRasterBand
 
   public:
 
-                            ISISMaskBand( GDALRasterBand* poBaseBand );
+                            explicit ISISMaskBand( GDALRasterBand* poBaseBand );
                            ~ISISMaskBand();
 
     virtual CPLErr          IReadBlock( int, int, void * ) override;
@@ -2375,7 +2375,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
                                 if( nOffset != nSkipBytes + nBlockNo *
                                                             nBlockSizeBytes )
                                 {
-                                    bWarned = true;
+                                    //bWarned = true;
                                     CPLError( CE_Warning, CPLE_AppDefined,
                                         "%s has incompatible "
                                         "characteristics with the ones "
