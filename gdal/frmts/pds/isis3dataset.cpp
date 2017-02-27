@@ -200,7 +200,7 @@ class CPLJsonObject
         }
 
         Type getType() const { return m_eType; }
-        bool getBool() const { return CPL_TO_BOOL(m_nVal); }
+        bool getBool() const { return m_nVal == 1; }
         GInt64 getInt() const { return m_nVal; }
         double getDouble() const { return m_dfVal; }
         const char* getString() const { return m_osVal.c_str(); }
@@ -211,7 +211,7 @@ class CPLJsonObject
             if( m_eType == INT )
                 obj = json_object_new_int64(m_nVal);
             else if( m_eType == BOOLEAN )
-                obj = json_object_new_boolean( CPL_TO_BOOL(m_nVal) );
+                obj = json_object_new_boolean( m_nVal == 1 );
             else if( m_eType == DOUBLE )
                 obj = json_object_new_double(m_dfVal);
             else if( m_eType == STRING )
