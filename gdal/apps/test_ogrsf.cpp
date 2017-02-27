@@ -1794,16 +1794,15 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     LOG_ACTION(poLayer->ResetReading());
 
     bool bFound = false;
+    GIntBig nIterCount = 0;
     while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
     {
         if( poFeature->Equal(poTargetFeature) )
         {
             bFound = true;
-            DestroyFeatureAndNullify(poFeature);
-            break;
         }
-        else
-            DestroyFeatureAndNullify(poFeature);
+        nIterCount ++;
+        DestroyFeatureAndNullify(poFeature);
     }
 
     if( !bFound )
@@ -1818,6 +1817,35 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     }
 
     nInclusiveCount = LOG_ACTION(poLayer->GetFeatureCount());
+
+    // Identity check doesn't always work depending on feature geometries
+    if( nIterCount > nInclusiveCount )
+    {
+        bRet = FALSE;
+        printf( "ERROR: GetFeatureCount() with spatial filter smaller (%d) than "
+                "count while iterating over features (%d).\n",
+                static_cast<int>(nInclusiveCount), static_cast<int>(nIterCount));
+    }
+
+    LOG_ACTION(poLayer->SetAttributeFilter("1=1"));
+    int nShouldBeSame = LOG_ACTION(poLayer->GetFeatureCount());
+    LOG_ACTION(poLayer->SetAttributeFilter(NULL));
+    if( nShouldBeSame != nInclusiveCount )
+    {
+        bRet = FALSE;
+        printf( "ERROR: Attribute filter seems to be make spatial "
+                "filter fail with GetFeatureCount().\n" );
+    }
+
+    LOG_ACTION(poLayer->SetAttributeFilter("1=0"));
+    int nShouldBeZero = LOG_ACTION(poLayer->GetFeatureCount());
+    LOG_ACTION(poLayer->SetAttributeFilter(NULL));
+    if( nShouldBeZero != 0 )
+    {
+        bRet = FALSE;
+        printf( "ERROR: Attribute filter seems to be ignored in "
+                "GetFeatureCount() when spatial filter is set.\n" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Construct exclusive filter.                                     */
