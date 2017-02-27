@@ -115,6 +115,10 @@ def isis_4():
     if ret != 'success':
         return ret
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
+    if ds.GetMetadataDomainList() != [ '', 'json:ISIS3' ]:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataDomainList())
+        return 'fail'
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
     if lbl.find('OriginalLabel') < 0:
         gdaltest.post_reason('fail')
@@ -718,8 +722,23 @@ def isis_21():
 def isis_22():
 
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
+    # Invalid Json
+    js = """invalid"""
+    with gdaltest.error_handler():
+        if ds.SetMetadata( [js], 'json:ISIS3') == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
+
+    ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
     # Invalid type for IsisCube
     js = """{ "IsisCube": 5 }"""
+    ds.SetMetadata( [js], 'json:ISIS3')
+    lbl = ds.GetMetadata_List('json:ISIS3')
+    if lbl is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     ds.SetMetadata( [js], 'json:ISIS3')
     ds = None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
@@ -846,7 +865,6 @@ def isis_23():
         ds = None
         gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
-
     return 'success'
 
 def cancel_cbk(pct, msg, user_data):
@@ -927,13 +945,42 @@ def isis_24():
     with gdaltest.error_handler():
         gdal.GetDriverByName('ISIS3').CreateCopy('/vsimem/out.lbl',
                                         src_ds,
-                                        options = ['DATA_LOCATION=GEOTIFF' ])
+                                        options = ['DATA_LOCATION=GEOTIFF',
+                                            'GEOTIFF_OPTIONS=COMPRESS=LZW'])
     gdal.Unlink('/vsimem/out.tif')
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/out.lbl')
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+    gdal.Unlink('/vsimem/out.lbl')
+
+    # Invalid StartByte
+    gdal.GetDriverByName('ISIS3').Create('/vsimem/out.lbl', 1, 1,
+                                         options = ['DATA_LOCATION=GEOTIFF',
+                                               'GEOTIFF_OPTIONS=COMPRESS=LZW'])
+    gdal.FileFromMemBuffer('/vsimem/out.lbl', """Object = IsisCube
+  Object = Core
+    StartByte = 2
+    Format = GeoTIFF
+    ^Core = out.tif
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 1
+    End_Group
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+End_Object
+End""")
+    with gdaltest.error_handler():
+        gdal.Open('/vsimem/out.lbl')
+    gdal.Unlink('/vsimem/out.tif')
     gdal.Unlink('/vsimem/out.lbl')
 
     gdal.FileFromMemBuffer('/vsimem/out.lbl', 'IsisCube')
@@ -1041,6 +1088,33 @@ End""")
   End_Object
 End_Object
 End""")
+
+    # unhandled format
+    with gdaltest.error_handler():
+        ds = gdal.Open('/vsimem/out.lbl')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/out.lbl')
+
+    gdal.FileFromMemBuffer('/vsimem/out.lbl', """Object = IsisCube
+  Object = Core
+    Format = unhandled
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 1
+    End_Group
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+End_Object
+End""")
+
     # unhandled pixel type not supported
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/out.lbl')
