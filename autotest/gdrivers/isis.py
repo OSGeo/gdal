@@ -602,7 +602,7 @@ def isis_18():
                                 options = ['LATITUDE_TYPE=Planetocentric',
                                            'LONGITUDE_DIRECTION=PositiveWest',
                                            'LONGITUDE_DOMAIN=360',
-                                           'BOUNDING_DEGREES=1.2,2.3,3.4,4.5'])
+                                           'BOUNDING_DEGREES=1.5,2.5,3.5,4.5'])
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform( [1000,1,0,2000,0,-1] )
     ds = None
@@ -620,11 +620,11 @@ def isis_18():
         gdaltest.post_reason('fail')
         print(lbl)
         return 'fail'
-    if lbl.find('"MinimumLatitude":2.3') < 0:
+    if lbl.find('"MinimumLatitude":2.5') < 0:
         gdaltest.post_reason('fail')
         print(lbl)
         return 'fail'
-    if lbl.find('"MinimumLongitude":1.2') < 0:
+    if lbl.find('"MinimumLongitude":1.5') < 0:
         gdaltest.post_reason('fail')
         print(lbl)
         return 'fail'
@@ -632,7 +632,7 @@ def isis_18():
         gdaltest.post_reason('fail')
         print(lbl)
         return 'fail'
-    if lbl.find('"MaximumLongitude":3.4') < 0:
+    if lbl.find('"MaximumLongitude":3.5') < 0:
         gdaltest.post_reason('fail')
         print(lbl)
         return 'fail'
