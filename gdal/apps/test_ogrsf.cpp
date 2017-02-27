@@ -1828,7 +1828,7 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     }
 
     LOG_ACTION(poLayer->SetAttributeFilter("1=1"));
-    int nShouldBeSame = LOG_ACTION(poLayer->GetFeatureCount());
+    GIntBig nShouldBeSame = LOG_ACTION(poLayer->GetFeatureCount());
     LOG_ACTION(poLayer->SetAttributeFilter(NULL));
     if( nShouldBeSame != nInclusiveCount )
     {
@@ -1838,7 +1838,7 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     }
 
     LOG_ACTION(poLayer->SetAttributeFilter("1=0"));
-    int nShouldBeZero = LOG_ACTION(poLayer->GetFeatureCount());
+    GIntBig nShouldBeZero = LOG_ACTION(poLayer->GetFeatureCount());
     LOG_ACTION(poLayer->SetAttributeFilter(NULL));
     if( nShouldBeZero != 0 )
     {
