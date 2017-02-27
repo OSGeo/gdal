@@ -313,7 +313,7 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
                 const double dfRY = padfY[i] - dfYPoint;
 
                 const double dfR2 = dfRX * dfRX + dfRY * dfRY;
-		// real distance + smoothing
+                // real distance + smoothing
                 const double dfRsmoothed2 = dfR2 + dfSmoothing2;
                 if( dfRsmoothed2 < 0.0000000000001 )
                 {
@@ -321,7 +321,7 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
                     CPLFree(papsPoints);
                     return CE_None;
                 }
-		// is point within real distance?
+                // is point within real distance?
                 if( dfR2 <= dfRPower2 )
                 {
                     oMapDistanceToZValues.insert(
