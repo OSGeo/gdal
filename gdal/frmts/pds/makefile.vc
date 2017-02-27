@@ -4,7 +4,7 @@ OBJ	=	pdsdataset.obj isis2dataset.obj isis3dataset.obj \
 
 GDAL_ROOT	=	..\..
 
-EXTRAFLAGS = 	-I..\raw
+EXTRAFLAGS = 	-I..\raw -I..\vrt -I..\..\ogr\ogrsf_frmts\geojson -I..\..\ogr\ogrsf_frmts\geojson\libjson
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 

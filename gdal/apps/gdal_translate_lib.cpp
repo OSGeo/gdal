@@ -1047,7 +1047,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Transfer generally applicable metadata.                         */
 /* -------------------------------------------------------------------- */
-    char** papszMetadata = CSLDuplicate(((GDALDataset*)hSrcDataset)->GetMetadata());
+    GDALDataset* poSrcDS = reinterpret_cast<GDALDataset*>(hSrcDataset);
+    char** papszMetadata = CSLDuplicate(poSrcDS->GetMetadata());
     if ( psOptions->nScaleRepeat > 0 || psOptions->bUnscale || psOptions->eOutputType != GDT_Unknown )
     {
         /* Remove TIFFTAG_MINSAMPLEVALUE and TIFFTAG_MAXSAMPLEVALUE */
@@ -1073,6 +1074,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if (pszInterleave)
         poVDS->SetMetadataItem("INTERLEAVE", pszInterleave, "IMAGE_STRUCTURE");
 
+    /* ISIS3 -> ISIS3 special case */
+    if( EQUAL(psOptions->pszFormat, "ISIS3") )
+    {
+        char** papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
+        if( papszMD_ISIS3 != NULL)
+            poVDS->SetMetadata( papszMD_ISIS3, "json:ISIS3" );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Transfer metadata that remains valid if the spatial             */
 /*      arrangement of the data is unaltered.                           */
@@ -1081,11 +1090,11 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     {
         char **papszMD;
 
-        papszMD = ((GDALDataset*)hSrcDataset)->GetMetadata("RPC");
+        papszMD = poSrcDS->GetMetadata("RPC");
         if( papszMD != NULL )
             poVDS->SetMetadata( papszMD, "RPC" );
 
-        papszMD = ((GDALDataset*)hSrcDataset)->GetMetadata("GEOLOCATION");
+        papszMD = poSrcDS->GetMetadata("GEOLOCATION");
         if( papszMD != NULL )
             poVDS->SetMetadata( papszMD, "GEOLOCATION" );
     }
@@ -1093,7 +1102,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     {
         char **papszMD;
 
-        papszMD = ((GDALDataset*)hSrcDataset)->GetMetadata("RPC");
+        papszMD = poSrcDS->GetMetadata("RPC");
         if( papszMD != NULL )
         {
             papszMD = CSLDuplicate(papszMD);

@@ -135,13 +135,12 @@ static int
 GDALInfoReportCorner( const GDALInfoOptions* psOptions,
                       GDALDatasetH hDataset,
                       OGRCoordinateTransformationH hTransform,
-                      OGRCoordinateTransformationH hTransformWGS84,
                       const char * corner_name,
                       double x,
                       double y,
                       bool bJson,
                       json_object *poCornerCoordinates,
-                      json_object *poWGS84ExtentCoordinates,
+                      json_object *poLongLatExtentCoordinates,
                       CPLString& osStr );
 
 static void
@@ -569,22 +568,28 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         pszProjection = GDALGetProjectionRef(hDataset);
 
     OGRCoordinateTransformationH hTransform = NULL;
-    OGRCoordinateTransformationH hTransformWGS84 = NULL;
+    bool bTransformToWGS84 = false;
 
     if( pszProjection != NULL && strlen(pszProjection) > 0 )
     {
         OGRSpatialReferenceH hLatLong = NULL;
-        OGRSpatialReferenceH hLatLongWGS84 = NULL;
 
         OGRSpatialReferenceH hProj = OSRNewSpatialReference( pszProjection );
         if( hProj != NULL )
         {
-            hLatLong = OSRCloneGeogCS( hProj );
-
-            if(bJson)
+            OGRErr eErr = OGRERR_NONE;
+            // Check that it looks like Earth before trying to reproject to wgs84...
+            if(bJson &&
+               fabs( OSRGetSemiMajor(hProj, &eErr) - 6378137.0) < 10000.0 &&
+               eErr == OGRERR_NONE )
             {
-                hLatLongWGS84 = OSRNewSpatialReference( NULL );
-                OSRSetWellKnownGeogCS( hLatLongWGS84, "WGS84" );
+                bTransformToWGS84 = true;
+                hLatLong = OSRNewSpatialReference( NULL );
+                OSRSetWellKnownGeogCS( hLatLong, "WGS84" );
+            }
+            else
+            {
+                hLatLong = OSRCloneGeogCS( hProj );
             }
         }
 
@@ -595,16 +600,6 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             CPLPopErrorHandler();
 
             OSRDestroySpatialReference( hLatLong );
-        }
-
-        if( hLatLongWGS84 != NULL )
-        {
-            CPLPushErrorHandler( CPLQuietErrorHandler );
-            hTransformWGS84 =
-                OCTNewCoordinateTransformation( hProj, hLatLongWGS84 );
-            CPLPopErrorHandler();
-
-            OSRDestroySpatialReference( hLatLongWGS84 );
         }
 
         if( hProj != NULL )
@@ -618,68 +613,69 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
     {
         json_object *poLinearRing = json_object_new_array();
         json_object *poCornerCoordinates = json_object_new_object();
-        json_object *poWGS84Extent = json_object_new_object();
-        json_object *poWGS84ExtentType = json_object_new_string("Polygon");
-        json_object *poWGS84ExtentCoordinates = json_object_new_array();
+        json_object *poLongLatExtent = json_object_new_object();
+        json_object *poLongLatExtentType = json_object_new_string("Polygon");
+        json_object *poLongLatExtentCoordinates = json_object_new_array();
 
-        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
+        GDALInfoReportCorner( psOptions, hDataset, hTransform,
                               "upperLeft",
                               0.0, 0.0, bJson, poCornerCoordinates,
-                              poWGS84ExtentCoordinates, osStr );
-        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
+                              poLongLatExtentCoordinates, osStr );
+        GDALInfoReportCorner( psOptions, hDataset, hTransform,
                               "lowerLeft",
                               0.0, GDALGetRasterYSize(hDataset), bJson,
-                              poCornerCoordinates, poWGS84ExtentCoordinates,
+                              poCornerCoordinates, poLongLatExtentCoordinates,
                               osStr );
-        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
+        GDALInfoReportCorner( psOptions, hDataset, hTransform,
                               "lowerRight",
                               GDALGetRasterXSize(hDataset),
                               GDALGetRasterYSize(hDataset),
                               bJson, poCornerCoordinates,
-                              poWGS84ExtentCoordinates, osStr );
-        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
+                              poLongLatExtentCoordinates, osStr );
+        GDALInfoReportCorner( psOptions, hDataset, hTransform,
                               "upperRight",
                               GDALGetRasterXSize(hDataset), 0.0, bJson,
-                              poCornerCoordinates, poWGS84ExtentCoordinates,
+                              poCornerCoordinates, poLongLatExtentCoordinates,
                               osStr );
-        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
+        GDALInfoReportCorner( psOptions, hDataset, hTransform,
                               "center",
                               GDALGetRasterXSize(hDataset) / 2.0,
                               GDALGetRasterYSize(hDataset) / 2.0,
                               bJson, poCornerCoordinates,
-                              poWGS84ExtentCoordinates, osStr );
-        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
+                              poLongLatExtentCoordinates, osStr );
+        GDALInfoReportCorner( psOptions, hDataset, hTransform,
                               "upperLeft",
                               0.0, 0.0, bJson, poCornerCoordinates,
-                              poWGS84ExtentCoordinates, osStr );
+                              poLongLatExtentCoordinates, osStr );
 
         json_object_object_add( poJsonObject, "cornerCoordinates",
                                 poCornerCoordinates );
-        json_object_object_add( poWGS84Extent, "type", poWGS84ExtentType );
-        json_object_array_add( poLinearRing, poWGS84ExtentCoordinates );
-        json_object_object_add( poWGS84Extent, "coordinates", poLinearRing );
-        json_object_object_add( poJsonObject, "wgs84Extent", poWGS84Extent );
+        json_object_object_add( poLongLatExtent, "type", poLongLatExtentType );
+        json_object_array_add( poLinearRing, poLongLatExtentCoordinates );
+        json_object_object_add( poLongLatExtent, "coordinates", poLinearRing );
+        json_object_object_add( poJsonObject,
+                bTransformToWGS84 ? "wgs84Extent": "extent", poLongLatExtent );
     }
     else
     {
         Concat(osStr, psOptions->bStdoutOutput, "Corner Coordinates:\n" );
-        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
+        GDALInfoReportCorner( psOptions, hDataset, hTransform,
                               "Upper Left",
                               0.0, 0.0, bJson, NULL, NULL, osStr );
-        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
+        GDALInfoReportCorner( psOptions, hDataset, hTransform,
                               "Lower Left",
                               0.0, GDALGetRasterYSize(hDataset), bJson,
                               NULL, NULL, osStr );
-        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
+        GDALInfoReportCorner( psOptions, hDataset, hTransform,
                               "Upper Right",
                               GDALGetRasterXSize(hDataset), 0.0, bJson,
                               NULL, NULL, osStr );
-        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
+        GDALInfoReportCorner( psOptions, hDataset, hTransform,
                               "Lower Right",
                               GDALGetRasterXSize(hDataset),
                               GDALGetRasterYSize(hDataset), bJson,
                               NULL, NULL, osStr );
-        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
+        GDALInfoReportCorner( psOptions, hDataset, hTransform,
                               "Center",
                               GDALGetRasterXSize(hDataset)/2.0,
                               GDALGetRasterYSize(hDataset)/2.0, bJson,
@@ -690,12 +686,6 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
     {
         OCTDestroyCoordinateTransformation( hTransform );
         hTransform = NULL;
-    }
-
-    if( hTransformWGS84 != NULL )
-    {
-        OCTDestroyCoordinateTransformation( hTransformWGS84 );
-        hTransformWGS84 = NULL;
     }
 
 /* ==================================================================== */
@@ -1427,13 +1417,12 @@ static int
 GDALInfoReportCorner( const GDALInfoOptions* psOptions,
                       GDALDatasetH hDataset,
                       OGRCoordinateTransformationH hTransform,
-                      OGRCoordinateTransformationH hTransformWGS84,
                       const char * corner_name,
                       double x,
                       double y,
                       bool bJson,
                       json_object *poCornerCoordinates,
-                      json_object *poWGS84ExtentCoordinates,
+                      json_object *poLongLatExtentCoordinates,
                       CPLString& osStr )
 
 {
@@ -1525,8 +1514,8 @@ GDALInfoReportCorner( const GDALInfoOptions* psOptions,
     if(bJson)
     {
         double dfZ = 0.0;
-        if( hTransformWGS84 != NULL && !EQUAL( corner_name, "center" )
-        && OCTTransform(hTransformWGS84,1,&dfGeoX,&dfGeoY,&dfZ) )
+        if( hTransform != NULL && !EQUAL( corner_name, "center" )
+        && OCTTransform(hTransform,1,&dfGeoX,&dfGeoY,&dfZ) )
         {
             json_object * const poCorner = json_object_new_array();
             json_object * const poX =
@@ -1535,7 +1524,7 @@ GDALInfoReportCorner( const GDALInfoOptions* psOptions,
                 json_object_new_double_with_precision( dfGeoY, 7 );
             json_object_array_add( poCorner, poX );
             json_object_array_add( poCorner, poY );
-            json_object_array_add( poWGS84ExtentCoordinates , poCorner );
+            json_object_array_add( poLongLatExtentCoordinates , poCorner );
         }
     }
     else
@@ -1563,21 +1552,25 @@ static void GDALInfoPrintMetadata( const GDALInfoOptions* psOptions,
                                    const char *pszDomain,
                                    const char *pszDisplayedname,
                                    const char *pszIndent,
-                                   int bJson,
+                                   int bJsonOutput,
                                    json_object *poMetadata,
                                    CPLString& osStr )
 {
     const bool bIsxml =
         pszDomain != NULL &&
         STARTS_WITH_CI(pszDomain, "xml:");
+    const bool bMDIsJson =
+        pszDomain != NULL &&
+        STARTS_WITH_CI(pszDomain, "json:");
 
     char **papszMetadata = GDALGetMetadata( hObject, pszDomain );
     if( papszMetadata != NULL && *papszMetadata != NULL )
     {
         json_object *poDomain =
-            (bJson && !bIsxml) ? json_object_new_object() : NULL;
+            (bJsonOutput && !bIsxml && !bMDIsJson) ?
+                                            json_object_new_object() : NULL;
 
-        if( !bJson )
+        if( !bJsonOutput )
             Concat( osStr, psOptions->bStdoutOutput, "%s%s:\n", pszIndent,
                     pszDisplayedname );
 
@@ -1585,11 +1578,27 @@ static void GDALInfoPrintMetadata( const GDALInfoOptions* psOptions,
 
         for( int i = 0; papszMetadata[i] != NULL; i++ )
         {
-            if( bJson )
+            if( bJsonOutput )
             {
                 if( bIsxml )
                 {
                     poValue = json_object_new_string( papszMetadata[i] );
+                    break;
+                }
+                else if( bMDIsJson )
+                {
+                    json_tokener* jstok = json_tokener_new();
+                    poValue = json_tokener_parse_ex(jstok, papszMetadata[i], -1);
+                    if( jstok->err != json_tokener_success)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                    "JSon parsing error: %s (at offset %d)",
+                                    json_tokener_error_desc(jstok->err),
+                                    jstok->char_offset);
+                        json_tokener_free(jstok);
+                        poValue = NULL;
+                    }
+                    json_tokener_free(jstok);
                     break;
                 }
                 else
@@ -1607,7 +1616,7 @@ static void GDALInfoPrintMetadata( const GDALInfoOptions* psOptions,
             }
             else
             {
-                if (bIsxml)
+                if (bIsxml || bMDIsJson)
                     Concat(osStr, psOptions->bStdoutOutput,
                            "%s%s\n", pszIndent, papszMetadata[i] );
                 else
@@ -1615,9 +1624,9 @@ static void GDALInfoPrintMetadata( const GDALInfoOptions* psOptions,
                            "%s  %s\n", pszIndent, papszMetadata[i] );
             }
         }
-        if(bJson)
+        if(bJsonOutput)
         {
-            if(bIsxml)
+            if(bIsxml || bMDIsJson)
             {
                 json_object_object_add( poMetadata, pszDomain, poValue );
             }
