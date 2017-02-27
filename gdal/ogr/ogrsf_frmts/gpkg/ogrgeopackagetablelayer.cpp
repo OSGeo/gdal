@@ -1719,7 +1719,8 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
     /* Ignore bForce, because we always do a full count on the database */
     OGRErr err;
     CPLString soSQL;
-    if ( m_poFilterGeom != NULL && m_poAttrQuery == NULL && HasSpatialIndex() )
+    if ( m_poFilterGeom != NULL && m_pszAttrQueryString == NULL &&
+        HasSpatialIndex() )
     {
         const char* pszT = m_pszTableName;
         const char* pszC = m_poFeatureDefn->
