@@ -837,6 +837,14 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
                 CSLDestroy(papszMetadataNew);
 
+                /* ISIS3 -> ISIS3 special case */
+                if( EQUAL(psOptions->pszFormat, "ISIS3") )
+                {
+                    char** papszMD_ISIS3 = GDALGetMetadata( hSrcDS, "json:ISIS3");
+                    if( papszMD_ISIS3 != NULL)
+                        GDALSetMetadata(hDstDS, papszMD_ISIS3, "json:ISIS3");
+                }
+
                 /* copy band-level metadata and other info */
                 if ( GDALGetRasterCount( hSrcDS ) == GDALGetRasterCount( hDstDS ) )
                 {
