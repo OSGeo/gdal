@@ -338,7 +338,7 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
             const double dfRX = padfX[i] - dfXPoint;
             const double dfRY = padfY[i] - dfYPoint;
             const double dfR2 = dfRX * dfRX + dfRY * dfRY;
-            const double dfRsmoothed2 = dfRX * dfRX + dfRY * dfRY + dfSmoothing2;
+            const double dfRsmoothed2 = dfR2 + dfSmoothing2;
 
             // Is this point located inside the search circle?
             if( dfRPower2 * dfRX * dfRX + dfRPower2 * dfRY * dfRY <= dfRPower4 )
