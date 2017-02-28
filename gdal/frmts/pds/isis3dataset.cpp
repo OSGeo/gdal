@@ -3553,7 +3553,7 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
     {
         GDALRasterBand *poBand = NULL;
 
-        if( EQUAL(pszDataLocation, "GEOTIFF") )
+        if( poDS->m_poExternalDS != NULL )
         {
             ISIS3WrapperRasterBand* poISISBand =
                 new ISIS3WrapperRasterBand(
