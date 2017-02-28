@@ -464,6 +464,25 @@ class Zoomify(object):
                             "%s-%s-%s.%s" % (z, x, y, self.tileformat))
 
 
+class TileJobInfo(object):
+    """
+    Plain object to hold tile job configuration for a dataset
+    """
+    tile_details = []
+    nb_data_bands = 0
+    output_file_path = ""
+    tile_extension = ""
+    tile_size = 0
+    tile_driver = None
+    kml = False
+    options = None
+
+    def __init__(self, **kwargs):
+        for key in kwargs:
+            if hasattr(self, key):
+                setattr(self, key, kwargs[key])
+
+
 class Gdal2TilesError(Exception):
     pass
 
@@ -958,6 +977,8 @@ class GDAL2Tiles(object):
         if not self.out_ds:
             self.out_ds = self.in_ds
 
+        self.out_ds.GetDriver().CreateCopy("gba.vrt", self.out_ds)
+
         #
         # Here we should have a raster (out_ds) in the correct Spatial Reference system
         #
@@ -1345,10 +1366,33 @@ class GDAL2Tiles(object):
                     "querysize": querysize,
                 })
 
-        self.create_base_tiles(tile_details)
+        job_config = TileJobInfo(
+            tile_details=tile_details,
+            nb_data_bands=self.dataBandsCount,
+            output_file_path=self.output,
+            tile_extension=self.tileext,
+            tile_driver=self.tiledriver,
+            tile_size=self.tilesize,
+            kml=self.kml,
+            options=self.options,
+        )
 
-    def create_base_tiles(self, tiles_info):
-        for tile_info in tiles_info:
+        self.create_base_tiles(job_config)
+
+    def create_base_tiles(self, tile_job_info):
+        dataBandsCount = tile_job_info.nb_data_bands
+        output = tile_job_info.output_file_path
+        tileext = tile_job_info.tile_extension
+        tilesize = tile_job_info.tile_size
+        options = tile_job_info.options
+
+        tilebands = dataBandsCount + 1
+        ds = gdal.Open("gba.vrt", gdal.GA_ReadOnly)
+        mem_drv = gdal.GetDriverByName('MEM')
+        out_drv = gdal.GetDriverByName(tile_job_info.tile_driver)
+        alphaband = ds.GetRasterBand(1).GetMaskBand()
+
+        for tile_info in tile_job_info.tile_details:
             tx = tile_info['tx']
             ty = tile_info['ty']
             tz = tile_info['tz']
@@ -1363,15 +1407,13 @@ class GDAL2Tiles(object):
             querysize = tile_info['querysize']
 
             # Tile dataset in memory
-            tilebands = self.dataBandsCount + 1
-            ds = self.out_ds
             tilefilename = os.path.join(
-                self.output, str(tz), str(tx), "%s.%s" % (ty, self.tileext))
-            dstile = self.mem_drv.Create('', self.tilesize, self.tilesize, tilebands)
+                output, str(tz), str(tx), "%s.%s" % (ty, tileext))
+            dstile = mem_drv.Create('', tilesize, tilesize, tilebands)
 
             data = alpha = None
 
-            if self.options.verbose:
+            if options.verbose:
                 print("\tReadRaster Extent: ",
                       (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize))
 
@@ -1380,16 +1422,16 @@ class GDAL2Tiles(object):
 
             if rxsize != 0 and rysize != 0 and wxsize != 0 and wysize != 0:
                 data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize,
-                                     band_list=list(range(1, self.dataBandsCount+1)))
-                alpha = self.alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
+                                     band_list=list(range(1, dataBandsCount+1)))
+                alpha = alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
 
             # The tile in memory is a transparent file by default. Write pixel values into it if
             # any
             if data:
-                if self.tilesize == querysize:
+                if tilesize == querysize:
                     # Use the ReadRaster result directly in tiles ('nearest neighbour' query)
                     dstile.WriteRaster(wx, wy, wxsize, wysize, data,
-                                       band_list=list(range(1, self.dataBandsCount+1)))
+                                       band_list=list(range(1, dataBandsCount+1)))
                     dstile.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
 
                     # Note: For source drivers based on WaveLet compression (JPEG2000, ECW,
@@ -1399,11 +1441,11 @@ class GDAL2Tiles(object):
                 else:
                     # Big ReadRaster query in memory scaled to the tilesize - all but 'near'
                     # algo
-                    dsquery = self.mem_drv.Create('', querysize, querysize, tilebands)
+                    dsquery = mem_drv.Create('', querysize, querysize, tilebands)
                     # TODO: fill the null value in case a tile without alpha is produced (now
                     # only png tiles are supported)
                     dsquery.WriteRaster(wx, wy, wxsize, wysize, data,
-                                        band_list=list(range(1, self.dataBandsCount+1)))
+                                        band_list=list(range(1, dataBandsCount+1)))
                     dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
 
                     self.scale_query_to_tile(dsquery, dstile, tilefilename)
@@ -1411,16 +1453,16 @@ class GDAL2Tiles(object):
 
             del data
 
-            if self.options.resampling != 'antialias':
+            if options.resampling != 'antialias':
                 # Write a copy of tile to png/jpg
-                self.out_drv.CreateCopy(tilefilename, dstile, strict=0)
+                out_drv.CreateCopy(tilefilename, dstile, strict=0)
 
             del dstile
 
             # Create a KML file for this tile.
-            if self.kml:
-                kmlfilename = os.path.join(self.output, str(tz), str(tx), '%d.kml' % ty)
-                if not self.options.resume or not os.path.exists(kmlfilename):
+            if tile_job_info.kml:
+                kmlfilename = os.path.join(output, str(tz), str(tx), '%d.kml' % ty)
+                if not options.resume or not os.path.exists(kmlfilename):
                     f = open(kmlfilename, 'wb')
                     f.write(self.generate_kml(tx, ty, tz).encode('utf-8'))
                     f.close()
