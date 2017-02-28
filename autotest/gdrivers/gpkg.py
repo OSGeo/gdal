@@ -249,6 +249,15 @@ def gpkg_1():
         return 'fail'
     ds = None
 
+    # Test USE_TILE_EXTENT=YES with empty table
+    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE)
+    ds.ExecuteSQL('DELETE FROM tmp')
+    ds = None
+    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER, open_options = ['USE_TILE_EXTENT=YES'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     os.remove('tmp/tmp.gpkg')
 
     # Without padding
