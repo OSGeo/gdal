@@ -3763,15 +3763,11 @@ static void GDALCopyWholeRasterGetSwathSize(
         }
     }
 
-    const int nMemoryPerCol = nSwathCols * nPixelSize;
-
-    // Do the computation on a big int since for example when translating the
-    // JPL WMS layer, we overflow 32 bits.
-    const GIntBig nSwathBufSize =
-        static_cast<GIntBig>(nMemoryPerCol) * nSwathLines;
+    const GIntBig nMemoryPerCol = static_cast<GIntBig>(nSwathCols) * nPixelSize;
+    const GIntBig nSwathBufSize = nMemoryPerCol * nSwathLines;
     if( nSwathBufSize > static_cast<GIntBig>(nTargetSwathSize) )
     {
-        nSwathLines = nTargetSwathSize / nMemoryPerCol;
+        nSwathLines = static_cast<int>(nTargetSwathSize / nMemoryPerCol);
         if (nSwathLines == 0)
             nSwathLines = 1;
 
@@ -3781,17 +3777,19 @@ static void GDALCopyWholeRasterGetSwathSize(
             "since requirement (" CPL_FRMT_GIB " bytes) exceed target swath "
             "size (%d bytes) (GDAL_SWATH_SIZE config. option)",
             nSwathLines,
-            static_cast<GIntBig>(nBlockYSize) * nMemoryPerCol,
+            nBlockYSize * nMemoryPerCol,
             nTargetSwathSize);
     }
     // If we are processing single scans, try to handle several at once.
     // If we are handling swaths already, only grow the swath if a row
     // of blocks is substantially less than our target buffer size.
     else if( nSwathLines == 1
-        || nMemoryPerCol * nSwathLines < nTargetSwathSize / 10 )
+        || nMemoryPerCol * nSwathLines <
+                        static_cast<GIntBig>(nTargetSwathSize) / 10 )
     {
         nSwathLines =
-            std::min(nYSize, std::max(1, nTargetSwathSize / nMemoryPerCol));
+            std::min(nYSize, std::max(1,
+                     static_cast<int>(nTargetSwathSize / nMemoryPerCol)));
 
         /* If possible try to align to source and target block height */
         if ((nSwathLines % nMaxBlockYSize) != 0 &&
@@ -4036,11 +4034,11 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
         GDALRasterIOExtraArg sExtraArg;
         INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-        const int nTotalBlocks =
-            nBandCount *
-            ((nYSize + nSwathLines - 1) / nSwathLines) *
-            ((nXSize + nSwathCols - 1) / nSwathCols);
-        int nBlocksDone = 0;
+        const GIntBig nTotalBlocks =
+            static_cast<GIntBig>(nBandCount) *
+            DIV_ROUND_UP(nYSize, nSwathLines) *
+            DIV_ROUND_UP(nXSize, nSwathCols);
+        GIntBig nBlocksDone = 0;
 
         for( int iBand = 0; iBand < nBandCount && eErr == CE_None; iBand++ )
         {
@@ -4122,10 +4120,10 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
         GDALRasterIOExtraArg sExtraArg;
         INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-        const int nTotalBlocks =
-            ((nYSize + nSwathLines - 1) / nSwathLines) *
-            ((nXSize + nSwathCols - 1) / nSwathCols);
-        int nBlocksDone = 0;
+        const GIntBig nTotalBlocks =
+            static_cast<GIntBig>(DIV_ROUND_UP(nYSize, nSwathLines)) *
+            DIV_ROUND_UP(nXSize, nSwathCols);
+        GIntBig nBlocksDone = 0;
 
         for( int iY = 0; iY < nYSize && eErr == CE_None; iY += nSwathLines )
         {
