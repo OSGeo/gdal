@@ -3937,15 +3937,15 @@ const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDef
 }
 
 
-void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByte *pabyData)
+void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const GByte *pabyData)
 {
-    GByte* pabyDataDup = (GByte*)VSIMalloc(nBytes);
+    const size_t nSize = static_cast<size_t>(nBytes);
+    GByte* pabyDataDup = (GByte*)VSIMalloc(nSize);
     if (pabyDataDup == NULL)
             return;
-    memcpy(pabyDataDup, pabyData, nBytes);
-    VSIFCloseL(VSIFileFromMemBuffer(utf8_path, (GByte*) pabyDataDup, nBytes, TRUE));
+    memcpy(pabyDataDup, pabyData, nSize);
+    VSIFCloseL(VSIFileFromMemBuffer(utf8_path, (GByte*) pabyDataDup, nSize, TRUE));
 }
-
 
 
 int wrapper_HasThreadSupport()
@@ -7084,12 +7084,18 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
       }
       
       if (safeLen) safeLen--;
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
       arg1 = (int) safeLen;
     }
     else if (PyBytes_Check(obj0))
     {
       Py_ssize_t safeLen = 0;
       PyBytes_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
       arg1 = (int) safeLen;
     }
     else
@@ -7102,6 +7108,9 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
     {
       Py_ssize_t safeLen = 0;
       PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
       arg1 = (int) safeLen;
     }
     else
@@ -7765,12 +7774,18 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
       }
       
       if (safeLen) safeLen--;
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
       arg1 = (int) safeLen;
     }
     else if (PyBytes_Check(obj0))
     {
       Py_ssize_t safeLen = 0;
       PyBytes_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
       arg1 = (int) safeLen;
     }
     else
@@ -7783,6 +7798,9 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
     {
       Py_ssize_t safeLen = 0;
       PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
       arg1 = (int) safeLen;
     }
     else
@@ -7892,7 +7910,7 @@ fail:
 SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   char *arg1 = (char *) 0 ;
-  int arg2 ;
+  GIntBig arg2 ;
   GByte *arg3 = (GByte *) 0 ;
   int bToFree1 = 0 ;
   int alloc2 = 0 ;
@@ -7910,7 +7928,7 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
     }
   }
   {
-    /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+    /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
 #if PY_VERSION_HEX>=0x03000000
     if (PyUnicode_Check(obj1))
     {
@@ -7921,13 +7939,13 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
       }
       
       if (safeLen) safeLen--;
-      arg2 = (int) safeLen;
+      arg2 = (GIntBig) safeLen;
     }
     else if (PyBytes_Check(obj1))
     {
       Py_ssize_t safeLen = 0;
       PyBytes_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
-      arg2 = (int) safeLen;
+      arg2 = (GIntBig) safeLen;
     }
     else
     {
@@ -7939,7 +7957,7 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
     {
       Py_ssize_t safeLen = 0;
       PyString_AsStringAndSize(obj1, (char**) &arg3, &safeLen);
-      arg2 = (int) safeLen;
+      arg2 = (GIntBig) safeLen;
     }
     else
     {
@@ -7977,7 +7995,7 @@ SWIGINTERN PyObject *_wrap_FileFromMemBuffer(PyObject *SWIGUNUSEDPARM(self), PyO
     GDALPythonFreeCStr(arg1, bToFree1);
   }
   {
-    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
     if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
       delete[] arg3;
     }
@@ -7990,7 +8008,7 @@ fail:
     GDALPythonFreeCStr(arg1, bToFree1);
   }
   {
-    /* %typemap(freearg) (int *nLen, char *pBuf ) */
+    /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
     if (ReturnSame(alloc2) == SWIG_NEWOBJ ) {
       delete[] arg3;
     }
@@ -9163,12 +9181,18 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
       }
       
       if (safeLen) safeLen--;
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
       arg1 = (int) safeLen;
     }
     else if (PyBytes_Check(obj0))
     {
       Py_ssize_t safeLen = 0;
       PyBytes_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
       arg1 = (int) safeLen;
     }
     else
@@ -9181,6 +9205,9 @@ SWIGINTERN PyObject *_wrap_VSIFWriteL(PyObject *SWIGUNUSEDPARM(self), PyObject *
     {
       Py_ssize_t safeLen = 0;
       PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
       arg1 = (int) safeLen;
     }
     else
@@ -31425,7 +31452,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetConfigOption", _wrap_GetConfigOption, METH_VARARGS, (char *)"GetConfigOption(char const * pszKey, char const * pszDefault=None) -> char const *"},
 	 { (char *)"CPLBinaryToHex", _wrap_CPLBinaryToHex, METH_VARARGS, (char *)"CPLBinaryToHex(int nBytes) -> retStringAndCPLFree *"},
 	 { (char *)"CPLHexToBinary", _wrap_CPLHexToBinary, METH_VARARGS, (char *)"CPLHexToBinary(char const * pszHex, int * pnBytes) -> GByte *"},
-	 { (char *)"FileFromMemBuffer", _wrap_FileFromMemBuffer, METH_VARARGS, (char *)"FileFromMemBuffer(char const * utf8_path, int nBytes)"},
+	 { (char *)"FileFromMemBuffer", _wrap_FileFromMemBuffer, METH_VARARGS, (char *)"FileFromMemBuffer(char const * utf8_path, GIntBig nBytes)"},
 	 { (char *)"Unlink", _wrap_Unlink, METH_VARARGS, (char *)"Unlink(char const * utf8_path) -> VSI_RETVAL"},
 	 { (char *)"HasThreadSupport", _wrap_HasThreadSupport, METH_VARARGS, (char *)"HasThreadSupport() -> int"},
 	 { (char *)"Mkdir", _wrap_Mkdir, METH_VARARGS, (char *)"Mkdir(char const * utf8_path, int mode) -> VSI_RETVAL"},
