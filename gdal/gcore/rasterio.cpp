@@ -121,14 +121,14 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             iSrcY = iBufYOff + nYOff;
 
             if( iSrcY < nLBlockY * nBlockYSize
-                || iSrcY >= (nLBlockY+1) * nBlockYSize )
+                || iSrcY - nBlockYSize >= nLBlockY * nBlockYSize )
             {
                 nLBlockY = iSrcY / nBlockYSize;
                 bool bJustInitialize =
                     eRWFlag == GF_Write
                     && nXOff == 0 && nXSize == nBlockXSize
                     && nYOff <= nLBlockY * nBlockYSize
-                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize;
+                    && nYOff + nYSize - nBlockYSize >= nLBlockY * nBlockYSize;
 
                 // Is this a partial tile at right and/or bottom edges of
                 // the raster, and that is going to be completely written?
@@ -139,7 +139,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     nXOff == 0 && nXSize == nBlockXSize &&
                     nYOff <= nLBlockY * nBlockYSize &&
                     nYOff + nYSize == GetYSize() &&
-                    (nLBlockY+1) * nBlockYSize > GetYSize() )
+                    nLBlockY * nBlockYSize > GetYSize() - nBlockYSize )
                 {
                     bJustInitialize = true;
                     bMemZeroBuffer = true;
@@ -150,8 +150,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                 poBlock = GetLockedBlockRef( 0, nLBlockY, bJustInitialize );
                 if( poBlock == NULL )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined,
+                {CPLError( CE_Failure, CPLE_AppDefined,
                               "GetBlockRef failed at X block offset %d, "
                               "Y block offset %d", 0, nLBlockY );
                     eErr = CE_Failure;
@@ -308,16 +307,21 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             iSrcX = nXOff;
             while( iSrcX < nXSpanEnd )
             {
-                nXSpan = (nLBlockX + 1) * nBlockXSize;
+                nXSpan = nLBlockX * nBlockXSize;
+                if( nXSpan < INT_MAX - nBlockXSize )
+                    nXSpan += nBlockXSize;
+                else
+                    nXSpan = INT_MAX;
+                const int nXRight = nXSpan;
                 nXSpan = ( nXSpan < nXSpanEnd ? nXSpan:nXSpanEnd ) - iSrcX;
-                const int nXSpanSize = nXSpan * static_cast<int>(nPixelSpace);
+                const size_t nXSpanSize = nXSpan * static_cast<size_t>(nPixelSpace);
 
                 bool bJustInitialize =
                     eRWFlag == GF_Write
                     && nYOff <= nLBlockY * nBlockYSize
-                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
+                    && nYOff + nYSize - nBlockYSize >= nLBlockY * nBlockYSize
                     && nXOff <= nLBlockX * nBlockXSize
-                    && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
+                    && nXOff + nXSize >= nXRight;
 
                 // Is this a partial tile at right and/or bottom edges of
                 // the raster, and that is going to be completely written?
@@ -327,12 +331,12 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff <= nLBlockX * nBlockXSize &&
                     nYOff <= nLBlockY * nBlockYSize &&
-                    (nXOff + nXSize >= (nLBlockX+1) * nBlockXSize ||
+                    (nXOff + nXSize >= nXRight ||
                      (nXOff + nXSize == GetXSize() &&
-                      (nLBlockX+1) * nBlockXSize > GetXSize())) &&
-                    (nYOff + nYSize >= (nLBlockY+1) * nBlockYSize ||
+                      nXRight > GetXSize())) &&
+                    (nYOff + nYSize - nBlockYSize >= nLBlockY * nBlockYSize ||
                      (nYOff + nYSize == GetYSize() &&
-                      (nLBlockY+1) * nBlockYSize > GetYSize())) )
+                      nLBlockY * nBlockYSize > GetYSize() - nBlockYSize)) )
                 {
                     bJustInitialize = true;
                     bMemZeroBuffer = true;
@@ -495,18 +499,18 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /*      Ensure we have the appropriate block loaded.                    */
     /* -------------------------------------------------------------------- */
                 if( iDstX < nLBlockX * nBlockXSize
-                    || iDstX >= (nLBlockX+1) * nBlockXSize
+                    || iDstX - nBlockXSize >= nLBlockX * nBlockXSize
                     || iDstY < nLBlockY * nBlockYSize
-                    || iDstY >= (nLBlockY+1) * nBlockYSize )
+                    || iDstY - nBlockYSize >= nLBlockY * nBlockYSize )
                 {
                     nLBlockX = iDstX / nBlockXSize;
                     nLBlockY = iDstY / nBlockYSize;
 
                     const bool bJustInitialize =
                         nYOff <= nLBlockY * nBlockYSize
-                        && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
+                        && nYOff + nYSize - nBlockYSize >= nLBlockY * nBlockYSize
                         && nXOff <= nLBlockX * nBlockXSize
-                        && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
+                        && nXOff + nXSize - nBlockXSize >= nLBlockX * nBlockXSize;
                     /*bool bMemZeroBuffer = FALSE;
                     if( !bJustInitialize &&
                         nXOff <= nLBlockX * nBlockXSize &&
@@ -646,7 +650,11 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             if( iSrcY >= nLimitBlockY )
             {
                 nLBlockY = iSrcY / nBlockYSize;
-                nLimitBlockY = (nLBlockY + 1) * nBlockYSize;
+                nLimitBlockY = nLBlockY * nBlockYSize;
+                if( nLimitBlockY < INT_MAX - nBlockYSize )
+                    nLimitBlockY += nBlockYSize;
+                else
+                    nLimitBlockY = INT_MAX;
                 // Make sure a new block is loaded.
                 nStartBlockX = -nBlockXSize;
             }
@@ -3526,9 +3534,9 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 /*      Ensure we have the appropriate block loaded.                    */
 /* -------------------------------------------------------------------- */
             if( iSrcX < nLBlockX * nBlockXSize
-                || iSrcX >= (nLBlockX+1) * nBlockXSize
+                || iSrcX - nBlockXSize >= nLBlockX * nBlockXSize
                 || iSrcY < nLBlockY * nBlockYSize
-                || iSrcY >= (nLBlockY+1) * nBlockYSize )
+                || iSrcY - nBlockYSize >= nLBlockY * nBlockYSize )
             {
                 nLBlockX = iSrcX / nBlockXSize;
                 nLBlockY = iSrcY / nBlockYSize;
@@ -3536,9 +3544,9 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                 const bool bJustInitialize =
                     eRWFlag == GF_Write
                     && nYOff <= nLBlockY * nBlockYSize
-                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
+                    && nYOff + nYSize - nBlockYSize >= nLBlockY * nBlockYSize
                     && nXOff <= nLBlockX * nBlockXSize
-                    && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
+                    && nXOff + nXSize - nBlockXSize >= nLBlockX * nBlockXSize;
                 /*bool bMemZeroBuffer = FALSE;
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff <= nLBlockX * nBlockXSize &&
