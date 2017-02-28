@@ -296,6 +296,10 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
                 }
             }
         }
+        else if ( poArray )
+        {
+            json_object_put( poArray );
+        }
         return TRUE;
     }
 
