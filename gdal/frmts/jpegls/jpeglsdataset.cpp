@@ -252,7 +252,7 @@ CPLErr JPEGLSDataset::Uncompress()
     const vsi_l_offset nFileSizeBig = VSIFTellL(fpL) - nOffset;
     VSIFSeekL(fpL, 0, SEEK_SET);
     const size_t nFileSize = static_cast<size_t>(nFileSizeBig);
-#if SIZEOF_VOIDP == 8
+#if SIZEOF_VOIDP != 8
     if( nFileSizeBig != nFileSize )
     {
         return CE_Failure;
@@ -281,7 +281,7 @@ CPLErr JPEGLSDataset::Uncompress()
         nRasterYSize * nBands *
         GDALGetDataTypeSizeBytes(GetRasterBand(1)->GetRasterDataType());
     const size_t nUncompressedSize = static_cast<size_t>(nUncompressedSizeBig);
-#if SIZEOF_VOIDP == 8
+#if SIZEOF_VOIDP != 8
     if( nUncompressedSizeBig != nUncompressedSize )
     {
         VSIFree(pabyCompressedData);
