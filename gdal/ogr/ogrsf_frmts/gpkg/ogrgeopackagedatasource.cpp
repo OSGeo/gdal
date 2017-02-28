@@ -716,6 +716,8 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                     "FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'gpkg_%' "
                     "AND name NOT LIKE 'vgpkg_%' "
                     "AND name NOT LIKE 'rtree_%' AND name NOT LIKE 'sqlite_%' "
+                    // Avoid reading those views from simple_sewer_features.gpkg
+                    "AND name NOT IN ('st_spatial_ref_sys', 'spatial_ref_sys', 'st_geometry_columns') "
                     "AND name NOT IN (SELECT table_name FROM gpkg_contents)";
         }
 
