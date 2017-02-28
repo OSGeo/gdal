@@ -1,0 +1,11 @@
+ENVI
+samples = 1
+lines = 1
+bands = 1
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+map info = { UTM , 1.000 , 1.000 , 736600.089 , 4078126.750 , 2.7000000000e+00 , 2.7000000000e+00 , 12 , North , WGS-84 , units=Meters , rotation=-66.00000000 }

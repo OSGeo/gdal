@@ -53,6 +53,7 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
+#include <cmath>
 
 CPL_CVSID("$Id$");
 
@@ -700,9 +701,40 @@ void ENVIDataset::WriteProjectionInfo()
 {
     // Format the location (geotransform) portion of the map info line.
     CPLString osLocation;
+    CPLString osRotation;
+
+    double dfPixelXSize = sqrt( adfGeoTransform[1] * adfGeoTransform[1] +
+                                adfGeoTransform[2] * adfGeoTransform[2] );
+    double dfPixelYSize = sqrt( adfGeoTransform[4] * adfGeoTransform[4] +
+                                adfGeoTransform[5] * adfGeoTransform[5] );
+    const bool bHasNonDefaultGT =
+          ( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
+            adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
+            adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0 );
+    if( bHasNonDefaultGT )
+    {
+        double dfRotation1 = -atan2( -adfGeoTransform[2], adfGeoTransform[1] )
+                                    / M_PI * 180;
+        double dfRotation2 = -atan2( -adfGeoTransform[4], -adfGeoTransform[5] )
+                                    / M_PI * 180;
+        double dfRotation = (dfRotation1 + dfRotation2) / 2;
+
+        if( fabs(dfRotation1 - dfRotation2) > 1e-5 )
+        {
+            CPLDebug("ENVI", "rot1 = %.15g, rot2 = %.15g",
+                    dfRotation1, dfRotation2);
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Geotransform matrix has non rotational terms");
+        }
+        if( fabs(dfRotation) > 1e-5 )
+        {
+            osRotation.Printf( ", rotation=%.15g", dfRotation );
+        }
+    }
+
     osLocation.Printf("1, 1, %.15g, %.15g, %.15g, %.15g",
                       adfGeoTransform[0], adfGeoTransform[3],
-                      adfGeoTransform[1], fabs(adfGeoTransform[5]));
+                      dfPixelXSize, dfPixelYSize);
 
     // Minimal case - write out simple geotransform if we have a
     // non-default geotransform.
@@ -711,13 +743,12 @@ void ENVIDataset::WriteProjectionInfo()
         (strlen(pszProjection) >= osLocalCs.size() &&
          STARTS_WITH(pszProjection, osLocalCs.c_str())) )
     {
-        if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-            adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-            adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0 )
+        if( bHasNonDefaultGT )
         {
             const char *pszHemisphere = "North";
-            if( VSIFPrintfL(fp, "map info = {Arbitrary, %s, %d, %s}\n",
-                            osLocation.c_str(), 0, pszHemisphere) < 0 )
+            if( VSIFPrintfL(fp, "map info = {Arbitrary, %s, %d, %s%s}\n",
+                            osLocation.c_str(), 0, pszHemisphere,
+                            osRotation.c_str()) < 0 )
                 return;
         }
         return;
@@ -775,14 +806,16 @@ void ENVIDataset::WriteProjectionInfo()
     {
         const char *pszHemisphere = bNorth ? "North" : "South";
 
-        bOK &= VSIFPrintfL(fp, "map info = {UTM, %s, %d, %s%s%s}\n",
+        bOK &= VSIFPrintfL(fp, "map info = {UTM, %s, %d, %s%s%s%s}\n",
                            osLocation.c_str(), iUTMZone, pszHemisphere,
-                           osCommaDatum.c_str(), osOptionalUnits.c_str()) >= 0;
+                           osCommaDatum.c_str(), osOptionalUnits.c_str(),
+                           osRotation.c_str()) >= 0;
     }
     else if( oSRS.IsGeographic() )
     {
-        bOK &= VSIFPrintfL(fp, "map info = {Geographic Lat/Lon, %s%s}\n",
-                           osLocation.c_str(), osCommaDatum.c_str()) >= 0;
+        bOK &= VSIFPrintfL(fp, "map info = {Geographic Lat/Lon, %s%s%s}\n",
+                           osLocation.c_str(), osCommaDatum.c_str(),
+                           osRotation.c_str()) >= 0;
     }
     else if( pszProjName == NULL )
     {
@@ -790,9 +823,10 @@ void ENVIDataset::WriteProjectionInfo()
     }
     else if( EQUAL(pszProjName, SRS_PT_NEW_ZEALAND_MAP_GRID) )
     {
-        bOK &= VSIFPrintfL(fp, "map info = {New Zealand Map Grid, %s%s%s}\n",
+        bOK &= VSIFPrintfL(fp, "map info = {New Zealand Map Grid, %s%s%s%s}\n",
                            osLocation.c_str(),
-                           osCommaDatum.c_str(), osOptionalUnits.c_str()) >= 0;
+                           osCommaDatum.c_str(), osOptionalUnits.c_str(),
+                           osRotation.c_str()) >= 0;
 
         bOK &= VSIFPrintfL(fp,
                            "projection info = {39, %.16g, %.16g, %.16g, %.16g, "
@@ -806,9 +840,10 @@ void ENVIDataset::WriteProjectionInfo()
     }
     else if( EQUAL(pszProjName, SRS_PT_TRANSVERSE_MERCATOR) )
     {
-        bOK &= VSIFPrintfL(fp, "map info = {Transverse Mercator, %s%s%s}\n",
+        bOK &= VSIFPrintfL(fp, "map info = {Transverse Mercator, %s%s%s%s}\n",
                            osLocation.c_str(),
-                           osCommaDatum.c_str(), osOptionalUnits.c_str() ) >= 0;
+                           osCommaDatum.c_str(), osOptionalUnits.c_str(),
+                           osRotation.c_str()) >= 0;
 
         bOK &=
             VSIFPrintfL(
@@ -826,9 +861,9 @@ void ENVIDataset::WriteProjectionInfo()
     else if( EQUAL(pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) ||
              EQUAL(pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
     {
-        bOK &= VSIFPrintfL(fp, "map info = {Lambert Conformal Conic, %s%s%s}\n",
+        bOK &= VSIFPrintfL(fp, "map info = {Lambert Conformal Conic, %s%s%s%s}\n",
                            osLocation.c_str(), osCommaDatum.c_str(),
-                           osOptionalUnits.c_str()) >= 0;
+                           osOptionalUnits.c_str(), osRotation.c_str()) >= 0;
 
         bOK &=
             VSIFPrintfL(
@@ -848,9 +883,9 @@ void ENVIDataset::WriteProjectionInfo()
                    SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN) )
     {
         bOK &=
-            VSIFPrintfL(fp, "map info = {Hotine Oblique Mercator A, %s%s%s}\n",
+            VSIFPrintfL(fp, "map info = {Hotine Oblique Mercator A, %s%s%s%s}\n",
                         osLocation.c_str(), osCommaDatum.c_str(),
-                        osOptionalUnits.c_str()) >= 0;
+                        osOptionalUnits.c_str(), osRotation.c_str()) >= 0;
 
         bOK &=
             VSIFPrintfL(
@@ -872,9 +907,9 @@ void ENVIDataset::WriteProjectionInfo()
     else if( EQUAL(pszProjName, SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
     {
         bOK &=
-            VSIFPrintfL(fp, "map info = {Hotine Oblique Mercator B, %s%s%s}\n",
+            VSIFPrintfL(fp, "map info = {Hotine Oblique Mercator B, %s%s%s%s}\n",
                         osLocation.c_str(), osCommaDatum.c_str(),
-                        osOptionalUnits.c_str()) >= 0;
+                        osOptionalUnits.c_str(), osRotation.c_str()) >= 0;
 
         bOK &=
             VSIFPrintfL(
@@ -894,9 +929,9 @@ void ENVIDataset::WriteProjectionInfo()
              EQUAL(pszProjName, SRS_PT_OBLIQUE_STEREOGRAPHIC) )
     {
         bOK &=
-            VSIFPrintfL(fp, "map info = {Stereographic (ellipsoid), %s%s%s}\n",
+            VSIFPrintfL(fp, "map info = {Stereographic (ellipsoid), %s%s%s%s}\n",
                         osLocation.c_str(), osCommaDatum.c_str(),
-                        osOptionalUnits.c_str()) >= 0;
+                        osOptionalUnits.c_str(), osRotation.c_str()) >= 0;
 
         bOK &=
             VSIFPrintfL(
@@ -914,9 +949,9 @@ void ENVIDataset::WriteProjectionInfo()
     else if( EQUAL(pszProjName, SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
         bOK &=
-            VSIFPrintfL(fp, "map info = {Albers Conical Equal Area, %s%s%s}\n",
+            VSIFPrintfL(fp, "map info = {Albers Conical Equal Area, %s%s%s%s}\n",
                         osLocation.c_str(), osCommaDatum.c_str(),
-                        osOptionalUnits.c_str()) >= 0;
+                        osOptionalUnits.c_str(), osRotation.c_str()) >= 0;
 
         bOK &=
             VSIFPrintfL(
@@ -934,9 +969,10 @@ void ENVIDataset::WriteProjectionInfo()
     }
     else if( EQUAL(pszProjName, SRS_PT_POLYCONIC) )
     {
-        bOK &= VSIFPrintfL(fp, "map info = {Polyconic, %s%s%s}\n",
+        bOK &= VSIFPrintfL(fp, "map info = {Polyconic, %s%s%s%s}\n",
                            osLocation.c_str(),
-                           osCommaDatum.c_str(), osOptionalUnits.c_str()) >= 0;
+                           osCommaDatum.c_str(), osOptionalUnits.c_str(),
+                           osRotation.c_str()) >= 0;
 
         bOK &=
             VSIFPrintfL(
@@ -953,9 +989,9 @@ void ENVIDataset::WriteProjectionInfo()
     else if( EQUAL(pszProjName, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
         bOK &= VSIFPrintfL(
-                   fp, "map info = {Lambert Azimuthal Equal Area, %s%s%s}\n",
+                   fp, "map info = {Lambert Azimuthal Equal Area, %s%s%s%s}\n",
                    osLocation.c_str(), osCommaDatum.c_str(),
-                   osOptionalUnits.c_str()) >= 0;
+                   osOptionalUnits.c_str(), osRotation.c_str()) >= 0;
 
         bOK &=
             VSIFPrintfL(
@@ -971,9 +1007,9 @@ void ENVIDataset::WriteProjectionInfo()
     }
     else if( EQUAL(pszProjName, SRS_PT_AZIMUTHAL_EQUIDISTANT) )
     {
-        bOK &= VSIFPrintfL(fp, "map info = {Azimuthal Equadistant, %s%s%s}\n",
+        bOK &= VSIFPrintfL(fp, "map info = {Azimuthal Equadistant, %s%s%s%s}\n",
                            osLocation.c_str(), osCommaDatum.c_str(),
-                           osOptionalUnits.c_str()) >= 0;
+                           osOptionalUnits.c_str(), osRotation.c_str()) >= 0;
 
         bOK &=
             VSIFPrintfL(
@@ -989,9 +1025,9 @@ void ENVIDataset::WriteProjectionInfo()
     }
     else if( EQUAL(pszProjName, SRS_PT_POLAR_STEREOGRAPHIC) )
     {
-        bOK &= VSIFPrintfL(fp, "map info = {Polar Stereographic, %s%s%s}\n",
+        bOK &= VSIFPrintfL(fp, "map info = {Polar Stereographic, %s%s%s%s}\n",
                            osLocation.c_str(), osCommaDatum.c_str(),
-                           osOptionalUnits.c_str()) >= 0;
+                           osOptionalUnits.c_str(), osRotation.c_str()) >= 0;
 
         bOK &=
             VSIFPrintfL(
@@ -1430,12 +1466,28 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
 
 {
     char **papszFields = SplitList(pszMapinfo);
+    const char *pszUnits = NULL;
+    double dfRotation = 0.0;
     const int nCount = CSLCount(papszFields);
 
     if( nCount < 7 )
     {
         CSLDestroy(papszFields);
         return false;
+    }
+
+    // Retrieve named values
+    for (int i=0; i<nCount; ++i)
+    {
+        if ( STARTS_WITH(papszFields[i], "units=") )
+        {
+            pszUnits = papszFields[i] + strlen("units=");
+        }
+        else if ( STARTS_WITH(papszFields[i], "rotation=") )
+        {
+            dfRotation = CPLAtof(papszFields[i] + strlen("rotation=")) *
+                            (M_PI/180) * -1;
+        }
     }
 
     // Check if we have coordinate system string, and if so parse it.
@@ -1457,18 +1509,19 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     }
 
     // Capture geotransform.
-    adfGeoTransform[1] = CPLAtof(papszFields[5]);  // Pixel width
-    adfGeoTransform[5] = -CPLAtof(papszFields[6]);  // Pixel height
-    // Upper left X coordinate.
-    adfGeoTransform[0] =
-        CPLAtof(papszFields[3]) -
-        (CPLAtof(papszFields[1]) - 1) * adfGeoTransform[1];
-    // Upper left Y coordinate.
-    adfGeoTransform[3] =
-        CPLAtof(papszFields[4]) -
-        (CPLAtof(papszFields[2]) - 1) * adfGeoTransform[5];
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[4] = 0.0;
+    const double xReference = CPLAtof(papszFields[1]);
+    const double yReference = CPLAtof(papszFields[2]);
+    const double pixelEasting = CPLAtof(papszFields[3]);
+    const double pixelNorthing = CPLAtof(papszFields[4]);
+    const double xPixelSize = CPLAtof(papszFields[5]);
+    const double yPixelSize = CPLAtof(papszFields[6]);
+
+    adfGeoTransform[0] = pixelEasting - (xReference - 1) * xPixelSize;
+    adfGeoTransform[1] = cos(dfRotation) * xPixelSize;
+    adfGeoTransform[2] = -sin(dfRotation) * xPixelSize;
+    adfGeoTransform[3] = pixelNorthing + (yReference - 1) * yPixelSize;
+    adfGeoTransform[4] = -sin(dfRotation) * yPixelSize;
+    adfGeoTransform[5] = -cos(dfRotation) * yPixelSize;
 
     // TODO(schwehr): Symbolic constants for the fields.
     // Capture projection.
@@ -1604,28 +1657,28 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     }
 
     // Try to process specialized units.
-    if( STARTS_WITH_CI(papszFields[nCount-1], "units"))
+    if( pszUnits != NULL )
     {
         // Handle linear units first.
-        if( EQUAL(papszFields[nCount - 1], "units=Feet") )
+        if( EQUAL(pszUnits, "Feet") )
             oSRS.SetLinearUnitsAndUpdateParameters(
                 SRS_UL_FOOT, CPLAtof(SRS_UL_FOOT_CONV));
-        else if( EQUAL(papszFields[nCount-1], "units=Meters") )
+        else if( EQUAL(pszUnits, "Meters") )
             oSRS.SetLinearUnitsAndUpdateParameters(SRS_UL_METER, 1.0);
-        else if( EQUAL(papszFields[nCount-1], "units=Km") )
+        else if( EQUAL(pszUnits, "Km") )
             oSRS.SetLinearUnitsAndUpdateParameters("Kilometer", 1000.0);
-        else if( EQUAL(papszFields[nCount-1], "units=Yards") )
+        else if( EQUAL(pszUnits, "Yards") )
             oSRS.SetLinearUnitsAndUpdateParameters("Yard", 0.9144);
-        else if( EQUAL(papszFields[nCount-1], "units=Miles") )
+        else if( EQUAL(pszUnits, "Miles") )
             oSRS.SetLinearUnitsAndUpdateParameters("Mile", 1609.344);
-        else if( EQUAL(papszFields[nCount-1], "units=Nautical Miles") )
+        else if( EQUAL(pszUnits, "Nautical Miles") )
             oSRS.SetLinearUnitsAndUpdateParameters(
                 SRS_UL_NAUTICAL_MILE, CPLAtof(SRS_UL_NAUTICAL_MILE_CONV));
 
         // Only handle angular units if we know the projection is geographic.
         if (oSRS.IsGeographic())
         {
-            if (EQUAL(papszFields[nCount - 1], "units=Radians") )
+            if (EQUAL(pszUnits, "Radians") )
             {
                 oSRS.SetAngularUnits(SRS_UA_RADIAN, 1.0);
             }
@@ -1637,9 +1690,9 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
                     SRS_UA_DEGREE, CPLAtof(SRS_UA_DEGREE_CONV));
 
                 double conversionFactor = 1.0;
-                if( EQUAL(papszFields[nCount-1], "units=Minutes") )
+                if( EQUAL(pszUnits, "Minutes") )
                     conversionFactor = 60.0;
-                else if( EQUAL(papszFields[nCount-1], "units=Seconds") )
+                else if( EQUAL(pszUnits, "Seconds") )
                     conversionFactor = 3600.0;
                 adfGeoTransform[0] /= conversionFactor;
                 adfGeoTransform[1] /= conversionFactor;
