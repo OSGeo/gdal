@@ -1115,6 +1115,32 @@ End""")
 End_Object
 End""")
 
+    # bad PDL formatting
+    with gdaltest.error_handler():
+        ds = gdal.Open('/vsimem/out.lbl')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/out.lbl')
+
+    gdal.FileFromMemBuffer('/vsimem/out.lbl', """Object = IsisCube
+  Object = Core
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 1
+    End_Group
+    Group = (Pixels, THIS_IS_INVALID)
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+End_Object
+End""")
+
     # unhandled pixel type not supported
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/out.lbl')
