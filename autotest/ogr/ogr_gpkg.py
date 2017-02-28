@@ -90,6 +90,23 @@ def ogr_gpkg_2():
 
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
 
+    # Should default to GPKG 1.0
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('PRAGMA application_id')
+    if sql_lyr is not None:
+        f = sql_lyr.GetNextFeature()
+        if f['application_id'] != 1196437808:
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            return 'fail'
+        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('PRAGMA user_version')
+        f = sql_lyr.GetNextFeature()
+        if f['user_version'] != 0:
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            return 'fail'
+        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
     if gdaltest.gpkg_ds is not None:
         return 'success'
     else:
