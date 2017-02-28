@@ -57,6 +57,10 @@
 
 CPL_CVSID("$Id$");
 
+// TODO(schwehr): This really should be defined in port/somewhere.h.
+static const double kdfDegToRad = M_PI / 180.0;
+static const double kdfRadToDeg = 180.0 / M_PI;
+
 static const int anUsgsEsriZones[] =
 {
   101, 3101,
@@ -617,9 +621,9 @@ void ENVIDataset::WriteProjectionInfo()
     if( bHasNonDefaultGT )
     {
         const double dfRotation1 =
-            -atan2(-adfGeoTransform[2], adfGeoTransform[1]) / M_PI * 180.0;
+            -atan2(-adfGeoTransform[2], adfGeoTransform[1]) * kdfRadToDeg;
         const double dfRotation2 =
-            -atan2(-adfGeoTransform[4], -adfGeoTransform[5]) / M_PI * 180.0;
+            -atan2(-adfGeoTransform[4], -adfGeoTransform[5]) * kdfRadToDeg;
         const double dfRotation = (dfRotation1 + dfRotation2) / 2.0;
 
         if( fabs(dfRotation1 - dfRotation2) > 1e-5 )
@@ -1388,8 +1392,9 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
         }
         else if ( STARTS_WITH(papszFields[i], "rotation=") )
         {
-            dfRotation = CPLAtof(papszFields[i] + strlen("rotation=")) * M_PI /
-                         180.0 * -1;
+            dfRotation =
+                CPLAtof(papszFields[i] + strlen("rotation=")) *
+                kdfDegToRad * -1.0;
         }
     }
 
