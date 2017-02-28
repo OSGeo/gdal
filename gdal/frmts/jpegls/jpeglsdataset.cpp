@@ -650,6 +650,7 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
     if (fp == NULL)
     {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszFilename);
         VSIFree(pabyDataCompressed);
         return NULL;
     }
