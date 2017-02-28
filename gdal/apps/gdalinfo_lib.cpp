@@ -1595,7 +1595,6 @@ static void GDALInfoPrintMetadata( const GDALInfoOptions* psOptions,
                                     "JSon parsing error: %s (at offset %d)",
                                     json_tokener_error_desc(jstok->err),
                                     jstok->char_offset);
-                        json_tokener_free(jstok);
                         poValue = NULL;
                     }
                     json_tokener_free(jstok);
