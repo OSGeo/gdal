@@ -1506,8 +1506,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
     int nYOff = (nRow - m_nShiftYTiles) * nBlockYSize - m_nShiftYPixelsMod;
 
     /* Assert that the tile at least intersects some of the GDAL raster space */
-    CPLAssert(nXOff + nBlockXSize > 0);
-    CPLAssert(nYOff + nBlockYSize > 0);
+    CPLAssert(nXOff > -nBlockXSize);
+    CPLAssert(nYOff > -nBlockYSize);
     /* Can happen if the tile of the raster is less than the block size */
     const int nRasterXSize = IGetRasterBand(1)->GetXSize();
     const int nRasterYSize = IGetRasterBand(1)->GetYSize();
@@ -1519,8 +1519,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
     {
         int nBlockXOff = nCol;
         int nBlockYOff = nRow;
-        if( (nBlockXOff+1) * nBlockXSize <= nRasterXSize &&
-            (nBlockYOff+1) * nBlockYSize > nRasterYSize )
+        if( nBlockXOff * nBlockXSize <= nRasterXSize - nBlockXSize &&
+            nBlockYOff * nBlockYSize > nRasterYSize - nBlockYSize )
         {
             for(int i = 0; i < nBands; i++ )
             {
@@ -1558,10 +1558,11 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             iXOff = -nXOff;
             iXCount += nXOff;
         }
-        if( nXOff + nBlockXSize > nRasterXSize )
+        if( nXOff > nRasterXSize - nBlockXSize )
         {
             bPartialTile = true;
-            iXCount -= nXOff + nBlockXSize - nRasterXSize;
+            iXCount -= static_cast<int>(
+                static_cast<GIntBig>(nXOff) + nBlockXSize - nRasterXSize);
         }
         if( nYOff < 0 )
         {
@@ -1569,10 +1570,11 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             iYOff = -nYOff;
             iYCount += nYOff;
         }
-        if( nYOff + nBlockYSize > nRasterYSize )
+        if( nYOff > nRasterYSize - nBlockYSize )
         {
             bPartialTile = true;
-            iYCount -= nYOff + nBlockYSize - nRasterYSize;
+            iYCount -= static_cast<int>(
+                static_cast<GIntBig>(nYOff) + nBlockYSize - nRasterYSize);
         }
         CPLAssert(iXOff >= 0);
         CPLAssert(iYOff >= 0);
@@ -3122,8 +3124,8 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
 
 #ifdef DEBUG_VERBOSE
                     if( eDataType == GDT_Byte &&
-                        (nBlockXOff+1) * nBlockXSize <= nRasterXSize &&
-                        (nBlockYOff+1) * nBlockYSize > nRasterYSize )
+                        nBlockXOff * nBlockXSize <= nRasterXSize - nBlockXSize &&
+                        nBlockYOff * nBlockYSize > nRasterYSize - nBlockYSize)
                     {
                         bool bFoundNonZero = false;
                         for(int y = nRasterYSize - nBlockYOff * nBlockYSize; y < nBlockYSize; y++)
@@ -3152,8 +3154,8 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                     // if we really want to do that, but that only makes sense if readers
                     // only clip to the gpkg_contents extent). Well, ere on the safe side for now
                     if( m_poTPD->m_eTF != GPKG_TF_JPEG &&
-                        ((nBlockXOff+1) * nBlockXSize >= nRasterXSize ||
-                         (nBlockYOff+1) * nBlockYSize >= nRasterYSize) )
+                        (nBlockXOff * nBlockXSize >= nRasterXSize - nBlockXSize ||
+                         nBlockYOff * nBlockYSize >= nRasterYSize - nBlockYSize) )
                     {
                         int nXEndValidity = nRasterXSize - nBlockXOff * nBlockXSize;
                         if( nXEndValidity > nBlockXSize )

@@ -3434,6 +3434,23 @@ def gpkg_40():
     return 'success'
 
 ###############################################################################
+# Robustness test
+
+def gpkg_41():
+
+    if gdaltest.gpkg_dr is None or gdal.GetConfigOption('TRAVIS') is not None or \
+       gdal.GetConfigOption('APPVEYOR') is not None:
+        return 'skip'
+
+    gdal.SetConfigOption('GPKG_ALLOW_CRAZY_SETTINGS', 'YES')
+    with gdaltest.error_handler():
+        gdal.Translate('/vsimem/gpkg_41.gpkg', 'data/huge_line.tif',
+                        format = 'GPKG', creationOptions = [
+                            'BLOCKXSIZE=500000000', 'BLOCKYSIZE=1' ])
+    gdal.SetConfigOption('GPKG_ALLOW_CRAZY_SETTINGS', None)
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -3495,6 +3512,7 @@ gdaltest_list = [
     gpkg_38,
     gpkg_39,
     gpkg_40,
+    gpkg_41,
     gpkg_cleanup,
 ]
 #gdaltest_list = [ gpkg_init, gpkg_39, gpkg_cleanup ]
