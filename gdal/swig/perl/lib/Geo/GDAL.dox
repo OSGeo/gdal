@@ -247,6 +247,9 @@
 
 ## @sub @DriverNames()
 # Available raster format drivers.
+# \code
+# perl -MGeo::GDAL -e '@d=Geo::GDAL::DriverNames;print "@d\n"'
+# \endcode
 # @note Use Geo::OGR::DriverNames for vector drivers.
 # @return a list of the short names of all available GDAL raster drivers.
 
@@ -695,8 +698,10 @@
 ## @method $GetGCPProjection()
 # @return projection string.
 
-## @method Geo::GDAL::Extent Extent()
-# @return A new Geo::GDAL::Extent object that represents the area that this raster covers.
+## @method Geo::GDAL::Extent Extent(@params)
+# @param params nothing, or a list ($xoff, $yoff, $w, $h)
+# @return A new Geo::GDAL::Extent object that represents the area that
+# this raster or the specified tile covers.
 
 ## @method Tile(Geo::GDAL::Extent e)
 # Compute the top left cell coordinates and width and height of the
@@ -919,8 +924,9 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 ## @class Geo::GDAL::Extent
 # @brief A rectangular area in projection coordinates: xmin, ymin, xmax, ymax.
 
-## @sub Geo::GDAL::Extent new($xmin, $ymin, $xmax, $ymax)
-# @return A new Extent object.
+## @sub Geo::GDAL::Extent new(@params)
+# @param params nothing, a list ($xmin, $ymin, $xmax, $ymax), or an Extent object
+# @return A new Extent object (empty if no parameters, a copy of the parameter if it is an Extent object).
 
 ## @sub @Size()
 # @return A list ($width, $height).
@@ -931,7 +937,8 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 
 ## @sub $Overlap($extent)
 # @param extent Another Geo::GDAL::Extent object.
-# @return A new Geo::GDAL::Extent object, which represents the joint area of the two extents.
+# @return A new, possibly empty, Geo::GDAL::Extent object, which
+# represents the joint area of the two extents.
 
 ## @sub ExpandToInclude($extent)
 # Extends this extent to include the other extent.
@@ -1659,19 +1666,27 @@ y = d + column * e + row * f
 # A Geo::GDAL::GeoTransform object is a reference to an anonymous array [a,b,c,d,e,f].
 # @isa = ( Geo::GDAL )
 
-## @cmethod new(@coeffs)
+## @cmethod new(@params)
+# @param params nothing, a reference to an array [a,b,c,d,e,f], a list
+# (a,b,c,d,e,f), or named parameters
+# - \a GCPs A reference to an array of Geo::GDAL::GCP objects.
+# - \a ApproxOK Minimize the error in the coefficients (integer, default is 1 (true), used with GCPs).
+# - \a Extent A Geo::GDAL::Extent object used to obtain the coordinates of the up left corner position.
+# - \a CellSize The cell size (width and height) (default is 1, used with Extent).
+#
+# @note When Extent is specifid, the created geo transform will be
+# north up, have square cells, and coefficient f will be -1 times the
+# cell size (image y - row - will increase downwards and projection y
+# will increase upwards).
 # @return a new Geo::GDAL::GeoTransform object.
 
-## @method FromGCPs(@GCPs, $ApproxOK)
-# Compute transformation coefficients from a list of Geo::GDAL::GCP
-# objects
-# @param GCPs A list of Geo::GDAL::GCP objects.
-# @param ApproxOK [optional] Minimize the error in the coefficient (integer, default is true).
-# @return a new Geo::GDAL::GeoTransform object.
+## @ignore FromGCPs
+## @ignore FromExtentAndCellSize
+## @ignore Extent
 
 ## @method Apply($x, $y)
 # @param x Column or x, or a reference to an array of columns or x's
-# @param y Row or y, or a reference to an array of columns or y's
+# @param y Row or y, or a reference to an array of rows or y's
 # @return a list (x, y), where x and y are the transformed coordinates
 # or references to arrays of transformed coordinates.
 

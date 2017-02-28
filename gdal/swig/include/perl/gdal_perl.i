@@ -959,24 +959,40 @@ sub GeoTransform {
 
 sub Extent {
     my $self = shift;
-    return $self->GeoTransform->Extent($self->Size);
+    my $t = $self->GeoTransform;
+    my $extent = $t->Extent($self->Size);
+    if (@_) {
+        my ($xoff, $yoff, $w, $h) = @_;
+        my ($x, $y) = $t->Apply([$xoff, $xoff+$w, $xoff+$w, $xoff], [$yoff, $yoff, $yoff+$h, $yoff+$h]);
+        my $xmin = shift @$x;
+        my $xmax = $xmin;
+        for my $x (@$x) {
+            $xmin = $x if $x < $xmin;
+            $xmax = $x if $x > $xmax;
+        }
+        my $ymin = shift @$y;
+        my $ymax = $ymin;
+        for my $y (@$y) {
+            $ymin = $y if $y < $ymin;
+            $ymax = $y if $y > $ymax;
+        }
+        $extent = Geo::GDAL::Extent->new($xmin, $ymin, $xmax, $ymax);
+    }
+    return $extent;
 }
 
 sub Tile { # $xoff, $yoff, $xsize, $ysize, assuming strict north up
     my ($self, $e) = @_;
     my ($w, $h) = $self->Size;
-    #print "sz $w $h\n";
-    my $gt = $self->GeoTransform;
-    #print "gt @$gt\n";
-    confess "GeoTransform is not \"north up\"." unless $gt->NorthUp;
-    my $x = $gt->Extent($w, $h);
-    my $xoff = floor(($e->[0] - $gt->[0])/$gt->[1]);
+    my $t = $self->GeoTransform;
+    confess "GeoTransform is not \"north up\"." unless $t->NorthUp;
+    my $xoff = floor(($e->[0] - $t->[0])/$t->[1]);
     $xoff = 0 if $xoff < 0;
-    my $yoff = floor(($gt->[3] - $e->[3])/(-$gt->[5]));
+    my $yoff = floor(($e->[1] - $t->[3])/$t->[5]);
     $yoff = 0 if $yoff < 0;
-    my $xsize = ceil(($e->[2] - $gt->[0])/$gt->[1]) - $xoff;
+    my $xsize = ceil(($e->[2] - $t->[0])/$t->[1]) - $xoff;
     $xsize = $w - $xoff if $xsize > $w - $xoff;
-    my $ysize = ceil(($gt->[3] - $e->[1])/(-$gt->[5])) - $yoff;
+    my $ysize = ceil(($e->[3] - $t->[3])/$t->[5]) - $yoff;
     $ysize = $h - $yoff if $ysize > $h - $yoff;
     return ($xoff, $yoff, $xsize, $ysize);
 }
@@ -2101,14 +2117,22 @@ sub new {
     my $self;
     if (@_ == 0) {
         $self = [0,1,0,0,0,1];
-    } elsif (@_ == 1) {
-        $self = $_[0];
+    } elsif (ref $_[0]) {
+        @$self = @{$_[0]};
+    } elsif ($_[0] =~ /^[a-zA-Z]/i) {
+        my $p = named_parameters(\@_, GCPs => undef, ApproxOK => 1, Extent => undef, CellSize => 1);
+        if ($p->{gcps}) {
+            $self = Geo::GDAL::GCPsToGeoTransform($p->{gcps}, $p->{approxok});
+        } elsif ($p->{extent}) {
+            $self = Geo::GDAL::GeoTransform->new($p->{extent}[0], $p->{cellsize}, 0, $p->{extent}[2], 0, -$p->{cellsize});
+        } else {
+            error("Missing GCPs or Extent");
+        }
     } else {
         my @a = @_;
         $self = \@a;
     }
     bless $self, $class;
-    return $self;
 }
 
 sub NorthUp {
@@ -2180,7 +2204,7 @@ sub new {
     my $class = shift;
     my $self;
     if (@_ == 0) {
-        $self = [0,0,0,0];
+        $self = [0,0,-1,0];
     } elsif (ref $_[0]) {
         @$self = @{$_[0]};
     } else {
@@ -2190,8 +2214,14 @@ sub new {
     return $self;
 }
 
+sub IsEmpty {
+    my $self = shift;
+    return $self->[2] < $self->[0];
+}
+
 sub Size {
     my $self = shift;
+    return (0,0) if $self->IsEmpty;
     return ($self->[2] - $self->[0], $self->[3] - $self->[1]);
 }
 
@@ -2202,7 +2232,7 @@ sub Overlaps {
 
 sub Overlap {
     my ($self, $e) = @_;
-    return undef unless $self->Overlaps($e);
+    return Geo::GDAL::Extent->new() unless $self->Overlaps($e);
     my $ret = Geo::GDAL::Extent->new($self);
     $ret->[0] = $e->[0] if $self->[0] < $e->[0];
     $ret->[1] = $e->[1] if $self->[1] < $e->[1];
@@ -2213,10 +2243,15 @@ sub Overlap {
 
 sub ExpandToInclude {
     my ($self, $e) = @_;
-    $self->[0] = $e->[0] if $e->[0] < $self->[0];
-    $self->[1] = $e->[1] if $e->[1] < $self->[1];
-    $self->[2] = $e->[2] if $e->[2] > $self->[2];
-    $self->[3] = $e->[3] if $e->[3] > $self->[3];
+    return if $e->IsEmpty;
+    if ($self->IsEmpty) {
+        @$self = @$e;
+    } else {
+        $self->[0] = $e->[0] if $e->[0] < $self->[0];
+        $self->[1] = $e->[1] if $e->[1] < $self->[1];
+        $self->[2] = $e->[2] if $e->[2] > $self->[2];
+        $self->[3] = $e->[3] if $e->[3] > $self->[3];
+    }
 }
 
 package Geo::GDAL::XML;
