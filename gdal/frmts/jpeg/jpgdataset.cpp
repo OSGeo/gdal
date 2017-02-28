@@ -3143,6 +3143,13 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
     sCInfo.client_data = &sErrorStruct;
 
     jpeg_create_compress(&sCInfo);
+    if (setjmp(sErrorStruct.setjmp_buffer))
+    {
+        if( fpImage )
+            VSIFCloseL(fpImage);
+        jpeg_destroy_compress(&sCInfo);
+        return NULL;
+    }
 
     jpeg_vsiio_dest(&sCInfo, fpImage);
 
