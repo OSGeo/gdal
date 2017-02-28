@@ -85,6 +85,22 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
 
     if ( ! poDb ) return OGRERR_FAILURE;
 
+    CPLString osUpdateFeatureCount;
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    if( m_poDS->m_bHasFeatureCountColumn )
+    {
+        if( m_nTotalFeatureCount >= 0 )
+        {
+            osUpdateFeatureCount.Printf(", ogr_feature_count = " CPL_FRMT_GIB,
+                                        m_nTotalFeatureCount);
+        }
+        else
+        {
+            osUpdateFeatureCount = ", ogr_feature_count = NULL";
+        }
+    }
+#endif
+
     const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", NULL);
     char *pszSQL = NULL;
 
@@ -93,8 +109,10 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
         pszSQL = sqlite3_mprintf(
                     "UPDATE gpkg_contents SET "
                     "last_change = '%q'"
+                    "%s "
                     "WHERE table_name = '%q'",
                     pszCurrentDate,
+                    osUpdateFeatureCount.c_str(),
                     m_pszTableName);
     }
     else
@@ -102,7 +120,9 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
         pszSQL = sqlite3_mprintf(
                     "UPDATE gpkg_contents SET "
                     "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now')"
+                    "%s "
                     "WHERE table_name = '%q'",
+                    osUpdateFeatureCount.c_str(),
                     m_pszTableName);
     }
 
@@ -586,13 +606,18 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         /* Check that the table name is registered in gpkg_contents */
         char* pszSQL = sqlite3_mprintf(
             "SELECT table_name, data_type, identifier, "
-            "description, min_x, min_y, max_x, max_y, srs_id "
+            "description, min_x, min_y, max_x, max_y%s "
             "FROM gpkg_contents "
             "WHERE table_name = '%q'"
 #ifdef WORKAROUND_SQLITE3_BUGS
             " OR 0"
 #endif
-            , m_pszTableName);
+            ,
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+            m_poDS->m_bHasFeatureCountColumn ? ", ogr_feature_count" :
+#endif
+            "",
+            m_pszTableName);
 
         SQLResult oResultContents;
         err = SQLQuery(poDb, pszSQL, &oResultContents);
@@ -617,6 +642,35 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         const char* pszDescription = SQLResultGetValue(&oResultContents, 3, 0);
         if( pszDescription && pszDescription[0] )
             OGRLayer::SetMetadataItem("DESCRIPTION", pszDescription);
+
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+        if( m_poDS->m_bHasFeatureCountColumn )
+        {
+            const char* pszFeatureCount =
+                                SQLResultGetValue(&oResultContents, 8, 0);
+            if( pszFeatureCount )
+            {
+                m_nTotalFeatureCount = CPLAtoGIntBig(pszFeatureCount);
+            }
+
+            // Check if the triggers are there. 
+            pszSQL = sqlite3_mprintf(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' "
+                "AND name IN ('trigger_insert_ogr_feature_count_%q', "
+                "'trigger_delete_ogr_feature_count_%q')",
+                m_pszTableName, m_pszTableName);
+            if( SQLGetInteger(poDb, pszSQL, NULL) == 2 )
+            {
+                m_bOGRFeatureCountTriggersEnabled = true;
+            }
+            else
+            {
+                CPLDebug("GPKG", "Insert/delete ogr_feature_count triggers "
+                         "missing on %s", m_pszTableName);
+            }
+            sqlite3_free(pszSQL);
+        }
+#endif
 
         if( bIsSpatial )
         {
@@ -920,6 +974,12 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_pszTableName(CPLStrdup(pszTableName)),
     m_iSrs(0),
     m_poExtent(NULL),
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    m_nTotalFeatureCount(-1),
+    m_bOGRFeatureCountTriggersEnabled(false),
+    m_bAddOGRFeatureCountTriggers(false),
+    m_bFeatureCountTriggersDeletedInTransaction(false),
+#endif
     m_soColumns(""),
     m_soFilter(""),
     m_bExtentChanged(false),
@@ -947,8 +1007,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
 
 OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 {
-    if( m_bDeferredCreation )
-        RunDeferredCreationIfNecessary();
+    SyncToDisk();
 
     if( m_bDropRTreeTable )
     {
@@ -958,15 +1017,8 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
             sqlite3_mprintf("DROP TABLE \"rtree_%w_%w\"", pszT, pszC);
         SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
+        m_bDropRTreeTable = false;
     }
-    else
-    {
-        CreateSpatialIndexIfNecessary();
-    }
-
-    /* Save metadata back to the database */
-    SaveExtent();
-    SaveTimestamp();
 
     /* Clean up resources in memory */
     if ( m_pszTableName )
@@ -1174,6 +1226,103 @@ OGRErr OGRGeoPackageTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn
     return OGRERR_NONE;
 }
 
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+
+/************************************************************************/
+/*                      DisableFeatureCount()                           */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::DisableFeatureCount(bool bInMemoryOnly)
+{
+    m_nTotalFeatureCount = -1;
+    if( !bInMemoryOnly && m_poDS->m_bHasFeatureCountColumn )
+    {
+        char* pszSQL = sqlite3_mprintf(
+            "UPDATE gpkg_contents SET ogr_feature_count = NULL WHERE "
+            "table_name = '%q'",
+            m_pszTableName);
+        SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+    }
+}
+
+/************************************************************************/
+/*                      CreateTriggers()                                */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::CreateTriggers(const char* pszTableName)
+{
+    if( m_bAddOGRFeatureCountTriggers )
+    {
+        if( pszTableName == NULL )
+            pszTableName = m_pszTableName;
+
+        m_bOGRFeatureCountTriggersEnabled = true;
+        m_bAddOGRFeatureCountTriggers = false;
+        m_bFeatureCountTriggersDeletedInTransaction = false;
+
+        CPLDebug("GPKG", "Creating insert/delete ogr_feature_count triggers");
+        char* pszSQL = sqlite3_mprintf(
+            "CREATE TRIGGER \"trigger_insert_ogr_feature_count_%w\" "
+            "AFTER INSERT ON \"%w\" "
+            "BEGIN UPDATE gpkg_contents SET ogr_feature_count = "
+            "ogr_feature_count + 1 WHERE table_name = '%q'; END;",
+            pszTableName, pszTableName, pszTableName);
+        SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+
+        pszSQL = sqlite3_mprintf(
+            "CREATE TRIGGER \"trigger_delete_ogr_feature_count_%w\" "
+            "AFTER DELETE ON \"%w\" "
+            "BEGIN UPDATE gpkg_contents SET ogr_feature_count = "
+            "ogr_feature_count - 1 WHERE table_name = '%q'; END;",
+            pszTableName, pszTableName, pszTableName);
+        SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+    }
+}
+
+/************************************************************************/
+/*                      DisableTriggers()                               */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::DisableTriggers()
+{
+    if( m_bOGRFeatureCountTriggersEnabled )
+    {
+        m_bOGRFeatureCountTriggersEnabled = false;
+        m_bAddOGRFeatureCountTriggers = true;
+        m_bFeatureCountTriggersDeletedInTransaction =
+            m_poDS->IsInTransaction();
+
+        CPLDebug("GPKG", "Deleting insert/delete ogr_feature_count triggers");
+
+        char* pszSQL = sqlite3_mprintf(
+            "DROP TRIGGER \"trigger_insert_ogr_feature_count_%w\"",
+            m_pszTableName);
+        SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+
+        pszSQL = sqlite3_mprintf(
+            "DROP TRIGGER \"trigger_delete_ogr_feature_count_%w\"",
+            m_pszTableName);
+        SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+
+        if( m_poDS->m_bHasFeatureCountColumn )
+        {
+            pszSQL = sqlite3_mprintf(
+                "UPDATE gpkg_contents SET ogr_feature_count = NULL WHERE "
+                "table_name = '%q'",
+                m_pszTableName);
+            SQLCommand(m_poDS->GetDB(), pszSQL);
+            sqlite3_free(pszSQL);
+        }
+    }
+}
+
+#endif // #ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+
 /************************************************************************/
 /*                      ICreateFeature()                                 */
 /************************************************************************/
@@ -1192,6 +1341,13 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
+
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    if( m_bOGRFeatureCountTriggersEnabled )
+    {
+        DisableTriggers();
+    }
+#endif
 
     /* Substitute default values for null Date/DateTime fields as the standard */
     /* format of SQLite is not the one mandated by GeoPackage */
@@ -1316,6 +1472,11 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
     {
         poFeature->SetFID(OGRNullFID);
     }
+
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    if( m_nTotalFeatureCount >= 0 )
+        m_nTotalFeatureCount++;
+#endif
 
     m_bContentChanged = true;
 
@@ -1644,6 +1805,13 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    if( m_bOGRFeatureCountTriggersEnabled )
+    {
+        DisableTriggers();
+    }
+#endif
+
     /* Clear out any existing query */
     ResetReading();
 
@@ -1659,7 +1827,14 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
         eErr = (sqlite3_changes(m_poDS->GetDB()) > 0) ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
 
         if( eErr == OGRERR_NONE )
+        {
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+            if( m_nTotalFeatureCount >= 0 )
+                m_nTotalFeatureCount--;
+#endif
+
             m_bContentChanged = true;
+        }
     }
     return eErr;
 }
@@ -1673,8 +1848,19 @@ OGRErr OGRGeoPackageTableLayer::SyncToDisk()
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    CreateTriggers();
+#endif
+
+    if( !m_bDropRTreeTable )
+    {
+        CreateSpatialIndexIfNecessary();
+    }
+
+    /* Save metadata back to the database */
     SaveExtent();
     SaveTimestamp();
+
     return OGRERR_NONE;
 }
 
@@ -1711,6 +1897,41 @@ OGRErr OGRGeoPackageTableLayer::RollbackTransaction()
 
 GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
 {
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    if( m_poFilterGeom == NULL && m_pszAttrQueryString == NULL )
+    {
+        if( m_nTotalFeatureCount >= 0 )
+        {
+            return m_nTotalFeatureCount;
+        }
+
+        if( m_poDS->m_bHasFeatureCountColumn )
+        {
+            char* pszSQL = sqlite3_mprintf(
+                "SELECT ogr_feature_count FROM gpkg_contents WHERE "
+                "table_name = '%q'",
+                m_pszTableName);
+            SQLResult oResult;
+            OGRErr err = SQLQuery( m_poDS->GetDB(), pszSQL, &oResult);
+            sqlite3_free(pszSQL);
+            if( err == OGRERR_NONE && oResult.nRowCount == 1 )
+            {
+                const char* pszFeatureCount =
+                                            SQLResultGetValue(&oResult, 0, 0);
+                if( pszFeatureCount )
+                {
+                    m_nTotalFeatureCount = CPLAtoGIntBig(pszFeatureCount);
+                }
+            }
+            SQLResultFree( &oResult );
+            if( m_nTotalFeatureCount >= 0 )
+            {
+                return m_nTotalFeatureCount;
+            }
+        }
+    }
+#endif
+
     if( m_poFilterGeom != NULL && !m_bFilterIsEnvelope )
         return OGRGeoPackageLayer::GetFeatureCount();
 
@@ -1760,7 +1981,26 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
 
     /* Generic implementation uses -1 for error condition, so we will too */
     if ( err == OGRERR_NONE )
+    {
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+        if( m_poFilterGeom == NULL && m_pszAttrQueryString == NULL )
+        {
+            m_nTotalFeatureCount = iFeatureCount;
+
+            if( m_poDS->GetUpdate() && m_poDS->m_bHasFeatureCountColumn )
+            {
+                const char* pszCount = CPLSPrintf(CPL_FRMT_GIB,
+                                                  m_nTotalFeatureCount);
+                char* pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_contents SET ogr_feature_count = %s WHERE "
+                    "table_name = '%q'", pszCount, m_pszTableName);
+                SQLCommand(m_poDS->GetDB(), pszSQL);
+                sqlite3_free(pszSQL);
+            }
+        }
+#endif
         return iFeatureCount;
+    }
     else
         return -1;
 }
@@ -1851,6 +2091,13 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
     {
         return TRUE;
     }
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    else if ( EQUAL(pszCap, OLCFastFeatureCount) )
+    {
+        return  m_poFilterGeom == NULL && m_pszAttrQueryString == NULL &&
+                m_nTotalFeatureCount >= 0;
+    }
+#endif
     else if ( EQUAL(pszCap, OLCFastSpatialFilter) )
     {
         return HasSpatialIndex();
@@ -2367,8 +2614,7 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
 {
     ResetReading();
-    RunDeferredCreationIfNecessary();
-    CreateSpatialIndexIfNecessary();
+    SyncToDisk();
 
     SQLResult oResultTable;
     char* pszSQL = sqlite3_mprintf(
@@ -2396,6 +2642,10 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
     {
         DropSpatialIndex();
     }
+
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    DisableTriggers();
+#endif
 
     pszSQL = sqlite3_mprintf(
         "UPDATE gpkg_geometry_columns SET table_name = '%q' WHERE "
@@ -2476,6 +2726,10 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
         {
             CreateSpatialIndex(pszDstTableName);
         }
+
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+        CreateTriggers(pszDstTableName);
+#endif
 
         eErr = m_poDS->SoftCommitTransaction();
         if( eErr == OGRERR_NONE)
@@ -2849,6 +3103,14 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
         sqlite3_free(pszSQL);
         if ( err != OGRERR_NONE )
             return OGRERR_FAILURE;
+
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+        if( m_poDS->m_bHasFeatureCountColumn )
+        {
+            m_nTotalFeatureCount = 0;
+            m_bAddOGRFeatureCountTriggers = true;
+        }
+#endif
     }
 
     ResetReading();

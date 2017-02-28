@@ -318,6 +318,9 @@ COMPRESSION_OPTIONS
 "     <Value>1.1</Value>"
 "     <Value>1.2</Value>"
 "  </Option>"
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+"  <Option name='ADD_OGR_FEATURE_COUNT_COLUMN' type='boolean' description='Whether to add ogr_feature_count column to gpkg_contents' default='YES'/>"
+#endif
 "</CreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,

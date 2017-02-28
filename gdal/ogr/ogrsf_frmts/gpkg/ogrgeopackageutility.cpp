@@ -38,7 +38,9 @@ OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)
     CPLAssert( pszSQL != NULL );
 
     char *pszErrMsg = NULL;
-    //CPLDebug("GPKG", "exec(%s)", pszSQL);
+#ifdef DEBUG_VERBOSE
+    CPLDebug("GPKG", "exec(%s)", pszSQL);
+#endif
     int rc = sqlite3_exec(poDb, pszSQL, NULL, NULL, &pszErrMsg);
 
     if ( rc != SQLITE_OK )
@@ -71,6 +73,9 @@ OGRErr SQLQuery(sqlite3 * poDb, const char * pszSQL, SQLResult * poResult)
 
     SQLResultInit(poResult);
 
+#ifdef DEBUG_VERBOSE
+    CPLDebug("GPKG", "get_table(%s)", pszSQL);
+#endif
     poResult->rc = sqlite3_get_table(
         poDb, pszSQL,
         &(poResult->papszResult),
@@ -156,6 +161,9 @@ GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
     sqlite3_stmt *poStmt = NULL;
 
     /* Prepare the SQL */
+#ifdef DEBUG_VERBOSE
+    CPLDebug("GPKG", "get(%s)", pszSQL);
+#endif
     int rc = sqlite3_prepare_v2(poDb, pszSQL, -1, &poStmt, NULL);
     if ( rc != SQLITE_OK )
     {
