@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "envidataset.h"
 #include "rawdataset.h"
 
 #include <climits>
@@ -233,104 +234,6 @@ static int ITTVISToUSGSZone( int nITTVISZone )
 
     return nITTVISZone;  // Perhaps it *is* the USGS zone?
 }
-
-/************************************************************************/
-/* ==================================================================== */
-/*                              ENVIDataset                             */
-/* ==================================================================== */
-/************************************************************************/
-
-class ENVIRasterBand;
-
-class ENVIDataset : public RawDataset
-{
-    friend class ENVIRasterBand;
-
-    VSILFILE   *fpImage;  // Image data file.
-    VSILFILE   *fp;  // Header file
-    char       *pszHDRFilename;
-
-    bool        bFoundMapinfo;
-    bool        bHeaderDirty;
-    bool        bFillFile;
-
-    double      adfGeoTransform[6];
-
-    char       *pszProjection;
-
-    char        **papszHeader;
-
-    CPLString   osStaFilename;
-
-    bool        ReadHeader( VSILFILE * );
-    bool        ProcessMapinfo( const char * );
-    void        ProcessRPCinfo( const char *, int, int);
-    void        ProcessStatsFile();
-    static int         byteSwapInt(int);
-    static float       byteSwapFloat(float);
-    static double      byteSwapDouble(double);
-    static void        SetENVIDatum( OGRSpatialReference *, const char * );
-    static void        SetENVIEllipse( OGRSpatialReference *, char ** );
-    void        WriteProjectionInfo();
-    bool        ParseRpcCoeffsMetaDataString( const char *psName,
-                                              char *papszVal[], int& idx );
-    bool        WriteRpcInfo();
-    bool        WritePseudoGcpInfo();
-
-    void        SetFillFile() { bFillFile = true; }
-
-    char        **SplitList( const char * );
-
-    enum Interleave { BSQ, BIL, BIP } interleave;
-    static int GetEnviType(GDALDataType eType);
-
-  public:
-            ENVIDataset();
-    virtual ~ENVIDataset();
-
-    virtual void    FlushCache() override;
-    virtual CPLErr  GetGeoTransform( double *padfTransform ) override;
-    virtual CPLErr  SetGeoTransform( double * ) override;
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr  SetProjection( const char * ) override;
-    virtual char  **GetFileList(void) override;
-
-    virtual void        SetDescription( const char * ) override;
-
-    virtual CPLErr      SetMetadata( char **papszMetadata,
-                                     const char *pszDomain = "" ) override;
-    virtual CPLErr      SetMetadataItem( const char *pszName,
-                                         const char *pszValue,
-                                         const char *pszDomain = "" ) override;
-    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection ) override;
-
-    static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Create( const char *pszFilename,
-                                int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszOptions );
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                            ENVIRasterBand                            */
-/* ==================================================================== */
-/************************************************************************/
-
-class ENVIRasterBand : public RawRasterBand
-{
-    public:
-                ENVIRasterBand( GDALDataset *poDS, int nBand, void *fpRaw,
-                                vsi_l_offset nImgOffset, int nPixelOffset,
-                                int nLineOffset,
-                                GDALDataType eDataType, int bNativeOrder,
-                                int bIsVSIL = FALSE, int bOwnsFP = FALSE );
-    virtual ~ENVIRasterBand() {}
-
-    virtual void        SetDescription( const char * ) override;
-
-    virtual CPLErr SetCategoryNames( char ** ) override;
-};
 
 /************************************************************************/
 /*                            ENVIDataset()                             */
