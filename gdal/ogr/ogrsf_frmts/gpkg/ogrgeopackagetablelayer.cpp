@@ -2100,14 +2100,11 @@ int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
 #endif
     else if ( EQUAL(pszCap, OLCFastSpatialFilter) )
     {
-        return HasSpatialIndex();
+        return HasSpatialIndex() || m_bDeferredSpatialIndexCreation;
     }
     else if ( EQUAL(pszCap, OLCFastGetExtent) )
     {
-        if ( m_poExtent )
-            return TRUE;
-        else
-            return FALSE;
+        return ( m_poExtent != NULL );
     }
     else if( EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
