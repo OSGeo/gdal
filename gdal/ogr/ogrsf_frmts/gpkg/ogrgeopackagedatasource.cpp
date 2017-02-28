@@ -1283,7 +1283,8 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         SQLResult oResult2;
         err = SQLQuery(hDB, pszSQL, &oResult2);
         sqlite3_free(pszSQL);
-        if  ( err != OGRERR_NONE || oResult2.nRowCount == 0 )
+        if  ( err != OGRERR_NONE || oResult2.nRowCount == 0 ||
+              SQLResultGetValue(&oResult2, 0, 0) == NULL )
         {
             SQLResultFree(&oResult);
             SQLResultFree(&oResult2);
