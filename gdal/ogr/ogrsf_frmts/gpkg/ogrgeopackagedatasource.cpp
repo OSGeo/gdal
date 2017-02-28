@@ -1597,8 +1597,10 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 
     double dfPixelXSizeZoomLevel0 = m_adfGeoTransform[1] * (1 << m_nZoomLevel);
     double dfPixelYSizeZoomLevel0 = fabs(m_adfGeoTransform[5]) * (1 << m_nZoomLevel);
-    int nTileXCountZoomLevel0 = ((nRasterXSize >> m_nZoomLevel) + nTileWidth - 1) / nTileWidth;
-    int nTileYCountZoomLevel0 = ((nRasterYSize >> m_nZoomLevel) + nTileHeight - 1) / nTileHeight;
+    int nTileXCountZoomLevel0 =
+        std::max(1, DIV_ROUND_UP((nRasterXSize >> m_nZoomLevel), nTileWidth));
+    int nTileYCountZoomLevel0 =
+        std::max(1, DIV_ROUND_UP((nRasterYSize >> m_nZoomLevel), nTileHeight));
 
     for(size_t iScheme = 0;
                iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
