@@ -361,10 +361,25 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 
 %apply Pointer NONNULL {const char * pszFilename};
 /* Added in GDAL 1.7.0 */
-#ifdef SWIGJAVA
+
+#if defined(SWIGPYTHON)
+
+%apply (GIntBig nLen, char *pBuf) {( GIntBig nBytes, const GByte *pabyData )};
+%inline {
+void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const GByte *pabyData)
+{
+    const size_t nSize = static_cast<size_t>(nBytes);
+    GByte* pabyDataDup = (GByte*)VSIMalloc(nSize);
+    if (pabyDataDup == NULL)
+            return;
+    memcpy(pabyDataDup, pabyData, nSize);
+    VSIFCloseL(VSIFileFromMemBuffer(utf8_path, (GByte*) pabyDataDup, nSize, TRUE));
+}
+}
+%clear ( GIntBig nBytes, const GByte *pabyData );
+#else
+#if defined(SWIGJAVA)
 %apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
-#elif defined(SWIGPYTHON)
-%apply (int nLen, char *pBuf) {( int nBytes, const GByte *pabyData )};
 #endif
 %inline {
 void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByte *pabyData)
@@ -377,8 +392,9 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByt
 }
 
 }
-#if defined(SWIGJAVA) || defined(SWIGPYTHON)
+#if defined(SWIGJAVA)
 %clear ( int nBytes, const GByte *pabyData );
+#endif
 #endif
 
 /* Added in GDAL 1.7.0 */
