@@ -479,12 +479,18 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     }
 
     if (safeLen) safeLen--;
+    if( safeLen > INT_MAX ) {
+      SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+    }
     $1 = (int) safeLen;
   }
   else if (PyBytes_Check($input))
   {
     Py_ssize_t safeLen = 0;
     PyBytes_AsStringAndSize($input, (char**) &$2, &safeLen);
+    if( safeLen > INT_MAX ) {
+      SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+    }
     $1 = (int) safeLen;
   }
   else
@@ -497,6 +503,9 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   {
     Py_ssize_t safeLen = 0;
     PyString_AsStringAndSize($input, (char**) &$2, &safeLen);
+    if( safeLen > INT_MAX ) {
+      SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+    }
     $1 = (int) safeLen;
   }
   else

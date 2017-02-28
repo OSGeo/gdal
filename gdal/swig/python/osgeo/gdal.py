@@ -1317,7 +1317,7 @@ def CPLHexToBinary(*args):
     return _gdal.CPLHexToBinary(*args)
 
 def FileFromMemBuffer(*args):
-    """FileFromMemBuffer(char const * utf8_path, int nBytes)"""
+    """FileFromMemBuffer(char const * utf8_path, GIntBig nBytes)"""
     return _gdal.FileFromMemBuffer(*args)
 
 def Unlink(*args):

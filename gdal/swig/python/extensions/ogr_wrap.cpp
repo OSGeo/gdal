@@ -22845,12 +22845,18 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
       }
       
       if (safeLen) safeLen--;
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
       arg1 = (int) safeLen;
     }
     else if (PyBytes_Check(obj0))
     {
       Py_ssize_t safeLen = 0;
       PyBytes_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
       arg1 = (int) safeLen;
     }
     else
@@ -22863,6 +22869,9 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
     {
       Py_ssize_t safeLen = 0;
       PyString_AsStringAndSize(obj0, (char**) &arg2, &safeLen);
+      if( safeLen > INT_MAX ) {
+        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      }
       arg1 = (int) safeLen;
     }
     else
@@ -23651,12 +23660,18 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
         }
         
         if (safeLen) safeLen--;
+        if( safeLen > INT_MAX ) {
+          SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+        }
         arg3 = (int) safeLen;
       }
       else if (PyBytes_Check(obj2))
       {
         Py_ssize_t safeLen = 0;
         PyBytes_AsStringAndSize(obj2, (char**) &arg4, &safeLen);
+        if( safeLen > INT_MAX ) {
+          SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+        }
         arg3 = (int) safeLen;
       }
       else
@@ -23669,6 +23684,9 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
       {
         Py_ssize_t safeLen = 0;
         PyString_AsStringAndSize(obj2, (char**) &arg4, &safeLen);
+        if( safeLen > INT_MAX ) {
+          SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+        }
         arg3 = (int) safeLen;
       }
       else
