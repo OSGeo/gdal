@@ -30,8 +30,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-/* CharLS header */
-#include <interface.h>
+#include "jpegls_header.h"
 
 /* g++ -Wall -g fmrts/jpegls/jpeglsdataset.cpp -shared -fPIC -o gdal_JPEGLS.so -Iport -Igcore -L. -lgdal -I/home/even/charls-1.0 -L/home/even/charls-1.0/build -lCharLS */
 
