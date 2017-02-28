@@ -64,6 +64,9 @@
 
 ## @sub @DriverNames()
 # A.k.a GetDriverNames
+# \code
+# perl -MGeo::GDAL -e '@d=Geo::OGR::DriverNames;print "@d\n"'
+# \endcode
 # @note Use Geo::GDAL::DriverNames for raster drivers.
 # @return a list of the short names of all available GDAL vector drivers.
 
