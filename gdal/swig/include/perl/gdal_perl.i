@@ -290,7 +290,17 @@ sub error {
 }
 
 sub last_error {
-    my $error = $error[$#error] // '';
+    my $error;
+    # all errors should be in @error
+    if (@error) {
+        $error = $error[$#error];
+    } elsif ($@) {
+        # swig exceptions are not in @error
+        $error = $@;
+        $error =~ s/ at .*//;
+    } else {
+        $error = 'unknown error';
+    }
     chomp($error);
     return $error;
 }
@@ -1082,7 +1092,7 @@ sub BuildOverviews {
     eval {
         $self->_BuildOverviews(@p);
     };
-    confess(Geo::GDAL->last_error) if $@;
+    confess(last_error()) if $@;
 }
 
 sub stdout_redirection_wrapper {
@@ -1849,7 +1859,7 @@ sub SetColorEntry {
     eval {
         $self->_SetColorEntry($index, $color);
     };
-    confess(Geo::GDAL->last_error) if $@;
+    confess(last_error()) if $@;
 }
 
 sub ColorEntry {
