@@ -1433,7 +1433,6 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     char **papszFields = SplitList(pszMapinfo);
     char *units = NULL;
     double rotation = 0.0;
-    const double PI = atan(1.0) * 4;
     const int nCount = CSLCount(papszFields);
 
     if( nCount < 7 )
@@ -1449,7 +1448,7 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
             {
                 units = papszFields[i] + strlen("units=");
             } else if (strncmp(papszFields[i], "rotation=", strlen("rotation=")) == 0) {
-                rotation = CPLAtof(papszFields[i] + strlen("rotation=")) * (PI/180) * -1;
+                rotation = CPLAtof(papszFields[i] + strlen("rotation=")) * (M_PI/180) * -1;
             }
         }
     }
