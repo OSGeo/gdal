@@ -477,7 +477,8 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 {
     SetPamFlags(0);
 
-    if( m_poParentDS == NULL && !m_osRasterTable.empty() &&
+    if( eAccess == GA_Update &&
+        m_poParentDS == NULL && !m_osRasterTable.empty() &&
         !m_bGeoTransformValid )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -906,6 +907,9 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
     }
     if( dfGDALMinX >= dfGDALMaxX || dfGDALMinY >= dfGDALMaxY )
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Illegal min_x/min_y/max_x/max_y values for %s",
+                 pszTableName);
         return false;
     }
 
@@ -975,7 +979,12 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
     double dfRasterXSize = 0.5 + (dfGDALMaxX - dfGDALMinX) / dfPixelXSize;
     double dfRasterYSize = 0.5 + (dfGDALMaxY - dfGDALMinY) / dfPixelYSize;
     if( dfRasterXSize > INT_MAX || dfRasterYSize > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too big raster: %f x %f",
+                 dfRasterXSize, dfRasterYSize);
         return false;
+    }
     nRasterXSize = (int)dfRasterXSize;
     nRasterYSize = (int)dfRasterYSize;
 
@@ -1025,6 +1034,8 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
                                                      nTileWidth, nTileHeight);
     if( m_pabyCachedTiles == NULL )
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too big tiles: %d x %d", nTileWidth, nTileHeight);
         return false;
     }
 
@@ -1090,7 +1101,9 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         char* pszSQL = sqlite3_mprintf(
             "SELECT datatype, scale, offset, data_null, precision FROM "
             "gpkg_2d_gridded_coverage_ancillary "
-            "WHERE tile_matrix_set_name = '%q'", pszTableName);
+            "WHERE tile_matrix_set_name = '%q' "
+            "AND datatype IN ('integer', 'float')"
+            "AND (scale > 0 OR scale IS NULL)", pszTableName);
         err = SQLQuery(hDB, pszSQL, &oResult);
         sqlite3_free(pszSQL);
         if( err != OGRERR_NONE || oResult.nRowCount == 0 )
@@ -1106,12 +1119,6 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         const char* pszPrecision = SQLResultGetValue(&oResult, 4, 0);
         if( pszDataNull )
             osDataNull = pszDataNull;
-        if( pszDataType == NULL ||
-            (!EQUAL(pszDataType, "integer") && !EQUAL(pszDataType, "float")) )
-        {
-            SQLResultFree(&oResult);
-            return false;
-        }
         if( EQUAL(pszDataType, "float") )
         {
             SetDataType(GDT_Float32);
@@ -1123,13 +1130,6 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
             m_eTF = GPKG_TF_PNG_16BIT;
             const double dfScale = pszScale ? CPLAtof(pszScale) : 1.0;
             const double dfOffset = pszOffset ? CPLAtof(pszOffset) : 0.0;
-            if( dfScale <= 0.0 )
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Unsupported scale %.18g", dfScale);
-                SQLResultFree(&oResult);
-                return false;
-            }
             if( dfScale == 1.0 )
             {
                 if( dfOffset == 0.0 )
