@@ -28,6 +28,8 @@ cpl_config.h
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
+*.VC.db
+*.VC.opendb
 /[Dd]ebug
 /[Rr]elease
 /x64
