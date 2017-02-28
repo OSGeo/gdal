@@ -2837,7 +2837,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     /* will be written into the main file and supported henceforth */
     SQLCommand(hDB, "PRAGMA encoding = \"UTF-8\"");
 
-    if( eDT != GDT_Byte )
+    if( nBandsIn > 0 && eDT != GDT_Byte )
     {
         m_nApplicationId = GPKG_APPLICATION_ID;
         m_nUserVersion = GPKG_1_2_VERSION;
