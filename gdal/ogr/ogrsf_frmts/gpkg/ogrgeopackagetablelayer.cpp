@@ -94,7 +94,8 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
                     "UPDATE gpkg_contents SET "
                     "last_change = '%q'"
                     "WHERE table_name = '%q'",
-                    m_pszTableName, pszCurrentDate);
+                    pszCurrentDate,
+                    m_pszTableName);
     }
     else
     {
