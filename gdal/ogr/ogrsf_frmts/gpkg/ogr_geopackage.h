@@ -40,6 +40,8 @@
 #define UNKNOWN_SRID   -2
 #define DEFAULT_SRID    0
 
+#define ENABLE_OGR_FEATURE_COUNT_COLUMN
+
 typedef enum
 {
     GPKG_ATTRIBUTES,
@@ -73,6 +75,9 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
     int                 m_nLayers;
     bool                m_bUtf8;
     void                CheckUnknownExtensions(bool bCheckRasterTable = false);
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    bool                m_bHasFeatureCountColumn;
+#endif
 
     CPLString           m_osIdentifier;
     bool                m_bIdentifierAsCO;
@@ -209,6 +214,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
         virtual OGRErr      CommitTransaction() override;
         virtual OGRErr      RollbackTransaction() override;
 
+        bool                IsInTransaction() const;
+
         int                 GetSrsId( const OGRSpatialReference * poSRS );
         const char*         GetSrsName( const OGRSpatialReference * poSRS );
         OGRSpatialReference* GetSpatialRef( int iSrsId );
@@ -325,6 +332,12 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     char*                       m_pszTableName;
     int                         m_iSrs;
     OGREnvelope*                m_poExtent;
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    GIntBig                     m_nTotalFeatureCount;
+    bool                        m_bOGRFeatureCountTriggersEnabled;
+    bool                        m_bAddOGRFeatureCountTriggers;
+    bool                        m_bFeatureCountTriggersDeletedInTransaction;
+#endif
     CPLString                   m_soColumns;
     CPLString                   m_soFilter;
     CPLString                   osQuery;
@@ -358,6 +371,10 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     OGRErr              RecreateTable(const CPLString& osColumnsForCreate,
                                       const CPLString& osFieldListForSelect);
     bool                IsTable();
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    void                CreateTriggers(const char* pszTableName = NULL);
+    void                DisableTriggers();
+#endif
 
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
@@ -393,6 +410,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce); }
+
     void                RecomputeExtent();
 
     OGRErr              ReadTableDefinition(bool bIsSpatial, bool bIsGpkgTable);
@@ -435,6 +453,19 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     void                SetTruncateFieldsFlag( int bFlag )
                                 { m_bTruncateFields = CPL_TO_BOOL( bFlag ); }
     OGRErr              RunDeferredCreationIfNecessary();
+
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    bool                GetAddOGRFeatureCountTriggers() const
+                                    { return m_bAddOGRFeatureCountTriggers; }
+    void                SetAddOGRFeatureCountTriggers(bool b)
+                                    { m_bAddOGRFeatureCountTriggers = b; }
+    bool                GetOGRFeatureCountTriggersDeletedInTransaction() const
+                        { return m_bFeatureCountTriggersDeletedInTransaction; }
+    void                SetOGRFeatureCountTriggersEnabled(bool b)
+                                    { m_bOGRFeatureCountTriggersEnabled = b; }
+
+    void                DisableFeatureCount( bool bInMemoryOnly = false );
+#endif
 
     /************************************************************************/
     /* GPKG methods */

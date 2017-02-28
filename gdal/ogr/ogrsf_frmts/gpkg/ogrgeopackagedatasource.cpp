@@ -441,6 +441,9 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_papoLayers(NULL),
     m_nLayers(0),
     m_bUtf8(false),
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    m_bHasFeatureCountColumn(false),
+#endif
     m_bIdentifierAsCO(false),
     m_bDescriptionAsCO(false),
     m_bHasReadMetadataFromStorage(false),
@@ -633,6 +636,20 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             SQLResultFree(&oResult);
             return FALSE;
         }
+
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+        if( aosGpkgTables[i] == "gpkg_contents" && oResult.nColCount == 6 )
+        {
+            for( int row = 0; row < oResult.nRowCount; row++ )
+            {
+                const char *pszColName = SQLResultGetValue(&oResult, 1, row);
+                if( pszColName && strcmp(pszColName, "ogr_feature_count") == 0 )
+                {
+                    m_bHasFeatureCountColumn = true;
+                }
+            }
+        }
+#endif
 
         SQLResultFree(&oResult);
     }
@@ -2939,7 +2956,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
         /* Requirement 13: A GeoPackage file SHALL include a gpkg_contents table */
         /* http://opengis.github.io/geopackage/#_contents */
-        const char *pszContents =
+        CPLString osContents =
             "CREATE TABLE gpkg_contents ("
             "table_name TEXT NOT NULL PRIMARY KEY,"
             "data_type TEXT NOT NULL,"
@@ -2948,11 +2965,20 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "last_change DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),"
             "min_x DOUBLE, min_y DOUBLE,"
             "max_x DOUBLE, max_y DOUBLE,"
-            "srs_id INTEGER,"
+            "srs_id INTEGER,";
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+        if( CPLFetchBool(papszOptions, "ADD_OGR_FEATURE_COUNT_COLUMN", true) )
+        {
+            m_bHasFeatureCountColumn = true;
+            osContents +=
+                "ogr_feature_count INTEGER,";
+        }
+#endif
+        osContents +=
             "CONSTRAINT fk_gc_r_srs_id FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys(srs_id)"
             ")";
 
-        if ( OGRERR_NONE != SQLCommand(hDB, pszContents) )
+        if ( OGRERR_NONE != SQLCommand(hDB, osContents) )
             return FALSE;
 
         /* Requirement 21: A GeoPackage with a gpkg_contents table row with a “features” */
@@ -4162,8 +4188,7 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
         return OGRERR_FAILURE;
 
     m_papoLayers[iLayer]->ResetReading();
-    m_papoLayers[iLayer]->RunDeferredCreationIfNecessary();
-    m_papoLayers[iLayer]->CreateSpatialIndexIfNecessary();
+    m_papoLayers[iLayer]->SyncToDisk();
 
     CPLString osLayerName = m_papoLayers[iLayer]->GetName();
 
@@ -4303,10 +4328,28 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
     m_bHasReadMetadataFromStorage = false;
 
     FlushMetadata();
-    for( int i = 0; i < m_nLayers; i++ )
+
+    CPLString osSQLCommand(pszSQLCommand);
+
+    if( pszDialect == NULL || !EQUAL(pszDialect, "DEBUG") )
     {
-        m_papoLayers[i]->RunDeferredCreationIfNecessary();
-        m_papoLayers[i]->CreateSpatialIndexIfNecessary();
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+        const bool bInsertOrDelete =
+            osSQLCommand.ifind("insert into ") != std::string::npos ||
+            osSQLCommand.ifind("delete from ") != std::string::npos;
+#endif
+
+        for( int i = 0; i < m_nLayers; i++ )
+        {
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+            if( bInsertOrDelete &&
+                osSQLCommand.ifind(m_papoLayers[i]->GetName()) != std::string::npos )
+            {
+                m_papoLayers[i]->DisableFeatureCount(true);
+            }
+#endif
+            m_papoLayers[i]->SyncToDisk();
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -4426,8 +4469,6 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /*      Prepare statement.                                              */
 /* -------------------------------------------------------------------- */
     sqlite3_stmt *hSQLStmt = NULL;
-
-    CPLString osSQLCommand = pszSQLCommand;
 
     /* This will speed-up layer creation */
     /* ORDER BY are costly to evaluate and are not necessary to establish */
@@ -5277,7 +5318,16 @@ std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>
 }
 
 /************************************************************************/
-/*                       CommitTransaction()                        */
+/*                         IsInTransaction()                            */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::IsInTransaction() const
+{
+    return nSoftTransactionLevel > 0;
+}
+
+/************************************************************************/
+/*                       CommitTransaction()                            */
 /************************************************************************/
 
 OGRErr GDALGeoPackageDataset::CommitTransaction()
@@ -5302,18 +5352,49 @@ OGRErr GDALGeoPackageDataset::CommitTransaction()
 OGRErr GDALGeoPackageDataset::RollbackTransaction()
 
 {
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    std::vector<bool> abAddTriggers;
+    std::vector<bool> abTriggersDeletedInTransaction;
+#endif
     if( nSoftTransactionLevel == 1 )
     {
         FlushMetadata();
         for( int i = 0; i < m_nLayers; i++ )
         {
-            m_papoLayers[i]->RunDeferredCreationIfNecessary();
-            m_papoLayers[i]->CreateSpatialIndexIfNecessary();
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+            abAddTriggers.push_back(
+                        m_papoLayers[i]->GetAddOGRFeatureCountTriggers());
+            abTriggersDeletedInTransaction.push_back(
+                m_papoLayers[i]->
+                    GetOGRFeatureCountTriggersDeletedInTransaction());
+            m_papoLayers[i]->SetAddOGRFeatureCountTriggers(false);
+#endif
+            m_papoLayers[i]->SyncToDisk();
             m_papoLayers[i]->ResetReading();
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+            m_papoLayers[i]->DisableFeatureCount();
+#endif
         }
     }
 
-    return OGRSQLiteBaseDataSource::RollbackTransaction();
+    OGRErr eErr = OGRSQLiteBaseDataSource::RollbackTransaction();
+#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+    if( !abAddTriggers.empty() )
+    {
+        for( int i = 0; i < m_nLayers; i++ )
+        {
+            if( abTriggersDeletedInTransaction[i] )
+            {
+                m_papoLayers[i]->SetOGRFeatureCountTriggersEnabled(true);
+            }
+            else
+            {
+                m_papoLayers[i]->SetAddOGRFeatureCountTriggers(abAddTriggers[i]);
+            }
+        }
+    }
+#endif
+    return eErr;
 }
 
 /************************************************************************/
