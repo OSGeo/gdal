@@ -3819,7 +3819,9 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
   {
      void* user_data = CPLGetErrorHandlerUserData();
      if( user_data != NULL )
-       Py_XDECREF((PyObject*)user_data);
+     {
+         Py_XDECREF((PyObject*)user_data);
+     }
      CPLPopErrorHandler();
   }
 
