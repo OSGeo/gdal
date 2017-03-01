@@ -1014,8 +1014,8 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
                  dfRasterXSize, dfRasterYSize);
         return false;
     }
-    nRasterXSize = (int)dfRasterXSize;
-    nRasterYSize = (int)dfRasterYSize;
+    nRasterXSize = std::max(1, static_cast<int>(dfRasterXSize));
+    nRasterYSize = std::max(1, static_cast<int>(dfRasterYSize));
 
     if( poParentDS )
     {
