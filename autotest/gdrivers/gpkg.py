@@ -1067,6 +1067,17 @@ def gpkg_14():
         return 'fail'
     ds = None
 
+    gdal.Translate('/vsimem/tmp2.gpkg', 'data/byte.tif', format = 'GPKG')
+    ds = gdal.OpenEx('/vsimem/tmp2.gpkg', gdal.OF_UPDATE)
+    ds.ExecuteSQL('UPDATE gpkg_contents SET min_x = NULL')
+    ds = None
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx('/vsimem/tmp2.gpkg', open_options = ['ZOOM_LEVEL=-1'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/tmp2.gpkg')
+
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
     if ds.RasterXSize != 512 or ds.RasterYSize != 256:
         gdaltest.post_reason('fail')
