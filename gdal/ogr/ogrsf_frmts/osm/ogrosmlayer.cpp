@@ -805,17 +805,12 @@ void OGROSMLayer::AddComputedAttribute( const char* pszName,
 {
     if( poDS->hDBForComputedAttributes == NULL )
     {
-#ifdef HAVE_SQLITE_VFS
         const int rc =
             sqlite3_open_v2(
                 ":memory:", &(poDS->hDBForComputedAttributes),
                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
                 SQLITE_OPEN_NOMUTEX,
                 NULL );
-#else
-        const int rc =
-            sqlite3_open( ":memory:", &(poDS->hDBForComputedAttributes) );
-#endif
         if( rc != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -866,12 +861,12 @@ void OGROSMLayer::AddComputedAttribute( const char* pszName,
     CPLDebug("OSM", "SQL : \"%s\"", osSQL.c_str());
 
     sqlite3_stmt *hStmt = NULL;
-    int rc = sqlite3_prepare( poDS->hDBForComputedAttributes, osSQL, -1,
+    int rc = sqlite3_prepare_v2( poDS->hDBForComputedAttributes, osSQL, -1,
                               &hStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "sqlite3_prepare() failed :  %s",
+                  "sqlite3_prepare_v2() failed :  %s",
                   sqlite3_errmsg(poDS->hDBForComputedAttributes) );
         return;
     }

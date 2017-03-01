@@ -299,9 +299,7 @@ class OGROSMDataSource : public OGRDataSource
     bool                bHasParsedFirstChunk;
     bool                bStopParsing;
 
-#ifdef HAVE_SQLITE_VFS
     sqlite3_vfs*        pMyVFS;
-#endif
 
     sqlite3            *hDB;
     sqlite3_stmt       *hInsertNodeStmt;

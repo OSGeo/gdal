@@ -294,7 +294,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
         CPLSPrintf("SELECT _rowid_, * FROM '%s' LIMIT 1", pszEscapedTableName);
 
     sqlite3_stmt *hColStmt = NULL;
-    int rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL );
+    int rc = sqlite3_prepare_v2( hDB, pszSQL, -1, &hColStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -354,7 +354,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                         OGRSQLiteEscape(pszFIDColumn).c_str(),
                         pszEscapedTableName);
     hColStmt = NULL;
-    rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL );
+    rc = sqlite3_prepare_v2( hDB, pszSQL, -1, &hColStmt, NULL );
     if( rc == SQLITE_OK )
     {
         rc = sqlite3_step( hColStmt );
@@ -590,7 +590,7 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
     const char *pszSQL =
         CPLSPrintf("SELECT _rowid_, * FROM '%s' LIMIT 1", pszEscapedTableName);
 
-    int rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL );
+    int rc = sqlite3_prepare_v2( hDB, pszSQL, -1, &hColStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -701,21 +701,18 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
     osSQL.Printf( "SELECT _rowid_, * FROM '%s' %s",
                     pszEscapedTableName,
                     osWHERE.c_str() );
+#ifdef DEBUG_VERBOSE
+    CPLDebug("SQLite", "%s", osSQL.c_str());
+#endif
 
-// #ifdef HAVE_SQLITE3_PREPARE_V2
-//    rc = sqlite3_prepare_v2( poDS->GetDB(), osSQL, osSQL.size(),
-//                  &hStmt, NULL );
-// #else
-    const int rc = sqlite3_prepare( poDS->GetDB(), osSQL, -1, &hStmt, NULL );
-// #endif
-
+    const int rc = sqlite3_prepare_v2( poDS->GetDB(), osSQL, -1, &hStmt, NULL );
     if( rc == SQLITE_OK )
     {
         return OGRERR_NONE;
     }
 
     CPLError( CE_Failure, CPLE_AppDefined,
-              "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
+              "In ResetStatement(): sqlite3_prepare_v2(%s):\n  %s",
               osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
     hStmt = NULL;
     return OGRERR_FAILURE;
@@ -777,13 +774,13 @@ OGRFeature *OGRSQLiteTableLayer::GetFeature( GIntBig nFeatureId )
 
     CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
 
-    const int rc = sqlite3_prepare( poDS->GetDB(), osSQL,
+    const int rc = sqlite3_prepare_v2( poDS->GetDB(), osSQL,
                                     static_cast<int>(osSQL.size()),
                                     &hStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "In GetFeature(): sqlite3_prepare(%s):\n  %s",
+                  "In GetFeature(): sqlite3_prepare_v2(%s):\n  %s",
                   osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
 
         return NULL;
@@ -2670,16 +2667,16 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
 /*      Prepare the statement.                                          */
 /* -------------------------------------------------------------------- */
 #ifdef DEBUG
-    CPLDebug( "OGR_SQLITE", "prepare(%s)", osCommand.c_str() );
+    CPLDebug( "OGR_SQLITE", "prepare_v2(%s)", osCommand.c_str() );
 #endif
 
     sqlite3_stmt *hUpdateStmt = NULL;
-    int rc = sqlite3_prepare( hDB, osCommand, -1, &hUpdateStmt, NULL );
+    int rc = sqlite3_prepare_v2( hDB, osCommand, -1, &hUpdateStmt, NULL );
 
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "In SetFeature(): sqlite3_prepare(%s):\n  %s",
+                  "In SetFeature(): sqlite3_prepare_v2(%s):\n  %s",
                   osCommand.c_str(), sqlite3_errmsg(hDB) );
 
         return OGRERR_FAILURE;
@@ -3062,22 +3059,18 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
     if( !bReuseStmt && (hInsertStmt == NULL || osCommand != osLastInsertStmt) )
     {
     #ifdef DEBUG
-        CPLDebug( "OGR_SQLITE", "prepare(%s)", osCommand.c_str() );
+        CPLDebug( "OGR_SQLITE", "prepare_v2(%s)", osCommand.c_str() );
     #endif
 
         ClearInsertStmt();
         if( poFeature->GetFID() == OGRNullFID )
             osLastInsertStmt = osCommand;
 
-#ifdef HAVE_SQLITE3_PREPARE_V2
         const int rc = sqlite3_prepare_v2( hDB, osCommand, -1, &hInsertStmt, NULL );
-#else
-        const int rc = sqlite3_prepare( hDB, osCommand, -1, &hInsertStmt, NULL );
-#endif
         if( rc != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                    "In CreateFeature(): sqlite3_prepare(%s):\n  %s",
+                    "In CreateFeature(): sqlite3_prepare_v2(%s):\n  %s",
                     osCommand.c_str(), sqlite3_errmsg(hDB) );
 
             ClearInsertStmt();

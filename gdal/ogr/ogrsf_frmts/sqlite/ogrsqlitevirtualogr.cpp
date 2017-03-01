@@ -33,8 +33,6 @@
 #include <map>
 #include <vector>
 
-#ifdef HAVE_SQLITE_VFS
-
 /************************************************************************/
 /*                           OGR2SQLITE_Register()                      */
 /************************************************************************/
@@ -2512,5 +2510,3 @@ int OGR2SQLITE_static_register (sqlite3 * hDB, char **pzErrMsg, void * _pApi)
 
     return SQLITE_OK;
 }
-
-#endif // HAVE_SQLITE_VFS

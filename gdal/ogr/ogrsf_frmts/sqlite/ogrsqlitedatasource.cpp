@@ -289,9 +289,7 @@ OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource() :
     m_pszFilename(NULL),
     hDB(NULL),
     bUpdate(FALSE),
-#ifdef HAVE_SQLITE_VFS
     pMyVFS(NULL),
-#endif
     fpMainFile(NULL),  // Do not close. The VFS layer will do it for us.
 #ifdef SPATIALITE_412_OR_LATER
     hSpatialiteCtxt(NULL),
@@ -357,7 +355,6 @@ void OGRSQLiteBaseDataSource::CloseDB()
 
     }
 
-#ifdef HAVE_SQLITE_VFS
     if (pMyVFS)
     {
         sqlite3_vfs_unregister(pMyVFS);
@@ -365,7 +362,6 @@ void OGRSQLiteBaseDataSource::CloseDB()
         CPLFree(pMyVFS);
         pMyVFS = NULL;
     }
-#endif
 }
 
 /************************************************************************/
@@ -758,7 +754,6 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
         sqlite3_config(SQLITE_CONFIG_MALLOC, &sDebugMemAlloc);
 #endif
 
-#ifdef HAVE_SQLITE_VFS
     if( bRegisterOGR2SQLiteExtensions )
         OGR2SQLITE_Register();
 
@@ -788,9 +783,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
     {
         rc = sqlite3_open_v2( m_pszFilename, &hDB, flags, NULL );
     }
-#else
-    int rc = sqlite3_open( m_pszFilename, &hDB );
-#endif  // HAVE_SQLITE_VFS
+
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -1202,7 +1195,7 @@ int OGRSQLiteDataSource::InitWithEPSG()
                     }
 
                     sqlite3_stmt *hInsertStmt = NULL;
-                    rc = sqlite3_prepare( hDB, osCommand, -1, &hInsertStmt, NULL );
+                    rc = sqlite3_prepare_v2( hDB, osCommand, -1, &hInsertStmt, NULL );
 
                     if ( pszProjCS )
                     {
@@ -1264,7 +1257,7 @@ int OGRSQLiteDataSource::InitWithEPSG()
                         nSRSId, nSRSId );
 
                     sqlite3_stmt *hInsertStmt = NULL;
-                    rc = sqlite3_prepare( hDB, osCommand, -1, &hInsertStmt, NULL );
+                    rc = sqlite3_prepare_v2( hDB, osCommand, -1, &hInsertStmt, NULL );
 
                     if( rc == SQLITE_OK)
                         rc = sqlite3_bind_text( hInsertStmt, 1, pszWKT, -1, SQLITE_STATIC );
@@ -2223,14 +2216,14 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
         }
     }
 
-    int rc = sqlite3_prepare( GetDB(), osSQLCommand.c_str(),
+    int rc = sqlite3_prepare_v2( GetDB(), osSQLCommand.c_str(),
                               static_cast<int>(osSQLCommand.size()),
                               &hSQLStmt, NULL );
 
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "In ExecuteSQL(): sqlite3_prepare(%s):\n  %s",
+                "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
                 pszSQLCommand, sqlite3_errmsg(GetDB()) );
 
         if( hSQLStmt != NULL )
@@ -3259,7 +3252,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     }
 
     sqlite3_stmt *hSelectStmt = NULL;
-    int rc = sqlite3_prepare( hDB, osCommand, -1, &hSelectStmt, NULL );
+    int rc = sqlite3_prepare_v2( hDB, osCommand, -1, &hSelectStmt, NULL );
 
     if( rc == SQLITE_OK)
         rc = sqlite3_bind_text( hSelectStmt, 1,
@@ -3472,7 +3465,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     }
 
     sqlite3_stmt *hInsertStmt = NULL;
-    rc = sqlite3_prepare( hDB, osCommand, -1, &hInsertStmt, NULL );
+    rc = sqlite3_prepare_v2( hDB, osCommand, -1, &hInsertStmt, NULL );
 
     for( int i = 0; apszToInsert[i] != NULL; i++ )
     {

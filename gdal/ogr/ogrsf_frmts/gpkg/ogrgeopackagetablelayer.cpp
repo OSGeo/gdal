@@ -934,7 +934,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
                             OGRSQLiteEscape(m_pszFidColumn).c_str(),
                             m_pszTableName);
         sqlite3_stmt* hColStmt = NULL;
-        int rc = sqlite3_prepare( poDb, pszSQLStatic, -1, &hColStmt, NULL );
+        int rc = sqlite3_prepare_v2( poDb, pszSQLStatic, -1, &hColStmt, NULL );
         if( rc == SQLITE_OK )
         {
             rc = sqlite3_step( hColStmt );
@@ -1695,11 +1695,13 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
                      m_soColumns.c_str(),
                      SQLEscapeDoubleQuote(m_pszTableName).c_str());
 
-    int err = sqlite3_prepare(m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
+    int err = sqlite3_prepare_v2(
+        m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
     if ( err != SQLITE_OK )
     {
         m_poQueryStatement = NULL;
-        CPLError( CE_Failure, CPLE_AppDefined, "failed to prepare SQL: %s", soSQL.c_str());
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "failed to prepare SQL: %s", soSQL.c_str());
         return OGRERR_FAILURE;
     }
 
@@ -1746,11 +1748,13 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
                  SQLEscapeDoubleQuote(m_pszTableName).c_str(),
                  m_pszFidColumn ? SQLEscapeDoubleQuote(m_pszFidColumn).c_str() : "_rowid_", nFID);
 
-    int err = sqlite3_prepare(m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
+    int err = sqlite3_prepare_v2(
+        m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
     if ( err != SQLITE_OK )
     {
         m_poQueryStatement = NULL;
-        CPLError( CE_Failure, CPLE_AppDefined, "failed to prepare SQL: %s", soSQL.c_str());
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "failed to prepare SQL: %s", soSQL.c_str());
         return NULL;
     }
 

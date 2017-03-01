@@ -213,9 +213,7 @@ OGROSMDataSource::OGROSMDataSource() :
     psParser(NULL),
     bHasParsedFirstChunk(false),
     bStopParsing(false),
-#ifdef HAVE_SQLITE_VFS
     pMyVFS(NULL),
-#endif
     hDB(NULL),
     hInsertNodeStmt(NULL),
     hInsertWayStmt(NULL),
@@ -312,14 +310,12 @@ OGROSMDataSource::~OGROSMDataSource()
     if( hDBForComputedAttributes != NULL )
         sqlite3_close(hDBForComputedAttributes);
 
-#ifdef HAVE_SQLITE_VFS
     if( pMyVFS )
     {
         sqlite3_vfs_unregister(pMyVFS);
         CPLFree(pMyVFS->pAppData);
         CPLFree(pMyVFS);
     }
-#endif
 
     if( !osTmpDBName.empty() && bMustUnlink )
     {
@@ -2961,7 +2957,6 @@ bool OGROSMDataSource::CreateTempDB()
     bool bIsExisting = false;
     bool bSuccess = false;
 
-#ifdef HAVE_SQLITE_VFS
     const char* pszExistingTmpFile = CPLGetConfigOption("OSM_EXISTING_TMPFILE", NULL);
     if( pszExistingTmpFile != NULL )
     {
@@ -3016,7 +3011,6 @@ bool OGROSMDataSource::CreateTempDB()
                 pMyVFS->zName );
         }
     }
-#endif
 
     if( !bSuccess )
     {
@@ -3210,12 +3204,13 @@ bool OGROSMDataSource::SetCacheSize()
 bool OGROSMDataSource::CreatePreparedStatements()
 {
     int rc =
-        sqlite3_prepare( hDB, "INSERT INTO nodes (id, coords) VALUES (?,?)", -1,
-                         &hInsertNodeStmt, NULL );
+        sqlite3_prepare_v2( hDB,
+                            "INSERT INTO nodes (id, coords) VALUES (?,?)", -1,
+                            &hInsertNodeStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "sqlite3_prepare() failed :  %s", sqlite3_errmsg(hDB) );
+                  "sqlite3_prepare_v2() failed :  %s", sqlite3_errmsg(hDB) );
         return false;
     }
 
@@ -3237,21 +3232,21 @@ bool OGROSMDataSource::CreatePreparedStatements()
             strcpy(szTmp + nLen -1, ",?) ORDER BY id ASC");
             nLen += 2;
         }
-        rc = sqlite3_prepare( hDB, szTmp, -1, &pahSelectNodeStmt[i], NULL );
+        rc = sqlite3_prepare_v2( hDB, szTmp, -1, &pahSelectNodeStmt[i], NULL );
         if( rc != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                    "sqlite3_prepare() failed :  %s", sqlite3_errmsg(hDB) );
+                    "sqlite3_prepare_v2() failed :  %s", sqlite3_errmsg(hDB) );
             return false;
         }
     }
 
-    rc = sqlite3_prepare( hDB, "INSERT INTO ways (id, data) VALUES (?,?)", -1,
+    rc = sqlite3_prepare_v2( hDB, "INSERT INTO ways (id, data) VALUES (?,?)", -1,
                           &hInsertWayStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "sqlite3_prepare() failed :  %s", sqlite3_errmsg(hDB) );
+                  "sqlite3_prepare_v2() failed :  %s", sqlite3_errmsg(hDB) );
         return false;
     }
 
@@ -3272,42 +3267,42 @@ bool OGROSMDataSource::CreatePreparedStatements()
             strcpy(szTmp + nLen -1, ",?)");
             nLen += 2;
         }
-        rc = sqlite3_prepare( hDB, szTmp, -1, &pahSelectWayStmt[i], NULL );
+        rc = sqlite3_prepare_v2( hDB, szTmp, -1, &pahSelectWayStmt[i], NULL );
         if( rc != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                    "sqlite3_prepare() failed :  %s", sqlite3_errmsg(hDB) );
+                    "sqlite3_prepare_v2() failed :  %s", sqlite3_errmsg(hDB) );
             return false;
         }
     }
 
-    rc = sqlite3_prepare(
+    rc = sqlite3_prepare_v2(
         hDB, "INSERT INTO polygons_standalone (id) VALUES (?)", -1,
         &hInsertPolygonsStandaloneStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "sqlite3_prepare() failed :  %s", sqlite3_errmsg(hDB) );
+                  "sqlite3_prepare_v2() failed :  %s", sqlite3_errmsg(hDB) );
         return false;
     }
 
-    rc = sqlite3_prepare(
+    rc = sqlite3_prepare_v2(
         hDB, "DELETE FROM polygons_standalone WHERE id = ?", -1,
         &hDeletePolygonsStandaloneStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "sqlite3_prepare() failed :  %s", sqlite3_errmsg(hDB) );
+                  "sqlite3_prepare_v2() failed :  %s", sqlite3_errmsg(hDB) );
         return false;
     }
 
-    rc = sqlite3_prepare(
+    rc = sqlite3_prepare_v2(
         hDB, "SELECT id FROM polygons_standalone ORDER BY id", -1,
         &hSelectPolygonsStandaloneStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "sqlite3_prepare() failed :  %s", sqlite3_errmsg(hDB) );
+                "sqlite3_prepare_v2() failed :  %s", sqlite3_errmsg(hDB) );
         return false;
     }
 
@@ -4117,14 +4112,10 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
 
             osTmpDBName = osNewTmpDBName;
 
-#ifdef HAVE_SQLITE_VFS
             const int rc =
                 sqlite3_open_v2( osTmpDBName.c_str(), &hDB,
                                  SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX,
                                  NULL );
-#else
-            const int rc = sqlite3_open( osTmpDBName.c_str(), &hDB );
-#endif
             if( rc != SQLITE_OK )
             {
                 CPLError( CE_Failure, CPLE_OpenFailed,

@@ -106,11 +106,11 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     bDoStep = true;
 
 #ifdef DEBUG
-    CPLDebug( "OGR_GPKG", "prepare(%s)", poBehaviour->osSQLCurrent.c_str() );
+    CPLDebug( "OGR_GPKG", "prepare_v2(%s)", poBehaviour->osSQLCurrent.c_str() );
 #endif
 
     const int rc =
-        sqlite3_prepare( m_poDS->GetDB(), poBehaviour->osSQLCurrent,
+        sqlite3_prepare_v2( m_poDS->GetDB(), poBehaviour->osSQLCurrent,
                          static_cast<int>(poBehaviour->osSQLCurrent.size()),
                          &m_poQueryStatement, NULL );
 
@@ -121,7 +121,7 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
+                  "In ResetStatement(): sqlite3_prepare_v2(%s):\n  %s",
                   poBehaviour->osSQLCurrent.c_str(), sqlite3_errmsg(m_poDS->GetDB()) );
         m_poQueryStatement = NULL;
         return OGRERR_FAILURE;
