@@ -1367,6 +1367,20 @@ def gpkg_14():
         return 'fail'
     ds = None
 
+    # Overflow occured in ComputeTileAndPixelShifts()
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['MINX=-1e12', 'MAXX=-0.9999e12'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Overflow occured in ComputeTileAndPixelShifts()
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['MINY=-1e12', 'MAXY=-0.9999e12'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     os.remove('tmp/tmp.gpkg')
     return 'success'
 
