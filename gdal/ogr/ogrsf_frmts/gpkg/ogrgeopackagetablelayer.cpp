@@ -1530,7 +1530,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
             /* Construct a SQL INSERT statement from the OGRFeature */
             /* Only work with fields that are set */
             /* Do not stick values into SQL, use placeholder and bind values later */
-            CPLString osCommand = FeatureGenerateInsertSQL(poFeature, true, true);
+            CPLString osCommand = FeatureGenerateInsertSQL(poFeature, true);
 
             /* Prepare the SQL into a statement */
             int err = sqlite3_prepare_v2(m_poDS->GetDB(), osCommand, -1, &m_poUpdateStatement, NULL);
