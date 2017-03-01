@@ -913,7 +913,8 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile( int nRow, int nCol, GByte *pa
     if ( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "failed to prepare SQL: %s", pszSQL );
+                  "failed to prepare SQL %s: %s",
+                  pszSQL, sqlite3_errmsg( IGetDB() ) );
         sqlite3_free(pszSQL);
         return NULL;
     }
@@ -2183,7 +2184,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             int rc = sqlite3_prepare_v2(IGetDB(), pszSQL, -1, &hStmt, NULL);
             if ( rc != SQLITE_OK )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, "failed to prepare SQL %s: %s",
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "failed to prepare SQL %s: %s",
                           pszSQL, sqlite3_errmsg(IGetDB()) );
                 CPLFree(pabyBlob);
             }
