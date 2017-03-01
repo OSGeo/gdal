@@ -1254,17 +1254,9 @@ GIntBig GDALGPKGMBTilesLikePseudoDataset::GetTileId(int nRow, int nCol)
             "tile_row = %d AND tile_column = %d",
             m_osRasterTable.c_str(), m_nZoomLevel,
         GetRowFromIntoTopConvention(nRow), nCol);
-    char** papszResult = NULL;
-    int nRowCount = 0;
-    int nColCount = 0;
-    sqlite3_get_table(IGetDB(), pszSQL, &papszResult,
-                        &nRowCount, &nColCount, NULL);
+    GIntBig nRes = SQLGetInteger64( IGetDB(), pszSQL, NULL );
     sqlite3_free(pszSQL);
-    GIntBig nId = 0;
-    if( nRowCount == 1 && nColCount == 1 )
-        nId = CPLAtoGIntBig(papszResult[1]);
-    sqlite3_free_table(papszResult);
-    return nId;
+    return nRes;
 }
 
 /************************************************************************/
