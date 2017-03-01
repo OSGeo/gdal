@@ -2391,10 +2391,11 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
     if( m_poFeatureDefn->GetGeomFieldCount() == 0 )
     {
         pszSQL = sqlite3_mprintf(
-                    "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name='%q'"
+                    "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name='%q' "
 #ifdef WORKAROUND_SQLITE3_BUGS
-                    " OR 0"
+                    "OR 0 "
 #endif
+                    "LIMIT 1000" // to avoid denial of service
                     ,pszT );
     }
     else
@@ -2405,10 +2406,11 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
                     "'gpkg_geom_COMPOUNDCURVE', 'gpkg_geom_CURVEPOLYGON', 'gpkg_geom_MULTICURVE', "
                     "'gpkg_geom_MULTISURFACE', 'gpkg_geom_CURVE', 'gpkg_geom_SURFACE', "
                     "'gpkg_geom_POLYHEDRALSURFACE', 'gpkg_geom_TIN', 'gpkg_geom_TRIANGLE', "
-                    "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger'))"
+                    "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger')) "
 #ifdef WORKAROUND_SQLITE3_BUGS
-                    " OR 0"
+                    "OR 0"
 #endif
+                    "LIMIT 1000" // to avoid denial of service
                     ,pszT,
                     m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef() );
     }
