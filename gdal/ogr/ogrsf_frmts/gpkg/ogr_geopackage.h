@@ -102,7 +102,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
 
     CPLString           m_osTilingScheme;
 
-        void            ComputeTileAndPixelShifts();
+        bool            ComputeTileAndPixelShifts();
         bool            InitRaster ( GDALGeoPackageDataset* poParentDS,
                                      const char* pszTableName,
                                      double dfMinX,

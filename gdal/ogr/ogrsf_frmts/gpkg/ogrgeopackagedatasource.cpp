@@ -949,18 +949,27 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
 /*                      ComputeTileAndPixelShifts()                     */
 /************************************************************************/
 
-void GDALGeoPackageDataset::ComputeTileAndPixelShifts()
+bool GDALGeoPackageDataset::ComputeTileAndPixelShifts()
 {
     int nTileWidth, nTileHeight;
     GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
 
     // Compute shift between GDAL origin and TileMatrixSet origin
-    int nShiftXPixels = (int)floor(0.5 + (m_adfGeoTransform[0] - m_dfTMSMinX) /  m_adfGeoTransform[1]);
-    m_nShiftXTiles = (int)floor(1.0 * nShiftXPixels / nTileWidth);
+    double dfShiftXPixels = (m_adfGeoTransform[0] - m_dfTMSMinX) / 
+                                                        m_adfGeoTransform[1];
+    if( dfShiftXPixels < INT_MIN || dfShiftXPixels + 0.5 > INT_MAX )
+        return false;
+    int nShiftXPixels = static_cast<int>(floor(0.5 + dfShiftXPixels));
+    m_nShiftXTiles = static_cast<int>(floor(1.0 * nShiftXPixels / nTileWidth));
     m_nShiftXPixelsMod = ((nShiftXPixels % nTileWidth) + nTileWidth) % nTileWidth;
-    int nShiftYPixels = (int)floor(0.5 + (m_adfGeoTransform[3] - m_dfTMSMaxY) /  m_adfGeoTransform[5]);
-    m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
+    double dfShiftYPixels = (m_adfGeoTransform[3] - m_dfTMSMaxY) /
+                                                        m_adfGeoTransform[5];
+    if( dfShiftYPixels < INT_MIN || dfShiftYPixels + 0.5 > INT_MAX )
+        return false;
+    int nShiftYPixels = static_cast<int>(floor(0.5 + dfShiftYPixels));
+    m_nShiftYTiles = static_cast<int>(floor(1.0 * nShiftYPixels / nTileHeight));
     m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
+    return true;
 }
 
 /************************************************************************/
@@ -1045,7 +1054,12 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
         SetBand( i, poNewBand );
     }
 
-    ComputeTileAndPixelShifts();
+    if( !ComputeTileAndPixelShifts() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Overflow occured in ComputeTileAndPixelShifts()");
+        return false;
+    }
 
     GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     GDALPamDataset::SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
@@ -1652,7 +1666,12 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     m_nTileMatrixWidth = nTileXCountZoomLevel0 * (1 << m_nZoomLevel);
     m_nTileMatrixHeight = nTileYCountZoomLevel0 * (1 << m_nZoomLevel);
 
-    ComputeTileAndPixelShifts();
+    if( !ComputeTileAndPixelShifts() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Overflow occured in ComputeTileAndPixelShifts()");
+        return CE_Failure;
+    };
 
     double dfGDALMinX = m_adfGeoTransform[0];
     double dfGDALMinY = m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5];
