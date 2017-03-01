@@ -3143,11 +3143,12 @@ def ogr_gpkg_43():
     ds.StartTransaction()
     for i in range(1001):
         ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, data_type, identifier) " +
-                      "VALUES ('attr%d', 'attributes', 'attr%d')" % (i+1,i+1))
-        ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, data_type, identifier) " +
                       "VALUES ('tiles%d', 'tiles', 'tiles%d')" % (i+1,i+1))
         ds.ExecuteSQL("INSERT INTO gpkg_tile_matrix_set VALUES " +
                       "('tiles%d', 0, 440720, 3750120, 441920, 3751320)" % (i+1))
+    for i in range(1001):
+        ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, data_type, identifier) " +
+                      "VALUES ('attr%d', 'attributes', 'attr%d')" % (i+1,i+1))
         ds.ExecuteSQL("CREATE TABLE attr%d (id INTEGER PRIMARY KEY AUTOINCREMENT)" % (i+1))
     ds.CommitTransaction()
     ds = None
@@ -3159,8 +3160,10 @@ def ogr_gpkg_43():
         print(len(ds.GetMetadata_List('SUBDATASETS')))
         return 'fail'
     ds = None
+    gdal.SetConfigOption('OGR_TABLE_LIMIT', '1000')
     with gdaltest.error_handler():
         ds = ogr.Open('/vsimem/ogr_gpkg_43.gpkg')
+    gdal.SetConfigOption('OGR_TABLE_LIMIT', None)
     if ds.GetLayerCount() != 1000:
         gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
