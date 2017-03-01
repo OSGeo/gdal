@@ -184,10 +184,7 @@ def gpkg_1():
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # With padding
     ds = gdal.Open('data/byte.tif')
@@ -195,11 +192,11 @@ def gpkg_1():
     clamped_expected_cs = get_expected_checksums(ds, gdaltest.png_dr, 1, clamp_output = False)[0]
     expected_gt = ds.GetGeoTransform()
     expected_wkt = ds.GetProjectionRef()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG'] )
     out_ds = None
     ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_gt = out_ds.GetGeoTransform()
     for i in range(6):
         if abs(expected_gt[i]-got_gt[i])>1e-8:
@@ -219,7 +216,7 @@ def gpkg_1():
         return 'fail'
 
     # Check that there's no extensions
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     sql_lyr = out_ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE type = 'table' AND name = 'gpkg_extensions'")
     if sql_lyr.GetFeatureCount() != 0:
         gdaltest.post_reason('fail')
@@ -228,7 +225,7 @@ def gpkg_1():
 
     out_ds = None
 
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', open_options= ['BAND_COUNT=3'])
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options= ['BAND_COUNT=3'])
     expected_cs = expected_cs[0:3]
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(out_ds.RasterCount)]
     if got_cs != expected_cs:
@@ -237,7 +234,7 @@ def gpkg_1():
         return 'fail'
     out_ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
     if ds.RasterXSize != 256 or ds.RasterYSize != 256:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -250,23 +247,23 @@ def gpkg_1():
     ds = None
 
     # Test USE_TILE_EXTENT=YES with empty table
-    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE)
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_UPDATE)
     ds.ExecuteSQL('DELETE FROM tmp')
     ds = None
-    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER, open_options = ['USE_TILE_EXTENT=YES'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER, open_options = ['USE_TILE_EXTENT=YES'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding
     ds = gdal.Open('data/byte.tif')
     expected_cs = ds.GetRasterBand(1).Checksum()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=20'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=20'] )
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs = [ expected_cs, expected_cs, expected_cs, 4873 ]
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
@@ -277,7 +274,7 @@ def gpkg_1():
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -291,10 +288,7 @@ def gpkg_2():
     if gdaltest.jpeg_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # With padding
     ds = gdal.Open('data/byte.tif')
@@ -302,10 +296,10 @@ def gpkg_2():
     clamped_expected_cs = get_expected_checksums(ds, gdaltest.jpeg_dr, 3, clamp_output = False)
     clamped_expected_cs.append(17849)
 
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=JPEG'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=JPEG'] )
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs = [ expected_cs, expected_cs, expected_cs, 4873 ]
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
@@ -316,7 +310,7 @@ def gpkg_2():
         return 'fail'
 
     # Check that there's no extensions
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     sql_lyr = out_ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE type = 'table' AND name = 'gpkg_extensions'")
     if sql_lyr.GetFeatureCount() != 0:
         gdaltest.post_reason('fail')
@@ -325,7 +319,7 @@ def gpkg_2():
 
     out_ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != clamped_expected_cs:
         gdaltest.post_reason('fail')
@@ -333,15 +327,15 @@ def gpkg_2():
         return 'fail'
     ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding
     ds = gdal.Open('data/byte.tif')
     expected_cs = get_expected_checksums(ds, gdaltest.jpeg_dr, 1, extend_src = False)[0]
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=JPEG', 'BLOCKSIZE=20'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=JPEG', 'BLOCKSIZE=20'] )
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs = [ expected_cs, expected_cs, expected_cs, 4873 ]
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
@@ -354,7 +348,7 @@ def gpkg_2():
     # Try deregistering JPEG driver
     gdaltest.jpeg_dr.Deregister()
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     # Should give warning at pixel reading time
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -365,10 +359,10 @@ def gpkg_2():
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     ds = gdal.Open('data/byte.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=JPEG'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=JPEG'] )
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     out_ds.FlushCache()
@@ -381,7 +375,7 @@ def gpkg_2():
     # Re-register driver
     gdaltest.jpeg_dr.Register()
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -395,10 +389,7 @@ def gpkg_3():
     if gdaltest.webp_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     ds = gdal.Open('data/byte.tif')
     expected_cs = get_expected_checksums(ds, gdaltest.webp_dr, 3)
@@ -408,10 +399,10 @@ def gpkg_3():
     else:
         clamped_expected_cs.append(17849)
 
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=WEBP'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=WEBP'] )
     out_ds = None
 
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg')
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -434,7 +425,7 @@ def gpkg_3():
 
     out_ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != clamped_expected_cs:
         gdaltest.post_reason('fail')
@@ -442,15 +433,15 @@ def gpkg_3():
         return 'fail'
     ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding
     ds = gdal.Open('data/byte.tif')
     expected_cs = get_expected_checksums(ds, gdaltest.webp_dr, 3, extend_src = False)
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=WEBP', 'BLOCKSIZE=20'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=WEBP', 'BLOCKSIZE=20'] )
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs.append(4873)
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
@@ -466,7 +457,7 @@ def gpkg_3():
     # Should give warning at open time since the webp extension is declared
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.webp_dr.Register()
@@ -487,14 +478,14 @@ def gpkg_3():
     # Re-register driver
     gdaltest.webp_dr.Register()
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Check updating a non-WEBP dataset with TILE_FORMAT=WEBP
-    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1 )
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 1, 1 )
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
     out_ds = None
 
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options=['TILE_FORMAT=WEBP'])
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options=['TILE_FORMAT=WEBP'])
     sql_lyr = out_ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE table_name = 'tmp' AND column_name = 'tile_data' AND extension_name = 'gpkg_webp'")
     if sql_lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
@@ -502,7 +493,7 @@ def gpkg_3():
     out_ds.ReleaseResultSet(sql_lyr)
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -528,10 +519,7 @@ def gpkg_4(tile_drv_name = 'PNG'):
     if tile_drv is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     ds = gdal.Open('data/rgbsmall.tif')
     expected_cs = get_expected_checksums(ds, tile_drv, 3)
@@ -541,11 +529,11 @@ def gpkg_4(tile_drv_name = 'PNG'):
     else:
         clamped_expected_cs.append(30638)
 
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=' + tile_drv_name] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=' + tile_drv_name] )
     ds = None
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs.append(30658)
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
@@ -556,7 +544,7 @@ def gpkg_4(tile_drv_name = 'PNG'):
         return 'fail'
     out_ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != clamped_expected_cs:
         gdaltest.post_reason('fail')
@@ -564,16 +552,16 @@ def gpkg_4(tile_drv_name = 'PNG'):
         return 'fail'
     ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding
     ds = gdal.Open('data/rgbsmall.tif')
     expected_cs = get_expected_checksums(ds, tile_drv, 3, extend_src = False)
     expected_cs.append(30658)
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=' + tile_drv_name, 'BLOCKSIZE=50'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=' + tile_drv_name, 'BLOCKSIZE=50'] )
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -583,7 +571,7 @@ def gpkg_4(tile_drv_name = 'PNG'):
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -634,13 +622,11 @@ def gpkg_7(tile_drv_name = 'PNG'):
             working_bands = 3
     if tile_drv is None:
         return 'skip'
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     src_ds = get_georeferenced_rgba_ds()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILE_FORMAT=' + tile_drv_name] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options = ['TILE_FORMAT=' + tile_drv_name] )
     out_ds = None
 
     expected_cs = get_expected_checksums(src_ds, tile_drv, working_bands)
@@ -649,7 +635,7 @@ def gpkg_7(tile_drv_name = 'PNG'):
     src_ds = None
     gdal.Unlink(src_filename)
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(working_bands)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -659,18 +645,18 @@ def gpkg_7(tile_drv_name = 'PNG'):
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding with alpha fully opaque
     tmp_ds = get_georeferenced_rgba_ds(alpha_fully_opaque = True)
     expected_cs = get_expected_checksums(tmp_ds, tile_drv, 3, extend_src = False)
     tmp_filename = tmp_ds.GetDescription()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = ['TILE_FORMAT=' + tile_drv_name, 'BLOCKXSIZE=%d' % tmp_ds.RasterXSize, 'BLOCKYSIZE=%d' % tmp_ds.RasterYSize] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', tmp_ds, options = ['TILE_FORMAT=' + tile_drv_name, 'BLOCKXSIZE=%d' % tmp_ds.RasterXSize, 'BLOCKYSIZE=%d' % tmp_ds.RasterYSize] )
     out_ds = None
     tmp_ds = None
     gdal.Unlink(tmp_filename)
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -680,17 +666,17 @@ def gpkg_7(tile_drv_name = 'PNG'):
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding with alpha fully transparent
     tmp_ds = get_georeferenced_rgba_ds(alpha_fully_transparent = True)
     tmp_filename = tmp_ds.GetDescription()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = ['TILE_FORMAT=' + tile_drv_name, 'BLOCKXSIZE=%d' % tmp_ds.RasterXSize, 'BLOCKYSIZE=%d' % tmp_ds.RasterYSize] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', tmp_ds, options = ['TILE_FORMAT=' + tile_drv_name, 'BLOCKXSIZE=%d' % tmp_ds.RasterXSize, 'BLOCKYSIZE=%d' % tmp_ds.RasterYSize] )
     out_ds = None
     tmp_ds = None
     gdal.Unlink(tmp_filename)
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     expected_cs = [0, 0, 0, 0]
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
@@ -701,7 +687,7 @@ def gpkg_7(tile_drv_name = 'PNG'):
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -739,22 +725,19 @@ def gpkg_10():
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     tmp_ds = get_georeferenced_ds_with_pct32()
     expected_ct = tmp_ds.GetRasterBand(1).GetColorTable().Clone()
     expected_cs_single_band = tmp_ds.GetRasterBand(1).Checksum()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = ['BLOCKXSIZE=%d' % tmp_ds.RasterXSize, 'BLOCKYSIZE=%d' % tmp_ds.RasterYSize]  )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', tmp_ds, options = ['BLOCKXSIZE=%d' % tmp_ds.RasterXSize, 'BLOCKYSIZE=%d' % tmp_ds.RasterYSize]  )
     out_ds = None
     tmp_filename = tmp_ds.GetDescription()
     tmp_ds = None
     gdal.Unlink(tmp_filename)
 
     expected_cs = [ 10991, 57677, 34965, 10638 ]
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     block_size = out_ds.GetRasterBand(1).GetBlockSize()
     if block_size != [out_ds.RasterXSize, out_ds.RasterYSize]:
         gdaltest.post_reason('fail')
@@ -784,7 +767,7 @@ def gpkg_10():
     out_ds = None
 
     expected_cs = [ expected_cs_single_band ]
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['BAND_COUNT=1'])
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['BAND_COUNT=1'])
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(out_ds.RasterCount)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -806,10 +789,10 @@ def gpkg_10():
 
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Repeated SetColorTable()
-    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1)
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg',1,1)
     out_ds.GetRasterBand(1).SetColorTable(None)
 
     gdal.ErrorReset()
@@ -824,20 +807,20 @@ def gpkg_10():
     out_ds = None
     gdal.PopErrorHandler()
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Partial tile
     tmp_ds = get_georeferenced_ds_with_pct32()
     expected_ct = tmp_ds.GetRasterBand(1).GetColorTable().Clone()
     expected_cs_single_band = tmp_ds.GetRasterBand(1).Checksum()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds)
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', tmp_ds)
     out_ds = None
     tmp_filename = tmp_ds.GetDescription()
     tmp_ds = None
     gdal.Unlink(tmp_filename)
 
     expected_cs = [ 10991, 57677, 34965, 10638 ]
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -871,11 +854,8 @@ def gpkg_11(tile_drv_name = 'JPEG'):
     if tile_drv is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
-
+    gdal.Unlink('/vsimem/tmp.gpkg')
+    
     rgba_xml = '<VRTDataset rasterXSize="162" rasterYSize="150">'
     for i in range(4):
         rgba_xml += """<VRTRasterBand dataType="Byte" band="%d">
@@ -889,7 +869,7 @@ def gpkg_11(tile_drv_name = 'JPEG'):
     rgba_ds = gdal.Open(rgba_xml)
 
     tmp_ds = get_georeferenced_ds_with_pct32()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = ['TILE_FORMAT=' + tile_drv_name] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', tmp_ds, options = ['TILE_FORMAT=' + tile_drv_name] )
     out_ds = None
     tmp_filename = tmp_ds.GetDescription()
     tmp_ds = None
@@ -898,7 +878,7 @@ def gpkg_11(tile_drv_name = 'JPEG'):
     expected_cs = get_expected_checksums(rgba_ds, tile_drv, working_bands)
     rgba_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(working_bands)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -906,7 +886,7 @@ def gpkg_11(tile_drv_name = 'JPEG'):
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -926,20 +906,17 @@ def gpkg_13():
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     src_ds = gdal.Open('data/small_world_pct.tif')
     expected_ct = src_ds.GetRasterBand(1).GetColorTable().Clone()
     expected_cs_single_band = src_ds.GetRasterBand(1).Checksum()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['BLOCKXSIZE=%d' % src_ds.RasterXSize, 'BLOCKYSIZE=%d' % src_ds.RasterYSize]  )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options = ['BLOCKXSIZE=%d' % src_ds.RasterXSize, 'BLOCKYSIZE=%d' % src_ds.RasterYSize]  )
     out_ds = None
     src_ds = None
 
     expected_cs = [ 63025, 48175, 12204 ]
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -952,7 +929,7 @@ def gpkg_13():
     out_ds = None
 
     expected_cs = [ expected_cs_single_band ]
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['BAND_COUNT=1'])
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['BAND_COUNT=1'])
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(out_ds.RasterCount)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -964,17 +941,17 @@ def gpkg_13():
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Partial tile
     src_ds = gdal.Open('data/small_world_pct.tif')
     expected_ct = src_ds.GetRasterBand(1).GetColorTable().Clone()
     expected_cs_single_band = src_ds.GetRasterBand(1).Checksum()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds)
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds)
     out_ds = None
     src_ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
     if ds.RasterXSize != 512 or ds.RasterYSize != 256:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -986,7 +963,7 @@ def gpkg_13():
         return 'fail'
     ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
     return 'success'
 
 ###############################################################################
@@ -999,23 +976,20 @@ def gpkg_14():
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     src_ds = gdal.Open('data/small_world.tif')
-    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'RASTER_TABLE=foo', 'RASTER_IDENTIFIER=bar', 'RASTER_DESCRIPTION=baz'])
+    ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'RASTER_TABLE=foo', 'RASTER_IDENTIFIER=bar', 'RASTER_DESCRIPTION=baz'])
     ds = None
 
     gdal.PushErrorHandler()
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['TABLE=non_existing'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['TABLE=non_existing'])
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = gdal.Open('tmp/tmp.gpkg')
+    ds = gdal.Open('/vsimem/tmp.gpkg')
     sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_contents WHERE table_name='foo'")
     feat_count = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
@@ -1043,7 +1017,7 @@ def gpkg_14():
     ds = None
 
     # In update mode, we expose even empty overview levels
-    ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
     if ds.GetMetadataItem('ZOOM_LEVEL') != '1':
         gdaltest.post_reason('fail')
         print(ds.GetMetadata())
@@ -1059,13 +1033,13 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['ZOOM_LEVEL=2'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['ZOOM_LEVEL=2'])
     if ds.RasterXSize != 400:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['ZOOM_LEVEL=1'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['ZOOM_LEVEL=1'])
     if ds.RasterXSize != 400:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1075,7 +1049,7 @@ def gpkg_14():
     ds = None
 
     # In update mode, we expose even empty overview levels
-    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['ZOOM_LEVEL=1'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_UPDATE, open_options = ['ZOOM_LEVEL=1'])
     if ds.RasterXSize != 400:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1084,7 +1058,7 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['ZOOM_LEVEL=0'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['ZOOM_LEVEL=0'])
     if ds.RasterXSize != 200:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1093,7 +1067,7 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
     if ds.RasterXSize != 512 or ds.RasterYSize != 256:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1106,7 +1080,7 @@ def gpkg_14():
     ds = None
 
     # Open with exactly one tile shift
-    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['TILE_FORMAT=PNG', 'MINX=-410.4','MAXY=320.4'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_UPDATE, open_options = ['TILE_FORMAT=PNG', 'MINX=-410.4','MAXY=320.4'])
     if ds.RasterXSize != 400+256 or ds.RasterYSize != 200+256:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1130,7 +1104,7 @@ def gpkg_14():
     ds = None
 
     # Partial tile shift (enclosing tiles)
-    ds = gdal.OpenEx('GPKG:tmp/tmp.gpkg:foo', gdal.OF_UPDATE, open_options = ['MINX=-270','MAXY=180','MINY=-180','MAXX=270'])
+    ds = gdal.OpenEx('GPKG:/vsimem/tmp.gpkg:foo', gdal.OF_UPDATE, open_options = ['MINX=-270','MAXY=180','MINY=-180','MAXX=270'])
     if ds.RasterXSize != 600 or ds.RasterYSize != 400:
         print(ds.RasterXSize)
         print(ds.RasterYSize)
@@ -1158,7 +1132,7 @@ def gpkg_14():
     ds.WriteRaster(0,0,ds.RasterXSize,ds.RasterYSize, data)
     ds = None
 
-    ds = gdal.OpenEx('GPKG:tmp/tmp.gpkg:foo', gdal.OF_UPDATE, open_options = ['MINX=-270','MAXY=180','MINY=-180','MAXX=270'])
+    ds = gdal.OpenEx('GPKG:/vsimem/tmp.gpkg:foo', gdal.OF_UPDATE, open_options = ['MINX=-270','MAXY=180','MINY=-180','MAXX=270'])
     expected_cs = [28940, 32454, 40526, 64323]
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
@@ -1170,7 +1144,7 @@ def gpkg_14():
     ds.GetRasterBand(1).WriteRaster(0,0,256,256, data)
     ds = None
 
-    ds = gdal.OpenEx('GPKG:tmp/tmp.gpkg:foo', open_options = ['MINX=-270','MAXY=180','MINY=-180','MAXX=270'])
+    ds = gdal.OpenEx('GPKG:/vsimem/tmp.gpkg:foo', open_options = ['MINX=-270','MAXY=180','MINY=-180','MAXX=270'])
     expected_cs = [28940, 32454, 40526, 64323]
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
@@ -1180,7 +1154,7 @@ def gpkg_14():
     ds = None
 
     # Partial tile shift (included in tiles)
-    ds = gdal.OpenEx('GPKG:tmp/tmp.gpkg:foo', gdal.OF_UPDATE, open_options = ['MINX=-90','MAXY=45','MINY=-45','MAXX=90'])
+    ds = gdal.OpenEx('GPKG:/vsimem/tmp.gpkg:foo', gdal.OF_UPDATE, open_options = ['MINX=-90','MAXY=45','MINY=-45','MAXX=90'])
     if ds.RasterXSize != 200 or ds.RasterYSize != 100:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1196,7 +1170,7 @@ def gpkg_14():
     ds.WriteRaster(0,0,ds.RasterXSize,ds.RasterYSize, data)
     ds = None
 
-    ds = gdal.OpenEx('GPKG:tmp/tmp.gpkg:foo', open_options = ['MINX=-90','MAXY=45','MINY=-45','MAXX=90'])
+    ds = gdal.OpenEx('GPKG:/vsimem/tmp.gpkg:foo', open_options = ['MINX=-90','MAXY=45','MINY=-45','MAXX=90'])
     if ds.RasterXSize != 200 or ds.RasterYSize != 100:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1208,16 +1182,16 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['APPEND_SUBDATASET=YES', 'RASTER_TABLE=other', 'BLOCKSIZE=64', 'TILE_FORMAT=PNG'])
+    ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options = ['APPEND_SUBDATASET=YES', 'RASTER_TABLE=other', 'BLOCKSIZE=64', 'TILE_FORMAT=PNG'])
     ds = None
     another_src_ds = gdal.Open('data/byte.tif')
-    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', another_src_ds, options = ['APPEND_SUBDATASET=YES'])
+    ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', another_src_ds, options = ['APPEND_SUBDATASET=YES'])
     ds = None
     another_src_ds = None
 
-    ds = gdal.Open('tmp/tmp.gpkg')
+    ds = gdal.Open('/vsimem/tmp.gpkg')
     md = ds.GetMetadata('SUBDATASETS')
-    if md['SUBDATASET_1_NAME'] != 'GPKG:tmp/tmp.gpkg:foo':
+    if md['SUBDATASET_1_NAME'] != 'GPKG:/vsimem/tmp.gpkg:foo':
         gdaltest.post_reason('fail')
         print(md)
         return 'fail'
@@ -1225,7 +1199,7 @@ def gpkg_14():
         gdaltest.post_reason('fail')
         print(md)
         return 'fail'
-    if md['SUBDATASET_2_NAME'] != 'GPKG:tmp/tmp.gpkg:other':
+    if md['SUBDATASET_2_NAME'] != 'GPKG:/vsimem/tmp.gpkg:other':
         gdaltest.post_reason('fail')
         print(md)
         return 'fail'
@@ -1233,7 +1207,7 @@ def gpkg_14():
         gdaltest.post_reason('fail')
         print(md)
         return 'fail'
-    if md['SUBDATASET_3_NAME'] != 'GPKG:tmp/tmp.gpkg:byte':
+    if md['SUBDATASET_3_NAME'] != 'GPKG:/vsimem/tmp.gpkg:byte':
         gdaltest.post_reason('fail')
         print(md)
         return 'fail'
@@ -1243,14 +1217,14 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    ds = gdal.Open('GPKG:tmp/tmp.gpkg:other')
+    ds = gdal.Open('GPKG:/vsimem/tmp.gpkg:other')
     block_size = ds.GetRasterBand(1).GetBlockSize()
     if block_size != [64, 64]:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['TABLE=other', 'MINX=-90','MAXY=45','MINY=-45','MAXX=90'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['TABLE=other', 'MINX=-90','MAXY=45','MINY=-45','MAXX=90'])
     if ds.RasterXSize != 200 or ds.RasterYSize != 100:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1266,18 +1240,18 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Open and fill with an area of interest larger/containing the natural extent
-    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 20, 20, 1, options = ['BLOCKSIZE=20'])
+    ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 20, 20, 1, options = ['BLOCKSIZE=20'])
     ds.SetGeoTransform([0,1,0,0,0,-1])
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'MAXX=25', 'MINY=-25', 'BAND_COUNT=1'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'MAXX=25', 'MINY=-25', 'BAND_COUNT=1'])
     ds.GetRasterBand(1).Fill(255)
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['MINX=-10','MAXY=10','MINY=-30','MAXX=30'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['MINX=-10','MAXY=10','MINY=-30','MAXX=30'])
     expected_cs = [4934,4934,4934,4934]
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
@@ -1286,19 +1260,19 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Open and fill with an area of interest smaller/inside the natural extent
     # (and smaller than the block size actually)
-    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 20, 20, 1, options = ['BLOCKSIZE=20'])
+    ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 20, 20, 1, options = ['BLOCKSIZE=20'])
     ds.SetGeoTransform([0,1,0,0,0,-1])
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=5', 'MAXY=-5', 'MAXX=15', 'MINY=-15', 'BAND_COUNT=1'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=5', 'MAXY=-5', 'MAXX=15', 'MINY=-15', 'BAND_COUNT=1'])
     ds.GetRasterBand(1).Fill(255)
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['MINX=-10','MAXY=10','MINY=-30','MAXX=30'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['MINX=-10','MAXY=10','MINY=-30','MAXX=30'])
     ## There's some non null data in R,G,B bands that is masked by the alpha. Oh well...
     expected_cs = [2762,2762,2762,1223]
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
@@ -1308,19 +1282,19 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Other corner case : the block intersects a tile at the right of the raster
     # size (because the raster size is smaller than the block size)
-    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 400, 200, 1)
+    ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 400, 200, 1)
     ds.SetGeoTransform([-180,0.9,0,90,0,-0.9])
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'MAXX=25', 'MINY=-25', 'BAND_COUNT=1'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'MAXX=25', 'MINY=-25', 'BAND_COUNT=1'])
     ds.GetRasterBand(1).Fill(255)
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg')
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg')
     expected_cs = [15080,15080,15080,13365]
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
@@ -1329,14 +1303,14 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Test reading block from partial tile database
-    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 512, 256, 4)
+    ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 512, 256, 4)
     ds.SetGeoTransform([0,1,0,0,0,-1])
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'TILE_FORMAT=PNG'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'TILE_FORMAT=PNG'])
     mem_ds = gdal.GetDriverByName('MEM').Create('', 256, 256)
     mem_ds.GetRasterBand(1).Fill(255)
     mem_ds.FlushCache()
@@ -1369,19 +1343,19 @@ def gpkg_14():
 
     # Overflow occured in ComputeTileAndPixelShifts()
     with gdaltest.error_handler():
-        ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['MINX=-1e12', 'MAXX=-0.9999e12'])
+        ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['MINX=-1e12', 'MAXX=-0.9999e12'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Overflow occured in ComputeTileAndPixelShifts()
     with gdaltest.error_handler():
-        ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['MINY=-1e12', 'MAXY=-0.9999e12'])
+        ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['MINY=-1e12', 'MAXY=-0.9999e12'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
     return 'success'
 
 ###############################################################################
@@ -1392,13 +1366,10 @@ def gpkg_15():
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # SetGeoTransform() and SetProjection() on a non-raster GPKG
-    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',0,0,0)
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg',0,0,0)
     if out_ds.GetGeoTransform(can_return_null = True) is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1422,10 +1393,10 @@ def gpkg_15():
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Repeated SetGeoTransform()
-    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1)
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg',1,1)
     ret = out_ds.SetGeoTransform([0,1,0,0,0,-1])
     if ret != 0:
         gdaltest.post_reason('fail')
@@ -1439,7 +1410,7 @@ def gpkg_15():
     out_ds = None
 
     # Repeated SetProjection()
-    out_ds = gdal.Open('tmp/tmp.gpkg',gdal.GA_Update)
+    out_ds = gdal.Open('/vsimem/tmp.gpkg',gdal.GA_Update)
     if out_ds.GetProjectionRef() != '':
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1454,14 +1425,14 @@ def gpkg_15():
         return 'fail'
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg',gdal.GA_Update)
+    out_ds = gdal.Open('/vsimem/tmp.gpkg',gdal.GA_Update)
     if out_ds.GetProjectionRef().find('4326') < 0:
         gdaltest.post_reason('fail')
         return 'fail'
     out_ds.SetProjection('')
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     if out_ds.GetProjectionRef() != '':
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1480,10 +1451,10 @@ def gpkg_15():
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Test SetColorInterpretation()
-    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1)
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg',1,1)
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
     ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_Undefined)
     if ret != 0:
@@ -1505,9 +1476,9 @@ def gpkg_15():
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
-    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1,3)
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg',1,1,3)
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
     ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
     if ret != 0:
@@ -1521,9 +1492,9 @@ def gpkg_15():
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
-    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1,2)
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg',1,1,2)
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
     ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_GrayIndex)
     if ret != 0:
@@ -1547,7 +1518,7 @@ def gpkg_15():
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -1560,12 +1531,10 @@ def gpkg_16():
         return 'skip'
     if gdaltest.jpeg_dr is None:
         return 'skip'
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
 
-    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1,3, options = ['TILE_FORMAT=JPEG'])
+    gdal.Unlink('/vsimem/tmp.gpkg')
+
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg',1,1,3, options = ['TILE_FORMAT=JPEG'])
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
     out_ds.GetRasterBand(1).Fill(255)
     out_ds.GetRasterBand(1).FlushCache()
@@ -1576,7 +1545,7 @@ def gpkg_16():
     out_ds.GetRasterBand(2).FlushCache()
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     val1 = ord(out_ds.GetRasterBand(1).ReadRaster(0,0,1,1))
     val2 = ord(out_ds.GetRasterBand(2).ReadRaster(0,0,1,1))
     val3 = ord(out_ds.GetRasterBand(3).ReadRaster(0,0,1,1))
@@ -1594,7 +1563,7 @@ def gpkg_16():
         gdaltest.post_reason('fail')
         print(val3)
         return 'fail'
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -1607,19 +1576,17 @@ def gpkg_17():
         return 'skip'
     if gdaltest.png_dr is None:
         return 'skip'
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding, immediately after create copy
     ds = gdal.Open('data/byte.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=10'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=10'] )
     out_ds.BuildOverviews('NEAR', [2])
     out_ds = None
     ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_cs = out_ds.GetRasterBand(1).GetOverview(0).Checksum()
     if got_cs != 1087:
         gdaltest.post_reason('fail')
@@ -1631,19 +1598,19 @@ def gpkg_17():
         gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding, after reopening, and BAND_COUNT = 1
     ds = gdal.Open('data/byte.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=10'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=10'] )
     out_ds = None
     # FIXME? Should we eventually write the driver somewhere in metadata ?
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options = ['TILE_FORMAT=PNG', 'BAND_COUNT=1'])
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options = ['TILE_FORMAT=PNG', 'BAND_COUNT=1'])
     out_ds.BuildOverviews('NEAR', [2])
     out_ds = None
     ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_cs = out_ds.GetRasterBand(1).GetOverview(0).Checksum()
     if got_cs != 1087:
         gdaltest.post_reason('fail')
@@ -1652,19 +1619,19 @@ def gpkg_17():
     if check_tile_format(out_ds, 'PNG', 1, False, zoom_level = 0) != 'success':
         return 'fail'
     out_ds = None
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding, after reopening
     ds = gdal.Open('data/byte.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=10'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=10'] )
     out_ds = None
     # FIXME? Should we eventually write the driver somewhere in metadata ?
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options = ['TILE_FORMAT=PNG'])
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options = ['TILE_FORMAT=PNG'])
     out_ds.BuildOverviews('NEAR', [2])
     out_ds = None
     ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_cs = out_ds.GetRasterBand(1).GetOverview(0).Checksum()
     if got_cs != 1087:
         gdaltest.post_reason('fail')
@@ -1674,7 +1641,7 @@ def gpkg_17():
         return 'fail'
 
     # Check that there's no extensions
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     sql_lyr = out_ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE type = 'table' AND name = 'gpkg_extensions'")
     if sql_lyr.GetFeatureCount() != 0:
         gdaltest.post_reason('fail')
@@ -1684,17 +1651,17 @@ def gpkg_17():
     out_ds = None
 
     # Test clearing overviews
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
     out_ds.BuildOverviews('NONE', [])
     out_ds = None
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     if out_ds.GetRasterBand(1).GetOverviewCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
 
     # Test building on an overview dataset --> error
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
     gdal.PushErrorHandler()
     ret = out_ds.GetRasterBand(1).GetOverview(0).GetDataset().BuildOverviews('NONE', [])
     gdal.PopErrorHandler()
@@ -1704,7 +1671,7 @@ def gpkg_17():
     out_ds = None
 
     # Test building overview factor 1 --> error
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
     gdal.PushErrorHandler()
     ret = out_ds.BuildOverviews('NEAR', [1])
     gdal.PopErrorHandler()
@@ -1714,7 +1681,7 @@ def gpkg_17():
     out_ds = None
 
     # Test building non-supported overview levels
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
     gdal.PushErrorHandler()
     gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', 'NO')
     ret = out_ds.BuildOverviews('NEAR', [3])
@@ -1726,7 +1693,7 @@ def gpkg_17():
     out_ds = None
 
     # Test building non-supported overview levels
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
     gdal.PushErrorHandler()
     gdal.SetConfigOption('ALLOW_GPKG_ZOOM_OTHER_EXTENSION', 'NO')
     ret = out_ds.BuildOverviews('NEAR', [2, 4])
@@ -1738,7 +1705,7 @@ def gpkg_17():
     out_ds = None
 
     # Test gpkg_zoom_other extension
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
     # Will fail because results in a 6x6 overview
     gdal.PushErrorHandler()
     ret = out_ds.BuildOverviews('NEAR', [3])
@@ -1749,7 +1716,7 @@ def gpkg_17():
     out_ds = None
 
     # Test building overviews on read-only dataset
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER)
     gdal.PushErrorHandler()
     ret = out_ds.BuildOverviews('NEAR', [2])
     gdal.PopErrorHandler()
@@ -1758,7 +1725,7 @@ def gpkg_17():
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -1772,13 +1739,13 @@ def gpkg_18():
     if gdaltest.png_dr is None:
         return 'skip'
     try:
-        os.remove('tmp/tmp.gpkg')
+        gdal.Unlink('/vsimem/tmp.gpkg')
     except:
         pass
 
     # Without padding, immediately after create copy
     ds = gdal.Open('data/small_world.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
     out_ds.BuildOverviews('CUBIC', [2, 4])
     out_ds = None
 
@@ -1793,7 +1760,7 @@ def gpkg_18():
 
     ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_cs = [out_ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(3)]
     if got_cs != expected_cs_ov0:
         gdaltest.post_reason('fail')
@@ -1813,7 +1780,7 @@ def gpkg_18():
     out_ds = None
 
     # Test gpkg_zoom_other extension
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
     # We expect a warning
     gdal.PushErrorHandler()
     ret = out_ds.BuildOverviews('NEAR', [3])
@@ -1853,7 +1820,7 @@ def gpkg_18():
 
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     if out_ds.GetRasterBand(1).GetOverviewCount() != 3:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1879,7 +1846,7 @@ def gpkg_18():
     out_ds = None
 
     # Add terminating overview
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE)
     ret = out_ds.BuildOverviews('NEAR', [8])
     if ret != 0:
         gdaltest.post_reason('fail')
@@ -1893,18 +1860,18 @@ def gpkg_18():
         return 'fail'
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding, immediately after create copy
     ds = gdal.Open('data/small_world.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
     # Should not result in gpkg_zoom_other
     ret = out_ds.BuildOverviews('NEAR', [8])
     if ret != 0:
         gdaltest.post_reason('fail')
         return 'fail'
     # Check that there's no extensions
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     sql_lyr = out_ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE type = 'table' AND name = 'gpkg_extensions'")
     if sql_lyr.GetFeatureCount() != 0:
         gdaltest.post_reason('fail')
@@ -1912,7 +1879,7 @@ def gpkg_18():
     out_ds.ReleaseResultSet(sql_lyr)
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -1925,14 +1892,12 @@ def gpkg_19():
         return 'skip'
     if gdaltest.png_dr is None:
         return 'skip'
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding, immediately after create copy
     ds = gdal.Open('data/small_world_pct.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
     out_ds.BuildOverviews('NEAR', [2, 4])
     out_ds = None
 
@@ -1945,7 +1910,7 @@ def gpkg_19():
 
     ds = None
 
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER, open_options=['BAND_COUNT=1'])
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER, open_options=['BAND_COUNT=1'])
     if out_ds.GetRasterBand(1).GetOverview(0).GetColorTable() is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1966,7 +1931,7 @@ def gpkg_19():
     if check_tile_format(out_ds, 'PNG', 4, False, zoom_level = 0) != 'success':
         return 'fail'
     out_ds = None
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -1979,18 +1944,16 @@ def gpkg_20():
         return 'skip'
     if gdaltest.png_dr is None:
         return 'skip'
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding, with small tiles (<=256x256)
     ds = gdal.Open('data/small_world.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG8', 'BLOCKSIZE=200'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG8', 'BLOCKSIZE=200'] )
     out_ds = None
     ds = None
 
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER)
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     expected_cs = [30875,31451,38110,64269]
     if got_cs != expected_cs:
@@ -2001,15 +1964,15 @@ def gpkg_20():
     if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
         return 'fail'
     out_ds = None
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding, with big tiles (>256x256)
     ds = gdal.Open('data/small_world.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG8', 'BLOCKXSIZE=400', 'BLOCKYSIZE=200'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG8', 'BLOCKXSIZE=400', 'BLOCKYSIZE=200'] )
     out_ds = None
     ds = None
 
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER)
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     expected_cs = [27001,30168,34800,64269]
     if got_cs != expected_cs:
@@ -2020,15 +1983,15 @@ def gpkg_20():
     if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
         return 'fail'
     out_ds = None
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # With and without padding, with small tiles
     ds = gdal.Open('data/small_world.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG8', 'BLOCKSIZE=150'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG8', 'BLOCKSIZE=150'] )
     out_ds = None
     ds = None
 
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER)
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     expected_cs = [27718,31528,42062,64269]
     if got_cs != expected_cs:
@@ -2041,7 +2004,7 @@ def gpkg_20():
     if check_tile_format(out_ds, 'PNG', 4, False, row = 0, col = 2) != 'success':
         return 'fail'
     out_ds = None
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Without padding, with small tiles (<=256x256), but especially less
     # than 256 colors.
@@ -2051,11 +2014,11 @@ def gpkg_20():
     ds.GetRasterBand(2).Fill(2)
     ds.GetRasterBand(3).Fill(3)
     ds.SetGeoTransform([0,1,0,0,0,-1])
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG8', 'BLOCKSIZE=50'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG8', 'BLOCKSIZE=50'] )
     out_ds = None
     ds = None
 
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER)
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER)
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     expected_cs = [2500, 5000, 7500, 30658]
     if got_cs != expected_cs:
@@ -2066,12 +2029,12 @@ def gpkg_20():
     if check_tile_format(out_ds, 'PNG', 1, True) != 'success':
         return 'fail'
     out_ds = None
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER, open_options = ['BAND_COUNT=1'])
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_RASTER, open_options = ['BAND_COUNT=1'])
     if out_ds.GetRasterBand(1).GetColorTable().GetCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -2084,12 +2047,10 @@ def gpkg_21():
         return 'skip'
     if gdaltest.png_dr is None:
         return 'skip'
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
 
-    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1)
+    gdal.Unlink('/vsimem/tmp.gpkg')
+
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 1, 1)
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
     mddlist = out_ds.GetMetadataDomainList()
     if len(mddlist) != 3:
@@ -2098,7 +2059,7 @@ def gpkg_21():
         return 'fail'
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
 
     # No metadata for now
     sql_lyr = out_ds.ExecuteSQL('SELECT count(*) FROM gpkg_metadata')
@@ -2125,7 +2086,7 @@ def gpkg_21():
     foo_value = 'bar'
     for i in range(4):
 
-        out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+        out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
 
         if len(out_ds.GetMetadata('GEOPACKAGE')) != 0:
             gdaltest.post_reason('fail')
@@ -2184,12 +2145,12 @@ def gpkg_21():
         out_ds = None
 
     # Clear metadata
-    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
     out_ds.SetMetadata(None)
     out_ds = None
 
     # No more metadata
-    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
     sql_lyr = out_ds.ExecuteSQL('SELECT * FROM gpkg_metadata')
     feat = sql_lyr.GetNextFeature()
     if feat is not None:
@@ -2212,7 +2173,7 @@ def gpkg_21():
     out_ds = None
 
     # Still no metadata
-    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
     if out_ds.GetMetadataItem('IDENTIFIER') != 'my_identifier':
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2241,7 +2202,7 @@ def gpkg_21():
 
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
 
     if out_ds.GetMetadataItem('bar', 'GEOPACKAGE') != 'foo':
         gdaltest.post_reason('fail')
@@ -2282,14 +2243,14 @@ def gpkg_21():
     out_ds.SetMetadataItem('bar', 'baz', 'GEOPACKAGE')
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
     if out_ds.GetMetadataItem('bar', 'GEOPACKAGE') != 'baz':
         gdaltest.post_reason('fail')
         return 'fail'
     out_ds.SetMetadata(None, 'GEOPACKAGE')
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
     if len(out_ds.GetMetadata('GEOPACKAGE')) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2309,7 +2270,7 @@ def gpkg_21():
     out_ds = None
 
     for i in range(2):
-        out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+        out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
         if out_ds.GetMetadataItem('1') != '2':
             gdaltest.post_reason('fail')
             return 'fail'
@@ -2339,13 +2300,13 @@ def gpkg_21():
         out_ds.SetMetadata(out_ds.GetMetadata('GEOPACKAGE'),'GEOPACKAGE')
         out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
     out_ds.SetMetadata(None)
     out_ds.SetMetadata(None, 'CUSTOM_DOMAIN')
     out_ds.SetMetadata(None, 'GEOPACKAGE')
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    out_ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
     if out_ds.GetMetadataItem('GPKG_METADATA_ITEM_1', 'GEOPACKAGE') != 'my_metadata':
         gdaltest.post_reason('fail')
         print(out_ds.GetMetadata())
@@ -2368,7 +2329,7 @@ def gpkg_21():
     out_ds.ReleaseResultSet(sql_lyr)
     out_ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -2413,23 +2374,20 @@ def gpkg_22(tile_drv_name = 'PNG'):
     if tile_drv is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     tmp_ds = get_georeferenced_greyalpha_ds()
     if tile_drv_name:
         options = ['TILE_FORMAT=' + tile_drv_name, 'BLOCKSIZE=16']
     else:
         options = ['BLOCKSIZE=16']
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = options)
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', tmp_ds, options = options)
     tmp_ds_filename = tmp_ds.GetDescription()
     ds = None
     gdal.Unlink(tmp_ds_filename)
     out_ds = None
 
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['BAND_COUNT=2'])
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['BAND_COUNT=2'])
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(2)]
     if got_cs != expected_cs:
         if tile_drv_name != 'WEBP' or got_cs != [4899, 10807]:
@@ -2438,7 +2396,7 @@ def gpkg_22(tile_drv_name = 'PNG'):
             return 'fail'
     out_ds = None
 
-    out_ds = gdal.Open('tmp/tmp.gpkg')
+    out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     expected_cs = [ expected_cs[0], expected_cs[0], expected_cs[0], expected_cs[1] ]
     if got_cs != expected_cs:
@@ -2448,7 +2406,7 @@ def gpkg_22(tile_drv_name = 'PNG'):
             return 'fail'
     out_ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['USE_TILE_EXTENT=YES'])
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != clamped_expected_cs:
         if tile_drv_name != 'WEBP' or got_cs != [5266, 5266, 5266, 11580]:
@@ -2457,7 +2415,7 @@ def gpkg_22(tile_drv_name = 'PNG'):
             return 'fail'
     ds = None
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     return 'success'
 
@@ -2489,10 +2447,7 @@ def gpkg_26():
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     tests =  [ ('CUSTOM', [4672, 4672, 4672, 4873], None),
                ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], None),
@@ -2511,10 +2466,10 @@ def gpkg_26():
         options = ['TILE_FORMAT=PNG', 'TILING_SCHEME='+scheme]
         if other_options:
             options = options + other_options
-        ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = options)
+        ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options = options)
         ds = None
 
-        ds = gdal.Open('tmp/tmp.gpkg')
+        ds = gdal.Open('/vsimem/tmp.gpkg')
         got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
         # VC12 returns [3561, 3561, 3561, 3691] for GoogleCRS84Quad
         # and For GoogleCRS84Quad RESAMPLING=CUBIC, got [3415, 3415, 3415, 3691]
@@ -2525,7 +2480,7 @@ def gpkg_26():
                 return 'fail'
         ds = None
 
-        os.remove('tmp/tmp.gpkg')
+        gdal.Unlink('/vsimem/tmp.gpkg')
 
     tests =  [ ('GoogleCRS84Quad', [42255, 47336, 24963, 35707], None),
                ('GoogleMapsCompatible', [35429, 36787, 20035, 17849], None) ]
@@ -2536,10 +2491,10 @@ def gpkg_26():
         options = ['TILE_FORMAT=PNG', 'TILING_SCHEME='+scheme]
         if other_options:
             options = options + other_options
-        ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = options)
+        ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options = options)
         ds = None
 
-        ds = gdal.Open('tmp/tmp.gpkg')
+        ds = gdal.Open('/vsimem/tmp.gpkg')
         got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
         if got_cs != expected_cs:
             gdaltest.post_reason('fail')
@@ -2548,18 +2503,18 @@ def gpkg_26():
                 return 'fail'
         ds = None
 
-        os.remove('tmp/tmp.gpkg')
+        gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Test a few error cases
     gdal.PushErrorHandler()
-    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1, 1, options = ['TILING_SCHEME=GoogleCRS84Quad', 'BLOCKSIZE=128'])
+    ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 1, 1, 1, options = ['TILING_SCHEME=GoogleCRS84Quad', 'BLOCKSIZE=128'])
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
-    ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1, 1, options = ['TILING_SCHEME=GoogleCRS84Quad'])
+    ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 1, 1, 1, options = ['TILING_SCHEME=GoogleCRS84Quad'])
     # Test that implicit SRS registration works.
     if ds.GetProjectionRef().find('4326') < 0:
         gdaltest.post_reason('fail')
@@ -2582,7 +2537,7 @@ def gpkg_26():
     ds = None
     gdal.PopErrorHandler()
 
-    os.remove('tmp/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Invalid TILING_SCHEME
     src_ds = gdal.Open('data/byte.tif')
@@ -2605,7 +2560,7 @@ def gpkg_26():
     # Source is not georeferenced
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
     gdal.PushErrorHandler()
-    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILING_SCHEME=GoogleCRS84Quad'])
+    ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options = ['TILING_SCHEME=GoogleCRS84Quad'])
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
@@ -2623,15 +2578,12 @@ def gpkg_27():
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     oldSize = gdal.GetCacheMax()
     gdal.SetCacheMax(0)
     src_ds = gdal.Open('data/small_world.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=200', 'BLOCKYSIZE=200'])
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=200', 'BLOCKYSIZE=200'])
     gdal.SetCacheMax(oldSize)
 
     expected_cs = [src_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
@@ -2654,10 +2606,7 @@ def gpkg_28():
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     src_ds = gdal.Open('data/small_world.tif')
     data = []
@@ -2666,7 +2615,7 @@ def gpkg_28():
     expected_cs = [src_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     src_ds = None
 
-    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 400 ,200, 3, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=400', 'BLOCKYSIZE=200'])
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 400 ,200, 3, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=400', 'BLOCKYSIZE=200'])
     out_ds.SetGeoTransform([0,10,0,0,0,-10])
 
     out_ds.GetRasterBand(1).WriteRaster(0,0,400,200, data[0])
@@ -2680,7 +2629,7 @@ def gpkg_28():
     for b in range(2):
         out_ds.GetRasterBand(b+2).WriteRaster(0,0,400,200, data[b+1])
     out_ds = None
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['BAND_COUNT=3'])
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['BAND_COUNT=3'])
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -2699,10 +2648,7 @@ def gpkg_29(x = 0):
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     src_ds = gdal.Open('data/small_world.tif')
     left = []
@@ -2713,7 +2659,7 @@ def gpkg_29(x = 0):
     expected_cs = [src_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     src_ds = None
 
-    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 400 ,200, 3, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=200', 'BLOCKYSIZE=200'])
+    out_ds = gdaltest.gpkg_dr.Create('/vsimem/tmp.gpkg', 400 ,200, 3, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=200', 'BLOCKYSIZE=200'])
     out_ds.SetGeoTransform([0,10,0,0,0,-10])
 
     out_ds.GetRasterBand(1).WriteRaster(0,0,200,200, left[0])
@@ -2727,7 +2673,7 @@ def gpkg_29(x = 0):
     for b in range(3):
         out_ds.GetRasterBand(b+1).WriteRaster(200,0,200,200, right[b])
     out_ds = None
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['BAND_COUNT=3'])
+    out_ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['BAND_COUNT=3'])
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -2753,18 +2699,15 @@ def gpkg_31():
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Force use of RGBA instead of Grey-Alpha (the natural use case is WEBP)
     # but here we can test losslessly
     gdal.SetConfigOption('GPKG_PNG_SUPPORTS_2BANDS', 'NO')
-    gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', gdal.Open('data/byte.tif'), options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=21'])
+    gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', gdal.Open('data/byte.tif'), options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=21'])
     gdal.SetConfigOption('GPKG_PNG_SUPPORTS_2BANDS', None)
 
-    ds = gdal.Open('tmp/tmp.gpkg')
+    ds = gdal.Open('/vsimem/tmp.gpkg')
     if check_tile_format(ds, 'PNG', 4, False) != 'success':
         return 'fail'
     expected_cs = [ 4672, 4672, 4672, 4873 ]
@@ -2786,18 +2729,15 @@ def gpkg_32():
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Force use of RGBA instead of Grey-Alpha (the natural use case is WEBP)
     # but here we can test losslessly
     gdal.SetConfigOption('GPKG_PNG_SUPPORTS_2BANDS', 'NO')
-    gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', get_georeferenced_greyalpha_ds(), options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=200'])
+    gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', get_georeferenced_greyalpha_ds(), options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=200'])
     gdal.SetConfigOption('GPKG_PNG_SUPPORTS_2BANDS', None)
 
-    ds = gdal.Open('tmp/tmp.gpkg')
+    ds = gdal.Open('/vsimem/tmp.gpkg')
     if check_tile_format(ds, 'PNG', 4, False) != 'success':
         return 'fail'
     expected_cs = [ 1970, 1970, 1970, 10807 ]
@@ -2807,7 +2747,7 @@ def gpkg_32():
         print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
         return 'fail'
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['BAND_COUNT=2'])
+    ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['BAND_COUNT=2'])
     expected_cs = [ 1970, 10807 ]
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
     if got_cs != expected_cs:
@@ -2827,18 +2767,15 @@ def gpkg_33():
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     # Force use of RGBA instead of color-table (the natural use case is WEBP)
     # but here we can test losslessly
     gdal.SetConfigOption('GPKG_PNG_SUPPORTS_CT', 'NO')
-    gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', get_georeferenced_ds_with_pct32(), options = ['TILE_FORMAT=PNG'])
+    gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', get_georeferenced_ds_with_pct32(), options = ['TILE_FORMAT=PNG'])
     gdal.SetConfigOption('GPKG_PNG_SUPPORTS_CT', None)
 
-    ds = gdal.Open('tmp/tmp.gpkg')
+    ds = gdal.Open('/vsimem/tmp.gpkg')
     if check_tile_format(ds, 'PNG', 4, False) != 'success':
         return 'fail'
     expected_cs = [ 10991, 57677, 34965, 10638 ]
@@ -2860,10 +2797,7 @@ def gpkg_34():
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 512, 417)
     src_ds.SetGeoTransform([-20037508.342789299786091, 2 * 20037508.342789299786091 / 512, 0,
@@ -2871,8 +2805,8 @@ def gpkg_34():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3857)
     src_ds.SetProjection(srs.ExportToWkt())
-    gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'TILING_SCHEME=GoogleMapsCompatible'])
-    ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'TILING_SCHEME=GoogleMapsCompatible'])
+    ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
     gdal.ErrorReset()
     ds.BuildOverviews('NEAR', [2])
     ds = None
@@ -2891,10 +2825,7 @@ def gpkg_35():
     if gdaltest.png_dr is None:
         return 'skip'
 
-    try:
-        os.remove('tmp/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 512, 417, 4)
     src_ds.SetGeoTransform([-20037508.342789299786091, 2 * 20037508.342789299786091 / 512, 0,
@@ -2902,7 +2833,7 @@ def gpkg_35():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(3857)
     src_ds.SetProjection(srs.ExportToWkt())
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'TILING_SCHEME=GoogleMapsCompatible'])
+    out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'TILING_SCHEME=GoogleMapsCompatible'])
     out_ds.GetRasterBand(1).Fill(32)
     out_ds.GetRasterBand(2).Fill(64)
     out_ds.GetRasterBand(3).Fill(128)
@@ -2918,7 +2849,7 @@ def gpkg_35():
     src_ds.GetRasterBand(4).Fill(255)
     white_data = src_ds.ReadRaster(0, 0, 256, height)
 
-    ds = gdal.Open('tmp/tmp.gpkg', gdal.GA_Update)
+    ds = gdal.Open('/vsimem/tmp.gpkg', gdal.GA_Update)
     ds.WriteRaster(256, 0, 256, height, white_data)
 
     oldSize = gdal.GetCacheMax()
@@ -3473,7 +3404,7 @@ def gpkg_cleanup():
         return 'skip'
 
     try:
-        os.remove('tmp/tmp.gpkg')
+        gdal.Unlink('/vsimem/tmp.gpkg')
     except:
         pass
 
