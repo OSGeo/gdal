@@ -131,7 +131,7 @@ class OGRAmigoCloudLayer : public OGRLayer
 
         virtual int                 TestCapability( const char * );
 
-        int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("AMIGOCLOUD_PAGE_SIZE", "500")); }
+        int                         GetFeaturesToFetch() { return 100; }
 };
 
 
