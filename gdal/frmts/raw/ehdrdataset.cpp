@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "ehdrdataset.h"
 #include "rawdataset.h"
 
 #include <cctype>
@@ -64,113 +65,6 @@ static const int HAS_MEAN_FLAG = 0x4;
 static const int HAS_STDDEV_FLAG = 0x8;
 static const int HAS_ALL_FLAGS =
     HAS_MIN_FLAG | HAS_MAX_FLAG | HAS_MEAN_FLAG | HAS_STDDEV_FLAG;
-
-/************************************************************************/
-/* ==================================================================== */
-/*                       EHdrDataset                                    */
-/* ==================================================================== */
-/************************************************************************/
-
-class EHdrRasterBand;
-
-class EHdrDataset : public RawDataset
-{
-    friend class EHdrRasterBand;
-
-    VSILFILE   *fpImage;  // image data file.
-
-    CPLString   osHeaderExt;
-
-    bool        bGotTransform;
-    double      adfGeoTransform[6];
-    char       *pszProjection;
-
-    bool        bHDRDirty;
-    char      **papszHDR;
-
-    bool        bCLRDirty;
-
-    CPLErr      ReadSTX();
-    CPLErr      RewriteSTX();
-    CPLErr      RewriteHDR();
-    void        ResetKeyValue( const char *pszKey, const char *pszValue );
-    const char *GetKeyValue( const char *pszKey, const char *pszDefault = "" );
-    void        RewriteColorTable( GDALColorTable * );
-
-  public:
-    EHdrDataset();
-    virtual ~EHdrDataset();
-
-    virtual CPLErr GetGeoTransform( double *padfTransform ) override;
-    virtual CPLErr SetGeoTransform( double *padfTransform ) override;
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr SetProjection( const char * ) override;
-
-    virtual char **GetFileList() override;
-
-    static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Create( const char *pszFilename,
-                                int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char **papszParmList );
-    static GDALDataset *CreateCopy( const char *pszFilename,
-                                    GDALDataset *poSrcDS,
-                                    int bStrict, char **papszOptions,
-                                    GDALProgressFunc pfnProgress,
-                                    void *pProgressData );
-    static CPLString GetImageRepFilename(const char *pszFilename);
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                          EHdrRasterBand                              */
-/* ==================================================================== */
-/************************************************************************/
-
-class EHdrRasterBand : public RawRasterBand
-{
-   friend class EHdrDataset;
-
-    int            nBits;
-    vsi_l_offset   nStartBit;
-    int            nPixelOffsetBits;
-    vsi_l_offset   nLineOffsetBits;
-
-    int            bNoDataSet;  // TODO(schwehr): Convert to bool.
-    double         dfNoData;
-    double         dfMin;
-    double         dfMax;
-    double         dfMean;
-    double         dfStdDev;
-
-    int            minmaxmeanstddev;
-
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              GSpacing nPixelSpace,
-                              GSpacing nLineSpace,
-                              GDALRasterIOExtraArg *psExtraArg ) override;
-
-  public:
-    EHdrRasterBand( GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                    vsi_l_offset nImgOffset, int nPixelOffset,
-                    int nLineOffset,
-                    GDALDataType eDataType, int bNativeOrder,
-                    int nBits);
-    virtual ~EHdrRasterBand() {}
-
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual CPLErr IWriteBlock( int, int, void * ) override;
-
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
-    virtual double GetMinimum( int *pbSuccess = NULL ) override;
-    virtual double GetMaximum(int *pbSuccess = NULL ) override;
-    virtual CPLErr GetStatistics( int bApproxOK, int bForce,
-                                  double *pdfMin, double *pdfMax,
-                                  double *pdfMean, double *pdfStdDev ) override;
-    virtual CPLErr SetStatistics( double dfMin, double dfMax,
-                                  double dfMean, double dfStdDev ) override;
-    virtual CPLErr SetColorTable( GDALColorTable *poNewCT ) override;
-};
 
 /************************************************************************/
 /*                           EHdrRasterBand()                           */
