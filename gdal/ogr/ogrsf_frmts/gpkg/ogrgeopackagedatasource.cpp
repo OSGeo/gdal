@@ -1284,7 +1284,11 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         err = SQLQuery(hDB, pszSQL, &oResult2);
         sqlite3_free(pszSQL);
         if  ( err != OGRERR_NONE || oResult2.nRowCount == 0 ||
-              SQLResultGetValue(&oResult2, 0, 0) == NULL )
+                // Can happen if table is empty
+              SQLResultGetValue(&oResult2, 0, 0) == NULL || 
+                // Can happen if table has no NOT NULL constraint on tile_row
+                // and that all tile_row are NULL
+              SQLResultGetValue(&oResult2, 1, 0) == NULL  )
         {
             SQLResultFree(&oResult);
             SQLResultFree(&oResult2);
