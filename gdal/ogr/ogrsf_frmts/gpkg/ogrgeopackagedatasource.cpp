@@ -2250,7 +2250,8 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
             "SELECT md.metadata, md.md_standard_uri, md.mime_type, mdr.reference_scope FROM gpkg_metadata md "
             "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
             "WHERE mdr.reference_scope = 'geopackage' OR "
-            "(mdr.reference_scope = 'table' AND mdr.table_name = '%q') ORDER BY md.id",
+            "(mdr.reference_scope = 'table' AND mdr.table_name = '%q') ORDER BY md.id "
+            "LIMIT 1000", // to avoid denial of service
             m_osRasterTable.c_str());
     }
     else
@@ -2258,7 +2259,9 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
         pszSQL = sqlite3_mprintf(
             "SELECT md.metadata, md.md_standard_uri, md.mime_type, mdr.reference_scope FROM gpkg_metadata md "
             "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
-            "WHERE mdr.reference_scope = 'geopackage' ORDER BY md.id");
+            "WHERE mdr.reference_scope = 'geopackage' ORDER BY md.id "
+            "LIMIT 1000" // to avoid denial of service
+        );
     }
 
     SQLResult oResult;
