@@ -721,6 +721,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                     "AND name NOT IN ('st_spatial_ref_sys', 'spatial_ref_sys', 'st_geometry_columns') "
                     "AND name NOT IN (SELECT table_name FROM gpkg_contents)";
         }
+        osSQL += " LIMIT 1000";
 
         SQLResult oResult;
         OGRErr err = SQLQuery(hDB, osSQL.c_str(), &oResult);
@@ -728,6 +729,13 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         {
             SQLResultFree(&oResult);
             return FALSE;
+        }
+
+        if( oResult.nRowCount == 1000 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                        "File has more than 1000 vector tables. "
+                        "Limiting to first 1000");
         }
 
         if ( oResult.nRowCount > 0 )
@@ -785,6 +793,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             sqlite3_free(pszTmp);
             SetPhysicalFilename( osFilename.c_str() );
         }
+        osSQL += " LIMIT 1000";
 
         const OGRErr err = SQLQuery(hDB, osSQL.c_str(), &oResult);
         if  ( err != OGRERR_NONE )
@@ -828,6 +837,13 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         else if( oResult.nRowCount >= 1 )
         {
             bRet = TRUE;
+
+            if( oResult.nRowCount == 1000 )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "File has more than 1000 raster tables. "
+                         "Limiting to first 1000");
+            }
 
             int nSDSCount = 0;
             for ( int i = 0; i < oResult.nRowCount; i++ )
