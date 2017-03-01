@@ -41,6 +41,7 @@ Process :
       must also be edited before if new utilities/scripts are added/removed.
 
 2) Update the release date, and number information in gcore/gdal_version.h.
+   Note: the format of GDAL_RELEASE_DATE should be YYYYMMDD.
 
 3) Update the VERSION file.
 
