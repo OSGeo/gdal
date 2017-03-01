@@ -885,8 +885,12 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
     double dfPixelYSize = CPLAtof(SQLResultGetValue(&oResult, 2, nIdxInResult));
     int nTileWidth = atoi(SQLResultGetValue(&oResult, 3, nIdxInResult));
     int nTileHeight = atoi(SQLResultGetValue(&oResult, 4, nIdxInResult));
-    int nTileMatrixWidth = atoi(SQLResultGetValue(&oResult, 5, nIdxInResult));
-    int nTileMatrixHeight = atoi(SQLResultGetValue(&oResult, 6, nIdxInResult));
+    int nTileMatrixWidth = static_cast<int>(
+        std::min(static_cast<GIntBig>(INT_MAX),
+                 CPLAtoGIntBig(SQLResultGetValue(&oResult, 5, nIdxInResult))));
+    int nTileMatrixHeight = static_cast<int>(
+        std::min(static_cast<GIntBig>(INT_MAX),
+                 CPLAtoGIntBig(SQLResultGetValue(&oResult, 6, nIdxInResult))));
 
     /* Use content bounds in priority over tile_matrix_set bounds */
     double dfGDALMinX = dfMinX;
@@ -1214,15 +1218,20 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         }
     }
 
-    /* The NOT NULL are just in case the tables would have been built without */
-    /* the mandatory constraints */
+    /* Various sanity checks added in the SELECT */
     char* pszQuotedTableName = sqlite3_mprintf("'%q'", pszTableName);
     CPLString osQuotedTableName(pszQuotedTableName);
     sqlite3_free(pszQuotedTableName);
     char* pszSQL = sqlite3_mprintf(
-            "SELECT zoom_level, pixel_x_size, pixel_y_size, tile_width, tile_height, matrix_width, matrix_height FROM gpkg_tile_matrix tm "
-            "WHERE table_name = %s AND pixel_x_size > 0 "
-            "AND pixel_y_size > 0 AND tile_width > 0 AND tile_height > 0 AND matrix_width > 0 AND matrix_height > 0",
+            "SELECT zoom_level, pixel_x_size, pixel_y_size, tile_width, "
+            "tile_height, matrix_width, matrix_height "
+            "FROM gpkg_tile_matrix tm "
+            "WHERE table_name = %s "
+            "AND zoom_level >= 0 AND zoom_level <= 2147483647 "
+            "AND pixel_x_size > 0 AND pixel_y_size > 0 "
+            "AND tile_width > 0 AND tile_width <= 2147483647 "
+            "AND tile_height > 0 AND tile_height <= 2147483647 "
+            "AND matrix_width > 0 AND matrix_height > 0",
             osQuotedTableName.c_str());
     CPLString osSQL(pszSQL);
     const char* pszZoomLevel =  CSLFetchNameValue(papszOpenOptionsIn, "ZOOM_LEVEL");

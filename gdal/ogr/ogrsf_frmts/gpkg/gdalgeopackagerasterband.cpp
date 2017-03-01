@@ -760,6 +760,8 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
     int nBlockXSize, nBlockYSize;
     IGetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
     const int nBands = IGetRasterCount();
+    const size_t nBandBlockSize = static_cast<size_t>(nBlockXSize) *
+                                                nBlockYSize * m_nDTSize;
     if( m_nShiftXPixelsMod || m_nShiftYPixelsMod )
     {
         GByte* pabyData = NULL;
@@ -773,7 +775,7 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
                 {
                     return m_pabyCachedTiles +
                         m_asCachedTilesDesc[i].nIdxWithinTileData * 4 *
-                        nBlockXSize * nBlockYSize * m_nDTSize;
+                        nBandBlockSize;
                 }
                 else
                 {
@@ -791,7 +793,7 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
                             (m_asCachedTilesDesc[2].nIdxWithinTileData == 2 ) ? 3 : 2;
                     pabyData = m_pabyCachedTiles +
                         m_asCachedTilesDesc[i].nIdxWithinTileData * 4 *
-                        nBlockXSize * nBlockYSize * m_nDTSize;
+                        nBandBlockSize;
                     break;
                 }
             }
@@ -801,8 +803,7 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
     }
     else
     {
-        GByte* pabyDest = m_pabyCachedTiles +
-            8 * nBlockXSize * nBlockYSize * m_nDTSize;
+        GByte* pabyDest = m_pabyCachedTiles + 8 * nBandBlockSize;
         bool bAllNonDirty = true;
         for( int i = 0; i < nBands; i++ )
         {
@@ -822,17 +823,16 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
             m_asCachedTilesDesc[i].nCol = -1;
             m_asCachedTilesDesc[i].nIdxWithinTileData = -1;
         }
-        GByte* pabyTemp = m_pabyCachedTiles +
-            12 * nBlockXSize * nBlockYSize * m_nDTSize;
+        GByte* pabyTemp = m_pabyCachedTiles + 12 * nBandBlockSize;
         if( ReadTile(nRow, nCol, pabyTemp) != NULL )
         {
             for( int i = 0; i < nBands; i++ )
             {
                 if( !m_asCachedTilesDesc[0].abBandDirty[i] )
                 {
-                    memcpy(pabyDest + i * nBlockXSize * nBlockYSize * m_nDTSize,
-                           pabyTemp + i * nBlockXSize * nBlockYSize * m_nDTSize,
-                           nBlockXSize * nBlockYSize * m_nDTSize);
+                    memcpy(pabyDest + i * nBandBlockSize,
+                           pabyTemp + i * nBandBlockSize,
+                           nBandBlockSize);
                 }
             }
         }
@@ -1129,10 +1129,13 @@ retry:
                 if( m_poTPD->m_nShiftXPixelsMod == 0
                     && m_poTPD->m_nShiftYPixelsMod == 0 )
                 {
+                    const size_t nBandBlockSize =
+                        static_cast<size_t>(nBlockXSize) *
+                                                nBlockYSize * m_nDTSize;
                     memcpy( pabyDest,
                             pabyTileData +
-                            (iBand - 1) * nBlockXSize * nBlockYSize * m_nDTSize,
-                            nBlockXSize * nBlockYSize * m_nDTSize );
+                            (iBand - 1) * nBandBlockSize,
+                            nBandBlockSize );
 #ifdef DEBUG_VERBOSE
                     if( eDataType == GDT_Byte &&
                         (nBlockXOff+1) * nBlockXSize <= nRasterXSize &&
@@ -1477,6 +1480,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
     /* If all bands for that block are not dirty/written, we need to */
     /* fetch the missing ones if the tile exists */
     bool bIsLossyFormat = false;
+    const size_t nBandBlockSize = static_cast<size_t>(nBlockXSize) *
+                                            nBlockYSize * m_nDTSize;
     if( !bAllDirty )
     {
         for( int i = 1; i <= 3; i++ )
@@ -1485,18 +1490,15 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             m_asCachedTilesDesc[i].nCol = -1;
             m_asCachedTilesDesc[i].nIdxWithinTileData = -1;
         }
-        ReadTile(nRow, nCol, m_pabyCachedTiles +
-                        4 * nBlockXSize * nBlockYSize * m_nDTSize,
+        ReadTile(nRow, nCol, m_pabyCachedTiles + 4 * nBandBlockSize,
                  &bIsLossyFormat);
         for( int i = 0; i < nBands; i++ )
         {
             if( !m_asCachedTilesDesc[0].abBandDirty[i] )
             {
-                memcpy(m_pabyCachedTiles +
-                            i * nBlockXSize * nBlockYSize * m_nDTSize,
-                       m_pabyCachedTiles +
-                            (4 + i) * nBlockXSize * nBlockYSize * m_nDTSize,
-                       nBlockXSize * nBlockYSize * m_nDTSize);
+                memcpy(m_pabyCachedTiles + i * nBandBlockSize,
+                       m_pabyCachedTiles + (4 + i) * nBandBlockSize,
+                       nBandBlockSize);
             }
         }
     }
@@ -1529,7 +1531,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 {
                     for(int x=0;x<nBlockXSize;x++)
                     {
-                        if( m_pabyCachedTiles[y*nBlockXSize+x + i * nBlockXSize * nBlockYSize] != 0 && !bFoundNonZero )
+                        if( m_pabyCachedTiles[y*nBlockXSize+x + i * nBandBlockSize] != 0 && !bFoundNonZero )
                         {
                             CPLDebug("GPKG", "WriteTileInternal(): Found non-zero content in ghost part of tile(band=%d,nBlockXOff=%d,nBlockYOff=%d,m_nZoomLevel=%d)\n",
                                     i+1,nBlockXOff,nBlockYOff,m_nZoomLevel);
@@ -1740,11 +1742,11 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         if( bPartialTile && (nTileBands == 2 || nTileBands == 4) )
         {
             int nTargetAlphaBand = nTileBands;
-            memset(m_pabyCachedTiles + (nTargetAlphaBand-1) * nBlockXSize * nBlockYSize, 0,
-                  nBlockXSize * nBlockYSize);
+            memset(m_pabyCachedTiles + (nTargetAlphaBand-1) * nBandBlockSize, 0,
+                   nBandBlockSize);
             for(int iY = iYOff; iY < iYOff + iYCount; iY ++)
             {
-                memset(m_pabyCachedTiles + ((nTargetAlphaBand-1) * nBlockYSize + iY) * nBlockXSize + iXOff,
+                memset(m_pabyCachedTiles + (static_cast<size_t>(nTargetAlphaBand-1) * nBlockYSize + iY) * nBlockXSize + iXOff,
                        255, iXCount);
             }
         }
@@ -2021,7 +2023,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 char** papszOptions = NULL;
                 char szDataPointer[32];
                 int nRet = CPLPrintPointer(szDataPointer,
-                                        m_pabyCachedTiles + i * nBlockXSize * nBlockYSize,
+                                        m_pabyCachedTiles + i * nBandBlockSize,
                                         sizeof(szDataPointer));
                 szDataPointer[nRet] = '\0';
                 papszOptions = CSLSetNameValue(papszOptions, "DATAPOINTER", szDataPointer);
@@ -2043,8 +2045,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                                        poMEM_RGB_DS->GetRasterBand(3),
                                        /*NULL, NULL, NULL,*/
                                        m_pabyCachedTiles,
-                                       m_pabyCachedTiles + nBlockXSize * nBlockYSize,
-                                       m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize,
+                                       m_pabyCachedTiles + nBandBlockSize,
+                                       m_pabyCachedTiles + 2 * nBandBlockSize,
                                        NULL,
                                        256, /* max colors */
                                        8, /* bit depth */
@@ -2086,10 +2088,10 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             }
             if( iYOff > 0 )
             {
-                memset(m_pabyCachedTiles + 0 * nBlockXSize * nBlockYSize, 0, nBlockXSize * iYOff);
-                memset(m_pabyCachedTiles + 1 * nBlockXSize * nBlockYSize, 0, nBlockXSize * iYOff);
-                memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize, 0, nBlockXSize * iYOff);
-                memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize, 0, nBlockXSize * iYOff);
+                memset(m_pabyCachedTiles + 0 * nBandBlockSize, 0, nBlockXSize * iYOff);
+                memset(m_pabyCachedTiles + 1 * nBandBlockSize, 0, nBlockXSize * iYOff);
+                memset(m_pabyCachedTiles + 2 * nBandBlockSize, 0, nBlockXSize * iYOff);
+                memset(m_pabyCachedTiles + 3 * nBandBlockSize, 0, nBlockXSize * iYOff);
             }
             int i = 0;  // TODO: Rename variable to make it clear what it is.
             for(int iY = iYOff; iY < iYOff + iYCount; iY ++)
@@ -2097,36 +2099,36 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 if( iXOff > 0 )
                 {
                     i = iY * nBlockXSize;
-                    memset(m_pabyCachedTiles + 0 * nBlockXSize * nBlockYSize + i, 0, iXOff);
-                    memset(m_pabyCachedTiles + 1 * nBlockXSize * nBlockYSize + i, 0, iXOff);
-                    memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize + i, 0, iXOff);
-                    memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize + i, 0, iXOff);
+                    memset(m_pabyCachedTiles + 0 * nBandBlockSize + i, 0, iXOff);
+                    memset(m_pabyCachedTiles + 1 * nBandBlockSize + i, 0, iXOff);
+                    memset(m_pabyCachedTiles + 2 * nBandBlockSize + i, 0, iXOff);
+                    memset(m_pabyCachedTiles + 3 * nBandBlockSize + i, 0, iXOff);
                 }
                 for(int iX = iXOff; iX < iXOff + iXCount; iX ++)
                 {
                     i = iY * nBlockXSize + iX;
                     GByte byVal = m_pabyCachedTiles[i];
                     m_pabyCachedTiles[i] = abyCT[4*byVal];
-                    m_pabyCachedTiles[i + 1 * nBlockXSize * nBlockYSize] = abyCT[4*byVal+1];
-                    m_pabyCachedTiles[i + 2 * nBlockXSize * nBlockYSize] = abyCT[4*byVal+2];
-                    m_pabyCachedTiles[i + 3 * nBlockXSize * nBlockYSize] = abyCT[4*byVal+3];
+                    m_pabyCachedTiles[i + 1 * nBandBlockSize] = abyCT[4*byVal+1];
+                    m_pabyCachedTiles[i + 2 * nBandBlockSize] = abyCT[4*byVal+2];
+                    m_pabyCachedTiles[i + 3 * nBandBlockSize] = abyCT[4*byVal+3];
                 }
                 if( iXOff + iXCount < nBlockXSize )
                 {
                     i = iY * nBlockXSize + iXOff + iXCount;
-                    memset(m_pabyCachedTiles + 0 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - (iXOff + iXCount));
-                    memset(m_pabyCachedTiles + 1 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - (iXOff + iXCount));
-                    memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - (iXOff + iXCount));
-                    memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize - (iXOff + iXCount));
+                    memset(m_pabyCachedTiles + 0 * nBandBlockSize + i, 0, nBlockXSize - (iXOff + iXCount));
+                    memset(m_pabyCachedTiles + 1 * nBandBlockSize + i, 0, nBlockXSize - (iXOff + iXCount));
+                    memset(m_pabyCachedTiles + 2 * nBandBlockSize + i, 0, nBlockXSize - (iXOff + iXCount));
+                    memset(m_pabyCachedTiles + 3 * nBandBlockSize + i, 0, nBlockXSize - (iXOff + iXCount));
                 }
             }
             if( iYOff + iYCount < nBlockYSize )
             {
                 i = (iYOff + iYCount) * nBlockXSize;
-                memset(m_pabyCachedTiles + 0 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
-                memset(m_pabyCachedTiles + 1 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
-                memset(m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
-                memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
+                memset(m_pabyCachedTiles + 0 * nBandBlockSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
+                memset(m_pabyCachedTiles + 1 * nBandBlockSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
+                memset(m_pabyCachedTiles + 2 * nBandBlockSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
+                memset(m_pabyCachedTiles + 3 * nBandBlockSize + i, 0, nBlockXSize * (nBlockYSize - (iYOff + iYCount)));
             }
         }
 
@@ -2361,6 +2363,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartia
     CPLErr eErr = CE_None;
     bool bGotPartialTiles = false;
     int nCountFlushedTiles = 0;
+    const size_t nBandBlockSize = static_cast<size_t>(nBlockXSize) *
+                                                nBlockYSize * m_nDTSize;
     do
     {
         rc = sqlite3_step(hStmt);
@@ -2425,17 +2429,15 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartia
                 if( nPartialFlags & (((1 << 4)-1) << (4*(nBand - 1))) )
                 {
                     CPLAssert( sqlite3_column_bytes(hStmt, 2 + nBand) ==
-                                    nBlockXSize * nBlockYSize * m_nDTSize );
-                    memcpy( m_pabyCachedTiles + (nBand-1) *
-                                        nBlockXSize * nBlockYSize * m_nDTSize,
+                                    static_cast<int>(nBandBlockSize) );
+                    memcpy( m_pabyCachedTiles + (nBand-1) * nBandBlockSize,
                             sqlite3_column_blob(hStmt, 2 + nBand),
-                            nBlockXSize * nBlockYSize * m_nDTSize);
+                            nBandBlockSize);
                 }
                 else
                 {
                     FillEmptyTileSingleBand(
-                        m_pabyCachedTiles + (nBand-1) *
-                                        nBlockXSize * nBlockYSize * m_nDTSize );
+                        m_pabyCachedTiles + (nBand-1) * nBandBlockSize );
                 }
             }
 
@@ -2477,8 +2479,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartia
                         GetTileOffsetAndScale(nTileId,
                                               dfTileOffset, dfTileScale);
                         ReadTile(osMemFileName,
-                                 m_pabyCachedTiles +
-                                    4 * nBlockXSize * nBlockYSize * m_nDTSize,
+                                 m_pabyCachedTiles + 4 * nBandBlockSize,
                                  dfTileOffset, dfTileScale);
                         VSIUnlink(osMemFileName);
 
@@ -2526,9 +2527,9 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartia
                                         for( int iY = nYOff; iY < nYOff + nYSize; iY ++ )
                                         {
                                             memcpy( m_pabyCachedTiles +
-                                                        (((nBand - 1) * nBlockYSize + iY) * nBlockXSize + nXOff) * m_nDTSize,
+                                                        ((static_cast<size_t>(nBand - 1) * nBlockYSize + iY) * nBlockXSize + nXOff) * m_nDTSize,
                                                     m_pabyCachedTiles +
-                                                        (((4 + nBand - 1) * nBlockYSize + iY) * nBlockXSize + nXOff) * m_nDTSize,
+                                                        ((static_cast<size_t>(4 + nBand - 1) * nBlockYSize + iY) * nBlockXSize + nXOff) * m_nDTSize,
                                                     nXSize * m_nDTSize );
                                         }
                                     }
@@ -2759,6 +2760,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
     int nBlockXSize, nBlockYSize;
     IGetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
     const int nBands = IGetRasterCount();
+    const size_t nBandBlockSize = static_cast<size_t>(nBlockXSize) *
+                                                nBlockYSize * m_nDTSize;
 
     int iQuadrantFlag = 0;
     if( nDstXOffset == 0 && nDstYOffset == 0 )
@@ -2808,22 +2811,21 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
         if( (nOldFlags & (((1 << 4)-1) << (4*(nBand - 1)))) == 0 )
         {
             FillEmptyTileSingleBand( m_pabyCachedTiles + (4 + nBand - 1) *
-                                    nBlockXSize * nBlockYSize * m_nDTSize );
+                                                            nBandBlockSize );
         }
         else
         {
             CPLAssert( sqlite3_column_bytes(hStmt, 2) ==
-                                    nBlockXSize * nBlockYSize * m_nDTSize );
-            memcpy( m_pabyCachedTiles + (4 + nBand - 1) *
-                                    nBlockXSize * nBlockYSize * m_nDTSize,
+                                    static_cast<int>(nBandBlockSize) );
+            memcpy( m_pabyCachedTiles + (4 + nBand - 1) * nBandBlockSize,
                     sqlite3_column_blob(hStmt, 2),
-                    nBlockXSize * nBlockYSize * m_nDTSize );
+                    nBandBlockSize );
         }
     }
     else
     {
         FillEmptyTileSingleBand( m_pabyCachedTiles + (4 + nBand - 1) *
-                            nBlockXSize * nBlockYSize * m_nDTSize );
+                                 nBandBlockSize );
     }
     sqlite3_finalize(hStmt);
     hStmt = NULL;
@@ -2831,9 +2833,11 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
     /* Copy the updated rectangle into the full tile */
     for(int iY = nDstYOffset; iY < nDstYOffset + nDstYSize; iY ++ )
     {
-        memcpy( m_pabyCachedTiles + ((4 + nBand - 1) * nBlockXSize * nBlockYSize +
+        memcpy( m_pabyCachedTiles + (static_cast<size_t>(4 + nBand - 1) *
+                    nBlockXSize * nBlockYSize +
                     iY * nBlockXSize + nDstXOffset) * m_nDTSize,
-                m_pabyCachedTiles + ((nBand - 1) * nBlockXSize * nBlockYSize +
+                m_pabyCachedTiles + (static_cast<size_t>(nBand - 1) *
+                    nBlockXSize * nBlockYSize +
                     iY * nBlockXSize + nDstXOffset) * m_nDTSize,
                 nDstXSize * m_nDTSize );
     }
@@ -2844,8 +2848,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
                 CPLSPrintf("/tmp/partial_band_%d_%d.tif", 1, nCounter++),
                 nBlockXSize, nBlockYSize, nBands, m_eDT, NULL);
     poLogDS->RasterIO(GF_Write, 0, 0, nBlockXSize, nBlockYSize,
-                      m_pabyCachedTiles + (4 + nBand - 1) *
-                                    nBlockXSize * nBlockYSize * m_nDTSize,
+                      m_pabyCachedTiles + (4 + nBand - 1) * nBandBlockSize,
                       nBlockXSize, nBlockYSize,
                       m_eDT,
                       1, NULL,
@@ -2888,22 +2891,19 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
                 if ( rc == SQLITE_ROW )
                 {
                     CPLAssert( sqlite3_column_bytes(hStmt, 0) ==
-                                        nBlockXSize * nBlockYSize * m_nDTSize );
-                    memcpy( m_pabyCachedTiles + (iBand - 1) *
-                                        nBlockXSize * nBlockYSize * m_nDTSize,
+                                        static_cast<int>(nBandBlockSize) );
+                    memcpy( m_pabyCachedTiles + (iBand - 1) * nBandBlockSize,
                             sqlite3_column_blob(hStmt, 0),
-                            nBlockXSize * nBlockYSize * m_nDTSize );
+                            nBandBlockSize );
                 }
                 sqlite3_finalize(hStmt);
                 hStmt = NULL;
             }
             else
             {
-                memcpy( m_pabyCachedTiles + (iBand - 1) *
-                                nBlockXSize * nBlockYSize * m_nDTSize,
-                        m_pabyCachedTiles + (4 + iBand - 1) *
-                                nBlockXSize * nBlockYSize * m_nDTSize,
-                        nBlockXSize * nBlockYSize * m_nDTSize );
+                memcpy( m_pabyCachedTiles + (iBand - 1) * nBandBlockSize,
+                        m_pabyCachedTiles + (4 + iBand - 1) * nBandBlockSize,
+                        nBandBlockSize );
             }
         }
 
@@ -2986,8 +2986,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
     }
 
     sqlite3_bind_blob( hStmt, 1,
-                       m_pabyCachedTiles + (4 + nBand - 1) * nBlockXSize * nBlockYSize * m_nDTSize,
-                       nBlockXSize * nBlockYSize * m_nDTSize,
+                       m_pabyCachedTiles + (4 + nBand - 1) * nBandBlockSize,
+                       static_cast<int>(nBandBlockSize),
                        SQLITE_TRANSIENT );
     rc = sqlite3_step( hStmt );
     CPLErr eErr = CE_Failure;
@@ -3143,10 +3143,13 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                     }
 #endif
 
-                    memcpy( m_poTPD->m_pabyCachedTiles + (iBand - 1) *
-                                        nBlockXSize * nBlockYSize * m_nDTSize,
+                    const size_t nBandBlockSize =
+                        static_cast<size_t>(nBlockXSize) *
+                                                nBlockYSize * m_nDTSize;
+                    memcpy( m_poTPD->m_pabyCachedTiles +
+                                                (iBand - 1) * nBandBlockSize,
                             pabySrc,
-                            nBlockXSize * nBlockYSize * m_nDTSize );
+                            nBandBlockSize );
 
                     // Make sure partial blocks are zero'ed outside of the validity area
                     // but do that only when know that JPEG will not be used so as to
