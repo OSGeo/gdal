@@ -93,9 +93,7 @@ class GDALGPKGMBTilesLikePseudoDataset
 
     CPLString           m_osWHERE;
 
-#ifdef HAVE_SQLITE_VFS
     sqlite3_vfs*        m_pMyVFS;
-#endif
     sqlite3            *m_hTempDB;
     CPLString           m_osTempDBFilename;
     time_t              m_nLastSpaceCheckTimestamp;

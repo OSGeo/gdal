@@ -32,8 +32,6 @@
 #include "ogrsqliteexecutesql.h"
 #include "cpl_multiproc.h"
 
-#ifdef HAVE_SQLITE_VFS
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -668,7 +666,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
         const char* pszInsertInto = CPLSPrintf(
             "INSERT INTO \"%s\" (pkid, xmin, xmax, ymin, ymax) "
             "VALUES (?,?,?,?,?)", osIdxNameEscaped.c_str());
-        rc = sqlite3_prepare(hDB, pszInsertInto, -1, &hStmt, NULL);
+        rc = sqlite3_prepare_v2(hDB, pszInsertInto, -1, &hStmt, NULL);
     }
 
     OGR2SQLITE_IgnoreAllFieldsExceptGeometry(poLayer);
@@ -976,14 +974,14 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     int bEmptyLayer = FALSE;
 
     sqlite3_stmt *hSQLStmt = NULL;
-    int rc = sqlite3_prepare( hDB,
+    int rc = sqlite3_prepare_v2( hDB,
                               pszStatement, -1,
                               &hSQLStmt, NULL );
 
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "In ExecuteSQL(): sqlite3_prepare(%s):\n  %s",
+                "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
                 pszStatement, sqlite3_errmsg(hDB) );
 
         if( hSQLStmt != NULL )
@@ -1071,31 +1069,3 @@ std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char* pszStatement)
 
     return oSetLayers;
 }
-
-#else // HAVE_SQLITE_VFS
-
-/************************************************************************/
-/*                          OGRSQLiteExecuteSQL()                       */
-/************************************************************************/
-
-OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
-                                const char *pszStatement,
-                                OGRGeometry *poSpatialFilter,
-                                const char *pszDialect )
-{
-    CPLError(CE_Failure, CPLE_NotSupported,
-                "The SQLite version is to old to support the SQLite SQL dialect");
-    return NULL;
-}
-
-/************************************************************************/
-/*                   OGRSQLiteGetReferencedLayers()                     */
-/************************************************************************/
-
-std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char* pszStatement)
-{
-     std::set<LayerDesc> oSetLayers;
-     return oSetLayers;
-}
-
-#endif // HAVE_SQLITE_VFS

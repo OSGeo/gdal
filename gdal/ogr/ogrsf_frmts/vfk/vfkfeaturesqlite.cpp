@@ -119,11 +119,11 @@ OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
     VFKReaderSQLite *poReader = (VFKReaderSQLite *) m_poDataBlock->GetReader();
     sqlite3  *poDB = poReader->m_poDB;
 
-    int rc = sqlite3_prepare(poDB, pszSQLCommand, -1,
+    int rc = sqlite3_prepare_v2(poDB, pszSQLCommand, -1,
                          &m_hStmt, NULL);
     if (rc != SQLITE_OK) {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "In ExecuteSQL(): sqlite3_prepare(%s):\n  %s",
+                 "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
                  pszSQLCommand, sqlite3_errmsg(poDB));
 
         if(m_hStmt != NULL) {

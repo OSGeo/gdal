@@ -39,8 +39,6 @@ CPL_CVSID("$Id$");
 
 //#define DEBUG_IO 1
 
-#ifdef HAVE_SQLITE_VFS
-
 typedef struct
 {
     char                       szVFSName[64];
@@ -503,5 +501,3 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData)
 
     return pMyVFS;
 }
-
-#endif // HAVE_SQLITE_VFS

@@ -625,14 +625,14 @@ sqlite3_stmt *VFKReaderSQLite::PrepareStatement(const char *pszSQLCommand)
     CPLDebug("OGR-VFK", "VFKReaderSQLite::PrepareStatement(): %s", pszSQLCommand);
 
     sqlite3_stmt *hStmt = NULL;
-    const int rc = sqlite3_prepare(m_poDB, pszSQLCommand, -1,
+    const int rc = sqlite3_prepare_v2(m_poDB, pszSQLCommand, -1,
                                    &hStmt, NULL);
 
     // TODO(schwehr): if( rc == SQLITE_OK ) return NULL;
     if (rc != SQLITE_OK)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "In PrepareStatement(): sqlite3_prepare(%s):\n  %s",
+                 "In PrepareStatement(): sqlite3_prepare_v2(%s):\n  %s",
                  pszSQLCommand, sqlite3_errmsg(m_poDB));
 
         if(hStmt != NULL) {

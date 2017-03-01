@@ -131,9 +131,7 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
     OGRDataSourceH hDS;
     sqlite3* hDB;
 
-#ifdef HAVE_SQLITE_VFS
     sqlite3_vfs*        pMyVFS;
-#endif
 
     bool bFetchedMetadata;
     CPLStringList aosList;
@@ -733,9 +731,8 @@ MBTilesDataset::MBTilesDataset()
     bFetchedMetadata = false;
     nHasNonEmptyGrids = -1;
     hDB = NULL;
-#ifdef HAVE_SQLITE_VFS
     pMyVFS = NULL;
-#endif
+
     m_bGeoTransformValid = false;
     m_adfGeoTransform[0] = 0.0;
     m_adfGeoTransform[1] = 1.0;
@@ -775,14 +772,12 @@ MBTilesDataset::~MBTilesDataset()
         {
             sqlite3_close(hDB);
 
-#ifdef HAVE_SQLITE_VFS
             if (pMyVFS)
             {
                 sqlite3_vfs_unregister(pMyVFS);
                 CPLFree(pMyVFS->pAppData);
                 CPLFree(pMyVFS);
             }
-#endif
         }
     }
 }
@@ -2095,7 +2090,6 @@ bool MBTilesDataset::CreateInternal( const char * pszFilename,
     SetDescription( pszFilename );
 
     int rc;
-#ifdef HAVE_SQLITE_VFS
     if (STARTS_WITH(pszFilename, "/vsi"))
     {
         pMyVFS = OGRSQLiteCreateVFS(NULL, NULL);
@@ -2103,7 +2097,6 @@ bool MBTilesDataset::CreateInternal( const char * pszFilename,
         rc = sqlite3_open_v2( pszFilename, &hDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, pMyVFS->zName );
     }
     else
-#endif
     {
         rc = sqlite3_open( pszFilename, &hDB );
     }

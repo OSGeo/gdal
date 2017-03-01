@@ -1497,7 +1497,7 @@ CPLErr OGRDB2DataSource::FlushRemainingShiftedTiles()
     int rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, strlen(pszSQL), &hStmt, NULL);
     if ( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare(%s) failed: %s",
+        CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare_v2(%s) failed: %s",
                   pszSQL, sqlite3_errmsg( m_hTempDB ) );
         return CE_Failure;
     }
@@ -1547,7 +1547,7 @@ CPLErr OGRDB2DataSource::FlushRemainingShiftedTiles()
                 CPLDebug("GPKG", "%s", pszNewSQL);
 #endif
                 sqlite3_stmt* hNewStmt = NULL;
-                rc = sqlite3_prepare(GetDB(), pszNewSQL, -1, &hNewStmt, NULL);
+                rc = sqlite3_prepare_v2(GetDB(), pszNewSQL, -1, &hNewStmt, NULL);
                 if ( rc == SQLITE_OK )
                 {
                     rc = sqlite3_step( hNewStmt );
@@ -1749,7 +1749,7 @@ CPLErr OGRDB2DataSource::WriteShiftedTile(int /*nRow*/, int /*nCol*/, int /*nBan
     int rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, strlen(pszSQL), &hStmt, NULL);
     if ( rc != SQLITE_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare(%s) failed: %s",
+        CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare_v2(%s) failed: %s",
                   pszSQL, sqlite3_errmsg( m_hTempDB ) );
         return CE_Failure;
     }
@@ -1836,7 +1836,7 @@ CPLErr OGRDB2DataSource::WriteShiftedTile(int /*nRow*/, int /*nCol*/, int /*nBan
                 rc = sqlite3_prepare_v2(m_hTempDB, pszSQL, strlen(pszSQL), &hStmt, NULL);
                 if ( rc != SQLITE_OK )
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare(%s) failed: %s",
+                    CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare_v2(%s) failed: %s",
                               pszSQL, sqlite3_errmsg( m_hTempDB ) );
                     return CE_Failure;
                 }

@@ -63,11 +63,6 @@
 
 #include "rasterlite2_header.h"
 
-#if SQLITE_VERSION_NUMBER >= 3006000
-#define HAVE_SQLITE_VFS
-#define HAVE_SQLITE3_PREPARE_V2
-#endif
-
 #ifndef DO_NOT_INCLUDE_SQLITE_CLASSES
 
 #define UNINITIALIZED_SRID  -2
@@ -684,9 +679,7 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
     sqlite3             *hDB;
     int                 bUpdate;
 
-#ifdef HAVE_SQLITE_VFS
     sqlite3_vfs*        pMyVFS;
-#endif
 
     VSILFILE*           fpMainFile; /* Set by the VFS layer when it opens the DB */
                                     /* Must *NOT* be closed by the datasource explicitly. */
@@ -946,10 +939,8 @@ CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn,
 int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
                                     const char* pszValue );
 
-#ifdef HAVE_SQLITE_VFS
 typedef void (*pfnNotifyFileOpenedType)(void* pfnUserData, const char* pszFilename, VSILFILE* fp);
 sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData);
-#endif
 
 void OGRSQLiteRegisterInflateDeflate(sqlite3* hDB);
 

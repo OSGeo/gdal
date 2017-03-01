@@ -1180,7 +1180,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
                         pszTableName);
                 }
                 sqlite3_stmt* hSQLStmt = NULL;
-                int rc = sqlite3_prepare( hDB, pszSQL, -1,
+                int rc = sqlite3_prepare_v2( hDB, pszSQL, -1,
                                           &hSQLStmt, NULL );
 
                 if( rc == SQLITE_OK )
@@ -4507,14 +4507,14 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
         }
     }
 
-    int rc = sqlite3_prepare( hDB, osSQLCommand.c_str(),
+    int rc = sqlite3_prepare_v2( hDB, osSQLCommand.c_str(),
                               static_cast<int>(osSQLCommand.size()),
                               &hSQLStmt, NULL );
 
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "In ExecuteSQL(): sqlite3_prepare(%s):\n  %s",
+                "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
                 pszSQLCommand, sqlite3_errmsg(hDB) );
 
         if( hSQLStmt != NULL )

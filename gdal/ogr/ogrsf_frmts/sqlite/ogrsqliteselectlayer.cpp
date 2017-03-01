@@ -324,11 +324,11 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
     bDoStep = TRUE;
 
 #ifdef DEBUG
-    CPLDebug( "OGR_SQLITE", "prepare(%s)", poBehaviour->osSQLCurrent.c_str() );
+    CPLDebug( "OGR_SQLITE", "prepare_v2(%s)", poBehaviour->osSQLCurrent.c_str() );
 #endif
 
     const int rc =
-        sqlite3_prepare( poDS->GetDB(), poBehaviour->osSQLCurrent,
+        sqlite3_prepare_v2( poDS->GetDB(), poBehaviour->osSQLCurrent,
                          static_cast<int>(poBehaviour->osSQLCurrent.size()),
                          &hStmt, NULL );
 
@@ -336,7 +336,7 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
         return OGRERR_NONE;
 
     CPLError( CE_Failure, CPLE_AppDefined,
-              "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
+              "In ResetStatement(): sqlite3_prepare_v2(%s):\n  %s",
               poBehaviour->osSQLCurrent.c_str(), sqlite3_errmsg(poDS->GetDB()) );
     hStmt = NULL;
     return OGRERR_FAILURE;
