@@ -1273,6 +1273,8 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
                             osQuotedTableName.c_str());
     }
     osSQL += " ORDER BY zoom_level DESC";
+    // To avoid denial of service.
+    osSQL += " LIMIT 100";
 
     err = SQLQuery(hDB, osSQL.c_str(), &oResult);
     if( err != OGRERR_NONE || oResult.nRowCount == 0 )
