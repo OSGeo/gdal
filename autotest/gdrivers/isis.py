@@ -620,8 +620,6 @@ def isis_18():
     sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1,
                                 options = ['LATITUDE_TYPE=Planetocentric',
-                                           'LONGITUDE_DIRECTION=PositiveWest',
-                                           'LONGITUDE_DOMAIN=360',
                                            'BOUNDING_DEGREES=1.5,2.5,3.5,4.5'])
     ds.SetProjection(sr.ExportToWkt())
     ds.SetGeoTransform( [1000,1,0,2000,0,-1] )
@@ -629,14 +627,6 @@ def isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
     if lbl.find('"LatitudeType":"Planetocentric"') < 0:
-        gdaltest.post_reason('fail')
-        print(lbl)
-        return 'fail'
-    if lbl.find('"LongitudeDirection":"PositiveWest"') < 0:
-        gdaltest.post_reason('fail')
-        print(lbl)
-        return 'fail'
-    if lbl.find('"LongitudeDomain":360') < 0:
         gdaltest.post_reason('fail')
         print(lbl)
         return 'fail'
@@ -653,6 +643,78 @@ def isis_18():
         print(lbl)
         return 'fail'
     if lbl.find('"MaximumLongitude":3.5') < 0:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    ds = None
+
+
+    sr = osr.SpatialReference()
+    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 100, 100,
+                                options = ['LONGITUDE_DIRECTION=PositiveWest'])
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform( [10,1,0,40,0,-1] )
+    ds = None
+    ds = gdal.Open('/vsimem/isis_tmp.lbl')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    if lbl.find('"LongitudeDirection":"PositiveWest"') < 0:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    if lbl.find('"LongitudeDomain":180') < 0:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    if lbl.find('"MinimumLatitude":-60') < 0:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    if lbl.find('"MinimumLongitude":-110') < 0:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    if lbl.find('"MaximumLatitude":40') < 0:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    if lbl.find('"MaximumLongitude":-10') < 0:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    ds = None
+
+
+    sr = osr.SpatialReference()
+    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 100, 100,
+                                options = ['FORCE_360=YES'])
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform( [-10,1,0,40,0,-1] )
+    ds = None
+    ds = gdal.Open('/vsimem/isis_tmp.lbl')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    if lbl.find('"MinimumLatitude":-60') < 0:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    if lbl.find('"MinimumLongitude":90') < 0:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    if lbl.find('"MaximumLatitude":40') < 0:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    if lbl.find('"MaximumLongitude":350') < 0:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    if lbl.find('"UpperLeftCornerX":-21547') < 0:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    if lbl.find('"UpperLeftCornerY":86188') < 0:
         gdaltest.post_reason('fail')
         print(lbl)
         return 'fail'
