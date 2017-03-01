@@ -543,7 +543,7 @@ class ISIS3Dataset : public RawDataset
     CPLString   m_osComment;
     CPLString   m_osLatitudeType;
     CPLString   m_osLongitudeDirection;
-    CPLString   m_osLongitudeDomain;
+    bool        m_bForce360;
     bool        m_bWriteBoundingDegrees;
     CPLString   m_osBoundingDegrees;
 
@@ -557,6 +557,7 @@ class ISIS3Dataset : public RawDataset
     const char *GetKeyword( const char *pszPath,
                             const char *pszDefault = "");
 
+    double       FixLong( double dfLong );
     json_object *BuildLabel();
     void         WriteLabel();
 
@@ -1652,6 +1653,7 @@ ISIS3Dataset::ISIS3Dataset() :
     m_bGotTransform(false),
     m_bHasSrcNoData(false),
     m_dfSrcNoData(0.0),
+    m_bForce360(false),
     m_bWriteBoundingDegrees(true),
     m_poJSonLabel(NULL),
     m_bUseSrcLabel(true),
@@ -2563,6 +2565,19 @@ const char *ISIS3Dataset::GetKeyword( const char *pszPath,
 }
 
 /************************************************************************/
+/*                              FixLong()                               */
+/************************************************************************/
+
+double ISIS3Dataset::FixLong( double dfLong )
+{
+    if( m_osLongitudeDirection == "PositiveWest" )
+        dfLong = -dfLong;
+    if( m_bForce360 && dfLong < 0 )
+        dfLong += 360.0;
+    return dfLong;
+}
+
+/************************************************************************/
 /*                           BuildLabel()                               */
 /************************************************************************/
 
@@ -2688,7 +2703,7 @@ json_object* ISIS3Dataset::BuildLabel()
         oMapping["_type"] = "group";
 
         oSRS.SetFromUserInput(m_osProjection);
-        if( oSRS.IsProjected() )
+        if( oSRS.IsProjected() || oSRS.IsGeographic() )
         {
             const char* pszDatum = oSRS.GetAttrValue("DATUM");
             CPLString osTargetName;
@@ -2723,36 +2738,50 @@ json_object* ISIS3Dataset::BuildLabel()
             bool bLongLatCorners = false;
             if( m_bGotTransform )
             {
-                OGRSpatialReference* poSRSLongLat = oSRS.CloneGeogCS();
-                OGRCoordinateTransformation* poCT =
-                    OGRCreateCoordinateTransformation(&oSRS, poSRSLongLat);
-                if( poCT )
+                for( int i = 0; i < 4; i++ )
                 {
-                    for( int i = 0; i < 4; i++ )
-                    {
-                        adfX[i] = m_adfGeoTransform[0] + (i%2) *
-                                        nRasterXSize * m_adfGeoTransform[1];
-                        adfY[i] = m_adfGeoTransform[3] +
-                                ( (i == 0 || i == 3) ? 0 : 1 ) *
-                                nRasterYSize * m_adfGeoTransform[5];
-                    }
-                    if( poCT->Transform(4, adfX, adfY) )
-                    {
-                        bLongLatCorners = true;
-                    }
-                    delete poCT;
+                    adfX[i] = m_adfGeoTransform[0] + (i%2) *
+                                    nRasterXSize * m_adfGeoTransform[1];
+                    adfY[i] = m_adfGeoTransform[3] +
+                            ( (i == 0 || i == 3) ? 0 : 1 ) *
+                            nRasterYSize * m_adfGeoTransform[5];
                 }
-                delete poSRSLongLat;
+                if( oSRS.IsGeographic() )
+                {
+                    bLongLatCorners = true;
+                }
+                else
+                {
+                    OGRSpatialReference* poSRSLongLat = oSRS.CloneGeogCS();
+                    OGRCoordinateTransformation* poCT =
+                        OGRCreateCoordinateTransformation(&oSRS, poSRSLongLat);
+                    if( poCT )
+                    {
+                        if( poCT->Transform(4, adfX, adfY) )
+                        {
+                            bLongLatCorners = true;
+                        }
+                        delete poCT;
+                    }
+                    delete poSRSLongLat;
+                }
+            }
+            if( bLongLatCorners )
+            {
+                for( int i = 0; i < 4; i++ )
+                {
+                    adfX[i] = FixLong(adfX[i]);
+                }
             }
 
-            if( !m_osLongitudeDomain.empty() )
-                oMapping["LongitudeDomain"] = atoi(m_osLongitudeDomain);
+            if( bLongLatCorners && (
+                    m_bForce360 || adfX[0] <- 180.0 || adfX[3] > 180.0) )
+            {
+                oMapping["LongitudeDomain"] = 360;
+            }
             else
             {
-                if( bLongLatCorners && adfX[3] > 180.0 )
-                    oMapping["LongitudeDomain"] = 360;
-                else
-                    oMapping["LongitudeDomain"] = 180;
+                oMapping["LongitudeDomain"] = 180;
             }
 
             if( m_bWriteBoundingDegrees && !m_osBoundingDegrees.empty() )
@@ -2781,7 +2810,14 @@ json_object* ISIS3Dataset::BuildLabel()
             }
 
             const char* pszProjection = oSRS.GetAttrValue("PROJECTION");
-            if( EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR) )
+            if( pszProjection == NULL )
+            {
+                oMapping["ProjectionName"] = "SimpleCylindrical";
+                oMapping["CenterLongitude"] = 0.0;
+                oMapping["CenterLatitude"] = 0.0;
+                oMapping["CenterLatitudeRadius"] = oSRS.GetSemiMajor();
+            }
+            else if( EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR) )
             {
                 oMapping["ProjectionName"] = "Equirectangular";
                 if( oSRS.GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 )
@@ -2792,7 +2828,7 @@ json_object* ISIS3Dataset::BuildLabel()
                              SRS_PP_LATITUDE_OF_ORIGIN);
                 }
                 oMapping["CenterLongitude"] =
-                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                    FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
                 const double dfCenterLat =
                         oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
                 oMapping["CenterLatitude"] = dfCenterLat;
@@ -2811,8 +2847,8 @@ json_object* ISIS3Dataset::BuildLabel()
             else if( EQUAL(pszProjection, SRS_PT_ORTHOGRAPHIC) )
             {
                 oMapping["ProjectionName"] = "Orthographic";
-                oMapping["CenterLongitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                oMapping["CenterLongitude"] = FixLong(
+                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
                 oMapping["CenterLatitude"] =
                         oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
             }
@@ -2820,15 +2856,15 @@ json_object* ISIS3Dataset::BuildLabel()
             else if( EQUAL(pszProjection, SRS_PT_SINUSOIDAL) )
             {
                 oMapping["ProjectionName"] = "Sinusoidal";
-                oMapping["CenterLongitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0);
+                oMapping["CenterLongitude"] = FixLong(
+                    oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0));
             }
 
             else if( EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) )
             {
                 oMapping["ProjectionName"] = "Mercator";
-                oMapping["CenterLongitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                oMapping["CenterLongitude"] = FixLong(
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
                 oMapping["CenterLatitude"] =
                         oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
                 oMapping["scaleFactor"] =
@@ -2838,8 +2874,8 @@ json_object* ISIS3Dataset::BuildLabel()
             else if( EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
             {
                 oMapping["ProjectionName"] = "PolarStereographic";
-                oMapping["CenterLongitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                oMapping["CenterLongitude"] = FixLong(
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
                 oMapping["CenterLatitude"] =
                         oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
                 oMapping["scaleFactor"] =
@@ -2849,8 +2885,8 @@ json_object* ISIS3Dataset::BuildLabel()
             else if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
             {
                 oMapping["ProjectionName"] = "TransverseMercator";
-                oMapping["CenterLongitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                oMapping["CenterLongitude"] = FixLong(
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
                 oMapping["CenterLatitude"] =
                         oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
                 oMapping["scaleFactor"] =
@@ -2860,8 +2896,8 @@ json_object* ISIS3Dataset::BuildLabel()
             else if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
             {
                 oMapping["ProjectionName"] = "LambertConformal";
-                oMapping["CenterLongitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                oMapping["CenterLongitude"] = FixLong(
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
                 oMapping["CenterLatitude"] =
                         oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
                 oMapping["FirstStandardParallel"] =
@@ -2896,7 +2932,7 @@ json_object* ISIS3Dataset::BuildLabel()
         else
         {
             CPLError(CE_Warning, CPLE_NotSupported,
-                     "Geodetic SRS not supported");
+                     "SRS not supported");
         }
     }
 
@@ -2905,21 +2941,35 @@ json_object* ISIS3Dataset::BuildLabel()
         CPLJsonObject& oMapping = oIsisCube["Mapping"];
         oMapping["_type"] = "group";
 
-        oMapping["UpperLeftCornerX"] = m_adfGeoTransform[0];
-        oMapping["UpperLeftCornerY"] = m_adfGeoTransform[3];
+        const double dfDegToMeter = oSRS.GetSemiMajor() * M_PI / 180.0;
         if( !m_osProjection.empty() && oSRS.IsProjected() )
         {
             const double dfLinearUnits = oSRS.GetLinearUnits();
             // Maybe we should deal differently with non meter units ?
             const double dfRes = m_adfGeoTransform[1] * dfLinearUnits;
+            const double dfScale = dfDegToMeter / dfRes;
+            oMapping["UpperLeftCornerX"] = m_adfGeoTransform[0];
+            oMapping["UpperLeftCornerY"] = m_adfGeoTransform[3];
             oMapping["PixelResolution"]["value"] = dfRes;
             oMapping["PixelResolution"]["unit"] = "meters/pixel";
-            oMapping["Scale"]["value"] =
-                oSRS.GetSemiMajor() * M_PI / 180. / dfRes;
+            oMapping["Scale"]["value"] = dfScale;
+            oMapping["Scale"]["unit"] = "pixels/degree";
+        }
+        else if( !m_osProjection.empty() && oSRS.IsGeographic() )
+        {
+            const double dfScale = 1.0 / m_adfGeoTransform[1];
+            const double dfRes = m_adfGeoTransform[1] * dfDegToMeter;
+            oMapping["UpperLeftCornerX"] = m_adfGeoTransform[0] * dfDegToMeter;
+            oMapping["UpperLeftCornerY"] = m_adfGeoTransform[3] * dfDegToMeter;
+            oMapping["PixelResolution"]["value"] = dfRes;
+            oMapping["PixelResolution"]["unit"] = "meters/pixel";
+            oMapping["Scale"]["value"] = dfScale;
             oMapping["Scale"]["unit"] = "pixels/degree";
         }
         else
         {
+            oMapping["UpperLeftCornerX"] = m_adfGeoTransform[0];
+            oMapping["UpperLeftCornerY"] = m_adfGeoTransform[3];
             oMapping["PixelResolution"] = m_adfGeoTransform[1];
         }
     }
@@ -3534,8 +3584,7 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
                                                   "LATITUDE_TYPE", "");
     poDS->m_osLongitudeDirection = CSLFetchNameValueDef(papszOptions,
                                                   "LONGITUDE_DIRECTION", "");
-    poDS->m_osLongitudeDomain = CSLFetchNameValueDef(papszOptions,
-                                                  "LONGITUDE_DOMAIN", "");
+    poDS->m_bForce360 = CPLFetchBool(papszOptions, "FORCE_360", false);
     poDS->m_bWriteBoundingDegrees = CPLFetchBool(papszOptions,
                                                  "WRITE_BOUNDING_DEGREES",
                                                  true);
@@ -3763,11 +3812,14 @@ void GDALRegister_ISIS3()
     "description='Comment to add into the label'/>"
 "  <Option name='LATITUDE_TYPE' type='string' "
     "description='Value of Mapping.LatitudeType' default='Planetographic'/>"
-"  <Option name='LONGITUDE_DIRECTION' type='string' "
+"  <Option name='LONGITUDE_DIRECTION' type='string-select' "
     "description='Value of Mapping.LongitudeDirection' "
-    "default='PositiveEast'/>"
-"  <Option name='LONGITUDE_DOMAIN' type='float' "
-    "description='Value of Mapping.LongitudeDomain'/>"
+    "default='PositiveEast'>"
+"     <Value>PositiveEast</Value>"
+"     <Value>PositiveWest</Value>"
+"  </Option>"
+"  <Option name='FORCE_360' type='boolean' "
+    "description='Whether to force longitudes in [0,360] range' default='NO'/>"
 "  <Option name='WRITE_BOUNDING_DEGREES' type='boolean'"
     "description='Whether to write Min/MaximumLong/Latitude values' "
     "default='YES'/>"
