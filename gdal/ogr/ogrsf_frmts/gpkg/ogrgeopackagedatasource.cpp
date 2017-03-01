@@ -721,7 +721,13 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                     "AND name NOT IN ('st_spatial_ref_sys', 'spatial_ref_sys', 'st_geometry_columns') "
                     "AND name NOT IN (SELECT table_name FROM gpkg_contents)";
         }
-        osSQL += " LIMIT 1000";
+        const int nTableLimit =
+                    atoi(CPLGetConfigOption("OGR_TABLE_LIMIT", "10000"));
+        if( nTableLimit > 0 )
+        {
+            osSQL += " LIMIT ";
+            osSQL += CPLSPrintf("%d", 1 + nTableLimit);
+        }
 
         SQLResult oResult;
         OGRErr err = SQLQuery(hDB, osSQL.c_str(), &oResult);
@@ -731,11 +737,14 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             return FALSE;
         }
 
-        if( oResult.nRowCount == 1000 )
+        if( nTableLimit > 0 && oResult.nRowCount > nTableLimit )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                        "File has more than 1000 vector tables. "
-                        "Limiting to first 1000");
+                     "File has more than %d vector tables. "
+                     "Limiting to first %d (can be overriden with "
+                     "OGR_TABLE_LIMIT config option)",
+                     nTableLimit, nTableLimit);
+            oResult.nRowCount = nTableLimit;
         }
 
         if ( oResult.nRowCount > 0 )
