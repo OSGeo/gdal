@@ -1306,6 +1306,12 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         }
         if( err != OGRERR_NONE || oResult.nRowCount == 0 )
         {
+            if( err == OGRERR_NONE && pszZoomLevel != NULL )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "ZOOM_LEVEL is probably not valid w.r.t tile "
+                         "table content");
+            }
             SQLResultFree(&oResult);
             sqlite3_free(pszSQL);
             return false;
