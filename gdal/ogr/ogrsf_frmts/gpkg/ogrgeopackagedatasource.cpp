@@ -1265,10 +1265,12 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
             "tile_height, matrix_width, matrix_height "
             "FROM gpkg_tile_matrix tm "
             "WHERE table_name = %s "
-            "AND zoom_level >= 0 AND zoom_level <= 2147483647 "
+            // INT_MAX would be the theoretical maximum value to avoid
+            // overflows, but that's already a insane value.
+            "AND zoom_level >= 0 AND zoom_level <= 65536 "
             "AND pixel_x_size > 0 AND pixel_y_size > 0 "
-            "AND tile_width > 0 AND tile_width <= 2147483647 "
-            "AND tile_height > 0 AND tile_height <= 2147483647 "
+            "AND tile_width > 0 AND tile_width <= 65536 "
+            "AND tile_height > 0 AND tile_height <= 65536 "
             "AND matrix_width > 0 AND matrix_height > 0",
             osQuotedTableName.c_str());
     CPLString osSQL(pszSQL);
