@@ -3367,40 +3367,96 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue( double dfNoDataValue )
 
 char** GDALGeoPackageRasterBand::GetMetadata(const char* pszDomain)
 {
+    GDALGeoPackageDataset *poGDS
+        = reinterpret_cast<GDALGeoPackageDataset *>( poDS );
+
     if( eDataType != GDT_Byte &&
         (pszDomain == NULL || EQUAL(pszDomain, "")) &&
         CSLFetchNameValue(GDALGPKGMBTilesLikeRasterBand::GetMetadata(),
                           "STATISTICS_MINIMUM") == NULL )
     {
-        GDALGeoPackageDataset *poGDS
-            = reinterpret_cast<GDALGeoPackageDataset *>( poDS );
-        char* pszSQL = sqlite3_mprintf(
-            "SELECT MIN(min), MAX(max) FROM "
-            "gpkg_2d_gridded_tile_ancillary t_a JOIN \"%w\" tpudt ON "
-            "t_a.tpudt_id = tpudt.id WHERE zoom_level=%d",
-            poGDS->m_osRasterTable.c_str(),
-            poGDS->m_nZoomLevel);
-        SQLResult sResult;
-        if( SQLQuery( poGDS->IGetDB(), pszSQL, &sResult) == OGRERR_NONE &&
-            sResult.nRowCount == 1 )
+        const int nColMin = poGDS->m_nShiftXTiles;
+        const int nColMax = (nRasterXSize - 1 + poGDS->m_nShiftXPixelsMod) /
+                                        nBlockXSize + poGDS->m_nShiftXTiles;
+        const int nRowMin = poGDS->m_nShiftYTiles;
+        const int nRowMax = (nRasterYSize - 1 + poGDS->m_nShiftYPixelsMod) /
+                                        nBlockYSize + poGDS->m_nShiftYTiles;
+
+        bool bOK = false;
+        if( poGDS->m_nShiftXPixelsMod == 0 &&
+            poGDS->m_nShiftYPixelsMod == 0 &&
+            (nRasterXSize % nBlockXSize) == 0 &&
+            (nRasterYSize % nBlockYSize) == 0 )
         {
-            const char* pszMin = SQLResultGetValue(&sResult, 0, 0);
-            const char* pszMax = SQLResultGetValue(&sResult, 1, 0);
-            if( pszMin )
-            {
-                GDALGPKGMBTilesLikeRasterBand::SetMetadataItem(
-                    "STATISTICS_MINIMUM",
-                    CPLSPrintf("%.14g", CPLAtof(pszMin)) );
-            }
-            if( pszMax )
-            {
-                GDALGPKGMBTilesLikeRasterBand::SetMetadataItem(
-                    "STATISTICS_MAXIMUM",
-                    CPLSPrintf("%.14g", CPLAtof(pszMax)) );
-            }
+            // If the area of interest matches entire tiles, then we can
+            // use tile statistics
+            bOK = true;
         }
-        SQLResultFree(&sResult);
-        sqlite3_free(pszSQL);
+        else if( m_bHasNoData )
+        {
+            // Otherwise, in the case where we have nodata, we assume that
+            // if the area of interest is at least larger than the existing
+            // tiles, the tile statistics will be reliable.
+            char* pszSQL = sqlite3_mprintf(
+                "SELECT MIN(tile_column), MAX(tile_column), "
+                "MIN(tile_row), MAX(tile_row) FROM \"%w\" "
+                "WHERE zoom_level = %d",
+                poGDS->m_osRasterTable.c_str(),
+                poGDS->m_nZoomLevel);
+            SQLResult sResult;
+            if( SQLQuery( poGDS->IGetDB(), pszSQL, &sResult) == OGRERR_NONE &&
+                sResult.nRowCount == 1 )
+            {
+                const char* pszMinX = SQLResultGetValue(&sResult, 0, 0);
+                const char* pszMaxX = SQLResultGetValue(&sResult, 1, 0);
+                const char* pszMinY = SQLResultGetValue(&sResult, 2, 0);
+                const char* pszMaxY = SQLResultGetValue(&sResult, 3, 0);
+                if( pszMinX && pszMaxX && pszMinY && pszMaxY )
+                {
+                    bOK = atoi(pszMinX) >= nColMin &&
+                          atoi(pszMaxX) <= nColMax &&
+                          atoi(pszMinY) >= nRowMin &&
+                          atoi(pszMaxY) <= nRowMax;
+                }
+            }
+            SQLResultFree(&sResult);
+            sqlite3_free(pszSQL);
+        }
+
+        if( bOK )
+        {
+            char* pszSQL = sqlite3_mprintf(
+                "SELECT MIN(min), MAX(max) FROM "
+                "gpkg_2d_gridded_tile_ancillary t_a JOIN \"%w\" tpudt ON "
+                "t_a.tpudt_id = tpudt.id WHERE tpudt.zoom_level = %d AND "
+                "tpudt.tile_column >= %d AND tpudt.tile_column <= %d AND "
+                "tpudt.tile_row >= %d AND tpudt.tile_row <= %d",
+                poGDS->m_osRasterTable.c_str(),
+                poGDS->m_nZoomLevel,
+                nColMin, nColMax,
+                nRowMin, nRowMax);
+            SQLResult sResult;
+            if( SQLQuery( poGDS->IGetDB(), pszSQL, &sResult) == OGRERR_NONE &&
+                sResult.nRowCount == 1 )
+            {
+                const char* pszMin = SQLResultGetValue(&sResult, 0, 0);
+                const char* pszMax = SQLResultGetValue(&sResult, 1, 0);
+                if( pszMin )
+                {
+                    GDALGPKGMBTilesLikeRasterBand::SetMetadataItem(
+                        "STATISTICS_MINIMUM",
+                        CPLSPrintf("%.14g", CPLAtof(pszMin)) );
+                }
+                if( pszMax )
+                {
+                    GDALGPKGMBTilesLikeRasterBand::SetMetadataItem(
+                        "STATISTICS_MAXIMUM",
+                        CPLSPrintf("%.14g", CPLAtof(pszMax)) );
+                }
+            }
+            SQLResultFree(&sResult);
+            sqlite3_free(pszSQL);
+        }
     }
     return GDALGPKGMBTilesLikeRasterBand::GetMetadata(pszDomain);
 }
