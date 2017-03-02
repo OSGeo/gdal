@@ -3073,6 +3073,17 @@ def ogr_gpkg_42():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # So as to test that we really read from gpkg_ogr_contents
+    ds.ExecuteSQL('UPDATE gpkg_ogr_contents SET feature_count = 5000')
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update = 1)
+    lyr = ds.GetLayer(0)
+    fc = lyr.GetFeatureCount()
+    if fc != 5000:
+        gdaltest.post_reason('fail')
+        print(fc)
+        return 'fail'
+
     # Test renaming
     ds.ExecuteSQL('ALTER TABLE foo RENAME TO bar')
     ds = None
@@ -3082,7 +3093,7 @@ def ogr_gpkg_42():
     val = f.GetField(0)
     f = None
     ds.ReleaseResultSet(sql_lyr)
-    if val != 5:
+    if val != 5000:
         gdaltest.post_reason('fail')
         return 'fail'
 
