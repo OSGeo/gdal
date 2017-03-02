@@ -40,7 +40,7 @@
 #define UNKNOWN_SRID   -2
 #define DEFAULT_SRID    0
 
-#define ENABLE_OGR_FEATURE_COUNT_COLUMN
+#define ENABLE_GPKG_OGR_CONTENTS
 
 typedef enum
 {
@@ -75,8 +75,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
     int                 m_nLayers;
     bool                m_bUtf8;
     void                CheckUnknownExtensions(bool bCheckRasterTable = false);
-#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
-    bool                m_bHasFeatureCountColumn;
+#ifdef ENABLE_GPKG_OGR_CONTENTS
+    bool                m_bHasGPKGOGRContents;
 #endif
 
     CPLString           m_osIdentifier;
@@ -332,7 +332,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     char*                       m_pszTableName;
     int                         m_iSrs;
     OGREnvelope*                m_poExtent;
-#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+#ifdef ENABLE_GPKG_OGR_CONTENTS
     GIntBig                     m_nTotalFeatureCount;
     bool                        m_bOGRFeatureCountTriggersEnabled;
     bool                        m_bAddOGRFeatureCountTriggers;
@@ -371,9 +371,9 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     OGRErr              RecreateTable(const CPLString& osColumnsForCreate,
                                       const CPLString& osFieldListForSelect);
     bool                IsTable();
-#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+#ifdef ENABLE_GPKG_OGR_CONTENTS
     void                CreateTriggers(const char* pszTableName = NULL);
-    void                DisableTriggers();
+    void                DisableTriggers(bool bNullifyFeatureCount = true);
 #endif
 
     public:
@@ -454,7 +454,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
                                 { m_bTruncateFields = CPL_TO_BOOL( bFlag ); }
     OGRErr              RunDeferredCreationIfNecessary();
 
-#ifdef ENABLE_OGR_FEATURE_COUNT_COLUMN
+#ifdef ENABLE_GPKG_OGR_CONTENTS
     bool                GetAddOGRFeatureCountTriggers() const
                                     { return m_bAddOGRFeatureCountTriggers; }
     void                SetAddOGRFeatureCountTriggers(bool b)
