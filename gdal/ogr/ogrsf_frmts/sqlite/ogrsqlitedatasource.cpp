@@ -817,7 +817,8 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
                        "sql LIKE '%%ogr_geocode%%' OR "
                        "sql LIKE '%%ogr_datasource_load_layers%%' OR "
                        "sql LIKE '%%ogr_GetConfigOption%%' OR "
-                       "sql LIKE '%%ogr_SetConfigOption%%' )",
+                       "sql LIKE '%%ogr_SetConfigOption%%' ) "
+                       "LIMIT 1",
                        &papszResult, &nRowCount, &nColCount,
                        &pszErrMsg );
     if( rc != SQLITE_OK )
@@ -1421,7 +1422,8 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         hDB,
         "SELECT f_table_name, f_geometry_column, geometry_type, "
         "coord_dimension, geometry_format, srid"
-        " FROM geometry_columns",
+        " FROM geometry_columns "
+        "LIMIT 10000",
         &papszResult, &nRowCount, &nColCount, &pszErrMsg );
 
     if( rc == SQLITE_OK )
@@ -1465,7 +1467,9 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         if( bListVirtualOGRLayers )
         {
             rc = sqlite3_get_table( hDB,
-                                "SELECT name, sql FROM sqlite_master WHERE sql LIKE 'CREATE VIRTUAL TABLE %'",
+                                "SELECT name, sql FROM sqlite_master "
+                                "WHERE sql LIKE 'CREATE VIRTUAL TABLE %' "
+                                "LIMIT 10000",
                                 &papszResult, &nRowCount,
                                 &nColCount, &pszErrMsg );
 
@@ -1521,7 +1525,8 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
     rc = sqlite3_get_table( hDB,
                             "SELECT f_table_name, f_geometry_column, "
                             "type, coord_dimension, srid, "
-                            "spatial_index_enabled FROM geometry_columns",
+                            "spatial_index_enabled FROM geometry_columns "
+                            "LIMIT 10000",
                             &papszResult, &nRowCount,
                             &nColCount, &pszErrMsg );
     if (rc != SQLITE_OK )
@@ -1531,7 +1536,8 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
         rc = sqlite3_get_table( hDB,
                                 "SELECT f_table_name, f_geometry_column, "
                                 "geometry_type, coord_dimension, srid, "
-                                "spatial_index_enabled FROM geometry_columns",
+                                "spatial_index_enabled FROM geometry_columns "
+                                "LIMIT 10000",
                                 &papszResult, &nRowCount,
                                 &nColCount, &pszErrMsg );
         if ( rc == SQLITE_OK )
@@ -1597,7 +1603,8 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
                 nRowCount2 = 0;
                 nColCount2 = 0;
                 rc = sqlite3_get_table( hDB,
-                                "SELECT coverage_name FROM raster_coverages",
+                                "SELECT coverage_name FROM raster_coverages "
+                                "LIMIT 10000",
                                 &papszResults2, &nRowCount2,
                                 &nColCount2, NULL );
                 if( rc == SQLITE_OK )
@@ -1663,7 +1670,9 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
 /*      Detect VirtualShape, VirtualXL and VirtualOGR layers            */
 /* -------------------------------------------------------------------- */
         rc = sqlite3_get_table( hDB,
-                            "SELECT name, sql FROM sqlite_master WHERE sql LIKE 'CREATE VIRTUAL TABLE %'",
+                            "SELECT name, sql FROM sqlite_master "
+                            "WHERE sql LIKE 'CREATE VIRTUAL TABLE %' "
+                            "LIMIT 10000",
                             &papszResult, &nRowCount,
                             &nColCount, &pszErrMsg );
 
@@ -1704,7 +1713,10 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
 /* -------------------------------------------------------------------- */
 
         rc = sqlite3_get_table( hDB,
-                                "SELECT view_name, view_geometry, view_rowid, f_table_name, f_geometry_column FROM views_geometry_columns",
+                                "SELECT view_name, view_geometry, view_rowid, "
+                                "f_table_name, f_geometry_column "
+                                "FROM views_geometry_columns "
+                                "LIMIT 10000",
                                 &papszResult, &nRowCount,
                                 &nColCount, NULL );
         if ( rc == SQLITE_OK )
@@ -1762,7 +1774,8 @@ all_tables:
                             "UNION ALL "
                             "SELECT name FROM sqlite_temp_master "
                             "WHERE type IN ('table','view') "
-                            "ORDER BY 1",
+                            "ORDER BY 1 "
+                            "LIMIT 10000",
                             &papszResult, &nRowCount,
                             &nColCount, &pszErrMsg );
 
@@ -3135,7 +3148,8 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
             // the driver uses 'EPSG' in upper case, but SpatiaLite extension
             // uses 'epsg' in lower case.
             osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE "
-                              "auth_name = '%s' COLLATE NOCASE AND auth_srid = '%s'",
+                              "auth_name = '%s' COLLATE NOCASE AND auth_srid = '%s' "
+                              "LIMIT 2",
                               pszAuthorityName, pszAuthorityCode );
 
             int rc = sqlite3_get_table( hDB, osCommand, &papszResult,
@@ -3164,7 +3178,8 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
                     sqlite3_free_table(papszResult);
 
                     osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE "
-                                      "auth_name = 'epsg' AND auth_srid = '%s'",
+                                      "auth_name = 'epsg' AND auth_srid = '%s' "
+                                      "LIMIT 2",
                                       pszAuthorityCode );
 
                     rc = sqlite3_get_table( hDB, osCommand, &papszResult,
@@ -3220,7 +3235,8 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Try to find based on the WKT match.                             */
 /* -------------------------------------------------------------------- */
-        osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE \"%s\" = ?",
+        osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE \"%s\" = ? "
+                          "LIMIT 2",
                           OGRSQLiteEscapeName(pszSRTEXTColName).c_str());
     }
 
@@ -3248,7 +3264,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*      Try to find based on the PROJ.4 match.                          */
 /* -------------------------------------------------------------------- */
         osCommand.Printf(
-            "SELECT srid FROM spatial_ref_sys WHERE proj4text = ?");
+            "SELECT srid FROM spatial_ref_sys WHERE proj4text = ? LIMIT 2");
     }
 
     sqlite3_stmt *hSelectStmt = NULL;
@@ -3309,7 +3325,8 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     if ( pszAuthorityCode != NULL && strlen(pszAuthorityCode) > 0 )
     {
-        osCommand.Printf( "SELECT * FROM spatial_ref_sys WHERE auth_srid='%s'",
+        osCommand.Printf( "SELECT * FROM spatial_ref_sys WHERE auth_srid='%s' "
+                          "LIMIT 2",
                           OGRSQLiteEscape(pszAuthorityCode).c_str() );
         rc = sqlite3_get_table( hDB, osCommand, &papszResult,
                                 &nRowCount, &nColCount, &pszErrMsg );
@@ -3527,7 +3544,8 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
     OGRSpatialReference *poSRS = NULL;
 
     CPLString osCommand;
-    osCommand.Printf( "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
+    osCommand.Printf( "SELECT srtext FROM spatial_ref_sys WHERE srid = %d "
+                      "LIMIT 2",
                       nId );
     int rc =
         sqlite3_get_table(
@@ -3579,7 +3597,8 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
             osSRTEXTColNameWithCommaBefore.Printf(", %s", pszSRTEXTColName);
 
         osCommand.Printf(
-            "SELECT proj4text, auth_name, auth_srid%s FROM spatial_ref_sys WHERE srid = %d",
+            "SELECT proj4text, auth_name, auth_srid%s FROM spatial_ref_sys "
+            "WHERE srid = %d LIMIT 2",
             (pszSRTEXTColName != NULL) ? osSRTEXTColNameWithCommaBefore.c_str() : "", nId );
         rc = sqlite3_get_table( hDB, osCommand,
                                 &papszResult, &nRowCount,
