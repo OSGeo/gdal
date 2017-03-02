@@ -3451,10 +3451,10 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
                                                        "DATA_LOCATION",
                                                        "LABEL");
     const bool bIsTiled = CPLFetchBool(papszOptions, "TILED", false);
-    const int nBlockXSize = atoi(CSLFetchNameValueDef(papszOptions,
-                                                      "BLOCKXSIZE", "256"));
-    const int nBlockYSize = atoi(CSLFetchNameValueDef(papszOptions,
-                                                      "BLOCKYSIZE", "256"));
+    const int nBlockXSize = std::max(1,
+            atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "256")));
+    const int nBlockYSize = std::max(1,
+            atoi(CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "256")));
     if( !EQUAL(pszDataLocation, "LABEL") &&
         !EQUAL( CPLGetExtension(pszFilename), "LBL") )
     {
