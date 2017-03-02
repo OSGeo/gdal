@@ -165,8 +165,10 @@ forward to the GeoTIFF driver. e.g. GEOTIFF_OPTIONS=COMPRESS=LZW.</li>
 Only for DATA_LOCATION=EXTERNAL or GEOTIFF.</li>
 <li> <b>TILED</b>=YES/NO. Whether the pixel data should be tiled. Default is NO
 (ie band sequential organization).</li>
-<li> <b>BLOCKXSIZE</b>=int_value. Tile width in pixels. Defaults to 256.</li>
-<li> <b>BLOCKYSIZE</b>=int_value. Tile height in pixels. Defaults to 256.</li>
+<li> <b>BLOCKXSIZE</b>=int_value. Tile width in pixels. Only used if TILED=YES.
+Defaults to 256.</li>
+<li> <b>BLOCKYSIZE</b>=int_value. Tile height in pixels. Only used if TILED=YES.
+Defaults to 256.</li>
 <li> <b>COMMENT</b>=string. Comment to add into the label.</li>
 <li> <b>LATITUDE_TYPE</b>=string. Value of Mapping.LatitudeType. Defaults to
 Planetographic.</li>
@@ -177,8 +179,8 @@ range. Defaults to NO.</li>
 <li> <b>WRITE_BOUNDING_DEGREES</b>=YES/NO. Whether to write Min/MaximumLong/
 Latitude values. Defaults to YES.</li>
 <li> <b>BOUNDING_DEGREES</b>=min_long,min_lat,max_long,max_lat. Manually set
-bounding box (values will not be affected by LONGITUDE_DIRECTION nor
-FORCE_360).</li>
+bounding box (values will not be modified by LONGITUDE_DIRECTION or
+FORCE_360 options).</li>
 <li> <b>USE_SRC_LABEL</b>=YES/NO. Whether to use source label in ISIS3 to
 ISIS3 conversions. Defaults to YES.</li>
 <li> <b>USE_SRC_MAPPING</b>=YES/NO. Whether to use Mapping group from source
