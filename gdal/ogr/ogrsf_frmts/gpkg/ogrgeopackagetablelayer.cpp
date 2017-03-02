@@ -1024,6 +1024,8 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 
     if( m_bDropRTreeTable )
     {
+        ResetReading();
+
         const char* pszT = m_pszTableName;
         const char* pszC =m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
         char* pszSQL =

@@ -104,17 +104,6 @@ OGRErr SQLResultFree(SQLResult * poResult)
     return OGRERR_NONE;
 }
 
-const char* SQLResultGetColumn(const SQLResult * poResult, int iColNum)
-{
-    if ( ! poResult )
-        return NULL;
-
-    if ( iColNum < 0 || iColNum >= poResult->nColCount )
-        return NULL;
-
-    return poResult->papszResult[iColNum];
-}
-
 const char* SQLResultGetValue(const SQLResult * poResult, int iColNum, int iRowNum)
 {
     if ( ! poResult )
@@ -636,33 +625,6 @@ OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialR
         return NULL;
 
     return poGeom;
-}
-
-OGRErr GPkgEnvelopeToOGR(GByte *pabyGpkg,
-                         size_t szGpkg,
-                         OGREnvelope *poEnv)
-{
-    CPLAssert( poEnv != NULL );
-    CPLAssert( pabyGpkg != NULL );
-
-    GPkgHeader oHeader;
-
-    /* Read header */
-    OGRErr err = GPkgHeaderFromWKB(pabyGpkg, szGpkg, &oHeader);
-    if ( err != OGRERR_NONE )
-        return err;
-
-    if ( oHeader.bEmpty || !oHeader.bExtentHasXY )
-    {
-        return OGRERR_FAILURE;
-    }
-
-    poEnv->MinX = oHeader.MinX;
-    poEnv->MaxX = oHeader.MaxX;
-    poEnv->MinY = oHeader.MinY;
-    poEnv->MaxY = oHeader.MaxY;
-
-    return OGRERR_NONE;
 }
 
 CPLString SQLEscapeDoubleQuote(const char* pszStr)
