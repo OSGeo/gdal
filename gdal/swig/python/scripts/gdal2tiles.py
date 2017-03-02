@@ -474,6 +474,7 @@ class TileJobInfo(object):
     tile_extension = ""
     tile_size = 0
     tile_driver = None
+    tile_swne = (0, 0, 0, 0)
     kml = False
     options = None
 
@@ -1242,7 +1243,10 @@ class GDAL2Tiles(object):
                 if (not self.options.resume or not
                         os.path.exists(os.path.join(self.output, 'doc.kml'))):
                     f = open(os.path.join(self.output, 'doc.kml'), 'wb')
-                    f.write(self.generate_kml(None, None, None, children).encode('utf-8'))
+                    f.write(self.generate_kml(
+                        None, None, None, self.tileext, self.tilesize, self.tileswne, self.options,
+                        children
+                    ).encode('utf-8'))
                     f.close()
 
     def generate_base_tiles(self):
@@ -1373,6 +1377,7 @@ class GDAL2Tiles(object):
             tile_extension=self.tileext,
             tile_driver=self.tiledriver,
             tile_size=self.tilesize,
+            tile_swne=self.tileswne,
             kml=self.kml,
             options=self.options,
         )
@@ -1464,7 +1469,10 @@ class GDAL2Tiles(object):
                 kmlfilename = os.path.join(output, str(tz), str(tx), '%d.kml' % ty)
                 if not options.resume or not os.path.exists(kmlfilename):
                     f = open(kmlfilename, 'wb')
-                    f.write(self.generate_kml(tx, ty, tz).encode('utf-8'))
+                    f.write(self.generate_kml(
+                        tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
+                        tile_job_info.tile_swne, tile_job_info.options
+                    ).encode('utf-8'))
                     f.close()
 
             # if not self.options.verbose and not self.options.quiet:
@@ -1563,7 +1571,10 @@ class GDAL2Tiles(object):
                     # Create a KML file for this tile.
                     if self.kml:
                         f = open(os.path.join(self.output, '%d/%d/%d.kml' % (tz, tx, ty)), 'wb')
-                        f.write(self.generate_kml(tx, ty, tz, children).encode('utf-8'))
+                        f.write(self.generate_kml(
+                            tx, ty, tz, self.tileext, self.tilesize, self.tileswne, self.options,
+                            children
+                        ).encode('utf-8'))
                         f.close()
 
                     if not self.options.verbose and not self.options.quiet:
@@ -1706,7 +1717,7 @@ class GDAL2Tiles(object):
     """
         return s
 
-    def generate_kml(self, tx, ty, tz, children=None, **args):
+    def generate_kml(self, tx, ty, tz, tileext, tilesize, tileswne, options, children=None, **args):
         """
         Template for the KML. Returns filled string.
         """
@@ -1714,9 +1725,9 @@ class GDAL2Tiles(object):
             children = []
 
         args['tx'], args['ty'], args['tz'] = tx, ty, tz
-        args['tileformat'] = self.tileext
+        args['tileformat'] = tileext
         if 'tilesize' not in args:
-            args['tilesize'] = self.tilesize
+            args['tilesize'] = tilesize
 
         if 'minlodpixels' not in args:
             args['minlodpixels'] = int(args['tilesize'] / 2)
@@ -1727,11 +1738,11 @@ class GDAL2Tiles(object):
 
         if tx is None:
             tilekml = False
-            args['title'] = self.options.title
+            args['title'] = options.title
         else:
             tilekml = True
             args['title'] = "%d/%d/%d.kml" % (tz, tx, ty)
-            args['south'], args['west'], args['north'], args['east'] = self.tileswne(tx, ty, tz)
+            args['south'], args['west'], args['north'], args['east'] = tileswne(tx, ty, tz)
 
         if tx == 0:
             args['drawOrder'] = 2 * tz + 1
@@ -1740,7 +1751,7 @@ class GDAL2Tiles(object):
         else:
             args['drawOrder'] = 0
 
-        url = self.options.url
+        url = options.url
         if not url:
             if tilekml:
                 url = "../../"
@@ -1786,7 +1797,7 @@ class GDAL2Tiles(object):
     """ % args
 
         for cx, cy, cz in children:
-            csouth, cwest, cnorth, ceast = self.tileswne(cx, cy, cz)
+            csouth, cwest, cnorth, ceast = tileswne(cx, cy, cz)
             s += """
         <NetworkLink>
           <name>%d/%d/%d.%s</name>
