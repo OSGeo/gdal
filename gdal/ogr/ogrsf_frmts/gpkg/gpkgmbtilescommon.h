@@ -157,10 +157,11 @@ class GDALGPKGMBTilesLikePseudoDataset
 
 class GDALGPKGMBTilesLikeRasterBand: public GDALPamRasterBand
 {
-    GDALGPKGMBTilesLikePseudoDataset* m_poTPD;
-    int                               m_nDTSize;
-    bool                              m_bHasNoData;
-    double                            m_dfNoDataValue;
+    protected:
+        GDALGPKGMBTilesLikePseudoDataset* m_poTPD;
+        int                               m_nDTSize;
+        bool                              m_bHasNoData;
+        double                            m_dfNoDataValue;
 
     public:
                                 GDALGPKGMBTilesLikeRasterBand(GDALGPKGMBTilesLikePseudoDataset* poTPD,
