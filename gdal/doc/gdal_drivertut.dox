@@ -48,16 +48,16 @@ class JDEMDataset : public GDALPamDataset
 {
     friend class JDEMRasterBand;
 
-    FILE	*fp;
-    GByte	abyHeader[1012];
+    FILE        *fp;
+    GByte       abyHeader[1012];
 
   public:
-		~JDEMDataset();
+                ~JDEMDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
 };
 \endcode
@@ -71,77 +71,64 @@ we have privileged access to modify the contents of the database object.
 
 The open method itself may look something like this:
 
-\verbatim
-GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
+\code
+GDALDataset *JDEMDataset::Open( GDALOpenInfo *poOpenInfo )
 
 {
-// -------------------------------------------------------------------- //
-//      Confirm that the header is compatible with a JDEM dataset.      //
-// -------------------------------------------------------------------- //
-    if (!Identify(poOpenInfo))
+    // Confirm that the header is compatible with a JDEM dataset.
+    if( !Identify(poOpenInfo) )
         return NULL;
 
-// -------------------------------------------------------------------- //
-//      Confirm the requested access is supported.                      //
-// -------------------------------------------------------------------- //
+    // Confirm the requested access is supported.
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "The JDEM driver does not support update access to existing"
-                  " datasets.\n" );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The JDEM driver does not support update access to existing "
+                 "datasets.");
         return NULL;
     }
 
-    /* Check that the file pointer from GDALOpenInfo* is available */
+    // Check that the file pointer from GDALOpenInfo* is available
     if( poOpenInfo->fpL == NULL )
     {
         return NULL;
     }
-// -------------------------------------------------------------------- //
-//      Create a corresponding GDALDataset.                             //
-// -------------------------------------------------------------------- //
-    JDEMDataset 	*poDS;
 
-    poDS = new JDEMDataset();
+    // Create a corresponding GDALDataset.
+    JDEMDataset *poDS = new JDEMDataset();
 
-    /* Borrow the file pointer from GDALOpenInfo* */
+    // Borrow the file pointer from GDALOpenInfo*.
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
 
-// -------------------------------------------------------------------- //
-//      Read the header.                                                //
-// -------------------------------------------------------------------- //
-    VSIFReadL( poDS->abyHeader, 1, 1012, poDS->fp );
+    // Read the header.
+    VSIFReadL(poDS->abyHeader, 1, 1012, poDS->fp);
 
-    poDS->nRasterXSize = JDEMGetField( (char *) poDS->abyHeader + 23, 3 );
-    poDS->nRasterYSize = JDEMGetField( (char *) poDS->abyHeader + 26, 3 );
-    if  (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0 )
+    poDS->nRasterXSize =
+        JDEMGetField(reinterpret_cast<char *>(poDS->abyHeader) + 23, 3);
+    poDS->nRasterYSize =
+        JDEMGetField(reinterpret_cast<char *>(poDS->abyHeader) + 26, 3);
+    if( poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid dimensions : %d x %d",
-                  poDS->nRasterXSize, poDS->nRasterYSize);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid dimensions : %d x %d",
+                 poDS->nRasterXSize, poDS->nRasterYSize);
         delete poDS;
         return NULL;
     }
 
-// -------------------------------------------------------------------- //
-//      Create band information objects.                                //
-// -------------------------------------------------------------------- //
-    poDS->SetBand( 1, new JDEMRasterBand( poDS, 1 ));
+    // Create band information objects.
+    poDS->SetBand(1, new JDEMRasterBand(poDS, 1));
 
-// -------------------------------------------------------------------- //
-//      Initialize any PAM information.                                 //
-// -------------------------------------------------------------------- //
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    // Initialize any PAM information.
+    poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
-// -------------------------------------------------------------------- //
-//      Initialize default overviews.                                   //
-// -------------------------------------------------------------------- //
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-    return( poDS );
+    // Initialize default overviews.
+    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    return poDS;
 }
-\endverbatim
+\code
 
 The first step in any database Open function is to verify that the file
 being passed is in fact of the type this driver is for.  It is important
@@ -186,7 +173,7 @@ format.
 
 The identification is in fact delegated to a Identify() static function :
 
-\verbatim
+\code
 /************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
@@ -194,27 +181,26 @@ The identification is in fact delegated to a Identify() static function :
 int JDEMDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Confirm that the header has what appears to be dates in the     */
-/*      expected locations.  Sadly this is a relatively weak test.      */
-/* -------------------------------------------------------------------- */
+    // Confirm that the header has what appears to be dates in the
+    // expected locations.  Sadly this is a relatively weak test.
     if( poOpenInfo->nHeaderBytes < 50 )
         return FALSE;
 
-    /* check if century values seem reasonable */
-    if( (!EQUALN((char *)poOpenInfo->pabyHeader+11,"19",2)
-          && !EQUALN((char *)poOpenInfo->pabyHeader+11,"20",2))
-        || (!EQUALN((char *)poOpenInfo->pabyHeader+15,"19",2)
-             && !EQUALN((char *)poOpenInfo->pabyHeader+15,"20",2))
-        || (!EQUALN((char *)poOpenInfo->pabyHeader+19,"19",2)
-             && !EQUALN((char *)poOpenInfo->pabyHeader+19,"20",2)) )
+    // Check if century values seem reasonable.
+    const char *psHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
+    if( (!EQUALN(psHeader + 11, "19", 2) &&
+         !EQUALN(psHeader + 11, "20", 2)) ||
+        (!EQUALN(psHeader + 15, "19", 2) &&
+         !EQUALN(psHeader + 15, "20", 2)) ||
+        (!EQUALN(psHeader + 19, "19", 2) &&
+         !EQUALN(psHeader + 19, "20", 2)) )
     {
         return FALSE;
     }
 
     return TRUE;
 }
-\endverbatim
+\code
 
 It is important to make the <i>is this my format</i> test as stringent as
 possible.  In this particular case the test is weak, and a file that happened
@@ -223,14 +209,15 @@ JDEM format, causing it to not be handled properly.
 
 Once we are satisfied that the file is of our format, we can do any other
 tests that are necessary to validate the file is usable, and in particular
-that we can provide the level of access desired.  Since the JDEM driver
+that we can provide the level of access desired.  Since the JDEM driver does
+not provide update support, error out in that case.
 
 \code
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "The JDEM driver does not support update access to existing"
-                  " datasets.\n" );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The JDEM driver does not support update access to existing "
+                 "datasets.");
         return NULL;
     }
 \endcode
@@ -239,17 +226,15 @@ Next we need to create an instance of the database class in which we will
 set various information of interest.
 
 \code
-    /* Check that the file pointer from GDALOpenInfo* is available */
+    // Check that the file pointer from GDALOpenInfo* is available.
     if( poOpenInfo->fpL == NULL )
     {
         return NULL;
     }
 
-    JDEMDataset 	*poDS;
+    JDEMDataset *poDS = new JDEMDataset();
 
-    poDS = new JDEMDataset();
-
-    /* Borrow the file pointer from GDALOpenInfo* */
+    // Borrow the file pointer from GDALOpenInfo*.
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
 \endcode
@@ -265,16 +250,18 @@ nRasterYSize are data fields inherited from the GDALDataset base class, and
 must be set by the Open() method.
 
 \code
-    VSIFReadL( poDS->abyHeader, 1, 1012, poDS->fp );
+    VSIFReadL(poDS->abyHeader, 1, 1012, poDS->fp);
 
-    poDS->nRasterXSize = JDEMGetField( (char *) poDS->abyHeader + 23, 3 );
-    poDS->nRasterYSize = JDEMGetField( (char *) poDS->abyHeader + 26, 3 );
+    poDS->nRasterXSize =
+        JDEMGetField(reinterpret_cast<char *>(poDS->abyHeader) + 23, 3);
+    poDS->nRasterYSize =
+        JDEMGetField(reinterpret_cast<char *>(poDS->abyHeader) + 26, 3);
 
     if  (poDS->nRasterXSize <= 0 || poDS->nRasterYSize <= 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid dimensions : %d x %d",
-                  poDS->nRasterXSize, poDS->nRasterYSize);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid dimensions : %d x %d",
+                 poDS->nRasterXSize, poDS->nRasterYSize);
         delete poDS;
         return NULL;
     }
@@ -284,10 +271,8 @@ All the bands related to this dataset must be created and attached using
 the SetBand() method.  We will explore the JDEMRasterBand() class shortly.
 
 \code
-// -------------------------------------------------------------------- //
-//      Create band information objects.                                //
-// -------------------------------------------------------------------- //
-    poDS->SetBand( 1, new JDEMRasterBand( poDS, 1 ));
+    // Create band information objects.
+    poDS->SetBand(1, new JDEMRasterBand(poDS, 1));
 \endcode
 
 Finally we assign a name to the dataset object, and call the GDALPamDataset
@@ -296,13 +281,11 @@ TryLoadXML() method which can initialize auxiliary information from an
 the GDALPamDataset and related classes.
 
 \code
-// -------------------------------------------------------------------- //
-//      Initialize any PAM information.                                 //
-// -------------------------------------------------------------------- //
+    // Initialize any PAM information.
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
 
-    return( poDS );
+    return poDS;
 }
 \endcode
 
@@ -317,7 +300,7 @@ JDEMRasterBand the declaration looks like this:
 class JDEMRasterBand : public GDALPamRasterBand
 {
   public:
-    		JDEMRasterBand( JDEMDataset *, int );
+    JDEMRasterBand( JDEMDataset *, int );
     virtual CPLErr IReadBlock( int, int, void * );
 };
 \endcode
@@ -329,11 +312,11 @@ matched to the method signature in gdal_priv.h.
 The constructor implementation looks like this:
 
 \code
-JDEMRasterBand::JDEMRasterBand( JDEMDataset *poDS, int nBand )
+JDEMRasterBand::JDEMRasterBand( JDEMDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Float32;
 
@@ -367,38 +350,36 @@ CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    JDEMDataset *poGDS = (JDEMDataset *) poDS;
-    char	*pszRecord;
-    int		nRecordSize = nBlockXSize*5 + 9 + 2;
-    int		i;
+    JDEMDataset *poGDS = static_cast<JDEMDataset *>(poDS);
+    int nRecordSize = nBlockXSize * 5 + 9 + 2;
 
-    VSIFSeekL( poGDS->fp, 1011 + nRecordSize*nBlockYOff, SEEK_SET );
+    VSIFSeekL(poGDS->fp, 1011 + nRecordSize*nBlockYOff, SEEK_SET);
 
-    pszRecord = (char *) CPLMalloc(nRecordSize);
-    VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp );
+    char *pszRecord = static_cast<char *>(CPLMalloc(nRecordSize));
+    VSIFReadL(pszRecord, 1, nRecordSize, poGDS->fp);
 
-    if( !EQUALN((char *) poGDS->abyHeader,pszRecord,6) )
+    if( !EQUALN(reinterpret_cast<char *>(poGDS->abyHeader), pszRecord, 6) )
     {
-        CPLFree( pszRecord );
+        CPLFree(pszRecord);
 
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "JDEM Scanline corrupt.  Perhaps file was not transferred\n"
-                  "in binary mode?" );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "JDEM Scanline corrupt.  Perhaps file was not transferred "
+                 "in binary mode?");
         return CE_Failure;
     }
 
-    if( JDEMGetField( pszRecord + 6, 3 ) != nBlockYOff + 1 )
+    if( JDEMGetField(pszRecord + 6, 3) != nBlockYOff + 1 )
     {
-        CPLFree( pszRecord );
+        CPLFree(pszRecord);
 
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "JDEM scanline out of order, JDEM driver does not\n"
-                  "currently support partial datasets." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "JDEM scanline out of order, JDEM driver does not "
+                 "currently support partial datasets.");
         return CE_Failure;
     }
 
-    for( i = 0; i < nBlockXSize; i++ )
-        ((float *) pImage)[i] = JDEMGetField( pszRecord + 9 + 5 * i, 5) * 0.1;
+    for( int i = 0; i < nBlockXSize; i++ )
+        ((float *) pImage)[i] = JDEMGetField(pszRecord + 9 + 5 * i, 5) * 0.1;
 
     return CE_None;
 }
@@ -431,41 +412,40 @@ datasets values of 1 and 1 would indicate the block going from (128,128) to
 While the JDEMDataset and JDEMRasterBand are now ready to use to read image
 data, it still isn't clear how the GDAL system knows about the new driver.
 This is accomplished via the GDALDriverManager.  To register our format we
-implement a registration function:
+implement a registration function.  The declaration goes in gcore/gdal_frmts.h:
+
 
 \code
-CPL_C_START
 void CPL_DLL GDALRegister_JDEM(void);
-CPL_C_END
+\endcode
 
-...
+The definition in the driver file is:
 
+\code
 void GDALRegister_JDEM()
 
 {
-    GDALDriver	*poDriver;
-
-    if (! GDAL_CHECK_VERSION("JDEM"))
+    if( !GDAL_CHECK_VERSION("JDEM") )
         return;
 
-    if( GDALGetDriverByName( "JDEM" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName("JDEM") != NULL )
+        return;
 
-        poDriver->SetDescription( "JDEM" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Japanese DEM (.mem)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_various.html#JDEM" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mem" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = JDEMDataset::Open;
-        poDriver->pfnIdentify = JDEMDataset::Identify;
+    poDriver->SetDescription("JDEM");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "Japanese DEM (.mem)");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
+                              "frmt_various.html#JDEM");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "mem");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = JDEMDataset::Open;
+    poDriver->pfnIdentify = JDEMDataset::Identify;
+
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
 \endcode
 
@@ -586,7 +566,7 @@ care to exactly match the signature of the method on the GDALRasterDataset
 base class.
 
 \code
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
 \endcode
 
@@ -602,12 +582,12 @@ of pixel approach used in some packages.
 CPLErr JDEMDataset::GetGeoTransform( double * padfTransform )
 
 {
-    double	dfLLLat, dfLLLong, dfURLat, dfURLong;
+    const char *psHeader = reinterpret_cast<char *>(abyHeader);
 
-    dfLLLat = JDEMGetAngle( (char *) abyHeader + 29 );
-    dfLLLong = JDEMGetAngle( (char *) abyHeader + 36 );
-    dfURLat = JDEMGetAngle( (char *) abyHeader + 43 );
-    dfURLong = JDEMGetAngle( (char *) abyHeader + 50 );
+    const double dfLLLat = JDEMGetAngle(psHeader + 29);
+    const double dfLLLong = JDEMGetAngle(psHeader + 36);
+    const double dfURLat = JDEMGetAngle(psHeader + 43);
+    const double dfURLong = JDEMGetAngle(psHeader + 50);
 
     padfTransform[0] = dfLLLong;
     padfTransform[3] = dfURLat;
@@ -633,12 +613,13 @@ definition.
 const char *JDEMDataset::GetProjectionRef()
 
 {
-    return( "GEOGCS[\"Tokyo\",DATUM[\"Tokyo\",SPHEROID[\"Bessel 1841\","
-	"6377397.155,299.1528128,AUTHORITY[\"EPSG\",7004]],TOWGS84[-148,"
-	"507,685,0,0,0,0],AUTHORITY[\"EPSG\",6301]],PRIMEM[\"Greenwich\","
-	"0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,"
-	"AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],"
-	"AUTHORITY[\"EPSG\",4301]]" );
+    return
+        "GEOGCS[\"Tokyo\",DATUM[\"Tokyo\",SPHEROID[\"Bessel 1841\","
+        "6377397.155,299.1528128,AUTHORITY[\"EPSG\",7004]],TOWGS84[-148,"
+        "507,685,0,0,0,0],AUTHORITY[\"EPSG\",6301]],PRIMEM[\"Greenwich\","
+        "0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,"
+        "AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],"
+        "AUTHORITY[\"EPSG\",4301]]";
 }
 \endcode
 
@@ -672,7 +653,7 @@ is typically accomplished with a call like the following near the end of the
 Open() method (after the PAM TryLoadXML()).
 
 \code
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
 \endcode
 
 This will enable default implementations for reading and creating overviews for
@@ -732,86 +713,77 @@ Return it in Update mode if practical, otherwise in ReadOnly mode is fine.
 The full implementation of the CreateCopy function for JPEG (which is
 assigned to pfnCreateCopy in the GDALDriver object) is here.
 
-\verbatim
+\code
 static GDALDataset *
 JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 int bStrict, char ** papszOptions,
                 GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
-    int  nQuality = 75;
-    int  bProgressive = FALSE;
+    const int nBands = poSrcDS->GetRasterCount();
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
 
-// --------------------------------------------------------------------
-//      Some some rudimentary checks
-// --------------------------------------------------------------------
+    // Some some rudimentary checks
     if( nBands != 1 && nBands != 3 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "JPEG driver doesn't support %d bands.  Must be 1 (grey) "
-                  "or 3 (RGB) bands.\n", nBands );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "JPEG driver doesn't support %d bands.  Must be 1 (grey) "
+                 "or 3 (RGB) bands.", nBands);
 
         return NULL;
     }
 
     if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte && bStrict )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "JPEG driver doesn't support data type %s. "
-                  "Only eight bit byte bands supported.\n",
-                  GDALGetDataTypeName(
-                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "JPEG driver doesn't support data type %s. "
+                 "Only eight bit byte bands supported.",
+                 GDALGetDataTypeName(
+                     poSrcDS->GetRasterBand(1)->GetRasterDataType()));
 
         return NULL;
     }
 
-// --------------------------------------------------------------------
-//      What options has the user selected?
-// --------------------------------------------------------------------
-    if( CSLFetchNameValue(papszOptions,"QUALITY") != NULL )
+    // What options has the user selected?
+
+    int nQuality = 75;
+    if( CSLFetchNameValue(papszOptions, "QUALITY") != NULL )
     {
-        nQuality = atoi(CSLFetchNameValue(papszOptions,"QUALITY"));
+        nQuality = atoi(CSLFetchNameValue(papszOptions, "QUALITY"));
         if( nQuality < 10 || nQuality > 100 )
         {
-            CPLError( CE_Failure, CPLE_IllegalArg,
-                      "QUALITY=%s is not a legal value in the range 10-100.",
-                      CSLFetchNameValue(papszOptions,"QUALITY") );
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "QUALITY=%s is not a legal value in the range 10 - 100.",
+                     CSLFetchNameValue(papszOptions, "QUALITY"));
             return NULL;
         }
     }
 
-    if( CSLFetchNameValue(papszOptions,"PROGRESSIVE") != NULL )
+    bool bProgressive = false;
+    if( CSLFetchNameValue(papszOptions, "PROGRESSIVE") != NULL )
     {
-        bProgressive = TRUE;
+        bProgressive = true;
     }
 
-// --------------------------------------------------------------------
-//      Create the dataset.
-// --------------------------------------------------------------------
-    VSILFILE	*fpImage;
-
-    fpImage = VSIFOpenL( pszFilename, "wb" );
+    // Create the dataset.
+    VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
     if( fpImage == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Unable to create jpeg file %s.\n",
-                  pszFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Unable to create jpeg file %s.",
+                 pszFilename);
         return NULL;
     }
 
-// --------------------------------------------------------------------
-//      Initialize JPG access to the file.
-// --------------------------------------------------------------------
+    // Initialize JPG access to the file.
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
 
-    sCInfo.err = jpeg_std_error( &sJErr );
-    jpeg_create_compress( &sCInfo );
+    sCInfo.err = jpeg_std_error(&sJErr);
+    jpeg_create_compress(&sCInfo);
 
-    jpeg_stdio_dest( &sCInfo, fpImage );
+    jpeg_stdio_dest(&sCInfo, fpImage);
 
     sCInfo.image_width = nXSize;
     sCInfo.image_height = nYSize;
@@ -826,49 +798,44 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         sCInfo.in_color_space = JCS_RGB;
     }
 
-    jpeg_set_defaults( &sCInfo );
+    jpeg_set_defaults(&sCInfo);
 
-    jpeg_set_quality( &sCInfo, nQuality, TRUE );
+    jpeg_set_quality(&sCInfo, nQuality, TRUE);
 
     if( bProgressive )
-        jpeg_simple_progression( &sCInfo );
+        jpeg_simple_progression(&sCInfo);
 
-    jpeg_start_compress( &sCInfo, TRUE );
+    jpeg_start_compress(&sCInfo, TRUE);
 
-// --------------------------------------------------------------------
-//      Loop over image, copying image data.
-// --------------------------------------------------------------------
-    GByte 	*pabyScanline;
-    CPLErr      eErr;
-
-    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize );
+    // Loop over image, copying image data.
+    GByte *pabyScanline = static_cast<GByte *>(CPLMalloc(nBands * nXSize));
 
     for( int iLine = 0; iLine < nYSize; iLine++ )
     {
-        JSAMPLE      *ppSamples;
-
         for( int iBand = 0; iBand < nBands; iBand++ )
         {
-            GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
-            eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
-                                     pabyScanline + iBand, nXSize, 1, GDT_Byte,
-                                     nBands, nBands * nXSize );
+            GDALRasterBand * poBand = poSrcDS->GetRasterBand(iBand + 1);
+            const CPLErr eErr =
+                poBand->RasterIO(GF_Read, 0, iLine, nXSize, 1,
+                                 pabyScanline + iBand, nXSize, 1, GDT_Byte,
+                                 nBands, nBands * nXSize);
+            // TODO: Handle error.
         }
 
-        ppSamples = pabyScanline;
-        jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
+        JSAMPLE *ppSamples = pabyScanline;
+        jpeg_write_scanlines(&sCInfo, &ppSamples, 1);
     }
 
-    CPLFree( pabyScanline );
+    CPLFree(pabyScanline);
 
-    jpeg_finish_compress( &sCInfo );
-    jpeg_destroy_compress( &sCInfo );
+    jpeg_finish_compress(&sCInfo);
+    jpeg_destroy_compress(&sCInfo);
 
-    VSIFCloseL( fpImage );
+    VSIFCloseL(fpImage);
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+    return static_cast<GDALDataset *>(GDALOpen(pszFilename, GA_ReadOnly));
 }
-\endverbatim
+\endcode
 
 \subsection gdal_drivertut_creation_create Dynamic Creation
 
@@ -883,58 +850,47 @@ calls, and then calling GDALOpen(,GA_Update) at the end to return a writable
 file handle.  This avoids having to duplicate the various setup actions in
 the Open() function.
 
-\verbatim
+\code
 GDALDataset *PAuxDataset::Create( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
                                   GDALDataType eType,
-                                  char ** // papszParmList  )
+                                  char ** /* papszParmList */ )
 
 {
-    char	*pszAuxFilename;
-
-// --------------------------------------------------------------------
-//      Verify input options.
-// --------------------------------------------------------------------
-    if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16
-        && eType != GDT_Int16 )
+    // Verify input options.
+    if( eType != GDT_Byte && eType != GDT_Float32 &&
+        eType != GDT_UInt16 && eType != GDT_Int16 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-              "Attempt to create PCI .Aux labeled dataset with an illegal\n"
-              "data type (%s).\n",
-              GDALGetDataTypeName(eType) );
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Attempt to create PCI .Aux labeled dataset with an illegal "
+            "data type (%s).",
+            GDALGetDataTypeName(eType));
 
         return NULL;
     }
 
-// --------------------------------------------------------------------
-//      Try to create the file.
-// --------------------------------------------------------------------
-    FILE	*fp;
-
-    fp = VSIFOpen( pszFilename, "w" );
+    // Try to create the file.
+    FILE *fp = VSIFOpen(pszFilename, "w");
 
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to create file `%s' failed.\n",
-                  pszFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Attempt to create file `%s' failed.",
+                 pszFilename);
         return NULL;
     }
 
-// --------------------------------------------------------------------
-//      Just write out a couple of bytes to establish the binary
-//      file, and then close it.
-// --------------------------------------------------------------------
-    VSIFWrite( (void *) "\0\0", 2, 1, fp );
-    VSIFClose( fp );
+    // Just write out a couple of bytes to establish the binary
+    // file, and then close it.
+    VSIFWrite("\0\0", 2, 1, fp);
+    VSIFClose(fp);
 
-// --------------------------------------------------------------------
-//      Create the aux filename.
-// --------------------------------------------------------------------
-    pszAuxFilename = (char *) CPLMalloc(strlen(pszFilename)+5);
-    strcpy( pszAuxFilename, pszFilename );;
+    // Create the aux filename.
+    char *pszAuxFilename = static_cast<char *>(CPLMalloc(strlen(pszFilename) + 5));
+    strcpy(pszAuxFilename, pszFilename);;
 
-    for( int i = strlen(pszAuxFilename)-1; i > 0; i-- )
+    for( int i = strlen(pszAuxFilename) - 1; i > 0; i-- )
     {
         if( pszAuxFilename[i] == '.' )
         {
@@ -943,55 +899,42 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         }
     }
 
-    strcat( pszAuxFilename, ".aux" );
+    strcat(pszAuxFilename, ".aux");
 
-// --------------------------------------------------------------------
-//      Open the file.
-// --------------------------------------------------------------------
-    fp = VSIFOpen( pszAuxFilename, "wt" );
+    // Open the file.
+    fp = VSIFOpen(pszAuxFilename, "wt");
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to create file `%s' failed.\n",
-                  pszAuxFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Attempt to create file `%s' failed.",
+                 pszAuxFilename);
         return NULL;
     }
 
-// --------------------------------------------------------------------
-//      We need to write out the original filename but without any
-//      path components in the AuxiliaryTarget line.  Do so now.
-// --------------------------------------------------------------------
-    int		iStart;
-
-    iStart = strlen(pszFilename)-1;
-    while( iStart > 0 && pszFilename[iStart-1] != '/'
-           && pszFilename[iStart-1] != '\\' )
+    // We need to write out the original filename but without any
+    // path components in the AuxiliaryTarget line.  Do so now.
+    int iStart = strlen(pszFilename) - 1;
+    while( iStart > 0 && pszFilename[iStart - 1] != '/' &&
+           pszFilename[iStart - 1] != '\\' )
         iStart--;
 
-    VSIFPrintf( fp, "AuxilaryTarget: %s\n", pszFilename + iStart );
+    VSIFPrintf(fp, "AuxilaryTarget: %s\n", pszFilename + iStart);
 
-// --------------------------------------------------------------------
-//      Write out the raw definition for the dataset as a whole.
-// --------------------------------------------------------------------
-    VSIFPrintf( fp, "RawDefinition: %d %d %d\n",
-                nXSize, nYSize, nBands );
+    // Write out the raw definition for the dataset as a whole.
+    VSIFPrintf(fp, "RawDefinition: %d %d %d\n",
+               nXSize, nYSize, nBands);
 
-// --------------------------------------------------------------------
-//      Write out a definition for each band.  We always write band
-//      sequential files for now as these are pretty efficiently
-//      handled by GDAL.
-// --------------------------------------------------------------------
-    int		nImgOffset = 0;
+    // Write out a definition for each band.  We always write band
+    // sequential files for now as these are pretty efficiently
+    // handled by GDAL.
+    int nImgOffset = 0;
 
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        const char * pszTypeName;
-        int	     nPixelOffset;
-        int	     nLineOffset;
+        const int nPixelOffset = GDALGetDataTypeSize(eType)/8;
+        const int nLineOffset = nXSize * nPixelOffset;
 
-        nPixelOffset = GDALGetDataTypeSize(eType)/8;
-        nLineOffset = nXSize * nPixelOffset;
-
+        const char *pszTypeName = NULL;
         if( eType == GDT_Float32 )
             pszTypeName = "32R";
         else if( eType == GDT_Int16 )
@@ -1002,7 +945,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
             pszTypeName = "8U";
 
         VSIFPrintf( fp, "ChanDefinition-%d: %s %d %d %d %s\n",
-                    iBand+1, pszTypeName,
+                    iBand + 1, pszTypeName,
                     nImgOffset, nPixelOffset, nLineOffset,
 #ifdef CPL_LSB
                     "Swapped"
@@ -1014,14 +957,12 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
         nImgOffset += nYSize * nLineOffset;
     }
 
-// --------------------------------------------------------------------
-//      Cleanup
-// --------------------------------------------------------------------
-    VSIFClose( fp );
+    // Cleanup.
+    VSIFClose(fp);
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    return static_cast<GDALDataset *>(GDALOpen(pszFilename, GA_Update));
 }
-\endverbatim
+\endcode
 
 File formats supporting dynamic creation, or even just update-in-place
 access also need to implement an IWriteBlock() method
@@ -1051,20 +992,20 @@ uses the following calls to create it's raster bands.
     if( poOpenInfo->pabyHeader[1] == '5' )
     {
         poDS->SetBand(
-            1, new RawRasterBand( poDS, 1, poDS->fpImage,
-                                  iIn, 1, nWidth, GDT_Byte, TRUE ));
+            1, new RawRasterBand(poDS, 1, poDS->fpImage,
+                                 iIn, 1, nWidth, GDT_Byte, TRUE));
     }
     else
     {
         poDS->SetBand(
-            1, new RawRasterBand( poDS, 1, poDS->fpImage,
-                                  iIn, 3, nWidth*3, GDT_Byte, TRUE ));
+            1, new RawRasterBand(poDS, 1, poDS->fpImage,
+                                 iIn, 3, nWidth*3, GDT_Byte, TRUE));
         poDS->SetBand(
-            2, new RawRasterBand( poDS, 2, poDS->fpImage,
-                                  iIn+1, 3, nWidth*3, GDT_Byte, TRUE ));
+            2, new RawRasterBand(poDS, 2, poDS->fpImage,
+                                 iIn+1, 3, nWidth*3, GDT_Byte, TRUE));
         poDS->SetBand(
-            3, new RawRasterBand( poDS, 3, poDS->fpImage,
-                                  iIn+2, 3, nWidth*3, GDT_Byte, TRUE ));
+            3, new RawRasterBand(poDS, 3, poDS->fpImage,
+                                 iIn+2, 3, nWidth*3, GDT_Byte, TRUE));
     }
 \endcode
 
