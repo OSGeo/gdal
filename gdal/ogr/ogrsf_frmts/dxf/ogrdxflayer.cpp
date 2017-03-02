@@ -478,7 +478,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
     bool bHaveZ = false;
     int nAttachmentPoint = -1;
     CPLString osText;
-    CPLString styleName;
+    CPLString osStyleName = "Arial";
 
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
@@ -526,7 +526,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
             break;
 
           case 7:
-            styleName = TextUnescape(szLineBuf);
+            osStyleName = TextUnescape(szLineBuf);
             break;
 
           default:
@@ -601,12 +601,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
     CPLString osStyle;
     char szBuffer[64];
     
-    if (styleName == "") 
-    {
-        styleName = "Arial";
-    }
-
-    osStyle.Printf("LABEL(f:\"%s\",t:\"%s\"", styleName.c_str(), osText.c_str());
+    osStyle.Printf("LABEL(f:\"%s\",t:\"%s\"", osStyleName.c_str(), osText.c_str());
 
     if( dfAngle != 0.0 )
     {
@@ -662,7 +657,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     double dfAngle = 0.0;
     double dfHeight = 0.0;
     CPLString osText;
-    CPLString styleName;
+    CPLString osStyleName = "Arial";
     bool bHaveZ = false;
     int nAnchorPosition = 1;
     int nHorizontalAlignment = 0;
@@ -707,7 +702,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
             break;
 
           case 7:
-            styleName = TextUnescape(szLineBuf);
+            osStyleName = TextUnescape(szLineBuf);
             break;
           
           default:
@@ -819,12 +814,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     CPLString osStyle;
     char szBuffer[64];
 
-    if (styleName == "") 
-    {
-        styleName = "Arial";
-    }
-
-    osStyle.Printf("LABEL(f:\"%s\",t:\"%s\"", styleName.c_str(), osText.c_str());
+    osStyle.Printf("LABEL(f:\"%s\",t:\"%s\"", osStyleName.c_str(), osText.c_str());
     
     osStyle += CPLString().Printf(",p:%d", nAnchorPosition);
 
