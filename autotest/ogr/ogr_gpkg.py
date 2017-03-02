@@ -712,6 +712,25 @@ def ogr_gpkg_14():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-1000 -30000000)'))
     lyr.CreateFeature(feat)
+    # Test null geometry
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    # Test empty geometry
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT EMPTY'))
+    lyr.CreateFeature(feat)
+
+    f = lyr.GetFeature(5)
+    if f.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetFeature(6)
+    if f.GetGeometryRef().ExportToWkt() != 'POINT EMPTY':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = None
 
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('SELECT * FROM "point_no_spi-but-with-dashes"')
     res = sql_lyr.TestCapability(ogr.OLCFastSpatialFilter)
@@ -735,6 +754,13 @@ def ogr_gpkg_14():
     lyr.CreateFeature(feat)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(-1000 -30000000)'))
+    lyr.CreateFeature(feat)
+    # Test null geometry
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    # Test empty geometry
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT EMPTY'))
     lyr.CreateFeature(feat)
 
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('SELECT * FROM "point-with-spi-and-dashes"')
@@ -1255,7 +1281,13 @@ def ogr_gpkg_21():
     field_defn = ogr.FieldDefn('str', ogr.OFTString)
     field_defn.SetWidth(2)
     lyr.CreateField(field_defn)
+    ds = None
 
+    ds = ogr.Open('/vsimem/ogr_gpkg_21.gpkg', update = 1)
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetWidth() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField(0, 'ab')
     gdal.ErrorReset()

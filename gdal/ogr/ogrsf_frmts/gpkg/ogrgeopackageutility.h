@@ -66,7 +66,6 @@ GIntBig             SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr 
 
 OGRErr              SQLResultInit(SQLResult * poResult);
 OGRErr              SQLQuery(sqlite3 *poDb, const char * pszSQL, SQLResult * poResult);
-const char*         SQLResultGetColumn(const SQLResult * poResult, int iColumnNum);
 const char*         SQLResultGetValue(const SQLResult * poResult, int iColumnNum, int iRowNum);
 int                 SQLResultGetValueAsInteger(const SQLResult * poResult, int iColNum, int iRowNum);
 OGRErr              SQLResultFree(SQLResult * poResult);
@@ -79,7 +78,6 @@ OGRwkbGeometryType  GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ, b
 
 GByte*              GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *szWkb);
 OGRGeometry*        GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialReference *poSrs);
-OGRErr              GPkgEnvelopeToOGR(GByte *pabyGpkg, size_t szGpkg, OGREnvelope *poEnv);
 
 OGRErr              GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHeader);
 
