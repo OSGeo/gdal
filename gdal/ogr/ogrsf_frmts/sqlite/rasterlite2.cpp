@@ -77,7 +77,8 @@ bool OGRSQLiteDataSource::OpenRaster()
     nColCount = 0;
     rc = sqlite3_get_table( hDB,
                            "SELECT coverage_name, title, abstract "
-                           "FROM raster_coverages",
+                           "FROM raster_coverages "
+                           "LIMIT 10000",
                            &papszResults, &nRowCount,
                            &nColCount, NULL );
     if( !(rc == SQLITE_OK && nRowCount > 0) )
@@ -184,7 +185,8 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
         char** papszResults2 = NULL;
         char* pszSQL = sqlite3_mprintf(
                 "SELECT section_id, section_name FROM \"%w\" "
-                "ORDER BY section_id",
+                "ORDER BY section_id "
+                "LIMIT 1000000",
                 osSectionTableName.c_str());
         int rc = sqlite3_get_table( hDB,
                 pszSQL,
@@ -281,7 +283,8 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
         char* pszSQL = sqlite3_mprintf(
             "SELECT extent_minx, extent_miny, extent_maxx, extent_maxy "
             "FROM raster_coverages WHERE "
-            "Lower(coverage_name) = Lower('%q')", m_osCoverageName.c_str() );
+            "Lower(coverage_name) = Lower('%q') "
+            "LIMIT 1", m_osCoverageName.c_str() );
         char** papszResults = NULL;
         int nRowCount = 0;
         int nColCount = 0;
@@ -715,7 +718,8 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
     // Fetch other metadata
     char* pszSQL = sqlite3_mprintf(
         "SELECT title, abstract FROM raster_coverages WHERE "
-        "Lower(coverage_name) = Lower('%q')", m_osCoverageName.c_str() );
+        "Lower(coverage_name) = Lower('%q') LIMIT 1",
+        m_osCoverageName.c_str() );
     char** papszResults = NULL;
     int nRowCount = 0;
     int nColCount = 0;
@@ -751,7 +755,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
         nColCount = 0;
         pszSQL = sqlite3_mprintf(
             "SELECT summary FROM \"%w\" WHERE "
-            "section_id = %d",
+            "section_id = %d LIMIT 1",
             CPLSPrintf( "%s_sections", m_osCoverageName.c_str() ),
             static_cast<int>(m_nSectionId) );
         rc = sqlite3_get_table( hDB, pszSQL,
@@ -813,7 +817,8 @@ void OGRSQLiteDataSource::ListOverviews()
                 "x_resolution_1_2, y_resolution_1_2, "
                 "x_resolution_1_4, y_resolution_1_4,"
                 "x_resolution_1_8, y_resolution_1_8 "
-                "FROM \"%w\" ORDER BY pyramid_level",
+                "FROM \"%w\" ORDER BY pyramid_level "
+                "LIMIT 1000",
                 CPLSPrintf( "%s_levels", m_osCoverageName.c_str() ) );
         }
         else
@@ -824,7 +829,8 @@ void OGRSQLiteDataSource::ListOverviews()
                 "x_resolution_1_4, y_resolution_1_4,"
                 "x_resolution_1_8, y_resolution_1_8 "
                 "FROM \"%w\" WHERE section_id = %d "
-                "ORDER BY pyramid_level",
+                "ORDER BY pyramid_level "
+                "LIMIT 1000",
                 CPLSPrintf( "%s_section_levels", m_osCoverageName.c_str() ),
                 static_cast<int>(m_nSectionId) );
         }
@@ -2129,7 +2135,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
     rl2CoveragePtr cvg = NULL;
     char* pszSQL = sqlite3_mprintf(
             "SELECT coverage_name "
-            "FROM raster_coverages WHERE coverage_name = '%q'",
+            "FROM raster_coverages WHERE coverage_name = '%q' LIMIT 1",
             osCoverageName.c_str());
     sqlite3_get_table( poDS->GetDB(), pszSQL,  &papszResults, &nRowCount,
                        &nColCount, NULL );

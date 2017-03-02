@@ -46,9 +46,14 @@ CPL_CVSID("$Id$");
 static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    int nLen = (int) strlen(poOpenInfo->pszFilename);
+    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    if( EQUAL(osExt, "gpkg") && GDALGetDriverByName("GPKG") != NULL )
+    {
+        return FALSE;
+    }
+
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "VirtualShape:") &&
-        nLen > 4 && EQUAL(poOpenInfo->pszFilename + nLen - 4, ".SHP"))
+        EQUAL(osExt, "shp"))
     {
         return TRUE;
     }
