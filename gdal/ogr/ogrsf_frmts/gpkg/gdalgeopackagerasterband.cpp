@@ -3360,3 +3360,62 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue( double dfNoDataValue )
 
     return (rc == SQLITE_OK) ? CE_None : CE_Failure;
 }
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char** GDALGeoPackageRasterBand::GetMetadata(const char* pszDomain)
+{
+    if( eDataType != GDT_Byte &&
+        (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+        CSLFetchNameValue(GDALGPKGMBTilesLikeRasterBand::GetMetadata(),
+                          "STATISTICS_MINIMUM") == NULL )
+    {
+        GDALGeoPackageDataset *poGDS
+            = reinterpret_cast<GDALGeoPackageDataset *>( poDS );
+        char* pszSQL = sqlite3_mprintf(
+            "SELECT MIN(min), MAX(max) FROM "
+            "gpkg_2d_gridded_tile_ancillary t_a JOIN \"%w\" tpudt ON "
+            "t_a.tpudt_id = tpudt.id WHERE zoom_level=%d",
+            poGDS->m_osRasterTable.c_str(),
+            poGDS->m_nZoomLevel);
+        SQLResult sResult;
+        if( SQLQuery( poGDS->IGetDB(), pszSQL, &sResult) == OGRERR_NONE &&
+            sResult.nRowCount == 1 )
+        {
+            const char* pszMin = SQLResultGetValue(&sResult, 0, 0);
+            const char* pszMax = SQLResultGetValue(&sResult, 1, 0);
+            if( pszMin )
+            {
+                GDALGPKGMBTilesLikeRasterBand::SetMetadataItem(
+                    "STATISTICS_MINIMUM",
+                    CPLSPrintf("%.14g", CPLAtof(pszMin)) );
+            }
+            if( pszMax )
+            {
+                GDALGPKGMBTilesLikeRasterBand::SetMetadataItem(
+                    "STATISTICS_MAXIMUM",
+                    CPLSPrintf("%.14g", CPLAtof(pszMax)) );
+            }
+        }
+        SQLResultFree(&sResult);
+        sqlite3_free(pszSQL);
+    }
+    return GDALGPKGMBTilesLikeRasterBand::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char* GDALGeoPackageRasterBand::GetMetadataItem(const char* pszName,
+                                                      const char* pszDomain)
+{
+    if( eDataType != GDT_Byte &&
+        (pszDomain == NULL || EQUAL(pszDomain, "")) )
+    {
+        GetMetadata();
+    }
+    return GDALGPKGMBTilesLikeRasterBand::GetMetadataItem(pszName, pszDomain);
+}

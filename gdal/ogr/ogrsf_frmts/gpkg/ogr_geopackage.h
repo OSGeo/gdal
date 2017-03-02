@@ -274,6 +274,10 @@ class GDALGeoPackageRasterBand CPL_FINAL: public GDALGPKGMBTilesLikeRasterBand
         virtual GDALRasterBand* GetOverview(int nIdx) override;
 
         virtual CPLErr          SetNoDataValue( double dfNoDataValue ) override;
+
+        virtual char**          GetMetadata(const char* pszDomain = "") override;
+        virtual const char*     GetMetadataItem(const char* pszName,
+                                                const char* pszDomain = "") override;
 };
 
 /************************************************************************/
