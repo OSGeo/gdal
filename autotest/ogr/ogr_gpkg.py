@@ -2957,11 +2957,11 @@ def ogr_gpkg_41():
     return 'success'
 
 ###############################################################################
-# Test ogr_feature_count
+# Test feature_count
 
 def foo_has_trigger(ds):
     sql_lyr = ds.ExecuteSQL(
-        "SELECT COUNT(*) FROM sqlite_master WHERE name = 'trigger_insert_ogr_feature_count_foo'", dialect = 'DEBUG')
+        "SELECT COUNT(*) FROM sqlite_master WHERE name = 'trigger_insert_feature_count_foo'", dialect = 'DEBUG')
     f = sql_lyr.GetNextFeature()
     has_trigger = f.GetField(0) == 1
     f = None
@@ -2969,7 +2969,7 @@ def foo_has_trigger(ds):
     return has_trigger
 
 def get_feature_count_from_gpkg_contents(ds):
-    sql_lyr = ds.ExecuteSQL('SELECT ogr_feature_count FROM gpkg_contents', dialect = 'DEBUG')
+    sql_lyr = ds.ExecuteSQL('SELECT feature_count FROM gpkg_ogr_contents', dialect = 'DEBUG')
     f = sql_lyr.GetNextFeature()
     val = f.GetField(0)
     f = None
@@ -3053,7 +3053,7 @@ def ogr_gpkg_42():
         gdaltest.post_reason('fail')
         print(fc)
         return 'fail'
-    ds.ExecuteSQL('UPDATE gpkg_contents SET ogr_feature_count = NULL')
+    ds.ExecuteSQL('UPDATE gpkg_ogr_contents SET feature_count = NULL')
     ds = None
 
     ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update = 1)
@@ -3068,15 +3068,37 @@ def ogr_gpkg_42():
         return 'fail'
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg')
+    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update = 1)
     if get_feature_count_from_gpkg_contents(ds) != 5:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    # Test renaming
+    ds.ExecuteSQL('ALTER TABLE foo RENAME TO bar')
+    ds = None
+    ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update = 1)
+    sql_lyr = ds.ExecuteSQL("SELECT feature_count FROM gpkg_ogr_contents WHERE table_name = 'bar'", dialect = 'DEBUG')
+    f = sql_lyr.GetNextFeature()
+    val = f.GetField(0)
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+    if val != 5:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test layer deletion
+    ds.DeleteLayer(0)
+    sql_lyr = ds.ExecuteSQL("SELECT feature_count FROM gpkg_ogr_contents", dialect = 'DEBUG')
+    f = sql_lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    # Test without ogr_feature_count column
+    # Test without feature_count column
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_42.gpkg',
-                            options = ['ADD_OGR_FEATURE_COUNT_COLUMN=FALSE'])
+                            options = ['ADD_GPKG_OGR_CONTENTS=FALSE'])
     lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone)
     lyr.CreateField( ogr.FieldDefn('i', ogr.OFTInteger) )
     for i in range(5):
@@ -3087,7 +3109,7 @@ def ogr_gpkg_42():
 
     ds = ogr.Open('/vsimem/ogr_gpkg_42.gpkg', update = 1)
 
-    # Check that ogr_feature_count column is missing
+    # Check that feature_count column is missing
     sql_lyr = ds.ExecuteSQL('PRAGMA table_info(gpkg_contents)')
     fc = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
