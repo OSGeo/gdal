@@ -3023,6 +3023,20 @@ def gpkg_39():
             return 'fail'
         ds.ReleaseResultSet(sql_lyr)
 
+    md = ds.GetRasterBand(1).GetMetadata()
+    if md != {'STATISTICS_MINIMUM': '0', 'STATISTICS_MAXIMUM': '255'}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+    ds = None
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    mdi = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
+    if mdi != '0':
+        gdaltest.post_reason('fail')
+        print(mdi)
+        return 'fail'
+    ds = None
+
     gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', noData = 1)
     ds = gdal.Open('/vsimem/gpkg_39.gpkg')
     if ds.GetRasterBand(1).Checksum() != 4672:
