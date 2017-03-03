@@ -207,7 +207,7 @@ def ogr_dxf_6():
         gdaltest.post_reason( 'not keeping 2D text as 2D' )
         return 'fail'
 
-    if feat.GetStyleString() != 'LABEL(f:"Arial",t:"Test",a:30,s:5g,p:7,c:#000000)':
+    if feat.GetStyleString() != 'LABEL(f:"normallatin1",t:"Test",a:30,s:5g,p:7,c:#000000)':
         print(feat.GetStyleString())
         gdaltest.post_reason( 'got wrong style string' )
         return 'fail'
@@ -299,7 +299,7 @@ def ogr_dxf_9():
         gdaltest.post_reason( 'Did not get expected first mtext.' )
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = 'LABEL(f:"normallatin1",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
         return 'fail'
@@ -730,7 +730,7 @@ def ogr_dxf_16():
         gdaltest.post_reason( 'Did not get expected first mtext.' )
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = 'LABEL(f:"normallatin1",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
         return 'fail'
