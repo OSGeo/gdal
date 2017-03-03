@@ -1819,6 +1819,8 @@ void OGRGenSQLResultsLayer::ReadIndexFields( OGRFeature* poSrcFeat,
                 {
                     case SWQ_INTEGER:
                     case SWQ_INTEGER64:
+                    // Yes, store Integer as Integer64.
+                    // This is consistent with the test in Compare()
                     psDstField->Integer64 =
                         poSrcFeat->GetFieldAsInteger64(
                             psKeyDef->field_index);
@@ -2204,9 +2206,8 @@ int OGRGenSQLResultsLayer::Compare( const OGRField *pasFirstTuple,
             switch (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex])
             {
               case SWQ_INTEGER:
-                nResult = ComparePrimitive( pasFirstTuple[iKey].Integer,
-                                            pasSecondTuple[iKey].Integer );
-                break;
+                  // Yes, read Integer in Integer64.
+                  // This is consistent with what is done ReadIndexFields()
               case SWQ_INTEGER64:
                 nResult = ComparePrimitive( pasFirstTuple[iKey].Integer64,
                                             pasSecondTuple[iKey].Integer64 );
