@@ -1495,8 +1495,8 @@ char* OGRGetXML_UTF8_EscapedString(const char* pszString)
 /*                        OGRCompareDate()                              */
 /************************************************************************/
 
-int OGRCompareDate( OGRField *psFirstTuple,
-                    OGRField *psSecondTuple )
+int OGRCompareDate( const OGRField *psFirstTuple,
+                    const OGRField *psSecondTuple )
 {
     // TODO: We ignore TZFlag.
 

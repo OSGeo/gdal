@@ -66,7 +66,7 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     int        *panGeomFieldToSrcGeomField;
 
-    GIntBig     nIndexSize;
+    size_t      nIndexSize;
     GIntBig    *panFIDIndex;
     int         bOrderByValid;
 
@@ -84,9 +84,11 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     OGRFeature *TranslateFeature( OGRFeature * );
     void        CreateOrderByIndex();
-    int         SortIndexSection( OGRField *pasIndexFields,
-                                  GIntBig nStart, GIntBig nEntries );
-    int         Compare( OGRField *pasFirst, OGRField *pasSecond );
+    void        SortIndexSection( const OGRField *pasIndexFields,
+                                  GIntBig *panMerged,
+                                  size_t nStart, size_t nEntries );
+    void        FreeIndexFields(OGRField *pasIndexFields, size_t l_nIndexSize);
+    int         Compare( const OGRField *pasFirst, const OGRField *pasSecond );
 
     void        ClearFilters();
     void        ApplyFiltersToSource();
