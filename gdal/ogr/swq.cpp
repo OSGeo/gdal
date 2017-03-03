@@ -540,6 +540,7 @@ static bool Compare (swq_field_type eType,
     }
 }
 
+#ifndef DOXYGEN_SKIP
 bool swq_summary::Comparator::operator() (const CPLString& a,
                                           const CPLString& b) const
 {
@@ -552,6 +553,7 @@ bool swq_summary::Comparator::operator() (const CPLString& a,
         return Compare(eType, b, a);
     }
 }
+#endif
 
 /************************************************************************/
 /*                         swq_identify_field()                         */
