@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "rdataset.h"
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -37,7 +40,6 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
-#include "cpl_port.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
@@ -49,67 +51,12 @@
 
 CPL_CVSID("$Id$");
 
-GDALDataset *
-RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
-             int bStrict, char ** papszOptions,
-             GDALProgressFunc pfnProgress, void * pProgressData );
-
 // static const int R_NILSXP = 0;
 static const int R_LISTSXP = 2;
 static const int R_CHARSXP = 9;
 static const int R_INTSXP = 13;
 static const int R_REALSXP = 14;
 static const int R_STRSXP = 16;
-
-/************************************************************************/
-/* ==================================================================== */
-/*                               RDataset                               */
-/* ==================================================================== */
-/************************************************************************/
-
-class RDataset : public GDALPamDataset
-{
-    friend class RRasterBand;
-    VSILFILE   *fp;
-    int         bASCII;
-    CPLString   osLastStringRead;
-
-    vsi_l_offset nStartOfData;
-
-    double     *padfMatrixValues;
-
-    const char *ASCIIFGets();
-    int         ReadInteger();
-    double      ReadFloat();
-    const char *ReadString();
-    bool        ReadPair( CPLString &osItemName, int &nItemType );
-
-  public:
-                RDataset();
-                ~RDataset();
-
-    static GDALDataset  *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                            RRasterBand                               */
-/* ==================================================================== */
-/************************************************************************/
-
-class RRasterBand : public GDALPamRasterBand
-{
-    friend class RDataset;
-
-    const double *padfMatrixValues;
-
-  public:
-                RRasterBand( RDataset *, int, const double * );
-    virtual ~RRasterBand() {}
-
-    virtual CPLErr          IReadBlock( int, int, void * ) override;
-};
 
 /************************************************************************/
 /*                            RRasterBand()                             */
