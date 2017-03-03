@@ -1661,13 +1661,13 @@ OGRFeature *OGRGenSQLResultsLayer::GetFeature( GIntBig nFID )
                 return NULL;
             }
             const size_t nIdx = static_cast<size_t>(nFID);
-            if( oSummary.oVectorDistinctValues[nIdx] != "__OGR_NULL__" )
+            if( oSummary.oVectorDistinctValues[nIdx] != SZ_OGR_NULL )
             {
                 poSummaryFeature->SetField( 0,
                             oSummary. oVectorDistinctValues[nIdx].c_str() );
             }
             else
-                poSummaryFeature->UnsetField( 0 );
+                poSummaryFeature->SetFieldNull( 0 );
         }
         else
         {
@@ -1698,10 +1698,10 @@ OGRFeature *OGRGenSQLResultsLayer::GetFeature( GIntBig nFID )
                 return NULL;
 
             const size_t nIdx = static_cast<size_t>(nFID);
-            if( m_oDistinctList[nIdx] != "__OGR_NULL__" )
+            if( m_oDistinctList[nIdx] != SZ_OGR_NULL )
                 poSummaryFeature->SetField( 0, m_oDistinctList[nIdx].c_str() );
             else
-                poSummaryFeature->UnsetField( 0 );
+                poSummaryFeature->SetFieldNull( 0 );
         }
 
         poSummaryFeature->SetFID( nFID );
