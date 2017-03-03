@@ -84,10 +84,15 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     OGRFeature *TranslateFeature( OGRFeature * );
     void        CreateOrderByIndex();
+    void        ReadIndexFields( OGRFeature* poSrcFeat,
+                                 int nOrderItems,
+                                 OGRField *pasIndexFields );
     void        SortIndexSection( const OGRField *pasIndexFields,
                                   GIntBig *panMerged,
                                   size_t nStart, size_t nEntries );
-    void        FreeIndexFields(OGRField *pasIndexFields, size_t l_nIndexSize);
+    void        FreeIndexFields(OGRField *pasIndexFields,
+                                size_t l_nIndexSize,
+                                bool bFreeArray = true);
     int         Compare( const OGRField *pasFirst, const OGRField *pasSecond );
 
     void        ClearFilters();
