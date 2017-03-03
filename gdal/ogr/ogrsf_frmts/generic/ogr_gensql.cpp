@@ -1863,6 +1863,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
                 FreeIndexFields( pasIndexFields, nIndexSize );
                 VSIFree(panFIDList);
                 nIndexSize = 0;
+                delete poSrcFeat;
                 return;
             }
             OGRField* pasNewIndexFields = (OGRField *)
@@ -1876,6 +1877,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
                 FreeIndexFields( pasIndexFields, nIndexSize );
                 VSIFree(panFIDList);
                 nIndexSize = 0;
+                delete poSrcFeat;
                 return;
             }
             pasIndexFields = pasNewIndexFields;
@@ -1888,6 +1890,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
                 FreeIndexFields( pasIndexFields, nIndexSize );
                 VSIFree(panFIDList);
                 nIndexSize = 0;
+                delete poSrcFeat;
                 return;
             }
             panFIDList = panNewFIDList;
