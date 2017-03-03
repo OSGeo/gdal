@@ -391,7 +391,7 @@ swq_select_summarize( swq_select *select_info,
     if( def->distinct_flag )
     {
         if( value == NULL )
-            value = "__OGR_NULL__";
+            value = SZ_OGR_NULL;
         try
         {
             if( summary.oSetDistinctValues.find(value) ==
@@ -520,9 +520,9 @@ static bool Compare (swq_field_type eType,
                      const CPLString& a,
                      const CPLString& b)
 {
-    if( a == "__OGR_NULL__" )
-        return b != "__OGR_NULL__";
-    else if( b == "__OGR_NULL__" )
+    if( a == SZ_OGR_NULL )
+        return b != SZ_OGR_NULL;
+    else if( b == SZ_OGR_NULL )
         return false;
     else
     {

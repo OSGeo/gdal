@@ -34,6 +34,9 @@
 #  define strcasecmp stricmp
 #endif
 
+// Used for swq_summary.oSetDistinctValues and oVectorDistinctValues
+#define SZ_OGR_NULL  "__OGR_NULL__"
+
 typedef enum {
     SWQ_OR,
     SWQ_AND,
