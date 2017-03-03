@@ -296,7 +296,7 @@ public:
 
         Comparator() : bSortAsc(true), eType(SWQ_STRING) {}
 
-        bool    operator() (const CPLString&, const CPLString &);
+        bool    operator() (const CPLString&, const CPLString &) const;
     };
 
     GIntBig     count;

@@ -356,7 +356,7 @@ swq_select_summarize( swq_select *select_info,
                     CPLAssert( select_info->order_specs ==1 );
                     CPLAssert( select_info->result_columns == 1 );
                     oComparator.bSortAsc =
-                        select_info->order_defs[0].ascending_flag;
+                        CPL_TO_BOOL(select_info->order_defs[0].ascending_flag);
                 }
                 if( select_info->column_defs[i].field_type == SWQ_INTEGER ||
 -                   select_info->column_defs[i].field_type == SWQ_INTEGER64 )
@@ -517,7 +517,7 @@ swq_select_summarize( swq_select *select_info,
 /************************************************************************/
 
 bool swq_summary::Comparator::operator() (const CPLString& a,
-                                          const CPLString& b)
+                                          const CPLString& b) const
 {
     bool ret = false;
     if( a == "__OGR_NULL__" )
