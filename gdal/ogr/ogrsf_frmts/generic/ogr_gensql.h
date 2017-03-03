@@ -34,6 +34,9 @@
 #include "ogrsf_frmts.h"
 #include "swq.h"
 #include "cpl_hash_set.h"
+#include "cpl_string.h"
+
+#include <vector>
 
 /*! @cond Doxygen_Suppress */
 
@@ -79,6 +82,7 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     GDALDataset **papoExtraDS;
 
     GIntBig     nIteratedFeatures;
+    std::vector<CPLString> m_oDistinctList;
 
     int         PrepareSummary();
 
