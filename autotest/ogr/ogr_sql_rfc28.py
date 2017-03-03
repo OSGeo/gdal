@@ -1401,6 +1401,7 @@ def ogr_rfc28_47():
     if f is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
 
     lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY ORDER BY EAS_ID DESC LIMIT 2" )
     tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [179,173] )
