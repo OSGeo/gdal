@@ -30,6 +30,7 @@
  */
 
 #include "cpl_port.h"
+#include "gribdataset.h"
 
 #include <cerrno>
 #include <cmath>
@@ -66,79 +67,6 @@
 CPL_CVSID("$Id$");
 
 static CPLMutex *hGRIBMutex = NULL;
-
-/************************************************************************/
-/* ==================================================================== */
-/*                              GRIBDataset                             */
-/* ==================================================================== */
-/************************************************************************/
-
-class GRIBRasterBand;
-
-class GRIBDataset : public GDALPamDataset
-{
-    friend class GRIBRasterBand;
-
-  public:
-                GRIBDataset();
-                ~GRIBDataset();
-
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
-
-    CPLErr      GetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef() override;
-
-  private:
-    void SetGribMetaData(grib_MetaData* meta);
-    VSILFILE    *fp;
-    char  *pszProjection;
-    // Calculate and store once as GetGeoTransform may be called multiple times.
-    double adfGeoTransform[6];
-
-    GIntBig  nCachedBytes;
-    GIntBig  nCachedBytesThreshold;
-    int      bCacheOnlyOneBand;
-    GRIBRasterBand* poLastUsedBand;
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                            GRIBRasterBand                             */
-/* ==================================================================== */
-/************************************************************************/
-
-class GRIBRasterBand : public GDALPamRasterBand
-{
-    friend class GRIBDataset;
-
-public:
-    GRIBRasterBand( GRIBDataset*, int, inventoryType* );
-    virtual ~GRIBRasterBand();
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual const char *GetDescription() const override;
-
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
-
-    void    FindPDSTemplate();
-
-    void    UncacheData();
-
-private:
-    CPLErr       LoadData();
-
-    static void ReadGribData( DataSource &, sInt4, int, double**,
-                              grib_MetaData** );
-    sInt4 start;
-    int subgNum;
-    char *longFstLevel;
-
-    double * m_Grib_Data;
-    grib_MetaData* m_Grib_MetaData;
-
-    int      nGribDataXSize;
-    int      nGribDataYSize;
-};
 
 /************************************************************************/
 /*                         ConvertUnitInText()                          */
