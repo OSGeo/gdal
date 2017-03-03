@@ -1512,6 +1512,35 @@ def ogr_sql_47():
 
     return 'success'
 
+###############################################################################
+# Test sorting of more than 100 elements
+
+def ogr_sql_48():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    lyr.CreateField( ogr.FieldDefn( 'int_field', ogr.OFTInteger) )
+    for i in range(1000):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        if (i % 2) == 0:
+            f.SetField(0, i + 1)
+        else:
+            f.SetField(0, 1001 - i)
+        lyr.CreateFeature(f)
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM test ORDER BY int_field')
+    i = 1
+    for f in sql_lyr:
+        if f['int_field'] != i:
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            return 'fail'
+        i = i + 1
+    if i != 1001:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 
 def ogr_sql_cleanup():
     gdaltest.lyr = None
@@ -1569,6 +1598,7 @@ gdaltest_list = [
     ogr_sql_45,
     ogr_sql_46,
     ogr_sql_47,
+    ogr_sql_48,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
