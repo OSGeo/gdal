@@ -53,7 +53,6 @@ swq_select::swq_select() :
     raw_select(NULL),
     result_columns(0),
     column_defs(NULL),
-    column_summary(NULL),
     table_count(0),
     table_defs(NULL),
     join_count(0),
@@ -93,20 +92,9 @@ swq_select::~swq_select()
         CPLFree( column_defs[i].field_alias );
 
         delete column_defs[i].expr;
-
-        if( column_summary != NULL
-            && column_summary[i].distinct_list != NULL )
-        {
-            for( int j = 0; j < column_summary[i].count; j++ )
-                CPLFree( column_summary[i].distinct_list[j] );
-
-            CPLFree( column_summary[i].distinct_list );
-        }
     }
 
     CPLFree( column_defs );
-
-    CPLFree( column_summary );
 
     for( int i = 0; i < order_specs; i++ )
     {

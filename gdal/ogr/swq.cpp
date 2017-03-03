@@ -30,6 +30,7 @@
 #include <ctime>
 
 #include <algorithm>
+#include <limits>
 #include <string>
 
 #include "cpl_error.h"
@@ -327,64 +328,90 @@ swq_select_summarize( swq_select *select_info,
     if( def->col_func == SWQCF_NONE && !def->distinct_flag )
         return NULL;
 
+    if( select_info->query_mode == SWQM_DISTINCT_LIST &&
+        select_info->order_specs > 0 )
+    {
+        if( select_info->order_specs > 1 )
+            return "Can't ORDER BY a DISTINCT list by more than one key.";
+
+        if( select_info->order_defs[0].field_index !=
+            select_info->column_defs[0].field_index )
+            return "Only selected DISTINCT field can be used for ORDER BY.";
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the summary information if this is the first row         */
 /*      being processed.                                                */
 /* -------------------------------------------------------------------- */
-    if( select_info->column_summary == NULL )
+    if( select_info->column_summary.empty() )
     {
-        select_info->column_summary = static_cast<swq_summary *>(
-            CPLMalloc(sizeof(swq_summary) * select_info->result_columns));
-        memset( select_info->column_summary, 0,
-                sizeof(swq_summary) * select_info->result_columns );
-
+        select_info->column_summary.resize(select_info->result_columns);
         for( int i = 0; i < select_info->result_columns; i++ )
         {
-            select_info->column_summary[i].min = 1e20;
-            select_info->column_summary[i].max = -1e20;
-            strcpy(select_info->column_summary[i].szMin, "9999/99/99 99:99:99");
-            strcpy(select_info->column_summary[i].szMax, "0000/00/00 00:00:00");
+            if( def->distinct_flag )
+            {
+                swq_summary::Comparator oComparator;
+                if( select_info->order_specs > 0 )
+                {
+                    CPLAssert( select_info->order_specs ==1 );
+                    CPLAssert( select_info->result_columns == 1 );
+                    oComparator.bSortAsc =
+                        select_info->order_defs[0].ascending_flag;
+                }
+                if( select_info->column_defs[i].field_type == SWQ_INTEGER ||
+-                   select_info->column_defs[i].field_type == SWQ_INTEGER64 )
+                {
+                    oComparator.eType = SWQ_INTEGER64;
+                }
+                else if( select_info->column_defs[i].field_type == SWQ_FLOAT )
+                {
+                    oComparator.eType = SWQ_FLOAT;
+                }
+                else
+                {
+                    oComparator.eType = SWQ_STRING;
+                }
+                select_info->column_summary[i].oSetDistinctValues =
+                    std::set<CPLString, swq_summary::Comparator>(oComparator);
+            }
+            select_info->column_summary[i].min =
+                std::numeric_limits<double>::infinity();
+            select_info->column_summary[i].max =
+                -std::numeric_limits<double>::infinity();
+            select_info->column_summary[i].osMin = "9999/99/99 99:99:99";
+            select_info->column_summary[i].osMax = "0000/00/00 00:00:00";
         }
     }
 
 /* -------------------------------------------------------------------- */
 /*      If distinct processing is on, process that now.                 */
 /* -------------------------------------------------------------------- */
-    swq_summary *summary = select_info->column_summary + dest_column;
+    swq_summary& summary = select_info->column_summary[dest_column];
 
     if( def->distinct_flag )
     {
-        // This should be implemented with a much more complicated
-        // data structure to achieve any sort of efficiency.
-        GIntBig i = 0;  // Used after for.
-        for( ; i < summary->count; i++ )
+        if( value == NULL )
+            value = "__OGR_NULL__";
+        try
         {
-            if( value == NULL )
+            if( summary.oSetDistinctValues.find(value) ==
+                    summary.oSetDistinctValues.end() )
             {
-                if( summary->distinct_list[i] == NULL )
-                    break;
+                summary.oSetDistinctValues.insert(value);
+                if( select_info->order_specs == 0 )
+                {
+                    // If not sorted, keep values in their original order
+                    summary.oVectorDistinctValues.push_back(value);
+                }
+                summary.count ++;
             }
-            else if( summary->distinct_list[i] != NULL &&
-                     strcmp(value, summary->distinct_list[i]) == 0 )
-                break;
+        }
+        catch( std::bad_alloc& )
+        {
+            return "Out of memory";
         }
 
-        if( i == summary->count )
-        {
-            char **old_list = summary->distinct_list;
-
-            summary->distinct_list = static_cast<char **>(
-                CPLMalloc(sizeof(char *) * (size_t)(summary->count + 1)));
-            if( summary->count )
-            {
-                memcpy( summary->distinct_list, old_list,
-                        sizeof(char *) * (size_t)summary->count );
-            }
-            summary->distinct_list[(summary->count)++] =
-                (value != NULL) ? CPLStrdup( value ) : NULL;
-
-            CPLFree(old_list);
-        }
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -400,19 +427,18 @@ swq_select_summarize( swq_select *select_info,
                 def->field_type == SWQ_TIME ||
                 def->field_type == SWQ_TIMESTAMP )
             {
-                if( strcmp( value, summary->szMin ) < 0 )
+                if( strcmp( value, summary.osMin ) < 0 )
                 {
-                    strncpy( summary->szMin, value, sizeof(summary->szMin) );
-                    summary->szMin[sizeof(summary->szMin) - 1] = '\0';
+                    summary.osMin = value;
                 }
             }
             else
             {
                 double df_val = CPLAtof(value);
-                if( df_val < summary->min )
-                    summary->min = df_val;
+                if( df_val < summary.min )
+                    summary.min = df_val;
             }
-            summary->count++;
+            summary.count++;
         }
         break;
       case SWQCF_MAX:
@@ -422,19 +448,18 @@ swq_select_summarize( swq_select *select_info,
                 def->field_type == SWQ_TIME ||
                 def->field_type == SWQ_TIMESTAMP )
             {
-                if( strcmp( value, summary->szMax ) > 0 )
+                if( strcmp( value, summary.osMax ) > 0 )
                 {
-                    strncpy( summary->szMax, value, sizeof(summary->szMax) );
-                    summary->szMax[sizeof(summary->szMax) - 1] = '\0';
+                    summary.osMax = value;
                 }
             }
             else
             {
                 double df_val = CPLAtof(value);
-                if( df_val > summary->max )
-                    summary->max = df_val;
+                if( df_val > summary.max )
+                    summary.max = df_val;
             }
-            summary->count++;
+            summary.count++;
         }
         break;
       case SWQCF_AVG:
@@ -456,23 +481,23 @@ swq_select_summarize( swq_select *select_info,
                     brokendowntime.tm_min = sField.Date.Minute;
                     brokendowntime.tm_sec =
                         static_cast<int>(sField.Date.Second);
-                    summary->count++;
-                    summary->sum += CPLYMDHMSToUnixTime(&brokendowntime);
-                    summary->sum += fmod(static_cast<double>(
+                    summary.count++;
+                    summary.sum += CPLYMDHMSToUnixTime(&brokendowntime);
+                    summary.sum += fmod(static_cast<double>(
                                                     sField.Date.Second), 1.0);
                 }
             }
             else
             {
-                summary->count++;
-                summary->sum += CPLAtof(value);
+                summary.count++;
+                summary.sum += CPLAtof(value);
             }
         }
         break;
 
       case SWQCF_COUNT:
-        if( value != NULL && !def->distinct_flag )
-            summary->count++;
+        if( value != NULL )
+            summary.count++;
         break;
 
       case SWQCF_NONE:
@@ -491,114 +516,30 @@ swq_select_summarize( swq_select *select_info,
 /*                      sort comparison functions.                      */
 /************************************************************************/
 
-static int FORCE_CDECL swq_compare_int( const void *item1, const void *item2 )
+bool swq_summary::Comparator::operator() (const CPLString& a,
+                                          const CPLString& b)
 {
-    const char* pszStr1 = *((const char **) item1);
-    const char* pszStr2 = *((const char **) item2);
-    if( pszStr1 == NULL )
-        return (pszStr2 == NULL) ? 0 : -1;
-    else if( pszStr2 == NULL )
-        return 1;
-
-    const GIntBig v1 = CPLAtoGIntBig(pszStr1);
-    const GIntBig v2 = CPLAtoGIntBig(pszStr2);
-
-    if( v1 < v2 )
-        return -1;
-    else if( v1 == v2 )
-        return 0;
+    bool ret = false;
+    if( a == "__OGR_NULL__" )
+        ret = b != "__OGR_NULL__";
+    else if( b == "__OGR_NULL__" )
+        ret = false;
     else
-        return 1;
-}
-
-static int FORCE_CDECL swq_compare_real( const void *item1, const void *item2 )
-{
-    const char* pszStr1 = *((const char **) item1);
-    const char* pszStr2 = *((const char **) item2);
-    if( pszStr1 == NULL )
-        return (pszStr2 == NULL) ? 0 : -1;
-    else if( pszStr2 == NULL )
-        return 1;
-
-    const double v1 = CPLAtof(pszStr1);
-    const double v2 = CPLAtof(pszStr2);
-
-    if( v1 < v2 )
-        return -1;
-    else if( v1 == v2 )
-        return 0;
-    else
-        return 1;
-}
-
-static int FORCE_CDECL swq_compare_string( const void *item1,
-                                           const void *item2 )
-{
-    const char* pszStr1 = *((const char **) item1);
-    const char* pszStr2 = *((const char **) item2);
-    if( pszStr1 == NULL )
-        return (pszStr2 == NULL) ? 0 : -1;
-    else if( pszStr2 == NULL )
-        return 1;
-
-    return strcmp( pszStr1, pszStr2 );
-}
-
-/************************************************************************/
-/*                    swq_select_finish_summarize()                     */
-/*                                                                      */
-/*      Call to complete summarize work.  Does stuff like ordering      */
-/*      the distinct list for instance.                                 */
-/************************************************************************/
-
-const char *swq_select_finish_summarize( swq_select *select_info )
-
-{
-    int (FORCE_CDECL *compare_func)(const void *, const void*);
-    GIntBig count = 0;
-    char **distinct_list = NULL;
-
-    if( select_info->query_mode != SWQM_DISTINCT_LIST
-        || select_info->order_specs == 0 )
-        return NULL;
-
-    if( select_info->order_specs > 1 )
-        return "Can't ORDER BY a DISTINCT list by more than one key.";
-
-    if( select_info->order_defs[0].field_index !=
-        select_info->column_defs[0].field_index )
-        return "Only selected DISTINCT field can be used for ORDER BY.";
-
-    if( select_info->column_summary == NULL )
-        return NULL;
-
-    if( select_info->column_defs[0].field_type == SWQ_INTEGER ||
-        select_info->column_defs[0].field_type == SWQ_INTEGER64 )
-        compare_func = swq_compare_int;
-    else if( select_info->column_defs[0].field_type == SWQ_FLOAT )
-        compare_func = swq_compare_real;
-    else
-        compare_func = swq_compare_string;
-
-    distinct_list = select_info->column_summary[0].distinct_list;
-    count = select_info->column_summary[0].count;
-
-    qsort( distinct_list, (size_t)count, sizeof(char *), compare_func );
-
-/* -------------------------------------------------------------------- */
-/*      Do we want the list ascending in stead of descending?           */
-/* -------------------------------------------------------------------- */
-    if( !select_info->order_defs[0].ascending_flag )
     {
-        for( GIntBig i = 0; i < count/2; i++ )
+        if( eType == SWQ_INTEGER64 )
+            ret = CPLAtoGIntBig(a) < CPLAtoGIntBig(b);
+        else if( eType == SWQ_FLOAT )
+            ret = CPLAtof(a) < CPLAtof(b);
+        else if( eType == SWQ_STRING )
+            ret = a < b;
+        else
         {
-            char *saved = distinct_list[i];
-            distinct_list[i] = distinct_list[count-i-1];
-            distinct_list[count-i-1] = saved;
+            CPLAssert( false );
         }
     }
-
-    return NULL;
+    if( !bSortAsc )
+        ret = !ret;
+    return ret;
 }
 
 /************************************************************************/

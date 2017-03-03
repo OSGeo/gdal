@@ -723,12 +723,10 @@ GIntBig OGRGenSQLResultsLayer::GetFeatureCount( int bForce )
         if( !PrepareSummary() )
             return 0;
 
-        swq_summary *psSummary = psSelectInfo->column_summary + 0;
-
-        if( psSummary == NULL )
+        if( psSelectInfo->column_summary.empty() )
             return 0;
 
-        nRet = psSummary->count;
+        nRet = psSelectInfo->column_summary[0].count;
     }
     else if( psSelectInfo->query_mode != SWQM_RECORDSET )
         return 1;
@@ -963,16 +961,6 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 
     poSrcLayer->GetLayerDefn()->SetGeometryIgnored(bSaveIsGeomIgnored);
 
-    pszError = swq_select_finish_summarize( psSelectInfo );
-    if( pszError != NULL )
-    {
-        delete poSummaryFeature;
-        poSummaryFeature = NULL;
-
-        CPLError( CE_Failure, CPLE_AppDefined, "%s", pszError );
-        return FALSE;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      If we have run out of features on the source layer, clear       */
 /*      away the filters we have installed till a next run through      */
@@ -990,12 +978,12 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
-            if (psSelectInfo->column_summary != NULL)
+            if( !psSelectInfo->column_summary.empty() )
             {
-                swq_summary *psSummary = psSelectInfo->column_summary + iField;
+                swq_summary& oSummary = psSelectInfo->column_summary[iField];
                 if( psColDef->col_func == SWQCF_COUNT )
                 {
-                    if( CPL_INT64_FITS_ON_INT32(psSummary->count) )
+                    if( CPL_INT64_FITS_ON_INT32(oSummary.count) )
                     {
                         delete poSummaryFeature;
                         poSummaryFeature = NULL;
@@ -1014,18 +1002,18 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
-            if (psSelectInfo->column_summary != NULL)
+            if (!psSelectInfo->column_summary.empty() )
             {
-                swq_summary *psSummary = psSelectInfo->column_summary + iField;
+                swq_summary& oSummary = psSelectInfo->column_summary[iField];
 
-                if( psColDef->col_func == SWQCF_AVG && psSummary->count > 0 )
+                if( psColDef->col_func == SWQCF_AVG && oSummary.count > 0 )
                 {
                     if( psColDef->field_type == SWQ_DATE ||
                         psColDef->field_type == SWQ_TIME ||
                         psColDef->field_type == SWQ_TIMESTAMP)
                     {
                         struct tm brokendowntime;
-                        double dfAvg = psSummary->sum / psSummary->count;
+                        double dfAvg = oSummary.sum / oSummary.count;
                         CPLUnixTimeToYMDHMS((GIntBig)dfAvg, &brokendowntime);
                         poSummaryFeature->SetField( iField,
                                                     brokendowntime.tm_year + 1900,
@@ -1038,30 +1026,30 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                     }
                     else
                         poSummaryFeature->SetField( iField,
-                                                    psSummary->sum / psSummary->count );
+                                                    oSummary.sum / oSummary.count );
                 }
-                else if( psColDef->col_func == SWQCF_MIN && psSummary->count > 0 )
+                else if( psColDef->col_func == SWQCF_MIN && oSummary.count > 0 )
                 {
                     if( psColDef->field_type == SWQ_DATE ||
                         psColDef->field_type == SWQ_TIME ||
                         psColDef->field_type == SWQ_TIMESTAMP)
-                        poSummaryFeature->SetField( iField, psSummary->szMin );
+                        poSummaryFeature->SetField( iField, oSummary.osMin.c_str() );
                     else
-                        poSummaryFeature->SetField( iField, psSummary->min );
+                        poSummaryFeature->SetField( iField, oSummary.min );
                 }
-                else if( psColDef->col_func == SWQCF_MAX && psSummary->count > 0 )
+                else if( psColDef->col_func == SWQCF_MAX && oSummary.count > 0 )
                 {
                     if( psColDef->field_type == SWQ_DATE ||
                         psColDef->field_type == SWQ_TIME ||
                         psColDef->field_type == SWQ_TIMESTAMP)
-                        poSummaryFeature->SetField( iField, psSummary->szMax );
+                        poSummaryFeature->SetField( iField, oSummary.osMax.c_str() );
                     else
-                        poSummaryFeature->SetField( iField, psSummary->max );
+                        poSummaryFeature->SetField( iField, oSummary.max );
                 }
                 else if( psColDef->col_func == SWQCF_COUNT )
-                    poSummaryFeature->SetField( iField, psSummary->count );
-                else if( psColDef->col_func == SWQCF_SUM && psSummary->count > 0 )
-                    poSummaryFeature->SetField( iField, psSummary->sum );
+                    poSummaryFeature->SetField( iField, oSummary.count );
+                else if( psColDef->col_func == SWQCF_SUM && oSummary.count > 0 )
+                    poSummaryFeature->SetField( iField, oSummary.sum );
             }
             else if ( psColDef->col_func == SWQCF_COUNT )
                 poSummaryFeature->SetField( iField, 0 );
@@ -1661,18 +1649,59 @@ OGRFeature *OGRGenSQLResultsLayer::GetFeature( GIntBig nFID )
         if( !PrepareSummary() )
             return NULL;
 
-        swq_summary *psSummary = psSelectInfo->column_summary + 0;
-
-        if( psSummary == NULL )
+        if( psSelectInfo->column_summary.empty() )
             return NULL;
 
-        if( nFID < 0 || nFID >= psSummary->count )
-            return NULL;
-
-        if( psSummary->distinct_list[nFID] != NULL )
-            poSummaryFeature->SetField( 0, psSummary->distinct_list[nFID] );
+        swq_summary& oSummary = psSelectInfo->column_summary[0];
+        if( psSelectInfo->order_specs == 0 )
+        {
+            if( nFID < 0 || nFID >= static_cast<GIntBig>(
+                                    oSummary.oVectorDistinctValues.size()) )
+            {
+                return NULL;
+            }
+            if( oSummary.oVectorDistinctValues[nFID] != "__OGR_NULL__" )
+            {
+                poSummaryFeature->SetField( 0,
+                            oSummary. oVectorDistinctValues[nFID].c_str() );
+            }
+            else
+                poSummaryFeature->UnsetField( 0 );
+        }
         else
-            poSummaryFeature->UnsetField( 0 );
+        {
+            if( m_oDistinctList.empty() )
+            {
+                std::set<CPLString, swq_summary::Comparator>::const_iterator
+                    oIter = oSummary.oSetDistinctValues.begin();
+                std::set<CPLString, swq_summary::Comparator>::const_iterator
+                    oEnd = oSummary.oSetDistinctValues.end();
+                try
+                {
+                    m_oDistinctList.reserve(
+                                        oSummary.oSetDistinctValues.size() );
+                    for( ; oIter != oEnd; ++oIter )
+                    {
+                        m_oDistinctList.push_back( *oIter );
+                    }
+                }
+                catch( std::bad_alloc& )
+                {
+                    return NULL;
+                }
+                oSummary.oSetDistinctValues.clear();
+            }
+
+            if( nFID < 0 ||
+                nFID >= static_cast<GIntBig>(m_oDistinctList.size()) )
+                return NULL;
+
+            if( m_oDistinctList[nFID] != "__OGR_NULL__" )
+                poSummaryFeature->SetField( 0, m_oDistinctList[nFID].c_str() );
+            else
+                poSummaryFeature->UnsetField( 0 );
+        }
+
         poSummaryFeature->SetFID( nFID );
 
         return poSummaryFeature->Clone();
