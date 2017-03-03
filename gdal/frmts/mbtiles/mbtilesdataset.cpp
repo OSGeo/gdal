@@ -1184,7 +1184,7 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
     aosList = CPLStringList(GDALPamDataset::GetMetadata(), FALSE);
 
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS,
-            "SELECT name, value FROM metadata", NULL, NULL);
+            "SELECT name, value FROM metadata LIMIT 1000", NULL, NULL);
     if (hSQLLyr == NULL)
         return NULL;
 
@@ -2652,7 +2652,7 @@ CPLErr MBTilesDataset::IBuildOverviews(
         int nRows = 0;
         int nCols = 0;
         char** papszResult = NULL;
-        sqlite3_get_table(hDB, "SELECT * FROM metadata WHERE name = 'minzoom'", &papszResult, &nRows, &nCols, NULL);
+        sqlite3_get_table(hDB, "SELECT * FROM metadata WHERE name = 'minzoom' LIMIT 2", &papszResult, &nRows, &nCols, NULL);
         sqlite3_free_table(papszResult);
         if( nRows == 1 )
         {
