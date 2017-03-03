@@ -1082,13 +1082,13 @@ def ogr_sql_36():
     for fieldname in ['intfield', 'int64field', 'floatfield', 'strfield']:
         sql_lyr = ds.ExecuteSQL( "select distinct %s from layer order by %s asc" % (fieldname, fieldname))
         feat = sql_lyr.GetNextFeature()
-        if feat.IsFieldSet(0) != 0:
+        if feat.IsFieldSetAndNotNull(0) != 0:
             gdaltest.post_reason('fail')
             print('field %s' % fieldname)
             feat.DumpReadable()
             return 'fail'
         feat = sql_lyr.GetNextFeature()
-        if feat.IsFieldSet(0) == 0:
+        if feat.IsFieldSetAndNotNull(0) == 0:
             gdaltest.post_reason('fail')
             print('field %s' % fieldname)
             feat.DumpReadable()
@@ -1098,13 +1098,13 @@ def ogr_sql_36():
     for fieldname in ['intfield', 'int64field', 'floatfield', 'strfield']:
         sql_lyr = ds.ExecuteSQL( "select distinct %s from layer order by %s desc" % (fieldname, fieldname))
         feat = sql_lyr.GetNextFeature()
-        if feat.IsFieldSet(0) == 0:
+        if feat.IsFieldSetAndNotNull(0) == 0:
             gdaltest.post_reason('fail')
             print('field %s' % fieldname)
             feat.DumpReadable()
             return 'fail'
         feat = sql_lyr.GetNextFeature()
-        if feat.IsFieldSet(0) != 0:
+        if feat.IsFieldSetAndNotNull(0) != 0:
             gdaltest.post_reason('fail')
             print('field %s' % fieldname)
             feat.DumpReadable()
@@ -1168,7 +1168,7 @@ def ogr_sql_37():
 
     sql_lyr = ds.ExecuteSQL( "select avg(intfield) from layer where intfield is null")
     feat = sql_lyr.GetNextFeature()
-    if feat.IsFieldSet(0) != 0:
+    if feat.IsFieldSetAndNotNull(0) != 0:
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
@@ -1177,7 +1177,7 @@ def ogr_sql_37():
     # Fix crash when first values is null (#4509)
     sql_lyr = ds.ExecuteSQL( "select distinct strfield_first_null from layer")
     feat = sql_lyr.GetNextFeature()
-    if feat.IsFieldSet('strfield_first_null'):
+    if feat.IsFieldSetAndNotNull('strfield_first_null'):
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
@@ -1190,7 +1190,7 @@ def ogr_sql_37():
 
     sql_lyr = ds.ExecuteSQL( "select distinct strfield_never_set from layer")
     feat = sql_lyr.GetNextFeature()
-    if feat.IsFieldSet('strfield_never_set'):
+    if feat.IsFieldSetAndNotNull('strfield_never_set'):
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
@@ -1198,7 +1198,7 @@ def ogr_sql_37():
 
     sql_lyr = ds.ExecuteSQL( "select min(intfield_never_set), max(intfield_never_set), avg(intfield_never_set), sum(intfield_never_set), count(intfield_never_set) from layer")
     feat = sql_lyr.GetNextFeature()
-    if feat.IsFieldSet(0) or feat.IsFieldSet(1) or feat.IsFieldSet(2) or feat.IsFieldSet(3) or feat.GetField(4) != 0:
+    if feat.IsFieldSetAndNotNull(0) or feat.IsFieldSetAndNotNull(1) or feat.IsFieldSetAndNotNull(2) or feat.IsFieldSetAndNotNull(3) or feat.GetField(4) != 0:
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
@@ -1346,7 +1346,7 @@ def ogr_sql_44():
                  "SELECT hstore_get_value('\"a\" => \"\" z', 'a') FROM poly" ]:
         sql_lyr = gdaltest.ds.ExecuteSQL( sql )
         f = sql_lyr.GetNextFeature()
-        if f.IsFieldSet(0):
+        if f.IsFieldSetAndNotNull(0):
             gdaltest.post_reason('fail')
             print(sql)
             f.DumpReadable()
