@@ -445,27 +445,21 @@ swq_select_summarize( swq_select *select_info,
                 def->field_type == SWQ_TIME ||
                 def->field_type == SWQ_TIMESTAMP )
             {
-                int nYear = 0;
-                int nMonth = 0;
-                int nDay = 0;
-                int nHour = 0;
-                int nMin = 0;
-                float fSec = 0.0f;
-                if( sscanf(value, "%04d/%02d/%02d %02d:%02d:%f",
-                           &nYear, &nMonth, &nDay, &nHour, &nMin, &fSec) == 6 ||
-                    sscanf(value, "%04d/%02d/%02d",
-                           &nYear, &nMonth, &nDay) == 3 )
+                OGRField sField;
+                if( OGRParseDate( value, &sField, 0 ) )
                 {
                     struct tm brokendowntime;
-                    brokendowntime.tm_year = nYear - 1900;
-                    brokendowntime.tm_mon = nMonth - 1;
-                    brokendowntime.tm_mday = nDay;
-                    brokendowntime.tm_hour = nHour;
-                    brokendowntime.tm_min = nMin;
-                    brokendowntime.tm_sec = static_cast<int>(fSec);
+                    brokendowntime.tm_year = sField.Date.Year - 1900;
+                    brokendowntime.tm_mon = sField.Date.Month - 1;
+                    brokendowntime.tm_mday = sField.Date.Day;
+                    brokendowntime.tm_hour = sField.Date.Hour;
+                    brokendowntime.tm_min = sField.Date.Minute;
+                    brokendowntime.tm_sec =
+                        static_cast<int>(sField.Date.Second);
                     summary->count++;
                     summary->sum += CPLYMDHMSToUnixTime(&brokendowntime);
-                    summary->sum += fmod(static_cast<double>(fSec), 1.0);
+                    summary->sum += fmod(static_cast<double>(
+                                                    sField.Date.Second), 1.0);
                 }
             }
             else
