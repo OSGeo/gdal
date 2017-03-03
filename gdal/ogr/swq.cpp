@@ -516,30 +516,41 @@ swq_select_summarize( swq_select *select_info,
 /*                      sort comparison functions.                      */
 /************************************************************************/
 
-bool swq_summary::Comparator::operator() (const CPLString& a,
-                                          const CPLString& b) const
+static bool Compare (swq_field_type eType,
+                     const CPLString& a,
+                     const CPLString& b)
 {
-    bool ret = false;
     if( a == "__OGR_NULL__" )
-        ret = b != "__OGR_NULL__";
+        return b != "__OGR_NULL__";
     else if( b == "__OGR_NULL__" )
-        ret = false;
+        return false;
     else
     {
         if( eType == SWQ_INTEGER64 )
-            ret = CPLAtoGIntBig(a) < CPLAtoGIntBig(b);
+            return CPLAtoGIntBig(a) < CPLAtoGIntBig(b);
         else if( eType == SWQ_FLOAT )
-            ret = CPLAtof(a) < CPLAtof(b);
+            return CPLAtof(a) < CPLAtof(b);
         else if( eType == SWQ_STRING )
-            ret = a < b;
+            return a < b;
         else
         {
             CPLAssert( false );
+            return false;
         }
     }
-    if( !bSortAsc )
-        ret = !ret;
-    return ret;
+}
+
+bool swq_summary::Comparator::operator() (const CPLString& a,
+                                          const CPLString& b) const
+{
+    if( bSortAsc )
+    {
+        return Compare(eType, a, b);
+    }
+    else
+    {
+        return Compare(eType, b, a);
+    }
 }
 
 /************************************************************************/
