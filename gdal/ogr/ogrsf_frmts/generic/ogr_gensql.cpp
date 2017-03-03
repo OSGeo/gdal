@@ -1468,9 +1468,10 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
             poDstFeat->SetGeomField( iGeomField ++,
                                      poSrcFeat->GetGeomFieldRef(iSrcGeomField) );
         }
-        else if( psColDef->field_index >= iFIDFieldIndex &&
-                 psColDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
+        else if( psColDef->field_index >= iFIDFieldIndex )
         {
+            CPLAssert( psColDef->field_index <
+                                    iFIDFieldIndex + SPECIAL_FIELD_COUNT );
             switch (SpecialFieldTypes[psColDef->field_index - iFIDFieldIndex])
             {
               case SWQ_INTEGER:
@@ -1760,9 +1761,10 @@ void OGRGenSQLResultsLayer::FreeIndexFields(OGRField *pasIndexFields,
     {
         swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
 
-        if ( psKeyDef->field_index >= iFIDFieldIndex &&
-            psKeyDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
+        if ( psKeyDef->field_index >= iFIDFieldIndex )
         {
+            CPLAssert( psKeyDef->field_index <
+                                    iFIDFieldIndex + SPECIAL_FIELD_COUNT );
             /* warning: only special fields of type string should be deallocated */
             if (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex] == SWQ_STRING)
             {
@@ -1811,33 +1813,33 @@ void OGRGenSQLResultsLayer::ReadIndexFields( OGRFeature* poSrcFeat,
 
         if ( psKeyDef->field_index >= iFIDFieldIndex)
         {
-            if ( psKeyDef->field_index <
-                                iFIDFieldIndex + SPECIAL_FIELD_COUNT )
+            CPLAssert( psKeyDef->field_index <
+                                iFIDFieldIndex + SPECIAL_FIELD_COUNT );
+
+            switch (SpecialFieldTypes[
+                            psKeyDef->field_index - iFIDFieldIndex])
             {
-                switch (SpecialFieldTypes[
-                                psKeyDef->field_index - iFIDFieldIndex])
-                {
-                    case SWQ_INTEGER:
-                    case SWQ_INTEGER64:
-                    // Yes, store Integer as Integer64.
-                    // This is consistent with the test in Compare()
-                    psDstField->Integer64 =
-                        poSrcFeat->GetFieldAsInteger64(
-                            psKeyDef->field_index);
-                    break;
+                case SWQ_INTEGER:
+                case SWQ_INTEGER64:
+                // Yes, store Integer as Integer64.
+                // This is consistent with the test in Compare()
+                psDstField->Integer64 =
+                    poSrcFeat->GetFieldAsInteger64(
+                        psKeyDef->field_index);
+                break;
 
-                    case SWQ_FLOAT:
-                    psDstField->Real =
-                        poSrcFeat->GetFieldAsDouble(psKeyDef->field_index);
-                    break;
+                case SWQ_FLOAT:
+                psDstField->Real =
+                    poSrcFeat->GetFieldAsDouble(psKeyDef->field_index);
+                break;
 
-                    default:
-                    psDstField->String = CPLStrdup(
-                        poSrcFeat->GetFieldAsString(
-                            psKeyDef->field_index) );
-                    break;
-                }
+                default:
+                psDstField->String = CPLStrdup(
+                    poSrcFeat->GetFieldAsString(
+                        psKeyDef->field_index) );
+                break;
             }
+
             continue;
         }
 
