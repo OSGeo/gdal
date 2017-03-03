@@ -2149,6 +2149,19 @@ void OGRGenSQLResultsLayer::SortIndexSection( const OGRField *pasIndexFields,
 }
 
 /************************************************************************/
+/*                           ComparePrimitive()                         */
+/************************************************************************/
+
+template<class T> static inline int ComparePrimitive(const T& a, const T& b)
+{
+    if( a < b )
+        return -1;
+    if( a > b )
+        return 1;
+    return 0;
+}
+
+/************************************************************************/
 /*                              Compare()                               */
 /************************************************************************/
 
@@ -2164,12 +2177,7 @@ int OGRGenSQLResultsLayer::Compare( const OGRField *pasFirstTuple,
         swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
         OGRFieldDefn *poFDefn = NULL;
 
-        if( psKeyDef->field_index >= iFIDFieldIndex + SPECIAL_FIELD_COUNT )
-        {
-            CPLAssert( false );
-            return 0;
-        }
-        else if( psKeyDef->field_index >= iFIDFieldIndex )
+        if( psKeyDef->field_index >= iFIDFieldIndex )
             poFDefn = NULL;
         else
             poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn(
@@ -2191,22 +2199,21 @@ int OGRGenSQLResultsLayer::Compare( const OGRField *pasFirstTuple,
         }
         else if ( poFDefn == NULL )
         {
+            CPLAssert( psKeyDef->field_index <
+                                    iFIDFieldIndex + SPECIAL_FIELD_COUNT );
             switch (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex])
             {
               case SWQ_INTEGER:
+                nResult = ComparePrimitive( pasFirstTuple[iKey].Integer,
+                                            pasSecondTuple[iKey].Integer );
+                break;
               case SWQ_INTEGER64:
-                if( pasFirstTuple[iKey].Integer64 <
-                                        pasSecondTuple[iKey].Integer64 )
-                    nResult = -1;
-                else if( pasFirstTuple[iKey].Integer64 >
-                                        pasSecondTuple[iKey].Integer64 )
-                    nResult = 1;
+                nResult = ComparePrimitive( pasFirstTuple[iKey].Integer64,
+                                            pasSecondTuple[iKey].Integer64 );
                 break;
               case SWQ_FLOAT:
-                if( pasFirstTuple[iKey].Real < pasSecondTuple[iKey].Real )
-                    nResult = -1;
-                else if( pasFirstTuple[iKey].Real > pasSecondTuple[iKey].Real )
-                    nResult = 1;
+                nResult = ComparePrimitive( pasFirstTuple[iKey].Real,
+                                            pasSecondTuple[iKey].Real );
                 break;
               case SWQ_STRING:
                 nResult = strcmp(pasFirstTuple[iKey].String,
@@ -2220,29 +2227,23 @@ int OGRGenSQLResultsLayer::Compare( const OGRField *pasFirstTuple,
         }
         else if( poFDefn->GetType() == OFTInteger )
         {
-            if( pasFirstTuple[iKey].Integer < pasSecondTuple[iKey].Integer )
-                nResult = -1;
-            else if( pasFirstTuple[iKey].Integer
-                     > pasSecondTuple[iKey].Integer )
-                nResult = 1;
+            nResult = ComparePrimitive( pasFirstTuple[iKey].Integer,
+                                        pasSecondTuple[iKey].Integer );
         }
         else if( poFDefn->GetType() == OFTInteger64 )
         {
-            if( pasFirstTuple[iKey].Integer64 < pasSecondTuple[iKey].Integer64 )
-                nResult = -1;
-            else if( pasFirstTuple[iKey].Integer64
-                     > pasSecondTuple[iKey].Integer64 )
-                nResult = 1;
+            nResult = ComparePrimitive( pasFirstTuple[iKey].Integer64,
+                                        pasSecondTuple[iKey].Integer64 );
         }
         else if( poFDefn->GetType() == OFTString )
+        {
             nResult = strcmp(pasFirstTuple[iKey].String,
                              pasSecondTuple[iKey].String);
+        }
         else if( poFDefn->GetType() == OFTReal )
         {
-            if( pasFirstTuple[iKey].Real < pasSecondTuple[iKey].Real )
-                nResult = -1;
-            else if( pasFirstTuple[iKey].Real > pasSecondTuple[iKey].Real )
-                nResult = 1;
+            nResult = ComparePrimitive( pasFirstTuple[iKey].Real,
+                                        pasSecondTuple[iKey].Real );
         }
         else if( poFDefn->GetType() == OFTDate ||
                  poFDefn->GetType() == OFTTime ||
