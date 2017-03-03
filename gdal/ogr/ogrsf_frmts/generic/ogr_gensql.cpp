@@ -1683,7 +1683,7 @@ OGRFeature *OGRGenSQLResultsLayer::GetFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
     if( panFIDIndex != NULL )
     {
-        if( nFID < 0 || nFID >= nIndexSize )
+        if( nFID < 0 || nFID >= static_cast<GIntBig>(nIndexSize) )
             return NULL;
         else
             nFID = panFIDIndex[nFID];
@@ -1743,6 +1743,58 @@ OGRFeatureDefn *OGRGenSQLResultsLayer::GetLayerDefn()
 }
 
 /************************************************************************/
+/*                         FreeIndexFields()                            */
+/************************************************************************/
+
+void OGRGenSQLResultsLayer::FreeIndexFields(OGRField *pasIndexFields,
+                                            size_t l_nIndexSize)
+{
+    swq_select *psSelectInfo = (swq_select *) pSelectInfo;
+    const int nOrderItems = psSelectInfo->order_specs;
+
+/* -------------------------------------------------------------------- */
+/*      Free the key field values.                                      */
+/* -------------------------------------------------------------------- */
+    for( int iKey = 0; iKey < nOrderItems; iKey++ )
+    {
+        swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
+
+        if ( psKeyDef->field_index >= iFIDFieldIndex &&
+            psKeyDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
+        {
+            /* warning: only special fields of type string should be deallocated */
+            if (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex] == SWQ_STRING)
+            {
+                for( size_t i = 0; i < l_nIndexSize; i++ )
+                {
+                    OGRField *psField = pasIndexFields + iKey + i * nOrderItems;
+                    CPLFree( psField->String );
+                }
+            }
+            continue;
+        }
+
+        OGRFieldDefn *poFDefn =
+            poSrcLayer->GetLayerDefn()->GetFieldDefn( psKeyDef->field_index );
+
+        if( poFDefn->GetType() == OFTString )
+        {
+            for( size_t i = 0; i < l_nIndexSize; i++ )
+            {
+                OGRField *psField = pasIndexFields + iKey + i * nOrderItems;
+
+                if( !OGR_RawField_IsUnset(psField) &&
+                    !OGR_RawField_IsNull(psField) )
+                    CPLFree( psField->String );
+            }
+        }
+    }
+
+    VSIFree(pasIndexFields);
+}
+
+
+/************************************************************************/
 /*                         CreateOrderByIndex()                         */
 /*                                                                      */
 /*      This method is responsible for creating an index providing      */
@@ -1763,7 +1815,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
-    int nOrderItems = psSelectInfo->order_specs;
+    const int nOrderItems = psSelectInfo->order_specs;
 
     if( ! (psSelectInfo->order_specs > 0
            && psSelectInfo->query_mode == SWQM_RECORDSET
@@ -1796,25 +1848,32 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 
     while( (poSrcFeat = poSrcLayer->GetNextFeature()) != NULL )
     {
-        if ((size_t)nIndexSize == nFeaturesAlloc)
+        if (nIndexSize == nFeaturesAlloc)
         {
-            GIntBig nNewFeaturesAlloc = (nFeaturesAlloc * 4) / 3;
-            if( (GIntBig)(size_t)(sizeof(OGRField) * nOrderItems * nNewFeaturesAlloc) !=
-                    (GIntBig)sizeof(OGRField) * nOrderItems * nNewFeaturesAlloc )
+            GUIntBig nNewFeaturesAlloc = static_cast<GUIntBig>(nFeaturesAlloc)
+                                                        + nFeaturesAlloc / 3;
+            if( static_cast<size_t>(nNewFeaturesAlloc) != nNewFeaturesAlloc ||
+                static_cast<size_t>(sizeof(OGRField) * nOrderItems *
+                                    nNewFeaturesAlloc) !=
+                static_cast<GUIntBig>(sizeof(OGRField)) * nOrderItems *
+                nNewFeaturesAlloc )
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate pasIndexFields");
-                VSIFree(pasIndexFields);
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot allocate pasIndexFields");
+                FreeIndexFields( pasIndexFields, nIndexSize );
                 VSIFree(panFIDList);
                 nIndexSize = 0;
                 return;
             }
             OGRField* pasNewIndexFields = (OGRField *)
                 VSI_REALLOC_VERBOSE(pasIndexFields,
-                           sizeof(OGRField) * nOrderItems * (size_t)nNewFeaturesAlloc);
+                           sizeof(OGRField) * nOrderItems *
+                           static_cast<size_t>(nNewFeaturesAlloc));
             if (pasNewIndexFields == NULL)
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate pasIndexFields");
-                VSIFree(pasIndexFields);
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot allocate pasIndexFields");
+                FreeIndexFields( pasIndexFields, nIndexSize );
                 VSIFree(panFIDList);
                 nIndexSize = 0;
                 return;
@@ -1822,10 +1881,11 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             pasIndexFields = pasNewIndexFields;
 
             GIntBig* panNewFIDList = (GIntBig *)
-                VSI_REALLOC_VERBOSE(panFIDList, sizeof(GIntBig) *  (size_t)nNewFeaturesAlloc);
+                VSI_REALLOC_VERBOSE(panFIDList, sizeof(GIntBig) *
+                                    static_cast<size_t>(nNewFeaturesAlloc));
             if (panNewFIDList == NULL)
             {
-                VSIFree(pasIndexFields);
+                FreeIndexFields( pasIndexFields, nIndexSize );
                 VSIFree(panFIDList);
                 nIndexSize = 0;
                 return;
@@ -1833,33 +1893,42 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             panFIDList = panNewFIDList;
 
             memset(pasIndexFields + nFeaturesAlloc, 0,
-                   sizeof(OGRField) * nOrderItems * (size_t)(nNewFeaturesAlloc - nFeaturesAlloc));
+                   sizeof(OGRField) * nOrderItems *
+                   static_cast<size_t>(nNewFeaturesAlloc - nFeaturesAlloc));
 
-            nFeaturesAlloc = (size_t)nNewFeaturesAlloc;
+            nFeaturesAlloc = static_cast<size_t>(nNewFeaturesAlloc);
         }
 
         for( int iKey = 0; iKey < nOrderItems; iKey++ )
         {
-            swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
-            OGRField *psDstField = pasIndexFields + nIndexSize * nOrderItems + iKey;
+            const swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
+            OGRField *psDstField =
+                pasIndexFields + nIndexSize * nOrderItems + iKey;
 
             if ( psKeyDef->field_index >= iFIDFieldIndex)
             {
-                if ( psKeyDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
+                if ( psKeyDef->field_index <
+                                    iFIDFieldIndex + SPECIAL_FIELD_COUNT )
                 {
-                    switch (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex])
+                    switch (SpecialFieldTypes[
+                                    psKeyDef->field_index - iFIDFieldIndex])
                     {
                       case SWQ_INTEGER:
                       case SWQ_INTEGER64:
-                        psDstField->Integer64 = poSrcFeat->GetFieldAsInteger64(psKeyDef->field_index);
+                        psDstField->Integer64 =
+                            poSrcFeat->GetFieldAsInteger64(
+                                psKeyDef->field_index);
                         break;
 
                       case SWQ_FLOAT:
-                        psDstField->Real = poSrcFeat->GetFieldAsDouble(psKeyDef->field_index);
+                        psDstField->Real =
+                            poSrcFeat->GetFieldAsDouble(psKeyDef->field_index);
                         break;
 
                       default:
-                        psDstField->String = CPLStrdup( poSrcFeat->GetFieldAsString(psKeyDef->field_index) );
+                        psDstField->String = CPLStrdup(
+                            poSrcFeat->GetFieldAsString(
+                                psKeyDef->field_index) );
                         break;
                     }
                 }
@@ -1899,23 +1968,26 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 /* -------------------------------------------------------------------- */
 /*      Initialize panFIDIndex                                          */
 /* -------------------------------------------------------------------- */
-    panFIDIndex = (GIntBig *) VSI_MALLOC_VERBOSE(sizeof(GIntBig) * (size_t)nIndexSize);
+    panFIDIndex = (GIntBig *) VSI_MALLOC_VERBOSE(sizeof(GIntBig) * nIndexSize);
     if( panFIDIndex == NULL )
     {
-        VSIFree(pasIndexFields);
+        FreeIndexFields( pasIndexFields, nIndexSize );
         VSIFree(panFIDList);
         nIndexSize = 0;
         return;
     }
-    for( int i = 0; i < nIndexSize; i++ )
-        panFIDIndex[i] = i;
+    for( size_t i = 0; i < nIndexSize; i++ )
+        panFIDIndex[i] = static_cast<GIntBig>(i);
 
 /* -------------------------------------------------------------------- */
 /*      Quick sort the records.                                         */
 /* -------------------------------------------------------------------- */
-    if( !SortIndexSection( pasIndexFields, 0, nIndexSize ) )
+
+    GIntBig *panMerged = (GIntBig *)
+        VSI_MALLOC_VERBOSE( sizeof(GIntBig) * nIndexSize );
+    if( panMerged == NULL )
     {
-        VSIFree(pasIndexFields);
+        FreeIndexFields( pasIndexFields, nIndexSize );
         VSIFree(panFIDList);
         nIndexSize = 0;
         VSIFree(panFIDIndex);
@@ -1923,58 +1995,22 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
         return;
     }
 
+    SortIndexSection( pasIndexFields, panMerged, 0, nIndexSize );
+    VSIFree( panMerged );
+
 /* -------------------------------------------------------------------- */
 /*      Rework the FID map to map to real FIDs.                         */
 /* -------------------------------------------------------------------- */
-    int bAlreadySorted = TRUE;
-    for( int i = 0; i < nIndexSize; i++ )
+    bool bAlreadySorted = true;
+    for( size_t i = 0; i < nIndexSize; i++ )
     {
-        if (panFIDIndex[i] != i)
-            bAlreadySorted = FALSE;
+        if (panFIDIndex[i] != static_cast<GIntBig>(i))
+            bAlreadySorted = false;
         panFIDIndex[i] = panFIDList[panFIDIndex[i]];
     }
 
     CPLFree( panFIDList );
-
-/* -------------------------------------------------------------------- */
-/*      Free the key field values.                                      */
-/* -------------------------------------------------------------------- */
-    for( int iKey = 0; iKey < nOrderItems; iKey++ )
-    {
-        swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
-
-        if ( psKeyDef->field_index >= iFIDFieldIndex &&
-            psKeyDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
-        {
-            /* warning: only special fields of type string should be deallocated */
-            if (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex] == SWQ_STRING)
-            {
-                for( int i = 0; i < nIndexSize; i++ )
-                {
-                    OGRField *psField = pasIndexFields + iKey + i * nOrderItems;
-                    CPLFree( psField->String );
-                }
-            }
-            continue;
-        }
-
-        OGRFieldDefn *poFDefn =
-            poSrcLayer->GetLayerDefn()->GetFieldDefn( psKeyDef->field_index );
-
-        if( poFDefn->GetType() == OFTString )
-        {
-            for( int i = 0; i < nIndexSize; i++ )
-            {
-                OGRField *psField = pasIndexFields + iKey + i * nOrderItems;
-
-                if( !OGR_RawField_IsUnset(psField) &&
-                    !OGR_RawField_IsNull(psField) )
-                    CPLFree( psField->String );
-            }
-        }
-    }
-
-    CPLFree( pasIndexFields );
+    FreeIndexFields( pasIndexFields, nIndexSize );
 
     /* If it is already sorted, then free than panFIDIndex array */
     /* so that GetNextFeature() can call a sequential GetNextFeature() */
@@ -1998,34 +2034,28 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 /*      Sort the records in a section of the index.                     */
 /************************************************************************/
 
-int OGRGenSQLResultsLayer::SortIndexSection( OGRField *pasIndexFields,
-                                              GIntBig nStart, GIntBig nEntries )
+void OGRGenSQLResultsLayer::SortIndexSection( const OGRField *pasIndexFields,
+                                              GIntBig *panMerged,
+                                              size_t nStart, size_t nEntries )
 
 {
     if( nEntries < 2 )
-        return TRUE;
+        return;
 
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
-    int      nOrderItems = psSelectInfo->order_specs;
+    const int   nOrderItems = psSelectInfo->order_specs;
 
-    GIntBig nFirstGroup = nEntries / 2;
-    GIntBig nFirstStart = nStart;
-    GIntBig nSecondGroup = nEntries - nFirstGroup;
-    GIntBig nSecondStart = nStart + nFirstGroup;
-    GIntBig iMerge = 0;
+    size_t nFirstGroup = nEntries / 2;
+    size_t nFirstStart = nStart;
+    size_t nSecondGroup = nEntries - nFirstGroup;
+    size_t nSecondStart = nStart + nFirstGroup;
 
-    if( !SortIndexSection( pasIndexFields, nFirstStart, nFirstGroup ) ||
-        !SortIndexSection( pasIndexFields, nSecondStart, nSecondGroup ) )
-        return FALSE;
+    SortIndexSection( pasIndexFields, panMerged, nFirstStart,
+                      nFirstGroup );
+    SortIndexSection( pasIndexFields, panMerged, nSecondStart,
+                      nSecondGroup );
 
-    GIntBig *panMerged = (GIntBig *)
-        VSI_MALLOC_VERBOSE( sizeof(GIntBig) * (size_t)nEntries );
-    if( panMerged == NULL )
-    {
-        return FALSE;
-    }
-
-    while( iMerge < nEntries )
+    for( size_t iMerge = 0; iMerge < nEntries; ++iMerge )
     {
         int  nResult = 0;
 
@@ -2041,30 +2071,28 @@ int OGRGenSQLResultsLayer::SortIndexSection( OGRField *pasIndexFields,
 
         if( nResult < 0 )
         {
-            panMerged[iMerge++] = panFIDIndex[nSecondStart++];
+            panMerged[iMerge] = panFIDIndex[nSecondStart];
+            nSecondStart++;
             nSecondGroup--;
         }
         else
         {
-            panMerged[iMerge++] = panFIDIndex[nFirstStart++];
+            panMerged[iMerge] = panFIDIndex[nFirstStart];
+            nFirstStart++;
             nFirstGroup--;
         }
     }
 
     /* Copy the merge list back into the main index */
-
-    memcpy( panFIDIndex + nStart, panMerged, sizeof(GIntBig) * (size_t)nEntries );
-    CPLFree( panMerged );
-
-    return TRUE;
+    memcpy( panFIDIndex + nStart, panMerged, sizeof(GIntBig) * nEntries );
 }
 
 /************************************************************************/
 /*                              Compare()                               */
 /************************************************************************/
 
-int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
-                                    OGRField *pasSecondTuple )
+int OGRGenSQLResultsLayer::Compare( const OGRField *pasFirstTuple,
+                                    const OGRField *pasSecondTuple )
 
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
@@ -2106,9 +2134,11 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
             {
               case SWQ_INTEGER:
               case SWQ_INTEGER64:
-                if( pasFirstTuple[iKey].Integer64 < pasSecondTuple[iKey].Integer64 )
+                if( pasFirstTuple[iKey].Integer64 <
+                                        pasSecondTuple[iKey].Integer64 )
                     nResult = -1;
-                else if( pasFirstTuple[iKey].Integer64 > pasSecondTuple[iKey].Integer64 )
+                else if( pasFirstTuple[iKey].Integer64 >
+                                        pasSecondTuple[iKey].Integer64 )
                     nResult = 1;
                 break;
               case SWQ_FLOAT:
