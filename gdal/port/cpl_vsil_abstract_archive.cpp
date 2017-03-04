@@ -620,14 +620,14 @@ VSIArchiveFilesystemHandler::OpenArchiveFile( const char* archiveFilename,
 
             VSIStatBufL sStat;
             if( VSIStatL(archiveFilename, &sStat) != 0 )
-                return FALSE;
+                return NULL;
 
             if( oFileList.find(archiveFilename) == oFileList.end() )
             {
                 if( poReader->GotoFirstFile() == FALSE )
                 {
                     delete(poReader);
-                    return FALSE;
+                    return NULL;
                 }
 
                 const CPLString osFileName = poReader->GetFileName();
