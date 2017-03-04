@@ -3291,6 +3291,29 @@ def ogr_gpkg_44():
 
 
 ###############################################################################
+# Test non conformant GeoPackage: table with non INTEGER PRIMARY KEY
+
+def ogr_gpkg_45():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_45.gpkg')
+    ds.ExecuteSQL('CREATE TABLE test (a INTEGER, b INTEGER, CONSTRAINT pkid_constraint PRIMARY KEY (a, b))')
+    ds.ExecuteSQL("INSERT INTO gpkg_contents ( table_name, identifier, data_type ) VALUES ( 'test', 'test', 'attributes' )")
+    ds = None
+    ds = ogr.Open('/vsimem/ogr_gpkg_45.gpkg')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFIDColumn() != '':
+        gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_45.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -3359,6 +3382,7 @@ gdaltest_list = [
     ogr_gpkg_42,
     ogr_gpkg_43,
     ogr_gpkg_44,
+    ogr_gpkg_45,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
