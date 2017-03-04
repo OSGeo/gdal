@@ -363,6 +363,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     CPLString                   m_osIdentifierLCO;
     CPLString                   m_osDescriptionLCO;
     bool                        m_bHasReadMetadataFromStorage;
+    bool                        m_bHasTriedDetectingFID64;
     GPKGASpatialVariant         m_eASPatialVariant;
 
     virtual OGRErr      ResetStatement() override;
