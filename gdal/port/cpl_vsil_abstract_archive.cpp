@@ -618,10 +618,6 @@ VSIArchiveFilesystemHandler::OpenArchiveFile( const char* archiveFilename,
         {
             CPLMutexHolder oHolder( &hMutex );
 
-            VSIStatBufL sStat;
-            if( VSIStatL(archiveFilename, &sStat) != 0 )
-                return NULL;
-
             if( oFileList.find(archiveFilename) == oFileList.end() )
             {
                 if( poReader->GotoFirstFile() == FALSE )
