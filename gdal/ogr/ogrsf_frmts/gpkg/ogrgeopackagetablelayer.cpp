@@ -938,28 +938,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         CPLDebug("GPKG",
                  "no integer primary key defined for table '%s'", m_pszTableName);
     }
-    else
-    {
-    /* -------------------------------------------------------------------- */
-    /*      Find if the FID holds 64bit values                              */
-    /* -------------------------------------------------------------------- */
-        const char* pszSQLStatic = CPLSPrintf("SELECT MAX(%s) FROM '%s'",
-                            OGRSQLiteEscape(m_pszFidColumn).c_str(),
-                            m_pszTableName);
-        sqlite3_stmt* hColStmt = NULL;
-        int rc = sqlite3_prepare_v2( poDb, pszSQLStatic, -1, &hColStmt, NULL );
-        if( rc == SQLITE_OK )
-        {
-            rc = sqlite3_step( hColStmt );
-            if( rc == SQLITE_ROW )
-            {
-                GIntBig nMaxId = sqlite3_column_int64( hColStmt, 0 );
-                if( nMaxId > INT_MAX )
-                    OGRLayer::SetMetadataItem(OLMD_FID64, "YES");
-            }
-        }
-        sqlite3_finalize( hColStmt );
-    }
 
     if ( bReadExtent )
     {
@@ -1008,6 +986,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_bDeferredCreation(false),
     m_iFIDAsRegularColumnIndex(-1),
     m_bHasReadMetadataFromStorage(false),
+    m_bHasTriedDetectingFID64(false),
     m_eASPatialVariant(GPKG_ATTRIBUTES)
 {
     m_poQueryStatement = NULL;
@@ -2897,6 +2876,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters( OGRwkbGeometryType eGType,
                                                      const char* pszDescription )
 {
     m_bDeferredCreation = true;
+    m_bHasTriedDetectingFID64 = true;
     m_pszFidColumn = CPLStrdup(pszFIDColumnName);
     m_poFeatureDefn = new OGRFeatureDefn( m_pszTableName );
     SetDescription( m_poFeatureDefn->GetName() );
@@ -3171,6 +3151,22 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
 char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
 
 {
+    if( !m_bHasTriedDetectingFID64 && m_pszFidColumn != NULL )
+    {
+        m_bHasTriedDetectingFID64 = true;
+/* -------------------------------------------------------------------- */
+/*      Find if the FID holds 64bit values                              */
+/* -------------------------------------------------------------------- */
+        char* pszSQL = sqlite3_mprintf("SELECT MAX(\"%s\") FROM \"%w\"",
+                                       m_pszFidColumn,
+                                       m_pszTableName);
+        OGRErr err = OGRERR_NONE;
+        GIntBig nMaxId = SQLGetInteger64( m_poDS->GetDB(), pszSQL, &err);
+        sqlite3_free(pszSQL);
+        if( nMaxId > INT_MAX )
+            OGRLayer::SetMetadataItem(OLMD_FID64, "YES");
+    }
+
     if( m_bHasReadMetadataFromStorage )
         return OGRLayer::GetMetadata( pszDomain );
 
