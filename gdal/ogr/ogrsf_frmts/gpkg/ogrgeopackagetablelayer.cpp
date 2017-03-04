@@ -774,7 +774,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
 
-    bool bFidFound = false;
+    bool bPKIDColumnFound = false;
 
     for ( int iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
     {
@@ -782,7 +782,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         const char *pszType = SQLResultGetValue(&oResultTable, 2, iRecord);
         int bNotNull = SQLResultGetValueAsInteger(&oResultTable, 3, iRecord);
         const char* pszDefault = SQLResultGetValue(&oResultTable, 4, iRecord);
-        OGRBoolean bFid = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord);
+        int nPKIDIndex = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord);
         OGRFieldSubType eSubType;
         int nMaxWidth = 0;
         OGRFieldType oType = GPkgFieldToOGR(pszType, eSubType, nMaxWidth);
@@ -852,19 +852,20 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
                 oType = OFTString;
             }
 
-            /* Is this the FID column? */
-            if ( bFid && (oType == OFTInteger || oType == OFTInteger64) )
+            /* Case of primary key on several columns */
+            if ( nPKIDIndex > 0 && bPKIDColumnFound )
             {
-                if( bFidFound )
-                {
-                    CPLDebug("GPKG", "For table %s, a new FID column has been found (%s). Keeping previous one (%s)",
-                             m_pszTableName, pszName, m_pszFidColumn);
-                }
-                else
-                {
-                    bFidFound = true;
-                    m_pszFidColumn = CPLStrdup(pszName);
-                }
+                CPLDebug("GPKG", "For table %s, multiple columns make "
+                         "the primary key. Ignoring them",
+                         m_pszTableName);
+                CPLFree( m_pszFidColumn );
+                m_pszFidColumn = NULL;
+            }
+            /* Is this the FID column? */
+            else if ( nPKIDIndex > 0 && (oType == OFTInteger || oType == OFTInteger64) )
+            {
+                bPKIDColumnFound = true;
+                m_pszFidColumn = CPLStrdup(pszName);
             }
             else
             {
@@ -933,7 +934,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     }
 
     /* Wait, we didn't find a FID? Some operations will not be possible */
-    if ( ! bFidFound )
+    if ( m_pszFidColumn )
     {
         CPLDebug("GPKG",
                  "no integer primary key defined for table '%s'", m_pszTableName);
