@@ -934,10 +934,11 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     }
 
     /* Wait, we didn't find a FID? Some operations will not be possible */
-    if ( m_pszFidColumn )
+    if ( m_pszFidColumn == NULL )
     {
         CPLDebug("GPKG",
-                 "no integer primary key defined for table '%s'", m_pszTableName);
+                 "no integer primary key defined for table '%s'",
+                 m_pszTableName);
     }
 
     if ( bReadExtent )
