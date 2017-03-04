@@ -3077,7 +3077,7 @@ void ISIS3Dataset::WriteLabel()
         char szFullFilename[2048] = { 0 };
         if( !CPLGetExecPath(szFullFilename, sizeof(szFullFilename) - 1) )
             strcpy(szFullFilename, "unknown_program");
-        const CPLString osProgram(CPLGetFilename(szFullFilename));
+        const CPLString osProgram(CPLGetBasename(szFullFilename));
         const CPLString osPath(CPLGetPath(szFullFilename));
         CPLJsonObject& oObj = oHistoryObj[osProgram];
         oObj["_type"] = "object";
