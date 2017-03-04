@@ -88,11 +88,20 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
 /*      Verify that the target is a real file, and has an               */
 /*      appropriate magic string at the beginning.                      */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 16 )
+    if( poOpenInfo->nHeaderBytes < 100 )
         return FALSE;
 
     if( !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
         return FALSE;
+
+    // In case we are opening /vsizip/foo.zip with a .gpkg inside
+    if( (memcmp(poOpenInfo->pabyHeader + 68, "GP10", 4) == 0 ||
+         memcmp(poOpenInfo->pabyHeader + 68, "GP11", 4) == 0 ||
+         memcmp(poOpenInfo->pabyHeader + 68, "GPKG", 4) == 0) &&
+        GDALGetDriverByName("GPKG") != NULL )
+    {
+        return FALSE;
+    }
 
     // Could be a Rasterlite file as well
     return -1;
