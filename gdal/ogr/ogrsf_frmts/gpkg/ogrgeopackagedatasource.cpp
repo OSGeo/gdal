@@ -392,13 +392,6 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference * cpoSRS)
         const int nMaxSRSId
             = SQLGetInteger(
                 hDB, "SELECT MAX(srs_id) FROM gpkg_spatial_ref_sys", &err );
-        if ( OGRERR_NONE != err )
-        {
-            CPLFree(pszWKT);
-            delete poSRS;
-            return DEFAULT_SRID;
-        }
-
         nSRSId = nMaxSRSId + 1;
     }
 
