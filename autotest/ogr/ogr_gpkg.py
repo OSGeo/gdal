@@ -859,6 +859,99 @@ def ogr_gpkg_15():
             gdaltest.post_reason('fail')
             return 'fail'
 
+    # Error case: less than 8 bytes
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_MinX(x'00')")
+    feat = sql_lyr.GetNextFeature()
+    if feat.IsFieldSetAndNotNull(0):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Error case: 8 wrong bytes
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_MinX(x'0001020304050607')")
+    feat = sql_lyr.GetNextFeature()
+    if feat.IsFieldSetAndNotNull(0):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Error case: too short blob
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_GeometryType(x'4750000300000000')")
+    feat = sql_lyr.GetNextFeature()
+    if feat.IsFieldSetAndNotNull(0):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Error case: invalid geometry
+    with gdaltest.error_handler():
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_GeometryType(x'475000030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')")
+    feat = sql_lyr.GetNextFeature()
+    if feat.IsFieldSetAndNotNull(0):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Error case: invalid type
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT GPKG_IsAssignable('POINT', NULL)")
+    feat = sql_lyr.GetNextFeature()
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Error case: invalid type
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT GPKG_IsAssignable(NULL, 'POINT')")
+    feat = sql_lyr.GetNextFeature()
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Test hstore_get_value
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT hstore_get_value('a=>b', 'a')")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 'b':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Test hstore_get_value
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT hstore_get_value('a=>b', 'x')")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Error case: invalid type
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT hstore_get_value('a=>b', NULL)")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Error case: invalid type
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT hstore_get_value(NULL, 'a')")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
     gdaltest.gpkg_ds = None
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
 
