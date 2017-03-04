@@ -3239,6 +3239,57 @@ def ogr_gpkg_43():
 
     return 'success'
 
+
+###############################################################################
+# Test GeoPackage without metadata table
+
+def ogr_gpkg_44():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CREATE_METADATA_TABLES', 'NO')
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_44.gpkg')
+    ds.CreateLayer('foo')
+    ds = None
+    gdal.SetConfigOption('CREATE_METADATA_TABLES', None)
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_44.gpkg')
+    md = ds.GetMetadata()
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+    md = ds.GetLayer(0).GetMetadata()
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE name = 'gpkg_metadata'")
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    if fc != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_44.gpkg', update = 1)
+    ds.SetMetadataItem('FOO', 'BAR')
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_44.gpkg')
+    md = ds.GetMetadata()
+    if md != { 'FOO': 'BAR' }:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_44.gpkg')
+
+    return 'success'
+
+
 ###############################################################################
 # Remove the test db from the tmp directory
 
@@ -3307,6 +3358,7 @@ gdaltest_list = [
     ogr_gpkg_41,
     ogr_gpkg_42,
     ogr_gpkg_43,
+    ogr_gpkg_44,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
