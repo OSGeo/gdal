@@ -1359,6 +1359,52 @@ def ogr_gpkg_20():
 
     gdal.Unlink('/vsimem/ogr_gpkg_20.gpkg')
 
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_20.gpkg')
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer('foo4326', srs = srs)
+    ds.ExecuteSQL("UPDATE gpkg_spatial_ref_sys SET definition='invalid', "
+                  "organization='', organization_coordsys_id = 0 "
+                  "WHERE srs_id = 4326")
+    ds = None
+
+    # Unable to parse srs_id '4326' well-known text 'invalid'
+    with gdaltest.error_handler():
+        ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg', update = 1 )
+
+    ds.ExecuteSQL('DELETE FROM gpkg_spatial_ref_sys WHERE srs_id = 4326')
+    ds = None
+    gdal.SetConfigOption('OGR_GPKG_FOREIGN_KEY_CHECK', 'NO')
+    # Warning 1: unable to read srs_id '4326' from gpkg_spatial_ref_sys
+    with gdaltest.error_handler():
+        ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg', update = 1 )
+    gdal.SetConfigOption('OGR_GPKG_FOREIGN_KEY_CHECK', None)
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gpkg_20.gpkg')
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_20.gpkg')
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer('foo4326', srs = srs)
+
+    ds.ExecuteSQL('DROP TABLE gpkg_spatial_ref_sys')
+    ds.ExecuteSQL('CREATE TABLE gpkg_spatial_ref_sys (srs_name TEXT, '
+                  'srs_id INTEGER, organization TEXT, '
+                  'organization_coordsys_id INTEGER, definition TEXT)')
+    ds.ExecuteSQL("INSERT INTO gpkg_spatial_ref_sys "
+                  "(srs_name,srs_id,organization,organization_coordsys_id,"
+                  "definition) VALUES (NULL,4326,NULL,NULL,NULL)")
+    ds = None
+
+    gdal.SetConfigOption('OGR_GPKG_FOREIGN_KEY_CHECK', 'NO')
+    # Warning 1: null definition for srs_id '4326' in gpkg_spatial_ref_sys
+    with gdaltest.error_handler():
+        ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg', update = 1 )
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gpkg_20.gpkg')
+
     return 'success'
 
 ###############################################################################
