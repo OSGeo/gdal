@@ -2032,7 +2032,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         eDataType = GDT_Int16;
         dfNoData = NULL2;
     }
-    else if (EQUAL(itype,"Real") || EQUAL(osFormat,"") ) {
+    else if (EQUAL(itype,"Real") || EQUAL(itype,"") ) {
         eDataType = GDT_Float32;
         dfNoData = NULL4;
     }
