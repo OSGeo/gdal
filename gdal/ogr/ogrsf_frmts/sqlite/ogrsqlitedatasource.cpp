@@ -334,6 +334,9 @@ void OGRSQLiteBaseDataSource::CloseDB()
         // read-write
         VSIStatBufL sStat;
         if( eAccess == GA_ReadOnly &&
+            !(STARTS_WITH(m_pszFilename, "/vsicurl/") ||
+              STARTS_WITH(m_pszFilename, "/vsitar/") ||
+              STARTS_WITH(m_pszFilename, "/vsizip/")) &&
             VSIStatL( CPLSPrintf("%s-wal", m_pszFilename), &sStat) == 0 )
         {
             CPL_IGNORE_RET_VAL( sqlite3_open( m_pszFilename, &hDB ) );
