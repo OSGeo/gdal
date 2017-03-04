@@ -382,8 +382,11 @@ int GRASSASCIIDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    // During fuzzing, do not use Identify to reject crazy content.
     if (!Identify(poOpenInfo))
         return NULL;
+#endif
 
     return CommonOpen(poOpenInfo, FORMAT_AAIG);
 }
