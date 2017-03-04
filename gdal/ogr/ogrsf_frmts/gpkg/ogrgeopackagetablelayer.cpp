@@ -3154,15 +3154,32 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
     if( !m_bHasTriedDetectingFID64 && m_pszFidColumn != NULL )
     {
         m_bHasTriedDetectingFID64 = true;
+
 /* -------------------------------------------------------------------- */
 /*      Find if the FID holds 64bit values                              */
 /* -------------------------------------------------------------------- */
-        char* pszSQL = sqlite3_mprintf("SELECT MAX(\"%s\") FROM \"%w\"",
-                                       m_pszFidColumn,
-                                       m_pszTableName);
+
+        // Normally the fid should be AUTOINCREMENT, so check sqlite_sequence
         OGRErr err = OGRERR_NONE;
+        char* pszSQL = sqlite3_mprintf(
+            "SELECT seq FROM sqlite_sequence WHERE name = '%q'",
+            m_pszTableName);
+        CPLPushErrorHandler(CPLQuietErrorHandler);
         GIntBig nMaxId = SQLGetInteger64( m_poDS->GetDB(), pszSQL, &err);
+        CPLPopErrorHandler();
         sqlite3_free(pszSQL);
+        if( err != OGRERR_NONE )
+        {
+            CPLErrorReset();
+
+            // In case of error, fallback to taking the MAX of the FID
+            pszSQL = sqlite3_mprintf("SELECT MAX(\"%s\") FROM \"%w\"",
+                                        m_pszFidColumn,
+                                        m_pszTableName);
+
+            nMaxId = SQLGetInteger64( m_poDS->GetDB(), pszSQL, &err);
+            sqlite3_free(pszSQL);
+        }
         if( nMaxId > INT_MAX )
             OGRLayer::SetMetadataItem(OLMD_FID64, "YES");
     }
