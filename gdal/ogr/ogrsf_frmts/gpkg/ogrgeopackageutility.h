@@ -57,7 +57,7 @@ typedef struct
 #ifdef notdef
     double MinM, MaxM;
 #endif
-    size_t szHeader;
+    size_t nHeaderLen;
 } GPkgHeader;
 
 OGRErr              SQLCommand(sqlite3 *poDb, const char * pszSQL);
@@ -76,10 +76,10 @@ OGRFieldType        GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSu
 const char*         GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType, int nMaxWidth);
 OGRwkbGeometryType  GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ, bool bHasM);
 
-GByte*              GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *szWkb);
-OGRGeometry*        GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialReference *poSrs);
+GByte*              GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *pnWkbLen);
+OGRGeometry*        GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen, OGRSpatialReference *poSrs);
 
-OGRErr              GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHeader);
+OGRErr              GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen, GPkgHeader *poHeader);
 
 CPLString           SQLEscapeDoubleQuote(const char* pszStr);
 CPLString           SQLUnescapeDoubleQuote(const char* pszStr);
