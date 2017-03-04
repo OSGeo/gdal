@@ -3196,7 +3196,8 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
         "SELECT md.metadata, md.md_standard_uri, md.mime_type, "
         "mdr.reference_scope FROM gpkg_metadata md "
         "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
-        "WHERE mdr.table_name = '%q' ORDER BY md.id",
+        "WHERE mdr.table_name = '%q' ORDER BY md.id "
+        "LIMIT 1000", // to avoid denial of service
         m_pszTableName);
 
     SQLResult oResult;
