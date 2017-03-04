@@ -35,6 +35,7 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
+#include "cpl_time.h"
 #include "cpl_vsi_error.h"
 #include "gdal_frmts.h"
 #include "gdal_proxy.h"
@@ -44,6 +45,13 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 #include "vrtdataset.h"
+
+// For gethostname()
+#ifdef _WIN32
+#include <winsock2.h>
+#else
+#include <unistd.h>
+#endif
 
 #include <algorithm>
 #include <map>
@@ -92,6 +100,12 @@ const float HIGH_REPR_SAT4  = -3.4028234663852886e+38f; // 0xFF7FFFFF;
 static const char* const pszSTARTBYTE_PLACEHOLDER = "!*^STARTBYTE^*!";
 // Must be large enough to hold an integer
 static const char* const pszLABEL_BYTES_PLACEHOLDER = "!*^LABEL_BYTES^*!";
+// Must be large enough to hold an integer
+static const char* const pszHISTORY_STARTBYTE_PLACEHOLDER =
+                                                    "!*^HISTORY_STARTBYTE^*!";
+// Must be large enough to hold an integer
+static const char* const pszHISTORY_BYTES_PLACEHOLDER =
+                                                    "!*^HISTORY_BYTES^*!";
 
 CPL_CVSID("$Id$");
 
@@ -553,6 +567,7 @@ class ISIS3Dataset : public RawDataset
     json_object  *m_poSrcJSonLabel; // creation only
     CPLStringList m_aosISIS3MD;
     CPLStringList m_aosAdditionalFiles;
+    CPLString     m_osFromFilename; // creation only
 
     const char *GetKeyword( const char *pszPath,
                             const char *pszDefault = "");
@@ -2588,16 +2603,6 @@ json_object* ISIS3Dataset::BuildLabel()
     if( m_poSrcJSonLabel == NULL )
         oLabel.clear();
 
-    if( oLabel.getType() == CPLJsonObject::OBJECT && oLabel.has("Label") )
-    {
-        CPLJsonObject& oLabelLabel = oLabel["Label"];
-        if( oLabelLabel.getType() == CPLJsonObject::OBJECT &&
-            oLabelLabel.has("Bytes") )
-        {
-            oLabelLabel["Bytes"] = pszLABEL_BYTES_PLACEHOLDER;
-        }
-    }
-
     CPLJsonObject& oIsisCube = oLabel["IsisCube"];
     if( oIsisCube.getType() != CPLJsonObject::OBJECT )
         oIsisCube.clear();
@@ -2974,6 +2979,20 @@ json_object* ISIS3Dataset::BuildLabel()
         }
     }
 
+    CPLJsonObject& oLabelLabel = oLabel["Label"];
+    if( oLabelLabel.getType() != CPLJsonObject::OBJECT )
+        oLabelLabel.clear();
+    oLabelLabel["_type"] = "object";
+    oLabelLabel["Bytes"] = pszLABEL_BYTES_PLACEHOLDER;
+
+    CPLJsonObject& oHistory = oLabel["History"];
+    if( oHistory.getType() != CPLJsonObject::OBJECT )
+        oHistory.clear();
+    oHistory["_type"] = "object";
+    oHistory["Name"] = "IsisCube";
+    oHistory["StartByte"] = pszHISTORY_STARTBYTE_PLACEHOLDER;
+    oHistory["Bytes"] = pszHISTORY_BYTES_PLACEHOLDER;
+
     return oLabel.asLibJsonObj();
 }
 
@@ -2992,32 +3011,140 @@ void ISIS3Dataset::WriteLabel()
     CPLString osTmpFile( CPLSPrintf("/vsimem/isis3_%p", this) );
     VSILFILE* fpTmp = VSIFOpenL( osTmpFile, "wb+" );
     SerializeAsPDL( fpTmp, m_poJSonLabel );
+    VSIFPrintfL(fpTmp, "End\n");
     VSIFCloseL( fpTmp );
     char *pszLabel = reinterpret_cast<char*>(
                             VSIGetMemFileBuffer( osTmpFile, NULL, TRUE ));
     const int nLabelSize = static_cast<int>(strlen(pszLabel));
+    VSIUnlink(osTmpFile);
 
     // Hack back StartByte value
-    char *pszStartByte = strstr(pszLabel, pszSTARTBYTE_PLACEHOLDER);
-    if( pszStartByte != NULL )
     {
-        const char* pszOffset = CPLSPrintf("%d", 1 + nLabelSize);
-        memcpy(pszStartByte, pszOffset, strlen(pszOffset));
-        memset(pszStartByte + strlen(pszOffset), ' ',
-                strlen(pszSTARTBYTE_PLACEHOLDER) - strlen(pszOffset));
+        char *pszStartByte = strstr(pszLabel, pszSTARTBYTE_PLACEHOLDER);
+        if( pszStartByte != NULL )
+        {
+            const char* pszOffset = CPLSPrintf("%d", 1 + nLabelSize);
+            memcpy(pszStartByte, pszOffset, strlen(pszOffset));
+            memset(pszStartByte + strlen(pszOffset), ' ',
+                    strlen(pszSTARTBYTE_PLACEHOLDER) - strlen(pszOffset));
+        }
     }
 
     // Hack back Label.Bytes value
-    char* pszLabelBytes = strstr(pszLabel, pszLABEL_BYTES_PLACEHOLDER);
-    if( pszLabelBytes != NULL )
     {
-        const char* pszBytes = CPLSPrintf("%d", nLabelSize);
-        memcpy(pszLabelBytes, pszBytes, strlen(pszBytes));
-        memset(pszLabelBytes + strlen(pszBytes), ' ',
-                strlen(pszLABEL_BYTES_PLACEHOLDER) - strlen(pszBytes));
+        char* pszLabelBytes = strstr(pszLabel, pszLABEL_BYTES_PLACEHOLDER);
+        if( pszLabelBytes != NULL )
+        {
+            const char* pszBytes = CPLSPrintf("%d", nLabelSize);
+            memcpy(pszLabelBytes, pszBytes, strlen(pszBytes));
+            memset(pszLabelBytes + strlen(pszBytes), ' ',
+                    strlen(pszLABEL_BYTES_PLACEHOLDER) - strlen(pszBytes));
+        }
     }
 
-    VSIUnlink(osTmpFile);
+    const GDALDataType eType = GetRasterBand(1)->GetRasterDataType();
+    const int nDTSize = GDALGetDataTypeSizeBytes(eType);
+    vsi_l_offset nImagePixels = 0;
+    if( m_poExternalDS == NULL )
+    {
+        if( m_bIsTiled )
+        {
+            int nBlockXSize = 1, nBlockYSize = 1;
+            GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+            nImagePixels = static_cast<vsi_l_offset>(nBlockXSize) *
+                            nBlockYSize * nBands *
+                            DIV_ROUND_UP(nRasterXSize, nBlockXSize) *
+                            DIV_ROUND_UP(nRasterYSize, nBlockYSize);
+        }
+        else
+        {
+            nImagePixels = static_cast<vsi_l_offset>(nRasterXSize) *
+                            nRasterYSize * nBands;
+        }
+    }
+
+    // Hack back History.StartBytes and  History.Bytes values
+    char* pszHistoryStartBytes = strstr(pszLabel,
+                                        pszHISTORY_STARTBYTE_PLACEHOLDER);
+    char* pszHistoryBytes = strstr(pszLabel,
+                                        pszHISTORY_BYTES_PLACEHOLDER);
+
+    char *pszHistory = NULL;
+    vsi_l_offset nHistoryOffset = 0;
+    if( pszHistoryStartBytes != NULL && pszHistoryBytes != NULL )
+    {
+        CPLJsonObject oHistoryObj;
+        char szFullFilename[2048] = { 0 };
+        if( !CPLGetExecPath(szFullFilename, sizeof(szFullFilename) - 1) )
+            strcpy(szFullFilename, "unknown_program");
+        const CPLString osProgram(CPLGetFilename(szFullFilename));
+        const CPLString osPath(CPLGetPath(szFullFilename));
+        CPLJsonObject& oObj = oHistoryObj[osProgram];
+        oObj["_type"] = "object";
+        oObj["GdalVersion"] = GDALVersionInfo("RELEASE_NAME");
+        if( osPath != "." )
+            oObj["ProgramPath"] = osPath;
+        time_t nCurTime = time(NULL);
+        if( nCurTime != -1 )
+        {
+            struct tm mytm;
+            CPLUnixTimeToYMDHMS(nCurTime, &mytm);
+            oObj["ExecutionDateTime"] =
+                CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
+                           mytm.tm_year + 1900,
+                           mytm.tm_mon + 1,
+                           mytm.tm_mday,
+                           mytm.tm_hour,
+                           mytm.tm_min,
+                           mytm.tm_sec);
+        }
+        char szHostname[256] = { 0 };
+        if( gethostname(szHostname, sizeof(szHostname)-1) == 0 )
+        {
+            oObj["HostName"] = szHostname;
+        }
+        const char* pszUsername = CPLGetConfigOption("USERNAME", NULL);
+        if( pszUsername == NULL )
+            pszUsername = CPLGetConfigOption("USER", NULL);
+        if( pszUsername != NULL )
+        {
+            oObj["UserName"] = pszUsername;
+        }
+        oObj["Description"] = "GDAL conversion";
+
+        CPLJsonObject& oUserParameters = oObj["UserParameters"];
+        oUserParameters["_type"] = "group";
+        if( !m_osFromFilename.empty() )
+            oUserParameters["FROM"] = CPLGetFilename( m_osFromFilename );
+        oUserParameters["TO"] = CPLGetFilename( GetDescription() );
+        if( m_bForce360 )
+            oUserParameters["Force_360"] = "true";
+
+        fpTmp = VSIFOpenL( osTmpFile, "wb+" );
+        json_object* poObj = oHistoryObj.asLibJsonObj();
+        SerializeAsPDL( fpTmp, poObj );
+        json_object_put(poObj);
+        VSIFCloseL( fpTmp );
+        pszHistory = reinterpret_cast<char*>(
+                                VSIGetMemFileBuffer( osTmpFile, NULL, TRUE ));
+        VSIUnlink(osTmpFile);
+        const int nHistorySize = static_cast<int>(strlen(pszHistory));
+
+        nHistoryOffset = nLabelSize + nImagePixels * nDTSize + 1;
+        const char* pszStartByte = CPLSPrintf(CPL_FRMT_GUIB,
+                                              nHistoryOffset);
+        CPLAssert(strlen(pszStartByte) <
+                                    strlen(pszHISTORY_STARTBYTE_PLACEHOLDER));
+        memcpy(pszHistoryStartBytes, pszStartByte, strlen(pszStartByte));
+        memset(pszHistoryStartBytes + strlen(pszStartByte), ' ',
+               strlen(pszHISTORY_STARTBYTE_PLACEHOLDER) -
+                                                        strlen(pszStartByte));
+
+        const char* pszBytes = CPLSPrintf("%d", nHistorySize);
+        memcpy(pszHistoryBytes, pszBytes, strlen(pszBytes));
+        memset(pszHistoryBytes + strlen(pszBytes), ' ',
+                strlen(pszHISTORY_BYTES_PLACEHOLDER) - strlen(pszBytes));
+    }
 
     // Write to final file
     VSIFSeekL( m_fpLabel, 0, SEEK_SET );
@@ -3050,30 +3177,11 @@ void ISIS3Dataset::WriteLabel()
     if( m_bInitToNodata && m_poExternalDS == NULL )
     {
         // Initialize the image to nodata
-        const GDALDataType eType = GetRasterBand(1)->GetRasterDataType();
-        const int nDTSize = GDALGetDataTypeSizeBytes(eType);
-
-        vsi_l_offset nPixelsToInit;
-        if( m_bIsTiled )
-        {
-            int nBlockXSize = 1, nBlockYSize = 1;
-            GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-            nPixelsToInit = static_cast<vsi_l_offset>(nBlockXSize) *
-                            nBlockYSize * nBands *
-                            DIV_ROUND_UP(nRasterXSize, nBlockXSize) *
-                            DIV_ROUND_UP(nRasterYSize, nBlockYSize);
-        }
-        else
-        {
-            nPixelsToInit = static_cast<vsi_l_offset>(nRasterXSize) *
-                            nRasterYSize * nBands;
-        }
-
         const double dfNoData = GetRasterBand(1)->GetNoDataValue();
         if( dfNoData == 0.0 )
         {
             VSIFTruncateL( m_fpImage, VSIFTellL(m_fpImage) + 
-                                                nPixelsToInit * nDTSize );
+                                                nImagePixels * nDTSize );
         }
         else
         {
@@ -3088,13 +3196,13 @@ void ISIS3Dataset::WriteLabel()
 #ifdef CPL_MSB
             GDALSwapWords( pabyTemp, nDTSize, nMaxPerPage, nDTSize );
 #endif
-            for( vsi_l_offset i = 0; i < nPixelsToInit; i += nMaxPerPage )
+            for( vsi_l_offset i = 0; i < nImagePixels; i += nMaxPerPage )
             {
                 int n;
-                if( i + nMaxPerPage <= nPixelsToInit )
+                if( i + nMaxPerPage <= nImagePixels )
                     n = nMaxPerPage;
                 else
-                    n = static_cast<int>(nPixelsToInit - i);
+                    n = static_cast<int>(nImagePixels - i);
                 if( VSIFWriteL( pabyTemp, n * nDTSize, 1, m_fpImage ) != 1 )
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
@@ -3106,6 +3214,14 @@ void ISIS3Dataset::WriteLabel()
             CPLFree( pabyTemp );
         }
     }
+
+    if( pszHistory != NULL )
+    {
+        VSIFSeekL( m_fpLabel, nHistoryOffset, SEEK_SET );
+        VSIFWriteL( pszHistory, 1, strlen(pszHistory), m_fpLabel);
+    }
+
+    VSIFree(pszHistory);
 }
 
 /************************************************************************/
@@ -3181,6 +3297,8 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
                 const char* pszType = json_object_get_string(poType);
                 if( EQUAL(pszType, "Object") )
                 {
+                    if( nDepth == 0 && VSIFTellL(fp) != 0 )
+                        VSIFPrintfL(fp, "\n");
                     VSIFPrintfL(fp, "%sObject = %s\n",
                                 osIndentation.c_str(), it.key);
                     SerializeAsPDL( fp, it.val, nDepth + 1 );
@@ -3189,6 +3307,7 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
                 }
                 else if( EQUAL(pszType, "Group") )
                 {
+                    VSIFPrintfL(fp, "\n");
                     VSIFPrintfL(fp, "%sGroup = %s\n",
                                 osIndentation.c_str(), it.key);
                     SerializeAsPDL( fp, it.val, nDepth + 1 );
@@ -3420,9 +3539,6 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
             VSIFPrintfL(fp, ")\n" );
         }
     }
-
-    if( nDepth == 0 )
-        VSIFPrintfL(fp, "End\n");
 }
 
 
@@ -3566,6 +3682,7 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
     }
 
     ISIS3Dataset* poDS = new ISIS3Dataset();
+    poDS->SetDescription( pszFilename );
     poDS->eAccess = GA_Update;
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
@@ -3701,6 +3818,7 @@ GDALDataset* ISIS3Dataset::CreateCopy( const char *pszFilename,
         Create( pszFilename, nXSize, nYSize, nBands, eType, papszOptions ));
     if( poDS == NULL )
         return NULL;
+    poDS->m_osFromFilename = poSrcUnderlyingDS->GetDescription();
 
     double adfGeoTransform[6] = { 0.0 };
     if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None
