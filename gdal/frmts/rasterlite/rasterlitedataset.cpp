@@ -1071,7 +1071,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
         for( int i=0; i < nLayers; i++ )
         {
             OGRLayerH hLyr = OGR_DS_GetLayer(hDS, i);
-            const char* pszLayerName = OGR_FD_GetName(OGR_L_GetLayerDefn(hLyr));
+            const char* pszLayerName = OGR_L_GetName(hLyr);
             if (strstr(pszLayerName, "_metadata"))
             {
                 char* pszShortName = CPLStrdup(pszLayerName);
