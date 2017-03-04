@@ -1193,20 +1193,13 @@ End""")
       Lines   = 1
       Bands   = 1
     End_Group
-    Group = (Pixels, THIS_IS_INVALID)
-      Type       = UnsignedByte
-      ByteOrder  = Lsb
-      Base       = 0.0
-      Multiplier = 1.0
-    End_Group
   End_Object
 End_Object
 End""")
 
-    # unhandled pixel type not supported
-    with gdaltest.error_handler():
-        ds = gdal.Open('/vsimem/out.lbl')
-    if ds is not None:
+    # missing Group = Pixels. This is actually valid. Assuming Real
+    ds = gdal.Open('/vsimem/out.lbl')
+    if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/out.lbl')
