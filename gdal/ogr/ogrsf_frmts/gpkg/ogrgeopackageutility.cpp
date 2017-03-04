@@ -189,19 +189,19 @@ int SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
 /* LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, */
 /* GeomCollection) */
 /* http://opengis.github.io/geopackage/#geometry_types */
-OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ, bool bHasM)
+OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pnGpkgLenType, bool bHasZ, bool bHasM)
 {
     OGRwkbGeometryType oType;
 
-    if ( EQUAL("Geometry", pszGpkgType) )
+    if ( EQUAL("Geometry", pnGpkgLenType) )
         oType = wkbUnknown;
     /* The 1.0 spec is not completely clear on what should be used... */
-    else if ( EQUAL("GeomCollection", pszGpkgType) ||
-              EQUAL("GeometryCollection", pszGpkgType) )
+    else if ( EQUAL("GeomCollection", pnGpkgLenType) ||
+              EQUAL("GeometryCollection", pnGpkgLenType) )
         oType =  wkbGeometryCollection;
     else
     {
-        oType = OGRFromOGCGeomType(pszGpkgType);
+        oType = OGRFromOGCGeomType(pnGpkgLenType);
         if( oType == wkbUnknown )
             oType = wkbNone;
     }
@@ -222,56 +222,56 @@ OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ, bo
 /* declared using one of the data types specified in table GeoPackage */
 /* Data Types. */
 /* http://opengis.github.io/geopackage/#table_column_data_types */
-OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
+OGRFieldType GPkgFieldToOGR(const char *pnGpkgLenType, OGRFieldSubType& eSubType,
                             int& nMaxWidth)
 {
     eSubType = OFSTNone;
     nMaxWidth = 0;
 
     /* Integer types */
-    if ( STRNCASECMP("INT", pszGpkgType, 3) == 0 )
+    if ( STRNCASECMP("INT", pnGpkgLenType, 3) == 0 )
         return OFTInteger64;
-    else if ( EQUAL("MEDIUMINT", pszGpkgType) )
+    else if ( EQUAL("MEDIUMINT", pnGpkgLenType) )
         return OFTInteger;
-    else if ( EQUAL("SMALLINT", pszGpkgType) )
+    else if ( EQUAL("SMALLINT", pnGpkgLenType) )
     {
         eSubType = OFSTInt16;
         return OFTInteger;
     }
-    else if ( EQUAL("TINYINT", pszGpkgType) )
+    else if ( EQUAL("TINYINT", pnGpkgLenType) )
         return OFTInteger;
-    else if ( EQUAL("BOOLEAN", pszGpkgType) )
+    else if ( EQUAL("BOOLEAN", pnGpkgLenType) )
     {
         eSubType = OFSTBoolean;
         return OFTInteger;
     }
 
     /* Real types */
-    else if ( EQUAL("FLOAT", pszGpkgType) )
+    else if ( EQUAL("FLOAT", pnGpkgLenType) )
     {
         eSubType = OFSTFloat32;
         return OFTReal;
     }
-    else if ( EQUAL("DOUBLE", pszGpkgType) )
+    else if ( EQUAL("DOUBLE", pnGpkgLenType) )
         return OFTReal;
-    else if ( EQUAL("REAL", pszGpkgType) )
+    else if ( EQUAL("REAL", pnGpkgLenType) )
         return OFTReal;
 
     /* String/binary types */
-    else if ( STRNCASECMP("TEXT", pszGpkgType, 4) == 0 )
+    else if ( STRNCASECMP("TEXT", pnGpkgLenType, 4) == 0 )
     {
-        if( pszGpkgType[4] == '(' )
-            nMaxWidth = atoi(pszGpkgType+5);
+        if( pnGpkgLenType[4] == '(' )
+            nMaxWidth = atoi(pnGpkgLenType+5);
         return OFTString;
     }
 
-    else if ( STRNCASECMP("BLOB", pszGpkgType, 4) == 0 )
+    else if ( STRNCASECMP("BLOB", pnGpkgLenType, 4) == 0 )
         return OFTBinary;
 
     /* Date types */
-    else if ( EQUAL("DATE", pszGpkgType) )
+    else if ( EQUAL("DATE", pnGpkgLenType) )
         return OFTDate;
-    else if ( EQUAL("DATETIME", pszGpkgType) )
+    else if ( EQUAL("DATETIME", pnGpkgLenType) )
         return OFTDateTime;
 
     /* Illegal! */
@@ -375,7 +375,8 @@ int SQLiteFieldFromOGR(OGRFieldType nType)
 *
 */
 
-GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *pszWkb)
+GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
+                           size_t *pnWkbLen)
 {
     CPLAssert( poGeometry != NULL );
 
@@ -390,17 +391,17 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
     int iDims = poGeometry->getCoordinateDimension();
 
     /* Header has 8 bytes for sure, and optional extra space for bounds */
-    size_t szHeader = 2+1+1+4;
+    size_t nHeaderLen = 2+1+1+4;
     if ( ! bPoint && ! bEmpty )
     {
-        szHeader += 8*2*iDims;
+        nHeaderLen += 8*2*iDims;
     }
 
     /* Total BLOB size is header + WKB size */
-    size_t szWkb = szHeader + poGeometry->WkbSize();
-    GByte *pabyWkb = (GByte *)CPLMalloc(szWkb);
-    if (pszWkb)
-        *pszWkb = szWkb;
+    size_t nWkbLen = nHeaderLen + poGeometry->WkbSize();
+    GByte *pabyWkb = (GByte *)CPLMalloc(nWkbLen);
+    if (pnWkbLen)
+        *pnWkbLen = nWkbLen;
 
     /* Header Magic */
     pabyWkb[0] = 0x47;
@@ -471,7 +472,7 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
         }
     }
 
-    GByte *pabyPtr = pabyWkb + szHeader;
+    GByte *pabyPtr = pabyWkb + nHeaderLen;
 
     /* Use the wkbVariantIso for ISO SQL/MM output (differs for 3d geometry) */
     err = poGeometry->exportToWkb(eByteOrder, pabyPtr, wkbVariantIso);
@@ -484,13 +485,13 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
     return pabyWkb;
 }
 
-OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHeader)
+OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen, GPkgHeader *poHeader)
 {
     CPLAssert( pabyGpkg != NULL );
     CPLAssert( poHeader != NULL );
 
     /* Magic (match required) */
-    if ( szGpkg < 8 ||
+    if ( nGpkgLen < 8 ||
          pabyGpkg[0] != 0x47 ||
          pabyGpkg[1] != 0x50 ||
          pabyGpkg[2] != 0 )  /* Version (only 0 supported at this time)*/
@@ -551,7 +552,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHea
     }
     poHeader->iSrsId = iSrsId;
 
-    if( szGpkg < static_cast<size_t>(8 + 8*2*nEnvelopeDim) )
+    if( nGpkgLen < static_cast<size_t>(8 + 8*2*nEnvelopeDim) )
     {
         // Not enough bytes
         return OGRERR_FAILURE;
@@ -597,30 +598,30 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHea
 #endif
 
     /* Header size in byte stream */
-    poHeader->szHeader = 8 + 8*2*nEnvelopeDim;
+    poHeader->nHeaderLen = 8 + 8*2*nEnvelopeDim;
 
     return OGRERR_NONE;
 }
 
-OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialReference *poSrs)
+OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen, OGRSpatialReference *poSrs)
 {
     CPLAssert( pabyGpkg != NULL );
 
     GPkgHeader oHeader;
 
     /* Read header */
-    OGRErr err = GPkgHeaderFromWKB(pabyGpkg, szGpkg, &oHeader);
+    OGRErr err = GPkgHeaderFromWKB(pabyGpkg, nGpkgLen, &oHeader);
     if ( err != OGRERR_NONE )
         return NULL;
 
     /* WKB pointer */
-    const GByte *pabyWkb = pabyGpkg + oHeader.szHeader;
-    size_t szWkb = szGpkg - oHeader.szHeader;
+    const GByte *pabyWkb = pabyGpkg + oHeader.nHeaderLen;
+    size_t nWkbLen = nGpkgLen - oHeader.nHeaderLen;
 
     /* Parse WKB */
     OGRGeometry *poGeom = NULL;
     err = OGRGeometryFactory::createFromWkb((GByte*)pabyWkb, poSrs, &poGeom,
-                                            static_cast<int>(szWkb));
+                                            static_cast<int>(nWkbLen));
     if ( err != OGRERR_NONE )
         return NULL;
 

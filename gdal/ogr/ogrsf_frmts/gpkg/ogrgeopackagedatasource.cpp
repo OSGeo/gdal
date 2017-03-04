@@ -5022,12 +5022,12 @@ void OGRGeoPackageSTGeometryType(sqlite3_context* pContext,
     int nBLOBLen = sqlite3_value_bytes (argv[0]);
     const GByte* pabyBLOB = (const GByte *) sqlite3_value_blob (argv[0]);
     OGRwkbGeometryType eGeometryType;
-    if( nBLOBLen <= (int)sHeader.szHeader )
+    if( static_cast<size_t>(nBLOBLen) <= sHeader.nHeaderLen )
     {
         sqlite3_result_null( pContext );
         return;
     }
-    OGRErr err = OGRReadWKBGeometryType( (GByte*)pabyBLOB + sHeader.szHeader,
+    OGRErr err = OGRReadWKBGeometryType( (GByte*)pabyBLOB + sHeader.nHeaderLen,
                                          wkbVariantIso, &eGeometryType );
     if( err != OGRERR_NONE )
         sqlite3_result_null( pContext );
