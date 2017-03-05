@@ -62,7 +62,7 @@
 
 CPL_CVSID("$Id$");
 
-static CPLString OSR_GDS( char **papszNV, const char * pszField,
+static CPLString OSR_GDS( char **papszNV, const char *pszField,
                           const char *pszDefaultValue );
 
 /************************************************************************/
@@ -80,9 +80,8 @@ AAIGRasterBand::AAIGRasterBand( AAIGDataset *poDSIn, int nDataStart ) :
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
-    panLineOffset =
-        static_cast<GUIntBig *>(
-            VSI_CALLOC_VERBOSE( poDSIn->nRasterYSize, sizeof(GUIntBig) ) );
+    panLineOffset = static_cast<GUIntBig *>(
+        VSI_CALLOC_VERBOSE(poDSIn->nRasterYSize, sizeof(GUIntBig)));
     if (panLineOffset == NULL)
     {
         return;
@@ -94,21 +93,17 @@ AAIGRasterBand::AAIGRasterBand( AAIGDataset *poDSIn, int nDataStart ) :
 /*                          ~AAIGRasterBand()                           */
 /************************************************************************/
 
-AAIGRasterBand::~AAIGRasterBand()
-
-{
-    CPLFree( panLineOffset );
-}
+AAIGRasterBand::~AAIGRasterBand() { CPLFree(panLineOffset); }
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
+                                   void *pImage )
 
 {
-    AAIGDataset *poODS = reinterpret_cast<AAIGDataset *>( poDS );
+    AAIGDataset *poODS = reinterpret_cast<AAIGDataset *>(poDS);
 
     if( nBlockYOff < 0 || nBlockYOff > poODS->nRasterYSize - 1
         || nBlockXOff != 0 || panLineOffset == NULL || poODS->fp == NULL )
@@ -118,17 +113,17 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         for( int iPrevLine = 1; iPrevLine <= nBlockYOff; iPrevLine++ )
             if( panLineOffset[iPrevLine] == 0 )
-                IReadBlock( nBlockXOff, iPrevLine-1, NULL );
+                IReadBlock( nBlockXOff, iPrevLine - 1, NULL );
     }
 
     if( panLineOffset[nBlockYOff] == 0 )
         return CE_Failure;
 
-    if( poODS->Seek( panLineOffset[nBlockYOff] ) != 0 )
+    if( poODS->Seek(panLineOffset[nBlockYOff]) != 0 )
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Can't seek to offset %lu in input file to read data.",
-                  static_cast<long unsigned int>(panLineOffset[nBlockYOff] ) );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Can't seek to offset %lu in input file to read data.",
+                 static_cast<long unsigned int>(panLineOffset[nBlockYOff]));
         return CE_Failure;
     }
 
@@ -138,17 +133,16 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         char chNext;
         do {
             chNext = poODS->Getc();
-        } while( isspace( static_cast<unsigned char>(chNext) ) );
+        } while( isspace(static_cast<unsigned char>(chNext)) );
 
         char szToken[500] = { '\0' };
-        int  iTokenChar = 0;
-        while( chNext != '\0' && !isspace((unsigned char)chNext)  )
+        int iTokenChar = 0;
+        while( chNext != '\0' && !isspace((unsigned char)chNext) )
         {
-            if( iTokenChar == sizeof(szToken)-2 )
+            if( iTokenChar == sizeof(szToken) - 2 )
             {
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Token too long at scanline %d.",
-                          nBlockYOff );
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Token too long at scanline %d.", nBlockYOff);
                 return CE_Failure;
             }
 
@@ -160,9 +154,8 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             (iPixel != poODS->nRasterXSize - 1 ||
             nBlockYOff != poODS->nRasterYSize - 1) )
         {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "File short, can't read line %d.",
-                      nBlockYOff );
+            CPLError(CE_Failure, CPLE_FileIO, "File short, can't read line %d.",
+                     nBlockYOff);
             return CE_Failure;
         }
 
@@ -174,10 +167,10 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 reinterpret_cast<double *>(pImage)[iPixel] = CPLAtofM(szToken);
             else if( eDataType == GDT_Float32 )
                 reinterpret_cast<float *>(pImage)[iPixel] =
-                    static_cast<float>( CPLAtofM(szToken) );
+                    static_cast<float>(CPLAtofM(szToken));
             else
                 reinterpret_cast<GInt32 *>(pImage)[iPixel] =
-                    static_cast<GInt32>( atoi(szToken) );
+                    static_cast<GInt32>(atoi(szToken));
         }
 
         iPixel++;
@@ -193,10 +186,10 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
-double AAIGRasterBand::GetNoDataValue( int * pbSuccess )
+double AAIGRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
-    AAIGDataset *poODS = reinterpret_cast<AAIGDataset *>( poDS );
+    AAIGDataset *poODS = reinterpret_cast<AAIGDataset *>(poDS);
 
     if( pbSuccess )
         *pbSuccess = poODS->bNoDataSet;
@@ -211,7 +204,7 @@ double AAIGRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr AAIGRasterBand::SetNoDataValue( double dfNoData )
 
 {
-    AAIGDataset *poODS = reinterpret_cast<AAIGDataset *>( poDS );
+    AAIGDataset *poODS = reinterpret_cast<AAIGDataset *>(poDS);
 
     poODS->bNoDataSet = true;
     poODS->dfNoDataValue = dfNoData;
@@ -245,7 +238,7 @@ AAIGDataset::AAIGDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    memset( achReadBuf, 0, sizeof(achReadBuf) );
+    memset(achReadBuf, 0, sizeof(achReadBuf));
 }
 
 /************************************************************************/
@@ -259,25 +252,21 @@ AAIGDataset::~AAIGDataset()
 
     if( fp != NULL )
     {
-        if( VSIFCloseL( fp ) != 0 )
+        if( VSIFCloseL(fp) != 0 )
         {
             CPLError(CE_Failure, CPLE_FileIO, "I/O error");
         }
     }
 
-    CPLFree( pszProjection );
-    CSLDestroy( papszPrj );
+    CPLFree(pszProjection);
+    CSLDestroy(papszPrj);
 }
 
 /************************************************************************/
 /*                                Tell()                                */
 /************************************************************************/
 
-GUIntBig AAIGDataset::Tell()
-
-{
-    return nBufferOffset + nOffsetInBuffer;
-}
+GUIntBig AAIGDataset::Tell() { return nBufferOffset + nOffsetInBuffer; }
 
 /************************************************************************/
 /*                                Seek()                                */
@@ -287,7 +276,7 @@ int AAIGDataset::Seek( GUIntBig nNewOffset )
 
 {
     nOffsetInBuffer = sizeof(achReadBuf);
-    return VSIFSeekL( fp, nNewOffset, SEEK_SET );
+    return VSIFSeekL(fp, nNewOffset, SEEK_SET);
 }
 
 /************************************************************************/
@@ -303,10 +292,10 @@ char AAIGDataset::Getc()
     if( nOffsetInBuffer < (int) sizeof(achReadBuf) )
         return achReadBuf[nOffsetInBuffer++];
 
-    nBufferOffset = VSIFTellL( fp );
+    nBufferOffset = VSIFTellL(fp);
     const int nRead =
-        static_cast<int>(VSIFReadL( achReadBuf, 1, sizeof(achReadBuf), fp ));
-    for( unsigned int i=nRead; i < sizeof(achReadBuf); i++ )
+        static_cast<int>(VSIFReadL(achReadBuf, 1, sizeof(achReadBuf), fp));
+    for( unsigned int i = nRead; i < sizeof(achReadBuf); i++ )
         achReadBuf[i] = '\0';
 
     nOffsetInBuffer = 0;
@@ -324,7 +313,7 @@ char **AAIGDataset::GetFileList()
     char **papszFileList = GDALPamDataset::GetFileList();
 
     if( papszPrj != NULL )
-        papszFileList = CSLAddString( papszFileList, osPrjFilename );
+        papszFileList = CSLAddString(papszFileList, osPrjFilename);
 
     return papszFileList;
 }
@@ -333,22 +322,20 @@ char **AAIGDataset::GetFileList()
 /*                            Identify()                                */
 /************************************************************************/
 
-int AAIGDataset::Identify( GDALOpenInfo * poOpenInfo )
+int AAIGDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Does this look like an AI grid file?                            */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 40
-        || !( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "ncols") ||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "nrows") ||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "xllcorner")||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "yllcorner")||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "xllcenter")||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "yllcenter")||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "dx")||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "dy")||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "cellsize")) )
+    // Does this look like an AI grid file?
+    if( poOpenInfo->nHeaderBytes < 40 ||
+        !(STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "ncols") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "nrows") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "xllcorner") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "yllcorner") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "xllcenter") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "yllcenter") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "dx") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "dy") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "cellsize")) )
         return FALSE;
 
     return TRUE;
@@ -358,19 +345,17 @@ int AAIGDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*                            Identify()                                */
 /************************************************************************/
 
-int GRASSASCIIDataset::Identify( GDALOpenInfo * poOpenInfo )
+int GRASSASCIIDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Does this look like a GRASS ASCII grid file?                    */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 40
-        || !( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "north:") ||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "south:") ||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "east:")||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "west:")||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "rows:")||
-              STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "cols:") ) )
+    // Does this look like a GRASS ASCII grid file?
+    if( poOpenInfo->nHeaderBytes < 40 ||
+        !(STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "north:") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "south:") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "east:") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "west:") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "rows:") ||
+          STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "cols:")) )
         return FALSE;
 
     return TRUE;
@@ -395,68 +380,67 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                          ParseHeader()                               */
 /************************************************************************/
 
-int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
+int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
 {
-    char** papszTokens =
-        CSLTokenizeString2( pszHeader,  " \n\r\t" , 0 );
+    char **papszTokens = CSLTokenizeString2(pszHeader, " \n\r\t", 0);
     const int nTokens = CSLCount(papszTokens);
 
     int i = 0;
-    if ( (i = CSLFindString( papszTokens, "ncols" )) < 0 ||
+    if ( (i = CSLFindString(papszTokens, "ncols")) < 0 ||
          i + 1 >= nTokens)
     {
-        CSLDestroy( papszTokens );
+        CSLDestroy(papszTokens);
         return FALSE;
     }
     nRasterXSize = atoi(papszTokens[i + 1]);
-    if ( (i = CSLFindString( papszTokens, "nrows" )) < 0 ||
+    if ( (i = CSLFindString(papszTokens, "nrows")) < 0 ||
          i + 1 >= nTokens)
     {
-        CSLDestroy( papszTokens );
+        CSLDestroy(papszTokens);
         return FALSE;
     }
     nRasterYSize = atoi(papszTokens[i + 1]);
 
     if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
     {
-        CSLDestroy( papszTokens );
+        CSLDestroy(papszTokens);
         return FALSE;
     }
 
     double dfCellDX = 0.0;
     double dfCellDY = 0.0;
-    if ( (i = CSLFindString( papszTokens, "cellsize" )) < 0 )
+    if ( (i = CSLFindString(papszTokens, "cellsize")) < 0 )
     {
         int iDX, iDY;
-        if( (iDX = CSLFindString(papszTokens,"dx")) < 0
-            || (iDY = CSLFindString(papszTokens,"dy")) < 0
-            || iDX+1 >= nTokens
-            || iDY+1 >= nTokens)
+        if( (iDX = CSLFindString(papszTokens, "dx")) < 0 ||
+            (iDY = CSLFindString(papszTokens, "dy")) < 0 ||
+            iDX + 1 >= nTokens ||
+            iDY + 1 >= nTokens )
         {
-            CSLDestroy( papszTokens );
+            CSLDestroy(papszTokens);
             return FALSE;
         }
 
-        dfCellDX = CPLAtofM( papszTokens[iDX+1] );
-        dfCellDY = CPLAtofM( papszTokens[iDY+1] );
+        dfCellDX = CPLAtofM(papszTokens[iDX + 1]);
+        dfCellDY = CPLAtofM(papszTokens[iDY + 1]);
     }
     else
     {
         if (i + 1 >= nTokens)
         {
-            CSLDestroy( papszTokens );
+            CSLDestroy(papszTokens);
             return FALSE;
         }
-        dfCellDY = CPLAtofM( papszTokens[i + 1] );
+        dfCellDY = CPLAtofM(papszTokens[i + 1]);
         dfCellDX = dfCellDY;
     }
 
     int j = 0;
-    if ((i = CSLFindString( papszTokens, "xllcorner" )) >= 0 &&
-        (j = CSLFindString( papszTokens, "yllcorner" )) >= 0 &&
+    if ((i = CSLFindString(papszTokens, "xllcorner")) >= 0 &&
+        (j = CSLFindString(papszTokens, "yllcorner")) >= 0 &&
         i + 1 < nTokens && j + 1 < nTokens)
     {
-        adfGeoTransform[0] = CPLAtofM( papszTokens[i + 1] );
+        adfGeoTransform[0] = CPLAtofM(papszTokens[i + 1]);
 
         // Small hack to compensate from insufficient precision in cellsize
         // parameter in datasets of
@@ -472,25 +456,24 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
 
         adfGeoTransform[1] = dfCellDX;
         adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = CPLAtofM( papszTokens[j + 1] )
-            + nRasterYSize * dfCellDY;
+        adfGeoTransform[3] =
+            CPLAtofM(papszTokens[j + 1]) + nRasterYSize * dfCellDY;
         adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = - dfCellDY;
+        adfGeoTransform[5] = -dfCellDY;
     }
-    else if ((i = CSLFindString( papszTokens, "xllcenter" )) >= 0 &&
-             (j = CSLFindString( papszTokens, "yllcenter" )) >= 0  &&
+    else if ((i = CSLFindString(papszTokens, "xllcenter")) >= 0 &&
+             (j = CSLFindString(papszTokens, "yllcenter")) >= 0 &&
              i + 1 < nTokens && j + 1 < nTokens)
     {
-        SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
+        SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
 
         adfGeoTransform[0] = CPLAtofM(papszTokens[i + 1]) - 0.5 * dfCellDX;
         adfGeoTransform[1] = dfCellDX;
         adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = CPLAtofM( papszTokens[j + 1] )
-            - 0.5 * dfCellDY
-            + nRasterYSize * dfCellDY;
+        adfGeoTransform[3] = CPLAtofM(papszTokens[j + 1]) - 0.5 * dfCellDY +
+                             nRasterYSize * dfCellDY;
         adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = - dfCellDY;
+        adfGeoTransform[5] = -dfCellDY;
     }
     else
     {
@@ -499,19 +482,19 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
         adfGeoTransform[2] = 0.0;
         adfGeoTransform[3] = 0.0;
         adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = - dfCellDY;
+        adfGeoTransform[5] = -dfCellDY;
     }
 
     if( (i = CSLFindString( papszTokens, "NODATA_value" )) >= 0 &&
         i + 1 < nTokens)
     {
-        const char* pszNoData = papszTokens[i + 1];
+        const char *pszNoData = papszTokens[i + 1];
 
         bNoDataSet = true;
         dfNoDataValue = CPLAtofM(pszNoData);
         if( pszDataType == NULL &&
-            (strchr( pszNoData, '.' ) != NULL ||
-             strchr( pszNoData, ',' ) != NULL ||
+            (strchr(pszNoData, '.') != NULL ||
+             strchr(pszNoData, ',') != NULL ||
              INT_MIN > dfNoDataValue || dfNoDataValue > INT_MAX) )
         {
             eDataType = GDT_Float32;
@@ -524,11 +507,11 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
         }
         if( eDataType == GDT_Float32 )
         {
-            dfNoDataValue = (double) (float) dfNoDataValue;
+            dfNoDataValue = (double)(float)dfNoDataValue;
         }
     }
 
-    CSLDestroy( papszTokens );
+    CSLDestroy(papszTokens);
 
     return TRUE;
 }
@@ -539,8 +522,11 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
 
 GDALDataset *GRASSASCIIDataset::Open( GDALOpenInfo * poOpenInfo )
 {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    // During fuzzing, do not use Identify to reject crazy content.
     if (!Identify(poOpenInfo))
         return NULL;
+#endif
 
     return CommonOpen(poOpenInfo, FORMAT_GRASSASCII);
 }
@@ -549,50 +535,50 @@ GDALDataset *GRASSASCIIDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                          ParseHeader()                               */
 /************************************************************************/
 
-int GRASSASCIIDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
+int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
+                                   const char *pszDataType)
 {
-    char** papszTokens =
-        CSLTokenizeString2( pszHeader,  " \n\r\t:" , 0 );
+    char **papszTokens = CSLTokenizeString2(pszHeader, " \n\r\t:", 0);
     const int nTokens = CSLCount(papszTokens);
     int i = 0;
-    if ( (i = CSLFindString( papszTokens, "cols" )) < 0 ||
+    if ( (i = CSLFindString(papszTokens, "cols")) < 0 ||
          i + 1 >= nTokens)
     {
-        CSLDestroy( papszTokens );
+        CSLDestroy(papszTokens);
         return FALSE;
     }
     nRasterXSize = atoi(papszTokens[i + 1]);
     if ( (i = CSLFindString( papszTokens, "rows" )) < 0 ||
          i + 1 >= nTokens)
     {
-        CSLDestroy( papszTokens );
+        CSLDestroy(papszTokens);
         return FALSE;
     }
     nRasterYSize = atoi(papszTokens[i + 1]);
 
     if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
     {
-        CSLDestroy( papszTokens );
+        CSLDestroy(papszTokens);
         return FALSE;
     }
 
-    const int iNorth = CSLFindString( papszTokens, "north" );
-    const int iSouth = CSLFindString( papszTokens, "south" );
-    const int iEast = CSLFindString( papszTokens, "east" );
-    const int iWest = CSLFindString( papszTokens, "west" );
+    const int iNorth = CSLFindString(papszTokens, "north");
+    const int iSouth = CSLFindString(papszTokens, "south");
+    const int iEast = CSLFindString(papszTokens, "east");
+    const int iWest = CSLFindString(papszTokens, "west");
 
     if (iNorth == -1 || iSouth == -1 || iEast == -1 || iWest == -1 ||
         std::max(std::max(iNorth, iSouth),
                  std::max(iEast, iWest)) + 1 >= nTokens)
     {
-        CSLDestroy( papszTokens );
+        CSLDestroy(papszTokens);
         return FALSE;
     }
 
-    const double dfNorth = CPLAtofM( papszTokens[iNorth + 1] );
-    const double dfSouth = CPLAtofM( papszTokens[iSouth + 1] );
-    const double dfEast = CPLAtofM( papszTokens[iEast + 1] );
-    const double dfWest = CPLAtofM( papszTokens[iWest + 1] );
+    const double dfNorth = CPLAtofM(papszTokens[iNorth + 1]);
+    const double dfSouth = CPLAtofM(papszTokens[iSouth + 1]);
+    const double dfEast = CPLAtofM(papszTokens[iEast + 1]);
+    const double dfWest = CPLAtofM(papszTokens[iWest + 1]);
     const double dfPixelXSize = (dfEast - dfWest) / nRasterXSize;
     const double dfPixelYSize = (dfNorth - dfSouth) / nRasterYSize;
 
@@ -601,9 +587,9 @@ int GRASSASCIIDataset::ParseHeader(const char* pszHeader, const char* pszDataTyp
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = dfNorth;
     adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = - dfPixelYSize;
+    adfGeoTransform[5] = -dfPixelYSize;
 
-    if( (i = CSLFindString( papszTokens, "null" )) >= 0 &&
+    if( (i = CSLFindString(papszTokens, "null")) >= 0 &&
         i + 1 < nTokens)
     {
         const char* pszNoData = papszTokens[i + 1];
@@ -611,8 +597,8 @@ int GRASSASCIIDataset::ParseHeader(const char* pszHeader, const char* pszDataTyp
         bNoDataSet = true;
         dfNoDataValue = CPLAtofM(pszNoData);
         if( pszDataType == NULL &&
-            (strchr( pszNoData, '.' ) != NULL ||
-             strchr( pszNoData, ',' ) != NULL ||
+            (strchr(pszNoData, '.') != NULL ||
+             strchr(pszNoData, ',') != NULL ||
              INT_MIN > dfNoDataValue || dfNoDataValue > INT_MAX) )
         {
             eDataType = GDT_Float32;
@@ -621,14 +607,14 @@ int GRASSASCIIDataset::ParseHeader(const char* pszHeader, const char* pszDataTyp
         {
             // TODO(schwehr): Is this really what we want?
             dfNoDataValue =
-                static_cast<double>( static_cast<float>( dfNoDataValue ) );
+                static_cast<double>(static_cast<float>(dfNoDataValue));
         }
     }
 
-    if( (i = CSLFindString( papszTokens, "type" )) >= 0 &&
+    if( (i = CSLFindString(papszTokens, "type")) >= 0 &&
         i + 1 < nTokens)
     {
-        const char* pszType = papszTokens[i + 1];
+        const char *pszType = papszTokens[i + 1];
         if (EQUAL(pszType, "int"))
             eDataType = GDT_Int32;
         else if (EQUAL(pszType, "float"))
@@ -637,8 +623,8 @@ int GRASSASCIIDataset::ParseHeader(const char* pszHeader, const char* pszDataTyp
             eDataType = GDT_Float64;
         else
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Invalid value for type parameter : %s", pszType);
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Invalid value for type parameter : %s", pszType);
         }
     }
 
@@ -651,12 +637,10 @@ int GRASSASCIIDataset::ParseHeader(const char* pszHeader, const char* pszDataTyp
 /*                           CommonOpen()                               */
 /************************************************************************/
 
-GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
-                                            GridFormat eFormat )
+GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
+                                      GridFormat eFormat )
 {
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
+    // Create a corresponding GDALDataset.
     AAIGDataset *poDS = NULL;
 
     if (eFormat == FORMAT_AAIG)
@@ -664,74 +648,68 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
     else
         poDS = new GRASSASCIIDataset();
 
-    const char* pszDataTypeOption =
-        (eFormat == FORMAT_AAIG) ?
+    const char *pszDataTypeOption =
+        eFormat == FORMAT_AAIG ?
         "AAIGRID_DATATYPE" : "GRASSASCIIGRID_DATATYPE";
 
-    const char* pszDataType = CPLGetConfigOption(pszDataTypeOption, NULL);
+    const char *pszDataType = CPLGetConfigOption(pszDataTypeOption, NULL);
     if( pszDataType == NULL )
         pszDataType =
-            CSLFetchNameValue( poOpenInfo->papszOpenOptions, "DATATYPE" );
+            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DATATYPE");
     if (pszDataType != NULL)
     {
         poDS->eDataType = GDALGetDataTypeByName(pszDataType);
         if (!(poDS->eDataType == GDT_Int32 || poDS->eDataType == GDT_Float32 ||
               poDS->eDataType == GDT_Float64))
         {
-            CPLError( CE_Warning, CPLE_NotSupported,
-                      "Unsupported value for %s : %s",
-                      pszDataTypeOption, pszDataType );
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Unsupported value for %s : %s",
+                     pszDataTypeOption, pszDataType);
             poDS->eDataType = GDT_Int32;
             pszDataType = NULL;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Parse the header.                                               */
-/* -------------------------------------------------------------------- */
-    if (!poDS->ParseHeader((const char *) poOpenInfo->pabyHeader, pszDataType))
+    // Parse the header.
+    if (!poDS->ParseHeader((const char *)poOpenInfo->pabyHeader, pszDataType))
     {
         delete poDS;
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Open file with large file API.                                  */
-/* -------------------------------------------------------------------- */
+    // Open file with large file API.
 
-    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
+    poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "r");
     if( poDS->fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "VSIFOpenL(%s) failed unexpectedly.",
-                  poOpenInfo->pszFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "VSIFOpenL(%s) failed unexpectedly.",
+                 poOpenInfo->pszFilename);
         delete poDS;
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Find the start of real data.                                    */
-/* -------------------------------------------------------------------- */
+    // Find the start of real data.
     int nStartOfData = 0;
 
-    for( int i = 2; true ; i++ )
+    for( int i = 2; true; i++ )
     {
         if( poOpenInfo->pabyHeader[i] == '\0' )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Couldn't find data values in ASCII Grid file.\n" );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Couldn't find data values in ASCII Grid file.\n");
             delete poDS;
             return NULL;
         }
 
-        if( poOpenInfo->pabyHeader[i-1] == '\n'
-            || poOpenInfo->pabyHeader[i-2] == '\n'
-            || poOpenInfo->pabyHeader[i-1] == '\r'
-            || poOpenInfo->pabyHeader[i-2] == '\r' )
+        if( poOpenInfo->pabyHeader[i - 1] == '\n' ||
+            poOpenInfo->pabyHeader[i - 2] == '\n' ||
+            poOpenInfo->pabyHeader[i - 1] == '\r' ||
+            poOpenInfo->pabyHeader[i - 2] == '\r' )
         {
-            if( !isalpha(poOpenInfo->pabyHeader[i])
-                && poOpenInfo->pabyHeader[i] != '\n'
-                && poOpenInfo->pabyHeader[i] != '\r')
+            if( !isalpha(poOpenInfo->pabyHeader[i]) &&
+                poOpenInfo->pabyHeader[i] != '\n' &&
+                poOpenInfo->pabyHeader[i] != '\r')
             {
                 nStartOfData = i;
 
@@ -741,17 +719,16 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Recognize the type of data.                                     */
-/* -------------------------------------------------------------------- */
-    CPLAssert( NULL != poDS->fp );
+
+    // Recognize the type of data.
+    CPLAssert(NULL != poDS->fp);
 
     if( pszDataType == NULL && poDS->eDataType != GDT_Float32 && poDS->eDataType != GDT_Float64)
     {
-        /* Allocate 100K chunk + 1 extra byte for NULL character. */
+        // Allocate 100K chunk + 1 extra byte for NULL character.
         const size_t nChunkSize = 1024 * 100;
-        GByte* pabyChunk = static_cast<GByte *>(
-            VSI_CALLOC_VERBOSE( nChunkSize + 1, sizeof(GByte) ) );
+        GByte *pabyChunk = static_cast<GByte *>(
+            VSI_CALLOC_VERBOSE(nChunkSize + 1, sizeof(GByte)));
         if (pabyChunk == NULL)
         {
             delete poDS;
@@ -759,17 +736,17 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
         }
         pabyChunk[nChunkSize] = '\0';
 
-        if( VSIFSeekL( poDS->fp, nStartOfData, SEEK_SET ) < 0 )
+        if( VSIFSeekL(poDS->fp, nStartOfData, SEEK_SET) < 0 )
         {
             delete poDS;
-            VSIFree( pabyChunk );
+            VSIFree(pabyChunk);
             return NULL;
         }
 
-        /* Scan for dot in subsequent chunks of data. */
-        while( !VSIFEofL( poDS->fp) )
+        // Scan for dot in subsequent chunks of data.
+        while( !VSIFEofL(poDS->fp) )
         {
-            CPL_IGNORE_RET_VAL(VSIFReadL( pabyChunk, nChunkSize, 1, poDS->fp ));
+            CPL_IGNORE_RET_VAL(VSIFReadL(pabyChunk, nChunkSize, 1, poDS->fp));
 
             for( int i = 0; i < static_cast<int>(nChunkSize); i++)
             {
@@ -782,57 +759,51 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
             }
         }
 
-        /* Deallocate chunk. */
-        VSIFree( pabyChunk );
+        // Deallocate chunk.
+        VSIFree(pabyChunk);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-    AAIGRasterBand* band = new AAIGRasterBand( poDS, nStartOfData );
-    poDS->SetBand( 1, band );
+    // Create band information objects.
+    AAIGRasterBand *band = new AAIGRasterBand(poDS, nStartOfData);
+    poDS->SetBand(1, band);
     if (band->panLineOffset == NULL)
     {
         delete poDS;
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Try to read projection file.                                    */
-/* -------------------------------------------------------------------- */
-
-    char * const pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
-    char * const pszBasename =
+    // Try to read projection file.
+    char *const pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+    char *const pszBasename =
         CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
 
-    poDS->osPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
+    poDS->osPrjFilename = CPLFormFilename(pszDirname, pszBasename, "prj");
     int nRet = 0;
     {
         VSIStatBufL sStatBuf;
-        nRet = VSIStatL( poDS->osPrjFilename, &sStatBuf );
+        nRet = VSIStatL(poDS->osPrjFilename, &sStatBuf);
     }
     if( nRet != 0 && VSIIsCaseSensitiveFS(poDS->osPrjFilename) )
     {
-        poDS->osPrjFilename = CPLFormFilename( pszDirname, pszBasename, "PRJ" );
+        poDS->osPrjFilename = CPLFormFilename(pszDirname, pszBasename, "PRJ");
 
         VSIStatBufL sStatBuf;
-        nRet = VSIStatL( poDS->osPrjFilename, &sStatBuf );
+        nRet = VSIStatL(poDS->osPrjFilename, &sStatBuf);
     }
 
     if( nRet == 0 )
     {
-        poDS->papszPrj = CSLLoad( poDS->osPrjFilename );
+        poDS->papszPrj = CSLLoad(poDS->osPrjFilename);
 
-        CPLDebug( "AAIGrid", "Loaded SRS from %s",
-                  poDS->osPrjFilename.c_str() );
+        CPLDebug("AAIGrid", "Loaded SRS from %s", poDS->osPrjFilename.c_str());
 
         OGRSpatialReference oSRS;
-        if( oSRS.importFromESRI( poDS->papszPrj ) == OGRERR_NONE )
+        if( oSRS.importFromESRI(poDS->papszPrj) == OGRERR_NONE )
         {
             // If geographic values are in seconds, we must transform.
             // Is there a code for minutes too?
-            if( oSRS.IsGeographic()
-                && EQUAL(OSR_GDS( poDS->papszPrj, "Units", ""), "DS") )
+            if( oSRS.IsGeographic() &&
+                EQUAL(OSR_GDS( poDS->papszPrj, "Units", ""), "DS") )
             {
                 poDS->adfGeoTransform[0] /= 3600.0;
                 poDS->adfGeoTransform[1] /= 3600.0;
@@ -842,23 +813,19 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
                 poDS->adfGeoTransform[5] /= 3600.0;
             }
 
-            CPLFree( poDS->pszProjection );
-            oSRS.exportToWkt( &(poDS->pszProjection) );
+            CPLFree(poDS->pszProjection);
+            oSRS.exportToWkt(&(poDS->pszProjection));
         }
     }
 
-    CPLFree( pszDirname );
-    CPLFree( pszBasename );
+    CPLFree(pszDirname);
+    CPLFree(pszBasename);
 
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    // Initialize any PAM information.
+    poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
-/* -------------------------------------------------------------------- */
-/*      Check for external overviews.                                   */
-/* -------------------------------------------------------------------- */
+    // Check for external overviews.
     poDS->oOvManager.Initialize(
         poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
@@ -869,10 +836,10 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr AAIGDataset::GetGeoTransform( double * padfTransform )
+CPLErr AAIGDataset::GetGeoTransform( double *padfTransform )
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
+    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
     return CE_None;
 }
 
@@ -880,182 +847,170 @@ CPLErr AAIGDataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *AAIGDataset::GetProjectionRef()
-
-{
-    return pszProjection;
-}
+const char *AAIGDataset::GetProjectionRef() { return pszProjection; }
 
 /************************************************************************/
 /*                          CreateCopy()                                */
 /************************************************************************/
 
 GDALDataset * AAIGDataset::CreateCopy(
-    const char * pszFilename, GDALDataset *poSrcDS,
+    const char *pszFilename, GDALDataset *poSrcDS,
     int /* bStrict */,
-    char ** papszOptions,
-    GDALProgressFunc pfnProgress, void * pProgressData )
+    char **papszOptions,
+    GDALProgressFunc pfnProgress, void *pProgressData )
 {
     const int nBands = poSrcDS->GetRasterCount();
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
 
-/* -------------------------------------------------------------------- */
-/*      Some rudimentary checks                                         */
-/* -------------------------------------------------------------------- */
+    // Some rudimentary checks.
     if( nBands != 1 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "AAIG driver doesn't support %d bands.  Must be 1 band.\n",
-                  nBands );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "AAIG driver doesn't support %d bands.  Must be 1 band.\n",
+                 nBands);
 
         return NULL;
     }
 
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    if( !pfnProgress(0.0, NULL, pProgressData) )
         return NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Create the dataset.                                             */
-/* -------------------------------------------------------------------- */
-    VSILFILE *fpImage = VSIFOpenL( pszFilename, "wt" );
+    // Create the dataset.
+    VSILFILE *fpImage = VSIFOpenL(pszFilename, "wt");
     if( fpImage == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Unable to create file %s.\n",
-                  pszFilename );
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Unable to create file %s.\n",
+                 pszFilename);
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Write ASCII Grid file header                                    */
-/* -------------------------------------------------------------------- */
-    double      adfGeoTransform[6];
-    char        szHeader[2000];
+    // Write ASCII Grid file header.
+    double adfGeoTransform[6] = {};
+    char szHeader[2000] = {};
     const char *pszForceCellsize =
-        CSLFetchNameValue( papszOptions, "FORCE_CELLSIZE" );
+        CSLFetchNameValue(papszOptions, "FORCE_CELLSIZE");
 
-    poSrcDS->GetGeoTransform( adfGeoTransform );
+    poSrcDS->GetGeoTransform(adfGeoTransform);
 
-    if( std::abs(adfGeoTransform[1] + adfGeoTransform[5]) < 0.0000001
-        || std::abs(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001
-        || (pszForceCellsize && CPLTestBool(pszForceCellsize)) )
-        CPLsnprintf( szHeader, sizeof(szHeader),
-                 "ncols        %d\n"
-                 "nrows        %d\n"
-                 "xllcorner    %.12f\n"
-                 "yllcorner    %.12f\n"
-                 "cellsize     %.12f\n",
-                 nXSize, nYSize,
-                 adfGeoTransform[0],
-                 adfGeoTransform[3] - nYSize * adfGeoTransform[1],
-                 adfGeoTransform[1] );
+    if( std::abs(adfGeoTransform[1] + adfGeoTransform[5]) < 0.0000001 ||
+        std::abs(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001 ||
+        (pszForceCellsize && CPLTestBool(pszForceCellsize)) )
+    {
+        CPLsnprintf(
+            szHeader, sizeof(szHeader),
+            "ncols        %d\n"
+            "nrows        %d\n"
+            "xllcorner    %.12f\n"
+            "yllcorner    %.12f\n"
+            "cellsize     %.12f\n",
+            nXSize, nYSize,
+            adfGeoTransform[0],
+            adfGeoTransform[3] - nYSize * adfGeoTransform[1],
+            adfGeoTransform[1]);
+    }
     else
     {
         if( pszForceCellsize == NULL )
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Producing a Golden Surfer style file with DX and DY "
-                      "instead of CELLSIZE since the input pixels are "
-                      "non-square.  Use the FORCE_CELLSIZE=TRUE creation "
-                      "option to force use of DX for even though this will "
-                      "be distorted.  Most ASCII Grid readers (ArcGIS "
-                      "included) do not support the DX and DY parameters." );
-        CPLsnprintf( szHeader, sizeof(szHeader),
-                 "ncols        %d\n"
-                 "nrows        %d\n"
-                 "xllcorner    %.12f\n"
-                 "yllcorner    %.12f\n"
-                 "dx           %.12f\n"
-                 "dy           %.12f\n",
-                 nXSize, nYSize,
-                 adfGeoTransform[0],
-                 adfGeoTransform[3] + nYSize * adfGeoTransform[5],
-                 adfGeoTransform[1],
-                 fabs(adfGeoTransform[5]) );
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Producing a Golden Surfer style file with DX and DY "
+                     "instead of CELLSIZE since the input pixels are "
+                     "non-square.  Use the FORCE_CELLSIZE=TRUE creation "
+                     "option to force use of DX for even though this will "
+                     "be distorted.  Most ASCII Grid readers (ArcGIS "
+                     "included) do not support the DX and DY parameters.");
+        CPLsnprintf(
+            szHeader, sizeof(szHeader),
+            "ncols        %d\n"
+            "nrows        %d\n"
+            "xllcorner    %.12f\n"
+            "yllcorner    %.12f\n"
+            "dx           %.12f\n"
+            "dy           %.12f\n",
+            nXSize, nYSize,
+            adfGeoTransform[0],
+            adfGeoTransform[3] + nYSize * adfGeoTransform[5],
+            adfGeoTransform[1],
+            fabs(adfGeoTransform[5]));
     }
 
-/* -------------------------------------------------------------------- */
-/*     Builds the format string used for printing float values.         */
-/* -------------------------------------------------------------------- */
+    // Builds the format string used for printing float values.
     char szFormatFloat[32] = { '\0' };
     strcpy(szFormatFloat, " %.20g");
     const char *pszDecimalPrecision =
-        CSLFetchNameValue( papszOptions, "DECIMAL_PRECISION" );
+        CSLFetchNameValue(papszOptions, "DECIMAL_PRECISION");
     const char *pszSignificantDigits =
-        CSLFetchNameValue( papszOptions, "SIGNIFICANT_DIGITS" );
+        CSLFetchNameValue(papszOptions, "SIGNIFICANT_DIGITS");
     bool bIgnoreSigDigits = false;
     if( pszDecimalPrecision && pszSignificantDigits )
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Conflicting precision arguments, using DECIMAL_PRECISION" );
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Conflicting precision arguments, using DECIMAL_PRECISION");
         bIgnoreSigDigits = true;
     }
     int nPrecision;
     if ( pszSignificantDigits && !bIgnoreSigDigits )
     {
-        nPrecision = atoi( pszSignificantDigits );
+        nPrecision = atoi(pszSignificantDigits);
         if (nPrecision >= 0)
-            snprintf( szFormatFloat, sizeof(szFormatFloat),
-                      " %%.%dg", nPrecision );
-        CPLDebug( "AAIGrid", "Setting precision format: %s", szFormatFloat );
+            snprintf(szFormatFloat, sizeof(szFormatFloat), " %%.%dg",
+                     nPrecision);
+        CPLDebug("AAIGrid", "Setting precision format: %s", szFormatFloat);
     }
     else if( pszDecimalPrecision )
     {
-        nPrecision = atoi( pszDecimalPrecision );
+        nPrecision = atoi(pszDecimalPrecision);
         if ( nPrecision >= 0 )
-            snprintf( szFormatFloat, sizeof(szFormatFloat),
-                      " %%.%df", nPrecision );
-        CPLDebug( "AAIGrid", "Setting precision format: %s", szFormatFloat );
+            snprintf(szFormatFloat, sizeof(szFormatFloat), " %%.%df",
+                     nPrecision);
+        CPLDebug("AAIGrid", "Setting precision format: %s", szFormatFloat);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Handle nodata (optionally).                                     */
-/* -------------------------------------------------------------------- */
-    GDALRasterBand * poBand = poSrcDS->GetRasterBand( 1 );
+    // Handle nodata (optionally).
+    GDALRasterBand *poBand = poSrcDS->GetRasterBand(1);
     const bool bReadAsInt =
-        poBand->GetRasterDataType() == GDT_Byte
-        || poBand->GetRasterDataType() == GDT_Int16
-        || poBand->GetRasterDataType() == GDT_UInt16
-        || poBand->GetRasterDataType() == GDT_Int32;
+        poBand->GetRasterDataType() == GDT_Byte ||
+        poBand->GetRasterDataType() == GDT_Int16 ||
+        poBand->GetRasterDataType() == GDT_UInt16 ||
+        poBand->GetRasterDataType() == GDT_Int32;
 
     // Write `nodata' value to header if it is exists in source dataset
     int bSuccess = FALSE;
-    const double dfNoData = poBand->GetNoDataValue( &bSuccess );
+    const double dfNoData = poBand->GetNoDataValue(&bSuccess);
     if ( bSuccess )
     {
-        snprintf( szHeader+strlen( szHeader ),
-                  sizeof(szHeader) - strlen(szHeader), "%s", "NODATA_value " );
+        snprintf(szHeader + strlen(szHeader),
+                 sizeof(szHeader) - strlen(szHeader), "%s", "NODATA_value ");
         if( bReadAsInt )
-            snprintf( szHeader+strlen( szHeader ),
-                      sizeof(szHeader) - strlen(szHeader), "%d",
-                      static_cast<int>(dfNoData) );
+            snprintf(szHeader+strlen(szHeader),
+                     sizeof(szHeader) - strlen(szHeader), "%d",
+                     static_cast<int>(dfNoData));
         else
-            CPLsnprintf( szHeader+strlen( szHeader ),
-                         sizeof(szHeader) - strlen(szHeader),
-                         szFormatFloat, dfNoData );
-        snprintf( szHeader+strlen( szHeader ),
-                  sizeof(szHeader) - strlen(szHeader), "%s", "\n" );
+            CPLsnprintf(szHeader + strlen(szHeader),
+                        sizeof(szHeader) - strlen(szHeader),
+                        szFormatFloat, dfNoData);
+        snprintf(szHeader + strlen(szHeader),
+                 sizeof(szHeader) - strlen(szHeader), "%s", "\n");
     }
 
-    if( VSIFWriteL( szHeader, strlen(szHeader), 1, fpImage ) != 1)
+    if( VSIFWriteL(szHeader, strlen(szHeader), 1, fpImage) != 1)
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Loop over image, copying image data.                            */
-/* -------------------------------------------------------------------- */
+    // Loop over image, copying image data.
     int *panScanline = NULL;
     double *padfScanline = NULL;
 
     // Write scanlines to output file
     if (bReadAsInt)
         panScanline = static_cast<int *>(
-            CPLMalloc( nXSize * GDALGetDataTypeSize(GDT_Int32) / 8 ) );
+            CPLMalloc(nXSize * GDALGetDataTypeSize(GDT_Int32) / 8));
     else
         padfScanline = static_cast<double *>(
-            CPLMalloc( nXSize * GDALGetDataTypeSize(GDT_Float64) / 8 ) );
+            CPLMalloc(nXSize * GDALGetDataTypeSize(GDT_Float64) / 8));
 
     CPLErr eErr = CE_None;
 
@@ -1068,23 +1023,23 @@ GDALDataset * AAIGDataset::CreateCopy(
             bReadAsInt ? reinterpret_cast<void *>(panScanline) :
             reinterpret_cast<void *>(padfScanline),
             nXSize, 1, bReadAsInt ? GDT_Int32 : GDT_Float64,
-            0, 0, NULL );
+            0, 0, NULL);
 
         if( bReadAsInt )
         {
             for ( int iPixel = 0; iPixel < nXSize; iPixel++ )
             {
-                snprintf( szHeader, sizeof(szHeader),
-                          " %d", panScanline[iPixel] );
+                snprintf(szHeader, sizeof(szHeader),
+                         " %d", panScanline[iPixel]);
                 osBuf += szHeader;
                 if( (iPixel & 1023) == 0 || iPixel == nXSize - 1 )
                 {
-                    if ( VSIFWriteL( osBuf, static_cast<int>(osBuf.size()), 1,
-                                     fpImage ) != 1 )
+                    if ( VSIFWriteL(osBuf, static_cast<int>(osBuf.size()), 1,
+                                    fpImage) != 1 )
                     {
                         eErr = CE_Failure;
-                        CPLError( CE_Failure, CPLE_AppDefined,
-                                  "Write failed, disk full?\n" );
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Write failed, disk full?\n");
                         break;
                     }
                     osBuf = "";
@@ -1095,8 +1050,8 @@ GDALDataset * AAIGDataset::CreateCopy(
         {
             for ( int iPixel = 0; iPixel < nXSize; iPixel++ )
             {
-                CPLsnprintf( szHeader, sizeof(szHeader),
-                             szFormatFloat, padfScanline[iPixel] );
+                CPLsnprintf(szHeader, sizeof(szHeader),
+                            szFormatFloat, padfScanline[iPixel]);
 
                 // Make sure that as least one value has a decimal point (#6060)
                 if( !bHasOutputDecimalDot )
@@ -1117,97 +1072,93 @@ GDALDataset * AAIGDataset::CreateCopy(
                 osBuf += szHeader;
                 if( (iPixel & 1023) == 0 || iPixel == nXSize - 1 )
                 {
-                    if ( VSIFWriteL( osBuf, (int)osBuf.size(), 1,
-                                     fpImage ) != 1 )
+                    if ( VSIFWriteL(osBuf, (int)osBuf.size(), 1,
+                                    fpImage) != 1 )
                     {
                         eErr = CE_Failure;
-                        CPLError( CE_Failure, CPLE_AppDefined,
-                                  "Write failed, disk full?\n" );
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Write failed, disk full?\n");
                         break;
                     }
                     osBuf = "";
                 }
             }
         }
-        if( VSIFWriteL( (void *) "\n", 1, 1, fpImage ) != 1 )
+        if( VSIFWriteL("\n", 1, 1, fpImage) != 1 )
             eErr = CE_Failure;
 
         if( eErr == CE_None &&
-            !pfnProgress( (iLine + 1) / static_cast<double>(nYSize), NULL,
-                          pProgressData) )
+            !pfnProgress((iLine + 1) / static_cast<double>(nYSize), NULL,
+                         pProgressData) )
         {
             eErr = CE_Failure;
-            CPLError( CE_Failure, CPLE_UserInterrupt,
-                      "User terminated CreateCopy()" );
+            CPLError(CE_Failure, CPLE_UserInterrupt,
+                     "User terminated CreateCopy()");
         }
     }
 
-    CPLFree( panScanline );
-    CPLFree( padfScanline );
-    if( VSIFCloseL( fpImage ) != 0 )
+    CPLFree(panScanline);
+    CPLFree(padfScanline);
+    if( VSIFCloseL(fpImage) != 0 )
         eErr = CE_Failure;
 
     if( eErr != CE_None )
         return NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Try to write projection file.                                   */
-/* -------------------------------------------------------------------- */
+    // Try to write projection file.
     const char *pszOriginalProjection = poSrcDS->GetProjectionRef();
-    if( !EQUAL( pszOriginalProjection, "" ) )
+    if( !EQUAL(pszOriginalProjection, "") )
     {
-        char *pszDirname = CPLStrdup( CPLGetPath(pszFilename) );
-        char *pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
-        char *pszPrjFilename = CPLStrdup( CPLFormFilename( pszDirname, pszBasename, "prj" ) );
-        VSILFILE *fp = VSIFOpenL( pszPrjFilename, "wt" );
+        char *pszDirname = CPLStrdup(CPLGetPath(pszFilename));
+        char *pszBasename = CPLStrdup(CPLGetBasename(pszFilename));
+        char *pszPrjFilename =
+            CPLStrdup(CPLFormFilename(pszDirname, pszBasename, "prj"));
+        VSILFILE *fp = VSIFOpenL(pszPrjFilename, "wt");
         if (fp != NULL)
         {
             OGRSpatialReference oSRS;
             // TODO(schwehr): importFromWkt should be const for the args.
-            oSRS.importFromWkt( const_cast<char **>( &pszOriginalProjection ) );
+            oSRS.importFromWkt(const_cast<char **>(&pszOriginalProjection));
             oSRS.morphToESRI();
             char *pszESRIProjection = NULL;
-            oSRS.exportToWkt( &pszESRIProjection );
-            CPL_IGNORE_RET_VAL(
-                VSIFWriteL( pszESRIProjection, 1,
-                            strlen(pszESRIProjection), fp ) );
+            oSRS.exportToWkt(&pszESRIProjection);
+            CPL_IGNORE_RET_VAL(VSIFWriteL(pszESRIProjection, 1,
+                                          strlen(pszESRIProjection), fp));
 
-            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-            CPLFree( pszESRIProjection );
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+            CPLFree(pszESRIProjection);
         }
         else
         {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Unable to create file %s.\n", pszPrjFilename );
+            CPLError(CE_Failure, CPLE_FileIO, "Unable to create file %s.\n",
+                     pszPrjFilename);
         }
-        CPLFree( pszDirname );
-        CPLFree( pszBasename );
-        CPLFree( pszPrjFilename );
+        CPLFree(pszDirname);
+        CPLFree(pszBasename);
+        CPLFree(pszPrjFilename);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxiliary pam information.         */
-/* -------------------------------------------------------------------- */
+    // Re-open dataset, and copy any auxiliary pam information.
 
-    /* If writing to stdout, we can't reopen it, so return */
-    /* a fake dataset to make the caller happy */
+    // If writing to stdout, we can't reopen it, so return
+    // a fake dataset to make the caller happy.
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    GDALPamDataset* poDS =
-        reinterpret_cast<GDALPamDataset *>( GDALOpen(pszFilename, GA_ReadOnly) );
+    GDALPamDataset *poDS =
+        reinterpret_cast<GDALPamDataset *>(GDALOpen(pszFilename, GA_ReadOnly));
     CPLPopErrorHandler();
     if (poDS)
     {
-        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+        poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);
         return poDS;
     }
 
     CPLErrorReset();
 
-    AAIGDataset* poAAIG_DS = new AAIGDataset();
+    AAIGDataset *poAAIG_DS = new AAIGDataset();
     poAAIG_DS->nRasterXSize = nXSize;
     poAAIG_DS->nRasterYSize = nYSize;
     poAAIG_DS->nBands = 1;
-    poAAIG_DS->SetBand( 1, new AAIGRasterBand( poAAIG_DS, 1 ) );
+    poAAIG_DS->SetBand(1, new AAIGRasterBand(poAAIG_DS, 1));
     return poAAIG_DS;
 }
 
@@ -1215,7 +1166,7 @@ GDALDataset * AAIGDataset::CreateCopy(
 /*                              OSR_GDS()                               */
 /************************************************************************/
 
-static CPLString OSR_GDS( char **papszNV, const char * pszField,
+static CPLString OSR_GDS( char **papszNV, const char *pszField,
                           const char *pszDefaultValue )
 
 {
@@ -1240,7 +1191,7 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
         else
             osResult = pszDefaultValue;
 
-        CSLDestroy( papszTokens );
+        CSLDestroy(papszTokens);
         return osResult;
     }
 }
@@ -1252,41 +1203,40 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
 void GDALRegister_AAIGrid()
 
 {
-    if( GDALGetDriverByName( "AAIGrid" ) != NULL )
+    if( GDALGetDriverByName("AAIGrid") != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "AAIGrid" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Arc/Info ASCII Grid" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#AAIGrid" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "asc" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte UInt16 Int16 Int32 Float32" );
+    poDriver->SetDescription("AAIGrid");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Arc/Info ASCII Grid");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_various.html#AAIGrid");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "asc");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
+                              "Byte UInt16 Int16 Int32 Float32");
 
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
 "   <Option name='FORCE_CELLSIZE' type='boolean' description='Force use of CELLSIZE, default is FALSE.'/>\n"
 "   <Option name='DECIMAL_PRECISION' type='int' description='Number of decimal when writing floating-point numbers(%f).'/>\n"
 "   <Option name='SIGNIFICANT_DIGITS' type='int' description='Number of significant digits when writing floating-point numbers(%g).'/>\n"
-"</CreationOptionList>\n" );
-    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"</CreationOptionList>\n");
+    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionLists>\n"
 "   <Option name='DATATYPE' type='string-select' description='Data type to be used.'>\n"
 "       <Value>Int32</Value>\n"
 "       <Value>Float32</Value>\n"
 "       <Value>Float64</Value>\n"
 "   </Option>\n"
-"</OpenOptionLists>\n" );
+"</OpenOptionLists>\n");
 
     poDriver->pfnOpen = AAIGDataset::Open;
     poDriver->pfnIdentify = AAIGDataset::Identify;
     poDriver->pfnCreateCopy = AAIGDataset::CreateCopy;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
 
 /************************************************************************/
@@ -1296,21 +1246,21 @@ void GDALRegister_AAIGrid()
 void GDALRegister_GRASSASCIIGrid()
 
 {
-    if( GDALGetDriverByName( "GRASSASCIIGrid" ) != NULL )
+    if( GDALGetDriverByName("GRASSASCIIGrid") != NULL )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "GRASSASCIIGrid" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GRASS ASCII Grid" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#GRASSASCIIGrid" );
+    poDriver->SetDescription("GRASSASCIIGrid");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "GRASS ASCII Grid");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
+                              "frmt_various.html#GRASSASCIIGrid");
 
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = GRASSASCIIDataset::Open;
     poDriver->pfnIdentify = GRASSASCIIDataset::Identify;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
