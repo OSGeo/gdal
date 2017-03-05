@@ -103,17 +103,17 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                    void *pImage )
 
 {
-    AAIGDataset *poODS = reinterpret_cast<AAIGDataset *>(poDS);
+    AAIGDataset *poODS = static_cast<AAIGDataset *>(poDS);
 
-    if( nBlockYOff < 0 || nBlockYOff > poODS->nRasterYSize - 1
-        || nBlockXOff != 0 || panLineOffset == NULL || poODS->fp == NULL )
+    if( nBlockYOff < 0 || nBlockYOff > poODS->nRasterYSize - 1 ||
+        nBlockXOff != 0 || panLineOffset == NULL || poODS->fp == NULL )
         return CE_Failure;
 
     if( panLineOffset[nBlockYOff] == 0 )
     {
         for( int iPrevLine = 1; iPrevLine <= nBlockYOff; iPrevLine++ )
             if( panLineOffset[iPrevLine] == 0 )
-                IReadBlock( nBlockXOff, iPrevLine - 1, NULL );
+                IReadBlock(nBlockXOff, iPrevLine - 1, NULL);
     }
 
     if( panLineOffset[nBlockYOff] == 0 )
@@ -130,7 +130,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     for( int iPixel = 0; iPixel < poODS->nRasterXSize; )
     {
         // Suck up any pre-white space.
-        char chNext;
+        char chNext = '\0';
         do {
             chNext = poODS->Getc();
         } while( isspace(static_cast<unsigned char>(chNext)) );
@@ -189,7 +189,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 double AAIGRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
-    AAIGDataset *poODS = reinterpret_cast<AAIGDataset *>(poDS);
+    AAIGDataset *poODS = static_cast<AAIGDataset *>(poDS);
 
     if( pbSuccess )
         *pbSuccess = poODS->bNoDataSet;
@@ -204,7 +204,7 @@ double AAIGRasterBand::GetNoDataValue( int *pbSuccess )
 CPLErr AAIGRasterBand::SetNoDataValue( double dfNoData )
 
 {
-    AAIGDataset *poODS = reinterpret_cast<AAIGDataset *>(poDS);
+    AAIGDataset *poODS = static_cast<AAIGDataset *>(poDS);
 
     poODS->bNoDataSet = true;
     poODS->dfNoDataValue = dfNoData;
@@ -289,7 +289,7 @@ int AAIGDataset::Seek( GUIntBig nNewOffset )
 char AAIGDataset::Getc()
 
 {
-    if( nOffsetInBuffer < (int) sizeof(achReadBuf) )
+    if( nOffsetInBuffer < static_cast<int>(sizeof(achReadBuf)) )
         return achReadBuf[nOffsetInBuffer++];
 
     nBufferOffset = VSIFTellL(fp);
@@ -507,7 +507,8 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
         }
         if( eDataType == GDT_Float32 )
         {
-            dfNoDataValue = (double)(float)dfNoDataValue;
+            dfNoDataValue =
+                static_cast<double>(static_cast<float>(dfNoDataValue));
         }
     }
 
@@ -520,7 +521,7 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *GRASSASCIIDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *GRASSASCIIDataset::Open( GDALOpenInfo *poOpenInfo )
 {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // During fuzzing, do not use Identify to reject crazy content.
@@ -592,7 +593,7 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
     if( (i = CSLFindString(papszTokens, "null")) >= 0 &&
         i + 1 < nTokens)
     {
-        const char* pszNoData = papszTokens[i + 1];
+        const char *pszNoData = papszTokens[i + 1];
 
         bNoDataSet = true;
         dfNoDataValue = CPLAtofM(pszNoData);
@@ -678,7 +679,6 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
     }
 
     // Open file with large file API.
-
     poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "r");
     if( poDS->fp == NULL )
     {
@@ -697,7 +697,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
         if( poOpenInfo->pabyHeader[i] == '\0' )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Couldn't find data values in ASCII Grid file.\n");
+                     "Couldn't find data values in ASCII Grid file.");
             delete poDS;
             return NULL;
         }
@@ -719,11 +719,11 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
         }
     }
 
-
     // Recognize the type of data.
     CPLAssert(NULL != poDS->fp);
 
-    if( pszDataType == NULL && poDS->eDataType != GDT_Float32 && poDS->eDataType != GDT_Float64)
+    if( pszDataType == NULL &&
+        poDS->eDataType != GDT_Float32 && poDS->eDataType != GDT_Float64)
     {
         // Allocate 100K chunk + 1 extra byte for NULL character.
         const size_t nChunkSize = 1024 * 100;
@@ -803,7 +803,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
             // If geographic values are in seconds, we must transform.
             // Is there a code for minutes too?
             if( oSRS.IsGeographic() &&
-                EQUAL(OSR_GDS( poDS->papszPrj, "Units", ""), "DS") )
+                EQUAL(OSR_GDS(poDS->papszPrj, "Units", ""), "DS") )
             {
                 poDS->adfGeoTransform[0] /= 3600.0;
                 poDS->adfGeoTransform[1] /= 3600.0;
@@ -827,7 +827,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
 
     // Check for external overviews.
     poDS->oOvManager.Initialize(
-        poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
+        poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles());
 
     return poDS;
 }
@@ -867,7 +867,7 @@ GDALDataset * AAIGDataset::CreateCopy(
     if( nBands != 1 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "AAIG driver doesn't support %d bands.  Must be 1 band.\n",
+                 "AAIG driver doesn't support %d bands.  Must be 1 band.",
                  nBands);
 
         return NULL;
@@ -881,7 +881,7 @@ GDALDataset * AAIGDataset::CreateCopy(
     if( fpImage == NULL )
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Unable to create file %s.\n",
+                 "Unable to create file %s.",
                  pszFilename);
         return NULL;
     }
@@ -983,7 +983,7 @@ GDALDataset * AAIGDataset::CreateCopy(
         snprintf(szHeader + strlen(szHeader),
                  sizeof(szHeader) - strlen(szHeader), "%s", "NODATA_value ");
         if( bReadAsInt )
-            snprintf(szHeader+strlen(szHeader),
+            snprintf(szHeader + strlen(szHeader),
                      sizeof(szHeader) - strlen(szHeader), "%d",
                      static_cast<int>(dfNoData));
         else
@@ -1001,16 +1001,17 @@ GDALDataset * AAIGDataset::CreateCopy(
     }
 
     // Loop over image, copying image data.
-    int *panScanline = NULL;
-    double *padfScanline = NULL;
 
     // Write scanlines to output file
-    if (bReadAsInt)
-        panScanline = static_cast<int *>(
-            CPLMalloc(nXSize * GDALGetDataTypeSize(GDT_Int32) / 8));
-    else
-        padfScanline = static_cast<double *>(
-            CPLMalloc(nXSize * GDALGetDataTypeSize(GDT_Float64) / 8));
+    int *panScanline = bReadAsInt
+                           ? static_cast<int *>(CPLMalloc(
+                                 nXSize * GDALGetDataTypeSizeBytes(GDT_Int32)))
+                           : NULL;
+
+    double *padfScanline =
+        bReadAsInt ? NULL
+                   : static_cast<double *>(CPLMalloc(
+                         nXSize * GDALGetDataTypeSizeBytes(GDT_Float64)));
 
     CPLErr eErr = CE_None;
 
@@ -1039,7 +1040,7 @@ GDALDataset * AAIGDataset::CreateCopy(
                     {
                         eErr = CE_Failure;
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Write failed, disk full?\n");
+                                 "Write failed, disk full?");
                         break;
                     }
                     osBuf = "";
@@ -1072,12 +1073,12 @@ GDALDataset * AAIGDataset::CreateCopy(
                 osBuf += szHeader;
                 if( (iPixel & 1023) == 0 || iPixel == nXSize - 1 )
                 {
-                    if ( VSIFWriteL(osBuf, (int)osBuf.size(), 1,
-                                    fpImage) != 1 )
+                  if ( VSIFWriteL(osBuf, static_cast<int>(osBuf.size()), 1,
+                                  fpImage) != 1 )
                     {
                         eErr = CE_Failure;
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Write failed, disk full?\n");
+                                 "Write failed, disk full?");
                         break;
                     }
                     osBuf = "";
@@ -1130,7 +1131,7 @@ GDALDataset * AAIGDataset::CreateCopy(
         }
         else
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Unable to create file %s.\n",
+            CPLError(CE_Failure, CPLE_FileIO, "Unable to create file %s.",
                      pszPrjFilename);
         }
         CPLFree(pszDirname);
