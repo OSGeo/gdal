@@ -583,6 +583,49 @@ def ogr_gpkg_12():
         return 'fail'
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(
+        'SELECT '
+        'CAST(fid AS INTEGER) AS FID, '
+        'CAST(fid AS INTEGER) AS FID, '
+        '_rowid_ ,'
+        'CAST(geom AS BLOB) AS GEOM, '
+        'CAST(geom AS BLOB) AS GEOM, '
+        'CAST(fld_integer AS INTEGER) AS FLD_INTEGER, '
+        'CAST(fld_integer AS INTEGER) AS FLD_INTEGER, '
+        'CAST(fld_string AS TEXT) AS FLD_STRING, '
+        'CAST(fld_real AS REAL) AS FLD_REAL '
+        'FROM tbl_linestring_renamed')
+    if sql_lyr.GetFIDColumn() != 'FID':
+        gdaltest.post_reason('fail')
+        print(sql_lyr.GetFIDColumn())
+        return 'fail'
+    if sql_lyr.GetGeometryColumn() != 'GEOM':
+        gdaltest.post_reason('fail')
+        print(sql_lyr.GetGeometryColumn())
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldCount() != 3:
+        gdaltest.post_reason('fail')
+        print(sql_lyr.GetLayerDefn().GetFieldCount())
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'FLD_INTEGER':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(1).GetName() != 'FLD_STRING':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(2).GetName() != 'FLD_REAL':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTReal:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('SELECT * FROM tbl_linestring_renamed WHERE 0=1')
     feat = sql_lyr.GetNextFeature()
@@ -951,6 +994,25 @@ def ogr_gpkg_15():
         return 'fail'
     feat = None
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    has_spatialite = False
+    with gdaltest.error_handler():
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT spatialite_version()")
+        if sql_lyr:
+            has_spatialite = True
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+    if has_spatialite:
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(
+            "SELECT ST_Buffer(geom, 0) FROM tbl_linestring_renamed")
+        if sql_lyr.GetGeomType() != ogr.wkbPolygon:
+            gdaltest.post_reason('fail')
+            print(sql_lyr.GetGeomType())
+            return 'fail'
+        if sql_lyr.GetSpatialRef().ExportToWkt().find('32631') < 0:
+            gdaltest.post_reason('fail')
+            print(sql_lyr.GetSpatialRef())
+            return 'fail'
+        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     gdaltest.gpkg_ds = None
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )

@@ -316,14 +316,18 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
 
-    int    nRawColumns = sqlite3_column_count( hStmt );
+    const int    nRawColumns = sqlite3_column_count( hStmt );
 
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 
+    const bool bPromoteToInteger64 =
+        CPLTestBool(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE"));
+
     for( int iCol = 0; iCol < nRawColumns; iCol++ )
     {
-        OGRFieldDefn    oField( OGRSQLiteParamsUnquote(sqlite3_column_name( hStmt, iCol )),
-                                OFTString );
+        OGRFieldDefn    oField(
+            OGRSQLiteParamsUnquote(sqlite3_column_name( hStmt, iCol )),
+            OFTString );
 
         // In some cases, particularly when there is a real name for
         // the primary key/_rowid_ column we will end up getting the
@@ -331,14 +335,8 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         if( m_poFeatureDefn->GetFieldIndex( oField.GetNameRef() ) != -1 )
             continue;
 
-        if( EQUAL(oField.GetNameRef(), "FID") )
-        {
-            CPLFree(m_pszFidColumn);
-            m_pszFidColumn = CPLStrdup(oField.GetNameRef());
-            iFIDCol = iCol;
-        }
-
-        if( m_pszFidColumn != NULL && EQUAL(m_pszFidColumn, oField.GetNameRef()))
+        if( m_pszFidColumn != NULL && EQUAL(m_pszFidColumn,
+                                            oField.GetNameRef()) )
             continue;
 
         // The rowid is for internal use, not a real column.
@@ -348,77 +346,128 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         // this will avoid the old geom field to appear when running something
         // like "select st_buffer(geom,5) as geom, * from my_layer"
         if( m_poFeatureDefn->GetGeomFieldCount() &&
-            EQUAL(oField.GetNameRef(), m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()) )
+            EQUAL(oField.GetNameRef(),
+                  m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()) )
+        {
             continue;
+        }
 
-        int nColType = sqlite3_column_type( hStmt, iCol );
+
+#ifdef SQLITE_HAS_COLUMN_METADATA
+        const char* pszTableName = sqlite3_column_table_name( hStmt, iCol );
+        const char* pszOriginName = sqlite3_column_origin_name( hStmt, iCol );
+        if( pszTableName != NULL && pszOriginName != NULL )
+        {
+            OGRLayer* poLayer = m_poDS->GetLayerByName(pszTableName);
+            if( poLayer != NULL )
+            {
+                if( m_poFeatureDefn->GetGeomFieldCount() == 0 &&
+                    EQUAL(pszOriginName, poLayer->GetGeometryColumn()) )
+                {
+                    OGRGeomFieldDefn oGeomField(
+                            poLayer->GetLayerDefn()->GetGeomFieldDefn(0));
+                    oGeomField.SetName( oField.GetNameRef() );
+                    m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
+                    iGeomCol = iCol;
+                    continue;
+                }
+                else if( EQUAL(pszOriginName, poLayer->GetFIDColumn()) )
+                {
+                    CPLFree(m_pszFidColumn);
+                    m_pszFidColumn = CPLStrdup(oField.GetNameRef());
+                    iFIDCol = iCol;
+                    continue;
+                }
+                int nSrcIdx = poLayer->GetLayerDefn()->GetFieldIndex(
+                                                        oField.GetNameRef());
+                if( nSrcIdx >= 0 )
+                {
+                    OGRFieldDefn* poSrcField =
+                            poLayer->GetLayerDefn()->GetFieldDefn(nSrcIdx);
+                    oField.SetType( poSrcField->GetType() );
+                    oField.SetSubType( poSrcField->GetSubType() );
+                    oField.SetWidth( poSrcField->GetWidth() );
+                    oField.SetPrecision( poSrcField->GetPrecision() );
+                    m_poFeatureDefn->AddFieldDefn( &oField );
+                    panFieldOrdinals[
+                            m_poFeatureDefn->GetFieldCount() - 1] = iCol;
+                    continue;
+                }
+            }
+        }
+#endif
+
+        const int nColType = sqlite3_column_type( hStmt, iCol );
+        if( m_pszFidColumn == NULL && nColType == SQLITE_INTEGER &&
+            EQUAL(oField.GetNameRef(), "FID") )
+        {
+            m_pszFidColumn = CPLStrdup(oField.GetNameRef());
+            iFIDCol = iCol;
+            continue;
+        }
+
         const char * pszDeclType = sqlite3_column_decltype(hStmt, iCol);
 
         // Recognize a geometry column from trying to build the geometry
-        // Useful for OGRSQLiteSelectLayer
-        if( nColType == SQLITE_BLOB && m_poFeatureDefn->GetGeomFieldCount() == 0 )
+        if( nColType == SQLITE_BLOB &&
+            m_poFeatureDefn->GetGeomFieldCount() == 0 )
         {
             const int nBytes = sqlite3_column_bytes( hStmt, iCol );
             if( nBytes >= 8 )
             {
                 // coverity[tainted_data_return]
-                const GByte* pabyGpkg = (const GByte*)sqlite3_column_blob( hStmt, iCol  );
+                const GByte* pabyGpkg =
+                        (const GByte*)sqlite3_column_blob( hStmt, iCol  );
                 GPkgHeader oHeader;
                 OGRGeometry* poGeom = NULL;
                 int nSRID = 0;
-                if( GPkgHeaderFromWKB(pabyGpkg, nBytes, &oHeader) == OGRERR_NONE &&
-                    (poGeom = GPkgGeometryToOGR(pabyGpkg, nBytes, NULL)) != NULL )
+
+                if( GPkgHeaderFromWKB(pabyGpkg, nBytes, &oHeader) ==
+                                                                OGRERR_NONE )
                 {
-                    OGRGeomFieldDefn oGeomField(oField.GetNameRef(), wkbUnknown);
+                    poGeom = GPkgGeometryToOGR(pabyGpkg, nBytes, NULL);
+                    nSRID = oHeader.iSrsId;
+                }
+                else
+                {
+                    // Try also spatialite geometry blobs
+                    if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
+                          pabyGpkg, nBytes, &poGeom, &nSRID ) != OGRERR_NONE )
+                    {
+                        delete poGeom;
+                        poGeom = NULL;
+                    }
+                }
+
+                if( poGeom )
+                {
+                    OGRGeomFieldDefn oGeomField(oField.GetNameRef(),
+                                                wkbUnknown);
 
                     /* Read the SRS */
-                    OGRSpatialReference *poSRS = m_poDS->GetSpatialRef(oHeader.iSrsId);
+                    OGRSpatialReference *poSRS =
+                                        m_poDS->GetSpatialRef(nSRID);
                     if ( poSRS )
                     {
                         oGeomField.SetSpatialRef(poSRS);
                         poSRS->Dereference();
                     }
 
-                    OGRwkbGeometryType eGeomType = wkbUnknown;
+                    OGRwkbGeometryType eGeomType = poGeom->getGeometryType();
                     if( pszDeclType != NULL )
                     {
-                        eGeomType = poGeom->getGeometryType();
-                        oGeomField.SetType( eGeomType );
-                    }
-                    delete poGeom;
-                    poGeom = NULL;
-
-#ifdef SQLITE_HAS_COLUMN_METADATA
-                    const char* pszTableName = sqlite3_column_table_name( hStmt, iCol );
-                    if( oGeomField.GetType() == wkbUnknown && pszTableName != NULL )
-                    {
-                        OGRGeoPackageLayer* poLayer = (OGRGeoPackageLayer*)
-                                        m_poDS->GetLayerByName(pszTableName);
-                        if( poLayer != NULL && poLayer->GetLayerDefn()->GetGeomFieldCount() > 0)
+                        OGRwkbGeometryType eDeclaredGeomType =
+                            GPkgGeometryTypeToWKB(pszDeclType, false, false);
+                        if( eDeclaredGeomType != wkbUnknown )
                         {
-                            oGeomField.SetType( poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->GetType() );
+                            OGR_GT_SetModifier(eDeclaredGeomType,
+                                               OGR_GT_HasZ(eGeomType),
+                                               OGR_GT_HasM(eGeomType));
+                            eGeomType = eDeclaredGeomType;
                         }
                     }
-#endif
+                    oGeomField.SetType( eGeomType );
 
-                    m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
-                    iGeomCol = iCol;
-                    continue;
-                }
-
-                // Try also spatialite geometry blobs
-                else if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyGpkg, nBytes,
-                                                                   &poGeom, &nSRID ) == OGRERR_NONE )
-                {
-                    OGRGeomFieldDefn oGeomField(oField.GetNameRef(), wkbUnknown);
-
-                    /* Read the SRS */
-                    OGRSpatialReference *poSRS = m_poDS->GetSpatialRef(nSRID);
-                    if ( poSRS )
-                    {
-                        oGeomField.SetSpatialRef(poSRS);
-                        poSRS->Dereference();
-                    }
                     delete poGeom;
                     poGeom = NULL;
 
@@ -426,17 +475,13 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                     iGeomCol = iCol;
                     continue;
                 }
-                // Unlikely to have poGeom be valid, but just in case, check
-                // if we need to delete it.
-                if (poGeom != NULL)
-                    delete poGeom;
             }
         }
 
         switch( nColType )
         {
           case SQLITE_INTEGER:
-            if( CPLTestBool(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE")) )
+            if( bPromoteToInteger64 )
                 oField.SetType( OFTInteger64 );
             else
             {
