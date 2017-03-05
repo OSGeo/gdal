@@ -734,7 +734,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "File has more than %d vector tables. "
-                     "Limiting to first %d (can be overriden with "
+                     "Limiting to first %d (can be overridden with "
                      "OGR_TABLE_LIMIT config option)",
                      nTableLimit, nTableLimit);
             oResult.nRowCount = nTableLimit;
@@ -1059,7 +1059,7 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
     if( !ComputeTileAndPixelShifts() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Overflow occured in ComputeTileAndPixelShifts()");
+                 "Overflow occurred in ComputeTileAndPixelShifts()");
         return false;
     }
 
@@ -1679,7 +1679,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     if( !ComputeTileAndPixelShifts() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Overflow occured in ComputeTileAndPixelShifts()");
+                 "Overflow occurred in ComputeTileAndPixelShifts()");
         return CE_Failure;
     };
 

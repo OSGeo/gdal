@@ -1352,21 +1352,21 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    # Overflow occured in ComputeTileAndPixelShifts()
+    # Overflow occurred in ComputeTileAndPixelShifts()
     with gdaltest.error_handler():
         ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['MINX=-1e12', 'MAXX=-0.9999e12'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Overflow occured in ComputeTileAndPixelShifts()
+    # Overflow occurred in ComputeTileAndPixelShifts()
     with gdaltest.error_handler():
         ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['MINY=-1e12', 'MAXY=-0.9999e12'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Overflow occured in ComputeTileAndPixelShifts()
+    # Overflow occurred in ComputeTileAndPixelShifts()
     gdal.Translate('/vsimem/tmp.gpkg', 'data/byte.tif', format = 'GPKG')
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', gdal.OF_UPDATE)
     ds.ExecuteSQL('UPDATE gpkg_contents SET min_x=-1000000002000, max_x=-1000000000000')
