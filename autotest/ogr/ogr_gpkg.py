@@ -995,13 +995,19 @@ def ogr_gpkg_15():
     feat = None
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
-    has_spatialite = False
+    has_spatialite_4_3_or_later = False
     with gdaltest.error_handler():
         sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT spatialite_version()")
         if sql_lyr:
-            has_spatialite = True
+            f = sql_lyr.GetNextFeature()
+            version = f.GetField(0)
+            version = '.'.join(version.split('.')[0:2])
+            version = float(version)
+            if version >= 4.3:
+                has_spatialite_4_3_or_later = True
+                #print('Spatialite 4.3 or later found')
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
-    if has_spatialite:
+    if has_spatialite_4_3_or_later:
         sql_lyr = gdaltest.gpkg_ds.ExecuteSQL(
             "SELECT ST_Buffer(geom, 0) FROM tbl_linestring_renamed")
         if sql_lyr.GetGeomType() != ogr.wkbPolygon:
