@@ -136,8 +136,6 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
         }
 
         OGRFeature *poFeature = TranslateFeature(m_poQueryStatement);
-        if( poFeature == NULL )
-            return NULL;
 
         if( (m_poFilterGeom == NULL
             || FilterGeometry( poFeature->GetGeomFieldRef(m_iGeomFieldFilter) ) )

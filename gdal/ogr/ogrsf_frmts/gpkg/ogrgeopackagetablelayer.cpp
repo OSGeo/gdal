@@ -1766,7 +1766,7 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
     if ( err == SQLITE_ROW )
     {
         OGRFeature* poFeature = TranslateFeature(m_poQueryStatement);
-        if( poFeature && m_iFIDAsRegularColumnIndex >= 0 )
+        if( m_iFIDAsRegularColumnIndex >= 0 )
         {
             poFeature->SetField(m_iFIDAsRegularColumnIndex, poFeature->GetFID());
         }
