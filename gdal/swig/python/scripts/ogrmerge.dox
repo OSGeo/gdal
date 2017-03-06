@@ -39,7 +39,8 @@ layer into the target dataset
 input vector layers is appended into a single target layer. This assumes that
 the schema of those vector layers is more or less the same.
 
-Internally this generates a VRT file, and if the output format is not VRT,
+Internally this generates a <a href="drv_vrt.html">VRT</a> file,
+and if the output format is not VRT,
 final translation is done with ogr2ogr / gdal.VectorTranslate.
 So for advanced uses, output to VRT, potential manual editing of it and
 ogr2ogr can be done.
@@ -55,7 +56,7 @@ One or several input vector datasets. Required
 </dd>
 
 <dt> <b>-f</b> <em>format</em>:</dt><dd>Select the output format.
-Defaults to "ESRI Shapefile"</dd>
+VRT is a valid output format as well. Defaults to "ESRI Shapefile"</dd>
 
 <dt> <b>-single</b>:</dt><dd>If specified, all input vector layers will be
 merged into a single one.</dd>
