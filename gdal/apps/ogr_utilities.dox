@@ -9,6 +9,7 @@ toolkit:
 <li> \ref ogr2ogr - Converts simple features data between file formats
 <li> \ref ogrtindex - Creates a tileindex
 <li> \ref ogrlineref - Create linear reference and provide some calculations using it
+<li> \ref ogrmerge - Merge several vector datasets into a single one
 </ul>
 
 \section ogr_utilities_switches General Command Line Switches
