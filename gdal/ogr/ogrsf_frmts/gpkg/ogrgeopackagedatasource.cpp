@@ -5056,7 +5056,7 @@ void OGRGeoPackageSTGeometryType(sqlite3_context* pContext,
         }
     }
 
-    if( static_cast<size_t>(nBLOBLen) <= sHeader.nHeaderLen )
+    if( static_cast<size_t>(nBLOBLen) < sHeader.nHeaderLen + 5 )
     {
         sqlite3_result_null( pContext );
         return;

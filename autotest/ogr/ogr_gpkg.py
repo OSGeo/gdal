@@ -1039,6 +1039,17 @@ def ogr_gpkg_15():
         return 'fail'
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
+    # Invalid spatialite geometry: SRID=4326,MULTIPOINT EMPTY truncated
+    with gdaltest.error_handler():
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_Transform(x'0001E610000000000000000000000000000000000000000000000000000000000000000000007C04000000000000FE', 4326) FROM tbl_linestring_renamed")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+
     if osr_proj4.have_proj480():
         sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_Transform(geom, ST_SRID(geom)) FROM tbl_linestring_renamed")
         feat = sql_lyr.GetNextFeature()
@@ -1055,6 +1066,16 @@ def ogr_gpkg_15():
             feat.DumpReadable()
             return 'fail'
         gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+        # Spatialite geometry: SRID=4326,MULTIPOINT EMPTY
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_SRID(ST_Transform(x'0001E610000000000000000000000000000000000000000000000000000000000000000000007C0400000000000000FE', 4326)) FROM tbl_linestring_renamed")
+        feat = sql_lyr.GetNextFeature()
+        if feat.GetField(0) != 4326:
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            return 'fail'
+        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
 
     # Error case: less than 8 bytes
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_MinX(x'00')")
@@ -1077,9 +1098,49 @@ def ogr_gpkg_15():
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     # Error case: too short blob
-    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_GeometryType(x'4750000300000000')")
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_GeometryType(x'4750001100000000')")
     feat = sql_lyr.GetNextFeature()
     if feat.IsFieldSetAndNotNull(0):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Error case: too short blob
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_GeometryType(x'475000110000000001040000')")
+    feat = sql_lyr.GetNextFeature()
+    if feat.IsFieldSetAndNotNull(0):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Invalid geometry, but long enough for our purpose...
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_GeometryType(x'47500011000000000104000000')")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 'MULTIPOINT':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Spatialite geometry (MULTIPOINT EMPTY)
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_GeometryType(x'00010000000000000000000000000000000000000000000000000000000000000000000000007C0400000000000000FE')")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 'MULTIPOINT':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Spatialite geometry (MULTIPOINT EMPTY)
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_IsEmpty(x'00010000000000000000000000000000000000000000000000000000000000000000000000007C0400000000000000FE')")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 1:
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
