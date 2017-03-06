@@ -469,7 +469,8 @@ static void CSVIngest( const char *pszFilename )
     int iLine = 0;
     while( pszThisLine != NULL && iLine < nMaxLineCount )
     {
-        psTable->papszLines[iLine++] = pszThisLine;
+        if( pszThisLine[0] != '#' )
+            psTable->papszLines[iLine++] = pszThisLine;
         pszThisLine = CSVFindNextLine( pszThisLine );
     }
 
@@ -754,7 +755,8 @@ static bool CSVCompare( const char * pszFieldValue, const char * pszTarget,
     }
     else if( eCriteria == CC_Integer )
     {
-        return( atoi(pszFieldValue) == atoi(pszTarget) );
+        return( CPLGetValueType(pszFieldValue) == CPL_VALUE_INTEGER &&
+                atoi(pszFieldValue) == atoi(pszTarget) );
     }
 
     return false;
@@ -1049,7 +1051,7 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
 /* -------------------------------------------------------------------- */
     if( iKeyField >= 0
         && iKeyField < CSLCount(psTable->papszRecFields)
-        && CSVCompare(pszValue, psTable->papszRecFields[iKeyField], eCriteria)
+        && CSVCompare(psTable->papszRecFields[iKeyField], pszValue, eCriteria)
         && !psTable->bNonUniqueKey )
     {
         return psTable->papszRecFields;
