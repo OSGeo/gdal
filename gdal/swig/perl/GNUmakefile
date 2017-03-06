@@ -6,7 +6,7 @@ BINDING = perl
 
 SWIGDEFINES = -DPERL_CPAN_NAMESPACE
 
-SWIG_INCLUDES = ../include/perl/callback.i ../include/perl/confess.i ../include/perl/destroy.i ../include/perl/init.i
+SWIG_INCLUDES = ../include/perl/callback.i ../include/perl/confess.i ../include/perl/destroy.i ../include/perl/init.i ../include/perl/band.i
 
 include ../SWIGmake.base
 
@@ -65,4 +65,4 @@ veryclean: clean
 doc: .FORCE
 
 .FORCE:
-	perl parse-for-doxygen.pl > all.pm; doxygen; rm -f all.pm
+	perl parse-for-doxygen.pl > all.pm; doxygen-filter-perl all.pm >all.dox; doxygen; rm -f all.*

@@ -25,3 +25,8 @@ is_deeply(\@tile, [0,0,256,256], "As one tile.");
 @tile = $d->Tile($d->Extent(10,20,10,20));
 
 is_deeply(\@tile, [10,20,10,20], "Subtile.");
+
+eval {
+    $d = Geo::GDAL::Driver('MEM')->Create(Width => 12.3);
+};
+ok($@ =~ /^TypeError/, "Catch swig exceptions in error messages.");
