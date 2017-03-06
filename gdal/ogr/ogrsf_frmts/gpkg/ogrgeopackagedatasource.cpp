@@ -1856,7 +1856,7 @@ static int GetFloorPowerOfTwo(int n)
 CPLErr GDALGeoPackageDataset::IBuildOverviews(
                         const char * pszResampling,
                         int nOverviews, int * panOverviewList,
-                        int nBandsIn, CPL_UNUSED int * panBandList,
+                        int nBandsIn, int * /*panBandList*/,
                         GDALProgressFunc pfnProgress, void * pProgressData )
 {
     if( GetAccess() != GA_Update )
@@ -4892,7 +4892,7 @@ bool GDALGeoPackageDataset::HasDataColumnsTable()
 /************************************************************************/
 
 static bool OGRGeoPackageGetHeader( sqlite3_context* pContext,
-                                    CPL_UNUSED int argc,
+                                    int /*argc*/,
                                     sqlite3_value** argv,
                                     GPkgHeader* psHeader,
                                     bool bNeedExtent )
@@ -4904,9 +4904,26 @@ static bool OGRGeoPackageGetHeader( sqlite3_context* pContext,
     }
     int nBLOBLen = sqlite3_value_bytes (argv[0]);
     const GByte* pabyBLOB = (const GByte *) sqlite3_value_blob (argv[0]);
+
     if( nBLOBLen < 8 ||
         GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, psHeader) != OGRERR_NONE )
     {
+        bool bEmpty = false;
+        memset( psHeader, 0, sizeof(*psHeader) );
+        if( OGRSQLiteLayer::GetSpatialiteGeometryHeader(
+                                        pabyBLOB, nBLOBLen,
+                                        &(psHeader->iSrsId),
+                                        NULL,
+                                        &bEmpty,
+                                        &(psHeader->MinX),
+                                        &(psHeader->MinY),
+                                        &(psHeader->MaxX),
+                                        &(psHeader->MaxY) ) == OGRERR_NONE )
+        {
+            psHeader->bEmpty = bEmpty;
+            return true;
+        }
+
         sqlite3_result_null(pContext);
         return false;
     }
@@ -5006,20 +5023,45 @@ void OGRGeoPackageSTIsEmpty(sqlite3_context* pContext,
 
 static
 void OGRGeoPackageSTGeometryType(sqlite3_context* pContext,
-                        int argc, sqlite3_value** argv)
+                                 int /*argc*/, sqlite3_value** argv)
 {
     GPkgHeader sHeader;
-    if( !OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false) )
-        return;
 
     int nBLOBLen = sqlite3_value_bytes (argv[0]);
     const GByte* pabyBLOB = (const GByte *) sqlite3_value_blob (argv[0]);
     OGRwkbGeometryType eGeometryType;
+
+    if( nBLOBLen < 8 ||
+        GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, &sHeader) != OGRERR_NONE )
+    {
+        if( OGRSQLiteLayer::GetSpatialiteGeometryHeader(
+                                        pabyBLOB, nBLOBLen,
+                                        NULL,
+                                        &eGeometryType,
+                                        NULL,
+                                        NULL,
+                                        NULL,
+                                        NULL,
+                                        NULL ) == OGRERR_NONE )
+        {
+            sqlite3_result_text( pContext,
+                                 OGRToOGCGeomType(eGeometryType),
+                                 -1, SQLITE_TRANSIENT );
+            return;
+        }
+        else
+        {
+            sqlite3_result_null( pContext );
+            return;
+        }
+    }
+
     if( static_cast<size_t>(nBLOBLen) <= sHeader.nHeaderLen )
     {
         sqlite3_result_null( pContext );
         return;
     }
+
     OGRErr err = OGRReadWKBGeometryType( (GByte*)pabyBLOB + sHeader.nHeaderLen,
                                          wkbVariantIso, &eGeometryType );
     if( err != OGRERR_NONE )
@@ -5034,7 +5076,7 @@ void OGRGeoPackageSTGeometryType(sqlite3_context* pContext,
 
 static
 void OGRGeoPackageGPKGIsAssignable(sqlite3_context* pContext,
-                                   CPL_UNUSED int argc,
+                                   int /*argc*/,
                                    sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
@@ -5066,12 +5108,155 @@ void OGRGeoPackageSTSRID(sqlite3_context* pContext,
 }
 
 /************************************************************************/
+/*                      OGRGeoPackageTransform()                        */
+/************************************************************************/
+
+static
+void OGRGeoPackageTransform(sqlite3_context* pContext,
+                            int argc,
+                            sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_BLOB ||
+        sqlite3_value_type (argv[1]) != SQLITE_INTEGER )
+    {
+        sqlite3_result_blob(pContext, NULL, 0, NULL);
+        return;
+    }
+
+    const int nBLOBLen = sqlite3_value_bytes (argv[0]);
+    const GByte* pabyBLOB =
+                reinterpret_cast<const GByte*>(sqlite3_value_blob (argv[0]));
+    GPkgHeader sHeader;
+    if( !OGRGeoPackageGetHeader( pContext, argc, argv, &sHeader, false) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid geometry");
+        sqlite3_result_blob(pContext, NULL, 0, NULL);
+        return;
+    }
+
+    GDALGeoPackageDataset* poDS = static_cast<GDALGeoPackageDataset*>(
+                                                sqlite3_user_data(pContext));
+
+    OGRSpatialReference* poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId);
+    if( poSrcSRS == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "SRID set on geometry (%d) is invalid", sHeader.iSrsId);
+        sqlite3_result_blob(pContext, NULL, 0, NULL);
+        return;
+    }
+
+    int nDestSRID = sqlite3_value_int (argv[1]);
+    OGRSpatialReference* poDstSRS = poDS->GetSpatialRef(nDestSRID);
+    if( poDstSRS == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Target SRID (%d) is invalid", nDestSRID);
+        sqlite3_result_blob(pContext, NULL, 0, NULL);
+        delete poSrcSRS;
+        return;
+    }
+
+    OGRGeometry* poGeom = GPkgGeometryToOGR(pabyBLOB, nBLOBLen, NULL);
+    if( poGeom == NULL )
+    {
+        // Try also spatialite geometry blobs
+        if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyBLOB, nBLOBLen,
+                                                    &poGeom ) != OGRERR_NONE )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid geometry");
+            sqlite3_result_blob(pContext, NULL, 0, NULL);
+            delete poSrcSRS;
+            delete poDstSRS;
+            return;
+        }
+    }
+
+    poGeom->assignSpatialReference(poSrcSRS);
+    if( poGeom->transformTo(poDstSRS) != OGRERR_NONE )
+    {
+        sqlite3_result_blob(pContext, NULL, 0, NULL);
+        poSrcSRS->Release();
+        poDstSRS->Release();
+        return;
+    }
+
+    size_t nBLOBDestLen = 0;
+    GByte* pabyDestBLOB =
+                    GPkgGeometryFromOGR(poGeom, nDestSRID, &nBLOBDestLen);
+    sqlite3_result_blob(pContext, pabyDestBLOB,
+                        static_cast<int>(nBLOBDestLen), VSIFree);
+
+    poSrcSRS->Release();
+    poDstSRS->Release();
+    delete poGeom;
+}
+
+/************************************************************************/
+/*                      OGRGeoPackageSridFromAuthCRS()                  */
+/************************************************************************/
+
+static
+void OGRGeoPackageSridFromAuthCRS(sqlite3_context* pContext,
+                                  int /*argc*/,
+                                  sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
+        sqlite3_value_type (argv[1]) != SQLITE_INTEGER )
+    {
+        sqlite3_result_int(pContext, -1);
+        return;
+    }
+
+    GDALGeoPackageDataset* poDS =
+            static_cast<GDALGeoPackageDataset*>(sqlite3_user_data(pContext));
+
+    char* pszSQL = sqlite3_mprintf(
+        "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
+        "lower(organization) = lower('%q') AND organization_coordsys_id = %d",
+        sqlite3_value_text( argv[0] ),
+        sqlite3_value_int( argv[1] ) );
+    OGRErr err = OGRERR_NONE;
+    int nSRSId = SQLGetInteger(poDS->GetDB(), pszSQL, &err);
+    if( err != OGRERR_NONE )
+        nSRSId = -1;
+    sqlite3_result_int(pContext, nSRSId);
+}
+
+/************************************************************************/
+/*                    OGRGeoPackageImportFromEPSG()                     */
+/************************************************************************/
+
+static
+void OGRGeoPackageImportFromEPSG(sqlite3_context* pContext,
+                                     int /*argc*/,
+                                     sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_INTEGER )
+    {
+        sqlite3_result_int( pContext, -1 );
+        return;
+    }
+
+    GDALGeoPackageDataset* poDS =
+            static_cast<GDALGeoPackageDataset*>(sqlite3_user_data(pContext));
+    OGRSpatialReference oSRS;
+    if( oSRS.importFromEPSG( sqlite3_value_int( argv[0] ) ) != OGRERR_NONE )
+    {
+        sqlite3_result_int( pContext, -1 );
+        return;
+    }
+
+    sqlite3_result_int( pContext,poDS->GetSrsId(&oSRS) );
+}
+
+/************************************************************************/
 /*                  OGRGeoPackageCreateSpatialIndex()                   */
 /************************************************************************/
 
 static
 void OGRGeoPackageCreateSpatialIndex(sqlite3_context* pContext,
-                                     CPL_UNUSED int argc,
+                                     int /*argc*/,
                                      sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
@@ -5108,7 +5293,7 @@ void OGRGeoPackageCreateSpatialIndex(sqlite3_context* pContext,
 
 static
 void OGRGeoPackageDisableSpatialIndex(sqlite3_context* pContext,
-                                      CPL_UNUSED int argc,
+                                      int /*argc*/,
                                       sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
@@ -5145,7 +5330,7 @@ void OGRGeoPackageDisableSpatialIndex(sqlite3_context* pContext,
 
 static
 void OGRGeoPackageHasSpatialIndex(sqlite3_context* pContext,
-                                  CPL_UNUSED int argc,
+                                  int /*argc*/,
                                   sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
@@ -5185,7 +5370,7 @@ void OGRGeoPackageHasSpatialIndex(sqlite3_context* pContext,
 
 static
 void GPKG_hstore_get_value(sqlite3_context* pContext,
-                           CPL_UNUSED int argc,
+                           int /*argc*/,
                            sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
@@ -5227,7 +5412,7 @@ static CPLString GPKG_GDAL_GetMemFileFromBlob(sqlite3_value** argv)
 
 static
 void GPKG_GDAL_GetMimeType(sqlite3_context* pContext,
-                           CPL_UNUSED int argc,
+                           int /*argc*/,
                            sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
@@ -5264,7 +5449,7 @@ void GPKG_GDAL_GetMimeType(sqlite3_context* pContext,
 
 static
 void GPKG_GDAL_GetBandCount(sqlite3_context* pContext,
-                           CPL_UNUSED int argc,
+                           int /*argc*/,
                            sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
@@ -5293,7 +5478,7 @@ void GPKG_GDAL_GetBandCount(sqlite3_context* pContext,
 
 static
 void GPKG_GDAL_HasColorTable(sqlite3_context* pContext,
-                             CPL_UNUSED int argc,
+                             int /*argc*/,
                              sqlite3_value** argv)
 {
     if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
@@ -5373,6 +5558,18 @@ bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
     // HSTORE functions
     sqlite3_create_function(hDB, "hstore_get_value", 2, SQLITE_ANY, NULL,
                             GPKG_hstore_get_value, NULL, NULL);
+
+    // Override a few Spatialite functions to work with gpkg_spatial_ref_sys
+    sqlite3_create_function(hDB, "ST_Transform", 2, SQLITE_ANY, this,
+                            OGRGeoPackageTransform, NULL, NULL);
+    sqlite3_create_function(hDB, "Transform", 2, SQLITE_ANY, this,
+                            OGRGeoPackageTransform, NULL, NULL);
+    sqlite3_create_function(hDB, "SridFromAuthCRS", 2, SQLITE_ANY, this,
+                            OGRGeoPackageSridFromAuthCRS, NULL, NULL);
+
+    // GDAL specific function
+    sqlite3_create_function(hDB, "ImportFromEPSG", 1, SQLITE_INTEGER, this,
+                            OGRGeoPackageImportFromEPSG, NULL, NULL);
 
     // Debug functions
     if( CPLTestBool(CPLGetConfigOption("GPKG_DEBUG", "FALSE")) )
