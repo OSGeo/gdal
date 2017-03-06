@@ -312,6 +312,15 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     virtual CPLString     GetSpatialWhere(CPL_UNUSED int iGeomCol,
                                           CPL_UNUSED OGRGeometry* poFilterGeom) override { return ""; }
 
+    static OGRErr       GetSpatialiteGeometryHeader( const GByte *pabyData,
+                                                    int nBytes,
+                                                    int* pnSRID,
+                                                    OGRwkbGeometryType* peType,
+                                                    bool* pbIsEmpty,
+                                                    double* pdfMinX,
+                                                    double* pdfMinY,
+                                                    double* pdfMaxX,
+                                                    double* pdfMaxY );
     static OGRErr       ImportSpatiaLiteGeometry( const GByte *, int,
                                                   OGRGeometry ** );
     static OGRErr       ImportSpatiaLiteGeometry( const GByte *, int,

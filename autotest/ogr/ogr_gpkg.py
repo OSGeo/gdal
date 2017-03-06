@@ -44,6 +44,8 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 import gdaltest
+sys.path.append( '../osr' )
+import osr_proj4
 
 ###############################################################################
 # Create a fresh database.
@@ -915,6 +917,144 @@ def ogr_gpkg_15():
             print(sql)
             gdaltest.post_reason('fail')
             return 'fail'
+
+    # NULL argument
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT SridFromAuthCRS(NULL, 4326)")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != -1:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # NULL argument
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT SridFromAuthCRS('epsg', NULL)")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != -1:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Existing entry
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT SridFromAuthCRS('epsg', 4326)")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 4326:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Non existing entry
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT SridFromAuthCRS('epsg', 1234)")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != -1:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # NULL argument
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ImportFromEPSG(NULL)")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != -1:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Existing entry in gpkg_spatial_ref_sys
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ImportFromEPSG(4326)")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 4326:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # New entry in gpkg_spatial_ref_sys
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ImportFromEPSG(32633)")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 32633:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Invalid code
+    with gdaltest.error_handler():
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ImportFromEPSG(0)")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != -1:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # NULL argument
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_Transform(NULL, 4326)")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Invalid geometry
+    with gdaltest.error_handler():
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_Transform(x'00', 4326)")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # NULL argument
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_Transform(geom, NULL) FROM tbl_linestring_renamed")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Invalid target SRID
+    with gdaltest.error_handler():
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_Transform(geom, 0) FROM tbl_linestring_renamed")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    # Invalid source SRID
+    with gdaltest.error_handler():
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_Transform(geom, 4326) FROM \"point-with-spi-and-dashes\"")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeometryRef() is not None:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+    if osr_proj4.have_proj480():
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_Transform(geom, ST_SRID(geom)) FROM tbl_linestring_renamed")
+        feat = sql_lyr.GetNextFeature()
+        if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (5 5,10 5,10 10,5 10)':
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            return 'fail'
+        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_SRID(ST_Transform(geom, 4326)) FROM tbl_linestring_renamed")
+        feat = sql_lyr.GetNextFeature()
+        if feat.GetField(0) != 4326:
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            return 'fail'
+        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     # Error case: less than 8 bytes
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_MinX(x'00')")

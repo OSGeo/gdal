@@ -184,8 +184,8 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             int iGpkgSize = sqlite3_column_bytes(hStmt, iGeomCol);
             // coverity[tainted_data_return]
             GByte *pabyGpkg = (GByte *)sqlite3_column_blob(hStmt, iGeomCol);
-            OGRGeometry *poGeom = GPkgGeometryToOGR(pabyGpkg, iGpkgSize, poSrs);
-            if ( ! poGeom )
+            OGRGeometry *poGeom = GPkgGeometryToOGR(pabyGpkg, iGpkgSize, NULL);
+            if ( poGeom == NULL )
             {
                 // Try also spatialite geometry blobs
                 if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyGpkg, iGpkgSize,
@@ -194,6 +194,8 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
                     CPLError( CE_Failure, CPLE_AppDefined, "Unable to read geometry");
                 }
             }
+            if( poGeom != NULL )
+                poGeom->assignSpatialReference(poSrs);
             poFeature->SetGeometryDirectly( poGeom );
         }
     }
