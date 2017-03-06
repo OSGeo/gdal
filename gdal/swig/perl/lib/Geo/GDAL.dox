@@ -1007,15 +1007,13 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 ## @method $DeleteNoDataValue()
 
 ## @method $NoDataValue($NoDataValue)
-# Remove no data value from this band.
-
-# @param NoDataValue [optional]
 # Get or set the "no data" value.
-# @note $band->NoDataValue(undef) sets the "no data" value to the
+# @param NoDataValue [optional]
+# @note $band->NoDataValue(undef) sets the NoData value to the
 # Posix floating point maximum. Use Geo::GDAL::Band::DeleteNoDataValue
-# to remove no data value from this band.
-# @return The "no data" value or undef in scalar context. An undef
-# value indicates that there is no no data value associated with this
+# to stop this band using a NoData value.
+# @return The NoData value or undef in scalar context. An undef
+# value indicates that there is no NoData value associated with this
 # band.
 
 ## @ignore GetUnitType
@@ -1041,6 +1039,23 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @return a list ($scale, $offset), the values are undefined if they
 # are not set.
 # @since version 1.9 of the bindings.
+
+## @method hashref ClassCounts($progress = undef, $progress_data = undef)
+# Compute the counts of cell values in the band.
+# @note This method is defined only for integer bands.
+# @note NoData values are counted similar to other values.
+# @return a reference to an anonymous hash, which contains the class
+# values as keys and the number of cells with that value as values.
+
+## @method Reclassify(hashref map, $progress = undef, $progress_data = undef)
+# Reclassify the cells in the band.
+# @note This method is defined only for integer bands.
+# @note NoData values are reclassified if explicitly specified in the
+# map. However, they are not reclassified to the default value, if one
+# is specified.
+# @param map A hash, which contains old class values as keys and new
+# class values as values. A special key '*' (star) can be used as default, to
+# act as a fallback new class value.
 
 ## @method ComputeRasterMinMax($approx_ok = 0)
 # @return arrayref MinMax = [min, max]
@@ -1274,7 +1289,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # - \a PerDataset: The mask band is shared between all bands on the dataset.
 # - \a Alpha: The mask band is actually an alpha band and may have values
 # other than 0 and 255.
-# - \a NoData: Indicates the mask is actually being generated from nodata values.
+# - \a NoData: Indicates the mask is actually being generated from NoData values.
 # (mutually exclusive of Alpha).
 
 ## @method CreateMaskBand(@flags)
@@ -1404,9 +1419,9 @@ buffer is used.
 # - \a Options Hash of options. Options are:
 #   - \a Values A list of cell values in this band to measure the distance from. If this option is not provided, the distance will be computed to non-zero pixel values. Currently pixel values are internally processed as integers.
 #   - \a DistUnits=PIXEL|GEO Indicates whether distances will be computed in cells or in georeferenced units. The default is pixel units. This also determines the interpretation of MaxDist.
-#   - \a MaxDist=n The maximum distance to search. Distances greater than this value will not be computed. Instead output cells will be set to a nodata value.
-#   - \a NoData=n The nodata value to use on the distance band for cells that are beyond MaxDist. If not provided, the distance band will be queried for a nodata value. If one is not found, 65535 will be used (255 if the type is Byte).
-#   - \a Use_Input_NoData=YES|NO If this option is set, the nodata value of this band will be respected. Leaving nodata cells in the input as nodata pixels in the distance raster.
+#   - \a MaxDist=n The maximum distance to search. Distances greater than this value will not be computed. Instead output cells will be set to a NoData value.
+#   - \a NoData=n The NoData value to use on the distance band for cells that are beyond MaxDist. If not provided, the distance band will be queried for a NoData value. If one is not found, 65535 will be used (255 if the type is Byte).
+#   - \a Use_Input_NoData=YES|NO If this option is set, the NoData value of this band will be respected. Leaving NoData cells in the input as NoData pixels in the distance raster.
 #   - \a Fixed_Buf_Val=n If this option is set, all cells within the MaxDist threshold are set to this value instead of the distance value.
 #   - \a DataType The data type for the result if it is not given.
 # - \a Progress Progress function.
