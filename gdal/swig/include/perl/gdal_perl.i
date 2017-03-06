@@ -28,8 +28,6 @@
 
 %include init.i
 
-%include band.i
-
 %init %{
   /* gdal_perl.i %init code */
   UseExceptions();
@@ -41,6 +39,8 @@
 %include callback.i
 %include confess.i
 %include cpl_exceptions.i
+
+%include band.i
 
 %rename (GetMetadata) GetMetadata_Dict;
 %ignore GetMetadata_List;

@@ -54,3 +54,14 @@ eval {
     $band->Reclassify({1 => 2, 2 => 3});
 };
 ok($@, "Reclassify works only on integer bands.");
+
+eval {
+    $c = $band->ClassCounts(sub {return 0});
+};
+ok($@, "Terminating ClassCounts raises an error.");
+
+eval {
+    $band->Reclassify({1 => 2, 2 => 3}, sub {return 0});
+};
+ok($@, "Terminating Reclassify raises an error.");
+

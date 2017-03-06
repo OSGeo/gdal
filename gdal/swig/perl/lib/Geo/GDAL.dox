@@ -1045,7 +1045,8 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @note This method is defined only for integer bands.
 # @note NoData values are counted similar to other values.
 # @return a reference to an anonymous hash, which contains the class
-# values as keys and the number of cells with that value as values.
+# values as keys and the number of cells with that value as values. If
+# the subroutine is user terminated an error is raised.
 
 ## @method Reclassify(hashref map, $progress = undef, $progress_data = undef)
 # Reclassify the cells in the band.
@@ -1053,6 +1054,8 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @note NoData values are reclassified if explicitly specified in the
 # map. However, they are not reclassified to the default value, if one
 # is specified.
+# @note If the subroutine is user terminated, already reclassified
+# cells will stay reclassified but an error is raised
 # @param map A hash, which contains old class values as keys and new
 # class values as values. A special key '*' (star) can be used as default, to
 # act as a fallback new class value.
