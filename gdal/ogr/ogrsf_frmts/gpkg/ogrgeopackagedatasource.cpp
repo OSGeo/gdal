@@ -5218,6 +5218,7 @@ void OGRGeoPackageSridFromAuthCRS(sqlite3_context* pContext,
         sqlite3_value_int( argv[1] ) );
     OGRErr err = OGRERR_NONE;
     int nSRSId = SQLGetInteger(poDS->GetDB(), pszSQL, &err);
+    sqlite3_free(pszSQL);
     if( err != OGRERR_NONE )
         nSRSId = -1;
     sqlite3_result_int(pContext, nSRSId);
