@@ -65,4 +65,4 @@ veryclean: clean
 doc: .FORCE
 
 .FORCE:
-	perl parse-for-doxygen.pl > all.pm; doxygen-filter-perl all.pm >all.dox; doxygen; rm -f all.*
+	perl parse-for-doxygen.pl > all.pm; doxygen; rm -f all.pm
