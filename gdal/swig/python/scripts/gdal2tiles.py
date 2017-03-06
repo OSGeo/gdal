@@ -464,6 +464,277 @@ class Zoomify(object):
                             "%s-%s-%s.%s" % (z, x, y, self.tileformat))
 
 
+def exit_with_error(message):
+    print("gdal2tiles: Error - %s" % message)
+    sys.exit(2)     # Status code 2 kept for backwards compatibility with the way OptionParser exits
+
+
+def generate_kml(tx, ty, tz, tileext, tilesize, tileswne, options, children=None, **args):
+    """
+    Template for the KML. Returns filled string.
+    """
+    if not children:
+        children = []
+
+    args['tx'], args['ty'], args['tz'] = tx, ty, tz
+    args['tileformat'] = tileext
+    if 'tilesize' not in args:
+        args['tilesize'] = tilesize
+
+    if 'minlodpixels' not in args:
+        args['minlodpixels'] = int(args['tilesize'] / 2)
+    if 'maxlodpixels' not in args:
+        args['maxlodpixels'] = int(args['tilesize'] * 8)
+    if children == []:
+        args['maxlodpixels'] = -1
+
+    if tx is None:
+        tilekml = False
+        args['title'] = options.title
+    else:
+        tilekml = True
+        args['title'] = "%d/%d/%d.kml" % (tz, tx, ty)
+        args['south'], args['west'], args['north'], args['east'] = tileswne(tx, ty, tz)
+
+    if tx == 0:
+        args['drawOrder'] = 2 * tz + 1
+    elif tx is not None:
+        args['drawOrder'] = 2 * tz
+    else:
+        args['drawOrder'] = 0
+
+    url = options.url
+    if not url:
+        if tilekml:
+            url = "../../"
+        else:
+            url = ""
+
+    s = """<?xml version="1.0" encoding="utf-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>%(title)s</name>
+    <description></description>
+    <Style>
+      <ListStyle id="hideChildren">
+        <listItemType>checkHideChildren</listItemType>
+      </ListStyle>
+    </Style>""" % args
+    if tilekml:
+        s += """
+    <Region>
+      <LatLonAltBox>
+        <north>%(north).14f</north>
+        <south>%(south).14f</south>
+        <east>%(east).14f</east>
+        <west>%(west).14f</west>
+      </LatLonAltBox>
+      <Lod>
+        <minLodPixels>%(minlodpixels)d</minLodPixels>
+        <maxLodPixels>%(maxlodpixels)d</maxLodPixels>
+      </Lod>
+    </Region>
+    <GroundOverlay>
+      <drawOrder>%(drawOrder)d</drawOrder>
+      <Icon>
+        <href>%(ty)d.%(tileformat)s</href>
+      </Icon>
+      <LatLonBox>
+        <north>%(north).14f</north>
+        <south>%(south).14f</south>
+        <east>%(east).14f</east>
+        <west>%(west).14f</west>
+      </LatLonBox>
+    </GroundOverlay>
+""" % args
+
+    for cx, cy, cz in children:
+        csouth, cwest, cnorth, ceast = tileswne(cx, cy, cz)
+        s += """
+    <NetworkLink>
+      <name>%d/%d/%d.%s</name>
+      <Region>
+        <LatLonAltBox>
+          <north>%.14f</north>
+          <south>%.14f</south>
+          <east>%.14f</east>
+          <west>%.14f</west>
+        </LatLonAltBox>
+        <Lod>
+          <minLodPixels>%d</minLodPixels>
+          <maxLodPixels>-1</maxLodPixels>
+        </Lod>
+      </Region>
+      <Link>
+        <href>%s%d/%d/%d.kml</href>
+        <viewRefreshMode>onRegion</viewRefreshMode>
+        <viewFormat/>
+      </Link>
+    </NetworkLink>
+        """ % (cz, cx, cy, args['tileformat'], cnorth, csouth, ceast, cwest,
+               args['minlodpixels'], url, cz, cx, cy)
+
+    s += """      </Document>
+</kml>
+    """
+    return s
+
+
+def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
+    """Scales down query dataset to the tile dataset"""
+
+    querysize = dsquery.RasterXSize
+    tilesize = dstile.RasterXSize
+    tilebands = dstile.RasterCount
+
+    if options.resampling == 'average':
+
+        # Function: gdal.RegenerateOverview()
+        for i in range(1, tilebands+1):
+            # Black border around NODATA
+            res = gdal.RegenerateOverview(dsquery.GetRasterBand(i), dstile.GetRasterBand(i),
+                                          'average')
+            if res != 0:
+                exit_with_error("RegenerateOverview() failed on %s, error %d" % (
+                    tilefilename, res))
+
+    elif options.resampling == 'antialias':
+
+        # Scaling by PIL (Python Imaging Library) - improved Lanczos
+        array = numpy.zeros((querysize, querysize, tilebands), numpy.uint8)
+        for i in range(tilebands):
+            array[:, :, i] = gdalarray.BandReadAsArray(dsquery.GetRasterBand(i+1),
+                                                       0, 0, querysize, querysize)
+        im = Image.fromarray(array, 'RGBA')     # Always four bands
+        im1 = im.resize((tilesize, tilesize), Image.ANTIALIAS)
+        if os.path.exists(tilefilename):
+            im0 = Image.open(tilefilename)
+            im1 = Image.composite(im1, im0, im1)
+        im1.save(tilefilename, tiledriver)
+
+    else:
+
+        if options.resampling == 'near':
+            gdal_resampling = gdal.GRA_NearestNeighbour
+
+        elif options.resampling == 'bilinear':
+            gdal_resampling = gdal.GRA_Bilinear
+
+        elif options.resampling == 'cubic':
+            gdal_resampling = gdal.GRA_Cubic
+
+        elif options.resampling == 'cubicspline':
+            gdal_resampling = gdal.GRA_CubicSpline
+
+        elif options.resampling == 'lanczos':
+            gdal_resampling = gdal.GRA_Lanczos
+
+        # Other algorithms are implemented by gdal.ReprojectImage().
+        dsquery.SetGeoTransform((0.0, tilesize / float(querysize), 0.0, 0.0, 0.0,
+                                 tilesize / float(querysize)))
+        dstile.SetGeoTransform((0.0, 1.0, 0.0, 0.0, 0.0, 1.0))
+
+        res = gdal.ReprojectImage(dsquery, dstile, None, None, gdal_resampling)
+        if res != 0:
+            exit_with_error("ReprojectImage() failed on %s, error %d" % (tilefilename, res))
+
+
+def create_base_tiles(tile_job_info):
+    dataBandsCount = tile_job_info.nb_data_bands
+    output = tile_job_info.output_file_path
+    tileext = tile_job_info.tile_extension
+    tilesize = tile_job_info.tile_size
+    options = tile_job_info.options
+
+    tilebands = dataBandsCount + 1
+    ds = gdal.Open("gba.vrt", gdal.GA_ReadOnly)
+    mem_drv = gdal.GetDriverByName('MEM')
+    out_drv = gdal.GetDriverByName(tile_job_info.tile_driver)
+    alphaband = ds.GetRasterBand(1).GetMaskBand()
+
+    for tile_info in tile_job_info.tile_details:
+        tx = tile_info['tx']
+        ty = tile_info['ty']
+        tz = tile_info['tz']
+        rx = tile_info['rx']
+        ry = tile_info['ry']
+        rxsize = tile_info['rxsize']
+        rysize = tile_info['rysize']
+        wx = tile_info['wx']
+        wy = tile_info['wy']
+        wxsize = tile_info['wxsize']
+        wysize = tile_info['wysize']
+        querysize = tile_info['querysize']
+
+        # Tile dataset in memory
+        tilefilename = os.path.join(
+            output, str(tz), str(tx), "%s.%s" % (ty, tileext))
+        dstile = mem_drv.Create('', tilesize, tilesize, tilebands)
+
+        data = alpha = None
+
+        if options.verbose:
+            print("\tReadRaster Extent: ",
+                  (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize))
+
+        # Query is in 'nearest neighbour' but can be bigger in then the tilesize
+        # We scale down the query to the tilesize by supplied algorithm.
+
+        if rxsize != 0 and rysize != 0 and wxsize != 0 and wysize != 0:
+            data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize,
+                                 band_list=list(range(1, dataBandsCount+1)))
+            alpha = alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
+
+        # The tile in memory is a transparent file by default. Write pixel values into it if
+        # any
+        if data:
+            if tilesize == querysize:
+                # Use the ReadRaster result directly in tiles ('nearest neighbour' query)
+                dstile.WriteRaster(wx, wy, wxsize, wysize, data,
+                                   band_list=list(range(1, dataBandsCount+1)))
+                dstile.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
+
+                # Note: For source drivers based on WaveLet compression (JPEG2000, ECW,
+                # MrSID) the ReadRaster function returns high-quality raster (not ugly
+                # nearest neighbour)
+                # TODO: Use directly 'near' for WaveLet files
+            else:
+                # Big ReadRaster query in memory scaled to the tilesize - all but 'near'
+                # algo
+                dsquery = mem_drv.Create('', querysize, querysize, tilebands)
+                # TODO: fill the null value in case a tile without alpha is produced (now
+                # only png tiles are supported)
+                dsquery.WriteRaster(wx, wy, wxsize, wysize, data,
+                                    band_list=list(range(1, dataBandsCount+1)))
+                dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
+
+                scale_query_to_tile(dsquery, dstile, tile_job_info.tile_driver, options,
+                                    tilefilename=tilefilename)
+                del dsquery
+
+        del data
+
+        if options.resampling != 'antialias':
+            # Write a copy of tile to png/jpg
+            out_drv.CreateCopy(tilefilename, dstile, strict=0)
+
+        del dstile
+
+        # Create a KML file for this tile.
+        if tile_job_info.kml:
+            kmlfilename = os.path.join(output, str(tz), str(tx), '%d.kml' % ty)
+            if not options.resume or not os.path.exists(kmlfilename):
+                f = open(kmlfilename, 'wb')
+                f.write(generate_kml(
+                    tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
+                    tile_job_info.tile_swne, tile_job_info.options
+                ).encode('utf-8'))
+                f.close()
+
+        # if not self.options.verbose and not self.options.quiet:
+        #     self.progressbar(ti / float(tcount))
+
+
 class TileJobInfo(object):
     """
     Plain object to hold tile job configuration for a dataset
@@ -632,9 +903,6 @@ class GDAL2Tiles(object):
             self.options.url += os.path.basename(self.output) + '/'
 
         # Supported options
-
-        self.resampling = None
-
         if self.options.resampling == 'average':
             try:
                 if gdal.RegenerateOverview:
@@ -652,21 +920,10 @@ class GDAL2Tiles(object):
                            "Install PIL (Python Imaging Library) and numpy.")
 
         elif self.options.resampling == 'near':
-            self.resampling = gdal.GRA_NearestNeighbour
             self.querysize = self.tilesize
 
         elif self.options.resampling == 'bilinear':
-            self.resampling = gdal.GRA_Bilinear
             self.querysize = self.tilesize * 2
-
-        elif self.options.resampling == 'cubic':
-            self.resampling = gdal.GRA_Cubic
-
-        elif self.options.resampling == 'cubicspline':
-            self.resampling = gdal.GRA_CubicSpline
-
-        elif self.options.resampling == 'lanczos':
-            self.resampling = gdal.GRA_Lanczos
 
         # User specified zoom levels
         self.tminz = None
@@ -1243,7 +1500,7 @@ class GDAL2Tiles(object):
                 if (not self.options.resume or not
                         os.path.exists(os.path.join(self.output, 'doc.kml'))):
                     f = open(os.path.join(self.output, 'doc.kml'), 'wb')
-                    f.write(self.generate_kml(
+                    f.write(generate_kml(
                         None, None, None, self.tileext, self.tilesize, self.tileswne, self.options,
                         children
                     ).encode('utf-8'))
@@ -1382,101 +1639,7 @@ class GDAL2Tiles(object):
             options=self.options,
         )
 
-        self.create_base_tiles(job_config)
-
-    def create_base_tiles(self, tile_job_info):
-        dataBandsCount = tile_job_info.nb_data_bands
-        output = tile_job_info.output_file_path
-        tileext = tile_job_info.tile_extension
-        tilesize = tile_job_info.tile_size
-        options = tile_job_info.options
-
-        tilebands = dataBandsCount + 1
-        ds = gdal.Open("gba.vrt", gdal.GA_ReadOnly)
-        mem_drv = gdal.GetDriverByName('MEM')
-        out_drv = gdal.GetDriverByName(tile_job_info.tile_driver)
-        alphaband = ds.GetRasterBand(1).GetMaskBand()
-
-        for tile_info in tile_job_info.tile_details:
-            tx = tile_info['tx']
-            ty = tile_info['ty']
-            tz = tile_info['tz']
-            rx = tile_info['rx']
-            ry = tile_info['ry']
-            rxsize = tile_info['rxsize']
-            rysize = tile_info['rysize']
-            wx = tile_info['wx']
-            wy = tile_info['wy']
-            wxsize = tile_info['wxsize']
-            wysize = tile_info['wysize']
-            querysize = tile_info['querysize']
-
-            # Tile dataset in memory
-            tilefilename = os.path.join(
-                output, str(tz), str(tx), "%s.%s" % (ty, tileext))
-            dstile = mem_drv.Create('', tilesize, tilesize, tilebands)
-
-            data = alpha = None
-
-            if options.verbose:
-                print("\tReadRaster Extent: ",
-                      (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize))
-
-            # Query is in 'nearest neighbour' but can be bigger in then the tilesize
-            # We scale down the query to the tilesize by supplied algorithm.
-
-            if rxsize != 0 and rysize != 0 and wxsize != 0 and wysize != 0:
-                data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize,
-                                     band_list=list(range(1, dataBandsCount+1)))
-                alpha = alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
-
-            # The tile in memory is a transparent file by default. Write pixel values into it if
-            # any
-            if data:
-                if tilesize == querysize:
-                    # Use the ReadRaster result directly in tiles ('nearest neighbour' query)
-                    dstile.WriteRaster(wx, wy, wxsize, wysize, data,
-                                       band_list=list(range(1, dataBandsCount+1)))
-                    dstile.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
-
-                    # Note: For source drivers based on WaveLet compression (JPEG2000, ECW,
-                    # MrSID) the ReadRaster function returns high-quality raster (not ugly
-                    # nearest neighbour)
-                    # TODO: Use directly 'near' for WaveLet files
-                else:
-                    # Big ReadRaster query in memory scaled to the tilesize - all but 'near'
-                    # algo
-                    dsquery = mem_drv.Create('', querysize, querysize, tilebands)
-                    # TODO: fill the null value in case a tile without alpha is produced (now
-                    # only png tiles are supported)
-                    dsquery.WriteRaster(wx, wy, wxsize, wysize, data,
-                                        band_list=list(range(1, dataBandsCount+1)))
-                    dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
-
-                    self.scale_query_to_tile(dsquery, dstile, tilefilename)
-                    del dsquery
-
-            del data
-
-            if options.resampling != 'antialias':
-                # Write a copy of tile to png/jpg
-                out_drv.CreateCopy(tilefilename, dstile, strict=0)
-
-            del dstile
-
-            # Create a KML file for this tile.
-            if tile_job_info.kml:
-                kmlfilename = os.path.join(output, str(tz), str(tx), '%d.kml' % ty)
-                if not options.resume or not os.path.exists(kmlfilename):
-                    f = open(kmlfilename, 'wb')
-                    f.write(self.generate_kml(
-                        tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
-                        tile_job_info.tile_swne, tile_job_info.options
-                    ).encode('utf-8'))
-                    f.close()
-
-            # if not self.options.verbose and not self.options.quiet:
-            #     self.progressbar(ti / float(tcount))
+        create_base_tiles(job_config)
 
     def generate_overview_tiles(self):
         """Generation of the overview tiles (higher in the pyramid) based on existing tiles"""
@@ -1557,7 +1720,8 @@ class GDAL2Tiles(object):
                                     band_list=list(range(1, tilebands+1)))
                                 children.append([x, y, tz+1])
 
-                    self.scale_query_to_tile(dsquery, dstile, tilefilename)
+                    scale_query_to_tile(dsquery, dstile, self.tiledriver, self.options,
+                                        tilefilename=tilefilename)
                     # Write a copy of tile to png/jpg
                     if self.options.resampling != 'antialias':
                         # Write a copy of tile to png/jpg
@@ -1571,7 +1735,7 @@ class GDAL2Tiles(object):
                     # Create a KML file for this tile.
                     if self.kml:
                         f = open(os.path.join(self.output, '%d/%d/%d.kml' % (tz, tx, ty)), 'wb')
-                        f.write(self.generate_kml(
+                        f.write(generate_kml(
                             tx, ty, tz, self.tileext, self.tilesize, self.tileswne, self.options,
                             children
                         ).encode('utf-8'))
@@ -1624,48 +1788,6 @@ class GDAL2Tiles(object):
 
         return (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize)
 
-    def scale_query_to_tile(self, dsquery, dstile, tilefilename=''):
-        """Scales down query dataset to the tile dataset"""
-
-        querysize = dsquery.RasterXSize
-        tilesize = dstile.RasterXSize
-        tilebands = dstile.RasterCount
-
-        if self.options.resampling == 'average':
-
-            # Function: gdal.RegenerateOverview()
-            for i in range(1, tilebands+1):
-                # Black border around NODATA
-                res = gdal.RegenerateOverview(dsquery.GetRasterBand(i), dstile.GetRasterBand(i),
-                                              'average')
-                if res != 0:
-                    self.error("RegenerateOverview() failed on %s, error %d" % (tilefilename, res))
-
-        elif self.options.resampling == 'antialias':
-
-            # Scaling by PIL (Python Imaging Library) - improved Lanczos
-            array = numpy.zeros((querysize, querysize, tilebands), numpy.uint8)
-            for i in range(tilebands):
-                array[:, :, i] = gdalarray.BandReadAsArray(dsquery.GetRasterBand(i+1),
-                                                           0, 0, querysize, querysize)
-            im = Image.fromarray(array, 'RGBA')     # Always four bands
-            im1 = im.resize((tilesize, tilesize), Image.ANTIALIAS)
-            if os.path.exists(tilefilename):
-                im0 = Image.open(tilefilename)
-                im1 = Image.composite(im1, im0, im1)
-            im1.save(tilefilename, self.tiledriver)
-
-        else:
-
-            # Other algorithms are implemented by gdal.ReprojectImage().
-            dsquery.SetGeoTransform((0.0, tilesize / float(querysize), 0.0, 0.0, 0.0,
-                                     tilesize / float(querysize)))
-            dstile.SetGeoTransform((0.0, 1.0, 0.0, 0.0, 0.0, 1.0))
-
-            res = gdal.ReprojectImage(dsquery, dstile, None, None, self.resampling)
-            if res != 0:
-                self.error("ReprojectImage() failed on %s, error %d" % (tilefilename, res))
-
     def generate_tilemapresource(self):
         """
         Template for tilemapresource.xml. Returns filled string. Expected variables:
@@ -1715,116 +1837,6 @@ class GDAL2Tiles(object):
         s += """      </TileSets>
     </TileMap>
     """
-        return s
-
-    def generate_kml(self, tx, ty, tz, tileext, tilesize, tileswne, options, children=None, **args):
-        """
-        Template for the KML. Returns filled string.
-        """
-        if not children:
-            children = []
-
-        args['tx'], args['ty'], args['tz'] = tx, ty, tz
-        args['tileformat'] = tileext
-        if 'tilesize' not in args:
-            args['tilesize'] = tilesize
-
-        if 'minlodpixels' not in args:
-            args['minlodpixels'] = int(args['tilesize'] / 2)
-        if 'maxlodpixels' not in args:
-            args['maxlodpixels'] = int(args['tilesize'] * 8)
-        if children == []:
-            args['maxlodpixels'] = -1
-
-        if tx is None:
-            tilekml = False
-            args['title'] = options.title
-        else:
-            tilekml = True
-            args['title'] = "%d/%d/%d.kml" % (tz, tx, ty)
-            args['south'], args['west'], args['north'], args['east'] = tileswne(tx, ty, tz)
-
-        if tx == 0:
-            args['drawOrder'] = 2 * tz + 1
-        elif tx is not None:
-            args['drawOrder'] = 2 * tz
-        else:
-            args['drawOrder'] = 0
-
-        url = options.url
-        if not url:
-            if tilekml:
-                url = "../../"
-            else:
-                url = ""
-
-        s = """<?xml version="1.0" encoding="utf-8"?>
-    <kml xmlns="http://www.opengis.net/kml/2.2">
-      <Document>
-        <name>%(title)s</name>
-        <description></description>
-        <Style>
-          <ListStyle id="hideChildren">
-            <listItemType>checkHideChildren</listItemType>
-          </ListStyle>
-        </Style>""" % args
-        if tilekml:
-            s += """
-        <Region>
-          <LatLonAltBox>
-            <north>%(north).14f</north>
-            <south>%(south).14f</south>
-            <east>%(east).14f</east>
-            <west>%(west).14f</west>
-          </LatLonAltBox>
-          <Lod>
-            <minLodPixels>%(minlodpixels)d</minLodPixels>
-            <maxLodPixels>%(maxlodpixels)d</maxLodPixels>
-          </Lod>
-        </Region>
-        <GroundOverlay>
-          <drawOrder>%(drawOrder)d</drawOrder>
-          <Icon>
-            <href>%(ty)d.%(tileformat)s</href>
-          </Icon>
-          <LatLonBox>
-            <north>%(north).14f</north>
-            <south>%(south).14f</south>
-            <east>%(east).14f</east>
-            <west>%(west).14f</west>
-          </LatLonBox>
-        </GroundOverlay>
-    """ % args
-
-        for cx, cy, cz in children:
-            csouth, cwest, cnorth, ceast = tileswne(cx, cy, cz)
-            s += """
-        <NetworkLink>
-          <name>%d/%d/%d.%s</name>
-          <Region>
-            <LatLonAltBox>
-              <north>%.14f</north>
-              <south>%.14f</south>
-              <east>%.14f</east>
-              <west>%.14f</west>
-            </LatLonAltBox>
-            <Lod>
-              <minLodPixels>%d</minLodPixels>
-              <maxLodPixels>-1</maxLodPixels>
-            </Lod>
-          </Region>
-          <Link>
-            <href>%s%d/%d/%d.kml</href>
-            <viewRefreshMode>onRegion</viewRefreshMode>
-            <viewFormat/>
-          </Link>
-        </NetworkLink>
-            """ % (cz, cx, cy, args['tileformat'], cnorth, csouth, ceast, cwest,
-                   args['minlodpixels'], url, cz, cx, cy)
-
-        s += """      </Document>
-    </kml>
-        """
         return s
 
     def generate_googlemaps(self):
