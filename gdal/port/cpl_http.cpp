@@ -150,6 +150,9 @@ static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
  * @param papszOptions option list as a NULL-terminated array of strings. May be NULL.
  *                     The following options are handled :
  * <ul>
+ * <li>CONNECTTIMEOUT=val, where val is in seconds (possibly with decimals).
+ *     This is the maximum delay for the connection to be established before
+ *     being aborted (GDAL >= 2.2).</li>
  * <li>TIMEOUT=val, where val is in seconds. This is the maximum delay for the whole
  *     request to complete before being aborted.</li>
  * <li>LOW_SPEED_TIME=val, where val is in seconds. This is the maximum time where the
@@ -182,10 +185,12 @@ static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
  *     fallback to the SSL_CERT_FILE environment variable. (GDAL >= 2.1.3)</li>
  * </ul>
  *
- * Alternatively, if not defined in the papszOptions arguments, the TIMEOUT,
+ * Alternatively, if not defined in the papszOptions arguments, the
+ * CONNECTTIMEOUT, TIMEOUT,
  * LOW_SPEED_TIME, LOW_SPEED_LIMIT, PROXY, PROXYUSERPWD, PROXYAUTH, NETRC,
  * MAX_RETRY and RETRY_DELAY values are searched in the configuration
- * options named GDAL_HTTP_TIMEOUT, GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT,
+ * options named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
+ * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT,
  * GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
  * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY and GDAL_HTTP_RETRY_DELAY.
  *
@@ -676,12 +681,22 @@ void CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
     curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
     curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
 
+    // Set connect timeout.
+    const char *pszConnectTimeout =
+        CSLFetchNameValue( papszOptions, "CONNECTTIMEOUT" );
+    if( pszConnectTimeout == NULL )
+        pszConnectTimeout = CPLGetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", NULL);
+    if( pszConnectTimeout != NULL )
+        curl_easy_setopt(http_handle, CURLOPT_CONNECTTIMEOUT_MS,
+                         static_cast<int>(1000 * CPLAtof(pszConnectTimeout)) );
+
     // Set timeout.
     const char *pszTimeout = CSLFetchNameValue( papszOptions, "TIMEOUT" );
     if( pszTimeout == NULL )
         pszTimeout = CPLGetConfigOption("GDAL_HTTP_TIMEOUT", NULL);
     if( pszTimeout != NULL )
-        curl_easy_setopt(http_handle, CURLOPT_TIMEOUT, atoi(pszTimeout) );
+        curl_easy_setopt(http_handle, CURLOPT_TIMEOUT_MS,
+                         static_cast<int>(1000 * CPLAtof(pszTimeout)) );
 
     // Set low speed time and limit.
     const char *pszLowSpeedTime =
