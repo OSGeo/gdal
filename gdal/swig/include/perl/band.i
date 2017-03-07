@@ -31,7 +31,7 @@
         GDALGetBlockSize( self, &XBlockSize, &YBlockSize );
         int XBlocks = (GDALGetRasterBandXSize(self) + XBlockSize - 1) / XBlockSize;
         int YBlocks = (GDALGetRasterBandYSize(self) + YBlockSize - 1) / YBlockSize;
-        GByte *data = (GByte *) CPLMalloc(XBlockSize * YBlockSize);
+        void *data = CPLMalloc(XBlockSize * YBlockSize * GDALGetDataTypeSizeBytes(dt));
         for (int yb = 0; yb < YBlocks; ++yb) {
             if (callback) {
                 double p = (double)yb/(double)YBlocks;
@@ -48,7 +48,24 @@
                 GDALGetActualBlockSize(self, xb, yb, &XValid, &YValid);
                 for (int iY = 0; iY < YValid; ++iY) {
                     for (int iX = 0; iX < XValid; ++iX) {
-                        int32_t k = data[iX + iY * XBlockSize];
+                        int32_t k;
+                        switch(dt) {
+                        case GDT_Byte:
+                          k = ((GByte*)(data))[iX + iY * XBlockSize];
+                          break;
+                        case GDT_UInt16:
+                          k = ((GUInt16*)(data))[iX + iY * XBlockSize];
+                          break;
+                        case GDT_Int16:
+                          k = ((GInt16*)(data))[iX + iY * XBlockSize];
+                          break;
+                        case GDT_UInt32:
+                          k = ((GUInt32*)(data))[iX + iY * XBlockSize];
+                          break;
+                        case GDT_Int32:
+                          k = ((GInt32*)(data))[iX + iY * XBlockSize];
+                          break;
+                        }
                         char key[12];
                         int klen = sprintf(key, "%i", k);
                         SV* sv;
@@ -95,7 +112,7 @@
         GDALGetBlockSize( self, &XBlockSize, &YBlockSize );
         int XBlocks = (GDALGetRasterBandXSize(self) + XBlockSize - 1) / XBlockSize;
         int YBlocks = (GDALGetRasterBandYSize(self) + YBlockSize - 1) / YBlockSize;
-        GByte *data = (GByte *) CPLMalloc(XBlockSize * YBlockSize);
+        void *data = CPLMalloc(XBlockSize * YBlockSize * GDALGetDataTypeSizeBytes(dt));
         for (int yb = 0; yb < YBlocks; ++yb) {
             if (callback) {
                 double p = (double)yb/(double)YBlocks;
@@ -110,15 +127,51 @@
                 GDALGetActualBlockSize(self, xb, yb, &XValid, &YValid);
                 for (int iY = 0; iY < YValid; ++iY) {
                     for (int iX = 0; iX < XValid; ++iX) {
-                        int32_t k = data[iX + iY * XBlockSize];
+                        int32_t k;
+                        switch(dt) {
+                        case GDT_Byte:
+                          k = ((GByte*)(data))[iX + iY * XBlockSize];
+                          break;
+                        case GDT_UInt16:
+                          k = ((GUInt16*)(data))[iX + iY * XBlockSize];
+                          break;
+                        case GDT_Int16:
+                          k = ((GInt16*)(data))[iX + iY * XBlockSize];
+                          break;
+                        case GDT_UInt32:
+                          k = ((GUInt32*)(data))[iX + iY * XBlockSize];
+                          break;
+                        case GDT_Int32:
+                          k = ((GInt32*)(data))[iX + iY * XBlockSize];
+                          break;
+                        }
                         char key[12];
                         int klen = sprintf(key, "%i", k);
                         SV** sv = hv_fetch(hash, key, klen, 0);
                         if (sv && SvOK(*sv)) {
-                            data[iX + iY * XBlockSize] = SvIV(*sv);
+                            k = SvIV(*sv);
                         } else if (has_default) {
                             if (!(has_no_data && k == no_data))
-                                data[iX + iY * XBlockSize] = def;
+                                k = def;
+                            else
+                                continue;
+                        }
+                        switch(dt) {
+                        case GDT_Byte:
+                          ((GByte*)(data))[iX + iY * XBlockSize] = k;
+                          break;
+                        case GDT_UInt16:
+                          ((GUInt16*)(data))[iX + iY * XBlockSize] = k;
+                          break;
+                        case GDT_Int16:
+                          ((GInt16*)(data))[iX + iY * XBlockSize] = k;
+                          break;
+                        case GDT_UInt32:
+                          ((GUInt32*)(data))[iX + iY * XBlockSize] = k;
+                          break;
+                        case GDT_Int32:
+                          ((GInt32*)(data))[iX + iY * XBlockSize] = k;
+                          break;
                         }
                     }
                 }
