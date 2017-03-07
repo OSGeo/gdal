@@ -3451,8 +3451,8 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
             "id INTEGER PRIMARY KEY AUTOINCREMENT,"
             "tile_matrix_set_name TEXT NOT NULL UNIQUE,"
             "datatype TEXT NOT NULL DEFAULT 'integer',"
-            "scale REAL DEFAULT 1.0,"
-            "offset REAL DEFAULT 0.0,"
+            "scale REAL NOT NULL DEFAULT 1.0,"
+            "offset REAL NOT NULL DEFAULT 0.0,"
             "precision REAL DEFAULT 1.0,"
             "data_null REAL,"
             "CONSTRAINT fk_g2dgtct_name FOREIGN KEY('tile_matrix_set_name') "
@@ -3468,8 +3468,8 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
             "id INTEGER PRIMARY KEY AUTOINCREMENT,"
             "tpudt_name TEXT NOT NULL,"
             "tpudt_id INTEGER NOT NULL,"
-            "scale REAL DEFAULT 1.0,"
-            "offset REAL DEFAULT 0.0,"
+            "scale REAL NOT NULL DEFAULT 1.0,"
+            "offset REAL NOT NULL DEFAULT 0.0,"
             "min REAL DEFAULT NULL,"
             "max REAL DEFAULT NULL,"
             "mean REAL DEFAULT NULL,"
@@ -3522,23 +3522,15 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
     // Requirement 111 and 112
     m_dfPrecision = CPLAtof(CSLFetchNameValueDef(papszOptions,
                                                       "PRECISION", "1"));
-    if( m_eTF == GPKG_TF_PNG_16BIT )
-    {
-        pszSQL = sqlite3_mprintf(
-            "INSERT INTO gpkg_2d_gridded_coverage_ancillary "
-            "(tile_matrix_set_name, datatype, scale, offset, precision) "
-            "VALUES ('%q', 'integer', %.18g, %.18g, %.18g)",
-            m_osRasterTable.c_str(), m_dfScale, m_dfOffset, m_dfPrecision);
-    }
-    else
-    {
-        // Requirement 117
-        pszSQL = sqlite3_mprintf(
-            "INSERT INTO gpkg_2d_gridded_coverage_ancillary "
-            "(tile_matrix_set_name, datatype, scale, offset, precision) "
-            "VALUES ('%q', 'float', NULL, NULL, %.18g)",
-            m_osRasterTable.c_str(), m_dfPrecision);
-    }
+
+    pszSQL = sqlite3_mprintf(
+        "INSERT INTO gpkg_2d_gridded_coverage_ancillary "
+        "(tile_matrix_set_name, datatype, scale, offset, precision) "
+        "VALUES ('%q', '%s', %.18g, %.18g, %.18g)",
+        m_osRasterTable.c_str(),
+        ( m_eTF == GPKG_TF_PNG_16BIT ) ? "integer" : "float",
+        m_dfScale, m_dfOffset, m_dfPrecision);
+
     eErr = SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
     if( eErr != OGRERR_NONE )

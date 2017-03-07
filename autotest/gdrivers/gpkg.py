@@ -3161,7 +3161,7 @@ def gpkg_39():
         return 'fail'
     sql_lyr = ds.ExecuteSQL('SELECT scale, offset FROM gpkg_2d_gridded_tile_ancillary')
     f = sql_lyr.GetNextFeature()
-    if f.IsFieldSetAndNotNull('scale'):
+    if f.GetField('scale') != 1.0:
         gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
