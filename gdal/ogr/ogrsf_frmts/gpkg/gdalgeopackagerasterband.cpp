@@ -2215,24 +2215,12 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 {
                     DeleteFromGriddedTileAncillary(nTileId);
 
-                    if( m_eTF == GPKG_TF_PNG_16BIT )
-                    {
-                        pszSQL = sqlite3_mprintf(
-                            "INSERT INTO gpkg_2d_gridded_tile_ancillary "
-                            "(tpudt_name, tpudt_id, scale, offset, min, max, "
-                            "mean, std_dev) VALUES "
-                            "('%q', ?, %.18g, %.18g, ?, ?, ?, ?)",
-                            m_osRasterTable.c_str(), dfTileScale, dfTileOffset);
-                    }
-                    else
-                    {
-                        pszSQL = sqlite3_mprintf(
-                            "INSERT INTO gpkg_2d_gridded_tile_ancillary "
-                            "(tpudt_name, tpudt_id, scale, offset, min, max, "
-                            "mean, std_dev) VALUES "
-                            "('%q', ?, NULL, NULL, ?, ?, ?, ?)",
-                            m_osRasterTable.c_str());
-                    }
+                    pszSQL = sqlite3_mprintf(
+                        "INSERT INTO gpkg_2d_gridded_tile_ancillary "
+                        "(tpudt_name, tpudt_id, scale, offset, min, max, "
+                        "mean, std_dev) VALUES "
+                        "('%q', ?, %.18g, %.18g, ?, ?, ?, ?)",
+                        m_osRasterTable.c_str(), dfTileScale, dfTileOffset);
 #ifdef DEBUG_VERBOSE
                     CPLDebug("GPKG", "%s", pszSQL);
 #endif
