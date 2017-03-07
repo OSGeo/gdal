@@ -462,10 +462,9 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                             GPkgGeometryTypeToWKB(pszDeclType, false, false);
                         if( eDeclaredGeomType != wkbUnknown )
                         {
-                            OGR_GT_SetModifier(eDeclaredGeomType,
+                            eGeomType = OGR_GT_SetModifier(eDeclaredGeomType,
                                                OGR_GT_HasZ(eGeomType),
                                                OGR_GT_HasM(eGeomType));
-                            eGeomType = eDeclaredGeomType;
                         }
                     }
                     oGeomField.SetType( eGeomType );
