@@ -3192,7 +3192,7 @@ static const struct
     { "esriGeometryLine", wkbMultiLineString },
     { "esriGeometryPolyline", wkbMultiLineString },
     { "esriGeometryPolygon", wkbMultiPolygon },
-    { "esriGeometryMultiPatch", wkbMultiPolygon }
+    { "esriGeometryMultiPatch", wkbUnknown }
 };
 
 OGRwkbGeometryType FileGDBOGRGeometryConverter::GetGeometryTypeFromESRI(
