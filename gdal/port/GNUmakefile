@@ -27,7 +27,8 @@ OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_base64.o cpl_vsil_curl.o cpl_vsil_curl_streaming.o \
 	cpl_vsil_cache.o cpl_xml_validate.o cpl_spawn.o \
 	cpl_google_oauth2.o cpl_progress.o cpl_virtualmem.o cpl_worker_thread_pool.o \
-	cpl_vsil_crypt.o cpl_sha256.o cpl_aws.o cpl_vsi_error.o cpl_cpu_features.o
+	cpl_vsil_crypt.o cpl_sha1.o cpl_sha256.o cpl_aws.o cpl_vsi_error.o cpl_cpu_features.o \
+	cpl_google_cloud.o
 
 ifeq ($(ODBC_SETTING),yes)
 OBJ	:= 	$(OBJ) cpl_odbc.o

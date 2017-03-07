@@ -1592,6 +1592,8 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallCurlStreamingFileHandler();
         VSIInstallS3FileHandler();
         VSIInstallS3StreamingFileHandler();
+        VSIInstallGSFileHandler();
+        VSIInstallGSStreamingFileHandler();
 #endif
         VSIInstallStdinHandler();
         VSIInstallStdoutHandler();
