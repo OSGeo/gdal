@@ -488,7 +488,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
             case FGTGT_MULTIPOINT: eGeomType = wkbMultiPoint; break;
             case FGTGT_LINE: eGeomType = wkbMultiLineString; break;
             case FGTGT_POLYGON: eGeomType = wkbMultiPolygon; break;
-            case FGTGT_MULTIPATCH: eGeomType = wkbMultiPolygon; break;
+            case FGTGT_MULTIPATCH: eGeomType = wkbUnknown; break;
         }
 
         psField = oTable.GetFieldValue(iShapeField);
