@@ -34,7 +34,9 @@
 #include <map>
 
 #include "cpl_aws.h"
+#include "cpl_google_cloud.h"
 #include "cpl_hash_set.h"
+#include "cpl_http.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
@@ -53,13 +55,19 @@ void VSIInstallS3StreamingFileHandler(void)
     // Not supported.
 }
 
+void VSIInstallGSStreamingFileHandler(void)
+{
+    // Not supported.
+}
+
 #else
 
 //! @cond Doxygen_Suppress
 
 #include <curl/curl.h>
 
-void VSICurlSetOptions( CURL* hCurlHandle, const char* pszURL );
+void VSICurlSetOptions( CURL* hCurlHandle, const char* pszURL,
+                        const char * const* papszOptions );
 
 #define ENABLE_DEBUG        0
 
@@ -212,6 +220,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
 
   private:
     char*           m_pszURL;
+    char**          m_papszHTTPOptions;
 
 #ifdef notdef
     unsigned int    nRecomputedChecksumOfFirst1024Bytes;
@@ -304,6 +313,7 @@ VSICurlStreamingHandle::VSICurlStreamingHandle( VSICurlStreamingFSHandler* poFS,
 {
     m_poFS = poFS;
     m_pszURL = CPLStrdup(pszURL);
+    m_papszHTTPOptions = CPLHTTPGetOptionsFromEnv();
 
 #ifdef notdef
     nRecomputedChecksumOfFirst1024Bytes = 0;
@@ -357,6 +367,7 @@ VSICurlStreamingHandle::~VSICurlStreamingHandle()
     CPLFree(m_pszURL);
     if( hCurlHandle != NULL )
         curl_easy_cleanup(hCurlHandle);
+    CSLDestroy( m_papszHTTPOptions );
 
     CPLFree(pCachedData);
 
@@ -526,7 +537,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 
     CURL* hLocalHandle = curl_easy_init();
 
-    VSICurlSetOptions(hLocalHandle, m_pszURL);
+    VSICurlSetOptions(hLocalHandle, m_pszURL, m_papszHTTPOptions);
 
     VSICURLStreamingInitWriteFuncStruct(&sWriteFuncHeaderData);
 
@@ -992,7 +1003,7 @@ VSICurlStreamingHandleReceivedBytesHeader( void *buffer, size_t count,
 
 void VSICurlStreamingHandle::DownloadInThread()
 {
-    VSICurlSetOptions(hCurlHandle, m_pszURL);
+    VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
     struct curl_slist* headers = GetCurlHeaders("GET");
     if( headers != NULL )
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -1774,6 +1785,90 @@ bool VSIS3StreamingHandle::CanRestartOnError( const char* pszErrorMsg,
     return false;
 }
 
+
+
+/************************************************************************/
+/*                       VSIGSStreamingFSHandler                        */
+/************************************************************************/
+
+class VSIGSStreamingFSHandler CPL_FINAL: public VSICurlStreamingFSHandler
+{
+protected:
+    virtual CPLString GetFSPrefix() override { return "/vsigs_streaming/"; }
+    virtual VSICurlStreamingHandle* CreateFileHandle( const char* pszURL )
+        override;
+
+public:
+        VSIGSStreamingFSHandler() {}
+};
+
+/************************************************************************/
+/*                            VSIGSStreamingHandle                      */
+/************************************************************************/
+
+class VSIGSStreamingHandle CPL_FINAL: public VSICurlStreamingHandle
+{
+    VSIGSHandleHelper* m_poGCHandleHelper;
+
+  protected:
+    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb )
+        override;
+    virtual bool StopReceivingBytesOnError() override { return false; }
+    virtual bool InterpretRedirect() override { return false; }
+
+  public:
+    VSIGSStreamingHandle( VSIGSStreamingFSHandler* poFS,
+                          VSIGSHandleHelper* poGCHandleHelper );
+    virtual ~VSIGSStreamingHandle();
+};
+
+/************************************************************************/
+/*                          CreateFileHandle()                          */
+/************************************************************************/
+
+VSICurlStreamingHandle *
+VSIGSStreamingFSHandler::CreateFileHandle( const char* pszURL )
+{
+    VSIGSHandleHelper* poGCHandleHelper =
+            VSIGSHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str());
+    if( poGCHandleHelper )
+    {
+        return new VSIGSStreamingHandle(this, poGCHandleHelper);
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                        VSIGSStreamingHandle()                        */
+/************************************************************************/
+
+VSIGSStreamingHandle::VSIGSStreamingHandle(
+    VSIGSStreamingFSHandler* poFS,
+    VSIGSHandleHelper* poGCHandleHelper) :
+    VSICurlStreamingHandle(poFS, poGCHandleHelper->GetURL()),
+    m_poGCHandleHelper(poGCHandleHelper)
+{}
+
+/************************************************************************/
+/*                       ~VSIGSStreamingHandle()                        */
+/************************************************************************/
+
+VSIGSStreamingHandle::~VSIGSStreamingHandle()
+{
+    delete m_poGCHandleHelper;
+}
+
+/************************************************************************/
+/*                           GetCurlHeaders()                           */
+/************************************************************************/
+
+struct curl_slist*
+VSIGSStreamingHandle::GetCurlHeaders( const CPLString& osVerb )
+{
+    return m_poGCHandleHelper->GetCurlHeaders(osVerb);
+}
+
+
 //! @endcond
 
 } /* end of anoymous namespace */
@@ -1833,8 +1928,8 @@ void VSIInstallCurlStreamingFileHandler(void)
  * libcurl).
  *
  * A special file handler is installed that allows on-the-fly sequential reading
- * of files streamed from AWS S3 buckets without prior download of the entire
- * file.
+ * of non-public files streamed from AWS S3 buckets without prior download of
+ * the entire file.
  *
  * Recognized filenames are of the form /vsis3_streaming/bucket/key where
  * bucket is the name of the S3 bucket and resource the S3 object "key", i.e.
@@ -1874,6 +1969,56 @@ void VSIInstallS3StreamingFileHandler(void)
 {
     VSIFileManager::InstallHandler( "/vsis3_streaming/",
                                     new VSIS3StreamingFSHandler );
+}
+
+/************************************************************************/
+/*                      VSIInstallGSStreamingFileHandler()              */
+/************************************************************************/
+
+/**
+ * \brief Install /vsigs_streaming/ Google Cloud Storage file system handler
+ * (requires libcurl)
+ *
+ * A special file handler is installed that allows on-the-fly random reading of
+ * non-public files streamed from Google Cloud Storage buckets, without prior
+ * download of the entire file.
+ *
+ * Recognized filenames are of the form /vsigs_streaming/bucket/key where
+ * bucket is the name of the bucket and key the object "key", i.e.
+ * a filename potentially containing subdirectories.
+ *
+ * Partial downloads are done with a 16 KB granularity by default.
+ * If the driver detects sequential reading
+ * it will progressively increase the chunk size up to 2 MB to improve download
+ * performance.
+ *
+ * The GS_SECRET_ACCESS_KEY and GS_ACCESS_KEY_ID configuration options must be
+ * set to use the AWS S3 authentication compatibility method.
+ * 
+ * Alternatively, it is possible to set the CPL_GS_HEADER_FILE configuration
+ * option to point to a filename of a text file with "key: value" headers.
+ * Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.
+ *
+ * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
+ * options can be used to define a proxy server. The syntax to use is the one of
+ * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
+ *
+ * The CURL_CA_BUNDLE or SSL_CERT_FILE configuration
+ * options can be used to set the path to the Certification Authority (CA)
+ * bundle file (if not specified, curl will use a file in a system location).
+ *
+ * On reading, the file can be cached in RAM by setting the configuration option
+ * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by
+ * setting the configuration option VSI_CACHE_SIZE (in bytes).
+ *
+ * VSIStatL() will return the size in st_size member.
+ *
+ * @since GDAL 2.2
+ */
+
+void VSIInstallGSStreamingFileHandler( void )
+{
+    VSIFileManager::InstallHandler( "/vsigs_streaming/", new VSIGSStreamingFSHandler );
 }
 
 #endif  // !defined(HAVE_CURL) || defined(CPL_MULTIPROC_STUB)

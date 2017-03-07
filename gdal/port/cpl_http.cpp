@@ -140,6 +140,48 @@ static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
 #endif /* def HAVE_CURL */
 
 /************************************************************************/
+/*                       CPLHTTPGetOptionsFromEnv()                     */
+/************************************************************************/
+
+typedef struct
+{
+    const char* pszEnvVar;
+    const char* pszOptionName;
+} TupleEnvVarOptionName;
+
+static const TupleEnvVarOptionName asAssocEnvVarOptionName[] =
+{
+    { "GDAL_HTTP_CONNECTTIMEOUT", "CONNECTTIMEOUT" },
+    { "GDAL_HTTP_TIMEOUT", "TIMEOUT" },
+    { "GDAL_HTTP_LOW_SPEED_TIME", "LOW_SPEED_TIME" },
+    { "GDAL_HTTP_LOW_SPEED_LIMIT", "LOW_SPEED_LIMIT" },
+    { "GDAL_HTTP_PROXY", "PROXY" },
+    { "GDAL_HTTP_PROXYUSERPWD", "PROXYUSERPWD" },
+    { "GDAL_PROXY_AUTH", "PROXYAUTH" },
+    { "GDAL_HTTP_NETRC", "NETRC" },
+    { "GDAL_HTTP_MAX_RETRY", "MAX_RETRY" },
+    { "GDAL_HTTP_RETRY_DELAY", "RETRY_DELAY" },
+    { "CURL_CA_BUNDLE", "CAINFO" },
+    { "SSL_CERT_FILE", "CAINFO" },
+};
+
+char** CPLHTTPGetOptionsFromEnv()
+{
+    char** papszOptions = NULL;
+    for( size_t i = 0; i < CPL_ARRAYSIZE(asAssocEnvVarOptionName); ++i )
+    {
+        const char* pszVal = CPLGetConfigOption(
+            asAssocEnvVarOptionName[i].pszEnvVar, NULL);
+        if( pszVal != NULL )
+        {
+            papszOptions = CSLSetNameValue(papszOptions,
+                asAssocEnvVarOptionName[i].pszOptionName, pszVal);
+        }
+    }
+    return papszOptions;
+}
+
+/************************************************************************/
 /*                           CPLHTTPFetch()                             */
 /************************************************************************/
 
