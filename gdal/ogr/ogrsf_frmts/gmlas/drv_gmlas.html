@@ -177,9 +177,14 @@ is set to YES, coordinates will be always swapped regarding the order they appea
 in the GML, and when it set to NO, they will be kept in the same order. The default
 is AUTO.</li>
 <li> <b>REMOVE_UNUSED_LAYERS</b>=YES/NO: Whether unused layers should be removed
-from the reported layers. Default to NO</li>
+from the reported layers. Defaults to NO</li>
 <li> <b>REMOVE_UNUSED_FIELDS</b>=YES/NO: Whether unused fields should be removed
-from the reported layers. Default to NO</li>
+from the reported layers. Defaults to NO</li>
+<li> <b>HANDLE_MULTIPLE_IMPORTS</b>=YES/NO: Whether multiple imports with the same
+namespace but different schema are allowed. Defaults to NO</li>
+<li> <b>SCHEMA_FULL_CHECKING</b>=YES/NO: Whether to be pedantic with XSD checking
+or to be forgiving e.g. if the invalid part of the schema is not referenced in the
+main document. Defaults to NO</li>
 </ul>
 
 <h2>Creation support</h2>
