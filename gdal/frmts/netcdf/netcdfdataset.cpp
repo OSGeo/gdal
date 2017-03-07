@@ -3218,15 +3218,15 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                 int node_offset = 0;
                 nc_get_att_int (cdfid, NC_GLOBAL, "node_offset", &node_offset);
 
-                double dummy[2] = { 0.0, 0.0 };
+                double adfActualRange[2] = { 0.0, 0.0 };
                 double xMinMax[2] = { 0.0, 0.0 };
                 double yMinMax[2] = { 0.0, 0.0 };
 
                 if( !nc_get_att_double(cdfid, nVarDimXID,
-                                       "actual_range", dummy) )
+                                       "actual_range", adfActualRange) )
                 {
-                    xMinMax[0] = dummy[0];
-                    xMinMax[1] = dummy[1];
+                    xMinMax[0] = adfActualRange[0];
+                    xMinMax[1] = adfActualRange[1];
                 }
                 else
                 {
@@ -3236,10 +3236,10 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                 }
 
                 if( !nc_get_att_double(cdfid, nVarDimYID,
-                                       "actual_range", dummy) )
+                                       "actual_range", adfActualRange) )
                 {
-                    yMinMax[0] = dummy[0];
-                    yMinMax[1] = dummy[1];
+                    yMinMax[0] = adfActualRange[0];
+                    yMinMax[1] = adfActualRange[1];
                 }
                 else
                 {
@@ -3251,10 +3251,29 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                 // Check for reverse order of y-coordinate.
                 if( yMinMax[0] > yMinMax[1] )
                 {
-                    dummy[0] = yMinMax[1];
-                    dummy[1] = yMinMax[0];
-                    yMinMax[0] = dummy[0];
-                    yMinMax[1] = dummy[1];
+                    const double dfTmp = yMinMax[0];
+                    yMinMax[0] = yMinMax[1];
+                    yMinMax[1] = dfTmp;
+                }
+
+                double dfCoordOffset = 0.0;
+                double dfCoordScale = 1.0;
+                if ( !nc_get_att_double(cdfid, nVarDimXID,
+                                       CF_ADD_OFFSET, &dfCoordOffset) &&
+                     !nc_get_att_double(cdfid, nVarDimXID,
+                                       CF_SCALE_FACTOR, &dfCoordScale) )
+                {
+                   xMinMax[0] = dfCoordOffset + xMinMax[0] * dfCoordScale;
+                   xMinMax[1] = dfCoordOffset + xMinMax[1] * dfCoordScale;
+                }
+
+                if ( !nc_get_att_double(cdfid, nVarDimYID,
+                                       CF_ADD_OFFSET, &dfCoordOffset) &&
+                     !nc_get_att_double(cdfid, nVarDimYID,
+                                       CF_SCALE_FACTOR, &dfCoordScale) )
+                {
+                   yMinMax[0] = dfCoordOffset + yMinMax[0] * dfCoordScale;
+                   yMinMax[1] = dfCoordOffset + yMinMax[1] * dfCoordScale;
                 }
 
                 adfTempGeoTransform[0] = xMinMax[0];
