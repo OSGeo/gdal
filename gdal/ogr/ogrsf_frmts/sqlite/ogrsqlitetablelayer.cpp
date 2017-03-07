@@ -3262,7 +3262,7 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
 
     CPLString osCommand;
 
-    osCommand.Printf( "CREATE TABLE '%s' ( %s INTEGER PRIMARY KEY",
+    osCommand.Printf( "CREATE TABLE '%s' ( %s INTEGER PRIMARY KEY AUTOINCREMENT",
                       pszEscapedTableName,
                       pszFIDColumn );
 
