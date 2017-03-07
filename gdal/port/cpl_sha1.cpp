@@ -172,14 +172,14 @@ void CPL_SHA1Final(CPL_SHA1Context *ctx, GByte hash[CPL_SHA1_HASH_SIZE])
 
     // Append to the padding the total message's length in bits and transform.
     ctx->bitlen += ctx->datalen * 8;
-    ctx->data[63] = ctx->bitlen;
-    ctx->data[62] = ctx->bitlen >> 8;
-    ctx->data[61] = ctx->bitlen >> 16;
-    ctx->data[60] = ctx->bitlen >> 24;
-    ctx->data[59] = ctx->bitlen >> 32;
-    ctx->data[58] = ctx->bitlen >> 40;
-    ctx->data[57] = ctx->bitlen >> 48;
-    ctx->data[56] = ctx->bitlen >> 56;
+    ctx->data[63] = static_cast<GByte>((ctx->bitlen) & 0xFFU);
+    ctx->data[62] = static_cast<GByte>((ctx->bitlen >> 8) & 0xFFU);
+    ctx->data[61] = static_cast<GByte>((ctx->bitlen >> 16) & 0xFFU);
+    ctx->data[60] = static_cast<GByte>((ctx->bitlen >> 24) & 0xFFU);
+    ctx->data[59] = static_cast<GByte>((ctx->bitlen >> 32) & 0xFFU);
+    ctx->data[58] = static_cast<GByte>((ctx->bitlen >> 40) & 0xFFU);
+    ctx->data[57] = static_cast<GByte>((ctx->bitlen >> 48) & 0xFFU);
+    ctx->data[56] = static_cast<GByte>((ctx->bitlen >> 56) & 0xFFU);
     sha1_transform(ctx, ctx->data);
 
     // Since this implementation uses little endian byte ordering and MD uses big endian,
