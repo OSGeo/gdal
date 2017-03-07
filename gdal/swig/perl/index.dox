@@ -342,6 +342,24 @@ my $feature = $lauer->InsertFeature({test => 13, geom => {WKT => 'POINT (10 20)'
 my $geom = $feature->{geom}; # will lead to memory error!
 \endcode
 
+\section index_processing_options Processing options
+
+Some methods are thin wrappers for <a
+href="http://www.gdal.org/pages.html">GDAL command line tools</a>.
+
+The options for these methods are given in hash where the key is the
+option name (-ot, -mask, etc) and the value is the option value. If
+the option expects a list of values, the list can be given as a
+string, where the values are separated by whitespace, or as a
+reference to an array.
+
+In the rare case, where a single value may contain whitespace (for
+example column name of a table), wrap the value in single quotation
+marks, i.e., like "'column name'".
+
+Note that the habit of specifying the option name without the hyphen
+and using a list for the options is still supported but deprecated.
+
 \section index_footer Note
 
 This documentation is generated from files within the GDAL
