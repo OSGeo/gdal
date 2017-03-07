@@ -764,42 +764,32 @@
 ## @method CreateMaskBand()
 # Add a mask band to the dataset.
 
-## @method Geo::GDAL::Dataset DEMProcessing($Dest, $Processing, $ColorFilename, $Options, coderef progress, $progress_data)
+## @method Geo::GDAL::Dataset DEMProcessing($Dest, $Processing, $ColorFilename, hashref Options, coderef progress, $progress_data)
 # Apply a DEM processing to this dataset.
 # @param Dest Destination raster dataset definition string (typically filename) or an object, which implements write and close.
 # @param Processing Processing to apply, one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", or "Roughness".
 # @param ColorFilename The color palette for color-relief.
-# @param Options A reference to a hash or list of options. For example
-# give { -of => 'PNG' } to set the output format. See <a
-# href="http://www.gdal.org/gdaldem.html">gdaldem</a> for all options.
+# @param Options See section \ref index_processing_options.
 # @param progress [optional] A reference to a subroutine, which will
 # be called with parameters (number progress, string msg, progress_data).
 # @param progress_data [optional]
 #
 
-## @method Geo::GDAL::Dataset Nearblack($Dest, $Options, coderef progress, $progress_data)
+## @method Geo::GDAL::Dataset Nearblack($Dest, hashref Options, coderef progress, $progress_data)
 # Convert nearly black/white pixels to black/white.
 # @param Dest Destination raster dataset definition string (typically
 # filename), destination dataset to which to add an alpha or mask
 # band, or an object, which implements write and close.
-# @param Options A reference to a hash or list of options. For example
-# give { -of => 'PNG' } to set the output format. See <a
-# href="http://www.gdal.org/nearblack.html">nearblack</a> for all
-# options.
+# @param Options See section \ref index_processing_options.
 # @return Dataset if destination dataset definition string was given,
 # otherwise a boolean for success/fail but the method croaks if there
 # was an error.
 
-## @method Geo::GDAL::Dataset Translate($Dest, $Options, coderef progress, $progress_data)
+## @method Geo::GDAL::Dataset Translate($Dest, hashref Options, coderef progress, $progress_data)
 # Convert this dataset into another format.
 # @param Dest Destination dataset definition string (typically
 # filename) or an object, which implements write and close.
-# @param Options A reference to a hash or list of options. For example
-# give { -of => 'PNG' } to set the output format or ['-tr', 10, 10] to
-# set the target resolution. See <a
-# href="http://www.gdal.org/gdal_translate.html">gdal_translate</a>
-# and <a href="http://www.gdal.org/ogr2ogr.html">ogr2ogr</a> for all
-# options.
+# @param Options See section \ref index_processing_options.
 # @return New dataset object if destination dataset definition
 # string was given, otherwise a boolean for success/fail but the
 # method croaks if there was an error.
@@ -817,74 +807,46 @@
 #
 # @return a new Geo::GDAL::Dataset object
 
-## @method Geo::GDAL::Dataset Warp($Dest, $Options, coderef progress, $progress_data)
+## @method Geo::GDAL::Dataset Warp($Dest, hashref Options, coderef progress, $progress_data)
 # Reproject this dataset.
 # @param Dest Destination raster dataset definition string (typically
 # filename) or an object, which implements write and close.
-# @param Options A reference to a hash or list of options. For example
-# give { -of => 'PNG' } to set the output format or ['-tr', 10, 10] to
-# set the target resolution. For a list the options are given as for
-# the command line utility. See <a
-# href="http://www.gdal.org/gdalwarp.html">gdalwarp</a> for all
-# options.
+# @param Options See section \ref index_processing_options.
 # @note This method can be run as a package subroutine with a list of
 # datasets as the first argument to mosaic several datasets.
 
-## @method Geo::GDAL::Dataset Grid($Dest, $Options)
+## @method Geo::GDAL::Dataset Grid($Dest, hashref Options)
 # Creates a regular raster grid from this data source.
 # This is equivalent to the gdal_grid utility.
 # @param Dest Destination raster dataset definition string (typically
 # filename) or an object, which implements write and close.
-# @param Options A reference to a hash or list of options. For example
-# give { -of => 'PNG' } to set the output format and ['-txe', 10, 10]
-# to set the georeferenced X extents. You must specify at least layer
-# name (key = -l) or SQL to create a layer (key = -sql). See <a
-# href="http://www.gdal.org/gdal_grid.html">gdal_grid</a> for a
-# complete list of options.
+# @param Options See section \ref index_processing_options.
 
-## @method Geo::GDAL::Dataset Rasterize($Dest, $Options, coderef progress, $progress_data)
+## @method Geo::GDAL::Dataset Rasterize($Dest, hashref Options, coderef progress, $progress_data)
 # Render data from this data source into a raster.
 # @param Dest Destination raster dataset definition string (typically
 # filename), destination dataset, or an object, which implements write and close.
-# @param Options A reference to a hash or list of options. For example
-# give { of => 'PNG' } to set the output format and ['-tr', 10, 10] or
-# {-tr => [10, 10]} to set the target resolution. You must specify at
-# least layer name (key = -l) or SQL to create a layer (key =
-# -sql). To create a new raster, you need to specify either target
-# resolution (tr => [xres, yres]) or target file size (ts => [width,
-# height]). For a list the options are given as for the command line
-# utility.See <a href="http://www.gdal.org/gdal_rasterize.html">gdal_rasterize</a>
-# for a complete list of options.
+# @param Options See section \ref index_processing_options.
 # @return Dataset if destination dataset definition string was given,
 # otherwise a boolean for success/fail but the method croaks if there
 # was an error.
 #
 
-## @method Geo::GDAL::Dataset BuildVRT($Dest, arrayref Sources, $Options, coderef progress, $progress_data)
+## @method Geo::GDAL::Dataset BuildVRT($Dest, arrayref Sources, hashref Options, coderef progress, $progress_data)
 # Build a virtual dataset from a set of datasets.
 # @param Dest Destination raster dataset definition string (typically
 # filename), or an object, which implements write and close.
 # @param Sources A list of filenames of input datasets or a list of
 # dataset objects.
-# @param Options A reference to a hash or list of options. For example
-# give { -r => 'cubic' } to select a resampling algorithm and ['-tr',
-# 10, 10] or {tr => [10, 10]} to set the target resolution. For a list
-# the options are given as for the command line utility. See <a
-# href="http://www.gdal.org/gdalbuildvrt.html">gdalbuildvrt</a> for a
-# complete list of options.
+# @param Options See section \ref index_processing_options.
 # @return Dataset object
 #
 # @note This subroutine is imported into the main namespace if Geo::GDAL
 # is use'd with qw/:all/.
 
-## @method $Info($Options)
+## @method $Info(hashref Options)
 # Information about this dataset.
-
-# @param Options A reference to a hash or list of options. For example
-# give { JSON => 1 } to set the output format to JSON. For a list the
-# options are given as for the command line utility. See <a
-# href="http://www.gdal.org/gdalinfo.html">gdalinfo</a> for all
-# options.
+# @param Options See section \ref index_processing_options.
 
 ## @method Geo::GDAL::ColorTable ComputeColorTable(%params)
 # Compute a color table from an RGB image

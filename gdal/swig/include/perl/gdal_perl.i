@@ -379,14 +379,23 @@ sub make_processing_options {
         my @options;
         for my $key (keys %$o) {
             my $val = $o->{$key};
+            # without hyphen is deprecated
             $key = '-'.$key unless $key =~ /^-/;
             push @options, $key;
+            if ($val =~ /^'/) {
+                $val =~ s/^'//;
+                $val =~ s/'$//;
+            } else {
+                $val = [split /\s/, $val] if $val =~ /\s/;
+            }
             push @options, ref $val ? @$val : $val;
         }
         $o = \@options;
     } elsif (ref $o eq 'ARRAY') {
+        # array ref is deprecated
         my @options;
         for my $item (@$o) {
+            @$item = [split /\s/, $item] if $item =~ /\s/;
             push @options, ref $item ? @$item : $item;
         }
         $o = \@options;
