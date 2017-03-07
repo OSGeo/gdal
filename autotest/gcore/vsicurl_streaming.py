@@ -48,9 +48,9 @@ def vsicurl_streaming_1():
     if drv is None:
         return 'skip'
 
-    gdal.SetConfigOption('GDAL_HTTP_TIMEOUT', '5')
+    gdal.SetConfigOption('GDAL_HTTP_CONNECTTIMEOUT', '5')
     fp = gdal.VSIFOpenL('/vsicurl_streaming/http://download.osgeo.org/gdal/data/usgsdem/cded/114p01_0100_deme.dem', 'rb')
-    gdal.SetConfigOption('GDAL_HTTP_TIMEOUT', None)
+    gdal.SetConfigOption('GDAL_HTTP_CONNECTTIMEOUT', None)
     if fp is None:
         if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/usgsdem/cded/114p01_0100_deme.dem', timeout = 4) is None:
             print('cannot open URL')
