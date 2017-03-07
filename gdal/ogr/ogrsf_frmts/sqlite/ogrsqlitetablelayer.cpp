@@ -1307,7 +1307,8 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 
     ClearInsertStmt();
 
-    if( poDS->IsSpatialiteDB() && EQUAL( oField.GetNameRef(), "ROWID") )
+    if( poDS->IsSpatialiteDB() && EQUAL( oField.GetNameRef(), "ROWID") &&
+        !(pszFIDColumn != NULL && EQUAL( oField.GetNameRef(), pszFIDColumn )) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "In a Spatialite DB, a 'ROWID' column that is not the integer "
