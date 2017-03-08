@@ -3243,8 +3243,12 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
     size_t nMaxKeyLength = 0;
     json_object_object_foreachC( poObj, it )
     {
-        if( it.val == NULL || strcmp(it.key, "_type") == 0 )
+        if( it.val == NULL ||
+            strcmp(it.key, "_type") == 0 ||
+            strcmp(it.key, "_container_name") == 0 )
+        {
             continue;
+        }
         const int nValType = json_object_get_type(it.val);
         if( nValType == json_type_string ||
             nValType == json_type_int ||
@@ -3274,8 +3278,12 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
     it.entry = NULL;
     json_object_object_foreachC( poObj, it )
     {
-        if( it.val == NULL || strcmp(it.key, "_type") == 0 )
+        if( it.val == NULL ||
+            strcmp(it.key, "_type") == 0 ||
+            strcmp(it.key, "_container_name") == 0 )
+        {
             continue;
+        }
         if( STARTS_WITH(it.key, "_comment") )
         {
             if(json_object_get_type(it.val) == json_type_string )
@@ -3292,6 +3300,14 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
         if( nValType == json_type_object )
         {
             json_object* poType = CPL_json_object_object_get(it.val, "_type");
+            json_object* poContainerName =
+                CPL_json_object_object_get(it.val, "_container_name");
+            const char* pszContainerName = it.key;
+            if( poContainerName &&
+                json_object_get_type(poContainerName) == json_type_string )
+            {
+                pszContainerName = json_object_get_string(poContainerName);
+            }
             if( poType && json_object_get_type(poType) == json_type_string )
             {
                 const char* pszType = json_object_get_string(poType);
@@ -3300,7 +3316,7 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
                     if( nDepth == 0 && VSIFTellL(fp) != 0 )
                         VSIFPrintfL(fp, "\n");
                     VSIFPrintfL(fp, "%sObject = %s\n",
-                                osIndentation.c_str(), it.key);
+                                osIndentation.c_str(), pszContainerName);
                     SerializeAsPDL( fp, it.val, nDepth + 1 );
                     VSIFPrintfL(fp, "%sEnd_Object\n",
                                 osIndentation.c_str());
@@ -3309,7 +3325,7 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
                 {
                     VSIFPrintfL(fp, "\n");
                     VSIFPrintfL(fp, "%sGroup = %s\n",
-                                osIndentation.c_str(), it.key);
+                                osIndentation.c_str(), pszContainerName);
                     SerializeAsPDL( fp, it.val, nDepth + 1 );
                     VSIFPrintfL(fp, "%sEnd_Group\n",
                                 osIndentation.c_str());

@@ -932,7 +932,7 @@ def isis_23():
 def cancel_cbk(pct, msg, user_data):
     return 0
 
-# Test error cass
+# Test error cases
 def isis_24():
 
     # For DATA_LOCATION=EXTERNAL, the main filename should have a .lbl extension
@@ -1326,6 +1326,84 @@ def isis_25():
 
     return 'success'
 
+# Test objects with same name
+def isis_26():
+    gdal.FileFromMemBuffer('/vsimem/in.lbl', """Object = IsisCube
+  Object = Core
+    StartByte = 1
+    Format = BandSequential
+    Group = Dimensions
+      Samples = 1
+      Lines   = 1
+      Bands   = 1
+    End_Group
+    Group = Pixels
+      Type       = UnsignedByte
+      ByteOrder  = Lsb
+      Base       = 0.0
+      Multiplier = 1.0
+    End_Group
+  End_Object
+End_Object
+
+Object = Table
+  Name = first_table
+End_Object
+
+Object = Table
+  Name = second_table
+End_Object
+
+Object = foo
+  x = A
+End_Object
+
+Object = foo
+  x = B
+End_Object
+
+Object = foo
+  x = C
+End_Object
+
+End""")
+
+    gdal.Translate('/vsimem/out.lbl', '/vsimem/in.lbl', format = 'ISIS3')
+
+    f = gdal.VSIFOpenL('/vsimem/out.lbl', 'rb')
+    content = gdal.VSIFReadL(1, 10000, f).decode('ASCII')
+    gdal.VSIFCloseL(f)
+
+    if content.find(
+"""Object = Table
+  Name = first_table
+End_Object
+
+Object = Table
+  Name = second_table
+End_Object
+
+Object = foo
+  x = A
+End_Object
+
+Object = foo
+  x = B
+End_Object
+
+Object = foo
+  x = C
+End_Object
+""") < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/in.lbl')
+    gdal.Unlink('/vsimem/out.lbl')
+
+    return 'success'
+
 gdaltest_list = [
     isis_1,
     isis_2,
@@ -1351,7 +1429,8 @@ gdaltest_list = [
     isis_22,
     isis_23,
     isis_24,
-    isis_25 ]
+    isis_25,
+    isis_26 ]
 
 
 if __name__ == '__main__':

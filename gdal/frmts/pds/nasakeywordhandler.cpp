@@ -52,6 +52,7 @@
 
 #include "cpl_string.h"
 #include "nasakeywordhandler.h"
+#include "ogrgeojsonreader.h"
 #include "ogr_json_header.h"
 
 CPL_CVSID("$Id$");
@@ -150,13 +151,44 @@ int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, json_object* poCur
         if( EQUAL(osName,"OBJECT") || EQUAL(osName,"GROUP") )
         {
             json_object* poNewGroup = json_object_new_object();
-            json_object_object_add(poCur, osValue.c_str(), poNewGroup);
             json_object_object_add(poNewGroup, "_type",
                 json_object_new_string( EQUAL(osName,"OBJECT") ?
                                                     "object" : "group" ) );
             if( !ReadGroup( (CPLString(pszPathPrefix) + osValue + ".").c_str(),
                             poNewGroup ) )
+            {
+                json_object_put(poNewGroup);
                 return FALSE;
+            }
+            json_object* poName = NULL;
+            if( (osValue == "Table" || osValue == "Field") &&
+                (poName = CPL_json_object_object_get(poNewGroup, "Name")) != NULL &&
+                json_object_get_type(poName) == json_type_string )
+            {
+                json_object_object_add(poCur,
+                    (osValue + "_" + json_object_get_string(poName)).c_str(),
+                    poNewGroup);
+                json_object_object_add(poNewGroup, "_container_name",
+                                       json_object_new_string(osValue));
+            }
+            else if( CPL_json_object_object_get(poCur, osValue) != NULL )
+            {
+                int nIter = 2;
+                while( CPL_json_object_object_get(poCur,
+                        (osValue + CPLSPrintf("_%d", nIter)).c_str()) != NULL )
+                {
+                    nIter ++;
+                }
+                json_object_object_add(poCur,
+                    (osValue + CPLSPrintf("_%d", nIter)).c_str(),
+                    poNewGroup);
+                json_object_object_add(poNewGroup, "_container_name",
+                                       json_object_new_string(osValue));
+            }
+            else
+            {
+                json_object_object_add(poCur, osValue.c_str(), poNewGroup);
+            }
         }
         else if( EQUAL(osName,"END")
                  || EQUAL(osName,"END_GROUP" )
