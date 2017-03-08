@@ -1445,7 +1445,6 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
     poPoints = NULL;
     padfZ = NULL;
     int nBeginLastPart = 0;
-
     for( int j = 0; j < poMPoly->getNumGeometries(); j++ )
     {
         OGRPolygon *poPoly = (OGRPolygon*)(poMPoly->getGeometryRef(j));
@@ -1458,17 +1457,28 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
         OGRLinearRing *poRing = poPoly->getExteriorRing();
         if( nRings == 1 && poRing->getNumPoints() == 4 )
         {
+            int nCorrectedPoints = nPoints;
+            if( nParts > 0 && poPoints != NULL &&
+                panPartType[nParts-1] == SHPP_OUTERRING &&
+                nPoints - panPartStart[nParts-1] == 4 )
+            {
+                nCorrectedPoints--;
+            }
+
             if( nParts > 0 && poPoints != NULL &&
                 ((panPartType[nParts-1] == SHPP_TRIANGLES &&
                   nPoints - panPartStart[nParts-1] == 3) ||
+                 (panPartType[nParts-1] == SHPP_OUTERRING &&
+                  nPoints - panPartStart[nParts-1] == 4) ||
                  panPartType[nParts-1] == SHPP_TRIFAN) &&
                 poRing->getX(0) == poPoints[nBeginLastPart].x &&
                 poRing->getY(0) == poPoints[nBeginLastPart].y &&
                 poRing->getZ(0) == padfZ[nBeginLastPart] &&
-                poRing->getX(1) == poPoints[nPoints-1].x &&
-                poRing->getY(1) == poPoints[nPoints-1].y &&
-                poRing->getZ(1) == padfZ[nPoints-1] )
+                poRing->getX(1) == poPoints[nCorrectedPoints-1].x &&
+                poRing->getY(1) == poPoints[nCorrectedPoints-1].y &&
+                poRing->getZ(1) == padfZ[nCorrectedPoints-1] )
             {
+                nPoints  = nCorrectedPoints;
                 panPartType[nParts-1] = SHPP_TRIFAN;
 
                 poPoints = static_cast<OGRRawPoint *>(
@@ -1482,15 +1492,18 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
             }
             else if( nParts > 0 && poPoints != NULL &&
                 ((panPartType[nParts-1] == SHPP_TRIANGLES &&
-                  nPoints - panPartStart[nParts-1] == 3) ||
+                  nPoints - panPartStart[nParts-1] == 3)||
+                 (panPartType[nParts-1] == SHPP_OUTERRING &&
+                  nPoints - panPartStart[nParts-1] == 4) ||
                  panPartType[nParts-1] == SHPP_TRISTRIP) &&
-                poRing->getX(0) == poPoints[nPoints-2].x &&
-                poRing->getY(0) == poPoints[nPoints-2].y &&
-                poRing->getZ(0) == padfZ[nPoints-2] &&
-                poRing->getX(1) == poPoints[nPoints-1].x &&
-                poRing->getY(1) == poPoints[nPoints-1].y &&
-                poRing->getZ(1) == padfZ[nPoints-1] )
+                poRing->getX(0) == poPoints[nCorrectedPoints-2].x &&
+                poRing->getY(0) == poPoints[nCorrectedPoints-2].y &&
+                poRing->getZ(0) == padfZ[nCorrectedPoints-2] &&
+                poRing->getX(1) == poPoints[nCorrectedPoints-1].x &&
+                poRing->getY(1) == poPoints[nCorrectedPoints-1].y &&
+                poRing->getZ(1) == padfZ[nCorrectedPoints-1] )
             {
+                nPoints  = nCorrectedPoints;
                 panPartType[nParts-1] = SHPP_TRISTRIP;
 
                 poPoints = static_cast<OGRRawPoint *>(
@@ -1515,21 +1528,22 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
                     panPartType = static_cast<int *>(
                         CPLRealloc(panPartType, (nParts + 1) * sizeof(int)));
                     panPartStart[nParts] = nPoints;
-                    panPartType[nParts] = SHPP_TRIANGLES;
+                    panPartType[nParts] = bAllowSHPTTriangle ? SHPP_TRIANGLES :
+                                                               SHPP_OUTERRING;
                     nParts++;
                 }
 
                 poPoints = static_cast<OGRRawPoint *>(
-                    CPLRealloc(poPoints, (nPoints + 3) * sizeof(OGRRawPoint)));
+                    CPLRealloc(poPoints, (nPoints + 4) * sizeof(OGRRawPoint)));
                 padfZ = static_cast<double *>(
-                    CPLRealloc(padfZ, (nPoints + 3) * sizeof(double)));
-                for( int i = 0; i < 3; i++ )
+                    CPLRealloc(padfZ, (nPoints + 4) * sizeof(double)));
+                for( int i = 0; i < 4; i++ )
                 {
                     poPoints[nPoints+i].x = poRing->getX(i);
                     poPoints[nPoints+i].y = poRing->getY(i);
                     padfZ[nPoints+i] = poRing->getZ(i);
                 }
-                nPoints += 3;
+                nPoints += bAllowSHPTTriangle ? 3 : 4;
             }
         }
         else
@@ -1573,13 +1587,11 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
         }
     }
 
-    if( !bAllowSHPTTriangle )
+    if( nParts == 1 && panPartType[0] == SHPP_OUTERRING &&
+        nPoints == 4 )
     {
-        for( int i = 0; i < nParts; i++ )
-        {
-            if( panPartType[i] == SHPP_TRIANGLES )
-                panPartType[i] = SHPP_TRIFAN;
-        }
+        panPartType[0] = SHPP_TRIFAN;
+        nPoints = 3;
     }
 
     delete poGeomToDelete;
