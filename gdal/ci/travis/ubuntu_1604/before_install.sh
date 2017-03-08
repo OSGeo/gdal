@@ -29,6 +29,11 @@ sudo chroot "$chroot" apt-get install -y fossil libgeotiff-dev libcharls-dev lib
 wget http://llvm.org/releases/3.9.0/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz
 tar xJf clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz
 
+wget https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5/FileGDB_API_1_5_64gcc51.tar.gz
+tar xzf FileGDB_API_1_5_64gcc51.tar.gz
+sudo cp FileGDB_API-64gcc51/lib/* "$chroot/usr/lib"
+sudo chroot "$chroot" ldconfig
+
 sudo chroot "$chroot" apt-get install -y pyflakes3
 sudo chroot "$chroot" sh -c "cd $PWD && pyflakes3 autotest"
 sudo chroot "$chroot" sh -c "cd $PWD && pyflakes3 gdal/swig/python/scripts"
