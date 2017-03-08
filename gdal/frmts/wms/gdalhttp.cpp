@@ -91,12 +91,19 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
     psRequest->m_curl_error.resize(CURL_ERROR_SIZE + 1);
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, &psRequest->m_curl_error[0]);
 
-    CPLHTTPSetOptions(psRequest->m_curl_handle, psRequest->options);
+    psRequest->m_headers = static_cast<struct curl_slist*>(
+            CPLHTTPSetOptions(psRequest->m_curl_handle, psRequest->options));
+    if( psRequest->m_headers != NULL )
+        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_HTTPHEADER,
+                         psRequest->m_headers);
+
 }
 
 WMSHTTPRequest::~WMSHTTPRequest() {
     if (m_curl_handle != NULL)
         curl_easy_cleanup(m_curl_handle);
+    if( m_headers != NULL )
+        curl_slist_free_all(m_headers);
     if (pabyData != NULL)
         CPLFree(pabyData);
 }
