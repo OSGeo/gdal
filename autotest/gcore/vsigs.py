@@ -48,7 +48,7 @@ def vsigs_init():
     gdaltest.gs_vars = {}
     for var in ('GS_SECRET_ACCESS_KEY', 'GS_ACCESS_KEY_ID',
                 'CPL_GS_TIMESTAMP', 'CPL_GS_ENDPOINT',
-                'CPL_GS_HEADER_FILE'):
+                'GDAL_HTTP_HEADER_FILE'):
         gdaltest.gs_vars[var] = gdal.GetConfigOption(var)
         if gdaltest.gs_vars[var] is not None:
             gdal.SetConfigOption(var, "")
@@ -71,24 +71,34 @@ def vsigs_1():
 
     # Invalid header filename
     gdal.ErrorReset()
-    with gdaltest.error_handler():
-        gdal.SetConfigOption('CPL_GS_HEADER_FILE', '/i_dont/exist.py')
-        f = open_for_read('/vsigs/foo/bar')
-        gdal.SetConfigOption('CPL_GS_HEADER_FILE', None)
-    if f is not None or gdal.GetLastErrorMsg().find('Cannot read /i_dont/exist.py') < 0:
+    gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', '/i_dont/exist.py')
+    f = open_for_read('/vsigs/foo/bar')
+    if f is None:
+        gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
         gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
+        return 'fail'
+    with gdaltest.error_handler():
+        data = gdal.VSIFReadL(1, 1, f)
+    last_err = gdal.GetLastErrorMsg()
+    gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
+    gdal.VSIFCloseL(f)
+    if len(data) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if last_err.find('Cannot read') < 0:
+        gdaltest.post_reason('fail')
+        print(last_err)
         return 'fail'
 
     # Invalid content for header file 
-    gdal.SetConfigOption('CPL_GS_HEADER_FILE', 'vsigs.py')
+    gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', 'vsigs.py')
     f = open_for_read('/vsigs/foo/bar')
     if f is None:
-        gdal.SetConfigOption('CPL_GS_HEADER_FILE', None)
+        gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
         gdaltest.post_reason('fail')
         return 'fail'
     data = gdal.VSIFReadL(1, 1, f)
-    gdal.SetConfigOption('CPL_GS_HEADER_FILE', None)
+    gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
     gdal.VSIFCloseL(f)
     if len(data) != 0:
         gdaltest.post_reason('fail')
@@ -175,10 +185,29 @@ def vsigs_2():
     if gdaltest.webserver_port == 0:
         return 'skip'
 
+    gdal.SetConfigOption('CPL_GS_ENDPOINT', 'http://127.0.0.1:%d/' % gdaltest.webserver_port)
+
+    # header file 
+    gdal.FileFromMemBuffer('/vsimem/my_headers.txt', 'foo: bar')
+    gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', '/vsimem/my_headers.txt')
+    f = open_for_read('/vsigs/gs_fake_bucket_http_header_file/resource')
+    if f is None:
+        gdal.Unlink('/vsimem/my_headers.txt')
+        gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = gdal.VSIFReadL(1, 1, f)
+    gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
+    gdal.Unlink('/vsimem/my_headers.txt')
+    gdal.VSIFCloseL(f)
+    if len(data) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', 'GS_SECRET_ACCESS_KEY')
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', 'GS_ACCESS_KEY_ID')
     gdal.SetConfigOption('CPL_GS_TIMESTAMP', 'my_timestamp')
-    gdal.SetConfigOption('CPL_GS_ENDPOINT', 'http://127.0.0.1:%d/' % gdaltest.webserver_port)
 
     f = open_for_read('/vsigs/gs_fake_bucket/resource')
     if f is None:

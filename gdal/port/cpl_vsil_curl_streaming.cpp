@@ -66,8 +66,10 @@ void VSIInstallGSStreamingFileHandler(void)
 
 #include <curl/curl.h>
 
-void VSICurlSetOptions( CURL* hCurlHandle, const char* pszURL,
+struct curl_slist* VSICurlSetOptions( CURL* hCurlHandle, const char* pszURL,
                         const char * const* papszOptions );
+struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
+                                        struct curl_slist* poSrcToDestroy );
 
 #define ENABLE_DEBUG        0
 
@@ -217,10 +219,10 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
 {
   protected:
     VSICurlStreamingFSHandler* m_poFS;
-
+    char**          m_papszHTTPOptions;
+    
   private:
     char*           m_pszURL;
-    char**          m_papszHTTPOptions;
 
 #ifdef notdef
     unsigned int    nRecomputedChecksumOfFirst1024Bytes;
@@ -537,7 +539,8 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 
     CURL* hLocalHandle = curl_easy_init();
 
-    VSICurlSetOptions(hLocalHandle, m_pszURL, m_papszHTTPOptions);
+    struct curl_slist* headers = 
+        VSICurlSetOptions(hLocalHandle, m_pszURL, m_papszHTTPOptions);
 
     VSICURLStreamingInitWriteFuncStruct(&sWriteFuncHeaderData);
 
@@ -564,7 +567,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
         osVerb = "HEAD";
     }
 
-    struct curl_slist* headers = GetCurlHeaders(osVerb);
+    headers = VSICurlMergeHeaders(headers, GetCurlHeaders(osVerb));
     if( headers != NULL )
         curl_easy_setopt(hLocalHandle, CURLOPT_HTTPHEADER, headers);
 
@@ -1003,8 +1006,9 @@ VSICurlStreamingHandleReceivedBytesHeader( void *buffer, size_t count,
 
 void VSICurlStreamingHandle::DownloadInThread()
 {
-    VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
-    struct curl_slist* headers = GetCurlHeaders("GET");
+    struct curl_slist* headers = 
+        VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
+    headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET"));
     if( headers != NULL )
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
@@ -1865,6 +1869,8 @@ VSIGSStreamingHandle::~VSIGSStreamingHandle()
 struct curl_slist*
 VSIGSStreamingHandle::GetCurlHeaders( const CPLString& osVerb )
 {
+    if( CSLFetchNameValue(m_papszHTTPOptions, "HEADER_FILE") )
+        return NULL;
     return m_poGCHandleHelper->GetCurlHeaders(osVerb);
 }
 
@@ -1995,7 +2001,7 @@ void VSIInstallS3StreamingFileHandler(void)
  * The GS_SECRET_ACCESS_KEY and GS_ACCESS_KEY_ID configuration options must be
  * set to use the AWS S3 authentication compatibility method.
  * 
- * Alternatively, it is possible to set the CPL_GS_HEADER_FILE configuration
+ * Alternatively, it is possible to set the GDAL_HTTP_HEADER_FILE configuration
  * option to point to a filename of a text file with "key: value" headers.
  * Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.
  *

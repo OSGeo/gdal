@@ -44,28 +44,8 @@ static
 struct curl_slist* GetGSHeaders( const CPLString& osVerb,
                                  const CPLString& osCanonicalResource,
                                  const CPLString& osSecretAccessKey,
-                                 const CPLString& osAccessKeyId,
-                                 const CPLString& osHeaderFile )
+                                 const CPLString& osAccessKeyId )
 {
-    if( !osHeaderFile.empty() )
-    {
-        VSILFILE *fp = VSIFOpenL( osHeaderFile, "rb" );
-        if( fp == NULL )
-        {
-            CPLError(CE_Failure, CPLE_FileIO,
-                     "Cannot read %s", osHeaderFile.c_str());
-            return NULL;
-        }
-        const char* pszLine = NULL;
-        struct curl_slist *headers=NULL;
-        while( (pszLine = CPLReadLineL(fp)) != NULL )
-        {
-            headers = curl_slist_append(headers, pszLine);
-        }
-        VSIFCloseL(fp);
-        return headers;
-    }
-
     if( osSecretAccessKey.empty() )
     {
         VSIError(VSIE_AWSInvalidCredentials,
@@ -129,13 +109,13 @@ VSIGSHandleHelper::VSIGSHandleHelper( const CPLString& osEndpoint,
                                       const CPLString& osBucketObjectKey,
                                       const CPLString& osSecretAccessKey,
                                       const CPLString& osAccessKeyId,
-                                      const CPLString& osHeaderFile) :
+                                      bool bUseHeaderFile ) :
     m_osURL(osEndpoint + osBucketObjectKey),
     m_osEndpoint(osEndpoint),
     m_osBucketObjectKey(osBucketObjectKey),
     m_osSecretAccessKey(osSecretAccessKey),
     m_osAccessKeyId(osAccessKeyId),
-    m_osHeaderFile(osHeaderFile)
+    m_bUseHeaderFile(bUseHeaderFile)
 {}
 
 /************************************************************************/
@@ -162,20 +142,22 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
     const CPLString osAccessKeyId(
         CPLGetConfigOption("GS_ACCESS_KEY_ID", ""));
     const CPLString osHeaderFile(
-        CPLGetConfigOption("CPL_GS_HEADER_FILE", "") );
+        CPLGetConfigOption("GDAL_HTTP_HEADER_FILE", "") );
 
-    struct curl_slist* headers = 
-        GetGSHeaders( "GET", "",  osSecretAccessKey, osAccessKeyId,
-                      osHeaderFile );
-    if( headers == NULL )
-        return NULL;
-    curl_slist_free_all(headers);
+    if( osHeaderFile.empty() )
+    {
+        struct curl_slist* headers = 
+            GetGSHeaders( "GET", "",  osSecretAccessKey, osAccessKeyId );
+        if( headers == NULL )
+            return NULL;
+        curl_slist_free_all(headers);
+    }
 
     return new VSIGSHandleHelper( osEndpoint,
                                   osBucketObject,
                                   osSecretAccessKey,
                                   osAccessKeyId,
-                                  osHeaderFile );
+                                  !osHeaderFile.empty() );
 }
 
 /************************************************************************/
@@ -185,11 +167,12 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
 struct curl_slist *
 VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb ) const
 {
+    if( m_bUseHeaderFile )
+        return NULL;
     return GetGSHeaders( osVerb,
                          "/" + m_osBucketObjectKey,
                          m_osSecretAccessKey,
-                         m_osAccessKeyId,
-                         m_osHeaderFile );
+                         m_osAccessKeyId );
 }
 
 #endif

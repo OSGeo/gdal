@@ -89,8 +89,10 @@ int VSICurlUninstallReadCbk( VSILFILE* /* fp */ )
 
 #include <curl/curl.h>
 
-void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL,
+struct curl_slist* VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL,
                        const char * const* papszOptions);
+struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
+                                        struct curl_slist* poSrcToDestroy );
 
 #include <map>
 
@@ -754,7 +756,8 @@ vsi_l_offset VSICurlHandle::GetFileSize( bool bSetError )
     bool bS3Redirect = false;
 
 retry:
-    VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
+    struct curl_slist* headers =
+            VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
 
     // We need that otherwise OSGEO4W's libcurl issue a dummy range request
     // when doing a HEAD when recycling connections.
@@ -808,7 +811,7 @@ retry:
     szCurlErrBuf[0] = '\0';
     curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-    struct curl_slist* headers = GetCurlHeaders(osVerb);
+    headers = VSICurlMergeHeaders(headers, GetCurlHeaders(osVerb));
     if( headers != NULL )
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
@@ -1078,7 +1081,8 @@ bool VSICurlHandle::DownloadRegion( const vsi_l_offset startOffset,
     WriteFuncStruct sWriteFuncHeaderData;
 
 retry:
-    VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
+    struct curl_slist* headers =
+        VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
 
     VSICURLInitWriteFuncStruct(&sWriteFuncData,
                                reinterpret_cast<VSILFILE *>(this),
@@ -1116,7 +1120,7 @@ retry:
     szCurlErrBuf[0] = '\0';
     curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-    struct curl_slist* headers = GetCurlHeaders("GET");
+    headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET"));
     if( headers != NULL )
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
@@ -1503,7 +1507,8 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
     }
 
     CURL* hCurlHandle = poFS->GetCurlHandleFor(m_pszURL);
-    VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
+    struct curl_slist* headers =
+        VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
 
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
@@ -1544,7 +1549,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
     char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
     curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-    struct curl_slist* headers = GetCurlHeaders("GET");
+    headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET"));
     if( headers != NULL )
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
@@ -3033,7 +3038,8 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
         for( int iTry = 0; iTry < 2; iTry++ )
         {
             CURL* hCurlHandle = GetCurlHandleFor(osDirname);
-            VSICurlSetOptions(hCurlHandle, osDirname.c_str(), NULL);
+            struct curl_slist* headers =
+                VSICurlSetOptions(hCurlHandle, osDirname.c_str(), NULL);
 
             // On the first pass, we want to try fetching all the possible
             // information (filename, file/directory, size). If that does not
@@ -3056,7 +3062,13 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
             char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
             curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
+            if( headers != NULL )
+                curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
             curl_easy_perform(hCurlHandle);
+
+            if( headers != NULL )
+                curl_slist_free_all(headers);
 
             if( sWriteFuncData.pBuffer == NULL )
                 return NULL;
@@ -3195,7 +3207,8 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
 #endif
 
         CURL* hCurlHandle = GetCurlHandleFor(osDirname);
-        VSICurlSetOptions(hCurlHandle, osDirname.c_str(), NULL);
+        struct curl_slist* headers =
+            VSICurlSetOptions(hCurlHandle, osDirname.c_str(), NULL);
 
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
@@ -3208,7 +3221,13 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
         char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
         curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
+        if( headers != NULL )
+            curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+
         curl_easy_perform(hCurlHandle);
+
+        if( headers != NULL )
+            curl_slist_free_all(headers);
 
         if( sWriteFuncData.pBuffer == NULL )
             return NULL;
@@ -4351,7 +4370,8 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname,
         if( !osObjectKey.empty() )
              poS3HandleHelper->AddQueryParameter("prefix", osObjectKey + "/");
 
-        VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL(), NULL);
+        struct curl_slist* headers = 
+            VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL(), NULL);
 
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
@@ -4363,7 +4383,8 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname,
         char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
         curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-        struct curl_slist* headers = poS3HandleHelper->GetCurlHeaders("GET");
+        headers = VSICurlMergeHeaders(headers,
+                               poS3HandleHelper->GetCurlHeaders("GET"));
         if( headers != NULL )
             curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
@@ -4628,7 +4649,8 @@ char** VSIGSFSHandler::GetFileList( const char *pszDirname,
         if( !osObjectKey.empty() )
             osURL += "&prefix=" + osObjectKey + "/";
 
-        VSICurlSetOptions(hCurlHandle, osURL, NULL);
+        struct curl_slist* headers =
+            VSICurlSetOptions(hCurlHandle, osURL, NULL);
 
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
@@ -4640,17 +4662,15 @@ char** VSIGSFSHandler::GetFileList( const char *pszDirname,
         char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
         curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-        struct curl_slist* headers = poHandleHelper->GetCurlHeaders("GET");
-        if( headers == NULL )
-        {
-            delete poHandleHelper;
-            return NULL;
-        }
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+        headers = VSICurlMergeHeaders(headers,
+                                      poHandleHelper->GetCurlHeaders("GET"));
+        if( headers != NULL )
+            curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         curl_easy_perform(hCurlHandle);
 
-        curl_slist_free_all(headers);
+        if( headers != NULL )
+            curl_slist_free_all(headers);
 
         if( sWriteFuncData.pBuffer == NULL)
         {
@@ -4713,6 +4733,8 @@ VSIGSHandle::~VSIGSHandle()
 
 struct curl_slist* VSIGSHandle::GetCurlHeaders( const CPLString& osVerb )
 {
+    if( CSLFetchNameValue(m_papszHTTPOptions, "HEADER_FILE") )
+        return NULL;
     return m_poHandleHelper->GetCurlHeaders( osVerb );
 }
 
@@ -4744,12 +4766,14 @@ int VSICurlUninstallReadCbk( VSILFILE* fp )
 /*                       VSICurlSetOptions()                            */
 /************************************************************************/
 
-void VSICurlSetOptions( CURL* hCurlHandle, const char* pszURL,
+struct curl_slist* VSICurlSetOptions(
+                        CURL* hCurlHandle, const char* pszURL,
                         const char * const* papszOptions )
 {
     curl_easy_setopt(hCurlHandle, CURLOPT_URL, pszURL);
 
-    CPLHTTPSetOptions(hCurlHandle, papszOptions);
+    struct curl_slist* headers = static_cast<struct curl_slist*>(
+        CPLHTTPSetOptions(hCurlHandle, papszOptions));
 
 // 7.16
 #if LIBCURL_VERSION_NUM >= 0x071000
@@ -4777,7 +4801,28 @@ void VSICurlSetOptions( CURL* hCurlHandle, const char* pszURL,
 
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
+
+    return headers;
 }
+
+/************************************************************************/
+/*                     VSICurlMergeHeaders()                            */
+/************************************************************************/
+
+struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
+                                        struct curl_slist* poSrcToDestroy )
+{
+    struct curl_slist* iter = poSrcToDestroy;
+    while( iter != NULL )
+    {
+        poDest = curl_slist_append(poDest, iter->data);
+        iter = iter->next;
+    }
+    if( poSrcToDestroy )
+        curl_slist_free_all(poSrcToDestroy);
+    return poDest;
+}
+
 
 #endif // DOXYGEN_SKIP
 //! @endcond
@@ -4930,7 +4975,7 @@ void VSIInstallS3FileHandler( void )
  * The GS_SECRET_ACCESS_KEY and GS_ACCESS_KEY_ID configuration options must be
  * set to use the AWS S3 authentication compatibility method.
  * 
- * Alternatively, it is possible to set the CPL_GS_HEADER_FILE configuration
+ * Alternatively, it is possible to set the GDAL_HTTP_HEADER_FILE configuration
  * option to point to a filename of a text file with "key: value" headers.
  * Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.
  *

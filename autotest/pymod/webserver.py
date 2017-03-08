@@ -696,6 +696,21 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.wfile.write(response.encode('ascii'))
                 return
 
+            if self.path == '/gs_fake_bucket_http_header_file/resource':
+                self.protocol_version = 'HTTP/1.1'
+
+                if 'foo' not in self.headers or self.headers['foo'] != 'bar':
+                    sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                    self.send_response(403)
+                    return
+
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Length', 1)
+                self.end_headers()
+                self.wfile.write("""Y""".encode('ascii'))
+                return
+
             if self.path == '/gs_fake_bucket/resource':
                 self.protocol_version = 'HTTP/1.1'
 
