@@ -712,12 +712,13 @@ int FileGDBTable::Open(const char* pszFilename,
 #endif
     }
 
-    nOffsetFieldDesc = GetUInt32(abyHeader + 32, 0);
+    nOffsetFieldDesc = GetUInt32(abyHeader + 32, 0) |
+            (static_cast<GUIntBig>(GetUInt32(abyHeader + 36, 0)) << 32);
 
 #ifdef DEBUG_VERBOSE
     if( nOffsetFieldDesc != 40 )
     {
-        CPLDebug("OpenFileGDB", "%s: nOffsetFieldDesc=%d",
+        CPLDebug("OpenFileGDB", "%s: nOffsetFieldDesc=" CPL_FRMT_GUIB,
                  pszFilename, nOffsetFieldDesc);
     }
 #endif
@@ -1176,7 +1177,7 @@ vsi_l_offset FileGDBTable::GetOffsetInTableForRow(int iRow)
 #ifdef DEBUG_VERBOSE
     if( iRow == 0 && nOffset != 0 &&
         nOffset != nOffsetHeaderEnd && nOffset != nOffsetHeaderEnd + 4 )
-        CPLDebug("OpenFileGDB", "%s: first feature offset = " CPL_FRMT_GUIB ". Expected %d",
+        CPLDebug("OpenFileGDB", "%s: first feature offset = " CPL_FRMT_GUIB ". Expected " CPL_FRMT_GUIB,
                  osFilename.c_str(), nOffset, nOffsetHeaderEnd);
 #endif
 
