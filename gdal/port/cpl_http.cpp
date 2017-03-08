@@ -163,6 +163,7 @@ static const TupleEnvVarOptionName asAssocEnvVarOptionName[] =
     { "GDAL_HTTP_RETRY_DELAY", "RETRY_DELAY" },
     { "CURL_CA_BUNDLE", "CAINFO" },
     { "SSL_CERT_FILE", "CAINFO" },
+    { "GDAL_HTTP_HEADER_FILE", "HEADER_FILE" }
 };
 
 char** CPLHTTPGetOptionsFromEnv()
@@ -204,6 +205,8 @@ char** CPLHTTPGetOptionsFromEnv()
  *     effect if LOW_SPEED_TIME is specified too. (GDAL >= 2.1)</li>
  * <li>HEADERS=val, where val is an extra header to use when getting a web page.
  *                  For example "Accept: application/x-ogcwkt"</li>
+ * <li>HEADER_FILE=filename: filename of a text file with "key: value" headers.
+ *     (GDAL >= 2.2)</li>
  * <li>HTTPAUTH=[BASIC/NTLM/GSSNEGOTIATE/ANY] to specify an authentication scheme to use.</li>
  * <li>USERPWD=userid:password to specify a user and password for authentication</li>
  * <li>POSTFIELDS=val, where val is a nul-terminated string to be passed to the server
@@ -230,11 +233,12 @@ char** CPLHTTPGetOptionsFromEnv()
  * Alternatively, if not defined in the papszOptions arguments, the
  * CONNECTTIMEOUT, TIMEOUT,
  * LOW_SPEED_TIME, LOW_SPEED_LIMIT, PROXY, PROXYUSERPWD, PROXYAUTH, NETRC,
- * MAX_RETRY and RETRY_DELAY values are searched in the configuration
+ * MAX_RETRY and RETRY_DELAY, HEADER_FILE values are searched in the configuration
  * options named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
  * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT,
  * GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
- * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY and GDAL_HTTP_RETRY_DELAY.
+ * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
+ * GDAL_HTTP_HEADER_FILE.
  *
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
@@ -388,7 +392,6 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /*      Setup the request.                                              */
 /* -------------------------------------------------------------------- */
     char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
-    struct curl_slist *headers=NULL;
 
     const char* pszArobase = strchr(pszURL, '@');
     const char* pszSlash = strchr(pszURL, '/');
@@ -412,7 +415,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
 
-    CPLHTTPSetOptions(http_handle, papszOptions);
+    struct curl_slist* headers= reinterpret_cast<struct curl_slist*>(
+                            CPLHTTPSetOptions(http_handle, papszOptions));
 
     // Set Headers.
     const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
@@ -422,8 +426,10 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         for( int i=0; papszTokensHeaders[i] != NULL; ++i )
             headers = curl_slist_append(headers, papszTokensHeaders[i]);
         CSLDestroy(papszTokensHeaders);
-        curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
     }
+
+    if( headers != NULL )
+        curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
 
     // Are we making a head request.
     const char* pszNoBody = NULL;
@@ -613,7 +619,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /*                         CPLHTTPSetOptions()                          */
 /************************************************************************/
 
-void CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
+void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
 {
     CURL *http_handle = reinterpret_cast<CURL *>(pcurl);
 
@@ -824,6 +830,30 @@ void CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         pszCookie = CPLGetConfigOption("GDAL_HTTP_COOKIE", NULL);
     if( pszCookie != NULL )
         curl_easy_setopt(http_handle, CURLOPT_COOKIE, pszCookie);
+
+    struct curl_slist* headers = NULL;
+    const char *pszHeaderFile = CSLFetchNameValue( papszOptions, "HEADER_FILE" );
+    if( pszHeaderFile == NULL )
+        pszHeaderFile = CPLGetConfigOption( "GDAL_HTTP_HEADER_FILE", NULL );
+    if( pszHeaderFile != NULL )
+    {
+        VSILFILE *fp = VSIFOpenL( pszHeaderFile, "rb" );
+        if( fp == NULL )
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Cannot read %s", pszHeaderFile);
+        }
+        else
+        {
+            const char* pszLine = NULL;
+            while( (pszLine = CPLReadLineL(fp)) != NULL )
+            {
+                headers = curl_slist_append(headers, pszLine);
+            }
+            VSIFCloseL(fp);
+        }
+    }
+    return headers;
 }
 #endif  // def HAVE_CURL
 

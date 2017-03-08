@@ -45,14 +45,14 @@ class VSIGSHandleHelper
         CPLString m_osBucketObjectKey;
         CPLString m_osSecretAccessKey;
         CPLString m_osAccessKeyId;
-        CPLString m_osHeaderFile;
+        bool      m_bUseHeaderFile;
 
     public:
         VSIGSHandleHelper(const CPLString& osEndpoint,
                           const CPLString& osBucketObjectKey,
                           const CPLString& osSecretAccessKey,
                           const CPLString& osAccessKeyId,
-                          const CPLString& osHeaderFile);
+                          bool bUseHeaderFile);
        ~VSIGSHandleHelper();
 
         static VSIGSHandleHelper* BuildFromURI(const char* pszURI,
