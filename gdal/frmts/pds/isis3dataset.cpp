@@ -103,9 +103,6 @@ static const char* const pszLABEL_BYTES_PLACEHOLDER = "!*^LABEL_BYTES^*!";
 // Must be large enough to hold an integer
 static const char* const pszHISTORY_STARTBYTE_PLACEHOLDER =
                                                     "!*^HISTORY_STARTBYTE^*!";
-// Must be large enough to hold an integer
-static const char* const pszHISTORY_BYTES_PLACEHOLDER =
-                                                    "!*^HISTORY_BYTES^*!";
 
 CPL_CVSID("$Id$");
 
@@ -133,13 +130,13 @@ class CPLJsonObject
         };
 
     private:
-        static const CPLJsonObject gUninitObject;
+        static const CPLJsonObject m_gUninitObject;
 
         Type m_eType;
         // Maintain both a list and a map to keep insertion order
         std::vector< std::pair< CPLString, CPLJsonObject* > > m_oList;
         std::map< CPLString, int> m_oMap;
-        GInt64 m_nVal;
+        GIntBig m_nVal;
         double m_dfVal;
         CPLString m_osVal;
 
@@ -177,7 +174,7 @@ class CPLJsonObject
         explicit CPLJsonObject(int nVal) :
             m_eType(INT), m_nVal(nVal), m_dfVal(0.0) {}
 
-        explicit CPLJsonObject(GInt64 nVal) :
+        explicit CPLJsonObject(GIntBig nVal) :
             m_eType(INT), m_nVal(nVal), m_dfVal(0.0) {}
 
         explicit CPLJsonObject(bool bVal) :
@@ -215,7 +212,7 @@ class CPLJsonObject
 
         Type getType() const { return m_eType; }
         bool getBool() const { return m_nVal == 1; }
-        GInt64 getInt() const { return m_nVal; }
+        GIntBig getInt() const { return m_nVal; }
         double getDouble() const { return m_dfVal; }
         const char* getString() const { return m_osVal.c_str(); }
 
@@ -253,50 +250,49 @@ class CPLJsonObject
         }
 
         // Non-const accessor. Creates then entry if needed
-        CPLJsonObject& operator[](const char* pszKey)
+        CPLJsonObject& operator[](const CPLString& osKey)
         {
             CPLAssert( m_eType == UNINIT || m_eType == OBJECT );
             m_eType = OBJECT;
             std::map<CPLString,int>::const_iterator oIter =
-                                                    m_oMap.find(pszKey);
+                                                    m_oMap.find(osKey);
             if( oIter != m_oMap.end() )
                 return *(m_oList[ oIter->second ].second);
             m_oList.push_back( std::pair<CPLString,CPLJsonObject*>(
-                                                pszKey, new CPLJsonObject()) );
-            m_oMap[pszKey] = static_cast<int>(m_oList.size()) - 1;
+                                                osKey, new CPLJsonObject()) );
+            m_oMap[osKey] = static_cast<int>(m_oList.size()) - 1;
             return *(m_oList.back().second);
         }
 
-        void insert(int nPos, const char* pszKey, const CPLJsonObject& obj )
+        void insert(size_t nPos, const CPLString& osKey, const CPLJsonObject& obj )
         {
             CPLAssert( m_eType == OBJECT );
-            CPLAssert( nPos >= 0 &&
-                       static_cast<size_t>(nPos) <= m_oList.size() );
-            del(pszKey);
+            CPLAssert( nPos <= m_oList.size() );
+            del(osKey);
             std::map<CPLString,int>::iterator oIter = m_oMap.begin();
             for( ; oIter != m_oMap.end(); ++oIter )
             {
-                if( oIter->second >= nPos )
+                if( oIter->second >= static_cast<int>(nPos) )
                     oIter->second ++;
             }
             m_oList.insert( m_oList.begin() + nPos,
                             std::pair<CPLString,CPLJsonObject*>(
-                                            pszKey, new CPLJsonObject(obj)) );
-            m_oMap[pszKey] = nPos;
+                                            osKey, new CPLJsonObject(obj)) );
+            m_oMap[osKey] = nPos;
         }
 
-        bool has(const char* pszKey) const
+        bool has(const CPLString& osKey) const
         {
             CPLAssert( m_eType == OBJECT );
             std::map<CPLString,int>::const_iterator oIter =
-                                                    m_oMap.find(pszKey);
+                                                    m_oMap.find(osKey);
             return oIter != m_oMap.end();
         }
 
-        void del(const char* pszKey)
+        void del(const CPLString& osKey)
         {
             CPLAssert( m_eType == OBJECT );
-            std::map<CPLString,int>::iterator oIter = m_oMap.find(pszKey);
+            std::map<CPLString,int>::iterator oIter = m_oMap.find(osKey);
             if( oIter != m_oMap.end() )
             {
                 const int nIdx = oIter->second;
@@ -313,42 +309,56 @@ class CPLJsonObject
             }
         }
 
-        const CPLJsonObject& operator[](const char* pszKey) const
+        const CPLJsonObject& operator[](const CPLString& osKey) const
         {
             CPLAssert( m_eType == OBJECT );
             std::map<CPLString,int>::const_iterator oIter =
-                                                    m_oMap.find(pszKey);
+                                                    m_oMap.find(osKey);
             if( oIter != m_oMap.end() )
                 return *(m_oList[ oIter->second ].second);
-            return gUninitObject;
+            return m_gUninitObject;
         }
 
         CPLJsonObject& operator[](int i)
         {
-            CPLAssert( m_eType == ARRAY );
+            CPLAssert( m_eType == ARRAY || m_eType == OBJECT );
             CPLAssert( i >= 0 && static_cast<size_t>(i) < m_oList.size() );
             return *(m_oList[i].second);
         }
 
         CPLJsonObject& operator[](size_t i)
         {
-            CPLAssert( m_eType == ARRAY );
+            CPLAssert( m_eType == ARRAY || m_eType == OBJECT );
             CPLAssert( i < m_oList.size() );
             return *(m_oList[i].second);
         }
 
         const CPLJsonObject& operator[](int i) const
         {
-            CPLAssert( m_eType == ARRAY );
+            CPLAssert( m_eType == ARRAY || m_eType == OBJECT );
             CPLAssert( i >= 0 && static_cast<size_t>(i) < m_oList.size() );
             return *(m_oList[i].second);
         }
 
         const CPLJsonObject& operator[](size_t i) const
         {
-            CPLAssert( m_eType == ARRAY );
+            CPLAssert( m_eType == ARRAY || m_eType == OBJECT );
             CPLAssert( i < m_oList.size() );
             return *(m_oList[i].second);
+        }
+
+        const CPLString& getKey(int i) const
+        {
+            CPLAssert( m_eType == OBJECT );
+            CPLAssert( i >= 0 && static_cast<size_t>(i) < m_oList.size() );
+            return m_oList[i].first;
+        }
+
+        const CPLString& getKey(size_t i) const
+        {
+            CPLAssert( m_eType == OBJECT );
+            CPLAssert( i < m_oList.size() );
+            return m_oList[i].first;
         }
 
         void add( const CPLJsonObject& newChild )
@@ -372,7 +382,7 @@ class CPLJsonObject
             return *this;
         }
 
-        CPLJsonObject& operator= (GInt64 nVal)
+        CPLJsonObject& operator= (GIntBig nVal)
         {
             m_eType = INT;
             m_nVal = nVal;
@@ -516,8 +526,8 @@ class CPLJsonObject
         }
 };
 
-CPLJsonObject gUninitObject;
-CPLJsonObject JSON_NULL_CST(CPLJsonObject::JSON_NULL);
+const CPLJsonObject CPLJsonObject::m_gUninitObject;
+const CPLJsonObject CPLJsonObject::JSON_NULL_CST(CPLJsonObject::JSON_NULL);
 
 /************************************************************************/
 /* ==================================================================== */
@@ -530,6 +540,16 @@ class ISIS3Dataset : public RawDataset
     friend class ISIS3RawRasterBand;
     friend class ISISTiledBand;
     friend class ISIS3WrapperRasterBand;
+
+    class NonPixelSection
+    {
+        public:
+            CPLString    osSrcFilename;
+            CPLString    osDstFilename; // empty for same file
+            vsi_l_offset nSrcOffset;
+            vsi_l_offset nSize;
+            CPLString    osPlaceHolder; // empty if not same file
+    };
 
     VSILFILE    *m_fpLabel;  // label file (only used for writing)
     VSILFILE    *m_fpImage;  // image data file. May be == fpLabel
@@ -562,8 +582,13 @@ class ISIS3Dataset : public RawDataset
     CPLString   m_osBoundingDegrees;
 
     json_object  *m_poJSonLabel;
+    CPLString     m_osHistory; // creation only
     bool          m_bUseSrcLabel; // creation only
     bool          m_bUseSrcMapping; // creation only
+    bool          m_bUseSrcHistory; // creation only
+    bool          m_bAddGDALHistory; // creation only
+    CPLString     m_osGDALHistory; // creation only
+    std::vector<NonPixelSection> m_aoNonPixelSections; // creation only
     json_object  *m_poSrcJSonLabel; // creation only
     CPLStringList m_aosISIS3MD;
     CPLStringList m_aosAdditionalFiles;
@@ -573,9 +598,12 @@ class ISIS3Dataset : public RawDataset
                             const char *pszDefault = "");
 
     double       FixLong( double dfLong );
-    json_object *BuildLabel();
+    void         BuildLabel();
+    void         BuildHistory();
     void         WriteLabel();
+    void         InvalidateLabel();
 
+    static CPLString SerializeAsPDL( json_object* poObj );
     static void SerializeAsPDL( VSILFILE* fp, json_object* poObj,
                                 int nDepth = 0 );
 
@@ -1673,6 +1701,8 @@ ISIS3Dataset::ISIS3Dataset() :
     m_poJSonLabel(NULL),
     m_bUseSrcLabel(true),
     m_bUseSrcMapping(false),
+    m_bUseSrcHistory(true),
+    m_bAddGDALHistory(true),
     m_poSrcJSonLabel(NULL)
 {
     m_oKeywords.SetStripSurroundingQuotes(true);
@@ -1781,6 +1811,7 @@ CPLErr ISIS3Dataset::SetProjection( const char* pszProjection )
     m_osProjection = pszProjection ? pszProjection : "";
     if( m_poExternalDS )
         m_poExternalDS->SetProjection(pszProjection);
+    InvalidateLabel();
     return CE_None;
 }
 
@@ -1820,6 +1851,7 @@ CPLErr ISIS3Dataset::SetGeoTransform( double * padfTransform )
     memcpy( m_adfGeoTransform, padfTransform, sizeof(double) * 6 );
     if( m_poExternalDS )
         m_poExternalDS->SetGeoTransform(padfTransform);
+    InvalidateLabel();
     return CE_None;
 }
 
@@ -1845,7 +1877,7 @@ char **ISIS3Dataset::GetMetadata( const char* pszDomain )
         {
             if( eAccess == GA_Update && m_poJSonLabel == NULL )
             {
-                m_poJSonLabel = BuildLabel();
+                BuildLabel();
             }
             CPLAssert( m_poJSonLabel != NULL );
             const char* pszJSon = json_object_to_json_string_ext(
@@ -1858,6 +1890,18 @@ char **ISIS3Dataset::GetMetadata( const char* pszDomain )
 }
 
 /************************************************************************/
+/*                           InvalidateLabel()                          */
+/************************************************************************/
+
+void ISIS3Dataset::InvalidateLabel()
+{
+    if( m_poJSonLabel )
+            json_object_put(m_poJSonLabel);
+        m_poJSonLabel = NULL;
+    m_aosISIS3MD.Clear();
+}
+
+/************************************************************************/
 /*                             SetMetadata()                            */
 /************************************************************************/
 
@@ -1866,13 +1910,10 @@ CPLErr ISIS3Dataset::SetMetadata( char** papszMD, const char* pszDomain )
     if( m_bUseSrcLabel && eAccess == GA_Update && pszDomain != NULL &&
         EQUAL( pszDomain, "json:ISIS3" ) )
     {
-        if( m_poJSonLabel )
-            json_object_put(m_poJSonLabel);
-        m_poJSonLabel = NULL;
         if( m_poSrcJSonLabel )
             json_object_put(m_poSrcJSonLabel);
         m_poSrcJSonLabel = NULL;
-        m_aosISIS3MD.Clear();
+        InvalidateLabel();
         if( papszMD != NULL && papszMD[0] != NULL )
         {
             if( !OGRJSonParse( papszMD[0], &m_poSrcJSonLabel, true ) )
@@ -1924,6 +1965,60 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
     poDS->m_poJSonLabel = poDS->m_oKeywords.StealJSon();
+    json_object_object_add(poDS->m_poJSonLabel, "_filename",
+                           json_object_new_string(poOpenInfo->pszFilename));
+
+    // Find additional files from the label
+    CPLJsonObject oObjLabel(poDS->m_poJSonLabel);
+    if( oObjLabel.getType() == CPLJsonObject::OBJECT )
+    {
+        const size_t nSize = oObjLabel.size();
+        for( size_t i = 0; i < nSize; ++i )
+        {
+            const CPLJsonObject& oObj(oObjLabel[i]);
+            if( oObj.getType() == CPLJsonObject::OBJECT )
+            {
+                const CPLString& osKey = oObjLabel.getKey(i);
+
+                CPLString osContainerName(osKey);
+                if( oObj.has( "_container_name" ) )
+                {
+                    const CPLJsonObject& oContainerName(
+                        oObj["_container_name"]);
+                    if( oContainerName.getType() ==
+                                    CPLJsonObject::STRING )
+                    {
+                        osContainerName = oContainerName.getString();
+                    }
+                }
+
+                if( oObj.has( "^" + osContainerName ) )
+                {
+                    const CPLJsonObject& oFilename(
+                                        oObj["^" + osContainerName]);
+                    if( oFilename.getType() == CPLJsonObject::STRING )
+                    {
+                        VSIStatBufL sStat;
+                        CPLString osFilename( CPLFormFilename(
+                            CPLGetPath(poOpenInfo->pszFilename),
+                            oFilename.getString(),
+                            NULL ) );
+                        if( VSIStatL( osFilename, &sStat ) == 0 )
+                        {
+                            poDS->m_aosAdditionalFiles.AddString(
+                                osFilename);
+                        }
+                        else
+                        {
+                            CPLDebug("ISIS3",
+                                        "File %s referenced but not foud",
+                                        osFilename.c_str());
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     VSIFCloseL( poOpenInfo->fpL );
     poOpenInfo->fpL = NULL;
@@ -2596,7 +2691,7 @@ double ISIS3Dataset::FixLong( double dfLong )
 /*                           BuildLabel()                               */
 /************************************************************************/
 
-json_object* ISIS3Dataset::BuildLabel()
+void ISIS3Dataset::BuildLabel()
 {
     // If we have a source label, then edit it directly
     CPLJsonObject oLabel( m_poSrcJSonLabel );
@@ -2985,15 +3080,363 @@ json_object* ISIS3Dataset::BuildLabel()
     oLabelLabel["_type"] = "object";
     oLabelLabel["Bytes"] = pszLABEL_BYTES_PLACEHOLDER;
 
+    // Deal with History object
+    BuildHistory();
+
     CPLJsonObject& oHistory = oLabel["History"];
-    if( oHistory.getType() != CPLJsonObject::OBJECT )
-        oHistory.clear();
+    oHistory.clear();
     oHistory["_type"] = "object";
     oHistory["Name"] = "IsisCube";
-    oHistory["StartByte"] = pszHISTORY_STARTBYTE_PLACEHOLDER;
-    oHistory["Bytes"] = pszHISTORY_BYTES_PLACEHOLDER;
+    if( m_osExternalFilename.empty() )
+        oHistory["StartByte"] = pszHISTORY_STARTBYTE_PLACEHOLDER;
+    else
+        oHistory["StartByte"] = 1;
+    oHistory["Bytes"] = static_cast<GIntBig>(m_osHistory.size());
+    if( !m_osExternalFilename.empty() )
+    {
+        CPLString osFilename(CPLGetBasename(GetDescription()));
+        osFilename += ".History.IsisCube";
+        oHistory["^History"] = osFilename;
+    }
 
-    return oLabel.asLibJsonObj();
+    // Deal with other objects that have StartByte & Bytes
+    m_aoNonPixelSections.clear();
+    if( m_poSrcJSonLabel )
+    {
+        CPLString osLabelSrcFilename;
+        if( oLabel.has("_filename") )
+        {
+            const CPLJsonObject& oFilename = oLabel["_filename"];
+            if( oFilename.getType() == CPLJsonObject::STRING )
+            {
+                osLabelSrcFilename = oFilename.getString();
+            }
+        }
+
+        for( size_t i = 0; i < oLabel.size(); )
+        {
+            if( oLabel[i].getType() == CPLJsonObject::OBJECT )
+            {
+                const CPLString& osKey = oLabel.getKey(i);
+                if( osKey == "History" )
+                {
+                    ++i;
+                    continue;
+                }
+
+                CPLJsonObject& oObj(oLabel[i]);
+                if( oObj.getType() != CPLJsonObject::OBJECT ||
+                    !oObj.has("Bytes") ||
+                    oObj["Bytes"].getType() != CPLJsonObject::INT ||
+                    oObj["Bytes"].getInt() <= 0 ||
+                    !oObj.has("StartByte") ||
+                    oObj["StartByte"].getType() != CPLJsonObject::INT ||
+                    oObj["StartByte"].getInt() <= 0 )
+                {
+                    ++i;
+                    continue;
+                }
+
+                if( osLabelSrcFilename.empty() )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "Cannot find _filename attribute in "
+                            "source ISIS3 metadata. Removing object "
+                            "%s from the label.",
+                            osKey.c_str());
+                    oLabel.del( osKey );
+                    // Do not increment i due to deletion.
+                    continue;
+                }
+
+                NonPixelSection oSection;
+                oSection.osSrcFilename = osLabelSrcFilename;
+                oSection.nSrcOffset = static_cast<vsi_l_offset>(
+                    oObj["StartByte"].getInt()) - 1U;
+                oSection.nSize = static_cast<vsi_l_offset>(
+                    oObj["Bytes"].getInt());
+
+                CPLString osName;
+                if( oObj.has( "Name" ) )
+                {
+                    const CPLJsonObject& oName(oObj["Name"]);
+                    if( oName.getType() ==
+                                    CPLJsonObject::STRING )
+                    {
+                        osName = oName.getString();
+                    }
+                }
+
+                CPLString osContainerName(osKey);
+                if( oObj.has( "_container_name" ) )
+                {
+                    const CPLJsonObject& oContainerName(
+                        oObj["_container_name"]);
+                    if( oContainerName.getType() ==
+                                    CPLJsonObject::STRING )
+                    {
+                        osContainerName = oContainerName.getString();
+                    }
+                }
+
+                const CPLString osKeyFilename( "^" + osContainerName );
+                if( oObj.has( osKeyFilename ) )
+                {
+                    const CPLJsonObject& oFilename(oObj[osKeyFilename]);
+                    if( oFilename.getType() == CPLJsonObject::STRING )
+                    {
+                        VSIStatBufL sStat;
+                        const CPLString osSrcFilename( CPLFormFilename(
+                            CPLGetPath(osLabelSrcFilename),
+                            oFilename.getString(),
+                            NULL ) );
+                        if( VSIStatL( osSrcFilename, &sStat ) == 0 )
+                        {
+                            oSection.osSrcFilename = osSrcFilename;
+                        }
+                        else
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Object %s points to %s, which does "
+                                     "not exist. Removing this section "
+                                     "from the label",
+                                     osKey.c_str(),
+                                     osSrcFilename.c_str());
+                            oLabel.del( osKey );
+                            // Do not increment i due to deletion.
+                            continue;
+                        }
+                    }
+                }
+
+                if( !m_osExternalFilename.empty() )
+                {
+                    oObj["StartByte"] = 1;
+                }
+                else
+                {
+                    CPLString osPlaceHolder;
+                    osPlaceHolder.Printf(
+                        "!*^PLACEHOLDER_%d_STARTBYTE^*!",
+                        static_cast<int>(m_aoNonPixelSections.size()) + 1);
+                    oObj["StartByte"] = osPlaceHolder;
+                    oSection.osPlaceHolder = osPlaceHolder;
+                }
+
+                if( !m_osExternalFilename.empty() )
+                {
+                    CPLString osDstFilename(
+                            CPLGetBasename(GetDescription()));
+                    osDstFilename += ".";
+                    osDstFilename += osContainerName;
+                    if( !osName.empty() )
+                    {
+                        osDstFilename += ".";
+                        osDstFilename += osName;
+                    }
+
+                    oSection.osDstFilename = CPLFormFilename(
+                        CPLGetPath( GetDescription() ),
+                        osDstFilename,
+                        NULL );
+
+                    if( oObj.has(osKeyFilename) )
+                        oObj[osKeyFilename] = osDstFilename;
+                    else
+                    {
+                        // Insert before first sub-group/object if there's one
+                        size_t j = 0;
+                        for(;  j < oObj.size(); ++j )
+                        {
+                            if( oObj[j].getType() == CPLJsonObject::OBJECT )
+                            {
+                                break;
+                            }
+                        }
+                        oObj.insert( j, osKeyFilename,
+                                     CPLJsonObject(osDstFilename) );
+                    }
+                }
+                else
+                {
+                    oObj.del(osKeyFilename);
+                }
+
+                m_aoNonPixelSections.push_back(oSection);
+            }
+
+            // Do not move that in for() loop.
+            ++i;
+        }
+    }
+
+    if( m_poJSonLabel )
+        json_object_put(m_poJSonLabel);
+    m_poJSonLabel = oLabel.asLibJsonObj();
+}
+
+/************************************************************************/
+/*                         BuildHistory()                               */
+/************************************************************************/
+
+void ISIS3Dataset::BuildHistory()
+{
+    CPLString osHistory(m_osGDALHistory);
+
+    if( m_bAddGDALHistory && m_osGDALHistory.empty() )
+    {
+        CPLJsonObject oHistoryObj;
+        char szFullFilename[2048] = { 0 };
+        if( !CPLGetExecPath(szFullFilename, sizeof(szFullFilename) - 1) )
+            strcpy(szFullFilename, "unknown_program");
+        const CPLString osProgram(CPLGetBasename(szFullFilename));
+        const CPLString osPath(CPLGetPath(szFullFilename));
+        CPLJsonObject& oObj = oHistoryObj[osProgram];
+        oObj["_type"] = "object";
+        oObj["GdalVersion"] = GDALVersionInfo("RELEASE_NAME");
+        if( osPath != "." )
+            oObj["ProgramPath"] = osPath;
+        time_t nCurTime = time(NULL);
+        if( nCurTime != -1 )
+        {
+            struct tm mytm;
+            CPLUnixTimeToYMDHMS(nCurTime, &mytm);
+            oObj["ExecutionDateTime"] =
+                CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
+                            mytm.tm_year + 1900,
+                            mytm.tm_mon + 1,
+                            mytm.tm_mday,
+                            mytm.tm_hour,
+                            mytm.tm_min,
+                            mytm.tm_sec);
+        }
+        char szHostname[256] = { 0 };
+        if( gethostname(szHostname, sizeof(szHostname)-1) == 0 )
+        {
+            oObj["HostName"] = szHostname;
+        }
+        const char* pszUsername = CPLGetConfigOption("USERNAME", NULL);
+        if( pszUsername == NULL )
+            pszUsername = CPLGetConfigOption("USER", NULL);
+        if( pszUsername != NULL )
+        {
+            oObj["UserName"] = pszUsername;
+        }
+        oObj["Description"] = "GDAL conversion";
+
+        CPLJsonObject& oUserParameters = oObj["UserParameters"];
+        oUserParameters["_type"] = "group";
+        if( !m_osFromFilename.empty() )
+            oUserParameters["FROM"] = CPLGetFilename( m_osFromFilename );
+        oUserParameters["TO"] = CPLGetFilename( GetDescription() );
+        if( m_bForce360 )
+            oUserParameters["Force_360"] = "true";
+
+        json_object* poObj = oHistoryObj.asLibJsonObj();
+        osHistory = SerializeAsPDL( poObj );
+        json_object_put(poObj);
+    }
+
+    if( m_poSrcJSonLabel != NULL && m_bUseSrcHistory )
+    {
+        CPLJsonObject oLabel( m_poSrcJSonLabel );
+        vsi_l_offset nHistoryOffset = 0;
+        int nHistorySize = 0;
+        CPLString osSrcFilename;
+        if( oLabel.has("_filename") )
+        {
+            const CPLJsonObject& oFilename = oLabel["_filename"];
+            if( oFilename.getType() == CPLJsonObject::STRING )
+            {
+                osSrcFilename = oFilename.getString();
+            }
+        }
+        CPLString osHistoryFilename(osSrcFilename);
+        if( oLabel.has("History") )
+        {
+            const CPLJsonObject& oHistory = oLabel["History"];
+            if( oHistory.getType() == CPLJsonObject::OBJECT )
+            {
+                if( oHistory.has("^History") )
+                {
+                    const CPLJsonObject& oHistoryFilename =
+                                                    oHistory["^History"];
+                    if( oHistoryFilename.getType() == CPLJsonObject::STRING )
+                    {
+                        osHistoryFilename = 
+                            CPLFormFilename( CPLGetPath(osSrcFilename),
+                                             oHistoryFilename.getString(),
+                                             NULL );
+                    }
+                }
+
+                if( oHistory.has("StartByte") )
+                {
+                    const CPLJsonObject& oStartByte = oHistory["StartByte"];
+                    if( oStartByte.getType() == CPLJsonObject::INT &&
+                        oStartByte.getInt() > 0 )
+                    {
+                        nHistoryOffset = static_cast<vsi_l_offset>(
+                            oStartByte.getInt()) - 1U;
+                    }
+                }
+
+                if( oHistory.has("Bytes") )
+                {
+                    const CPLJsonObject& oBytes = oHistory["Bytes"];
+                    if( oBytes.getType() == CPLJsonObject::INT )
+                    {
+                        nHistorySize = static_cast<int>(
+                            oBytes.getInt());
+                    }
+                }
+            }
+        }
+        if( osHistoryFilename.empty() )
+        {
+            CPLDebug("ISIS3", "Cannot find filename for source history");
+        }
+        else if( nHistorySize <= 0 || nHistorySize > 1000000 )
+        {
+            CPLDebug("ISIS3",
+                     "Invalid or missing value for History.Bytes "
+                     "for source history");
+        }
+        else
+        {
+            VSILFILE* fpHistory = VSIFOpenL(osHistoryFilename, "rb");
+            if( fpHistory != NULL )
+            {
+                VSIFSeekL(fpHistory, nHistoryOffset, SEEK_SET);
+                if( !osHistory.empty() )
+                    osHistory += "\n";
+                const size_t nOrigSize = osHistory.size();
+                osHistory.resize( nOrigSize + nHistorySize );
+                if( VSIFReadL( &osHistory[nOrigSize], nHistorySize, 1,
+                              fpHistory ) != 1 )
+                {
+                    CPLError(CE_Warning, CPLE_FileIO,
+                             "Cannot read %d bytes at offset " CPL_FRMT_GUIB
+                             "of %s: history will not be preserved",
+                             nHistorySize, nHistoryOffset,
+                             osHistoryFilename.c_str());
+                    osHistory.resize( nOrigSize );
+                }
+                VSIFCloseL(fpHistory);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_FileIO,
+                         "Cannot open %s: history will not be preserved",
+                         osHistoryFilename.c_str());
+            }
+        }
+    }
+
+    if( osHistory.empty() )
+        osHistory = " ";
+
+    m_osHistory = osHistory;
 }
 
 /************************************************************************/
@@ -3005,18 +3448,13 @@ void ISIS3Dataset::WriteLabel()
     m_bIsLabelWritten = true;
 
     if( m_poJSonLabel == NULL )
-        m_poJSonLabel = BuildLabel();
+        BuildLabel();
 
-    // Serialize label into temporary file
-    CPLString osTmpFile( CPLSPrintf("/vsimem/isis3_%p", this) );
-    VSILFILE* fpTmp = VSIFOpenL( osTmpFile, "wb+" );
-    SerializeAsPDL( fpTmp, m_poJSonLabel );
-    VSIFPrintfL(fpTmp, "End\n");
-    VSIFCloseL( fpTmp );
-    char *pszLabel = reinterpret_cast<char*>(
-                            VSIGetMemFileBuffer( osTmpFile, NULL, TRUE ));
-    const int nLabelSize = static_cast<int>(strlen(pszLabel));
-    VSIUnlink(osTmpFile);
+    // Serialize label
+    CPLString osLabel( SerializeAsPDL(m_poJSonLabel) );
+    osLabel += "End\n";
+    char *pszLabel = &osLabel[0];
+    const int nLabelSize = static_cast<int>(osLabel.size());
 
     // Hack back StartByte value
     {
@@ -3063,93 +3501,51 @@ void ISIS3Dataset::WriteLabel()
         }
     }
 
-    // Hack back History.StartBytes and  History.Bytes values
+    // Hack back History.StartBytes value
     char* pszHistoryStartBytes = strstr(pszLabel,
                                         pszHISTORY_STARTBYTE_PLACEHOLDER);
-    char* pszHistoryBytes = strstr(pszLabel,
-                                        pszHISTORY_BYTES_PLACEHOLDER);
 
-    char *pszHistory = NULL;
     vsi_l_offset nHistoryOffset = 0;
-    if( pszHistoryStartBytes != NULL && pszHistoryBytes != NULL )
+    vsi_l_offset nLastOffset = 0;
+    if( pszHistoryStartBytes != NULL )
     {
-        CPLJsonObject oHistoryObj;
-        char szFullFilename[2048] = { 0 };
-        if( !CPLGetExecPath(szFullFilename, sizeof(szFullFilename) - 1) )
-            strcpy(szFullFilename, "unknown_program");
-        const CPLString osProgram(CPLGetBasename(szFullFilename));
-        const CPLString osPath(CPLGetPath(szFullFilename));
-        CPLJsonObject& oObj = oHistoryObj[osProgram];
-        oObj["_type"] = "object";
-        oObj["GdalVersion"] = GDALVersionInfo("RELEASE_NAME");
-        if( osPath != "." )
-            oObj["ProgramPath"] = osPath;
-        time_t nCurTime = time(NULL);
-        if( nCurTime != -1 )
-        {
-            struct tm mytm;
-            CPLUnixTimeToYMDHMS(nCurTime, &mytm);
-            oObj["ExecutionDateTime"] =
-                CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
-                           mytm.tm_year + 1900,
-                           mytm.tm_mon + 1,
-                           mytm.tm_mday,
-                           mytm.tm_hour,
-                           mytm.tm_min,
-                           mytm.tm_sec);
-        }
-        char szHostname[256] = { 0 };
-        if( gethostname(szHostname, sizeof(szHostname)-1) == 0 )
-        {
-            oObj["HostName"] = szHostname;
-        }
-        const char* pszUsername = CPLGetConfigOption("USERNAME", NULL);
-        if( pszUsername == NULL )
-            pszUsername = CPLGetConfigOption("USER", NULL);
-        if( pszUsername != NULL )
-        {
-            oObj["UserName"] = pszUsername;
-        }
-        oObj["Description"] = "GDAL conversion";
-
-        CPLJsonObject& oUserParameters = oObj["UserParameters"];
-        oUserParameters["_type"] = "group";
-        if( !m_osFromFilename.empty() )
-            oUserParameters["FROM"] = CPLGetFilename( m_osFromFilename );
-        oUserParameters["TO"] = CPLGetFilename( GetDescription() );
-        if( m_bForce360 )
-            oUserParameters["Force_360"] = "true";
-
-        fpTmp = VSIFOpenL( osTmpFile, "wb+" );
-        json_object* poObj = oHistoryObj.asLibJsonObj();
-        SerializeAsPDL( fpTmp, poObj );
-        json_object_put(poObj);
-        VSIFCloseL( fpTmp );
-        pszHistory = reinterpret_cast<char*>(
-                                VSIGetMemFileBuffer( osTmpFile, NULL, TRUE ));
-        VSIUnlink(osTmpFile);
-        const int nHistorySize = static_cast<int>(strlen(pszHistory));
-
-        nHistoryOffset = nLabelSize + nImagePixels * nDTSize + 1;
+        CPLAssert( m_osExternalFilename.empty() );
+        nHistoryOffset = nLabelSize + nImagePixels * nDTSize;
+        nLastOffset = nHistoryOffset + m_osHistory.size();
         const char* pszStartByte = CPLSPrintf(CPL_FRMT_GUIB,
-                                              nHistoryOffset);
+                                              nHistoryOffset + 1);
         CPLAssert(strlen(pszStartByte) <
                                     strlen(pszHISTORY_STARTBYTE_PLACEHOLDER));
         memcpy(pszHistoryStartBytes, pszStartByte, strlen(pszStartByte));
         memset(pszHistoryStartBytes + strlen(pszStartByte), ' ',
                strlen(pszHISTORY_STARTBYTE_PLACEHOLDER) -
                                                         strlen(pszStartByte));
+    }
 
-        const char* pszBytes = CPLSPrintf("%d", nHistorySize);
-        memcpy(pszHistoryBytes, pszBytes, strlen(pszBytes));
-        memset(pszHistoryBytes + strlen(pszBytes), ' ',
-                strlen(pszHISTORY_BYTES_PLACEHOLDER) - strlen(pszBytes));
+    // Replace placeholders in other sections
+    for( size_t i = 0; i < m_aoNonPixelSections.size(); ++i )
+    {
+        if( !m_aoNonPixelSections[i].osPlaceHolder.empty() )
+        {
+            char* pszPlaceHolder = strstr(pszLabel,
+                            m_aoNonPixelSections[i].osPlaceHolder.c_str());
+            CPLAssert( pszPlaceHolder != NULL );
+            const char* pszStartByte = CPLSPrintf(CPL_FRMT_GUIB,
+                                                  nLastOffset + 1);
+            nLastOffset += m_aoNonPixelSections[i].nSize;
+            CPLAssert(strlen(pszStartByte) <
+                            m_aoNonPixelSections[i].osPlaceHolder.size() );
+
+            memcpy(pszPlaceHolder, pszStartByte, strlen(pszStartByte));
+            memset(pszPlaceHolder + strlen(pszStartByte), ' ',
+                m_aoNonPixelSections[i].osPlaceHolder.size() -
+                                                            strlen(pszStartByte));
+        }
     }
 
     // Write to final file
     VSIFSeekL( m_fpLabel, 0, SEEK_SET );
-    VSIFWriteL( pszLabel, 1, strlen(pszLabel), m_fpLabel);
-    VSIFree(pszLabel);
+    VSIFWriteL( pszLabel, 1, osLabel.size(), m_fpLabel);
 
     if( m_osExternalFilename.empty() )
     {
@@ -3174,7 +3570,7 @@ void ISIS3Dataset::WriteLabel()
         }
     }
 
-    if( m_bInitToNodata && m_poExternalDS == NULL )
+    if( m_bInitToNodata )
     {
         // Initialize the image to nodata
         const double dfNoData = GetRasterBand(1)->GetNoDataValue();
@@ -3215,13 +3611,108 @@ void ISIS3Dataset::WriteLabel()
         }
     }
 
-    if( pszHistory != NULL )
+    // Write history
+    if( !m_osHistory.empty() )
     {
-        VSIFSeekL( m_fpLabel, nHistoryOffset, SEEK_SET );
-        VSIFWriteL( pszHistory, 1, strlen(pszHistory), m_fpLabel);
+        if( m_osExternalFilename.empty() )
+        {
+            VSIFSeekL( m_fpLabel, nHistoryOffset, SEEK_SET );
+            VSIFWriteL( m_osHistory.c_str(), 1, m_osHistory.size(), m_fpLabel);
+        }
+        else
+        {
+            CPLString osFilename(CPLGetBasename(GetDescription()));
+            osFilename += ".History.IsisCube";
+            osFilename = 
+              CPLFormFilename(CPLGetPath(GetDescription()), osFilename, NULL);
+            VSILFILE* fp = VSIFOpenL(osFilename, "wb");
+            if( fp )
+            {
+                m_aosAdditionalFiles.AddString(osFilename);
+
+                VSIFWriteL( m_osHistory.c_str(), 1,
+                            m_osHistory.size(), fp );
+                VSIFCloseL(fp);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_FileIO,
+                         "Cannot write %s", osFilename.c_str());
+            }
+        }
     }
 
-    VSIFree(pszHistory);
+    // Write other non pixel sections
+    for( size_t i = 0; i < m_aoNonPixelSections.size(); ++i )
+    {
+        VSILFILE* fpSrc = VSIFOpenL(
+                        m_aoNonPixelSections[i].osSrcFilename, "rb");
+        if( fpSrc == NULL )
+        {
+            CPLError(CE_Warning, CPLE_FileIO,
+                        "Cannot open %s",
+                        m_aoNonPixelSections[i].osSrcFilename.c_str());
+            continue;
+        }
+
+        VSILFILE* fpDest = m_fpLabel;
+        if( !m_aoNonPixelSections[i].osDstFilename.empty() )
+        {
+            fpDest = VSIFOpenL(m_aoNonPixelSections[i].osDstFilename, "wb");
+            if( fpDest == NULL )
+            {
+                CPLError(CE_Warning, CPLE_FileIO,
+                         "Cannot create %s",
+                         m_aoNonPixelSections[i].osDstFilename.c_str());
+                VSIFCloseL(fpSrc);
+                continue;
+            }
+
+            m_aosAdditionalFiles.AddString(
+                                m_aoNonPixelSections[i].osDstFilename);
+        }
+
+        VSIFSeekL(fpSrc, m_aoNonPixelSections[i].nSrcOffset, SEEK_SET);
+        GByte abyBuffer[4096];
+        vsi_l_offset nRemaining = m_aoNonPixelSections[i].nSize;
+        while( nRemaining )
+        {
+            size_t nToRead = 4096;
+            if( nRemaining < nToRead )
+                nToRead = nRemaining;
+            size_t nRead = VSIFReadL( abyBuffer, 1, nToRead, fpSrc );
+            if( nRead != nToRead )
+            {
+                CPLError(CE_Warning, CPLE_FileIO,
+                         "Could not read " CPL_FRMT_GUIB " bytes from %s",
+                         m_aoNonPixelSections[i].nSize,
+                         m_aoNonPixelSections[i].osSrcFilename.c_str());
+                break;
+            }
+            VSIFWriteL( abyBuffer, 1, nRead, fpDest );
+            nRemaining -= nRead;
+        }
+
+        VSIFCloseL( fpSrc );
+        if( fpDest != m_fpLabel )
+            VSIFCloseL(fpDest);
+    }
+}
+
+/************************************************************************/
+/*                      SerializeAsPDL()                                */
+/************************************************************************/
+
+CPLString ISIS3Dataset::SerializeAsPDL( json_object* poObj )
+{
+    CPLString osTmpFile( CPLSPrintf("/vsimem/isis3_%p", poObj) );
+    VSILFILE* fpTmp = VSIFOpenL( osTmpFile, "wb+" );
+    SerializeAsPDL( fpTmp, poObj );
+    VSIFCloseL( fpTmp );
+    CPLString osContent( reinterpret_cast<char*>(
+                            VSIGetMemFileBuffer( osTmpFile, NULL, FALSE )) );
+    VSIUnlink(osTmpFile);
+    return osContent;
 }
 
 /************************************************************************/
@@ -3245,7 +3736,8 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
     {
         if( it.val == NULL ||
             strcmp(it.key, "_type") == 0 ||
-            strcmp(it.key, "_container_name") == 0 )
+            strcmp(it.key, "_container_name") == 0 ||
+            strcmp(it.key, "_filename") == 0 )
         {
             continue;
         }
@@ -3280,7 +3772,8 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
     {
         if( it.val == NULL ||
             strcmp(it.key, "_type") == 0 ||
-            strcmp(it.key, "_container_name") == 0 )
+            strcmp(it.key, "_container_name") == 0 ||
+            strcmp(it.key, "_filename") == 0 )
         {
             continue;
         }
@@ -3711,7 +4204,7 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
     poDS->m_fpImage = fpImage ? fpImage: fp;
     poDS->m_bIsLabelWritten = false;
     poDS->m_bIsTiled = bIsTiled;
-    poDS->m_bInitToNodata = true;
+    poDS->m_bInitToNodata = (poDS->m_poExternalDS == NULL);
     poDS->m_osComment = CSLFetchNameValueDef(papszOptions, "COMMENT", "");
     poDS->m_osLatitudeType = CSLFetchNameValueDef(papszOptions,
                                                   "LATITUDE_TYPE", "");
@@ -3726,6 +4219,15 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
     poDS->m_bUseSrcLabel = CPLFetchBool(papszOptions, "USE_SRC_LABEL", true);
     poDS->m_bUseSrcMapping =
                         CPLFetchBool(papszOptions, "USE_SRC_MAPPING", false);
+    poDS->m_bUseSrcHistory =
+                        CPLFetchBool(papszOptions, "USE_SRC_HISTORY", true);
+    poDS->m_bAddGDALHistory =
+                        CPLFetchBool(papszOptions, "ADD_GDAL_HISTORY", true);
+    if( poDS->m_bAddGDALHistory )
+    {
+        poDS->m_osGDALHistory = CSLFetchNameValueDef(papszOptions,
+                                                     "GDAL_HISTORY", "");
+    }
     const double dfNoData = (eType == GDT_Byte)    ? NULL1:
                             (eType == GDT_UInt16)  ? NULLU2:
                             (eType == GDT_Int16)   ? NULL2:
@@ -3967,6 +4469,18 @@ void GDALRegister_ISIS3()
     "description='Whether to use Mapping group from source label in "
                  "ISIS3 to ISIS3 conversions' "
     "default='NO'/>"
+"  <Option name='USE_SRC_HISTORY' type='boolean'"
+    "description='Whether to use content pointed by the History object in "
+                 "ISIS3 to ISIS3 conversions' "
+    "default='YES'/>"
+"  <Option name='ADD_GDAL_HISTORY' type='boolean'"
+    "description='Whether to add GDAL specific history in the content pointed "
+                 "by the History object in "
+                 "ISIS3 to ISIS3 conversions' "
+    "default='YES'/>"
+"  <Option name='GDAL_HISTORY' type='string'"
+    "description='Manually defined GDAL history. Must be formatted as ISIS3 "
+    "PDL. If not specified, it is automatically composed.'/>"
 "</CreationOptionList>"
     );
 
