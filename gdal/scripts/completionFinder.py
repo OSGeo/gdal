@@ -239,7 +239,8 @@ def main(argv):
   ogrtools = [ "ogr2ogr",\
                "ogrinfo",\
                "ogrlineref",\
-               "ogrtindex"]
+               "ogrtindex",
+               "ogrmerge.py"]
 
   # parse general options
   generalOptions = parseGDALGeneralOptions()
