@@ -815,12 +815,17 @@ retry:
     if( headers != NULL )
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
+    curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
+
     curl_easy_perform(hCurlHandle);
 
     if( headers != NULL )
         curl_slist_free_all(headers);
 
     eExists = EXIST_UNKNOWN;
+
+    long mtime = 0;
+    curl_easy_getinfo(hCurlHandle, CURLINFO_FILETIME, &mtime);
 
     if( STARTS_WITH(osURL, "ftp") )
     {
@@ -1008,6 +1013,8 @@ retry:
     cachedFileProp->fileSize = fileSize;
     cachedFileProp->eExists = eExists;
     cachedFileProp->bIsDirectory = bIsDirectory;
+    if( mtime != 0 )
+        cachedFileProp->mTime = mtime;
 
     return fileSize;
 }
@@ -1124,6 +1131,8 @@ retry:
     if( headers != NULL )
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
+    curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
+
     curl_easy_perform(hCurlHandle);
 
     if( headers != NULL )
@@ -1149,6 +1158,11 @@ retry:
 
     char *content_type = NULL;
     curl_easy_getinfo(hCurlHandle, CURLINFO_CONTENT_TYPE, &content_type);
+
+    long mtime = 0;
+    curl_easy_getinfo(hCurlHandle, CURLINFO_FILETIME, &mtime);
+    if( mtime != 0 )
+        cachedFileProp->mTime = mtime;
 
     if( ENABLE_DEBUG )
         CPLDebug("VSICURL", "Got response_code=%ld", response_code);
