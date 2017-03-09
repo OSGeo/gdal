@@ -79,7 +79,7 @@ GDALMRFDataset::GDALMRFDataset() :
     mp_safe(FALSE),
     hasVersions(FALSE),
     verCount(0),
-    bCrystalized(FALSE), // Assume not in create mode
+    bCrystalized(TRUE), // Assume not in create mode
     spacing(0),
     poSrcDS(NULL),
     level(-1),
@@ -1710,7 +1710,7 @@ GDALMRFDataset::Create(const char * pszName,
     img.nbo = FALSE;
 
     // Set the guard that tells us it needs saving before IO can take place
-    poDS->bCrystalized = 0;
+    poDS->bCrystalized = FALSE;
 
     // Process the options, anything that an MRF might take
 
