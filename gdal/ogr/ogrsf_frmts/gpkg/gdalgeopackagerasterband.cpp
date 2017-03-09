@@ -2690,7 +2690,9 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
             m_pMyVFS = OGRSQLiteCreateVFS(NULL, NULL);
             sqlite3_vfs_register(m_pMyVFS, 0);
             rc = sqlite3_open_v2( m_osTempDBFilename, &m_hTempDB,
-                             SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, m_pMyVFS->zName );
+                                  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
+                                  SQLITE_OPEN_NOMUTEX,
+                                  m_pMyVFS->zName );
         }
         else
         {

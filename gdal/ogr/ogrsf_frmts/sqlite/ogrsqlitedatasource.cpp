@@ -762,7 +762,9 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
     if( bRegisterOGR2SQLiteExtensions )
         OGR2SQLITE_Register();
 
-    int flags = flagsIn;
+    // No mutex since OGR objects are not supposed to be used concurrently
+    // from multiple threads.
+    int flags = flagsIn | SQLITE_OPEN_NOMUTEX;
 #ifdef SQLITE_OPEN_URI
     // This code enables support for named memory databases in SQLite.
     // SQLITE_USE_URI is checked only to enable backward compatibility, in
