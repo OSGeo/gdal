@@ -18,7 +18,7 @@
 * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-* Copyright 2014-2015 Esri
+* Portions copyright 2014-2017 Esri
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@
 *
 ******************************************************************************
 *
-*   Since the MRF dataset and the band are so closely tied together, they should be
+*   The MRF dataset and the band are closely tied together, they should be
 *   considered a single class, or a class (dataset) with extensions (bands).
 *
 *
@@ -120,16 +120,42 @@ bool GDALMRFDataset::SetPBuffer(unsigned int sz)
     return true;
 }
 
+//
+// Called by dataset destructor or at GDAL termination, to avoid
+// closing datasets whose drivers have already been unloaded
+//
+int GDALMRFDataset::CloseDependentDatasets()
+{
+    int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
+
+    if (poSrcDS)
+    {
+        bHasDroppedRef = TRUE;
+        GDALClose(reinterpret_cast<GDALDatasetH>(poSrcDS));
+        poSrcDS = NULL;
+    }
+
+    if (cds) {
+        bHasDroppedRef = TRUE;
+        GDALClose(reinterpret_cast<GDALDatasetH>(cds));
+        cds = NULL;
+    }
+
+    return bHasDroppedRef;
+}
+
 GDALMRFDataset::~GDALMRFDataset()
 
 {   // Make sure everything gets written
     FlushCache();
+
+    CloseDependentDatasets();
+
     if (ifp.FP)
         VSIFCloseL(ifp.FP);
     if (dfp.FP)
         VSIFCloseL(dfp.FP);
-    delete cds;
-    delete poSrcDS;
+
     delete poColorTable;
 
     // CPLFree ignores being called with NULL
