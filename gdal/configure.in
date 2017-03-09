@@ -2571,6 +2571,7 @@ dnl ---------------------------------------------------------------------------
 AC_ARG_WITH(fgdb,[  --with-fgdb[=ARG]        Include ESRI File Geodatabase support (ARG=FGDP API Path, yes or no)],,)
 
 FGDB_ENABLED=no
+FGDB_LIB=
 
 if test "$with_fgdb" = "no" ; then
 
@@ -2621,6 +2622,11 @@ else
     AC_MSG_ERROR([not found.])
   fi
 
+fi
+
+if test "$FGDB_LIB" != ""; then
+  dnl pj_datums is not a function but an object, but for linking that doesn't matter.
+  AC_CHECK_LIB(FileGDBAPI,pj_datums,FGDB_HAS_PROJ4=yes,FGDB_HAS_PROJ4=no,$FGDB_LIB)
 fi
 
 AC_SUBST(FGDB_ENABLED, $FGDB_ENABLED)
@@ -5489,4 +5495,9 @@ fi
 
 if test "$HAVE_LIBXML2" = "yes" -a "$FGDB_ENABLED" = "yes"; then
     AC_MSG_WARN([--with-libxml2 and --with-fgdb are both available. There might be some incompatibility between system libxml2 and the embedded copy within libFileGDBAPI])
+fi
+
+dnl FileGDB v1.5
+if test "$PROJ_STATIC" = "no" -a "$FGDB_ENABLED" = "yes" -a "$FGDB_HAS_PROJ4" = "yes"; then
+    AC_MSG_WARN([--without-static-proj and --with-fgdb are both available. There might be some incompatibility between system libproj and the embedded copy within libFileGDBAPI])
 fi
