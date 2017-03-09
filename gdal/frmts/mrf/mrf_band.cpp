@@ -802,6 +802,10 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     CPLDebug("MRF_IB", "IWriteBlock %d,%d,0,%d, level  %d, stride %d\n", xblk, yblk,
         nBand, m_l, cstride);
 
+    // Finish the Create call
+    if (!poDS->bCrystalized)
+        poDS->Crystalize();
+
     if (1 == cstride) {     // Separate bands, we can write it as is
         // Empty page skip
 

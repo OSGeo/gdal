@@ -179,10 +179,6 @@ CPLErr GDALMRFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int n
         static_cast<int>(nPixelSpace), static_cast<int>(nLineSpace),
         static_cast<int>(nBandSpace));
 
-    // Finish the Create call
-    if (!bCrystalized)
-        Crystalize();
-
     //
     // Call the parent implementation, which splits it into bands and calls their IRasterIO
     //
