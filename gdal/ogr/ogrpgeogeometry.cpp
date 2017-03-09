@@ -394,26 +394,18 @@ OGRGeometry* OGRCreateFromMultiPatch       ( int nParts,
     std::map< std::vector<double>, std::pair<int,int> > oMapEdges;
     bool bTINCandidate = nParts >= 2;
     std::set<int> oSetDuplicated;
-    for( int iPart = 0; iPart < nParts; iPart++ )
+    for( int iPart = 0; iPart < nParts && panPartStart != NULL; iPart++ )
     {
         int nPartPoints = 0;
-        int nPartStart = 0;
 
         // Figure out details about this part's vertex list.
-        if( panPartStart == NULL )
-        {
-            nPartPoints = nPoints;
-        }
+        if( iPart == nParts - 1 )
+            nPartPoints =
+                nPoints - panPartStart[iPart];
         else
-        {
-            if( iPart == nParts - 1 )
-                nPartPoints =
-                    nPoints - panPartStart[iPart];
-            else
-                nPartPoints = panPartStart[iPart+1]
-                    - panPartStart[iPart];
-            nPartStart = panPartStart[iPart];
-        }
+            nPartPoints = panPartStart[iPart+1]
+                - panPartStart[iPart];
+        const int nPartStart = panPartStart[iPart];
 
         if( panPartType[iPart] == SHPP_OUTERRING &&
             nPartPoints == 4 &&
@@ -475,7 +467,7 @@ OGRGeometry* OGRCreateFromMultiPatch       ( int nParts,
             break;
         }
     }
-    if( bTINCandidate )
+    if( bTINCandidate && panPartStart != NULL )
     {
         std::set<int> oVisitedParts;
         std::set<int> oToBeVisitedParts;
@@ -486,12 +478,7 @@ OGRGeometry* OGRCreateFromMultiPatch       ( int nParts,
             oVisitedParts.insert(iPart);
             oToBeVisitedParts.erase(iPart);
 
-            int nPartStart = 0;
-            if( panPartStart != NULL )
-            {
-                nPartStart = panPartStart[iPart];
-            }
-
+            const int nPartStart = panPartStart[iPart];
             for( int j = 0; j < 3; j++ )
             {
                 const std::pair<int,int>& oPair =
