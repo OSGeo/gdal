@@ -605,7 +605,8 @@ int OGRSQLiteBaseDataSource::SetCacheSize()
         int nRowCount = 0;
         int nColCount = 0;
         int iSqlitePageSize = -1;
-        const int iSqliteCacheBytes = atoi( pszSqliteCacheMB ) * 1024 * 1024;
+        const GIntBig iSqliteCacheBytes = 
+            static_cast<GIntBig>(atoi( pszSqliteCacheMB )) * 1024 * 1024;
 
         /* querying the current PageSize */
         int rc =
@@ -632,7 +633,8 @@ int OGRSQLiteBaseDataSource::SetCacheSize()
         /* computing the CacheSize as #Pages */
         if( iSqlitePageSize == 0 )
             return TRUE;
-        const int iSqliteCachePages = iSqliteCacheBytes / iSqlitePageSize;
+        const int iSqliteCachePages =
+                static_cast<int>(iSqliteCacheBytes / iSqlitePageSize);
         if( iSqliteCachePages <= 0)
             return TRUE;
 
