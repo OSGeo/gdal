@@ -278,7 +278,7 @@ class CPLJsonObject
             m_oList.insert( m_oList.begin() + nPos,
                             std::pair<CPLString,CPLJsonObject*>(
                                             osKey, new CPLJsonObject(obj)) );
-            m_oMap[osKey] = nPos;
+            m_oMap[osKey] = static_cast<int>(nPos);
         }
 
         bool has(const CPLString& osKey) const
