@@ -3679,7 +3679,7 @@ void ISIS3Dataset::WriteLabel()
         {
             size_t nToRead = 4096;
             if( nRemaining < nToRead )
-                nToRead = nRemaining;
+                nToRead = static_cast<size_t>(nRemaining);
             size_t nRead = VSIFReadL( abyBuffer, 1, nToRead, fpSrc );
             if( nRead != nToRead )
             {
