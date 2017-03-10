@@ -3392,15 +3392,14 @@ CPLString OGRSQLiteLayer::FormatSpatialFilterFromRTree(OGRGeometry* poFilterGeom
         return "";
 
     osSpatialWHERE.Printf("%s IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
-                    "xmax >= %s AND xmin <= %s AND ymax >= %s AND ymin <= %s)",
+                    "xmax >= %.12f AND xmin <= %.12f AND ymax >= %.12f AND ymin <= %.12f)",
                     pszRowIDName,
                     pszEscapedTable,
                     pszEscapedGeomCol,
-                    // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
-                    CPLString().FormatC(sEnvelope.MinX - 1e-11,"%.12f").c_str(),
-                    CPLString().FormatC(sEnvelope.MaxX + 1e-11,"%.12f").c_str(),
-                    CPLString().FormatC(sEnvelope.MinY - 1e-11,"%.12f").c_str(),
-                    CPLString().FormatC(sEnvelope.MaxY + 1e-11,"%.12f").c_str());
+                    sEnvelope.MinX - 1e-11,
+                    sEnvelope.MaxX + 1e-11,
+                    sEnvelope.MinY - 1e-11,
+                    sEnvelope.MaxY + 1e-11);
 
     return osSpatialWHERE;
 }
@@ -3424,13 +3423,13 @@ CPLString OGRSQLiteLayer::FormatSpatialFilterFromMBR(OGRGeometry* poFilterGeom,
         return "";
 
     /* A bit inefficient but still faster than OGR filtering */
-    osSpatialWHERE.Printf("MBRIntersects(\"%s\", BuildMBR(%s, %s, %s, %s))",
+    osSpatialWHERE.Printf("MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f))",
                     pszEscapedGeomColName,
                     // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
-                    CPLString().FormatC(sEnvelope.MinX - 1e-11,"%.12f").c_str(),
-                    CPLString().FormatC(sEnvelope.MinY - 1e-11,"%.12f").c_str(),
-                    CPLString().FormatC(sEnvelope.MaxX + 1e-11,"%.12f").c_str(),
-                    CPLString().FormatC(sEnvelope.MaxY + 1e-11,"%.12f").c_str());
+                    sEnvelope.MinX - 1e-11,
+                    sEnvelope.MinY - 1e-11,
+                    sEnvelope.MaxX + 1e-11,
+                    sEnvelope.MaxY + 1e-11);
 
     return osSpatialWHERE;
 }
