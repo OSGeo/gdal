@@ -144,8 +144,8 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
               && !EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")
 #endif
               && !(STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") &&
-                   EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "zip"))
-           )
+                   EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "zip") )
+              && !STARTS_WITH(poOpenInfo->pszFilename, "/vsigzip/") )
     {
         if( bEmitWarning )
         {
