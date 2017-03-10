@@ -34,7 +34,7 @@
 
 // See Bronek Kozicki's comments posted here:
 // http://lists.boost.org/Archives/boost/2005/07/89697.php
-#if defined(_MSC_VER) || defined(_WIN32_WCE)
+#if defined(_MSC_VER)
 #pragma warning(disable: 4996)
 #endif
 

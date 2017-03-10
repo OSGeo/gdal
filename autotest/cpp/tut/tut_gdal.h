@@ -41,7 +41,7 @@
 namespace tut
 {
 
-#if defined(WIN32) || defined(_WIN32_WCE)
+#if defined(WIN32)
 #define SEP '\\'
 #else
 #define SEP '/'
