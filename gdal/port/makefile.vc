@@ -20,9 +20,9 @@ OBJ	=	cpl_conv.obj \
 		cpl_getexecpath.obj \
 		cpl_vsil.obj \
 		cpl_vsi_mem.obj \
-                cpl_http.obj \
-                cpl_hash_set.obj \
-                cplkeywordparser.obj \
+		cpl_http.obj \
+		cpl_hash_set.obj \
+		cplkeywordparser.obj \
 		cpl_recode.obj \
 		cpl_recode_iconv.obj \
 		cpl_recode_stub.obj \
