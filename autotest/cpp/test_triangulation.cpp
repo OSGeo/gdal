@@ -27,7 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <tut.h>
+#include <tut.hpp>
 #include <gdal_alg.h>
 
 namespace tut

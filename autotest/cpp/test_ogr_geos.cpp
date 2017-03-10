@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test GEOS integration in OGR - geometric operations.
@@ -24,18 +23,8 @@
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-//
-//  $Log: test_ogr_geos.cpp,v $
-//  Revision 1.3  2007/01/04 18:58:36  mloskot
-//  Updated VC++ 2005 project for C++ Unit Test package.
-//
-//  Revision 1.2  2006/12/06 15:39:13  mloskot
-//  Added file header comment and copyright note.
-//
-//
-///////////////////////////////////////////////////////////////////////////////
 
-#include <tut.h>
+#include <tut.hpp>
 #include <tut_gdal.h>
 #ifdef HAVE_GEOS
 #include <geos_c.h> // GEOS C API

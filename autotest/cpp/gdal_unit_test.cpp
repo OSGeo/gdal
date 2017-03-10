@@ -22,13 +22,14 @@
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
+
 #ifdef _MSC_VER
 #define WIN32_LEAN_AND_MEAN
 #endif // _MSC_VER
 
 // TUT
-#include <tut.h>
-#include <tut_reporter.h>
+#include <tut.hpp>
+#include <tut_reporter.hpp>
 #include <gdal_common.h>
 // GDAL
 #include <gdal.h>
@@ -49,6 +50,17 @@ namespace tut
     std::string const common::data_basedir("data");
     std::string const common::tmp_basedir("tmp");
 
+    void check_test_group(char const* name)
+    {
+        std::string grpname(name);
+        if (grpname.empty())
+            throw std::runtime_error("missing test group name");
+
+        tut::groupnames gl = runner.get().list_groups();
+        tut::groupnames::const_iterator found = std::find(gl.cbegin(), gl.cend(), grpname);
+        if (found == gl.cend())
+            throw std::runtime_error("test group " + grpname + " not found");
+    }
 } // namespace tut
 
 int main(int argc, char* argv[])
@@ -57,37 +69,69 @@ int main(int argc, char* argv[])
     ::GDALAllRegister();
     ::OGRRegisterAll();
 
-    GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    std::cout
+        << "GDAL C/C++ API tests"
+        << " (" << ::GDALVersionInfo("--version") << ")"
+        << "\n---------------------------------------------------------\n";
 
-    // We don't actually use the arguments ourself.
-    CSLDestroy( argv );
-    argv = NULL;
+    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    if (argc < 1)
+    {
+        std::cout
+            << "\n---------------------------------------------------------\n"
+            << "No tests to run\n";
+        return EXIT_SUCCESS;
+    }
 
-    // Retrieve GDAL version
-    std::string gdalVersion(::GDALVersionInfo("RELEASE_NAME"));
-
-    std::cout << "C++ Test Suite for GDAL C/C++ API\n"
-        << "----------------------------------------\n"
-        << "GDAL library version: " << gdalVersion
-        << "\nGDAL test data: " << tut::common::data_basedir
-        << "\n----------------------------------------\n";
+        
 
     // Initialize TUT framework
-    tut::reporter visi;
-    tut::runner.get().set_callback(&visi);
-
-    bool bOk = false;
-    try
+    int nRetCode = EXIT_FAILURE;
     {
-        bOk = tut::runner.get().run_tests();
-    }
-    catch( const std::exception& ex )
-    {
-        std::cerr << "TUT raised ex: " << ex.what() << std::endl;
+        tut::reporter visi;
+        tut::runner.get().set_callback(&visi);
+
+        try
+        {
+            if (argc == 1)
+            {
+                tut::runner.get().run_tests();
+            }
+            else if (argc == 2 && std::string(argv[1]) == "--list")
+            {
+                tut::groupnames gl = tut::runner.get().list_groups();
+                tut::groupnames::const_iterator b = gl.begin();
+                tut::groupnames::const_iterator e = gl.end();
+                tut::groupnames::difference_type d = std::distance(b, e);
+                std::cout << "Registered " << d << " test groups:\n" << std::endl;
+                while (b != e)
+                {
+                    std::cout << "  " << *b << std::endl;
+                    ++b;
+                }
+            }
+            else if (argc == 2 && std::string(argv[1]) != "--list")
+            {
+                tut::check_test_group(argv[1]);
+                tut::runner.get().run_tests(argv[1]);
+            }
+            else if (argc == 3)
+            {
+                tut::check_test_group(argv[1]);
+
+                tut::test_result result;
+                tut::runner.get().run_test(argv[1], std::atoi(argv[2]), result);
+            }
+            nRetCode = EXIT_SUCCESS;
+        }
+        catch (const std::exception& ex)
+        {
+            std::cerr << "GDAL C/C++ API tests error: " << ex.what() << std::endl;
+            nRetCode = EXIT_FAILURE;
+        }
     }
 
-    int nRetCode = bOk ? 0 : 1;
-
+    CSLDestroy(argv);
     GDALDestroyDriverManager();
     OGRCleanupAll();
 

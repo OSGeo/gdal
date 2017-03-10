@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  TUT: C++ Unit Test Framework extensions for GDAL Test Suite
@@ -22,13 +21,6 @@
 // License along with this library; if not, write to the
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
-///////////////////////////////////////////////////////////////////////////////
-//
-//  $Log: tut_gdal.h,v $
-//  Revision 1.4  2006/12/06 15:39:14  mloskot
-//  Added file header comment and copyright note.
-//
-//
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef TUT_GDAL_H_INCLUDED
 #define TUT_GDAL_H_INCLUDED

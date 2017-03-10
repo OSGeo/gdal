@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test general CPL features.
@@ -25,7 +24,7 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <tut.h>
+#include <tut.hpp>
 #include <tut_gdal.h>
 #include <gdal_common.h>
 #include <string>
