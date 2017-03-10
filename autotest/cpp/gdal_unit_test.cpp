@@ -57,8 +57,8 @@ namespace tut
             throw std::runtime_error("missing test group name");
 
         tut::groupnames gl = runner.get().list_groups();
-        tut::groupnames::const_iterator found = std::find(gl.cbegin(), gl.cend(), grpname);
-        if (found == gl.cend())
+        tut::groupnames::const_iterator found = std::find(gl.begin(), gl.end(), grpname);
+        if (found == gl.end())
             throw std::runtime_error("test group " + grpname + " not found");
     }
 } // namespace tut

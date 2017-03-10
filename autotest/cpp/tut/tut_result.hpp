@@ -1,6 +1,11 @@
 #ifndef TUT_RESULT_H_GUARD
 #define TUT_RESULT_H_GUARD
 
+#if defined(TUT_USE_POSIX)
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
 #include <string>
 
 namespace tut

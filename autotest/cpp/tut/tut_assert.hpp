@@ -109,6 +109,17 @@ void ensure_equals(const LHS& actual, const RHS& expected)
 }
 
 template<typename M>
+void ensure_equals(const M& msg, const char* actual,const char* expected)
+{
+  ensure_equals(msg, std::string(actual), std::string(expected));
+}
+
+void ensure_equals(const char* actual,const char* expected)
+{
+  ensure_equals(0,actual,expected);
+}
+
+template<typename M>
 void ensure_equals(const M& msg, const double& actual, const double& expected,
                    const double& epsilon = std::numeric_limits<double>::epsilon())
 {
