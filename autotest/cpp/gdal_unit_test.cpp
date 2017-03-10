@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Main program of C++ Unit Tests runner for GDAL
@@ -22,16 +21,6 @@
 // License along with this library; if not, write to the
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
-///////////////////////////////////////////////////////////////////////////////
-//
-//  $Log: gdal_unit_test.cpp,v $
-//  Revision 1.5  2007/01/04 18:15:54  mloskot
-//  Updated C++ Unit Test package for Windows CE
-//
-//  Revision 1.4  2006/12/06 15:39:13  mloskot
-//  Added file header comment and copyright note.
-//
-//
 ///////////////////////////////////////////////////////////////////////////////
 #ifdef _MSC_VER
 #define WIN32_LEAN_AND_MEAN
@@ -57,16 +46,8 @@ namespace tut
 
     // Common test data path
     // Customize these paths if you need.
-
-#ifdef _WIN32_WCE
-    std::string const common::gdal_dir("\\My Documents\\gdaltest");
-    std::string const common::gdal_dictdir(gdal_dir + "\\dict");
-    std::string const common::data_basedir(gdal_dir + "\\data");
-    std::string const common::tmp_basedir(gdal_dir + "\\tmp");
-#else
     std::string const common::data_basedir("data");
     std::string const common::tmp_basedir("tmp");
-#endif // _WIN32_WCE
 
 } // namespace tut
 
@@ -81,12 +62,6 @@ int main(int argc, char* argv[])
     // We don't actually use the arguments ourself.
     CSLDestroy( argv );
     argv = NULL;
-
-#ifdef _WIN32_WCE
-    // Register GDAL dictionaries location.
-    // Windows CE doesn't support environment variables.
-    CPLPushFinderLocation(tut::common::gdal_dictdir.c_str());
-#endif
 
     // Retrieve GDAL version
     std::string gdalVersion(::GDALVersionInfo("RELEASE_NAME"));
@@ -118,11 +93,6 @@ int main(int argc, char* argv[])
 
     CPLDumpSharedList( NULL );
     CPLCleanupTLS();
-
-#ifdef _WIN32_WCE
-    std::cout << "Press enter to quit\n";
-    std::cin.get();
-#endif // _WIN32_WCE
 
     return nRetCode;
 }
