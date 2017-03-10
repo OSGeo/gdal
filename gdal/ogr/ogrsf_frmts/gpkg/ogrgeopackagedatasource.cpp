@@ -4547,6 +4547,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
     bool bEmptyLayer = false;
 
     if( osSQLCommand.ifind("SELECT ") == 0 &&
+        CPLString(osSQLCommand.substr(1)).ifind("SELECT ") == std::string::npos &&
         osSQLCommand.ifind(" UNION ") == std::string::npos &&
         osSQLCommand.ifind(" INTERSECT ") == std::string::npos &&
         osSQLCommand.ifind(" EXCEPT ") == std::string::npos )
@@ -4567,7 +4568,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                 "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
-                pszSQLCommand, sqlite3_errmsg(hDB) );
+                osSQLCommand.c_str(), sqlite3_errmsg(hDB) );
 
         if( hSQLStmt != NULL )
         {
@@ -4587,7 +4588,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                   "In ExecuteSQL(): sqlite3_step(%s):\n  %s",
-                  pszSQLCommand, sqlite3_errmsg(hDB) );
+                  osSQLCommand.c_str(), sqlite3_errmsg(hDB) );
 
             sqlite3_finalize( hSQLStmt );
             return NULL;

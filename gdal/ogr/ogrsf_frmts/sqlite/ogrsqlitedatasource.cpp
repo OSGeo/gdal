@@ -2224,6 +2224,7 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     int bEmptyLayer = FALSE;
 
     if( osSQLCommand.ifind("SELECT ") == 0 &&
+        CPLString(osSQLCommand.substr(1)).ifind("SELECT ") == std::string::npos &&
         osSQLCommand.ifind(" UNION ") == std::string::npos &&
         osSQLCommand.ifind(" INTERSECT ") == std::string::npos &&
         osSQLCommand.ifind(" EXCEPT ") == std::string::npos )
@@ -2243,8 +2244,8 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
-                pszSQLCommand, sqlite3_errmsg(GetDB()) );
+                  "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
+                  osSQLCommand.c_str(), sqlite3_errmsg(GetDB()) );
 
         if( hSQLStmt != NULL )
         {
@@ -2264,7 +2265,7 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                   "In ExecuteSQL(): sqlite3_step(%s):\n  %s",
-                  pszSQLCommand, sqlite3_errmsg(GetDB()) );
+                  osSQLCommand.c_str(), sqlite3_errmsg(GetDB()) );
 
             sqlite3_finalize( hSQLStmt );
             return NULL;
