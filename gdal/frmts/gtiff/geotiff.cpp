@@ -815,9 +815,8 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         TIFF* hTIFF = poGDS->poParentDS->hTIFF;
         if( !TIFFIsTiled( hTIFF ) && poGDS->poParentDS->nBlockYSize > 1 &&
             (nBlockYOff + 1 ==
-             static_cast<int>(
                  DIV_ROUND_UP( poGDS->poParentDS->nRasterYSize,
-                               poGDS->poParentDS->nBlockYSize ) ) ||
+                               poGDS->poParentDS->nBlockYSize ) ||
              (poGDS->poJPEGDS != NULL &&
               poGDS->poJPEGDS->GetRasterYSize() !=
               nBlockYSize * nScaleFactor)) )
@@ -4675,7 +4674,7 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
             void* pJPEGTable = NULL;
             if( TIFFGetField( poGDS->hTIFF, TIFFTAG_JPEGTABLES,
                               &nJPEGTableSize, &pJPEGTable ) != 1 ||
-                pJPEGTable == NULL || static_cast<int>(nJPEGTableSize) <= 0 )
+                pJPEGTable == NULL || nJPEGTableSize > INT_MAX )
             {
                 return NULL;
             }
@@ -7203,7 +7202,7 @@ int GTiffDataset::GetJPEGOverviewCount()
     if( TIFFGetField(hTIFF, TIFFTAG_JPEGTABLES, &nJPEGTableSize, &pJPEGTable) )
     {
         if( pJPEGTable == NULL ||
-            static_cast<int>(nJPEGTableSize) <= 0 ||
+            nJPEGTableSize > INT_MAX ||
             static_cast<GByte*>(pJPEGTable)[nJPEGTableSize-1] != 0xD9 )
         {
             return 0;
@@ -7882,8 +7881,7 @@ bool GTiffDataset::WriteEncodedStrip( uint32 strip, GByte* pabyData,
     const int nStripWithinBand = strip % nBlocksPerBand;
     int nStripHeight = nRowsPerStrip;
 
-    if( static_cast<int>((nStripWithinBand + 1) * nRowsPerStrip) >
-        GetRasterYSize() )
+    if( nStripWithinBand * nStripHeight > GetRasterYSize() - nStripHeight )
     {
         nStripHeight = GetRasterYSize() - nStripWithinBand * nRowsPerStrip;
         cc = (cc / nRowsPerStrip) * nStripHeight;
@@ -8641,8 +8639,7 @@ static void GTiffFillStreamableOffsetAndCount( TIFF* hTIFF, int nSize )
 /*      amount of valid data we have. (#2748)                           */
 /* -------------------------------------------------------------------- */
             int nStripWithinBand = i % nBlocksPerBand;
-            if( static_cast<int>((nStripWithinBand +1) * nRowsPerStrip) >
-               static_cast<int>(nYSize) )
+            if( nStripWithinBand * nRowsPerStrip > nYSize - nRowsPerStrip )
             {
                 cc = (cc / nRowsPerStrip)
                     * (nYSize - nStripWithinBand * nRowsPerStrip);
