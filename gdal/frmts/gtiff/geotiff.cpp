@@ -293,8 +293,8 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
 
     int         nBlocksPerBand;
 
-    uint32      nBlockXSize;
-    uint32      nBlockYSize;
+    int         nBlockXSize;
+    int         nBlockYSize;
 
     int         nLoadedBlock;  // Or tile.
     bool        bLoadedBlockDirty;
@@ -732,7 +732,7 @@ CPLErr GTiffJPEGOverviewDS::IRasterIO(
     // be the most efficient one, to avoid decompressing the JPEG content
     // for each requested band.
     if( nBandCount > 1 && poParentDS->nPlanarConfig == PLANARCONFIG_CONTIG &&
-        (static_cast<int>(poParentDS->nBlockXSize) < poParentDS->nRasterXSize ||
+        (poParentDS->nBlockXSize < poParentDS->nRasterXSize ||
          poParentDS->nBlockYSize > 1) )
     {
         return BlockBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -2450,7 +2450,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
             const int nYOffsetInBlock = nSrcLine % nBlockYSize;
             const int nUsedBlockHeight =
                 std::min( nBufYSize - y,
-                          static_cast<int>(nBlockYSize) - nYOffsetInBlock );
+                          nBlockYSize - nYOffsetInBlock );
 
             int nBlockXOff = nXOff / nBlockXSize;
             int nXOffsetInBlock = nXOff % nBlockXSize;
@@ -2461,7 +2461,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
             {
                 const toff_t nCurOffset = panOffsets[nBlockId];
                 const int nUsedBlockWidth =
-                    std::min( static_cast<int>(nBlockXSize) - nXOffsetInBlock,
+                    std::min( nBlockXSize - nXOffsetInBlock,
                               nBufXSize - x );
 
                 if( nCurOffset == 0 )
@@ -2490,7 +2490,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         nYOffsetInBlock * nBlockXSize * nBandsPerBlockDTSize;
                     const GByte* pabyLocalSrcDataK0 = oFetcher.FetchBytes(
                             nCurOffset + nByteOffsetInBlock,
-                            static_cast<int>(nBlockXSize) *
+                            nBlockXSize *
                             nUsedBlockHeight * nBandsPerBlock,
                             nDTSize, bIsByteSwapped, bIsComplex, nBlockId);
                     if( pabyLocalSrcDataK0 == NULL )
@@ -2562,7 +2562,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                 const int nYOffsetInBlock = nSrcLine % nBlockYSize;
                 const int nUsedBlockHeight =
                     std::min( nBufYSize - y,
-                              static_cast<int>(nBlockYSize) - nYOffsetInBlock);
+                              nBlockYSize - nYOffsetInBlock);
 
                 int nBlockXOff = nXOff / nBlockXSize;
                 int nXOffsetInBlock = nXOff % nBlockXSize;
@@ -2583,7 +2583,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                     const toff_t nCurOffset = panOffsets[nBlockId];
                     const int nUsedBlockWidth =
                         std::min(
-                            static_cast<int>(nBlockXSize) - nXOffsetInBlock,
+                            nBlockXSize - nXOffsetInBlock,
                             nBufXSize - x);
 
                     if( nCurOffset == 0 )
@@ -2609,7 +2609,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         const GByte* pabyLocalSrcDataK0 =
                             oFetcher.FetchBytes(
                                 nCurOffset + nByteOffsetInBlock,
-                                static_cast<int>(nBlockXSize) *
+                                nBlockXSize *
                                 nUsedBlockHeight * nBandsPerBlock,
                                 nDTSize, bIsByteSwapped, bIsComplex, nBlockId);
                         if( pabyLocalSrcDataK0 == NULL )
@@ -2711,7 +2711,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         pabyLocalSrcDataStartLine =
                             oFetcher.FetchBytes(
                                 nCurOffset + nBaseByteOffsetInBlock,
-                                static_cast<int>(nBlockXSize) *
+                                nBlockXSize *
                                 nBandsPerBlock * nUsedBlockHeight,
                                 nDTSize,
                                 bIsByteSwapped, bIsComplex, nBlockId);
@@ -2877,7 +2877,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             pabyLocalSrcDataStartLine =
                                 oFetcher.FetchBytes(
                                     nCurOffset + nBaseByteOffsetInBlock,
-                                    static_cast<int>(nBlockXSize) *
+                                    nBlockXSize *
                                     nBandsPerBlock * nUsedBlockHeight,
                                     nDTSize,
                                     bIsByteSwapped, bIsComplex, nBlockId);
@@ -2998,7 +2998,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         const toff_t nCurOffset = panOffsets[nBlockId];
                         const int nUsedBlockWidth =
                             std::min(
-                                static_cast<int>(nBlockXSize) - nXOffsetInBlock,
+                                nBlockXSize - nXOffsetInBlock,
                                 nBufXSize - x);
 
                         int nIters = nUsedBlockWidth;
@@ -3120,7 +3120,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                 pabyLocalSrcDataStartLine =
                                     oFetcher.FetchBytes(
                                         nCurOffset + nBaseByteOffsetInBlock,
-                                        static_cast<int>(nBlockXSize) *
+                                        nBlockXSize *
                                         nBandsPerBlock,
                                         nDTSize,
                                         bIsByteSwapped, bIsComplex, nBlockId);
@@ -3332,8 +3332,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             const toff_t nCurOffset = panOffsets[nBlockId];
                             const int nUsedBlockWidth =
                                 std::min(
-                                    static_cast<int>(nBlockXSize) -
-                                    nXOffsetInBlock,
+                                    nBlockXSize - nXOffsetInBlock,
                                     nBufXSize - x );
                             int nIters = nUsedBlockWidth;
 
@@ -3431,8 +3430,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                     pabyLocalSrcDataStartLine =
                                         oFetcher.FetchBytes(
                                             nCurOffset + nBaseByteOffsetInBlock,
-                                            static_cast<int>(nBlockXSize) *
-                                            nBandsPerBlock,
+                                            nBlockXSize * nBandsPerBlock,
                                             nDTSize,
                                             bIsByteSwapped,
                                             bIsComplex,
@@ -4069,10 +4067,17 @@ int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
             }
             if( bHasData )
             {
+                const int nXBlockRight =
+                    ( iX * nBlockXSize > INT_MAX - nBlockXSize ) ? INT_MAX :
+                    (iX + 1) * nBlockXSize;
+                const int nYBlockBottom =
+                    ( iY * nBlockYSize > INT_MAX - nBlockYSize ) ? INT_MAX :
+                    (iY + 1) * nBlockYSize;
+
                 nPixelsData +=
-                    (std::min( (iX + 1) * nBlockXSize, nXOff + nXSize ) -
+                    (std::min( nXBlockRight, nXOff + nXSize ) -
                      std::max( iX * nBlockXSize, nXOff )) *
-                    (std::min( (iY + 1) * nBlockYSize, nYOff + nYSize ) -
+                    (std::min( nYBlockBottom, nYOff + nYSize ) -
                      std::max( iY * nBlockYSize, nYOff ));
                 nStatus |= GDAL_DATA_COVERAGE_STATUS_DATA;
             }
@@ -4127,10 +4132,12 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     int nBlockReqSize = nBlockBufSize;
 
-    if( (nBlockYOff + 1) * nBlockYSize > nRasterYSize )
+    if( nBlockYOff * nBlockYSize > nRasterYSize - nBlockYSize )
     {
         nBlockReqSize = (nBlockBufSize / nBlockYSize)
-            * (nBlockYSize - (((nBlockYOff + 1) * nBlockYSize) % nRasterYSize));
+            * (nBlockYSize - static_cast<int>(
+                (static_cast<GIntBig>(nBlockYOff + 1) * nBlockYSize)
+                    % nRasterYSize));
     }
 
     poGDS->WaitCompletionForBlock(nBlockId);
@@ -5640,7 +5647,7 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     int nThisBlockYSize = nBlockYSize;
 
-    if( (nBlockYOff + 1) * nBlockYSize > GetYSize()
+    if( nBlockYOff * nBlockYSize > GetYSize() - nBlockYSize
         && !TIFFIsTiled( poGDS->hTIFF ) )
         nThisBlockYSize = GetYSize() - nBlockYOff * nBlockYSize;
 
@@ -7332,15 +7339,11 @@ void GTiffDataset::FillEmptyTiles()
                         const int nYOff =
                             (iBlock / nBlocksPerRow) * nBlockYSize;
                         const int nXSize =
-                            (nXOff + static_cast<int>(nBlockXSize) <=
-                             nRasterXSize) ?
-                            static_cast<int>(nBlockXSize) :
-                            nRasterXSize - nXOff;
+                            (nXOff + nBlockXSize <= nRasterXSize) ?
+                            nBlockXSize : nRasterXSize - nXOff;
                         const int nYSize =
-                            (nYOff + static_cast<int>(nBlockYSize) <=
-                             nRasterYSize) ?
-                            static_cast<int>(nBlockYSize) :
-                            nRasterYSize - nYOff;
+                            (nYOff + nBlockYSize <= nRasterYSize) ?
+                            nBlockYSize : nRasterYSize - nYOff;
                         for( int iBand = 1; iBand <= nBands; ++iBand )
                         {
                             CPL_IGNORE_RET_VAL( GetRasterBand( iBand )->
@@ -7794,11 +7797,11 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
             0;
 
         // Fill out to the right.
-        const unsigned int iSrcX = nBlockXSize - nRightPixelsToFill - 1;
+        const int iSrcX = nBlockXSize - nRightPixelsToFill - 1;
 
-        for( unsigned int iX = iSrcX + 1; iX < nBlockXSize; ++iX )
+        for( int iX = iSrcX + 1; iX < nBlockXSize; ++iX )
         {
-            for( int unsigned iY = 0; iY < nBlockYSize; ++iY )
+            for( int iY = 0; iY < nBlockYSize; ++iY )
             {
                 memcpy( pabyData + (nBlockXSize * iY + iX) * nComponents,
                         pabyData + (nBlockXSize * iY + iSrcX) * nComponents,
@@ -7807,8 +7810,8 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
         }
 
         // Now fill out the bottom.
-        const unsigned int iSrcY = nBlockYSize - nBottomPixelsToFill - 1;
-        for( unsigned int iY = iSrcY + 1; iY < nBlockYSize; ++iY )
+        const int iSrcY = nBlockYSize - nBottomPixelsToFill - 1;
+        for( int iY = iSrcY + 1; iY < nBlockYSize; ++iY )
         {
             memcpy( pabyData + nBlockXSize * nComponents * iY,
                     pabyData + nBlockXSize * nComponents * iSrcY,
@@ -8522,10 +8525,12 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, bool bReadFromDisk )
     const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     const int nBlockYOff = (nBlockId % nBlocksPerBand) / nBlocksPerRow;
 
-    if( static_cast<int>((nBlockYOff + 1) * nBlockYSize) > nRasterYSize )
+    if( nBlockYOff * nBlockYSize > nRasterYSize - nBlockYSize )
     {
         nBlockReqSize = (nBlockBufSize / nBlockYSize)
-            * (nBlockYSize - (((nBlockYOff + 1) * nBlockYSize) % nRasterYSize));
+            * (nBlockYSize - static_cast<int>(
+                (static_cast<GIntBig>(nBlockYOff + 1) * nBlockYSize) %
+                    nRasterYSize));
         memset( pabyBlockBuf, 0, nBlockBufSize );
     }
 
@@ -11518,6 +11523,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nXSize > INT_MAX || nYSize > INT_MAX )
     {
         // GDAL only supports signed 32bit dimensions.
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too large image size: %u x %u",
+                 nXSize, nYSize);
         XTIFFClose( l_hTIFF );
         return NULL;
     }
@@ -12675,6 +12683,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     uint32 nYSize = 0;
     TIFFGetField( hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
     TIFFGetField( hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
+    // uint32 -> int32 overflow already verified.
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 
@@ -12730,8 +12739,19 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
     if( TIFFIsTiled(hTIFF) )
     {
-        TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &(nBlockXSize) );
-        TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &(nBlockYSize) );
+        uint32 l_nBlockXSize = 0;
+        uint32 l_nBlockYSize = 0;
+        TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &(l_nBlockXSize) );
+        TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &(l_nBlockYSize) );
+        if( l_nBlockXSize > INT_MAX || nBlockYSize > INT_MAX )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too large block size: %u x %u",
+                     l_nBlockXSize, l_nBlockYSize);
+            return CE_Failure;
+        }
+        nBlockXSize = static_cast<int>(l_nBlockXSize);
+        nBlockYSize = static_cast<int>(l_nBlockYSize);
     }
     else
     {
@@ -12754,7 +12774,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     }
 
     nBlocksPerBand =
-        DIV_ROUND_UP(nYSize, nBlockYSize) * DIV_ROUND_UP(nXSize, nBlockXSize);
+        DIV_ROUND_UP(nRasterYSize, nBlockYSize) *
+        DIV_ROUND_UP(nRasterXSize, nBlockXSize);
 
 /* -------------------------------------------------------------------- */
 /*      Should we handle this using the GTiffBitmapBand?                */
@@ -12767,8 +12788,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
         // Lets treat large "one row" bitmaps using the scanline api.
         if( !TIFFIsTiled(hTIFF)
-            && nBlockYSize == nYSize
-            && nYSize > 2000
+            && nBlockYSize == nRasterYSize
+            && nRasterYSize > 2000
             // libtiff does not support reading JBIG files with
             // TIFFReadScanline().
             && nCompression != COMPRESSION_JBIG )
@@ -12848,8 +12869,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
     if( !TIFFIsTiled(hTIFF)
         && nBitsPerSample == 8
-        && nBlockYSize == nYSize
-        && nYSize > 2000
+        && nBlockYSize == nRasterYSize
+        && nRasterYSize > 2000
         && !bTreatAsRGBA
         && CPLTestBool(CPLGetConfigOption("GDAL_ENABLE_TIFF_SPLIT", "YES")) )
     {
