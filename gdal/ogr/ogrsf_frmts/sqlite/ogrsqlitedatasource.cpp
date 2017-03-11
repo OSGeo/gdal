@@ -799,121 +799,134 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
         return FALSE;
     }
 
-    if( CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_READ", "NO")) ) {
+    if( (flagsIn & SQLITE_OPEN_CREATE) == 0 )
+    {
+        if( CPLTestBool(CPLGetConfigOption("OGR_VFK_DB_READ", "NO")) )
+        {
+            int nRowCount = 0, nColCount = 0;
+            char** papszResult = NULL;
+
+            sqlite3_get_table( hDB,
+                            "SELECT name FROM sqlite_master "
+                            "WHERE type = 'table' AND name = 'vfk_tables'",
+                            &papszResult, &nRowCount, &nColCount,
+                            NULL );
+
+            sqlite3_free_table( papszResult );
+
+            if( nRowCount > 0 )
+                return FALSE;  /* DB is valid VFK datasource */
+        }
+
         int nRowCount = 0, nColCount = 0;
         char** papszResult = NULL;
-
-        sqlite3_get_table( hDB,
-                           "SELECT name FROM sqlite_master "
-                           "WHERE type = 'table' AND name = 'vfk_tables'",
-                           &papszResult, &nRowCount, &nColCount,
-                           NULL );
-
-        sqlite3_free_table( papszResult );
-
-        if( nRowCount > 0 )
-            return FALSE;  /* DB is valid VFK datasource */
-    }
-
-    int nRowCount = 0, nColCount = 0;
-    char** papszResult = NULL;
-    char* pszErrMsg = NULL;
-    rc = sqlite3_get_table( hDB,
-                       "SELECT name, sql FROM sqlite_master "
-                       "WHERE (type = 'trigger' OR type = 'view') AND ("
-                       "sql LIKE '%%ogr_geocode%%' OR "
-                       "sql LIKE '%%ogr_datasource_load_layers%%' OR "
-                       "sql LIKE '%%ogr_GetConfigOption%%' OR "
-                       "sql LIKE '%%ogr_SetConfigOption%%' ) "
-                       "LIMIT 1",
-                       &papszResult, &nRowCount, &nColCount,
-                       &pszErrMsg );
-    if( rc != SQLITE_OK )
-    {
-        bool bIsWAL = false;
-        VSILFILE* fp = VSIFOpenL(m_pszFilename, "rb");
-        if( fp != NULL )
+        char* pszErrMsg = NULL;
+        rc = sqlite3_get_table( hDB,
+                        "SELECT name, sql FROM sqlite_master "
+                        "WHERE (type = 'trigger' OR type = 'view') AND ("
+                        "sql LIKE '%%ogr_geocode%%' OR "
+                        "sql LIKE '%%ogr_datasource_load_layers%%' OR "
+                        "sql LIKE '%%ogr_GetConfigOption%%' OR "
+                        "sql LIKE '%%ogr_SetConfigOption%%' ) "
+                        "LIMIT 1",
+                        &papszResult, &nRowCount, &nColCount,
+                        &pszErrMsg );
+        if( rc != SQLITE_OK )
         {
-            GByte byVal = 0;
-            VSIFSeekL(fp, 18, SEEK_SET);
-            VSIFReadL(&byVal, 1, 1, fp);
-            bIsWAL = byVal == 2;
-        }
-        if( bIsWAL )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "%s: this file is a WAL-enabled database. It cannot be opened "
-                "because it is presumably read-only or in a read-only directory.",
-                pszErrMsg);
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrMsg);
-        }
-        sqlite3_free( pszErrMsg );
-        return FALSE;
-    }
-
-    sqlite3_free_table(papszResult);
-    papszResult = NULL;
-
-    if( nRowCount > 0 )
-    {
-        if( !CPLTestBool(CPLGetConfigOption("ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW", "NO")) )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed, "%s",
-                "A trigger and/or view calls a OGR extension SQL function that could be used to "
-                "steal data, or use network bandwidth, without your consent.\n"
-                "The database will not be opened unless the ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW "
-                "configuration option to YES.");
-            return FALSE;
-        }
-    }
-
-    const char* pszSqliteJournal = CPLGetConfigOption("OGR_SQLITE_JOURNAL", NULL);
-    if (pszSqliteJournal != NULL)
-    {
-        pszErrMsg = NULL;
-
-        const char* pszSQL = CPLSPrintf("PRAGMA journal_mode = %s",
-                                        pszSqliteJournal);
-
-        rc = sqlite3_get_table( hDB, pszSQL,
-                                &papszResult, &nRowCount, &nColCount,
-                                &pszErrMsg );
-        if( rc == SQLITE_OK )
-        {
-            sqlite3_free_table(papszResult);
-        }
-        else
-        {
-            sqlite3_free( pszErrMsg );
-        }
-    }
-
-    const char* pszSqlitePragma = CPLGetConfigOption("OGR_SQLITE_PRAGMA", NULL);
-    if (pszSqlitePragma != NULL)
-    {
-        char** papszTokens = CSLTokenizeString2( pszSqlitePragma, ",", CSLT_HONOURSTRINGS );
-        for(int i=0; papszTokens[i] != NULL; i++ )
-        {
-            pszErrMsg = NULL;
-
-            const char* pszSQL = CPLSPrintf("PRAGMA %s", papszTokens[i]);
-
-            rc = sqlite3_get_table( hDB, pszSQL,
-                                    &papszResult, &nRowCount, &nColCount,
-                                    &pszErrMsg );
-            if( rc == SQLITE_OK )
+            bool bIsWAL = false;
+            VSILFILE* fp = VSIFOpenL(m_pszFilename, "rb");
+            if( fp != NULL )
             {
-                sqlite3_free_table(papszResult);
+                GByte byVal = 0;
+                VSIFSeekL(fp, 18, SEEK_SET);
+                VSIFReadL(&byVal, 1, 1, fp);
+                bIsWAL = byVal == 2;
+                VSIFCloseL(fp);
+            }
+            if( bIsWAL )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "%s: this file is a WAL-enabled database. "
+                    "It cannot be opened "
+                    "because it is presumably read-only or in a "
+                    "read-only directory.",
+                    pszErrMsg);
             }
             else
             {
-                sqlite3_free( pszErrMsg );
+                CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrMsg);
+            }
+            sqlite3_free( pszErrMsg );
+            return FALSE;
+        }
+
+        sqlite3_free_table(papszResult);
+
+        if( nRowCount > 0 )
+        {
+            if( !CPLTestBool(CPLGetConfigOption(
+                "ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW", "NO")) )
+            {
+                CPLError( CE_Failure, CPLE_OpenFailed, "%s",
+                    "A trigger and/or view calls a OGR extension SQL "
+                    "function that could be used to "
+                    "steal data, or use network bandwidth, without your consent.\n"
+                    "The database will not be opened unless the "
+                    "ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW "
+                    "configuration option to YES.");
+                return FALSE;
             }
         }
+    }
+
+    const char* pszSqlitePragma =
+                            CPLGetConfigOption("OGR_SQLITE_PRAGMA", NULL);
+    CPLString osJournalMode =
+                        CPLGetConfigOption("OGR_SQLITE_JOURNAL", "");
+
+    bool bPageSizeFound = false;
+    if (pszSqlitePragma != NULL)
+    {
+        char** papszTokens = CSLTokenizeString2( pszSqlitePragma, ",",
+                                                 CSLT_HONOURSTRINGS );
+        for(int i=0; papszTokens[i] != NULL; i++ )
+        {
+            if( STARTS_WITH_CI(papszTokens[i], "PAGE_SIZE") )
+                bPageSizeFound = true;
+            if( STARTS_WITH_CI(papszTokens[i], "JOURNAL_MODE") )
+            {
+                const char* pszEqual = strchr(papszTokens[i], '=');
+                if( pszEqual )
+                {
+                    osJournalMode = pszEqual + 1;
+                    osJournalMode.Trim();
+                }
+            }
+
+            const char* pszSQL = CPLSPrintf("PRAGMA %s", papszTokens[i]);
+
+            CPL_IGNORE_RET_VAL(
+                sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL ) );
+        }
         CSLDestroy(papszTokens);
+    }
+
+    if( !bPageSizeFound && (flagsIn | SQLITE_OPEN_CREATE) != 0 )
+    {
+        // Since sqlite 3.12 the default page_size is now 4096. But we
+        // can use that even with older versions.
+        CPL_IGNORE_RET_VAL(
+            sqlite3_exec( hDB, "PRAGMA page_size = 4096", NULL, NULL, NULL ) );
+    }
+
+    // journal_mode = WAL must be done *AFTER* changing page size.
+    if (!osJournalMode.empty())
+    {
+        const char* pszSQL = CPLSPrintf("PRAGMA journal_mode = %s",
+                                        osJournalMode.c_str());
+
+        CPL_IGNORE_RET_VAL(
+            sqlite3_exec( hDB, pszSQL, NULL, NULL, NULL ) );
     }
 
     if (!SetCacheSize())
