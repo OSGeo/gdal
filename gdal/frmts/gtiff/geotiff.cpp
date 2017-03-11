@@ -7470,7 +7470,7 @@ void GTiffDataset::FillEmptyTiles()
                                                     TIFFClientdata( hTIFF ));
                         const vsi_l_offset nCurOffset = VSIFTellL(fp);
                         VSIFSeekL(fp, nOffset, SEEK_SET);
-                        VSIFReadL(pabyRaw, 1, nRawSize, fp);
+                        VSIFReadL(pabyRaw, 1, static_cast<int>(nRawSize), fp);
                         VSIFSeekL(fp, nCurOffset, SEEK_SET);
                     }
                 }
