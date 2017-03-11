@@ -7463,7 +7463,7 @@ void GTiffDataset::FillEmptyTiles()
                 if( nCompression != COMPRESSION_NONE )
                 {
                     pabyRaw = static_cast<GByte*>(
-                            VSI_MALLOC_VERBOSE(static_cast<size_t>(nRawSize)));
+                            VSI_MALLOC_VERBOSE(static_cast<int>(nRawSize)));
                     if( pabyRaw )
                     {
                         VSILFILE* fp = VSI_TIFFGetVSILFile(
@@ -7478,7 +7478,7 @@ void GTiffDataset::FillEmptyTiles()
             else
             {
                 WriteRawStripOrTile( iBlock, pabyRaw,
-                                     static_cast<size_t>(nRawSize) );
+                                     static_cast<int>(nRawSize) );
             }
         }
     }
