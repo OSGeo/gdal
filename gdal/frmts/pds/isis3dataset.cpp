@@ -3579,7 +3579,7 @@ void ISIS3Dataset::WriteLabel()
             VSIFTruncateL( m_fpImage, VSIFTellL(m_fpImage) + 
                                                 nImagePixels * nDTSize );
         }
-        else
+        else if( nDTSize != 0 ) // to make Coverity not warn about div by 0
         {
             const int nPageSize = 4096; // Must be multiple of 4 since
                                         // Float32 is the largest type
