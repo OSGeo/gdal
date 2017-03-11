@@ -7477,7 +7477,8 @@ void GTiffDataset::FillEmptyTiles()
             }
             else
             {
-                WriteRawStripOrTile( iBlock, pabyRaw, nRawSize );
+                WriteRawStripOrTile( iBlock, pabyRaw,
+                                     static_cast<size_t>(nRawSize) );
             }
         }
     }
