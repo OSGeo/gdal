@@ -2971,14 +2971,14 @@ bool OGROSMDataSource::CreateTempDB()
         osTmpDBName.Printf("/vsimem/osm_importer/osm_temp_%p.sqlite", this);
 
         // On 32 bit, the virtual memory space is scarce, so we need to
-        // reserve it right now Will not hurt on 64 bit either.
+        // reserve it right now. Will not hurt on 64 bit either.
         VSILFILE* fp = VSIFOpenL(osTmpDBName, "wb");
         if( fp )
         {
             GIntBig nSize =
                 static_cast<GIntBig>(nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
             if( bCustomIndexing && bInMemoryNodesFile )
-                nSize = nSize * 1 / 4;
+                nSize = nSize / 4;
 
             CPLPushErrorHandler(CPLQuietErrorHandler);
             bSuccess =
@@ -2986,7 +2986,7 @@ bool OGROSMDataSource::CreateTempDB()
             CPLPopErrorHandler();
 
             if( bSuccess )
-                 VSIFTruncateL(fp, 0);
+                 bSuccess = VSIFTruncateL(fp, 0) == 0;
 
             VSIFCloseL(fp);
 
@@ -3153,7 +3153,8 @@ bool OGROSMDataSource::SetCacheSize()
     int nRowCount = 0;
     int nColCount = 0;
     int iSqlitePageSize = -1;
-    const int iSqliteCacheBytes = atoi( pszSqliteCacheMB ) * 1024 * 1024;
+    const GIntBig iSqliteCacheBytes =
+            static_cast<GIntBig>(atoi( pszSqliteCacheMB )) * 1024 * 1024;
 
     /* querying the current PageSize */
     int rc = sqlite3_get_table( hDB, "PRAGMA page_size",
@@ -3179,7 +3180,8 @@ bool OGROSMDataSource::SetCacheSize()
         return true;
 
     /* computing the CacheSize as #Pages */
-    const int iSqliteCachePages = iSqliteCacheBytes / iSqlitePageSize;
+    const int iSqliteCachePages = static_cast<int>(
+                                    iSqliteCacheBytes / iSqlitePageSize);
     if( iSqliteCachePages <= 0)
         return true;
 
