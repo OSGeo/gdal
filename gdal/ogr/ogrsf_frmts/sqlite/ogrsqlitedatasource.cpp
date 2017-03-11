@@ -900,6 +900,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
                 {
                     osJournalMode = pszEqual + 1;
                     osJournalMode.Trim();
+                    break;
                 }
             }
 
