@@ -5501,6 +5501,10 @@ void GPKG_GDAL_HasColorTable(sqlite3_context* pContext,
 /*                         OpenOrCreateDB()                             */
 /************************************************************************/
 
+#ifndef SQLITE_DETERMINISTIC
+#define SQLITE_DETERMINISTIC 0
+#endif
+
 bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
 {
     const bool bSuccess =
@@ -5520,59 +5524,78 @@ bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
 #endif
 
     /* Used by RTree Spatial Index Extension */
-    sqlite3_create_function(hDB, "ST_MinX", 1, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "ST_MinX", 1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             OGRGeoPackageSTMinX, NULL, NULL);
-    sqlite3_create_function(hDB, "ST_MinY", 1, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "ST_MinY", 1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             OGRGeoPackageSTMinY, NULL, NULL);
-    sqlite3_create_function(hDB, "ST_MaxX", 1, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "ST_MaxX", 1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             OGRGeoPackageSTMaxX, NULL, NULL);
-    sqlite3_create_function(hDB, "ST_MaxY", 1, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "ST_MaxY", 1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             OGRGeoPackageSTMaxY, NULL, NULL);
-    sqlite3_create_function(hDB, "ST_IsEmpty", 1, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "ST_IsEmpty", 1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             OGRGeoPackageSTIsEmpty, NULL, NULL);
 
     /* Used by Geometry Type Triggers Extension */
-    sqlite3_create_function(hDB, "ST_GeometryType", 1, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "ST_GeometryType", 1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             OGRGeoPackageSTGeometryType, NULL, NULL);
-    sqlite3_create_function(hDB, "GPKG_IsAssignable", 2, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "GPKG_IsAssignable", 2,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             OGRGeoPackageGPKGIsAssignable, NULL, NULL);
 
     /* Used by Geometry SRS ID Triggers Extension */
-    sqlite3_create_function(hDB, "ST_SRID", 1, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "ST_SRID", 1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             OGRGeoPackageSTSRID, NULL, NULL);
 
     /* Spatialite-like functions */
-    sqlite3_create_function(hDB, "CreateSpatialIndex", 2, SQLITE_ANY, this,
+    sqlite3_create_function(hDB, "CreateSpatialIndex", 2,
+                            SQLITE_UTF8, this,
                             OGRGeoPackageCreateSpatialIndex, NULL, NULL);
-    sqlite3_create_function(hDB, "DisableSpatialIndex", 2, SQLITE_ANY, this,
+    sqlite3_create_function(hDB, "DisableSpatialIndex", 2,
+                            SQLITE_UTF8, this,
                             OGRGeoPackageDisableSpatialIndex, NULL, NULL);
-    sqlite3_create_function(hDB, "HasSpatialIndex", 2, SQLITE_ANY, this,
-                            OGRGeoPackageHasSpatialIndex, NULL, NULL);
+    sqlite3_create_function(hDB, "HasSpatialIndex", 2, SQLITE_UTF8, this,
+                            OGRGeoPackageHasSpatialIndex,
+                            NULL, NULL);
 
     // HSTORE functions
-    sqlite3_create_function(hDB, "hstore_get_value", 2, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "hstore_get_value", 2,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             GPKG_hstore_get_value, NULL, NULL);
 
     // Override a few Spatialite functions to work with gpkg_spatial_ref_sys
-    sqlite3_create_function(hDB, "ST_Transform", 2, SQLITE_ANY, this,
+    sqlite3_create_function(hDB, "ST_Transform", 2,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, this,
                             OGRGeoPackageTransform, NULL, NULL);
-    sqlite3_create_function(hDB, "Transform", 2, SQLITE_ANY, this,
+    sqlite3_create_function(hDB, "Transform", 2,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, this,
                             OGRGeoPackageTransform, NULL, NULL);
-    sqlite3_create_function(hDB, "SridFromAuthCRS", 2, SQLITE_ANY, this,
+    sqlite3_create_function(hDB, "SridFromAuthCRS", 2,
+                            SQLITE_UTF8, this,
                             OGRGeoPackageSridFromAuthCRS, NULL, NULL);
 
     // GDAL specific function
-    sqlite3_create_function(hDB, "ImportFromEPSG", 1, SQLITE_INTEGER, this,
+    sqlite3_create_function(hDB, "ImportFromEPSG", 1,
+                            SQLITE_UTF8, this,
                             OGRGeoPackageImportFromEPSG, NULL, NULL);
 
     // Debug functions
     if( CPLTestBool(CPLGetConfigOption("GPKG_DEBUG", "FALSE")) )
     {
-        sqlite3_create_function(hDB, "GDAL_GetMimeType", 1, SQLITE_ANY, NULL,
+        sqlite3_create_function(hDB, "GDAL_GetMimeType", 1,
+                                SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                                 GPKG_GDAL_GetMimeType, NULL, NULL);
-        sqlite3_create_function(hDB, "GDAL_GetBandCount", 1, SQLITE_ANY, NULL,
+        sqlite3_create_function(hDB, "GDAL_GetBandCount", 1,
+                                SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                                 GPKG_GDAL_GetBandCount, NULL, NULL);
-        sqlite3_create_function(hDB, "GDAL_HasColorTable", 1, SQLITE_ANY, NULL,
+        sqlite3_create_function(hDB, "GDAL_HasColorTable", 1,
+                                SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                                 GPKG_GDAL_HasColorTable, NULL, NULL);
     }
 

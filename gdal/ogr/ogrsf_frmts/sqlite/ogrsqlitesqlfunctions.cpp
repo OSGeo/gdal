@@ -1076,55 +1076,73 @@ void OGRSQLITE_hstore_get_value(sqlite3_context* pContext,
 /*                   OGRSQLiteRegisterSQLFunctions()                    */
 /************************************************************************/
 
+#ifndef SQLITE_DETERMINISTIC
+#define SQLITE_DETERMINISTIC 0
+#endif
+
 static
 void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
 {
     OGRSQLiteExtensionData* pData = new OGRSQLiteExtensionData(hDB);
 
-    sqlite3_create_function(hDB, "ogr_version", 0, SQLITE_ANY, NULL,
-                           OGR2SQLITE_ogr_version, NULL, NULL);
+    sqlite3_create_function(hDB, "ogr_version", 0,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
+                            OGR2SQLITE_ogr_version, NULL, NULL);
 
-    sqlite3_create_function(hDB, "ogr_version", 1, SQLITE_ANY, NULL,
-                           OGR2SQLITE_ogr_version, NULL, NULL);
+    sqlite3_create_function(hDB, "ogr_version", 1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
+                            OGR2SQLITE_ogr_version, NULL, NULL);
 
-    sqlite3_create_function(hDB, "ogr_deflate", 1, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "ogr_deflate", 1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             OGR2SQLITE_ogr_deflate, NULL, NULL);
 
-    sqlite3_create_function(hDB, "ogr_deflate", 2, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "ogr_deflate", 2,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             OGR2SQLITE_ogr_deflate, NULL, NULL);
 
-    sqlite3_create_function(hDB, "ogr_inflate", 1, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "ogr_inflate", 1,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             OGR2SQLITE_ogr_inflate, NULL, NULL);
 
-    sqlite3_create_function(hDB, "ogr_geocode", -1, SQLITE_ANY, pData,
+    sqlite3_create_function(hDB, "ogr_geocode", -1,
+                            SQLITE_UTF8, pData,
                             OGR2SQLITE_ogr_geocode, NULL, NULL);
 
-    sqlite3_create_function(hDB, "ogr_geocode_reverse", -1, SQLITE_ANY, pData,
+    sqlite3_create_function(hDB, "ogr_geocode_reverse", -1,
+                            SQLITE_UTF8, pData,
                             OGR2SQLITE_ogr_geocode_reverse, NULL, NULL);
 
-    sqlite3_create_function(hDB, "ogr_datasource_load_layers", 1, SQLITE_ANY, hDB,
+    sqlite3_create_function(hDB, "ogr_datasource_load_layers", 1,
+                            SQLITE_UTF8, hDB,
                             OGR2SQLITE_ogr_datasource_load_layers, NULL, NULL);
 
-    sqlite3_create_function(hDB, "ogr_datasource_load_layers", 2, SQLITE_ANY, hDB,
+    sqlite3_create_function(hDB, "ogr_datasource_load_layers", 2,
+                            SQLITE_UTF8, hDB,
                             OGR2SQLITE_ogr_datasource_load_layers, NULL, NULL);
 
-    sqlite3_create_function(hDB, "ogr_datasource_load_layers", 3, SQLITE_ANY, hDB,
+    sqlite3_create_function(hDB, "ogr_datasource_load_layers", 3,
+                            SQLITE_UTF8, hDB,
                             OGR2SQLITE_ogr_datasource_load_layers, NULL, NULL);
 
 #if notdef
-    sqlite3_create_function(hDB, "ogr_GetConfigOption", 1, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "ogr_GetConfigOption", 1,
+                            SQLITE_UTF8, NULL,
                             OGR2SQLITE_ogr_GetConfigOption, NULL, NULL);
 
-    sqlite3_create_function(hDB, "ogr_SetConfigOption", 2, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "ogr_SetConfigOption", 2,
+                            SQLITE_UTF8, NULL,
                             OGR2SQLITE_ogr_SetConfigOption, NULL, NULL);
 #endif
 
     // Custom and undocumented function, not sure I'll keep it.
-    sqlite3_create_function(hDB, "Transform3", 3, SQLITE_ANY, pData,
+    sqlite3_create_function(hDB, "Transform3", 3,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, pData,
                             OGR2SQLITE_Transform, NULL, NULL);
 
     // HSTORE functions
-    sqlite3_create_function(hDB, "hstore_get_value", 2, SQLITE_ANY, NULL,
+    sqlite3_create_function(hDB, "hstore_get_value", 2,
+                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                             OGRSQLITE_hstore_get_value, NULL, NULL);
 
 #ifdef MINIMAL_SPATIAL_FUNCTIONS
@@ -1141,9 +1159,11 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
                  "Spatialite not available. Implementing a few functions");
 
 #define REGISTER_ST_op(argc, op) \
-        sqlite3_create_function(hDB, #op, argc, SQLITE_ANY, NULL, \
+        sqlite3_create_function(hDB, #op, argc, \
+                                SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL, \
                                 OGR2SQLITE_ST_##op, NULL, NULL); \
-        sqlite3_create_function(hDB, "ST_" #op, argc, SQLITE_ANY, NULL, \
+        sqlite3_create_function(hDB, "ST_" #op, argc, \
+                                SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL, \
                                 OGR2SQLITE_ST_##op, NULL, NULL);
 
         REGISTER_ST_op(1, AsText);
