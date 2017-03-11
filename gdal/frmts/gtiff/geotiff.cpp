@@ -12683,7 +12683,14 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     uint32 nYSize = 0;
     TIFFGetField( hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
     TIFFGetField( hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
-    // uint32 -> int32 overflow already verified.
+    if( nXSize > INT_MAX || nYSize > INT_MAX )
+    {
+        // GDAL only supports signed 32bit dimensions.
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too large image size: %u x %u",
+                 nXSize, nYSize);
+        return CE_Failure;
+    }
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 
@@ -13947,21 +13954,30 @@ void GTiffDataset::ScanDirectories()
             TIFFGetField( hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
             TIFFGetField( hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
 
-            uint16 nSPP = 0;
-            if( !TIFFGetField(hTIFF, TIFFTAG_SAMPLESPERPIXEL, &nSPP ) )
-                nSPP = 1;
+            if( nXSize > INT_MAX || nYSize > INT_MAX )
+            {
+                CPLDebug("GTiff",
+                         "Skipping directory with too large image: %u x %u",
+                         nXSize, nYSize);
+            }
+            else
+            {
+                uint16 nSPP = 0;
+                if( !TIFFGetField(hTIFF, TIFFTAG_SAMPLESPERPIXEL, &nSPP ) )
+                    nSPP = 1;
 
-            CPLString osName, osDesc;
-            osName.Printf( "SUBDATASET_%d_NAME=GTIFF_DIR:%d:%s",
-                           iDirIndex, iDirIndex, osFilename.c_str() );
-            osDesc.Printf( "SUBDATASET_%d_DESC=Page %d (%dP x %dL x %dB)",
-                           iDirIndex, iDirIndex,
-                           static_cast<int>(nXSize),
-                           static_cast<int>(nYSize),
-                           nSPP );
+                CPLString osName, osDesc;
+                osName.Printf( "SUBDATASET_%d_NAME=GTIFF_DIR:%d:%s",
+                            iDirIndex, iDirIndex, osFilename.c_str() );
+                osDesc.Printf( "SUBDATASET_%d_DESC=Page %d (%dP x %dL x %dB)",
+                            iDirIndex, iDirIndex,
+                            static_cast<int>(nXSize),
+                            static_cast<int>(nYSize),
+                            nSPP );
 
-            aosSubdatasets.AddString(osName);
-            aosSubdatasets.AddString(osDesc);
+                aosSubdatasets.AddString(osName);
+                aosSubdatasets.AddString(osDesc);
+            }
         }
 
         // Make sure we are stepping from the expected directory regardless
