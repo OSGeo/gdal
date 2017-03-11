@@ -169,25 +169,26 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * m_poFeatureDefn->GetFieldCount() );
 
     /* Always start with a primary key */
-    CPLString soColumns = m_pszFidColumn ? m_pszFidColumn : "_rowid_";
-    CPLString soColumn;
+    CPLString soColumns = "m.";
+    soColumns += m_pszFidColumn ?
+        "\"" + SQLEscapeDoubleQuote(m_pszFidColumn) + "\"" : "_rowid_";
     iFIDCol = 0;
 
     /* Add a geometry column if there is one (just one) */
     if ( m_poFeatureDefn->GetGeomFieldCount() )
     {
-        soColumns += ", ";
-        soColumn.Printf("\"%s\"", SQLEscapeDoubleQuote(m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()).c_str());
-        soColumns += soColumn;
+        soColumns += ", m.\"";
+        soColumns += SQLEscapeDoubleQuote(m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
+        soColumns += "\"";
         iGeomCol = 1;
     }
 
     /* Add all the attribute columns */
     for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
     {
-        soColumns += ", ";
-        soColumn.Printf("\"%s\"", SQLEscapeDoubleQuote(m_poFeatureDefn->GetFieldDefn(i)->GetNameRef()).c_str());
-        soColumns += soColumn;
+        soColumns += ", m.\"";
+        soColumns += SQLEscapeDoubleQuote(m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+        soColumns += "\"";
         panFieldOrdinals[i] = 1 + (iGeomCol >= 0) + i;
     }
 
@@ -1681,15 +1682,63 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
     /* so job #1 is to prepare the statement. */
     /* Append the attribute filter, if there is one */
     CPLString soSQL;
-    if ( m_soFilter.length() > 0 )
-        soSQL.Printf("SELECT %s FROM \"%s\" WHERE %s",
+    if ( !m_soFilter.empty() )
+    {
+        soSQL.Printf("SELECT %s FROM \"%s\" m WHERE %s",
                      m_soColumns.c_str(),
                      SQLEscapeDoubleQuote(m_pszTableName).c_str(),
                      m_soFilter.c_str());
+
+        if ( m_poFilterGeom != NULL && m_pszAttrQueryString == NULL &&
+            HasSpatialIndex() && m_pszFidColumn != NULL )
+        {
+            const char* pszT = m_pszTableName;
+            const char* pszC = m_poFeatureDefn->
+                            GetGeomFieldDefn(m_iGeomFieldFilter)->GetNameRef();
+
+            OGREnvelope  sEnvelope;
+
+            m_poFilterGeom->getEnvelope( &sEnvelope );
+
+            bool bUseSpatialIndex = true;
+            if( m_poExtent &&
+                sEnvelope.MinX <= m_poExtent->MinX &&
+                sEnvelope.MinY <= m_poExtent->MinY &&
+                sEnvelope.MaxX >= m_poExtent->MaxX &&
+                sEnvelope.MaxY >= m_poExtent->MaxY )
+            {
+                // Selecting from spatial filter on whole extent can be rather
+                // slow. So use function based filtering, just in case the
+                // advertized global extent might be wrong. Otherwise we might
+                // just discard completely the spatial filter.
+                bUseSpatialIndex = false;
+            }
+
+            if( bUseSpatialIndex &&
+                !CPLIsInf(sEnvelope.MinX) && !CPLIsInf(sEnvelope.MinY) &&
+                !CPLIsInf(sEnvelope.MaxX) && !CPLIsInf(sEnvelope.MaxY) )
+            {
+                soSQL.Printf("SELECT %s FROM \"%s\" m "
+                             "JOIN \"rtree_%s_%s\" r "
+                             "ON m.\"%s\" = r.id WHERE "
+                             "r.maxx >= %.12f AND r.minx <= %.12f AND "
+                             "r.maxy >= %.12f AND r.miny <= %.12f",
+                             m_soColumns.c_str(),
+                             SQLEscapeDoubleQuote(pszT).c_str(),
+                             SQLEscapeDoubleQuote(pszT).c_str(),
+                             SQLEscapeDoubleQuote(pszC).c_str(),
+                             SQLEscapeDoubleQuote(m_pszFidColumn).c_str(),
+                             sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
+                             sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
+            }
+        }
+    }
     else
-        soSQL.Printf("SELECT %s FROM \"%s\" ",
+        soSQL.Printf("SELECT %s FROM \"%s\" m",
                      m_soColumns.c_str(),
                      SQLEscapeDoubleQuote(m_pszTableName).c_str());
+
+    CPLDebug("GPKG", "ResetStatement(%s)", soSQL.c_str());
 
     int err = sqlite3_prepare_v2(
         m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
@@ -1739,10 +1788,13 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
 
     /* No filters apply, just use the FID */
     CPLString soSQL;
-    soSQL.Printf("SELECT %s FROM \"%s\" WHERE \"%s\" = " CPL_FRMT_GIB,
+    soSQL.Printf("SELECT %s FROM \"%s\" m "
+                 "WHERE \"%s\" = " CPL_FRMT_GIB,
                  m_soColumns.c_str(),
                  SQLEscapeDoubleQuote(m_pszTableName).c_str(),
-                 m_pszFidColumn ? SQLEscapeDoubleQuote(m_pszFidColumn).c_str() : "_rowid_", nFID);
+                 m_pszFidColumn ?
+                    SQLEscapeDoubleQuote(m_pszFidColumn).c_str() : "_rowid_",
+                 nFID);
 
     int err = sqlite3_prepare_v2(
         m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
@@ -2132,6 +2184,15 @@ void OGRGeoPackageTableLayer::CreateSpatialIndexIfNecessary()
 /*                       CreateSpatialIndex()                           */
 /************************************************************************/
 
+typedef struct
+{
+    GIntBig nId;
+    double  dfMinX;
+    double  dfMinY;
+    double  dfMaxX;
+    double  dfMaxY;
+} GPKGRTreeEntry;
+
 bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
 {
     OGRErr err;
@@ -2196,10 +2257,13 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
     m_bDropRTreeTable = false;
 
     /* Populate the RTree */
+#ifdef NO_PROGRESSIVE_RTREE_INSERTION
     pszSQL = sqlite3_mprintf(
-                 "INSERT OR REPLACE INTO \"rtree_%w_%w\" "
-                 "SELECT \"%w\", st_minx(\"%w\"), st_maxx(\"%w\"), st_miny(\"%w\"), st_maxy(\"%w\") FROM \"%w\"",
-                 pszT, pszC, pszI, pszC, pszC, pszC, pszC, pszT );
+        "INSERT INTO \"rtree_%w_%w\" "
+        "SELECT \"%w\", ST_MinX(\"%w\"), ST_MaxX(\"%w\"), "
+        "ST_MinY(\"%w\"), ST_MaxY(\"%w\") FROM \"%w\" "
+        "WHERE \"%w\" NOT NULL AND NOT ST_IsEmpty(\"%w\")",
+                 pszT, pszC, pszI, pszC, pszC, pszC, pszC, pszT, pszC, pszC );
     err = SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
     if( err != OGRERR_NONE )
@@ -2207,6 +2271,111 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
         m_poDS->SoftRollbackTransaction();
         return false;
     }
+#else
+    pszSQL = sqlite3_mprintf(
+        "SELECT \"%w\", ST_MinX(\"%w\"), ST_MaxX(\"%w\"), "
+        "ST_MinY(\"%w\"), ST_MaxY(\"%w\") FROM \"%w\" "
+        "WHERE \"%w\" NOT NULL AND NOT ST_IsEmpty(\"%w\")",
+            pszI, pszC, pszC, pszC, pszC, pszT, pszC, pszC );
+    sqlite3_stmt* hIterStmt = NULL;
+    if ( sqlite3_prepare_v2(m_poDS->GetDB(), pszSQL, -1, &hIterStmt, NULL)
+                                                            != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "failed to prepare SQL: %s", pszSQL);
+        sqlite3_free(pszSQL);
+        m_poDS->SoftRollbackTransaction();
+        return OGRERR_FAILURE;
+    }
+    sqlite3_free(pszSQL);
+
+    pszSQL = sqlite3_mprintf(
+        "INSERT INTO \"rtree_%w_%w\" VALUES (?,?,?,?,?)",
+        pszT, pszC);
+    sqlite3_stmt* hInsertStmt = NULL;
+    if ( sqlite3_prepare_v2(m_poDS->GetDB(), pszSQL, -1, &hInsertStmt, NULL)
+                                                            != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "failed to prepare SQL: %s", pszSQL);
+        sqlite3_free(pszSQL);
+        sqlite3_finalize(hIterStmt);
+        m_poDS->SoftRollbackTransaction();
+        return false;
+    }
+    sqlite3_free(pszSQL);
+
+    // Insert entries in RTree by chuncks of 100000
+    std::vector<GPKGRTreeEntry> aoEntries;
+    GUIntBig nEntryCount = 0;
+    const size_t nChunkSize = 100000;
+    while( true )
+    {
+        int sqlite_err = sqlite3_step(hIterStmt);
+        bool bFinished = false;
+        if( sqlite_err == SQLITE_ROW )
+        {
+            GPKGRTreeEntry sEntry;
+            sEntry.nId = sqlite3_column_int64(hIterStmt, 0);
+            sEntry.dfMinX = sqlite3_column_double(hIterStmt, 1);
+            sEntry.dfMaxX = sqlite3_column_double(hIterStmt, 2);
+            sEntry.dfMinY = sqlite3_column_double(hIterStmt, 3);
+            sEntry.dfMaxY = sqlite3_column_double(hIterStmt, 4);
+            aoEntries.push_back(sEntry);
+        }
+        else if( sqlite_err == SQLITE_DONE )
+        {
+            bFinished = true;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "failed to iterate over features while inserting in "
+                      "RTree: %s",
+                      sqlite3_errmsg( m_poDS->GetDB() ) );
+            sqlite3_finalize(hIterStmt);
+            sqlite3_finalize(hInsertStmt);
+            m_poDS->SoftRollbackTransaction();
+            return false;
+        }
+
+        if( aoEntries.size() == nChunkSize || bFinished )
+        {
+            for( size_t i = 0; i < aoEntries.size(); ++i )
+            {
+                sqlite3_reset(hInsertStmt);
+
+                sqlite3_bind_int64(hInsertStmt,1,aoEntries[i].nId);
+                sqlite3_bind_double(hInsertStmt,2,aoEntries[i].dfMinX);
+                sqlite3_bind_double(hInsertStmt,3,aoEntries[i].dfMaxX);
+                sqlite3_bind_double(hInsertStmt,4,aoEntries[i].dfMinY);
+                sqlite3_bind_double(hInsertStmt,5,aoEntries[i].dfMaxY);
+                sqlite_err = sqlite3_step(hInsertStmt);
+                if ( ! (err == SQLITE_OK || err == SQLITE_DONE) )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "failed to execute insertion in RTree : %s",
+                              sqlite3_errmsg( m_poDS->GetDB() ) );
+                    sqlite3_finalize(hIterStmt);
+                    sqlite3_finalize(hInsertStmt);
+                    m_poDS->SoftRollbackTransaction();
+                    return false;
+                }
+            }
+
+            nEntryCount += aoEntries.size();
+            CPLDebug("GPKG", CPL_FRMT_GUIB " rows inserted into rtree_%s_%s",
+                     nEntryCount, pszT, pszC);
+
+            aoEntries.clear();
+            if( bFinished )
+                break;
+        }
+    }
+
+    sqlite3_finalize(hIterStmt);
+    sqlite3_finalize(hInsertStmt);
+#endif
 
     /* Define Triggers to Maintain Spatial Index Values */
 
@@ -2802,30 +2971,50 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomColIn,
 
         poFilterGeom->getEnvelope( &sEnvelope );
 
-        if( CPLIsInf(sEnvelope.MinX) || CPLIsInf(sEnvelope.MinY) ||
-            CPLIsInf(sEnvelope.MaxX) || CPLIsInf(sEnvelope.MaxY) )
+        if( CPLIsInf(sEnvelope.MinX) && sEnvelope.MinX < 0 &&
+            CPLIsInf(sEnvelope.MinY) && sEnvelope.MinY < 0 &&
+            CPLIsInf(sEnvelope.MaxX) && sEnvelope.MaxX > 0 &&
+            CPLIsInf(sEnvelope.MaxY) && sEnvelope.MaxY > 0 )
         {
-            return osSpatialWHERE;
+            return CPLString();
         }
 
-        if( HasSpatialIndex() )
+        bool bUseSpatialIndex = true;
+        if( m_poExtent &&
+            sEnvelope.MinX <= m_poExtent->MinX &&
+            sEnvelope.MinY <= m_poExtent->MinY &&
+            sEnvelope.MaxX >= m_poExtent->MaxX &&
+            sEnvelope.MaxY >= m_poExtent->MaxY )
         {
-            osSpatialWHERE.Printf("ROWID IN ( SELECT id FROM \"rtree_%s_%s\" WHERE "
-                            "maxx >= %.12f AND minx <= %.12f AND maxy >= %.12f AND miny <= %.12f)",
-                            pszT, pszC,
-                            sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
-                            sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
+            // Selecting from spatial filter on whole extent can be rather
+            // slow. So use function based filtering, just in case the
+            // advertized global extent might be wrong. Otherwise we might
+            // just discard completely the spatial filter.
+            bUseSpatialIndex = false;
+        }
+
+        if( bUseSpatialIndex && HasSpatialIndex() && m_pszFidColumn )
+        {
+            osSpatialWHERE.Printf(
+                "\"%s\" IN ( SELECT id FROM \"rtree_%s_%s\" WHERE "
+                "maxx >= %.12f AND minx <= %.12f AND "
+                "maxy >= %.12f AND miny <= %.12f)",
+                SQLEscapeDoubleQuote(m_pszFidColumn).c_str(),
+                SQLEscapeDoubleQuote(pszT).c_str(),
+                SQLEscapeDoubleQuote(pszC).c_str(),
+                sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
+                sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
         }
         else
         {
             /* A bit inefficient but still faster than OGR filtering */
             osSpatialWHERE.Printf(
-                        "(ST_MaxX(\"%s\") >= %.12f AND ST_MinX(\"%s\") <= %.12f AND "
-                        "ST_MaxY(\"%s\") >= %.12f AND ST_MinY(\"%s\") <= %.12f)",
-                        pszC, sEnvelope.MinX - 1e-11,
-                        pszC, sEnvelope.MaxX + 1e-11,
-                        pszC, sEnvelope.MinY - 1e-11,
-                        pszC, sEnvelope.MaxY + 1e-11);
+                "(ST_MaxX(\"%s\") >= %.12f AND ST_MinX(\"%s\") <= %.12f AND "
+                "ST_MaxY(\"%s\") >= %.12f AND ST_MinY(\"%s\") <= %.12f)",
+                SQLEscapeDoubleQuote(pszC).c_str(), sEnvelope.MinX - 1e-11,
+                SQLEscapeDoubleQuote(pszC).c_str(), sEnvelope.MaxX + 1e-11,
+                SQLEscapeDoubleQuote(pszC).c_str(), sEnvelope.MinY - 1e-11,
+                SQLEscapeDoubleQuote(pszC).c_str(), sEnvelope.MaxY + 1e-11);
         }
     }
 
@@ -2863,6 +3052,7 @@ void OGRGeoPackageTableLayer::BuildWhere()
             m_soFilter += ")";
         }
     }
+    CPLDebug("GPKG", "Filter: %s", m_soFilter.c_str());
 }
 
 /************************************************************************/
@@ -3175,7 +3365,7 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
             CPLErrorReset();
 
             // In case of error, fallback to taking the MAX of the FID
-            pszSQL = sqlite3_mprintf("SELECT MAX(\"%s\") FROM \"%w\"",
+            pszSQL = sqlite3_mprintf("SELECT MAX(\"%w\") FROM \"%w\"",
                                         m_pszFidColumn,
                                         m_pszTableName);
 
