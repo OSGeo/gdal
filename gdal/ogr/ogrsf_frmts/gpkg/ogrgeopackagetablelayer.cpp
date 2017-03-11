@@ -2285,7 +2285,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
                     "failed to prepare SQL: %s", pszSQL);
         sqlite3_free(pszSQL);
         m_poDS->SoftRollbackTransaction();
-        return OGRERR_FAILURE;
+        return false;
     }
     sqlite3_free(pszSQL);
 
