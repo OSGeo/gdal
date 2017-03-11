@@ -7440,16 +7440,50 @@ void GTiffDataset::FillEmptyTiles()
 /*      Check all blocks, writing out data for uninitialized blocks.    */
 /* -------------------------------------------------------------------- */
 
+    GByte* pabyRaw = NULL;
+    vsi_l_offset nRawSize = 0;
     for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
     {
         if( panByteCounts[iBlock] == 0 )
         {
-            if( WriteEncodedTileOrStrip( iBlock, pabyData, FALSE ) != CE_None )
-                break;
+            if( pabyRaw == NULL )
+            {
+                if( WriteEncodedTileOrStrip( iBlock, pabyData, FALSE
+                                                                ) != CE_None )
+                    break;
+                vsi_l_offset nOffset = 0;
+                bool b = IsBlockAvailable( iBlock, &nOffset, &nRawSize);
+#ifdef DEBUG
+                CPLAssert(b);
+#else
+                CPL_IGNORE_RET_VAL(b);
+#endif
+                // When using compression, get back the compressed block
+                // so we can use the raw API to write it faster.
+                if( nCompression != COMPRESSION_NONE )
+                {
+                    pabyRaw = static_cast<GByte*>(
+                            VSI_MALLOC_VERBOSE(static_cast<size_t>(nRawSize)));
+                    if( pabyRaw )
+                    {
+                        VSILFILE* fp = VSI_TIFFGetVSILFile(
+                                                    TIFFClientdata( hTIFF ));
+                        const vsi_l_offset nCurOffset = VSIFTellL(fp);
+                        VSIFSeekL(fp, nOffset, SEEK_SET);
+                        VSIFReadL(pabyRaw, 1, nRawSize, fp);
+                        VSIFSeekL(fp, nCurOffset, SEEK_SET);
+                    }
+                }
+            }
+            else
+            {
+                WriteRawStripOrTile( iBlock, pabyRaw, nRawSize );
+            }
         }
     }
 
     CPLFree( pabyData );
+    VSIFree( pabyRaw );
 }
 
 /************************************************************************/
