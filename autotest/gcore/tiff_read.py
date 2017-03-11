@@ -2849,6 +2849,18 @@ def tiff_read_arcgis93_geodataxform_gcp():
     return 'success'
 
 ###############################################################################
+# Test reading file with block size > signed int 32 bit
+
+def tiff_read_block_width_above_32bit():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/block_width_above_32bit.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2941,6 +2953,7 @@ gdaltest_list.append( (tiff_read_ycbcr_lzw) )
 
 gdaltest_list.append( (tiff_read_unit_from_srs) )
 gdaltest_list.append( (tiff_read_arcgis93_geodataxform_gcp) )
+gdaltest_list.append( (tiff_read_block_width_above_32bit) )
 
 # gdaltest_list = [ tiff_read_ycbcr_lzw ]
 
