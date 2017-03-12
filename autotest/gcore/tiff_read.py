@@ -2892,6 +2892,42 @@ def tiff_read_second_image_width_above_32bit():
     return 'success'
 
 ###############################################################################
+# Test reading file with minimal number of warnings without warning
+
+def tiff_read_minimum_tiff_tags_no_warning():
+
+    gdal.ErrorReset()
+    ds = gdal.Open('data/minimum_tiff_tags_no_warning.tif')
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.GetRasterBand(1).Checksum()
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading file with minimal number of warnings but warning
+
+def tiff_read_minimum_tiff_tags_with_warning():
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/minimum_tiff_tags_with_warning.tif')
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    ds.GetRasterBand(1).Checksum()
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2987,6 +3023,8 @@ gdaltest_list.append( (tiff_read_arcgis93_geodataxform_gcp) )
 gdaltest_list.append( (tiff_read_block_width_above_32bit) )
 gdaltest_list.append( (tiff_read_image_width_above_32bit) )
 gdaltest_list.append( (tiff_read_second_image_width_above_32bit) )
+gdaltest_list.append( (tiff_read_minimum_tiff_tags_no_warning) )
+gdaltest_list.append( (tiff_read_minimum_tiff_tags_with_warning) )
 
 # gdaltest_list = [ tiff_read_ycbcr_lzw ]
 
