@@ -28,12 +28,6 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
 
 <ul>
 <li>GeoPackage only supports one geometry column per table.</li>
-<li>Before GDAL 2.0, the driver did not implement the GeoPackage spatial index extension.</li>
-<li>The core GeoPackage specification does not currently support non-spatial tables, but
-    starting with GDAL 2.0, the driver allows creating and reading such tables via the
-    <a href="geopackage_aspatial.html">Aspatial Support</a> (<code>gdal_aspatial</code>) extension.
-    Note: starting with GDAL 2.2, the driver will also, by default, list non spatial tables
-    that are not registered through the gdal_aspatial extension.</li>
 </ul>
 
 <h2>SQL</h2>
@@ -190,6 +184,22 @@ although it can be through direct SQL commands).</p>
 <p>The specific DESCRIPTION and IDENTIFIER metadata item of the default metadata
 domain can be used in read/write to read from/update the corresponding columns of
 the gpkg_contents table.</p>
+
+<h3>Non-spatial tables</h3>
+
+<p>The core GeoPackage specification of GeoPackage 1.0 and 1.1 did not support
+non-spatial tables. This was added in GeoPackage 1.2 as the "attributes"
+data type.</p>
+
+<p>Starting with GDAL 2.0, the driver allows creating and reading non-spatial
+tables with the     <a href="geopackage_aspatial.html">Aspatial Support</a>
+(<code>gdal_aspatial</code>) extension.</p>
+
+<p>Starting with GDAL 2.2, the driver will also, by default, list non spatial tables
+that are not registered through the gdal_aspatial extension, and support the
+GeoPackage 1.2 "attributes" data type as well. Starting with GDAL 2.2, non
+spatial tables are by default created following the GeoPackage 1.2 "attributes"
+data type (can be controlled with the ASPATIAL_VARIANT layer creation option)</p>
 
 <h3>Examples</h3>
 
