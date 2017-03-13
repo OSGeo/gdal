@@ -375,31 +375,34 @@ sub s_exists {
 
 sub make_processing_options {
     my ($o) = @_;
+    my @options;
+    my $processor = sub {
+        my $val = shift;
+        if (ref $val eq 'ARRAY') {
+            return @$val;
+        } elsif (not ref $val) {
+            if ($val =~ /\s/ && $val =~ /^[+\-0-9.,% ]+$/) {
+                return split /\s+/, $val;
+            }
+            return $val;
+        } else {
+            error("'$val' is not a valid processing option.");
+        }
+    };
     if (ref $o eq 'HASH') {
-        my @options;
         for my $key (keys %$o) {
             my $val = $o->{$key};
             # without hyphen is deprecated
             $key = '-'.$key unless $key =~ /^-/;
             push @options, $key;
-            if ($val =~ /^'/) {
-                $val =~ s/^'//;
-                $val =~ s/'$//;
-            } else {
-                $val = [split /\s/, $val] if $val =~ /\s/;
-            }
-            push @options, ref $val ? @$val : $val;
+            push @options, $processor->($val);
         }
-        $o = \@options;
     } elsif (ref $o eq 'ARRAY') {
-        # array ref is deprecated
-        my @options;
         for my $item (@$o) {
-            @$item = [split /\s/, $item] if $item =~ /\s/;
-            push @options, ref $item ? @$item : $item;
+            push @options, $processor->($item);
         }
-        $o = \@options;
     }
+    $o = \@options;
     return $o;
 }
 
@@ -1429,6 +1432,7 @@ sub Size {
     my $self = shift;
     return ($self->{XSize}, $self->{YSize});
 }
+*BlockSize = *GetBlockSize;
 
 sub DataType {
     my $self = shift;
