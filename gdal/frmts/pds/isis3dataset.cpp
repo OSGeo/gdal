@@ -3281,61 +3281,7 @@ void ISIS3Dataset::BuildLabel()
 
 void ISIS3Dataset::BuildHistory()
 {
-    CPLString osHistory(m_osGDALHistory);
-
-    if( m_bAddGDALHistory && m_osGDALHistory.empty() )
-    {
-        CPLJsonObject oHistoryObj;
-        char szFullFilename[2048] = { 0 };
-        if( !CPLGetExecPath(szFullFilename, sizeof(szFullFilename) - 1) )
-            strcpy(szFullFilename, "unknown_program");
-        const CPLString osProgram(CPLGetBasename(szFullFilename));
-        const CPLString osPath(CPLGetPath(szFullFilename));
-        CPLJsonObject& oObj = oHistoryObj[osProgram];
-        oObj["_type"] = "object";
-        oObj["GdalVersion"] = GDALVersionInfo("RELEASE_NAME");
-        if( osPath != "." )
-            oObj["ProgramPath"] = osPath;
-        time_t nCurTime = time(NULL);
-        if( nCurTime != -1 )
-        {
-            struct tm mytm;
-            CPLUnixTimeToYMDHMS(nCurTime, &mytm);
-            oObj["ExecutionDateTime"] =
-                CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
-                            mytm.tm_year + 1900,
-                            mytm.tm_mon + 1,
-                            mytm.tm_mday,
-                            mytm.tm_hour,
-                            mytm.tm_min,
-                            mytm.tm_sec);
-        }
-        char szHostname[256] = { 0 };
-        if( gethostname(szHostname, sizeof(szHostname)-1) == 0 )
-        {
-            oObj["HostName"] = szHostname;
-        }
-        const char* pszUsername = CPLGetConfigOption("USERNAME", NULL);
-        if( pszUsername == NULL )
-            pszUsername = CPLGetConfigOption("USER", NULL);
-        if( pszUsername != NULL )
-        {
-            oObj["UserName"] = pszUsername;
-        }
-        oObj["Description"] = "GDAL conversion";
-
-        CPLJsonObject& oUserParameters = oObj["UserParameters"];
-        oUserParameters["_type"] = "group";
-        if( !m_osFromFilename.empty() )
-            oUserParameters["FROM"] = CPLGetFilename( m_osFromFilename );
-        oUserParameters["TO"] = CPLGetFilename( GetDescription() );
-        if( m_bForce360 )
-            oUserParameters["Force_360"] = "true";
-
-        json_object* poObj = oHistoryObj.asLibJsonObj();
-        osHistory = SerializeAsPDL( poObj );
-        json_object_put(poObj);
-    }
+    CPLString osHistory;
 
     if( m_poSrcJSonLabel != NULL && m_bUseSrcHistory )
     {
@@ -3408,11 +3354,8 @@ void ISIS3Dataset::BuildHistory()
             if( fpHistory != NULL )
             {
                 VSIFSeekL(fpHistory, nHistoryOffset, SEEK_SET);
-                if( !osHistory.empty() )
-                    osHistory += "\n";
-                const size_t nOrigSize = osHistory.size();
-                osHistory.resize( nOrigSize + nHistorySize );
-                if( VSIFReadL( &osHistory[nOrigSize], nHistorySize, 1,
+                osHistory.resize( nHistorySize );
+                if( VSIFReadL( &osHistory[0], nHistorySize, 1,
                               fpHistory ) != 1 )
                 {
                     CPLError(CE_Warning, CPLE_FileIO,
@@ -3420,7 +3363,7 @@ void ISIS3Dataset::BuildHistory()
                              "of %s: history will not be preserved",
                              nHistorySize, nHistoryOffset,
                              osHistoryFilename.c_str());
-                    osHistory.resize( nOrigSize );
+                    osHistory.clear();
                 }
                 VSIFCloseL(fpHistory);
             }
@@ -3431,6 +3374,69 @@ void ISIS3Dataset::BuildHistory()
                          osHistoryFilename.c_str());
             }
         }
+    }
+
+    if( m_bAddGDALHistory && !m_osGDALHistory.empty() )
+    {
+        if( !osHistory.empty() )
+            osHistory += "\n";
+        osHistory += m_osGDALHistory;
+    }
+    else if( m_bAddGDALHistory )
+    {
+        if( !osHistory.empty() )
+            osHistory += "\n";
+
+        CPLJsonObject oHistoryObj;
+        char szFullFilename[2048] = { 0 };
+        if( !CPLGetExecPath(szFullFilename, sizeof(szFullFilename) - 1) )
+            strcpy(szFullFilename, "unknown_program");
+        const CPLString osProgram(CPLGetBasename(szFullFilename));
+        const CPLString osPath(CPLGetPath(szFullFilename));
+        CPLJsonObject& oObj = oHistoryObj[osProgram];
+        oObj["_type"] = "object";
+        oObj["GdalVersion"] = GDALVersionInfo("RELEASE_NAME");
+        if( osPath != "." )
+            oObj["ProgramPath"] = osPath;
+        time_t nCurTime = time(NULL);
+        if( nCurTime != -1 )
+        {
+            struct tm mytm;
+            CPLUnixTimeToYMDHMS(nCurTime, &mytm);
+            oObj["ExecutionDateTime"] =
+                CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
+                            mytm.tm_year + 1900,
+                            mytm.tm_mon + 1,
+                            mytm.tm_mday,
+                            mytm.tm_hour,
+                            mytm.tm_min,
+                            mytm.tm_sec);
+        }
+        char szHostname[256] = { 0 };
+        if( gethostname(szHostname, sizeof(szHostname)-1) == 0 )
+        {
+            oObj["HostName"] = szHostname;
+        }
+        const char* pszUsername = CPLGetConfigOption("USERNAME", NULL);
+        if( pszUsername == NULL )
+            pszUsername = CPLGetConfigOption("USER", NULL);
+        if( pszUsername != NULL )
+        {
+            oObj["UserName"] = pszUsername;
+        }
+        oObj["Description"] = "GDAL conversion";
+
+        CPLJsonObject& oUserParameters = oObj["UserParameters"];
+        oUserParameters["_type"] = "group";
+        if( !m_osFromFilename.empty() )
+            oUserParameters["FROM"] = CPLGetFilename( m_osFromFilename );
+        oUserParameters["TO"] = CPLGetFilename( GetDescription() );
+        if( m_bForce360 )
+            oUserParameters["Force_360"] = "true";
+
+        json_object* poObj = oHistoryObj.asLibJsonObj();
+        osHistory += SerializeAsPDL( poObj );
+        json_object_put(poObj);
     }
 
     if( osHistory.empty() )
