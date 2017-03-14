@@ -2351,7 +2351,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
                 sqlite3_bind_double(hInsertStmt,4,aoEntries[i].dfMinY);
                 sqlite3_bind_double(hInsertStmt,5,aoEntries[i].dfMaxY);
                 sqlite_err = sqlite3_step(hInsertStmt);
-                if ( ! (err == SQLITE_OK || err == SQLITE_DONE) )
+                if ( sqlite_err != SQLITE_OK && sqlite_err != SQLITE_DONE )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "failed to execute insertion in RTree : %s",
