@@ -171,9 +171,17 @@ Defaults to 256.</li>
 Defaults to 256.</li>
 <li> <b>COMMENT</b>=string. Comment to add into the label.</li>
 <li> <b>LATITUDE_TYPE</b>=Planetocentric/Planetographic. Value of
-Mapping.LatitudeType. Defaults to Planetographic.</li>
+Mapping.LatitudeType. Defaults to Planetographic. If specified, and
+USE_SRC_MAPPING is in effect, this will be taken into account to override the
+source LatitudeType.</li>
 <li> <b>LONGITUDE_DIRECTION</b>=PositiveEast/PositiveWest.
-Value of Mapping.LongitudeDirection. Defaults to PositiveEast.</li>
+Value of Mapping.LongitudeDirection. Defaults to PositiveEast. If specified,
+and USE_SRC_MAPPING is in effect, this will be taken into account to override
+the source LongitudeDirection.</li>
+<li> <b>TARGET_NAME</b>=string.
+Value of Mapping.TargetName. This is normally deduced from the SRS datum name.
+If specified, and USE_SRC_MAPPING is in effect, this will be taken into account
+to override the source TargetName.</li>
 <li> <b>FORCE_360</b>=YES/NO. Whether to force longitudes in the [0, 360]
 range. Defaults to NO.</li>
 <li> <b>WRITE_BOUNDING_DEGREES</b>=YES/NO. Whether to write Min/MaximumLong/
