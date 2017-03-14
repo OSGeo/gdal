@@ -912,7 +912,7 @@ int OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn, int bRegisterOGR2SQLite
         CSLDestroy(papszTokens);
     }
 
-    if( !bPageSizeFound && (flagsIn | SQLITE_OPEN_CREATE) != 0 )
+    if( !bPageSizeFound && (flagsIn & SQLITE_OPEN_CREATE) != 0 )
     {
         // Since sqlite 3.12 the default page_size is now 4096. But we
         // can use that even with older versions.
