@@ -2826,7 +2826,7 @@ void ISIS3Dataset::BuildLabel()
             if( !m_osLatitudeType.empty() )
                 oMapping["LatitudeType"] = m_osLatitudeType;
             else
-                oMapping["LatitudeType"] = "Planetographic";
+                oMapping["LatitudeType"] = "Planetocentric";
 
             if( !m_osLongitudeDirection.empty() )
                 oMapping["LongitudeDirection"] = m_osLongitudeDirection;
@@ -4452,8 +4452,11 @@ void GDALRegister_ISIS3()
                             "description='Tile height' default='256'/>"
 "  <Option name='COMMENT' type='string' "
     "description='Comment to add into the label'/>"
-"  <Option name='LATITUDE_TYPE' type='string' "
-    "description='Value of Mapping.LatitudeType' default='Planetographic'/>"
+"  <Option name='LATITUDE_TYPE' type='string-select' "
+    "description='Value of Mapping.LatitudeType' default='Planetocentric'>"
+"     <Value>Planetocentric</Value>"
+"     <Value>Planetographic</Value>"
+"  </Option>"
 "  <Option name='LONGITUDE_DIRECTION' type='string-select' "
     "description='Value of Mapping.LongitudeDirection' "
     "default='PositiveEast'>"

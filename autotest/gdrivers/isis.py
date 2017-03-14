@@ -571,7 +571,7 @@ def isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     wkt = ds.GetProjectionRef()
     ds = None
-    if not osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["Mercator DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,200.0000000000004]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["scale_factor",0.9],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]')):
+    if not osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["Mercator DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["scale_factor",0.9],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]')):
         gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
@@ -585,7 +585,7 @@ def isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     wkt = ds.GetProjectionRef()
     ds = None
-    if not osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["PolarStereographic DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,200.0000000000004]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["scale_factor",0.9],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]')):
+    if not osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["PolarStereographic DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME_polarRadius",122838.72,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["scale_factor",0.9],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]')):
         gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
@@ -599,7 +599,7 @@ def isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     wkt = ds.GetProjectionRef()
     ds = None
-    if not osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["TransverseMercator DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,200.0000000000004]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["scale_factor",0.9],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]')):
+    if not osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["TransverseMercator DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",1],PARAMETER["central_meridian",2],PARAMETER["scale_factor",0.9],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]')):
         gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
@@ -613,7 +613,7 @@ def isis_18():
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     wkt = ds.GetProjectionRef()
     ds = None
-    if not osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["LambertConformal DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,200.0000000000004]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",1],PARAMETER["standard_parallel_2",2],PARAMETER["latitude_of_origin",3],PARAMETER["central_meridian",4],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]')):
+    if not osr.SpatialReference(wkt).IsSame(osr.SpatialReference('PROJCS["LambertConformal DATUM_NAME",GEOGCS["GCS_DATUM_NAME",DATUM["D_DATUM_NAME",SPHEROID["DATUM_NAME",123456,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",1],PARAMETER["standard_parallel_2",2],PARAMETER["latitude_of_origin",3],PARAMETER["central_meridian",4],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]')):
         gdaltest.post_reason('fail')
         print(wkt)
         return 'fail'
