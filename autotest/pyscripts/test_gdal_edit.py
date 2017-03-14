@@ -278,6 +278,29 @@ def test_gdal_edit_py_5():
     return 'success'
 
 ###############################################################################
+# Test -scale and -offset
+
+def test_gdal_edit_py_6():
+
+    script_path = test_py_scripts.get_py_script('gdal_edit')
+    if script_path is None:
+        return 'skip'
+
+    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
+
+    test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -scale 2 -offset 3")
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    if ds.GetRasterBand(1).GetScale() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOffset() != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_edit_py_cleanup():
@@ -295,6 +318,7 @@ gdaltest_list = [
     test_gdal_edit_py_3,
     test_gdal_edit_py_4,
     test_gdal_edit_py_5,
+    test_gdal_edit_py_6,
     test_gdal_edit_py_cleanup,
     ]
 

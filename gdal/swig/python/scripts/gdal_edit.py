@@ -37,6 +37,7 @@ from osgeo import osr
 def Usage():
     print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
     print('                 [-tr xres yres] [-unsetgt] [-a_nodata value] [-unsetnodata]')
+    print('                 [-offset value] [-scale value]')
     print('                 [-unsetstats] [-stats] [-approx_stats]')
     print('                 [-gcp pixel line easting northing [elevation]]*')
     print('                 [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname')
@@ -80,6 +81,8 @@ def gdal_edit(argv):
     molist = []
     gcp_list = []
     open_options = []
+    offset = None
+    scale = None
 
     i = 1
     argc = len(argv)
@@ -105,6 +108,12 @@ def gdal_edit(argv):
             i = i + 1
         elif argv[i] == '-a_nodata' and i < len(argv)-1:
             nodata = float(argv[i+1])
+            i = i + 1
+        elif argv[i] == '-scale' and i < len(argv)-1:
+            scale = float(argv[i+1])
+            i = i + 1
+        elif argv[i] == '-offset' and i < len(argv)-1:
+            offset = float(argv[i+1])
             i = i + 1
         elif argv[i] == '-mo' and i < len(argv)-1:
             molist.append(argv[i+1])
@@ -157,7 +166,9 @@ def gdal_edit(argv):
 
     if (srs is None and lry is None and yres is None and not unsetgt
             and not unsetstats and not stats and nodata is None
-            and len(molist) == 0 and not unsetmd and len(gcp_list) == 0 and not unsetnodata):
+            and len(molist) == 0 and not unsetmd and len(gcp_list) == 0
+            and not unsetnodata
+            and scale is None and offset is None):
         print('No option specified')
         print('')
         return Usage()
@@ -239,6 +250,14 @@ def gdal_edit(argv):
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i+1).DeleteNoDataValue()
 
+    if scale is not None:
+        for i in range(ds.RasterCount):
+            ds.GetRasterBand(i+1).SetScale(scale)
+
+    if offset is not None:
+       for i in range(ds.RasterCount):
+           ds.GetRasterBand(i+1).SetOffset(offset)
+ 
     if unsetstats:
         for i in range(ds.RasterCount):
             band = ds.GetRasterBand(i+1)

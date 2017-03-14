@@ -14,6 +14,7 @@ Edit in place various information of an existing GDAL dataset.
 gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
           [-tr xres yres] [-unsetgt] [-a_nodata value] [-unsetnodata]
           [-unsetstats] [-stats] [-approx_stats]
+          [-scale value] [-offset value]
           [-gcp pixel line easting northing [elevation]]*
           [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname
 \endverbatim
@@ -74,6 +75,19 @@ Assign a specified nodata value to output bands.</dd>
 
 <dt> <b>-unsetnodata</b></dt>:<dd> (GDAL >= 2.1)
 Remove existing nodata values.</dd>
+
+<dt> <b>-scale</b> <i>value</i>:</dt><dd> (GDAL >= 2.2)
+Assign a specified scale value to output bands. If no scale is needed, it
+it recommended to set the value to 1. Scale and Offset are generally used
+together. For example, scale and offset might be used to store elevations in 
+a unsigned 16bit integer file with a precision of 0.1, and starting from -100.
+True values would be calculated as: 
+true_value = (pixel_value * scale) + offset 
+Note: these values can be applied using -unscale during a gdal_translate run.</dd> 
+
+<dt> <b>-offset</b> <i>value</i>:</dt><dd> (GDAL >= 2.2)
+Assign a specified offset value to output bands. If no offset is needed, it
+recommended to set the value to 0. For more see scale.</dd> 
 
 <dt> <b>-gcp</b> <i>pixel line easting northing [elevation]</i>:</dt><dd>
 Add the indicated ground control point to the dataset.  This option
