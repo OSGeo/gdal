@@ -2604,6 +2604,60 @@ AC_SUBST([HAVE_OPENJPEG],$HAVE_OPENJPEG)
 AC_SUBST([OPENJPEG_VERSION],$OPENJPEG_VERSION)
 
 dnl ---------------------------------------------------------------------------
+dnl Select a JPEG XR (jxrlib) Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(jpegxr,[  --with-jpegxr[=ARG]     Include JPEG XR support via jxrlib library (ARG=yes/no)],,)
+
+HAVE_JXRLIB=no
+
+if test "$with_jpegxr" = "no" ; then
+
+  AC_MSG_NOTICE([jxrlib (JPEG XR) support disabled.])
+
+elif test "$with_jpegxr" = "yes" -o "$with_jpegxr" = "" ; then
+
+  PKG_PROG_PKG_CONFIG([0.25]) # check and set $PKG_CONFIG
+  PKG_CHECK_MODULES([JXRLIB], [libjxr], [HAVE_JXRLIB=yes], [HAVE_JXRLIB=no])
+
+  if test "$HAVE_JXRLIB" = "yes"; then
+    JXRLIB_FLAGS=`pkg-config libjxr --cflags-only-other`
+    JXRLIB_INCLUDE=`pkg-config libjxr --cflags-only-I`
+    JXRLIB_LIBS=`pkg-config libjxr --libs`
+  else
+    AC_CHECK_HEADERS([JXRGlue.h])
+    if test "$ac_cv_header_JXRGlue_h" = "no" ; then
+      AC_MSG_CHECKING([for JXRGlue.h])
+      if test -r /usr/include/JXRGlue.h ; then
+        JXRLIB_INCLUDE=
+        AC_MSG_RESULT([yes])
+      elif test -r /usr/include/jxrlib/JXRGlue.h ; then
+        JXRLIB_INCLUDE="-I/usr/include/jxrlib"
+        AC_MSG_RESULT([yes])
+      else
+        AC_MSG_RESULT([no])
+      fi
+    fi
+
+    AC_CHECK_LIB(jxrglue,PKCreateFactory,HAVE_JXRLIB=yes,HAVE_JXRLIB=no,)
+    if test "$HAVE_JXRLIB" = "yes"; then
+      JXRLIB_LIBS="-ljxrglue"
+      JXRLIB_FLAGS="-D__ANSI__ -DDISABLE_PERF_MEASUREMENT"
+    fi
+  fi
+fi
+
+if test "$HAVE_JXRLIB" = "yes"; then
+  LIBS="$JXRLIB_LIBS $LIBS"
+  OPT_GDAL_FORMATS="jpegxr $OPT_GDAL_FORMATS"
+fi
+
+AC_SUBST([HAVE_JXRLIB],$HAVE_JXRLIB)
+AC_SUBST([JXRLIB_FLAGS],$JXRLIB_FLAGS)
+AC_SUBST([JXRLIB_INCLUDE],$JXRLIB_INCLUDE)
+
+
+dnl ---------------------------------------------------------------------------
 dnl Select a FGDB API to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
@@ -5462,6 +5516,7 @@ else
   LOC_MSG([  JasPer support:            ${HAVE_JASPER}])
 fi
 LOC_MSG([  OpenJPEG support:          ${HAVE_OPENJPEG}])
+LOC_MSG([  JPEG XR support:           ${HAVE_JXRLIB}])
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])

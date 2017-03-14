@@ -766,6 +766,11 @@ ECW_SETTING
 FGDB_INC
 FGDB_LIB
 FGDB_ENABLED
+JXRLIB_INCLUDE
+JXRLIB_FLAGS
+HAVE_JXRLIB
+JXRLIB_LIBS
+JXRLIB_CFLAGS
 OPENJPEG_VERSION
 HAVE_OPENJPEG
 JASPER_FLAGS
@@ -911,7 +916,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -984,6 +988,7 @@ with_kea
 with_netcdf
 with_jasper
 with_openjpeg
+with_jpegxr
 with_fgdb
 with_ecw
 with_kakadu
@@ -1073,6 +1078,8 @@ CXXCPP
 PKG_CONFIG
 HDF5_CFLAGS
 HDF5_LIBS
+JXRLIB_CFLAGS
+JXRLIB_LIBS
 LIBKML_CFLAGS
 LIBKML_LIBS'
 
@@ -1113,7 +1120,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE}'
@@ -1366,15 +1372,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1512,7 +1509,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1665,7 +1662,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1760,6 +1756,7 @@ Optional Packages:
   --with-netcdf=ARG     Include netCDF support (ARG=no or netCDF tree prefix)
   --with-jasper=ARG     Include JPEG-2000 support via JasPer library (ARG=path)
   --with-openjpeg=ARG     Include JPEG-2000 support via OpenJPEG 2.0 library (ARG=path)
+  --with-jpegxr=ARG     Include JPEG XR support via jxrlib library (ARG=yes/no)
   --with-fgdb=ARG        Include ESRI File Geodatabase support (ARG=FGDP API Path, yes or no)
   --with-ecw=ARG        Include ECW support (ARG=ECW SDK Path, yes or no)
   --with-kakadu=ARG     Include Kakadu/JPEG2000 support
@@ -1856,6 +1853,9 @@ Some influential environment variables:
   PKG_CONFIG  path to pkg-config utility
   HDF5_CFLAGS C compiler flags for HDF5, overriding pkg-config
   HDF5_LIBS   linker flags for HDF5, overriding pkg-config
+  JXRLIB_CFLAGS
+              C compiler flags for JXRLIB, overriding pkg-config
+  JXRLIB_LIBS linker flags for JXRLIB, overriding pkg-config
   LIBKML_CFLAGS
               C compiler flags for LIBKML, overriding pkg-config
   LIBKML_LIBS linker flags for LIBKML, overriding pkg-config
@@ -25423,6 +25423,307 @@ OPENJPEG_VERSION=$OPENJPEG_VERSION
 
 
 
+# Check whether --with-jpegxr was given.
+if test "${with_jpegxr+set}" = set; then :
+  withval=$with_jpegxr;
+fi
+
+
+HAVE_JXRLIB=no
+
+if test "$with_jpegxr" = "no" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: jxrlib (JPEG XR) support disabled." >&5
+$as_echo "$as_me: jxrlib (JPEG XR) support disabled." >&6;}
+
+elif test "$with_jpegxr" = "yes" -o "$with_jpegxr" = "" ; then
+
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+$as_echo "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.25
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		PKG_CONFIG=""
+	fi
+
+fi # check and set $PKG_CONFIG
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for JXRLIB" >&5
+$as_echo_n "checking for JXRLIB... " >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$JXRLIB_CFLAGS"; then
+        pkg_cv_JXRLIB_CFLAGS="$JXRLIB_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libjxr\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libjxr") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_JXRLIB_CFLAGS=`$PKG_CONFIG --cflags "libjxr" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$JXRLIB_LIBS"; then
+        pkg_cv_JXRLIB_LIBS="$JXRLIB_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libjxr\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libjxr") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_JXRLIB_LIBS=`$PKG_CONFIG --libs "libjxr" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        JXRLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "libjxr"`
+        else
+	        JXRLIB_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libjxr"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$JXRLIB_PKG_ERRORS" >&5
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                HAVE_JXRLIB=no
+elif test $pkg_failed = untried; then
+	HAVE_JXRLIB=no
+else
+	JXRLIB_CFLAGS=$pkg_cv_JXRLIB_CFLAGS
+	JXRLIB_LIBS=$pkg_cv_JXRLIB_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	HAVE_JXRLIB=yes
+fi
+
+  if test "$HAVE_JXRLIB" = "yes"; then
+    JXRLIB_FLAGS=`pkg-config libjxr --cflags-only-other`
+    JXRLIB_INCLUDE=`pkg-config libjxr --cflags-only-I`
+    JXRLIB_LIBS=`pkg-config libjxr --libs`
+  else
+    for ac_header in JXRGlue.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "JXRGlue.h" "ac_cv_header_JXRGlue_h" "$ac_includes_default"
+if test "x$ac_cv_header_JXRGlue_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_JXRGLUE_H 1
+_ACEOF
+
+fi
+
+done
+
+    if test "$ac_cv_header_JXRGlue_h" = "no" ; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JXRGlue.h" >&5
+$as_echo_n "checking for JXRGlue.h... " >&6; }
+      if test -r /usr/include/JXRGlue.h ; then
+        JXRLIB_INCLUDE=
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+      elif test -r /usr/include/jxrlib/JXRGlue.h ; then
+        JXRLIB_INCLUDE="-I/usr/include/jxrlib"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      fi
+    fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PKCreateFactory in -ljxrglue" >&5
+$as_echo_n "checking for PKCreateFactory in -ljxrglue... " >&6; }
+if ${ac_cv_lib_jxrglue_PKCreateFactory+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ljxrglue  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char PKCreateFactory ();
+int
+main ()
+{
+return PKCreateFactory ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_jxrglue_PKCreateFactory=yes
+else
+  ac_cv_lib_jxrglue_PKCreateFactory=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_jxrglue_PKCreateFactory" >&5
+$as_echo "$ac_cv_lib_jxrglue_PKCreateFactory" >&6; }
+if test "x$ac_cv_lib_jxrglue_PKCreateFactory" = xyes; then :
+  HAVE_JXRLIB=yes
+else
+  HAVE_JXRLIB=no
+fi
+
+    if test "$HAVE_JXRLIB" = "yes"; then
+      JXRLIB_LIBS="-ljxrglue"
+      JXRLIB_FLAGS="-D__ANSI__ -DDISABLE_PERF_MEASUREMENT"
+    fi
+  fi
+fi
+
+if test "$HAVE_JXRLIB" = "yes"; then
+  LIBS="$JXRLIB_LIBS $LIBS"
+  OPT_GDAL_FORMATS="jpegxr $OPT_GDAL_FORMATS"
+fi
+
+HAVE_JXRLIB=$HAVE_JXRLIB
+
+JXRLIB_FLAGS=$JXRLIB_FLAGS
+
+JXRLIB_INCLUDE=$JXRLIB_INCLUDE
+
+
+
+
+
 # Check whether --with-fgdb was given.
 if test "${with_fgdb+set}" = set; then :
   withval=$with_fgdb;
@@ -36605,6 +36906,9 @@ echo "  JasPer support:            ${HAVE_JASPER}"
 fi
 
 echo "  OpenJPEG support:          ${HAVE_OPENJPEG}"
+
+
+echo "  JPEG XR support:           ${HAVE_JXRLIB}"
 
 
 echo "  ECW support:               ${ECW_SETTING}"

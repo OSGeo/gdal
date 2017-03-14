@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $Id: gdal_frmts.h 36731 2016-12-07 11:08:07Z rouault $
  *
  * Project:  GDAL
  * Purpose:  Prototypes for all format specific driver initialization.
@@ -164,6 +164,7 @@ void CPL_DLL GDALRegister_XYZ(void);
 void CPL_DLL GDALRegister_HF2(void);
 void CPL_DLL GDALRegister_PDF(void);
 void CPL_DLL GDALRegister_JPEGLS(void);
+void CPL_DLL GDALRegister_JPEGXR(void);
 void CPL_DLL GDALRegister_MAP(void);
 void CPL_DLL GDALRegister_OZI(void);
 void CPL_DLL GDALRegister_ACE2(void);

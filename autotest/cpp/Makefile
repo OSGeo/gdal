@@ -65,6 +65,11 @@ OBJ = \
     test_osr_proj4.o \
     tut/tut_gdal.o
 
+JPEGXR_FRMT_DISABLED = $(shell gdal-config --formats|grep jpegxr >/dev/null 2>/dev/null; echo $$?)
+ifeq ($(JPEGXR_FRMT_DISABLED), 0)
+OBJ += test_gdal_jpegxr.o
+endif
+
 gdal_unit_test: $(OBJ)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 

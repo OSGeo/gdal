@@ -1,0 +1,62 @@
+<html>
+<head>
+<title>JPEGXR -- JPEG XR File Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>JPEGXR -- JPEG XR File Format</h1>
+
+<p>The JPEG XR format is supported for reading, and batch writing, but not update in place. JPEG XR files are represented as one band (greyscale) or three band (RGB) or four band (RGB with Alpha) datasets with Byte valued bands.<p>
+
+<p>The driver is implemented based on the <a href="https://jxrlib.codeplex.com/">jxrlib</a> - open source (BSD) implementation of JPEG XR format by Microsoft.</p>
+
+<h2>Driver Features</h2>
+
+<ul>
+<li>Compression - lossless by default, controlled with <code>QUALITY</code> option.</li>
+<li>Image Structure - entire image is decoded; tiling not yet supported.</li>
+<li>Channel Organization - Grey, RGB, BGR, RGBA, BGRA.</li>
+<li>Color - RBG images YUV with 8-bit per sample and <a href="https://en.wikipedia.org/wiki/Chroma_subsampling">4:4:4</a> full chroma resolution encoding by default.</li>
+</ul>
+
+<h2>Creation Options</h2>
+
+<p>JPEG XR files are created using the "JPEGXR" driver code. JPEG XR file creation is implemented by the batch (<code>CreateCopy</code>) method.</p>
+
+<p>Encoder properties can be controlled with the following options:</p>
+
+<ul>
+<li><b>QUALITY=n</b>: By default the quality flag is set to 100, but this option can be used to select other values. Values must be in therange from 0 (lossy) to 100 (lossless).<p></li>
+<li><b>OVERLAP=[0,1,2]</b>: Overlap processing level
+  <ul>
+  <li>0 - No overlap processing (default for lossless quality)</li>
+  <li>1 - One level (default for lossy quality), modifying 4x4 block encoded values based on values of neighboring blocks.</li>
+  <li>2 - Two level, in addition to the first level, encoded values of 16x16 macro blocks are modified based on the values of neighboring macro blocks.</li>
+  </ul>
+</li>
+</ul>
+
+<h2>Security Note</h2>
+
+<p>JPEG XR format users be aware that fuzzing tests of image format libraries by author of <a href="http://lcamtuf.coredump.cx/afl/">american fuzzy lop</a> revealed <code>jxrlib</code> suffers of "sheer number of exploitable bug" see <a href="http://lcamtuf.coredump.cx/afl/demo/">afl-generated, minimized image test</a> demo.</p>
+
+<h2>Licensing</h2>
+
+<p>Microsoft has patents on the technology in JPEG XR.</p>
+
+<p>Microsoft grants permission to implement the JPEG XR specification under the <a href="https://en.wikipedia.org/wiki/Microsoft_Open_Specification_Promise">Microsoft Community Promise</a>.</p>
+
+<p>The <a href="http://jxrlib.codeplex.com">jxrlib</a> - open source implementation of JPEG XR is available the BSD License.</p>
+
+<h2>See Also:</h2>
+
+<ul>
+<li><a href="https://jxrlib.codeplex.com/">JPEG XR Library</a> - open source (BSD) implementation of JPEG XR format by Microsoft. The project includes Microsoft JPEG XR Device Porting Kit with documentation, reference source code and samples.</li>
+<li><a href="https://jpeg.org/jpegxr/">JPEG XR Overview</a> by ISO/IEC JTC1/SC29/WG1 standards committee.</li>
+<li><a href="https://hdview.wordpress.com/">JPEG XR Development Team</a> blog with additional information about JPEG XR.</li>
+<li><a href="https://msdn.microsoft.com/en-us/library/windows/desktop/hh707223.aspx">JPEG XR Codec</a> in Windows Imagining Component.</li>
+</ul>
+
+</body>
+</html>

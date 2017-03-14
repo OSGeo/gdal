@@ -34,6 +34,20 @@ install:
 #- nmake /f makefile.vc
 #- nmake /f makefile.vc install-all
 #- cd ..
+- appveyor DownloadFile "http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=jxrlib&DownloadId=685249&FileTime=130142428055530000&Build=21053" -FileName jxrlib_1_1.zip
+- 7z x jxrlib_1_1.zip -oC:\jxrlib_1_1 > nul
+- set JXRLIB_DIR=C:\jxrlib_1_1\jxrlib
+- cd %JXRLIB_DIR%\jxrencoderdecoder
+- sed -i "s/\bMultiThreaded\b/MultiThreadedDLL/g" %JXRLIB_DIR%\image\vc11projects\CommonLib_vc11.vcxproj
+- sed -i "s/\bMultiThreaded\b/MultiThreadedDLL/g" %JXRLIB_DIR%\image\vc11projects\DecodeLib_vc11.vcxproj
+- sed -i "s/\bMultiThreaded\b/MultiThreadedDLL/g" %JXRLIB_DIR%\image\vc11projects\EncodeLib_vc11.vcxproj
+- sed -i "s/\bMultiThreaded\b/MultiThreadedDLL/g" %JXRLIB_DIR%\jxrencoderdecoder\JXRDecApp_vc11.vcxproj
+- sed -i "s/\bMultiThreaded\b/MultiThreadedDLL/g" %JXRLIB_DIR%\jxrencoderdecoder\JXREncApp_vc11.vcxproj
+- sed -i "s/\bMultiThreaded\b/MultiThreadedDLL/g" %JXRLIB_DIR%\jxrgluelib\JXRGlueLib_vc11.vcxproj
+- sed -i "s/\bMultiThreaded\b/MultiThreadedDLL/g" %JXRLIB_DIR%\jxrtestlib\JXRTestLib_vc11.vcxproj
+- if "%platform%" == "x86" msbuild /p:Configuration=Release /p:Platform=Win32 JXR_vc11.sln
+- if "%platform%" == "x64" msbuild /p:Configuration=Release /p:Platform=x64 JXR_vc11.sln
+- cd %APPVEYOR_BUILD_FOLDER%
 - cd gdal
 - echo GEOS_CFLAGS=-I$(SDK_INC) -DHAVE_GEOS > nmake.local
 - echo GEOS_LIB=$(SDK_LIB)\geos_c.lib >> nmake.local
@@ -70,6 +84,11 @@ install:
 - echo OPENJPEG_CFLAGS = -I$(SDK_INC) >> nmake.local
 - echo OPENJPEG_LIB = $(SDK_LIB)\openjp2.lib >> nmake.local
 - echo OPENJPEG_VERSION = 20100 >> nmake.local
+- echo JXRLIB_DIR = %JXRLIB_DIR% >> nmake.local
+- echo JXRLIB_INCLUDE = -I$(JXRLIB_DIR)\common\include -I$(JXRLIB_DIR)\image\sys -I$(JXRLIB_DIR)\jxrgluelib >> nmake.local
+- if "%platform%" == "x86" echo JXRLIB_LIB = $(JXRLIB_DIR)\image\vc11projects\Release\JXRCommonLib\JXRCommonLib.lib $(JXRLIB_DIR)\image\vc11projects\Release\JXRDecodeLib\JXRDecodeLib.lib $(JXRLIB_DIR)\image\vc11projects\Release\JXREncodeLib\JXREncodeLib.lib $(JXRLIB_DIR)\jxrgluelib\Release\JXRGlueLib\JXRGlueLib.lib >> nmake.local
+- if "%platform%" == "x64" echo JXRLIB_LIB = $(JXRLIB_DIR)\image\vc11projects\Release\JXRCommonLib\x64\JXRCommonLib.lib $(JXRLIB_DIR)\image\vc11projects\Release\JXRDecodeLib\x64\JXRDecodeLib.lib $(JXRLIB_DIR)\image\vc11projects\Release\JXREncodeLib\x64\JXREncodeLib.lib $(JXRLIB_DIR)\jxrgluelib\Release\JXRGlueLib\x64\JXRGlueLib.lib >> nmake.local
+- echo JXRLIB_FLAGS = -D__ANSI__ -DDISABLE_PERF_MEASUREMENT >> nmake.local
 - echo ECWDIR=bla >> nmake.local
 - echo ECWLIB=$(SDK_LIB)\libecwj2.lib >> nmake.local
 - echo ECWFLAGS=-DECWSDK_VERSION=33 -I$(SDK_INC) /D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS  /DLIBECWJ2 /DWIN32 /D_WINDLL -DNO_X86_MMI >> nmake.local

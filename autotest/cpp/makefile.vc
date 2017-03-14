@@ -34,6 +34,10 @@ GDAL_SUPPORT = \
     -DFRMT_dted \
     -DFRMT_gtiff
 
+!IFDEF JXRLIB_DIR
+GDAL_SUPPORT = $(GDAL_SUPPORT) -DFRMT_jpegxr
+!ENDIF
+
 # END OF CONFIGURATION
 #############################################################################
 
@@ -60,6 +64,10 @@ OBJ = \
     test_osr_pci.obj \
     test_osr_proj4.obj \
     tut/tut_gdal.obj
+
+!IFDEF JXRLIB_DIR
+OBJ = $(OBJ) test_gdal_jpegxr.obj
+!ENDIF
 
 # Commands
 RM = -del
