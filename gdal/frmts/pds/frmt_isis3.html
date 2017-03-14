@@ -191,12 +191,12 @@ projection). Only used if USE_SRC_LABEL=YES</li>
 source History object in ISIS3 to ISIS3 conversions, and write it to the new
 dataset. Defaults to YES. Only used if USE_SRC_LABEL=YES. If ADD_GDAL_HISTORY
 and USE_SRC_HISTORY are set to YES (or unspecified), a new history section will
-be preprended to the existing history.</li>
+be appended to the existing history.</li>
 <li> <b>ADD_GDAL_HISTORY</b>=YES/NO. Whether to add GDAL specific history in
 the content pointed by the History object in ISIS3 to ISIS3 conversions.
 Defaults to YES. Only used if USE_SRC_LABEL=YES. If ADD_GDAL_HISTORY
 and USE_SRC_HISTORY are set to YES (or unspecified), a new history section will
-be preprended to the existing history. When ADD_GDAL_HISTORY=YES, the
+be appended to the existing history. When ADD_GDAL_HISTORY=YES, the
 history is normally composed from current GDAL version, binary name and path,
 host name, user name and source and target filenames. It is possible to
 completely override it by specifying the GDAL_HISTORY option.</li>
