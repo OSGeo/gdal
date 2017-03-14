@@ -12747,7 +12747,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         uint32 l_nBlockYSize = 0;
         TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &(l_nBlockXSize) );
         TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &(l_nBlockYSize) );
-        if( l_nBlockXSize > INT_MAX || nBlockYSize > INT_MAX )
+        if( l_nBlockXSize > INT_MAX || l_nBlockYSize > INT_MAX )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too large block size: %u x %u",
