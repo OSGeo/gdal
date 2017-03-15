@@ -42,7 +42,9 @@ typedef struct json_object json_object;
 /* ==================================================================== */
 /************************************************************************/
 
-class NASAKeywordHandler
+// Only exported for HDF4 plugin needs. Do not use outside of GDAL please.
+
+class CPL_DLL NASAKeywordHandler
 {
     char     **papszKeywordList;
 
