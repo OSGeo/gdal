@@ -45,8 +45,34 @@ for my $datatype (qw/Byte Int16 Int32 UInt16 UInt32/) {
     #}
     is_deeply($c, {0 => 22, 5 => 3}, "Reclassify with default does not affect cells with NoData.");
 }
+
+for my $datatype (qw/Float32 Float64/) {
+    my $band = Geo::GDAL::Driver('MEM')->Create(Type => $datatype, Width => 2, Height => 2)->Band;
+    my $tile = $band->ReadTile;
+    $tile->[0] = [2,3];
+    $tile->[1] = [5,6];
+    $band->WriteTile($tile);
+
+    # 1   2   3
+    #   3   5
+    my $classifier = ['<', [5.0, [3.0, 1.0, 2.0], 3.0]];
+    my $counts = $band->ClassCounts($classifier);
+    #say STDERR $counts;
+    my @counts;
+    for my $key (sort {$a<=>$b} keys %$counts) {
+        #say STDERR "$key => $counts->{$key}";
+        push @counts, $key => $counts->{$key};
+    }
+    is_deeply(\@counts, [0=>1,1=>1,2=>2], "Class counts $datatype");
+    $band->Reclassify($classifier);
+    $tile = $band->ReadTile;
+    #for my $y (0..$#$tile) {
+    #    say STDERR "@{$tile->[$y]}";
+    #}
+    is_deeply($tile, [[1,2],[3,3]], "Reclassify $datatype");
+}
     
-my $band = Geo::GDAL::Driver('MEM')->Create(Type => 'Float32', Width => 5, Height => 5)->Band;
+my $band = Geo::GDAL::Driver('MEM')->Create(Type => 'CFloat32', Width => 5, Height => 5)->Band;
 eval {
     my $c = $band->ClassCounts;
 };
