@@ -529,21 +529,25 @@ void OGRSQLiteDataSource::SaveStatistics()
 
         int rc = SQLITE_OK;
 
+        const char* pszNow = HasSpatialite4Layout() ?
+            "strftime('%Y-%m-%dT%H:%M:%fZ','now')" : "DateTime('now')";
         if( nReplaceEventId >= 0 )
         {
             rc = sqlite3_exec( hDB,
                                CPLSPrintf("UPDATE spatialite_history SET "
-                                          "timestamp = DateTime('now') "
-                                          "WHERE event_id = %d", nReplaceEventId),
+                                          "timestamp = %s "
+                                          "WHERE event_id = %d",
+                                          pszNow,
+                                          nReplaceEventId),
                                NULL, NULL, &pszErrMsg );
         }
         else
         {
             rc = sqlite3_exec( hDB,
-                "INSERT INTO spatialite_history (table_name, geometry_column, "
+                CPLSPrintf( "INSERT INTO spatialite_history (table_name, geometry_column, "
                 "event, timestamp, ver_sqlite, ver_splite) VALUES ("
                 "'ALL-TABLES', 'ALL-GEOMETRY-COLUMNS', 'UpdateLayerStatistics', "
-                "DateTime('now'), sqlite_version(), spatialite_version())",
+                "%s, sqlite_version(), spatialite_version())", pszNow),
                 NULL, NULL, &pszErrMsg );
         }
 

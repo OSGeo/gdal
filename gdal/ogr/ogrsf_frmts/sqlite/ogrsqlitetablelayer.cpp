@@ -98,20 +98,6 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
                     poGeomFieldDefn->aosDisabledTriggers[j].second.c_str(),
                     NULL, NULL, NULL ));
         }
-
-        // Update geometry_columns_time.
-        if( !poGeomFieldDefn->aosDisabledTriggers.empty() )
-        {
-            char* pszSQL3 = sqlite3_mprintf(
-                "UPDATE geometry_columns_time "
-                "SET last_insert = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ', 'now') "
-                "WHERE Lower(f_table_name) = Lower('%q') AND "
-                "Lower(f_geometry_column) = Lower('%q')",
-                pszTableName, poGeomFieldDefn->GetNameRef());
-            CPL_IGNORE_RET_VAL(
-                sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, NULL ));
-            sqlite3_free( pszSQL3 );
-        }
     }
 
     CPLFree(pszTableName);
@@ -1097,7 +1083,8 @@ GIntBig OGRSQLiteTableLayer::GetFeatureCount( int bForce )
         if( m_poFilterGeom == NULL && osQuery.empty() )
         {
             nFeatureCount = nResult;
-            bStatisticsNeedsToBeFlushed = TRUE;
+            if( poDS->GetUpdate() )
+                bStatisticsNeedsToBeFlushed = TRUE;
         }
     }
 
@@ -1183,7 +1170,8 @@ OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
             if( m_poFilterGeom == NULL && osQuery.empty() )
             {
                 poGeomFieldDefn->bCachedExtentIsValid = TRUE;
-                bStatisticsNeedsToBeFlushed = TRUE;
+                if( poDS->GetUpdate() )
+                    bStatisticsNeedsToBeFlushed = TRUE;
                 memcpy(&poGeomFieldDefn->oCachedExtent, psExtent, sizeof(poGeomFieldDefn->oCachedExtent));
             }
         }
@@ -3470,7 +3458,7 @@ void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
         CPLString osSQL;
         CPLString osLastEvtDate;
         osSQL.Printf("SELECT MAX(last_insert, last_update, last_delete) FROM geometry_columns_time WHERE "
-                    "(f_table_name = '%s' AND f_geometry_column = '%s')"
+                    "(f_table_name = lower('%s') AND f_geometry_column = lower('%s'))"
 #ifdef WORKAROUND_SQLITE3_BUGS
                     " OR 0"
 #endif
@@ -3488,12 +3476,13 @@ void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
         int nYear = 0;
         int nMonth = 0;
         int nDay = 0;
+        char chSep = 0;
         int nHour = 0;
         int nMinute = 0;
         float fSecond = 0.0f;
         if( nRowCount == 1 && nColCount == 1 && papszResult[1] != NULL &&
-            sscanf( papszResult[1], "%04d-%02d-%02dT%02d:%02d:%f",
-                    &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond ) == 6 )
+            sscanf( papszResult[1], "%04d-%02d-%02d%c%02d:%02d:%f",
+                    &nYear, &nMonth, &nDay, &chSep, &nHour, &nMinute, &fSecond ) == 7 )
         {
             osLastEvtDate = papszResult[1];
         }
@@ -3506,7 +3495,7 @@ void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
 
         osSQL.Printf("SELECT last_verified, row_count, extent_min_x, extent_min_y, "
                     "extent_max_x, extent_max_y FROM geometry_columns_statistics WHERE "
-                    "(f_table_name = '%s' AND f_geometry_column = '%s')"
+                    "(f_table_name = lower('%s') AND f_geometry_column = lower('%s'))"
 #ifdef WORKAROUND_SQLITE3_BUGS
                     " OR 0"
 #endif
@@ -3518,8 +3507,8 @@ void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
                         &nRowCount, &nColCount, NULL );
 
         if( nRowCount == 1 && nColCount == 6 && papszResult[6] != NULL &&
-            sscanf( papszResult[6], "%04d-%02d-%02dT%02d:%02d:%f",
-                    &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond ) == 6 )
+            sscanf( papszResult[6], "%04d-%02d-%02d%c%02d:%02d:%f",
+                    &nYear, &nMonth, &nDay, &chSep, &nHour, &nMinute, &fSecond ) == 7 )
         {
             CPLString osLastVerified(papszResult[6]);
 
@@ -3547,7 +3536,7 @@ void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
                     }
                     else
                     {
-                        CPLDebug("SQLite", "Layer %s feature count : " CPL_FRMT_GIB,
+                        CPLDebug("SQLITE", "Layer %s feature count : " CPL_FRMT_GIB,
                                     pszTableName, nFeatureCount);
                     }
                 }
@@ -3560,9 +3549,14 @@ void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
                     poGeomFieldDefn->oCachedExtent.MinY = CPLAtof(pszMinY);
                     poGeomFieldDefn->oCachedExtent.MaxX = CPLAtof(pszMaxX);
                     poGeomFieldDefn->oCachedExtent.MaxY = CPLAtof(pszMaxY);
-                    CPLDebug("SQLite", "Layer %s extent : %s,%s,%s,%s",
+                    CPLDebug("SQLITE", "Layer %s extent : %s,%s,%s,%s",
                                 pszTableName, pszMinX,pszMinY,pszMaxX,pszMaxY);
                 }
+            }
+            else
+            {
+                CPLDebug("SQLite", "Statistics in %s is not up-to-date",
+                         pszTableName);
             }
         }
 
@@ -3657,7 +3651,7 @@ void OGRSQLiteTableLayer::LoadStatistics()
             if( pszRowCount != NULL )
             {
                 nFeatureCount = CPLAtoGIntBig( pszRowCount );
-                CPLDebug("SQLite", "Layer %s feature count : " CPL_FRMT_GIB,
+                CPLDebug("SQLITE", "Layer %s feature count : " CPL_FRMT_GIB,
                             pszTableName, nFeatureCount);
             }
 
@@ -3670,7 +3664,7 @@ void OGRSQLiteTableLayer::LoadStatistics()
                 poGeomFieldDefn->oCachedExtent.MinY = CPLAtof(pszMinY);
                 poGeomFieldDefn->oCachedExtent.MaxX = CPLAtof(pszMaxX);
                 poGeomFieldDefn->oCachedExtent.MaxY = CPLAtof(pszMaxY);
-                CPLDebug("SQLite", "Layer %s extent : %s,%s,%s,%s",
+                CPLDebug("SQLITE", "Layer %s extent : %s,%s,%s,%s",
                             pszTableName, pszMinX,pszMinY,pszMaxX,pszMaxY);
             }
         }
@@ -3689,7 +3683,7 @@ void OGRSQLiteTableLayer::LoadStatistics()
 int OGRSQLiteTableLayer::SaveStatistics()
 {
     if( !bStatisticsNeedsToBeFlushed || !poDS->IsSpatialiteDB()  ||
-        !poDS->IsSpatialiteLoaded() || poDS->HasSpatialite4Layout() )
+        !poDS->IsSpatialiteLoaded() )
         return -1;
     if( GetLayerDefn()->GetGeomFieldCount() != 1 )
         return -1;
@@ -3700,46 +3694,104 @@ int OGRSQLiteTableLayer::SaveStatistics()
     sqlite3 *hDB = poDS->GetDB();
     char* pszErrMsg = NULL;
 
+    // Update geometry_columns_time.
+    if( !poGeomFieldDefn->aosDisabledTriggers.empty() )
+    {
+        char* pszSQL3 = sqlite3_mprintf(
+            "UPDATE geometry_columns_time "
+            "SET last_insert = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ', 'now') "
+            "WHERE Lower(f_table_name) = Lower('%q') AND "
+            "Lower(f_geometry_column) = Lower('%q')",
+            pszTableName, poGeomFieldDefn->GetNameRef());
+        if( sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, &pszErrMsg) != SQLITE_OK )
+        {
+            CPLDebug("SQLITE", "%s: error %s",
+                     pszSQL3, pszErrMsg ? pszErrMsg : "unknown");
+            sqlite3_free( pszErrMsg );
+            pszErrMsg = NULL;
+        }
+        sqlite3_free( pszSQL3 );
+    }
+
+    const char* pszStatTableName =
+        poDS->HasSpatialite4Layout() ? "geometry_columns_statistics":
+                                       "layer_statistics";
+    const char* pszFTableName =
+        poDS->HasSpatialite4Layout() ? "f_table_name" : "table_name";
+    const char* pszFGeometryColumn =
+        poDS->HasSpatialite4Layout() ? "f_geometry_column" : "geometry_column";
+    CPLString osTableName(pszTableName);
+    CPLString osGeomCol(pszGeomCol);
+    const char* pszNowValue = "";
+    if( poDS->HasSpatialite4Layout() )
+    {
+        osTableName = osTableName.tolower();
+        osGeomCol = osGeomCol.tolower();
+        pszNowValue = ", strftime('%Y-%m-%dT%H:%M:%fZ','now')";
+    }
     if( nFeatureCount >= 0 )
     {
         /* Update or add entry in the layer_statistics table */
         if( poGeomFieldDefn->bCachedExtentIsValid )
         {
-            osSQL.Printf("INSERT OR REPLACE INTO layer_statistics (raster_layer, "
-                            "table_name, geometry_column, row_count, extent_min_x, "
-                            "extent_min_y, extent_max_x, extent_max_y) VALUES ("
-                            "0, '%s', '%s', " CPL_FRMT_GIB ", %s, %s, %s, %s)",
-                            pszEscapedTableName, OGRSQLiteEscape(pszGeomCol).c_str(),
+            osSQL.Printf("INSERT OR REPLACE INTO %s (%s"
+                            "%s, %s, row_count, extent_min_x, "
+                            "extent_min_y, extent_max_x, extent_max_y%s) VALUES ("
+                            "%s'%s', '%s', " CPL_FRMT_GIB ", %.18g, %.18g, %.18g, %.18g%s)",
+                            pszStatTableName,
+                            poDS->HasSpatialite4Layout() ? "" : "raster_layer, ",
+                            pszFTableName,
+                            pszFGeometryColumn,
+                            poDS->HasSpatialite4Layout() ? ", last_verified": "",
+                            poDS->HasSpatialite4Layout() ? "" : "0 ,",
+                            OGRSQLiteEscape(osTableName).c_str(),
+                            OGRSQLiteEscape(osGeomCol).c_str(),
                             nFeatureCount,
-                            // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
-                            CPLString().FormatC(poGeomFieldDefn->oCachedExtent.MinX,"%.18g").c_str(),
-                            CPLString().FormatC(poGeomFieldDefn->oCachedExtent.MinY,"%.18g").c_str(),
-                            CPLString().FormatC(poGeomFieldDefn->oCachedExtent.MaxX,"%.18g").c_str(),
-                            CPLString().FormatC(poGeomFieldDefn->oCachedExtent.MaxY,"%.18g").c_str());
+                            poGeomFieldDefn->oCachedExtent.MinX,
+                            poGeomFieldDefn->oCachedExtent.MinY,
+                            poGeomFieldDefn->oCachedExtent.MaxX,
+                            poGeomFieldDefn->oCachedExtent.MaxY,
+                            pszNowValue
+                        );
         }
         else
         {
-            osSQL.Printf("INSERT OR REPLACE INTO layer_statistics (raster_layer, "
-                            "table_name, geometry_column, row_count, extent_min_x, "
-                            "extent_min_y, extent_max_x, extent_max_y) VALUES ("
-                            "0, '%s', '%s', " CPL_FRMT_GIB ", NULL, NULL, NULL, NULL)",
-                            pszEscapedTableName, OGRSQLiteEscape(pszGeomCol).c_str(),
-                            nFeatureCount);
+            osSQL.Printf("INSERT OR REPLACE INTO %s (%s"
+                            "%s, %s, row_count, extent_min_x, "
+                            "extent_min_y, extent_max_x, extent_max_y%s) VALUES ("
+                            "%s'%s', '%s', " CPL_FRMT_GIB ", NULL, NULL, NULL, NULL%s)",
+                            pszStatTableName,
+                            poDS->HasSpatialite4Layout() ? "" : "raster_layer, ",
+                            pszFTableName,
+                            pszFGeometryColumn,
+                            poDS->HasSpatialite4Layout() ? ", last_verified": "",
+                            poDS->HasSpatialite4Layout() ? "" : "0 ,",
+                            OGRSQLiteEscape(osTableName).c_str(),
+                            OGRSQLiteEscape(osGeomCol).c_str(),
+                            nFeatureCount,
+                            pszNowValue
+                        );
         }
     }
     else
     {
         /* Remove any existing entry in layer_statistics if for some reason */
         /* we know that it will out-of-sync */
-        osSQL.Printf("DELETE FROM layer_statistics WHERE "
-                     "table_name = '%s' AND geometry_column = '%s'",
-                     pszEscapedTableName, OGRSQLiteEscape(pszGeomCol).c_str());
+        osSQL.Printf("DELETE FROM %s WHERE "
+                     "%s = '%s' AND %s = '%s'",
+                     pszStatTableName,
+                     pszFTableName,
+                     OGRSQLiteEscape(osTableName).c_str(),
+                     pszFGeometryColumn,
+                     OGRSQLiteEscape(osGeomCol).c_str());
     }
 
     int rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, &pszErrMsg );
     if( rc != SQLITE_OK )
     {
-        CPLDebug("SQLITE", "Error %s", pszErrMsg ? pszErrMsg : "unknown");
+        CPLDebug("SQLITE", "%s: error %s",
+                 osSQL.c_str(),
+                 pszErrMsg ? pszErrMsg : "unknown");
         sqlite3_free( pszErrMsg );
         return FALSE;
     }
