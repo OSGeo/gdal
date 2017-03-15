@@ -24,6 +24,11 @@ for my $datatype (qw/Byte Int16 Int32 UInt16 UInt32/) {
     
     $c = $band->ClassCounts;
     is_deeply($c, \%counts, "$datatype: ClassCounts");
+
+    eval {
+        $band->ClassCounts(sub {return 1});
+    };
+    ok(!$@, "ClassCounts overload test $datatype: $@");
     
     $band->Reclassify({'*' => 10, 1 => 2, 2 => 3});
     $c = $band->ClassCounts;
@@ -44,6 +49,7 @@ for my $datatype (qw/Byte Int16 Int32 UInt16 UInt32/) {
     #    print "$key $c->{$key}\n";
     #}
     is_deeply($c, {0 => 22, 5 => 3}, "Reclassify with default does not affect cells with NoData.");
+
 }
 
 for my $datatype (qw/Float32 Float64/) {
@@ -70,6 +76,11 @@ for my $datatype (qw/Float32 Float64/) {
     #    say STDERR "@{$tile->[$y]}";
     #}
     is_deeply($tile, [[1,2],[3,3]], "Reclassify $datatype");
+
+    eval {
+        $band->Reclassify($classifier, sub {return 1});
+    };
+    ok(!$@, "Reclassify overload test $datatype: $@");
 }
     
 my $band = Geo::GDAL::Driver('MEM')->Create(Type => 'CFloat32', Width => 5, Height => 5)->Band;

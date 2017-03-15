@@ -1367,6 +1367,10 @@ IF_UNDEF_NULL(const char *, target_key)
     $1 = (void *)(&saved_env);
 }
 
+%typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) GDALProgressFunc callback {
+    /* %typemap(typecheck, precedence=SWIG_TYPECHECK_INTEGER) GDALProgressFunc callback */
+   $1 = SvOK($input) && SvROK($input) && SvTYPE(SvRV($input)) == SVt_PVCV;
+}
 %typemap(in) (GDALProgressFunc callback = NULL)
 {
     /* %typemap(in) (GDALProgressFunc callback = NULL) */
