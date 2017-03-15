@@ -2243,7 +2243,7 @@ Usage:
     gdaldem hillshade input_dem output_hillshade
                 [-z ZFactor (default=1)] [-s scale* (default=1)]"
                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]
-                [-alg ZevenbergenThorne] [-combined | -multidimensional]
+                [-alg ZevenbergenThorne] [-combined | -multidirectional]
                 [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
 
 - To generate a slope map from any GDAL-supported elevation raster :
@@ -2344,10 +2344,10 @@ The following specific options are available :
 <dt> <b>-az</b> <i>azimuth</i>:</dt><dd>azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.</dd>
 <dt> <b>-alt</b> <i>altitude</i>:</dt><dd>altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.</dd>
 <dt> <b>-combined</b>:</dt><dd>(starting with GDAL 1.10) combined shading, a combination of slope and oblique shading.</dd>
-<dt> <b>-multidimensional</b>:</dt><dd>(starting with GDAL 2.2) multidimensional shading, a combination of hillshading illuminated from 225 deg, 270 deg, 315 deg, and 360 deg azimuth.</dd>
+<dt> <b>-multidirectional</b>:</dt><dd>(starting with GDAL 2.2) multidirectional shading, a combination of hillshading illuminated from 225 deg, 270 deg, 315 deg, and 360 deg azimuth.</dd>
 </dl>
 
-Multidimensional hillshading applies the formula of http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf.
+Multidirectional hillshading applies the formula of http://pubs.usgs.gov/of/1992/of92-422/of92-422.pdf.
 
 \subsection gdaldem_slope slope
 
