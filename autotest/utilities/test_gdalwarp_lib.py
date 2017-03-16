@@ -1356,6 +1356,26 @@ def test_gdalwarp_lib_135():
         print(data)
         return 'fail'
 
+    # Both transforms, but none of them have geoidgrids
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = 'EPSG:32631+5730',
+                   dstSRS = 'EPSG:4326+5621')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 100:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Both transforms being a no-op
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
+                   dstSRS = '+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 100:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
     # Both transforms to anonymous VRT
     ds = gdal.Warp('', src_ds, format = 'VRT',
                    srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
@@ -1504,6 +1524,24 @@ def test_gdalwarp_lib_135():
 
     ds = gdal.Warp('', src_ds, format = 'MEM',
                    dstSRS = 'EPSG:4979', outputType = gdal.GDT_Byte)
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 120:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Forward transform with explict unhandled unit
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).Fill(100)
+    src_ds.GetRasterBand(1).SetUnitType('unhandled')
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', src_ds, format = 'MEM',
+                       dstSRS = 'EPSG:4979')
     data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
     if data != 120:
         gdaltest.post_reason('Bad value')
