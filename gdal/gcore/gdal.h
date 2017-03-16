@@ -629,6 +629,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALSetGCPs( GDALDatasetH, int, const GDAL_GCP *,
 void CPL_DLL * CPL_STDCALL GDALGetInternalHandle( GDALDatasetH, const char * );
 int CPL_DLL CPL_STDCALL GDALReferenceDataset( GDALDatasetH );
 int CPL_DLL CPL_STDCALL GDALDereferenceDataset( GDALDatasetH );
+int CPL_DLL CPL_STDCALL GDALReleaseDataset( GDALDatasetH );
 
 CPLErr CPL_DLL CPL_STDCALL
 GDALBuildOverviews( GDALDatasetH, const char *, int, int *,

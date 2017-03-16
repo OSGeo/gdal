@@ -340,10 +340,8 @@ int VRTWarpedDataset::CloseDependentDatasets()
     {
         GDALDatasetH hDS = m_papoOverviews[iOverview];
 
-        if( GDALDereferenceDataset( hDS ) < 1 )
+        if( GDALReleaseDataset( hDS ) )
         {
-            GDALReferenceDataset( hDS );
-            GDALClose( hDS );
             bHasDroppedRef = true;
         }
     }
@@ -369,10 +367,8 @@ int VRTWarpedDataset::CloseDependentDatasets()
 /* -------------------------------------------------------------------- */
         if( psWO != NULL && psWO->hSrcDS != NULL )
         {
-            if( GDALDereferenceDataset( psWO->hSrcDS ) < 1 )
+            if( GDALReleaseDataset( psWO->hSrcDS ) )
             {
-                GDALReferenceDataset( psWO->hSrcDS );
-                GDALClose( psWO->hSrcDS );
                 bHasDroppedRef = true;
             }
         }
@@ -449,14 +445,17 @@ CPLErr VRTWarpedDataset::Initialize( void *psWO )
         psWO_Dup->papszWarpOptions =
             CSLSetNameValue(psWO_Dup->papszWarpOptions, "INIT_DEST", "0");
 
+    CPLErr eErr = m_poWarper->Initialize( psWO_Dup );
+
     // The act of initializing this warped dataset with this warp options
     // will result in our assuming ownership of a reference to the
     // hSrcDS.
 
-    if( static_cast<GDALWarpOptions *>( psWO )->hSrcDS != NULL )
+    if( eErr == CE_None &&
+        static_cast<GDALWarpOptions *>( psWO )->hSrcDS != NULL )
+    {
         GDALReferenceDataset( psWO_Dup->hSrcDS );
-
-    CPLErr eErr = m_poWarper->Initialize( psWO_Dup );
+    }
 
     GDALDestroyWarpOptions(psWO_Dup);
 
@@ -484,32 +483,30 @@ void VRTWarpedDataset::CreateImplicitOverviews()
     const int nOvrCount = poSrcDS->GetRasterBand(1)->GetOverviewCount();
     for( int iOvr = 0; iOvr < nOvrCount; iOvr++ )
     {
-        bool bDeleteSrcOvrDataset = false;
         GDALDataset* poSrcOvrDS = poSrcDS;
         if( m_nSrcOvrLevel < -2 )
         {
             if( iOvr + m_nSrcOvrLevel + 2 >= 0 )
             {
-                bDeleteSrcOvrDataset = true;
                 poSrcOvrDS =
                     GDALCreateOverviewDataset( poSrcDS,
                                                iOvr + m_nSrcOvrLevel + 2,
-                                               FALSE, FALSE );
+                                               FALSE );
             }
         }
         else if( m_nSrcOvrLevel == -2 )
         {
-            bDeleteSrcOvrDataset = true;
-            poSrcOvrDS = GDALCreateOverviewDataset(poSrcDS, iOvr, FALSE, FALSE);
+            poSrcOvrDS = GDALCreateOverviewDataset(poSrcDS, iOvr, FALSE);
         }
         else if( m_nSrcOvrLevel >= 0 )
         {
-            bDeleteSrcOvrDataset = true;
             poSrcOvrDS = GDALCreateOverviewDataset( poSrcDS, m_nSrcOvrLevel,
-                                                    TRUE, FALSE );
+                                                    TRUE );
         }
         if( poSrcOvrDS == NULL )
             break;
+        if( poSrcOvrDS == poSrcDS )
+            poSrcOvrDS->Reference();
 
         const double dfSrcRatioX = static_cast<double>(
             poSrcDS->GetRasterXSize() ) / poSrcOvrDS->GetRasterXSize();
@@ -546,8 +543,7 @@ void VRTWarpedDataset::CreateImplicitOverviews()
 
         if( nDstPixels < 1 || nDstLines < 1 )
         {
-            if( bDeleteSrcOvrDataset )
-                delete poSrcOvrDS;
+            poSrcOvrDS->ReleaseRef();
             break;
         }
 
@@ -560,8 +556,7 @@ void VRTWarpedDataset::CreateImplicitOverviews()
                                                        dfSrcRatioY );
         if( pTransformerArg == NULL )
         {
-            if( bDeleteSrcOvrDataset )
-                delete poSrcOvrDS;
+            poSrcOvrDS->ReleaseRef();
             break;
         }
 
@@ -586,13 +581,7 @@ void VRTWarpedDataset::CreateImplicitOverviews()
             nDstPixels, nDstLines,
             adfDstGeoTransform, psWOOvr );
 
-        if( bDeleteSrcOvrDataset )
-        {
-            if( hDstDS == NULL )
-                delete poSrcOvrDS;
-            else
-                GDALDereferenceDataset( poSrcOvrDS );
-        }
+        poSrcOvrDS->ReleaseRef();
 
         GDALDestroyWarpOptions(psWOOvr);
 
@@ -638,6 +627,26 @@ char** VRTWarpedDataset::GetFileList()
 
     return papszFileList;
 }
+
+/************************************************************************/
+/*                      SetApplyVerticalShiftGrid()                     */
+/************************************************************************/
+
+void  VRTWarpedDataset::SetApplyVerticalShiftGrid(const char* pszVGrids,
+                                               int bInverse,
+                                               double dfToMeterSrc,
+                                               double dfToMeterDest,
+                                               char** papszOptions )
+{
+    VerticalShiftGrid oVertShiftGrid;
+    oVertShiftGrid.osVGrids = pszVGrids;
+    oVertShiftGrid.bInverse = bInverse;
+    oVertShiftGrid.dfToMeterSrc = dfToMeterSrc;
+    oVertShiftGrid.dfToMeterDest = dfToMeterDest;
+    oVertShiftGrid.aosOptions.Assign(papszOptions,FALSE);
+    m_aoVerticalShiftGrids.push_back(oVertShiftGrid);
+}
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1133,6 +1142,83 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
     psWO->hDstDS = this;
 
 /* -------------------------------------------------------------------- */
+/*      Deserialize vertical shift grids.                               */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode* psIter = psTree->psChild;
+    for( ; psWO->hSrcDS != NULL && psIter != NULL; psIter = psIter->psNext )
+    {
+        if( psIter->eType != CXT_Element ||
+            !EQUAL(psIter->pszValue, "VerticalShiftGrids") )
+        {
+            continue;
+        }
+        const char* pszVGrids = CPLGetXMLValue(psIter, "Grids", NULL);
+        if( pszVGrids )
+        {
+            int bInverse = CSLTestBoolean(
+                CPLGetXMLValue(psIter, "Inverse", "FALSE") );
+            double dfToMeterSrc = CPLAtof(
+                CPLGetXMLValue( psIter, "ToMeterSrc", "1.0") );
+            double dfToMeterDest = CPLAtof(
+                CPLGetXMLValue( psIter, "ToMeterDest", "1.0") );
+            char** papszOptions = NULL;
+            CPLXMLNode* psIter2 = psIter->psChild;
+            for( ; psIter2 != NULL; psIter2 = psIter2->psNext )
+            {
+                if( psIter2->eType != CXT_Element ||
+                    !EQUAL(psIter2->pszValue, "Option") )
+                {
+                    continue;
+                }
+                const char* pszName = CPLGetXMLValue(psIter2, "name", NULL);
+                const char* pszValue = CPLGetXMLValue(psIter2, NULL, NULL);
+                if( pszName && pszValue )
+                {
+                    papszOptions = CSLSetNameValue(papszOptions, pszName,
+                                                   pszValue);
+                }
+            }
+            SetApplyVerticalShiftGrid(pszVGrids, bInverse,
+                                      dfToMeterSrc, dfToMeterDest,
+                                      papszOptions );
+            int bError = FALSE;
+            GDALDatasetH hGridDataset =
+                GDALOpenVerticalShiftGrid(pszVGrids, &bError);
+            if( bError && hGridDataset == NULL )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                            "Cannot open %s. Source dataset will no "
+                            "be vertically adjusted regarding "
+                            "vertical datum", pszVGrids);
+            }
+            else if( hGridDataset != NULL )
+            {
+                // Transform from source vertical datum to WGS84
+                GDALDatasetH hTmpDS = GDALApplyVerticalShiftGrid(
+                    psWO->hSrcDS, hGridDataset, bInverse,
+                    dfToMeterSrc, dfToMeterDest, papszOptions );
+                GDALReleaseDataset(hGridDataset);
+                if( hTmpDS == NULL )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "Source dataset will no "
+                            "be vertically adjusted regarding "
+                            "vertical datum %s", pszVGrids);
+                }
+                else
+                {
+                    CPLDebug("GDALWARP", "Adjusting source dataset "
+                            "with vertical datum using %s", pszVGrids);
+                    GDALReleaseDataset(psWO->hSrcDS);
+                    psWO->hSrcDS = hTmpDS;
+                }
+            }
+
+            CSLDestroy(papszOptions);
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Instantiate the warp operation.                                 */
 /* -------------------------------------------------------------------- */
     m_poWarper = new GDALWarpOperation();
@@ -1282,6 +1368,44 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPathIn )
         else
             CPLCreateXMLElementAndValue(
                 psTree, "SrcOvrLevel", CPLSPrintf("%d", m_nSrcOvrLevel) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Serialize vertical shift grids.                                 */
+/* -------------------------------------------------------------------- */
+    for(size_t i = 0; i < m_aoVerticalShiftGrids.size(); ++i )
+    {
+        CPLXMLNode* psVertShiftGridNode = 
+            CPLCreateXMLNode( psTree, CXT_Element, "VerticalShiftGrids" );
+        CPLCreateXMLElementAndValue(psVertShiftGridNode,
+                                    "Grids",
+                                    m_aoVerticalShiftGrids[i].osVGrids);
+        CPLCreateXMLElementAndValue(psVertShiftGridNode,
+                "Inverse",
+                m_aoVerticalShiftGrids[i].bInverse ? "TRUE" : "FALSE");
+        CPLCreateXMLElementAndValue(psVertShiftGridNode,
+                "ToMeterSrc",
+                CPLSPrintf("%.18g", m_aoVerticalShiftGrids[i].dfToMeterSrc));
+        CPLCreateXMLElementAndValue(psVertShiftGridNode,
+                "ToMeterDest",
+                CPLSPrintf("%.18g", m_aoVerticalShiftGrids[i].dfToMeterDest));
+        for( int j=0; j < m_aoVerticalShiftGrids[i].aosOptions.size(); ++j )
+        {
+            char* pszKey = NULL;
+            const char* pszValue = CPLParseNameValue(
+                m_aoVerticalShiftGrids[i].aosOptions[j], &pszKey);
+            if( pszKey && pszValue )
+            {
+                CPLXMLNode* psOption = CPLCreateXMLElementAndValue(
+                    psVertShiftGridNode,
+                    "Option",
+                    pszValue);
+                CPLCreateXMLNode(
+                    CPLCreateXMLNode( psOption, CXT_Attribute, "name" ),
+                    CXT_Text, pszKey );
+            }
+            CPLFree(pszKey);
+        }
     }
 
 /* ==================================================================== */

@@ -616,6 +616,17 @@ void CPL_DLL GDALTriangulationFree(GDALTriangulation* psDT);
 void GDALTriangulationTerminate(void);
 /*! @endcond */
 
+GDALDatasetH CPL_DLL GDALOpenVerticalShiftGrid(
+                                        const char* pszProj4Geoidgrids,
+                                        int* pbError );
+
+GDALDatasetH CPL_DLL GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
+                                         GDALDatasetH hGridDataset,
+                                         int bInverse,
+                                         double dfSrcUnitToMeter,
+                                         double dfDstUnitToMeter,
+                                         const char* const* papszOptions );
+
 CPL_C_END
 
 #endif /* ndef GDAL_ALG_H_INCLUDED */

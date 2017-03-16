@@ -5878,6 +5878,22 @@ SWIGINTERN int GDALTransformerInfoShadow_TransformGeolocations(GDALTransformerIn
                             	      callback, callback_data, options );
   }
 
+GDALDatasetShadow* ApplyVerticalShiftGrid( GDALDatasetShadow *src_ds,
+                                           GDALDatasetShadow *grid_ds,
+                                           bool inverse = false,
+                                           double srcUnitToMeter = 1.0,
+                                           double dstUnitToMeter = 1.0,
+                                           char** options = NULL ) {
+  GDALDatasetShadow *ds = GDALApplyVerticalShiftGrid( src_ds, grid_ds,
+                                                      inverse,
+                                                      srcUnitToMeter,
+                                                      dstUnitToMeter,
+                                                      options );
+  return ds;
+
+}
+
+
 GIntBig wrapper_GDALGetCacheMax()
 {
     return GDALGetCacheMax64();
@@ -26247,6 +26263,161 @@ SWIGINTERN PyObject *Transformer_swigregister(PyObject *SWIGUNUSEDPARM(self), Py
   return SWIG_Py_Void();
 }
 
+SWIGINTERN PyObject *_wrap_ApplyVerticalShiftGrid(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  GDALDatasetShadow *arg2 = (GDALDatasetShadow *) 0 ;
+  bool arg3 = (bool) false ;
+  double arg4 = (double) 1.0 ;
+  double arg5 = (double) 1.0 ;
+  char **arg6 = (char **) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  bool val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  char *  kwnames[] = {
+    (char *) "src_ds",(char *) "grid_ds",(char *) "inverse",(char *) "srcUnitToMeter",(char *) "dstUnitToMeter",(char *) "options", NULL 
+  };
+  GDALDatasetShadow *result = 0 ;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO|OOOO:ApplyVerticalShiftGrid",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ApplyVerticalShiftGrid" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "ApplyVerticalShiftGrid" "', argument " "2"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALDatasetShadow * >(argp2);
+  if (obj2) {
+    ecode3 = SWIG_AsVal_bool(obj2, &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "ApplyVerticalShiftGrid" "', argument " "3"" of type '" "bool""'");
+    } 
+    arg3 = static_cast< bool >(val3);
+  }
+  if (obj3) {
+    ecode4 = SWIG_AsVal_double(obj3, &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "ApplyVerticalShiftGrid" "', argument " "4"" of type '" "double""'");
+    } 
+    arg4 = static_cast< double >(val4);
+  }
+  if (obj4) {
+    ecode5 = SWIG_AsVal_double(obj4, &val5);
+    if (!SWIG_IsOK(ecode5)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "ApplyVerticalShiftGrid" "', argument " "5"" of type '" "double""'");
+    } 
+    arg5 = static_cast< double >(val5);
+  }
+  if (obj5) {
+    {
+      /* %typemap(in) char **options */
+      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+      if ( ! PySequence_Check(obj5) || PyUnicode_Check(obj5)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj5)
+  #endif
+        ) {
+        PyErr_SetString(PyExc_TypeError,"not a sequence");
+        SWIG_fail;
+      }
+      
+      Py_ssize_t size = PySequence_Size(obj5);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
+        PyObject* pyObj = PySequence_GetItem(obj5,i);
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg6 = CSLAddString( arg6, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg6 = CSLAddString( arg6, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg6 = CSLAddString( arg6, PyString_AsString(pyObj) );
+#endif
+        else
+        {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+          SWIG_fail;
+        }
+        Py_DECREF(pyObj);
+      }
+    }
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (GDALDatasetShadow *)ApplyVerticalShiftGrid(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg6 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg6 );
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_ApplyGeoTransform(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   double *arg1 ;
@@ -31716,6 +31887,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Transformer_TransformPoints", _wrap_Transformer_TransformPoints, METH_VARARGS, (char *)"Transformer_TransformPoints(Transformer self, int bDstToSrc, int nCount) -> int"},
 	 { (char *)"Transformer_TransformGeolocations", (PyCFunction) _wrap_Transformer_TransformGeolocations, METH_VARARGS | METH_KEYWORDS, (char *)"Transformer_TransformGeolocations(Transformer self, Band xBand, Band yBand, Band zBand, GDALProgressFunc callback=0, void * callback_data=None, char ** options=None) -> int"},
 	 { (char *)"Transformer_swigregister", Transformer_swigregister, METH_VARARGS, NULL},
+	 { (char *)"ApplyVerticalShiftGrid", (PyCFunction) _wrap_ApplyVerticalShiftGrid, METH_VARARGS | METH_KEYWORDS, (char *)"ApplyVerticalShiftGrid(Dataset src_ds, Dataset grid_ds, bool inverse=False, double srcUnitToMeter=1.0, double dstUnitToMeter=1.0, char ** options=None) -> Dataset"},
 	 { (char *)"ApplyGeoTransform", _wrap_ApplyGeoTransform, METH_VARARGS, (char *)"ApplyGeoTransform(double [6] padfGeoTransform, double dfPixel, double dfLine)"},
 	 { (char *)"InvGeoTransform", _wrap_InvGeoTransform, METH_VARARGS, (char *)"InvGeoTransform(double [6] gt_in) -> RETURN_NONE"},
 	 { (char *)"VersionInfo", _wrap_VersionInfo, METH_VARARGS, (char *)"VersionInfo(char const * request) -> char const *"},

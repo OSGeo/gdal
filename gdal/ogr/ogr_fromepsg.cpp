@@ -2191,6 +2191,10 @@ OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
 OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 
 {
+    const int nCodeIn = nCode;
+    // HACK to support 3D WGS84
+    if( nCode == 4979 )
+        nCode = 4326;
     bNormInfoSet = FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -2269,12 +2273,12 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
     else
         pszAuthName = GetAuthorityName( "GEOGCS" );
 
-    if( eErr == OGRERR_NONE && pszAuthName == NULL )
+    if( eErr == OGRERR_NONE && (pszAuthName == NULL || nCode != nCodeIn) )
     {
         if( IsProjected() )
-            SetAuthority( "PROJCS", "EPSG", nCode );
+            SetAuthority( "PROJCS", "EPSG", nCodeIn );
         else if( IsGeographic() )
-            SetAuthority( "GEOGCS", "EPSG", nCode );
+            SetAuthority( "GEOGCS", "EPSG", nCodeIn );
     }
 
 /* -------------------------------------------------------------------- */

@@ -502,6 +502,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     int           Reference();
     int           Dereference();
+    int           ReleaseRef();
+
     /** Return access mode.
      * @return access mode.
      */
@@ -1573,9 +1575,9 @@ void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg* psExtraArg,
                                         int nXSize, int nYSize,
                                         int nBufXSize, int nBufYSize);
 
-/* CPL_DLL exported, but only for gdalwarp */
-GDALDataset CPL_DLL* GDALCreateOverviewDataset(GDALDataset* poDS, int nOvrLevel,
-                                               int bThisLevelOnly, int bOwnDS);
+
+GDALDataset* GDALCreateOverviewDataset(GDALDataset* poDS, int nOvrLevel,
+                                       int bThisLevelOnly);
 
 #define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
 

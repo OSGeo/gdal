@@ -140,27 +140,16 @@ VRTSimpleSource::VRTSimpleSource( const VRTSimpleSource* poSrcSource,
 VRTSimpleSource::~VRTSimpleSource()
 
 {
-    // We use bRelativeToVRTOri to know if the file has been opened from
-    // XMLInit(), and thus we are sure that no other code has a direct
-    // reference to the dataset.
     if( m_poMaskBandMainBand != NULL )
     {
         if( m_poMaskBandMainBand->GetDataset() != NULL )
         {
-            if( m_poMaskBandMainBand->GetDataset()->GetShared() ||
-                m_bRelativeToVRTOri >= 0 )
-                GDALClose( m_poMaskBandMainBand->GetDataset() );
-            else
-                m_poMaskBandMainBand->GetDataset()->Dereference();
+            m_poMaskBandMainBand->GetDataset()->ReleaseRef();
         }
     }
     else if( m_poRasterBand != NULL && m_poRasterBand->GetDataset() != NULL )
     {
-        if( m_poRasterBand->GetDataset()->GetShared() ||
-            m_bRelativeToVRTOri >= 0 )
-            GDALClose( m_poRasterBand->GetDataset() );
-        else
-            m_poRasterBand->GetDataset()->Dereference();
+        m_poRasterBand->GetDataset()->ReleaseRef();
     }
 }
 
