@@ -530,7 +530,7 @@ GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
         reinterpret_cast<GDALDataset*>(hSrcDataset),
         poReprojectedGrid,
         eDT,
-        bInverse,
+        CPL_TO_BOOL(bInverse),
         dfSrcUnitToMeter,
         dfDstUnitToMeter,
         // Undocumented option. For testing only
