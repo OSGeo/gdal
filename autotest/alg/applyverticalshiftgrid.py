@@ -238,7 +238,7 @@ def applyverticalshiftgrid_3():
     out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds,
                                          options = ['RESAMPLING=BILINEAR'])
     cs = out_ds.GetRasterBand(1).Checksum()
-    if cs != 4867:
+    if cs != 4867 and cs != 4868:
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
