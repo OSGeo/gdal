@@ -630,7 +630,10 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
             if ( err != OGRERR_NONE )
                 CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultContents.pszErrMsg ? oResultContents.pszErrMsg : "" );
             else /* if ( oResultContents.nRowCount != 1 ) */
-                CPLError( CE_Failure, CPLE_AppDefined, "layer '%s' is not registered in gpkg_contents", m_pszTableName );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "layer '%s' is not registered in gpkg_contents or "
+                          "corresponding table/view does not exist",
+                          m_pszTableName );
 
             SQLResultFree(&oResultContents);
             return OGRERR_FAILURE;
