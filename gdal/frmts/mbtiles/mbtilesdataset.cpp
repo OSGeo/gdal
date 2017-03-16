@@ -1950,7 +1950,8 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
             nBands = MBTilesGetBandCount(hDS, nMaxLevel,
                                          nMinTileRow, nMaxTileRow,
                                          nMinTileCol, nMaxTileCol);
-            if (nBands < 0)
+            // Map RGB to RGBA since we can guess wrong (see #6836)
+            if (nBands < 0 || nBands == 3)
                 nBands = 4;
         }
 
