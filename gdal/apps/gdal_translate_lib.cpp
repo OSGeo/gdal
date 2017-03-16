@@ -1609,12 +1609,25 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Write to the output file using CopyCreate().                    */
 /* -------------------------------------------------------------------- */
-    hOutDS = GDALCreateCopy( hDriver, pszDest, (GDALDatasetH) poVDS,
-                             psOptions->bStrict, psOptions->papszCreateOptions,
-                             psOptions->pfnProgress, psOptions->pProgressData );
-    hOutDS = GDALTranslateFlush(hOutDS);
+    if( EQUAL(psOptions->pszFormat, "VRT") &&
+        psOptions->papszCreateOptions == NULL )
+    {
+        poVDS->SetDescription(pszDest);
+        hOutDS = (GDALDatasetH) poVDS ;
+        if( !EQUAL(pszDest, "") )
+        {
+            hOutDS = GDALTranslateFlush(hOutDS);
+        }
+    }
+    else
+    {
+        hOutDS = GDALCreateCopy( hDriver, pszDest, (GDALDatasetH) poVDS,
+                                psOptions->bStrict, psOptions->papszCreateOptions,
+                                psOptions->pfnProgress, psOptions->pProgressData );
+        hOutDS = GDALTranslateFlush(hOutDS);
 
-    GDALClose( (GDALDatasetH) poVDS );
+        GDALClose( (GDALDatasetH) poVDS );
+    }
 
     GDALTranslateOptionsFree(psOptions);
     return hOutDS;
