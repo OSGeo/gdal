@@ -331,6 +331,7 @@ def test_gdalwarp_lib_16():
 
     ds = gdal.Warp('/vsimem/test_gdalwarp_lib_16.vrt', 'tmp/testgdalwarp_gcp.tif', format = 'VRT')
     if ds is None:
+        gdaltest.post_reason('fail')
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -341,6 +342,13 @@ def test_gdalwarp_lib_16():
     ds = None
 
     gdal.Unlink('/vsimem/test_gdalwarp_lib_16.vrt')
+
+    # Cannot write file
+    with gdaltest.error_handler():
+        ds = gdal.Warp('/i_dont/exist/test_gdalwarp_lib_16.vrt', 'tmp/testgdalwarp_gcp.tif', format = 'VRT')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 

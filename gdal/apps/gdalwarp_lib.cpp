@@ -214,9 +214,9 @@ struct GDALWarpAppOptions
 static CPLErr
 LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
              const char *pszCWHERE, const char *pszCSQL,
-             void **phCutlineRet );
+             OGRGeometryH *phCutlineRet );
 static CPLErr
-TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
+TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
                           char ***ppapszWarpOptions, char **papszTO );
 
 static GDALDatasetH
@@ -279,10 +279,10 @@ static double GetAverageSegmentLength(OGRGeometryH hGeom)
 /*                           CropToCutline()                            */
 /************************************************************************/
 
-static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDALDatasetH *pahSrcDS,
+static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO, int nSrcCount, GDALDatasetH *pahSrcDS,
                            double& dfMinX, double& dfMinY, double& dfMaxX, double &dfMaxY )
 {
-    OGRGeometryH hCutlineGeom = OGR_G_Clone( (OGRGeometryH) hCutline );
+    OGRGeometryH hCutlineGeom = OGR_G_Clone( hCutline );
     OGRSpatialReferenceH hCutlineSRS = OGR_G_GetSpatialReference( hCutlineGeom );
     const char *pszThisTargetSRS = CSLFetchNameValue( papszTO, "DST_SRS" );
     const char *pszThisSourceSRS = CSLFetchNameValue(papszTO, "SRC_SRS");
@@ -389,8 +389,7 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDAL
 
         for(int nIter=0;nIter<10;nIter++)
         {
-            if( hTransformedGeom != NULL )
-                OGR_G_DestroyGeometry(hTransformedGeom);
+            OGR_G_DestroyGeometry(hTransformedGeom);
             hTransformedGeom = OGR_G_Clone(hGeomInSrcSRS);
             if( hCTSrcToDst != NULL )
                 OGR_G_Transform( hTransformedGeom, hCTSrcToDst );
@@ -725,7 +724,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     void *hTransformArg = NULL;
     int bHasGotErr = FALSE;
     int bVRT = FALSE;
-    void *hCutline = NULL;
+    OGRGeometryH hCutline = NULL;
 
     GDALWarpAppOptions* psOptions =
         (psOptionsIn) ? GDALWarpAppOptionsClone(psOptionsIn) :
@@ -861,8 +860,10 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     if( psOptions->pszCutlineDSName != NULL )
     {
         CPLErr eError;
-        eError = LoadCutline( psOptions->pszCutlineDSName, psOptions->pszCLayer, psOptions->pszCWHERE, psOptions->pszCSQL,
-                     &hCutline );
+        eError = LoadCutline( psOptions->pszCutlineDSName,
+                              psOptions->pszCLayer,
+                              psOptions->pszCWHERE, psOptions->pszCSQL,
+                              &hCutline );
         if(eError == CE_Failure)
         {
             GDALWarpAppOptionsFree(psOptions);
@@ -878,7 +879,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         if(eError == CE_Failure)
         {
             GDALWarpAppOptionsFree(psOptions);
-            OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+            OGR_G_DestroyGeometry( hCutline );
             return NULL;
         }
     }
@@ -920,11 +921,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                                        psOptions);
         if(hDstDS == NULL)
         {
-            if( hUniqueTransformArg )
-                GDALDestroyTransformer( hUniqueTransformArg );
+            GDALDestroyTransformer( hUniqueTransformArg );
             GDALWarpAppOptionsFree(psOptions);
-            if( hCutline != NULL )
-                OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+            OGR_G_DestroyGeometry( hCutline );
             return NULL;
         }
 
@@ -979,8 +978,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         if( hSrcDS == NULL )
         {
             GDALWarpAppOptionsFree(psOptions);
-            if( hCutline != NULL )
-                OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+            OGR_G_DestroyGeometry( hCutline );
             GDALReleaseDataset(hDstDS);
             return NULL;
         }
@@ -992,8 +990,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Input file %s has no raster bands.", GDALGetDescription(hSrcDS) );
             GDALWarpAppOptionsFree(psOptions);
-            if( hCutline != NULL )
-                OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+            OGR_G_DestroyGeometry( hCutline );
             GDALReleaseDataset(hDstDS);
             return NULL;
         }
@@ -1165,8 +1162,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         if( hTransformArg == NULL )
         {
             GDALWarpAppOptionsFree(psOptions);
-            if( hCutline != NULL )
-                OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+            OGR_G_DestroyGeometry( hCutline );
             GDALReleaseDataset(hDstDS);
             return NULL;
         }
@@ -1251,11 +1247,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                                                 bErrorOccured );
             if( bErrorOccured )
             {
-                if( hTransformArg != NULL )
-                    GDALDestroyTransformer( hTransformArg );
+                GDALDestroyTransformer( hTransformArg );
                 GDALWarpAppOptionsFree(psOptions);
-                if( hCutline != NULL )
-                    OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+                OGR_G_DestroyGeometry( hCutline );
                 GDALReleaseDataset(hWrkSrcDS);
                 GDALReleaseDataset(hDstDS);
                 return NULL;
@@ -1593,12 +1587,10 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                                       psOptions->papszTO );
             if(eError == CE_Failure)
             {
-                if( hTransformArg != NULL )
-                    GDALDestroyTransformer( hTransformArg );
+                GDALDestroyTransformer( hTransformArg );
                 GDALDestroyWarpOptions( psWO );
                 GDALWarpAppOptionsFree(psOptions);
-                if( hCutline != NULL )
-                    OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+                OGR_G_DestroyGeometry( hCutline );
                 GDALReleaseDataset(hWrkSrcDS);
                 GDALReleaseDataset(hDstDS);
                 return NULL;
@@ -1616,13 +1608,11 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             CPLErr eErr = GDALInitializeWarpedVRT( hDstDS, psWO );
             GDALDestroyWarpOptions( psWO );
             GDALWarpAppOptionsFree(psOptions);
-            if( hCutline != NULL )
-                OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+            OGR_G_DestroyGeometry( hCutline );
             GDALReleaseDataset(hWrkSrcDS);
             if( eErr != CE_None )
             {
-                if( hTransformArg != NULL )
-                    GDALDestroyTransformer( hTransformArg );
+                GDALDestroyTransformer( hTransformArg );
                 GDALReleaseDataset(hDstDS);
                 return NULL;
             }
@@ -1669,8 +1659,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-        if( hTransformArg != NULL )
-            GDALDestroyTransformer( hTransformArg );
+        GDALDestroyTransformer( hTransformArg );
 
         GDALDestroyWarpOptions( psWO );
 
@@ -1688,8 +1677,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         bHasGotErr = TRUE;
     }
 
-    if( hCutline != NULL )
-        OGR_G_DestroyGeometry( (OGRGeometryH) hCutline );
+    OGR_G_DestroyGeometry( hCutline );
 
     GDALWarpAppOptionsFree(psOptions);
 
@@ -1796,7 +1784,7 @@ static bool LooseValidateCutline(OGRGeometryH hGeom)
 static CPLErr
 LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
              const char *pszCWHERE, const char *pszCSQL,
-             void **phCutlineRet )
+             OGRGeometryH* phCutlineRet )
 
 {
     OGRRegisterAll();
@@ -1894,7 +1882,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
     OGR_G_AssignSpatialReference(
         hMultiPolygon, OGR_L_GetSpatialRef(hLayer) );
 
-    *phCutlineRet = (void *) hMultiPolygon;
+    *phCutlineRet = hMultiPolygon;
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
@@ -2554,11 +2542,11 @@ double GetMaximumSegmentLength( OGRGeometry* poGeom )
 /*      Transform cutline from its SRS to source pixel/line coordinates.*/
 /************************************************************************/
 static CPLErr
-TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
+TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
                           char ***ppapszWarpOptions, char **papszTO_In )
 
 {
-    OGRGeometryH hMultiPolygon = OGR_G_Clone( (OGRGeometryH) hCutline );
+    OGRGeometryH hMultiPolygon = OGR_G_Clone( hCutline );
 
 /* -------------------------------------------------------------------- */
 /*      Checkout that if there's a cutline SRS, there's also a raster   */
@@ -2733,7 +2721,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
         for(int i=0;i<MAX_ITERATIONS;i++)
         {
             OGR_G_DestroyGeometry( hMultiPolygon );
-            hMultiPolygon = OGR_G_Clone( (OGRGeometryH) hCutline );
+            hMultiPolygon = OGR_G_Clone( hCutline );
             OGR_G_Segmentize(hMultiPolygon, dfSegmentSize);
             if( i == MAX_ITERATIONS - 1 )
             {
