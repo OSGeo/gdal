@@ -2906,6 +2906,10 @@ Transformer_swigregister = _gdal.Transformer_swigregister
 Transformer_swigregister(Transformer)
 
 
+def ApplyVerticalShiftGrid(*args, **kwargs):
+    """ApplyVerticalShiftGrid(Dataset src_ds, Dataset grid_ds, bool inverse=False, double srcUnitToMeter=1.0, double dstUnitToMeter=1.0, char ** options=None) -> Dataset"""
+    return _gdal.ApplyVerticalShiftGrid(*args, **kwargs)
+
 def ApplyGeoTransform(*args):
     """ApplyGeoTransform(double [6] padfGeoTransform, double dfPixel, double dfLine)"""
     return _gdal.ApplyGeoTransform(*args)

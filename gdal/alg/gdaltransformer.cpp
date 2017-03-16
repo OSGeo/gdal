@@ -1582,17 +1582,51 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
 /*      Setup reprojection.                                             */
 /* -------------------------------------------------------------------- */
-    if( pszSrcWKT != NULL && strlen(pszSrcWKT) > 0
-        && pszDstWKT != NULL && strlen(pszDstWKT) > 0
-        && !EQUAL(pszSrcWKT, pszDstWKT) )
+    CPLString osSrcWKT = pszSrcWKT ? pszSrcWKT : "";
+    CPLString osDstWKT = pszDstWKT ? pszDstWKT : "";
+
+    if( !osSrcWKT.empty() && !osDstWKT.empty() && !EQUAL(osSrcWKT, osDstWKT) )
     {
-        CPLString osSrcWKT = pszSrcWKT;
+        if( CPLFetchBool( papszOptions, "STRIP_VERT_CS", false ) )
+        {
+            OGRSpatialReference oSRS;
+            oSRS.SetFromUserInput(osSrcWKT);
+            if( oSRS.IsCompound() )
+            {
+                OGR_SRSNode* poNode = oSRS.GetRoot()->GetChild(1);
+                if( poNode != NULL )
+                {
+                    char* pszWKT = NULL;
+                    poNode->exportToWkt(&pszWKT);
+                    osSrcWKT = pszWKT;
+                    CPLFree(pszWKT);
+                }
+            }
+
+            oSRS.SetFromUserInput(osDstWKT);
+            if( oSRS.IsCompound() )
+            {
+                OGR_SRSNode* poNode = oSRS.GetRoot()->GetChild(1);
+                if( poNode != NULL )
+                {
+                    char* pszWKT = NULL;
+                    poNode->exportToWkt(&pszWKT);
+                    osDstWKT = pszWKT;
+                    CPLFree(pszWKT);
+                }
+            }
+        }
+    }
+
+    if( !osSrcWKT.empty() && !osDstWKT.empty() && !EQUAL(osSrcWKT, osDstWKT) )
+    {
         if( hSrcDS
             && CPLFetchBool( papszOptions, "INSERT_CENTER_LONG", true ) )
             osSrcWKT = InsertCenterLong( hSrcDS, osSrcWKT );
 
+
         psInfo->pReprojectArg =
-            GDALCreateReprojectionTransformer( osSrcWKT.c_str(), pszDstWKT );
+            GDALCreateReprojectionTransformer( osSrcWKT, osDstWKT );
         if( psInfo->pReprojectArg == NULL )
         {
             GDALDestroyGenImgProjTransformer( psInfo );

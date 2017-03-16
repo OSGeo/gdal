@@ -16426,7 +16426,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 // Create a fake dataset with the source overview level so that
                 // GDALDatasetCopyWholeRaster can cope with it.
                 GDALDataset* poSrcOvrDS =
-                    GDALCreateOverviewDataset(poSrcDS, iOvrLevel, TRUE, FALSE);
+                    GDALCreateOverviewDataset(poSrcDS, iOvrLevel, TRUE);
 
                 GDALRasterBand* poOvrBand =
                         poSrcDS->GetRasterBand(1)->GetOverview(iOvrLevel);

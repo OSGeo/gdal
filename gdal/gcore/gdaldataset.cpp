@@ -1180,6 +1180,50 @@ int CPL_STDCALL GDALDereferenceDataset( GDALDatasetH hDataset )
     return static_cast<GDALDataset *>(hDataset)->Dereference();
 }
 
+
+/************************************************************************/
+/*                            ReleaseRef()                              */
+/************************************************************************/
+
+/**
+ * \brief Drop a reference to this object, and destroy if no longer referenced.
+ * @return TRUE if the object has been destroyed.
+ * @since GDAL 2.2
+ */
+
+int GDALDataset::ReleaseRef()
+
+{
+    CPLAssert( NULL != this );
+
+    if( Dereference() <= 0 )
+    {
+        nRefCount = 1;
+        delete this;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/************************************************************************/
+/*                        GDALReleaseDataset()                          */
+/************************************************************************/
+
+/**
+ * \brief Drop a reference to this object, and destroy if no longer referenced.
+ *
+ * @see GDALDataset::ReleaseRef()
+ * @since GDAL 2.2
+ */
+
+int CPL_STDCALL GDALReleaseDataset( GDALDatasetH hDataset )
+
+{
+    VALIDATE_POINTER1(hDataset, "GDALReleaseDataset", 0);
+
+    return static_cast<GDALDataset *>(hDataset)->ReleaseRef();
+}
+
 /************************************************************************/
 /*                             GetShared()                              */
 /************************************************************************/
@@ -2859,8 +2903,10 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
                 const bool bThisLevelOnly =
                     osVal.ifind("only") != std::string::npos;
                 GDALDataset *poOvrDS = GDALCreateOverviewDataset(
-                    poDS, nOvrLevel, bThisLevelOnly, TRUE);
-                if( poOvrDS == NULL )
+                    poDS, nOvrLevel, bThisLevelOnly);
+                poDS->ReleaseRef();
+                poDS = poOvrDS;
+                if( poDS == NULL )
                 {
                     if( nOpenFlags & GDAL_OF_VERBOSE_ERROR )
                     {
@@ -2868,12 +2914,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
                                  "Cannot open overview level %d of %s",
                                  nOvrLevel, pszFilename);
                     }
-                    GDALClose(poDS);
-                    poDS = NULL;
-                }
-                else
-                {
-                    poDS = poOvrDS;
                 }
             }
             VSIErrorReset();
@@ -4071,7 +4111,7 @@ This method is the same as the C function OGRReleaseDataSource().
 OGRErr GDALDataset::Release()
 
 {
-    GDALClose(this);
+    ReleaseRef();
     return OGRERR_NONE;
 }
 

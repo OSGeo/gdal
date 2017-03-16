@@ -36,7 +36,7 @@ import os
 
 sys.path.append( '../pymod' )
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 import gdaltest
 import ogrtest
 
@@ -1300,6 +1300,318 @@ def test_gdalwarp_lib_134():
     return 'success'
 
 ###############################################################################
+# Test vertical datum shift
+
+def test_gdalwarp_lib_135():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
+    src_ds.GetRasterBand(1).Fill(100)
+
+    grid_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/grid.tif', 1, 1)
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("WGS84")
+    grid_ds.SetProjection(sr.ExportToWkt())
+    grid_ds.SetGeoTransform([-180,360,0,90,0,-180])
+    grid_ds.GetRasterBand(1).Fill(20)
+    grid_ds = None
+
+    grid_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/grid2.tif', 1, 1)
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("WGS84")
+    grid_ds.SetProjection(sr.ExportToWkt())
+    grid_ds.SetGeoTransform([-180,360,0,90,0,-180])
+    grid_ds.GetRasterBand(1).Fill(5)
+    grid_ds = None
+
+    gdal.GetDriverByName('GTiff').Create('/vsimem/ungeoref_grid.tif', 1, 1)
+
+    # Forward transform
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
+                   dstSRS = 'EPSG:4979')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 120:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Inverse transform
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
+                   dstSRS = '+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 80:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Both transforms
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
+                   dstSRS = '+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid2.tif +vunits=m +no_defs')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 115:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Both transforms to anonymous VRT
+    ds = gdal.Warp('', src_ds, format = 'VRT',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
+                   dstSRS = '+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid2.tif +vunits=m +no_defs')
+    src_ds = None # drop the ref to src_ds before for fun
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 115:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
+    src_ds.GetRasterBand(1).Fill(100)
+
+    # Both transforms to regular VRT
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/dem.tif', src_ds)
+    gdal.Warp('/vsimem/tmp.vrt', '/vsimem/dem.tif', format = 'VRT',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs',
+                   dstSRS = '+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/grid2.tif +vunits=m +no_defs')
+    ds = gdal.Open('/vsimem/tmp.vrt')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    ds = None
+    gdal.Unlink('/vsimem/dem.tif')
+    gdal.Unlink('/vsimem/tmp.vrt')
+    if data != 115:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Missing grid in forward path
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', src_ds, format = 'MEM',
+                    srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=i_dont_exist.tif +vunits=m +no_defs',
+                    dstSRS = 'EPSG:4979')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Missing grid in forward path with PROJ_LIB
+    old_proj_lib = os.environ.get('PROJ_LIB', None)
+    os.environ['PROJ_LIB'] = '/i_dont/exist'
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', src_ds, format = 'MEM',
+                    srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=i_dont_exist.tif +vunits=m +no_defs',
+                    dstSRS = 'EPSG:4979')
+    if old_proj_lib:
+        os.environ['PROJ_LIB'] = old_proj_lib
+    else:
+        del os.environ['PROJ_LIB']
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Missing grid in forward path
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', src_ds, format = 'MEM',
+                    srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=~/i_dont_exist.tif +vunits=m +no_defs',
+                    dstSRS = 'EPSG:4979')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Ungeoref grid in forward path
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', src_ds, format = 'MEM',
+                    srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/ungeoref_grid.tif +vunits=m +no_defs',
+                    dstSRS = 'EPSG:4979')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Missing grid in inverse path
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
+                   dstSRS = '+proj=longlat +datum=WGS84 +geoidgrids=i_dont_exist.tif +vunits=m +no_defs')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Ungeoref grid in inverse path
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
+                   dstSRS = '+proj=longlat +datum=WGS84 +geoidgrids=/vsimem/ungeoref_grid.tif +vunits=m +no_defs')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Missing grid in forward path, but this is OK
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                    srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=@i_dont_exist.tif +vunits=m +no_defs',
+                    dstSRS = 'EPSG:4979')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 100:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Missing grid in inverse path but this is OK
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs',
+                   dstSRS = '+proj=longlat +datum=WGS84 +geoidgrids=@i_dont_exist.tif +vunits=m +no_defs')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 100:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+
+    # Forward transform with explict m unit
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).Fill(100)
+    src_ds.GetRasterBand(1).SetUnitType('m')
+
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   dstSRS = 'EPSG:4979')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 120:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Forward transform with explict ft unit
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1, gdal.GDT_Float32)
+    src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif +vunits=m +no_defs')
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.GetRasterBand(1).Fill(100 / 0.3048)
+    src_ds.GetRasterBand(1).SetUnitType('ft')
+
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   dstSRS = 'EPSG:4979', outputType = gdal.GDT_Byte)
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 120:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    grid_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/empty_grid.tif', 1, 1)
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("WGS84")
+    grid_ds.SetProjection(sr.ExportToWkt())
+    grid_ds.SetGeoTransform([-180,360,0,90,0,-180])
+    grid_ds.GetRasterBand(1).Fill(255)
+    grid_ds.GetRasterBand(1).SetNoDataValue(255)
+    grid_ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
+    src_ds.GetRasterBand(1).Fill(100)
+
+    # Test missing shift values in area of interest
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/empty_grid.tif +vunits=m +no_defs',
+                   dstSRS = 'EPSG:4979')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 100:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Same, but make it an error
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/empty_grid.tif +vunits=m +no_defs',
+                   dstSRS = 'EPSG:4979',
+                   transformerOptions = ['ERROR_ON_MISSING_VERT_SHIFT=YES'] )
+    if ds is not None:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Test several grids
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif,/vsimem/empty_grid.tif +vunits=m +no_defs',
+                   dstSRS = 'EPSG:4979')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 120:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Same, but different order
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/empty_grid.tif,/vsimem/grid.tif +vunits=m +no_defs',
+                   dstSRS = 'EPSG:4979')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 120:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Test several grids, with some missing
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif,i_dont_exist.tif +vunits=m +no_defs',
+                   dstSRS = 'EPSG:4979')
+    if ds is not None:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Test several grids, with some missing, but that's OK
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/grid.tif,@i_dont_exist.tif +vunits=m +no_defs',
+                   dstSRS = 'EPSG:4979')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 120:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    # Test several grids, with all missing, but that's OK
+    ds = gdal.Warp('', src_ds, format = 'MEM',
+                   srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=@i_dont_exist.tif,@i_dont_exist_either.tif +vunits=m +no_defs',
+                   dstSRS = 'EPSG:4979')
+    data = struct.unpack('B' * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    if data != 100:
+        gdaltest.post_reason('Bad value')
+        print(data)
+        return 'fail'
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/grid.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/grid2.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/ungeoref_grid.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/empty_grid.tif')
+
+    return 'success'
+
+###############################################################################
+# Test error code path linked with failed warper initialization
+
+def test_gdalwarp_lib_136():
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', warpOptions = [ 'CUTLINE=invalid' ])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'VRT', warpOptions = [ 'CUTLINE=invalid' ])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -1382,6 +1694,8 @@ gdaltest_list = [
     test_gdalwarp_lib_132,
     test_gdalwarp_lib_133,
     test_gdalwarp_lib_134,
+    test_gdalwarp_lib_135,
+    test_gdalwarp_lib_136,
     test_gdalwarp_lib_cleanup,
     ]
 
