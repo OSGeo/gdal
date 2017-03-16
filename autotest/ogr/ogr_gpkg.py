@@ -3736,6 +3736,68 @@ def ogr_gpkg_45():
     return 'success'
 
 ###############################################################################
+# Test spatial view and spatial index
+
+def ogr_gpkg_46():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_46.gpkg')
+    lyr = ds.CreateLayer('foo')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 1)'))
+    lyr.CreateFeature(f)
+    ds.ExecuteSQL('CREATE VIEW my_view AS SELECT geom AS my_geom, fid AS my_mid FROM foo')
+    ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view', 'my_view', 'features', 0 )")
+    ds.ExecuteSQL("INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 0, 0, 0)")
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_46.gpkg')
+    lyr = ds.GetLayerByName('my_view')
+    if lyr.GetGeometryColumn() != 'my_geom':
+        gdaltest.post_reason('fail')
+        print(lyr.GetGeometryColumn())
+        return 'fail'
+
+    if lyr.GetFIDColumn() != 'my_mid':
+        ds = None
+        gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_46.gpkg')
+        print('SQLite likely built without SQLITE_HAS_COLUMN_METADATA')
+        return 'skip'
+
+    # Check if spatial index is recognized
+    sql_lyr = ds.ExecuteSQL("SELECT HasSpatialIndex('my_view', 'my_geom')")
+    f = sql_lyr.GetNextFeature()
+    has_spatial_index = f.GetField(0) == 1
+    ds.ReleaseResultSet(sql_lyr)
+    if not has_spatial_index:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Effectively test spatial index
+    lyr.SetSpatialFilterRect(-0.5,-0.5,0.5,0.5)
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_46.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -3805,6 +3867,7 @@ gdaltest_list = [
     ogr_gpkg_43,
     ogr_gpkg_44,
     ogr_gpkg_45,
+    ogr_gpkg_46,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
