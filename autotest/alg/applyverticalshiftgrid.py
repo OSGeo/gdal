@@ -174,18 +174,19 @@ def applyverticalshiftgrid_2():
         return 'fail'
 
     # Out of memory
-    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-    src_ds.SetProjection(sr.ExportToWkt())
-    grid_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
-    grid_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-    grid_ds.SetProjection(sr.ExportToWkt())
-    with gdaltest.error_handler():
-        out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds,
-                                             options = ['BLOCKSIZE=2000000000'])
-    if out_ds is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is None:
+        src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+        src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+        src_ds.SetProjection(sr.ExportToWkt())
+        grid_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+        grid_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+        grid_ds.SetProjection(sr.ExportToWkt())
+        with gdaltest.error_handler():
+            out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds,
+                                                options = ['BLOCKSIZE=2000000000'])
+        if out_ds is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     # Wrong DATATYPE
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
