@@ -568,7 +568,7 @@ static CPLString GetProj4Filename(const char* pszFilename)
     CPLString osFilename;
 
     /* or fixed path: /name, ./name or ../name */
-    if ( !CPLIsFilenameRelative(pszFilename) || *pszFilename != '.' )
+    if ( !CPLIsFilenameRelative(pszFilename) || *pszFilename == '.' )
     {
         return pszFilename;
     }

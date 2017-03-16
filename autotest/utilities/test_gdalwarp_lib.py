@@ -1419,6 +1419,15 @@ def test_gdalwarp_lib_135():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Missing grid in forward path
+    with gdaltest.error_handler():
+        ds = gdal.Warp('', src_ds, format = 'MEM',
+                    srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/i_dont/exist.tif +vunits=m +no_defs',
+                    dstSRS = 'EPSG:4979')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     # Ungeoref grid in forward path
     with gdaltest.error_handler():
         ds = gdal.Warp('', src_ds, format = 'MEM',
