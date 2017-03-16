@@ -484,16 +484,14 @@ static GDALDatasetH ApplyVerticalShiftGrid( GDALDatasetH hWrkSrcDS,
     bErrorOccuredOut = false;
     // Check if we must do vertical shift grid transform
     double adfGT[6];
-    const char* pszSrcWKT = NULL;
-    const char* pszDstWKT = NULL;
+    const char* pszSrcWKT = CSLFetchNameValueDef(
+                                    psOptions->papszTO, "SRC_SRS",
+                                    GDALGetProjectionRef(hWrkSrcDS) );
+    const char* pszDstWKT = CSLFetchNameValue( psOptions->papszTO, "DST_SRS" );
     if( GDALGetRasterCount(hWrkSrcDS) == 1 &&
         GDALGetGeoTransform(hWrkSrcDS, adfGT) == CE_None &&
-        ((pszSrcWKT = CSLFetchNameValue( psOptions->papszTO, "SRC_SRS" ))
-                                                                != NULL ||
-         ((pszSrcWKT = GDALGetProjectionRef(hWrkSrcDS)) != NULL &&
-           pszSrcWKT[0] != '\0')) &&
-        (pszDstWKT = CSLFetchNameValue( psOptions->papszTO, "DST_SRS" ))
-                                                                != NULL )
+        pszSrcWKT != NULL && pszSrcWKT[0] != '\0' &&
+        pszDstWKT != NULL )
     {
         OGRSpatialReference oSRSSrc;
         OGRSpatialReference oSRSDst;
