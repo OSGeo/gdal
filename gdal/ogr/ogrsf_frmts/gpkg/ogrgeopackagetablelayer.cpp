@@ -609,10 +609,11 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     {
         /* Check that the table name is registered in gpkg_contents */
         char* pszSQL = sqlite3_mprintf(
-            "SELECT table_name, data_type, identifier, "
-            "description, min_x, min_y, max_x, max_y "
-            "FROM gpkg_contents "
-            "WHERE table_name = '%q'"
+            "SELECT c.table_name, c.data_type, c.identifier, "
+            "c.description, c.min_x, c.min_y, c.max_x, c.max_y, m.type "
+            "FROM gpkg_contents c JOIN sqlite_master m ON "
+            "c.table_name = m.name "
+            "WHERE (c.table_name = '%q' AND m.type IN ('table', 'view'))"
 #ifdef WORKAROUND_SQLITE3_BUGS
             " OR 0"
 #endif
@@ -641,6 +642,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         const char* pszDescription = SQLResultGetValue(&oResultContents, 3, 0);
         if( pszDescription && pszDescription[0] )
             OGRLayer::SetMetadataItem("DESCRIPTION", pszDescription);
+        m_bIsView = EQUAL(SQLResultGetValue(&oResultContents, 8, 0), "view");
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
         if( m_poDS->m_bHasGPKGOGRContents )
@@ -935,7 +937,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     }
 
     /* Wait, we didn't find a FID? Some operations will not be possible */
-    if ( m_pszFidColumn == NULL )
+    if ( !m_bIsView && m_pszFidColumn == NULL )
     {
         CPLDebug("GPKG",
                  "no integer primary key defined for table '%s'",
@@ -966,6 +968,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
                     const char * pszTableName) :
     OGRGeoPackageLayer(poDS),
     m_pszTableName(CPLStrdup(pszTableName)),
+    m_bIsView(false),
     m_iSrs(0),
     m_poExtent(NULL),
 #ifdef ENABLE_GPKG_OGR_CONTENTS
@@ -1029,6 +1032,75 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 
     if ( m_poInsertStatement )
         sqlite3_finalize(m_poInsertStatement);
+}
+
+/************************************************************************/
+/*                        PostInit()                                    */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::PostInit()
+{
+#ifdef SQLITE_HAS_COLUMN_METADATA
+    if( m_bIsView )
+    {
+        /* Detect if the view columns have the FID and geom columns of a */
+        /* table that has itself a spatial index */
+        sqlite3_stmt* hStmt = NULL;
+        char* pszSQL = sqlite3_mprintf("SELECT * FROM \"%w\"", m_pszTableName);
+        CPL_IGNORE_RET_VAL(sqlite3_prepare_v2(m_poDS->GetDB(),
+                                              pszSQL, -1, &hStmt, NULL));
+        sqlite3_free(pszSQL);
+        if( hStmt )
+        {
+            if( sqlite3_step(hStmt) == SQLITE_ROW )
+            {
+                OGRGeoPackageTableLayer* poLayerGeom = NULL;
+                OGRGeoPackageTableLayer* poLayerFID = NULL;
+                const int nRawColumns = sqlite3_column_count( hStmt );
+                for( int iCol = 0; iCol < nRawColumns; iCol++ )
+                {
+                    CPLString osColName(OGRSQLiteParamsUnquote(
+                                        sqlite3_column_name( hStmt, iCol )));
+                    const char* pszTableName =
+                        sqlite3_column_table_name( hStmt, iCol );
+                    const char* pszOriginName =
+                        sqlite3_column_origin_name( hStmt, iCol );
+                    if( pszTableName != NULL && pszOriginName != NULL )
+                    {
+                        OGRGeoPackageTableLayer* poLayer =
+                            dynamic_cast<OGRGeoPackageTableLayer*>(
+                            m_poDS->GetLayerByName(pszTableName));
+                        if( poLayer != NULL &&
+                            strcmp(pszOriginName,
+                                   poLayer->GetGeometryColumn()) == 0 )
+                        {
+                            poLayerGeom = poLayer;
+                        }
+                        else if( poLayer != NULL &&
+                                 strcmp(pszOriginName,
+                                        poLayer->GetFIDColumn()) == 0 )
+                        {
+                            poLayerFID = poLayer;
+                            CPLFree(m_pszFidColumn);
+                            m_pszFidColumn = CPLStrdup(osColName);
+                        }
+                    }
+                }
+
+                if( poLayerGeom != NULL && poLayerGeom == poLayerFID &&
+                    poLayerGeom->HasSpatialIndex() )
+                {
+                    m_bHasSpatialIndex = true;
+                    m_osRTreeName = poLayerGeom->m_osRTreeName;
+                }
+            }
+            sqlite3_finalize(hStmt);
+        }
+
+        /* Update the columns string */
+        BuildColumns();
+    }
+#endif
 }
 
 /************************************************************************/
@@ -1692,10 +1764,6 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
         if ( m_poFilterGeom != NULL && m_pszAttrQueryString == NULL &&
             HasSpatialIndex() && m_pszFidColumn != NULL )
         {
-            const char* pszT = m_pszTableName;
-            const char* pszC = m_poFeatureDefn->
-                            GetGeomFieldDefn(m_iGeomFieldFilter)->GetNameRef();
-
             OGREnvelope  sEnvelope;
 
             m_poFilterGeom->getEnvelope( &sEnvelope );
@@ -1719,14 +1787,13 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
                 !CPLIsInf(sEnvelope.MaxX) && !CPLIsInf(sEnvelope.MaxY) )
             {
                 soSQL.Printf("SELECT %s FROM \"%s\" m "
-                             "JOIN \"rtree_%s_%s\" r "
+                             "JOIN \"%s\" r "
                              "ON m.\"%s\" = r.id WHERE "
                              "r.maxx >= %.12f AND r.minx <= %.12f AND "
                              "r.maxy >= %.12f AND r.miny <= %.12f",
                              m_soColumns.c_str(),
-                             SQLEscapeDoubleQuote(pszT).c_str(),
-                             SQLEscapeDoubleQuote(pszT).c_str(),
-                             SQLEscapeDoubleQuote(pszC).c_str(),
+                             SQLEscapeDoubleQuote(m_pszTableName).c_str(),
+                             SQLEscapeDoubleQuote(m_osRTreeName).c_str(),
                              SQLEscapeDoubleQuote(m_pszFidColumn).c_str(),
                              sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
                              sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
@@ -1996,10 +2063,6 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
     if ( m_poFilterGeom != NULL && m_pszAttrQueryString == NULL &&
         HasSpatialIndex() )
     {
-        const char* pszT = m_pszTableName;
-        const char* pszC = m_poFeatureDefn->
-                        GetGeomFieldDefn(m_iGeomFieldFilter)->GetNameRef();
-
         OGREnvelope  sEnvelope;
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
@@ -2007,11 +2070,10 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
         if( !CPLIsInf(sEnvelope.MinX) && !CPLIsInf(sEnvelope.MinY) &&
             !CPLIsInf(sEnvelope.MaxX) && !CPLIsInf(sEnvelope.MaxY) )
         {
-            soSQL.Printf("SELECT COUNT(*) FROM \"rtree_%s_%s\" WHERE "
+            soSQL.Printf("SELECT COUNT(*) FROM \"%s\" WHERE "
                          "maxx >= %.12f AND minx <= %.12f AND "
                          "maxy >= %.12f AND miny <= %.12f",
-                         SQLEscapeDoubleQuote(pszT).c_str(),
-                         SQLEscapeDoubleQuote(pszC).c_str(),
+                         SQLEscapeDoubleQuote(m_osRTreeName).c_str(),
                          sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
                          sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
         }
@@ -2196,6 +2258,9 @@ typedef struct
 bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
 {
     OGRErr err;
+
+    if( m_bIsView )
+        return false;
 
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return false;
@@ -2705,6 +2770,10 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
     if ( err == OGRERR_NONE && oResultTable.nRowCount == 1 )
     {
         m_bHasSpatialIndex = true;
+        m_osRTreeName = "rtree_";
+        m_osRTreeName += pszT;
+        m_osRTreeName += "_";
+        m_osRTreeName += pszC;
     }
     SQLResultFree(&oResultTable);
 
@@ -2717,6 +2786,9 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
 
 bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 {
+    if( m_bIsView )
+        return false;
+
     if( !HasSpatialIndex() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Spatial index not existing");
@@ -2962,9 +3034,6 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomColIn,
     if( iGeomColIn < 0 || iGeomColIn >= m_poFeatureDefn->GetGeomFieldCount() )
         return osSpatialWHERE;
 
-    const char* pszT = m_pszTableName;
-    const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(iGeomColIn)->GetNameRef();
-
     if( poFilterGeom != NULL )
     {
         OGREnvelope  sEnvelope;
@@ -2996,17 +3065,18 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomColIn,
         if( bUseSpatialIndex && HasSpatialIndex() && m_pszFidColumn )
         {
             osSpatialWHERE.Printf(
-                "\"%s\" IN ( SELECT id FROM \"rtree_%s_%s\" WHERE "
+                "\"%s\" IN ( SELECT id FROM \"%s\" WHERE "
                 "maxx >= %.12f AND minx <= %.12f AND "
                 "maxy >= %.12f AND miny <= %.12f)",
                 SQLEscapeDoubleQuote(m_pszFidColumn).c_str(),
-                SQLEscapeDoubleQuote(pszT).c_str(),
-                SQLEscapeDoubleQuote(pszC).c_str(),
+                SQLEscapeDoubleQuote(m_osRTreeName).c_str(),
                 sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
                 sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
         }
         else
         {
+            const char* pszC =
+                m_poFeatureDefn->GetGeomFieldDefn(iGeomColIn)->GetNameRef();
             /* A bit inefficient but still faster than OGR filtering */
             osSpatialWHERE.Printf(
                 "(ST_MaxX(\"%s\") >= %.12f AND ST_MinX(\"%s\") <= %.12f AND "

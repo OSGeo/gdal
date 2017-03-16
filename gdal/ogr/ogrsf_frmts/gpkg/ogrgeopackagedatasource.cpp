@@ -763,6 +763,10 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                 }
                 m_papoLayers[m_nLayers++] = poLayer;
             }
+
+            // For spatial views
+            for ( int i = 0; i < m_nLayers; i++ )
+                m_papoLayers[i]->PostInit();
         }
 
         SQLResultFree(&oResult);
