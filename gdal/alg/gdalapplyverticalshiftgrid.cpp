@@ -246,7 +246,7 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                                     GDT_Float32,
                                                     sizeof(float),
                                                     nBlockXSize * sizeof(float),
-                                                    0);
+                                                    NULL);
     if( eErr == CE_None )
         eErr =  poGDS->m_poReprojectedGrid->GetRasterBand(1)->RasterIO(GF_Read,
                                                     nXOff, nYOff,
@@ -256,7 +256,7 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                                     GDT_Float32,
                                                     sizeof(float),
                                                     nBlockXSize * sizeof(float),
-                                                    0);
+                                                    NULL);
     if( eErr == CE_None )
     {
         const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
