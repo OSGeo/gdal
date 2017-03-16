@@ -207,7 +207,9 @@ data type (can be controlled with the ASPATIAL_VARIANT layer creation option)</p
 <li>
 Simple translation of a single shapefile into GeoPackage.  The table 'abc' will
 be created with the features from abc.shp and attributes from abc.dbf.
-The file <code>filename.gpkg</code> must <strong>not</strong> already exist, as it will be created.
+The file <code>filename.gpkg</code> must <strong>not</strong> already exist,
+as it will be created. For adding new layers into existing geopackage run 
+ogr2ogr with <strong>-update</strong>.
 <pre>
 % ogr2ogr -f GPKG filename.gpkg abc.shp
 </pre>
