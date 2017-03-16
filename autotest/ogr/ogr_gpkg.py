@@ -3763,12 +3763,6 @@ def ogr_gpkg_46():
         print(lyr.GetGeometryColumn())
         return 'fail'
 
-    if lyr.GetFIDColumn() != 'my_mid':
-        ds = None
-        gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_46.gpkg')
-        print('SQLite likely built without SQLITE_HAS_COLUMN_METADATA')
-        return 'skip'
-
     # Check if spatial index is recognized
     sql_lyr = ds.ExecuteSQL("SELECT HasSpatialIndex('my_view', 'my_geom')")
     f = sql_lyr.GetNextFeature()
@@ -3777,6 +3771,12 @@ def ogr_gpkg_46():
     if not has_spatial_index:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    if not has_spatial_index:
+        ds = None
+        gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_46.gpkg')
+        print('SQLite likely built without SQLITE_HAS_COLUMN_METADATA')
+        return 'skip'
 
     # Effectively test spatial index
     lyr.SetSpatialFilterRect(-0.5,-0.5,0.5,0.5)

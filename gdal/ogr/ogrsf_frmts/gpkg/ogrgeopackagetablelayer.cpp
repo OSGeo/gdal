@@ -1055,7 +1055,6 @@ void OGRGeoPackageTableLayer::PostInit()
             if( sqlite3_step(hStmt) == SQLITE_ROW )
             {
                 OGRGeoPackageTableLayer* poLayerGeom = NULL;
-                OGRGeoPackageTableLayer* poLayerFID = NULL;
                 const int nRawColumns = sqlite3_column_count( hStmt );
                 for( int iCol = 0; iCol < nRawColumns; iCol++ )
                 {
@@ -1071,27 +1070,42 @@ void OGRGeoPackageTableLayer::PostInit()
                             dynamic_cast<OGRGeoPackageTableLayer*>(
                             m_poDS->GetLayerByName(pszTableName));
                         if( poLayer != NULL &&
+                            osColName == GetGeometryColumn() &&
                             strcmp(pszOriginName,
                                    poLayer->GetGeometryColumn()) == 0 )
                         {
                             poLayerGeom = poLayer;
-                        }
-                        else if( poLayer != NULL &&
-                                 strcmp(pszOriginName,
-                                        poLayer->GetFIDColumn()) == 0 )
-                        {
-                            poLayerFID = poLayer;
-                            CPLFree(m_pszFidColumn);
-                            m_pszFidColumn = CPLStrdup(osColName);
+                            break;
                         }
                     }
                 }
 
-                if( poLayerGeom != NULL && poLayerGeom == poLayerFID &&
-                    poLayerGeom->HasSpatialIndex() )
+                if( poLayerGeom != NULL && poLayerGeom->HasSpatialIndex() )
                 {
-                    m_bHasSpatialIndex = true;
-                    m_osRTreeName = poLayerGeom->m_osRTreeName;
+                    for( int iCol = 0; iCol < nRawColumns; iCol++ )
+                    {
+                        CPLString osColName(OGRSQLiteParamsUnquote(
+                                            sqlite3_column_name( hStmt, iCol )));
+                        const char* pszTableName =
+                            sqlite3_column_table_name( hStmt, iCol );
+                        const char* pszOriginName =
+                            sqlite3_column_origin_name( hStmt, iCol );
+                        if( pszTableName != NULL && pszOriginName != NULL )
+                        {
+                            OGRGeoPackageTableLayer* poLayer =
+                                dynamic_cast<OGRGeoPackageTableLayer*>(
+                                m_poDS->GetLayerByName(pszTableName));
+                            if( poLayer != NULL && poLayer == poLayerGeom &&
+                                 strcmp(pszOriginName,
+                                        poLayer->GetFIDColumn()) == 0 )
+                            {
+                                m_bHasSpatialIndex = true;
+                                m_osRTreeName = poLayerGeom->m_osRTreeName;
+                                m_osFIDForRTree = osColName;
+                                break;
+                            }
+                        }
+                    }
                 }
             }
             sqlite3_finalize(hStmt);
@@ -1762,7 +1776,7 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
                      m_soFilter.c_str());
 
         if ( m_poFilterGeom != NULL && m_pszAttrQueryString == NULL &&
-            HasSpatialIndex() && m_pszFidColumn != NULL )
+            HasSpatialIndex() )
         {
             OGREnvelope  sEnvelope;
 
@@ -1794,7 +1808,7 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
                              m_soColumns.c_str(),
                              SQLEscapeDoubleQuote(m_pszTableName).c_str(),
                              SQLEscapeDoubleQuote(m_osRTreeName).c_str(),
-                             SQLEscapeDoubleQuote(m_pszFidColumn).c_str(),
+                             SQLEscapeDoubleQuote(m_osFIDForRTree).c_str(),
                              sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
                              sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
             }
@@ -2060,7 +2074,7 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
     /* Ignore bForce, because we always do a full count on the database */
     OGRErr err;
     CPLString soSQL;
-    if ( m_poFilterGeom != NULL && m_pszAttrQueryString == NULL &&
+    if ( !m_bIsView && m_poFilterGeom != NULL && m_pszAttrQueryString == NULL &&
         HasSpatialIndex() )
     {
         OGREnvelope  sEnvelope;
@@ -2774,6 +2788,7 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
         m_osRTreeName += pszT;
         m_osRTreeName += "_";
         m_osRTreeName += pszC;
+        m_osFIDForRTree = m_pszFidColumn;
     }
     SQLResultFree(&oResultTable);
 
@@ -3062,13 +3077,13 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomColIn,
             bUseSpatialIndex = false;
         }
 
-        if( bUseSpatialIndex && HasSpatialIndex() && m_pszFidColumn )
+        if( bUseSpatialIndex && HasSpatialIndex() )
         {
             osSpatialWHERE.Printf(
                 "\"%s\" IN ( SELECT id FROM \"%s\" WHERE "
                 "maxx >= %.12f AND minx <= %.12f AND "
                 "maxy >= %.12f AND miny <= %.12f)",
-                SQLEscapeDoubleQuote(m_pszFidColumn).c_str(),
+                SQLEscapeDoubleQuote(m_osFIDForRTree).c_str(),
                 SQLEscapeDoubleQuote(m_osRTreeName).c_str(),
                 sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
                 sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);

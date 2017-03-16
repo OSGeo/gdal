@@ -347,6 +347,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     CPLString                   m_soFilter;
     CPLString                   osQuery;
     CPLString                   m_osRTreeName;
+    CPLString                   m_osFIDForRTree;
     bool                        m_bExtentChanged;
     bool                        m_bContentChanged;
     sqlite3_stmt*               m_poUpdateStatement;
