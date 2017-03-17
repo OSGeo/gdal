@@ -805,7 +805,20 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
 
-    bool bPKIDColumnFound = false;
+    // First pass to determine if we have a single PKID column
+    int nCountPKIDColumns = 0;
+    for ( int iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
+    {
+        int nPKIDIndex = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord);
+        if( nPKIDIndex > 0 )
+            nCountPKIDColumns ++;
+    }
+    if( nCountPKIDColumns > 1 )
+    {
+        CPLDebug("GPKG", "For table %s, multiple columns make "
+                         "the primary key. Ignoring them",
+                 m_pszTableName);
+    }
 
     for ( int iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
     {
@@ -883,19 +896,10 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
                 oType = OFTString;
             }
 
-            /* Case of primary key on several columns */
-            if ( nPKIDIndex > 0 && bPKIDColumnFound )
-            {
-                CPLDebug("GPKG", "For table %s, multiple columns make "
-                         "the primary key. Ignoring them",
-                         m_pszTableName);
-                CPLFree( m_pszFidColumn );
-                m_pszFidColumn = NULL;
-            }
             /* Is this the FID column? */
-            else if ( nPKIDIndex > 0 && (oType == OFTInteger || oType == OFTInteger64) )
+            if ( nPKIDIndex > 0 && nCountPKIDColumns == 1 &&
+                      (oType == OFTInteger || oType == OFTInteger64) )
             {
-                bPKIDColumnFound = true;
                 m_pszFidColumn = CPLStrdup(pszName);
             }
             else
