@@ -20,19 +20,19 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
                 g2float *fld,g2int ngrdpts,g2int ibmap,g2int *bmap)
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_addfield 
+// SUBPROGRAM:    g2_addfield
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-11-05
 //
 // ABSTRACT: This routine packs up Sections 4 through 7 for a given field
 //   and adds them to a GRIB2 message.  They are Product Definition Section,
-//   Data Representation Section, Bit-Map Section and Data Section, 
+//   Data Representation Section, Bit-Map Section and Data Section,
 //   respectively.
-//   This routine is used with routines "g2_create", "g2_addlocal", 
-//   "g2_addgrid", and "g2_gribend" to create a complete GRIB2 message.  
+//   This routine is used with routines "g2_create", "g2_addlocal",
+//   "g2_addgrid", and "g2_gribend" to create a complete GRIB2 message.
 //   g2_create must be called first to initialize a new GRIB2 message.
 //   Also, routine g2_addgrid must be called after g2_create and
 //   before this routine to add the appropriate grid description to
-//   the GRIB2 message.   Also, a call to g2_gribend is required to complete 
+//   the GRIB2 message.   Also, a call to g2_gribend is required to complete
 //   GRIB2 message after all fields have been added.
 //
 // PROGRAM HISTORY LOG:
@@ -54,7 +54,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
 //                4 through 7 should be added.
 //     ipdsnum  - Product Definition Template Number ( see Code Table 4.0)
 //     ipdstmpl - Contains the data values for the specified Product Definition
-//                Template ( N=ipdsnum ).  Each element of this integer 
+//                Template ( N=ipdsnum ).  Each element of this integer
 //                array contains an entry (in the order specified) of Product
 //                Definition Template 4.N
 //     coordlist- Array containing floating point values intended to document
@@ -63,7 +63,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
 //     numcoord - number of values in array coordlist.
 //     idrsnum  - Data Representation Template Number ( see Code Table 5.0 )
 //     idrstmpl - Contains the data values for the specified Data Representation
-//                Template ( N=idrsnum ).  Each element of this integer 
+//                Template ( N=idrsnum ).  Each element of this integer
 //                array contains an entry (in the order specified) of Data
 //                Representation Template 5.N
 //                Note that some values in this template (eg. reference
@@ -81,7 +81,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
 //                255 = Bit map does not apply to this product.
 //     bmap[]   - Integer array containing bitmap to be added. ( if ibmap=0 )
 //
-//   OUTPUT ARGUMENT LIST:      
+//   OUTPUT ARGUMENT LIST:
 //     cgrib    - Character array to contain the updated GRIB2 message.
 //                Must be allocated large enough to store the entire
 //                GRIB2 message.
@@ -108,7 +108,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE:  
+//   MACHINE:
 //
 //$$$
 {
@@ -131,7 +131,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       g2float *pfld;
       xxtemplate  *mappds,*mapdrs;
       const unsigned int allones=4294967295u;
- 
+
 //
 //  Check to see if beginning of GRIB message exists
 //
@@ -142,11 +142,11 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       }
 //
 //  Get current length of GRIB message
-//  
+//
       gbit(cgrib,&lencurr,96,32);
 //
 //  Check to see if GRIB message is already complete
-//  
+//
       if ( cgrib[lencurr-4]==s7 && cgrib[lencurr-3]==s7 &&
            cgrib[lencurr-2]==s7 && cgrib[lencurr-1]==s7 ) {
         printf("g2_addfield: GRIB message already complete.  Cannot add new section.\n");
@@ -159,7 +159,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       issec3=0;
       isprevbmap=0;
       len=16;    // length of Section 0
-      for (;;) { 
+      for (;;) {
       //    Get number and length of next section
         iofst=len*8;
         gbit(cgrib,&ilen,iofst,32);
@@ -316,11 +316,11 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
         simpack(pfld,ndpts,idrstmpl,cpack,&lcpack);
       else if (idrsnum==2 || idrsnum==3)           //  Complex Packing
         cmplxpack(pfld,ndpts,idrsnum,idrstmpl,cpack,&lcpack);
-      else if (idrsnum == 50) {         //  Sperical Harmonic Simple Packing 
+      else if (idrsnum == 50) {         //  Sperical Harmonic Simple Packing
         simpack(pfld+1,ndpts-1,idrstmpl,cpack,&lcpack);
         mkieee(pfld+0,idrstmpl+4,1);  // ensure RE(0,0) value is IEEE format
       }
-      else if (idrsnum == 51) {         //  Sperical Harmonic Complex Packing 
+      else if (idrsnum == 51) {         //  Sperical Harmonic Complex Packing
         getpoly(cgrib+lpos3,&JJ,&KK,&MM);
         if ( JJ!=0 && KK!=0 && MM!=0 )
            specpack(pfld,ndpts,JJ,KK,MM,idrstmpl,cpack,&lcpack);
@@ -478,7 +478,7 @@ g2int g2_addfield(unsigned char *cgrib,g2int ipdsnum,g2int *ipdstmpl,
       }
       //
       //   Calculate length of section 7 and store it in octets
-      //   1-4 of section 7.  
+      //   1-4 of section 7.
       //
       lensec7=(iofst-ibeg)/8;
       sbit(cgrib,&lensec7,ibeg,32);

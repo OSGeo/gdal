@@ -5,7 +5,7 @@
 g2int g2_unpack1(unsigned char *cgrib,g2int *iofst,g2int **ids,g2int *idslen)
 /*//$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_unpack1 
+// SUBPROGRAM:    g2_unpack1
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-29
 //
 // ABSTRACT: This subroutine unpacks Section 1 (Identification Section)
@@ -20,9 +20,9 @@ g2int g2_unpack1(unsigned char *cgrib,g2int *iofst,g2int **ids,g2int *idslen)
 //     cgrib    - char array containing Section 1 of the GRIB2 message
 //     iofst    - Bit offset for the beginning of Section 1 in cgrib.
 //
-//   OUTPUT ARGUMENTS:      
+//   OUTPUT ARGUMENTS:
 //     iofst    - Bit offset at the end of Section 1, returned.
-//     ids      - address of pointer to integer array containing information 
+//     ids      - address of pointer to integer array containing information
 //                read from Section 1, the Identification section.
 //            ids[0]  = Identification of originating Centre
 //                                 ( see Common Code Table C-1 )
@@ -49,7 +49,7 @@ g2int g2_unpack1(unsigned char *cgrib,g2int *iofst,g2int **ids,g2int *idslen)
 //                2 = Array passed is not section 1
 //                6 = memory allocation error
 //
-// REMARKS: 
+// REMARKS:
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
@@ -88,12 +88,12 @@ g2int g2_unpack1(unsigned char *cgrib,g2int *iofst,g2int **ids,g2int *idslen)
          ierr=6;
          return(ierr);
       }
-      
+
       for (i=0;i<*idslen;i++) {
         nbits=mapid[i]*8;
         gbit(cgrib,*ids+i,*iofst,nbits);
         *iofst=*iofst+nbits;
       }
-      
+
       return(ierr);    // End of Section 1 processing
 }

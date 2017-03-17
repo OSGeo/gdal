@@ -1999,7 +1999,7 @@ void pk_grib2 (CPL_UNUSED sInt4 * kfildo, CPL_UNUSED float * ain,
                CPL_UNUSED sInt4 * nidat, CPL_UNUSED float * rdat,
                CPL_UNUSED sInt4 * nrdat, CPL_UNUSED sInt4 * is0,
                CPL_UNUSED sInt4 * ns0, CPL_UNUSED sInt4 * is1,
-               CPL_UNUSED sInt4 * ns1, CPL_UNUSED sInt4 * is3, 
+               CPL_UNUSED sInt4 * ns1, CPL_UNUSED sInt4 * is3,
                CPL_UNUSED sInt4 * ns3, CPL_UNUSED sInt4 * is4,
                CPL_UNUSED sInt4 * ns4, CPL_UNUSED sInt4 * is5,
                CPL_UNUSED sInt4 * ns5, CPL_UNUSED sInt4 * is6,
@@ -2014,7 +2014,7 @@ void pk_grib2 (CPL_UNUSED sInt4 * kfildo, CPL_UNUSED float * ain,
                CPL_UNUSED sInt4 * ndjer, CPL_UNUSED sInt4 * kjer)
 {
 #ifndef _FORTRAN
-   
+
    printf ("Can not pack things unless using FORTRAN!\n");
    return;
 

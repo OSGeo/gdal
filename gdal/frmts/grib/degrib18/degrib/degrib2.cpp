@@ -123,10 +123,10 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
    wordType word;       /* Used to check that the edition is correct. */
    uInt4 curLen;        /* Where we currently are in buff. */
    uInt4 i;             /* Used to loop over the first few char's */
-   uInt4 stillNeed;     /* Number of bytes still needed to get 1st 8 bytes of 
+   uInt4 stillNeed;     /* Number of bytes still needed to get 1st 8 bytes of
                          * message into memory. */
 
-   /* Get first 8 bytes.  If GRIB we don't care.  If TDLP, this is the length 
+   /* Get first 8 bytes.  If GRIB we don't care.  If TDLP, this is the length
     * of record.  Read at least 1 record (length + 2 * 8) + 8 (next record
     * length) + 8 bytes before giving up. */
    curLen = 8;
@@ -263,7 +263,7 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
  *  msgNum = Which message to look for. (Input)
  *  offset = Where in the file the message starts (this is before the
  *           wmo ASCII part if there is one.) (Output)
- *  curMsg = The current # of messages we have looked through. (In/Out) 
+ *  curMsg = The current # of messages we have looked through. (In/Out)
  *
  * FILES/DATABASES:
  *   An already opened "GRIB2" File

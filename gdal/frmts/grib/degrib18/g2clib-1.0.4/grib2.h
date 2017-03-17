@@ -7,7 +7,7 @@
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-25
 //
 //   Each element of structure gribfield is defined as:
-//   
+//
 //   gribfield gfld;
 //
 //        gfld->version = GRIB edition number ( currently 2 )
@@ -124,10 +124,10 @@
 //        gfld->unpacked = logical value indicating whether the bitmap and
 //                        data values were unpacked.  If false,
 //                        gfld->bmap and gfld->fld pointers are nullified.
-//        gfld->expanded = Logical value indicating whether the data field 
-//                         was expanded to the grid in the case where a 
+//        gfld->expanded = Logical value indicating whether the data field
+//                         was expanded to the grid in the case where a
 //                         bit-map is present.  If true, the data points in
-//                         gfld->fld match the grid points and zeros were 
+//                         gfld->fld match the grid points and zeros were
 //                         inserted at grid points where data was bit-mapped
 //                         out.  If false, the data values in gfld->fld were
 //                         not expanded to the grid and are just a consecutive
@@ -207,7 +207,7 @@ void g2_free(gribfield *);
 /*  Prototypes for packing API  */
 g2int g2_create(unsigned char *,g2int *,g2int *);
 g2int g2_addlocal(unsigned char *,unsigned char *,g2int );
-g2int g2_addgrid(unsigned char *,g2int *,g2int *,g2int *,g2int ); 
+g2int g2_addgrid(unsigned char *,g2int *,g2int *,g2int *,g2int );
 g2int g2_addfield(unsigned char *,g2int ,g2int *,
                        g2float *,g2int ,g2int ,g2int *,
                        g2float *,g2int ,g2int ,g2int *);
@@ -270,7 +270,7 @@ g2int getpoly(unsigned char *csec3,g2int *jj,g2int *kk,g2int *mm);
 void jpcpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
              unsigned char *cpack,g2int *lcpack);
 int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
-                 g2int ltype, g2int ratio, g2int retry, char *outjpc, 
+                 g2int ltype, g2int ratio, g2int retry, char *outjpc,
                  g2int jpclen);
 
 int dec_png(unsigned char *pngbuf,g2int len,g2int *width,g2int *height,unsigned char *cout, g2int ndpts, g2int nbits);

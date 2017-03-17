@@ -3,10 +3,10 @@
 void rdieee(g2int *rieee,g2float *a,g2int num)
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    rdieee 
+// SUBPROGRAM:    rdieee
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-25
 //
-// ABSTRACT: This subroutine reads a list of real values in 
+// ABSTRACT: This subroutine reads a list of real values in
 //   32-bit IEEE floating point format.
 //
 // PROGRAM HISTORY LOG:
@@ -17,7 +17,7 @@ void rdieee(g2int *rieee,g2float *a,g2int num)
 //     rieee    - g2int array of floating point values in 32-bit IEEE format.
 //     num      - Number of floating point values to convert.
 //
-//   OUTPUT ARGUMENT LIST:      
+//   OUTPUT ARGUMENT LIST:
 //     a        - float array of real values.  a must be allocated with at
 //                least 4*num bytes of memory before calling this function.
 //
@@ -57,7 +57,7 @@ void rdieee(g2int *rieee,g2float *a,g2int num)
 
         sign=1.0;
         if (isign == 1) sign=-1.0;
-        
+
         if ( (iexp > 0) && (iexp < 255) ) {
           temp=(g2float)int_power(2.0,(iexp-127));
           a[j]=(float)(sign*temp*(1.0+(two23*(g2float)imant)));
@@ -67,7 +67,7 @@ void rdieee(g2int *rieee,g2float *a,g2int num)
             a[j]=sign*two126*two23*(g2float)imant;
           else
             a[j]=(float)(sign*0.0);
-          
+
         }
         else if ( iexp == 255 )
            a[j]=(float)(sign*(1E+37));

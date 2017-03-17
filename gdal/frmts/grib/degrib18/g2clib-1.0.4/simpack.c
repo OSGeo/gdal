@@ -29,21 +29,21 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
 //                [3] = Number of bits used to pack data, if value is
 //                      > 0 and  <= 31.
 //                      If this input value is 0 or outside above range
-//                      then the num of bits is calculated based on given 
+//                      then the num of bits is calculated based on given
 //                      data and scale factors.
 //                [4] = Original field type - currently ignored on input
 //                      Data values assumed to be reals.
 //
-//   OUTPUT ARGUMENT LIST: 
+//   OUTPUT ARGUMENT LIST:
 //     idrstmpl - Contains the array of values for Data Representation
 //                Template 5.0
 //                [0] = Reference value - set by simpack routine.
 //                [1] = Binary Scale Factor - unchanged from input
 //                [2] = Decimal Scale Factor - unchanged from input
-//                [3] = Number of bits used to pack data, unchanged from 
+//                [3] = Number of bits used to pack data, unchanged from
 //                      input if value is between 0 and 31.
 //                      If this input value is 0 or outside above range
-//                      then the num of bits is calculated based on given 
+//                      then the num of bits is calculated based on given
 //                      data and scale factors.
 //                [4] = Original field type - currently set = 0 on output.
 //                      Data values assumed to be reals.
@@ -54,7 +54,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE:  
+//   MACHINE:
 //
 //$$$
 {
@@ -65,7 +65,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
       g2float  bscale,dscale,rmax,rmin,temp;
       double maxnum;
       const g2float alog2=0.69314718f;       //  ln(2.0)
-      
+
       bscale=(float)int_power(2.0,-idrstmpl[1]);
       dscale=(float)int_power(10.0,idrstmpl[2]);
       if (idrstmpl[3] <= 0 || idrstmpl[3] > 31)
@@ -81,7 +81,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
         if (fld[j] > rmax) rmax=fld[j];
         if (fld[j] < rmin) rmin=fld[j];
       }
-     
+
       ifld=calloc(ndpts,sizeof(g2int));
 //
 //  If max and min values are not equal, pack up field.
@@ -91,12 +91,12 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
 //
       if (rmin != rmax) {
         //
-        //  Determine which algorithm to use based on user-supplied 
+        //  Determine which algorithm to use based on user-supplied
         //  binary scale factor and number of bits.
         //
         if (nbits==0 && idrstmpl[1]==0) {
            //
-           //  No binary scaling and calculate minimum number of 
+           //  No binary scaling and calculate minimum number of
            //  bits in which the data will fit.
            //
            imin=(g2int)RINT(rmin*dscale);
@@ -126,7 +126,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
         }
         else if (nbits==0 && idrstmpl[1]!=0) {
            //
-           //  Use binary scaling factor and calculate minimum number of 
+           //  Use binary scaling factor and calculate minimum number of
            //  bits in which the data will fit.
            //
            rmin=rmin*dscale;
@@ -140,7 +140,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
         }
         else if (nbits!=0 && idrstmpl[1]!=0) {
            //
-           //  Use binary scaling factor and use minimum number of 
+           //  Use binary scaling factor and use minimum number of
            //  bits specified by user.   Dangerous - may loose
            //  information if binary scale factor and nbits not set
            //  properly by user.

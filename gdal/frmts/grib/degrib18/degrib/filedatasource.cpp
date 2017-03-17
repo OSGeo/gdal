@@ -37,7 +37,7 @@ int FileDataSource::DataSourceFgetc()
 int FileDataSource::DataSourceUngetc(int c)
 {
     DataSourceFseek(-1, SEEK_CUR );
-    
+
     return c;
 }
 

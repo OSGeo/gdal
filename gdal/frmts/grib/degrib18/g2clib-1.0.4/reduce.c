@@ -220,7 +220,7 @@ L190:
 
 	/* nboxj[j - 1] = newboxt; */
 	ntotpr = ntotbt[j];
-	ntotbt[j - 1] = (*ibit + *jbit) * (*lx + newboxt) + j * (*lx + 
+	ntotbt[j - 1] = (*ibit + *jbit) * (*lx + newboxt) + j * (*lx +
 		newboxt);
 
 	if (ntotbt[j - 1] >= ntotpr) {
@@ -336,8 +336,8 @@ L250:
 	    }
 
 	    if (newboxp[l - 1] > 0) {
-		if ((movmin + *novref) * newboxp[l - 1] + *novref <= nov[l] + 
-			*novref && (movmin + *novref) * (newboxp[l - 1] + 1) 
+		if ((movmin + *novref) * newboxp[l - 1] + *novref <= nov[l] +
+			*novref && (movmin + *novref) * (newboxp[l - 1] + 1)
 			>= nov[l] + *novref) {
 		    goto L288;
 		} else {

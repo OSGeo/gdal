@@ -1176,7 +1176,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
    }
    meta->pds2.sect4.templat = (unsigned short int) is4[7];
 
-   /* 
+   /*
     * Handle variables common to the supported templates.
     */
    if (ns4 < 34) {
@@ -2152,7 +2152,7 @@ static void ParseGridPrimMiss (gridAttribType *attrib, double *grib_Data,
                         if (WxType->ugly[index].f_valid) {
                            WxType->ugly[index].f_valid = 2;
                         } else {
-                           /* Table is not valid here so set value to missPri 
+                           /* Table is not valid here so set value to missPri
                             */
                            value = attrib->missPri;
                            (*missCnt)++;
@@ -2280,7 +2280,7 @@ static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
                         if (WxType->ugly[index].f_valid) {
                            WxType->ugly[index].f_valid = 2;
                         } else {
-                           /* Table is not valid here so set value to missPri 
+                           /* Table is not valid here so set value to missPri
                             */
                            value = attrib->missPri;
                            (*missCnt)++;
@@ -2427,7 +2427,7 @@ void ParseGrid (gridAttribType *attrib, double **Grib_Data,
          } else {
             value = ain[scanIndex];
          }
-         /* Make sure value is not a missing value when converting units, and 
+         /* Make sure value is not a missing value when converting units, and
           * while computing max/min. */
          if ((attrib->f_miss == 0) ||
              ((attrib->f_miss == 1) && (value != attrib->missPri)) ||

@@ -16,7 +16,7 @@
 #ifndef SINT4_TYPE
  #define SINT4_TYPE
 /*   #ifdef _64Bit
- *   typedef of sInt4 and uInt4 determination now moved to config.h  
+ *   typedef of sInt4 and uInt4 determination now moved to config.h
  *    A D T Aug 26, 2006
  *   Moved back to here with assumption that SIZEOF_LONG_INT is set
  *    by makefile.

@@ -90,7 +90,7 @@ typedef struct {
                          * group. However, the # of bits for a number can't
                          * be > 64, and is probably < 32, so bit is < 6 and
                          * probably < 5. */
-   uInt4 num;           /* number of values in the group. May need this to be 
+   uInt4 num;           /* number of values in the group. May need this to be
                          * signed. */
    sInt4 max;           /* Max value for the group */
    uInt4 start;         /* index in Data where group starts. */
@@ -529,7 +529,7 @@ int TDLP_Inventory (DataSource &fp, sInt4 tdlpLen, inventoryType *inv)
        return -1;
    }
    pds = (uChar *) malloc (sectLen * sizeof (uChar));
-   if( pds == NULL ) 
+   if( pds == NULL )
    {
       errSprintf ("Ran out of memory in PDS (TDLP_Inventory)\n");
       return -1;
@@ -1188,7 +1188,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
                f_missing = 0;
                if (li_temp == maxVal) {
                   data[dataInd] = meta->gridAttrib.missPri;
-                  /* In the case of grp[i].bit == 0, if grp[i].min == 0, then 
+                  /* In the case of grp[i].bit == 0, if grp[i].min == 0, then
                    * it is the missing value, otherwise regular value. Only
                    * need to be concerned for primary missing values. */
                   f_missing = 1;
@@ -1387,7 +1387,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
                f_missing = 0;
                if (li_temp == maxVal) {
                   data[dataInd] = meta->gridAttrib.missPri;
-                  /* In the case of grp[i].bit == 0, if grp[i].min == 0, then 
+                  /* In the case of grp[i].bit == 0, if grp[i].min == 0, then
                    * it is the missing value, otherwise regular value. Only
                    * need to be concerned for primary missing values. */
                   f_missing = 1;
@@ -3250,7 +3250,7 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
             if (scoreB < scoreA) {
                f_keep = 1;
             } else if (numSubGroup > 2) {
-               /* We can do "doSplitLeft" (which is breaking it into 2 groups 
+               /* We can do "doSplitLeft" (which is breaking it into 2 groups
                 * the first having range n - 1, the second having range n,
                 * using what we know from doSplit. */
                subGroup[1].num = group[i].num - subGroup[0].num;
@@ -4082,7 +4082,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    char f_simple = 0;   /* Simple Pack flag: not implemented in specs. */
    int gridType;        /* Which type of grid. (Polar, Mercator, Lambert). */
    int dataCnt;         /* Keeps track of which element we are writing. */
-   sInt4 max0;          /* The max value in a group.  Represents primary or * 
+   sInt4 max0;          /* The max value in a group.  Represents primary or *
                          * secondary missing value depending on scheme. */
    sInt4 max1;          /* The next to max value in a group.  Represents *
                          * secondary missing value. */

@@ -49,7 +49,7 @@ void user_flush_data(png_structp png_ptr)
 
 int enc_png(char *data,g2int width,g2int height,g2int nbits,char *pngbuf)
 {
- 
+
     int color_type;
     g2int j,bytes,pnglen,bit_depth;
     png_structp png_ptr;
@@ -60,7 +60,7 @@ int enc_png(char *data,g2int width,g2int height,g2int nbits,char *pngbuf)
 
 /* create and initialize png_structs  */
 
-    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, 
+    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL,
                                       NULL, NULL);
     if (!png_ptr)
        return (-1);
