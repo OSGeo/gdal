@@ -56,7 +56,7 @@
                      gfsSchemaLocation="ruian_vf_st_uvoh_v1.gfs" />
     </namespace>
 
-    <!-- Japan FGD GML schema -->
+    <!-- Japan FGD GML v4 schema -->
     <namespace uri="http://fgd.gsi.go.jp/spec/2008/FGD_GMLSchema">
         <featureType elementName="GCP"
                      gfsSchemaLocation="jpfgdgml_GCP.gfs" />
