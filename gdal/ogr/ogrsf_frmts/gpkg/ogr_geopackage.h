@@ -334,7 +334,7 @@ class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
 {
     char*                       m_pszTableName;
-    bool                        m_bIsView;
+    bool                        m_bIsTable;
     int                         m_iSrs;
     OGREnvelope*                m_poExtent;
 #ifdef ENABLE_GPKG_OGR_CONTENTS
@@ -378,7 +378,6 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     CPLString           BuildSelectFieldList(const std::vector<OGRFieldDefn*>& apoFields);
     OGRErr              RecreateTable(const CPLString& osColumnsForCreate,
                                       const CPLString& osFieldListForSelect);
-    bool                IsTable();
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     void                CreateTriggers(const char* pszTableName = NULL);
     void                DisableTriggers(bool bNullifyFeatureCount = true);

@@ -605,15 +605,39 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     bool bHasZ = false;
     bool bHasM = false;
 
+    // Is it a table or a view ?
+    {
+        SQLResult oResult;
+        char* pszSQL = sqlite3_mprintf(
+            "SELECT type FROM sqlite_master WHERE name = '%q' AND type "
+            "IN ('view', 'table')",
+            m_pszTableName);
+        err = SQLQuery(poDb, pszSQL, &oResult);
+        sqlite3_free(pszSQL);
+        if ( err == OGRERR_NONE && oResult.nRowCount == 1 )
+        {
+            m_bIsTable = EQUAL(SQLResultGetValue(&oResult, 0, 0),
+                               "table");
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Table or view '%s' does not exist",
+                      m_pszTableName );
+            SQLResultFree(&oResult);
+            return OGRERR_FAILURE;
+        }
+        SQLResultFree(&oResult);
+    }
+
     if( bIsGpkgTable )
     {
         /* Check that the table name is registered in gpkg_contents */
         char* pszSQL = sqlite3_mprintf(
-            "SELECT c.table_name, c.data_type, c.identifier, "
-            "c.description, c.min_x, c.min_y, c.max_x, c.max_y, m.type "
-            "FROM gpkg_contents c JOIN sqlite_master m ON "
-            "c.table_name = m.name "
-            "WHERE (c.table_name = '%q' AND m.type IN ('table', 'view'))"
+            "SELECT table_name, data_type, identifier, "
+            "description, min_x, min_y, max_x, max_y "
+            "FROM gpkg_contents "
+            "WHERE (table_name = '%q')"
 #ifdef WORKAROUND_SQLITE3_BUGS
             " OR 0"
 #endif
@@ -631,8 +655,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
                 CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultContents.pszErrMsg ? oResultContents.pszErrMsg : "" );
             else /* if ( oResultContents.nRowCount != 1 ) */
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "layer '%s' is not registered in gpkg_contents or "
-                          "corresponding table/view does not exist",
+                          "layer '%s' is not registered in gpkg_contents",
                           m_pszTableName );
 
             SQLResultFree(&oResultContents);
@@ -645,7 +668,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         const char* pszDescription = SQLResultGetValue(&oResultContents, 3, 0);
         if( pszDescription && pszDescription[0] )
             OGRLayer::SetMetadataItem("DESCRIPTION", pszDescription);
-        m_bIsView = EQUAL(SQLResultGetValue(&oResultContents, 8, 0), "view");
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
         if( m_poDS->m_bHasGPKGOGRContents )
@@ -940,7 +962,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     }
 
     /* Wait, we didn't find a FID? Some operations will not be possible */
-    if ( !m_bIsView && m_pszFidColumn == NULL )
+    if ( m_bIsTable && m_pszFidColumn == NULL )
     {
         CPLDebug("GPKG",
                  "no integer primary key defined for table '%s'",
@@ -971,7 +993,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
                     const char * pszTableName) :
     OGRGeoPackageLayer(poDS),
     m_pszTableName(CPLStrdup(pszTableName)),
-    m_bIsView(false),
+    m_bIsTable(true), // sensible init for creation mode
     m_iSrs(0),
     m_poExtent(NULL),
 #ifdef ENABLE_GPKG_OGR_CONTENTS
@@ -1044,7 +1066,7 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 void OGRGeoPackageTableLayer::PostInit()
 {
 #ifdef SQLITE_HAS_COLUMN_METADATA
-    if( m_bIsView )
+    if( !m_bIsTable )
     {
         /* Detect if the view columns have the FID and geom columns of a */
         /* table that has itself a spatial index */
@@ -2077,7 +2099,7 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
     /* Ignore bForce, because we always do a full count on the database */
     OGRErr err;
     CPLString soSQL;
-    if ( !m_bIsView && m_poFilterGeom != NULL && m_pszAttrQueryString == NULL &&
+    if ( m_bIsTable && m_poFilterGeom != NULL && m_pszAttrQueryString == NULL &&
         HasSpatialIndex() )
     {
         OGREnvelope  sEnvelope;
@@ -2276,7 +2298,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
 {
     OGRErr err;
 
-    if( m_bIsView )
+    if( !m_bIsTable )
         return false;
 
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
@@ -2804,7 +2826,7 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
 
 bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 {
-    if( m_bIsView )
+    if( !m_bIsTable )
         return false;
 
     if( !HasSpatialIndex() )
@@ -3753,24 +3775,6 @@ CPLString OGRGeoPackageTableLayer::BuildSelectFieldList(const std::vector<OGRFie
 }
 
 /************************************************************************/
-/*                               IsTable()                              */
-/************************************************************************/
-
-bool OGRGeoPackageTableLayer::IsTable()
-{
-    SQLResult oResultTable;
-    char* pszSQL = sqlite3_mprintf(
-        "SELECT * FROM sqlite_master WHERE name = '%q' AND type = 'table'",
-         m_pszTableName);
-    OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
-    sqlite3_free(pszSQL);
-    const bool bIsTable = ( err == OGRERR_NONE &&
-                                  oResultTable.nRowCount == 1 );
-    SQLResultFree(&oResultTable);
-    return bIsTable;
-}
-
-/************************************************************************/
 /*                             DeleteField()                            */
 /************************************************************************/
 
@@ -3798,7 +3802,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
 /* -------------------------------------------------------------------- */
 /*      Check that is a table and not a view                            */
 /* -------------------------------------------------------------------- */
-    if( !IsTable() )
+    if( !m_bIsTable )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Layer %s is not a table",
@@ -3925,7 +3929,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 /* -------------------------------------------------------------------- */
 /*      Check that is a table and not a view                            */
 /* -------------------------------------------------------------------- */
-    if( !IsTable() )
+    if( !m_bIsTable )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Layer %s is not a table",
@@ -4270,7 +4274,7 @@ OGRErr OGRGeoPackageTableLayer::ReorderFields( int* panMap )
 /* -------------------------------------------------------------------- */
 /*      Check that is a table and not a view                            */
 /* -------------------------------------------------------------------- */
-    if( !IsTable() )
+    if( !m_bIsTable )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Layer %s is not a table",
