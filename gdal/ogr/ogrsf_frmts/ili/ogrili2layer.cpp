@@ -70,13 +70,13 @@ OGRILI2Layer::~OGRILI2Layer()
 
 
 /************************************************************************/
-/*                             ISetFeature()                             */
+/*                             AddFeature()                             */
 /************************************************************************/
 
-OGRErr OGRILI2Layer::ISetFeature (OGRFeature *poFeature)
+void OGRILI2Layer::AddFeature (OGRFeature *poFeature)
 {
+    poFeature->SetFID( static_cast<GIntBig>(1 + listFeature.size()) );
     listFeature.push_back(poFeature);
-    return OGRERR_NONE;
 }
 
 /************************************************************************/

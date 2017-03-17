@@ -657,12 +657,11 @@ OGRLayer* ILI2Reader::GetLayer(const char* pszName) {
 
 int ILI2Reader::AddFeature(DOMElement *elem) {
   bool newLayer = true;
-  OGRLayer *curLayer = NULL;
   char *pszName = tr_strdup(elem->getTagName());
   //CPLDebug( "OGR_ILI", "Reading layer: %s", pszName );
 
   // test if this layer exist
-  curLayer = GetLayer(pszName);
+  OGRILI2Layer* curLayer = dynamic_cast<OGRILI2Layer*>(GetLayer(pszName));
   newLayer = (curLayer == NULL);
 
   // add a layer
@@ -701,7 +700,7 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   }
 
   SetFieldValues(feature, elem);
-  CPL_IGNORE_RET_VAL(curLayer->SetFeature(feature));
+  curLayer->AddFeature(feature);
 
   CPLFree(pszName);
 
