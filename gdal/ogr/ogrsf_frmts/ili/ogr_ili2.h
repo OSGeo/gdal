@@ -60,7 +60,7 @@ class OGRILI2Layer : public OGRLayer
 
                        ~OGRILI2Layer();
 
-    OGRErr              ISetFeature(OGRFeature *poFeature);
+    void                AddFeature(OGRFeature *poFeature);
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
