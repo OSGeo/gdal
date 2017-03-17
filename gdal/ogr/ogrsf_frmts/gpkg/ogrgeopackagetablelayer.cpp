@@ -641,6 +641,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
 #ifdef WORKAROUND_SQLITE3_BUGS
             " OR 0"
 #endif
+            " LIMIT 2"
             , m_pszTableName);
 
         SQLResult oResultContents;
@@ -679,6 +680,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
 #ifdef WORKAROUND_SQLITE3_BUGS
                 " OR 0"
 #endif
+                " LIMIT 2"
                 , m_pszTableName);
             SQLResult oResultFeatureCount;
             err = SQLQuery(poDb, pszSQL, &oResultFeatureCount);
@@ -742,6 +744,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
 #ifdef WORKAROUND_SQLITE3_BUGS
                         " OR 0"
 #endif
+                        " LIMIT 2"
                         ,m_pszTableName);
 
             SQLResult oResultGeomCols;
@@ -2067,7 +2070,7 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
         {
             char* pszSQL = sqlite3_mprintf(
                 "SELECT feature_count FROM gpkg_ogr_contents WHERE "
-                "table_name = '%q'",
+                "table_name = '%q' LIMIT 2",
                 m_pszTableName);
             SQLResult oResult;
             OGRErr err = SQLQuery( m_poDS->GetDB(), pszSQL, &oResult);
@@ -2802,6 +2805,7 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
 #ifdef WORKAROUND_SQLITE3_BUGS
                 " OR 0"
 #endif
+                " LIMIT 2"
                  ,pszT, pszC );
     SQLResult oResultTable;
     OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
@@ -3659,7 +3663,7 @@ OGRErr OGRGeoPackageTableLayer::RecreateTable(const CPLString& osColumnsForCreat
 
     char* pszSQL = sqlite3_mprintf(
         "SELECT sql FROM sqlite_master WHERE type IN ('trigger','index') "
-        "AND tbl_name='%q'",
+        "AND tbl_name='%q' LIMIT 10000",
         m_pszTableName );
     SQLResult oTriggers;
     OGRErr eErr = SQLQuery(hDB, pszSQL, &oTriggers);
@@ -4034,7 +4038,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
         char* pszSQL = sqlite3_mprintf(
             "SELECT name, type, sql FROM sqlite_master WHERE "
             "type IN ('trigger','index') "
-            "AND tbl_name='%q' AND sql LIKE '%%%q%%'",
+            "AND tbl_name='%q' AND sql LIKE '%%%q%%' LIMIT 10000",
             m_pszTableName,
             SQLEscapeDoubleQuote(osOldColName).c_str() );
         eErr = SQLQuery(hDB, pszSQL, &oTriggers);
