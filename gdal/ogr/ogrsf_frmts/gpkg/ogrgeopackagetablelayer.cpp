@@ -110,7 +110,7 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
     sqlite3_free(pszSQL);
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-    if( err == OGRERR_NONE && m_poDS->m_bHasGPKGOGRContents )
+    if( m_bIsTable && err == OGRERR_NONE && m_poDS->m_bHasGPKGOGRContents )
     {
         CPLString osFeatureCount;
         if( m_nTotalFeatureCount >= 0 )
@@ -704,7 +704,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
             {
                 m_bOGRFeatureCountTriggersEnabled = true;
             }
-            else
+            else if( m_bIsTable )
             {
                 CPLDebug("GPKG", "Insert/delete feature_count triggers "
                          "missing on %s", m_pszTableName);
@@ -2136,7 +2136,7 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
     if ( err == OGRERR_NONE )
     {
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-        if( m_poFilterGeom == NULL && m_pszAttrQueryString == NULL )
+        if( m_bIsTable && m_poFilterGeom == NULL && m_pszAttrQueryString == NULL )
         {
             m_nTotalFeatureCount = iFeatureCount;
 
