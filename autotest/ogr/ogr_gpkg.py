@@ -3769,10 +3769,6 @@ def ogr_gpkg_46():
     has_spatial_index = f.GetField(0) == 1
     ds.ReleaseResultSet(sql_lyr)
     if not has_spatial_index:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    if not has_spatial_index:
         ds = None
         gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_46.gpkg')
         print('SQLite likely built without SQLITE_HAS_COLUMN_METADATA')
