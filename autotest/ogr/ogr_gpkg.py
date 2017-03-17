@@ -3729,6 +3729,9 @@ def ogr_gpkg_45():
     if lyr.GetFIDColumn() != '':
         gdaltest.post_reason('fail')
         return 'fail'
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_45.gpkg')
