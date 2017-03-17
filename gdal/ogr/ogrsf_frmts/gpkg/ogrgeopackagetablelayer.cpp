@@ -1043,10 +1043,8 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
     {
         ResetReading();
 
-        const char* pszT = m_pszTableName;
-        const char* pszC =m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
         char* pszSQL =
-            sqlite3_mprintf("DROP TABLE \"rtree_%w_%w\"", pszT, pszC);
+            sqlite3_mprintf("DROP TABLE \"%w\"", m_osRTreeName.c_str());
         SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
         m_bDropRTreeTable = false;
@@ -2324,7 +2322,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
 
     if( m_poFeatureDefn->GetGeomFieldCount() == 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Spatial index already existing");
+        CPLError(CE_Failure, CPLE_AppDefined, "No geometry column");
         return false;
     }
     if( m_poDS->CreateExtensionsTableIfNecessary() != OGRERR_NONE )
@@ -2334,29 +2332,21 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
     const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
     const char* pszI = GetFIDColumn();
 
+    m_osRTreeName = "rtree_";
+    m_osRTreeName += pszT;
+    m_osRTreeName += "_";
+    m_osRTreeName += pszC;
+    m_osFIDForRTree = m_pszFidColumn;
+
     m_poDS->SoftStartTransaction();
 
-    /* Register the table in gpkg_extensions */
-    char* pszSQL = sqlite3_mprintf(
-        "INSERT INTO gpkg_extensions "
-        "(table_name,column_name,extension_name,definition,scope) "
-        "VALUES ('%q', '%q', 'gpkg_rtree_index', "
-        "'GeoPackage 1.0 Specification Annex L', 'write-only')",
-        pszT, pszC );
-    err = SQLCommand(m_poDS->GetDB(), pszSQL);
-    sqlite3_free(pszSQL);
-    if( err != OGRERR_NONE )
-    {
-        m_poDS->SoftRollbackTransaction();
-        return false;
-    }
-
+    char* pszSQL;
     /* Create virtual table */
     if( !m_bDropRTreeTable )
     {
         pszSQL = sqlite3_mprintf(
-                    "CREATE VIRTUAL TABLE \"rtree_%w_%w\" USING rtree(id, minx, maxx, miny, maxy)",
-                    pszT, pszC );
+                    "CREATE VIRTUAL TABLE \"%w\" USING rtree(id, minx, maxx, miny, maxy)",
+                    m_osRTreeName.c_str() );
         err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
         if( err != OGRERR_NONE )
@@ -2370,11 +2360,11 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
     /* Populate the RTree */
 #ifdef NO_PROGRESSIVE_RTREE_INSERTION
     pszSQL = sqlite3_mprintf(
-        "INSERT INTO \"rtree_%w_%w\" "
+        "INSERT INTO \"%w\" "
         "SELECT \"%w\", ST_MinX(\"%w\"), ST_MaxX(\"%w\"), "
         "ST_MinY(\"%w\"), ST_MaxY(\"%w\") FROM \"%w\" "
         "WHERE \"%w\" NOT NULL AND NOT ST_IsEmpty(\"%w\")",
-                 pszT, pszC, pszI, pszC, pszC, pszC, pszC, pszT, pszC, pszC );
+        m_osRTreeName.c_str(), pszI, pszC, pszC, pszC, pszC, pszT, pszC, pszC );
     err = SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
     if( err != OGRERR_NONE )
@@ -2401,8 +2391,8 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
     sqlite3_free(pszSQL);
 
     pszSQL = sqlite3_mprintf(
-        "INSERT INTO \"rtree_%w_%w\" VALUES (?,?,?,?,?)",
-        pszT, pszC);
+        "INSERT INTO \"%w\" VALUES (?,?,?,?,?)",
+        m_osRTreeName.c_str());
     sqlite3_stmt* hInsertStmt = NULL;
     if ( sqlite3_prepare_v2(m_poDS->GetDB(), pszSQL, -1, &hInsertStmt, NULL)
                                                             != SQLITE_OK )
@@ -2475,8 +2465,8 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
             }
 
             nEntryCount += aoEntries.size();
-            CPLDebug("GPKG", CPL_FRMT_GUIB " rows inserted into rtree_%s_%s",
-                     nEntryCount, pszT, pszC);
+            CPLDebug("GPKG", CPL_FRMT_GUIB " rows inserted into %s",
+                     nEntryCount, m_osRTreeName.c_str());
 
             aoEntries.clear();
             if( bFinished )
@@ -2488,84 +2478,84 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
     sqlite3_finalize(hInsertStmt);
 #endif
 
+    CPLString osSQL;
+
+    /* Register the table in gpkg_extensions */
+    pszSQL = sqlite3_mprintf(
+        "INSERT INTO gpkg_extensions "
+        "(table_name,column_name,extension_name,definition,scope) "
+        "VALUES ('%q', '%q', 'gpkg_rtree_index', "
+        "'GeoPackage 1.0 Specification Annex L', 'write-only')",
+        pszT, pszC );
+    osSQL += pszSQL;
+    sqlite3_free(pszSQL);
+
     /* Define Triggers to Maintain Spatial Index Values */
 
     /* Conditions: Insertion of non-empty geometry
        Actions   : Insert record into rtree */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER \"rtree_%w_%w_insert\" AFTER INSERT ON \"%w\" "
+                   "CREATE TRIGGER \"%w_insert\" AFTER INSERT ON \"%w\" "
                    "WHEN (new.\"%w\" NOT NULL AND NOT ST_IsEmpty(NEW.\"%w\")) "
                    "BEGIN "
-                   "INSERT OR REPLACE INTO \"rtree_%w_%w\" VALUES ("
+                   "INSERT OR REPLACE INTO \"%w\" VALUES ("
                    "NEW.\"%w\","
                    "ST_MinX(NEW.\"%w\"), ST_MaxX(NEW.\"%w\"),"
                    "ST_MinY(NEW.\"%w\"), ST_MaxY(NEW.\"%w\")"
                    "); "
                    "END",
-                   pszT, pszC, pszT,
+                   m_osRTreeName.c_str(), pszT,
                    pszC, pszC,
-                   pszT, pszC,
+                   m_osRTreeName.c_str(),
                    pszI,
                    pszC, pszC,
                    pszC, pszC);
-    err = SQLCommand(m_poDS->GetDB(), pszSQL);
+    osSQL += ";";
+    osSQL += pszSQL;
     sqlite3_free(pszSQL);
-    if( err != OGRERR_NONE )
-    {
-        m_poDS->SoftRollbackTransaction();
-        return false;
-    }
 
     /* Conditions: Update of geometry column to non-empty geometry
                No row ID change
        Actions   : Update record in rtree */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER \"rtree_%w_%w_update1\" AFTER UPDATE OF \"%w\" ON \"%w\" "
+                   "CREATE TRIGGER \"%w_update1\" AFTER UPDATE OF \"%w\" ON \"%w\" "
                    "WHEN OLD.\"%w\" = NEW.\"%w\" AND "
                    "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\")) "
                    "BEGIN "
-                   "INSERT OR REPLACE INTO \"rtree_%w_%w\" VALUES ("
+                   "INSERT OR REPLACE INTO \"%w\" VALUES ("
                    "NEW.\"%w\","
                    "ST_MinX(NEW.\"%w\"), ST_MaxX(NEW.\"%w\"),"
                    "ST_MinY(NEW.\"%w\"), ST_MaxY(NEW.\"%w\")"
                    "); "
                    "END",
-                   pszT, pszC, pszC, pszT,
+                   m_osRTreeName.c_str(), pszC, pszT,
                    pszI, pszI,
                    pszC, pszC,
-                   pszT, pszC,
+                   m_osRTreeName.c_str(),
                    pszI,
                    pszC, pszC,
                    pszC, pszC);
-    err = SQLCommand(m_poDS->GetDB(), pszSQL);
+    osSQL += ";";
+    osSQL += pszSQL;
     sqlite3_free(pszSQL);
-    if( err != OGRERR_NONE )
-    {
-        m_poDS->SoftRollbackTransaction();
-        return false;
-    }
 
     /* Conditions: Update of geometry column to empty geometry
                No row ID change
        Actions   : Remove record from rtree */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER \"rtree_%w_%w_update2\" AFTER UPDATE OF \"%w\" ON \"%w\" "
+                   "CREATE TRIGGER \"%w_update2\" AFTER UPDATE OF \"%w\" ON \"%w\" "
                    "WHEN OLD.\"%w\" = NEW.\"%w\" AND "
                    "(NEW.\"%w\" ISNULL OR ST_IsEmpty(NEW.\"%w\")) "
                    "BEGIN "
-                   "DELETE FROM \"rtree_%w_%w\" WHERE id = OLD.\"%w\"; "
+                   "DELETE FROM \"%w\" WHERE id = OLD.\"%w\"; "
                    "END",
-                   pszT, pszC, pszC, pszT,
+                   m_osRTreeName.c_str(), pszC, pszT,
                    pszI, pszI,
                    pszC, pszC,
-                   pszT, pszC, pszI);
-    err = SQLCommand(m_poDS->GetDB(), pszSQL);
+                   m_osRTreeName.c_str(), pszI);
+    osSQL += ";";
+    osSQL += pszSQL;
     sqlite3_free(pszSQL);
-    if( err != OGRERR_NONE )
-    {
-        m_poDS->SoftRollbackTransaction();
-        return false;
-    }
 
     /* Conditions: Update of any column
                     Row ID change
@@ -2573,69 +2563,64 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
         Actions   : Remove record from rtree for old <i>
                     Insert record into rtree for new <i> */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER \"rtree_%w_%w_update3\" AFTER UPDATE OF \"%w\" ON \"%w\" "
+                   "CREATE TRIGGER \"%w_update3\" AFTER UPDATE OF \"%w\" ON \"%w\" "
                    "WHEN OLD.\"%w\" != NEW.\"%w\" AND "
                    "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\")) "
                    "BEGIN "
-                   "DELETE FROM \"rtree_%w_%w\" WHERE id = OLD.\"%w\"; "
-                   "INSERT OR REPLACE INTO \"rtree_%w_%w\" VALUES ("
+                   "DELETE FROM \"%w\" WHERE id = OLD.\"%w\"; "
+                   "INSERT OR REPLACE INTO \"%w\" VALUES ("
                    "NEW.\"%w\","
                    "ST_MinX(NEW.\"%w\"), ST_MaxX(NEW.\"%w\"),"
                    "ST_MinY(NEW.\"%w\"), ST_MaxY(NEW.\"%w\")"
                    "); "
                    "END",
-                   pszT, pszC, pszC, pszT,
+                   m_osRTreeName.c_str(), pszC, pszT,
                    pszI, pszI,
                    pszC, pszC,
-                   pszT, pszC, pszI,
-                   pszT, pszC,
+                   m_osRTreeName.c_str(), pszI,
+                   m_osRTreeName.c_str(),
                    pszI,
                    pszC, pszC,
                    pszC, pszC);
-    err = SQLCommand(m_poDS->GetDB(), pszSQL);
+    osSQL += ";";
+    osSQL += pszSQL;
     sqlite3_free(pszSQL);
-    if( err != OGRERR_NONE )
-    {
-        m_poDS->SoftRollbackTransaction();
-        return false;
-    }
 
     /* Conditions: Update of any column
                     Row ID change
                     Empty geometry
         Actions   : Remove record from rtree for old and new <i> */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER \"rtree_%w_%w_update4\" AFTER UPDATE ON \"%w\" "
+                   "CREATE TRIGGER \"%w_update4\" AFTER UPDATE ON \"%w\" "
                    "WHEN OLD.\"%w\" != NEW.\"%w\" AND "
                    "(NEW.\"%w\" ISNULL OR ST_IsEmpty(NEW.\"%w\")) "
                    "BEGIN "
-                   "DELETE FROM \"rtree_%w_%w\" WHERE id IN (OLD.\"%w\", NEW.\"%w\"); "
+                   "DELETE FROM \"%w\" WHERE id IN (OLD.\"%w\", NEW.\"%w\"); "
                    "END",
-                   pszT, pszC, pszT,
+                   m_osRTreeName.c_str(), pszT,
                    pszI, pszI,
                    pszC, pszC,
-                   pszT, pszC, pszI, pszI);
-    err = SQLCommand(m_poDS->GetDB(), pszSQL);
+                   m_osRTreeName.c_str(), pszI, pszI);
+    osSQL += ";";
+    osSQL += pszSQL;
     sqlite3_free(pszSQL);
-    if( err != OGRERR_NONE )
-    {
-        m_poDS->SoftRollbackTransaction();
-        return false;
-    }
 
     /* Conditions: Row deleted
         Actions   : Remove record from rtree for old <i> */
     pszSQL = sqlite3_mprintf(
-                   "CREATE TRIGGER \"rtree_%w_%w_delete\" AFTER DELETE ON \"%w\" "
+                   "CREATE TRIGGER \"%w_delete\" AFTER DELETE ON \"%w\" "
                    "WHEN old.\"%w\" NOT NULL "
                    "BEGIN "
-                   "DELETE FROM \"rtree_%w_%w\" WHERE id = OLD.\"%w\"; "
+                   "DELETE FROM \"%w\" WHERE id = OLD.\"%w\"; "
                    "END",
-                   pszT, pszC, pszT,
+                   m_osRTreeName.c_str(), pszT,
                    pszC,
-                   pszT, pszC, pszI);
-    err = SQLCommand(m_poDS->GetDB(), pszSQL);
+                   m_osRTreeName.c_str(), pszI);
+    osSQL += ";";
+    osSQL += pszSQL;
     sqlite3_free(pszSQL);
+
+    err = SQLCommand(m_poDS->GetDB(), osSQL);
     if( err != OGRERR_NONE )
     {
         m_poDS->SoftRollbackTransaction();
@@ -2844,7 +2829,7 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
     }
 
     const char* pszT = m_pszTableName;
-    const char* pszC =m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+    const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
     char* pszSQL = sqlite3_mprintf(
         "DELETE FROM gpkg_extensions WHERE table_name='%q' "
         "AND column_name='%q' AND extension_name='gpkg_rtree_index'",
@@ -2858,36 +2843,42 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
         /* remove the content and memorize that we will have to delete the */
         /* table later */
         m_bDropRTreeTable = true;
-        pszSQL = sqlite3_mprintf("DELETE FROM \"rtree_%w_%w\"", pszT, pszC);
+        pszSQL = sqlite3_mprintf("DELETE FROM \"%w\"", m_osRTreeName.c_str());
     }
     else
     {
-        pszSQL = sqlite3_mprintf("DROP TABLE \"rtree_%w_%w\"", pszT, pszC);
+        pszSQL = sqlite3_mprintf("DROP TABLE \"%w\"", m_osRTreeName.c_str());
     }
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%w_%w_insert\"", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"%w_insert\"",
+                             m_osRTreeName.c_str());
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%w_%w_update1\"", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"%w_update1\"",
+                             m_osRTreeName.c_str());
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%w_%w_update2\"", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"%w_update2\"",
+                             m_osRTreeName.c_str());
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%w_%w_update3\"", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"%w_update3\"",
+                             m_osRTreeName.c_str());
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%w_%w_update4\"", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"%w_update4\"",
+                             m_osRTreeName.c_str());
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"rtree_%w_%w_delete\"", pszT, pszC);
+    pszSQL = sqlite3_mprintf("DROP TRIGGER \"%w_delete\"",
+                             m_osRTreeName.c_str());
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
