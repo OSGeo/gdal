@@ -829,6 +829,18 @@ def ogr_gpkg_14():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Test spatial filer right away
+    lyr.SetSpatialFilterRect(1000, 30000000,1000, 30000000)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -1451,6 +1463,18 @@ def ogr_gpkg_18():
         gdaltest.post_reason('fail')
         return 'fail'
     f = None
+    ds = None
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_18.gpkg')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbTriangle)
+    with gdaltest.error_handler():
+        # Warning 1: Registering non-standard gpkg_geom_TRIANGLE extension
+        ds.FlushCache()
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE table_name = 'test' AND extension_name = 'gpkg_geom_TRIANGLE'")
+    if sql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
     ds = None
 
     gdal.Unlink('/vsimem/ogr_gpkg_18.gpkg')
