@@ -652,7 +652,7 @@ static void Clock_FormatParse (char buffer[SIZEOF_BUFFER], sInt4 sec, float floa
          strcat (buffer, temp);
          return;
 
-         /* If the current day is a federal holiday, then return a pointer to 
+         /* If the current day is a federal holiday, then return a pointer to
           * the appropriate holiday string (e.g., "Martin Luther King Day") */
       case 'v':
          /* Clock_FormatParse 'd' */

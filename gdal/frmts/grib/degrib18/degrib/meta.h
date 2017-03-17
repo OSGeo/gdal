@@ -52,7 +52,7 @@ typedef enum { UC_NONE, UC_K2F, UC_InchWater, UC_M2Feet, UC_M2Inch,
 /*
 enum { NDFD_MAX=0, NDFD_MIN=1, NDFD_POP=2, NDFD_TEMP=3, NDFD_WD=4,
        NDFD_WS=5, NDFD_TD=6, NDFD_SKY=7, NDFD_QPF=8, NDFD_SNOW=9,
-       NDFD_ICEACC=10, NDFD_WX=11, NDFD_WH=12, NDFD_AT=13, NDFD_RH=14, 
+       NDFD_ICEACC=10, NDFD_WX=11, NDFD_WH=12, NDFD_AT=13, NDFD_RH=14,
        NDFD_WG=15, NDFD_WWA=16, NDFD_INC34=17, NDFD_INC50=18, NDFD_INC64=19,
        NDFD_CUM34=20, NDFD_CUM50=21, NDFD_CUM64=22, NDFD_FWXWINDRH=23,
        NDFD_FWXTSTORM=24, NDFD_CONHAZ=25,
@@ -146,7 +146,7 @@ typedef struct {
    sInt4 HazCode[NUM_UGLY_WORD]; /* A code to represent all the attributes. */
    int SimpleCode;         /* Simple weather code for this ugly string. */
    char *errors;           /* if STORE_ERRORS, then it contains any error
-                            * messages found while parsing this string. */ 
+                            * messages found while parsing this string. */
 } UglyStringType;
 
 typedef struct {

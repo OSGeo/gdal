@@ -43,7 +43,7 @@ int MemoryDataSource::DataSourceFgetc()
 		returnVal = (int)c;
 		eof = false;
 	}
-	return returnVal;		
+	return returnVal;
 }
 
 int MemoryDataSource::DataSourceUngetc(int c)
@@ -82,7 +82,7 @@ int MemoryDataSource::DataSourceFseek(long offset, int origin)
 
 int MemoryDataSource::DataSourceFeof()
 {
-	return eof;	
+	return eof;
 }
 
 long MemoryDataSource::DataSourceFtell()

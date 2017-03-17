@@ -127,10 +127,10 @@ g2int getpdsindex(g2int number)
 xxtemplate *getpdstemplate(g2int number)
 ///$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    getpdstemplate 
+// SUBPROGRAM:    getpdstemplate
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2000-05-11
 //
-// ABSTRACT: This subroutine returns PDS template information for a 
+// ABSTRACT: This subroutine returns PDS template information for a
 //   specified Product Definition Template 4.NN.
 //   The number of entries in the template is returned along with a map
 //   of the number of octets occupied by each entry.  Also, a flag is
@@ -141,7 +141,7 @@ xxtemplate *getpdstemplate(g2int number)
 //
 // USAGE:    CALL getpdstemplate(number)
 //   INPUT ARGUMENT LIST:
-//     number   - NN, indicating the number of the Product Definition 
+//     number   - NN, indicating the number of the Product Definition
 //                Template 4.NN that is being requested.
 //
 //   RETURN VALUE:
@@ -179,17 +179,17 @@ xxtemplate *getpdstemplate(g2int number)
 
          return(0);        //NULL
 }
-         
-        
+
+
 xxtemplate *extpdstemplate(g2int number,g2int *list)
 ///$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    extpdstemplate 
+// SUBPROGRAM:    extpdstemplate
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2000-05-11
 //
 // ABSTRACT: This subroutine generates the remaining octet map for a
 //   given Product Definition Template, if required.  Some Templates can
-//   vary depending on data values given in an earlier part of the 
+//   vary depending on data values given in an earlier part of the
 //   Template, and it is necessary to know some of the earlier entry
 //   values to generate the full octet map of the Template.
 //
@@ -198,9 +198,9 @@ xxtemplate *extpdstemplate(g2int number,g2int *list)
 //
 // USAGE:    CALL extpdstemplate(number,list)
 //   INPUT ARGUMENT LIST:
-//     number   - NN, indicating the number of the Product Definition 
+//     number   - NN, indicating the number of the Product Definition
 //                Template 4.NN that is being requested.
-//     list()   - The list of values for each entry in the 
+//     list()   - The list of values for each entry in the
 //                the Product Definition Template 4.NN.
 //
 //   RETURN VALUE:

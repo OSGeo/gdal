@@ -176,7 +176,7 @@ void mySplit (const char *data, char symbol, size_t *Argc, char ***Argv,
          }
          argc++;
          head = ptr + 1;
-         /* The following head != NULL is in case data is not '\0' terminated 
+         /* The following head != NULL is in case data is not '\0' terminated
           */
          if ((head != NULL) && (*head == '\0')) {
             /* Handle a break character just before the \0 */
@@ -438,7 +438,7 @@ int myStat (char *filename, char *perm, sInt4 *size, double *mtime)
    }
 }
 
-/** 
+/**
 static int FileMatch (const char *filename, const char *filter)
 {
    const char *ptr1;

@@ -17,9 +17,9 @@ typedef g2int logical;
 #define TRUE_ (1)
 #define FALSE_ (0)
 
-/* Subroutine */ int pack_gp(integer *kfildo, integer *ic, integer *nxy, 
-	integer *is523, integer *minpk, integer *inc, integer *missp, integer 
-	*misss, integer *jmin, integer *jmax, integer *lbit, integer *nov, 
+/* Subroutine */ int pack_gp(integer *kfildo, integer *ic, integer *nxy,
+	integer *is523, integer *minpk, integer *inc, integer *missp, integer
+	*misss, integer *jmin, integer *jmax, integer *lbit, integer *nov,
 	integer *ndg, integer *lx, integer *ibit, integer *jbit, integer *
 	kbit, integer *novref, integer *lbitref, integer *ier)
 {
@@ -37,13 +37,13 @@ typedef g2int logical;
     static logical adda;
     static integer ired, kinc, mina, maxa, minb, maxb, minc, maxc, ibxx2[31];
     static char cfeed[1];
-    static integer nenda, nendb, ibita, ibitb, minak, minbk, maxak, maxbk, 
+    static integer nenda, nendb, ibita, ibitb, minak, minbk, maxak, maxbk,
 	    minck, maxck, nouta, lmiss, itest, nount;
-    extern /* Subroutine */ int reduce(integer *, integer *, integer *, 
-	    integer *, integer *, integer *, integer *, integer *, integer *, 
+    extern /* Subroutine */ int reduce(integer *, integer *, integer *,
+	    integer *, integer *, integer *, integer *, integer *, integer *,
 	    integer *, integer *, integer *, integer *);
-    static integer ibitbs, mislla, misllb, misllc, iersav, lminpk, ktotal, 
-	    kounta, kountb, kstart, mstart, mintst, maxtst, 
+    static integer ibitbs, mislla, misllb, misllc, iersav, lminpk, ktotal,
+	    kounta, kountb, kstart, mstart, mintst, maxtst,
 	    kounts, mintstk, maxtstk;
     integer *misslx;
 
@@ -1417,7 +1417,7 @@ L420:
 /*        FOR SPACE EFFICIENCY. */
 
     if (ired == 0) {
-	reduce(kfildo, &jmin[1], &jmax[1], &lbit[1], &nov[1], lx, ndg, ibit, 
+	reduce(kfildo, &jmin[1], &jmax[1], &lbit[1], &nov[1], lx, ndg, ibit,
 		jbit, kbit, novref, ibxx2, ier);
 
 	if (*ier == 714 || *ier == 715) {

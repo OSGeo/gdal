@@ -4,7 +4,7 @@
 void g2_free(gribfield *gfld)
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_free 
+// SUBPROGRAM:    g2_free
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-28
 //
 // ABSTRACT: This routine frees up memory that was allocated for
@@ -24,10 +24,10 @@ void g2_free(gribfield *gfld)
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE:  
+//   MACHINE:
 //
 //$$$
-{ 
+{
 
       if (gfld->idsect != 0 ) free(gfld->idsect);
       if (gfld->local != 0 ) free(gfld->local);

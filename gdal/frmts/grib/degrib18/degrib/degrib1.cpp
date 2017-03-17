@@ -1285,7 +1285,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
    bufLoc = 8;
    for (i = 0; i < P1; i++) {
       memBitRead (&uli_temp, sizeof (sInt4), bds, numBits, &bufLoc, &numUsed);
-      printf ("(%d %u) (numUsed %ld numBits %d)", i, uli_temp, 
+      printf ("(%d %u) (numUsed %ld numBits %d)", i, uli_temp,
               (long) numUsed, numBits);
       if (numUsed != 0) {
          printf ("\n");

@@ -3,27 +3,27 @@
 void g2_miss( gribfield *gfld, float *rmiss, int *nmiss )
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_miss 
+// SUBPROGRAM:    g2_miss
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2004-12-16
 //
 // ABSTRACT: This routine checks the Data Representation Template to see if
-// missing value management is used, and returns the missing value(s) 
+// missing value management is used, and returns the missing value(s)
 // in the data field.
 //
 // PROGRAM HISTORY LOG:
 // 2004-12-16  Gilbert
 //
 // USAGE:    g2_miss( gribfield *gfld, float *rmiss, int *nmiss )
-//                   
+//
 //   INPUT ARGUMENT LIST:
-//     *gfld    - pointer to gribfield structure (defined in include file 
+//     *gfld    - pointer to gribfield structure (defined in include file
 //                   grib2.h)
 //
-//   OUTPUT ARGUMENT LIST:      
+//   OUTPUT ARGUMENT LIST:
 //     rmiss    - List of the missing values used
 //     nmiss    - NUmber of the missing values included in the field
 //
-// REMARKS:  rmiss must be allocated in the calling program with enough space 
+// REMARKS:  rmiss must be allocated in the calling program with enough space
 //           hold all the missing values.
 //
 // ATTRIBUTES:
@@ -32,7 +32,7 @@ void g2_miss( gribfield *gfld, float *rmiss, int *nmiss )
 //
 //$$$
 {
-    g2int     itype;    
+    g2int     itype;
 
     /*
      *  Missing value management currently only used in
@@ -42,7 +42,7 @@ void g2_miss( gribfield *gfld, float *rmiss, int *nmiss )
        *nmiss=0;
        return;
     }
-                                                                                
+
     itype = gfld->idrtmpl[4];
     if ( gfld->idrtmpl[6] == 1 ) {
          *nmiss=1;
