@@ -41,7 +41,7 @@ CADTables::CADTables()
 {
 }
 
-void CADTables::AddTable( TableType eType, CADHandle hHandle )
+void CADTables::AddTable( TableType eType, const CADHandle& hHandle )
 {
     mapTables[eType] = hHandle;
 }
