@@ -1277,7 +1277,7 @@ OGRErr OGRGeoPackageTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn
 
     OGRSpatialReference* poSRS = oGeomField.GetSpatialRef();
     if( poSRS != NULL )
-        m_iSrs = m_poDS->GetSrsId(poSRS);
+        m_iSrs = m_poDS->GetSrsId(*poSRS);
 
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
@@ -3216,7 +3216,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters( OGRwkbGeometryType eGType,
     {
         OGRGeomFieldDefn oGeomFieldDefn(pszGeomColumnName, eGType);
         if( poSRS )
-            m_iSrs = m_poDS->GetSrsId(poSRS);
+            m_iSrs = m_poDS->GetSrsId(*poSRS);
         oGeomFieldDefn.SetSpatialRef(poSRS);
         oGeomFieldDefn.SetNullable(bGeomNullable);
         m_poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
