@@ -777,7 +777,7 @@ OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
         return poNewChild->importFromWkt( ppszInput );
     }
 
-    return OGRERR_NONE.
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
