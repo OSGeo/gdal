@@ -1275,7 +1275,10 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
 
     // If USE_TILE_EXTENT=YES, then query the tile table to find which tiles
     // actually exist.
+
+    // CAUTION: Do not move those variables inside inner scope !
     CPLString osContentsMinX, osContentsMinY, osContentsMaxX, osContentsMaxY;
+
     if( CPLTestBool(CSLFetchNameValueDef(papszOpenOptionsIn, "USE_TILE_EXTENT", "NO")) )
     {
         pszSQL = sqlite3_mprintf(
