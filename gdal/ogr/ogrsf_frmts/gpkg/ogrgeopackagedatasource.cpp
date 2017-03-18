@@ -3414,7 +3414,7 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
     // Check if gpkg_2d_gridded_coverage_ancillary has been created
     SQLResult oResultTable;
     OGRErr eErr = SQLQuery(hDB,
-        "SELECT * FROM sqlite_master WHERE type = 'table' AND "
+        "SELECT * FROM sqlite_master WHERE type IN ('table', 'view') AND "
         "name = 'gpkg_2d_gridded_coverage_ancillary'"
         , &oResultTable);
     bool bHasTable = ( eErr == OGRERR_NONE && oResultTable.nRowCount == 1 );
