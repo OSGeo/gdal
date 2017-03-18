@@ -201,6 +201,25 @@ GeoPackage 1.2 "attributes" data type as well. Starting with GDAL 2.2, non
 spatial tables are by default created following the GeoPackage 1.2 "attributes"
 data type (can be controlled with the ASPATIAL_VARIANT layer creation option)</p>
 
+<h3>Spatial views</h3>
+
+<p>Views can be created and recognized as valid spatial layers if a corresponding
+record is inserted into the gpkg_contents and gpkg_geometry_columns table.</p>
+
+<p>Starting with GDAL 2.2, in the case of the columns in the SELECT clause of
+the view acts a integer primary key, then it can be recognized by OGR as the
+FID column of the view, provided it is renamed as OGC_FID. Selecting a feature
+id from a source table without renaming will not be sufficient, since due to
+joins this feature id could appear several times. Thus the user must explicitly
+acknowledge that the column is really a primary key.</p>
+
+<p>For example:</p>
+<pre>
+CREATE VIEW my_view AS SELECT foo.fid AS OGC_FID, foo.geom, ... FROM foo JOIN another_table ON foo.some_id = another_table.other_id
+INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view', 'my_view', 'features', 4326)
+INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 4326, 0, 0)
+</pre>
+
 <h3>Examples</h3>
 
 <ul>
