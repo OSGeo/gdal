@@ -1383,7 +1383,7 @@ def ogr_gml_34():
     ds = None
 
     gdal.Unlink( '/vsimem/ogr_gml_34.gml' )
-    gdal.Unlink( '/vsimem/ogr_gml_34.gfs' )
+    gdal.Unlink( '/vsimem/ogr_gml_34.xsd' )
 
     return 'success'
 
@@ -3792,6 +3792,7 @@ def ogr_gml_72():
 
     gdal.Unlink("/vsimem/ogr_gml_72.gml")
     gdal.Unlink("/vsimem/ogr_gml_72.xsd")
+    gdal.Unlink("/vsimem/ogr_gml_72.gfs")
 
     ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_72.gml')
     ds.SetMetadata({'NAME': 'name', 'DESCRIPTION': 'description' })
@@ -3806,6 +3807,7 @@ def ogr_gml_72():
 
     gdal.Unlink("/vsimem/ogr_gml_72.gml")
     gdal.Unlink("/vsimem/ogr_gml_72.xsd")
+    gdal.Unlink("/vsimem/ogr_gml_72.gfs")
 
     return 'success'
 
@@ -4145,6 +4147,10 @@ def ogr_gml_cleanup():
     gdal.SetConfigOption( 'GML_SAVE_RESOLVED_TO', None )
 
     gdaltest.clean_tmp()
+
+    fl = gdal.ReadDir('/vsimem/')
+    if fl is not None:
+        print(fl)
 
     return ogr_gml_clean_files()
 
