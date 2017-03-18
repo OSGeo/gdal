@@ -275,9 +275,9 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
 }
 
 const char * GDALGeoPackageDataset::GetSrsName(
-    const OGRSpatialReference *poSRS )
+    const OGRSpatialReference& oSRS )
 {
-    const OGR_SRSNode *node = poSRS->GetAttrNode("PROJCS");
+    const OGR_SRSNode *node = oSRS.GetAttrNode("PROJCS");
 
     /* Projected coordinate system? */
     if ( node != NULL )
@@ -286,7 +286,7 @@ const char * GDALGeoPackageDataset::GetSrsName(
     }
 
     /* Geographic coordinate system? */
-    if ( (node = poSRS->GetAttrNode("GEOGCS")) != NULL )
+    if ( (node = oSRS.GetAttrNode("GEOGCS")) != NULL )
     {
         return node->GetChild(0)->GetValue();
     }
@@ -295,12 +295,9 @@ const char * GDALGeoPackageDataset::GetSrsName(
     return "Unnamed SRS";
 }
 
-int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference * cpoSRS)
+int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
 {
-    if( cpoSRS == NULL )
-        return DEFAULT_SRID;
-
-    OGRSpatialReference *poSRS = cpoSRS->Clone();
+    OGRSpatialReference *poSRS = oSRS.Clone();
 
     const char* pszAuthorityName = poSRS->GetAuthorityName( NULL );
 
@@ -394,7 +391,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference * cpoSRS)
             "INSERT INTO gpkg_spatial_ref_sys "
             "(srs_name,srs_id,organization,organization_coordsys_id,"
             "definition) VALUES ('%q', %d, upper('%q'), %d, '%q')",
-            GetSrsName(poSRS), nSRSId, pszAuthorityName, nAuthorityCode,
+            GetSrsName(*poSRS), nSRSId, pszAuthorityName, nAuthorityCode,
             pszWKT );
     }
     else
@@ -403,7 +400,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference * cpoSRS)
             "INSERT INTO gpkg_spatial_ref_sys "
             "(srs_name,srs_id,organization,organization_coordsys_id,"
             "definition) VALUES ('%q', %d, upper('%q'), %d, '%q')",
-            GetSrsName(poSRS), nSRSId, "NONE", nSRSId, pszWKT );
+            GetSrsName(*poSRS), nSRSId, "NONE", nSRSId, pszWKT );
     }
 
     // Add new row to gpkg_spatial_ref_sys.
@@ -1486,7 +1483,7 @@ CPLErr GDALGeoPackageDataset::SetProjection( const char* pszProjection )
         OGRSpatialReference oSRS;
         if( oSRS.SetFromUserInput(pszProjection) != OGRERR_NONE )
             return CE_Failure;
-        nSRID = GetSrsId( &oSRS );
+        nSRID = GetSrsId( oSRS );
     }
 
     for(size_t iScheme = 0;
@@ -5206,7 +5203,7 @@ void OGRGeoPackageImportFromEPSG(sqlite3_context* pContext,
         return;
     }
 
-    sqlite3_result_int( pContext,poDS->GetSrsId(&oSRS) );
+    sqlite3_result_int( pContext,poDS->GetSrsId(oSRS) );
 }
 
 /************************************************************************/

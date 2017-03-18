@@ -216,8 +216,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
 
         bool                IsInTransaction() const;
 
-        int                 GetSrsId( const OGRSpatialReference * poSRS );
-        const char*         GetSrsName( const OGRSpatialReference * poSRS );
+        int                 GetSrsId( const OGRSpatialReference& oSRS );
+        const char*         GetSrsName( const OGRSpatialReference& oSRS );
         OGRSpatialReference* GetSpatialRef( int iSrsId );
         bool                GetUTF8() { return m_bUtf8; }
         OGRErr              CreateExtensionsTableIfNecessary();
