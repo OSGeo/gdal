@@ -1263,8 +1263,11 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
-                                                 CPL_UNUSED int bApproxOK )
+                                                 int /* bApproxOK */ )
 {
+    if( !CheckUpdatableTable("CreateGeomField") )
+        return OGRERR_FAILURE;
+
     if( m_poFeatureDefn->GetGeomFieldCount() == 1 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,

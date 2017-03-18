@@ -2017,9 +2017,18 @@ def ogr_gpkg_23():
     lyr.CreateFeature(f)
     f = None
 
+    ds.CreateLayer('test5', geom_type = ogr.wkbNone)
+
     ds = None
 
     ds = ogr.Open('/vsimem/ogr_gpkg_23.gpkg')
+
+    lyr = ds.GetLayerByName('test5')
+    field_defn = ogr.GeomFieldDefn('', ogr.wkbPoint)
+    with gdaltest.error_handler():
+        if lyr.CreateGeomField(field_defn) == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
