@@ -45,7 +45,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
     if( poOpenInfo->fpL == NULL)
         return FALSE;
 
-    if ( poOpenInfo->nHeaderBytes < 16 ||
+    if ( poOpenInfo->nHeaderBytes < 100 ||
         !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
     {
         return FALSE;
@@ -65,10 +65,9 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
     const GUInt32 nGP11ApplicationIdMSB = CPL_MSBWORD32(GP11_APPLICATION_ID);
     const GUInt32 nGPKGApplicationIdMSB = CPL_MSBWORD32(GPKG_APPLICATION_ID);
     const GUInt32 nVersionGPKG12MSB = CPL_MSBWORD32(GPKG_1_2_VERSION);
-    if( poOpenInfo->nHeaderBytes < 68 + 4 ||
-        (memcmp(poOpenInfo->pabyHeader + 68, &nGP10ApplicationIdMSB, 4) != 0 &&
-         memcmp(poOpenInfo->pabyHeader + 68, &nGP11ApplicationIdMSB, 4) != 0 &&
-         memcmp(poOpenInfo->pabyHeader + 68, &nGPKGApplicationIdMSB, 4) != 0) )
+    if( memcmp(poOpenInfo->pabyHeader + 68, &nGP10ApplicationIdMSB, 4) != 0 &&
+        memcmp(poOpenInfo->pabyHeader + 68, &nGP11ApplicationIdMSB, 4) != 0 &&
+        memcmp(poOpenInfo->pabyHeader + 68, &nGPKGApplicationIdMSB, 4) != 0 )
     {
 #ifdef DEBUG
         if( EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")  )
@@ -103,8 +102,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
             }
         }
     }
-    else if( poOpenInfo->nHeaderBytes >= 68 + 4 &&
-             memcmp(poOpenInfo->pabyHeader + 68, &nGPKGApplicationIdMSB, 4) == 0 &&
+    else if( memcmp(poOpenInfo->pabyHeader + 68, &nGPKGApplicationIdMSB, 4) == 0 &&
              memcmp(poOpenInfo->pabyHeader + 60, &nVersionGPKG12MSB, 4) != 0 )
     {
 #ifdef DEBUG
