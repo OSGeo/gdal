@@ -3506,7 +3506,7 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
                                         m_pszFidColumn,
                                         m_pszTableName);
 
-            nMaxId = SQLGetInteger64( m_poDS->GetDB(), pszSQL, &err);
+            nMaxId = SQLGetInteger64( m_poDS->GetDB(), pszSQL, NULL);
             sqlite3_free(pszSQL);
         }
         if( nMaxId > INT_MAX )
