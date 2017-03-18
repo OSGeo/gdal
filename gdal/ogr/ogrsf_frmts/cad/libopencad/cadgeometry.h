@@ -100,7 +100,7 @@ public:
     void              setBlockAttributes( const std::vector<CADAttrib>& value );
 
     std::vector<std::string> getEED() const;
-    void setEED( std::vector<std::string> eed );
+    void setEED( const std::vector<std::string>& eed );
 
     virtual void print() const                     = 0;
     virtual void transform( const Matrix& matrix ) = 0;
