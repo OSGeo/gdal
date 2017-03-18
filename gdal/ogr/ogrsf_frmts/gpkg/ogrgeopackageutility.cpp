@@ -109,11 +109,12 @@ const char* SQLResultGetValue(const SQLResult * poResult, int iColNum, int iRowN
     CPLAssert( poResult != NULL );
 
     const int nCols = poResult->nColCount;
+#ifdef DEBUG
     const int nRows = poResult->nRowCount;
 
     CPLAssert( iColNum >= 0 && iColNum < nCols );
     CPLAssert( iRowNum >= 0 && iRowNum < nRows );
-
+#endif
     return poResult->papszResult[ nCols + iRowNum * nCols + iColNum ];
 }
 
