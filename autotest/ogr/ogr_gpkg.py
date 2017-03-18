@@ -1477,6 +1477,20 @@ def ogr_gpkg_18():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
+    # Test non-linear geometry in GeometryCollection
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_18.gpkg')
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(CIRCULARSTRING(0 0,1 0,0 0))'))
+    lyr.CreateFeature(f)
+    f = None
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE table_name = 'test' AND extension_name LIKE 'gpkg_geom_%'")
+    if sql_lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
     gdal.Unlink('/vsimem/ogr_gpkg_18.gpkg')
 
     return 'success'
