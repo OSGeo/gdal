@@ -180,8 +180,7 @@ OGRSpatialReference::OGRSpatialReference(const OGRSpatialReference &oOther) :
 OGRSpatialReference::~OGRSpatialReference()
 
 {
-    if( poRoot != NULL )
-        delete poRoot;
+    delete poRoot;
 }
 
 /************************************************************************/
@@ -240,9 +239,7 @@ void CPL_STDCALL OSRDestroySpatialReference( OGRSpatialReferenceH hSRS )
 void OGRSpatialReference::Clear()
 
 {
-    if( poRoot )
-        delete poRoot;
-
+    delete poRoot;
     poRoot = NULL;
 
     bNormInfoSet = FALSE;
@@ -421,9 +418,7 @@ void OSRRelease( OGRSpatialReferenceH hSRS )
 void OGRSpatialReference::SetRoot( OGR_SRSNode * poNewRoot )
 
 {
-    if( poRoot != NULL )
-        delete poRoot;
-
+    delete poRoot;
     poRoot = poNewRoot;
 }
 
@@ -782,7 +777,7 @@ OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
         return poNewChild->importFromWkt( ppszInput );
     }
 
-    return eErr;  // TODO(schwehr): Always OGRERR_NONE.
+    return OGRERR_NONE.
 }
 
 /************************************************************************/
@@ -2437,11 +2432,7 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
-    if( GetRoot() != NULL )
-    {
-        delete poRoot;
-        poRoot = NULL;
-    }
+    Clear();
 
 /* -------------------------------------------------------------------- */
 /*      Find code (ignoring version) out of string like:                */
@@ -2583,11 +2574,7 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
-    if( GetRoot() != NULL )
-    {
-        delete poRoot;
-        poRoot = NULL;
-    }
+    Clear();
 
     if( STARTS_WITH_CI(pszCur, "-compound?1=") )
     {
