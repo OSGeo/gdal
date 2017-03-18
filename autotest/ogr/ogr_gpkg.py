@@ -3851,6 +3851,102 @@ def ogr_gpkg_46():
     return 'success'
 
 ###############################################################################
+# Test corner case of Identify()
+
+def ogr_gpkg_47():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg')
+    # Set wrong application_id
+    fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
+    gdal.VSIFSeekL(fp, 68, 0)
+    gdal.VSIFWriteL('\0\0\0\0', 4, 1, fp)
+    gdal.VSIFCloseL(fp)
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
+    ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+    gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options = ['VERSION=1.2'])
+    # Set wrong user_version
+    fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
+    gdal.VSIFSeekL(fp, 60, 0)
+    gdal.VSIFWriteL('\0\0\0\0', 4, 1, fp)
+    gdal.VSIFCloseL(fp)
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
+    ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+    gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Just for the sake of coverage testing in DEBUG mode
+    with gdaltest.error_handler():
+        gdaltest.gpkg_dr.CreateDataSource('/vsimem/.cur_input')
+    # Set wrong application_id
+    fp = gdal.VSIFOpenL('/vsimem/.cur_input', 'rb+')
+    gdal.VSIFSeekL(fp, 68, 0)
+    gdal.VSIFWriteL('\0\0\0\0', 4, 1, fp)
+    gdal.VSIFCloseL(fp)
+    ogr.Open('/vsimem/.cur_input')
+    gdal.Unlink('/vsimem/.cur_input')
+
+    with gdaltest.error_handler():
+        gdaltest.gpkg_dr.CreateDataSource('/vsimem/.cur_input', options = ['VERSION=1.2'])
+    # Set wrong user_version
+    fp = gdal.VSIFOpenL('/vsimem/.cur_input', 'rb+')
+    gdal.VSIFSeekL(fp, 60, 0)
+    gdal.VSIFWriteL('\0\0\0\0', 4, 1, fp)
+    gdal.VSIFCloseL(fp)
+    ogr.Open('/vsimem/.cur_input')
+    gdal.Unlink('/vsimem/.cur_input')
+
+    # Test reading in a zip
+    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg')
+    fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb')
+    content = gdal.VSIFReadL(1, 1000000, fp)
+    gdal.VSIFCloseL(fp)
+    fzip = gdal.VSIFOpenL('/vsizip//vsimem/ogr_gpkg_47.zip', 'wb')
+    fp = gdal.VSIFOpenL('/vsizip//vsimem/ogr_gpkg_47.zip/my.gpkg', 'wb')
+    gdal.VSIFWriteL(content, 1, len(content), fp)
+    gdal.VSIFCloseL(fp)
+    gdal.VSIFCloseL(fzip)
+    ds = ogr.Open('/vsizip//vsimem/ogr_gpkg_47.zip')
+    if ds.GetDriver().GetName() != 'GPKG':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gpkg_47.zip')
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_47.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -3921,6 +4017,7 @@ gdaltest_list = [
     ogr_gpkg_44,
     ogr_gpkg_45,
     ogr_gpkg_46,
+    ogr_gpkg_47,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

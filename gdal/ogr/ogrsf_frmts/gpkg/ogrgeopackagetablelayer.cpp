@@ -3411,10 +3411,8 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
             pszSQL = sqlite3_mprintf(
                 "DELETE FROM gpkg_ogr_contents WHERE table_name = '%q'",
                 pszLayerName);
-            err = SQLCommand(m_poDS->GetDB(), pszSQL);
+            SQLCommand(m_poDS->GetDB(), pszSQL);
             sqlite3_free(pszSQL);
-            if ( err != OGRERR_NONE )
-                return OGRERR_FAILURE;
 
             pszSQL = sqlite3_mprintf(
                 "INSERT INTO gpkg_ogr_contents (table_name, feature_count) "
@@ -3422,10 +3420,11 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
                 pszLayerName);
             err = SQLCommand(m_poDS->GetDB(), pszSQL);
             sqlite3_free(pszSQL);
-            if ( err != OGRERR_NONE )
-                return OGRERR_FAILURE;
-            m_nTotalFeatureCount = 0;
-            m_bAddOGRFeatureCountTriggers = true;
+            if ( err == OGRERR_NONE )
+            {
+                m_nTotalFeatureCount = 0;
+                m_bAddOGRFeatureCountTriggers = true;
+            }
         }
 #endif
     }
