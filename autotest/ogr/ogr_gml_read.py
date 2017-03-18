@@ -4135,45 +4135,6 @@ def ogr_gml_80():
 
 
 ###############################################################################
-# Test reading Japanese FGD GML (v4) files
-
-def ogr_gml_81():
-
-    if not gdaltest.have_gml_reader:
-        return 'skip'
-
-    ### open FGD GML file
-    ds = ogr.Open('data/JP-FG-GML-ElevPt.xml')
-
-    # check number of layers
-    if ds.GetLayerCount() != 1:
-        gdaltest.post_reason('Wrong layer count')
-        return 'fail'
-
-    lyr = ds.GetLayer(0)
-    # print lyr.GetName(), lyr.GetGeometryColumn()
-
-    # check the SRS
-    sr = osr.SpatialReference()
-    sr.ImportFromEPSG(6668)   # JGD2011
-    if not sr.IsSame(lyr.GetSpatialRef()):
-        gdaltest.post_reason('Wrong SRS')
-        return 'fail'
-
-    # check the first feature
-    feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POINT (133.123456789 34.123456789)'):
-        gdaltest.post_reason('Wrong geometry')
-        return 'fail'
-
-    if feat.GetField('devDate') != '2015-01-07':
-        gdaltest.post_reason('Wrong attribute value')
-        return 'fail'
-
-    return 'success'
-
-
-###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -4385,7 +4346,6 @@ gdaltest_list = [
     ogr_gml_78,
     ogr_gml_79,
     ogr_gml_80,
-    ogr_gml_81,
     ogr_gml_cleanup ]
 
 disabled_gdaltest_list = [
