@@ -106,36 +106,20 @@ OGRErr SQLResultFree(SQLResult * poResult)
 
 const char* SQLResultGetValue(const SQLResult * poResult, int iColNum, int iRowNum)
 {
-    if ( ! poResult )
-        return NULL;
+    CPLAssert( poResult != NULL );
 
-    int nCols = poResult->nColCount;
-    int nRows = poResult->nRowCount;
+    const int nCols = poResult->nColCount;
+    const int nRows = poResult->nRowCount;
 
-    if ( iColNum < 0 || iColNum >= nCols )
-        return NULL;
-
-    if ( iRowNum < 0 || iRowNum >= nRows )
-        return NULL;
+    CPLAssert( iColNum >= 0 && iColNum < nCols );
+    CPLAssert( iRowNum >= 0 && iRowNum < nRows );
 
     return poResult->papszResult[ nCols + iRowNum * nCols + iColNum ];
 }
 
 int SQLResultGetValueAsInteger(const SQLResult * poResult, int iColNum, int iRowNum)
 {
-    if ( ! poResult )
-        return 0;
-
-    int nCols = poResult->nColCount;
-    int nRows = poResult->nRowCount;
-
-    if ( iColNum < 0 || iColNum >= nCols )
-        return 0;
-
-    if ( iRowNum < 0 || iRowNum >= nRows )
-        return 0;
-
-    char *pszValue = poResult->papszResult[ nCols + iRowNum * nCols + iColNum ];
+    const char *pszValue = SQLResultGetValue(poResult, iColNum, iRowNum);
     if ( ! pszValue )
         return 0;
 
@@ -181,7 +165,7 @@ GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
 
 int SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
 {
-    return (int)SQLGetInteger64(poDb, pszSQL, err);
+    return static_cast<int>(SQLGetInteger64(poDb, pszSQL, err));
 }
 
 /* Requirement 20: A GeoPackage SHALL store feature table geometries */
