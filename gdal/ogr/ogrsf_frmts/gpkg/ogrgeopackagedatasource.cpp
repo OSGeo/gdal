@@ -234,7 +234,8 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
 
     CPLString oSQL;
     oSQL.Printf( "SELECT definition, organization, organization_coordsys_id "
-                 "FROM gpkg_spatial_ref_sys WHERE srs_id = %d LIMIT 2",
+                 "FROM gpkg_spatial_ref_sys WHERE definition IS NOT NULL AND "
+                 "srs_id = %d LIMIT 2",
                  iSrsId );
 
     SQLResult oResult;
@@ -250,15 +251,6 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
     }
 
     const char *pszWkt = SQLResultGetValue(&oResult, 0, 0);
-    if ( ! pszWkt )
-    {
-        SQLResultFree(&oResult);
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "null definition for srs_id '%d' in gpkg_spatial_ref_sys",
-                  iSrsId);
-        return NULL;
-    }
-
     const char* pszOrganization = SQLResultGetValue(&oResult, 1, 0);
     const char* pszOrganizationCoordsysID = SQLResultGetValue(&oResult, 2, 0);
 
