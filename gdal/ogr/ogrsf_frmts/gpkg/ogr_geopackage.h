@@ -479,6 +479,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     /* GPKG methods */
 
   private:
+    bool                CheckUpdatableTable(const char* pszOperation);
     OGRErr              UpdateExtent( const OGREnvelope *poExtent );
     OGRErr              SaveExtent();
     OGRErr              SaveTimestamp();

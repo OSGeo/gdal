@@ -1136,19 +1136,17 @@ void OGRGeoPackageTableLayer::PostInit()
 }
 
 /************************************************************************/
-/*                      CreateField()                                   */
+/*                      CheckUpdatableTable()                           */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
-                                             CPL_UNUSED int bApproxOK )
+bool OGRGeoPackageTableLayer::CheckUpdatableTable(const char* pszOperation)
 {
-    OGRFieldDefn oFieldDefn(poField);
     if( !m_poDS->GetUpdate() )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   UNSUPPORTED_OP_READ_ONLY,
-                  "CreateField");
-        return OGRERR_FAILURE;
+                  pszOperation);
+        return false;
     }
 /* -------------------------------------------------------------------- */
 /*      Check that is a table and not a view                            */
@@ -1158,9 +1156,22 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Layer %s is not a table",
                  m_pszTableName);
-        return OGRERR_FAILURE;
+        return false;
     }
+    return true;
+}
 
+/************************************************************************/
+/*                      CreateField()                                   */
+/************************************************************************/
+
+OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
+                                             CPL_UNUSED int bApproxOK )
+{
+    if( !CheckUpdatableTable("CreateField") )
+        return OGRERR_FAILURE;
+
+    OGRFieldDefn oFieldDefn(poField);
     int nMaxWidth = 0;
     if( m_bPreservePrecision && poField->GetType() == OFTString )
         nMaxWidth = poField->GetWidth();
@@ -1442,12 +1453,10 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 {
     if( !m_poDS->GetUpdate() )
     {
-    {
         CPLError( CE_Failure, CPLE_NotSupported,
                   UNSUPPORTED_OP_READ_ONLY,
                   "CreateFeature");
         return OGRERR_FAILURE;
-    }
     }
 
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
@@ -3802,13 +3811,8 @@ CPLString OGRGeoPackageTableLayer::BuildSelectFieldList(const std::vector<OGRFie
 
 OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
 {
-    if ( !m_poDS->GetUpdate() )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "DeleteField");
+    if( !CheckUpdatableTable("DeleteField") )
         return OGRERR_FAILURE;
-    }
 
     if (iFieldToDelete < 0 || iFieldToDelete >= m_poFeatureDefn->GetFieldCount())
     {
@@ -3820,17 +3824,6 @@ OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
     ResetReading();
     RunDeferredCreationIfNecessary();
     CreateSpatialIndexIfNecessary();
-
-/* -------------------------------------------------------------------- */
-/*      Check that is a table and not a view                            */
-/* -------------------------------------------------------------------- */
-    if( !m_bIsTable )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Layer %s is not a table",
-                 m_pszTableName);
-        return OGRERR_FAILURE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Build list of old fields, and the list of new fields.           */
@@ -3926,13 +3919,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
                                                 OGRFieldDefn* poNewFieldDefn,
                                                 int nFlagsIn )
 {
-    if ( !m_poDS->GetUpdate() )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "AlterFieldDefn");
+    if( !CheckUpdatableTable("AlterFieldDefn") )
         return OGRERR_FAILURE;
-    }
 
     if (iFieldToAlter < 0 || iFieldToAlter >= m_poFeatureDefn->GetFieldCount())
     {
@@ -3947,17 +3935,6 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     ResetReading();
     RunDeferredCreationIfNecessary();
     CreateSpatialIndexIfNecessary();
-
-/* -------------------------------------------------------------------- */
-/*      Check that is a table and not a view                            */
-/* -------------------------------------------------------------------- */
-    if( !m_bIsTable )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Layer %s is not a table",
-                 m_pszTableName);
-        return OGRERR_FAILURE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Check that the new column name is not a duplicate.              */
@@ -4271,13 +4248,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 
 OGRErr OGRGeoPackageTableLayer::ReorderFields( int* panMap )
 {
-    if ( !m_poDS->GetUpdate() )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "ReorderFields");
+    if( !CheckUpdatableTable("ReorderFields") )
         return OGRERR_FAILURE;
-    }
 
     if (m_poFeatureDefn->GetFieldCount() == 0)
         return OGRERR_NONE;
@@ -4292,17 +4264,6 @@ OGRErr OGRGeoPackageTableLayer::ReorderFields( int* panMap )
     ResetReading();
     RunDeferredCreationIfNecessary();
     CreateSpatialIndexIfNecessary();
-
-/* -------------------------------------------------------------------- */
-/*      Check that is a table and not a view                            */
-/* -------------------------------------------------------------------- */
-    if( !m_bIsTable )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Layer %s is not a table",
-                 m_pszTableName);
-        return OGRERR_FAILURE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Drop any iterator since we change the DB structure              */
