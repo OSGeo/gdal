@@ -2648,7 +2648,11 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
     if( m_poFeatureDefn->GetGeomFieldCount() == 0 )
     {
         pszSQL = sqlite3_mprintf(
-                    "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE table_name='%q' "
+                    "SELECT extension_name, definition, scope "
+                    "FROM gpkg_extensions WHERE (table_name='%q' "
+                    "AND extension_name IS NOT NULL "
+                    "AND definition IS NOT NULL "
+                    "AND scope IS NOT NULL) "
 #ifdef WORKAROUND_SQLITE3_BUGS
                     "OR 0 "
 #endif
@@ -2658,7 +2662,11 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
     else
     {
         pszSQL = sqlite3_mprintf(
-                    "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE (table_name='%q' "
+                    "SELECT extension_name, definition, scope "
+                    "FROM gpkg_extensions WHERE (table_name='%q' "
+                    "AND extension_name IS NOT NULL "
+                    "AND definition IS NOT NULL "
+                    "AND scope IS NOT NULL "
                     "AND column_name='%q' AND extension_name NOT IN ('gpkg_geom_CIRCULARSTRING', "
                     "'gpkg_geom_COMPOUNDCURVE', 'gpkg_geom_CURVEPOLYGON', 'gpkg_geom_MULTICURVE', "
                     "'gpkg_geom_MULTISURFACE', 'gpkg_geom_CURVE', 'gpkg_geom_SURFACE', "
@@ -2681,9 +2689,6 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
             const char* pszExtName = SQLResultGetValue(&oResultTable, 0, i);
             const char* pszDefinition = SQLResultGetValue(&oResultTable, 1, i);
             const char* pszScope = SQLResultGetValue(&oResultTable, 2, i);
-            if( pszExtName == NULL ) pszExtName = "(null)";
-            if( pszDefinition == NULL ) pszDefinition = "(null)";
-            if( pszScope == NULL ) pszScope = "(null)";
             if( m_poDS->GetUpdate() && EQUAL(pszScope, "write-only") )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,

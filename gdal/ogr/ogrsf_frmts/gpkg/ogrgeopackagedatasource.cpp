@@ -4681,7 +4681,13 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
     char* pszSQL = NULL;
     if( !bCheckRasterTable)
         pszSQL = sqlite3_mprintf(
-            "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE (table_name IS NULL AND extension_name != 'gdal_aspatial' AND extension_name != 'gpkg_elevation_tiles') "
+            "SELECT extension_name, definition, scope FROM gpkg_extensions "
+            "WHERE (table_name IS NULL "
+            "AND extension_name IS NOT NULL "
+            "AND definition IS NOT NULL "
+            "AND scope IS NOT NULL "
+            "AND extension_name != 'gdal_aspatial' "
+            "AND extension_name != 'gpkg_elevation_tiles') "
 #ifdef WORKAROUND_SQLITE3_BUGS
             "OR 0 "
 #endif
@@ -4689,7 +4695,12 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
         );
     else
         pszSQL = sqlite3_mprintf(
-            "SELECT extension_name, definition, scope FROM gpkg_extensions WHERE (table_name = '%q' AND extension_name != 'gpkg_elevation_tiles') "
+            "SELECT extension_name, definition, scope FROM gpkg_extensions "
+            "WHERE (table_name = '%q' "
+            "AND extension_name IS NOT NULL "
+            "AND definition IS NOT NULL "
+            "AND scope IS NOT NULL "
+            "AND extension_name != 'gpkg_elevation_tiles') "
 #ifdef WORKAROUND_SQLITE3_BUGS
             "OR 0 "
 #endif
@@ -4707,9 +4718,6 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             const char* pszExtName = SQLResultGetValue(&oResultTable, 0, i);
             const char* pszDefinition = SQLResultGetValue(&oResultTable, 1, i);
             const char* pszScope = SQLResultGetValue(&oResultTable, 2, i);
-            if( pszExtName == NULL ) pszExtName = "(null)";
-            if( pszDefinition == NULL ) pszDefinition = "(null)";
-            if( pszScope == NULL ) pszScope = "(null)";
 
             if( EQUAL(pszExtName, "gpkg_webp") )
             {
