@@ -45,9 +45,16 @@ static int OGRVFKDriverIdentify(GDALOpenInfo* poOpenInfo)
 
     /* valid datasource can be also SQLite DB previously created by
        VFK driver, the real check is done by VFKReaderSQLite */
-    if ( poOpenInfo->nHeaderBytes >= 15 &&
+    if ( poOpenInfo->nHeaderBytes >= 100 &&
          STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
-        return GDAL_IDENTIFY_UNKNOWN;
+    {
+        VSIStatBuf sStat;
+        if (CPLStat(poOpenInfo->pszFilename, &sStat) == 0 &&
+            VSI_ISREG(sStat.st_mode))
+        {
+            return GDAL_IDENTIFY_UNKNOWN;
+        }
+    }
 
     return FALSE;
 }
@@ -64,7 +71,7 @@ static GDALDataset *OGRVFKDriverOpen(GDALOpenInfo* poOpenInfo)
 
     OGRVFKDataSource *poDS = new OGRVFKDataSource();
 
-    if( !poDS->Open(poOpenInfo->pszFilename, TRUE) ||
+    if( !poDS->Open(poOpenInfo) ||
         poDS->GetLayerCount() == 0 )
     {
         delete poDS;
