@@ -102,7 +102,7 @@ public:
     OGRVFKDataSource();
     ~OGRVFKDataSource();
 
-    int            Open(const char *, int);
+    int            Open(GDALOpenInfo* poOpenInfo);
 
     const char    *GetName() override { return pszName; }
 
