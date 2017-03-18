@@ -603,7 +603,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if( SQLGetInteger(hDB,
-            "SELECT COUNT(*) FROM sqlite_master WHERE "
+            "SELECT 1 FROM sqlite_master WHERE "
             "name = 'gpkg_ogr_contents' AND type = 'table'", NULL) == 1 )
     {
         m_bHasGPKGOGRContents = true;
@@ -617,7 +617,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
     {
         bHasGPKGGeometryColumns = SQLGetInteger(hDB,
-            "SELECT COUNT(*) FROM sqlite_master WHERE "
+            "SELECT 1 FROM sqlite_master WHERE "
             "name = 'gpkg_geometry_columns' AND "
             "type IN ('table', 'view')", NULL) == 1;
     }
@@ -721,7 +721,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->nOpenFlags & GDAL_OF_RASTER )
     {
         bHasTileMatrixSet = SQLGetInteger(hDB,
-            "SELECT COUNT(*) FROM sqlite_master WHERE "
+            "SELECT 1 FROM sqlite_master WHERE "
             "name = 'gpkg_tile_matrix_set' AND "
             "type IN ('table', 'view')", NULL) == 1;
     }
@@ -4619,7 +4619,7 @@ void GDALGeoPackageDataset::ReleaseResultSet( OGRLayer * poLayer )
 bool GDALGeoPackageDataset::HasExtensionsTable()
 {
     return SQLGetInteger(hDB,
-        "SELECT COUNT(*) FROM sqlite_master WHERE name = 'gpkg_extensions' "
+        "SELECT 1 FROM sqlite_master WHERE name = 'gpkg_extensions' "
         "AND type IN ('table', 'view')", NULL) == 1;
 }
 

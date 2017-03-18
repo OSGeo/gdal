@@ -2772,11 +2772,10 @@ bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(OGRwkbGeometryT
         "SELECT 1 FROM gpkg_extensions WHERE table_name = '%q' AND "
         "column_name = '%q' AND extension_name = 'gpkg_geom_%s'",
          pszT, pszC, pszGeometryType);
-    OGRErr err = OGRERR_NONE;
-    SQLGetInteger(m_poDS->GetDB(), pszSQL, &err);
+    const bool bExists = SQLGetInteger(m_poDS->GetDB(), pszSQL, NULL) == 1;
     sqlite3_free(pszSQL);
 
-    if( err != OGRERR_NONE )
+    if( !bExists )
     {
         if( eGType == wkbPolyhedralSurface ||
             eGType == wkbTIN || eGType == wkbTriangle )
@@ -2792,7 +2791,7 @@ bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(OGRwkbGeometryT
                     "(table_name,column_name,extension_name,definition,scope) "
                     "VALUES ('%q', '%q', 'gpkg_geom_%s', 'GeoPackage 1.0 Specification Annex J', 'read-write')",
                     pszT, pszC, pszGeometryType);
-        err = SQLCommand(m_poDS->GetDB(), pszSQL);
+        OGRErr err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
         if ( err != OGRERR_NONE )
             return false;
@@ -2927,16 +2926,13 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
     ResetReading();
     SyncToDisk();
 
-    SQLResult oResultTable;
     char* pszSQL = sqlite3_mprintf(
-        "SELECT * FROM sqlite_master WHERE name = '%q' "
+        "SELECT 1 FROM sqlite_master WHERE name = '%q' "
         "AND type IN ('table', 'view')",
          pszDstTableName);
-    OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
+    const bool bAlreadyExists =
+            SQLGetInteger(m_poDS->GetDB(), pszSQL, NULL) == 1;
     sqlite3_free(pszSQL);
-    const bool bAlreadyExists = ( err == OGRERR_NONE &&
-                                  oResultTable.nRowCount == 1 );
-    SQLResultFree(&oResultTable);
     if( bAlreadyExists )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
