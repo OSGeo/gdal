@@ -2687,17 +2687,20 @@ bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(
     if( poGeom != NULL )
     {
         OGRwkbGeometryType eGType = wkbFlatten(poGeom->getGeometryType());
-        if( eGType > wkbGeometryCollection )
-            CreateGeometryExtensionIfNecessary(eGType);
-        const OGRGeometryCollection* poGC =
-                            dynamic_cast<const OGRGeometryCollection*>(poGeom);
-        if( poGC != NULL )
+        if( eGType >= wkbGeometryCollection )
         {
-            const int nSubGeoms = poGC->getNumGeometries();
-            for( int i = 0; i < nSubGeoms; i++ )
+            if( eGType > wkbGeometryCollection )
+                CreateGeometryExtensionIfNecessary(eGType);
+            const OGRGeometryCollection* poGC =
+                            dynamic_cast<const OGRGeometryCollection*>(poGeom);
+            if( poGC != NULL )
             {
-                bRet &=
-                  CreateGeometryExtensionIfNecessary(poGC->getGeometryRef(i));
+                const int nSubGeoms = poGC->getNumGeometries();
+                for( int i = 0; i < nSubGeoms; i++ )
+                {
+                    bRet &=
+                    CreateGeometryExtensionIfNecessary(poGC->getGeometryRef(i));
+                }
             }
         }
     }
