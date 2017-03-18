@@ -667,26 +667,13 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         std::string osSQL =
             "SELECT c.table_name, c.identifier, 1 as is_spatial, c.min_x, c.min_y, c.max_x, c.max_y, 1 AS is_gpkg_table "
             "  FROM gpkg_geometry_columns g JOIN gpkg_contents c ON (g.table_name = c.table_name)"
-            "  WHERE c.data_type = 'features' ";
-
-        if (HasGDALAspatialExtension())
-        {
-            // Was the only method available in OGR 2.0 and 2.1
-            osSQL +=
-                "UNION ALL "
-                "SELECT table_name, identifier, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 1 AS is_gpkg_table "
-                "  FROM gpkg_contents"
-                "  WHERE data_type = 'aspatial' ";
-        }
-        else
-        {
-            // GPKG 1.2 or later
-            osSQL +=
-                "UNION ALL "
-                "SELECT table_name, identifier, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 1 AS is_gpkg_table "
-                "  FROM gpkg_contents"
-                "  WHERE data_type = 'attributes' ";
-        }
+            "  WHERE c.table_name IS NOT NULL AND c.data_type = 'features' "
+            // aspatial: Was the only method available in OGR 2.0 and 2.1
+            // attributes: GPKG 1.2 or later
+            "UNION ALL "
+            "SELECT table_name, identifier, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 1 AS is_gpkg_table "
+            "  FROM gpkg_contents"
+            "  WHERE table_name IS NOT NULL AND data_type IN ('aspatial', 'attributes') ";
 
         const char* pszListAllTables = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "AUTO");
         bool bHasASpatialOrAttributes = HasGDALAspatialExtension();
@@ -707,7 +694,8 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             // vgpkg_ is Spatialite virtual table
             osSQL += "UNION ALL "
                     "SELECT name, name, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 0 AS is_gpkg_table "
-                    "FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'gpkg_%' "
+                    "FROM sqlite_master WHERE type IN ('table', 'view') "
+                    "AND name IS NOT NULL AND name NOT LIKE 'gpkg_%' "
                     "AND name NOT LIKE 'vgpkg_%' "
                     "AND name NOT LIKE 'rtree_%' AND name NOT LIKE 'sqlite_%' "
                     // Avoid reading those views from simple_sewer_features.gpkg
@@ -747,11 +735,6 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             for ( int i = 0; i < oResult.nRowCount; i++ )
             {
                 const char *pszTableName = SQLResultGetValue(&oResult, 0, i);
-                if ( ! pszTableName )
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined, "unable to read table name for layer(%d)", i);
-                    continue;
-                }
                 bool bIsSpatial = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResult, 2, i));
                 bool bIsGpkgTable = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResult, 7, i));
                 OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszTableName);
@@ -787,9 +770,17 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     {
         SQLResult oResult;
         std::string osSQL =
-            "SELECT c.table_name, c.identifier, c.description, c.srs_id, c.min_x, c.min_y, c.max_x, c.max_y, "
-            "tms.min_x, tms.min_y, tms.max_x, tms.max_y, c.data_type FROM gpkg_contents c JOIN gpkg_tile_matrix_set tms ON "
-            "c.table_name = tms.table_name WHERE data_type IN ('tiles', '2d-gridded-coverage')";
+            "SELECT c.table_name, c.identifier, c.description, c.srs_id, "
+            "c.min_x, c.min_y, c.max_x, c.max_y, "
+            "tms.min_x, tms.min_y, tms.max_x, tms.max_y, c.data_type "
+            "FROM gpkg_contents c JOIN gpkg_tile_matrix_set tms ON "
+            "c.table_name = tms.table_name WHERE "
+            "c.table_name IS NOT NULL AND "
+            "tms.min_x IS NOT NULL AND "
+            "tms.min_y IS NOT NULL AND "
+            "tms.max_x IS NOT NULL AND "
+            "tms.max_y IS NOT NULL AND "
+            "data_type IN ('tiles', '2d-gridded-coverage')";
         if( CSLFetchNameValue( poOpenInfo->papszOpenOptions, "TABLE") )
             osSubdatasetTableName = CSLFetchNameValue( poOpenInfo->papszOpenOptions, "TABLE");
         if( !osSubdatasetTableName.empty() )
@@ -828,17 +819,14 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             const char* pszTMSMaxX = SQLResultGetValue(&oResult, 10, 0);
             const char* pszTMSMaxY = SQLResultGetValue(&oResult, 11, 0);
             const char* pszDataType = SQLResultGetValue(&oResult, 12, 0);
-            if( pszTableName != NULL && pszTMSMinX != NULL && pszTMSMinY != NULL &&
-                pszTMSMaxX != NULL && pszTMSMaxY != NULL )
-            {
-                bRet = OpenRaster( pszTableName, pszIdentifier, pszDescription,
-                                   pszSRSId ? atoi(pszSRSId) : 0,
-                                   CPLAtof(pszTMSMinX), CPLAtof(pszTMSMinY),
-                                   CPLAtof(pszTMSMaxX), CPLAtof(pszTMSMaxY),
-                                   pszMinX, pszMinY, pszMaxX, pszMaxY,
-                                   EQUAL(pszDataType, "tiles"),
-                                   poOpenInfo->papszOpenOptions );
-            }
+
+            bRet = OpenRaster( pszTableName, pszIdentifier, pszDescription,
+                                pszSRSId ? atoi(pszSRSId) : 0,
+                                CPLAtof(pszTMSMinX), CPLAtof(pszTMSMinY),
+                                CPLAtof(pszTMSMaxX), CPLAtof(pszTMSMaxY),
+                                pszMinX, pszMinY, pszMaxX, pszMaxY,
+                                EQUAL(pszDataType, "tiles"),
+                                poOpenInfo->papszOpenOptions );
         }
         else if( oResult.nRowCount >= 1 )
         {
@@ -856,20 +844,19 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             {
                 const char *pszTableName = SQLResultGetValue(&oResult, 0, i);
                 const char *pszIdentifier = SQLResultGetValue(&oResult, 1, i);
-                if( pszTableName != NULL )
-                {
+
+                m_papszSubDatasets = CSLSetNameValue( m_papszSubDatasets,
+                                                    CPLSPrintf("SUBDATASET_%d_NAME", nSDSCount+1),
+                                                    CPLSPrintf("GPKG:%s:%s", m_pszFilename, pszTableName) );
+                if( pszIdentifier )
                     m_papszSubDatasets = CSLSetNameValue( m_papszSubDatasets,
-                                                        CPLSPrintf("SUBDATASET_%d_NAME", nSDSCount+1),
-                                                        CPLSPrintf("GPKG:%s:%s", m_pszFilename, pszTableName) );
-                    if( pszIdentifier )
-                        m_papszSubDatasets = CSLSetNameValue( m_papszSubDatasets,
-                                                              CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount+1),
-                                                              CPLSPrintf("%s - %s", pszTableName, pszIdentifier) );
-                    else
-                        m_papszSubDatasets = CSLSetNameValue( m_papszSubDatasets,
-                                                              CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount+1),
-                                                              pszTableName );
-                }
+                                                            CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount+1),
+                                                            CPLSPrintf("%s - %s", pszTableName, pszIdentifier) );
+                else
+                    m_papszSubDatasets = CSLSetNameValue( m_papszSubDatasets,
+                                                            CPLSPrintf("SUBDATASET_%d_DESC", nSDSCount+1),
+                                                            pszTableName );
+
                 nSDSCount ++;
             }
         }
