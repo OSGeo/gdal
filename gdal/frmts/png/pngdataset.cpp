@@ -504,7 +504,6 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
        (pData != NULL) &&
        (panBandMap != NULL) && IsFullBandMap(panBandMap, nBands))
     {
-
         // Pixel interleaved case.
         if( nBandSpace == 1 )
         {
@@ -512,7 +511,7 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
             {
                 CPLErr tmpError = LoadScanline(y);
                 if(tmpError != CE_None) return tmpError;
-                GByte* pabyScanline = pabyBuffer
+                const GByte* pabyScanline = pabyBuffer
                     + (y - nBufferStartLine) * nBands * nXSize;
                 if( nPixelSpace == nBandSpace * nBandCount )
                 {
@@ -535,12 +534,33 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
             {
                 CPLErr tmpError = LoadScanline(y);
                 if(tmpError != CE_None) return tmpError;
-                GByte* pabyScanline = pabyBuffer
+                const GByte* pabyScanline = pabyBuffer
                     + (y - nBufferStartLine) * nBands * nXSize;
-                for(int x = 0; x < nXSize; ++x)
+                GByte* pabyDest = reinterpret_cast<GByte *>( pData ) +
+                                                            y*nLineSpace;
+                if( nBandSpace > nBands )
                 {
+                    // Cache friendly way for typical band interleaved case.
                     for(int iBand=0;iBand<nBands;iBand++)
-                         reinterpret_cast<GByte *>( pData )[(y*nLineSpace) + (x*nPixelSpace) + iBand * nBandSpace] = pabyScanline[x*nBands+iBand];
+                    {
+                        GByte* pabyDest2 = pabyDest + iBand * nBandSpace;
+                        const GByte* pabyScanline2 = pabyScanline + iBand;
+                        GDALCopyWords( pabyScanline2, GDT_Byte, nBands,
+                                       pabyDest2, GDT_Byte, nPixelSpace,
+                                       nXSize );
+                    }
+                }
+                else
+                {
+                    // Generic method
+                    for(int x = 0; x < nXSize; ++x)
+                    {
+                        for(int iBand=0;iBand<nBands;iBand++)
+                        {
+                            pabyDest[(x*nPixelSpace) + iBand * nBandSpace] =
+                                pabyScanline[x*nBands+iBand];
+                        }
+                    }
                 }
             }
         }
