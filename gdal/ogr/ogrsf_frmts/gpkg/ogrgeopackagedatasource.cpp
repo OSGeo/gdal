@@ -2472,7 +2472,7 @@ bool GDALGeoPackageDataset::CreateMetadataTables()
         CPLTestBool(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
 
     /* From C.10. gpkg_metadata Table 35. gpkg_metadata Table Definition SQL  */
-    const char* pszMetadata =
+    CPLString osSQL =
         "CREATE TABLE gpkg_metadata ("
         "id INTEGER CONSTRAINT m_pk PRIMARY KEY ASC NOT NULL UNIQUE,"
         "md_scope TEXT NOT NULL DEFAULT 'dataset',"
@@ -2480,9 +2480,6 @@ bool GDALGeoPackageDataset::CreateMetadataTables()
         "mime_type TEXT NOT NULL DEFAULT 'text/xml',"
         "metadata TEXT NOT NULL"
         ")";
-
-    if ( OGRERR_NONE != SQLCommand(hDB, pszMetadata) )
-        return false;
 
     /* From D.2. metadata Table 40. metadata Trigger Definition SQL  */
     const char* pszMetadataTriggers =
@@ -2516,11 +2513,14 @@ bool GDALGeoPackageDataset::CreateMetadataTables()
     "'catalogue','schema','taxonomy','software','service', "
     "'collectionHardware','nonGeographicDataset','dimensionGroup')); "
     "END";
-    if ( bCreateTriggers && OGRERR_NONE != SQLCommand(hDB, pszMetadataTriggers) )
-        return false;
+    if ( bCreateTriggers )
+    {
+        osSQL += ";";
+        osSQL += pszMetadataTriggers;
+    }
 
     /* From C.11. gpkg_metadata_reference Table 36. gpkg_metadata_reference Table Definition SQL */
-    const char* pszMetadataReference =
+    osSQL += ";"
         "CREATE TABLE gpkg_metadata_reference ("
         "reference_scope TEXT NOT NULL,"
         "table_name TEXT,"
@@ -2532,9 +2532,6 @@ bool GDALGeoPackageDataset::CreateMetadataTables()
         "CONSTRAINT crmr_mfi_fk FOREIGN KEY (md_file_id) REFERENCES gpkg_metadata(id),"
         "CONSTRAINT crmr_mpi_fk FOREIGN KEY (md_parent_id) REFERENCES gpkg_metadata(id)"
         ")";
-
-    if ( OGRERR_NONE != SQLCommand(hDB, pszMetadataReference) )
-        return false;
 
     /* From D.3. metadata_reference Table 41. gpkg_metadata_reference Trigger Definition SQL   */
     const char* pszMetadataReferenceTriggers =
@@ -2628,10 +2625,13 @@ bool GDALGeoPackageDataset::CreateMetadataTables()
         "'[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9][0-9][0-9]Z' "
         "AND strftime('%s',NEW.timestamp) NOT NULL); "
         "END";
-    if ( bCreateTriggers && OGRERR_NONE != SQLCommand(hDB, pszMetadataReferenceTriggers) )
-        return false;
+    if ( bCreateTriggers )
+    {
+        osSQL += ";";
+        osSQL += pszMetadataReferenceTriggers;
+    }
 
-    return true;
+    return SQLCommand(hDB, osSQL) == OGRERR_NONE;
 }
 
 /************************************************************************/
