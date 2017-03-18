@@ -2958,9 +2958,11 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         pszPragma = CPLSPrintf("PRAGMA user_version = %d", m_nUserVersion);
         SQLCommand(hDB, pszPragma);
 
+        CPLString osSQL;
+
         /* Requirement 10: A GeoPackage SHALL include a gpkg_spatial_ref_sys table */
         /* http://opengis.github.io/geopackage/#spatial_ref_sys */
-        const char *pszSpatialRefSys =
+        osSQL =
             "CREATE TABLE gpkg_spatial_ref_sys ("
             "srs_name TEXT NOT NULL,"
             "srs_id INTEGER NOT NULL PRIMARY KEY,"
@@ -2968,59 +2970,44 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "organization_coordsys_id INTEGER NOT NULL,"
             "definition  TEXT NOT NULL,"
             "description TEXT"
-            ")";
-
-        if ( OGRERR_NONE != SQLCommand(hDB, pszSpatialRefSys) )
-            return FALSE;
-
+            ")"
+            ";"
         /* Requirement 11: The gpkg_spatial_ref_sys table in a GeoPackage SHALL */
         /* contain a record for EPSG:4326, the geodetic WGS84 SRS */
         /* http://opengis.github.io/geopackage/#spatial_ref_sys */
-        const char *pszSpatialRefSysRecord =
+
             "INSERT INTO gpkg_spatial_ref_sys ("
             "srs_name, srs_id, organization, organization_coordsys_id, definition, description"
             ") VALUES ("
             "'WGS 84 geodetic', 4326, 'EPSG', 4326, '"
             "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]"
             "', 'longitude/latitude coordinates in decimal degrees on the WGS 84 spheroid'"
-            ")";
-
-        if ( OGRERR_NONE != SQLCommand(hDB, pszSpatialRefSysRecord) )
-            return FALSE;
-
+            ")"
+            ";"
         /* Requirement 11: The gpkg_spatial_ref_sys table in a GeoPackage SHALL */
         /* contain a record with an srs_id of -1, an organization of “NONE”, */
         /* an organization_coordsys_id of -1, and definition “undefined” */
         /* for undefined Cartesian coordinate reference systems */
         /* http://opengis.github.io/geopackage/#spatial_ref_sys */
-        pszSpatialRefSysRecord =
             "INSERT INTO gpkg_spatial_ref_sys ("
             "srs_name, srs_id, organization, organization_coordsys_id, definition, description"
             ") VALUES ("
             "'Undefined cartesian SRS', -1, 'NONE', -1, 'undefined', 'undefined cartesian coordinate reference system'"
-            ")";
-
-        if ( OGRERR_NONE != SQLCommand(hDB, pszSpatialRefSysRecord) )
-            return FALSE;
-
+            ")"
+            ";"
         /* Requirement 11: The gpkg_spatial_ref_sys table in a GeoPackage SHALL */
         /* contain a record with an srs_id of 0, an organization of “NONE”, */
         /* an organization_coordsys_id of 0, and definition “undefined” */
         /* for undefined geographic coordinate reference systems */
         /* http://opengis.github.io/geopackage/#spatial_ref_sys */
-        pszSpatialRefSysRecord =
             "INSERT INTO gpkg_spatial_ref_sys ("
             "srs_name, srs_id, organization, organization_coordsys_id, definition, description"
             ") VALUES ("
             "'Undefined geographic SRS', 0, 'NONE', 0, 'undefined', 'undefined geographic coordinate reference system'"
-            ")";
-
-        if ( OGRERR_NONE != SQLCommand(hDB, pszSpatialRefSysRecord) )
-            return FALSE;
-
+            ")"
+            ";"
         /* Requirement 13: A GeoPackage file SHALL include a gpkg_contents table */
         /* http://opengis.github.io/geopackage/#_contents */
-        const char* pszContents =
             "CREATE TABLE gpkg_contents ("
             "table_name TEXT NOT NULL PRIMARY KEY,"
             "data_type TEXT NOT NULL,"
@@ -3031,30 +3018,28 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "max_x DOUBLE, max_y DOUBLE,"
             "srs_id INTEGER,"
             "CONSTRAINT fk_gc_r_srs_id FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys(srs_id)"
-            ")";
-
-        if ( OGRERR_NONE != SQLCommand(hDB, pszContents) )
-            return FALSE;
+            ")"
+            ;
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
         if( CPLFetchBool(papszOptions, "ADD_GPKG_OGR_CONTENTS", true) )
         {
             m_bHasGPKGOGRContents = true;
-            if ( OGRERR_NONE != SQLCommand(hDB,
+            osSQL += 
+                ";"
                 "CREATE TABLE gpkg_ogr_contents("
                 "table_name TEXT NOT NULL PRIMARY KEY,"
                 "feature_count INTEGER DEFAULT NULL"
-                ")") )
-            {
-                return FALSE;
-            }
+                ")";
         }
 #endif
 
         /* Requirement 21: A GeoPackage with a gpkg_contents table row with a “features” */
         /* data_type SHALL contain a gpkg_geometry_columns table or updateable view */
         /* http://opengis.github.io/geopackage/#_geometry_columns */
-        const char *pszGeometryColumns =
+        if( bCreateGeometryColumns )
+        {
+            osSQL += ";"
             "CREATE TABLE gpkg_geometry_columns ("
             "table_name TEXT NOT NULL,"
             "column_name TEXT NOT NULL,"
@@ -3067,12 +3052,10 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "CONSTRAINT fk_gc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name),"
             "CONSTRAINT fk_gc_srs FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys (srs_id)"
             ")";
-
-        if ( bCreateGeometryColumns && OGRERR_NONE != SQLCommand(hDB, pszGeometryColumns) )
-            return FALSE;
+        }
 
         /* From C.5. gpkg_tile_matrix_set Table 28. gpkg_tile_matrix_set Table Creation SQL  */
-        const char *pszTileMatrixSet =
+        osSQL += ";"
             "CREATE TABLE gpkg_tile_matrix_set ("
             "table_name TEXT NOT NULL PRIMARY KEY,"
             "srs_id INTEGER NOT NULL,"
@@ -3082,13 +3065,10 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "max_y DOUBLE NOT NULL,"
             "CONSTRAINT fk_gtms_table_name FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name),"
             "CONSTRAINT fk_gtms_srs FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys (srs_id)"
-            ")";
-
-        if ( OGRERR_NONE != SQLCommand(hDB, pszTileMatrixSet) )
-            return FALSE;
+            ")"
+            ";"
 
         /* From C.6. gpkg_tile_matrix Table 29. gpkg_tile_matrix Table Creation SQL */
-        const char *pszTileMatrix =
             "CREATE TABLE gpkg_tile_matrix ("
             "table_name TEXT NOT NULL,"
             "zoom_level INTEGER NOT NULL,"
@@ -3102,9 +3082,9 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "CONSTRAINT fk_tmm_table_name FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)"
             ")";
 
-        if ( OGRERR_NONE != SQLCommand(hDB, pszTileMatrix) )
-            return FALSE;
 
+        if( bCreateTriggers )
+        {
         /* From D.1. gpkg_tile_matrix Table 39. gpkg_tile_matrix Trigger Definition SQL */
         const char* pszTileMatrixTrigger =
         "CREATE TRIGGER 'gpkg_tile_matrix_zoom_level_insert' "
@@ -3167,7 +3147,11 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         "SELECT RAISE(ABORT, 'update on table ''gpkg_tile_matrix'' violates constraint: pixel_y_size must be greater than 0') "
         "WHERE NOT (NEW.pixel_y_size > 0); "
         "END;";
-        if ( bCreateTriggers && OGRERR_NONE != SQLCommand(hDB, pszTileMatrixTrigger) )
+            osSQL += ";";
+            osSQL += pszTileMatrixTrigger;
+        }
+
+        if ( OGRERR_NONE != SQLCommand(hDB, osSQL) )
             return FALSE;
 
         if( CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) &&
@@ -3194,6 +3178,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             SetGlobalOffsetScale(-32768.0, 1.0);
 
         /* From C.7. sample_tile_pyramid (Informative) Table 31. EXAMPLE: tiles table Create Table SQL (Informative) */
+        CPLString osSQL;
         char* pszSQL = sqlite3_mprintf("CREATE TABLE \"%w\" ("
           "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
           "zoom_level INTEGER NOT NULL,"
@@ -3202,13 +3187,13 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
           "tile_data BLOB NOT NULL,"
           "UNIQUE (zoom_level, tile_column, tile_row)"
         ")", m_osRasterTable.c_str());
-        OGRErr eErr = SQLCommand(hDB, pszSQL);
+        osSQL += pszSQL;
         sqlite3_free(pszSQL);
-        if ( OGRERR_NONE != eErr )
-            return FALSE;
 
+        if( bCreateTriggers )
+        {
         /* From D.5. sample_tile_pyramid Table 43. tiles table Trigger Definition SQL  */
-        char* pszSQLTriggers = sqlite3_mprintf("CREATE TRIGGER \"%w_zoom_insert\" "
+        pszSQL = sqlite3_mprintf("CREATE TRIGGER \"%w_zoom_insert\" "
         "BEFORE INSERT ON \"%w\" "
         "FOR EACH ROW BEGIN "
         "SELECT RAISE(ABORT, 'insert on table ''%q'' violates constraint: zoom_level not specified for table in gpkg_tile_matrix') "
@@ -3281,13 +3266,15 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         m_osRasterTable.c_str(),
         m_osRasterTable.c_str()
         );
-        if( bCreateTriggers )
-        {
-            eErr = SQLCommand(hDB, pszSQLTriggers);
-            sqlite3_free(pszSQLTriggers);
-            if ( OGRERR_NONE != eErr )
-                return FALSE;
+
+            osSQL += ";";
+            osSQL += pszSQL;
+            sqlite3_free(pszSQL);
         }
+
+        OGRErr eErr = SQLCommand(hDB, osSQL);
+        if ( OGRERR_NONE != eErr )
+            return FALSE;
 
         const char* pszTF = CSLFetchNameValue(papszOptions, "TILE_FORMAT");
         if( eDT == GDT_Int16 || eDT == GDT_UInt16 )
@@ -3441,6 +3428,8 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
         , &oResultTable);
     bool bHasTable = ( eErr == OGRERR_NONE && oResultTable.nRowCount == 1 );
     SQLResultFree(&oResultTable);
+
+    CPLString osSQL;
     if( !bHasTable )
     {
         // It doesn't exist. So create gpkg_extensions table if necessary, and
@@ -3450,7 +3439,7 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
             return false;
 
         // Requirement 105
-        if( SQLCommand( hDB,
+        osSQL =
             "CREATE TABLE gpkg_2d_gridded_coverage_ancillary ("
             "id INTEGER PRIMARY KEY AUTOINCREMENT,"
             "tile_matrix_set_name TEXT NOT NULL UNIQUE,"
@@ -3461,13 +3450,9 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
             "data_null REAL,"
             "CONSTRAINT fk_g2dgtct_name FOREIGN KEY('tile_matrix_set_name') "
             "REFERENCES gpkg_tile_matrix_set ( table_name )"
-            "CHECK (datatype in ('integer','float')))" ) != OGRERR_NONE )
-        {
-            return false;
-        }
-
+            "CHECK (datatype in ('integer','float')))"
+            ";"
         // Requirement 106
-        if( SQLCommand( hDB,
             "CREATE TABLE gpkg_2d_gridded_tile_ancillary ("
             "id INTEGER PRIMARY KEY AUTOINCREMENT,"
             "tpudt_name TEXT NOT NULL,"
@@ -3480,34 +3465,24 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
             "std_dev REAL DEFAULT NULL,"
             "CONSTRAINT fk_g2dgtat_name FOREIGN KEY (tpudt_name) "
             "REFERENCES gpkg_contents(table_name),"
-            "UNIQUE (tpudt_name, tpudt_id))" ) != OGRERR_NONE )
-        {
-            return false;
-        }
-
+            "UNIQUE (tpudt_name, tpudt_id))"
+            ";"
         // Requirement 110
-        if( SQLCommand( hDB,
             "INSERT INTO gpkg_extensions "
             "(table_name, column_name, extension_name, definition, scope) "
             "VALUES ('gpkg_2d_gridded_coverage_ancillary', NULL, "
             "'gpkg_elevation_tiles', "
             "'http://www.geopackage.org/spec/#extension_tiled_gridded_elevation_data', "
-            "'read-write')" ) != OGRERR_NONE )
-        {
-            return false;
-        }
-
+            "'read-write')"
+            ";"
         // Requirement 110
-        if( SQLCommand( hDB,
             "INSERT INTO gpkg_extensions "
             "(table_name, column_name, extension_name, definition, scope) "
             "VALUES ('gpkg_2d_gridded_tile_ancillary', NULL, "
             "'gpkg_elevation_tiles', "
             "'http://www.geopackage.org/spec/#extension_tiled_gridded_elevation_data', "
-            "'read-write')" ) != OGRERR_NONE )
-        {
-            return false;
-        }
+            "'read-write')"
+            ";";
     }
 
     // Requirement 110
@@ -3518,10 +3493,9 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
         "'gpkg_elevation_tiles', "
         "'http://www.geopackage.org/spec/#extension_tiled_gridded_elevation_data', "
         "'read-write')", m_osRasterTable.c_str());
-    eErr = SQLCommand(hDB, pszSQL);
+    osSQL += pszSQL;
+    osSQL += ";";
     sqlite3_free(pszSQL);
-    if( eErr != OGRERR_NONE )
-        return false;
 
     // Requirement 111 and 112
     m_dfPrecision = CPLAtof(CSLFetchNameValueDef(papszOptions,
@@ -3534,11 +3508,8 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
         m_osRasterTable.c_str(),
         ( m_eTF == GPKG_TF_PNG_16BIT ) ? "integer" : "float",
         m_dfScale, m_dfOffset, m_dfPrecision);
-
-    eErr = SQLCommand(hDB, pszSQL);
+    osSQL += pszSQL;
     sqlite3_free(pszSQL);
-    if( eErr != OGRERR_NONE )
-        return false;
 
     // Requirement 108
     eErr = SQLQuery(hDB,
@@ -3562,13 +3533,12 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
             "(srs_name,srs_id,organization,organization_coordsys_id,"
             "definition) VALUES ('WGS 84 3D', 4979, 'EPSG', 4979, '%q')",
             pszWKT);
-        eErr = SQLCommand(hDB, pszSQL);
+        osSQL += ";";
+        osSQL += pszSQL;
         sqlite3_free(pszSQL);
-        if( eErr != OGRERR_NONE )
-            return false;
     }
 
-    return true;
+    return SQLCommand(hDB, osSQL) == OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -3613,15 +3583,15 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
 
     if( EQUAL(pszTilingScheme, "CUSTOM") )
     {
-        GDALDriver* poThisDriver = (GDALDriver*)GDALGetDriverByName("GPKG");
-        if( !poThisDriver )
+        GDALDataset* poDS = NULL;
+        GDALDriver* poThisDriver = reinterpret_cast<GDALDriver*>(
+                                                GDALGetDriverByName("GPKG"));
+        if( poThisDriver != NULL )
         {
-            CSLDestroy(papszUpdatedOptions);
-            return NULL;
+            poDS = poThisDriver->DefaultCreateCopy(
+                pszFilename, poSrcDS, bStrict,
+                papszUpdatedOptions, pfnProgress, pProgressData );
         }
-        GDALDataset* poDS = poThisDriver->DefaultCreateCopy(
-                                    pszFilename, poSrcDS, bStrict,
-                                    papszUpdatedOptions, pfnProgress, pProgressData );
         CSLDestroy(papszUpdatedOptions);
         return poDS;
     }
