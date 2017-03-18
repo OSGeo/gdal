@@ -3169,10 +3169,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters( OGRwkbGeometryType eGType,
     m_bDeferredCreation = true;
     m_bHasTriedDetectingFID64 = true;
     m_pszFidColumn = CPLStrdup(pszFIDColumnName);
-    m_poFeatureDefn = new OGRFeatureDefn( m_pszTableName );
-    SetDescription( m_poFeatureDefn->GetName() );
-    m_poFeatureDefn->SetGeomType(wkbNone);
-    m_poFeatureDefn->Reference();
+
     if( eGType != wkbNone )
     {
         OGRGeomFieldDefn oGeomFieldDefn(pszGeomColumnName, eGType);
