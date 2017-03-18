@@ -3520,7 +3520,10 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
         "SELECT md.metadata, md.md_standard_uri, md.mime_type, "
         "mdr.reference_scope FROM gpkg_metadata md "
         "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
-        "WHERE mdr.table_name = '%q' ORDER BY md.id "
+        "WHERE md.metadata IS NOT NULL AND "
+        "md.md_standard_uri IS NOT NULL AND "
+        "md.mime_type IS NOT NULL AND "
+        "mdr.table_name = '%q' ORDER BY md.id "
         "LIMIT 1000", // to avoid denial of service
         m_pszTableName);
 
@@ -3543,10 +3546,8 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
         const char* pszMimeType = SQLResultGetValue(&oResult, 2, i);
         //const char* pszReferenceScope = SQLResultGetValue(&oResult, 3, i);
         //int bIsGPKGScope = EQUAL(pszReferenceScope, "geopackage");
-        if( pszMetadata == NULL )
-            continue;
-        if( pszMDStandardURI != NULL && EQUAL(pszMDStandardURI, "http://gdal.org") &&
-            pszMimeType != NULL && EQUAL(pszMimeType, "text/xml") )
+        if( EQUAL(pszMDStandardURI, "http://gdal.org") &&
+            EQUAL(pszMimeType, "text/xml") )
         {
             CPLXMLNode* psXMLNode = CPLParseXMLString(pszMetadata);
             if( psXMLNode )
@@ -3582,10 +3583,8 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
         const char* pszMimeType = SQLResultGetValue(&oResult, 2, i);
         //const char* pszReferenceScope = SQLResultGetValue(&oResult, 3, i);
         //int bIsGPKGScope = EQUAL(pszReferenceScope, "geopackage");
-        if( pszMetadata == NULL )
-            continue;
-        if( pszMDStandardURI != NULL && EQUAL(pszMDStandardURI, "http://gdal.org") &&
-            pszMimeType != NULL && EQUAL(pszMimeType, "text/xml") )
+        if( EQUAL(pszMDStandardURI, "http://gdal.org") &&
+            EQUAL(pszMimeType, "text/xml") )
             continue;
 
         /*if( strcmp( pszMDStandardURI, "http://www.isotc211.org/2005/gmd" ) == 0 &&
