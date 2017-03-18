@@ -2714,7 +2714,7 @@ bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(
 bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(OGRwkbGeometryType eGType)
 {
     eGType = wkbFlatten(eGType);
-    CPLAssert(eGType <= wkbTriangle);
+    CPLAssert(eGType > wkbGeometryCollection && eGType <= wkbTriangle);
     if( m_abHasGeometryExtension[eGType] )
         return true;
 
