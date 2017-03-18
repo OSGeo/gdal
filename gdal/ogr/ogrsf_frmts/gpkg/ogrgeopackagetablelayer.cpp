@@ -231,10 +231,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
             err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb,
                                     static_cast<int>(szWkb), CPLFree);
 
-            // FIXME: in case the geometry is a GeometryCollection, we should
-            // inspect its subgeometries to see if there's non-linear ones.
-            if( wkbFlatten(poGeom->getGeometryType()) > wkbGeometryCollection )
-                CreateGeometryExtensionIfNecessary(poGeom->getGeometryType());
+            CreateGeometryExtensionIfNecessary(poGeom);
         }
         /* NULL geometry */
         else
@@ -2677,6 +2674,34 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
         }
     }
     SQLResultFree(&oResultTable);
+}
+
+/************************************************************************/
+/*                     CreateGeometryExtensionIfNecessary()             */
+/************************************************************************/
+
+bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(
+                                                    const OGRGeometry* poGeom)
+{
+    bool bRet = true;
+    if( poGeom != NULL )
+    {
+        OGRwkbGeometryType eGType = wkbFlatten(poGeom->getGeometryType());
+        if( eGType > wkbGeometryCollection )
+            CreateGeometryExtensionIfNecessary(eGType);
+        const OGRGeometryCollection* poGC =
+                            dynamic_cast<const OGRGeometryCollection*>(poGeom);
+        if( poGC != NULL )
+        {
+            const int nSubGeoms = poGC->getNumGeometries();
+            for( int i = 0; i < nSubGeoms; i++ )
+            {
+                bRet &=
+                  CreateGeometryExtensionIfNecessary(poGC->getGeometryRef(i));
+            }
+        }
+    }
+    return bRet;
 }
 
 /************************************************************************/
