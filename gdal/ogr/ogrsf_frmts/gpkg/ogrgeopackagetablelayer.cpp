@@ -160,11 +160,6 @@ OGRErr OGRGeoPackageTableLayer::UpdateExtent( const OGREnvelope *poExtent )
 //
 OGRErr OGRGeoPackageTableLayer::BuildColumns()
 {
-    if ( ! m_poFeatureDefn )
-    {
-        return OGRERR_FAILURE;
-    }
-
     CPLFree(panFieldOrdinals);
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * m_poFeatureDefn->GetFieldCount() );
 
@@ -214,34 +209,23 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                                                        int *pnColCount,
                                                        bool bAddFID )
 {
-    if ( ! (poFeature && poStmt && pnColCount) )
-        return OGRERR_FAILURE;
-
     OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
 
     int nColCount = 1;
+    int err = SQLITE_OK;
     if( bAddFID )
     {
-        const int err =
-            sqlite3_bind_int64(poStmt, nColCount++, poFeature->GetFID());
-        if ( err != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "failed to bind FID to statement");
-            return OGRERR_FAILURE;
-        }
+        err = sqlite3_bind_int64(poStmt, nColCount++, poFeature->GetFID());
     }
 
     /* Bind data values to the statement, here bind the blob for geometry */
-    if ( poFeatureDefn->GetGeomFieldCount() )
+    if ( err == SQLITE_OK && poFeatureDefn->GetGeomFieldCount() )
     {
-        GByte *pabyWkb = NULL;
-
-        int err = SQLITE_OK;
         // Non-NULL geometry.
         OGRGeometry* poGeom = poFeature->GetGeomFieldRef(0);
         if ( poGeom )
         {
+            GByte *pabyWkb = NULL;
             size_t szWkb = 0;
             pabyWkb = GPkgGeometryFromOGR(poGeom, m_iSrs, &szWkb);
             err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb,
@@ -257,16 +241,9 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
         {
             err = sqlite3_bind_null(poStmt, nColCount++);
         }
-        if ( err != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "failed to bind geometry to statement");
-            return OGRERR_FAILURE;
-        }
     }
 
     /* Bind the attributes using appropriate SQLite data types */
-    int err = SQLITE_OK;
     for( int i = 0;
          err == SQLITE_OK && i < poFeatureDefn->GetFieldCount();
          i++ )
@@ -386,7 +363,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
         }
     }
 
-    *pnColCount = nColCount;
+    if( pnColCount != NULL )
+        *pnColCount = nColCount;
     return (err == SQLITE_OK) ? OGRERR_NONE : OGRERR_FAILURE;
 }
 
@@ -432,10 +410,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindInsertParameters( OGRFeature *poFeatu
                                                              sqlite3_stmt *poStmt,
                                                              bool bAddFID )
 {
-    int nColCount = 0;
-    return
-        FeatureBindParameters( poFeature, poStmt, &nColCount,
-                               bAddFID );
+    return FeatureBindParameters( poFeature, poStmt, NULL, bAddFID );
 }
 
 //----------------------------------------------------------------------
@@ -800,10 +775,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     }
 
     /* Populate feature definition from table description */
-    m_poFeatureDefn = new OGRFeatureDefn( m_pszTableName );
-    SetDescription( m_poFeatureDefn->GetName() );
-    m_poFeatureDefn->SetGeomType(wkbNone);
-    m_poFeatureDefn->Reference();
 
     // First pass to determine if we have a single PKID column
     int nCountPKIDColumns = 0;
@@ -1027,8 +998,12 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_bHasTriedDetectingFID64(false),
     m_eASPatialVariant(GPKG_ATTRIBUTES)
 {
-    m_poQueryStatement = NULL;
     memset(m_abHasGeometryExtension, 0, sizeof(m_abHasGeometryExtension));
+
+    m_poFeatureDefn = new OGRFeatureDefn( m_pszTableName );
+    SetDescription( m_poFeatureDefn->GetName() );
+    m_poFeatureDefn->SetGeomType(wkbNone);
+    m_poFeatureDefn->Reference();
 }
 
 /************************************************************************/
@@ -1782,7 +1757,6 @@ void OGRGeoPackageTableLayer::ResetReading()
     }
 
     BuildColumns();
-    return;
 }
 
 /************************************************************************/
