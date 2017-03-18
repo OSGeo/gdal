@@ -189,19 +189,19 @@ int SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
 /* LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, */
 /* GeomCollection) */
 /* http://opengis.github.io/geopackage/#geometry_types */
-OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pnGpkgLenType, bool bHasZ, bool bHasM)
+OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ, bool bHasM)
 {
     OGRwkbGeometryType oType;
 
-    if ( EQUAL("Geometry", pnGpkgLenType) )
+    if ( EQUAL("Geometry", pszGpkgType) )
         oType = wkbUnknown;
     /* The 1.0 spec is not completely clear on what should be used... */
-    else if ( EQUAL("GeomCollection", pnGpkgLenType) ||
-              EQUAL("GeometryCollection", pnGpkgLenType) )
+    else if ( EQUAL("GeomCollection", pszGpkgType) ||
+              EQUAL("GeometryCollection", pszGpkgType) )
         oType =  wkbGeometryCollection;
     else
     {
-        oType = OGRFromOGCGeomType(pnGpkgLenType);
+        oType = OGRFromOGCGeomType(pszGpkgType);
         if( oType == wkbUnknown )
             oType = wkbNone;
     }
@@ -222,56 +222,56 @@ OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pnGpkgLenType, bool bHasZ, 
 /* declared using one of the data types specified in table GeoPackage */
 /* Data Types. */
 /* http://opengis.github.io/geopackage/#table_column_data_types */
-OGRFieldType GPkgFieldToOGR(const char *pnGpkgLenType, OGRFieldSubType& eSubType,
+OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
                             int& nMaxWidth)
 {
     eSubType = OFSTNone;
     nMaxWidth = 0;
 
     /* Integer types */
-    if ( STRNCASECMP("INT", pnGpkgLenType, 3) == 0 )
+    if ( STRNCASECMP("INT", pszGpkgType, 3) == 0 )
         return OFTInteger64;
-    else if ( EQUAL("MEDIUMINT", pnGpkgLenType) )
+    else if ( EQUAL("MEDIUMINT", pszGpkgType) )
         return OFTInteger;
-    else if ( EQUAL("SMALLINT", pnGpkgLenType) )
+    else if ( EQUAL("SMALLINT", pszGpkgType) )
     {
         eSubType = OFSTInt16;
         return OFTInteger;
     }
-    else if ( EQUAL("TINYINT", pnGpkgLenType) )
-        return OFTInteger;
-    else if ( EQUAL("BOOLEAN", pnGpkgLenType) )
+    else if ( EQUAL("TINYINT", pszGpkgType) )
+        return OFTInteger; // [-128, 127]
+    else if ( EQUAL("BOOLEAN", pszGpkgType) )
     {
         eSubType = OFSTBoolean;
         return OFTInteger;
     }
 
     /* Real types */
-    else if ( EQUAL("FLOAT", pnGpkgLenType) )
+    else if ( EQUAL("FLOAT", pszGpkgType) )
     {
         eSubType = OFSTFloat32;
         return OFTReal;
     }
-    else if ( EQUAL("DOUBLE", pnGpkgLenType) )
+    else if ( EQUAL("DOUBLE", pszGpkgType) )
         return OFTReal;
-    else if ( EQUAL("REAL", pnGpkgLenType) )
+    else if ( EQUAL("REAL", pszGpkgType) )
         return OFTReal;
 
     /* String/binary types */
-    else if ( STRNCASECMP("TEXT", pnGpkgLenType, 4) == 0 )
+    else if ( STRNCASECMP("TEXT", pszGpkgType, 4) == 0 )
     {
-        if( pnGpkgLenType[4] == '(' )
-            nMaxWidth = atoi(pnGpkgLenType+5);
+        if( pszGpkgType[4] == '(' )
+            nMaxWidth = atoi(pszGpkgType+5);
         return OFTString;
     }
 
-    else if ( STRNCASECMP("BLOB", pnGpkgLenType, 4) == 0 )
+    else if ( STRNCASECMP("BLOB", pszGpkgType, 4) == 0 )
         return OFTBinary;
 
     /* Date types */
-    else if ( EQUAL("DATE", pnGpkgLenType) )
+    else if ( EQUAL("DATE", pszGpkgType) )
         return OFTDate;
-    else if ( EQUAL("DATETIME", pnGpkgLenType) )
+    else if ( EQUAL("DATETIME", pszGpkgType) )
         return OFTDateTime;
 
     /* Illegal! */
@@ -283,10 +283,10 @@ OGRFieldType GPkgFieldToOGR(const char *pnGpkgLenType, OGRFieldSubType& eSubType
 /* declared using one of the data types specified in table GeoPackage */
 /* Data Types. */
 /* http://opengis.github.io/geopackage/#table_column_data_types */
-const char* GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType,
+const char* GPkgFieldFromOGR(OGRFieldType eType, OGRFieldSubType eSubType,
                              int nMaxWidth)
 {
-    switch(nType)
+    switch(eType)
     {
         case OFTInteger:
         {
@@ -324,9 +324,9 @@ const char* GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType,
     }
 }
 
-int SQLiteFieldFromOGR(OGRFieldType nType)
+int SQLiteFieldFromOGR(OGRFieldType eType)
 {
-    switch(nType)
+    switch(eType)
     {
         case OFTInteger:
             return SQLITE_INTEGER;
