@@ -336,7 +336,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
         pszSQL = sqlite3_mprintf(
                          "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
                          "upper(organization) = upper('%q') AND "
-                         "organization_coordsys_id = %d LIMIT 2",
+                         "organization_coordsys_id = %d",
                          pszAuthorityName, nAuthorityCode );
 
         nSRSId = SQLGetInteger(hDB, pszSQL, &err);
@@ -355,7 +355,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
                          "srs_id = %d", nAuthorityCode );
 
         // Yep, we can!
-        if ( ! SQLGetInteger(hDB, pszSQL, &err) && err == OGRERR_NONE )
+        if ( SQLGetInteger(hDB, pszSQL, NULL) == 0 )
             bCanUseAuthorityCode = true;
         sqlite3_free(pszSQL);
     }
@@ -380,7 +380,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
         // Get the current maximum srid in the srs table.
         const int nMaxSRSId
             = SQLGetInteger(
-                hDB, "SELECT MAX(srs_id) FROM gpkg_spatial_ref_sys", &err );
+                hDB, "SELECT MAX(srs_id) FROM gpkg_spatial_ref_sys", NULL );
         nSRSId = nMaxSRSId + 1;
     }
 
@@ -585,55 +585,28 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     }
 
     /* OGR UTF-8 capability, we'll advertise UTF-8 support if we have it */
-    if ( OGRERR_NONE == PragmaCheck("encoding", "UTF-8", 1) )
-    {
-        m_bUtf8 = true;
-    }
-    else
-    {
-        m_bUtf8 = false;
-    }
+    m_bUtf8 = ( OGRERR_NONE == PragmaCheck("encoding", "UTF-8", 1) );
 
     /* Check for requirement metadata tables */
     /* Requirement 10: gpkg_spatial_ref_sys must exist */
     /* Requirement 13: gpkg_contents must exist */
-    static std::string aosGpkgTables[] = {
-        "gpkg_spatial_ref_sys",
-        "gpkg_contents"
-    };
-
-    for ( int i = 0;
-          i < (int)(sizeof(aosGpkgTables) / sizeof(aosGpkgTables[0]));
-          i++ )
+    if( SQLGetInteger(hDB,
+        "SELECT COUNT(*) FROM sqlite_master WHERE "
+        "name IN ('gpkg_spatial_ref_sys', 'gpkg_contents') AND "
+        "type IN ('table', 'view')", NULL) != 2 )
     {
-        SQLResult oResult;
-        char *pszSQL = sqlite3_mprintf("pragma table_info('%q')", aosGpkgTables[i].c_str());
-        const OGRErr err = SQLQuery(hDB, pszSQL, &oResult);
-        sqlite3_free(pszSQL);
-
-        if  ( err != OGRERR_NONE )
-            return FALSE;
-
-        if ( oResult.nRowCount <= 0 )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, "required GeoPackage table '%s' is missing", aosGpkgTables[i].c_str());
-            SQLResultFree(&oResult);
-            return FALSE;
-        }
-
-        SQLResultFree(&oResult);
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "At least one of the required GeoPackage tables, "
+                  "gpkg_spatial_ref_sys or gpkg_contents, is missing");
+        return FALSE;
     }
 
-
 #ifdef ENABLE_GPKG_OGR_CONTENTS
+    if( SQLGetInteger(hDB,
+            "SELECT COUNT(*) FROM sqlite_master WHERE "
+            "name = 'gpkg_ogr_contents' AND type = 'table'", NULL) == 1 )
     {
-        OGRErr err = OGRERR_NONE;
-        if( SQLGetInteger(hDB,
-                "SELECT COUNT(*) FROM sqlite_master WHERE "
-                "name = 'gpkg_ogr_contents' AND type = 'table'", &err) == 1 )
-        {
-            m_bHasGPKGOGRContents = true;
-        }
+        m_bHasGPKGOGRContents = true;
     }
 #endif
 
@@ -643,11 +616,10 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     bool bHasGPKGGeometryColumns = false;
     if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
     {
-        SQLResult oResult;
-        const OGRErr err =
-            SQLQuery(hDB, "pragma table_info('gpkg_geometry_columns')", &oResult);
-        bHasGPKGGeometryColumns = err == OGRERR_NONE && oResult.nRowCount > 0;
-        SQLResultFree(&oResult);
+        bHasGPKGGeometryColumns = SQLGetInteger(hDB,
+            "SELECT COUNT(*) FROM sqlite_master WHERE "
+            "name = 'gpkg_geometry_columns' AND "
+            "type IN ('table', 'view')", NULL) == 1;
     }
     if( bHasGPKGGeometryColumns )
     {
@@ -748,12 +720,10 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     bool bHasTileMatrixSet = false;
     if( poOpenInfo->nOpenFlags & GDAL_OF_RASTER )
     {
-        SQLResult oResult;
-        const OGRErr err =
-            SQLQuery(hDB,
-                     "pragma table_info('gpkg_tile_matrix_set')", &oResult);
-        bHasTileMatrixSet = err == OGRERR_NONE && oResult.nRowCount > 0;
-        SQLResultFree(&oResult);
+        bHasTileMatrixSet = SQLGetInteger(hDB,
+            "SELECT COUNT(*) FROM sqlite_master WHERE "
+            "name = 'gpkg_tile_matrix_set' AND "
+            "type IN ('table', 'view')", NULL) == 1;
     }
     if( bHasTileMatrixSet )
     {
@@ -2198,12 +2168,11 @@ const char* GDALGeoPackageDataset::CheckMetadataDomain( const char* pszDomain )
 
 bool GDALGeoPackageDataset::HasMetadataTables()
 {
-    OGRErr err;
     const int nCount = SQLGetInteger(hDB,
                   "SELECT COUNT(*) FROM sqlite_master WHERE name IN "
                   "('gpkg_metadata', 'gpkg_metadata_reference') "
-                  "AND type IN ('table', 'view')", &err);
-    return err == OGRERR_NONE && nCount == 2;
+                  "AND type IN ('table', 'view')", NULL);
+    return nCount == 2;
 }
 
 /************************************************************************/
@@ -4649,13 +4618,9 @@ void GDALGeoPackageDataset::ReleaseResultSet( OGRLayer * poLayer )
 
 bool GDALGeoPackageDataset::HasExtensionsTable()
 {
-    SQLResult oResultTable;
-    OGRErr err = SQLQuery(hDB,
-        "SELECT * FROM sqlite_master WHERE name = 'gpkg_extensions' "
-        "AND type IN ('table', 'view') LIMIT 2", &oResultTable);
-    bool bHasExtensionsTable = ( err == OGRERR_NONE && oResultTable.nRowCount == 1 );
-    SQLResultFree(&oResultTable);
-    return bHasExtensionsTable;
+    return SQLGetInteger(hDB,
+        "SELECT COUNT(*) FROM sqlite_master WHERE name = 'gpkg_extensions' "
+        "AND type IN ('table', 'view')", NULL) == 1;
 }
 
 /************************************************************************/
