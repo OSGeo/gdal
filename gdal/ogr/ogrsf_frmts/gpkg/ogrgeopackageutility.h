@@ -70,10 +70,10 @@ const char*         SQLResultGetValue(const SQLResult * poResult, int iColumnNum
 int                 SQLResultGetValueAsInteger(const SQLResult * poResult, int iColNum, int iRowNum);
 OGRErr              SQLResultFree(SQLResult * poResult);
 
-int                 SQLiteFieldFromOGR(OGRFieldType nType);
+int                 SQLiteFieldFromOGR(OGRFieldType eType);
 
 OGRFieldType        GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType, int& nMaxWidth);
-const char*         GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType, int nMaxWidth);
+const char*         GPkgFieldFromOGR(OGRFieldType eType, OGRFieldSubType eSubType, int nMaxWidth);
 OGRwkbGeometryType  GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ, bool bHasM);
 
 GByte*              GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *pnWkbLen);
