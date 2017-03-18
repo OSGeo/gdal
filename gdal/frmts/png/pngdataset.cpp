@@ -538,7 +538,7 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
                     + (y - nBufferStartLine) * nBands * nXSize;
                 GByte* pabyDest = reinterpret_cast<GByte *>( pData ) +
                                                             y*nLineSpace;
-                if( nBandSpace > nBands )
+                if( nPixelSpace <= nBands && nBandSpace > nBands )
                 {
                     // Cache friendly way for typical band interleaved case.
                     for(int iBand=0;iBand<nBands;iBand++)
@@ -546,7 +546,8 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
                         GByte* pabyDest2 = pabyDest + iBand * nBandSpace;
                         const GByte* pabyScanline2 = pabyScanline + iBand;
                         GDALCopyWords( pabyScanline2, GDT_Byte, nBands,
-                                       pabyDest2, GDT_Byte, nPixelSpace,
+                                       pabyDest2, GDT_Byte,
+                                       static_cast<int>(nPixelSpace),
                                        nXSize );
                     }
                 }
