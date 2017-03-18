@@ -1467,8 +1467,8 @@ class TABMAPFile
     void Dump(FILE *fpOut = NULL);
     void DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,
                                FILE *fpMIF, FILE *fpMID,
-                               int nIndexInNode=-1,
                                int nParentId=-1,
+                               int nIndexInNode=-1,
                                int nCurDepth=0,
                                int nMaxDepth=-1);
 #endif
