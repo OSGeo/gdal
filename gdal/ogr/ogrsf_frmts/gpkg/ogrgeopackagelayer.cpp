@@ -163,7 +163,14 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
 /*      Set FID if we have a column to set it from.                     */
 /* -------------------------------------------------------------------- */
     if( iFIDCol >= 0 )
+    {
         poFeature->SetFID( sqlite3_column_int64( hStmt, iFIDCol ) );
+        if( m_pszFidColumn == NULL && poFeature->GetFID() == 0 )
+        {
+            // Miht be the case for views with joins.
+            poFeature->SetFID( iNextShapeId );
+        }
+    }
     else
         poFeature->SetFID( iNextShapeId );
 

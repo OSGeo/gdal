@@ -800,7 +800,9 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         OGRFieldType oType = GPkgFieldToOGR(pszType, eSubType, nMaxWidth);
 
         /* Not a standard field type... */
-        if ( (oType > OFTMaxType && !osGeomColsType.empty() ) || EQUAL(osGeomColumnName, pszName) )
+        if ( !EQUAL(pszType, "") && !EQUAL(pszName, "OGC_FID") &&
+            ((oType > OFTMaxType && !osGeomColsType.empty() ) ||
+             EQUAL(osGeomColumnName, pszName)) )
         {
             /* Maybe it's a geometry type? */
             OGRwkbGeometryType oGeomType;
@@ -1066,7 +1068,22 @@ void OGRGeoPackageTableLayer::PostInit()
                         sqlite3_column_table_name( hStmt, iCol );
                     const char* pszOriginName =
                         sqlite3_column_origin_name( hStmt, iCol );
-                    if( pszTableName != NULL && pszOriginName != NULL )
+                    if( EQUAL(osColName, "OGC_FID") &&
+                        (pszOriginName == NULL ||
+                         osColName != pszOriginName) )
+                    {
+                        // in the case we have a OGC_FID column, and that
+                        // is not the name of the original column, then
+                        // interpret this as an explicit intent to be a
+                        // PKID.
+                        // We cannot just take the FID of a source table as
+                        // a FID because of potential joins that would result
+                        // in multiple records with same source FID.
+                        m_pszFidColumn = CPLStrdup(osColName);
+                        m_poFeatureDefn->DeleteFieldDefn(
+                            m_poFeatureDefn->GetFieldIndex(osColName));
+                    }
+                    else if( pszTableName != NULL && pszOriginName != NULL )
                     {
                         OGRGeoPackageTableLayer* poLayer =
                             dynamic_cast<OGRGeoPackageTableLayer*>(
@@ -1077,7 +1094,6 @@ void OGRGeoPackageTableLayer::PostInit()
                                    poLayer->GetGeometryColumn()) == 0 )
                         {
                             poLayerGeom = poLayer;
-                            break;
                         }
                     }
                 }
@@ -1132,6 +1148,16 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
         CPLError( CE_Failure, CPLE_NotSupported,
                   UNSUPPORTED_OP_READ_ONLY,
                   "CreateField");
+        return OGRERR_FAILURE;
+    }
+/* -------------------------------------------------------------------- */
+/*      Check that is a table and not a view                            */
+/* -------------------------------------------------------------------- */
+    if( !m_bIsTable )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Layer %s is not a table",
+                 m_pszTableName);
         return OGRERR_FAILURE;
     }
 
@@ -1868,14 +1894,16 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
     /* Clear out any existing query */
     ResetReading();
 
+    if( m_pszFidColumn == NULL )
+        return OGRLayer::GetFeature(nFID);
+
     /* No filters apply, just use the FID */
     CPLString soSQL;
     soSQL.Printf("SELECT %s FROM \"%s\" m "
                  "WHERE \"%s\" = " CPL_FRMT_GIB,
                  m_soColumns.c_str(),
                  SQLEscapeDoubleQuote(m_pszTableName).c_str(),
-                 m_pszFidColumn ?
-                    SQLEscapeDoubleQuote(m_pszFidColumn).c_str() : "_rowid_",
+                 SQLEscapeDoubleQuote(m_pszFidColumn).c_str(),
                  nFID);
 
     int err = sqlite3_prepare_v2(
@@ -2193,18 +2221,27 @@ void OGRGeoPackageTableLayer::RecomputeExtent()
 
 int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
 {
-    if ( EQUAL(pszCap, OLCCreateField) ||
-         EQUAL(pszCap, OLCSequentialWrite) ||
-         EQUAL(pszCap, OLCDeleteFeature) ||
-         EQUAL(pszCap, OLCRandomWrite) ||
-         EQUAL(pszCap, OLCDeleteField) ||
-         EQUAL(pszCap, OLCAlterFieldDefn) ||
-         EQUAL(pszCap, OLCReorderFields) )
+    if ( EQUAL(pszCap, OLCSequentialWrite) )
     {
         return m_poDS->GetUpdate();
     }
-    else if ( EQUAL(pszCap, OLCRandomRead) ||
-              EQUAL(pszCap, OLCTransactions) )
+    else if ( EQUAL(pszCap, OLCCreateField) ||
+              EQUAL(pszCap, OLCDeleteField) ||
+              EQUAL(pszCap, OLCAlterFieldDefn) ||
+              EQUAL(pszCap, OLCReorderFields) )
+    {
+        return m_poDS->GetUpdate() && m_bIsTable;
+    }
+    else if ( EQUAL(pszCap, OLCDeleteFeature) ||
+              EQUAL(pszCap, OLCRandomWrite) )
+    {
+        return m_poDS->GetUpdate() && m_pszFidColumn != NULL;
+    }
+    else if ( EQUAL(pszCap, OLCRandomRead) )
+    {
+        return m_pszFidColumn != NULL;
+    }
+    else if ( EQUAL(pszCap, OLCTransactions) )
     {
         return TRUE;
     }

@@ -288,6 +288,11 @@ def ogr_gpkg_7():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(geom)
     feat.SetField('dummy', 'a dummy value')
+
+    if lyr.TestCapability(ogr.OLCSequentialWrite) != 1:
+        gdaltest.post_reason('lyr.TestCapability(ogr.OLCSequentialWrite) != 1')
+        return 'fail'
+
     if lyr.CreateFeature(feat) != 0:
         gdaltest.post_reason('cannot create feature')
         return 'fail'
@@ -314,10 +319,18 @@ def ogr_gpkg_7():
         gdaltest.post_reason('cannot create feature')
         return 'fail'
 
+    if lyr.TestCapability(ogr.OLCRandomRead) != 1:
+        gdaltest.post_reason('lyr.TestCapability(ogr.OLCRandomRead) != 1')
+        return 'fail'
+
     # Random read a feature
     feat_read_random = lyr.GetFeature(feat.GetFID())
     if feat_read_random.GetField('dummy') != 'who you calling a dummy?':
         gdaltest.post_reason('random read output does not match input')
+        return 'fail'
+
+    if lyr.TestCapability(ogr.OLCRandomWrite) != 1:
+        gdaltest.post_reason('lyr.TestCapability(ogr.OLCRandomWrite) != 1')
         return 'fail'
 
     # Random write a feature
@@ -326,6 +339,10 @@ def ogr_gpkg_7():
     feat_read_random = lyr.GetFeature(feat.GetFID())
     if feat_read_random.GetField('dummy') != 'i am no dummy':
         gdaltest.post_reason('random read output does not match random write input')
+        return 'fail'
+
+    if lyr.TestCapability(ogr.OLCDeleteFeature) != 1:
+        gdaltest.post_reason('lyr.TestCapability(ogr.OLCDeleteFeature) != 1')
         return 'fail'
 
     # Delete a feature
@@ -3808,17 +3825,39 @@ def ogr_gpkg_46():
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 1)'))
     lyr.CreateFeature(f)
-    ds.ExecuteSQL('CREATE VIEW my_view AS SELECT geom AS my_geom, fid AS my_mid FROM foo')
+    ds.ExecuteSQL('CREATE VIEW my_view AS SELECT geom AS my_geom, fid AS my_fid FROM foo')
     ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view', 'my_view', 'features', 0 )")
     ds.ExecuteSQL("INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 0, 0, 0)")
+
+    ds.ExecuteSQL("CREATE VIEW my_view2 AS SELECT geom, fid AS OGC_FID, 'bla' as another_column FROM foo")
+    ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view2', 'my_view2', 'features', 0 )")
+    ds.ExecuteSQL("INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view2', 'my_geom', 'GEOMETRY', 0, 0, 0)")
+
+    ds.ExecuteSQL('CREATE VIEW my_view3 AS SELECT a.fid, a.geom, b.fid as fid2 FROM foo a, foo b')
+    ds.ExecuteSQL("INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view3', 'my_view3', 'features', 0 )")
+    ds.ExecuteSQL("INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view3', 'my_geom', 'GEOMETRY', 0, 0, 0)")
+
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_46.gpkg')
+    ds = ogr.Open('/vsimem/ogr_gpkg_46.gpkg', update = 1)
     lyr = ds.GetLayerByName('my_view')
+    if lyr.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldCount())
+        return 'fail'
     if lyr.GetGeometryColumn() != 'my_geom':
         gdaltest.post_reason('fail')
         print(lyr.GetGeometryColumn())
         return 'fail'
+
+    # Operations not valid on a view
+    with gdaltest.error_handler():
+        ds.ReleaseResultSet(ds.ExecuteSQL("SELECT CreateSpatialIndex('my_view', 'my_geom')"))
+        ds.ReleaseResultSet(ds.ExecuteSQL("SELECT DisableSpatialIndex('my_view', 'my_geom')"))
+        lyr.AlterFieldDefn(0, lyr.GetLayerDefn().GetFieldDefn(0), ogr.ALTER_ALL_FLAG)
+        lyr.DeleteField(0)
+        lyr.ReorderFields([0])
+        lyr.CreateField(ogr.FieldDefn('bar'))
 
     # Check if spatial index is recognized
     sql_lyr = ds.ExecuteSQL("SELECT HasSpatialIndex('my_view', 'my_geom')")
@@ -3844,6 +3883,45 @@ def ogr_gpkg_46():
     if f is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    # View with FID
+    lyr = ds.GetLayerByName('my_view2')
+    if lyr.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldCount())
+        return 'fail'
+    if lyr.GetFIDColumn() != 'OGC_FID':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 1 or f.GetField(0) != 'bla':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # View without valid rowid
+    lyr = ds.GetLayerByName('my_view3')
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldCount())
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f2 = lyr.GetFeature(1)
+    if not f.Equal(f2):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        f2.DumpReadable()
+        return 'fail'
+
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_46.gpkg')
