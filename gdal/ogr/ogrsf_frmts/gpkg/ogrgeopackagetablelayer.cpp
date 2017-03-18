@@ -1920,11 +1920,6 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
     /* Should be only one or zero results */
     err = sqlite3_step(m_poQueryStatement);
 
-    /* Nothing left in statement? NULL return indicates to caller */
-    /* that there are no features left */
-    if ( err == SQLITE_DONE )
-        return NULL;
-
     /* Aha, got one */
     if ( err == SQLITE_ROW )
     {
@@ -1955,13 +1950,6 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
     }
     if( m_pszFidColumn == NULL )
     {
-        return OGRERR_FAILURE;
-    }
-
-    /* No FID, no answer. */
-    if (nFID == OGRNullFID)
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, "delete feature called with null FID");
         return OGRERR_FAILURE;
     }
 
