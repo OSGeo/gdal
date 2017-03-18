@@ -2311,7 +2311,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
 {
     OGRErr err;
 
-    if( !m_bIsTable )
+    if( !CheckUpdatableTable("CreateSpatialIndex") )
         return false;
 
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
@@ -2823,7 +2823,8 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
         return CPL_TO_BOOL(m_bHasSpatialIndex);
     m_bHasSpatialIndex = false;
 
-    if( m_poFeatureDefn->GetGeomFieldCount() == 0 ||
+    if( m_pszFidColumn == NULL ||
+        m_poFeatureDefn->GetGeomFieldCount() == 0 ||
         !m_poDS->HasExtensionsTable() )
         return false;
 
@@ -2862,7 +2863,7 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
 
 bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 {
-    if( !m_bIsTable )
+    if( !CheckUpdatableTable("DropSpatialIndex") )
         return false;
 
     if( !HasSpatialIndex() )
