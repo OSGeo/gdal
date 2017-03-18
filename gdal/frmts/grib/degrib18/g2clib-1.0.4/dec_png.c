@@ -1,6 +1,6 @@
 #include "grib2.h"
 #ifndef USE_PNG
-int dec_png(unsigned char *pngbuf,g2int *width,g2int *height,char *cout){return 0;}
+int dec_png(unsigned char *pngbuf,g2int len,g2int *width,g2int *height,unsigned char *cout, g2int ndpts, g2int nbits){return 0;}
 #else   /* USE_PNG */
 #include <stdio.h>
 #include <stdlib.h>
