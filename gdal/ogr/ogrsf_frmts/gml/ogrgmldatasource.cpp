@@ -873,7 +873,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
                     GMLRegistryNamespace &oNamespace =
                         oRegistry.aoNamespaces[iNS];
                     const char *pszNSToFind =
-                        (oNamespace.osPrefix.size()) ? CPLSPrintf("xmlns:%s", oNamespace.osPrefix.c_str()) : NULL;
+                        (!oNamespace.osPrefix.empty()) ? CPLSPrintf("xmlns:%s", oNamespace.osPrefix.c_str()) : NULL;
                     const char *pszURIToFind =
                         CPLSPrintf("\"%s\"", oNamespace.osURI.c_str());
                     // Case sensitive comparison since below test that also
