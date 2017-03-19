@@ -41,7 +41,7 @@ CPL_CVSID("$Id$");
 */
 VFKProperty::VFKProperty() :
     m_bIsNull(true),
-    m_nValue(0),
+    m_iValue(0),
     m_dValue(0.0)
 {}
 
@@ -50,7 +50,16 @@ VFKProperty::VFKProperty() :
 */
 VFKProperty::VFKProperty( int iValue ) :
     m_bIsNull(false),
-    m_nValue(iValue),
+    m_iValue(iValue),
+    m_dValue(0.0)
+{}
+
+/*!
+  \brief Set VFK property (big integer)
+*/
+VFKProperty::VFKProperty( GIntBig iValue ) :
+    m_bIsNull(false),
+    m_iValue(iValue),
     m_dValue(0.0)
 {}
 
@@ -59,7 +68,7 @@ VFKProperty::VFKProperty( int iValue ) :
 */
 VFKProperty::VFKProperty( double dValue ) :
     m_bIsNull(false),
-    m_nValue(0),
+    m_iValue(0),
     m_dValue(dValue)
 {}
 
@@ -68,7 +77,7 @@ VFKProperty::VFKProperty( double dValue ) :
 */
 VFKProperty::VFKProperty( const char *pszValue ) :
     m_bIsNull(false),
-    m_nValue(0),
+    m_iValue(0),
     m_dValue(0.0),
     m_strValue(NULL != pszValue ? pszValue : "")
 {}
@@ -78,7 +87,7 @@ VFKProperty::VFKProperty( const char *pszValue ) :
 */
 VFKProperty::VFKProperty( CPLString const& strValue ) :
     m_bIsNull(false),
-    m_nValue(0),
+    m_iValue(0),
     m_dValue(0.0),
     m_strValue(strValue)
 {}
@@ -93,7 +102,7 @@ VFKProperty::~VFKProperty() {}
 */
 VFKProperty::VFKProperty( VFKProperty const& other ) :
     m_bIsNull(other.m_bIsNull),
-    m_nValue(other.m_nValue),
+    m_iValue(other.m_iValue),
     m_dValue(other.m_dValue),
     m_strValue(other.m_strValue)
 {}
@@ -105,7 +114,7 @@ VFKProperty& VFKProperty::operator=( VFKProperty const& other )
 {
     if (&other != this) {
         m_bIsNull = other.m_bIsNull;
-        m_nValue = other.m_nValue;
+        m_iValue = other.m_iValue;
         m_dValue = other.m_dValue;
         m_strValue = other.m_strValue;
     }

@@ -69,13 +69,14 @@ class VFKProperty
 private:
     bool                    m_bIsNull;
 
-    int                     m_nValue;
+    GIntBig                 m_iValue;
     double                  m_dValue;
     CPLString               m_strValue;
 
 public:
     VFKProperty();
     explicit VFKProperty(int);
+    explicit VFKProperty(GIntBig);
     explicit VFKProperty(double);
     explicit VFKProperty(const char*);
     explicit VFKProperty(CPLString const&);
@@ -84,9 +85,10 @@ public:
     VFKProperty(VFKProperty const& other);
     VFKProperty& operator=(VFKProperty const& other);
 
-    bool                    IsNull()    const { return m_bIsNull; }
-    int                     GetValueI() const { return m_nValue; }
-    double                  GetValueD() const { return m_dValue; }
+    bool                    IsNull()      const { return m_bIsNull; }
+    int                     GetValueI()   const { return static_cast<int> (m_iValue); }
+    GIntBig                 GetValueI64() const { return m_iValue; }
+    double                  GetValueD()   const { return m_dValue; }
     const char             *GetValueS( bool = false ) const;
 };
 
@@ -209,7 +211,6 @@ public:
     int               GetPrecision() const { return m_nPrecision;  }
     OGRFieldType      GetType() const  { return m_eFType;  }
     CPLString         GetTypeSQL() const;
-    GBool             IsIntBig() const { return m_pszType[0] == 'N'; }
     const char       *GetEncoding() const { return  m_pszEncoding; }
 };
 

@@ -491,6 +491,9 @@ bool VFKFeature::SetProperty( int iIndex, const char *pszValue )
     case OFTInteger:
         m_propertyList[iIndex] = VFKProperty(atoi(pszValue));
         break;
+    case OFTInteger64:
+        m_propertyList[iIndex] = VFKProperty(CPLAtoGIntBig(pszValue));
+        break;
     case OFTReal:
         m_propertyList[iIndex] = VFKProperty(CPLAtof(pszValue));
         break;

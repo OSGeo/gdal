@@ -230,15 +230,24 @@ OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
         if (sqlite3_column_type(m_hStmt, iField) == SQLITE_NULL) /* skip null values */
             continue;
         OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
-        if (fType == OFTInteger)
+        switch (fType) {
+        case OFTInteger:
             poFeature->SetField(iField,
                                 sqlite3_column_int(m_hStmt, iField));
-        else if (fType == OFTReal)
+            break;
+        case OFTInteger64:
+            poFeature->SetField(iField,
+                                sqlite3_column_int64(m_hStmt, iField));
+            break;
+        case OFTReal:
             poFeature->SetField(iField,
                                 sqlite3_column_double(m_hStmt, iField));
-        else
+            break;
+        default:
             poFeature->SetField(iField,
                                 (const char *) sqlite3_column_text(m_hStmt, iField));
+            break;
+        }
     }
 
     FinalizeSQL();
