@@ -81,33 +81,7 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
 
     m_bContentChanged = false;
 
-    sqlite3* poDb = m_poDS->GetDB();
-
-    if ( ! poDb ) return OGRERR_FAILURE;
-
-    const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", NULL);
-    char *pszSQL = NULL;
-
-    if( pszCurrentDate )
-    {
-        pszSQL = sqlite3_mprintf(
-                    "UPDATE gpkg_contents SET "
-                    "last_change = '%q'"
-                    "WHERE table_name = '%q'",
-                    pszCurrentDate,
-                    m_pszTableName);
-    }
-    else
-    {
-        pszSQL = sqlite3_mprintf(
-                    "UPDATE gpkg_contents SET "
-                    "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now')"
-                    "WHERE table_name = '%q'",
-                    m_pszTableName);
-    }
-
-    OGRErr err = SQLCommand(poDb, pszSQL);
-    sqlite3_free(pszSQL);
+    OGRErr err = m_poDS->UpdateGpkgContentsLastChange(m_pszTableName);
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if( m_bIsTable && err == OGRERR_NONE && m_poDS->m_bHasGPKGOGRContents )
@@ -121,13 +95,13 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
         {
             osFeatureCount = "NULL";
         }
-        pszSQL = sqlite3_mprintf(
+        char* pszSQL = sqlite3_mprintf(
                     "UPDATE gpkg_ogr_contents SET "
                     "feature_count = %s "
                     "WHERE table_name = '%q'",
                     osFeatureCount.c_str(),
                     m_pszTableName);
-        err = SQLCommand(poDb, pszSQL);
+        err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
     }
 #endif

@@ -229,6 +229,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
         const char*         GetGeometryTypeString(OGRwkbGeometryType eType);
 
         void                ResetReadingAllLayers();
+        OGRErr              UpdateGpkgContentsLastChange(
+                                                const char* pszTableName);
 
         static GDALDataset* CreateCopy( const char *pszFilename,
                                                    GDALDataset *poSrcDS,
