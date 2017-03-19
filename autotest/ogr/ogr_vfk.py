@@ -237,9 +237,30 @@ def ogr_vfk_6():
     return 'success'
 
 ###############################################################################
-# Open DB file as datasource (new in GDAL 2.2)
+# Read PAR layer, check data types (Integer64 new in GDAL 2.2)
 
 def ogr_vfk_7():
+
+    if gdaltest.vfk_drv is None:
+        return 'skip'
+
+    defn = gdaltest.vfk_layer_par.GetLayerDefn()
+
+    for idx, name, ctype in ((0, "ID", ogr.OFTInteger64),
+                             (1, "STAV_DAT", ogr.OFTInteger),
+                             (2, "DATUM_VZNIKU", ogr.OFTString),
+                             (22, "CENA_NEMOVITOSTI", ogr.OFTReal)):
+        col = defn.GetFieldDefn(idx)
+        if col.GetName() != name or col.GetType() != ctype:
+            gdaltest.post_reason("PAR: '{}' column name/type mismatch".format(name))
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Open DB file as datasource (new in GDAL 2.2)
+
+def ogr_vfk_8():
 
     if gdaltest.vfk_drv is None:
        return 'skip'
@@ -293,6 +314,7 @@ gdaltest_list = [
     ogr_vfk_5,
     ogr_vfk_6,
     ogr_vfk_7,
+    ogr_vfk_8,
     ogr_vfk_cleanup ]
 
 if __name__ == '__main__':
