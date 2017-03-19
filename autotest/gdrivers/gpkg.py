@@ -197,6 +197,15 @@ def gpkg_1():
     ds = None
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
+
+    # Check there's no ogr_empty_table
+    sql_lyr = out_ds.ExecuteSQL("SELECT COUNT(*) FROM sqlite_master WHERE name = 'ogr_empty_table'")
+    f = sql_lyr.GetNextFeature()
+    if f.GetField(0) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds.ReleaseResultSet(sql_lyr)
+
     got_gt = out_ds.GetGeoTransform()
     for i in range(6):
         if abs(expected_gt[i]-got_gt[i])>1e-8:
@@ -2994,6 +3003,15 @@ def gpkg_39():
     src_ds = gdal.Open('data/int16.tif')
     gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG')
     ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+
+    # Check there a ogr_empty_table
+    sql_lyr = ds.ExecuteSQL("SELECT COUNT(*) FROM sqlite_master WHERE name = 'ogr_empty_table'")
+    f = sql_lyr.GetNextFeature()
+    if f.GetField(0) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
     if ds.GetRasterBand(1).DataType != gdal.GDT_Int16:
         gdaltest.post_reason('fail')
         return 'fail'

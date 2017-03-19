@@ -100,6 +100,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
 
     bool                m_bInFlushCache;
 
+    bool                m_bTableCreated;
+
     CPLString           m_osTilingScheme;
 
         bool            ComputeTileAndPixelShifts();
@@ -163,6 +165,9 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
         int                     FindLayerIndex(const char* pszLayerName);
 
         bool                    CreateTileGriddedTable(char** papszOptions);
+
+        void                    CreateOGREmptyTableIfNeeded();
+        void                    RemoveOGREmptyTable();
 
     public:
                             GDALGeoPackageDataset();

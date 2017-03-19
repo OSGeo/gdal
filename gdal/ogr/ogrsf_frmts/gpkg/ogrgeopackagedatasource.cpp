@@ -453,6 +453,7 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_papoOverviewDS(NULL),
     m_bZoomOther(false),
     m_bInFlushCache(false),
+    m_bTableCreated(false),
     m_osTilingScheme("CUSTOM")
 {
     m_adfGeoTransform[0] = 0.0;
@@ -483,6 +484,20 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 
     FlushCache();
     FlushMetadata();
+
+    if( eAccess == GA_Update )
+    {
+        CreateOGREmptyTableIfNeeded();
+    }
+
+    // Destroy bands now since we don't want
+    // GDALGPKGMBTilesLikeRasterBand::FlushCache() to run after dataset
+    // destruction
+    for( int i = 0; i < nBands; i++ )
+        delete papoBands[i];
+    nBands = 0;
+    CPLFree(papoBands);
+    papoBands = NULL;
 
     // Destroy overviews before cleaning m_hTempDB as they could still
     // need it
@@ -662,7 +677,9 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         std::string osSQL =
             "SELECT c.table_name, c.identifier, 1 as is_spatial, c.min_x, c.min_y, c.max_x, c.max_y, 1 AS is_gpkg_table "
             "  FROM gpkg_geometry_columns g JOIN gpkg_contents c ON (g.table_name = c.table_name)"
-            "  WHERE c.table_name IS NOT NULL AND c.data_type = 'features' "
+            "  WHERE c.table_name IS NOT NULL AND"
+            "  c.table_name <> 'ogr_empty_table' AND"
+            "  c.data_type = 'features' "
             // aspatial: Was the only method available in OGR 2.0 and 2.1
             // attributes: GPKG 1.2 or later
             "UNION ALL "
@@ -3386,6 +3403,12 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         }
     }
 
+    if( bFileExists && nBandsIn > 0 && eDT == GDT_Byte )
+    {
+        // If there was an ogr_empty_table table, we can remove it
+        RemoveOGREmptyTable();
+    }
+
     SoftCommitTransaction();
 
     /* Requirement 2 */
@@ -3400,7 +3423,64 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         SQLCommand( hDB, "PRAGMA synchronous = OFF" );
     }
 
+    m_bTableCreated = true;
+
     return TRUE;
+}
+
+/************************************************************************/
+/*                     CreateOGREmptyTableIfNeeded()                    */
+/************************************************************************/
+
+void GDALGeoPackageDataset::CreateOGREmptyTableIfNeeded()
+{
+    // The specification makes it compulsory (Req 17) to have at least a
+    // features or tiles table, so create a dummy one.
+    if( m_bTableCreated &&
+        !SQLGetInteger(hDB,
+        "SELECT 1 FROM gpkg_contents WHERE data_type IN "
+        "('features', 'tiles')", NULL) &&
+        CPLTestBool(CPLGetConfigOption("OGR_GPKG_CREATE_EMPTY_TABLE", "YES")) )
+    {
+        CPLDebug("GPKG", "Creating a dummy ogr_empty_table features table, "
+                "since there is no features or tiles table.");
+        const char* const apszLayerOptions[] = {
+            "SPATIAL_INDEX=NO",
+            "DESCRIPTION=Technical table needed to be conformant with "
+                        "Requirement 17 of the GeoPackage specification",
+            NULL };
+        CreateLayer("ogr_empty_table", NULL, wkbUnknown,
+                    const_cast<char**>(apszLayerOptions));
+        // Effectively create the table
+        FlushCache();
+    }
+}
+
+/************************************************************************/
+/*                        RemoveOGREmptyTable()                         */
+/************************************************************************/
+
+void GDALGeoPackageDataset::RemoveOGREmptyTable()
+{
+    // Run with sqlite3_exec since we don't want errors to be emitted
+    sqlite3_exec( hDB,
+        "DROP TABLE IF EXISTS ogr_empty_table", NULL, NULL, NULL );
+    sqlite3_exec( hDB,
+        "DELETE FROM gpkg_contents WHERE table_name = 'ogr_empty_table'",
+        NULL, NULL, NULL );
+#ifdef ENABLE_GPKG_OGR_CONTENTS
+    if( m_bHasGPKGOGRContents )
+    {
+        sqlite3_exec( hDB,
+            "DELETE FROM gpkg_ogr_contents WHERE "
+            "table_name = 'ogr_empty_table'",
+            NULL, NULL, NULL );
+    }
+#endif
+    sqlite3_exec( hDB,
+        "DELETE FROM gpkg_geometry_columns WHERE "
+        "table_name = 'ogr_empty_table'",
+        NULL, NULL, NULL );
 }
 
 /************************************************************************/
@@ -4179,6 +4259,15 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         }
         poLayer->SetASpatialVariant( eASPatialVariant );
     }
+
+    // If there was an ogr_empty_table table, we can remove it
+    if( strcmp(pszLayerName, "ogr_empty_table") != 0 &&
+        eGType != wkbNone )
+    {
+        RemoveOGREmptyTable();
+    }
+
+    m_bTableCreated = true;
 
     m_papoLayers = (OGRGeoPackageTableLayer**)CPLRealloc(m_papoLayers,  sizeof(OGRGeoPackageTableLayer*) * (m_nLayers+1));
     m_papoLayers[m_nLayers++] = poLayer;
