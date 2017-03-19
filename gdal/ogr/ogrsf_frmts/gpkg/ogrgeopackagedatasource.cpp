@@ -1759,29 +1759,7 @@ CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode()
     // Update raster table last_change column in gpkg_contents if needed
     if( m_bHasModifiedTiles )
     {
-        const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", NULL);
-        char *pszSQL = NULL ;
-
-        if( pszCurrentDate )
-        {
-            pszSQL = sqlite3_mprintf(
-                        "UPDATE gpkg_contents SET "
-                        "last_change = '%q'"
-                        "WHERE table_name = '%q'",
-                        pszCurrentDate,
-                        m_osRasterTable.c_str());
-        }
-        else
-        {
-            pszSQL = sqlite3_mprintf(
-                        "UPDATE gpkg_contents SET "
-                        "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now')"
-                        "WHERE table_name = '%q'",
-                        m_osRasterTable.c_str());
-        }
-
-        CPL_IGNORE_RET_VAL(SQLCommand(hDB, pszSQL));
-        sqlite3_free(pszSQL);
+        UpdateGpkgContentsLastChange(m_osRasterTable);
 
         m_bHasModifiedTiles = false;
     }
@@ -1789,6 +1767,39 @@ CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode()
     CPLErr eErr = FlushTiles();
 
     m_bInFlushCache = false;
+    return eErr;
+}
+
+/************************************************************************/
+/*                    UpdateGpkgContentsLastChange()                    */
+/************************************************************************/
+
+OGRErr GDALGeoPackageDataset::UpdateGpkgContentsLastChange(
+                                                const char* pszTableName)
+{
+    const char* pszCurrentDate = CPLGetConfigOption("OGR_CURRENT_DATE", NULL);
+    char *pszSQL = NULL ;
+
+    if( pszCurrentDate )
+    {
+        pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_contents SET "
+                    "last_change = '%q'"
+                    "WHERE table_name = '%q'",
+                    pszCurrentDate,
+                    pszTableName);
+    }
+    else
+    {
+        pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_contents SET "
+                    "last_change = strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ','now')"
+                    "WHERE table_name = '%q'",
+                    pszTableName);
+    }
+
+    OGRErr eErr = SQLCommand(hDB, pszSQL);
+    sqlite3_free(pszSQL);
     return eErr;
 }
 
