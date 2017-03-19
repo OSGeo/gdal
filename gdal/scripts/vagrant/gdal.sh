@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # abort install if any errors occur and enable tracing
 set -o errexit
