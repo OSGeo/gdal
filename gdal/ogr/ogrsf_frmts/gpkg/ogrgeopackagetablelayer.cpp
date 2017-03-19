@@ -1559,7 +1559,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     /* Read the latest FID value */
     GIntBig nFID = sqlite3_last_insert_rowid(m_poDS->GetDB());
-    if( nFID )
+    if( nFID || poFeature->GetFID() == 0 )
     {
         poFeature->SetFID(nFID);
         if( m_iFIDAsRegularColumnIndex >= 0 )
