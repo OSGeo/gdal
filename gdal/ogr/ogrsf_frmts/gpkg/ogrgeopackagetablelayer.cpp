@@ -2158,20 +2158,33 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     /* User is OK with expensive calculation, fall back to */
     /* default implementation (scan all features) and save */
     /* the result for later */
-    if ( bForce )
+    if ( bForce && m_poFeatureDefn->GetGeomFieldCount() )
     {
-        OGRErr err = OGRLayer::GetExtent(psExtent, bForce);
+        const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+        char* pszSQL = sqlite3_mprintf(
+            "SELECT MIN(ST_MinX(\"%w\")), MIN(ST_MinY(\"%w\")), "
+            "MAX(ST_MaxX(\"%w\")), MAX(ST_MaxY(\"%w\")) FROM \"%w\" WHERE "
+            "\"%w\" IS NOT NULL AND NOT ST_IsEmpty(\"%w\")",
+            pszC, pszC, pszC, pszC, m_pszTableName, pszC, pszC);
+        SQLResult oResult;
+        OGRErr err = SQLQuery( m_poDS->GetDB(), pszSQL, &oResult);
+        sqlite3_free(pszSQL);
         delete m_poExtent;
         m_poExtent = NULL;
-        if( err == OGRERR_NONE )
+        if( err == OGRERR_NONE && oResult.nRowCount == 1 &&
+            SQLResultGetValue(&oResult, 0, 0) != NULL )
         {
+            psExtent->MinX = CPLAtof(SQLResultGetValue(&oResult, 0, 0));
+            psExtent->MinY = CPLAtof(SQLResultGetValue(&oResult, 1, 0));
+            psExtent->MaxX = CPLAtof(SQLResultGetValue(&oResult, 2, 0));
+            psExtent->MaxY = CPLAtof(SQLResultGetValue(&oResult, 3, 0));
             m_poExtent = new OGREnvelope( *psExtent );
             m_bExtentChanged = true;
             SaveExtent();
         }
         else
         {
-            char *pszSQL = sqlite3_mprintf(
+            pszSQL = sqlite3_mprintf(
                 "UPDATE gpkg_contents SET "
                 "min_x = NULL, min_y = NULL, "
                 "max_x = NULL, max_y = NULL "
@@ -2182,6 +2195,7 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
             sqlite3_free(pszSQL);
             m_bExtentChanged = false;
         }
+        SQLResultFree(&oResult);
         return err;
     }
 
