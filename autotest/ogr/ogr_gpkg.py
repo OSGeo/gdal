@@ -31,6 +31,7 @@
 ###############################################################################
 
 import os
+import struct
 import sys
 
 # Make sure we run from the directory of the script
@@ -3948,7 +3949,7 @@ def ogr_gpkg_47():
     # Set wrong application_id
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 68, 0)
-    gdal.VSIFWriteL('\0\0\0\0', 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B'*4,0,0,0,0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
@@ -3971,7 +3972,7 @@ def ogr_gpkg_47():
     # Set wrong user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL('\0\0\0\0', 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B'*4,0,0,0,0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
@@ -3995,7 +3996,7 @@ def ogr_gpkg_47():
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL('\0\0\x27\xD9', 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B'*4,0,0,0x27,0xD9), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
@@ -4018,7 +4019,7 @@ def ogr_gpkg_47():
     # Set user_version
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL('\0\0\x28\x3C', 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B'*4,0,0,0x28,0x3C), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
@@ -4043,7 +4044,7 @@ def ogr_gpkg_47():
     # Set wrong application_id
     fp = gdal.VSIFOpenL('/vsimem/.cur_input', 'rb+')
     gdal.VSIFSeekL(fp, 68, 0)
-    gdal.VSIFWriteL('\0\0\0\0', 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B'*4,0,0,0,0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
     ogr.Open('/vsimem/.cur_input')
     gdal.Unlink('/vsimem/.cur_input')
@@ -4053,7 +4054,7 @@ def ogr_gpkg_47():
     # Set wrong user_version
     fp = gdal.VSIFOpenL('/vsimem/.cur_input', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
-    gdal.VSIFWriteL('\0\0\0\0', 4, 1, fp)
+    gdal.VSIFWriteL(struct.pack('B'*4,0,0,0,0), 4, 1, fp)
     gdal.VSIFCloseL(fp)
     ogr.Open('/vsimem/.cur_input')
     gdal.Unlink('/vsimem/.cur_input')
