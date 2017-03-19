@@ -4855,13 +4855,20 @@ static bool OGRGeoPackageGetHeader( sqlite3_context* pContext,
                                         &(psHeader->MaxY) ) == OGRERR_NONE )
         {
             psHeader->bEmpty = bEmpty;
-            return true;
+            if( !(bEmpty && bNeedExtent) )
+                return true;
         }
 
         sqlite3_result_null(pContext);
         return false;
     }
-    if( !(psHeader->bExtentHasXY) && bNeedExtent )
+
+    if( psHeader->bEmpty && bNeedExtent )
+    {
+        sqlite3_result_null(pContext);
+        return false;
+    }
+    else if( !(psHeader->bExtentHasXY) && bNeedExtent )
     {
         OGRGeometry *poGeom = GPkgGeometryToOGR(pabyBLOB, nBLOBLen, NULL);
         if( poGeom == NULL || poGeom->IsEmpty() )
