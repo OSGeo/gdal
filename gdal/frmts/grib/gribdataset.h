@@ -83,20 +83,20 @@ class GRIBDataset : public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 
-    CPLErr      GetGeoTransform( double * padfTransform ) override;
+    CPLErr      GetGeoTransform( double *padfTransform ) override;
     const char *GetProjectionRef() override;
 
   private:
-    void SetGribMetaData(grib_MetaData* meta);
-    VSILFILE    *fp;
-    char  *pszProjection;
+    void SetGribMetaData(grib_MetaData *meta);
+    VSILFILE *fp;
+    char *pszProjection;
     // Calculate and store once as GetGeoTransform may be called multiple times.
     double adfGeoTransform[6];
 
-    GIntBig  nCachedBytes;
-    GIntBig  nCachedBytesThreshold;
-    int      bCacheOnlyOneBand;
-    GRIBRasterBand* poLastUsedBand;
+    GIntBig nCachedBytes;
+    GIntBig nCachedBytesThreshold;
+    int bCacheOnlyOneBand;
+    GRIBRasterBand *poLastUsedBand;
 };
 
 /************************************************************************/
@@ -110,7 +110,7 @@ class GRIBRasterBand : public GDALPamRasterBand
     friend class GRIBDataset;
 
 public:
-    GRIBRasterBand( GRIBDataset*, int, inventoryType* );
+    GRIBRasterBand( GRIBDataset *, int, inventoryType * );
     virtual ~GRIBRasterBand();
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual const char *GetDescription() const override;
@@ -124,15 +124,15 @@ public:
 private:
     CPLErr       LoadData();
 
-    static void ReadGribData( DataSource &, sInt4, int, double**,
-                              grib_MetaData** );
+    static void ReadGribData( DataSource &, sInt4, int, double **,
+                              grib_MetaData ** );
     sInt4 start;
     int subgNum;
     char *longFstLevel;
 
-    double * m_Grib_Data;
-    grib_MetaData* m_Grib_MetaData;
+    double *m_Grib_Data;
+    grib_MetaData *m_Grib_MetaData;
 
-    int      nGribDataXSize;
-    int      nGribDataYSize;
+    int nGribDataXSize;
+    int nGribDataYSize;
 };
