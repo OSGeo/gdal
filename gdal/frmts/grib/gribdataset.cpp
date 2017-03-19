@@ -154,8 +154,8 @@ void GRIBRasterBand::FindPDSTemplate()
         memcpy(&nSectSize, abyHead, 4);
         CPL_MSBPTR32(&nSectSize);
 
-        if( VSIFSeekL( poGDS->fp, nSectSize-5, SEEK_CUR ) != 0 ||
-            VSIFReadL( abyHead, 5, 1, poGDS->fp ) != 1 )
+        if( VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0 ||
+            VSIFReadL(abyHead, 5, 1, poGDS->fp) != 1 )
             break;
     }
 
@@ -194,7 +194,7 @@ void GRIBRasterBand::FindPDSTemplate()
         CPLFree(pabyBody);
     }
 
-    VSIFSeekL( poGDS->fp, nOffset, SEEK_SET );
+    VSIFSeekL(poGDS->fp, nOffset, SEEK_SET);
 }
 
 /************************************************************************/
@@ -240,8 +240,9 @@ CPLErr GRIBRasterBand::LoadData()
                          "Caching only one band at a time from now");
                 for(int i = 0; i < poGDS->nBands; i++)
                 {
-                    reinterpret_cast<GRIBRasterBand*>(
-                        poGDS->GetRasterBand(i+1))->UncacheData();
+                    reinterpret_cast<GRIBRasterBand *>(
+                        poGDS->GetRasterBand(i + 1))
+                        ->UncacheData();
                 }
                 poGDS->nCachedBytes = 0;
                 poGDS->bCacheOnlyOneBand = TRUE;
@@ -415,7 +416,7 @@ void GRIBRasterBand::UncacheData()
     m_Grib_Data = NULL;
     if (m_Grib_MetaData)
     {
-        MetaFree( m_Grib_MetaData );
+        MetaFree(m_Grib_MetaData);
         delete m_Grib_MetaData;
     }
     m_Grib_MetaData = NULL;
@@ -515,8 +516,11 @@ int GRIBDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
 
 {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    // During fuzzing, do not use Identify to reject crazy content.
     if( !Identify(poOpenInfo) )
         return NULL;
+#endif
 
     // A fast "probe" on the header that is partially read in memory.
     char *buff = NULL;
