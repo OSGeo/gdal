@@ -93,6 +93,14 @@ def ogr_gpkg_2():
 
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
 
+    # Check there a ogr_empty_table
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT COUNT(*) FROM sqlite_master WHERE name = 'ogr_empty_table'")
+    f = sql_lyr.GetNextFeature()
+    if f.GetField(0) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+
     # Should default to GPKG 1.0
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('PRAGMA application_id')
     f = sql_lyr.GetNextFeature()
@@ -159,6 +167,14 @@ def ogr_gpkg_4():
 
     if gdaltest.gpkg_ds is None:
         return 'fail'
+
+    # Check there no ogr_empty_table
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT COUNT(*) FROM sqlite_master WHERE name = 'ogr_empty_table'")
+    f = sql_lyr.GetNextFeature()
+    if f.GetField(0) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     if gdaltest.gpkg_ds.GetLayerCount() != 2:
         gdaltest.post_reason( 'unexpected number of layers' )
@@ -2689,12 +2705,12 @@ def ogr_gpkg_32():
     if ds.GetLayerCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
-    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_contents')
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_contents WHERE table_name != 'ogr_empty_table'")
     if sql_lyr.GetFeatureCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
-    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_geometry_columns')
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_geometry_columns WHERE table_name != 'ogr_empty_table'")
     if sql_lyr.GetFeatureCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2725,7 +2741,7 @@ def ogr_gpkg_33():
     gdal.SetConfigOption('OGR_CURRENT_DATE', None)
 
     ds = ogr.Open('/vsimem/ogr_gpkg_33.gpkg')
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_contents WHERE last_change = '2000-01-01T:00:00:00.000Z'")
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_contents WHERE last_change = '2000-01-01T:00:00:00.000Z' AND table_name != 'ogr_empty_table'")
     if sql_lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3433,12 +3449,12 @@ def ogr_gpkg_40():
     if ds.GetLayerCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
-    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_contents')
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_contents WHERE table_name != 'ogr_empty_table'")
     if sql_lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
-    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_geometry_columns')
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_geometry_columns WHERE table_name != 'ogr_empty_table'")
     if sql_lyr.GetFeatureCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3633,7 +3649,7 @@ def ogr_gpkg_42():
 
     # Test layer deletion
     ds.DeleteLayer(0)
-    sql_lyr = ds.ExecuteSQL("SELECT feature_count FROM gpkg_ogr_contents", dialect = 'DEBUG')
+    sql_lyr = ds.ExecuteSQL("SELECT feature_count FROM gpkg_ogr_contents WHERE table_name != 'ogr_empty_table'", dialect = 'DEBUG')
     f = sql_lyr.GetNextFeature()
     if f is not None:
         gdaltest.post_reason('fail')
