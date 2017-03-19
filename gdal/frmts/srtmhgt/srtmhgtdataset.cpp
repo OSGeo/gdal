@@ -261,8 +261,8 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
     return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*	We check the file size to see if it is                          */
-/*	SRTM1 (below or above lat 50) or SRTM 3                         */
+/*      We check the file size to see if it is                          */
+/*      SRTM1 (below or above lat 50) or SRTM 3                         */
 /* -------------------------------------------------------------------- */
   VSIStatBufL fileStat;
 
@@ -483,8 +483,8 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
     const int nYSize = poSrcDS->GetRasterYSize();
 
     if (!((nXSize == 1201 && nYSize == 1201) ||
-	  (nXSize == 3601 && nYSize == 3601) ||
-	  (nXSize == 1801 && nYSize == 3601)))
+          (nXSize == 3601 && nYSize == 3601) ||
+          (nXSize == 1801 && nYSize == 3601)))
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Image dimensions should be 1201x1201, 3601x3601 or 1801x3601.");
