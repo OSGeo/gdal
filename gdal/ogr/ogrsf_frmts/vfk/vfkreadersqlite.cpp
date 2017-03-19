@@ -736,17 +736,17 @@ OGRErr VFKReaderSQLite::AddFeature( IVFKDataBlock *poDataBlock,
             case OFTInteger:
                 osValue.Printf("%d", poProperty->GetValueI());
                 break;
+            case OFTInteger64:
+                osValue.Printf(CPL_FRMT_GIB, poProperty->GetValueI64());
+                break;
             case OFTReal:
                 osValue.Printf("%f", poProperty->GetValueD());
                 break;
             case OFTString:
-                if (poDataBlock->GetProperty(i)->IsIntBig())
-                    osValue.Printf("%s", poProperty->GetValueS());
-                else
-                    osValue.Printf("'%s'", poProperty->GetValueS(true));
+                osValue.Printf("'%s'", poProperty->GetValueS(true));
                 break;
             default:
-                osValue.Printf("'%s'", poProperty->GetValueS());
+                osValue.Printf("'%s'", poProperty->GetValueS(true));
                 break;
             }
         }
@@ -769,7 +769,7 @@ OGRErr VFKReaderSQLite::AddFeature( IVFKDataBlock *poDataBlock,
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot find property PORADOVE_CISLO_BODU");
             return OGRERR_FAILURE;
         }
-        if (!EQUAL(poProperty->GetValueS(), "1"))
+        if (poProperty->GetValueI64() != 1)
             return OGRERR_NONE;
     }
 
