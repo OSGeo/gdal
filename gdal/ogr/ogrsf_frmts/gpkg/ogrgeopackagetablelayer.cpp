@@ -2194,6 +2194,7 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
             SQLCommand( m_poDS->GetDB(), pszSQL);
             sqlite3_free(pszSQL);
             m_bExtentChanged = false;
+            err = OGRERR_FAILURE; // we didn't get an extent
         }
         SQLResultFree(&oResult);
         return err;
