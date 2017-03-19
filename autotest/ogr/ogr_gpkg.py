@@ -94,20 +94,19 @@ def ogr_gpkg_2():
 
     # Should default to GPKG 1.0
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('PRAGMA application_id')
-    if sql_lyr is not None:
-        f = sql_lyr.GetNextFeature()
-        if f['application_id'] != 1196437808:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
-        sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('PRAGMA user_version')
-        f = sql_lyr.GetNextFeature()
-        if f['user_version'] != 0:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-        gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+    f = sql_lyr.GetNextFeature()
+    if f['application_id'] != 1196437808:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = gdaltest.gpkg_ds.ExecuteSQL('PRAGMA user_version')
+    f = sql_lyr.GetNextFeature()
+    if f['user_version'] != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
     if gdaltest.gpkg_ds is not None:
         return 'success'
@@ -3973,6 +3972,53 @@ def ogr_gpkg_47():
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
     gdal.VSIFSeekL(fp, 60, 0)
     gdal.VSIFWriteL('\0\0\0\0', 4, 1, fp)
+    gdal.VSIFCloseL(fp)
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
+    ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+    gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Set GPKG 1.2.1
+    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options = ['VERSION=1.2'])
+    # Set user_version
+    fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
+    gdal.VSIFSeekL(fp, 60, 0)
+    gdal.VSIFWriteL('\0\0\x27\xD9', 4, 1, fp)
+    gdal.VSIFCloseL(fp)
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', 'NO')
+    ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+    gdal.SetConfigOption('GPKG_WARN_UNRECOGNIZED_APPLICATION_ID', None)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Set GPKG 1.3.0
+    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg', options = ['VERSION=1.2'])
+    # Set user_version
+    fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb+')
+    gdal.VSIFSeekL(fp, 60, 0)
+    gdal.VSIFWriteL('\0\0\x28\x3C', 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():

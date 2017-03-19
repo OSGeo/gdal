@@ -61,13 +61,15 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
     /* Requirement 2: application id */
     /* http://opengis.github.io/geopackage/#_file_format */
     /* Be tolerant since some datasets don't actually follow that requirement */
-    const GUInt32 nGP10ApplicationIdMSB = CPL_MSBWORD32(GP10_APPLICATION_ID);
-    const GUInt32 nGP11ApplicationIdMSB = CPL_MSBWORD32(GP11_APPLICATION_ID);
-    const GUInt32 nGPKGApplicationIdMSB = CPL_MSBWORD32(GPKG_APPLICATION_ID);
-    const GUInt32 nVersionGPKG12MSB = CPL_MSBWORD32(GPKG_1_2_VERSION);
-    if( memcmp(poOpenInfo->pabyHeader + 68, &nGP10ApplicationIdMSB, 4) != 0 &&
-        memcmp(poOpenInfo->pabyHeader + 68, &nGP11ApplicationIdMSB, 4) != 0 &&
-        memcmp(poOpenInfo->pabyHeader + 68, &nGPKGApplicationIdMSB, 4) != 0 )
+    GUInt32 nApplicationId;
+    memcpy(&nApplicationId, poOpenInfo->pabyHeader + knApplicationIdPos, 4);
+    nApplicationId = CPL_MSBWORD32(nApplicationId);
+    GUInt32 nUserVersion;
+    memcpy(&nUserVersion, poOpenInfo->pabyHeader + knUserVersionPos, 4);
+    nUserVersion = CPL_MSBWORD32(nUserVersion);
+    if( nApplicationId != GP10_APPLICATION_ID &&
+        nApplicationId != GP11_APPLICATION_ID &&
+        nApplicationId != GPKG_APPLICATION_ID )
     {
 #ifdef DEBUG
         if( EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")  )
@@ -81,29 +83,34 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
         if( bEmitWarning )
         {
             GByte abySignature[4+1];
-            memcpy(abySignature, poOpenInfo->pabyHeader + 68, 4);
+            memcpy(abySignature, poOpenInfo->pabyHeader + knApplicationIdPos, 4);
             abySignature[4] = '\0';
 
             /* Is this a GPxx version ? */
-            const bool bWarn = CPLTestBool(CPLGetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "YES"));
+            const bool bWarn = CPLTestBool(CPLGetConfigOption(
+                "GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "YES"));
             if( bWarn )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                            "GPKG: bad application_id 0x%02X%02X%02X%02X on '%s'",
-                            abySignature[0], abySignature[1], abySignature[2], abySignature[3],
-                            poOpenInfo->pszFilename );
+                          "GPKG: bad application_id=0x%02X%02X%02X%02X on '%s'",
+                          abySignature[0], abySignature[1],
+                          abySignature[2], abySignature[3],
+                          poOpenInfo->pszFilename );
             }
             else
             {
                 CPLDebug( "GPKG",
-                            "bad application_id 0x%02X%02X%02X%02X on '%s'",
-                            abySignature[0], abySignature[1], abySignature[2], abySignature[3],
-                            poOpenInfo->pszFilename );
+                          "bad application_id=0x%02X%02X%02X%02X on '%s'",
+                          abySignature[0], abySignature[1],
+                          abySignature[2], abySignature[3],
+                          poOpenInfo->pszFilename );
             }
         }
     }
-    else if( memcmp(poOpenInfo->pabyHeader + 68, &nGPKGApplicationIdMSB, 4) == 0 &&
-             memcmp(poOpenInfo->pabyHeader + 60, &nVersionGPKG12MSB, 4) != 0 )
+    else if(nApplicationId == GPKG_APPLICATION_ID &&
+            // Accept any 102XX version
+            !(nUserVersion >= GPKG_1_2_VERSION &&
+              nUserVersion < GPKG_1_2_VERSION + 99))
     {
 #ifdef DEBUG
         if( EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input")  )
@@ -117,23 +124,66 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
         if( bEmitWarning )
         {
             GByte abySignature[4+1];
-            memcpy(abySignature, poOpenInfo->pabyHeader + 60, 4);
+            memcpy(abySignature, poOpenInfo->pabyHeader + knUserVersionPos, 4);
             abySignature[4] = '\0';
 
-            const bool bWarn = CPLTestBool(CPLGetConfigOption("GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "YES"));
+            const bool bWarn = CPLTestBool(CPLGetConfigOption(
+                            "GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "YES"));
             if( bWarn )
             {
-                CPLError( CE_Warning, CPLE_AppDefined,
-                            "GPKG: bad user_version 0x%02X%02X%02X%02X on '%s'",
-                            abySignature[0], abySignature[1], abySignature[2], abySignature[3],
-                            poOpenInfo->pszFilename );
+                if( nUserVersion > GPKG_1_2_VERSION )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "This version of GeoPackage "
+                              "user_version=0x%02X%02X%02X%02X "
+                              "(%u, v%d.%d.%d) on '%s' may only be "
+                              "partially supported",
+                              abySignature[0], abySignature[1],
+                              abySignature[2], abySignature[3],
+                              nUserVersion,
+                              nUserVersion / 10000,
+                              (nUserVersion % 10000 ) / 100,
+                              nUserVersion % 100,
+                              poOpenInfo->pszFilename );
+                }
+                else
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "GPKG: unrecognized user_version="
+                              "0x%02X%02X%02X%02X (%u) on '%s'",
+                              abySignature[0], abySignature[1],
+                              abySignature[2], abySignature[3],
+                              nUserVersion,
+                              poOpenInfo->pszFilename );
+                }
             }
             else
             {
-                CPLDebug( "GPKG",
-                            "bad user_version 0x%02X%02X%02X%02X on '%s'",
-                            abySignature[0], abySignature[1], abySignature[2], abySignature[3],
-                            poOpenInfo->pszFilename );
+                if( nUserVersion > GPKG_1_2_VERSION )
+                {
+                    CPLDebug( "GPKG",
+                              "This version of GeoPackage "
+                              "user_version=0x%02X%02X%02X%02X "
+                              "(%u, v%d.%d.%d) on '%s' may only be "
+                              "partially supported",
+                              abySignature[0], abySignature[1],
+                              abySignature[2], abySignature[3],
+                              nUserVersion,
+                              nUserVersion / 10000,
+                              (nUserVersion % 10000 ) / 100,
+                              nUserVersion % 100,
+                              poOpenInfo->pszFilename );
+                }
+                else
+                {
+                    CPLDebug( "GPKG",
+                              "unrecognized user_version=0x%02X%02X%02X%02X"
+                              "(%u) on '%s'",
+                              abySignature[0], abySignature[1],
+                              abySignature[2], abySignature[3],
+                              nUserVersion,
+                              poOpenInfo->pszFilename );
+                }
             }
         }
     }

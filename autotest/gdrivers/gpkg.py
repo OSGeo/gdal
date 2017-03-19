@@ -3008,20 +3008,19 @@ def gpkg_39():
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
     sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
-    if sql_lyr is not None:
-        f = sql_lyr.GetNextFeature()
-        if f['application_id'] != 1196444487:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-        ds.ReleaseResultSet(sql_lyr)
-        sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
-        f = sql_lyr.GetNextFeature()
-        if f['user_version'] != 10200:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-        ds.ReleaseResultSet(sql_lyr)
+    f = sql_lyr.GetNextFeature()
+    if f['application_id'] != 1196444487:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
+    f = sql_lyr.GetNextFeature()
+    if f['user_version'] != 10200:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
 
     # Statistics not available on partial tile without nodata
     md = ds.GetRasterBand(1).GetMetadata()
@@ -3370,78 +3369,74 @@ def gpkg_40():
     gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format = 'GPKG')
     ds = gdal.Open('/vsimem/gpkg_40.gpkg')
     sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
-    if sql_lyr is not None:
-        f = sql_lyr.GetNextFeature()
-        if f['application_id'] != 1196437808:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-        ds.ReleaseResultSet(sql_lyr)
-        sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
-        f = sql_lyr.GetNextFeature()
-        if f['user_version'] != 0:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-        ds.ReleaseResultSet(sql_lyr)
+    f = sql_lyr.GetNextFeature()
+    if f['application_id'] != 1196437808:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
+    f = sql_lyr.GetNextFeature()
+    if f['user_version'] != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
 
     # Should default to 1.2 if we didn't override it.
     gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format = 'GPKG',
                    outputType = gdal.GDT_Int16, creationOptions = ['VERSION=1.0'])
     ds = gdal.Open('/vsimem/gpkg_40.gpkg')
     sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
-    if sql_lyr is not None:
-        f = sql_lyr.GetNextFeature()
-        if f['application_id'] != 1196437808:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-        ds.ReleaseResultSet(sql_lyr)
-        sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
-        f = sql_lyr.GetNextFeature()
-        if f['user_version'] != 0:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-        ds.ReleaseResultSet(sql_lyr)
+    f = sql_lyr.GetNextFeature()
+    if f['application_id'] != 1196437808:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
+    f = sql_lyr.GetNextFeature()
+    if f['user_version'] != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
 
     gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format = 'GPKG',
                    creationOptions = ['VERSION=1.1'])
     ds = gdal.Open('/vsimem/gpkg_40.gpkg')
     sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
-    if sql_lyr is not None:
-        f = sql_lyr.GetNextFeature()
-        if f['application_id'] != 1196437809:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-        ds.ReleaseResultSet(sql_lyr)
-        sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
-        f = sql_lyr.GetNextFeature()
-        if f['user_version'] != 0:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-        ds.ReleaseResultSet(sql_lyr)
+    f = sql_lyr.GetNextFeature()
+    if f['application_id'] != 1196437809:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
+    f = sql_lyr.GetNextFeature()
+    if f['user_version'] != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
 
     gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format = 'GPKG',
                    creationOptions = ['VERSION=1.2'])
     ds = gdal.Open('/vsimem/gpkg_40.gpkg')
     sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
-    if sql_lyr is not None:
-        f = sql_lyr.GetNextFeature()
-        if f['application_id'] != 1196444487:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-        ds.ReleaseResultSet(sql_lyr)
-        sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
-        f = sql_lyr.GetNextFeature()
-        if f['user_version'] != 10200:
-            gdaltest.post_reason('fail')
-            f.DumpReadable()
-            return 'fail'
-        ds.ReleaseResultSet(sql_lyr)
+    f = sql_lyr.GetNextFeature()
+    if f['application_id'] != 1196444487:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
+    f = sql_lyr.GetNextFeature()
+    if f['user_version'] != 10200:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
 
     gdal.Unlink('/vsimem/gpkg_40.gpkg')
 

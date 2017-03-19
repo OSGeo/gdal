@@ -109,6 +109,16 @@ static const TilingSchemeDefinition asTilingShemes[] =
 OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
 {
     CPLAssert( hDB != NULL );
+
+    // PRAGMA application_id available since SQLite 3.7.17
+#if SQLITE_VERSION_NUMBER >= 3007017
+    const char *pszPragma = CPLSPrintf(
+        "PRAGMA application_id = %u;"
+        "PRAGMA user_version = %u",
+        m_nApplicationId,
+        m_nUserVersion);
+    return SQLCommand(hDB, pszPragma);
+#else
     CPLAssert( m_pszFilename != NULL );
 
 #ifdef SPATIALITE_412_OR_LATER
@@ -123,7 +133,7 @@ OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
     VSILFILE *pfFile = VSIFOpenL( m_pszFilename, "rb+" );
     if( pfFile == NULL )
         return OGRERR_FAILURE;
-    VSIFSeekL(pfFile, knGpkgIdPos, SEEK_SET);
+    VSIFSeekL(pfFile, knApplicationIdPos, SEEK_SET);
     const GUInt32 nApplicationIdMSB = CPL_MSBWORD32(m_nApplicationId);
     szWritten = VSIFWriteL(&nApplicationIdMSB, 1, 4, pfFile);
     if (szWritten == 4 )
@@ -147,6 +157,7 @@ OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
         return OGRERR_FAILURE;
 
     return OGRERR_NONE;
+#endif
 }
 
 bool GDALGeoPackageDataset::ReOpenDB()
@@ -526,6 +537,8 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     SetDescription( poOpenInfo->pszFilename );
     CPLString osFilename( poOpenInfo->pszFilename );
     CPLString osSubdatasetTableName;
+    GByte abyHeaderLetMeHerePlease[100];
+    const GByte* pabyHeader = poOpenInfo->pabyHeader;
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GPKG:") )
     {
         char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename, ":", 0);
@@ -539,6 +552,13 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         osSubdatasetTableName = papszTokens[2];
 
         CSLDestroy(papszTokens);
+        VSILFILE *fp = VSIFOpenL(osFilename, "rb");
+        if( fp != NULL )
+        {
+            VSIFReadL( abyHeaderLetMeHerePlease, 1, 100, fp );
+            VSIFCloseL(fp);
+        }
+        pabyHeader = abyHeaderLetMeHerePlease;
     }
 
     bUpdate = poOpenInfo->eAccess == GA_Update;
@@ -551,13 +571,27 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                         : SQLITE_OPEN_READONLY) )
         return FALSE;
 
-    OGRErr eErr;
-    int nTmp = SQLGetInteger(hDB, "PRAGMA application_id", &eErr);
-    if( eErr == OGRERR_NONE )
-        m_nApplicationId = nTmp;
-    nTmp = SQLGetInteger(hDB, "PRAGMA user_version", &eErr);
-    if( eErr == OGRERR_NONE )
-        m_nUserVersion = nTmp;
+
+    memcpy(&m_nApplicationId, pabyHeader + knApplicationIdPos, 4);
+    m_nApplicationId = CPL_MSBWORD32(m_nApplicationId);
+    memcpy(&m_nUserVersion, pabyHeader + knUserVersionPos, 4);
+    m_nUserVersion = CPL_MSBWORD32(m_nUserVersion);
+    if( m_nApplicationId == GP10_APPLICATION_ID )
+    {
+        CPLDebug("GPKG", "GeoPackage v1.0");
+    }
+    else if( m_nApplicationId == GP11_APPLICATION_ID )
+    {
+        CPLDebug("GPKG", "GeoPackage v1.1");
+    }
+    else if( m_nApplicationId == GPKG_APPLICATION_ID &&
+             m_nUserVersion >= GPKG_1_2_VERSION )
+    {
+        CPLDebug("GPKG", "GeoPackage v%d.%d.%d",
+                 m_nUserVersion / 10000,
+                 (m_nUserVersion % 10000) / 100,
+                 m_nUserVersion % 100);
+    }
 
     /* Requirement 6: The SQLite PRAGMA integrity_check SQL command SHALL return “ok” */
     /* http://opengis.github.io/geopackage/#_file_integrity */
@@ -2913,14 +2947,6 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     int bCreateGeometryColumns = CPLTestBool(CPLGetConfigOption("CREATE_GEOMETRY_COLUMNS", "YES"));
     if( !bFileExists )
     {
-        /* Requirement 2 */
-        const char *pszPragma = CPLSPrintf("PRAGMA application_id = %d",
-                                           m_nApplicationId);
-        SQLCommand(hDB, pszPragma);
-
-        pszPragma = CPLSPrintf("PRAGMA user_version = %d", m_nUserVersion);
-        SQLCommand(hDB, pszPragma);
-
         CPLString osSQL;
 
         /* Requirement 10: A GeoPackage SHALL include a gpkg_spatial_ref_sys table */
@@ -4471,6 +4497,15 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
         return GDALDataset::ExecuteSQL( pszSQLCommand,
                                           poSpatialFilter,
                                           "SQLITE" );
+
+#if SQLITE_VERSION_NUMBER < 3007017
+    // Emulate PRAGMA application_id
+    if( EQUAL(pszSQLCommand, "PRAGMA application_id") )
+    {
+        return new OGRSQLiteSingleFeatureLayer
+                                ( pszSQLCommand + 7, m_nApplicationId );
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Prepare statement.                                              */

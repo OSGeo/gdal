@@ -55,7 +55,7 @@ static const int GP11_APPLICATION_ID = 0x47503131;
 static const int GPKG_APPLICATION_ID = 0x47504B47;
 static const GUInt32 GPKG_1_2_VERSION = 0x000027D8; // 10200
 
-static const size_t knGpkgIdPos = 68;
+static const size_t knApplicationIdPos = 68;
 static const size_t knUserVersionPos = 60;
 
 /************************************************************************/
@@ -69,8 +69,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
     friend class GDALGeoPackageRasterBand;
     friend class OGRGeoPackageTableLayer;
 
-    int                 m_nApplicationId;
-    int                 m_nUserVersion;
+    GUInt32             m_nApplicationId;
+    GUInt32             m_nUserVersion;
     OGRGeoPackageTableLayer** m_papoLayers;
     int                 m_nLayers;
     bool                m_bUtf8;
