@@ -4161,6 +4161,33 @@ def ogr_gpkg_48():
     return 'success'
 
 ###############################################################################
+# Test CreateGeomField() on a attributes layer
+
+def ogr_gpkg_49():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_49.gpkg')
+
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone,
+                         options = [ 'ASPATIAL_VARIANT=GPKG_ATTRIBUTES' ])
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+
+    field_defn = ogr.GeomFieldDefn('geomfield_not_nullable', ogr.wkbPoint)
+    if lyr.CreateGeomField(field_defn) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_49.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -4233,6 +4260,7 @@ gdaltest_list = [
     ogr_gpkg_46,
     ogr_gpkg_47,
     ogr_gpkg_48,
+    ogr_gpkg_49,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
