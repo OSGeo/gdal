@@ -32,8 +32,8 @@
 
 #include "ogrsf_frmts.h"
 #include "ogr_sqlite.h"
-#include "ogrgeopackageutility.h"
 #include "gpkgmbtilescommon.h"
+#include "ogrsqliteutility.h"
 
 #include <vector>
 

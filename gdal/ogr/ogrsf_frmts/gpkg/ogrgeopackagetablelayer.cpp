@@ -29,6 +29,7 @@
 
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
+#include "ogrsqliteutility.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
 

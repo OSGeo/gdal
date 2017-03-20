@@ -31,6 +31,8 @@
 #include "ogr_p.h"
 #include "swq.h"
 #include "gdalwarper.h"
+#include "ogrgeopackageutility.h"
+#include "ogrsqliteutility.h"
 
 #include <cstdlib>
 
