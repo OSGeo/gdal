@@ -493,10 +493,10 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     OGRErr              BuildColumns();
     bool                IsGeomFieldSet( OGRFeature *poFeature );
     CPLString           FeatureGenerateUpdateSQL( OGRFeature *poFeature );
-    CPLString           FeatureGenerateInsertSQL( OGRFeature *poFeature, bool bAddFID );
+    CPLString           FeatureGenerateInsertSQL( OGRFeature *poFeature, bool bAddFID, bool bBindUnsetFields );
     OGRErr              FeatureBindUpdateParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt );
-    OGRErr              FeatureBindInsertParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, bool bAddFID );
-    OGRErr              FeatureBindParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int *pnColCount, bool bAddFID );
+    OGRErr              FeatureBindInsertParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, bool bAddFID, bool bBindUnsetFields );
+    OGRErr              FeatureBindParameters( OGRFeature *poFeature, sqlite3_stmt *poStmt, int *pnColCount, bool bAddFID, bool bBindUnsetFields );
 
     void                CheckUnknownExtensions();
     bool                CreateGeometryExtensionIfNecessary(const OGRGeometry* poGeom);
