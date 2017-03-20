@@ -30,6 +30,7 @@
 #include "ogr_api.h"
 #include "ogrsqlitevirtualogr.h"
 #include "ogrsqliteexecutesql.h"
+#include "ogrsqliteutility.h"
 #include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
@@ -513,15 +514,15 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
         osGeomColRaw = poGeomField->GetNameRef();
     const char* pszGeomColRaw = osGeomColRaw.c_str();
 
-    CPLString osGeomColEscaped(OGRSQLiteEscape(pszGeomColRaw));
+    CPLString osGeomColEscaped(SQLEscapeLiteral(pszGeomColRaw));
     const char* pszGeomColEscaped = osGeomColEscaped.c_str();
 
-    CPLString osLayerNameEscaped(OGRSQLiteEscape(osTableName));
+    CPLString osLayerNameEscaped(SQLEscapeLiteral(osTableName));
     const char* pszLayerNameEscaped = osLayerNameEscaped.c_str();
 
     CPLString osIdxNameRaw(CPLSPrintf("idx_%s_%s",
                     oLayerDesc.osLayerName.c_str(), pszGeomColRaw));
-    CPLString osIdxNameEscaped(OGRSQLiteEscapeName(osIdxNameRaw));
+    CPLString osIdxNameEscaped(SQLEscapeName(osIdxNameRaw));
 
     /* Make sure that the SRS is injected in spatial_ref_sys */
     OGRSpatialReference* poSRS = poGeomField->GetSpatialRef();
@@ -641,7 +642,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
                     "VirtualOGRSpatialIndex(%d, '%s', pkid, xmin, xmax, ymin, ymax)",
                     osIdxNameEscaped.c_str(),
                     nExtraDS,
-                    OGRSQLiteEscape(oLayerDesc.osLayerName).c_str());
+                    SQLEscapeLiteral(oLayerDesc.osLayerName).c_str());
 
     rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
     if( rc != SQLITE_OK )
@@ -932,9 +933,9 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
             poSingleSrcLayer = poLayer;
 
         osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR(%d,'%s',%d,%d)",
-                OGRSQLiteEscapeName(osTableName).c_str(),
+                SQLEscapeName(osTableName).c_str(),
                 nExtraDS,
-                OGRSQLiteEscape(oLayerDesc.osLayerName).c_str(),
+                SQLEscapeLiteral(oLayerDesc.osLayerName).c_str(),
                 bFoundOGRStyle,
                 TRUE/*bExposeOGRNativeData*/);
 

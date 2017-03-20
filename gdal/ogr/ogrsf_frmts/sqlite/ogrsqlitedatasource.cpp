@@ -41,6 +41,7 @@
 #include "cpl_csv.h"
 #include "cpl_multiproc.h"
 #include "ogrsqlitevirtualogr.h"
+#include "ogrsqliteutility.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -1367,7 +1368,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
                 CSLDestroy(papszTokens);
                 return FALSE;
             }
-            m_pszFilename = CPLStrdup( OGRSQLiteParamsUnquote( papszTokens[1] ) );
+            m_pszFilename = CPLStrdup( SQLUnescape( papszTokens[1] ) );
             CSLDestroy(papszTokens);
         }
         else
@@ -2628,67 +2629,6 @@ char *OGRSQLiteDataSource::LaunderName( const char *pszSrcName )
 }
 
 /************************************************************************/
-/*                       OGRSQLiteParamsUnquote()                       */
-/************************************************************************/
-
-CPLString OGRSQLiteParamsUnquote(const char* pszVal)
-{
-    char chQuoteChar = pszVal[0];
-    if( chQuoteChar != '\'' && chQuoteChar != '"' )
-        return pszVal;
-
-    CPLString osRet;
-    pszVal ++;
-    while( *pszVal != '\0' )
-    {
-        if( *pszVal == chQuoteChar )
-        {
-            if( pszVal[1] == chQuoteChar )
-                pszVal ++;
-            else
-                break;
-        }
-        osRet += *pszVal;
-        pszVal ++;
-    }
-    return osRet;
-}
-
-/************************************************************************/
-/*                          OGRSQLiteEscape()                           */
-/************************************************************************/
-
-CPLString OGRSQLiteEscape( const char *pszLiteral )
-{
-    CPLString osVal;
-    for( int i = 0; pszLiteral[i] != '\0'; i++ )
-    {
-        if ( pszLiteral[i] == '\'' )
-            osVal += '\'';
-        osVal += pszLiteral[i];
-    }
-    return osVal;
-}
-
-/************************************************************************/
-/*                        OGRSQLiteEscapeName()                         */
-/************************************************************************/
-
-CPLString OGRSQLiteEscapeName(const char* pszName)
-{
-    CPLString osRet;
-    while( *pszName != '\0' )
-    {
-        if( *pszName == '"' )
-            osRet += "\"\"";
-        else
-            osRet += *pszName;
-        pszName ++;
-    }
-    return osRet;
-}
-
-/************************************************************************/
 /*                            DeleteLayer()                             */
 /************************************************************************/
 
@@ -2761,7 +2701,7 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
 /* -------------------------------------------------------------------- */
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
-    CPLString osEscapedLayerName = OGRSQLiteEscape(osLayerName);
+    CPLString osEscapedLayerName = SQLEscapeLiteral(osLayerName);
     const char* pszEscapedLayerName = osEscapedLayerName.c_str();
     const char* pszGeometryColumn = osGeometryColumn.size() ? osGeometryColumn.c_str() : NULL;
 
@@ -2804,19 +2744,19 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
         if( bIsSpatiaLiteDB && pszGeometryColumn )
         {
             osCommand.Printf( "DROP TABLE 'idx_%s_%s'", pszEscapedLayerName,
-                              OGRSQLiteEscape(pszGeometryColumn).c_str());
+                              SQLEscapeLiteral(pszGeometryColumn).c_str());
             CPL_IGNORE_RET_VAL(sqlite3_exec( hDB, osCommand, NULL, NULL, NULL ));
 
             osCommand.Printf( "DROP TABLE 'idx_%s_%s_node'", pszEscapedLayerName,
-                              OGRSQLiteEscape(pszGeometryColumn).c_str());
+                              SQLEscapeLiteral(pszGeometryColumn).c_str());
             CPL_IGNORE_RET_VAL(sqlite3_exec( hDB, osCommand, NULL, NULL, NULL ));
 
             osCommand.Printf( "DROP TABLE 'idx_%s_%s_parent'", pszEscapedLayerName,
-                              OGRSQLiteEscape(pszGeometryColumn).c_str());
+                              SQLEscapeLiteral(pszGeometryColumn).c_str());
             CPL_IGNORE_RET_VAL(sqlite3_exec( hDB, osCommand, NULL, NULL, NULL ));
 
             osCommand.Printf( "DROP TABLE 'idx_%s_%s_rowid'", pszEscapedLayerName,
-                              OGRSQLiteEscape(pszGeometryColumn).c_str());
+                              SQLEscapeLiteral(pszGeometryColumn).c_str());
             CPL_IGNORE_RET_VAL(sqlite3_exec( hDB, osCommand, NULL, NULL, NULL ));
         }
     }
@@ -3263,7 +3203,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
         osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE \"%s\" = ? "
                           "LIMIT 2",
-                          OGRSQLiteEscapeName(pszSRTEXTColName).c_str());
+                          SQLEscapeName(pszSRTEXTColName).c_str());
     }
 
 /* -------------------------------------------------------------------- */
@@ -3353,7 +3293,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     {
         osCommand.Printf( "SELECT * FROM spatial_ref_sys WHERE auth_srid='%s' "
                           "LIMIT 2",
-                          OGRSQLiteEscape(pszAuthorityCode).c_str() );
+                          SQLEscapeLiteral(pszAuthorityCode).c_str() );
         rc = sqlite3_get_table( hDB, osCommand, &papszResult,
                                 &nRowCount, &nColCount, &pszErrMsg );
 

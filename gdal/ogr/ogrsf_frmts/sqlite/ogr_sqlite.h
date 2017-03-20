@@ -934,14 +934,6 @@ class RL2RasterBand CPL_FINAL: public GDALPamRasterBand
 
 #endif /* DO_NOT_INCLUDE_SQLITE_CLASSES */
 
-/* To escape literals. The returned string doesn't contain the surrounding single quotes */
-CPLString OGRSQLiteEscape( const char *pszLiteral );
-
-/* To escape table or field names. The returned string doesn't contain the surrounding double quotes */
-CPLString OGRSQLiteEscapeName( const char* pszName );
-
-CPLString OGRSQLiteParamsUnquote(const char* pszVal);
-
 CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn,
                                                int bSQLiteDialectInternalUse );
 

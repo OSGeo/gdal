@@ -190,40 +190,63 @@ int SQLiteFieldFromOGR(OGRFieldType eType)
     }
 }
 
-CPLString SQLEscapeDoubleQuote(const char* pszStr)
+/************************************************************************/
+/*                             SQLUnescape()                            */
+/************************************************************************/
+
+CPLString SQLUnescape(const char* pszVal)
 {
+    char chQuoteChar = pszVal[0];
+    if( chQuoteChar != '\'' && chQuoteChar != '"' )
+        return pszVal;
+
     CPLString osRet;
-    while( *pszStr != '\0' )
+    pszVal ++;
+    while( *pszVal != '\0' )
     {
-        if( *pszStr == '"' )
-            osRet += "\"\"";
-        else
-            osRet += *pszStr;
-        pszStr ++;
+        if( *pszVal == chQuoteChar )
+        {
+            if( pszVal[1] == chQuoteChar )
+                pszVal ++;
+            else
+                break;
+        }
+        osRet += *pszVal;
+        pszVal ++;
     }
     return osRet;
 }
 
-CPLString SQLUnescapeDoubleQuote(const char* pszStr)
+/************************************************************************/
+/*                          SQLEscapeLiteral()                          */
+/************************************************************************/
+
+CPLString SQLEscapeLiteral( const char *pszLiteral )
+{
+    CPLString osVal;
+    for( int i = 0; pszLiteral[i] != '\0'; i++ )
+    {
+        if ( pszLiteral[i] == '\'' )
+            osVal += '\'';
+        osVal += pszLiteral[i];
+    }
+    return osVal;
+}
+
+/************************************************************************/
+/*                           SQLEscapeName()                            */
+/************************************************************************/
+
+CPLString SQLEscapeName(const char* pszName)
 {
     CPLString osRet;
-    const bool bStartsWithDoubleQuote = (pszStr[0] == '"');
-    if( bStartsWithDoubleQuote )
-        pszStr ++;
-    while( *pszStr != '\0' )
+    while( *pszName != '\0' )
     {
-        if( bStartsWithDoubleQuote && *pszStr == '"' && pszStr[1] == '"' )
-        {
-            osRet += "\"";
-            pszStr ++;
-        }
-        else if( bStartsWithDoubleQuote && *pszStr == '"' )
-        {
-            break;
-        }
+        if( *pszName == '"' )
+            osRet += "\"\"";
         else
-            osRet += *pszStr;
-        pszStr ++;
+            osRet += *pszName;
+        pszName ++;
     }
     return osRet;
 }
