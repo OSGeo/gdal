@@ -1083,18 +1083,14 @@ GIntBig OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 /* -------------------------------------------------------------------- */
 /*      Execute.                                                        */
 /* -------------------------------------------------------------------- */
-    char **papszResult, *pszErrMsg;
-    int nRowCount, nColCount;
-    GIntBig nResult = -1;
-
-    if( sqlite3_get_table( poDS->GetDB(), pszSQL, &papszResult,
-                           &nRowCount, &nColCount, &pszErrMsg ) != SQLITE_OK )
-        return -1;
-
-    if( nRowCount == 1 && nColCount == 1 )
+    OGRErr eErr = OGRERR_NONE;
+    GIntBig nResult = SQLGetInteger64( poDS->GetDB(), pszSQL, &eErr);
+    if( eErr == OGRERR_FAILURE )
     {
-        nResult = CPLAtoGIntBig(papszResult[1]);
-
+        nResult = -1;
+    }
+    else
+    {
         if( m_poFilterGeom == NULL && osQuery.empty() )
         {
             nFeatureCount = nResult;
@@ -1102,8 +1098,6 @@ GIntBig OGRSQLiteTableLayer::GetFeatureCount( int bForce )
                 bStatisticsNeedsToBeFlushed = TRUE;
         }
     }
-
-    sqlite3_free_table( papszResult );
 
     return nResult;
 }
