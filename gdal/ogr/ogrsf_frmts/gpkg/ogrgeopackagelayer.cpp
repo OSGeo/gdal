@@ -29,6 +29,7 @@
 
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
+#include "ogrsqliteutility.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
@@ -335,7 +336,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
     for( int iCol = 0; iCol < nRawColumns; iCol++ )
     {
         OGRFieldDefn    oField(
-            OGRSQLiteParamsUnquote(sqlite3_column_name( hStmt, iCol )),
+            SQLUnescape(sqlite3_column_name( hStmt, iCol )),
             OFTString );
 
         // In some cases, particularly when there is a real name for

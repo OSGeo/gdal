@@ -27,12 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogrsf_frmts.h"
-#include "sqlite3.h"
-
 #ifndef OGR_SQLITEUTILITY_H_INCLUDED
 #define OGR_SQLITEUTILITY_H_INCLUDED
 
+#include "ogr_core.h"
+#include "cpl_string.h"
 #include "sqlite3.h"
 
 typedef struct
@@ -57,8 +56,15 @@ OGRErr              SQLResultFree(SQLResult * poResult);
 
 int                 SQLiteFieldFromOGR(OGRFieldType eType);
 
-CPLString           SQLEscapeDoubleQuote(const char* pszStr);
-CPLString           SQLUnescapeDoubleQuote(const char* pszStr);
+/* To escape literals. The returned string doesn't contain the surrounding single quotes */
+CPLString           SQLEscapeLiteral( const char *pszLiteral );
+
+/* To escape table or field names. The returned string doesn't contain the surrounding double quotes */
+CPLString           SQLEscapeName( const char* pszName );
+
+/* Remove leading ' or " and unescape in that case. Or return string unmodified */
+CPLString           SQLUnescape(const char* pszVal);
+
 char**              SQLTokenize( const char* pszSQL );
 
 #endif // OGR_SQLITEUTILITY_H_INCLUDED

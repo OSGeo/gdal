@@ -141,14 +141,14 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
     /* Always start with a primary key */
     CPLString soColumns = "m.";
     soColumns += m_pszFidColumn ?
-        "\"" + SQLEscapeDoubleQuote(m_pszFidColumn) + "\"" : "_rowid_";
+        "\"" + SQLEscapeName(m_pszFidColumn) + "\"" : "_rowid_";
     iFIDCol = 0;
 
     /* Add a geometry column if there is one (just one) */
     if ( m_poFeatureDefn->GetGeomFieldCount() )
     {
         soColumns += ", m.\"";
-        soColumns += SQLEscapeDoubleQuote(m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
+        soColumns += SQLEscapeName(m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
         soColumns += "\"";
         iGeomCol = 1;
     }
@@ -157,7 +157,7 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
     for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
     {
         soColumns += ", m.\"";
-        soColumns += SQLEscapeDoubleQuote(m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+        soColumns += SQLEscapeName(m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
         soColumns += "\"";
         panFieldOrdinals[i] = 1 + (iGeomCol >= 0) + i;
     }
@@ -405,12 +405,12 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
         poFeatureDefn->GetGeomFieldCount() == 0 &&
         !bAddFID )
         return CPLSPrintf("INSERT INTO \"%s\" DEFAULT VALUES",
-                          SQLEscapeDoubleQuote(m_pszTableName).c_str());
+                          SQLEscapeName(m_pszTableName).c_str());
 
     /* Set up our SQL string basics */
     CPLString osSQLFront;
     osSQLFront.Printf("INSERT INTO \"%s\" ( ",
-                      SQLEscapeDoubleQuote(m_pszTableName).c_str());
+                      SQLEscapeName(m_pszTableName).c_str());
 
     CPLString osSQLBack;
     osSQLBack = ") VALUES (";
@@ -419,7 +419,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
 
     if( bAddFID )
     {
-        osSQLColumn.Printf("\"%s\"", SQLEscapeDoubleQuote(GetFIDColumn()).c_str());
+        osSQLColumn.Printf("\"%s\"", SQLEscapeName(GetFIDColumn()).c_str());
         osSQLFront += osSQLColumn;
         osSQLBack += "?";
         bNeedComma = true;
@@ -433,7 +433,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
             osSQLBack += ", ";
         }
 
-        osSQLColumn.Printf("\"%s\"", SQLEscapeDoubleQuote(poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()).c_str());
+        osSQLColumn.Printf("\"%s\"", SQLEscapeName(poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()).c_str());
         osSQLFront += osSQLColumn;
         osSQLBack += "?";
         bNeedComma = true;
@@ -458,7 +458,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
         }
 
         osSQLColumn.Printf("\"%s\"",
-                           SQLEscapeDoubleQuote(poFeatureDefn->GetFieldDefn(i)->GetNameRef()).c_str());
+                           SQLEscapeName(poFeatureDefn->GetFieldDefn(i)->GetNameRef()).c_str());
         osSQLFront += osSQLColumn;
         osSQLBack += "?";
     }
@@ -467,7 +467,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
 
     if( !bNeedComma )
         return CPLSPrintf("INSERT INTO \"%s\" DEFAULT VALUES",
-                          SQLEscapeDoubleQuote(m_pszTableName).c_str());
+                          SQLEscapeName(m_pszTableName).c_str());
 
     return osSQLFront + osSQLBack;
 }
@@ -491,14 +491,14 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
     /* Set up our SQL string basics */
     CPLString osUpdate;
     osUpdate.Printf("UPDATE \"%s\" SET ",
-                    SQLEscapeDoubleQuote(m_pszTableName).c_str());
+                    SQLEscapeName(m_pszTableName).c_str());
 
     CPLString osSQLColumn;
 
     if ( poFeatureDefn->GetGeomFieldCount() > 0 )
     {
         osSQLColumn.Printf("\"%s\"",
-                           SQLEscapeDoubleQuote(poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()).c_str());
+                           SQLEscapeName(poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()).c_str());
         osUpdate += osSQLColumn;
         osUpdate += "=?";
         bNeedComma = true;
@@ -517,7 +517,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
             osUpdate += ", ";
 
         osSQLColumn.Printf("\"%s\"",
-                           SQLEscapeDoubleQuote(poFeatureDefn->GetFieldDefn(i)->GetNameRef()).c_str());
+                           SQLEscapeName(poFeatureDefn->GetFieldDefn(i)->GetNameRef()).c_str());
         osUpdate += osSQLColumn;
         osUpdate += "=?";
     }
@@ -526,7 +526,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
 
     CPLString osWhere;
     osWhere.Printf(" WHERE \"%s\" = ?",
-                   SQLEscapeDoubleQuote(m_pszFidColumn).c_str());
+                   SQLEscapeName(m_pszFidColumn).c_str());
 
     return osUpdate + osWhere;
 }
@@ -1037,7 +1037,7 @@ void OGRGeoPackageTableLayer::PostInit()
                 const int nRawColumns = sqlite3_column_count( hStmt );
                 for( int iCol = 0; iCol < nRawColumns; iCol++ )
                 {
-                    CPLString osColName(OGRSQLiteParamsUnquote(
+                    CPLString osColName(SQLUnescape(
                                         sqlite3_column_name( hStmt, iCol )));
                     const char* pszTableName =
                         sqlite3_column_table_name( hStmt, iCol );
@@ -1077,7 +1077,7 @@ void OGRGeoPackageTableLayer::PostInit()
                 {
                     for( int iCol = 0; iCol < nRawColumns; iCol++ )
                     {
-                        CPLString osColName(OGRSQLiteParamsUnquote(
+                        CPLString osColName(SQLUnescape(
                                             sqlite3_column_name( hStmt, iCol )));
                         const char* pszTableName =
                             sqlite3_column_table_name( hStmt, iCol );
@@ -1169,8 +1169,8 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
         CPLString osCommand;
 
         osCommand.Printf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s",
-                          SQLEscapeDoubleQuote(m_pszTableName).c_str(),
-                          SQLEscapeDoubleQuote(poField->GetNameRef()).c_str(),
+                          SQLEscapeName(m_pszTableName).c_str(),
+                          SQLEscapeName(poField->GetNameRef()).c_str(),
                           GPkgFieldFromOGR(poField->GetType(),
                                            poField->GetSubType(),
                                            nMaxWidth));
@@ -1786,7 +1786,7 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
     {
         soSQL.Printf("SELECT %s FROM \"%s\" m WHERE %s",
                      m_soColumns.c_str(),
-                     SQLEscapeDoubleQuote(m_pszTableName).c_str(),
+                     SQLEscapeName(m_pszTableName).c_str(),
                      m_soFilter.c_str());
 
         if ( m_poFilterGeom != NULL && m_pszAttrQueryString == NULL &&
@@ -1820,9 +1820,9 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
                              "r.maxx >= %.12f AND r.minx <= %.12f AND "
                              "r.maxy >= %.12f AND r.miny <= %.12f",
                              m_soColumns.c_str(),
-                             SQLEscapeDoubleQuote(m_pszTableName).c_str(),
-                             SQLEscapeDoubleQuote(m_osRTreeName).c_str(),
-                             SQLEscapeDoubleQuote(m_osFIDForRTree).c_str(),
+                             SQLEscapeName(m_pszTableName).c_str(),
+                             SQLEscapeName(m_osRTreeName).c_str(),
+                             SQLEscapeName(m_osFIDForRTree).c_str(),
                              sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
                              sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
             }
@@ -1831,7 +1831,7 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
     else
         soSQL.Printf("SELECT %s FROM \"%s\" m",
                      m_soColumns.c_str(),
-                     SQLEscapeDoubleQuote(m_pszTableName).c_str());
+                     SQLEscapeName(m_pszTableName).c_str());
 
     CPLDebug("GPKG", "ResetStatement(%s)", soSQL.c_str());
 
@@ -1889,8 +1889,8 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
     soSQL.Printf("SELECT %s FROM \"%s\" m "
                  "WHERE \"%s\" = " CPL_FRMT_GIB,
                  m_soColumns.c_str(),
-                 SQLEscapeDoubleQuote(m_pszTableName).c_str(),
-                 SQLEscapeDoubleQuote(m_pszFidColumn).c_str(),
+                 SQLEscapeName(m_pszTableName).c_str(),
+                 SQLEscapeName(m_pszFidColumn).c_str(),
                  nFID);
 
     int err = sqlite3_prepare_v2(
@@ -1955,8 +1955,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
     /* No filters apply, just use the FID */
     CPLString soSQL;
     soSQL.Printf("DELETE FROM \"%s\" WHERE \"%s\" = " CPL_FRMT_GIB,
-                 SQLEscapeDoubleQuote(m_pszTableName).c_str(),
-                 SQLEscapeDoubleQuote(m_pszFidColumn).c_str(), nFID);
+                 SQLEscapeName(m_pszTableName).c_str(),
+                 SQLEscapeName(m_pszFidColumn).c_str(), nFID);
 
     OGRErr eErr = SQLCommand(m_poDS->GetDB(), soSQL.c_str());
     if( eErr == OGRERR_NONE )
@@ -2091,7 +2091,7 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
             soSQL.Printf("SELECT COUNT(*) FROM \"%s\" WHERE "
                          "maxx >= %.12f AND minx <= %.12f AND "
                          "maxy >= %.12f AND miny <= %.12f",
-                         SQLEscapeDoubleQuote(m_osRTreeName).c_str(),
+                         SQLEscapeName(m_osRTreeName).c_str(),
                          sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
                          sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
         }
@@ -2101,11 +2101,11 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
     {
         if ( !m_soFilter.empty() )
             soSQL.Printf("SELECT Count(*) FROM \"%s\" WHERE %s",
-                         SQLEscapeDoubleQuote(m_pszTableName).c_str(),
+                         SQLEscapeName(m_pszTableName).c_str(),
                          m_soFilter.c_str());
         else
             soSQL.Printf("SELECT Count(*) FROM \"%s\"",
-                         SQLEscapeDoubleQuote(m_pszTableName).c_str());
+                         SQLEscapeName(m_pszTableName).c_str());
     }
 
     /* Just run the query directly and get back integer */
@@ -3138,8 +3138,8 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomColIn,
                 "\"%s\" IN ( SELECT id FROM \"%s\" WHERE "
                 "maxx >= %.12f AND minx <= %.12f AND "
                 "maxy >= %.12f AND miny <= %.12f)",
-                SQLEscapeDoubleQuote(m_osFIDForRTree).c_str(),
-                SQLEscapeDoubleQuote(m_osRTreeName).c_str(),
+                SQLEscapeName(m_osFIDForRTree).c_str(),
+                SQLEscapeName(m_osRTreeName).c_str(),
                 sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
                 sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
         }
@@ -3151,10 +3151,10 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomColIn,
             osSpatialWHERE.Printf(
                 "(ST_MaxX(\"%s\") >= %.12f AND ST_MinX(\"%s\") <= %.12f AND "
                 "ST_MaxY(\"%s\") >= %.12f AND ST_MinY(\"%s\") <= %.12f)",
-                SQLEscapeDoubleQuote(pszC).c_str(), sEnvelope.MinX - 1e-11,
-                SQLEscapeDoubleQuote(pszC).c_str(), sEnvelope.MaxX + 1e-11,
-                SQLEscapeDoubleQuote(pszC).c_str(), sEnvelope.MinY - 1e-11,
-                SQLEscapeDoubleQuote(pszC).c_str(), sEnvelope.MaxY + 1e-11);
+                SQLEscapeName(pszC).c_str(), sEnvelope.MinX - 1e-11,
+                SQLEscapeName(pszC).c_str(), sEnvelope.MaxX + 1e-11,
+                SQLEscapeName(pszC).c_str(), sEnvelope.MinY - 1e-11,
+                SQLEscapeName(pszC).c_str(), sEnvelope.MaxY + 1e-11);
         }
     }
 
@@ -4029,7 +4029,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
             "type IN ('trigger','index') "
             "AND tbl_name='%q' AND sql LIKE '%%%q%%' LIMIT 10000",
             m_pszTableName,
-            SQLEscapeDoubleQuote(osOldColName).c_str() );
+            SQLEscapeName(osOldColName).c_str() );
         eErr = SQLQuery(hDB, pszSQL, &oTriggers);
         sqlite3_free(pszSQL);
 
@@ -4190,7 +4190,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
                     osSQL += " ON ";
                     osSQL += papszTokens[4];
                     osSQL += "(\"";
-                    osSQL += SQLEscapeDoubleQuote(osNewColName);
+                    osSQL += SQLEscapeName(osNewColName);
                     osSQL += "\")";
                     eErr = SQLCommand(hDB, osSQL);
                 }

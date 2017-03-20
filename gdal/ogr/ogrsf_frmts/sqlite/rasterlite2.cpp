@@ -34,6 +34,7 @@
  ****************************************************************************/
 
 #include "ogr_sqlite.h"
+#include "ogrsqliteutility.h"
 #include "rasterlite2_header.h"
 
 #include <algorithm>
@@ -44,7 +45,7 @@ static CPLString EscapeNameAndQuoteIfNeeded(const char* pszName)
 {
     if( strchr(pszName, '"') == NULL && strchr(pszName, ':') == NULL )
         return pszName;
-    return '"' + OGRSQLiteEscapeName(pszName) + '"';
+    return '"' + SQLEscapeName(pszName) + '"';
 }
 
 #endif
@@ -160,7 +161,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
 
     m_aosSubDatasets.Clear();
 
-    m_osCoverageName = OGRSQLiteParamsUnquote( papszTokens[2] );
+    m_osCoverageName = SQLUnescape( papszTokens[2] );
     m_nSectionId =
         (CSLCount(papszTokens) >= 4) ? CPLAtoGIntBig( papszTokens[3] ) : -1;
 
