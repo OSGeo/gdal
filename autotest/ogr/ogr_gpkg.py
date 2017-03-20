@@ -4127,6 +4127,33 @@ def ogr_gpkg_48():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
+
+    # No geom field, one single field with default value
+    lyr = ds.CreateLayer('default_field_no_geom', geom_type = ogr.wkbNone)
+    fld_defn = ogr.FieldDefn('foo')
+    fld_defn.SetDefault('x')
+    lyr.CreateField(fld_defn)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetField('foo') != 'x':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1)
+    if lyr.SetFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetField('foo') != 'x':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_48.gpkg')
