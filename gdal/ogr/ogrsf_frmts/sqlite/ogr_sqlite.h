@@ -352,6 +352,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     CPLString           osLastInsertStmt;
 
     int                 bHasCheckedTriggers;
+    bool                m_bHasTriedDetectingFID64;
 
     void                ClearInsertStmt();
 
