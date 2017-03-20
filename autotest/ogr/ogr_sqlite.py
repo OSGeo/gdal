@@ -1035,7 +1035,7 @@ def ogr_sqlite_19_bis():
         print(nb_srs)
         return 'fail'
 
-    gdal.Unlink('/vsimem/spatialite_test_without_epsg.d')
+    gdal.Unlink('/vsimem/spatialite_test_without_epsg.db')
 
     return 'success'
 
