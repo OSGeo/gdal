@@ -4097,6 +4097,43 @@ def ogr_gpkg_47():
     return 'success'
 
 ###############################################################################
+# Test insertion of features with unset fields
+
+def ogr_gpkg_48():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_48.gpkg')
+    lyr = ds.CreateLayer('foo')
+    lyr.CreateField( ogr.FieldDefn('a') )
+    lyr.CreateField( ogr.FieldDefn('b') )
+    lyr.CreateField( ogr.FieldDefn('c') )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('a', 'a')
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('b', 'b')
+    f.SetField('c', 'c')
+    lyr.CreateFeature(f)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetField('a') != 'a' or f.GetField('b') is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('b') != 'b' or f.GetField('c') != 'c' or f.GetField('a') is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_48.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -4168,6 +4205,7 @@ gdaltest_list = [
     ogr_gpkg_45,
     ogr_gpkg_46,
     ogr_gpkg_47,
+    ogr_gpkg_48,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
