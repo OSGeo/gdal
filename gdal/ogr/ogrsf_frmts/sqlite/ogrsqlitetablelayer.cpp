@@ -32,6 +32,7 @@
 #include "ogr_sqlite.h"
 #include "ogr_p.h"
 #include "cpl_time.h"
+#include "ogrsqliteutility.h"
 #include <string>
 
 static const char UNSUPPORTED_OP_READ_ONLY[] =
@@ -56,6 +57,7 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn ) :
     hInsertStmt(NULL),
     bHasCheckedTriggers(!CPLTestBool(
         CPLGetConfigOption("OGR_SQLITE_DISABLE_INSERT_TRIGGERS", "YES"))),
+    m_bHasTriedDetectingFID64(false),
     bStatisticsNeedsToBeFlushed(FALSE),
     nFeatureCount(-1),
     bDeferredCreation(FALSE),
@@ -244,24 +246,57 @@ const char* OGRSQLiteTableLayer::GetName()
 }
 
 /************************************************************************/
-/*                             GetMetadata()                            */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
-char** OGRSQLiteTableLayer::GetMetadata( const char * pszDomain )
+char **OGRSQLiteTableLayer::GetMetadata( const char *pszDomain )
+
 {
     GetLayerDefn();
+    if( !m_bHasTriedDetectingFID64 && pszFIDColumn != NULL )
+    {
+        m_bHasTriedDetectingFID64 = true;
+
+/* -------------------------------------------------------------------- */
+/*      Find if the FID holds 64bit values                              */
+/* -------------------------------------------------------------------- */
+
+        // Normally the fid should be AUTOINCREMENT, so check sqlite_sequence
+        OGRErr err = OGRERR_NONE;
+        char* pszSQL = sqlite3_mprintf(
+            "SELECT seq FROM sqlite_sequence WHERE name = '%q'",
+            pszTableName);
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        GIntBig nMaxId = SQLGetInteger64( poDS->GetDB(), pszSQL, &err);
+        CPLPopErrorHandler();
+        sqlite3_free(pszSQL);
+        if( err != OGRERR_NONE )
+        {
+            CPLErrorReset();
+
+            // In case of error, fallback to taking the MAX of the FID
+            pszSQL = sqlite3_mprintf("SELECT MAX(\"%w\") FROM \"%w\"",
+                                        pszFIDColumn,
+                                        pszTableName);
+
+            nMaxId = SQLGetInteger64( poDS->GetDB(), pszSQL, NULL);
+            sqlite3_free(pszSQL);
+        }
+        if( nMaxId > INT_MAX )
+            OGRLayer::SetMetadataItem(OLMD_FID64, "YES");
+    }
+
     return OGRSQLiteLayer::GetMetadata(pszDomain);
 }
 
 /************************************************************************/
-/*                           GetMetadataItem()                          */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
-const char * OGRSQLiteTableLayer::GetMetadataItem( const char * pszName,
-                                                   const char * pszDomain )
+const char *OGRSQLiteTableLayer::GetMetadataItem( const char * pszName,
+                                                  const char * pszDomain )
 {
-    GetLayerDefn();
-    return OGRSQLiteLayer::GetMetadataItem(pszName, pszDomain);
+    return CSLFetchNameValue( GetMetadata(pszDomain), pszName );
 }
 
 /************************************************************************/
@@ -330,26 +365,6 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
         const std::set<CPLString>& aosGeomCols(poDS->GetGeomColsForTable(pszTableName));
         BuildFeatureDefn( GetDescription(), hColStmt,
                           (bIsVirtualShape) ? NULL : &aosGeomCols, aosIgnoredCols );
-    }
-    sqlite3_finalize( hColStmt );
-
-/* -------------------------------------------------------------------- */
-/*      Find if the FID holds 64bit values                              */
-/* -------------------------------------------------------------------- */
-    pszSQL = CPLSPrintf("SELECT MAX(%s) FROM '%s'",
-                        OGRSQLiteEscape(pszFIDColumn).c_str(),
-                        pszEscapedTableName);
-    hColStmt = NULL;
-    rc = sqlite3_prepare_v2( hDB, pszSQL, -1, &hColStmt, NULL );
-    if( rc == SQLITE_OK )
-    {
-        rc = sqlite3_step( hColStmt );
-        if( rc == SQLITE_ROW )
-        {
-            GIntBig nMaxId = sqlite3_column_int64( hColStmt, 0 );
-            if( nMaxId > INT_MAX )
-                SetMetadataItem(OLMD_FID64, "YES");
-        }
     }
     sqlite3_finalize( hColStmt );
 
