@@ -872,15 +872,24 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
                 {
                     GMLRegistryNamespace &oNamespace =
                         oRegistry.aoNamespaces[iNS];
-                    const char *pszNSToFind =
-                        (!oNamespace.osPrefix.empty()) ? CPLSPrintf("xmlns:%s", oNamespace.osPrefix.c_str()) : NULL;
-                    const char *pszURIToFind =
-                        CPLSPrintf("\"%s\"", oNamespace.osURI.c_str());
+                    // When namespace is omitted or fit with case sensitive match for
+                    // name space prefix, then go next to find feature match.
+                    //
                     // Case sensitive comparison since below test that also
                     // uses the namespace prefix is case sensitive.
-                    if( ( pszNSToFind == NULL || osHeader.ifind(pszNSToFind)
-                                                 != std::string::npos ) &&
-                        strstr(szHeader, pszURIToFind) != NULL )
+                    if( !oNamespace.osPrefix.empty() &&
+                        osHeader.find(CPLSPrintf("xmlns:%s",
+                            oNamespace.osPrefix.c_str()))
+                              == std::string::npos )
+                    {
+                        // namespace does not match with one of registry definition.
+                        // go to next entry.
+                        continue;
+                    }
+
+                    const char *pszURIToFind =
+                        CPLSPrintf("\"%s\"", oNamespace.osURI.c_str());
+                    if( strstr(szHeader, pszURIToFind) != NULL )
                     {
                         if( oNamespace.bUseGlobalSRSName )
                             bUseGlobalSRSName = true;
