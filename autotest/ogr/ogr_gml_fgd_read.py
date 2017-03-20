@@ -47,16 +47,33 @@ from osgeo import osr
 
 _fgd_dir = 'data/gml_jpfgd/'
 
+
 ###############################################################################
 # Test reading Japanese FGD GML (v4) ElevPt file
 
 def ogr_gml_fgd_1():
 
-    if not gdaltest.have_gml_reader:
+    gdaltest.have_gml_fgd_reader = 0
+
+    if not gdaltest.have_gml_fgd_reader:
         return 'skip'
 
     ### open FGD GML file
-    ds = ogr.Open(_fgd_dir + 'ElevPt.xml')
+    try:
+        ds = ogr.Open(_fgd_dir + 'ElevPt.xml')
+    except:
+        ds = None
+
+    if ds is None:
+        if gdal.GetLastErrorMsg().find('Xerces') != -1:
+            return 'skip'
+        else:
+            gdaltest.post_reason( 'failed to open test file.' )
+            return 'fail'
+
+    # we have gml reader for fgd
+    gdaltest.have_gml_fgd_reader = 1
+
 
     # check number of layers
     if ds.GetLayerCount() != 1:
@@ -74,7 +91,7 @@ def ogr_gml_fgd_1():
 
     # check the first feature
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POINT (133.123456789 34.123456789)'):
+    if ogrtest.check_feature_geometry(feat, 'POINT (34.123456789 133.123456789)'):
         gdaltest.post_reason('Wrong geometry')
         return 'fail'
 
