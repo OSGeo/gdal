@@ -179,10 +179,13 @@ bool OGRGeoPackageTableLayer::IsGeomFieldSet( OGRFeature *poFeature )
         poFeature->GetGeomFieldRef(0);
 }
 
+#define MY_CPLAssert CPLAssert
+
 OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                                                        sqlite3_stmt *poStmt,
                                                        int *pnColCount,
-                                                       bool bAddFID )
+                                                       bool bAddFID,
+                                                       bool bBindUnsetFields )
 {
     OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
 
@@ -191,6 +194,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
     if( bAddFID )
     {
         err = sqlite3_bind_int64(poStmt, nColCount++, poFeature->GetFID());
+        MY_CPLAssert( err == SQLITE_OK );
     }
 
     /* Bind data values to the statement, here bind the blob for geometry */
@@ -205,6 +209,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
             pabyWkb = GPkgGeometryFromOGR(poGeom, m_iSrs, &szWkb);
             err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb,
                                     static_cast<int>(szWkb), CPLFree);
+            MY_CPLAssert( err == SQLITE_OK );
 
             CreateGeometryExtensionIfNecessary(poGeom);
         }
@@ -212,6 +217,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
         else
         {
             err = sqlite3_bind_null(poStmt, nColCount++);
+            MY_CPLAssert( err == SQLITE_OK );
         }
     }
 
@@ -223,7 +229,14 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
         if( i == m_iFIDAsRegularColumnIndex )
             continue;
         if( !poFeature->IsFieldSet(i) )
+        {
+            if( bBindUnsetFields )
+            {
+                err = sqlite3_bind_null(poStmt, nColCount++);
+                MY_CPLAssert( err == SQLITE_OK );
+            }
             continue;
+        }
 
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
 
@@ -234,11 +247,13 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                 case SQLITE_INTEGER:
                 {
                     err = sqlite3_bind_int64(poStmt, nColCount++, poFeature->GetFieldAsInteger64(i));
+                    MY_CPLAssert( err == SQLITE_OK );
                     break;
                 }
                 case SQLITE_FLOAT:
                 {
                     err = sqlite3_bind_double(poStmt, nColCount++, poFeature->GetFieldAsDouble(i));
+                    MY_CPLAssert( err == SQLITE_OK );
                     break;
                 }
                 case SQLITE_BLOB:
@@ -246,6 +261,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                     int szBlob = 0;
                     GByte *pabyBlob = poFeature->GetFieldAsBinary(i, &szBlob);
                     err = sqlite3_bind_blob(poStmt, nColCount++, pabyBlob, szBlob, NULL);
+                    MY_CPLAssert( err == SQLITE_OK );
                     break;
                 }
                 default:
@@ -325,6 +341,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                         }
                     }
                     err = sqlite3_bind_text(poStmt, nColCount++, pszVal, nValLengthBytes, SQLITE_TRANSIENT);
+                    MY_CPLAssert( err == SQLITE_OK );
                     break;
                 }
             }
@@ -332,6 +349,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
         else
         {
             err = sqlite3_bind_null(poStmt, nColCount++);
+            MY_CPLAssert( err == SQLITE_OK );
         }
     }
 
@@ -353,7 +371,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindUpdateParameters( OGRFeature *poFeatu
 
     int nColCount = 0;
     const OGRErr err =
-        FeatureBindParameters( poFeature, poStmt, &nColCount, false );
+        FeatureBindParameters( poFeature, poStmt, &nColCount, false, false );
     if ( err != OGRERR_NONE )
         return err;
 
@@ -380,9 +398,10 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindUpdateParameters( OGRFeature *poFeatu
 //
 OGRErr OGRGeoPackageTableLayer::FeatureBindInsertParameters( OGRFeature *poFeature,
                                                              sqlite3_stmt *poStmt,
-                                                             bool bAddFID )
+                                                             bool bAddFID,
+                                                             bool bBindUnsetFields )
 {
-    return FeatureBindParameters( poFeature, poStmt, NULL, bAddFID );
+    return FeatureBindParameters( poFeature, poStmt, NULL, bAddFID, bBindUnsetFields );
 }
 
 //----------------------------------------------------------------------
@@ -396,7 +415,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindInsertParameters( OGRFeature *poFeatu
 // column ordering.
 //
 CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeature,
-                                                             bool bAddFID )
+                                                             bool bAddFID,
+                                                             bool bBindUnsetFields )
 {
     bool bNeedComma = false;
     OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
@@ -444,7 +464,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
     {
         if( i == m_iFIDAsRegularColumnIndex )
             continue;
-        if( !poFeature->IsFieldSet(i) )
+        if( !bBindUnsetFields && !poFeature->IsFieldSet(i) )
             continue;
 
         if( !bNeedComma )
@@ -1460,7 +1480,6 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         if( pszDefault != NULL )
         {
             bHasDefaultValue = true;
-            break;
         }
     }
 
@@ -1501,7 +1520,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         /* Only work with fields that are set */
         /* Do not stick values into SQL, use placeholder and bind values later */
         m_bInsertStatementWithFID = poFeature->GetFID() != OGRNullFID;
-        CPLString osCommand = FeatureGenerateInsertSQL(poFeature, m_bInsertStatementWithFID);
+        CPLString osCommand = FeatureGenerateInsertSQL(poFeature, m_bInsertStatementWithFID, !bHasDefaultValue);
 
         /* Prepare the SQL into a statement */
         sqlite3 *poDb = m_poDS->GetDB();
@@ -1517,7 +1536,8 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     /* Bind values onto the statement now */
     OGRErr errOgr = FeatureBindInsertParameters(poFeature, m_poInsertStatement,
-                                                m_bInsertStatementWithFID);
+                                                m_bInsertStatementWithFID,
+                                                !bHasDefaultValue);
     if ( errOgr != OGRERR_NONE )
     {
         sqlite3_reset(m_poInsertStatement);
