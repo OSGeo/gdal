@@ -4177,7 +4177,7 @@ def ogr_gpkg_49():
     lyr.CreateFeature(f)
     f = None
 
-    field_defn = ogr.GeomFieldDefn('geomfield_not_nullable', ogr.wkbPoint)
+    field_defn = ogr.GeomFieldDefn('', ogr.wkbPoint)
     if lyr.CreateGeomField(field_defn) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
