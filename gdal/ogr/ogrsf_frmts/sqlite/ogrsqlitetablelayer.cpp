@@ -1335,8 +1335,6 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 
     if( !bDeferredCreation )
     {
-        char *pszErrMsg = NULL;
-        sqlite3 *hDB = poDS->GetDB();
         CPLString osCommand;
 
         CPLString osFieldType(FieldDefnToSQliteFieldDefn(&oField));
@@ -1366,17 +1364,8 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
     #endif
 
-        const int rc =
-            sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
-        if( rc != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "Failed to add field %s to table %s:\n %s",
-                    oField.GetNameRef(), poFeatureDefn->GetName(),
-                    pszErrMsg );
-            sqlite3_free( pszErrMsg );
+        if( SQLCommand( poDS->GetDB(), osCommand ) != OGRERR_NONE )
             return OGRERR_FAILURE;
-        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1494,7 +1483,6 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeom
     OGRwkbGeometryType eType = poGeomFieldDefn->GetType();
     const char* pszGeomCol = poGeomFieldDefn->GetNameRef();
     int nSRSId = poGeomFieldDefn->nSRSId;
-    char* pszErrMsg = NULL;
 
     const int nCoordDim = eType == wkbFlatten(eType) ? 2 : 3;
 
@@ -1519,15 +1507,8 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeom
         CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
 #endif
 
-        int rc = sqlite3_exec( poDS->GetDB(), osCommand, NULL, NULL, &pszErrMsg );
-        if( rc != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to geometry field:\n%s",
-                      pszErrMsg );
-            sqlite3_free( pszErrMsg );
+        if( SQLCommand( poDS->GetDB(), osCommand ) != OGRERR_NONE )
             return OGRERR_FAILURE;
-        }
     }
 
     CPLString osCommand;
@@ -1609,18 +1590,7 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn( OGRSQLiteGeomFieldDefn *poGeom
     CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
 #endif
 
-    const int rc =
-        sqlite3_exec( poDS->GetDB(), osCommand, NULL, NULL, &pszErrMsg );
-    if( rc != SQLITE_OK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to geometry field:\n%s",
-                  pszErrMsg );
-        sqlite3_free( pszErrMsg );
-        return OGRERR_FAILURE;
-    }
-
-    return OGRERR_NONE;
+    return SQLCommand( poDS->GetDB(), osCommand );
 }
 
 /************************************************************************/
@@ -2967,7 +2937,6 @@ OGRErr OGRSQLiteTableLayer::DeleteFeature( GIntBig nFID )
 
 {
     CPLString      osSQL;
-    char          *pszErrMsg = NULL;
 
     if (HasLayerDefnError())
         return OGRERR_FAILURE;
@@ -2998,15 +2967,8 @@ OGRErr OGRSQLiteTableLayer::DeleteFeature( GIntBig nFID )
 
     CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
 
-    const int rc = sqlite3_exec( poDS->GetDB(), osSQL, NULL, NULL, &pszErrMsg );
-    if( rc != SQLITE_OK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "In DeleteFeature(): sqlite3_exec(%s):\n  %s",
-                    osSQL.c_str(), pszErrMsg );
-        sqlite3_free( pszErrMsg );
+    if( SQLCommand( poDS->GetDB(), osSQL ) != OGRERR_NONE )
         return OGRERR_FAILURE;
-    }
 
     OGRErr eErr = (sqlite3_changes(poDS->GetDB()) > 0) ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
     if( eErr == OGRERR_NONE )
@@ -3070,8 +3032,6 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
         return OGRERR_NONE;
     bDeferredCreation = FALSE;
 
-    const char* pszLayerName = poFeatureDefn->GetName();
-
     CPLString osCommand;
 
     osCommand.Printf( "CREATE TABLE '%s' ( %s INTEGER PRIMARY KEY AUTOINCREMENT",
@@ -3132,16 +3092,8 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
     CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
 #endif
 
-    char *pszErrMsg = NULL;
-    int rc = sqlite3_exec( poDS->GetDB(), osCommand, NULL, NULL, &pszErrMsg );
-    if( rc != SQLITE_OK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to create table %s: %s",
-                  pszLayerName, pszErrMsg );
-        sqlite3_free( pszErrMsg );
+    if( SQLCommand( poDS->GetDB(), osCommand ) != OGRERR_NONE )
         return OGRERR_FAILURE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Eventually we should be adding this table to a table of         */
@@ -3161,16 +3113,8 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
 #ifdef DEBUG
         CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
 #endif
-
-        rc = sqlite3_exec( poDS->GetDB(), osCommand, NULL, NULL, &pszErrMsg );
-        if( rc != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to run %s: %s",
-                  osCommand.c_str(), pszErrMsg );
-            sqlite3_free( pszErrMsg );
+        if( SQLCommand( poDS->GetDB(), osCommand ) != OGRERR_NONE )
             return OGRERR_FAILURE;
-        }
 
         for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
         {
@@ -3187,15 +3131,9 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
     if( poDS->IsSpatialiteDB() && poDS->GetLayerCount() == 1)
     {
         /* To create the layer_statistics and spatialite_history tables */
-        rc = sqlite3_exec( poDS->GetDB(), "SELECT UpdateLayerStatistics()", NULL, NULL, &pszErrMsg );
-        if( rc != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to run %s: %s",
-                  osCommand.c_str(), pszErrMsg );
-            sqlite3_free( pszErrMsg );
+        if( SQLCommand( poDS->GetDB(), "SELECT UpdateLayerStatistics()" )
+                                                            != OGRERR_NONE )
             return OGRERR_FAILURE;
-        }
     }
 
     return OGRERR_NONE;
@@ -3507,7 +3445,7 @@ void OGRSQLiteTableLayer::LoadStatistics()
 int OGRSQLiteTableLayer::SaveStatistics()
 {
     if( !bStatisticsNeedsToBeFlushed || !poDS->IsSpatialiteDB()  ||
-        !poDS->IsSpatialiteLoaded() )
+        !poDS->IsSpatialiteLoaded() || !poDS->GetUpdate() )
         return -1;
     if( GetLayerDefn()->GetGeomFieldCount() != 1 )
         return -1;
@@ -3540,6 +3478,13 @@ int OGRSQLiteTableLayer::SaveStatistics()
     const char* pszStatTableName =
         poDS->HasSpatialite4Layout() ? "geometry_columns_statistics":
                                        "layer_statistics";
+    if( SQLGetInteger( poDS->GetDB(),
+            CPLSPrintf("SELECT 1 FROM sqlite_master WHERE type IN "
+                       "('view', 'table') AND name = '%s'",
+                       pszStatTableName), NULL ) == 0 )
+    {
+        return TRUE;
+    }
     const char* pszFTableName =
         poDS->HasSpatialite4Layout() ? "f_table_name" : "table_name";
     const char* pszFGeometryColumn =
@@ -3610,17 +3555,7 @@ int OGRSQLiteTableLayer::SaveStatistics()
                      SQLEscapeLiteral(osGeomCol).c_str());
     }
 
-    int rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, &pszErrMsg );
-    if( rc != SQLITE_OK )
-    {
-        CPLDebug("SQLITE", "%s: error %s",
-                 osSQL.c_str(),
-                 pszErrMsg ? pszErrMsg : "unknown");
-        sqlite3_free( pszErrMsg );
-        return FALSE;
-    }
-    else
-        return TRUE;
+    return SQLCommand( hDB, osSQL) == OGRERR_NONE;
 }
 
 /************************************************************************/

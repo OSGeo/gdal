@@ -694,8 +694,8 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
                                     /* Must *NOT* be closed by the datasource explicitly. */
 
     int                 OpenOrCreateDB(int flags, int bRegisterOGR2SQLiteExtensions);
-    int                 SetSynchronous();
-    int                 SetCacheSize();
+    bool                SetSynchronous();
+    bool                SetCacheSize();
 
     void                CloseDB();
 
