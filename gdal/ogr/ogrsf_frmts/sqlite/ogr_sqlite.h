@@ -361,7 +361,6 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     OGRErr              RecomputeOrdinals();
 
-    OGRErr              AddColumnAncientMethod( OGRFieldDefn& oField);
     void                AddColumnDef(char* pszNewFieldList, size_t nBufLen,
                                      OGRFieldDefn* poFldDefn);
 

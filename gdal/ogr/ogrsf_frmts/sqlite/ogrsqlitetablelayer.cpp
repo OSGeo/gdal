@@ -1326,58 +1326,47 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 
     if( !bDeferredCreation )
     {
-        /* ADD COLUMN only available since SQLite 3.1.3 */
-        if (CPLTestBool(CPLGetConfigOption("OGR_SQLITE_USE_ADD_COLUMN", "YES")) &&
-            sqlite3_libversion_number() > 3 * 1000000 + 1 * 1000 + 3)
+        char *pszErrMsg = NULL;
+        sqlite3 *hDB = poDS->GetDB();
+        CPLString osCommand;
+
+        CPLString osFieldType(FieldDefnToSQliteFieldDefn(&oField));
+        osCommand.Printf("ALTER TABLE '%s' ADD COLUMN '%s' %s",
+                        pszEscapedTableName,
+                        OGRSQLiteEscape(oField.GetNameRef()).c_str(),
+                        osFieldType.c_str());
+        if( !oField.IsNullable() )
         {
-            char *pszErrMsg = NULL;
-            sqlite3 *hDB = poDS->GetDB();
-            CPLString osCommand;
-
-            CPLString osFieldType(FieldDefnToSQliteFieldDefn(&oField));
-            osCommand.Printf("ALTER TABLE '%s' ADD COLUMN '%s' %s",
-                            pszEscapedTableName,
-                            OGRSQLiteEscape(oField.GetNameRef()).c_str(),
-                            osFieldType.c_str());
-            if( !oField.IsNullable() )
-            {
-                osCommand += " NOT NULL";
-            }
-            if( oField.GetDefault() != NULL && !oField.IsDefaultDriverSpecific() )
-            {
-                osCommand += " DEFAULT ";
-                osCommand += oField.GetDefault();
-            }
-            else if( !oField.IsNullable() )
-            {
-                // This is kind of dumb, but SQLite mandates a DEFAULT value
-                // when adding a NOT NULL column in an ALTER TABLE ADD COLUMN
-                // statement, which defeats the purpose of NOT NULL,
-                // whereas it doesn't in CREATE TABLE
-                osCommand += " DEFAULT ''";
-            }
-
-        #ifdef DEBUG
-            CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
-        #endif
-
-            const int rc =
-                sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
-            if( rc != SQLITE_OK )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                        "Failed to add field %s to table %s:\n %s",
-                        oField.GetNameRef(), poFeatureDefn->GetName(),
-                        pszErrMsg );
-                sqlite3_free( pszErrMsg );
-                return OGRERR_FAILURE;
-            }
+            osCommand += " NOT NULL";
         }
-        else
+        if( oField.GetDefault() != NULL && !oField.IsDefaultDriverSpecific() )
         {
-            OGRErr eErr = AddColumnAncientMethod(oField);
-            if (eErr != OGRERR_NONE)
-                return eErr;
+            osCommand += " DEFAULT ";
+            osCommand += oField.GetDefault();
+        }
+        else if( !oField.IsNullable() )
+        {
+            // This is kind of dumb, but SQLite mandates a DEFAULT value
+            // when adding a NOT NULL column in an ALTER TABLE ADD COLUMN
+            // statement, which defeats the purpose of NOT NULL,
+            // whereas it doesn't in CREATE TABLE
+            osCommand += " DEFAULT ''";
+        }
+
+    #ifdef DEBUG
+        CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
+    #endif
+
+        const int rc =
+            sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to add field %s to table %s:\n %s",
+                    oField.GetNameRef(), poFeatureDefn->GetName(),
+                    pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return OGRERR_FAILURE;
         }
     }
 
@@ -1703,180 +1692,6 @@ void OGRSQLiteTableLayer::AddColumnDef(char* pszNewFieldList, size_t nBufLen,
                  nBufLen-strlen(pszNewFieldList), " DEFAULT %s",
                  poFldDefn->GetDefault() );
     }
-}
-
-/************************************************************************/
-/*                       AddColumnAncientMethod()                       */
-/************************************************************************/
-
-OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
-{
-
-/* -------------------------------------------------------------------- */
-/*      How much space do we need for the list of fields.               */
-/* -------------------------------------------------------------------- */
-    char *pszOldFieldList;
-    char *pszNewFieldList;
-    size_t nBufLen = 0;
-
-    InitFieldListForRecrerate(pszNewFieldList, pszOldFieldList, nBufLen,
-                              static_cast<int>(strlen( oField.GetNameRef() )));
-
-/* -------------------------------------------------------------------- */
-/*      Build list of old fields, and the list of new fields.           */
-/* -------------------------------------------------------------------- */
-
-    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
-    {
-        OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(iField);
-
-        // we already added OGC_FID so don't do it again
-        if( EQUAL(poFldDefn->GetNameRef(),pszFIDColumn ? pszFIDColumn : "OGC_FID") )
-            continue;
-
-        snprintf( pszOldFieldList+strlen(pszOldFieldList), nBufLen-strlen(pszOldFieldList),
-                 ", \"%s\"", OGRSQLiteEscapeName(poFldDefn->GetNameRef()).c_str() );
-
-        AddColumnDef(pszNewFieldList, nBufLen, poFldDefn);
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Add the new field.                                              */
-/* -------------------------------------------------------------------- */
-    AddColumnDef(pszNewFieldList, nBufLen, &oField);
-
-/* ==================================================================== */
-/*      Backup, destroy, recreate and repopulate the table.  SQLite     */
-/*      has no ALTER TABLE so we have to do all this to add a           */
-/*      column.                                                         */
-/* ==================================================================== */
-
-/* -------------------------------------------------------------------- */
-/*      Do this all in a transaction.                                   */
-/* -------------------------------------------------------------------- */
-    poDS->SoftStartTransaction();
-
-/* -------------------------------------------------------------------- */
-/*      Save existing related triggers and index                        */
-/* -------------------------------------------------------------------- */
-    char *pszErrMsg = NULL;
-    sqlite3 *hDB = poDS->GetDB();
-    CPLString osSQL;
-
-    osSQL.Printf( "SELECT sql FROM sqlite_master WHERE type IN ('trigger','index') AND tbl_name='%s'",
-                   pszEscapedTableName );
-
-    int nRowTriggerIndexCount, nColTriggerIndexCount;
-    char **papszTriggerIndexResult = NULL;
-    int rc =
-        sqlite3_get_table( hDB, osSQL.c_str(), &papszTriggerIndexResult,
-                           &nRowTriggerIndexCount, &nColTriggerIndexCount,
-                           &pszErrMsg );
-
-/* -------------------------------------------------------------------- */
-/*      Make a backup of the table.                                     */
-/* -------------------------------------------------------------------- */
-
-    if( rc == SQLITE_OK )
-        rc = sqlite3_exec( hDB,
-                       CPLSPrintf( "CREATE TEMPORARY TABLE t1_back(%s)",
-                                   pszOldFieldList ),
-                       NULL, NULL, &pszErrMsg );
-
-    if( rc == SQLITE_OK )
-        rc = sqlite3_exec( hDB,
-                           CPLSPrintf( "INSERT INTO t1_back SELECT %s FROM '%s'",
-                                       pszOldFieldList,
-                                       pszEscapedTableName ),
-                           NULL, NULL, &pszErrMsg );
-
-/* -------------------------------------------------------------------- */
-/*      Drop the original table, and recreate with new field.           */
-/* -------------------------------------------------------------------- */
-    if( rc == SQLITE_OK )
-        rc = sqlite3_exec( hDB,
-                           CPLSPrintf( "DROP TABLE '%s'",
-                                       pszEscapedTableName ),
-                           NULL, NULL, &pszErrMsg );
-
-    if( rc == SQLITE_OK )
-    {
-        const char *pszCmd =
-            CPLSPrintf( "CREATE TABLE '%s' (%s)",
-                        pszEscapedTableName,
-                        pszNewFieldList );
-        rc = sqlite3_exec( hDB, pszCmd,
-                           NULL, NULL, &pszErrMsg );
-
-        CPLDebug( "OGR_SQLITE", "exec(%s)", pszCmd );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Copy backup field values into new table.                        */
-/* -------------------------------------------------------------------- */
-
-    if( rc == SQLITE_OK )
-        rc = sqlite3_exec( hDB,
-                           CPLSPrintf( "INSERT INTO '%s' SELECT %s, NULL FROM t1_back",
-                                       pszEscapedTableName,
-                                       pszOldFieldList ),
-                           NULL, NULL, &pszErrMsg );
-
-    CPLFree( pszOldFieldList );
-    CPLFree( pszNewFieldList );
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup backup table.                                           */
-/* -------------------------------------------------------------------- */
-
-    if( rc == SQLITE_OK )
-        rc = sqlite3_exec( hDB,
-                           CPLSPrintf( "DROP TABLE t1_back" ),
-                           NULL, NULL, &pszErrMsg );
-
-/* -------------------------------------------------------------------- */
-/*      Recreate existing related tables, triggers and index            */
-/* -------------------------------------------------------------------- */
-
-    if( rc == SQLITE_OK )
-    {
-        for( int i = 1;
-             i <= nRowTriggerIndexCount &&
-             nColTriggerIndexCount == 1 &&
-             rc == SQLITE_OK;
-             i++ )
-        {
-            if (papszTriggerIndexResult[i] != NULL && papszTriggerIndexResult[i][0] != '\0')
-                rc = sqlite3_exec( hDB,
-                            papszTriggerIndexResult[i],
-                            NULL, NULL, &pszErrMsg );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      COMMIT on success or ROLLBACK on failure.                       */
-/* -------------------------------------------------------------------- */
-
-    sqlite3_free_table( papszTriggerIndexResult );
-
-    if( rc == SQLITE_OK )
-    {
-        poDS->SoftCommitTransaction();
-    }
-    else
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to add field %s to table %s:\n %s",
-                  oField.GetNameRef(), poFeatureDefn->GetName(),
-                  pszErrMsg );
-        sqlite3_free( pszErrMsg );
-
-        poDS->SoftRollbackTransaction();
-
-        return OGRERR_FAILURE;
-    }
-
-    return OGRERR_NONE;
 }
 
 /************************************************************************/
