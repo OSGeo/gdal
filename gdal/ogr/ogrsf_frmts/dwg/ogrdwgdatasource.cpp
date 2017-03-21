@@ -47,7 +47,7 @@ OGRDWGDataSource::OGRDWGDataSource() :
   iEntitiesSectionOffset(0),
   bInlineBlocks(FALSE),
   poServices(NULL),
-  poDb(NULL)
+  poDb(static_cast<const OdRxObject*>(NULL))
 
 {
 }
