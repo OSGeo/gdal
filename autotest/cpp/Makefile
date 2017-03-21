@@ -98,7 +98,7 @@ vsipreload.so: ../../gdal/port/vsipreload.cpp
 	$(CXX) -fPIC -g $(CXXFLAGS) $< $(LDFLAGS) -shared -o $@
 
 test_include_from_c_file: test_include_from_c_file.c
-	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
+	$(CC) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 clean:
 	$(RM) $(PROGS)
