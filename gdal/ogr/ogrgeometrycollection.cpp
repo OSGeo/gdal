@@ -991,25 +991,20 @@ void OGRGeometryCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
     OGREnvelope3D oGeomEnv;
     bool bExtentSet = false;
 
+    *psEnvelope = OGREnvelope3D();
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
         if( !papoGeoms[iGeom]->IsEmpty() )
         {
-            if( !bExtentSet )
-            {
-                papoGeoms[iGeom]->getEnvelope( psEnvelope );
-                bExtentSet = true;
-            }
-            else
-            {
-                papoGeoms[iGeom]->getEnvelope( &oGeomEnv );
-                psEnvelope->Merge( oGeomEnv );
-            }
+            bExtentSet = true;
+            papoGeoms[iGeom]->getEnvelope( &oGeomEnv );
+            psEnvelope->Merge( oGeomEnv );
         }
     }
 
     if( !bExtentSet )
     {
+        // To be backward compatible when called on empty geom
         psEnvelope->MinX = 0.0;
         psEnvelope->MinY = 0.0;
         psEnvelope->MinZ = 0.0;
