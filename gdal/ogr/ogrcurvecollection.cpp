@@ -506,7 +506,14 @@ void OGRCurveCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
             else
             {
                 papoCurves[iGeom]->getEnvelope( &oGeomEnv );
-                psEnvelope->Merge( oGeomEnv );
+                // In the current implementation we cannot use Merge()
+                // if the initial envelope is 0.
+                psEnvelope->MinX = MIN(psEnvelope->MinX,oGeomEnv.MinX);
+                psEnvelope->MaxX = MAX(psEnvelope->MaxX,oGeomEnv.MaxX);
+                psEnvelope->MinY = MIN(psEnvelope->MinY,oGeomEnv.MinY);
+                psEnvelope->MaxY = MAX(psEnvelope->MaxY,oGeomEnv.MaxY);
+                psEnvelope->MinZ = MIN(psEnvelope->MinZ,oGeomEnv.MinZ);
+                psEnvelope->MaxZ = MAX(psEnvelope->MaxZ,oGeomEnv.MaxZ);
             }
         }
     }

@@ -3557,6 +3557,25 @@ def ogr_geom_curve_surface():
     return 'success'
 
 ###############################################################################
+def ogr_geom_multipoint_envelope_bug():
+
+    g = ogr.CreateGeometryFromWkt('MULTIPOINT(0 0,1 1)')
+    minx, maxx, miny, maxy = g.GetEnvelope()
+    if (minx, maxx, miny, maxy) != (0, 1, 0, 1):
+        gdaltest.post_reason('fail')
+        print(minx, maxx, miny, maxy)
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('MULTIPOINT(0 0 0,1 1 1)')
+    minx, maxx, miny, maxy, minz, maxz = g.GetEnvelope3D()
+    if (minx, maxx, miny, maxy, minz, maxz) != (0, 1, 0, 1, 0, 1):
+        gdaltest.post_reason('fail')
+        print(minx, maxx, miny, maxy, minz, maxz)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -3610,6 +3629,7 @@ gdaltest_list = [
     ogr_geom_measured_geometries_to_2D_or_3D,
     ogr_geom_postgis_ewkt_xym,
     ogr_geom_curve_surface,
+    ogr_geom_multipoint_envelope_bug,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
