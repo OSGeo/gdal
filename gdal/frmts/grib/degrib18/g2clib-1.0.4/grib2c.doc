@@ -11,14 +11,14 @@ Contents:
 - GRIB2 Routine Documentation
 
 ===============================================================================
- 
+
                                 Introduction
 
 This document briefly describes the routines available for encoding/decoding
 GRIB Edition 2 (GRIB2) messages.  A basic familiarity with GRIB is assumed.
 
 A GRIB Edition 2 message is a machine independent format for storing
-one or more gridded data fields.  Each GRIB2 message consists of the 
+one or more gridded data fields.  Each GRIB2 message consists of the
 following sections:
 
 SECTION 0 - Indicator Section
@@ -58,8 +58,8 @@ a number of different grids, several routines are used to encode a message.
 This should give users more flexibility in how to organize data
 within one or more GRIB2 messages.
 
-To start a new GRIB2 message, call function g2_create.  G2_create 
-encodes Sections 0 and 1 at the beginning of the message.  This routine 
+To start a new GRIB2 message, call function g2_create.  G2_create
+encodes Sections 0 and 1 at the beginning of the message.  This routine
 must be used to create each message.
 
 Routine g2_addlocal can be used to add a Local Use Section ( Section 2 ).
@@ -67,7 +67,7 @@ Note that this section is optional and need not appear in a GRIB2 message.
 
 Function g2_addgrid is used to encode a grid definition into Section 3.
 This grid definition defines the geometry of the data values in the
-fields that follow it.  g2_addgrid can be called again to change the grid 
+fields that follow it.  g2_addgrid can be called again to change the grid
 definition describing subsequent data fields.
 
 Each data field is added to the GRIB2 message using routine g2_addfield,
@@ -90,16 +90,16 @@ and data fields are contained in a given GRIB2 message.  This routine also
 returns all the information stored in Sections 0 and 1 of the GRIB2
 message.
 
-g2_getfld can be used to get all information pertaining to the nth 
+g2_getfld can be used to get all information pertaining to the nth
 data field in the message.  The subroutine returns all the unpacked metadata
 for each Section and Template in a gribfield structure,
 which is defined in include file grib2.h.  An option exists that lets the
-user decide if the decoder should unpack the Bit-map ( if applicable ) 
+user decide if the decoder should unpack the Bit-map ( if applicable )
 and the data values or just return the field description information.
 
-Note that a struct gribfield is allocated by g2_getfld, and it also 
+Note that a struct gribfield is allocated by g2_getfld, and it also
 contains pointers to many arrays of data that are alloated during decoding.
-Because of this, users are encouraged to free up this memory, when it is 
+Because of this, users are encouraged to free up this memory, when it is
 no longer needed, by an explicit call to routine g2_free.
 
 Please see the "GRIB2 Routine Documentation" section below for subroutine
@@ -122,7 +122,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
     gribfield  *gfld;
     FILE   *fptr;
     size_t  lengrib;
- 
+
     iseek=0;
     unpack=1;
     expand=1;
@@ -162,7 +162,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-25
 //
 //   Each element of structure gribfield is defined as:
-//   
+//
 //   gribfield gfld;
 //
 //        gfld->version = GRIB edition number ( currently 2 )
@@ -242,7 +242,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                          This element is a pointer to an array
 //                          that holds the data.  This pointer is nullified
 //                          if gfld->numoct_opt=0.
-//        gfld->num_opt = (Used if gfld->numoct_opt .ne. 0) 
+//        gfld->num_opt = (Used if gfld->numoct_opt .ne. 0)
 //                       The number of entries
 //                       in array ideflist.  i.e. number of rows ( or columns )
 //                       for which optional grid points are defined.  This value
@@ -295,7 +295,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                     254 = Previously defined bitmap applies to this field
 //                     255 = Bit map does not apply to this product.
 //        gfld->bmap  = integer array containing decoded bitmap,
-//                      if gfld->ibmap=0 or gfld->ibap=254.  
+//                      if gfld->ibmap=0 or gfld->ibap=254.
 //                      Otherwise nullified.
 //                      This element is a pointer to an array
 //                      that holds the data.
@@ -312,7 +312,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //   PRGMMR: Gilbert          ORG: W/NP11      DATE: 2002-10-28
 //
 // ABSTRACT: This subprogram searches a file for the next GRIB Message.
-//   The search is done starting at byte offset iseek of the file referenced 
+//   The search is done starting at byte offset iseek of the file referenced
 //   by lugb for mseek bytes at a time.
 //   If found, the starting position and length of the message are returned
 //   in lskip and lgrib, respectively.
@@ -341,7 +341,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK  ///////////////////////////////////
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_info 
+// SUBPROGRAM:    g2_info
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-28
 //
 // ABSTRACT: This subroutine searches through a GRIB2 message and
@@ -358,21 +358,21 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //   INPUT ARGUMENT:
 //     cgrib    - Character pointer to the GRIB2 message
 //
-//   OUTPUT ARGUMENTS:      
-//     listsec0 - pointer to an array containing information decoded from 
+//   OUTPUT ARGUMENTS:
+//     listsec0 - pointer to an array containing information decoded from
 //                GRIB Indicator Section 0.
 //                Must be allocated with >= 3 elements.
 //                listsec0[0]=Discipline-GRIB Master Table Number
 //                            (see Code Table 0.0)
 //                listsec0[1]=GRIB Edition Number (currently 2)
 //                listsec0[2]=Length of GRIB message
-//     listsec1 - pointer to an array containing information read from GRIB 
+//     listsec1 - pointer to an array containing information read from GRIB
 //                Identification Section 1.
 //                Must be allocated with >= 13 elements.
 //                listsec1[0]=Id of originating centre (Common Code Table C-1)
 //                listsec1[1]=Id of originating sub-centre (local table)
 //                listsec1[2]=GRIB Master Tables Version Number (Code Table 1.0)
-//                listsec1[3]=GRIB Local Tables Version Number 
+//                listsec1[3]=GRIB Local Tables Version Number
 //                listsec1[4]=Significance of Reference Time (Code Table 1.1)
 //                listsec1[5]=Reference Time - Year (4 digits)
 //                listsec1[6]=Reference Time - Month
@@ -384,7 +384,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                listsec1[12]=Type of processed data (Code Table 1.3)
 //     numfields- The number of gridded fields found in the GRIB message.
 //                That is, the number of occurrences of Sections 4 - 7.
-//     numlocal - The number of Local Use Sections ( Section 2 ) found in 
+//     numlocal - The number of Local Use Sections ( Section 2 ) found in
 //                the GRIB message.
 //
 //     RETURN VALUES:
@@ -401,7 +401,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE:  
+//   MACHINE:
 //
 //////////////////////////////////////////////////////////////////////////
 
@@ -409,10 +409,10 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK  ///////////////////////////////////
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_getfld 
+// SUBPROGRAM:    g2_getfld
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-28
 //
-// ABSTRACT: This subroutine returns all the metadata, template values, 
+// ABSTRACT: This subroutine returns all the metadata, template values,
 //   Bit-map ( if applicable ), and the unpacked data for a given data
 //   field.  All of the information returned is stored in a gribfield
 //   structure, which is defined in file grib2.h.
@@ -446,10 +446,10 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                This argument is ignored if unpack == 0 OR if the
 //                returned field does not contain a bit-map.
 //
-//   OUTPUT ARGUMENT:      
+//   OUTPUT ARGUMENT:
 //     gribfield gfld; - pointer to structure gribfield containing
 //                       all decoded data for the data field.
-// 
+//
 //        gfld->version = GRIB edition number ( currently 2 )
 //        gfld->discipline = Message Discipline ( see Code Table 0.0 )
 //        gfld->idsect = Contains the entries in the Identification
@@ -527,7 +527,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                          This element is a pointer to an array
 //                          that holds the data.  This pointer is nullified
 //                          if gfld->numoct_opt=0.
-//        gfld->num_opt = (Used if gfld->numoct_opt .ne. 0) 
+//        gfld->num_opt = (Used if gfld->numoct_opt .ne. 0)
 //                        The number of entries
 //                       in array ideflist.  i.e. number of rows ( or columns )
 //                       for which optional grid points are defined.  This value
@@ -587,7 +587,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                     This element is a pointer to an array
 //                     that holds the data.
 //
-// 
+//
 //   RETURN VALUES:
 //     ierr     - Error return code.
 //                0 = no error
@@ -610,7 +610,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //
 // REMARKS: Note that struct gribfield is allocated by this routine and it
 //          also contains pointers to many arrays of data that were allocated
-//          during decoding.  Users are encouraged to free up this memory, 
+//          during decoding.  Users are encouraged to free up this memory,
 //          when it is no longer needed, by an explicit call to routine g2_free.
 //          EXAMPLE:
 //              #include "grib2.h"
@@ -631,7 +631,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE:  
+//   MACHINE:
 //
 ///////////////////////////////////////////////////////////////////////////
 
@@ -639,13 +639,13 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_create 
+// SUBPROGRAM:    g2_create
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-31
 //
 // ABSTRACT: This routine initializes a new GRIB2 message and packs
 //   GRIB2 sections 0 (Indicator Section) and 1 (Identification Section).
-//   This routine is used with routines "g2_addlocal", "g2_addgrid", 
-//   "g2_addfield", and "g2_gribend" to create a complete GRIB2 message.  
+//   This routine is used with routines "g2_addlocal", "g2_addgrid",
+//   "g2_addfield", and "g2_gribend" to create a complete GRIB2 message.
 //   g2_create must be called first to initialize a new GRIB2 message.
 //   Also, a call to g2_gribend is required to complete GRIB2 message
 //   after all fields have been added.
@@ -677,7 +677,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                listsec1[11]=Production status of data (Code Table 1.3)
 //                listsec1[12]=Type of processed data (Code Table 1.4)
 //
-//   OUTPUT ARGUMENTS:      
+//   OUTPUT ARGUMENTS:
 //     cgrib    - Char array to contain the new GRIB2 message.
 //                Must be allocated large enough to store the entire
 //                GRIB2 message.
@@ -687,13 +687,13 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //              > 0 = Current size of new GRIB2 message
 //               -1 = Tried to use for version other than GRIB Edition 2
 //
-// REMARKS: This routine is intended for use with routines "g2_addlocal", 
-//          "g2_addgrid", "g2_addfield", and "g2_gribend" to create a complete 
+// REMARKS: This routine is intended for use with routines "g2_addlocal",
+//          "g2_addgrid", "g2_addfield", and "g2_gribend" to create a complete
 //          GRIB2 message.
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE:  
+//   MACHINE:
 //
 //$$$
 
@@ -701,13 +701,13 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_addlocal 
+// SUBPROGRAM:    g2_addlocal
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-11-01
 //
-// ABSTRACT: This routine adds a Local Use Section (Section 2) to 
-//   a GRIB2 message.  It is used with routines "g2_create", 
+// ABSTRACT: This routine adds a Local Use Section (Section 2) to
+//   a GRIB2 message.  It is used with routines "g2_create",
 //   "g2_addgrid", "g2_addfield",
-//   and "g2_gribend" to create a complete GRIB2 message.  
+//   and "g2_gribend" to create a complete GRIB2 message.
 //   g2_create must be called first to initialize a new GRIB2 message.
 //
 // PROGRAM HISTORY LOG:
@@ -723,7 +723,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //     lcsec2   - Number of bytes of character array csec2 to be added to
 //                Section 2.
 //
-//   OUTPUT ARGUMENT:      
+//   OUTPUT ARGUMENT:
 //     cgrib    - Char array to contain the updated GRIB2 message.
 //                Must be allocated large enough to store the entire
 //                GRIB2 message.
@@ -742,7 +742,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE: 
+//   MACHINE:
 //
 //$$$
 
@@ -750,10 +750,10 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_addgrid 
+// SUBPROGRAM:    g2_addgrid
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-11-01
 //
-// ABSTRACT: This routine packs up a Grid Definition Section (Section 3) 
+// ABSTRACT: This routine packs up a Grid Definition Section (Section 3)
 //   and adds it to a GRIB2 message.  It is used with routines "g2_create",
 //   "g2_addlocal", "g2_addfield",
 //   and "g2_gribend" to create a complete GRIB2 message.
@@ -771,17 +771,17 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                Must be dimensioned >= 5.
 //                igds[0]=Source of grid definition (see Code Table 3.0)
 //                igds[1]=Number of grid points in the defined grid.
-//                igds[2]=Number of octets needed for each 
-//                            additional grid points definition.  
+//                igds[2]=Number of octets needed for each
+//                            additional grid points definition.
 //                            Used to define number of
 //                            points in each row ( or column ) for
-//                            non-regular grids.  
+//                            non-regular grids.
 //                            = 0, if using regular grid.
-//                igds[3]=Interpretation of list for optional points 
+//                igds[3]=Interpretation of list for optional points
 //                            definition.  (Code Table 3.11)
 //                igds[4]=Grid Definition Template Number (Code Table 3.1)
 //     igdstmpl - Contains the data values for the specified Grid Definition
-//                Template ( NN=igds[4] ).  Each element of this integer 
+//                Template ( NN=igds[4] ).  Each element of this integer
 //                array contains an entry (in the order specified) of Grid
 //                Definition Template 3.NN
 //     ideflist - (Used if igds[2] != 0)  This array contains the
@@ -790,7 +790,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                in array ideflist.  i.e. number of rows ( or columns )
 //                for which optional grid points are defined.
 //
-//   OUTPUT ARGUMENTS:      
+//   OUTPUT ARGUMENTS:
 //     cgrib    - Char array to contain the updated GRIB2 message.
 //                Must be allocated large enough to store the entire
 //                GRIB2 message.
@@ -810,7 +810,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE:  
+//   MACHINE:
 //
 //$$$
 
@@ -818,19 +818,19 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_addfield 
+// SUBPROGRAM:    g2_addfield
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-11-05
 //
 // ABSTRACT: This routine packs up Sections 4 through 7 for a given field
 //   and adds them to a GRIB2 message.  They are Product Definition Section,
-//   Data Representation Section, Bit-Map Section and Data Section, 
+//   Data Representation Section, Bit-Map Section and Data Section,
 //   respectively.
-//   This routine is used with routines "g2_create", "g2_addlocal", 
-//   "g2_addgrid", and "g2_gribend" to create a complete GRIB2 message.  
+//   This routine is used with routines "g2_create", "g2_addlocal",
+//   "g2_addgrid", and "g2_gribend" to create a complete GRIB2 message.
 //   g2_create must be called first to initialize a new GRIB2 message.
 //   Also, routine g2_addgrid must be called after g2_create and
 //   before this routine to add the appropriate grid description to
-//   the GRIB2 message.   Also, a call to g2_gribend is required to complete 
+//   the GRIB2 message.   Also, a call to g2_gribend is required to complete
 //   GRIB2 message after all fields have been added.
 //
 // PROGRAM HISTORY LOG:
@@ -844,7 +844,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                4 through 7 should be added.
 //     ipdsnum  - Product Definition Template Number ( see Code Table 4.0)
 //     ipdstmpl - Contains the data values for the specified Product Definition
-//                Template ( N=ipdsnum ).  Each element of this integer 
+//                Template ( N=ipdsnum ).  Each element of this integer
 //                array contains an entry (in the order specified) of Product
 //                Definition Template 4.N
 //     coordlist- Array containing floating point values intended to document
@@ -853,7 +853,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //     numcoord - number of values in array coordlist.
 //     idrsnum  - Data Representation Template Number ( see Code Table 5.0 )
 //     idrstmpl - Contains the data values for the specified Data Representation
-//                Template ( N=idrsnum ).  Each element of this integer 
+//                Template ( N=idrsnum ).  Each element of this integer
 //                array contains an entry (in the order specified) of Data
 //                Representation Template 5.N
 //                Note that some values in this template (eg. reference
@@ -871,7 +871,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                255 = Bit map does not apply to this product.
 //     bmap[]   - Integer array containing bitmap to be added. ( if ibmap=0 )
 //
-//   OUTPUT ARGUMENT LIST:      
+//   OUTPUT ARGUMENT LIST:
 //     cgrib    - Character array to contain the updated GRIB2 message.
 //                Must be allocated large enough to store the entire
 //                GRIB2 message.
@@ -895,7 +895,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE:  
+//   MACHINE:
 //
 //$$$
 
@@ -903,14 +903,14 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_gribend 
+// SUBPROGRAM:    g2_gribend
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-31
 //
 // ABSTRACT: This routine finalizes a GRIB2 message after all grids
 //   and fields have been added.  It adds the End Section ( "7777" )
 //   to the end of the GRIB message and calculates the length and stores
 //   it in the appropriate place in Section 0.
-//   This routine is used with routines "g2_create", "g2_addlocal", 
+//   This routine is used with routines "g2_create", "g2_addlocal",
 //   "g2_addgrid", and "g2_addfield" to create a complete GRIB2 message.
 //   g2_create must be called first to initialize a new GRIB2 message.
 //
@@ -923,7 +923,7 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //                be previous calls to g2_create, g2_addlocal, g2_addgrid,
 //                and g2_addfield.
 //
-//   OUTPUT ARGUMENTS:      
+//   OUTPUT ARGUMENTS:
 //     cgrib    - Char array containing the finalized GRIB2 message
 //
 //   RETURN VALUES:
@@ -931,12 +931,12 @@ all the GRIB2 fields in a file.  This is illustrated by the following example:
 //              > 0 = Length of the final GRIB2 message in bytes.
 //               -1 = GRIB message was not initialized.  Need to call
 //                    routine g2_create first.
-//               -2 = GRIB message already complete.  
+//               -2 = GRIB message already complete.
 //               -3 = Sum of Section byte counts doesn't add to total byte count
 //               -4 = Previous Section was not 7.
 //
-// REMARKS: This routine is intended for use with routines "g2_create", 
-//          "g2_addlocal", "g2_addgrid", and "g2_addfield" to create a complete 
+// REMARKS: This routine is intended for use with routines "g2_create",
+//          "g2_addlocal", "g2_addgrid", and "g2_addfield" to create a complete
 //          GRIB2 message.
 //
 // ATTRIBUTES:
