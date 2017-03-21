@@ -1506,7 +1506,30 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
                              poRecord->GetIntSubfield("VRPT",iField,
                              "MASK",iSubField) );
     }
+	
+/* -------------------------------------------------------------------- */
+/*      Geometric attributes                                            */
+/*      Retrieve POSACC and QUAPOS attributes                           */
+/* -------------------------------------------------------------------- */
 
+	const int posaccField = poRegistrar->FindAttrByAcronym("POSACC");
+	const int quaposField = poRegistrar->FindAttrByAcronym("QUAPOS");
+	
+	DDFField * field = poRecord->GetField(i);
+	for( int j = 0; j < field->GetRepeatCount(); j++ ) {
+		// POSACC field
+		if (poRecord->GetIntSubfield("ATTV",0,"ATTL",j) == posaccField) {
+            poFeature->SetField( "POSACC",
+                                poRecord->GetFloatSubfield("ATTV",0,"ATVL",j) );
+		}
+	
+		// QUAPOS field
+		if (poRecord->GetIntSubfield("ATTV",0,"ATTL",j) == quaposField) {
+			poFeature->SetField( "QUAPOS",
+                            poRecord->GetFloatSubfield("ATTV",0,"ATVL",j) );
+		}
+	}
+	
     return poFeature;
 }
 
