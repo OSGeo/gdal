@@ -47,6 +47,7 @@ CPL_C_START
 /** List element structure. */
 typedef struct _CPLList CPLList;
 
+/** List element structure. */
 struct _CPLList
 {
     /*! Pointer to the data object. Should be allocated and freed by the
