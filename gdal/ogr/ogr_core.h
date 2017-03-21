@@ -46,10 +46,16 @@
 
 /*! @cond Doxygen_Suppress */
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+#include <limits>
+
 class CPL_DLL OGREnvelope
 {
   public:
-        OGREnvelope() : MinX(0.0), MaxX(0.0), MinY(0.0), MaxY(0.0)
+        OGREnvelope() : MinX(std::numeric_limits<double>::infinity()),
+                        MaxX(-std::numeric_limits<double>::infinity()),
+                        MinY(std::numeric_limits<double>::infinity()),
+                        MaxY(-std::numeric_limits<double>::infinity())
         {
         }
 
@@ -67,41 +73,24 @@ class CPL_DLL OGREnvelope
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
-    int  IsInit() const { return MinX != 0 || MinY != 0 || MaxX != 0 || MaxY != 0; }
+    int  IsInit() const { return MinX != std::numeric_limits<double>::infinity(); }
 
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
 
     void Merge( OGREnvelope const& sOther ) {
-        if( IsInit() )
-        {
-            MinX = MIN(MinX,sOther.MinX);
-            MaxX = MAX(MaxX,sOther.MaxX);
-            MinY = MIN(MinY,sOther.MinY);
-            MaxY = MAX(MaxY,sOther.MaxY);
-        }
-        else
-        {
-            MinX = sOther.MinX;
-            MaxX = sOther.MaxX;
-            MinY = sOther.MinY;
-            MaxY = sOther.MaxY;
-        }
+        MinX = MIN(MinX,sOther.MinX);
+        MaxX = MAX(MaxX,sOther.MaxX);
+        MinY = MIN(MinY,sOther.MinY);
+        MaxY = MAX(MaxY,sOther.MaxY);
     }
+
     void Merge( double dfX, double dfY ) {
-        if( IsInit() )
-        {
-            MinX = MIN(MinX,dfX);
-            MaxX = MAX(MaxX,dfX);
-            MinY = MIN(MinY,dfY);
-            MaxY = MAX(MaxY,dfY);
-        }
-        else
-        {
-            MinX = MaxX = dfX;
-            MinY = MaxY = dfY;
-        }
+        MinX = MIN(MinX,dfX);
+        MaxX = MAX(MaxX,dfX);
+        MinY = MIN(MinY,dfY);
+        MaxY = MAX(MaxY,dfY);
     }
 
     void Intersect( OGREnvelope const& sOther ) {
@@ -124,10 +113,7 @@ class CPL_DLL OGREnvelope
         }
         else
         {
-            MinX = 0;
-            MaxX = 0;
-            MinY = 0;
-            MaxY = 0;
+            *this = OGREnvelope();
         }
     }
 
@@ -161,7 +147,9 @@ typedef struct
 class CPL_DLL OGREnvelope3D : public OGREnvelope
 {
   public:
-        OGREnvelope3D() : OGREnvelope(), MinZ(0.0), MaxZ(0.0)
+        OGREnvelope3D() : OGREnvelope(),
+                          MinZ(std::numeric_limits<double>::infinity()),
+                          MaxZ(-std::numeric_limits<double>::infinity())
         {
         }
 
@@ -178,47 +166,27 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
-    int  IsInit() const { return MinX != 0 || MinY != 0 || MaxX != 0 || MaxY != 0 || MinZ != 0 || MaxZ != 0; }
+    int  IsInit() const { return MinX != std::numeric_limits<double>::infinity(); }
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
 
     void Merge( OGREnvelope3D const& sOther ) {
-        if( IsInit() )
-        {
-            MinX = MIN(MinX,sOther.MinX);
-            MaxX = MAX(MaxX,sOther.MaxX);
-            MinY = MIN(MinY,sOther.MinY);
-            MaxY = MAX(MaxY,sOther.MaxY);
-            MinZ = MIN(MinZ,sOther.MinZ);
-            MaxZ = MAX(MaxZ,sOther.MaxZ);
-        }
-        else
-        {
-            MinX = sOther.MinX;
-            MaxX = sOther.MaxX;
-            MinY = sOther.MinY;
-            MaxY = sOther.MaxY;
-            MinZ = sOther.MinZ;
-            MaxZ = sOther.MaxZ;
-        }
+        MinX = MIN(MinX,sOther.MinX);
+        MaxX = MAX(MaxX,sOther.MaxX);
+        MinY = MIN(MinY,sOther.MinY);
+        MaxY = MAX(MaxY,sOther.MaxY);
+        MinZ = MIN(MinZ,sOther.MinZ);
+        MaxZ = MAX(MaxZ,sOther.MaxZ);
     }
+
     void Merge( double dfX, double dfY, double dfZ ) {
-        if( IsInit() )
-        {
-            MinX = MIN(MinX,dfX);
-            MaxX = MAX(MaxX,dfX);
-            MinY = MIN(MinY,dfY);
-            MaxY = MAX(MaxY,dfY);
-            MinZ = MIN(MinZ,dfZ);
-            MaxZ = MAX(MaxZ,dfZ);
-        }
-        else
-        {
-            MinX = MaxX = dfX;
-            MinY = MaxY = dfY;
-            MinZ = MaxZ = dfZ;
-        }
+        MinX = MIN(MinX,dfX);
+        MaxX = MAX(MaxX,dfX);
+        MinY = MIN(MinY,dfY);
+        MaxY = MAX(MaxY,dfY);
+        MinZ = MIN(MinZ,dfZ);
+        MaxZ = MAX(MaxZ,dfZ);
     }
 
     void Intersect( OGREnvelope3D const& sOther ) {
@@ -245,12 +213,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
         }
         else
         {
-            MinX = 0;
-            MaxX = 0;
-            MinY = 0;
-            MaxY = 0;
-            MinZ = 0;
-            MaxZ = 0;
+            *this = OGREnvelope3D();
         }
     }
 
