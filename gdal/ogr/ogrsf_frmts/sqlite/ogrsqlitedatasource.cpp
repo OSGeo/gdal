@@ -497,10 +497,10 @@ void OGRSQLiteDataSource::SaveStatistics()
         SQLResult oResult;
         int nReplaceEventId = -1;
 
-        SQLQuery( hDB,
+        CPL_IGNORE_RET_VAL( SQLQuery( hDB,
                   "SELECT event_id, table_name, geometry_column, event "
                   "FROM spatialite_history ORDER BY event_id DESC LIMIT 1",
-                  &oResult );
+                  &oResult ) );
 
         if( oResult.nRowCount == 1 )
         {
