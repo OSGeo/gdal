@@ -498,11 +498,12 @@ int GRIBDataset::Identify( GDALOpenInfo *poOpenInfo )
     if (poOpenInfo->nHeaderBytes < 8)
         return FALSE;
 
-    // Does a part of what ReadSECT0() but in a thread-safe way.
+    const char *pasHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
+    // Does a part of what ReadSECT0(), but in a thread-safe way.
     for(int i = 0; i < poOpenInfo->nHeaderBytes - 3; i++)
     {
-        if(STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + i, "GRIB") ||
-           STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + i, "TDLP"))
+        if(STARTS_WITH_CI(pasHeader + i, "GRIB") ||
+           STARTS_WITH_CI(pasHeader + i, "TDLP"))
             return TRUE;
     }
 
@@ -736,14 +737,11 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         break;
     }
 
-    // Earth model.
-    double a = meta->gds.majEarth * 1000.0;  // in meters
-    double b = meta->gds.minEarth * 1000.0;
-    if( a == 0 && b == 0 )
-    {
-        a = 6377563.396;
-        b = 6356256.910;
-    }
+    const bool bHaveEarthModel =
+        meta->gds.majEarth != 0.0 || meta->gds.minEarth != 0.0;
+    // In meters.
+    const double a = bHaveEarthModel ? meta->gds.majEarth * 1.0e3 : 6377563.396;
+    const double b = bHaveEarthModel ? meta->gds.minEarth * 1.0e3 : 6356256.910;
 
     if (meta->gds.f_sphere)
     {
@@ -869,7 +867,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
 
     CPLFree(pszProjection);
     pszProjection = NULL;
-    oSRS.exportToWkt(&(pszProjection));
+    oSRS.exportToWkt(&pszProjection);
 }
 
 /************************************************************************/
