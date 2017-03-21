@@ -34,7 +34,6 @@
 #include "cpl_csv.h"
 #include "cpl_error.h"
 #include "cpl_hash_set.h"
-#include "cplkeywordparser.h"
 #include "cpl_list.h"
 #include "cpl_minixml.h"
 #include "cpl_port.h"
