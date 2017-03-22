@@ -269,11 +269,11 @@ S57GenerateVectorPrimitiveFeatureDefn( int nRCNM,
 /* -------------------------------------------------------------------- */
 /*      Geometric primitive attributes                                  */
 /* -------------------------------------------------------------------- */	
-	oField.Set( "POSACC", OFTReal, 10, 2 );
-	poFDefn->AddFieldDefn( &oField );
+    oField.Set( "POSACC", OFTReal, 10, 2 );
+    poFDefn->AddFieldDefn( &oField );
 
-	oField.Set( "QUAPOS", OFTInteger, 2, 0 );
-	poFDefn->AddFieldDefn( &oField );
+    oField.Set( "QUAPOS", OFTInteger, 2, 0 );
+    poFDefn->AddFieldDefn( &oField );
 
 /* -------------------------------------------------------------------- */
 /*      For lines we want to capture the point links for the first      */
