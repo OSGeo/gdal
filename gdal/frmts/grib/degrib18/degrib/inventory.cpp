@@ -243,7 +243,7 @@ static int InventoryParseTime (char *is, double *AnsTime)
  *****************************************************************************
  */
 static int GRIB2SectToBuffer (DataSource &fp,
-                              CPL_UNUSED uInt4 gribLen,
+                              uInt4 gribLen,
                               sChar *sect,
                               uInt4 *secLen, uInt4 *buffLen, char **buff)
 {
@@ -257,7 +257,7 @@ static int GRIB2SectToBuffer (DataSource &fp,
       }
       return -1;
    }
-   if( *secLen < sizeof(sInt4) )
+   if( *secLen < sizeof(sInt4) || *secLen > gribLen )
    {
        errSprintf ("ERROR: Wrong secLen in GRIB2SectToBuffer\n");
        return -1;
