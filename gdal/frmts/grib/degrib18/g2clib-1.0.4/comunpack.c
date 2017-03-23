@@ -46,12 +46,12 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
 //$$$//
 {
 
-      g2int   nbitsd=0,isign;
-      g2int  j,iofst,ival1,ival2,minsd,itemp,l,k,n,non=0;
-      g2int  *ifld,*ifldmiss=0;
-      g2int  *gref,*gwidth,*glen;
-      g2int  itype,ngroups,nbitsgref,nbitsgwidth,nbitsglen;
-      g2int  msng1,msng2;
+      g2int nbitsd=0,isign;
+      g2int j,iofst,ival1,ival2,minsd,itemp,l,k,n,non=0;
+      g2int *ifld=NULL,*ifldmiss=NULL;
+      g2int *gref=NULL,*gwidth=NULL,*glen=NULL;
+      g2int itype,ngroups,nbitsgref,nbitsgwidth,nbitsglen;
+      g2int msng1,msng2;
       g2float ref,bscale,dscale,rmiss1,rmiss2;
       g2int totBit, totLen;
 
@@ -194,10 +194,11 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
         totBit += (gwidth[j]*glen[j]);
         totLen += glen[j];
       }
-      if (totLen != ndpts) {
-        return 1;
-      }
-      if (totBit / 8. > lensec) {
+      if (totLen != ndpts || totBit / 8. > lensec) {
+        free(ifld);
+        free(gwidth);
+        free(glen);
+        free(gref);
         return 1;
       }
 //
