@@ -989,9 +989,8 @@ OGRFeature *OGRDWGLayer::TranslateARC( OdDbEntityPtr poEntity )
 /*                          TranslateSPLINE()                           */
 /************************************************************************/
 
-void rbspline2( int npts,int k,int p1,double b[],double h[],
-                bool xflag, double x[], double p[] );
-
+void rbspline(int npts,int k,int p1,double b[],double h[], double p[]);
+void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[]);
 
 OGRFeature *OGRDWGLayer::TranslateSPLINE( OdDbEntityPtr poEntity )
 
@@ -1053,16 +1052,12 @@ OGRFeature *OGRDWGLayer::TranslateSPLINE( OdDbEntityPtr poEntity )
     for( i = 0; i < 3*p1; i++ )
         p.push_back( 0.0 );
 
-    std::vector<double> x;
-    x.resize( nControlPoints );
-    rbspline2( nControlPoints, nDegree+1, p1, &(adfControlPoints[0]),
-               &(h[0]), false, &(x[0]), &(p[0]) );
-    /*if( poSpline->isClosed() )
+    if( poSpline->isClosed() )
         rbsplinu( nControlPoints, nDegree+1, p1, &(adfControlPoints[0]),
                   &(h[0]), &(p[0]) );
     else
         rbspline( nControlPoints, nDegree+1, p1, &(adfControlPoints[0]),
-                  &(h[0]), &(p[0]) );*/
+                  &(h[0]), &(p[0]) );
 
 /* -------------------------------------------------------------------- */
 /*      Turn into OGR geometry.                                         */
