@@ -294,20 +294,20 @@ void rbspline2( int npts,int k,int p1,double b[],double h[],
 
 /*  Subroutine to generate a rational B-spline curve using an uniform open knot vector
 
-	C code for An Introduction to NURBS
-	by David F. Rogers. Copyright (C) 2000 David F. Rogers,
-	All rights reserved.
-	
-	Name: rbspline.c
-	Language: C
-	Subroutines called: knot.c, rbasis.c, fmtmul.c
-	Book reference: Chapter 4, Alg. p. 297
+    C code for An Introduction to NURBS
+    by David F. Rogers. Copyright (C) 2000 David F. Rogers,
+    All rights reserved.
+
+    Name: rbspline.c
+    Language: C
+    Subroutines called: knot.c, rbasis.c, fmtmul.c
+    Book reference: Chapter 4, Alg. p. 297
 
     b[]         = array containing the defining polygon vertices
                   b[1] contains the x-component of the vertex
                   b[2] contains the y-component of the vertex
                   b[3] contains the z-component of the vertex
-	h[]			= array containing the homogeneous weighting factors 
+    h[]         = array containing the homogeneous weighting factors 
     k           = order of the B-spline basis function
     nbasis      = array containing the basis functions for a single value of t
     nplusc      = number of knot values
@@ -378,7 +378,7 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
                 jcount = jcount + 3;
             }
         }
-    	icount = icount + 3;
+        icount = icount + 3;
         t = t + step;
     }
 }
@@ -389,20 +389,20 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
 
 /*  Subroutine to generate a rational B-spline curve using an uniform periodic knot vector
 
-	C code for An Introduction to NURBS
-	by David F. Rogers. Copyright (C) 2000 David F. Rogers,
-	All rights reserved.
-	
-	Name: rbsplinu.c
-	Language: C
-	Subroutines called: knotu.c, rbasis.c, fmtmul.c
-	Book reference: Chapter 4, Alg. p. 298
+    C code for An Introduction to NURBS
+    by David F. Rogers. Copyright (C) 2000 David F. Rogers,
+    All rights reserved.
+
+    Name: rbsplinu.c
+    Language: C
+    Subroutines called: knotu.c, rbasis.c, fmtmul.c
+    Book reference: Chapter 4, Alg. p. 298
 
     b[]         = array containing the defining polygon vertices
                   b[1] contains the x-component of the vertex
                   b[2] contains the y-component of the vertex
                   b[3] contains the z-component of the vertex
-	h[]			= array containing the homogeneous weighting factors 
+    h[]         = array containing the homogeneous weighting factors 
     k           = order of the B-spline basis function
     nbasis      = array containing the basis functions for a single value of t
     nplusc      = number of knot values
