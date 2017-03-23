@@ -327,7 +327,7 @@ void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
 
 {
     std::vector<double> x (npts + k + 1, 0.0);
-    rbspline2( npts,k,p1,b,h,false,&x[0],p );
+    rbspline2( npts,k,p1,b,h,true,&x[0],p );
 }
 
 /************************************************************************/
