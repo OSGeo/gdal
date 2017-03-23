@@ -590,11 +590,9 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
     FileDataSource grib_fp(poDS->fp);
 
     // Contains an GRIB2 message inventory of the file.
-    inventoryType *Inv = NULL;
-    uInt4 LenInv = 0;  // Size of Inv (also # of GRIB2 messages).
-    int msgNum = 0;    // The messageNumber during the inventory.
+    gdal::grib::InventoryWrapper oInventories(grib_fp);
 
-    if( GRIB2Inventory(grib_fp, &Inv, &LenInv, 0, &msgNum) <= 0 )
+    if( oInventories.result() <= 0 )
     {
         char *errMsg = errSprintf(NULL);
         if( errMsg != NULL )
@@ -614,7 +612,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // Create band objects.
-    for (uInt4 i = 0; i < LenInv; ++i)
+    for (uInt4 i = 0; i < oInventories.length(); ++i)
     {
         GRIBRasterBand *gribBand = NULL;
         uInt4 bandNr = i + 1;
@@ -624,7 +622,8 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
             // in it.
             double *data = NULL;
             grib_MetaData *metaData = NULL;
-            GRIBRasterBand::ReadGribData(grib_fp, 0, Inv[i].subgNum,
+            GRIBRasterBand::ReadGribData(grib_fp, 0,
+                                         oInventories.get(i)->subgNum,
                                          &data, &metaData);
             if( data == NULL || metaData == NULL || metaData->gds.Nx < 1 ||
                 metaData->gds.Ny < 1 )
@@ -652,9 +651,9 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
             // Set the DataSet's x,y size, georeference and projection from
             // the first GRIB band.
             poDS->SetGribMetaData(metaData);
-            gribBand = new GRIBRasterBand(poDS, bandNr, Inv + i);
+            gribBand = new GRIBRasterBand(poDS, bandNr, oInventories.get(i));
 
-            if( Inv->GribVersion == 2 )
+            if( oInventories.get(i)->GribVersion == 2 )
                 gribBand->FindPDSTemplate();
 
             gribBand->m_Grib_Data = data;
@@ -662,17 +661,15 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
         }
         else
         {
-            gribBand = new GRIBRasterBand(poDS, bandNr, Inv + i);
+            gribBand = new GRIBRasterBand(poDS, bandNr, oInventories.get(i));
             if( CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")) )
             {
-                if( Inv->GribVersion == 2 )
+                if( oInventories.get(i)->GribVersion == 2 )
                     gribBand->FindPDSTemplate();
             }
         }
         poDS->SetBand(bandNr, gribBand);
-        GRIB2InventoryFree(Inv + i);
     }
-    free(Inv);
 
     // Initialize any PAM information.
     poDS->SetDescription(poOpenInfo->pszFilename);

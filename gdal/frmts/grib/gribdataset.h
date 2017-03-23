@@ -136,3 +136,49 @@ private:
     int nGribDataXSize;
     int nGribDataYSize;
 };
+
+namespace gdal {
+namespace grib {
+
+// Thin layer to manage allocation and deallocation.
+class InventoryWrapper {
+  public:
+    explicit InventoryWrapper(const std::string &filepath)
+        : inv_(nullptr), inv_len_(0), num_messages_(0), result_(0) {
+      FileDataSource grib(filepath.c_str());
+      result_ = GRIB2Inventory(grib, &inv_, &inv_len_, 0 /* all messages */,
+                               &num_messages_);
+    }
+    explicit InventoryWrapper(FileDataSource file_data_source)
+        : inv_(nullptr), inv_len_(0), num_messages_(0), result_(0) {
+      result_ = GRIB2Inventory(file_data_source, &inv_, &inv_len_,
+                               0 /* all messages */, &num_messages_);
+    }
+
+    ~InventoryWrapper() {
+        if (inv_ == nullptr) return;
+        for (uInt4 i = 0; i < inv_len_; i++) {
+            GRIB2InventoryFree(inv_ + i);
+        }
+        free(inv_);
+    }
+
+    // Modifying the contents pointed to by the return is allowed.
+    inventoryType * get(int i) const {
+      if (i < 0 || i >= static_cast<int>(inv_len_)) return nullptr;
+      return inv_ + i;
+    }
+
+    uInt4 length() const { return inv_len_; }
+    size_t num_messages() const { return num_messages_; }
+    int result() const { return result_; }
+
+  private:
+    inventoryType *inv_;
+    uInt4 inv_len_;
+    int num_messages_;
+    int result_;
+};
+
+}  // namespace grib
+}  // namespace gdal
