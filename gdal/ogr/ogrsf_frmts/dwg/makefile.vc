@@ -8,37 +8,44 @@ OBJ =	\
     ogrdwg_dimension.obj \
     ogrdwg_hatch.obj 
 
-DXF_OBJ = ..\dxf\intronurbs.obj ..\dxf\ogrdxf_polyline_smooth.obj 
+DXF_OBJ = ..\dxf\intronurbs.obj ..\dxf\ogrdxf_polyline_smooth.obj  ..\dxf\ogr_autocad_services.obj
 
 PLUGIN_DLL = ogr_DWG.dll
 
 GDAL_ROOT	=	..\..\..
 
 TD_LIBS =  \
-	$(TD_LIBDIR)/TD_ExamplesCommon.lib \
 	$(TD_LIBDIR)/TD_Key.lib \
-	$(TD_LIBDIR)/ModelerGeometry.lib \
-	$(TD_LIBDIR)/TD_BrepRenderer.lib \
-	$(TD_LIBDIR)/TD_Br.lib \
-	$(TD_LIBDIR)/TD_AcisBuilder.lib \
-	$(TD_LIBDIR)/TD_DynBlocks.lib \
+	$(TD_LIBDIR)/TD_ExamplesCommon.lib \
 	$(TD_LIBDIR)/TD_Db.lib \
 	$(TD_LIBDIR)/TD_DbRoot.lib \
+	$(TD_LIBDIR)/TD_Root.lib \
+	$(TD_LIBDIR)/TD_Ge.lib \
+	$(TD_LIBDIR)/TD_Alloc.lib \
+	advapi32.lib
+
+# Previously in TD_LIBS and no longer existing in Teigha 4.2.2:
+TD_NO_LONGER_EXISTING_LIBS =  \
+	$(TD_LIBDIR)/TD_FT.lib \
+	$(TD_LIBDIR)/Jpeg.lib \
+	$(TD_LIBDIR)/OdBagFiler.lib
+
+# Previously in TD_LIBS, still existing in Teigha 4.2.2, but useless for linking
+TD_USELESS_LIBS =  \
+	$(TD_LIBDIR)/TD_AcisBuilder.lib \
+	$(TD_LIBDIR)/TD_DynBlocks.lib \
+	$(TD_LIBDIR)/TD_BrepRenderer.lib \
+	$(TD_LIBDIR)/TD_Br.lib \
 	$(TD_LIBDIR)/TD_Gs.lib \
 	$(TD_LIBDIR)/TD_SpatialIndex.lib \
 	$(TD_LIBDIR)/TD_Ave.lib \
-	$(TD_LIBDIR)/TD_Root.lib \
 	$(TD_LIBDIR)/TD_Gi.lib \
-	$(TD_LIBDIR)/TD_Ge.lib \
-	$(TD_LIBDIR)/TD_FT.lib \
-	$(TD_LIBDIR)/TD_Alloc.lib \
 	$(TD_LIBDIR)/RxRasterServices.lib \
-	$(TD_LIBDIR)/Jpeg.lib \
 	$(TD_LIBDIR)/RecomputeDimBlock.lib \
 	$(TD_LIBDIR)/ExFieldEvaluator.lib \
-	$(TD_LIBDIR)/OdBagFiler.lib \
 	$(TD_LIBDIR)/RasterProcessor.lib \
-	advapi32.lib
+	$(TD_LIBDIR)/ModelerGeometry.lib
+
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 

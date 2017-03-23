@@ -44,10 +44,13 @@ CPL_CVSID("$Id: ogrdxfdatasource.cpp 22009 2011-03-22 20:01:34Z warmerdam $");
 /************************************************************************/
 
 OGRDWGDataSource::OGRDWGDataSource() :
-  fp(NULL)
+  fp(NULL),
+  iEntitiesSectionOffset(0),
+  bInlineBlocks(FALSE),
+  poServices(NULL),
+  poDb(static_cast<const OdRxObject*>(NULL))
 
 {
-    poDb = NULL;
 }
 
 /************************************************************************/
