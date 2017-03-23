@@ -2379,7 +2379,8 @@ void ParseGrid (gridAttribType *attrib, double **Grib_Data,
    sInt4 x, y;          /* Where we are in a grid of scan value 0100 */
    sInt4 newIndex;      /* x,y in a 1 dimensional array. */
    double value;        /* The data in the new units. */
-   double *grib_Data;   /* A pointer to Grib_Data for ease of manipulation. */
+   /* A pointer to Grib_Data for ease of manipulation. */
+   double *grib_Data = NULL;
    sInt4 missCnt = 0;   /* Number of detected missing values. */
    uInt4 index;         /* Current index into Wx table. */
    float *ain = (float *) iain;
@@ -2597,7 +2598,7 @@ void FreqPrint (char **ans, double *Data, sInt4 DataLen, sInt4 Nx,
                 sInt4 Ny, sChar decimal, char *comment)
 {
    int x, y, i;
-   double *ptr;
+   double *ptr = NULL;
    double value;
    freqType *freq = NULL;
    int numFreq = 0;
