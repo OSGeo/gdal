@@ -2146,7 +2146,7 @@ This function is the same as the C function OGR_L_DeleteField().
 
 \fn OGRErr OGR_L_DeleteField( OGRLayerH hLayer, int iField);
 
-\brief Create a new field on a layer.
+\brief Delete an existing field on a layer.
 
 You must use this to delete existing fields
 on a real layer. Internally the OGRFeatureDefn for the layer will be updated
