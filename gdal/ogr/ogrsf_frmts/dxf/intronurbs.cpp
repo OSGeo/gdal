@@ -48,7 +48,7 @@ CPL_CVSID("$Id$");
 
 /* used by ogrdxflayer.cpp */
 void rbspline2( int npts,int k,int p1,double b[],double h[],
-                bool xflag, double x[], double p[] );
+                bool bCalculateKnots, double x[], double p[] );
 
 /* used by DWG driver */
 void rbspline(int npts,int k,int p1,double b[],double h[], double p[]);
@@ -238,13 +238,13 @@ static void rbasis( int c, double t, int npts,
                   p[3] contains the z-component of the point
     p1          = number of points to be calculated on the curve
     t           = parameter value 0 <= t <= npts - k + 1
-    xflag       = when set to true, x will be filled with the knot() routine,
+    bCalculateKnots  = when set to true, x will be filled with the knot() routine,
                   otherwise its content will be used.
-    x[]         = array containing the knot vector (must be npts + k + 1 large)
+    knots[]     = array containing the knot vector (must be npts + k + 1 large)
 */
 
 void rbspline2( int npts,int k,int p1,double b[],double h[],
-                bool xflag, double x[], double p[] )
+                bool bCalculateKnots, double knots[], double p[] )
 
 {
     const int nplusc = npts + k;
@@ -254,25 +254,25 @@ void rbspline2( int npts,int k,int p1,double b[],double h[],
 
 /* generate the uniform open knot vector */
 
-    if( xflag == true )
-        knot(npts, k, x);
+    if( bCalculateKnots == true )
+        knot(npts, k, knots);
 
     int icount = 0;
 
 /*    calculate the points on the rational B-spline curve */
 
     double t = 0.0;
-    const double step = ((double)x[nplusc])/((double)(p1-1));
+    const double step = ((double)knots[nplusc])/((double)(p1-1));
 
     for( int i1 = 1; i1<= p1; i1++ )
     {
-        if( (double)x[nplusc] - t < 5e-6 )
+        if( (double)knots[nplusc] - t < 5e-6 )
         {
-            t = (double)x[nplusc];
+            t = (double)knots[nplusc];
         }
 
         /* generate the basis function for this value of t */
-        rbasis(k, t, npts, x, h, &(nbasis[0]));
+        rbasis(k, t, npts, knots, h, &(nbasis[0]));
         for( int j = 1; j <= 3; j++ )
         {      /* generate a point on the curve */
             int jcount = j;

@@ -1696,7 +1696,7 @@ OGRFeature *OGRDXFLayer::TranslateARC()
 /************************************************************************/
 
 void rbspline2(int npts,int k,int p1,double b[],double h[],
-        bool xflag, double x[], double p[]);
+        bool bCalculateKnots, double knots[], double p[]);
 
 OGRFeature *OGRDXFLayer::TranslateSPLINE()
 
