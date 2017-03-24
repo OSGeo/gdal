@@ -3478,6 +3478,39 @@ def gpkg_41():
     return 'success'
 
 ###############################################################################
+# Test opening in vector mode a database without gpkg_geometry_columns
+
+def gpkg_42():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CREATE_GEOMETRY_COLUMNS', 'NO')
+    gdal.Translate('/vsimem/gpkg_42.gpkg', 'data/byte.tif', format = 'GPKG')
+    gdal.SetConfigOption('CREATE_GEOMETRY_COLUMNS', None)
+
+    ds = gdal.OpenEx('/vsimem/gpkg_42.gpkg', gdal.OF_VECTOR | gdal.OF_UPDATE)
+    sql_lyr = ds.ExecuteSQL("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_geometry_columns'")
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    if fc != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.CreateLayer('test')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.FlushCache()
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/gpkg_42.gpkg')
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -3540,6 +3573,7 @@ gdaltest_list = [
     gpkg_39,
     gpkg_40,
     gpkg_41,
+    gpkg_42,
     gpkg_cleanup,
 ]
 #gdaltest_list = [ gpkg_init, gpkg_39, gpkg_cleanup ]
