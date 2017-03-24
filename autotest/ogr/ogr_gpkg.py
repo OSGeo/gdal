@@ -2634,7 +2634,7 @@ def ogr_gpkg_30():
     ds = None
 
     with gdaltest.error_handler():
-        ds = ogr.Open('/vsimem/ogr_gpkg_30.geopkg')
+        ds = ogr.Open('/vsimem/ogr_gpkg_30.geopkg', update = 1)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3969,7 +3969,7 @@ def ogr_gpkg_47():
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
-        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update = 1)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3992,7 +3992,7 @@ def ogr_gpkg_47():
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
-        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update = 1)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -4015,7 +4015,7 @@ def ogr_gpkg_47():
     gdal.VSIFWriteL(struct.pack('B'*4,0,0,0x27,0xD9), 4, 1, fp)
     gdal.VSIFCloseL(fp)
 
-    ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+    ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update = 1)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -4039,7 +4039,7 @@ def ogr_gpkg_47():
     gdal.VSIFCloseL(fp)
 
     with gdaltest.error_handler():
-        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg')
+        ds = ogr.Open('/vsimem/ogr_gpkg_47.gpkg', update = 1)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -4076,7 +4076,9 @@ def ogr_gpkg_47():
     gdal.Unlink('/vsimem/.cur_input')
 
     # Test reading in a zip
-    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg')
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_47.gpkg')
+    ds.CreateLayer('foo')
+    ds = None
     fp = gdal.VSIFOpenL('/vsimem/ogr_gpkg_47.gpkg', 'rb')
     content = gdal.VSIFReadL(1, 1000000, fp)
     gdal.VSIFCloseL(fp)

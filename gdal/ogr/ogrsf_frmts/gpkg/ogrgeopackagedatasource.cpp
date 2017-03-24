@@ -102,6 +102,20 @@ static const TilingSchemeDefinition asTilingShemes[] =
       78271.516, 78271.516 },
 };
 
+static const char* pszCREATE_GPKG_GEOMETRY_COLUMNS =
+    "CREATE TABLE gpkg_geometry_columns ("
+    "table_name TEXT NOT NULL,"
+    "column_name TEXT NOT NULL,"
+    "geometry_type_name TEXT NOT NULL,"
+    "srs_id INTEGER NOT NULL,"
+    "z TINYINT NOT NULL,"
+    "m TINYINT NOT NULL,"
+    "CONSTRAINT pk_geom_cols PRIMARY KEY (table_name, column_name),"
+    "CONSTRAINT uk_gc_table_name UNIQUE (table_name),"
+    "CONSTRAINT fk_gc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name),"
+    "CONSTRAINT fk_gc_srs FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys (srs_id)"
+    ")";
+
 /* Only recent versions of SQLite will let us muck with application_id */
 /* via a PRAGMA statement, so we have to write directly into the */
 /* file header here. */
@@ -440,6 +454,7 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     m_bHasGPKGOGRContents(false),
 #endif
+    m_bHasGPKGGeometryColumns(false),
     m_bIdentifierAsCO(false),
     m_bDescriptionAsCO(false),
     m_bHasReadMetadataFromStorage(false),
@@ -664,15 +679,14 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     CheckUnknownExtensions();
 
     int bRet = FALSE;
-    bool bHasGPKGGeometryColumns = false;
     if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
     {
-        bHasGPKGGeometryColumns = SQLGetInteger(hDB,
+        m_bHasGPKGGeometryColumns = SQLGetInteger(hDB,
             "SELECT 1 FROM sqlite_master WHERE "
             "name = 'gpkg_geometry_columns' AND "
             "type IN ('table', 'view')", NULL) == 1;
     }
-    if( bHasGPKGGeometryColumns )
+    if( m_bHasGPKGGeometryColumns )
     {
         /* Load layer definitions for all tables in gpkg_contents & gpkg_geometry_columns */
         /* and non-spatial tables as well */
@@ -744,6 +758,8 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
 
         if ( oResult.nRowCount > 0 )
         {
+            bRet = TRUE;
+
             m_papoLayers = (OGRGeoPackageTableLayer**)CPLMalloc(sizeof(OGRGeoPackageTableLayer*) * oResult.nRowCount);
 
             for ( int i = 0; i < oResult.nRowCount; i++ )
@@ -767,7 +783,6 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
 
         SQLResultFree(&oResult);
-        bRet = TRUE;
     }
 
     bool bHasTileMatrixSet = false;
@@ -874,6 +889,21 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
 
         SQLResultFree(&oResult);
+    }
+
+    if( !bRet && (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) )
+    {
+        if ( (poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) )
+        {
+            bRet = TRUE;
+        }
+        else
+        {
+            CPLDebug("GPKG",
+                     "This GeoPackage has no vector content and is opened "
+                     "in read-only mode. If you open it in update mode, "
+                     "opening will be successful.");
+        }
     }
 
     return bRet;
@@ -3047,19 +3077,9 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         /* http://opengis.github.io/geopackage/#_geometry_columns */
         if( bCreateGeometryColumns )
         {
-            osSQL += ";"
-            "CREATE TABLE gpkg_geometry_columns ("
-            "table_name TEXT NOT NULL,"
-            "column_name TEXT NOT NULL,"
-            "geometry_type_name TEXT NOT NULL,"
-            "srs_id INTEGER NOT NULL,"
-            "z TINYINT NOT NULL,"
-            "m TINYINT NOT NULL,"
-            "CONSTRAINT pk_geom_cols PRIMARY KEY (table_name, column_name),"
-            "CONSTRAINT uk_gc_table_name UNIQUE (table_name),"
-            "CONSTRAINT fk_gc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name),"
-            "CONSTRAINT fk_gc_srs FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys (srs_id)"
-            ")";
+            m_bHasGPKGGeometryColumns = true;
+            osSQL += ";";
+            osSQL += pszCREATE_GPKG_GEOMETRY_COLUMNS;
         }
 
         /* From C.5. gpkg_tile_matrix_set Table 28. gpkg_tile_matrix_set Table Creation SQL  */
@@ -4112,6 +4132,15 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
                   m_pszFilename, pszLayerName );
 
         return NULL;
+    }
+
+    if( !m_bHasGPKGGeometryColumns )
+    {
+        if( SQLCommand( hDB, pszCREATE_GPKG_GEOMETRY_COLUMNS ) != OGRERR_NONE )
+        {
+            return NULL;
+        }
+        m_bHasGPKGGeometryColumns = true;
     }
 
     // Check identifier unicity
