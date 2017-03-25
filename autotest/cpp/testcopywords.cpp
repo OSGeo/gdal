@@ -176,16 +176,13 @@ void FromR(GDALDataType intype, ConstantType inval, ConstantType invali, GDALDat
 #define IS_UNSIGNED(x) (x == GDT_Byte || x == GDT_UInt16 || x == GDT_UInt32)
 #define IS_FLOAT(x) (x == GDT_Float32 || x == GDT_Float64 || x == GDT_CFloat32 || x == GDT_CFloat64)
 
-int i;
-GDALDataType outtype;
-
 #define CST_3000000000 (((GIntBig)3000) * 1000 * 1000)
 #define CST_5000000000 (((GIntBig)5000) * 1000 * 1000)
 
 void check_GDT_Byte()
 {
     /* GDT_Byte */
-    for(outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
+    for(GDALDataType outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
     {
         FROM_R(GDT_Byte, 0, outtype, 0);
         FROM_R(GDT_Byte, 127, outtype, 127);
@@ -231,7 +228,7 @@ void check_GDT_Int16()
     FROM_R(GDT_Int16, -32000, GDT_CInt32, -32000);
     FROM_R(GDT_Int16, -32000, GDT_CFloat32, -32000);
     FROM_R(GDT_Int16, -32000, GDT_CFloat64, -32000);
-    for(outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
+    for(GDALDataType outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
     {
         FROM_R(GDT_Int16, 127, outtype, 127);
     }
@@ -252,7 +249,7 @@ void check_GDT_Int16()
 void check_GDT_UInt16()
 {
     /* GDT_UInt16 */
-    for(outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
+    for(GDALDataType outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
     {
         FROM_R(GDT_UInt16, 0, outtype, 0);
         FROM_R(GDT_UInt16, 127, outtype, 127);
@@ -285,7 +282,7 @@ void check_GDT_Int32()
     FROM_R(GDT_Int32, -33000, GDT_CInt32, -33000);
     FROM_R(GDT_Int32, -33000, GDT_CFloat32, -33000);
     FROM_R(GDT_Int32, -33000, GDT_CFloat64, -33000);
-    for(outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
+    for(GDALDataType outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
     {
         FROM_R(GDT_Int32, 127, outtype, 127);
     }
@@ -306,7 +303,7 @@ void check_GDT_Int32()
 void check_GDT_UInt32()
 {
     /* GDT_UInt32 */
-    for(outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
+    for(GDALDataType outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
     {
         FROM_R(GDT_UInt32, 0, outtype, 0);
         FROM_R(GDT_UInt32, 127, outtype, 127);
@@ -328,10 +325,10 @@ void check_GDT_UInt32()
 void check_GDT_Float32and64()
 {
     /* GDT_Float32 and GDT_Float64 */
-    for(i=0;i<2;i++)
+    for(int i=0;i<2;i++)
     {
         GDALDataType intype = (i == 0) ? GDT_Float32 : GDT_Float64;
-        for(outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
+        for(GDALDataType outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
         {
             if (IS_FLOAT(outtype))
             {
@@ -407,7 +404,7 @@ void check_GDT_CInt16()
     FROM_C(GDT_CInt16, -32000, -32500, GDT_CInt32, -32000, -32500);
     FROM_C(GDT_CInt16, -32000, -32500, GDT_CFloat32, -32000, -32500);
     FROM_C(GDT_CInt16, -32000, -32500, GDT_CFloat64, -32000, -32500);
-    for(outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
+    for(GDALDataType outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
     {
         FROM_C(GDT_CInt16, 127, 128, outtype, 127, 128);
     }
@@ -439,7 +436,7 @@ void check_GDT_CInt32()
     FROM_C(GDT_CInt32, -33000, -33500, GDT_CInt32, -33000, -33500);
     FROM_C(GDT_CInt32, -33000, -33500, GDT_CFloat32, -33000, -33500);
     FROM_C(GDT_CInt32, -33000, -33500, GDT_CFloat64, -33000, -33500);
-    for(outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
+    for(GDALDataType outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
     {
         FROM_C(GDT_CInt32, 127, 128, outtype, 127, 128);
     }
@@ -460,10 +457,10 @@ void check_GDT_CInt32()
 void check_GDT_CFloat32and64()
 {
     /* GDT_CFloat32 and GDT_CFloat64 */
-    for(i=0;i<2;i++)
+    for(int i=0;i<2;i++)
     {
         GDALDataType intype = (i == 0) ? GDT_CFloat32 : GDT_CFloat64;
-        for(outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
+        for(GDALDataType outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
         {
             if (IS_FLOAT(outtype))
             {
