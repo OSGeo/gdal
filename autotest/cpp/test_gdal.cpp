@@ -23,12 +23,14 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <tut.hpp>
-#include <gdal.h>
+#include "gdal_unit_test.h"
+
 #include <gdal_priv.h>
 #include <gdal_utils.h>
-#include <string>
+#include <gdal.h>
+
 #include <limits>
+#include <string>
 
 namespace tut
 {

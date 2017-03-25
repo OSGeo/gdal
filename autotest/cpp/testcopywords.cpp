@@ -27,9 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <iostream>
 #include "cpl_conv.h"
 #include <gdal.h>
+
+#include <iostream>
 
 GByte* pIn;
 GByte* pOut;

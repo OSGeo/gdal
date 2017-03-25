@@ -24,13 +24,15 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <tut.hpp>
-#include <tut_gdal.h>
-#ifdef HAVE_GEOS
-#include <geos_c.h> // GEOS C API
-#endif
-#include <ogrsf_frmts.h> // OGR
+#include "gdal_unit_test.h"
+
 #include <ogr_api.h>
+#include <ogrsf_frmts.h>
+
+#ifdef HAVE_GEOS
+#include <geos_c.h>
+#endif
+
 #include <string>
 
 namespace tut

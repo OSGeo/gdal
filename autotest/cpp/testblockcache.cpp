@@ -31,12 +31,12 @@
 #define DEBUG
 #endif
 
-#include <stdlib.h>
-#include <assert.h>
-#include <vector>
-
 #include "cpl_multiproc.h"
 #include "gdal_priv.h"
+
+#include <cassert>
+#include <cstdlib>
+#include <vector>
 
 CPLLock* psLock = NULL;
 

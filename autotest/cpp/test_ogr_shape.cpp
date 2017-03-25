@@ -24,11 +24,11 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <tut.hpp>
-#include <tut_gdal.h>
-#include <gdal_common.h>
+#include "gdal_unit_test.h"
+
 #include <ogr_api.h>
 #include <ogrsf_frmts.h>
+
 #include <algorithm>
 #include <iterator>
 #include <string>

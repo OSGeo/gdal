@@ -23,18 +23,13 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
-// See Bronek Kozicki's comments posted here:
-// http://lists.boost.org/Archives/boost/2005/07/89697.php
-#if defined(_MSC_VER)
-#pragma warning(disable: 4996)
-#endif
+#include "gdal_unit_test.h"
 
-#include <tut.hpp>
-#include <tut_gdal.h>
-#include <ogr_srs_api.h> // OSR
-#include <ogr_api.h> // OGR
 #include <cpl_conv.h>
-#include <cpl_error.h> // CPL
+#include <cpl_error.h>
+#include <ogr_api.h>
+#include <ogr_srs_api.h>
+
 #include <algorithm>
 #include <cmath>
 #include <string>

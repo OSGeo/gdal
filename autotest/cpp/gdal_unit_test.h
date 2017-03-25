@@ -25,6 +25,8 @@
 #ifndef GDAL_COMMON_H_INCLUDED
 #define GDAL_COMMON_H_INCLUDED
 
+#include <tut_gdal.h>
+
 #include <string>
 
 namespace tut {
