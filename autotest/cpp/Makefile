@@ -18,7 +18,7 @@ endif
 
 LDFLAGS = $(shell gdal-config --libs)
 
-PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond test_virtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting test_include_from_c_file
+PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting test_include_from_c_file
 
 all: $(PROGS)
 
@@ -31,7 +31,7 @@ quick_test:
 	./testcopywords
 	./testclosedondestroydm
 	./testthreadcond
-	./test_virtualmem
+	./testvirtualmem
 	./testblockcache -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
 	./testblockcache -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
 	./testblockcache -check -co TILED=YES -migrate
@@ -76,7 +76,7 @@ testclosedondestroydm: testclosedondestroydm.cpp
 testthreadcond: testthreadcond.cpp
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
-test_virtualmem: test_virtualmem.cpp
+testvirtualmem: testvirtualmem.cpp
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 testblockcache: testblockcache.cpp
