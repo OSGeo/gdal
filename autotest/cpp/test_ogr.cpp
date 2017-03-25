@@ -23,8 +23,10 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <tut.hpp>
+#include "gdal_unit_test.h"
+
 #include <ogrsf_frmts.h>
+
 #include <string>
 
 namespace tut

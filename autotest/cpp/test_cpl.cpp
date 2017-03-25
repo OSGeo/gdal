@@ -24,16 +24,16 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <tut.hpp>
-#include <tut_gdal.h>
-#include <gdal_common.h>
-#include <string>
+#include "gdal_unit_test.h"
+
+#include <cpl_error.h>
+#include <cpl_hash_set.h>
+#include <cpl_list.h>
+#include <cpl_sha256.h>
+#include <cpl_string.h>
+
 #include <fstream>
-#include "cpl_list.h"
-#include "cpl_hash_set.h"
-#include "cpl_string.h"
-#include "cpl_sha256.h"
-#include "cpl_error.h"
+#include <string>
 
 static bool gbGotError = false;
 static void CPL_STDCALL myErrorHandler(CPLErr, CPLErrorNum, const char*)

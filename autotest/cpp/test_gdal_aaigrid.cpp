@@ -24,18 +24,17 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <tut.hpp> // TUT
-#include <tut_gdal.h>
-#include <gdal_common.h>
-#include <gdal.h> // GDAL
+#include "gdal_unit_test.h"
+
+#include <cpl_string.h>
 #include <gdal_alg.h>
 #include <gdal_priv.h>
-#include <cpl_string.h>
-#include <sstream> // C++
-#include <string>
-#include <vector>
+#include <gdal.h>
 
 #include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace tut
 {

@@ -27,11 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-
 #include "gdal.h"
+
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 
 int main(int /* argc */, char* /* argv */ [])
 {

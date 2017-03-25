@@ -28,11 +28,12 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
-#include "cpl_string.h"
 #include "cpl_multiproc.h"
-#include "gdal.h"
+#include "cpl_string.h"
 #include "gdal_priv.h"
-#include <assert.h>
+#include "gdal.h"
+
+#include <cassert>
 
 void thread_func(void* /* unused */)
 {

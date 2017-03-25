@@ -30,6 +30,8 @@
 #include <sstream>
 #include <string>
 
+#include <tut.hpp>
+
 namespace tut
 {
 
