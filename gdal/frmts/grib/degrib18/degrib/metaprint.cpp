@@ -57,6 +57,7 @@
  * Instead do sizeof(table) in calling procedure.
  *****************************************************************************
  */
+#if 0  // Unused with GDAL.
 static const char *Lookup(const char * const *table, size_t n, size_t index)
 {
    static const char * const def[] =
@@ -71,6 +72,7 @@ static const char *Lookup(const char * const *table, size_t n, size_t index)
       return def[2];
    }
 }
+#endif
 
 /*****************************************************************************
  * Print() --
@@ -197,6 +199,7 @@ char *Print(const char *label, const char *varName, int fmt, ...)
    return NULL;
 }
 
+#if 0  // Unused with GDAL.
 /*****************************************************************************
  * PrintSect1() --
  *
@@ -1412,3 +1415,4 @@ int MetaPrint (grib_MetaData *meta, char **ans, sChar decimal, sChar f_unit)
    *ans = Print (NULL, NULL, Prt_NULL);
    return 0;
 }
+#endif  // Unused with GDAL.
