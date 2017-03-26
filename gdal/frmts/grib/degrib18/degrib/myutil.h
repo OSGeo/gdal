@@ -63,7 +63,7 @@ void strToLower (char *str);
 int strcmpNoCase (const char *str1, const char *str2);
 #endif  // Unused with GDAL.
 
-int GetIndexFromStr (const char *str, char **Opt, int *Index);
+int GetIndexFromStr (const char *str, const char * const *Opt, int *Index);
 
 #if 0  // Unused with GDAL.
 /* Rename because changed error return from -1 to 1 */
