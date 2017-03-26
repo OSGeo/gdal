@@ -151,6 +151,7 @@ size_t reallocFGets (char **Ptr, size_t *LenBuff, FILE *fp)
  * NOTES
  *****************************************************************************
  */
+
 #if 0  // Unused with GDAL.
 void mySplit (const char *data, char symbol, size_t *Argc, char ***Argv,
               char f_trim)
@@ -273,6 +274,7 @@ int myAtoI (const char *ptr, sInt4 *value)
  * NOTES
  *****************************************************************************
  */
+
 #if 0  // Unused with GDAL.
 int myAtoF (const char *ptr, double *value)
 {
@@ -702,7 +704,14 @@ void strTrim (char *str)
 
    /* Remove the trailing white space before working on the leading ones. */
    len = strlen (str);
-   for (i = len - 1; (/* (i >= 0) && */ (isspace ((unsigned char)str[i]))); i--) {
+   if (len == 0) {
+       return;
+   }
+   for (i = len - 1; i > 0 && isspace ((unsigned char)str[i]); i--) {
+   }
+   if (i == 0 && str[i] == ' ') {
+       str[0] = '\0';
+       return;
    }
    len = i + 1;
    str[len] = '\0';
@@ -743,15 +752,19 @@ void strTrim (char *str)
 void strTrimRight (char *str, char c)
 {
    size_t i;            /* loop counter for traversing str. */
+   const size_t len = str == NULL ? 0 : strlen(str);
 
    /* str shouldn't be null, but if it is, we want to handle it. */
    myAssert (str != NULL);
-   if (str == NULL) {
+   if (len == 0) {
       return;
    }
 
    for (i = strlen (str) - 1;
-        (/* (i >= 0) && */ ((isspace ((unsigned char)str[i])) || (str[i] == c))); i--) {
+        i > 0 && (isspace ((unsigned char)str[i]) || str[i] == c); i--) {
+   }
+   if (i == 0 && (isspace ((unsigned char)str[i]) || str[i] == c)) {
+     str[i] = '\0';
    }
    str[i + 1] = '\0';
 }
@@ -1015,7 +1028,7 @@ int strcmpNoCase (const char *str1, const char *str2)
  *   Why not const char **Opt?
  *****************************************************************************
  */
-int GetIndexFromStr (const char *str, char **Opt, int *Index)
+int GetIndexFromStr (const char *str, const char * const *Opt, int *Index)
 {
    int cnt = 0;         /* Current Count in Opt. */
 
