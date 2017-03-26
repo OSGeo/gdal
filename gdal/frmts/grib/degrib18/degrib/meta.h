@@ -568,12 +568,14 @@ void ParseGrid (gridAttribType * attrib, double **Grib_Data,
 void FreqPrint (char **ans, double *Data, sInt4 DataLen, sInt4 Nx,
                 sInt4 Ny, sChar decimal, char *comment);
 
+#if 0  // Unused with GDAL
 /* Possible error messages left in errSprintf() */
 int MetaPrintGDS (gdsType * gds, int version, char **ans);
 
 /* Possible error messages left in errSprintf() */
 int MetaPrint (grib_MetaData *meta, char **ans, sChar decimal, sChar f_unit);
-
+#endif  // Unused with GDAL.
+  
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
