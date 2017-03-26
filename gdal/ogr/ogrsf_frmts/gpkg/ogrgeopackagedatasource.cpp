@@ -2992,12 +2992,9 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
     SoftStartTransaction();
 
-    int bCreateTriggers = CPLTestBool(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
-    int bCreateGeometryColumns = CPLTestBool(CPLGetConfigOption("CREATE_GEOMETRY_COLUMNS", "YES"));
+    CPLString osSQL;
     if( !bFileExists )
     {
-        CPLString osSQL;
-
         /* Requirement 10: A GeoPackage SHALL include a gpkg_spatial_ref_sys table */
         /* http://opengis.github.io/geopackage/#spatial_ref_sys */
         osSQL =
@@ -3075,15 +3072,29 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         /* Requirement 21: A GeoPackage with a gpkg_contents table row with a “features” */
         /* data_type SHALL contain a gpkg_geometry_columns table or updateable view */
         /* http://opengis.github.io/geopackage/#_geometry_columns */
+        const bool bCreateGeometryColumns =
+            CPLTestBool(CPLGetConfigOption("CREATE_GEOMETRY_COLUMNS", "YES"));
         if( bCreateGeometryColumns )
         {
             m_bHasGPKGGeometryColumns = true;
             osSQL += ";";
             osSQL += pszCREATE_GPKG_GEOMETRY_COLUMNS;
         }
+    }
+
+    const bool bCreateTriggers =
+        CPLTestBool(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
+    if( (bFileExists && nBandsIn != 0 && SQLGetInteger(hDB,
+            "SELECT 1 FROM sqlite_master WHERE name = 'gpkg_tile_matrix_set' "
+            "AND type in ('table', 'view')", NULL) == 0 ) ||
+        (!bFileExists &&
+         CPLTestBool(CPLGetConfigOption("CREATE_RASTER_TABLES", "YES"))) )
+    {
+        if( !osSQL.empty() )
+            osSQL += ";";
 
         /* From C.5. gpkg_tile_matrix_set Table 28. gpkg_tile_matrix_set Table Creation SQL  */
-        osSQL += ";"
+        osSQL +=
             "CREATE TABLE gpkg_tile_matrix_set ("
             "table_name TEXT NOT NULL PRIMARY KEY,"
             "srs_id INTEGER NOT NULL,"
@@ -3109,7 +3120,6 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "CONSTRAINT pk_ttm PRIMARY KEY (table_name, zoom_level),"
             "CONSTRAINT fk_tmm_table_name FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name)"
             ")";
-
 
         if( bCreateTriggers )
         {
@@ -3178,10 +3188,13 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             osSQL += ";";
             osSQL += pszTileMatrixTrigger;
         }
+    }
 
-        if ( OGRERR_NONE != SQLCommand(hDB, osSQL) )
-            return FALSE;
+    if ( !osSQL.empty() && OGRERR_NONE != SQLCommand(hDB, osSQL) )
+        return FALSE;
 
+    if( !bFileExists )
+    {
         if( CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) &&
             !CreateMetadataTables() )
             return FALSE;
@@ -3206,7 +3219,6 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             SetGlobalOffsetScale(-32768.0, 1.0);
 
         /* From C.7. sample_tile_pyramid (Informative) Table 31. EXAMPLE: tiles table Create Table SQL (Informative) */
-        CPLString osSQL;
         char* pszSQL = sqlite3_mprintf("CREATE TABLE \"%w\" ("
           "id INTEGER PRIMARY KEY AUTOINCREMENT,"
           "zoom_level INTEGER NOT NULL,"
@@ -3215,7 +3227,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
           "tile_data BLOB NOT NULL,"
           "UNIQUE (zoom_level, tile_column, tile_row)"
         ")", m_osRasterTable.c_str());
-        osSQL += pszSQL;
+        osSQL = pszSQL;
         sqlite3_free(pszSQL);
 
         if( bCreateTriggers )

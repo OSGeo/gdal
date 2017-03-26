@@ -3511,6 +3511,44 @@ def gpkg_42():
     return 'success'
 
 ###############################################################################
+# Test adding raster to a database without pre-existing raster support tables.
+
+def gpkg_43():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CREATE_RASTER_TABLES', 'NO')
+    ds = gdaltest.gpkg_dr.Create('/vsimem/gpkg_43.gpkg', 0, 0, 0, gdal.GDT_Unknown)
+    gdal.SetConfigOption('CREATE_RASTER_TABLES', None)
+    ds.CreateLayer('foo')
+    ds = None
+
+    ds = gdal.OpenEx('/vsimem/gpkg_43.gpkg', gdal.OF_UPDATE)
+    sql_lyr = ds.ExecuteSQL("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_tile_matrix_set'")
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    if fc != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Translate('/vsimem/gpkg_43.gpkg', 'data/byte.tif',
+                   format = 'GPKG', creationOptions = ['APPEND_SUBDATASET=YES'])
+    ds = gdal.OpenEx('/vsimem/gpkg_43.gpkg')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/gpkg_43.gpkg')
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -3574,6 +3612,7 @@ gdaltest_list = [
     gpkg_40,
     gpkg_41,
     gpkg_42,
+    gpkg_43,
     gpkg_cleanup,
 ]
 #gdaltest_list = [ gpkg_init, gpkg_39, gpkg_cleanup ]
