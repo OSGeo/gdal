@@ -2013,13 +2013,13 @@ int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
    relType *Rel = NULL;
    int lenRel = 0;
    int lenStack = 0;
-   static char *PreRel[] = { "LAST", "THIS", "NEXT", NULL };
-   static char *RelUnit[] = {
+   static const char * const PreRel[] = { "LAST", "THIS", "NEXT", NULL };
+   static const char * const RelUnit[] = {
       "YEAR", "YEARS", "MONTH", "MONTHS", "FORTNIGHT", "FORTNIGHTS", "WEEK",
       "WEEKS", "DAY", "DAYS", "HOUR", "HOURS", "MIN", "MINS", "MINUTE",
       "MINUTES", "SEC", "SECS", "SECOND", "SECONDS", NULL
    };
-   static char *AdjDay[] = { "YESTERDAY", "TODAY", "TOMORROW", NULL };
+   static const char * const AdjDay[] = { "YESTERDAY", "TODAY", "TOMORROW", NULL };
    sChar f_ampm = -1;
    char f_timeZone = 0;
    char f_time = 0;
