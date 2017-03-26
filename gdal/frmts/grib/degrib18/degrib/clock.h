@@ -33,8 +33,11 @@ void Clock_PrintMonth (int mon, char *buffer, int buffLen);
 void Clock_ScanDate (double *clock, sInt4 year, int mon, int day);
 int Clock_ScanDateNumber (double *clock, char *buffer);
 void Clock_PrintDateNumber (double clock, char buffer[15]);
-int Clock_Scan (double *clock, char *buffer, char f_gmt);
 
+#if 0  // Unused with GDAL.
+int Clock_Scan (double *clock, char *buffer, char f_gmt);
+#endif
+  
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
