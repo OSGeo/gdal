@@ -1975,6 +1975,7 @@ static int Clock_GetWord (char **Start, char **End, char word[30],
 }
 #endif
 
+#if 0  // Unused with gdal.
 typedef struct {
    sInt4 val;
    int len;             /* read from len char string? */
@@ -1985,6 +1986,7 @@ typedef struct {
    int f_negate;
    int amount;
 } relType;
+#endif
 
 /*****************************************************************************
  * Clock_Scan() --
