@@ -182,7 +182,7 @@ static void GDALCollectRingsFromGeometry(
     std::vector<int> &aPartSize, GDALBurnValueSrc eBurnValueSrc)
 
 {
-    if( poShape == NULL )
+    if( poShape == NULL || poShape->IsEmpty() )
         return;
 
     OGRwkbGeometryType eFlatType = wkbFlatten(poShape->getGeometryType());
@@ -316,7 +316,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
 {
     GDALRasterizeInfo sInfo;
 
-    if (poShape == NULL)
+    if (poShape == NULL || poShape->IsEmpty())
         return;
 
     sInfo.nXSize = nXSize;

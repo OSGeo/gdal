@@ -193,10 +193,49 @@ def test_gdal_rasterize_lib_100():
 
     return 'success'
 
+###############################################################################
+# Rasterization on empty geometry
+
+def test_gdal_rasterize_lib_101():
+
+    target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100 )
+
+    # Create a layer to rasterize from.
+
+    vector_ds = \
+              gdal.GetDriverByName('Memory').Create( '', 0, 0, 0 )
+    rast_lyr = vector_ds.CreateLayer( 'rast1' )
+
+    # polygon with empty exterior ring
+    geom = ogr.CreateGeometryFromJson('{ "type": "Polygon", "coordinates": [ [ ] ] }')
+
+    feat = ogr.Feature( rast_lyr.GetLayerDefn() )
+    feat.SetGeometryDirectly( geom )
+
+    rast_lyr.CreateFeature( feat )
+
+    ret = gdal.Rasterize(target_ds, vector_ds, burnValues = [255])
+    if ret != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check results.
+    checksum = target_ds.GetRasterBand(1).Checksum()
+    if checksum != 0:
+        print(checksum)
+        gdaltest.post_reason( 'Did not get expected image checksum' )
+
+        return 'fail'
+
+    target_ds = None
+
+    return 'success'
+
 gdaltest_list = [
     test_gdal_rasterize_lib_1,
     test_gdal_rasterize_lib_3,
-    test_gdal_rasterize_lib_100
+    test_gdal_rasterize_lib_100,
+    test_gdal_rasterize_lib_101
     ]
 
 if __name__ == '__main__':
