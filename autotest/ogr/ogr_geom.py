@@ -3575,6 +3575,18 @@ def ogr_geom_multipoint_envelope_bug():
 
     return 'success'
 
+
+###############################################################################
+def ogr_geom_polygon_empty_ring():
+
+    g = ogr.Geometry( ogr.wkbPolygon )
+    g2 = ogr.Geometry( ogr.wkbLinearRing )
+    g.AddGeometryDirectly( g2 )
+    if not g.IsEmpty():
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # cleanup
 
@@ -3630,6 +3642,7 @@ gdaltest_list = [
     ogr_geom_postgis_ewkt_xym,
     ogr_geom_curve_surface,
     ogr_geom_multipoint_envelope_bug,
+    ogr_geom_polygon_empty_ring,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
