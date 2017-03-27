@@ -611,7 +611,7 @@ static CPLString GetProj4Filename(const char* pszFilename)
     }
 
 
-#if defined(PROJ_STATIC) && PJ_VERSION >= 480
+#if defined(PROJ_STATIC) && PJ_VERSION >= 490
     // Super messy. proj.4 up to 4.9.3 had no public API to return the full
     // path to a resource file, so we rely on the fact that it emits a log
     // message with it...
