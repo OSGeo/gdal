@@ -570,7 +570,12 @@ void OGRCurveCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
 
 OGRBoolean OGRCurveCollection::IsEmpty() const
 {
-    return nCurveCount == 0;
+    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    {
+        if( !papoCurves[iGeom]->IsEmpty() )
+            return FALSE;
+    }
+    return TRUE;
 }
 
 /************************************************************************/
