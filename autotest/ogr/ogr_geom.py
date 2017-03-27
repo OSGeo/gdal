@@ -4215,6 +4215,18 @@ def ogr_geom_multipoint_envelope_bug():
 
     return 'success'
 
+
+###############################################################################
+def ogr_geom_polygon_empty_ring():
+
+    g = ogr.Geometry( ogr.wkbPolygon )
+    g2 = ogr.Geometry( ogr.wkbLinearRing )
+    g.AddGeometryDirectly( g2 )
+    if not g.IsEmpty():
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # cleanup
 
@@ -4281,6 +4293,7 @@ gdaltest_list = [
     ogr_geom_import_corrupted_wkb,
     ogr_geom_triangle_ps_tin_conversion,
     ogr_geom_multipoint_envelope_bug,
+    ogr_geom_polygon_empty_ring,
     ogr_geom_cleanup ]
 
 # gdaltest_list = [ ogr_geom_triangle_ps_tin_conversion ]
