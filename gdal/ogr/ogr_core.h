@@ -45,7 +45,7 @@
  */
 
 /*! @cond Doxygen_Suppress */
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
 
 extern "C++"
 {
@@ -148,7 +148,7 @@ typedef struct
  * Simple container for a bounding region in 3D.
  */
 
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
 
 extern "C++" {
 
