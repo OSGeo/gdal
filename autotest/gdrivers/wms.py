@@ -899,7 +899,7 @@ gdaltest_list = [
     wms_14,
     wms_15,
     wms_16,
-    wms_17,
+    #wms_17,
     wms_18,
     wms_19,
     wms_cleanup ]
