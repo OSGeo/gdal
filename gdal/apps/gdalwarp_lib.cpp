@@ -718,6 +718,11 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     if( pszDest == NULL )
         pszDest = GDALGetDescription(hDstDS);
 
+#ifdef DEBUG
+    GDALDataset* poDstDS = reinterpret_cast<GDALDataset*>(hDstDS);
+    const int nExpectedRefCountAtEnd = ( poDstDS != NULL ) ? poDstDS->GetRefCount() : 1;
+#endif
+    const bool bDropDstDSRef = (hDstDS != NULL);
     if( hDstDS != NULL )
         GDALReferenceDataset(hDstDS);
     GDALTransformerFunc pfnTransformer = NULL;
@@ -926,7 +931,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             OGR_G_DestroyGeometry( hCutline );
             return NULL;
         }
-
+#ifdef DEBUG
+        poDstDS = reinterpret_cast<GDALDataset*>(hDstDS);
+#endif
         psOptions->bCreateOutput = TRUE;
 
         if( !bInitDestSetByUser )
@@ -1681,8 +1688,16 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
     GDALWarpAppOptionsFree(psOptions);
 
-    if( bHasGotErr )
+    if( bHasGotErr || bDropDstDSRef )
         GDALReleaseDataset(hDstDS);
+
+#ifdef DEBUG
+    if( !bHasGotErr || bDropDstDSRef )
+    {
+        CPLAssert( poDstDS->GetRefCount() == nExpectedRefCountAtEnd );
+    }
+#endif
+
     return (bHasGotErr) ? NULL : hDstDS;
 }
 
