@@ -47,6 +47,8 @@
 /*! @cond Doxygen_Suppress */
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
+extern "C++"
+{
 #include <limits>
 
 class CPL_DLL OGREnvelope
@@ -129,6 +131,9 @@ class CPL_DLL OGREnvelope
                MaxX >= other.MaxX && MaxY >= other.MaxY;
     }
 };
+
+} // extern "C++"
+
 #else
 typedef struct
 {
@@ -143,7 +148,10 @@ typedef struct
  * Simple container for a bounding region in 3D.
  */
 
-#if defined(__cplusplus) && !defined(CPL_SURESS_CPLUSPLUS)
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+extern "C++" {
+
 class CPL_DLL OGREnvelope3D : public OGREnvelope
 {
   public:
@@ -231,6 +239,9 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
                MinZ <= other.MinZ && MaxZ >= other.MaxZ;
     }
 };
+
+} // extern "C++"
+
 #else
 typedef struct
 {
