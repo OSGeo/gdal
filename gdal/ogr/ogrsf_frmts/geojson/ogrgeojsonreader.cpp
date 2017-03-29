@@ -1304,7 +1304,7 @@ OGRGeoJSONReader::ReadFeatureCollection( OGRGeoJSONLayer* poLayer,
 /*                           OGRGeoJSONFindMemberByName                 */
 /************************************************************************/
 
-json_object* OGRGeoJSONFindMemberByName( json_object* poObj,
+lh_entry* OGRGeoJSONFindMemberEntryByName( json_object* poObj,
                                          const char* pszName )
 {
     if( NULL == pszName || NULL == poObj)
@@ -1325,12 +1325,21 @@ json_object* OGRGeoJSONFindMemberByName( json_object* poObj,
             it.key = (char*)it.entry->k;
             it.val = (json_object*)it.entry->v;
             if( EQUAL( it.key, pszName ) )
-                return it.val;
+                return it.entry;
             it.entry = it.entry->next;
         }
     }
 
     return NULL;
+}
+
+json_object* OGRGeoJSONFindMemberByName( json_object* poObj,
+                                         const char* pszName )
+{
+    lh_entry* entry = OGRGeoJSONFindMemberEntryByName( poObj, pszName );
+    if ( NULL == entry )
+        return NULL;
+    return (json_object*)entry->v;
 }
 
 /************************************************************************/
@@ -1399,16 +1408,24 @@ OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj )
                   "Feature gets NULL geometry assigned." );
     }
     // If we have a crs object in the current object, let's try and set it too.
-
-    json_object* poObjSrs = OGRGeoJSONFindMemberByName( poObj, "crs" );
-    if( poGeometry != NULL && poObjSrs != NULL )
+    if( poGeometry != NULL )
     {
-        OGRSpatialReference* poSRS = OGRGeoJSONReadSpatialReference(poObj);
-        if( poSRS != NULL )
-        {
-            poGeometry->assignSpatialReference(poSRS);
-            poSRS->Release();
+        lh_entry* entry = OGRGeoJSONFindMemberEntryByName( poObj, "crs" );
+        if (entry != NULL ) {
+            json_object* poObjSrs = (json_object*)entry->v;
+            if( poObjSrs != NULL )
+            {
+                OGRSpatialReference* poSRS = OGRGeoJSONReadSpatialReference(poObj);
+                if( poSRS != NULL )
+                {
+                    poGeometry->assignSpatialReference(poSRS);
+                    poSRS->Release();
+                }
+            }
         }
+        else
+            // Assign WGS84 if no CRS defined on geometry.
+            poGeometry->assignSpatialReference(OGRSpatialReference::GetWGS84SRS());
     }
     return poGeometry;
 }
@@ -1934,12 +1951,6 @@ OGRGeometryH OGR_G_CreateGeometryFromJson( const char* pszJson )
         return NULL;
 
     OGRGeometry* poGeometry = OGRGeoJSONReadGeometry( poObj );
-
-    // Assign WGS84 if no CRS defined on geometry.
-    if( poGeometry && poGeometry->getSpatialReference() == NULL )
-    {
-        poGeometry->assignSpatialReference(OGRSpatialReference::GetWGS84SRS());
-    }
 
     // Release JSON tree.
     json_object_put( poObj );

@@ -2109,6 +2109,13 @@ def ogr_geojson_41():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # But if a crs object is set to null, set no crs
+    g = ogr.CreateGeometryFromJson('{ "type": "Point", "coordinates" : [ 2, 49], "crs": null }')
+    srs = g.GetSpatialReference()
+    if srs:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
