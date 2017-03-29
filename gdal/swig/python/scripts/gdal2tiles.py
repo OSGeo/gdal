@@ -996,6 +996,9 @@ class GDAL2Tiles(object):
         p.add_option("-q", "--quiet",
                      action="store_true", dest="quiet",
                      help="Disable messages and status to stdout")
+        p.add_option("--processes",
+                     dest="processes",
+                     help="Number of processes to use for tiling")
 
         # KML options
         g = OptionGroup(p, "KML (Google Earth) options",
@@ -1027,7 +1030,8 @@ class GDAL2Tiles(object):
 
         p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
                        webviewer='all', copyright='', resampling='average', resume=False,
-                       googlekey='INSERT_YOUR_KEY_HERE', bingkey='INSERT_YOUR_KEY_HERE')
+                       googlekey='INSERT_YOUR_KEY_HERE', bingkey='INSERT_YOUR_KEY_HERE',
+                       processes=1)
 
         self.parser = p
 
