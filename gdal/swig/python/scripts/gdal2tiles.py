@@ -735,6 +735,76 @@ def create_base_tiles(tile_job_info):
         #     self.progressbar(ti / float(tcount))
 
 
+def optparse_init():
+    """Prepare the option parser for input (argv)"""
+
+    from optparse import OptionParser, OptionGroup
+    usage = "Usage: %prog [options] input_file(s) [output]"
+    p = OptionParser(usage, version="%prog " + __version__)
+    p.add_option("-p", "--profile", dest='profile',
+                 type='choice', choices=profile_list,
+                 help=("Tile cutting profile (%s) - default 'mercator' "
+                       "(Google Maps compatible)" % ",".join(profile_list)))
+    p.add_option("-r", "--resampling", dest="resampling",
+                 type='choice', choices=resampling_list,
+                 help="Resampling method (%s) - default 'average'" % ",".join(resampling_list))
+    p.add_option('-s', '--s_srs', dest="s_srs", metavar="SRS",
+                 help="The spatial reference system used for the source input data")
+    p.add_option('-z', '--zoom', dest="zoom",
+                 help="Zoom levels to render (format:'2-5' or '10').")
+    p.add_option('-e', '--resume', dest="resume", action="store_true",
+                 help="Resume mode. Generate only missing files.")
+    p.add_option('-a', '--srcnodata', dest="srcnodata", metavar="NODATA",
+                 help="NODATA transparency value to assign to the input data")
+    p.add_option('-d', '--tmscompatible', dest="tmscompatible", action="store_true",
+                 help=("When using the geodetic profile, specifies the base resolution "
+                       "as 0.703125 or 2 tiles at zoom level 0."))
+    p.add_option("-v", "--verbose",
+                 action="store_true", dest="verbose",
+                 help="Print status messages to stdout")
+    p.add_option("-q", "--quiet",
+                 action="store_true", dest="quiet",
+                 help="Disable messages and status to stdout")
+    p.add_option("--processes",
+                 dest="processes",
+                 help="Number of processes to use for tiling")
+
+    # KML options
+    g = OptionGroup(p, "KML (Google Earth) options",
+                    "Options for generated Google Earth SuperOverlay metadata")
+    g.add_option("-k", "--force-kml", dest='kml', action="store_true",
+                 help=("Generate KML for Google Earth - default for 'geodetic' profile and "
+                       "'raster' in EPSG:4326. For a dataset with different projection use "
+                       "with caution!"))
+    g.add_option("-n", "--no-kml", dest='kml', action="store_false",
+                 help="Avoid automatic generation of KML files for EPSG:4326")
+    g.add_option("-u", "--url", dest='url',
+                 help="URL address where the generated tiles are going to be published")
+    p.add_option_group(g)
+
+    # HTML options
+    g = OptionGroup(p, "Web viewer options",
+                    "Options for generated HTML viewers a la Google Maps")
+    g.add_option("-w", "--webviewer", dest='webviewer', type='choice', choices=webviewer_list,
+                 help="Web viewer to generate (%s) - default 'all'" % ",".join(webviewer_list))
+    g.add_option("-t", "--title", dest='title',
+                 help="Title of the map")
+    g.add_option("-c", "--copyright", dest='copyright',
+                 help="Copyright for the map")
+    g.add_option("-g", "--googlekey", dest='googlekey',
+                 help="Google Maps API key from http://code.google.com/apis/maps/signup.html")
+    g.add_option("-b", "--bingkey", dest='bingkey',
+                 help="Bing Maps API key from https://www.bingmapsportal.com/")
+    p.add_option_group(g)
+
+    p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
+                   webviewer='all', copyright='', resampling='average', resume=False,
+                   googlekey='INSERT_YOUR_KEY_HERE', bingkey='INSERT_YOUR_KEY_HERE',
+                   processes=1)
+
+    return p
+
+
 class TileJobInfo(object):
     """
     Plain object to hold tile job configuration for a dataset
@@ -856,7 +926,7 @@ class GDAL2Tiles(object):
 
         # RUN THE ARGUMENT PARSER:
 
-        self.optparse_init()
+        self.parser = optparse_init()
         self.options, self.args = self.parser.parse_args(args=arguments)
         if not self.args:
             self.error("No input file specified")
@@ -965,75 +1035,6 @@ class GDAL2Tiles(object):
             print("Output:", self.output)
             print("Cache: %s MB" % (gdal.GetCacheMax() / 1024 / 1024))
             print('')
-
-    def optparse_init(self):
-        """Prepare the option parser for input (argv)"""
-
-        from optparse import OptionParser, OptionGroup
-        usage = "Usage: %prog [options] input_file(s) [output]"
-        p = OptionParser(usage, version="%prog " + __version__)
-        p.add_option("-p", "--profile", dest='profile',
-                     type='choice', choices=profile_list,
-                     help=("Tile cutting profile (%s) - default 'mercator' "
-                           "(Google Maps compatible)" % ",".join(profile_list)))
-        p.add_option("-r", "--resampling", dest="resampling",
-                     type='choice', choices=resampling_list,
-                     help="Resampling method (%s) - default 'average'" % ",".join(resampling_list))
-        p.add_option('-s', '--s_srs', dest="s_srs", metavar="SRS",
-                     help="The spatial reference system used for the source input data")
-        p.add_option('-z', '--zoom', dest="zoom",
-                     help="Zoom levels to render (format:'2-5' or '10').")
-        p.add_option('-e', '--resume', dest="resume", action="store_true",
-                     help="Resume mode. Generate only missing files.")
-        p.add_option('-a', '--srcnodata', dest="srcnodata", metavar="NODATA",
-                     help="NODATA transparency value to assign to the input data")
-        p.add_option('-d', '--tmscompatible', dest="tmscompatible", action="store_true",
-                     help=("When using the geodetic profile, specifies the base resolution "
-                           "as 0.703125 or 2 tiles at zoom level 0."))
-        p.add_option("-v", "--verbose",
-                     action="store_true", dest="verbose",
-                     help="Print status messages to stdout")
-        p.add_option("-q", "--quiet",
-                     action="store_true", dest="quiet",
-                     help="Disable messages and status to stdout")
-        p.add_option("--processes",
-                     dest="processes",
-                     help="Number of processes to use for tiling")
-
-        # KML options
-        g = OptionGroup(p, "KML (Google Earth) options",
-                        "Options for generated Google Earth SuperOverlay metadata")
-        g.add_option("-k", "--force-kml", dest='kml', action="store_true",
-                     help=("Generate KML for Google Earth - default for 'geodetic' profile and "
-                           "'raster' in EPSG:4326. For a dataset with different projection use "
-                           "with caution!"))
-        g.add_option("-n", "--no-kml", dest='kml', action="store_false",
-                     help="Avoid automatic generation of KML files for EPSG:4326")
-        g.add_option("-u", "--url", dest='url',
-                     help="URL address where the generated tiles are going to be published")
-        p.add_option_group(g)
-
-        # HTML options
-        g = OptionGroup(p, "Web viewer options",
-                        "Options for generated HTML viewers a la Google Maps")
-        g.add_option("-w", "--webviewer", dest='webviewer', type='choice', choices=webviewer_list,
-                     help="Web viewer to generate (%s) - default 'all'" % ",".join(webviewer_list))
-        g.add_option("-t", "--title", dest='title',
-                     help="Title of the map")
-        g.add_option("-c", "--copyright", dest='copyright',
-                     help="Copyright for the map")
-        g.add_option("-g", "--googlekey", dest='googlekey',
-                     help="Google Maps API key from http://code.google.com/apis/maps/signup.html")
-        g.add_option("-b", "--bingkey", dest='bingkey',
-                     help="Bing Maps API key from https://www.bingmapsportal.com/")
-        p.add_option_group(g)
-
-        p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
-                       webviewer='all', copyright='', resampling='average', resume=False,
-                       googlekey='INSERT_YOUR_KEY_HERE', bingkey='INSERT_YOUR_KEY_HERE',
-                       processes=1)
-
-        self.parser = p
 
     # -------------------------------------------------------------------------
     def open_input(self):
