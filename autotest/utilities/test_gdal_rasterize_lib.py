@@ -232,9 +232,9 @@ def test_gdal_rasterize_lib_101():
     return 'success'
 
 gdaltest_list = [
-    test_gdal_rasterize_lib_1,
-    test_gdal_rasterize_lib_3,
-    test_gdal_rasterize_lib_100,
+    #test_gdal_rasterize_lib_1,
+    #test_gdal_rasterize_lib_3,
+    #test_gdal_rasterize_lib_100,
     test_gdal_rasterize_lib_101
     ]
 

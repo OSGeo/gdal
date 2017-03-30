@@ -540,6 +540,9 @@ Usage:
 \verbatim
 ogrtindex [-lnum n]... [-lname name]... [-f output_format]
           [-write_absolute_path] [-skip_different_projection]
+          [-t_srs target_srs]
+          [-src_srs_name field_name] [-src_srs_format [AUTO|WKT|EPSG|PROJ]
+          [-accept_different_schemas]
                  output_dataset src_dataset...
 \endverbatim
 
@@ -563,6 +566,20 @@ to layers using the OGR connection type.
 <dt><b>-write_absolute_path</b>:</dt><dd> Filenames are written with absolute paths</dd>
 <dt><b>-skip_different_projection</b>:</dt><dd> Only layers with same projection ref
         as layers already inserted in the tileindex will be inserted.</dd>
+<dt><b>-t_srs</b> target_srs:</dt><dd> (GDAL &gt;= 2.2)
+<p>Extent of input files will be transformed to the desired target
+coordinate reference system. Using this option generates files that are not
+compatible with MapServer &lt; 7.2. Default creates simple rectangular polygons
+in the same coordinate reference system as the input rasters.</p>
+</dd>
+<dt><b>-src_srs_name</b> field_name:</dt><dd> (GDAL &gt;= 2.2)
+<p>The name of the field to store the SRS of each tile. This field name can be
+used as the value of the TILESRS keyword in MapServer &gt;= 7.2.</p>
+</dd>
+<dt><b>-src_srs_format</b> type:</dt><dd> (GDAL &gt;= 2.2)
+<p>The format in which the SRS of each tile must be written.
+Types can be AUTO, WKT, EPSG, PROJ.</p>
+</dd>
 <dt><b>-accept_different_schemas</b>:</dt><dd> By default ogrtindex checks that all
         layers inserted into the index have the same attribute schemas. If you specify
         this option, this test will be disabled. Be aware that resulting index may be
@@ -575,10 +592,6 @@ as independent records.
 
 If the tile index already exists it will be appended to, otherwise it will
 be created.
-
-It is a flaw of the current ogrtindex program that no attempt is made to
-copy the coordinate system definition from the source datasets to the tile
-index (as is expected by MapServer when PROJECTION AUTO is in use).
 
 \section ogrtindex_example EXAMPLE
 
