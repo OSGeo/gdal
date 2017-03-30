@@ -155,6 +155,13 @@ int main( int nArgc, char **papszArgv )
     if( pszOutputName == NULL || nFirstSourceDataset == -1 )
         Usage();
 
+    if( bSrcSRSFormatSpecified && pszSrcSRSName == NULL )
+    {
+        fprintf( stderr,"-src_srs_name must be specified when -src_srs_format is "
+                "specified.\n" );
+        Usage();
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create and validate target SRS if given.                        */
 /* -------------------------------------------------------------------- */
