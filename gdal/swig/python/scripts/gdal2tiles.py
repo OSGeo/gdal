@@ -639,6 +639,24 @@ def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
             exit_with_error("ReprojectImage() failed on %s, error %d" % (tilefilename, res))
 
 
+def gettempfilename(suffix):
+    """Returns a temporary filename"""
+    if '_' in os.environ:
+        # tempfile.mktemp() crashes on some Wine versions (the one of Ubuntu 12.04 particularly)
+        if os.environ['_'].find('wine') >= 0:
+            tmpdir = '.'
+            if 'TMP' in os.environ:
+                tmpdir = os.environ['TMP']
+            import time
+            import random
+            random.seed(time.time())
+            random_part = 'file%d' % random.randint(0, 1000000000)
+            return os.path.join(tmpdir, random_part + suffix)
+
+    import tempfile
+    return tempfile.mktemp(suffix)
+
+
 def create_base_tiles(tile_job_info):
     gdal.AllRegister()
 
@@ -858,23 +876,6 @@ class GDAL2Tiles(object):
     def progressbar(self, complete=0.0):
         """Print progressbar for float value 0..1"""
         gdal.TermProgress_nocb(complete)
-
-    def gettempfilename(self, suffix):
-        """Returns a temporary filename"""
-        if '_' in os.environ:
-            # tempfile.mktemp() crashes on some Wine versions (the one of Ubuntu 12.04 particularly)
-            if os.environ['_'].find('wine') >= 0:
-                tmpdir = '.'
-                if 'TMP' in os.environ:
-                    tmpdir = os.environ['TMP']
-                import time
-                import random
-                random.seed(time.time())
-                random_part = 'file%d' % random.randint(0, 1000000000)
-                return os.path.join(tmpdir, random_part + suffix)
-
-        import tempfile
-        return tempfile.mktemp(suffix)
 
     def stop(self):
         """Stop the rendering immediately"""
@@ -1150,7 +1151,7 @@ class GDAL2Tiles(object):
 
                     # Correction of AutoCreateWarpedVRT for NODATA values
                     if in_nodata != []:
-                        tempfilename = self.gettempfilename('-gdal2tiles.vrt')
+                        tempfilename = gettempfilename('-gdal2tiles.vrt')
                         self.out_ds.GetDriver().CreateCopy(tempfilename, self.out_ds)
                         # open as a text file
                         s = open(tempfilename).read()
@@ -1193,7 +1194,7 @@ class GDAL2Tiles(object):
                     # without NODATA:
                     # equivalent of gdalwarp -dstalpha
                     if in_nodata == [] and self.out_ds.RasterCount in [1, 3]:
-                        tempfilename = self.gettempfilename('-gdal2tiles.vrt')
+                        tempfilename = gettempfilename('-gdal2tiles.vrt')
                         self.out_ds.GetDriver().CreateCopy(tempfilename, self.out_ds)
                         # open as a text file
                         s = open(tempfilename).read()
