@@ -1090,3 +1090,32 @@ const char *CPLGenerateTempFilename( const char *pszStem )
 
     return CPLFormFilename( pszDir, osFilename, NULL );
 }
+
+/************************************************************************/
+/*                         CPLExpandTilde()                             */
+/************************************************************************/
+
+/**
+ * Expands ~/ at start of filename.
+ * 
+ * Assumes that the HOME configuration option is defined.
+ *
+ * @param pszFilename filename potentially starting with ~/
+ *
+ * @return an expanded filename.
+ *
+ * @since GDAL 2.2
+ */
+
+const char *CPLExpandTilde( const char *pszFilename )
+
+{
+    if( !STARTS_WITH_CI(pszFilename, "~/") )
+        return pszFilename;
+
+    const char* pszHome = CPLGetConfigOption("HOME", NULL);
+    if( pszHome == NULL )
+        return pszFilename;
+
+    return CPLFormFilename( pszHome, pszFilename + 2, NULL );
+}

@@ -735,7 +735,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
     oAnalyzer.SetPGIdentifierLaundering(m_oConf.m_bPGIdentifierLaundering);
 
     m_osGMLFilename = STARTS_WITH_CI(poOpenInfo->pszFilename, szGMLAS_PREFIX) ?
-        poOpenInfo->pszFilename + strlen(szGMLAS_PREFIX) :
+        CPLExpandTilde(poOpenInfo->pszFilename + strlen(szGMLAS_PREFIX)) :
         poOpenInfo->pszFilename;
 
     CPLString osXSDFilenames = CSLFetchNameValueDef(

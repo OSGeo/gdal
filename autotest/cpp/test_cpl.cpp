@@ -1033,4 +1033,15 @@ namespace tut
         CSLDestroy(options);
     }
 
+    template<>
+    template<>
+    void object::test<20>()
+    {
+        ensure_equals ( CPLExpandTilde("/foo/bar"), "/foo/bar" );
+
+        CPLSetConfigOption("HOME", "/foo");
+        ensure_equals ( CPLExpandTilde("~/bar"), "/foo/bar" );
+        CPLSetConfigOption("HOME", NULL);
+    }
+
 } // namespace tut
