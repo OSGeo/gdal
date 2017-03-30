@@ -37,9 +37,10 @@
 #  DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-from __future__ import print_function
+from __future__ import print_function, division
 
 import math
+from multiprocessing import Pipe, Pool, Process
 import os
 import sys
 
@@ -464,9 +465,15 @@ class Zoomify(object):
                             "%s-%s-%s.%s" % (z, x, y, self.tileformat))
 
 
-def exit_with_error(message):
-    print("gdal2tiles: Error - %s" % message)
-    sys.exit(2)     # Status code 2 kept for backwards compatibility with the way OptionParser exits
+def exit_with_error(message, details=""):
+    # Message printing and exit code kept from the way it worked using the OptionParser (in case
+    # someone parses the error output)
+    sys.stderr.write("Usage: gdal2tiles.py [options] input_file [output]\n\n")
+    sys.stderr.write("gdal2tiles.py: error: %s\n" % message)
+    if details:
+        sys.stderr.write("\n\n%s\n" % details)
+
+    sys.exit(2)
 
 
 def generate_kml(tx, ty, tz, tileext, tilesize, tileswne, options, children=None, **args):
@@ -759,7 +766,7 @@ def optparse_init():
     """Prepare the option parser for input (argv)"""
 
     from optparse import OptionParser, OptionGroup
-    usage = "Usage: %prog [options] input_file(s) [output]"
+    usage = "Usage: %prog [options] input_file [output]"
     p = OptionParser(usage, version="%prog " + __version__)
     p.add_option("-p", "--profile", dest='profile',
                  type='choice', choices=profile_list,
@@ -825,6 +832,30 @@ def optparse_init():
     return p
 
 
+def process_args(argv):
+    parser = optparse_init()
+    options, args = parser.parse_args(args=argv)
+
+    # Args should be either an input file OR an input file and an output folder
+    if (len(args) == 0):
+        exit_with_error("You need to specify at least an input file as argument to the script")
+    if (len(args) > 2):
+        exit_with_error("Processing of several input files is not supported.",
+                        "Please first use a tool like gdal_vrtmerge.py or gdal_merge.py on the "
+                        "files: gdal_vrtmerge.py -o merged.vrt %s" % " ".join(args))
+
+    input_file = args[0]
+    if not os.path.isfile(input_file):
+        exit_with_error("The provided input file %s does not exist or is not a file" % input_file)
+
+    if len(args) == 2:
+        output_folder = args[1]
+    else:
+        output_folder = os.path.basename(input_file)
+
+    return input_file, output_folder, options
+
+
 class TileJobInfo(object):
     """
     Plain object to hold tile job configuration for a dataset
@@ -835,7 +866,6 @@ class TileJobInfo(object):
     tile_extension = ""
     tile_size = 0
     tile_driver = None
-    tile_swne = (0, 0, 0, 0)
     kml = False
     options = None
 
@@ -843,6 +873,15 @@ class TileJobInfo(object):
         for key in kwargs:
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
+
+    def __unicode__(self):
+        return "TileJobInfo %s\n%s\n" % (self.tile_details, self.options)
+
+    def __str__(self):
+        return "TileJobInfo %s\n%s\n" % (self.tile_details, self.options)
+
+    def __repr__(self):
+        return "TileJobInfo %s\n%s\n" % (self.tile_details, self.options)
 
 
 class Gdal2TilesError(Exception):
@@ -1216,8 +1255,8 @@ class GDAL2Tiles(object):
                         s = s.replace(
                             "</WorkingDataType>",
                             """
-    </WorkingDataType>
-    <Option name="INIT_DEST">0</Option>
+                            </WorkingDataType>
+                            <Option name="INIT_DEST">0</Option>
                             """)
                         # save the corrected VRT
                         open(tempfilename, "w").write(s)
@@ -1635,19 +1674,21 @@ class GDAL2Tiles(object):
                     "querysize": querysize,
                 })
 
-        job_config = TileJobInfo(
-            tile_details=tile_details,
-            nb_data_bands=self.dataBandsCount,
-            output_file_path=self.output,
-            tile_extension=self.tileext,
-            tile_driver=self.tiledriver,
-            tile_size=self.tilesize,
-            tile_swne=self.tileswne,
-            kml=self.kml,
-            options=self.options,
-        )
+        confs = [
+            TileJobInfo(
+                tile_details=[tile],
+                nb_data_bands=self.dataBandsCount,
+                output_file_path=self.output,
+                tile_extension=self.tileext,
+                tile_driver=self.tiledriver,
+                tile_size=self.tilesize,
+                kml=self.kml,
+                options=self.options,
+            )
+            for tile in tile_details
+        ]
 
-        create_base_tiles(job_config)
+        return confs
 
     def generate_overview_tiles(self):
         """Generation of the overview tiles (higher in the pyramid) based on existing tiles"""
@@ -2597,11 +2638,29 @@ class GDAL2Tiles(object):
         return s
 
 
+def worker_tile_details(send_pipe, argv):
+    gdal2tiles = GDAL2Tiles(argv[1:])
+    gdal2tiles.open_input()
+    gdal2tiles.generate_metadata()
+    tile_job_info = gdal2tiles.generate_base_tiles()
+    send_pipe.send(tile_job_info)
+
+
 def main():
+    (receiver, sender) = Pipe(False)
     argv = gdal.GeneralCmdLineProcessor(sys.argv)
-    if argv:
-        gdal2tiles = GDAL2Tiles(argv[1:])
-        gdal2tiles.process()
+    print("Begin tiles details calc")
+    p = Process(target=worker_tile_details, args=[sender, argv])
+    p.start()
+    p.join()
+    print("Tiles details calc complete.")
+    confs = receiver.recv()
+    nb_process = 2
+    pool = Pool(nb_process)
+    chunksize = int(math.ceil(len(confs) / nb_process))
+    pool.map(create_base_tiles, confs, chunksize)
+    pool.close()
+    pool.join()
 
 if __name__ == '__main__':
     main()
