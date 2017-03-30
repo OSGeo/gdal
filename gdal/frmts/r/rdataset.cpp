@@ -369,19 +369,31 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Read the count.
     const int nValueCount = poDS->ReadInteger();
+    if( nValueCount < 0 )
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined, "nValueCount < 0: %d", nValueCount);
+        delete poDS;
+        return NULL;
+    }
 
     poDS->nStartOfData = VSIFTellL(poDS->fp);
 
+    // TODO(schwehr): Factor in the size of doubles.
     VSIStatBufL stat;
     const int dStatSuccess =
         VSIStatExL(osAdjustedFilename, &stat, VSI_STAT_SIZE_FLAG);
-    if (dStatSuccess != 0 || nValueCount > stat.st_size - poDS->nStartOfData)
+    if( dStatSuccess != 0 ||
+        static_cast<vsi_l_offset>(nValueCount) >
+        stat.st_size - poDS->nStartOfData )
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "Corrupt file.  "
-            "Object claims to be larger than available bytes. %d > %u",
-            nValueCount, stat.st_size - poDS->nStartOfData);
+            "Object claims to be larger than available bytes. "
+            "%d > " CPL_FRMT_GUIB,
+            nValueCount,
+            stat.st_size - poDS->nStartOfData);
         delete poDS;
         return NULL;
     }
