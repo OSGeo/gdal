@@ -209,6 +209,7 @@ def test_ogrtindex_3():
                 return 'fail'
             i = i + 1
             feat = ds.GetLayer(0).GetNextFeature()
+        ds = None
 
     return 'success'
 
