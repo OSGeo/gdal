@@ -298,8 +298,11 @@ int RDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    // During fuzzing, do not use Identify to reject crazy content.
     if( !Identify(poOpenInfo) )
         return NULL;
+#endif
 
     // Confirm the requested access is supported.
     if( poOpenInfo->eAccess == GA_Update )
@@ -368,6 +371,20 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     const int nValueCount = poDS->ReadInteger();
 
     poDS->nStartOfData = VSIFTellL(poDS->fp);
+
+    VSIStatBufL stat;
+    const int dStatSuccess =
+        VSIStatExL(osAdjustedFilename, &stat, VSI_STAT_SIZE_FLAG);
+    if (dStatSuccess != 0 || nValueCount > stat.st_size - poDS->nStartOfData)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Corrupt file.  "
+            "Object claims to be larger than available bytes. %d > %u",
+            nValueCount, stat.st_size - poDS->nStartOfData);
+        delete poDS;
+        return NULL;
+    }
 
     // Read/Skip ahead to attributes.
     if( poDS->bASCII )
@@ -470,18 +487,21 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     // Create the raster band object(s).
     for( int iBand = 0; iBand < nBandCount; iBand++ )
     {
-        GDALRasterBand *poBand =
-            poDS->bASCII
-                ? new RRasterBand(poDS, iBand + 1, poDS->padfMatrixValues +
-                                                       iBand *
-                                                           poDS->nRasterXSize *
-                                                           poDS->nRasterYSize)
-                : static_cast<GDALRasterBand *>(new RawRasterBand(
-                      poDS, iBand + 1, poDS->fp,
-                      poDS->nStartOfData +
-                          poDS->nRasterXSize * poDS->nRasterYSize * 8 * iBand,
-                      8, poDS->nRasterXSize * 8, GDT_Float64, !CPL_IS_LSB, TRUE,
-                      FALSE));
+        GDALRasterBand *poBand = NULL;
+
+        if( poDS->bASCII )
+            poBand = new RRasterBand(
+                poDS, iBand + 1,
+                poDS->padfMatrixValues +
+                    iBand * poDS->nRasterXSize * poDS->nRasterYSize);
+        else
+            poBand = new RawRasterBand(
+                poDS, iBand + 1, poDS->fp,
+                poDS->nStartOfData +
+                    poDS->nRasterXSize * poDS->nRasterYSize * 8 * iBand,
+                8, poDS->nRasterXSize * 8,
+                GDT_Float64, !CPL_IS_LSB,
+                TRUE, FALSE);
 
         poDS->SetBand(iBand + 1, poBand);
     }
