@@ -328,6 +328,8 @@ CPL_C_END
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
+extern "C++"
+{
 #include <string>
 
 /*
@@ -552,6 +554,8 @@ class CPL_DLL CPLStringList
     /** Return lists */
     operator char**(void) { return List(); }
 };
+
+} // extern "C++"
 
 #endif /* def __cplusplus && !CPL_SUPRESS_CPLUSPLUS */
 

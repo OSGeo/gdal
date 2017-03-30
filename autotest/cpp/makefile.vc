@@ -70,7 +70,7 @@ CPPFLAGS = $(CFLAGS)
 
 GDAL_TEST_EXE = gdal_unit_test.exe
 
-default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe testdestroy.exe testmultithreadedwriting.exe test_include_from_c_file.exe
+default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe testdestroy.exe testmultithreadedwriting.exe test_include_from_c_file.exe test_c_include_from_cpp_file.exe
 
 check:	 $(GDAL_TEST_EXE) testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe testmultithreadedwriting.exe
 	 $(GDAL_TEST_EXE)
@@ -129,9 +129,13 @@ testdestroy.exe: testdestroy.cpp
 	$(CC) testdestroy.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testdestroy.exe.manifest mt -manifest testdestroy.exe.manifest -outputresource:testdestroy.exe;1
 
-test_include_from_c_file: test_include_from_c_file.c
-	$(CC) test_include_from_c_file.cpp $(CFLAGS) $(GDAL_LIB)
+test_include_from_c_file.exe: test_include_from_c_file.c
+	$(CC) test_include_from_c_file.c $(CFLAGS) $(GDAL_LIB)
     if exist test_include_from_c_file.exe.manifest mt -manifest test_include_from_c_file.exe.manifest -outputresource:test_include_from_c_file.exe;1
+
+test_c_include_from_cpp_file.exe: test_c_include_from_cpp_file.cpp
+	$(CC) test_c_include_from_cpp_file.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist test_c_include_from_cpp_file.exe.manifest mt -manifest test_c_include_from_cpp_file.exe.manifest -outputresource:test_c_include_from_cpp_file.exe;1
 
 copy-gdal-dll:	$(GDAL_DLL) 
 

@@ -18,7 +18,7 @@ endif
 
 LDFLAGS = $(shell gdal-config --libs)
 
-PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting test_include_from_c_file
+PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting test_include_from_c_file test_c_include_from_cpp_file
 
 all: $(PROGS)
 
@@ -99,6 +99,9 @@ vsipreload.so: ../../gdal/port/vsipreload.cpp
 
 test_include_from_c_file: test_include_from_c_file.c
 	$(CC) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
+
+test_c_include_from_cpp_file: test_c_include_from_cpp_file.cpp
+	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 clean:
 	$(RM) $(PROGS)
