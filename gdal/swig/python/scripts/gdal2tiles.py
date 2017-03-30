@@ -640,6 +640,8 @@ def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
 
 
 def create_base_tiles(tile_job_info):
+    gdal.AllRegister()
+
     dataBandsCount = tile_job_info.nb_data_bands
     output = tile_job_info.output_file_path
     tileext = tile_job_info.tile_extension
