@@ -4468,6 +4468,9 @@ static inline double DISTANCE(double x1, double y1, double x2, double y2)
 /**
  * \brief Returns the parameter of an arc circle.
  *
+ * Angles are return in radians, with trigonometic convention (counter clock
+ * wise)
+ * 
  * @param x0 x of first point
  * @param y0 y of first point
  * @param x1 x of intermediate point
@@ -4477,9 +4480,9 @@ static inline double DISTANCE(double x1, double y1, double x2, double y2)
  * @param R radius (output)
  * @param cx x of arc center (output)
  * @param cy y of arc center (output)
- * @param alpha0 angle between center and first point (output)
- * @param alpha1 angle between center and intermediate point (output)
- * @param alpha2 angle between center and final point (output)
+ * @param alpha0 angle between center and first point, in radians (output)
+ * @param alpha1 angle between center and intermediate point, in radians (output)
+ * @param alpha2 angle between center and final point, in radians (output)
  * @return TRUE if the points are not aligned and define an arc circle.
  *
  * @since GDAL 2.0
