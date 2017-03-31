@@ -1950,6 +1950,8 @@ def ogr_gmlas_inline_identifier():
     if ds.GetLayerCount() != 2:
         gdaltest.post_reason('fail')
         print( ds.GetLayerCount() )
+        for i in range( ds.GetLayerCount() ):
+            print(ds.GetLayer(i).GetName())
         return 'fail'
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldIndex('identifier_foo') < 0:

@@ -300,6 +300,41 @@
                 </xs:annotation>
               </xs:element>
 
+              <xs:element name="FlatteningRules" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="MaximumNumberOfFields" type="xs:int" minOccurs="0">
+                      <xs:annotation>
+                        <xs:documentation>
+                            Maximum number of fields in an element considered
+                            for flattening.
+                            Default is 10.
+                        </xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                    <xs:element name="Namespaces" type="namespacesType" minOccurs="0"/>
+                    <xs:element name="ForceFlatteningXPath" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+                      <xs:annotation>
+                        <xs:documentation>
+                            XPath of element that will be considered for flattening
+                            even if it has more than MaximumNumberOfFields fields.
+                            Note: other constraints might make it impossible to
+                            flatten it, for example if it has repeated elements.
+                        </xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                    <xs:element name="DisableFlatteningXPath" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+                      <xs:annotation>
+                        <xs:documentation>
+                            XPath of element that will NOT be considered for flattening
+                            even if it has less or MaximumNumberOfFields fields.
+                        </xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+
             </xs:sequence>
           </xs:complexType>
         </xs:element>

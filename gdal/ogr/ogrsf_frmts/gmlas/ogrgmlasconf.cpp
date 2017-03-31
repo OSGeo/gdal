@@ -57,6 +57,7 @@ GMLASConfiguration::GMLASConfiguration()
     , m_nIdentifierMaxLength(0)
     , m_bCaseInsensitiveIdentifier(CASE_INSENSITIVE_IDENTIFIER_DEFAULT)
     , m_bPGIdentifierLaundering(PG_IDENTIFIER_LAUNDERING_DEFAULT)
+    , m_nMaximumFieldsForFlattening(MAXIMUM_FIELDS_FLATTENING_DEFAULT)
     , m_bAllowXSDCache(ALLOW_XSD_CACHE_DEFAULT)
     , m_bSchemaFullChecking(SCHEMA_FULL_CHECKING_DEFAULT)
     , m_bHandleMultipleImports(HANDLE_MULTIPLE_IMPORTS_DEFAULT)
@@ -379,6 +380,35 @@ bool GMLASConfiguration::Load(const char* pszFilename)
     m_bPGIdentifierLaundering = CPLGetXMLBoolValue( psRoot,
                 "=Configuration.LayerBuildingRules.PostgreSQLIdentifierLaundering",
                 PG_IDENTIFIER_LAUNDERING_DEFAULT );
+
+    CPLXMLNode* psFlatteningRules = CPLGetXMLNode(psRoot,
+                        "=Configuration.LayerBuildingRules.FlatteningRules");
+    if( psFlatteningRules )
+    {
+        m_nMaximumFieldsForFlattening = atoi( CPLGetXMLValue( psFlatteningRules,
+                "MaximumNumberOfFields",
+                CPLSPrintf("%d", MAXIMUM_FIELDS_FLATTENING_DEFAULT) ) );
+
+        ParseNamespaces(psFlatteningRules, m_oMapPrefixToURIFlatteningRules);
+
+        for( CPLXMLNode* psIter = psFlatteningRules->psChild;
+                         psIter != NULL;
+                         psIter = psIter->psNext )
+        {
+            if( psIter->eType == CXT_Element &&
+                EQUAL(psIter->pszValue, "ForceFlatteningXPath") )
+            {
+                m_osForcedFlattenedXPath.push_back(
+                    CPLGetXMLValue(psIter, "", "") );
+            }
+            else if( psIter->eType == CXT_Element &&
+                     EQUAL(psIter->pszValue, "DisableFlatteningXPath") )
+            {
+                m_osDisabledFlattenedXPath.push_back(
+                    CPLGetXMLValue(psIter, "", "") );
+            }
+        }
+    }
 
     CPLXMLNode* psTypingConstraints = CPLGetXMLNode(psRoot,
                                             "=Configuration.TypingConstraints");
