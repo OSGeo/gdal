@@ -4190,6 +4190,41 @@ def ogr_gpkg_49():
     return 'success'
 
 ###############################################################################
+# Test minimalistic support of definition_12_063
+
+def ogr_gpkg_50():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    gdal.SetConfigOption('GPKG_ADD_DEFINITION_12_063', 'YES')
+    gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_50.gpkg')
+    gdal.SetConfigOption('GPKG_ADD_DEFINITION_12_063', None)
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_50.gpkg', update = 1)
+    srs32631 = osr.SpatialReference()
+    srs32631.ImportFromEPSG( 32631 )
+    ds.CreateLayer('test', srs = srs32631)
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_50.gpkg')
+    lyr = ds.GetLayer('test')
+    if not lyr.GetSpatialRef().IsSame(srs32631):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    sql_lyr = ds.ExecuteSQL('SELECT definition_12_063 FROM gpkg_spatial_ref_sys WHERE srs_id = 32631')
+    f = sql_lyr.GetNextFeature()
+    if f.GetField(0) != 'undefined':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_50.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -4263,6 +4298,7 @@ gdaltest_list = [
     ogr_gpkg_47,
     ogr_gpkg_48,
     ogr_gpkg_49,
+    ogr_gpkg_50,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
