@@ -735,9 +735,19 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
             oVector );
     }
 
+    m_oForcedFlattenedXPathMatcher.SetRefXPaths(
+                                  m_oConf.m_oMapPrefixToURIFlatteningRules,
+                                  m_oConf.m_osForcedFlattenedXPath);
+
+    m_oDisabledFlattenedXPathMatcher.SetRefXPaths(
+                                  m_oConf.m_oMapPrefixToURIFlatteningRules,
+                                  m_oConf.m_osDisabledFlattenedXPath);
+
     GMLASSchemaAnalyzer oAnalyzer(m_oIgnoredXPathMatcher,
                                   m_oChildrenElementsConstraintsXPathMatcher,
-                                  m_oConf.m_oMapChildrenElementsConstraints);
+                                  m_oConf.m_oMapChildrenElementsConstraints,
+                                  m_oForcedFlattenedXPathMatcher,
+                                  m_oDisabledFlattenedXPathMatcher);
     oAnalyzer.SetUseArrays(m_oConf.m_bUseArrays);
     oAnalyzer.SetUseNullState(m_oConf.m_bUseNullState);
     oAnalyzer.SetInstantiateGMLFeaturesOnly(
@@ -746,6 +756,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
     oAnalyzer.SetCaseInsensitiveIdentifier(
                                         m_oConf.m_bCaseInsensitiveIdentifier);
     oAnalyzer.SetPGIdentifierLaundering(m_oConf.m_bPGIdentifierLaundering);
+    oAnalyzer.SetMaximumFieldsForFlattening(m_oConf.m_nMaximumFieldsForFlattening);
 
     m_osGMLFilename = STARTS_WITH_CI(poOpenInfo->pszFilename, szGMLAS_PREFIX) ?
         CPLExpandTilde(poOpenInfo->pszFilename + strlen(szGMLAS_PREFIX)) :

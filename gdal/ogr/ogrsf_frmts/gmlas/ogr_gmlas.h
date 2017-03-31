@@ -333,6 +333,9 @@ class GMLASConfiguration
         /** Whether to launder identifiers like postgresql does */
         bool            m_bPGIdentifierLaundering;
 
+        /* Maximum number of fields in an element considered for flattening. */
+        int             m_nMaximumFieldsForFlattening;
+
         /** Whether remote XSD schemas should be locally cached. */
         bool            m_bAllowXSDCache;
 
@@ -353,6 +356,13 @@ class GMLASConfiguration
 
         /** Whether technical layers should be exposed.  */
         bool            m_bExposeMetadataLayers;
+
+        /** For flatening rules, map prefix namespace to its URI */
+        std::map<CPLString, CPLString> m_oMapPrefixToURIFlatteningRules;
+
+        std::vector<CPLString> m_osForcedFlattenedXPath;
+
+        std::vector<CPLString> m_osDisabledFlattenedXPath;
 
         /** For ignored xpaths, map prefix namespace to its URI */
         std::map<CPLString, CPLString> m_oMapPrefixToURIIgnoredXPaths;
@@ -776,6 +786,10 @@ class GMLASSchemaAnalyzer
 
         GMLASXPathMatcher& m_oChildrenElementsConstraintsXPathMatcher;
 
+        GMLASXPathMatcher& m_oForcedFlattenedXPathMatcher;
+
+        GMLASXPathMatcher& m_oDisabledFlattenedXPathMatcher;
+
         std::map<CPLString, std::vector<CPLString> > m_oMapChildrenElementsConstraints;
 
         /** Whether repeated strings, integers, reals should be in corresponding
@@ -836,6 +850,9 @@ class GMLASSchemaAnalyzer
         /** Whether to launder identifiers like postgresql does */
         bool            m_bPGIdentifierLaundering;
 
+        /* Maximum number of fields in an element considered for flattening. */
+        int             m_nMaximumFieldsForFlattening;
+
         /** GML version found: 2.1.1, 3.1.1 or 3.2.1 or empty*/
         CPLString m_osGMLVersionFound;
 
@@ -863,7 +880,8 @@ class GMLASSchemaAnalyzer
                             std::vector<XSElementDeclaration*>& oVectorEltsForTopClass,
                             std::set<CPLString>& aoSetXPathEltsForTopClass,
                             XSModel* poModel,
-                            bool& bSimpleEnoughOut);
+                            bool& bSimpleEnoughOut,
+                            int& nCountSubEltsOut);
         void BuildMapCountOccurrencesOfSameName(
                     XSModelGroup* poModelGroup,
                     std::map< CPLString, int >& oMapCountOccurrencesOfSameName);
@@ -921,7 +939,9 @@ class GMLASSchemaAnalyzer
                     GMLASXPathMatcher& oIgnoredXPathMatcher,
                     GMLASXPathMatcher& oChildrenElementsConstraintsXPathMatcher,
                     const std::map<CPLString, std::vector<CPLString> >&
-                                                        oMapChildrenElementsConstraints );
+                                                        oMapChildrenElementsConstraints,
+                    GMLASXPathMatcher& oForcedFlattenedXPathMatcher,
+                    GMLASXPathMatcher& oDisabledFlattenedXPathMatcher);
 
         void SetUseArrays(bool b) { m_bUseArrays = b; }
         void SetUseNullState(bool b) { m_bUseNullState = b; }
@@ -933,6 +953,8 @@ class GMLASSchemaAnalyzer
                                     { m_bCaseInsensitiveIdentifier = b; }
         void SetPGIdentifierLaundering(bool b)
                                     { m_bPGIdentifierLaundering = b; }
+        void SetMaximumFieldsForFlattening(int n)
+                                    { m_nMaximumFieldsForFlattening = n; }
 
         bool Analyze(GMLASXSDCache& oCache,
                      const CPLString& osBaseDirname,
@@ -998,6 +1020,10 @@ class OGRGMLASDataSource: public GDALDataset
         GMLASXPathMatcher              m_oIgnoredXPathMatcher;
 
         GMLASXPathMatcher              m_oChildrenElementsConstraintsXPathMatcher;
+
+        GMLASXPathMatcher              m_oForcedFlattenedXPathMatcher;
+
+        GMLASXPathMatcher              m_oDisabledFlattenedXPathMatcher;
 
         GMLASSwapCoordinatesEnum       m_eSwapCoordinates;
 
