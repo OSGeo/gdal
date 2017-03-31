@@ -330,7 +330,9 @@ CPL_C_END
 
 extern "C++"
 {
+#ifndef DOXYGEN_SKIP
 #include <string>
+#endif
 
 /*
  * Simple trick to avoid "using" declaration in header for new compilers
