@@ -3117,6 +3117,16 @@ def gpkg_39():
         print(cs)
         return 'fail'
 
+    gdal.SetConfigOption('GPKG_ADD_DEFINITION_12_063', 'YES')
+    gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', noData = 1, creationOptions = ['TILING_SCHEME=GoogleMapsCompatible'])
+    gdal.SetConfigOption('GPKG_ADD_DEFINITION_12_063', None)
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4118 and cs != 4077:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
     gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', width = 1024, height = 1024)
     ds = gdal.Open('/vsimem/gpkg_39.gpkg', gdal.GA_Update)
     ds.BuildOverviews('NEAR', [2, 4])
