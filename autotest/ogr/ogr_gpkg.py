@@ -4205,11 +4205,23 @@ def ogr_gpkg_50():
     srs32631 = osr.SpatialReference()
     srs32631.ImportFromEPSG( 32631 )
     ds.CreateLayer('test', srs = srs32631)
+
+    # No authority node
+    srs_without_org = osr.SpatialReference()
+    srs_without_org.SetFromUserInput("""GEOGCS["another geogcs",
+    DATUM["another datum",
+        SPHEROID["another spheroid",1000,0]]]""")
+    lyr = ds.CreateLayer('without_org', srs = srs_without_org)
+
     ds = None
 
     ds = ogr.Open('/vsimem/ogr_gpkg_50.gpkg')
     lyr = ds.GetLayer('test')
     if not lyr.GetSpatialRef().IsSame(srs32631):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayer('without_org')
+    if not lyr.GetSpatialRef().IsSame(srs_without_org):
         gdaltest.post_reason('fail')
         return 'fail'
     sql_lyr = ds.ExecuteSQL('SELECT definition_12_063 FROM gpkg_spatial_ref_sys WHERE srs_id = 32631')
