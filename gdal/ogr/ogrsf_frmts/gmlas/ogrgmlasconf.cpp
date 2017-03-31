@@ -222,6 +222,48 @@ static void CPL_STDCALL GMLASConfigurationErrorHandler(CPLErr /*eErr*/,
 }
 
 /************************************************************************/
+/*                           ParseNamespaces()                          */
+/************************************************************************/
+
+static void ParseNamespaces(CPLXMLNode* psContainerNode,
+                            std::map<CPLString, CPLString>& oMap)
+{
+    CPLXMLNode* psNamespaces = CPLGetXMLNode(psContainerNode, "Namespaces");
+    if( psNamespaces != NULL )
+    {
+        for( CPLXMLNode* psIter = psNamespaces->psChild;
+                            psIter != NULL;
+                            psIter = psIter->psNext )
+        {
+            if( psIter->eType == CXT_Element &&
+                EQUAL(psIter->pszValue, "Namespace") )
+            {
+                CPLString osPrefix = CPLGetXMLValue(psIter, "prefix", "");
+                CPLString osURI = CPLGetXMLValue(psIter, "uri", "");
+                if( !osPrefix.empty() && !osURI.empty() )
+                {
+                    if( oMap.find(osPrefix) ==
+                        oMap.end() )
+                    {
+                        oMap[osPrefix] = osURI;
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                    "Prefix %s was already mapped to %s. "
+                                    "Attempt to map it to %s ignored",
+                                    osPrefix.c_str(),
+                                    oMap[osPrefix].
+                                                                    c_str(),
+                                    osURI.c_str());
+                    }
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                                 Load()                               */
 /************************************************************************/
 
@@ -338,6 +380,46 @@ bool GMLASConfiguration::Load(const char* pszFilename)
                 "=Configuration.LayerBuildingRules.PostgreSQLIdentifierLaundering",
                 PG_IDENTIFIER_LAUNDERING_DEFAULT );
 
+    CPLXMLNode* psTypingConstraints = CPLGetXMLNode(psRoot,
+                                            "=Configuration.TypingConstraints");
+    if( psTypingConstraints )
+    {
+        ParseNamespaces(psTypingConstraints, m_oMapPrefixToURITypeConstraints);
+
+        for( CPLXMLNode* psIter = psTypingConstraints->psChild;
+                         psIter != NULL;
+                         psIter = psIter->psNext )
+        {
+            if( psIter->eType == CXT_Element &&
+                EQUAL(psIter->pszValue, "ChildConstraint") )
+            {
+                const CPLString& osXPath( CPLGetXMLValue(psIter, "ContainerXPath", "") );
+                CPLXMLNode* psChildrenTypes = CPLGetXMLNode(psIter, "ChildrenElements");
+                if( IsValidXPath(osXPath) )
+                {
+                    for( CPLXMLNode* psIter2 =
+                            psChildrenTypes ? psChildrenTypes->psChild : NULL;
+                                     psIter2 != NULL;
+                                     psIter2 = psIter2->psNext )
+                    {
+                        if( psIter2->eType == CXT_Element &&
+                            EQUAL(psIter2->pszValue, "Element") )
+                        {
+                            m_oMapChildrenElementsConstraints[osXPath].push_back(
+                                CPLGetXMLValue(psIter2, "", "") );
+                        }
+                    }
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "XPath syntax %s not supported",
+                             osXPath.c_str());
+                }
+            }
+        }
+    }
+
     CPLXMLNode* psIgnoredXPaths = CPLGetXMLNode(psRoot,
                                             "=Configuration.IgnoredXPaths");
     if( psIgnoredXPaths )
@@ -347,40 +429,7 @@ bool GMLASConfiguration::Load(const char* pszFilename)
                        "WarnIfIgnoredXPathFoundInDocInstance",
                        WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT );
 
-        CPLXMLNode* psNamespaces = CPLGetXMLNode(psIgnoredXPaths,
-                                                 "Namespaces");
-        if( psNamespaces != NULL )
-        {
-            for( CPLXMLNode* psIter = psNamespaces->psChild;
-                             psIter != NULL;
-                             psIter = psIter->psNext )
-            {
-                if( psIter->eType == CXT_Element &&
-                    EQUAL(psIter->pszValue, "Namespace") )
-                {
-                    CPLString osPrefix = CPLGetXMLValue(psIter, "prefix", "");
-                    CPLString osURI = CPLGetXMLValue(psIter, "uri", "");
-                    if( !osPrefix.empty() && !osURI.empty() )
-                    {
-                        if( m_oMapPrefixToURIIgnoredXPaths.find(osPrefix) ==
-                            m_oMapPrefixToURIIgnoredXPaths.end() )
-                        {
-                            m_oMapPrefixToURIIgnoredXPaths[osPrefix] = osURI;
-                        }
-                        else
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Prefix %s was already mapped to %s. "
-                                     "Attempt to map it to %s ignored",
-                                     osPrefix.c_str(),
-                                     m_oMapPrefixToURIIgnoredXPaths[osPrefix].
-                                                                        c_str(),
-                                     osURI.c_str());
-                        }
-                    }
-                }
-            }
-        }
+        ParseNamespaces(psIgnoredXPaths, m_oMapPrefixToURIIgnoredXPaths);
 
         for( CPLXMLNode* psIter = psIgnoredXPaths->psChild;
                          psIter != NULL;

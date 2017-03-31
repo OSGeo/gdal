@@ -360,6 +360,12 @@ class GMLASConfiguration
         /** Ignored xpaths */
         std::vector<CPLString> m_aosIgnoredXPaths;
 
+        /** For type constraints, map prefix namespace to its URI */
+        std::map<CPLString, CPLString> m_oMapPrefixToURITypeConstraints;
+
+        /** Map an XPath to a list of potential types for its children */
+        std::map<CPLString, std::vector<CPLString> > m_oMapChildrenElementsConstraints;
+
         /* Beginning of Writer config */
 
         /** Number of spaces for indentation */
@@ -478,6 +484,9 @@ class GMLASXPathMatcher
         bool MatchesRefXPath(
             const CPLString& osXPath,
             CPLString& osOutMatchedXPath ) const;
+
+        const std::map<CPLString, CPLString>& GetMapPrefixToURI() const
+            { return m_oMapPrefixToURIReferenceXPaths; }
 };
 
 /************************************************************************/
@@ -765,6 +774,10 @@ class GMLASSchemaAnalyzer
 {
         GMLASXPathMatcher& m_oIgnoredXPathMatcher;
 
+        GMLASXPathMatcher& m_oChildrenElementsConstraintsXPathMatcher;
+
+        std::map<CPLString, std::vector<CPLString> > m_oMapChildrenElementsConstraints;
+
         /** Whether repeated strings, integers, reals should be in corresponding
             OGR array types. */
         bool m_bUseArrays;
@@ -786,6 +799,9 @@ class GMLASSchemaAnalyzer
 
         /** Map from a namespace URI to the corresponding prefix */
         std::map<CPLString, CPLString> m_oMapURIToPrefix;
+
+        /** Map element XPath to its XSElementDeclaration* */
+        std::map<CPLString, XSElementDeclaration*> m_oMapXPathToEltDecl;
 
         typedef std::map<XSElementDeclaration*,
                                 std::vector<XSElementDeclaration*> >
@@ -836,6 +852,8 @@ class GMLASSchemaAnalyzer
         void GetConcreteImplementationTypes(
                                 XSElementDeclaration* poParentElt,
                                 std::vector<XSElementDeclaration*>& apoImplEltList);
+        std::vector<XSElementDeclaration*>
+                    GetConstraintChildrenElements(const CPLString& osFullXPath);
         bool FindElementsWithMustBeToLevel(
                             const CPLString& osParentXPath,
                             XSModelGroup* poModelGroup,
@@ -876,7 +894,9 @@ class GMLASSchemaAnalyzer
                         std::vector<XSElementDeclaration*>& apoSubEltList,
                         GMLASFeatureClass& oClass,
                         int nMaxOccurs,
-                        bool bForceJunctionTable);
+                        bool bEltNameWillNeedPrefix,
+                        bool bForceJunctionTable,
+                        bool bCaseOfConstraintChildren);
 
         bool IsGMLNamespace(const CPLString& osURI);
 
@@ -897,7 +917,12 @@ class GMLASSchemaAnalyzer
         CPL_DISALLOW_COPY_ASSIGN(GMLASSchemaAnalyzer)
 
     public:
-        explicit GMLASSchemaAnalyzer( GMLASXPathMatcher& oIgnoredXPathMatcher );
+                GMLASSchemaAnalyzer(
+                    GMLASXPathMatcher& oIgnoredXPathMatcher,
+                    GMLASXPathMatcher& oChildrenElementsConstraintsXPathMatcher,
+                    const std::map<CPLString, std::vector<CPLString> >&
+                                                        oMapChildrenElementsConstraints );
+
         void SetUseArrays(bool b) { m_bUseArrays = b; }
         void SetUseNullState(bool b) { m_bUseNullState = b; }
         void SetInstantiateGMLFeaturesOnly(bool b)
@@ -971,6 +996,8 @@ class OGRGMLASDataSource: public GDALDataset
         GMLASXSDCache                  m_oCache;
 
         GMLASXPathMatcher              m_oIgnoredXPathMatcher;
+
+        GMLASXPathMatcher              m_oChildrenElementsConstraintsXPathMatcher;
 
         GMLASSwapCoordinatesEnum       m_eSwapCoordinates;
 

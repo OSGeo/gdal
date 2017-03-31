@@ -218,8 +218,13 @@ void GMLASAnalyzerEntityResolver::DoExtraSchemaProcessing(
 /************************************************************************/
 
 GMLASSchemaAnalyzer::GMLASSchemaAnalyzer(
-                            GMLASXPathMatcher& oIgnoredXPathMatcher )
+                            GMLASXPathMatcher& oIgnoredXPathMatcher,
+                            GMLASXPathMatcher& oChildrenElementsConstraintsXPathMatcher,
+                            const std::map<CPLString, std::vector<CPLString> >&
+                                                        oMapChildrenElementsConstraints )
     : m_oIgnoredXPathMatcher(oIgnoredXPathMatcher)
+    , m_oChildrenElementsConstraintsXPathMatcher(oChildrenElementsConstraintsXPathMatcher)
+    , m_oMapChildrenElementsConstraints(oMapChildrenElementsConstraints)
     , m_bUseArrays(true)
     , m_bUseNullState(false)
     , m_bInstantiateGMLFeaturesOnly(true)
@@ -921,6 +926,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     m_oSetSchemaURLs = oXSDEntityResolver.GetSchemaURLS();
 
     m_oIgnoredXPathMatcher.SetDocumentMapURIToPrefix( m_oMapURIToPrefix );
+    m_oChildrenElementsConstraintsXPathMatcher.SetDocumentMapURIToPrefix( m_oMapURIToPrefix );
 
     XSModel* poModel = getGrammarPool(poGrammarPool.get());
     CPLAssert(poModel); // should not be null according to doc
@@ -989,6 +995,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
             const CPLString osEltXPath(
                             MakeXPath(transcode(poEltDecl->getNamespace()),
                                       transcode(poEltDecl->getName())));
+            m_oMapXPathToEltDecl[ osEltXPath ] = poEltDecl;
             if( poSubstGroup )
             {
                 m_oMapParentEltToChildElt[poSubstGroup].push_back(poEltDecl);
@@ -1557,21 +1564,86 @@ void GMLASSchemaAnalyzer::GetConcreteImplementationTypes(
 {
     tMapParentEltToChildElt::const_iterator oIter =
         m_oMapParentEltToChildElt.find( poParentElt );
-    if( oIter == m_oMapParentEltToChildElt.end() )
-        return;
-
-    for( size_t j = 0; j < oIter->second.size(); j++ )
+    if( oIter != m_oMapParentEltToChildElt.end() )
     {
-        XSElementDeclaration* poSubElt = oIter->second[j];
-        if( IsEltCompatibleOfFC(poSubElt) )
+        for( size_t j = 0; j < oIter->second.size(); j++ )
         {
-            if( !poSubElt->getAbstract() )
+            XSElementDeclaration* poSubElt = oIter->second[j];
+            if( IsEltCompatibleOfFC(poSubElt) )
             {
-                apoImplEltList.push_back(poSubElt);
+                if( !poSubElt->getAbstract() )
+                {
+                    apoImplEltList.push_back(poSubElt);
+                }
+                GetConcreteImplementationTypes(poSubElt, apoImplEltList);
             }
-            GetConcreteImplementationTypes(poSubElt, apoImplEltList);
         }
     }
+}
+
+/************************************************************************/
+/*                       GetConstraintChildrenElements()                */
+/************************************************************************/
+
+std::vector<XSElementDeclaration*>
+    GMLASSchemaAnalyzer::GetConstraintChildrenElements(const CPLString& osFullXPath)
+{
+
+    std::vector<XSElementDeclaration*> oVectorRes;
+    CPLString osMatched;
+    if( m_oChildrenElementsConstraintsXPathMatcher.MatchesRefXPath(
+                                                    osFullXPath, osMatched) )
+    {
+        const std::vector<CPLString>& oVector =
+                                m_oMapChildrenElementsConstraints[osMatched];
+        const std::map<CPLString, CPLString>& oMapPrefixToURI =
+                m_oChildrenElementsConstraintsXPathMatcher.GetMapPrefixToURI();
+        for( size_t j = 0; j < oVector.size(); ++j )
+        {
+            const CPLString& osSubElt(oVector[j]);
+            CPLString osSubEltPrefix;
+            CPLString osSubEltURI;
+            CPLString osSubEltType(osSubElt);
+            size_t nPos = osSubElt.find(":");
+            if( nPos != std::string::npos )
+            {
+                osSubEltPrefix = osSubElt.substr(0, nPos);
+                osSubEltType = osSubElt.substr(nPos+1);
+
+                std::map<CPLString, CPLString>::const_iterator oIter2 =
+                    oMapPrefixToURI.find(osSubEltPrefix);
+                if( oIter2 != oMapPrefixToURI.end() )
+                {
+                    osSubEltURI = oIter2->second;
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "Cannot find prefix of type constraint %s",
+                            osSubElt.c_str());
+                }
+            }
+
+            const CPLString osSubEltXPath(MakeXPath(osSubEltURI, osSubEltType));
+            std::map<CPLString, XSElementDeclaration*>::const_iterator oIter2 =
+                m_oMapXPathToEltDecl.find(osSubEltXPath);
+            if( oIter2 != m_oMapXPathToEltDecl.end() )
+            {
+                XSElementDeclaration* poSubElt = oIter2->second;
+                if( IsEltCompatibleOfFC(poSubElt) )
+                {
+                    oVectorRes.push_back(poSubElt);
+                }
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot find element declaration of type constraint %s",
+                         osSubElt.c_str());
+            }
+        }
+    }
+    return oVectorRes;
 }
 
 /************************************************************************/
@@ -1678,8 +1750,12 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
                         std::vector<XSElementDeclaration*>& apoImplEltList,
                         GMLASFeatureClass& oClass,
                         int nMaxOccurs,
-                        bool bForceJunctionTable )
+                        bool bEltNameWillNeedPrefix,
+                        bool bForceJunctionTable,
+                        bool bCaseOfConstraintChildren )
 {
+    const CPLString osEltPrefix(
+                GetPrefix(transcode(poElt->getNamespace())));
     const CPLString osEltName(transcode(poElt->getName()));
     const CPLString osOnlyElementXPath(
                     MakeXPath(transcode(poElt->getNamespace()),
@@ -1687,7 +1763,7 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
     const CPLString osElementXPath( oClass.GetXPath() + "/" +
                                     osOnlyElementXPath );
 
-    if( !poElt->getAbstract() )
+    if( !poElt->getAbstract() && !bCaseOfConstraintChildren )
     {
         apoImplEltList.insert(apoImplEltList.begin(), poElt);
     }
@@ -1715,6 +1791,8 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
             aoSetSubEltXPath.insert(osSubEltXPath);
 
             const CPLString osRealFullXPath( oClass.GetXPath() + "/" +
+                    ((bCaseOfConstraintChildren) ?
+                            osOnlyElementXPath + "/" : CPLString("")) +
                                              osSubEltXPath );
 
             if( IsIgnoredXPath( osRealFullXPath ) )
@@ -1727,18 +1805,24 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
             }
 
             GMLASField oField;
-            if( apoImplEltList.size() > 1 )
+            if( apoImplEltList.size() > 1 || bCaseOfConstraintChildren )
             {
-                if( m_oMapEltNamesToInstanceCount[osSubEltName] > 1 )
+                if( m_oMapEltNamesToInstanceCount[osSubEltName] > 1  )
                 {
                     CPLString osLaunderedXPath(osSubEltXPath);
                     osLaunderedXPath.replaceAll(':', '_');
-                    oField.SetName( transcode(poElt->getName()) + "_" +
+                    oField.SetName(
+                        ((bEltNameWillNeedPrefix) ? osEltPrefix + "_" :
+                                                                CPLString()) +
+                                    transcode(poElt->getName()) + "_" +
                                     osLaunderedXPath + "_pkid" );
                 }
                 else
                 {
-                    oField.SetName( transcode(poElt->getName()) + "_" +
+                    oField.SetName(
+                        ((bEltNameWillNeedPrefix) ? osEltPrefix + "_" :
+                                                                CPLString()) +
+                            transcode(poElt->getName()) + "_" +
                                     osSubEltName + "_pkid" );
                 }
             }
@@ -1801,8 +1885,13 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
 
             // Add an abstract field
             GMLASField oField;
-            oField.SetName( osEltName + "_" + osSubEltName );
+            oField.SetName(
+                ((bEltNameWillNeedPrefix) ? osEltPrefix + "_" :
+                                                                CPLString()) +
+                osEltName + "_" + osSubEltName );
             oField.SetXPath( oClass.GetXPath() + "/" +
+                    ((bCaseOfConstraintChildren) ?
+                            osOnlyElementXPath + "/" : CPLString("")) +
                                                 osSubEltXPath);
             oField.SetMinOccurs( 0 );
             oField.SetMaxOccurs( nMaxOccurs );
@@ -1952,6 +2041,9 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
             std::vector<XSElementDeclaration*> apoImplEltList;
             GetConcreteImplementationTypes(poElt, apoImplEltList);
 
+            std::vector<XSElementDeclaration*> apoChildrenElements =
+                GetConstraintChildrenElements(osFullXPath);
+
             // Special case for a GML geometry property
             if( IsGMLNamespace(transcode(poTypeDef->getNamespace())) &&
                 GetOGRGeometryType(poTypeDef) != wkbNone )
@@ -1973,9 +2065,13 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                 // Do nothing
             }
             // Are there substitution groups for this element ?
-            else if( !apoImplEltList.empty() )
+            else if( !apoImplEltList.empty() || !apoChildrenElements.empty() )
             {
-                if( !poElt->getAbstract() )
+                if( !apoChildrenElements.empty() )
+                {
+                    apoImplEltList = apoChildrenElements;
+                }
+                else if( !poElt->getAbstract() )
                 {
                     apoImplEltList.insert(apoImplEltList.begin(), poElt);
                 }
@@ -2369,7 +2465,10 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                         apoImplEltList,
                                         oClass,
                                         1,
-                                        true);
+                                        false, // doesn't need prefix
+                                        true, // force junction table
+                                        false // regular case
+                                       );
 
             return true;
         }
@@ -2401,6 +2500,9 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 oIter != oMapCountOccurrencesOfSameName.end() &&
                 oIter->second > 1;
             const CPLString osEltNS(transcode(poElt->getNamespace()));
+            const CPLString osPrefixedEltName(
+                (bEltNameWillNeedPrefix ? GetPrefix(osEltNS) + "_" : CPLString()) +
+                osEltName);
             const CPLString osOnlyElementXPath(MakeXPath(osEltNS, osEltName));
             const CPLString osElementXPath( oClass.GetXPath() + "/" +
                                             osOnlyElementXPath );
@@ -2443,13 +2545,29 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
             std::vector<XSElementDeclaration*> apoImplEltList;
             GetConcreteImplementationTypes(poElt, apoImplEltList);
 
+            std::vector<XSElementDeclaration*> apoChildrenElements =
+                GetConstraintChildrenElements(osElementXPath);
+
             // Special case for a GML geometry property
             OGRwkbGeometryType eGeomType = wkbNone;
-            if( IsGMLNamespace(transcode(poTypeDef->getNamespace())) &&
+
+            if( !apoChildrenElements.empty() )
+            {
+                CreateNonNestedRelationship(poElt,
+                                            apoChildrenElements,
+                                            oClass,
+                                            nMaxOccurs,
+                                            bEltNameWillNeedPrefix,
+                                            false, // do not force junction table
+                                            true // special case for children elements
+                                           );
+            }
+
+            else if( IsGMLNamespace(transcode(poTypeDef->getNamespace())) &&
                 (eGeomType = GetOGRGeometryType(poTypeDef)) != wkbNone )
             {
                 GMLASField oField;
-                oField.SetName( osEltName );
+                oField.SetName( osPrefixedEltName );
                 oField.SetMinOccurs( nMinOccurs );
                 oField.SetMaxOccurs( nMaxOccurs );
                 oField.SetType( GMLAS_FT_GEOMETRY, szFAKEXS_GEOMETRY );
@@ -2474,7 +2592,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                                                     != wkbNone )
             {
                 GMLASField oField;
-                oField.SetName( osEltName );
+                oField.SetName( osPrefixedEltName );
                 oField.SetMinOccurs( nMinOccurs );
                 oField.SetMaxOccurs( nMaxOccurs );
 
@@ -2498,7 +2616,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                      osEltName != "AbstractTimeObject" )
             {
                 GMLASField oField;
-                oField.SetName( osEltName );
+                oField.SetName( osPrefixedEltName );
                 oField.SetMinOccurs( nMinOccurs );
                 oField.SetMaxOccurs( nMaxOccurs );
                 if( osEltName == "AbstractGeometry" )
@@ -2536,7 +2654,10 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                             apoImplEltList,
                                             oClass,
                                             nMaxOccurs,
-                                            false);
+                                            bEltNameWillNeedPrefix,
+                                            false, // do not force junction table
+                                            false // regular case
+                                           );
             }
 
             // Abstract element without realizations !
@@ -2591,8 +2712,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 {
                     GMLASFeatureClass oNestedClass;
                     oNestedClass.SetName( oClass.GetName() + "_" +
-                                          ((bEltNameWillNeedPrefix) ? GetPrefix(osEltNS) + "_" : "") +
-                                          osEltName );
+                                          osPrefixedEltName );
                     oNestedClass.SetXPath( osElementXPath );
                     GMLASField oUniqueField;
                     oUniqueField.SetName("value");
@@ -2607,7 +2727,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     oClass.AddNestedClass( oNestedClass );
 
                     oField.SetType( GMLAS_FT_STRING, "" );
-                    oField.SetName( osEltName );
+                    oField.SetName( osPrefixedEltName );
                     oField.SetXPath( osElementXPath );
                     oField.SetCategory(
                                     GMLASField::PATH_TO_CHILD_ELEMENT_NO_LINK);
@@ -2616,7 +2736,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 }
                 else
                 {
-                    oField.SetName( osEltName );
+                    oField.SetName( osPrefixedEltName );
                     oField.SetXPath( osElementXPath );
                     if( !bIsChoice && nMinOccurs > 0 &&
                         !poElt->getNillable() )
@@ -2632,7 +2752,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     if( nMinOccurs == 0 && poElt->getNillable() && !m_bUseNullState )
                     {
                         GMLASField oFieldNil;
-                        oFieldNil.SetName( osEltName + "_" + szNIL );
+                        oFieldNil.SetName( osPrefixedEltName + "_" + szNIL );
                         oFieldNil.SetXPath( osElementXPath + "/" +
                                             szAT_XSI_NIL );
                         oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
@@ -2675,7 +2795,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     XSAttributeUse* poAttr = poAttrList->elementAt(j);
                     GMLASField oField;
                     CPLString osNamePrefix( bMoveNestedClassToTop ?
-                                osEltName : CPLString() );
+                        osPrefixedEltName : CPLString() );
                     SetFieldFromAttribute(oField, poAttr,
                                           osElementXPath,
                                           osNamePrefix);
@@ -2717,7 +2837,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     }
                     else
                     {
-                        oField.SetName( osEltName + "_anyAttributes" );
+                        oField.SetName( osPrefixedEltName + "_anyAttributes" );
                     }
                     oField.SetXPath(  osElementXPath + "/" + szAT_ANY_ATTR );
                     oField.SetDocumentation( GetAnnotationDoc(
@@ -2741,7 +2861,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     {
                         /* We have a complex type, but no attributes, and */
                         /* compatible of arrays, so move it to top level! */
-                        oField.SetName( osEltName );
+                        oField.SetName( osPrefixedEltName );
                         oField.SetArray( true );
                         oField.SetMinOccurs( nMinOccurs );
                         oField.SetMaxOccurs( nMaxOccurs );
@@ -2764,7 +2884,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             }
                         }
 
-                        oField.SetName( osEltName );
+                        oField.SetName( osPrefixedEltName );
                         oField.SetMinOccurs( (bIsChoice) ? 0 : nMinOccurs );
                         oField.SetMaxOccurs( nMaxOccurs );
 
@@ -2775,7 +2895,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         if( nMinOccurs == 0 && poElt->getNillable() && !m_bUseNullState )
                         {
                             GMLASField oFieldNil;
-                            oFieldNil.SetName( osEltName + "_" + szNIL );
+                            oFieldNil.SetName( osPrefixedEltName + "_" + szNIL );
                             oFieldNil.SetXPath( osElementXPath + "/" +
                                                 szAT_XSI_NIL );
                             oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
@@ -2817,7 +2937,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             }
                         }
 
-                        oField.SetName( osEltName );
+                        oField.SetName( osPrefixedEltName );
                         oField.SetMinOccurs( nMinOccurs );
                         oField.SetMaxOccurs( nMaxOccurs );
                     }
@@ -2838,7 +2958,10 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                                 oClass,
                                                 bMoveNestedClassToTop ? 1 :
                                                         MAXOCCURS_UNLIMITED,
-                                                true);
+                                                bEltNameWillNeedPrefix,
+                                                true, // force junction table
+                                                false // regular case
+                                               );
 
                     bNothingMoreToDo = true;
                 }
@@ -2847,8 +2970,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 {
                     GMLASFeatureClass oNestedClass;
                     oNestedClass.SetName( oClass.GetName() + "_" +
-                                          ((bEltNameWillNeedPrefix) ? GetPrefix(osEltNS) + "_" : "") +
-                                          osEltName );
+                                          osPrefixedEltName );
                     oNestedClass.SetXPath( osElementXPath );
                     oNestedClass.SetDocumentation( GetAnnotationDoc( poElt ) );
 
@@ -2903,7 +3025,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             if( poElt->getNillable() && !m_bUseNullState )
                             {
                                 GMLASField oFieldNil;
-                                oFieldNil.SetName( osEltName + "_" + szNIL );
+                                oFieldNil.SetName( osPrefixedEltName + "_" + szNIL );
                                 oFieldNil.SetXPath( osElementXPath + "/" +
                                                     szAT_XSI_NIL );
                                 oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
@@ -2917,7 +3039,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             oField.SetXPath(
                                 GMLASField::MakePKIDFieldXPathFromXLinkHrefXPath(
                                             osElementXPath + "/" + szAT_XLINK_HREF));
-                            oField.SetName( osEltName + szPKID_SUFFIX );
+                            oField.SetName( osPrefixedEltName + szPKID_SUFFIX );
                             oField.SetMinOccurs(0);
                             oField.SetMaxOccurs(1);
                             oField.SetType( GMLAS_FT_STRING, szXS_STRING );
@@ -2935,7 +3057,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             if( poElt->getNillable() && !m_bUseNullState )
                             {
                                 GMLASField oFieldNil;
-                                oFieldNil.SetName( osEltName + "_" + szNIL );
+                                oFieldNil.SetName( osPrefixedEltName + "_" + szNIL );
                                 oFieldNil.SetXPath( osElementXPath + "/" +
                                                     szAT_XSI_NIL );
                                 oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
@@ -2986,8 +3108,8 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         for(size_t j = 0; j < osNestedClassFields.size(); j++ )
                         {
                             GMLASField oField(osNestedClassFields[j]);
-                            oField.SetName( osEltName +
-                                            "_" + oField.GetName() );
+                            oField.SetName( 
+                                osPrefixedEltName + "_" + oField.GetName() );
                             if( nMinOccurs == 0 ||
                                 (poEltCT->getParticle() != NULL &&
                                  poEltCT->getParticle()->getMinOccurs() == 0) )
@@ -3027,7 +3149,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             // no nested classes, then add an array attribute
                             // at the top-level
                             GMLASField oField (oNestedClass.GetFields()[0] );
-                            oField.SetName( osEltName + "_" +
+                            oField.SetName( osPrefixedEltName + "_" +
                                             oField.GetName() );
                             if( oField.GetMaxOccurs() == 1 &&
                                 bEltRepeatedParticle &&
@@ -3057,13 +3179,13 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                 GMLASFeatureClass oIntermediateNestedClass;
                                 oIntermediateNestedClass.SetName(
                                         oClass.GetName() + "_" +
-                                        osEltName );
+                                        osPrefixedEltName );
                                 oIntermediateNestedClass.SetXPath( osElementXPath );
 
                                 oIntermediateNestedClass.PrependFields( aoFields );
 
                                 oNestedClass.SetName( oClass.GetName() + "_" +
-                                        osEltName + "_sequence" );
+                                        osPrefixedEltName + "_sequence" );
                                 oNestedClass.SetXPath( oNestedClass.GetXPath() +
                                         szEXTRA_SUFFIX + "sequence");
                                 oNestedClass.SetIsRepeatedSequence( true );
@@ -3093,7 +3215,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             }
 
                             GMLASField oField;
-                            oField.SetName( osEltName );
+                            oField.SetName( osPrefixedEltName );
                             oField.SetXPath( osElementXPath );
                             if( bRepeatedParticle )
                             {
@@ -3135,15 +3257,14 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 {
                     GMLASFeatureClass oNestedClass;
                     oNestedClass.SetName( oClass.GetName() + "_" +
-                                        ((bEltNameWillNeedPrefix) ? GetPrefix(osEltNS) + "_" : "") +
-                                        osEltName );
+                                          osPrefixedEltName );
                     oNestedClass.SetXPath( osElementXPath );
                     oNestedClass.AppendFields( aoFields );
                     oNestedClass.SetDocumentation( GetAnnotationDoc( poElt ) );
                     oClass.AddNestedClass( oNestedClass );
 
                     GMLASField oField;
-                    oField.SetName( osEltName );
+                    oField.SetName( osPrefixedEltName );
                     oField.SetXPath( osElementXPath );
                     oField.SetMinOccurs( (bIsChoice) ? 0 : nMinOccurs );
                     oField.SetMaxOccurs( nMaxOccurs );

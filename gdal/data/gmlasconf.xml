@@ -37,6 +37,20 @@
         <PostgreSQLIdentifierLaundering>true</PostgreSQLIdentifierLaundering>
     </LayerBuildingRules>
 
+    <!-- constraints typically expressed as schematrons -->
+    <TypingConstraints>
+        <Namespaces>
+            <Namespace prefix="gwml2w" uri="http://www.opengis.net/gwml-well/2.2"/>
+            <Namespace prefix="om" uri="http://www.opengis.net/om/2.0"/>
+        </Namespaces>
+        <ChildConstraint>
+            <ContainerXPath>gwml2w:GW_GeologyLog/om:result</ContainerXPath>
+            <ChildrenElements>
+                <Element>gwml2w:GW_GeologyLogCoverage</Element>
+            </ChildrenElements>
+        </ChildConstraint>
+    </TypingConstraints>
+
     <XLinkResolution>
         <Timeout>10</Timeout> <!-- can be set with GDAL_HTTP_TIMEOUT -->
         <!-- <MaxGlobalResolutionTime></MaxGlobalResolutionTime> -->

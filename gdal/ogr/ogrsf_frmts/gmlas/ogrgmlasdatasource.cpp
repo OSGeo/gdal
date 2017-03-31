@@ -724,7 +724,20 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
                                     m_oConf.m_oMapPrefixToURIIgnoredXPaths,
                                     m_oConf.m_aosIgnoredXPaths );
 
-    GMLASSchemaAnalyzer oAnalyzer(m_oIgnoredXPathMatcher);
+    {
+        std::map<CPLString, std::vector<CPLString> >::const_iterator oIter =
+                            m_oConf.m_oMapChildrenElementsConstraints.begin();
+        std::vector<CPLString> oVector;
+        for( ; oIter != m_oConf.m_oMapChildrenElementsConstraints.end(); ++oIter )
+            oVector.push_back(oIter->first);
+        m_oChildrenElementsConstraintsXPathMatcher.SetRefXPaths(
+            m_oConf.m_oMapPrefixToURITypeConstraints,
+            oVector );
+    }
+
+    GMLASSchemaAnalyzer oAnalyzer(m_oIgnoredXPathMatcher,
+                                  m_oChildrenElementsConstraintsXPathMatcher,
+                                  m_oConf.m_oMapChildrenElementsConstraints);
     oAnalyzer.SetUseArrays(m_oConf.m_bUseArrays);
     oAnalyzer.SetUseNullState(m_oConf.m_bUseNullState);
     oAnalyzer.SetInstantiateGMLFeaturesOnly(
