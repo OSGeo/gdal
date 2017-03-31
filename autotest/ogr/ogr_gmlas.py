@@ -3698,6 +3698,234 @@ def ogr_gmlas_read_fake_gmljp2():
     return 'success'
 
 ###############################################################################
+#  Test TypingConstraints
+
+def ogr_gmlas_typing_constraints():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    # One substitution, no repetition
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_typing_constraints.xml',
+"""<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns ogr_gmlas_typing_constraints.xsd">
+    <myns:foo>
+        <myns:bar><myns:value>baz</myns:value></myns:bar>
+    </myns:foo>
+</myns:main_elt>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_typing_constraints.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" minOccurs="0"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="bar">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_typing_constraints.xml',
+        open_options = ["""CONFIG_FILE=<Configuration>
+<TypingConstraints>
+        <Namespaces>
+            <Namespace prefix="myns_modified_for_fun" uri="http://myns"/>
+        </Namespaces>
+        <ChildConstraint>
+            <ContainerXPath>myns_modified_for_fun:main_elt/myns_modified_for_fun:foo</ContainerXPath>
+            <ChildrenElements>
+                <Element>myns_modified_for_fun:bar</Element>
+            </ChildrenElements>
+        </ChildConstraint>
+    </TypingConstraints>
+</Configuration>"""])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if not f.IsFieldSetAndNotNull('foo_bar_pkid'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    lyr = ds.GetLayer(1)
+    f = lyr.GetNextFeature()
+    if f.GetField('value') != 'baz':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gmlas_typing_constraints.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_typing_constraints.xsd')
+
+
+
+
+    # One substitution, with repetition
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_typing_constraints.xml',
+"""<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns ogr_gmlas_typing_constraints.xsd">
+    <myns:foo>
+        <myns:bar><myns:value>baz</myns:value></myns:bar>
+        <myns:bar><myns:value>baz2</myns:value></myns:bar>
+    </myns:foo>
+</myns:main_elt>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_typing_constraints.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="bar">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_typing_constraints.xml',
+        open_options = ["""CONFIG_FILE=<Configuration>
+<TypingConstraints>
+        <Namespaces>
+            <Namespace prefix="myns_modified_for_fun" uri="http://myns"/>
+        </Namespaces>
+        <ChildConstraint>
+            <ContainerXPath>myns_modified_for_fun:main_elt/myns_modified_for_fun:foo</ContainerXPath>
+            <ChildrenElements>
+                <Element>myns_modified_for_fun:bar</Element>
+            </ChildrenElements>
+        </ChildConstraint>
+    </TypingConstraints>
+</Configuration>"""])
+    lyr = ds.GetLayer('main_elt_foo_bar')
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayer('bar')
+    f = lyr.GetNextFeature()
+    if f.GetField('value') != 'baz':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('value') != 'baz2':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gmlas_typing_constraints.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_typing_constraints.xsd')
+
+
+    # 2 substitutions
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_typing_constraints.xml',
+"""<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns ogr_gmlas_typing_constraints.xsd">
+    <myns:foo>
+        <myns:bar><myns:value>baz</myns:value></myns:bar>
+    </myns:foo>
+</myns:main_elt>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_typing_constraints.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" minOccurs="0"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="bar">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="baz">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_typing_constraints.xml',
+        open_options = ["""CONFIG_FILE=<Configuration>
+<TypingConstraints>
+        <Namespaces>
+            <Namespace prefix="myns_modified_for_fun" uri="http://myns"/>
+        </Namespaces>
+        <ChildConstraint>
+            <ContainerXPath>myns_modified_for_fun:main_elt/myns_modified_for_fun:foo</ContainerXPath>
+            <ChildrenElements>
+                <Element>myns_modified_for_fun:bar</Element>
+                <Element>myns_modified_for_fun:baz</Element>
+            </ChildrenElements>
+        </ChildConstraint>
+    </TypingConstraints>
+</Configuration>"""])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if not f.IsFieldSetAndNotNull('foo_bar_pkid'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f.IsFieldSetAndNotNull('foo_baz_pkid'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    lyr = ds.GetLayer(1)
+    f = lyr.GetNextFeature()
+    if f.GetField('value') != 'baz':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gmlas_typing_constraints.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_typing_constraints.xsd')
+
+
+    return 'success'
+
+
+###############################################################################
 #  Cleanup
 
 def ogr_gmlas_cleanup():
@@ -3764,9 +3992,10 @@ gdaltest_list = [
     ogr_gmlas_writer_options,
     ogr_gmlas_writer_errors,
     ogr_gmlas_read_fake_gmljp2,
+    ogr_gmlas_typing_constraints,
     ogr_gmlas_cleanup ]
 
-# gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_writer_gml, ogr_gmlas_cleanup ]
+#gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_typing_constraints, ogr_gmlas_cleanup ]
 
 if __name__ == '__main__':
 

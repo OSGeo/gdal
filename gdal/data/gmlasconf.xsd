@@ -148,6 +148,7 @@
             </xs:documentation>
           </xs:annotation>
         </xs:element>
+
         <xs:element name="LayerBuildingRules" minOccurs="0">
           <xs:annotation>
             <xs:documentation>
@@ -299,6 +300,36 @@
                 </xs:annotation>
               </xs:element>
 
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
+
+        <xs:element name="TypingConstraints" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+                Constraints to specify the types of children of elements of
+                type xs:anyType.
+            </xs:documentation>
+          </xs:annotation>
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Namespaces" type="namespacesType" minOccurs="0"/>
+
+              <xs:element name="ChildConstraint" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="ContainerXPath" type="xs:string"/>
+                    <xs:element name="ChildrenElements" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Element" type="xs:string" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
             </xs:sequence>
           </xs:complexType>
         </xs:element>
@@ -669,54 +700,7 @@
                   </xs:documentation>
                 </xs:annotation>
               </xs:element>
-              <xs:element name="Namespaces" minOccurs="0">
-                <xs:annotation>
-                  <xs:documentation>
-                    Define optional namespaces prefix/uri tuples with
-                    which to interpret the XPath elements defined
-                    afterwards.
-                    This allows the user to define different rules when
-                    different namespaces in different XML instances map
-                    to the same prefix. E.g documents referencing
-                    different GML versions may use "gml" as
-                    a prefix for "http://www.opengis.net/gml" or
-                    "http://www.opengis.net/gml/3.2", but it might be
-                    desirable to have different exclusion rules.
-                    When comparing the XPath exclusion rules and the
-                    XPath of the elements/attributes of the parsed
-                    documents, and when the namespace of the XPath
-                    exclusion rule has been difined, the URI will be
-                    used as the unambiguous key. Otherwise prefix
-                    matching will be used.
-                  </xs:documentation>
-                </xs:annotation>
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element name="Namespace" minOccurs="0" maxOccurs="unbounded">
-                      <xs:annotation>
-                        <xs:documentation>
-                          Define a namespaces prefix/uri tuple with
-                          which to interpret the XPath elements
-                          defined afterwards.
-                        </xs:documentation>
-                      </xs:annotation>
-                      <xs:complexType>
-                        <xs:sequence/>
-                        <xs:attribute name="prefix" type="xs:string" use="required">
-                          <xs:annotation>
-                            <xs:documentation>Namespace prefix.</xs:documentation>
-                          </xs:annotation>
-                        </xs:attribute>
-                        <xs:attribute name="uri" type="xs:string" use="required">
-                          <xs:annotation>
-                            <xs:documentation>Namespace URI.</xs:documentation>
-                          </xs:annotation>
-                        </xs:attribute>
-                      </xs:complexType>
-                    </xs:element>
-                  </xs:sequence>
-                </xs:complexType>
-              </xs:element>
+              <xs:element name="Namespaces" type="namespacesType" minOccurs="0"/>
               <xs:element name="XPath" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
                   <xs:documentation>
@@ -927,5 +911,52 @@ Use ogr_gmlas:FeatureCollection / ogr_gmlas:featureMember wrapping
         <xs:enumeration value="unlimited"/>
     </xs:restriction>
   </xs:simpleType>
+
+  <xs:complexType name="namespacesType">
+    <xs:annotation>
+        <xs:documentation>
+        Define optional namespaces prefix/uri tuples with
+        which to interpret the XPath elements defined
+        afterwards.
+        This allows the user to define different rules when
+        different namespaces in different XML instances map
+        to the same prefix. E.g documents referencing
+        different GML versions may use "gml" as
+        a prefix for "http://www.opengis.net/gml" or
+        "http://www.opengis.net/gml/3.2", but it might be
+        desirable to have different exclusion rules.
+        When comparing the XPath exclusion rules and the
+        XPath of the elements/attributes of the parsed
+        documents, and when the namespace of the XPath
+        exclusion rule has been difined, the URI will be
+        used as the unambiguous key. Otherwise prefix
+        matching will be used.
+        </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+        <xs:element name="Namespace" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+            <xs:documentation>
+                Define a namespaces prefix/uri tuple with
+                which to interpret the XPath elements
+                defined afterwards.
+            </xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+            <xs:sequence/>
+            <xs:attribute name="prefix" type="xs:string" use="required">
+                <xs:annotation>
+                <xs:documentation>Namespace prefix.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="uri" type="xs:string" use="required">
+                <xs:annotation>
+                <xs:documentation>Namespace URI.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            </xs:complexType>
+        </xs:element>
+     </xs:sequence>
+  </xs:complexType>
 
 </xs:schema>
