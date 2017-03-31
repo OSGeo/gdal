@@ -3694,7 +3694,7 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
   "  AXIS[\"longitude\",east,ORDER[2],ANGLEUNIT[\"degree\",0.01745329252]],"
   "  AXIS[\"ellipsoidal height\",up,ORDER[3],LENGTHUNIT[\"metre\",1.0]],"
   "ID[\"EPSG\",4979]]";
-        if( m_bHasDefinition12_063 )
+        if( !m_bHasDefinition12_063 )
         {
             pszSQL = sqlite3_mprintf(
                 "INSERT INTO gpkg_spatial_ref_sys "
