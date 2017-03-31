@@ -79,6 +79,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
     bool                m_bHasGPKGOGRContents;
 #endif
     bool                m_bHasGPKGGeometryColumns;
+    bool                m_bHasDefinition12_063;
 
     CPLString           m_osIdentifier;
     bool                m_bIdentifierAsCO;

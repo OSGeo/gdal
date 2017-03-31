@@ -412,22 +412,47 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
     }
 
     // Add new SRS row to gpkg_spatial_ref_sys.
-    if( pszAuthorityName != NULL && nAuthorityCode > 0 )
+    if( m_bHasDefinition12_063 )
     {
-        pszSQL = sqlite3_mprintf(
-            "INSERT INTO gpkg_spatial_ref_sys "
-            "(srs_name,srs_id,organization,organization_coordsys_id,"
-            "definition) VALUES ('%q', %d, upper('%q'), %d, '%q')",
-            GetSrsName(*poSRS), nSRSId, pszAuthorityName, nAuthorityCode,
-            pszWKT );
+        if( pszAuthorityName != NULL && nAuthorityCode > 0 )
+        {
+            pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_spatial_ref_sys "
+                "(srs_name,srs_id,organization,organization_coordsys_id,"
+                "definition, definition_12_063) VALUES "
+                "('%q', %d, upper('%q'), %d, '%q', 'undefined')",
+                GetSrsName(*poSRS), nSRSId, pszAuthorityName, nAuthorityCode,
+                pszWKT );
+        }
+        else
+        {
+            pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_spatial_ref_sys "
+                "(srs_name,srs_id,organization,organization_coordsys_id,"
+                "definition, definition_12_063) VALUES "
+                "('%q', %d, upper('%q'), %d, '%q', 'undefined')",
+                GetSrsName(*poSRS), nSRSId, "NONE", nSRSId, pszWKT );
+        }
     }
     else
     {
-        pszSQL = sqlite3_mprintf(
-            "INSERT INTO gpkg_spatial_ref_sys "
-            "(srs_name,srs_id,organization,organization_coordsys_id,"
-            "definition) VALUES ('%q', %d, upper('%q'), %d, '%q')",
-            GetSrsName(*poSRS), nSRSId, "NONE", nSRSId, pszWKT );
+        if( pszAuthorityName != NULL && nAuthorityCode > 0 )
+        {
+            pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_spatial_ref_sys "
+                "(srs_name,srs_id,organization,organization_coordsys_id,"
+                "definition) VALUES ('%q', %d, upper('%q'), %d, '%q')",
+                GetSrsName(*poSRS), nSRSId, pszAuthorityName, nAuthorityCode,
+                pszWKT );
+        }
+        else
+        {
+            pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_spatial_ref_sys "
+                "(srs_name,srs_id,organization,organization_coordsys_id,"
+                "definition) VALUES ('%q', %d, upper('%q'), %d, '%q')",
+                GetSrsName(*poSRS), nSRSId, "NONE", nSRSId, pszWKT );
+        }
     }
 
     // Add new row to gpkg_spatial_ref_sys.
@@ -455,6 +480,7 @@ GDALGeoPackageDataset::GDALGeoPackageDataset() :
     m_bHasGPKGOGRContents(false),
 #endif
     m_bHasGPKGGeometryColumns(false),
+    m_bHasDefinition12_063(false),
     m_bIdentifierAsCO(false),
     m_bDescriptionAsCO(false),
     m_bHasReadMetadataFromStorage(false),
@@ -665,6 +691,19 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                   "At least one of the required GeoPackage tables, "
                   "gpkg_spatial_ref_sys or gpkg_contents, is missing");
         return FALSE;
+    }
+
+    // Detect definition_12_063 column
+    {
+        sqlite3_stmt* hSQLStmt = NULL;
+        int rc = sqlite3_prepare_v2( hDB,
+            "SELECT definition_12_063 FROM gpkg_spatial_ref_sys ", -1,
+            &hSQLStmt, NULL );
+        if( rc == SQLITE_OK )
+        {
+            m_bHasDefinition12_063 = true;
+            sqlite3_finalize(hSQLStmt);
+        }
     }
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
@@ -3004,7 +3043,13 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "organization TEXT NOT NULL,"
             "organization_coordsys_id INTEGER NOT NULL,"
             "definition  TEXT NOT NULL,"
-            "description TEXT"
+            "description TEXT";
+        if( CPLTestBool(CPLGetConfigOption("GPKG_ADD_DEFINITION_12_063", "NO")) )
+        {
+            m_bHasDefinition12_063 = true;
+            osSQL += ", definition_12_063 TEXT NOT NULL";
+        }
+        osSQL += 
             ")"
             ";"
         /* Requirement 11: The gpkg_spatial_ref_sys table in a GeoPackage SHALL */
@@ -3012,11 +3057,17 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         /* http://opengis.github.io/geopackage/#spatial_ref_sys */
 
             "INSERT INTO gpkg_spatial_ref_sys ("
-            "srs_name, srs_id, organization, organization_coordsys_id, definition, description"
+            "srs_name, srs_id, organization, organization_coordsys_id, definition, description";
+        if( m_bHasDefinition12_063 )
+            osSQL += ", definition_12_063";
+        osSQL +=
             ") VALUES ("
             "'WGS 84 geodetic', 4326, 'EPSG', 4326, '"
             "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]"
-            "', 'longitude/latitude coordinates in decimal degrees on the WGS 84 spheroid'"
+            "', 'longitude/latitude coordinates in decimal degrees on the WGS 84 spheroid'";
+        if( m_bHasDefinition12_063 )
+            osSQL += ", 'GEODCRS[\"WGS 84\", DATUM[\"World Geodetic System 1984\", ELLIPSOID[\"WGS 84\",6378137, 298.257223563, LENGTHUNIT[\"metre\", 1.0]]], PRIMEM[\"Greenwich\", 0.0, ANGLEUNIT[\"degree\",0.0174532925199433]], CS[ellipsoidal, 2], AXIS[\"latitude\", north, ORDER[1]], AXIS[\"longitude\", east, ORDER[2]], ANGLEUNIT[\"degree\", 0.0174532925199433], ID[\"EPSG\", 4326]]'";
+        osSQL +=
             ")"
             ";"
         /* Requirement 11: The gpkg_spatial_ref_sys table in a GeoPackage SHALL */
@@ -3025,9 +3076,15 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         /* for undefined Cartesian coordinate reference systems */
         /* http://opengis.github.io/geopackage/#spatial_ref_sys */
             "INSERT INTO gpkg_spatial_ref_sys ("
-            "srs_name, srs_id, organization, organization_coordsys_id, definition, description"
+            "srs_name, srs_id, organization, organization_coordsys_id, definition, description";
+        if( m_bHasDefinition12_063 )
+            osSQL += ", definition_12_063";
+        osSQL +=
             ") VALUES ("
-            "'Undefined cartesian SRS', -1, 'NONE', -1, 'undefined', 'undefined cartesian coordinate reference system'"
+            "'Undefined cartesian SRS', -1, 'NONE', -1, 'undefined', 'undefined cartesian coordinate reference system'";
+        if( m_bHasDefinition12_063 )
+            osSQL += ", 'undefined'";
+        osSQL +=
             ")"
             ";"
         /* Requirement 11: The gpkg_spatial_ref_sys table in a GeoPackage SHALL */
@@ -3036,9 +3093,15 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         /* for undefined geographic coordinate reference systems */
         /* http://opengis.github.io/geopackage/#spatial_ref_sys */
             "INSERT INTO gpkg_spatial_ref_sys ("
-            "srs_name, srs_id, organization, organization_coordsys_id, definition, description"
+            "srs_name, srs_id, organization, organization_coordsys_id, definition, description";
+        if( m_bHasDefinition12_063 )
+            osSQL += ", definition_12_063";
+        osSQL +=
             ") VALUES ("
-            "'Undefined geographic SRS', 0, 'NONE', 0, 'undefined', 'undefined geographic coordinate reference system'"
+            "'Undefined geographic SRS', 0, 'NONE', 0, 'undefined', 'undefined geographic coordinate reference system'";
+        if( m_bHasDefinition12_063 )
+            osSQL += ", 'undefined'";
+        osSQL +=
             ")"
             ";"
         /* Requirement 13: A GeoPackage file SHALL include a gpkg_contents table */
@@ -3631,11 +3694,23 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
   "  AXIS[\"longitude\",east,ORDER[2],ANGLEUNIT[\"degree\",0.01745329252]],"
   "  AXIS[\"ellipsoidal height\",up,ORDER[3],LENGTHUNIT[\"metre\",1.0]],"
   "ID[\"EPSG\",4979]]";
-        pszSQL = sqlite3_mprintf(
-            "INSERT INTO gpkg_spatial_ref_sys "
-            "(srs_name,srs_id,organization,organization_coordsys_id,"
-            "definition) VALUES ('WGS 84 3D', 4979, 'EPSG', 4979, '%q')",
-            pszWKT);
+        if( m_bHasDefinition12_063 )
+        {
+            pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_spatial_ref_sys "
+                "(srs_name,srs_id,organization,organization_coordsys_id,"
+                "definition) VALUES ('WGS 84 3D', 4979, 'EPSG', 4979, '%q')",
+                pszWKT);
+        }
+        else
+        {
+            pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_spatial_ref_sys "
+                "(srs_name,srs_id,organization,organization_coordsys_id,"
+                "definition,definition_12_063) VALUES "
+                "('WGS 84 3D', 4979, 'EPSG', 4979, '%q', '%q')",
+                pszWKT, pszWKT);
+        }
         osSQL += ";";
         osSQL += pszSQL;
         sqlite3_free(pszSQL);
