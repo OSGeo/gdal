@@ -4203,9 +4203,8 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
     {
         if( EQUALN(psPro->proExeName, EPRJ_EXTERNAL_NZMG, 4) )
         {
-            // handle NZMG which is an external projection see
-            // http://www.linz.govt.nz/core/surveysystem/geodeticinfo\
-            //       /datums-projections/projections/nzmg/index.html
+            // Handle New Zealand Map Grid (NZMG) external projection.  See:
+            // http://www.linz.govt.nz/
             //
             // Is there a better way that doesn't require hardcoding
             // of these numbers?
