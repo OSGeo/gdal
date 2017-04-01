@@ -5891,7 +5891,7 @@ const char* GDALGeoPackageDataset::GetGeometryTypeString(OGRwkbGeometryType eTyp
 {
     const char* pszGPKGGeomType = OGRToOGCGeomType(eType);
     if( EQUAL(pszGPKGGeomType, "GEOMETRYCOLLECTION") &&
-        CPLTestBool(CPLGetConfigOption("OGR_GPKG_GEOMCOLLECTION", "YES")) )
+        CPLTestBool(CPLGetConfigOption("OGR_GPKG_GEOMCOLLECTION", "NO")) )
     {
         pszGPKGGeomType = "GEOMCOLLECTION";
     }
