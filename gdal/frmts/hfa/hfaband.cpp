@@ -1368,7 +1368,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
     // file in the right size.
     if( (panBlockFlag[iBlock] & BFLG_VALID) == 0 &&
         !(panBlockFlag[iBlock] & BFLG_COMPRESSED) &&
-        	panBlockStart[iBlock] == 0 )
+        panBlockStart[iBlock] == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to write to invalid tile with number %d "
