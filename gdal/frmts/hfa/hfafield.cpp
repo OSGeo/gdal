@@ -1008,6 +1008,13 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
           memcpy(&dfNumber, pabyData + nIndexValue * 8, 8);
           HFAStandard(8, &dfNumber);
           dfDoubleRet = dfNumber;
+          if( dfNumber > std::numeric_limits<int>::max() ||
+              dfNumber < std::numeric_limits<int>::min() )
+          {
+              CPLError(CE_Failure, CPLE_AppDefined,
+                       "Too large for int: %f", dfNumber);
+              return false;
+          }
           nIntRet = static_cast<int>(dfNumber);
       }
       break;
