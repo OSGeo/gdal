@@ -1,3 +1,4 @@
+#!/bin/bash
 # Build CGAL
 wget https://gforge.inria.fr/frs/download.php/file/34400/CGAL-4.5.1.tar.gz
 tar xf CGAL-4.5.1.tar.gz

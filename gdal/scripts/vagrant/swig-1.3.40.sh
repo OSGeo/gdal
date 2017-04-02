@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # abort install if any errors occur and enable tracing
 set -o errexit
@@ -12,7 +12,7 @@ fi
 #NUMTHREADS=1 # disable MP
 export NUMTHREADS
 
-wget "http://downloads.sourceforge.net/project/swig/swig/swig-1.3.40/swig-1.3.40.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fswig%2Ffiles%2Fswig%2Fswig-1.3.40%2F&ts=1425900154&use_mirror=freefr" -O swig-1.3.40.tar.gz
+wget --no-check-certificate https://sourceforge.net/projects/swig/files/swig/swig-1.3.40/swig-1.3.40.tar.gz/download -O swig-1.3.40.tar.gz
 tar xvzf swig-1.3.40.tar.gz
 cd  swig-1.3.40
 ./configure --prefix=$HOME/install-swig-1.3.40
