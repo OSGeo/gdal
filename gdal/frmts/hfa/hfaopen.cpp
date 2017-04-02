@@ -210,6 +210,8 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     if( !bRet )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+        CPLFree(psInfo->pszFilename);
+        CPLFree(psInfo->pszPath);
         CPLFree(psInfo);
         return NULL;
     }
@@ -220,6 +222,8 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     if( psInfo->poRoot == NULL )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+        CPLFree(psInfo->pszFilename);
+        CPLFree(psInfo->pszPath);
         CPLFree(psInfo);
         return NULL;
     }
