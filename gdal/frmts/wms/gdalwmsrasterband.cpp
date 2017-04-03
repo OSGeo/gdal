@@ -659,7 +659,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
             }
         }
         if (!advise_read) {
-			const int * const bandmap = GetBandMapForExpand( nDSRasterCount, m_parent_dataset->nBands );
+            const int * const bandmap = GetBandMapForExpand( nDSRasterCount, m_parent_dataset->nBands );
             for (int ib = 1; ib <= m_parent_dataset->nBands; ++ib) {
                 if (ret == CE_None) {
                     void *p = NULL;
