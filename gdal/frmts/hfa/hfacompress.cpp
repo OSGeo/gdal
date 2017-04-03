@@ -27,7 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "hfa_p.h"
+
+#include <cstddef>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
+#include "hfa.h"
 
 CPL_CVSID("$Id$");
 
@@ -91,7 +99,7 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
     }
     else if( m_nDataTypeNumBits == 16 )
     {
-        val = ((GUInt16* )m_pData)[iPixel];
+        val = ((GUInt16 *)m_pData)[iPixel];
     }
     else if( m_nDataTypeNumBits == 32 )
     {
