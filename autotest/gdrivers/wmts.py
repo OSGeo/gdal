@@ -1697,8 +1697,6 @@ def wmts_23( imagetype, expected_cs ):
         print(ds.RasterYSize)
         return 'fail'
 
-    copy_ds = gdal.GetDriverByName('PNG').CreateCopy( '/home/sas/tmp/gdal-test/' + imagetype + '.png', ds )
-
     for i in range(4):
         cs = ds.GetRasterBand( i + 1 ).Checksum()
         if cs != expected_cs[i]:
