@@ -853,7 +853,21 @@ def process_args(argv):
     else:
         output_folder = os.path.basename(input_file)
 
+    options = options_post_processing(options, input_file, output_folder)
+
     return input_file, output_folder, options
+
+
+def options_post_processing(options, input_file, output_folder):
+    # Workaround for old versions of GDAL
+    try:
+        if ((options.verbose and options.resampling == 'near') or
+                gdal.TermProgress_nocb):
+            pass
+    except Exception:
+        exit_with_error("This version of GDAL is not supported. Please upgrade to 1.6+.")
+
+    return options
 
 
 class TileJobInfo(object):

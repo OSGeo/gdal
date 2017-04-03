@@ -1,8 +1,14 @@
 import os
 import tempfile
-from unittest import TestCase
+from unittest import mock, TestCase
 
 import gdal2tiles
+
+
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
 
 
 class OptionParserInputOutputTest(TestCase):
@@ -18,7 +24,7 @@ class OptionParserInputOutputTest(TestCase):
 
     def test_output_folder_is_the_input_file_folder_when_none_passed(self):
         _, input_file = tempfile.mkstemp()
-        parsed_input, parsed_output, options = gdal2tiles.process_args([input_file])
+        _, parsed_output, options = gdal2tiles.process_args([input_file])
 
         self.assertEqual(parsed_output, os.path.basename(input_file))
 
@@ -41,3 +47,26 @@ class OptionParserInputOutputTest(TestCase):
     def test_exits_when_first_param_is_not_a_file(self):
         folder = tempfile.gettempdir()
         self._asserts_exits_with_code_2([folder])
+
+
+class OptionParserPostProcessingTest(TestCase):
+
+    def setUp(self):
+        self.DEFAULT_OPTIONS = {'verbose': True, 'resampling': 'near'}
+        self.DEFAULT_ATTRDICT_OPTIONS = AttrDict(self.DEFAULT_OPTIONS)
+
+    @mock.patch('gdal2tiles.gdal', spec=[])
+    def test_verbose_resampling_does_not_need_TermProgress_nocb(self, mock_term_progress):
+        # With the [] spec, calling any non-list method/property on gdal will raise an error, which
+        # is what we want gdal.TermProgress_nocb to do
+        gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "bar.tiff", "baz")
+        # The fact that no error is thrown is the point of the test
+
+    @mock.patch('gdal2tiles.gdal', spec=[])
+    def test_non_verbose_resampling_exits_if_no_TermProgress_nocb(self, _):
+        # With the [] spec, calling any non-list method/property on gdal will raise an error, which
+        # is what we want gdal.TermProgress_nocb to do
+        self.DEFAULT_ATTRDICT_OPTIONS['verbose'] = False
+
+        with self.assertRaises(SystemExit):
+            gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "bar.tiff", "baz")
