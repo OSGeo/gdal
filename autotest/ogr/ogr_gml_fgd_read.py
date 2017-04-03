@@ -56,9 +56,6 @@ def ogr_gml_fgd_1():
 
     gdaltest.have_gml_fgd_reader = 0
 
-    if not gdaltest.have_gml_fgd_reader:
-        return 'skip'
-
     ### open FGD GML file
     try:
         ds = ogr.Open(_fgd_dir + 'ElevPt.xml')
@@ -74,7 +71,6 @@ def ogr_gml_fgd_1():
 
     # we have gml reader for fgd
     gdaltest.have_gml_fgd_reader = 1
-
 
     # check number of layers
     if ds.GetLayerCount() != 1:
