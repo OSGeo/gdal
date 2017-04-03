@@ -867,6 +867,9 @@ def options_post_processing(options, input_file, output_folder):
     except Exception:
         exit_with_error("This version of GDAL is not supported. Please upgrade to 1.6+.")
 
+    if not options.title:
+        options.title = os.path.basename(input_file)
+
     return options
 
 

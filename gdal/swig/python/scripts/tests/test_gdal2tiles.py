@@ -24,7 +24,7 @@ class OptionParserInputOutputTest(TestCase):
 
     def test_output_folder_is_the_input_file_folder_when_none_passed(self):
         _, input_file = tempfile.mkstemp()
-        _, parsed_output, options = gdal2tiles.process_args([input_file])
+        _, parsed_output, _ = gdal2tiles.process_args([input_file])
 
         self.assertEqual(parsed_output, os.path.basename(input_file))
 
@@ -49,14 +49,19 @@ class OptionParserInputOutputTest(TestCase):
         self._asserts_exits_with_code_2([folder])
 
 
+# pylint:disable=E1101
 class OptionParserPostProcessingTest(TestCase):
 
     def setUp(self):
-        self.DEFAULT_OPTIONS = {'verbose': True, 'resampling': 'near'}
+        self.DEFAULT_OPTIONS = {
+            'verbose': True,
+            'resampling': 'near',
+            'title': '',
+        }
         self.DEFAULT_ATTRDICT_OPTIONS = AttrDict(self.DEFAULT_OPTIONS)
 
     @mock.patch('gdal2tiles.gdal', spec=[])
-    def test_verbose_resampling_does_not_need_TermProgress_nocb(self, mock_term_progress):
+    def test_verbose_resampling_does_not_need_TermProgress_nocb(self, _):
         # With the [] spec, calling any non-list method/property on gdal will raise an error, which
         # is what we want gdal.TermProgress_nocb to do
         gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "bar.tiff", "baz")
@@ -70,3 +75,20 @@ class OptionParserPostProcessingTest(TestCase):
 
         with self.assertRaises(SystemExit):
             gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "bar.tiff", "baz")
+
+    def test_title_is_untouched_if_set(self):
+        title = "fizzbuzz"
+        self.DEFAULT_ATTRDICT_OPTIONS['title'] = title
+
+        options = gdal2tiles.options_post_processing(
+            self.DEFAULT_ATTRDICT_OPTIONS, "bar.tiff", "baz")
+
+        self.assertEqual(options.title, title)
+
+    def test_title_default_to_input_filename_if_not_set(self):
+        input_file = "foo/bar/fizz/buzz.tiff"
+
+        options = gdal2tiles.options_post_processing(
+            self.DEFAULT_ATTRDICT_OPTIONS, input_file, "baz")
+
+        self.assertEqual(options.title, os.path.basename(input_file))
