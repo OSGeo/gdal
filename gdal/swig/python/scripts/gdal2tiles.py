@@ -887,6 +887,14 @@ def options_post_processing(options, input_file, output_folder):
             exit_with_error("'average' resampling algorithm is not available.",
                             "Please use -r 'near' argument or upgrade to newer version of GDAL.")
 
+    elif options.resampling == 'antialias':
+        try:
+            if numpy:     # pylint:disable=W0125
+                pass
+        except Exception:
+            exit_with_error("'antialias' resampling algorithm is not available.",
+                            "Install PIL (Python Imaging Library) and numpy.")
+
     return options
 
 

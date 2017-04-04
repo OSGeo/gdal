@@ -141,3 +141,19 @@ class OptionParserPostProcessingTest(TestCase):
 
         with self.assertRaises(SystemExit):
             gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+
+    def test_antialias_resampling_supported_with_numpy(self):
+        gdal2tiles.numpy = True
+        self.DEFAULT_ATTRDICT_OPTIONS['resampling'] = "antialias"
+
+        gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+        # No error means it worked as expected
+
+    def test_antialias_resampling_not_supported_wout_numpy(self):
+        if hasattr(gdal2tiles, "numpy"):
+            del gdal2tiles.numpy
+
+        self.DEFAULT_ATTRDICT_OPTIONS['resampling'] = "antialias"
+
+        with self.assertRaises(SystemExit):
+            gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
