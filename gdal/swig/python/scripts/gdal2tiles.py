@@ -878,6 +878,15 @@ def options_post_processing(options, input_file, output_folder):
             out_path = out_path[:-1]
         options.url += os.path.basename(out_path) + '/'
 
+    # Supported options
+    if options.resampling == 'average':
+        try:
+            if gdal.RegenerateOverview:
+                pass
+        except Exception:
+            exit_with_error("'average' resampling algorithm is not available.",
+                            "Please use -r 'near' argument or upgrade to newer version of GDAL.")
+
     return options
 
 

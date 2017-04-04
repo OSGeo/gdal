@@ -61,6 +61,11 @@ class OptionParserPostProcessingTest(TestCase):
         }
         self.DEFAULT_ATTRDICT_OPTIONS = AttrDict(self.DEFAULT_OPTIONS)
 
+    def _setup_gdal_patch(self, mock_gdal):
+        mock_gdal.TermProgress_nocb = True
+        mock_gdal.RegenerateOverview = True
+        return mock_gdal
+
     @mock.patch('gdal2tiles.gdal', spec=[])
     def test_verbose_resampling_does_not_need_TermProgress_nocb(self, _):
         # With the [] spec, calling any non-list method/property on gdal will raise an error, which
@@ -119,3 +124,20 @@ class OptionParserPostProcessingTest(TestCase):
             self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", output_folder)
 
         self.assertEqual(options.url, url + "fizz/")
+
+    @mock.patch('gdal2tiles.gdal', spec=AttrDict())
+    def test_average_resampling_supported_with_latest_gdal(self, mock_gdal):
+        self._setup_gdal_patch(mock_gdal)
+        self.DEFAULT_ATTRDICT_OPTIONS['resampling'] = "average"
+
+        gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
+        # No error means it worked as expected
+
+    @mock.patch('gdal2tiles.gdal', spec=AttrDict())
+    def test_average_resampling_not_supported_in_old_gdal(self, mock_gdal):
+        mock_gdal = self._setup_gdal_patch(mock_gdal)
+        del mock_gdal.RegenerateOverview
+        self.DEFAULT_ATTRDICT_OPTIONS['resampling'] = "average"
+
+        with self.assertRaises(SystemExit):
+            gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "/bar/")
