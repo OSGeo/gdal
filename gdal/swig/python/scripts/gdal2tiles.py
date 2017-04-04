@@ -895,6 +895,56 @@ def options_post_processing(options, input_file, output_folder):
             exit_with_error("'antialias' resampling algorithm is not available.",
                             "Install PIL (Python Imaging Library) and numpy.")
 
+    # TODO: gbataille - to be put somewhere else
+    #
+    # elif self.options.resampling == 'near':
+    #     self.querysize = self.tilesize
+    #
+    # elif self.options.resampling == 'bilinear':
+    #     self.querysize = self.tilesize * 2
+    #
+    # # User specified zoom levels
+    # self.tminz = None
+    # self.tmaxz = None
+    # if self.options.zoom:
+    #     minmax = self.options.zoom.split('-', 1)
+    #     minmax.extend([''])
+    #     zoom_min, zoom_max = minmax[:2]
+    #     self.tminz = int(zoom_min)
+    #     if zoom_max:
+    #         self.tmaxz = int(zoom_max)
+    #     else:
+    #         self.tmaxz = int(zoom_min)
+    #
+    # # KML generation
+    # self.kml = self.options.kml
+    #
+    # Check if the input filename is full ascii or not
+
+    try:
+        os.path.basename(input_file).encode('ascii')
+    except UnicodeEncodeError:
+        full_ascii = False
+    else:
+        full_ascii = True
+
+    # LC_CTYPE check
+    if not full_ascii and 'UTF-8' not in os.environ.get("LC_CTYPE", ""):
+        if not options.quiet:
+            print("\nWARNING: "
+                  "You are running gdal2tiles.py with a LC_CTYPE environment variable that is "
+                  "not UTF-8 compatible, and your input file contains non-ascii characters. "
+                  "The generated sample googlemaps, openlayers or "
+                  "leaflet files might contain some invalid characters as a result\n")
+
+    # Output the results
+    if options.verbose:
+        print("Options:", options)
+        print("Input:", input_file)
+        print("Output:", output_folder)
+        print("Cache: %s MB" % (gdal.GetCacheMax() / 1024 / 1024))
+        print('')
+
     return options
 
 
