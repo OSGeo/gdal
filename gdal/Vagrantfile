@@ -35,6 +35,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     lxc.container_name = "gdal-vagrant"
   end
  
+  config.vm.provider :hyperv do |hyperv,ovrd|
+    ovrd.vm.box = "hashicorp/precise64"
+    ovrd.ssh.username = "vagrant"
+    hyperv.cpus = vm_cpu
+    hyperv.memory = vm_ram
+    hyperv.vmname = "gdal-vagrant"
+  end
+
   ppaRepos = [
     "ppa:ubuntugis/ubuntugis-unstable", "ppa:marlam/gta"
   ]
