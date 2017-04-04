@@ -57,6 +57,7 @@ class OptionParserPostProcessingTest(TestCase):
             'verbose': True,
             'resampling': 'near',
             'title': '',
+            'url': '',
         }
         self.DEFAULT_ATTRDICT_OPTIONS = AttrDict(self.DEFAULT_OPTIONS)
 
@@ -92,3 +93,29 @@ class OptionParserPostProcessingTest(TestCase):
             self.DEFAULT_ATTRDICT_OPTIONS, input_file, "baz")
 
         self.assertEqual(options.title, os.path.basename(input_file))
+
+    def test_url_stays_empty_if_not_passed(self):
+        options = gdal2tiles.options_post_processing(
+            self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", "baz")
+
+        self.assertEqual(options.url, "")
+
+    def test_url_ends_with_the_output_folder_last_component(self):
+        output_folder = "foo/bar/fizz"
+        url = "www.mysite.com/storage"
+        self.DEFAULT_ATTRDICT_OPTIONS['url'] = url
+
+        options = gdal2tiles.options_post_processing(
+            self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", output_folder)
+
+        self.assertEqual(options.url, url + "/fizz/")
+
+        # With already present trailing slashes
+        output_folder = "foo/bar/fizz/"
+        url = "www.mysite.com/storage/"
+        self.DEFAULT_ATTRDICT_OPTIONS['url'] = url
+
+        options = gdal2tiles.options_post_processing(
+            self.DEFAULT_ATTRDICT_OPTIONS, "foo.tiff", output_folder)
+
+        self.assertEqual(options.url, url + "fizz/")

@@ -870,6 +870,14 @@ def options_post_processing(options, input_file, output_folder):
     if not options.title:
         options.title = os.path.basename(input_file)
 
+    if options.url and not options.url.endswith('/'):
+        options.url += '/'
+    if options.url:
+        out_path = output_folder
+        if out_path.endswith("/"):
+            out_path = out_path[:-1]
+        options.url += os.path.basename(out_path) + '/'
+
     return options
 
 
