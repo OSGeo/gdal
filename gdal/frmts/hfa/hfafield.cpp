@@ -40,6 +40,7 @@
 #  include <fcntl.h>
 #endif
 #include <algorithm>
+#include <limits>
 #include <vector>
 
 #include "cpl_conv.h"
