@@ -997,13 +997,6 @@ class GDAL2Tiles(object):
         # Generation of the overview tiles (higher in the pyramid)
         self.generate_overview_tiles()
 
-    def error(self, msg, details=""):
-        """Print an error message and stop the processing"""
-        if details:
-            self.parser.error(msg + "\n\n" + details)
-        else:
-            self.parser.error(msg)
-
     def progressbar(self, complete=0.0):
         """Print progressbar for float value 0..1"""
         gdal.TermProgress_nocb(complete)
@@ -1063,7 +1056,7 @@ class GDAL2Tiles(object):
         self.parser = optparse_init()
         self.options, self.args = self.parser.parse_args(args=arguments)
         if not self.args:
-            self.error("No input file specified")
+            exit_with_error("No input file specified")
 
         # POSTPROCESSING OF PARSED ARGUMENTS:
 
@@ -1073,7 +1066,7 @@ class GDAL2Tiles(object):
                     gdal.TermProgress_nocb):
                 pass
         except Exception:
-            self.error("This version of GDAL is not supported. Please upgrade to 1.6+.")
+            exit_with_error("This version of GDAL is not supported. Please upgrade to 1.6+.")
 
         # Is output directory the last argument?
 
@@ -1086,9 +1079,11 @@ class GDAL2Tiles(object):
         # More files on the input not directly supported yet
 
         if (len(self.args) > 1):
-            self.error("Processing of several input files is not supported.",
-                       "Please first use a tool like gdal_vrtmerge.py or gdal_merge.py on the "
-                       "files: gdal_vrtmerge.py -o merged.vrt %s" % " ".join(self.args))
+           exit_with_error(
+               "Processing of several input files is not supported.",
+               "Please first use a tool like gdal_vrtmerge.py or gdal_merge.py on the "
+               "files: gdal_vrtmerge.py -o merged.vrt %s" % " ".join(self.args)
+           )
 
         self.input = self.args[0]
 
@@ -1112,16 +1107,18 @@ class GDAL2Tiles(object):
                 if gdal.RegenerateOverview:
                     pass
             except Exception:
-                self.error("'average' resampling algorithm is not available.",
-                           "Please use -r 'near' argument or upgrade to newer version of GDAL.")
+                exit_with_error(
+                    "'average' resampling algorithm is not available.",
+                    "Please use -r 'near' argument or upgrade to newer version of GDAL."
+                )
 
         elif self.options.resampling == 'antialias':
             try:
                 if numpy:     # pylint:disable=W0125
                     pass
             except Exception:
-                self.error("'antialias' resampling algorithm is not available.",
-                           "Install PIL (Python Imaging Library) and numpy.")
+                exit_with_error("'antialias' resampling algorithm is not available.",
+                                "Install PIL (Python Imaging Library) and numpy.")
 
         elif self.options.resampling == 'near':
             self.querysize = self.tilesize
@@ -1198,18 +1195,20 @@ class GDAL2Tiles(object):
 
         if not self.in_ds:
             # Note: GDAL prints the ERROR message too
-            self.error("It is not possible to open the input file '%s'." % self.input)
+            exit_with_error("It is not possible to open the input file '%s'." % self.input)
 
         # Read metadata from the input file
         if self.in_ds.RasterCount == 0:
-            self.error("Input file '%s' has no raster band" % self.input)
+            exit_with_error("Input file '%s' has no raster band" % self.input)
 
         if self.in_ds.GetRasterBand(1).GetRasterColorTable():
-            self.error("Please convert this file to RGB/RGBA and run gdal2tiles on the result.",
-                       "From paletted file you can create RGBA file (temp.vrt) by:\n"
-                       "gdal_translate -of vrt -expand rgba %s temp.vrt\n"
-                       "then run:\n"
-                       "gdal2tiles temp.vrt" % self.input)
+            exit_with_error(
+                "Please convert this file to RGB/RGBA and run gdal2tiles on the result.",
+                "From paletted file you can create RGBA file (temp.vrt) by:\n"
+                "gdal_translate -of vrt -expand rgba %s temp.vrt\n"
+                "then run:\n"
+                "gdal2tiles temp.vrt" % self.input
+            )
 
         # Get NODATA value
         in_nodata = []
@@ -1262,10 +1261,12 @@ class GDAL2Tiles(object):
 
             if ((self.in_ds.GetGeoTransform() == (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)) and
                     (self.in_ds.GetGCPCount() == 0)):
-                self.error("There is no georeference - neither affine transformation (worldfile) "
-                           "nor GCPs. You can generate only 'raster' profile tiles.",
-                           "Either gdal2tiles with parameter -p 'raster' or use another GIS "
-                           "software for georeference e.g. gdal_transform -gcp / -a_ullr / -a_srs")
+                exit_with_error(
+                    "There is no georeference - neither affine transformation (worldfile) "
+                    "nor GCPs. You can generate only 'raster' profile tiles.",
+                    "Either gdal2tiles with parameter -p 'raster' or use another GIS "
+                    "software for georeference e.g. gdal_transform -gcp / -a_ullr / -a_srs"
+                )
 
             if in_srs:
                 if ((in_srs.ExportToProj4() != self.out_srs.ExportToProj4()) or
@@ -1364,8 +1365,9 @@ class GDAL2Tiles(object):
                     '''
 
             else:
-                self.error("Input file has unknown SRS.",
-                           "Use --s_srs ESPG:xyz (or similar) to provide source reference system.")
+                exit_with_error(
+                    "Input file has unknown SRS.",
+                    "Use --s_srs ESPG:xyz (or similar) to provide source reference system.")
 
             if self.out_ds and self.options.verbose:
                 print("Projected file:", "tiles.vrt", "( %sP x %sL - %s bands)" % (
@@ -1406,8 +1408,8 @@ class GDAL2Tiles(object):
 
         # Report error in case rotation/skew is in geotransform (possible only in 'raster' profile)
         if (self.out_gt[2], self.out_gt[4]) != (0, 0):
-            self.error("Georeference of the raster contains rotation or skew. "
-                       "Such raster is not supported. Please use gdalwarp first.")
+            exit_with_error("Georeference of the raster contains rotation or skew. "
+                            "Such raster is not supported. Please use gdalwarp first.")
 
         # Here we expect: pixel is square, no rotation on the raster
 
