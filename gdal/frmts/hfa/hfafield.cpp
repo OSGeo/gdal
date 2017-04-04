@@ -125,7 +125,7 @@ const char *HFAField::Initialize( const char *pszInput )
     }
 
     // If this is an object, we extract the type of the object.
-    int i;  // TODO: Describe why i needs to span chItemType blocks.
+    int i = 0;  // TODO: Describe why i needs to span chItemType blocks.
 
     if( chItemType == 'o' )
     {
