@@ -2133,6 +2133,13 @@ void HFARasterBand::ReadHistogramMetadata()
     int nNumBins = poEntry->GetIntField("numRows");
     if( nNumBins < 0 )
         return;
+    // TODO(schwehr): Can we do a better/tighter check?
+    if( nNumBins > 1000000 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Unreasonably large histogram: %d", nNumBins);
+        return;
+    }
 
     // Fetch the histogram values.
     const int nOffset = poEntry->GetIntField("columnDataPtr");
