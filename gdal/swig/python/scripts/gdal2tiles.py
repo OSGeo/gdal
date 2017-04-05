@@ -895,32 +895,6 @@ def options_post_processing(options, input_file, output_folder):
             exit_with_error("'antialias' resampling algorithm is not available.",
                             "Install PIL (Python Imaging Library) and numpy.")
 
-    # TODO: gbataille - to be put somewhere else
-    #
-    # elif self.options.resampling == 'near':
-    #     self.querysize = self.tilesize
-    #
-    # elif self.options.resampling == 'bilinear':
-    #     self.querysize = self.tilesize * 2
-    #
-    # # User specified zoom levels
-    # self.tminz = None
-    # self.tmaxz = None
-    # if self.options.zoom:
-    #     minmax = self.options.zoom.split('-', 1)
-    #     minmax.extend([''])
-    #     zoom_min, zoom_max = minmax[:2]
-    #     self.tminz = int(zoom_min)
-    #     if zoom_max:
-    #         self.tmaxz = int(zoom_max)
-    #     else:
-    #         self.tmaxz = int(zoom_min)
-    #
-    # # KML generation
-    # self.kml = self.options.kml
-    #
-    # Check if the input filename is full ascii or not
-
     try:
         os.path.basename(input_file).encode('ascii')
     except UnicodeEncodeError:
@@ -1053,74 +1027,9 @@ class GDAL2Tiles(object):
 
         # RUN THE ARGUMENT PARSER:
 
-        self.parser = optparse_init()
-        self.options, self.args = self.parser.parse_args(args=arguments)
-        if not self.args:
-            exit_with_error("No input file specified")
+        self.input, self.output, self.options = process_args(arguments)
 
-        # POSTPROCESSING OF PARSED ARGUMENTS:
-
-        # Workaround for old versions of GDAL
-        try:
-            if ((self.options.verbose and self.options.resampling == 'near') or
-                    gdal.TermProgress_nocb):
-                pass
-        except Exception:
-            exit_with_error("This version of GDAL is not supported. Please upgrade to 1.6+.")
-
-        # Is output directory the last argument?
-
-        # Test output directory, if it doesn't exist
-        if (os.path.isdir(self.args[-1]) or
-                (len(self.args) > 1 and not os.path.exists(self.args[-1]))):
-            self.output = self.args[-1]
-            self.args = self.args[:-1]
-
-        # More files on the input not directly supported yet
-
-        if (len(self.args) > 1):
-           exit_with_error(
-               "Processing of several input files is not supported.",
-               "Please first use a tool like gdal_vrtmerge.py or gdal_merge.py on the "
-               "files: gdal_vrtmerge.py -o merged.vrt %s" % " ".join(self.args)
-           )
-
-        self.input = self.args[0]
-
-        # Default values for not given options
-
-        if not self.output:
-            # Directory with input filename without extension in actual directory
-            self.output = os.path.splitext(os.path.basename(self.input))[0]
-
-        if not self.options.title:
-            self.options.title = os.path.basename(self.input)
-
-        if self.options.url and not self.options.url.endswith('/'):
-            self.options.url += '/'
-        if self.options.url:
-            self.options.url += os.path.basename(self.output) + '/'
-
-        # Supported options
-        if self.options.resampling == 'average':
-            try:
-                if gdal.RegenerateOverview:
-                    pass
-            except Exception:
-                exit_with_error(
-                    "'average' resampling algorithm is not available.",
-                    "Please use -r 'near' argument or upgrade to newer version of GDAL."
-                )
-
-        elif self.options.resampling == 'antialias':
-            try:
-                if numpy:     # pylint:disable=W0125
-                    pass
-            except Exception:
-                exit_with_error("'antialias' resampling algorithm is not available.",
-                                "Install PIL (Python Imaging Library) and numpy.")
-
-        elif self.options.resampling == 'near':
+        if self.options.resampling == 'near':
             self.querysize = self.tilesize
 
         elif self.options.resampling == 'bilinear':
@@ -1141,31 +1050,6 @@ class GDAL2Tiles(object):
 
         # KML generation
         self.kml = self.options.kml
-
-        # Check if the input filename is full ascii or not
-        try:
-            os.path.basename(self.input).encode('ascii')
-        except UnicodeEncodeError:
-            full_ascii = False
-        else:
-            full_ascii = True
-
-        # LC_CTYPE check
-        if not full_ascii and 'UTF-8' not in os.environ.get("LC_CTYPE", ""):
-            if not self.options.quiet:
-                print("\nWARNING: "
-                      "You are running gdal2tiles.py with a LC_CTYPE environment variable that is "
-                      "not UTF-8 compatible, and your input file contains non-ascii characters. "
-                      "The generated sample googlemaps, openlayers or "
-                      "leaflet files might contain some invalid characters as a result\n")
-
-        # Output the results
-        if self.options.verbose:
-            print("Options:", self.options)
-            print("Input:", self.input)
-            print("Output:", self.output)
-            print("Cache: %s MB" % (gdal.GetCacheMax() / 1024 / 1024))
-            print('')
 
     # -------------------------------------------------------------------------
     def open_input(self):
