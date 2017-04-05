@@ -2162,8 +2162,8 @@ void HFARasterBand::ReadHistogramMetadata()
         for( int i = 0; i < nNumBins; i++ )
         {
             const double dfNumber = padfWorkBuf[i];
-            if( dfNumber > std::numeric_limits<GUIntBig>::max() ||
-                dfNumber < std::numeric_limits<GUIntBig>::min() ||
+            if( dfNumber >= std::numeric_limits<GUIntBig>::max() ||
+                dfNumber <= std::numeric_limits<GUIntBig>::min() ||
                 CPLIsNan(dfNumber) )
             {
                 CPLError(CE_Failure, CPLE_FileIO, "Out of range hist vals.");
