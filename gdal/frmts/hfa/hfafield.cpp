@@ -33,7 +33,6 @@
 
 #include <cerrno>
 #include <climits>
-#include <math.h>  // isnan only in cmath starting with C++11.
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -1012,7 +1011,7 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
           dfDoubleRet = dfNumber;
           if( dfNumber > std::numeric_limits<int>::max() ||
               dfNumber < std::numeric_limits<int>::min() ||
-              isnan(dfNumber) )
+              CPLIsNan(dfNumber) )
           {
               CPLError(CE_Failure, CPLE_AppDefined,
                        "Too large for int: %f", dfNumber);
