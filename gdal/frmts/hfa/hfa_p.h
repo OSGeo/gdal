@@ -33,9 +33,13 @@
 #define HFA_P_H_INCLUDED
 
 #include "cpl_port.h"
+#include "hfa.h"
+
+#include <cstdio>
+#include <vector>
+
 #include "cpl_error.h"
 #include "cpl_vsi.h"
-#include <vector>
 
 #ifdef CPL_LSB
 #  define HFAStandard(n,p) {}
@@ -45,11 +49,11 @@
 
 #include "hfa.h"
 
-class HFAEntry;
-class HFAType;
-class HFADictionary;
 class HFABand;
+class HFADictionary;
+class HFAEntry;
 class HFASpillFile;
+class HFAType;
 
 /************************************************************************/
 /*      Flag indicating read/write, or read-only access to data.        */
@@ -427,13 +431,6 @@ class HFAType
 class HFADictionary
 {
   public:
-    int         nTypes;
-    int         nTypesMax;
-    HFAType     **papoTypes;
-
-    CPLString   osDictionaryText;
-    bool        bDictionaryTextDirty;
-
     explicit     HFADictionary( const char *pszDict );
                 ~HFADictionary();
 
@@ -443,6 +440,16 @@ class HFADictionary
     static int  GetItemSize( char );
 
     void        Dump( FILE * );
+
+  private:
+    int         nTypes;
+    int         nTypesMax;
+    HFAType     **papoTypes;
+
+  public:
+    // TODO(schwehr): Make these members private.
+    CPLString   osDictionaryText;
+    bool        bDictionaryTextDirty;
 };
 
 /************************************************************************/

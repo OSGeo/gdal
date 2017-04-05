@@ -98,7 +98,7 @@ static const char * const apszDefDefn[] = {
 /*                           HFADictionary()                            */
 /************************************************************************/
 
-HFADictionary::HFADictionary( const char * pszString ) :
+HFADictionary::HFADictionary( const char *pszString ) :
     nTypes(0),
     nTypesMax(0),
     papoTypes(NULL),
