@@ -2971,11 +2971,11 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(char** papszArgv,
             }
             psOptions->az = CPLAtof(papszArgv[i]);
         }
-        else if( eUtilityMode == HILL_SHADE &&
+        else if( 
             (EQUAL(papszArgv[i], "--alt") ||
              EQUAL(papszArgv[i], "-alt") ||
-             EQUAL(papszArgv[i], "--alt") ||
-             EQUAL(papszArgv[i], "-alt")) && i+1<argc
+             EQUAL(papszArgv[i], "--altitude") ||
+             EQUAL(papszArgv[i], "-altitude")) && i+1<argc
           )
         {
             ++i;
