@@ -1819,6 +1819,20 @@ CPLXMLNode *HFARasterAttributeTable::Serialize() const
 /*                           HFARasterBand()                            */
 /************************************************************************/
 
+namespace {
+
+// Convert 0..1 input color range to 0..255.
+// Clamp overflow and underflow.
+short ColorToShort(double val)
+{
+    const double dfScaled = val * 256.0;
+    // Clamp to [0..255].
+    const double dfClamped = std::max(0.0, std::min(255.0, dfScaled));
+    return static_cast<short>(dfClamped);
+}
+
+}  // namespace
+
 HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
     poCT(NULL),
     // eHFADataType
@@ -1959,12 +1973,11 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
             // the [0...1] range to each possible output value and avoid
             // rounding issues for the "normal" values generated using n/255.
             // See bug #1732 for some discussion.
-            const short nMax = 255;
             GDALColorEntry sEntry = {
-                std::min(nMax, static_cast<short>(padfRed[iColor] * 256)),
-                std::min(nMax, static_cast<short>(padfGreen[iColor] * 256)),
-                std::min(nMax, static_cast<short>(padfBlue[iColor] * 256)),
-                std::min(nMax, static_cast<short>(padfAlpha[iColor] * 256))
+                ColorToShort(padfRed[iColor]),
+                ColorToShort(padfGreen[iColor]),
+                ColorToShort(padfBlue[iColor]),
+                ColorToShort(padfAlpha[iColor])
             };
 
             if( padfBins != NULL )
