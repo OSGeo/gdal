@@ -1216,12 +1216,26 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
               HFAStandard(8, &dfValue);
 
               dfDoubleRet = dfValue;
-              if( dfDoubleRet > INT_MAX )
-                  nIntRet = INT_MAX;
-              else if( dfDoubleRet < INT_MIN )
-                  nIntRet = INT_MIN;
+              const int nMax = std::numeric_limits<int>::max();
+              const int nMin = std::numeric_limits<int>::min();
+              if( dfDoubleRet >= nMax )
+              {
+                  nIntRet = nMax;
+              }
+              else if( dfDoubleRet <= nMin )
+              {
+                  nIntRet = nMin;
+              }
+              else if( CPLIsNan(dfDoubleRet) )
+              {
+                  CPLError(CE_Warning, CPLE_AppDefined,
+                           "NaN converted to INT_MAX.");
+                  nIntRet = nMax;
+              }
               else
+              {
                   nIntRet = static_cast<int>(dfDoubleRet);
+              }
           }
           else
           {
