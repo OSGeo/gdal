@@ -33,6 +33,7 @@
 
 #include <cerrno>
 #include <climits>
+#include <cmath>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -1010,7 +1011,8 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
           HFAStandard(8, &dfNumber);
           dfDoubleRet = dfNumber;
           if( dfNumber > std::numeric_limits<int>::max() ||
-              dfNumber < std::numeric_limits<int>::min() )
+              dfNumber < std::numeric_limits<int>::min() ||
+              isnan(dfNumber) )
           {
               CPLError(CE_Failure, CPLE_AppDefined,
                        "Too large for int: %f", dfNumber);
