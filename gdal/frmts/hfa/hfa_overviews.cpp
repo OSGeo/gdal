@@ -81,26 +81,26 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
         // Create the HFA (.aux) file.  We create it with
         // COMPRESSED=YES so that no space will be allocated for the
         // base band.
-        GDALDriver *poHFADriver = (GDALDriver *) GDALGetDriverByName("HFA");
+        GDALDriver *poHFADriver =
+            static_cast<GDALDriver *>(GDALGetDriverByName("HFA"));
         if( poHFADriver == NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "HFA driver is unavailable.");
             return CE_Failure;
         }
 
-        const char *apszOptions[4] =
-            { "COMPRESSED=YES", "AUX=YES", NULL, NULL };
-
         CPLString osDepFileOpt = "DEPENDENT_FILE=";
         osDepFileOpt += CPLGetFilename(poParentDS->GetDescription());
-        apszOptions[2] = osDepFileOpt.c_str();
+
+        const char *apszOptions[4] =
+            { "COMPRESSED=YES", "AUX=YES", osDepFileOpt.c_str(), NULL };
 
         *ppoODS =
             poHFADriver->Create(pszOvrFilename,
                                 poParentDS->GetRasterXSize(),
                                 poParentDS->GetRasterYSize(),
                                 poParentDS->GetRasterCount(),
-                                eDT, (char **)apszOptions);
+                                eDT, const_cast<char **>(apszOptions));
 
         if( *ppoODS == NULL )
             return CE_Failure;
