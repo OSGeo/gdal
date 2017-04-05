@@ -2158,14 +2158,38 @@ void HFARasterBand::ReadHistogramMetadata()
 
     if( nBinSize == 8 )  // Source is doubles.
     {
+        const double *padfWorkBuf = reinterpret_cast<double *>(pabyWorkBuf);
         for( int i = 0; i < nNumBins; i++ )
-            panHistValues[i] =
-                static_cast<GUIntBig>(((double *)pabyWorkBuf)[i]);
+        {
+            const double dfNumber = padfWorkBuf[i];
+            if( dfNumber > std::numeric_limits<GUIntBig>::max() ||
+                dfNumber < std::numeric_limits<GUIntBig>::min() ||
+                CPLIsNan(dfNumber) )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Out of range hist vals.");
+                CPLFree(panHistValues);
+                CPLFree(pabyWorkBuf);
+                return;
+            }
+            panHistValues[i] = static_cast<GUIntBig>(dfNumber);
+        }
     }
     else  // Source is 32bit integers.
     {
+        const int *panWorkBuf = reinterpret_cast<int *>(pabyWorkBuf);
         for( int i = 0; i < nNumBins; i++ )
-            panHistValues[i] = static_cast<GUIntBig>(((int *)pabyWorkBuf)[i]);
+        {
+            const int nNumber = panWorkBuf[i];
+            // Positive int should always fit.
+            if( nNumber < 0 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Out of range hist vals.");
+                CPLFree(panHistValues);
+                CPLFree(pabyWorkBuf);
+                return;
+            }
+            panHistValues[i] = static_cast<GUIntBig>(nNumber);
+        }
     }
 
     CPLFree(pabyWorkBuf);
