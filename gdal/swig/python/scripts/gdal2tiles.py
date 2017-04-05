@@ -42,6 +42,7 @@ from __future__ import print_function, division
 import math
 from multiprocessing import Pipe, Pool, Process
 import os
+import tempfile
 import sys
 
 from osgeo import gdal
@@ -674,7 +675,7 @@ def create_base_tiles(tile_job_info):
     options = tile_job_info.options
 
     tilebands = dataBandsCount + 1
-    ds = gdal.Open("gba.vrt", gdal.GA_ReadOnly)
+    ds = gdal.Open(tile_job_info.src_file, gdal.GA_ReadOnly)
     mem_drv = gdal.GetDriverByName('MEM')
     out_drv = gdal.GetDriverByName(tile_job_info.tile_driver)
     alphaband = ds.GetRasterBand(1).GetMaskBand()
@@ -927,6 +928,7 @@ class TileJobInfo(object):
     Plain object to hold tile job configuration for a dataset
     """
     tile_details = []
+    src_file = ""
     nb_data_bands = 0
     output_file_path = ""
     tile_extension = ""
@@ -1009,6 +1011,7 @@ class GDAL2Tiles(object):
         self.tilesize = 256
         self.tiledriver = 'PNG'
         self.tileext = 'png'
+        _, self.temp_vrt = tempfile.mkstemp()
 
         # Should we read bigger window of the input raster and scale it down?
         # Note: Modified later by open_input()
@@ -1260,7 +1263,7 @@ class GDAL2Tiles(object):
         if not self.out_ds:
             self.out_ds = self.in_ds
 
-        self.out_ds.GetDriver().CreateCopy("gba.vrt", self.out_ds)
+        self.out_ds.GetDriver().CreateCopy(self.temp_vrt, self.out_ds)
 
         #
         # Here we should have a raster (out_ds) in the correct Spatial Reference system
@@ -1655,6 +1658,7 @@ class GDAL2Tiles(object):
         confs = [
             TileJobInfo(
                 tile_details=[tile],
+                src_file=self.temp_vrt,
                 nb_data_bands=self.dataBandsCount,
                 output_file_path=self.output,
                 tile_extension=self.tileext,
@@ -2639,6 +2643,8 @@ def main():
     pool.map(create_base_tiles, confs, chunksize)
     pool.close()
     pool.join()
+    os.unlink(confs[0].src_file)
+
 
 if __name__ == '__main__':
     main()
