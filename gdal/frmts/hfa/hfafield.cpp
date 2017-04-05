@@ -33,7 +33,7 @@
 
 #include <cerrno>
 #include <climits>
-#include <cmath>
+#include <math.h>  // isnan only in cmath starting with C++11.
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
