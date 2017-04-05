@@ -64,17 +64,22 @@ class OptionParserPostProcessingTest(TestCase):
     def _setup_gdal_patch(self, mock_gdal):
         mock_gdal.TermProgress_nocb = True
         mock_gdal.RegenerateOverview = True
+        mock_gdal.GetCacheMax = lambda: 1024 * 1024
         return mock_gdal
 
     @mock.patch('gdal2tiles.gdal', spec=[])
-    def test_verbose_resampling_does_not_need_TermProgress_nocb(self, _):
+    def test_verbose_resampling_does_not_need_TermProgress_nocb(self, mock_gdal):
+        mock_gdal = self._setup_gdal_patch(mock_gdal)
+        del mock_gdal.TermProgress_nocb
         # With the [] spec, calling any non-list method/property on gdal will raise an error, which
         # is what we want gdal.TermProgress_nocb to do
         gdal2tiles.options_post_processing(self.DEFAULT_ATTRDICT_OPTIONS, "bar.tiff", "baz")
         # The fact that no error is thrown is the point of the test
 
     @mock.patch('gdal2tiles.gdal', spec=[])
-    def test_non_verbose_resampling_exits_if_no_TermProgress_nocb(self, _):
+    def test_non_verbose_resampling_exits_if_no_TermProgress_nocb(self, mock_gdal):
+        mock_gdal = self._setup_gdal_patch(mock_gdal)
+        del mock_gdal.TermProgress_nocb
         # With the [] spec, calling any non-list method/property on gdal will raise an error, which
         # is what we want gdal.TermProgress_nocb to do
         self.DEFAULT_ATTRDICT_OPTIONS['verbose'] = False
