@@ -661,7 +661,6 @@ def gettempfilename(suffix):
             random_part = 'file%d' % random.randint(0, 1000000000)
             return os.path.join(tmpdir, random_part + suffix)
 
-    import tempfile
     return tempfile.mktemp(suffix)
 
 
