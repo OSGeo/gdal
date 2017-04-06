@@ -110,6 +110,10 @@ bool GML_IsSRSLatLongOrder(const char *pszSRSName)
         }
         return false;
     }
+    /* fguuid:jgd20??.bl (Japanese FGD GML v4) */
+    else if (strncmp(pszSRSName, "fguuid:jgd", 10) == 0 && strstr(pszSRSName, ".bl") != NULL) {
+        return true;
+    }
 
     return false;
 }

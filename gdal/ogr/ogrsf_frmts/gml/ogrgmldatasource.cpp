@@ -872,14 +872,24 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
                 {
                     GMLRegistryNamespace &oNamespace =
                         oRegistry.aoNamespaces[iNS];
-                    const char *pszNSToFind =
-                        CPLSPrintf("xmlns:%s", oNamespace.osPrefix.c_str());
-                    const char *pszURIToFind =
-                        CPLSPrintf("\"%s\"", oNamespace.osURI.c_str());
+                    // When namespace is omitted or fit with case sensitive match for
+                    // name space prefix, then go next to find feature match.
+                    //
                     // Case sensitive comparison since below test that also
                     // uses the namespace prefix is case sensitive.
-                    if( osHeader.find(pszNSToFind) != std::string::npos &&
-                        strstr(szHeader, pszURIToFind) != NULL )
+                    if( !oNamespace.osPrefix.empty() &&
+                        osHeader.find(CPLSPrintf("xmlns:%s",
+                            oNamespace.osPrefix.c_str()))
+                              == std::string::npos )
+                    {
+                        // namespace does not match with one of registry definition.
+                        // go to next entry.
+                        continue;
+                    }
+
+                    const char *pszURIToFind =
+                        CPLSPrintf("\"%s\"", oNamespace.osURI.c_str());
+                    if( strstr(szHeader, pszURIToFind) != NULL )
                     {
                         if( oNamespace.bUseGlobalSRSName )
                             bUseGlobalSRSName = true;
@@ -893,15 +903,29 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
                             GMLRegistryFeatureType &oFeatureType =
                                 oNamespace.aoFeatureTypes[iTypename];
 
-                            if ( !oFeatureType.osElementValue.empty() )
-                                pszElementToFind = CPLSPrintf(
-                                    "%s:%s>%s", oNamespace.osPrefix.c_str(),
-                                    oFeatureType.osElementName.c_str(),
-                                    oFeatureType.osElementValue.c_str());
+                            if( !oNamespace.osPrefix.empty() )
+                            {
+                                if ( !oFeatureType.osElementValue.empty() )
+                                    pszElementToFind = CPLSPrintf(
+                                        "%s:%s>%s", oNamespace.osPrefix.c_str(),
+                                        oFeatureType.osElementName.c_str(),
+                                        oFeatureType.osElementValue.c_str());
+                                else
+                                    pszElementToFind = CPLSPrintf(
+                                        "%s:%s", oNamespace.osPrefix.c_str(),
+                                        oFeatureType.osElementName.c_str());
+                            }
                             else
-                                pszElementToFind = CPLSPrintf(
-                                    "%s:%s", oNamespace.osPrefix.c_str(),
-                                    oFeatureType.osElementName.c_str());
+                            {
+                                if ( !oFeatureType.osElementValue.empty() )
+                                    pszElementToFind = CPLSPrintf("%s>%s",
+                                                                  oFeatureType.osElementName.c_str(),
+                                                                  oFeatureType.osElementValue.c_str());
+                                else
+                                    pszElementToFind = CPLSPrintf("<%s",
+                                                                  oFeatureType.osElementName.c_str());
+                            }
+
 
                             // Case sensitive test since in a CadastralParcel
                             // feature there is a property basicPropertyUnit
