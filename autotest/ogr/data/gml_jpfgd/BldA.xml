@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Dataset xsi:schemaLocation="http://fgd.gsi.go.jp/spec/2008/FGD_GMLSchema FGD_GMLSchema.xsd"
+	xmlns:gml="http://www.opengis.net/gml/3.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	xmlns="http://fgd.gsi.go.jp/spec/2008/FGD_GMLSchema"
+	gml:id="Dataset1">
+  <gml:description>テストデータ</gml:description>
+  <gml:name>基盤地図情報テストデータ（GML版）</gml:name>
+<BldA gml:id="K17_1234567890_123456">
+<fid>20170303-12345-12345-s-12345</fid>
+<lfSpanFr gml:id="K17_1234567890_123456-1">
+<gml:timePosition>2017-03-03</gml:timePosition>
+</lfSpanFr>
+<devDate gml:id="K17_1234567890_123456-2">
+<gml:timePosition>2017-03-07</gml:timePosition>
+</devDate>
+<orgGILvl>2500</orgGILvl>
+<area>
+<gml:Surface gml:id="K17_1234567890_123456-g" srsName="fguuid:jgd2011.bl">
+<gml:patches>
+<gml:PolygonPatch>
+<gml:exterior>
+<gml:Ring>
+<gml:curveMember>
+<gml:Curve gml:id="K17_1234567890_123456-3">
+<gml:segments>
+<gml:LineStringSegment>
+<gml:posList>
+35.695217139713343 139.718509733734351
+35.695312194713338 139.718444177734369
+35.695349894966789 139.718496754142762
+35.695235944713339 139.718550483734361 
+35.695217139713343 139.718509733734351
+</gml:posList>
+</gml:LineStringSegment>
+</gml:segments>
+</gml:Curve>
+</gml:curveMember>
+</gml:Ring>
+</gml:exterior>
+</gml:PolygonPatch>
+</gml:patches>
+</gml:Surface>
+</area>
+<type>普通建物</type>
+</BldA>
+</Dataset>
+
