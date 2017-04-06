@@ -5,11 +5,9 @@
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  GML Reading Driver for Japanese FGD GML v4 testing.
-# Author:   Frank Warmerdam <warmerdam@pobox.com>
+# Author:   Hiroshi Miura <miurahr@linux.com>
 #
 ###############################################################################
-# Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
-# Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
 # Copyright (c) 2017, Hiroshi Miura <miurahr@linux.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
