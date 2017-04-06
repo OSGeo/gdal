@@ -15,6 +15,21 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.hostname = "gdal-vagrant"
   config.vm.host_name = "gdal-vagrant"
 
+  # proxy configurations.
+  # these options are also specified by environment variables;
+  #   VAGRANT_HTTP_PROXY, VAGRANT_HTTPS_PROXY, VAGRANT_FTP_PROXY
+  #   VAGRANT_NO_PROXY, VAGRANT_SVN_PROXY, VAGRANT_GIT_PROXY
+  # if you want to set these on Vagrantfile, edit followings.
+  if Vagrant.has_plugin?("vagrant-proxyconf")
+    config.proxy.enabled   = false  # true|false
+    #config.proxy.http      = "http://192.168.0.2:3128"
+    #config.proxy.ftp       = "http://192.168.0.2:3128"
+    #config.proxy.https     = "DIRECT"
+    #config.proxy.no_proxy  = "localhost,127.0.0.1,.example.com"
+    #config.svn_proxy.http  = ""
+    #config.git_proxy.http  = ""
+  end
+
   config.vm.synced_folder "../autotest/", "/home/vagrant/autotest/"
 
   config.vm.provider :virtualbox do |vb,ovrd|
@@ -35,6 +50,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     lxc.container_name = "gdal-vagrant"
   end
  
+  config.vm.provider :hyperv do |hyperv,ovrd|
+    ovrd.vm.box = "hashicorp/precise64"
+    ovrd.ssh.username = "vagrant"
+    hyperv.cpus = vm_cpu
+    hyperv.memory = vm_ram
+    hyperv.vmname = "gdal-vagrant"
+  end
+
   ppaRepos = [
     "ppa:ubuntugis/ubuntugis-unstable", "ppa:marlam/gta"
   ]
