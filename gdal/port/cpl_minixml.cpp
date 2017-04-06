@@ -1002,6 +1002,8 @@ static bool _GrowBuffer( size_t nNeeded,
 /*                        CPLSerializeXMLNode()                         */
 /************************************************************************/
 
+// TODO(schwehr): Rewrite this whole thing using C++ string.
+// CPLSerializeXMLNode has buffer overflows.
 static bool
 CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
                      char **ppszText, size_t *pnLength,
@@ -1215,10 +1217,9 @@ char *CPLSerializeXMLTree( const CPLXMLNode *psNode )
 
 {
     size_t nMaxLength = 100;
-    char *pszText = static_cast<char *>(VSIMalloc(nMaxLength));
+    char *pszText = static_cast<char *>(CPLCalloc(nMaxLength, sizeof(char)));
     if( pszText == NULL )
         return NULL;
-    pszText[0] = '\0';
 
     size_t nLength = 0;
     for( const CPLXMLNode *psThis = psNode;
