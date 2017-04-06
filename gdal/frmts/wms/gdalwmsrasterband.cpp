@@ -557,7 +557,7 @@ static const int * GetBandMapForExpand( int nSourceBands, int nWmsBands )
     static const int  bandmap3to4[] = { 1, 2, 3, 0 };
     static const int  bandmap4to4[] = { 1, 2, 3, 4 };
 
-    static const int* bandmap_selector[4][4] = {
+    static const int* const bandmap_selector[4][4] = {
         { bandmap1to1, bandmap2to1, bandmap3to1, bandmap4to1 },
         { bandmap1to2, bandmap2to2, bandmap3to2, bandmap4to2 },
         { bandmap1to3, bandmap2to3, bandmap3to3, bandmap4to3 },
