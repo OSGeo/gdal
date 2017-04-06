@@ -581,7 +581,7 @@ static void kml2styletable(
     /***** No reason to add it if it don't have an id. *****/
     if( !poKmlStyle->has_id() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "ERROR parsing kml Style: No id" );
         return;
     }
@@ -898,7 +898,7 @@ static StyleSelectorPtr StyleFromStyleURL(
 
                 if( !poKmlRoot )
                 {
-                    CPLError( CE_Failure, CPLE_OpenFailed,
+                    CPLError( CE_Warning, CPLE_OpenFailed,
                               "ERROR parsing style kml %s :%s",
                               pszUrlTmp, oKmlErrors.c_str() );
                     CPLFree(pszUrlTmp);
