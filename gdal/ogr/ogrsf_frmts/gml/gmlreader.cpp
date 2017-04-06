@@ -767,8 +767,14 @@ int GMLReader::GetFeatureElementIndex( const char *pszElement,
                         return i;
                     }
                 }
+                // Give a chance to find a feature class by element name
+                // This is for example needed for
+                // autotest/ogr/data/gml_jpfgd/BldA.xml that has a
+                // feature at a low nesting level.
             }
-            return -1;
+            else {
+                return -1;
+            }
         }
     }
 
