@@ -1635,6 +1635,91 @@ def wmts_22():
         return 'fail'
 
     return 'success'
+###############################################################################
+#
+
+def wmts_23( imagetype, expected_cs ):
+
+    if gdaltest.wmts_drv is None:
+        return 'skip'
+
+    inputXml = '/vsimem/' + imagetype +'.xml'
+    serviceUrl =  '/vsimem/wmts_23/' + imagetype
+    gdal.FileFromMemBuffer( inputXml, """<Capabilities>
+    <Contents>
+        <Layer>
+            <Identifier/>
+            <TileMatrixSetLink>
+                <TileMatrixSet/>
+            </TileMatrixSetLink>
+            <Style>
+                <Identifier/>
+            </Style>
+            <ResourceURL format="image/png" template=" """ + serviceUrl + """/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+        </Layer>
+        <TileMatrixSet>
+            <Identifier/>
+            <SupportedCRS>urn:ogc:def:crs:EPSG:6.18:3:3857</SupportedCRS>
+            <TileMatrix>
+                <Identifier>0</Identifier>
+                <ScaleDenominator>559082264.029</ScaleDenominator>
+                <TopLeftCorner>-20037508.3428 20037508.3428</TopLeftCorner>
+                <TileWidth>128</TileWidth>
+                <TileHeight>128</TileHeight>
+                <MatrixWidth>1</MatrixWidth>
+                <MatrixHeight>1</MatrixHeight>
+            </TileMatrix>
+        </TileMatrixSet>
+    </Contents>
+</Capabilities>""")
+
+    tmp_ds = gdal.Open( 'data/wms/' + imagetype + '.png' )
+    if tmp_ds is None:
+        gdaltest.post_reason('fail - cant open tmp_ds')
+        return 'fail'
+
+    tile0_ds = gdal.GetDriverByName('PNG').CreateCopy(serviceUrl + '/0/0/0.png', tmp_ds )
+    if tile0_ds is None:
+        gdaltest.post_reason('fail - cant create tile0')
+        return 'fail'
+
+    ds = gdal.Open('WMTS:' + inputXml )
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ds.RasterXSize != 128:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+    if ds.RasterYSize != 128:
+        gdaltest.post_reason('fail')
+        print(ds.RasterYSize)
+        return 'fail'
+
+    for i in range(4):
+        cs = ds.GetRasterBand( i + 1 ).Checksum()
+        if cs != expected_cs[i]:
+            gdaltest.post_reason('fail')
+            print( cs )
+            return 'fail'
+
+    return 'success'
+
+def wmts_23_gray():
+    return wmts_23( 'gray', [ 60137, 60137, 60137, 4428 ] )
+
+def wmts_23_grayalpha():
+    return wmts_23( 'gray+alpha', [ 39910, 39910, 39910, 63180 ] )
+
+def wmts_23_pal():
+    return wmts_23( 'pal', [ 62950, 59100, 63864, 453 ] )
+
+def wmts_23_rgb():
+    return wmts_23( 'rgb', [ 1020, 3665, 6180, 4428 ] )
+
+def wmts_23_rgba():
+    return wmts_23( 'rgba', [ 65530, 51449, 1361, 59291 ] )
 
 ###############################################################################
 #
@@ -1698,6 +1783,11 @@ gdaltest_list = [
     wmts_20,
     wmts_21,
     wmts_22,
+    wmts_23_gray,
+    wmts_23_grayalpha,
+    wmts_23_pal,
+    wmts_23_rgb,
+    wmts_23_rgba,
     wmts_cleanup ]
 
 if __name__ == '__main__':
