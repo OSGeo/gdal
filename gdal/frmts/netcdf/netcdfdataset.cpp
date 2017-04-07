@@ -3276,6 +3276,25 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                    yMinMax[1] = dfCoordOffset + yMinMax[1] * dfCoordScale;
                 }
 
+                double dummyAdd, dummyScale;
+                if ( !nc_get_att_double(cdfid, nVarDimXID,
+                                       CF_ADD_OFFSET, &dummyAdd) &&
+                     !nc_get_att_double(cdfid, nVarDimXID,
+                                       CF_SCALE_FACTOR, &dummyScale) )
+                {
+                   xMinMax[0] = dummyAdd + xMinMax[0] * dummyScale;
+                   xMinMax[1] = dummyAdd + xMinMax[1] * dummyScale;
+                }
+
+                if ( !nc_get_att_double(cdfid, nVarDimYID,
+                                       CF_ADD_OFFSET, &dummyAdd) &&
+                     !nc_get_att_double(cdfid, nVarDimYID,
+                                       CF_SCALE_FACTOR, &dummyScale) )
+                {
+                   yMinMax[0] = dummyAdd + yMinMax[0] * dummyScale;
+                   yMinMax[1] = dummyAdd + yMinMax[1] * dummyScale;
+                }
+
                 adfTempGeoTransform[0] = xMinMax[0];
                 adfTempGeoTransform[2] = 0;
                 adfTempGeoTransform[3] = yMinMax[1];
