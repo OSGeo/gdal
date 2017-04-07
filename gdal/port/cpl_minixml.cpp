@@ -1163,6 +1163,9 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
                 if( psChild->eType != CXT_Text && bJustText )
                 {
                     bJustText = false;
+                    *pnLength += strlen(*ppszText + *pnLength);
+                    if( !_GrowBuffer( 1 + *pnLength, ppszText, pnMaxLength ) )
+                        return false;
                     strcat( *ppszText + *pnLength, "\n" );
                 }
 
