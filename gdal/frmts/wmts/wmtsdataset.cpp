@@ -718,8 +718,8 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             }
             oTM.nTileWidth = atoi(pszTileWidth);
             oTM.nTileHeight = atoi(pszTileHeight);
-            if( oTM.nTileWidth < 128 || oTM.nTileWidth > 4096 ||
-                oTM.nTileHeight < 128 || oTM.nTileHeight > 4096 )
+            if( oTM.nTileWidth <= 0 || oTM.nTileWidth > 4096 ||
+                oTM.nTileHeight <= 0 || oTM.nTileHeight > 4096 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid TileWidth/TileHeight element");
