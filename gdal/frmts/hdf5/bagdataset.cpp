@@ -27,20 +27,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gh5_convenience.h"
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
+#include "iso19115_srs.h"
+#include "ogr_core.h"
 #include "ogr_spatialref.h"
 
 #include <algorithm>
 
 CPL_CVSID("$Id$");
-
-OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
-                                   const char *pszISOXML );
 
 /************************************************************************/
 /* ==================================================================== */
