@@ -542,8 +542,10 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
         delete poDS;
         return NULL;
     }
-    poDS->dims = (hsize_t *)CPLCalloc(poDS->ndims, sizeof(hsize_t));
-    poDS->maxdims = (hsize_t *)CPLCalloc(poDS->ndims, sizeof(hsize_t));
+    poDS->dims =
+        static_cast<hsize_t *>(CPLCalloc(poDS->ndims, sizeof(hsize_t)));
+    poDS->maxdims =
+        static_cast<hsize_t *>(CPLCalloc(poDS->ndims, sizeof(hsize_t)));
     poDS->dimensions = H5Sget_simple_extent_dims(poDS->dataspace_id, poDS->dims,
                                                  poDS->maxdims);
     poDS->datatype = H5Dget_type(poDS->dataset_id);
@@ -799,12 +801,13 @@ CPLErr HDF5ImageDataset::CreateProjections()
             const int nXLimit =
                 (static_cast<int>(nRasterXSize) / nDeltaLon) * nDeltaLon;
 
-        // The original code in https://trac.osgeo.org/gdal/changeset/8066
-        // always add +180 to the longitudes, but without justification
-        // I suspect this might be due to handling products crossing the
-        // antimeridian. Trying to do it just when needed through a heuristics.
-        bool bHasLonNearMinus180 = false;
-        bool bHasLonNearPlus180 = false;
+            // The original code in https://trac.osgeo.org/gdal/changeset/8066
+            // always add +180 to the longitudes, but without justification
+            // I suspect this might be due to handling products crossing the
+            // antimeridian. Trying to do it just when needed through a
+            // heuristics.
+            bool bHasLonNearMinus180 = false;
+            bool bHasLonNearPlus180 = false;
             bool bHasLonNearZero = false;
             for( int j = 0; j < nYLimit; j += nDeltaLat )
             {
@@ -1209,7 +1212,7 @@ void HDF5ImageDataset::CaptureCSKGCPs(int iProductType)
                     if( pasGCPList[i].pszInfo )
                         CPLFree(pasGCPList[i].pszInfo);
                 }
-                CPLFree( pasGCPList );
+                CPLFree(pasGCPList);
                 pasGCPList = NULL;
                 nGCPCount = 0;
                 break;
