@@ -3202,7 +3202,9 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                 oSRSForComparison.GetRoot()->StripNodes( "UNIT" );
                 if( oSRSForComparison.IsSame(&oSRSGDAL) )
                 {
-                    // printf("ARE SAME, using GDAL WKT\n");
+#ifdef NCDF_DEBUG
+                    CPLDebug("GDAL_netCDF", "ARE SAME, using GDAL WKT");
+#endif
                     bGotGdalSRS = true;
                     CPLDebug( "GDAL_netCDF", "setting WKT from GDAL" );
                     SetProjection( pszWKT );
@@ -6168,10 +6170,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                     (nProfileDimId >= 0 && anDimIds[0] == nProfileDimId) )
                 {
 #ifdef NCDF_DEBUG
-                    char szTemp[NC_MAX_NAME+1];
-                    szTemp[0] = '\0';
-                    CPL_IGNORE_RET_VAL(nc_inq_varname( poDS->cdfid, anPotentialVectorVarID[j], szTemp ));
-                    CPLDebug("GDAL_netCDF", "Variable %s is a vector field", szTemp);
+                    char szTemp2[NC_MAX_NAME + 1] = {};
+                    CPL_IGNORE_RET_VAL(
+                        nc_inq_varname(poDS->cdfid, anPotentialVectorVarID[j],
+                                       szTemp2));
+                    CPLDebug("GDAL_netCDF",
+                             "Variable %s is a vector field", szTemp2);
 #endif
                     poLayer->AddField( anPotentialVectorVarID[j] );
                 }
@@ -7771,8 +7775,11 @@ static bool NCDFIsCfProjection( const char* pszProjection )
     // Find the appropriate mapping.
     for( int iMap = 0; poNetcdfSRS_PT[iMap].WKT_SRS != NULL; iMap++ )
     {
-        // printf("now at %d, proj=%s\n",i, poNetcdfSRS_PT[i].GDAL_SRS);
-        if( EQUAL( pszProjection, poNetcdfSRS_PT[iMap].WKT_SRS ) )
+#ifdef NCDF_DEBUG
+      CPLDebug("GDAL_netCDF", "now at %d, proj=%s",
+               iMap, poNetcdfSRS_PT[iMap].WKT_SRS);
+#endif
+      if( EQUAL( pszProjection, poNetcdfSRS_PT[iMap].WKT_SRS ) )
         {
             return poNetcdfSRS_PT[iMap].mappings != NULL;
         }
@@ -7933,7 +7940,12 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                 if( bWriteVal )
                     oOutList.push_back( std::make_pair( *posNCDFAtt, dfValue ) );
             }
-            // else printf("NOT FOUND!!!\n");
+#ifdef NCDF_DEBUG
+            else
+            {
+                CPLDebug("GDAL_netCDF", "NOT FOUND!");
+            }
+#endif
         }
     }
     else
