@@ -566,8 +566,7 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
         }
 
         if( !HDF5GroupCheckDuplicate(poHparent, oStatbuf.objno) )
-            H5Giterate(hHDF5, pszObjName, NULL,
-                       HDF5CreateGroupObjs, (void *)poHchild);
+            H5Giterate(hHDF5, pszObjName, NULL, HDF5CreateGroupObjs, poHchild);
         else
             CPLDebug("HDF5", "avoiding link looping on node '%s'.", pszObjName);
 
@@ -741,7 +740,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
 
         if( nAttrElmts > 0 )
         {
-            buf = (void *)CPLMalloc(nAttrElmts * H5Tget_size(hAttrNativeType));
+            buf = CPLMalloc(nAttrElmts * H5Tget_size(hAttrNativeType));
             szData = static_cast<char *>(CPLMalloc(nDataLen));
             szValue = static_cast<char *>(CPLMalloc(MAX_METADATA_LEN));
             szData[0] = '\0';
@@ -896,7 +895,7 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
         {
             // Identifier of group.
             const hid_t l_hGroupID = H5Gopen(hHDF5, poH5Object->pszPath);
-            H5Aiterate(l_hGroupID, NULL, HDF5AttrIterate, (void *)poDS);
+            H5Aiterate(l_hGroupID, NULL, HDF5AttrIterate, poDS);
             H5Gclose(l_hGroupID);
         }
         break;
@@ -904,8 +903,7 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
         if( nbAttrs > 0 )
         {
             hid_t hDatasetID = H5Dopen(hHDF5, poH5Object->pszPath);
-            H5Aiterate(hDatasetID, NULL, HDF5AttrIterate,
-                       reinterpret_cast<void *>(poDS));
+            H5Aiterate(hDatasetID, NULL, HDF5AttrIterate, poDS);
             H5Dclose(hDatasetID);
         }
         break;
@@ -1109,8 +1107,7 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
         poRootGroup->poHchild = static_cast<HDF5GroupObjects *>(
             CPLCalloc(static_cast<size_t>(poRootGroup->nbObjs),
                       sizeof(HDF5GroupObjects)));
-        H5Giterate(hGroupID, "/", NULL,
-                   HDF5CreateGroupObjs, reinterpret_cast<void *>(poRootGroup));
+        H5Giterate(hGroupID, "/", NULL, HDF5CreateGroupObjs, poRootGroup);
     }
     else
     {
