@@ -1592,7 +1592,7 @@ CPLErr netCDFRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
                   nBlockXOff, nBlockYOff, nBand );
 #endif
 
-    int nd;
+    int nd = 0;
     nc_inq_varndims ( cdfid, nZId, &nd );
 
     // Locate X, Y and Z position in the array.
@@ -1944,7 +1944,7 @@ double netCDFDataset::FetchCopyParm( const char *pszGridMappingValue,
                                      const char *pszParm, double dfDefault )
 
 {
-    char szTemp[ 256 ];
+    char szTemp[256] = {};
     snprintf(szTemp, sizeof(szTemp), "%s#%s", pszGridMappingValue, pszParm);
     const char *pszValue = CSLFetchNameValue(papszMetadata, szTemp);
 
@@ -7444,7 +7444,8 @@ int netCDFDataset::DefVarDeflate(
 #ifdef NETCDF_HAS_NC4
             int nVarId, bool bChunkingArg
 #else
-            int /* nVarId */ , bool /* bChunkingArg */
+            int /* nVarId */,
+            bool /* bChunkingArg */
 #endif
             )
 {
