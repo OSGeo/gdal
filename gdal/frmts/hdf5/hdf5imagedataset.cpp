@@ -83,9 +83,11 @@ class HDF5ImageDataset : public HDF5Dataset
     int         nGCPCount;
     OGRSpatialReference oSRS;
 
-    hsize_t      *dims,*maxdims;
+    hsize_t      *dims;
+    hsize_t      *maxdims;
     HDF5GroupObjects *poH5Objects;
-    int          ndims,dimensions;
+    int          ndims;
+    int          dimensions;
     hid_t        dataset_id;
     hid_t        dataspace_id;
     hsize_t      size;
@@ -119,9 +121,9 @@ public:
 
     int     IsComplexCSKL1A() const
     {
-        return (GetSubdatasetType() == CSK_PRODUCT) &&
-               (GetCSKProductType() == PROD_CSK_L1A) &&
-               (ndims == 3);
+        return GetSubdatasetType() == CSK_PRODUCT &&
+               GetCSKProductType() == PROD_CSK_L1A &&
+               ndims == 3;
     }
     int GetYIndex() const { return IsComplexCSKL1A() ? 0 : ndims - 2; }
     int GetXIndex() const { return IsComplexCSKL1A() ? 1 : ndims - 1; }
@@ -172,11 +174,12 @@ HDF5ImageDataset::HDF5ImageDataset() :
     pszGCPProjection(NULL),
     pasGCPList(NULL),
     nGCPCount(0),
-    oSRS( OGRSpatialReference() ),
+    oSRS(OGRSpatialReference()),
     dims(NULL),
     maxdims(NULL),
     poH5Objects(NULL),
-    ndims(0), dimensions(0),
+    ndims(0),
+    dimensions(0),
     dataset_id(-1),
     dataspace_id(-1),
     size(0),
@@ -294,14 +297,14 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDSIn, int nBandIn,
     const hid_t listid = H5Dget_create_plist(poDSIn->dataset_id);
     if( listid > 0 )
     {
-        if(H5Pget_layout(listid) == H5D_CHUNKED)
+        if( H5Pget_layout(listid) == H5D_CHUNKED )
         {
             hsize_t panChunkDims[3] = {0, 0, 0};
             const int nDimSize = H5Pget_chunk(listid, 3, panChunkDims);
             CPL_IGNORE_RET_VAL(nDimSize);
             CPLAssert(nDimSize == poDSIn->ndims);
-            nBlockXSize = (int)panChunkDims[poDSIn->GetXIndex()];
-            nBlockYSize = (int)panChunkDims[poDSIn->GetYIndex()];
+            nBlockXSize = static_cast<int>(panChunkDims[poDSIn->GetXIndex()]);
+            nBlockYSize = static_cast<int>(panChunkDims[poDSIn->GetYIndex()]);
         }
 
         H5Pclose(listid);
@@ -343,7 +346,7 @@ CPLErr HDF5ImageRasterBand::SetNoDataValue( double dfNoData )
 CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                         void *pImage )
 {
-    HDF5ImageDataset *poGDS = reinterpret_cast<HDF5ImageDataset *>(poDS);
+    HDF5ImageDataset *poGDS = static_cast<HDF5ImageDataset *>(poDS);
 
     if( poGDS->eAccess == GA_Update )
     {
@@ -462,8 +465,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
         CSLTokenizeString2(poOpenInfo->pszFilename, ":",
                            CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES);
 
-    // TODO(schwehr): != 3.
-    if( !((CSLCount(papszName) == 3) || (CSLCount(papszName) == 4)) )
+    if( !(CSLCount(papszName) == 3 || CSLCount(papszName) == 4) )
     {
         CSLDestroy(papszName);
         delete poDS;
@@ -567,11 +569,11 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo *poOpenInfo )
         static_cast<int>(poDS->dims[poDS->GetXIndex()]);  // nCols
     if( poDS->IsComplexCSKL1A() )
     {
-        poDS->nBands = (int)poDS->dims[2];  // nBands
+        poDS->nBands = static_cast<int>(poDS->dims[2]);
     }
     else if( poDS->ndims == 3 )
     {
-        poDS->nBands = (int)poDS->dims[0];
+        poDS->nBands = static_cast<int>(poDS->dims[0]);
     }
     else
     {
@@ -700,13 +702,13 @@ CPLErr HDF5ImageDataset::CreateProjections()
     {
     case CSK_PRODUCT:
     {
-        const char *osMissionLevel = NULL;
         int productType = PROD_UNKNOWN;
 
         if(GetMetadataItem("Product_Type") != NULL)
         {
             // Get the format's level.
-            osMissionLevel = HDF5Dataset::GetMetadataItem("Product_Type");
+            const char *osMissionLevel =
+                HDF5Dataset::GetMetadataItem("Product_Type");
 
             if(STARTS_WITH_CI(osMissionLevel, "RAW"))
                 productType = PROD_CSK_L0;
@@ -763,9 +765,9 @@ CPLErr HDF5ImageDataset::CreateProjections()
 
         poH5Objects = HDF5FindDatasetObjects(poH5RootGroup, "Longitude");
         const hid_t LongitudeDatasetID = H5Dopen(hHDF5, poH5Objects->pszPath);
-        // LongitudeDataspaceID = H5Dget_space( dataset_id );
+        // LongitudeDataspaceID = H5Dget_space(dataset_id);
 
-        if( (LatitudeDatasetID > 0) && (LongitudeDatasetID > 0) )
+        if( LatitudeDatasetID > 0 && LongitudeDatasetID > 0 )
         {
             float *const Latitude = static_cast<float *>(
                 CPLCalloc(nRasterYSize * nRasterXSize, sizeof(float)));
@@ -794,7 +796,6 @@ CPLErr HDF5ImageDataset::CreateProjections()
                 static_cast<GDAL_GCP *>(CPLCalloc(nGCPCount, sizeof(GDAL_GCP)));
 
             GDALInitGCPs(nGCPCount, pasGCPList);
-            int k = 0;
 
             const int nYLimit =
                 (static_cast<int>(nRasterYSize) / nDeltaLat) * nDeltaLat;
@@ -829,6 +830,7 @@ CPLErr HDF5ImageDataset::CreateProjections()
                  !bHasLonNearZero && pszShiftGCP == NULL) ||
                 (pszShiftGCP != NULL && CPLTestBool(pszShiftGCP));
 
+            int k = 0;
             for( int j = 0; j < nYLimit; j += nDeltaLat )
             {
                 for( int i = 0; i < nXLimit; i += nDeltaLon )
@@ -939,12 +941,9 @@ void HDF5ImageDataset::IdentifyProductType()
 {
     iSubdatasetType = UNKNOWN_PRODUCT;
 
-/************************************************************************/
-/*                               COSMO-SKYMED                           */
-/************************************************************************/
+    // COSMO-SKYMED
 
-    // Get the Mission Id as a char *, because the
-    // field may not exist
+    // Get the Mission Id as a char *, because the field may not exist.
     const char *const pszMissionId = HDF5Dataset::GetMetadataItem("Mission_ID");
 
     // If there is a Mission_ID field.
@@ -956,12 +955,11 @@ void HDF5ImageDataset::IdentifyProductType()
         {
             iSubdatasetType = CSK_PRODUCT;
 
-            const char *osMissionLevel = NULL;
-
             if(GetMetadataItem("Product_Type") != NULL)
             {
                 // Get the format's level.
-                osMissionLevel = HDF5Dataset::GetMetadataItem("Product_Type");
+                const char *osMissionLevel =
+                    HDF5Dataset::GetMetadataItem("Product_Type");
 
                 if(STARTS_WITH_CI(osMissionLevel, "RAW"))
                     iCSKProductType = PROD_CSK_L0;
@@ -1135,7 +1133,7 @@ void HDF5ImageDataset::CaptureCSKGeoTransform(int iProductType)
                 CPLFree(pdLineSpacing);
                 CPLFree(pdColumnSpacing);
 
-                bHasGeoTransform = TRUE;
+                bHasGeoTransform = true;
             }
         }
     }
@@ -1155,8 +1153,8 @@ void HDF5ImageDataset::CaptureCSKGeoTransform(int iProductType)
 void HDF5ImageDataset::CaptureCSKGCPs(int iProductType)
 {
     // Only retrieve GCPs for L0,L1A and L1B products.
-    if(iProductType == PROD_CSK_L0 || iProductType == PROD_CSK_L1A ||
-       iProductType == PROD_CSK_L1B)
+    if( iProductType == PROD_CSK_L0 || iProductType == PROD_CSK_L1A ||
+        iProductType == PROD_CSK_L1B )
     {
         nGCPCount = 4;
         pasGCPList = static_cast<GDAL_GCP *>(CPLCalloc(sizeof(GDAL_GCP), 4));
