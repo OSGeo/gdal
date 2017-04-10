@@ -3696,38 +3696,45 @@ fi
 AC_SUBST(HAVE_PCRE)
 
 dnl ---------------------------------------------------------------------------
-dnl Check for DWGdirect.
+dnl Check for Teigha.
 dnl ---------------------------------------------------------------------------
 
-DWGDIRECT=
-DWG_PLT=
+TEIGHA_DIR=
 
-AC_MSG_CHECKING(Checking for DWGdirect)
-AC_ARG_WITH(dwgdirect,
-    [  --with-dwgdirect[=path] Include DWG direct support],
+AC_MSG_CHECKING(Checking for Teigha)
+AC_ARG_WITH(teigha,
+    [  --with-teigha[=path] Include Teigha DWG/DGN support],
     ,,)
 
-if test -z "$with_dwgdirect" -o "$with_dwgdirect" = "no"; then
+if test -z "$with_teigha" -o "$with_teigha" = "no"; then
     AC_MSG_RESULT(disabled)
-    HAVE_DWGDIRECT=no
+    HAVE_TEIGHA=no
 else
     AC_MSG_RESULT(enabled)
 
-    AC_ARG_WITH(dwgdirect,
-      [  --with-dwg-plt[=platform] DWGdirect Platform, defaults to lnxX86],
+    AC_ARG_WITH(teigha-plt,
+      [  --with-teigha-plt[=platform] Teigha platform],
       ,,)
-    if test "x$with_dwg_plt" != "x" ; then
-        DWG_PLT=$with_dwg_plt
+    if test "x$with_teigha_plt" != "x" ; then
+        TEIGHA_DIR=$with_teigha
+        HAVE_TEIGHA=yes
+        TEIGHA_PLT=$with_teigha_plt
+        LIBS="${LIBS} ${TEIGHA_DIR}/bin/${TEIGHA_PLT}/TG_Db.tx"
+        LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTG_ExamplesCommon.a"
+        LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_ExamplesCommon.a"
+        LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_Key.a"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Db"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_DbRoot"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Db"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Ge"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Alloc"
     else
-        DWG_PLT=lnxX86
+        AC_MSG_ERROR([--with-teigha-plt not specified])
     fi
-    DWGDIRECT=$with_dwgdirect
-    HAVE_DWGDIRECT=yes
 fi
 
-dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
-AC_SUBST(DWG_PLT)
-AC_SUBST(DWGDIRECT)
+AC_SUBST(TEIGHA_DIR)
+AC_SUBST(HAVE_TEIGHA)
 
 dnl ---------------------------------------------------------------------------
 dnl Select Informix DataBlade support
@@ -5451,7 +5458,7 @@ if test "x$SPATIALITE_SONAME" != "x"; then
 LOC_MSG([  SpatiaLite shared obj name:${SPATIALITE_SONAME}])
 fi
 LOC_MSG([  RasterLite2 support:       ${HAVE_RASTERLITE2}])
-LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
+LOC_MSG([  DWG support                ${HAVE_TEIGHA}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
 LOC_MSG([  SFCGAL support:            ${HAVE_SFCGAL_RESULT}])
