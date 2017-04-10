@@ -363,7 +363,7 @@ public:
 
     const char * const * GetHTTPRequestOpts();
 
-    static const char *GetServerConfig(const char *URI);
+    static const char *GetServerConfig(const char *URI, char **papszHTTPOptions);
     static void DestroyCfgMutex();
     static void ClearConfigCache();
 
