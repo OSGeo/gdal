@@ -4897,7 +4897,8 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             "AND definition IS NOT NULL "
             "AND scope IS NOT NULL "
             "AND extension_name != 'gdal_aspatial' "
-            "AND extension_name != 'gpkg_elevation_tiles') "
+            "AND extension_name != 'gpkg_elevation_tiles' "
+            "AND extension_name != 'gpkg_metadata') "
 #ifdef WORKAROUND_SQLITE3_BUGS
             "OR 0 "
 #endif
@@ -4910,7 +4911,8 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             "AND extension_name IS NOT NULL "
             "AND definition IS NOT NULL "
             "AND scope IS NOT NULL "
-            "AND extension_name != 'gpkg_elevation_tiles') "
+            "AND extension_name != 'gpkg_elevation_tiles' "
+            "AND extension_name != 'gpkg_metadata') "
 #ifdef WORKAROUND_SQLITE3_BUGS
             "OR 0 "
 #endif
