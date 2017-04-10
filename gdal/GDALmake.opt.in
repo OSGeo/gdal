@@ -33,7 +33,7 @@ INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 
 # SDE_LIB needs to be first because it embeds zlib.  We need to use its symbols instead of -lz's
 
-LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB) \
+LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(CURL_LIB) \
 		$(MRSID_LIBS) $(MRSID_LIDAR_LIBS) $(ECW_LIBS) $(INGRES_LIB) \
 		$(PCIDSK_LIB) $(RASDAMAN_LIB) $(CHARLS_LIB) $(SOSI_LIB) \
 		$(OPENCL_LIB) $(JVM_LIB) $(LIBICONV) $(FGDB_LIB) $(LIBXML2_LIB) $(MONGODB_LIB)
@@ -394,32 +394,6 @@ LIBXML2_INC = @LIBXML2_INC@
 LIBXML2_LIB = @LIBXML2_LIB@
 
 #
-# DWGdirect Library
-#
-DWGDIRECT =	@DWGDIRECT@
-DWG_PLT = @DWG_PLT@
-
-ifneq ($(DWGDIRECT),)
-DWG_LIBDIR =	$(DWGDIRECT)/lib/$(DWG_PLT)
-DWG_LIBS = $(DWG_LIBDIR)/DD_$(DWG_PLT)_ModelerGeometry.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_AcisRenderer.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Br.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_AcisBuilder.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Db.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Gs.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_SpatialIndex.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Gi.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Ge.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Root.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_FT.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Alloc.a
-HAVE_DWGDIRECT = yes
-else
-DWG_LIBS =
-HAVE_DWGDIRECT = no
-endif
-
-#
 # CAD Support
 #
 HAVE_CAD	=	@CXX11_SUPPORT@
@@ -524,6 +498,12 @@ PDFIUM_PLUGIN_LIB = @PDFIUM_PLUGIN_LIB@
 #HAVE_CHARLS = yes
 #CHARLS_INC = -I/path/to/charls_include
 #CHARLS_LIB = -L/path/to/charls_lib -lCharLS
+
+#
+# Teigha stuff
+#
+HAVE_TEIGHA = @HAVE_TEIGHA@
+TEIGHA_DIR = @TEIGHA_DIR@
 
 #
 # PROJ.4 stuff

@@ -38,25 +38,7 @@
 #include <queue>
 
 #include "ogr_autocad_services.h"
-
-#include "OdaCommon.h"
-#include "diagnostics.h"
-#include "DbDatabase.h"
-#include "DbEntity.h"
-#include "DbDimAssoc.h"
-#include "DbObjectIterator.h"
-#include "DbBlockTable.h"
-#include "DbBlockTableRecord.h"
-#include "DbSymbolTable.h"
-
-#include "OdCharMapper.h"
-#include "RxObjectImpl.h"
-
-#include "ExSystemServices.h"
-#include "ExHostAppServices.h"
-#include "OdFileBuf.h"
-#include "RxDynamicModule.h"
-#include "FdField.h"
+#include "dwg_headers.h"
 
 class OGRDWGDataSource;
 class OGRDWGServices;
@@ -147,7 +129,7 @@ class OGRDWGLayer : public OGRLayer
 
     CPLString           TextUnescape( OdString oString);
 
-    OdDbBlockTableRecordPtr poBlock;
+    OdDbBlockTableRecordPtr m_poBlock;
     OdDbObjectIteratorPtr   poEntIter;
 
   public:
@@ -176,7 +158,7 @@ class OGRDWGDataSource : public OGRDataSource
 {
     VSILFILE           *fp;
 
-    CPLString           osName;
+    CPLString           m_osName;
     std::vector<OGRLayer*> apoLayers;
 
     int                 iEntitiesSectionOffset;
@@ -206,7 +188,7 @@ class OGRDWGDataSource : public OGRDataSource
     int                 Open( OGRDWGServices *poServices,
                               const char * pszFilename, int bHeaderOnly=FALSE );
 
-    const char          *GetName() override { return osName; }
+    const char          *GetName() override { return m_osName; }
 
     int                 GetLayerCount() override { return apoLayers.size(); }
     OGRLayer            *GetLayer( int ) override;

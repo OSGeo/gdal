@@ -111,7 +111,7 @@ const char *OGRDWGDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRDWGDriver::Open( const char * pszFilename, int bUpdate )
+OGRDataSource *OGRDWGDriver::Open( const char * pszFilename, int /*bUpdate*/ )
 
 {
     Initialize();
@@ -131,7 +131,7 @@ OGRDataSource *OGRDWGDriver::Open( const char * pszFilename, int bUpdate )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDWGDriver::TestCapability( const char * pszCap )
+int OGRDWGDriver::TestCapability( const char * /*pszCap*/ )
 
 {
     return FALSE;

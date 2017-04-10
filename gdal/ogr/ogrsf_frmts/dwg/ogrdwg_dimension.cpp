@@ -30,10 +30,6 @@
 #include "ogr_dwg.h"
 #include "cpl_conv.h"
 
-#include "DbDimension.h"
-#include "DbRotatedDimension.h"
-#include "DbAlignedDimension.h"
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -366,7 +362,7 @@ void OGRDWGLayer::FormatDimension( CPLString &osText, double dfValue )
     // to spend the effort.  See QCAD's rs_dimlinear.cpp and related files
     // for example.
 
-    sprintf(szFormat, "%%.%df", nPrecision );
+    snprintf(szFormat, sizeof(szFormat), "%%.%df", nPrecision );
     CPLsnprintf(szBuffer, sizeof(szBuffer), szFormat, dfValue);
     char* pszComma = strchr(szBuffer, ',');
     if (pszComma)

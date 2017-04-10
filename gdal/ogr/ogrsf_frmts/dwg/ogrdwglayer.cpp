@@ -31,33 +31,16 @@
 
 #include "ogrdxf_polyline_smooth.h"
 
-#include "DbPolyline.h"
-#include "Db2dPolyline.h"
-#include "Db3dPolyline.h"
-#include "Db3dPolylineVertex.h"
-#include "DbLine.h"
-#include "DbPoint.h"
-#include "DbEllipse.h"
-#include "DbArc.h"
-#include "DbMText.h"
-#include "DbText.h"
-#include "DbCircle.h"
-#include "DbSpline.h"
-#include "DbBlockReference.h"
-#include "DbAttribute.h"
-#include "DbFiler.h"
-#include "Ge/GeScale3d.h"
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            OGRDWGLayer()                             */
 /************************************************************************/
 
-OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDS )
+OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDSIn )
 
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
 
     iNextFID = 0;
 
@@ -85,12 +68,12 @@ OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDS )
 
     for (pBlkIter->start(); ! pBlkIter->done(); pBlkIter->step())
     {
-        poBlock = pBlkIter->getRecordId().safeOpenObject();
+        m_poBlock = pBlkIter->getRecordId().safeOpenObject();
 
-        if( EQUAL(poBlock->getName(),"*Model_Space") )
+        if( EQUAL(m_poBlock->getName(),"*Model_Space") )
             break;
         else
-            poBlock = NULL;
+            m_poBlock = NULL;
     }
 
     ResetReading();
@@ -136,7 +119,7 @@ CPLString OGRDWGLayer::TextUnescape( OdString oString )
 void OGRDWGLayer::SetBlockTable( OdDbBlockTableRecordPtr poNewBlock )
 
 {
-    poBlock = poNewBlock;
+    m_poBlock = poNewBlock;
 
     ResetReading();
 }
@@ -165,8 +148,8 @@ void OGRDWGLayer::ResetReading()
     iNextFID = 0;
     ClearPendingFeatures();
 
-    if( !poBlock.isNull() )
-        poEntIter = poBlock->newIterator();
+    if( !m_poBlock.isNull() )
+        poEntIter = m_poBlock->newIterator();
 }
 
 /************************************************************************/

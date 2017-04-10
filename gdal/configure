@@ -693,8 +693,8 @@ SDE_ENABLED
 IDB_LIB
 IDB_INC
 HAVE_IDB
-DWGDIRECT
-DWG_PLT
+HAVE_TEIGHA
+TEIGHA_DIR
 HAVE_PCRE
 RASTERLITE2_CFLAGS
 HAVE_RASTERLITE2
@@ -1018,7 +1018,8 @@ with_spatialite_soname
 with_sqlite3
 with_rasterlite2
 with_pcre
-with_dwgdirect
+with_teigha
+with_teigha_plt
 with_idb
 with_sde
 with_sde_version
@@ -1800,8 +1801,8 @@ Optional Packages:
                           specify the prefix for sqlite3 library
   --with-rasterlite2=ARG Include RasterLite2 support (ARG=no(default), yes or path)
   --with-pcre             Include libpcre support (REGEXP support for SQLite)
-  --with-dwgdirect=path Include DWG direct support
-  --with-dwg-plt=platform DWGdirect Platform, defaults to lnxX86
+  --with-teigha=path Include Teigha DWG/DGN support
+  --with-teigha-plt=platform Teigha platform
   --with-idb=DIR        Include Informix DataBlade support (DIR points to Informix root)
   --with-sde=DIR        Include ESRI SDE support (DIR is SDE's install dir).
   --with-sde-version=VERSION NUMBER  Set ESRI SDE version number (Default is 80).
@@ -29899,39 +29900,47 @@ fi
 
 
 
-DWGDIRECT=
-DWG_PLT=
+TEIGHA_DIR=
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking for DWGdirect" >&5
-$as_echo_n "checking Checking for DWGdirect... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking for Teigha" >&5
+$as_echo_n "checking Checking for Teigha... " >&6; }
 
-# Check whether --with-dwgdirect was given.
-if test "${with_dwgdirect+set}" = set; then :
-  withval=$with_dwgdirect;
+# Check whether --with-teigha was given.
+if test "${with_teigha+set}" = set; then :
+  withval=$with_teigha;
 fi
 
 
-if test -z "$with_dwgdirect" -o "$with_dwgdirect" = "no"; then
+if test -z "$with_teigha" -o "$with_teigha" = "no"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
 $as_echo "disabled" >&6; }
-    HAVE_DWGDIRECT=no
+    HAVE_TEIGHA=no
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
 $as_echo "enabled" >&6; }
 
 
-# Check whether --with-dwgdirect was given.
-if test "${with_dwgdirect+set}" = set; then :
-  withval=$with_dwgdirect;
+# Check whether --with-teigha-plt was given.
+if test "${with_teigha_plt+set}" = set; then :
+  withval=$with_teigha_plt;
 fi
 
-    if test "x$with_dwg_plt" != "x" ; then
-        DWG_PLT=$with_dwg_plt
+    if test "x$with_teigha_plt" != "x" ; then
+        TEIGHA_DIR=$with_teigha
+        HAVE_TEIGHA=yes
+        TEIGHA_PLT=$with_teigha_plt
+        LIBS="${LIBS} ${TEIGHA_DIR}/bin/${TEIGHA_PLT}/TG_Db.tx"
+        LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTG_ExamplesCommon.a"
+        LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_ExamplesCommon.a"
+        LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_Key.a"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Db"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_DbRoot"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Db"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Ge"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Alloc"
     else
-        DWG_PLT=lnxX86
+        as_fn_error $? "--with-teigha-plt not specified" "$LINENO" 5
     fi
-    DWGDIRECT=$with_dwgdirect
-    HAVE_DWGDIRECT=yes
 fi
 
 
@@ -36536,7 +36545,7 @@ fi
 echo "  RasterLite2 support:       ${HAVE_RASTERLITE2}"
 
 
-echo "  DWGdirect support          ${HAVE_DWGDIRECT}"
+echo "  DWG support                ${HAVE_TEIGHA}"
 
 
 echo "  INFORMIX DataBlade support:${HAVE_IDB}"
