@@ -1658,6 +1658,10 @@ def gpkg_17():
     out_ds = None
     ds = None
 
+    if not validate('/vsimem/tmp.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
     got_cs = out_ds.GetRasterBand(1).GetOverview(0).Checksum()
     if got_cs != 1087:
