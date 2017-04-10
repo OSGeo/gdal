@@ -63,6 +63,7 @@ class GPKGChecker:
 
     def __init__(self, filename, abort_at_first_error=True, verbose=False):
         self.filename = filename
+        self.extended_pragma_info = False
         self.abort_at_first_error = abort_at_first_error
         self.verbose = verbose
         self.errors = []
@@ -97,6 +98,8 @@ class GPKGChecker:
                     expected_notnull = 1
                 if type == 'INTEGER' and pk:
                     notnull = 1
+                if not self.extended_pragma_info and expected_pk > 1:
+                    expected_pk = 1
 
                 self._assert(type == expected_type, req,
                              'Wrong type for %s of %s. Expected %s, got %s' %
@@ -1449,6 +1452,17 @@ class GPKGChecker:
                 self._assert(user_version >= expected_version, 2,
                              'Wrong user_version: %d. Expected >= %d' %
                              (user_version, expected_version))
+
+        conn = sqlite3.connect(':memory:')
+        c = conn.cursor()
+        c.execute('CREATE TABLE foo(one TEXT, two TEXT, '
+                  'CONSTRAINT pk PRIMARY KEY (one, two))')
+        c.execute('PRAGMA table_info(foo)')
+        rows = c.fetchall()
+        if rows[1][5] == 2:
+            self.extended_pragma_info = True
+        c.close()
+        conn.close()
 
         conn = sqlite3.connect(self.filename)
         c = conn.cursor()
