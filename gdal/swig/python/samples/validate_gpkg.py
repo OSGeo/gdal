@@ -603,12 +603,28 @@ class GPKGChecker:
                           "corresponding row in gpkg_tile_matrix") %
                          (table_name, zoom_level))
 
-        c.execute("SELECT pixel_x_size, pixel_y_size FROM gpkg_tile_matrix "
+        zoom_other_levels = False
+        c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_extensions'")
+        if c.fetchone() is not None:
+            c.execute("SELECT column_name FROM gpkg_extensions WHERE "
+                      "table_name = ? "
+                      "AND extension_name = 'gpkg_zoom_other'", (table_name,))
+            row = c.fetchone()
+            if row is not None:
+                (column_name, ) = row
+                self._assert(column_name == 'tile_data', 88,
+                             'Wrong column_name in gpkg_extensions for '
+                             'gpkg_zoom_other')
+                zoom_other_levels = True
+
+        c.execute("SELECT zoom_level, pixel_x_size, pixel_y_size "
+                  "FROM gpkg_tile_matrix "
                   "WHERE table_name = ? ORDER BY zoom_level", (table_name,))
         rows = c.fetchall()
+        prev_zoom_level = None
         prev_pixel_x_size = None
         prev_pixel_y_size = None
-        for (pixel_x_size, pixel_y_size) in rows:
+        for (zoom_level, pixel_x_size, pixel_y_size) in rows:
             if prev_pixel_x_size is not None:
                 self._assert(
                     pixel_x_size < prev_pixel_x_size and
@@ -616,8 +632,22 @@ class GPKGChecker:
                     53,
                     ('For table %s, pixel size are not consistent ' +
                      'with zoom_level') % table_name)
+            if prev_zoom_level is not None and \
+               zoom_level == prev_zoom_level + 1 and not zoom_other_levels:
+                    self._assert(
+                        abs((pixel_x_size-prev_pixel_x_size/2) /
+                            prev_pixel_x_size) < 1e-5, 35,
+                        "Expected pixel_x_size=%f for zoom_level=%d. Got %f" %
+                        (prev_pixel_x_size/2, zoom_level, pixel_x_size))
+                    self._assert(
+                        abs((pixel_y_size-prev_pixel_y_size/2) /
+                            prev_pixel_y_size) < 1e-5, 35,
+                        "Expected pixel_y_size=%f for zoom_level=%d. Got %f" %
+                        (prev_pixel_y_size/2, zoom_level, pixel_y_size))
+
             prev_pixel_x_size = pixel_x_size
             prev_pixel_y_size = pixel_y_size
+            prev_zoom_level = zoom_level
 
         c.execute("SELECT max_x - min_x, "
                   "       MIN(matrix_width * tile_width * pixel_x_size), "
