@@ -3540,11 +3540,11 @@ CPLErr netCDFDataset::SetGeoTransform ( double * padfTransform )
 /************************************************************************/
 
 int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
-                                char** ppszCFProjection, bool bWriteGDALTags)
+                                char **ppszCFProjection, bool bWriteGDALTags)
 {
     int status;
     int NCDFVarID = -1;
-    char* pszCFProjection = NULL;
+    char *pszCFProjection = NULL;
 
     *ppszCFProjection = NULL;
 
@@ -3567,11 +3567,9 @@ int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
                             poNetcdfSRS_PT[i].CF_SRS);
                 pszCFProjection = CPLStrdup(poNetcdfSRS_PT[i].CF_SRS);
                 CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d)",
-                            cdfid, poNetcdfSRS_PT[i].CF_SRS, NC_CHAR);
-                status = nc_def_var(cdfid,
-                                        poNetcdfSRS_PT[i].CF_SRS,
-                                        NC_CHAR,
-                                        0, NULL, &NCDFVarID);
+                         cdfid, poNetcdfSRS_PT[i].CF_SRS, NC_CHAR);
+                status = nc_def_var(cdfid, poNetcdfSRS_PT[i].CF_SRS, NC_CHAR, 0,
+                                    NULL, &NCDFVarID);
                 NCDF_ERR(status);
                 break;
             }
@@ -3580,8 +3578,7 @@ int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
             return -1;
 
         status = nc_put_att_text(cdfid, NCDFVarID, CF_GRD_MAPPING_NAME,
-                                    strlen(pszCFProjection),
-                                    pszCFProjection);
+                                 strlen(pszCFProjection), pszCFProjection);
         NCDF_ERR(status);
 
         // Various projection attributes.
@@ -3592,10 +3589,11 @@ int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
         {
             const char *pszPredefProj4 = poSRS->GetExtension(
                         poSRS->GetRoot()->GetValue(), "PROJ4", NULL);
-            const char* pszSweepAxisAngle =
-             (pszPredefProj4 != NULL && strstr(pszPredefProj4, "+sweep=x")) ? "x" : "y";
-            status = nc_put_att_text(cdfid, NCDFVarID, CF_PP_SWEEP_ANGLE_AXIS,
-                             strlen(pszSweepAxisAngle), pszSweepAxisAngle);
+            const char *pszSweepAxisAngle =
+                (pszPredefProj4 != NULL && strstr(pszPredefProj4, "+sweep=x")) ? "x" : "y";
+            status =
+                nc_put_att_text(cdfid, NCDFVarID, CF_PP_SWEEP_ANGLE_AXIS,
+                                strlen(pszSweepAxisAngle), pszSweepAxisAngle);
             NCDF_ERR(status);
         }
     }
@@ -3606,19 +3604,18 @@ int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
 
         pszCFProjection = CPLStrdup("crs");
         CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d)",
-                    cdfid, pszCFProjection, NC_CHAR);
-        status = nc_def_var(cdfid, pszCFProjection, NC_CHAR,
-                                0, NULL, &NCDFVarID);
+                 cdfid, pszCFProjection, NC_CHAR);
+        status =
+            nc_def_var(cdfid, pszCFProjection, NC_CHAR, 0, NULL, &NCDFVarID);
         NCDF_ERR(status);
         status = nc_put_att_text(cdfid, NCDFVarID, CF_GRD_MAPPING_NAME,
-                                    strlen(CF_PT_LATITUDE_LONGITUDE),
-                                    CF_PT_LATITUDE_LONGITUDE);
+                                 strlen(CF_PT_LATITUDE_LONGITUDE),
+                                 CF_PT_LATITUDE_LONGITUDE);
         NCDF_ERR(status);
     }
 
     status = nc_put_att_text(cdfid, NCDFVarID, CF_LNG_NAME,
-                              strlen("CRS definition"),
-                             "CRS definition");
+                             strlen("CRS definition"), "CRS definition");
     NCDF_ERR(status);
 
     *ppszCFProjection = pszCFProjection;
@@ -3628,20 +3625,20 @@ int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
     // DATUM information.
     double dfTemp = poSRS->GetPrimeMeridian();
     nc_put_att_double(cdfid, NCDFVarID, CF_PP_LONG_PRIME_MERIDIAN,
-                        NC_DOUBLE, 1, &dfTemp);
+                      NC_DOUBLE, 1, &dfTemp);
     dfTemp = poSRS->GetSemiMajor();
     nc_put_att_double(cdfid, NCDFVarID, CF_PP_SEMI_MAJOR_AXIS,
-                        NC_DOUBLE, 1, &dfTemp);
+                      NC_DOUBLE, 1, &dfTemp);
     dfTemp = poSRS->GetInvFlattening();
     nc_put_att_double(cdfid, NCDFVarID, CF_PP_INVERSE_FLATTENING,
-                        NC_DOUBLE, 1, &dfTemp);
+                      NC_DOUBLE, 1, &dfTemp);
 
     if( bWriteGDALTags )
     {
-        char* pszSpatialRef = NULL;
+        char *pszSpatialRef = NULL;
         poSRS->exportToWkt(&pszSpatialRef);
         status = nc_put_att_text(cdfid, NCDFVarID, NCDF_SPATIAL_REF,
-                                  strlen(pszSpatialRef), pszSpatialRef);
+                                 strlen(pszSpatialRef), pszSpatialRef);
         NCDF_ERR(status);
         CPLFree(pszSpatialRef);
     }
@@ -3653,34 +3650,34 @@ int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
 /*                   NCDFWriteLonLatVarsAttributes()                    */
 /************************************************************************/
 
-void NCDFWriteLonLatVarsAttributes(int cdfid,
-                                          int nVarLonID,
-                                          int nVarLatID)
+void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID)
 {
-    int status;
-
-    status = nc_put_att_text(cdfid, nVarLatID, CF_STD_NAME,
-                     strlen(CF_LATITUDE_STD_NAME), CF_LATITUDE_STD_NAME);
+    int status =
+        nc_put_att_text(cdfid, nVarLatID, CF_STD_NAME,
+                        strlen(CF_LATITUDE_STD_NAME), CF_LATITUDE_STD_NAME);
     NCDF_ERR(status);
 
-    status = nc_put_att_text(cdfid, nVarLatID, CF_LNG_NAME,
-                     strlen(CF_LATITUDE_LNG_NAME), CF_LATITUDE_LNG_NAME);
+    status =
+        nc_put_att_text(cdfid, nVarLatID, CF_LNG_NAME,
+                        strlen(CF_LATITUDE_LNG_NAME), CF_LATITUDE_LNG_NAME);
     NCDF_ERR(status);
 
     status = nc_put_att_text(cdfid, nVarLatID, CF_UNITS,
-                     strlen(CF_DEGREES_NORTH), CF_DEGREES_NORTH);
+                             strlen(CF_DEGREES_NORTH), CF_DEGREES_NORTH);
     NCDF_ERR(status);
 
-    status = nc_put_att_text(cdfid, nVarLonID, CF_STD_NAME,
-                     strlen(CF_LONGITUDE_STD_NAME), CF_LONGITUDE_STD_NAME);
+    status =
+        nc_put_att_text(cdfid, nVarLonID, CF_STD_NAME,
+                        strlen(CF_LONGITUDE_STD_NAME), CF_LONGITUDE_STD_NAME);
     NCDF_ERR(status);
 
-    status = nc_put_att_text(cdfid, nVarLonID, CF_LNG_NAME,
-                     strlen(CF_LONGITUDE_LNG_NAME), CF_LONGITUDE_LNG_NAME);
+    status =
+        nc_put_att_text(cdfid, nVarLonID, CF_LNG_NAME,
+                        strlen(CF_LONGITUDE_LNG_NAME), CF_LONGITUDE_LNG_NAME);
     NCDF_ERR(status);
 
     status = nc_put_att_text(cdfid, nVarLonID, CF_UNITS,
-                     strlen(CF_DEGREES_EAST), CF_DEGREES_EAST);
+                             strlen(CF_DEGREES_EAST), CF_DEGREES_EAST);
     NCDF_ERR(status);
 }
 
@@ -3689,7 +3686,7 @@ void NCDFWriteLonLatVarsAttributes(int cdfid,
 /************************************************************************/
 
 void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
-                                      OGRSpatialReference* poSRS)
+                               OGRSpatialReference *poSRS)
 {
     int status;
     char *pszUnits = NULL;
@@ -3709,31 +3706,29 @@ void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
     }
 
     status = nc_put_att_text(cdfid, nVarXID, CF_STD_NAME,
-                        strlen(CF_PROJ_X_COORD),
-                        CF_PROJ_X_COORD);
+                             strlen(CF_PROJ_X_COORD), CF_PROJ_X_COORD);
     NCDF_ERR(status);
 
     status = nc_put_att_text(cdfid, nVarXID, CF_LNG_NAME,
-                        strlen(CF_PROJ_X_COORD_LONG_NAME),
-                        CF_PROJ_X_COORD_LONG_NAME);
+                             strlen(CF_PROJ_X_COORD_LONG_NAME),
+                             CF_PROJ_X_COORD_LONG_NAME);
     NCDF_ERR(status);
 
     status = nc_put_att_text(cdfid, nVarXID, CF_UNITS,
-                        strlen(pszUnitsToWrite), pszUnitsToWrite);
+                             strlen(pszUnitsToWrite), pszUnitsToWrite);
     NCDF_ERR(status);
 
     status = nc_put_att_text(cdfid, nVarYID, CF_STD_NAME,
-                        strlen(CF_PROJ_Y_COORD),
-                        CF_PROJ_Y_COORD);
+                             strlen(CF_PROJ_Y_COORD), CF_PROJ_Y_COORD);
     NCDF_ERR(status);
 
     status = nc_put_att_text(cdfid, nVarYID, CF_LNG_NAME,
-                        strlen(CF_PROJ_Y_COORD_LONG_NAME),
-                        CF_PROJ_Y_COORD_LONG_NAME);
+                             strlen(CF_PROJ_Y_COORD_LONG_NAME),
+                             CF_PROJ_Y_COORD_LONG_NAME);
     NCDF_ERR(status);
 
-    status = nc_put_att_text(cdfid, nVarYID, CF_UNITS,
-                        strlen(pszUnitsToWrite), pszUnitsToWrite);
+    status = nc_put_att_text(cdfid, nVarYID, CF_UNITS, strlen(pszUnitsToWrite),
+                             pszUnitsToWrite);
     NCDF_ERR(status);
 }
 
@@ -3742,7 +3737,7 @@ void NCDFWriteXYVarsAttributes(int cdfid, int nVarXID, int nVarYID,
 /************************************************************************/
 
 CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
-                                         void * pProgressData )
+                                         void *pProgressData )
 {
     const char *pszValue = NULL;
     CPLErr eErr = CE_None;
@@ -3767,7 +3762,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
     bAddedProjectionVars = true;
 
-    char *pszWKT = (char *) pszProjection;
+    char *pszWKT = (char *)pszProjection;
     OGRSpatialReference oSRS;
     oSRS.importFromWkt(&pszWKT);
 
@@ -3777,18 +3772,18 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         bIsGeographic = true;
 
     CPLDebug("GDAL_netCDF",
-              "SetProjection, WKT now = [%s]\nprojected: %d geographic: %d",
-              pszProjection ? pszProjection : "(null)",
-              static_cast<int>(bIsProjected),
-              static_cast<int>(bIsGeographic));
+             "SetProjection, WKT now = [%s]\nprojected: %d geographic: %d",
+             pszProjection ? pszProjection : "(null)",
+             static_cast<int>(bIsProjected),
+             static_cast<int>(bIsGeographic));
 
     if( !bSetGeoTransform )
         CPLDebug("GDAL_netCDF", "netCDFDataset::AddProjectionVars() called, "
-                  "but GeoTransform has not yet been defined!");
+                 "but GeoTransform has not yet been defined!");
 
     if( !bSetProjection )
         CPLDebug("GDAL_netCDF", "netCDFDataset::AddProjectionVars() called, "
-                  "but Projection has not yet been defined!");
+                 "but Projection has not yet been defined!");
 
     // Check GEOLOCATION information.
     char **papszGeolocationInfo = GetMetadata("GEOLOCATION");
@@ -3805,12 +3800,11 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
         if( hDS_X != NULL && hDS_Y != NULL )
         {
-            int nBand =
-                std::max(1, atoi(CSLFetchNameValueDef(papszGeolocationInfo,
-                                                       "X_BAND", "0")));
+            int nBand = std::max(1, atoi(CSLFetchNameValueDef(
+                                        papszGeolocationInfo, "X_BAND", "0")));
             hBand_X = GDALGetRasterBand(hDS_X, nBand);
             nBand = std::max(1, atoi(CSLFetchNameValueDef(papszGeolocationInfo,
-                                                           "Y_BAND", "0")));
+                                                          "Y_BAND", "0")));
             hBand_Y = GDALGetRasterBand(hDS_Y, nBand);
 
             // If geoloc bands are found, do basic validation based on their
@@ -3823,37 +3817,37 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                 int nYSize_YBand = GDALGetRasterYSize(hDS_Y);
 
                 // TODO 1D geolocation arrays not implemented.
-                if( (nYSize_XBand == 1) && (nYSize_YBand == 1) )
+                if( nYSize_XBand == 1 && nYSize_YBand == 1 )
                 {
                     bHasGeoloc = false;
                     CPLDebug("GDAL_netCDF",
                               "1D GEOLOCATION arrays not supported yet");
                 }
                 // 2D bands must have same sizes as the raster bands.
-                else if( (nXSize_XBand != nRasterXSize) ||
-                         (nYSize_XBand != nRasterYSize) ||
-                         (nXSize_YBand != nRasterXSize) ||
-                         (nYSize_YBand != nRasterYSize) )
+                else if( nXSize_XBand != nRasterXSize ||
+                         nYSize_XBand != nRasterYSize ||
+                         nXSize_YBand != nRasterXSize ||
+                         nYSize_YBand != nRasterYSize )
                 {
                     bHasGeoloc = false;
                     CPLDebug("GDAL_netCDF",
-                              "GEOLOCATION array sizes (%dx%d %dx%d) differ "
-                              "from raster (%dx%d), not supported",
-                              nXSize_XBand, nYSize_XBand, nXSize_YBand, nYSize_YBand,
-                              nRasterXSize, nRasterYSize);
+                             "GEOLOCATION array sizes (%dx%d %dx%d) differ "
+                             "from raster (%dx%d), not supported",
+                             nXSize_XBand, nYSize_XBand, nXSize_YBand,
+                             nYSize_YBand, nRasterXSize, nRasterYSize);
                 }
                 // 2D bands are only supported for projected SRS (see CF 5.6).
                 else if( !bIsProjected )
                 {
                     bHasGeoloc = false;
                     CPLDebug("GDAL_netCDF",
-                              "2D GEOLOCATION arrays only supported for projected SRS");
+                             "2D GEOLOCATION arrays only supported for projected SRS");
                 }
                 else
                 {
                     bHasGeoloc = true;
                     CPLDebug("GDAL_netCDF",
-                              "dataset has GEOLOCATION information, will try to write it");
+                             "dataset has GEOLOCATION information, will try to write it");
                 }
             }
         }
@@ -3862,9 +3856,11 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     // Process projection options.
     if( bIsProjected )
     {
-        bool bIsCfProjection = NCDFIsCfProjection(oSRS.GetAttrValue("PROJECTION"));
+        bool bIsCfProjection =
+            NCDFIsCfProjection(oSRS.GetAttrValue("PROJECTION"));
         bWriteGridMapping = true;
-        bWriteGDALTags = CPL_TO_BOOL(CSLFetchBoolean(papszCreationOptions, "WRITE_GDAL_TAGS", TRUE ));
+        bWriteGDALTags = CPL_TO_BOOL(
+            CSLFetchBoolean(papszCreationOptions, "WRITE_GDAL_TAGS", TRUE));
         // Force WRITE_GDAL_TAGS if is not a CF projection.
         if( !bWriteGDALTags && !bIsCfProjection )
             bWriteGDALTags = true;
@@ -3899,7 +3895,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         eLonLatType = NC_FLOAT;
         pszValue =
             CSLFetchNameValueDef(papszCreationOptions, "TYPE_LONLAT", "FLOAT");
-        if( EQUAL(pszValue, "DOUBLE" ) )
+        if( EQUAL(pszValue, "DOUBLE") )
             eLonLatType = NC_DOUBLE;
     }
     else
@@ -3908,13 +3904,14 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         // geographic information.
         bWriteGridMapping = bIsGeographic;
 
-        bWriteGDALTags = CPL_TO_BOOL(CSLFetchBoolean(papszCreationOptions, "WRITE_GDAL_TAGS", bWriteGridMapping));
-        if( bWriteGDALTags )
+        bWriteGDALTags = CPL_TO_BOOL(CSLFetchBoolean(
+            papszCreationOptions, "WRITE_GDAL_TAGS", bWriteGridMapping));
+        if(bWriteGDALTags)
             bWriteGeoTransform = true;
 
         pszValue =
             CSLFetchNameValueDef(papszCreationOptions, "WRITE_LONLAT", "YES");
-        if( EQUAL(pszValue, "IF_NEEDED" ) )
+        if( EQUAL(pszValue, "IF_NEEDED") )
             bWriteLonLat = true;
         else
             bWriteLonLat = CPLTestBool(pszValue);
@@ -3925,18 +3922,17 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         if( !bWriteLonLat )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                      "creating geographic file without lon/lat values!");
+                     "creating geographic file without lon/lat values!");
             if( bSetGeoTransform )
             {
-                bWriteGDALTags = true; // Not desirable if no geotransform.
+                bWriteGDALTags = true;  // Not desirable if no geotransform.
                 bWriteGeoTransform = true;
             }
         }
 
         eLonLatType = NC_DOUBLE;
-        pszValue
-            = CSLFetchNameValueDef(
-                papszCreationOptions, "TYPE_LONLAT", "DOUBLE");
+        pszValue =
+            CSLFetchNameValueDef(papszCreationOptions, "TYPE_LONLAT", "DOUBLE");
         if( EQUAL(pszValue, "FLOAT") )
             eLonLatType = NC_FLOAT;
     }
@@ -3946,18 +3942,19 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
     // bottom-up value: new driver is bottom-up by default.
     // Override with WRITE_BOTTOMUP.
-    bBottomUp = CPL_TO_BOOL(CSLFetchBoolean(papszCreationOptions, "WRITE_BOTTOMUP", TRUE));
+    bBottomUp = CPL_TO_BOOL(
+        CSLFetchBoolean(papszCreationOptions, "WRITE_BOTTOMUP", TRUE));
 
     CPLDebug("GDAL_netCDF",
-              "bIsProjected=%d bIsGeographic=%d bWriteGridMapping=%d "
-              "bWriteGDALTags=%d bWriteLonLat=%d bBottomUp=%d bHasGeoloc=%d",
-              static_cast<int>(bIsProjected),
-              static_cast<int>(bIsGeographic),
-              static_cast<int>(bWriteGridMapping),
-              static_cast<int>(bWriteGDALTags),
-              static_cast<int>(bWriteLonLat),
-              static_cast<int>(bBottomUp),
-              static_cast<int>(bHasGeoloc));
+             "bIsProjected=%d bIsGeographic=%d bWriteGridMapping=%d "
+             "bWriteGDALTags=%d bWriteLonLat=%d bBottomUp=%d bHasGeoloc=%d",
+             static_cast<int>(bIsProjected),
+             static_cast<int>(bIsGeographic),
+             static_cast<int>(bWriteGridMapping),
+             static_cast<int>(bWriteGDALTags),
+             static_cast<int>(bWriteLonLat),
+             static_cast<int>(bBottomUp),
+             static_cast<int>(bHasGeoloc));
 
     // Exit if nothing to do.
     if( !bIsProjected && !bWriteLonLat )
@@ -3971,8 +3968,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     // Rename dimensions if lon/lat.
     if( !bIsProjected )
     {
-        /* rename dims to lat/lon */
-        papszDimName.Clear(); //if we add other dims one day, this has to change
+        // Rename dims to lat/lon.
+        papszDimName.Clear();  // If we add other dims one day, this has to change
         papszDimName.AddString(NCDF_DIMNAME_LAT);
         papszDimName.AddString(NCDF_DIMNAME_LON);
 
@@ -3985,9 +3982,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     // Write projection attributes.
     if( bWriteGridMapping )
     {
-        const int NCDFVarID =
-            NCDFWriteSRSVariable(cdfid, &oSRS, &pszCFProjection,
-                                 bWriteGDALTags);
+        const int NCDFVarID = NCDFWriteSRSVariable(
+            cdfid, &oSRS, &pszCFProjection, bWriteGDALTags);
         if( NCDFVarID < 0 )
             return CE_Failure;
 
@@ -3997,10 +3993,10 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             CPLString osGeoTransform;
             for( int i = 0; i < 6; i++ )
             {
-                osGeoTransform += CPLSPrintf("%.16g ",
-                         adfGeoTransform[i]);
+                osGeoTransform += CPLSPrintf("%.16g ", adfGeoTransform[i]);
             }
-            CPLDebug("GDAL_netCDF", "szGeoTransform = %s", osGeoTransform.c_str());
+            CPLDebug("GDAL_netCDF", "szGeoTransform = %s",
+                     osGeoTransform.c_str());
 
             // if( strlen(pszProj4Defn) > 0 ) {
             //     nc_put_att_text(cdfid, NCDFVarID, "proj4",
@@ -4015,10 +4011,9 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             if( bWriteGeoTransform && bSetGeoTransform )
             {
                 {
-                    const int status =
-                        nc_put_att_text(cdfid, NCDFVarID, NCDF_GEOTRANSFORM,
-                                         osGeoTransform.size(),
-                                         osGeoTransform.c_str());
+                    const int status = nc_put_att_text(
+                        cdfid, NCDFVarID, NCDF_GEOTRANSFORM,
+                        osGeoTransform.size(), osGeoTransform.c_str());
                     NCDF_ERR(status);
                 }
             }
@@ -4040,18 +4035,18 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         int anXDims[1];
         anXDims[0] = nXDimID;
         CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d)",
-                  cdfid, CF_PROJ_X_VAR_NAME, NC_DOUBLE);
+                 cdfid, CF_PROJ_X_VAR_NAME, NC_DOUBLE);
         int status = nc_def_var(cdfid, CF_PROJ_X_VAR_NAME, NC_DOUBLE,
-                             1, anXDims, &nVarXID);
+                                1, anXDims, &nVarXID);
         NCDF_ERR(status);
 
         // Y
         int anYDims[1];
         anYDims[0] = nYDimID;
         CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d)",
-                  cdfid, CF_PROJ_Y_VAR_NAME, NC_DOUBLE);
+                 cdfid, CF_PROJ_Y_VAR_NAME, NC_DOUBLE);
         status = nc_def_var(cdfid, CF_PROJ_Y_VAR_NAME, NC_DOUBLE,
-                             1, anYDims, &nVarYID);
+                            1, anYDims, &nVarYID);
         NCDF_ERR(status);
 
         NCDFWriteXYVarsAttributes(cdfid, nVarXID, nVarYID, &oSRS);
@@ -4060,21 +4055,21 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     // Write lat/lon attributes if needed.
     if( bWriteLonLat )
     {
-        int *panLatDims=NULL;
-        int *panLonDims=NULL;
-        int nLatDims=-1;
-        int nLonDims=-1;
+        int *panLatDims = NULL;
+        int *panLonDims = NULL;
+        int nLatDims = -1;
+        int nLonDims = -1;
 
         // Get information.
         if( bHasGeoloc )
         {
             // Geoloc
             nLatDims = 2;
-            panLatDims = (int *) CPLCalloc(nLatDims, sizeof(int));
+            panLatDims = (int *)CPLCalloc(nLatDims, sizeof(int));
             panLatDims[0] = nYDimID;
             panLatDims[1] = nXDimID;
             nLonDims = 2;
-            panLonDims = (int *) CPLCalloc(nLonDims, sizeof(int));
+            panLonDims = (int *)CPLCalloc(nLonDims, sizeof(int));
             panLonDims[0] = nYDimID;
             panLonDims[1] = nXDimID;
         }
@@ -4082,11 +4077,11 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         {
             // Projected
             nLatDims = 2;
-            panLatDims = (int *) CPLCalloc(nLatDims, sizeof(int));
+            panLatDims = (int *)CPLCalloc(nLatDims, sizeof(int));
             panLatDims[0] = nYDimID;
             panLatDims[1] = nXDimID;
             nLonDims = 2;
-            panLonDims = (int *) CPLCalloc(nLonDims, sizeof(int));
+            panLonDims = (int *)CPLCalloc(nLonDims, sizeof(int));
             panLonDims[0] = nYDimID;
             panLonDims[1] = nXDimID;
         }
@@ -4094,27 +4089,27 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         {
             // Geographic
             nLatDims = 1;
-            panLatDims = (int *) CPLCalloc(nLatDims, sizeof(int));
+            panLatDims = (int *)CPLCalloc(nLatDims, sizeof(int));
             panLatDims[0] = nYDimID;
             nLonDims = 1;
-            panLonDims = (int *) CPLCalloc(nLonDims, sizeof(int));
+            panLonDims = (int *)CPLCalloc(nLonDims, sizeof(int));
             panLonDims[0] = nXDimID;
         }
 
         // Def vars and attributes.
         int status = nc_def_var(cdfid, CF_LATITUDE_VAR_NAME, eLonLatType,
-                             nLatDims, panLatDims, &nVarLatID);
+                                nLatDims, panLatDims, &nVarLatID);
         CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d,%d,-,-) got id %d",
-                  cdfid, CF_LATITUDE_VAR_NAME, eLonLatType, nLatDims, nVarLatID);
+                 cdfid, CF_LATITUDE_VAR_NAME, eLonLatType, nLatDims, nVarLatID);
         NCDF_ERR(status);
-        DefVarDeflate(nVarLatID, false); // don't set chunking
+        DefVarDeflate(nVarLatID, false);  // Don't set chunking.
 
         status = nc_def_var(cdfid, CF_LONGITUDE_VAR_NAME, eLonLatType,
-                             nLonDims, panLonDims, &nVarLonID);
+                            nLonDims, panLonDims, &nVarLonID);
         CPLDebug("GDAL_netCDF", "nc_def_var(%d,%s,%d,%d,-,-) got id %d",
-                  cdfid, CF_LONGITUDE_VAR_NAME, eLonLatType, nLatDims, nVarLonID);
+                 cdfid, CF_LONGITUDE_VAR_NAME, eLonLatType, nLatDims, nVarLonID);
         NCDF_ERR(status);
-        DefVarDeflate(nVarLonID, false); // don't set chunking
+        DefVarDeflate(nVarLonID, false);  // Don't set chunking.
 
         NCDFWriteLonLatVarsAttributes(cdfid, nVarLonID, nVarLatID);
 
@@ -4136,7 +4131,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         OGRSpatialReference *poLatLonSRS = NULL;
         OGRCoordinateTransformation *poTransform = NULL;
 
-        char *pszWKT2 = (char *) pszProjection;
+        char *pszWKT2 = (char *)pszProjection;
         OGRSpatialReference oSRS2;
         oSRS2.importFromWkt(&pszWKT2);
 
@@ -4149,8 +4144,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
         CPLDebug("GDAL_netCDF", "Getting (X,Y) values");
 
-        padXVal = (double *) CPLMalloc(nRasterXSize * sizeof(double));
-        padYVal = (double *) CPLMalloc(nRasterYSize * sizeof(double));
+        padXVal = (double *)CPLMalloc(nRasterXSize * sizeof(double));
+        padYVal = (double *)CPLMalloc(nRasterYSize * sizeof(double));
 
         // Get Y values.
         if( !bBottomUp )
@@ -4159,13 +4154,13 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             dfY0 = adfGeoTransform[3] + (adfGeoTransform[5] * nRasterYSize);
         dfDY = adfGeoTransform[5];
 
-        for( int j=0; j<nRasterYSize; j++ )
+        for( int j = 0; j < nRasterYSize; j++ )
         {
             // The data point is centered inside the pixel.
             if( !bBottomUp )
-                padYVal[j] = dfY0 + (j+0.5)*dfDY ;
+                padYVal[j] = dfY0 + (j + 0.5) * dfDY;
             else  // Invert latitude values.
-                padYVal[j] = dfY0 - (j+0.5)*dfDY ;
+                padYVal[j] = dfY0 - (j + 0.5) * dfDY;
         }
         startX[0] = 0;
         countX[0] = nRasterXSize;
@@ -4174,10 +4169,10 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         dfX0 = adfGeoTransform[0];
         dfDX = adfGeoTransform[1];
 
-        for( int i=0; i<nRasterXSize; i++ )
+        for( int i = 0; i < nRasterXSize; i++ )
         {
             // The data point is centered inside the pixel.
-            padXVal[i] = dfX0 + (i+0.5)*dfDX ;
+            padXVal[i] = dfX0 + (i + 0.5) * dfDX;
         }
         startY[0] = 0;
         countY[0] = nRasterYSize;
@@ -4188,13 +4183,12 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         SetDefineMode(false);
 
         CPLDebug("GDAL_netCDF", "Writing X values");
-        int status = nc_put_vara_double(cdfid, nVarXID, startX,
-                                     countX, padXVal);
+        int status =
+            nc_put_vara_double(cdfid, nVarXID, startX, countX, padXVal);
         NCDF_ERR(status);
 
         CPLDebug("GDAL_netCDF", "Writing Y values");
-        status = nc_put_vara_double(cdfid, nVarYID, startY,
-                                     countY, padYVal);
+        status = nc_put_vara_double(cdfid, nVarYID, startY, countY, padYVal);
         NCDF_ERR(status);
 
         pfnProgress(0.20, NULL, pProgressData);
@@ -4212,7 +4206,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             if( poTransform == NULL )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                          "Unable to get Coordinate Transform");
+                         "Unable to get Coordinate Transform");
                 bWriteLonLat = false;
             }
         }
@@ -4228,14 +4222,13 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             bool bOK = true;
             double dfProgress = 0.2;
 
-            size_t start[]={ 0, 0 };
-            size_t count[]={ 1, (size_t)nRasterXSize };
-            padLatVal = (double *) CPLMalloc(nRasterXSize * sizeof(double));
-            padLonVal = (double *) CPLMalloc(nRasterXSize * sizeof(double));
+            size_t start[] = { 0, 0 };
+            size_t count[] = { 1, (size_t)nRasterXSize };
+            padLatVal = (double *)CPLMalloc(nRasterXSize * sizeof(double));
+            padLonVal = (double *)CPLMalloc(nRasterXSize * sizeof(double));
 
-            for( int j = 0; (j < nRasterYSize) && bOK && (status == NC_NOERR); j++ )
+            for( int j = 0; j < nRasterYSize && bOK && status == NC_NOERR; j++ )
             {
-
                 start[0] = j;
 
                 // Get values from geotransform.
@@ -4249,8 +4242,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                     }
 
                     // Do the transform.
-                    bOK = CPL_TO_BOOL(poTransform->Transform(nRasterXSize,
-                                                  padLonVal, padLatVal, NULL));
+                    bOK = CPL_TO_BOOL(poTransform->Transform(
+                        nRasterXSize, padLonVal, padLatVal, NULL));
                     if( !bOK )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
@@ -4261,15 +4254,15 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                 else
                 {
                     eErr = GDALRasterIO(hBand_Y, GF_Read,
-                                         0, j, nRasterXSize, 1,
-                                         padLatVal, nRasterXSize, 1,
-                                         GDT_Float64, 0, 0);
+                                        0, j, nRasterXSize, 1,
+                                        padLatVal, nRasterXSize, 1,
+                                        GDT_Float64, 0, 0);
                     if( eErr == CE_None )
                     {
                         eErr = GDALRasterIO(hBand_X, GF_Read,
-                                             0, j, nRasterXSize, 1,
-                                             padLonVal, nRasterXSize, 1,
-                                             GDT_Float64, 0, 0);
+                                            0, j, nRasterXSize, 1,
+                                            padLonVal, nRasterXSize, 1,
+                                            GDT_Float64, 0, 0);
                     }
 
                     if( eErr == CE_None )
@@ -4278,7 +4271,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                     {
                         bOK = false;
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                  "Unable to get scanline %d",j);
+                                 "Unable to get scanline %d", j);
                     }
                 }
 
@@ -4286,14 +4279,14 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                 if( bOK )
                 {
                     status = nc_put_vara_double(cdfid, nVarLatID, start,
-                                                 count, padLatVal);
+                                                count, padLatVal);
                     NCDF_ERR(status);
                     status = nc_put_vara_double(cdfid, nVarLonID, start,
-                                                 count, padLonVal);
+                                                count, padLonVal);
                     NCDF_ERR(status);
                 }
 
-                if( (nRasterYSize/10) >0 && (j % (nRasterYSize/10) == 0) )
+                if( (nRasterYSize / 10) >0 && (j % (nRasterYSize / 10) == 0) )
                 {
                     dfProgress += 0.08;
                     pfnProgress(dfProgress, NULL, pProgressData);
@@ -4329,7 +4322,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             // could add test fabs(fabs(padLatVal[0]) - fabs(dfY0)) <= 0.1))
             if( nTemp == nRasterYSize )
             {
-                CPLDebug("GDAL_netCDF", "Using Y_VALUES geolocation metadata for lat values");
+                CPLDebug("GDAL_netCDF",
+                         "Using Y_VALUES geolocation metadata for lat values");
             }
             else
             {
@@ -4346,14 +4340,14 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
         if( padLatVal == NULL )
         {
-            padLatVal = (double *) CPLMalloc(nRasterYSize * sizeof(double));
-            for( int i=0; i<nRasterYSize; i++ )
+            padLatVal = (double *)CPLMalloc(nRasterYSize * sizeof(double));
+            for( int i = 0; i < nRasterYSize; i++ )
             {
                 // The data point is centered inside the pixel.
                 if( !bBottomUp )
-                    padLatVal[i] = dfY0 + (i+0.5)*dfDY ;
+                    padLatVal[i] = dfY0 + (i + 0.5) * dfDY;
                 else  // Invert latitude values.
-                    padLatVal[i] = dfY0 - (i+0.5)*dfDY ;
+                    padLatVal[i] = dfY0 - (i + 0.5) * dfDY;
             }
         }
 
@@ -4364,11 +4358,11 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         dfX0 = adfGeoTransform[0];
         dfDX = adfGeoTransform[1];
 
-        padLonVal = (double *) CPLMalloc(nRasterXSize * sizeof(double));
-        for( int i=0; i<nRasterXSize; i++ )
+        padLonVal = (double *)CPLMalloc(nRasterXSize * sizeof(double));
+        for( int i = 0; i < nRasterXSize; i++ )
         {
             // The data point is centered inside the pixel.
-            padLonVal[i] = dfX0 + (i+0.5)*dfDX ;
+            padLonVal[i] = dfX0 + (i + 0.5) * dfDX;
         }
 
         size_t startLon[1] = {0};
@@ -4382,13 +4376,13 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         // Write values.
         CPLDebug("GDAL_netCDF", "Writing lat values");
 
-        int status = nc_put_vara_double(cdfid, nVarLatID, startLat,
-                                     countLat, padLatVal);
+        int status =
+            nc_put_vara_double(cdfid, nVarLatID, startLat, countLat, padLatVal);
         NCDF_ERR(status);
 
         CPLDebug("GDAL_netCDF", "Writing lon values");
-        status = nc_put_vara_double(cdfid, nVarLonID, startLon,
-                                     countLon, padLonVal);
+        status =
+            nc_put_vara_double(cdfid, nVarLonID, startLon, countLon, padLonVal);
         NCDF_ERR(status);
 
         CPLFree(padLatVal);
@@ -4426,17 +4420,14 @@ void netCDFDataset::AddGridMappingRef()
 
         // Make sure we are in define mode.
         SetDefineMode(true);
-        int status = nc_put_att_text(cdfid, nVarId,
-                                  CF_GRD_MAPPING,
-                                  strlen(pszCFProjection),
-                                  pszCFProjection);
+        int status = nc_put_att_text(cdfid, nVarId, CF_GRD_MAPPING,
+                                     strlen(pszCFProjection), pszCFProjection);
         NCDF_ERR(status);
         if( pszCFCoordinates != NULL && !EQUAL(pszCFCoordinates, "") )
         {
-            status = nc_put_att_text(cdfid, nVarId,
-                                      CF_COORDINATES,
-                                      strlen(pszCFCoordinates),
-                                      pszCFCoordinates);
+            status =
+                nc_put_att_text(cdfid, nVarId, CF_COORDINATES,
+                                strlen(pszCFCoordinates), pszCFCoordinates);
             NCDF_ERR(status);
         }
 
@@ -4449,7 +4440,7 @@ void netCDFDataset::AddGridMappingRef()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr netCDFDataset::GetGeoTransform( double * padfTransform )
+CPLErr netCDFDataset::GetGeoTransform( double *padfTransform )
 
 {
     memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
@@ -4467,23 +4458,23 @@ double netCDFDataset::rint( double dfX)
 {
     if( dfX > 0 )
     {
-        int nX = (int) (dfX+0.5);
+        int nX = (int)(dfX + 0.5);
         if( nX % 2 )
         {
             double dfDiff = dfX - (double)nX;
             if( dfDiff == -0.5 )
-                return double(nX-1);
+                return double(nX - 1);
         }
         return double(nX);
     }
     else
     {
-        int nX = (int) (dfX-0.5);
+        int nX = (int)(dfX - 0.5);
         if( nX % 2 )
         {
             double dfDiff = dfX - (double)nX;
             if( dfDiff == 0.5 )
-                return double(nX+1);
+                return double(nX + 1);
         }
         return double(nX);
     }
@@ -4510,22 +4501,21 @@ CPLErr netCDFDataset::ReadAttributes( int cdfidIn, int var)
         NCDF_ERR(status);
     }
 
-    for( int l=0; l < nbAttr; l++)
+    for( int l = 0; l < nbAttr; l++ )
     {
-        char szAttrName[ NC_MAX_NAME+1 ];
+        char szAttrName[NC_MAX_NAME + 1];
         szAttrName[0] = 0;
         int status = nc_inq_attname(cdfidIn, var, l, szAttrName);
         NCDF_ERR(status);
-        char szMetaName[ NC_MAX_NAME * 2 + 1 + 1 ];
-        snprintf(szMetaName, sizeof(szMetaName),
-                 "%s#%s", szVarName, szAttrName);
+        char szMetaName[NC_MAX_NAME * 2 + 1 + 1];
+        snprintf(szMetaName, sizeof(szMetaName), "%s#%s", szVarName,
+                 szAttrName);
 
         char *pszMetaTemp = NULL;
         if( NCDFGetAttr(cdfidIn, var, szAttrName, &pszMetaTemp) == CE_None )
         {
-            papszMetadata = CSLSetNameValue(papszMetadata,
-                                            szMetaName,
-                                            pszMetaTemp);
+            papszMetadata =
+                CSLSetNameValue(papszMetadata, szMetaName, pszMetaTemp);
             CPLFree(pszMetaTemp);
             pszMetaTemp = NULL;
         }
@@ -4553,72 +4543,72 @@ void netCDFDataset::CreateSubDatasetList()
 
     int nSub = 1;
     int nVarCount;
-    nc_inq_nvars (cdfid, &nVarCount);
+    nc_inq_nvars(cdfid, &nVarCount);
 
     for( int nVar = 0; nVar < nVarCount; nVar++ )
     {
 
         int nDims;
-        nc_inq_varndims (cdfid, nVar, &nDims);
+        nc_inq_varndims(cdfid, nVar, &nDims);
 
         if( nDims >= 2 )
         {
-            ponDimIds = (int *) CPLCalloc(nDims, sizeof(int));
-            nc_inq_vardimid (cdfid, nVar, ponDimIds);
+            ponDimIds = (int *)CPLCalloc(nDims, sizeof(int));
+            nc_inq_vardimid(cdfid, nVar, ponDimIds);
 
             // Create Sub dataset list.
             CPLString osDim;
             for( int i = 0; i < nDims; i++ )
             {
                 size_t nDimLen;
-                nc_inq_dimlen (cdfid, ponDimIds[i], &nDimLen);
-                osDim += CPLSPrintf("%dx", (int) nDimLen);
+                nc_inq_dimlen(cdfid, ponDimIds[i], &nDimLen);
+                osDim += CPLSPrintf("%dx", (int)nDimLen);
             }
 
             nc_type nVarType;
             nc_inq_vartype(cdfid, nVar, &nVarType);
             // Get rid of the last "x" character.
-            osDim.resize(osDim.size()-1);
-            const char* pszType = "";
+            osDim.resize(osDim.size() - 1);
+            const char *pszType = "";
             switch( nVarType )
             {
-                case NC_BYTE:
-                    pszType = "8-bit integer";
-                    break;
-                case NC_CHAR:
-                    pszType = "8-bit character";
-                    break;
-                case NC_SHORT:
-                    pszType = "16-bit integer";
-                    break;
-                case NC_INT:
-                    pszType = "32-bit integer";
-                    break;
-                case NC_FLOAT:
-                    pszType = "32-bit floating-point";
-                    break;
-                case NC_DOUBLE:
-                    pszType = "64-bit floating-point";
-                    break;
+            case NC_BYTE:
+                pszType = "8-bit integer";
+                break;
+            case NC_CHAR:
+                pszType = "8-bit character";
+                break;
+            case NC_SHORT:
+                pszType = "16-bit integer";
+                break;
+            case NC_INT:
+                pszType = "32-bit integer";
+                break;
+            case NC_FLOAT:
+                pszType = "32-bit floating-point";
+                break;
+            case NC_DOUBLE:
+                pszType = "64-bit floating-point";
+                break;
 #ifdef NETCDF_HAS_NC4
-                case NC_UBYTE:
-                    pszType = "8-bit unsigned integer";
-                    break;
-                case NC_USHORT:
-                    pszType = "16-bit unsigned integer";
-                    break;
-                case NC_UINT:
-                    pszType = "32-bit unsigned integer";
-                    break;
-                case NC_INT64:
-                    pszType = "64-bit integer";
-                    break;
-                case NC_UINT64:
-                    pszType = "64-bit unsigned integer";
-                    break;
+            case NC_UBYTE:
+                pszType = "8-bit unsigned integer";
+                break;
+            case NC_USHORT:
+                pszType = "16-bit unsigned integer";
+                break;
+            case NC_UINT:
+                pszType = "32-bit unsigned integer";
+                break;
+            case NC_INT64:
+                pszType = "64-bit integer";
+                break;
+            case NC_UINT64:
+                pszType = "64-bit unsigned integer";
+                break;
 #endif
-                default:
-                    break;
+            default:
+                break;
             }
             szName[0] = '\0';
             int status = nc_inq_varname(cdfid, nVar, szName);
@@ -4626,8 +4616,8 @@ void netCDFDataset::CreateSubDatasetList()
             nAttlen = 0;
             nc_inq_att(cdfid, nVar, CF_STD_NAME, &nAttype, &nAttlen);
             if( nAttlen < sizeof(szVarStdName) &&
-                nc_get_att_text (cdfid, nVar, CF_STD_NAME,
-                                  szVarStdName) == NC_NOERR )
+                nc_get_att_text(cdfid, nVar, CF_STD_NAME,
+                                szVarStdName) == NC_NOERR )
             {
                 szVarStdName[nAttlen] = '\0';
             }
@@ -4636,23 +4626,20 @@ void netCDFDataset::CreateSubDatasetList()
                 snprintf(szVarStdName, sizeof(szVarStdName), "%s", szName);
             }
 
-            char szTemp[ NC_MAX_NAME+1 ];
+            char szTemp[NC_MAX_NAME + 1];
             snprintf(szTemp, sizeof(szTemp), "SUBDATASET_%d_NAME", nSub);
 
             poDS->papszSubDatasets =
                 CSLSetNameValue(poDS->papszSubDatasets, szTemp,
-                                 CPLSPrintf("NETCDF:\"%s\":%s",
-                                             poDS->osFilename.c_str(),
-                                             szName));
+                                CPLSPrintf("NETCDF:\"%s\":%s",
+                                           poDS->osFilename.c_str(), szName));
 
             snprintf(szTemp, sizeof(szTemp), "SUBDATASET_%d_DESC", nSub++);
 
             poDS->papszSubDatasets =
                 CSLSetNameValue(poDS->papszSubDatasets, szTemp,
-                                 CPLSPrintf("[%s] %s (%s)",
-                                             osDim.c_str(),
-                                             szVarStdName,
-                                             pszType));
+                                CPLSPrintf("[%s] %s (%s)", osDim.c_str(),
+                                           szVarStdName, pszType));
 
             CPLFree(ponDimIds);
         }
@@ -4663,7 +4650,7 @@ void netCDFDataset::CreateSubDatasetList()
 /*                              IdentifyFormat()                      */
 /************************************************************************/
 
-NetCDFFormatEnum netCDFDataset::IdentifyFormat( GDALOpenInfo * poOpenInfo,
+NetCDFFormatEnum netCDFDataset::IdentifyFormat( GDALOpenInfo *poOpenInfo,
 #ifndef HAVE_HDF5
 CPL_UNUSED
 #endif
@@ -4684,15 +4671,16 @@ CPL_UNUSED
         {
             bool bFoundZ = false;
             bool bFoundDimension = false;
-            for(int i=0;i<poOpenInfo->nHeaderBytes - 11;i++)
+            for( int i = 0; i < poOpenInfo->nHeaderBytes - 11; i++ )
             {
                 if( poOpenInfo->pabyHeader[i] == 1 &&
-                    poOpenInfo->pabyHeader[i+1] == 'z' &&
-                    poOpenInfo->pabyHeader[i+2] == 0 )
+                    poOpenInfo->pabyHeader[i + 1] == 'z' &&
+                    poOpenInfo->pabyHeader[i + 2] == 0 )
                     bFoundZ = true;
                 else if( poOpenInfo->pabyHeader[i] == 9 &&
-                        memcmp((const char*)poOpenInfo->pabyHeader + i + 1, "dimension", 9) == 0 &&
-                        poOpenInfo->pabyHeader[i+10] == 0 )
+                         memcmp((const char *)poOpenInfo->pabyHeader + i + 1,
+                                "dimension", 9) == 0 &&
+                         poOpenInfo->pabyHeader[i + 10] == 0 )
                     bFoundDimension = true;
             }
             if( bFoundZ && bFoundDimension )
@@ -4701,11 +4689,11 @@ CPL_UNUSED
 
         return NCDF_FORMAT_NC;
     }
-    else if( STARTS_WITH_CI((char*)poOpenInfo->pabyHeader, "CDF\002") )
+    else if( STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "CDF\002") )
     {
         return NCDF_FORMAT_NC2;
     }
-    else if( STARTS_WITH_CI((char*)poOpenInfo->pabyHeader, "\211HDF\r\n\032\n") )
+    else if( STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "\211HDF\r\n\032\n") )
     {
         // Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
         // If HDF5 is not supported in GDAL, this driver will try to open the
@@ -4719,10 +4707,10 @@ CPL_UNUSED
         if( bCheckExt )
         {
             // Check by default.
-            const char* pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
-            if( ! (EQUAL(pszExtension, "nc") || EQUAL(pszExtension, "cdf")
-                    || EQUAL(pszExtension, "nc2") || EQUAL(pszExtension, "nc4")
-                    || EQUAL(pszExtension, "nc3") || EQUAL(pszExtension, "grd")) )
+            const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+            if( !(EQUAL(pszExtension, "nc") || EQUAL(pszExtension, "cdf") ||
+                  EQUAL(pszExtension, "nc2") || EQUAL(pszExtension, "nc4") ||
+                  EQUAL(pszExtension, "nc3") || EQUAL(pszExtension, "grd")) )
                 return NCDF_FORMAT_HDF5;
         }
 #endif
@@ -4734,7 +4722,7 @@ CPL_UNUSED
         return NCDF_FORMAT_HDF5;
 #endif
     }
-    else if( STARTS_WITH_CI((char*)poOpenInfo->pabyHeader, "\016\003\023\001") )
+    else if( STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "\016\003\023\001") )
     {
         // Requires HDF4 support in libnetcdf, but if HF4 is supported by GDAL
         // don't try to open.
@@ -4766,7 +4754,7 @@ CPL_UNUSED
 /*                            TestCapability()                          */
 /************************************************************************/
 
-int netCDFDataset::TestCapability(const char* pszCap)
+int netCDFDataset::TestCapability(const char *pszCap)
 {
     if( EQUAL(pszCap, ODsCCreateLayer) )
     {
@@ -4780,7 +4768,7 @@ int netCDFDataset::TestCapability(const char* pszCap)
 /*                            GetLayer()                                */
 /************************************************************************/
 
-OGRLayer* netCDFDataset::GetLayer(int nIdx)
+OGRLayer *netCDFDataset::GetLayer(int nIdx)
 {
     if( nIdx < 0 || nIdx >= nLayers )
         return NULL;
@@ -4791,21 +4779,21 @@ OGRLayer* netCDFDataset::GetLayer(int nIdx)
 /*                            ICreateLayer()                            */
 /************************************************************************/
 
-OGRLayer* netCDFDataset::ICreateLayer( const char *pszName,
+OGRLayer *netCDFDataset::ICreateLayer( const char *pszName,
                                        OGRSpatialReference *poSpatialRef,
                                        OGRwkbGeometryType eGType,
-                                       char ** papszOptions )
+                                       char **papszOptions )
 {
     int nLayerCDFId = cdfid;
     if( !TestCapability(ODsCCreateLayer) )
         return NULL;
 
     CPLString osNetCDFLayerName(pszName);
-    const netCDFWriterConfigLayer* poLayerConfig = NULL;
+    const netCDFWriterConfigLayer *poLayerConfig = NULL;
     if( oWriterConfig.m_bIsValid )
     {
-        std::map<CPLString, netCDFWriterConfigLayer>::const_iterator oLayerIter =
-                                        oWriterConfig.m_oLayers.find(pszName);
+        std::map<CPLString, netCDFWriterConfigLayer>::const_iterator
+            oLayerIter = oWriterConfig.m_oLayers.find(pszName);
         if( oLayerIter != oWriterConfig.m_oLayers.end() )
         {
             poLayerConfig = &(oLayerIter->second);
@@ -4813,19 +4801,24 @@ OGRLayer* netCDFDataset::ICreateLayer( const char *pszName,
         }
     }
 
-    netCDFDataset* poLayerDataset = NULL;
+    netCDFDataset *poLayerDataset = NULL;
     if( eMultipleLayerBehaviour == SEPARATE_FILES )
     {
-        char** papszDatasetOptions = NULL;
-        papszDatasetOptions = CSLSetNameValue(papszDatasetOptions, "CONFIG_FILE",
-                                       CSLFetchNameValue(papszCreationOptions, "CONFIG_FILE"));
-        papszDatasetOptions = CSLSetNameValue(papszDatasetOptions, "FORMAT",
-                                       CSLFetchNameValue(papszCreationOptions, "FORMAT"));
-        papszDatasetOptions = CSLSetNameValue(papszDatasetOptions, "WRITE_GDAL_TAGS",
-                                       CSLFetchNameValue(papszCreationOptions, "WRITE_GDAL_TAGS"));
-        CPLString osLayerFilename(CPLFormFilename(osFilename, osNetCDFLayerName, "nc"));
+        char **papszDatasetOptions = NULL;
+        papszDatasetOptions = CSLSetNameValue(
+            papszDatasetOptions, "CONFIG_FILE",
+            CSLFetchNameValue(papszCreationOptions, "CONFIG_FILE"));
+        papszDatasetOptions =
+            CSLSetNameValue(papszDatasetOptions, "FORMAT",
+                            CSLFetchNameValue(papszCreationOptions, "FORMAT"));
+        papszDatasetOptions = CSLSetNameValue(
+            papszDatasetOptions, "WRITE_GDAL_TAGS",
+            CSLFetchNameValue(papszCreationOptions, "WRITE_GDAL_TAGS"));
+        CPLString osLayerFilename(
+            CPLFormFilename(osFilename, osNetCDFLayerName, "nc"));
         CPLAcquireMutex(hNCMutex, 1000.0);
-        poLayerDataset = CreateLL(osLayerFilename, 0, 0, 0, papszDatasetOptions);
+        poLayerDataset =
+            CreateLL(osLayerFilename, 0, 0, 0, papszDatasetOptions);
         CPLReleaseMutex(hNCMutex);
         CSLDestroy(papszDatasetOptions);
         if( poLayerDataset == NULL )
@@ -4833,7 +4826,7 @@ OGRLayer* netCDFDataset::ICreateLayer( const char *pszName,
 
         nLayerCDFId = poLayerDataset->cdfid;
         NCDFAddGDALHistory(nLayerCDFId, osLayerFilename, "", "Create",
-                            NCDF_CONVENTIONS_CF_V1_6);
+                           NCDF_CONVENTIONS_CF_V1_6);
     }
 #ifdef NETCDF_HAS_NC4
     else if( eMultipleLayerBehaviour == SEPARATE_GROUPS )
@@ -4841,43 +4834,45 @@ OGRLayer* netCDFDataset::ICreateLayer( const char *pszName,
         SetDefineMode(true);
 
         nLayerCDFId = -1;
-        int status = nc_def_grp (cdfid, osNetCDFLayerName, &nLayerCDFId);
+        int status = nc_def_grp(cdfid, osNetCDFLayerName, &nLayerCDFId);
         NCDF_ERR(status);
         if( status != NC_NOERR )
             return NULL;
 
         NCDFAddGDALHistory(nLayerCDFId, osFilename, "", "Create",
-                            NCDF_CONVENTIONS_CF_V1_6);
+                           NCDF_CONVENTIONS_CF_V1_6);
     }
 #endif
 
     // Make a clone to workaround a bug in released MapServer versions
     // that destroys the passed SRS instead of releasing it .
-    OGRSpatialReference* poSRS = poSpatialRef;
+    OGRSpatialReference *poSRS = poSpatialRef;
     if( poSRS != NULL )
         poSRS = poSRS->Clone();
-    netCDFLayer* poLayer = new netCDFLayer(poLayerDataset ? poLayerDataset : this,
-                                            nLayerCDFId,
-                                            osNetCDFLayerName, eGType, poSRS);
+    netCDFLayer *poLayer =
+        new netCDFLayer(poLayerDataset ? poLayerDataset : this, nLayerCDFId,
+                        osNetCDFLayerName, eGType, poSRS);
     if( poSRS != NULL )
         poSRS->Release();
 
     // Fetch layer creation options coming from config file
-    char** papszNewOptions = CSLDuplicate(papszOptions);
+    char **papszNewOptions = CSLDuplicate(papszOptions);
     if( oWriterConfig.m_bIsValid )
     {
         std::map<CPLString, CPLString>::const_iterator oIter;
         for( oIter = oWriterConfig.m_oLayerCreationOptions.begin();
              oIter != oWriterConfig.m_oLayerCreationOptions.end(); ++oIter )
         {
-            papszNewOptions = CSLSetNameValue(papszNewOptions, oIter->first, oIter->second);
+            papszNewOptions =
+                CSLSetNameValue(papszNewOptions, oIter->first, oIter->second);
         }
         if( poLayerConfig != NULL )
         {
             for( oIter = poLayerConfig->m_oLayerCreationOptions.begin();
                  oIter != poLayerConfig->m_oLayerCreationOptions.end(); ++oIter )
             {
-                papszNewOptions = CSLSetNameValue(papszNewOptions, oIter->first, oIter->second);
+                papszNewOptions = CSLSetNameValue(papszNewOptions, oIter->first,
+                                                  oIter->second);
             }
         }
     }
@@ -4894,7 +4889,8 @@ OGRLayer* netCDFDataset::ICreateLayer( const char *pszName,
     if( poLayerDataset != NULL )
         apoVectorDatasets.push_back(poLayerDataset);
 
-    papoLayers = static_cast<netCDFLayer**>(CPLRealloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer*)));
+    papoLayers = static_cast<netCDFLayer **>(
+        CPLRealloc(papoLayers, (nLayers + 1) * sizeof(netCDFLayer *)));
     papoLayers[nLayers++] = poLayer;
     return poLayer;
 }
@@ -4903,20 +4899,22 @@ OGRLayer* netCDFDataset::ICreateLayer( const char *pszName,
 /*                           CloneAttributes()                          */
 /************************************************************************/
 
-bool netCDFDataset::CloneAttributes(int old_cdfid, int new_cdfid, int nSrcVarId, int nDstVarId)
+bool netCDFDataset::CloneAttributes(int old_cdfid, int new_cdfid, int nSrcVarId,
+                                    int nDstVarId)
 {
     int nAttCount = -1;
     int status = nc_inq_varnatts(old_cdfid, nSrcVarId, &nAttCount);
     NCDF_ERR(status);
 
-    for( int i=0; i < nAttCount; i++ )
+    for( int i = 0; i < nAttCount; i++ )
     {
-        char szName[ NC_MAX_NAME + 1 ];
+        char szName[NC_MAX_NAME + 1];
         szName[0] = 0;
         status = nc_inq_attname(old_cdfid, nSrcVarId, i, szName);
         NCDF_ERR(status);
 
-        status = nc_copy_att(old_cdfid, nSrcVarId, szName, new_cdfid, nDstVarId);
+        status =
+            nc_copy_att(old_cdfid, nSrcVarId, szName, new_cdfid, nDstVarId);
         NCDF_ERR(status);
         if( status != NC_NOERR )
             return false;
@@ -4929,7 +4927,8 @@ bool netCDFDataset::CloneAttributes(int old_cdfid, int new_cdfid, int nSrcVarId,
 /*                          CloneVariableContent()                      */
 /************************************************************************/
 
-bool netCDFDataset::CloneVariableContent(int old_cdfid, int new_cdfid, int nSrcVarId, int nDstVarId)
+bool netCDFDataset::CloneVariableContent(int old_cdfid, int new_cdfid,
+                                         int nSrcVarId, int nDstVarId)
 {
     int nVarDimCount = -1;
     int status = nc_inq_varndims(old_cdfid, nSrcVarId, &nVarDimCount);
@@ -4941,55 +4940,55 @@ bool netCDFDataset::CloneVariableContent(int old_cdfid, int new_cdfid, int nSrcV
     status = nc_inq_vartype(old_cdfid, nSrcVarId, &nc_datatype);
     NCDF_ERR(status);
     size_t nTypeSize = 0;
-    switch (nc_datatype)
+    switch( nc_datatype )
     {
-        case NC_BYTE:
-        case NC_CHAR:
-            nTypeSize = 1;
-            break;
-        case NC_SHORT:
-            nTypeSize = 2;
-            break;
-        case NC_INT:
-            nTypeSize = 4;
-            break;
-        case NC_FLOAT:
-            nTypeSize = 4;
-            break;
-        case NC_DOUBLE:
-            nTypeSize = 8;
-            break;
+    case NC_BYTE:
+    case NC_CHAR:
+        nTypeSize = 1;
+        break;
+    case NC_SHORT:
+        nTypeSize = 2;
+        break;
+    case NC_INT:
+        nTypeSize = 4;
+        break;
+    case NC_FLOAT:
+        nTypeSize = 4;
+        break;
+    case NC_DOUBLE:
+        nTypeSize = 8;
+        break;
 #ifdef NETCDF_HAS_NC4
-        case NC_UBYTE:
-            nTypeSize = 1;
-            break;
-        case NC_USHORT:
-            nTypeSize = 2;
-            break;
-        case NC_UINT:
-            nTypeSize = 4;
-            break;
-        case NC_INT64:
-        case NC_UINT64:
-            nTypeSize = 8;
-            break;
-        case NC_STRING:
-            nTypeSize = sizeof(char*);
-            break;
+    case NC_UBYTE:
+        nTypeSize = 1;
+        break;
+    case NC_USHORT:
+        nTypeSize = 2;
+        break;
+    case NC_UINT:
+        nTypeSize = 4;
+        break;
+    case NC_INT64:
+    case NC_UINT64:
+        nTypeSize = 8;
+        break;
+    case NC_STRING:
+        nTypeSize = sizeof(char *);
+        break;
 #endif
-        default:
-        {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unsupported data type: %d",
-                     nc_datatype);
-            return false;
-        }
+    default:
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported data type: %d",
+                 nc_datatype);
+        return false;
+    }
     }
 
     size_t nElems = 1;
     size_t anStart[NC_MAX_DIMS];
     size_t anCount[NC_MAX_DIMS];
     size_t nRecords = 1;
-    for( int i=0; i < nVarDimCount; i++)
+    for( int i = 0; i < nVarDimCount; i++)
     {
         anStart[i] = 0;
         if( i == 0 )
@@ -5007,108 +5006,111 @@ bool netCDFDataset::CloneVariableContent(int old_cdfid, int new_cdfid, int nSrcV
         }
     }
 
-    void* pBuffer = VSI_MALLOC2_VERBOSE(nElems, nTypeSize);
+    void *pBuffer = VSI_MALLOC2_VERBOSE(nElems, nTypeSize);
     if( pBuffer == NULL )
         return false;
 
-    for(size_t iRecord = 0; iRecord < nRecords; iRecord ++ )
+    for(size_t iRecord = 0; iRecord < nRecords; iRecord++ )
     {
         anStart[0] = iRecord;
 
-        switch (nc_datatype)
+        switch( nc_datatype )
         {
-            case NC_BYTE:
-                status = nc_get_vara_schar(old_cdfid, nSrcVarId, anStart, anCount,
-                                           (signed char *)pBuffer);
-                if( !status )
-                    status = nc_put_vara_schar(new_cdfid, nDstVarId, anStart, anCount,
-                                               (const signed char *)pBuffer);
-                break;
-            case NC_CHAR:
-                status = nc_get_vara_text(old_cdfid, nSrcVarId, anStart, anCount,
-                                          (char *)pBuffer);
-                if( !status )
-                    status = nc_put_vara_text(new_cdfid, nDstVarId, anStart, anCount,
-                                              (char *)pBuffer);
-                break;
-            case NC_SHORT:
-                status = nc_get_vara_short(old_cdfid, nSrcVarId, anStart, anCount,
-                                           (short *)pBuffer);
-                if( !status )
-                    status = nc_put_vara_short(new_cdfid, nDstVarId, anStart, anCount,
-                                               (short *)pBuffer);
-                break;
-            case NC_INT:
-                status = nc_get_vara_int(old_cdfid, nSrcVarId, anStart, anCount,
-                                            (int *)pBuffer);
-                if( !status )
-                    status = nc_put_vara_int(new_cdfid, nDstVarId, anStart, anCount,
-                                             (int *)pBuffer);
-                break;
-            case NC_FLOAT:
-                status = nc_get_vara_float(old_cdfid, nSrcVarId, anStart, anCount,
-                                           (float *)pBuffer);
-                if( !status )
-                    status = nc_put_vara_float(new_cdfid, nDstVarId, anStart, anCount,
-                                                (float *)pBuffer);
-                break;
-            case NC_DOUBLE:
-                status = nc_get_vara_double(old_cdfid, nSrcVarId, anStart, anCount,
-                                            (double *)pBuffer);
-                if( !status )
-                    status = nc_put_vara_double(new_cdfid, nDstVarId, anStart, anCount,
-                                                (double *)pBuffer);
+        case NC_BYTE:
+            status = nc_get_vara_schar(old_cdfid, nSrcVarId, anStart, anCount,
+                                       (signed char *)pBuffer);
+            if( !status )
+                status =
+                    nc_put_vara_schar(new_cdfid, nDstVarId, anStart, anCount,
+                                      (const signed char *)pBuffer);
+            break;
+        case NC_CHAR:
+            status = nc_get_vara_text(old_cdfid, nSrcVarId, anStart, anCount,
+                                      (char *)pBuffer);
+            if( !status )
+                status = nc_put_vara_text(new_cdfid, nDstVarId, anStart,
+                                          anCount, (char *)pBuffer);
+            break;
+        case NC_SHORT:
+            status = nc_get_vara_short(old_cdfid, nSrcVarId, anStart, anCount,
+                                       (short *)pBuffer);
+            if( !status )
+                status = nc_put_vara_short(new_cdfid, nDstVarId, anStart,
+                                           anCount, (short *)pBuffer);
+            break;
+        case NC_INT:
+            status = nc_get_vara_int(old_cdfid, nSrcVarId, anStart, anCount,
+                                     (int *)pBuffer);
+            if( !status )
+                status = nc_put_vara_int(new_cdfid, nDstVarId, anStart, anCount,
+                                         (int *)pBuffer);
+            break;
+        case NC_FLOAT:
+            status = nc_get_vara_float(old_cdfid, nSrcVarId, anStart, anCount,
+                                       (float *)pBuffer);
+            if( !status )
+                status = nc_put_vara_float(new_cdfid, nDstVarId, anStart,
+                                           anCount, (float *)pBuffer);
+            break;
+        case NC_DOUBLE:
+            status = nc_get_vara_double(old_cdfid, nSrcVarId, anStart, anCount,
+                                        (double *)pBuffer);
+            if( !status )
+                status = nc_put_vara_double(new_cdfid, nDstVarId, anStart,
+                                            anCount, (double *)pBuffer);
             break;
 #ifdef NETCDF_HAS_NC4
-            case NC_STRING:
-                status = nc_get_vara_string(old_cdfid, nSrcVarId, anStart, anCount,
-                                             (char**) pBuffer);
-                if( !status )
-                {
-                    status = nc_put_vara_string(new_cdfid, nDstVarId, anStart, anCount,
-                                                 (const char**) pBuffer);
-                    nc_free_string(nElems, (char**) pBuffer);
-                }
-                break;
+        case NC_STRING:
+            status = nc_get_vara_string(old_cdfid, nSrcVarId, anStart, anCount,
+                                        (char **)pBuffer);
+            if( !status )
+            {
+                status = nc_put_vara_string(new_cdfid, nDstVarId, anStart,
+                                            anCount, (const char **)pBuffer);
+                nc_free_string(nElems, (char **)pBuffer);
+            }
+            break;
 
-            case NC_UBYTE:
-                status = nc_get_vara_uchar(old_cdfid, nSrcVarId, anStart, anCount,
-                                            (unsigned char *)pBuffer);
-                if( !status )
-                    status = nc_put_vara_uchar(new_cdfid, nDstVarId, anStart, anCount,
-                                                (unsigned char *)pBuffer);
-                break;
-            case NC_USHORT:
-                status = nc_get_vara_ushort(old_cdfid, nSrcVarId, anStart, anCount,
-                                            (unsigned short *)pBuffer);
-                if( !status )
-                    status = nc_put_vara_ushort(new_cdfid, nDstVarId, anStart, anCount,
-                                                (unsigned short *)pBuffer);
-                break;
-            case NC_UINT:
-                status = nc_get_vara_uint(old_cdfid, nSrcVarId, anStart, anCount,
-                                            (unsigned int *)pBuffer);
-                if( !status )
-                    status = nc_put_vara_uint(new_cdfid, nDstVarId, anStart, anCount,
-                                                (unsigned int *)pBuffer);
-                break;
-            case NC_INT64:
-                status = nc_get_vara_longlong(old_cdfid, nSrcVarId, anStart, anCount,
-                                                (long long *)pBuffer);
-                if( !status )
-                    status = nc_put_vara_longlong(new_cdfid, nDstVarId, anStart, anCount,
-                                                    (long long *)pBuffer);
-                break;
-            case NC_UINT64:
-                status = nc_get_vara_ulonglong(old_cdfid, nSrcVarId, anStart, anCount,
-                                                (unsigned long long *)pBuffer);
-                if( !status )
-                    status = nc_put_vara_ulonglong(new_cdfid, nDstVarId, anStart, anCount,
-                                                    (unsigned long long *)pBuffer);
-                break;
+        case NC_UBYTE:
+            status = nc_get_vara_uchar(old_cdfid, nSrcVarId, anStart, anCount,
+                                       (unsigned char *)pBuffer);
+            if( !status )
+                status = nc_put_vara_uchar(new_cdfid, nDstVarId, anStart,
+                                           anCount, (unsigned char *)pBuffer);
+            break;
+        case NC_USHORT:
+            status = nc_get_vara_ushort(old_cdfid, nSrcVarId, anStart, anCount,
+                                        (unsigned short *)pBuffer);
+            if( !status )
+                status = nc_put_vara_ushort(new_cdfid, nDstVarId, anStart,
+                                            anCount, (unsigned short *)pBuffer);
+            break;
+        case NC_UINT:
+            status = nc_get_vara_uint(old_cdfid, nSrcVarId, anStart, anCount,
+                                      (unsigned int *)pBuffer);
+            if( !status )
+                status = nc_put_vara_uint(new_cdfid, nDstVarId, anStart,
+                                          anCount, (unsigned int *)pBuffer);
+            break;
+        case NC_INT64:
+            status = nc_get_vara_longlong(old_cdfid, nSrcVarId, anStart,
+                                          anCount, (long long *)pBuffer);
+            if(!status)
+                status = nc_put_vara_longlong(new_cdfid, nDstVarId, anStart,
+                                              anCount, (long long *)pBuffer);
+            break;
+        case NC_UINT64:
+            status =
+                nc_get_vara_ulonglong(old_cdfid, nSrcVarId, anStart, anCount,
+                                      (unsigned long long *)pBuffer);
+            if( !status )
+                status = nc_put_vara_ulonglong(new_cdfid, nDstVarId, anStart,
+                                               anCount,
+                                               (unsigned long long *)pBuffer);
+            break;
 #endif
-            default:
-                status = NC_EBADTYPE;
+        default:
+            status = NC_EBADTYPE;
         }
 
         NCDF_ERR(status);
@@ -5129,7 +5131,7 @@ bool netCDFDataset::CloneVariableContent(int old_cdfid, int new_cdfid, int nSrcV
 
 bool NCDFIsUnlimitedDim(bool
 #ifdef NETCDF_HAS_NC4
-                                            bIsNC4
+                            bIsNC4
 #endif
                             , int cdfid, int nDimId)
 {
@@ -5141,9 +5143,10 @@ bool NCDFIsUnlimitedDim(bool
         bool bFound = false;
         if( nUnlimitedDims )
         {
-            int* panUnlimitedDimIds = static_cast<int*>(CPLMalloc(sizeof(int) * nUnlimitedDims));
+            int *panUnlimitedDimIds =
+                static_cast<int *>(CPLMalloc(sizeof(int) * nUnlimitedDims));
             nc_inq_unlimdims(cdfid, NULL, panUnlimitedDimIds);
-            for(int i=0;i<nUnlimitedDims;i++)
+            for(int i = 0; i < nUnlimitedDims; i++)
             {
                 if( panUnlimitedDimIds[i] == nDimId )
                 {
@@ -5176,14 +5179,15 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId,
     int nDimCount = -1;
     int status = nc_inq_ndims(nOldGrpId, &nDimCount);
     NCDF_ERR(status)
-    int* panDimIds = static_cast<int*>(CPLMalloc(sizeof(int) * nDimCount));
+    int *panDimIds = static_cast<int *>(CPLMalloc(sizeof(int) * nDimCount));
     int nUnlimiDimID = -1;
-    status = nc_inq_unlimdim (nOldGrpId, &nUnlimiDimID);
+    status = nc_inq_unlimdim(nOldGrpId, &nUnlimiDimID);
     NCDF_ERR(status);
 #ifdef NETCDF_HAS_NC4
     if( bIsNC4 )
     {
-        // In NC4, the dimension ids of a group are not necessarily in [0,nDimCount-1] range
+        // In NC4, the dimension ids of a group are not necessarily in
+        // [0,nDimCount-1] range
         int nDimCount2 = -1;
         status = nc_inq_dimids(nOldGrpId, &nDimCount2, panDimIds, FALSE);
         NCDF_ERR(status);
@@ -5192,23 +5196,23 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId,
     else
 #endif
     {
-        for( int i=0; i < nDimCount; i++ )
+        for( int i = 0; i < nDimCount; i++ )
             panDimIds[i] = i;
     }
-    for( int i=0; i < nDimCount; i++ )
+    for( int i = 0; i < nDimCount; i++ )
     {
-        char szDimName[ NC_MAX_NAME + 1 ];
+        char szDimName[NC_MAX_NAME + 1];
         szDimName[0] = 0;
         size_t nLen = 0;
         const int nDimId = panDimIds[i];
-        status = nc_inq_dim (nOldGrpId, nDimId, szDimName, &nLen);
+        status = nc_inq_dim(nOldGrpId, nDimId, szDimName, &nLen);
         NCDF_ERR(status);
         if( NCDFIsUnlimitedDim(bIsNC4, nOldGrpId, nDimId) )
             nLen = NC_UNLIMITED;
         else if( nDimId == nDimIdToGrow && nOldGrpId == nLayerId )
             nLen = nNewSize;
         int nNewDimId = -1;
-        status = nc_def_dim (nNewGrpId, szDimName, nLen, &nNewDimId);
+        status = nc_def_dim(nNewGrpId, szDimName, nLen, &nNewDimId);
         NCDF_ERR(status);
         CPLAssert(nDimId == nNewDimId);
         if( status != NC_NOERR )
@@ -5232,7 +5236,7 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId,
 
     for( int i=0; i < nVarCount; i++ )
     {
-        char szVarName[ NC_MAX_NAME + 1 ];
+        char szVarName[NC_MAX_NAME + 1];
         szVarName[0] = 0;
         status = nc_inq_varname(nOldGrpId, i, szVarName);
         NCDF_ERR(status);
@@ -5247,7 +5251,7 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId,
         NCDF_ERR(status);
         int nNewVarId = -1;
         status = nc_def_var(nNewGrpId, szVarName, nc_datatype,
-                             nVarDimCount, anDimIds, &nNewVarId);
+                            nVarDimCount, anDimIds, &nNewVarId);
         NCDF_ERR(status);
         CPLAssert(i == nNewVarId);
         if( status != NC_NOERR )
@@ -5269,7 +5273,7 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId,
     }
 
     // Clone variable content
-    for( int i=0; i < nVarCount; i++ )
+    for( int i = 0; i < nVarCount; i++ )
     {
         if( !CloneVariableContent(nOldGrpId, nNewGrpId, i, i) )
         {
@@ -5288,25 +5292,25 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
 {
     int nCreationMode;
     // Set nCreationMode based on eFormat.
-    switch ( eFormat )
+    switch( eFormat )
     {
 #ifdef NETCDF_HAS_NC2
-        case NCDF_FORMAT_NC2:
-            nCreationMode = NC_CLOBBER|NC_64BIT_OFFSET;
-            break;
+    case NCDF_FORMAT_NC2:
+        nCreationMode = NC_CLOBBER | NC_64BIT_OFFSET;
+        break;
 #endif
 #ifdef NETCDF_HAS_NC4
-        case NCDF_FORMAT_NC4:
-            nCreationMode = NC_CLOBBER|NC_NETCDF4;
-            break;
-        case NCDF_FORMAT_NC4C:
-            nCreationMode = NC_CLOBBER|NC_NETCDF4|NC_CLASSIC_MODEL;
-            break;
+    case NCDF_FORMAT_NC4:
+        nCreationMode = NC_CLOBBER | NC_NETCDF4;
+        break;
+    case NCDF_FORMAT_NC4C:
+        nCreationMode = NC_CLOBBER | NC_NETCDF4 | NC_CLASSIC_MODEL;
+        break;
 #endif
-        case NCDF_FORMAT_NC:
-        default:
-            nCreationMode = NC_CLOBBER;
-            break;
+    case NCDF_FORMAT_NC:
+    default:
+        nCreationMode = NC_CLOBBER;
+        break;
     }
 
     int new_cdfid = -1;
@@ -5331,10 +5335,11 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
         nc_inq_grps(cdfid, &nGroupCount, NULL) == NC_NOERR &&
         nGroupCount > 0 )
     {
-        int* panGroupIds = static_cast<int*>(CPLMalloc(sizeof(int) * nGroupCount));
+        int *panGroupIds =
+            static_cast<int *>(CPLMalloc(sizeof(int) * nGroupCount));
         status = nc_inq_grps(cdfid, NULL, panGroupIds);
         NCDF_ERR(status)
-        for(int i=0;i<nGroupCount;i++)
+        for(int i = 0; i < nGroupCount; i++)
         {
             char szGroupName[NC_MAX_NAME + 1];
             szGroupName[0] = 0;
@@ -5359,7 +5364,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
         }
         CPLFree(panGroupIds);
 
-        for(int i=0;i<nLayers;i++)
+        for(int i = 0; i < nLayers; i++)
         {
             char szGroupName[NC_MAX_NAME + 1];
             szGroupName[0] = 0;
@@ -5392,10 +5397,11 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
 #ifdef NETCDF_HAS_NC4
     if( !oListGrpName.empty() )
     {
-        for(int i=0;i<nLayers;i++)
+        for(int i = 0; i < nLayers; i++)
         {
             int nNewLayerCDFID = -1;
-            status = nc_inq_ncid(cdfid, oListGrpName[i].c_str(), &nNewLayerCDFID);
+            status =
+                nc_inq_ncid(cdfid, oListGrpName[i].c_str(), &nNewLayerCDFID);
             NCDF_ERR(status);
             papoLayers[i]->SetCDFID(nNewLayerCDFID);
         }
@@ -5403,7 +5409,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     else
 #endif
     {
-        for(int i=0;i<nLayers;i++)
+        for(int i = 0; i < nLayers; i++)
         {
             papoLayers[i]->SetCDFID(cdfid);
         }
@@ -5416,7 +5422,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
 /*                              Identify()                              */
 /************************************************************************/
 
-int netCDFDataset::Identify( GDALOpenInfo * poOpenInfo )
+int netCDFDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") )
@@ -5437,11 +5443,12 @@ int netCDFDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
 
 {
 #ifdef NCDF_DEBUG
-    CPLDebug("GDAL_netCDF", "\n=====\nOpen(), filename=[%s]", poOpenInfo->pszFilename);
+    CPLDebug("GDAL_netCDF", "\n=====\nOpen(), filename=[%s]",
+             poOpenInfo->pszFilename);
 #endif
 
     // Does this appear to be a netcdf file?
@@ -5450,20 +5457,21 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         eTmpFormat = IdentifyFormat(poOpenInfo);
 #ifdef NCDF_DEBUG
-    CPLDebug("GDAL_netCDF", "identified format %d", eTmpFormat);
+        CPLDebug("GDAL_netCDF", "identified format %d", eTmpFormat);
 #endif
         // Note: not calling Identify() directly, because we want the file type.
         // Only support NCDF_FORMAT* formats.
         if( !(NCDF_FORMAT_NC == eTmpFormat ||
-               NCDF_FORMAT_NC2 == eTmpFormat ||
-               NCDF_FORMAT_NC4 == eTmpFormat ||
-               NCDF_FORMAT_NC4C == eTmpFormat) )
+              NCDF_FORMAT_NC2 == eTmpFormat ||
+              NCDF_FORMAT_NC4 == eTmpFormat ||
+              NCDF_FORMAT_NC4C == eTmpFormat) )
             return NULL;
     }
 
     CPLMutexHolderD(&hNCMutex);
 
-    CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+    CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with
+                                // GDALDataset own mutex.
     netCDFDataset *poDS = new netCDFDataset();
     CPLAcquireMutex(hNCMutex, 1000.0);
 
@@ -5477,7 +5485,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         char **papszName =
             CSLTokenizeString2(poOpenInfo->pszFilename,
-                                ":", CSLT_HONOURSTRINGS|CSLT_PRESERVEESCAPES);
+                               ":", CSLT_HONOURSTRINGS|CSLT_PRESERVEESCAPES);
 
         // Check for drive name in windows NETCDF:"D:\...
         if( CSLCount(papszName) == 4 &&
@@ -5508,21 +5516,24 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         else
         {
             CSLDestroy(papszName);
-            CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
+                                        // deadlock with GDALDataset own mutex.
             delete poDS;
             CPLAcquireMutex(hNCMutex, 1000.0);
             CPLError(CE_Failure, CPLE_AppDefined,
-                      "Failed to parse NETCDF: prefix string into expected 2, 3 or 4 fields.");
+                     "Failed to parse NETCDF: prefix string into expected 2, 3 or 4 fields.");
             return NULL;
         }
         // Identify Format from real file, with bCheckExt=FALSE.
-        GDALOpenInfo* poOpenInfo2 = new GDALOpenInfo(poDS->osFilename.c_str(), GA_ReadOnly);
+        GDALOpenInfo *poOpenInfo2 =
+            new GDALOpenInfo(poDS->osFilename.c_str(), GA_ReadOnly);
         poDS->eFormat = IdentifyFormat(poOpenInfo2, FALSE);
         delete poOpenInfo2;
         if( NCDF_FORMAT_NONE == poDS->eFormat ||
             NCDF_FORMAT_UNKNOWN == poDS->eFormat )
         {
-            CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
+                                        // deadlock with GDALDataset own mutex.
             delete poDS;
             CPLAcquireMutex(hNCMutex, 1000.0);
             return NULL;
@@ -5547,7 +5558,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "error opening");
 #endif
-        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                    // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
@@ -5564,7 +5576,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int status = nc_inq(cdfid, &ndims, &nvars, &ngatts, &unlimdimid);
     if( status != NC_NOERR )
     {
-        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                    // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
@@ -5572,7 +5585,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Get file type from netcdf.
     int nTmpFormat = NCDF_FORMAT_NONE;
-    status = nc_inq_format (cdfid, &nTmpFormat);
+    status = nc_inq_format(cdfid, &nTmpFormat);
     if( status != NC_NOERR )
     {
         NCDF_ERR(status);
@@ -5580,8 +5593,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         CPLDebug("GDAL_netCDF",
-                  "driver detected file type=%d, libnetcdf detected type=%d",
-                  poDS->eFormat, nTmpFormat);
+                 "driver detected file type=%d, libnetcdf detected type=%d",
+                 poDS->eFormat, nTmpFormat);
         if( static_cast<NetCDFFormatEnum>(nTmpFormat) != poDS->eFormat )
         {
             // Warn if file detection conflicts with that from libnetcdf
@@ -5589,23 +5602,25 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
             if( nTmpFormat != NCDF_FORMAT_NC4C )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                          "NetCDF driver detected file type=%d, but libnetcdf detected type=%d",
-                          poDS->eFormat, nTmpFormat);
+                         "NetCDF driver detected file type=%d, but libnetcdf detected type=%d",
+                         poDS->eFormat, nTmpFormat);
             }
             CPLDebug("GDAL_netCDF", "setting file type to %d, was %d",
-                      nTmpFormat, poDS->eFormat);
+                     nTmpFormat, poDS->eFormat);
             poDS->eFormat = static_cast<NetCDFFormatEnum>(nTmpFormat);
         }
     }
 
     // Confirm the requested access is supported.
-    if( poOpenInfo->eAccess == GA_Update && (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 )
+    if( poOpenInfo->eAccess == GA_Update &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                  "The NETCDF driver does not support update access to existing"
-                  " datasets.");
+                 "The NETCDF driver does not support update access to existing"
+                 " datasets.");
         nc_close(cdfid);
-        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                    // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
@@ -5619,12 +5634,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         if( status != NC_NOERR )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                      "%s is a netCDF file, but %s is not a variable.",
-                      poOpenInfo->pszFilename,
-                      osSubdatasetName.c_str());
+                     "%s is a netCDF file, but %s is not a variable.",
+                     poOpenInfo->pszFilename, osSubdatasetName.c_str());
 
             nc_close(cdfid);
-            CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
+                                        // deadlock with GDALDataset own mutex.
             delete poDS;
             CPLAcquireMutex(hNCMutex, 1000.0);
             return NULL;
@@ -5634,11 +5649,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( ndims < 2 && (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                  "%s is a netCDF file, but without any dimensions >= 2.",
-                  poOpenInfo->pszFilename);
+                 "%s is a netCDF file, but without any dimensions >= 2.",
+                 poOpenInfo->pszFilename);
 
         nc_close(cdfid);
-        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                    // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
@@ -5646,17 +5662,17 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPLDebug("GDAL_netCDF", "dim_count = %d", ndims);
 
-    char szConventions[NC_MAX_NAME+1];
+    char szConventions[NC_MAX_NAME + 1];
     szConventions[0] = '\0';
-    nc_type nAttype=NC_NAT;
+    nc_type nAttype = NC_NAT;
     size_t nAttlen = 0;
     nc_inq_att(cdfid, NC_GLOBAL, "Conventions", &nAttype, &nAttlen);
     if( nAttlen >= sizeof(szConventions) ||
         (status = nc_get_att_text(cdfid, NC_GLOBAL, "Conventions",
-                                   szConventions)) != NC_NOERR )
+                                  szConventions)) != NC_NOERR )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                  "No UNIDATA NC_GLOBAL:Conventions attribute");
+                 "No UNIDATA NC_GLOBAL:Conventions attribute");
         // Note that 'Conventions' is always capital 'C' in CF spec.
     }
     else
@@ -5685,7 +5701,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     // check if there are vector layers.
 #ifdef NETCDF_HAS_NC4
     int nGroupCount = 0;
-    int* panGroupIds = NULL;
+    int *panGroupIds = NULL;
     if( nvars == 0 &&
         poDS->eFormat == NCDF_FORMAT_NC4 &&
         (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
@@ -5695,39 +5711,39 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     if( nGroupCount > 0 )
     {
-        panGroupIds = static_cast<int*>(CPLMalloc(sizeof(int) * nGroupCount));
+        panGroupIds = static_cast<int *>(CPLMalloc(sizeof(int) * nGroupCount));
         nc_inq_grps(cdfid, NULL, panGroupIds);
     }
     for( int iGrp = 0; iGrp < ((nGroupCount) ? nGroupCount : 1); iGrp ++ )
     {
-    char szGroupName[NC_MAX_NAME + 1];
-    szGroupName[0] = 0;
-    int iGrpId = (nGroupCount) ? panGroupIds[iGrp] : cdfid;
-    if( nGroupCount )
-    {
-        nc_inq_grpname (iGrpId, szGroupName);
-        ndims = 0;
-        ngatts = 0;
-        nvars = 0;
-        unlimdimid = -1;
-        status = nc_inq(iGrpId, &ndims, &nvars, &ngatts, &unlimdimid);
-        NCDF_ERR(status);
+        char szGroupName[NC_MAX_NAME + 1];
+        szGroupName[0] = 0;
+        int iGrpId = (nGroupCount) ? panGroupIds[iGrp] : cdfid;
+        if( nGroupCount )
+        {
+            nc_inq_grpname(iGrpId, szGroupName);
+            ndims = 0;
+            ngatts = 0;
+            nvars = 0;
+            unlimdimid = -1;
+            status = nc_inq(iGrpId, &ndims, &nvars, &ngatts, &unlimdimid);
+            NCDF_ERR(status);
 
-        CSLDestroy(poDS->papszMetadata);
-        poDS->papszMetadata = NULL;
-        poDS->ReadAttributes(cdfid, NC_GLOBAL);
-        poDS->ReadAttributes(iGrpId, NC_GLOBAL);
-    }
-    else
-    {
-        snprintf(szGroupName, sizeof(szGroupName),
-                  "%s", CPLGetBasename(poDS->osFilename));
-    }
-    poDS->cdfid = iGrpId;
+            CSLDestroy(poDS->papszMetadata);
+            poDS->papszMetadata = NULL;
+            poDS->ReadAttributes(cdfid, NC_GLOBAL);
+            poDS->ReadAttributes(iGrpId, NC_GLOBAL);
+        }
+        else
+        {
+            snprintf(szGroupName, sizeof(szGroupName), "%s",
+                     CPLGetBasename(poDS->osFilename));
+        }
+        poDS->cdfid = iGrpId;
 #else
     char szGroupName[NC_MAX_NAME + 1];
     snprintf(szGroupName, sizeof(szGroupName),
-              "%s", CPLGetBasename(poDS->osFilename));
+             "%s", CPLGetBasename(poDS->osFilename));
 #endif
 
     // Identify variables that we should ignore as Raster Bands.
@@ -5736,379 +5752,429 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     // See CF sections 5.2, 5.6 and 7.1.
     char **papszIgnoreVars = NULL;
 
-    for( int j = 0; j < nvars; j++ )
-    {
-        if( NCDFGetAttr(poDS->cdfid, j, "coordinates", &pszTemp) == CE_None )
+        for( int j = 0; j < nvars; j++ )
         {
-            char **papszTokens = CSLTokenizeString2(pszTemp, " ", 0);
-            for( int i = 0; i<CSLCount(papszTokens); i++ )
+            if( NCDFGetAttr(poDS->cdfid, j, "coordinates", &pszTemp) == CE_None )
             {
-                papszIgnoreVars = CSLAddString(papszIgnoreVars, papszTokens[i]);
-            }
-            if( papszTokens ) CSLDestroy(papszTokens);
-            CPLFree(pszTemp);
-        }
-        if( NCDFGetAttr(poDS->cdfid, j, "bounds", &pszTemp) == CE_None &&
-            pszTemp != NULL )
-        {
-            if( !EQUAL(pszTemp, "") )
-                papszIgnoreVars = CSLAddString(papszIgnoreVars, pszTemp);
-            CPLFree(pszTemp);
-        }
-    }
-
-    // Filter variables (valid 2D raster bands and vector fields).
-    nIgnoredVars = 0;
-    std::vector<int> anPotentialVectorVarID;
-    // oMapDimIdToCount[x] = number of times dim x is the first dimension of potential vector variables
-    std::map<int, int> oMapDimIdToCount;
-    int nVarXId = -1;
-    int nVarYId = -1;
-    int nVarZId = -1;
-    bool bIsVectorOnly = true;
-    int nProfileDimId = -1;
-    int nParentIndexVarID = -1;
-
-    for( int j = 0; j < nvars; j++ )
-    {
-        int ndimsForVar = -1;
-        char szTemp[NC_MAX_NAME+1];
-        nc_inq_varndims (poDS->cdfid, j, &ndimsForVar);
-        // Should we ignore this variable?
-        szTemp[0] = '\0';
-        status = nc_inq_varname(poDS->cdfid, j, szTemp);
-        if( status != NC_NOERR )
-            continue;
-
-        nc_type atttype=NC_NAT;
-        size_t attlen = 0;
-
-        if( ndimsForVar == 1 &&
-            (NCDFIsVarLongitude(poDS->cdfid, -1, szTemp) ||
-             NCDFIsVarProjectionX(poDS->cdfid, -1, szTemp)) )
-        {
-            nVarXId = j;
-        }
-        else if( ndimsForVar == 1 &&
-            (NCDFIsVarLatitude(poDS->cdfid, -1, szTemp) ||
-             NCDFIsVarProjectionY(poDS->cdfid, -1, szTemp)) )
-        {
-            nVarYId = j;
-        }
-        else if( ndimsForVar == 1 &&
-            NCDFIsVarVerticalCoord(poDS->cdfid, -1, szTemp) )
-        {
-            nVarZId = j;
-        }
-        else if( CSLFindString(papszIgnoreVars, szTemp) != -1 )
-        {
-            nIgnoredVars++;
-            CPLDebug("GDAL_netCDF", "variable #%d [%s] was ignored",
-                      j, szTemp);
-        }
-        // Only accept 2+D vars.
-        else if( ndimsForVar >= 2 )
-        {
-
-            // Identify variables that might be vector variables
-            if( ndimsForVar == 2 )
-            {
-                int anDimIds[2] = { -1, -1 };
-                nc_inq_vardimid(poDS->cdfid, j, anDimIds);
-                char szDimNameX[NC_MAX_NAME+1], szDimNameY[NC_MAX_NAME+1];
-                szDimNameX[0]='\0';
-                szDimNameY[0]='\0';
-                if( nc_inq_dimname(poDS->cdfid, anDimIds[0], szDimNameY) == NC_NOERR &&
-                    nc_inq_dimname(poDS->cdfid, anDimIds[1], szDimNameX) == NC_NOERR &&
-                    NCDFIsVarLongitude(poDS->cdfid, -1, szDimNameX)==false &&
-                    NCDFIsVarProjectionX(poDS->cdfid, -1, szDimNameX)==false &&
-                    NCDFIsVarLatitude(poDS->cdfid, -1, szDimNameY)==false &&
-                    NCDFIsVarProjectionY(poDS->cdfid, -1, szDimNameY)==false )
+                char **papszTokens = CSLTokenizeString2(pszTemp, " ", 0);
+                for( int i = 0; i<CSLCount(papszTokens); i++ )
                 {
-                    anPotentialVectorVarID.push_back(j);
-                    oMapDimIdToCount[ anDimIds[0] ] ++;
+                    papszIgnoreVars =
+                        CSLAddString(papszIgnoreVars, papszTokens[i]);
+                }
+                if( papszTokens ) CSLDestroy(papszTokens);
+                CPLFree(pszTemp);
+             }
+            if( NCDFGetAttr(poDS->cdfid, j, "bounds", &pszTemp) == CE_None &&
+                pszTemp != NULL )
+            {
+                if( !EQUAL(pszTemp, "") )
+                    papszIgnoreVars = CSLAddString(papszIgnoreVars, pszTemp);
+                CPLFree(pszTemp);
+            }
+        }
+
+        // Filter variables (valid 2D raster bands and vector fields).
+        nIgnoredVars = 0;
+        std::vector<int> anPotentialVectorVarID;
+        // oMapDimIdToCount[x] = number of times dim x is the first dimension of
+        // potential vector variables
+        std::map<int, int> oMapDimIdToCount;
+        int nVarXId = -1;
+        int nVarYId = -1;
+        int nVarZId = -1;
+        bool bIsVectorOnly = true;
+        int nProfileDimId = -1;
+        int nParentIndexVarID = -1;
+
+        for( int j = 0; j < nvars; j++ )
+        {
+            int ndimsForVar = -1;
+            char szTemp[NC_MAX_NAME + 1];
+            nc_inq_varndims(poDS->cdfid, j, &ndimsForVar);
+            // Should we ignore this variable?
+            szTemp[0] = '\0';
+            status = nc_inq_varname(poDS->cdfid, j, szTemp);
+            if( status != NC_NOERR )
+                continue;
+
+            nc_type atttype = NC_NAT;
+            size_t attlen = 0;
+
+            if( ndimsForVar == 1 &&
+                (NCDFIsVarLongitude(poDS->cdfid, -1, szTemp) ||
+                NCDFIsVarProjectionX(poDS->cdfid, -1, szTemp)) )
+            {
+                nVarXId = j;
+            }
+            else if( ndimsForVar == 1 &&
+                     (NCDFIsVarLatitude(poDS->cdfid, -1, szTemp) ||
+                      NCDFIsVarProjectionY(poDS->cdfid, -1, szTemp)) )
+            {
+                nVarYId = j;
+            }
+            else if( ndimsForVar == 1 &&
+                     NCDFIsVarVerticalCoord(poDS->cdfid, -1, szTemp) )
+            {
+                nVarZId = j;
+            }
+            else if( CSLFindString(papszIgnoreVars, szTemp) != -1 )
+            {
+                nIgnoredVars++;
+                CPLDebug("GDAL_netCDF", "variable #%d [%s] was ignored", j,
+                         szTemp);
+            }
+            // Only accept 2+D vars.
+            else if( ndimsForVar >= 2 )
+            {
+
+                // Identify variables that might be vector variables
+                if( ndimsForVar == 2 )
+                {
+                    int anDimIds[2] = { -1, -1 };
+                    nc_inq_vardimid(poDS->cdfid, j, anDimIds);
+                    char szDimNameX[NC_MAX_NAME + 1];
+                    char szDimNameY[NC_MAX_NAME + 1];
+                    szDimNameX[0] = '\0';
+                    szDimNameY[0] = '\0';
+                    if( nc_inq_dimname(poDS->cdfid, anDimIds[0], szDimNameY) ==
+                           NC_NOERR &&
+                       nc_inq_dimname(poDS->cdfid, anDimIds[1], szDimNameX) ==
+                           NC_NOERR &&
+                       NCDFIsVarLongitude(poDS->cdfid, -1, szDimNameX) ==
+                           false &&
+                       NCDFIsVarProjectionX(poDS->cdfid, -1, szDimNameX) ==
+                           false &&
+                       NCDFIsVarLatitude(poDS->cdfid, -1, szDimNameY) ==
+                           false &&
+                       NCDFIsVarProjectionY(poDS->cdfid, -1, szDimNameY) ==
+                           false )
+                    {
+                        anPotentialVectorVarID.push_back(j);
+                        oMapDimIdToCount[anDimIds[0]]++;
+                    }
+                    else
+                    {
+                        bIsVectorOnly = false;
+                    }
                 }
                 else
-                    bIsVectorOnly = false;
-            }
-            else
-                bIsVectorOnly = false;
-
-            if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 )
-            {
-                nVarID=j;
-                nCount++;
-            }
-        }
-        else if( ndimsForVar == 1 )
-        {
-            if( nc_inq_att(poDS->cdfid, j, "instance_dimension", &atttype, &attlen) == NC_NOERR &&
-                atttype == NC_CHAR && attlen < NC_MAX_NAME )
-            {
-                char szInstanceDimension[NC_MAX_NAME+1];
-                if( nc_get_att_text (poDS->cdfid, j, "instance_dimension",
-                                      szInstanceDimension) == NC_NOERR )
                 {
-                    szInstanceDimension[attlen] = 0;
-                    for(int idim = 0; idim < ndims; idim ++)
+                    bIsVectorOnly = false;
+                }
+                if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 )
+                {
+                    nVarID = j;
+                    nCount++;
+                }
+            }
+            else if( ndimsForVar == 1 )
+            {
+                if( nc_inq_att(poDS->cdfid, j, "instance_dimension", &atttype,
+                               &attlen) == NC_NOERR &&
+                    atttype == NC_CHAR && attlen < NC_MAX_NAME )
+                {
+                    char szInstanceDimension[NC_MAX_NAME + 1];
+                    if( nc_get_att_text(poDS->cdfid, j, "instance_dimension",
+                                        szInstanceDimension) == NC_NOERR )
                     {
-                        char szDimName[NC_MAX_NAME+1];
-                        szDimName[0] = 0;
-                        status = nc_inq_dimname(poDS->cdfid, idim, szDimName);
-                        NCDF_ERR(status);
-                        if( strcmp(szInstanceDimension, szDimName) == 0 )
+                        szInstanceDimension[attlen] = 0;
+                        for(int idim = 0; idim < ndims; idim++)
                         {
-                            nParentIndexVarID = j;
-                            nProfileDimId = idim;
-                            break;
+                            char szDimName[NC_MAX_NAME + 1];
+                            szDimName[0] = 0;
+                            status =
+                                nc_inq_dimname(poDS->cdfid, idim, szDimName);
+                            NCDF_ERR(status);
+                        if( strcmp(szInstanceDimension, szDimName) == 0 )
+                            {
+                                nParentIndexVarID = j;
+                                nProfileDimId = idim;
+                                break;
+                            }
+                        }
+                        if( nProfileDimId < 0 )
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Attribute instance_dimension='%s' refers "
+                                     "to a non existing dimension",
+                                     szInstanceDimension);
                         }
                     }
-                    if( nProfileDimId < 0 )
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                "Attribute instance_dimension='%s' refers to a non existing dimension",
-                                szInstanceDimension);
-                    }
+                }
+                if( j != nParentIndexVarID )
+                {
+                    anPotentialVectorVarID.push_back(j);
+                    int nDimId = -1;
+                    nc_inq_vardimid(poDS->cdfid, j, &nDimId);
+                    oMapDimIdToCount[nDimId]++;
                 }
             }
-            if( j != nParentIndexVarID )
-            {
-                anPotentialVectorVarID.push_back(j);
-                int nDimId = -1;
-                nc_inq_vardimid(poDS->cdfid, j, &nDimId);
-                oMapDimIdToCount[ nDimId ] ++;
-            }
         }
-    }
 
-    CSLDestroy(papszIgnoreVars);
+        CSLDestroy(papszIgnoreVars);
 
-    CPLString osFeatureType(
-        CSLFetchNameValueDef(poDS->papszMetadata, "NC_GLOBAL#featureType", ""));
+        CPLString osFeatureType(CSLFetchNameValueDef(
+            poDS->papszMetadata, "NC_GLOBAL#featureType", ""));
 
-    // If we are opened in raster-only mode and that there are only 1D or 2D
-    // variables and that the 2D variables have no X/Y dim, and all variables
-    // refer to the same main dimension (or 2 dimensions for featureType=profile),
-    // then it is a pure vector dataset
-    if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
-        (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 &&
-        bIsVectorOnly && nCount > 0 &&
-        !anPotentialVectorVarID.empty() &&
-        (oMapDimIdToCount.size() == 1 ||
-         (EQUAL(osFeatureType, "profile") && oMapDimIdToCount.size() == 2 && nProfileDimId >= 0)) )
-    {
-        anPotentialVectorVarID.resize(0);
-        nCount = 0;
-    }
+        // If we are opened in raster-only mode and that there are only 1D or 2D
+        // variables and that the 2D variables have no X/Y dim, and all
+        // variables refer to the same main dimension (or 2 dimensions for
+        // featureType=profile), then it is a pure vector dataset
+        if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 &&
+            bIsVectorOnly && nCount > 0 &&
+            !anPotentialVectorVarID.empty() &&
+            (oMapDimIdToCount.size() == 1 ||
+             (EQUAL(osFeatureType, "profile") && oMapDimIdToCount.size() == 2 &&
+              nProfileDimId >= 0)) )
+        {
+            anPotentialVectorVarID.resize(0);
+            nCount = 0;
+        }
 
-    if( !anPotentialVectorVarID.empty() &&
-        (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
-    {
-        // Take the dimension that is referenced the most times
-        if( !(oMapDimIdToCount.size() == 1 ||
+        if( !anPotentialVectorVarID.empty() &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
+        {
+            // Take the dimension that is referenced the most times
+            if( !(oMapDimIdToCount.size() == 1 ||
               (EQUAL(osFeatureType, "profile") && oMapDimIdToCount.size() == 2 && nProfileDimId >= 0)) )
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "The dataset has several variables that could be identified "
-                     "as vector fields, but not all share the same primary dimension. "
-                     "Consequently they will be ignored.");
-        }
-        else
-        {
-            OGRwkbGeometryType eGType = wkbUnknown;
-            CPLString osLayerName = CSLFetchNameValueDef(
-                poDS->papszMetadata, "NC_GLOBAL#ogr_layer_name", szGroupName);
-            poDS->papszMetadata = CSLSetNameValue(poDS->papszMetadata, "NC_GLOBAL#ogr_layer_name", NULL);
-
-            if( EQUAL(osFeatureType, "point") || EQUAL(osFeatureType, "profile") )
             {
-                poDS->papszMetadata = CSLSetNameValue(poDS->papszMetadata, "NC_GLOBAL#featureType", NULL);
-                eGType = wkbPoint;
-            }
-
-            const char* pszLayerType = CSLFetchNameValue(poDS->papszMetadata, "NC_GLOBAL#ogr_layer_type");
-            if( pszLayerType != NULL )
-            {
-                eGType = OGRFromOGCGeomType(pszLayerType);
-                poDS->papszMetadata = CSLSetNameValue(poDS->papszMetadata, "NC_GLOBAL#ogr_layer_type", NULL);
-            }
-
-            CPLString osGeometryField = CSLFetchNameValueDef(poDS->papszMetadata, "NC_GLOBAL#ogr_geometry_field", "");
-            poDS->papszMetadata = CSLSetNameValue(poDS->papszMetadata, "NC_GLOBAL#ogr_geometry_field", NULL);
-
-            int nFirstVarId = -1;
-            int nVectorDim = oMapDimIdToCount.rbegin()->first;
-            if( EQUAL(osFeatureType, "profile") && oMapDimIdToCount.size() == 2 )
-            {
-                if( nVectorDim == nProfileDimId )
-                    nVectorDim = oMapDimIdToCount.begin()->first;
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "The dataset has several variables that could be identified "
+                         "as vector fields, but not all share the same primary dimension. "
+                         "Consequently they will be ignored.");
             }
             else
-                nProfileDimId = -1;
-            for( size_t j = 0; j < anPotentialVectorVarID.size(); j++ )
             {
-                int anDimIds[2] = { -1, -1 };
-                nc_inq_vardimid(poDS->cdfid, anPotentialVectorVarID[j], anDimIds);
-                if( nVectorDim == anDimIds[0] )
-                {
-                    nFirstVarId = anPotentialVectorVarID[j];
-                    break;
-                }
-            }
+                OGRwkbGeometryType eGType = wkbUnknown;
+                CPLString osLayerName = CSLFetchNameValueDef(
+                poDS->papszMetadata, "NC_GLOBAL#ogr_layer_name", szGroupName);
+                poDS->papszMetadata = CSLSetNameValue(
+                    poDS->papszMetadata, "NC_GLOBAL#ogr_layer_name", NULL);
 
-            // In case where coordinates are explicitly specified for one of the field/variable,
-            // use them in priority over the ones that might have been identified above
-            char* pszCoordinates = NULL;
-            if( NCDFGetAttr(poDS->cdfid, nFirstVarId, "coordinates", &pszCoordinates) == CE_None )
-            {
-                char** papszTokens = CSLTokenizeString2(pszCoordinates, " ", 0);
-                for( int i=0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
+                if( EQUAL(osFeatureType, "point") ||
+                    EQUAL(osFeatureType, "profile") )
                 {
-                    if( NCDFIsVarLongitude(poDS->cdfid, -1, papszTokens[i]) ||
-                        NCDFIsVarProjectionX(poDS->cdfid, -1, papszTokens[i]) )
+                    poDS->papszMetadata = CSLSetNameValue(
+                        poDS->papszMetadata, "NC_GLOBAL#featureType", NULL);
+                    eGType = wkbPoint;
+                }
+
+                const char *pszLayerType = CSLFetchNameValue(
+                    poDS->papszMetadata, "NC_GLOBAL#ogr_layer_type");
+                if( pszLayerType != NULL )
+                {
+                    eGType = OGRFromOGCGeomType(pszLayerType);
+                    poDS->papszMetadata = CSLSetNameValue(
+                        poDS->papszMetadata, "NC_GLOBAL#ogr_layer_type", NULL);
+                }
+
+                CPLString osGeometryField = CSLFetchNameValueDef(
+                    poDS->papszMetadata, "NC_GLOBAL#ogr_geometry_field", "");
+                poDS->papszMetadata = CSLSetNameValue(
+                    poDS->papszMetadata, "NC_GLOBAL#ogr_geometry_field", NULL);
+
+                int nFirstVarId = -1;
+                int nVectorDim = oMapDimIdToCount.rbegin()->first;
+                if( EQUAL(osFeatureType, "profile") &&
+                    oMapDimIdToCount.size() == 2 )
+                {
+                    if( nVectorDim == nProfileDimId )
+                        nVectorDim = oMapDimIdToCount.begin()->first;
+                }
+                else
+                {
+                    nProfileDimId = -1;
+                }
+                for( size_t j = 0; j < anPotentialVectorVarID.size(); j++ )
+                {
+                    int anDimIds[2] = { -1, -1 };
+                    nc_inq_vardimid(poDS->cdfid, anPotentialVectorVarID[j],
+                                    anDimIds);
+                    if( nVectorDim == anDimIds[0] )
                     {
-                        nVarXId = -1;
-                        CPL_IGNORE_RET_VAL(nc_inq_varid(poDS->cdfid, papszTokens[i], &nVarXId));
-                    }
-                    else if( NCDFIsVarLatitude(poDS->cdfid, -1, papszTokens[i]) ||
-                             NCDFIsVarProjectionY(poDS->cdfid, -1, papszTokens[i]) )
-                    {
-                        nVarYId = -1;
-                        CPL_IGNORE_RET_VAL(nc_inq_varid(poDS->cdfid, papszTokens[i], &nVarYId));
-                    }
-                    else if( NCDFIsVarVerticalCoord(poDS->cdfid, -1, papszTokens[i]) )
-                    {
-                        nVarZId = -1;
-                        CPL_IGNORE_RET_VAL(nc_inq_varid(poDS->cdfid, papszTokens[i], &nVarZId));
+                        nFirstVarId = anPotentialVectorVarID[j];
+                        break;
                     }
                 }
-                CSLDestroy(papszTokens);
-            }
-            CPLFree(pszCoordinates);
 
-            // Check that the X,Y,Z vars share 1D and share the same dimension
-            // as attribute variables
-            if( nVarXId >= 0 && nVarYId >= 0 )
-            {
-                int nVarDimCount = -1;
-                int nVarDimId = -1;
-                if( nc_inq_varndims(poDS->cdfid, nVarXId, &nVarDimCount) != NC_NOERR ||
-                    nVarDimCount != 1 ||
-                    nc_inq_vardimid(poDS->cdfid, nVarXId, &nVarDimId) != NC_NOERR ||
-                    nVarDimId != ((nProfileDimId >= 0) ? nProfileDimId : nVectorDim) ||
-                    nc_inq_varndims(poDS->cdfid, nVarYId, &nVarDimCount) != NC_NOERR ||
-                    nVarDimCount != 1 ||
+                // In case where coordinates are explicitly specified for one of
+                // the field/variable,
+                // use them in priority over the ones that might have been
+                // identified above.
+                char *pszCoordinates = NULL;
+                if( NCDFGetAttr(poDS->cdfid, nFirstVarId, "coordinates",
+                                &pszCoordinates) == CE_None )
+                {
+                    char **papszTokens =
+                        CSLTokenizeString2(pszCoordinates, " ", 0);
+                    for(int i = 0;
+                        papszTokens != NULL && papszTokens[i] != NULL; i++)
+                    {
+                        if( NCDFIsVarLongitude(poDS->cdfid, -1,
+                                               papszTokens[i]) ||
+                            NCDFIsVarProjectionX(poDS->cdfid, -1,
+                                                 papszTokens[i]) )
+                        {
+                            nVarXId = -1;
+                            CPL_IGNORE_RET_VAL(nc_inq_varid(
+                                poDS->cdfid, papszTokens[i], &nVarXId));
+                        }
+                        else if( NCDFIsVarLatitude(poDS->cdfid, -1,
+                                                   papszTokens[i]) ||
+                                 NCDFIsVarProjectionY(poDS->cdfid, -1,
+                                                      papszTokens[i]) )
+                        {
+                            nVarYId = -1;
+                            CPL_IGNORE_RET_VAL(nc_inq_varid(
+                                poDS->cdfid, papszTokens[i], &nVarYId));
+                        }
+                        else if( NCDFIsVarVerticalCoord(poDS->cdfid, -1,
+                                                       papszTokens[i]))
+                        {
+                            nVarZId = -1;
+                            CPL_IGNORE_RET_VAL(nc_inq_varid(
+                                poDS->cdfid, papszTokens[i], &nVarZId));
+                        }
+                    }
+                    CSLDestroy(papszTokens);
+                }
+                CPLFree(pszCoordinates);
+
+                // Check that the X,Y,Z vars share 1D and share the same
+                // dimension as attribute variables.
+                if( nVarXId >= 0 && nVarYId >= 0 )
+                {
+                    int nVarDimCount = -1;
+                    int nVarDimId = -1;
+                    if( nc_inq_varndims(poDS->cdfid, nVarXId, &nVarDimCount) != NC_NOERR ||
+                        nVarDimCount != 1 ||
+                        nc_inq_vardimid(poDS->cdfid, nVarXId, &nVarDimId) != NC_NOERR ||
+                        nVarDimId != ((nProfileDimId >= 0) ? nProfileDimId : nVectorDim) ||
+                        nc_inq_varndims(poDS->cdfid, nVarYId, &nVarDimCount) != NC_NOERR ||
+                        nVarDimCount != 1 ||
                     nc_inq_vardimid(poDS->cdfid, nVarYId, &nVarDimId) != NC_NOERR ||
                     nVarDimId != ((nProfileDimId >= 0) ? nProfileDimId : nVectorDim) )
-                {
-                    nVarXId = nVarYId = -1;
+                    {
+                        nVarXId = nVarYId = -1;
+                    }
+                    else if( nVarZId >= 0 &&
+                             (nc_inq_varndims(poDS->cdfid, nVarZId,
+                                              &nVarDimCount) != NC_NOERR ||
+                              nVarDimCount != 1 ||
+                              nc_inq_vardimid(poDS->cdfid, nVarZId,
+                                              &nVarDimId) != NC_NOERR ||
+                              nVarDimId != nVectorDim) )
+                    {
+                        nVarZId = -1;
+                    }
                 }
-                else if( nVarZId >= 0 &&
-                         (nc_inq_varndims(poDS->cdfid, nVarZId, &nVarDimCount) != NC_NOERR ||
-                          nVarDimCount != 1 ||
-                          nc_inq_vardimid(poDS->cdfid, nVarZId, &nVarDimId) != NC_NOERR ||
-                          nVarDimId != nVectorDim) )
+
+                if( eGType == wkbUnknown && nVarXId >= 0 && nVarYId >= 0 )
                 {
-                    nVarZId = -1;
+                    eGType = wkbPoint;
                 }
-            }
-
-            if( eGType == wkbUnknown && nVarXId >= 0 && nVarYId >= 0 )
-            {
-                eGType = wkbPoint;
-            }
-            if( eGType == wkbPoint && nVarXId >= 0 && nVarYId >= 0 && nVarZId >= 0 )
-            {
-                eGType = wkbPoint25D;
-            }
-            if( eGType == wkbUnknown && osGeometryField.empty() )
-            {
-                eGType = wkbNone;
-            }
-
-            // Read projection info
-            char** papszMetadataBackup = CSLDuplicate(poDS->papszMetadata);
-            poDS->ReadAttributes(poDS->cdfid, nFirstVarId);
-            poDS->SetProjectionFromVar(nFirstVarId, true);
-
-            char szVarName[ NC_MAX_NAME+1 ];
-            szVarName[0] = '\0';
-            CPL_IGNORE_RET_VAL(nc_inq_varname(poDS->cdfid, nFirstVarId, szVarName));
-            char szTemp[ NC_MAX_NAME+1 ];
-            snprintf(szTemp, sizeof(szTemp),
-                     "%s#%s", szVarName, CF_GRD_MAPPING);
-            CPLString osGridMapping = CSLFetchNameValueDef(poDS->papszMetadata,
-                                                           szTemp, "");
-
-            CSLDestroy(poDS->papszMetadata);
-            poDS->papszMetadata = papszMetadataBackup;
-
-            OGRSpatialReference* poSRS = NULL;
-            if( poDS->pszProjection != NULL )
-            {
-                poSRS = new OGRSpatialReference();
-                char* pszWKT = poDS->pszProjection;
-                if( poSRS->importFromWkt(&pszWKT) != OGRERR_NONE )
+                if( eGType == wkbPoint && nVarXId >= 0 && nVarYId >= 0 &&
+                    nVarZId >= 0 )
                 {
-                    delete poSRS;
-                    poSRS = NULL;
+                    eGType = wkbPoint25D;
                 }
-                CPLFree(poDS->pszProjection);
-                poDS->pszProjection = NULL;
-            }
-            // Reset if there's a 2D raster
-            poDS->bSetProjection = false;
-            poDS->bSetGeoTransform = false;
+                if( eGType == wkbUnknown && osGeometryField.empty() )
+                {
+                    eGType = wkbNone;
+                }
+
+                // Read projection info
+                char **papszMetadataBackup = CSLDuplicate(poDS->papszMetadata);
+                poDS->ReadAttributes(poDS->cdfid, nFirstVarId);
+                poDS->SetProjectionFromVar(nFirstVarId, true);
+
+                char szVarName[NC_MAX_NAME + 1];
+                szVarName[0] = '\0';
+                CPL_IGNORE_RET_VAL(
+                    nc_inq_varname(poDS->cdfid, nFirstVarId, szVarName));
+                char szTemp[NC_MAX_NAME + 1];
+                snprintf(szTemp, sizeof(szTemp),
+                         "%s#%s", szVarName, CF_GRD_MAPPING);
+                CPLString osGridMapping =
+                    CSLFetchNameValueDef(poDS->papszMetadata, szTemp, "");
+
+                CSLDestroy(poDS->papszMetadata);
+                poDS->papszMetadata = papszMetadataBackup;
+
+                OGRSpatialReference *poSRS = NULL;
+                if( poDS->pszProjection != NULL )
+                {
+                    poSRS = new OGRSpatialReference();
+                    char *pszWKT = poDS->pszProjection;
+                    if( poSRS->importFromWkt(&pszWKT) != OGRERR_NONE )
+                    {
+                        delete poSRS;
+                        poSRS = NULL;
+                    }
+                    CPLFree(poDS->pszProjection);
+                    poDS->pszProjection = NULL;
+                }
+                // Reset if there's a 2D raster
+                poDS->bSetProjection = false;
+                poDS->bSetGeoTransform = false;
 
             if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 )
-            {
-                // Strip out uninteresting metadata
-                poDS->papszMetadata = CSLSetNameValue(poDS->papszMetadata, "NC_GLOBAL#Conventions", NULL);
-                poDS->papszMetadata = CSLSetNameValue(poDS->papszMetadata, "NC_GLOBAL#GDAL", NULL);
-                poDS->papszMetadata = CSLSetNameValue(poDS->papszMetadata, "NC_GLOBAL#history", NULL);
-            }
-
-            netCDFLayer* poLayer = new netCDFLayer(poDS, poDS->cdfid, osLayerName, eGType, poSRS);
-            if( poSRS != NULL )
-                poSRS->Release();
-            poLayer->SetRecordDimID(nVectorDim);
-            if( wkbFlatten(eGType) == wkbPoint && nVarXId >= 0 && nVarYId >= 0 )
-            {
-                poLayer->SetXYZVars(nVarXId, nVarYId, nVarZId);
-            }
-            else if( !osGeometryField.empty() )
-            {
-                poLayer->SetWKTGeometryField(osGeometryField);
-            }
-            if( !osGridMapping.empty() )
-            {
-                poLayer->SetGridMapping(osGridMapping);
-            }
-            poLayer->SetProfile(nProfileDimId, nParentIndexVarID );
-            poDS->papoLayers = static_cast<netCDFLayer**>(
-                CPLRealloc(poDS->papoLayers, (poDS->nLayers + 1) * sizeof(netCDFLayer*)));
-            poDS->papoLayers[poDS->nLayers++] = poLayer;
-
-            for( size_t j = 0; j < anPotentialVectorVarID.size(); j++ )
-            {
-                int anDimIds[2] = { -1, -1 };
-                nc_inq_vardimid(poDS->cdfid, anPotentialVectorVarID[j], anDimIds);
-                if( anDimIds[0] == nVectorDim ||
-                    (nProfileDimId >= 0 && anDimIds[0] == nProfileDimId) )
                 {
+                    // Strip out uninteresting metadata.
+                    poDS->papszMetadata = CSLSetNameValue(
+                        poDS->papszMetadata, "NC_GLOBAL#Conventions", NULL);
+                    poDS->papszMetadata = CSLSetNameValue(
+                        poDS->papszMetadata, "NC_GLOBAL#GDAL", NULL);
+                    poDS->papszMetadata = CSLSetNameValue(
+                        poDS->papszMetadata, "NC_GLOBAL#history", NULL);
+                }
+
+                netCDFLayer *poLayer = new netCDFLayer(
+                    poDS, poDS->cdfid, osLayerName, eGType, poSRS);
+                if( poSRS != NULL )
+                    poSRS->Release();
+                poLayer->SetRecordDimID(nVectorDim);
+                if( wkbFlatten(eGType) == wkbPoint && nVarXId >= 0 &&
+                    nVarYId >= 0 )
+                {
+                    poLayer->SetXYZVars(nVarXId, nVarYId, nVarZId);
+                }
+                else if( !osGeometryField.empty() )
+                {
+                    poLayer->SetWKTGeometryField(osGeometryField);
+                }
+                if( !osGridMapping.empty() )
+                {
+                    poLayer->SetGridMapping(osGridMapping);
+                }
+                poLayer->SetProfile(nProfileDimId, nParentIndexVarID);
+                poDS->papoLayers = static_cast<netCDFLayer **>(
+                    CPLRealloc(poDS->papoLayers,
+                               (poDS->nLayers + 1) * sizeof(netCDFLayer *)));
+                poDS->papoLayers[poDS->nLayers++] = poLayer;
+
+                for( size_t j = 0; j < anPotentialVectorVarID.size(); j++ )
+                {
+                    int anDimIds[2] = { -1, -1 };
+                    nc_inq_vardimid(poDS->cdfid, anPotentialVectorVarID[j],
+                                    anDimIds);
+                    if( anDimIds[0] == nVectorDim ||
+                        (nProfileDimId >= 0 && anDimIds[0] == nProfileDimId) )
+                    {
 #ifdef NCDF_DEBUG
-                    char szTemp2[NC_MAX_NAME + 1] = {};
-                    CPL_IGNORE_RET_VAL(
-                        nc_inq_varname(poDS->cdfid, anPotentialVectorVarID[j],
-                                       szTemp2));
-                    CPLDebug("GDAL_netCDF",
-                             "Variable %s is a vector field", szTemp2);
+                        char szTemp2[NC_MAX_NAME + 1] = {};
+                        CPL_IGNORE_RET_VAL(nc_inq_varname(
+                            poDS->cdfid, anPotentialVectorVarID[j], szTemp2));
+                        CPLDebug("GDAL_netCDF", "Variable %s is a vector field",
+                                 szTemp2);
 #endif
-                    poLayer->AddField(anPotentialVectorVarID[j]);
+                        poLayer->AddField(anPotentialVectorVarID[j]);
+                    }
                 }
             }
         }
-    }
 
 #ifdef NETCDF_HAS_NC4
     }  // End for group.
@@ -6120,7 +6186,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nCount == 0 && !bTreatAsSubdataset )
     {
         poDS->SetMetadata(poDS->papszMetadata);
-        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                    // with GDALDataset own mutex.
         poDS->TryLoadXML();
         // If the dataset has been opened in raster mode only, exit
         if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
@@ -6148,7 +6215,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->CreateSubDatasetList();
         poDS->SetMetadata(poDS->papszMetadata);
-        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                    // with GDALDataset own mutex.
         poDS->TryLoadXML();
         CPLAcquireMutex(hNCMutex, 1000.0);
         return poDS;
@@ -6158,7 +6226,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     // the name of the single available variable as the subdataset.
     if( !bTreatAsSubdataset )
     {
-        char szVarName[NC_MAX_NAME+1];
+        char szVarName[NC_MAX_NAME + 1];
         szVarName[0] = '\0';
         status = nc_inq_varname(cdfid, nVarID, szVarName);
         NCDF_ERR(status);
@@ -6167,20 +6235,20 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // We have ignored at least one variable, so we should report them
     // as subdatasets for reference.
-    if( (nIgnoredVars > 0) && !bTreatAsSubdataset )
+    if( nIgnoredVars > 0 && !bTreatAsSubdataset )
     {
         CPLDebug("GDAL_netCDF",
-                  "As %d variables were ignored, creating subdataset list "
-                  "for reference. Variable #%d [%s] is the main variable",
-                  nIgnoredVars, nVarID, osSubdatasetName.c_str());
+                 "As %d variables were ignored, creating subdataset list "
+                 "for reference. Variable #%d [%s] is the main variable",
+                 nIgnoredVars, nVarID, osSubdatasetName.c_str());
         poDS->CreateSubDatasetList();
     }
 
     // Open the NETCDF subdataset NETCDF:"filename":subdataset.
-    int var=-1;
+    int var = -1;
     nc_inq_varid(cdfid, osSubdatasetName, &var);
     int nd = 0;
-    nc_inq_varndims (cdfid, var, &nd);
+    nc_inq_varndims(cdfid, var, &nd);
 
     int *paDimIds = static_cast<int *>(CPLCalloc(nd, sizeof(int)));
 
@@ -6193,10 +6261,11 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nd < 2 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                  "Variable has %d dimension(s) - not supported.", nd);
+                 "Variable has %d dimension(s) - not supported.", nd);
         CPLFree(paDimIds);
         CPLFree(panBandDimPos);
-        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                    // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
@@ -6215,63 +6284,63 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     // To disable set GDAL_NETCDF_VERIFY_DIMS=NO and to use only
     // attributes (not varnames) set GDAL_NETCDF_VERIFY_DIMS=STRICT
     const bool bCheckDims =
-        CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_VERIFY_DIMS", "YES"))
-        && STARTS_WITH_CI(szConventions, "CF");
+        CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_VERIFY_DIMS", "YES")) &&
+        STARTS_WITH_CI(szConventions, "CF");
 
     if( bCheckDims )
     {
-        char szDimName1[NC_MAX_NAME+1] = {};
-        char szDimName2[NC_MAX_NAME+1] = {};
-        char szDimName3[NC_MAX_NAME+1] = {};
-        char szDimName4[NC_MAX_NAME+1] = {};
-        status = nc_inq_dimname(cdfid, paDimIds[nd-1], szDimName1);
+        char szDimName1[NC_MAX_NAME + 1] = {};
+        char szDimName2[NC_MAX_NAME + 1] = {};
+        char szDimName3[NC_MAX_NAME + 1] = {};
+        char szDimName4[NC_MAX_NAME + 1] = {};
+        status = nc_inq_dimname(cdfid, paDimIds[nd - 1], szDimName1);
         NCDF_ERR(status);
-        status = nc_inq_dimname(cdfid, paDimIds[nd-2], szDimName2);
+        status = nc_inq_dimname(cdfid, paDimIds[nd - 2], szDimName2);
         NCDF_ERR(status);
-        if( NCDFIsVarLongitude(cdfid, -1, szDimName1)==false &&
-            NCDFIsVarProjectionX(cdfid, -1, szDimName1)==false )
+        if( NCDFIsVarLongitude(cdfid, -1, szDimName1) == false &&
+            NCDFIsVarProjectionX(cdfid, -1, szDimName1) == false )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                      "dimension #%d (%s) is not a Longitude/X dimension.",
-                      nd-1, szDimName1);
+                     "dimension #%d (%s) is not a Longitude/X dimension.",
+                     nd - 1, szDimName1);
         }
-        if( NCDFIsVarLatitude(cdfid, -1, szDimName2)==false &&
-            NCDFIsVarProjectionY(cdfid, -1, szDimName2)==false )
+        if( NCDFIsVarLatitude(cdfid, -1, szDimName2) == false &&
+            NCDFIsVarProjectionY(cdfid, -1, szDimName2) == false )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                      "dimension #%d (%s) is not a Latitude/Y dimension.",
-                      nd-2, szDimName2);
+                     "dimension #%d (%s) is not a Latitude/Y dimension.",
+                     nd - 2, szDimName2);
         }
         if( nd >= 3 )
         {
-            status = nc_inq_dimname(cdfid, paDimIds[nd-3], szDimName3);
+            status = nc_inq_dimname(cdfid, paDimIds[nd - 3], szDimName3);
             NCDF_ERR(status);
             if( nd >= 4 )
             {
-                status = nc_inq_dimname(cdfid, paDimIds[nd-4], szDimName4);
+                status = nc_inq_dimname(cdfid, paDimIds[nd - 4], szDimName4);
                 NCDF_ERR(status);
-                if( NCDFIsVarVerticalCoord( cdfid, -1, szDimName3)==false )
-                {
-                    CPLError( CE_Warning, CPLE_AppDefined,
-                              "dimension #%d (%s) is not a Time dimension.",
-                              nd-3, szDimName3);
-                }
-                if( NCDFIsVarTimeCoord(cdfid, -1, szDimName4)==false )
+                if( NCDFIsVarVerticalCoord( cdfid, -1, szDimName3) == false )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                              "dimension #%d (%s) is not a Time dimension.",
-                              nd-4, szDimName4);
+                             "dimension #%d (%s) is not a Time dimension.",
+                             nd - 3, szDimName3);
+                }
+                if( NCDFIsVarTimeCoord(cdfid, -1, szDimName4) == false )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "dimension #%d (%s) is not a Time dimension.",
+                             nd - 4, szDimName4);
                 }
             }
             else
             {
-                if( NCDFIsVarVerticalCoord(cdfid, -1, szDimName3)==false &&
-                    NCDFIsVarTimeCoord(cdfid, -1, szDimName3)==false )
+                if( NCDFIsVarVerticalCoord(cdfid, -1, szDimName3) == false &&
+                    NCDFIsVarTimeCoord(cdfid, -1, szDimName3) == false )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                              "dimension #%d (%s) is not a "
-                              "Time or Vertical dimension.",
-                              nd-3, szDimName3);
+                             "dimension #%d (%s) is not a "
+                             "Time or Vertical dimension.",
+                             nd - 3, szDimName3);
                 }
             }
         }
@@ -6279,13 +6348,13 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Get X dimensions information.
     size_t xdim;
-    poDS->nXDimID = paDimIds[nd-1];
-    nc_inq_dimlen (cdfid, poDS->nXDimID, &xdim);
+    poDS->nXDimID = paDimIds[nd - 1];
+    nc_inq_dimlen(cdfid, poDS->nXDimID, &xdim);
 
     // Get Y dimension information.
     size_t ydim;
-    poDS->nYDimID = paDimIds[nd-2];
-    nc_inq_dimlen (cdfid, poDS->nYDimID, &ydim);
+    poDS->nYDimID = paDimIds[nd - 2];
+    nc_inq_dimlen(cdfid, poDS->nYDimID, &ydim);
 
     if( xdim > INT_MAX || ydim > INT_MAX )
     {
@@ -6295,7 +6364,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                  static_cast<GUIntBig>(ydim));
         CPLFree(paDimIds);
         CPLFree(panBandDimPos);
-        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                    // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
@@ -6305,16 +6375,16 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = static_cast<int>(ydim);
 
     unsigned int k = 0;
-    for( int j=0; j < nd; j++ )
+    for( int j = 0; j < nd; j++ )
     {
         if( paDimIds[j] == poDS->nXDimID )
         {
-            panBandDimPos[0] = j;         // Save Position of XDim
+            panBandDimPos[0] = j;  // Save Position of XDim
             k++;
         }
         if( paDimIds[j] == poDS->nYDimID )
         {
-            panBandDimPos[1] = j;         // Save Position of YDim
+            panBandDimPos[1] = j;  // Save Position of YDim
             k++;
         }
     }
@@ -6323,7 +6393,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLFree(paDimIds);
         CPLFree(panBandDimPos);
-        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                    // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
@@ -6336,9 +6407,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->ReadAttributes(cdfid, var);
 
     // Read Metadata for each dimension.
-    for( int j=0; j < ndims; j++ )
+    for( int j = 0; j < ndims; j++ )
     {
-        char szTemp[NC_MAX_NAME+1];
+        char szTemp[NC_MAX_NAME + 1];
         status = nc_inq_dimname(cdfid, j, szTemp);
         NCDF_ERR(status);
         poDS->papszDimName.AddString(szTemp);
@@ -6359,8 +6430,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->bBottomUp = CPLTestBool(pszValue);
         CPLDebug("GDAL_netCDF",
-                  "set bBottomUp=%d because GDAL_NETCDF_BOTTOMUP=%s",
-                  static_cast<int>(poDS->bBottomUp), pszValue);
+                 "set bBottomUp=%d because GDAL_NETCDF_BOTTOMUP=%s",
+                 static_cast<int>(poDS->bBottomUp), pszValue);
     }
 
     // Save non-spatial dimension info.
@@ -6375,24 +6446,24 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nd > 2 )
     {
-        nDim=2;
-        panBandZLev = (int *)CPLCalloc(nd-2, sizeof(int));
+        nDim = 2;
+        panBandZLev = (int *)CPLCalloc(nd - 2, sizeof(int));
 
         osExtraDimNames = "{";
 
-        char szDimName[NC_MAX_NAME+1] = {};
+        char szDimName[NC_MAX_NAME + 1] = {};
 
         for( int j = 0; j < nd; j++ )
         {
             if( (paDimIds[j] != poDS->nXDimID) &&
                 (paDimIds[j] != poDS->nYDimID) )
             {
-                nc_inq_dimlen (cdfid, paDimIds[j], &lev_count);
+                nc_inq_dimlen(cdfid, paDimIds[j], &lev_count);
                 nTotLevCount *= lev_count;
-                panBandZLev[ nDim-2 ] = static_cast<int>(lev_count);
-                panBandDimPos[ nDim++ ] = j; //Save Position of ZDim
-                //Save non-spatial dimension names
-                if( nc_inq_dimname(cdfid, paDimIds[j], szDimName )
+                panBandZLev[nDim - 2] = static_cast<int>(lev_count);
+                panBandDimPos[nDim++] = j;  // Save Position of ZDim
+                // Save non-spatial dimension names.
+                if( nc_inq_dimname(cdfid, paDimIds[j], szDimName)
                     == NC_NOERR )
                 {
                     osExtraDimNames += szDimName;
@@ -6402,26 +6473,28 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                     }
                     nc_inq_varid(cdfid, szDimName, &nVarID);
                     nc_inq_vartype(cdfid, nVarID, &nType);
-                    char szExtraDimDef[NC_MAX_NAME+1];
-                    snprintf(szExtraDimDef, sizeof(szExtraDimDef), "{%ld,%d}", (long)lev_count, nType);
-                    char szTemp[NC_MAX_NAME+32+1];
-                    snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_DEF", szDimName);
-                    poDS->papszMetadata = CSLSetNameValue(poDS->papszMetadata,
-                                                           szTemp, szExtraDimDef);
+                    char szExtraDimDef[NC_MAX_NAME + 1];
+                    snprintf(szExtraDimDef, sizeof(szExtraDimDef), "{%ld,%d}",
+                             (long)lev_count, nType);
+                    char szTemp[NC_MAX_NAME + 32 + 1];
+                    snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_DEF",
+                             szDimName);
+                    poDS->papszMetadata = CSLSetNameValue(
+                        poDS->papszMetadata, szTemp, szExtraDimDef);
                     if( NCDFGet1DVar(cdfid, nVarID, &pszTemp) == CE_None )
                     {
-                        snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_VALUES", szDimName);
-                        poDS->papszMetadata = CSLSetNameValue(poDS->papszMetadata,
-                                                              szTemp, pszTemp);
+                        snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_VALUES",
+                                 szDimName);
+                        poDS->papszMetadata = CSLSetNameValue(
+                            poDS->papszMetadata, szTemp, pszTemp);
                         CPLFree(pszTemp);
                     }
                 }
             }
         }
         osExtraDimNames += "}";
-        poDS->papszMetadata = CSLSetNameValue(poDS->papszMetadata,
-                                               "NETCDF_DIM_EXTRA",
-                                               osExtraDimNames);
+        poDS->papszMetadata = CSLSetNameValue(
+            poDS->papszMetadata, "NETCDF_DIM_EXTRA", osExtraDimNames);
     }
 
     // Store Metadata.
@@ -6430,7 +6503,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     // Create bands.
 
     // Arbitrary threshold.
-    int nMaxBandCount = atoi(CPLGetConfigOption("GDAL_MAX_BAND_COUNT", "32768"));
+    int nMaxBandCount =
+        atoi(CPLGetConfigOption("GDAL_MAX_BAND_COUNT", "32768"));
     if( nMaxBandCount <= 0 )
         nMaxBandCount = 32768;
     if( nTotLevCount > static_cast<unsigned int>(nMaxBandCount) )
@@ -6444,10 +6518,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     for( unsigned int lev = 0; lev < nTotLevCount ; lev++ )
     {
         netCDFRasterBand *poBand =
-            new netCDFRasterBand(poDS, var, nDim, lev,
-                                 panBandZLev, panBandDimPos,
-                                 paDimIds, lev+1);
-        poDS->SetBand(lev+1, poBand);
+            new netCDFRasterBand(poDS, var, nDim, lev, panBandZLev,
+                                 panBandDimPos, paDimIds, lev + 1);
+        poDS->SetBand(lev + 1, poBand);
     }
 
     CPLFree(paDimIds);
@@ -6463,7 +6536,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetSubdatasetName(osSubdatasetName);
     }
 
-    CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+    CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with
+                                // GDALDataset own mutex.
     poDS->TryLoadXML();
 
     if( bTreatAsSubdataset )
@@ -6497,33 +6571,32 @@ static void CopyMetadata( void *poDS, int fpImage, int CDFVarID,
     char **papszMetadata = NULL;
     if( CDFVarID == NC_GLOBAL )
     {
-        papszMetadata = GDALGetMetadata((GDALDataset *) poDS,"");
+        papszMetadata = GDALGetMetadata((GDALDataset *)poDS, "");
     }
     else
     {
-        papszMetadata = GDALGetMetadata((GDALRasterBandH) poDS, NULL);
+        papszMetadata = GDALGetMetadata((GDALRasterBandH)poDS, NULL);
     }
 
     const int nItems = CSLCount(papszMetadata);
 
-    for( int k=0; k < nItems; k++ )
+    for( int k = 0; k < nItems; k++ )
     {
         const char *pszField = CSLGetField(papszMetadata, k);
         if( papszFieldData ) CSLDestroy(papszFieldData);
-        papszFieldData = CSLTokenizeString2 (pszField, "=",
-                                             CSLT_HONOURSTRINGS);
+        papszFieldData = CSLTokenizeString2(pszField, "=", CSLT_HONOURSTRINGS);
         if( papszFieldData[1] != NULL )
         {
 #ifdef NCDF_DEBUG
             CPLDebug("GDAL_netCDF", "copy metadata [%s]=[%s]",
-                      papszFieldData[ 0 ], papszFieldData[ 1 ]);
+                     papszFieldData[0], papszFieldData[1]);
 #endif
 
-            CPLString osMetaName(papszFieldData[ 0 ]);
-            CPLString osMetaValue(papszFieldData[ 1 ]);
+            CPLString osMetaName(papszFieldData[0]);
+            CPLString osMetaValue(papszFieldData[1]);
 
             // Check for items that match pszPrefix if applicable.
-            if( (pszPrefix != NULL) && (!EQUAL(pszPrefix, "")) )
+            if( pszPrefix != NULL && !EQUAL(pszPrefix, "") )
             {
                 // Remove prefix.
                 if( EQUALN(osMetaName, pszPrefix, strlen(pszPrefix)) )
@@ -6533,7 +6606,7 @@ static void CopyMetadata( void *poDS, int fpImage, int CDFVarID,
                 // Only copy items that match prefix.
                 else
                 {
-                        continue;
+                    continue;
                 }
             }
 
@@ -6590,25 +6663,25 @@ static void CopyMetadata( void *poDS, int fpImage, int CDFVarID,
 
 #ifdef NCDF_DEBUG
             CPLDebug("GDAL_netCDF", "copy name=[%s] value=[%s]",
-                      osMetaName.c_str(), osMetaValue.c_str());
+                     osMetaName.c_str(), osMetaValue.c_str());
 #endif
             if( NCDFPutAttr(fpImage, CDFVarID, osMetaName,
-                             osMetaValue) != CE_None )
+                            osMetaValue) != CE_None )
                 CPLDebug("GDAL_netCDF", "NCDFPutAttr(%d, %d, %s, %s) failed",
-                          fpImage, CDFVarID,
-                          osMetaName.c_str(), osMetaValue.c_str());
+                         fpImage, CDFVarID,
+                         osMetaName.c_str(), osMetaValue.c_str());
         }
     }
 
     if( papszFieldData ) CSLDestroy(papszFieldData);
 
     // Set add_offset and scale_factor here if present.
-    if( (CDFVarID != NC_GLOBAL) && bIsBand )
+    if( CDFVarID != NC_GLOBAL && bIsBand )
     {
 
         int bGotAddOffset, bGotScale;
-        GDALRasterBandH poRB = (GDALRasterBandH) poDS;
-        const double dfAddOffset = GDALGetRasterOffset(poRB , &bGotAddOffset);
+        GDALRasterBandH poRB = (GDALRasterBandH)poDS;
+        const double dfAddOffset = GDALGetRasterOffset(poRB, &bGotAddOffset);
         const double dfScale = GDALGetRasterScale(poRB, &bGotScale);
 
         if( bGotAddOffset && dfAddOffset != 0.0 )
@@ -6627,9 +6700,9 @@ static void CopyMetadata( void *poDS, int fpImage, int CDFVarID,
 /************************************************************************/
 
 netCDFDataset *
-netCDFDataset::CreateLL( const char * pszFilename,
+netCDFDataset::CreateLL( const char *pszFilename,
                          int nXSize, int nYSize, int nBands,
-                         char ** papszOptions )
+                         char **papszOptions )
 {
     if( !((nXSize == 0 && nYSize == 0 && nBands == 0) ||
           (nXSize > 0 && nYSize > 0 && nBands > 0)) )
@@ -6637,7 +6710,8 @@ netCDFDataset::CreateLL( const char * pszFilename,
         return NULL;
     }
 
-    CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+    CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with
+                                // GDALDataset own mutex.
     netCDFDataset *poDS = new netCDFDataset();
     CPLAcquireMutex(hNCMutex, 1000.0);
 
@@ -6666,9 +6740,12 @@ netCDFDataset::CreateLL( const char * pszFilename,
         {
             if( !VSI_ISDIR(sStat.st_mode) )
             {
-                CPLError(CE_Failure, CPLE_FileIO, "%s is an existing file, but not a directory",
-                        pszFilename);
-                CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "%s is an existing file, but not a directory",
+                         pszFilename);
+                CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
+                                            // deadlock with GDALDataset own
+                                            // mutex.
                 delete poDS;
                 CPLAcquireMutex(hNCMutex, 1000.0);
                 return NULL;
@@ -6678,7 +6755,8 @@ netCDFDataset::CreateLL( const char * pszFilename,
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s directory",
                      pszFilename);
-            CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
+                                        // deadlock with GDALDataset own mutex.
             delete poDS;
             CPLAcquireMutex(hNCMutex, 1000.0);
             return NULL;
@@ -6696,9 +6774,10 @@ netCDFDataset::CreateLL( const char * pszFilename,
     if( status != NC_NOERR )
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                  "Unable to create netCDF file %s (Error code %d): %s .",
-                  pszFilename, status, nc_strerror(status));
-        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+                 "Unable to create netCDF file %s (Error code %d): %s .",
+                 pszFilename, status, nc_strerror(status));
+        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                    // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
@@ -6708,18 +6787,18 @@ netCDFDataset::CreateLL( const char * pszFilename,
     if( nXSize > 0 && nYSize > 0 )
     {
         poDS->papszDimName.AddString(NCDF_DIMNAME_X);
-        status = nc_def_dim(poDS->cdfid, NCDF_DIMNAME_X, nXSize,
-                            &(poDS->nXDimID));
+        status =
+            nc_def_dim(poDS->cdfid, NCDF_DIMNAME_X, nXSize, &(poDS->nXDimID));
         NCDF_ERR(status);
         CPLDebug("GDAL_netCDF", "status nc_def_dim(%d, %s, %d, -) got id %d",
-                poDS->cdfid, NCDF_DIMNAME_X, nXSize, poDS->nXDimID);
+                 poDS->cdfid, NCDF_DIMNAME_X, nXSize, poDS->nXDimID);
 
         poDS->papszDimName.AddString(NCDF_DIMNAME_Y);
-        status = nc_def_dim(poDS->cdfid, NCDF_DIMNAME_Y, nYSize,
-                            &(poDS->nYDimID));
+        status =
+            nc_def_dim(poDS->cdfid, NCDF_DIMNAME_Y, nYSize, &(poDS->nYDimID));
         NCDF_ERR(status);
         CPLDebug("GDAL_netCDF", "status nc_def_dim(%d, %s, %d, -) got id %d",
-                poDS->cdfid, NCDF_DIMNAME_Y, nYSize, poDS->nYDimID);
+                 poDS->cdfid, NCDF_DIMNAME_Y, nYSize, poDS->nYDimID);
     }
 
     return poDS;
@@ -6730,10 +6809,10 @@ netCDFDataset::CreateLL( const char * pszFilename,
 /************************************************************************/
 
 GDALDataset *
-netCDFDataset::Create( const char * pszFilename,
+netCDFDataset::Create( const char *pszFilename,
                        int nXSize, int nYSize, int nBands,
                        GDALDataType eType,
-                       char ** papszOptions )
+                       char **papszOptions )
 {
     CPLDebug("GDAL_netCDF",
               "\n=====\nnetCDFDataset::Create(%s, ...)",
@@ -6742,36 +6821,34 @@ netCDFDataset::Create( const char * pszFilename,
     CPLMutexHolderD(&hNCMutex);
 
     netCDFDataset *poDS = netCDFDataset::CreateLL(pszFilename,
-                                                   nXSize, nYSize, nBands,
-                                                   papszOptions);
+                                                  nXSize, nYSize, nBands,
+                                                  papszOptions);
     if( !poDS )
         return NULL;
 
     // Should we write signed or unsigned byte?
     // TODO should this only be done in Create()
     poDS->bSignedData = true;
-    const char *pszValue =
-        CSLFetchNameValueDef(papszOptions, "PIXELTYPE", "");
-    if( eType == GDT_Byte && (!EQUAL(pszValue, "SIGNEDBYTE") ) )
+    const char *pszValue = CSLFetchNameValueDef(papszOptions, "PIXELTYPE", "");
+    if( eType == GDT_Byte && !EQUAL(pszValue, "SIGNEDBYTE") )
         poDS->bSignedData = false;
 
     // Add Conventions, GDAL info and history.
     if( poDS->cdfid >= 0 )
     {
         NCDFAddGDALHistory(poDS->cdfid, pszFilename, "", "Create",
-                            (nBands == 0) ? NCDF_CONVENTIONS_CF_V1_6 : NCDF_CONVENTIONS_CF_V1_5);
+                           (nBands == 0) ? NCDF_CONVENTIONS_CF_V1_6
+                                         : NCDF_CONVENTIONS_CF_V1_5);
     }
 
     // Define bands.
     for( int iBand = 1; iBand <= nBands; iBand++ )
     {
-        poDS->SetBand(iBand, new netCDFRasterBand(poDS, eType, iBand,
-                                                    poDS->bSignedData));
+        poDS->SetBand(
+            iBand, new netCDFRasterBand(poDS, eType, iBand, poDS->bSignedData));
     }
 
-    CPLDebug("GDAL_netCDF",
-              "netCDFDataset::Create(%s, ...) done",
-              pszFilename);
+    CPLDebug("GDAL_netCDF", "netCDFDataset::Create(%s, ...) done", pszFilename);
     // Return same dataset.
     return poDS;
 }
@@ -6779,41 +6856,40 @@ netCDFDataset::Create( const char * pszFilename,
 template <class T>
 static CPLErr NCDFCopyBand( GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
                             int nXSize, int nYSize,
-                            GDALProgressFunc pfnProgress, void * pProgressData )
+                            GDALProgressFunc pfnProgress, void *pProgressData )
 {
     GDALDataType eDT = poSrcBand->GetRasterDataType();
     CPLErr eErr = CE_None;
-    T *patScanline = (T *) CPLMalloc(nXSize * sizeof(T));
+    T *patScanline = (T *)CPLMalloc(nXSize * sizeof(T));
 
     for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
-        eErr = poSrcBand->RasterIO(GF_Read, 0, iLine, nXSize, 1,
-                                    patScanline, nXSize, 1, eDT,
-                                    0, 0, NULL);
+        eErr = poSrcBand->RasterIO(GF_Read, 0, iLine, nXSize, 1, patScanline,
+                                   nXSize, 1, eDT, 0, 0, NULL);
         if( eErr != CE_None )
         {
-            CPLDebug("GDAL_netCDF",
-                      "NCDFCopyBand(), poSrcBand->RasterIO() returned error code %d",
-                      eErr);
+            CPLDebug(
+                "GDAL_netCDF",
+                "NCDFCopyBand(), poSrcBand->RasterIO() returned error code %d",
+                eErr);
         }
         else
         {
             eErr = poDstBand->RasterIO(GF_Write, 0, iLine, nXSize, 1,
-                                        patScanline, nXSize, 1, eDT,
-                                        0, 0, NULL);
+                                       patScanline, nXSize, 1, eDT, 0, 0, NULL);
             if( eErr != CE_None )
                 CPLDebug("GDAL_netCDF",
-                          "NCDFCopyBand(), poDstBand->RasterIO() returned error code %d",
-                          eErr);
+                         "NCDFCopyBand(), poDstBand->RasterIO() returned error code %d",
+                         eErr);
         }
 
-        if( (nYSize>10) && (iLine % (nYSize/10) == 1) )
+        if( nYSize > 10 && (iLine % (nYSize / 10) == 1) )
         {
-            if( !pfnProgress(1.0*iLine/nYSize , NULL, pProgressData) )
+            if( !pfnProgress(1.0 * iLine / nYSize, NULL, pProgressData) )
             {
                 eErr = CE_Failure;
                 CPLError(CE_Failure, CPLE_UserInterrupt,
-                        "User terminated CreateCopy()");
+                         "User terminated CreateCopy()");
             }
         }
     }
@@ -6830,15 +6906,14 @@ static CPLErr NCDFCopyBand( GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand
 /************************************************************************/
 
 GDALDataset*
-netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
-                           CPL_UNUSED int bStrict, char ** papszOptions,
-                           GDALProgressFunc pfnProgress, void * pProgressData )
+netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
+                           CPL_UNUSED int bStrict, char **papszOptions,
+                           GDALProgressFunc pfnProgress, void *pProgressData )
 {
     CPLMutexHolderD(&hNCMutex);
 
-    CPLDebug("GDAL_netCDF",
-              "\n=====\nnetCDFDataset::CreateCopy(%s, ...)",
-              pszFilename);
+    CPLDebug("GDAL_netCDF", "\n=====\nnetCDFDataset::CreateCopy(%s, ...)",
+             pszFilename);
 
     const int nBands = poSrcDS->GetRasterCount();
     const int nXSize = poSrcDS->GetRasterXSize();
@@ -6849,21 +6924,22 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( nBands == 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                  "NetCDF driver does not support "
-                  "source dataset with zero band.");
+                 "NetCDF driver does not support "
+                 "source dataset with zero band.");
         return NULL;
     }
 
     GDALDataType eDT;
     GDALRasterBand *poSrcBand = NULL;
-    for( int iBand=1; iBand <= nBands; iBand++ )
+    for( int iBand = 1; iBand <= nBands; iBand++ )
     {
         poSrcBand = poSrcDS->GetRasterBand(iBand);
         eDT = poSrcBand->GetRasterDataType();
         if( eDT == GDT_Unknown || GDALDataTypeIsComplex(eDT) )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                      "NetCDF driver does not support source dataset with band of complex type.");
+                     "NetCDF driver does not support source dataset with band "
+                     "of complex type.");
             return NULL;
         }
     }
@@ -6880,10 +6956,10 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     // Copy global metadata.
     // Add Conventions, GDAL info and history.
-    CopyMetadata((void *) poSrcDS, poDS->cdfid, NC_GLOBAL, NULL, false);
+    CopyMetadata((void *)poSrcDS, poDS->cdfid, NC_GLOBAL, NULL, false);
     NCDFAddGDALHistory(poDS->cdfid, pszFilename,
-                        poSrcDS->GetMetadataItem("NC_GLOBAL#history", ""),
-                        "CreateCopy");
+                       poSrcDS->GetMetadataItem("NC_GLOBAL#history", ""),
+                       "CreateCopy");
 
     pfnProgress(0.1, NULL, pProgressData);
 
@@ -6900,8 +6976,9 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         // for( int i=0; i<CSLCount(papszExtraDimNames ); i++ ) {
         for( int i = CSLCount(papszExtraDimNames) - 1; i >= 0; i-- )
         {
-            char szTemp[ NC_MAX_NAME + 32 + 1 ];
-            snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_DEF", papszExtraDimNames[i]);
+            char szTemp[NC_MAX_NAME + 32 + 1];
+            snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_DEF",
+                     papszExtraDimNames[i]);
             papszExtraDimValues =
                 NCDFTokenizeArray(poSrcDS->GetMetadataItem(szTemp, ""));
             const size_t nDimSize = atol(papszExtraDimValues[0]);
@@ -6917,9 +6994,9 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             // if nBands != #bands computed raise a warning
             // just issue a debug message, because it was probably intentional
             CPLDebug("GDAL_netCDF",
-                      "Warning: Number of bands (%d) is not compatible with dimensions "
-                      "(total=%ld names=%s)", nBands, (long)nDimSizeTot,
-                      poSrcDS->GetMetadataItem("NETCDF_DIM_EXTRA", ""));
+                     "Warning: Number of bands (%d) is not compatible with dimensions "
+                     "(total=%ld names=%s)", nBands, (long)nDimSizeTot,
+                     poSrcDS->GetMetadataItem("NETCDF_DIM_EXTRA", ""));
             CSLDestroy(papszExtraDimNames);
             papszExtraDimNames = NULL;
         }
@@ -6935,35 +7012,35 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( nDim > 2 )
     {
-        panBandZLev = reinterpret_cast<int *>(CPLCalloc(nDim-2, sizeof(int)));
-        panDimVarIds = reinterpret_cast<int *>(CPLCalloc(nDim-2, sizeof(int)));
+        panBandZLev = reinterpret_cast<int *>(CPLCalloc(nDim - 2, sizeof(int)));
+        panDimVarIds =
+            reinterpret_cast<int *>(CPLCalloc(nDim - 2, sizeof(int)));
 
         // Define all dims.
-        for( int i = CSLCount(papszExtraDimNames)-1; i >= 0; i-- )
+        for( int i = CSLCount(papszExtraDimNames) - 1; i >= 0; i-- )
         {
             poDS->papszDimName.AddString(papszExtraDimNames[i]);
-            char szTemp[ NC_MAX_NAME + 32 + 1 ];
-            snprintf(szTemp, sizeof(szTemp),
-                      "NETCDF_DIM_%s_DEF", papszExtraDimNames[i]);
+            char szTemp[NC_MAX_NAME + 32 + 1];
+            snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_DEF",
+                     papszExtraDimNames[i]);
             papszExtraDimValues =
                 NCDFTokenizeArray(poSrcDS->GetMetadataItem(szTemp, ""));
             const int nDimSize = atoi(papszExtraDimValues[0]);
             // nc_type is an enum in netcdf-3, needs casting.
             nVarType = static_cast<nc_type>(atol(papszExtraDimValues[1]));
             CSLDestroy(papszExtraDimValues);
-            panBandZLev[ i ] = nDimSize;
-            panBandDimPos[ i+2 ] = i;  // Save Position of ZDim.
+            panBandZLev[i] = nDimSize;
+            panBandDimPos[i + 2] = i;  // Save Position of ZDim.
 
             // Define dim.
             status = nc_def_dim(poDS->cdfid, papszExtraDimNames[i], nDimSize,
-                                 &(panDimIds[i]));
+                                &(panDimIds[i]));
             NCDF_ERR(status);
 
             // Define dim var.
-            int anDim[1] = { panDimIds[i] };
-            status = nc_def_var(poDS->cdfid, papszExtraDimNames[i],
-                                 nVarType, 1, anDim,
-                                 &(panDimVarIds[i]));
+            int anDim[1] = {panDimIds[i]};
+            status = nc_def_var(poDS->cdfid, papszExtraDimNames[i], nVarType, 1,
+                                anDim, &(panDimVarIds[i]));
             NCDF_ERR(status);
 
             // Add dim metadata, using global var# items.
@@ -6997,14 +7074,14 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poDS->SetProjection(pszWKT);
         // Now we can call AddProjectionVars() directly.
         poDS->bSetGeoTransform = bGotGeoTransform;
-        pScaledProgress = GDALCreateScaledProgress(0.1, 0.25, pfnProgress,
-                                                    pProgressData);
+        pScaledProgress =
+            GDALCreateScaledProgress(0.1, 0.25, pfnProgress, pProgressData);
         poDS->AddProjectionVars(GDALScaledProgress, pScaledProgress);
         // Save X,Y dim positions.
-        panDimIds[nDim-1] = poDS->nXDimID;
-        panBandDimPos[0] = nDim-1;
-        panDimIds[nDim-2] = poDS->nYDimID;
-        panBandDimPos[1] = nDim-2;
+        panDimIds[nDim - 1] = poDS->nXDimID;
+        panBandDimPos[0] = nDim - 1;
+        panDimIds[nDim - 2] = poDS->nYDimID;
+        panBandDimPos[1] = nDim - 2;
         GDALDestroyScaledProgress(pScaledProgress);
     }
 
@@ -7015,13 +7092,13 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         static_cast<netCDFDataset *>(poDS)->SetDefineMode(false);
         for( int i = CSLCount(papszExtraDimNames) - 1; i >= 0; i-- )
         {
-            char szTemp[ NC_MAX_NAME + 32 + 1 ];
-            snprintf(szTemp, sizeof(szTemp),
-                      "NETCDF_DIM_%s_VALUES", papszExtraDimNames[i]);
+            char szTemp[NC_MAX_NAME + 32 + 1];
+            snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_VALUES",
+                     papszExtraDimNames[i]);
             if( poSrcDS->GetMetadataItem(szTemp) != NULL )
             {
                 NCDFPut1DVar(poDS->cdfid, panDimVarIds[i],
-                              poSrcDS->GetMetadataItem(szTemp));
+                             poSrcDS->GetMetadataItem(szTemp));
             }
         }
     }
@@ -7032,18 +7109,18 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     netCDFRasterBand *poBand = NULL;
     int nBandID = -1;
 
-    for( int iBand=1; iBand <= nBands; iBand++ )
+    for( int iBand = 1; iBand <= nBands; iBand++ )
     {
         CPLDebug("GDAL_netCDF", "creating band # %d/%d nDim = %d",
-                  iBand, nBands, nDim);
+                 iBand, nBands, nDim);
 
         poSrcBand = poSrcDS->GetRasterBand(iBand);
         eDT = poSrcBand->GetRasterDataType();
 
         // Get var name from NETCDF_VARNAME.
         const char *tmpMetadata = poSrcBand->GetMetadataItem("NETCDF_VARNAME");
-        char szBandName[ NC_MAX_NAME+1 ];
-        if( tmpMetadata != NULL)
+        char szBandName[NC_MAX_NAME + 1];
+        if( tmpMetadata != NULL )
         {
             if( nBands > 1 && papszExtraDimNames == NULL )
                 snprintf(szBandName, sizeof(szBandName),
@@ -7052,18 +7129,19 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 snprintf(szBandName, sizeof(szBandName), "%s", tmpMetadata);
         }
         else
-            szBandName[0]='\0';
+        {
+            szBandName[0] = '\0';
+}
 
         // Get long_name from <var>#long_name.
-        char szLongName[ NC_MAX_NAME+1 ];
+        char szLongName[NC_MAX_NAME + 1];
         snprintf(szLongName, sizeof(szLongName), "%s#%s",
-                 poSrcBand->GetMetadataItem("NETCDF_VARNAME"),
-                 CF_LNG_NAME);
+                 poSrcBand->GetMetadataItem("NETCDF_VARNAME"), CF_LNG_NAME);
         tmpMetadata = poSrcDS->GetMetadataItem(szLongName);
         if( tmpMetadata != NULL)
             snprintf(szLongName, sizeof(szLongName), "%s", tmpMetadata);
         else
-            szLongName[0]='\0';
+            szLongName[0] = '\0';
 
         bool bSignedData = true;
         if( eDT == GDT_Byte )
@@ -7071,23 +7149,19 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             // GDAL defaults to unsigned bytes, but check if metadata says its
             // signed, as NetCDF can support this for certain formats.
             bSignedData = false;
-            tmpMetadata = poSrcBand->GetMetadataItem("PIXELTYPE",
-                                                     "IMAGE_STRUCTURE");
+            tmpMetadata =
+                poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
             if( tmpMetadata && EQUAL(tmpMetadata, "SIGNEDBYTE") )
                 bSignedData = true;
         }
 
         if( nDim > 2 )
-            poBand = new netCDFRasterBand(poDS, eDT, iBand,
-                                           bSignedData,
-                                           szBandName, szLongName,
-                                           nBandID, nDim, iBand-1,
-                                           panBandZLev, panBandDimPos,
-                                           panDimIds);
+            poBand = new netCDFRasterBand(
+                poDS, eDT, iBand, bSignedData, szBandName, szLongName, nBandID,
+                nDim, iBand - 1, panBandZLev, panBandDimPos, panDimIds);
         else
-            poBand = new netCDFRasterBand(poDS, eDT, iBand,
-                                           bSignedData,
-                                           szBandName, szLongName);
+            poBand = new netCDFRasterBand(poDS, eDT, iBand, bSignedData,
+                                          szBandName, szLongName);
 
         poDS->SetBand(iBand, poBand);
 
@@ -7102,7 +7176,7 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
 
         // Copy Metadata for band.
-        CopyMetadata((void *) GDALGetRasterBand(poSrcDS, iBand),
+        CopyMetadata((void *)GDALGetRasterBand(poSrcDS, iBand),
                       poDS->cdfid, poBand->nZId);
 
         // If more than 2D pass the first band's netcdf var ID to subsequent
@@ -7127,14 +7201,12 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     for( int iBand = 1; iBand <= nBands && eErr == CE_None; iBand++ )
     {
-        const double dfTemp2 = dfTemp + 0.4/nBands;
-        pScaledProgress =
-            GDALCreateScaledProgress(dfTemp, dfTemp2,
-                                      pfnProgress, pProgressData);
+        const double dfTemp2 = dfTemp + 0.4 / nBands;
+        pScaledProgress = GDALCreateScaledProgress(dfTemp, dfTemp2, pfnProgress,
+                                                   pProgressData);
         dfTemp = dfTemp2;
 
-        CPLDebug("GDAL_netCDF", "copying band data # %d/%d ",
-                  iBand, nBands);
+        CPLDebug("GDAL_netCDF", "copying band data # %d/%d ", iBand, nBands);
 
         poSrcBand = poSrcDS->GetRasterBand(iBand);
         eDT = poSrcBand->GetRasterDataType();
@@ -7146,31 +7218,31 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             CPLDebug("GDAL_netCDF", "GByte Band#%d", iBand);
             eErr = NCDFCopyBand<GByte>(poSrcBand, poDstBand, nXSize, nYSize,
-                                 GDALScaledProgress, pScaledProgress);
+                                       GDALScaledProgress, pScaledProgress);
         }
         else if( (eDT == GDT_UInt16) || (eDT == GDT_Int16) )
         {
             CPLDebug("GDAL_netCDF", "GInt16 Band#%d", iBand);
             eErr = NCDFCopyBand<GInt16>(poSrcBand, poDstBand, nXSize, nYSize,
-                                 GDALScaledProgress, pScaledProgress);
+                                        GDALScaledProgress, pScaledProgress);
         }
         else if( (eDT == GDT_UInt32) || (eDT == GDT_Int32) )
         {
             CPLDebug("GDAL_netCDF", "GInt16 Band#%d", iBand);
             eErr = NCDFCopyBand<GInt32>(poSrcBand, poDstBand, nXSize, nYSize,
-                                 GDALScaledProgress, pScaledProgress);
+                                        GDALScaledProgress, pScaledProgress);
         }
         else if( eDT == GDT_Float32 )
         {
             CPLDebug("GDAL_netCDF", "float Band#%d", iBand);
             eErr = NCDFCopyBand<float>(poSrcBand, poDstBand, nXSize, nYSize,
-                                 GDALScaledProgress, pScaledProgress);
+                                       GDALScaledProgress, pScaledProgress);
         }
         else if( eDT == GDT_Float64 )
         {
             CPLDebug("GDAL_netCDF", "double Band#%d", iBand);
             eErr = NCDFCopyBand<double>(poSrcBand, poDstBand, nXSize, nYSize,
-                                 GDALScaledProgress, pScaledProgress);
+                                        GDALScaledProgress, pScaledProgress);
         }
         else
         {
@@ -7197,8 +7269,8 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     pfnProgress(0.95, NULL, pProgressData);
 
     // Re-open dataset so we can return it.
-    poDS = reinterpret_cast<netCDFDataset *>(
-        GDALOpen(pszFilename, GA_ReadOnly));
+    poDS =
+        reinterpret_cast<netCDFDataset *>(GDALOpen(pszFilename, GA_ReadOnly));
 
     // PAM cloning is disabled. See bug #4244.
     // if( poDS )
@@ -7211,10 +7283,10 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 // Note: some logic depends on bIsProjected and bIsGeoGraphic.
 // May not be known when Create() is called, see AddProjectionVars().
-void
-netCDFDataset::ProcessCreationOptions()
+void netCDFDataset::ProcessCreationOptions()
 {
-    const char* pszConfig = CSLFetchNameValue(papszCreationOptions, "CONFIG_FILE");
+    const char *pszConfig =
+        CSLFetchNameValue(papszCreationOptions, "CONFIG_FILE");
     if( pszConfig != NULL )
     {
         if( oWriterConfig.Parse(pszConfig) )
@@ -7225,9 +7297,8 @@ netCDFDataset::ProcessCreationOptions()
                  oIter != oWriterConfig.m_oDatasetCreationOptions.end();
                  ++ oIter )
             {
-                papszCreationOptions = CSLSetNameValue(papszCreationOptions,
-                                                       oIter->first,
-                                                       oIter->second);
+                papszCreationOptions = CSLSetNameValue(
+                    papszCreationOptions, oIter->first, oIter->second);
             }
         }
     }
@@ -7260,7 +7331,8 @@ netCDFDataset::ProcessCreationOptions()
         else
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                      "FORMAT=%s in not supported, using the default NC format.", pszValue);
+                     "FORMAT=%s in not supported, using the default NC format.",
+                     pszValue);
         }
     }
 
@@ -7282,7 +7354,8 @@ netCDFDataset::ProcessCreationOptions()
                   (eFormat == NCDF_FORMAT_NC4C)) )
             {
                 CPLError(CE_Warning, CPLE_IllegalArg,
-                          "NOTICE: Format set to NC4C because compression is set to DEFLATE.");
+                         "NOTICE: Format set to NC4C because compression is "
+                         "set to DEFLATE.");
                 eFormat = NCDF_FORMAT_NC4C;
             }
         }
@@ -7301,20 +7374,20 @@ netCDFDataset::ProcessCreationOptions()
         if( !(nZLevel >= 1 && nZLevel <= 9) )
         {
             CPLError(CE_Warning, CPLE_IllegalArg,
-                    "ZLEVEL=%s value not recognised, ignoring.",
-                    pszValue);
+                     "ZLEVEL=%s value not recognised, ignoring.", pszValue);
             nZLevel = NCDF_DEFLATE_LEVEL;
         }
     }
 
     // CHUNKING option.
-    bChunking = CPL_TO_BOOL(CSLFetchBoolean(papszCreationOptions, "CHUNKING", TRUE));
+    bChunking =
+        CPL_TO_BOOL(CSLFetchBoolean(papszCreationOptions, "CHUNKING", TRUE));
 
 #endif
 
     // MULTIPLE_LAYERS option.
-    const char* pszMultipleLayerBehaviour = CSLFetchNameValueDef(
-                            papszCreationOptions, "MULTIPLE_LAYERS", "NO");
+    const char *pszMultipleLayerBehaviour =
+        CSLFetchNameValueDef(papszCreationOptions, "MULTIPLE_LAYERS", "NO");
     if( EQUAL(pszMultipleLayerBehaviour, "NO") )
         eMultipleLayerBehaviour = SINGLE_LAYER;
     else if( EQUAL(pszMultipleLayerBehaviour, "SEPARATE_FILES") )
@@ -7329,96 +7402,94 @@ netCDFDataset::ProcessCreationOptions()
         else
         {
             CPLError(CE_Warning, CPLE_IllegalArg,
-                      "MULTIPLE_LAYERS=%s is recognised only with FORMAT=NC4",
-                      pszMultipleLayerBehaviour);
+                     "MULTIPLE_LAYERS=%s is recognised only with FORMAT=NC4",
+                     pszMultipleLayerBehaviour);
         }
     }
 #endif
     else
     {
-        CPLError(CE_Warning, CPLE_IllegalArg, "MULTIPLE_LAYERS=%s not recognised",
-                  pszMultipleLayerBehaviour);
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "MULTIPLE_LAYERS=%s not recognised",
+                 pszMultipleLayerBehaviour);
     }
 
     // Set nCreateMode based on eFormat.
-    switch ( eFormat )
+    switch( eFormat )
     {
 #ifdef NETCDF_HAS_NC2
-        case NCDF_FORMAT_NC2:
-            nCreateMode = NC_CLOBBER|NC_64BIT_OFFSET;
-            break;
+    case NCDF_FORMAT_NC2:
+        nCreateMode = NC_CLOBBER | NC_64BIT_OFFSET;
+        break;
 #endif
 #ifdef NETCDF_HAS_NC4
-        case NCDF_FORMAT_NC4:
-            nCreateMode = NC_CLOBBER|NC_NETCDF4;
-            break;
-        case NCDF_FORMAT_NC4C:
-            nCreateMode = NC_CLOBBER|NC_NETCDF4|NC_CLASSIC_MODEL;
-            break;
+    case NCDF_FORMAT_NC4:
+        nCreateMode = NC_CLOBBER | NC_NETCDF4;
+        break;
+    case NCDF_FORMAT_NC4C:
+        nCreateMode = NC_CLOBBER | NC_NETCDF4 | NC_CLASSIC_MODEL;
+        break;
 #endif
-        case NCDF_FORMAT_NC:
-        default:
-            nCreateMode = NC_CLOBBER;
-            break;
+    case NCDF_FORMAT_NC:
+    default:
+        nCreateMode = NC_CLOBBER;
+        break;
     }
 
-    CPLDebug("GDAL_netCDF",
-              "file options: format=%d compress=%d zlevel=%d",
-              eFormat, eCompress, nZLevel);
+    CPLDebug("GDAL_netCDF", "file options: format=%d compress=%d zlevel=%d",
+             eFormat, eCompress, nZLevel);
 }
 
 int netCDFDataset::DefVarDeflate(
 #ifdef NETCDF_HAS_NC4
-            int nVarId, bool bChunkingArg
+    int nVarId, bool bChunkingArg
 #else
-            int /* nVarId */,
-            bool /* bChunkingArg */
+    int /* nVarId */, bool /* bChunkingArg */
 #endif
-            )
+    )
 {
 #ifdef NETCDF_HAS_NC4
     if( eCompress == NCDF_COMPRESS_DEFLATE )
     {
-        // Must set chunk size to avoid huge performance hit (set bChunkingArg=TRUE)
+        // Must set chunk size to avoid huge performance hit (set
+        // bChunkingArg=TRUE)
         // perhaps another solution it to change the chunk cache?
         // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf.html#Chunk-Cache
         // TODO: make sure this is okay.
-        CPLDebug("GDAL_netCDF",
-                  "DefVarDeflate(%d, %d) nZlevel=%d",
-                  nVarId, static_cast<int>(bChunkingArg), nZLevel);
+        CPLDebug("GDAL_netCDF", "DefVarDeflate(%d, %d) nZlevel=%d", nVarId,
+                 static_cast<int>(bChunkingArg), nZLevel);
 
         int status = nc_def_var_deflate(cdfid, nVarId, 1, 1, nZLevel);
         NCDF_ERR(status);
 
-        if( (status == NC_NOERR) && bChunkingArg && bChunking )
+        if( status == NC_NOERR && bChunkingArg && bChunking )
         {
             // set chunking to be 1 for all dims, except X dim
             // size_t chunksize[] = { 1, (size_t)nRasterXSize };
-            size_t chunksize[ MAX_NC_DIMS ];
+            size_t chunksize[MAX_NC_DIMS];
             int nd;
             nc_inq_varndims(cdfid, nVarId, &nd);
             chunksize[0] = (size_t)1;
             chunksize[1] = (size_t)1;
-            for( int i=2; i<nd; i++ ) chunksize[i] = (size_t)1;
-            chunksize[nd-1] = (size_t)nRasterXSize;
+            for( int i = 2; i < nd; i++) chunksize[i] = (size_t)1;
+            chunksize[nd - 1] = (size_t)nRasterXSize;
 
             CPLDebug("GDAL_netCDF",
-                      "DefVarDeflate() chunksize={%ld, %ld} chunkX=%ld nd=%d",
-                      (long)chunksize[0], (long)chunksize[1], (long)chunksize[nd-1], nd);
+                     "DefVarDeflate() chunksize={%ld, %ld} chunkX=%ld nd=%d",
+                     (long)chunksize[0], (long)chunksize[1],
+                     (long)chunksize[nd - 1], nd);
 #ifdef NCDF_DEBUG
-            for( int i=0; i<nd; i++ )
+            for( int i = 0; i < nd; i++ )
                 CPLDebug("GDAL_netCDF", "DefVarDeflate() chunk[%d]=%ld",
-                          i, chunksize[i]);
+                         i, chunksize[i]);
 #endif
 
-            status = nc_def_var_chunking(cdfid, nVarId,
-                                          NC_CHUNKED, chunksize);
+            status = nc_def_var_chunking(cdfid, nVarId, NC_CHUNKED, chunksize);
             NCDF_ERR(status);
         }
         else
         {
-            CPLDebug("GDAL_netCDF",
-                      "chunksize not set");
+            CPLDebug("GDAL_netCDF", "chunksize not set");
         }
         return status;
     }
@@ -7430,7 +7501,7 @@ int netCDFDataset::DefVarDeflate(
 /*                           NCDFUnloadDriver()                         */
 /************************************************************************/
 
-static void NCDFUnloadDriver(CPL_UNUSED GDALDriver* poDriver)
+static void NCDFUnloadDriver(CPL_UNUSED GDALDriver *poDriver)
 {
     if( hNCMutex != NULL )
         CPLDestroyMutex(hNCMutex);
@@ -7456,10 +7527,8 @@ void GDALRegister_netCDF()
     poDriver->SetDescription("netCDF");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                               "Network Common Data Format");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                               "frmt_netcdf.html");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Network Common Data Format");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_netcdf.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "nc");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
@@ -7560,7 +7629,7 @@ void GDALRegister_netCDF()
 #endif
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
-                               "Integer Integer64 Real String Date DateTime");
+                              "Integer Integer64 Real String Date DateTime");
 
     // Set pfns and register driver.
     poDriver->pfnOpen = netCDFDataset::Open;
@@ -7581,7 +7650,7 @@ void GDALRegister_netCDF()
 /************************************************************************/
 
 /* Test for GDAL version string >= target */
-static bool NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
+static bool NCDFIsGDALVersionGTE(const char *pszVersion, int nTarget)
 {
 
     // Valid strings are "GDAL 1.9dev, released 2011/01/18" and "GDAL 1.8.1 ".
@@ -7597,9 +7666,9 @@ static bool NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
     else if( STARTS_WITH_CI(pszVersion, "GDAL 1.8dev") )
         return nTarget <= 1800;
 
-    char **papszTokens = CSLTokenizeString2(pszVersion+5, ".", 0);
+    char **papszTokens = CSLTokenizeString2(pszVersion + 5, ".", 0);
 
-    int nVersions [] = {0, 0, 0, 0};
+    int nVersions[] = {0, 0, 0, 0};
     for( int iToken = 0;
          papszTokens && iToken < 4 && papszTokens[iToken];
          iToken++ )
@@ -7609,10 +7678,11 @@ static bool NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
 
     int nVersion = 0;
     if( nVersions[0] > 1 || nVersions[1] >= 10 )
-        nVersion = GDAL_COMPUTE_VERSION(nVersions[0], nVersions[1], nVersions[2]);
+        nVersion =
+            GDAL_COMPUTE_VERSION(nVersions[0], nVersions[1], nVersions[2]);
     else
-        nVersion = nVersions[0]*1000 + nVersions[1]*100 +
-            nVersions[2]*10 + nVersions[3];
+        nVersion = nVersions[0] * 1000 + nVersions[1] * 100 +
+                   nVersions[2] * 10 + nVersions[3];
 
     CSLDestroy(papszTokens);
     return nTarget <= nVersion;
@@ -7620,18 +7690,17 @@ static bool NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
 
 // Add Conventions, GDAL version and history.
 static void NCDFAddGDALHistory( int fpImage,
-                         const char * pszFilename, const char *pszOldHist,
-                         const char * pszFunctionName,
-                                const char * pszCFVersion )
+                         const char *pszFilename, const char *pszOldHist,
+                         const char *pszFunctionName,
+                                const char *pszCFVersion )
 {
     int status = nc_put_att_text(fpImage, NC_GLOBAL, "Conventions",
-                     strlen(pszCFVersion),
-                     pszCFVersion);
+                                 strlen(pszCFVersion), pszCFVersion);
     NCDF_ERR(status);
 
-    const char* pszNCDF_GDAL = GDALVersionInfo("--version");
+    const char *pszNCDF_GDAL = GDALVersionInfo("--version");
     status = nc_put_att_text(fpImage, NC_GLOBAL, "GDAL",
-                     strlen(pszNCDF_GDAL), pszNCDF_GDAL);
+                             strlen(pszNCDF_GDAL), pszNCDF_GDAL);
     NCDF_ERR(status);
 
     // Add history.
@@ -7650,8 +7719,9 @@ static void NCDFAddGDALHistory( int fpImage,
 
 // Code taken from cdo and libcdi, used for writing the history attribute.
 
-//void cdoDefHistory(int fileID, char *histstring)
-static void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist)
+// void cdoDefHistory(int fileID, char *histstring)
+static void NCDFAddHistory(int fpImage, const char *pszAddHist,
+                           const char *pszOldHist)
 {
     // Check pszOldHist - as if there was no previous history, it will be
     // a null pointer - if so set as empty.
@@ -7667,17 +7737,18 @@ static void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszO
     if( tp != -1 )
     {
         struct tm *ltime = localtime(&tp);
-        (void) strftime(strtime, sizeof(strtime), "%a %b %d %H:%M:%S %Y: ", ltime);
+        (void)strftime(strtime, sizeof(strtime), "%a %b %d %H:%M:%S %Y: ",
+                       ltime);
     }
 
     // status = nc_get_att_text(fpImage, NC_GLOBAL,
     //                           "history", pszOldHist);
     // printf("status: %d pszOldHist: [%s]\n",status,pszOldHist);
 
-    size_t nNewHistSize
-        = strlen(pszOldHist)+strlen(strtime)+strlen(pszAddHist)+1+1;
-    char *pszNewHist
-        = reinterpret_cast<char *>(CPLMalloc(nNewHistSize * sizeof(char)));
+    size_t nNewHistSize =
+        strlen(pszOldHist) + strlen(strtime) + strlen(pszAddHist) + 1 + 1;
+    char *pszNewHist =
+        reinterpret_cast<char *>(CPLMalloc(nNewHistSize * sizeof(char)));
 
     strcpy(pszNewHist, strtime);
     strcat(pszNewHist, pszAddHist);
@@ -7690,15 +7761,14 @@ static void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszO
         strcat(pszNewHist, pszOldHist);
     }
 
-    const int status = nc_put_att_text(fpImage, NC_GLOBAL,
-                                        "history", strlen(pszNewHist),
-                                        pszNewHist);
+    const int status = nc_put_att_text(fpImage, NC_GLOBAL, "history",
+                                       strlen(pszNewHist), pszNewHist);
     NCDF_ERR(status);
 
     CPLFree(pszNewHist);
 }
 
-static bool NCDFIsCfProjection( const char* pszProjection )
+static bool NCDFIsCfProjection( const char *pszProjection )
 {
     // Find the appropriate mapping.
     for( int iMap = 0; poNetcdfSRS_PT[iMap].WKT_SRS != NULL; iMap++ )
@@ -7734,7 +7804,7 @@ static bool NCDFIsCfProjection( const char* pszProjection )
 // NOTE: modifications by ET to combine the specific and generic mappings.
 
 static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
-                           const char* pszProjection,
+                           const char *pszProjection,
                            const int fpImage, const int NCDFVarID )
 {
     const oNetcdfSRS_PP *poMap = NULL;
@@ -7762,8 +7832,8 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
     if( !poMap )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                  "projection name %s in not part of the CF standard, will not be supported by CF!",
-                  pszProjection);
+                 "projection name %s in not part of the CF standard, will not be supported by CF!",
+                 pszProjection);
         poMap = poGenericMappings;
     }
 
@@ -7777,12 +7847,12 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
     }
 
     const char *pszParamVal = NULL;
-    std::map< std::string, double > oValMap;
+    std::map<std::string, double> oValMap;
     for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
     {
         const OGR_SRSNode *poNode = poPROJCS->GetChild(iChild);
-        if( !EQUAL(poNode->GetValue(), "PARAMETER")
-            || poNode->GetChildCount() != 2 )
+        if( !EQUAL(poNode->GetValue(), "PARAMETER") ||
+            poNode->GetChildCount() != 2 )
             continue;
         const char *pszParamStr = poNode->GetChild(0)->GetValue();
         pszParamVal = poNode->GetChild(1)->GetValue();
@@ -7792,14 +7862,14 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
 
     double dfValue = 0.0;
     const std::string *posGDALAtt;
-    std::map< std::string, std::string >::iterator oAttIter;
-    std::map< std::string, double >::iterator oValIter, oValIter2;
+    std::map<std::string, std::string>::iterator oAttIter;
+    std::map<std::string, double>::iterator oValIter, oValIter2;
 
     // Results to write.
-    std::vector< std::pair<std::string, double> > oOutList;
+    std::vector<std::pair<std::string, double>> oOutList;
 
     // Lookup mappings and fill output vector.
-    if( poMap != poGenericMappings )
+    if(poMap != poGenericMappings)
     {
         // Specific mapping, loop over mapping values.
         for( oAttIter = oAttMap.begin(); oAttIter != oAttMap.end(); ++oAttIter )
@@ -7821,8 +7891,8 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                     double dfLatPole = 0.0;
                     if( dfValue > 0.0 ) dfLatPole = 90.0;
                     else dfLatPole = -90.0;
-                        oOutList.push_back(std::make_pair(std::string(CF_PP_LAT_PROJ_ORIGIN),
-                                                            dfLatPole));
+                    oOutList.push_back(std::make_pair(
+                        std::string(CF_PP_LAT_PROJ_ORIGIN), dfLatPole));
                 }
 
                 // special case for LCC-1SP
@@ -7849,18 +7919,23 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                         }
                         // Else copy standard_parallel1 from
                         // latitude_of_origin, because scale_factor=1.0.
-                        else {
-                            oValIter2 = oValMap.find(std::string(SRS_PP_LATITUDE_OF_ORIGIN));
+                        else
+                        {
+                            oValIter2 = oValMap.find(
+                                std::string(SRS_PP_LATITUDE_OF_ORIGIN));
                             if( oValIter2 != oValMap.end() )
                             {
-                                oOutList.push_back(std::make_pair(std::string(CF_PP_STD_PARALLEL_1),
-                                                                    oValIter2->second));
+                                oOutList.push_back(std::make_pair(
+                                    std::string(CF_PP_STD_PARALLEL_1),
+                                    oValIter2->second));
                             }
                             else
                             {
                                 CPLError(CE_Failure, CPLE_NotSupported,
-                                          "NetCDF driver export of LCC-1SP with no standard_parallel1 "
-                                          "and no latitude_of_origin is not supported (bug #3324).");
+                                         "NetCDF driver export of LCC-1SP with "
+                                         "no standard_parallel1 "
+                                         "and no latitude_of_origin is not "
+                                         "supported (bug #3324).");
                             }
                         }
                     }
@@ -7893,13 +7968,14 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
             /* for SRS_PP_SCALE_FACTOR write 2 mappings */
             else if( EQUAL(posGDALAtt->c_str(), SRS_PP_SCALE_FACTOR) )
             {
-                oOutList.push_back(std::make_pair(std::string(CF_PP_SCALE_FACTOR_MERIDIAN),
-                                                    dfValue));
-                oOutList.push_back(std::make_pair(std::string(CF_PP_SCALE_FACTOR_ORIGIN),
-                                                    dfValue));
+                oOutList.push_back(std::make_pair(
+                    std::string(CF_PP_SCALE_FACTOR_MERIDIAN), dfValue));
+                oOutList.push_back(std::make_pair(
+                    std::string(CF_PP_SCALE_FACTOR_ORIGIN), dfValue));
             }
             /* if not found insert the GDAL name */
-            else {
+            else
+            {
                 oOutList.push_back(std::make_pair(*posGDALAtt, dfValue));
             }
         }
@@ -7917,17 +7993,20 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
         pszParamVal = (it->first).c_str();
         dfValue = it->second;
         /* Handle the STD_PARALLEL attrib */
-        if( EQUAL(pszParamVal, CF_PP_STD_PARALLEL_1) ) {
+        if( EQUAL(pszParamVal, CF_PP_STD_PARALLEL_1) )
+        {
             bFoundStdP1 = true;
             dfStdP[0] = dfValue;
         }
-        else if( EQUAL(pszParamVal, CF_PP_STD_PARALLEL_2) ) {
+        else if( EQUAL(pszParamVal, CF_PP_STD_PARALLEL_2) )
+        {
             bFoundStdP2 = true;
             dfStdP[1] = dfValue;
         }
-        else {
+        else
+        {
             nc_put_att_double(fpImage, NCDFVarID, pszParamVal,
-                               NC_DOUBLE, 1, &dfValue);
+                              NC_DOUBLE, 1, &dfValue);
         }
     }
     /* Now write the STD_PARALLEL attrib */
@@ -7937,16 +8016,18 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
         if( !bFoundStdP2 || dfStdP[0] == dfStdP[1] )
         {
             nc_put_att_double(fpImage, NCDFVarID, CF_PP_STD_PARALLEL,
-                               NC_DOUBLE, 1, &dfStdP[0]);
+                              NC_DOUBLE, 1, &dfStdP[0]);
         }
-        else { /* two values */
+        else 
+        {
+            // Two values.
             nc_put_att_double(fpImage, NCDFVarID, CF_PP_STD_PARALLEL,
-                               NC_DOUBLE, 2, dfStdP);
+                              NC_DOUBLE, 2, dfStdP);
         }
     }
 }
 
-static CPLErr NCDFSafeStrcat(char** ppszDest, const char* pszSrc, size_t* nDestSize)
+static CPLErr NCDFSafeStrcat(char **ppszDest, const char *pszSrc, size_t *nDestSize)
 {
     /* Reallocate the data string until the content fits */
     while( *nDestSize < (strlen(*ppszDest) + strlen(pszSrc) + 1) )
@@ -7955,7 +8036,8 @@ static CPLErr NCDFSafeStrcat(char** ppszDest, const char* pszSrc, size_t* nDestS
         *ppszDest = reinterpret_cast<char *>(
             CPLRealloc(reinterpret_cast<void *>(*ppszDest), *nDestSize));
 #ifdef NCDF_DEBUG
-        CPLDebug("GDAL_netCDF", "NCDFSafeStrcat() resized str from %ld to %ld", (*nDestSize)/2, *nDestSize);
+        CPLDebug("GDAL_netCDF", "NCDFSafeStrcat() resized str from %ld to %ld",
+                 (*nDestSize) / 2, *nDestSize);
 #endif
     }
     strcat(*ppszDest, pszSrc);
@@ -7968,7 +8050,7 @@ static CPLErr NCDFSafeStrcat(char** ppszDest, const char* pszSrc, size_t* nDestS
 /* and if bSetPszValue=True sets pszValue with all attribute values */
 /* pszValue is the responsibility of the caller and must be freed */
 static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
-                     double *pdfValue, char **pszValue, int bSetPszValue )
+                            double *pdfValue, char **pszValue, int bSetPszValue )
 {
     nc_type nAttrType = NC_NAT;
     size_t nAttrLen = 0;
@@ -7978,7 +8060,8 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
         return CE_Failure;
 
 #ifdef NCDF_DEBUG
-    CPLDebug("GDAL_netCDF", "NCDFGetAttr1(%s) len=%ld type=%d", pszAttrName, nAttrLen, nAttrType);
+    CPLDebug("GDAL_netCDF", "NCDFGetAttr1(%s) len=%ld type=%d", pszAttrName,
+             nAttrLen, nAttrType);
 #endif
 
     /* Allocate guaranteed minimum size (use 10 or 20 if not a string) */
@@ -7999,16 +8082,17 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
 
     double dfValue = 0.0;
     size_t m;
-    char szTemp[ 256 ];
+    char szTemp[256];
 
-    switch (nAttrType) {
-        case NC_CHAR:
+    switch (nAttrType)
+    {
+    case NC_CHAR:
             nc_get_att_text(nCdfId, nVarId, pszAttrName, pszAttrValue);
             pszAttrValue[nAttrLen]='\0';
             dfValue = 0.0;
             break;
-        case NC_BYTE:
-        {
+    case NC_BYTE:
+    {
             signed char *pscTemp
                 = reinterpret_cast<signed char *>(
                     CPLCalloc(nAttrLen, sizeof(signed char)));
