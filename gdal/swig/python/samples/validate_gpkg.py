@@ -663,7 +663,10 @@ class GPKGChecker:
                              "Invalid tile_row in %s" % table_name)
 
         c.execute("SELECT tile_data FROM %s" % _esc_id(table_name))
+        found_jpeg = False
+        found_png = False
         found_webp = False
+        found_tiff = False
         for (blob,) in c.fetchall():
             self._assert(blob is not None and len(blob) >= 12, 19,
                          'Invalid blob')
@@ -686,10 +689,20 @@ class GPKGChecker:
                 self._assert(is_png or is_tiff, 36,
                              'Unrecognized image mime type')
 
+            if is_jpeg:
+                found_jpeg = True
+            if is_png:
+                found_png = True
             if is_webp:
                 found_webp = True
+            if is_tiff:
+                found_tiff = True
 
         if found_webp:
+            self._assert(not found_png and not found_jpeg and not found_tiff,
+                         92,
+                         "Table %s should contain only webp tiles" %
+                         table_name)
             c.execute("SELECT 1 FROM gpkg_extensions WHERE "
                       "table_name = ? AND column_name = 'tile_data' AND "
                       "extension_name = 'gpkg_webp' AND "
@@ -1458,5 +1471,8 @@ if __name__ == '__main__':
             sys.exit(0)
         else:
             for (req, msg) in ret:
-                print('Req %d: %s' % (req, msg))
+                if req:
+                    print('Req %d: %s' % (req, msg))
+                else:
+                    print(msg)
             sys.exit(1)
