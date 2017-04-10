@@ -4173,9 +4173,9 @@ bool GDALGeoPackageDataset::RegisterZoomOtherExtension()
 
     char* pszSQL = sqlite3_mprintf(
         "INSERT INTO gpkg_extensions "
-        "(table_name, extension_name, definition, scope) "
+        "(table_name, column_name, extension_name, definition, scope) "
         "VALUES "
-        "('%q', 'gpkg_zoom_other', 'GeoPackage 1.0 Specification Annex O', 'read-write')",
+        "('%q', 'tile_data', 'gpkg_zoom_other', 'GeoPackage 1.0 Specification Annex O', 'read-write')",
         m_osRasterTable.c_str());
     const OGRErr eErr = SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
