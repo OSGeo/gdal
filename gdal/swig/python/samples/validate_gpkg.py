@@ -157,9 +157,15 @@ class GPKGChecker:
         self._check_structure(columns, expected_columns, 10,
                               'gpkg_spatial_ref_sys')
 
-        c.execute("SELECT srs_id, organization, organization_coordsys_id, "
-                  "definition FROM gpkg_spatial_ref_sys "
-                  "WHERE srs_id IN (-1, 0, 4326) ORDER BY srs_id")
+        if has_definition_12_063:
+            c.execute("SELECT srs_id, organization, organization_coordsys_id, "
+                      "definition, definition_12_063 "
+                      "FROM gpkg_spatial_ref_sys "
+                      "WHERE srs_id IN (-1, 0, 4326) ORDER BY srs_id")
+        else:
+            c.execute("SELECT srs_id, organization, organization_coordsys_id, "
+                      "definition FROM gpkg_spatial_ref_sys "
+                      "WHERE srs_id IN (-1, 0, 4326) ORDER BY srs_id")
         ret = c.fetchall()
         self._assert(ret[0][1] == 'NONE', 11,
                      'wrong value for organization for srs_id = -1: %s' %
@@ -170,6 +176,11 @@ class GPKGChecker:
         self._assert(ret[0][3] == 'undefined', 11,
                      'wrong value for definition for srs_id = -1: %s' %
                      ret[0][3])
+        if has_definition_12_063:
+            self._assert(ret[0][4] == 'undefined', 116,
+                         'wrong value for definition_12_063 for ' +
+                         'srs_id = -1: %s' % ret[0][4])
+
         self._assert(ret[1][1] == 'NONE', 11,
                      'wrong value for organization for srs_id = 0: %s' %
                      ret[1][1])
@@ -179,6 +190,11 @@ class GPKGChecker:
         self._assert(ret[1][3] == 'undefined', 11,
                      'wrong value for definition for srs_id = 0: %s' %
                      ret[1][3])
+        if has_definition_12_063:
+            self._assert(ret[1][4] == 'undefined', 116,
+                         'wrong value for definition_12_063 for ' +
+                         'srs_id = 0: %s' % ret[1][4])
+
         self._assert(ret[2][1].lower() == 'epsg', 11,
                      'wrong value for organization for srs_id = 4326: %s' %
                      ret[2][1])
@@ -188,6 +204,21 @@ class GPKGChecker:
         self._assert(ret[2][3] != 'undefined', 11,
                      'wrong value for definition for srs_id = 4326: %s' %
                      ret[2][3])
+        if has_definition_12_063:
+            self._assert(ret[2][4] != 'undefined', 116,
+                         'wrong value for definition_12_063 for ' +
+                         'srs_id = 4326: %s' % ret[2][4])
+
+        if has_definition_12_063:
+            c.execute("SELECT srs_id FROM gpkg_spatial_ref_sys "
+                      "WHERE srs_id NOT IN (0, -1) AND "
+                      "definition = 'undefined' AND "
+                      "definition_12_063 = 'undefined'")
+            rows = c.fetchall()
+            for (srs_id, ) in rows:
+                self._assert(False, 117,
+                             'srs_id = %d has both definition and ' % srs_id +
+                             'definition_12_063 undefined')
 
     def _check_gpkg_contents(self, c):
 
