@@ -38,9 +38,42 @@ if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
         os.chdir(os.path.dirname(sys.argv[0]))
 
 sys.path.append( '../pymod' )
+sys.path.append('../../gdal/swig/python/samples')
 
 from osgeo import osr, gdal
 import gdaltest
+
+###############################################################################
+# Validate a geopackage
+
+try:
+    import validate_gpkg
+    has_validate = True
+except:
+    has_validate = False
+
+def validate(filename, quiet = False):
+    if has_validate:
+        my_filename = filename
+        if my_filename.startswith('/vsimem/'):
+            my_filename = 'tmp/validate.gpkg'
+            f = gdal.VSIFOpenL(filename, 'rb')
+            if f is None:
+                print('Cannot open %s' % filename)
+                return False
+            content = gdal.VSIFReadL(1, 10000000, f)
+            gdal.VSIFCloseL(f)
+            open(my_filename, 'wb').write(content)
+        try:
+            validate_gpkg.check(my_filename)
+        except Exception as e:
+            if not quiet:
+                print(e)
+            return False
+        finally:
+            if my_filename != filename:
+                os.unlink(my_filename)
+    return True
 
 ###############################################################################
 # Test if GPKG and tile drivers are available
@@ -195,6 +228,10 @@ def gpkg_1():
     out_ds = gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG'] )
     out_ds = None
     ds = None
+
+    if not validate('/vsimem/tmp.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
 
     out_ds = gdal.Open('/vsimem/tmp.gpkg')
 
@@ -3002,6 +3039,11 @@ def gpkg_39():
 
     src_ds = gdal.Open('data/int16.tif')
     gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG')
+
+    if not validate('/vsimem/gpkg_39.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
     ds = gdal.Open('/vsimem/gpkg_39.gpkg')
 
     # Check there a ogr_empty_table
@@ -3325,6 +3367,11 @@ yllcorner    3750120
 cellsize     60
 -100000 100000""")
     gdal.Translate('/vsimem/gpkg_39.gpkg', '/vsimem/gpkg_39.asc', format = 'GPKG', outputType = gdal.GDT_Float32, creationOptions = ['TILE_FORMAT=PNG'])
+
+    if not validate('/vsimem/gpkg_39.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
     src_ds = gdal.Open('/vsimem/gpkg_39.asc')
     ds = gdal.Open('/vsimem/gpkg_39.gpkg')
     if ds.GetRasterBand(1).DataType != gdal.GDT_Float32:
@@ -3553,6 +3600,10 @@ def gpkg_43():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
+
+    if not validate('/vsimem/gpkg_43.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
 
     gdal.Unlink('/vsimem/gpkg_43.gpkg')
 

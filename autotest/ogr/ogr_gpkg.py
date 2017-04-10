@@ -40,6 +40,7 @@ if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
         os.chdir(os.path.dirname(sys.argv[0]))
 
 sys.path.append( '../pymod' )
+sys.path.append('../../gdal/swig/python/samples')
 
 from osgeo import gdal
 from osgeo import ogr
@@ -47,6 +48,38 @@ from osgeo import osr
 import gdaltest
 sys.path.append( '../osr' )
 import osr_proj4
+
+###############################################################################
+# Validate a geopackage
+
+try:
+    import validate_gpkg
+    has_validate = True
+except:
+    has_validate = False
+
+def validate(filename, quiet = False):
+    if has_validate:
+        my_filename = filename
+        if my_filename.startswith('/vsimem/'):
+            my_filename = 'tmp/validate.gpkg'
+            f = gdal.VSIFOpenL(filename, 'rb')
+            if f is None:
+                print('Cannot open %s' % filename)
+                return False
+            content = gdal.VSIFReadL(1, 10000000, f)
+            gdal.VSIFCloseL(f)
+            open(my_filename, 'wb').write(content)
+        try:
+            validate_gpkg.check(my_filename)
+        except Exception as e:
+            if not quiet:
+                print(e)
+            return False
+        finally:
+            if my_filename != filename:
+                os.unlink(my_filename)
+    return True
 
 ###############################################################################
 # Create a fresh database.
@@ -75,13 +108,16 @@ def ogr_gpkg_1():
 
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.CreateDataSource( 'tmp/gpkg_test.gpkg' )
 
-    if gdaltest.gpkg_ds is not None:
-        return 'success'
-    else:
+    if gdaltest.gpkg_ds is None:
         return 'fail'
 
     gdaltest.gpkg_ds = None
 
+    if not validate('tmp/gpkg_test.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Re-open database to test validity
@@ -117,10 +153,7 @@ def ogr_gpkg_2():
         return 'fail'
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
-    if gdaltest.gpkg_ds is not None:
-        return 'success'
-    else:
-        return 'fail'
+    return 'success'
 
 
 ###############################################################################
@@ -160,6 +193,10 @@ def ogr_gpkg_4():
         return 'skip'
 
     gdaltest.gpkg_ds = None
+
+    if not validate('tmp/gpkg_test.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
@@ -264,6 +301,10 @@ def ogr_gpkg_6():
         return 'fail'
 
     gdaltest.gpkg_ds = None
+
+    if not validate('tmp/gpkg_test.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
@@ -1433,6 +1474,10 @@ def ogr_gpkg_18():
     f = None
     ds = None
 
+    if not validate('/vsimem/ogr_gpkg_18.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
     ds = ogr.Open('/vsimem/ogr_gpkg_18.gpkg')
     if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail : warning NOT expected')
@@ -1509,6 +1554,11 @@ def ogr_gpkg_18():
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
     ds = None
+
+    ret = validate('/vsimem/ogr_gpkg_18.gpkg', quiet = True)
+    if ret:
+        gdaltest.post_reason('validation unexpectedly succeeded')
+        return 'fail'
 
     # Test non-linear geometry in GeometryCollection
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_18.gpkg')
@@ -1649,6 +1699,10 @@ def ogr_gpkg_19():
         return 'fail'
     ds = None
 
+    if not validate('/vsimem/ogr_gpkg_19.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
     gdal.Unlink('/vsimem/ogr_gpkg_19.gpkg')
     gdal.Unlink('/vsimem/ogr_gpkg_19.gpkg.aux.xml')
 
@@ -1710,6 +1764,10 @@ def ogr_gpkg_20():
         print(lyr.GetSpatialRef().ExportToWkt())
         return 'fail'
     ds = None
+
+    if not validate('/vsimem/ogr_gpkg_20.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
 
     gdal.Unlink('/vsimem/ogr_gpkg_20.gpkg')
 
@@ -2560,6 +2618,10 @@ def ogr_gpkg_29():
     lyr.CreateFeature(f)
     ds = None
 
+    if not validate('/vsimem/ogr_gpkg_29.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
     ds = ogr.Open('/vsimem/ogr_gpkg_29.gpkg', update = 1)
     lyr = ds.GetLayerByName('pointm')
     if lyr.GetGeomType() != ogr.wkbPointM:
@@ -2684,6 +2746,10 @@ def ogr_gpkg_31():
         return 'fail'
     ds = None
 
+    if not validate('/vsimem/ogr_gpkg_31.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_31.gpkg')
 
     return 'success'
@@ -2721,6 +2787,10 @@ def ogr_gpkg_32():
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
     ds = None
+
+    if not validate('/vsimem/ogr_gpkg_32.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
 
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_32.gpkg')
 
@@ -3466,6 +3536,10 @@ def ogr_gpkg_40():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
+    if not validate('/vsimem/ogr_gpkg_40.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_40.gpkg')
 
     return 'success'
@@ -3771,6 +3845,10 @@ def ogr_gpkg_44():
     ds.CreateLayer('foo')
     ds = None
     gdal.SetConfigOption('CREATE_METADATA_TABLES', None)
+
+    if not validate('/vsimem/ogr_gpkg_44.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
 
     ds = ogr.Open('/vsimem/ogr_gpkg_44.gpkg')
     md = ds.GetMetadata()
@@ -4214,6 +4292,10 @@ def ogr_gpkg_50():
     lyr = ds.CreateLayer('without_org', srs = srs_without_org)
 
     ds = None
+
+    if not validate('/vsimem/ogr_gpkg_50.gpkg'):
+        gdaltest.post_reason('validation failed')
+        return 'fail'
 
     ds = ogr.Open('/vsimem/ogr_gpkg_50.gpkg')
     lyr = ds.GetLayer('test')
