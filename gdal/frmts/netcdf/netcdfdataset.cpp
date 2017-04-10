@@ -7866,7 +7866,7 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
     std::map<std::string, double>::iterator oValIter, oValIter2;
 
     // Results to write.
-    std::vector<std::pair<std::string, double>> oOutList;
+    std::vector<std::pair<std::string, double> > oOutList;
 
     // Lookup mappings and fill output vector.
     if(poMap != poGenericMappings)
