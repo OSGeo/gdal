@@ -357,10 +357,13 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
             buffer = psconfig; // The copy will be replaced by the decoded result
             psconfig = WMSUtilDecode(buffer, CPLGetXMLValue(config, "Configuration.encoding", ""));
         }
-        else { // Not inline, use the WMSdriver
+        else { // Not inline, use the WMSdriver to fetch the server config
             CPLString getTileServiceUrl = m_base_url + "request=GetTileService";
+
             // This returns a string managed by the cfg cache
-            psconfig = GDALWMSDataset::GetServerConfig(getTileServiceUrl);
+            psconfig = GDALWMSDataset::GetServerConfig(getTileServiceUrl,
+                const_cast<char **>(m_parent_dataset->GetHTTPRequestOpts()));
+
             if (psconfig == NULL)
                 throw CPLOPrintf("%s HTTP failure", SIG);
         }

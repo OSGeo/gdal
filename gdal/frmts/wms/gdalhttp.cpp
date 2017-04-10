@@ -232,6 +232,13 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         if (psRequest->nStatus == 0 && psRequest->Error.empty() && STARTS_WITH(psRequest->URL.c_str(), "file://"))
             psRequest->nStatus = 200;
 
+        // If there is an error with no error message, use the content if it is text
+        if (psRequest->Error.empty()
+            && psRequest->nStatus != 0
+            && psRequest->nStatus != 200
+            && strstr(psRequest->ContentType, "text"))
+            psRequest->Error = reinterpret_cast<const char *>(psRequest->pabyData);
+
         CPLDebug("HTTP", "Request [%d] %s : status = %d, content type = %s, error = %s",
                  i, psRequest->URL.c_str(), psRequest->nStatus,
                  !psRequest->ContentType.empty() ? psRequest->ContentType.c_str() : "(null)",

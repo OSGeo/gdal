@@ -948,7 +948,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                             GetServerConfig()                        */
 /************************************************************************/
 
-const char *GDALWMSDataset::GetServerConfig(const char *URI)
+const char *GDALWMSDataset::GetServerConfig(const char *URI, char **papszHTTPOptions)
 {
     CPLMutexHolder oHolder(&cfgmtx);
 
@@ -956,7 +956,7 @@ const char *GDALWMSDataset::GetServerConfig(const char *URI)
     if (cfg.end() != cfg.find(URI))
         return cfg.find(URI)->second;
 
-    CPLHTTPResult *psResult = CPLHTTPFetch(URI, NULL);
+    CPLHTTPResult *psResult = CPLHTTPFetch(URI, papszHTTPOptions);
 
     if (NULL == psResult)
         return NULL;
