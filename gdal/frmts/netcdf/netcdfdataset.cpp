@@ -136,11 +136,11 @@ class netCDFRasterBand : public GDALPamRasterBand
     int         nBandYPos;
     int         *panBandZPos;
     int         *panBandZLev;
-    int         bNoDataSet;
+    bool        bNoDataSet;
     double      dfNoDataValue;
     double      adfValidRange[2];
-    int         bHaveScale;
-    int         bHaveOffset;
+    bool        bHaveScale;
+    bool        bHaveOffset;
     double      dfScale;
     double      dfOffset;
     CPLString   osUnitType;
@@ -213,7 +213,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     nBandYPos(panBandZPosIn[1]),
     panBandZPos(NULL),
     panBandZLev(NULL),
-    bNoDataSet(FALSE),
+    bNoDataSet(false),
     dfNoDataValue(0.0),
     bHaveScale(false),
     bHaveOffset(false),
@@ -535,7 +535,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     nBandYPos(0),
     panBandZPos(NULL),
     panBandZLev(NULL),
-    bNoDataSet(FALSE),
+    bNoDataSet(false),
     dfNoDataValue(0.0),
     bHaveScale(false),
     bHaveOffset(false),
@@ -746,7 +746,7 @@ netCDFRasterBand::~netCDFRasterBand()
 double netCDFRasterBand::GetOffset( int *pbSuccess )
 {
     if( pbSuccess != NULL )
-        *pbSuccess = bHaveOffset;
+        *pbSuccess = static_cast<int>(bHaveOffset);
 
     return dfOffset;
 }
@@ -786,7 +786,7 @@ CPLErr netCDFRasterBand::SetOffset( double dfNewOffset )
 double netCDFRasterBand::GetScale( int *pbSuccess )
 {
     if( pbSuccess != NULL )
-        *pbSuccess = bHaveScale;
+        *pbSuccess = static_cast<int>(bHaveScale);
 
     return dfScale;
 }
@@ -874,7 +874,7 @@ double netCDFRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
     if( pbSuccess )
-        *pbSuccess = bNoDataSet;
+        *pbSuccess = static_cast<int>(bNoDataSet);
 
     if( bNoDataSet )
         return dfNoDataValue;
@@ -986,7 +986,7 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
         if( status == NC_NOERR )
         {
             dfNoDataValue = dfNoData;
-            bNoDataSet = TRUE;
+            bNoDataSet = true;
             return CE_None;
         }
 
@@ -994,7 +994,7 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
     }
 
     dfNoDataValue = dfNoData;
-    bNoDataSet = TRUE;
+    bNoDataSet = true;
     return CE_None;
 }
 
@@ -1025,7 +1025,7 @@ CPLErr netCDFRasterBand::DeleteNoDataValue()
         if( status == NC_NOERR )
         {
             dfNoDataValue = 0.0;
-            bNoDataSet = FALSE;
+            bNoDataSet = false;
             return CE_None;
         }
 
@@ -1033,7 +1033,7 @@ CPLErr netCDFRasterBand::DeleteNoDataValue()
     }
 
     dfNoDataValue = 0.0;
-    bNoDataSet = FALSE;
+    bNoDataSet = false;
     return CE_None;
 }
 #endif
@@ -7192,7 +7192,7 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 
         // Set nodata value, if any.
         // poBand->SetNoDataValue(poSrcBand->GetNoDataValue(0));
-        int bNoDataSet;
+        int bNoDataSet = FALSE;
         double dfNoDataValue = poSrcBand->GetNoDataValue(&bNoDataSet);
         if( bNoDataSet )
         {
