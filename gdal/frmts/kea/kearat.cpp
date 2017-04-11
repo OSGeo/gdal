@@ -31,7 +31,8 @@
 
 CPL_CVSID("$Id$");
 
-KEARasterAttributeTable::KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable)
+KEARasterAttributeTable::KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable,
+                            KEARasterBand *poBand)
 {
     for( size_t nColumnIndex = 0; nColumnIndex < poKEATable->getMaxGlobalColIdx(); nColumnIndex++ )
     {
@@ -48,6 +49,7 @@ KEARasterAttributeTable::KEARasterAttributeTable(kealib::KEAAttributeTable *poKE
         m_aoFields.push_back(sKEAField);
     }
     m_poKEATable = poKEATable;
+    m_poBand = poBand;
 }
 
 KEARasterAttributeTable::~KEARasterAttributeTable()
@@ -903,6 +905,38 @@ CPLErr KEARasterAttributeTable::CreateColumn( const char *pszFieldName,
     }
 
     return CE_None;
+}
+
+CPLErr KEARasterAttributeTable::SetLinearBinning( double dfRow0Min,
+                                            double dfBinSize )
+{
+    size_t nRows = m_poKEATable->getSize();
+
+    osWorkingResult.Printf( "%.16g", dfRow0Min);
+    m_poBand->SetMetadataItem("STATISTICS_HISTOMIN", osWorkingResult);
+    osWorkingResult.Printf( "%.16g", (nRows - 1) * dfBinSize + dfRow0Min);
+    m_poBand->SetMetadataItem("STATISTICS_HISTOMAX", osWorkingResult);
+    osWorkingResult.Printf( "%lu", (unsigned long)nRows);
+    m_poBand->SetMetadataItem("STATISTICS_HISTONUMBINS", osWorkingResult);
+
+    return CE_None;
+}
+
+int KEARasterAttributeTable::GetLinearBinning( double *pdfRow0Min,
+                                            double *pdfBinSize ) const
+{
+    const char *pszMin = m_poBand->GetMetadataItem("STATISTICS_HISTOMIN");
+    const char *pszMax = m_poBand->GetMetadataItem("STATISTICS_HISTOMAX");
+    const char *pszNumBins = m_poBand->GetMetadataItem("STATISTICS_HISTONUMBINS");
+    if( ( pszMin == NULL ) || ( pszMax == NULL ) || ( pszNumBins == NULL ) )
+    {
+        return FALSE;
+    } 
+    *pdfRow0Min = atof(pszMin);
+    long nRows = atol(pszNumBins);
+    *pdfBinSize = (atof(pszMax) - *pdfRow0Min) / (nRows - 1);
+
+    return TRUE;
 }
 
 CPLXMLNode *KEARasterAttributeTable::Serialize() const
