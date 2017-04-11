@@ -2107,184 +2107,184 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 
     switch( eType )
     {
-        case OFTString:
-        case OFTStringList:
-        case OFTIntegerList:
-        case OFTRealList:
+    case OFTString:
+    case OFTStringList:
+    case OFTIntegerList:
+    case OFTRealList:
+    {
+        if( poFieldDefn->GetWidth() == 1 )
         {
-            if( poFieldDefn->GetWidth() == 1 )
-            {
-                nType = NC_CHAR;
-                status = nc_def_var(m_nLayerCDFId,
-                                    pszVarName,
-                                    nType, 1, &nMainDimId, &nVarID);
-            }
+            nType = NC_CHAR;
+            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1,
+                                &nMainDimId, &nVarID);
+        }
 #ifdef NETCDF_HAS_NC4
-            else if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
-            {
-                nType = NC_STRING;
-                status = nc_def_var(m_nLayerCDFId,
-                                     pszVarName,
-                                     nType, 1, &nMainDimId, &nVarID );
-            }
+        else if( m_poDS->eFormat == NCDF_FORMAT_NC4 && m_bUseStringInNC4 )
+        {
+            nType = NC_STRING;
+            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1,
+                                &nMainDimId, &nVarID);
+        }
 #endif
-            else
+        else
+        {
+            if( poFieldDefn->GetWidth() == 0 && !m_bAutoGrowStrings )
             {
-                if( poFieldDefn->GetWidth() == 0 && !m_bAutoGrowStrings )
+                if( m_nDefaultMaxWidthDimId < 0 )
                 {
-                    if( m_nDefaultMaxWidthDimId < 0 )
-                    {
-                        status = nc_def_dim(m_nLayerCDFId,
-                                            "string_default_max_width",
-                                            m_nDefaultWidth,
-                                            &m_nDefaultMaxWidthDimId);
-                        NCDF_ERR(status);
-                        if ( status != NC_NOERR ) {
-                            return OGRERR_FAILURE;
-                        }
-                    }
-                    nSecDimId = m_nDefaultMaxWidthDimId;
-                }
-                else
-                {
-                    size_t nDim = (poFieldDefn->GetWidth() == 0) ?
-                                    m_nDefaultWidth : poFieldDefn->GetWidth();
-                    status = nc_def_dim(m_nLayerCDFId,
-                                        CPLSPrintf("%s_max_width", pszVarName),
-                                        nDim, &nSecDimId);
+                    status =
+                        nc_def_dim(m_nLayerCDFId, "string_default_max_width",
+                                   m_nDefaultWidth, &m_nDefaultMaxWidthDimId);
                     NCDF_ERR(status);
-                    if ( status != NC_NOERR ) {
+                    if( status != NC_NOERR )
+                    {
                         return OGRERR_FAILURE;
                     }
                 }
-
-                nDimCount = 2;
-                int anDims[2] = { nMainDimId, nSecDimId };
-                nType = NC_CHAR;
-                status = nc_def_var(m_nLayerCDFId,
-                                    pszVarName,
-                                    nType, 2, anDims, &nVarID);
+                nSecDimId = m_nDefaultMaxWidthDimId;
             }
-            NCDF_ERR(status);
-            if ( status != NC_NOERR ) {
-                return OGRERR_FAILURE;
-            }
-
-            break;
-        }
-
-        case OFTInteger:
-        {
-            nType = (eSubType == OFSTBoolean) ? NC_BYTE :
-                    (eSubType == OFSTInt16) ?   NC_SHORT :
-                                                NC_INT;
-
-            if( nType == NC_BYTE )
-                nodata.chVal = NC_FILL_BYTE;
-            else if( nType == NC_SHORT )
-                nodata.sVal = NC_FILL_SHORT;
-            else if( nType == NC_INT )
-                nodata.nVal = NC_FILL_INT;
-
-            status = nc_def_var(m_nLayerCDFId,
-                                 pszVarName,
-                                 nType, 1, &nMainDimId, &nVarID);
-            NCDF_ERR(status);
-            if ( status != NC_NOERR ) {
-                return OGRERR_FAILURE;
-            }
-
-            if( eSubType == OFSTBoolean )
-            {
-                signed char anRange[2] = { 0, 1 };
-                nc_put_att_schar(m_nLayerCDFId,nVarID, "valid_range",
-                                  NC_BYTE, 2, anRange);
-            }
-
-            break;
-        }
-
-        case OFTInteger64:
-        {
-            nType = NC_DOUBLE;
-            nodata.dfVal = NC_FILL_DOUBLE;
-#ifdef NETCDF_HAS_NC4
-            if( m_poDS->eFormat == NCDF_FORMAT_NC4 )
-            {
-                nType = NC_INT64;
-                nodata.nVal64 = NC_FILL_INT64;
-            }
-#endif
-            status = nc_def_var(m_nLayerCDFId,
-                                 pszVarName,
-                                 nType, 1, &nMainDimId, &nVarID);
-            NCDF_ERR(status);
-            if ( status != NC_NOERR ) {
-                return OGRERR_FAILURE;
-            }
-            break;
-        }
-
-        case OFTReal:
-        {
-            nType = (eSubType == OFSTFloat32) ? NC_FLOAT : NC_DOUBLE;
-            if( eSubType == OFSTFloat32 )
-                nodata.fVal = NC_FILL_FLOAT;
             else
-                nodata.dfVal = NC_FILL_DOUBLE;
-            status = nc_def_var(m_nLayerCDFId,
-                                 pszVarName,
-                                 nType, 1, &nMainDimId, &nVarID);
-            NCDF_ERR(status);
-            if ( status != NC_NOERR ) {
-                return OGRERR_FAILURE;
+            {
+                size_t nDim = poFieldDefn->GetWidth() == 0
+                                  ? m_nDefaultWidth
+                                  : poFieldDefn->GetWidth();
+                status = nc_def_dim(m_nLayerCDFId,
+                                    CPLSPrintf("%s_max_width", pszVarName),
+                                    nDim, &nSecDimId);
+                NCDF_ERR(status);
+                if( status != NC_NOERR )
+                {
+                    return OGRERR_FAILURE;
+                }
             }
 
-            break;
+            nDimCount = 2;
+            int anDims[2] = {nMainDimId, nSecDimId};
+            nType = NC_CHAR;
+            status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 2, anDims,
+                                &nVarID);
+        }
+        NCDF_ERR(status);
+        if( status != NC_NOERR )
+        {
+            return OGRERR_FAILURE;
         }
 
-        case OFTDate:
-        {
-            nType = NC_INT;
-            status = nc_def_var(m_nLayerCDFId,
-                                 pszVarName,
-                                 nType, 1, &nMainDimId, &nVarID);
-            NCDF_ERR(status);
-            if ( status != NC_NOERR ) {
-                return OGRERR_FAILURE;
-            }
+        break;
+    }
+
+    case OFTInteger:
+    {
+        nType = eSubType == OFSTBoolean
+                    ? NC_BYTE
+                    : (eSubType == OFSTInt16) ? NC_SHORT : NC_INT;
+
+        if( nType == NC_BYTE )
+            nodata.chVal = NC_FILL_BYTE;
+        else if( nType == NC_SHORT )
+            nodata.sVal = NC_FILL_SHORT;
+        else if( nType == NC_INT )
             nodata.nVal = NC_FILL_INT;
 
-            status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
-                                      strlen("days since 1970-1-1"),
-                                      "days since 1970-1-1");
-            NCDF_ERR(status);
-
-            break;
-        }
-
-        case OFTDateTime:
+        status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
+                            &nVarID);
+        NCDF_ERR(status);
+        if( status != NC_NOERR )
         {
-            nType = NC_DOUBLE;
-            status = nc_def_var(m_nLayerCDFId,
-                                 pszVarName,
-                                 nType, 1, &nMainDimId, &nVarID);
-            NCDF_ERR(status);
-            if ( status != NC_NOERR ) {
-                return OGRERR_FAILURE;
-            }
-            nodata.dfVal = NC_FILL_DOUBLE;
-
-            status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
-                             strlen("seconds since 1970-1-1 0:0:0"),
-                             "seconds since 1970-1-1 0:0:0");
-            NCDF_ERR(status);
-
-            break;
+            return OGRERR_FAILURE;
         }
 
-        default:
+        if( eSubType == OFSTBoolean )
+        {
+            signed char anRange[2] = { 0, 1 };
+            nc_put_att_schar(m_nLayerCDFId, nVarID, "valid_range", NC_BYTE, 2,
+                             anRange);
+        }
+
+        break;
+    }
+
+    case OFTInteger64:
+    {
+        nType = NC_DOUBLE;
+        nodata.dfVal = NC_FILL_DOUBLE;
+#ifdef NETCDF_HAS_NC4
+        if( m_poDS->eFormat == NCDF_FORMAT_NC4 )
+        {
+            nType = NC_INT64;
+            nodata.nVal64 = NC_FILL_INT64;
+        }
+#endif
+        status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
+                            &nVarID);
+        NCDF_ERR(status);
+        if( status != NC_NOERR )
+        {
             return OGRERR_FAILURE;
+        }
+        break;
+    }
+
+    case OFTReal:
+    {
+        nType = (eSubType == OFSTFloat32) ? NC_FLOAT : NC_DOUBLE;
+        if( eSubType == OFSTFloat32 )
+            nodata.fVal = NC_FILL_FLOAT;
+        else
+            nodata.dfVal = NC_FILL_DOUBLE;
+        status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
+                            &nVarID);
+        NCDF_ERR(status);
+        if( status != NC_NOERR )
+        {
+            return OGRERR_FAILURE;
+        }
+
+        break;
+    }
+
+    case OFTDate:
+    {
+        nType = NC_INT;
+        status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
+                            &nVarID);
+        NCDF_ERR(status);
+        if( status != NC_NOERR )
+        {
+            return OGRERR_FAILURE;
+        }
+        nodata.nVal = NC_FILL_INT;
+
+        status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
+                                 strlen("days since 1970-1-1"),
+                                 "days since 1970-1-1");
+        NCDF_ERR(status);
+
+        break;
+    }
+
+    case OFTDateTime:
+    {
+        nType = NC_DOUBLE;
+        status = nc_def_var(m_nLayerCDFId, pszVarName, nType, 1, &nMainDimId,
+                            &nVarID);
+        NCDF_ERR(status);
+        if( status != NC_NOERR )
+        {
+            return OGRERR_FAILURE;
+        }
+        nodata.dfVal = NC_FILL_DOUBLE;
+
+        status = nc_put_att_text(m_nLayerCDFId, nVarID, CF_UNITS,
+                                 strlen("seconds since 1970-1-1 0:0:0"),
+                                 "seconds since 1970-1-1 0:0:0");
+        NCDF_ERR(status);
+
+        break;
+    }
+
+    default:
+        return OGRERR_FAILURE;
     }
 
     FieldDesc fieldDesc;
