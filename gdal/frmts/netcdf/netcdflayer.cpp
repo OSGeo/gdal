@@ -1735,170 +1735,170 @@ bool netCDFLayer::AddField(int nVarID)
 
     switch( vartype )
     {
-        case NC_BYTE:
-        {
-            eType = OFTInteger;
-            char* pszValue = NULL;
-            if( GetFillValue(nVarID, &pszValue) == CE_None )
-                nodata.chVal = static_cast<signed char>(atoi(pszValue));
-            else
-                nodata.chVal = NC_FILL_BYTE;
-            CPLFree(pszValue);
-            break;
-        }
+    case NC_BYTE:
+    {
+        eType = OFTInteger;
+        char *pszValue = NULL;
+        if( GetFillValue(nVarID, &pszValue) == CE_None )
+            nodata.chVal = static_cast<signed char>(atoi(pszValue));
+        else
+            nodata.chVal = NC_FILL_BYTE;
+        CPLFree(pszValue);
+        break;
+    }
 
 #ifdef NETCDF_HAS_NC4
-        case NC_UBYTE:
-        {
-            eType = OFTInteger;
-            char* pszValue = NULL;
-            if( GetFillValue(nVarID, &pszValue) == CE_None )
-                nodata.uchVal = static_cast<unsigned char>(atoi(pszValue));
-            else
-                nodata.uchVal = NC_FILL_UBYTE;
-            CPLFree(pszValue);
-            break;
-        }
+    case NC_UBYTE:
+    {
+        eType = OFTInteger;
+        char *pszValue = NULL;
+        if( GetFillValue(nVarID, &pszValue) == CE_None )
+            nodata.uchVal = static_cast<unsigned char>(atoi(pszValue));
+        else
+            nodata.uchVal = NC_FILL_UBYTE;
+        CPLFree(pszValue);
+        break;
+    }
 #endif
 
-        case NC_CHAR:
+    case NC_CHAR:
+    {
+        eType = OFTString;
+        if( nDimCount == 1 )
         {
-            eType = OFTString;
-            if( nDimCount == 1 )
+            nWidth = 1;
+        }
+        else if( nDimCount == 2 )
+        {
+            size_t nDimLen = 0;
+            nc_inq_dimlen(m_nLayerCDFId, anDimIds[1], &nDimLen);
+            nWidth = static_cast<int>(nDimLen);
+        }
+        break;
+    }
+
+#ifdef NETCDF_HAS_NC4
+    case NC_STRING:
+    {
+        eType = OFTString;
+        break;
+    }
+#endif
+
+    case NC_SHORT:
+    {
+        eType = OFTInteger;
+        eSubType = OFSTInt16;
+        char *pszValue = NULL;
+        if( GetFillValue(nVarID, &pszValue) == CE_None )
+            nodata.sVal = static_cast<short>(atoi(pszValue));
+        else
+            nodata.sVal = NC_FILL_SHORT;
+        CPLFree(pszValue);
+        break;
+    }
+
+#ifdef NETCDF_HAS_NC4
+    case NC_USHORT:
+    {
+        eType = OFTInteger;
+        char *pszValue = NULL;
+        if( GetFillValue(nVarID, &pszValue) == CE_None )
+            nodata.usVal = static_cast<unsigned short>(atoi(pszValue));
+        else
+            nodata.usVal = NC_FILL_USHORT;
+        CPLFree(pszValue);
+        break;
+    }
+#endif
+
+    case NC_INT:
+    {
+        eType = OFTInteger;
+        char *pszValue = NULL;
+        if( GetFillValue(nVarID, &pszValue) == CE_None )
+            nodata.nVal = atoi(pszValue);
+        else
+            nodata.nVal = NC_FILL_INT;
+        CPLFree(pszValue);
+        break;
+    }
+
+#ifdef NETCDF_HAS_NC4
+    case NC_UINT:
+    {
+        eType = OFTInteger64;
+        char *pszValue = NULL;
+        if( GetFillValue(nVarID, &pszValue) == CE_None )
+            nodata.unVal = static_cast<unsigned int>(CPLAtoGIntBig(pszValue));
+        else
+            nodata.unVal = NC_FILL_UINT;
+        CPLFree(pszValue);
+        break;
+    }
+#endif
+
+#ifdef NETCDF_HAS_NC4
+    case NC_INT64:
+    {
+        eType = OFTInteger64;
+        char *pszValue = NULL;
+        if( GetFillValue(nVarID, &pszValue) == CE_None )
+            nodata.nVal64 = CPLAtoGIntBig(pszValue);
+        else
+            nodata.nVal64 = NC_FILL_INT64;
+        CPLFree(pszValue);
+        break;
+    }
+
+    case NC_UINT64:
+    {
+        eType = OFTReal;
+        char *pszValue = NULL;
+        if( GetFillValue(nVarID, &pszValue) == CE_None )
+        {
+            nodata.unVal64 = 0;
+            for( int i = 0; pszValue[i] != '\0'; i++ )
             {
-                nWidth = 1;
+                nodata.unVal64 = nodata.unVal64 * 10 + (pszValue[i] - '0');
             }
-            else if( nDimCount == 2 )
-            {
-                size_t nDimLen = 0;
-                nc_inq_dimlen(m_nLayerCDFId, anDimIds[1], &nDimLen);
-                nWidth = static_cast<int>(nDimLen);
-            }
-            break;
         }
-
-#ifdef NETCDF_HAS_NC4
-        case NC_STRING:
-        {
-            eType = OFTString;
-            break;
-        }
+        else
+            nodata.unVal64 = NC_FILL_UINT64;
+        CPLFree(pszValue);
+        break;
+    }
 #endif
 
-        case NC_SHORT:
-        {
-            eType = OFTInteger;
-            eSubType = OFSTInt16;
-            char* pszValue = NULL;
-            if( GetFillValue(nVarID, &pszValue) == CE_None )
-                nodata.sVal = static_cast<short>(atoi(pszValue));
-            else
-                nodata.sVal = NC_FILL_SHORT;
-            CPLFree(pszValue);
-            break;
-        }
+    case NC_FLOAT:
+    {
+        eType = OFTReal;
+        eSubType = OFSTFloat32;
+        double dfValue;
+        if( GetFillValue(nVarID, &dfValue) == CE_None )
+            nodata.fVal = static_cast<float>(dfValue);
+        else
+            nodata.fVal = NC_FILL_FLOAT;
+        break;
+    }
 
-#ifdef NETCDF_HAS_NC4
-        case NC_USHORT:
-        {
-            eType = OFTInteger;
-            char* pszValue = NULL;
-            if( GetFillValue(nVarID, &pszValue) == CE_None )
-                nodata.usVal = static_cast<unsigned short>(atoi(pszValue));
-            else
-                nodata.usVal = NC_FILL_USHORT;
-            CPLFree(pszValue);
-            break;
-        }
-#endif
+    case NC_DOUBLE:
+    {
+        eType = OFTReal;
+        double dfValue;
+        if( GetFillValue(nVarID, &dfValue) == CE_None )
+            nodata.dfVal = dfValue;
+        else
+            nodata.dfVal = NC_FILL_DOUBLE;
+        break;
+    }
 
-        case NC_INT:
-        {
-            eType = OFTInteger;
-            char* pszValue = NULL;
-            if( GetFillValue(nVarID, &pszValue) == CE_None )
-                nodata.nVal = atoi(pszValue);
-            else
-                nodata.nVal = NC_FILL_INT;
-            CPLFree(pszValue);
-            break;
-        }
-
-#ifdef NETCDF_HAS_NC4
-        case NC_UINT:
-        {
-            eType = OFTInteger64;
-            char* pszValue = NULL;
-            if( GetFillValue(nVarID, &pszValue) == CE_None )
-                nodata.unVal = static_cast<unsigned int>(CPLAtoGIntBig(pszValue));
-            else
-                nodata.unVal = NC_FILL_UINT;
-            CPLFree(pszValue);
-            break;
-        }
-#endif
-
-#ifdef NETCDF_HAS_NC4
-        case NC_INT64:
-        {
-            eType = OFTInteger64;
-            char* pszValue = NULL;
-            if( GetFillValue(nVarID, &pszValue) == CE_None )
-                nodata.nVal64 = CPLAtoGIntBig(pszValue);
-            else
-                nodata.nVal64 = NC_FILL_INT64;
-            CPLFree(pszValue);
-            break;
-        }
-
-        case NC_UINT64:
-        {
-            eType = OFTReal;
-            char* pszValue = NULL;
-            if( GetFillValue(nVarID, &pszValue) == CE_None )
-            {
-                nodata.unVal64 = 0;
-                for(int i=0; pszValue[i] != '\0'; i++)
-                {
-                    nodata.unVal64 = nodata.unVal64 * 10 + (pszValue[i] - '0');
-                }
-            }
-            else
-                nodata.unVal64 = NC_FILL_UINT64;
-            CPLFree(pszValue);
-            break;
-        }
-#endif
-
-        case NC_FLOAT:
-        {
-            eType = OFTReal;
-            eSubType = OFSTFloat32;
-            double dfValue;
-            if( GetFillValue(nVarID, &dfValue) == CE_None )
-                nodata.fVal = static_cast<float>(dfValue);
-            else
-                nodata.fVal = NC_FILL_FLOAT;
-            break;
-        }
-
-        case NC_DOUBLE:
-        {
-            eType = OFTReal;
-            double dfValue;
-            if( GetFillValue(nVarID, &dfValue) == CE_None )
-                nodata.dfVal = dfValue;
-            else
-                nodata.dfVal = NC_FILL_DOUBLE;
-            break;
-        }
-
-        default:
-        {
-            CPLDebug("GDAL_netCDF", "Variable %s has type %d, which is unhandled",
-                     szName, vartype);
-            return false;
-        }
+    default:
+    {
+        CPLDebug("GDAL_netCDF", "Variable %s has type %d, which is unhandled",
+                 szName, vartype);
+        return false;
+    }
     }
 
     bool bIsDays = false;
