@@ -46,11 +46,10 @@ bool netCDFWriterConfiguration::SetNameValue(
 
 bool netCDFWriterConfiguration::Parse(const char *pszFilename)
 {
-    CPLXMLNode *psRoot = NULL;
-    if( STARTS_WITH(pszFilename, "<Configuration") )
-        psRoot = CPLParseXMLString(pszFilename);
-    else
-        psRoot = CPLParseXMLFile(pszFilename);
+    CPLXMLNode *psRoot =
+        STARTS_WITH(pszFilename, "<Configuration")
+        ? CPLParseXMLString(pszFilename)
+        : CPLParseXMLFile(pszFilename);
     if( psRoot == NULL )
         return false;
     CPLXMLTreeCloser oCloser(psRoot);
@@ -90,7 +89,9 @@ bool netCDFWriterConfiguration::Parse(const char *pszFilename)
                 m_oLayers[oLayer.m_osName] = oLayer;
         }
         else
+        {
             CPLDebug("GDAL_netCDF", "Ignoring %s", psIter->pszValue);
+        }
     }
 
     m_bIsValid = true;
@@ -151,7 +152,9 @@ bool netCDFWriterConfigField::Parse(CPLXMLNode *psNode)
                 m_aoAttributes.push_back(oAtt);
         }
         else
+        {
             CPLDebug("GDAL_netCDF", "Ignoring %s", psIter->pszValue);
+        }
     }
 
     return true;
