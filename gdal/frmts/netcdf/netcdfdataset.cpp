@@ -2784,8 +2784,8 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 
     if( !bReadSRSOnly && (nVarDimXID != -1) && (nVarDimYID != -1) )
     {
-        pdfXCoord = (double *)CPLCalloc(xdim, sizeof(double));
-        pdfYCoord = (double *)CPLCalloc(ydim, sizeof(double));
+        pdfXCoord = static_cast<double *>(CPLCalloc(xdim, sizeof(double)));
+        pdfYCoord = static_cast<double *>(CPLCalloc(ydim, sizeof(double)));
 
         size_t start[2] = { 0, 0 };
         size_t edge[2] = { xdim, 0 };
@@ -4065,11 +4065,11 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         {
             // Geoloc
             nLatDims = 2;
-            panLatDims = (int *)CPLCalloc(nLatDims, sizeof(int));
+            panLatDims = static_cast<int *>(CPLCalloc(nLatDims, sizeof(int)));
             panLatDims[0] = nYDimID;
             panLatDims[1] = nXDimID;
             nLonDims = 2;
-            panLonDims = (int *)CPLCalloc(nLonDims, sizeof(int));
+            panLonDims = static_cast<int *>(CPLCalloc(nLonDims, sizeof(int)));
             panLonDims[0] = nYDimID;
             panLonDims[1] = nXDimID;
         }
@@ -4077,11 +4077,11 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         {
             // Projected
             nLatDims = 2;
-            panLatDims = (int *)CPLCalloc(nLatDims, sizeof(int));
+            panLatDims = static_cast<int *>(CPLCalloc(nLatDims, sizeof(int)));
             panLatDims[0] = nYDimID;
             panLatDims[1] = nXDimID;
             nLonDims = 2;
-            panLonDims = (int *)CPLCalloc(nLonDims, sizeof(int));
+            panLonDims = static_cast<int *>(CPLCalloc(nLonDims, sizeof(int)));
             panLonDims[0] = nYDimID;
             panLonDims[1] = nXDimID;
         }
@@ -4089,10 +4089,10 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         {
             // Geographic
             nLatDims = 1;
-            panLatDims = (int *)CPLCalloc(nLatDims, sizeof(int));
+            panLatDims = static_cast<int *>(CPLCalloc(nLatDims, sizeof(int)));
             panLatDims[0] = nYDimID;
             nLonDims = 1;
-            panLonDims = (int *)CPLCalloc(nLonDims, sizeof(int));
+            panLonDims = static_cast<int *>(CPLCalloc(nLonDims, sizeof(int)));
             panLonDims[0] = nXDimID;
         }
 
@@ -4144,8 +4144,10 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
         CPLDebug("GDAL_netCDF", "Getting (X,Y) values");
 
-        padXVal = (double *)CPLMalloc(nRasterXSize * sizeof(double));
-        padYVal = (double *)CPLMalloc(nRasterYSize * sizeof(double));
+        padXVal =
+            static_cast<double *>(CPLMalloc(nRasterXSize * sizeof(double)));
+        padYVal =
+            static_cast<double *>(CPLMalloc(nRasterYSize * sizeof(double)));
 
         // Get Y values.
         if( !bBottomUp )
@@ -4224,8 +4226,10 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
             size_t start[] = { 0, 0 };
             size_t count[] = { 1, (size_t)nRasterXSize };
-            padLatVal = (double *)CPLMalloc(nRasterXSize * sizeof(double));
-            padLonVal = (double *)CPLMalloc(nRasterXSize * sizeof(double));
+            padLatVal =
+                static_cast<double *>(CPLMalloc(nRasterXSize * sizeof(double)));
+            padLonVal =
+                static_cast<double *>(CPLMalloc(nRasterXSize * sizeof(double)));
 
             for( int j = 0; j < nRasterYSize && bOK && status == NC_NOERR; j++ )
             {
@@ -4340,7 +4344,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
         if( padLatVal == NULL )
         {
-            padLatVal = (double *)CPLMalloc(nRasterYSize * sizeof(double));
+            padLatVal =
+                static_cast<double *>(CPLMalloc(nRasterYSize * sizeof(double)));
             for( int i = 0; i < nRasterYSize; i++ )
             {
                 // The data point is centered inside the pixel.
@@ -4358,7 +4363,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         dfX0 = adfGeoTransform[0];
         dfDX = adfGeoTransform[1];
 
-        padLonVal = (double *)CPLMalloc(nRasterXSize * sizeof(double));
+        padLonVal =
+            static_cast<double *>(CPLMalloc(nRasterXSize * sizeof(double)));
         for( int i = 0; i < nRasterXSize; i++ )
         {
             // The data point is centered inside the pixel.
@@ -4553,7 +4559,7 @@ void netCDFDataset::CreateSubDatasetList()
 
         if( nDims >= 2 )
         {
-            ponDimIds = (int *)CPLCalloc(nDims, sizeof(int));
+            ponDimIds = static_cast<int *>(CPLCalloc(nDims, sizeof(int)));
             nc_inq_vardimid(cdfid, nVar, ponDimIds);
 
             // Create Sub dataset list.
@@ -6447,7 +6453,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     if( nd > 2 )
     {
         nDim = 2;
-        panBandZLev = (int *)CPLCalloc(nd - 2, sizeof(int));
+        panBandZLev = static_cast<int *>(CPLCalloc(nd - 2, sizeof(int)));
 
         osExtraDimNames = "{";
 
@@ -6860,7 +6866,7 @@ static CPLErr NCDFCopyBand( GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand
 {
     GDALDataType eDT = poSrcBand->GetRasterDataType();
     CPLErr eErr = CE_None;
-    T *patScanline = (T *)CPLMalloc(nXSize * sizeof(T));
+    T *patScanline = static_cast<T *>(CPLMalloc(nXSize * sizeof(T)));
 
     for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
@@ -7002,8 +7008,8 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         }
     }
 
-    int *panDimIds = reinterpret_cast<int *>(CPLCalloc(nDim, sizeof(int)));
-    int *panBandDimPos = reinterpret_cast<int *>(CPLCalloc(nDim, sizeof(int)));
+    int *panDimIds = static_cast<int *>(CPLCalloc(nDim, sizeof(int)));
+    int *panBandDimPos = static_cast<int *>(CPLCalloc(nDim, sizeof(int)));
 
     nc_type nVarType;
     int status = NC_NOERR;
@@ -7012,9 +7018,8 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 
     if( nDim > 2 )
     {
-        panBandZLev = reinterpret_cast<int *>(CPLCalloc(nDim - 2, sizeof(int)));
-        panDimVarIds =
-            reinterpret_cast<int *>(CPLCalloc(nDim - 2, sizeof(int)));
+        panBandZLev = static_cast<int *>(CPLCalloc(nDim - 2, sizeof(int)));
+        panDimVarIds = static_cast<int *>(CPLCalloc(nDim - 2, sizeof(int)));
 
         // Define all dims.
         for( int i = CSLCount(papszExtraDimNames) - 1; i >= 0; i-- )
@@ -7749,7 +7754,7 @@ static void NCDFAddHistory(int fpImage, const char *pszAddHist,
     size_t nNewHistSize =
         strlen(pszOldHist) + strlen(strtime) + strlen(pszAddHist) + 1 + 1;
     char *pszNewHist =
-        reinterpret_cast<char *>(CPLMalloc(nNewHistSize * sizeof(char)));
+        static_cast<char *>(CPLMalloc(nNewHistSize * sizeof(char)));
 
     strcpy(pszNewHist, strtime);
     strcat(pszNewHist, pszAddHist);
@@ -8035,7 +8040,7 @@ static CPLErr NCDFSafeStrcat(char **ppszDest, const char *pszSrc, size_t *nDestS
     while( *nDestSize < (strlen(*ppszDest) + strlen(pszSrc) + 1) )
     {
         (*nDestSize) *= 2;
-        *ppszDest = reinterpret_cast<char *>(
+        *ppszDest = static_cast<char *>(
             CPLRealloc(reinterpret_cast<void *>(*ppszDest), *nDestSize));
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "NCDFSafeStrcat() resized str from %ld to %ld",
@@ -8076,7 +8081,8 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     if( nAttrType == NC_INT64 && nAttrValueSize < 20 )
         nAttrValueSize = 22;
 #endif
-    char *pszAttrValue = (char *)CPLCalloc(nAttrValueSize, sizeof(char));
+    char *pszAttrValue =
+        static_cast<char *>(CPLCalloc(nAttrValueSize, sizeof(char)));
     *pszAttrValue = '\0';
 
     if( nAttrLen > 1 && nAttrType != NC_CHAR )
@@ -8095,7 +8101,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
         break;
     case NC_BYTE:
     {
-        signed char *pscTemp = reinterpret_cast<signed char *>(
+        signed char *pscTemp = static_cast<signed char *>(
             CPLCalloc(nAttrLen, sizeof(signed char)));
         nc_get_att_schar(nCdfId, nVarId, pszAttrName, pscTemp);
         dfValue = static_cast<double>(pscTemp[0]);
@@ -8112,7 +8118,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     case NC_SHORT:
     {
         short *psTemp =
-            reinterpret_cast<short *>(CPLCalloc(nAttrLen, sizeof(short)));
+            static_cast<short *>(CPLCalloc(nAttrLen, sizeof(short)));
         nc_get_att_short(nCdfId, nVarId, pszAttrName, psTemp);
         dfValue = static_cast<double>(psTemp[0]);
         for( m = 0; m < nAttrLen - 1; m++ )
@@ -8143,7 +8149,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     case NC_FLOAT:
     {
         float *pfTemp =
-            reinterpret_cast<float *>(CPLCalloc(nAttrLen, sizeof(float)));
+            static_cast<float *>(CPLCalloc(nAttrLen, sizeof(float)));
         nc_get_att_float(nCdfId, nVarId, pszAttrName, pfTemp);
         dfValue = static_cast<double>(pfTemp[0]);
         for( m = 0; m < nAttrLen - 1; m++ )
@@ -8159,7 +8165,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     case NC_DOUBLE:
     {
         double *pdfTemp =
-            reinterpret_cast<double *>(CPLCalloc(nAttrLen, sizeof(double)));
+            static_cast<double *>(CPLCalloc(nAttrLen, sizeof(double)));
         nc_get_att_double(nCdfId, nVarId, pszAttrName, pdfTemp);
         dfValue = pdfTemp[0];
         for( m = 0; m < nAttrLen - 1; m++ )
@@ -8176,7 +8182,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     case NC_STRING:
     {
         char **ppszTemp =
-            reinterpret_cast<char **>(CPLCalloc(nAttrLen, sizeof(char *)));
+            static_cast<char **>(CPLCalloc(nAttrLen, sizeof(char *)));
         nc_get_att_string(nCdfId, nVarId, pszAttrName, ppszTemp);
         dfValue = 0.0;
         for( m = 0; m < nAttrLen - 1; m++ )
@@ -8191,7 +8197,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     }
     case NC_UBYTE:
     {
-        unsigned char *pucTemp = reinterpret_cast<unsigned char *>(
+        unsigned char *pucTemp = static_cast<unsigned char *>(
             CPLCalloc(nAttrLen, sizeof(unsigned char)));
         nc_get_att_uchar(nCdfId, nVarId, pszAttrName, pucTemp);
         dfValue = static_cast<double>(pucTemp[0]);
@@ -8208,7 +8214,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     case NC_USHORT:
     {
         unsigned short *pusTemp;
-        pusTemp = reinterpret_cast<unsigned short *>(
+        pusTemp = static_cast<unsigned short *>(
             CPLCalloc(nAttrLen, sizeof(unsigned short)));
         nc_get_att_ushort(nCdfId, nVarId, pszAttrName, pusTemp);
         dfValue = static_cast<double>(pusTemp[0]);
@@ -8241,7 +8247,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     case NC_INT64:
     {
         GIntBig *panTemp =
-            reinterpret_cast<GIntBig *>(CPLCalloc(nAttrLen, sizeof(GIntBig)));
+            static_cast<GIntBig *>(CPLCalloc(nAttrLen, sizeof(GIntBig)));
         nc_get_att_longlong(nCdfId, nVarId, pszAttrName, panTemp);
         dfValue = static_cast<double>(panTemp[0]);
         for( m = 0; m < nAttrLen - 1; m++ )
@@ -8257,7 +8263,7 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     case NC_UINT64:
     {
         GUIntBig *panTemp =
-            reinterpret_cast<GUIntBig *>(CPLCalloc(nAttrLen, sizeof(GUIntBig)));
+            static_cast<GUIntBig *>(CPLCalloc(nAttrLen, sizeof(GUIntBig)));
         nc_get_att_ulonglong(nCdfId, nVarId, pszAttrName, panTemp);
         dfValue = static_cast<double>(panTemp[0]);
         for( m = 0; m < nAttrLen - 1; m++ )
@@ -8407,7 +8413,7 @@ static CPLErr NCDFPutAttr( int nCdfId, int nVarId, const char *pszAttrName,
         case NC_INT:
         {
             int *pnTemp =
-                reinterpret_cast<int *>(CPLCalloc(nAttrLen, sizeof(int)));
+                static_cast<int *>(CPLCalloc(nAttrLen, sizeof(int)));
             for( size_t i = 0; i < nAttrLen; i++ )
             {
                 pnTemp[i] =
@@ -8422,7 +8428,7 @@ static CPLErr NCDFPutAttr( int nCdfId, int nVarId, const char *pszAttrName,
 #ifdef NETCDF_HAS_NC4
         case NC_UINT:
         {
-            unsigned int *punTemp = reinterpret_cast<unsigned int *>(
+            unsigned int *punTemp = static_cast<unsigned int *>(
                 CPLCalloc(nAttrLen, sizeof(unsigned int)));
             for( size_t i = 0; i < nAttrLen; i++ )
             {
@@ -8439,7 +8445,7 @@ static CPLErr NCDFPutAttr( int nCdfId, int nVarId, const char *pszAttrName,
         case NC_FLOAT:
         {
             float *pfTemp =
-                reinterpret_cast<float *>(CPLCalloc(nAttrLen, sizeof(float)));
+                static_cast<float *>(CPLCalloc(nAttrLen, sizeof(float)));
             for( size_t i = 0; i < nAttrLen; i++ )
             {
                 pfTemp[i] = (float)CPLStrtod(papszValues[i], &pszTemp);
@@ -8453,7 +8459,7 @@ static CPLErr NCDFPutAttr( int nCdfId, int nVarId, const char *pszAttrName,
         case NC_DOUBLE:
         {
             double *pdfTemp =
-                reinterpret_cast<double *>(CPLCalloc(nAttrLen, sizeof(double)));
+                static_cast<double *>(CPLCalloc(nAttrLen, sizeof(double)));
             for( size_t i = 0; i < nAttrLen; i++ )
             {
                 pdfTemp[i] = CPLStrtod(papszValues[i], &pszTemp);
@@ -8504,7 +8510,7 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     /* Allocate guaranteed minimum size */
     size_t nVarValueSize = NCDF_MAX_STR_LEN;
     char *pszVarValue =
-        reinterpret_cast<char *>(CPLCalloc(nVarValueSize, sizeof(char)));
+        static_cast<char *>(CPLCalloc(nVarValueSize, sizeof(char)));
     *pszVarValue = '\0';
 
     if( nVarLen == 0 )
@@ -8526,7 +8532,7 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
         break;
     case NC_BYTE:
     {
-        signed char *pscTemp = reinterpret_cast<signed char *>(
+        signed char *pscTemp = static_cast<signed char *>(
             CPLCalloc(nVarLen, sizeof(signed char)));
         nc_get_vara_schar(nCdfId, nVarId, start, count, pscTemp);
         char szTemp[256];
@@ -8543,8 +8549,7 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     }
     case NC_SHORT:
     {
-        short *psTemp =
-            reinterpret_cast<short *>(CPLCalloc(nVarLen, sizeof(short)));
+        short *psTemp = static_cast<short *>(CPLCalloc(nVarLen, sizeof(short)));
         nc_get_vara_short(nCdfId, nVarId, start, count, psTemp);
         char szTemp[256];
         size_t m = 0;
@@ -8560,7 +8565,7 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     }
     case NC_INT:
     {
-        int *pnTemp = reinterpret_cast<int *>(CPLCalloc(nVarLen, sizeof(int)));
+        int *pnTemp = static_cast<int *>(CPLCalloc(nVarLen, sizeof(int)));
         nc_get_vara_int(nCdfId, nVarId, start, count, pnTemp);
         char szTemp[256];
         size_t m = 0;
@@ -8576,8 +8581,7 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     }
     case NC_FLOAT:
     {
-        float *pfTemp =
-            reinterpret_cast<float *>(CPLCalloc(nVarLen, sizeof(float)));
+        float *pfTemp = static_cast<float *>(CPLCalloc(nVarLen, sizeof(float)));
         nc_get_vara_float(nCdfId, nVarId, start, count, pfTemp);
         char szTemp[256];
         size_t m = 0;
@@ -8594,7 +8598,7 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     case NC_DOUBLE:
     {
         double *pdfTemp =
-            reinterpret_cast<double *>(CPLCalloc(nVarLen, sizeof(double)));
+            static_cast<double *>(CPLCalloc(nVarLen, sizeof(double)));
         nc_get_vara_double(nCdfId, nVarId, start, count, pdfTemp);
         char szTemp[256];
         size_t m = 0;
@@ -8612,7 +8616,7 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     case NC_STRING:
     {
         char **ppszTemp =
-            reinterpret_cast<char **>(CPLCalloc(nVarLen, sizeof(char *)));
+            static_cast<char **>(CPLCalloc(nVarLen, sizeof(char *)));
         nc_get_vara_string(nCdfId, nVarId, start, count, ppszTemp);
         size_t m = 0;
         for( ; m < nVarLen - 1; m++ )
@@ -8628,7 +8632,8 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     case NC_UBYTE:
     {
         unsigned char *pucTemp;
-        pucTemp = (unsigned char *)CPLCalloc(nVarLen, sizeof(unsigned char));
+        pucTemp = static_cast<unsigned char *>(
+            CPLCalloc(nVarLen, sizeof(unsigned char)));
         nc_get_vara_uchar(nCdfId, nVarId, start, count, pucTemp);
         char szTemp[256];
         size_t m = 0;
@@ -8645,7 +8650,8 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     case NC_USHORT:
     {
         unsigned short *pusTemp;
-        pusTemp = (unsigned short *)CPLCalloc(nVarLen, sizeof(unsigned short));
+        pusTemp = static_cast<unsigned short *>(
+            CPLCalloc(nVarLen, sizeof(unsigned short)));
         nc_get_vara_ushort(nCdfId, nVarId, start, count, pusTemp);
         char szTemp[256];
         size_t m = 0;
@@ -8662,7 +8668,8 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
     case NC_UINT:
     {
         unsigned int *punTemp;
-        punTemp = (unsigned int *)CPLCalloc(nVarLen, sizeof(unsigned int));
+        punTemp = static_cast<unsigned int *>(
+            CPLCalloc(nVarLen, sizeof(unsigned int)));
         nc_get_vara_uint(nCdfId, nVarId, start, count, punTemp);
         char szTemp[256];
         size_t m = 0;
@@ -8740,7 +8747,7 @@ static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
         {
         case NC_BYTE:
         {
-            signed char *pscTemp = reinterpret_cast<signed char *>(
+            signed char *pscTemp = static_cast<signed char *>(
                 CPLCalloc(nVarLen, sizeof(signed char)));
             for( size_t i = 0; i < nVarLen; i++ )
             {
@@ -8756,7 +8763,7 @@ static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
         case NC_SHORT:
         {
             short *psTemp =
-                reinterpret_cast<short *>(CPLCalloc(nVarLen, sizeof(short)));
+                static_cast<short *>(CPLCalloc(nVarLen, sizeof(short)));
             for( size_t i = 0; i < nVarLen; i++ )
             {
                 char *pszTemp = NULL;
@@ -8770,8 +8777,7 @@ static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
         }
         case NC_INT:
         {
-            int *pnTemp =
-                reinterpret_cast<int *>(CPLCalloc(nVarLen, sizeof(int)));
+            int *pnTemp = static_cast<int *>(CPLCalloc(nVarLen, sizeof(int)));
             for( size_t i = 0; i < nVarLen; i++ )
             {
                 char *pszTemp = NULL;
@@ -8786,7 +8792,7 @@ static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
         case NC_FLOAT:
         {
             float *pfTemp =
-                reinterpret_cast<float *>(CPLCalloc(nVarLen, sizeof(float)));
+                static_cast<float *>(CPLCalloc(nVarLen, sizeof(float)));
             for(size_t i = 0; i < nVarLen; i++)
             {
                 char *pszTemp = NULL;
@@ -8800,7 +8806,7 @@ static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
         case NC_DOUBLE:
         {
             double *pdfTemp =
-                reinterpret_cast<double *>(CPLCalloc(nVarLen, sizeof(double)));
+                static_cast<double *>(CPLCalloc(nVarLen, sizeof(double)));
             for( size_t i = 0; i < nVarLen; i++ )
             {
                 char *pszTemp = NULL;
@@ -8829,7 +8835,7 @@ static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
                 }
                 case NC_UBYTE:
                 {
-                    unsigned char *pucTemp = reinterpret_cast<unsigned char *>(
+                    unsigned char *pucTemp = static_cast<unsigned char *>(
                         CPLCalloc(nVarLen, sizeof(unsigned char)));
                     for( size_t i = 0; i < nVarLen; i++ )
                     {
@@ -8846,7 +8852,7 @@ static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
                 case NC_USHORT:
                 {
                     unsigned short *pusTemp =
-                        reinterpret_cast<unsigned short *>(
+                        static_cast<unsigned short *>(
                             CPLCalloc(nVarLen, sizeof(unsigned short)));
                     for( size_t i = 0; i < nVarLen; i++ )
                     {
@@ -8862,7 +8868,7 @@ static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
                 }
                 case NC_UINT:
                 {
-                    unsigned int *punTemp = reinterpret_cast<unsigned int *>(
+                    unsigned int *punTemp = static_cast<unsigned int *>(
                         CPLCalloc(nVarLen, sizeof(unsigned int)));
                     for( size_t i = 0; i < nVarLen; i++ )
                     {
@@ -9192,7 +9198,7 @@ static char **NCDFTokenizeArray( const char *pszValue )
 
     if( pszValue[0] == '{' && nLen > 2 && pszValue[nLen - 1] == '}' )
     {
-        char *pszTemp = reinterpret_cast<char *>(CPLMalloc((nLen - 2) + 1));
+        char *pszTemp = static_cast<char *>(CPLMalloc((nLen - 2) + 1));
         strncpy(pszTemp, pszValue + 1, nLen - 2);
         pszTemp[nLen - 2] = '\0';
         papszValues = CSLTokenizeString2(pszTemp, ",", CSLT_ALLOWEMPTYTOKENS);
