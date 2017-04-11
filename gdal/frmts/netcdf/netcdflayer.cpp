@@ -1335,227 +1335,236 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         int status = NC_NOERR;
         switch( m_aoFieldDesc[i].nType )
         {
-            case NC_CHAR:
+        case NC_CHAR:
+        {
+            const char *pszVal = poFeature->GetFieldAsString(i);
+            if( m_aoFieldDesc[i].nDimCount == 1 )
             {
-                const char* pszVal = poFeature->GetFieldAsString(i);
-                if( m_aoFieldDesc[i].nDimCount == 1 )
+                if( strlen(pszVal) > 1 &&
+                    !m_aoFieldDesc[i].bHasWarnedAboutTruncation )
                 {
-                    if( strlen(pszVal) > 1 && !m_aoFieldDesc[i].bHasWarnedAboutTruncation )
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Content of field %s exceeded the 1 character "
+                             "limit and will be truncated",
+                             m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+                    m_aoFieldDesc[i].bHasWarnedAboutTruncation = true;
+                }
+                status = nc_put_var1_text(
+                    m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, pszVal);
+            }
+            else
+            {
+                size_t anCount[2];
+                anCount[0] = 1;
+                anCount[1] = strlen(pszVal);
+                size_t nWidth = 0;
+                nc_inq_dimlen(m_nLayerCDFId, m_aoFieldDesc[i].nSecDimId,
+                              &nWidth);
+                if( anCount[1] > nWidth )
+                {
+                    if( m_bAutoGrowStrings &&
+                        m_poFeatureDefn->GetFieldDefn(i)->GetWidth() == 0 )
                     {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                "Content of field %s exceeded the 1 character limit and will be truncated",
-                                m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
-                        m_aoFieldDesc[i].bHasWarnedAboutTruncation = true;
+                        size_t nNewSize = anCount[1] + anCount[1] / 3;
+
+                        CPLDebug("GDAL_netCDF", "Growing %s from %u to %u",
+                                 m_poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                                 static_cast<unsigned>(nWidth),
+                                 static_cast<unsigned>(nNewSize));
+                        m_poDS->GrowDim(m_nLayerCDFId,
+                                        m_aoFieldDesc[i].nSecDimId, nNewSize);
+
+                        pszVal = poFeature->GetFieldAsString(i);
                     }
-                    status = nc_put_var1_text(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                               anIndex, pszVal);
-                }
-                else
-                {
-                    size_t anCount[2];
-                    anCount[0] = 1;
-                    anCount[1] = strlen(pszVal);
-                    size_t nWidth = 0;
-                    nc_inq_dimlen(m_nLayerCDFId, m_aoFieldDesc[i].nSecDimId, &nWidth);
-                    if( anCount[1] > nWidth )
+                    else
                     {
-                        if( m_bAutoGrowStrings && m_poFeatureDefn->GetFieldDefn(i)->GetWidth() == 0 )
+                        anCount[1] = nWidth;
+                        if( !m_aoFieldDesc[i].bHasWarnedAboutTruncation )
                         {
-                            size_t nNewSize = anCount[1] + anCount[1] / 3;
-
-                            CPLDebug("GDAL_netCDF", "Growing %s from %u to %u",
-                                    m_poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
-                                    static_cast<unsigned>(nWidth),
-                                    static_cast<unsigned>(nNewSize));
-                            m_poDS->GrowDim(m_nLayerCDFId, m_aoFieldDesc[i].nSecDimId, nNewSize);
-
-                            pszVal = poFeature->GetFieldAsString(i);
-                        }
-                        else
-                        {
-                            anCount[1] = nWidth;
-                            if( !m_aoFieldDesc[i].bHasWarnedAboutTruncation )
-                            {
-                                CPLError(CE_Warning, CPLE_AppDefined,
-                                         "Content of field %s exceeded the %u character limit and will be truncated",
-                                         m_poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
-                                         static_cast<unsigned int>(nWidth));
-                                m_aoFieldDesc[i].bHasWarnedAboutTruncation = true;
-                            }
+                            CPLError(
+                                CE_Warning, CPLE_AppDefined,
+                                "Content of field %s exceeded the %u character "
+                                "limit and will be truncated",
+                                m_poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                                static_cast<unsigned int>(nWidth));
+                            m_aoFieldDesc[i].bHasWarnedAboutTruncation = true;
                         }
                     }
-                    status = nc_put_vara_text(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                                anIndex, anCount, pszVal);
                 }
-                break;
+                status =
+                    nc_put_vara_text(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                     anIndex, anCount, pszVal);
             }
+            break;
+        }
 
 #ifdef NETCDF_HAS_NC4
-            case NC_STRING:
-            {
-                const char* pszVal = poFeature->GetFieldAsString(i);
-                status = nc_put_var1_string(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                             anIndex, &pszVal);
-                break;
-            }
+        case NC_STRING:
+        {
+            const char *pszVal = poFeature->GetFieldAsString(i);
+            status = nc_put_var1_string(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                        anIndex, &pszVal);
+            break;
+        }
 #endif
 
-            case NC_BYTE:
-            {
-                int nVal = poFeature->GetFieldAsInteger(i);
-                signed char chVal = static_cast<signed char>(nVal);
-                status = nc_put_var1_schar(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                            anIndex, &chVal);
-                break;
-            }
+        case NC_BYTE:
+        {
+            int nVal = poFeature->GetFieldAsInteger(i);
+            signed char chVal = static_cast<signed char>(nVal);
+            status = nc_put_var1_schar(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                       anIndex, &chVal);
+            break;
+        }
 
 #ifdef NETCDF_HAS_NC4
-            case NC_UBYTE:
-            {
-                int nVal = poFeature->GetFieldAsInteger(i);
-                unsigned char uchVal = static_cast<unsigned char>(nVal);
-                status = nc_put_var1_uchar(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                            anIndex, &uchVal);
-                break;
-            }
+        case NC_UBYTE:
+        {
+            int nVal = poFeature->GetFieldAsInteger(i);
+            unsigned char uchVal = static_cast<unsigned char>(nVal);
+            status = nc_put_var1_uchar(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                       anIndex, &uchVal);
+            break;
+        }
 #endif
 
-            case NC_SHORT:
-            {
-                int nVal = poFeature->GetFieldAsInteger(i);
-                short sVal = static_cast<short>(nVal);
-                status = nc_put_var1_short(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                            anIndex, &sVal);
-                break;
-            }
+        case NC_SHORT:
+        {
+            int nVal = poFeature->GetFieldAsInteger(i);
+            short sVal = static_cast<short>(nVal);
+            status = nc_put_var1_short(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                       anIndex, &sVal);
+            break;
+        }
 
 #ifdef NETCDF_HAS_NC4
-            case NC_USHORT:
-            {
-                int nVal = poFeature->GetFieldAsInteger(i);
-                unsigned short usVal = static_cast<unsigned short>(nVal);
-                status = nc_put_var1_ushort(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                            anIndex, &usVal);
-                break;
-            }
+        case NC_USHORT:
+        {
+            int nVal = poFeature->GetFieldAsInteger(i);
+            unsigned short usVal = static_cast<unsigned short>(nVal);
+            status = nc_put_var1_ushort(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                        anIndex, &usVal);
+            break;
+        }
 #endif
 
-            case NC_INT:
+        case NC_INT:
+        {
+            int nVal;
+            if( m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate )
             {
-                int nVal;
-                if( m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate )
-                {
-                    int nYear;
-                    int nMonth;
-                    int nDay;
-                    int nHour;
-                    int nMinute;
-                    float fSecond;
-                    int nTZ;
-                    poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
-                                                &nHour, &nMinute, &fSecond, &nTZ);
-                    struct tm brokendowntime;
-                    brokendowntime.tm_year = nYear - 1900;
-                    brokendowntime.tm_mon= nMonth - 1;
-                    brokendowntime.tm_mday = nDay;
-                    brokendowntime.tm_hour = 0;
-                    brokendowntime.tm_min = 0;
-                    brokendowntime.tm_sec = 0;
-                    GIntBig nVal64 = CPLYMDHMSToUnixTime(&brokendowntime);
-                    if( m_aoFieldDesc[i].bIsDays )
-                        nVal64 /= 86400;
-                    nVal = static_cast<int>(nVal64);
-                }
-                else
-                {
-                    nVal = poFeature->GetFieldAsInteger(i);
-                }
-                status = nc_put_var1_int(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                          anIndex, &nVal);
-                break;
+                int nYear;
+                int nMonth;
+                int nDay;
+                int nHour;
+                int nMinute;
+                float fSecond;
+                int nTZ;
+                poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
+                                              &nHour, &nMinute, &fSecond, &nTZ);
+                struct tm brokendowntime;
+                brokendowntime.tm_year = nYear - 1900;
+                brokendowntime.tm_mon = nMonth - 1;
+                brokendowntime.tm_mday = nDay;
+                brokendowntime.tm_hour = 0;
+                brokendowntime.tm_min = 0;
+                brokendowntime.tm_sec = 0;
+                GIntBig nVal64 = CPLYMDHMSToUnixTime(&brokendowntime);
+                if( m_aoFieldDesc[i].bIsDays )
+                    nVal64 /= 86400;
+                nVal = static_cast<int>(nVal64);
             }
+            else
+            {
+                nVal = poFeature->GetFieldAsInteger(i);
+            }
+            status = nc_put_var1_int(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                     anIndex, &nVal);
+            break;
+        }
 
 #ifdef NETCDF_HAS_NC4
-            case NC_UINT:
-            {
-                GIntBig nVal = poFeature->GetFieldAsInteger64(i);
-                unsigned int unVal = static_cast<unsigned int>(nVal);
-                status = nc_put_var1_uint(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                            anIndex, &unVal);
-                break;
-            }
+        case NC_UINT:
+        {
+            GIntBig nVal = poFeature->GetFieldAsInteger64(i);
+            unsigned int unVal = static_cast<unsigned int>(nVal);
+            status = nc_put_var1_uint(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                      anIndex, &unVal);
+            break;
+        }
 #endif
 
 #ifdef NETCDF_HAS_NC4
-            case NC_INT64:
-            {
-                GIntBig nVal = poFeature->GetFieldAsInteger64(i);
-                status = nc_put_var1_longlong(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                               anIndex, &nVal);
-                break;
-            }
+        case NC_INT64:
+        {
+            GIntBig nVal = poFeature->GetFieldAsInteger64(i);
+            status = nc_put_var1_longlong(
+                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
+            break;
+        }
 
-            case NC_UINT64:
-            {
-                double dfVal = poFeature->GetFieldAsDouble(i);
-                GUIntBig nVal = static_cast<GUIntBig>(dfVal);
-                status = nc_put_var1_ulonglong(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                                anIndex, &nVal);
-                break;
-            }
+        case NC_UINT64:
+        {
+            double dfVal = poFeature->GetFieldAsDouble(i);
+            GUIntBig nVal = static_cast<GUIntBig>(dfVal);
+            status = nc_put_var1_ulonglong(
+                m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
+            break;
+        }
 #endif
 
-            case NC_FLOAT:
-            {
-                double dfVal = poFeature->GetFieldAsDouble(i);
-                float fVal = static_cast<float>(dfVal);
-                status = nc_put_var1_float(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                            anIndex, &fVal);
-                break;
-            }
+        case NC_FLOAT:
+        {
+            double dfVal = poFeature->GetFieldAsDouble(i);
+            float fVal = static_cast<float>(dfVal);
+            status = nc_put_var1_float(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                       anIndex, &fVal);
+            break;
+        }
 
-            case NC_DOUBLE:
+        case NC_DOUBLE:
+        {
+            double dfVal;
+            if( m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate ||
+                m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime )
             {
-                double dfVal;
-                if( m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate ||
-                    m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime )
-                {
-                    int nYear;
-                    int nMonth;
-                    int nDay;
-                    int nHour;
-                    int nMinute;
-                    float fSecond;
-                    int nTZ;
-                    poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
-                                                &nHour, &nMinute, &fSecond, &nTZ);
-                    struct tm brokendowntime;
-                    brokendowntime.tm_year = nYear - 1900;
-                    brokendowntime.tm_mon= nMonth - 1;
-                    brokendowntime.tm_mday = nDay;
-                    brokendowntime.tm_hour = nHour;
-                    brokendowntime.tm_min = nMinute;
-                    brokendowntime.tm_sec = static_cast<int>(fSecond);
-                    GIntBig nVal = CPLYMDHMSToUnixTime(&brokendowntime);
-                    dfVal = static_cast<double>(nVal) + fmod(fSecond, 1.0f);
-                    if( m_aoFieldDesc[i].bIsDays )
-                        dfVal /= 86400.0;
-                }
-                else
-                {
-                    dfVal = poFeature->GetFieldAsDouble(i);
-                }
-                status = nc_put_var1_double(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
-                                             anIndex, &dfVal);
-                break;
+                int nYear;
+                int nMonth;
+                int nDay;
+                int nHour;
+                int nMinute;
+                float fSecond;
+                int nTZ;
+                poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
+                                              &nHour, &nMinute, &fSecond, &nTZ);
+                struct tm brokendowntime;
+                brokendowntime.tm_year = nYear - 1900;
+                brokendowntime.tm_mon = nMonth - 1;
+                brokendowntime.tm_mday = nDay;
+                brokendowntime.tm_hour = nHour;
+                brokendowntime.tm_min = nMinute;
+                brokendowntime.tm_sec = static_cast<int>(fSecond);
+                GIntBig nVal = CPLYMDHMSToUnixTime(&brokendowntime);
+                dfVal = static_cast<double>(nVal) + fmod(fSecond, 1.0f);
+                if( m_aoFieldDesc[i].bIsDays )
+                    dfVal /= 86400.0;
             }
+            else
+            {
+                dfVal = poFeature->GetFieldAsDouble(i);
+            }
+            status = nc_put_var1_double(m_nLayerCDFId, m_aoFieldDesc[i].nVarId,
+                                        anIndex, &dfVal);
+            break;
+        }
 
-            default:
-                break;
+        default:
+            break;
         }
 
         NCDF_ERR(status);
-        if ( status != NC_NOERR ) {
+        if( status != NC_NOERR )
+        {
             return false;
         }
     }
