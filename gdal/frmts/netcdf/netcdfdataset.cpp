@@ -29,15 +29,35 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_error.h"
-#include "cpl_multiproc.h"
-#include "cpl_time.h"
-#include "gdal_frmts.h"
+#include "cpl_port.h"
 #include "netcdfdataset.h"
 
+#include <cctype>
+#include <cerrno>
+#include <climits>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <algorithm>
 #include <limits>
-#include <map>  // For NCDFWriteProjAttribs().
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_multiproc.h"
+#include "cpl_progress.h"
+#include "cpl_time.h"
+#include "gdal.h"
+#include "gdal_frmts.h"
+#include "gdal_version.h"
+#include "ogr_core.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -7831,8 +7851,8 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
     if( nMapIndex == -1 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                  "projection name %s not found in the lookup tables!",
-                  pszProjection);
+                 "projection name %s not found in the lookup tables!",
+                 pszProjection);
     }
     // If no mapping was found or assigned, set the generic one.
     if( !poMap )
@@ -7847,7 +7867,7 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
     // Initialize local map objects.
 
     // Attribute <GDAL,NCDF> and Value <NCDF,value> mappings
-    std::map< std::string, std::string > oAttMap;
+    std::map<std::string, std::string> oAttMap;
     for( int iMap = 0; poMap[iMap].WKT_ATT != NULL; iMap++ )
     {
         oAttMap[poMap[iMap].WKT_ATT] = poMap[iMap].CF_ATT;
