@@ -316,8 +316,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     if( (status == NC_NOERR) && (attlen == 2))
     {
         int vrange[2] = { 0, 0 };
-        int vmin = 0;
-        int vmax = 0;
         status = nc_get_att_int(cdfid, nZId, "valid_range", vrange);
         if( status == NC_NOERR )
         {
@@ -328,10 +326,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         // If not found look for valid_min and valid_max.
         else
         {
+            int vmin = 0;
             status = nc_get_att_int(cdfid, nZId, "valid_min", &vmin);
             if( status == NC_NOERR )
             {
                 adfValidRange[0] = vmin;
+                int vmax = 0;
                 status = nc_get_att_int(cdfid, nZId, "valid_max", &vmax);
                 if( status == NC_NOERR )
                 {
@@ -461,12 +461,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     // GDAL block size should be set to hdf5 chunk size.
 #ifdef NETCDF_HAS_NC4
     int nTmpFormat = 0;
-    size_t chunksize[ MAX_NC_DIMS ] = {};
     status = nc_inq_format(cdfid, &nTmpFormat);
     NetCDFFormatEnum eTmpFormat = static_cast<NetCDFFormatEnum>(nTmpFormat);
     if( (status == NC_NOERR) && ((eTmpFormat == NCDF_FORMAT_NC4) ||
           (eTmpFormat == NCDF_FORMAT_NC4C)) )
     {
+        size_t chunksize[MAX_NC_DIMS] = {};
         // Check for chunksize and set it as the blocksize (optimizes read).
         status = nc_inq_var_chunking(cdfid, nZId, &nTmpFormat, chunksize);
         if( (status == NC_NOERR) && (nTmpFormat == NC_CHUNKED) )
@@ -600,8 +600,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         default:
             if( nBand == 1 )
                 CPLError(CE_Warning, CPLE_AppDefined,
-                          "Unsupported GDAL datatype (%d), treat as NC_FLOAT.",
-                          static_cast<int>(eDataType));
+                         "Unsupported GDAL datatype (%d), treat as NC_FLOAT.",
+                         static_cast<int>(eDataType));
             nc_datatype = NC_FLOAT;
             eDataType = GDT_Float32;
             break;
@@ -6297,8 +6297,6 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     {
         char szDimName1[NC_MAX_NAME + 1] = {};
         char szDimName2[NC_MAX_NAME + 1] = {};
-        char szDimName3[NC_MAX_NAME + 1] = {};
-        char szDimName4[NC_MAX_NAME + 1] = {};
         status = nc_inq_dimname(cdfid, paDimIds[nd - 1], szDimName1);
         NCDF_ERR(status);
         status = nc_inq_dimname(cdfid, paDimIds[nd - 2], szDimName2);
@@ -6319,10 +6317,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         }
         if( nd >= 3 )
         {
+            char szDimName3[NC_MAX_NAME + 1] = {};
             status = nc_inq_dimname(cdfid, paDimIds[nd - 3], szDimName3);
             NCDF_ERR(status);
             if( nd >= 4 )
             {
+                char szDimName4[NC_MAX_NAME + 1] = {};
                 status = nc_inq_dimname(cdfid, paDimIds[nd - 4], szDimName4);
                 NCDF_ERR(status);
                 if( NCDFIsVarVerticalCoord( cdfid, -1, szDimName3) == false )
