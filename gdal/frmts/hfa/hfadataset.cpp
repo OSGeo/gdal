@@ -2975,7 +2975,15 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
                                           poDT);
         }
 
-        poBinFunction->SetStringField("binFunction", "direct");
+        // direct for thematic layers, linear otherwise
+        const char* pszLayerType =
+            hHFA->papoBand[nBand-1]->poNode->GetStringField("layerType");
+        if( pszLayerType == NULL ||
+            STARTS_WITH_CI(pszLayerType, "thematic") )
+            poBinFunction->SetStringField("binFunctionType", "direct");
+        else
+            poBinFunction->SetStringField("binFunctionType", "linear" );
+
         poBinFunction->SetDoubleField("minLimit", dfRow0Min);
         poBinFunction->SetDoubleField(
            "maxLimit", (nRowCount - 1) * dfBinSize + dfRow0Min);
