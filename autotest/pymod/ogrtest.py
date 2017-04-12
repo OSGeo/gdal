@@ -131,7 +131,7 @@ def check_feature_geometry( feat, geom, max_error = 0.0001 ):
     return 0
 
 ###############################################################################
-def check_feature( feat, feat_ref, max_error = 0.0001 ):
+def check_feature( feat, feat_ref, max_error = 0.0001, excluded_fields = None ):
     """ Returns 0 in case of success """
 
     for i in range(feat.GetGeomFieldCount()):
@@ -142,16 +142,19 @@ def check_feature( feat, feat_ref, max_error = 0.0001 ):
             return ret
 
     for i in range(feat.GetFieldCount()):
+        if excluded_fields is not None:
+            if feat.GetDefnRef().GetFieldDefn(i).GetName() in excluded_fields:
+                continue
         if feat.GetField(i) != feat_ref.GetField(i):
-            gdaltest.post_reason('Field %d, expected val %s, got val %s',
-                                 i, str(feat_ref.GetField(i)),
-                                 str(feat.GetField(i)))
+            gdaltest.post_reason('Field %d, expected val %s, got val %s' %
+                                 (i, str(feat_ref.GetField(i)),
+                                 str(feat.GetField(i))))
             return 1
 
     return 0
 
 ###############################################################################
-def compare_layers( lyr, lyr_ref ):
+def compare_layers( lyr, lyr_ref, excluded_fields = None ):
 
     for f_ref in lyr_ref:
         f = lyr.GetNextFeature()
@@ -159,8 +162,7 @@ def compare_layers( lyr, lyr_ref ):
             gdaltest.post_reason('fail')
             f_ref.DumpReadable()
             return 'fail'
-        if check_feature(f, f_ref) != 0:
-            gdaltest.post_reason('fail')
+        if check_feature(f, f_ref, excluded_fields=excluded_fields) != 0:
             f.DumpReadable()
             f_ref.DumpReadable()
             return 'fail'
