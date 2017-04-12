@@ -364,6 +364,19 @@ class GMLASConfiguration
 
         std::vector<CPLString> m_osDisabledFlattenedXPath;
 
+        enum SWEActivationMode
+        {
+            SWE_ACTIVATE_IF_PREFIX_FOUND,
+            SWE_ACTIVATE_TRUE,
+            SWE_ACTIVATE_FALSE
+        };
+
+        /** If and when activate SWE special processings */
+        SWEActivationMode m_eSWEActivationMode;
+
+        /** If enabling swe:DataArray parsing */
+        bool m_bSWEProcessDataArray;
+
         /** For ignored xpaths, map prefix namespace to its URI */
         std::map<CPLString, CPLString> m_oMapPrefixToURIIgnoredXPaths;
 
@@ -1042,6 +1055,11 @@ class OGRGMLASDataSource: public GDALDataset
 
         CPLString                      m_osGMLVersionFound;
 
+        bool                           m_bFoundSWE;
+
+        // Pointers are also included in m_apoLayers
+        std::vector<OGRGMLASLayer*>    m_apoSWEDataArrayLayers;
+
         void TranslateClasses( OGRGMLASLayer* poParentLayer,
                                const GMLASFeatureClass& oFC );
 
@@ -1167,6 +1185,7 @@ class OGRGMLASLayer: public OGRLayer
                       const GMLASFeatureClass& oFC,
                       OGRGMLASLayer* poParentLayer,
                       bool bAlwaysGenerateOGRPKId);
+        explicit OGRGMLASLayer(const char* pszLayerName);
         virtual ~OGRGMLASLayer();
 
         virtual const char* GetName() override { return GetDescription(); }
@@ -1175,7 +1194,10 @@ class OGRGMLASLayer: public OGRLayer
         virtual OGRFeature* GetNextFeature() override;
         virtual int TestCapability( const char* ) override { return FALSE; }
 
+        void SetDataSource(OGRGMLASDataSource* poDS) { m_poDS = poDS; }
+
         void PostInit(bool bIncludeGeometryXML);
+        void ProcessDataRecord(CPLXMLNode* psDataRecord);
         void CreateCompoundFoldedMappings();
 
         const GMLASFeatureClass& GetFeatureClass() const { return m_oFC; }
@@ -1374,6 +1396,12 @@ class GMLASReader : public DefaultHandler
         /** Initial pass to guess SRS, etc... */
         bool                        m_bInitialPass;
 
+        /** Whether to process swe:DataArray in a special way */
+        bool                        m_bProcessSWEDataArray;
+
+        /** Depth level of the swe:DataArray element */
+        int                         m_nSWEDataArrayLevel;
+
         /** Base unique identifier */
         CPLString                      m_osHash;
 
@@ -1399,6 +1427,9 @@ class GMLASReader : public DefaultHandler
         CPLString                      m_osAttrValue;
         CPLString                      m_osText;
 
+        std::vector<OGRGMLASLayer*>    m_apoSWEDataArrayLayers;
+        int                            m_nSWEDataArrayLayerIdx;
+
         void        SetField( OGRFeature* poFeature,
                               OGRGMLASLayer* poLayer,
                               int nAttrIdx,
@@ -1419,7 +1450,8 @@ class GMLASReader : public DefaultHandler
 
         void        AttachAsLastChild(CPLXMLNode* psNode);
 
-        void        ProcessGeometry();
+        void        ProcessSWEDataArray(CPLXMLNode* psRoot);
+        void        ProcessGeometry(CPLXMLNode* psRoot);
 
         void        ProcessAttributes(const Attributes& attrs);
         void        ProcessXLinkHref( const CPLString& osAttrXPath,
@@ -1438,6 +1470,8 @@ class GMLASReader : public DefaultHandler
                         const CPLString& osFieldXPath,
                         int& nInsertFieldIdx,
                         const GMLASXLinkResolutionConf::URLSpecificResolution& oRule );
+
+        bool        FillTextContent() const { return !m_bInitialPass; }
 
     public:
                         GMLASReader(GMLASXSDCache& oCache,
@@ -1501,6 +1535,7 @@ class GMLASReader : public DefaultHandler
                           void* pProgressData,
                           bool bRemoveUnusedLayers,
                           bool bRemoveUnusedFields,
+                          bool bProcessSWEDataArray,
                           std::set<CPLString>& aoSetRemovedLayerNames);
 
         static bool LoadXSDInParser( SAX2XMLReader* poParser,
@@ -1511,6 +1546,10 @@ class GMLASReader : public DefaultHandler
                                      Grammar** ppoGrammar,
                                      bool bSchemaFullChecking,
                                      bool bHandleMultipleImports );
+
+        void SetSWEDataArrayLayers( const std::vector<OGRGMLASLayer*>& ar );
+        const std::vector<OGRGMLASLayer*>& GetSWEDataArrayLayers() const
+            { return m_apoSWEDataArrayLayers; }
 };
 
 #endif // OGR_GMLAS_INCLUDED

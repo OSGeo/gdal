@@ -155,6 +155,56 @@ OGRGMLASLayer::OGRGMLASLayer( OGRGMLASDataSource* poDS,
 }
 
 /************************************************************************/
+/*                            OGRGMLASLayer()                           */
+/************************************************************************/
+
+OGRGMLASLayer::OGRGMLASLayer(const char* pszLayerName) :
+    m_poDS( NULL ),
+    m_bLayerDefnFinalized( true ),
+    m_poFeatureDefn( new OGRFeatureDefn( pszLayerName ) ),
+    m_bEOF( false ),
+    m_poReader( NULL ),
+    m_fpGML( NULL ),
+    m_nIDFieldIdx( -1 ),
+    m_bIDFieldIsGenerated( false ),
+    m_poParentLayer( NULL ),
+    m_nParentIDFieldIdx( -1 )
+
+{
+    m_poFeatureDefn->SetGeomType(wkbNone);
+    m_poFeatureDefn->Reference();
+
+    SetDescription( m_poFeatureDefn->GetName() );
+}
+
+/************************************************************************/
+/*                         ProcessDataRecord()                          */
+/************************************************************************/
+
+void OGRGMLASLayer::ProcessDataRecord(CPLXMLNode* psDataRecord)
+{
+    for( CPLXMLNode* psIter = psDataRecord->psChild;
+                        psIter != NULL; psIter = psIter->psNext )
+    {
+        if( psIter->eType == CXT_Element &&
+            strcmp(psIter->pszValue, "field") == 0 )
+        {
+            CPLString osName = CPLGetXMLValue(psIter, "name", "");
+            OGRFieldDefn oFieldDefn(osName, OFTString);
+            if( CPLGetXMLNode(psIter, "Time") )
+            {
+                oFieldDefn.SetType(OFTDateTime);
+            }
+            else if( CPLGetXMLNode(psIter, "Quantity") )
+            {
+                oFieldDefn.SetType(OFTReal);
+            }
+            m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        }
+    }
+}
+
+/************************************************************************/
 /*                             PostInit()                               */
 /************************************************************************/
 
