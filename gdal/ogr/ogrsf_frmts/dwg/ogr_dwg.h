@@ -239,18 +239,13 @@ protected:
 
 class OGRDWGDriver : public OGRSFDriver
 {
-    int     bInitialized;
-    void    Initialize();
-
-    OdStaticRxObject<OGRDWGServices> oServices;
-
-    static void ErrorHandler( OdResult oRes );
+    OGRDWGServices *poServices;
 
   public:
     OGRDWGDriver();
     ~OGRDWGDriver();
 
-    OGRDWGServices *GetServices() { return &oServices; }
+    OGRDWGServices *GetServices() { return poServices; }
 
     const char *GetName() override;
     OGRDataSource *Open( const char *, int ) override;

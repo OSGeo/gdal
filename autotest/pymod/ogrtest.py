@@ -65,15 +65,14 @@ def check_features_against_list( layer, field_name, value_list ):
 
 ###############################################################################
 def check_feature_geometry( feat, geom, max_error = 0.0001 ):
+    """ Returns 0 in case of success """
     try:
         f_geom = feat.GetGeometryRef()
     except:
         f_geom = feat
 
-    if isinstance(geom,type('a')):
+    if geom is not None and isinstance(geom,type('a')):
         geom = ogr.CreateGeometryFromWkt( geom )
-    else:
-        geom = geom.Clone()
 
     if (f_geom is not None and geom is None):
         gdaltest.post_reason( 'expected NULL geometry but got one.' )
@@ -129,8 +128,48 @@ def check_feature_geometry( feat, geom, max_error = 0.0001 ):
                 #print(geom.GetZ(i))
                 return 1
 
-    geom.Destroy()
     return 0
+
+###############################################################################
+def check_feature( feat, feat_ref, max_error = 0.0001 ):
+    """ Returns 0 in case of success """
+
+    for i in range(feat.GetGeomFieldCount()):
+        ret = check_feature_geometry(feat.GetGeomFieldRef(i),
+                                     feat_ref.GetGeomFieldRef(i),
+                                     max_error = max_error )
+        if ret != 0:
+            return ret
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetField(i) != feat_ref.GetField(i):
+            gdaltest.post_reason('Field %d, expected val %s, got val %s',
+                                 i, str(feat_ref.GetField(i)),
+                                 str(feat.GetField(i)))
+            return 1
+
+    return 0
+
+###############################################################################
+def compare_layers( lyr, lyr_ref ):
+
+    for f_ref in lyr_ref:
+        f = lyr.GetNextFeature()
+        if f is None:
+            gdaltest.post_reason('fail')
+            f_ref.DumpReadable()
+            return 'fail'
+        if check_feature(f, f_ref) != 0:
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            f_ref.DumpReadable()
+            return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    return 'success'
 
 ###############################################################################
 def quick_create_layer_def( lyr, field_list):

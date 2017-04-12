@@ -3725,7 +3725,7 @@ else
         LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_Key.a"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Db"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_DbRoot"
-        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Db"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Root"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Ge"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Alloc"
     else
@@ -5458,7 +5458,7 @@ if test "x$SPATIALITE_SONAME" != "x"; then
 LOC_MSG([  SpatiaLite shared obj name:${SPATIALITE_SONAME}])
 fi
 LOC_MSG([  RasterLite2 support:       ${HAVE_RASTERLITE2}])
-LOC_MSG([  DWG support                ${HAVE_TEIGHA}])
+LOC_MSG([  Teigha (DWG and DGNv8):    ${HAVE_TEIGHA}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
 LOC_MSG([  SFCGAL support:            ${HAVE_SFCGAL_RESULT}])

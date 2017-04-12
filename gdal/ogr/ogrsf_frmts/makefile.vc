@@ -82,12 +82,12 @@ PLUGIN_PG_DIR = pg
 !ENDIF
 !ENDIF
 
-!IFDEF DWGDIRECT
-!IF "$(DWG_PLUGIN)" != "YES"
-DWGDIR = dxfdwg
-DWG_OBJ = dxfdwg\*.obj
+!IFDEF TD_LIBDIR
+!IF "$(TD_PLUGIN)" != "YES"
+DWGDIR = dwg
+DWG_OBJ = dwg\*.obj
 !ELSE
-PLUGIN_DWGDIR = dxfdwg
+PLUGIN_DWG_DIR = dwg
 !ENDIF
 !ENDIF
 
