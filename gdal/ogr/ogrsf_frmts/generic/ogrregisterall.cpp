@@ -160,6 +160,9 @@ void OGRRegisterAllInternal()
 #ifdef DWG_ENABLED
     RegisterOGRDWG();
 #endif
+#ifdef DGNV8_ENABLED
+    RegisterOGRDGNV8();
+#endif
 #ifdef DXF_ENABLED
     RegisterOGRDXF();
 #endif

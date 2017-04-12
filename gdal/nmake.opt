@@ -359,14 +359,23 @@ JPEG12_SUPPORTED = 1
 #TD_FLAGS = -D_TOOLKIT_IN_DLL_
 #TD_INCLUDE = -I$(TD_BASE)\TD\Include -I$(TD_BASE)\TD\Extensions\ExServices
 # The following works for Teigha 4.2.2
-#TD_INCLUDE = -I$(TD_BASE)\Core\Include -I$(TD_BASE)\Core\Extensions\ExServices
-#TD_LIBDIR = $(TD_BASE)\lib\vc9dll
+#TD_INCLUDE = -I$(TD_BASE)\Core\Include -I$(TD_BASE)\Core\Extensions\ExServices -I$(TD_BASE)\Dgn\include -I$(TD_BASE)\Dgn\Extensions\ExServices
+#TD_LIBDIR = $(TD_BASE)\lib\vc14dll
+#TD_LIBS =  \
+#	$(TD_LIBDIR)/TD_Key.lib \
+#	$(TD_LIBDIR)/TD_ExamplesCommon.lib \
+#	$(TD_LIBDIR)/TD_Db.lib \
+#	$(TD_LIBDIR)/TD_DbRoot.lib \
+#	$(TD_LIBDIR)/TD_Root.lib \
+#	$(TD_LIBDIR)/TD_Ge.lib \
+#	$(TD_LIBDIR)/TD_Alloc.lib \
+#	$(TD_LIBDIR)/TG_Db.lib \
+#	$(TD_LIBDIR)/TG_ExamplesCommon.lib \
+#	advapi32.lib
 
-# DWG/DXF support via DWGdirect from Open Design Alliance
+# Uncomment to build as a plugin
+#TD_PLUGIN = YES
 
-#DWGDIRECT=C:\warmerda\DWGdirect
-#DWG_LIB_DIR=$(DWGDIRECT)\lib\VC6MD
-#DWG_LIB=$(DWG_LIB_DIR)\DD_AcisBuilder_dll.lib $(DWG_LIB_DIR)\DD_AcisRenderer_dll.lib $(DWG_LIB_DIR)\DD_Alloc_dll.lib $(DWG_LIB_DIR)\DD_BmpExport_dll.lib $(DWG_LIB_DIR)\DD_Br_dll.lib $(DWG_LIB_DIR)\DD_Db_dll.lib $(DWG_LIB_DIR)\DD_DwfExport_dll.lib $(DWG_LIB_DIR)\DD_DwfImport_dll.lib $(DWG_LIB_DIR)\DD_Ge_dll.lib $(DWG_LIB_DIR)\DD_Gi_dll.lib $(DWG_LIB_DIR)\DD_Gs_dll.lib $(DWG_LIB_DIR)\DD_ModelerGeometry_dll.lib $(DWG_LIB_DIR)\DD_Root_dll.lib $(DWG_LIB_DIR)\DD_Sm_dll.lib $(DWG_LIB_DIR)\DD_SpatialIndex_dll.lib $(DWG_LIB_DIR)\DD_VC6MD_OleDataAccess_dll.lib
 
 # Uncomment the following and update to enable OGDI support.
 #OGDIDIR =	D:\warmerda\iii\devdir
@@ -899,6 +908,14 @@ MONGODB_LIB_LINK =
 NAS_ENABLED = YES
 !ENDIF
 
+!IFDEF TD_LIBS
+!IF "$(TD_PLUGIN)" != "YES"
+DWG_LIB_LINK = $(TD_LIBS)
+!ELSE
+DWG_LIB_LINK =
+!ENDIF
+!ENDIF
+
 # Under win64, symbols for function names lack the underscore prefix
 # present on win32. Also the STDCALL calling convention is not used.
 !IFDEF WIN64
@@ -911,7 +928,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(ECW_LIB_LINK) $(LURATECH_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) \
 	$(FITS_LIB_LINK) $(JPEG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
 	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
-	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(SDE_LIB) $(ARCOBJECTS_LIB) $(DWG_LIB) \
+	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(SDE_LIB) $(ARCOBJECTS_LIB) $(DWG_LIB_LINK) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ZLIB_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) \

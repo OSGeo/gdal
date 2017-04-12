@@ -94,9 +94,6 @@ int OGRDWGDataSource::Open( OGRDWGServices *poServicesIn,
                             const char * pszFilename, int /*bHeaderOnly*/ )
 
 {
-    if( !EQUAL(CPLGetExtension(pszFilename),"dwg") )
-        return FALSE;
-
     poServices = poServicesIn;
 
     osEncoding = CPL_ENC_ISO8859_1;
