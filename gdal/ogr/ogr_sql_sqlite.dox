@@ -56,7 +56,7 @@ translated, as far as possible, as attribute filters that are applied on the
 underlying OGR layers. Joins can be very expensive operations if the secondary table is not
 indexed on the key field being used.<p>
 
-\subsection ogr_sql_sqlite_geometry Delimited identifiers
+\subsection ogr_sql_sqlite_delimited_identifiers Delimited identifiers
 
 If names of layers or attributes are reserved keywords in SQL like 'FROM' or they
 begin with a number or underscore they must be handled as "delimited identifiers" and
