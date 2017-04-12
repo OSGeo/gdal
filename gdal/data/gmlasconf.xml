@@ -57,7 +57,7 @@
         </FlatteningRules>
 
         <SWEProcessing>
-            <Activation>ifSWEPrefixFoundInTopElement</Activation>
+            <Activation>ifSWENamespaceFoundInTopElement</Activation>
             <ProcessDataArray>true</ProcessDataArray>
         </SWEProcessing>
     </LayerBuildingRules>

@@ -348,12 +348,12 @@
                       <xs:annotation>
                         <xs:documentation>
                             If and how SWE processing is enabled.
-                            Default is ifSWEPrefixFoundInTopElement.
+                            Default is ifSWENamespaceFoundInTopElement.
                         </xs:documentation>
                       </xs:annotation>
                       <xs:simpleType>
                         <xs:restriction base="xs:string">
-                            <xs:enumeration value="ifSWEPrefixFoundInTopElement">
+                            <xs:enumeration value="ifSWENamespaceFoundInTopElement">
                                 <xs:annotation>
                                     <xs:documentation>
                                         If the http://www.opengis.net/swe/2.0

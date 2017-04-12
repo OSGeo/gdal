@@ -798,7 +798,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
     {
         topElementParser.Parse(m_osGMLFilename, fpGML);
         if( m_oConf.m_eSWEActivationMode ==
-                        GMLASConfiguration::SWE_ACTIVATE_IF_PREFIX_FOUND )
+                        GMLASConfiguration::SWE_ACTIVATE_IF_NAMESPACE_FOUND )
         {
             m_bFoundSWE = topElementParser.GetSWE();
         }

@@ -64,7 +64,7 @@ GMLASConfiguration::GMLASConfiguration()
     , m_bValidate(VALIDATE_DEFAULT)
     , m_bFailIfValidationError(FAIL_IF_VALIDATION_ERROR_DEFAULT)
     , m_bExposeMetadataLayers(WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT)
-    , m_eSWEActivationMode(SWE_ACTIVATE_IF_PREFIX_FOUND)
+    , m_eSWEActivationMode(SWE_ACTIVATE_IF_NAMESPACE_FOUND)
     , m_bSWEProcessDataArray(SWE_PROCESS_DATA_ARRAY_DEFAULT)
     , m_nIndentSize(INDENT_SIZE_DEFAULT)
     , m_osSRSNameFormat(szSRSNAME_DEFAULT)
@@ -414,9 +414,9 @@ bool GMLASConfiguration::Load(const char* pszFilename)
 
     const char* pszSWEProcessingActivation = CPLGetXMLValue( psRoot,
         "=Configuration.LayerBuildingRules.SWEProcessing.Activation",
-        "ifSWEPrefixFoundInTopElement" );
-    if( EQUAL(pszSWEProcessingActivation, "ifSWEPrefixFoundInTopElement") )
-        m_eSWEActivationMode = SWE_ACTIVATE_IF_PREFIX_FOUND;
+        "ifSWENamespaceFoundInTopElement" );
+    if( EQUAL(pszSWEProcessingActivation, "ifSWENamespaceFoundInTopElement") )
+        m_eSWEActivationMode = SWE_ACTIVATE_IF_NAMESPACE_FOUND;
     else if( CPLTestBool(pszSWEProcessingActivation) )
         m_eSWEActivationMode = SWE_ACTIVATE_TRUE;
     else
