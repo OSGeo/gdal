@@ -335,6 +335,50 @@
                 </xs:complexType>
               </xs:element>
 
+              <xs:element name="SWEProcessing" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        Configuration of special processing for elements in
+                        the http://www.opengis.net/swe/2.0 namespace.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="Activation" minOccurs="0">
+                      <xs:annotation>
+                        <xs:documentation>
+                            If and how SWE processing is enabled.
+                            Default is ifSWEPrefixFoundInTopElement.
+                        </xs:documentation>
+                      </xs:annotation>
+                      <xs:simpleType>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="ifSWEPrefixFoundInTopElement">
+                                <xs:annotation>
+                                    <xs:documentation>
+                                        If the http://www.opengis.net/swe/2.0
+                                        namespace is found, SWE special
+                                        processing will be enabled.
+                                    </xs:documentation>
+                                </xs:annotation>
+                            </xs:enumeration>
+                            <xs:enumeration value="true"/>
+                            <xs:enumeration value="false"/>
+                        </xs:restriction>
+                      </xs:simpleType>
+                    </xs:element>
+                    <xs:element name="ProcessDataArray" type="xs:boolean"
+                                minOccurs="0" maxOccurs="unbounded">
+                      <xs:annotation>
+                        <xs:documentation>
+                            If swe:DataArray must be parsed. Default is tru.
+                        </xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+
             </xs:sequence>
           </xs:complexType>
         </xs:element>
