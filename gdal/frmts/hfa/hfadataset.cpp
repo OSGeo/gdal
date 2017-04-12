@@ -3239,7 +3239,8 @@ void HFADataset::FlushCache()
 
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        HFARasterBand *poBand = (HFARasterBand *)GetRasterBand(iBand + 1);
+        HFARasterBand *poBand =
+            static_cast<HFARasterBand *>(GetRasterBand(iBand + 1));
         if( poBand->bMetadataDirty && poBand->GetMetadata() != NULL )
         {
             HFASetMetadata(hHFA, iBand + 1, poBand->GetMetadata());
@@ -5188,7 +5189,8 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     // interacting with PAM.
     for( int i = 0; i < poDS->nBands; i++ )
     {
-        HFARasterBand *poBand = (HFARasterBand *)poDS->GetRasterBand(i + 1);
+        HFARasterBand *poBand =
+            static_cast<HFARasterBand *>(poDS->GetRasterBand(i + 1));
 
         char **papszMD = HFAGetMetadata(hHFA, i + 1);
         if( papszMD != NULL )
@@ -5212,7 +5214,8 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     // Read the elevation metadata, if present.
     for( int iBand = 0; iBand < poDS->nBands; iBand++ )
     {
-        HFARasterBand *poBand = (HFARasterBand *)poDS->GetRasterBand(iBand + 1);
+        HFARasterBand *poBand =
+            static_cast<HFARasterBand *>(poDS->GetRasterBand(iBand + 1));
         const char *pszEU = HFAReadElevationUnit(hHFA, iBand);
 
         if( pszEU != NULL )
@@ -5226,7 +5229,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     // Check for dependent dataset value.
-    HFAInfo_t *psInfo = (HFAInfo_t *)hHFA;
+    HFAInfo_t *psInfo = hHFA;
     HFAEntry *poEntry = psInfo->poRoot->GetNamedChild("DependentFile");
     if( poEntry != NULL )
     {
@@ -5245,7 +5248,8 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     // Clear dirty metadata flags.
     for( int i = 0; i < poDS->nBands; i++ )
     {
-        HFARasterBand *poBand = (HFARasterBand *)poDS->GetRasterBand(i + 1);
+        HFARasterBand *poBand =
+            static_cast<HFARasterBand *>(poDS->GetRasterBand(i + 1));
         poBand->bMetadataDirty = false;
     }
     poDS->bMetadataDirty = false;
