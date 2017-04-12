@@ -64,6 +64,8 @@ GMLASConfiguration::GMLASConfiguration()
     , m_bValidate(VALIDATE_DEFAULT)
     , m_bFailIfValidationError(FAIL_IF_VALIDATION_ERROR_DEFAULT)
     , m_bExposeMetadataLayers(WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT)
+    , m_eSWEActivationMode(SWE_ACTIVATE_IF_PREFIX_FOUND)
+    , m_bSWEProcessDataArray(SWE_PROCESS_DATA_ARRAY_DEFAULT)
     , m_nIndentSize(INDENT_SIZE_DEFAULT)
     , m_osSRSNameFormat(szSRSNAME_DEFAULT)
     , m_osWrapping(szWFS2_FEATURECOLLECTION)
@@ -409,6 +411,19 @@ bool GMLASConfiguration::Load(const char* pszFilename)
             }
         }
     }
+
+    const char* pszSWEProcessingActivation = CPLGetXMLValue( psRoot,
+        "=Configuration.LayerBuildingRules.SWEProcessing.Activation",
+        "ifSWEPrefixFoundInTopElement" );
+    if( EQUAL(pszSWEProcessingActivation, "ifSWEPrefixFoundInTopElement") )
+        m_eSWEActivationMode = SWE_ACTIVATE_IF_PREFIX_FOUND;
+    else if( CPLTestBool(pszSWEProcessingActivation) )
+        m_eSWEActivationMode = SWE_ACTIVATE_TRUE;
+    else
+        m_eSWEActivationMode = SWE_ACTIVATE_FALSE;
+    m_bSWEProcessDataArray = CPLTestBool(CPLGetXMLValue( psRoot,
+        "=Configuration.LayerBuildingRules.SWEProcessing.ProcessDataArray",
+        "true" ));
 
     CPLXMLNode* psTypingConstraints = CPLGetXMLNode(psRoot,
                                             "=Configuration.TypingConstraints");

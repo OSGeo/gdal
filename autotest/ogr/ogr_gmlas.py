@@ -3926,6 +3926,194 @@ def ogr_gmlas_typing_constraints():
 
     return 'success'
 
+###############################################################################
+#  Test swe:DataArray
+
+def ogr_gmlas_swe_dataarray():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    # One substitution, no repetition
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_swe_dataarray.xml',
+"""<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:swe="http://www.opengis.net/swe/2.0"
+                  xsi:schemaLocation="http://myns ogr_gmlas_swe_dataarray.xsd">
+    <myns:foo>
+        <swe:DataArray>
+            <swe:elementCount>
+                <swe:Count>
+                        <swe:value>2</swe:value>
+                </swe:Count>
+            </swe:elementCount>
+            <swe:elementType name="Components">
+                <swe:DataRecord>
+                        <swe:field name="myTime">
+                            <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime"/>
+                        </swe:field>
+                        <swe:field name="myCategory">
+                            <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification"/>
+                        </swe:field>
+                         <swe:field name="myQuantity">
+                            <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour"/>
+                        </swe:field>
+                </swe:DataRecord>
+            </swe:elementType>
+            <swe:encoding>
+                    <swe:TextEncoding decimalSeparator="." blockSeparator="@@" tokenSeparator=","/>
+            </swe:encoding>
+            <swe:values>2016-09-01T00:00:00+01:00,1,2.34@@2017-09-01T00:00:00,2,3.45</swe:values>
+        </swe:DataArray>
+    </myns:foo>
+
+    <myns:foo>
+        <swe:DataArray>
+            <swe:elementCount>
+                <swe:Count>
+                        <swe:value>2</swe:value>
+                </swe:Count>
+            </swe:elementCount>
+            <swe:elementType>
+                <swe:DataRecord>
+                        <swe:field name="myTime">
+                            <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime"/>
+                        </swe:field>
+                        <swe:field name="myCategory">
+                            <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification"/>
+                        </swe:field>
+                         <swe:field name="myQuantity">
+                            <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour"/>
+                        </swe:field>
+                </swe:DataRecord>
+            </swe:elementType>
+            <swe:encoding>
+                    <swe:TextEncoding decimalSeparator="." blockSeparator="@@" tokenSeparator=","/>
+            </swe:encoding>
+            <!-- extra fields and trailing block separator -->
+            <swe:values>2016-09-01T00:00:00+01:00,1,2.34,extra_field,extra_field2@@2017-09-01T00:00:00,,3.45@@
+            </swe:values>
+        </swe:DataArray>
+    </myns:foo>
+
+    <myns:foo>
+        <swe:DataArray>
+            <swe:elementCount>
+                <swe:Count>
+                        <swe:value>2</swe:value>
+                </swe:Count>
+            </swe:elementCount>
+            <swe:elementType>
+                <swe:DataRecord>
+                        <swe:field name="myTime">
+                            <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime"/>
+                        </swe:field>
+                        <swe:field name="myCategory">
+                            <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification"/>
+                        </swe:field>
+                         <swe:field name="myQuantity">
+                            <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour"/>
+                        </swe:field>
+                </swe:DataRecord>
+            </swe:elementType>
+            <swe:encoding>
+                    <swe:TextEncoding decimalSeparator="." blockSeparator="," tokenSeparator=","/>
+            </swe:encoding>
+            <!-- blockSeparator == tokenSeparator. Valid, but not advised ! -->
+            <swe:values>2016-09-01T00:00:00+01:00,1,2.34,2017-09-01T00:00:00,,3.45</swe:values>
+        </swe:DataArray>
+    </myns:foo>
+</myns:main_elt>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_swe_dataarray.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_swe_dataarray.xml')
+
+    lyr = ds.GetLayerByName('dataarray_1_components')
+    f = lyr.GetNextFeature()
+    if f.GetField('myTime') != '2016/09/01 00:00:00+01' or \
+       f.GetField('myCategory') != '1' or \
+       f.GetField('myQuantity') != 2.34:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('myTime') != '2017/09/01 00:00:00' or \
+       f.GetField('myCategory') != '2' or \
+       f.GetField('myQuantity') != 3.45:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayerByName('dataarray_2')
+    f = lyr.GetNextFeature()
+    if f.GetField('myTime') != '2016/09/01 00:00:00+01' or \
+       f.GetField('myCategory') != '1' or \
+       f.GetField('myQuantity') != 2.34:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('myTime') != '2017/09/01 00:00:00' or \
+       f.GetField('myCategory') is not None or \
+       f.GetField('myQuantity') != 3.45:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayerByName('dataarray_3')
+    f = lyr.GetNextFeature()
+    if f.GetField('myTime') != '2016/09/01 00:00:00+01' or \
+       f.GetField('myCategory') != '1' or \
+       f.GetField('myQuantity') != 2.34:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('myTime') != '2017/09/01 00:00:00' or \
+       f.GetField('myCategory') is not None or \
+       f.GetField('myQuantity') != 3.45:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gmlas_swe_dataarray.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_swe_dataarray.xsd')
+
+
+    return 'success'
+
 
 ###############################################################################
 #  Cleanup
@@ -3995,9 +4183,10 @@ gdaltest_list = [
     ogr_gmlas_writer_errors,
     ogr_gmlas_read_fake_gmljp2,
     ogr_gmlas_typing_constraints,
+    ogr_gmlas_swe_dataarray,
     ogr_gmlas_cleanup ]
 
-#gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_typing_constraints, ogr_gmlas_cleanup ]
+#gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_swe_dataarray, ogr_gmlas_cleanup ]
 
 if __name__ == '__main__':
 
