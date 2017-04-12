@@ -55,6 +55,11 @@
             <DisableFlatteningXPath>...</DisableFlatteningXPath>
             -->
         </FlatteningRules>
+
+        <SWEProcessing>
+            <Activation>ifSWEPrefixFoundInTopElement</Activation>
+            <ProcessDataArray>true</ProcessDataArray>
+        </SWEProcessing>
     </LayerBuildingRules>
 
     <!-- constraints typically expressed as schematrons -->
