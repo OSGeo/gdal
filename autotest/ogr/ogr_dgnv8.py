@@ -69,7 +69,7 @@ def ogr_dgnv8_2():
     lyr_ref = ds_ref.GetLayer(0)
     ds = ogr.Open( 'data/test_dgnv8_ref.csv' )
     lyr = ds.GetLayer(0)
-    ret = ogrtest.compare_layers(lyr, lyr_ref)
+    ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields = ['WKT'])
        
     gdal.Unlink('/vsimem/ogr_dgnv8_2.csv')
         
@@ -125,11 +125,11 @@ def ogr_dgnv8_4():
     lyr_ref = ds_ref.GetLayer(0)
     ds = ogr.Open( 'data/test_dgnv8_write_ref.csv' )
     lyr = ds.GetLayer(0)
-    ret = ogrtest.compare_layers(lyr, lyr_ref)
+    ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields = ['WKT'])
        
     gdal.Unlink(tmp_csv)
         
-    return 'success'
+    return ret
 
 ###############################################################################
 # Test creation options

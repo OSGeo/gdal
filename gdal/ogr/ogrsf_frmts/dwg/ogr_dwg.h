@@ -190,7 +190,7 @@ class OGRDWGDataSource : public OGRDataSource
 
     const char          *GetName() override { return m_osName; }
 
-    int                 GetLayerCount() override { return apoLayers.size(); }
+    int                 GetLayerCount() override { return static_cast<int>(apoLayers.size()); }
     OGRLayer            *GetLayer( int ) override;
 
     int                 TestCapability( const char * ) override;
