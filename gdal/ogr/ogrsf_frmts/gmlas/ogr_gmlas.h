@@ -366,7 +366,7 @@ class GMLASConfiguration
 
         enum SWEActivationMode
         {
-            SWE_ACTIVATE_IF_PREFIX_FOUND,
+            SWE_ACTIVATE_IF_NAMESPACE_FOUND,
             SWE_ACTIVATE_TRUE,
             SWE_ACTIVATE_FALSE
         };
