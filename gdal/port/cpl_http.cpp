@@ -728,6 +728,7 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
     // Enable following redirections.  Requires libcurl 7.10.1 at least.
     curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
     curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
+    curl_easy_setopt(http_handle, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL );
 
     // Set connect timeout.
     const char *pszConnectTimeout =
