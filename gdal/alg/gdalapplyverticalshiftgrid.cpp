@@ -673,7 +673,9 @@ GDALDatasetH GDALOpenVerticalShiftGrid( const char* pszProj4Geoidgrids,
             bMissingOk = true;
         }
         const CPLString osFilename(GetProj4Filename(pszProj4Geoidgrids));
-        GDALDatasetH hDS = GDALOpenEx(osFilename, 0, NULL, NULL, NULL);
+        const char* const papszOpenOptions[] =
+            { "@SHIFT_ORIGIN_IN_MINUS_180_PLUS_180=YES", NULL };
+        GDALDatasetH hDS = GDALOpenEx(osFilename, 0, NULL, papszOpenOptions, NULL);
         if( hDS == NULL )
         {
             CPLDebug("GDAL", "Cannot find file corresponding to %s",
@@ -728,6 +730,8 @@ GDALDatasetH GDALOpenVerticalShiftGrid( const char* pszProj4Geoidgrids,
     papszArgv = CSLAddString(papszArgv, "highest");
     papszArgv = CSLAddString(papszArgv, "-vrtnodata");
     papszArgv = CSLAddString(papszArgv, "-inf");
+    papszArgv = CSLAddString(papszArgv, "-oo");
+    papszArgv = CSLAddString(papszArgv, "@SHIFT_ORIGIN_IN_MINUS_180_PLUS_180=YES");
     GDALBuildVRTOptions* psOptions = GDALBuildVRTOptionsNew(papszArgv, NULL);
     CSLDestroy(papszArgv);
     GDALDatasetH hDS =
