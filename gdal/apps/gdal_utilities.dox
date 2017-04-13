@@ -746,6 +746,7 @@ gdalbuildvrt [-tileindex field_name]
              [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"]
              [-a_srs srs_def]
              [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
+             [-oo NAME=VALUE]*
              [-input_file_list my_list.txt] [-overwrite] output.vrt [gdalfile]*
 \endverbatim
 
@@ -869,6 +870,9 @@ complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
 <dt> <b>-r</b>
 <i>{nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode}</i>:</dt><dd>
 (GDAL &gt;= 2.0) Select a resampling algorithm.</dd>
+
+<dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.2)
+Dataset open option (format specific)</dd>
 
 <dt> <b>-input_file_list</b>:</dt><dd>
 To specify a text file with an input filename on each line
