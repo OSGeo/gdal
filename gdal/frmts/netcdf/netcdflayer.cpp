@@ -260,7 +260,7 @@ bool netCDFLayer::Create(char **papszOptions,
     if( wkbFlatten(m_poFeatureDefn->GetGeomType()) == wkbPoint )
     {
         const int nPointDim =
-            m_osProfileDimName.size() ? m_nProfileDimID : m_nRecordDimID;
+            !m_osProfileDimName.empty() ? m_nProfileDimID : m_nRecordDimID;
         const bool bIsGeographic = (poSRS == NULL || poSRS->IsGeographic());
 
         const char *pszXVarName =
@@ -345,7 +345,7 @@ bool netCDFLayer::Create(char **papszOptions,
         }
 
         const char *pszFeatureTypeVal =
-            m_osProfileDimName.size() ? "profile" : "point";
+            !m_osProfileDimName.empty() ? "profile" : "point";
         status = nc_put_att_text(m_nLayerCDFId, NC_GLOBAL, "featureType",
                                  strlen(pszFeatureTypeVal), pszFeatureTypeVal);
         NCDF_ERR(status);

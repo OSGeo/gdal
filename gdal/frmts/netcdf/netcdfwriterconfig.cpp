@@ -77,7 +77,7 @@ bool netCDFWriterConfiguration::Parse(const char *pszFilename)
         {
             netCDFWriterConfigField oField;
             if( oField.Parse(psIter) )
-                m_oFields[oField.m_osName.size()
+                m_oFields[!oField.m_osName.empty()
                               ? oField.m_osName
                               : CPLString("__") + oField.m_osNetCDFName] =
                     oField;
@@ -193,7 +193,7 @@ bool netCDFWriterConfigLayer::Parse(CPLXMLNode *psNode)
         {
             netCDFWriterConfigField oField;
             if( oField.Parse(psIter) )
-                m_oFields[oField.m_osName.size()
+                m_oFields[!oField.m_osName.empty()
                               ? oField.m_osName
                               : CPLString("__") + oField.m_osNetCDFName] =
                     oField;
