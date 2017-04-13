@@ -15,6 +15,7 @@
  */
 #include <string.h>
 #include <stdlib.h>
+#include <limits>
 #include "meta.h"
 #include "metaname.h"
 #include "myerror.h"
@@ -2203,6 +2204,21 @@ static void ElemNameProb (uShort2 center, uShort2 subcenter, int prodType,
    *unit = (char *) malloc (strlen ("[%]") + 1);
    strcpy (*unit, "[%]");
 
+   {
+      // 25.4 mm = 1 inch
+      const double tmp = upperProb * 25.4;
+
+      // TODO(schwehr): Make a function and reuse it for other limit checks.
+      if (upperProb > tmp ||
+          tmp > std::numeric_limits<int>::max() ||
+          tmp < std::numeric_limits<int>::min() ||
+          CPLIsNan(tmp) ) {
+         // TODO(schwehr): What is the correct response?
+         errSprintf ("ERROR: upperProb out of range.  Setting to 0.\n");
+         upperProb = 0.0;
+      }
+   }
+
    if (f_isNdfd || f_isMos) {
       /* Deal with NDFD/MOS handling of Prob Precip_Tot -> PoP12 */
       if ((prodType == 0) && (cat == 1) && (subcat == 8)) {
@@ -2245,7 +2261,7 @@ static void ElemNameProb (uShort2 center, uShort2 subcenter, int prodType,
             if (lenTime > 0) {
                if (timeRangeUnit == 3) {
                   if (upperProb != (double) .254) {
-                     mallocSprintf (name, "PoP%02dm-%03d", lenTime, (int) (int) (upperProb / .254 + .5));
+                     mallocSprintf (name, "PoP%02dm-%03d", lenTime, (int) (upperProb / .254 + .5));
                   } else {
                      mallocSprintf (name, "PoP%02dm", lenTime);
                   }
