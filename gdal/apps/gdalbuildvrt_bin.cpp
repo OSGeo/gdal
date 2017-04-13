@@ -52,6 +52,7 @@ static void Usage(const char* pszErrorMsg)
             "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
             "                    [-a_srs srs_def]\n"
             "                    [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]\n"
+            "                    [-oo NAME=VALUE]*\n"
             "                    [-input_file_list my_list.txt] [-overwrite] output.vrt [gdalfile]*\n"
             "\n"
             "e.g.\n"
