@@ -1065,6 +1065,16 @@ CPLErr GDALWarpKernel::PerformWarp()
         if( fabs(dfYReciprocalScale-nYReciprocalScale) < 0.05 )
             dfYScale = 1.0 / nYReciprocalScale;
     }
+
+    // XSCALE and YSCALE undocumented for now. Can help in some cases
+    // Best would probably a per-pixel scale computation.
+    const char* pszXScale = CSLFetchNameValue(papszWarpOptions, "XSCALE");
+    if( pszXScale != NULL )
+        dfXScale = CPLAtof(pszXScale);
+    const char* pszYScale = CSLFetchNameValue(papszWarpOptions, "YSCALE");
+    if( pszYScale != NULL )
+        dfYScale = CPLAtof(pszYScale);
+
 #if DEBUG_VERBOSE
     CPLDebug("WARP", "dfXScale = %f, dfYScale = %f", dfXScale, dfYScale);
 #endif
