@@ -95,7 +95,9 @@ bool OGRSQLiteDataSource::OpenRaster()
         const char* pszAbstract = papszRow[2];
         if( pszCoverageName != NULL )
         {
-            rl2CoveragePtr cvg = rl2_create_coverage_from_dbms( hDB,
+            rl2CoveragePtr cvg = rl2_create_coverage_from_dbms( 
+                                                            hDB,
+                                                            NULL,
                                                             pszCoverageName );
             if( cvg != NULL )
             {
@@ -168,6 +170,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
     CSLDestroy(papszTokens);
 
     m_pRL2Coverage = rl2_create_coverage_from_dbms( hDB,
+                                                    NULL,
                                                     m_osCoverageName );
     if( m_pRL2Coverage == NULL )
     {
@@ -246,7 +249,8 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
     // Get extent and resolution
     if( m_nSectionId >= 0 )
     {
-        int ret = rl2_resolve_base_resolution_from_dbms( hDB,
+        int ret = rl2_resolve_base_resolution_from_dbms(hDB,
+                                                        NULL,
                                                         m_osCoverageName,
                                                         TRUE, // by_section
                                                         m_nSectionId,
@@ -262,12 +266,13 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
 
 
         ret = rl2_resolve_full_section_from_dbms( hDB,
-                                                m_osCoverageName,
-                                                m_nSectionId,
-                                                dfXRes, dfYRes,
-                                                &dfMinX, &dfMinY,
-                                                &dfMaxX, &dfMaxY,
-                                                &nWidth, &nHeight );
+                                                  NULL,
+                                                  m_osCoverageName,
+                                                  m_nSectionId,
+                                                  dfXRes, dfYRes,
+                                                  &dfMinX, &dfMinY,
+                                                  &dfMaxX, &dfMaxY,
+                                                  &nWidth, &nHeight );
         if( ret != RL2_OK || nWidth == 0 || nWidth > INT_MAX ||
             nHeight == 0 || nHeight > INT_MAX )
         {
@@ -683,7 +688,9 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(CPL_UNUSED
     if( m_nSectionId < 0 || bSingleSection )
     {
         rl2RasterStatisticsPtr pStatistics =
-            rl2_create_raster_statistics_from_dbms( hDB, m_osCoverageName );
+            rl2_create_raster_statistics_from_dbms( hDB,
+                                                    NULL,
+                                                    m_osCoverageName );
         if( pStatistics != NULL )
         {
             for( int iBand = 1; iBand <= l_nBands; ++iBand )
@@ -1031,7 +1038,9 @@ GDALColorTable* RL2RasterBand::GetColorTable()
     if( m_poCT == NULL && m_eColorInterp == GCI_PaletteIndex )
     {
         rl2PalettePtr palettePtr =
-            rl2_get_dbms_palette( poGDS->GetDB(),
+            rl2_get_dbms_palette(
+                            poGDS->GetDB(),
+                            NULL,
                             rl2_get_coverage_name(poGDS->GetRL2CoveragePtr()) );
         if( palettePtr )
         {
@@ -2144,7 +2153,9 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
     sqlite3_free_table(papszResults);
     if( nRowCount == 1 )
     {
-        cvg = rl2_create_coverage_from_dbms( poDS->GetDB(), osCoverageName );
+        cvg = rl2_create_coverage_from_dbms( poDS->GetDB(),
+                                             NULL,
+                                             osCoverageName );
         if( cvg == NULL )
         {
             delete poDS;
@@ -2232,7 +2243,8 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
     if( cvg == NULL )
     {
         cvg = rl2_create_coverage_from_dbms( poDS->GetDB(),
-                                                        osCoverageName );
+                                             NULL,
+                                             osCoverageName );
         if (cvg == NULL)
         {
             if( pPalette )
