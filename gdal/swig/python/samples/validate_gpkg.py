@@ -1467,39 +1467,40 @@ class GPKGChecker:
         conn = sqlite3.connect(self.filename)
         c = conn.cursor()
         try:
-            c.execute('SELECT 1 FROM sqlite_master')
-            c.fetchone()
-        except:
-            self._assert(False, 1, 'not a sqlite3 database')
+            try:
+                c.execute('SELECT 1 FROM sqlite_master')
+                c.fetchone()
+            except:
+                self._assert(False, 1, 'not a sqlite3 database')
 
-        c.execute('PRAGMA foreign_key_check')
-        ret = c.fetchall()
-        self._assert(len(ret) == 0, 7,
-                     'foreign_key_check failed: %s' % str(ret))
+            c.execute('PRAGMA foreign_key_check')
+            ret = c.fetchall()
+            self._assert(len(ret) == 0, 7,
+                         'foreign_key_check failed: %s' % str(ret))
 
-        c.execute('PRAGMA integrity_check')
-        self._assert(c.fetchone()[0] == 'ok', 6, 'integrity_check failed')
+            c.execute('PRAGMA integrity_check')
+            self._assert(c.fetchone()[0] == 'ok', 6, 'integrity_check failed')
 
-        self._check_gpkg_spatial_ref_sys(c)
+            self._check_gpkg_spatial_ref_sys(c)
 
-        self._check_gpkg_contents(c)
+            self._check_gpkg_contents(c)
 
-        self._check_features(c)
+            self._check_features(c)
 
-        self._check_tiles(c)
+            self._check_tiles(c)
 
-        self._check_attributes(c)
+            self._check_attributes(c)
 
-        self._check_tiled_gridded_elevation_data(c)
+            self._check_tiled_gridded_elevation_data(c)
 
-        self._check_gpkg_extensions(c)
+            self._check_gpkg_extensions(c)
 
-        self._check_metadata(c)
+            self._check_metadata(c)
 
-        # TODO: check gpkg_schema
-
-        c.close()
-        conn.close()
+            # TODO: check gpkg_schema
+        finally:
+            c.close()
+            conn.close()
 
 
 def check(filename, abort_at_first_error=True, verbose=False):
