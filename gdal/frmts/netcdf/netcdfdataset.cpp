@@ -4487,8 +4487,15 @@ CPLErr netCDFDataset::GetGeoTransform( double *padfTransform )
 /*                                rint()                                */
 /************************************************************************/
 
+#ifdef HAVE_CXX11
+double netCDFDataset::rint( double dfX )
+{
+    return std::round(dfX);
+}
+#else
 double netCDFDataset::rint( double dfX)
 {
+    // rint has undefined behavior for values of dfX that exceed in int max.
     if( dfX > 0 )
     {
         int nX = (int)(dfX + 0.5);
@@ -4512,6 +4519,7 @@ double netCDFDataset::rint( double dfX)
         return double(nX);
     }
 }
+#endif  // !HAVE_CXX11
 
 /************************************************************************/
 /*                        ReadAttributes()                              */
