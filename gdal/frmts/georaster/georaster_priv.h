@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     georaster_priv.h
  * Project:  Oracle Spatial GeoRaster Driver
@@ -57,6 +56,14 @@ void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile);
 void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
 
 //  ---------------------------------------------------------------------------
+//  JPEG2000 support - Install the Vitual File System handler to OCI LOB
+//  ---------------------------------------------------------------------------
+
+CPL_C_START
+void CPL_DLL VSIInstallOCILobHandler(void);
+CPL_C_END
+
+//  ---------------------------------------------------------------------------
 //  System constants
 //  ---------------------------------------------------------------------------
 
@@ -76,8 +83,8 @@ void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
 
 //  Default block size
 
-#define DEFAULT_BLOCK_ROWS 256
-#define DEFAULT_BLOCK_COLUMNS 256
+#define DEFAULT_BLOCK_ROWS 512
+#define DEFAULT_BLOCK_COLUMNS 512
 
 //  Default Model Coordinate Location (internal pixel geo-reference)
 
@@ -88,6 +95,8 @@ void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
 // MAX double string representation
 
 #define MAX_DOUBLE_STR_REP 20
+
+// Pyramid levels details
 
 struct hLevelDetails {
     int             nColumnBlockSize;
@@ -145,8 +154,23 @@ private:
     GeoRasterRasterBand*
                         poMaskBand;
     bool                bApplyNoDataArray;
+    void                JP2_Open( GDALAccess eAccess );
+    void                JP2_CreateCopy( GDALDataset* poJP2DS,
+                                        char** papszOptions,
+                                        int* pnResolutions,
+                                        GDALProgressFunc pfnProgress,
+                                        void* pProgressData );
+    boolean             JP2_CopyDirect( const char* pszJP2Filename,
+                                        int* pnResolutions,
+                                        GDALProgressFunc pfnProgress,
+                                        void* pProgressData );
+    boolean             JPEG_CopyDirect( const char* pszJPGFilename,
+                                         GDALProgressFunc pfnProgress,
+                                         void* pProgressData );
 
 public:
+
+    GDALDataset*        poJP2Dataset;
 
     void                SetSubdatasets( GeoRasterWrapper* poGRW );
 
@@ -200,6 +224,8 @@ public:
     virtual OGRErr      StartTransaction(int /* bForce */ =FALSE) override {return CE_None;};
     virtual OGRErr      CommitTransaction() override {return CE_None;};
     virtual OGRErr      RollbackTransaction() override {return CE_None;};
+    
+    virtual char**      GetFileList();
 
     void                AssignGeoRaster( GeoRasterWrapper* poGRW );
 };
@@ -215,7 +241,8 @@ class GeoRasterRasterBand : public GDALRasterBand
 public:
                         GeoRasterRasterBand( GeoRasterDataset* poGDS,
                             int nBand,
-                            int nLevel );
+                            int nLevel,
+                            GDALDataset* poJP2Dataset = NULL );
     virtual            ~GeoRasterRasterBand();
 
 private:
@@ -224,6 +251,7 @@ private:
     GDALColorTable*     poColorTable;
     GDALRasterAttributeTable*
                         poDefaultRAT;
+    GDALDataset*        poJP2Dataset;
     double              dfMin;
     double              dfMax;
     double              dfMean;
@@ -294,6 +322,7 @@ private:
     GByte*              pabyBlockBuf;
     GByte*              pabyCompressBuf;
     OWStatement*        poBlockStmt;
+    OWStatement*        poStmtWrite;
 
     int                 nCurrentLevel;
     long                nLevelOffset;
@@ -407,6 +436,7 @@ public:
                                                 int nBandBlocks );
     void                SetWriteOnly( bool value ) { bWriteOnly = value; };
     void                SetRPC();
+    void                SetMaxLevel( int nMaxLevel );
     void                GetRPC();
 
 public:
@@ -436,7 +466,7 @@ public:
     CPLString           sCompressionType;
     int                 nCompressQuality;
     CPLString           sWKText;
-
+    CPLString           sAuthority;
     CPLList*            psNoDataList;
 
     int                 nRasterColumns;

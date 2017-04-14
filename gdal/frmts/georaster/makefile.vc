@@ -5,7 +5,8 @@ GDAL_ROOT = ..\..
 OBJ = oci_wrapper.obj \
       georaster_dataset.obj \
       georaster_rasterband.obj \
-      georaster_wrapper.obj
+      georaster_wrapper.obj \
+      cpl_vsil_ocilob.obj
 
 PLUGIN_DLL = gdal_GEOR.dll
 

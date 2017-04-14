@@ -1703,26 +1703,26 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        poDS->bUseSetDecodeArea =
-            (poDS->nRasterXSize == (int)nTileW &&
-            poDS->nRasterYSize == (int)nTileH &&
-            (poDS->nRasterXSize > 1024 ||
-            poDS->nRasterYSize > 1024));
+    poDS->bUseSetDecodeArea =
+        (poDS->nRasterXSize == (int)nTileW &&
+         poDS->nRasterYSize == (int)nTileH &&
+         (poDS->nRasterXSize > 1024 ||
+          poDS->nRasterYSize > 1024));
 
-        /* Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
-        /* are tiled with tile dimensions 2048x2048. It would be a waste of */
-        /* memory to allocate such big blocks */
-        if( poDS->nRasterXSize < (int)nTileW &&
-            poDS->nRasterYSize < (int)nTileH )
-        {
-            poDS->bUseSetDecodeArea = TRUE;
-            nTileW = poDS->nRasterXSize;
-            nTileH = poDS->nRasterYSize;
-            if (nTileW > 2048) nTileW = 2048;
-            if (nTileH > 2048) nTileH = 2048;
-        }
-        else if (poDS->bUseSetDecodeArea)
-        {
+    /* Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
+    /* are tiled with tile dimensions 2048x2048. It would be a waste of */
+    /* memory to allocate such big blocks */
+    if( poDS->nRasterXSize < (int)nTileW &&
+        poDS->nRasterYSize < (int)nTileH )
+    {
+        poDS->bUseSetDecodeArea = TRUE;
+        nTileW = poDS->nRasterXSize;
+        nTileH = poDS->nRasterYSize;
+        if (nTileW > 2048) nTileW = 2048;
+        if (nTileH > 2048) nTileH = 2048;
+    }
+    else if (poDS->bUseSetDecodeArea)
+    {
             // Arbitrary threshold... ~4 million at least needed for the GRIB2
             // images mentioned below.
             if( nTileH == 1 && nTileW < 20 * 1024 * 1024 )
@@ -1732,9 +1732,9 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             else
             {
-                if (nTileW > 1024) nTileW = 1024;
-                if (nTileH > 1024) nTileH = 1024;
-            }
+        if (nTileW > 1024) nTileW = 1024;
+        if (nTileH > 1024) nTileH = 1024;
+    }
         }
     }
 
@@ -2678,6 +2678,106 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             return NULL;
     }
 
+    /* ---------------------------------------------------------------- */
+    /* If the input driver is identifed as "GEORASTER" the following    */
+    /* section will try to dump a ORACLE GeoRaster JP2 BLOB into a file */
+    /* ---------------------------------------------------------------- */
+
+    if ( EQUAL( poSrcDS->GetDriverName(), "GEORASTER" ) )
+    {
+        const char* pszGEOR_compress = poSrcDS->GetMetadataItem("COMPRESSION", 
+                                                "IMAGE_STRUCTURE");
+
+        if( pszGEOR_compress == NULL )
+        {
+            pszGEOR_compress = "NONE";
+        }
+
+        /* Check if the JP2 BLOB needs re-shaping */
+
+        bool bGEOR_reshape = false;
+
+        const char* apszIgnoredOptions[] = {
+            "BLOCKXSIZE", "BLOCKYSIZE", "QUALITY", "REVERSIBLE",
+            "RESOLUTIONS", "PROGRESSION", "SOP", "EPH",
+            "YCBCR420", "YCC", "NBITS", "1BIT_ALPHA", "PRECINCTS",
+            "TILEPARTS", "CODEBLOCK_WIDTH", "CODEBLOCK_HEIGHT", NULL };
+
+        for( int i = 0; apszIgnoredOptions[i]; i ++)
+        {
+            if( CSLFetchNameValue(papszOptions, apszIgnoredOptions[i]) )
+            {
+                bGEOR_reshape = true;
+            }
+        }
+
+        if( CSLFetchNameValue( papszOptions, "USE_SRC_CODESTREAM" ) )
+        {
+            bGEOR_reshape = false;
+        }
+
+        char** papszGEOR_files = poSrcDS->GetFileList();
+
+        if( EQUAL( pszGEOR_compress, "JP2-F" ) &&
+            CSLCount( papszGEOR_files ) > 0 &&
+            bGEOR_reshape == false )
+        {
+
+            char* pszVsiOciLob = papszGEOR_files[0];
+
+            VSILFILE *fpBlob = VSIFOpenL( pszVsiOciLob, "r" );
+            VSILFILE* fp = VSIFOpenL( pszFilename, "w+b" );
+
+            VSIFSeekL( fpBlob, 0, SEEK_END );
+
+            size_t nBlobSize = VSIFTellL( fpBlob);
+            size_t nChunk = (size_t) ( GDALGetCacheMax() * 0.25 );
+            size_t nSize = 0;
+            size_t nCount = 0;
+
+            void *pBuffer = (GByte*) VSIMalloc( sizeof(GByte) * nChunk );
+
+            VSIFSeekL( fpBlob, 0, SEEK_SET );
+
+            while( ( nSize = VSIFReadL( pBuffer, 1, nChunk, fpBlob ) ) > 0 )
+            {
+                VSIFWriteL( pBuffer, 1, nSize, fp );
+                nCount += nSize;
+                pfnProgress( (float) nCount / (float) nBlobSize, 
+                                 NULL, pProgressData );
+            }
+
+            CPLFree( pBuffer );
+            VSIFCloseL( fpBlob );
+
+            VSIFCloseL( fp );
+
+            /* Return the GDALDaset object */
+
+            GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
+            JP2OpenJPEGDataset *poDS = (JP2OpenJPEGDataset*)
+                                       JP2OpenJPEGDataset::Open(&oOpenInfo);
+
+            /* Copy essential metadata */
+
+            double adfGeoTransform[6];
+
+            if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+            {
+                poDS->SetGeoTransform( adfGeoTransform );
+            }
+
+            const char* pszWKT = poSrcDS->GetProjectionRef();
+
+            if( pszWKT != NULL && pszWKT[0] != '\0' )
+            {
+                poDS->SetProjection( pszWKT );
+            }
+
+            return (GDALDataset*) poDS;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Setup encoder                                                  */
 /* -------------------------------------------------------------------- */
@@ -2920,7 +3020,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         if( nGMLJP2Version == 2 && bJPXOption )
             ftypBox.AppendWritableData(4, "jpx "); /* Branding */
         else
-            ftypBox.AppendWritableData(4, "jp2 "); /* Branding */
+        ftypBox.AppendWritableData(4, "jp2 "); /* Branding */
         ftypBox.AppendUInt32(0); /* minimum version */
         ftypBox.AppendWritableData(4, "jp2 "); /* Compatibility list: first value */
 
