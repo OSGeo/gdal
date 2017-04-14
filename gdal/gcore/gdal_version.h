@@ -23,8 +23,8 @@
 #endif
 
 #ifndef GDAL_RELEASE_DATE
-#  define GDAL_RELEASE_DATE     20169999
+#  define GDAL_RELEASE_DATE     20170414
 #endif
 #ifndef GDAL_RELEASE_NAME
-#  define GDAL_RELEASE_NAME     "2.2.0dev"
+#  define GDAL_RELEASE_NAME     "2.2.0beta1"
 #endif
