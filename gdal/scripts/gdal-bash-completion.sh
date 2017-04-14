@@ -67,7 +67,7 @@ _gdalbuildvrt()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-tileindex -resolution -te -tr -tap -separate -b -sd -allow_projection_difference -q -addalpha -hidenodata -srcnodata -vrtnodata -a_srs -r -input_file_list -overwrite "
+      key_list="-tileindex -resolution -te -tr -tap -separate -b -sd -allow_projection_difference -q -addalpha -hidenodata -srcnodata -vrtnodata -a_srs -r -oo -input_file_list -overwrite "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -172,7 +172,7 @@ _gdal_edit.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -ro -a_srs -a_ullr -tr -unsetgt -a_nodata -unsetnodata -unsetstats -stats -approx_stats -gcp -unsetmd -oo -mo --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -ro -a_srs -a_ullr -tr -unsetgt -a_nodata -unsetnodata -offset -scale -unsetstats -stats -approx_stats -gcp -unsetmd -oo -mo --version --license --formats --format --optfile --config --debug --pause --locale "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -604,7 +604,7 @@ _gdalwarp()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general --formats -s_srs -t_srs -to -order -tps -rpc -geoloc -et -refine_gcps -te -tr -tap -ts -ovr -wo -ot -wt -srcnodata -dstnodata -dstalpha -r -wm -multi -q -cutline -cl -cwhere -csql -cblend -crop_to_cutline -of -co -overwrite -nomd -cvmd -setci -oo -doo --version --license --format --optfile --config --debug --pause --locale "
+      key_list="--help-general --formats -s_srs -t_srs -to -novshiftgrid -order -tps -rpc -geoloc -et -refine_gcps -te -tr -tap -ts -ovr -wo -ot -wt -srcnodata -dstnodata -dstalpha -r -wm -multi -q -cutline -cl -cwhere -csql -cblend -crop_to_cutline -of -co -overwrite -nomd -cvmd -setci -oo -doo --version --license --format --optfile --config --debug --pause --locale "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -701,7 +701,7 @@ _ogrtindex()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-lnum -lname -f -write_absolute_path -skip_different_projection -accept_different_schemas "
+      key_list="-lnum -lname -f -write_absolute_path -skip_different_projection -t_srs -src_srs_name -src_srs_format -accept_different_schemas "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
