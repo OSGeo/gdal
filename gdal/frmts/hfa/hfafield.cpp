@@ -993,8 +993,10 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
           memcpy(&fNumber, pabyData + nIndexValue * 4, 4);
           HFAStandard(4, &fNumber);
           dfDoubleRet = fNumber;
-          if( fNumber > std::numeric_limits<int>::max() ||
-              fNumber < std::numeric_limits<int>::min() ||
+          if( dfDoubleRet > static_cast<double>(
+                                            std::numeric_limits<int>::max()) ||
+              dfDoubleRet < static_cast<double>(
+                                            std::numeric_limits<int>::min()) ||
               CPLIsNan(fNumber) )
           {
               CPLError(CE_Failure, CPLE_AppDefined,
