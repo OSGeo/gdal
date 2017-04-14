@@ -29,6 +29,9 @@
  *****************************************************************************/
 
 #include "cpl_error.h"
+#include "cpl_vsi_virtual.h"
+#include "gdaljp2metadata.h"
+#include "cpl_list.h"
 
 #include "gdal.h"
 #include "gdal_frmts.h"
@@ -60,6 +63,7 @@ GeoRasterDataset::GeoRasterDataset()
     pasGCPList          = NULL;
     poMaskBand          = NULL;
     bApplyNoDataArray   = false;
+    poJP2Dataset        = NULL;
 }
 
 //  ---------------------------------------------------------------------------
@@ -83,6 +87,11 @@ GeoRasterDataset::~GeoRasterDataset()
         delete poMaskBand;
     }
 
+    if( poJP2Dataset )
+    {
+        delete poJP2Dataset;
+    }
+    
     CPLFree( pszProjection );
     CSLDestroy( papszSubdatasets );
 }
@@ -150,6 +159,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     //  -------------------------------------------------------------------
 
     GeoRasterDataset *poGRD = new GeoRasterDataset();
+
     if( ! poGRD )
     {
         return NULL;
@@ -227,6 +237,22 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     }
 
     //  -------------------------------------------------------------------
+    //  Open for JPEG 2000 compression for reading
+    //  -------------------------------------------------------------------
+
+    if( EQUAL( poGRW->sCompressionType.c_str(), "JP2-F" ) &&
+        poGRD->eAccess == GA_ReadOnly )
+    {
+        poGRD->JP2_Open( poOpenInfo->eAccess );
+
+        if( ! poGRD->poJP2Dataset )
+        {
+            delete poGRD;
+            return NULL;            
+        }
+    }
+
+    //  -------------------------------------------------------------------
     //  Load mask band
     //  -------------------------------------------------------------------
 
@@ -237,7 +263,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     {
         poGRD->poMaskBand = new GeoRasterRasterBand( poGRD, 0, DEFAULT_BMP_MASK );
     }
-
+    
     //  -------------------------------------------------------------------
     //  Check for filter Nodata environment variable, default is YES
     //  -------------------------------------------------------------------
@@ -249,17 +275,17 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     {
         poGRD->bApplyNoDataArray = true;
     }
+
     //  -------------------------------------------------------------------
     //  Create bands
     //  -------------------------------------------------------------------
 
     int i = 0;
-    int nBand = 0;
 
-    for( i = 0; i < poGRD->nBands; i++ )
+    for( i = 1; i <= poGRD->nBands; i++ )
     {
-        nBand = i + 1;
-        poGRD->SetBand( nBand, new GeoRasterRasterBand( poGRD, nBand, 0 ) );
+        poGRD->SetBand( i, new GeoRasterRasterBand( poGRD, i, 0 , 
+                                                    poGRD->poJP2Dataset) );
     }
 
     //  -------------------------------------------------------------------
@@ -268,21 +294,21 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
 
     if( poGRW->nBandBlockSize == 1 )
     {
-        poGRD->SetMetadataItem( "INTERLEAVE", "BAND", "IMAGE_STRUCTURE" );
+        poGRD->SetMetadataItem( "INTERLEAVE", "BSQ", "IMAGE_STRUCTURE" );
     }
     else
     {
         if( EQUAL( poGRW->sInterleaving.c_str(), "BSQ" ) )
         {
-            poGRD->SetMetadataItem( "INTERLEAVE", "BAND", "IMAGE_STRUCTURE" );
+            poGRD->SetMetadataItem( "INTERLEAVE", "BSQ", "IMAGE_STRUCTURE" );
         }
         else if( EQUAL( poGRW->sInterleaving.c_str(), "BIP" ) )
         {
-            poGRD->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+            poGRD->SetMetadataItem( "INTERLEAVE", "PIB", "IMAGE_STRUCTURE" );
         }
         else if( EQUAL( poGRW->sInterleaving.c_str(), "BIL" ) )
         {
-            poGRD->SetMetadataItem( "INTERLEAVE", "LINE", "IMAGE_STRUCTURE" );
+            poGRD->SetMetadataItem( "INTERLEAVE", "BIL", "IMAGE_STRUCTURE" );
         }
     }
 
@@ -291,9 +317,9 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
 
     if( STARTS_WITH_CI(poGRW->sCompressionType.c_str(), "JPEG") )
     {
-        poGRD->SetMetadataItem( "COMPRESS_QUALITY",
+        poGRD->SetMetadataItem( "COMPRESSION_QUALITY",
             CPLGetXMLValue( poGRW->phMetadata,
-            "rasterInfo.compression.quality", "0" ), "IMAGE_STRUCTURE" );
+            "rasterInfo.compression.quality", "undefined" ), "IMAGE_STRUCTURE" );
     }
 
     if( EQUAL( poGRW->sCellDepth.c_str(), "1BIT" ) )
@@ -335,6 +361,9 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
 
     poGRD->SetMetadataItem( "WKT", poGRW->sWKText.c_str(), "ORACLE" );
 
+    poGRD->SetMetadataItem( "COMPRESSION", 
+        poGRW->sCompressionType.c_str(), "ORACLE" );
+
     poGRD->SetMetadataItem( "METADATA", pszDoc, "ORACLE" );
 
     CPLFree( pszDoc );
@@ -344,6 +373,444 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     //  -------------------------------------------------------------------
 
     return (GDALDataset*) poGRD;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                                    JP2Open()
+//  ---------------------------------------------------------------------------
+
+void GeoRasterDataset::JP2_Open( GDALAccess /* eAccess */ )
+{
+    GDALDriver* poJP2Driver = NULL;
+
+    static const char * const apszDrivers[] = { "JP2OPENJPEG", "JP2ECW", "JP2MRSID",
+                                                "JPEG2000", "JP2KAK", NULL };
+
+    // Find at least one available JP2 driver
+
+    for( int iDriver = 0; apszDrivers[iDriver] != NULL; iDriver++ )
+    {
+        poJP2Driver = (GDALDriver*) GDALGetDriverByName(apszDrivers[iDriver]);
+
+        if( poJP2Driver )
+        {
+            break;
+        }
+    }
+
+    // If JP2 driver is installed, try to open the LOB via VSIOCILOB handler
+
+    poJP2Dataset = NULL;
+
+    if( poJP2Driver )
+    {
+        CPLString osDSName;
+
+        osDSName.Printf( "/vsiocilob/%s,%s,%s,%s,%d,noext",
+                          poGeoRaster->poConnection->GetUser(),
+                          poGeoRaster->poConnection->GetPassword(),
+                          poGeoRaster->poConnection->GetServer(),
+                          poGeoRaster->sDataTable.c_str(),
+                          poGeoRaster->nRasterId );
+
+        poJP2Dataset = (GDALDataset*) GDALOpenEx( osDSName.c_str(), 
+                                                  GDAL_OF_RASTER,
+                                                  apszDrivers,
+                                                  NULL, NULL );
+    }
+
+    // Report error
+
+    if( ! poJP2Dataset )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                "Unable to open JPEG2000 image within GeoRaster dataset.\n%s",
+                 ( ! poJP2Driver ) ?
+        "No JPEG2000 capable driver (JP2OPENJPEG,, JP2ECW, JP2MRSID, etc...) is available." :
+        "One or several JPEG2000 capable drivers are available but the lob could not be "
+        "opened successfully." );
+    }
+}
+
+//  ---------------------------------------------------------------------------
+//                                                              JP2CreateCopy()
+//  ---------------------------------------------------------------------------
+
+void GeoRasterDataset::JP2_CreateCopy( GDALDataset* poJP2DS,
+                                       char** papszOptions,
+                                       int* pnResolutions,
+                                       GDALProgressFunc pfnProgress,
+                                       void* pProgressData )
+{
+    GDALDriver* poJP2Driver = NULL;
+
+    static const char * const apszDrivers[] = { "JP2OPENJPEG", "JP2ECW", "JP2MRSID",
+                                                "JPEG2000", "JP2KAK", NULL };
+
+    // Find at least one available JP2 driver
+
+    for( int iDriver = 0; apszDrivers[iDriver] != NULL; iDriver++ )
+    {
+        poJP2Driver = (GDALDriver*) GDALGetDriverByName(apszDrivers[iDriver]);
+
+        if( poJP2Driver )
+        {
+            break;
+        }
+    }
+
+    // If a JP2 driver is installed calls driver's CreateCopy
+
+    poJP2Dataset = NULL;
+
+    if( poJP2Driver )
+    {
+        char** papszOpt = NULL;
+
+        const char* pszFetched  = "";
+
+        pszFetched = CSLFetchNameValue( papszOptions, "JP2_BLOCKXSIZE" );
+
+        if( pszFetched )
+        {
+            papszOpt = CSLAddNameValue( papszOpt, "BLOCKXSIZE",  pszFetched );
+            papszOpt = CSLAddNameValue( papszOpt, "TILE_HEIGHT", pszFetched );
+        }
+
+        CPLDebug("GEOR","JP2_BLOCKXSIZE %s", pszFetched );
+
+        pszFetched = CSLFetchNameValue( papszOptions, "JP2_BLOCKYSIZE" );
+
+        if( pszFetched )
+        {
+            papszOpt = CSLAddNameValue( papszOpt, "BLOCKYSIZE",  pszFetched );
+            papszOpt = CSLAddNameValue( papszOpt, "TILE_WIDTH",  pszFetched );
+        }
+
+        pszFetched = CSLFetchNameValue( papszOptions, "JP2_QUALITY" );
+
+        if( pszFetched )
+        {
+            papszOpt = CSLAddNameValue( papszOpt, "QUALITY", pszFetched );
+
+            if( STARTS_WITH_CI( pszFetched, "100" ) )
+            {
+                papszOpt = CSLAddNameValue( papszOpt, "REVERSIBLE",  "TRUE" ); 
+            }
+
+            poGeoRaster->nCompressQuality = atoi( pszFetched );
+        }
+        else
+        {
+            poGeoRaster->nCompressQuality = 25; // JP2OpenJPEG default...
+        }
+
+        pszFetched = CSLFetchNameValue( papszOptions, "JP2_REVERSIBLE" );
+
+        if( pszFetched )
+        {
+            papszOpt = CSLAddNameValue( papszOpt, "REVERSIBLE", pszFetched );
+        }
+
+        pszFetched = CSLFetchNameValue( papszOptions, "JP2_RESOLUTIONS" );
+
+        if( pszFetched )
+        {
+            papszOpt = CSLAddNameValue( papszOpt, "RESOLUTIONS", pszFetched );
+            papszOpt = CSLAddNameValue( papszOpt, "RESOLUTIONS_LEVELS", pszFetched );
+            papszOpt = CSLAddNameValue( papszOpt, "LAYERS", pszFetched );
+        }
+
+        pszFetched = CSLFetchNameValue( papszOptions, "JP2_PROGRESSION" );
+
+        if( pszFetched )
+        {
+            papszOpt = CSLAddNameValue( papszOpt, "PROGRESSION", pszFetched );
+        }
+
+        papszOpt = CSLAddNameValue( papszOpt, "CODEC",       "JP2" ); 
+        papszOpt = CSLAddNameValue( papszOpt, "GeoJP2",      "NO" ); 
+        papszOpt = CSLAddNameValue( papszOpt, "GMLJP2",      "NO" ); 
+        papszOpt = CSLAddNameValue( papszOpt, "YCBCR420",    "NO" );
+        papszOpt = CSLAddNameValue( papszOpt, "TARGET",      "0" ); 
+
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+
+        CPLString osDSName;
+
+        osDSName.Printf( "/vsiocilob/%s,%s,%s,%s,%d,noext",
+                          poGeoRaster->poConnection->GetUser(),
+                          poGeoRaster->poConnection->GetPassword(),
+                          poGeoRaster->poConnection->GetServer(),
+                          poGeoRaster->sDataTable.c_str(),
+                          poGeoRaster->nRasterId );
+
+        poJP2Dataset = (GDALDataset*) GDALCreateCopy( poJP2Driver, 
+                                                      osDSName.c_str(), 
+                                                      poJP2DS,
+                                                      false,
+                                                      (char**) papszOpt,
+                                                      pfnProgress,
+                                                      pProgressData );
+
+        CPLPopErrorHandler();
+
+        CSLDestroy( papszOpt );
+    }
+
+    if( ! poJP2Dataset )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                "Unable to copy JPEG2000 image into GeoRaster dataset.\n%s",
+                 ( ! poJP2Driver ) ?
+        "No JPEG2000 capable driver (JP2OPENJPEG, JP2ECW, JP2MRSID, etc...) is available." :
+        "One or several JPEG2000 capable drivers are available but the file could not be "
+        "opened successfully." );
+        return;
+    }
+
+    // Retrieve the number of resolutions based on the number of overviews
+
+    CPLPushErrorHandler( CPLQuietErrorHandler );
+
+    *pnResolutions = poJP2Dataset->GetRasterBand(1)->GetOverviewCount() + 1;
+
+    delete poJP2Dataset;
+
+    CPLPopErrorHandler(); // Avoid showing warning regards writing aux.xml file
+
+    poJP2Dataset = NULL;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                             JP2_CopyDirect()
+//  ---------------------------------------------------------------------------
+
+boolean GeoRasterDataset::JP2_CopyDirect( const char* pszJP2Filename,
+                                          int* pnResolutions,
+                                          GDALProgressFunc pfnProgress,
+                                          void* pProgressData )
+{
+    char** papszFileList = GetFileList();
+    
+    if( CSLCount(papszFileList) == 0 )
+    {
+        return false;
+    }
+    
+    VSILFILE *fpInput  = VSIFOpenL( pszJP2Filename, "r" );
+    VSILFILE *fpOutput = VSIFOpenL( papszFileList[0], "wb" );    
+
+    size_t nCache = (size_t) ( GDALGetCacheMax() * 0.25 );
+
+    void *pBuffer = (GByte*) VSIMalloc( sizeof(GByte) * nCache );
+
+    GDALJP2Box oBox( fpInput );
+
+    (void) oBox.ReadFirst();
+
+    GUInt32   nLBox;
+    GUInt32   nTBox;
+
+    int       nBoxCount = 0;
+
+    while( strlen(oBox.GetType()) > 0 )
+    {
+        nBoxCount++;
+
+        if( EQUAL( oBox.GetType(), "jp  " ) ||
+            EQUAL( oBox.GetType(), "ftyp" ) ||
+            EQUAL( oBox.GetType(), "jp2h" ) )
+        {
+            size_t nSize = (size_t) 0;
+            size_t nDataLength = (size_t) oBox.GetDataLength();
+
+            nSize = VSIFReadL( pBuffer, 1, nDataLength, fpInput);
+ 
+            if ( nSize != nDataLength )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "amount read differs from JP2 Box data length" );
+            }
+
+            nLBox = (int) nDataLength + 8;
+            nLBox = CPL_MSBWORD32( nLBox );
+
+            memcpy( &nTBox, oBox.GetType(), 4 );
+
+            VSIFWriteL( &nLBox, 4, 1, fpOutput );
+            VSIFWriteL( &nTBox, 4, 1, fpOutput );
+            VSIFWriteL( pBuffer, 1, nSize, fpOutput );
+        }
+
+        if( EQUAL( oBox.GetType(), "jp2c" ) )
+        {
+            size_t nCount = 0;
+            size_t nSize = 0;
+            size_t nDataLength = oBox.GetDataLength();
+ 
+            nLBox = (int) nDataLength + 8;
+            nLBox = CPL_MSBWORD32( nLBox );
+
+            memcpy( &nTBox, oBox.GetType(), 4 );
+
+            VSIFWriteL( &nLBox, 4, 1, fpOutput );
+            VSIFWriteL( &nTBox, 4, 1, fpOutput );
+
+            while( nCount < nDataLength )
+            {
+                size_t nChunk = (size_t) MIN( nCache, nDataLength - nCount );
+
+                nSize = VSIFReadL( pBuffer, 1, nChunk, fpInput );
+
+                if ( nSize != nChunk )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined, 
+                              "amount read differs from JP2 data length" );
+                }
+
+                VSIFWriteL( pBuffer, 1, nSize, fpOutput ); 
+
+                nCount += nSize;
+
+                pfnProgress( (float) nCount / (float) nDataLength, 
+                             NULL, pProgressData );
+            }
+        }
+
+        if( ! oBox.ReadNext() )
+        {
+            break;
+        }
+    }
+
+    VSIFCloseL( fpInput );
+    VSIFCloseL( fpOutput );
+
+    CSLDestroy( papszFileList );
+    CPLFree( pBuffer );
+
+    // Retrieve the number of resolutions based on the number of overviews
+
+    JP2_Open( GA_ReadOnly );
+
+    if( poJP2Dataset )
+    {
+        *pnResolutions = poJP2Dataset->GetRasterBand(1)->GetOverviewCount() + 1;
+
+        delete poJP2Dataset;
+        poJP2Dataset = NULL;
+    }
+
+    return (nBoxCount > 0);
+}
+
+//  ---------------------------------------------------------------------------
+//                                                             JPG_CopyDirect()
+//  ---------------------------------------------------------------------------
+
+boolean GeoRasterDataset::JPEG_CopyDirect( const char* pszJPGFilename,
+                                           GDALProgressFunc pfnProgress,
+                                           void* pProgressData )
+{
+    OWConnection*  poConnection  = poGeoRaster->poConnection;
+    OWStatement*   poStmt = NULL;
+    OCILobLocator* poLocator;
+    
+    poStmt = poConnection->CreateStatement( CPLSPrintf( 
+                   "select rasterblock from %s where rasterid = %d "
+                   "and rownum = 1 for update",
+                   poGeoRaster->sDataTable.c_str(),
+                   poGeoRaster->nRasterId ) );
+    
+    poStmt->Define( &poLocator );
+
+    if( poStmt->Execute() )
+    {
+        VSILFILE *fpInput = VSIFOpenL( pszJPGFilename, "r" );
+
+        size_t nCache = (size_t) ( GDALGetCacheMax() * 0.25 );
+
+        void *pBuffer = (GByte*) VSIMalloc( sizeof(GByte) * nCache );
+
+        VSIFSeekL( fpInput, 0L, SEEK_END);
+
+        size_t nCount = 0;
+        size_t nSize = 0;
+        size_t nDataLength = VSIFTellL( fpInput );
+
+        VSIFSeekL( fpInput, 0L, SEEK_SET );
+
+        GUIntBig nWrite = (GUIntBig) 0;
+        GUIntBig nCurOff = (GUIntBig) 0;
+
+        while( nCount < nDataLength )
+        {
+            size_t nChunk = (size_t) MIN( nCache, nDataLength - nCount );
+
+            nSize = VSIFReadL( pBuffer, 1, nChunk, fpInput );
+
+            if ( nSize != nChunk )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "amount read differs from JPG length" );
+            }
+
+            nWrite = poStmt->WriteBlob( poLocator,
+                                        (void*) pBuffer,
+                                        (nCurOff + 1),
+                                        nSize );
+
+            nCurOff += nWrite;
+            nCount  += nSize;
+
+            pfnProgress( (float) nCount / (float) nDataLength, 
+                         NULL, pProgressData );
+        }
+        
+        VSIFCloseL( fpInput );
+
+        CPLFree( pBuffer );
+        
+        return true;
+    }            
+
+    if( poLocator )
+    {
+        OWStatement::Free( &poLocator, 1 );
+    }
+    
+    if( poStmt )
+    {
+        delete poStmt;
+    }    
+        
+    return false;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                                GetFileList()
+//  ---------------------------------------------------------------------------
+
+char** GeoRasterDataset::GetFileList()
+{
+    char** papszFileList = NULL;
+    
+    if( EQUAL( poGeoRaster->sCompressionType.c_str(), "JP2-F" ) )
+    {
+        CPLString osDSName;
+
+        osDSName.Printf( "/vsiocilob/%s,%s,%s,%s,%d,noext",
+                this->poGeoRaster->poConnection->GetUser(),
+                this->poGeoRaster->poConnection->GetPassword(),
+                this->poGeoRaster->poConnection->GetServer(),
+                this->poGeoRaster->sDataTable.c_str(),
+                this->poGeoRaster->nRasterId );
+
+        papszFileList = CSLAddString( papszFileList, osDSName.c_str() );
+    }
+
+    return papszFileList;
 }
 
 //  ---------------------------------------------------------------------------
@@ -474,7 +941,8 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     pszFetched = CSLFetchNameValue( papszOptions, "COMPRESS" );
 
     if( pszFetched != NULL &&
-        ( STARTS_WITH_CI(pszFetched, "JPEG") ||
+        ( EQUAL( pszFetched, "JPEG-F" ) ||
+          EQUAL( pszFetched, "JP2-F" ) ||
           EQUAL( pszFetched, "DEFLATE" ) ) )
     {
         poGRW->sCompressionType = pszFetched;
@@ -529,8 +997,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     }
     else
     {
-        if( ! EQUAL( poGRW->sCompressionType.c_str(), "NONE" ) &&
-          ( nBands == 3 || nBands == 4 ) )
+        if( nBands == 3 || nBands == 4 )
         {
             poGRW->nBandBlockSize = nBands;
         }
@@ -596,11 +1063,12 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         return NULL;
     }
 
-    /* Compression JPEG-B is deprecated. It should be able to read but to
+    /* Compression JPEG-B is deprecated. It should be able to read but not
      * to create new GeoRaster on databases with that compression option.
      *
      * TODO: Remove that options on next release.
      */
+
     if( EQUAL( poGRW->sCompressionType.c_str(), "JPEG-B" ) )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
@@ -669,6 +1137,16 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
             delete poGRD;
             return NULL;
         }
+    }
+
+    // When the compression is JP2-F it should be just one block
+    
+    if( EQUAL( poGRW->sCompressionType.c_str(), "JP2-F" ) )
+    {
+        poGRW->nRowBlockSize    = poGRW->nRasterRows;
+        poGRW->nColumnBlockSize = poGRW->nRasterColumns;
+        poGRW->nBandBlockSize   = poGRW->nRasterBands;
+        poGRW->bBlocking        = false;
     }
 
     pszFetched = CSLFetchNameValue( papszOptions, "OBJECTTABLE" );
@@ -913,7 +1391,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
         //  Copy Color Table
         // ----------------------------------------------------------------
 
-        GDALColorTable* poColorTable = poSrcBand->GetColorTable();
+        GDALColorTable* poColorTable = poSrcBand->GetColorTable(); 
 
         if( poColorTable )
         {
@@ -1029,7 +1507,75 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     int nPixelSize = GDALGetDataTypeSize(
         poSrcDS->GetRasterBand(1)->GetRasterDataType() ) / 8;
 
-    if( poDstDS->poGeoRaster->nBandBlockSize == 1)
+    if( EQUAL( poDstDS->poGeoRaster->sCompressionType.c_str(), "JPEG-F" ) &&
+        nBlockXSize == nXSize && nBlockYSize == nYSize ) 
+    {
+        // --------------------------------------------------------------------
+        // Load JPEG avoiding decompression/compression - direct copy
+        // --------------------------------------------------------------------
+        
+        const char* pszDriverName = poSrcDS->GetDriverName();
+
+        if ( EQUAL( pszDriverName, "JPEG" ) )
+        {
+            char** papszFileList = poSrcDS->GetFileList();
+            
+            if ( poDstDS->JPEG_CopyDirect( papszFileList[0],
+                                           pfnProgress,
+                                           pProgressData ) )
+            { 
+                CPLDebug("GEOR","JPEG Direct copy succeed");
+            }            
+        }
+        
+    }
+    else if( EQUAL( poDstDS->poGeoRaster->sCompressionType.c_str(), "JP2-F" ) ) 
+    {
+        // --------------------------------------------------------------------
+        // Load JP2K avoiding decompression/compression - direct copy
+        // --------------------------------------------------------------------
+        
+        boolean bJP2CopyDirectSucceed = false;
+        
+        const char* pszDriverName = poSrcDS->GetDriverName();
+
+        int nJP2Resolution = -1;
+        
+        if ( EQUAL( pszDriverName, "JP2OpenJPEG" ) && 
+             poSrcDS->GetRasterBand(1)->GetColorTable() == NULL )
+        {
+            //  ---------------------------------------------------------------
+            //  Try to load the JP2 file directly
+            //  ---------------------------------------------------------------
+   
+            char** papszFileList = poSrcDS->GetFileList();
+
+            bJP2CopyDirectSucceed = poDstDS->JP2_CopyDirect( papszFileList[0],
+                                                             &nJP2Resolution,
+                                                             pfnProgress,
+                                                             pProgressData );
+
+        }
+
+        if( ! bJP2CopyDirectSucceed )
+        { 
+            //  ---------------------------------------------------------------
+            //  Use VSIOCILOB to load using a resident JP2 driver 
+            //  ---------------------------------------------------------------
+
+            poDstDS->JP2_CreateCopy( poSrcDS,          /* JP2 dataset */
+                                     papszOptions,     /* options list */
+                                     &nJP2Resolution,  /* returned resolution */
+                                     pfnProgress,      /* progress function */
+                                     pProgressData );  /* progress data */
+
+        }
+
+        // Number of pyramid levels is the number of resolutions - 1
+
+        poDstDS->poGeoRaster->SetMaxLevel( MAX( 1, nJP2Resolution - 1 ) );
+    }
+    else if( poDstDS->poGeoRaster->nBandBlockSize == 1)
     {
         // ----------------------------------------------------------------
         //  Band order
@@ -1183,21 +1729,39 @@ CPLErr GeoRasterDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     GDALRasterIOExtraArg* psExtraArg )
 
 {
-    if( poGeoRaster->nBandBlockSize > 1 )
+    if( EQUAL( poGeoRaster->sCompressionType.c_str(), "JP2-F" ) )
     {
-        return GDALDataset::BlockBasedRasterIO( eRWFlag,
-            nXOff, nYOff, nXSize, nYSize,
-            pData, nBufXSize, nBufYSize, eBufType,
-            nBandCount, panBandMap, nPixelSpace,
-            nLineSpace, nBandSpace, psExtraArg );
+        if( poJP2Dataset )
+        {
+            return poJP2Dataset->RasterIO( eRWFlag,
+                        nXOff, nYOff, nXSize, nYSize,
+                        pData, nBufXSize, nBufYSize, eBufType,
+                        nBandCount, panBandMap,
+                        nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
+        }
+        else
+        {
+            return CE_Failure;
+        }
     }
     else
     {
-        return GDALDataset::IRasterIO( eRWFlag,
-            nXOff, nYOff, nXSize, nYSize,
-            pData, nBufXSize, nBufYSize, eBufType,
-            nBandCount, panBandMap,
-            nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
+        if( poGeoRaster->nBandBlockSize > 1 )
+        {
+            return GDALDataset::BlockBasedRasterIO( eRWFlag,
+                        nXOff, nYOff, nXSize, nYSize,
+                        pData, nBufXSize, nBufYSize, eBufType,
+                        nBandCount, panBandMap, nPixelSpace,
+                        nLineSpace, nBandSpace, psExtraArg );
+        }
+        else
+        {
+            return GDALDataset::IRasterIO( eRWFlag,
+                        nXOff, nYOff, nXSize, nYSize,
+                        pData, nBufXSize, nBufYSize, eBufType,
+                        nBandCount, panBandMap,
+                        nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
+        }
     }
 }
 
@@ -1225,7 +1789,7 @@ CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
     {
         return CE_Failure;
     }
-
+    
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
 
     bGeoTransform = true;
@@ -1483,11 +2047,11 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     // ----------------------------------------------------------------
 
     OGRSpatialReference *poSRS2 = oSRS.Clone();
-
+    
     poSRS2->StripCTParms();
 
     double dfAngularUnits = poSRS2->GetAngularUnits( NULL );
-
+    
     if( fabs(dfAngularUnits - 0.0174532925199433) < 0.0000000000000010 )
     {
         /* match the precision used on Oracle for that particular value */
@@ -1502,7 +2066,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         delete poSRS2;
         return CE_Failure;
     }
-
+    
     const char *pszProjName = poSRS2->GetAttrValue( "PROJECTION" );
 
     if( pszProjName )
@@ -1576,7 +2140,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         {
             poSRS2->SetProjection( "Interrupted Goode Homolosine" );
         }
-
+        
         // ----------------------------------------------------------------
         // Translate projection's parameters to Oracle's standards
         // ----------------------------------------------------------------
@@ -1680,12 +2244,12 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     int nNewSRID = 0;
 
     const char *pszFuncName = "FIND_GEOG_CRS";
-
+  
     if( poSRS2->IsProjected() )
     {
         pszFuncName = "FIND_PROJ_CRS";
     }
-
+    
     poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  LIST SDO_SRID_LIST;"
@@ -1699,7 +2263,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         "END;",
             pszFuncName,
             pszCloneWKT ) );
-
+        
     poStmt->BindName( ":out", &nNewSRID );
 
     CPLPushErrorHandler( CPLQuietErrorHandler );
@@ -1719,14 +2283,14 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     // --------------------------------------------------------------------
     // Search by simplified WKT or insert it as a user defined SRS
     // --------------------------------------------------------------------
-
+    
     int nCounter = 0;
 
     poStmt = poConnection->CreateStatement( CPLSPrintf(
         "SELECT COUNT(*) FROM MDSYS.CS_SRS WHERE WKTEXT = '%s'", pszCloneWKT));
-
+    
     poStmt->Define( &nCounter );
-
+            
     CPLPushErrorHandler( CPLQuietErrorHandler );
 
     if( poStmt->Execute() && nCounter > 0 )
@@ -1739,7 +2303,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         if( poStmt->Execute() )
         {
             CPLPopErrorHandler();
-
+            
             poGeoRaster->SetGeoReference( nNewSRID );
             CPLFree( pszCloneWKT );
             return CE_None;
@@ -1747,7 +2311,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     }
 
     CPLPopErrorHandler();
-
+    
     poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  MAX_SRID NUMBER := 0;\n"
@@ -1770,24 +2334,24 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     if( poStmt->Execute() )
     {
         CPLPopErrorHandler();
-
+            
         poGeoRaster->SetGeoReference( nNewSRID );
     }
     else
     {
         CPLPopErrorHandler();
-
+            
         poGeoRaster->SetGeoReference( UNKNOWN_CRS );
 
         CPLError( CE_Warning, CPLE_UserInterrupt,
             "Insufficient privileges to insert reference system to "
             "table MDSYS.CS_SRS." );
-
+        
         eError = CE_Warning;
     }
 
     CPLFree( pszCloneWKT );
-
+    
     return eError;
 }
 
@@ -1858,7 +2422,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
         poStmt = poConnection->CreateStatement(
             "SELECT   DISTINCT TABLE_NAME, OWNER FROM ALL_SDO_GEOR_SYSDATA\n"
             "  ORDER  BY TABLE_NAME ASC" );
-
+        
         char szTable[OWNAME];
         char szOwner[OWNAME];
 
@@ -1907,7 +2471,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
 
         poStmt->Define( szColumn );
         poStmt->Define( szOwner );
-
+        
         if( poStmt->Execute() )
         {
             int nCount = 1;
@@ -1930,7 +2494,7 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
             }
             while( poStmt->Fetch() );
         }
-
+        
         return;
     }
 
@@ -2055,6 +2619,11 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
     (void) panBandList;
     (void) nListBands;
 
+    if( EQUAL( poGeoRaster->sCompressionType.c_str(), "JP2-F" ) )
+    {
+        return CE_None; // Ignore it, JP2 automatically has overviews
+    }
+
     //  ---------------------------------------------------------------
     //  Can't update on read-only access mode
     //  ---------------------------------------------------------------
@@ -2079,7 +2648,7 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
     {
         bInternal = false;
     }
-
+        
     //  -----------------------------------------------------------
     //  Pyramids applies to the whole dataset not to a specific band
     //  -----------------------------------------------------------
@@ -2168,7 +2737,7 @@ CPLErr GeoRasterDataset::IBuildOverviews( const char* pszResampling,
     //  -----------------------------------------------------------
     //  If Pyramid was done internally on the server exit here
     //  -----------------------------------------------------------
-
+    
     if( bInternal )
     {
         pfnProgress( 1 , NULL, pProgressData );
@@ -2258,7 +2827,7 @@ CPLErr GeoRasterDataset::CreateMaskBand( int /*nFlags*/ )
     {
         return CE_Failure;
     }
-
+    
     poGeoRaster->bHasBitmapMask = true;
 
     return CE_None;
@@ -2332,12 +2901,25 @@ void CPL_DLL GDALRegister_GEOR()
 "   </Option>"
 "  <Option name='COMPRESS'    type='string-select'>"
 "       <Value>NONE</Value>"
-"       <Value>JPEG-B</Value>"
 "       <Value>JPEG-F</Value>"
+"       <Value>JP2-F</Value>"
 "       <Value>DEFLATE</Value>"
 "  </Option>"
 "  <Option name='QUALITY'     type='int'    description='JPEG quality 0..100' "
                                            "default='75'/>"
+"  <Option name='JP2_QUALITY'     type='string' description='For JP2-F compression, single quality value or comma separated list "
+        "of increasing quality values for several layers, each in the 0-100 range' default='25'/>"
+"  <Option name='JP2_BLOCKXSIZE'  type='int' description='For JP2 compression, tile Width' default='1024'/>"
+"  <Option name='JP2_BLOCKYSIZE'  type='int' description='For JP2 compression, tile Height' default='1024'/>"
+"  <Option name='JP2_REVERSIBLE'  type='boolean' description='For JP2-F compression, True if the compression is reversible' default='false'/>"
+"  <Option name='JP2_RESOLUTIONS' type='int' description='For JP2-F compression, Number of resolutions.' min='1' max='30'/>"
+"  <Option name='JP2_PROGRESSION' type='string-select' description='For JP2-F compression, progression order' default='LRCP'>"
+"    <Value>LRCP</Value>"
+"    <Value>RLCP</Value>"
+"    <Value>RPCL</Value>"
+"    <Value>PCRL</Value>"
+"    <Value>CPRL</Value>"
+"  </Option>"
 "</CreationOptionList>" );
 
     poDriver->pfnOpen       = GeoRasterDataset::Open;
@@ -2347,4 +2929,6 @@ void CPL_DLL GDALRegister_GEOR()
     poDriver->pfnDelete     = GeoRasterDataset::Delete;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
+
+    VSIInstallOCILobHandler();
 }
