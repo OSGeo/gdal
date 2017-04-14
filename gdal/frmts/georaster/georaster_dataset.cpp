@@ -467,9 +467,7 @@ void GeoRasterDataset::JP2_CreateCopy( GDALDataset* poJP2DS,
     {
         char** papszOpt = NULL;
 
-        const char* pszFetched  = "";
-
-        pszFetched = CSLFetchNameValue( papszOptions, "JP2_BLOCKXSIZE" );
+        const char* pszFetched  = CSLFetchNameValue( papszOptions, "JP2_BLOCKXSIZE" );
 
         if( pszFetched )
         {
@@ -622,10 +620,9 @@ boolean GeoRasterDataset::JP2_CopyDirect( const char* pszJP2Filename,
             EQUAL( oBox.GetType(), "ftyp" ) ||
             EQUAL( oBox.GetType(), "jp2h" ) )
         {
-            size_t nSize = (size_t) 0;
             size_t nDataLength = (size_t) oBox.GetDataLength();
 
-            nSize = VSIFReadL( pBuffer, 1, nDataLength, fpInput);
+            size_t nSize = VSIFReadL( pBuffer, 1, nDataLength, fpInput);
  
             if ( nSize != nDataLength )
             {
