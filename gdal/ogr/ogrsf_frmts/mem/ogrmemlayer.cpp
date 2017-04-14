@@ -553,10 +553,10 @@ OGRErr OGRMemLayer::CreateField( OGRFieldDefn *poField,
 
     int *panRemap = static_cast<int *>(
         CPLMalloc(sizeof(int) * m_poFeatureDefn->GetFieldCount()) );
-    for( GIntBig i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i )
+    for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i )
     {
         if( i < m_poFeatureDefn->GetFieldCount() - 1 )
-            panRemap[i] = static_cast<int>(i);
+            panRemap[i] = i;
         else
             panRemap[i] = -1;
     }
