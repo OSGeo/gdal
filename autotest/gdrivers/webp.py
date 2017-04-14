@@ -142,7 +142,7 @@ def webp_5():
     out_ds = None
     gdal.Unlink('/vsimem/webp_5.webp')
 
-    if cs1 != 12603 and cs1 != 18536:
+    if cs1 != 12603 and cs1 != 18536 and cs1 != 14800:
         gdaltest.post_reason('did not get expected checksum on band 1')
         print(cs1)
         return 'fail'
