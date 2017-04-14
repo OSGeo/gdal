@@ -225,7 +225,7 @@ public:
     virtual OGRErr      CommitTransaction() override {return CE_None;};
     virtual OGRErr      RollbackTransaction() override {return CE_None;};
     
-    virtual char**      GetFileList();
+    virtual char**      GetFileList() override;
 
     void                AssignGeoRaster( GeoRasterWrapper* poGRW );
 };

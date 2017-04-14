@@ -44,7 +44,7 @@ CPL_CVSID("$Id$");
 GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
                                           int nBandIn,
                                           int nLevel,
-                                          GDALDataset* poJP2Dataset )
+                                          GDALDataset* poJP2DatasetIn )
 {
     poDS                = (GDALDataset*) poGDS;
     poGeoRaster         = poGDS->poGeoRaster;
@@ -66,7 +66,7 @@ GeoRasterRasterBand::GeoRasterRasterBand( GeoRasterDataset *poGDS,
     nNoDataArraySz      = 0;
     bHasNoDataArray     = false;
    
-    this->poJP2Dataset  = poJP2Dataset;
+    poJP2Dataset        = poJP2DatasetIn;
 
     //  -----------------------------------------------------------------------
     //  Initialize overview list

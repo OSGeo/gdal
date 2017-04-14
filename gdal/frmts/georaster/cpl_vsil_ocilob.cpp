@@ -48,9 +48,9 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
                                     const char *pszAccess,
-                                    bool bSetError );
+                                    bool bSetError ) override;
     virtual int               Stat( const char *pszFilename,
-                                    VSIStatBufL *pStatBuf, int nFlags );
+                                    VSIStatBufL *pStatBuf, int nFlags ) override;
 
 private:
 
@@ -83,12 +83,12 @@ class VSIOCILobHandle : public VSIVirtualHandle
                                        boolean bUpdateIn );
     virtual          ~VSIOCILobHandle();
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Close();
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Close() override;
 };
 
 // ****************************************************************************
@@ -159,7 +159,7 @@ char** WSIOCILobFSHandle::ParseIdentificator( const char* pszFilename )
 
 VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename, 
                                            const char* pszAccess,
-                                           bool bSetError )
+                                           bool /* bSetError*/ )
 {
     char** papszParam = ParseIdentificator( pszFilename );
 

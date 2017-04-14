@@ -2730,7 +2730,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
             VSIFSeekL( fpBlob, 0, SEEK_END );
 
-            size_t nBlobSize = VSIFTellL( fpBlob);
+            size_t nBlobSize = static_cast<size_t>(VSIFTellL( fpBlob));
             size_t nChunk = (size_t) ( GDALGetCacheMax() * 0.25 );
             size_t nSize = 0;
             size_t nCount = 0;
