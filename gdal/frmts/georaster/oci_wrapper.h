@@ -266,7 +266,7 @@ public:
                             const char* pszUserIn,
                             const char* pszPasswordIn,
                             const char* pszServerIn );
-                        OWConnection(
+    explicit            OWConnection(
                             OCIExtProcContext* poWithContext );
     virtual            ~OWConnection();
 
