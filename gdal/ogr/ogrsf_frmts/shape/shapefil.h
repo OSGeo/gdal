@@ -46,6 +46,12 @@
 
 #ifdef USE_CPL
 #include "cpl_conv.h"
+
+/* Hide shapelib symbols in GDAL builds --with-hide-internal-symbols */
+#if !defined(SHPAPI_CALL) && defined(USE_GCC_VISIBILITY_FLAG)
+#define SHPAPI_CALL
+#endif
+
 #endif
 
 #ifdef __cplusplus
