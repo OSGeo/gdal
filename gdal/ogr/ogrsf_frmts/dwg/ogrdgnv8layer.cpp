@@ -1432,20 +1432,20 @@ OGRErr OGRDGNV8Layer::DeleteFeature(GIntBig nFID)
     catch (const OdError& e)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Teigha DGN error ocurred: %s",
+                 "Teigha DGN error occurred: %s",
                  ToUTF8(e.description()).c_str());
         return OGRERR_FAILURE;
     }
     catch (const std::exception &exc)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "std::exception ocurred: %s", exc.what());
+                 "std::exception occurred: %s", exc.what());
         return OGRERR_FAILURE;
     }
     catch (...)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unknown exception ocurred");
+                 "Unknown exception occurred");
         return OGRERR_FAILURE;
     }
     m_poDS->SetModified();
@@ -1568,20 +1568,20 @@ OGRErr OGRDGNV8Layer::ICreateFeature( OGRFeature *poFeature )
     catch (const OdError& e)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Teigha DGN error ocurred: %s",
+                 "Teigha DGN error occurred: %s",
                  ToUTF8(e.description()).c_str());
         return OGRERR_FAILURE;
     }
     catch (const std::exception &exc)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "std::exception ocurred: %s", exc.what());
+                 "std::exception occurred: %s", exc.what());
         return OGRERR_FAILURE;
     }
     catch (...)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unknown exception ocurred");
+                 "Unknown exception occurred");
         return OGRERR_FAILURE;
     }
 

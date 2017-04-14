@@ -322,7 +322,7 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
  * Reference counting semantics on the source and grid datasets should be
  * honoured. That is, don't just GDALClose() it, unless it was opened with
  * GDALOpenShared(), but rather use GDALReleaseDataset() if wanting to
- * immmediately release the reference(s) and make the returned dataset the
+ * immediately release the reference(s) and make the returned dataset the
  * owner of them.
  *
  * Valid use cases:
@@ -344,7 +344,7 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
  * @param hSrcDataset source (DEM) dataset. Must not be NULL.
  * @param hGridDataset vertical grid shift dataset. Must not be NULL.
  * @param bInverse if set to FALSE, hGridDataset values will be added to
- *                 hSrcDataset. If set to TRUE, they will be substracted.
+ *                 hSrcDataset. If set to TRUE, they will be subtracted.
  * @param dfSrcUnitToMeter the factor to convert values from hSrcDataset to
  *                         meters (1.0 if source values are in meter).
  * @param dfDstUnitToMeter the factor to convert shifted values from meter
@@ -651,7 +651,7 @@ static CPLString GetProj4Filename(const char* pszFilename)
  *
  * @param pszProj4Geoidgrids Value of proj.4 geoidgrids parameter.
  * @param pbError If not NULL, the pointed value will be set to TRUE if an
- *                eror occured.
+ *                error occurred.
  *
  * @return a dataset. If not NULL, it must be closed with GDALClose().
  *

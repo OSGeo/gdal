@@ -633,7 +633,7 @@ GPKG driver:
  * SQLite/GPKG: add explicit error message when trying to open a read-only WAL-enabled database (#6776)
  * SQLite/GPKG: make sure when closing a WAL-enabled database opened in read-only mode to reopen it in read-write mode so that the -wal and -shm files are removed (#6776)
  * make GetFeature() works on non conformant tables that have no integer primary key field (#6799), and be robust to non standard column types
- * remove trigers related to metadata tables that cause issues and have been removed by latest revisions of the spec.
+ * remove triggers related to metadata tables that cause issues and have been removed by latest revisions of the spec.
  * declare feature id column of features tables and tile pyramid user data tables as NOT NULL (#6807)
  * add a gpkg_ogr_contents table to store feature count.
  * speed-up GetFeatureCount() with only a spatial filter set

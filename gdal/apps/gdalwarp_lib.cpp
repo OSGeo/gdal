@@ -478,9 +478,9 @@ static bool Is3DGeogcs( const OGRSpatialReference& oSRS )
 static GDALDatasetH ApplyVerticalShiftGrid( GDALDatasetH hWrkSrcDS,
                                             const GDALWarpAppOptions* psOptions,
                                             GDALDatasetH hVRTDS,
-                                            bool& bErrorOccuredOut )
+                                            bool& bErrorOccurredOut )
 {
-    bErrorOccuredOut = false;
+    bErrorOccurredOut = false;
     // Check if we must do vertical shift grid transform
     double adfGT[6];
     const char* pszSrcWKT = CSLFetchNameValueDef(
@@ -589,7 +589,7 @@ static GDALDatasetH ApplyVerticalShiftGrid( GDALDatasetH hWrkSrcDS,
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Cannot open %s.", pszSrcProj4Geoids);
-                    bErrorOccuredOut = true;
+                    bErrorOccurredOut = true;
                     CSLDestroy(papszOptions);
                     return hWrkSrcDS;
                 }
@@ -602,7 +602,7 @@ static GDALDatasetH ApplyVerticalShiftGrid( GDALDatasetH hWrkSrcDS,
                     GDALReleaseDataset(hGridDataset);
                     if( hTmpDS == NULL )
                     {
-                        bErrorOccuredOut = true;
+                        bErrorOccurredOut = true;
                         CSLDestroy(papszOptions);
                         return hWrkSrcDS;
                     }
@@ -636,7 +636,7 @@ static GDALDatasetH ApplyVerticalShiftGrid( GDALDatasetH hWrkSrcDS,
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Cannot open %s.", pszDstProj4Geoids);
-                    bErrorOccuredOut = true;
+                    bErrorOccurredOut = true;
                     CSLDestroy(papszOptions);
                     return hWrkSrcDS;
                 }
@@ -649,7 +649,7 @@ static GDALDatasetH ApplyVerticalShiftGrid( GDALDatasetH hWrkSrcDS,
                     GDALReleaseDataset(hGridDataset);
                     if( hTmpDS == NULL )
                     {
-                        bErrorOccuredOut = true;
+                        bErrorOccurredOut = true;
                         CSLDestroy(papszOptions);
                         return hWrkSrcDS;
                     }
@@ -1247,12 +1247,12 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
         if( !psOptions->bNoVShiftGrid )
         {
-            bool bErrorOccured = false;
+            bool bErrorOccurred = false;
             hWrkSrcDS = ApplyVerticalShiftGrid( hWrkSrcDS,
                                                 psOptions,
                                                 bVRT ? hDstDS : NULL,
-                                                bErrorOccured );
-            if( bErrorOccured )
+                                                bErrorOccurred );
+            if( bErrorOccurred )
             {
                 GDALDestroyTransformer( hTransformArg );
                 GDALWarpAppOptionsFree(psOptions);

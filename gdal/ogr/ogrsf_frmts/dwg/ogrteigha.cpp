@@ -90,7 +90,7 @@ bool OGRTEIGHAInitialize()
     catch ( ... )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "An exception ocurred in OGRTEIGHAInitialize()");
+                 "An exception occurred in OGRTEIGHAInitialize()");
     }
     return bInitSuccess;
 }

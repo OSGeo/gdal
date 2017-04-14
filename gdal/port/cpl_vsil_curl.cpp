@@ -4975,7 +4975,7 @@ void VSIInstallS3FileHandler( void )
  * A special file handler is installed that allows on-the-fly random reading of
  * non-public files available in Google Cloud Storage buckets, without prior
  * download of the entire file.
- * Read-only suport for now.
+ * Read-only support for now.
  *
  * Recognized filenames are of the form /vsigs/bucket/key where
  * bucket is the name of the bucket and key the object "key", i.e.

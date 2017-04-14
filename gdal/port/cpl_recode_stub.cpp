@@ -1222,7 +1222,7 @@ int utf8locale( void )
         ret = GetACP() == CP_UTF8;
 #else
         char* s;
-        ret = 1; // assumme UTF-8 if no locale
+        ret = 1; // assume UTF-8 if no locale
         if( ((s = getenv("LC_CTYPE")) && *s) ||
             ((s = getenv("LC_ALL"))   && *s) ||
             ((s = getenv("LANG"))     && *s) )
