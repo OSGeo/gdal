@@ -119,9 +119,10 @@ gdal_translate -of georaster landsat_825.tif
 geor:scott/tiger@orcl,landsat,raster \<br>
 &nbsp; -co INSERT="(ID, RASTER) VALUES (2,</span><span style="font-family: Courier New,Courier,monospace;"></span><span style="font-family: Courier New,Courier,monospace;">SDO_GEOR.INIT()</span><span style="font-family: Courier New,Courier,monospace;"></span><span style="font-family: Courier New,Courier,monospace;">)"</span><br>
 <ul>
-  <li><strong>COMPRESS</strong>: Compression options, JPEG-F,
-DEFLATE or NONE. The two JPEG options are lossy, meaning that the
-original pixel values are changed.</li>
+  <li><strong>COMPRESS</strong>: Compression options, JPEG-F, JP2-F,
+DEFLATE or NONE. The JPEG-F options is lossy, meaning that the
+original pixel values are changed. The JP2-F compression is lossless
+if JP2_QUALITY=100.</li>
   <li><strong>GENPYRAMID</strong>: Generate pyramid after a GeoRaster object have been loaded to the database.
 The content of that parameter must be the resampling method of
 choice NN (nearest neighbor) , BILINEAR, BIQUADRATIC, CUBIC, AVERAGE4 or AVERAGE16. If GENPYRLEVELS is not
@@ -130,6 +131,41 @@ informed the PL/SQL function sdo_geor.generatePyramid will calculate the number 
 If GENPYRAMID is not informed the resample method NN (nearest neighbor) will apply.</li>
   <li><strong>QUALITY</strong>: Quality compression option for JPEG
 ranging from 0 to 100. The default is 75.</li>
+
+
+<li><p><b>JP2_QUALITY=float_value,float_value,...</b> 
+Only if COMPRESS=JP2-f 
+: Percentage between 0 and 100.
+A value of 50 means the file will be half-size in comparison to uncompressed data,
+33 means 1/3, etc.. Defaults to 25 (unless the dataset is made of a single band
+with color table, in which case the default quality is 100).
+</li>
+
+<li><p><b>JP2_REVERSIBLE=YES/NO</b> 
+Only if COMPRESS=JP2-f 
+: YES means use of reversible 5x3 integer-only
+filter, NO use of the irreversible DWT 9-7. Defaults to NO  (unless the dataset
+is made of a single band with color table, in which case reversible filter is
+used).</p></li>
+
+<li><p><b>JP2_RESOLUTIONS=int_value</b> 
+Only if COMPRESS=JP2-f 
+: Number of resolution levels. Default value
+is selected such the smallest overview of a tile is no bigger than 128x128.</p></li>
+
+<li><p><b>JP2_BLOCKXSIZE=int_value</b> 
+Only if COMPRESS=JP2-f 
+: Tile width. Defaults to 1024.</p></li>
+
+<li><p><b>JP2_BLOCKYSIZE=int_value</b> 
+Only if COMPRESS=JP2-f 
+: Tile height. Defaults to 1024.</p></li>
+
+<li><p><b>JP2_PROGRESSION=LRCP/RLCP/RPCL/PCRL/CPRL</b> 
+Only if COMPRESS=JP2-f 
+: Progession order. Defaults
+to LRCP.</p></li>
+
   <li><strong>NBITS</strong>: Sub byte data type, options: 1, 2 or 4.</li>
   <li><strong>SPATIALEXTENT</strong>: Generate Spatial Extents. The default for that options is
 TRUE, that means that this option only need to be informed to force the Spatial Extent to
