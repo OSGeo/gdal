@@ -213,9 +213,9 @@ CPLErr GeoRasterRasterBand::IReadBlock( int nBlockXOff,
     if( poJP2Dataset )
     {
         int nXOff      = nBlockXOff * poGeoRaster->nColumnBlockSize;
-	int nYOff      = nBlockYOff * poGeoRaster->nRowBlockSize;
-	int nXSize     = poGeoRaster->nColumnBlockSize;
-	int nYSize     = poGeoRaster->nRowBlockSize;
+        int nYOff      = nBlockYOff * poGeoRaster->nRowBlockSize;
+        int nXSize     = poGeoRaster->nColumnBlockSize;
+        int nYSize     = poGeoRaster->nRowBlockSize;
         int nBufXSize  = nBlockXSize;
         int nBufYSize  = nBlockYSize;
 
@@ -259,9 +259,9 @@ CPLErr GeoRasterRasterBand::IWriteBlock( int nBlockXOff,
     if( poJP2Dataset )
     {
         int nXOff      = nBlockXOff * poGeoRaster->nColumnBlockSize;
-	int nYOff      = nBlockYOff * poGeoRaster->nRowBlockSize;
-	int nXSize     = poGeoRaster->nColumnBlockSize;
-	int nYSize     = poGeoRaster->nRowBlockSize;
+        int nYOff      = nBlockYOff * poGeoRaster->nRowBlockSize;
+        int nXSize     = poGeoRaster->nColumnBlockSize;
+        int nYSize     = poGeoRaster->nRowBlockSize;
         int nBufXSize  = nBlockXSize;
         int nBufYSize  = nBlockYSize;
 

@@ -659,6 +659,7 @@ OWStatement::OWStatement( OWConnection* pConnect, const char* pszStatement )
     nNextCol        = 0;
     nNextBnd        = 0;
     hError          = poConnection->hError;
+    nFetchCount     = 0;
 
     //  -----------------------------------------------------------
     //  Create Statement handler
