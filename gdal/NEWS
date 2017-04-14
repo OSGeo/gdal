@@ -67,7 +67,7 @@ Build(Unix):
  * configure: update DWG support to work with Teigha libraries
 
 Build(Windows):
- * Try to avoid confusiong between libqhull io.h and mingw own io.h (#6590)
+ * Try to avoid confusion between libqhull io.h and mingw own io.h (#6590)
  * update script to generate most recent Visual C++ project files (#6635)
  * fix broken and missing dependencies in makefile.vc
  * add a way to use an external zlib (github #171)
@@ -263,8 +263,8 @@ GPKG driver:
 
 GTiff driver:
  * support SPARSE_OK=YES in CreateCopy() mode (and in update mode with the SPARSE_OK=YES open option), by actively detecting blocks filled with 0/nodata about to be written
- * When writing missing blocks (ie non SPARSE case), use the nodata value when defined. Otherwise fallback to 0 as before.
- * in FillEmptyTiles() (ie in the TIFF non-sparse mode), avoid writing zeroes to file so as to speed up file creation when filesystem supports ... sparse files
+ * When writing missing blocks (i.e. non SPARSE case), use the nodata value when defined. Otherwise fallback to 0 as before.
+ * in FillEmptyTiles() (i.e. in the TIFF non-sparse mode), avoid writing zeroes to file so as to speed up file creation when filesystem supports ... sparse files
  * add write support for half-precision floating point (Float32 with NBITS=16)
  * handle storing (and reading) band color interpretation in GDAL internal metadata when it doesn't match the capabilities of the TIFF format, such as B,G,R ordering (#6651)
  * Fix RasterIO() reported when downsampling a RGBA JPEG compressed TIFF file (#6943)
@@ -348,7 +348,7 @@ JP2ECW driver:
  * fix crash when translating a Float64 raster (at least with SDK 3.3)
 
 JP2KAK driver:
- * add support for Kakadu v7.8
+ * add support for Kakadu v7.9.  v7.8 should not be used.  It has a bug fixed in v7.9
  * catch exceptions in jp2_out.write_header()
 
 JP2OpenJPEG driver:
@@ -531,8 +531,8 @@ if operating on two layers with same geom dim.
  * OGREnvelope: change initialization to fix issue when getting MULTIPOINT(0 0,1 1) envelope (#6841)
 
 OGRSpatialReference:
- * Upgrade to EPSG database v8.9
- * OGRCT: upgrade LIBNAME of mingw and cygwin to libproj-9.dll and cygproj-9.dll to be uptodate with proj 4.9.X (recommended method is using ./configure --with-static-proj4 instead) (#6501)
+ * Upgrade to EPSG database v9.0 (#6772)
+ * OGRCT: upgrade LIBNAME of mingw and cygwin to libproj-9.dll and cygproj-9.dll to be up-to-date with proj 4.9.X (recommended method is using ./configure --with-static-proj4 instead) (#6501)
  * importFromESRI(): fix import of multi line MERCATOR SRS (#6523)
  * morphToESRI(): correctly compute standard_parallel_1 of Mercator(2SP) projection from scale factor of Mercator(1SP) (#6456, #4861)
  * exportToProj4(): recognize explicit OSR_USE_ETMERC=NO to avoid using etmerc with proj >= 4.9.3
