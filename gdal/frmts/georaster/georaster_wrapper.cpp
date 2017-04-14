@@ -64,7 +64,6 @@ GeoRasterWrapper::GeoRasterWrapper() :
     dfYCoefficient[0]   = 0.0;
     dfYCoefficient[1]   = 1.0;
     dfYCoefficient[2]   = 0.0;
-    sCompressionType    = "NONE";
     nCompressQuality    = 75;
     bGenPyramid         = false;
     nPyramidLevels      = 0;
@@ -73,6 +72,7 @@ GeoRasterWrapper::GeoRasterWrapper() :
     pabyCompressBuf     = NULL;
     bIsReferenced       = false;
     poBlockStmt         = NULL;
+    poStmtWrite         = NULL;
     nCacheBlockId       = -1;
     nCurrentLevel       = -1;
     pahLevels           = NULL;
