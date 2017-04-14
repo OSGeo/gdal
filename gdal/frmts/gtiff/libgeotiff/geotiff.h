@@ -38,11 +38,11 @@
 /**********************************************************************
  * Do we want to build as a DLL on windows?
  **********************************************************************/
-#if !defined(CPL_DLL)
+#if !defined(GTIF_DLL)
 #  if defined(_WIN32) && defined(BUILD_AS_DLL)
-#    define CPL_DLL     __declspec(dllexport)
+#    define GTIF_DLL     __declspec(dllexport)
 #  else
-#    define CPL_DLL
+#    define GTIF_DLL
 #  endif
 #endif
 
@@ -85,36 +85,36 @@ typedef enum {
  **********************************************************************/
 
 /* TIFF-level interface */
-GTIF CPL_DLL *GTIFNew(void *tif);
-GTIF CPL_DLL *GTIFNewSimpleTags(void *tif);
-GTIF CPL_DLL *GTIFNewWithMethods(void *tif, TIFFMethod*);
-void CPL_DLL  GTIFFree(GTIF *gtif);
-int  CPL_DLL  GTIFWriteKeys(GTIF *gtif);
-void CPL_DLL  GTIFDirectoryInfo(GTIF *gtif, int *versions, int *keycount);
+GTIF GTIF_DLL *GTIFNew(void *tif);
+GTIF GTIF_DLL *GTIFNewSimpleTags(void *tif);
+GTIF GTIF_DLL *GTIFNewWithMethods(void *tif, TIFFMethod*);
+void GTIF_DLL  GTIFFree(GTIF *gtif);
+int  GTIF_DLL  GTIFWriteKeys(GTIF *gtif);
+void GTIF_DLL  GTIFDirectoryInfo(GTIF *gtif, int *versions, int *keycount);
 
 /* GeoKey Access */
-int  CPL_DLL  GTIFKeyInfo(GTIF *gtif, geokey_t key, int *size, tagtype_t* type);
-int  CPL_DLL  GTIFKeyGet(GTIF *gtif, geokey_t key, void *val, int index,
+int  GTIF_DLL  GTIFKeyInfo(GTIF *gtif, geokey_t key, int *size, tagtype_t* type);
+int  GTIF_DLL  GTIFKeyGet(GTIF *gtif, geokey_t key, void *val, int index,
                          int count);
-int  CPL_DLL  GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type,
+int  GTIF_DLL  GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type,
                          int count,...);
 
 /* Metadata Import-Export utilities */
-void  CPL_DLL  GTIFPrint(GTIF *gtif, GTIFPrintMethod print, void *aux);
-int   CPL_DLL  GTIFImport(GTIF *gtif, GTIFReadMethod scan, void *aux);
-char  CPL_DLL *GTIFKeyName(geokey_t key);
-char  CPL_DLL *GTIFValueName(geokey_t key,int value);
-char  CPL_DLL *GTIFTypeName(tagtype_t type);
-char  CPL_DLL *GTIFTagName(int tag);
-int   CPL_DLL  GTIFKeyCode(char * key);
-int   CPL_DLL  GTIFValueCode(geokey_t key,char *value);
-int   CPL_DLL  GTIFTypeCode(char *type);
-int   CPL_DLL  GTIFTagCode(char *tag);
+void  GTIF_DLL  GTIFPrint(GTIF *gtif, GTIFPrintMethod print, void *aux);
+int   GTIF_DLL  GTIFImport(GTIF *gtif, GTIFReadMethod scan, void *aux);
+char  GTIF_DLL *GTIFKeyName(geokey_t key);
+char  GTIF_DLL *GTIFValueName(geokey_t key,int value);
+char  GTIF_DLL *GTIFTypeName(tagtype_t type);
+char  GTIF_DLL *GTIFTagName(int tag);
+int   GTIF_DLL  GTIFKeyCode(char * key);
+int   GTIF_DLL  GTIFValueCode(geokey_t key,char *value);
+int   GTIF_DLL  GTIFTypeCode(char *type);
+int   GTIF_DLL  GTIFTagCode(char *tag);
 
 /* Translation between image/PCS space */
 
-int CPL_DLL    GTIFImageToPCS( GTIF *gtif, double *x, double *y );
-int CPL_DLL    GTIFPCSToImage( GTIF *gtif, double *x, double *y );
+int GTIF_DLL    GTIFImageToPCS( GTIF *gtif, double *x, double *y );
+int GTIF_DLL    GTIFPCSToImage( GTIF *gtif, double *x, double *y );
 
 #if defined(__cplusplus)
 }

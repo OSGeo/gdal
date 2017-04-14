@@ -57,20 +57,20 @@ extern "C" {
 /**********************************************************************
  * Do we want to build as a DLL on windows?
  **********************************************************************/
-#if !defined(CPL_DLL)
+#if !defined(GTIF_DLL)
 #  if defined(_WIN32) && defined(BUILD_AS_DLL)
-#    define CPL_DLL     __declspec(dllexport)
+#    define GTIF_DLL     __declspec(dllexport)
 #  else
-#    define CPL_DLL
+#    define GTIF_DLL
 #  endif
 #endif
 
-extern void CPL_DLL XTIFFInitialize(void);
-extern TIFF CPL_DLL * XTIFFOpen(const char* name, const char* mode);
-extern TIFF CPL_DLL * XTIFFFdOpen(int fd, const char* name, const char* mode);
-extern void CPL_DLL XTIFFClose(TIFF *tif);
+extern void GTIF_DLL XTIFFInitialize(void);
+extern TIFF GTIF_DLL * XTIFFOpen(const char* name, const char* mode);
+extern TIFF GTIF_DLL * XTIFFFdOpen(int fd, const char* name, const char* mode);
+extern void GTIF_DLL XTIFFClose(TIFF *tif);
 
-extern TIFF CPL_DLL * XTIFFClientOpen(const char* name, const char* mode,
+extern TIFF GTIF_DLL * XTIFFClientOpen(const char* name, const char* mode,
                                       thandle_t thehandle,
                                       TIFFReadWriteProc, TIFFReadWriteProc,
                                       TIFFSeekProc, TIFFCloseProc,
