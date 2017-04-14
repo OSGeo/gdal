@@ -767,6 +767,10 @@ if test "$with_hide_internal_symbols" = "yes"; then
         AC_MSG_RESULT([yes])
         CFLAGS="$CFLAGS -fvisibility=hidden"
         CXXFLAGS="$CXXFLAGS -fvisibility=hidden"
+        CFLAGS_NOFTRAPV="$CFLAGS_NOFTRAPV -fvisibility=hidden"
+        CXXFLAGS_NOFTRAPV="$CXXFLAGS_NOFTRAPV -fvisibility=hidden"
+        CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT -fvisibility=hidden"
+        CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT="$CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT -fvisibility=hidden"
     else
         AC_MSG_RESULT([no])
     fi
