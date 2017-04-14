@@ -79,7 +79,7 @@ static bool parseURN( char *pszURN,
 /*      Extract object type                                             */
 /* -------------------------------------------------------------------- */
     if( ppszObjectType != NULL )
-        *ppszObjectType = (const char *) pszURN + 12;
+        *ppszObjectType = pszURN + 12;
 
     int i = 12;
     while( pszURN[i] != ':' && pszURN[i] != '\0' )
@@ -95,7 +95,7 @@ static bool parseURN( char *pszURN,
 /*      Extract authority                                               */
 /* -------------------------------------------------------------------- */
     if( ppszAuthority != NULL )
-        *ppszAuthority = (char *) pszURN + i;
+        *ppszAuthority = pszURN + i;
 
     while( pszURN[i] != ':' && pszURN[i] != '\0' )
         i++;
@@ -110,7 +110,7 @@ static bool parseURN( char *pszURN,
 /*      Extract version                                                 */
 /* -------------------------------------------------------------------- */
     if( ppszVersion != NULL )
-        *ppszVersion = (char *) pszURN + i;
+        *ppszVersion = pszURN + i;
 
     while( pszURN[i] != ':' && pszURN[i] != '\0' )
         i++;
@@ -125,7 +125,7 @@ static bool parseURN( char *pszURN,
 /*      Extract code.                                                   */
 /* -------------------------------------------------------------------- */
     if( ppszCode != NULL )
-        *ppszCode = (char *) pszURN + i;
+        *ppszCode = pszURN + i;
 
     return true;
 }
