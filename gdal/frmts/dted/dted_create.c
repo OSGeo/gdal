@@ -114,7 +114,7 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
 {
     VSILFILE     *fp;
     unsigned char achRecord[3601*2 + 12];
-    int         nXSize, nYSize, iProfile;
+    int         nXSize, nYSize, nReferenceLat, iProfile;
     static char szError[512];
 
 /* -------------------------------------------------------------------- */
@@ -142,13 +142,15 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
         return szError;
     }
 
-    if( ABS(nLLOriginLat) >= 80 )
+    nReferenceLat = nLLOriginLat < 0 ? - (nLLOriginLat + 1) : nLLOriginLat;
+
+    if( nReferenceLat >= 80 )
         nXSize = (nXSize - 1) / 6 + 1;
-    else if( ABS(nLLOriginLat) >= 75 )
+    else if( nReferenceLat >= 75 )
         nXSize = (nXSize - 1) / 4 + 1;
-    else if( ABS(nLLOriginLat) >= 70 )
+    else if( nReferenceLat >= 70 )
         nXSize = (nXSize - 1) / 3 + 1;
-    else if( ABS(nLLOriginLat) >= 50 )
+    else if( nReferenceLat >= 50 )
         nXSize = (nXSize - 1) / 2 + 1;
 
 /* -------------------------------------------------------------------- */
