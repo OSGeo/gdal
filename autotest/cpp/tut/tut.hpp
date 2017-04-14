@@ -346,7 +346,7 @@ public:
             return false;
         }
 
-        // withing scope; check if given test exists
+        // within scope; check if given test exists
         tests_iterator ti = tests_.find(n);
         if (ti == tests_.end())
         {

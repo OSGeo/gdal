@@ -1689,7 +1689,7 @@ char** CPLGetConfigOptions(void)
   * This does not affect options set through environment variables or with
   * CPLSetThreadLocalConfigOption().
   *
-  * The passed list is copied by the funtion.
+  * The passed list is copied by the function.
   *
   * @param papszConfigOptions the new list (or NULL).
   *
@@ -1868,7 +1868,7 @@ char** CPLGetThreadLocalConfigOptions(void)
   * This does not affect options set through environment variables or with
   * CPLSetConfigOption().
   *
-  * The passed list is copied by the funtion.
+  * The passed list is copied by the function.
   *
   * @param papszConfigOptions the new list (or NULL).
   *

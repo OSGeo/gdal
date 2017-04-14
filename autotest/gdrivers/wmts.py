@@ -1675,12 +1675,12 @@ def wmts_23( imagetype, expected_cs ):
 
     tmp_ds = gdal.Open( 'data/wms/' + imagetype + '.png' )
     if tmp_ds is None:
-        gdaltest.post_reason('fail - cant open tmp_ds')
+        gdaltest.post_reason('fail - cannot open tmp_ds')
         return 'fail'
 
     tile0_ds = gdal.GetDriverByName('PNG').CreateCopy(serviceUrl + '/0/0/0.png', tmp_ds )
     if tile0_ds is None:
-        gdaltest.post_reason('fail - cant create tile0')
+        gdaltest.post_reason('fail - cannot create tile0')
         return 'fail'
 
     ds = gdal.Open('WMTS:' + inputXml )

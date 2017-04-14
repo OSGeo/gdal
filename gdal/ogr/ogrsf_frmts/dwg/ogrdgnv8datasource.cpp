@@ -86,18 +86,18 @@ void OGRDGNV8DataSource::FlushCache()
     catch (const OdError& e)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Teigha DGN error ocurred: %s",
+                 "Teigha DGN error occurred: %s",
                  ToUTF8(e.description()).c_str());
     }
     catch (const std::exception &exc)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "std::exception ocurred: %s", exc.what());
+                 "std::exception occurred: %s", exc.what());
     }
     catch (...)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unknown exception ocurred");
+                 "Unknown exception occurred");
     }
 }
 
@@ -118,20 +118,20 @@ int OGRDGNV8DataSource::Open( const char * pszFilename, bool bUpdate )
     catch (const OdError& e)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Teigha DGN error ocurred: %s",
+                 "Teigha DGN error occurred: %s",
                  ToUTF8(e.description()).c_str());
         return FALSE;
     }
     catch (const std::exception &exc)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "std::exception ocurred: %s", exc.what());
+                 "std::exception occurred: %s", exc.what());
         return FALSE;
     }
     catch (...)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unknown exception ocurred");
+                 "Unknown exception occurred");
         return FALSE;
     }
 
@@ -421,20 +421,20 @@ bool OGRDGNV8DataSource::PreCreate( const char *pszFilename,
     catch (const OdError& e)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Teigha DGN error ocurred: %s",
+                 "Teigha DGN error occurred: %s",
                  ToUTF8(e.description()).c_str());
         return false;
     }
     catch (const std::exception &exc)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "std::exception ocurred: %s", exc.what());
+                 "std::exception occurred: %s", exc.what());
         return false;
     }
     catch (...)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unknown exception ocurred");
+                 "Unknown exception occurred");
         return false;
     }
 
@@ -598,20 +598,20 @@ OGRLayer *OGRDGNV8DataSource::ICreateLayer( const char *pszLayerName,
     catch (const OdError& e)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Teigha DGN error ocurred: %s",
+                 "Teigha DGN error occurred: %s",
                  ToUTF8(e.description()).c_str());
         return NULL;
     }
     catch (const std::exception &exc)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "std::exception ocurred: %s", exc.what());
+                 "std::exception occurred: %s", exc.what());
         return NULL;
     }
     catch (...)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unknown exception ocurred");
+                 "Unknown exception occurred");
         return NULL;
     }
     

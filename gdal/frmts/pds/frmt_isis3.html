@@ -193,7 +193,7 @@ FORCE_360 options).</li>
 ISIS3 conversions. Defaults to YES.</li>
 <li> <b>USE_SRC_MAPPING</b>=YES/NO. Whether to use Mapping group from source
 label in ISIS3 to ISIS3 conversions. Defaults to NO (that is to say that the
-conent of Mapping group will be created from new dataset geotransform and
+content of Mapping group will be created from new dataset geotransform and
 projection). Only used if USE_SRC_LABEL=YES</li>
 <li> <b>USE_SRC_HISTORY</b>=YES/NO. Whether to use the content pointed by the
 source History object in ISIS3 to ISIS3 conversions, and write it to the new
@@ -228,7 +228,7 @@ label = json.loads( src_ds.GetMetadata_List('json:ISIS3')[0] )
 # Update parameter
 label["IsisCube"]["Mapping"]["TargetName"] = "Moon"
 
-# Instanciate new raster
+# Instantiate new raster
 # Note the USE_SRC_MAPPING=YES creation option, since we modified the
 # IsisCube.Mapping section, which otherwise is completely rewritten from
 # the geotransform and projection attached to the output dataset.

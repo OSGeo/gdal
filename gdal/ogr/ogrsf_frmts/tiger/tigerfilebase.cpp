@@ -365,7 +365,7 @@ bool TigerFileBase::WriteRecord( char *pachRecord, int nRecLen,
 
     /*
      * Prior to TIGER_2002, type 5 files lacked the version.  So write
-     * the version in the record iff we're using TIGER_2002 or higher,
+     * the version in the record if we're using TIGER_2002 or higher,
      * or if this is not type "5"
      */
     if ( (poDS->GetVersion() >= TIGER_2002) ||

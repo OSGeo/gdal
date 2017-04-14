@@ -1504,7 +1504,7 @@ def test_gdalwarp_lib_135():
         return 'fail'
 
 
-    # Forward transform with explict m unit
+    # Forward transform with explicit m unit
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
     sr = osr.SpatialReference()
@@ -1521,7 +1521,7 @@ def test_gdalwarp_lib_135():
         print(data)
         return 'fail'
 
-    # Forward transform with explict ft unit
+    # Forward transform with explicit ft unit
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1, gdal.GDT_Float32)
     src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
     sr = osr.SpatialReference()
@@ -1538,7 +1538,7 @@ def test_gdalwarp_lib_135():
         print(data)
         return 'fail'
 
-    # Forward transform with explict unhandled unit
+    # Forward transform with explicit unhandled unit
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
     sr = osr.SpatialReference()
