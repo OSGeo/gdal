@@ -170,14 +170,15 @@ VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
 
     if( ! EQUAL( papszParam[5], "noext" ) )
     {
+        CSLDestroy( papszParam );
         return NULL;
     }
 
-    this->poConnection = new OWConnection( papszParam[0],
-                                           papszParam[1],
-                                           papszParam[2] );
+    poConnection = new OWConnection( papszParam[0],
+                                     papszParam[1],
+                                     papszParam[2] );
 
-    if( ! this->poConnection->Succeeded() )
+    if( ! poConnection->Succeeded() )
     {
         CSLDestroy( papszParam );
         return NULL;
@@ -189,15 +190,15 @@ VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
     if( strchr(pszAccess, 'w') != NULL ||
         strchr(pszAccess, '+') != NULL )
     {
-        pszUpdate = CPLStrdup( "for update" );
+        pszUpdate = "for update";
         bUpdate = true;
     }
 
-    this->poStatement = this->poConnection->CreateStatement( CPLSPrintf( 
+    poStatement = poConnection->CreateStatement( CPLSPrintf( 
                     "select rasterblock from %s where rasterid = %s and rownum = 1 %s", 
                     papszParam[3], papszParam[4], pszUpdate ) );
 
-    poStatement->Define( &this->phLocator );
+    poStatement->Define( &phLocator );
 
     CSLDestroy( papszParam );
 
