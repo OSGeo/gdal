@@ -208,12 +208,12 @@ GDALDataType GH5_GetDataType(hid_t TypeID)
         return GDT_Float32;
     else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
         return GDT_Float64;
+#ifdef notdef
     else if( H5Tequal(H5T_NATIVE_LLONG,  TypeID) )
         return GDT_Unknown;
     else if( H5Tequal(H5T_NATIVE_ULLONG, TypeID) )
         return GDT_Unknown;
-    else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
-        return GDT_Unknown;
+#endif
 
     return GDT_Unknown;
 }
