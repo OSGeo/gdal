@@ -2723,10 +2723,25 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             bGEOR_reshape == false )
         {
 
-            char* pszVsiOciLob = papszGEOR_files[0];
+            const char* pszVsiOciLob = papszGEOR_files[0];
 
             VSILFILE *fpBlob = VSIFOpenL( pszVsiOciLob, "r" );
+            if( fpBlob == NULL )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s",
+                         pszVsiOciLob);
+                delete poGMLJP2Box;
+                return NULL;
+            }
             VSILFILE* fp = VSIFOpenL( pszFilename, "w+b" );
+            if( fp == NULL )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot create %s",
+                         pszFilename);
+                delete poGMLJP2Box;
+                VSIFCloseL(fpBlob);
+                return NULL;
+            }
 
             VSIFSeekL( fpBlob, 0, SEEK_END );
 
@@ -2735,7 +2750,14 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             size_t nSize = 0;
             size_t nCount = 0;
 
-            void *pBuffer = (GByte*) VSIMalloc( sizeof(GByte) * nChunk );
+            void *pBuffer = (GByte*) VSI_MALLOC_VERBOSE( nChunk );
+            if( pBuffer == NULL )
+            {
+                delete poGMLJP2Box;
+                VSIFCloseL(fpBlob);
+                VSIFCloseL( fp );
+                return NULL;
+            }
 
             VSIFSeekL( fpBlob, 0, SEEK_SET );
 
@@ -2755,8 +2777,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             /* Return the GDALDaset object */
 
             GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
-            JP2OpenJPEGDataset *poDS = (JP2OpenJPEGDataset*)
-                                       JP2OpenJPEGDataset::Open(&oOpenInfo);
+            GDALDataset *poDS = JP2OpenJPEGDataset::Open(&oOpenInfo);
 
             /* Copy essential metadata */
 
@@ -2774,7 +2795,8 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                 poDS->SetProjection( pszWKT );
             }
 
-            return (GDALDataset*) poDS;
+            delete poGMLJP2Box;
+            return poDS;
         }
     }
 
