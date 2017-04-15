@@ -1971,12 +1971,21 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         poDS->InitRaster ( NULL, nMaxLevel, nBands,
                            dfMinX, dfMinY, dfMaxX, dfMaxY );
 
+        const char* pszFormat = poDS->GetMetadataItem("format");
+        if( pszFormat != NULL && EQUAL(pszFormat, "pbf") )
+        {
+            CPLDebug("MBTiles",
+                     "This files contain vector tiles, "
+                     "not supported by this driver");
+            delete poDS;
+            return NULL;
+        }
+
         if( poDS->eAccess == GA_Update )
         {
             // So that we can edit all potential overviews
             nMinLevel = 0;
 
-            const char* pszFormat = poDS->GetMetadataItem("format");
             if( pszFormat != NULL && (EQUAL(pszFormat, "jpg") || EQUAL(pszFormat, "jpeg")) )
             {
                 poDS->m_eTF = GPKG_TF_JPEG;
