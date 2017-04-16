@@ -2622,6 +2622,12 @@ CPLErr MBTilesDataset::IBuildOverviews(
     GDALRasterBand*** papapoOverviewBands = (GDALRasterBand ***) CPLCalloc(sizeof(void*),nBands);
     int iCurOverview = 0;
     int nMinZoom = m_nZoomLevel;
+    for( int i = 0; i < m_nOverviewCount; i++ )
+    {
+        MBTilesDataset* poODS = m_papoOverviewDS[i];
+        if( poODS->m_nZoomLevel < nMinZoom )
+            nMinZoom = poODS->m_nZoomLevel;
+    }
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
         papapoOverviewBands[iBand] = (GDALRasterBand **) CPLCalloc(sizeof(void*),nOverviews);
@@ -2640,8 +2646,6 @@ CPLErr MBTilesDataset::IBuildOverviews(
                 continue;
             }
             MBTilesDataset* poODS = m_papoOverviewDS[iOvr];
-            if( poODS->m_nZoomLevel < nMinZoom )
-                nMinZoom = poODS->m_nZoomLevel;
             papapoOverviewBands[iBand][iCurOverview] = poODS->GetRasterBand(iBand+1);
             iCurOverview++ ;
         }
