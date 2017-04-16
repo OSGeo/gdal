@@ -1385,7 +1385,7 @@ bool VRTDerivedRasterBand::InitializePython()
     PyObject* poCompiledString = Py_CompileString(
         ("import numpy\n"
         "def GDALCreateNumpyArray(buffer, dtype, height, width):\n"
-        "    return numpy.frombuffer(buffer, dtype.decode('ascii'))."
+        "    return numpy.frombuffer(buffer, str(dtype.decode('ascii')))."
                                                 "reshape([height, width])\n"
         "\n" + m_poPrivate->m_osCode).c_str(),
         osModuleName, Py_file_input);
