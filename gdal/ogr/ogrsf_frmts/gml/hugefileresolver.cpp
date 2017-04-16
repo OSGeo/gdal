@@ -58,8 +58,7 @@ CPL_CVSID("$Id$");
 /*      support the HUGE xlink:href resolver        */
 /****************************************************/
 
-// sqlite3_clear_bindings() isn't available in old versions of sqlite3.
-#if defined(HAVE_SQLITE) && SQLITE_VERSION_NUMBER >= 3006000
+#ifdef HAVE_SQLITE
 
 // Internal helper struct supporting GML tags <Edge>.
 struct huge_tag
