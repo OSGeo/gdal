@@ -99,7 +99,7 @@ static const int BUCKET_SECTOR_SIZE_ARRAY_SIZE = 1024;
 
 // Must be a multiple of both BUCKET_BITMAP_SIZE and
 // BUCKET_SECTOR_SIZE_ARRAY_SIZE
-static const int PAGE_SIZE = 4096;
+static const int knPAGE_SIZE = 4096;
 
 // compressSize should not be greater than 512, so COMPRESS_SIZE_TO_BYTE() fits
 // on a byte.
@@ -378,13 +378,13 @@ OGROSMDataSource::~OGROSMDataSource()
         {
             if( bCompressNodes )
             {
-                int nRem = i % (PAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
+                int nRem = i % (knPAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
                 if( nRem == 0 )
                     CPLFree(papsBuckets[i].u.panSectorSize);
             }
             else
             {
-                int nRem = i % (PAGE_SIZE / BUCKET_BITMAP_SIZE);
+                int nRem = i % (knPAGE_SIZE / BUCKET_BITMAP_SIZE);
                 if( nRem == 0 )
                     CPLFree(papsBuckets[i].u.pabyBitmap);
             }
@@ -533,10 +533,10 @@ bool OGROSMDataSource::AllocBucket( int iBucket )
 {
     if( bCompressNodes )
     {
-        const int nRem = iBucket % (PAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
+        const int nRem = iBucket % (knPAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
         if( papsBuckets[iBucket - nRem].u.panSectorSize == NULL )
             papsBuckets[iBucket - nRem].u.panSectorSize =
-                static_cast<GByte*>(VSI_CALLOC_VERBOSE(1, PAGE_SIZE));
+                static_cast<GByte*>(VSI_CALLOC_VERBOSE(1, knPAGE_SIZE));
         if( papsBuckets[iBucket - nRem].u.panSectorSize != NULL )
         {
             papsBuckets[iBucket].u.panSectorSize =
@@ -548,10 +548,10 @@ bool OGROSMDataSource::AllocBucket( int iBucket )
     }
     else
     {
-        const int nRem = iBucket % (PAGE_SIZE / BUCKET_BITMAP_SIZE);
+        const int nRem = iBucket % (knPAGE_SIZE / BUCKET_BITMAP_SIZE);
         if( papsBuckets[iBucket - nRem].u.pabyBitmap == NULL )
             papsBuckets[iBucket - nRem].u.pabyBitmap =
-                reinterpret_cast<GByte *>(VSI_CALLOC_VERBOSE(1, PAGE_SIZE));
+                reinterpret_cast<GByte *>(VSI_CALLOC_VERBOSE(1, knPAGE_SIZE));
         if( papsBuckets[iBucket - nRem].u.pabyBitmap != NULL )
         {
             papsBuckets[iBucket].u.pabyBitmap =
