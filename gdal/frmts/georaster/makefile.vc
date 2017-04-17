@@ -5,7 +5,8 @@ GDAL_ROOT = ..\..
 OBJ = oci_wrapper.obj \
       georaster_dataset.obj \
       georaster_rasterband.obj \
-      georaster_wrapper.obj
+      georaster_wrapper.obj \
+      cpl_vsil_ocilob.obj
 
 PLUGIN_DLL = gdal_GEOR.dll
 
@@ -18,7 +19,14 @@ JPEG_LIB   = ..\jpeg\libjpeg\libjpeg.lib
 !ENDIF
 !ENDIF
 
-EXTRAFLAGS = $(OCI_INCLUDE) -I..\zlib $(JPEG_FLAGS)
+!IFDEF ZLIB_EXTERNAL_LIB
+ZLIB_FLAGS = $(ZLIB_INC)
+!ELSE
+ZLIB_FLAGS = -I..\zlib
+ZLIB_LIB = ..\zlib\*.obj
+!ENDIF
+
+EXTRAFLAGS = $(OCI_INCLUDE) $(ZLIB_FLAGS) $(JPEG_FLAGS)
 
 default: $(OBJ)
 	xcopy /D  /Y *.obj ..\o
@@ -37,7 +45,7 @@ clean:
 plugin:	$(PLUGIN_DLL)
 
 $(PLUGIN_DLL): $(OBJ)
-	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(OCI_LIB) ..\zlib\*.obj \
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(OCI_LIB) $(ZLIB_LIB) \
 	..\jpeg\vsidataio.obj $(JPEG_LIB)
 	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
 
