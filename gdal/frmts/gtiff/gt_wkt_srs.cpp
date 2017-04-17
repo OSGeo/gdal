@@ -91,17 +91,13 @@ CPL_C_END
 
 static const char * const papszDatumEquiv[] =
 {
-    "Militar_Geographische_Institut",
-    "Militar_Geographische_Institute",
-    "World_Geodetic_System_1984",
-    "WGS_1984",
-    "WGS_72_Transit_Broadcast_Ephemeris",
-    "WGS_1972_Transit_Broadcast_Ephemeris",
-    "World_Geodetic_System_1972",
-    "WGS_1972",
-    "European_Terrestrial_Reference_System_89",
-    "European_Reference_System_1989",
-    NULL
+  "Militar_Geographische_Institut", "Militar_Geographische_Institute",
+  "World_Geodetic_System_1984", "WGS_1984",
+  "WGS_72_Transit_Broadcast_Ephemeris", "WGS_1972_Transit_Broadcast_Ephemeris",
+  "World_Geodetic_System_1972", "WGS_1972",
+  "European_Terrestrial_Reference_System_89", "European_Reference_System_1989",
+  "D_North_American_1927", "North_American_Datum_1927", // #6863
+  NULL
 };
 
 // Older libgeotiff's won't list this.
