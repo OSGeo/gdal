@@ -202,7 +202,7 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
     if( CPLFetchBool(poOpenInfo->papszOpenOptions,
                                 "SHIFT_ORIGIN_IN_MINUS_180_PLUS_180", false) )
     {
-        if( poDS->adfGeoTransform[0] < -180.0 )
+        if( poDS->adfGeoTransform[0] < -180.0 - poDS->adfGeoTransform[1] )
             poDS->adfGeoTransform[0] += 360.0;
         else if( poDS->adfGeoTransform[0] > 180.0 )
             poDS->adfGeoTransform[0] -= 360.0;
