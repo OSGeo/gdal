@@ -372,13 +372,62 @@ def applyverticalshiftgrid_5():
 
     return 'success'
 
+###############################################################################
+# Simulate EGM grids
+
+def applyverticalshiftgrid_6():
+
+    grid_ds = gdal.GetDriverByName('GTX').Create(
+        '/vsimem/applyverticalshiftgrid_6.gtx', 1440, 721, 1, gdal.GDT_Float32)
+    grid_ds.SetGeoTransform([-180.125,0.25,0,90.125,0,-0.25])
+    grid_ds.GetRasterBand(1).Fill(10)
+    grid_ds = None
+
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM',
+                   dstSRS = '+proj=utm +zone=11 +datum=NAD27 +geoidgrids=/vsimem/applyverticalshiftgrid_6.gtx +vunits=m +no_defs')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4783:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/applyverticalshiftgrid_6.gtx')
+
+    return 'success'
+
+###############################################################################
+# Simulate USA geoid grids with long origin > 180
+
+def applyverticalshiftgrid_7():
+
+    grid_ds = gdal.GetDriverByName('GTX').Create(
+        '/vsimem/applyverticalshiftgrid_7.gtx', 700, 721, 1, gdal.GDT_Float32)
+    grid_ds.SetGeoTransform([-150 + 360,0.25,0,90.125,0,-0.25])
+    grid_ds.GetRasterBand(1).Fill(10)
+    grid_ds = None
+
+    ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM',
+                   dstSRS = '+proj=utm +zone=11 +datum=NAD27 +geoidgrids=/vsimem/applyverticalshiftgrid_7.gtx +vunits=m +no_defs')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4783:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+
+    gdal.Unlink('/vsimem/applyverticalshiftgrid_7.gtx')
+
+    return 'success'
+
 
 gdaltest_list = [
     applyverticalshiftgrid_1,
     applyverticalshiftgrid_2,
     applyverticalshiftgrid_3,
     applyverticalshiftgrid_4,
-    applyverticalshiftgrid_5
+    applyverticalshiftgrid_5,
+    applyverticalshiftgrid_6,
+    applyverticalshiftgrid_7
 ]
 
 if __name__ == '__main__':
