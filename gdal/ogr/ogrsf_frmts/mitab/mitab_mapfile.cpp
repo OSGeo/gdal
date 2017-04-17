@@ -2956,8 +2956,8 @@ void TABMAPFile::ResetCoordFilter()
 
     ORDER_MIN_MAX(m_XMinFilter, m_XMaxFilter);
     ORDER_MIN_MAX(m_YMinFilter, m_YMaxFilter);
-    ORDER_MIN_MAX(m_sMinFilter. x,m_sMaxFilter.x);
-    ORDER_MIN_MAX(m_sMinFilter. y,m_sMaxFilter.y);
+    ORDER_MIN_MAX(m_sMinFilter.x, m_sMaxFilter.x);
+    ORDER_MIN_MAX(m_sMinFilter.y, m_sMaxFilter.y);
 }
 
 /**********************************************************************
