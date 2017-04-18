@@ -5622,6 +5622,7 @@ static int _TIFFFillStrilesInternal( TIFF *tif, int loadStripByteCount )
             !TIFFFetchStripThing(tif,&(td->td_stripbytecount_entry),
                                  td->td_nstrips,&td->td_stripbytecount))
         {
+            if( tif->tif_dir.td_nstrips > 1 )
                 return_value = 0;
         }
 
