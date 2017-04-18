@@ -30,7 +30,6 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
-#include "netcdfdataset.h"
 
 #include <cctype>
 #include <cerrno>
@@ -46,6 +45,10 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+// Must be included after standard includes, otherwise VS2015 fails when
+// including <ctime>
+#include "netcdfdataset.h"
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
