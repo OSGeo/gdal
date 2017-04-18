@@ -2125,7 +2125,7 @@ OGRErr OGRCSVLayer::WriteHeader()
                     {
                         bOK &= VSIFPrintfL(fpCSVT, "%s", "Real") > 0;
                     }
-	                    break;
+                    break;
                 }
                 case OFTDate:
                     bOK &= VSIFPrintfL(fpCSVT, "%s", "Date") > 0;
