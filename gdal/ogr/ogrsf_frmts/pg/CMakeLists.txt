@@ -4,6 +4,7 @@
 # * Author: Dmitriy Baryshnikov (aka Bishop), polimax@mail.ru
 # ******************************************************************************
 # * Copyright (C) 2013 Bishop
+# * Copyright (C) 2017 Hiroshi Miura
 # * 
 # * Permission is hereby granted, free of charge, to any person obtaining a
 # * copy of this software and associated documentation files (the "Software"),
@@ -32,13 +33,6 @@ project ("lib${LIB_NAME}")
 include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr)  
 include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr/ogrsf_frmts)  
 
-find_package(POSTGRES REQUIRED)
-if(POSTGRES_FOUND)
-	include_directories(${POSTGRES_INCLUDE_DIR})
-	add_definitions(-DHAVE_PG)
-	set(GDAL_HAVE_PG ON CACHE INTERNAL "GDAL_HAVE_PG")
-endif(POSTGRES_FOUND)
-
 set(LIB_INST_HEADERS
 	ogr_pg.h
 )
@@ -56,15 +50,24 @@ set(LIB_CSOURCES
 	ogrpgutility.cpp
 )
 
-set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
-add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
+if(OGR_ENABLE_PG)
+    find_package(POSTGRES REQUIRED)
+    if(POSTGRES_FOUND)
+        include_directories(${POSTGRES_INCLUDE_DIR})
+        add_definitions(-DHAVE_PG)
+        set(GDAL_HAVE_PG ON CACHE INTERNAL "GDAL_HAVE_PG")
+    endif(POSTGRES_FOUND)
 
-if(POSTGRES_FOUND)
-    if(WIN32)
-		set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} ${POSTGRES_LIBRARY} Ws2_32.lib Secur32.lib PARENT_SCOPE)
-	else(WIN32)	
-		set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} ${POSTGRES_LIBRARY} PARENT_SCOPE)
-    endif(WIN32)
-endif(POSTGRES_FOUND)
+    set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
+    add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
 
-install(FILES ${LIB_INST_HEADERS} DESTINATION include/gdal)
+    if(POSTGRES_FOUND)
+        if(WIN32)
+            set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} ${POSTGRES_LIBRARY} Ws2_32.lib Secur32.lib PARENT_SCOPE)
+        else(WIN32)
+            set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} ${POSTGRES_LIBRARY} PARENT_SCOPE)
+        endif(WIN32)
+    endif(POSTGRES_FOUND)
+
+    install(FILES ${LIB_INST_HEADERS} DESTINATION include/gdal)
+endif()

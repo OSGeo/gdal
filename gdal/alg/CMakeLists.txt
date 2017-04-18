@@ -56,46 +56,49 @@ if(GDAL_PAM_ENABLED)
 endif(GDAL_PAM_ENABLED)
 
 include_directories(${GDAL_ROOT_SOURCE_DIR}/gcore)
-include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr)
-include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr/ogrsf_frmts)
+include_directories(${GDAL_ROOT_SOURCE_DIR}/frmts/vrt)
 
 set(LIB_HHEADERS
-    gdalgrid.h
-    gdalwarper.h
-    gdal_alg.h
-    gdal_alg_priv.h
-    gvgcpfit.h
-    thinplatespline.h 
-	gdal_simplesurf.h
+        gdalgrid.h
+        gdalwarper.h
+        gdal_alg.h
+        gdal_alg_priv.h
+        gdalgrid.h
+        gdalgrid_priv.h
+        gvgcpfit.h
+        thinplatespline.h
+        gdal_simplesurf.h
 )
 
 set(LIB_CSOURCES
-    contour.cpp
-    gdalchecksum.cpp
-    gdalcutline.cpp
-    gdaldither.cpp
-    gdalgeoloc.cpp
-    gdalgrid.cpp
-    gdalmediancut.cpp
-    gdalproximity.cpp
-    gdalrasterize.cpp
-    gdalrasterpolygonenumerator.cpp
-    gdalsievefilter.cpp
-    gdalsimplewarp.cpp
-    gdaltransformer.cpp
-    gdalwarper.cpp
-    gdalwarpkernel.cpp
-    gdalwarpoperation.cpp
-    gdal_crs.c
-    #gdal_nrgcrs.c
-    gdal_rpc.cpp
-    gdal_tps.cpp
-    llrasterize.cpp
-    polygonize.cpp
-    rasterfill.cpp
-    thinplatespline.cpp 
-	gdal_simplesurf.cpp
-	gdal_octave.cpp
+        contour.cpp
+        delaunay.c
+        gdal_crs.c
+        gdal_nrgcrs.c
+        gdal_octave.cpp
+        gdal_rpc.cpp
+        gdal_tps.cpp
+        gdalchecksum.cpp
+        gdalcutline.cpp
+        gdaldither.cpp
+        gdalgeoloc.cpp
+        gdalgrid.cpp
+        gdalmediancut.cpp
+        gdalproximity.cpp
+        gdalrasterize.cpp
+        gdalrasterpolygonenumerator.cpp
+        gdalsievefilter.cpp
+        gdalsimplewarp.cpp
+        gdaltransformer.cpp
+        gdalwarper.cpp
+        gdalwarpkernel.cpp
+        gdalwarpoperation.cpp
+        #gdal_nrgcrs.c
+        llrasterize.cpp
+        polygonize.cpp
+        rasterfill.cpp
+        thinplatespline.cpp
+        gdal_simplesurf.cpp
 )
 
 find_package(OpenCL)
@@ -109,9 +112,21 @@ if(OPENCL_FOUND)
 	)
 	
 	set(LIB_CSOURCES
-		gdalwarpkernel_opencl.c
+		gdalwarpkernel_opencl.cpp
 	)
 endif(OPENCL_FOUND)
+
+option(GDAL_QHULL_INTERNAL "use internal qhull libs" ON)
+if(GDAL_QHULL_INTERNAL)
+    add_definitions(-DINTERNAL_QHULL)
+    include_directories(internal_libqhull)
+    set(LIB_HHEADERS ${LIB_HHEADERS}
+            internal_qhull_headers.h
+       )
+else()
+    add_definitions(-DEXTERNAL_QHULL)
+    add_definitions(-DQHULL_INCLUDE_SUBDIR_IS_LIBQHULL=${QHULL_INCLUDE_SUBDIR_IS_LIBQHULL})
+endif()
 
 set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
 add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})

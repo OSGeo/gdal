@@ -4,6 +4,7 @@
 # * Author: Dmitriy Baryshnikov (aka Bishop), polimax@mail.ru
 # ******************************************************************************
 # * Copyright (C) 2013 Bishop
+# * Copyright (C) 2017 Hiroshi Miura
 # * 
 # * Permission is hereby granted, free of charge, to any person obtaining a
 # * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +25,7 @@
 # * DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-cmake_minimum_required (VERSION 2.8.10)
+cmake_minimum_required (VERSION 2.8.12)
 
 set(LIB_NAME "ogrsf_kml")
 project ("lib${LIB_NAME}")
@@ -33,34 +34,36 @@ include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr)
 include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr/ogrsf_frmts)  
 
 set(LIB_HHEADERS
-	ogr_kml.h
+	    ogr_kml.h
 )
 
 set(LIB_CSOURCES
-	ogr2kmlgeometry.cpp
-	ogrkmldatasource.cpp
-	ogrkmldriver.cpp
-	ogrkmllayer.cpp
+        ogr2kmlgeometry.cpp
+        ogrkmldatasource.cpp
+        ogrkmldriver.cpp
+        ogrkmllayer.cpp
 )
 
-if(EXPAT_FOUND)
-set(LIB_HHEADERS ${LIB_HHEADERS}
-	kml.h
-	kmlnode.h
-	kmlutility.h
-	kmlvector.h
-)
+if(OGR_ENABLE_KML)
+    if(EXPAT_FOUND)
+        set(LIB_HHEADERS ${LIB_HHEADERS}
+                kml.h
+                kmlnode.h
+                kmlutility.h
+                kmlvector.h
+        )
 
-set(LIB_CSOURCES ${LIB_CSOURCES}
-	kml.cpp
-	kmlnode.cpp
-	kmlvector.cpp
-)
-endif(EXPAT_FOUND)
+        set(LIB_CSOURCES ${LIB_CSOURCES}
+                kml.cpp
+                kmlnode.cpp
+                kmlvector.cpp
+        )
+    endif(EXPAT_FOUND)
 
-set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
-add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
+    set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
+    add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
 
-if(EXPAT_FOUND)
-	set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} ${EXPAT_LIBRARIES} PARENT_SCOPE)
-endif(EXPAT_FOUND)
+    if(EXPAT_FOUND)
+        set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} ${EXPAT_LIBRARIES} PARENT_SCOPE)
+    endif(EXPAT_FOUND)
+endif()

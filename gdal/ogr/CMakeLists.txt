@@ -83,6 +83,7 @@ set(LIB_INST_HEADERS
 	ogr_p.h
 	ogr_spatialref.h
 	ogr_srs_api.h
+    ogr_sfcgal.h
 )
 
 set(LIB_HHEADERS ${LIB_INST_HEADERS}
@@ -95,10 +96,14 @@ set(LIB_HHEADERS ${LIB_INST_HEADERS}
     swq.h
     osr_cs_wkt.h
     osr_cs_wkt_parser.h
+	ogr_geocoding.h
+    ogr_json_header.h
+    ogr_libs.h
+    ogr_xerces_headers.h
 )
 
 set(LIB_CSOURCES
-    gml2ogrgeometry.cpp 
+    gml2ogrgeometry.cpp
     ogr2gmlgeometry.cpp 
     ograssemblepolygon.cpp
     ogrct.cpp 
@@ -121,7 +126,8 @@ set(LIB_CSOURCES
     ogrspatialreference.cpp 
     ogrsurface.cpp
     ogrutils.cpp
-    ogr_api.cpp 
+    ogr_api.cpp
+    ograpispy.cpp
     # #ogr_capi_test.c
     ogr_fromepsg.cpp
     ogr_opt.cpp 
@@ -146,7 +152,18 @@ set(LIB_CSOURCES
     swq_select.cpp 
     ogrgeomediageometry.cpp 
 	ogrpgeogeometry.cpp 
-    ogrfeaturequery.cpp 
+    ogrfeaturequery.cpp
+	ogr_geocoding.cpp
+    ogr_xerces.cpp
+    ogrcircularstring.cpp
+    ogrcompoundcurve.cpp
+    ogrcurvecollection.cpp
+    ogrcurvepolygon.cpp
+    ogrmulticurve.cpp
+    ogrmultisurface.cpp
+    ogrpolyhedralsurface.cpp
+    ogrtriangle.cpp
+    ogrtriangulatedsurface.cpp
 )
 
 # needed packages

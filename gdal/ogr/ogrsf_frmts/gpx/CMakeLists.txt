@@ -4,7 +4,8 @@
 # * Author: Dmitriy Baryshnikov (aka Bishop), polimax@mail.ru
 # ******************************************************************************
 # * Copyright (C) 2013 Bishop
-# * 
+# * Copyright (C) 2017 Hiroshi Miura
+# *
 # * Permission is hereby granted, free of charge, to any person obtaining a
 # * copy of this software and associated documentation files (the "Software"),
 # * to deal in the Software without restriction, including without limitation
@@ -42,10 +43,12 @@ set(LIB_CSOURCES
 	ogrgpxlayer.cpp	
 )
 
-if(EXPAT_FOUND)
-	add_definitions(-DHAVE_EXPAT=1)
-	include_directories(${EXPAT_INCLUDE_DIRS})
-endif(EXPAT_FOUND)
+if(OGR_ENABLE_GPX)
+    if(EXPAT_FOUND)
+        add_definitions(-DHAVE_EXPAT=1)
+        include_directories(${EXPAT_INCLUDE_DIRS})
+    endif(EXPAT_FOUND)
 
-set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
-add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
+    set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
+    add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
+endif()

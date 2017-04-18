@@ -4,7 +4,8 @@
 # * Author: Dmitriy Baryshnikov (aka Bishop), polimax@mail.ru
 # ******************************************************************************
 # * Copyright (C) 2012,2013 Bishop
-# * 
+# * Copyright (C) 2017 Hiroshi Miura
+# *
 # * Permission is hereby granted, free of charge, to any person obtaining a
 # * copy of this software and associated documentation files (the "Software"),
 # * to deal in the Software without restriction, including without limitation
@@ -24,7 +25,7 @@
 # * DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-cmake_minimum_required (VERSION 2.8.10)
+cmake_minimum_required (VERSION 2.8.12)
 
 set(LIB_NAME "ogrsf_gml")
 project ("lib${LIB_NAME}")
@@ -38,57 +39,68 @@ if(EXPAT_FOUND)
     include_directories(${EXPAT_INCLUDE_DIRS})
     add_definitions(-DHAVE_EXPAT)
 	set(GDAL_HAVE_EXPAT ON CACHE INTERNAL "GDAL_HAVE_EXPAT")
-endif(EXPAT_FOUND)
+endif()
 
-# ifeq ($(HAVE_XERCES),yes)
-# CPPFLAGS +=  -DHAVE_XERCES
-# endif
+find_package(XercesC)
+if(XercesC_FOUND)
+    include_directories(${XercesC_INCLUDE_DIRS})
+    add_definitions(-DHAVE_XERCES)
+    set(GDAL_HAVE_XERCES ON CACHE INTERNAL "GDAL_HAVE_XERCES")
+endif()
 
 find_package(Sqlite3)
 if(SQLITE3_FOUND)
     include_directories(${SQLITE3_INCLUDE_DIR})
     add_definitions(-DHAVE_SQLITE)
-	set(GDAL_HAVE_SQLITE ON CACHE INTERNAL "GDAL_HAVE_SQLITE")
-endif(SQLITE3_FOUND)
+    set(GDAL_HAVE_SQLITE ON CACHE INTERNAL "GDAL_HAVE_SQLITE")
+endif()
 
 set(LIB_HHEADERS
-	gmlreader.h
-	gmlreaderp.h
+    gmlreader.h
+    gmlreaderp.h
     gmlregistry.h
-	gmlutils.h
-	ogr_gml.h
-	parsexsd.h
+    gmlutils.h
+    ogr_gml.h
+    parsexsd.h
+    xercesc_headers.h
 )
 
 set(LIB_CSOURCES
-	gfstemplate.cpp
-	gmlfeature.cpp
-	gmlfeatureclass.cpp
-	gmlhandler.cpp
-	gmlpropertydefn.cpp
-	gmlreader.cpp
-	gmlreadstate.cpp
+    gfstemplate.cpp
+    gmlfeature.cpp
+    gmlfeatureclass.cpp
+    gmlhandler.cpp
+    gmlpropertydefn.cpp
+    gmlreader.cpp
+    gmlreadstate.cpp
     gmlregistry.cpp
-	gmlutils.cpp
-	hugefileresolver.cpp
-	ogrgmldatasource.cpp
-	ogrgmldriver.cpp
-	ogrgmllayer.cpp
-	parsexsd.cpp
-	resolvexlinks.cpp
+    gmlutils.cpp
+    hugefileresolver.cpp
+    ogrgmldatasource.cpp
+    ogrgmldriver.cpp
+    ogrgmllayer.cpp
+    parsexsd.cpp
+    resolvexlinks.cpp
 )
 
-set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
-add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})	
+if(OGR_ENABLE_GML)
+    set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
+    add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
 
-set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB})
+    set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB})
 
-if(EXPAT_FOUND)
-	set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} ${EXPAT_LIBRARIES})
-endif(EXPAT_FOUND)
+    if(EXPAT_FOUND)
+        set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} ${EXPAT_LIBRARIES})
+    endif()
 
-if(SQLITE3_FOUND)
-	set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} ${SQLITE3_LIBRARY})
-endif(SQLITE3_FOUND)
+    if(XERCES_FOUND)
+        set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} ${XercesC_LIBRARIES})
+    endif()
 
-set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} PARENT_SCOPE)
+    if(SQLITE3_FOUND)
+        set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} ${SQLITE3_LIBRARY})
+    endif()
+
+    set(GDAL_TARGET_LINK_LIB ${GDAL_TARGET_LINK_LIB} PARENT_SCOPE)
+endif()
+

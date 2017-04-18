@@ -4,7 +4,8 @@
 # * Author: Dmitriy Baryshnikov (aka Bishop), polimax@mail.ru
 # ******************************************************************************
 # * Copyright (C) 2013 Bishop
-# * 
+# * Copyright (C) 2017 Hiroshi Miura
+## *
 # * Permission is hereby granted, free of charge, to any person obtaining a
 # * copy of this software and associated documentation files (the "Software"),
 # * to deal in the Software without restriction, including without limitation
@@ -24,19 +25,14 @@
 # * DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-cmake_minimum_required (VERSION 2.8.10)
+cmake_minimum_required (VERSION 2.8.12)
 
 set(LIB_NAME "ogrsf_shp")
 project ("lib${LIB_NAME}")
 
 include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr)  
 include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr/ogrsf_frmts)  
-include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr/ogrsf_frmts/generic)  
-add_definitions(-DDSHAPELIB_DLLEXPORT -DSAOffset=vsi_l_offset)
-
-if(GDAL_USE_CPL)
-	add_definitions(-DUSE_CPL)
-endif(GDAL_USE_CPL)
+include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr/ogrsf_frmts/generic)
 
 set(LIB_HHEADERS
     ogrshape.h
@@ -55,5 +51,13 @@ set(LIB_CSOURCES
 	sbnsearch.c
 )
 
-set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
-add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
+if(OGR_ENABLE_SHP)
+    add_definitions(-DDSHAPELIB_DLLEXPORT -DSAOffset=vsi_l_offset)
+
+    if(GDAL_USE_CPL)
+        add_definitions(-DUSE_CPL)
+    endif(GDAL_USE_CPL)
+
+    set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
+    add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
+endif()

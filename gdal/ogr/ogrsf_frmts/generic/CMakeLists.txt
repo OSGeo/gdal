@@ -4,6 +4,7 @@
 # * Author: Dmitriy Baryshnikov (aka Bishop), polimax@mail.ru
 # ******************************************************************************
 # * Copyright (C) 2012 Bishop
+# * Copyright (C) 2017 Hiroshi Miura
 # * 
 # * Permission is hereby granted, free of charge, to any person obtaining a
 # * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +25,7 @@
 # * DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-cmake_minimum_required (VERSION 2.8.10)
+cmake_minimum_required (VERSION 2.8.12)
 
 set(LIB_NAME "ogrsf_generic")
 project ("lib${LIB_NAME}")
@@ -33,21 +34,36 @@ include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr)
 include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr/ogrsf_frmts)  
 
 set(LIB_HHEADERS
-    ogr_gensql.h
-)
+        ogr_gensql.h
+		ogreditablelayer.h
+		ogremulatedtransaction.h
+		ogrmutexeddatasource.h
+		ogrmutexedlayer.h
+		ogrwarpedlayer.h
+    )
 
 set(LIB_CSOURCES
-	ogrsfdriverregistrar.cpp
-	ogrlayer.cpp
-	ogrdatasource.cpp
-	ogrsfdriver.cpp
-	ogrregisterall.cpp
-	ogr_gensql.cpp
-	ogr_attrind.cpp
-	ogr_miattrind.cpp
+        ogrsfdriverregistrar.cpp
+        ogrlayer.cpp
+        ogrdatasource.cpp
+        ogrsfdriver.cpp
+        ogrregisterall.cpp
+        ogr_gensql.cpp
+        ogr_attrind.cpp
+        ogr_miattrind.cpp
+        ogrwarpedlayer.cpp
+        ogrunionlayer.cpp
+        ogrlayerpool.cpp
+        ogrlayerdecorator.cpp
+		ogreditablelayer.cpp
+		ogremulatedtransaction.cpp
+        ogrmutexeddatasource.cpp
+        ogrmutexedlayer.cpp
 )
 
-set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
-add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
+if(GDAL_ENABLE_OGR)
+    set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
+    add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
 
-install(FILES ${LIB_HHEADERS} DESTINATION include/gdal)
+    install(FILES ${LIB_HHEADERS} DESTINATION include/gdal)
+endif()

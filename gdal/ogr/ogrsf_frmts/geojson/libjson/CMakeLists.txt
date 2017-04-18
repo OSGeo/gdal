@@ -31,27 +31,34 @@ project ("lib${LIB_NAME}")
 
 
 set(LIB_HHEADERS
-    arraylist.h
-	bits.h
-	config.h
-	debug.h
-	json.h
-	json_object.h
-	json_object_private.h
-	json_tokener.h
-	json_util.h
-	linkhash.h
-	printbuf.h
+        arraylist.h
+        bits.h
+        config.h
+        debug.h
+        json.h
+        json_c_version.h
+        json_config.h
+        json_inttypes.h
+        json_object.h
+        json_object_private.h
+        json_tokener.h
+        json_util.h
+        linkhash.h
+        json_object_iterator.h
+        printbuf.h
+        symbol_renames.h
 )
 
 set(LIB_CSOURCES	
-	arraylist.c
-	debug.c	
-	json_object.c
-	json_tokener.c
-	json_util.c
-	linkhash.c
-	printbuf.c
+        arraylist.c
+        debug.c
+        json_c_version.c
+        json_object.c
+        json_object_iterator.c
+        json_tokener.c
+        json_util.c
+        linkhash.c
+        printbuf.c
 )
 
 set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)

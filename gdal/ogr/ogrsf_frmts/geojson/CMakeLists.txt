@@ -4,6 +4,7 @@
 # * Author: Dmitriy Baryshnikov (aka Bishop), polimax@mail.ru
 # ******************************************************************************
 # * Copyright (C) 2013 Bishop
+# * Copyright (C) 2017 Hiroshi Miura
 # * 
 # * Permission is hereby granted, free of charge, to any person obtaining a
 # * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +25,7 @@
 # * DEALINGS IN THE SOFTWARE.
 # ******************************************************************************
 
-cmake_minimum_required (VERSION 2.8.10)
+cmake_minimum_required (VERSION 2.8.12)
 
 set(LIB_NAME "ogrsf_geojson")
 project ("lib${LIB_NAME}")
@@ -33,6 +34,8 @@ include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr)
 include_directories(${GDAL_ROOT_SOURCE_DIR}/ogr/ogrsf_frmts)  
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libjson)
+
+add_subdirectory(libjson)
 
 set(LIB_HHEADERS
     ogrgeojsonreader.h
@@ -53,11 +56,8 @@ set(LIB_CSOURCES
     ogrtopojsonreader.cpp	
 )
 
-# option(OGR_USE_JSONC_INTERNAL "Set ON to use internal libjson-c" ON)
-# if(OGR_USE_JSONC_INTERNAL)
-	add_subdirectory(libjson)
-# else(OGR_USE_JSONC_INTERNAL)
-# endif(OGR_USE_JSONC_INTERNAL)
-
-set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
-add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
+if (GDAL_ENABLE_OGR)
+    add_definitions(-DGEOJSON_ENABLED)
+    set(GDAL_TARGET_OBJECTS ${GDAL_TARGET_OBJECTS} $<TARGET_OBJECTS:${LIB_NAME}> PARENT_SCOPE)
+    add_library(${LIB_NAME} OBJECT ${LIB_HHEADERS} ${LIB_CSOURCES})
+endif ()
