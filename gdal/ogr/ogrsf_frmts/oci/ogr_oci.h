@@ -129,7 +129,7 @@ class CPL_DLL OGROCISession {
 
     int         nServerVersion;
     int         nServerRelease;
-    int         nMaxNameLength;
+    size_t      nMaxNameLength;
 };
 
 OGROCISession CPL_DLL*
