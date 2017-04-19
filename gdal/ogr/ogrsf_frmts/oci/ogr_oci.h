@@ -121,11 +121,15 @@ class CPL_DLL OGROCISession {
     CPLErr   GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
                           ub2 *pnOCIType, ub4 *pnOCILen );
 
-    static void     CleanName( char * );
+    void     CleanName( char * );
 
     OCIType *PinTDO( const char * );
 
   private:
+
+    int         nServerVersion;
+    int         nServerRelease;
+    size_t      nMaxNameLength;
 };
 
 OGROCISession CPL_DLL*
@@ -524,11 +528,11 @@ class OGROCIDataSource : public OGRDataSource
 
     OGROCISession      *GetSession() { return poSession; }
 
-    int                 Open( const char *, char** papszOpenOptions,
+    int                 Open( const char *, char** papszOpenOptionsIn,
                               int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName,
                                    int nSRID, int bUpdate, int bTestOpen,
-                                   char** papszOpenOptions );
+                                   char** papszOpenOptionsIn );
 
     const char          *GetName() override { return pszName; }
     int                 GetLayerCount() override { return nLayers; }
