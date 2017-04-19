@@ -244,8 +244,10 @@ static GDALDataset *OGRCSVDriverCreate( const char *pszName,
     // Force it to open as a datasource.
     OGRCSVDataSource *poDS = new OGRCSVDataSource();
 
-     if( EQUAL(CPLGetExtension(pszName), "csv") )
+    if( EQUAL(CPLGetExtension(pszName), "csv") )
+    {
         poDS->CreateForSingleFile(osDirName, pszName);
+    }
     else if( !poDS->Open(osDirName, TRUE, TRUE) )
     {
         delete poDS;
@@ -266,10 +268,7 @@ static GDALDataset *OGRCSVDriverCreate( const char *pszName,
 static CPLErr OGRCSVDriverDelete( const char *pszFilename )
 
 {
-    if( CPLUnlinkTree(pszFilename) == 0 )
-        return CE_None;
-
-    return CE_Failure;
+    return CPLUnlinkTree(pszFilename) == 0 ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
