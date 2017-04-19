@@ -128,6 +128,9 @@ class CPL_DLL OGROCISession {
 
   private:
 
+    int      nServerVersion;
+    int      nServerRelease;
+    size_t   nMaxNameLength;
 };
 
 OGROCISession CPL_DLL*
@@ -526,11 +529,11 @@ class OGROCIDataSource : public OGRDataSource
 
     OGROCISession      *GetSession() { return poSession; }
 
-    int                 Open( const char *, char** papszOpenOptions,
+    int                 Open( const char *, char** papszOpenOptionsIn,
                               int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName,
                                    int nSRID, int bUpdate, int bTestOpen,
-                                   char** papszOpenOptions );
+                                   char** papszOpenOptionsIn );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }

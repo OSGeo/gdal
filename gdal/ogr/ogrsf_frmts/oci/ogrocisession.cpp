@@ -73,6 +73,9 @@ OGROCISession::OGROCISession()
     pszUserid = NULL;
     pszPassword = NULL;
     pszDatabase = NULL;
+    nServerVersion = 10;
+    nServerRelease = 1;
+    nMaxNameLength = 30;
 }
 
 /************************************************************************/
@@ -278,6 +281,51 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
     this->pszUserid = CPLStrdup(pszUseridIn);
     this->pszPassword = CPLStrdup(pszPasswordIn);
     this->pszDatabase = CPLStrdup(pszDatabaseIn);
+
+/* -------------------------------------------------------------------- */
+/*      Get server version information                                  */
+/* -------------------------------------------------------------------- */
+
+    char szVersionTxt[256];
+
+    OCIServerVersion( hSvcCtx, hError, (text*) szVersionTxt, 
+                    (ub4) sizeof(szVersionTxt), (ub1) OCI_HTYPE_SVCCTX );
+
+    char** papszNameValue = CSLTokenizeString2( szVersionTxt, " .", 
+                                                CSLT_STRIPLEADSPACES );
+
+    int count = CSLCount( papszNameValue);
+
+    for( int i = 0; i < count; i++)
+    {
+        if( EQUAL(papszNameValue[i], "Release") )
+        {
+            if( i + 1 < count )
+            {
+                nServerVersion = atoi(papszNameValue[i + 1]);
+            }
+            if( i + 2 < count )
+            {
+                nServerRelease = atoi(papszNameValue[i + 2]);
+            }
+            break;
+        }
+    }
+
+    CPLDebug("OCI", "From '%s' :", szVersionTxt);
+    CPLDebug("OCI", "Version:%d", nServerVersion);
+    CPLDebug("OCI", "Release:%d", nServerRelease);
+
+/* -------------------------------------------------------------------- */
+/*      Set maximun name length (before 12.2 ? 30 : 128)                */
+/* -------------------------------------------------------------------- */
+
+    if( nServerVersion >= 12 && nServerRelease >= 2 )
+    {
+        nMaxNameLength = 128;
+    }
+
+    CPLFree( papszNameValue );
 
 /* -------------------------------------------------------------------- */
 /*      Setting up the OGR compatible time formatting rules.            */
@@ -511,8 +559,8 @@ void OGROCISession::CleanName( char * pszName )
 {
     int   i;
 
-    if( strlen(pszName) > 30 )
-        pszName[30] = '\0';
+    if( strlen(pszName) > nMaxNameLength )
+        pszName[nMaxNameLength] = '\0';
 
     for( i = 0; pszName[i] != '\0'; i++ )
     {

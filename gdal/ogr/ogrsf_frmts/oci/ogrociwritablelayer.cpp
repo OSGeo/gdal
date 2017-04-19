@@ -246,7 +246,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
 {
     OGROCISession      *poSession = poDS->GetSession();
     char                szFieldType[256];
-    char                szFieldName[30];     // specify at most 30 characters, see ORA-00972
+    char                szFieldName[128];  // 12.2 max identifier name
     OGRFieldDefn        oField( poFieldIn );
 
 /* -------------------------------------------------------------------- */
