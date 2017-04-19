@@ -1044,4 +1044,18 @@ namespace tut
         CPLSetConfigOption("HOME", NULL);
     }
 
+    template<>
+    template<>
+    void object::test<21>()
+    {
+        // CPLString(std::string) constructor
+        ensure_equals ( CPLString(std::string("abc")).c_str(), "abc" );
+
+        // CPLString(const char*) constructor
+        ensure_equals ( CPLString("abc").c_str(), "abc" );
+
+        // CPLString(const char*, n) constructor
+        ensure_equals ( CPLString("abc",1).c_str(), "a" );
+    }
+
 } // namespace tut

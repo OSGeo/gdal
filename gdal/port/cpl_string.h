@@ -334,37 +334,8 @@ extern "C++"
 #include <string>
 #endif
 
-/*
- * Simple trick to avoid "using" declaration in header for new compilers
- * but make it still working with old compilers which throw C2614 errors.
- *
- * Define MSVC_OLD_STUPID_BEHAVIOUR
- * for old compilers: VC++ 5 and 6 as well as eVC++ 3 and 4.
- */
-
-/*
- * Detect old MSVC++ compiler <= 6.0
- * 1200 - VC++ 6.0
- * 1200-1202 - eVC++ 4.0
- */
-#if defined(_MSC_VER)
-# if (_MSC_VER <= 1202)
-#  define MSVC_OLD_STUPID_BEHAVIOUR
-# endif
-#endif
-
-/* Avoid C2614 errors */
-#ifdef MSVC_OLD_STUPID_BEHAVIOUR
-    using std::string;
-# define gdal_std_string string
-#else
-/*! @cond Doxygen_Suppress */
-# define gdal_std_string std::string
-/*! @endcond */
-#endif
-
 //! Convenient string class based on std::string.
-class CPL_DLL CPLString : public gdal_std_string
+class CPL_DLL CPLString : public std::string
 {
 public:
 
@@ -372,10 +343,12 @@ public:
     CPLString(void) {}
     /** Constructor */
     // cppcheck-suppress noExplicitConstructor
-    CPLString( const std::string &oStr ) : gdal_std_string( oStr ) {}
+    CPLString( const std::string &oStr ) : std::string( oStr ) {}
     /** Constructor */
     // cppcheck-suppress noExplicitConstructor
-    CPLString( const char *pszStr ) : gdal_std_string( pszStr ) {}
+    CPLString( const char *pszStr ) : std::string( pszStr ) {}
+    /** Constructor */
+    CPLString( const char *pszStr, size_t n ) : std::string( pszStr, n ) {}
 
     /** Return string as zero terminated character array */
     operator const char* (void) const { return c_str(); }
@@ -383,26 +356,26 @@ public:
     /** Return character at specified index */
     char& operator[](std::string::size_type i)
     {
-        return gdal_std_string::operator[](i);
+        return std::string::operator[](i);
     }
 
     /** Return character at specified index */
     const char& operator[](std::string::size_type i) const
     {
-        return gdal_std_string::operator[](i);
+        return std::string::operator[](i);
     }
 
     /** Return character at specified index */
     char& operator[](int i)
     {
-        return gdal_std_string::operator[](
+        return std::string::operator[](
             static_cast<std::string::size_type>(i));
     }
 
     /** Return character at specified index */
     const char& operator[](int i) const
     {
-        return gdal_std_string::operator[](
+        return std::string::operator[](
             static_cast<std::string::size_type>(i));
     }
 
