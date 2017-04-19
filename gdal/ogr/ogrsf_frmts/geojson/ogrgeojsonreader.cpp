@@ -514,7 +514,7 @@ bool OGRGeoJSONReader::GenerateLayerDefn( OGRGeoJSONLayer* poLayer,
 }
 
 /************************************************************************/
-/*                     OGRGeoJSONReaderAddNewField()                    */
+/*                     OGRGeoJSONReaderAddOrUpdateField()               */
 /************************************************************************/
 
 void OGRGeoJSONReaderAddOrUpdateField(
@@ -1934,7 +1934,7 @@ OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj )
 }
 
 /************************************************************************/
-/*                           OGR_G_ExportToJson                         */
+/*                       OGR_G_CreateGeometryFromJson                   */
 /************************************************************************/
 
 /** Create a OGR geometry from a GeoJSON geometry object */
