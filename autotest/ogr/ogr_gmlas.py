@@ -3958,12 +3958,21 @@ def ogr_gmlas_swe_dataarray():
                          <swe:field name="myQuantity">
                             <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour"/>
                         </swe:field>
+                         <swe:field name="myCount">
+                            <swe:Count definition="http://"/>
+                        </swe:field>
+                         <swe:field name="myText">
+                            <swe:Text definition="http://"/>
+                        </swe:field>
+                         <swe:field name="myBoolean">
+                            <swe:Boolean definition="http://"/>
+                        </swe:field>
                 </swe:DataRecord>
             </swe:elementType>
             <swe:encoding>
                     <swe:TextEncoding decimalSeparator="." blockSeparator="@@" tokenSeparator=","/>
             </swe:encoding>
-            <swe:values>2016-09-01T00:00:00+01:00,1,2.34@@2017-09-01T00:00:00,2,3.45</swe:values>
+            <swe:values>2016-09-01T00:00:00+01:00,1,2.34,3,foo,true@@2017-09-01T00:00:00,2,3.45</swe:values>
         </swe:DataArray>
     </myns:foo>
 
@@ -4045,9 +4054,13 @@ def ogr_gmlas_swe_dataarray():
 
     lyr = ds.GetLayerByName('dataarray_1_components')
     f = lyr.GetNextFeature()
-    if f.GetField('myTime') != '2016/09/01 00:00:00+01' or \
+    if not f.IsFieldSetAndNotNull('parent_ogr_pkid') or \
+       f.GetField('myTime') != '2016/09/01 00:00:00+01' or \
        f.GetField('myCategory') != '1' or \
-       f.GetField('myQuantity') != 2.34:
+       f.GetField('myQuantity') != 2.34 or \
+       f.GetField('myCount') != 3 or \
+       f.GetField('myText') != 'foo' or \
+       f.GetField('myBoolean') != True:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -4114,6 +4127,285 @@ def ogr_gmlas_swe_dataarray():
 
     return 'success'
 
+
+###############################################################################
+#  Test swe:DataRecord
+
+def ogr_gmlas_swe_datarecord():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    # One substitution, no repetition
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_swe_datarecord.xml',
+"""<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:xlink="http://www.w3.org/1999/xlink"
+                  xmlns:swe="http://www.opengis.net/swe/2.0"
+                  xsi:schemaLocation="http://myns ogr_gmlas_swe_datarecord.xsd">
+    <myns:foo>
+        <swe:DataRecord>
+            <swe:field name="myTime">
+                <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime">
+                    <swe:value>2017-09-01T00:00:00</swe:value>
+                </swe:Time>
+            </swe:field>
+            <swe:field name="myCategory">
+                <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification">
+                    <swe:identifier>myidentifier</swe:identifier>
+                    <swe:codeSpace xlink:href="http://example.com"/>
+                    <swe:value>myvalue</swe:value>
+                </swe:Category>
+            </swe:field>
+            <swe:field name="myQuantity">
+                <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour">
+                    <swe:value>1.23</swe:value>
+                </swe:Quantity>
+            </swe:field>
+            <swe:field name="myCount">
+                <swe:Count definition="http://">
+                    <swe:value>2</swe:value>
+                </swe:Count>
+            </swe:field>
+            <swe:field name="myText">
+                <swe:Text definition="http://">
+                    <swe:value>foo</swe:value>
+                </swe:Text>
+            </swe:field>
+            <swe:field name="myBoolean">
+                <swe:Boolean definition="http://">
+                    <swe:value>true</swe:value>
+                </swe:Boolean>
+            </swe:field>
+        </swe:DataRecord>
+    </myns:foo>
+
+    <myns:foo>
+        <swe:DataRecord>
+            <swe:field name="myTime">
+                <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime">
+                    <swe:value>2017-09-01T00:00:00</swe:value>
+                </swe:Time>
+            </swe:field>
+            <swe:field name="myCategory">
+                <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification">
+                    <swe:identifier>myidentifier</swe:identifier>
+                    <swe:codeSpace xlink:href="http://example.com"/>
+                    <swe:value>myvalue</swe:value>
+                </swe:Category>
+            </swe:field>
+            <swe:field name="myQuantity">
+                <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour">
+                    <swe:value>1.23</swe:value>
+                </swe:Quantity>
+            </swe:field>
+        </swe:DataRecord>
+    </myns:foo>
+
+</myns:main_elt>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_swe_datarecord.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           xmlns:swe="http://www.opengis.net/swe/2.0"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:import namespace="http://www.opengis.net/swe/2.0" schemaLocation="ogr_gmlas_swe_datarecord_swe.xsd"/>
+<xs:element name="main_elt">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                        <xs:complexContent>
+                                <xs:extension base="swe:DataRecordPropertyType">
+                                        <xs:attribute name="nilReason" type="xs:string"/>
+                                </xs:extension>
+                        </xs:complexContent>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_swe_datarecord_swe.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:swe="http://www.opengis.net/swe/2.0"
+           xmlns:xlink="http://www.w3.org/1999/xlink"
+           targetNamespace="http://www.opengis.net/swe/2.0"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:import namespace="http://www.w3.org/1999/xlink" schemaLocation="ogr_gmlas_swe_datarecord_xlink.xsd"/>
+
+<xs:element name="AbstractDataComponent" abstract="true" type="swe:AbstractDataComponentType"/>
+
+<xs:complexType name="AbstractDataComponentType"/>
+
+<xs:attributeGroup name="AssociationAttributeGroup">
+    <xs:attributeGroup ref="xlink:simpleAttrs"/>
+</xs:attributeGroup>
+
+<xs:complexType name="Reference">
+    <xs:attributeGroup ref="swe:AssociationAttributeGroup"/>
+</xs:complexType>
+
+<xs:element name="Time" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Category" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="identifier" type="xs:string" minOccurs="0"/>
+            <xs:element name="codeSpace" type="swe:Reference" minOccurs="0"/>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Quantity" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Count" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:int"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Text" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Boolean" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:boolean"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:complexType name="AbstractDataComponentPropertyType">
+    <xs:sequence minOccurs="0">
+        <xs:element ref="swe:AbstractDataComponent"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:element name="DataRecord" substitutionGroup="swe:AbstractDataComponent" type="swe:DataRecordType">
+</xs:element>
+
+<xs:complexType name="DataRecordType">
+    <xs:complexContent>
+        <xs:extension base="swe:AbstractDataComponentType">
+            <xs:sequence>
+              <xs:element name="field" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:complexContent>
+                        <xs:extension base="swe:AbstractDataComponentPropertyType">
+                            <xs:attribute name="name" type="xs:NCName" use="required"/>
+                        </xs:extension>
+                    </xs:complexContent>
+                </xs:complexType>
+              </xs:element>
+           </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+  </xs:complexType>
+
+
+<xs:complexType name="DataRecordPropertyType">
+    <xs:sequence minOccurs="0">
+        <xs:element ref="swe:DataRecord"/>
+    </xs:sequence>
+</xs:complexType>
+
+</xs:schema>""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_swe_datarecord_xlink.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:xlink="http://www.w3.org/1999/xlink"
+              targetNamespace="http://www.w3.org/1999/xlink"
+              elementFormDefault="qualified"
+              attributeFormDefault="unqualified">
+<xs:attribute name="href" type="xs:anyURI"/>
+<xs:attributeGroup name="simpleAttrs">
+    <xs:attribute ref="xlink:href"/>
+</xs:attributeGroup>
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_swe_datarecord.xml')
+    lyr = ds.GetLayerByName('main_elt_foo')
+    if lyr.GetLayerDefn().GetFieldCount() != 12:
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldCount())
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('mytime_value') != '2017/09/01 00:00:00' or \
+       f.GetField('mycategory_value') != 'myvalue' or \
+       f.GetField('mycategory_identifier') != 'myidentifier' or \
+       f.GetField('mycategory_codespace_href') != 'http://example.com' or \
+       f.GetField('myquantity_value') != 1.23 or \
+       f.GetField('mycount_value') != 2 or \
+       f.GetField('mytext_value') != 'foo' or \
+       f.GetField('myboolean_value') != True:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gmlas_swe_datarecord.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_swe_datarecord.xsd')
+    gdal.Unlink('/vsimem/ogr_gmlas_swe_datarecord_swe.xsd')
+    gdal.Unlink('/vsimem/ogr_gmlas_swe_datarecord_xlink.xsd')
+
+
+    return 'success'
 
 ###############################################################################
 #  Cleanup
@@ -4184,9 +4476,10 @@ gdaltest_list = [
     ogr_gmlas_read_fake_gmljp2,
     ogr_gmlas_typing_constraints,
     ogr_gmlas_swe_dataarray,
+    ogr_gmlas_swe_datarecord,
     ogr_gmlas_cleanup ]
 
-#gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_swe_dataarray, ogr_gmlas_cleanup ]
+# gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_swe_dataarray, ogr_gmlas_cleanup ]
 
 if __name__ == '__main__':
 

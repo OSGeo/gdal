@@ -30,6 +30,7 @@
 
 // Must be first for DEBUG_BOOL case
 #include "ogr_gmlas.h"
+#include "cpl_minixml.h"
 
 CPL_CVSID("$Id$");
 
@@ -44,6 +45,7 @@ OGRGMLASLayer::OGRGMLASLayer( OGRGMLASDataSource* poDS,
     m_poDS( poDS ),
     m_oFC( oFC ),
     m_bLayerDefnFinalized( false ),
+    m_nMaxFieldIndex( 0 ),
     m_poFeatureDefn( new OGRFeatureDefn( oFC.GetName() ) ),
     m_bEOF( false ),
     m_poReader( NULL ),
@@ -161,6 +163,7 @@ OGRGMLASLayer::OGRGMLASLayer( OGRGMLASDataSource* poDS,
 OGRGMLASLayer::OGRGMLASLayer(const char* pszLayerName) :
     m_poDS( NULL ),
     m_bLayerDefnFinalized( true ),
+    m_nMaxFieldIndex( 0 ),
     m_poFeatureDefn( new OGRFeatureDefn( pszLayerName ) ),
     m_bEOF( false ),
     m_poReader( NULL ),
@@ -178,10 +181,116 @@ OGRGMLASLayer::OGRGMLASLayer(const char* pszLayerName) :
 }
 
 /************************************************************************/
-/*                         ProcessDataRecord()                          */
+/*                        GetSWEChildAndType()                          */
 /************************************************************************/
 
-void OGRGMLASLayer::ProcessDataRecord(CPLXMLNode* psDataRecord)
+static
+CPLXMLNode* GetSWEChildAndType( CPLXMLNode* psNode,
+                                OGRFieldType& eType,
+                                OGRFieldSubType& eSubType )
+{
+    eType = OFTString;
+    eSubType = OFSTNone;
+    CPLXMLNode* psChildNode = NULL;
+    if( (psChildNode = CPLGetXMLNode(psNode, "Time")) != NULL )
+    {
+        eType = OFTDateTime;
+    }
+    else if( (psChildNode = CPLGetXMLNode(psNode, "Quantity")) != NULL )
+    {
+        eType = OFTReal;
+    }
+    else if( (psChildNode = CPLGetXMLNode(psNode, "Category")) != NULL )
+    {
+        eType = OFTString;
+    }
+    else if( (psChildNode = CPLGetXMLNode(psNode, "Count")) != NULL )
+    {
+        eType = OFTInteger;
+    }
+    else if( (psChildNode = CPLGetXMLNode(psNode, "Text")) != NULL )
+    {
+        eType = OFTString;
+    }
+    else if( (psChildNode = CPLGetXMLNode(psNode, "Boolean")) != NULL )
+    {
+        eType = OFTInteger;
+        eSubType = OFSTBoolean;
+    }
+    return psChildNode;
+}
+
+/************************************************************************/
+/*              ProcessDataRecordOfDataArrayCreateFields()               */
+/************************************************************************/
+
+void OGRGMLASLayer::ProcessDataRecordOfDataArrayCreateFields(
+                                                OGRGMLASLayer* poParentLayer,
+                                                CPLXMLNode* psDataRecord,
+                                                OGRLayer* poFieldsMetadataLayer)
+{
+    {
+        CPLString osFieldName(szPARENT_PREFIX);
+        osFieldName += poParentLayer->GetLayerDefn()->GetFieldDefn(
+                                poParentLayer->GetIDFieldIdx())->GetNameRef();
+        OGRFieldDefn oFieldDefn( osFieldName, OFTString );
+        oFieldDefn.SetNullable( false );
+        m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+    }
+
+    for( CPLXMLNode* psIter = psDataRecord->psChild;
+                        psIter != NULL; psIter = psIter->psNext )
+    {
+        if( psIter->eType == CXT_Element &&
+            strcmp(psIter->pszValue, "field") == 0 )
+        {
+            CPLString osName = CPLGetXMLValue(psIter, "name", "");
+            osName.tolower();
+            OGRFieldDefn oFieldDefn(osName, OFTString);
+            OGRFieldType eType;
+            OGRFieldSubType eSubType;
+            CPLXMLNode* psNode = GetSWEChildAndType(psIter, eType, eSubType);
+            oFieldDefn.SetType(eType);
+            oFieldDefn.SetSubType(eSubType);
+            m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+
+            // Register field in _ogr_fields_metadata
+            OGRFeature* poFieldDescFeature =
+                        new OGRFeature(poFieldsMetadataLayer->GetLayerDefn());
+            poFieldDescFeature->SetField( szLAYER_NAME, GetName() );
+            m_nMaxFieldIndex =  m_poFeatureDefn->GetFieldCount() - 1;
+            poFieldDescFeature->SetField( szFIELD_INDEX, m_nMaxFieldIndex );
+            poFieldDescFeature->SetField( szFIELD_NAME,
+                                            oFieldDefn.GetNameRef() );
+            if( psNode )
+            {
+                poFieldDescFeature->SetField( szFIELD_TYPE, psNode->pszValue );
+            }
+            poFieldDescFeature->SetField( szFIELD_IS_LIST, 0 );
+            poFieldDescFeature->SetField( szFIELD_MIN_OCCURS, 0 );
+            poFieldDescFeature->SetField( szFIELD_MAX_OCCURS, 1 );
+            poFieldDescFeature->SetField( szFIELD_CATEGORY, szSWE_FIELD );
+            if( psNode )
+            {
+                char* pszXML = CPLSerializeXMLTree(psNode);
+                poFieldDescFeature->SetField( szFIELD_DOCUMENTATION, pszXML);
+                CPLFree(pszXML);
+            }
+            CPL_IGNORE_RET_VAL(
+                poFieldsMetadataLayer->CreateFeature(poFieldDescFeature));
+            delete poFieldDescFeature;
+        }
+    }
+}
+
+/************************************************************************/
+/*                ProcessDataRecordCreateFields()                       */
+/************************************************************************/
+
+void OGRGMLASLayer::ProcessDataRecordCreateFields(
+                                CPLXMLNode* psDataRecord,
+                                const std::vector<OGRFeature*>& apoFeatures,
+                                OGRLayer* poFieldsMetadataLayer)
 {
     for( CPLXMLNode* psIter = psDataRecord->psChild;
                         psIter != NULL; psIter = psIter->psNext )
@@ -190,16 +299,186 @@ void OGRGMLASLayer::ProcessDataRecord(CPLXMLNode* psDataRecord)
             strcmp(psIter->pszValue, "field") == 0 )
         {
             CPLString osName = CPLGetXMLValue(psIter, "name", "");
+            osName = osName.tolower();
             OGRFieldDefn oFieldDefn(osName, OFTString);
-            if( CPLGetXMLNode(psIter, "Time") )
+            OGRFieldType eType;
+            OGRFieldSubType eSubType;
+            CPLXMLNode* psChildNode = GetSWEChildAndType(psIter, eType, eSubType);
+            oFieldDefn.SetType(eType);
+            oFieldDefn.SetSubType(eSubType);
+            if( psChildNode != NULL &&
+                m_oMapSWEFieldToOGRFieldName.find(osName) ==
+                                        m_oMapSWEFieldToOGRFieldName.end() )
             {
-                oFieldDefn.SetType(OFTDateTime);
+                const int nValidFields = m_poFeatureDefn->GetFieldCount();
+
+                CPLString osSWEField(osName);
+                if( m_poFeatureDefn->GetFieldIndex(osName) >= 0 )
+                    osName = "swe_field_" + osName;
+                m_oMapSWEFieldToOGRFieldName[osSWEField] = osName;
+                oFieldDefn.SetName((osName + "_value").c_str());
+                m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+
+                // Register field in _ogr_fields_metadata
+                OGRFeature* poFieldDescFeature =
+                            new OGRFeature(poFieldsMetadataLayer->GetLayerDefn());
+                poFieldDescFeature->SetField( szLAYER_NAME, GetName() );
+                m_nMaxFieldIndex ++;
+                poFieldDescFeature->SetField( szFIELD_INDEX, m_nMaxFieldIndex);
+                poFieldDescFeature->SetField( szFIELD_NAME,
+                                                oFieldDefn.GetNameRef() );
+                if( psChildNode )
+                {
+                    poFieldDescFeature->SetField( szFIELD_TYPE, psChildNode->pszValue );
+                }
+                poFieldDescFeature->SetField( szFIELD_IS_LIST, 0 );
+                poFieldDescFeature->SetField( szFIELD_MIN_OCCURS, 0 );
+                poFieldDescFeature->SetField( szFIELD_MAX_OCCURS, 1 );
+                poFieldDescFeature->SetField( szFIELD_CATEGORY, szSWE_FIELD );
+                if( psChildNode )
+                {
+                    CPLXMLNode* psDupTree = CPLCloneXMLTree(psChildNode);
+                    CPLXMLNode* psValue = CPLGetXMLNode(psDupTree, "value");
+                    if( psValue != NULL )
+                        CPLRemoveXMLChild(psDupTree, psValue);
+                    char* pszXML = CPLSerializeXMLTree(psDupTree);
+                    CPLDestroyXMLNode(psDupTree);
+                    poFieldDescFeature->SetField( szFIELD_DOCUMENTATION, pszXML);
+                    CPLFree(pszXML);
+                }
+                CPL_IGNORE_RET_VAL(
+                    poFieldsMetadataLayer->CreateFeature(poFieldDescFeature));
+                delete poFieldDescFeature;
+
+                for(  CPLXMLNode* psIter2 = psChildNode->psChild;
+                        psIter2 != NULL; psIter2 = psIter2->psNext )
+                {
+                    if( psIter2->eType == CXT_Element &&
+                        strcmp(psIter2->pszValue, "value") != 0 )
+                    {
+                        CPLString osName2(osName + "_" + psIter2->pszValue);
+                        osName2.tolower();
+                        for(  CPLXMLNode* psIter3 = psIter2->psChild;
+                                psIter3 != NULL; psIter3 = psIter3->psNext )
+                        {
+                            if( psIter3->eType == CXT_Attribute )
+                            {
+                                const char* pszValue = psIter3->pszValue;
+                                const char* pszColon = strchr(pszValue, ':');
+                                if( pszColon )
+                                    pszValue = pszColon + 1;
+                                CPLString osName3(osName2 + "_" + pszValue);
+                                osName3.tolower();
+                                OGRFieldDefn oFieldDefn2(osName3, OFTString);
+                                m_poFeatureDefn->AddFieldDefn(&oFieldDefn2);
+                            }
+                            else if( psIter3->eType == CXT_Text )
+                            {
+                                OGRFieldDefn oFieldDefn2(osName2, OFTString);
+                                m_poFeatureDefn->AddFieldDefn(&oFieldDefn2);
+                            }
+                        }
+                    }
+                }
+
+                int *panRemap = static_cast<int *>(
+                    CPLMalloc(sizeof(int) * m_poFeatureDefn->GetFieldCount()) );
+                for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i )
+                {
+                    if( i < nValidFields )
+                        panRemap[i] = i;
+                    else
+                        panRemap[i] = -1;
+                }
+
+                for( size_t i = 0; i < apoFeatures.size(); i++ )
+                {
+                    apoFeatures[i]->RemapFields( NULL, panRemap );
+                }
+
+                CPLFree( panRemap );
             }
-            else if( CPLGetXMLNode(psIter, "Quantity") )
+        }
+    }
+}
+
+/************************************************************************/
+/*                             SetSWEValue()                            */
+/************************************************************************/
+
+static void SetSWEValue(OGRFeature* poFeature, const CPLString& osFieldName,
+                        const char* pszValue)
+{
+    int iField = poFeature->GetDefnRef()->GetFieldIndex(osFieldName);
+    OGRFieldDefn* poFieldDefn = poFeature->GetFieldDefnRef(iField);
+    OGRFieldType eType(poFieldDefn->GetType());
+    OGRFieldSubType eSubType(poFieldDefn->GetSubType());
+    if( eType == OFTInteger && eSubType == OFSTBoolean )
+    {
+        poFeature->SetField(iField, EQUAL(pszValue, "1") ||
+                                    EQUAL(pszValue, "True") ? 1 : 0);
+    }
+    else
+    {
+        poFeature->SetField(iField, pszValue);
+    }
+}
+
+/************************************************************************/
+/*                    ProcessDataRecordFillFeature()                    */
+/************************************************************************/
+
+void OGRGMLASLayer::ProcessDataRecordFillFeature(CPLXMLNode* psDataRecord,
+                                                 OGRFeature* poFeature)
+{
+    for( CPLXMLNode* psIter = psDataRecord->psChild;
+                        psIter != NULL; psIter = psIter->psNext )
+    {
+        if( psIter->eType == CXT_Element &&
+            strcmp(psIter->pszValue, "field") == 0 )
+        {
+            CPLString osName = CPLGetXMLValue(psIter, "name", "");
+            osName = osName.tolower();
+            OGRFieldDefn oFieldDefn(osName, OFTString);
+            OGRFieldType eType;
+            OGRFieldSubType eSubType;
+            CPLXMLNode* psChildNode = GetSWEChildAndType(psIter, eType, eSubType);
+            oFieldDefn.SetType(eType);
+            oFieldDefn.SetSubType(eSubType);
+            if( psChildNode == NULL )
+                continue;
+            std::map<CPLString, CPLString>::const_iterator oIter =
+                m_oMapSWEFieldToOGRFieldName.find(osName);
+            CPLAssert( oIter != m_oMapSWEFieldToOGRFieldName.end() );
+            osName = oIter->second;
+            for(  CPLXMLNode* psIter2 = psChildNode->psChild;
+                        psIter2 != NULL; psIter2 = psIter2->psNext )
             {
-                oFieldDefn.SetType(OFTReal);
+                if( psIter2->eType == CXT_Element )
+                {
+                    CPLString osName2(osName + "_" + psIter2->pszValue);
+                    osName2.tolower();
+                    for(  CPLXMLNode* psIter3 = psIter2->psChild;
+                            psIter3 != NULL; psIter3 = psIter3->psNext )
+                    {
+                        if( psIter3->eType == CXT_Attribute )
+                        {
+                            const char* pszValue = psIter3->pszValue;
+                            const char* pszColon = strchr(pszValue, ':');
+                            if( pszColon )
+                                pszValue = pszColon + 1;
+                            CPLString osName3(osName2 + "_" + pszValue);
+                            osName3.tolower();
+                            SetSWEValue(poFeature, osName3,
+                                                psIter3->psChild->pszValue );
+                        }
+                        else if( psIter3->eType == CXT_Text )
+                        {
+                            SetSWEValue(poFeature, osName2, psIter3->pszValue );
+                        }
+                    }
+                }
             }
-            m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
         }
     }
 }
@@ -339,6 +618,7 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
         poFieldDescFeature->SetField( szLAYER_NAME, GetName() );
 
         ++nFieldIndex;
+        m_nMaxFieldIndex = nFieldIndex;
         poFieldDescFeature->SetField( szFIELD_INDEX, nFieldIndex);
 
         if( oField.GetName().empty() )
@@ -724,6 +1004,29 @@ OGRGMLASLayer::~OGRGMLASLayer()
 }
 
 /************************************************************************/
+/*                        DeleteTargetIndex()                           */
+/************************************************************************/
+
+static void DeleteTargetIndex(std::map<CPLString, int>& oMap, int nIdx)
+{
+    bool bIterToRemoveValid = false;
+    std::map<CPLString, int>::iterator oIterToRemove;
+    std::map<CPLString, int>::iterator oIter = oMap.begin();
+    for( ; oIter != oMap.end(); ++oIter )
+    {
+        if( oIter->second > nIdx )
+            oIter->second --;
+        else if( oIter->second == nIdx )
+        {
+            bIterToRemoveValid = true;
+            oIterToRemove = oIter;
+        }
+    }
+    if( bIterToRemoveValid )
+        oMap.erase(oIterToRemove);
+}
+
+/************************************************************************/
 /*                            RemoveField()                             */
 /************************************************************************/
 
@@ -735,19 +1038,7 @@ bool OGRGMLASLayer::RemoveField( int nIdx )
     m_poFeatureDefn->DeleteFieldDefn( nIdx );
 
     // Refresh maps
-    {
-        std::map<CPLString, int>       oMapFieldXPathToOGRFieldIdx;
-        std::map<CPLString, int>::const_iterator oIter =
-                            m_oMapFieldXPathToOGRFieldIdx.begin();
-        for( ; oIter != m_oMapFieldXPathToOGRFieldIdx.end(); ++oIter )
-        {
-            if( oIter->second < nIdx )
-                oMapFieldXPathToOGRFieldIdx[oIter->first] = oIter->second;
-            else if( oIter->second > nIdx )
-                oMapFieldXPathToOGRFieldIdx[oIter->first] = oIter->second - 1;
-        }
-        m_oMapFieldXPathToOGRFieldIdx = oMapFieldXPathToOGRFieldIdx;
-    }
+    DeleteTargetIndex(m_oMapFieldXPathToOGRFieldIdx, nIdx);
 
     {
         std::map<int, int>             oMapOGRFieldIdxtoFCFieldIdx;
@@ -764,6 +1055,20 @@ bool OGRGMLASLayer::RemoveField( int nIdx )
     }
 
     return true;
+}
+
+/************************************************************************/
+/*                        InsertTargetIndex()                           */
+/************************************************************************/
+
+static void InsertTargetIndex(std::map<CPLString, int>& oMap, int nIdx)
+{
+    std::map<CPLString, int>::iterator oIter = oMap.begin();
+    for( ; oIter != oMap.end(); ++oIter )
+    {
+        if( oIter->second >= nIdx )
+            oIter->second ++;
+    }
 }
 
 /************************************************************************/
@@ -790,20 +1095,8 @@ void OGRGMLASLayer::InsertNewField( int nInsertPos,
     delete[] panMap;
 
     // Refresh maps
-    {
-        std::map<CPLString, int>       oMapFieldXPathToOGRFieldIdx;
-        std::map<CPLString, int>::const_iterator oIter =
-                            m_oMapFieldXPathToOGRFieldIdx.begin();
-        for( ; oIter != m_oMapFieldXPathToOGRFieldIdx.end(); ++oIter )
-        {
-            if( oIter->second < nInsertPos )
-                oMapFieldXPathToOGRFieldIdx[oIter->first] = oIter->second;
-            else
-                oMapFieldXPathToOGRFieldIdx[oIter->first] = oIter->second + 1;
-        }
-        m_oMapFieldXPathToOGRFieldIdx = oMapFieldXPathToOGRFieldIdx;
-        m_oMapFieldXPathToOGRFieldIdx[ osXPath ] = nInsertPos;
-    }
+    InsertTargetIndex(m_oMapFieldXPathToOGRFieldIdx, nInsertPos);
+    m_oMapFieldXPathToOGRFieldIdx[ osXPath ] = nInsertPos;
 
     {
         std::map<int, int>             oMapOGRFieldIdxtoFCFieldIdx;

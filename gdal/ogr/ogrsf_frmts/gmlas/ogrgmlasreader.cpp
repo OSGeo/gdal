@@ -396,7 +396,12 @@ GMLASReader::GMLASReader(GMLASXSDCache& oCache,
     m_eSwapCoordinates = GMLAS_SWAP_AUTO;
     m_bInitialPass = false;
     m_bProcessSWEDataArray = false;
+    m_bProcessSWEDataRecord = false;
     m_nSWEDataArrayLevel = -1;
+    m_nSWEDataRecordLevel = -1;
+    m_poFieldsMetadataLayer = NULL;
+    m_poLayersMetadataLayer = NULL;
+    m_poRelationshipsLayer = NULL;
     m_nFileSize = 0;
     m_bWarnUnexpected =
         CPLTestBool(CPLGetConfigOption("GMLAS_WARN_UNEXPECTED", "FALSE"));
@@ -871,7 +876,8 @@ void GMLASReader::BuildXMLBlobStartElement(const CPLString& osXPath,
     }
 
     CPLXMLNode* psNode = NULL;
-    if( m_nCurGeomFieldIdx >= 0 || m_nSWEDataArrayLevel >= 0 )
+    if( m_nCurGeomFieldIdx >= 0 || m_nSWEDataArrayLevel >= 0 ||
+        m_nSWEDataRecordLevel >= 0 )
     {
         psNode = CPLCreateXMLNode( NULL, CXT_Element, osXPath );
         if( !m_apsXMLNodeStack.empty() )
@@ -1105,17 +1111,28 @@ void GMLASReader::startElement(
     }
 
     if( m_bProcessSWEDataArray && m_nSWEDataArrayLevel < 0 &&
-        m_nCurGeomFieldIdx < 0 )
+        m_nSWEDataRecordLevel < 0 && m_nCurGeomFieldIdx < 0 )
     {
         if( osNSURI == szSWE_URI &&
-            osLocalname == "DataArray" )
+            (osLocalname == "DataArray" || osLocalname == "DataStream") )
         {
+            if( m_nCurFieldIdx >= 0 )
+            {
+                m_osSWEDataArrayParentField =
+                    m_oCurCtxt.m_poFeature->
+                                GetFieldDefnRef(m_nCurFieldIdx)->GetNameRef();
+            }
+            else
+            {
+                m_osSWEDataArrayParentField.clear();
+            }
             m_nSWEDataArrayLevel = m_nLevel;
         }
     }
 
     // Deal with XML content
-    if( m_bIsXMLBlob || m_nSWEDataArrayLevel >= 0 )
+    if( m_bIsXMLBlob || m_nSWEDataArrayLevel >= 0 ||
+        m_nSWEDataRecordLevel >= 0 )
     {
         BuildXMLBlobStartElement(osXPath, attrs);
     }
@@ -1521,11 +1538,10 @@ void GMLASReader::startElement(
                 const GMLASField& oField(
                     m_oCurCtxt.m_poLayer->GetFeatureClass().GetFields()[
                                                                 nFCFieldIdx]);
-                m_bIsXMLBlob = (oField.GetType() == GMLAS_FT_ANYTYPE ||
-                                m_nCurGeomFieldIdx != -1 );
-                if( m_bIsXMLBlob )
+                if( m_nSWEDataArrayLevel < 0 && m_nSWEDataRecordLevel < 0 )
                 {
-                    CPLAssert( m_nSWEDataArrayLevel < 0 );
+                    m_bIsXMLBlob = (oField.GetType() == GMLAS_FT_ANYTYPE ||
+                                    m_nCurGeomFieldIdx != -1 );
                 }
                 m_bIsXMLBlobIncludeUpper = m_bIsXMLBlob &&
                                             oField.GetIncludeThisEltInBlob();
@@ -1583,6 +1599,15 @@ void GMLASReader::startElement(
                                   poOldLayer,
                                   nOldCurFieldIdx,
                                   osChildId );
+
+                        if( m_bProcessSWEDataRecord && !m_bIsXMLBlob &&
+                            m_nSWEDataArrayLevel < 0 &&
+                            m_nSWEDataRecordLevel < 0 &&
+                            osNestedXPath == "swe:DataRecord" )
+                        {
+                            m_nSWEDataRecordLevel = m_nLevel;
+                            BuildXMLBlobStartElement(osXPath, attrs);
+                        }
                     }
                 }
             }
@@ -2440,6 +2465,59 @@ void GMLASReader::endElement(
         m_osCurSubXPath.resize( m_osCurSubXPath.size() - 1 - nLastXPathLength);
     else if( m_osCurSubXPath.size() == nLastXPathLength )
          m_osCurSubXPath.clear();
+
+    if( m_nSWEDataRecordLevel >= 0)
+    {
+        if( m_nLevel > m_nSWEDataRecordLevel )
+        {
+            CPLAssert( m_apsXMLNodeStack.size() > 1 );
+            m_apsXMLNodeStack.pop_back();
+        }
+        else
+        {
+            CPLAssert( m_apsXMLNodeStack.size() == 1 );
+            CPLXMLNode* psRoot = m_apsXMLNodeStack[0].psNode;
+            ProcessSWEDataRecord(psRoot);
+            m_nSWEDataRecordLevel = -1;
+            CPLDestroyXMLNode(psRoot);
+            m_apsXMLNodeStack.clear();
+        }
+    }
+}
+
+/************************************************************************/
+/*                             SetSWEValue()                            */
+/************************************************************************/
+
+static void SetSWEValue(OGRFeature* poFeature, int iField, CPLString& osValue)
+{
+    if( !osValue.empty() )
+    {
+        OGRFieldDefn* poFieldDefn = poFeature->GetFieldDefnRef(iField);
+        OGRFieldType eType(poFieldDefn->GetType());
+        OGRFieldSubType eSubType(poFieldDefn->GetSubType());
+        if( eType == OFTReal || eType == OFTInteger)
+        {
+            osValue.Trim();
+            if( eSubType == OFSTBoolean )
+            {
+                osValue = EQUAL(osValue, "1") ||
+                          EQUAL(osValue, "True") ? "1" : "0";
+            }
+        }
+        poFeature->SetField(iField, osValue.c_str());
+    }
+}
+
+/************************************************************************/
+/*                              SkipSpace()                             */
+/************************************************************************/
+
+static size_t SkipSpace( const char* pszValues, size_t i )
+{
+    while( isspace( static_cast<int>(pszValues[i]) ) )
+        i ++;
+    return i;
 }
 
 /************************************************************************/
@@ -2484,8 +2562,49 @@ void GMLASReader::ProcessSWEDataArray(CPLXMLNode* psRoot)
         }
         osLayerName = osLayerName.tolower();
         OGRGMLASLayer* poLayer = new OGRGMLASLayer(osLayerName);
+
+        // Register layer in _ogr_layers_metadata
+        {
+            OGRFeature* poLayerDescFeature =
+                        new OGRFeature(m_poLayersMetadataLayer->GetLayerDefn());
+            poLayerDescFeature->SetField( szLAYER_NAME, osLayerName );
+            poLayerDescFeature->SetField( szLAYER_CATEGORY, szSWE_DATA_ARRAY );
+
+            CPLString osFieldName(szPARENT_PREFIX);
+            osFieldName += m_oCurCtxt.m_poLayer->GetLayerDefn()->GetFieldDefn(
+                        m_oCurCtxt.m_poLayer->GetIDFieldIdx())->GetNameRef();
+            poLayerDescFeature->SetField( szLAYER_PARENT_PKID_NAME,
+                                          osFieldName.c_str() );
+            CPL_IGNORE_RET_VAL(
+                m_poLayersMetadataLayer->CreateFeature(poLayerDescFeature));
+            delete poLayerDescFeature;
+        }
+
+        // Register layer relationship in _ogr_layer_relationships
+        {
+            OGRFeature* poRelationshipsFeature =
+                new OGRFeature(m_poRelationshipsLayer->GetLayerDefn());
+            poRelationshipsFeature->SetField( szPARENT_LAYER,
+                                              m_oCurCtxt.m_poLayer->GetName() );
+            poRelationshipsFeature->SetField( szPARENT_PKID,
+                    m_oCurCtxt.m_poLayer->GetLayerDefn()->GetFieldDefn(
+                        m_oCurCtxt.m_poLayer->GetIDFieldIdx())->GetNameRef() );
+            if( !m_osSWEDataArrayParentField.empty() )
+            {
+                poRelationshipsFeature->SetField( szPARENT_ELEMENT_NAME,
+                                                  m_osSWEDataArrayParentField );
+            }
+            poRelationshipsFeature->SetField(szCHILD_LAYER,
+                                             osLayerName);
+            CPL_IGNORE_RET_VAL(m_poRelationshipsLayer->CreateFeature(
+                                            poRelationshipsFeature));
+            delete poRelationshipsFeature;
+        }
+
         m_apoSWEDataArrayLayers.push_back(poLayer);
-        poLayer->ProcessDataRecord(psDataRecord);
+        poLayer->ProcessDataRecordOfDataArrayCreateFields(m_oCurCtxt.m_poLayer,
+                                                          psDataRecord,
+                                                          m_poFieldsMetadataLayer);
     }
     else
     {
@@ -2493,15 +2612,14 @@ void GMLASReader::ProcessSWEDataArray(CPLXMLNode* psRoot)
                     static_cast<int>(m_apoSWEDataArrayLayers.size()) );
         OGRGMLASLayer* poLayer =
                         m_apoSWEDataArrayLayers[m_nSWEDataArrayLayerIdx];
-        const int nFieldCount = poLayer->GetLayerDefn()->GetFieldCount();
+        // -1 because first field is parent id
+        const int nFieldCount = poLayer->GetLayerDefn()->GetFieldCount() - 1;
         int nFID = 1;
         int iField = 0;
         const size_t nLen = strlen(pszValues);
         OGRFeature* poFeature = NULL;
         const bool bSameSep = (osTokenSeparator == osBlockSeparator);
-        size_t nLastValid = 0;
-        while( isspace( static_cast<int>(pszValues[nLastValid]) ) )
-            nLastValid ++;
+        size_t nLastValid = SkipSpace(pszValues, 0);
         size_t i = nLastValid;
         while( i < nLen )
         {
@@ -2509,6 +2627,9 @@ void GMLASReader::ProcessSWEDataArray(CPLXMLNode* psRoot)
             {
                 poFeature = new OGRFeature( poLayer->GetLayerDefn() );
                 poFeature->SetFID( nFID );
+                poFeature->SetField( 0,
+                    m_oCurCtxt.m_poFeature->GetFieldAsString(
+                        m_oCurCtxt.m_poLayer->GetIDFieldIdx()));
                 nFID ++;
                 iField = 0;
             }
@@ -2520,21 +2641,23 @@ void GMLASReader::ProcessSWEDataArray(CPLXMLNode* psRoot)
                     PushFeatureReady( poFeature, poLayer );
                     poFeature = new OGRFeature( poLayer->GetLayerDefn() );
                     poFeature->SetFID( nFID );
+                    poFeature->SetField( 0,
+                        m_oCurCtxt.m_poFeature->GetFieldAsString(
+                            m_oCurCtxt.m_poLayer->GetIDFieldIdx()));
                     nFID ++;
                     iField = 0;
                 }
 
                 if( iField < nFieldCount )
                 {
-                    std::string osValue( pszValues + nLastValid,
-                                         i - nLastValid );
-                    if( !osValue.empty() )
-                        poFeature->SetField(iField, osValue.c_str());
+                    CPLString osValue( pszValues + nLastValid,
+                                       i - nLastValid );
+                    // +1 because first field is parent id
+                    SetSWEValue(poFeature, iField+1, osValue);
                     iField ++;
                 }
                 nLastValid = i + osTokenSeparator.size();
-                while( isspace( static_cast<int>(pszValues[nLastValid]) ) )
-                    nLastValid ++;
+                nLastValid = SkipSpace(pszValues, nLastValid);
                 i = nLastValid;
             }
             else if( strncmp( pszValues + i, osBlockSeparator,
@@ -2542,17 +2665,16 @@ void GMLASReader::ProcessSWEDataArray(CPLXMLNode* psRoot)
             {
                 if( iField < nFieldCount )
                 {
-                    std::string osValue( pszValues + nLastValid,
-                                         i - nLastValid );
-                    if( !osValue.empty() )
-                        poFeature->SetField(iField, osValue.c_str());
+                    CPLString osValue( pszValues + nLastValid,
+                                       i - nLastValid );
+                    // +1 because first field is parent id
+                    SetSWEValue(poFeature, iField+1, osValue);
                     iField ++;
                 }
                 PushFeatureReady( poFeature, poLayer );
                 poFeature = NULL;
                 nLastValid = i + osBlockSeparator.size();
-                while( isspace( static_cast<int>(pszValues[nLastValid]) ) )
-                    nLastValid ++;
+                nLastValid = SkipSpace(pszValues, nLastValid);
                 i = nLastValid;
             }
             else
@@ -2564,16 +2686,45 @@ void GMLASReader::ProcessSWEDataArray(CPLXMLNode* psRoot)
         {
             if( iField < nFieldCount )
             {
-                std::string osValue( pszValues + nLastValid,
-                                     nLen - nLastValid );
-                if( !osValue.empty() )
-                    poFeature->SetField(iField, osValue.c_str());
+                CPLString osValue( pszValues + nLastValid,
+                                    nLen - nLastValid );
+                // +1 because first field is parent id
+                SetSWEValue(poFeature, iField+1, osValue);
                 //iField ++;
             }
             PushFeatureReady( poFeature, poLayer );
         }
     }
     m_nSWEDataArrayLayerIdx ++;
+}
+
+
+/************************************************************************/
+/*                        ProcessSWEDataRecord()                        */
+/************************************************************************/
+
+void GMLASReader::ProcessSWEDataRecord(CPLXMLNode* psRoot)
+{
+    CPLStripXMLNamespace( psRoot, "swe", true );
+    if( m_bInitialPass )
+    {
+        // Collect existing live features of this layer, so that we can
+        // patch them
+        std::vector<OGRFeature*> apoFeatures;
+        apoFeatures.push_back(m_oCurCtxt.m_poFeature);
+        for(size_t i = 0; i < m_aoFeaturesReady.size(); ++i )
+        {
+            if( m_aoFeaturesReady[i].second == m_oCurCtxt.m_poLayer )
+                apoFeatures.push_back(m_aoFeaturesReady[i].first);
+        }
+        m_oCurCtxt.m_poLayer->ProcessDataRecordCreateFields(
+            psRoot, apoFeatures, m_poFieldsMetadataLayer);
+    }
+    else
+    {
+        m_oCurCtxt.m_poLayer->ProcessDataRecordFillFeature(
+            psRoot, m_oCurCtxt.m_poFeature);
+    }
 }
 
 /************************************************************************/
@@ -2748,8 +2899,8 @@ void GMLASReader::characters( const XMLCh *const chars,
                               const XMLSize_t length )
 {
     bool bTextMemberUpdated = false;
-    if( ((m_bIsXMLBlob && m_nCurGeomFieldIdx >= 0 && FillTextContent()) ||
-        m_nSWEDataArrayLevel >= 0) &&
+    if( ((m_bIsXMLBlob && m_nCurGeomFieldIdx >= 0 && !m_bInitialPass) ||
+        m_nSWEDataArrayLevel >= 0 || m_nSWEDataRecordLevel >= 0) &&
         // Check the stack is not empty in case of space chars before the
         // starting node
         !m_apsXMLNodeStack.empty() )
@@ -2967,10 +3118,16 @@ bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
                                bool bRemoveUnusedLayers,
                                bool bRemoveUnusedFields,
                                bool bProcessSWEDataArray,
+                               OGRLayer* poFieldsMetadataLayer,
+                               OGRLayer* poLayersMetadataLayer,
+                               OGRLayer* poRelationshipsLayer,
                                std::set<CPLString>& aoSetRemovedLayerNames)
 {
     m_bInitialPass = true;
     m_bProcessSWEDataArray = bProcessSWEDataArray;
+    m_poFieldsMetadataLayer = poFieldsMetadataLayer;
+    m_poLayersMetadataLayer = poLayersMetadataLayer;
+    m_poRelationshipsLayer = poRelationshipsLayer;
 
     // Store in m_oSetGeomFieldsWithUnknownSRS the geometry fields
     std::set<OGRGMLASLayer*> oSetUnreferencedLayers;

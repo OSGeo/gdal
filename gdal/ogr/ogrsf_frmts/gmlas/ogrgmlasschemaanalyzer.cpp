@@ -1494,6 +1494,12 @@ static bool IsAnyType(XSComplexTypeDefinition* poType)
                 }
             }
         }
+        else if( poType->getDerivationMethod() ==
+                                            XSConstants::DERIVATION_EXTENSION )
+        {
+            // swe:values case
+            return true;
+        }
     }
     return false;
 }
@@ -2198,16 +2204,21 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                             aoSetXPathEltsForTopClass.find( osXPath )
                                 == aoSetXPathEltsForTopClass.end() )
                         {
+                            CPLString osIgnored;
+                            if( !m_oForcedFlattenedXPathMatcher.MatchesRefXPath(
+                                                        osXPath, osIgnored))
+                            {
 #ifdef DEBUG_VERBOSE
-                            CPLDebug("GMLAS", "%s (%s) must be exposed as "
-                                     "top-level (multiple time referenced)",
-                                     osXPath.c_str(),
-                                     transcode(
-                                        poTypeDef->getNamespace()).c_str());
+                                CPLDebug("GMLAS", "%s (%s) must be exposed as "
+                                        "top-level (multiple time referenced)",
+                                        osXPath.c_str(),
+                                        transcode(
+                                            poTypeDef->getNamespace()).c_str());
 #endif
-                            m_oSetEltsForTopClass.insert(poElt);
-                            oVectorEltsForTopClass.push_back(poElt);
-                            aoSetXPathEltsForTopClass.insert( osXPath );
+                                m_oSetEltsForTopClass.insert(poElt);
+                                oVectorEltsForTopClass.push_back(poElt);
+                                aoSetXPathEltsForTopClass.insert( osXPath );
+                            }
                         }
                     }
                     else
