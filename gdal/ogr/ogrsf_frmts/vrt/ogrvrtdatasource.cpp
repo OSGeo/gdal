@@ -45,7 +45,8 @@ typedef struct
     const char          *pszName;
 } OGRGeomTypeName;
 
-static const OGRGeomTypeName asGeomTypeNames[] = { /* 25D versions are implicit */
+// 25D versions are implicit.
+static const OGRGeomTypeName asGeomTypeNames[] = {
     { wkbUnknown, "wkbUnknown" },
     { wkbPoint, "wkbPoint" },
     { wkbLineString, "wkbLineString" },
@@ -68,7 +69,7 @@ static const OGRGeomTypeName asGeomTypeNames[] = { /* 25D versions are implicit 
     { wkbNone, NULL }
 };
 
-OGRwkbGeometryType OGRVRTGetGeometryType( const char* pszGType, int* pbError )
+OGRwkbGeometryType OGRVRTGetGeometryType( const char *pszGType, int *pbError )
 {
     if( pbError )
         *pbError = FALSE;
@@ -79,13 +80,14 @@ OGRwkbGeometryType OGRVRTGetGeometryType( const char* pszGType, int* pbError )
     for( ; asGeomTypeNames[iType].pszName != NULL; iType++ )
     {
         if( EQUALN(pszGType, asGeomTypeNames[iType].pszName,
-                strlen(asGeomTypeNames[iType].pszName)) )
+                   strlen(asGeomTypeNames[iType].pszName)) )
         {
             eGeomType = asGeomTypeNames[iType].eType;
 
-            if( strstr(pszGType,"25D") != NULL || strstr(pszGType,"Z") != NULL )
+            if( strstr(pszGType, "25D") != NULL || strstr(pszGType, "Z") != NULL )
                 eGeomType = wkbSetZ(eGeomType);
-            if( pszGType[strlen(pszGType)-1] == 'M' || pszGType[strlen(pszGType)-2] == 'M' )
+            if( pszGType[strlen(pszGType) - 1] == 'M' ||
+                pszGType[strlen(pszGType) - 2] == 'M' )
                 eGeomType = wkbSetM(eGeomType);
             break;
         }
@@ -104,7 +106,7 @@ OGRwkbGeometryType OGRVRTGetGeometryType( const char* pszGType, int* pbError )
 /*                          OGRVRTDataSource()                          */
 /************************************************************************/
 
-OGRVRTDataSource::OGRVRTDataSource( GDALDriver* poDriverIn ) :
+OGRVRTDataSource::OGRVRTDataSource( GDALDriver *poDriverIn ) :
     papoLayers(NULL),
     paeLayerType(NULL),
     nLayers(0),
@@ -125,14 +127,14 @@ OGRVRTDataSource::OGRVRTDataSource( GDALDriver* poDriverIn ) :
 OGRVRTDataSource::~OGRVRTDataSource()
 
 {
-    CPLFree( pszName );
+    CPLFree(pszName);
 
     CloseDependentDatasets();
 
-    CPLFree( paeLayerType );
+    CPLFree(paeLayerType);
 
     if( psTree != NULL)
-        CPLDestroyXMLNode( psTree );
+        CPLDestroyXMLNode(psTree);
 
     delete poLayerPool;
 }
@@ -148,7 +150,7 @@ int OGRVRTDataSource::CloseDependentDatasets()
     {
         delete papoLayers[i];
     }
-    CPLFree( papoLayers );
+    CPLFree(papoLayers);
     nLayers = 0;
     papoLayers = NULL;
     return bHasClosedDependentDatasets;
@@ -158,7 +160,7 @@ int OGRVRTDataSource::CloseDependentDatasets()
 /*                        InstantiateWarpedLayer()                      */
 /************************************************************************/
 
-OGRLayer*  OGRVRTDataSource::InstantiateWarpedLayer(
+OGRLayer *OGRVRTDataSource::InstantiateWarpedLayer(
     CPLXMLNode *psLTree,
     const char *pszVRTDirectory,
     int bUpdate,
@@ -167,11 +169,10 @@ OGRLayer*  OGRVRTDataSource::InstantiateWarpedLayer(
     if( !EQUAL(psLTree->pszValue,"OGRVRTWarpedLayer") )
         return NULL;
 
-    OGRLayer* poSrcLayer = NULL;
+    OGRLayer *poSrcLayer = NULL;
 
-    for( CPLXMLNode *psSubNode=psLTree->psChild;
-         psSubNode != NULL;
-         psSubNode=psSubNode->psNext )
+    for( CPLXMLNode *psSubNode = psLTree->psChild; psSubNode != NULL;
+         psSubNode = psSubNode->psNext )
     {
         if( psSubNode->eType != CXT_Element )
             continue;
@@ -184,43 +185,48 @@ OGRLayer*  OGRVRTDataSource::InstantiateWarpedLayer(
 
     if( poSrcLayer == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Cannot instantiate source layer" );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot instantiate source layer");
         return NULL;
     }
 
-    const char* pszTargetSRS = CPLGetXMLValue(psLTree, "TargetSRS", NULL);
+    const char *pszTargetSRS = CPLGetXMLValue(psLTree, "TargetSRS", NULL);
     if( pszTargetSRS == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Missing TargetSRS element within OGRVRTWarpedLayer" );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Missing TargetSRS element within OGRVRTWarpedLayer");
         delete poSrcLayer;
         return NULL;
     }
 
-    const char* pszGeomFieldName = CPLGetXMLValue(psLTree, "WarpedGeomFieldName", NULL);
+    const char *pszGeomFieldName =
+        CPLGetXMLValue(psLTree, "WarpedGeomFieldName", NULL);
     int iGeomField = 0;
     if( pszGeomFieldName != NULL )
     {
-        iGeomField = poSrcLayer->GetLayerDefn()->GetGeomFieldIndex(pszGeomFieldName);
+        iGeomField =
+            poSrcLayer->GetLayerDefn()->GetGeomFieldIndex(pszGeomFieldName);
         if( iGeomField < 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                  "Cannot find source geometry field '%s'", pszGeomFieldName );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot find source geometry field '%s'",
+                     pszGeomFieldName);
             delete poSrcLayer;
             return NULL;
         }
     }
 
-    OGRSpatialReference* poSrcSRS = NULL;
-    const char* pszSourceSRS = CPLGetXMLValue(psLTree, "SrcSRS", NULL);
+    OGRSpatialReference *poSrcSRS = NULL;
+    const char *pszSourceSRS = CPLGetXMLValue(psLTree, "SrcSRS", NULL);
 
     if( pszSourceSRS == NULL )
     {
         if( iGeomField < poSrcLayer->GetLayerDefn()->GetGeomFieldCount() )
         {
-            poSrcSRS = poSrcLayer->GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetSpatialRef();
-            if( poSrcSRS != NULL)
+            poSrcSRS = poSrcLayer->GetLayerDefn()
+                           ->GetGeomFieldDefn(iGeomField)
+                           ->GetSpatialRef();
+            if( poSrcSRS != NULL )
                 poSrcSRS = poSrcSRS->Clone();
         }
     }
@@ -236,13 +242,12 @@ OGRLayer*  OGRVRTDataSource::InstantiateWarpedLayer(
 
     if( poSrcSRS == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to import source SRS" );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to import source SRS");
         delete poSrcLayer;
         return NULL;
     }
 
-    OGRSpatialReference* poTargetSRS = new OGRSpatialReference();
+    OGRSpatialReference *poTargetSRS = new OGRSpatialReference();
     if( poTargetSRS->SetFromUserInput(pszTargetSRS) != OGRERR_NONE )
     {
         delete poTargetSRS;
@@ -251,8 +256,7 @@ OGRLayer*  OGRVRTDataSource::InstantiateWarpedLayer(
 
     if( poTargetSRS == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to import target SRS" );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to import target SRS");
         delete poSrcSRS;
         delete poSrcLayer;
         return NULL;
@@ -265,10 +269,11 @@ OGRLayer*  OGRVRTDataSource::InstantiateWarpedLayer(
         return poSrcLayer;
     }
 
-    OGRCoordinateTransformation* poCT =
-        OGRCreateCoordinateTransformation( poSrcSRS, poTargetSRS );
-    OGRCoordinateTransformation* poReversedCT = (poCT != NULL) ?
-        OGRCreateCoordinateTransformation( poTargetSRS, poSrcSRS ) : NULL;
+    OGRCoordinateTransformation *poCT =
+        OGRCreateCoordinateTransformation(poSrcSRS, poTargetSRS);
+    OGRCoordinateTransformation *poReversedCT =
+        poCT != NULL ? OGRCreateCoordinateTransformation(poTargetSRS, poSrcSRS)
+                     : NULL;
 
     delete poSrcSRS;
     delete poTargetSRS;
@@ -279,27 +284,22 @@ OGRLayer*  OGRVRTDataSource::InstantiateWarpedLayer(
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Build the OGRWarpedLayer.                                       */
-/* -------------------------------------------------------------------- */
+    // Build the OGRWarpedLayer.
+    OGRWarpedLayer *poLayer =
+        new OGRWarpedLayer(poSrcLayer, iGeomField, TRUE, poCT, poReversedCT);
 
-    OGRWarpedLayer* poLayer = new OGRWarpedLayer(poSrcLayer, iGeomField,
-                                                 TRUE, poCT, poReversedCT);
-
-/* -------------------------------------------------------------------- */
-/*      Set Extent if provided                                          */
-/* -------------------------------------------------------------------- */
-    const char* pszExtentXMin = CPLGetXMLValue( psLTree, "ExtentXMin", NULL );
-    const char* pszExtentYMin = CPLGetXMLValue( psLTree, "ExtentYMin", NULL );
-    const char* pszExtentXMax = CPLGetXMLValue( psLTree, "ExtentXMax", NULL );
-    const char* pszExtentYMax = CPLGetXMLValue( psLTree, "ExtentYMax", NULL );
+    // Set Extent if provided.
+    const char *pszExtentXMin = CPLGetXMLValue(psLTree, "ExtentXMin", NULL);
+    const char *pszExtentYMin = CPLGetXMLValue(psLTree, "ExtentYMin", NULL);
+    const char *pszExtentXMax = CPLGetXMLValue(psLTree, "ExtentXMax", NULL);
+    const char *pszExtentYMax = CPLGetXMLValue(psLTree, "ExtentYMax", NULL);
     if( pszExtentXMin != NULL && pszExtentYMin != NULL &&
         pszExtentXMax != NULL && pszExtentYMax != NULL )
     {
-        poLayer->SetExtent( CPLAtof(pszExtentXMin),
-                            CPLAtof(pszExtentYMin),
-                            CPLAtof(pszExtentXMax),
-                            CPLAtof(pszExtentYMax) );
+        poLayer->SetExtent(CPLAtof(pszExtentXMin),
+                           CPLAtof(pszExtentYMin),
+                           CPLAtof(pszExtentXMax),
+                           CPLAtof(pszExtentYMax));
     }
 
     return poLayer;
@@ -309,32 +309,28 @@ OGRLayer*  OGRVRTDataSource::InstantiateWarpedLayer(
 /*                        InstantiateUnionLayer()                       */
 /************************************************************************/
 
-OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
+OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
     CPLXMLNode *psLTree,
     const char *pszVRTDirectory,
     int bUpdate,
     int nRecLevel)
 {
-    if( !EQUAL(psLTree->pszValue,"OGRVRTUnionLayer") )
+    if( !EQUAL(psLTree->pszValue, "OGRVRTUnionLayer") )
         return NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Get layer name.                                                 */
-/* -------------------------------------------------------------------- */
-    const char *pszLayerName = CPLGetXMLValue( psLTree, "name", NULL );
+    // Get layer name.
+    const char *pszLayerName = CPLGetXMLValue(psLTree, "name", NULL);
 
     if( pszLayerName == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Missing name attribute on OGRVRTUnionLayer" );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Missing name attribute on OGRVRTUnionLayer");
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Do we have a fixed geometry type?  If not derive from the       */
-/*      source layer.                                                   */
-/* -------------------------------------------------------------------- */
-    const char* pszGType = CPLGetXMLValue( psLTree, "GeometryType", NULL );
+    // Do we have a fixed geometry type?  If not derive from the
+    // source layer.
+    const char *pszGType = CPLGetXMLValue(psLTree, "GeometryType", NULL);
     bool bGlobalGeomTypeSet = false;
     OGRwkbGeometryType eGlobalGeomType = wkbUnknown;
     if( pszGType != NULL )
@@ -344,220 +340,209 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
         eGlobalGeomType = OGRVRTGetGeometryType(pszGType, &bError);
         if( bError )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "GeometryType %s not recognised.",
-                    pszGType );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GeometryType %s not recognised.", pszGType);
             return NULL;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Apply a spatial reference system if provided                    */
-/* -------------------------------------------------------------------- */
-     const char* pszLayerSRS = CPLGetXMLValue( psLTree, "LayerSRS", NULL );
-     OGRSpatialReference* poGlobalSRS = NULL;
-     bool bGlobalSRSSet = false;
-     if( pszLayerSRS != NULL )
-     {
-         bGlobalSRSSet = true;
-         if( !EQUAL(pszLayerSRS,"NULL") )
-         {
-             OGRSpatialReference oSRS;
+    // Apply a spatial reference system if provided.
+    const char *pszLayerSRS = CPLGetXMLValue(psLTree, "LayerSRS", NULL);
+    OGRSpatialReference *poGlobalSRS = NULL;
+    bool bGlobalSRSSet = false;
+    if( pszLayerSRS != NULL )
+    {
+        bGlobalSRSSet = true;
+        if( !EQUAL(pszLayerSRS, "NULL") )
+        {
+            OGRSpatialReference oSRS;
 
-             if( oSRS.SetFromUserInput( pszLayerSRS ) != OGRERR_NONE )
-             {
-                 CPLError( CE_Failure, CPLE_AppDefined,
-                           "Failed to import LayerSRS `%s'.", pszLayerSRS );
-                 return NULL;
-             }
-             poGlobalSRS = oSRS.Clone();
-         }
-     }
+            if( oSRS.SetFromUserInput(pszLayerSRS) != OGRERR_NONE )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to import LayerSRS `%s'.", pszLayerSRS);
+                return NULL;
+            }
+            poGlobalSRS = oSRS.Clone();
+        }
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Find field declarations.                                        */
-/* -------------------------------------------------------------------- */
-    OGRFieldDefn** papoFields = NULL;
+    // Find field declarations.
+    OGRFieldDefn **papoFields = NULL;
     int nFields = 0;
-    OGRUnionLayerGeomFieldDefn** papoGeomFields = NULL;
+    OGRUnionLayerGeomFieldDefn **papoGeomFields = NULL;
     int nGeomFields = 0;
 
-    for( CPLXMLNode *psSubNode = psLTree->psChild;
-         psSubNode != NULL;
-         psSubNode=psSubNode->psNext )
+    for( CPLXMLNode *psSubNode = psLTree->psChild; psSubNode != NULL;
+         psSubNode = psSubNode->psNext )
     {
-         if( psSubNode->eType != CXT_Element )
-             continue;
+        if( psSubNode->eType != CXT_Element )
+            continue;
 
-         if( psSubNode->eType == CXT_Element && EQUAL(psSubNode->pszValue,"Field") )
-         {
-/* -------------------------------------------------------------------- */
-/*      Field name.                                                     */
-/* -------------------------------------------------------------------- */
-             const char *l_pszName = CPLGetXMLValue( psSubNode, "name", NULL );
-             if( l_pszName == NULL )
-             {
-                 CPLError( CE_Failure, CPLE_AppDefined,
-                           "Unable to identify Field name." );
-                 break;
-             }
-
-             OGRFieldDefn oFieldDefn( l_pszName, OFTString );
-
-/* -------------------------------------------------------------------- */
-/*      Type                                                            */
-/* -------------------------------------------------------------------- */
-             const char *pszArg = CPLGetXMLValue( psSubNode, "type", NULL );
-
-             if( pszArg != NULL )
-             {
-                 int iType = 0;  // Used after for.
-
-                 for( ; iType <= (int) OFTMaxType; iType++ )
-                 {
-                     if( EQUAL(pszArg,OGRFieldDefn::GetFieldTypeName(
-                                   (OGRFieldType)iType)) )
-                     {
-                         oFieldDefn.SetType( (OGRFieldType) iType );
-                         break;
-                     }
-                 }
-
-                 if( iType > (int) OFTMaxType )
-                 {
-                     CPLError( CE_Failure, CPLE_AppDefined,
-                               "Unable to identify Field type '%s'.",
-                               pszArg );
-                     break;
-                 }
-             }
-
-/* -------------------------------------------------------------------- */
-/*      Width and precision.                                            */
-/* -------------------------------------------------------------------- */
-             int nWidth = atoi(CPLGetXMLValue( psSubNode, "width", "0" ));
-             if (nWidth < 0)
-             {
-                CPLError( CE_Failure, CPLE_IllegalArg,
-                          "Invalid width for field %s.",
-                          l_pszName );
+        if( psSubNode->eType == CXT_Element &&
+            EQUAL(psSubNode->pszValue, "Field") )
+        {
+            // Field name.
+            const char *l_pszName = CPLGetXMLValue(psSubNode, "name", NULL);
+            if( l_pszName == NULL )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unable to identify Field name.");
                 break;
-             }
-             oFieldDefn.SetWidth(nWidth);
+            }
 
-             int nPrecision = atoi(CPLGetXMLValue( psSubNode, "precision", "0" ));
-             if (nPrecision < 0 || nPrecision > 1024)
-             {
-                CPLError( CE_Failure, CPLE_IllegalArg,
-                          "Invalid precision for field %s.",
-                          l_pszName );
+            OGRFieldDefn oFieldDefn(l_pszName, OFTString);
+
+            // Type.
+            const char *pszArg = CPLGetXMLValue(psSubNode, "type", NULL);
+
+            if( pszArg != NULL )
+            {
+                int iType = 0;  // Used after for.
+
+                for( ; iType <= (int) OFTMaxType; iType++ )
+                {
+                    // TODO(schwehr): C++ casts.
+                    if( EQUAL(pszArg, OGRFieldDefn::GetFieldTypeName(
+                                          (OGRFieldType)iType)) )
+                    {
+                        oFieldDefn.SetType((OGRFieldType)iType);
+                        break;
+                    }
+                }
+
+                if( iType > (int)OFTMaxType )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unable to identify Field type '%s'.", pszArg);
+                    break;
+                }
+            }
+
+            // Width and precision.
+            int nWidth = atoi(CPLGetXMLValue(psSubNode, "width", "0"));
+            if( nWidth < 0 )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid width for field %s.", l_pszName);
                 break;
-             }
-             oFieldDefn.SetPrecision(nPrecision);
+            }
+            oFieldDefn.SetWidth(nWidth);
 
-             papoFields = (OGRFieldDefn**) CPLRealloc(papoFields,
-                                        sizeof(OGRFieldDefn*) * (nFields + 1));
-             papoFields[nFields] = new OGRFieldDefn(&oFieldDefn);
-             nFields ++;
-         }
+            int nPrecision = atoi(CPLGetXMLValue(psSubNode, "precision", "0"));
+            if( nPrecision < 0 || nPrecision > 1024 )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid precision for field %s.", l_pszName);
+                break;
+            }
+            oFieldDefn.SetPrecision(nPrecision);
 
-         else if( psSubNode->eType == CXT_Element &&
-                  EQUAL(psSubNode->pszValue,"GeometryField") )
-         {
-             const char *l_pszName = CPLGetXMLValue( psSubNode, "name", NULL );
-             if( l_pszName == NULL )
-             {
-                 CPLError( CE_Failure, CPLE_AppDefined,
-                           "Unable to identify GeometryField name." );
-                 break;
-             }
+            papoFields = (OGRFieldDefn **)CPLRealloc(
+                papoFields, sizeof(OGRFieldDefn *) * (nFields + 1));
+            papoFields[nFields] = new OGRFieldDefn(&oFieldDefn);
+            nFields++;
+        }
 
-             pszGType = CPLGetXMLValue( psSubNode, "GeometryType", NULL );
-             if( pszGType == NULL && nGeomFields == 0 )
-                 pszGType = CPLGetXMLValue( psLTree, "GeometryType", NULL );
-             OGRwkbGeometryType eGeomType = wkbUnknown;
-             bool bGeomTypeSet = false;
-             if( pszGType != NULL )
-             {
+        else if( psSubNode->eType == CXT_Element &&
+                 EQUAL(psSubNode->pszValue, "GeometryField") )
+        {
+            const char *l_pszName = CPLGetXMLValue(psSubNode, "name", NULL);
+            if( l_pszName == NULL )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unable to identify GeometryField name.");
+                break;
+            }
+
+            pszGType = CPLGetXMLValue(psSubNode, "GeometryType", NULL);
+            if( pszGType == NULL && nGeomFields == 0 )
+                pszGType = CPLGetXMLValue(psLTree, "GeometryType", NULL);
+            OGRwkbGeometryType eGeomType = wkbUnknown;
+            bool bGeomTypeSet = false;
+            if( pszGType != NULL )
+            {
                 int bError = FALSE;
                 eGeomType = OGRVRTGetGeometryType(pszGType, &bError);
                 bGeomTypeSet = true;
                 if( bError || eGeomType == wkbNone )
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                            "GeometryType %s not recognised.",
-                            pszGType );
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "GeometryType %s not recognised.", pszGType);
                     break;
                 }
-             }
+            }
 
-             const char* pszSRS = CPLGetXMLValue( psSubNode, "SRS", NULL );
-             if( pszSRS == NULL && nGeomFields == 0 )
-                 pszSRS = CPLGetXMLValue( psLTree, "LayerSRS", NULL );
-             OGRSpatialReference* poSRS = NULL;
-             bool bSRSSet = false;
-             if( pszSRS != NULL )
-             {
-                 bSRSSet = true;
-                 if( !EQUAL(pszSRS,"NULL") )
-                 {
+            const char *pszSRS = CPLGetXMLValue(psSubNode, "SRS", NULL);
+            if( pszSRS == NULL && nGeomFields == 0 )
+                pszSRS = CPLGetXMLValue(psLTree, "LayerSRS", NULL);
+            OGRSpatialReference *poSRS = NULL;
+            bool bSRSSet = false;
+            if( pszSRS != NULL )
+            {
+                bSRSSet = true;
+                if( !EQUAL(pszSRS, "NULL") )
+                {
                     OGRSpatialReference oSRS;
 
-                    if( oSRS.SetFromUserInput( pszSRS ) != OGRERR_NONE )
+                    if( oSRS.SetFromUserInput(pszSRS) != OGRERR_NONE )
                     {
-                        CPLError( CE_Failure, CPLE_AppDefined,
-                                "Failed to import SRS `%s'.", pszSRS );
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Failed to import SRS `%s'.", pszSRS);
                         break;
                     }
                     poSRS = oSRS.Clone();
                 }
              }
 
-             OGRUnionLayerGeomFieldDefn* poFieldDefn =
-                    new OGRUnionLayerGeomFieldDefn(l_pszName, eGeomType);
-             if( poSRS != NULL )
-             {
+            OGRUnionLayerGeomFieldDefn *poFieldDefn =
+                new OGRUnionLayerGeomFieldDefn(l_pszName, eGeomType);
+            if( poSRS != NULL )
+            {
                 poFieldDefn->SetSpatialRef(poSRS);
                 poSRS->Dereference();
-             }
-             poFieldDefn->bGeomTypeSet = bGeomTypeSet;
-             poFieldDefn->bSRSSet = bSRSSet;
+            }
+            poFieldDefn->bGeomTypeSet = bGeomTypeSet;
+            poFieldDefn->bSRSSet = bSRSSet;
 
-             const char* pszExtentXMin = CPLGetXMLValue( psSubNode, "ExtentXMin", NULL );
-             const char* pszExtentYMin = CPLGetXMLValue( psSubNode, "ExtentYMin", NULL );
-             const char* pszExtentXMax = CPLGetXMLValue( psSubNode, "ExtentXMax", NULL );
-             const char* pszExtentYMax = CPLGetXMLValue( psSubNode, "ExtentYMax", NULL );
-             if( pszExtentXMin != NULL && pszExtentYMin != NULL &&
-                 pszExtentXMax != NULL && pszExtentYMax != NULL )
-             {
+            const char *pszExtentXMin =
+                CPLGetXMLValue(psSubNode, "ExtentXMin", NULL);
+            const char *pszExtentYMin =
+                CPLGetXMLValue(psSubNode, "ExtentYMin", NULL);
+            const char *pszExtentXMax =
+                CPLGetXMLValue(psSubNode, "ExtentXMax", NULL);
+            const char *pszExtentYMax =
+                CPLGetXMLValue(psSubNode, "ExtentYMax", NULL);
+            if( pszExtentXMin != NULL && pszExtentYMin != NULL &&
+                pszExtentXMax != NULL && pszExtentYMax != NULL )
+            {
                 poFieldDefn->sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
                 poFieldDefn->sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
                 poFieldDefn->sStaticEnvelope.MaxX = CPLAtof(pszExtentXMax);
                 poFieldDefn->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
-             }
+            }
 
-             papoGeomFields = (OGRUnionLayerGeomFieldDefn**) CPLRealloc(papoGeomFields,
-                                        sizeof(OGRUnionLayerGeomFieldDefn*) * (nGeomFields + 1));
-             papoGeomFields[nGeomFields] = poFieldDefn;
-             nGeomFields ++;
-         }
+            papoGeomFields = (OGRUnionLayerGeomFieldDefn **)CPLRealloc(
+                papoGeomFields,
+                sizeof(OGRUnionLayerGeomFieldDefn *) * (nGeomFields + 1));
+            papoGeomFields[nGeomFields] = poFieldDefn;
+            nGeomFields++;
+        }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set Extent if provided                                          */
-/* -------------------------------------------------------------------- */
-    const char* pszExtentXMin = CPLGetXMLValue( psLTree, "ExtentXMin", NULL );
-    const char* pszExtentYMin = CPLGetXMLValue( psLTree, "ExtentYMin", NULL );
-    const char* pszExtentXMax = CPLGetXMLValue( psLTree, "ExtentXMax", NULL );
-    const char* pszExtentYMax = CPLGetXMLValue( psLTree, "ExtentYMax", NULL );
+    // Set Extent if provided.
+    const char *pszExtentXMin = CPLGetXMLValue(psLTree, "ExtentXMin", NULL);
+    const char *pszExtentYMin = CPLGetXMLValue(psLTree, "ExtentYMin", NULL);
+    const char *pszExtentXMax = CPLGetXMLValue(psLTree, "ExtentXMax", NULL);
+    const char *pszExtentYMax = CPLGetXMLValue(psLTree, "ExtentYMax", NULL);
 
     if( eGlobalGeomType != wkbNone && nGeomFields == 0 &&
         (bGlobalGeomTypeSet || bGlobalSRSSet ||
          (pszExtentXMin != NULL && pszExtentYMin != NULL &&
           pszExtentXMax != NULL && pszExtentYMax != NULL)) )
     {
-        OGRUnionLayerGeomFieldDefn* poFieldDefn =
-                new OGRUnionLayerGeomFieldDefn("", eGlobalGeomType);
+        OGRUnionLayerGeomFieldDefn *poFieldDefn =
+            new OGRUnionLayerGeomFieldDefn("", eGlobalGeomType);
         if( poGlobalSRS != NULL )
         {
             poFieldDefn->SetSpatialRef(poGlobalSRS);
@@ -575,10 +560,11 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
             poFieldDefn->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
         }
 
-        papoGeomFields = (OGRUnionLayerGeomFieldDefn**) CPLRealloc(papoGeomFields,
-                                sizeof(OGRUnionLayerGeomFieldDefn*) * (nGeomFields + 1));
+        papoGeomFields = (OGRUnionLayerGeomFieldDefn **)CPLRealloc(
+            papoGeomFields,
+            sizeof(OGRUnionLayerGeomFieldDefn *) * (nGeomFields + 1));
         papoGeomFields[nGeomFields] = poFieldDefn;
-        nGeomFields ++;
+        nGeomFields++;
     }
     else
     {
@@ -586,35 +572,30 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
         poGlobalSRS = NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Find source layers                                              */
-/* -------------------------------------------------------------------- */
-
+    // Find source layers.
     int nSrcLayers = 0;
-    OGRLayer** papoSrcLayers = NULL;
+    OGRLayer **papoSrcLayers = NULL;
 
-    for( CPLXMLNode *psSubNode = psLTree->psChild;
-         psSubNode != NULL;
-         psSubNode=psSubNode->psNext )
+    for( CPLXMLNode *psSubNode = psLTree->psChild; psSubNode != NULL;
+         psSubNode = psSubNode->psNext )
     {
         if( psSubNode->eType != CXT_Element )
             continue;
 
-        OGRLayer* poSrcLayer = InstantiateLayer(psSubNode, pszVRTDirectory,
+        OGRLayer *poSrcLayer = InstantiateLayer(psSubNode, pszVRTDirectory,
                                                 bUpdate, nRecLevel + 1);
         if( poSrcLayer != NULL )
         {
-            papoSrcLayers = (OGRLayer**)
-                CPLRealloc(papoSrcLayers, sizeof(OGRLayer*) * (nSrcLayers + 1));
+            papoSrcLayers = (OGRLayer **)CPLRealloc(
+                papoSrcLayers, sizeof(OGRLayer *) * (nSrcLayers + 1));
             papoSrcLayers[nSrcLayers] = poSrcLayer;
-            nSrcLayers ++;
+            nSrcLayers++;
         }
     }
 
     if( nSrcLayers == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Cannot find source layers" );
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find source layers");
         for( int iField = 0; iField < nFields; iField++ )
             delete papoFields[iField];
         CPLFree(papoFields);
@@ -624,35 +605,27 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Build the OGRUnionLayer.                                        */
-/* -------------------------------------------------------------------- */
-    OGRUnionLayer* poLayer = new OGRUnionLayer( pszLayerName,
-                                                nSrcLayers,
-                                                papoSrcLayers,
-                                                TRUE );
+    // Build the OGRUnionLayer.
+    OGRUnionLayer *poLayer =
+        new OGRUnionLayer(pszLayerName, nSrcLayers, papoSrcLayers, TRUE);
 
-/* -------------------------------------------------------------------- */
-/*      Set the source layer field name attribute.                      */
-/* -------------------------------------------------------------------- */
-    const char* pszSourceLayerFieldName =
-        CPLGetXMLValue( psLTree, "SourceLayerFieldName", NULL );
+    // Set the source layer field name attribute.
+    const char *pszSourceLayerFieldName =
+        CPLGetXMLValue(psLTree, "SourceLayerFieldName", NULL);
     poLayer->SetSourceLayerFieldName(pszSourceLayerFieldName);
 
-/* -------------------------------------------------------------------- */
-/*      Set the PreserveSrcFID attribute.                               */
-/* -------------------------------------------------------------------- */
+    // Set the PreserveSrcFID attribute.
     bool bPreserveSrcFID = false;
-    const char* pszPreserveFID = CPLGetXMLValue( psLTree, "PreserveSrcFID", NULL );
+    const char *pszPreserveFID =
+        CPLGetXMLValue(psLTree, "PreserveSrcFID", NULL);
     if( pszPreserveFID != NULL )
         bPreserveSrcFID = CPLTestBool(pszPreserveFID);
     poLayer->SetPreserveSrcFID(bPreserveSrcFID);
 
-/* -------------------------------------------------------------------- */
-/*      Set fields                                                      */
-/* -------------------------------------------------------------------- */
+    // Set fields.
     FieldUnionStrategy eFieldStrategy = FIELD_UNION_ALL_LAYERS;
-    const char* pszFieldStrategy = CPLGetXMLValue( psLTree, "FieldStrategy", NULL );
+    const char *pszFieldStrategy =
+        CPLGetXMLValue(psLTree, "FieldStrategy", NULL);
     if( pszFieldStrategy != NULL )
     {
         if( EQUAL(pszFieldStrategy, "FirstLayer") )
@@ -663,21 +636,24 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
             eFieldStrategy = FIELD_INTERSECTION_ALL_LAYERS;
         else
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Unhandled value for FieldStrategy `%s'.", pszFieldStrategy );
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Unhandled value for FieldStrategy `%s'.",
+                     pszFieldStrategy);
         }
     }
     if( nFields != 0 || nGeomFields > 1 )
     {
         if( pszFieldStrategy != NULL )
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Ignoring FieldStrategy value, because explicit Field or GeometryField is provided") ;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Ignoring FieldStrategy value, "
+                     "because explicit Field or GeometryField is provided");
         eFieldStrategy = FIELD_SPECIFIED;
     }
 
-    poLayer->SetFields(eFieldStrategy, nFields, papoFields,
-                       (nGeomFields == 0 && eGlobalGeomType == wkbNone) ? -1 : nGeomFields,
-                       papoGeomFields);
+    poLayer->SetFields(
+        eFieldStrategy, nFields, papoFields,
+        (nGeomFields == 0 && eGlobalGeomType == wkbNone) ? -1 : nGeomFields,
+        papoGeomFields);
 
     for(int iField = 0; iField < nFields; iField++)
         delete papoFields[iField];
@@ -686,10 +662,8 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
         delete papoGeomFields[iField];
     CPLFree(papoGeomFields);
 
-/* -------------------------------------------------------------------- */
-/*      Set FeatureCount if provided                                    */
-/* -------------------------------------------------------------------- */
-    const char* pszFeatureCount = CPLGetXMLValue( psLTree, "FeatureCount", NULL );
+    // Set FeatureCount if provided.
+    const char *pszFeatureCount = CPLGetXMLValue(psLTree, "FeatureCount", NULL);
     if( pszFeatureCount != NULL )
     {
         poLayer->SetFeatureCount(atoi(pszFeatureCount));
@@ -702,20 +676,18 @@ OGRLayer*  OGRVRTDataSource::InstantiateUnionLayer(
 /*                     InstantiateLayerInternal()                       */
 /************************************************************************/
 
-OGRLayer* OGRVRTDataSource::InstantiateLayerInternal(
+OGRLayer *OGRVRTDataSource::InstantiateLayerInternal(
     CPLXMLNode *psLTree,
     const char *pszVRTDirectory,
     int bUpdate,
     int nRecLevel )
 {
-/* -------------------------------------------------------------------- */
-/*      Create the layer object.                                        */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(psLTree->pszValue,"OGRVRTLayer") )
+    // Create the layer object.
+    if( EQUAL(psLTree->pszValue, "OGRVRTLayer") )
     {
-        OGRVRTLayer* poVRTLayer = new OGRVRTLayer(this);
+        OGRVRTLayer *poVRTLayer = new OGRVRTLayer(this);
 
-        if( !poVRTLayer->FastInitialize( psLTree, pszVRTDirectory, bUpdate ) )
+        if( !poVRTLayer->FastInitialize(psLTree, pszVRTDirectory, bUpdate) )
         {
             delete poVRTLayer;
             return NULL;
@@ -725,13 +697,13 @@ OGRLayer* OGRVRTDataSource::InstantiateLayerInternal(
     }
     else if( EQUAL(psLTree->pszValue,"OGRVRTWarpedLayer") && nRecLevel < 30 )
     {
-        return InstantiateWarpedLayer( psLTree, pszVRTDirectory,
-                                       bUpdate, nRecLevel + 1 );
+        return InstantiateWarpedLayer(psLTree, pszVRTDirectory,
+                                      bUpdate, nRecLevel + 1);
     }
     else if( EQUAL(psLTree->pszValue,"OGRVRTUnionLayer") && nRecLevel < 30 )
     {
-        return InstantiateUnionLayer( psLTree, pszVRTDirectory,
-                                      bUpdate, nRecLevel + 1 );
+        return InstantiateUnionLayer(psLTree, pszVRTDirectory,
+                                     bUpdate, nRecLevel + 1);
     }
     else
         return NULL;
@@ -743,29 +715,26 @@ OGRLayer* OGRVRTDataSource::InstantiateLayerInternal(
 
 typedef struct
 {
-    OGRVRTDataSource* poDS;
+    OGRVRTDataSource *poDS;
     CPLXMLNode *psNode;
     char       *pszVRTDirectory;
     bool        bUpdate;
 } PooledInitData;
 
-static OGRLayer* OGRVRTOpenProxiedLayer(void* pUserData)
+static OGRLayer *OGRVRTOpenProxiedLayer(void *pUserData)
 {
-    PooledInitData* pData = (PooledInitData*) pUserData;
+    PooledInitData *pData = (PooledInitData *)pUserData;
     return pData->poDS->InstantiateLayerInternal(
-        pData->psNode,
-        pData->pszVRTDirectory,
-        pData->bUpdate,
-        0);
+        pData->psNode, pData->pszVRTDirectory, pData->bUpdate, 0);
 }
 
 /************************************************************************/
 /*                     OGRVRTFreeProxiedLayerUserData()                 */
 /************************************************************************/
 
-static void OGRVRTFreeProxiedLayerUserData(void* pUserData)
+static void OGRVRTFreeProxiedLayerUserData(void *pUserData)
 {
-    PooledInitData* pData = (PooledInitData*) pUserData;
+    PooledInitData *pData = (PooledInitData *)pUserData;
     CPLFree(pData->pszVRTDirectory);
     CPLFree(pData);
 }
@@ -774,7 +743,7 @@ static void OGRVRTFreeProxiedLayerUserData(void* pUserData)
 /*                          InstantiateLayer()                          */
 /************************************************************************/
 
-OGRLayer* OGRVRTDataSource::InstantiateLayer(
+OGRLayer *OGRVRTDataSource::InstantiateLayer(
     CPLXMLNode *psLTree,
     const char *pszVRTDirectory,
     int bUpdate,
@@ -782,15 +751,14 @@ OGRLayer* OGRVRTDataSource::InstantiateLayer(
 {
     if( poLayerPool != NULL && EQUAL(psLTree->pszValue,"OGRVRTLayer"))
     {
-        PooledInitData* pData = (PooledInitData*) CPLMalloc(sizeof(PooledInitData));
+        PooledInitData *pData =
+            (PooledInitData *)CPLMalloc(sizeof(PooledInitData));
         pData->poDS = this;
         pData->psNode = psLTree;
         pData->pszVRTDirectory = CPLStrdup(pszVRTDirectory);
         pData->bUpdate = CPL_TO_BOOL(bUpdate);
-        return new OGRProxiedLayer(poLayerPool,
-                                    OGRVRTOpenProxiedLayer,
-                                    OGRVRTFreeProxiedLayerUserData,
-                                    pData);
+        return new OGRProxiedLayer(poLayerPool, OGRVRTOpenProxiedLayer,
+                                   OGRVRTFreeProxiedLayerUserData, pData);
     }
 
     return InstantiateLayerInternal(psLTree, pszVRTDirectory,
@@ -810,7 +778,8 @@ static int CountOGRVRTLayers(CPLXMLNode *psTree)
     if( EQUAL(psTree->pszValue, "OGRVRTLayer") )
         ++nCount;
 
-    for( CPLXMLNode *psNode=psTree->psChild; psNode != NULL; psNode=psNode->psNext )
+    for( CPLXMLNode *psNode = psTree->psChild; psNode != NULL;
+         psNode = psNode->psNext )
     {
         nCount += CountOGRVRTLayers(psNode);
     }
@@ -826,78 +795,64 @@ bool OGRVRTDataSource::Initialize( CPLXMLNode *psTreeIn, const char *pszNewName,
                                    int bUpdate )
 
 {
-    CPLAssert( nLayers == 0 );
+    CPLAssert(nLayers == 0);
 
     psTree = psTreeIn;
 
-/* -------------------------------------------------------------------- */
-/*      Set name, and capture the directory path so we can use it       */
-/*      for relative datasources.                                       */
-/* -------------------------------------------------------------------- */
-    CPLString osVRTDirectory = CPLGetPath( pszNewName );
+    // Set name, and capture the directory path so we can use it
+    // for relative datasources.
+    CPLString osVRTDirectory = CPLGetPath(pszNewName);
 
-    pszName = CPLStrdup( pszNewName );
+    pszName = CPLStrdup(pszNewName);
 
-/* -------------------------------------------------------------------- */
-/*      Look for the OGRVRTDataSource node, it might be after an        */
-/*      <xml> node.                                                     */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psVRTDSXML = CPLGetXMLNode( psTree, "=OGRVRTDataSource" );
+    // Look for the OGRVRTDataSource node, it might be after an <xml> node.
+    CPLXMLNode *psVRTDSXML = CPLGetXMLNode(psTree, "=OGRVRTDataSource");
     if( psVRTDSXML == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Did not find the <OGRVRTDataSource> node in the root of the document,\n"
-                  "this is not really an OGR VRT." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Did not find the <OGRVRTDataSource> node in the root of the "
+                 "document, this is not really an OGR VRT.");
         return false;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Determine if we must proxy layers.                              */
-/* -------------------------------------------------------------------- */
+    // Determine if we must proxy layers.
     int nOGRVRTLayerCount = CountOGRVRTLayers(psVRTDSXML);
 
-    int nMaxSimultaneouslyOpened = atoi(CPLGetConfigOption("OGR_VRT_MAX_OPENED", "100"));
+    int nMaxSimultaneouslyOpened =
+        atoi(CPLGetConfigOption("OGR_VRT_MAX_OPENED", "100"));
     if( nMaxSimultaneouslyOpened < 1 )
         nMaxSimultaneouslyOpened = 1;
     if( nOGRVRTLayerCount > nMaxSimultaneouslyOpened )
         poLayerPool = new OGRLayerPool(nMaxSimultaneouslyOpened);
 
-/* -------------------------------------------------------------------- */
-/*      Apply any dataset level metadata.                               */
-/* -------------------------------------------------------------------- */
-    oMDMD.XMLInit( psVRTDSXML, TRUE );
+    // Apply any dataset level metadata.
+    oMDMD.XMLInit(psVRTDSXML, TRUE);
 
-/* -------------------------------------------------------------------- */
-/*      Look for layers.                                                */
-/* -------------------------------------------------------------------- */
-
-    for( CPLXMLNode *psLTree=psVRTDSXML->psChild; psLTree != NULL; psLTree=psLTree->psNext )
+    // Look for layers.
+    for( CPLXMLNode *psLTree = psVRTDSXML->psChild; psLTree != NULL;
+         psLTree = psLTree->psNext )
     {
         if( psLTree->eType != CXT_Element )
             continue;
 
-/* -------------------------------------------------------------------- */
-/*      Create the layer object.                                        */
-/* -------------------------------------------------------------------- */
-        OGRLayer  *poLayer = InstantiateLayer(psLTree, osVRTDirectory, bUpdate);
+        // Create the layer object.
+        OGRLayer *poLayer = InstantiateLayer(psLTree, osVRTDirectory, bUpdate);
         if( poLayer == NULL )
             continue;
 
-/* -------------------------------------------------------------------- */
-/*      Add layer to data source layer list.                            */
-/* -------------------------------------------------------------------- */
-        nLayers ++;
-        papoLayers = (OGRLayer **)
-            CPLRealloc( papoLayers,  sizeof(OGRLayer *) * nLayers );
-        papoLayers[nLayers-1] = poLayer;
+        // Add layer to data source layer list.
+        nLayers++;
+        papoLayers =
+            (OGRLayer **)CPLRealloc(papoLayers, sizeof(OGRLayer *) * nLayers);
+        papoLayers[nLayers - 1] = poLayer;
 
-        paeLayerType = (OGRLayerType*)
-            CPLRealloc( paeLayerType,  sizeof(int) * nLayers );
-        if( poLayerPool != NULL && EQUAL(psLTree->pszValue,"OGRVRTLayer"))
+        paeLayerType =
+            (OGRLayerType *)CPLRealloc(paeLayerType, sizeof(int) * nLayers);
+        if( poLayerPool != NULL && EQUAL(psLTree->pszValue, "OGRVRTLayer") )
         {
             paeLayerType[nLayers - 1] = OGR_VRT_PROXIED_LAYER;
         }
-        else if( EQUAL(psLTree->pszValue,"OGRVRTLayer") )
+        else if( EQUAL(psLTree->pszValue, "OGRVRTLayer") )
         {
             paeLayerType[nLayers - 1] = OGR_VRT_LAYER;
         }
@@ -914,9 +869,9 @@ bool OGRVRTDataSource::Initialize( CPLXMLNode *psTreeIn, const char *pszNewName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVRTDataSource::TestCapability( const char * pszCap )
+int OGRVRTDataSource::TestCapability( const char *pszCap )
 {
-    if( EQUAL(pszCap,ODsCCurveGeometries) )
+    if( EQUAL(pszCap, ODsCCurveGeometries) )
         return TRUE;
     return FALSE;
 }
@@ -938,7 +893,7 @@ OGRLayer *OGRVRTDataSource::GetLayer( int iLayer )
 /*                         AddForbiddenNames()                          */
 /************************************************************************/
 
-void OGRVRTDataSource::AddForbiddenNames(const char* pszOtherDSName)
+void OGRVRTDataSource::AddForbiddenNames(const char *pszOtherDSName)
 {
     aosOtherDSNameSet.insert(pszOtherDSName);
 }
@@ -947,7 +902,7 @@ void OGRVRTDataSource::AddForbiddenNames(const char* pszOtherDSName)
 /*                         IsInForbiddenNames()                         */
 /************************************************************************/
 
-bool OGRVRTDataSource::IsInForbiddenNames( const char* pszOtherDSName ) const
+bool OGRVRTDataSource::IsInForbiddenNames( const char *pszOtherDSName ) const
 {
     return aosOtherDSNameSet.find(pszOtherDSName) != aosOtherDSNameSet.end();
 }
@@ -959,30 +914,31 @@ bool OGRVRTDataSource::IsInForbiddenNames( const char* pszOtherDSName ) const
 char **OGRVRTDataSource::GetFileList()
 {
     CPLStringList oList;
-    oList.AddString( GetName() );
-    for(int i=0; i<nLayers; i++ )
+    oList.AddString(GetName());
+    for( int i = 0; i < nLayers; i++ )
     {
-        OGRLayer* poLayer = papoLayers[i];
-        OGRVRTLayer* poVRTLayer = NULL;
+        OGRLayer *poLayer = papoLayers[i];
+        OGRVRTLayer *poVRTLayer = NULL;
         switch( paeLayerType[nLayers - 1] )
         {
-            case OGR_VRT_PROXIED_LAYER:
-                poVRTLayer = (OGRVRTLayer*) ((OGRProxiedLayer*)poLayer)->GetUnderlyingLayer();
-                break;
-            case OGR_VRT_LAYER:
-                poVRTLayer = (OGRVRTLayer*) poLayer;
-                break;
-            default:
-                break;
+        case OGR_VRT_PROXIED_LAYER:
+            poVRTLayer = (OGRVRTLayer *)((OGRProxiedLayer *)poLayer)
+                             ->GetUnderlyingLayer();
+            break;
+        case OGR_VRT_LAYER:
+            poVRTLayer = (OGRVRTLayer *)poLayer;
+            break;
+        default:
+            break;
         }
-        if( poVRTLayer != NULL )
+        if(poVRTLayer != NULL)
         {
-            GDALDataset* poSrcDS = poVRTLayer->GetSrcDataset();
+            GDALDataset *poSrcDS = poVRTLayer->GetSrcDataset();
             if( poSrcDS != NULL )
             {
-                char** papszFileList = poSrcDS->GetFileList();
-                char** papszIter = papszFileList;
-                for(; papszIter != NULL && *papszIter != NULL; papszIter++ )
+                char **papszFileList = poSrcDS->GetFileList();
+                char **papszIter = papszFileList;
+                for( ; papszIter != NULL && *papszIter != NULL; papszIter++ )
                 {
                     if( oList.FindString(*papszIter) < 0 )
                         oList.AddString(*papszIter);
