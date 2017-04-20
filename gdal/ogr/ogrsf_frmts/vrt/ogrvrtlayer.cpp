@@ -35,7 +35,8 @@
 
 CPL_CVSID("$Id$");
 
-#define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
+#define UNSUPPORTED_OP_READ_ONLY \
+    "%s : unsupported operation on a read-only datasource."
 
 /************************************************************************/
 /*                       OGRVRTGeomFieldProps()                         */
@@ -103,7 +104,7 @@ OGRVRTLayer::~OGRVRTLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug("VRT", "%d features read on layer '%s'.",
-                 (int) m_nFeaturesRead,
+                 static_cast<int>(m_nFeaturesRead),
                  poFeatureDefn->GetName());
     }
 
@@ -183,7 +184,7 @@ bool OGRVRTLayer::FastInitialize( CPLXMLNode *psLTreeIn,
     if( pszGType != NULL )
     {
         int l_bError = FALSE;
-        OGRwkbGeometryType eGeomType =
+        const OGRwkbGeometryType eGeomType =
             OGRVRTGetGeometryType(pszGType, &l_bError);
         if( l_bError )
         {
@@ -490,18 +491,18 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
 /*                         FullInitialize()                             */
 /************************************************************************/
 
+// TODO(schwehr): Remove gotos.
 bool OGRVRTLayer::FullInitialize()
-
 {
+    if( bHasFullInitialized )
+        return true;
+
     const char *pszSharedSetting = NULL;
     const char *pszSQL = NULL;
     const char *pszSrcFIDFieldName = NULL;
     const char *pszStyleFieldName = NULL;
     CPLXMLNode *psChild = NULL;
     bool bFoundGeometryField = false;
-
-    if( bHasFullInitialized )
-        return true;
 
     bHasFullInitialized = true;
 
@@ -513,7 +514,8 @@ bool OGRVRTLayer::FullInitialize()
 
     // Figure out the data source name.  It may be treated relative
     // to vrt filename, but normally it is used directly.
-    char *pszSrcDSName = (char *)CPLGetXMLValue(psLTree, "SrcDataSource", NULL);
+    char *pszSrcDSName =
+        const_cast<char *>(CPLGetXMLValue(psLTree, "SrcDataSource", NULL));
 
     if( pszSrcDSName == NULL )
     {
@@ -857,17 +859,17 @@ try_again:
             {
                 int iType = 0;  // Used after for.
 
-                for( ; iType <= (int) OFTMaxType; iType++ )
+                for( ; iType <= static_cast<int>(OFTMaxType); iType++ )
                 {
                     if( EQUAL(pszArg, OGRFieldDefn::GetFieldTypeName(
-                                          (OGRFieldType)iType)) )
+                                          static_cast<OGRFieldType>(iType))) )
                     {
-                        oFieldDefn.SetType((OGRFieldType)iType);
+                        oFieldDefn.SetType(static_cast<OGRFieldType>(iType));
                         break;
                     }
                 }
 
-                if( iType > (int)OFTMaxType )
+                if( iType > static_cast<int>(OFTMaxType) )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Unable to identify Field type '%s'.", pszArg);
@@ -882,17 +884,18 @@ try_again:
                 OGRFieldSubType eSubType = OFSTNone;
 
                 int iType = 0;  // Used after for.
-                for( iType = 0; iType <= (int) OFSTMaxSubType; iType++ )
+                for( ; iType <= static_cast<int>(OFSTMaxSubType); iType++ )
                 {
-                    if( EQUAL(pszArg, OGRFieldDefn::GetFieldSubTypeName(
-                                          (OGRFieldSubType)iType)) )
+                    if( EQUAL(pszArg,
+                              OGRFieldDefn::GetFieldSubTypeName(
+                                  static_cast<OGRFieldSubType>(iType))) )
                     {
-                        eSubType = (OGRFieldSubType)iType;
+                        eSubType = static_cast<OGRFieldSubType>(iType);
                         break;
                     }
                 }
 
-                if( iType > (int)OFSTMaxSubType )
+                if( iType > static_cast<int>(OFSTMaxSubType) )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Unable to identify Field subtype '%s'.", pszArg);
@@ -976,12 +979,13 @@ try_again:
         }
     }
 
-    CPLAssert(poFeatureDefn->GetFieldCount() == (int)anSrcField.size());
+    CPLAssert(poFeatureDefn->GetFieldCount() ==
+              static_cast<int>(anSrcField.size()));
 
     // Create the schema, if it was not explicitly in the VRT.
     if( poFeatureDefn->GetFieldCount() == 0 )
     {
-        int nSrcFieldCount = GetSrcLayerDefn()->GetFieldCount();
+        const int nSrcFieldCount = GetSrcLayerDefn()->GetFieldCount();
 
         for( int iSrcField = 0; iSrcField < nSrcFieldCount; iSrcField++ )
         {
@@ -1021,7 +1025,7 @@ try_again:
         for( size_t i = 0; i < apoGeomFieldProps.size(); i++ )
         {
             if( apoGeomFieldProps[i]->eGeometryStyle != VGS_Direct ||
-                apoGeomFieldProps[i]->iGeomField != (int)i )
+                apoGeomFieldProps[i]->iGeomField != static_cast<int>(i) )
             {
                 bSame = false;
                 break;
@@ -1047,7 +1051,8 @@ try_again:
         }
     }
 
-    CPLAssert(poFeatureDefn->GetGeomFieldCount() == (int)apoGeomFieldProps.size());
+    CPLAssert(poFeatureDefn->GetGeomFieldCount() ==
+              static_cast<int>(apoGeomFieldProps.size()));
 
     // Allow vrt to override whether attribute filters should be
     // passed through.
@@ -1239,7 +1244,7 @@ bool OGRVRTLayer::ResetSourceReading()
 
     // Clear spatial filter (to be safe) for non direct geometries
     // and reset reading.
-    if( m_iGeomFieldFilter < (int)apoGeomFieldProps.size() &&
+    if( m_iGeomFieldFilter < static_cast<int>(apoGeomFieldProps.size()) &&
         apoGeomFieldProps[m_iGeomFieldFilter]->eGeometryStyle == VGS_Direct &&
         apoGeomFieldProps[m_iGeomFieldFilter]->iGeomField >= 0 )
     {
@@ -1344,7 +1349,7 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
         if( poFeature == NULL )
             return NULL;
 
-        if( ((m_iGeomFieldFilter < (int)apoGeomFieldProps.size() &&
+        if( ((m_iGeomFieldFilter < static_cast<int>(apoGeomFieldProps.size()) &&
               apoGeomFieldProps[m_iGeomFieldFilter]->eGeometryStyle ==
                   VGS_Direct) ||
              m_poFilterGeom == NULL ||
@@ -1429,7 +1434,8 @@ retry:
         }
         else if( eGeometryStyle == VGS_WKT && iGeomField != -1 )
         {
-            char *pszWKT = (char *)poSrcFeat->GetFieldAsString(iGeomField);
+            char *pszWKT =
+                const_cast<char *>(poSrcFeat->GetFieldAsString(iGeomField));
 
             if( pszWKT != NULL )
             {
@@ -1616,8 +1622,8 @@ OGRFeature *OGRVRTLayer::GetFeature( GIntBig nFeatureId )
     // If the FID is directly mapped, we can do a simple
     // GetFeature() to get our target feature.  Otherwise we need
     // to setup an appropriate query to get it.
-    OGRFeature *poSrcFeature;
-    OGRFeature *poFeature;
+    OGRFeature *poSrcFeature = NULL;
+    OGRFeature *poFeature = NULL;
 
     if( iFIDField == -1 )
     {
@@ -1627,7 +1633,7 @@ OGRFeature *OGRVRTLayer::GetFeature( GIntBig nFeatureId )
     {
         const char *pszFID =
             poSrcLayer->GetLayerDefn()->GetFieldDefn(iFIDField)->GetNameRef();
-        char *pszFIDQuery = (char *)CPLMalloc(strlen(pszFID) + 64);
+        char *pszFIDQuery = static_cast<char *>(CPLMalloc(strlen(pszFID) + 64));
 
         poSrcLayer->ResetReading();
         snprintf(pszFIDQuery, strlen(pszFID) + 64, "%s = " CPL_FRMT_GIB, pszFID,
@@ -1735,8 +1741,8 @@ OGRVRTLayer::TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature)
             OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
             if( poGeom != NULL )
             {
-                int nSize = poGeom->WkbSize();
-                GByte *pabyData = (GByte *)CPLMalloc(nSize);
+                const int nSize = poGeom->WkbSize();
+                GByte *pabyData = static_cast<GByte *>(CPLMalloc(nSize));
                 if( poGeom->exportToWkb(wkbNDR, pabyData) == OGRERR_NONE )
                 {
                     if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() ==
@@ -2409,12 +2415,12 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
     }
 
     // Add source fields that are not referenced by VRT layer.
-    int *panSrcFieldsUsed =
-        (int *)CPLCalloc(sizeof(int), poSrcFeatureDefn->GetFieldCount());
+    int *panSrcFieldsUsed = static_cast<int *>(
+        CPLCalloc(sizeof(int), poSrcFeatureDefn->GetFieldCount()));
     for( int iVRTField = 0; iVRTField < GetLayerDefn()->GetFieldCount();
          iVRTField++ )
     {
-        int iSrcField = anSrcField[iVRTField];
+        const int iSrcField = anSrcField[iVRTField];
         if( iSrcField >= 0 )
             panSrcFieldsUsed[iSrcField] = TRUE;
     }
@@ -2466,14 +2472,14 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
     CPLFree(panSrcFieldsUsed);
 
     // Add source geometry fields that are not referenced by VRT layer.
-    panSrcFieldsUsed =
-        (int *)CPLCalloc(sizeof(int), poSrcFeatureDefn->GetGeomFieldCount());
+    panSrcFieldsUsed = static_cast<int *>(
+        CPLCalloc(sizeof(int), poSrcFeatureDefn->GetGeomFieldCount()));
     for( int iVRTField = 0; iVRTField < GetLayerDefn()->GetGeomFieldCount();
          iVRTField++ )
     {
         if( apoGeomFieldProps[iVRTField]->eGeometryStyle == VGS_Direct )
         {
-            int iSrcField = apoGeomFieldProps[iVRTField]->iGeomField;
+            const int iSrcField = apoGeomFieldProps[iVRTField]->iGeomField;
             if( iSrcField >= 0 )
                 panSrcFieldsUsed[iSrcField] = TRUE;
         }

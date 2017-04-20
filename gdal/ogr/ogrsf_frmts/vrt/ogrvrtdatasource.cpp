@@ -33,6 +33,8 @@
 #include "ogrwarpedlayer.h"
 #include "ogrunionlayer.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -84,7 +86,8 @@ OGRwkbGeometryType OGRVRTGetGeometryType( const char *pszGType, int *pbError )
         {
             eGeomType = asGeomTypeNames[iType].eType;
 
-            if( strstr(pszGType, "25D") != NULL || strstr(pszGType, "Z") != NULL )
+            if( strstr(pszGType, "25D") != NULL ||
+                strstr(pszGType, "Z") != NULL )
                 eGeomType = wkbSetZ(eGeomType);
             if( pszGType[strlen(pszGType) - 1] == 'M' ||
                 pszGType[strlen(pszGType) - 2] == 'M' )
@@ -145,7 +148,7 @@ OGRVRTDataSource::~OGRVRTDataSource()
 
 int OGRVRTDataSource::CloseDependentDatasets()
 {
-    int bHasClosedDependentDatasets = (nLayers > 0);
+    const int bHasClosedDependentDatasets = nLayers > 0;
     for( int i = 0; i < nLayers; i++ )
     {
         delete papoLayers[i];
@@ -400,18 +403,17 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
             {
                 int iType = 0;  // Used after for.
 
-                for( ; iType <= (int) OFTMaxType; iType++ )
+                for( ; iType <= static_cast<int>(OFTMaxType); iType++ )
                 {
-                    // TODO(schwehr): C++ casts.
                     if( EQUAL(pszArg, OGRFieldDefn::GetFieldTypeName(
-                                          (OGRFieldType)iType)) )
+                                          static_cast<OGRFieldType>(iType))) )
                     {
-                        oFieldDefn.SetType((OGRFieldType)iType);
+                        oFieldDefn.SetType(static_cast<OGRFieldType>(iType));
                         break;
                     }
                 }
 
-                if( iType > (int)OFTMaxType )
+                if( iType > static_cast<int>(OFTMaxType) )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Unable to identify Field type '%s'.", pszArg);
@@ -420,7 +422,7 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
             }
 
             // Width and precision.
-            int nWidth = atoi(CPLGetXMLValue(psSubNode, "width", "0"));
+            const int nWidth = atoi(CPLGetXMLValue(psSubNode, "width", "0"));
             if( nWidth < 0 )
             {
                 CPLError(CE_Failure, CPLE_IllegalArg,
@@ -429,7 +431,8 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
             }
             oFieldDefn.SetWidth(nWidth);
 
-            int nPrecision = atoi(CPLGetXMLValue(psSubNode, "precision", "0"));
+            const int nPrecision =
+                atoi(CPLGetXMLValue(psSubNode, "precision", "0"));
             if( nPrecision < 0 || nPrecision > 1024 )
             {
                 CPLError(CE_Failure, CPLE_IllegalArg,
@@ -438,12 +441,11 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
             }
             oFieldDefn.SetPrecision(nPrecision);
 
-            papoFields = (OGRFieldDefn **)CPLRealloc(
-                papoFields, sizeof(OGRFieldDefn *) * (nFields + 1));
+            papoFields = static_cast<OGRFieldDefn **>(CPLRealloc(
+                papoFields, sizeof(OGRFieldDefn *) * (nFields + 1)));
             papoFields[nFields] = new OGRFieldDefn(&oFieldDefn);
             nFields++;
         }
-
         else if( psSubNode->eType == CXT_Element &&
                  EQUAL(psSubNode->pszValue, "GeometryField") )
         {
@@ -522,9 +524,10 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
                 poFieldDefn->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
             }
 
-            papoGeomFields = (OGRUnionLayerGeomFieldDefn **)CPLRealloc(
-                papoGeomFields,
-                sizeof(OGRUnionLayerGeomFieldDefn *) * (nGeomFields + 1));
+            papoGeomFields = static_cast<OGRUnionLayerGeomFieldDefn **>(
+                CPLRealloc(
+                    papoGeomFields,
+                    sizeof(OGRUnionLayerGeomFieldDefn *) * (nGeomFields + 1)));
             papoGeomFields[nGeomFields] = poFieldDefn;
             nGeomFields++;
         }
@@ -560,9 +563,9 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
             poFieldDefn->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
         }
 
-        papoGeomFields = (OGRUnionLayerGeomFieldDefn **)CPLRealloc(
+        papoGeomFields = static_cast<OGRUnionLayerGeomFieldDefn **>(CPLRealloc(
             papoGeomFields,
-            sizeof(OGRUnionLayerGeomFieldDefn *) * (nGeomFields + 1));
+            sizeof(OGRUnionLayerGeomFieldDefn *) * (nGeomFields + 1)));
         papoGeomFields[nGeomFields] = poFieldDefn;
         nGeomFields++;
     }
@@ -586,8 +589,8 @@ OGRLayer *OGRVRTDataSource::InstantiateUnionLayer(
                                                 bUpdate, nRecLevel + 1);
         if( poSrcLayer != NULL )
         {
-            papoSrcLayers = (OGRLayer **)CPLRealloc(
-                papoSrcLayers, sizeof(OGRLayer *) * (nSrcLayers + 1));
+          papoSrcLayers = static_cast<OGRLayer **>(CPLRealloc(
+                papoSrcLayers, sizeof(OGRLayer *) * (nSrcLayers + 1)));
             papoSrcLayers[nSrcLayers] = poSrcLayer;
             nSrcLayers++;
         }
@@ -705,8 +708,8 @@ OGRLayer *OGRVRTDataSource::InstantiateLayerInternal(
         return InstantiateUnionLayer(psLTree, pszVRTDirectory,
                                      bUpdate, nRecLevel + 1);
     }
-    else
-        return NULL;
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -723,7 +726,7 @@ typedef struct
 
 static OGRLayer *OGRVRTOpenProxiedLayer(void *pUserData)
 {
-    PooledInitData *pData = (PooledInitData *)pUserData;
+    PooledInitData *pData = static_cast<PooledInitData *>(pUserData);
     return pData->poDS->InstantiateLayerInternal(
         pData->psNode, pData->pszVRTDirectory, pData->bUpdate, 0);
 }
@@ -734,7 +737,7 @@ static OGRLayer *OGRVRTOpenProxiedLayer(void *pUserData)
 
 static void OGRVRTFreeProxiedLayerUserData(void *pUserData)
 {
-    PooledInitData *pData = (PooledInitData *)pUserData;
+    PooledInitData *pData = static_cast<PooledInitData *>(pUserData);
     CPLFree(pData->pszVRTDirectory);
     CPLFree(pData);
 }
@@ -816,12 +819,10 @@ bool OGRVRTDataSource::Initialize( CPLXMLNode *psTreeIn, const char *pszNewName,
     }
 
     // Determine if we must proxy layers.
-    int nOGRVRTLayerCount = CountOGRVRTLayers(psVRTDSXML);
+    const int nOGRVRTLayerCount = CountOGRVRTLayers(psVRTDSXML);
 
-    int nMaxSimultaneouslyOpened =
-        atoi(CPLGetConfigOption("OGR_VRT_MAX_OPENED", "100"));
-    if( nMaxSimultaneouslyOpened < 1 )
-        nMaxSimultaneouslyOpened = 1;
+    const int nMaxSimultaneouslyOpened =
+      std::max(atoi(CPLGetConfigOption("OGR_VRT_MAX_OPENED", "100")), 1);
     if( nOGRVRTLayerCount > nMaxSimultaneouslyOpened )
         poLayerPool = new OGRLayerPool(nMaxSimultaneouslyOpened);
 
@@ -842,12 +843,12 @@ bool OGRVRTDataSource::Initialize( CPLXMLNode *psTreeIn, const char *pszNewName,
 
         // Add layer to data source layer list.
         nLayers++;
-        papoLayers =
-            (OGRLayer **)CPLRealloc(papoLayers, sizeof(OGRLayer *) * nLayers);
+        papoLayers = static_cast<OGRLayer **>(
+            CPLRealloc(papoLayers, sizeof(OGRLayer *) * nLayers));
         papoLayers[nLayers - 1] = poLayer;
 
-        paeLayerType =
-            (OGRLayerType *)CPLRealloc(paeLayerType, sizeof(int) * nLayers);
+        paeLayerType = static_cast<OGRLayerType *>(
+            CPLRealloc(paeLayerType, sizeof(int) * nLayers));
         if( poLayerPool != NULL && EQUAL(psLTree->pszValue, "OGRVRTLayer") )
         {
             paeLayerType[nLayers - 1] = OGR_VRT_PROXIED_LAYER;
