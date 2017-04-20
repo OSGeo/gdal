@@ -1050,12 +1050,16 @@ int OGRParseDate( const char *pszInput,
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             ++pszInput;
+        if( *pszInput == '\0' )
+            return TRUE;
 
         bGotSomething = true;
 
         // If ISO 8601 format.
         if( *pszInput == 'T' )
             ++pszInput;
+        else if( *pszInput != ' ' )
+            return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
