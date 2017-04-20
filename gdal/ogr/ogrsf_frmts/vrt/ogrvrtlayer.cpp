@@ -2076,7 +2076,7 @@ OGRSpatialReference *OGRVRTLayer::GetSpatialRef()
 {
     if( (CPLGetXMLValue(psLTree, "LayerSRS", NULL) != NULL ||
          CPLGetXMLValue(psLTree, "GeometryField.SRS", NULL) != NULL) &&
-        apoGeomFieldProps.size() >= 1 )
+        !apoGeomFieldProps.empty() )
         return apoGeomFieldProps[0]->poSRS;
 
     if( !bHasFullInitialized )
