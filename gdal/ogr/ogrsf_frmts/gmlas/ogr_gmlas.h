@@ -374,6 +374,9 @@ class GMLASConfiguration
         /** If and when activate SWE special processings */
         SWEActivationMode m_eSWEActivationMode;
 
+        /** If enabling swe:DataRecord parsing */
+        bool m_bSWEProcessDataRecord;
+
         /** If enabling swe:DataArray parsing */
         bool m_bSWEProcessDataArray;
 
@@ -1143,6 +1146,7 @@ class OGRGMLASLayer: public OGRLayer
         OGRGMLASDataSource            *m_poDS;
         GMLASFeatureClass              m_oFC;
         bool                           m_bLayerDefnFinalized;
+        int                            m_nMaxFieldIndex;
         OGRFeatureDefn                *m_poFeatureDefn;
 
         /** Map from XPath to corresponding field index in OGR layer
@@ -1173,6 +1177,8 @@ class OGRGMLASLayer: public OGRLayer
         /** OGR field index of the field that points to the parent ID */
         int                            m_nParentIDFieldIdx;
 
+        std::map<CPLString, CPLString> m_oMapSWEFieldToOGRFieldName;
+
         OGRFeature*                    GetNextRawFeature();
 
         bool                           InitReader();
@@ -1197,7 +1203,14 @@ class OGRGMLASLayer: public OGRLayer
         void SetDataSource(OGRGMLASDataSource* poDS) { m_poDS = poDS; }
 
         void PostInit(bool bIncludeGeometryXML);
-        void ProcessDataRecord(CPLXMLNode* psDataRecord);
+        void ProcessDataRecordCreateFields(CPLXMLNode* psDataRecord,
+                                const std::vector<OGRFeature*>& apoFeatures,
+                                OGRLayer* poFieldsMetadataLayer);
+        void ProcessDataRecordFillFeature(CPLXMLNode* psDataRecord,
+                                          OGRFeature* poFeature);
+        void ProcessDataRecordOfDataArrayCreateFields(OGRGMLASLayer* poParentLayer,
+                                                      CPLXMLNode* psDataRecord,
+                                                      OGRLayer* poFieldsMetadataLayer);
         void CreateCompoundFoldedMappings();
 
         const GMLASFeatureClass& GetFeatureClass() const { return m_oFC; }
@@ -1399,8 +1412,21 @@ class GMLASReader : public DefaultHandler
         /** Whether to process swe:DataArray in a special way */
         bool                        m_bProcessSWEDataArray;
 
+        /** Whether to process swe:DataArray in a special way */
+        bool                        m_bProcessSWEDataRecord;
+
         /** Depth level of the swe:DataArray element */
         int                         m_nSWEDataArrayLevel;
+
+        /** Field name to which the DataArray belongs to */
+        CPLString                   m_osSWEDataArrayParentField;
+
+        /** Depth level of the swe:DataRecord element */
+        int                         m_nSWEDataRecordLevel;
+
+        OGRLayer                   *m_poFieldsMetadataLayer;
+        OGRLayer                   *m_poLayersMetadataLayer;
+        OGRLayer                   *m_poRelationshipsLayer;
 
         /** Base unique identifier */
         CPLString                      m_osHash;
@@ -1451,6 +1477,7 @@ class GMLASReader : public DefaultHandler
         void        AttachAsLastChild(CPLXMLNode* psNode);
 
         void        ProcessSWEDataArray(CPLXMLNode* psRoot);
+        void        ProcessSWEDataRecord(CPLXMLNode* psRoot);
         void        ProcessGeometry(CPLXMLNode* psRoot);
 
         void        ProcessAttributes(const Attributes& attrs);
@@ -1471,7 +1498,7 @@ class GMLASReader : public DefaultHandler
                         int& nInsertFieldIdx,
                         const GMLASXLinkResolutionConf::URLSpecificResolution& oRule );
 
-        bool        FillTextContent() const { return !m_bInitialPass; }
+        bool        FillTextContent() const { return !m_bInitialPass && m_nCurFieldIdx >=0; }
 
     public:
                         GMLASReader(GMLASXSDCache& oCache,
@@ -1536,6 +1563,9 @@ class GMLASReader : public DefaultHandler
                           bool bRemoveUnusedLayers,
                           bool bRemoveUnusedFields,
                           bool bProcessSWEDataArray,
+                          OGRLayer* poFieldsMetadataLayer,
+                          OGRLayer* poLayersMetadataLayer,
+                          OGRLayer* poRelationshipsLayer,
                           std::set<CPLString>& aoSetRemovedLayerNames);
 
         static bool LoadXSDInParser( SAX2XMLReader* poParser,
@@ -1548,6 +1578,7 @@ class GMLASReader : public DefaultHandler
                                      bool bHandleMultipleImports );
 
         void SetSWEDataArrayLayers( const std::vector<OGRGMLASLayer*>& ar );
+        void SetProcessDataRecord(bool b) { m_bProcessSWEDataRecord = b; }
         const std::vector<OGRGMLASLayer*>& GetSWEDataArrayLayers() const
             { return m_apoSWEDataArrayLayers; }
 };

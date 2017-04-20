@@ -1061,7 +1061,8 @@ bool GMLASWriter::CollectFields()
         }
     }
 
-    m_poFieldsMDLayer->SetAttributeFilter( NULL );
+    m_poFieldsMDLayer->SetAttributeFilter(
+        (CPLString(szFIELD_CATEGORY) + " != '" + szSWE_FIELD + "'").c_str() );
     m_poFieldsMDLayer->ResetReading();
     while( true )
     {
