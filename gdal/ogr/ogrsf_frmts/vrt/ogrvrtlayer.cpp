@@ -73,7 +73,7 @@ OGRVRTGeomFieldProps::~OGRVRTGeomFieldProps()
 /*                            OGRVRTLayer()                             */
 /************************************************************************/
 
-OGRVRTLayer::OGRVRTLayer( OGRVRTDataSource* poDSIn ) :
+OGRVRTLayer::OGRVRTLayer( OGRVRTDataSource *poDSIn ) :
     poDS(poDSIn),
     bHasFullInitialized(false),
     psLTree(NULL),
@@ -102,12 +102,12 @@ OGRVRTLayer::~OGRVRTLayer()
 {
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
-        CPLDebug( "VRT", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead,
-                  poFeatureDefn->GetName() );
+        CPLDebug("VRT", "%d features read on layer '%s'.",
+                 (int) m_nFeaturesRead,
+                 poFeatureDefn->GetName());
     }
 
-    for(size_t i=0;i<apoGeomFieldProps.size();i++)
+    for( size_t i = 0; i < apoGeomFieldProps.size(); i++ )
         delete apoGeomFieldProps[i];
 
     if( poSrcDS != NULL )
@@ -120,15 +120,15 @@ OGRVRTLayer::~OGRVRTLayer()
         }
 
         if( bSrcLayerFromSQL && poSrcLayer )
-            poSrcDS->ReleaseResultSet( poSrcLayer );
+            poSrcDS->ReleaseResultSet(poSrcLayer);
 
-        GDALClose( (GDALDatasetH) poSrcDS );
+        GDALClose((GDALDatasetH)poSrcDS);
     }
 
     if( poFeatureDefn )
         poFeatureDefn->Release();
 
-    CPLFree( pszAttrFilter );
+    CPLFree(pszAttrFilter);
 }
 
 /************************************************************************/
@@ -137,10 +137,10 @@ OGRVRTLayer::~OGRVRTLayer()
 
 OGRFeatureDefn* OGRVRTLayer::GetSrcLayerDefn()
 {
-    if (poSrcFeatureDefn)
+    if( poSrcFeatureDefn )
         return poSrcFeatureDefn;
 
-    if (poSrcLayer)
+    if( poSrcLayer )
         poSrcFeatureDefn = poSrcLayer->GetLayerDefn();
 
     return poSrcFeatureDefn;
@@ -159,188 +159,171 @@ bool OGRVRTLayer::FastInitialize( CPLXMLNode *psLTreeIn,
     bUpdate = CPL_TO_BOOL(bUpdateIn);
     osVRTDirectory = pszVRTDirectory;
 
-    if( !EQUAL(psLTree->pszValue,"OGRVRTLayer") )
+    if( !EQUAL(psLTree->pszValue, "OGRVRTLayer") )
         return FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      Get layer name.                                                 */
-/* -------------------------------------------------------------------- */
-    const char *pszLayerName = CPLGetXMLValue( psLTree, "name", NULL );
+    // Get layer name.
+    const char *pszLayerName = CPLGetXMLValue(psLTree, "name", NULL);
 
     if( pszLayerName == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Missing name attribute on OGRVRTLayer" );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Missing name attribute on OGRVRTLayer");
         return FALSE;
     }
 
     osName = pszLayerName;
-    SetDescription( pszLayerName );
+    SetDescription(pszLayerName);
 
-/* -------------------------------------------------------------------- */
-/*      Do we have a fixed geometry type?  If so use it                 */
-/* -------------------------------------------------------------------- */
-     CPLXMLNode* psGeometryFieldNode = CPLGetXMLNode(psLTree, "GeometryField");
-     const char *pszGType = CPLGetXMLValue( psLTree, "GeometryType", NULL );
-     if( pszGType == NULL && psGeometryFieldNode != NULL )
-         pszGType = CPLGetXMLValue( psGeometryFieldNode, "GeometryType", NULL );
-     if( pszGType != NULL )
-     {
-         int l_bError = FALSE;
-         OGRwkbGeometryType eGeomType =
-             OGRVRTGetGeometryType(pszGType, &l_bError);
-         if( l_bError )
-         {
-             CPLError( CE_Failure, CPLE_AppDefined,
-                       "GeometryType %s not recognised.",
-                       pszGType );
-             return FALSE;
-         }
-         if( eGeomType != wkbNone )
-         {
-             apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
-             apoGeomFieldProps[0]->eGeomType = eGeomType;
-         }
-     }
+    // Do we have a fixed geometry type?  If so, use it.
+    CPLXMLNode *psGeometryFieldNode = CPLGetXMLNode(psLTree, "GeometryField");
+    const char *pszGType = CPLGetXMLValue(psLTree, "GeometryType", NULL);
+    if( pszGType == NULL && psGeometryFieldNode != NULL )
+        pszGType = CPLGetXMLValue(psGeometryFieldNode, "GeometryType", NULL);
+    if( pszGType != NULL )
+    {
+        int l_bError = FALSE;
+        OGRwkbGeometryType eGeomType =
+            OGRVRTGetGeometryType(pszGType, &l_bError);
+        if( l_bError )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GeometryType %s not recognised.", pszGType);
+            return FALSE;
+        }
+        if( eGeomType != wkbNone )
+        {
+            apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
+            apoGeomFieldProps[0]->eGeomType = eGeomType;
+        }
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Apply a spatial reference system if provided                    */
-/* -------------------------------------------------------------------- */
-     const char* pszLayerSRS = CPLGetXMLValue( psLTree, "LayerSRS", NULL );
-     if( pszLayerSRS == NULL && psGeometryFieldNode != NULL )
-         pszLayerSRS = CPLGetXMLValue( psGeometryFieldNode, "SRS", NULL );
-     if( pszLayerSRS != NULL )
-     {
-         if( apoGeomFieldProps.empty() )
-         {
-             apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
-         }
-         if( !(EQUAL(pszLayerSRS,"NULL")) )
-         {
-             OGRSpatialReference oSRS;
+    // Apply a spatial reference system if provided.
+    const char *pszLayerSRS = CPLGetXMLValue(psLTree, "LayerSRS", NULL);
+    if( pszLayerSRS == NULL && psGeometryFieldNode != NULL )
+        pszLayerSRS = CPLGetXMLValue(psGeometryFieldNode, "SRS", NULL);
+    if( pszLayerSRS != NULL )
+    {
+        if( apoGeomFieldProps.empty() )
+        {
+            apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
+        }
+        if( !(EQUAL(pszLayerSRS, "NULL")) )
+        {
+            OGRSpatialReference oSRS;
 
-             if( oSRS.SetFromUserInput( pszLayerSRS ) != OGRERR_NONE )
-             {
-                 CPLError( CE_Failure, CPLE_AppDefined,
-                           "Failed to import LayerSRS `%s'.", pszLayerSRS );
-                 return FALSE;
-             }
-             apoGeomFieldProps[0]->poSRS = oSRS.Clone();
-         }
-     }
+            if( oSRS.SetFromUserInput(pszLayerSRS) != OGRERR_NONE )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to import LayerSRS `%s'.", pszLayerSRS);
+                return FALSE;
+            }
+            apoGeomFieldProps[0]->poSRS = oSRS.Clone();
+        }
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Set FeatureCount if provided                                    */
-/* -------------------------------------------------------------------- */
-     const char* pszFeatureCount = CPLGetXMLValue( psLTree, "FeatureCount", NULL );
-     if( pszFeatureCount != NULL )
-     {
-         nFeatureCount = CPLAtoGIntBig(pszFeatureCount);
-     }
+    // Set FeatureCount if provided.
+    const char *pszFeatureCount = CPLGetXMLValue(psLTree, "FeatureCount", NULL);
+    if( pszFeatureCount != NULL )
+    {
+        nFeatureCount = CPLAtoGIntBig(pszFeatureCount);
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Set Extent if provided                                          */
-/* -------------------------------------------------------------------- */
-     const char* pszExtentXMin = CPLGetXMLValue( psLTree, "ExtentXMin", NULL );
-     const char* pszExtentYMin = CPLGetXMLValue( psLTree, "ExtentYMin", NULL );
-     const char* pszExtentXMax = CPLGetXMLValue( psLTree, "ExtentXMax", NULL );
-     const char* pszExtentYMax = CPLGetXMLValue( psLTree, "ExtentYMax", NULL );
-     if( pszExtentXMin == NULL && psGeometryFieldNode != NULL )
-     {
-        pszExtentXMin = CPLGetXMLValue( psGeometryFieldNode, "ExtentXMin", NULL );
-        pszExtentYMin = CPLGetXMLValue( psGeometryFieldNode, "ExtentYMin", NULL );
-        pszExtentXMax = CPLGetXMLValue( psGeometryFieldNode, "ExtentXMax", NULL );
-        pszExtentYMax = CPLGetXMLValue( psGeometryFieldNode, "ExtentYMax", NULL );
-     }
-     if( pszExtentXMin != NULL && pszExtentYMin != NULL &&
-         pszExtentXMax != NULL && pszExtentYMax != NULL )
-     {
-         if( apoGeomFieldProps.empty() )
-         {
-             apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
-         }
-         apoGeomFieldProps[0]->sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
-         apoGeomFieldProps[0]->sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
-         apoGeomFieldProps[0]->sStaticEnvelope.MaxX = CPLAtof(pszExtentXMax);
-         apoGeomFieldProps[0]->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
-     }
+    // Set Extent if provided.
+    const char *pszExtentXMin = CPLGetXMLValue(psLTree, "ExtentXMin", NULL);
+    const char *pszExtentYMin = CPLGetXMLValue(psLTree, "ExtentYMin", NULL);
+    const char *pszExtentXMax = CPLGetXMLValue(psLTree, "ExtentXMax", NULL);
+    const char *pszExtentYMax = CPLGetXMLValue(psLTree, "ExtentYMax", NULL);
+    if( pszExtentXMin == NULL && psGeometryFieldNode != NULL )
+    {
+        pszExtentXMin = CPLGetXMLValue(psGeometryFieldNode, "ExtentXMin", NULL);
+        pszExtentYMin = CPLGetXMLValue(psGeometryFieldNode, "ExtentYMin", NULL);
+        pszExtentXMax = CPLGetXMLValue(psGeometryFieldNode, "ExtentXMax", NULL);
+        pszExtentYMax = CPLGetXMLValue(psGeometryFieldNode, "ExtentYMax", NULL);
+    }
+    if( pszExtentXMin != NULL && pszExtentYMin != NULL &&
+        pszExtentXMax != NULL && pszExtentYMax != NULL )
+    {
+        if( apoGeomFieldProps.empty() )
+        {
+            apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
+        }
+        apoGeomFieldProps[0]->sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
+        apoGeomFieldProps[0]->sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
+        apoGeomFieldProps[0]->sStaticEnvelope.MaxX = CPLAtof(pszExtentXMax);
+        apoGeomFieldProps[0]->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
+    }
 
-     return TRUE;
+    return TRUE;
 }
 
 /************************************************************************/
 /*                       ParseGeometryField()                           */
 /************************************************************************/
 
-bool OGRVRTLayer::ParseGeometryField( CPLXMLNode* psNode,
-                                      CPLXMLNode* psNodeParent,
-                                      OGRVRTGeomFieldProps* poProps )
+bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
+                                     CPLXMLNode *psNodeParent,
+                                     OGRVRTGeomFieldProps *poProps)
 {
-    const char* pszName = CPLGetXMLValue( psNode, "name", NULL);
-    poProps->osName = (pszName ) ? pszName : "";
-    if( pszName == NULL &&
-        apoGeomFieldProps.size() > 1 && poProps != apoGeomFieldProps[0] )
+    const char *pszName = CPLGetXMLValue(psNode, "name", NULL);
+    poProps->osName = pszName ? pszName : "";
+    if( pszName == NULL && apoGeomFieldProps.size() > 1 &&
+        poProps != apoGeomFieldProps[0] )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-            "A 'name' attribute should be defined when there are several geometry fields");
+                 "A 'name' attribute should be defined when there are "
+                 "several geometry fields");
     }
 
-/* -------------------------------------------------------------------- */
-/*      Do we have a fixed geometry type?                               */
-/* -------------------------------------------------------------------- */
-    const char* pszGType = CPLGetXMLValue( psNode, "GeometryType", NULL );
+    // Do we have a fixed geometry type?
+    const char *pszGType = CPLGetXMLValue(psNode, "GeometryType", NULL);
     if( pszGType == NULL && poProps == apoGeomFieldProps[0] )
-        pszGType = CPLGetXMLValue( psNodeParent, "GeometryType", NULL );
+        pszGType = CPLGetXMLValue(psNodeParent, "GeometryType", NULL);
     if( pszGType != NULL )
     {
         int l_bError = FALSE;
         poProps->eGeomType = OGRVRTGetGeometryType(pszGType, &l_bError);
         if( l_bError )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                     "GeometryType %s not recognised.",
-                      pszGType );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GeometryType %s not recognised.", pszGType);
             return false;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Determine which field(s) to get the geometry from               */
-/* -------------------------------------------------------------------- */
-    const char *pszEncoding = CPLGetXMLValue( psNode,"encoding", "direct");
+    // Determine which field(s) to get the geometry from.
+    const char *pszEncoding = CPLGetXMLValue(psNode, "encoding", "direct");
 
-    if( EQUAL(pszEncoding,"Direct") )
+    if( EQUAL(pszEncoding, "Direct") )
         poProps->eGeometryStyle = VGS_Direct;
-    else if( EQUAL(pszEncoding,"None") )
+    else if( EQUAL(pszEncoding, "None") )
         poProps->eGeometryStyle = VGS_None;
-    else if( EQUAL(pszEncoding,"WKT") )
+    else if( EQUAL(pszEncoding, "WKT") )
         poProps->eGeometryStyle = VGS_WKT;
-    else if( EQUAL(pszEncoding,"WKB") )
+    else if( EQUAL(pszEncoding, "WKB") )
         poProps->eGeometryStyle = VGS_WKB;
-    else if( EQUAL(pszEncoding,"Shape") )
+    else if( EQUAL(pszEncoding, "Shape") )
         poProps->eGeometryStyle = VGS_Shape;
-    else if( EQUAL(pszEncoding,"PointFromColumns") )
+    else if( EQUAL(pszEncoding, "PointFromColumns") )
     {
         poProps->eGeometryStyle = VGS_PointFromColumns;
-        poProps->bUseSpatialSubquery =
-            CPLTestBool(
-                CPLGetXMLValue(psNode,
-                            "GeometryField.useSpatialSubquery",
-                            "TRUE"));
+        poProps->bUseSpatialSubquery = CPLTestBool(
+            CPLGetXMLValue(psNode, "GeometryField.useSpatialSubquery", "TRUE"));
 
         poProps->iGeomXField = GetSrcLayerDefn()->GetFieldIndex(
-            CPLGetXMLValue( psNode, "x", "missing" ) );
+            CPLGetXMLValue(psNode, "x", "missing"));
         poProps->iGeomYField = GetSrcLayerDefn()->GetFieldIndex(
-            CPLGetXMLValue( psNode, "y", "missing" ) );
+            CPLGetXMLValue(psNode, "y", "missing"));
         poProps->iGeomZField = GetSrcLayerDefn()->GetFieldIndex(
-            CPLGetXMLValue( psNode, "z", "missing" ) );
+            CPLGetXMLValue(psNode, "z", "missing"));
         poProps->iGeomMField = GetSrcLayerDefn()->GetFieldIndex(
-            CPLGetXMLValue( psNode, "m", "missing" ) );
+            CPLGetXMLValue(psNode, "m", "missing"));
 
         if( poProps->iGeomXField == -1 || poProps->iGeomYField == -1 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "Unable to identify source X or Y field for PointFromColumns encoding." );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to identify source X or Y field for "
+                     "PointFromColumns encoding.");
             return false;
         }
 
@@ -355,44 +338,44 @@ bool OGRVRTLayer::ParseGeometryField( CPLXMLNode* psNode,
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                "encoding=\"%s\" not recognised.", pszEncoding );
+        CPLError(CE_Failure, CPLE_AppDefined, "encoding=\"%s\" not recognised.",
+                 pszEncoding);
         return false;
     }
 
-    if( poProps->eGeometryStyle == VGS_WKT
-        || poProps->eGeometryStyle == VGS_WKB
-        || poProps->eGeometryStyle == VGS_Shape )
+    if( poProps->eGeometryStyle == VGS_WKT ||
+        poProps->eGeometryStyle == VGS_WKB ||
+        poProps->eGeometryStyle == VGS_Shape )
     {
-        const char *pszFieldName =
-            CPLGetXMLValue( psNode, "field", "missing" );
+        const char *pszFieldName = CPLGetXMLValue(psNode, "field", "missing");
 
         poProps->iGeomField = GetSrcLayerDefn()->GetFieldIndex(pszFieldName);
 
         if( poProps->iGeomField == -1 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "Unable to identify source field '%s' for geometry.",
-                    pszFieldName );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to identify source field '%s' for geometry.",
+                     pszFieldName);
             return false;
         }
     }
     else if( poProps->eGeometryStyle == VGS_Direct )
     {
-        const char *pszFieldName =
-            CPLGetXMLValue( psNode, "field", NULL );
+        const char *pszFieldName = CPLGetXMLValue(psNode, "field", NULL);
 
         if( pszFieldName != NULL || GetSrcLayerDefn()->GetGeomFieldCount() > 1 )
         {
             if( pszFieldName == NULL )
                 pszFieldName = poProps->osName;
-            poProps->iGeomField = GetSrcLayerDefn()->GetGeomFieldIndex(pszFieldName);
+            poProps->iGeomField =
+                GetSrcLayerDefn()->GetGeomFieldIndex(pszFieldName);
 
             if( poProps->iGeomField == -1 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                        "Unable to identify source geometry field '%s' for geometry.",
-                        pszFieldName );
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unable to identify source geometry field '%s' "
+                         "for geometry.",
+                         pszFieldName);
                 return false;
             }
         }
@@ -402,18 +385,16 @@ bool OGRVRTLayer::ParseGeometryField( CPLXMLNode* psNode,
         }
         else if( psNode != NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "Unable to identify source geometry field." );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to identify source geometry field.");
             return false;
         }
     }
 
     poProps->bReportSrcColumn =
-        CPLTestBool(CPLGetXMLValue( psNode, "reportSrcColumn", "YES" ));
+        CPLTestBool(CPLGetXMLValue(psNode, "reportSrcColumn", "YES"));
 
-/* -------------------------------------------------------------------- */
-/*      Guess geometry type if not explicitly provided (or computed)   */
-/* -------------------------------------------------------------------- */
+    // Guess geometry type if not explicitly provided (or computed).
     if( pszGType == NULL && poProps->eGeomType == wkbUnknown )
     {
         if( GetSrcLayerDefn()->GetGeomFieldCount() == 1 )
@@ -421,86 +402,86 @@ bool OGRVRTLayer::ParseGeometryField( CPLXMLNode* psNode,
         else if( poProps->eGeometryStyle == VGS_Direct &&
                  poProps->iGeomField >= 0 )
         {
-            poProps->eGeomType =
-                GetSrcLayerDefn()->GetGeomFieldDefn(poProps->iGeomField)->GetType();
+            poProps->eGeomType = GetSrcLayerDefn()
+                                     ->GetGeomFieldDefn(poProps->iGeomField)
+                                     ->GetType();
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Copy spatial reference system from source if not provided       */
-/* -------------------------------------------------------------------- */
-     const char* pszSRS = CPLGetXMLValue( psNode, "SRS", NULL );
-     if( pszSRS == NULL && poProps == apoGeomFieldProps[0] )
-        pszSRS = CPLGetXMLValue( psNodeParent, "LayerSRS", NULL );
-     if( pszSRS == NULL )
-     {
-         OGRSpatialReference* poSRS = NULL;
-         if( GetSrcLayerDefn()->GetGeomFieldCount() == 1 )
-         {
+    // Copy spatial reference system from source if not provided.
+    const char *pszSRS = CPLGetXMLValue(psNode, "SRS", NULL);
+    if( pszSRS == NULL && poProps == apoGeomFieldProps[0] )
+        pszSRS = CPLGetXMLValue(psNodeParent, "LayerSRS", NULL);
+    if( pszSRS == NULL )
+    {
+        OGRSpatialReference *poSRS = NULL;
+        if( GetSrcLayerDefn()->GetGeomFieldCount() == 1 )
+        {
             poSRS = poSrcLayer->GetSpatialRef();
-         }
-         else if( poProps->eGeometryStyle == VGS_Direct &&
+        }
+        else if( poProps->eGeometryStyle == VGS_Direct &&
                  poProps->iGeomField >= 0 )
-         {
-             poSRS = GetSrcLayerDefn()->
-                    GetGeomFieldDefn(poProps->iGeomField)->GetSpatialRef();
-         }
-         if( poSRS != NULL )
+        {
+            poSRS = GetSrcLayerDefn()
+                        ->GetGeomFieldDefn(poProps->iGeomField)
+                        ->GetSpatialRef();
+        }
+        if( poSRS != NULL )
             poProps->poSRS = poSRS->Clone();
-     }
-     else if( poProps->poSRS == NULL )
-     {
-         if( !(EQUAL(pszSRS,"NULL")) )
-         {
-             OGRSpatialReference oSRS;
+    }
+    else if( poProps->poSRS == NULL )
+    {
+        if( !(EQUAL(pszSRS,"NULL")) )
+        {
+            OGRSpatialReference oSRS;
 
-             if( oSRS.SetFromUserInput( pszSRS ) != OGRERR_NONE )
-             {
-                 CPLError( CE_Failure, CPLE_AppDefined,
-                           "Failed to import SRS `%s'.", pszSRS );
-                 return false;
-             }
-             poProps->poSRS = oSRS.Clone();
-         }
-     }
+            if( oSRS.SetFromUserInput(pszSRS) != OGRERR_NONE )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to import SRS `%s'.", pszSRS);
+                return false;
+            }
+            poProps->poSRS = oSRS.Clone();
+        }
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Do we have a SrcRegion?                                         */
-/* -------------------------------------------------------------------- */
-    const char *pszSrcRegion = CPLGetXMLValue( psNode, "SrcRegion", NULL );
+    // Do we have a SrcRegion?
+    const char *pszSrcRegion = CPLGetXMLValue(psNode, "SrcRegion", NULL);
     if( pszSrcRegion == NULL && poProps == apoGeomFieldProps[0] )
-        pszSrcRegion = CPLGetXMLValue( psNodeParent, "SrcRegion", NULL );
+        pszSrcRegion = CPLGetXMLValue(psNodeParent, "SrcRegion", NULL);
     if( pszSrcRegion != NULL )
     {
-        OGRGeometryFactory::createFromWkt( (char**) &pszSrcRegion, NULL, &poProps->poSrcRegion );
-        if( poProps->poSrcRegion == NULL || wkbFlatten(poProps->poSrcRegion->getGeometryType()) != wkbPolygon)
+        OGRGeometryFactory::createFromWkt((char **)&pszSrcRegion, NULL,
+                                          &poProps->poSrcRegion);
+        if( poProps->poSrcRegion == NULL ||
+            wkbFlatten(poProps->poSrcRegion->getGeometryType()) != wkbPolygon )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                        "Ignoring SrcRegion. It must be a valid WKT polygon");
+                     "Ignoring SrcRegion. It must be a valid WKT polygon");
             delete poProps->poSrcRegion;
             poProps->poSrcRegion = NULL;
         }
 
-        poProps->bSrcClip = CPLTestBool(CPLGetXMLValue( psNode, "SrcRegion.clip", "FALSE" ));
+        poProps->bSrcClip =
+            CPLTestBool(CPLGetXMLValue(psNode, "SrcRegion.clip", "FALSE"));
     }
 
-/* -------------------------------------------------------------------- */
-/*      Set Extent if provided                                          */
-/* -------------------------------------------------------------------- */
-     const char* pszExtentXMin = CPLGetXMLValue( psNode, "ExtentXMin", NULL );
-     const char* pszExtentYMin = CPLGetXMLValue( psNode, "ExtentYMin", NULL );
-     const char* pszExtentXMax = CPLGetXMLValue( psNode, "ExtentXMax", NULL );
-     const char* pszExtentYMax = CPLGetXMLValue( psNode, "ExtentYMax", NULL );
-     if( pszExtentXMin != NULL && pszExtentYMin != NULL &&
-         pszExtentXMax != NULL && pszExtentYMax != NULL )
-     {
-         poProps->sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
-         poProps->sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
-         poProps->sStaticEnvelope.MaxX = CPLAtof(pszExtentXMax);
-         poProps->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
-     }
+    // Set Extent if provided.
+    const char *pszExtentXMin = CPLGetXMLValue(psNode, "ExtentXMin", NULL);
+    const char *pszExtentYMin = CPLGetXMLValue(psNode, "ExtentYMin", NULL);
+    const char *pszExtentXMax = CPLGetXMLValue(psNode, "ExtentXMax", NULL);
+    const char *pszExtentYMax = CPLGetXMLValue(psNode, "ExtentYMax", NULL);
+    if( pszExtentXMin != NULL && pszExtentYMin != NULL &&
+        pszExtentXMax != NULL && pszExtentYMax != NULL )
+    {
+        poProps->sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
+        poProps->sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
+        poProps->sStaticEnvelope.MaxX = CPLAtof(pszExtentXMax);
+        poProps->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
+    }
 
-    poProps->bNullable = CPLTestBool(CPLGetXMLValue( psNode, "nullable", "TRUE" ));
+    poProps->bNullable =
+        CPLTestBool(CPLGetXMLValue(psNode, "nullable", "TRUE"));
 
     return true;
 }
@@ -524,44 +505,43 @@ bool OGRVRTLayer::FullInitialize()
 
     bHasFullInitialized = true;
 
-    poFeatureDefn = new OGRFeatureDefn( osName );
+    poFeatureDefn = new OGRFeatureDefn(osName);
     poFeatureDefn->Reference();
 
-    if (poDS->GetRecursionDetected())
+    if( poDS->GetRecursionDetected() )
         return false;
 
-/* -------------------------------------------------------------------- */
-/*      Figure out the data source name.  It may be treated relative    */
-/*      to vrt filename, but normally it is used directly.              */
-/* -------------------------------------------------------------------- */
-    char *pszSrcDSName = (char *) CPLGetXMLValue(psLTree,"SrcDataSource",NULL);
+    // Figure out the data source name.  It may be treated relative
+    // to vrt filename, but normally it is used directly.
+    char *pszSrcDSName = (char *)CPLGetXMLValue(psLTree, "SrcDataSource", NULL);
 
     if( pszSrcDSName == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Missing SrcDataSource for layer %s.", osName.c_str() );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Missing SrcDataSource for layer %s.", osName.c_str());
         goto error;
     }
 
-    if( CPLTestBool(CPLGetXMLValue( psLTree, "SrcDataSource.relativetoVRT",
-                                       "0")) )
+    if( CPLTestBool(CPLGetXMLValue(psLTree, "SrcDataSource.relativetoVRT",
+                                   "0")) )
     {
-        static const char* const apszPrefixes[] = { "CSV:", "GPSBABEL:" };
+        static const char *const apszPrefixes[] = {"CSV:", "GPSBABEL:"};
         bool bDone = false;
-        for( size_t i = 0; i < sizeof(apszPrefixes) / sizeof(apszPrefixes[0]); i ++)
+        for( size_t i = 0; i < sizeof(apszPrefixes) / sizeof(apszPrefixes[0]);
+             i++ )
         {
-            const char* pszPrefix = apszPrefixes[i];
+            const char *pszPrefix = apszPrefixes[i];
             if( EQUALN(pszSrcDSName, pszPrefix, strlen(pszPrefix)) )
             {
-                const char* pszLastPart = strrchr(pszSrcDSName, ':') + 1;
-                /* CSV:z:/foo.xyz */
+                const char *pszLastPart = strrchr(pszSrcDSName, ':') + 1;
+                // CSV:z:/foo.xyz
                 if( (pszLastPart[0] == '/' || pszLastPart[0] == '\\') &&
                     pszLastPart - pszSrcDSName >= 3 && pszLastPart[-3] == ':' )
                     pszLastPart -= 2;
                 CPLString osPrefix(pszSrcDSName);
                 osPrefix.resize(pszLastPart - pszSrcDSName);
-                pszSrcDSName = CPLStrdup( (osPrefix +
-                    CPLProjectRelativeFilename( osVRTDirectory, pszLastPart )).c_str() );
+                pszSrcDSName = CPLStrdup((osPrefix +
+                    CPLProjectRelativeFilename(osVRTDirectory, pszLastPart)).c_str());
                 bDone = true;
                 break;
             }
@@ -569,7 +549,7 @@ bool OGRVRTLayer::FullInitialize()
         if( !bDone )
         {
             pszSrcDSName = CPLStrdup(
-                CPLProjectRelativeFilename( osVRTDirectory, pszSrcDSName ) );
+                CPLProjectRelativeFilename(osVRTDirectory, pszSrcDSName));
         }
     }
     else
@@ -577,80 +557,83 @@ bool OGRVRTLayer::FullInitialize()
         pszSrcDSName = CPLStrdup(pszSrcDSName);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Are we accessing this datasource in shared mode?  We default    */
-/*      to shared for SrcSQL requests, but we also allow the XML to     */
-/*      control our shared setting with an attribute on the             */
-/*      datasource element.                                             */
-/* -------------------------------------------------------------------- */
-    pszSharedSetting = CPLGetXMLValue( psLTree,
-                                                   "SrcDataSource.shared",
-                                                   NULL );
+    // Are we accessing this datasource in shared mode?  We default
+    // to shared for SrcSQL requests, but we also allow the XML to
+    // control our shared setting with an attribute on the
+    // datasource element.
+    pszSharedSetting = CPLGetXMLValue(psLTree, "SrcDataSource.shared", NULL);
     if( pszSharedSetting == NULL )
     {
-        if( CPLGetXMLValue( psLTree, "SrcSQL", NULL ) == NULL )
+        if( CPLGetXMLValue(psLTree, "SrcSQL", NULL) == NULL )
             pszSharedSetting = "OFF";
         else
             pszSharedSetting = "ON";
     }
 
-    bSrcDSShared = CPLTestBool( pszSharedSetting );
+    bSrcDSShared = CPLTestBool(pszSharedSetting);
 
-    // update mode doesn't make sense if we have a SrcSQL element
-    if (CPLGetXMLValue( psLTree, "SrcSQL", NULL ) != NULL)
+    // Update mode doesn't make sense if we have a SrcSQL element.
+    if( CPLGetXMLValue(psLTree, "SrcSQL", NULL) != NULL )
         bUpdate = false;
 
-/* -------------------------------------------------------------------- */
-/*      Try to access the datasource.                                   */
-/* -------------------------------------------------------------------- */
+    // Try to access the datasource.
 try_again:
     CPLErrorReset();
-    if( EQUAL(pszSrcDSName,"@dummy@") )
+    if( EQUAL(pszSrcDSName, "@dummy@") )
     {
-        GDALDriver *poMemDriver = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
-        if (poMemDriver != NULL)
+        GDALDriver *poMemDriver =
+            OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+        if( poMemDriver != NULL )
         {
-            poSrcDS = poMemDriver->Create( "@dummy@", 0, 0, 0, GDT_Unknown, NULL );
-            poSrcDS->CreateLayer( "@dummy@" );
+            poSrcDS =
+                poMemDriver->Create("@dummy@", 0, 0, 0, GDT_Unknown, NULL);
+            poSrcDS->CreateLayer("@dummy@");
         }
     }
     else if( bSrcDSShared )
     {
         if( poDS->IsInForbiddenNames(pszSrcDSName) )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cyclic VRT opening detected !");
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cyclic VRT opening detected!");
             poDS->SetRecursionDetected();
         }
         else
         {
-            char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psLTree);
+            char **papszOpenOptions =
+                GDALDeserializeOpenOptionsFromXML(psLTree);
             int l_nFlags = GDAL_OF_VECTOR | GDAL_OF_SHARED;
-            if( bUpdate ) l_nFlags |= GDAL_OF_UPDATE;
-            poSrcDS = (GDALDataset*) GDALOpenEx( pszSrcDSName, l_nFlags, NULL,
-                                (const char* const* )papszOpenOptions, NULL );
+            if( bUpdate )
+                l_nFlags |= GDAL_OF_UPDATE;
+            poSrcDS = (GDALDataset *)GDALOpenEx(
+                pszSrcDSName, l_nFlags, NULL,
+                (const char *const *)papszOpenOptions, NULL);
             CSLDestroy(papszOpenOptions);
-            /* Is it a VRT datasource ? */
-            if (poSrcDS != NULL && poSrcDS->GetDriver() == poDS->GetDriver())
+            // Is it a VRT datasource?
+            if( poSrcDS != NULL && poSrcDS->GetDriver() == poDS->GetDriver() )
             {
-                OGRVRTDataSource* poVRTSrcDS = (OGRVRTDataSource*)poSrcDS;
+                OGRVRTDataSource *poVRTSrcDS = (OGRVRTDataSource *)poSrcDS;
                 poVRTSrcDS->AddForbiddenNames(poDS->GetName());
             }
         }
     }
     else
     {
-        if (poDS->GetCallLevel() < 32)
+        if( poDS->GetCallLevel() < 32 )
         {
-            char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psLTree);
+            char **papszOpenOptions =
+                GDALDeserializeOpenOptionsFromXML(psLTree);
             int l_nFlags = GDAL_OF_VECTOR;
-            if( bUpdate ) l_nFlags |= GDAL_OF_UPDATE;
-            poSrcDS = (GDALDataset*) GDALOpenEx( pszSrcDSName, l_nFlags, NULL,
-                                (const char* const* )papszOpenOptions, NULL );
+            if( bUpdate )
+                l_nFlags |= GDAL_OF_UPDATE;
+            poSrcDS = (GDALDataset *)GDALOpenEx(
+                pszSrcDSName, l_nFlags, NULL,
+                (const char *const *)papszOpenOptions, NULL);
             CSLDestroy(papszOpenOptions);
-            /* Is it a VRT datasource ? */
-            if (poSrcDS != NULL && poSrcDS->GetDriver() == poDS->GetDriver())
+            // Is it a VRT datasource?
+            if( poSrcDS != NULL && poSrcDS->GetDriver() == poDS->GetDriver() )
             {
-                OGRVRTDataSource* poVRTSrcDS = (OGRVRTDataSource*)poSrcDS;
+                OGRVRTDataSource *poVRTSrcDS = (OGRVRTDataSource *)poSrcDS;
                 poVRTSrcDS->SetCallLevel(poDS->GetCallLevel() + 1);
                 poVRTSrcDS->SetParentDS(poDS);
             }
@@ -658,11 +641,12 @@ try_again:
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Trying to open a VRT from a VRT from a VRT from ... [32 times] a VRT !");
+                     "Trying to open a VRT from a VRT from a VRT from ... "
+                     "[32 times] a VRT!");
 
             poDS->SetRecursionDetected();
 
-            OGRVRTDataSource* poParent = poDS->GetParentDS();
+            OGRVRTDataSource *poParent = poDS->GetParentDS();
             while(poParent != NULL)
             {
                 poParent->SetRecursionDetected();
@@ -675,76 +659,69 @@ try_again:
     {
         if( bUpdate )
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Cannot open datasource `%s' in update mode. Trying again in read-only mode",
-                       pszSrcDSName );
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Cannot open datasource `%s' in update mode. "
+                     "Trying again in read-only mode",
+                     pszSrcDSName);
             bUpdate = false;
             goto try_again;
         }
         if( strlen(CPLGetLastErrorMsg()) == 0 )
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Failed to open datasource `%s'.",
-                      pszSrcDSName );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to open datasource `%s'.", pszSrcDSName);
         goto error;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Apply any metadata.                                             */
-/* -------------------------------------------------------------------- */
-    oMDMD.XMLInit( psLTree, TRUE );
+    // Apply any metadata.
+    oMDMD.XMLInit(psLTree, TRUE);
 
-/* -------------------------------------------------------------------- */
-/*      Is this layer derived from an SQL query result?                 */
-/* -------------------------------------------------------------------- */
-    pszSQL = CPLGetXMLValue( psLTree, "SrcSQL", NULL );
+    // Is this layer derived from an SQL query result?
+    pszSQL = CPLGetXMLValue(psLTree, "SrcSQL", NULL);
 
     if( pszSQL != NULL )
     {
-        const char* pszDialect = CPLGetXMLValue( psLTree, "SrcSQL.dialect", NULL );
+        const char *pszDialect =
+            CPLGetXMLValue(psLTree, "SrcSQL.dialect", NULL);
         if( pszDialect != NULL && pszDialect[0] == '\0' )
             pszDialect = NULL;
-        poSrcLayer = poSrcDS->ExecuteSQL( pszSQL, NULL, pszDialect );
+        poSrcLayer = poSrcDS->ExecuteSQL(pszSQL, NULL, pszDialect);
         if( poSrcLayer == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "SQL statement failed, or returned no layer result:\n%s",
-                      pszSQL );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "SQL statement failed, or returned no layer result:\n%s",
+                     pszSQL);
             goto error;
         }
         bSrcLayerFromSQL = true;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Fetch the layer if it is a regular layer.                       */
-/* -------------------------------------------------------------------- */
+    // Fetch the layer if it is a regular layer.
     if( poSrcLayer == NULL )
     {
-        const char *pszSrcLayerName = CPLGetXMLValue( psLTree, "SrcLayer",
-                                                      osName );
+        const char *pszSrcLayerName =
+            CPLGetXMLValue(psLTree, "SrcLayer", osName);
 
-        poSrcLayer = poSrcDS->GetLayerByName( pszSrcLayerName );
+        poSrcLayer = poSrcDS->GetLayerByName(pszSrcLayerName);
         if( poSrcLayer == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to find layer '%s' on datasource '%s'.",
-                      pszSrcLayerName, pszSrcDSName );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to find layer '%s' on datasource '%s'.",
+                     pszSrcLayerName, pszSrcDSName);
             goto error;
         }
     }
 
-    CPLFree( pszSrcDSName );
+    CPLFree(pszSrcDSName);
     pszSrcDSName = NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Search for GeometryField definitions                            */
-/* -------------------------------------------------------------------- */
+    // Search for GeometryField definitions.
 
-    /* Create as many OGRVRTGeomFieldProps as there are */
-    /* GeometryField elements */
-    for( psChild = psLTree->psChild; psChild != NULL; psChild=psChild->psNext )
+    // Create as many OGRVRTGeomFieldProps as there are
+    // GeometryField elements.
+    for( psChild = psLTree->psChild; psChild != NULL; psChild = psChild->psNext )
     {
         if( psChild->eType == CXT_Element &&
-            EQUAL(psChild->pszValue,"GeometryField") )
+            EQUAL(psChild->pszValue, "GeometryField") )
         {
             if( !bFoundGeometryField )
             {
@@ -761,7 +738,7 @@ try_again:
 
             apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
             if( !ParseGeometryField(psChild, psLTree,
-                                    apoGeomFieldProps.back() ) )
+                                    apoGeomFieldProps.back()) )
             {
                 goto error;
             }
@@ -769,278 +746,248 @@ try_again:
     }
 
     if( !bFoundGeometryField &&
-        CPLGetXMLValue( psLTree, "SrcRegion", NULL ) != NULL )
+        CPLGetXMLValue(psLTree, "SrcRegion", NULL) != NULL )
     {
         apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
     }
 
     if( !bFoundGeometryField && apoGeomFieldProps.size() == 1 )
     {
-        /* Otherwise use the top-level elements such as SrcRegion */
-        if( !ParseGeometryField(NULL, psLTree, apoGeomFieldProps[0] ) )
+        // Otherwise use the top-level elements such as SrcRegion.
+        if( !ParseGeometryField(NULL, psLTree, apoGeomFieldProps[0]) )
             goto error;
     }
 
     if( apoGeomFieldProps.empty() &&
-        CPLGetXMLValue( psLTree, "GeometryType", NULL ) == NULL )
+        CPLGetXMLValue(psLTree, "GeometryType", NULL) == NULL )
     {
-        /* If no GeometryField is found but source geometry fields */
-        /* exist, use them */
+        // If no GeometryField is found but source geometry fields
+        // exist, use them.
         for( int iGeomField = 0;
                 iGeomField < GetSrcLayerDefn()->GetGeomFieldCount();
                 iGeomField++ )
         {
-            OGRVRTGeomFieldProps* poProps = new OGRVRTGeomFieldProps();
+            OGRVRTGeomFieldProps *poProps = new OGRVRTGeomFieldProps();
             apoGeomFieldProps.push_back(poProps);
-            OGRGeomFieldDefn* poFDefn =
+            OGRGeomFieldDefn *poFDefn =
                 GetSrcLayerDefn()->GetGeomFieldDefn(iGeomField);
             poProps->osName = poFDefn->GetNameRef();
             poProps->eGeomType = poFDefn->GetType();
             if( poFDefn->GetSpatialRef() != NULL )
-            poProps->poSRS = poFDefn->GetSpatialRef()->Clone();
+                poProps->poSRS = poFDefn->GetSpatialRef()->Clone();
             poProps->iGeomField = iGeomField;
             poProps->bNullable = CPL_TO_BOOL(poFDefn->IsNullable());
         }
     }
 
-    /* Instantiate real geometry fields from VRT properties. */
+    // Instantiate real geometry fields from VRT properties.
     poFeatureDefn->SetGeomType(wkbNone);
-    for( size_t i = 0; i < apoGeomFieldProps.size(); i ++ )
+    for( size_t i = 0; i < apoGeomFieldProps.size(); i++ )
     {
-        OGRGeomFieldDefn oFieldDefn( apoGeomFieldProps[i]->osName,
-                                    apoGeomFieldProps[i]->eGeomType );
-        oFieldDefn.SetSpatialRef( apoGeomFieldProps[i]->poSRS );
-        oFieldDefn.SetNullable( apoGeomFieldProps[i]->bNullable );
+        OGRGeomFieldDefn oFieldDefn(apoGeomFieldProps[i]->osName,
+                                    apoGeomFieldProps[i]->eGeomType);
+        oFieldDefn.SetSpatialRef(apoGeomFieldProps[i]->poSRS);
+        oFieldDefn.SetNullable(apoGeomFieldProps[i]->bNullable);
         poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Figure out what should be used as an FID.                       */
-/* -------------------------------------------------------------------- */
-     bAttrFilterPassThrough = true;
-     pszSrcFIDFieldName = CPLGetXMLValue( psLTree, "FID", NULL );
+    // Figure out what should be used as an FID.
+    bAttrFilterPassThrough = true;
+    pszSrcFIDFieldName = CPLGetXMLValue(psLTree, "FID", NULL);
 
-     if( pszSrcFIDFieldName != NULL )
-     {
-         iFIDField =
-             GetSrcLayerDefn()->GetFieldIndex( pszSrcFIDFieldName );
-         if( iFIDField == -1 )
-         {
-             CPLError( CE_Failure, CPLE_AppDefined,
-                       "Unable to identify FID field '%s'.",
-                       pszSrcFIDFieldName );
-             goto error;
-         }
+    if( pszSrcFIDFieldName != NULL )
+    {
+        iFIDField = GetSrcLayerDefn()->GetFieldIndex(pszSrcFIDFieldName);
+        if( iFIDField == -1 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to identify FID field '%s'.", pszSrcFIDFieldName);
+            goto error;
+        }
 
-         // User facing FID column name. If not defined we will report the
-         // source FID column name only if it is exposed as a field too (#4637).
-         osFIDFieldName = CPLGetXMLValue( psLTree, "FID.name", "" );
+        // User facing FID column name. If not defined we will report the
+        // source FID column name only if it is exposed as a field too (#4637).
+        osFIDFieldName = CPLGetXMLValue(psLTree, "FID.name", "");
 
-         if( !EQUAL(pszSrcFIDFieldName, poSrcLayer->GetFIDColumn()) )
-         {
-             bAttrFilterPassThrough = false;
-         }
-     }
+        if( !EQUAL(pszSrcFIDFieldName, poSrcLayer->GetFIDColumn()) )
+        {
+            bAttrFilterPassThrough = false;
+        }
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Figure out what should be used as a Style                       */
-/* -------------------------------------------------------------------- */
-     pszStyleFieldName = CPLGetXMLValue( psLTree, "Style", NULL );
+    // Figure out what should be used as a Style.
+    pszStyleFieldName = CPLGetXMLValue(psLTree, "Style", NULL);
 
-     if( pszStyleFieldName != NULL )
-     {
-         iStyleField =
-             GetSrcLayerDefn()->GetFieldIndex( pszStyleFieldName );
-         if( iStyleField == -1 )
-         {
-             CPLError( CE_Failure, CPLE_AppDefined,
-                       "Unable to identify Style field '%s'.",
-                       pszStyleFieldName );
-             goto error;
-         }
+    if( pszStyleFieldName != NULL )
+    {
+        iStyleField = GetSrcLayerDefn()->GetFieldIndex(pszStyleFieldName);
+        if( iStyleField == -1 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to identify Style field '%s'.", pszStyleFieldName);
+            goto error;
+        }
 
-         if( !EQUAL(pszStyleFieldName, "OGR_STYLE") )
-         {
-             bAttrFilterPassThrough = false;
-         }
-     }
+        if( !EQUAL(pszStyleFieldName, "OGR_STYLE") )
+        {
+            bAttrFilterPassThrough = false;
+        }
+    }
 
-/* ==================================================================== */
-/*      Search for schema definitions in the VRT.                       */
-/* ==================================================================== */
-     for( psChild = psLTree->psChild; psChild != NULL; psChild=psChild->psNext )
-     {
-         if( psChild->eType == CXT_Element && EQUAL(psChild->pszValue,"Field") )
-         {
-/* -------------------------------------------------------------------- */
-/*      Field name.                                                     */
-/* -------------------------------------------------------------------- */
-             const char *pszName = CPLGetXMLValue( psChild, "name", NULL );
-             if( pszName == NULL )
-             {
-                 CPLError( CE_Failure, CPLE_AppDefined,
-                           "Unable to identify Field name." );
-                 goto error;
-             }
-
-             OGRFieldDefn oFieldDefn( pszName, OFTString );
-
-/* -------------------------------------------------------------------- */
-/*      Type                                                            */
-/* -------------------------------------------------------------------- */
-             const char *pszArg = CPLGetXMLValue( psChild, "type", NULL );
-
-             if( pszArg != NULL )
-             {
-                 int iType = 0;  // Used after for.
-
-                 for( ; iType <= (int) OFTMaxType; iType++ )
-                 {
-                     if( EQUAL(pszArg,OGRFieldDefn::GetFieldTypeName(
-                                   (OGRFieldType)iType)) )
-                     {
-                         oFieldDefn.SetType( (OGRFieldType) iType );
-                         break;
-                     }
-                 }
-
-                 if( iType > (int) OFTMaxType )
-                 {
-                     CPLError( CE_Failure, CPLE_AppDefined,
-                               "Unable to identify Field type '%s'.",
-                               pszArg );
-                     goto error;
-                 }
-             }
-
-/* -------------------------------------------------------------------- */
-/*      Subtype                                                         */
-/* -------------------------------------------------------------------- */
-             pszArg = CPLGetXMLValue( psChild, "subtype", NULL );
-             if( pszArg != NULL )
-             {
-                 OGRFieldSubType eSubType = OFSTNone;
-
-                 int iType = 0;  // Used after for.
-                 for( iType = 0; iType <= (int) OFSTMaxSubType; iType++ )
-                 {
-                     if( EQUAL(pszArg,OGRFieldDefn::GetFieldSubTypeName(
-                                   (OGRFieldSubType)iType)) )
-                     {
-                         eSubType = (OGRFieldSubType) iType;
-                         break;
-                     }
-                 }
-
-                 if( iType > (int) OFSTMaxSubType )
-                 {
-                     CPLError( CE_Failure, CPLE_AppDefined,
-                               "Unable to identify Field subtype '%s'.",
-                               pszArg );
-                     goto error;
-                 }
-
-                 if( !OGR_AreTypeSubTypeCompatible(oFieldDefn.GetType(), eSubType) )
-                 {
-                     CPLError( CE_Failure, CPLE_AppDefined,
-                               "Invalid subtype '%s' for type '%s'.",
-                               pszArg, OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()) );
-                     goto error;
-                 }
-
-                 oFieldDefn.SetSubType( eSubType );
-             }
-
-/* -------------------------------------------------------------------- */
-/*      Width and precision.                                            */
-/* -------------------------------------------------------------------- */
-             int nWidth = atoi(CPLGetXMLValue( psChild, "width", "0" ));
-             if (nWidth < 0)
-             {
-                CPLError( CE_Failure, CPLE_IllegalArg,
-                          "Invalid width for field %s.",
-                          pszName );
+    // Search for schema definitions in the VRT.
+    for( psChild = psLTree->psChild; psChild != NULL; psChild = psChild->psNext )
+    {
+        if( psChild->eType == CXT_Element && EQUAL(psChild->pszValue, "Field") )
+        {
+            // Field name.
+            const char *pszName = CPLGetXMLValue(psChild, "name", NULL);
+            if( pszName == NULL )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unable to identify Field name.");
                 goto error;
-             }
-             oFieldDefn.SetWidth(nWidth);
+            }
 
-             int nPrecision = atoi(CPLGetXMLValue( psChild, "precision", "0" ));
-             if (nPrecision < 0 || nPrecision > 1024)
-             {
-                CPLError( CE_Failure, CPLE_IllegalArg,
-                          "Invalid precision for field %s.",
-                          pszName );
+            OGRFieldDefn oFieldDefn(pszName, OFTString);
+
+            // Type.
+            const char *pszArg = CPLGetXMLValue(psChild, "type", NULL);
+
+            if( pszArg != NULL )
+            {
+                int iType = 0;  // Used after for.
+
+                for( ; iType <= (int) OFTMaxType; iType++ )
+                {
+                    if( EQUAL(pszArg, OGRFieldDefn::GetFieldTypeName(
+                                          (OGRFieldType)iType)) )
+                    {
+                        oFieldDefn.SetType((OGRFieldType)iType);
+                        break;
+                    }
+                }
+
+                if( iType > (int)OFTMaxType )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unable to identify Field type '%s'.", pszArg);
+                    goto error;
+                }
+            }
+
+            // Subtype.
+            pszArg = CPLGetXMLValue(psChild, "subtype", NULL);
+            if( pszArg != NULL )
+            {
+                OGRFieldSubType eSubType = OFSTNone;
+
+                int iType = 0;  // Used after for.
+                for( iType = 0; iType <= (int) OFSTMaxSubType; iType++ )
+                {
+                    if( EQUAL(pszArg, OGRFieldDefn::GetFieldSubTypeName(
+                                          (OGRFieldSubType)iType)) )
+                    {
+                        eSubType = (OGRFieldSubType)iType;
+                        break;
+                    }
+                }
+
+                if( iType > (int)OFSTMaxSubType )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unable to identify Field subtype '%s'.", pszArg);
+                    goto error;
+                }
+
+                if( !OGR_AreTypeSubTypeCompatible(oFieldDefn.GetType(),
+                                                  eSubType) )
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Invalid subtype '%s' for type '%s'.", pszArg,
+                        OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()));
+                    goto error;
+                }
+
+                oFieldDefn.SetSubType(eSubType);
+            }
+
+            // Width and precision.
+            int nWidth = atoi(CPLGetXMLValue(psChild, "width", "0"));
+            if( nWidth < 0 )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid width for field %s.", pszName);
                 goto error;
-             }
-             oFieldDefn.SetPrecision(nPrecision);
+            }
+            oFieldDefn.SetWidth(nWidth);
 
-/* -------------------------------------------------------------------- */
-/*      Nullable attribute.                                             */
-/* -------------------------------------------------------------------- */
-             const bool bNullable =
-                 CPLTestBool(CPLGetXMLValue( psChild, "nullable", "true" ));
-             oFieldDefn.SetNullable(bNullable);
+            int nPrecision = atoi(CPLGetXMLValue(psChild, "precision", "0"));
+            if( nPrecision < 0 || nPrecision > 1024 )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid precision for field %s.", pszName);
+                goto error;
+            }
+            oFieldDefn.SetPrecision(nPrecision);
 
-/* -------------------------------------------------------------------- */
-/*      Default attribute.                                              */
-/* -------------------------------------------------------------------- */
-             oFieldDefn.SetDefault(CPLGetXMLValue( psChild, "default",NULL));
+            // Nullable attribute.
+            const bool bNullable =
+                CPLTestBool(CPLGetXMLValue(psChild, "nullable", "true"));
+            oFieldDefn.SetNullable(bNullable);
 
-/* -------------------------------------------------------------------- */
-/*      Create the field.                                               */
-/* -------------------------------------------------------------------- */
-             poFeatureDefn->AddFieldDefn( &oFieldDefn );
+            // Default attribute.
+            oFieldDefn.SetDefault(CPLGetXMLValue(psChild, "default", NULL));
 
-             abDirectCopy.push_back( FALSE );
+            // Create the field.
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
 
-/* -------------------------------------------------------------------- */
-/*      Source field.                                                   */
-/* -------------------------------------------------------------------- */
-             int iSrcField =
-                 GetSrcLayerDefn()->GetFieldIndex( pszName );
+            abDirectCopy.push_back(FALSE);
 
-             pszArg = CPLGetXMLValue( psChild, "src", NULL );
+            // Source field.
+            int iSrcField = GetSrcLayerDefn()->GetFieldIndex(pszName);
 
-             if( pszArg != NULL )
-             {
-                 iSrcField =
-                     GetSrcLayerDefn()->GetFieldIndex( pszArg );
-                 if( iSrcField == -1 )
-                 {
-                     CPLError( CE_Failure, CPLE_AppDefined,
-                               "Unable to find source field '%s'.",
-                               pszArg );
-                     goto error;
-                 }
-             }
+            pszArg = CPLGetXMLValue(psChild, "src", NULL);
 
-             if (iSrcField < 0 || (pszArg != NULL && strcmp(pszArg, pszName) != 0))
-                 bAttrFilterPassThrough = false;
-             else
-             {
-                 OGRFieldDefn* poSrcFieldDefn = GetSrcLayerDefn()->GetFieldDefn(iSrcField);
-                 if (poSrcFieldDefn->GetType() != oFieldDefn.GetType())
-                     bAttrFilterPassThrough = false;
-             }
+            if( pszArg != NULL )
+            {
+                iSrcField = GetSrcLayerDefn()->GetFieldIndex(pszArg);
+                if( iSrcField == -1 )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unable to find source field '%s'.", pszArg);
+                    goto error;
+                }
+            }
 
-             anSrcField.push_back( iSrcField );
-         }
-     }
+            if( iSrcField < 0 || (pszArg != NULL && strcmp(pszArg, pszName) != 0) )
+            {
+                bAttrFilterPassThrough = false;
+            }
+            else
+            {
+                OGRFieldDefn *poSrcFieldDefn =
+                    GetSrcLayerDefn()->GetFieldDefn(iSrcField);
+                if( poSrcFieldDefn->GetType() != oFieldDefn.GetType() )
+                    bAttrFilterPassThrough = false;
+            }
 
-     CPLAssert( poFeatureDefn->GetFieldCount() == (int) anSrcField.size() );
+            anSrcField.push_back(iSrcField);
+        }
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Create the schema, if it was not explicitly in the VRT.         */
-/* -------------------------------------------------------------------- */
-     if( poFeatureDefn->GetFieldCount() == 0 )
-     {
-         int nSrcFieldCount = GetSrcLayerDefn()->GetFieldCount();
+    CPLAssert(poFeatureDefn->GetFieldCount() == (int)anSrcField.size());
 
-         for( int iSrcField = 0; iSrcField < nSrcFieldCount; iSrcField++ )
-         {
-             bool bSkip = false;
-             for( size_t iGF = 0; iGF < apoGeomFieldProps.size(); iGF++ )
-             {
+    // Create the schema, if it was not explicitly in the VRT.
+    if( poFeatureDefn->GetFieldCount() == 0 )
+    {
+        int nSrcFieldCount = GetSrcLayerDefn()->GetFieldCount();
+
+        for( int iSrcField = 0; iSrcField < nSrcFieldCount; iSrcField++ )
+        {
+            bool bSkip = false;
+            for( size_t iGF = 0; iGF < apoGeomFieldProps.size(); iGF++ )
+            {
                 if( !apoGeomFieldProps[iGF]->bReportSrcColumn &&
                     (iSrcField == apoGeomFieldProps[iGF]->iGeomXField ||
                      iSrcField == apoGeomFieldProps[iGF]->iGeomYField ||
@@ -1052,27 +999,26 @@ try_again:
                     bSkip = true;
                     break;
                 }
-             }
-             if( bSkip )
-                 continue;
+            }
+            if( bSkip )
+                continue;
 
-             poFeatureDefn->AddFieldDefn( GetSrcLayerDefn()->GetFieldDefn( iSrcField ) );
-             anSrcField.push_back( iSrcField );
-             abDirectCopy.push_back( TRUE );
-         }
+            poFeatureDefn->AddFieldDefn(
+                GetSrcLayerDefn()->GetFieldDefn(iSrcField));
+            anSrcField.push_back(iSrcField);
+            abDirectCopy.push_back(TRUE);
+        }
 
-         bAttrFilterPassThrough = true;
-     }
+        bAttrFilterPassThrough = true;
+    }
 
-/* -------------------------------------------------------------------- */
-/*      Is VRT layer definition identical to the source layer defn ?    */
-/*      If so, use it directly, and save the translation of features.   */
-/* -------------------------------------------------------------------- */
-     if (poSrcFeatureDefn != NULL && iFIDField == -1 && iStyleField == -1 &&
-         poSrcFeatureDefn->IsSame(poFeatureDefn))
-     {
+    // Is VRT layer definition identical to the source layer defn?
+    // If so, use it directly, and save the translation of features.
+    if( poSrcFeatureDefn != NULL && iFIDField == -1 && iStyleField == -1 &&
+        poSrcFeatureDefn->IsSame(poFeatureDefn) )
+    {
         bool bSame = true;
-        for(size_t i = 0; i < apoGeomFieldProps.size(); i++ )
+        for( size_t i = 0; i < apoGeomFieldProps.size(); i++ )
         {
             if( apoGeomFieldProps[i]->eGeometryStyle != VGS_Direct ||
                 apoGeomFieldProps[i]->iGeomField != (int)i )
@@ -1083,42 +1029,41 @@ try_again:
         }
         if( bSame )
         {
-            CPLDebug("VRT", "Source feature definition is identical to VRT feature definition. Use optimized path");
+            CPLDebug(
+                "VRT", "Source feature definition is identical to VRT "
+                "feature definition. Use optimized path");
             poFeatureDefn->Release();
             poFeatureDefn = poSrcFeatureDefn;
             poFeatureDefn->Reference();
-            for(int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
+            for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
             {
                 if( apoGeomFieldProps[i]->poSRS != NULL )
                     apoGeomFieldProps[i]->poSRS->Release();
-                apoGeomFieldProps[i]->poSRS = poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef();
+                apoGeomFieldProps[i]->poSRS =
+                    poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef();
                 if( apoGeomFieldProps[i]->poSRS != NULL )
                     apoGeomFieldProps[i]->poSRS->Reference();
             }
         }
-     }
+    }
 
-     CPLAssert( poFeatureDefn->GetGeomFieldCount() == (int)apoGeomFieldProps.size() );
+    CPLAssert(poFeatureDefn->GetGeomFieldCount() == (int)apoGeomFieldProps.size());
 
-/* -------------------------------------------------------------------- */
-/*      Allow vrt to override whether attribute filters should be       */
-/*      passed through.                                                 */
-/* -------------------------------------------------------------------- */
-     if( CPLGetXMLValue( psLTree, "attrFilterPassThrough", NULL ) != NULL )
-         bAttrFilterPassThrough =
-             CPLTestBool(
-                 CPLGetXMLValue(psLTree, "attrFilterPassThrough",
-                                "TRUE") );
+    // Allow vrt to override whether attribute filters should be
+    // passed through.
+    if( CPLGetXMLValue(psLTree, "attrFilterPassThrough", NULL) != NULL )
+        bAttrFilterPassThrough = CPLTestBool(
+            CPLGetXMLValue(psLTree, "attrFilterPassThrough", "TRUE"));
 
-     SetIgnoredFields(NULL);
+    SetIgnoredFields(NULL);
 
-     return true;
+    return true;
 
 error:
     bError = true;
-    CPLFree( pszSrcDSName );
+    CPLFree(pszSrcDSName);
     poFeatureDefn->Release();
-    poFeatureDefn = new OGRFeatureDefn( osName );
+    poFeatureDefn = new OGRFeatureDefn(osName);
     poFeatureDefn->Reference();
     return false;
 }
@@ -1127,11 +1072,7 @@ error:
 /*                            ResetReading()                            */
 /************************************************************************/
 
-void OGRVRTLayer::ResetReading()
-
-{
-    bNeedReset = true;
-}
+void OGRVRTLayer::ResetReading() { bNeedReset = true; }
 
 /************************************************************************/
 /*                         ResetSourceReading()                         */
@@ -1142,33 +1083,36 @@ bool OGRVRTLayer::ResetSourceReading()
 {
     bool bSuccess = true;
 
-/* -------------------------------------------------------------------- */
-/*      Do we want to let source layer do spatial restriction?          */
-/* -------------------------------------------------------------------- */
+    // Do we want to let source layer do spatial restriction?
     char *pszFilter = NULL;
-    for(size_t i=0; i < apoGeomFieldProps.size(); i++ )
+    for( size_t i = 0; i < apoGeomFieldProps.size(); i++ )
     {
         if( (m_poFilterGeom || apoGeomFieldProps[i]->poSrcRegion) &&
             apoGeomFieldProps[i]->bUseSpatialSubquery &&
             apoGeomFieldProps[i]->eGeometryStyle == VGS_PointFromColumns )
         {
-            const char *pszXField, *pszYField;
-            OGRFieldDefn* poXField = poSrcLayer->GetLayerDefn()->GetFieldDefn(apoGeomFieldProps[i]->iGeomXField);
-            OGRFieldDefn* poYField = poSrcLayer->GetLayerDefn()->GetFieldDefn(apoGeomFieldProps[i]->iGeomYField);
+            OGRFieldDefn *poXField = poSrcLayer->GetLayerDefn()->GetFieldDefn(
+                apoGeomFieldProps[i]->iGeomXField);
+            OGRFieldDefn *poYField = poSrcLayer->GetLayerDefn()->GetFieldDefn(
+                apoGeomFieldProps[i]->iGeomYField);
 
-            pszXField = poXField->GetNameRef();
-            pszYField = poYField->GetNameRef();
+            const char *pszXField = poXField->GetNameRef();
+            const char *pszYField = poYField->GetNameRef();
             if( apoGeomFieldProps[i]->bUseSpatialSubquery )
             {
                 OGRFieldType xType = poXField->GetType();
                 OGRFieldType yType = poYField->GetType();
-                if (!((xType == OFTReal || xType == OFTInteger || xType == OFTInteger64) &&
-                      (yType == OFTReal || yType == OFTInteger || yType == OFTInteger64)))
+                if( !((xType == OFTReal || xType == OFTInteger ||
+                       xType == OFTInteger64) &&
+                      (yType == OFTReal || yType == OFTInteger ||
+                       yType == OFTInteger64)) )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                            "The '%s' and/or '%s' fields of the source layer are not declared as numeric fields,\n"
-                            "so the spatial filter cannot be turned into an attribute filter on them",
-                            pszXField, pszYField);
+                             "The '%s' and/or '%s' fields of the source layer "
+                             "are not declared as numeric fields, "
+                             "so the spatial filter cannot be turned into an "
+                             "attribute filter on them",
+                             pszXField, pszYField);
                     apoGeomFieldProps[i]->bUseSpatialSubquery = false;
                 }
             }
@@ -1177,17 +1121,21 @@ bool OGRVRTLayer::ResetSourceReading()
                 OGREnvelope sEnvelope;
                 CPLString osFilter;
 
-                if (apoGeomFieldProps[i]->poSrcRegion != NULL)
+                if( apoGeomFieldProps[i]->poSrcRegion != NULL )
                 {
-                    if (m_poFilterGeom == NULL)
-                        apoGeomFieldProps[i]->poSrcRegion->getEnvelope( &sEnvelope );
+                    if( m_poFilterGeom == NULL )
+                    {
+                        apoGeomFieldProps[i]->poSrcRegion->getEnvelope(
+                            &sEnvelope);
+                    }
                     else
                     {
-                        OGRGeometry* poIntersection =
-                            apoGeomFieldProps[i]->poSrcRegion->Intersection(m_poFilterGeom);
-                        if (poIntersection && !poIntersection->IsEmpty())
+                        OGRGeometry *poIntersection =
+                            apoGeomFieldProps[i]->poSrcRegion->Intersection(
+                                m_poFilterGeom);
+                        if( poIntersection && !poIntersection->IsEmpty() )
                         {
-                            poIntersection->getEnvelope( &sEnvelope );
+                            poIntersection->getEnvelope(&sEnvelope);
                         }
                         else
                         {
@@ -1200,43 +1148,55 @@ bool OGRVRTLayer::ResetSourceReading()
                     }
                 }
                 else
-                    m_poFilterGeom->getEnvelope( &sEnvelope );
+                {
+                    m_poFilterGeom->getEnvelope(&sEnvelope);
+                }
 
                 if( !CPLIsInf(sEnvelope.MinX) )
-                    osFilter += CPLSPrintf("%s > %.15g", pszXField, sEnvelope.MinX);
+                    osFilter +=
+                        CPLSPrintf("%s > %.15g", pszXField, sEnvelope.MinX);
                 else if( sEnvelope.MinX > 0 )
                     osFilter += "0 = 1";
 
                 if( !CPLIsInf(sEnvelope.MaxX) )
                 {
-                    if( !osFilter.empty() ) osFilter += " AND ";
-                    osFilter += CPLSPrintf("%s < %.15g", pszXField, sEnvelope.MaxX);
+                    if( !osFilter.empty() )
+                        osFilter += " AND ";
+                    osFilter +=
+                        CPLSPrintf("%s < %.15g", pszXField, sEnvelope.MaxX);
                 }
                 else if( sEnvelope.MaxX < 0 )
                 {
-                    if( !osFilter.empty() ) osFilter += " AND ";
+                    if( !osFilter.empty() )
+                        osFilter += " AND ";
                     osFilter += "0 = 1";
                 }
 
                 if( !CPLIsInf(sEnvelope.MinY) )
                 {
-                    if( !osFilter.empty() ) osFilter += " AND ";
-                    osFilter += CPLSPrintf("%s > %.15g", pszYField, sEnvelope.MinY);
+                    if( !osFilter.empty() )
+                        osFilter += " AND ";
+                    osFilter +=
+                        CPLSPrintf("%s > %.15g", pszYField, sEnvelope.MinY);
                 }
                 else if( sEnvelope.MinY > 0 )
                 {
-                    if( !osFilter.empty() ) osFilter += " AND ";
+                    if( !osFilter.empty() )
+                        osFilter += " AND ";
                     osFilter += "0 = 1";
                 }
 
                 if( !CPLIsInf(sEnvelope.MaxY) )
                 {
-                    if( !osFilter.empty() ) osFilter += " AND ";
-                    osFilter += CPLSPrintf("%s < %.15g", pszYField, sEnvelope.MaxY);
+                    if( !osFilter.empty() )
+                        osFilter += " AND ";
+                    osFilter +=
+                        CPLSPrintf("%s < %.15g", pszYField, sEnvelope.MaxY);
                 }
                 else if( sEnvelope.MaxY < 0 )
                 {
-                    if( !osFilter.empty() ) osFilter += " AND ";
+                    if( !osFilter.empty() )
+                        osFilter += " AND ";
                     osFilter += "0 = 1";
                 }
 
@@ -1246,23 +1206,24 @@ bool OGRVRTLayer::ResetSourceReading()
                 }
             }
 
-            /* Just do it on one geometry field. To complicated otherwise ! */
+            // Just do it on one geometry field. To complicated otherwise!
             break;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Install spatial + attr filter query on source layer.            */
-/* -------------------------------------------------------------------- */
+    // Install spatial + attr filter query on source layer.
     if( pszFilter == NULL && pszAttrFilter == NULL )
-        bSuccess = (poSrcLayer->SetAttributeFilter( NULL ) == OGRERR_NONE);
-
+    {
+        bSuccess = poSrcLayer->SetAttributeFilter(NULL) == OGRERR_NONE;
+    }
     else if( pszFilter != NULL && pszAttrFilter == NULL )
-        bSuccess = (poSrcLayer->SetAttributeFilter( pszFilter ) == OGRERR_NONE);
-
+    {
+        bSuccess = poSrcLayer->SetAttributeFilter(pszFilter) == OGRERR_NONE;
+    }
     else if( pszFilter == NULL && pszAttrFilter != NULL )
-        bSuccess = (poSrcLayer->SetAttributeFilter( pszAttrFilter ) == OGRERR_NONE);
-
+    {
+        bSuccess = poSrcLayer->SetAttributeFilter(pszAttrFilter) == OGRERR_NONE;
+    }
     else
     {
         CPLString osMerged = pszFilter;
@@ -1271,33 +1232,37 @@ bool OGRVRTLayer::ResetSourceReading()
         osMerged += pszAttrFilter;
         osMerged += ")";
 
-        bSuccess = (poSrcLayer->SetAttributeFilter(osMerged) == OGRERR_NONE);
+        bSuccess = poSrcLayer->SetAttributeFilter(osMerged) == OGRERR_NONE;
     }
 
-    CPLFree( pszFilter );
+    CPLFree(pszFilter);
 
-/* -------------------------------------------------------------------- */
-/*      Clear spatial filter (to be safe) for non direct geometries     */
-/*      and reset reading.                                              */
-/* -------------------------------------------------------------------- */
-    if (m_iGeomFieldFilter < (int)apoGeomFieldProps.size() &&
+    // Clear spatial filter (to be safe) for non direct geometries
+    // and reset reading.
+    if( m_iGeomFieldFilter < (int)apoGeomFieldProps.size() &&
         apoGeomFieldProps[m_iGeomFieldFilter]->eGeometryStyle == VGS_Direct &&
         apoGeomFieldProps[m_iGeomFieldFilter]->iGeomField >= 0 )
     {
-        OGRGeometry* poSpatialGeom = NULL;
-        OGRGeometry* poSrcRegion = apoGeomFieldProps[m_iGeomFieldFilter]->poSrcRegion;
+        OGRGeometry *poSpatialGeom = NULL;
+        OGRGeometry *poSrcRegion =
+            apoGeomFieldProps[m_iGeomFieldFilter]->poSrcRegion;
         bool bToDelete = false;
 
-        if (poSrcRegion == NULL)
+        if( poSrcRegion == NULL )
+        {
             poSpatialGeom = m_poFilterGeom;
-        else if (m_poFilterGeom == NULL)
+        }
+        else if( m_poFilterGeom == NULL )
+        {
             poSpatialGeom = poSrcRegion;
+        }
         else
         {
             if( wkbFlatten(m_poFilterGeom->getGeometryType()) != wkbPolygon )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Spatial filter should be polygon when a SrcRegion is defined. Ignoring it");
+                         "Spatial filter should be polygon when a SrcRegion is "
+                         "defined. Ignoring it");
                 poSpatialGeom = poSrcRegion;
             }
             else
@@ -1323,14 +1288,14 @@ bool OGRVRTLayer::ResetSourceReading()
                 }
             }
         }
-        poSrcLayer->SetSpatialFilter( apoGeomFieldProps[m_iGeomFieldFilter]->iGeomField,
-                                      poSpatialGeom );
+        poSrcLayer->SetSpatialFilter(
+            apoGeomFieldProps[m_iGeomFieldFilter]->iGeomField, poSpatialGeom);
         if( bToDelete )
             delete poSpatialGeom;
     }
     else
     {
-        poSrcLayer->SetSpatialFilter( NULL );
+        poSrcLayer->SetSpatialFilter(NULL);
     }
     poSrcLayer->ResetReading();
     bNeedReset = false;
@@ -1347,7 +1312,7 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
 {
     if( !bHasFullInitialized )
         FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected())
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
         return NULL;
     if( bError )
         return NULL;
@@ -1365,14 +1330,14 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
             return NULL;
 
         OGRFeature *poFeature = NULL;
-        if (poFeatureDefn == poSrcFeatureDefn)
+        if( poFeatureDefn == poSrcFeatureDefn )
         {
             poFeature = poSrcFeature;
             ClipAndAssignSRS(poFeature);
         }
         else
         {
-            poFeature = TranslateFeature( poSrcFeature, TRUE );
+            poFeature = TranslateFeature(poSrcFeature, TRUE);
             delete poSrcFeature;
         }
 
@@ -1380,11 +1345,11 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
             return NULL;
 
         if( ((m_iGeomFieldFilter < (int)apoGeomFieldProps.size() &&
-              apoGeomFieldProps[m_iGeomFieldFilter]->eGeometryStyle == VGS_Direct)
-            || m_poFilterGeom == NULL
-            || FilterGeometry( poFeature->GetGeomFieldRef(m_iGeomFieldFilter) ))
-            && (m_poAttrQuery == NULL
-                || m_poAttrQuery->Evaluate( poFeature )) )
+              apoGeomFieldProps[m_iGeomFieldFilter]->eGeometryStyle ==
+                  VGS_Direct) ||
+             m_poFilterGeom == NULL ||
+             FilterGeometry(poFeature->GetGeomFieldRef(m_iGeomFieldFilter))) &&
+            (m_poAttrQuery == NULL || m_poAttrQuery->Evaluate(poFeature)) )
             return poFeature;
 
         delete poFeature;
@@ -1395,23 +1360,23 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
 /*                          ClipAndAssignSRS()                          */
 /************************************************************************/
 
-void OGRVRTLayer::ClipAndAssignSRS(OGRFeature* poFeature)
+void OGRVRTLayer::ClipAndAssignSRS(OGRFeature *poFeature)
 {
     for(int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
     {
-        /* Clip the geometry to the SrcRegion if asked */
-        OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
-        if (apoGeomFieldProps[i]->poSrcRegion != NULL &&
+        // Clip the geometry to the SrcRegion if asked.
+        OGRGeometry *poGeom = poFeature->GetGeomFieldRef(i);
+        if( apoGeomFieldProps[i]->poSrcRegion != NULL &&
             apoGeomFieldProps[i]->bSrcClip &&
-            poGeom != NULL)
+            poGeom != NULL )
         {
             poGeom = poGeom->Intersection(apoGeomFieldProps[i]->poSrcRegion);
-            if (poGeom != NULL && apoGeomFieldProps[i]->poSRS != NULL)
+            if( poGeom != NULL && apoGeomFieldProps[i]->poSRS != NULL )
                 poGeom->assignSpatialReference(apoGeomFieldProps[i]->poSRS);
 
             poFeature->SetGeomFieldDirectly(i, poGeom);
         }
-        else if (poGeom != NULL && apoGeomFieldProps[i]->poSRS != NULL)
+        else if( poGeom != NULL && apoGeomFieldProps[i]->poSRS != NULL )
             poGeom->assignSpatialReference(apoGeomFieldProps[i]->poSRS);
     }
 }
@@ -1422,30 +1387,26 @@ void OGRVRTLayer::ClipAndAssignSRS(OGRFeature* poFeature)
 /*      Translate a source feature into a feature for this layer.       */
 /************************************************************************/
 
-OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature*& poSrcFeat, int bUseSrcRegion )
+OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *&poSrcFeat,
+                                           int bUseSrcRegion )
 
 {
 retry:
-    OGRFeature *poDstFeat = new OGRFeature( poFeatureDefn );
+    OGRFeature *poDstFeat = new OGRFeature(poFeatureDefn);
 
     m_nFeaturesRead++;
 
-/* -------------------------------------------------------------------- */
-/*      Handle FID.                                                     */
-/* -------------------------------------------------------------------- */
+    // Handle FID.
     if( iFIDField == -1 )
-        poDstFeat->SetFID( poSrcFeat->GetFID() );
+        poDstFeat->SetFID(poSrcFeat->GetFID());
     else
-        poDstFeat->SetFID( poSrcFeat->GetFieldAsInteger64( iFIDField ) );
+        poDstFeat->SetFID(poSrcFeat->GetFieldAsInteger64(iFIDField));
 
-/* -------------------------------------------------------------------- */
-/*      Handle style string.                                            */
-/* -------------------------------------------------------------------- */
+    // Handle style string.
     if( iStyleField != -1 )
     {
         if( poSrcFeat->IsFieldSetAndNotNull(iStyleField) )
-            poDstFeat->SetStyleString(
-                poSrcFeat->GetFieldAsString(iStyleField) );
+            poDstFeat->SetStyleString(poSrcFeat->GetFieldAsString(iStyleField));
     }
     else
     {
@@ -1455,32 +1416,30 @@ retry:
 
     for(int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
     {
-        OGRVRTGeometryStyle eGeometryStyle = apoGeomFieldProps[i]->eGeometryStyle;
+        OGRVRTGeometryStyle eGeometryStyle =
+            apoGeomFieldProps[i]->eGeometryStyle;
         int iGeomField = apoGeomFieldProps[i]->iGeomField;
-    /* -------------------------------------------------------------------- */
-    /*      Handle the geometry.  Eventually there will be several more     */
-    /*      supported options.                                              */
-    /* -------------------------------------------------------------------- */
+
+        // Handle the geometry.  Eventually there will be several more
+        // supported options.
         if( eGeometryStyle == VGS_None ||
             GetLayerDefn()->GetGeomFieldDefn(i)->IsIgnored() )
         {
-            /* do nothing */
+            // Do nothing.
         }
         else if( eGeometryStyle == VGS_WKT && iGeomField != -1 )
         {
-            char *pszWKT = (char *) poSrcFeat->GetFieldAsString(
-                iGeomField );
+            char *pszWKT = (char *)poSrcFeat->GetFieldAsString(iGeomField);
 
             if( pszWKT != NULL )
             {
                 OGRGeometry *poGeom = NULL;
 
-                OGRGeometryFactory::createFromWkt( &pszWKT, NULL, &poGeom );
+                OGRGeometryFactory::createFromWkt(&pszWKT, NULL, &poGeom);
                 if( poGeom == NULL )
-                    CPLDebug( "OGR_VRT", "Did not get geometry from %s",
-                            pszWKT );
+                    CPLDebug("OGR_VRT", "Did not get geometry from %s", pszWKT);
 
-                poDstFeat->SetGeomFieldDirectly( i, poGeom );
+                poDstFeat->SetGeomFieldDirectly(i, poGeom);
             }
         }
         else if( eGeometryStyle == VGS_WKB && iGeomField != -1 )
@@ -1491,13 +1450,13 @@ retry:
 
             if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() == OFTBinary )
             {
-                pabyWKB = poSrcFeat->GetFieldAsBinary( iGeomField, &nBytes );
+                pabyWKB = poSrcFeat->GetFieldAsBinary(iGeomField, &nBytes);
             }
             else
             {
-                const char *pszWKT = poSrcFeat->GetFieldAsString( iGeomField );
+                const char *pszWKT = poSrcFeat->GetFieldAsString(iGeomField);
 
-                pabyWKB = CPLHexToBinary( pszWKT, &nBytes );
+                pabyWKB = CPLHexToBinary(pszWKT, &nBytes);
                 bNeedFree = true;
             }
 
@@ -1505,13 +1464,13 @@ retry:
             {
                 OGRGeometry *poGeom = NULL;
 
-                if( OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeom,
-                                                    nBytes ) == OGRERR_NONE )
-                    poDstFeat->SetGeomFieldDirectly( i, poGeom );
+                if( OGRGeometryFactory::createFromWkb(pabyWKB, NULL, &poGeom,
+                                                      nBytes) == OGRERR_NONE )
+                    poDstFeat->SetGeomFieldDirectly(i, poGeom);
             }
 
             if( bNeedFree )
-                CPLFree( pabyWKB );
+                CPLFree(pabyWKB);
         }
         else if( eGeometryStyle == VGS_Shape && iGeomField != -1 )
         {
@@ -1521,13 +1480,13 @@ retry:
 
             if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() == OFTBinary )
             {
-                pabyWKB = poSrcFeat->GetFieldAsBinary( iGeomField, &nBytes );
+                pabyWKB = poSrcFeat->GetFieldAsBinary(iGeomField, &nBytes);
             }
             else
             {
-                const char *pszWKT = poSrcFeat->GetFieldAsString( iGeomField );
+                const char *pszWKT = poSrcFeat->GetFieldAsString(iGeomField);
 
-                pabyWKB = CPLHexToBinary( pszWKT, &nBytes );
+                pabyWKB = CPLHexToBinary(pszWKT, &nBytes);
                 bNeedFree = true;
             }
 
@@ -1535,40 +1494,47 @@ retry:
             {
                 OGRGeometry *poGeom = NULL;
 
-                if( OGRCreateFromShapeBin( pabyWKB, &poGeom, nBytes ) == OGRERR_NONE )
-                    poDstFeat->SetGeomFieldDirectly( i, poGeom );
+                if( OGRCreateFromShapeBin(pabyWKB, &poGeom, nBytes) ==
+                    OGRERR_NONE )
+                    poDstFeat->SetGeomFieldDirectly(i, poGeom);
             }
 
             if( bNeedFree )
-                CPLFree( pabyWKB );
+                CPLFree(pabyWKB);
         }
         else if( eGeometryStyle == VGS_Direct && iGeomField != -1 )
         {
-            poDstFeat->SetGeomField( i, poSrcFeat->GetGeomFieldRef(iGeomField) );
+            poDstFeat->SetGeomField(i, poSrcFeat->GetGeomFieldRef(iGeomField));
         }
         else if( eGeometryStyle == VGS_PointFromColumns )
         {
-            OGRPoint* poPoint = NULL;
+            OGRPoint *poPoint = NULL;
             if( apoGeomFieldProps[i]->iGeomZField != -1 )
             {
-                poPoint = new OGRPoint( poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomXField ),
-                                poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomYField ),
-                                poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomZField ) );
+                poPoint = new OGRPoint(poSrcFeat->GetFieldAsDouble(
+                                           apoGeomFieldProps[i]->iGeomXField),
+                                       poSrcFeat->GetFieldAsDouble(
+                                           apoGeomFieldProps[i]->iGeomYField),
+                                       poSrcFeat->GetFieldAsDouble(
+                                           apoGeomFieldProps[i]->iGeomZField));
             }
             else
             {
-                poPoint = new OGRPoint( poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomXField ),
-                                poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomYField ) );
+                poPoint = new OGRPoint(poSrcFeat->GetFieldAsDouble(
+                                           apoGeomFieldProps[i]->iGeomXField),
+                                       poSrcFeat->GetFieldAsDouble(
+                                           apoGeomFieldProps[i]->iGeomYField));
             }
             if( apoGeomFieldProps[i]->iGeomMField >= 0 )
             {
-                poPoint->setM( poSrcFeat->GetFieldAsDouble( apoGeomFieldProps[i]->iGeomMField ) );
+                poPoint->setM(poSrcFeat->GetFieldAsDouble(
+                    apoGeomFieldProps[i]->iGeomMField));
             }
-            poDstFeat->SetGeomFieldDirectly( i, poPoint );
+            poDstFeat->SetGeomFieldDirectly(i, poPoint);
         }
         else
         {
-            /* add other options here. */
+            // Add other options here.
         }
 
         // In the non-direct case, we need to check that the geometry
@@ -1577,15 +1543,16 @@ retry:
             apoGeomFieldProps[i]->eGeometryStyle != VGS_Direct &&
             apoGeomFieldProps[i]->poSrcRegion != NULL )
         {
-            OGRGeometry* poGeom = poDstFeat->GetGeomFieldRef(i);
-            if (poGeom != NULL && !poGeom->Intersects(apoGeomFieldProps[i]->poSrcRegion))
+            OGRGeometry *poGeom = poDstFeat->GetGeomFieldRef(i);
+            if( poGeom != NULL &&
+                !poGeom->Intersects(apoGeomFieldProps[i]->poSrcRegion) )
             {
                 delete poSrcFeat;
                 delete poDstFeat;
 
-                /* Fetch next source feature and retry translating it */
+                // Fetch next source feature and retry translating it.
                 poSrcFeat = poSrcLayer->GetNextFeature();
-                if (poSrcFeat == NULL)
+                if( poSrcFeat == NULL )
                     return NULL;
 
                 goto retry;
@@ -1595,36 +1562,37 @@ retry:
 
     ClipAndAssignSRS(poDstFeat);
 
-/* -------------------------------------------------------------------- */
-/*      Copy fields.                                                    */
-/* -------------------------------------------------------------------- */
-    for( int iVRTField = 0; iVRTField < poFeatureDefn->GetFieldCount(); iVRTField++ )
+    // Copy fields.
+    for( int iVRTField = 0; iVRTField < poFeatureDefn->GetFieldCount();
+         iVRTField++ )
     {
         if( anSrcField[iVRTField] == -1 )
             continue;
 
-        OGRFieldDefn *poDstDefn = poFeatureDefn->GetFieldDefn( iVRTField );
-        OGRFieldDefn *poSrcDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( anSrcField[iVRTField] );
+        OGRFieldDefn *poDstDefn = poFeatureDefn->GetFieldDefn(iVRTField);
+        OGRFieldDefn *poSrcDefn =
+            poSrcLayer->GetLayerDefn()->GetFieldDefn(anSrcField[iVRTField]);
 
-        if( !poSrcFeat->IsFieldSetAndNotNull( anSrcField[iVRTField] ) || poDstDefn->IsIgnored() )
+        if( !poSrcFeat->IsFieldSetAndNotNull(anSrcField[iVRTField]) ||
+            poDstDefn->IsIgnored() )
             continue;
 
-        if( abDirectCopy[iVRTField]
-            && poDstDefn->GetType() == poSrcDefn->GetType() )
+        if( abDirectCopy[iVRTField] &&
+            poDstDefn->GetType() == poSrcDefn->GetType() )
         {
-            poDstFeat->SetField( iVRTField,
-                                 poSrcFeat->GetRawFieldRef( anSrcField[iVRTField] ) );
+            poDstFeat->SetField(
+                iVRTField, poSrcFeat->GetRawFieldRef(anSrcField[iVRTField]));
         }
         else
         {
-            /* Eventually we need to offer some more sophisticated translation
-               options here for more esoteric types. */
-            if (poDstDefn->GetType() == OFTReal)
-                poDstFeat->SetField( iVRTField,
-                                 poSrcFeat->GetFieldAsDouble(anSrcField[iVRTField]));
+            // Eventually we need to offer some more sophisticated translation
+            // options here for more esoteric types.
+            if( poDstDefn->GetType() == OFTReal )
+                poDstFeat->SetField(iVRTField, poSrcFeat->GetFieldAsDouble(
+                                                   anSrcField[iVRTField]));
             else
-                poDstFeat->SetField( iVRTField,
-                                 poSrcFeat->GetFieldAsString(anSrcField[iVRTField]));
+                poDstFeat->SetField(iVRTField, poSrcFeat->GetFieldAsString(
+                                                   anSrcField[iVRTField]));
         }
     }
 
@@ -1638,31 +1606,34 @@ retry:
 OGRFeature *OGRVRTLayer::GetFeature( GIntBig nFeatureId )
 
 {
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return NULL;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return NULL;
 
     bNeedReset = true;
 
-/* -------------------------------------------------------------------- */
-/*      If the FID is directly mapped, we can do a simple               */
-/*      GetFeature() to get our target feature.  Otherwise we need      */
-/*      to setup an appropriate query to get it.                        */
-/* -------------------------------------------------------------------- */
-    OGRFeature      *poSrcFeature, *poFeature;
+    // If the FID is directly mapped, we can do a simple
+    // GetFeature() to get our target feature.  Otherwise we need
+    // to setup an appropriate query to get it.
+    OGRFeature *poSrcFeature;
+    OGRFeature *poFeature;
 
     if( iFIDField == -1 )
     {
-        poSrcFeature = poSrcLayer->GetFeature( nFeatureId );
+        poSrcFeature = poSrcLayer->GetFeature(nFeatureId);
     }
     else
     {
-        const char* pszFID = poSrcLayer->GetLayerDefn()->GetFieldDefn(iFIDField)->GetNameRef();
-        char* pszFIDQuery = (char*)CPLMalloc(strlen(pszFID) + 64);
+        const char *pszFID =
+            poSrcLayer->GetLayerDefn()->GetFieldDefn(iFIDField)->GetNameRef();
+        char *pszFIDQuery = (char *)CPLMalloc(strlen(pszFID) + 64);
 
         poSrcLayer->ResetReading();
-        snprintf( pszFIDQuery, strlen(pszFID) + 64, "%s = " CPL_FRMT_GIB, pszFID, nFeatureId );
-        poSrcLayer->SetSpatialFilter( NULL );
-        poSrcLayer->SetAttributeFilter( pszFIDQuery );
+        snprintf(pszFIDQuery, strlen(pszFID) + 64, "%s = " CPL_FRMT_GIB, pszFID,
+                 nFeatureId);
+        poSrcLayer->SetSpatialFilter(NULL);
+        poSrcLayer->SetAttributeFilter(pszFIDQuery);
         CPLFree(pszFIDQuery);
 
         poSrcFeature = poSrcLayer->GetNextFeature();
@@ -1671,17 +1642,15 @@ OGRFeature *OGRVRTLayer::GetFeature( GIntBig nFeatureId )
     if( poSrcFeature == NULL )
         return NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Translate feature and return it.                                */
-/* -------------------------------------------------------------------- */
-    if (poFeatureDefn == poSrcFeatureDefn)
+    // Translate feature and return it.
+    if( poFeatureDefn == poSrcFeatureDefn )
     {
         poFeature = poSrcFeature;
         ClipAndAssignSRS(poFeature);
     }
     else
     {
-        poFeature = TranslateFeature( poSrcFeature, FALSE );
+        poFeature = TranslateFeature(poSrcFeature, FALSE);
         delete poSrcFeature;
     }
 
@@ -1694,8 +1663,10 @@ OGRFeature *OGRVRTLayer::GetFeature( GIntBig nFeatureId )
 
 OGRErr OGRVRTLayer::SetNextByIndex( GIntBig nIndex )
 {
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return OGRERR_FAILURE;
 
     if( bNeedReset )
     {
@@ -1703,7 +1674,7 @@ OGRErr OGRVRTLayer::SetNextByIndex( GIntBig nIndex )
             return OGRERR_FAILURE;
     }
 
-    if (TestCapability(OLCFastSetNextByIndex))
+    if( TestCapability(OLCFastSetNextByIndex) )
         return poSrcLayer->SetNextByIndex(nIndex);
 
     return OGRLayer::SetNextByIndex(nIndex);
@@ -1715,19 +1686,18 @@ OGRErr OGRVRTLayer::SetNextByIndex( GIntBig nIndex )
 /*      Translate a VRT feature into a feature for the source layer     */
 /************************************************************************/
 
-OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeature)
+OGRFeature *
+OGRVRTLayer::TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature)
 {
-    OGRFeature *poSrcFeat = new OGRFeature( poSrcLayer->GetLayerDefn() );
+    OGRFeature *poSrcFeat = new OGRFeature(poSrcLayer->GetLayerDefn());
 
-    poSrcFeat->SetFID( poVRTFeature->GetFID() );
+    poSrcFeat->SetFID(poVRTFeature->GetFID());
 
-/* -------------------------------------------------------------------- */
-/*      Handle style string.                                            */
-/* -------------------------------------------------------------------- */
+    // Handle style string.
     if( iStyleField != -1 )
     {
         if( poVRTFeature->GetStyleString() != NULL )
-            poSrcFeat->SetField( iStyleField, poVRTFeature->GetStyleString() );
+            poSrcFeat->SetField(iStyleField, poVRTFeature->GetStyleString());
     }
     else
     {
@@ -1735,26 +1705,25 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
             poSrcFeat->SetStyleString(poVRTFeature->GetStyleString());
     }
 
-/* -------------------------------------------------------------------- */
-/*      Handle the geometry.  Eventually there will be several more     */
-/*      supported options.                                              */
-/* -------------------------------------------------------------------- */
+    // Handle the geometry.  Eventually there will be several more
+    // supported options.
     for(int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
     {
-        OGRVRTGeometryStyle eGeometryStyle = apoGeomFieldProps[i]->eGeometryStyle;
+        OGRVRTGeometryStyle eGeometryStyle =
+            apoGeomFieldProps[i]->eGeometryStyle;
         int iGeomField = apoGeomFieldProps[i]->iGeomField;
 
         if( eGeometryStyle == VGS_None )
         {
-            /* do nothing */
+            // Do nothing.
         }
         else if( eGeometryStyle == VGS_WKT && iGeomField >= 0 )
         {
-            OGRGeometry* poGeom = poVRTFeature->GetGeomFieldRef(i);
-            if (poGeom != NULL)
+            OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
+            if( poGeom != NULL )
             {
-                char* pszWKT = NULL;
-                if (poGeom->exportToWkt(&pszWKT) == OGRERR_NONE)
+                char *pszWKT = NULL;
+                if( poGeom->exportToWkt(&pszWKT) == OGRERR_NONE )
                 {
                     poSrcFeat->SetField(iGeomField, pszWKT);
                 }
@@ -1763,20 +1732,21 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
         }
         else if( eGeometryStyle == VGS_WKB && iGeomField >= 0)
         {
-            OGRGeometry* poGeom = poVRTFeature->GetGeomFieldRef(i);
-            if (poGeom != NULL)
+            OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
+            if( poGeom != NULL )
             {
                 int nSize = poGeom->WkbSize();
-                GByte* pabyData = (GByte*)CPLMalloc(nSize);
-                if (poGeom->exportToWkb(wkbNDR, pabyData) == OGRERR_NONE)
+                GByte *pabyData = (GByte *)CPLMalloc(nSize);
+                if( poGeom->exportToWkb(wkbNDR, pabyData) == OGRERR_NONE )
                 {
-                    if ( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() == OFTBinary )
+                    if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() ==
+                        OFTBinary )
                     {
                         poSrcFeat->SetField(iGeomField, nSize, pabyData);
                     }
                     else
                     {
-                        char* pszHexWKB = CPLBinaryToHex(nSize, pabyData);
+                        char *pszHexWKB = CPLBinaryToHex(nSize, pabyData);
                         poSrcFeat->SetField(iGeomField, pszHexWKB);
                         CPLFree(pszHexWKB);
                     }
@@ -1790,62 +1760,63 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
         }
         else if( eGeometryStyle == VGS_Direct && iGeomField >= 0 )
         {
-            poSrcFeat->SetGeomField( iGeomField, poVRTFeature->GetGeomFieldRef(i) );
+            poSrcFeat->SetGeomField(iGeomField,
+                                    poVRTFeature->GetGeomFieldRef(i));
         }
         else if( eGeometryStyle == VGS_PointFromColumns )
         {
-            OGRGeometry* poGeom = poVRTFeature->GetGeomFieldRef(i);
-            if (poGeom != NULL)
+            OGRGeometry *poGeom = poVRTFeature->GetGeomFieldRef(i);
+            if( poGeom != NULL )
             {
-                if (wkbFlatten(poGeom->getGeometryType()) != wkbPoint)
+                if( wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
-                            "Cannot set a non ponctual geometry for PointFromColumns geometry");
+                             "Cannot set a non ponctual geometry for "
+                             "PointFromColumns geometry");
                 }
                 else
                 {
-                    poSrcFeat->SetField( apoGeomFieldProps[i]->iGeomXField,
-                                         ((OGRPoint*)poGeom)->getX() );
-                    poSrcFeat->SetField( apoGeomFieldProps[i]->iGeomYField,
-                                         ((OGRPoint*)poGeom)->getY() );
+                    poSrcFeat->SetField(apoGeomFieldProps[i]->iGeomXField,
+                                        ((OGRPoint *)poGeom)->getX());
+                    poSrcFeat->SetField(apoGeomFieldProps[i]->iGeomYField,
+                                        ((OGRPoint *)poGeom)->getY());
                     if( apoGeomFieldProps[i]->iGeomZField != -1 )
                     {
-                        poSrcFeat->SetField( apoGeomFieldProps[i]->iGeomZField,
-                                             ((OGRPoint*)poGeom)->getZ() );
+                        poSrcFeat->SetField(apoGeomFieldProps[i]->iGeomZField,
+                                            ((OGRPoint *)poGeom)->getZ());
                     }
                     if( apoGeomFieldProps[i]->iGeomMField != -1 )
                     {
-                        poSrcFeat->SetField( apoGeomFieldProps[i]->iGeomMField,
-                                             ((OGRPoint*)poGeom)->getM() );
+                        poSrcFeat->SetField(apoGeomFieldProps[i]->iGeomMField,
+                                            ((OGRPoint *)poGeom)->getM());
                     }
                 }
             }
         }
         else
         {
-            /* add other options here. */
+            // Add other options here.
         }
 
-        OGRGeometry* poGeom = poSrcFeat->GetGeomFieldRef(i);
-        if ( poGeom != NULL && apoGeomFieldProps[i]->poSRS != NULL )
+        OGRGeometry *poGeom = poSrcFeat->GetGeomFieldRef(i);
+        if( poGeom != NULL && apoGeomFieldProps[i]->poSRS != NULL )
             poGeom->assignSpatialReference(apoGeomFieldProps[i]->poSRS);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Copy fields.                                                    */
-/* -------------------------------------------------------------------- */
-    for( int iVRTField = 0; iVRTField < poFeatureDefn->GetFieldCount(); iVRTField++ )
+    // Copy fields.
+    for( int iVRTField = 0; iVRTField < poFeatureDefn->GetFieldCount();
+         iVRTField++ )
     {
         bool bSkip = false;
         for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
         {
-            /* Do not set source geometry columns. Have been set just above */
-            if ((apoGeomFieldProps[i]->eGeometryStyle != VGS_Direct &&
+            // Do not set source geometry columns. Have been set just above.
+            if( (apoGeomFieldProps[i]->eGeometryStyle != VGS_Direct &&
                  anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomField) ||
                 anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomXField ||
                 anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomYField ||
                 anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomZField ||
-                anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomMField)
+                anSrcField[iVRTField] == apoGeomFieldProps[i]->iGeomMField )
             {
                 bSkip = true;
                 break;
@@ -1854,21 +1825,22 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
         if( bSkip )
             continue;
 
-        OGRFieldDefn *poVRTDefn = poFeatureDefn->GetFieldDefn( iVRTField );
-        OGRFieldDefn *poSrcDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( anSrcField[iVRTField] );
+        OGRFieldDefn *poVRTDefn = poFeatureDefn->GetFieldDefn(iVRTField);
+        OGRFieldDefn *poSrcDefn =
+            poSrcLayer->GetLayerDefn()->GetFieldDefn(anSrcField[iVRTField]);
 
-        if( abDirectCopy[iVRTField]
-            && poVRTDefn->GetType() == poSrcDefn->GetType() )
+        if( abDirectCopy[iVRTField] &&
+            poVRTDefn->GetType() == poSrcDefn->GetType() )
         {
-            poSrcFeat->SetField( anSrcField[iVRTField],
-                                 poVRTFeature->GetRawFieldRef( iVRTField ) );
+            poSrcFeat->SetField(anSrcField[iVRTField],
+                                poVRTFeature->GetRawFieldRef(iVRTField));
         }
         else
         {
-            /* Eventually we need to offer some more sophisticated translation
-               options here for more esoteric types. */
-            poSrcFeat->SetField( anSrcField[iVRTField],
-                                 poVRTFeature->GetFieldAsString(iVRTField));
+            // Eventually we need to offer some more sophisticated translation
+            // options here for more esoteric types.
+            poSrcFeat->SetField(anSrcField[iVRTField],
+                                poVRTFeature->GetFieldAsString(iVRTField));
         }
     }
 
@@ -1879,33 +1851,35 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
 /*                           ICreateFeature()                            */
 /************************************************************************/
 
-OGRErr OGRVRTLayer::ICreateFeature( OGRFeature* poVRTFeature )
+OGRErr OGRVRTLayer::ICreateFeature(OGRFeature *poVRTFeature)
 {
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return OGRERR_FAILURE;
 
     if( !bUpdate )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "CreateFeature");
+        CPLError(CE_Failure, CPLE_NotSupported, UNSUPPORTED_OP_READ_ONLY,
+                 "CreateFeature");
         return OGRERR_FAILURE;
     }
 
     if( iFIDField != -1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "The CreateFeature() operation is not supported if the FID option is specified." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The CreateFeature() operation is not supported "
+                 "if the FID option is specified.");
         return OGRERR_FAILURE;
     }
 
     if( poSrcFeatureDefn == poFeatureDefn )
         return poSrcLayer->CreateFeature(poVRTFeature);
 
-    OGRFeature* poSrcFeature = TranslateVRTFeatureToSrcFeature(poVRTFeature);
+    OGRFeature *poSrcFeature = TranslateVRTFeatureToSrcFeature(poVRTFeature);
     poSrcFeature->SetFID(OGRNullFID);
     OGRErr eErr = poSrcLayer->CreateFeature(poSrcFeature);
-    if (eErr == OGRERR_NONE)
+    if( eErr == OGRERR_NONE )
     {
         poVRTFeature->SetFID(poSrcFeature->GetFID());
     }
@@ -1917,30 +1891,32 @@ OGRErr OGRVRTLayer::ICreateFeature( OGRFeature* poVRTFeature )
 /*                             ISetFeature()                             */
 /************************************************************************/
 
-OGRErr OGRVRTLayer::ISetFeature( OGRFeature* poVRTFeature )
+OGRErr OGRVRTLayer::ISetFeature(OGRFeature *poVRTFeature)
 {
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return OGRERR_FAILURE;
 
     if( !bUpdate )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "SetFeature");
+        CPLError(CE_Failure, CPLE_NotSupported, UNSUPPORTED_OP_READ_ONLY,
+                 "SetFeature");
         return OGRERR_FAILURE;
     }
 
     if( iFIDField != -1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "The SetFeature() operation is not supported if the FID option is specified." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The SetFeature() operation is not supported "
+                 "if the FID option is specified.");
         return OGRERR_FAILURE;
     }
 
     if( poSrcFeatureDefn == poFeatureDefn )
         return poSrcLayer->SetFeature(poVRTFeature);
 
-    OGRFeature* poSrcFeature = TranslateVRTFeatureToSrcFeature(poVRTFeature);
+    OGRFeature *poSrcFeature = TranslateVRTFeatureToSrcFeature(poVRTFeature);
     OGRErr eErr = poSrcLayer->SetFeature(poSrcFeature);
     delete poSrcFeature;
     return eErr;
@@ -1953,21 +1929,23 @@ OGRErr OGRVRTLayer::ISetFeature( OGRFeature* poVRTFeature )
 OGRErr OGRVRTLayer::DeleteFeature( GIntBig nFID )
 
 {
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return OGRERR_FAILURE;
 
     if( !bUpdate )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "DeleteFeature");
+        CPLError(CE_Failure, CPLE_NotSupported, UNSUPPORTED_OP_READ_ONLY,
+                 "DeleteFeature");
         return OGRERR_FAILURE;
     }
 
     if( iFIDField != -1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "The DeleteFeature() operation is not supported if the FID option is specified." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The DeleteFeature() operation is not supported "
+                 "if the FID option is specified.");
         return OGRERR_FAILURE;
     }
 
@@ -1981,24 +1959,26 @@ OGRErr OGRVRTLayer::DeleteFeature( GIntBig nFID )
 OGRErr OGRVRTLayer::SetAttributeFilter( const char *pszNewQuery )
 
 {
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return OGRERR_FAILURE;
 
     if( bAttrFilterPassThrough )
     {
-        CPLFree( pszAttrFilter );
+        CPLFree(pszAttrFilter);
         if( pszNewQuery == NULL || strlen(pszNewQuery) == 0 )
             pszAttrFilter = NULL;
         else
-            pszAttrFilter = CPLStrdup( pszNewQuery );
+            pszAttrFilter = CPLStrdup(pszNewQuery);
 
         ResetReading();
         return OGRERR_NONE;
     }
     else
     {
-        /* setup m_poAttrQuery */
-        return OGRLayer::SetAttributeFilter( pszNewQuery );
+        // Setup m_poAttrQuery.
+        return OGRLayer::SetAttributeFilter(pszNewQuery);
     }
 }
 
@@ -2006,32 +1986,33 @@ OGRErr OGRVRTLayer::SetAttributeFilter( const char *pszNewQuery )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVRTLayer::TestCapability( const char * pszCap )
+int OGRVRTLayer::TestCapability( const char *pszCap )
 
 {
-    if ( EQUAL(pszCap,OLCFastFeatureCount) &&
-         nFeatureCount >= 0 &&
-         m_poFilterGeom == NULL && m_poAttrQuery == NULL )
+    if( EQUAL(pszCap, OLCFastFeatureCount) && nFeatureCount >= 0 &&
+        m_poFilterGeom == NULL && m_poAttrQuery == NULL )
         return TRUE;
 
-    if ( EQUAL(pszCap,OLCFastGetExtent) &&
-         apoGeomFieldProps.size() == 1 &&
-         apoGeomFieldProps[0]->sStaticEnvelope.IsInit() )
+    if( EQUAL(pszCap, OLCFastGetExtent) && apoGeomFieldProps.size() == 1 &&
+        apoGeomFieldProps[0]->sStaticEnvelope.IsInit() )
         return TRUE;
 
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return FALSE;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return FALSE;
 
-    if ( EQUAL(pszCap,OLCFastFeatureCount) ||
-         EQUAL(pszCap,OLCFastSetNextByIndex) )
+    if( EQUAL(pszCap, OLCFastFeatureCount) ||
+        EQUAL(pszCap, OLCFastSetNextByIndex) )
     {
         if( m_poAttrQuery == NULL )
         {
             bool bForward = true;
-            for( size_t i=0; i<apoGeomFieldProps.size();i++ )
+            for( size_t i = 0; i < apoGeomFieldProps.size(); i++ )
             {
                 if( !(apoGeomFieldProps[i]->eGeometryStyle == VGS_Direct ||
-                    (apoGeomFieldProps[i]->poSrcRegion == NULL && m_poFilterGeom == NULL)) )
+                      (apoGeomFieldProps[i]->poSrcRegion == NULL &&
+                       m_poFilterGeom == NULL)) )
                 {
                     bForward = false;
                     break;
@@ -2045,13 +2026,12 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
         return FALSE;
     }
 
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+    else if( EQUAL(pszCap, OLCFastSpatialFilter) )
         return apoGeomFieldProps.size() == 1 &&
                apoGeomFieldProps[0]->eGeometryStyle == VGS_Direct &&
-               m_poAttrQuery == NULL &&
-               poSrcLayer->TestCapability(pszCap);
+               m_poAttrQuery == NULL && poSrcLayer->TestCapability(pszCap);
 
-    else if ( EQUAL(pszCap,OLCFastGetExtent) )
+    else if( EQUAL(pszCap, OLCFastGetExtent) )
         return apoGeomFieldProps.size() == 1 &&
                apoGeomFieldProps[0]->eGeometryStyle == VGS_Direct &&
                m_poAttrQuery == NULL &&
@@ -2059,23 +2039,23 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
                 apoGeomFieldProps[0]->bSrcClip) &&
                poSrcLayer->TestCapability(pszCap);
 
-    else if( EQUAL(pszCap,OLCRandomRead) )
+    else if( EQUAL(pszCap, OLCRandomRead) )
         return iFIDField == -1 && poSrcLayer->TestCapability(pszCap);
 
-    else if( EQUAL(pszCap,OLCSequentialWrite)
-             || EQUAL(pszCap,OLCRandomWrite)
-             || EQUAL(pszCap,OLCDeleteFeature) )
+    else if( EQUAL(pszCap, OLCSequentialWrite)
+             || EQUAL(pszCap, OLCRandomWrite)
+             || EQUAL(pszCap, OLCDeleteFeature) )
         return bUpdate && iFIDField == -1 && poSrcLayer->TestCapability(pszCap);
 
-    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+    else if( EQUAL(pszCap, OLCStringsAsUTF8) )
         return poSrcLayer->TestCapability(pszCap);
 
-    else if( EQUAL(pszCap,OLCTransactions) )
+    else if( EQUAL(pszCap, OLCTransactions) )
         return bUpdate && poSrcLayer->TestCapability(pszCap);
 
-    else if( EQUAL(pszCap,OLCIgnoreFields) ||
-             EQUAL(pszCap,OLCCurveGeometries) ||
-             EQUAL(pszCap,OLCMeasuredGeometries) )
+    else if( EQUAL(pszCap, OLCIgnoreFields) ||
+             EQUAL(pszCap, OLCCurveGeometries) ||
+             EQUAL(pszCap, OLCMeasuredGeometries) )
         return poSrcLayer->TestCapability(pszCap);
 
     return FALSE;
@@ -2088,13 +2068,15 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
 OGRSpatialReference *OGRVRTLayer::GetSpatialRef()
 
 {
-    if ((CPLGetXMLValue( psLTree, "LayerSRS", NULL ) != NULL ||
-         CPLGetXMLValue( psLTree, "GeometryField.SRS", NULL ) != NULL) &&
-        apoGeomFieldProps.size() >= 1)
+    if( (CPLGetXMLValue(psLTree, "LayerSRS", NULL) != NULL ||
+         CPLGetXMLValue(psLTree, "GeometryField.SRS", NULL) != NULL) &&
+        apoGeomFieldProps.size() >= 1 )
         return apoGeomFieldProps[0]->poSRS;
 
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return NULL;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return NULL;
 
     if( apoGeomFieldProps.size() >= 1 )
         return apoGeomFieldProps[0]->poSRS;
@@ -2108,7 +2090,7 @@ OGRSpatialReference *OGRVRTLayer::GetSpatialRef()
 
 OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
-    return GetExtent( 0, psExtent, bForce );
+    return GetExtent(0, psExtent, bForce);
 }
 
 OGRErr OGRVRTLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce )
@@ -2118,29 +2100,33 @@ OGRErr OGRVRTLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce
 
     if( apoGeomFieldProps[iGeomField]->sStaticEnvelope.IsInit() )
     {
-        memcpy(psExtent,&apoGeomFieldProps[iGeomField]->sStaticEnvelope,
+        memcpy(psExtent, &apoGeomFieldProps[iGeomField]->sStaticEnvelope,
                sizeof(OGREnvelope));
         return OGRERR_NONE;
     }
 
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return OGRERR_FAILURE;
 
-    if ( apoGeomFieldProps[iGeomField]->eGeometryStyle == VGS_Direct &&
-         m_poAttrQuery == NULL &&
-         (apoGeomFieldProps[iGeomField]->poSrcRegion == NULL ||
-          apoGeomFieldProps[iGeomField]->bSrcClip) )
+    if( apoGeomFieldProps[iGeomField]->eGeometryStyle == VGS_Direct &&
+        m_poAttrQuery == NULL &&
+        (apoGeomFieldProps[iGeomField]->poSrcRegion == NULL ||
+         apoGeomFieldProps[iGeomField]->bSrcClip) )
     {
         if( bNeedReset )
             ResetSourceReading();
 
         OGRErr eErr = poSrcLayer->GetExtent(
-                apoGeomFieldProps[iGeomField]->iGeomField, psExtent, bForce);
-        if( eErr != OGRERR_NONE || apoGeomFieldProps[iGeomField]->poSrcRegion == NULL )
+            apoGeomFieldProps[iGeomField]->iGeomField, psExtent, bForce);
+        if( eErr != OGRERR_NONE ||
+            apoGeomFieldProps[iGeomField]->poSrcRegion == NULL )
             return eErr;
 
         OGREnvelope sSrcRegionEnvelope;
-        apoGeomFieldProps[iGeomField]->poSrcRegion->getEnvelope(&sSrcRegionEnvelope);
+        apoGeomFieldProps[iGeomField]->poSrcRegion->getEnvelope(
+            &sSrcRegionEnvelope);
 
         psExtent->Intersect(sSrcRegionEnvelope);
         return eErr;
@@ -2156,24 +2142,25 @@ OGRErr OGRVRTLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce
 GIntBig OGRVRTLayer::GetFeatureCount( int bForce )
 
 {
-    if (nFeatureCount >= 0 &&
-        m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    if( nFeatureCount >= 0 && m_poFilterGeom == NULL && m_poAttrQuery == NULL )
     {
         return nFeatureCount;
     }
 
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return 0;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return 0;
 
-    if (TestCapability(OLCFastFeatureCount))
+    if( TestCapability(OLCFastFeatureCount) )
     {
         if( bNeedReset )
             ResetSourceReading();
 
-        return poSrcLayer->GetFeatureCount( bForce );
+        return poSrcLayer->GetFeatureCount(bForce);
     }
 
-    return OGRLayer::GetFeatureCount( bForce );
+    return OGRLayer::GetFeatureCount(bForce);
 }
 
 /************************************************************************/
@@ -2185,26 +2172,28 @@ void OGRVRTLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
     SetSpatialFilter(0, poGeomIn);
 }
 
-void OGRVRTLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
+void OGRVRTLayer::SetSpatialFilter( int iGeomField, OGRGeometry *poGeomIn )
 {
     if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() )
     {
         if( poGeomIn != NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                        "Invalid geometry field index : %d", iGeomField);
+                     "Invalid geometry field index : %d", iGeomField);
         }
         return;
     }
 
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return;
 
     if( apoGeomFieldProps[iGeomField]->eGeometryStyle == VGS_Direct)
         bNeedReset = true;
 
     m_iGeomFieldFilter = iGeomField;
-    if( InstallFilter( poGeomIn ) )
+    if( InstallFilter(poGeomIn) )
         ResetReading();
 }
 
@@ -2214,8 +2203,10 @@ void OGRVRTLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
 
 OGRErr OGRVRTLayer::SyncToDisk()
 {
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return OGRERR_FAILURE;
 
     return poSrcLayer->SyncToDisk();
 }
@@ -2237,8 +2228,8 @@ OGRFeatureDefn *OGRVRTLayer::GetLayerDefn()
 
 OGRwkbGeometryType OGRVRTLayer::GetGeomType()
 {
-    if( CPLGetXMLValue( psLTree, "GeometryType", NULL ) != NULL ||
-        CPLGetXMLValue( psLTree, "GeometryField.GeometryType", NULL ) != NULL )
+    if( CPLGetXMLValue(psLTree, "GeometryType", NULL) != NULL ||
+        CPLGetXMLValue(psLTree, "GeometryField.GeometryType", NULL) != NULL )
     {
         if( apoGeomFieldProps.size() >= 1)
             return apoGeomFieldProps[0]->eGeomType;
@@ -2252,31 +2243,34 @@ OGRwkbGeometryType OGRVRTLayer::GetGeomType()
 /*                             GetFIDColumn()                           */
 /************************************************************************/
 
-const char * OGRVRTLayer::GetFIDColumn()
+const char *OGRVRTLayer::GetFIDColumn()
 {
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return "";
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return "";
 
     if( !osFIDFieldName.empty() )
         return osFIDFieldName;
 
-    const char* pszFIDColumn = NULL;
-    if (iFIDField == -1)
+    const char *pszFIDColumn = NULL;
+    if( iFIDField == -1 )
     {
-        /* If pass-through, then query the source layer FID column */
+        // If pass-through, then query the source layer FID column.
         pszFIDColumn = poSrcLayer->GetFIDColumn();
-        if (pszFIDColumn == NULL || EQUAL(pszFIDColumn, ""))
+        if( pszFIDColumn == NULL || EQUAL(pszFIDColumn, "") )
             return "";
     }
     else
     {
-        /* Otherwise get the name from the index in the source layer definition */
-        OGRFieldDefn* poFDefn = GetSrcLayerDefn()->GetFieldDefn(iFIDField);
+        // Otherwise get the name from the index in the source layer definition.
+        OGRFieldDefn *poFDefn = GetSrcLayerDefn()->GetFieldDefn(iFIDField);
         pszFIDColumn = poFDefn->GetNameRef();
     }
 
-    /* Check that the FIDColumn is actually reported in the VRT layer definition */
-    if (GetLayerDefn()->GetFieldIndex(pszFIDColumn) != -1)
+    // Check that the FIDColumn is actually reported in the VRT layer
+    // definition.
+    if( GetLayerDefn()->GetFieldIndex(pszFIDColumn) != -1 )
         return pszFIDColumn;
     else
         return "";
@@ -2288,7 +2282,8 @@ const char * OGRVRTLayer::GetFIDColumn()
 
 OGRErr OGRVRTLayer::StartTransaction()
 {
-    if( !bHasFullInitialized ) FullInitialize();
+    if( !bHasFullInitialized )
+        FullInitialize();
     if( !poSrcLayer || !bUpdate || poDS->GetRecursionDetected() )
         return OGRERR_FAILURE;
 
@@ -2301,7 +2296,8 @@ OGRErr OGRVRTLayer::StartTransaction()
 
 OGRErr OGRVRTLayer::CommitTransaction()
 {
-    if( !bHasFullInitialized ) FullInitialize();
+    if( !bHasFullInitialized )
+        FullInitialize();
     if( !poSrcLayer || !bUpdate || poDS->GetRecursionDetected() )
         return OGRERR_FAILURE;
 
@@ -2314,7 +2310,8 @@ OGRErr OGRVRTLayer::CommitTransaction()
 
 OGRErr OGRVRTLayer::RollbackTransaction()
 {
-    if( !bHasFullInitialized ) FullInitialize();
+    if( !bHasFullInitialized )
+        FullInitialize();
     if( !poSrcLayer || !bUpdate || poDS->GetRecursionDetected() )
         return OGRERR_FAILURE;
 
@@ -2327,8 +2324,10 @@ OGRErr OGRVRTLayer::RollbackTransaction()
 
 OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
 {
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return OGRERR_FAILURE;
 
     if( !poSrcLayer->TestCapability(OLCIgnoreFields) )
         return OGRERR_FAILURE;
@@ -2337,17 +2336,17 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    const char** papszIter = papszFields;
-    char** papszFieldsSrc = NULL;
+    const char **papszIter = papszFields;
+    char **papszFieldsSrc = NULL;
     poSrcLayer->GetLayerDefn();
 
-    /* Translate explicitly ignored fields of VRT layers to their equivalent */
-    /* source fields. */
-    while ( papszIter != NULL && *papszIter != NULL )
+    // Translate explicitly ignored fields of VRT layers to their equivalent
+    // source fields.
+    while( papszIter != NULL && *papszIter != NULL )
     {
-        const char* pszFieldName = *papszIter;
-        if ( EQUAL(pszFieldName, "OGR_GEOMETRY") ||
-                EQUAL(pszFieldName, "OGR_STYLE") )
+        const char *pszFieldName = *papszIter;
+        if( EQUAL(pszFieldName, "OGR_GEOMETRY") ||
+            EQUAL(pszFieldName, "OGR_STYLE") )
         {
             papszFieldsSrc = CSLAddString(papszFieldsSrc, pszFieldName);
         }
@@ -2357,19 +2356,24 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
             if( iVRTField >= 0 )
             {
                 int iSrcField = anSrcField[iVRTField];
-                if (iSrcField >= 0)
+                if( iSrcField >= 0 )
                 {
                     // If we are asked to ignore x or y for a
                     // VGS_PointFromColumns geometry field, we must NOT pass
                     // that order to the underlying layer.
                     bool bOKToIgnore = true;
-                    for(int iGeomVRTField = 0;
-                            iGeomVRTField < GetLayerDefn()->GetGeomFieldCount(); iGeomVRTField++)
+                    for( int iGeomVRTField = 0;
+                         iGeomVRTField < GetLayerDefn()->GetGeomFieldCount();
+                         iGeomVRTField++ )
                     {
-                        if( (iSrcField == apoGeomFieldProps[iGeomVRTField]->iGeomXField ||
-                             iSrcField == apoGeomFieldProps[iGeomVRTField]->iGeomYField ||
-                             iSrcField == apoGeomFieldProps[iGeomVRTField]->iGeomZField ||
-                             iSrcField == apoGeomFieldProps[iGeomVRTField]->iGeomMField) )
+                        if( iSrcField ==
+                                apoGeomFieldProps[iGeomVRTField]->iGeomXField ||
+                            iSrcField ==
+                                apoGeomFieldProps[iGeomVRTField]->iGeomYField ||
+                            iSrcField ==
+                                apoGeomFieldProps[iGeomVRTField]->iGeomZField ||
+                            iSrcField ==
+                                apoGeomFieldProps[iGeomVRTField]->iGeomMField )
                         {
                             bOKToIgnore = false;
                             break;
@@ -2377,8 +2381,10 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
                     }
                     if( bOKToIgnore )
                     {
-                        OGRFieldDefn *poSrcDefn = poSrcFeatureDefn->GetFieldDefn( iSrcField );
-                        papszFieldsSrc = CSLAddString(papszFieldsSrc, poSrcDefn->GetNameRef());
+                        OGRFieldDefn *poSrcDefn =
+                            poSrcFeatureDefn->GetFieldDefn(iSrcField);
+                        papszFieldsSrc = CSLAddString(papszFieldsSrc,
+                                                      poSrcDefn->GetNameRef());
                     }
                 }
             }
@@ -2392,9 +2398,9 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
                     if( iSrcField >= 0 )
                     {
                         OGRGeomFieldDefn *poSrcDefn =
-                            poSrcFeatureDefn->GetGeomFieldDefn( iSrcField );
-                        papszFieldsSrc =
-                            CSLAddString(papszFieldsSrc, poSrcDefn->GetNameRef());
+                            poSrcFeatureDefn->GetGeomFieldDefn(iSrcField);
+                        papszFieldsSrc = CSLAddString(papszFieldsSrc,
+                                                      poSrcDefn->GetNameRef());
                     }
                 }
             }
@@ -2402,12 +2408,14 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
         papszIter++;
     }
 
-    /* Add source fields that are not referenced by VRT layer */
-    int* panSrcFieldsUsed = (int*) CPLCalloc(sizeof(int), poSrcFeatureDefn->GetFieldCount());
-    for(int iVRTField = 0; iVRTField < GetLayerDefn()->GetFieldCount(); iVRTField++)
+    // Add source fields that are not referenced by VRT layer.
+    int *panSrcFieldsUsed =
+        (int *)CPLCalloc(sizeof(int), poSrcFeatureDefn->GetFieldCount());
+    for( int iVRTField = 0; iVRTField < GetLayerDefn()->GetFieldCount();
+         iVRTField++ )
     {
         int iSrcField = anSrcField[iVRTField];
-        if (iSrcField >= 0)
+        if( iSrcField >= 0 )
             panSrcFieldsUsed[iSrcField] = TRUE;
     }
     for(int iVRTField = 0;
@@ -2415,29 +2423,29 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
     {
         OGRVRTGeometryStyle eGeometryStyle =
             apoGeomFieldProps[iVRTField]->eGeometryStyle;
-        /* For a VGS_PointFromColumns geometry field, we must not ignore */
-        /* the fields that help building it */
+        // For a VGS_PointFromColumns geometry field, we must not ignore
+        // the fields that help building it.
         if( eGeometryStyle == VGS_PointFromColumns )
         {
             int iSrcField = apoGeomFieldProps[iVRTField]->iGeomXField;
-            if (iSrcField >= 0)
+            if( iSrcField >= 0 )
                 panSrcFieldsUsed[iSrcField] = TRUE;
             iSrcField = apoGeomFieldProps[iVRTField]->iGeomYField;
-            if (iSrcField >= 0)
+            if( iSrcField >= 0 )
                 panSrcFieldsUsed[iSrcField] = TRUE;
             iSrcField = apoGeomFieldProps[iVRTField]->iGeomZField;
-            if (iSrcField >= 0)
+            if( iSrcField >= 0 )
                 panSrcFieldsUsed[iSrcField] = TRUE;
             iSrcField = apoGeomFieldProps[iVRTField]->iGeomMField;
-            if (iSrcField >= 0)
+            if( iSrcField >= 0 )
                 panSrcFieldsUsed[iSrcField] = TRUE;
         }
-        /* Similarly for other kinds of geometry fields */
+        // Similarly for other kinds of geometry fields.
         else if( eGeometryStyle == VGS_WKT || eGeometryStyle == VGS_WKB ||
                  eGeometryStyle == VGS_Shape )
         {
             int iSrcField = apoGeomFieldProps[iVRTField]->iGeomField;
-            if (iSrcField >= 0)
+            if( iSrcField >= 0 )
                 panSrcFieldsUsed[iSrcField] = TRUE;
         }
     }
@@ -2445,42 +2453,45 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
         panSrcFieldsUsed[iStyleField] = TRUE;
     if( iFIDField >= 0 )
         panSrcFieldsUsed[iFIDField] = TRUE;
-    for(int iSrcField = 0; iSrcField < poSrcFeatureDefn->GetFieldCount(); iSrcField ++)
+    for( int iSrcField = 0; iSrcField < poSrcFeatureDefn->GetFieldCount();
+         iSrcField++ )
     {
         if( !panSrcFieldsUsed[iSrcField] )
         {
-            OGRFieldDefn *poSrcDefn = poSrcFeatureDefn->GetFieldDefn( iSrcField );
-            papszFieldsSrc = CSLAddString(papszFieldsSrc, poSrcDefn->GetNameRef());
+            OGRFieldDefn *poSrcDefn = poSrcFeatureDefn->GetFieldDefn(iSrcField);
+            papszFieldsSrc =
+                CSLAddString(papszFieldsSrc, poSrcDefn->GetNameRef());
         }
     }
     CPLFree(panSrcFieldsUsed);
 
-    /* Add source geometry fields that are not referenced by VRT layer */
-    panSrcFieldsUsed = (int*) CPLCalloc(sizeof(int),
-                                        poSrcFeatureDefn->GetGeomFieldCount());
-    for(int iVRTField = 0;
-            iVRTField < GetLayerDefn()->GetGeomFieldCount(); iVRTField++)
+    // Add source geometry fields that are not referenced by VRT layer.
+    panSrcFieldsUsed =
+        (int *)CPLCalloc(sizeof(int), poSrcFeatureDefn->GetGeomFieldCount());
+    for( int iVRTField = 0; iVRTField < GetLayerDefn()->GetGeomFieldCount();
+         iVRTField++ )
     {
         if( apoGeomFieldProps[iVRTField]->eGeometryStyle == VGS_Direct )
         {
             int iSrcField = apoGeomFieldProps[iVRTField]->iGeomField;
-            if (iSrcField >= 0)
+            if( iSrcField >= 0 )
                 panSrcFieldsUsed[iSrcField] = TRUE;
         }
     }
-    for(int iSrcField = 0;
-            iSrcField < poSrcFeatureDefn->GetGeomFieldCount(); iSrcField ++)
+    for( int iSrcField = 0; iSrcField < poSrcFeatureDefn->GetGeomFieldCount();
+         iSrcField++ )
     {
         if( !panSrcFieldsUsed[iSrcField] )
         {
             OGRGeomFieldDefn *poSrcDefn =
-                    poSrcFeatureDefn->GetGeomFieldDefn( iSrcField );
-            papszFieldsSrc = CSLAddString(papszFieldsSrc, poSrcDefn->GetNameRef());
+                poSrcFeatureDefn->GetGeomFieldDefn(iSrcField);
+            papszFieldsSrc =
+                CSLAddString(papszFieldsSrc, poSrcDefn->GetNameRef());
         }
     }
     CPLFree(panSrcFieldsUsed);
 
-    eErr = poSrcLayer->SetIgnoredFields((const char**)papszFieldsSrc);
+    eErr = poSrcLayer->SetIgnoredFields((const char **)papszFieldsSrc);
 
     CSLDestroy(papszFieldsSrc);
 
@@ -2491,9 +2502,11 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
 /*                          GetSrcDataset()                             */
 /************************************************************************/
 
-GDALDataset* OGRVRTLayer::GetSrcDataset()
+GDALDataset *OGRVRTLayer::GetSrcDataset()
 {
-    if( !bHasFullInitialized ) FullInitialize();
-    if (!poSrcLayer || poDS->GetRecursionDetected()) return NULL;
+    if( !bHasFullInitialized )
+        FullInitialize();
+    if( !poSrcLayer || poDS->GetRecursionDetected() )
+        return NULL;
     return poSrcDS;
 }
