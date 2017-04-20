@@ -317,7 +317,8 @@
                       <xs:annotation>
                         <xs:documentation>
                             XPath of element that will be considered for flattening
-                            even if it has more than MaximumNumberOfFields fields.
+                            even if it has more than MaximumNumberOfFields fields,
+                            or if it is referenced several times by other elements.
                             Note: other constraints might make it impossible to
                             flatten it, for example if it has repeated elements.
                         </xs:documentation>
@@ -367,11 +368,20 @@
                         </xs:restriction>
                       </xs:simpleType>
                     </xs:element>
+                    <xs:element name="ProcessDataRecord" type="xs:boolean"
+                                minOccurs="0" maxOccurs="unbounded">
+                      <xs:annotation>
+                        <xs:documentation>
+                            If swe:DataRecord must be parsed. Default is true.
+                        </xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
                     <xs:element name="ProcessDataArray" type="xs:boolean"
                                 minOccurs="0" maxOccurs="unbounded">
                       <xs:annotation>
                         <xs:documentation>
-                            If swe:DataArray must be parsed. Default is tru.
+                            If swe:DataArray and swe:DataStream must be parsed.
+                            Default is true.
                         </xs:documentation>
                       </xs:annotation>
                     </xs:element>

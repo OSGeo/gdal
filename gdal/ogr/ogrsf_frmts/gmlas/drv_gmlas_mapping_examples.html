@@ -315,6 +315,85 @@ OGRFeature(MyFeature2_names_name_name):1
 
 </table>
 
+<h2>swe:DataArray</h2>
+
+The following snippet
+
+<pre>
+    &lt;swe:DataArray&gt;
+        &lt;swe:elementCount&gt;
+            &lt;swe:Count&gt;
+                    &lt;swe:value&gt;2&lt;/swe:value&gt;
+            &lt;/swe:Count&gt;
+        &lt;/swe:elementCount&gt;
+        &lt;swe:elementType name="Components"&gt;
+            &lt;swe:DataRecord&gt;
+                    &lt;swe:field name="myTime"&gt;
+                        &lt;swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime"&gt;
+                                &lt;swe:uom xlink:href="http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"/&gt;
+                        &lt;/swe:Time&gt;
+                    &lt;/swe:field&gt;
+                    &lt;swe:field name="myCategory"&gt;
+                        &lt;swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification"/&gt;
+                    &lt;/swe:field&gt;
+                        &lt;swe:field name="myQuantity"&gt;
+                        &lt;swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour"&gt;
+                                &lt;swe:uom xlink:href="http://dd.eionet.europa.eu/vocabulary/uom/concentration/ug.m-3"/&gt;
+                        &lt;/swe:Quantity&gt;
+                    &lt;/swe:field&gt;
+                    &lt;swe:field name="myCount"&gt;
+                        &lt;swe:Count definition="http://"/&gt;
+                    &lt;/swe:field&gt;
+                        &lt;swe:field name="myText"&gt;
+                        &lt;swe:Text definition="http://"/&gt;
+                    &lt;/swe:field&gt;
+                        &lt;swe:field name="myBoolean"&gt;
+                        &lt;swe:Boolean definition="http://"/&gt;
+                    &lt;/swe:field&gt;
+            &lt;/swe:DataRecord&gt;
+        &lt;/swe:elementType&gt;
+        &lt;swe:encoding&gt;
+                &lt;swe:TextEncoding decimalSeparator="." blockSeparator="@@" tokenSeparator=","/&gt;
+        &lt;/swe:encoding&gt;
+        &lt;swe:values&gt;2016-09-01T00:00:00+01:00,1,2.34,3,foo,true@@2017-09-01T00:00:00,2,3.45&lt;/swe:values&gt;
+    &lt;/swe:DataArray&gt;
+</pre>
+
+will receive a special processing to be mapped into a dedicated layer:
+
+<pre>
+
+Layer name: dataarray_1_components
+Geometry: None
+Feature Count: 2
+Layer SRS WKT:
+(unknown)
+parent_ogr_pkid: String (0.0) NOT NULL
+mytime: DateTime (0.0)
+mycategory: String (0.0)
+myquantity: Real (0.0)
+mycount: Integer (0.0)
+mytext: String (0.0)
+myboolean: Integer(Boolean) (0.0)
+OGRFeature(dataarray_1_components):1
+  parent_ogr_pkid (String) = BAE8440FC4563A80D2AB1860A47AA0A3_DataArray_1
+  mytime (DateTime) = 2016/09/01 00:00:00+01
+  mycategory (String) = 1
+  myquantity (Real) = 2.34
+  mycount (Integer) = 3
+  mytext (String) = foo
+  myboolean (Integer(Boolean)) = 1
+
+OGRFeature(dataarray_1_components):2
+  parent_ogr_pkid (String) = BAE8440FC4563A80D2AB1860A47AA0A3_DataArray_1
+  mytime (DateTime) = 2017/09/01 00:00:00
+  mycategory (String) = 2
+  myquantity (Real) = 3.45
+
+
+
+</pre>
+
 <h2>See Also</h2>
 
 <ul>

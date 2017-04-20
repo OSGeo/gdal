@@ -39,16 +39,15 @@
             <!-- Maximum number of fields allowed for element flattening -->
             <MaximumNumberOfFields>10</MaximumNumberOfFields>
 
-            <!--
             <Namespaces>
-                <Namespace prefix="..." uri="..."/>
+                <Namespace prefix="swe" uri="http://www.opengis.net/swe/2.0"/>
             </Namespaces>
-            -->
+
             <!-- Exception to MaximumNumberOfFields:
                 force this element(s) to be flattened even if they have more elements -->
-            <!--
-            <ForceFlatteningXPath>...</ForceFlatteningXPath>
-            -->
+
+            <ForceFlatteningXPath>swe:values</ForceFlatteningXPath>
+
             <!-- Exception to MaximumNumberOfFields:
                 prevent this element(s) from being flattened even if they have less elements -->
             <!--
@@ -58,6 +57,7 @@
 
         <SWEProcessing>
             <Activation>ifSWENamespaceFoundInTopElement</Activation>
+            <ProcessDataRecord>true</ProcessDataRecord>
             <ProcessDataArray>true</ProcessDataArray>
         </SWEProcessing>
     </LayerBuildingRules>
@@ -147,12 +147,11 @@
         <XPath>swe:Quantity/@optional</XPath>
         <XPath>swe:Quantity/@id</XPath>
         <XPath>swe:Quantity/swe:identifier</XPath>
-        <XPath>swe:Quantity/@definition</XPath>
+        <!-- <XPath>swe:Quantity/@definition</XPath> -->
         <XPath>swe:Quantity/swe:label</XPath>
         <XPath>swe:Quantity/swe:nilValues</XPath>
         <XPath>swe:Quantity/swe:constraint</XPath>
         <XPath>swe:Quantity/swe:quality</XPath>
-        <XPath>swe:Quantity/swe:extension</XPath>
     </IgnoredXPaths>
 
     <!-- Section for GMLAS writer config -->
