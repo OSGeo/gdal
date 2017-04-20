@@ -972,7 +972,9 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
     m_oXLinkResolver.SetConf( m_oConf.m_oXLinkResolution );
     m_oXLinkResolver.SetRefreshMode( bRefreshCache );
 
-    if( m_bValidate || m_bRemoveUnusedLayers || m_bFoundSWE )
+    if( m_bValidate || m_bRemoveUnusedLayers ||
+        (m_bFoundSWE && (m_oConf.m_bSWEProcessDataRecord ||
+                         m_oConf.m_bSWEProcessDataArray)) )
     {
         CPLErrorReset();
         RunFirstPassIfNeeded( NULL, NULL, NULL );
@@ -1245,6 +1247,7 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
         {
             poReader->SetMapSRSNameToInvertedAxis(m_oMapSRSNameToInvertedAxis);
             poReader->SetMapGeomFieldDefnToSRSName(m_oMapGeomFieldDefnToSRSName);
+            poReader->SetProcessDataRecord(m_bFoundSWE && m_oConf.m_bSWEProcessDataRecord);
             poReader->SetSWEDataArrayLayers(m_apoSWEDataArrayLayers);
         }
         return true;
@@ -1268,7 +1271,9 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
     const bool bHasURLSpecificRules =
                 !m_oXLinkResolver.GetConf().m_aoURLSpecificRules.empty();
     if( bHasGeomFields || m_bValidate || m_bRemoveUnusedLayers ||
-        m_bRemoveUnusedFields || bHasURLSpecificRules || m_bFoundSWE )
+        m_bRemoveUnusedFields || bHasURLSpecificRules ||
+        (m_bFoundSWE && (m_oConf.m_bSWEProcessDataRecord ||
+                         m_oConf.m_bSWEProcessDataArray)) )
     {
         bool bJustOpenedFiled =false;
         VSILFILE* fp = NULL;
@@ -1296,6 +1301,9 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
                                  m_bSchemaFullChecking,
                                  m_bHandleMultipleImports );
 
+        poReaderFirstPass->SetProcessDataRecord(
+            m_bFoundSWE && m_oConf.m_bSWEProcessDataRecord);
+
         poReaderFirstPass->SetFileSize( m_nFileSize );
 
         poReaderFirstPass->SetMapIgnoredXPathToWarn(
@@ -1310,6 +1318,9 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
             m_bRemoveUnusedLayers,
             m_bRemoveUnusedFields,
             m_bFoundSWE && m_oConf.m_bSWEProcessDataArray,
+            m_poFieldsMetadataLayer,
+            m_poLayersMetadataLayer,
+            m_poRelationshipsLayer,
             aoSetRemovedLayerNames);
 
         const std::vector<OGRGMLASLayer*>& apoSWEDataArrayLayers =
@@ -1401,6 +1412,7 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
         {
             poReader->SetMapSRSNameToInvertedAxis(m_oMapSRSNameToInvertedAxis);
             poReader->SetMapGeomFieldDefnToSRSName(m_oMapGeomFieldDefnToSRSName);
+            poReader->SetProcessDataRecord(m_bFoundSWE && m_oConf.m_bSWEProcessDataRecord);
             poReader->SetSWEDataArrayLayers(m_apoSWEDataArrayLayers);
         }
     }

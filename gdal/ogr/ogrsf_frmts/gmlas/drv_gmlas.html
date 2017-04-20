@@ -58,6 +58,15 @@ well as content required by the schema and absent from the document.</p>
 <p>Consult the <a href="drv_gmlas_mapping_examples.html">GMLAS mapping examples</a>
 page for more details.</p>
 
+<p>By default in the configuration, swe:DataRecord and swe:DataArray elements
+from the Sensor Web Enablement (SWE) Common Data Model namespace will receive
+a special processing, so they are mapped more naturally to OGR concepts. The
+swe:field elements will be mapped as OGR fields, and the swe:values element of
+a swe:DataArray will be parsed into OGR features in a dedicated layer for each
+swe:DataArray. Note that those conveniency exposure is for read-only purpose.
+When using the write side of the driver, only the content of the general
+mapping mechanisms will be used.</p>
+
 <h2>Metadata layers</h2>
 
 <p>Three special layers "_ogr_fields_metadata", "_ogr_layers_metadata",
@@ -346,6 +355,9 @@ but with limited support for complex features<br/></li>
 
 <p>Initial implementation has been funded by the European Union's Earth observation programme
 Copernicus, as part of the tasks delegated to the European Environment Agency.</p>
+<p>Development of special processing of some Sensor Web Enablement (SWE)
+Common Data Model swe:DataRecord and swe:DataArray constructs has been funded
+by Bureau des Recherches Géologiques et Minières (BRGM).</p>
 
 </body>
 </html>
