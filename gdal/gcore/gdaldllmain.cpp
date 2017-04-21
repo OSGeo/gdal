@@ -85,7 +85,7 @@ void GDALDestroy(void)
     /* Needed in case no driver manager has been instantiated. */
     CPLFreeConfig();
     CPLFinalizeTLS();
-	CPLCleanupErrorMutex();
+    CPLCleanupErrorMutex();
     CPLCleanupMasterMutex();
 }
 

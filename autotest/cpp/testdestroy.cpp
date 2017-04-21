@@ -31,7 +31,7 @@
 
 int main()
 {
-	GDALAllRegister();
+    GDALAllRegister();
     /* See corresponding bug reports: */
     /* https://trac.osgeo.org/gdal/ticket/6139 */
     /* https://trac.osgeo.org/gdal/ticket/6868 */
