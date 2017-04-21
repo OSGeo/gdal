@@ -37,7 +37,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRMemDataSource::OGRMemDataSource( const char *pszFilename,
-                                    char ** /* papszOptions */) :
+                                    char ** /* papszOptions */ ) :
     papoLayers(NULL),
     nLayers(0),
     pszName(CPLStrdup(pszFilename))
@@ -50,12 +50,12 @@ OGRMemDataSource::OGRMemDataSource( const char *pszFilename,
 OGRMemDataSource::~OGRMemDataSource()
 
 {
-    CPLFree( pszName );
+    CPLFree(pszName);
 
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
-    CPLFree( papoLayers );
+    CPLFree(papoLayers);
 }
 
 /************************************************************************/
@@ -63,24 +63,20 @@ OGRMemDataSource::~OGRMemDataSource()
 /************************************************************************/
 
 OGRLayer *
-OGRMemDataSource::ICreateLayer( const char * pszLayerName,
+OGRMemDataSource::ICreateLayer( const char *pszLayerName,
                                 OGRSpatialReference *poSRS,
                                 OGRwkbGeometryType eType,
-                                char ** papszOptions )
+                                char **papszOptions )
 {
-/* -------------------------------------------------------------------- */
-/*      Create the layer object.                                        */
-/* -------------------------------------------------------------------- */
-    OGRMemLayer *poLayer = new OGRMemLayer( pszLayerName, poSRS, eType );
+    // Create the layer object.
+    OGRMemLayer *poLayer = new OGRMemLayer(pszLayerName, poSRS, eType);
 
     if( CPLFetchBool(papszOptions, "ADVERTIZE_UTF8", false) )
         poLayer->SetAdvertizeUTF8(true);
 
-/* -------------------------------------------------------------------- */
-/*      Add layer to data source layer list.                            */
-/* -------------------------------------------------------------------- */
+    // Add layer to data source layer list.
     papoLayers = static_cast<OGRMemLayer **>(
-        CPLRealloc( papoLayers,  sizeof(OGRMemLayer *) * (nLayers+1) ) );
+        CPLRealloc(papoLayers, sizeof(OGRMemLayer *) * (nLayers + 1)));
 
     papoLayers[nLayers++] = poLayer;
 
@@ -98,8 +94,8 @@ OGRErr OGRMemDataSource::DeleteLayer( int iLayer )
     {
         delete papoLayers[iLayer];
 
-        for( int i = iLayer+1; i < nLayers; ++i )
-            papoLayers[i-1] = papoLayers[i];
+        for( int i = iLayer + 1; i < nLayers; ++i )
+            papoLayers[i - 1] = papoLayers[i];
 
         --nLayers;
 
@@ -113,20 +109,20 @@ OGRErr OGRMemDataSource::DeleteLayer( int iLayer )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMemDataSource::TestCapability( const char * pszCap )
+int OGRMemDataSource::TestCapability( const char *pszCap )
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
+    if( EQUAL(pszCap, ODsCCreateLayer) )
         return TRUE;
-    else if( EQUAL(pszCap,ODsCDeleteLayer) )
+    else if( EQUAL(pszCap, ODsCDeleteLayer) )
         return TRUE;
-    else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
+    else if( EQUAL(pszCap, ODsCCreateGeomFieldAfterCreateLayer) )
         return TRUE;
-    else if( EQUAL(pszCap,ODsCCurveGeometries) )
+    else if( EQUAL(pszCap, ODsCCurveGeometries) )
         return TRUE;
-    else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+    else if( EQUAL(pszCap, ODsCMeasuredGeometries) )
         return TRUE;
-    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+    else if( EQUAL(pszCap, ODsCRandomLayerWrite) )
         return TRUE;
 
     return FALSE;
