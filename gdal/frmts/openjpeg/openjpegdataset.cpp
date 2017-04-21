@@ -2242,6 +2242,8 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         return NULL;
     }
 
+    // NOTE: if changing the default block size, the logic in nitfdataset.cpp
+    // CreateCopy() will have to be changed as well.
     int nBlockXSize =
         atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "1024"));
     int nBlockYSize =
