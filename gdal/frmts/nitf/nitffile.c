@@ -619,9 +619,6 @@ int NITFCreate( const char *pszFilename,
     nNPPBH = nPixels;
     nNPPBV = nLines;
 
-    if( CSLFetchNameValue( papszOptions, "BLOCKSIZE" ) != NULL )
-        nNPPBH = nNPPBV = atoi(CSLFetchNameValue( papszOptions, "BLOCKSIZE" ));
-
     if( CSLFetchNameValue( papszOptions, "BLOCKXSIZE" ) != NULL )
         nNPPBH = atoi(CSLFetchNameValue( papszOptions, "BLOCKXSIZE" ));
 
@@ -634,7 +631,7 @@ int NITFCreate( const char *pszFilename,
     if( CSLFetchNameValue( papszOptions, "NPPBV" ) != NULL )
         nNPPBV = atoi(CSLFetchNameValue( papszOptions, "NPPBV" ));
 
-    if (EQUAL(pszIC, "NC") &&
+    if ( (EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) &&
         (nPixels > 8192 || nLines > 8192) &&
         nNPPBH == nPixels && nNPPBV == nLines)
     {
@@ -649,7 +646,7 @@ int NITFCreate( const char *pszFilename,
             * ((GIntBig) nPixels *nLines)
             * nBands;
     }
-    else if (EQUAL(pszIC, "NC") &&
+    else if ( (EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) &&
              nPixels > 8192 && nNPPBH == nPixels)
     {
         /* See MIL-STD-2500-C, paragraph 5.4.2.2-d */
@@ -671,7 +668,7 @@ int NITFCreate( const char *pszFilename,
             * ((GIntBig) nPixels * (nNBPC * nNPPBV))
             * nBands;
     }
-    else if (EQUAL(pszIC, "NC") &&
+    else if ( (EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) &&
              nLines > 8192 && nNPPBV == nLines)
     {
         /* See MIL-STD-2500-C, paragraph 5.4.2.2-d */
