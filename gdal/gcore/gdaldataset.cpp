@@ -3753,7 +3753,10 @@ In GDAL 1.X, this method used to be in the OGRDataSource class.
 @param pszName the name for the new layer.  This should ideally not
 match any existing layer on the datasource.
 @param poSpatialRef the coordinate system to use for the new layer, or NULL if
-no coordinate system is available.
+no coordinate system is available.  The driver might only increase
+the reference counter of the object to take ownership, and not make a full copy,
+so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
+are done with the object.
 @param eGType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written.
 @param papszOptions a StringList of name=value options.  Options are driver
@@ -3837,7 +3840,10 @@ This method is the same as the C++ method GDALDataset::CreateLayer().
 @param pszName the name for the new layer.  This should ideally not
 match any existing layer on the datasource.
 @param hSpatialRef the coordinate system to use for the new layer, or NULL if
-no coordinate system is available.
+no coordinate system is available.  The driver might only increase
+the reference counter of the object to take ownership, and not make a full copy,
+so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
+are done with the object.
 @param eGType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written.
 @param papszOptions a StringList of name=value options.  Options are driver
