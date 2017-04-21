@@ -4614,6 +4614,27 @@ NITFDataset::NITFCreateCopy(
             }
         }
     }
+    else if( poJ2KDriver != NULL &&
+             EQUAL(poJ2KDriver->GetDescription(), "JP2OPENJPEG") &&
+             (nXSize >= 1024 || nYSize >= 1024) )
+    {
+        // The JP2OPENJPEG driver uses 1024 block size by default. Set it
+        // explicitly for NITFCreate() purposes.
+        int nBlockXSize = atoi(
+            CSLFetchNameValueDef(papszFullOptions, "BLOCKXSIZE", "0"));
+        int nBlockYSize = atoi(
+            CSLFetchNameValueDef(papszFullOptions, "BLOCKYSIZE", "0"));
+        if( nBlockXSize == 0 )
+        {
+            papszFullOptions = CSLSetNameValue(papszFullOptions,
+                                                "BLOCKXSIZE", "1024");
+        }
+        if( nBlockYSize == 0 )
+        {
+            papszFullOptions = CSLSetNameValue(papszFullOptions,
+                                                "BLOCKYSIZE", "1024");
+        }
+    }
 
     if (!NITFCreate( pszFilename, nXSize, nYSize, poSrcDS->GetRasterCount(),
                 GDALGetDataTypeSize( eType ), pszPVType,
