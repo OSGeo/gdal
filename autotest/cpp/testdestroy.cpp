@@ -31,7 +31,12 @@
 
 int main()
 {
-    /* see https://trac.osgeo.org/gdal/ticket/6139 */
+	GDALAllRegister();
+    /* See corresponding bug reports: */
+    /* https://trac.osgeo.org/gdal/ticket/6139 */
+    /* https://trac.osgeo.org/gdal/ticket/6868 */
+    CPLError(CE_None, CPLE_AppDefined,
+             "Expected, CPLError called to trigger hErrorMutex allocation");
     GDALDestroy();
     return 0;
 }
