@@ -1537,7 +1537,10 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
                 && psWO->padfDstNoDataReal != NULL )
             {
                 adfInitRealImag[0] = psWO->padfDstNoDataReal[iBand];
-                adfInitRealImag[1] = psWO->padfDstNoDataImag[iBand];
+                if( psWO->padfDstNoDataImag != NULL )
+                {
+                    adfInitRealImag[1] = psWO->padfDstNoDataImag[iBand];
+                }
             }
             else
             {

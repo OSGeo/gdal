@@ -1431,7 +1431,10 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
                 && psOptions->padfDstNoDataReal != NULL )
             {
                 adfInitRealImag[0] = psOptions->padfDstNoDataReal[iBand];
-                adfInitRealImag[1] = psOptions->padfDstNoDataImag[iBand];
+                if( psOptions->padfDstNoDataImag != NULL )
+                {
+                    adfInitRealImag[1] = psOptions->padfDstNoDataImag[iBand];
+                }
             }
             else
             {
@@ -2045,7 +2048,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                 double adfNoData[2] =
                 {
                     psOptions->padfDstNoDataReal[iBand],
-                    psOptions->padfDstNoDataImag[iBand]
+                    psOptions->padfDstNoDataImag != NULL ? psOptions->padfDstNoDataImag[iBand] : 0.0
                 };
 
                 int bAllValid = FALSE;
