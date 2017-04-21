@@ -10,23 +10,6 @@ and wkbTriangle; and their Z, M and ZM variants (as well as for the type of
 geometry fields). Client code, as well as out-of-tree drivers that support
 writing geometries, must be ready to deal with them.
 
-MIGRATION GUIDE FROM GDAL 2.0 to GDAL 2.1
-------------------------------------------
-
-A) RFC 61: Support for measured geometries
-
-Link: https://trac.osgeo.org/gdal/wiki/rfc61_support_for_measured_geometries
-
-The OGRwkbGeometryType enumeration has been extended with new values for the
-M and ZM variants of the geometry types. Client code may have to be upgraded
-to take into account those new values. Note that the wkbPolyhedralSurface, wkbTIN
-and wkbTriangle types and their Z, M and ZM variants, have also been introduced
-as a provision for a potential support in a future version (they are unused in
-OGR core and drivers for now).
-
-Previously the ESRI Shapefile driver read XYM data as XYZ. Now it is read
-as XYM.
-
 B) RFC 67: Null values in OGR
 
 Link: https://trac.osgeo.org/gdal/wiki/rfc67_nullfieldvalues
@@ -44,6 +27,23 @@ states.
 On the writing side, a few drivers will now distinguish between the unset
 and null state, namely GeoJSON, CouchDB, Cloudant, MongoDB, ElasticSearch and
 GML.
+
+MIGRATION GUIDE FROM GDAL 2.0 to GDAL 2.1
+------------------------------------------
+
+A) RFC 61: Support for measured geometries
+
+Link: https://trac.osgeo.org/gdal/wiki/rfc61_support_for_measured_geometries
+
+The OGRwkbGeometryType enumeration has been extended with new values for the
+M and ZM variants of the geometry types. Client code may have to be upgraded
+to take into account those new values. Note that the wkbPolyhedralSurface, wkbTIN
+and wkbTriangle types and their Z, M and ZM variants, have also been introduced
+as a provision for a potential support in a future version (they are unused in
+OGR core and drivers for now).
+
+Previously the ESRI Shapefile driver read XYM data as XYZ. Now it is read
+as XYM.
 
 MIGRATION GUIDE FROM GDAL 1.11 to GDAL 2.0
 ------------------------------------------

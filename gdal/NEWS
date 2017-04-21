@@ -24,10 +24,14 @@ GDAL/OGR 2.2.0 Release Notes =
         https://trac.osgeo.org/gdal/wiki/rfc63_sparse_datasets_improvements
  * RFC 64: Triangle, Polyhedral surface and TIN
         https://trac.osgeo.org/gdal/wiki/rfc64_triangle_polyhedralsurface_tin
+    ==> this RFC introduces potential backward incompatible behaviour.
+        Consult MIGRATION_GUIDE.txt
  * RFC 66: OGR random layer read/write capabilities
         https://trac.osgeo.org/gdal/wiki/rfc66_randomlayerreadwrite
  * RFC 67: add null field state for OGR features, in addition to unset fields
         https://trac.osgeo.org/gdal/wiki/rfc67_nullfieldvalues
+    ==> this RFC introduces potential backward incompatible behaviour.
+        Consult MIGRATION_GUIDE.txt
  * Upgrade to EPSG database v9.0 (#6772)
  * Python bindings: Global Interpreter Lock (GIL) released before entering GDAL native code (for all, in GDAL module and a few ones in ogr like ogr.Open())
  * Continued major efforts on sanitization of code base
