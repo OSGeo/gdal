@@ -1515,10 +1515,21 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 /* -------------------------------------------------------------------- */
     if( nSrcXSize == 0 && nSrcYSize == 0 )
     {
+        // TODO: This taking of the warp mutex is suboptimal. We could get rid
+        // of it, but that would require making sure ComputeSourceWindow()
+        // uses a different pTransformerArg than the warp kernel.
+        if( hWarpMutex != NULL && !CPLAcquireMutex( hWarpMutex, 600.0 ) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Failed to acquire WarpMutex in WarpRegion()." );
+            return CE_Failure;
+        }
         eErr = ComputeSourceWindow( nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                                     &nSrcXOff, &nSrcYOff,
                                     &nSrcXSize, &nSrcYSize,
                                     &nSrcXExtraSize, &nSrcYExtraSize, NULL );
+        if( hWarpMutex != NULL )
+            CPLReleaseMutex( hWarpMutex );
         if( eErr != CE_None )
             return eErr;
     }
@@ -2241,6 +2252,19 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
     {
         if( !pabSuccess[i] )
         {
+            nFailedCount++;
+            continue;
+        }
+
+        // If this happens this is likely the symptom of a bug somewhere.
+        if( CPLIsNan(padfX[i]) || CPLIsNan(padfY[i]) )
+        {
+            static bool bNanCoordFound = false;
+            if( !bNanCoordFound )
+            {
+                CPLDebug("WARP", "NaN coordinate found.");
+                bNanCoordFound = true;
+            }
             nFailedCount++;
             continue;
         }

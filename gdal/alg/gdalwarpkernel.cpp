@@ -3936,6 +3936,18 @@ static CPL_INLINE int GWKCheckAndComputeSrcOffsets(const int* _pabSuccess,
     if( !_pabSuccess[_iDstX] )
         return FALSE;
 
+    // If this happens this is likely the symptom of a bug somewhere.
+    if( CPLIsNan(_padfX[_iDstX]) || CPLIsNan(_padfY[_iDstX]) )
+    {
+        static bool bNanCoordFound = false;
+        if( !bNanCoordFound )
+        {
+            CPLDebug("WARP", "NaN coordinate found.");
+            bNanCoordFound = true;
+        }
+        return false;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Figure out what pixel we want in our source raster, and skip    */
 /*      further processing if it is well off the source image.          */
