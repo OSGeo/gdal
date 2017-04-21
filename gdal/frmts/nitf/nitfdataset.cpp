@@ -3821,6 +3821,7 @@ static char **NITFJP2ECWOptions( char **papszOptions )
 
     return papszJP2Options;
 }
+
 /************************************************************************/
 /*                           NITFJP2KAKOptions()                        */
 /*                                                                      */
@@ -3831,27 +3832,46 @@ static char **NITFJP2ECWOptions( char **papszOptions )
 static char **NITFJP2KAKOptions( char **papszOptions )
 
 {
-    char** papszKAKOptions = NULL;
+    char** papszJP2Options = CSLAddString(NULL, "CODEC=J2K");
 
     for( int i = 0; papszOptions != NULL && papszOptions[i] != NULL; i++ )
     {
-       if(      STARTS_WITH_CI(papszOptions[i], "QUALITY=") )
-          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
-       else if (STARTS_WITH_CI(papszOptions[i], "BLOCKXSIZE=") )
-          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
-       else if (STARTS_WITH_CI(papszOptions[i], "BLOCKYSIZE=") )
-          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
-       else if (STARTS_WITH_CI(papszOptions[i], "GMLPJ2=") )
-          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
-       else if (STARTS_WITH_CI(papszOptions[i], "GeoJP2=") )
-          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
-       else if (STARTS_WITH_CI(papszOptions[i], "LAYERS=") )
-          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
-       else if (STARTS_WITH_CI(papszOptions[i], "ROI=") )
-          papszKAKOptions = CSLAddString(papszKAKOptions, papszOptions[i]);
+        if( STARTS_WITH_CI(papszOptions[i], "QUALITY=") ||
+            STARTS_WITH_CI(papszOptions[i], "BLOCKXSIZE=") ||
+            STARTS_WITH_CI(papszOptions[i], "BLOCKYSIZE=") ||
+            STARTS_WITH_CI(papszOptions[i], "LAYERS=") ||
+            STARTS_WITH_CI(papszOptions[i], "ROI=") )
+        {
+            papszJP2Options = CSLAddString(papszJP2Options, papszOptions[i]);
+        }
     }
 
-    return papszKAKOptions;
+    return papszJP2Options;
+}
+
+/************************************************************************/
+/*                      NITFJP2OPENJPEGOptions()                        */
+/*                                                                      */
+/*      Prepare JP2-in-NITF creation options based in part of the       */
+/*      NITF creation options.                                          */
+/************************************************************************/
+
+static char **NITFJP2OPENJPEGOptions( char **papszOptions )
+
+{
+    char** papszJP2Options = CSLAddString(NULL, "CODEC=J2K");
+
+    for( int i = 0; papszOptions != NULL && papszOptions[i] != NULL; i++ )
+    {
+        if( STARTS_WITH_CI(papszOptions[i], "QUALITY=") ||
+            STARTS_WITH_CI(papszOptions[i], "BLOCKXSIZE=") ||
+            STARTS_WITH_CI(papszOptions[i], "BLOCKYSIZE=") )
+        {
+            papszJP2Options = CSLAddString(papszJP2Options, papszOptions[i]);
+        }
+    }
+
+    return papszJP2Options;
 }
 
 /************************************************************************/
@@ -4002,6 +4022,20 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
                                                           &papszTextMD,
                                                           &papszCgmMD );
 
+    const char* pszBlockSize = CSLFetchNameValue(papszFullOptions, "BLOCKSIZE");
+    if(  pszBlockSize!= NULL &&
+        CSLFetchNameValue(papszFullOptions, "BLOCKXSIZE") == NULL )
+    {
+        papszFullOptions = CSLSetNameValue(papszFullOptions,
+                                           "BLOCKXSIZE", pszBlockSize);
+    }
+    if(  pszBlockSize!= NULL &&
+        CSLFetchNameValue(papszFullOptions, "BLOCKYSIZE") == NULL )
+    {
+        papszFullOptions = CSLSetNameValue(papszFullOptions,
+                                           "BLOCKYSIZE", pszBlockSize);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
@@ -4015,9 +4049,6 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
         CSLDestroy(papszFullOptions);
         return NULL;
     }
-
-    CSLDestroy(papszFullOptions);
-    papszFullOptions = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Various special hacks related to JPEG2000 encoded files.        */
@@ -4040,7 +4071,7 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
 
         NITFClose( psFile );
 
-        char** papszJP2Options = NITFJP2ECWOptions(papszOptions);
+        char** papszJP2Options = NITFJP2ECWOptions(papszFullOptions);
         poWritableJ2KDataset =
             poJ2KDriver->Create( osDSName, nXSize, nYSize, nBands, eType,
                                  papszJP2Options );
@@ -4053,6 +4084,7 @@ NITFDataset::NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize,
             return NULL;
         }
     }
+    CSLDestroy(papszFullOptions);
 
 /* -------------------------------------------------------------------- */
 /*      Open the dataset in update mode.                                */
@@ -4124,6 +4156,12 @@ NITFDataset::NITFCreateCopy(
             }
             if( poJ2KDriver == NULL )
             {
+                /* Try with JP2OPENJPEG as an alternate driver */
+                poJ2KDriver =
+                    GetGDALDriverManager()->GetDriverByName( "JP2OPENJPEG" );
+            }
+            if( poJ2KDriver == NULL )
+            {
                 /* Try with Jasper as an alternate driver */
                 poJ2KDriver =
                     GetGDALDriverManager()->GetDriverByName( "JPEG2000" );
@@ -4177,6 +4215,20 @@ NITFDataset::NITFCreateCopy(
                                                          papszOptions,
                                                          &papszTextMD,
                                                          &papszCgmMD );
+
+    const char* pszBlockSize = CSLFetchNameValue(papszFullOptions, "BLOCKSIZE");
+    if(  pszBlockSize!= NULL &&
+        CSLFetchNameValue(papszFullOptions, "BLOCKXSIZE") == NULL )
+    {
+        papszFullOptions = CSLSetNameValue(papszFullOptions,
+                                           "BLOCKXSIZE", pszBlockSize);
+    }
+    if(  pszBlockSize!= NULL &&
+        CSLFetchNameValue(papszFullOptions, "BLOCKYSIZE") == NULL )
+    {
+        papszFullOptions = CSLSetNameValue(papszFullOptions,
+                                           "BLOCKYSIZE", pszBlockSize);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Copy over other source metadata items as creation options       */
@@ -4531,6 +4583,38 @@ NITFDataset::NITFCreateCopy(
         return NULL;
     }
 
+    if ( poJ2KDriver != NULL && EQUAL(poJ2KDriver->GetDescription(), "JP2ECW"))
+    {
+        if( EQUAL(CSLFetchNameValueDef(papszFullOptions, "PROFILE", "NPJE"),
+                  "NPJE") && (nXSize >= 1024 || nYSize >= 1024) )
+        {
+            int nBlockXSize = atoi(
+                CSLFetchNameValueDef(papszFullOptions, "BLOCKXSIZE", "0"));
+            int nBlockYSize = atoi(
+                CSLFetchNameValueDef(papszFullOptions, "BLOCKYSIZE", "0"));
+            if( nBlockXSize > 0 && nBlockXSize != 1024 )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                    "BLOCKXSIZE != 1024 inconsistent with PROFILE=NPJE");
+            }
+            if( nBlockYSize > 0 && nBlockYSize != 1024 )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                    "BLOCKYSIZE != 1024 inconsistent with PROFILE=NPJE");
+            }
+            if( nBlockXSize == 0 )
+            {
+                papszFullOptions = CSLSetNameValue(papszFullOptions,
+                                                   "BLOCKXSIZE", "1024");
+            }
+            if( nBlockYSize == 0 )
+            {
+                papszFullOptions = CSLSetNameValue(papszFullOptions,
+                                                   "BLOCKYSIZE", "1024");
+            }
+        }
+    }
+
     if (!NITFCreate( pszFilename, nXSize, nYSize, poSrcDS->GetRasterCount(),
                 GDALGetDataTypeSize( eType ), pszPVType,
                 papszFullOptions ))
@@ -4540,9 +4624,6 @@ NITFDataset::NITFCreateCopy(
         CSLDestroy(papszTextMD);
         return NULL;
     }
-
-    CSLDestroy( papszFullOptions );
-    papszFullOptions = NULL;
 
 /* ==================================================================== */
 /*      JPEG2000 case.  We need to write the data through a J2K         */
@@ -4557,6 +4638,7 @@ NITFDataset::NITFCreateCopy(
         {
             CSLDestroy(papszCgmMD);
             CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
             return NULL;
         }
 
@@ -4572,7 +4654,7 @@ NITFDataset::NITFCreateCopy(
         GDALDataset *poJ2KDataset = NULL;
         if (EQUAL(poJ2KDriver->GetDescription(), "JP2ECW"))
         {
-            char** papszJP2Options = NITFJP2ECWOptions(papszOptions);
+            char** papszJP2Options = NITFJP2ECWOptions(papszFullOptions);
             poJ2KDataset =
                 poJ2KDriver->CreateCopy( osDSName, poSrcDS, FALSE,
                                          papszJP2Options,
@@ -4581,12 +4663,21 @@ NITFDataset::NITFCreateCopy(
         }
         else if (EQUAL(poJ2KDriver->GetDescription(), "JP2KAK"))
         {
-           char** papszKAKOptions = NITFJP2KAKOptions(papszOptions);
+           char** papszJP2Options = NITFJP2KAKOptions(papszFullOptions);
             poJ2KDataset =
                 poJ2KDriver->CreateCopy( osDSName, poSrcDS, FALSE,
-                                         papszKAKOptions,
+                                         papszJP2Options,
                                          pfnProgress, pProgressData );
-            CSLDestroy(papszKAKOptions);
+            CSLDestroy(papszJP2Options);
+        }
+        else if (EQUAL(poJ2KDriver->GetDescription(), "JP2OPENJPEG"))
+        {
+           char** papszJP2Options = NITFJP2OPENJPEGOptions(papszFullOptions);
+            poJ2KDataset =
+                poJ2KDriver->CreateCopy( osDSName, poSrcDS, FALSE,
+                                         papszJP2Options,
+                                         pfnProgress, pProgressData );
+            CSLDestroy(papszJP2Options);
         }
         else
         {
@@ -4601,6 +4692,7 @@ NITFDataset::NITFCreateCopy(
         {
             CSLDestroy(papszCgmMD);
             CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
             return NULL;
         }
 
@@ -4618,6 +4710,7 @@ NITFDataset::NITFCreateCopy(
         {
             CSLDestroy(papszCgmMD);
             CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
             return NULL;
         }
 
@@ -4628,6 +4721,7 @@ NITFDataset::NITFCreateCopy(
         {
             CSLDestroy(papszCgmMD);
             CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
             return NULL;
         }
     }
@@ -4643,13 +4737,14 @@ NITFDataset::NITFCreateCopy(
         {
             CSLDestroy(papszCgmMD);
             CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
             return NULL;
         }
         GUIntBig nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
 
         const bool bSuccess =
             NITFWriteJPEGImage( poSrcDS, psFile->fp, nImageOffset,
-                                papszOptions,
+                                papszFullOptions,
                                 pfnProgress, pProgressData );
 
         if( !bSuccess )
@@ -4657,6 +4752,7 @@ NITFDataset::NITFCreateCopy(
             NITFClose( psFile );
             CSLDestroy(papszCgmMD);
             CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
             return NULL;
         }
 
@@ -4676,6 +4772,7 @@ NITFDataset::NITFCreateCopy(
         {
             CSLDestroy(papszCgmMD);
             CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
             return NULL;
         }
 
@@ -4686,6 +4783,7 @@ NITFDataset::NITFCreateCopy(
         {
             CSLDestroy(papszCgmMD);
             CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
             return NULL;
         }
 #endif /* def JPEG_SUPPORTED */
@@ -4702,6 +4800,7 @@ NITFDataset::NITFCreateCopy(
         {
             CSLDestroy(papszCgmMD);
             CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
             return NULL;
         }
 
@@ -4721,6 +4820,7 @@ NITFDataset::NITFCreateCopy(
         {
             CSLDestroy(papszCgmMD);
             CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
             return NULL;
         }
 
@@ -4730,6 +4830,7 @@ NITFDataset::NITFCreateCopy(
             delete poDstDS;
             CSLDestroy(papszCgmMD);
             CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
             return NULL;
         }
 
@@ -4782,6 +4883,7 @@ NITFDataset::NITFCreateCopy(
             delete poDstDS;
             CSLDestroy(papszCgmMD);
             CSLDestroy(papszTextMD);
+            CSLDestroy( papszFullOptions );
             return NULL;
         }
     }
@@ -4819,6 +4921,7 @@ NITFDataset::NITFCreateCopy(
 
     CSLDestroy(papszCgmMD);
     CSLDestroy(papszTextMD);
+    CSLDestroy( papszFullOptions );
 
     return poDstDS;
 }
@@ -5577,9 +5680,6 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
     int nNPPBH = nXSize;
     int nNPPBV = nYSize;
 
-    if( CSLFetchNameValue( papszOptions, "BLOCKSIZE" ) != NULL )
-        nNPPBH = nNPPBV = atoi(CSLFetchNameValue( papszOptions, "BLOCKSIZE" ));
-
     if( CSLFetchNameValue( papszOptions, "BLOCKXSIZE" ) != NULL )
         nNPPBH = atoi(CSLFetchNameValue( papszOptions, "BLOCKXSIZE" ));
 
@@ -5872,7 +5972,7 @@ void GDALRegister_NITF()
 #ifdef JPEG_SUPPORTED
                 "C3/M3=JPEG compression. "
 #endif
-                "C8=JP2 compression through the JP2ECW driver"
+                "C8=JP2 compression through the JP2ECW/JP2KAK/JP2OPENJPEG/JPEG2000 driver"
                 "'>"
 "       <Value>NC</Value>"
 #ifdef JPEG_SUPPORTED
