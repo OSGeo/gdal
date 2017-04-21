@@ -79,10 +79,13 @@ void GDALDestroy(void)
     OGRCleanupAll();
     bInGDALGlobalDestructor = false;
 
-    /* See https://trac.osgeo.org/gdal/ticket/6139 */
+    /* See corresponding bug reports: */
+    /* https://trac.osgeo.org/gdal/ticket/6139 */
+    /* https://trac.osgeo.org/gdal/ticket/6868 */
     /* Needed in case no driver manager has been instantiated. */
     CPLFreeConfig();
     CPLFinalizeTLS();
+    CPLCleanupErrorMutex();
     CPLCleanupMasterMutex();
 }
 
