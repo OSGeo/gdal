@@ -61,6 +61,9 @@ class GPKGCheckException(Exception):
 
 class GPKGChecker:
 
+    EXT_GEOM_TYPES = ('CIRCULARSTRING', 'COMPOUNDCURVE', 'CURVEPOLYGON',
+                      'MULTICURVE', 'MULTISURFACE', 'CURVE', 'SURFACE')
+
     def __init__(self, filename, abort_at_first_error=True, verbose=False):
         self.filename = filename
         self.extended_pragma_info = False
@@ -308,8 +311,6 @@ class GPKGChecker:
         base_geom_types = ('GEOMETRY', 'POINT', 'LINESTRING', 'POLYGON',
                            'MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON',
                            'GEOMETRYCOLLECTION')
-        ext_geom_types = ('CIRCULARSTRING', 'COMPOUNDCURVE', 'CURVEPOLYGON',
-                          'MULTICURVE', 'MULTISURFACE', 'CURVE', 'SURFACE')
         cols = c.fetchall()
         found_geom = False
         count_pkid = 0
@@ -317,7 +318,8 @@ class GPKGChecker:
             if name == geom_column_name:
                 found_geom = True
                 self._assert(
-                    type in base_geom_types or type in ext_geom_types,
+                    type in base_geom_types or
+                    type in GPKGChecker.EXT_GEOM_TYPES,
                     25, ('invalid type (%s) for geometry ' +
                          'column of table %s') % (type, table_name))
                 self._assert(type == geometry_type_name, 31,
@@ -348,7 +350,7 @@ class GPKGChecker:
         self._assert(m in (0, 1, 2), 27, ("m value of %s is %d. " +
                      "Expected 0, 1 or 2") % (table_name, m))
 
-        if geometry_type_name in ext_geom_types:
+        if geometry_type_name in GPKGChecker.EXT_GEOM_TYPES:
             c.execute("SELECT 1 FROM gpkg_extensions WHERE "
                       "extension_name = 'gpkg_geom_%s' AND "
                       "table_name = ? AND column_name = ? AND "
@@ -358,7 +360,7 @@ class GPKGChecker:
                          "gpkg_geom_%s extension should be declared for "
                          "table %s" % (geometry_type_name, table_name))
 
-        wkb_geometries = base_geom_types + ext_geom_types
+        wkb_geometries = base_geom_types + GPKGChecker.EXT_GEOM_TYPES
         c.execute("SELECT %s FROM %s " %
                   (_esc_id(geom_column_name), _esc_id(table_name)))
         found_geom_types = set()
@@ -478,7 +480,7 @@ class GPKGChecker:
                          (table_name, str(found_geom_types)))
 
         for geom_type in found_geom_types:
-            if geom_type in ext_geom_types:
+            if geom_type in GPKGChecker.EXT_GEOM_TYPES:
                 c.execute("SELECT 1 FROM gpkg_extensions WHERE "
                           "extension_name = 'gpkg_geom_%s' AND "
                           "table_name = ? AND column_name = ? AND "
@@ -1207,12 +1209,44 @@ class GPKGChecker:
                                   "gpkg_extensions doesn't exist") %
                                  (column_name, table_name))
 
-        c.execute("SELECT extension_name FROM gpkg_extensions "
-                  "WHERE extension_name NOT LIKE 'gpkg_%'")
+        c.execute("SELECT extension_name FROM gpkg_extensions")
         rows = c.fetchall()
+        KNOWN_EXTENSIONS = ['gpkg_rtree_index',
+                            'gpkg_zoom_other',
+                            'gpkg_webp',
+                            'gpkg_metadata',
+                            'gpkg_schema',
+                            'gpkg_crs_wkt',
+                            'gpkg_elevation_tiles']
+        for geom_name in GPKGChecker.EXT_GEOM_TYPES:
+            KNOWN_EXTENSIONS += ['gpkg_geom_' + geom_name]
+
         for (extension_name,) in rows:
-            self._assert(False, 63,
-                         "extension_name %s not valid" % extension_name)
+
+            if extension_name.startswith('gpkg_'):
+                self._assert(extension_name in KNOWN_EXTENSIONS,
+                             62,
+                             "extension_name %s not valid" % extension_name)
+            else:
+                self._assert('_' in extension_name,
+                             62,
+                             "extension_name %s not valid" % extension_name)
+                author = extension_name[0:extension_name.find('_')]
+                ext_name = extension_name[extension_name.find('_')+1:]
+                for x in author:
+                    self._assert((x >= 'a' and x <= 'z') or
+                                 (x >= 'A' and x <= 'Z') or
+                                 (x >= '0' and x <= '9'),
+                                 62,
+                                 "extension_name %s not valid" %
+                                 extension_name)
+                for x in ext_name:
+                    self._assert((x >= 'a' and x <= 'z') or
+                                 (x >= 'A' and x <= 'Z') or
+                                 (x >= '0' and x <= '9') or x == '_',
+                                 62,
+                                 "extension_name %s not valid" %
+                                 extension_name)
 
         c.execute("SELECT extension_name, scope FROM gpkg_extensions "
                   "WHERE scope NOT IN ('read-write', 'write-only')")
