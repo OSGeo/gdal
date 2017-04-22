@@ -55,6 +55,7 @@
 #include "ogr_api.h"
 #include "ogr_json_header.h"
 #include "ogr_srs_api.h"
+#include "ogrgeojsonreader.h"
 #include "ogrgeojsonwriter.h"
 
 using std::vector;
@@ -1587,17 +1588,7 @@ static void GDALInfoPrintMetadata( const GDALInfoOptions* psOptions,
                 }
                 else if( bMDIsJson )
                 {
-                    json_tokener* jstok = json_tokener_new();
-                    poValue = json_tokener_parse_ex(jstok, papszMetadata[i], -1);
-                    if( jstok->err != json_tokener_success)
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                    "JSon parsing error: %s (at offset %d)",
-                                    json_tokener_error_desc(jstok->err),
-                                    jstok->char_offset);
-                        poValue = NULL;
-                    }
-                    json_tokener_free(jstok);
+                    OGRJSonParse(papszMetadata[i], &poValue, true);
                     break;
                 }
                 else
