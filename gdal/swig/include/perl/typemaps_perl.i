@@ -1561,6 +1561,17 @@ IF_UNDEF_NULL(const char *, target_key)
     if (tmpbuf$argnum) Safefree(tmpbuf$argnum);
 }
 
+%typemap(in, numinputs=1, fragment="sv_to_utf8_string") (const char* field_name) (U8 *tmpbuf = NULL)
+{
+    /* %typemap(in,numinputs=1) (const char* field_name) */
+    $1 = sv_to_utf8_string($input, &tmpbuf);
+}
+%typemap(freearg) (const char* field_name)
+{
+    /* %typemap(freearg) (const char* field_name) */
+    if (tmpbuf$argnum) Safefree(tmpbuf$argnum);
+}
+
 %typemap(in,numinputs=0) (int *pnBytes) (int bytes)
 {
     /* %typemap(in,numinputs=0) (int *pnBytes) (int bytes) */

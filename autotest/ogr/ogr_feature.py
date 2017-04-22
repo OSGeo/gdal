@@ -719,7 +719,7 @@ def ogr_feature_cp_stringlist():
 
 
 ###############################################################################
-# Test SetField() with unicode string
+# Test SetField() / GetField() with unicode string
 
 def ogr_feature_unicode():
     if sys.version_info >= (3,0,0):
@@ -730,9 +730,24 @@ def ogr_feature_unicode():
     field_def = ogr.FieldDefn( 'field_string', ogr.OFTString )
     feat_def.AddFieldDefn( field_def )
 
+    field_def = ogr.FieldDefn( 'field_integer64', ogr.OFTInteger64 )
+    feat_def.AddFieldDefn( field_def )
+
     src_feature = ogr.Feature( feat_def )
     src_feature.SetField( 'field_string', 'abc def'.decode('utf-8') )
     if src_feature.GetField('field_string') != 'abc def':
+        return 'fail'
+    if src_feature.GetField('field_string'.decode('utf-8')) != 'abc def':
+        return 'fail'
+
+    src_feature = ogr.Feature( feat_def )
+    src_feature.SetField( 'field_string'.decode('utf-8'), 'abc def'.decode('utf-8') )
+    if src_feature.GetField('field_string') != 'abc def':
+        return 'fail'
+
+    src_feature = ogr.Feature( feat_def )
+    src_feature.SetField( 'field_integer64'.decode('utf-8'), 1 )
+    if src_feature.GetField('field_integer64') != 1:
         return 'fail'
 
     return 'success'

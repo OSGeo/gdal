@@ -3341,7 +3341,7 @@ class Feature(_object):
     def SetGeomField(self, *args):
         """
         SetGeomField(Feature self, int iField, Geometry geom) -> OGRErr
-        SetGeomField(Feature self, char const * name, Geometry geom) -> OGRErr
+        SetGeomField(Feature self, char const * field_name, Geometry geom) -> OGRErr
 
         OGRErr
         OGR_F_SetGeomField(OGRFeatureH hFeat, int iField, OGRGeometryH hGeom)
@@ -3373,7 +3373,7 @@ class Feature(_object):
     def SetGeomFieldDirectly(self, *args):
         """
         SetGeomFieldDirectly(Feature self, int iField, Geometry geom) -> OGRErr
-        SetGeomFieldDirectly(Feature self, char const * name, Geometry geom) -> OGRErr
+        SetGeomFieldDirectly(Feature self, char const * field_name, Geometry geom) -> OGRErr
 
         OGRErr
         OGR_F_SetGeomFieldDirectly(OGRFeatureH hFeat, int iField, OGRGeometryH
@@ -3409,7 +3409,7 @@ class Feature(_object):
     def GetGeomFieldRef(self, *args):
         """
         GetGeomFieldRef(Feature self, int iField) -> Geometry
-        GetGeomFieldRef(Feature self, char const * name) -> Geometry
+        GetGeomFieldRef(Feature self, char const * field_name) -> Geometry
 
         OGRGeometryH
         OGR_F_GetGeomFieldRef(OGRFeatureH hFeat, int iField)
@@ -3511,7 +3511,7 @@ class Feature(_object):
     def GetFieldDefnRef(self, *args):
         """
         GetFieldDefnRef(Feature self, int id) -> FieldDefn
-        GetFieldDefnRef(Feature self, char const * name) -> FieldDefn
+        GetFieldDefnRef(Feature self, char const * field_name) -> FieldDefn
 
         OGRFieldDefnH
         OGR_F_GetFieldDefnRef(OGRFeatureH hFeat, int i)
@@ -3562,7 +3562,7 @@ class Feature(_object):
     def GetGeomFieldDefnRef(self, *args):
         """
         GetGeomFieldDefnRef(Feature self, int id) -> GeomFieldDefn
-        GetGeomFieldDefnRef(Feature self, char const * name) -> GeomFieldDefn
+        GetGeomFieldDefnRef(Feature self, char const * field_name) -> GeomFieldDefn
 
         OGRGeomFieldDefnH
         OGR_F_GetGeomFieldDefnRef(OGRFeatureH hFeat, int i)
@@ -3590,7 +3590,7 @@ class Feature(_object):
     def GetFieldAsString(self, *args):
         """
         GetFieldAsString(Feature self, int id) -> char const
-        GetFieldAsString(Feature self, char const * name) -> char const *
+        GetFieldAsString(Feature self, char const * field_name) -> char const *
 
         const char*
         OGR_F_GetFieldAsString(OGRFeatureH hFeat, int iField)
@@ -3620,7 +3620,7 @@ class Feature(_object):
     def GetFieldAsInteger(self, *args):
         """
         GetFieldAsInteger(Feature self, int id) -> int
-        GetFieldAsInteger(Feature self, char const * name) -> int
+        GetFieldAsInteger(Feature self, char const * field_name) -> int
 
         int
         OGR_F_GetFieldAsInteger(OGRFeatureH hFeat, int iField)
@@ -3649,7 +3649,7 @@ class Feature(_object):
     def GetFieldAsInteger64(self, *args):
         """
         GetFieldAsInteger64(Feature self, int id) -> GIntBig
-        GetFieldAsInteger64(Feature self, char const * name) -> GIntBig
+        GetFieldAsInteger64(Feature self, char const * field_name) -> GIntBig
 
         GIntBig
         OGR_F_GetFieldAsInteger64(OGRFeatureH hFeat, int iField)
@@ -3681,7 +3681,7 @@ class Feature(_object):
     def GetFieldAsDouble(self, *args):
         """
         GetFieldAsDouble(Feature self, int id) -> double
-        GetFieldAsDouble(Feature self, char const * name) -> double
+        GetFieldAsDouble(Feature self, char const * field_name) -> double
 
         double
         OGR_F_GetFieldAsDouble(OGRFeatureH hFeat, int iField)
@@ -3710,7 +3710,7 @@ class Feature(_object):
     def GetFieldAsDateTime(self, *args):
         """
         GetFieldAsDateTime(Feature self, int id)
-        GetFieldAsDateTime(Feature self, char const * name)
+        GetFieldAsDateTime(Feature self, char const * field_name)
 
         int
         OGR_F_GetFieldAsDateTime(OGRFeatureH hFeat, int iField, int *pnYear,
@@ -3758,7 +3758,7 @@ class Feature(_object):
     def GetFieldAsIntegerList(self, *args):
         """
         GetFieldAsIntegerList(Feature self, int id)
-        GetFieldAsIntegerList(Feature self, char const * name)
+        GetFieldAsIntegerList(Feature self, char const * field_name)
 
         const int*
         OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField, int
@@ -3823,7 +3823,7 @@ class Feature(_object):
     def GetFieldAsDoubleList(self, *args):
         """
         GetFieldAsDoubleList(Feature self, int id)
-        GetFieldAsDoubleList(Feature self, char const * name)
+        GetFieldAsDoubleList(Feature self, char const * field_name)
 
         const double*
         OGR_F_GetFieldAsDoubleList(OGRFeatureH hFeat, int iField, int
@@ -3885,7 +3885,7 @@ class Feature(_object):
     def GetFieldAsBinary(self, *args):
         """
         GetFieldAsBinary(Feature self, int id) -> OGRErr
-        GetFieldAsBinary(Feature self, char const * name) -> OGRErr
+        GetFieldAsBinary(Feature self, char const * field_name) -> OGRErr
 
         GByte*
         OGR_F_GetFieldAsBinary(OGRFeatureH hFeat, int iField, int *pnBytes)
@@ -3915,7 +3915,7 @@ class Feature(_object):
     def IsFieldSet(self, *args):
         """
         IsFieldSet(Feature self, int id) -> bool
-        IsFieldSet(Feature self, char const * name) -> bool
+        IsFieldSet(Feature self, char const * field_name) -> bool
 
         int OGR_F_IsFieldSet(OGRFeatureH
         hFeat, int iField)
@@ -3939,7 +3939,7 @@ class Feature(_object):
     def IsFieldNull(self, *args):
         """
         IsFieldNull(Feature self, int id) -> bool
-        IsFieldNull(Feature self, char const * name) -> bool
+        IsFieldNull(Feature self, char const * field_name) -> bool
         """
         return _ogr.Feature_IsFieldNull(self, *args)
 
@@ -3947,14 +3947,14 @@ class Feature(_object):
     def IsFieldSetAndNotNull(self, *args):
         """
         IsFieldSetAndNotNull(Feature self, int id) -> bool
-        IsFieldSetAndNotNull(Feature self, char const * name) -> bool
+        IsFieldSetAndNotNull(Feature self, char const * field_name) -> bool
         """
         return _ogr.Feature_IsFieldSetAndNotNull(self, *args)
 
 
     def GetFieldIndex(self, *args):
         """
-        GetFieldIndex(Feature self, char const * name) -> int
+        GetFieldIndex(Feature self, char const * field_name) -> int
 
         int
         OGR_F_GetFieldIndex(OGRFeatureH hFeat, const char *pszName)
@@ -3980,7 +3980,7 @@ class Feature(_object):
 
     def GetGeomFieldIndex(self, *args):
         """
-        GetGeomFieldIndex(Feature self, char const * name) -> int
+        GetGeomFieldIndex(Feature self, char const * field_name) -> int
 
         int
         OGR_F_GetGeomFieldIndex(OGRFeatureH hFeat, const char *pszName)
@@ -4088,7 +4088,7 @@ class Feature(_object):
     def UnsetField(self, *args):
         """
         UnsetField(Feature self, int id)
-        UnsetField(Feature self, char const * name)
+        UnsetField(Feature self, char const * field_name)
 
         void OGR_F_UnsetField(OGRFeatureH
         hFeat, int iField)
@@ -4110,7 +4110,7 @@ class Feature(_object):
     def SetFieldNull(self, *args):
         """
         SetFieldNull(Feature self, int id)
-        SetFieldNull(Feature self, char const * name)
+        SetFieldNull(Feature self, char const * field_name)
         """
         return _ogr.Feature_SetFieldNull(self, *args)
 
@@ -4148,11 +4148,11 @@ class Feature(_object):
     def SetField(self, *args):
         """
         SetField(Feature self, int id, char const * value)
-        SetField(Feature self, char const * name, char const * value)
+        SetField(Feature self, char const * field_name, char const * value)
         SetField(Feature self, int id, double value)
-        SetField(Feature self, char const * name, double value)
+        SetField(Feature self, char const * field_name, double value)
         SetField(Feature self, int id, int year, int month, int day, int hour, int minute, float second, int tzflag)
-        SetField(Feature self, char const * name, int year, int month, int day, int hour, int minute, float second, int tzflag)
+        SetField(Feature self, char const * field_name, int year, int month, int day, int hour, int minute, float second, int tzflag)
         """
         return _ogr.Feature_SetField(self, *args)
 
@@ -4275,7 +4275,7 @@ class Feature(_object):
     def SetFieldBinaryFromHexString(self, *args):
         """
         SetFieldBinaryFromHexString(Feature self, int id, char const * pszValue)
-        SetFieldBinaryFromHexString(Feature self, char const * name, char const * pszValue)
+        SetFieldBinaryFromHexString(Feature self, char const * field_name, char const * pszValue)
         """
         return _ogr.Feature_SetFieldBinaryFromHexString(self, *args)
 
@@ -4415,7 +4415,7 @@ class Feature(_object):
     def GetFieldType(self, *args):
         """
         GetFieldType(Feature self, int id) -> OGRFieldType
-        GetFieldType(Feature self, char const * name) -> OGRFieldType
+        GetFieldType(Feature self, char const * field_name) -> OGRFieldType
         """
         return _ogr.Feature_GetFieldType(self, *args)
 
@@ -4743,7 +4743,7 @@ class Feature(_object):
             return self.SetField2( fld_index, value )
 
     def GetField(self, fld_index):
-        if isinstance(fld_index, str):
+        if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise ValueError("Illegal field requested in GetField()")
@@ -4794,21 +4794,21 @@ class Feature(_object):
 
         if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
             fld_index = args[0]
-            if isinstance(fld_index, str):
+            if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
                 fld_index = self.GetFieldIndex(fld_index)
             return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
 
 
         if len(args) == 2 and str(type(args[1])) == "<type 'unicode'>":
             fld_index = args[0]
-            if isinstance(fld_index, str):
+            if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
                 fld_index = self.GetFieldIndex(fld_index)
             return _ogr.Feature_SetFieldString(self, fld_index, args[1])
 
         return _ogr.Feature_SetField(self, *args)
 
     def SetField2(self, fld_index, value):
-        if isinstance(fld_index, str):
+        if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise ValueError("Illegal field requested in SetField2()")
@@ -5001,7 +5001,7 @@ class FeatureDefn(_object):
 
     def GetFieldIndex(self, *args):
         """
-        GetFieldIndex(FeatureDefn self, char const * name) -> int
+        GetFieldIndex(FeatureDefn self, char const * field_name) -> int
 
         int
         OGR_FD_GetFieldIndex(OGRFeatureDefnH hDefn, const char *pszFieldName)
@@ -5111,7 +5111,7 @@ class FeatureDefn(_object):
 
     def GetGeomFieldIndex(self, *args):
         """
-        GetGeomFieldIndex(FeatureDefn self, char const * name) -> int
+        GetGeomFieldIndex(FeatureDefn self, char const * field_name) -> int
 
         int
         OGR_FD_GetGeomFieldIndex(OGRFeatureDefnH hDefn, const char

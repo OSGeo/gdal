@@ -286,7 +286,7 @@
             return self.SetField2( fld_index, value )
 
     def GetField(self, fld_index):
-        if isinstance(fld_index, str):
+        if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise ValueError("Illegal field requested in GetField()")
@@ -337,21 +337,21 @@
 
         if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
             fld_index = args[0]
-            if isinstance(fld_index, str):
+            if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
                 fld_index = self.GetFieldIndex(fld_index)
             return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
 
 
         if len(args) == 2 and str(type(args[1])) == "<type 'unicode'>":
             fld_index = args[0]
-            if isinstance(fld_index, str):
+            if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
                 fld_index = self.GetFieldIndex(fld_index)
             return _ogr.Feature_SetFieldString(self, fld_index, args[1])
 
         return _ogr.Feature_SetField(self, *args)
 
     def SetField2(self, fld_index, value):
-        if isinstance(fld_index, str):
+        if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise ValueError("Illegal field requested in SetField2()")
