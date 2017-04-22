@@ -247,7 +247,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
         CSLFetchNameValue(papszOptions, "NATIVE_MEDIA_TYPE");
     bool bWriteCRSIfWGS84 = true;
     bool bFoundNameInNativeData = false;
-    if( pszNativeMediaType &&
+    if( pszNativeData && pszNativeMediaType &&
         EQUAL(pszNativeMediaType, "application/vnd.geo+json") )
     {
         json_object *poObj = NULL;
