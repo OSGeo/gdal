@@ -1999,7 +1999,8 @@ bool OGRJSonParse( const char* pszText, json_object** ppoObj,
     if( ppoObj == NULL )
         return false;
     json_tokener* jstok = json_tokener_new();
-    *ppoObj = json_tokener_parse_ex(jstok, pszText, -1);
+    const int nLen = pszText == NULL ? 0 : static_cast<int>(strlen(pszText));
+    *ppoObj = json_tokener_parse_ex(jstok, pszText, nLen);
     if( jstok->err != json_tokener_success)
     {
         if( bVerboseError )
