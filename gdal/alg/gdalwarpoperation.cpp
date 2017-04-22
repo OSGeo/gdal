@@ -320,15 +320,6 @@ int GDALWarpOperation::ValidateOptions()
         return FALSE;
     }
 
-    if( psOptions->padfSrcNoDataReal != NULL
-        && psOptions->padfSrcNoDataImag == NULL )
-    {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "GDALWarpOptions.Validate(): "
-                  "padfSrcNoDataReal set, but padfSrcNoDataImag not set." );
-        return FALSE;
-    }
-
     if( psOptions->pfnProgress == NULL )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
@@ -1919,7 +1910,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                 double adfNoData[2] =
                 {
                     psOptions->padfSrcNoDataReal[i2],
-                    psOptions->padfSrcNoDataImag[i2]
+                    psOptions->padfSrcNoDataImag != NULL ? psOptions->padfSrcNoDataImag[i2] : 0.0
                 };
 
                 int bAllValid = FALSE;
