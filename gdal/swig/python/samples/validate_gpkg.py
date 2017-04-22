@@ -43,6 +43,9 @@ try:
 except:
     has_gdal = False
 
+def _esc_literal(literal):
+    return literal.replace("'", "''")
+
 
 def _esc_id(identifier):
     return '"' + identifier.replace('"', "\"\"") + '"'
@@ -515,19 +518,19 @@ class GPKGChecker:
             self._check_structure(columns, expected_columns, 77, rtree_name)
 
             c.execute("SELECT 1 FROM sqlite_master WHERE type = 'trigger' " +
-                      "AND name = '%s_insert'" % rtree_name)
+                      "AND name = '%s_insert'" % _esc_literal(rtree_name))
             self._assert(c.fetchone() is not None, 75,
                          "%s_insert trigger missing" % rtree_name)
 
             for i in range(4):
                 c.execute("SELECT 1 FROM sqlite_master WHERE " +
                           "type = 'trigger' " +
-                          "AND name = '%s_update%d'" % (rtree_name, i+1))
+                          "AND name = '%s_update%d'" % (_esc_literal(rtree_name), i+1))
                 self._assert(c.fetchone() is not None, 75,
                              "%s_update%d trigger missing" % (rtree_name, i+1))
 
             c.execute("SELECT 1 FROM sqlite_master WHERE type = 'trigger' " +
-                      "AND name = '%s_delete'" % rtree_name)
+                      "AND name = '%s_delete'" % _esc_literal(rtree_name))
             self._assert(c.fetchone() is not None, 75,
                          "%s_delete trigger missing" % rtree_name)
 
