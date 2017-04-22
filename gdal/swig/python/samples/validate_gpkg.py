@@ -307,7 +307,7 @@ class GPKGChecker:
         geometry_type_name = rows_gpkg_geometry_columns[0][3]
         srs_id = rows_gpkg_geometry_columns[0][4]
 
-        c.execute('PRAGMA table_info(%s)' % table_name)
+        c.execute('PRAGMA table_info(%s)' % _esc_id(table_name))
         base_geom_types = ('GEOMETRY', 'POINT', 'LINESTRING', 'POLYGON',
                            'MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON',
                            'GEOMETRYCOLLECTION')
@@ -503,7 +503,7 @@ class GPKGChecker:
                          ("Table %s has a RTree, but not declared in " +
                           "gpkg_extensions") % table_name)
 
-            c.execute('PRAGMA table_info(%s)' % rtree_name)
+            c.execute('PRAGMA table_info(%s)' % _esc_id(rtree_name))
             columns = c.fetchall()
             expected_columns = [
                 (0, 'id', '', 0, None, 0),
@@ -594,7 +594,7 @@ class GPKGChecker:
         for (table_name,) in rows:
             self._log('Checking attributes table ' + table_name)
 
-            c.execute('PRAGMA table_info(%s)' % table_name)
+            c.execute('PRAGMA table_info(%s)' % _esc_id(table_name))
             cols = c.fetchall()
             count_pkid = 0
             for (_, name, type, notnull, default, pk) in cols:
@@ -616,7 +616,7 @@ class GPKGChecker:
 
         self._log('Checking tile pyramid user table ' + table_name)
 
-        c.execute("PRAGMA table_info(%s)" % table_name)
+        c.execute("PRAGMA table_info(%s)" % _esc_id(table_name))
         columns = c.fetchall()
         expected_columns = [
             (0, 'id', 'INTEGER', 0, None, 1),
@@ -1247,6 +1247,17 @@ class GPKGChecker:
                                  62,
                                  "extension_name %s not valid" %
                                  extension_name)
+
+        # c.execute("SELECT extension_name, definition FROM gpkg_extensions "
+        #           "WHERE definition NOT LIKE 'Annex %' AND "
+        #           "definition NOT LIKE 'http%' AND "
+        #           "definition NOT LIKE 'mailto:%' AND "
+        #           "definition NOT LIKE 'Extension Title%' ")
+        # rows = c.fetchall()
+        # for (extension_name, definition) in rows:
+        #     self._assert(False, 63,
+        #                  "extension_name %s has invalid definition %s" %
+        #                  (extension_name, definition))
 
         c.execute("SELECT extension_name, scope FROM gpkg_extensions "
                   "WHERE scope NOT IN ('read-write', 'write-only')")
