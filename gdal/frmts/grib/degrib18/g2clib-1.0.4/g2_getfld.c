@@ -17,10 +17,10 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
                 gribfield **gfld)
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_getfld 
+// SUBPROGRAM:    g2_getfld
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-28
 //
-// ABSTRACT: This subroutine returns all the metadata, template values, 
+// ABSTRACT: This subroutine returns all the metadata, template values,
 //   Bit-map ( if applicable ), and the unpacked data for a given data
 //   field.  All of the information returned is stored in a gribfield
 //   structure, which is defined in file grib2.h.
@@ -44,20 +44,20 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
 //     unpack   - Boolean value indicating whether to unpack bitmap/data field
 //                1 = unpack bitmap (if present) and data values
 //                0 = do not unpack bitmap and data values
-//     expand   - Boolean value indicating whether the data points should be 
+//     expand   - Boolean value indicating whether the data points should be
 //                expanded to the correspond grid, if a bit-map is present.
-//                1 = if possible, expand data field to grid, inserting zero 
-//                    values at gridpoints that are bitmapped out. 
+//                1 = if possible, expand data field to grid, inserting zero
+//                    values at gridpoints that are bitmapped out.
 //                    (SEE REMARKS2)
 //                0 = do not expand data field, leaving it an array of
 //                    consecutive data points for each "1" in the bitmap.
 //                This argument is ignored if unpack == 0 OR if the
 //                returned field does not contain a bit-map.
 //
-//   OUTPUT ARGUMENT:      
+//   OUTPUT ARGUMENT:
 //     gribfield gfld; - pointer to structure gribfield containing
 //                       all decoded data for the data field.
-// 
+//
 //        gfld->version = GRIB edition number ( currently 2 )
 //        gfld->discipline = Message Discipline ( see Code Table 0.0 )
 //        gfld->idsect = Contains the entries in the Identification
@@ -135,7 +135,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
 //                          This element is a pointer to an array
 //                          that holds the data.  This pointer is nullified
 //                          if gfld->numoct_opt=0.
-//        gfld->num_opt = (Used if gfld->numoct_opt .ne. 0) 
+//        gfld->num_opt = (Used if gfld->numoct_opt .ne. 0)
 //                        The number of entries
 //                       in array ideflist.  i.e. number of rows ( or columns )
 //                       for which optional grid points are defined.  This value
@@ -173,10 +173,10 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
 //        gfld->unpacked = logical value indicating whether the bitmap and
 //                        data values were unpacked.  If false,
 //                        gfld->bmap and gfld->fld pointers are nullified.
-//        gfld->expanded = Logical value indicating whether the data field 
-//                         was expanded to the grid in the case where a 
+//        gfld->expanded = Logical value indicating whether the data field
+//                         was expanded to the grid in the case where a
 //                         bit-map is present.  If true, the data points in
-//                         gfld->fld match the grid points and zeros were 
+//                         gfld->fld match the grid points and zeros were
 //                         inserted at grid points where data was bit-mapped
 //                         out.  If false, the data values in gfld->fld were
 //                         not expanded to the grid and are just a consecutive
@@ -195,7 +195,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
 //                     This element is a pointer to an array
 //                     that holds the data.
 //
-// 
+//
 //   RETURN VALUES:
 //     ierr     - Error return code.
 //                0 = no error
@@ -219,7 +219,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
 //
 // REMARKS: Note that struct gribfield is allocated by this routine and it
 //          also contains pointers to many arrays of data that were allocated
-//          during decoding.  Users are encouraged to free up this memory, 
+//          during decoding.  Users are encouraged to free up this memory,
 //          when it is no longer needed, by an explicit call to routine g2_free.
 //          EXAMPLE:
 //              #include "grib2.h"
@@ -233,18 +233,18 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
 //
 // REMARKS2: It may not always be possible to expand a bit-mapped data field.
 //           If a pre-defined bit-map is used and not included in the GRIB2
-//           message itself, this routine would not have the necessary 
+//           message itself, this routine would not have the necessary
 //           information to expand the data.  In this case, gfld->expanded would
-//           would be set to 0 (false), regardless of the value of input 
+//           would be set to 0 (false), regardless of the value of input
 //           argument expand.
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE:  
+//   MACHINE:
 //
 //$$$
 {
-    
+
       g2int have3,have4,have5,have6,have7,ierr,jerr;
       g2int numfld,j,n,istart,iofst,ipos;
       g2int disc,ver,lensec0,lengrib,lensec,isecnum;
@@ -276,7 +276,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
       lgfld->fld=0;
 //
 //  Check for valid request number
-//  
+//
       if (ifldnum <= 0) {
         printf("g2_getfld: Request for field number must be positive.\n");
         ierr=3;
@@ -287,7 +287,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
 //
       istart=-1;
       for (j=0;j<100;j++) {
-        if (cgrib[j]=='G' && cgrib[j+1]=='R' &&cgrib[j+2]=='I' && 
+        if (cgrib[j]=='G' && cgrib[j+1]=='R' &&cgrib[j+2]=='I' &&
             cgrib[j+3]=='B') {
           istart=j;
           break;
@@ -299,7 +299,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
         return(ierr);
       }
 //
-//  Unpack Section 0 - Indicator Section 
+//  Unpack Section 0 - Indicator Section
 //
       iofst=8*(istart+6);
       gbit(cgrib,&disc,iofst,8);     // Discipline
@@ -313,20 +313,20 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
       ipos=istart+lensec0;
 //
 //  Currently handles only GRIB Edition 2.
-//  
+//
       if (ver != 2) {
         printf("g2_getfld: can only decode GRIB edition 2.\n");
         ierr=2;
         return(ierr);
       }
 //
-//  Loop through the remaining sections keeping track of the 
+//  Loop through the remaining sections keeping track of the
 //  length of each.  Also keep the latest Grid Definition Section info.
 //  Unpack the requested field number.
 //
       for (;;) {
         //    Check to see if we are at end of GRIB message
-        if (cgrib[ipos]=='7' && cgrib[ipos+1]=='7' && cgrib[ipos+2]=='7' && 
+        if (cgrib[ipos]=='7' && cgrib[ipos+1]=='7' && cgrib[ipos+2]=='7' &&
             cgrib[ipos+3]=='7') {
           ipos=ipos+4;
           //    If end of GRIB message not where expected, issue error
@@ -378,7 +378,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
           }
         }
         //
-        //   If found Section 3, unpack the GDS info using the 
+        //   If found Section 3, unpack the GDS info using the
         //   appropriate template.  Save in case this is the latest
         //   grid before the requested field.
         //
@@ -455,7 +455,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
             if (jerr == 0) {
               have6=1;
               if (lgfld->ibmap == 254)     // use previously specified bitmap
-                 if( bmpsave!=0 ) 
+                 if( bmpsave!=0 )
                     lgfld->bmap=bmpsave;
                  else {
                     printf("g2_getfld: Prev bit-map specified, but none exist.\n");
@@ -486,7 +486,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
                           &lgfld->fld);
           if (jerr == 0) {
             have7=1;
-            //  If bitmap is used with this field, expand data field 
+            //  If bitmap is used with this field, expand data field
             //  to grid, if possible.
             if ( lgfld->ibmap != 255 && lgfld->bmap != 0 ) {
                if ( expand == 1 ) {
@@ -530,12 +530,12 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
         if (unpack && have3 && have4 && have5 && have6 && have7)
             return(ierr);
         //
-        //  If unpacking is not requested, return when sections 
+        //  If unpacking is not requested, return when sections
         //  3 through 6 have been processed
         //
         if ((! unpack) && have3 && have4 && have5 && have6)
             return(ierr);
-        
+
       }
 
 //

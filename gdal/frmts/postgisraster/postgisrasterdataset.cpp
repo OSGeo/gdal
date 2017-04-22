@@ -1075,7 +1075,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
             }
             if( bFetchTile )
             {
-                if( osIDsToFetch.size() != 0 )
+                if( !osIDsToFetch.empty() )
                     osIDsToFetch += ",";
                 osIDsToFetch += "'";
                 osIDsToFetch += pszPKID;
@@ -1086,7 +1086,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
         PQclear(poResult);
     }
 
-    if( bFetchAll || osIDsToFetch.size() != 0 || osSpatialFilter.size() != 0 )
+    if( bFetchAll || !osIDsToFetch.empty() || !osSpatialFilter.empty() )
     {
         osCommand.Printf("SELECT %s, ST_Metadata(%s)",
                          pszPrimaryKeyName, pszColumn);
@@ -1099,7 +1099,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
         }
         osCommand += CPLSPrintf(" FROM %s.%s",
                                 pszSchema, pszTable);
-        if( osIDsToFetch.size() != 0 )
+        if( !osIDsToFetch.empty() )
         {
             osCommand += " WHERE ";
             osCommand += pszPrimaryKeyName;
@@ -1107,7 +1107,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
             osCommand += osIDsToFetch;
             osCommand += ")";
         }
-        else if ( osSpatialFilter.size() != 0 )
+        else if ( !osSpatialFilter.empty() )
         {
             osCommand += " WHERE ";
             osCommand += osSpatialFilter;

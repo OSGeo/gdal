@@ -1,0 +1,199 @@
+<html>
+<head>
+<title>PLScenes (Planet Labs Scenes), Data V1 API</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>PLScenes (Planet Labs Scenes), Data V1 API</h1>
+
+GDAL/OGR &gt;= 2.2<p>
+
+The driver supports read-only operations to list scenes and their metadata
+as a vector layer per item-types:
+"PSOrthoTile", "REOrthoTile", "PSScene3Band", "PSScene4Band", "REScene", "Landsat8L1G", "Sentinel2L1C".
+It can also access raster scenes.<p>
+
+<h2>Dataset name syntax</h2>
+
+The minimal syntax to open a datasource is : <pre>PLScenes:[options]</pre><p>
+
+Additional optional parameters can be specified after the ':' sign.
+Currently the following one is supported :<p>
+
+<ul>
+<li> <b>version</b>=data_v1: To specify the API version to request.</li>
+<li> <b>api_key</b>=value: To specify the Planet API KEY. It is mandatory, unless
+it is supplied through the open option API_KEY, or the configuration option PL_API_KEY.</li>
+<li><b>follow_links</b>=YES/NO: Whether assets links should be followed for each scene (vector).
+Getting assets links require a HTTP request per scene, which might be costly when
+enumerating through a lot of products. Defaults to NO.</li>
+<li> <b>scene</b>=scene_id: To specify the scene ID, when accessing raster data.
+Optional for vector layer access.</li>
+<li> <b>itemtypes</b>=name: To specify the item types name.
+Optional for vector layer access. Mandatory for raster accessI.</li>
+<li> <b>asset</b>=value: To specify the asset type
+(for raster fetching). Default is "visual". Optional for vector layer access.
+If the option is not specified and the 'visual' asset category does not exist for the scene
+(or if the value is set to 'list'), the returned dataset will have subdatasets
+for the available asset categories.</li>
+<li> <b>medata</b>=YES/NO: (Raster only) Whether scene metadata should be
+fetch from the API and attached to the raster dataset. Defaults to YES.</li>
+</ul>
+
+If several parameters are specified, they must be separated by a comma.<p>
+
+<h2>Open options</h2>
+
+The following open options are available :
+<ul>
+<li><b>VERSION</b>=data_v1: To specify the API version to request.</li>
+<li><b>API_KEY</b>=value: To specify the Planet API KEY.</li>
+<li><b>FOLLOW_LINKS</b>=YES/NO: Whether assets links should be followed for each scene (vector).
+Getting assets links require a HTTP request per scene, which might be costly when
+enumerating through a lot of products. Defaults to NO.</li>
+<li><b>SCENE</b>=scene_id: To specify the scene ID, when accessing raster data.
+Optional for vector layer access.</li>
+<li> <b>ITEMTYPES</b>=name: To specify the item types name.
+Optional for vector layer access. Mandatory for raster access.</li>
+<li> <b>ASSET</b>=value: To specify the asset type
+(for raster fetching). Default is "visual". Optional for vector layer access.
+If the option is not specified and the 'visual' asset category does not exist for the scene
+(or if the value is set to 'list'), the returned dataset will have subdatasets
+for the available asset categories.</li>
+<li><b>RANDOM_ACCESS</b>=YES/NO: Whether raster should be accessed in random access mode
+(but with potentially not optimal throughput). If NO, in-memory ingestion is done.
+Default is YES.</li>
+<li><b>ACTIVATION_TIMEOUT</b>=int: Number of seconds during which to wait for
+asset activation (raster). Default is 3600.</li>
+<li> <b>METADATA</b>=YES/NO: (Raster only) Whether scene metadata should be
+fetched from the API and attached to the raster dataset. Defaults to YES.</li>
+</ul>
+
+<h2>Configuration options</h2>
+
+The following configuration options are available :
+<ul>
+<li><b>PL_API_KEY</b>=value: To specify the Planet API KEY.</li>
+</ul>
+
+<h2>Attributes</h2>
+
+<p>The layer field definition is built from the "plscensconf.json"
+file in the GDAL configuration. The links to downloadable products are
+in <i>asset_XXXXX_location</i> attributes where XXXXX is the asset category id,
+when they are active. Otherwise they should be activated by sending a POST request to
+the URL in the <i>asset_XXXXX_activate_link</i> attribute (what the raster driver
+does automatically)</p>
+
+<h3>Geometry</h3>
+
+The footprint of each scene is reported as a MultiPolygon with a longitude/latitude
+WGS84 coordinate system (EPSG:4326).
+
+<h3>Filtering</h3>
+
+The driver will forward any spatial filter set with SetSpatialFilter() to
+the server. It also makes the same for simple attribute filters set with
+SetAttributeFilter(). Note that not all attributes support all comparison
+operators. Refer to comparator column in <a href="https://www.planet.com/docs/v0/scenes/#metadata">Metadata properties</a> <p>
+
+<h3>Paging</h3>
+
+Features are retrieved from the server by chunks of 250 by default (and this
+is the maximum value accepted by the server).
+This number can be altered with the PLSCENES_PAGE_SIZE
+configuration option.<p>
+
+<h3>Vector layer (scene metadata) examples</h3>
+
+<li>
+Listing all scenes available (with the rights of the account) :
+<pre>
+ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value
+</pre>
+or
+<pre>
+ogrinfo -ro -al "PLScenes:api_key=some_value"
+</pre>
+or
+<pre>
+ogrinfo -ro -al "PLScenes:" --config PL_API_KEY some_value
+</pre>
+<p>
+
+<li>
+Listing all scenes available on PSOrthoTile item types, under a point of (lat,lon)=(40,-100) :
+<pre>
+ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value PSOrthoTile -spat -100 40 -100 40
+</pre>
+<p>
+
+<li>
+Listing all scenes available within a bounding box (lat,lon)=(40,-100) to (lat,lon)=(39,-99)
+<pre>
+ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value -spat -100 40 -99 39
+</pre>
+<p>
+
+<li>
+Listing all scenes available matching criteria :
+<pre>
+ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value PSOrthoTile -where "acquired >= '2015/03/26 00:00:00' AND cloud_cover &lt; 10"
+</pre>
+<p>
+
+<li>
+List all downloadable scenes:
+<pre>
+ogrinfo -ro -al -q "PLScenes:" -oo API_KEY=some_value PSOrthoTile -where="permissions='assets:download'"
+</pre>
+
+<p>
+
+
+<h2>Raster access</h2>
+
+<p>Scenes can be accessed as raster datasets, provided
+that the scene ID is specified with the 'scene' parameter / SCENE open option.
+The 'itemtypes' parameter / ITEMTYPES open option must also be specified. 
+The asset type (visual, analytic, ...) can be specified with the
+'asset' parameter / ASSET open option. The scene id is the
+content of the value of the 'id' field of the features.</p>
+
+<p>If the product is not
+already generated on the server, it will be activated, and the driver will wait
+for it to be available. The length of this retry can be configured with the
+ACTIVATION_TIMEOUT open option.</p>
+
+<h3>Raster access examples</h3>
+
+<li>
+Displaying raster metadata :
+
+<pre>
+gdalinfo "PLScenes:scene=scene_id,itemtypes=itemypes,asset=analytic" -oo API_KEY=some_value
+</pre>
+or
+<pre>
+gdalinfo "PLScenes:" -oo API_KEY=some_value -oo ITEMTYPES=itemtypes -oo SCENE=scene_id -oo ASSET=analytic
+</pre>
+
+<li>
+Converting/downloading a whole file:
+
+<pre>
+gdal_translate "PLScenes:" -oo API_KEY=some_value -oo SCENE=scene_id \
+                -oo ITEMTYPES=itemtypes -oo ASSET=analytic -oo RANDOM_ACCESS=NO out.tif
+</pre>
+
+<h2>See Also</h2>
+
+<ul>
+<li> <a href="drv_plscenes.html">General documentation page for PLScenes driver</a><p>
+<li> <a href="https://www.planet.com/docs/reference/data-api/">Documentation of Planet Scenes Data API v1</a><p>
+<li> <a href="frmt_plmosaic.html">Raster PLMosaic / Planet Mosaics API driver</a><p>
+</ul>
+
+</body>
+</html>

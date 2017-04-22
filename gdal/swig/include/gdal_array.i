@@ -36,6 +36,12 @@
 // Define this unconditionnaly of whether DEBUG_BOOL is defined or not,
 // since we do not pass -DDEBUG_BOOL when building the bindings
 #define DO_NOT_USE_DEBUG_BOOL
+
+// So that override is properly defined
+#ifndef GDAL_COMPILATION
+#define GDAL_COMPILATION
+#endif
+
 %}
 
 %include constraints.i
@@ -104,16 +110,16 @@ class NUMPYDataset : public GDALDataset
                  NUMPYDataset();
                  ~NUMPYDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr SetGeoTransform( double * ) override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
+                            const char *pszGCPProjection ) override;
 
     static GDALDataset *Open( PyArrayObject *psArray );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -451,20 +457,36 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
 
     if( psArray->nd == 3 )
     {
-        nBands = psArray->dimensions[0];
+        if( psArray->dimensions[0] > INT_MAX ||
+            psArray->dimensions[1] > INT_MAX ||
+            psArray->dimensions[2] > INT_MAX ||
+            !GDALCheckBandCount(static_cast<int>(psArray->dimensions[0]), 0) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too big array dimensions");
+            delete poDS;
+            return NULL;
+        }
+        nBands = static_cast<int>(psArray->dimensions[0]);
         nBandOffset = psArray->strides[0];
-        poDS->nRasterXSize = psArray->dimensions[2];
+        poDS->nRasterXSize = static_cast<int>(psArray->dimensions[2]);
         nPixelOffset = psArray->strides[2];
-        poDS->nRasterYSize = psArray->dimensions[1];
+        poDS->nRasterYSize = static_cast<int>(psArray->dimensions[1]);
         nLineOffset = psArray->strides[1];
     }
     else
     {
+        if( psArray->dimensions[0] > INT_MAX ||
+            psArray->dimensions[1] > INT_MAX )
+        {
+            delete poDS;
+            return NULL;
+        }
         nBands = 1;
         nBandOffset = 0;
-        poDS->nRasterXSize = psArray->dimensions[1];
+        poDS->nRasterXSize = static_cast<int>(psArray->dimensions[1]);
         nPixelOffset = psArray->strides[1];
-        poDS->nRasterYSize = psArray->dimensions[0];
+        poDS->nRasterYSize = static_cast<int>(psArray->dimensions[0]);
         nLineOffset = psArray->strides[0];
     }
 
@@ -546,7 +568,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     GDALRegister_NUMPY();
 
     /* I wish I had a safe way of checking the type */
-    sprintf( szString, "NUMPY:::%p", psArray );
+    snprintf( szString, sizeof(szString), "NUMPY:::%p", psArray );
     return CPLStrdup(szString);
 }
 %}
@@ -576,9 +598,17 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     int xdim = ( psArray->nd == 2) ? 1 : 2;
     int ydim = ( psArray->nd == 2) ? 0 : 1;
 
-    int nxsize, nysize, pixel_space, line_space;
-    nxsize = psArray->dimensions[xdim];
-    nysize = psArray->dimensions[ydim];
+    if( psArray->dimensions[xdim] > INT_MAX ||
+        psArray->dimensions[ydim] > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "Too big array dimensions");
+        return CE_Failure;
+    }
+    int nxsize, nysize;
+    GSpacing pixel_space, line_space;
+    nxsize = static_cast<int>(psArray->dimensions[xdim]);
+    nysize = static_cast<int>(psArray->dimensions[ydim]);
     pixel_space = psArray->strides[xdim];
     line_space = psArray->strides[ydim];
 
@@ -627,12 +657,20 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 
     int xdim = 2;
     int ydim = 1;
+    if( psArray->dimensions[xdim] > INT_MAX ||
+        psArray->dimensions[ydim] > INT_MAX ||
+        psArray->dimensions[0] > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "Too big array dimensions");
+        return CE_Failure;
+    }
 
     int bandsize, nxsize, nysize;
     GIntBig pixel_space, line_space, band_space;
-    nxsize = psArray->dimensions[xdim];
-    nysize = psArray->dimensions[ydim];
-    bandsize = psArray->dimensions[0];
+    nxsize = static_cast<int>(psArray->dimensions[xdim]);
+    nysize = static_cast<int>(psArray->dimensions[ydim]);
+    bandsize = static_cast<int>(psArray->dimensions[0]);
     if( bandsize != GDALGetRasterCount(ds) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -768,8 +806,8 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     }
     else
     {
-        int nTilesPerRow = (nBufXSize + nTileXSize - 1) / nTileXSize;
-        int nTilesPerCol = (nBufYSize + nTileYSize - 1) / nTileYSize;
+        npy_intp nTilesPerRow = static_cast<npy_intp>((nBufXSize + nTileXSize - 1) / nTileXSize);
+        npy_intp nTilesPerCol = static_cast<npy_intp>((nBufYSize + nTileYSize - 1) / nTileYSize);
         npy_intp shape[5], stride[5];
         if( nBandCount == 1 )
         {
@@ -862,8 +900,14 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                   PyArray_NDIM(psArray) );
         return CE_Failure;
     }
+    if( PyArray_DIM(psArray, 0) > INT_MAX )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Too big array dimension");
+        return CE_Failure;
+    }
 
-    int nLength = PyArray_DIM(psArray, 0);
+    int nLength = static_cast<int>(PyArray_DIM(psArray, 0));
     int nType = PyArray_TYPE(psArray);
     CPLErr retval = CE_None;
 
@@ -965,7 +1009,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
         {
             // note strlen doesn't include null char
             // but that is what numpy expects so all good
-            nLen = strlen(papszStringList[n]);
+            nLen = static_cast<int>(strlen(papszStringList[n]));
             if( nLen > nMaxLen )
                 nMaxLen = nLen;
         }
@@ -1021,7 +1065,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 
 %pythoncode %{
 import numpy
-import _gdal_array
+from . import _gdal_array
 
 import gdalconst
 import gdal

@@ -459,7 +459,7 @@ GDALRasterAttributeTable *KEARasterBand::GetDefaultRAT()
         {
             // we assume this is never NULL - creates a new one if none exists
             kealib::KEAAttributeTable *pKEATable = this->m_pImageIO->getAttributeTable(kealib::kea_att_file, this->nBand);
-            this->m_pAttributeTable = new KEARasterAttributeTable(pKEATable);
+            this->m_pAttributeTable = new KEARasterAttributeTable(pKEATable, this);
         }
         catch(const kealib::KEAException &e)
         {

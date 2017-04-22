@@ -782,7 +782,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
           fprintf( fp, "  screen_flag: %d\n", psCT->screen_flag );
           for( int i = 0; i < 256; i++ )
           {
-              fprintf( fp, "  %3d: (%3d,%3d,%3d)\n",
+              fprintf( fp, "  %3d: (%3u,%3u,%3u)\n",
                        i,
                        psCT->color_info[i][0],
                        psCT->color_info[i][1],
@@ -908,7 +908,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
           DGNElemBSplineSurfaceHeader *psSpline =
             (DGNElemBSplineSurfaceHeader *) psElement;
 
-          fprintf( fp, "  desc_words=%ld, curve type=%d\n",
+          fprintf( fp, "  desc_words=%ld, curve type=%u\n",
                    psSpline->desc_words, psSpline->curve_type);
 
           fprintf( fp, "  U: properties=%02x",
@@ -928,7 +928,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             }
           }
           fprintf(fp, "\n");
-          fprintf( fp, "     order=%d\n  %d poles, %d knots, %d rule lines\n",
+          fprintf( fp, "     order=%u\n  %d poles, %d knots, %d rule lines\n",
                    psSpline->u_order, psSpline->num_poles_u,
                    psSpline->num_knots_u, psSpline->rule_lines_u);
 
@@ -943,7 +943,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             }
           }
           fprintf(fp, "\n");
-          fprintf( fp, "     order=%d\n  %d poles, %d knots, %d rule lines\n",
+          fprintf( fp, "     order=%u\n  %d poles, %d knots, %d rule lines\n",
                    psSpline->v_order, psSpline->num_poles_v,
                    psSpline->num_knots_v, psSpline->rule_lines_v);
       }
@@ -955,7 +955,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             (DGNElemBSplineCurveHeader *) psElement;
 
           fprintf( fp,
-                   "  desc_words=%ld, curve type=%d\n"
+                   "  desc_words=%ld, curve type=%u\n"
                    "  properties=%02x",
                    psSpline->desc_words, psSpline->curve_type,
                    psSpline->properties);
@@ -974,7 +974,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             }
           }
           fprintf(fp, "\n");
-          fprintf( fp, "  order=%d\n  %d poles, %d knots\n",
+          fprintf( fp, "  order=%u\n  %d poles, %d knots\n",
                    psSpline->order, psSpline->num_poles, psSpline->num_knots);
       }
       break;
@@ -1283,9 +1283,9 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
                 nEntityNum = psElement->attr_data[nAttrOffset+6]
                     + psElement->attr_data[nAttrOffset+7] * 256;
                 nMSLink = psElement->attr_data[nAttrOffset+8]
-                    + psElement->attr_data[nAttrOffset+9] * 256
-                    + psElement->attr_data[nAttrOffset+10] * 65536
-                    + psElement->attr_data[nAttrOffset+11] * 65536 * 256;
+                    | (psElement->attr_data[nAttrOffset+9] << 8)
+                    | (psElement->attr_data[nAttrOffset+10] << 16)
+                    | (psElement->attr_data[nAttrOffset+11] << 24);
             }
 
             if( pnLinkageType != NULL )

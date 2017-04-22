@@ -119,9 +119,9 @@ GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
 
 # libtool targets and help variables
 LIBGDAL	:=		libgdal.la
-LIBGDAL_CURRENT	:=	21
+LIBGDAL_CURRENT	:=	22
 LIBGDAL_REVISION	:=	0
-LIBGDAL_AGE	:=	1
+LIBGDAL_AGE	:=	2
 
 # native build targets and variables
 GDAL_VER	=	@GDAL_VER@
@@ -215,6 +215,8 @@ SPATIALITE_INC = @SPATIALITE_INC@
 SPATIALITE_AMALGAMATION = @SPATIALITE_AMALGAMATION@
 SPATIALITE_412_OR_LATER = @SPATIALITE_412_OR_LATER@
 HAVE_PCRE = @HAVE_PCRE@
+HAVE_RASTERLITE2 = @HAVE_RASTERLITE2@
+RASTERLITE2_CFLAGS = @RASTERLITE2_CFLAGS@
 
 #
 # JPEG2000 via Kakadu Support.
@@ -261,6 +263,11 @@ ECW_FLAGS	= @ECW_FLAGS@
 ECW_INCLUDE 	= @ECW_INCLUDE@
 ECW_LIBS	= @ECW_LIBS@
 
+#
+# JP2Lura Related
+#
+JP2LURA_INCLUDE 	= @JP2LURA_INCLUDE@
+
 # Xerces C++ XML Parser for GML and ILI
 #
 HAVE_XERCES	= @HAVE_XERCES@
@@ -293,6 +300,11 @@ OCI_INCLUDE	= @OCI_INCLUDE@
 
 HAVE_GEOS       =       @HAVE_GEOS@
 GEOS_CFLAGS     =       @GEOS_CFLAGS@
+
+# SFCGAL Support
+
+HAVE_SFCGAL       =       @HAVE_SFCGAL@
+SFCGAL_CFLAGS     =       @SFCGAL_CFLAGS@
 
 # QHull Support
 
@@ -382,30 +394,9 @@ LIBXML2_INC = @LIBXML2_INC@
 LIBXML2_LIB = @LIBXML2_LIB@
 
 #
-# DWGdirect Library
+# CAD Support
 #
-DWGDIRECT =	@DWGDIRECT@
-DWG_PLT = @DWG_PLT@
-
-ifneq ($(DWGDIRECT),)
-DWG_LIBDIR =	$(DWGDIRECT)/lib/$(DWG_PLT)
-DWG_LIBS = $(DWG_LIBDIR)/DD_$(DWG_PLT)_ModelerGeometry.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_AcisRenderer.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Br.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_AcisBuilder.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Db.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Gs.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_SpatialIndex.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Gi.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Ge.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Root.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_FT.a \
-	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Alloc.a
-HAVE_DWGDIRECT = yes
-else
-DWG_LIBS =
-HAVE_DWGDIRECT = no
-endif
+HAVE_CAD	=	@CXX11_SUPPORT@
 
 #
 # Informix DataBlade support
@@ -509,6 +500,12 @@ PDFIUM_PLUGIN_LIB = @PDFIUM_PLUGIN_LIB@
 #CHARLS_LIB = -L/path/to/charls_lib -lCharLS
 
 #
+# Teigha stuff
+#
+HAVE_TEIGHA = @HAVE_TEIGHA@
+TEIGHA_DIR = @TEIGHA_DIR@
+
+#
 # PROJ.4 stuff
 #
 PROJ_STATIC	=	@PROJ_STATIC@
@@ -562,6 +559,7 @@ GDAL_FORMATS += idrisi gsg ingr ers jaxapalsar dimap gff cosar pds adrg
 GDAL_FORMATS += coasp tsx terragen blx msgn til r northwood saga xyz hf2
 GDAL_FORMATS += kmlsuperoverlay ctg e00grid zmap ngsgeoid iris map cals
 GDAL_FORMATS += safe sentinel2 derived
+GDAL_FORMATS += prf
 GDAL_FORMATS += @OPT_GDAL_FORMATS@
 
 ifneq ($(PCIDSK_SETTING),no)

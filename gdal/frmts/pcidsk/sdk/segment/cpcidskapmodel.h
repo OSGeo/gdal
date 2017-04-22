@@ -44,22 +44,22 @@ namespace PCIDSK {
             
         ~CPCIDSKAPModelSegment();
 
-        unsigned int GetWidth(void) const;
-        unsigned int GetHeight(void) const;
-        unsigned int GetDownsampleFactor(void) const;
+        unsigned int GetWidth(void) const override;
+        unsigned int GetHeight(void) const override;
+        unsigned int GetDownsampleFactor(void) const override;
 
         // Interior Orientation Parameters
-        PCIDSKAPModelIOParams const& GetInteriorOrientationParams(void) const;
+        PCIDSKAPModelIOParams const& GetInteriorOrientationParams(void) const override;
         
         // Exterior Orientation Parameters
-        PCIDSKAPModelEOParams const& GetExteriorOrientationParams(void) const;
+        PCIDSKAPModelEOParams const& GetExteriorOrientationParams(void) const override;
 
         // ProjInfo
-        PCIDSKAPModelMiscParams const& GetAdditionalParams(void) const;
+        PCIDSKAPModelMiscParams const& GetAdditionalParams(void) const override;
         
-        std::string GetMapUnitsString(void) const;
-        std::string GetUTMUnitsString(void) const;
-        std::vector<double> const& GetProjParams(void) const;
+        std::string GetMapUnitsString(void) const override;
+        std::string GetUTMUnitsString(void) const override;
+        std::vector<double> const& GetProjParams(void) const override;
 
     private:
         void UpdateFromDisk();

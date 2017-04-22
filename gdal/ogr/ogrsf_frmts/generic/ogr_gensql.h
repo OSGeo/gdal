@@ -34,6 +34,9 @@
 #include "ogrsf_frmts.h"
 #include "swq.h"
 #include "cpl_hash_set.h"
+#include "cpl_string.h"
+
+#include <vector>
 
 /*! @cond Doxygen_Suppress */
 
@@ -66,7 +69,7 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     int        *panGeomFieldToSrcGeomField;
 
-    GIntBig     nIndexSize;
+    size_t      nIndexSize;
     GIntBig    *panFIDIndex;
     int         bOrderByValid;
 
@@ -78,13 +81,23 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     int         nExtraDSCount;
     GDALDataset **papoExtraDS;
 
+    GIntBig     nIteratedFeatures;
+    std::vector<CPLString> m_oDistinctList;
+
     int         PrepareSummary();
 
     OGRFeature *TranslateFeature( OGRFeature * );
     void        CreateOrderByIndex();
-    int         SortIndexSection( OGRField *pasIndexFields,
-                                  GIntBig nStart, GIntBig nEntries );
-    int         Compare( OGRField *pasFirst, OGRField *pasSecond );
+    void        ReadIndexFields( OGRFeature* poSrcFeat,
+                                 int nOrderItems,
+                                 OGRField *pasIndexFields );
+    void        SortIndexSection( const OGRField *pasIndexFields,
+                                  GIntBig *panMerged,
+                                  size_t nStart, size_t nEntries );
+    void        FreeIndexFields(OGRField *pasIndexFields,
+                                size_t l_nIndexSize,
+                                bool bFreeArray = true);
+    int         Compare( const OGRField *pasFirst, const OGRField *pasSecond );
 
     void        ClearFilters();
     void        ApplyFiltersToSource();
@@ -107,24 +120,24 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
                                        const char *pszDialect );
     virtual     ~OGRGenSQLResultsLayer();
 
-    virtual OGRGeometry *GetSpatialFilter();
+    virtual OGRGeometry *GetSpatialFilter() override;
 
-    virtual void        ResetReading();
-    virtual OGRFeature *GetNextFeature();
-    virtual OGRErr      SetNextByIndex( GIntBig nIndex );
-    virtual OGRFeature *GetFeature( GIntBig nFID );
+    virtual void        ResetReading() override;
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRErr      SetNextByIndex( GIntBig nIndex ) override;
+    virtual OGRFeature *GetFeature( GIntBig nFID ) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn();
+    virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) { return GetExtent(0, psExtent, bForce); }
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE);
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override { return GetExtent(0, psExtent, bForce); }
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
-    virtual void        SetSpatialFilter( OGRGeometry * poGeom ) { SetSpatialFilter(0, poGeom); }
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * );
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual void        SetSpatialFilter( OGRGeometry * poGeom ) override { SetSpatialFilter(0, poGeom); }
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * ) override;
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
 };
 
 /*! @endcond */

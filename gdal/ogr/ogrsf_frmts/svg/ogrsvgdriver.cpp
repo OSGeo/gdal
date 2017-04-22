@@ -50,7 +50,7 @@ static GDALDataset *OGRSVGDriverOpen( GDALOpenInfo* poOpenInfo )
     if( strstr((const char*)poOpenInfo->pabyHeader, "<svg") == NULL )
         return NULL;
 
-    OGRSVGDataSource   *poDS = new OGRSVGDataSource();
+    OGRSVGDataSource *poDS = new OGRSVGDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {

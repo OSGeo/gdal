@@ -30,8 +30,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-/* CharLS header */
-#include <interface.h>
+#include "jpegls_header.h"
 
 /* g++ -Wall -g fmrts/jpegls/jpeglsdataset.cpp -shared -fPIC -o gdal_JPEGLS.so -Iport -Igcore -L. -lgdal -I/home/even/charls-1.0 -L/home/even/charls-1.0/build -lCharLS */
 
@@ -48,6 +47,7 @@ class JPEGLSDataset : public GDALPamDataset
     friend class JPEGLSRasterBand;
 
     CPLString osFilename;
+    VSILFILE *fpL;
     GByte* pabyUncompressedData;
     int    bHasUncompressed;
     int    nBitsPerSample;
@@ -83,8 +83,8 @@ class JPEGLSRasterBand : public GDALPamRasterBand
                 JPEGLSRasterBand( JPEGLSDataset * poDS, int nBand);
     virtual ~JPEGLSRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/
@@ -217,6 +217,7 @@ GDALColorInterp JPEGLSRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 JPEGLSDataset::JPEGLSDataset() :
+    fpL(NULL),
     pabyUncompressedData(NULL),
     bHasUncompressed(FALSE),
     nBitsPerSample(0),
@@ -230,6 +231,8 @@ JPEGLSDataset::JPEGLSDataset() :
 JPEGLSDataset::~JPEGLSDataset()
 
 {
+    if( fpL != NULL )
+        VSIFCloseL(fpL);
     VSIFree(pabyUncompressedData);
 }
 
@@ -244,28 +247,47 @@ CPLErr JPEGLSDataset::Uncompress()
 
     bHasUncompressed = TRUE;
 
-    VSILFILE* fp = VSIFOpenL(osFilename, "rb");
-    if (!fp)
+    CPLAssert( fpL != NULL );
+    VSIFSeekL(fpL, 0, SEEK_END);
+    const vsi_l_offset nFileSizeBig = VSIFTellL(fpL) - nOffset;
+    VSIFSeekL(fpL, 0, SEEK_SET);
+    const size_t nFileSize = static_cast<size_t>(nFileSizeBig);
+#if SIZEOF_VOIDP != 8
+    if( nFileSizeBig != nFileSize )
+    {
         return CE_Failure;
-
-    VSIFSeekL(fp, 0, SEEK_END);
-    int nFileSize = (int)VSIFTellL(fp) - nOffset;
-    VSIFSeekL(fp, 0, SEEK_SET);
+    }
+#endif
 
     GByte* pabyCompressedData = (GByte*)VSIMalloc(nFileSize);
     if (pabyCompressedData == NULL)
     {
-        VSIFCloseL(fp);
+        VSIFCloseL(fpL);
+        fpL = NULL;
         return CE_Failure;
     }
 
-    VSIFSeekL(fp, nOffset, SEEK_SET);
-    VSIFReadL(pabyCompressedData, 1, nFileSize, fp);
-    VSIFCloseL(fp);
-    fp = NULL;
+    VSIFSeekL(fpL, nOffset, SEEK_SET);
+    if( VSIFReadL(pabyCompressedData, 1, nFileSize, fpL) != nFileSize )
+    {
+        VSIFCloseL(fpL);
+        fpL = NULL;
+        return CE_Failure;
+    }
+    VSIFCloseL(fpL);
+    fpL = NULL;
 
-    int nUncompressedSize = nRasterXSize * nRasterYSize *
-                            nBands * (GDALGetDataTypeSize(GetRasterBand(1)->GetRasterDataType()) / 8);
+    const GUIntBig nUncompressedSizeBig = static_cast<GUIntBig>(nRasterXSize) *
+        nRasterYSize * nBands *
+        GDALGetDataTypeSizeBytes(GetRasterBand(1)->GetRasterDataType());
+    const size_t nUncompressedSize = static_cast<size_t>(nUncompressedSizeBig);
+#if SIZEOF_VOIDP != 8
+    if( nUncompressedSizeBig != nUncompressedSize )
+    {
+        VSIFree(pabyCompressedData);
+        return CE_Failure;
+    }
+#endif
     pabyUncompressedData = (GByte*)VSI_MALLOC_VERBOSE(nUncompressedSize);
     if (pabyUncompressedData == NULL)
     {
@@ -298,12 +320,12 @@ CPLErr JPEGLSDataset::Uncompress()
 int JPEGLSDataset::Identify( GDALOpenInfo * poOpenInfo, int& bIsDCOM )
 
 {
-    GByte  *pabyHeader = poOpenInfo->pabyHeader;
+    const GByte  *pabyHeader = poOpenInfo->pabyHeader;
     int    nHeaderBytes = poOpenInfo->nHeaderBytes;
 
     bIsDCOM = FALSE;
 
-    if( nHeaderBytes < 10 )
+    if( poOpenInfo->fpL == NULL || nHeaderBytes < 10 )
         return FALSE;
 
     if( pabyHeader[0] != 0xff
@@ -386,11 +408,10 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-        if (fp == NULL)
-            return NULL;
+        VSILFILE* fp = poOpenInfo->fpL;
         GByte abyBuffer[1028];
         GByte abySignature[] = { 0xFF, 0xD8, 0xFF, 0xF7 };
+        VSIFSeekL(fp, 0, SEEK_SET);
         while( true )
         {
             if (VSIFReadL(abyBuffer, 1, 1028, fp) != 1028)
@@ -415,8 +436,8 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
 
         VSIFSeekL(fp, nOffset, SEEK_SET);
         VSIFReadL(abyBuffer, 1, 1024, fp);
+        VSIFSeekL(fp, 0, SEEK_SET);
         eError = JpegLsReadHeader(abyBuffer, 1024, &sParams);
-        VSIFCloseL(fp);
         if (eError == OK)
         {
             CPLDebug("JPEGLS", "JPEGLS image found at offset %d", nOffset);
@@ -448,6 +469,8 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nBands = sParams.components;
     poDS->nBitsPerSample = sParams.bitspersample;
     poDS->nOffset = nOffset;
+    poDS->fpL = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -488,9 +511,9 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 GDALProgressFunc /*pfnProgress*/, void * /*pProgressData*/ )
 
 {
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
+    const int  nBands = poSrcDS->GetRasterCount();
+    const int  nXSize = poSrcDS->GetRasterXSize();
+    const int  nYSize = poSrcDS->GetRasterYSize();
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
@@ -528,11 +551,21 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
     }
 
-    int nWordSize = GDALGetDataTypeSize(eDT) / 8;
-    int nUncompressedSize = nXSize * nYSize * nBands * nWordSize;
+    const int nWordSize = GDALGetDataTypeSizeBytes(eDT);
+    const GUIntBig nUncompressedSizeBig = static_cast<GUIntBig>(nXSize) *
+                                                nYSize * nBands * nWordSize;
+#if SIZEOF_VOIDP != 8
+    if( nUncompressedSizeBig + 256 !=
+                    static_cast<size_t>(nUncompressedSizeBig + 256) )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Too big image");
+        return NULL;
+    }
+#endif
+    const size_t nUncompressedSize = static_cast<size_t>(nUncompressedSizeBig);
     // FIXME? bug in charls-1.0beta ?. I needed a "+ something" to
     // avoid errors on byte.tif.
-    int nCompressedSize = nUncompressedSize + 256;
+    const size_t nCompressedSize = nUncompressedSize + 256;
     GByte* pabyDataCompressed = (GByte*)VSI_MALLOC_VERBOSE(nCompressedSize);
     GByte* pabyDataUncompressed = (GByte*)VSI_MALLOC_VERBOSE(nUncompressedSize);
     if (pabyDataCompressed == NULL || pabyDataUncompressed == NULL)
@@ -617,6 +650,7 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
     if (fp == NULL)
     {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszFilename);
         VSIFree(pabyDataCompressed);
         return NULL;
     }

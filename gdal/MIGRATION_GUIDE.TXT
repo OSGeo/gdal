@@ -1,3 +1,33 @@
+MIGRATION GUIDE FROM GDAL 2.1 to GDAL 2.2
+-----------------------------------------
+
+A) RFC 64: Triangle, Polyhedral surface and TIN
+
+Link: https://trac.osgeo.org/gdal/wiki/rfc64_triangle_polyhedralsurface_tin
+
+Vector drivers can now return geometries of type wkbPolyhedralSurface, wkbTIN
+and wkbTriangle; and their Z, M and ZM variants (as well as for the type of
+geometry fields). Client code, as well as out-of-tree drivers that support
+writing geometries, must be ready to deal with them.
+
+B) RFC 67: Null values in OGR
+
+Link: https://trac.osgeo.org/gdal/wiki/rfc67_nullfieldvalues
+
+Previously, the "unset" state of a field was used both for a unset state
+(ie no information for the field of the feature) or the NULL state of the
+field. Now there is OGR_F_IsFieldSet() / OGRFeature::IsFieldSet() for the
+unset state, and a new OGR_F_IsFieldNull() / OGRFeature::IsFieldNull() for the
+new NULL state. Code that used OGR_F_IsFieldSet() / OGRFeature::IsFieldSet()
+should also test the NULL state, otherwise empty strings or 0 numeric values
+will be returned. A convenient way of migrating is to replace the use of
+OGR_F_IsFieldSet() / OGRFeature::IsFieldSet() by OGR_F_IsFieldSetAndNotNull() /
+OGRFeature::IsFieldSetAndNotNull() if there is no need to distinguish both
+states.
+On the writing side, a few drivers will now distinguish between the unset
+and null state, namely GeoJSON, CouchDB, Cloudant, MongoDB, ElasticSearch and
+GML.
+
 MIGRATION GUIDE FROM GDAL 2.0 to GDAL 2.1
 ------------------------------------------
 

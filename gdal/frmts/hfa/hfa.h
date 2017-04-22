@@ -230,6 +230,7 @@ HFAEvaluateXFormStack( int nStepCount, int bForward,
                        double *pdfX, double *pdfY );
 
 char CPL_DLL **HFAReadCameraModel( HFAHandle psInfo );
+const char CPL_DLL *HFAReadElevationUnit( HFAHandle psInfo, int iBand );
 
 /* -------------------------------------------------------------------- */
 /*      Projection codes.                                               */

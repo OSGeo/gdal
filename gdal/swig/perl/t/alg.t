@@ -2,8 +2,65 @@ use strict;
 use warnings;
 use v5.10;
 use Scalar::Util 'blessed';
-use Test::More tests => 9;
+use Test::More tests => 21;
 BEGIN { use_ok('Geo::GDAL') };
+
+{
+    # test making of processing options
+    my @a1 = ('-a', 1, '-b', 2, '-3.0%');
+    my @b1 = ('-b', 2, '-3.0%', '-a', 1);
+
+    my @a2 = ('-a', 1, '-b', '2 -3.0%');
+    my @b2 = ('-b', '2 -3.0%', '-a', 1);
+
+    my @a3 = ('-a', 1, '-b', 'a 3');
+    my @b3 = ('-b', 'a 3', '-a', 1);
+
+    sub test {
+        my ($got, $t, $test) = @_;
+        my $out = join("' , '", @$got);
+        my @a;
+        my @b;
+        if ($t == 1) {
+            @a = @a1; @b = @b1;
+        } elsif ($t == 2) {
+            @a = @a2; @b = @b2;
+        } else {
+            @a = @a3; @b = @b3;
+        }
+        ok(eq_array($got, \@a) || eq_array($got, \@b), "$test ($t): '$out'");
+    }
+    my $got = Geo::GDAL::make_processing_options({-a => 1, -b => [2,'-3.0%']});
+    test($got, 1, 'processing options hash');
+    $got = Geo::GDAL::make_processing_options({-a => 1, -b => "2 -3.0%"});
+    test($got, 1, 'processing options hash string to list');
+    $got = Geo::GDAL::make_processing_options({-a => 1, -b => "a 3"});
+    test($got, 3, 'processing options hash string to string');
+    $got = Geo::GDAL::make_processing_options({-a => 1, -b => ["2 -3.0%"]});
+    test($got, 2, 'processing options hash string from array');
+    
+    $got = Geo::GDAL::make_processing_options([-a => 1, -b => [2,'-3.0%']]);
+    test($got, 1, 'processing options array');
+    $got = Geo::GDAL::make_processing_options([-a => 1, -b => "2 -3.0%"]);
+    test($got, 1, 'processing options array string to list');
+    $got = Geo::GDAL::make_processing_options([-a => 1, -b => 2, '-3.0%']);
+    test($got, 1, 'processing options array list to list');
+    $got = Geo::GDAL::make_processing_options([-a => 1, -b => ["2 -3.0%"]]);
+    test($got, 2, 'processing options array string from array');
+    
+    $got = Geo::GDAL::make_processing_options({a => 1, b => [2,'-3.0%']});
+    test($got, 1, 'processing options hash');
+    $got = Geo::GDAL::make_processing_options({a => 1, b => "2 -3.0%"});
+    test($got, 1, 'processing options hash string to list');
+    $got = Geo::GDAL::make_processing_options({a => 1, b => ["2 -3.0%"]});
+    test($got, 2, 'processing options hash string from array');
+    
+    eval {
+        Geo::GDAL::make_processing_options({a => 1, b => {2,3}});
+    };
+    ok($@, "error in make processing options");
+    
+}
 
 {
     my $b = Geo::GDAL::Driver('MEM')->Create(Width => 40, Height => 40)->Band;
@@ -97,7 +154,7 @@ BEGIN { use_ok('Geo::GDAL') };
     my $dest = '/vsimem/tmp';
     my $result;
     eval {
-        $result = Geo::GDAL::Dataset::Warp([$d], $dest, {to => 'SRC_METHOD=NO_GEOTRANSFORM'});
+        $result = Geo::GDAL::Dataset::Warp([$d], $dest, {-to => 'SRC_METHOD=NO_GEOTRANSFORM'});
         $result = blessed($result);
     };
     ok($@ eq '' && $result && $result eq 'Geo::GDAL::Dataset', "Warp datasets ($result) $@");

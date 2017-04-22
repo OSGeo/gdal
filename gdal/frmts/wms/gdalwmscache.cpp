@@ -67,14 +67,25 @@ CPLErr GDALWMSCache::Initialize(CPLXMLNode *config) {
     return CE_None;
 }
 
+// Recursive makedirs, ignoring errors
+static void MakeDirs(const CPLString & path) {
+    CPLString p(CPLGetDirname(path));
+    if (p.size() >= 2)
+        MakeDirs(p);
+    VSIMkdir(p, 0744);
+}
+
+// Warns if it fails to write, but returns success
 CPLErr GDALWMSCache::Write(const char *key, const CPLString &file_name) {
     CPLString cache_file(KeyToCacheFile(key));
     // printf("GDALWMSCache::Write(%s, %s) -> %s\n", key, file_name.c_str());
-    if (CPLCopyFile(cache_file.c_str(), file_name.c_str()) != CE_None) {
-        MakeDirs(cache_file.c_str());
-        CPLCopyFile(cache_file.c_str(), file_name.c_str());
-    }
-
+    if (CPLCopyFile(cache_file, file_name) == CE_None)
+        return CE_None;
+    MakeDirs(cache_file.c_str());
+    if (CPLCopyFile(cache_file, file_name) == CE_None)
+        return CE_None;
+    // Warn if it fails after folder creation
+    CPLError(CE_Warning, CPLE_FileIO, "Error writing to WMS cache %s", m_cache_path.c_str());
     return CE_None;
 }
 
@@ -88,7 +99,6 @@ CPLErr GDALWMSCache::Read(const char *key, CPLString *file_name) {
         *file_name = cache_file;
         ret = CE_None;
     }
-    //    printf("GDALWMSCache::Read(...) -> %s\n", cache_file.c_str());
 
     return ret;
 }
@@ -97,7 +107,8 @@ CPLString GDALWMSCache::KeyToCacheFile(const char *key) {
     CPLString hash(MD5String(key));
     CPLString cache_file(m_cache_path);
 
-    if (cache_file.size() && (cache_file[cache_file.size() - 1] != '/')) cache_file.append(1, '/');
+    if (!cache_file.empty() && cache_file.back() != '/')
+        cache_file.append(1, '/');
     for (int i = 0; i < m_cache_depth; ++i) {
         cache_file.append(1, hash[i]);
         cache_file.append(1, '/');

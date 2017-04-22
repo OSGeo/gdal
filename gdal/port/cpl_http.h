@@ -103,4 +103,12 @@ char CPL_DLL *GOA2GetAccessToken( const char *pszRefreshToken,
 
 CPL_C_END
 
+#ifdef __cplusplus
+/*! @cond Doxygen_Suppress */
+// Not sure if this belong here, used in cpl_http.cpp, cpl_vsil_curl.cpp and frmts/wms/gdalhttp.cpp
+void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions);
+char** CPLHTTPGetOptionsFromEnv();
+/*! @endcond */
+#endif // __cplusplus
+
 #endif /* ndef CPL_HTTP_H_INCLUDED */

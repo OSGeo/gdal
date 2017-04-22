@@ -59,7 +59,7 @@ public class GDALContour {
         String sourceFilename = null;
         String outputFilename = null;
         int sourceBand = 1;
-        String attributName = null;
+        String attributeName = null;
         boolean threeDimension = false;
         boolean ignoreNodata = false;
         boolean hasSourceNodata = false;
@@ -99,7 +99,7 @@ public class GDALContour {
 
             } else if (args[i].equals("-a") && args.length > i) {
 
-                attributName = args[++i];
+                attributeName = args[++i];
 
             } else if (args[i].equals("-off") && args.length > i) {
 
@@ -271,9 +271,9 @@ public class GDALContour {
         layer.CreateField(field, 0);
         field.delete();
 
-        if (attributName != null) {
+        if (attributeName != null) {
 
-            field = new FieldDefn(attributName, ogr.OFTReal);
+            field = new FieldDefn(attributeName, ogr.OFTReal);
             field.SetWidth(12);
             field.SetPrecision(3);
 
@@ -297,7 +297,7 @@ public class GDALContour {
 
         gdal.ContourGenerate(band, contourInterval, offset, fixedLevelsDouble,
                 (ignoreNodata ? 1 : 0), sourceNodata, layer, feature.GetFieldIndex("ID"),
-                (attributName != null ? feature.GetFieldIndex(attributName) : -1),
+                (attributeName != null ? feature.GetFieldIndex(attributeName) : -1),
                 progressCallback);
 
         dataSource.delete();

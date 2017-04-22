@@ -62,8 +62,8 @@ class NGSGEOIDDataset : public GDALPamDataset
                  NGSGEOIDDataset();
     virtual     ~NGSGEOIDDataset();
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char* GetProjectionRef();
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char* GetProjectionRef() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -82,8 +82,8 @@ class NGSGEOIDRasterBand : public GDALPamRasterBand
   public:
                 explicit NGSGEOIDRasterBand( NGSGEOIDDataset * );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual const char* GetUnitType() { return "m"; }
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual const char* GetUnitType() override { return "m"; }
 };
 
 /************************************************************************/

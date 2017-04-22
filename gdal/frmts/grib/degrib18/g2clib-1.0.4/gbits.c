@@ -90,7 +90,7 @@ void sbits(unsigned char *out,const g2int *in,g2int iskip,g2int nbyte,g2int nski
          ibit=nbit%8;
          nbit = nbit + nbyte + nskip;
 
-//        make byte aligned 
+//        make byte aligned
          if (ibit != 7) {
              tbit= ( bitcnt < (ibit+1) ) ? bitcnt : ibit+1;  // find min
              imask = ones[tbit-1] << (7-ibit);

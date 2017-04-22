@@ -64,6 +64,9 @@
 
 ## @sub @DriverNames()
 # A.k.a GetDriverNames
+# \code
+# perl -MGeo::GDAL -e '@d=Geo::OGR::DriverNames;print "@d\n"'
+# \endcode
 # @note Use Geo::GDAL::DriverNames for raster drivers.
 # @return a list of the short names of all available GDAL vector drivers.
 
@@ -407,6 +410,18 @@
 ## @method $GetName()
 # @return the name of the layer.
 
+## @method Geo::OGR::Feature Feature($f)
+#
+# @param f [optional] feature id, a feature, a row, or a tuple 
+#
+# @note If the argument feature has a null FID (FID not set) the
+# feature is inserted into the layer as a new feature. If the FID is
+# non null, then the feature replaces the feature in the layer with
+# that FID.
+#
+# @return a new Geo::OGR::Feature object that represents the feature
+# in the layer.
+
 ## @method Geo::OGR::Feature GetFeature($fid)
 # @param fid feature id
 # @return a new Geo::OGR::Feature object that represents the feature in the layer.
@@ -416,15 +431,6 @@
 #
 # Replaces a feature in the layer based on the given feature's
 # id. Requires RandomWrite capability.
-# @param feature a Geo::OGR::Feature object
-
-## @method CreateFeature($feature)
-# @deprecated use Geo::OGR::Layer::InsertFeature which accepts Perl
-# data and checks for geometry type and attribute data
-#
-# @note The feature should have the same schema as the layer.
-#
-# Inserts a feature into the layer. The given feature's id may change.
 # @param feature a Geo::OGR::Feature object
 
 ## @method InsertFeature($feature)
@@ -448,7 +454,8 @@
 # A.k.a GetLayerDefn.
 # @return a Geo::OGR::FeatureDefn object.
 
-## @method $GetFeatureCount($force = 1)
+## @method $FeatureCount($force = 1)
+# A.k.a GetFeatureCount
 # @param force
 # @return integer
 
@@ -505,14 +512,22 @@
 
 ## @cmethod Geo::OGR::Feature new(%schema)
 # @brief Create a new feature.
-# @param A Geo::OGR::FeatureDefn object or named parameters to create one:
-# - \a Name
+# @param Named parameters:
+# - \a Schema a reference to a schema hash, or a Geo::OGR::Layer,
+#      Geo::OGR::Feature, or Geo::OGR::FeatureDefn object.
+# - \a Values values for the feature attributes.
+# - \a StyleIgnored whether the style can be omitted when fetching
+#      features. (default is false)
+#
+# Schema is a hash with the following keys:
+# - \a Name name of the schema (not used).
 # - \a Fields a list of Geo::OGR::FieldDefn or Geo::OGR::GeomFieldDefn
-# objects or anonymous hashes from which such can be created.
+# objects or references to hashes from which fields can be created.
 # - \a GeometryType the geometry type if the feature has only one spatial field.
-# - \a StyleIgnored whether the style can be omitted when fetching features. (default is false)
 #
 # @note Do not mix GeometryType and geometry fields in Fields list.
+# @note Old syntax where the argument is a Geo::OGR::FeatureDefn
+# object or Schema hash is supported.
 #
 # @return a new Geo::OGR::Feature object.
 
@@ -870,6 +885,9 @@
 # - \a Nullable (default is true)
 # - \a Default
 # - \a Ignored (default is false)
+#
+# @note Simplified parameters <name> => <type> is also supported.
+#
 # @return a new Geo::OGR::FieldDefn object
 
 ## @method \%Schema(%params)
@@ -979,6 +997,9 @@
 # - \a SpatialReference a Geo::OSR::SpatialReference object.
 # - \a Nullable (default is true)
 # - \a Ignored (default is false)
+#
+# @note Simplified parameters <name> => <type> is also supported.
+#
 # @return a new Geo::OGR::GeomFieldDefn object
 
 ## @method \%Schema(%params)

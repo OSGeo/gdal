@@ -74,11 +74,11 @@ class CPL_DLL OGDIDataset : public GDALDataset
 
     int GetClientID() { return nClientID; }
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 
-    virtual char **GetMetadataDomainList();
-    virtual char **GetMetadata( const char * pszDomain = "" );
+    virtual char **GetMetadataDomainList() override;
+    virtual char **GetMetadata( const char * pszDomain = "" ) override;
 };
 
 /************************************************************************/
@@ -104,7 +104,7 @@ class OGDIRasterBand : public GDALRasterBand
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace,
                               GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg );
+                              GDALRasterIOExtraArg* psExtraArg ) override;
 
     CPLErr         EstablishAccess( int nXOff, int nYOff,
                                     int nXSize, int nYSize,
@@ -116,14 +116,14 @@ class OGDIRasterBand : public GDALRasterBand
                                    ecs_Family, int );
     virtual ~OGDIRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual int    HasArbitraryOverviews();
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual int    HasArbitraryOverviews() override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize,
-                               GDALDataType eDT, char **papszOptions );
+                               GDALDataType eDT, char **papszOptions ) override;
 };
 
 /************************************************************************/

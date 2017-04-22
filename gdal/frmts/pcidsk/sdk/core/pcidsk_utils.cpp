@@ -52,10 +52,10 @@ using namespace PCIDSK;
 #include <time.h>
 #include <sys/types.h>
 
-void	PCIDSK::GetCurrentDateTime( char *out_time )
+void    PCIDSK::GetCurrentDateTime( char *out_time )
 
 {
-    time_t	    clock;
+    time_t          clock;
     char            ctime_out[25];
 
     time( &clock );
@@ -399,7 +399,7 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
             next++;
 
         // move past white space.
-        while( *next != '\0' && *next == ' ' )
+        while( *next == ' ' )
             next++;
     }
 
@@ -507,7 +507,7 @@ std::string PCIDSK::MergeRelativePath( const PCIDSK::IOInterfaces *io_interfaces
 /* -------------------------------------------------------------------- */
 /*      Does src_filename appear to be absolute?                        */
 /* -------------------------------------------------------------------- */
-    if( src_filename.size() == 0 )
+    if( src_filename.empty() )
         return src_filename; // we can't do anything with a blank.
     else if( src_filename.size() > 2 && src_filename[1] == ':' )
         return src_filename; // has a drive letter?
@@ -637,14 +637,20 @@ static void vDebug( void (*pfnDebug)(const char *),
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
-            pszWorkBuffer = (char *) realloc(pszWorkBuffer, 
-                                             nWorkBufferSize );
+            char* pszWorkBufferNew = (char *) realloc(pszWorkBuffer, 
+                                                      nWorkBufferSize );
 #ifdef va_copy
             va_end( wrk_args );
             va_copy( wrk_args, args );
 #else
             wrk_args = args;
 #endif
+            if( pszWorkBufferNew == NULL )
+            {
+                strcpy( pszWorkBuffer, "(message too large)" );
+                break;
+            }
+            pszWorkBuffer = pszWorkBufferNew;
         }
         message = pszWorkBuffer;
         free( pszWorkBuffer );

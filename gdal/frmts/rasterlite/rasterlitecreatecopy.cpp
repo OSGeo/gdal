@@ -144,7 +144,7 @@ static int RasterliteInsertSRID(OGRDataSourceH hDS, const char* pszWKT)
 
     CPLString osSQL;
     int nSRSId = -1;
-    if (nAuthorityCode != 0 && osAuthorityName.size() != 0)
+    if (nAuthorityCode != 0 && !osAuthorityName.empty())
     {
         osSQL.Printf   ("SELECT srid FROM spatial_ref_sys WHERE auth_srid = %d", nAuthorityCode);
         OGRLayerH hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
@@ -152,7 +152,7 @@ static int RasterliteInsertSRID(OGRDataSourceH hDS, const char* pszWKT)
         {
             nSRSId = nAuthorityCode;
 
-            if ( osProjCS.size() != 0 )
+            if ( !osProjCS.empty() )
                 osSQL.Printf(
                     "INSERT INTO spatial_ref_sys "
                     "(srid, auth_name, auth_srid, ref_sys_name, proj4text) "
@@ -434,7 +434,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSIStatBuf sBuf;
     const bool bExists = (VSIStat(osDBName.c_str(), &sBuf) == 0);
 
-    if (osTableName.size() == 0)
+    if (osTableName.empty())
     {
         if (bExists)
         {

@@ -129,7 +129,7 @@ OGRWAsPLayer::~OGRWAsPLayer()
 
         std::vector<int> endNeighbors( oBoundaries.size(), -1 );
         std::vector<int> startNeighbors( oBoundaries.size(), -1 );
-        for ( PointMap::const_iterator it = oMap.begin(); it != oMap.end(); it++ )
+        for ( PointMap::const_iterator it = oMap.begin(); it != oMap.end(); ++it )
         {
             if ( it->second.size() != 2 ) continue;
             int i = it->second[0];
@@ -287,7 +287,6 @@ OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
         poLine->StartPoint( &pt );
         newLine->addPoint( &pt );
         const int iNumPoints= poLine->getNumPoints();
-        unsigned rem = 0;
         for (int v=1; v<iNumPoints; v++)
         {
             if ( fabs(poLine->getX(v) - pt.getX()) > dist ||
@@ -295,10 +294,6 @@ OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
             {
                 poLine->getPoint( v, &pt );
                 newLine->addPoint( &pt );
-            }
-            else
-            {
-                ++rem;
             }
         }
 
@@ -642,7 +637,7 @@ OGRErr OGRWAsPLayer::ICreateFeature( OGRFeature * poFeature )
     double z1 = 0.0;
     if ( -1 != iFirstFieldIdx )
     {
-        if (!poFeature->IsFieldSet(iFirstFieldIdx))
+        if (!poFeature->IsFieldSetAndNotNull(iFirstFieldIdx))
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Field %d %s is NULL", iFirstFieldIdx, sFirstField.c_str() );
             return OGRERR_FAILURE;
@@ -665,7 +660,7 @@ OGRErr OGRWAsPLayer::ICreateFeature( OGRFeature * poFeature )
     double z2 = 0.0;
     if ( -1 != iSecondFieldIdx )
     {
-        if (!poFeature->IsFieldSet(iSecondFieldIdx))
+        if (!poFeature->IsFieldSetAndNotNull(iSecondFieldIdx))
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Field %d %s is NULL", iSecondFieldIdx, sSecondField.c_str() );
             return OGRERR_FAILURE;

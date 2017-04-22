@@ -39,8 +39,6 @@ CPL_CVSID("$Id$");
 
 //#define DEBUG_IO 1
 
-#ifdef HAVE_SQLITE_VFS
-
 typedef struct
 {
     char                       szVFSName[64];
@@ -214,7 +212,7 @@ static const sqlite3_io_methods OGRSQLiteIOMethods =
     NULL,  // xShmLock
     NULL,  // xShmBarrier
     NULL,  // xShmUnmap
-#if SQLITE_VERSION_NUMBER >= 3008002L /* perhaps older too ? */
+#if SQLITE_VERSION_NUMBER >= 3007017L /* perhaps older too ? */
     NULL,  // xFetch
     NULL,  // xUnfetch
 #endif
@@ -298,7 +296,9 @@ static int OGRSQLiteVFSAccess (DEBUG_ONLY sqlite3_vfs* pVFS,
     if (flags == SQLITE_ACCESS_EXISTS)
     {
         /* Do not try to check the presence of a journal or a wal on /vsicurl ! */
-        if ( STARTS_WITH(zName, "/vsicurl/") &&
+        if ( (STARTS_WITH(zName, "/vsicurl/") ||
+              STARTS_WITH(zName, "/vsitar/") ||
+              STARTS_WITH(zName, "/vsizip/")) &&
              ((strlen(zName) > strlen("-journal") &&
                strcmp(zName + strlen(zName) - strlen("-journal"), "-journal") == 0) ||
               (strlen(zName) > strlen("-wal") &&
@@ -503,5 +503,3 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData)
 
     return pMyVFS;
 }
-
-#endif // HAVE_SQLITE_VFS

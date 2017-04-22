@@ -26,8 +26,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_spawn.h"
 
+#include <cstring>
+
+#include "cpl_config.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
@@ -160,14 +164,14 @@ int CPLSpawn( const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
 /*                          CPLPipeRead()                               */
 /************************************************************************/
 
-int CPLPipeRead(CPL_FILE_HANDLE fin, void* data, int length)
+int CPLPipeRead( CPL_FILE_HANDLE fin, void* data, int length )
 {
-    GByte* pabyData = reinterpret_cast<GByte *>( data );
+    GByte* pabyData = static_cast<GByte *>(data);
     int nRemain = length;
     while( nRemain > 0 )
     {
         DWORD nRead = 0;
-        if (!ReadFile( fin, pabyData, nRemain, &nRead, NULL))
+        if( !ReadFile(fin, pabyData, nRemain, &nRead, NULL) )
             return FALSE;
         pabyData += nRead;
         nRemain -= nRead;
@@ -179,14 +183,14 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void* data, int length)
 /*                         CPLPipeWrite()                               */
 /************************************************************************/
 
-int CPLPipeWrite(CPL_FILE_HANDLE fout, const void* data, int length)
+int CPLPipeWrite( CPL_FILE_HANDLE fout, const void* data, int length )
 {
-    const GByte* pabyData = (const GByte*)data;
+    const GByte* pabyData = static_cast<const GByte *>(data);
     int nRemain = length;
     while( nRemain > 0 )
     {
         DWORD nWritten = 0;
-        if (!WriteFile(fout, pabyData, nRemain, &nWritten, NULL))
+        if( !WriteFile(fout, pabyData, nRemain, &nWritten, NULL) )
             return FALSE;
         pabyData += nWritten;
         nRemain -= nWritten;
@@ -200,16 +204,16 @@ int CPLPipeWrite(CPL_FILE_HANDLE fout, const void* data, int length)
 
 static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout)
 {
-    char buf[PIPE_BUFFER_SIZE];
-    while(true)
+    char buf[PIPE_BUFFER_SIZE] = {};
+    while( true )
     {
         DWORD nRead = 0;
-        if (!ReadFile( pipe_fd, buf, PIPE_BUFFER_SIZE, &nRead, NULL))
+        if( !ReadFile( pipe_fd, buf, PIPE_BUFFER_SIZE, &nRead, NULL) )
             break;
-        if (nRead <= 0)
+        if( nRead <= 0 )
             break;
-        int nWritten = (int)VSIFWriteL(buf, 1, nRead, fout);
-        if (nWritten < (int)nRead)
+        const int nWritten = static_cast<int>(VSIFWriteL(buf, 1, nRead, fout));
+        if( nWritten < static_cast<int>(nRead) )
             break;
     }
 }
@@ -236,15 +240,6 @@ CPLSpawnedProcess* CPLSpawnAsync(
     int bCreateErrorPipe,
     char** /* papszOptions */)
 {
-    HANDLE pipe_in[2] = {NULL, NULL};
-    HANDLE pipe_out[2] = {NULL, NULL};
-    HANDLE pipe_err[2] = {NULL, NULL};
-    SECURITY_ATTRIBUTES saAttr;
-    PROCESS_INFORMATION piProcInfo;
-    STARTUPINFO siStartInfo;
-    CPLString osCommandLine;
-    CPLSpawnedProcess* p = NULL;
-
     if( papszArgv == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -252,50 +247,73 @@ CPLSpawnedProcess* CPLSpawnAsync(
         return NULL;
     }
 
+    // TODO(schwehr): Consider initializing saAttr.
+    SECURITY_ATTRIBUTES saAttr;
     saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
     saAttr.bInheritHandle = TRUE;
     saAttr.lpSecurityDescriptor = NULL;
 
+    // TODO(schwehr): Move these to where they are used after gotos are removed.
+    HANDLE pipe_out[2] = { NULL, NULL };
+    HANDLE pipe_err[2] = { NULL, NULL };
+    CPLString osCommandLine;
+
+    HANDLE pipe_in[2] = { NULL, NULL };
     if( bCreateInputPipe )
     {
-        if (!CreatePipe(&pipe_in[IN_FOR_PARENT],&pipe_in[OUT_FOR_PARENT],&saAttr, 0))
+        if( !CreatePipe(&pipe_in[IN_FOR_PARENT], &pipe_in[OUT_FOR_PARENT],
+                        &saAttr, 0) )
             goto err_pipe;
-        /* The child must not inherit from the write side of the pipe_in */
-        if (!SetHandleInformation(pipe_in[OUT_FOR_PARENT],HANDLE_FLAG_INHERIT,0))
+        // The child must not inherit from the write side of the pipe_in.
+        if( !SetHandleInformation(pipe_in[OUT_FOR_PARENT], HANDLE_FLAG_INHERIT,
+                                  0) )
             goto err_pipe;
     }
 
     if( bCreateOutputPipe )
     {
-        if (!CreatePipe(&pipe_out[IN_FOR_PARENT],&pipe_out[OUT_FOR_PARENT],&saAttr, 0))
+        if( !CreatePipe(&pipe_out[IN_FOR_PARENT], &pipe_out[OUT_FOR_PARENT],
+                        &saAttr, 0) )
             goto err_pipe;
-        /* The child must not inherit from the read side of the pipe_out */
-        if (!SetHandleInformation(pipe_out[IN_FOR_PARENT],HANDLE_FLAG_INHERIT,0))
+        // The child must not inherit from the read side of the pipe_out.
+        if( !SetHandleInformation(pipe_out[IN_FOR_PARENT], HANDLE_FLAG_INHERIT,
+                                  0) )
             goto err_pipe;
     }
 
     if( bCreateErrorPipe )
     {
-        if (!CreatePipe(&pipe_err[IN_FOR_PARENT],&pipe_err[OUT_FOR_PARENT],&saAttr, 0))
+        if( !CreatePipe(&pipe_err[IN_FOR_PARENT], &pipe_err[OUT_FOR_PARENT],
+                        &saAttr, 0) )
             goto err_pipe;
-        /* The child must not inherit from the read side of the pipe_err */
-        if (!SetHandleInformation(pipe_err[IN_FOR_PARENT],HANDLE_FLAG_INHERIT,0))
+        // The child must not inherit from the read side of the pipe_err.
+        if( !SetHandleInformation(pipe_err[IN_FOR_PARENT], HANDLE_FLAG_INHERIT,
+                                  0) )
             goto err_pipe;
     }
 
+    // TODO(schwehr): Consider initializing piProcInfo.
+    PROCESS_INFORMATION piProcInfo;
     memset(&piProcInfo, 0, sizeof(PROCESS_INFORMATION));
+    STARTUPINFO siStartInfo;
     memset(&siStartInfo, 0, sizeof(STARTUPINFO));
     siStartInfo.cb = sizeof(STARTUPINFO);
-    siStartInfo.hStdInput = (bCreateInputPipe) ? pipe_in[IN_FOR_PARENT] : GetStdHandle(STD_INPUT_HANDLE);
-    siStartInfo.hStdOutput = (bCreateOutputPipe) ? pipe_out[OUT_FOR_PARENT] : GetStdHandle(STD_OUTPUT_HANDLE);
-    siStartInfo.hStdError = (bCreateErrorPipe) ? pipe_err[OUT_FOR_PARENT] : GetStdHandle(STD_ERROR_HANDLE);
+    siStartInfo.hStdInput =
+        bCreateInputPipe
+        ? pipe_in[IN_FOR_PARENT] : GetStdHandle(STD_INPUT_HANDLE);
+    siStartInfo.hStdOutput =
+        bCreateOutputPipe
+        ? pipe_out[OUT_FOR_PARENT] : GetStdHandle(STD_OUTPUT_HANDLE);
+    siStartInfo.hStdError =
+        bCreateErrorPipe
+        ? pipe_err[OUT_FOR_PARENT] : GetStdHandle(STD_ERROR_HANDLE);
     siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-    for( int i=0; papszArgv[i] != NULL; i++ )
+    for( int i = 0; papszArgv[i] != NULL; i++ )
     {
-        if (i > 0)
+        if( i > 0 )
             osCommandLine += " ";
-        /* We need to quote arguments with spaces in them (if not already done) */
+        // We need to quote arguments with spaces in them (if not already done).
         if( strchr(papszArgv[i], ' ') != NULL &&
             papszArgv[i][0] != '"' )
         {
@@ -304,26 +322,28 @@ CPLSpawnedProcess* CPLSpawnAsync(
             osCommandLine += "\"";
         }
         else
+        {
             osCommandLine += papszArgv[i];
+        }
     }
 
-    if (!CreateProcess(NULL,
+    if( !CreateProcess(NULL,
                        (CHAR*)osCommandLine.c_str(),
-                       NULL,          // process security attributes
-                       NULL,          // primary thread security attributes
-                       TRUE,          // handles are inherited
-                       CREATE_NO_WINDOW|NORMAL_PRIORITY_CLASS,             // creation flags
-                       NULL,          // use parent's environment
-                       NULL,          // use parent's current directory
+                       NULL,          // Process security attributes
+                       NULL,          // Primary thread security attributes
+                       TRUE,          // Handles are inherited
+                       CREATE_NO_WINDOW|NORMAL_PRIORITY_CLASS, // Creation flags
+                       NULL,          // Use parent's environment
+                       NULL,          // Use parent's current directory
                        &siStartInfo,
-                       &piProcInfo))
+                       &piProcInfo) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Could not create process %s",
                  osCommandLine.c_str());
         goto err;
     }
 
-    /* Close unused end of pipe */
+    // Close unused end of pipe.
     if( bCreateInputPipe )
         CloseHandle(pipe_in[IN_FOR_PARENT]);
     if( bCreateOutputPipe )
@@ -331,25 +351,29 @@ CPLSpawnedProcess* CPLSpawnAsync(
     if( bCreateErrorPipe )
         CloseHandle(pipe_err[OUT_FOR_PARENT]);
 
-    p = (CPLSpawnedProcess*)CPLMalloc(sizeof(CPLSpawnedProcess));
-    p->hProcess = piProcInfo.hProcess;
-    p->nProcessId = piProcInfo.dwProcessId;
-    p->hThread = piProcInfo.hThread;
-    p->fin = pipe_out[IN_FOR_PARENT];
-    p->fout = pipe_in[OUT_FOR_PARENT];
-    p->ferr = pipe_err[IN_FOR_PARENT];
-    return p;
+    {
+        CPLSpawnedProcess* p = static_cast<CPLSpawnedProcess *>(
+            CPLMalloc(sizeof(CPLSpawnedProcess)));
+        p->hProcess = piProcInfo.hProcess;
+        p->nProcessId = piProcInfo.dwProcessId;
+        p->hThread = piProcInfo.hThread;
+        p->fin = pipe_out[IN_FOR_PARENT];
+        p->fout = pipe_in[OUT_FOR_PARENT];
+        p->ferr = pipe_err[IN_FOR_PARENT];
+
+        return p;
+    }
 
 err_pipe:
     CPLError(CE_Failure, CPLE_AppDefined, "Could not create pipe");
 err:
-    for( int i=0; i < 2; i++ )
+    for( int i = 0; i < 2; i++ )
     {
-        if (pipe_in[i] != NULL)
+        if( pipe_in[i] != NULL )
             CloseHandle(pipe_in[i]);
-        if (pipe_out[i] != NULL)
+        if( pipe_out[i] != NULL )
             CloseHandle(pipe_out[i]);
-        if (pipe_err[i] != NULL)
+        if( pipe_err[i] != NULL )
             CloseHandle(pipe_err[i]);
     }
 
@@ -380,7 +404,9 @@ int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, int /* bKill */ )
         GetExitCodeProcess(p->hProcess, &exitCode);
     }
     else
+    {
         exitCode = 0;
+    }
 
     CloseHandle(p->hProcess);
     CloseHandle(p->hThread);
@@ -390,7 +416,7 @@ int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, int /* bKill */ )
     CPLSpawnAsyncCloseErrorFileHandle(p);
     CPLFree(p);
 
-    return (int)exitCode;
+    return static_cast<int>(exitCode);
 }
 
 /************************************************************************/
@@ -445,11 +471,11 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess* p)
  */
 int CPLPipeRead( CPL_FILE_HANDLE fin, void* data, int length )
 {
-    GByte* pabyData = reinterpret_cast<GByte*>( data );
+    GByte* pabyData = static_cast<GByte*>( data );
     int nRemain = length;
     while( nRemain > 0 )
     {
-        while(true)
+        while( true )
         {
             const int n = static_cast<int>(read(fin, pabyData, nRemain));
             if( n < 0 )
@@ -486,7 +512,7 @@ int CPLPipeRead( CPL_FILE_HANDLE fin, void* data, int length )
  */
 int CPLPipeWrite( CPL_FILE_HANDLE fout, const void* data, int length )
 {
-    const GByte* pabyData = reinterpret_cast<const GByte*>( data );
+    const GByte* pabyData = static_cast<const GByte*>( data );
     int nRemain = length;
     while( nRemain > 0 )
     {
@@ -560,35 +586,41 @@ struct _CPLSpawnedProcess
  * @param pfnMain the function to run in the child process (Unix only).
  * @param papszArgv argument list of the executable to run. papszArgv[0] is the
  *                  name of the executable.
- * @param bCreateInputPipe set to TRUE to create a pipe for the child input stream.
- * @param bCreateOutputPipe set to TRUE to create a pipe for the child output stream.
- * @param bCreateErrorPipe set to TRUE to create a pipe for the child error stream.
+ * @param bCreateInputPipe set to TRUE to create a pipe for the child
+ * input stream.
+ * @param bCreateOutputPipe set to TRUE to create a pipe for the child
+ * output stream.
+ * @param bCreateErrorPipe set to TRUE to create a pipe for the child
+ * error stream.
+
  *
  * @return a handle, that must be freed with CPLSpawnAsyncFinish()
  *
  * @since GDAL 1.10.0
  */
-CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE),
-                                 const char * const papszArgv[],
-                                 int bCreateInputPipe,
-                                 int bCreateOutputPipe,
-                                 int bCreateErrorPipe,
-                                 char** /* papszOptions */ )
+CPLSpawnedProcess* CPLSpawnAsync( int (*pfnMain)(CPL_FILE_HANDLE,
+                                                 CPL_FILE_HANDLE),
+                                  const char * const papszArgv[],
+                                  int bCreateInputPipe,
+                                  int bCreateOutputPipe,
+                                  int bCreateErrorPipe,
+                                  char** /* papszOptions */ )
 {
     int pipe_in[2] = { -1, -1 };
     int pipe_out[2] = { -1, -1 };
     int pipe_err[2] = { -1, -1 };
-    bool bDup2In = CPL_TO_BOOL(bCreateInputPipe);
-    bool bDup2Out = CPL_TO_BOOL(bCreateOutputPipe);
-    bool bDup2Err = CPL_TO_BOOL(bCreateErrorPipe);
 
-    if ((bCreateInputPipe && pipe(pipe_in)) ||
+    if( (bCreateInputPipe && pipe(pipe_in)) ||
         (bCreateOutputPipe && pipe(pipe_out)) ||
-        (bCreateErrorPipe && pipe(pipe_err)))
+        (bCreateErrorPipe && pipe(pipe_err)) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Could not create pipe");
         return NULL;
     }
+
+    bool bDup2In = CPL_TO_BOOL(bCreateInputPipe);
+    bool bDup2Out = CPL_TO_BOOL(bCreateOutputPipe);
+    bool bDup2Err = CPL_TO_BOOL(bCreateErrorPipe);
 
     char** papszArgvDup = CSLDuplicate( const_cast<char **>( papszArgv ) );
 
@@ -662,17 +694,28 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
             bHasActions = true;
         }
 
-        pid_t pid;
+        pid_t pid = 0;
         if( posix_spawnp(&pid, papszArgvDup[0],
                          bHasActions ? &actions : NULL,
                          NULL,
-                         reinterpret_cast<char* const*>( papszArgvDup ),
+                         papszArgvDup,
                          environ) != 0 )
         {
             if( bHasActions )
                 posix_spawn_file_actions_destroy(&actions);
             CPLError(CE_Failure, CPLE_AppDefined, "posix_spawnp() failed");
-            goto err;
+            CSLDestroy(papszArgvDup);
+            for( int i = 0; i < 2; i++ )
+            {
+                if( pipe_in[i] >= 0 )
+                    close(pipe_in[i]);
+                if( pipe_out[i] >= 0 )
+                    close(pipe_out[i]);
+                if( pipe_err[i] >= 0 )
+                    close(pipe_err[i]);
+            }
+
+            return NULL;
         }
 
         CSLDestroy(papszArgvDup);
@@ -702,18 +745,22 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
     }
 #endif // #ifdef HAVE_POSIX_SPAWNP
 
-    pid_t pid;
+    pid_t pid = 0;
+
 #if defined(HAVE_VFORK) && !defined(HAVE_POSIX_SPAWNP)
     if( papszArgv != NULL && !bDup2In && !bDup2Out && !bDup2Err )
     {
-        /* Workaround clang static analyzer warning about unsafe use of vfork */
+        // Workaround clang static analyzer warning about unsafe use of vfork.
         pid_t (*p_vfork)(void) = vfork;
         pid = p_vfork();
     }
     else
 #endif
+    {
         pid = fork();
-    if (pid == 0)
+    }
+
+    if( pid == 0 )
     {
         // Close unused end of pipe.
         if( bDup2In )
@@ -733,7 +780,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
             if( bDup2Err )
                 dup2(pipe_err[OUT_FOR_PARENT], fileno(stderr));
 
-            execvp(papszArgvDup[0], (char* const*) papszArgvDup);
+            execvp(papszArgvDup[0], papszArgvDup);
 
             _exit(1);
         }
@@ -764,7 +811,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
         if( bCreateErrorPipe )
             close(pipe_err[OUT_FOR_PARENT]);
 
-        /* Ignore SIGPIPE */
+        // Ignore SIGPIPE.
 #ifdef SIGPIPE
         std::signal( SIGPIPE, SIG_IGN );
 #endif
@@ -779,21 +826,17 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
         p->ferr = pipe_err[IN_FOR_PARENT];
         return p;
     }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Fork failed");
-        goto err;
-    }
 
-err:
+    CPLError(CE_Failure, CPLE_AppDefined, "Fork failed");
+
     CSLDestroy(papszArgvDup);
     for( int i = 0; i < 2; i++ )
     {
-        if (pipe_in[i] >= 0)
+        if( pipe_in[i] >= 0 )
             close(pipe_in[i]);
-        if (pipe_out[i] >= 0)
+        if( pipe_out[i] >= 0 )
             close(pipe_out[i]);
-        if (pipe_err[i] >= 0)
+        if( pipe_err[i] >= 0 )
             close(pipe_err[i]);
     }
 
@@ -828,22 +871,20 @@ CPL_PID CPLSpawnAsyncGetChildProcessId( CPLSpawnedProcess* p )
  * @since GDAL 1.10.0
  */
 
-/**/
-/**/
-
-int CPLSpawnAsyncFinish( CPLSpawnedProcess* p, int bWait, int /* bKill */ )
+int CPLSpawnAsyncFinish( CPLSpawnedProcess* p, int bWait,
+                         CPL_UNUSED int bKill )
 {
     int status = 0;
 
     if( bWait )
     {
-        while( 1 )
+        while( true )
         {
             status = -1;
             const int ret = waitpid (p->pid, &status, 0);
             if( ret < 0 )
             {
-                if (errno != EINTR)
+                if( errno != EINTR )
                 {
                     break;
                 }

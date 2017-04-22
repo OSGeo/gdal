@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_extra.c 2691 2015-12-06 21:54:31Z rouault $
+ * $Id: geo_extra.c 2741 2016-09-04 18:50:49Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize a few common PCS values without use of CSV

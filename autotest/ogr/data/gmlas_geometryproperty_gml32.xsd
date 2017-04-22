@@ -50,6 +50,13 @@
         <xs:element name="curveProperty" type="gml:CurvePropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>
         <xs:element name="surfaceProperty" type="gml:SurfacePropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>
         <xs:element name="pointPropertyRepeated" type="gml:PointPropertyType" nillable="true" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element name="myCustomPointProperty" nillable="true" minOccurs="0" maxOccurs="1">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element ref="gml:Point"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
       </xs:sequence>
     </xs:extension>
   </xs:complexContent>

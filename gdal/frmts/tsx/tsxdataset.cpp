@@ -93,12 +93,12 @@ public:
     TSXDataset();
     virtual ~TSXDataset();
 
-    virtual int GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    CPLErr GetGeoTransform( double* padfTransform);
-    const char* GetProjectionRef();
+    CPLErr GetGeoTransform( double* padfTransform) override;
+    const char* GetProjectionRef() override;
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static int Identify( GDALOpenInfo *poOpenInfo );
@@ -120,7 +120,7 @@ public:
         ePolarization ePol, GDALDataset *poBand );
     virtual ~TSXRasterBand();
 
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage ) override;
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
 };

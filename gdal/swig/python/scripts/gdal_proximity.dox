@@ -1,7 +1,12 @@
 
-/*! \page gdal_proximity gdal_proximity.py
+/*!
+\if man
+\page gdal_proximity
+\else
+\page gdal_proximity gdal_proximity.py
+\endif
 
-produces a raster proximity map
+Produces a raster proximity map.
 
 \section gdal_proximity_synopsis SYNOPSIS
 

@@ -165,8 +165,7 @@ GDALDataset* PCRasterDataset::createCopy(
   }
 
   // The in-memory type of the cells.
-  CSF_CR appCellRepresentation = CR_UNDEFINED;
-  appCellRepresentation = GDALType2CellRepresentation(
+  CSF_CR appCellRepresentation = GDALType2CellRepresentation(
          raster->GetRasterDataType(), true);
 
   if(appCellRepresentation == CR_UNDEFINED) {

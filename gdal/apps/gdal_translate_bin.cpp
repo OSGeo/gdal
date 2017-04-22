@@ -256,8 +256,8 @@ int main( int argc, char ** argv )
 /*      Handle subdatasets.                                             */
 /* -------------------------------------------------------------------- */
     if( !psOptionsForBinary->bCopySubDatasets
-        && CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0
-        && GDALGetRasterCount(hDataset) == 0 )
+        && GDALGetRasterCount(hDataset) == 0
+        && CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0 )
     {
         fprintf( stderr,
                  "Input file contains subdatasets. Please, select one of them for reading.\n" );
@@ -266,8 +266,8 @@ int main( int argc, char ** argv )
         exit( 1 );
     }
 
-    if( CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0
-        && psOptionsForBinary->bCopySubDatasets )
+    if( psOptionsForBinary->bCopySubDatasets &&
+        CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0 )
     {
         char **papszSubdatasets = GDALGetMetadata(hDataset,"SUBDATASETS");
         char *pszSubDest = (char *) CPLMalloc(strlen(psOptionsForBinary->pszDest)+32);

@@ -6,7 +6,7 @@ g2int g2_unpack6(unsigned char *cgrib,g2int *iofst,g2int ngpts,g2int *ibmap,
                g2int **bmap)
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_unpack6 
+// SUBPROGRAM:    g2_unpack6
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-31
 //
 // ABSTRACT: This subroutine unpacks Section 6 (Bit-Map Section)
@@ -22,14 +22,14 @@ g2int g2_unpack6(unsigned char *cgrib,g2int *iofst,g2int ngpts,g2int *ibmap,
 //     iofst    - Bit offset of the beginning of Section 6 in cgrib.
 //     ngpts    - Number of grid points specified in the bit-map
 //
-//   OUTPUT ARGUMENTS:      
+//   OUTPUT ARGUMENTS:
 //     iofst    - Bit offset at the end of Section 6, returned.
 //     ibmap    - Bitmap indicator ( see Code Table 6.0 )
 //                0 = bitmap applies and is included in Section 6.
 //                1-253 = Predefined bitmap applies
 //                254 = Previously defined bitmap applies to this field
 //                255 = Bit map does not apply to this product.
-//     bmap     - Pointer to an integer array containing decoded bitmap. 
+//     bmap     - Pointer to an integer array containing decoded bitmap.
 //                ( if ibmap=0 )
 //
 //   RETURN VALUES:
@@ -56,7 +56,7 @@ g2int g2_unpack6(unsigned char *cgrib,g2int *iofst,g2int ngpts,g2int *ibmap,
 
       *iofst=*iofst+32;    // skip Length of Section
       gbit(cgrib,&isecnum,*iofst,8);         // Get Section Number
-      *iofst=*iofst+8; 
+      *iofst=*iofst+8;
 
       if ( isecnum != 6 ) {
          ierr=2;
@@ -76,7 +76,7 @@ g2int g2_unpack6(unsigned char *cgrib,g2int *iofst,g2int ngpts,g2int *ibmap,
          else {
             *bmap=lbmap;
          }
-         intbmap=(g2int *)calloc(ngpts,sizeof(g2int));  
+         intbmap=(g2int *)calloc(ngpts,sizeof(g2int));
          gbits(cgrib,intbmap,*iofst,1,0,ngpts);
          *iofst=*iofst+ngpts;
          for (j=0;j<ngpts;j++) {
@@ -91,7 +91,7 @@ g2int g2_unpack6(unsigned char *cgrib,g2int *iofst,g2int ngpts,g2int *ibmap,
 //        print *,'gf_unpack6: Predefined bitmap ',*ibmap,' not recognized.'
 //        ierr=4;
       }
-      
+
       return(ierr);    // End of Section 6 processing
 
 }

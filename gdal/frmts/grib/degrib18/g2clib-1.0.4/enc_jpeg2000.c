@@ -26,7 +26,7 @@ int enc_jpeg2000(CPL_UNUSED unsigned char *cin,
 #endif /* USE_JPEG2000_J2KSUBFILE */
 
 int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
-                 g2int ltype, g2int ratio, g2int retry, char *outjpc, 
+                 g2int ltype, g2int ratio, g2int retry, char *outjpc,
                  g2int jpclen)
 /*$$$  SUBPROGRAM DOCUMENTATION BLOCK
 *                .      .    .                                       .
@@ -34,8 +34,8 @@ int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
 *   PRGMMR: Gilbert          ORG: W/NP11     DATE: 2002-12-02
 *
 * ABSTRACT: This Function encodes a grayscale image into a JPEG2000 code stream
-*   specified in the JPEG2000 Part-1 standard (i.e., ISO/IEC 15444-1) 
-*   using JasPer Software version 1.500.4 (or 1.700.2 ) written by the 
+*   specified in the JPEG2000 Part-1 standard (i.e., ISO/IEC 15444-1)
+*   using JasPer Software version 1.500.4 (or 1.700.2 ) written by the
 *   University of British Columbia, Image Power Inc, and others.
 *   JasPer is available at http://www.ece.uvic.ca/~mdadams/jasper/.
 *
@@ -46,7 +46,7 @@ int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
 *                       JPEG2000 algorithm.
 *
 * USAGE:    int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,
-*                            g2int nbits, g2int ltype, g2int ratio, 
+*                            g2int nbits, g2int ltype, g2int ratio,
 *                            g2int retry, char *outjpc, g2int jpclen)
 *
 *   INPUT ARGUMENTS:
@@ -87,7 +87,7 @@ int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
 {
 
 #ifdef USE_JPEG2000_J2KSUBFILE
-     
+
     // J2KSUBFILE method ... TODO!!
     return 0;
 
@@ -123,17 +123,17 @@ int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
        strcat(opts,"\nnumgbits=4");
     }
     //printf("SAGopts: %s\n",opts);
-    
+
 //
 //     Initialize the JasPer image structure describing the grayscale
 //     image to encode into the JPEG2000 code stream.
 //
     image.tlx_=0;
     image.tly_=0;
-#ifdef JAS_1_500_4 
+#ifdef JAS_1_500_4
     image.brx_=(uint_fast32_t)width;
     image.bry_=(uint_fast32_t)height;
-#endif 
+#endif
 #ifdef JAS_1_700_2
     image.brx_=(jas_image_coord_t)width;
     image.bry_=(jas_image_coord_t)height;
@@ -145,7 +145,7 @@ int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
 #endif
 #ifdef JAS_1_700_2
     image.clrspc_=JAS_CLRSPC_SGRAY;         /* grayscale Image */
-    image.cmprof_=0; 
+    image.cmprof_=0;
 #endif
     image.inmem_=1;
 
@@ -191,7 +191,7 @@ int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
     }
 //
 //     Clean up JasPer work structures.
-//    
+//
     rwcnt=jpcstream->rwcnt_;
     ier=jas_stream_close(istream);
     ier=jas_stream_close(jpcstream);

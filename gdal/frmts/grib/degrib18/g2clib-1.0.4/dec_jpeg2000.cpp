@@ -1,38 +1,25 @@
 #include <cpl_port.h>
 
-#include "grib2.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-/* -------------------------------------------------------------------- */
-/* ==================================================================== */
-/*      We prefer to use JasPer directly if it is available.  If not    */
-/*      we fallback on calling back to GDAL to try and process the      */
-/*      jpeg2000 chunks.                                                */
-/* ==================================================================== */
-/* -------------------------------------------------------------------- */
 
 #include <gdal_pam.h>
 #include <cpl_conv.h>
 
 CPL_C_START
-// Should this go in an include file?  Otherwise it should be static, correct?
-int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld);
+#include "grib2.h"
 CPL_C_END
 
-int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
+int dec_jpeg2000(const void *injpc,g2int bufsize,g2int *outfld,g2int outpixels)
 /*$$$  SUBPROGRAM DOCUMENTATION BLOCK
 *                .      .    .                                       .
 * SUBPROGRAM:    dec_jpeg2000      Decodes JPEG2000 code stream
 *   PRGMMR: Gilbert          ORG: W/NP11     DATE: 2002-12-02
 *
 * ABSTRACT: This Function decodes a JPEG2000 code stream specified in the
-*   JPEG2000 Part-1 standard (i.e., ISO/IEC 15444-1) using JasPer
-*   Software version 1.500.4 (or 1.700.2) written by the University of British
-*   Columbia and Image Power Inc, and others.
-*   JasPer is available at http://www.ece.uvic.ca/~mdadams/jasper/.
+*   JPEG2000 Part-1 standard (i.e., ISO/IEC 15444-1) using a GDAL JPEG2000
+*   capable driver.
 *
 * PROGRAM HISTORY LOG:
 * 2002-12-02  Gilbert
@@ -51,11 +38,7 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
 *         -3 = Error decode jpeg2000 code stream.
 *         -5 = decoded image had multiple color components.
 *              Only grayscale is expected.
-*
-* REMARKS:
-*
-*      Requires JasPer Software version 1.500.4 or 1.700.2
-*
+
 * ATTRIBUTES:
 *   LANGUAGE: C
 *   MACHINE:  IBM SP
@@ -94,6 +77,16 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
     // Fulfill administration: initialize parameters required for RasterIO
     const int nXSize = poJ2KDataset->GetRasterXSize();
     const int nYSize = poJ2KDataset->GetRasterYSize();
+    // Do not test strict equality, since there are cases where the image
+    // is actually smaller than the requested number of pixels
+    if( nYSize == 0 || nXSize > outpixels / nYSize )
+    {
+        fprintf(stderr, "dec_jpeg2000: Image contains %d pixels > %d.\n",
+                nXSize * nYSize, outpixels);
+       GDALClose( poJ2KDataset );
+       VSIUnlink( osFileName );
+       return (-5);
+    }
     int nXOff = 0;
     int nYOff = 0;
     int nBufXSize = nXSize;

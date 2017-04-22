@@ -30,16 +30,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal_priv.h"
+#include "gdalexif.h"
+
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
 #include <vector>
 
 #include "cpl_conv.h"
-#include "cpl_port.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
-
-#include "gdal_priv.h"
-#include "gdalexif.h"
 
 using std::vector;
 
@@ -299,7 +307,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
               poExifTags++)
         {
             if(poExifTags->tag == poTIFFDirEntry->tdir_tag) {
-                CPLAssert( NULL != poExifTags && NULL != poExifTags->name );
+                CPLAssert( NULL != poExifTags->name );
 
                 CPLStrlcpy(szName, poExifTags->name, sizeof(szName));
                 break;
@@ -312,7 +320,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
                  poGPSTags++ )
             {
                 if( poGPSTags->tag == poTIFFDirEntry->tdir_tag ) {
-                    CPLAssert( NULL != poGPSTags && NULL != poGPSTags->name );
+                    CPLAssert( NULL != poGPSTags->name );
                     CPLStrlcpy(szName, poGPSTags->name, sizeof(szName));
                     break;
                 }
@@ -325,7 +333,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
             const struct intr_tag *poInterTags = intr_tags;
             for( ; poInterTags->tag; poInterTags++)
                 if(poInterTags->tag == poTIFFDirEntry->tdir_tag) {
-                    CPLAssert( NULL != poInterTags && NULL != poInterTags->name );
+                    CPLAssert( NULL != poInterTags->name );
                     CPLStrlcpy(szName, poInterTags->name, sizeof(szName));
                     break;
                 }
@@ -352,7 +360,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 /* -------------------------------------------------------------------- */
         if( szName[0] == '\0' )
         {
-            snprintf( szName, sizeof(szName), "EXIF_%d", poTIFFDirEntry->tdir_tag );
+            snprintf( szName, sizeof(szName), "EXIF_%u", poTIFFDirEntry->tdir_tag );
             continue;
         }
 

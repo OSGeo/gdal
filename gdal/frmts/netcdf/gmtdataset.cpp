@@ -27,12 +27,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+
+#include <cstddef>
+#include <cstring>
+#include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
+#include "cpl_progress.h"
+#include "gdal.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gdal_priv.h"
 #include "netcdf.h"
-
-#include <algorithm>
+#include "ogr_core.h"
 
 CPL_CVSID("$Id$");
 
@@ -64,7 +74,7 @@ class GMTDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr      GetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
 };
 
 /************************************************************************/
@@ -83,7 +93,7 @@ class GMTRasterBand : public GDALPamRasterBand
     GMTRasterBand( GMTDataset *poDS, int nZId, int nBand );
     virtual ~GMTRasterBand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

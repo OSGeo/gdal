@@ -333,7 +333,7 @@ static void AddGenericAttributes( NTFFileReader * poReader,
                                        &pszAttLongName, &pszAttValue,
                                        &pszCodeDesc );
 
-            if( poFeature->IsFieldSet( iListField ) )
+            if( poFeature->IsFieldSetAndNotNull( iListField ) )
             {
                 poFeature->SetField( iListField,
                     CPLSPrintf( "%s,%s",

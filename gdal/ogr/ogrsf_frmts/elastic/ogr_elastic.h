@@ -34,15 +34,8 @@
 #include "ogr_p.h"
 #include "cpl_hash_set.h"
 #include <vector>
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic ignored "-Wdocumentation"
-#endif
-#include <json.h>
-#ifdef __clang
-#pragma clang diagnostic pop
-#endif
+
+#include "ogr_json_header.h"
 
 typedef enum
 {
@@ -52,6 +45,21 @@ typedef enum
 } ESGeometryTypeMapping;
 
 class OGRElasticDataSource;
+
+
+class OGRESSortDesc
+{
+    public:
+        CPLString osColumn;
+        bool      bAsc;
+
+        OGRESSortDesc( const CPLString& osColumnIn, bool bAscIn ) :
+            osColumn(osColumnIn),
+            bAsc(bAscIn) {}
+        OGRESSortDesc(const OGRESSortDesc& other) :
+            osColumn(other.osColumn),
+            bAsc(other.bAsc) {}
+};
 
 /************************************************************************/
 /*                          OGRElasticLayer                             */
@@ -73,8 +81,10 @@ class OGRElasticLayer : public OGRLayer {
     char                               **m_papszStoredFields;
     char                               **m_papszNotAnalyzedFields;
     char                               **m_papszNotIndexedFields;
+    char                               **m_papszFieldsWithRawValue;
 
     CPLString                            m_osESSearch;
+    std::vector<OGRESSortDesc>           m_aoSortColumns;
 
     CPLString                            m_osBulkContent;
     int                                  m_nBulkUpload;
@@ -100,6 +110,8 @@ class OGRElasticLayer : public OGRLayer {
 
     json_object*                          m_poSpatialFilter;
     CPLString                             m_osJSONFilter;
+    bool                                  m_bFilterMustBeClientSideEvaluated;
+    json_object*                          m_poJSONFilter;
 
     bool                                  m_bIgnoreSourceID;
     bool                                  m_bDotAsNestedField;
@@ -137,6 +149,12 @@ class OGRElasticLayer : public OGRLayer {
                                             const std::vector<CPLString>& aosPath,
                                             int bIsGeoPoint );
 
+    CPLString                             BuildQuery(bool bCountOnly);
+    json_object*                          GetValue( int nFieldIdx,
+                                                    swq_expr_node* poValNode );
+    json_object*                          TranslateSQLToFilter(swq_expr_node* poNode);
+    json_object*                          BuildSort();
+
 public:
                         OGRElasticLayer( const char* pszLayerName,
                                          const char* pszIndexName,
@@ -146,30 +164,30 @@ public:
                                          const char* pszESSearch = NULL);
                         virtual ~OGRElasticLayer();
 
-    virtual void        ResetReading();
-    virtual OGRFeature *GetNextFeature();
+    virtual void        ResetReading() override;
+    virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRErr      ICreateFeature(OGRFeature *poFeature);
-    virtual OGRErr      ISetFeature(OGRFeature *poFeature);
-    virtual OGRErr      CreateField(OGRFieldDefn *poField, int bApproxOK);
-    virtual OGRErr      CreateGeomField(OGRGeomFieldDefn *poField, int bApproxOK);
+    virtual OGRErr      ICreateFeature(OGRFeature *poFeature) override;
+    virtual OGRErr      ISetFeature(OGRFeature *poFeature) override;
+    virtual OGRErr      CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    virtual OGRErr      CreateGeomField(OGRGeomFieldDefn *poField, int bApproxOK) override;
 
-    virtual const char* GetName() { return m_poFeatureDefn->GetName(); }
-    virtual OGRFeatureDefn *GetLayerDefn();
-    virtual const char *GetFIDColumn();
+    virtual const char* GetName() override { return m_poFeatureDefn->GetName(); }
+    virtual OGRFeatureDefn *GetLayerDefn() override;
+    virtual const char *GetFIDColumn() override;
 
-    virtual int         TestCapability(const char *);
+    virtual int         TestCapability(const char *) override;
 
-    virtual GIntBig     GetFeatureCount(int bForce);
+    virtual GIntBig     GetFeatureCount(int bForce) override;
 
-    virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );
-    virtual OGRErr      SetAttributeFilter(const char* pszFilter);
+    virtual void        SetSpatialFilter( OGRGeometry *poGeom ) override { SetSpatialFilter(0, poGeom); }
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override;
+    virtual OGRErr      SetAttributeFilter(const char* pszFilter) override;
 
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) { return GetExtent(0, psExtent, bForce); }
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override { return GetExtent(0, psExtent, bForce); }
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE) override;
 
-    virtual OGRErr      SyncToDisk();
+    virtual OGRErr      SyncToDisk() override;
 
     void                FinalizeFeatureDefn(bool bReadFeatures = true);
     void                InitFeatureDefnFromMapping(json_object* poSchema,
@@ -184,6 +202,10 @@ public:
     void                SetDotAsNestedField( bool bFlag ) { m_bDotAsNestedField = bFlag; }
     void                SetFID(const CPLString& m_osFIDIn) { m_osFID = m_osFIDIn; }
     void                SetNextFID(GIntBig nNextFID) { m_nNextFID = nNextFID; }
+
+    OGRElasticLayer*    Clone() const;
+    void                SetOrderBy( const std::vector<OGRESSortDesc>& v )
+                                                        { m_aoSortColumns = v; }
 };
 
 /************************************************************************/
@@ -197,6 +219,10 @@ class OGRElasticDataSource : public GDALDataset {
 
     OGRElasticLayer   **m_papoLayers;
     int                 m_nLayers;
+    std::map<OGRLayer*, OGRLayer*> m_oMapResultSet;
+
+    bool                CheckVersion();
+    int                 GetLayerIndex( const char* pszName );
 
 public:
                             OGRElasticDataSource();
@@ -210,6 +236,7 @@ public:
     int                 m_nFeatureCountToEstablishFeatureDefn;
     bool                m_bJSonField;
     bool                m_bFlattenNestedAttributes;
+    int                 m_nMajorVersion;
 
     int Open(GDALOpenInfo* poOpenInfo);
 
@@ -220,24 +247,24 @@ public:
 
     virtual const char *GetName() { return m_pszName; }
 
-    virtual int         GetLayerCount() { return m_nLayers; }
-    virtual OGRLayer   *GetLayer(int);
+    virtual int         GetLayerCount() override { return m_nLayers; }
+    virtual OGRLayer   *GetLayer(int) override;
 
     virtual OGRLayer   *ICreateLayer(const char * pszLayerName,
                                     OGRSpatialReference *poSRS,
                                     OGRwkbGeometryType eType,
-                                    char ** papszOptions);
-    virtual OGRErr      DeleteLayer( int iLayer );
+                                    char ** papszOptions) override;
+    virtual OGRErr      DeleteLayer( int iLayer ) override;
 
     virtual OGRLayer   *ExecuteSQL( const char *pszSQLCommand,
                                             OGRGeometry *poSpatialFilter,
-                                            const char *pszDialect );
-    virtual void        ReleaseResultSet( OGRLayer * poLayer );
+                                            const char *pszDialect ) override;
+    virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
-    virtual int         TestCapability(const char *);
+    virtual int         TestCapability(const char *) override;
 
-    bool                 UploadFile(const CPLString &url, const CPLString &data);
-    void                Delete(const CPLString &url);
+    static bool         UploadFile(const CPLString &url, const CPLString &data);
+    static void         Delete(const CPLString &url);
 
     json_object*        RunRequest(const char* pszURL, const char* pszPostContent = NULL);
     const CPLString&    GetFID() const { return m_osFID; }

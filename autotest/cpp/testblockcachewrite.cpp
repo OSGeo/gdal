@@ -28,10 +28,11 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
-#include "cpl_string.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
 #include "gdal_priv.h"
-#include <assert.h>
+
+#include <cassert>
 
 class MyRasterBand: public GDALRasterBand
 {

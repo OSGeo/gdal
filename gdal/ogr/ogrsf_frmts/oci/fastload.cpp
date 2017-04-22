@@ -73,7 +73,7 @@ int main()
     SDO_GEOMETRY_ind   aoGeometryIndicators[100];
     SDO_GEOMETRY_TYPE *apoGeomMap[100];
     SDO_GEOMETRY_ind  *apoGeomIndMap[100];
-    double adfX[100], adfY[100];
+    //double adfX[100], adfY[100];
 
     memset( aphElemInfos, 0, sizeof(OCIArray*) * 100 );
     memset( aphOrdinates, 0, sizeof(OCIArray*) * 100 );
@@ -123,12 +123,13 @@ int main()
 
     for( iRow = 0; iRow < 100; iRow++ )
     {
+        // cppcheck-suppress unreadVariable
         anField1[iRow] = iRow;
         sprintf( szField2 + iRow*4, "%3d", iRow );
         anGType[iRow] = 3001;
         anSRID[iRow] = -1;
-        adfX[iRow] = 100.0 + iRow;
-        adfY[iRow] = 100.0 - iRow;
+        //adfX[iRow] = 100.0 + iRow;
+        //adfY[iRow] = 100.0 - iRow;
 
         //---------------------------------------------------------------
         int anElemInfo[3], nElemInfoCount;

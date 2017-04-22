@@ -570,7 +570,7 @@ def ogr_shape_16_1():
         gdaltest.post_reason( 'Got wrong EAS_ID' )
         return 'fail'
 
-    if feat.IsFieldSet( 'NEWFLD' ):
+    if not feat.IsFieldNull( 'NEWFLD' ):
         gdaltest.post_reason( 'Expected NULL NEWFLD value!' )
         return 'fail'
 
@@ -1643,7 +1643,7 @@ def ogr_shape_39():
     lyr = ds.GetLayer(0)
     feat_read = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('MULTIPOLYGON (((5 4 10,0 0 5,10 0 5,5 4 10)),((5 4 10,10 0 5,10 8 5,5 4 10)),((5 4 10,10 8 5,0 8 5,5 4 10)),((5 4 10,0 8 5,0 0 5,5 4 10)),((10 0 5,10 0 0,10 8 5,10 0 5)),((10 0 0,10 8 5,10 8 0,10 0 0)),((10 8 5,10 8 0,0 8 5,10 8 5)),((10 8 0,0 8 5,0 8 0,10 8 0)),((0 8 5,0 8 0,0 0 5,0 8 5)),((0 8 0,0 0 5,0 0 0,0 8 0)),((0 0 0,0 0 5,10 0 5,10 0 0,6 0 0,6 0 3,4 0 3,4 0 0,0 0 0),(1 0 2,3 0 2,3 0 4,1 0 4,1 0 2),(7 0 2,9 0 2,9 0 4,7 0 4,7 0 2)))'),
+    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (TIN (((5 4 10,0 0 5,10 0 5,5 4 10)),((5 4 10,10 0 5,10 8 5,5 4 10)),((5 4 10,10 8 5,0 8 5,5 4 10)),((5 4 10,0 8 5,0 0 5,5 4 10))),TIN (((10 0 5,10 0 0,10 8 5,10 0 5)),((10 0 0,10 8 5,10 8 0,10 0 0)),((10 8 5,10 8 0,0 8 5,10 8 5)),((10 8 0,0 8 5,0 8 0,10 8 0)),((0 8 5,0 8 0,0 0 5,0 8 5)),((0 8 0,0 0 5,0 0 0,0 8 0))),MULTIPOLYGON (((0 0 0,0 0 5,10 0 5,10 0 0,6 0 0,6 0 3,4 0 3,4 0 0,0 0 0),(1 0 2,3 0 2,3 0 4,1 0 4,1 0 2),(7 0 2,9 0 2,9 0 4,7 0 4,7 0 2))))'),
                                 max_error = 0.000000001 ) != 0:
         print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
@@ -3083,7 +3083,7 @@ def ogr_shape_63():
     import struct
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_63.dbf')
-    lyr = ds.CreateLayer('ogr_shape_63')
+    lyr = ds.CreateLayer('ogr_shape_63', geom_type = ogr.wkbNone)
     gdaltest.fieldname = '\xc3\xa9'
     if lyr.CreateField(ogr.FieldDefn(gdaltest.fieldname, ogr.OFTString)) != 0:
         gdaltest.post_reason('failed')
@@ -3811,6 +3811,9 @@ def ogr_shape_81():
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,-1 -1)'))
+    lyr.CreateFeature(f)
     f = None
     ds = None
 
@@ -4532,7 +4535,7 @@ def ogr_shape_99():
     GEOGCS["GCS_CH1903",
         DATUM["CH1903",
             SPHEROID["Bessel_1841",6377397.155,299.1528128],
-            TOWGS84[674.4,15.1,405.3,0,0,0,0]],
+            TOWGS84[674.374,15.056,405.346,0,0,0,0]],
         PRIMEM["Greenwich",0.0],
         UNIT["Degree",0.0174532925199433]],
     PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],
@@ -4790,7 +4793,338 @@ def ogr_shape_101():
 
     return 'success'
 
+###############################################################################
+# Test reading invalid .prj
 
+def ogr_shape_102():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_102.shp')
+    lyr = ds.CreateLayer('ogr_shape_102', geom_type = ogr.wkbPoint)
+    ds = None
+    gdal.FileFromMemBuffer('/vsimem/ogr_shape_102.prj', 'invalid')
+    ds = ogr.Open('/vsimem/ogr_shape_102.shp')
+    lyr = ds.GetLayer(0)
+    lyr.GetSpatialRef()
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_102.shp')
+
+    return 'success'
+
+###############################################################################
+# Test handling of EOF character
+
+def check_EOF(filename, expected = True):
+
+    f = gdal.VSIFOpenL(filename, 'rb')
+    if f is None:
+        print('%s does not exist' % filename)
+        return False
+    size = gdal.VSIStatL(filename).size
+    content = gdal.VSIFReadL(1, size, f)
+    gdal.VSIFCloseL(f)
+    pos = content.find('\x1A'.encode('LATIN1'))
+    if expected:
+        if pos < 0:
+            print('Did not find EOF char')
+            return False
+        if pos != size - 1:
+            print('Found EOF char but not at end of file!')
+            return False
+    elif pos >= 0:
+        print('Found EOF char but we did not expect that !')
+        return False
+    return True
+
+def ogr_shape_103():
+
+    filename = '/vsimem/ogr_shape_103.dbf'
+
+    for (options, expected) in [ (['DBF_EOF_CHAR=YES'], True),
+                                ([], True),
+                                (['DBF_EOF_CHAR=NO'], False) ]:
+
+        options += [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ]
+
+        # Create empty file
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+        lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = options)
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            print(options)
+            return 'fail'
+
+        # Add field
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Add record
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Add another field
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.CreateField( ogr.FieldDefn('foo2', ogr.OFTString) )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Grow a field
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        fd = lyr.GetLayerDefn().GetFieldDefn(0)
+        new_fd = ogr.FieldDefn( fd.GetName(), fd.GetType() )
+        new_fd.SetWidth( fd.GetWidth() + 1 )
+        lyr.AlterFieldDefn(0, fd, ogr.ALTER_ALL_FLAG)
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Reorder fields
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.ReorderFields([1, 0])
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Shrink a field
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        fd = lyr.GetLayerDefn().GetFieldDefn(0)
+        new_fd = ogr.FieldDefn( fd.GetName(), fd.GetType() )
+        new_fd.SetWidth( fd.GetWidth() + 1 )
+        lyr.AlterFieldDefn(0, fd, ogr.ALTER_ALL_FLAG)
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Remove a field
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.DeleteField(0)
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+
+        # Create file with one field but no record
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+        lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = options)
+        lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+
+        # Create file with two records
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+        lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = options)
+        lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+        lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+        lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Test editing a record that is not the last one
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.SetFeature( lyr.GetNextFeature() )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Test editing the last record
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.GetNextFeature()
+        lyr.SetFeature( lyr.GetNextFeature() )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+
+    # Test appending to a file without a EOF marker
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+    lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = ['DBF_EOF_CHAR=NO'] + [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ])
+    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+    ds = None
+    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ])
+    lyr = ds.GetLayer(0)
+    lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+    ds.FlushCache()
+
+    if not check_EOF(filename):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+
+    # Test editing a record (that is not the last one ) in a file without a EOF marker
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+    lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = ['DBF_EOF_CHAR=NO'] + [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ])
+    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+    lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+    ds = None
+    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ])
+    lyr = ds.GetLayer(0)
+    lyr.SetFeature( lyr.GetNextFeature() )
+    ds = None
+
+    # To document our current behaviour. Could make sense to be changed.
+    if not check_EOF(filename, expected = False):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+    return 'success'
+
+###############################################################################
+# Test writing MULTIPATCH
+
+def ogr_shape_104():
+
+    for (wkt, lyr_type, options, expected_wkt) in \
+                [ ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [],  None ],
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,1 1 3,2 2 4,0 0 0)))', ogr.wkbUnknown, [], None], # triangle fan
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 1 2,1 1 3,4 4 5,0 1 2)))', ogr.wkbUnknown, [], None], # triangle strip
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [], None], # no fan no strip
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [],
+                        'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))'],
+                        # no fan no strip with duplicated triangle (as found in #5888)
+                  ['POLYHEDRALSURFACE Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                  ['GEOMETRYCOLLECTION Z (TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0))))', ogr.wkbUnknown, [],  'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))' ],
+                  ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbUnknown, [ 'SHPT=MULTIPATCH' ], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                  ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                  ['POLYGON Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                  ['MULTIPOLYGON Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+               ]:
+
+        if expected_wkt is None:
+            expected_wkt = wkt
+
+        filename = '/vsimem/ogr_shape_104.shp'
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+        lyr = ds.CreateLayer('ogr_shape_104', geom_type = lyr_type, options = options)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry( ogr.CreateGeometryFromWkt( wkt ) )
+        lyr.CreateFeature(f)
+        ds = None
+
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if f.GetGeometryRef().ExportToIsoWkt() != expected_wkt:
+            gdaltest.post_reason('fail')
+            print(wkt, lyr_type, options)
+            f.DumpReadable()
+            return 'fail'
+        ds = None
+
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+    return 'success'
+
+###############################################################################
+# Test reading .dbf with substantial padding after last field definition.
+
+def ogr_shape_105():
+
+    ds = ogr.Open('data/padding_after_field_defns.dbf')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['id'] != '1' or f['foo'] != '2':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that rewriting the last shape reuses the space it took. (#6787)
+
+def ogr_shape_106():
+
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_106.shp')
+    lyr = ds.CreateLayer('ogr_shape_81')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    size = gdal.VSIStatL('/vsimem/ogr_shape_106.shp').size
+    if size != 188:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    ds = ogr.Open('/vsimem/ogr_shape_106.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    # Write larger shape
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(2 2,3 3,4 4)'))
+    lyr.SetFeature(f)
+    ds = None
+
+    size = gdal.VSIStatL('/vsimem/ogr_shape_106.shp').size
+    if size != 188 + 2 * 8:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_106.shp' )
+
+    return 'success'
+
+###############################################################################
 def ogr_shape_cleanup():
 
     if gdaltest.shape_ds is None:
@@ -4935,9 +5269,14 @@ gdaltest_list = [
     ogr_shape_99,
     ogr_shape_100,
     ogr_shape_101,
+    ogr_shape_102,
+    ogr_shape_103,
+    ogr_shape_104,
+    ogr_shape_105,
+    ogr_shape_106,
     ogr_shape_cleanup ]
 
-# gdaltest_list = [ ogr_shape_101 ]
+# gdaltest_list = [ ogr_shape_106 ]
 
 if __name__ == '__main__':
 

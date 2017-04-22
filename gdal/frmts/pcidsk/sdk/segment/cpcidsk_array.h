@@ -52,15 +52,15 @@ namespace PCIDSK
         virtual     ~CPCIDSK_ARRAY();
 
         // CPCIDSK_ARRAY
-        unsigned char GetDimensionCount() const ;
-        void SetDimensionCount(unsigned char nDim) ;
-        const std::vector<unsigned int>& GetSizes() const ;
-        void SetSizes(const std::vector<unsigned int>& oSizes) ;
-        const std::vector<double>& GetArray() const ;
-        void SetArray(const std::vector<double>& oArray) ;
+        unsigned char GetDimensionCount() const override ;
+        void SetDimensionCount(unsigned char nDim) override ;
+        const std::vector<unsigned int>& GetSizes() const override ;
+        void SetSizes(const std::vector<unsigned int>& oSizes) override ;
+        const std::vector<double>& GetArray() const override ;
+        void SetArray(const std::vector<double>& oArray) override ;
 
         //synchronize the segment on disk.
-        void Synchronize();
+        void Synchronize() override;
     private:
 
         //Headers are not supported by PCIDSK, we keep the function

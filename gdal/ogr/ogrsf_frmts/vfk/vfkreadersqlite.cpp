@@ -5,8 +5,8 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2012-2014, Martin Landa <landa.martin gmail.com>
- * Copyright (c) 2012-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2016, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2012-2016, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -212,6 +212,8 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
 
     if( m_bNewDb )
     {
+        OGRSpatialReference *poSRS;
+
         /* new DB, create support metadata tables */
         osCommand.Printf(
             "CREATE TABLE %s (file_name text, file_size integer, "
@@ -222,8 +224,35 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
 
         /* header table */
         osCommand.Printf(
-            "CREATE TABLE %s (key text, value text)", VFK_DB_HEADER);
+            "CREATE TABLE %s (key text, value text)", VFK_DB_HEADER_TABLE);
         ExecuteSQL(osCommand.c_str());
+
+        /* geometry_columns */
+        osCommand.Printf(
+            "CREATE TABLE %s (f_table_name text, f_geometry_column text, "
+            "geometry_type integer, coord_dimension integer, "
+            "srid integer, geometry_format text)", VFK_DB_GEOMETRY_TABLE);
+        ExecuteSQL(osCommand.c_str());
+
+        /* spatial_ref_sys */
+        osCommand.Printf(
+            "CREATE TABLE %s (srid interer, auth_name text, auth_srid text, "
+            "srtext text)", VFK_DB_SPATIAL_REF_TABLE);
+        ExecuteSQL(osCommand.c_str());
+
+        /* insert S-JTSK into spatial_ref_sys table */
+        poSRS = new OGRSpatialReference();
+        if (poSRS->importFromEPSG(5514) != OGRERR_FAILURE)
+        {
+            char *pszWKT = NULL;
+            poSRS->exportToWkt(&pszWKT);
+            osCommand.Printf("INSERT INTO %s (srid, auth_name, auth_srid, "
+                             "srtext) VALUES (5514, 'EPSG', 5514, '%s')",
+                             VFK_DB_SPATIAL_REF_TABLE, pszWKT);
+            ExecuteSQL(osCommand.c_str());
+            CPLFree(pszWKT);
+        }
+        delete poSRS;
     }
 }
 
@@ -444,7 +473,7 @@ void VFKReaderSQLite::StoreInfo2DB()
 
         CPLString osSQL;
         osSQL.Printf("INSERT INTO %s VALUES(\"%s\", %c%s%c)",
-                     VFK_DB_HEADER, i->first.c_str(),
+                     VFK_DB_HEADER_TABLE, i->first.c_str(),
                      q, value, q);
         ExecuteSQL(osSQL);
     }
@@ -568,7 +597,14 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
                          VFK_DB_TABLE, CPLGetFilename(m_pszFilename),
                          (GUIntBig) m_poFStat->st_size,
                          pszBlockName, pszDefn);
+        ExecuteSQL(osCommand.c_str());
 
+        int geom_type = ((VFKDataBlockSQLite *) poDataBlock)->GetGeometrySQLType();
+        /* update VFK_DB_GEOMETRY_TABLE */
+        osCommand.Printf("INSERT INTO %s (f_table_name, f_geometry_column, geometry_type, "
+                         "coord_dimension, srid, geometry_format) VALUES "
+                         "('%s', '%s', %d, 2, 5514, 'WKB')",
+                         VFK_DB_GEOMETRY_TABLE, pszBlockName, GEOM_COLUMN, geom_type);
         ExecuteSQL(osCommand.c_str());
 
         sqlite3_finalize(hStmt);
@@ -589,14 +625,14 @@ sqlite3_stmt *VFKReaderSQLite::PrepareStatement(const char *pszSQLCommand)
     CPLDebug("OGR-VFK", "VFKReaderSQLite::PrepareStatement(): %s", pszSQLCommand);
 
     sqlite3_stmt *hStmt = NULL;
-    const int rc = sqlite3_prepare(m_poDB, pszSQLCommand, -1,
+    const int rc = sqlite3_prepare_v2(m_poDB, pszSQLCommand, -1,
                                    &hStmt, NULL);
 
     // TODO(schwehr): if( rc == SQLITE_OK ) return NULL;
     if (rc != SQLITE_OK)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "In PrepareStatement(): sqlite3_prepare(%s):\n  %s",
+                 "In PrepareStatement(): sqlite3_prepare_v2(%s):\n  %s",
                  pszSQLCommand, sqlite3_errmsg(m_poDB));
 
         if(hStmt != NULL) {
@@ -700,17 +736,17 @@ OGRErr VFKReaderSQLite::AddFeature( IVFKDataBlock *poDataBlock,
             case OFTInteger:
                 osValue.Printf("%d", poProperty->GetValueI());
                 break;
+            case OFTInteger64:
+                osValue.Printf(CPL_FRMT_GIB, poProperty->GetValueI64());
+                break;
             case OFTReal:
                 osValue.Printf("%f", poProperty->GetValueD());
                 break;
             case OFTString:
-                if (poDataBlock->GetProperty(i)->IsIntBig())
-                    osValue.Printf("%s", poProperty->GetValueS());
-                else
-                    osValue.Printf("'%s'", poProperty->GetValueS(true));
+                osValue.Printf("'%s'", poProperty->GetValueS(true));
                 break;
             default:
-                osValue.Printf("'%s'", poProperty->GetValueS());
+                osValue.Printf("'%s'", poProperty->GetValueS(true));
                 break;
             }
         }
@@ -733,7 +769,7 @@ OGRErr VFKReaderSQLite::AddFeature( IVFKDataBlock *poDataBlock,
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot find property PORADOVE_CISLO_BODU");
             return OGRERR_FAILURE;
         }
-        if (!EQUAL(poProperty->GetValueS(), "1"))
+        if (poProperty->GetValueI64() != 1)
             return OGRERR_NONE;
     }
 

@@ -27,7 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_proxy.h"
+
+#include <cstddef>
+
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_virtualmem.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -36,7 +45,8 @@ CPL_CVSID("$Id$");
 /*                        GDALProxyDataset                              */
 /* ******************************************************************** */
 
-#define D_PROXY_METHOD_WITH_RET(retType, retErrValue, methodName, argList, argParams) \
+#define D_PROXY_METHOD_WITH_RET(retType, retErrValue, methodName, \
+                                argList, argParams) \
 retType GDALProxyDataset::methodName argList \
 { \
     retType ret; \

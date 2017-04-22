@@ -680,7 +680,7 @@ def ogr_basic_13():
 # Test ogr.Open(.) in an empty directory
 
 def ogr_basic_14():
-    
+
     os.mkdir('tmp/ogr_basic_14')
     os.chdir('tmp/ogr_basic_14')
     ds = ogr.Open('.')
@@ -690,6 +690,52 @@ def ogr_basic_14():
         return 'fail'
 
     os.rmdir('tmp/ogr_basic_14')
+
+    return 'success'
+
+###############################################################################
+# Test exceptions with OGRErr return code
+
+def ogr_basic_15():
+
+    ds = ogr.Open('data/poly.shp')
+    lyr = ds.GetLayer(0)
+
+    used_exceptions_before = ogr.GetUseExceptions()
+    ogr.UseExceptions()
+    try:
+        lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    except RuntimeError as e:
+        ok = str(e).find('CreateFeature : unsupported operation on a read-only datasource') >= 0
+        if not ok:
+            print('Got: %s' + str(e))
+            return 'fail'
+        return 'success'
+    finally:
+        if used_exceptions_before == 0:
+            ogr.DontUseExceptions()
+
+    print('Expected exception')
+    return 'fail'
+
+
+###############################################################################
+# Test issue with Python 3.5 and older SWIG (#6749)
+
+def ogr_basic_16_make_geom():
+    geom = ogr.Geometry(ogr.wkbPoint)
+    geom.AddPoint_2D(0, 0)
+    return geom
+
+def ogr_basic_16_gen_list(N):
+    for i in range(N):
+        ogr_basic_16_make_geom()
+        yield i
+
+def ogr_basic_16():
+
+    if list(ogr_basic_16_gen_list(2)) != [0, 1]:
+        return 'fail'
 
     return 'success'
 
@@ -717,6 +763,8 @@ gdaltest_list = [
     ogr_basic_12,
     ogr_basic_13,
     ogr_basic_14,
+    ogr_basic_15,
+    ogr_basic_16,
     ogr_basic_cleanup ]
 
 #gdaltest_list = [ ogr_basic_13 ]

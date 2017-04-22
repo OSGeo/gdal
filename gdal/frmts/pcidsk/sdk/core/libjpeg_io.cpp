@@ -72,8 +72,8 @@ void PCIDSK::LibJPEG_DecompressBlock(
     int xsize, int ysize, eChanType CPL_UNUSED pixel_type )
 {
     struct jpeg_decompress_struct sJCompInfo;
-    struct jpeg_source_mgr	sSrcMgr;
-    struct jpeg_error_mgr	sErrMgr;
+    struct jpeg_source_mgr        sSrcMgr;
+    struct jpeg_error_mgr         sErrMgr;
 
     int i;
 
@@ -83,10 +83,8 @@ void PCIDSK::LibJPEG_DecompressBlock(
 /*      free it as soon as it is done so this should not hurt much.     */
 /* -------------------------------------------------------------------- */
     sSrcMgr.init_source = _DummySrcMgrMethod;
-    sSrcMgr.fill_input_buffer = (boolean (*)(j_decompress_ptr))
-        						_DummyMgrMethod;
-    sSrcMgr.skip_input_data = (void (*)(j_decompress_ptr, long))
-        						_DummyMgrMethod;
+    sSrcMgr.fill_input_buffer = (boolean (*)(j_decompress_ptr))_DummyMgrMethod;
+    sSrcMgr.skip_input_data = (void (*)(j_decompress_ptr, long))_DummyMgrMethod;
     sSrcMgr.resync_to_restart = jpeg_resync_to_restart;
     sSrcMgr.term_source = _DummySrcMgrMethod;
 
@@ -119,11 +117,11 @@ void PCIDSK::LibJPEG_DecompressBlock(
     jpeg_start_decompress(&sJCompInfo);
 
 /* -------------------------------------------------------------------- */
-/*	Read each of the scanlines.					*/
+/*      Read each of the scanlines.                                     */
 /* -------------------------------------------------------------------- */
     for( i = 0; i < ysize; i++ )
     {
-        uint8	*line_data = dst_data + i*xsize;
+        uint8   *line_data = dst_data + i*xsize;
         jpeg_read_scanlines( &sJCompInfo, (JSAMPARRAY) &line_data, 1 );
     }
 
@@ -142,11 +140,11 @@ void PCIDSK::LibJPEG_CompressBlock(
     uint8 *src_data, CPL_UNUSED int src_bytes, uint8 *dst_data, int &dst_bytes,
     int xsize, int ysize, CPL_UNUSED eChanType pixel_type, int quality )
 {
-    struct jpeg_compress_struct	sJCompInfo;
-    struct jpeg_destination_mgr	sDstMgr;
-    struct jpeg_error_mgr	sErrMgr;
+    struct jpeg_compress_struct sJCompInfo;
+    struct jpeg_destination_mgr sDstMgr;
+    struct jpeg_error_mgr       sErrMgr;
 
-    int		i;
+    int     i;
 
 /* -------------------------------------------------------------------- */
 /*      Setup the buffer we will compress into.                         */
@@ -155,7 +153,7 @@ void PCIDSK::LibJPEG_CompressBlock(
     sDstMgr.free_in_buffer = dst_bytes;
     sDstMgr.init_destination = _DummyMgrMethod;
     sDstMgr.empty_output_buffer = (boolean (*)(j_compress_ptr))
-        						_DummyMgrMethod;
+                                                            _DummyMgrMethod;
     sDstMgr.term_destination = _DummyMgrMethod;
 
 /* -------------------------------------------------------------------- */
@@ -177,17 +175,17 @@ void PCIDSK::LibJPEG_CompressBlock(
     jpeg_start_compress(&sJCompInfo, TRUE );
     
 /* -------------------------------------------------------------------- */
-/*	Write all the scanlines at once.				*/
+/*      Write all the scanlines at once.                                */
 /* -------------------------------------------------------------------- */
     for( i = 0; i < ysize; i++ )
     {
-        uint8	*pabyLine = src_data + i*xsize;
+        uint8   *pabyLine = src_data + i*xsize;
         
         jpeg_write_scanlines( &sJCompInfo, (JSAMPARRAY)&pabyLine, 1 );
     }
     
 /* -------------------------------------------------------------------- */
-/*	Cleanup.							*/
+/*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
     jpeg_finish_compress( &sJCompInfo );
 

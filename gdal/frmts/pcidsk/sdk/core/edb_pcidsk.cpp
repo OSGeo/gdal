@@ -50,28 +50,28 @@ class PCIDSK_EDBFile : public EDBFile
     
 public:
 
-    PCIDSK_EDBFile( PCIDSKFile *file_in ) { file = file_in; }
+    explicit PCIDSK_EDBFile( PCIDSKFile *file_in ) { file = file_in; }
     ~PCIDSK_EDBFile() { Close(); }
 
-    int Close() const;
-    int GetWidth() const;
-    int GetHeight() const;
-    int GetChannels() const;
-    int GetBlockWidth(int channel ) const;
-    int GetBlockHeight(int channel ) const;
-    eChanType GetType(int channel ) const;
+    int Close() const override;
+    int GetWidth() const override;
+    int GetHeight() const override;
+    int GetChannels() const override;
+    int GetBlockWidth(int channel ) const override;
+    int GetBlockHeight(int channel ) const override;
+    eChanType GetType(int channel ) const override;
     int ReadBlock(int channel,
                   int block_index, void *buffer,
                   int win_xoff, int win_yoff,
-                  int win_xsize, int win_ysize );
-    int WriteBlock( int channel, int block_index, void *buffer);
+                  int win_xsize, int win_ysize ) override;
+    int WriteBlock( int channel, int block_index, void *buffer) override;
 };
 
 /************************************************************************/
 /*                           DefaultOpenEDB()                           */
 /************************************************************************/
 
-EDBFile *PCIDSK::DefaultOpenEDB( std::string filename, std::string access )
+EDBFile *PCIDSK::DefaultOpenEDB( const std::string& filename, const std::string& access )
 
 {
     // it would be nice to be able to pass in an appropriate PCIDSKInterface!

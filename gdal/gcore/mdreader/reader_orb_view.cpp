@@ -27,7 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "reader_orb_view.h"
+
+#include <ctime>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -35,11 +43,12 @@ CPL_CVSID("$Id$");
  * GDALMDReaderOrbView()
  */
 GDALMDReaderOrbView::GDALMDReaderOrbView(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
+                                         char **papszSiblingFiles) :
+    GDALMDReaderBase(pszPath, papszSiblingFiles),
+    m_osIMDSourceFilename( GDALFindAssociatedFile( pszPath, "PVL",
+                                                    papszSiblingFiles, 0 ) ),
+    m_osRPBSourceFilename( CPLString() )
 {
-    m_osIMDSourceFilename = GDALFindAssociatedFile( pszPath, "PVL",
-                                                    papszSiblingFiles, 0 );
-
     const char* pszBaseName = CPLGetBasename(pszPath);
     const char* pszDirName = CPLGetDirname(pszPath);
 
@@ -61,10 +70,10 @@ GDALMDReaderOrbView::GDALMDReaderOrbView(const char *pszPath,
         }
     }
 
-    if( m_osIMDSourceFilename.size() )
+    if( !m_osIMDSourceFilename.empty() )
         CPLDebug( "MDReaderOrbView", "IMD Filename: %s",
                   m_osIMDSourceFilename.c_str() );
-    if( m_osRPBSourceFilename.size() )
+    if( !m_osRPBSourceFilename.empty() )
         CPLDebug( "MDReaderOrbView", "RPB Filename: %s",
                   m_osRPBSourceFilename.c_str() );
 }

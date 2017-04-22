@@ -73,11 +73,6 @@
 #define GNM_RULEKW_DENY "DENY"
 #define GNM_RULEKW_ANY "ANY"
 
-// Graph constants
-#define GNM_EDGE_DIR_BOTH       0   // bidirectional
-#define GNM_EDGE_DIR_SRCTOTGT   1   // from source to target
-#define GNM_EDGE_DIR_TGTTOSRC   2   // from target to source
-
 #define GNM_BLOCK_NONE 0x0000  // no blocking (vertex or edge)
 #define GNM_BLOCK_SRC  0x0001  // the source vertex is blocked
 #define GNM_BLOCK_TGT  0x0002  // the target vertext is blocked
@@ -87,8 +82,6 @@
 // Other string constants.
 #define GNM_SRSFILENAME "_gnm_srs.prj"
 
-// Alias for some big data type to store identificators.
-#define GNMGFID GIntBig
 // Corespondent datatype for identificator
 // (i.e. int -> OFTInteger -> GetFieldAsInteger and
 //       GUIntBig -> OFTInteger64 -> GetFieldAsInteger64)
@@ -97,4 +90,3 @@
 #define GNMGFIDFormat CPL_FRMT_GIB
 
 #endif // GNM_PRIV
-

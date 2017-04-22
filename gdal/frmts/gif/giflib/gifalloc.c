@@ -63,7 +63,8 @@ MakeMapObject(int ColorCount,
     }
 
     Object->Colors = (GifColorType *)calloc(ColorCount, sizeof(GifColorType));
-    if (Object->Colors == (GifColorType *) NULL) {
+    if (Object->Colors == NULL) {
+        free(Object->Colors); /* useless but make cppcheck happy */
         free(Object);
         return ((ColorMapObject *) NULL);
     }

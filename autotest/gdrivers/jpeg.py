@@ -1054,6 +1054,19 @@ def jpeg_25():
     return 'success'
 
 ###############################################################################
+# Test creation error
+
+def jpeg_26():
+
+    src_ds = gdal.GetDriverByName('Mem').Create('', 70000, 1)
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('JPEG').CreateCopy(
+                                                '/vsimem/jpeg_26.jpg', src_ds)
+    if ds is not None:
+        return 'fail'
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def jpeg_cleanup():
@@ -1096,6 +1109,7 @@ gdaltest_list = [
     jpeg_23,
     jpeg_24,
     jpeg_25,
+    jpeg_26,
     jpeg_cleanup ]
 
 if __name__ == '__main__':

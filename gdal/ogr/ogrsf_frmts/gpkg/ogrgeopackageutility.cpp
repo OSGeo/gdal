@@ -31,162 +31,6 @@
 
 CPL_CVSID("$Id$");
 
-/* Runs a SQL command and ignores the result (good for INSERT/UPDATE/CREATE) */
-OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)
-{
-    CPLAssert( poDb != NULL );
-    CPLAssert( pszSQL != NULL );
-
-    char *pszErrMsg = NULL;
-    //CPLDebug("GPKG", "exec(%s)", pszSQL);
-    int rc = sqlite3_exec(poDb, pszSQL, NULL, NULL, &pszErrMsg);
-
-    if ( rc != SQLITE_OK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "sqlite3_exec(%s) failed: %s",
-                  pszSQL, pszErrMsg ? pszErrMsg : "" );
-        sqlite3_free( pszErrMsg );
-        return OGRERR_FAILURE;
-    }
-
-    return OGRERR_NONE;
-}
-
-OGRErr SQLResultInit(SQLResult * poResult)
-{
-    poResult->papszResult = NULL;
-    poResult->pszErrMsg = NULL;
-    poResult->nRowCount = 0;
-    poResult->nColCount = 0;
-    poResult->rc = 0;
-    return OGRERR_NONE;
-}
-
-OGRErr SQLQuery(sqlite3 * poDb, const char * pszSQL, SQLResult * poResult)
-{
-    CPLAssert( poDb != NULL );
-    CPLAssert( pszSQL != NULL );
-    CPLAssert( poResult != NULL );
-
-    SQLResultInit(poResult);
-
-    poResult->rc = sqlite3_get_table(
-        poDb, pszSQL,
-        &(poResult->papszResult),
-        &(poResult->nRowCount),
-        &(poResult->nColCount),
-        &(poResult->pszErrMsg) );
-
-    if( poResult->rc != SQLITE_OK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "sqlite3_get_table(%s) failed: %s", pszSQL, poResult->pszErrMsg );
-        return OGRERR_FAILURE;
-    }
-
-    return OGRERR_NONE;
-}
-
-OGRErr SQLResultFree(SQLResult * poResult)
-{
-    if ( poResult->papszResult )
-        sqlite3_free_table(poResult->papszResult);
-
-    if ( poResult->pszErrMsg )
-        sqlite3_free(poResult->pszErrMsg);
-
-    return OGRERR_NONE;
-}
-
-const char* SQLResultGetColumn(const SQLResult * poResult, int iColNum)
-{
-    if ( ! poResult )
-        return NULL;
-
-    if ( iColNum < 0 || iColNum >= poResult->nColCount )
-        return NULL;
-
-    return poResult->papszResult[iColNum];
-}
-
-const char* SQLResultGetValue(const SQLResult * poResult, int iColNum, int iRowNum)
-{
-    if ( ! poResult )
-        return NULL;
-
-    int nCols = poResult->nColCount;
-    int nRows = poResult->nRowCount;
-
-    if ( iColNum < 0 || iColNum >= nCols )
-        return NULL;
-
-    if ( iRowNum < 0 || iRowNum >= nRows )
-        return NULL;
-
-    return poResult->papszResult[ nCols + iRowNum * nCols + iColNum ];
-}
-
-int SQLResultGetValueAsInteger(const SQLResult * poResult, int iColNum, int iRowNum)
-{
-    if ( ! poResult )
-        return 0;
-
-    int nCols = poResult->nColCount;
-    int nRows = poResult->nRowCount;
-
-    if ( iColNum < 0 || iColNum >= nCols )
-        return 0;
-
-    if ( iRowNum < 0 || iRowNum >= nRows )
-        return 0;
-
-    char *pszValue = poResult->papszResult[ nCols + iRowNum * nCols + iColNum ];
-    if ( ! pszValue )
-        return 0;
-
-    return atoi(pszValue);
-}
-
-/* Returns the first row of first column of SQL as integer */
-GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
-{
-    CPLAssert( poDb != NULL );
-
-    sqlite3_stmt *poStmt = NULL;
-
-    /* Prepare the SQL */
-    int rc = sqlite3_prepare_v2(poDb, pszSQL, -1, &poStmt, NULL);
-    if ( rc != SQLITE_OK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare_v2(%s) failed: %s",
-                  pszSQL, sqlite3_errmsg( poDb ) );
-        if ( err ) *err = OGRERR_FAILURE;
-        return 0;
-    }
-
-    /* Execute and fetch first row */
-    rc = sqlite3_step(poStmt);
-    if ( rc != SQLITE_ROW )
-    {
-        if ( err ) *err = OGRERR_FAILURE;
-        sqlite3_finalize(poStmt);
-        return 0;
-    }
-
-    /* Read the integer from the row */
-    GIntBig i = sqlite3_column_int64(poStmt, 0);
-    sqlite3_finalize(poStmt);
-
-    if ( err ) *err = OGRERR_NONE;
-    return i;
-}
-
-int SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
-{
-    return (int)SQLGetInteger64(poDb, pszSQL, err);
-}
-
 /* Requirement 20: A GeoPackage SHALL store feature table geometries */
 /* with the basic simple feature geometry types (Geometry, Point, */
 /* LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, */
@@ -242,7 +86,7 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
         return OFTInteger;
     }
     else if ( EQUAL("TINYINT", pszGpkgType) )
-        return OFTInteger;
+        return OFTInteger; // [-128, 127]
     else if ( EQUAL("BOOLEAN", pszGpkgType) )
     {
         eSubType = OFSTBoolean;
@@ -286,10 +130,10 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
 /* declared using one of the data types specified in table GeoPackage */
 /* Data Types. */
 /* http://opengis.github.io/geopackage/#table_column_data_types */
-const char* GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType,
+const char* GPkgFieldFromOGR(OGRFieldType eType, OGRFieldSubType eSubType,
                              int nMaxWidth)
 {
-    switch(nType)
+    switch(eType)
     {
         case OFTInteger:
         {
@@ -327,27 +171,6 @@ const char* GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType,
     }
 }
 
-int SQLiteFieldFromOGR(OGRFieldType nType)
-{
-    switch(nType)
-    {
-        case OFTInteger:
-            return SQLITE_INTEGER;
-        case OFTReal:
-            return SQLITE_FLOAT;
-        case OFTString:
-            return SQLITE_TEXT;
-        case OFTBinary:
-            return SQLITE_BLOB;
-        case OFTDate:
-            return SQLITE_TEXT;
-        case OFTDateTime:
-            return SQLITE_TEXT;
-        default:
-            return 0;
-    }
-}
-
 /* Requirement 19: A GeoPackage SHALL store feature table geometries
 *  with or without optional elevation (Z) and/or measure (M) values in SQL
 *  BLOBs using the Standard GeoPackageBinary format specified in table GeoPackage
@@ -378,7 +201,8 @@ int SQLiteFieldFromOGR(OGRFieldType nType)
 *
 */
 
-GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *pszWkb)
+GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
+                           size_t *pnWkbLen)
 {
     CPLAssert( poGeometry != NULL );
 
@@ -393,17 +217,17 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
     int iDims = poGeometry->getCoordinateDimension();
 
     /* Header has 8 bytes for sure, and optional extra space for bounds */
-    size_t szHeader = 2+1+1+4;
+    size_t nHeaderLen = 2+1+1+4;
     if ( ! bPoint && ! bEmpty )
     {
-        szHeader += 8*2*iDims;
+        nHeaderLen += 8*2*iDims;
     }
 
     /* Total BLOB size is header + WKB size */
-    size_t szWkb = szHeader + poGeometry->WkbSize();
-    GByte *pabyWkb = (GByte *)CPLMalloc(szWkb);
-    if (pszWkb)
-        *pszWkb = szWkb;
+    size_t nWkbLen = nHeaderLen + poGeometry->WkbSize();
+    GByte *pabyWkb = (GByte *)CPLMalloc(nWkbLen);
+    if (pnWkbLen)
+        *pnWkbLen = nWkbLen;
 
     /* Header Magic */
     pabyWkb[0] = 0x47;
@@ -474,7 +298,7 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
         }
     }
 
-    GByte *pabyPtr = pabyWkb + szHeader;
+    GByte *pabyPtr = pabyWkb + nHeaderLen;
 
     /* Use the wkbVariantIso for ISO SQL/MM output (differs for 3d geometry) */
     err = poGeometry->exportToWkb(eByteOrder, pabyPtr, wkbVariantIso);
@@ -487,13 +311,13 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
     return pabyWkb;
 }
 
-OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHeader)
+OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen, GPkgHeader *poHeader)
 {
     CPLAssert( pabyGpkg != NULL );
     CPLAssert( poHeader != NULL );
 
     /* Magic (match required) */
-    if ( szGpkg < 8 ||
+    if ( nGpkgLen < 8 ||
          pabyGpkg[0] != 0x47 ||
          pabyGpkg[1] != 0x50 ||
          pabyGpkg[2] != 0 )  /* Version (only 0 supported at this time)*/
@@ -554,7 +378,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHea
     }
     poHeader->iSrsId = iSrsId;
 
-    if( szGpkg < static_cast<size_t>(8 + 8*2*nEnvelopeDim) )
+    if( nGpkgLen < static_cast<size_t>(8 + 8*2*nEnvelopeDim) )
     {
         // Not enough bytes
         return OGRERR_FAILURE;
@@ -600,177 +424,32 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHea
 #endif
 
     /* Header size in byte stream */
-    poHeader->szHeader = 8 + 8*2*nEnvelopeDim;
+    poHeader->nHeaderLen = 8 + 8*2*nEnvelopeDim;
 
     return OGRERR_NONE;
 }
 
-OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialReference *poSrs)
+OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen, OGRSpatialReference *poSrs)
 {
     CPLAssert( pabyGpkg != NULL );
 
     GPkgHeader oHeader;
 
     /* Read header */
-    OGRErr err = GPkgHeaderFromWKB(pabyGpkg, szGpkg, &oHeader);
+    OGRErr err = GPkgHeaderFromWKB(pabyGpkg, nGpkgLen, &oHeader);
     if ( err != OGRERR_NONE )
         return NULL;
 
     /* WKB pointer */
-    const GByte *pabyWkb = pabyGpkg + oHeader.szHeader;
-    size_t szWkb = szGpkg - oHeader.szHeader;
+    const GByte *pabyWkb = pabyGpkg + oHeader.nHeaderLen;
+    size_t nWkbLen = nGpkgLen - oHeader.nHeaderLen;
 
     /* Parse WKB */
     OGRGeometry *poGeom = NULL;
     err = OGRGeometryFactory::createFromWkb((GByte*)pabyWkb, poSrs, &poGeom,
-                                            static_cast<int>(szWkb));
+                                            static_cast<int>(nWkbLen));
     if ( err != OGRERR_NONE )
         return NULL;
 
     return poGeom;
-}
-
-OGRErr GPkgEnvelopeToOGR(GByte *pabyGpkg,
-                         size_t szGpkg,
-                         OGREnvelope *poEnv)
-{
-    CPLAssert( poEnv != NULL );
-    CPLAssert( pabyGpkg != NULL );
-
-    GPkgHeader oHeader;
-
-    /* Read header */
-    OGRErr err = GPkgHeaderFromWKB(pabyGpkg, szGpkg, &oHeader);
-    if ( err != OGRERR_NONE )
-        return err;
-
-    if ( oHeader.bEmpty || !oHeader.bExtentHasXY )
-    {
-        return OGRERR_FAILURE;
-    }
-
-    poEnv->MinX = oHeader.MinX;
-    poEnv->MaxX = oHeader.MaxX;
-    poEnv->MinY = oHeader.MinY;
-    poEnv->MaxY = oHeader.MaxY;
-
-    return OGRERR_NONE;
-}
-
-CPLString SQLEscapeDoubleQuote(const char* pszStr)
-{
-    CPLString osRet;
-    while( *pszStr != '\0' )
-    {
-        if( *pszStr == '"' )
-            osRet += "\"\"";
-        else
-            osRet += *pszStr;
-        pszStr ++;
-    }
-    return osRet;
-}
-
-CPLString SQLUnescapeDoubleQuote(const char* pszStr)
-{
-    CPLString osRet;
-    const bool bStartsWithDoubleQuote = (pszStr[0] == '"');
-    if( bStartsWithDoubleQuote )
-        pszStr ++;
-    while( *pszStr != '\0' )
-    {
-        if( bStartsWithDoubleQuote && *pszStr == '"' && pszStr[1] == '"' )
-        {
-            osRet += "\"";
-            pszStr ++;
-        }
-        else if( bStartsWithDoubleQuote && *pszStr == '"' )
-        {
-            break;
-        }
-        else
-            osRet += *pszStr;
-        pszStr ++;
-    }
-    return osRet;
-}
-
-/************************************************************************/
-/*                             SQLTokenize()                            */
-/************************************************************************/
-
-char** SQLTokenize( const char* pszStr )
-{
-    char** papszTokens = NULL;
-    bool bInQuote = false;
-    char chQuoteChar = '\0';
-    bool bInSpace = true;
-    CPLString osCurrentToken;
-    while( *pszStr != '\0' )
-    {
-        if( *pszStr == ' ' && !bInQuote )
-        {
-            if( !bInSpace )
-            {
-                papszTokens = CSLAddString(papszTokens, osCurrentToken);
-                osCurrentToken.clear();
-            }
-            bInSpace = true;
-        }
-        else if( (*pszStr == '(' || *pszStr == ')' || *pszStr == ',')  && !bInQuote )
-        {
-            if( !bInSpace )
-            {
-                papszTokens = CSLAddString(papszTokens, osCurrentToken);
-                osCurrentToken.clear();
-            }
-            osCurrentToken.clear();
-            osCurrentToken += *pszStr;
-            papszTokens = CSLAddString(papszTokens, osCurrentToken);
-            osCurrentToken.clear();
-            bInSpace = true;
-        }
-        else if( *pszStr == '"' || *pszStr == '\'' )
-        {
-            if( bInQuote && *pszStr == chQuoteChar && pszStr[1] == chQuoteChar )
-            {
-                osCurrentToken += *pszStr;
-                osCurrentToken += *pszStr;
-                pszStr += 2;
-                continue;
-            }
-            else if( bInQuote && *pszStr == chQuoteChar )
-            {
-                osCurrentToken += *pszStr;
-                papszTokens = CSLAddString(papszTokens, osCurrentToken);
-                osCurrentToken.clear();
-                bInSpace = true;
-                bInQuote = false;
-                chQuoteChar = '\0';
-            }
-            else if( bInQuote )
-            {
-                osCurrentToken += *pszStr;
-            }
-            else
-            {
-                chQuoteChar = *pszStr;
-                osCurrentToken.clear();
-                osCurrentToken += chQuoteChar;
-                bInQuote = true;
-                bInSpace = false;
-            }
-        }
-        else
-        {
-            osCurrentToken += *pszStr;
-            bInSpace = false;
-        }
-        pszStr ++;
-    }
-
-    if( !osCurrentToken.empty() )
-        papszTokens = CSLAddString(papszTokens, osCurrentToken);
-
-    return papszTokens;
 }

@@ -38,6 +38,9 @@
 
 #include <vector>
 
+// Special value to map to a NULL field
+#define OGR_GML_NULL "___OGR_GML_NULL___"
+
 typedef enum {
     GMLPT_Untyped = 0,
     GMLPT_String = 1,
@@ -169,8 +172,8 @@ class CPL_DLL GMLFeatureClass
     bool        m_bSRSNameConsistent;
 
   public:
-            GMLFeatureClass( const char *pszName = "" );
-           ~GMLFeatureClass();
+    explicit  GMLFeatureClass( const char *pszName = "" );
+             ~GMLFeatureClass();
 
     const char *GetElementName() const;
     size_t      GetElementNameLen() const;
@@ -240,7 +243,7 @@ class CPL_DLL GMLFeature
     char           **m_papszOBProperties;
 
 public:
-                    GMLFeature( GMLFeatureClass * );
+    explicit        GMLFeature( GMLFeatureClass * );
                    ~GMLFeature();
 
     GMLFeatureClass*GetClass() const { return m_poClass; }

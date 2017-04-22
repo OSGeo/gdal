@@ -59,10 +59,10 @@ class SNODASDataset : public RawDataset
                     SNODASDataset();
     virtual ~SNODASDataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
@@ -80,9 +80,9 @@ class SNODASRasterBand : public RawRasterBand
             SNODASRasterBand( VSILFILE* fpRaw, int nXSize, int nYSize );
     virtual ~SNODASRasterBand() {}
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum(int *pbSuccess = NULL );
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum(int *pbSuccess = NULL ) override;
 };
 
 /************************************************************************/
@@ -415,7 +415,7 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !bNotProjected || !bIsWGS84 )
         return NULL;
 
-    if( osDataFilename.size() == 0 )
+    if( osDataFilename.empty() )
         return NULL;
 
     if( !GDALCheckDatasetDimensions(nCols, nRows) )
@@ -457,9 +457,9 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[5] = - (dfMaxY - dfMinY) / nRows;
     }
 
-    if( osDescription.size() )
+    if( !osDescription.empty() )
         poDS->SetMetadataItem("Description", osDescription);
-    if( osDataUnits.size() )
+    if( !osDataUnits.empty() )
         poDS->SetMetadataItem("Data_Units", osDataUnits);
     if( nStartYear != -1 && nStartMonth != -1 && nStartDay != -1 &&
         nStartHour != -1 && nStartMinute != -1 && nStartSecond != -1 )

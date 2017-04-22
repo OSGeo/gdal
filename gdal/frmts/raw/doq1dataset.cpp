@@ -123,8 +123,8 @@ class DOQ1Dataset : public RawDataset
                 DOQ1Dataset();
                 ~DOQ1Dataset();
 
-    CPLErr      GetGeoTransform( double * padfTransform );
-    const char  *GetProjectionRef( void );
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
+    const char  *GetProjectionRef( void ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };

@@ -26,18 +26,33 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "vrtdataset.h"
-
+#include "cpl_port.h"
 #include "gdal_vrt.h"
-#include "gdalpansharpen.h"
-#include "ogr_spatialref.h"
+#include "vrtdataset.h"
 
 #include <cassert>
 #include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
 #include <map>
 #include <set>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "gdalpansharpen.h"
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -459,7 +474,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         if( psIter->eType != CXT_Element || !EQUAL(psIter->pszValue, "SpectralBand") )
             continue;
 
-        if( nInputSpectralBandsIn  )
+        if( nInputSpectralBandsIn && pahInputSpectralBandsIn != NULL )
         {
             if( iSpectralBand == nInputSpectralBandsIn )
             {
@@ -516,9 +531,9 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
                 if( poDataset->GetProjectionRef() )
                     osProjection = poDataset->GetProjectionRef();
 
-                if( osPanProjection.size() )
+                if( !osPanProjection.empty() )
                 {
-                    if( osProjection.size() )
+                    if( !osProjection.empty() )
                     {
                         if( osPanProjection != osProjection )
                         {
@@ -544,7 +559,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
                                  osSourceFilename.c_str());
                     }
                 }
-                else if( osProjection.size() )
+                else if( !osProjection.empty() )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Pan dataset has no projection, whereas %s has one. Results might be incorrect",
@@ -808,7 +823,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
             }
         }
 
-        if( nInputSpectralBandsIn  )
+        if( nInputSpectralBandsIn && pahInputSpectralBandsIn != NULL )
         {
             poBand = reinterpret_cast<GDALRasterBand *>(
                 pahInputSpectralBandsIn[iSpectralBand] );
@@ -867,7 +882,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         iSpectralBand ++;
     }
 
-    if( ahSpectralBands.size() == 0 )
+    if( ahSpectralBands.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "No spectral band defined");
         goto error;
@@ -987,7 +1002,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         }
     }
 
-    if( adfWeights.size() == 0 )
+    if( adfWeights.empty() )
     {
         for( int i = 0; i < static_cast<int>( ahSpectralBands.size() ); i++ )
         {
@@ -1003,7 +1018,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         goto error;
     }
 
-    if( aMapDstBandToSpectralBand.size() == 0 )
+    if( aMapDstBandToSpectralBand.empty() )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "No spectral band is mapped to an output band");
@@ -1651,7 +1666,7 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
 
     // Build on-the-fly overviews from overviews of pan and spectral bands
     if( poGDS->m_poPansharpener != NULL &&
-        poGDS->m_apoOverviewDatasets.size() == 0 &&
+        poGDS->m_apoOverviewDatasets.empty() &&
         poGDS->m_poMainDataset == poGDS )
     {
         GDALPansharpenOptions* psOptions = poGDS->m_poPansharpener->GetOptions();

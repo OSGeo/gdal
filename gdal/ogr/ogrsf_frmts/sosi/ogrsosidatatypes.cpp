@@ -19,7 +19,11 @@ void OGRSOSIDataType::setElement(int nIndex, const char *name, OGRFieldType type
     poElements[nIndex].setType(name, type);
 }
 
-OGRSOSISimpleDataType::OGRSOSISimpleDataType () {}
+OGRSOSISimpleDataType::OGRSOSISimpleDataType ():
+    pszName(""),
+    nType(OFTString)
+{}
+
 OGRSOSISimpleDataType::OGRSOSISimpleDataType (const char *name, OGRFieldType type) {
     setType(name, type);
 }

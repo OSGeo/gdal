@@ -28,13 +28,27 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
+#include "cpl_port.h"
 #include "gt_overview.h"
-#include "gtiff.h"
-#include "tifvsi.h"
-#include "xtiffio.h"
+
+#include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "gtiff.h"
+#include "tiff.h"
+#include "tiffvers.h"
+#include "tifvsi.h"
+#include "xtiffio.h"
 
 CPL_CVSID("$Id$");
 
@@ -63,7 +77,10 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             unsigned short *panBlue,
                             int nExtraSamples,
                             unsigned short *panExtraSampleValues,
-                            const char *pszMetadata )
+                            const char *pszMetadata,
+                            const char* pszJPEGQuality,
+                            const char* pszJPEGTablesMode,
+                            const char* pszNoData )
 
 {
     const toff_t nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
@@ -130,6 +147,35 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
     if( pszMetadata && strlen(pszMetadata) > 0 )
         TIFFSetField( hTIFF, TIFFTAG_GDAL_METADATA, pszMetadata );
 
+
+/* -------------------------------------------------------------------- */
+/*      Write JPEG tables if needed.                                    */
+/* -------------------------------------------------------------------- */
+    if( nCompressFlag == COMPRESSION_JPEG )
+    {
+        GTiffWriteJPEGTables( hTIFF,
+                              (nPhotometric == PHOTOMETRIC_RGB) ? "RGB" :
+                              (nPhotometric == PHOTOMETRIC_YCBCR) ? "YCBCR" :
+                                                                "MINISBLACK",
+                              pszJPEGQuality,
+                              pszJPEGTablesMode );
+
+        if( nPhotometric == PHOTOMETRIC_YCBCR )
+        {
+            // Explicitly register the subsampling so that JPEGFixupTags
+            // is a no-op (helps for cloud optimized geotiffs)
+            TIFFSetField( hTIFF, TIFFTAG_YCBCRSUBSAMPLING, 2, 2 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write no data value if we have one.                             */
+/* -------------------------------------------------------------------- */
+    if( pszNoData != NULL )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, pszNoData );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Write directory, and return byte offset.                        */
 /* -------------------------------------------------------------------- */
@@ -173,7 +219,7 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
             CPLString osItem;
             CPLString osName;
 
-            osName.Printf( "INTERNAL_MASK_FLAGS_%d", iBand+1 );
+            osName.Printf( "INTERNAL_MASK_FLAGS_%d", iBand + 1 );
             if( poBaseDS->GetMetadataItem( osName ) )
             {
                 osItem.Printf( "<Item name=\"%s\">%s</Item>",
@@ -689,6 +735,17 @@ GTIFFBuildOverviews( const char * pszFilename,
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
     GTIFFGetOverviewBlockSize(&nOvrBlockXSize, &nOvrBlockYSize);
+
+    CPLString osNoData; // don't move this in inner scope
+    const char* pszNoData = NULL;
+    int bNoDataSet = FALSE;
+    const double dfNoDataValue = papoBandList[0]->GetNoDataValue(&bNoDataSet);
+    if( bNoDataSet )
+    {
+        osNoData = GTiffFormatGDALNoDataTagValue(dfNoDataValue);
+        pszNoData = osNoData.c_str();
+    }
+
     for( iOverview = 0; iOverview < nOverviews; iOverview++ )
     {
         const int nOXSize = (nXSize + panOverviewList[iOverview] - 1)
@@ -704,7 +761,11 @@ GTIFFBuildOverviews( const char * pszFilename,
                              panRed, panGreen, panBlue,
                              0,
                              NULL, // TODO: How can we fetch extrasamples?
-                             osMetadata );
+                             osMetadata,
+                             CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ),
+                             CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", NULL ),
+                             pszNoData
+                           );
     }
 
     if( panRed )
@@ -746,6 +807,17 @@ GTIFFBuildOverviews( const char * pszFilename,
         GTIFFSetJpegQuality((GDALDatasetH)hODS, nJpegQuality);
     }
 
+    if( nCompression == COMPRESSION_JPEG
+        && CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", NULL ) != NULL )
+    {
+        const int nJpegTablesMode =
+            atoi(CPLGetConfigOption("JPEG_TABLESMODE_OVERVIEW",
+                            CPLSPrintf("%d", knGTIFFJpegTablesModeDefault)));
+        TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE,
+                      nJpegTablesMode );
+        GTIFFSetJpegTablesMode((GDALDatasetH)hODS, nJpegTablesMode);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Loop writing overview data.                                     */
 /* -------------------------------------------------------------------- */
@@ -781,7 +853,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         for( int iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
         {
             GDALRasterBand *poSrcBand = papoBandList[iBand];
-            GDALRasterBand *poDstBand = hODS->GetRasterBand( iBand+1 );
+            GDALRasterBand *poDstBand = hODS->GetRasterBand( iBand + 1 );
             papapoOverviewBands[iBand] =
                 static_cast<GDALRasterBand **>(
                     CPLCalloc(sizeof(void *), nOverviews) );
@@ -848,7 +920,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         for( int iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
         {
             GDALRasterBand *hSrcBand = papoBandList[iBand];
-            GDALRasterBand *hDstBand = hODS->GetRasterBand( iBand+1 );
+            GDALRasterBand *hDstBand = hODS->GetRasterBand( iBand + 1 );
 
             int bHasNoData = FALSE;
             const double noDataValue = hSrcBand->GetNoDataValue(&bHasNoData);
@@ -864,7 +936,7 @@ GTIFFBuildOverviews( const char * pszFilename,
             nDstOverviews = std::min(knMaxOverviews, nDstOverviews);
 
             // TODO(schwehr): Convert to starting with i = 1 and remove +1.
-            for( int i = 0; i < nDstOverviews-1 && eErr == CE_None; i++ )
+            for( int i = 0; i < nDstOverviews - 1 && eErr == CE_None; i++ )
             {
                 papoOverviews[i+1] = hDstBand->GetOverview(i);
                 if( papoOverviews[i+1] == NULL )

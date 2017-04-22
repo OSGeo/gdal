@@ -550,7 +550,7 @@ static int NDFD_WxTable1 (UglyStringType * ugly)
             }
          }
       case WX_T:
-         /* 
+         /*
           * Check Severe storms.  If so, this is most important weather
           * type.
           */
@@ -1025,7 +1025,7 @@ static int NDFD_WxTable2 (UglyStringType * ugly)
             }
          }
       case WX_T:
-         /* 
+         /*
           * Check Severe storms.  If so, this is most important weather
           * type.
           */
@@ -2303,7 +2303,7 @@ static void Ugly2English (UglyStringType * ugly)
             }
          }
       }
-      /* Hazard is now smallest number first... we now convert from "00 00 00 
+      /* Hazard is now smallest number first... we now convert from "00 00 00
        * 04 05" to 405 */
       ugly->HazCode[i] = 0;
       for (j = 0; j < NUM_UGLY_ATTRIB; j++) {
@@ -2477,7 +2477,7 @@ int ParseUglyString (UglyStringType * ugly, char *wxData, int simpleVer)
       }
 */
    }
-   if (start != '\0') {
+   if (start != NULL) {
       if (UglyLookUp (ugly, start, word, place, attNum) != 0) {
 #ifdef VERBOSE
          printf ("(E) '%s'\n", wxData);

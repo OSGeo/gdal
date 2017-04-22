@@ -106,6 +106,39 @@ AC_DEFUN([AX_LIB_LIBKML],
         [LIBKML_VERSION=;])
 
     if test -n "$LIBKML_VERSION" -a -n "$libkml_prefix"; then
+        # Test that the package found is for the right architecture
+        saved_CPPFLAGS="$CPPFLAGS"
+        saved_LIBS="$LIBS"
+        CPPFLAGS="$CPPFLAGS $LIBKML_CFLAGS"
+        LIBS="$LIBKML_LIBS"
+
+        AC_MSG_CHECKING([if libkml can be linked])
+        AC_LANG_PUSH([C++])
+        AC_LINK_IFELSE([
+            AC_LANG_PROGRAM(
+                [[
+@%:@include <kml/dom.h>
+                        ]],
+                        [[
+kmldom::KmlFactory* factory = kmldom::KmlFactory::GetFactory();
+                ]]
+            )],
+            [
+            HAVE_LIBKML=yes
+            AC_MSG_RESULT([yes])
+            ],
+            [
+            HAVE_LIBKML=no
+            AC_MSG_RESULT([no])
+            ]
+        )
+        AC_LANG_POP([C++])
+
+        CPPFLAGS="$saved_CPPFLAGS"
+        LIBS="$saved_LIBS"
+    fi
+
+    if test "$HAVE_LIBKML" = "yes"; then
         HAVE_LIBKML="yes"
 
 	LIBKML_LDFLAGS="$LIBKML_LIBS"

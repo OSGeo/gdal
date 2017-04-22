@@ -120,7 +120,7 @@ class CPL_DLL S57ClassRegistrar
     std::vector<S57AttrInfo*> aoAttrInfos;
     std::vector<int> anAttrIndex; // sorted by acronym.
 
-    bool        FindFile( const char *pszTarget, const char *pszDirectory,
+    static bool        FindFile( const char *pszTarget, const char *pszDirectory,
                           bool bReportErr, VSILFILE **fp );
 
     const char *ReadLine( VSILFILE * fp );
@@ -170,7 +170,7 @@ class S57ClassContentExplorer
     char      **papszTempResult;
 
     public:
-        S57ClassContentExplorer(S57ClassRegistrar* poRegistrar);
+    explicit    S57ClassContentExplorer(S57ClassRegistrar* poRegistrar);
        ~S57ClassContentExplorer();
 
     bool        SelectClassByIndex( int );
@@ -295,10 +295,12 @@ class CPL_DLL S57Reader
     OGRFeature         *AssembleFeature( DDFRecord  *, OGRFeatureDefn * );
 
     void                ApplyObjectClassAttributes( DDFRecord *, OGRFeature *);
+    // cppcheck-suppress functionStatic
     void                GenerateLNAMAndRefs( DDFRecord *, OGRFeature * );
     void                GenerateFSPTAttributes( DDFRecord *, OGRFeature * );
 
     void                AssembleSoundingGeometry( DDFRecord *, OGRFeature * );
+    // cppcheck-suppress functionStatic
     void                AssemblePointGeometry( DDFRecord *, OGRFeature * );
     void                AssembleLineGeometry( DDFRecord *, OGRFeature * );
     void                AssembleAreaGeometry( DDFRecord *, OGRFeature * );
@@ -310,13 +312,14 @@ class CPL_DLL S57Reader
     OGRFeatureDefn     *FindFDefn( DDFRecord * );
     int                 ParseName( DDFField *, int = 0, int * = NULL );
 
+    // cppcheck-suppress functionStatic
     bool                ApplyRecordUpdate( DDFRecord *, DDFRecord * );
 
     bool                bMissingWarningIssued;
     bool                bAttrWarningIssued;
 
   public:
-                        S57Reader( const char * );
+    explicit            S57Reader( const char * );
                        ~S57Reader();
 
     void                SetClassBased( S57ClassRegistrar *, S57ClassContentExplorer* );

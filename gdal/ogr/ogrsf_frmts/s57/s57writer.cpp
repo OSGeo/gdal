@@ -896,7 +896,7 @@ bool S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Add the FSPT if needed.                                         */
 /* -------------------------------------------------------------------- */
-    if( poFeature->IsFieldSet( poFeature->GetFieldIndex("NAME_RCNM") ) )
+    if( poFeature->IsFieldSetAndNotNull( poFeature->GetFieldIndex("NAME_RCNM") ) )
     {
         int nItemCount = 0;
 
@@ -911,6 +911,7 @@ bool S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
         const int *panMASK =
             poFeature->GetFieldAsIntegerList( "MASK", &nItemCount );
 
+        // cppcheck-suppress duplicateExpression
         CPLAssert( sizeof(int) == sizeof(GInt32) );
 
         const int nRawDataSize = nItemCount * 8;
@@ -1023,7 +1024,7 @@ bool S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
         if( iField < 0 )
             continue;
 
-        if( !poFeature->IsFieldSet( iField ) )
+        if( !poFeature->IsFieldSetAndNotNull( iField ) )
             continue;
 
         const int nATTLInt = poRegistrar->FindAttrByAcronym( papszAttrList[iAttr] );
@@ -1031,7 +1032,7 @@ bool S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
             continue;
 
         GUInt16 nATTL = (GUInt16)nATTLInt;
-        nATTL = CPL_LSBWORD16( nATTL );
+        CPL_LSBPTR16( &nATTL );
         memcpy( achRawData + nRawSize, &nATTL, 2 );
         nRawSize += 2;
 

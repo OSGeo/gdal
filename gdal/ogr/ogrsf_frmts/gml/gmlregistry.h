@@ -43,20 +43,20 @@ class GMLRegistryFeatureType
         CPLString                           osSchemaLocation;
         CPLString                           osGFSSchemaLocation;
 
-        int Parse(const char* pszRegistryFilename, CPLXMLNode* psNode);
+        bool Parse(const char* pszRegistryFilename, CPLXMLNode* psNode);
 };
 
 class GMLRegistryNamespace
 {
     public:
-        GMLRegistryNamespace() : bUseGlobalSRSName(FALSE) {}
+        GMLRegistryNamespace() : bUseGlobalSRSName(false) {}
 
         CPLString                           osPrefix;
         CPLString                           osURI;
-        int                                 bUseGlobalSRSName;
+        bool                                bUseGlobalSRSName;
         std::vector<GMLRegistryFeatureType> aoFeatureTypes;
 
-        int Parse(const char* pszRegistryFilename, CPLXMLNode* psNode);
+        bool Parse(const char* pszRegistryFilename, CPLXMLNode* psNode);
 };
 
 class GMLRegistry
@@ -66,8 +66,9 @@ class GMLRegistry
     public:
         std::vector<GMLRegistryNamespace> aoNamespaces;
 
-        GMLRegistry(const CPLString& osRegistryPathIn) : osRegistryPath(osRegistryPathIn) {}
-        int Parse();
+        explicit GMLRegistry(const CPLString& osRegistryPathIn) :
+                                        osRegistryPath(osRegistryPathIn) {}
+        bool Parse();
 };
 
 #endif /* GMLREGISTRY_H_INCLUDED */

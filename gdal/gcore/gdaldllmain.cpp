@@ -27,11 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal.h"
-#include "ogr_api.h"
-#include "cpl_multiproc.h"
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "ogr_api.h"
+
 
 static bool bInGDALGlobalDestructor = false;
 extern "C" int CPL_DLL GDALIsInGlobalDestructor();
@@ -75,10 +79,13 @@ void GDALDestroy(void)
     OGRCleanupAll();
     bInGDALGlobalDestructor = false;
 
-    /* See https://trac.osgeo.org/gdal/ticket/6139 */
+    /* See corresponding bug reports: */
+    /* https://trac.osgeo.org/gdal/ticket/6139 */
+    /* https://trac.osgeo.org/gdal/ticket/6868 */
     /* Needed in case no driver manager has been instantiated. */
     CPLFreeConfig();
     CPLFinalizeTLS();
+    CPLCleanupErrorMutex();
     CPLCleanupMasterMutex();
 }
 

@@ -62,6 +62,10 @@ void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption( const char *pszKey,
 /*! @cond Doxygen_Suppress */
 void CPL_DLL CPL_STDCALL CPLFreeConfig(void);
 /*! @endcond */
+char CPL_DLL** CPLGetConfigOptions(void);
+void CPL_DLL   CPLSetConfigOptions(const char* const * papszConfigOptions);
+char CPL_DLL** CPLGetThreadLocalConfigOptions(void);
+void CPL_DLL   CPLSetThreadLocalConfigOptions(const char* const * papszConfigOptions);
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */
@@ -169,6 +173,7 @@ char CPL_DLL      **CPLCorrespondingPaths( const char *pszOldFilename,
 int CPL_DLL CPLCheckForFile( char *pszFilename, char **papszSiblingList );
 
 const char CPL_DLL *CPLGenerateTempFilename( const char *pszStem ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLExpandTilde( const char *pszFilename ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */

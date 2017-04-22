@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test general CPL features.
@@ -25,16 +24,16 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <tut.h>
-#include <tut_gdal.h>
-#include <gdal_common.h>
-#include <string>
+#include "gdal_unit_test.h"
+
+#include <cpl_error.h>
+#include <cpl_hash_set.h>
+#include <cpl_list.h>
+#include <cpl_sha256.h>
+#include <cpl_string.h>
+
 #include <fstream>
-#include "cpl_list.h"
-#include "cpl_hash_set.h"
-#include "cpl_string.h"
-#include "cpl_sha256.h"
-#include "cpl_error.h"
+#include <string>
 
 static bool gbGotError = false;
 static void CPL_STDCALL myErrorHandler(CPLErr, CPLErrorNum, const char*)
@@ -478,7 +477,9 @@ namespace tut
             bool bOK = (memcmp(pszDecodedString, oReferenceString.szString,
                            nLength) == 0);
             // FIXME Some tests fail on Mac. Not sure why, but do not error out just for that
-            if( !bOK && (EQUAL(CPLGetConfigOption("TRAVIS_OS_NAME", ""), "osx") || getenv("DO_NOT_FAIL_ON_RECODE_ERRORS")))
+            if( !bOK && (strstr(CPLGetConfigOption("TRAVIS_OS_NAME", ""), "osx") != NULL ||
+                         strstr(CPLGetConfigOption("BUILD_NAME", ""), "osx") != NULL ||
+                         getenv("DO_NOT_FAIL_ON_RECODE_ERRORS") != NULL))
             {
                 fprintf(stderr, "Recode from %s failed\n", oTestString.szEncoding);
             }
@@ -996,6 +997,65 @@ namespace tut
             ensure( ptr == NULL );
 #endif
         }
+    }
+
+/************************************************************************/
+/*             CPLGetConfigOptions() / CPLSetConfigOptions()            */
+/************************************************************************/
+    template<>
+    template<>
+    void object::test<18>()
+    {
+        CPLSetConfigOption("FOOFOO", "BAR");
+        char** options = CPLGetConfigOptions();
+        ensure_equals (CSLFetchNameValue(options, "FOOFOO"), "BAR");
+        CPLSetConfigOptions(NULL);
+        ensure_equals (CPLGetConfigOption("FOOFOO", "i_dont_exist"), "i_dont_exist");
+        CPLSetConfigOptions(options);
+        ensure_equals (CPLGetConfigOption("FOOFOO", "i_dont_exist"), "BAR");
+        CSLDestroy(options);
+    }
+
+/************************************************************************/
+/*  CPLGetThreadLocalConfigOptions() / CPLSetThreadLocalConfigOptions() */
+/************************************************************************/
+    template<>
+    template<>
+    void object::test<19>()
+    {
+        CPLSetThreadLocalConfigOption("FOOFOO", "BAR");
+        char** options = CPLGetThreadLocalConfigOptions();
+        ensure_equals (CSLFetchNameValue(options, "FOOFOO"), "BAR");
+        CPLSetThreadLocalConfigOptions(NULL);
+        ensure_equals (CPLGetThreadLocalConfigOption("FOOFOO", "i_dont_exist"), "i_dont_exist");
+        CPLSetThreadLocalConfigOptions(options);
+        ensure_equals (CPLGetThreadLocalConfigOption("FOOFOO", "i_dont_exist"), "BAR");
+        CSLDestroy(options);
+    }
+
+    template<>
+    template<>
+    void object::test<20>()
+    {
+        ensure_equals ( CPLExpandTilde("/foo/bar"), "/foo/bar" );
+
+        CPLSetConfigOption("HOME", "/foo");
+        ensure_equals ( CPLExpandTilde("~/bar"), "/foo/bar" );
+        CPLSetConfigOption("HOME", NULL);
+    }
+
+    template<>
+    template<>
+    void object::test<21>()
+    {
+        // CPLString(std::string) constructor
+        ensure_equals ( CPLString(std::string("abc")).c_str(), "abc" );
+
+        // CPLString(const char*) constructor
+        ensure_equals ( CPLString("abc").c_str(), "abc" );
+
+        // CPLString(const char*, n) constructor
+        ensure_equals ( CPLString("abc",1).c_str(), "a" );
     }
 
 } // namespace tut

@@ -991,7 +991,7 @@ right, top and bottom of in_ar / out_ar. This is the value of the optional
 BufferRadius element that can be set so that the original pixel request is
 extended by a given amount of pixels.</li>
 <li> <i>gt</i>: geotransform. Array of 6 double values.</li>
-<li> <i>kwargs</i>: dictionnary with user arguments defined in
+<li> <i>kwargs</i>: dictionary with user arguments defined in
 PixelFunctionArguments</li>
 </ol>
 
@@ -1196,7 +1196,7 @@ the just-in-time compiler may cache its compilation.
 Given the following mandelbrot.py file :
 
 \code
-# Trick for compatiblity with and without numba
+# Trick for compatibility with and without numba
 try:
     from numba import jit
     #print('Using numba')
@@ -1438,7 +1438,7 @@ and spectral bands have not the same geospatial extent. By default, Union will t
 the union of all spatial extents. Intersection the intersection of all spatial extents.
 None will not proceed to any adjustment at all (might be useful if the geotransform are
 somehow dummy, and the top-left and bottom-right corners of all bands match), but will
-emmit a warning. NoneWithoutWarning is the same as None, but in a silent way.</li>
+emit a warning. NoneWithoutWarning is the same as None, but in a silent way.</li>
 </li>
 </ul>
 

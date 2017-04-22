@@ -26,7 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_conv.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -64,7 +66,7 @@ CPL_CVSID("$Id$");
 #include <libxml/parserInternals.h>
 #include <libxml/catalog.h>
 
-#ifdef __clang
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 
@@ -95,7 +97,7 @@ static void CPLFixPath(char* pszPath)
             return;
         char* pszSlashBefore = pszSlashDotDot - 1;
         while( pszSlashBefore > pszPath && *pszSlashBefore != '/' )
-            pszSlashBefore --;
+            pszSlashBefore--;
         if( pszSlashBefore == pszPath )
             return;
         memmove(pszSlashBefore + 1, pszSlashDotDot + 4,
@@ -279,7 +281,7 @@ static bool CPLWorkaroundLibXMLBug( CPLXMLNode* psIter )
                     "gml:CategoryExtentType") == 0 )
     {
         CPLXMLNode* psIter2 = psIter->psChild;
-        while(psIter2)
+        while( psIter2 )
         {
             if( psIter2->eType == CXT_Attribute &&
                 strcmp(psIter2->pszValue, "type") == 0 )
@@ -765,7 +767,7 @@ xmlParserInputPtr CPLExternalEntityLoader( const char * URL,
         else if( strcmp(URL, "http://www.w3.org/2001/xml.xsd") == 0 )
         {
             CPLString osTmp = CPLFindLocalXSD("xml.xsd");
-            if( osTmp.size() != 0 )
+            if( !osTmp.empty() )
             {
                 osURL = osTmp;
                 URL = osURL.c_str();
@@ -783,7 +785,7 @@ xmlParserInputPtr CPLExternalEntityLoader( const char * URL,
         else if( strcmp(URL, "http://www.w3.org/1999/xlink.xsd") == 0 )
         {
             CPLString osTmp = CPLFindLocalXSD("xlink.xsd");
-            if( osTmp.size() != 0 )
+            if( !osTmp.empty() )
             {
                 osURL = osTmp;
                 URL = osURL.c_str();
@@ -815,13 +817,20 @@ xmlParserInputPtr CPLExternalEntityLoader( const char * URL,
             URL += 16;
         else
             URL += 7;
+
         if( URL[0] == '/' && URL[1] != '\0' && URL[2] == ':' && URL[3] == '/' )
+        {
             // Windows.
             ++URL;
-        else if( URL[0] == '/' )  // Unix.
-            ;
+        }
+        else if( URL[0] == '/' )
+        {
+            // Unix.
+        }
         else
+        {
             return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
+        }
     }
 
     CPLString osModURL;
@@ -1065,7 +1074,7 @@ int CPLValidateXML( const char* pszXMLFilename,
                     const char* pszXSDFilename,
                     CPL_UNUSED char** papszOptions )
 {
-    char szHeader[2048];  // TODO(schwehr): Get this off of the stack.
+    char szHeader[2048] = {};  // TODO(schwehr): Get this off of the stack.
     CPLString osTmpXSDFilename;
 
     if( pszXMLFilename[0] == '<' )
@@ -1155,7 +1164,9 @@ int CPLValidateXML( const char* pszXMLFilename,
                 "   <xs:import namespace=\"%s\" schemaLocation=\"%s\"/>\n",
                 pszWFSSchemaNamespace, pszWFSSchemaLocation));
             CPL_IGNORE_RET_VAL(VSIFPrintfL(
-                fpMEM, "   <xs:import namespace=\"ignored\" schemaLocation=\"%s\"/>\n", pszEscapedXSDFilename));
+                fpMEM,
+                "   <xs:import namespace=\"ignored\" schemaLocation=\"%s\"/>\n",
+                pszEscapedXSDFilename));
             if( pszGMLSchemaLocation )
                 CPL_IGNORE_RET_VAL(VSIFPrintfL(
                     fpMEM,
@@ -1168,8 +1179,10 @@ int CPLValidateXML( const char* pszXMLFilename,
     }
 
     CPLXMLSchemaPtr pSchema =
-        CPLLoadXMLSchema(osTmpXSDFilename.size() ? osTmpXSDFilename.c_str() : pszXSDFilename);
-    if( osTmpXSDFilename.size() )
+        CPLLoadXMLSchema(!osTmpXSDFilename.empty()
+                         ? osTmpXSDFilename.c_str()
+                         : pszXSDFilename);
+    if( !osTmpXSDFilename.empty() )
         VSIUnlink(osTmpXSDFilename);
     if( pSchema == NULL )
         return FALSE;

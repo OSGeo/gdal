@@ -30,11 +30,11 @@
 
 CPL_CVSID("$Id$");
 
-bool netCDFWriterConfiguration::SetNameValue(CPLXMLNode* psNode,
-                                             std::map<CPLString,CPLString>& oMap)
+bool netCDFWriterConfiguration::SetNameValue(
+    CPLXMLNode *psNode, std::map<CPLString, CPLString> &oMap)
 {
-    const char* pszName = CPLGetXMLValue(psNode, "name", NULL);
-    const char* pszValue = CPLGetXMLValue(psNode, "value", NULL);
+    const char *pszName = CPLGetXMLValue(psNode, "name", NULL);
+    const char *pszValue = CPLGetXMLValue(psNode, "value", NULL);
     if( pszName != NULL && pszValue != NULL )
     {
         oMap[pszName] = pszValue;
@@ -44,19 +44,18 @@ bool netCDFWriterConfiguration::SetNameValue(CPLXMLNode* psNode,
     return false;
 }
 
-bool netCDFWriterConfiguration::Parse(const char* pszFilename)
+bool netCDFWriterConfiguration::Parse(const char *pszFilename)
 {
-    CPLXMLNode* psRoot = NULL;
-    if( STARTS_WITH(pszFilename, "<Configuration") )
-        psRoot = CPLParseXMLString(pszFilename);
-    else
-        psRoot = CPLParseXMLFile(pszFilename);
+    CPLXMLNode *psRoot =
+        STARTS_WITH(pszFilename, "<Configuration")
+        ? CPLParseXMLString(pszFilename)
+        : CPLParseXMLFile(pszFilename);
     if( psRoot == NULL )
         return false;
     CPLXMLTreeCloser oCloser(psRoot);
 
-    for(CPLXMLNode* psIter = psRoot->psChild;
-                    psIter != NULL; psIter = psIter->psNext )
+    for( CPLXMLNode *psIter = psRoot->psChild; psIter != NULL;
+         psIter = psIter->psNext )
     {
         if( psIter->eType != CXT_Element )
             continue;
@@ -78,7 +77,10 @@ bool netCDFWriterConfiguration::Parse(const char* pszFilename)
         {
             netCDFWriterConfigField oField;
             if( oField.Parse(psIter) )
-                m_oFields[oField.m_osName.size() ? oField.m_osName : CPLString("__") +  oField.m_osNetCDFName] = oField;
+                m_oFields[!oField.m_osName.empty()
+                              ? oField.m_osName
+                              : CPLString("__") + oField.m_osNetCDFName] =
+                    oField;
         }
         else if( EQUAL(psIter->pszValue, "Layer") )
         {
@@ -87,7 +89,9 @@ bool netCDFWriterConfiguration::Parse(const char* pszFilename)
                 m_oLayers[oLayer.m_osName] = oLayer;
         }
         else
+        {
             CPLDebug("GDAL_netCDF", "Ignoring %s", psIter->pszValue);
+        }
     }
 
     m_bIsValid = true;
@@ -95,14 +99,16 @@ bool netCDFWriterConfiguration::Parse(const char* pszFilename)
     return true;
 }
 
-bool netCDFWriterConfigAttribute::Parse(CPLXMLNode* psNode)
+bool netCDFWriterConfigAttribute::Parse(CPLXMLNode *psNode)
 {
-    const char* pszName = CPLGetXMLValue(psNode, "name", NULL);
-    const char* pszValue = CPLGetXMLValue(psNode, "value", NULL);
-    const char* pszType = CPLGetXMLValue(psNode, "type", "string");
-    if( !EQUAL(pszType, "string") && !EQUAL(pszType, "integer") && !EQUAL(pszType, "double") )
+    const char *pszName = CPLGetXMLValue(psNode, "name", NULL);
+    const char *pszValue = CPLGetXMLValue(psNode, "value", NULL);
+    const char *pszType = CPLGetXMLValue(psNode, "type", "string");
+    if( !EQUAL(pszType, "string") && !EQUAL(pszType, "integer") &&
+        !EQUAL(pszType, "double") )
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "type='%s' unsupported", pszType);
+        CPLError(CE_Failure, CPLE_NotSupported, "type='%s' unsupported",
+                 pszType);
         return false;
     }
     if( pszName == NULL || pszValue == NULL )
@@ -116,14 +122,15 @@ bool netCDFWriterConfigAttribute::Parse(CPLXMLNode* psNode)
     return true;
 }
 
-bool netCDFWriterConfigField::Parse(CPLXMLNode* psNode)
+bool netCDFWriterConfigField::Parse(CPLXMLNode *psNode)
 {
-    const char* pszName = CPLGetXMLValue(psNode, "name", NULL);
-    const char* pszNetCDFName = CPLGetXMLValue(psNode, "netcdf_name", pszName);
-    const char* pszMainDim = CPLGetXMLValue(psNode, "main_dim", NULL);
+    const char *pszName = CPLGetXMLValue(psNode, "name", NULL);
+    const char *pszNetCDFName = CPLGetXMLValue(psNode, "netcdf_name", pszName);
+    const char *pszMainDim = CPLGetXMLValue(psNode, "main_dim", NULL);
     if( pszName == NULL && pszNetCDFName == NULL )
     {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Bot name and netcdf_name are missing");
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Bot name and netcdf_name are missing");
         return false;
     }
     if( pszName != NULL )
@@ -133,8 +140,8 @@ bool netCDFWriterConfigField::Parse(CPLXMLNode* psNode)
     if( pszMainDim != NULL )
         m_osMainDim = pszMainDim;
 
-    for(CPLXMLNode* psIter = psNode->psChild;
-                    psIter != NULL; psIter = psIter->psNext )
+    for( CPLXMLNode *psIter = psNode->psChild; psIter != NULL;
+         psIter = psIter->psNext )
     {
         if( psIter->eType != CXT_Element )
             continue;
@@ -145,17 +152,19 @@ bool netCDFWriterConfigField::Parse(CPLXMLNode* psNode)
                 m_aoAttributes.push_back(oAtt);
         }
         else
+        {
             CPLDebug("GDAL_netCDF", "Ignoring %s", psIter->pszValue);
+        }
     }
 
     return true;
 }
 
-bool netCDFWriterConfigLayer::Parse(CPLXMLNode* psNode)
+bool netCDFWriterConfigLayer::Parse(CPLXMLNode *psNode)
 {
-    const char* pszName = CPLGetXMLValue(psNode, "name", NULL);
-    const char* pszNetCDFName = CPLGetXMLValue(psNode, "netcdf_name", pszName);
-    if( pszName == NULL  )
+    const char *pszName = CPLGetXMLValue(psNode, "name", NULL);
+    const char *pszNetCDFName = CPLGetXMLValue(psNode, "netcdf_name", pszName);
+    if( pszName == NULL )
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Missing name");
         return false;
@@ -164,14 +173,15 @@ bool netCDFWriterConfigLayer::Parse(CPLXMLNode* psNode)
     if( pszNetCDFName != NULL )
         m_osNetCDFName = pszNetCDFName;
 
-    for(CPLXMLNode* psIter = psNode->psChild;
-                    psIter != NULL; psIter = psIter->psNext )
+    for( CPLXMLNode *psIter = psNode->psChild; psIter != NULL;
+         psIter = psIter->psNext )
     {
         if( psIter->eType != CXT_Element )
             continue;
         if( EQUAL(psIter->pszValue, "LayerCreationOption") )
         {
-            netCDFWriterConfiguration::SetNameValue(psIter, m_oLayerCreationOptions);
+            netCDFWriterConfiguration::SetNameValue(psIter,
+                                                    m_oLayerCreationOptions);
         }
         else if( EQUAL(psIter->pszValue, "Attribute") )
         {
@@ -183,10 +193,15 @@ bool netCDFWriterConfigLayer::Parse(CPLXMLNode* psNode)
         {
             netCDFWriterConfigField oField;
             if( oField.Parse(psIter) )
-                m_oFields[oField.m_osName.size() ? oField.m_osName : CPLString("__") +  oField.m_osNetCDFName] = oField;
+                m_oFields[!oField.m_osName.empty()
+                              ? oField.m_osName
+                              : CPLString("__") + oField.m_osNetCDFName] =
+                    oField;
         }
         else
+        {
             CPLDebug("GDAL_netCDF", "Ignoring %s", psIter->pszValue);
+        }
     }
 
     return true;

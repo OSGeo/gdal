@@ -211,7 +211,7 @@ static void mk_s57()
     DDFField *poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
     poRec->SetFieldRaw( poField, 0, "\1\0\036", 3 );
 
-    poField = poRec->AddField( oModule.FindFieldDefn( "DSID" ) );
+    /*poField = */ poRec->AddField( oModule.FindFieldDefn( "DSID" ) );
 
     poRec->SetIntSubfield   ( "DSID", 0, "RCNM", 0, 10 );
     poRec->SetIntSubfield   ( "DSID", 0, "RCID", 0, 1 );
@@ -230,7 +230,7 @@ static void mk_s57()
     poRec->SetIntSubfield   ( "DSID", 0, "AGEN", 0, 540 );
     poRec->SetStringSubfield( "DSID", 0, "COMT", 0, "" );
 
-    poField = poRec->AddField( oModule.FindFieldDefn( "DSSI" ) );
+    /*poField = */ poRec->AddField( oModule.FindFieldDefn( "DSSI" ) );
 
     poRec->SetIntSubfield   ( "DSSI", 0, "DSTR", 0, 2 );
     poRec->SetIntSubfield   ( "DSSI", 0, "AALL", 0, 1 );
@@ -255,7 +255,7 @@ static void mk_s57()
     poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
     poRec->SetFieldRaw( poField, 0, "\2\0\036", 3 );
 
-    poField = poRec->AddField( oModule.FindFieldDefn( "DSPM" ) );
+    /*poField = */ poRec->AddField( oModule.FindFieldDefn( "DSPM" ) );
 
     poRec->SetIntSubfield   ( "DSPM", 0, "RCNM", 0, 20 );
     poRec->SetIntSubfield   ( "DSPM", 0, "RCID", 0, 1 );
@@ -281,14 +281,14 @@ static void mk_s57()
     poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
     poRec->SetFieldRaw( poField, 0, "\3\0\036", 3 );
 
-    poField = poRec->AddField( oModule.FindFieldDefn( "VRID" ) );
+    /*poField = */ poRec->AddField( oModule.FindFieldDefn( "VRID" ) );
 
     poRec->SetIntSubfield   ( "VRID", 0, "RCNM", 0, 110 );
     poRec->SetIntSubfield   ( "VRID", 0, "RCID", 0, 518 );
     poRec->SetIntSubfield   ( "VRID", 0, "RVER", 0, 1 );
     poRec->SetIntSubfield   ( "VRID", 0, "RUIN", 0, 1 );
 
-    poField = poRec->AddField( oModule.FindFieldDefn( "SG3D" ) );
+    /*poField = */ poRec->AddField( oModule.FindFieldDefn( "SG3D" ) );
 
     poRec->SetIntSubfield   ( "SG3D", 0, "YCOO", 0, -325998702 );
     poRec->SetIntSubfield   ( "SG3D", 0, "XCOO", 0, 612175350 );

@@ -72,7 +72,7 @@ def nitf_3():
 ###############################################################################
 # Test direction creation of an NITF file.
 
-def nitf_create(creation_options, set_inverted_color_interp = True):
+def nitf_create(creation_options, set_inverted_color_interp = True, createcopy = False):
 
     drv = gdal.GetDriverByName( 'NITF' )
 
@@ -81,7 +81,10 @@ def nitf_create(creation_options, set_inverted_color_interp = True):
     except:
         pass
 
-    ds = drv.Create( 'tmp/test_create.ntf', 200, 100, 3, gdal.GDT_Byte,
+    if createcopy:
+        ds = gdal.GetDriverByName('MEM').Create('', 200, 100, 3, gdal.GDT_Byte)
+    else:
+        ds = drv.Create( 'tmp/test_create.ntf', 200, 100, 3, gdal.GDT_Byte,
                      creation_options )
     ds.SetGeoTransform( (100, 0.1, 0.0, 30.0, 0.0, -0.1 ) )
 
@@ -101,6 +104,10 @@ def nitf_create(creation_options, set_inverted_color_interp = True):
         ds.WriteRaster( 0, line, 200, 1, raw_data,
                         buf_type = gdal.GDT_Int16,
                         band_list = [1,2,3] )
+
+    if createcopy:
+        ds = drv.CreateCopy( 'tmp/test_create.ntf', ds,
+                            options = creation_options)
 
     ds = None
 
@@ -562,8 +569,6 @@ def nitf_28_jp2ecw():
 
 ###############################################################################
 # Test reading the previously create file with the JP2MrSID driver
-# (The NITF driver only looks for the JP2ECW driver when creating IC=C8 NITF files,
-#  but allows any GDAL driver to open the JP2 stream inside it)
 
 def nitf_28_jp2mrsid():
     if not gdaltest.nitf_28_jp2ecw_is_ok:
@@ -589,10 +594,6 @@ def nitf_28_jp2mrsid():
 
 ###############################################################################
 # Test reading the previously create file with the JP2KAK driver
-# (The NITF driver only looks for the JP2ECW driver when creating IC=C8 NITF files,
-#  but allows any GDAL driver to open the JP2 stream inside it)
-#
-# Note: I (E. Rouault) haven't been able to check that this test actually works.
 
 def nitf_28_jp2kak():
     if not gdaltest.nitf_28_jp2ecw_is_ok:
@@ -610,6 +611,54 @@ def nitf_28_jp2kak():
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2KAK')
 
     ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp = False)
+
+    gdaltest.reregister_all_jpeg2000_drivers()
+
+    return ret
+
+###############################################################################
+# Test reading the previously create file with the JP2KAK driver
+
+def nitf_28_jp2openjpeg():
+    if not gdaltest.nitf_28_jp2ecw_is_ok:
+        return 'skip'
+
+    try:
+        drv = gdal.GetDriverByName( 'JP2OpenJPEG' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
+
+    ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp = False)
+
+    gdaltest.reregister_all_jpeg2000_drivers()
+
+    return ret
+
+###############################################################################
+# Test Create() with IC=C8 compression with the JP2OpenJPEG driver
+
+def nitf_28_jp2openjpeg_bis():
+    try:
+        drv = gdal.GetDriverByName( 'JP2OpenJPEG' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
+
+    if nitf_create([ 'ICORDS=G', 'IC=C8', 'QUALITY=25' ], set_inverted_color_interp = False, createcopy = True) == 'success':
+        ret = nitf_check_created_file(31604, 42782, 38791, set_inverted_color_interp = False)
+    else:
+        ret = 'fail'
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
@@ -3431,6 +3480,8 @@ gdaltest_list = [
     nitf_28_jp2ecw,
     nitf_28_jp2mrsid,
     nitf_28_jp2kak,
+    nitf_28_jp2openjpeg,
+    nitf_28_jp2openjpeg_bis,
     nitf_29,
     nitf_30,
     nitf_31,

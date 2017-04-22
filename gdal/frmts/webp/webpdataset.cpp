@@ -63,10 +63,10 @@ class WEBPDataset : public GDALPamDataset
                                    int, int *,
                                    GSpacing nPixelSpace, GSpacing nLineSpace,
                                    GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg* psExtraArg);
+                                   GDALRasterIOExtraArg* psExtraArg) override;
 
-    virtual char      **GetMetadataDomainList();
-    virtual char  **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadataDomainList() override;
+    virtual char  **GetMetadata( const char * pszDomain = "" ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -90,8 +90,8 @@ class WEBPRasterBand : public GDALPamRasterBand
   public:
                    WEBPRasterBand( WEBPDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/
@@ -344,7 +344,7 @@ CPLErr WEBPDataset::IRasterIO( GDALRWFlag eRWFlag,
     if((eRWFlag == GF_Read) &&
        (nBandCount == nBands) &&
        (nXOff == 0) &&
-       (nYOff == 0) && // TODO: X -> Y on this was correct?
+       (nYOff == 0) &&
        (nXSize == nBufXSize) && (nXSize == nRasterXSize) &&
        (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
        (eBufType == GDT_Byte) &&

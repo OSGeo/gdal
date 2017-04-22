@@ -37,8 +37,10 @@ CPL_CVSID("$Id$");
 OGRGFTResultLayer::OGRGFTResultLayer( OGRGFTDataSource* poDSIn,
                                       const char* pszSQL ) :
     OGRGFTLayer(poDSIn),
+    osSQL( CPLString() ),
     bGotAllRows(FALSE)
 {
+    // cppcheck-suppress useInitializationList
     osSQL = PatchSQL(pszSQL);
 
     poFeatureDefn = new OGRFeatureDefn( "result" );
@@ -196,7 +198,7 @@ int OGRGFTResultLayer::RunSQL()
             poTableDefn = poTableLayer->GetLayerDefn();
 
         if (poTableLayer != NULL &&
-            poTableLayer->GetTableId().size() &&
+            !poTableLayer->GetTableId().empty() &&
             !EQUAL(osTableId, poTableLayer->GetTableId()))
         {
             osChangedSQL = osSQL;
@@ -243,7 +245,7 @@ int OGRGFTResultLayer::RunSQL()
         STARTS_WITH_CI(osSQL.c_str(), "DESCRIBE"))
     {
         ParseCSVResponse(pszLine, aosRows);
-        if (aosRows.size() > 0)
+        if (!aosRows.empty())
         {
             char** papszTokens = OGRGFTCSVSplitLine(aosRows[0], ',');
             for(int i=0;papszTokens && papszTokens[i];i++)

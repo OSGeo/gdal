@@ -35,7 +35,7 @@ extern Link_t *RecipeFunctions;
 
 void InitCeosSARVolume(CeosSARVolume_t *volume, int32 file_name_convention)
 {
-    volume->Flavour = \
+    volume->Flavor = \
 	volume->Sensor = \
 	volume->ProductType = 0;
 

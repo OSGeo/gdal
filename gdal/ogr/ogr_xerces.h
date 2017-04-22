@@ -47,7 +47,8 @@ void CPL_DLL OGRDeinitializeXerces(void);
 namespace OGR
 {
 CPLString CPL_DLL transcode( const XMLCh *panXMLString, int nLimitingChars = -1 );
-CPLString CPL_DLL &transcode( const XMLCh *panXMLString, CPLString& osRet, int nLimitingChars = -1 );
+CPLString CPL_DLL &transcode( const XMLCh *panXMLString, CPLString& osRet,
+                              int nLimitingChars = -1 );
 }
 
 #ifndef OGR_USING

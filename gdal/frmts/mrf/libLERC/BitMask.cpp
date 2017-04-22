@@ -50,17 +50,17 @@ bool BitMask::RLEdecompress(const Byte* src) {
 #define READ_COUNT if (true) { count = *src++; count += (*src++ << 8); }
 
     while (sz) { // One sequence per loop
-	READ_COUNT;
-	if (count < 0) { // negative count for repeats
-	    Byte b = *src++;
-	    sz += count;
-	    while (0 != count++)
-		*dst++ = b;
-	} else { // No repeats
-	    sz -= count;
-	    while (0 != count--)
-		*dst++ = *src++;
-	}
+        READ_COUNT;
+        if (count < 0) { // negative count for repeats
+            Byte b = *src++;
+            sz += count;
+            while (0 != count++)
+                *dst++ = b;
+        } else { // No repeats
+            sz -= count;
+            while (0 != count--)
+                *dst++ = *src++;
+        }
     }
     READ_COUNT;
     return (count == EOT);
@@ -73,11 +73,11 @@ inline static int run_length(const Byte *s, int max_count)
 {
     assert(max_count && s);
     if (max_count > MAX_RUN)
-	max_count = MAX_RUN;
+        max_count = MAX_RUN;
     const Byte c = *s++;
     for (int count = 1; count < max_count; count++)
-	if (c != *s++)
-	    return count;
+        if (c != *s++)
+            return count;
     return max_count;
 }
 
@@ -104,21 +104,22 @@ int BitMask::RLEcompress(Byte *dst) const {
 
     dst += 2; // Skip the space for the first count
     while (sz) {
-	int run = run_length(src, sz);
-	if (run < MIN_RUN) { // Use one byte
-	    *dst++ = *src++;
-	    sz--;
-	    if (MAX_RUN == ++oddrun)
-		FLUSH;
-	} else { // Found a run
-	    FLUSH;
-	    WRITE_COUNT(-run);
-	    *pCnt++ = *src;
-	    src += run;
-	    sz -= run;
-	    dst = pCnt + 2; // after the next marker
-	}
+        int run = run_length(src, sz);
+        if (run < MIN_RUN) { // Use one byte
+            *dst++ = *src++;
+            sz--;
+            if (MAX_RUN == ++oddrun)
+                FLUSH;
+        } else { // Found a run
+            FLUSH;
+            WRITE_COUNT(-run);
+            *pCnt++ = *src;
+            src += run;
+            sz -= run;
+            dst = pCnt + 2; // after the next marker
+        }
     }
+    // cppcheck-suppress uselessAssignmentPtrArg
     FLUSH;
     WRITE_COUNT(EOT); // End marker
     // return compressed output size
@@ -138,18 +139,18 @@ int BitMask::RLEsize() const {
     // output size, start with size of end marker
     int osz = 2;
     while (sz) {
-	int run = run_length(src, sz);
-	if (run < MIN_RUN) {
-	    src++;
-	    sz--;
-	    if (MAX_RUN == ++oddrun)
-		SIMFLUSH;
-	} else {
-	    SIMFLUSH;
-	    src += run;
-	    sz -= run;
-	    osz += 3; // Any run is 3 bytes
-	}
+        int run = run_length(src, sz);
+        if (run < MIN_RUN) {
+            src++;
+            sz--;
+            if (MAX_RUN == ++oddrun)
+                SIMFLUSH;
+        } else {
+            SIMFLUSH;
+            src += run;
+            sz -= run;
+            osz += 3; // Any run is 3 bytes
+        }
     }
     SIMFLUSH;
     return osz;

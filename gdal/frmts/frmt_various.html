@@ -327,7 +327,7 @@ USGS DOQ Standards</a></p>
 
 <h2><a name="EHdr">EHdr -- ESRI .hdr Labelled</a></h2>
 
-<p>GDAL supports reading and writing the ESRI .hdr labelling format,
+<p>GDAL supports reading and writing the ESRI .hdr labeling format,
 often referred to as ESRI BIL format.  Eight, sixteen
 and thirty-two bit integer raster data types are supported as well as 32
 bit floating point.  Coordinate systems (from a .prj file), and georeferencing
@@ -821,7 +821,7 @@ GMT.</p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/netcdf/gmtdataset.cpp</tt>.</p>
 
-<p>See Also: <a href="http://www.unidata.ucar.edu/packages/netcdf/">Unidata NetCDF Page</a></p>
+<p>See Also: <a href="http://www.unidata.ucar.edu/software/netcdf/">Unidata NetCDF Page</a></p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
@@ -1411,6 +1411,23 @@ left of the values that appear in the file).</p>
 <p>Informal specification given in this <a href="http://lists.osgeo.org/pipermail/gdal-dev/2011-June/029173.html">GDAL-dev mailing list thread</a></p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/zmap/zmapdataset.cpp</tt>.</p>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+<h2><a name="CAD">CAD -- AutoCAD DWG raster layer</a></h2>
+
+<p>(GDAL >= 2.2.0)</p>
+
+<p>
+OGR DWG support is based on libopencad, so the list of supported DWG (DXF)
+versions can be seen in libopencad documentation. All drawing entities are
+separated into layers as they are in DWG file. The rasters are usually a separate
+georeferenced files (GeoTiff, Jpeg, Png etc.) which exist in DWG file as separate
+layers. The driver try to get spatial reference and other methadata from DWG
+Image description and set it to GDALDataset.
+</p>
+
+<p>NOTE: Implemented as <tt>ogr/ogrsf_frmts/cad/gdalcaddataset.cpp</tt>.</p>
 
 <hr>
 <p>

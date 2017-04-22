@@ -28,10 +28,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_priv.h"
-#include "cpl_string.h"
+
+#include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
+#include <string>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
@@ -917,7 +929,7 @@ CPLErr GDALDefaultOverviews::CreateMaskBand( int nFlags, int nBand )
         if( poTBand == NULL )
             return CE_Failure;
 
-        const int nBands = nFlags & GMF_PER_DATASET ?
+        const int nBands = (nFlags & GMF_PER_DATASET) ?
             1 : poDS->GetRasterCount();
 
         char **papszOpt = CSLSetNameValue( NULL, "COMPRESS", "DEFLATE" );
@@ -982,12 +994,15 @@ CPLErr GDALDefaultOverviews::CreateMaskBand( int nFlags, int nBand )
 /*                            GetMaskBand()                             */
 /************************************************************************/
 
+// Secret code meaning we don't handle this band.
+static const int MISSING_FLAGS = 0x8000;
+
 GDALRasterBand *GDALDefaultOverviews::GetMaskBand( int nBand )
 
 {
     const int nFlags = GetMaskFlags( nBand );
 
-    if( nFlags == 0x8000 )  // Secret code meaning we don't handle this band.
+    if( nFlags == MISSING_FLAGS )
         return NULL;
 
     if( nFlags & GMF_PER_DATASET )
@@ -1018,7 +1033,7 @@ int GDALDefaultOverviews::GetMaskFlags( int nBand )
             CPLString().Printf( "INTERNAL_MASK_FLAGS_%d", std::max(nBand, 1)) );
 
     if( pszValue == NULL )
-        return 0x8000;
+        return MISSING_FLAGS;
 
     return atoi(pszValue);
 }

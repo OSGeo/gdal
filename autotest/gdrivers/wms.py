@@ -481,12 +481,13 @@ def wms_11():
     if gdaltest.skip_on_travis():
         return 'skip'
 
+    srv = 'http://onearth.jpl.nasa.gov/wms.cgi'
+    if gdaltest.gdalurlopen(srv) is None:
+        return 'skip'
+
     name = "WMS:http://onearth.jpl.nasa.gov/wms.cgi?request=GetTileService"
     ds = gdal.Open( name )
     if ds is None:
-        srv = 'http://onearth.jpl.nasa.gov/wms.cgi?request=GetTileService'
-        if gdaltest.gdalurlopen(srv) is None:
-            return 'skip'
         gdaltest.post_reason( 'open of %s failed.' % name)
         return 'fail'
 
@@ -596,11 +597,11 @@ def wms_14():
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    if abs(gt[0]- -20037508.339999999850988) > 0.00001 \
-       or abs(gt[3]- 20037508.339999999850988) > 0.00001 \
-       or abs(gt[1] - 0.298582141697407) > 0.00001 \
+    if abs(gt[0]- -20037508.34278924,) > 0.00001 \
+       or abs(gt[3]- 20037508.34278924,) > 0.00001 \
+       or abs(gt[1] - 0.2985821417389697) > 0.00001 \
        or abs(gt[2] - 0) > 0.00001 \
-       or abs(gt[5] - -0.298582141697407) > 0.00001 \
+       or abs(gt[5] - -0.2985821417389697,) > 0.00001 \
        or abs(gt[4] - 0) > 0.00001:
         gdaltest.post_reason( 'wrong geotransform' )
         print(gt)
@@ -780,12 +781,13 @@ def wms_17():
     if gdaltest.wms_drv is None:
         return 'skip'
 
+    srv = 'http://onmoon.lmmp.nasa.gov/sites/wms.cgi?'
+    if gdaltest.gdalurlopen(srv) is None:
+        return 'skip'
+
     name = '<GDAL_WMS><Service name="TiledWMS"><ServerUrl>http://onmoon.lmmp.nasa.gov/sites/wms.cgi?</ServerUrl><TiledGroupName>King Crater DEM Color Confidence, LMMP</TiledGroupName></Service></GDAL_WMS>'
     ds = gdal.Open( name )
     if ds is None:
-        srv = 'http://onmoon.lmmp.nasa.gov/sites/wms.cgi?'
-        if gdaltest.gdalurlopen(srv) is None:
-            return 'skip'
         gdaltest.post_reason( 'open of %s failed.' % name)
         return 'fail'
 
@@ -897,7 +899,7 @@ gdaltest_list = [
     wms_14,
     wms_15,
     wms_16,
-    wms_17,
+    #wms_17,
     wms_18,
     wms_19,
     wms_cleanup ]

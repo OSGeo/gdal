@@ -528,6 +528,7 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
     const char* pszNativeMediaType = poFeature->GetNativeMediaType();
     json_object* poNativeGeom = NULL;
     json_object* poNativeId = NULL;
+    bool bHasProperties = true;
     if( pszNativeMediaType &&
         EQUAL(pszNativeMediaType, "application/vnd.geo+json") )
     {
@@ -541,11 +542,16 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
             it.val = NULL;
             it.entry = NULL;
             CPLString osNativeData;
+            bHasProperties = false;
             json_object_object_foreachC(poNativeJSon, it)
             {
-                if( strcmp(it.key, "type") == 0 ||
-                    strcmp(it.key, "properties") == 0 )
+                if( strcmp(it.key, "type") == 0 )
                 {
+                    continue;
+                }
+                if( strcmp(it.key, "properties") == 0 )
+                {
+                    bHasProperties = true;
                     continue;
                 }
                 if( strcmp(it.key, "bbox") == 0 )
@@ -621,9 +627,13 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
             bWriteIdIfFoundInAttributes = false;
         }
     }
-    json_object* poObjProps
-        = OGRGeoJSONWriteAttributes( poFeature, bWriteIdIfFoundInAttributes, oOptions );
-    json_object_object_add( poObj, "properties", poObjProps );
+
+    if( bHasProperties )
+    {
+        json_object* poObjProps
+            = OGRGeoJSONWriteAttributes( poFeature, bWriteIdIfFoundInAttributes, oOptions );
+        json_object_object_add( poObj, "properties", poObjProps );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write feature geometry to GeoJSON "geometry" object.            */
@@ -700,6 +710,11 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature,
     OGRFeatureDefn* poDefn = poFeature->GetDefnRef();
     for( int nField = 0; nField < poDefn->GetFieldCount(); ++nField )
     {
+        if( !poFeature->IsFieldSet(nField) )
+        {
+            continue;
+        }
+
         OGRFieldDefn* poFieldDefn = poDefn->GetFieldDefn( nField );
         CPLAssert( NULL != poFieldDefn );
         OGRFieldType eType = poFieldDefn->GetType();
@@ -713,7 +728,7 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature,
 
         json_object* poObjProp = NULL;
 
-        if( !poFeature->IsFieldSet(nField) )
+        if( poFeature->IsFieldNull(nField) )
         {
             // poObjProp = NULL;
         }
@@ -848,7 +863,11 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
 json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
                                       const OGRGeoJSONWriteOptions& oOptions )
 {
-    CPLAssert( NULL != poGeometry );
+    if( poGeometry == NULL )
+    {
+        CPLAssert( false );
+        return NULL;
+    }
 
     OGRwkbGeometryType eType = poGeometry->getGeometryType();
     // For point empty, return a null geometry. For other empty geometry types,
@@ -915,7 +934,15 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
                       "Feature gets NULL geometry assigned." );
         }
 
-        json_object_object_add( poObj, "coordinates", poObjGeom);
+        if( poObjGeom != NULL )
+        {
+            json_object_object_add( poObj, "coordinates", poObjGeom);
+        }
+        else
+        {
+            json_object_put(poObj);
+            poObj = NULL;
+        }
     }
 
     return poObj;
@@ -1445,7 +1472,7 @@ OGR_json_double_with_significant_figures_to_string( struct json_object *jso,
                 nSize = CPLsnprintf(szBuffer, sizeof(szBuffer),
                                     szFormatting, jso->o.c_double);
                 if( nSize+2 < static_cast<int>(sizeof(szBuffer)) &&
-                    (pszDot = strchr(szBuffer, '.')) == NULL )
+                    strchr(szBuffer, '.') == NULL )
                 {
                     nSize +=
                         CPLsnprintf(szBuffer + nSize, sizeof(szBuffer) - nSize,

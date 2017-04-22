@@ -59,7 +59,7 @@ class VizGeorefSpline2D
 
   public:
 
-    VizGeorefSpline2D(int nof_vars = 1) :
+    explicit VizGeorefSpline2D(int nof_vars = 1) :
         type(VIZ_GEOREF_SPLINE_ZERO_POINTS),
         _nof_vars(nof_vars),
         _nof_points(0),

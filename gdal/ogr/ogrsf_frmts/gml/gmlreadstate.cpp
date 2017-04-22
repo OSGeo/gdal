@@ -27,8 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gmlreaderp.h"
+
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
@@ -71,7 +79,7 @@ void GMLReadState::PushPath( const char *pszElement, int nLen )
 {
     if (m_nPathLength > 0)
         osPath.append(1, '|');
-    if (m_nPathLength < (int)aosPathComponents.size())
+    if (m_nPathLength < static_cast<int>(aosPathComponents.size()))
     {
         if (nLen >= 0)
         {
@@ -89,7 +97,7 @@ void GMLReadState::PushPath( const char *pszElement, int nLen )
         aosPathComponents.push_back(pszElement);
         osPath.append(pszElement);
     }
-    m_nPathLength ++;
+    m_nPathLength++;
 }
 
 /************************************************************************/
@@ -99,8 +107,9 @@ void GMLReadState::PushPath( const char *pszElement, int nLen )
 void GMLReadState::PopPath()
 
 {
-    CPLAssert( m_nPathLength > 0 );
+    CPLAssert(m_nPathLength > 0);
 
-    osPath.resize(osPath.size() - (aosPathComponents[m_nPathLength-1].size() + ((m_nPathLength > 1) ? 1 : 0)));
-    m_nPathLength --;
+    osPath.resize(osPath.size() - (aosPathComponents[m_nPathLength - 1].size() +
+                                   ((m_nPathLength > 1) ? 1 : 0)));
+    m_nPathLength--;
 }

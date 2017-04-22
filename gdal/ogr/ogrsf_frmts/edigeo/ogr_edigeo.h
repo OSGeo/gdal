@@ -63,17 +63,17 @@ class OGREDIGEOLayer : public OGRLayer
                                        OGRSpatialReference* poSRS);
                         virtual ~OGREDIGEOLayer();
 
-    virtual void                ResetReading();
-    virtual OGRFeature *        GetNextFeature();
-    virtual OGRFeature *        GetFeature(GIntBig nFID);
-    virtual GIntBig             GetFeatureCount( int bForce );
+    virtual void                ResetReading() override;
+    virtual OGRFeature *        GetNextFeature() override;
+    virtual OGRFeature *        GetFeature(GIntBig nFID) override;
+    virtual GIntBig             GetFeatureCount( int bForce ) override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 
-    virtual OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual OGRErr              GetExtent(OGREnvelope *psExtent, int bForce) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     void                        AddFeature(OGRFeature* poFeature);
@@ -231,12 +231,12 @@ class OGREDIGEODataSource : public OGRDataSource
 
     int                 Open( const char * pszFilename );
 
-    virtual const char*         GetName() { return pszName; }
+    virtual const char*         GetName() override { return pszName; }
 
-    virtual int                 GetLayerCount();
-    virtual OGRLayer*           GetLayer( int );
+    virtual int                 GetLayerCount() override;
+    virtual OGRLayer*           GetLayer( int ) override;
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 
     int                         HasUTF8ContentOnly() { return bHasUTF8ContentOnly; }
 };

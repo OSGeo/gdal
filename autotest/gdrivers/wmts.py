@@ -485,6 +485,8 @@ def wmts_13():
     for connection_str in [ 'WMTS:/vsimem/minimal.xml,layer=',
                             'WMTS:/vsimem/minimal.xml,style=',
                             'WMTS:/vsimem/minimal.xml,tilematrixset=',
+                            'WMTS:/vsimem/minimal.xml,tilematrix=',
+                            'WMTS:/vsimem/minimal.xml,zoom_level=',
                             'WMTS:/vsimem/minimal.xml,layer=,style=,tilematrixset=' ]:
         ds = gdal.Open(connection_str)
         if ds is None:
@@ -495,7 +497,9 @@ def wmts_13():
 
     for connection_str in [ 'WMTS:/vsimem/minimal.xml,layer=foo',
                             'WMTS:/vsimem/minimal.xml,style=bar',
-                            'WMTS:/vsimem/minimal.xml,tilematrixset=baz' ]:
+                            'WMTS:/vsimem/minimal.xml,tilematrixset=baz',
+                            'WMTS:/vsimem/minimal.xml,tilematrix=baw',
+                            'WMTS:/vsimem/minimal.xml,zoom_level=30' ]:
         gdal.PushErrorHandler()
         ds = gdal.Open(connection_str)
         gdal.PopErrorHandler()
@@ -581,7 +585,7 @@ def wmts_14():
             <Identifier>tms</Identifier>
             <SupportedCRS>urn:ogc:def:crs:EPSG:6.18:3:3857</SupportedCRS>
             <TileMatrix>
-                <Identifier>0</Identifier>
+                <Identifier>tm_0</Identifier>
                 <ScaleDenominator>559082264.029</ScaleDenominator>
                 <TopLeftCorner>-20037508.3428 20037508.3428</TopLeftCorner>
                 <TileWidth>256</TileWidth>
@@ -590,7 +594,7 @@ def wmts_14():
                 <MatrixHeight>1</MatrixHeight>
             </TileMatrix>
             <TileMatrix>
-                <ows:Identifier>18</ows:Identifier>
+                <ows:Identifier>tm_18</ows:Identifier>
                 <ScaleDenominator>2132.72958385</ScaleDenominator>
                 <TopLeftCorner>-20037508.3428 20037508.3428</TopLeftCorner>
                 <TileWidth>256</TileWidth>
@@ -689,7 +693,7 @@ def wmts_14():
         return 'fail'
 
     ds = gdal.Open('/vsimem/gdal_nominal.xml')
-    gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/18/0/0/2/1.txt', 'foo')
+    gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/tm_18/0/0/2/1.txt', 'foo')
     res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     if res != '<LocationInfo>foo</LocationInfo>':
         gdaltest.post_reason('fail')
@@ -718,7 +722,9 @@ def wmts_14():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    for open_options in [ ['URL=/vsimem/nominal.xml', 'STYLE=x', 'TILEMATRIXSET=y'] ]:
+    for open_options in [ ['URL=/vsimem/nominal.xml', 'STYLE=x', 'TILEMATRIXSET=y'],
+                          ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIX=30'],
+                          ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'ZOOM_LEVEL=30'] ]:
         gdal.PushErrorHandler()
         ds = gdal.OpenEx('WMTS:', open_options = open_options)
         gdal.PopErrorHandler()
@@ -727,12 +733,102 @@ def wmts_14():
             return 'fail'
 
     ds = gdal.Open('WMTS:/vsimem/nominal.xml')
-    gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/18/0/0/2/1.txt', '<?xml version="1.0" encoding="UTF-8"?><xml_content/>')
+    gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/tm_18/0/0/2/1.txt', '<?xml version="1.0" encoding="UTF-8"?><xml_content/>')
     res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     if res != """<LocationInfo><xml_content />
 </LocationInfo>""":
         gdaltest.post_reason('fail')
         print(res)
+        return 'fail'
+
+    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml,tilematrix=tm_0')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 256:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+
+    ds = gdal.OpenEx('WMTS:/vsimem/gdal_nominal.xml', open_options = ['tilematrix=tm_0'])
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 256:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+
+    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml,zoom_level=0')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 256:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+
+    ds = gdal.OpenEx('WMTS:/vsimem/gdal_nominal.xml', open_options = ['zoom_level=0'])
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 256:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/gdal_nominal.xml', """<GDAL_WMTS>
+  <GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl>
+  <Layer>lyr1</Layer>
+  <Style>style=auto</Style>
+  <TileMatrixSet>tms</TileMatrixSet>
+  <TileMatrix>tm_0</TileMatrix>
+  <DataWindow>
+    <UpperLeftX>-20037508.3428</UpperLeftX>
+    <UpperLeftY>20037508.3428</UpperLeftY>
+    <LowerRightX>20037508.34278254</LowerRightX>
+    <LowerRightY>-20037508.34278254</LowerRightY>
+  </DataWindow>
+  <BandsCount>4</BandsCount>
+  <Cache />
+  <UnsafeSSL>true</UnsafeSSL>
+  <ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>
+  <ZeroBlockOnServerException>true</ZeroBlockOnServerException>
+</GDAL_WMTS>""")
+    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 256:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/gdal_nominal.xml', """<GDAL_WMTS>
+  <GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl>
+  <Layer>lyr1</Layer>
+  <Style>style=auto</Style>
+  <TileMatrixSet>tms</TileMatrixSet>
+  <ZoomLevel>0</ZoomLevel>
+  <DataWindow>
+    <UpperLeftX>-20037508.3428</UpperLeftX>
+    <UpperLeftY>20037508.3428</UpperLeftY>
+    <LowerRightX>20037508.34278254</LowerRightX>
+    <LowerRightY>-20037508.34278254</LowerRightY>
+  </DataWindow>
+  <BandsCount>4</BandsCount>
+  <Cache />
+  <UnsafeSSL>true</UnsafeSSL>
+  <ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>
+  <ZeroBlockOnServerException>true</ZeroBlockOnServerException>
+</GDAL_WMTS>""")
+    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 256:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
         return 'fail'
 
     return 'success'
@@ -1470,6 +1566,162 @@ def wmts_21():
     return 'success'
 
 ###############################################################################
+# Test when WGS84BoundingBox is a densified reprojection of the tile matrix bbox
+
+def wmts_22():
+
+    if gdaltest.wmts_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/wmts_22.xml', """<Capabilities>
+    <Contents>
+        <Layer>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-6.38153862706 55.6179644952</ows:LowerCorner>
+                <ows:UpperCorner>60.3815386271 75.5825702342</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+            <Identifier>lyr1</Identifier>
+            <Title>My layer1</Title>
+            <Style isDefault="true">
+                <Identifier>default_style</Identifier>
+                <Title>Default style</Title>
+            </Style>
+            <TileMatrixSetLink>
+                <TileMatrixSet>tms</TileMatrixSet>
+            </TileMatrixSetLink>
+            <ResourceURL format="image/png"
+    template="/vsimem/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+        </Layer>
+        <TileMatrixSet>
+            <Identifier>tms</Identifier>
+            <ows:Identifier>tms</ows:Identifier>
+            <ows:SupportedCRS>urn:ogc:def:crs:EPSG::3067</ows:SupportedCRS>
+            <TileMatrix>
+                <ows:Identifier>13</ows:Identifier>
+                <ScaleDenominator>3571.42857143</ScaleDenominator>
+                <TopLeftCorner>-548576.0 8388608.0</TopLeftCorner>
+                <TileWidth>256</TileWidth>
+                <TileHeight>256</TileHeight>
+                <MatrixWidth>8192</MatrixWidth>
+                <MatrixHeight>8192</MatrixHeight>
+            </TileMatrix>
+        </TileMatrixSet>
+    </Contents>
+    <ServiceMetadataURL xlink:href="/vsimem/wmts_22.xml"/>
+</Capabilities>""")
+
+    ds = gdal.Open('WMTS:/vsimem/wmts_22.xml')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 2097152:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+    if ds.RasterYSize != 2097152:
+        gdaltest.post_reason('fail')
+        print(ds.RasterYSize)
+        return 'fail'
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (-548576.0, 1.0000000000004, 0.0, 8388608.0, 0.0, -1.0000000000004)
+    for i in range(6):
+        if abs(got_gt[i] - expected_gt[i]) > 1e-8:
+            gdaltest.post_reason('fail')
+            print(got_gt)
+            return 'fail'
+    if ds.GetProjectionRef().find('3067') < 0:
+        gdaltest.post_reason('fail')
+        print(ds.GetProjectionRef())
+        return 'fail'
+
+    return 'success'
+###############################################################################
+#
+
+def wmts_23( imagetype, expected_cs ):
+
+    if gdaltest.wmts_drv is None:
+        return 'skip'
+
+    inputXml = '/vsimem/' + imagetype +'.xml'
+    serviceUrl =  '/vsimem/wmts_23/' + imagetype
+    gdal.FileFromMemBuffer( inputXml, """<Capabilities>
+    <Contents>
+        <Layer>
+            <Identifier/>
+            <TileMatrixSetLink>
+                <TileMatrixSet/>
+            </TileMatrixSetLink>
+            <Style>
+                <Identifier/>
+            </Style>
+            <ResourceURL format="image/png" template=" """ + serviceUrl + """/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+        </Layer>
+        <TileMatrixSet>
+            <Identifier/>
+            <SupportedCRS>urn:ogc:def:crs:EPSG:6.18:3:3857</SupportedCRS>
+            <TileMatrix>
+                <Identifier>0</Identifier>
+                <ScaleDenominator>559082264.029</ScaleDenominator>
+                <TopLeftCorner>-20037508.3428 20037508.3428</TopLeftCorner>
+                <TileWidth>128</TileWidth>
+                <TileHeight>128</TileHeight>
+                <MatrixWidth>1</MatrixWidth>
+                <MatrixHeight>1</MatrixHeight>
+            </TileMatrix>
+        </TileMatrixSet>
+    </Contents>
+</Capabilities>""")
+
+    tmp_ds = gdal.Open( 'data/wms/' + imagetype + '.png' )
+    if tmp_ds is None:
+        gdaltest.post_reason('fail - cannot open tmp_ds')
+        return 'fail'
+
+    tile0_ds = gdal.GetDriverByName('PNG').CreateCopy(serviceUrl + '/0/0/0.png', tmp_ds )
+    if tile0_ds is None:
+        gdaltest.post_reason('fail - cannot create tile0')
+        return 'fail'
+
+    ds = gdal.Open('WMTS:' + inputXml )
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ds.RasterXSize != 128:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+    if ds.RasterYSize != 128:
+        gdaltest.post_reason('fail')
+        print(ds.RasterYSize)
+        return 'fail'
+
+    for i in range(4):
+        cs = ds.GetRasterBand( i + 1 ).Checksum()
+        if cs != expected_cs[i]:
+            gdaltest.post_reason('fail')
+            print( cs )
+            return 'fail'
+
+    return 'success'
+
+def wmts_23_gray():
+    return wmts_23( 'gray', [ 60137, 60137, 60137, 4428 ] )
+
+def wmts_23_grayalpha():
+    return wmts_23( 'gray+alpha', [ 39910, 39910, 39910, 63180 ] )
+
+def wmts_23_pal():
+    return wmts_23( 'pal', [ 62950, 59100, 63864, 453 ] )
+
+def wmts_23_rgb():
+    return wmts_23( 'rgb', [ 1020, 3665, 6180, 4428 ] )
+
+def wmts_23_rgba():
+    return wmts_23( 'rgba', [ 65530, 51449, 1361, 59291 ] )
+
+###############################################################################
 #
 
 def wmts_CleanCache():
@@ -1530,6 +1782,12 @@ gdaltest_list = [
     wmts_19,
     wmts_20,
     wmts_21,
+    wmts_22,
+    wmts_23_gray,
+    wmts_23_grayalpha,
+    wmts_23_pal,
+    wmts_23_rgb,
+    wmts_23_rgba,
     wmts_cleanup ]
 
 if __name__ == '__main__':

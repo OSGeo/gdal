@@ -157,11 +157,17 @@ void OGRRegisterAllInternal()
 #ifdef XPLANE_ENABLED
     RegisterOGRXPlane();
 #endif
-#ifdef DWGDIRECT_ENABLED
-    RegisterOGRDXFDWG();
+#ifdef DWG_ENABLED
+    RegisterOGRDWG();
+#endif
+#ifdef DGNV8_ENABLED
+    RegisterOGRDGNV8();
 #endif
 #ifdef DXF_ENABLED
     RegisterOGRDXF();
+#endif
+#ifdef CAD_ENABLED
+    RegisterOGRCAD();
 #endif
 #ifdef GRASS_ENABLED
     RegisterOGRGRASS();

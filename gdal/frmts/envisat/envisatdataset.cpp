@@ -51,7 +51,7 @@ class MerisL2FlagBand : public GDALPamRasterBand
   public:
     MerisL2FlagBand( GDALDataset *, int, VSILFILE*, vsi_l_offset, int );
     virtual ~MerisL2FlagBand();
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
   private:
     vsi_l_offset nImgOffset;
@@ -125,9 +125,10 @@ CPLErr MerisL2FlagBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         return CE_Failure;
     }
 
+    const unsigned int nUInt32Size = 4;
     for( unsigned iImg = 0, iBuf = 0;
-         iImg < nBlockXSize * (unsigned)sizeof(GDT_UInt32);
-         iImg += (unsigned)sizeof(GDT_UInt32), iBuf += (unsigned)nBytePerPixel )
+         iImg < nBlockXSize * nUInt32Size;
+         iImg += nUInt32Size, iBuf += (unsigned)nBytePerPixel )
     {
 #ifdef CPL_LSB
         ((GByte*) pImage)[iImg] = pReadBuf[iBuf + 2];
@@ -174,11 +175,11 @@ class EnvisatDataset : public RawDataset
                 EnvisatDataset();
     virtual ~EnvisatDataset();
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
-    virtual char      **GetMetadataDomainList();
-    virtual char **GetMetadata( const char * pszDomain );
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
+    virtual char      **GetMetadataDomainList() override;
+    virtual char **GetMetadata( const char * pszDomain ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };

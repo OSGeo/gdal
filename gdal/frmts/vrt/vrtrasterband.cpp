@@ -27,11 +27,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "vrtdataset.h"
-#include "cpl_minixml.h"
-#include "cpl_string.h"
 
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
+#include <memory>
+#include <vector>
+
+#include "gdal.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_hash_set.h"
+#include "cpl_minixml.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 /*! @cond Doxygen_Suppress */
 
@@ -484,8 +498,8 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         const int nSrcBand = atoi(CPLGetXMLValue( psNode, "SourceBand", "1" ) );
 
         m_apoOverviews.resize( m_apoOverviews.size() + 1 );
-        m_apoOverviews[m_apoOverviews.size()-1].osFilename = pszSrcDSName;
-        m_apoOverviews[m_apoOverviews.size()-1].nBand = nSrcBand;
+        m_apoOverviews.back().osFilename = pszSrcDSName;
+        m_apoOverviews.back().nBand = nSrcBand;
 
         CPLFree( pszSrcDSName );
     }
@@ -1016,7 +1030,7 @@ int VRTRasterBand::GetOverviewCount()
 
 {
     // First: overviews declared in <Overview> element
-    if( m_apoOverviews.size() > 0 )
+    if( !m_apoOverviews.empty() )
         return static_cast<int>(m_apoOverviews.size());
 
     // If not found, external .ovr overviews
@@ -1027,7 +1041,7 @@ int VRTRasterBand::GetOverviewCount()
     // If not found, implicit virtual overviews
     VRTDataset* poVRTDS = reinterpret_cast<VRTDataset *>( poDS );
     poVRTDS->BuildVirtualOverviews();
-    if( poVRTDS->m_apoOverviews.size() && poVRTDS->m_apoOverviews[0] )
+    if( !poVRTDS->m_apoOverviews.empty() && poVRTDS->m_apoOverviews[0] )
         return static_cast<int>( poVRTDS->m_apoOverviews.size() );
 
     return 0;
@@ -1041,7 +1055,7 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
 
 {
     // First: overviews declared in <Overview> element
-    if( m_apoOverviews.size() > 0 )
+    if( !m_apoOverviews.empty() )
     {
         if( iOverview < 0
             || iOverview >= static_cast<int>( m_apoOverviews.size() ) )
@@ -1079,7 +1093,7 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
     // If not found, implicit virtual overviews
     VRTDataset* poVRTDS = reinterpret_cast<VRTDataset *>( poDS );
     poVRTDS->BuildVirtualOverviews();
-    if( poVRTDS->m_apoOverviews.size() && poVRTDS->m_apoOverviews[0] )
+    if( !poVRTDS->m_apoOverviews.empty() && poVRTDS->m_apoOverviews[0] )
     {
         if( iOverview < 0
             || iOverview >= static_cast<int>( poVRTDS->m_apoOverviews.size() ) )

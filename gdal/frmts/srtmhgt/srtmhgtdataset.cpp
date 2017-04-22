@@ -62,8 +62,8 @@ class SRTMHGTDataset : public GDALPamDataset
     SRTMHGTDataset();
     virtual ~SRTMHGTDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform(double*);
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform(double*) override;
 
     static int Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset* Open(GDALOpenInfo*);
@@ -88,14 +88,14 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
   public:
     SRTMHGTRasterBand(SRTMHGTDataset*, int);
 
-    virtual CPLErr IReadBlock(int, int, void*);
-    virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage);
+    virtual CPLErr IReadBlock(int, int, void*) override;
+    virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual double  GetNoDataValue( int *pbSuccess = NULL );
+    virtual double  GetNoDataValue( int *pbSuccess = NULL ) override;
 
-    virtual const char* GetUnitType() { return "m"; }
+    virtual const char* GetUnitType() override { return "m"; }
 };
 
 /************************************************************************/
@@ -261,14 +261,16 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
     return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      We check the file size to see if it is 25,934,402 bytes         */
-/*      (SRTM 1) or 2,884,802 bytes (SRTM 3)                            */
+/*      We check the file size to see if it is                          */
+/*      SRTM1 (below or above lat 50) or SRTM 3                         */
 /* -------------------------------------------------------------------- */
   VSIStatBufL fileStat;
 
   if(VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
       return FALSE;
-  if(fileStat.st_size != 25934402 && fileStat.st_size != 2884802)
+  if(fileStat.st_size != 3601 * 3601 * 2 &&
+     fileStat.st_size != 1801 * 3601 * 2 &&
+     fileStat.st_size != 1201 * 1201 * 2 )
       return FALSE;
 
   return TRUE;
@@ -301,6 +303,7 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
   strncpy(latLonValueString, &fileName[1], 2);
   int southWestLat = atoi(latLonValueString);
   memset(latLonValueString, 0, 4);
+  // cppcheck-suppress redundantCopy
   strncpy(latLonValueString, &fileName[4], 3);
   int southWestLon = atoi(latLonValueString);
 
@@ -332,30 +335,47 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
       delete poDS;
       return NULL;
   }
-  const int numPixels = (fileStat.st_size == 25934402) ? 3601 : /* 2884802 */ 1201;
+
+  int numPixels_x, numPixels_y;
+
+  switch (fileStat.st_size) {
+  case 3601 * 3601 * 2:
+    numPixels_x = numPixels_y = 3601;
+    break;
+  case 1801 * 3601 * 2:
+    numPixels_x = 1801;
+    numPixels_y = 3601;
+    break;
+  case 1201 * 1201 * 2:
+    numPixels_x = numPixels_y = 1201;
+    break;
+  default:
+    numPixels_x = numPixels_y = 0;
+    break;
+  }    
 
   poDS->eAccess = poOpenInfo->eAccess;
 #ifdef CPL_LSB
   if(poDS->eAccess == GA_Update)
   {
       poDS->panBuffer
-          = reinterpret_cast<GInt16 *>( CPLMalloc(numPixels * sizeof(GInt16)) );
+          = reinterpret_cast<GInt16 *>( CPLMalloc(numPixels_x * sizeof(GInt16)) );
   }
 #endif
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-  poDS->nRasterXSize = numPixels;
-  poDS->nRasterYSize = numPixels;
+  poDS->nRasterXSize = numPixels_x;
+  poDS->nRasterYSize = numPixels_y;
   poDS->nBands = 1;
 
-  poDS->adfGeoTransform[0] = southWestLon - 0.5 / (numPixels - 1);
-  poDS->adfGeoTransform[1] = 1.0 / (numPixels-1);
+  poDS->adfGeoTransform[0] = southWestLon - 0.5 / (numPixels_x - 1);
+  poDS->adfGeoTransform[1] = 1.0 / (numPixels_x-1);
   poDS->adfGeoTransform[2] = 0.0;
-  poDS->adfGeoTransform[3] = southWestLat + 1 + 0.5 / (numPixels - 1);
+  poDS->adfGeoTransform[3] = southWestLat + 1 + 0.5 / (numPixels_y - 1);
   poDS->adfGeoTransform[4] = 0.0;
-  poDS->adfGeoTransform[5] = -1.0 / (numPixels-1);
+  poDS->adfGeoTransform[5] = -1.0 / (numPixels_y-1);
 
   poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
 
@@ -462,10 +482,12 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
 
-    if (!((nXSize == 1201 && nYSize == 1201) || (nXSize == 3601 && nYSize == 3601)))
+    if (!((nXSize == 1201 && nYSize == 1201) ||
+          (nXSize == 3601 && nYSize == 3601) ||
+          (nXSize == 1801 && nYSize == 3601)))
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Image dimensions should be 1201x1201 or 3601x3601.");
+                  "Image dimensions should be 1201x1201, 3601x3601 or 1801x3601.");
         return NULL;
     }
 
@@ -473,11 +495,13 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 /*      Check filename.                                                 */
 /* -------------------------------------------------------------------- */
     char expectedFileName[12];
-    snprintf(expectedFileName, sizeof(expectedFileName), "%c%02d%c%03d.HGT",
+
+    CPLsnprintf(expectedFileName, sizeof(expectedFileName), "%c%02d%c%03d.HGT",
              (nLLOriginLat >= 0) ? 'N' : 'S',
              (nLLOriginLat >= 0) ? nLLOriginLat : -nLLOriginLat,
              (nLLOriginLong >= 0) ? 'E' : 'W',
              (nLLOriginLong >= 0) ? nLLOriginLong : -nLLOriginLong);
+
     if (!EQUAL(expectedFileName, CPLGetFilename(pszFilename)))
     {
         CPLError( CE_Warning, CPLE_AppDefined,

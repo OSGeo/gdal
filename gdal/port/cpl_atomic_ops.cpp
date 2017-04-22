@@ -29,9 +29,11 @@
 
 #include "cpl_atomic_ops.h"
 
+#include "cpl_config.h"
+
 // TODO: If C++11, use #include <atomic>.
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 #if defined(__MACH__) && defined(__APPLE__)
 
@@ -39,15 +41,15 @@ CPL_CVSID("$Id:");
 
 int CPLAtomicAdd(volatile int* ptr, int increment)
 {
-  return OSAtomicAdd32(increment, (int*)(ptr));
+    return OSAtomicAdd32(increment, (int*)(ptr));
 }
 
 int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 {
-  return OSAtomicCompareAndSwap32(oldval, newval, (int*)(ptr));
+    return OSAtomicCompareAndSwap32(oldval, newval, (int*)(ptr));
 }
 
-#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+#elif defined(_MSC_VER)
 
 #include <windows.h>
 
@@ -56,13 +58,15 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 #if defined(_MSC_VER) && (_MSC_VER <= 1200)
   return InterlockedExchangeAdd((LONG*)(ptr), (LONG)(increment)) + increment;
 #else
-  return InterlockedExchangeAdd((volatile LONG*)(ptr), (LONG)(increment)) + increment;
+  return InterlockedExchangeAdd((volatile LONG*)(ptr),
+                                (LONG)(increment)) + increment;
 #endif
 }
 
 int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 {
-  return (LONG)InterlockedCompareExchange((volatile LONG*)(ptr), (LONG)newval, (LONG)oldval) == (LONG)oldval;
+  return (LONG)InterlockedCompareExchange((volatile LONG*)(ptr), (LONG)newval,
+                                          (LONG)oldval) == (LONG)oldval;
 }
 
 #elif defined(__MINGW32__) && defined(__i386__)
@@ -76,7 +80,8 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 
 int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 {
-  return (LONG)InterlockedCompareExchange((LONG*)(ptr), (LONG)newval, (LONG)oldval) == (LONG)oldval;
+  return (LONG)InterlockedCompareExchange((LONG*)(ptr), (LONG)newval,
+                                          (LONG)oldval) == (LONG)oldval;
 }
 
 #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
@@ -101,24 +106,25 @@ int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
     : "r" (newval), "m" (*ptr), "a" (oldval)
     : "memory");
 
-    return (int) ret;
+    return static_cast<int>(ret);
 }
 
 #elif defined(HAVE_GCC_ATOMIC_BUILTINS)
-/* Starting with GCC 4.1.0, built-in functions for atomic memory access are provided. */
-/* see http://gcc.gnu.org/onlinedocs/gcc-4.1.0/gcc/Atomic-Builtins.html */
-/* We use a ./configure test to determine whether this builtins are available */
-/* as it appears that the GCC 4.1 version used on debian etch is broken when linking */
-/* such instructions... */
-int CPLAtomicAdd(volatile int* ptr, int increment)
+// Starting with GCC 4.1.0, built-in functions for atomic memory access are
+// provided.  See:
+//   http://gcc.gnu.org/onlinedocs/gcc-4.1.0/gcc/Atomic-Builtins.html
+// We use a ./configure test to determine whether this builtins are available.
+// as it appears that the GCC 4.1 version used on debian etch is broken when
+// linking such instructions.
+int CPLAtomicAdd( volatile int* ptr, int increment )
 {
-  if (increment > 0)
+  if( increment > 0 )
     return __sync_add_and_fetch(ptr, increment);
 
   return __sync_sub_and_fetch(ptr, -increment);
 }
 
-int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
+int CPLAtomicCompareAndExchange( volatile int* ptr, int oldval, int newval )
 {
     return __sync_bool_compare_and_swap (ptr, oldval, newval);
 }
@@ -126,14 +132,14 @@ int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 #elif !defined(CPL_MULTIPROC_PTHREAD)
 #warning "Needs real lock API to implement properly atomic increment"
 
-/* Dummy implementation */
+// Dummy implementation.
 int CPLAtomicAdd(volatile int* ptr, int increment)
 {
     (*ptr) += increment;
     return *ptr;
 }
 
-int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
+int CPLAtomicCompareAndExchange( volatile int* ptr, int oldval, int newval )
 {
     if( *ptr == oldval )
     {

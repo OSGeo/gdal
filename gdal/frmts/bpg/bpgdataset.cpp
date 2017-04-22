@@ -83,8 +83,8 @@ class BPGRasterBand : public GDALPamRasterBand
 
                    BPGRasterBand( BPGDataset *, int nbits );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/
@@ -93,7 +93,7 @@ class BPGRasterBand : public GDALPamRasterBand
 
 BPGRasterBand::BPGRasterBand( BPGDataset *poDSIn, int nbits )
 {
-    poDS = poDS;
+    poDS = poDSIn;
 
     eDataType = nbits > 8 ? GDT_UInt16 : GDT_Byte;
 

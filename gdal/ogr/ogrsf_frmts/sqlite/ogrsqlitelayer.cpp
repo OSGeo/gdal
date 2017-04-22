@@ -39,6 +39,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_sqlite.h"
+#include "ogrsqliteutility.h"
 #include <cassert>
 
 CPL_CVSID("$Id$");
@@ -182,7 +183,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 
     for( int iCol = 0; iCol < nRawColumns; iCol++ )
     {
-        OGRFieldDefn    oField( OGRSQLiteParamsUnquote(sqlite3_column_name( hStmtIn, iCol )),
+        OGRFieldDefn    oField( SQLUnescape(sqlite3_column_name( hStmtIn, iCol )),
                                 OFTString );
 
         // In some cases, particularly when there is a real name for
@@ -516,7 +517,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
     {
         for( int iCol = 0; iCol < nRawColumns; iCol++ )
         {
-            if( EQUAL(OGRSQLiteParamsUnquote(sqlite3_column_name(hStmtIn,iCol)).c_str(),
+            if( EQUAL(SQLUnescape(sqlite3_column_name(hStmtIn,iCol)).c_str(),
                       pszFIDColumn) )
             {
                 iFIDCol = iCol;
@@ -717,7 +718,10 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 
         int nSQLite3Type = sqlite3_column_type( hStmt, iRawField );
         if( nSQLite3Type == SQLITE_NULL )
+        {
+            poFeature->SetFieldNull( iField );
             continue;
+        }
 
         switch( poFieldDefn->GetType() )
         {
@@ -2350,6 +2354,167 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 }
 
 /************************************************************************/
+/*                     GetSpatialiteGeometryHeader()                    */
+/************************************************************************/
+typedef struct
+{
+    int                nSpliteType;
+    OGRwkbGeometryType eGType;
+} SpliteOGRGeometryTypeTuple;
+
+static const SpliteOGRGeometryTypeTuple anTypesMap[] = {
+{ OGRSplitePointXY, wkbPoint },
+{ OGRSplitePointXYZ, wkbPoint25D },
+{ OGRSplitePointXYM, wkbPointM },
+{ OGRSplitePointXYZM, wkbPointZM },
+{ OGRSpliteLineStringXY, wkbLineString },
+{ OGRSpliteLineStringXYZ, wkbLineString25D },
+{ OGRSpliteLineStringXYM, wkbLineStringM },
+{ OGRSpliteLineStringXYZM, wkbLineStringZM },
+{ OGRSpliteComprLineStringXY, wkbLineString },
+{ OGRSpliteComprLineStringXYZ, wkbLineString25D },
+{ OGRSpliteComprLineStringXYM, wkbLineStringM },
+{ OGRSpliteComprLineStringXYZM, wkbLineStringZM },
+{ OGRSplitePolygonXY, wkbPolygon },
+{ OGRSplitePolygonXYZ, wkbPolygon25D },
+{ OGRSplitePolygonXYM, wkbPolygonM },
+{ OGRSplitePolygonXYZM, wkbPolygonZM },
+{ OGRSpliteComprPolygonXY, wkbPolygon },
+{ OGRSpliteComprPolygonXYZ, wkbPolygon25D },
+{ OGRSpliteComprPolygonXYM, wkbPolygonM },
+{ OGRSpliteComprPolygonXYZM, wkbPolygonZM },
+
+{ OGRSpliteMultiPointXY, wkbMultiPoint },
+{ OGRSpliteMultiPointXYZ, wkbMultiPoint25D },
+{ OGRSpliteMultiPointXYM, wkbMultiPointM },
+{ OGRSpliteMultiPointXYZM, wkbMultiPointZM },
+{ OGRSpliteMultiLineStringXY, wkbMultiLineString },
+{ OGRSpliteMultiLineStringXYZ, wkbMultiLineString25D },
+{ OGRSpliteMultiLineStringXYM, wkbMultiLineStringM },
+{ OGRSpliteMultiLineStringXYZM, wkbMultiLineStringZM },
+{ OGRSpliteComprMultiLineStringXY, wkbMultiLineString },
+{ OGRSpliteComprMultiLineStringXYZ, wkbMultiLineString25D },
+{ OGRSpliteComprMultiLineStringXYM, wkbMultiLineStringM },
+{ OGRSpliteComprMultiLineStringXYZM, wkbMultiLineStringZM },
+{ OGRSpliteMultiPolygonXY, wkbMultiPolygon },
+{ OGRSpliteMultiPolygonXYZ, wkbMultiPolygon25D },
+{ OGRSpliteMultiPolygonXYM, wkbMultiPolygonM },
+{ OGRSpliteMultiPolygonXYZM, wkbMultiPolygonZM },
+{ OGRSpliteComprMultiPolygonXY, wkbMultiPolygon },
+{ OGRSpliteComprMultiPolygonXYZ, wkbMultiPolygon25D },
+{ OGRSpliteComprMultiPolygonXYM, wkbMultiPolygonM },
+{ OGRSpliteComprMultiPolygonXYZM, wkbMultiPolygonZM },
+
+{ OGRSpliteGeometryCollectionXY, wkbGeometryCollection },
+{ OGRSpliteGeometryCollectionXYZ, wkbGeometryCollection25D },
+{ OGRSpliteGeometryCollectionXYM, wkbGeometryCollectionM },
+{ OGRSpliteGeometryCollectionXYZM, wkbGeometryCollectionZM },
+{ OGRSpliteComprGeometryCollectionXY, wkbGeometryCollection },
+{ OGRSpliteComprGeometryCollectionXYZ, wkbGeometryCollection25D },
+{ OGRSpliteComprGeometryCollectionXYM, wkbGeometryCollectionM },
+{ OGRSpliteComprGeometryCollectionXYZM, wkbGeometryCollectionZM },
+};
+
+OGRErr OGRSQLiteLayer::GetSpatialiteGeometryHeader( const GByte *pabyData,
+                                                    int nBytes,
+                                                    int* pnSRID,
+                                                    OGRwkbGeometryType* peType,
+                                                    bool* pbIsEmpty,
+                                                    double* pdfMinX,
+                                                    double* pdfMinY,
+                                                    double* pdfMaxX,
+                                                    double* pdfMaxY )
+{
+    if( nBytes < 44
+        || pabyData[0] != 0
+        || pabyData[38] != 0x7C
+        || pabyData[nBytes-1] != 0xFE )
+        return OGRERR_CORRUPT_DATA;
+
+    OGRwkbByteOrder eByteOrder = (OGRwkbByteOrder) pabyData[1];
+
+    if( pnSRID != NULL )
+    {
+        int nSRID = 0;
+        memcpy( &nSRID, pabyData + 2, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nSRID );
+        *pnSRID = nSRID;
+    }
+
+    if( peType != NULL || pbIsEmpty != NULL )
+    {
+        OGRwkbGeometryType eGType = wkbUnknown;
+        int nSpliteType = 0;
+        memcpy( &nSpliteType, pabyData + 39, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nSpliteType );
+        for( size_t i = 0; i < CPL_ARRAYSIZE(anTypesMap); ++i )
+        {
+            if( anTypesMap[i].nSpliteType == nSpliteType )
+            {
+                eGType = anTypesMap[i].eGType;
+                break;
+            }
+        }
+        if( peType != NULL )
+            *peType = eGType;
+        if( pbIsEmpty != NULL )
+        {
+            *pbIsEmpty = false;
+            if ( wkbFlatten(eGType) != wkbPoint &&
+                 nBytes >= 44 + 4 )
+            {
+                int nCount = 0;
+                memcpy( &nSpliteType, pabyData + 43, 4 );
+                if (NEED_SWAP_SPATIALITE())
+                    CPL_SWAP32PTR( &nCount );
+                *pbIsEmpty = (nCount == 0);
+            }
+        }
+    }
+
+    if( pdfMinX != NULL )
+    {
+        double dfMinX = 0.0;
+        memcpy( &dfMinX, pabyData + 6, 8 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP64PTR( &dfMinX );
+        *pdfMinX = dfMinX;
+    }
+
+    if( pdfMinY != NULL )
+    {
+        double dfMinY = 0.0;
+        memcpy( &dfMinY, pabyData + 14, 8 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP64PTR( &dfMinY );
+        *pdfMinY = dfMinY;
+    }
+
+
+    if( pdfMaxX != NULL )
+    {
+        double dfMaxX = 0.0;
+        memcpy( &dfMaxX, pabyData + 22, 8 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP64PTR( &dfMaxX );
+        *pdfMaxX = dfMaxX;
+    }
+
+    if( pdfMaxY != NULL )
+    {
+        double dfMaxY = 0.0;
+        memcpy( &dfMaxY, pabyData + 30, 8 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP64PTR( &dfMaxY );
+        *pdfMaxY = dfMaxY;
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                      ImportSpatiaLiteGeometry()                      */
 /************************************************************************/
 
@@ -2553,8 +2718,12 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
         }
 
         default:
-            CPLError(CE_Failure, CPLE_AppDefined, "Unexpected geometry type");
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unexpected geometry type: %s",
+                     OGRToOGCGeomType(poGeometry->getGeometryType()));
             return 0;
+        }
     }
 }
 
@@ -2980,10 +3149,16 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
 
     bUseComprGeom = bUseComprGeom && !bSpatialite2D && CanBeCompressedSpatialiteGeometry(poWorkGeom);
 
-    int nDataLen =
-        44 + ComputeSpatiaLiteGeometrySize( poWorkGeom,
-                                            bSpatialite2D,
-                                            bUseComprGeom );
+    const int nGeomSize = ComputeSpatiaLiteGeometrySize( poWorkGeom,
+                                                         bSpatialite2D,
+                                                         bUseComprGeom );
+    if( nGeomSize == 0 )
+    {
+        *ppabyData = NULL;
+        *pnDataLength = 0;
+        return OGRERR_FAILURE;
+    }
+    const int nDataLen = 44 + nGeomSize;
     OGREnvelope sEnvelope;
 
     *ppabyData =  (GByte *) CPLMalloc( nDataLen );
@@ -3113,7 +3288,9 @@ void OGRSQLiteLayer::ClearStatement()
 {
     if( hStmt != NULL )
     {
+#ifdef DEBUG_VERBOSE
         CPLDebug( "OGR_SQLITE", "finalize %p", hStmt );
+#endif
         sqlite3_finalize( hStmt );
         hStmt = NULL;
     }
@@ -3216,15 +3393,14 @@ CPLString OGRSQLiteLayer::FormatSpatialFilterFromRTree(OGRGeometry* poFilterGeom
         return "";
 
     osSpatialWHERE.Printf("%s IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
-                    "xmax >= %s AND xmin <= %s AND ymax >= %s AND ymin <= %s)",
+                    "xmax >= %.12f AND xmin <= %.12f AND ymax >= %.12f AND ymin <= %.12f)",
                     pszRowIDName,
                     pszEscapedTable,
                     pszEscapedGeomCol,
-                    // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
-                    CPLString().FormatC(sEnvelope.MinX - 1e-11,"%.12f").c_str(),
-                    CPLString().FormatC(sEnvelope.MaxX + 1e-11,"%.12f").c_str(),
-                    CPLString().FormatC(sEnvelope.MinY - 1e-11,"%.12f").c_str(),
-                    CPLString().FormatC(sEnvelope.MaxY + 1e-11,"%.12f").c_str());
+                    sEnvelope.MinX - 1e-11,
+                    sEnvelope.MaxX + 1e-11,
+                    sEnvelope.MinY - 1e-11,
+                    sEnvelope.MaxY + 1e-11);
 
     return osSpatialWHERE;
 }
@@ -3248,13 +3424,13 @@ CPLString OGRSQLiteLayer::FormatSpatialFilterFromMBR(OGRGeometry* poFilterGeom,
         return "";
 
     /* A bit inefficient but still faster than OGR filtering */
-    osSpatialWHERE.Printf("MBRIntersects(\"%s\", BuildMBR(%s, %s, %s, %s))",
+    osSpatialWHERE.Printf("MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f))",
                     pszEscapedGeomColName,
                     // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
-                    CPLString().FormatC(sEnvelope.MinX - 1e-11,"%.12f").c_str(),
-                    CPLString().FormatC(sEnvelope.MinY - 1e-11,"%.12f").c_str(),
-                    CPLString().FormatC(sEnvelope.MaxX + 1e-11,"%.12f").c_str(),
-                    CPLString().FormatC(sEnvelope.MaxY + 1e-11,"%.12f").c_str());
+                    sEnvelope.MinX - 1e-11,
+                    sEnvelope.MinY - 1e-11,
+                    sEnvelope.MaxX + 1e-11,
+                    sEnvelope.MaxY + 1e-11);
 
     return osSpatialWHERE;
 }

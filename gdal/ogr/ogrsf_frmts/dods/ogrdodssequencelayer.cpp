@@ -443,7 +443,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
         return NULL;
 
     if( poSuperSeq == NULL )
-        iSubSeq = nFeatureId;
+        iSubSeq = static_cast<int>(nFeatureId);
     else
     {
         int nSeqOffset = 0;
@@ -458,7 +458,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
         {
             if( nSeqOffset + panSubSeqSize[iSuperSeq] > nFeatureId )
             {
-                iSubSeq = nFeatureId - nSeqOffset;
+                iSubSeq = static_cast<int>(nFeatureId) - nSeqOffset;
                 break;
             }
             nSeqOffset += panSubSeqSize[iSuperSeq];
@@ -880,7 +880,12 @@ bool OGRDODSSequenceLayer::ProvideDataDDS()
 /*      count of elements.                                              */
 /* -------------------------------------------------------------------- */
     if( poSuperSeq == NULL )
-        nRecordCount = dynamic_cast<Sequence *>(poTargetVar)->number_of_rows();
+    {
+        Sequence* poSeq = dynamic_cast<Sequence *>(poTargetVar);
+        if( poSeq == NULL )
+            return false;
+        nRecordCount = poSeq->number_of_rows();
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise we have to count up all the target sequence           */

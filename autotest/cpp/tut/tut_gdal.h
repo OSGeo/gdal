@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  TUT: C++ Unit Test Framework extensions for GDAL Test Suite
@@ -23,13 +22,6 @@
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-//
-//  $Log: tut_gdal.h,v $
-//  Revision 1.4  2006/12/06 15:39:14  mloskot
-//  Added file header comment and copyright note.
-//
-//
-///////////////////////////////////////////////////////////////////////////////
 #ifndef TUT_GDAL_H_INCLUDED
 #define TUT_GDAL_H_INCLUDED
 
@@ -38,10 +30,12 @@
 #include <sstream>
 #include <string>
 
+#include <tut.hpp>
+
 namespace tut
 {
 
-#if defined(WIN32) || defined(_WIN32_WCE)
+#if defined(WIN32)
 #define SEP '\\'
 #else
 #define SEP '/'

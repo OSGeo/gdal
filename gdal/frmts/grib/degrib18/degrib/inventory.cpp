@@ -121,13 +121,13 @@ void GRIB2InventoryPrint (inventoryType *Inv, uInt4 LenInv)
       delta = (Inv[i].validTime - Inv[i].refTime) / 3600.;
       delta = myRound (delta, 2);
       if (Inv[i].comment == NULL) {
-         printf ("%d.%d, %d, %d, %s, %s, %s, %s, %.2f\n",
+         printf ("%u.%u, %d, %d, %s, %s, %s, %s, %.2f\n",
                  Inv[i].msgNum, Inv[i].subgNum, Inv[i].start,
                  Inv[i].GribVersion, Inv[i].element, Inv[i].shortFstLevel,
                  refTime, validTime, delta);
          fflush (stdout);
       } else {
-         printf ("%d.%d, %d, %d, %s=\"%s\", %s, %s, %s, %.2f\n",
+         printf ("%u.%u, %d, %d, %s=\"%s\", %s, %s, %s, %.2f\n",
                  Inv[i].msgNum, Inv[i].subgNum, Inv[i].start,
                  Inv[i].GribVersion, Inv[i].element, Inv[i].comment,
                  Inv[i].shortFstLevel, refTime, validTime, delta);
@@ -243,7 +243,7 @@ static int InventoryParseTime (char *is, double *AnsTime)
  *****************************************************************************
  */
 static int GRIB2SectToBuffer (DataSource &fp,
-                              CPL_UNUSED uInt4 gribLen,
+                              uInt4 gribLen,
                               sChar *sect,
                               uInt4 *secLen, uInt4 *buffLen, char **buff)
 {
@@ -257,7 +257,7 @@ static int GRIB2SectToBuffer (DataSource &fp,
       }
       return -1;
    }
-   if( *secLen < sizeof(sInt4) )
+   if( *secLen < sizeof(sInt4) || *secLen > gribLen )
    {
        errSprintf ("ERROR: Wrong secLen in GRIB2SectToBuffer\n");
        return -1;
@@ -822,9 +822,9 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
    char *msg;           /* Used to pop messages off the error Stack. */
    int version;         /* Which version of GRIB is in this message. */
    uChar prodType;      /* Which GRIB2 type of product, 0 is meteo, 1 is
-                         * hydro, 2 is land, 3 is space, 10 is oceanographic. 
+                         * hydro, 2 is land, 3 is space, 10 is oceanographic.
                          */
-   int grib_limit;      /* How many bytes to look for before the first "GRIB" 
+   int grib_limit;      /* How many bytes to look for before the first "GRIB"
                          * in the file.  If not found, is not a GRIB file. */
    int c;               /* Determine if end of the file without fileLen. */
    sInt4 fileLen;       /* Length of the GRIB2 file. */
@@ -1067,9 +1067,9 @@ int GRIB2RefTime (char *filename, double *refTime)
    char *msg;           /* Used to pop messages off the error Stack. */
    int version;         /* Which version of GRIB is in this message. */
    /* uChar prodType; */      /* Which GRIB2 type of product, 0 is meteo, 1 is
-                         * hydro, 2 is land, 3 is space, 10 is oceanographic. 
+                         * hydro, 2 is land, 3 is space, 10 is oceanographic.
                          */
-   int grib_limit;      /* How many bytes to look for before the first "GRIB" 
+   int grib_limit;      /* How many bytes to look for before the first "GRIB"
                          * in the file.  If not found, is not a GRIB file. */
    int c;               /* Determine if end of the file without fileLen. */
    sInt4 fileLen;       /* Length of the GRIB2 file. */

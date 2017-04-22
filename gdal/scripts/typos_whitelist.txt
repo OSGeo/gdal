@@ -22,7 +22,7 @@ See COMMITERS file.
     sizeOfFields[nFields] += WriteSubFieldStr(fd, osBaseFileName, 8); /* NAM */
     sizeOfFields[nFields] += WriteSubFieldStr(fd, osNAM.c_str(), 8); /* NAM */
                                                   "NAM!STR!PRT!SWO!SWA!NEO!NEA",
-        sizeOfFields[nFields] += WriteSubFieldStr(fd, osBaseFileName, 8); /* NAM */
+        sizeOfFields[nFields] += WriteSubFieldStr(fd, osBaseFileName, 8); // NAM
       {136, "Socialist Republic of Viet Nam"},
 		double	eps[NANGLES], ua, va, ang, epsa;
 				ang = uv2ang(ua, va);
@@ -40,4 +40,28 @@ See COMMITERS file.
       addSimpleType(&oTypes, "GVAKT_PROS", "geoVernAktivProsess", OFTString);
       addSimpleType(&oTypes, "GVVKT_PROS", "geoVernViktigProsess", OFTString);
       addSimpleType(&oTypes, "PROSESS_HISTORIE", "prosesshistorie", OFTString);
-        ih.Put( "<unintialized>", 64, 64 );  // TODO: Spelling?
+            ih.Put( "<unintialized>", 64, 64 );  // TODO: Spelling?
+      {7, 110, "NAM Model - 15km version"},
+      {7, 111, "NAM model, generic resolution"},
+      {7, 115, "Downscaled GFS from NAM eXtension"},
+      {7, 130, "Merge of fields from the RUC, NAM, and Spectral Model"},
+   /* 0 */ {"ACCES", "Air concentration of Caesium 137", "Bq/(m^3)", UC_NONE},
+        : CPLGetXMLValue( psSrcXML, "metresPerUnit", NULL );
+{ "kilometre", SRS_UL_KILOMETER_CONV, "km" },
+    { CADObject::DIMENSION_ANG_3PT,    "DIMENSION ANG 3PT" },
+    {"SCALING_FACTOR_ATM_PRES",                           16, EDT_Float32,     1},
+    {"SCALING_FACTOR_SURF_PRES",                         104, EDT_Float32,     1},
+    {"OFFSET_SURF_PRES",                                 208, EDT_Float32,     1},
+  /* now prec is nonzero iff there are any 16-bit quant tables. */
+   * a box is splittable iff norm > 0.
+  boolean saw_JFIF_marker;	/* TRUE iff a JFIF APP0 marker was found */
+  boolean saw_Adobe_marker;	/* TRUE iff an Adobe APP14 marker was found */
+        // We will update the object count iff we are writing beyond the end.
+   /* 1 */ {"PRES", "Pressure", "Pa", UC_NONE},
+   /* 1 */ {"PRES", "Pressure", "hPa", UC_NONE},
+   /* 0 */ {"PRES", "Pressure", "Pa", UC_NONE},
+ * copied iff they didn't exist before.  ColorTransIn2 maps the old
+      nearzero iff determinant < qh NEARzero[dim-1]
+      facet->visitid= 0 iff vertex-at-infinity (i.e., unbounded)
+    sets same iff vertices have the same orientation
+      nearzero iff diagonal[k] < qh NEARzero[k]

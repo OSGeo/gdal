@@ -41,6 +41,7 @@ class ADRGDataset : public GDALPamDataset
 
     CPLString    osGENFileName;
     CPLString    osIMGFileName;
+    CPLString    osSRS;
 
     VSILFILE*        fdIMG;
     int*         TILEINDEX;
@@ -75,14 +76,14 @@ class ADRGDataset : public GDALPamDataset
                  ADRGDataset();
     virtual     ~ADRGDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * padfGeoTransform );
-    virtual CPLErr SetGeoTransform( double * padfGeoTransform );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * padfGeoTransform ) override;
+    virtual CPLErr SetGeoTransform( double * padfGeoTransform ) override;
 
-    virtual char      **GetMetadataDomainList();
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadataDomainList() override;
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual char      **GetFileList();
+    virtual char      **GetFileList() override;
 
     void                AddSubDataset( const char* pszGENFileName, const char* pszIMGFileName );
 
@@ -110,11 +111,11 @@ class ADRGRasterBand : public GDALPamRasterBand
   public:
                             ADRGRasterBand( ADRGDataset *, int );
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual CPLErr          IWriteBlock( int, int, void * );
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual CPLErr          IWriteBlock( int, int, void * ) override;
 
-    virtual double          GetNoDataValue( int *pbSuccess = NULL );
+    virtual double          GetNoDataValue( int *pbSuccess = NULL ) override;
 
 //    virtual int             GetOverviewCount();
 //    virtual GDALRasterBand* GetOverview(int i);
@@ -330,7 +331,7 @@ static unsigned int WriteSubFieldInt(VSILFILE* fd, int val, unsigned int size)
 {
     char* str = (char*)CPLMalloc(size+1);
     char formatStr[32];
-    snprintf( formatStr, sizeof(formatStr), "%%0%dd", size);
+    snprintf( formatStr, sizeof(formatStr), "%%0%ud", size);
     snprintf( str, size+1, formatStr, val);
     VSIFWriteL(str, 1, size, fd);
     CPLFree(str);
@@ -540,7 +541,9 @@ ADRGDataset::ADRGDataset() :
     fdTHF(NULL),
     bGeoTransformValid(0),
     nNextAvailableBlock(0)
-{}
+{
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
+}
 
 /************************************************************************/
 /*                          ~ADRGDataset()                              */
@@ -651,7 +654,7 @@ char ** ADRGDataset::GetFileList()
 {
     char** papszFileList = GDALPamDataset::GetFileList();
 
-    if( osGENFileName.size() > 0 && osIMGFileName.size() > 0 )
+    if( !osGENFileName.empty() && !osIMGFileName.empty() )
     {
         CPLString osMainFilename = GetDescription();
         VSIStatBufL sStat;
@@ -727,11 +730,7 @@ char **ADRGDataset::GetMetadata( const char *pszDomain )
 
 const char* ADRGDataset::GetProjectionRef()
 {
-    return
-        "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
-        "SPHEROID[\"WGS 84\",6378137,298.257223563]],"
-        "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
-        "AUTHORITY[\"EPSG\",\"4326\"]]";
+    return osSRS;
 }
 
 /************************************************************************/
@@ -1108,14 +1107,6 @@ ADRGDataset* ADRGDataset::OpenDataset(
         return NULL;
     }
 
-    if( ZNA == 9 || ZNA == 18 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Polar cases are not handled by ADRG driver");
-        VSIFCloseL(fdIMG);
-        delete[] TILEINDEX;
-        return NULL;
-    }
-
     /* Skip ISO8211 header of IMG file */
     int offsetInIMG = 0;
     char c;
@@ -1197,19 +1188,62 @@ ADRGDataset* ADRGDataset::OpenDataset(
     poDS->offsetInIMG = offsetInIMG;
     poDS->poOverviewDS = NULL;
 
-    poDS->adfGeoTransform[0] = LSO;
-    poDS->adfGeoTransform[1] = 360. / ARV;
-    poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[3] = PSO;
-    poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = - 360. / BRV;
+    if( ZNA == 9)
+    {
+        // North Polar Case
+        poDS->adfGeoTransform[0] = 111319.4907933 * (90.0 - PSO) * sin(LSO * M_PI / 180.0);
+        poDS->adfGeoTransform[1] = 40075016.68558 / ARV;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = -111319.4907933 * (90.0 - PSO) * cos(LSO * M_PI / 180.0);
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = -40075016.68558 / ARV;
+        poDS->osSRS =
+                "PROJCS[\"ARC_System_Zone_09\",GEOGCS[\"GCS_Sphere\","
+                "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
+                "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
+                "PROJECTION[\"Azimuthal_Equidistant\"],"
+                "PARAMETER[\"latitude_of_center\",90],"
+                "PARAMETER[\"longitude_of_center\",0],"
+                "PARAMETER[\"false_easting\",0],"
+                "PARAMETER[\"false_northing\",0]]";
+    }
+    else if (ZNA == 18)
+    {
+        // South Polar Case
+        poDS->adfGeoTransform[0] = 111319.4907933 * (90.0 + PSO) * sin(LSO * M_PI / 180.0);
+        poDS->adfGeoTransform[1] = 40075016.68558 / ARV;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = 111319.4907933 * (90.0 + PSO) * cos(LSO * M_PI / 180.0);
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = -40075016.68558 / ARV;
+        poDS->osSRS = "PROJCS[\"ARC_System_Zone_18\",GEOGCS[\"GCS_Sphere\","
+                "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
+                "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
+                "PROJECTION[\"Azimuthal_Equidistant\"],"
+                "PARAMETER[\"latitude_of_center\",-90],"
+                "PARAMETER[\"longitude_of_center\",0],"
+                "PARAMETER[\"false_easting\",0],"
+                "PARAMETER[\"false_northing\",0]]";
+    }
+    else
+    {
+        poDS->adfGeoTransform[0] = LSO;
+        poDS->adfGeoTransform[1] = 360. / ARV;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = PSO;
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = - 360. / BRV;
+        poDS->osSRS = SRS_WKT_WGS84;
+    }
 
     // if( isGIN )
     {
         char szValue[32];
         snprintf( szValue, sizeof(szValue), "%d", SCA);
         poDS->SetMetadataItem( "ADRG_SCA", szValue );
-    }
+        snprintf( szValue, sizeof(szValue), "%d", ZNA);
+        poDS->SetMetadataItem( "ADRG_ZNA", szValue );
+     }
 
     poDS->SetMetadataItem( "ADRG_NAM", osNAM.c_str() );
 
@@ -1532,8 +1566,8 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    if( osGENFileName.size() > 0 &&
-        osIMGFileName.size() > 0 )
+    if( !osGENFileName.empty() &&
+        !osIMGFileName.empty() )
     {
         if( poOpenInfo->eAccess == GA_Update )
         {
@@ -1630,7 +1664,7 @@ GDALDataset *ADRGDataset::Create( const char* pszFilename,
     }
 
     CPLString osBaseFileName(CPLGetBasename(pszFilename));
-    if( strlen(osBaseFileName) != 8 ||
+    if( osBaseFileName.size() != 8 ||
         osBaseFileName[6] != '0' ||
         osBaseFileName[7] != '1' )
     {
@@ -1775,7 +1809,7 @@ static void WriteGENFile_DataSetDescriptionRecord(VSILFILE* fd)
     sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NOZ */
     sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NOS */
     sizeOfFields[nFields] += WriteFieldTerminator(fd);
-    nFields++;
+    /* nFields++; */
 
     FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields),
                       sizeOfFields, nameOfFields);
@@ -1859,7 +1893,7 @@ static void WriteGENFile_OverviewRecord(
         sizeOfFields[nFields] += WriteSubFieldInt(fd, TILEINDEX[i], 5);  // TSI
     }
     sizeOfFields[nFields] += WriteFieldTerminator(fd);
-    nFields++;
+    /* nFields++; */
 
     FinishWriteLeader(fd, pos, 9, 9, 3, N_ELEMENTS(sizeOfFields),
                       sizeOfFields, nameOfFields);
@@ -1964,7 +1998,7 @@ static void WriteGENFile_GeneralInformationRecord(
         sizeOfFields[nFields] += WriteSubFieldInt(fd, TILEINDEX[i], 5);  // TSI
     }
     sizeOfFields[nFields] += WriteFieldTerminator(fd);
-    nFields++;
+    /* nFields++; */
 
     FinishWriteLeader(fd, pos, 9, 9, 3, N_ELEMENTS(sizeOfFields),
                       sizeOfFields, nameOfFields);
@@ -2127,7 +2161,7 @@ void ADRGDataset::WriteTHFFile()
             WriteLongitude(fd, LSO + nRasterXSize * adfGeoTransform[1]);  // NEO
         sizeOfFields[nFields] += WriteLatitude(fd, PSO); /* NEA */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
+        /* nFields++; */
 
         FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields),
                           sizeOfFields, nameOfFields);
@@ -2165,7 +2199,7 @@ void ADRGDataset::WriteTHFFile()
         sizeOfFields[nFields] +=
             WriteSubFieldStr(fd, "MIL-A-89007", 20); /* SPA */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
+        /* nFields++; */
 
         FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields),
                           sizeOfFields, nameOfFields);
@@ -2239,7 +2273,7 @@ void ADRGDataset::WriteTHFFile()
         sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
         sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
+        /* nFields++; */
 
         FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields),
                           sizeOfFields, nameOfFields);
@@ -2296,7 +2330,7 @@ void ADRGDataset::WriteTHFFile()
             strcat(tmp, "02.IMG");
             sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 51); /* VFF */
             sizeOfFields[nFields] += WriteFieldTerminator(fd);
-            nFields++;
+            /* nFields++; */
         }
 
         FinishWriteLeader(fd, pos, 9, 9, 3, nTotalFields,

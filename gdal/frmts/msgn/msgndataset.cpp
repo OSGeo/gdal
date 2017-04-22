@@ -69,8 +69,8 @@ class MSGNDataset : public GDALDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr     GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr     GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 /************************************************************************/
@@ -90,7 +90,7 @@ class MSGNRasterBand : public GDALRasterBand
     unsigned int band_in_file;      // The effective index of the band in the file
     open_mode_type open_mode;
 
-    double  GetNoDataValue (int *pbSuccess=NULL) {
+    double  GetNoDataValue (int *pbSuccess=NULL) override {
         if (pbSuccess) {
             *pbSuccess = 1;
         }
@@ -105,10 +105,10 @@ class MSGNRasterBand : public GDALRasterBand
 
         MSGNRasterBand( MSGNDataset *, int , open_mode_type mode, int orig_band_no, int band_in_file);
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum(int *pbSuccess = NULL );
-    virtual const char* GetDescription() const { return band_description; }
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum(int *pbSuccess = NULL ) override;
+    virtual const char* GetDescription() const override { return band_description; }
 };
 
 /************************************************************************/
@@ -129,7 +129,7 @@ MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDSIn, int nBandIn,
     nBand = nBandIn;  // GDAL's band number, i.e. always starts at 1.
 
     snprintf(band_description, sizeof(band_description),
-             "band %02d", orig_band_no);
+             "band %02u", orig_band_no);
 
     if( mode != MODE_RAD )
     {
@@ -511,12 +511,12 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->SetMetadataItem("Radiometric parameters format", "offset slope");
     for (i=1; i < band_count; i++) {
-        snprintf(tagname, sizeof(tagname), "ch%02d_cal", band_map[i]);
+        snprintf(tagname, sizeof(tagname), "ch%02u_cal", band_map[i]);
         CPLsnprintf(field, sizeof(field), "%.12e %.12e", cal[band_map[i]-1].cal_offset, cal[band_map[i]-1].cal_slope);
         poDS->SetMetadataItem(tagname, field);
     }
 
-    snprintf(field, sizeof(field), "%04d%02d%02d/%02d:%02d",
+    snprintf(field, sizeof(field), "%04u%02u%02u/%02u:%02u",
         poDS->msg_reader_core->get_year(),
         poDS->msg_reader_core->get_month(),
         poDS->msg_reader_core->get_day(),
@@ -525,7 +525,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     );
     poDS->SetMetadataItem("Date/Time", field);
 
-    snprintf(field, sizeof(field), "%d %d",
+    snprintf(field, sizeof(field), "%u %u",
          poDS->msg_reader_core->get_line_start(),
          poDS->msg_reader_core->get_col_start()
     );

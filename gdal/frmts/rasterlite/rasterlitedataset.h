@@ -61,25 +61,25 @@ class RasterliteDataset : public GDALPamDataset
 
     virtual     ~RasterliteDataset();
 
-    virtual char      **GetMetadataDomainList();
-    virtual char **GetMetadata( const char *pszDomain );
+    virtual char      **GetMetadataDomainList() override;
+    virtual char **GetMetadata( const char *pszDomain ) override;
     virtual const char *GetMetadataItem( const char *pszName,
-                                         const char *pszDomain );
-    virtual CPLErr GetGeoTransform( double* padfGeoTransform );
-    virtual const char* GetProjectionRef();
+                                         const char *pszDomain ) override;
+    virtual CPLErr GetGeoTransform( double* padfGeoTransform ) override;
+    virtual const char* GetProjectionRef() override;
 
-    virtual char** GetFileList();
+    virtual char** GetFileList() override;
 
     virtual CPLErr IBuildOverviews( const char * pszResampling,
                                     int nOverviews, int * panOverviewList,
                                     int nBands, int * panBandList,
-                                    GDALProgressFunc pfnProgress, void * pProgressData );
+                                    GDALProgressFunc pfnProgress, void * pProgressData ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
   private:
     int bMustFree;
@@ -139,13 +139,13 @@ class RasterliteBand: public GDALPamRasterBand
                                             GDALDataType eDataType,
                                             int nBlockXSize, int nBlockYSize );
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable* GetColorTable();
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable* GetColorTable() override;
 
-    virtual int             GetOverviewCount();
-    virtual GDALRasterBand* GetOverview(int nLevel);
+    virtual int             GetOverviewCount() override;
+    virtual GDALRasterBand* GetOverview(int nLevel) override;
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
 };
 
 GDALDataset *

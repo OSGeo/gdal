@@ -1,4 +1,4 @@
-/* $Id: tif_aux.c,v 1.28 2016-01-23 21:20:34 erouault Exp $ */
+/* $Id: tif_aux.c,v 1.29 2016-11-11 20:45:53 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -212,11 +212,18 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32 tag, va_list ap)
 		*va_arg(ap, uint16 *) = td->td_resolutionunit;
 		return (1);
 	case TIFFTAG_PREDICTOR:
-                {
-			TIFFPredictorState* sp = (TIFFPredictorState*) tif->tif_data;
-			*va_arg(ap, uint16*) = (uint16) sp->predictor;
-			return 1;
-                }
+    {
+        TIFFPredictorState* sp = (TIFFPredictorState*) tif->tif_data;
+        if( sp == NULL )
+        {
+            TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+                         "Cannot get \"Predictor\" tag as plugin is not configured");
+            *va_arg(ap, uint16*) = 0;
+            return 0;
+        }
+        *va_arg(ap, uint16*) = (uint16) sp->predictor;
+        return 1;
+    }
 	case TIFFTAG_DOTRANGE:
 		*va_arg(ap, uint16 *) = 0;
 		*va_arg(ap, uint16 *) = (1<<td->td_bitspersample)-1;

@@ -245,7 +245,7 @@ OGRFeature *OGRWalkLayer::GetNextRawFeature()
         const char *pszValue = poStmt->GetColData( iSrcField );
 
         if( pszValue == NULL )
-            /* no value */;
+            poFeature->SetFieldNull( iField );
         else if( poFeature->GetFieldDefnRef(iField)->GetType() == OFTBinary )
             poFeature->SetField( iField,
                                  poStmt->GetColDataLength(iSrcField),

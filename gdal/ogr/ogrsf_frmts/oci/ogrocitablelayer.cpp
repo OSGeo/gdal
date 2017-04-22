@@ -975,7 +975,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
 
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
             continue;
 
         if( !bNeedComma )
@@ -1079,7 +1079,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
             continue;
 
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(i);
@@ -1848,7 +1848,7 @@ OGRErr OGROCITableLayer::BoundCreateFeature( OGRFeature *poFeature )
     /* of BoundCreateFeature() doesn't work. */
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( !poFeature->IsFieldSet( i ) &&
+        if( !poFeature->IsFieldSetAndNotNull( i ) &&
             poFeature->GetFieldDefnRef(i)->GetDefault() != NULL )
         {
             FlushPendingFeatures();
@@ -2014,7 +2014,7 @@ OGRErr OGROCITableLayer::BoundCreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
         {
             papaeWriteFieldInd[i][iCache] = OCI_IND_NULL;
             continue;
@@ -2185,15 +2185,15 @@ void OGROCITableLayer::CreateSpatialIndex()
             GetGeomType() != wkbUnknown;
 
         CPLString osParams(CSLFetchNameValueDef(papszOptions,"INDEX_PARAMETERS", ""));
-        if( bAddLayerGType || osParams.size() != 0 )
+        if( bAddLayerGType || !osParams.empty() )
         {
             sIndexCmd.Append( " PARAMETERS( '" );
-            if( osParams.size() != 0 )
+            if( !osParams.empty() )
                 sIndexCmd.Append( osParams.c_str() );
             if( bAddLayerGType &&
                 osParams.ifind("LAYER_GTYPE") == std::string::npos )
             {
-                if( osParams.size() != 0 )
+                if( !osParams.empty() )
                     sIndexCmd.Append( ", " );
                 sIndexCmd.Append( "LAYER_GTYPE=" );
                 if( wkbFlatten(GetGeomType()) == wkbPoint )

@@ -31,6 +31,7 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_vsi_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -222,13 +223,13 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszFilename, "w+" );
+    fp = VSIFOpenExL( pszFilename, "w+", true );
 
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open '%s' for writing.",
-                  pszFilename );
+                  "Failed to open '%s' for writing: %s",
+                  pszFilename, VSIGetLastErrorMsg() );
         return FALSE;
     }
 
@@ -478,7 +479,7 @@ bool OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
         // the layer contents while copying so we can duplicate
         // it for any new layer definitions.
         if( nCode == 0 && EQUAL(szLineBuf,"LAYER")
-            && osTable == "LAYER" && aosDefaultLayerText.size() == 0 )
+            && osTable == "LAYER" && aosDefaultLayerText.empty() )
         {
             do {
                 anDefaultLayerCode.push_back( nCode );
@@ -675,7 +676,7 @@ bool OGRDXFWriterDS::WriteNewLineTypeRecords( VSILFILE *fpIn )
         poLayer->GetNewLineTypeMap();
 
     for( oIt = oNewLineTypes.begin();
-         oIt != oNewLineTypes.end(); oIt++ )
+         oIt != oNewLineTypes.end(); ++oIt )
     {
         WriteValue( fpIn, 0, "LTYPE" );
         WriteEntityID( fpIn );

@@ -301,7 +301,8 @@ void GDALPDFObject::Serialize(CPLString& osStr)
         case PDFObjectType_Array: GetArray()->Serialize(osStr); return;
         case PDFObjectType_Dictionary: GetDictionary()->Serialize(osStr); return;
         case PDFObjectType_Unknown:
-        default: fprintf(stderr, "Serializing unknown object !\n"); return;
+        default: CPLError(CE_Warning, CPLE_AppDefined,
+                          "Serializing unknown object !"); return;
     }
 }
 
@@ -329,7 +330,8 @@ GDALPDFObjectRW* GDALPDFObject::Clone()
         case PDFObjectType_Array: return GDALPDFObjectRW::CreateArray(GetArray()->Clone());
         case PDFObjectType_Dictionary: return GDALPDFObjectRW::CreateDictionary(GetDictionary()->Clone());
         case PDFObjectType_Unknown:
-        default: fprintf(stderr, "Cloning unknown object !\n"); return NULL;
+        default: CPLError(CE_Warning, CPLE_AppDefined,
+                          "Cloning unknown object !"); return NULL;
     }
 }
 
@@ -643,7 +645,7 @@ GDALPDFObjectRW* GDALPDFObjectRW::CreateArray(GDALPDFArrayRW* poArray)
 
 const char* GDALPDFObjectRW::GetTypeNameNative()
 {
-    fprintf(stderr, "Should not go here");
+    CPLError(CE_Failure, CPLE_AppDefined, "Should not go here");
     return "";
 }
 
@@ -913,8 +915,8 @@ class GDALPDFDictionaryPoppler: public GDALPDFDictionary
         GDALPDFDictionaryPoppler(Dict* poDict) : m_poDict(poDict) {}
         virtual ~GDALPDFDictionaryPoppler();
 
-        virtual GDALPDFObject* Get(const char* pszKey);
-        virtual std::map<CPLString, GDALPDFObject*>& GetValues();
+        virtual GDALPDFObject* Get(const char* pszKey) override;
+        virtual std::map<CPLString, GDALPDFObject*>& GetValues() override;
 };
 
 /************************************************************************/
@@ -933,8 +935,8 @@ class GDALPDFArrayPoppler : public GDALPDFArray
         GDALPDFArrayPoppler(Array* poArray) : m_poArray(poArray) {}
         virtual ~GDALPDFArrayPoppler();
 
-        virtual int GetLength();
-        virtual GDALPDFObject* Get(int nIndex);
+        virtual int GetLength() override;
+        virtual GDALPDFObject* Get(int nIndex) override;
 };
 
 /************************************************************************/
@@ -953,8 +955,8 @@ class GDALPDFStreamPoppler : public GDALPDFStream
         GDALPDFStreamPoppler(Stream* poStream) : m_nLength(-1), m_poStream(poStream) {}
         virtual ~GDALPDFStreamPoppler() {}
 
-        virtual int GetLength();
-        virtual char* GetBytes();
+        virtual int GetLength() override;
+        virtual char* GetBytes() override;
 };
 
 /************************************************************************/
@@ -1422,8 +1424,8 @@ class GDALPDFDictionaryPodofo: public GDALPDFDictionary
         GDALPDFDictionaryPodofo(PoDoFo::PdfDictionary* poDict, PoDoFo::PdfVecObjects& poObjects) : m_poDict(poDict), m_poObjects(poObjects) {}
         virtual ~GDALPDFDictionaryPodofo();
 
-        virtual GDALPDFObject* Get(const char* pszKey);
-        virtual std::map<CPLString, GDALPDFObject*>& GetValues();
+        virtual GDALPDFObject* Get(const char* pszKey) override;
+        virtual std::map<CPLString, GDALPDFObject*>& GetValues() override;
 };
 
 /************************************************************************/
@@ -1443,8 +1445,8 @@ class GDALPDFArrayPodofo : public GDALPDFArray
         GDALPDFArrayPodofo(PoDoFo::PdfArray* poArray, PoDoFo::PdfVecObjects& poObjects) : m_poArray(poArray), m_poObjects(poObjects) {}
         virtual ~GDALPDFArrayPodofo();
 
-        virtual int GetLength();
-        virtual GDALPDFObject* Get(int nIndex);
+        virtual int GetLength() override;
+        virtual GDALPDFObject* Get(int nIndex) override;
 };
 
 /************************************************************************/
@@ -1462,8 +1464,8 @@ class GDALPDFStreamPodofo : public GDALPDFStream
         GDALPDFStreamPodofo(PoDoFo::PdfStream* pStream) : m_pStream(pStream) { }
         virtual ~GDALPDFStreamPodofo() { }
 
-        virtual int GetLength();
-        virtual char* GetBytes();
+        virtual int GetLength() override;
+        virtual char* GetBytes() override;
 };
 
 /************************************************************************/
@@ -1876,8 +1878,8 @@ class GDALPDFDictionaryPdfium: public GDALPDFDictionary
         GDALPDFDictionaryPdfium(CPDF_Dictionary* poDict) : m_poDict(poDict) {}
         virtual ~GDALPDFDictionaryPdfium();
 
-        virtual GDALPDFObject* Get(const char* pszKey);
-        virtual std::map<CPLString, GDALPDFObject*>& GetValues();
+        virtual GDALPDFObject* Get(const char* pszKey) override;
+        virtual std::map<CPLString, GDALPDFObject*>& GetValues() override;
 };
 
 /************************************************************************/
@@ -1896,8 +1898,8 @@ class GDALPDFArrayPdfium : public GDALPDFArray
         GDALPDFArrayPdfium(CPDF_Array* poArray) : m_poArray(poArray) {}
         virtual ~GDALPDFArrayPdfium();
 
-        virtual int GetLength();
-        virtual GDALPDFObject* Get(int nIndex);
+        virtual int GetLength() override;
+        virtual GDALPDFObject* Get(int nIndex) override;
 };
 
 /************************************************************************/
@@ -1920,8 +1922,8 @@ class GDALPDFStreamPdfium : public GDALPDFStream
             m_pStream(pStream), m_nSize(0), m_pData(NULL) {}
         virtual ~GDALPDFStreamPdfium() { FX_Free(m_pData); }
 
-        virtual int GetLength();
-        virtual char* GetBytes();
+        virtual int GetLength() override;
+        virtual char* GetBytes() override;
 };
 
 /************************************************************************/

@@ -78,7 +78,7 @@ class CALSRasterBand: public GDALPamRasterBand
     GDALRasterBand* poUnderlyingBand;
 
   public:
-    CALSRasterBand( CALSDataset* poDSIn )
+    explicit CALSRasterBand( CALSDataset* poDSIn )
     {
         poDS = poDSIn;
         poUnderlyingBand = poDSIn->poUnderlyingDS->GetRasterBand(1);
@@ -87,7 +87,7 @@ class CALSRasterBand: public GDALPamRasterBand
         eDataType = GDT_Byte;
     }
 
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void * pData )
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void * pData ) override
     {
         return poUnderlyingBand->ReadBlock(nBlockXOff, nBlockYOff, pData);
     }
@@ -98,7 +98,7 @@ class CALSRasterBand: public GDALPamRasterBand
                               GDALDataType eBufType,
                               GSpacing nPixelSpace,
                               GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg )
+                              GDALRasterIOExtraArg* psExtraArg ) override
     {
         return poUnderlyingBand->RasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -106,22 +106,22 @@ class CALSRasterBand: public GDALPamRasterBand
             nPixelSpace, nLineSpace, psExtraArg ) ;
     }
 
-    virtual GDALColorTable* GetColorTable()
+    virtual GDALColorTable* GetColorTable() override
     {
         return poUnderlyingBand->GetColorTable();
     }
 
-    virtual GDALColorInterp GetColorInterpretation()
+    virtual GDALColorInterp GetColorInterpretation() override
     {
         return GCI_PaletteIndex;
     }
 
-    virtual char** GetMetadata(const char* pszDomain)
+    virtual char** GetMetadata(const char* pszDomain) override
     {
         return poUnderlyingBand->GetMetadata(pszDomain);
     }
 
-    virtual const char* GetMetadataItem(const char* pszKey, const char* pszDomain)
+    virtual const char* GetMetadataItem(const char* pszKey, const char* pszDomain) override
     {
         return poUnderlyingBand->GetMetadataItem(pszKey, pszDomain);
     }
@@ -139,7 +139,7 @@ class CALSWrapperSrcBand: public GDALPamRasterBand
         bool bInvertValues;
 
     public:
-        CALSWrapperSrcBand( GDALDataset* poSrcDSIn )
+        explicit CALSWrapperSrcBand( GDALDataset* poSrcDSIn )
         {
             poSrcDS = poSrcDSIn;
             SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE");
@@ -165,7 +165,7 @@ class CALSWrapperSrcBand: public GDALPamRasterBand
 
         virtual CPLErr IReadBlock( int /* nBlockXOff */,
                                    int /* nBlockYOff */,
-                                   void * /* pData */ )
+                                   void * /* pData */ ) override
         {
             // Should not be called.
             return CE_Failure;
@@ -177,7 +177,7 @@ class CALSWrapperSrcBand: public GDALPamRasterBand
                                   GDALDataType eBufType,
                                   GSpacing nPixelSpace,
                                   GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg* psExtraArg )
+                                  GDALRasterIOExtraArg* psExtraArg ) override
         {
             const CPLErr eErr =
                 poSrcDS->GetRasterBand(1)->RasterIO(
@@ -230,9 +230,9 @@ CALSDataset::~CALSDataset()
 
 {
     delete poUnderlyingDS;
-    if( osTIFFHeaderFilename.size() )
+    if( !osTIFFHeaderFilename.empty() )
         VSIUnlink(osTIFFHeaderFilename);
-    if( osSparseFilename.size() )
+    if( !osSparseFilename.empty() )
         VSIUnlink(osSparseFilename);
 }
 
@@ -265,7 +265,7 @@ int CALSDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 void CALSDataset::WriteLEInt16( VSILFILE* fp, GInt16 nVal )
 {
-    nVal = CPL_LSBWORD16(nVal);
+    CPL_LSBPTR16(&nVal);
     VSIFWriteL(&nVal, 1, 2, fp);
 }
 
@@ -275,7 +275,7 @@ void CALSDataset::WriteLEInt16( VSILFILE* fp, GInt16 nVal )
 
 void CALSDataset::WriteLEInt32( VSILFILE* fp, GInt32 nVal )
 {
-    nVal = CPL_LSBWORD32(nVal);
+    CPL_LSBPTR32(&nVal);
     VSIFWriteL(&nVal, 1, 4, fp);
 }
 
@@ -529,6 +529,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
     memset(szBuffer, ' ', 2048);
     CPLString osField;
     osField = "srcdocid: NONE";
+    // cppcheck-suppress redundantCopy
     memcpy(szBuffer, osField, osField.size());
 
     osField = "dstdocid: NONE";

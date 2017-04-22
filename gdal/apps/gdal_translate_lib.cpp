@@ -28,18 +28,29 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "gdal_priv.h"
-#include "ogr_spatialref.h"
-#include "vrtdataset.h"
-#include "commonutils.h"
+#include "cpl_port.h"
+#include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
+#include <cmath>
 #include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
+#include <limits>
+
+#include "commonutils.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "gdal_vrt.h"
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
+#include "vrtdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -695,7 +706,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             return NULL;
         }
 
-        if( osProjSRS.size() )
+        if( !osProjSRS.empty() )
         {
             pszProjection = GDALGetProjectionRef( hSrcDataset );
             if( pszProjection != NULL && strlen(pszProjection) > 0 )
@@ -1036,7 +1047,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Transfer generally applicable metadata.                         */
 /* -------------------------------------------------------------------- */
-    char** papszMetadata = CSLDuplicate(((GDALDataset*)hSrcDataset)->GetMetadata());
+    GDALDataset* poSrcDS = reinterpret_cast<GDALDataset*>(hSrcDataset);
+    char** papszMetadata = CSLDuplicate(poSrcDS->GetMetadata());
     if ( psOptions->nScaleRepeat > 0 || psOptions->bUnscale || psOptions->eOutputType != GDT_Unknown )
     {
         /* Remove TIFFTAG_MINSAMPLEVALUE and TIFFTAG_MAXSAMPLEVALUE */
@@ -1062,6 +1074,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if (pszInterleave)
         poVDS->SetMetadataItem("INTERLEAVE", pszInterleave, "IMAGE_STRUCTURE");
 
+    /* ISIS3 -> ISIS3 special case */
+    if( EQUAL(psOptions->pszFormat, "ISIS3") )
+    {
+        char** papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
+        if( papszMD_ISIS3 != NULL)
+            poVDS->SetMetadata( papszMD_ISIS3, "json:ISIS3" );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Transfer metadata that remains valid if the spatial             */
 /*      arrangement of the data is unaltered.                           */
@@ -1070,11 +1090,11 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     {
         char **papszMD;
 
-        papszMD = ((GDALDataset*)hSrcDataset)->GetMetadata("RPC");
+        papszMD = poSrcDS->GetMetadata("RPC");
         if( papszMD != NULL )
             poVDS->SetMetadata( papszMD, "RPC" );
 
-        papszMD = ((GDALDataset*)hSrcDataset)->GetMetadata("GEOLOCATION");
+        papszMD = poSrcDS->GetMetadata("GEOLOCATION");
         if( papszMD != NULL )
             poVDS->SetMetadata( papszMD, "GEOLOCATION" );
     }
@@ -1082,7 +1102,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     {
         char **papszMD;
 
-        papszMD = ((GDALDataset*)hSrcDataset)->GetMetadata("RPC");
+        papszMD = poSrcDS->GetMetadata("RPC");
         if( papszMD != NULL )
         {
             papszMD = CSLDuplicate(papszMD);
@@ -1405,6 +1425,13 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
             poSource->SetColorTableComponent(nComponent);
 
+            int bSuccess;
+            double dfNoData = poSrcBand->GetNoDataValue( &bSuccess );
+            if ( bSuccess )
+            {
+                poSource->SetNoDataValue(dfNoData);
+            } 
+
             poSimpleSource = poSource;
         }
         else
@@ -1461,7 +1488,13 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                 bSignedByte = true;
             int bClamped = FALSE, bRounded = FALSE;
             double dfVal;
-            if( bSignedByte )
+            if( eBandType == GDT_Float32 && CPLIsInf(psOptions->dfNoDataReal) )
+            {
+                dfVal = std::numeric_limits<float>::infinity();
+                if( psOptions->dfNoDataReal < 0 )
+                    dfVal = -dfVal;
+            }
+            else if( bSignedByte )
             {
                 if( psOptions->dfNoDataReal < -128 )
                 {
@@ -1576,12 +1609,25 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Write to the output file using CopyCreate().                    */
 /* -------------------------------------------------------------------- */
-    hOutDS = GDALCreateCopy( hDriver, pszDest, (GDALDatasetH) poVDS,
-                             psOptions->bStrict, psOptions->papszCreateOptions,
-                             psOptions->pfnProgress, psOptions->pProgressData );
-    hOutDS = GDALTranslateFlush(hOutDS);
+    if( EQUAL(psOptions->pszFormat, "VRT") &&
+        psOptions->papszCreateOptions == NULL )
+    {
+        poVDS->SetDescription(pszDest);
+        hOutDS = (GDALDatasetH) poVDS ;
+        if( !EQUAL(pszDest, "") )
+        {
+            hOutDS = GDALTranslateFlush(hOutDS);
+        }
+    }
+    else
+    {
+        hOutDS = GDALCreateCopy( hDriver, pszDest, (GDALDatasetH) poVDS,
+                                psOptions->bStrict, psOptions->papszCreateOptions,
+                                psOptions->pfnProgress, psOptions->pProgressData );
+        hOutDS = GDALTranslateFlush(hOutDS);
 
-    GDALClose( (GDALDatasetH) poVDS );
+        GDALClose( (GDALDatasetH) poVDS );
+    }
 
     GDALTranslateOptionsFree(psOptions);
     return hOutDS;
@@ -1755,7 +1801,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
     int argc = CSLCount(papszArgv);
-    for( int i = 0; i < argc; i++ )
+    for( int i = 0; papszArgv != NULL && i < argc; i++ )
     {
         if( EQUAL(papszArgv[i],"-of") && i < argc-1 )
         {

@@ -35,34 +35,34 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
-                        CPLString &osResult, bool bReportError )
+                         CPLString &osResult, bool bReportError )
 
 {
-    hid_t hAttr = H5Aopen_name( loc_id, pszAttrName );
+    hid_t hAttr = H5Aopen_name(loc_id, pszAttrName);
 
     osResult.clear();
 
     if( hAttr < 0 )
     {
         if( bReportError )
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to read attribute %s failed, not found.",
-                      pszAttrName );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Attempt to read attribute %s failed, not found.",
+                     pszAttrName);
         return false;
     }
 
-    hid_t hAttrTypeID      = H5Aget_type( hAttr );
-    hid_t hAttrNativeType  = H5Tget_native_type( hAttrTypeID, H5T_DIR_DEFAULT );
+    hid_t hAttrTypeID = H5Aget_type(hAttr);
+    hid_t hAttrNativeType = H5Tget_native_type(hAttrTypeID, H5T_DIR_DEFAULT);
 
     bool retVal = false;
-    if( H5Tget_class( hAttrNativeType ) == H5T_STRING )
+    if( H5Tget_class(hAttrNativeType) == H5T_STRING )
     {
-        const size_t nAttrSize = H5Tget_size( hAttrTypeID );
-        char *pachBuffer = static_cast<char *>( CPLCalloc(nAttrSize+1, 1) );
-        H5Aread( hAttr, hAttrNativeType, pachBuffer );
+        const size_t nAttrSize = H5Tget_size(hAttrTypeID);
+        char *pachBuffer = static_cast<char *>(CPLCalloc(nAttrSize + 1, 1));
+        H5Aread(hAttr, hAttrNativeType, pachBuffer);
 
         osResult = pachBuffer;
-        CPLFree( pachBuffer );
+        CPLFree(pachBuffer);
 
         retVal = true;
     }
@@ -72,14 +72,14 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
             CPLError(
                 CE_Failure, CPLE_AppDefined,
                 "Attribute %s of unsupported type for conversion to string.",
-                pszAttrName );
+                pszAttrName);
 
         retVal = false;
     }
 
-    H5Tclose( hAttrNativeType );
-    H5Tclose( hAttrTypeID );
-    H5Aclose( hAttr );
+    H5Tclose(hAttrNativeType);
+    H5Tclose(hAttrTypeID);
+    H5Aclose(hAttr);
     return retVal;
 }
 
@@ -91,86 +91,81 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
                          double &dfResult, bool bReportError )
 
 {
-    const hid_t hAttr = H5Aopen_name( loc_id, pszAttrName );
+    const hid_t hAttr = H5Aopen_name(loc_id, pszAttrName);
 
     dfResult = 0.0;
     if( hAttr < 0 )
     {
         if( bReportError )
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to read attribute %s failed, not found.",
-                      pszAttrName );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Attempt to read attribute %s failed, not found.",
+                     pszAttrName);
         return false;
     }
 
-    hid_t hAttrTypeID      = H5Aget_type( hAttr );
-    hid_t hAttrNativeType  = H5Tget_native_type( hAttrTypeID, H5T_DIR_DEFAULT );
+    hid_t hAttrTypeID = H5Aget_type(hAttr);
+    hid_t hAttrNativeType = H5Tget_native_type(hAttrTypeID, H5T_DIR_DEFAULT);
 
-/* -------------------------------------------------------------------- */
-/*      Confirm that we have a single element value.                    */
-/* -------------------------------------------------------------------- */
-
-    hid_t hAttrSpace       = H5Aget_space( hAttr );
-    hsize_t anSize[64];
-    int nAttrDims       = H5Sget_simple_extent_dims( hAttrSpace, anSize, NULL );
+    // Confirm that we have a single element value.
+    hid_t hAttrSpace = H5Aget_space(hAttr);
+    hsize_t anSize[64] = {};
+    int nAttrDims = H5Sget_simple_extent_dims(hAttrSpace, anSize, NULL);
 
     int i, nAttrElements = 1;
 
-    for( i=0; i < nAttrDims; i++ ) {
-        nAttrElements *= (int) anSize[i];
+    for( i = 0; i < nAttrDims; i++ )
+    {
+        nAttrElements *= (int)anSize[i];
     }
 
     if( nAttrElements != 1 )
     {
         if( bReportError )
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to read attribute %s failed, count=%d, not 1.",
-                      pszAttrName, nAttrElements );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Attempt to read attribute %s failed, count=%d, not 1.",
+                     pszAttrName, nAttrElements);
 
-        H5Sclose( hAttrSpace );
-        H5Tclose( hAttrNativeType );
-        H5Tclose( hAttrTypeID );
-        H5Aclose( hAttr );
+        H5Sclose(hAttrSpace);
+        H5Tclose(hAttrNativeType);
+        H5Tclose(hAttrTypeID);
+        H5Aclose(hAttr);
         return false;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Read the value.                                                 */
-/* -------------------------------------------------------------------- */
-    void *buf = (void *)CPLMalloc( H5Tget_size( hAttrNativeType ));
-    H5Aread( hAttr, hAttrNativeType, buf );
+    // Read the value.
+    void *buf = CPLMalloc(H5Tget_size(hAttrNativeType));
+    H5Aread(hAttr, hAttrNativeType, buf);
 
-/* -------------------------------------------------------------------- */
-/*      Translate to double.                                            */
-/* -------------------------------------------------------------------- */
-    if( H5Tequal( H5T_NATIVE_INT, hAttrNativeType ) )
-        dfResult = *((int *) buf);
-    else if( H5Tequal( H5T_NATIVE_FLOAT,    hAttrNativeType ) )
-        dfResult = *((float *) buf);
-    else if( H5Tequal( H5T_NATIVE_DOUBLE,    hAttrNativeType ) )
-        dfResult = *((double *) buf);
+    // Translate to double.
+    if( H5Tequal(H5T_NATIVE_INT, hAttrNativeType) )
+        dfResult = *((int *)buf);
+    else if( H5Tequal(H5T_NATIVE_FLOAT,    hAttrNativeType) )
+        dfResult = *((float *)buf);
+    else if( H5Tequal(H5T_NATIVE_DOUBLE,    hAttrNativeType) )
+        dfResult = *((double *)buf);
     else
     {
         if( bReportError )
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attribute %s of unsupported type for conversion to double.",
-                      pszAttrName );
-        CPLFree( buf );
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Attribute %s of unsupported type for conversion to double.",
+                pszAttrName);
+        CPLFree(buf);
 
-        H5Sclose( hAttrSpace );
-        H5Tclose( hAttrNativeType );
-        H5Tclose( hAttrTypeID );
-        H5Aclose( hAttr );
+        H5Sclose(hAttrSpace);
+        H5Tclose(hAttrNativeType);
+        H5Tclose(hAttrTypeID);
+        H5Aclose(hAttr);
 
         return false;
     }
 
-    CPLFree( buf );
+    CPLFree(buf);
 
-    H5Sclose( hAttrSpace );
-    H5Tclose( hAttrNativeType );
-    H5Tclose( hAttrTypeID );
-    H5Aclose( hAttr );
+    H5Sclose(hAttrSpace);
+    H5Tclose(hAttrNativeType);
+    H5Tclose(hAttrTypeID);
+    H5Aclose(hAttr);
     return true;
 }
 
@@ -181,44 +176,44 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
 /************************************************************************/
 GDALDataType GH5_GetDataType(hid_t TypeID)
 {
-    if( H5Tequal( H5T_NATIVE_CHAR,        TypeID ) )
+    if( H5Tequal(H5T_NATIVE_CHAR,        TypeID) )
         return GDT_Byte;
-    else if( H5Tequal( H5T_NATIVE_SCHAR,  TypeID ) )
+    else if( H5Tequal(H5T_NATIVE_SCHAR,  TypeID) )
         return GDT_Byte;
-    else if( H5Tequal( H5T_NATIVE_UCHAR,  TypeID ) )
+    else if( H5Tequal(H5T_NATIVE_UCHAR,  TypeID) )
         return GDT_Byte;
-    else if( H5Tequal( H5T_NATIVE_SHORT,  TypeID ) )
+    else if( H5Tequal(H5T_NATIVE_SHORT,  TypeID) )
         return GDT_Int16;
-    else if( H5Tequal( H5T_NATIVE_USHORT, TypeID ) )
+    else if( H5Tequal(H5T_NATIVE_USHORT, TypeID) )
         return GDT_UInt16;
-    else if( H5Tequal( H5T_NATIVE_INT,    TypeID ) )
+    else if( H5Tequal(H5T_NATIVE_INT,    TypeID) )
         return GDT_Int32;
-    else if( H5Tequal( H5T_NATIVE_UINT,   TypeID ) )
+    else if( H5Tequal(H5T_NATIVE_UINT,   TypeID) )
         return GDT_UInt32;
-    else if( H5Tequal( H5T_NATIVE_LONG,   TypeID ) )
+    else if( H5Tequal(H5T_NATIVE_LONG,   TypeID) )
     {
         if( sizeof(long) == 4 )
             return GDT_Int32;
         else
             return GDT_Unknown;
     }
-    else if( H5Tequal( H5T_NATIVE_ULONG,  TypeID ) )
+    else if( H5Tequal(H5T_NATIVE_ULONG,  TypeID) )
     {
         if( sizeof(unsigned long) == 4 )
             return GDT_UInt32;
         else
             return GDT_Unknown;
     }
-    else if( H5Tequal( H5T_NATIVE_FLOAT,  TypeID ) )
+    else if( H5Tequal(H5T_NATIVE_FLOAT,  TypeID) )
         return GDT_Float32;
-    else if( H5Tequal( H5T_NATIVE_DOUBLE, TypeID ) )
+    else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
         return GDT_Float64;
-    else if( H5Tequal( H5T_NATIVE_LLONG,  TypeID ) )
+#ifdef notdef
+    else if( H5Tequal(H5T_NATIVE_LLONG,  TypeID) )
         return GDT_Unknown;
-    else if( H5Tequal( H5T_NATIVE_ULLONG, TypeID ) )
+    else if( H5Tequal(H5T_NATIVE_ULLONG, TypeID) )
         return GDT_Unknown;
-    else if( H5Tequal( H5T_NATIVE_DOUBLE, TypeID ) )
-        return GDT_Unknown;
+#endif
 
     return GDT_Unknown;
 }

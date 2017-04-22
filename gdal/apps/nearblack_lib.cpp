@@ -27,13 +27,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include <vector>
+#include "cpl_port.h"
+#include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
+#include <cstdlib>
+#include <cstring>
+
 #include <algorithm>
+#include <memory>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
@@ -229,7 +238,7 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 
     /***** set a color if there are no colors set? *****/
 
-    if ( oColors.size() == 0) {
+    if ( oColors.empty()) {
         Color oColor;
 
         /***** loop over the bands to get the right number of values *****/
@@ -755,7 +764,7 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
     int argc = CSLCount(papszArgv);
-    for( int i = 0; i < argc; i++ )
+    for( int i = 0; papszArgv != NULL && i < argc; i++ )
     {
         if( EQUAL(papszArgv[i],"-of") && i < argc-1 )
         {
@@ -825,7 +834,7 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
 
             /***** check if the number of bands is consistent *****/
 
-            if ( psOptions->oColors.size() > 0 &&
+            if ( !psOptions->oColors.empty() &&
                  psOptions->oColors.front().size() != oColor.size() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,

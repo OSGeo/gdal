@@ -123,10 +123,10 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
    wordType word;       /* Used to check that the edition is correct. */
    uInt4 curLen;        /* Where we currently are in buff. */
    uInt4 i;             /* Used to loop over the first few char's */
-   uInt4 stillNeed;     /* Number of bytes still needed to get 1st 8 bytes of 
+   uInt4 stillNeed;     /* Number of bytes still needed to get 1st 8 bytes of
                          * message into memory. */
 
-   /* Get first 8 bytes.  If GRIB we don't care.  If TDLP, this is the length 
+   /* Get first 8 bytes.  If GRIB we don't care.  If TDLP, this is the length
     * of record.  Read at least 1 record (length + 2 * 8) + 8 (next record
     * length) + 8 bytes before giving up. */
    curLen = 8;
@@ -263,7 +263,7 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
  *  msgNum = Which message to look for. (Input)
  *  offset = Where in the file the message starts (this is before the
  *           wmo ASCII part if there is one.) (Output)
- *  curMsg = The current # of messages we have looked through. (In/Out) 
+ *  curMsg = The current # of messages we have looked through. (In/Out)
  *
  * FILES/DATABASES:
  *   An already opened "GRIB2" File
@@ -286,7 +286,7 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
 int FindGRIBMsg (DataSource &fp, int msgNum, sInt4 *offset, int *curMsg)
 {
    int cnt;             /* The current message we are looking at. */
-   char *buff;          /* Holds the info between records. */
+   char *buff = NULL;   /* Holds the info between records. */
    uInt4 buffLen;       /* Length of info between records. */
    sInt4 sect0[SECT0LEN_WORD]; /* Holds the current Section 0. */
    uInt4 gribLen;       /* Length of the current GRIB message. */
@@ -821,13 +821,14 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    sInt4 l3264b;        /* Number of bits in a sInt4.  Needed by FORTRAN
                          * unpack library to determine if system has a 4
                          * byte_ sInt4 or an 8 byte sInt4. */
-   char *buff;          /* Holds the info between records. */
+   char *buff = NULL;   /* Holds the info between records. */
    uInt4 buffLen;       /* Length of info between records. */
    sInt4 sect0[SECT0LEN_WORD]; /* Holds the current Section 0. */
    uInt4 gribLen;       /* Length of the current GRIB message. */
    sInt4 nd5;           /* Size of grib message rounded up to the nearest
                          * sInt4. */
-   char *c_ipack;       /* A char ptr to the message stored in IS->ipack */
+   /* A char ptr to the message stored in IS->ipack */
+   char *c_ipack = NULL;
    sInt4 local_ns[8];   /* Local copy of section lengths. */
    sInt4 nd2x3;         /* Total number of grid points. */
    short int table50;   /* Type of packing used. (See code table 5.0)
@@ -874,7 +875,6 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
     * don't want to throw it out, nor have to re-read ipack from disk.
     */
    l3264b = sizeof (sInt4) * 8;
-   buff = NULL;
    buffLen = 0;
    if (*f_endMsg == 1) {
       if (ReadSECT0 (fp, &buff, &buffLen, -1, sect0, &gribLen, &version) < 0) {

@@ -151,7 +151,7 @@ class ImdReader
     char                 codeUndefined;
     char                 codeContinue;
   public:
-                         ImdReader(int iliVersion);
+    explicit             ImdReader(int iliVersion);
                         ~ImdReader();
     void                 ReadModel(const char *pszFilename);
     FeatureDefnInfo      GetFeatureDefnInfo(const char *pszLayerName);

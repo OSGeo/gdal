@@ -294,7 +294,8 @@ voidpf zcalloc (opaque, items, size)
     unsigned items;
     unsigned size;
 {
-    if (opaque) items += size - size; /* make compiler happy */
+    /* cppcheck-suppress uselessAssignmentPtrArg */
+    if (opaque) opaque = 0; /* to make compiler happy */
     return sizeof(uInt) > 2 ? (voidpf)malloc(items * size) :
                               (voidpf)calloc(items, size);
 }

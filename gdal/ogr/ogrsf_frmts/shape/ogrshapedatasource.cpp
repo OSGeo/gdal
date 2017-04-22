@@ -239,7 +239,7 @@ bool OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
             // We don't consume .dbf files in a directory that looks like
             // an old style Arc/Info (for PC?) that unless we found at least
             // some shapefiles.  See Bug 493.
-            if( bMightBeOldCoverage && osLayerNameSet.size() == 0 )
+            if( bMightBeOldCoverage && osLayerNameSet.empty() )
                 continue;
 
             if( strlen(pszCandidate) < 4
@@ -407,6 +407,8 @@ bool OGRShapeDataSource::OpenFile( const char *pszNewName, bool bUpdate )
         CSLFetchNameValue( papszOpenOptions, "DBF_DATE_LAST_UPDATE" ) );
     poLayer->SetAutoRepack(
         CPLFetchBool( papszOpenOptions, "AUTO_REPACK", true ) );
+    poLayer->SetWriteDBFEOFChar(
+        CPLFetchBool( papszOpenOptions, "DBF_EOF_CHAR", true ) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -485,7 +487,7 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         nShapeType = SHPT_ARC;
     else if( eType == wkbPoint )
         nShapeType = SHPT_POINT;
-    else if( eType == wkbPolygon )
+    else if( eType == wkbPolygon || eType == wkbTriangle )
         nShapeType = SHPT_POLYGON;
     else if( eType == wkbMultiPoint )
         nShapeType = SHPT_MULTIPOINT;
@@ -509,11 +511,11 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         nShapeType = SHPT_ARCM;
     else if( eType == wkbMultiLineStringZM )
         nShapeType = SHPT_ARCZ;
-    else if( eType == wkbPolygon25D )
+    else if( eType == wkbPolygon25D || eType == wkbTriangleZ )
         nShapeType = SHPT_POLYGONZ;
-    else if( eType == wkbPolygonM )
+    else if( eType == wkbPolygonM || eType == wkbTriangleM )
         nShapeType = SHPT_POLYGONM;
-    else if( eType == wkbPolygonZM )
+    else if( eType == wkbPolygonZM || eType == wkbTriangleZM )
         nShapeType = SHPT_POLYGONZ;
     else if( eType == wkbMultiPolygon )
         nShapeType = SHPT_POLYGON;
@@ -529,6 +531,9 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         nShapeType = SHPT_MULTIPOINTM;
     else if( eType == wkbMultiPointZM )
         nShapeType = SHPT_MULTIPOINTZ;
+    else if( wkbFlatten(eType) == wkbTIN ||
+             wkbFlatten(eType) == wkbPolyhedralSurface )
+        nShapeType = SHPT_MULTIPATCH;
     else if( eType == wkbNone )
         nShapeType = SHPT_NULL;
 
@@ -622,6 +627,11 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         nShapeType = SHPT_MULTIPOINTZ;
         eType = wkbMultiPointZM;
     }
+    else if( EQUAL(pszOverride,"MULTIPATCH") )
+    {
+        nShapeType = SHPT_MULTIPATCH;
+        eType = wkbUnknown; // not ideal...
+    }
     else if( EQUAL(pszOverride,"NONE") || EQUAL(pszOverride,"NULL") )
     {
         nShapeType = SHPT_NULL;
@@ -643,7 +653,7 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
                   "Geometry type of `%s' not supported in shapefiles.  "
                   "Type can be overridden with a layer creation option "
                   "of SHPT=POINT/ARC/POLYGON/MULTIPOINT/POINTZ/ARCZ/POLYGONZ/"
-                  "MULTIPOINTZ.",
+                  "MULTIPOINTZ/MULTIPATCH.",
                   OGRGeometryTypeToName(eType) );
         return NULL;
     }
@@ -702,9 +712,6 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
 
         if( hSHP == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Failed to open Shapefile `%s'.",
-                      pszFilename );
             CPLFree( pszFilename );
             CPLFree( pszFilenameWithoutExt );
             return NULL;
@@ -793,6 +800,8 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         CSLFetchNameValue( papszOptions, "DBF_DATE_LAST_UPDATE" ) );
     poLayer->SetAutoRepack(
         CPLFetchBool( papszOptions, "AUTO_REPACK", true ) );
+    poLayer->SetWriteDBFEOFChar(
+        CPLFetchBool( papszOptions, "DBF_EOF_CHAR", true ) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -829,7 +838,7 @@ int OGRShapeDataSource::GetLayerCount()
 
 {
 #ifndef IMMEDIATE_OPENING
-    if( oVectorLayerName.size() != 0 )
+    if( !oVectorLayerName.empty() )
     {
         for( size_t i = 0; i < oVectorLayerName.size(); i++ )
         {
@@ -884,7 +893,7 @@ OGRLayer *OGRShapeDataSource::GetLayer( int iLayer )
 OGRLayer *OGRShapeDataSource::GetLayerByName( const char * pszLayerNameIn )
 {
 #ifndef IMMEDIATE_OPENING
-    if( oVectorLayerName.size() != 0 )
+    if( !oVectorLayerName.empty() )
     {
         for( int j = 0; j < nLayers; j++ )
         {

@@ -188,7 +188,7 @@ void OGROCILoaderLayer::WriteLoaderHeader()
             VSIFPrintf( fpLoader, "    \"%s\" INTEGER EXTERNAL",
                         poFldDefn->GetNameRef() );
         }
-        else if( poFldDefn->GetType() == OFTInteger )
+        else if( poFldDefn->GetType() == OFTInteger64 )
         {
             VSIFPrintf( fpLoader, "    \"%s\" LONGINTEGER EXTERNAL",
                         poFldDefn->GetNameRef() );
@@ -198,12 +198,7 @@ void OGROCILoaderLayer::WriteLoaderHeader()
             VSIFPrintf( fpLoader, "    \"%s\" FLOAT EXTERNAL",
                         poFldDefn->GetNameRef() );
         }
-        else if( poFldDefn->GetType() == OFTString )
-        {
-            VSIFPrintf( fpLoader, "    \"%s\" VARCHARC(4)",
-                        poFldDefn->GetNameRef() );
-        }
-        else
+        else /* if( poFldDefn->GetType() == OFTString ) or default case */
         {
             VSIFPrintf( fpLoader, "    \"%s\" VARCHARC(4)",
                         poFldDefn->GetNameRef() );
@@ -324,7 +319,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureStreamMode( OGRFeature *poFeature )
     {
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(i);
 
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
         {
             if( poFldDefn->GetType() != OFTInteger
                 && poFldDefn->GetType() != OFTInteger64
@@ -448,7 +443,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
     {
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(i);
 
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
         {
             if( poFldDefn->GetType() != OFTInteger
                 && poFldDefn->GetType() != OFTInteger64

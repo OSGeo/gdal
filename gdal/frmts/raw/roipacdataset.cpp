@@ -63,12 +63,12 @@ class ROIPACDataset : public RawDataset
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char **papszOptions );
 
-    virtual void        FlushCache( void );
-    CPLErr              GetGeoTransform( double *padfTransform );
-    virtual CPLErr      SetGeoTransform( double *padfTransform );
-    const char         *GetProjectionRef( void );
-    virtual CPLErr      SetProjection( const char *pszNewProjection );
-    virtual char      **GetFileList( void );
+    virtual void        FlushCache( void ) override;
+    CPLErr              GetGeoTransform( double *padfTransform ) override;
+    virtual CPLErr      SetGeoTransform( double *padfTransform ) override;
+    const char         *GetProjectionRef( void ) override;
+    virtual CPLErr      SetProjection( const char *pszNewProjection ) override;
+    virtual char      **GetFileList( void ) override;
 };
 
 /************************************************************************/

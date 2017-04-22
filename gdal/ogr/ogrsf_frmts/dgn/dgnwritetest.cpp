@@ -48,7 +48,7 @@ int main( int /* argc */, char ** /* argv */ )
 
     if( hNewDGN == NULL )
     {
-        printf( "DGNCreate failed.\n" );
+        printf( "DGNCreate failed.\n" );/*ok*/
         exit( 10 );
     }
 

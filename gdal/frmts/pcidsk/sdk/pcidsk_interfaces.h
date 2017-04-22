@@ -47,7 +47,7 @@ namespace PCIDSK
 
         const IOInterfaces *io;
 
-        EDBFile           *(*OpenEDB)(std::string filename, std::string access);
+        EDBFile           *(*OpenEDB)(const std::string& filename, const std::string& access);
 
         Mutex             *(*CreateMutex)(void);
 

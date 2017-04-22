@@ -70,7 +70,7 @@ class CPL_DLL OGR_SRSNode
     OGRErr      importFromWkt( char **, int nRecLevel, int* pnNodes );
 
   public:
-                OGR_SRSNode(const char * = NULL);
+    explicit     OGR_SRSNode(const char * = NULL);
                 ~OGR_SRSNode();
 
     /** Return whether this is a leaf node.
@@ -154,7 +154,7 @@ class CPL_DLL OGRSpatialReference
                                   const char* pszURN);
   public:
                 OGRSpatialReference(const OGRSpatialReference&);
-                OGRSpatialReference(const char * = NULL);
+    explicit    OGRSpatialReference(const char * = NULL);
 
     virtual    ~OGRSpatialReference();
 

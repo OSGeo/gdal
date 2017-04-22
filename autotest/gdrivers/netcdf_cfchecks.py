@@ -72,6 +72,8 @@ def normalize_whitespace(text):
     "Remove redundant whitespace from a string."
     return ' '.join(text.split())
 
+def my_cmp(a,b):
+    return (a>b)-(a<b)
 
 class CFVersion(object):
     """A CF version number, stored as a tuple, that can be instantiated with
@@ -103,7 +105,7 @@ class CFVersion(object):
             in_o = (pos < len(other.tuple))
             if in_s:
                 if in_o:
-                    c = cmp(self.tuple[pos], other.tuple[pos])
+                    c = my_cmp(self.tuple[pos], other.tuple[pos])
                     if c != 0:
                         return c  # e.g. 1.x <=> 1.y
                 else:  # in_s and not in_o

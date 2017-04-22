@@ -46,17 +46,17 @@ CPL_CVSID("$Id$");
         do { \
                 VSIFReadL( &(x), 4, 1, (f) ); \
                 (x) = CPL_SWAP32( (x) ); \
-        } while (0);
+        } while ( false );
 #define READ_SHORT(f, x) \
         do { \
                 VSIFReadL( &(x), 2, 1, (f) ); \
                 (x) = CPL_SWAP16( (x) ); \
-        } while (0);
+        } while ( false );
 #else
-#define READ_WORD(f, x) do { VSIFReadL( &(x), 4, 1, (f) ); } while (0);
-#define READ_SHORT(f, x) do { VSIFReadL( &(x), 2, 1, (f) ); } while (0);
+#define READ_WORD(f, x) do { VSIFReadL( &(x), 4, 1, (f) ); } while ( false);
+#define READ_SHORT(f, x) do { VSIFReadL( &(x), 2, 1, (f) ); } while ( false );
 #endif /* def CPL_LSB */
-#define READ_BYTE(f, x) do { VSIFReadL( &(x), 1, 1, (f) ); } while (0);
+#define READ_BYTE(f, x) do { VSIFReadL( &(x), 1, 1, (f) ); } while ( false );
 
 /* read floating point value stored as ASCII */
 #define READ_CHAR_FLOAT(n, l, f) \
@@ -65,7 +65,7 @@ CPL_CVSID("$Id$");
                 psBuf[(l)] = '\0'; \
                 VSIFReadL( &psBuf, (l), 1, (f) );\
                 (n) = CPLAtof( psBuf );\
-        } while (0);
+        } while( false );
 
 /* read numbers stored as ASCII */
 #define READ_CHAR_VAL(x, n, f) \
@@ -74,7 +74,7 @@ CPL_CVSID("$Id$");
                 psBuf[(n)] = '\0';\
                 VSIFReadL( &psBuf, (n), 1, (f) ); \
                 (x) = atoi(psBuf); \
-        } while (0);
+        } while( false );
 
 /* read string fields
  * note: string must be size of field to be extracted + 1
@@ -83,7 +83,7 @@ CPL_CVSID("$Id$");
         do { \
                 VSIFReadL( &(s), 1, (n), (f) ); \
                 (s)[(n)] = '\0'; \
-        } while (0);
+        } while( false );
 
 /*************************************************************************/
 /* a few key offsets in the volume directory file */
@@ -165,8 +165,8 @@ public:
     PALSARJaxaDataset();
     ~PALSARJaxaDataset();
 
-    int GetGCPCount();
-    const GDAL_GCP *GetGCPs();
+    int GetGCPCount() override;
+    const GDAL_GCP *GetGCPs() override;
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static int Identify( GDALOpenInfo *poOpenInfo );
@@ -196,8 +196,6 @@ PALSARJaxaDataset::~PALSARJaxaDataset()
 
 class PALSARJaxaRasterBand : public GDALRasterBand {
     VSILFILE *fp;
-    int nRasterXSize;
-    int nRasterYSize;
     ePolarization nPolarization;
     eFileType nFileType;
     int nBitsPerSample;
@@ -208,7 +206,7 @@ public:
     PALSARJaxaRasterBand( PALSARJaxaDataset *poDS, int nBand, VSILFILE *fp );
     ~PALSARJaxaRasterBand();
 
-    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage ) override;
 };
 
 /************************************************************************/
@@ -218,8 +216,6 @@ public:
 PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDSIn,
                                             int nBandIn, VSILFILE *fpIn ) :
     fp(fpIn),
-    nRasterXSize(0),
-    nRasterYSize(0),
     nPolarization(hh),
     nBitsPerSample(0),
     nSamplesPerGroup(0),
@@ -584,7 +580,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     VSILFILE *fpVV = VSIFOpenL( pszImgFile, "rb" );
     if (fpVV != NULL) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 3, fpVV ) );
-        nBandNum++;
+        /* nBandNum++; */
     }
 
     VSIFree( pszImgFile );

@@ -58,9 +58,9 @@ class EIRDataset : public RawDataset
     EIRDataset();
     virtual ~EIRDataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -82,7 +82,9 @@ EIRDataset::EIRDataset() :
     bHDRDirty(false),
     papszHDR(NULL),
     papszExtraFiles(NULL)
-{}
+{
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
+}
 
 /************************************************************************/
 /*                            ~EIRDataset()                            */
@@ -331,8 +333,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0], "FORMAT") )
         {
-            strncpy( szLayout, papszTokens[1], sizeof(szLayout) );
-            szLayout[sizeof(szLayout)-1] = '\0';
+            snprintf( szLayout, sizeof(szLayout), "%s", papszTokens[1] );
         }
         else if( EQUAL(papszTokens[0], "DATATYPE")
                  || EQUAL(papszTokens[0], "DATA_TYPE") )

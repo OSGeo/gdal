@@ -301,6 +301,18 @@ void OGRShapeLayer::SetModificationDate( const char* pszStr )
 }
 
 /************************************************************************/
+/*                       SetWriteDBFEOFChar()                           */
+/************************************************************************/
+
+void OGRShapeLayer::SetWriteDBFEOFChar( bool b )
+{
+    if( hDBF )
+    {
+        DBFSetWriteEndOfFileChar( hDBF, b );
+    }
+}
+
+/************************************************************************/
 /*                          ConvertCodePage()                           */
 /************************************************************************/
 
@@ -1025,6 +1037,8 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
 
     if( nTotalShapeCount == 0
         && wkbFlatten(eRequestedGeomType) == wkbUnknown
+        && hSHP != NULL
+        && hSHP->nShapeType != SHPT_MULTIPATCH
         && poFeature->GetGeometryRef() != NULL )
     {
         OGRGeometry *poGeom = poFeature->GetGeometryRef();
@@ -1098,24 +1112,28 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
 
           case wkbPolygon:
           case wkbMultiPolygon:
+          case wkbTriangle:
             nShapeType = SHPT_POLYGON;
             eRequestedGeomType = wkbPolygon;
             break;
 
           case wkbPolygon25D:
           case wkbMultiPolygon25D:
+          case wkbTriangleZ:
             nShapeType = SHPT_POLYGONZ;
             eRequestedGeomType = wkbPolygon25D;
             break;
 
           case wkbPolygonM:
           case wkbMultiPolygonM:
+          case wkbTriangleM:
             nShapeType = SHPT_POLYGONM;
             eRequestedGeomType = wkbPolygonM;
             break;
 
           case wkbPolygonZM:
           case wkbMultiPolygonZM:
+          case wkbTriangleZM:
             nShapeType = SHPT_POLYGONZ;
             eRequestedGeomType = wkbPolygonZM;
             break;
@@ -1123,6 +1141,41 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
           default:
             nShapeType = -1;
             break;
+        }
+
+        if( wkbFlatten(poGeom->getGeometryType()) == wkbTIN ||
+            wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface )
+        {
+            nShapeType = SHPT_MULTIPATCH;
+            eRequestedGeomType = wkbUnknown;
+        }
+
+        if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
+        {
+            OGRGeometryCollection *poGC =
+                            dynamic_cast<OGRGeometryCollection *>(poGeom);
+            bool bIsMultiPatchCompatible = false;
+            for( int iGeom = 0; poGC != NULL &&
+                                iGeom < poGC->getNumGeometries(); iGeom++ )
+            {
+                OGRwkbGeometryType eSubGeomType =
+                    wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
+                if( eSubGeomType == wkbTIN ||
+                    eSubGeomType == wkbPolyhedralSurface )
+                {
+                    bIsMultiPatchCompatible = true;
+                }
+                else if( eSubGeomType != wkbMultiPolygon )
+                {
+                    bIsMultiPatchCompatible = false;
+                    break;
+                }
+            }
+            if( bIsMultiPatchCompatible )
+            {
+                nShapeType = SHPT_MULTIPATCH;
+                eRequestedGeomType = wkbUnknown;
+            }
         }
 
         if( nShapeType != -1 )
@@ -1542,7 +1595,7 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCStringsAsUTF8) )
     {
         // No encoding defined: we don't know.
-        if( osEncoding.size() == 0)
+        if( osEncoding.empty())
             return FALSE;
 
         if( hDBF == NULL || DBFGetFieldCount( hDBF ) == 0 )
@@ -1554,7 +1607,7 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         const int nFieldCount = DBFGetFieldCount( hDBF );
         for( int i = 0; i < nFieldCount; i++ )
         {
-            char szFieldName[20] = {};
+            char szFieldName[XBASE_FLDNAME_LEN_READ+1] = {};
             int nWidth = 0;
             int nPrecision = 0;
 
@@ -1627,18 +1680,11 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
                   "but some DBF readers might only support 255 fields" );
     }
 
-    if( hDBF->nHeaderLength + 32 > 65535 )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Cannot add more fields in DBF file.");
-        return OGRERR_FAILURE;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Normalize field name                                            */
 /* -------------------------------------------------------------------- */
     CPLString osFieldName;
-    if( osEncoding.size() )
+    if( !osEncoding.empty() )
     {
         CPLClearRecodeWarningFlags();
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -1663,10 +1709,10 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
     const int nNameSize = static_cast<int>(osFieldName.size());
     char * pszTmp =
-        CPLScanString( osFieldName, std::min( nNameSize, 10) , TRUE, TRUE);
-    char szNewFieldName[10 + 1];
-    strncpy(szNewFieldName, pszTmp, 10);
-    szNewFieldName[10] = '\0';
+        CPLScanString( osFieldName, std::min( nNameSize, XBASE_FLDNAME_LEN_WRITE) , TRUE, TRUE);
+    char szNewFieldName[XBASE_FLDNAME_LEN_WRITE + 1];
+    strncpy(szNewFieldName, pszTmp, sizeof(szNewFieldName)-1);
+    szNewFieldName[sizeof(szNewFieldName)-1] = '\0';
 
     if( !bApproxOK &&
         ( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 ||
@@ -1682,10 +1728,13 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
     int nRenameNum = 1;
     while( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 && nRenameNum < 10 )
-        snprintf( szNewFieldName, sizeof(szNewFieldName),
-                  "%.8s_%.1d", pszTmp, nRenameNum++ );
+    {
+        CPLsnprintf( szNewFieldName, sizeof(szNewFieldName),
+                  "%.8s_%.1d", pszTmp, nRenameNum );
+        nRenameNum ++;
+    }
     while( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 && nRenameNum < 100 )
-        snprintf( szNewFieldName, sizeof(szNewFieldName),
+        CPLsnprintf( szNewFieldName, sizeof(szNewFieldName),
                   "%.8s%.2d", pszTmp, nRenameNum++ );
 
     CPLFree( pszTmp );
@@ -1695,9 +1744,10 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
     {
         // One hundred similar field names!!?
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Too many field names like '%s' when truncated to 10 letters "
+                  "Too many field names like '%s' when truncated to %d letters "
                   "for Shapefile format.",
-                  poFieldDefn->GetNameRef() );
+                  poFieldDefn->GetNameRef(),
+                  XBASE_FLDNAME_LEN_WRITE );
     }
 
     OGRFieldDefn oModFieldDefn(poFieldDefn);
@@ -1784,15 +1834,6 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
     oModFieldDefn.SetWidth( nWidth );
     oModFieldDefn.SetPrecision( nDecimals );
-
-    if( hDBF->nRecordLength + nWidth > 65535 )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create field %s in Shape DBF file. "
-                  "Maximum record length reached.",
-                  szNewFieldName );
-        return OGRERR_FAILURE;
-    }
 
     // Suppress the dummy FID field if we have created it just before.
     if( DBFGetFieldCount( hDBF ) == 1 && poFeatureDefn->GetFieldCount() == 0 )
@@ -1920,7 +1961,8 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
     OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
     OGRFieldType eType = poFieldDefn->GetType();
 
-    char szFieldName[20] = {};
+    // On reading we support up to 11 characters
+    char szFieldName[XBASE_FLDNAME_LEN_READ+1] = {};
     int nWidth = 0;
     int nPrecision = 0;
     DBFGetFieldInfo( hDBF, iField, szFieldName, &nWidth, &nPrecision );
@@ -1950,7 +1992,7 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
     if( nFlagsIn & ALTER_NAME_FLAG )
     {
         CPLString osFieldName;
-        if( osEncoding.size() )
+        if( !osEncoding.empty() )
         {
             CPLClearRecodeWarningFlags();
             CPLErrorReset();
@@ -1976,8 +2018,8 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
             osFieldName = poNewFieldDefn->GetNameRef();
         }
 
-        strncpy(szFieldName, osFieldName, 10);
-        szFieldName[10] = '\0';
+        strncpy(szFieldName, osFieldName, sizeof(szFieldName)-1);
+        szFieldName[sizeof(szFieldName)-1] = '\0';
     }
     if( nFlagsIn & ALTER_WIDTH_PRECISION_FLAG )
     {
@@ -2079,6 +2121,9 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef()
                                   adfTOWGS84[6]);
             }
         }
+
+        if( poSRS )
+            poSRS->AutoIdentifyEPSG();
     }
 
     return poSRS;
@@ -2536,7 +2581,7 @@ OGRErr OGRShapeLayer::Repack()
     CSLDestroy(papszCandidates);
     papszCandidates = NULL;
 
-    if( hDBF != NULL && osDBFName.size() == 0 )
+    if( hDBF != NULL && osDBFName.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find the filename of the DBF file, but we managed to "
@@ -2546,7 +2591,7 @@ OGRErr OGRShapeLayer::Repack()
         return OGRERR_FAILURE;
     }
 
-    if( hSHP != NULL && osSHPName.size() == 0 )
+    if( hSHP != NULL && osSHPName.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find the filename of the SHP file, but we managed to "
@@ -2556,7 +2601,7 @@ OGRErr OGRShapeLayer::Repack()
         return OGRERR_FAILURE;
     }
 
-    if( hSHP != NULL && osSHXName.size() == 0 )
+    if( hSHP != NULL && osSHXName.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find the filename of the SHX file, but we managed to "
@@ -2600,7 +2645,7 @@ OGRErr OGRShapeLayer::Repack()
         }
 
         // Delete temporary .cpg file if existing.
-        if( osCPGName.size() )
+        if( !osCPGName.empty() )
         {
             CPLString oCPGTempFile =
                 CPLFormFilename(osDirname, osBasename, NULL);
@@ -2771,7 +2816,7 @@ OGRErr OGRShapeLayer::Repack()
             if( !CopyInPlace( VSI_SHP_GetVSIL(hDBF->fp), oTempFileDBF ) )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                        "An error occured while copying the content of %s on top of %s. "
+                        "An error occurred while copying the content of %s on top of %s. "
                         "The non corrupted version is in the _packed.dbf, "
                         "_packed.shp and _packed.shx files that you should rename "
                         "on top of the main ones.",
@@ -2800,7 +2845,7 @@ OGRErr OGRShapeLayer::Repack()
             if( !CopyInPlace( VSI_SHP_GetVSIL(hSHP->fpSHP), oTempFileSHP ) )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                        "An error occured while copying the content of %s on top of %s. "
+                        "An error occurred while copying the content of %s on top of %s. "
                         "The non corrupted version is in the _packed.dbf, "
                         "_packed.shp and _packed.shx files that you should rename "
                         "on top of the main ones.",
@@ -2822,7 +2867,7 @@ OGRErr OGRShapeLayer::Repack()
             if( !CopyInPlace( VSI_SHP_GetVSIL(hSHP->fpSHX), oTempFileSHX ) )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                        "An error occured while copying the content of %s on top of %s. "
+                        "An error occurred while copying the content of %s on top of %s. "
                         "The non corrupted version is in the _packed.dbf, "
                         "_packed.shp and _packed.shx files that you should rename "
                         "on top of the main ones.",
@@ -3069,7 +3114,7 @@ OGRErr OGRShapeLayer::ResizeDBF()
         OGRFieldDefn* const poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
 
         const char chNativeType = DBFGetNativeFieldType( hDBF, iField );
-        char szFieldName[20] = {};
+        char szFieldName[XBASE_FLDNAME_LEN_READ+1] = {};
         int nOriWidth = 0;
         int nPrecision = 0;
         DBFGetFieldInfo( hDBF, iField, szFieldName,
@@ -3125,6 +3170,8 @@ void OGRShapeLayer::TruncateDBF()
     vsi_l_offset nNewSize =
         hDBF->nRecordLength * static_cast<SAOffset>(hDBF->nRecords)
         + hDBF->nHeaderLength;
+    if( hDBF->bWriteEndOfFileChar )
+        nNewSize ++;
     if( nNewSize < nOldSize )
     {
         CPLDebug(

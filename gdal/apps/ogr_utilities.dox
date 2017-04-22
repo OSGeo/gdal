@@ -9,6 +9,7 @@ toolkit:
 <li> \ref ogr2ogr - Converts simple features data between file formats
 <li> \ref ogrtindex - Creates a tileindex
 <li> \ref ogrlineref - Create linear reference and provide some calculations using it
+<li> \ref ogrmerge - Merge several vector datasets into a single one
 </ul>
 
 \section ogr_utilities_switches General Command Line Switches
@@ -64,9 +65,14 @@ and exit.
 
 */
 
-/*! \page ogrinfo ogrinfo
+/*!
+\if man
+\page ogrinfo
+\else
+\page ogrinfo ogrinfo
+\endif
 
-lists information about an OGR supported data source
+Lists information about an OGR supported data source.
 
 \section ogrinfo_synopsis SYNOPSIS
 
@@ -231,9 +237,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
 
-/*! \page ogr2ogr ogr2ogr
+/*!
+\if man
+\page ogr2ogr
+\else
+\page ogr2ogr ogr2ogr
+\endif
 
-converts simple features data between file formats
+Converts simple features data between file formats.
 
 \section ogr2ogr_synopsis SYNOPSIS
 
@@ -245,7 +256,7 @@ Usage:
 Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
                [-select field_list] [-where restricted_where|\@filename]
                [-progress] [-sql <sql statement>|\@filename] [-dialect dialect]
-               [-preserve_fid] [-fid FID]
+               [-preserve_fid] [-fid FID] [-limit nb_features]
                [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
@@ -361,6 +372,8 @@ id will be reported.  Operates exclusive of the spatial or attribute
 queries.  Note: if you want to select several features based on their feature id, you can
 also use the fact the 'fid' is a special field recognized by OGR SQL. So, '-where "fid in (1,3,5)"'
 would select features 1, 3 and 5.</dd>
+<dt> <b>-limit</b> <i>nb_features</i>:</dt><dd> (starting with GDAL 2.2): to
+limit the number of features, per layer.</dd>
 </dl>
 
 Srs_def can be a full WKT definition (hard to escape properly), or a well
@@ -509,9 +522,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
 
-/*! \page ogrtindex ogrtindex
+/*!
+\if man
+\page ogrtindex
+\else
+\page ogrtindex ogrtindex
+\endif
 
-creates a tileindex
+Creates a tileindex.
 
 \section ogrtindex_synopsis SYNOPSIS
 
@@ -522,6 +540,9 @@ Usage:
 \verbatim
 ogrtindex [-lnum n]... [-lname name]... [-f output_format]
           [-write_absolute_path] [-skip_different_projection]
+          [-t_srs target_srs]
+          [-src_srs_name field_name] [-src_srs_format [AUTO|WKT|EPSG|PROJ]
+          [-accept_different_schemas]
                  output_dataset src_dataset...
 \endverbatim
 
@@ -545,6 +566,20 @@ to layers using the OGR connection type.
 <dt><b>-write_absolute_path</b>:</dt><dd> Filenames are written with absolute paths</dd>
 <dt><b>-skip_different_projection</b>:</dt><dd> Only layers with same projection ref
         as layers already inserted in the tileindex will be inserted.</dd>
+<dt><b>-t_srs</b> target_srs:</dt><dd> (GDAL &gt;= 2.2)
+<p>Extent of input files will be transformed to the desired target
+coordinate reference system. Using this option generates files that are not
+compatible with MapServer &lt; 7.2. Default creates simple rectangular polygons
+in the same coordinate reference system as the input rasters.</p>
+</dd>
+<dt><b>-src_srs_name</b> field_name:</dt><dd> (GDAL &gt;= 2.2)
+<p>The name of the field to store the SRS of each tile. This field name can be
+used as the value of the TILESRS keyword in MapServer &gt;= 7.2.</p>
+</dd>
+<dt><b>-src_srs_format</b> type:</dt><dd> (GDAL &gt;= 2.2)
+<p>The format in which the SRS of each tile must be written.
+Types can be AUTO, WKT, EPSG, PROJ.</p>
+</dd>
 <dt><b>-accept_different_schemas</b>:</dt><dd> By default ogrtindex checks that all
         layers inserted into the index have the same attribute schemas. If you specify
         this option, this test will be disabled. Be aware that resulting index may be
@@ -557,10 +592,6 @@ as independent records.
 
 If the tile index already exists it will be appended to, otherwise it will
 be created.
-
-It is a flaw of the current ogrtindex program that no attempt is made to
-copy the coordinate system definition from the source datasets to the tile
-index (as is expected by MapServer when PROJECTION AUTO is in use).
 
 \section ogrtindex_example EXAMPLE
 
@@ -578,7 +609,12 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 
 */
 
-/*! \page ogrlineref ogrlineref
+/*!
+\if man
+\page ogrlineref
+\else
+\page ogrlineref ogrlineref
+\endif
 
 The utility can be used for:
 - create linear reference file from input data

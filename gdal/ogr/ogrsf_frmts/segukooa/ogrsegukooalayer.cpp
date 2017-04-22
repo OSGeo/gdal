@@ -789,7 +789,7 @@ OGRFeature *OGRSEGUKOOALineLayer::GetNextRawFeature()
 
     while(poNextBaseFeature != NULL)
     {
-        if (poNextBaseFeature->IsFieldSet(0) &&
+        if (poNextBaseFeature->IsFieldSetAndNotNull(0) &&
             poNextBaseFeature->GetFieldAsString(0)[0] != '\0')
         {
             if (poFeature != NULL &&

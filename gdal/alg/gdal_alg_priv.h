@@ -116,7 +116,7 @@ public:  // these are intended to be readonly.
     int      nConnectedness;
 
 public:
-             GDALRasterPolygonEnumeratorT( int nConnectedness=4 );
+    explicit GDALRasterPolygonEnumeratorT( int nConnectedness=4 );
             ~GDALRasterPolygonEnumeratorT();
 
     void     ProcessLine( DataType *panLastLineVal, DataType *panThisLineVal,

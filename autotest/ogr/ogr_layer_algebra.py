@@ -63,7 +63,7 @@ def print_layer(A):
         if f is None:
             return
         g = f.GetGeometryRef()
-        print g.ExportToWkt()
+        print(g.ExportToWkt())
 
 def is_same(A,B):
 

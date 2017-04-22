@@ -1,25 +1,56 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  GDAL Core
+ * Purpose:  Test block cache & writing behaviour under multi-threading
+ * Author:   Even Rouault, <even dot rouault at spatialys dot com>
+ *
+ ******************************************************************************
+ * Copyright (c) 2011, Even Rouault <even dot rouault at spatialys dot com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
 #include <cpl_conv.h>
 #include <cpl_string.h>
-#include <gdal.h>
-#include <gdal_priv.h>
 #include <gdal_alg.h>
+#include <gdal_priv.h>
+#include <gdal.h>
+
 #include <cassert>
 
 static void OpenJPEG2000(const char* pszFilename)
 {
-    const char* const apszDrivers[] = {"JP2ECW", "JP2OpenJPEG", "JPEG2000" , "JP2MrSID", "JP2KAK" };
-    GDALDriverH aphDrivers[5];
+    const int N_DRIVERS = 6;
+    const char* const apszDrivers[] = {"JP2ECW", "JP2OpenJPEG", "JPEG2000" , "JP2MrSID", "JP2KAK", "JP2Lura" };
+    GDALDriverH aphDrivers[ N_DRIVERS ];
     GDALDatasetH hDS;
     int i, j;
 
-    for(i=0;i<5;i++)
+    for(i=0;i<N_DRIVERS;i++)
         aphDrivers[i] = GDALGetDriverByName(apszDrivers[i]);
 
-    for(i=0;i<5;i++)
+    for(i=0;i<N_DRIVERS;i++)
     {
         if( aphDrivers[i] == NULL )
             continue;
-        for(j=0;j<5;j++)
+        for(j=0;j<N_DRIVERS;j++)
         {
             if( i == j || aphDrivers[j] == NULL )
                 continue;
@@ -27,8 +58,11 @@ static void OpenJPEG2000(const char* pszFilename)
         }
 
         hDS = GDALOpen(pszFilename, GA_ReadOnly);
-        assert( hDS != NULL );
-        for(j=0;j<5;j++)
+        if( !EQUAL(apszDrivers[i], "JP2Lura") )
+        {
+            assert( hDS != NULL );
+        }
+        for(j=0;j<N_DRIVERS;j++)
         {
             if( i == j || aphDrivers[j] == NULL )
                 continue;

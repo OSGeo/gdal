@@ -27,9 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_conv.h"
-#include "cpl_string.h"
+
+#include <cstddef>
+
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
 #include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
@@ -75,7 +79,7 @@ static FindFileTLS* CPLGetFindFileTLS()
             CPLGetTLSEx( CTLS_FINDFILE, &bMemoryError ) );
     if( bMemoryError )
         return NULL;
-    if (pTLSData == NULL)
+    if( pTLSData == NULL )
     {
         pTLSData = static_cast<FindFileTLS *>(
             VSI_CALLOC_VERBOSE(1, sizeof(FindFileTLS) ) );
@@ -197,7 +201,7 @@ void CPLPushFileFinder( CPLFileFinder pfnFinder )
 
 {
     FindFileTLS* pTLSData = CPLFinderInit();
-    if (pTLSData == NULL )
+    if( pTLSData == NULL )
         return;
 
     pTLSData->papfnFinders = static_cast<CPLFileFinder *>(

@@ -27,8 +27,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_csv.h"
+
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
 #include "gdal_csv.h"
 
@@ -322,7 +332,7 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
         /* If the last token is an empty token, then we have to catch
          * it now, otherwise we won't reenter the loop and it will be lost.
          */
-        if ( *pszString == '\0' && *(pszString-1) == chDelimiter )
+        if( *pszString == '\0' && *(pszString-1) == chDelimiter )
         {
             papszRetListNew = CSLAddStringMayFail( papszRetList, "" );
             if( papszRetListNew == NULL )
@@ -459,7 +469,8 @@ static void CSVIngest( const char *pszFilename )
     int iLine = 0;
     while( pszThisLine != NULL && iLine < nMaxLineCount )
     {
-        psTable->papszLines[iLine++] = pszThisLine;
+        if( pszThisLine[0] != '#' )
+            psTable->papszLines[iLine++] = pszThisLine;
         pszThisLine = CSVFindNextLine( pszThisLine );
     }
 
@@ -507,22 +518,24 @@ static void CSVIngest( const char *pszFilename )
  *
  * @return ',', ';', ' ' or '\t'
  */
-char CSVDetectSeperator (const char* pszLine)
+char CSVDetectSeperator( const char* pszLine )
 {
-    bool    bInString = false;
-    char    chDelimiter = '\0';
-    int     nCountSpace = 0;
+    bool bInString = false;
+    char chDelimiter = '\0';
+    int nCountSpace = 0;
 
     for( ; *pszLine != '\0'; pszLine++ )
     {
         if( !bInString && ( *pszLine == ',' || *pszLine == ';'
                             || *pszLine == '\t'))
         {
-            if (chDelimiter == '\0')
-                chDelimiter = *pszLine;
-            else if (chDelimiter != *pszLine)
+            if( chDelimiter == '\0' )
             {
-                /* The separator is not consistent on the line. */
+                chDelimiter = *pszLine;
+            }
+            else if( chDelimiter != *pszLine )
+            {
+                // The separator is not consistent on the line.
                 CPLDebug( "CSV", "Inconsistent separator. '%c' and '%c' found. "
                           "Using ',' as default",
                           chDelimiter, *pszLine);
@@ -548,7 +561,7 @@ char CSVDetectSeperator (const char* pszLine)
         }
     }
 
-    if (chDelimiter == '\0')
+    if( chDelimiter == '\0' )
     {
         if( nCountSpace > 0 )
             chDelimiter = ' ';
@@ -580,7 +593,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
     if( fp == NULL )
         return NULL;
 
-    const char  *pszLine = CPLReadLine( fp );
+    const char *pszLine = CPLReadLine( fp );
     if( pszLine == NULL )
         return NULL;
 
@@ -588,7 +601,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
 /*      If there are no quotes, then this is the simple case.           */
 /*      Parse, and return tokens.                                       */
 /* -------------------------------------------------------------------- */
-    if( strchr(pszLine,'\"') == NULL )
+    if( strchr(pszLine, '\"') == NULL )
         return CSVSplitLine( pszLine, chDelimiter );
 
 /* -------------------------------------------------------------------- */
@@ -622,7 +635,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
         char* pszWorkLineTmp = static_cast<char *>(
             VSIRealloc(pszWorkLine,
                        nWorkLineLength + nLineLen + 2) );
-        if (pszWorkLineTmp == NULL)
+        if( pszWorkLineTmp == NULL )
             break;
         pszWorkLine = pszWorkLineTmp;
         // The newline gets lost in CPLReadLine().
@@ -661,7 +674,7 @@ char **CSVReadParseLine2L( VSILFILE * fp, char chDelimiter )
     if( fp == NULL )
         return NULL;
 
-    const char  *pszLine = CPLReadLineL( fp );
+    const char *pszLine = CPLReadLineL( fp );
     if( pszLine == NULL )
         return NULL;
 
@@ -669,7 +682,7 @@ char **CSVReadParseLine2L( VSILFILE * fp, char chDelimiter )
 /*      If there are no quotes, then this is the simple case.           */
 /*      Parse, and return tokens.                                       */
 /* -------------------------------------------------------------------- */
-    if( strchr(pszLine,'\"') == NULL )
+    if( strchr(pszLine, '\"') == NULL )
         return CSVSplitLine( pszLine, chDelimiter );
 
 /* -------------------------------------------------------------------- */
@@ -703,7 +716,7 @@ char **CSVReadParseLine2L( VSILFILE * fp, char chDelimiter )
         char* pszWorkLineTmp = static_cast<char *>(
             VSIRealloc(pszWorkLine,
                        nWorkLineLength + nLineLen + 2) );
-        if (pszWorkLineTmp == NULL)
+        if( pszWorkLineTmp == NULL )
             break;
 
         pszWorkLine = pszWorkLineTmp;
@@ -742,7 +755,8 @@ static bool CSVCompare( const char * pszFieldValue, const char * pszTarget,
     }
     else if( eCriteria == CC_Integer )
     {
-        return( atoi(pszFieldValue) == atoi(pszTarget) );
+        return( CPLGetValueType(pszFieldValue) == CPL_VALUE_INTEGER &&
+                atoi(pszFieldValue) == atoi(pszTarget) );
     }
 
     return false;
@@ -1037,7 +1051,7 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
 /* -------------------------------------------------------------------- */
     if( iKeyField >= 0
         && iKeyField < CSLCount(psTable->papszRecFields)
-        && CSVCompare(pszValue, psTable->papszRecFields[iKeyField], eCriteria)
+        && CSVCompare(psTable->papszRecFields[iKeyField], pszValue, eCriteria)
         && !psTable->bNonUniqueKey )
     {
         return psTable->papszRecFields;
@@ -1242,7 +1256,7 @@ const char *CSVGetField( const char * pszFilename,
 typedef struct
 {
     char szPath[512];
-    bool  bCSVFinderInitialized;
+    bool bCSVFinderInitialized;
 } DefaultCSVFileNameTLS;
 
 const char * GDALDefaultCSVFilename( const char *pszBasename )
@@ -1268,7 +1282,7 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
             if( nFullLen > nBasenameLen
                 && strcmp(psTable->pszFilename+nFullLen-nBasenameLen,
                           pszBasename) == 0
-                && strchr("/\\",psTable->pszFilename[+nFullLen-nBasenameLen-1])
+                && strchr("/\\", psTable->pszFilename[+nFullLen-nBasenameLen-1])
                           != NULL )
             {
                 return psTable->pszFilename;
@@ -1282,7 +1296,7 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
     DefaultCSVFileNameTLS* pTLSData =
         static_cast<DefaultCSVFileNameTLS *>(
             CPLGetTLSEx( CTLS_CSVDEFAULTFILENAME, &bMemoryError ) );
-    if (pTLSData == NULL && !bMemoryError)
+    if( pTLSData == NULL && !bMemoryError )
     {
         pTLSData = static_cast<DefaultCSVFileNameTLS *>(
             VSI_CALLOC_VERBOSE( 1, sizeof(DefaultCSVFileNameTLS) ) );
@@ -1403,7 +1417,7 @@ put into CSVDirName).  <p>
 static const char *CSVFileOverride( const char * pszInput )
 
 {
-    static char         szPath[1024];
+    static char szPath[1024] = {};
 
 #ifdef WIN32
     sprintf( szPath, "%s\\%s", CSVDirName, pszInput );

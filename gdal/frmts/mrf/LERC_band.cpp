@@ -30,6 +30,114 @@ USING_NAMESPACE_LERC
 
 NAMESPACE_MRF_START
 
+//
+// Check that a buffer contains a supported Lerc1 blob, the type supported by MRF
+// Can't really check everything without decoding, this just checks the main structure
+// returns actual size if it is Lerc1 with size < sz
+// returns 0 if format doesn't match
+// returns -1 if Lerc1 but size can't be determined
+//
+// returns -<actual size> if actual size > sz
+
+static int checkV1(const char *s, size_t sz)
+{
+    GInt32 nBytesMask, nBytesData;
+
+// Read an unaligned 4 byte little endian int from location p, advances pointer
+#define READ_GINT32(X, p) \
+            memcpy(&X, p, sizeof(GInt32));\
+            SWAP_4(X); \
+            p+= sizeof(GInt32)
+
+    // Header is 34 bytes
+    // band header is 16, first mask band then data band
+    if (sz < 66)
+        return 0;
+    // First ten bytes are ASCII signature
+    if (!STARTS_WITH(s, "CntZImage "))
+        return 0;
+    s += 10;
+
+    // A place to read an int or a float
+    union {
+        GInt32 i;
+        float val;
+    };
+
+    // Version
+    READ_GINT32(i, s);
+    if (i != 11) return 0;
+
+    // Type
+    READ_GINT32(i, s);
+    if (i != Image::CNT_Z) return 0;
+
+    // Height
+    READ_GINT32(i, s); // Arbitrary number in CntZImage::read()
+    if (i > 20000 || i <= 0) return 0;
+
+    // Width
+    READ_GINT32(i, s);
+    if (i > 20000 || i <= 0) return 0;
+
+    // Skip the max val stored as double
+    s += sizeof(double);
+
+    // First header should be the mask, which mean 0 blocks
+    // Height
+    READ_GINT32(i, s);
+    if (i != 0) return 0;
+
+    // WIDTH
+    READ_GINT32(i, s);
+    if (i != 0) return 0;
+
+    READ_GINT32(nBytesMask, s);
+    if (nBytesMask < 0) return 0;
+
+    // mask max value, 0 or 1 as float
+    READ_GINT32(i, s);
+    if (val != 0.0 && val != 1.0) return 0;
+
+    // If data header can't be read the actual size is unknown
+    if (static_cast<size_t>(66 + nBytesMask) >= sz) return -1;
+
+    s += nBytesMask;
+
+    // Data Band header
+    READ_GINT32(i, s); // number of full height blocks, never single pixel blocks
+    if (i <= 0 || i > 10000)
+        return 0;
+
+    READ_GINT32(i, s); // number of full width blocks, never single pixel blocks
+    if (i <= 0 || i > 10000)
+        return 0;
+
+    READ_GINT32(nBytesData, s);
+    if (nBytesData < 0) return 0;
+
+#undef READ_GINT32
+
+    // Actual LERC blob size
+    int size = static_cast<int>(66 + nBytesMask + nBytesData);
+    return (static_cast<size_t>(size) > sz) ? -size : size;
+}
+
+static GDALDataType GetL2DataType(Lerc2::DataType L2type) {
+    GDALDataType dt;
+    switch (L2type) {
+    case Lerc2::DT_Byte:  dt = GDT_Byte; break;
+    case Lerc2::DT_Short: dt = GDT_Int16; break;
+    case Lerc2::DT_UShort: dt = GDT_UInt16; break;
+    case Lerc2::DT_Int: dt = GDT_Int32; break;
+    case Lerc2::DT_UInt: dt = GDT_UInt32; break;
+    case Lerc2::DT_Float: dt = GDT_Float32; break;
+    case Lerc2::DT_Double: dt = GDT_Float64; break;
+    default: dt = GDT_Unknown;
+    }
+    return dt;
+}
+
 // Load a buffer into a zImg
 template <typename T> static void CntZImgFill(CntZImage &zImg, T *src, const ILImage &img)
 {
@@ -57,12 +165,12 @@ template <typename T> static void CntZImgUFill(CntZImage &zImg, T *dst, const IL
     int h = static_cast<int>(zImg.getHeight());
     int w = static_cast<int>(zImg.getWidth());
     T *ptr = dst;
-    T ndv = (T)(img.NoDataValue);
+    T ndv = static_cast<T>(img.NoDataValue);
     // Use 0 if nodata is not defined
     if (!img.hasNoData) ndv = 0;
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++)
-            *ptr++ = (zImg(i, j).cnt == 0) ? ndv : (T)(zImg(i, j).z);
+            *ptr++ = (zImg(i, j).cnt == 0) ? ndv : static_cast<T>(zImg(i, j).z);
 }
 
 //  LERC 1 compression
@@ -70,7 +178,7 @@ static CPLErr CompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img, doubl
 {
     CntZImage zImg;
     // Fill data into zImg
-#define FILL(T) CntZImgFill(zImg, (T *)(src.buffer), img)
+#define FILL(T) CntZImgFill(zImg, reinterpret_cast<T *>(src.buffer), img)
     switch (img.dt) {
     case GDT_Byte:      FILL(GByte);    break;
     case GDT_UInt16:    FILL(GUInt16);  break;
@@ -101,6 +209,18 @@ static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 {
     CntZImage zImg;
     Byte *ptr = (Byte *)src.buffer;
+
+    // Check that input passes snicker test
+    int actual = checkV1(src.buffer, src.size);
+    if (actual == 0) {
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Not a supported LERC format");
+        return CE_Failure;
+    }
+    if (actual < 0) { // Negative return means buffer is too short
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: Lerc object too large");
+            return CE_Failure;
+    }
+
     if (!zImg.read(&ptr, 1e12))
     {
         CPLError(CE_Failure,CPLE_AppDefined,"MRF: Error during LERC decompression");
@@ -108,7 +228,7 @@ static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     }
 
 // Unpack from zImg to dst buffer, calling the right type
-#define UFILL(T) CntZImgUFill(zImg, (T *)(dst.buffer), img)
+#define UFILL(T) CntZImgUFill(zImg, reinterpret_cast<T *>(dst.buffer), img)
     switch (img.dt) {
     case GDT_Byte:      UFILL(GByte);   break;
     case GDT_UInt16:    UFILL(GUInt16); break;
@@ -134,15 +254,14 @@ template <typename T> static int MaskFill(BitMask2 &bitMask, T *src, const ILIma
 
     bitMask.SetSize(w, h);
     bitMask.SetAllValid();
-    T *ptr = src;
 
     // No data value
-    T ndv = T(img.NoDataValue);
+    T ndv = static_cast<T>(img.NoDataValue);
     if (!img.hasNoData) ndv = 0; // It really doesn't get called when img doesn't have NoDataValue
 
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++)
-            if (ndv == *ptr++) {
+            if (ndv == *src++) {
                 bitMask.SetInvalid(i, j);
                 count++;
             }
@@ -160,7 +279,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     if (img.hasNoData) { // Only build a bitmask if no data value is defined
         switch (img.dt) {
 
-#define MASK(T) ndv_count = MaskFill(bitMask, (T *)(src.buffer), img)
+#define MASK(T) ndv_count = MaskFill(bitMask, reinterpret_cast<T *>(src.buffer), img)
 
         case GDT_Byte:          MASK(GByte);    break;
         case GDT_UInt16:        MASK(GUInt16);  break;
@@ -183,8 +302,8 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     switch (img.dt) {
 
 #define ENCODE(T) if (true) { \
-    sz = lerc2.ComputeNumBytesNeededToWrite((T *)(src.buffer), precision, ndv_count != 0);\
-    success = lerc2.Encode((T *)(src.buffer), &ptr);\
+    sz = lerc2.ComputeNumBytesNeededToWrite(reinterpret_cast<T *>(src.buffer), precision, ndv_count != 0);\
+    success = lerc2.Encode(reinterpret_cast<T *>(src.buffer), &ptr);\
     }
 
     case GDT_Byte:      ENCODE(GByte);      break;
@@ -228,12 +347,32 @@ template <typename T> static void UnMask(BitMask2 &bitMask, T *arr, const ILImag
 
 CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 {
-    const Byte *ptr = (Byte *)(src.buffer);
+    const Byte *ptr = reinterpret_cast<Byte *>(src.buffer);
     Lerc2::HeaderInfo hdInfo;
     Lerc2 lerc2;
+    if (src.size < Lerc2::ComputeNumBytesHeader()) {
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Invalid LERC");
+        return CE_Failure;
+    }
+
+    // If not Lerc2 switch to Lerc
     if (!lerc2.GetHeaderInfo(ptr, hdInfo))
         return DecompressLERC(dst, src, img);
-    // It is lerc2 here
+
+    // It is Lerc2 test that it looks reasonable
+    if (static_cast<size_t>(hdInfo.blobSize) > src.size) {
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Lerc2 object too large");
+        return CE_Failure;
+    }
+
+    if (img.pagesize.x != hdInfo.nCols
+        || img.pagesize.y != hdInfo.nRows
+        || img.dt != GetL2DataType(hdInfo.dt)
+        || dst.size < static_cast<size_t>(hdInfo.nCols * hdInfo.nRows * GDALGetDataTypeSizeBytes(img.dt))) {
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Lerc2 format");
+        return CE_Failure;
+    }
+
     bool success = false;
     BitMask2 bitMask(img.pagesize.x, img.pagesize.y);
     switch (img.dt) {
@@ -279,7 +418,83 @@ CPLErr LERC_Band::Compress(buf_mgr &dst, buf_mgr &src)
         return CompressLERC(dst, src, img, precision);
 }
 
-LERC_Band::LERC_Band( GDALMRFDataset *pDS, const ILImage &image,
+CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
+{
+    // Should have enough data pre-read
+    if(poOpenInfo->nHeaderBytes <
+        static_cast<int>(CntZImage::computeNumBytesNeededToWriteVoidImage()))
+    {
+        return NULL;
+    }
+
+    if (poOpenInfo->eAccess != GA_ReadOnly
+        || poOpenInfo->pszFilename == NULL
+        || poOpenInfo->pabyHeader == NULL
+        || strlen(poOpenInfo->pszFilename) < 2)
+        return NULL;
+
+    // Check the header too
+    char *psz = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
+    CPLString sHeader;
+    sHeader.assign(psz, psz + poOpenInfo->nHeaderBytes);
+    if (!IsLerc(sHeader))
+        return NULL;
+
+    // Get the desired type
+    const char *pszDataType = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DATATYPE");
+    GDALDataType dt = GDT_Unknown; // Use this as a validity flag
+    if (pszDataType)
+        dt = GDALGetDataTypeByName(pszDataType);
+
+
+    // Use this structure to fetch width and height
+    ILSize size(-1, -1, 1, 1, 1);
+
+    // Try lerc2
+    if (sHeader.size() >= Lerc2::ComputeNumBytesHeader()) {
+        Lerc2 l2;
+        Lerc2::HeaderInfo hinfo;
+        hinfo.RawInit();
+        if (l2.GetHeaderInfo(reinterpret_cast<Byte *>(psz), hinfo)) {
+            size.x = hinfo.nCols;
+            size.y = hinfo.nRows;
+            // Set the datatype, which marks it as valid
+            dt = GetL2DataType(hinfo.dt);
+        }
+    }
+
+    if (size.x <= 0 && sHeader.size() >= CntZImage::computeNumBytesNeededToWriteVoidImage()) {
+        CntZImage zImg;
+        Byte *pb = reinterpret_cast<Byte *>(psz);
+        // Read only the header, changes pb
+        if (zImg.read(&pb, 1e12, true))
+        {
+            size.x = zImg.getWidth();
+            size.y = zImg.getHeight();
+            // Read as byte by default, otherwise LERC can be read as anything
+            if (dt == GDT_Unknown)
+                dt = GDT_Byte;
+        }
+    }
+
+    if (size.x <=0 || size.y <=0 || dt == GDT_Unknown)
+        return NULL;
+
+    // Build and return the MRF configuration for a single tile reader
+    CPLXMLNode *config = CPLCreateXMLNode(NULL, CXT_Element, "MRF_META");
+    CPLXMLNode *raster = CPLCreateXMLNode(config, CXT_Element, "Raster");
+    XMLSetAttributeVal(raster, "Size", size, "%.0f");
+    XMLSetAttributeVal(raster, "PageSize", size, "%.0f");
+    CPLCreateXMLElementAndValue(raster, "Compression", CompName(IL_LERC));
+    CPLCreateXMLElementAndValue(raster, "DataType", GDALGetDataTypeName(dt));
+    CPLCreateXMLElementAndValue(raster, "DataFile", poOpenInfo->pszFilename);
+    // Set a magic index file name to prevent the driver from attempting to open itd
+    CPLCreateXMLElementAndValue(raster, "IndexFile", "(null)");
+
+    return config;
+}
+
+LERC_Band::LERC_Band(GDALMRFDataset *pDS, const ILImage &image,
                       int b, int level ) :
     GDALMRFRasterBand(pDS, image, b, level)
 {

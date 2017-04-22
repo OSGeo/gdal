@@ -28,40 +28,20 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_idfile.cpp,v $
- * Revision 1.8  2006-11-28 18:49:08  dmorissette
- * Completed changes to split TABMAPObjectBlocks properly and produce an
- * optimal spatial index (bug 1585)
- *
- * Revision 1.7  2004/06/30 20:29:04  dmorissette
- * Fixed refs to old address danmo@videotron.ca
- *
- * Revision 1.6  2000/01/18 22:08:56  daniel
- * Allow opening of 0-size .ID file (dataset with 0 features)
- *
- * Revision 1.5  2000/01/15 22:30:44  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.4  1999/09/26 14:59:36  daniel
- * Implemented write support
- *
- * Revision 1.3  1999/09/20 18:43:01  daniel
- * Use binary access to open file.
- *
- * Revision 1.2  1999/09/16 02:39:16  daniel
- * Completed read support for most feature types
- *
- * Revision 1.1  1999/07/12 04:18:24  daniel
- * Initial checkin
- *
  **********************************************************************/
 
+#include "cpl_port.h"
 #include "mitab.h"
-#include "mitab_utils.h"
 
 #include <algorithm>
+#include <limits.h>
+#include <string.h>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
+#include "mitab_priv.h"
+#include "mitab_utils.h"
 
 CPL_CVSID("$Id$");
 
@@ -88,10 +68,7 @@ TABIDFile::TABIDFile() :
  *
  * Destructor.
  **********************************************************************/
-TABIDFile::~TABIDFile()
-{
-    Close();
-}
+TABIDFile::~TABIDFile() { Close(); }
 
 /**********************************************************************
  *                   TABIDFile::Open()
@@ -100,18 +77,17 @@ TABIDFile::~TABIDFile()
  * Return 0 on success, -1 in case of failure.
  **********************************************************************/
 
-int TABIDFile::Open(const char *pszFname, const char* pszAccess)
+int TABIDFile::Open(const char *pszFname, const char *pszAccess)
 {
+    // cppcheck-suppress nullPointer
     if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead);
-    else if( STARTS_WITH_CI(pszAccess, "w") )
+    if( STARTS_WITH_CI(pszAccess, "w") )
         return Open(pszFname, TABWrite);
-    else
-    {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed: access mode \"%s\" not supported", pszAccess);
-        return -1;
-    }
+
+    CPLError(CE_Failure, CPLE_FileIO,
+             "Open() failed: access mode \"%s\" not supported", pszAccess);
+    return -1;
 }
 
 /**********************************************************************
@@ -134,12 +110,10 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
         return -1;
     }
 
-    /*-----------------------------------------------------------------
-     * Validate access mode and make sure we use binary access.
-     * Note that in Write mode we need TABReadWrite since we do random
-     * updates in the index as data blocks are split
-     *----------------------------------------------------------------*/
-    const char* pszAccess = NULL;
+    // Validate access mode and make sure we use binary access.
+    // Note that in Write mode we need TABReadWrite since we do random
+    // updates in the index as data blocks are split.
+    const char *pszAccess = NULL;
     if (eAccess == TABRead)
     {
         m_eAccessMode = TABRead;
@@ -162,33 +136,26 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
         return -1;
     }
 
-    /*-----------------------------------------------------------------
-     * Change .MAP extension to .ID if necessary
-     *----------------------------------------------------------------*/
+    // Change .MAP extension to .ID if necessary.
     m_pszFname = CPLStrdup(pszFname);
 
-    int nLen = static_cast<int>(strlen(m_pszFname));
-    if (nLen > 4 && strcmp(m_pszFname+nLen-4, ".MAP")==0)
-        strcpy(m_pszFname+nLen-4, ".ID");
-    else if (nLen > 4 && strcmp(m_pszFname+nLen-4, ".map")==0)
-        strcpy(m_pszFname+nLen-4, ".id");
+    const int nLen = static_cast<int>(strlen(m_pszFname));
+    if (nLen > 4 && strcmp(m_pszFname + nLen - 4, ".MAP") == 0)
+        strcpy(m_pszFname + nLen - 4, ".ID");
+    else if (nLen > 4 && strcmp(m_pszFname + nLen - 4, ".map") == 0)
+        strcpy(m_pszFname + nLen - 4, ".id");
 
-    /*-----------------------------------------------------------------
-     * Change .MAP extension to .ID if necessary
-     *----------------------------------------------------------------*/
 #ifndef _WIN32
+    // Change .MAP extension to .ID if necessary.
     TABAdjustFilenameExtension(m_pszFname);
 #endif
 
-    /*-----------------------------------------------------------------
-     * Open file
-     *----------------------------------------------------------------*/
+    // Open file.
     m_fp = VSIFOpenL(m_pszFname, pszAccess);
 
     if (m_fp == NULL)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Open() failed for %s", m_pszFname);
+        CPLError(CE_Failure, CPLE_FileIO, "Open() failed for %s", m_pszFname);
         CPLFree(m_pszFname);
         m_pszFname = NULL;
         return -1;
@@ -196,28 +163,25 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
 
     if (m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite)
     {
-        /*-------------------------------------------------------------
-         * READ access:
-         * Establish the number of object IDs from the size of the file
-         *------------------------------------------------------------*/
-        VSIStatBufL  sStatBuf;
+        // READ access:
+        // Establish the number of object IDs from the size of the file.
+        VSIStatBufL sStatBuf;
         if ( VSIStatL(m_pszFname, &sStatBuf) == -1 )
         {
-            CPLError(CE_Failure, CPLE_FileIO,
-                     "stat() failed for %s\n", m_pszFname);
+            CPLError(CE_Failure, CPLE_FileIO, "stat() failed for %s",
+                     m_pszFname);
             Close();
             return -1;
         }
 
-        if( static_cast<vsi_l_offset>(sStatBuf.st_size) > static_cast<vsi_l_offset>(INT_MAX / 4) )
+        if( static_cast<vsi_l_offset>(sStatBuf.st_size) >
+            static_cast<vsi_l_offset>(INT_MAX / 4) )
             m_nMaxId = INT_MAX / 4;
         else
-            m_nMaxId = (int)(sStatBuf.st_size/4);
+            m_nMaxId = static_cast<int>(sStatBuf.st_size / 4);
         m_nBlockSize = std::min(1024, m_nMaxId * 4);
 
-        /*-------------------------------------------------------------
-         * Read the first block from the file
-         *------------------------------------------------------------*/
+        // Read the first block from the file.
         m_poIDBlock = new TABRawBinBlock(m_eAccessMode, FALSE);
 
         if (m_nMaxId == 0)
@@ -236,10 +200,8 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
     }
     else
     {
-        /*-------------------------------------------------------------
-         * WRITE access:
-         * Get ready to write to the file
-         *------------------------------------------------------------*/
+        // WRITE access:
+        // Get ready to write to the file.
         m_poIDBlock = new TABRawBinBlock(m_eAccessMode, FALSE);
         m_nMaxId = 0;
         m_nBlockSize = 1024;
@@ -261,9 +223,7 @@ int TABIDFile::Close()
     if (m_fp == NULL)
         return 0;
 
-    /*----------------------------------------------------------------
-     * Write access: commit latest changes to the file.
-     *---------------------------------------------------------------*/
+    // Write access: commit latest changes to the file.
     if (m_eAccessMode != TABRead)
         SyncToDisk();
 
@@ -325,7 +285,7 @@ GInt32 TABIDFile::GetObjPtr(GInt32 nObjId)
         return -1;
     }
 
-    if (m_poIDBlock->GotoByteInFile( (nObjId-1)*4 ) != 0)
+    if (m_poIDBlock->GotoByteInFile((nObjId - 1) * 4) != 0)
         return -1;
 
     return m_poIDBlock->ReadInt32();
@@ -357,31 +317,28 @@ int TABIDFile::SetObjPtr(GInt32 nObjId, GInt32 nObjPtr)
 
     if (nObjId < 1)
     {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-               "SetObjPtr(): Invalid object ID %d (must be greater than zero)",
-                 nObjId);
+        CPLError(
+            CE_Failure, CPLE_IllegalArg,
+            "SetObjPtr(): Invalid object ID %d (must be greater than zero)",
+            nObjId);
         return -1;
     }
 
-    /*-----------------------------------------------------------------
-     * GotoByteInFile() will automagically commit current block and init
-     * a new one if necessary.
-     *----------------------------------------------------------------*/
-    GInt32 nLastIdBlock = ((m_nMaxId-1)*4) / m_nBlockSize;
-    GInt32 nTargetIdBlock = ((nObjId-1)*4) / m_nBlockSize;
+    // GotoByteInFile() will automagically commit current block and init
+    // a new one if necessary.
+    const GInt32 nLastIdBlock = ((m_nMaxId - 1) * 4) / m_nBlockSize;
+    const GInt32 nTargetIdBlock = ((nObjId - 1) * 4) / m_nBlockSize;
     if (m_nMaxId > 0 && nTargetIdBlock <= nLastIdBlock)
     {
-        /* Pass second arg to GotoByteInFile() to force reading from file
-         * when going back to blocks already committed
-         */
-        if (m_poIDBlock->GotoByteInFile( (nObjId-1)*4, TRUE ) != 0)
+        // Pass second arg to GotoByteInFile() to force reading from file
+        // when going back to blocks already committed.
+        if (m_poIDBlock->GotoByteInFile((nObjId - 1) * 4, TRUE) != 0)
             return -1;
     }
     else
     {
-        /* If we reach EOF then a new empty block will have to be allocated
-         */
-        if (m_poIDBlock->GotoByteInFile( (nObjId-1)*4 ) != 0)
+        // If we reach EOF then a new empty block will have to be allocated.
+        if (m_poIDBlock->GotoByteInFile((nObjId - 1) * 4) != 0)
             return -1;
     }
 
@@ -399,10 +356,7 @@ int TABIDFile::SetObjPtr(GInt32 nObjId, GInt32 nObjPtr)
  *
  * Returns a value >= 0 on success, -1 on error.
  **********************************************************************/
-GInt32 TABIDFile::GetMaxObjId()
-{
-    return m_nMaxId;
-}
+GInt32 TABIDFile::GetMaxObjId() { return m_nMaxId; }
 
 /**********************************************************************
  *                   TABIDFile::Dump()
@@ -433,4 +387,4 @@ void TABIDFile::Dump(FILE *fpOut /*=NULL*/)
     fflush(fpOut);
 }
 
-#endif // DEBUG
+#endif  // DEBUG

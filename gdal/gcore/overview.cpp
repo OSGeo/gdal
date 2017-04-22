@@ -27,13 +27,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal_priv.h"
+
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
+
+#include <algorithm>
 #include <limits>
 #include <vector>
 
-#include "gdal_priv.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+// TODO(schwehr): Fix warning: Software emulation of SSE2.
+// #include "gdalsse_priv.h"
 #include "gdalwarper.h"
-
-#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -137,7 +149,8 @@ GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
                            int /* bHasNoData_unused */,
                            float /* fNoDataValue_unused */,
                            GDALColorTable* /* poColorTable_unused */,
-                           GDALDataType /* eSrcDataType */)
+                           GDALDataType /* eSrcDataType */,
+                           bool /* bPropagateNoData */ )
 {
     if( eWrkDataType == GDT_Byte )
         return GDALResampleChunk32R_NearT(
@@ -251,7 +264,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                const char * pszResampling,
                                int bHasNoData,  // TODO(schwehr): bool.
                                float fNoDataValue,
-                               GDALColorTable* poColorTable )
+                               GDALColorTable* poColorTable,
+                               bool bPropagateNoData )
 {
     // AVERAGE_BIT2GRAYSCALE
     const bool bBit2Grayscale =
@@ -447,8 +461,12 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                         }
                     }
 
-                    if( nCount == 0 )
+                    if( nCount == 0 ||
+                        (bPropagateNoData && nCount <
+                            (nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)))
+                    {
                         pDstScanline[iDstPixel] = tNoDataValue;
+                    }
                     else if( eWrkDataType == GDT_Byte ||
                              eWrkDataType == GDT_UInt16)
                         pDstScanline[iDstPixel] =
@@ -491,8 +509,12 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                     }
                 }
 
-                if( nCount == 0 )
+                if( nCount == 0 ||
+                    (bPropagateNoData && nCount <
+                        (nSrcYOff2 - nSrcYOff) * (nSrcXOff2 - nSrcXOff)) )
+                {
                     pDstScanline[iDstPixel] = tNoDataValue;
+                }
                 else
                 {
                     int nR = (nTotalR + nCount / 2) / nCount,
@@ -532,7 +554,8 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                               const char * pszResampling,
                               int bHasNoData, float fNoDataValue,
                               GDALColorTable* poColorTable,
-                              GDALDataType /* eSrcDataType */ )
+                              GDALDataType /* eSrcDataType */,
+                              bool bPropagateNoData )
 {
     if( eWrkDataType == GDT_Byte )
         return GDALResampleChunk32R_AverageT<GByte, int>(
@@ -548,7 +571,8 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             poOverview,
             pszResampling,
             bHasNoData, fNoDataValue,
-            poColorTable);
+            poColorTable,
+            bPropagateNoData );
     else if( eWrkDataType == GDT_UInt16 &&
              dfXRatioDstToSrc * dfYRatioDstToSrc < 65536 )
         return GDALResampleChunk32R_AverageT<GUInt16, GUInt32>(
@@ -564,7 +588,8 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             poOverview,
             pszResampling,
             bHasNoData, fNoDataValue,
-            poColorTable );
+            poColorTable,
+            bPropagateNoData );
     else if( eWrkDataType == GDT_Float32 )
         return GDALResampleChunk32R_AverageT<float, double>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
@@ -579,7 +604,8 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
             poOverview,
             pszResampling,
             bHasNoData, fNoDataValue,
-            poColorTable );
+            poColorTable,
+            bPropagateNoData );
 
     CPLAssert(false);
     return CE_Failure;
@@ -604,7 +630,8 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                             const char * /* pszResampling */,
                             int bHasNoData, float fNoDataValue,
                             GDALColorTable* poColorTable,
-                            GDALDataType /* eSrcDataType */)
+                            GDALDataType /* eSrcDataType */,
+                            bool /* bPropagateNoData */ )
 
 {
     float * pafChunk = static_cast<float *>( pChunk );
@@ -879,7 +906,8 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                            const char * /* pszResampling */,
                            int bHasNoData, float fNoDataValue,
                            GDALColorTable* poColorTable,
-                           GDALDataType eSrcDataType)
+                           GDALDataType eSrcDataType,
+                           bool /* bPropagateNoData */ )
 
 {
     float * pafChunk = static_cast<float*>( pChunk );
@@ -1629,11 +1657,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
 #if 0
         if( nSrcPixelStart < nChunkXOff && nChunkXOff > 0 )
         {
-            printf( "truncated iDstPixel = %d\n", iDstPixel );
+            printf( "truncated iDstPixel = %d\n", iDstPixel );/*ok*/
         }
         if( nSrcPixelStop > nChunkRightXOff && nChunkRightXOff < nSrcWidth )
         {
-            printf( "truncated iDstPixel = %d\n", iDstPixel );
+            printf( "truncated iDstPixel = %d\n", iDstPixel );/*ok*/
         }
 #endif
         const int nSrcPixelCount = nSrcPixelStop - nSrcPixelStart;
@@ -1783,11 +1811,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
         if( nSrcLineStart < nChunkYOff &&
             nChunkYOff > 0 )
         {
-            printf( "truncated iDstLine = %d\n", iDstLine );
+            printf( "truncated iDstLine = %d\n", iDstLine );/*ok*/
         }
         if( nSrcLineStop > nChunkBottomYOff && nChunkBottomYOff < nSrcHeight )
         {
-            printf( "truncated iDstLine = %d\n", iDstLine );
+            printf( "truncated iDstLine = %d\n", iDstLine );/*ok*/
         }
 #endif
         const int nSrcLineCount = nSrcLineStop - nSrcLineStart;
@@ -1922,7 +1950,8 @@ static CPLErr GDALResampleChunk32R_Convolution(
     const char * pszResampling,
     int bHasNoData, float fNoDataValue,
     GDALColorTable* /* poColorTable_unused */,
-    GDALDataType /* eSrcDataType */ )
+    GDALDataType /* eSrcDataType */,
+    bool /* bPropagateNoData */ )
 {
     GDALResampleAlg eResample;
     if( EQUAL(pszResampling, "BILINEAR") )
@@ -2710,6 +2739,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     int bHasNoData = FALSE;
     const float fNoDataValue =
         static_cast<float>( poSrcBand->GetNoDataValue(&bHasNoData) );
+    const bool bPropagateNoData =
+        CPLTestBool( CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO") );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image operating on chunks.                            */
@@ -2872,7 +2903,8 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                     nDstYOff, nDstYOff2,
                     papoOvrBands[iOverview], pszResampling,
                     bHasNoData, fNoDataValue, poColorTable,
-                    poSrcBand->GetRasterDataType());
+                    poSrcBand->GetRasterDataType(),
+                    bPropagateNoData);
             else
                 eErr = GDALResampleChunkC32R(
                     nWidth, nHeight,
@@ -3097,6 +3129,8 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         pafNoDataValue[iBand] = static_cast<float>(
             papoSrcBands[iBand]->GetNoDataValue(&pabHasNoData[iBand]) );
     }
+    const bool bPropagateNoData =
+        CPLTestBool( CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO") );
 
     // Second pass to do the real job.
     double dfCurPixelCount = 0;
@@ -3321,7 +3355,8 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
                         pabHasNoData[iBand],
                         pafNoDataValue[iBand],
                         /*poColorTable*/ NULL,
-                        eDataType);
+                        eDataType,
+                        bPropagateNoData);
                 }
             }
 

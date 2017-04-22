@@ -176,9 +176,12 @@ static const char* const BESSEL_1841_NAMIBIA = "BN";
 
 typedef struct Latitude_Band_Value
 {
+  /* cppcheck-suppress unusedStructMember */
   long letter;            /* letter representing latitude band  */
   double min_northing;    /* minimum northing for latitude band */
+  /* cppcheck-suppress unusedStructMember */
   double north;           /* upper latitude for latitude band   */
+  /* cppcheck-suppress unusedStructMember */
   double south;           /* lower latitude for latitude band   */
 } Latitude_Band;
 
@@ -207,6 +210,7 @@ static const Latitude_Band Latitude_Band_Table[20] =
 
 typedef struct UPS_Constant_Value
 {
+  /* cppcheck-suppress unusedStructMember */
   long letter;            /* letter representing latitude band      */
   long ltr2_low_value;    /* 2nd letter range - high number         */
   long ltr2_high_value;   /* 2nd letter range - low number          */
@@ -740,7 +744,7 @@ long Convert_UTM_To_MGRS (long Zone,
 { /* Convert_UTM_To_MGRS */
   double latitude;           /* Latitude of UTM point */
   double longitude;          /* Longitude of UTM point */
-  long temp_error = MGRS_NO_ERROR;
+  /*long temp_error = MGRS_NO_ERROR; */
   long error_code = MGRS_NO_ERROR;
 
   if ((Zone < 1) || (Zone > 60))
@@ -756,14 +760,14 @@ long Convert_UTM_To_MGRS (long Zone,
   if (!error_code)
   {
     Set_UTM_Parameters (MGRS_a, MGRS_f, 0);
-    temp_error = Convert_UTM_To_Geodetic (Zone, Hemisphere, Easting, Northing, &latitude, &longitude);
+    /*temp_error =*/ Convert_UTM_To_Geodetic (Zone, Hemisphere, Easting, Northing, &latitude, &longitude);
 
 	  /* Special check for rounding to (truncated) eastern edge of zone 31V */
 	  if ((Zone == 31) && (latitude >= 56.0 * DEG_TO_RAD) && (latitude < 64.0 * DEG_TO_RAD) &&
         (longitude >= 3.0 * DEG_TO_RAD))
 	  { /* Reconvert to UTM zone 32 */
       Set_UTM_Parameters (MGRS_a, MGRS_f, 32);
-      temp_error = Convert_Geodetic_To_UTM (latitude, longitude, &Zone, &Hemisphere, &Easting, &Northing);
+      /*temp_error =*/ Convert_Geodetic_To_UTM (latitude, longitude, &Zone, &Hemisphere, &Easting, &Northing);
 	  }
 
 	  error_code = UTM_To_MGRS (Zone, latitude, Easting, Northing, Precision, MGRS);
@@ -917,7 +921,7 @@ long Convert_UPS_To_MGRS (char   Hemisphere,
   double grid_easting;        /* Easting used to derive 2nd letter of MGRS    */
   double grid_northing;       /* Northing used to derive 3rd letter of MGRS   */
   long ltr2_low_value;        /* 2nd letter range - low number                */
-  int letters[MGRS_LETTERS];  /* Number location of 3 letters in alphabet     */
+  int letters[MGRS_LETTERS] = { 0 };  /* Number location of 3 letters in alphabet     */
   double divisor;
   int l_index = 0;
   long error_code = MGRS_NO_ERROR;

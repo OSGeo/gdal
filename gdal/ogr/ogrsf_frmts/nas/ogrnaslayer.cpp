@@ -105,12 +105,10 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Cleanup last feature, and get a new raw nas feature.            */
 /* -------------------------------------------------------------------- */
-        delete poNASFeature;
         delete poGeom;
-
-        poNASFeature = NULL;
         poGeom = NULL;
 
+        delete poNASFeature;
         poNASFeature = poDS->GetReader()->NextFeature();
         if( poNASFeature == NULL )
             return NULL;
@@ -136,16 +134,43 @@ OGRFeature *OGRNASLayer::GetNextFeature()
             poNASFeature->GetGeometryList();
         if (papsGeometry[0] != NULL)
         {
+            CPLString osLastErrorMsg;
+            CPLPushErrorHandler(CPLQuietErrorHandler);
             poGeom = (OGRGeometry*) OGR_G_CreateFromGMLTree(papsGeometry[0]);
+            CPLPopErrorHandler();
+            if( poGeom == NULL )
+                osLastErrorMsg = CPLGetLastErrorMsg();
             poGeom = NASReader::ConvertGeometry(poGeom);
             poGeom = OGRGeometryFactory::forceTo(poGeom, GetGeomType());
             // poGeom->dumpReadable( 0, "NAS: " );
 
-            // We assume the OGR_G_CreateFromGMLTree() function would
-            // have already reported an error.
             if( poGeom == NULL )
             {
+                CPLString osGMLId;
+                if( poFClass->GetPropertyIndex("gml_id") == 0 )
+                {
+                     const GMLProperty *psGMLProperty =
+                            poNASFeature->GetProperty( 0 );
+                    if( psGMLProperty && psGMLProperty->nSubProperties == 1 )
+                    {
+                        osGMLId.Printf("(gml_id=%s) ",
+                                       psGMLProperty->papszSubProperties[0]);
+                    }
+                }
+
+                const bool bGoOn =CPLTestBool(
+                    CPLGetConfigOption("NAS_SKIP_CORRUPTED_FEATURES", "NO"));
+                CPLError(bGoOn ? CE_Warning : CE_Failure, CPLE_AppDefined,
+                         "Geometry of feature %d %scannot be parsed: %s%s",
+                         iNextNASId, osGMLId.c_str(), osLastErrorMsg.c_str(),
+                         bGoOn ? ". Skipping to next feature.":
+                         ". You may set the NAS_SKIP_CORRUPTED_FEATURES "
+                         "configuration option to YES to skip to the next "
+                         "feature");
                 delete poNASFeature;
+                poNASFeature = NULL;
+                if( bGoOn )
+                    continue;
                 return NULL;
             }
 

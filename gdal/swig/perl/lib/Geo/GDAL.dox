@@ -23,7 +23,6 @@
 ## @ignore last_error
 ## @ignore error
 ## @ignore named_parameters
-## @ignore string2int
 
 ## @ignore GeneralCmdLineProcessor
 ## @ignore ParseCommandLine
@@ -248,6 +247,9 @@
 
 ## @sub @DriverNames()
 # Available raster format drivers.
+# \code
+# perl -MGeo::GDAL -e '@d=Geo::GDAL::DriverNames;print "@d\n"'
+# \endcode
 # @note Use Geo::OGR::DriverNames for vector drivers.
 # @return a list of the short names of all available GDAL raster drivers.
 
@@ -298,11 +300,7 @@
 #
 # @return a new Geo::GDAL::Dataset object if success.
 
-## @sub Geo::GDAL::Dataset OpenShared($name, $access = 'ReadOnly')
-# Open a raster dataset in shared mode.
-# @param name Raster dataset string (typically a filename).
-# @param access Access type, either 'ReadOnly' (the default) or 'Update'.
-# @return a new Geo::GDAL::Dataset object or undef.
+## @ignore OpenShared
 
 ## @sub Geo::GDAL::Dataset OpenEx(%params)
 # The generic dataset open method, used internally by all Open and OpenShared methods.
@@ -560,7 +558,8 @@
 ## @method @Size()
 # @return (width, height)
 
-## @method Geo::GDAL::Driver GetDriver()
+## @method Geo::GDAL::Driver Driver()
+# @note a.k.a. GetDriver
 # @return a Geo::GDAL::Driver object that was used to open or create this dataset.
 
 ## @ignore GetRasterBand
@@ -695,6 +694,18 @@
 ## @method $GetGCPProjection()
 # @return projection string.
 
+## @method Geo::GDAL::Extent Extent(@params)
+# @param params nothing, or a list ($xoff, $yoff, $w, $h)
+# @return A new Geo::GDAL::Extent object that represents the area that
+# this raster or the specified tile covers.
+
+## @method Tile(Geo::GDAL::Extent e)
+# Compute the top left cell coordinates and width and height of the
+# tile that covers the given extent.
+# @param e The extent whose tile is needed.
+# @note Requires that the raster is a strictly north up one.
+# @return A list ($xoff, $yoff, $xsize, $ysize).
+
 ## @method FlushCache()
 # Write cached data to disk. There is usually no need to call this
 # method.
@@ -749,48 +760,32 @@
 ## @method CreateMaskBand()
 # Add a mask band to the dataset.
 
-## @method Geo::GDAL::Dataset DEMProcessing($Dest, $Processing, $ColorFilename, $Options, coderef progress, $progress_data)
+## @method Geo::GDAL::Dataset DEMProcessing($Dest, $Processing, $ColorFilename, hashref Options, coderef progress, $progress_data)
 # Apply a DEM processing to this dataset.
 # @param Dest Destination raster dataset definition string (typically filename) or an object, which implements write and close.
 # @param Processing Processing to apply, one of "hillshade", "slope", "aspect", "color-relief", "TRI", "TPI", or "Roughness".
 # @param ColorFilename The color palette for color-relief.
-# @param Options A reference to a hash or list of options. For a hash
-# the keys are without the prefix '-'. For example give { of => 'PNG'
-# } to set the output format. For a list the options are given as for
-# the command line utility. See <a
-# href="http://www.gdal.org/gdaldem.html">gdaldem</a> for all options.
+# @param Options See section \ref index_processing_options.
 # @param progress [optional] A reference to a subroutine, which will
 # be called with parameters (number progress, string msg, progress_data).
 # @param progress_data [optional]
 #
 
-## @method Geo::GDAL::Dataset Nearblack($Dest, $Options, coderef progress, $progress_data)
+## @method Geo::GDAL::Dataset Nearblack($Dest, hashref Options, coderef progress, $progress_data)
 # Convert nearly black/white pixels to black/white.
 # @param Dest Destination raster dataset definition string (typically
 # filename), destination dataset to which to add an alpha or mask
 # band, or an object, which implements write and close.
-# @param Options A reference to a hash or list of options. For a hash
-# the keys are without the prefix '-'. For example give { of => 'PNG'
-# } to set the output format. For a list the options are given as for
-# the command line utility. See <a
-# href="http://www.gdal.org/nearblack.html">nearblack</a> for all
-# options.
+# @param Options See section \ref index_processing_options.
 # @return Dataset if destination dataset definition string was given,
 # otherwise a boolean for success/fail but the method croaks if there
 # was an error.
 
-## @method Geo::GDAL::Dataset Translate($Dest, $Options, coderef progress, $progress_data)
+## @method Geo::GDAL::Dataset Translate($Dest, hashref Options, coderef progress, $progress_data)
 # Convert this dataset into another format.
 # @param Dest Destination dataset definition string (typically
 # filename) or an object, which implements write and close.
-# @param Options A reference to a hash or list of options. For a hash
-# the keys are without the prefix '-'. For example give { of => 'PNG'
-# } to set the output format and ['-tr', 10, 10] to set the target
-# resolution. For a list the options are given as for the command line
-# utility. See <a
-# href="http://www.gdal.org/gdal_translate.html">gdal_translate</a>
-# and <a href="http://www.gdal.org/ogr2ogr.html">ogr2ogr</a> for all
-# options.
+# @param Options See section \ref index_processing_options.
 # @return New dataset object if destination dataset definition
 # string was given, otherwise a boolean for success/fail but the
 # method croaks if there was an error.
@@ -808,80 +803,46 @@
 #
 # @return a new Geo::GDAL::Dataset object
 
-## @method Geo::GDAL::Dataset Warp($Dest, $Options, coderef progress, $progress_data)
+## @method Geo::GDAL::Dataset Warp($Dest, hashref Options, coderef progress, $progress_data)
 # Reproject this dataset.
 # @param Dest Destination raster dataset definition string (typically
 # filename) or an object, which implements write and close.
-# @param Options A reference to a hash or list of options. For a hash
-# the keys are without the prefix '-'. For example give { of => 'PNG'
-# } to set the output format and ['-tr', 10, 10] to set the target
-# resolution. For a list the options are given as for the command line
-# utility. See <a
-# href="http://www.gdal.org/gdalwarp.html">gdalwarp</a> for all
-# options.
+# @param Options See section \ref index_processing_options.
 # @note This method can be run as a package subroutine with a list of
 # datasets as the first argument to mosaic several datasets.
 
-## @method Geo::GDAL::Dataset Grid($Dest, $Options)
+## @method Geo::GDAL::Dataset Grid($Dest, hashref Options)
 # Creates a regular raster grid from this data source.
 # This is equivalent to the gdal_grid utility.
 # @param Dest Destination raster dataset definition string (typically
 # filename) or an object, which implements write and close.
-# @param Options A reference to a hash or list of options. For a hash
-# the keys are without the prefix '-'. For example give { of => 'PNG'
-# } to set the output format and ['-txe', 10, 10] to set the
-# georeferenced X extents. You must specify at least layer name (key =
-# l) or SQL to create a layer (key = sql). For a list the options are
-# given as for the command line utility. See <a
-# href="http://www.gdal.org/gdal_grid.html">gdal_grid</a> for a
-# complete list of options.
+# @param Options See section \ref index_processing_options.
 
-## @method Geo::GDAL::Dataset Rasterize($Dest, $Options, coderef progress, $progress_data)
+## @method Geo::GDAL::Dataset Rasterize($Dest, hashref Options, coderef progress, $progress_data)
 # Render data from this data source into a raster.
 # @param Dest Destination raster dataset definition string (typically
 # filename), destination dataset, or an object, which implements write and close.
-# @param Options A reference to a hash or list of options. For a hash
-# the keys are without the prefix '-' and the values must be
-# strings. For example give { of => 'PNG' } to set the output format
-# and ['-tr', 10, 10] to set the target resolution. You must specify
-# at least layer name (key = l) or SQL to create a layer (key =
-# sql). To create a new raster, you need to specify either target
-# resolution (tr => xres,yres) or target file size (ts =>
-# width,height). For a list the options are given as for the command
-# line utility.See <a
-# href="http://www.gdal.org/gdal_rasterize.html">gdal_rasterize</a>
-# for a complete list of options.
+# @param Options See section \ref index_processing_options.
 # @return Dataset if destination dataset definition string was given,
 # otherwise a boolean for success/fail but the method croaks if there
 # was an error.
 #
 
-## @method Geo::GDAL::Dataset BuildVRT($Dest, arrayref Sources, $Options, coderef progress, $progress_data)
+## @method Geo::GDAL::Dataset BuildVRT($Dest, arrayref Sources, hashref Options, coderef progress, $progress_data)
 # Build a virtual dataset from a set of datasets.
 # @param Dest Destination raster dataset definition string (typically
 # filename), or an object, which implements write and close.
 # @param Sources A list of filenames of input datasets or a list of
 # dataset objects.
-# @param Options A reference to a hash or list of options. For a hash
-# the keys are without the prefix '-' and the values must be
-# strings. For example give { r => 'cubic' } to select a resampling
-# algorithm and ['-tr', 10, 10] to set the target resolution. For a
-# list the options are given as for the command line utility. See <a
-# href="http://www.gdal.org/gdalbuildvrt.html">gdalbuildvrt</a> for a
-# complete list of options.
+# @param Options See section \ref index_processing_options.
 # @return Dataset object
 #
 # @note This subroutine is imported into the main namespace if Geo::GDAL
 # is use'd with qw/:all/.
 
-## @method $Info($Options)
+## @method $Info(hashref Options)
 # Information about this dataset.
-# @param Options A reference to a hash or list of options. For a hash
-# the keys are without the prefix '-'. For example give { JSON => 1 }
-# to set the output format to JSON. For a list the options are given
-# as for the command line utility. See <a
-# href="http://www.gdal.org/gdalinfo.html">gdalinfo</a> for all
-# options.
+# @param Options See section \ref index_processing_options.
 
 ## @method Geo::GDAL::ColorTable ComputeColorTable(%params)
 # Compute a color table from an RGB image
@@ -914,6 +875,33 @@
 my $d = Geo::GDAL::Open('pic.jpg');
 Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 \endcode
+
+
+
+
+## @class Geo::GDAL::Extent
+# @brief A rectangular area in projection coordinates: xmin, ymin, xmax, ymax.
+
+## @sub Geo::GDAL::Extent new(@params)
+# @param params nothing, a list ($xmin, $ymin, $xmax, $ymax), or an Extent object
+# @return A new Extent object (empty if no parameters, a copy of the parameter if it is an Extent object).
+
+## @sub @Size()
+# @return A list ($width, $height).
+
+## @sub $Overlaps($extent)
+# @param extent Another Geo::GDAL::Extent object.
+# @return True if this extent overlaps the other extent, false otherwise.
+
+## @sub $Overlap($extent)
+# @param extent Another Geo::GDAL::Extent object.
+# @return A new, possibly empty, Geo::GDAL::Extent object, which
+# represents the joint area of the two extents.
+
+## @sub ExpandToInclude($extent)
+# Extends this extent to include the other extent.
+# @param extent Another Geo::GDAL::Extent object.
+
 
 
 
@@ -954,9 +942,10 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 ## @method @Size()
 # @return The size of the band as a list (width, height).
 
-## @method @GetBlockSize()
-# @return The size of a preferred i/o raster blocks as a list (width,
-# height).
+## @method @BlockSize()
+# A.k.a GetBlockSize
+# @return The size of a preferred i/o raster block size as a list
+# (width, height).
 
 ## @ignore GetRasterColorInterpretation
 ## @ignore SetRasterColorInterpretation
@@ -977,15 +966,13 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 ## @method $DeleteNoDataValue()
 
 ## @method $NoDataValue($NoDataValue)
-# Remove no data value from this band.
-
-# @param NoDataValue [optional]
 # Get or set the "no data" value.
-# @note $band->NoDataValue(undef) sets the "no data" value to the
+# @param NoDataValue [optional]
+# @note $band->NoDataValue(undef) sets the NoData value to the
 # Posix floating point maximum. Use Geo::GDAL::Band::DeleteNoDataValue
-# to remove no data value from this band.
-# @return The "no data" value or undef in scalar context. An undef
-# value indicates that there is no no data value associated with this
+# to stop this band using a NoData value.
+# @return The NoData value or undef in scalar context. An undef
+# value indicates that there is no NoData value associated with this
 # band.
 
 ## @ignore GetUnitType
@@ -1011,6 +998,44 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @return a list ($scale, $offset), the values are undefined if they
 # are not set.
 # @since version 1.9 of the bindings.
+
+## @method hashref ClassCounts($classifier, $progress = undef, $progress_data = undef)
+# Compute the counts of cell values or number of cell values in ranges.
+# @note Classifier is required only for float bands. Do not specify
+# one for integer bands.
+# @note NoData values are counted similar to other values.
+#
+# @param classifier Anonymous array of format [ $comparison,
+# $classifier ], where $comparison is a string '<', '<=', '>', or '>='
+# and $classifier is an anonymous array of format [ $value,
+# $value|$classifier, $value|$classifier ], where $value is numeric
+# value against which the reclassified value is compared to.
+# @note Numeric value requires decimal point.
+#
+# In the example below, the real line is divided into ranges
+# [-inf..3), [3..5), and [5..inf], i.e., three ranges with indexes 0,
+# 1, and 2.
+# \code
+# $classifier = [ '<', [5.0, [3.0, 1.0, 2.0], 3.0] ];
+# \endcode
+# @return a reference to an anonymous hash, which contains the class
+# values (indexes) as keys and the number of cells with that value or
+# in that range as values. If the subroutine is user terminated an
+# error is raised.
+
+## @method Reclassify($classifier, $progress = undef, $progress_data = undef)
+# Reclassify the cells in the band.
+# @note This method is defined only for integer bands.
+# @note NoData values are reclassified if explicitly specified in the
+# map. However, they are not reclassified to the default value, if one
+# is specified.
+# @note If the subroutine is user terminated or the classifier is
+# incorrect, already reclassified cells will stay reclassified but an
+# error is raised.
+# @param classifier For integer rasters an anonymous hash, which
+# contains old class values as keys and new class values as values. A
+# special key '*' (star) can be used as default, to act as a fallback
+# new class value. For float rasters as in Geo::GDAL::Band::ClassCounts.
 
 ## @method ComputeRasterMinMax($approx_ok = 0)
 # @return arrayref MinMax = [min, max]
@@ -1244,7 +1269,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # - \a PerDataset: The mask band is shared between all bands on the dataset.
 # - \a Alpha: The mask band is actually an alpha band and may have values
 # other than 0 and 255.
-# - \a NoData: Indicates the mask is actually being generated from nodata values.
+# - \a NoData: Indicates the mask is actually being generated from NoData values.
 # (mutually exclusive of Alpha).
 
 ## @method CreateMaskBand(@flags)
@@ -1284,7 +1309,12 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # - \a Mask A raster band, which is used as a mask to select polygonized areas. Default is undef.
 # - \a OutLayer A vector layer into which the polygons are written. If not given, an in-memory layer 'polygonized' is created and returned.
 # - \a PixValField The name of the field in the output layer into which the cell value of the polygon area is stored. Default is 'val'.
-# - \a Options Hash or list of options. Connectedness can be set to 4 to use 4-connectedness, otherwise 8-connectedness is used. ForceIntPixel can be set to 1 to force using a 32 bit int buffer for cell values in the process. If this is not set and the data type of this raster does not fit into a 32 bit int buffer, a 32 bit float buffer is used.
+# - \a Options Hash or list of options. Connectedness can be set to 8
+to use 8-connectedness, otherwise 4-connectedness is
+used. ForceIntPixel can be set to 1 to force using a 32 bit int buffer
+for cell values in the process. If this is not set and the data type
+of this raster does not fit into a 32 bit int buffer, a 32 bit float
+buffer is used.
 # - \a Progress Progress function.
 # - \a ProgressData Additional parameter for the progress function.
 #
@@ -1369,9 +1399,9 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # - \a Options Hash of options. Options are:
 #   - \a Values A list of cell values in this band to measure the distance from. If this option is not provided, the distance will be computed to non-zero pixel values. Currently pixel values are internally processed as integers.
 #   - \a DistUnits=PIXEL|GEO Indicates whether distances will be computed in cells or in georeferenced units. The default is pixel units. This also determines the interpretation of MaxDist.
-#   - \a MaxDist=n The maximum distance to search. Distances greater than this value will not be computed. Instead output cells will be set to a nodata value.
-#   - \a NoData=n The nodata value to use on the distance band for cells that are beyond MaxDist. If not provided, the distance band will be queried for a nodata value. If one is not found, 65535 will be used (255 if the type is Byte).
-#   - \a Use_Input_NoData=YES|NO If this option is set, the nodata value of this band will be respected. Leaving nodata cells in the input as nodata pixels in the distance raster.
+#   - \a MaxDist=n The maximum distance to search. Distances greater than this value will not be computed. Instead output cells will be set to a NoData value.
+#   - \a NoData=n The NoData value to use on the distance band for cells that are beyond MaxDist. If not provided, the distance band will be queried for a NoData value. If one is not found, 65535 will be used (255 if the type is Byte).
+#   - \a Use_Input_NoData=YES|NO If this option is set, the NoData value of this band will be respected. Leaving NoData cells in the input as NoData pixels in the distance raster.
 #   - \a Fixed_Buf_Val=n If this option is set, all cells within the MaxDist threshold are set to this value instead of the distance value.
 #   - \a DataType The data type for the result if it is not given.
 # - \a Progress Progress function.
@@ -1631,19 +1661,27 @@ y = d + column * e + row * f
 # A Geo::GDAL::GeoTransform object is a reference to an anonymous array [a,b,c,d,e,f].
 # @isa = ( Geo::GDAL )
 
-## @cmethod new(@coeffs)
+## @cmethod new(@params)
+# @param params nothing, a reference to an array [a,b,c,d,e,f], a list
+# (a,b,c,d,e,f), or named parameters
+# - \a GCPs A reference to an array of Geo::GDAL::GCP objects.
+# - \a ApproxOK Minimize the error in the coefficients (integer, default is 1 (true), used with GCPs).
+# - \a Extent A Geo::GDAL::Extent object used to obtain the coordinates of the up left corner position.
+# - \a CellSize The cell size (width and height) (default is 1, used with Extent).
+#
+# @note When Extent is specifid, the created geo transform will be
+# north up, have square cells, and coefficient f will be -1 times the
+# cell size (image y - row - will increase downwards and projection y
+# will increase upwards).
 # @return a new Geo::GDAL::GeoTransform object.
 
-## @method FromGCPs(@GCPs, $ApproxOK)
-# Compute transformation coefficients from a list of Geo::GDAL::GCP
-# objects
-# @param GCPs A list of Geo::GDAL::GCP objects.
-# @param ApproxOK [optional] Minimize the error in the coefficient (integer, default is true).
-# @return a new Geo::GDAL::GeoTransform object.
+## @ignore FromGCPs
+## @ignore FromExtentAndCellSize
+## @ignore Extent
 
 ## @method Apply($x, $y)
 # @param x Column or x, or a reference to an array of columns or x's
-# @param y Row or y, or a reference to an array of columns or y's
+# @param y Row or y, or a reference to an array of rows or y's
 # @return a list (x, y), where x and y are the transformed coordinates
 # or references to arrays of transformed coordinates.
 

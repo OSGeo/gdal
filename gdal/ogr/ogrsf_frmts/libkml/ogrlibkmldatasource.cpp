@@ -33,6 +33,7 @@
 #include "ogr_libkml.h"
 #include "ogrlibkmlstyle.h"
 #include "ogr_p.h"
+#include "cpl_vsi_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -254,11 +255,12 @@ void OGRLIBKMLDataSource::WriteKml()
 
     if( !oKmlOut.empty() )
     {
-        VSILFILE* fp = VSIFOpenL( oKmlFilename.c_str(), "wb" );
+        VSILFILE* fp = VSIFOpenExL( oKmlFilename.c_str(), "wb", true );
         if( fp == NULL )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "ERROR writing %s", oKmlFilename.c_str() );
+                      "Error writing %s: %s", oKmlFilename.c_str(),
+                      VSIGetLastErrorMsg() );
             return;
         }
 
@@ -317,8 +319,9 @@ void OGRLIBKMLDataSource::WriteKmz()
 
     if( !hZIP )
     {
-        CPLError( CE_Failure, CPLE_NoWriteAccess, "ERROR creating %s",
-                  pszName );
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Error creating %s: %s",
+                  pszName, VSIGetLastErrorMsg() );
         return;
     }
 
@@ -465,11 +468,12 @@ void OGRLIBKMLDataSource::WriteDir()
 
         const char *pszOutfile = CPLFormFilename( pszName, "doc.kml", NULL );
 
-        VSILFILE* fp = VSIFOpenL( pszOutfile, "wb" );
+        VSILFILE* fp = VSIFOpenExL( pszOutfile, "wb", true );
         if( fp == NULL )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "ERROR Writing %s to %s", "doc.kml", pszName );
+                      "Error writing %s to %s: %s", "doc.kml", pszName,
+                      VSIGetLastErrorMsg() );
             return;
         }
 
@@ -1524,7 +1528,9 @@ void OGRLIBKMLDataSource::ParseDocumentOptions( KmlPtr poKml,
 {
     if( poKmlDocument != NULL )
     {
-        poKmlDocument->set_id("root_doc");
+        const char* pszDocumentId =
+            CSLFetchNameValueDef(m_papszOptions, "DOCUMENT_ID", "root_doc");
+        poKmlDocument->set_id(pszDocumentId);
 
         const char* pszAuthorName =
             CSLFetchNameValue(m_papszOptions, "AUTHOR_NAME");
@@ -1605,7 +1611,7 @@ void OGRLIBKMLDataSource::ParseDocumentOptions( KmlPtr poKml,
         CPLString osListStyleIconHref =
             CSLFetchNameValueDef(m_papszOptions, "LISTSTYLE_ICON_HREF", "");
         createkmlliststyle( m_poKmlFactory,
-                            "root_doc",
+                            pszDocumentId,
                             poKmlDocument,
                             poKmlDocument,
                             osListStyleType,
@@ -1723,7 +1729,7 @@ int OGRLIBKMLDataSource::CreateKml(
     char **papszOptions )
 {
     m_poKmlDSKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, papszOptions);
-    if( osUpdateTargetHref.size() == 0 )
+    if( osUpdateTargetHref.empty() )
     {
         DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument();
         m_poKmlDSKml->set_feature( poKmlDocument );
@@ -1751,7 +1757,7 @@ int OGRLIBKMLDataSource::CreateKmz(
     char ** /* papszOptions */ )
 {
     /***** create the doc.kml  *****/
-    if( osUpdateTargetHref.size() == 0 )
+    if( osUpdateTargetHref.empty() )
     {
         const char *pszUseDocKml =
             CPLGetConfigOption( "LIBKML_USE_DOC.KML", "yes" );
@@ -1794,7 +1800,7 @@ int OGRLIBKMLDataSource::CreateDir(
     m_isDir = true;
     bUpdated = true;
 
-    if( osUpdateTargetHref.size() == 0 )
+    if( osUpdateTargetHref.empty() )
     {
         const char *pszUseDocKml =
             CPLGetConfigOption( "LIBKML_USE_DOC.KML", "yes" );
@@ -1835,7 +1841,7 @@ int OGRLIBKMLDataSource::Create(
 
     osUpdateTargetHref =
         CSLFetchNameValueDef(papszOptions, "UPDATE_TARGETHREF", "");
-    if( osUpdateTargetHref.size() )
+    if( !osUpdateTargetHref.empty() )
     {
         m_poKmlUpdate = m_poKmlFactory->CreateUpdate();
         m_poKmlUpdate->set_targethref(osUpdateTargetHref.c_str());
@@ -1975,9 +1981,12 @@ OGRErr OGRLIBKMLDataSource::DeleteLayerKmz( int iLayer )
                             if( EQUAL( pszLink, poOgrLayer->GetFileName() ) )
                             {
                                 m_poKmlDocKml->DeleteFeatureAt( iKmlFeature );
+                                delete poKmlHref;
                                 break;
                             }
                         }
+
+                        delete poKmlHref;
                     }
                 }
             }

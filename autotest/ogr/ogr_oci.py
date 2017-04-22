@@ -73,7 +73,7 @@ def ogr_oci_2():
 
     ######################################################
     # Create Oracle Layer
-    gdaltest.oci_lyr = gdaltest.oci_ds.CreateLayer( 'tpoly' )
+    gdaltest.oci_lyr = gdaltest.oci_ds.CreateLayer( 'tpoly', options = ['DIM=3'] )
 
     ######################################################
     # Setup Schema
@@ -1047,7 +1047,7 @@ def ogr_oci_21():
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
        f.GetField('field_real') != 1.23 or \
-       f.IsFieldSet('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
+       not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56':
         gdaltest.post_reason('fail')
         f.DumpReadable()

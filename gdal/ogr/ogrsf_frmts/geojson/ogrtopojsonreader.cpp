@@ -89,6 +89,7 @@ typedef struct
     double dfScale1;
     double dfTranslate0;
     double dfTranslate1;
+    bool bElementExists;
 } ScalingParams;
 
 /************************************************************************/
@@ -138,10 +139,18 @@ static void ParseArc( OGRLineString* poLS, json_object* poArcsDB, int nArcID,
         double dfY = 0.0;
         if( ParsePoint( poPoint, &dfX, &dfY ) )
         {
-            dfAccX += dfX;
-            dfAccY += dfY;
-            dfX = dfAccX * psParams->dfScale0 + psParams->dfTranslate0;
-            dfY = dfAccY * psParams->dfScale1 + psParams->dfTranslate1;
+            if( psParams->bElementExists )
+            {
+                dfAccX += dfX;
+                dfAccY += dfY;
+                dfX = dfAccX * psParams->dfScale0 + psParams->dfTranslate0;
+                dfY = dfAccY * psParams->dfScale1 + psParams->dfTranslate1;
+            }
+            else
+            {
+                dfX = dfX * psParams->dfScale0 + psParams->dfTranslate0;
+                dfY = dfY * psParams->dfScale1 + psParams->dfTranslate1;
+            }
             if( i == 0 )
             {
                 if( !bReverse && poLS->getNumPoints() > 0 )
@@ -566,6 +575,7 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     sParams.dfScale1 = 1.0;
     sParams.dfTranslate0 = 0.0;
     sParams.dfTranslate1 = 0.0;
+    sParams.bElementExists = false;
     json_object* poObjTransform =
         OGRGeoJSONFindMemberByName( poGJObject_, "transform" );
     if( NULL != poObjTransform &&
@@ -588,6 +598,7 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
             {
                 sParams.dfScale0 = json_object_get_double(poScale0);
                 sParams.dfScale1 = json_object_get_double(poScale1);
+                sParams.bElementExists = true;
             }
         }
 
@@ -610,6 +621,7 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
             {
                 sParams.dfTranslate0 = json_object_get_double(poTranslate0);
                 sParams.dfTranslate1 = json_object_get_double(poTranslate1);
+                sParams.bElementExists = true;
             }
         }
     }

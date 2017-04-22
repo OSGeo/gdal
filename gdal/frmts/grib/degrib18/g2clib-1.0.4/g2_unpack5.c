@@ -7,7 +7,7 @@ g2int g2_unpack5(unsigned char *cgrib,g2int *iofst,g2int *ndpts,g2int *idrsnum,
                g2int **idrstmpl,g2int *mapdrslen)
 ////$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
-// SUBPROGRAM:    g2_unpack5 
+// SUBPROGRAM:    g2_unpack5
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-31
 //
 // ABSTRACT: This subroutine unpacks Section 5 (Data Representation Section)
@@ -22,11 +22,11 @@ g2int g2_unpack5(unsigned char *cgrib,g2int *iofst,g2int *ndpts,g2int *idrsnum,
 //     cgrib    - char array containing Section 5 of the GRIB2 message
 //     iofst    - Bit offset for the beginning of Section 5 in cgrib.
 //
-//   OUTPUT ARGUMENTS:      
+//   OUTPUT ARGUMENTS:
 //     iofst    - Bit offset at the end of Section 5, returned.
 //     ndpts    - Number of data points unpacked and returned.
 //     idrsnum  - Data Representation Template Number ( see Code Table 5.0)
-//     idrstmpl - Pointer to an integer array containing the data values for 
+//     idrstmpl - Pointer to an integer array containing the data values for
 //                the specified Data Representation
 //                Template ( N=idrsnum ).  Each element of this integer
 //                array contains an entry (in the order specified) of Data
@@ -46,7 +46,7 @@ g2int g2_unpack5(unsigned char *cgrib,g2int *iofst,g2int *ndpts,g2int *idrsnum,
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE:  
+//   MACHINE:
 //
 //$$$//
 {
@@ -95,7 +95,7 @@ g2int g2_unpack5(unsigned char *cgrib,g2int *iofst,g2int *ndpts,g2int *idrsnum,
          ierr=6;
          *mapdrslen=0;
          *idrstmpl=0;     //NULL
-         if ( mapdrs != 0 ) free(mapdrs);
+         free(mapdrs);
          return(ierr);
       }
       else {

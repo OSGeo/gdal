@@ -242,7 +242,7 @@ int main (int argc, char **argv)
       for (x = 0; x < NxNy; x++) {
          printf ("%d ", ray1[x]);
          ScanIndex2XY (x, &x1, &y1, scan, Nx, Ny);
-         /* 
+         /*
           * To get scan 0000 do the following:
           * row = x1 + ((Ny-1) - y1) * Nx;
           */

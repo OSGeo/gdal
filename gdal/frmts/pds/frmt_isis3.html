@@ -9,25 +9,254 @@
 
 ISIS3 is a format used by the USGS Planetary Cartography group
 to store and distribute planetary imagery data.  GDAL provides
-read-only access to ISIS3 formatted imagery data.<p>
+read/creation/update access to ISIS3 formatted imagery data.<p>
 
 ISIS3 files often have the extension .cub, sometimes with an associated
 .lbl (label) file.  When a .lbl file exists it should be used as
-the dataset name rather than the .cub file.<p>
+the dataset name rather than the .cub file. Since GDAL 2.2, the driver also
+supports imagery stored in a separate GeoTIFF file.<p>
 
 In addition to support for most ISIS3 imagery configurations, this
 driver also reads georeferencing and coordinate system information
 as well as selected other header metadata.<p>
+
+Starting with GDAL 2.2, a mask band is attached to each source band. The
+value of this mask band is 0 when the pixel value is the NULL value or one of
+the low/high on-intstrument/processed saturation value, or 255 when the pixel
+value is valid.<p>
 
 Implementation of this driver was supported by the United States
 Geological Survey.<p>
 
 ISIS3 is part of a family of related formats including PDS and ISIS2.<p>
 
+<h2>Metadata</h2>
+
+<p>Starting with GDAL 2.2, the ISIS3 label can be retrieved as JSon-serialized
+content in the json:ISIS3 metadata domain.</p>
+
+<p>For example:</p>
+
+<pre>
+$ python
+from osgeo import gdal
+ds = gdal.Open('../autotest/gdrivers/data/isis3_detached.lbl')
+print(ds.GetMetadata_List('json:ISIS3')[0])
+{
+  "IsisCube":{
+    "_type":"object",
+    "Core":{
+      "_type":"object",
+      "StartByte":1,
+      "^Core":"isis3_detached.cub",
+      "Format":"BandSequential",
+      "Dimensions":{
+        "_type":"group",
+        "Samples":317,
+        "Lines":30,
+        "Bands":1
+      },
+      "Pixels":{
+        "_type":"group",
+        "Type":"UnsignedByte",
+        "ByteOrder":"Lsb",
+        "Base":0.000000,
+        "Multiplier":1.000000
+      }
+    },
+    "Instrument":{
+      "_type":"group",
+      "TargetName":"Mars"
+    },
+    "BandBin":{
+      "_type":"group",
+      "Center":1.000000,
+      "OriginalBand":1
+    },
+    "Mapping":{
+      "_type":"group",
+      "ProjectionName":"Equirectangular",
+      "CenterLongitude":184.412994,
+      "TargetName":"Mars",
+      "EquatorialRadius":{
+        "value":3396190.000000,
+        "unit":"meters"
+      },
+      "PolarRadius":{
+        "value":3376200.000000,
+        "unit":"meters"
+      },
+      "LatitudeType":"Planetographic",
+      "LongitudeDirection":"PositiveWest",
+      "LongitudeDomain":360,
+      "MinimumLatitude":-14.822815,
+      "MaximumLatitude":-14.727503,
+      "MinimumLongitude":184.441132,
+      "MaximumLongitude":184.496521,
+      "UpperLeftCornerX":-4766.964984,
+      "UpperLeftCornerY":-872623.628822,
+      "PixelResolution":{
+        "value":10.102500,
+        "unit":"meters\/pixel"
+      },
+      "Scale":{
+        "value":5864.945312,
+        "unit":"pixels\/degree"
+      },
+      "CenterLatitude":-15.147000,
+      "CenterLatitudeRadius":3394813.857978
+    }
+  },
+  "Label":{
+    "_type":"object",
+    "Bytes":65536,
+  },
+  "History":{
+    "_type":"object",
+    "Name":"IsisCube",
+    "StartByte":1,
+    "Bytes":957,
+    "^History":"r0200357_10m_Jul20_o_i3_detatched.History.IsisCube"
+  },
+  "OriginalLabel":{
+    "_type":"object",
+    "Name":"IsisCube",
+    "StartByte":1,
+    "Bytes":2482,
+    "^OriginalLabel":"r0200357_10m_Jul20_o_i3_detatched.OriginalLabel.IsisCube"
+  }
+}
+</pre>
+
+or
+<pre>
+$ gdalinfo -json ../autotest/gdrivers/data/isis3_detached.lbl -mdd all
+</pre>
+
+<p>On creation, a source template label can be passed to the SetMetadata()
+interface in the "json:ISIS3" metadata domain.</p>
+
+<h2>Creation support</h2>
+
+<p>Starting with GDAL 2.2, the ISIS3 driver supports updating imagery of
+existing datasets, creating new datasets through the CreateCopy() and Create()
+interfaces.</p>
+
+<p>When using CreateCopy(), gdal_translate or gdalwarp, an effort is made to
+preserve as much as possible of the original label when doing ISIS3 to ISIS3
+conversions. This can be disabled with the USE_SRC_LABEL=NO creation option.
+</p>
+
+<p>The available creation options are:</p>
+<ul>
+<li> <b>DATA_LOCATION</b>=LABEL/EXTERNAL/GEOTIFF. To specify the location of
+pixel data. The default value is LABEL, ie imagery immediately follows the
+label.
+If using EXTERNAL, the imagery is put in a raw file whose filename is the main
+filename with a .cub extension. If using GEOTIFF, the imagery is put in a
+separate GeoTIFF file, whose filename is the main filename with a .tif
+extension.</li>
+<li> <b>GEOTIFF_AS_REGULAR_EXTERNAL</b>=YES/NO. Whether the GeoTIFF file, if
+uncompressed, should be registered as a regular raw file. Defaults to YES, so
+as to maximimze the compatibility with earlier version of the ISIS3 driver.</li>
+<li> <b>GEOTIFF_OPTIONS</b>=string. Comma separated list of KEY=VALUE tuples to 
+forward to the GeoTIFF driver. e.g. GEOTIFF_OPTIONS=COMPRESS=LZW.</li>
+<li> <b>EXTERNAL_FILENAME</b>=filename. Override default external filename.
+Only for DATA_LOCATION=EXTERNAL or GEOTIFF.</li>
+<li> <b>TILED</b>=YES/NO. Whether the pixel data should be tiled. Default is NO
+(ie band sequential organization).</li>
+<li> <b>BLOCKXSIZE</b>=int_value. Tile width in pixels. Only used if TILED=YES.
+Defaults to 256.</li>
+<li> <b>BLOCKYSIZE</b>=int_value. Tile height in pixels. Only used if TILED=YES.
+Defaults to 256.</li>
+<li> <b>COMMENT</b>=string. Comment to add into the label.</li>
+<li> <b>LATITUDE_TYPE</b>=Planetocentric/Planetographic. Value of
+Mapping.LatitudeType. Defaults to Planetographic. If specified, and
+USE_SRC_MAPPING is in effect, this will be taken into account to override the
+source LatitudeType.</li>
+<li> <b>LONGITUDE_DIRECTION</b>=PositiveEast/PositiveWest.
+Value of Mapping.LongitudeDirection. Defaults to PositiveEast. If specified,
+and USE_SRC_MAPPING is in effect, this will be taken into account to override
+the source LongitudeDirection.</li>
+<li> <b>TARGET_NAME</b>=string.
+Value of Mapping.TargetName. This is normally deduced from the SRS datum name.
+If specified, and USE_SRC_MAPPING is in effect, this will be taken into account
+to override the source TargetName.</li>
+<li> <b>FORCE_360</b>=YES/NO. Whether to force longitudes in the [0, 360]
+range. Defaults to NO.</li>
+<li> <b>WRITE_BOUNDING_DEGREES</b>=YES/NO. Whether to write Min/MaximumLong/
+Latitude values. Defaults to YES.</li>
+<li> <b>BOUNDING_DEGREES</b>=min_long,min_lat,max_long,max_lat. Manually set
+bounding box (values will not be modified by LONGITUDE_DIRECTION or
+FORCE_360 options).</li>
+<li> <b>USE_SRC_LABEL</b>=YES/NO. Whether to use source label in ISIS3 to
+ISIS3 conversions. Defaults to YES.</li>
+<li> <b>USE_SRC_MAPPING</b>=YES/NO. Whether to use Mapping group from source
+label in ISIS3 to ISIS3 conversions. Defaults to NO (that is to say that the
+content of Mapping group will be created from new dataset geotransform and
+projection). Only used if USE_SRC_LABEL=YES</li>
+<li> <b>USE_SRC_HISTORY</b>=YES/NO. Whether to use the content pointed by the
+source History object in ISIS3 to ISIS3 conversions, and write it to the new
+dataset. Defaults to YES. Only used if USE_SRC_LABEL=YES. If ADD_GDAL_HISTORY
+and USE_SRC_HISTORY are set to YES (or unspecified), a new history section will
+be appended to the existing history.</li>
+<li> <b>ADD_GDAL_HISTORY</b>=YES/NO. Whether to add GDAL specific history in
+the content pointed by the History object in ISIS3 to ISIS3 conversions.
+Defaults to YES. Only used if USE_SRC_LABEL=YES. If ADD_GDAL_HISTORY
+and USE_SRC_HISTORY are set to YES (or unspecified), a new history section will
+be appended to the existing history. When ADD_GDAL_HISTORY=YES, the
+history is normally composed from current GDAL version, binary name and path,
+host name, user name and source and target filenames. It is possible to
+completely override it by specifying the GDAL_HISTORY option.</li>
+<li> <b>GDAL_HISTORY</b>=string. Manually defined GDAL history. Must be
+formatted as ISIS3 PDL. If not specified, it is automatically composed. Only
+used if ADD_GDAL_HISTORY=YES (or unspecified).</li>
+</ul>
+
+<h2>Examples</h2>
+
+How to create a copy of a source ISIS3 dataset to another ISIS3 dataset while
+modifying a parameter of IsisCube.Mapping group, by using GDAL Python :
+
+<pre>
+import json
+from osgeo import gdal
+
+src_ds = gdal.Open('in.lbl')
+# Load source label as JSon
+label = json.loads( src_ds.GetMetadata_List('json:ISIS3')[0] )
+# Update parameter
+label["IsisCube"]["Mapping"]["TargetName"] = "Moon"
+
+# Instantiate new raster
+# Note the USE_SRC_MAPPING=YES creation option, since we modified the
+# IsisCube.Mapping section, which otherwise is completely rewritten from
+# the geotransform and projection attached to the output dataset.
+out_ds = gdal.GetDriverByName('ISIS3').Create('out.lbl',
+                                              src_ds.RasterXSize,
+                                              src_ds.RasterYSize,
+                                              src_ds.RasterCount,
+                                              src_ds.GetRasterBand(1).DataType,
+                                              options = ['USE_SRC_MAPPING=YES'])
+# Attach the modified label
+out_ds.SetMetadata( [json.dumps(label)], 'json:ISIS3' )
+
+# Copy imagery (assumes that each band fits into memory, otherwise a line-by
+# line or block-per-block strategy would be more appropriate )
+for i in range(src_ds.RasterCount):
+    out_ds.GetRasterBand(1).WriteRaster( 0, 0,
+                                        src_ds.RasterXSize,
+                                        src_ds.RasterYSize,
+                                        src_ds.GetRasterBand(1).ReadRaster() )
+out_ds = None
+src_ds = None
+</pre>
+
+
 <h2>See Also:</h2>
 
 <ul>
-<li> Implemented as <tt>gdal/frmts/pds/isis2dataset.cpp</tt>.
+<li> Implemented as <tt>gdal/frmts/pds/isis3dataset.cpp</tt>.
 <li> <a href="frmt_pds.html">GDAL PDS Driver</a>
 <li> <a href="frmt_isis2.html">GDAL ISIS2 Driver</a>
 </ul>

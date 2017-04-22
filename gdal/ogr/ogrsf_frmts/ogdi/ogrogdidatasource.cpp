@@ -235,7 +235,7 @@ int OGROGDIDataSource::Open( const char * pszNewName )
         if( ECSERROR(psResult) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "UpdateDictionay failed: %s",
+                      "UpdateDictionary failed: %s",
                       psResult->message ? psResult->message : "(no message string)");
             CPLFree( pszWorkingName );
             return FALSE;

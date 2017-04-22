@@ -36,39 +36,74 @@
 #endif
 
 #include "cpl_port.h"  // Must be first.
+#include "gtiff.h"
 
+// TODO(schwehr): Move this to cpl_port.h?
+#if HAVE_CXX11 && !defined(__MINGW32__)
+#define HAVE_CXX11_MUTEX 1
+#endif
+
+#include <cerrno>
+#include <climits>
+#include <cmath>
+#include <cstdarg>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+#if HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+
+#include <algorithm>
+#include <memory>
+#if HAVE_CXX11_MUTEX
+#  include <mutex>
+#endif
+#include <set>
+#include <string>
+#include <vector>
+
+#include "cpl_config.h"
+#include "cpl_conv.h"
 #include "cpl_csv.h"
-#include "cplkeywordparser.h"
+#include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "cpl_port.h"
+#include "cpl_progress.h"
 #include "cpl_string.h"
+#include "cpl_virtualmem.h"
+#include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
+#include "cplkeywordparser.h"
+#include "gdal.h"
 #include "gdal_csv.h"
 #include "gdal_frmts.h"
 #include "gdal_mdreader.h"
 #include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "geo_normalize.h"
+#include "geotiff.h"
 #include "geovalues.h"
 #include "gt_jpeg_copy.h"
 #include "gt_overview.h"
 #include "gt_wkt_srs.h"
 #include "gt_wkt_srs_priv.h"
-#include "gtiff.h"
 #include "ogr_spatialref.h"
+#include "tiff.h"
 #include "tif_float.h"
+#include "tiffio.h"
 #ifdef INTERNAL_LIBTIFF
 #  include "tiffiop.h"
 #endif
+#include "tiffvers.h"
 #include "tifvsi.h"
 #include "xtiffio.h"
-
-#include <cmath>
-#include <algorithm>
-#include <set>
-
-#if HAVE_CXX11
-#include <mutex>
-#endif
 
 
 CPL_CVSID("$Id$");
@@ -77,6 +112,8 @@ CPL_CVSID("$Id$");
 static bool bGlobalStripIntegerOverflow = false;
 #endif
 static bool bGlobalInExternalOvr = false;
+
+const char* const szJPEGGTiffDatasetTmpPrefix = "/vsimem/gtiffdataset_jpg_tmp_";
 
 typedef enum
 {
@@ -190,6 +227,9 @@ typedef enum
     VIRTUAL_MEM_IO_IF_ENOUGH_RAM
 } VirtualMemIOEnum;
 
+#if !defined(__MINGW32__)
+namespace {
+#endif
 typedef struct
 {
     GTiffDataset *poDS;
@@ -205,6 +245,9 @@ typedef struct
     int           nCompressedBufferSize;
     bool          bReady;
 } GTiffCompressionJob;
+#if !defined(__MINGW32__)
+}
+#endif
 
 class GTiffDataset CPL_FINAL : public GDALPamDataset
 {
@@ -218,6 +261,7 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     friend class GTiffSplitBitmapBand;
 
     friend void  GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality );
+    friend void  GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode );
 
     TIFF       *hTIFF;
     VSILFILE   *fpL;
@@ -249,8 +293,8 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
 
     int         nBlocksPerBand;
 
-    uint32      nBlockXSize;
-    uint32      nBlockYSize;
+    int         nBlockXSize;
+    int         nBlockYSize;
 
     int         nLoadedBlock;  // Or tile.
     bool        bLoadedBlockDirty;
@@ -261,6 +305,7 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     bool        bWriteErrorInFlushBlockBuf;
 
     char        *pszProjection;
+    CPLString   m_osVertUnit;
     bool        bLookedForProjection;
     bool        bLookedForMDAreaOrPoint;
 
@@ -381,7 +426,7 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
 
     bool          bDebugDontWriteBlocks;
 
-    CPLErr        RegisterNewOverviewDataset( toff_t nOverviewOffset );
+    CPLErr        RegisterNewOverviewDataset( toff_t nOverviewOffset, int l_nJpegQuality );
     CPLErr        CreateOverviewsFromSrcOverviews( GDALDataset* poSrcDS );
     CPLErr        CreateInternalMaskOverviews( int nOvrBlockXSize,
                                                int nOvrBlockYSize );
@@ -424,6 +469,8 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
 
     int            GuessJPEGQuality( bool& bOutHasQuantizationTable,
                                      bool& bOutHasHuffmanTable );
+
+    void           SetJPEGQualityAndTablesModeFromFile();
 
     int            DirectIO( GDALRWFlag eRWFlag,
                              int nXOff, int nYOff, int nXSize, int nYSize,
@@ -472,21 +519,21 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     void        FlushCacheInternal( bool bFlushDirectory );
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
   public:
              GTiffDataset();
     virtual ~GTiffDataset();
 
-    virtual const char *GetProjectionRef();
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr SetGeoTransform( double * ) override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
-    CPLErr         SetGCPs( int, const GDAL_GCP *, const char * );
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
+    CPLErr         SetGCPs( int, const GDAL_GCP *, const char * ) override;
 
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
@@ -495,11 +542,11 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
                               int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
-                              GDALRasterIOExtraArg* psExtraArg );
-    virtual char **GetFileList();
+                              GDALRasterIOExtraArg* psExtraArg ) override;
+    virtual char **GetFileList() override;
 
     virtual CPLErr IBuildOverviews( const char *, int, int *, int, int *,
-                                    GDALProgressFunc, void * );
+                                    GDALProgressFunc, void * ) override;
 
     CPLErr         OpenOffset( TIFF *, GTiffDataset **ppoActiveDSRef,
                                toff_t nDirOffset, bool bBaseIn, GDALAccess,
@@ -517,18 +564,18 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-    virtual void    FlushCache();
+    virtual void    FlushCache() override;
 
-    virtual char  **GetMetadataDomainList();
-    virtual CPLErr  SetMetadata( char **, const char * = "" );
-    virtual char  **GetMetadata( const char * pszDomain = "" );
+    virtual char  **GetMetadataDomainList() override;
+    virtual CPLErr  SetMetadata( char **, const char * = "" ) override;
+    virtual char  **GetMetadata( const char * pszDomain = "" ) override;
     virtual CPLErr  SetMetadataItem( const char*, const char*,
-                                     const char* = "" );
+                                     const char* = "" ) override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
-    virtual void   *GetInternalHandle( const char * );
+                                         const char * pszDomain = "" ) override;
+    virtual void   *GetInternalHandle( const char * ) override;
 
-    virtual CPLErr          CreateMaskBand( int nFlags );
+    virtual CPLErr          CreateMaskBand( int nFlags ) override;
 
     // Only needed by createcopy and close code.
     static void     WriteRPC( GDALDataset *, TIFF *, int, const char *,
@@ -588,7 +635,7 @@ class GTiffJPEGOverviewDS CPL_FINAL : public GDALDataset
                               int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
-                              GDALRasterIOExtraArg* psExtraArg );
+                              GDALRasterIOExtraArg* psExtraArg ) override;
 };
 
 class GTiffJPEGOverviewBand CPL_FINAL : public GDALRasterBand
@@ -597,7 +644,7 @@ class GTiffJPEGOverviewBand CPL_FINAL : public GDALRasterBand
     GTiffJPEGOverviewBand( GTiffJPEGOverviewDS* poDS, int nBand );
     virtual ~GTiffJPEGOverviewBand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -685,7 +732,7 @@ CPLErr GTiffJPEGOverviewDS::IRasterIO(
     // be the most efficient one, to avoid decompressing the JPEG content
     // for each requested band.
     if( nBandCount > 1 && poParentDS->nPlanarConfig == PLANARCONFIG_CONTIG &&
-        (static_cast<int>(poParentDS->nBlockXSize) < poParentDS->nRasterXSize ||
+        (poParentDS->nBlockXSize < poParentDS->nRasterXSize ||
          poParentDS->nBlockYSize > 1) )
     {
         return BlockBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -768,9 +815,8 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         TIFF* hTIFF = poGDS->poParentDS->hTIFF;
         if( !TIFFIsTiled( hTIFF ) && poGDS->poParentDS->nBlockYSize > 1 &&
             (nBlockYOff + 1 ==
-             static_cast<int>(
                  DIV_ROUND_UP( poGDS->poParentDS->nRasterYSize,
-                               poGDS->poParentDS->nBlockYSize ) ) ||
+                               poGDS->poParentDS->nBlockYSize ) ||
              (poGDS->poJPEGDS != NULL &&
               poGDS->poJPEGDS->GetRasterYSize() !=
               nBlockYSize * nScaleFactor)) )
@@ -898,7 +944,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 CPLSetThreadLocalConfigOption(
                     "GDAL_JPEG_TO_RGB",
-                    osOldVal.size() ? osOldVal.c_str() : NULL );
+                    !osOldVal.empty() ? osOldVal.c_str() : NULL );
             }
         }
         else
@@ -989,6 +1035,26 @@ void GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality )
 }
 
 /************************************************************************/
+/*                     GTIFFSetJpegTablesMode()                         */
+/* Called by GTIFFBuildOverviews() to set the jpeg tables mode on the   */
+/* of the .ovr file.                                                    */
+/************************************************************************/
+
+void GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode )
+{
+    CPLAssert(
+        EQUAL(GDALGetDriverShortName(GDALGetDatasetDriver(hGTIFFDS)), "GTIFF"));
+
+    GTiffDataset* const poDS = static_cast<GTiffDataset *>(hGTIFFDS);
+    poDS->nJpegTablesMode = nJpegTablesMode;
+
+    poDS->ScanDirectories();
+
+    for( int i = 0; i < poDS->nOverviewCount; ++i )
+        poDS->papoOverviewDS[i]->nJpegTablesMode = nJpegTablesMode;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                            GTiffRasterBand                           */
 /* ==================================================================== */
@@ -1034,70 +1100,70 @@ public:
              GTiffRasterBand( GTiffDataset *, int );
     virtual ~GTiffRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 
     virtual int IGetDataCoverageStatus( int nXOff, int nYOff,
                                         int nXSize, int nYSize,
                                         int nMaskFlagStop,
-                                        double* pdfDataPct);
+                                        double* pdfDataPct) override;
 
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg ) CPL_FINAL;
+                              GDALRasterIOExtraArg* psExtraArg ) override CPL_FINAL;
 
-    virtual const char *GetDescription() const CPL_FINAL;
-    virtual void        SetDescription( const char * ) CPL_FINAL;
+    virtual const char *GetDescription() const override CPL_FINAL;
+    virtual void        SetDescription( const char * ) override CPL_FINAL;
 
-    virtual GDALColorInterp GetColorInterpretation() /*CPL_FINAL*/;
-    virtual GDALColorTable *GetColorTable() /*CPL_FINAL*/;
-    virtual CPLErr          SetColorTable( GDALColorTable * ) CPL_FINAL;
-    virtual double          GetNoDataValue( int * ) CPL_FINAL;
-    virtual CPLErr          SetNoDataValue( double ) CPL_FINAL;
-    virtual CPLErr DeleteNoDataValue() CPL_FINAL;
+    virtual GDALColorInterp GetColorInterpretation() override /*CPL_FINAL*/;
+    virtual GDALColorTable *GetColorTable() override /*CPL_FINAL*/;
+    virtual CPLErr          SetColorTable( GDALColorTable * ) override CPL_FINAL;
+    virtual double          GetNoDataValue( int * ) override CPL_FINAL;
+    virtual CPLErr          SetNoDataValue( double ) override CPL_FINAL;
+    virtual CPLErr DeleteNoDataValue() override CPL_FINAL;
 
-    virtual double GetOffset( int *pbSuccess = NULL ) CPL_FINAL;
-    virtual CPLErr SetOffset( double dfNewValue ) CPL_FINAL;
-    virtual double GetScale( int *pbSuccess = NULL ) CPL_FINAL;
-    virtual CPLErr SetScale( double dfNewValue ) CPL_FINAL;
-    virtual const char* GetUnitType() CPL_FINAL;
-    virtual CPLErr SetUnitType( const char *pszNewValue ) CPL_FINAL;
-    virtual CPLErr SetColorInterpretation( GDALColorInterp ) CPL_FINAL;
+    virtual double GetOffset( int *pbSuccess = NULL ) override CPL_FINAL;
+    virtual CPLErr SetOffset( double dfNewValue ) override CPL_FINAL;
+    virtual double GetScale( int *pbSuccess = NULL ) override CPL_FINAL;
+    virtual CPLErr SetScale( double dfNewValue ) override CPL_FINAL;
+    virtual const char* GetUnitType() override CPL_FINAL;
+    virtual CPLErr SetUnitType( const char *pszNewValue ) override CPL_FINAL;
+    virtual CPLErr SetColorInterpretation( GDALColorInterp ) override CPL_FINAL;
 
-    virtual char      **GetMetadataDomainList() CPL_FINAL;
-    virtual CPLErr  SetMetadata( char **, const char * = "" ) CPL_FINAL;
-    virtual char  **GetMetadata( const char * pszDomain = "" ) CPL_FINAL;
+    virtual char      **GetMetadataDomainList() override CPL_FINAL;
+    virtual CPLErr  SetMetadata( char **, const char * = "" ) override CPL_FINAL;
+    virtual char  **GetMetadata( const char * pszDomain = "" ) override CPL_FINAL;
     virtual CPLErr  SetMetadataItem( const char*, const char*,
-                                     const char* = "" ) CPL_FINAL;
+                                     const char* = "" ) override CPL_FINAL;
     virtual const char *GetMetadataItem(
-        const char * pszName, const char * pszDomain = "" ) CPL_FINAL;
-    virtual int    GetOverviewCount() CPL_FINAL;
-    virtual GDALRasterBand *GetOverview( int ) CPL_FINAL;
+        const char * pszName, const char * pszDomain = "" ) override CPL_FINAL;
+    virtual int    GetOverviewCount()  override CPL_FINAL;
+    virtual GDALRasterBand *GetOverview( int ) override CPL_FINAL;
 
-    virtual GDALRasterBand *GetMaskBand() CPL_FINAL;
-    virtual int             GetMaskFlags() CPL_FINAL;
-    virtual CPLErr          CreateMaskBand( int nFlags ) CPL_FINAL;
+    virtual GDALRasterBand *GetMaskBand() override CPL_FINAL;
+    virtual int             GetMaskFlags() override CPL_FINAL;
+    virtual CPLErr          CreateMaskBand( int nFlags )  override CPL_FINAL;
 
     virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                int *pnPixelSpace,
                                                GIntBig *pnLineSpace,
-                                               char **papszOptions ) CPL_FINAL;
+                                               char **papszOptions )  override CPL_FINAL;
 
     virtual CPLErr  GetHistogram(
         double dfMin, double dfMax,
         int nBuckets, GUIntBig * panHistogram,
         int bIncludeOutOfRange, int bApproxOK,
-        GDALProgressFunc, void *pProgressData ) CPL_FINAL;
+        GDALProgressFunc, void *pProgressData )  override CPL_FINAL;
 
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                         int *pnBuckets,
                                         GUIntBig ** ppanHistogram,
                                         int bForce,
                                         GDALProgressFunc,
-                                        void *pProgressData) CPL_FINAL;
+                                        void *pProgressData)  override CPL_FINAL;
 };
 
 /************************************************************************/
@@ -1338,16 +1404,11 @@ public:
         {
             while( nSeekForward > 0 )
             {
-#if HAVE_CXX11
-                // If size_t is smaller than vsi_l_offset, possible trouble.
-                static_assert(
-                    sizeof(size_t) >= sizeof(vsi_l_offset),
-                    "size_t must be the same size or bigger than vsi_l_offset");
-#endif
-                size_t nToRead = static_cast<size_t>(
-                    std::min(nTempBufferSize,
-                             static_cast<size_t>(nSeekForward)));
-                if( VSIFReadL(pTempBuffer, nToRead, 1, fp) != 1 )
+                vsi_l_offset nToRead = nSeekForward;
+                if( nToRead > nTempBufferSize )
+                    nToRead = nTempBufferSize;
+                if( VSIFReadL(pTempBuffer, static_cast<size_t>(nToRead),
+                              1, fp) != 1 )
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "Cannot seek to block %d", nBlockId);
@@ -2388,7 +2449,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
             const int nYOffsetInBlock = nSrcLine % nBlockYSize;
             const int nUsedBlockHeight =
                 std::min( nBufYSize - y,
-                          static_cast<int>(nBlockYSize) - nYOffsetInBlock );
+                          nBlockYSize - nYOffsetInBlock );
 
             int nBlockXOff = nXOff / nBlockXSize;
             int nXOffsetInBlock = nXOff % nBlockXSize;
@@ -2399,7 +2460,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
             {
                 const toff_t nCurOffset = panOffsets[nBlockId];
                 const int nUsedBlockWidth =
-                    std::min( static_cast<int>(nBlockXSize) - nXOffsetInBlock,
+                    std::min( nBlockXSize - nXOffsetInBlock,
                               nBufXSize - x );
 
                 if( nCurOffset == 0 )
@@ -2408,7 +2469,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                     for( int k = 0; k < nUsedBlockHeight; ++k )
                     {
                         GByte* pabyLocalData =
-                            pabyData + (y+k) * nLineSpace + x * nPixelSpace;
+                            pabyData + (y + k) * nLineSpace + x * nPixelSpace;
                         for( int iBand = 0; iBand < nBandCount; ++iBand )
                         {
                             GByte* pabyLocalDataBand =
@@ -2428,7 +2489,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         nYOffsetInBlock * nBlockXSize * nBandsPerBlockDTSize;
                     const GByte* pabyLocalSrcDataK0 = oFetcher.FetchBytes(
                             nCurOffset + nByteOffsetInBlock,
-                            static_cast<int>(nBlockXSize) *
+                            nBlockXSize *
                             nUsedBlockHeight * nBandsPerBlock,
                             nDTSize, bIsByteSwapped, bIsComplex, nBlockId);
                     if( pabyLocalSrcDataK0 == NULL )
@@ -2437,7 +2498,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                     for( int k = 0; k < nUsedBlockHeight; ++k )
                     {
                         GByte* pabyLocalData =
-                            pabyData + (y+k) * nLineSpace + x * nPixelSpace;
+                            pabyData + (y + k) * nLineSpace + x * nPixelSpace;
                         const GByte* pabyLocalSrcData =
                             pabyLocalSrcDataK0 +
                             (k * nBlockXSize + nXOffsetInBlock) *
@@ -2500,7 +2561,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                 const int nYOffsetInBlock = nSrcLine % nBlockYSize;
                 const int nUsedBlockHeight =
                     std::min( nBufYSize - y,
-                              static_cast<int>(nBlockYSize) - nYOffsetInBlock);
+                              nBlockYSize - nYOffsetInBlock);
 
                 int nBlockXOff = nXOff / nBlockXSize;
                 int nXOffsetInBlock = nXOff % nBlockXSize;
@@ -2521,7 +2582,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                     const toff_t nCurOffset = panOffsets[nBlockId];
                     const int nUsedBlockWidth =
                         std::min(
-                            static_cast<int>(nBlockXSize) - nXOffsetInBlock,
+                            nBlockXSize - nXOffsetInBlock,
                             nBufXSize - x);
 
                     if( nCurOffset == 0 )
@@ -2530,7 +2591,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         for( int k = 0; k < nUsedBlockHeight; ++k )
                         {
                             GByte* pabyLocalData =
-                                pabyData + (y+k) * nLineSpace + x * nPixelSpace;
+                                pabyData + (y + k) * nLineSpace + x * nPixelSpace;
 
                             GDALCopyWords(
                                 &dfNoData, GDT_Float64, 0,
@@ -2547,7 +2608,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         const GByte* pabyLocalSrcDataK0 =
                             oFetcher.FetchBytes(
                                 nCurOffset + nByteOffsetInBlock,
-                                static_cast<int>(nBlockXSize) *
+                                nBlockXSize *
                                 nUsedBlockHeight * nBandsPerBlock,
                                 nDTSize, bIsByteSwapped, bIsComplex, nBlockId);
                         if( pabyLocalSrcDataK0 == NULL )
@@ -2566,7 +2627,8 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         for( int k = 0; k < nUsedBlockHeight; ++k )
                         {
                             GByte* pabyLocalData =
-                                pabyData + (y+k) * nLineSpace + x * nPixelSpace;
+                                pabyData + (y + k) * nLineSpace +
+                                x * nPixelSpace;
                             const GByte* pabyLocalSrcData =
                                 pabyLocalSrcDataK0 +
                                 (k * nBlockXSize + nXOffsetInBlock) *
@@ -2648,7 +2710,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         pabyLocalSrcDataStartLine =
                             oFetcher.FetchBytes(
                                 nCurOffset + nBaseByteOffsetInBlock,
-                                static_cast<int>(nBlockXSize) *
+                                nBlockXSize *
                                 nBandsPerBlock * nUsedBlockHeight,
                                 nDTSize,
                                 bIsByteSwapped, bIsComplex, nBlockId);
@@ -2664,7 +2726,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                     for( int k = 0; k < ychunk; ++k )
                     {
                         GByte* const pabyLocalData =
-                            pabyData + (y+k) * nLineSpace + x * nPixelSpace;
+                            pabyData + (y + k) * nLineSpace + x * nPixelSpace;
                         for( int iBand = 0; iBand < nBandCount; ++iBand )
                         {
                             GDALCopyWords(
@@ -2814,7 +2876,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             pabyLocalSrcDataStartLine =
                                 oFetcher.FetchBytes(
                                     nCurOffset + nBaseByteOffsetInBlock,
-                                    static_cast<int>(nBlockXSize) *
+                                    nBlockXSize *
                                     nBandsPerBlock * nUsedBlockHeight,
                                     nDTSize,
                                     bIsByteSwapped, bIsComplex, nBlockId);
@@ -2841,7 +2903,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         for( int k = 0; k < ychunk; ++k )
                         {
                             GByte* const pabyLocalData =
-                                pabyData + (y+k) * nLineSpace + x * nPixelSpace;
+                                pabyData + (y + k) * nLineSpace + x * nPixelSpace;
 
                             GDALCopyWords( &dfNoData, GDT_Float64, 0,
                                            pabyLocalData, eBufType, 0,
@@ -2935,7 +2997,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         const toff_t nCurOffset = panOffsets[nBlockId];
                         const int nUsedBlockWidth =
                             std::min(
-                                static_cast<int>(nBlockXSize) - nXOffsetInBlock,
+                                nBlockXSize - nXOffsetInBlock,
                                 nBufXSize - x);
 
                         int nIters = nUsedBlockWidth;
@@ -3057,7 +3119,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                 pabyLocalSrcDataStartLine =
                                     oFetcher.FetchBytes(
                                         nCurOffset + nBaseByteOffsetInBlock,
-                                        static_cast<int>(nBlockXSize) *
+                                        nBlockXSize *
                                         nBandsPerBlock,
                                         nDTSize,
                                         bIsByteSwapped, bIsComplex, nBlockId);
@@ -3237,7 +3299,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                     if( nPlanarConfig == PLANARCONFIG_CONTIG )
                     {
                         REACHED(12);
-                        nBaseByteOffsetInBlock += (nBand-1) * nDTSize;
+                        nBaseByteOffsetInBlock += (nBand - 1) * nDTSize;
                     }
                     else
                     {
@@ -3269,8 +3331,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             const toff_t nCurOffset = panOffsets[nBlockId];
                             const int nUsedBlockWidth =
                                 std::min(
-                                    static_cast<int>(nBlockXSize) -
-                                    nXOffsetInBlock,
+                                    nBlockXSize - nXOffsetInBlock,
                                     nBufXSize - x );
                             int nIters = nUsedBlockWidth;
 
@@ -3368,8 +3429,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                     pabyLocalSrcDataStartLine =
                                         oFetcher.FetchBytes(
                                             nCurOffset + nBaseByteOffsetInBlock,
-                                            static_cast<int>(nBlockXSize) *
-                                            nBandsPerBlock,
+                                            nBlockXSize * nBandsPerBlock,
                                             nDTSize,
                                             bIsByteSwapped,
                                             bIsComplex,
@@ -3456,7 +3516,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             (nYOffsetInBlock * nBlockXSize + nXOff) *
                             nBandsPerBlockDTSize;
                         if( nPlanarConfig == PLANARCONFIG_CONTIG )
-                            nBaseByteOffsetInBlock += (nBand-1) * nDTSize;
+                            nBaseByteOffsetInBlock += (nBand - 1) * nDTSize;
 
                         GByte* pabyLocalData = pabyData + y * nLineSpace;
                         if( bNoXResamplingNoTypeChange &&
@@ -3466,7 +3526,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             if( !oFetcher.FetchBytes(
                                 pabyLocalData,
                                 nCurOffset + nBaseByteOffsetInBlock,
-                                (nXSize-1) * nBandsPerBlock + 1, nDTSize,
+                                (nXSize - 1) * nBandsPerBlock + 1, nDTSize,
                                 bIsByteSwapped, bIsComplex, nBlockId) )
                             {
                                 return CE_Failure;
@@ -3476,7 +3536,7 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                         {
                             const GByte* pabyLocalSrcData = oFetcher.FetchBytes(
                                 nCurOffset + nBaseByteOffsetInBlock,
-                                (nXSize-1) * nBandsPerBlock + 1, nDTSize,
+                                (nXSize - 1) * nBandsPerBlock + 1, nDTSize,
                                 bIsByteSwapped, bIsComplex, nBlockId);
                             if( pabyLocalSrcData == NULL )
                                 return CE_Failure;
@@ -3974,7 +4034,7 @@ int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
                 iX + iY * nBlocksPerRow;
             int nBlockId = nBlockIdBand0;
             if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
-                nBlockId = nBlockIdBand0 + (nBand-1) * poGDS->nBlocksPerBand;
+                nBlockId = nBlockIdBand0 + (nBand - 1) * poGDS->nBlocksPerBand;
             vsi_l_offset nOffset = 0;
             vsi_l_offset nLength = 0;
             bool bHasData = false;
@@ -4006,10 +4066,17 @@ int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
             }
             if( bHasData )
             {
+                const int nXBlockRight =
+                    ( iX * nBlockXSize > INT_MAX - nBlockXSize ) ? INT_MAX :
+                    (iX + 1) * nBlockXSize;
+                const int nYBlockBottom =
+                    ( iY * nBlockYSize > INT_MAX - nBlockYSize ) ? INT_MAX :
+                    (iY + 1) * nBlockYSize;
+
                 nPixelsData +=
-                    (std::min( (iX + 1) * nBlockXSize, nXOff + nXSize ) -
+                    (std::min( nXBlockRight, nXOff + nXSize ) -
                      std::max( iX * nBlockXSize, nXOff )) *
-                    (std::min( (iY + 1) * nBlockYSize, nYOff + nYSize ) -
+                    (std::min( nYBlockBottom, nYOff + nYSize ) -
                      std::max( iY * nBlockYSize, nYOff ));
                 nStatus |= GDAL_DATA_COVERAGE_STATUS_DATA;
             }
@@ -4055,7 +4122,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nBlockXOff + nBlockYOff * nBlocksPerRow;
     int nBlockId = nBlockIdBand0;
     if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
-        nBlockId = nBlockIdBand0 + (nBand-1) * poGDS->nBlocksPerBand;
+        nBlockId = nBlockIdBand0 + (nBand - 1) * poGDS->nBlocksPerBand;
 
 /* -------------------------------------------------------------------- */
 /*      The bottom most partial tiles and strips are sometimes only     */
@@ -4064,10 +4131,12 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     int nBlockReqSize = nBlockBufSize;
 
-    if( (nBlockYOff+1) * nBlockYSize > nRasterYSize )
+    if( nBlockYOff * nBlockYSize > nRasterYSize - nBlockYSize )
     {
         nBlockReqSize = (nBlockBufSize / nBlockYSize)
-            * (nBlockYSize - (((nBlockYOff+1) * nBlockYSize) % nRasterYSize));
+            * (nBlockYSize - static_cast<int>(
+                (static_cast<GIntBig>(nBlockYOff + 1) * nBlockYSize)
+                    % nRasterYSize));
     }
 
     poGDS->WaitCompletionForBlock(nBlockId);
@@ -4259,7 +4328,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         || poGDS->nBands == 1 )
     {
         const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow
-            + (nBand-1) * poGDS->nBlocksPerBand;
+            + (nBand - 1) * poGDS->nBlocksPerBand;
 
         const CPLErr eErr =
             poGDS->WriteEncodedTileOrStrip(nBlockId, pImage, true);
@@ -4286,11 +4355,11 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         bAllBlocksDirty = true;
         for( int iBand = 0; iBand < nBands; ++iBand )
         {
-            if( iBand+1 != nBand )
+            if( iBand + 1 != nBand )
             {
                 apoBlocks[iBand] =
                     reinterpret_cast<GTiffRasterBand *>(
-                        poGDS->GetRasterBand( iBand+1 ))
+                        poGDS->GetRasterBand( iBand + 1 ))
                             ->TryGetLockedBlockRef( nBlockXOff, nBlockYOff );
 
                 if( apoBlocks[iBand] == NULL )
@@ -4343,7 +4412,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         const GByte *pabyThisImage = NULL;
         GDALRasterBlock *poBlock = NULL;
 
-        if( iBand+1 == nBand )
+        if( iBand + 1 == nBand )
         {
             pabyThisImage = static_cast<GByte *>( pImage );
         }
@@ -4353,7 +4422,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 poBlock = apoBlocks[iBand];
             else
                 poBlock = reinterpret_cast<GTiffRasterBand *>(
-                    poGDS->GetRasterBand( iBand+1 ))
+                    poGDS->GetRasterBand( iBand + 1 ))
                         ->TryGetLockedBlockRef( nBlockXOff, nBlockYOff );
 
             if( poBlock == NULL )
@@ -4494,6 +4563,11 @@ const char* GTiffRasterBand::GetUnitType()
 
 {
     poGDS->LoadGeoreferencingAndPamIfNeeded();
+    if( osUnitType.empty() )
+    {
+        poGDS->LookForProjection();
+        return poGDS->m_osVertUnit.c_str();
+    }
 
     return osUnitType.c_str();
 }
@@ -4600,7 +4674,7 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
             void* pJPEGTable = NULL;
             if( TIFFGetField( poGDS->hTIFF, TIFFTAG_JPEGTABLES,
                               &nJPEGTableSize, &pJPEGTable ) != 1 ||
-                pJPEGTable == NULL || static_cast<int>(nJPEGTableSize) <= 0 )
+                pJPEGTable == NULL || nJPEGTableSize > INT_MAX )
             {
                 return NULL;
             }
@@ -4610,6 +4684,15 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
             CPLFree(pszHex);
 
             return pszReturn;
+        }
+
+        if( EQUAL(pszName, "IFD_OFFSET") )
+        {
+            if( !poGDS->SetDirectory() )
+                return NULL;
+
+            return CPLSPrintf( CPL_FRMT_GUIB,
+                               static_cast<GUIntBig>(poGDS->nDirOffset) );
         }
 
         if( sscanf( pszName, "BLOCK_OFFSET_%d_%d",
@@ -4629,7 +4712,7 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
             int nBlockId = nBlockYOff * nBlocksPerRow + nBlockXOff;
             if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
             {
-                nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
+                nBlockId += (nBand - 1) * poGDS->nBlocksPerBand;
             }
 
             vsi_l_offset nOffset = 0;
@@ -4658,7 +4741,7 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
             int nBlockId = nBlockYOff * nBlocksPerRow + nBlockXOff;
             if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
             {
-                nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
+                nBlockId += (nBand - 1) * poGDS->nBlocksPerBand;
             }
 
             vsi_l_offset nByteCount = 0;
@@ -5308,8 +5391,8 @@ class GTiffSplitBand CPL_FINAL : public GTiffRasterBand
              GTiffSplitBand( GTiffDataset *, int );
     virtual ~GTiffSplitBand() {};
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -5383,7 +5466,7 @@ CPLErr GTiffSplitBand::IReadBlock( int /* nBlockXOff */, int nBlockYOff,
                 poGDS->pabyBlockBuf ? poGDS->pabyBlockBuf : pImage,
                 poGDS->nLastLineRead,
                 (poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE) ?
-                 static_cast<uint16>(nBand-1) : 0 ) == -1
+                 static_cast<uint16>(nBand - 1) : 0 ) == -1
             && !poGDS->bIgnoreReadErrors )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -5438,10 +5521,10 @@ class GTiffRGBABand CPL_FINAL : public GTiffRasterBand
                    GTiffRGBABand( GTiffDataset *, int );
     virtual ~GTiffRGBABand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/
@@ -5502,12 +5585,22 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         if( TIFFIsTiled( poGDS->hTIFF ) )
         {
+#if defined(INTERNAL_LIBTIFF) || TIFFLIB_VERSION > 20161119
+            if( TIFFReadRGBATileExt(
+                   poGDS->hTIFF,
+                   nBlockXOff * nBlockXSize,
+                   nBlockYOff * nBlockYSize,
+                   reinterpret_cast<uint32 *>(poGDS->pabyBlockBuf),
+                   !poGDS->bIgnoreReadErrors) == 0
+                && !poGDS->bIgnoreReadErrors )
+#else
             if( TIFFReadRGBATile(
                    poGDS->hTIFF,
                    nBlockXOff * nBlockXSize,
                    nBlockYOff * nBlockYSize,
-                   reinterpret_cast<uint32 *>(poGDS->pabyBlockBuf)) == -1
+                   reinterpret_cast<uint32 *>(poGDS->pabyBlockBuf)) == 0
                 && !poGDS->bIgnoreReadErrors )
+#endif
             {
                 // Once TIFFError() is properly hooked, this can go away.
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -5520,11 +5613,20 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
         else
         {
+#if defined(INTERNAL_LIBTIFF) || TIFFLIB_VERSION > 20161119
+            if( TIFFReadRGBAStripExt(
+                   poGDS->hTIFF,
+                   nBlockId * nBlockYSize,
+                   reinterpret_cast<uint32 *>(poGDS->pabyBlockBuf),
+                   !poGDS->bIgnoreReadErrors) == 0
+                && !poGDS->bIgnoreReadErrors )
+#else
             if( TIFFReadRGBAStrip(
                    poGDS->hTIFF,
                    nBlockId * nBlockYSize,
-                   reinterpret_cast<uint32 *>(poGDS->pabyBlockBuf)) == -1
+                   reinterpret_cast<uint32 *>(poGDS->pabyBlockBuf)) == 0
                 && !poGDS->bIgnoreReadErrors )
+#endif
             {
                 // Once TIFFError() is properly hooked, this can go away.
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -5544,7 +5646,7 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     int nThisBlockYSize = nBlockYSize;
 
-    if( (nBlockYOff+1) * nBlockYSize > GetYSize()
+    if( nBlockYOff * nBlockYSize > GetYSize() - nBlockYSize
         && !TIFFIsTiled( poGDS->hTIFF ) )
         nThisBlockYSize = GetYSize() - nBlockYOff * nBlockYSize;
 
@@ -5602,8 +5704,8 @@ class GTiffOddBitsBand : public GTiffRasterBand
                    GTiffOddBitsBand( GTiffDataset *, int );
     virtual ~GTiffOddBitsBand() {};
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -5736,7 +5838,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
     if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
-        nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
+        nBlockId += (nBand - 1) * poGDS->nBlocksPerBand;
 
     // Only read content from disk in the CONTIG case.
     {
@@ -5810,7 +5912,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
         if( eDataType == GDT_Float32 && poGDS->nBitsPerSample == 16 )
         {
-            for( ; iPixel < nBlockYSize * nBlockXSize; iPixel ++ )
+            for( ; iPixel < nBlockYSize * nBlockXSize; iPixel++ )
             {
                 GUInt32 nInWord = static_cast<GUInt32 *>(pImage)[iPixel];
                 GUInt16 nHalf = FloatToHalf(nInWord, poGDS->bClipWarn);
@@ -5961,7 +6063,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         const GByte *pabyThisImage = NULL;
         GDALRasterBlock *poBlock = NULL;
 
-        if( iBand+1 == nBand )
+        if( iBand + 1 == nBand )
         {
             pabyThisImage = static_cast<GByte *>( pImage );
         }
@@ -5969,7 +6071,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         {
             poBlock =
                 reinterpret_cast<GTiffOddBitsBand *>(
-                    poGDS->GetRasterBand( iBand+1 ))
+                    poGDS->GetRasterBand( iBand + 1 ))
                         ->TryGetLockedBlockRef( nBlockXOff, nBlockYOff );
 
             if( poBlock == NULL )
@@ -5996,7 +6098,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
         if( eDataType == GDT_Float32 && poGDS->nBitsPerSample == 16 )
         {
-            for( ; iPixel < nBlockYSize * nBlockXSize; iPixel ++ )
+            for( ; iPixel < nBlockYSize * nBlockXSize; iPixel++ )
             {
                 GUInt32 nInWord = reinterpret_cast<const GUInt32 *>(
                                                         pabyThisImage)[iPixel];
@@ -6190,7 +6292,8 @@ static void ExpandPacked8ToByte1( const GByte * const CPL_RESTRICT pabySrc,
 // https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html#Integers-implementation
 static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
 {
-    return static_cast<GByte>(static_cast<signed char>(byVal << (7-nBit)) >> 7);
+    return
+        static_cast<GByte>(static_cast<signed char>(byVal << (7 - nBit)) >> 7);
 }
 #else
 // Portable way
@@ -6229,7 +6332,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
     if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
-        nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
+        nBlockId += (nBand - 1) * poGDS->nBlocksPerBand;
 
 /* -------------------------------------------------------------------- */
 /*      Handle the case of a strip in a writable file that doesn't      */
@@ -6263,7 +6366,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         for( int iLine = 0; iLine < nBlockYSize; ++iLine )
         {
-            int iSrcOffsetByte = ((nBlockXSize+7) >> 3) * iLine;
+            int iSrcOffsetByte = ((nBlockXSize + 7) >> 3) * iLine;
 
             if( !poGDS->bPromoteTo8Bits )
             {
@@ -6347,7 +6450,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
         {
             iPixelBitSkip = poGDS->nBands * poGDS->nBitsPerSample;
-            iBandBitOffset = (nBand-1) * poGDS->nBitsPerSample;
+            iBandBitOffset = (nBand - 1) * poGDS->nBitsPerSample;
         }
         else
         {
@@ -6401,7 +6504,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
         {
             iPixelByteSkip = (poGDS->nBands * poGDS->nBitsPerSample) / 8;
-            iBandByteOffset = ((nBand-1) * poGDS->nBitsPerSample) / 8;
+            iBandByteOffset = ((nBand - 1) * poGDS->nBitsPerSample) / 8;
         }
         else
         {
@@ -6445,7 +6548,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
         {
             iPixelBitSkip = poGDS->nBands * poGDS->nBitsPerSample;
-            iBandBitOffset = (nBand-1) * poGDS->nBitsPerSample;
+            iBandBitOffset = (nBand - 1) * poGDS->nBitsPerSample;
         }
         else
         {
@@ -6521,8 +6624,8 @@ class GTiffBitmapBand : public GTiffOddBitsBand
                    GTiffBitmapBand( GTiffDataset *, int );
     virtual       ~GTiffBitmapBand();
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
 };
 
 /************************************************************************/
@@ -6614,8 +6717,8 @@ class GTiffSplitBitmapBand CPL_FINAL : public GTiffBitmapBand
                    GTiffSplitBitmapBand( GTiffDataset *, int );
     virtual       ~GTiffSplitBitmapBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -7099,7 +7202,7 @@ int GTiffDataset::GetJPEGOverviewCount()
     if( TIFFGetField(hTIFF, TIFFTAG_JPEGTABLES, &nJPEGTableSize, &pJPEGTable) )
     {
         if( pJPEGTable == NULL ||
-            static_cast<int>(nJPEGTableSize) <= 0 ||
+            nJPEGTableSize > INT_MAX ||
             static_cast<GByte*>(pJPEGTable)[nJPEGTableSize-1] != 0xD9 )
         {
             return 0;
@@ -7119,7 +7222,7 @@ int GTiffDataset::GetJPEGOverviewCount()
     {
         papoJPEGOverviewDS[i] =
             new GTiffJPEGOverviewDS(
-                this, i+1,
+                this, i + 1,
                 pJPEGTable, static_cast<int>(nJPEGTableSize) );
     }
 
@@ -7235,15 +7338,11 @@ void GTiffDataset::FillEmptyTiles()
                         const int nYOff =
                             (iBlock / nBlocksPerRow) * nBlockYSize;
                         const int nXSize =
-                            (nXOff + static_cast<int>(nBlockXSize) <=
-                             nRasterXSize) ?
-                            static_cast<int>(nBlockXSize) :
-                            nRasterXSize - nXOff;
+                            (nXOff + nBlockXSize <= nRasterXSize) ?
+                            nBlockXSize : nRasterXSize - nXOff;
                         const int nYSize =
-                            (nYOff + static_cast<int>(nBlockYSize) <=
-                             nRasterYSize) ?
-                            static_cast<int>(nBlockYSize) :
-                            nRasterYSize - nYOff;
+                            (nYOff + nBlockYSize <= nRasterYSize) ?
+                            nBlockYSize : nRasterYSize - nYOff;
                         for( int iBand = 1; iBand <= nBands; ++iBand )
                         {
                             CPL_IGNORE_RET_VAL( GetRasterBand( iBand )->
@@ -7285,7 +7384,7 @@ void GTiffDataset::FillEmptyTiles()
                     if( !bOK )
                         break;
                 }
-                nCountBlocksToZero ++;
+                nCountBlocksToZero++;
             }
         }
         CPLFree( pabyData );
@@ -7322,7 +7421,7 @@ void GTiffDataset::FillEmptyTiles()
                     panByteOffsets[iBlock] = static_cast<toff_t>(
                                         nOffset + iBlockToZero * nBlockBytes);
                     panByteCounts[iBlock] = nBlockBytes;
-                    iBlockToZero ++;
+                    iBlockToZero++;
                 }
             }
             CPLAssert( iBlockToZero ==
@@ -7343,16 +7442,51 @@ void GTiffDataset::FillEmptyTiles()
 /*      Check all blocks, writing out data for uninitialized blocks.    */
 /* -------------------------------------------------------------------- */
 
+    GByte* pabyRaw = NULL;
+    vsi_l_offset nRawSize = 0;
     for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
     {
         if( panByteCounts[iBlock] == 0 )
         {
-            if( WriteEncodedTileOrStrip( iBlock, pabyData, FALSE ) != CE_None )
-                break;
+            if( pabyRaw == NULL )
+            {
+                if( WriteEncodedTileOrStrip( iBlock, pabyData, FALSE
+                                                                ) != CE_None )
+                    break;
+                vsi_l_offset nOffset = 0;
+                bool b = IsBlockAvailable( iBlock, &nOffset, &nRawSize);
+#ifdef DEBUG
+                CPLAssert(b);
+#else
+                CPL_IGNORE_RET_VAL(b);
+#endif
+                // When using compression, get back the compressed block
+                // so we can use the raw API to write it faster.
+                if( nCompression != COMPRESSION_NONE )
+                {
+                    pabyRaw = static_cast<GByte*>(
+                            VSI_MALLOC_VERBOSE(static_cast<int>(nRawSize)));
+                    if( pabyRaw )
+                    {
+                        VSILFILE* fp = VSI_TIFFGetVSILFile(
+                                                    TIFFClientdata( hTIFF ));
+                        const vsi_l_offset nCurOffset = VSIFTellL(fp);
+                        VSIFSeekL(fp, nOffset, SEEK_SET);
+                        VSIFReadL(pabyRaw, 1, static_cast<int>(nRawSize), fp);
+                        VSIFSeekL(fp, nCurOffset, SEEK_SET);
+                    }
+                }
+            }
+            else
+            {
+                WriteRawStripOrTile( iBlock, pabyRaw,
+                                     static_cast<int>(nRawSize) );
+            }
         }
     }
 
     CPLFree( pabyData );
+    VSIFree( pabyRaw );
 }
 
 /************************************************************************/
@@ -7389,17 +7523,18 @@ bool GTiffDataset::HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
     {
         if( !(IsEqualToNoData(pBuffer[iBand], noDataValue) &&
               IsEqualToNoData(
-                  pBuffer[static_cast<size_t>(nWidth-1) * nComponents + iBand],
+                  pBuffer[static_cast<size_t>(nWidth - 1) * nComponents +
+                          iBand],
                   noDataValue) &&
               IsEqualToNoData(
                   pBuffer[(static_cast<size_t>(nHeight-1)/2 * nLineStride +
                            (nWidth - 1)/2) * nComponents + iBand],
                   noDataValue) &&
               IsEqualToNoData(
-                  pBuffer[static_cast<size_t>(nHeight-1) * nLineStride *
+                  pBuffer[static_cast<size_t>(nHeight - 1) * nLineStride *
                           nComponents + iBand], noDataValue) &&
               IsEqualToNoData(
-                  pBuffer[(static_cast<size_t>(nHeight-1) * nLineStride +
+                  pBuffer[(static_cast<size_t>(nHeight - 1) * nLineStride +
                            nWidth - 1) * nComponents + iBand], noDataValue) ) )
         {
             return false;
@@ -7431,7 +7566,7 @@ bool GTiffDataset::HasOnlyNoData( const void* pBuffer, int nWidth, int nHeight,
     // once. Select the largest natural integer type for the architecture.
 #if SIZEOF_VOIDP == 8 || defined(__x86_64__)
     // We test __x86_64__ for x32 arch where SIZEOF_VOIDP == 4
-    typedef GUIntBig WordType;
+    typedef GUInt64 WordType;
 #else
     typedef unsigned int WordType;
 #endif
@@ -7653,19 +7788,19 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
 
         const int nRightPixelsToFill =
             iColumn == nBlocksPerRow - 1 ?
-            nBlockXSize * (iColumn+1) - nRasterXSize :
+            nBlockXSize * (iColumn + 1) - nRasterXSize :
             0;
         const int nBottomPixelsToFill =
             iRow == nBlocksPerColumn - 1 ?
-            nBlockYSize * (iRow+1) - nRasterYSize :
+            nBlockYSize * (iRow + 1) - nRasterYSize :
             0;
 
         // Fill out to the right.
-        const unsigned int iSrcX = nBlockXSize - nRightPixelsToFill - 1;
+        const int iSrcX = nBlockXSize - nRightPixelsToFill - 1;
 
-        for( unsigned int iX = iSrcX+1; iX < nBlockXSize; ++iX )
+        for( int iX = iSrcX + 1; iX < nBlockXSize; ++iX )
         {
-            for( int unsigned iY = 0; iY < nBlockYSize; ++iY )
+            for( int iY = 0; iY < nBlockYSize; ++iY )
             {
                 memcpy( pabyData + (nBlockXSize * iY + iX) * nComponents,
                         pabyData + (nBlockXSize * iY + iSrcX) * nComponents,
@@ -7674,8 +7809,8 @@ bool GTiffDataset::WriteEncodedTile( uint32 tile, GByte *pabyData,
         }
 
         // Now fill out the bottom.
-        const unsigned int iSrcY = nBlockYSize - nBottomPixelsToFill - 1;
-        for( unsigned int iY = iSrcY+1; iY < nBlockYSize; ++iY )
+        const int iSrcY = nBlockYSize - nBottomPixelsToFill - 1;
+        for( int iY = iSrcY + 1; iY < nBlockYSize; ++iY )
         {
             memcpy( pabyData + nBlockXSize * nComponents * iY,
                     pabyData + nBlockXSize * nComponents * iSrcY,
@@ -7746,8 +7881,7 @@ bool GTiffDataset::WriteEncodedStrip( uint32 strip, GByte* pabyData,
     const int nStripWithinBand = strip % nBlocksPerBand;
     int nStripHeight = nRowsPerStrip;
 
-    if( static_cast<int>((nStripWithinBand+1) * nRowsPerStrip) >
-        GetRasterYSize() )
+    if( nStripWithinBand * nStripHeight > GetRasterYSize() - nStripHeight )
     {
         nStripHeight = GetRasterYSize() - nStripWithinBand * nRowsPerStrip;
         cc = (cc / nRowsPerStrip) * nStripHeight;
@@ -8389,10 +8523,12 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, bool bReadFromDisk )
     const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     const int nBlockYOff = (nBlockId % nBlocksPerBand) / nBlocksPerRow;
 
-    if( static_cast<int>((nBlockYOff+1) * nBlockYSize) > nRasterYSize )
+    if( nBlockYOff * nBlockYSize > nRasterYSize - nBlockYSize )
     {
         nBlockReqSize = (nBlockBufSize / nBlockYSize)
-            * (nBlockYSize - (((nBlockYOff+1) * nBlockYSize) % nRasterYSize));
+            * (nBlockYSize - static_cast<int>(
+                (static_cast<GIntBig>(nBlockYOff + 1) * nBlockYSize) %
+                    nRasterYSize));
         memset( pabyBlockBuf, 0, nBlockBufSize );
     }
 
@@ -8503,8 +8639,7 @@ static void GTiffFillStreamableOffsetAndCount( TIFF* hTIFF, int nSize )
 /*      amount of valid data we have. (#2748)                           */
 /* -------------------------------------------------------------------- */
             int nStripWithinBand = i % nBlocksPerBand;
-            if( static_cast<int>((nStripWithinBand+1) * nRowsPerStrip) >
-               static_cast<int>(nYSize) )
+            if( nStripWithinBand * nRowsPerStrip > nYSize - nRowsPerStrip )
             {
                 cc = (cc / nRowsPerStrip)
                     * (nYSize - nStripWithinBand * nRowsPerStrip);
@@ -8662,7 +8797,7 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
         iStartBefore = -nBlockId;
     for( int i = iStartBefore;
          static_cast<uint32>(nBlockId + i) < nstrips &&
-         static_cast<GIntBig>(nOffset) + (i+1) * static_cast<int>(sizeofval) <=
+         static_cast<GIntBig>(nOffset) + (i + 1) * static_cast<int>(sizeofval) <=
          static_cast<GIntBig>(nOffsetEndPage);
          ++i )
     {
@@ -9088,23 +9223,14 @@ CPLErr GTiffDataset::CleanOverviews()
 /*                   RegisterNewOverviewDataset()                       */
 /************************************************************************/
 
-CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset)
+CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
+                                                int l_nJpegQuality)
 {
     GTiffDataset* poODS = new GTiffDataset();
-    poODS->nJpegQuality = nJpegQuality;
+    poODS->nJpegQuality = l_nJpegQuality;
     poODS->nZLevel = nZLevel;
     poODS->nLZMAPreset = nLZMAPreset;
-
-    if( nCompression == COMPRESSION_JPEG )
-    {
-        if( CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ) != NULL )
-        {
-            poODS->nJpegQuality =
-                atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
-        }
-        TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY,
-                        poODS->nJpegQuality );
-    }
+    poODS->nJpegTablesMode = nJpegTablesMode;
 
     if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, nOverviewOffset, false,
                             GA_Update ) != CE_None )
@@ -9260,6 +9386,22 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
         int nOXSize = poOvrBand->GetXSize();
         int nOYSize = poOvrBand->GetYSize();
 
+        int nOvrJpegQuality = nJpegQuality;
+        if( nCompression == COMPRESSION_JPEG &&
+            CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ) != NULL )
+        {
+            nOvrJpegQuality =
+                atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
+        }
+
+        CPLString osNoData; // don't move this in inner scope
+        const char* pszNoData = NULL;
+        if( bNoDataSet )
+        {
+            osNoData = GTiffFormatGDALNoDataTagValue(dfNoDataValue);
+            pszNoData = osNoData.c_str();
+        }
+
         toff_t nOverviewOffset =
                 GTIFFWriteDirectory(hTIFF, FILETYPE_REDUCEDIMAGE,
                                     nOXSize, nOYSize,
@@ -9272,12 +9414,17 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
                                     nPredictor,
                                     panRed, panGreen, panBlue,
                                     nExtraSamples, panExtraSampleValues,
-                                    osMetadata );
+                                    osMetadata,
+                                    nOvrJpegQuality >= 0 ?
+                                        CPLSPrintf("%d", nOvrJpegQuality) : NULL,
+                                    CPLSPrintf("%d", nJpegTablesMode),
+                                    pszNoData
+                                   );
 
         if( nOverviewOffset == 0 )
             eErr = CE_Failure;
         else
-            eErr = RegisterNewOverviewDataset(nOverviewOffset);
+            eErr = RegisterNewOverviewDataset(nOverviewOffset, nOvrJpegQuality);
     }
 
     CPLFree(panExtraSampleValues);
@@ -9334,7 +9481,8 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                         nMaskOvrCompression, PHOTOMETRIC_MASK,
                         SAMPLEFORMAT_UINT, PREDICTOR_NONE,
                         NULL, NULL, NULL, 0, NULL,
-                        "" );
+                        "",
+                        NULL, NULL, NULL );
 
                 if( nOverviewOffset == 0 )
                 {
@@ -9439,8 +9587,8 @@ CPLErr GTiffDataset::IBuildOverviews(
     if( nBandsIn != GetRasterCount() )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Generation of overviews in TIFF currently only"
-                  " supported when operating on all bands.  "
+                  "Generation of overviews in TIFF currently only "
+                  "supported when operating on all bands.  "
                   "Operation failed." );
         return CE_Failure;
     }
@@ -9624,6 +9772,22 @@ CPLErr GTiffDataset::IBuildOverviews(
                 (GetRasterYSize() + panOverviewList[i] - 1)
                 / panOverviewList[i];
 
+            int nOvrJpegQuality = nJpegQuality;
+            if( nCompression == COMPRESSION_JPEG &&
+                CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ) != NULL )
+            {
+                nOvrJpegQuality =
+                    atoi(CPLGetConfigOption("JPEG_QUALITY_OVERVIEW","75"));
+            }
+
+            CPLString osNoData; // don't move this in inner scope
+            const char* pszNoData = NULL;
+            if( bNoDataSet )
+            {
+                osNoData = GTiffFormatGDALNoDataTagValue(dfNoDataValue);
+                pszNoData = osNoData.c_str();
+            }
+
             const toff_t nOverviewOffset =
                 GTIFFWriteDirectory(
                     hTIFF, FILETYPE_REDUCEDIMAGE,
@@ -9634,12 +9798,17 @@ CPLErr GTiffDataset::IBuildOverviews(
                     nPredictor,
                     panRed, panGreen, panBlue,
                     nExtraSamples, panExtraSampleValues,
-                    osMetadata );
+                    osMetadata,
+                    nOvrJpegQuality >= 0 ?
+                                CPLSPrintf("%d", nOvrJpegQuality) : NULL,
+                    CPLSPrintf("%d", nJpegTablesMode),
+                    pszNoData );
 
             if( nOverviewOffset == 0 )
                 eErr = CE_Failure;
             else
-                eErr = RegisterNewOverviewDataset(nOverviewOffset);
+                eErr = RegisterNewOverviewDataset(nOverviewOffset,
+                                                  nOvrJpegQuality);
         }
         else
         {
@@ -10338,7 +10507,7 @@ static bool IsStandardColorInterpretation(GDALDataset* poSrcDS,
         for( int i = 0; i < poSrcDS->GetRasterCount(); ++i )
         {
             const GDALColorInterp eInterp =
-                poSrcDS->GetRasterBand(i+1)->GetColorInterpretation();
+                poSrcDS->GetRasterBand(i + 1)->GetColorInterpretation();
             if( !(eInterp == GCI_GrayIndex || eInterp == GCI_Undefined ||
                     (i > 0 && eInterp == GCI_AlphaBand)) )
             {
@@ -10782,18 +10951,28 @@ char** GTiffDatasetReadRPCTag(TIFF* hTIFF)
 }
 
 /************************************************************************/
+/*                  GTiffFormatGDALNoDataTagValue()                     */
+/************************************************************************/
+
+CPLString GTiffFormatGDALNoDataTagValue( double dfNoData )
+{
+    CPLString osVal;
+    if( CPLIsNan(dfNoData) )
+        osVal = "nan";
+    else
+        osVal.Printf("%.18g", dfNoData);
+    return osVal;
+}
+
+/************************************************************************/
 /*                         WriteNoDataValue()                           */
 /************************************************************************/
 
 void GTiffDataset::WriteNoDataValue( TIFF *l_hTIFF, double dfNoData )
 
 {
-    char szVal[400] = {};
-    if( CPLIsNan(dfNoData) )
-        strcpy(szVal, "nan");
-    else
-        CPLsnprintf(szVal, sizeof(szVal), "%.18g", dfNoData);
-    TIFFSetField( l_hTIFF, TIFFTAG_GDAL_NODATA, szVal );
+    CPLString osVal( GTiffFormatGDALNoDataTagValue(dfNoData) );
+    TIFFSetField( l_hTIFF, TIFFTAG_GDAL_NODATA, osVal.c_str() );
 }
 
 /************************************************************************/
@@ -10875,8 +11054,10 @@ bool GTiffDataset::SetDirectory( toff_t nNewOffset )
         // Now, reset zip and jpeg quality.
         if(nJpegQuality > 0 && nCompression == COMPRESSION_JPEG)
         {
+#ifdef DEBUG_VERBOSE
             CPLDebug( "GTiff", "Propagate JPEG_QUALITY(%d) in SetDirectory()",
                       nJpegQuality );
+#endif
             TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality);
         }
         if(nJpegTablesMode >= 0 && nCompression == COMPRESSION_JPEG)
@@ -10949,6 +11130,7 @@ int GTiffDataset::Identify( GDALOpenInfo *poOpenInfo )
 /*                            GTIFFErrorHandler()                       */
 /************************************************************************/
 
+namespace {
 class GTIFFErrorStruct CPL_FINAL
 {
   public:
@@ -10960,6 +11142,7 @@ class GTIFFErrorStruct CPL_FINAL
     GTIFFErrorStruct(CPLErr eErrIn, CPLErrorNum noIn, const char* msgIn) :
         type(eErrIn), no(noIn), msg(msgIn) {}
 };
+}
 
 static void CPL_STDCALL GTIFFErrorHandler( CPLErr eErr, CPLErrorNum no,
                                            const char* msg )
@@ -11034,14 +11217,22 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
         static_cast<GByte*>(
             VSIGetMemFileBuffer( osTmpFilename, &nDataLength, FALSE) );
     const bool bLittleEndian = (pabyBuffer[0] == 'I');
-    const bool bSwap =
-        (bLittleEndian && !CPL_IS_LSB) ||
-        (!bLittleEndian && CPL_IS_LSB);
+#if CPL_IS_LSB
+    const bool bSwap = !bLittleEndian;
+#else
+    const bool bSwap = bLittleEndian;
+#endif
     const bool bBigTIFF = pabyBuffer[2] == 43 || pabyBuffer[3] == 43;
     vsi_l_offset nMaxOffset = 0;
     if( bBigTIFF )
     {
-        GUIntBig nTmp = 0;
+#ifndef CPL_HAS_GINT64
+        CPLError(CE_Failure, CPLE_NotSupported, "BigTIFF not supported");
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
+        VSIUnlink(osTmpFilename);
+        return false;
+#else
+        GUInt64 nTmp = 0;
         memcpy(&nTmp, pabyBuffer + 8, 8);
         if( bSwap ) CPL_SWAP64PTR(&nTmp);
         if( nTmp != 16 )
@@ -11101,9 +11292,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
             {
                 memcpy(&nTmp, pabyBuffer + 24 + i * 20 + 12, 8);
                 if( bSwap ) CPL_SWAP64PTR(&nTmp);
-                if( nTmp >
-                    static_cast<GUIntBig>(
-                        (static_cast<GIntBig>(INT_MAX) << 32) - nTagSize) )
+                if( nTmp > GUINT64_MAX - nTagSize )
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Overflow with tag %d", nTag);
@@ -11115,6 +11304,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
                     nMaxOffset = nTmp + nTagSize;
             }
         }
+#endif
     }
     else
     {
@@ -11330,6 +11520,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nXSize > INT_MAX || nYSize > INT_MAX )
     {
         // GDAL only supports signed 32bit dimensions.
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too large image size: %u x %u",
+                 nXSize, nYSize);
         XTIFFClose( l_hTIFF );
         return NULL;
     }
@@ -11411,6 +11604,15 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->bStreamingIn = bStreaming;
     poDS->nCompression = l_nCompression;
 
+    // In the case of GDAL_DISABLE_READDIR_ON_OPEN = NO / EMPTY_DIR
+    if( poOpenInfo->AreSiblingFilesLoaded() &&
+        CSLCount( poOpenInfo->GetSiblingFiles() ) <= 1 )
+    {
+        poDS->oOvManager.TransferSiblingFiles( CSLDuplicate(
+                                            poOpenInfo->GetSiblingFiles() ) );
+        poDS->m_bHasGotSiblingFiles = true;
+    }
+
     if( poDS->OpenOffset( l_hTIFF, &(poDS->poActiveDS),
                           TIFFCurrentDirOffset(l_hTIFF), true,
                           poOpenInfo->eAccess,
@@ -11428,98 +11630,6 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         poDS->InitCreationOrOpenOptions(poOpenInfo->papszOpenOptions);
-    }
-
-    if( l_nCompression == COMPRESSION_JPEG && poOpenInfo->eAccess == GA_Update )
-    {
-        bool bHasQuantizationTable = false;
-        bool bHasHuffmanTable = false;
-        int nQuality = poDS->GuessJPEGQuality( bHasQuantizationTable,
-                                               bHasHuffmanTable );
-        if( nQuality > 0 )
-        {
-            CPLDebug("GTiff", "Guessed JPEG quality to be %d", nQuality);
-            poDS->nJpegQuality = nQuality;
-            TIFFSetField( l_hTIFF, TIFFTAG_JPEGQUALITY, nQuality );
-
-            // This means we will use the quantization tables from the
-            // JpegTables tag.
-            poDS->nJpegTablesMode = JPEGTABLESMODE_QUANT;
-        }
-        else
-        {
-            uint32 nJPEGTableSize = 0;
-            void* pJPEGTable = NULL;
-            if( !TIFFGetField( l_hTIFF, TIFFTAG_JPEGTABLES,
-                               &nJPEGTableSize, &pJPEGTable) )
-            {
-                toff_t *panByteCounts = NULL;
-                const int nBlockCount =
-                    poDS->nPlanarConfig == PLANARCONFIG_SEPARATE
-                    ? poDS->nBlocksPerBand * poDS->nBands
-                    : poDS->nBlocksPerBand;
-                if( TIFFIsTiled( l_hTIFF ) )
-                    TIFFGetField( l_hTIFF, TIFFTAG_TILEBYTECOUNTS,
-                                  &panByteCounts );
-                else
-                    TIFFGetField( l_hTIFF, TIFFTAG_STRIPBYTECOUNTS,
-                                  &panByteCounts );
-
-                bool bFoundNonEmptyBlock = false;
-                if( panByteCounts != NULL )
-                {
-                    for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
-                    {
-                        if( panByteCounts[iBlock] != 0 )
-                        {
-                            bFoundNonEmptyBlock = true;
-                            break;
-                        }
-                    }
-                }
-                if( bFoundNonEmptyBlock )
-                {
-                    CPLDebug("GTiff", "Could not guess JPEG quality. "
-                             "JPEG tables are missing, so going in "
-                             "TIFFTAG_JPEGTABLESMODE = 0/2 mode");
-                    // Write quantization tables in each strile.
-                    poDS->nJpegTablesMode = 0;
-                }
-            }
-            else
-            {
-                if( bHasQuantizationTable )
-                {
-                    // FIXME in libtiff: this is likely going to cause issues
-                    // since libtiff will reuse in each strile the number of
-                    // the global quantization table, which is invalid.
-                    CPLDebug(
-                        "GTiff", "Could not guess JPEG quality although JPEG "
-                        "quantization tables are present, so going in "
-                        "TIFFTAG_JPEGTABLESMODE = 0/2 mode" );
-                }
-                else
-                {
-                    CPLDebug("GTiff", "Could not guess JPEG quality since JPEG "
-                            "quantization tables are not present, so going in "
-                            "TIFFTAG_JPEGTABLESMODE = 0/2 mode");
-                }
-
-                // Write quantization tables in each strile.
-                poDS->nJpegTablesMode = 0;
-            }
-        }
-        if( bHasHuffmanTable )
-        {
-            // If there are Huffman tables in header use them, otherwise
-            // if we use optimized tables, libtiff will currently reuse
-            // the number of the Huffman tables of the header for the
-            // optimized version of each strile, which is illegal.
-            poDS->nJpegTablesMode |= JPEGTABLESMODE_HUFF;
-        }
-        if( poDS->nJpegTablesMode >= 0 )
-            TIFFSetField( l_hTIFF, TIFFTAG_JPEGTABLESMODE,
-                          poDS->nJpegTablesMode);
     }
 
     poDS->m_bLoadPam = true;
@@ -11648,20 +11758,30 @@ void GTiffDataset::LookForProjection()
         {
             pszProjection = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
 
-            // Should we simplify away vertical CS stuff?
-            if( STARTS_WITH_CI(pszProjection, "COMPD_CS")
-                && !CPLTestBool( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
-                                                    "NO") ) )
+            if( STARTS_WITH_CI(pszProjection, "COMPD_CS") )
             {
                 OGRSpatialReference oSRS;
 
-                CPLDebug( "GTiff", "Got COMPD_CS, but stripping it." );
                 char *pszWKT = pszProjection;
                 oSRS.importFromWkt( &pszWKT );
-                CPLFree( pszProjection );
 
-                oSRS.StripVertical();
-                oSRS.exportToWkt( &pszProjection );
+                char* pszVertUnit = NULL;
+                oSRS.GetTargetLinearUnits("COMPD_CS|VERT_CS", &pszVertUnit);
+                if( pszVertUnit && !EQUAL(pszVertUnit, "unknown") )
+                {
+                    m_osVertUnit = pszVertUnit;
+                }
+
+                // Should we simplify away vertical CS stuff?
+                if( !CPLTestBool( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
+                                                    "NO") ) )
+                {
+                    CPLDebug( "GTiff", "Got COMPD_CS, but stripping it." );
+
+                    oSRS.StripVertical();
+                    CPLFree( pszProjection );
+                    oSRS.exportToWkt( &pszProjection );
+                }
             }
         }
 
@@ -11723,7 +11843,7 @@ void GTiffDataset::AdjustLinearUnit( short UOMLength )
         if( !pstr1 || pstr1 - pstr >= 128 )
             return;
         char csUnitStr[128];
-        strncpy(csUnitStr, pstr, pstr1-pstr);
+        strncpy(csUnitStr, pstr, pstr1 - pstr);
         csUnitStr[pstr1-pstr] = '\0';
         const double csUnit = CPLAtof(csUnitStr);
         if( fabs(csUnit - 1.0) > 0.000001 )
@@ -11826,6 +11946,80 @@ void GTiffDataset::ApplyPamInfo()
             pszProjection = CPLStrdup(pszPamGCPProjection);
 
         bLookedForProjection = true;
+    }
+
+    if( m_nPAMGeorefSrcIndex >= 0 && nGCPCount == 0 )
+    {
+        CPLXMLNode *psValueAsXML = NULL;
+        CPLXMLNode *psGeodataXform = NULL;
+        char** papszXML = oMDMD.GetMetadata( "xml:ESRI" );
+        if (CSLCount(papszXML) == 1)
+        {
+            psValueAsXML = CPLParseXMLString( papszXML[0] );
+            if( psValueAsXML )
+                psGeodataXform = CPLGetXMLNode(psValueAsXML, "=GeodataXform");
+        }
+
+        const char* pszTIFFTagResUnit = GetMetadataItem("TIFFTAG_RESOLUTIONUNIT");
+        const char* pszTIFFTagXRes = GetMetadataItem("TIFFTAG_XRESOLUTION");
+        const char* pszTIFFTagYRes = GetMetadataItem("TIFFTAG_YRESOLUTION");
+        if (psGeodataXform && pszTIFFTagResUnit &&pszTIFFTagXRes &&
+            pszTIFFTagYRes && atoi(pszTIFFTagResUnit) == 2 )
+        {
+            CPLXMLNode* psSourceGCPs = CPLGetXMLNode(psGeodataXform,
+                                                        "SourceGCPs");
+            CPLXMLNode* psTargetGCPs = CPLGetXMLNode(psGeodataXform,
+                                                        "TargetGCPs");
+            if( psSourceGCPs && psTargetGCPs )
+            {
+                std::vector<double> adfSourceGCPs, adfTargetGCPs;
+                for( CPLXMLNode* psIter = psSourceGCPs->psChild;
+                                    psIter != NULL;
+                                    psIter = psIter->psNext )
+                {
+                    if( psIter->eType == CXT_Element &&
+                        EQUAL(psIter->pszValue, "Double") )
+                    {
+                        adfSourceGCPs.push_back(
+                            CPLAtof( CPLGetXMLValue(psIter, NULL, "") ) );
+                    }
+                }
+                for( CPLXMLNode* psIter = psTargetGCPs->psChild;
+                                    psIter != NULL;
+                                    psIter = psIter->psNext )
+                {
+                    if( psIter->eType == CXT_Element &&
+                        EQUAL(psIter->pszValue, "Double") )
+                    {
+                        adfTargetGCPs.push_back(
+                            CPLAtof( CPLGetXMLValue(psIter, NULL, "") ) );
+                    }
+                }
+                if( adfSourceGCPs.size() == adfTargetGCPs.size() &&
+                    (adfSourceGCPs.size() % 2) == 0 )
+                {
+                    nGCPCount = static_cast<int>(
+                                            adfSourceGCPs.size() / 2);
+                    pasGCPList = static_cast<GDAL_GCP *>(
+                            CPLCalloc(sizeof(GDAL_GCP), nGCPCount) );
+                    for( int i = 0; i < nGCPCount; ++i )
+                    {
+                        pasGCPList[i].pszId = CPLStrdup("");
+                        pasGCPList[i].pszInfo = CPLStrdup("");
+                        // The origin used is the bottom left corner,
+                        // and raw values are in inches!
+                        pasGCPList[i].dfGCPPixel = adfSourceGCPs[2*i] *
+                                                        CPLAtof(pszTIFFTagXRes);
+                        pasGCPList[i].dfGCPLine = nRasterYSize -
+                                adfSourceGCPs[2*i+1] * CPLAtof(pszTIFFTagYRes);
+                        pasGCPList[i].dfGCPX = adfTargetGCPs[2*i];
+                        pasGCPList[i].dfGCPY = adfTargetGCPs[2*i+1];
+                    }
+                }
+            }
+        }
+        if( psValueAsXML )
+            CPLDestroyXMLNode(psValueAsXML);
     }
 
 /* -------------------------------------------------------------------- */
@@ -12486,6 +12680,14 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     uint32 nYSize = 0;
     TIFFGetField( hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
     TIFFGetField( hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
+    if( nXSize > INT_MAX || nYSize > INT_MAX )
+    {
+        // GDAL only supports signed 32bit dimensions.
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too large image size: %u x %u",
+                 nXSize, nYSize);
+        return CE_Failure;
+    }
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 
@@ -12541,8 +12743,19 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
     if( TIFFIsTiled(hTIFF) )
     {
-        TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &(nBlockXSize) );
-        TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &(nBlockYSize) );
+        uint32 l_nBlockXSize = 0;
+        uint32 l_nBlockYSize = 0;
+        TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &(l_nBlockXSize) );
+        TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &(l_nBlockYSize) );
+        if( l_nBlockXSize > INT_MAX || l_nBlockYSize > INT_MAX )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too large block size: %u x %u",
+                     l_nBlockXSize, l_nBlockYSize);
+            return CE_Failure;
+        }
+        nBlockXSize = static_cast<int>(l_nBlockXSize);
+        nBlockYSize = static_cast<int>(l_nBlockYSize);
     }
     else
     {
@@ -12565,7 +12778,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     }
 
     nBlocksPerBand =
-        DIV_ROUND_UP(nYSize, nBlockYSize) * DIV_ROUND_UP(nXSize, nBlockXSize);
+        DIV_ROUND_UP(nRasterYSize, nBlockYSize) *
+        DIV_ROUND_UP(nRasterXSize, nBlockXSize);
 
 /* -------------------------------------------------------------------- */
 /*      Should we handle this using the GTiffBitmapBand?                */
@@ -12578,8 +12792,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
         // Lets treat large "one row" bitmaps using the scanline api.
         if( !TIFFIsTiled(hTIFF)
-            && nBlockYSize == nYSize
-            && nYSize > 2000
+            && nBlockYSize == nRasterYSize
+            && nRasterYSize > 2000
             // libtiff does not support reading JBIG files with
             // TIFFReadScanline().
             && nCompression != COMPRESSION_JBIG )
@@ -12609,6 +12823,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         if( TIFFRGBAImageOK( hTIFF, szMessage ) == 1 )
         {
             const char* pszSourceColorSpace = NULL;
+            nBands = 4;
             switch( nPhotometric )
             {
                 case PHOTOMETRIC_CIELAB:
@@ -12625,6 +12840,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                     break;
                 case PHOTOMETRIC_YCBCR:
                     pszSourceColorSpace = "YCbCr";
+                    nBands = 3; // probably true for other photometric values
                     break;
             }
             if( pszSourceColorSpace )
@@ -12632,7 +12848,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                                             pszSourceColorSpace,
                                             "IMAGE_STRUCTURE" );
             bTreatAsRGBA = true;
-            nBands = 4;
+
         }
         else
         {
@@ -12657,8 +12873,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
     if( !TIFFIsTiled(hTIFF)
         && nBitsPerSample == 8
-        && nBlockYSize == nYSize
-        && nYSize > 2000
+        && nBlockYSize == nRasterYSize
+        && nRasterYSize > 2000
         && !bTreatAsRGBA
         && CPLTestBool(CPLGetConfigOption("GDAL_ENABLE_TIFF_SPLIT", "YES")) )
     {
@@ -12841,17 +13057,17 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     for( int iBand = 0; iBand < nBands; ++iBand )
     {
         if( bTreatAsRGBA )
-            SetBand( iBand+1, new GTiffRGBABand( this, iBand+1 ) );
+            SetBand( iBand + 1, new GTiffRGBABand( this, iBand + 1 ) );
         else if( bTreatAsSplitBitmap )
-            SetBand( iBand+1, new GTiffSplitBitmapBand( this, iBand+1 ) );
+            SetBand( iBand + 1, new GTiffSplitBitmapBand( this, iBand + 1 ) );
         else if( bTreatAsSplit )
-            SetBand( iBand+1, new GTiffSplitBand( this, iBand+1 ) );
+            SetBand( iBand + 1, new GTiffSplitBand( this, iBand + 1 ) );
         else if( bTreatAsBitmap )
-            SetBand( iBand+1, new GTiffBitmapBand( this, iBand+1 ) );
+            SetBand( iBand + 1, new GTiffBitmapBand( this, iBand + 1 ) );
         else if( bTreatAsOdd )
-            SetBand( iBand+1, new GTiffOddBitsBand( this, iBand+1 ) );
+            SetBand( iBand + 1, new GTiffOddBitsBand( this, iBand + 1 ) );
         else
-            SetBand( iBand+1, new GTiffRasterBand( this, iBand+1 ) );
+            SetBand( iBand + 1, new GTiffRasterBand( this, iBand + 1 ) );
     }
 
     if( GetRasterBand(1)->GetRasterDataType() == GDT_Unknown )
@@ -13054,7 +13270,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
          nBitsPerSample != 32) )
     {
         for( int i = 0; i < nBands; ++i )
-            static_cast<GTiffRasterBand*>(GetRasterBand(i+1))->
+            static_cast<GTiffRasterBand*>(GetRasterBand(i + 1))->
                 oGTiffMDMD.SetMetadataItem(
                     "NBITS",
                     CPLString().Printf(
@@ -13190,6 +13406,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                 }
             }
         }
+    }
+
+    if( nCompression == COMPRESSION_JPEG && eAccess == GA_Update )
+    {
+        SetJPEGQualityAndTablesModeFromFile();
     }
 
     CPLAssert(m_bReadGeoTransform == bReadGeoTransform);
@@ -13465,7 +13686,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
             {
                 char szID[32] = {};
 
-                snprintf( szID, sizeof(szID), "%d", iGCP+1 );
+                snprintf( szID, sizeof(szID), "%d", iGCP + 1 );
                 pasGCPList[iGCP].pszId = CPLStrdup( szID );
                 pasGCPList[iGCP].pszInfo = CPLStrdup("");
                 pasGCPList[iGCP].dfGCPPixel = padfTiePoints[iGCP*6+0];
@@ -13536,7 +13757,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 poBand->bHaveOffsetScale = CPL_TO_BOOL(nHaveOffsetScale);
                 poBand->dfOffset = poBand->GDALPamRasterBand::GetOffset();
             }
-            if( poBand->osUnitType.size() == 0 )
+            if( poBand->osUnitType.empty() )
             {
                 const char* pszUnitType =
                     poBand->GDALPamRasterBand::GetUnitType();
@@ -13730,21 +13951,30 @@ void GTiffDataset::ScanDirectories()
             TIFFGetField( hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
             TIFFGetField( hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
 
-            uint16 nSPP = 0;
-            if( !TIFFGetField(hTIFF, TIFFTAG_SAMPLESPERPIXEL, &nSPP ) )
-                nSPP = 1;
+            if( nXSize > INT_MAX || nYSize > INT_MAX )
+            {
+                CPLDebug("GTiff",
+                         "Skipping directory with too large image: %u x %u",
+                         nXSize, nYSize);
+            }
+            else
+            {
+                uint16 nSPP = 0;
+                if( !TIFFGetField(hTIFF, TIFFTAG_SAMPLESPERPIXEL, &nSPP ) )
+                    nSPP = 1;
 
-            CPLString osName, osDesc;
-            osName.Printf( "SUBDATASET_%d_NAME=GTIFF_DIR:%d:%s",
-                           iDirIndex, iDirIndex, osFilename.c_str() );
-            osDesc.Printf( "SUBDATASET_%d_DESC=Page %d (%dP x %dL x %dB)",
-                           iDirIndex, iDirIndex,
-                           static_cast<int>(nXSize),
-                           static_cast<int>(nYSize),
-                           nSPP );
+                CPLString osName, osDesc;
+                osName.Printf( "SUBDATASET_%d_NAME=GTIFF_DIR:%d:%s",
+                            iDirIndex, iDirIndex, osFilename.c_str() );
+                osDesc.Printf( "SUBDATASET_%d_DESC=Page %d (%dP x %dL x %dB)",
+                            iDirIndex, iDirIndex,
+                            static_cast<int>(nXSize),
+                            static_cast<int>(nYSize),
+                            nSPP );
 
-            aosSubdatasets.AddString(osName);
-            aosSubdatasets.AddString(osDesc);
+                aosSubdatasets.AddString(osName);
+                aosSubdatasets.AddString(osDesc);
+            }
         }
 
         // Make sure we are stepping from the expected directory regardless
@@ -13841,7 +14071,8 @@ static int GTiffGetJpegQuality(char** papszOptions)
 static int GTiffGetJpegTablesMode(char** papszOptions)
 {
     return atoi(CSLFetchNameValueDef( papszOptions, "JPEGTABLESMODE",
-                                   "1" /* JPEGTABLESMODE_QUANT */));
+                                      CPLSPrintf("%d",
+                                                knGTIFFJpegTablesModeDefault)));
 }
 
 /************************************************************************/
@@ -13876,7 +14107,7 @@ void GTiffDataset::GetDiscardLsbOption(char** papszOptions)
             int nBits = atoi(papszTokens[0]);
             anMaskLsb.push_back(~((1 << nBits)-1));
             if( nBits > 1 )
-                anOffsetLsb.push_back(1 << (nBits-1));
+                anOffsetLsb.push_back(1 << (nBits - 1));
             else
                 anOffsetLsb.push_back(0);
         }
@@ -13889,7 +14120,7 @@ void GTiffDataset::GetDiscardLsbOption(char** papszOptions)
             int nBits = atoi(papszTokens[i]);
             anMaskLsb.push_back(~((1 << nBits)-1));
             if( nBits > 1 )
-                anOffsetLsb.push_back(1 << (nBits-1));
+                anOffsetLsb.push_back(1 << (nBits - 1));
             else
                 anOffsetLsb.push_back(0);
         }
@@ -14010,6 +14241,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Streaming related code                                          */
 /* -------------------------------------------------------------------- */
+    const CPLString osOriFilename(pszFilename);
     bool bStreaming =
         strcmp(pszFilename, "/vsistdout/") == 0 ||
         CPLFetchBool(papszParmList, "STREAMABLE_OUTPUT", false);
@@ -14083,6 +14315,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     if( l_nCompression == COMPRESSION_NONE &&
         dfUncompressedImageSize >= 1e9 &&
         !CPLFetchBool(papszParmList, "SPARSE_OK", false) &&
+        osOriFilename != "/vsistdout/" &&
+        osOriFilename != "/vsistdout_redirect/" &&
         CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")) )
     {
         GIntBig nFreeDiskSpace =
@@ -14394,6 +14628,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
             TIFFSetField( l_hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_YCBCR );
             nSamplesAccountedFor = 3;
+
+            // Explicitly register the subsampling so that JPEGFixupTags
+            // is a no-op (helps for cloud optimized geotiffs)
+            TIFFSetField( l_hTIFF, TIFFTAG_YCBCRSUBSAMPLING, 2, 2 );
         }
         else if( EQUAL( pszValue, "CIELAB" ))
         {
@@ -14510,11 +14748,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
     else
     {
-        const uint32 l_nRowsPerStrip =
+        const uint32 l_nRowsPerStrip = std::min(nYSize,
             l_nBlockYSize == 0
-            ? std::min(nYSize,
-                       static_cast<int>(TIFFDefaultStripSize(l_hTIFF,0)))
-            : l_nBlockYSize;
+            ? static_cast<int>(TIFFDefaultStripSize(l_hTIFF,0))
+            : l_nBlockYSize );
 
         TIFFSetField( l_hTIFF, TIFFTAG_ROWSPERSTRIP, l_nRowsPerStrip );
     }
@@ -14581,89 +14818,134 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     // the directory. This way we avoid a directory rewriting.
 #if defined(BIGTIFF_SUPPORT)
     if( l_nCompression == COMPRESSION_JPEG &&
-        !STARTS_WITH(pszFilename, "/vsimem/gtiffdataset_jpg_tmp_") &&
+        !STARTS_WITH(pszFilename, szJPEGGTiffDatasetTmpPrefix) &&
         CPLTestBool(
             CSLFetchNameValueDef(papszParmList, "WRITE_JPEGTABLE_TAG", "YES")) )
     {
-        CPLString osTmpFilenameIn;
-        osTmpFilenameIn.Printf("/vsimem/gtiffdataset_jpg_tmp_%p", l_hTIFF);
-        VSILFILE* fpTmp = NULL;
-        CPLString osTmp;
-        char** papszLocalParameters = NULL;
-        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
-                                               "COMPRESS", "JPEG");
-        papszLocalParameters =
-            CSLSetNameValue(
-                papszLocalParameters,
-                "JPEG_QUALITY",
-                CSLFetchNameValue(papszParmList, "JPEG_QUALITY") );
-        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
-                "PHOTOMETRIC", CSLFetchNameValue(papszParmList, "PHOTOMETRIC"));
-        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
-                                               "BLOCKYSIZE", "16");
-        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
-                "NBITS", CSLFetchNameValue(papszParmList, "NBITS"));
-        papszLocalParameters =
-            CSLSetNameValue(
-                papszLocalParameters,
-                "JPEGTABLESMODE",
-                CSLFetchNameValue(papszParmList, "JPEGTABLESMODE") );
-        TIFF* hTIFFTmp =
-            CreateLL( osTmpFilenameIn, 16, 16, (l_nBands <= 4) ? l_nBands : 1,
-                      eType, 0.0, papszLocalParameters, &fpTmp, osTmp );
-        CSLDestroy(papszLocalParameters);
-        if( hTIFFTmp )
-        {
-            uint16 l_nPhotometric = 0;
-            int nJpegTablesModeIn = 0;
-            TIFFGetField( hTIFFTmp, TIFFTAG_PHOTOMETRIC, &(l_nPhotometric) );
-            TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE,
-                          &nJpegTablesModeIn );
-            TIFFWriteCheck( hTIFFTmp, FALSE, "CreateLL" );
-            TIFFWriteDirectory( hTIFFTmp );
-            TIFFSetDirectory( hTIFFTmp, 0 );
-            // Now, reset quality and jpegcolormode.
-            if(l_nJpegQuality > 0)
-                TIFFSetField(hTIFFTmp, TIFFTAG_JPEGQUALITY, l_nJpegQuality);
-            if( l_nPhotometric == PHOTOMETRIC_YCBCR
-                && CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
-                                                    "YES") ) )
-            {
-                TIFFSetField( hTIFFTmp, TIFFTAG_JPEGCOLORMODE,
-                              JPEGCOLORMODE_RGB);
-            }
-            if( nJpegTablesModeIn >= 0 )
-                TIFFSetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE,
-                              nJpegTablesModeIn);
-
-            // TODO(schwehr): Explain all these literals.
-            GByte abyZeroData[(16*16*4*3)/2] = {};
-            int nBlockSize = 16 * 16 * ((l_nBands <= 4) ? l_nBands : 1);
-            if( l_nBitsPerSample == 12 )
-               nBlockSize = (nBlockSize * 3) / 2;
-            TIFFWriteEncodedStrip( hTIFFTmp, 0, abyZeroData, nBlockSize);
-
-            uint32 nJPEGTableSize = 0;
-            void* pJPEGTable = NULL;
-            if( TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLES, &nJPEGTableSize,
-                              &pJPEGTable) )
-                TIFFSetField( l_hTIFF, TIFFTAG_JPEGTABLES, nJPEGTableSize,
-                              pJPEGTable);
-
-            float *ref = NULL;
-            if( TIFFGetField(hTIFFTmp, TIFFTAG_REFERENCEBLACKWHITE, &ref) )
-                TIFFSetField(l_hTIFF, TIFFTAG_REFERENCEBLACKWHITE, ref);
-
-            XTIFFClose(hTIFFTmp);
-            CPL_IGNORE_RET_VAL(VSIFCloseL(fpTmp));
-        }
-        VSIUnlink(osTmpFilenameIn);
+        GTiffWriteJPEGTables( l_hTIFF,
+                              CSLFetchNameValue(papszParmList, "PHOTOMETRIC"),
+                              CSLFetchNameValue(papszParmList, "JPEG_QUALITY"),
+                              CSLFetchNameValue(papszParmList,
+                                                "JPEGTABLESMODE") );
     }
 #endif
 
     *pfpL = l_fpL;
 
     return l_hTIFF;
+}
+
+/************************************************************************/
+/*                      GTiffWriteJPEGTables()                          */
+/*                                                                      */
+/*      Sets the TIFFTAG_JPEGTABLES (and TIFFTAG_REFERENCEBLACKWHITE)   */
+/*      tags immediately, instead of relying on the TIFF JPEG codec     */
+/*      to write them when it starts compressing imagery. This avoids   */
+/*      an IFD rewrite at the end of the file.                          */
+/*      Must be used after having set TIFFTAG_SAMPLESPERPIXEL,          */
+/*      TIFFTAG_BITSPERSAMPLE.                                          */
+/************************************************************************/
+
+void GTiffWriteJPEGTables( TIFF* hTIFF,
+                           const char* pszPhotometric,
+                           const char* pszJPEGQuality,
+                           const char* pszJPEGTablesMode )
+{
+    // Would perhaps works with libtiff 3.X but didn't bother trying This trick
+    // creates a temporary in-memory file and fetches its JPEG tables so that
+    // we can directly set them, before tif_jpeg.c compute them at the first
+    // strip/tile writing, which is too late, since we have already crystalized
+    // the directory. This way we avoid a directory rewriting.
+#if defined(BIGTIFF_SUPPORT)
+    uint16 nBands = 0;
+    if( !TIFFGetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL,
+                        &nBands ) )
+        nBands = 1;
+
+    uint16 l_nBitsPerSample = 0;
+    if( !TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE,
+                        &(l_nBitsPerSample)) )
+        l_nBitsPerSample = 1;
+
+    CPLString osTmpFilenameIn;
+    osTmpFilenameIn.Printf("%s%p", szJPEGGTiffDatasetTmpPrefix, hTIFF);
+    VSILFILE* fpTmp = NULL;
+    CPLString osTmp;
+    char** papszLocalParameters = NULL;
+    const int nInMemImageWidth = 16;
+    const int nInMemImageHeight = 16;
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "COMPRESS", "JPEG" );
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "JPEG_QUALITY",
+                                            pszJPEGQuality );
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "PHOTOMETRIC", pszPhotometric );
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "BLOCKYSIZE",
+                                            CPLSPrintf("%u", nInMemImageHeight)
+                                          );
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "NBITS",
+                                            CPLSPrintf("%u", l_nBitsPerSample));
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "JPEGTABLESMODE",
+                                            pszJPEGTablesMode );
+
+    TIFF* hTIFFTmp = GTiffDataset::CreateLL(
+                    osTmpFilenameIn, nInMemImageWidth, nInMemImageHeight,
+                    (nBands <= 4) ? nBands : 1,
+                    (l_nBitsPerSample <= 8) ? GDT_Byte : GDT_UInt16, 0.0,
+                    papszLocalParameters, &fpTmp, osTmp );
+    CSLDestroy(papszLocalParameters);
+    if( hTIFFTmp )
+    {
+        uint16 l_nPhotometric = 0;
+        int nJpegTablesModeIn = 0;
+        TIFFGetField( hTIFFTmp, TIFFTAG_PHOTOMETRIC, &(l_nPhotometric) );
+        TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE,
+                        &nJpegTablesModeIn );
+        TIFFWriteCheck( hTIFFTmp, FALSE, "CreateLL" );
+        TIFFWriteDirectory( hTIFFTmp );
+        TIFFSetDirectory( hTIFFTmp, 0 );
+        // Now, reset quality and jpegcolormode.
+        const int l_nJpegQuality = pszJPEGQuality ? atoi(pszJPEGQuality) : 0;
+        if(l_nJpegQuality > 0)
+            TIFFSetField(hTIFFTmp, TIFFTAG_JPEGQUALITY, l_nJpegQuality);
+        if( l_nPhotometric == PHOTOMETRIC_YCBCR
+            && CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                                "YES") ) )
+        {
+            TIFFSetField( hTIFFTmp, TIFFTAG_JPEGCOLORMODE,
+                            JPEGCOLORMODE_RGB);
+        }
+        if( nJpegTablesModeIn >= 0 )
+            TIFFSetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE,
+                            nJpegTablesModeIn);
+
+        int nBlockSize = nInMemImageWidth * nInMemImageHeight *
+                                        ((nBands <= 4) ? nBands : 1);
+        if( l_nBitsPerSample == 12 )
+            nBlockSize = (nBlockSize * 3) / 2;
+        std::vector<GByte> abyZeroData( nBlockSize, 0 );
+        TIFFWriteEncodedStrip( hTIFFTmp, 0, &abyZeroData[0], nBlockSize);
+
+        uint32 nJPEGTableSize = 0;
+        void* pJPEGTable = NULL;
+        if( TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLES, &nJPEGTableSize,
+                            &pJPEGTable) )
+            TIFFSetField( hTIFF, TIFFTAG_JPEGTABLES, nJPEGTableSize,
+                            pJPEGTable);
+
+        float *ref = NULL;
+        if( TIFFGetField(hTIFFTmp, TIFFTAG_REFERENCEBLACKWHITE, &ref) )
+            TIFFSetField(hTIFF, TIFFTAG_REFERENCEBLACKWHITE, ref);
+
+        XTIFFClose(hTIFFTmp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTmp));
+    }
+    VSIUnlink(osTmpFilenameIn);
+#endif
 }
 
 /************************************************************************/
@@ -14675,7 +14957,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 static const GByte* GTIFFFindNextTable( const GByte* paby, GByte byMarker,
                                         int nLen, int* pnLenTable )
 {
-    for( int i = 0; i+1 < nLen; )
+    for( int i = 0; i + 1 < nLen; )
     {
         if( paby[i] != 0xFF )
             return NULL;
@@ -14685,7 +14967,7 @@ static const GByte* GTIFFFindNextTable( const GByte* paby, GByte byMarker,
             ++i;
             continue;
         }
-        if( i+2 >= nLen )
+        if( i + 2 >= nLen )
             return NULL;
         int nMarkerLen = paby[i+1] * 256 + paby[i+2];
         if( i+1+nMarkerLen >= nLen )
@@ -14836,6 +15118,102 @@ int GTiffDataset::GuessJPEGQuality( bool& bOutHasQuantizationTable,
     VSIUnlink(osTmpFilenameIn);
 
     return nRet;
+}
+
+/************************************************************************/
+/*               SetJPEGQualityAndTablesModeFromFile()                  */
+/************************************************************************/
+
+void GTiffDataset::SetJPEGQualityAndTablesModeFromFile()
+{
+    bool bHasQuantizationTable = false;
+    bool bHasHuffmanTable = false;
+    int nQuality = GuessJPEGQuality( bHasQuantizationTable,
+                                     bHasHuffmanTable );
+    if( nQuality > 0 )
+    {
+        CPLDebug("GTiff", "Guessed JPEG quality to be %d", nQuality);
+        nJpegQuality = nQuality;
+        TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nQuality );
+
+        // This means we will use the quantization tables from the
+        // JpegTables tag.
+        nJpegTablesMode = JPEGTABLESMODE_QUANT;
+    }
+    else
+    {
+        uint32 nJPEGTableSize = 0;
+        void* pJPEGTable = NULL;
+        if( !TIFFGetField( hTIFF, TIFFTAG_JPEGTABLES,
+                            &nJPEGTableSize, &pJPEGTable) )
+        {
+            toff_t *panByteCounts = NULL;
+            const int nBlockCount =
+                nPlanarConfig == PLANARCONFIG_SEPARATE
+                ? nBlocksPerBand * nBands
+                : nBlocksPerBand;
+            if( TIFFIsTiled( hTIFF ) )
+                TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS,
+                                &panByteCounts );
+            else
+                TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS,
+                                &panByteCounts );
+
+            bool bFoundNonEmptyBlock = false;
+            if( panByteCounts != NULL )
+            {
+                for( int iBlock = 0; iBlock < nBlockCount; ++iBlock )
+                {
+                    if( panByteCounts[iBlock] != 0 )
+                    {
+                        bFoundNonEmptyBlock = true;
+                        break;
+                    }
+                }
+            }
+            if( bFoundNonEmptyBlock )
+            {
+                CPLDebug("GTiff", "Could not guess JPEG quality. "
+                            "JPEG tables are missing, so going in "
+                            "TIFFTAG_JPEGTABLESMODE = 0/2 mode");
+                // Write quantization tables in each strile.
+                nJpegTablesMode = 0;
+            }
+        }
+        else
+        {
+            if( bHasQuantizationTable )
+            {
+                // FIXME in libtiff: this is likely going to cause issues
+                // since libtiff will reuse in each strile the number of
+                // the global quantization table, which is invalid.
+                CPLDebug(
+                    "GTiff", "Could not guess JPEG quality although JPEG "
+                    "quantization tables are present, so going in "
+                    "TIFFTAG_JPEGTABLESMODE = 0/2 mode" );
+            }
+            else
+            {
+                CPLDebug("GTiff", "Could not guess JPEG quality since JPEG "
+                        "quantization tables are not present, so going in "
+                        "TIFFTAG_JPEGTABLESMODE = 0/2 mode");
+            }
+
+            // Write quantization tables in each strile.
+            nJpegTablesMode = 0;
+        }
+    }
+    if( bHasHuffmanTable )
+    {
+        // If there are Huffman tables in header use them, otherwise
+        // if we use optimized tables, libtiff will currently reuse
+        // the number of the Huffman tables of the header for the
+        // optimized version of each strile, which is illegal.
+        nJpegTablesMode |= JPEGTABLESMODE_HUFF;
+    }
+    if( nJpegTablesMode >= 0 )
+        TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE,
+                        nJpegTablesMode);
 }
 
 /************************************************************************/
@@ -14995,7 +15373,9 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     // so that the end result can be memory mapped without knowledge of each
     // strip offset.
     if( CPLTestBool( CSLFetchNameValueDef( papszParmList,
-                              "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
+                              "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) ||
+         CPLTestBool( CSLFetchNameValueDef( papszParmList,
+                              "@WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
     {
         poDS->bWriteEmptyTiles = true;
     }
@@ -15054,12 +15434,12 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
             poDS->nBitsPerSample == 64 ||
             poDS->nBitsPerSample == 128)
         {
-            poDS->SetBand( iBand+1, new GTiffRasterBand( poDS, iBand+1 ) );
+            poDS->SetBand( iBand + 1, new GTiffRasterBand( poDS, iBand + 1 ) );
         }
         else
         {
-            poDS->SetBand( iBand+1, new GTiffOddBitsBand( poDS, iBand+1 ) );
-            poDS->GetRasterBand( iBand+1 )->
+            poDS->SetBand( iBand + 1, new GTiffOddBitsBand( poDS, iBand + 1 ) );
+            poDS->GetRasterBand( iBand + 1 )->
                 SetMetadataItem( "NBITS",
                                  CPLString().Printf("%d",poDS->nBitsPerSample),
                                  "IMAGE_STRUCTURE" );
@@ -15217,59 +15597,63 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
-    const int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
     double dfExtraSpaceForOverviews = 0;
-    if( nSrcOverviews != 0 &&
-        CPLFetchBool(papszOptions, "COPY_SRC_OVERVIEWS", false) )
+    if( CPLFetchBool(papszOptions, "COPY_SRC_OVERVIEWS", false) )
     {
-        for( int j = 1; j <= l_nBands; ++j )
+        const int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
+        if( nSrcOverviews )
         {
-            if( poSrcDS->GetRasterBand(j)->GetOverviewCount() != nSrcOverviews )
+            for( int j = 1; j <= l_nBands; ++j )
             {
-                CPLError(
-                    CE_Failure, CPLE_NotSupported,
-                    "COPY_SRC_OVERVIEWS cannot be used when the bands have "
-                    "not the same number of overview levels." );
-                CSLDestroy(papszCreateOptions);
-                return NULL;
+                if( poSrcDS->GetRasterBand(j)->GetOverviewCount() !=
+                                                        nSrcOverviews )
+                {
+                    CPLError(
+                        CE_Failure, CPLE_NotSupported,
+                        "COPY_SRC_OVERVIEWS cannot be used when the bands have "
+                        "not the same number of overview levels." );
+                    CSLDestroy(papszCreateOptions);
+                    return NULL;
+                }
+                for( int i = 0; i < nSrcOverviews; ++i )
+                {
+                    GDALRasterBand* poOvrBand =
+                        poSrcDS->GetRasterBand(j)->GetOverview(i);
+                    if( poOvrBand == NULL )
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_NotSupported,
+                            "COPY_SRC_OVERVIEWS cannot be used when one "
+                            "overview band is NULL." );
+                        CSLDestroy(papszCreateOptions);
+                        return NULL;
+                    }
+                    GDALRasterBand* poOvrFirstBand =
+                        poSrcDS->GetRasterBand(1)->GetOverview(i);
+                    if( poOvrBand->GetXSize() != poOvrFirstBand->GetXSize() ||
+                        poOvrBand->GetYSize() != poOvrFirstBand->GetYSize() )
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_NotSupported,
+                            "COPY_SRC_OVERVIEWS cannot be used when the "
+                            "overview bands have not the same dimensions "
+                            "among bands." );
+                        CSLDestroy(papszCreateOptions);
+                        return NULL;
+                    }
+                }
             }
+
             for( int i = 0; i < nSrcOverviews; ++i )
             {
-                GDALRasterBand* poOvrBand =
-                    poSrcDS->GetRasterBand(j)->GetOverview(i);
-                if( poOvrBand == NULL )
-                {
-                    CPLError(
-                        CE_Failure, CPLE_NotSupported,
-                        "COPY_SRC_OVERVIEWS cannot be used when one "
-                        "overview band is NULL." );
-                    CSLDestroy(papszCreateOptions);
-                    return NULL;
-                }
-                GDALRasterBand* poOvrFirstBand =
-                    poSrcDS->GetRasterBand(1)->GetOverview(i);
-                if( poOvrBand->GetXSize() != poOvrFirstBand->GetXSize() ||
-                    poOvrBand->GetYSize() != poOvrFirstBand->GetYSize() )
-                {
-                    CPLError(
-                        CE_Failure, CPLE_NotSupported,
-                        "COPY_SRC_OVERVIEWS cannot be used when the "
-                        "overview bands have not the same dimensions "
-                        "among bands." );
-                    CSLDestroy(papszCreateOptions);
-                    return NULL;
-                }
+                dfExtraSpaceForOverviews +=
+                    static_cast<double>(
+                      poSrcDS->GetRasterBand(1)->GetOverview(i)->GetXSize() ) *
+                      poSrcDS->GetRasterBand(1)->GetOverview(i)->GetYSize();
             }
+            dfExtraSpaceForOverviews *=
+                                l_nBands * GDALGetDataTypeSizeBytes(eType);
         }
-
-        for( int i = 0; i < nSrcOverviews; ++i )
-        {
-            dfExtraSpaceForOverviews +=
-                static_cast<double>(
-                    poSrcDS->GetRasterBand(1)->GetOverview(i)->GetXSize() ) *
-                poSrcDS->GetRasterBand(1)->GetOverview(i)->GetYSize();
-        }
-        dfExtraSpaceForOverviews *= l_nBands * GDALGetDataTypeSizeBytes(eType);
     }
 
 /* -------------------------------------------------------------------- */
@@ -16005,80 +16389,83 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     double dfCurPixels = 0;
 
     if( eErr == CE_None &&
-        nSrcOverviews != 0 &&
         CPLFetchBool(papszOptions, "COPY_SRC_OVERVIEWS", false) )
     {
-        eErr = poDS->CreateOverviewsFromSrcOverviews(poSrcDS);
-
-        if( poDS->nOverviewCount != nSrcOverviews )
+        const int nSrcOverviews = poSrcDS->GetRasterBand(1)->GetOverviewCount();
+        if( nSrcOverviews )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Did only manage to instantiate %d overview levels, "
-                      "whereas source contains %d",
-                      poDS->nOverviewCount, nSrcOverviews);
-            eErr = CE_Failure;
-        }
+            eErr = poDS->CreateOverviewsFromSrcOverviews(poSrcDS);
 
-        for( int i = 0; i < nSrcOverviews; ++i )
-        {
-            GDALRasterBand* poOvrBand =
-                poSrcDS->GetRasterBand(1)->GetOverview(i);
-            dfTotalPixels += static_cast<double>(poOvrBand->GetXSize()) *
-                             poOvrBand->GetYSize();
-        }
-
-        char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
-        if( l_nCompression != COMPRESSION_NONE )
-            papszCopyWholeRasterOptions[0] =
-                const_cast<char*>( "COMPRESSED=YES" );
-        // Now copy the imagery.
-        for( int i = 0; eErr == CE_None && i < nSrcOverviews; ++i )
-        {
-            // Begin with the smallest overview.
-            const int iOvrLevel = nSrcOverviews - 1 - i;
-
-            // Create a fake dataset with the source overview level so that
-            // GDALDatasetCopyWholeRaster can cope with it.
-            GDALDataset* poSrcOvrDS =
-                GDALCreateOverviewDataset(poSrcDS, iOvrLevel, TRUE, FALSE);
-
-            GDALRasterBand* poOvrBand =
-                    poSrcDS->GetRasterBand(1)->GetOverview(iOvrLevel);
-            double dfNextCurPixels =
-                dfCurPixels +
-                static_cast<double>(poOvrBand->GetXSize()) *
-                poOvrBand->GetYSize();
-
-            void* pScaledData =
-                GDALCreateScaledProgress( dfCurPixels / dfTotalPixels,
-                                          dfNextCurPixels / dfTotalPixels,
-                                          pfnProgress, pProgressData );
-
-            eErr =
-                GDALDatasetCopyWholeRaster(
-                    (GDALDatasetH) poSrcOvrDS,
-                    (GDALDatasetH) poDS->papoOverviewDS[iOvrLevel],
-                    papszCopyWholeRasterOptions,
-                    GDALScaledProgress, pScaledData );
-
-            dfCurPixels = dfNextCurPixels;
-            GDALDestroyScaledProgress(pScaledData);
-
-            delete poSrcOvrDS;
-            poSrcOvrDS = NULL;
-            poDS->papoOverviewDS[iOvrLevel]->FlushCache();
-
-            // Copy mask of the overview.
-            if( eErr == CE_None && poDS->poMaskDS != NULL )
+            if( poDS->nOverviewCount != nSrcOverviews )
             {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Did only manage to instantiate %d overview levels, "
+                        "whereas source contains %d",
+                        poDS->nOverviewCount, nSrcOverviews);
+                eErr = CE_Failure;
+            }
+
+            for( int i = 0; i < nSrcOverviews; ++i )
+            {
+                GDALRasterBand* poOvrBand =
+                    poSrcDS->GetRasterBand(1)->GetOverview(i);
+                dfTotalPixels += static_cast<double>(poOvrBand->GetXSize()) *
+                                poOvrBand->GetYSize();
+            }
+
+            char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
+            if( l_nCompression != COMPRESSION_NONE )
+                papszCopyWholeRasterOptions[0] =
+                    const_cast<char*>( "COMPRESSED=YES" );
+            // Now copy the imagery.
+            for( int i = 0; eErr == CE_None && i < nSrcOverviews; ++i )
+            {
+                // Begin with the smallest overview.
+                const int iOvrLevel = nSrcOverviews - 1 - i;
+
+                // Create a fake dataset with the source overview level so that
+                // GDALDatasetCopyWholeRaster can cope with it.
+                GDALDataset* poSrcOvrDS =
+                    GDALCreateOverviewDataset(poSrcDS, iOvrLevel, TRUE);
+
+                GDALRasterBand* poOvrBand =
+                        poSrcDS->GetRasterBand(1)->GetOverview(iOvrLevel);
+                double dfNextCurPixels =
+                    dfCurPixels +
+                    static_cast<double>(poOvrBand->GetXSize()) *
+                    poOvrBand->GetYSize();
+
+                void* pScaledData =
+                    GDALCreateScaledProgress( dfCurPixels / dfTotalPixels,
+                                            dfNextCurPixels / dfTotalPixels,
+                                            pfnProgress, pProgressData );
+
                 eErr =
-                    GDALRasterBandCopyWholeRaster(
-                        poOvrBand->GetMaskBand(),
-                        poDS->papoOverviewDS[iOvrLevel]->
-                        poMaskDS->GetRasterBand(1),
+                    GDALDatasetCopyWholeRaster(
+                        (GDALDatasetH) poSrcOvrDS,
+                        (GDALDatasetH) poDS->papoOverviewDS[iOvrLevel],
                         papszCopyWholeRasterOptions,
-                        GDALDummyProgress, NULL);
-                poDS->papoOverviewDS[iOvrLevel]->poMaskDS->FlushCache();
+                        GDALScaledProgress, pScaledData );
+
+                dfCurPixels = dfNextCurPixels;
+                GDALDestroyScaledProgress(pScaledData);
+
+                delete poSrcOvrDS;
+                poSrcOvrDS = NULL;
+                poDS->papoOverviewDS[iOvrLevel]->FlushCache();
+
+                // Copy mask of the overview.
+                if( eErr == CE_None && poDS->poMaskDS != NULL )
+                {
+                    eErr =
+                        GDALRasterBandCopyWholeRaster(
+                            poOvrBand->GetMaskBand(),
+                            poDS->papoOverviewDS[iOvrLevel]->
+                            poMaskDS->GetRasterBand(1),
+                            papszCopyWholeRasterOptions,
+                            GDALDummyProgress, NULL);
+                    poDS->papoOverviewDS[iOvrLevel]->poMaskDS->FlushCache();
+                }
             }
         }
     }
@@ -16145,7 +16532,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                               "TIFFWriteScanline() failed." );
                     eErr = CE_Failure;
                 }
-                if( !GDALScaledProgress( (j+1) * 1.0 / nYSize,
+                if( !GDALScaledProgress( (j + 1) * 1.0 / nYSize,
                                          NULL, pScaledData ) )
                     eErr = CE_Failure;
             }
@@ -16179,15 +16566,16 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                         }
                     }
                     if( eErr == CE_None &&
-                        TIFFWriteScanline( l_hTIFF, pabyScanline, j,
-                                           static_cast<uint16>(iBand-1)) == -1 )
+                        TIFFWriteScanline(
+                            l_hTIFF, pabyScanline, j,
+                            static_cast<uint16>(iBand - 1)) == -1 )
                     {
                         CPLError( CE_Failure, CPLE_AppDefined,
                                   "TIFFWriteScanline() failed." );
                         eErr = CE_Failure;
                     }
                     if( !GDALScaledProgress(
-                           (j+1 + (iBand - 1) * nYSize) * 1.0 /
+                           (j + 1 + (iBand - 1) * nYSize) * 1.0 /
                            (l_nBands * nYSize),
                            NULL, pScaledData ) )
                         eErr = CE_Failure;
@@ -16253,7 +16641,10 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         // strip offset
         if( CPLTestBool( CSLFetchNameValueDef(
                              papszOptions,
-                             "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
+                             "WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) ||
+           CPLTestBool( CSLFetchNameValueDef(
+                             papszOptions,
+                             "@WRITE_EMPTY_TILES_SYNCHRONOUSLY", "FALSE" )) )
         {
             poDS->bWriteEmptyTiles = true;
         }
@@ -16406,7 +16797,18 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
 
     if( GetAccess() == GA_Update )
     {
-        if( padfTransform[0] == 0.0 &&
+        if( nGCPCount > 0 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "GCPs previously set are going to be cleared "
+                     "due to the setting of a geotransform.");
+            bForceUnsetGTOrGCPs = true;
+            GDALDeinitGCPs( nGCPCount, pasGCPList );
+            CPLFree( pasGCPList );
+            nGCPCount = 0;
+            pasGCPList = NULL;
+        }
+        else if( padfTransform[0] == 0.0 &&
             padfTransform[1] == 1.0 &&
             padfTransform[2] == 0.0 &&
             padfTransform[3] == 0.0 &&
@@ -16494,7 +16896,30 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
         LookForProjection();
 
         if( nGCPCount > 0 && nGCPCountIn == 0 )
+        {
             bForceUnsetGTOrGCPs = true;
+        }
+        else if( nGCPCountIn > 0 &&
+                 !(adfGeoTransform[0] == 0.0 &&
+                   adfGeoTransform[1] == 1.0 &&
+                   adfGeoTransform[2] == 0.0 &&
+                   adfGeoTransform[3] == 0.0 &&
+                   adfGeoTransform[4] == 0.0 &&
+                   adfGeoTransform[5] == 1.0) )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "A geotransform previously set is going to be cleared "
+                     "due to the setting of GCPs.");
+            adfGeoTransform[0] = 0.0;
+            adfGeoTransform[1] = 1.0;
+            adfGeoTransform[2] = 0.0;
+            adfGeoTransform[3] = 0.0;
+            adfGeoTransform[4] = 0.0;
+            adfGeoTransform[5] = 1.0;
+            bGeoTransformValid = false;
+            bForceUnsetGTOrGCPs = true;
+        }
+
         if( !EQUAL(pszProjection, "") &&
                    (pszGCPProjection == NULL ||
                    pszGCPProjection[0] == '\0') )
@@ -16685,14 +17110,12 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
              EQUAL(pszName, "UNREACHED_VIRTUALMEMIO_CODE_PATH") )
     {
         CPLString osMissing;
-        for( int i = 0;
-             i < static_cast<int>( sizeof(anReachedVirtualMemIO) ) /
-                 sizeof(anReachedVirtualMemIO[0]) );
-             ++i )
+        for( int i = 0; i < static_cast<int>(
+                                CPL_ARRAYSIZE(anReachedVirtualMemIO)); ++i )
         {
             if( !anReachedVirtualMemIO[i] )
             {
-                if( osMissing.size() ) osMissing += ",";
+                if( !osMissing.empty() ) osMissing += ",";
                 osMissing += CPLSPrintf("%d", i);
             }
         }
@@ -16902,7 +17325,7 @@ char **GTiffDataset::GetFileList()
         }
     }
 
-    if( osGeorefFilename.size() != 0 &&
+    if( !osGeorefFilename.empty() &&
         CSLFindString(papszFileList, osGeorefFilename) == -1 )
     {
         papszFileList = CSLAddString( papszFileList, osGeorefFilename );
@@ -16988,7 +17411,8 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
                 nBlockXSize, nBlockYSize,
                 bIsTiled, l_nCompression,
                 PHOTOMETRIC_MASK, PREDICTOR_NONE,
-                SAMPLEFORMAT_UINT, NULL, NULL, NULL, 0, NULL, "");
+                SAMPLEFORMAT_UINT, NULL, NULL, NULL, 0, NULL, "", NULL, NULL,
+                NULL );
         if( nOffset == 0 )
             return CE_Failure;
 
@@ -17181,16 +17605,16 @@ static void GTiffTagExtender(TIFF *tif)
 #include <dlfcn.h>
 #endif
 
-#if HAVE_CXX11
+#if HAVE_CXX11_MUTEX
 static std::mutex oDeleteMutex;
 #else
 static CPLMutex* hGTiffOneTimeInitMutex = NULL;
-#endif  // HAVE_CXX11
+#endif  // HAVE_CXX11_MUTEX
 
 int GTiffOneTimeInit()
 
 {
-#if HAVE_CXX11
+#if HAVE_CXX11_MUTEX
     std::lock_guard<std::mutex> oLock(oDeleteMutex);
 #else
     CPLMutexHolder oHolder( &hGTiffOneTimeInitMutex);

@@ -989,7 +989,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
    }
    if (meta->gds.scan != GRIB2BIT_2) {
 #ifdef DEBUG
-      printf ("Scan mode is expected to be 0100 (i.e. %d) not %d\n",
+      printf ("Scan mode is expected to be 0100 (i.e. %d) not %u\n",
               GRIB2BIT_2, meta->gds.scan);
       printf ("The merged GRIB2 Library should return it in 0100\n");
       printf ("The merged library swaps both NCEP and MDL data to scan "
@@ -1176,7 +1176,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
    }
    meta->pds2.sect4.templat = (unsigned short int) is4[7];
 
-   /* 
+   /*
     * Handle variables common to the supported templates.
     */
    if (ns4 < 34) {
@@ -2152,7 +2152,7 @@ static void ParseGridPrimMiss (gridAttribType *attrib, double *grib_Data,
                         if (WxType->ugly[index].f_valid) {
                            WxType->ugly[index].f_valid = 2;
                         } else {
-                           /* Table is not valid here so set value to missPri 
+                           /* Table is not valid here so set value to missPri
                             */
                            value = attrib->missPri;
                            (*missCnt)++;
@@ -2280,7 +2280,7 @@ static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
                         if (WxType->ugly[index].f_valid) {
                            WxType->ugly[index].f_valid = 2;
                         } else {
-                           /* Table is not valid here so set value to missPri 
+                           /* Table is not valid here so set value to missPri
                             */
                            value = attrib->missPri;
                            (*missCnt)++;
@@ -2379,7 +2379,8 @@ void ParseGrid (gridAttribType *attrib, double **Grib_Data,
    sInt4 x, y;          /* Where we are in a grid of scan value 0100 */
    sInt4 newIndex;      /* x,y in a 1 dimensional array. */
    double value;        /* The data in the new units. */
-   double *grib_Data;   /* A pointer to Grib_Data for ease of manipulation. */
+   /* A pointer to Grib_Data for ease of manipulation. */
+   double *grib_Data = NULL;
    sInt4 missCnt = 0;   /* Number of detected missing values. */
    uInt4 index;         /* Current index into Wx table. */
    float *ain = (float *) iain;
@@ -2427,7 +2428,7 @@ void ParseGrid (gridAttribType *attrib, double **Grib_Data,
          } else {
             value = ain[scanIndex];
          }
-         /* Make sure value is not a missing value when converting units, and 
+         /* Make sure value is not a missing value when converting units, and
           * while computing max/min. */
          if ((attrib->f_miss == 0) ||
              ((attrib->f_miss == 1) && (value != attrib->missPri)) ||
@@ -2597,7 +2598,7 @@ void FreqPrint (char **ans, double *Data, sInt4 DataLen, sInt4 Nx,
                 sInt4 Ny, sChar decimal, char *comment)
 {
    int x, y, i;
-   double *ptr;
+   double *ptr = NULL;
    double value;
    freqType *freq = NULL;
    int numFreq = 0;

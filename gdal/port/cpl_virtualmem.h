@@ -31,6 +31,8 @@
 #ifndef CPL_VIRTUAL_MEM_INCLUDED
 #define CPL_VIRTUAL_MEM_INCLUDED
 
+#include <stddef.h>
+
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 

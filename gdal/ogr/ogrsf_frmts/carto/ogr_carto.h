@@ -35,15 +35,8 @@
 
 #include <vector>
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic ignored "-Wdocumentation"
-#endif
-#include <json.h>
-#ifdef __clang
-#pragma clang diagnostic pop
-#endif
+#include "ogr_json_header.h"
+
 
 json_object* OGRCARTOGetSingleRow(json_object* poObj);
 CPLString OGRCARTOEscapeIdentifier(const char* pszStr);
@@ -93,21 +86,21 @@ protected:
     virtual CPLString    GetSRS_SQL(const char* pszGeomCol) = 0;
 
   public:
-                         OGRCARTOLayer(OGRCARTODataSource* poDS);
+    explicit OGRCARTOLayer(OGRCARTODataSource* poDS);
     virtual ~OGRCARTOLayer();
 
-    virtual void                ResetReading();
-    virtual OGRFeature *        GetNextFeature();
+    virtual void                ResetReading() override;
+    virtual OGRFeature *        GetNextFeature() override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn();
+    virtual OGRFeatureDefn *    GetLayerDefn() override;
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn) = 0;
     virtual json_object*        FetchNewFeatures(GIntBig iNext);
 
-    virtual const char*         GetFIDColumn() { return osFIDColName.c_str(); }
+    virtual const char*         GetFIDColumn() override { return osFIDColName.c_str(); }
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 
-    int                         GetFeaturesToFetch() {
+    static int                         GetFeaturesToFetch() {
         return atoi(CPLGetConfigOption("CARTO_PAGE_SIZE",
                         CPLGetConfigOption("CARTODB_PAGE_SIZE", "500"))); }
 };
@@ -143,38 +136,38 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
 
     void                BuildWhere();
 
-    virtual CPLString    GetSRS_SQL(const char* pszGeomCol);
+    virtual CPLString    GetSRS_SQL(const char* pszGeomCol) override;
 
   public:
                          OGRCARTOTableLayer(OGRCARTODataSource* poDS, const char* pszName);
     virtual ~OGRCARTOTableLayer();
 
-    virtual const char*         GetName() { return osName.c_str(); }
-    virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn);
-    virtual json_object*        FetchNewFeatures(GIntBig iNext);
+    virtual const char*         GetName() override { return osName.c_str(); }
+    virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn) override;
+    virtual json_object*        FetchNewFeatures(GIntBig iNext) override;
 
-    virtual GIntBig             GetFeatureCount( int bForce = TRUE );
-    virtual OGRFeature         *GetFeature( GIntBig nFeatureId );
+    virtual GIntBig             GetFeatureCount( int bForce = TRUE ) override;
+    virtual OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 
-    virtual OGRErr      DeleteField( int iField );
+    virtual OGRErr      DeleteField( int iField ) override;
 
-    virtual OGRFeature  *GetNextRawFeature();
+    virtual OGRFeature  *GetNextRawFeature() override;
 
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( GIntBig nFID );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
-    virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual void        SetSpatialFilter( OGRGeometry *poGeom ) override { SetSpatialFilter(0, poGeom); }
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override;
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
 
-    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) { return GetExtent(0, psExtent, bForce); }
-    virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce );
+    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override { return GetExtent(0, psExtent, bForce); }
+    virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce ) override;
 
     void                SetLaunderFlag( bool bFlag )
         { bLaunderColumnNames = bFlag; }
@@ -200,15 +193,15 @@ class OGRCARTOResultLayer : public OGRCARTOLayer
 {
     OGRFeature          *poFirstFeature;
 
-    virtual CPLString    GetSRS_SQL(const char* pszGeomCol);
+    virtual CPLString    GetSRS_SQL(const char* pszGeomCol) override;
 
   public:
                         OGRCARTOResultLayer( OGRCARTODataSource* poDS,
                                                const char * pszRawStatement );
     virtual             ~OGRCARTOResultLayer();
 
-    virtual OGRFeatureDefn *GetLayerDefnInternal(json_object* poObjIn);
-    virtual OGRFeature  *GetNextRawFeature();
+    virtual OGRFeatureDefn *GetLayerDefnInternal(json_object* poObjIn) override;
+    virtual OGRFeature  *GetNextRawFeature() override;
 
     bool                IsOK();
 };
@@ -249,24 +242,24 @@ class OGRCARTODataSource : public OGRDataSource
                               char** papszOpenOptions,
                               int bUpdate );
 
-    virtual const char* GetName() { return pszName; }
+    virtual const char* GetName() override { return pszName; }
 
-    virtual int         GetLayerCount() { return nLayers; }
-    virtual OGRLayer*   GetLayer( int );
-    virtual OGRLayer    *GetLayerByName(const char *);
+    virtual int         GetLayerCount() override { return nLayers; }
+    virtual OGRLayer*   GetLayer( int ) override;
+    virtual OGRLayer    *GetLayerByName(const char *) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
     virtual OGRLayer   *ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL );
-    virtual OGRErr      DeleteLayer(int);
+                                     char ** papszOptions = NULL ) override;
+    virtual OGRErr      DeleteLayer(int) override;
 
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect );
-    virtual void        ReleaseResultSet( OGRLayer * poLayer );
+                                    const char *pszDialect ) override;
+    virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
     const char*                 GetAPIURL() const;
     bool                        IsReadWrite() const { return bReadWrite; }
@@ -274,9 +267,9 @@ class OGRCARTODataSource : public OGRDataSource
     char**                      AddHTTPOptions();
     json_object*                RunSQL(const char* pszUnescapedSQL);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
-    int                         FetchSRSId( OGRSpatialReference * poSRS );
+    static int                         FetchSRSId( OGRSpatialReference * poSRS );
 
-    int                         IsAuthenticatedConnection() { return osAPIKey.size() != 0; }
+    int                         IsAuthenticatedConnection() { return !osAPIKey.empty(); }
     int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }
     void                        SetOGRMetadataFunction(int bFlag) { bHasOGRMetadataFunction = bFlag; }
 

@@ -57,7 +57,7 @@ public:
   int  Size() const                          { return (m_nCols * m_nRows + 7) >> 3; }
   const Byte* Bits() const                   { return m_pBits; }
   Byte* Bits()                               { return m_pBits; }
-  Byte  Bit(int k) const                     { return (1 << 7) >> (k & 7); }
+  static Byte  Bit(int k)                    { return (1 << 7) >> (k & 7); }
 
   int  CountValidBits() const;
   void  Clear();

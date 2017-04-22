@@ -26,8 +26,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <vector>
+#include "cpl_port.h"
 #include "gdaljp2metadatagenerator.h"
+
+#include <cstddef>
 
 CPL_CVSID("$Id$");
 
@@ -44,7 +46,7 @@ CPL_CVSID("$Id$");
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
-#ifdef __clang
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 

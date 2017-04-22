@@ -366,6 +366,7 @@ OGRDB2Statement::OGRDB2Statement( OGRDB2Session *poSession )
 
 {
     DB2_DEBUG_ENTER("OGRDB2Statement::OGRDB2Statement");
+    m_nLastRetCode = 0;
     m_bPrepared = FALSE;
 
     m_poSession = poSession;
@@ -1186,7 +1187,7 @@ void OGRDB2Statement::Append( const char *pszText )
         }
         else
         {
-            m_pszStatement = (char *) VSIRealloc(m_pszStatement, m_nStatementMax);
+            m_pszStatement = (char *) CPLRealloc(m_pszStatement, m_nStatementMax);
         }
     }
 

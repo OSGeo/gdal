@@ -32,6 +32,12 @@
 #include "cpl_port.h"
 #endif
 
+// Compatibility hack for non-C++11 compilers
+#if !(__cplusplus >= 201103L || _MSC_VER >= 1500)
+#define override
+#endif
+
+
 namespace PCIDSK {
 
     typedef unsigned char  uint8;
@@ -93,7 +99,7 @@ namespace PCIDSK {
 #endif
 
 #ifndef GDAL_PCIDSK_DRIVER
-#ifdef PCIDSK_INTERNAL
+#if defined(PCIDSK_INTERNAL) && !defined(ALIAS_CPLSNPRINTF_AS_SNPRINTF)
 #include <stdlib.h>
 extern "C" double CPLAtof(const char*);
 extern "C" int CPLsprintf(char *str, const char* fmt, ...) PCIDSK_PRINT_FUNC_FORMAT(2,3);

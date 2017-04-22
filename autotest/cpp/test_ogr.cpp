@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test general OGR features.
@@ -23,15 +22,11 @@
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-//
-//  $Log: test_ogr.cpp,v $
-//  Revision 1.4  2006/12/06 15:39:13  mloskot
-//  Added file header comment and copyright note.
-//
-//
-///////////////////////////////////////////////////////////////////////////////
-#include <tut.h>
+
+#include "gdal_unit_test.h"
+
 #include <ogrsf_frmts.h>
+
 #include <string>
 
 namespace tut
@@ -41,7 +36,7 @@ namespace tut
     struct test_ogr_data
     {
         // Expected number of drivers
-        OGRSFDriverRegistrar* drv_reg_;
+        GDALDriverManager* drv_reg_;
         int drv_count_;
         std::string drv_shape_;
         bool has_geos_support_;
@@ -51,7 +46,7 @@ namespace tut
             drv_count_(0),
             drv_shape_("ESRI Shapefile")
         {
-            drv_reg_ = OGRSFDriverRegistrar::GetRegistrar();
+            drv_reg_ = GetGDALDriverManager();
 
             // Windows CE port builds with fixed number of drivers
 #ifdef OGR_ENABLED
@@ -85,23 +80,7 @@ namespace tut
     template<>
     void object::test<1>()
     {
-        ensure("OGRSFDriverRegistrar::GetRegistrar() is NULL", NULL != drv_reg_);
-    }
-
-    // Test number of registered OGR drivers
-    template<>
-    template<>
-    void object::test<2>()
-    {
-        OGRSFDriverRegistrar* reg = NULL;
-        reg = OGRSFDriverRegistrar::GetRegistrar();
-        ensure(NULL != reg);
-
-#ifdef WIN32CE
-        // This is only restricted on WIN32CE.
-        ensure_equals("OGR registered drivers count doesn't match",
-            reg->GetDriverCount(), drv_count_);
-#endif
+        ensure("GetGDALDriverManager() is NULL", NULL != drv_reg_);
     }
 
     // Test if Shapefile driver is registered
@@ -109,11 +88,10 @@ namespace tut
     template<>
     void object::test<3>()
     {
-        OGRSFDriverRegistrar* reg = NULL;
-        reg = OGRSFDriverRegistrar::GetRegistrar();
-        ensure(NULL != reg);
+        GDALDriverManager* manager = GetGDALDriverManager();
+        ensure(NULL != manager);
 
-        GDALDriver* drv = reg->GetDriverByName(drv_shape_.c_str());
+        GDALDriver* drv = manager->GetDriverByName(drv_shape_.c_str());
         ensure("Shapefile driver is not registered", NULL != drv);
     }
 
@@ -162,6 +140,9 @@ namespace tut
         testSpatialReferenceLeakOnCopy<OGRMultiPoint>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRMultiCurve>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRMultiLineString>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRTriangle>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRPolyhedralSurface>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRTriangulatedSurface>(poSRS);
 
         delete poSRS;
     }
@@ -311,6 +292,29 @@ namespace tut
         return poCollection;
     }
 
+    template<>
+    OGRTriangle* make()
+    {
+        OGRPoint p1(0, 0), p2(0, 1), p3(1, 1);
+        return new OGRTriangle(p1, p2, p3);
+    }
+
+    template<>
+    OGRTriangulatedSurface* make()
+    {
+        OGRTriangulatedSurface* poTS = new OGRTriangulatedSurface();
+        poTS->addGeometryDirectly(make<OGRTriangle>());
+        return poTS;
+    }
+
+    template<>
+    OGRPolyhedralSurface* make()
+    {
+        OGRPolyhedralSurface* poPS = new OGRPolyhedralSurface();
+        poPS->addGeometryDirectly(make<OGRPolygon>());
+        return poPS;
+    }
+
     template<class T>
     void testCopyEquals()
     {
@@ -326,9 +330,18 @@ namespace tut
         T value3;
         value3 = *poOrigin;
         value3 = *poOrigin;
+        value3 = value3;
 
         std::ostringstream strErrorAssign;
         strErrorAssign << poOrigin->getGeometryName() << ": assignment operator changed a value";
+#ifdef DEBUG_VERBOSE
+        char* wkt1 = NULL, *wkt2 = NULL;
+        poOrigin->exportToWkt(&wkt1);
+        value3.exportToWkt(&wkt2);
+        printf("%s %s\n", wkt1, wkt2);
+        CPLFree(wkt1);
+        CPLFree(wkt2);
+#endif
         ensure(strErrorAssign.str().c_str(), CPL_TO_BOOL(poOrigin->Equals(&value3)));
 
         OGRGeometryFactory::destroyGeometry(poOrigin);
@@ -352,6 +365,9 @@ namespace tut
         testCopyEquals<OGRMultiPoint>();
         testCopyEquals<OGRMultiCurve>();
         testCopyEquals<OGRMultiLineString>();
+        testCopyEquals<OGRTriangle>();
+        testCopyEquals<OGRPolyhedralSurface>();
+        testCopyEquals<OGRTriangulatedSurface>();
 
     }
 
@@ -459,6 +475,7 @@ namespace tut
       OGR_ST_SetUnit(hTool, OGRSTUPixel, 1.0);
       ensure_equals(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0);
       ensure_equals(OGR_ST_GetUnit(hTool), OGRSTUPixel);
+      OGR_ST_Destroy(hTool);
 
       OGR_SM_Destroy(hSM);
     }

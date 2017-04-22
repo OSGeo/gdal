@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.39 2016-10-31 17:24:26 erouault Exp $ */
+/* $Id: tif_predict.c,v 1.42 2017-02-25 17:05:12 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -259,11 +259,12 @@ PredictorSetupEncode(TIFF* tif)
 
 #define REPEAT4(n, op)		\
     switch (n) {		\
-    default: { tmsize_t i; for (i = n-4; i > 0; i--) { op; } } \
-    case 4:  op;		\
-    case 3:  op;		\
-    case 2:  op;		\
-    case 1:  op;		\
+    default: { \
+        tmsize_t i; for (i = n-4; i > 0; i--) { op; } }  /*-fallthrough*/  \
+    case 4:  op; /*-fallthrough*/ \
+    case 3:  op; /*-fallthrough*/ \
+    case 2:  op; /*-fallthrough*/ \
+    case 1:  op; /*-fallthrough*/ \
     case 0:  ;			\
     }
 
@@ -409,7 +410,7 @@ fpAcc(TIFF* tif, uint8* cp0, tmsize_t cc)
 	tmsize_t wc = cc / bps;
 	tmsize_t count = cc;
 	uint8 *cp = (uint8 *) cp0;
-	uint8 *tmp = (uint8 *)_TIFFmalloc(cc);
+	uint8 *tmp;
 
     if(cc%(bps*stride)!=0)
     {
@@ -418,6 +419,7 @@ fpAcc(TIFF* tif, uint8* cp0, tmsize_t cc)
         return 0;
     }
 
+    tmp = (uint8 *)_TIFFmalloc(cc);
 	if (!tmp)
 		return 0;
 
@@ -640,7 +642,7 @@ fpDiff(TIFF* tif, uint8* cp0, tmsize_t cc)
 	tmsize_t wc = cc / bps;
 	tmsize_t count;
 	uint8 *cp = (uint8 *) cp0;
-	uint8 *tmp = (uint8 *)_TIFFmalloc(cc);
+	uint8 *tmp;
 
     if((cc%(bps*stride))!=0)
     {
@@ -648,6 +650,8 @@ fpDiff(TIFF* tif, uint8* cp0, tmsize_t cc)
                      "%s", "(cc%(bps*stride))!=0");
         return 0;
     }
+
+    tmp = (uint8 *)_TIFFmalloc(cc);
 	if (!tmp)
 		return 0;
 
@@ -722,6 +726,7 @@ PredictorEncodeTile(TIFF* tif, uint8* bp0, tmsize_t cc0, uint16 s)
     {
         TIFFErrorExt(tif->tif_clientdata, "PredictorEncodeTile",
                      "%s", "(cc0%rowsize)!=0");
+        _TIFFfree( working_copy );
         return 0;
     }
 	while (cc > 0) {
@@ -793,7 +798,7 @@ PredictorPrintDir(TIFF* tif, FILE* fd, long flags)
 			case 2: fprintf(fd, "horizontal differencing "); break;
 			case 3: fprintf(fd, "floating point predictor "); break;
 		}
-		fprintf(fd, "%u (0x%x)\n", sp->predictor, sp->predictor);
+		fprintf(fd, "%d (0x%x)\n", sp->predictor, sp->predictor);
 	}
 	if (sp->printdir)
 		(*sp->printdir)(tif, fd, flags);

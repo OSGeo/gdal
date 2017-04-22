@@ -592,7 +592,7 @@ ParseXPM( const char *pszInput,
         anCharLookup[*(reinterpret_cast<GByte*>(papszXPMList[iColor+1]))] = iColor;
 
         GDALColorEntry sColor;
-        int nRed, nGreen, nBlue;
+        unsigned int nRed, nGreen, nBlue;
 
         if( EQUAL(papszTokens[1],"None") )
         {
@@ -652,10 +652,10 @@ ParseXPM( const char *pszInput,
             return NULL;
         }
 
-        for( int iPixel = 0;
-             pabyInLine[iPixel] != '\0' && iPixel < *pnXSize;
-             iPixel++ )
+        for( int iPixel = 0; iPixel < *pnXSize; iPixel++ )
         {
+            if( pabyInLine[iPixel] == '\0' )
+                break;
             const int nPixelValue
                 = anCharLookup[pabyInLine[iPixel]];
             if( nPixelValue != -1 )

@@ -581,7 +581,7 @@ static void kml2styletable(
     /***** No reason to add it if it don't have an id. *****/
     if( !poKmlStyle->has_id() )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        CPLError( CE_Warning, CPLE_AppDefined,
                   "ERROR parsing kml Style: No id" );
         return;
     }
@@ -830,7 +830,7 @@ static ContainerPtr MyGetContainerFromRoot(
 
 static StyleSelectorPtr StyleFromStyleURL(
     const StyleMapPtr& stylemap,
-    const string styleurl,
+    const string& styleurl,
     OGRStyleTable * poStyleTable )
 {
     // TODO:: Parse the styleURL.
@@ -898,7 +898,7 @@ static StyleSelectorPtr StyleFromStyleURL(
 
                 if( !poKmlRoot )
                 {
-                    CPLError( CE_Failure, CPLE_OpenFailed,
+                    CPLError( CE_Warning, CPLE_OpenFailed,
                               "ERROR parsing style kml %s :%s",
                               pszUrlTmp, oKmlErrors.c_str() );
                     CPLFree(pszUrlTmp);
@@ -1213,7 +1213,7 @@ void createkmlliststyle(
     const CPLString& osListStyleType,
     const CPLString& osListStyleIconHref)
 {
-    if( osListStyleType.size() || osListStyleIconHref.size() )
+    if( !osListStyleType.empty() || !osListStyleIconHref.empty() )
     {
         StylePtr poKmlStyle = poKmlFactory->CreateStyle();
 
@@ -1224,7 +1224,7 @@ void createkmlliststyle(
 
         ListStylePtr poKmlListStyle = poKmlFactory->CreateListStyle();
         poKmlStyle->set_liststyle( poKmlListStyle );
-        if( osListStyleType.size() )
+        if( !osListStyleType.empty() )
         {
             if( EQUAL(osListStyleType, "check") )
                 poKmlListStyle->set_listitemtype( kmldom::LISTITEMTYPE_CHECK );
@@ -1248,7 +1248,7 @@ void createkmlliststyle(
             }
         }
 
-        if( osListStyleIconHref.size() )
+        if( !osListStyleIconHref.empty() )
         {
             ItemIconPtr poItemIcon = poKmlFactory->CreateItemIcon();
             poItemIcon->set_href( osListStyleIconHref.c_str() );

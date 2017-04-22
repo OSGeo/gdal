@@ -95,10 +95,10 @@
 
 %apply ( void **outPythonObject ) { (void **buf ) };
 %inline %{
-int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
+unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int nMembCount, VSILFILE *fp)
 {
-    GUIntBig buf_size = (GUIntBig)nMembSize * nMembCount;
-    if( nMembSize < 0 || nMembCount < 0 || buf_size > 0xFFFFFFFFU )
+    size_t buf_size = static_cast<size_t>(nMembSize) * nMembCount;
+    if( buf_size > 0xFFFFFFFFU )
    {
         CPLError(CE_Failure, CPLE_AppDefined, "Too big request");
         *buf = NULL;
@@ -127,7 +127,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         _PyBytes_Resize(&o, nRet * nMembSize);
         *buf = o;
     }
-    return nRet;
+    return static_cast<unsigned int>(nRet);
 #else
     *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
@@ -144,7 +144,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         _PyString_Resize(&o, nRet * nMembSize);
         *buf = o;
     }
-    return nRet;
+    return static_cast<unsigned int>(nRet);
 #endif
 }
 %}
@@ -195,15 +195,17 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
                      GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
                      GDALProgressFunc callback = NULL,
                      void* callback_data=NULL) {
-    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
-    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    int nxsize = (buf_xsize==0) ? static_cast<int>(xsize) : *buf_xsize;
+    int nysize = (buf_ysize==0) ? static_cast<int>(ysize) : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
                                         : (GDALDataType)*buf_type;
     GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
     GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
 
-    GIntBig buf_size = ComputeBandRasterIOSize( nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
-                                            pixel_space, line_space, FALSE );
+    size_t buf_size = static_cast<size_t>(
+        ComputeBandRasterIOSize( nxsize, nysize,
+                                 GDALGetDataTypeSize( ntype ) / 8,
+                                 pixel_space, line_space, FALSE ) );
     if (buf_size == 0)
     {
         *buf = NULL;
@@ -276,7 +278,8 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     int nBlockXSize, nBlockYSize;
     GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
     int nDataTypeSize = (GDALGetDataTypeSize(GDALGetRasterDataType(self)) / 8);
-    GIntBig buf_size = (GIntBig)nBlockXSize * nBlockYSize * nDataTypeSize;
+    size_t buf_size = static_cast<size_t>(nBlockXSize) *
+                                                nBlockYSize * nDataTypeSize;
 
 %#if PY_VERSION_HEX >= 0x03000000
     *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
@@ -310,6 +313,19 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
 
 
 %pythoncode %{
+
+  def ComputeStatistics(self, approx_ok):
+    """ComputeStatistics(Band self, bool approx_ok, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
+
+    # For backward compatibility. New SWIG has stricter typing and really
+    # enforces bool
+    if approx_ok == 0:
+        approx_ok = False
+    elif approx_ok == 1:
+        approx_ok = True
+
+    return _gdal.Band_ComputeStatistics(self, approx_ok)
+
 
   def ReadRaster(self, xoff = 0, yoff = 0, xsize = None, ysize = None,
                    buf_xsize = None, buf_ysize = None, buf_type = None,
@@ -462,9 +478,13 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     GIntBig band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
 
     int ntypesize = GDALGetDataTypeSize( ntype ) / 8;
-    GIntBig buf_size = ComputeDatasetRasterIOSize (nxsize, nysize, ntypesize,
-                                               band_list ? band_list : GDALGetRasterCount(self), pband_list, band_list,
-                                               pixel_space, line_space, band_space, FALSE);
+    size_t buf_size = static_cast<size_t>(
+        ComputeDatasetRasterIOSize (nxsize, nysize, ntypesize,
+                                    band_list ? band_list :
+                                        GDALGetRasterCount(self),
+                                    pband_list, band_list,
+                                    pixel_space, line_space, band_space,
+                                    FALSE));
     if (buf_size == 0)
     {
         *buf = NULL;
@@ -1154,7 +1174,8 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
 def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
          accessMode = None,
          srcSRS = None, dstSRS = None, reproject = True,
-         SQLStatement = None, SQLDialect = None, where = None, selectFields = None, spatFilter = None,
+         SQLStatement = None, SQLDialect = None, where = None, selectFields = None,
+         spatFilter = None, spatSRS = None,
          datasetCreationOptions = None,
          layerCreationOptions = None,
          layers = None,
@@ -1164,6 +1185,7 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
          segmentizeMaxDist= None,
          zField = None,
          skipFailures = False,
+         limit = None,
          callback = None, callback_data = None):
     """ Create a VectorTranslateOptions() object that can be passed to gdal.VectorTranslate()
         Keyword arguments are :
@@ -1178,6 +1200,7 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
           where --- WHERE clause to apply to source layer(s)
           selectFields --- list of fields to select
           spatFilter --- spatial filter as (minX, minY, maxX, maxY) bounding box
+          spatSRS --- SRS in which the spatFilter is expressed. If not specified, it is assumed to be the one of the layer(s)
           datasetCreationOptions --- list of dataset creation options
           layerCreationOptions --- list of layer creation options
           layers --- list of layers to convert
@@ -1187,6 +1210,7 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
           segmentizeMaxDist --- maximum distance between consecutive nodes of a line geometry
           zField --- name of field to use to set the Z component of geometries
           skipFailures --- whether to skip failures
+          limit -- maximum number of features to read per layer
           callback --- callback method
           callback_data --- user data for callback
     """
@@ -1233,12 +1257,17 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
             for opt in layerCreationOptions:
                 new_options += ['-lco', opt ]
         if layers is not None:
-            for lyr in layers:
-                new_options += [ lyr ]
+            if _is_str_or_unicode(layers):
+                new_options += [ layers ]
+            else:
+                for lyr in layers:
+                    new_options += [ lyr ]
         if segmentizeMaxDist is not None:
             new_options += ['-segmentize', str(segmentizeMaxDist) ]
         if spatFilter is not None:
             new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3]) ]
+        if spatSRS is not None:
+            new_options += ['-spat_srs', str(spatSRS) ]
         if layerName is not None:
             new_options += ['-nln', layerName]
         if geometryType is not None:
@@ -1249,7 +1278,8 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
             new_options += ['-zfield', zField]
         if skipFailures:
             new_options += ['-skip']
-
+        if limit is not None:
+            new_options += ['-limit', str(limit)]
     if callback is not None:
         new_options += [ '-progress' ]
 
@@ -1336,7 +1366,7 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
         if trigonometric:
             new_options += ['-trigonometric' ]
         if zeroForFlat:
-            new_options += ['zero_for_flat' ]
+            new_options += ['-zero_for_flat' ]
 
     return (GDALDEMProcessingOptions(new_options), colorFilename, callback, callback_data)
 

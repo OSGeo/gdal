@@ -67,24 +67,24 @@ class OGRDGNLayer : public OGRLayer
                                      int bUpdate );
                         virtual ~OGRDGNLayer();
 
-    void                SetSpatialFilter( OGRGeometry * );
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+    void                SetSpatialFilter( OGRGeometry * ) override;
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
-    OGRFeature *        GetFeature( GIntBig nFeatureId );
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
+    OGRFeature *        GetFeature( GIntBig nFeatureId ) override;
 
-    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
 };
 
 /************************************************************************/
@@ -111,13 +111,13 @@ class OGRDGNDataSource : public OGRDataSource
     OGRLayer           *ICreateLayer( const char *,
                                      OGRSpatialReference * = NULL,
                                      OGRwkbGeometryType = wkbUnknown,
-                                     char ** = NULL );
+                                     char ** = NULL ) override;
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 };
 
 #endif /* ndef OGR_DGN_H_INCLUDED */

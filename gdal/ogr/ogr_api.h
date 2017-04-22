@@ -175,6 +175,7 @@ OGRGeometryH CPL_DLL OGR_G_PointOnSurface( OGRGeometryH ) CPL_WARN_UNUSED_RESULT
 OGRGeometryH CPL_DLL OGR_G_Difference( OGRGeometryH, OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_SymDifference( OGRGeometryH, OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 double CPL_DLL OGR_G_Distance( OGRGeometryH, OGRGeometryH );
+double CPL_DLL OGR_G_Distance3D( OGRGeometryH, OGRGeometryH );
 double CPL_DLL OGR_G_Length( OGRGeometryH );
 double CPL_DLL OGR_G_Area( OGRGeometryH );
 int    CPL_DLL OGR_G_Centroid( OGRGeometryH, OGRGeometryH );
@@ -400,7 +401,17 @@ int    CPL_DLL OGR_F_GetFieldIndex( OGRFeatureH, const char * );
 
 int    CPL_DLL OGR_F_IsFieldSet( OGRFeatureH, int );
 void   CPL_DLL OGR_F_UnsetField( OGRFeatureH, int );
+
+int    CPL_DLL OGR_F_IsFieldNull( OGRFeatureH, int );
+int    CPL_DLL OGR_F_IsFieldSetAndNotNull( OGRFeatureH, int );
+void   CPL_DLL OGR_F_SetFieldNull( OGRFeatureH, int );
+
 OGRField CPL_DLL *OGR_F_GetRawFieldRef( OGRFeatureH, int );
+
+int    CPL_DLL OGR_RawField_IsUnset( const OGRField* );
+int    CPL_DLL OGR_RawField_IsNull( const OGRField* );
+void   CPL_DLL OGR_RawField_SetUnset( OGRField* );
+void   CPL_DLL OGR_RawField_SetNull( OGRField* );
 
 int    CPL_DLL OGR_F_GetFieldAsInteger( OGRFeatureH, int );
 GIntBig CPL_DLL OGR_F_GetFieldAsInteger64( OGRFeatureH, int );

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     georaster_priv.h
  * Project:  Oracle Spatial GeoRaster Driver
@@ -57,6 +56,14 @@ void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile);
 void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
 
 //  ---------------------------------------------------------------------------
+//  JPEG2000 support - Install the Vitual File System handler to OCI LOB
+//  ---------------------------------------------------------------------------
+
+CPL_C_START
+void CPL_DLL VSIInstallOCILobHandler(void);
+CPL_C_END
+
+//  ---------------------------------------------------------------------------
 //  System constants
 //  ---------------------------------------------------------------------------
 
@@ -76,8 +83,8 @@ void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
 
 //  Default block size
 
-#define DEFAULT_BLOCK_ROWS 256
-#define DEFAULT_BLOCK_COLUMNS 256
+#define DEFAULT_BLOCK_ROWS 512
+#define DEFAULT_BLOCK_COLUMNS 512
 
 //  Default Model Coordinate Location (internal pixel geo-reference)
 
@@ -88,6 +95,8 @@ void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
 // MAX double string representation
 
 #define MAX_DOUBLE_STR_REP 20
+
+// Pyramid levels details
 
 struct hLevelDetails {
     int             nColumnBlockSize;
@@ -145,8 +154,23 @@ private:
     GeoRasterRasterBand*
                         poMaskBand;
     bool                bApplyNoDataArray;
+    void                JP2_Open( GDALAccess eAccess );
+    void                JP2_CreateCopy( GDALDataset* poJP2DS,
+                                        char** papszOptions,
+                                        int* pnResolutions,
+                                        GDALProgressFunc pfnProgress,
+                                        void* pProgressData );
+    boolean             JP2_CopyDirect( const char* pszJP2Filename,
+                                        int* pnResolutions,
+                                        GDALProgressFunc pfnProgress,
+                                        void* pProgressData );
+    boolean             JPEG_CopyDirect( const char* pszJPGFilename,
+                                         GDALProgressFunc pfnProgress,
+                                         void* pProgressData );
 
 public:
+
+    GDALDataset*        poJP2Dataset;
 
     void                SetSubdatasets( GeoRasterWrapper* poGRW );
 
@@ -165,13 +189,13 @@ public:
                             char** papszOptions,
                             GDALProgressFunc pfnProgress,
                             void* pProgressData );
-    virtual CPLErr      GetGeoTransform( double* padfTransform );
-    virtual CPLErr      SetGeoTransform( double* padfTransform );
-    virtual const char* GetProjectionRef();
-    virtual CPLErr      SetProjection( const char* pszProjString );
-    virtual char      **GetMetadataDomainList();
-    virtual char**      GetMetadata( const char* pszDomain );
-    virtual void        FlushCache();
+    virtual CPLErr      GetGeoTransform( double* padfTransform ) override;
+    virtual CPLErr      SetGeoTransform( double* padfTransform ) override;
+    virtual const char* GetProjectionRef() override;
+    virtual CPLErr      SetProjection( const char* pszProjString ) override;
+    virtual char      **GetMetadataDomainList() override;
+    virtual char**      GetMetadata( const char* pszDomain ) override;
+    virtual void        FlushCache() override;
     virtual CPLErr      IRasterIO( GDALRWFlag eRWFlag,
                             int nXOff, int nYOff, int nXSize, int nYSize,
                             void *pData, int nBufXSize, int nBufYSize,
@@ -179,15 +203,15 @@ public:
                             int nBandCount, int *panBandMap,
                             GSpacing nPixelSpace, GSpacing nLineSpace,
                             GSpacing nBandSpace,
-                            GDALRasterIOExtraArg* psExtraArg );
-    virtual int         GetGCPCount() { return nGCPCount; }
-    virtual const char* GetGCPProjection();
+                            GDALRasterIOExtraArg* psExtraArg ) override;
+    virtual int         GetGCPCount() override { return nGCPCount; }
+    virtual const char* GetGCPProjection() override;
     virtual const GDAL_GCP*
-                        GetGCPs() { return pasGCPList; }
+                        GetGCPs() override { return pasGCPList; }
     virtual CPLErr      SetGCPs(
                             int nGCPCount,
                             const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
+                            const char *pszGCPProjection ) override;
     virtual CPLErr      IBuildOverviews(
                             const char* pszResampling,
                             int nOverviews,
@@ -195,11 +219,13 @@ public:
                             int nListBandsover,
                             int* panBandList,
                             GDALProgressFunc pfnProgress,
-                            void* pProgresoversData );
-    virtual CPLErr      CreateMaskBand( int nFlags );
-    virtual OGRErr      StartTransaction(int /* bForce */ =FALSE) {return CE_None;};
-    virtual OGRErr      CommitTransaction() {return CE_None;};
-    virtual OGRErr      RollbackTransaction() {return CE_None;};
+                            void* pProgresoversData ) override;
+    virtual CPLErr      CreateMaskBand( int nFlags ) override;
+    virtual OGRErr      StartTransaction(int /* bForce */ =FALSE) override {return CE_None;};
+    virtual OGRErr      CommitTransaction() override {return CE_None;};
+    virtual OGRErr      RollbackTransaction() override {return CE_None;};
+    
+    virtual char**      GetFileList() override;
 
     void                AssignGeoRaster( GeoRasterWrapper* poGRW );
 };
@@ -215,7 +241,8 @@ class GeoRasterRasterBand : public GDALRasterBand
 public:
                         GeoRasterRasterBand( GeoRasterDataset* poGDS,
                             int nBand,
-                            int nLevel );
+                            int nLevel,
+                            GDALDataset* poJP2Dataset = NULL );
     virtual            ~GeoRasterRasterBand();
 
 private:
@@ -224,6 +251,7 @@ private:
     GDALColorTable*     poColorTable;
     GDALRasterAttributeTable*
                         poDefaultRAT;
+    GDALDataset*        poJP2Dataset;
     double              dfMin;
     double              dfMax;
     double              dfMean;
@@ -244,33 +272,33 @@ private:
 
 public:
 
-    virtual double      GetNoDataValue( int *pbSuccess = NULL );
-    virtual CPLErr      SetNoDataValue( double dfNoDataValue );
-    virtual double      GetMinimum( int* pbSuccess = NULL );
-    virtual double      GetMaximum( int* pbSuccess = NULL );
+    virtual double      GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual CPLErr      SetNoDataValue( double dfNoDataValue ) override;
+    virtual double      GetMinimum( int* pbSuccess = NULL ) override;
+    virtual double      GetMaximum( int* pbSuccess = NULL ) override;
     virtual GDALColorTable*
-                        GetColorTable();
-    virtual CPLErr      SetColorTable( GDALColorTable *poInColorTable );
+                        GetColorTable() override;
+    virtual CPLErr      SetColorTable( GDALColorTable *poInColorTable ) override;
     virtual GDALColorInterp
-                        GetColorInterpretation();
+                        GetColorInterpretation() override;
     virtual CPLErr      IReadBlock( int nBlockXOff, int nBlockYOff,
-                            void *pImage );
+                            void *pImage ) override;
     virtual CPLErr      IWriteBlock( int nBlockXOff, int nBlockYOff,
-                            void *pImage );
+                            void *pImage ) override;
     virtual CPLErr      SetStatistics( double dfMin, double dfMax,
-                            double dfMean, double dfStdDev );
+                            double dfMean, double dfStdDev ) override;
     virtual CPLErr      GetStatistics( int bApproxOK, int bForce,
                             double* pdfMin, double* pdfMax,
-                            double* pdfMean, double* pdfStdDev );
-    virtual             GDALRasterAttributeTable *GetDefaultRAT();
-    virtual CPLErr      SetDefaultRAT( const GDALRasterAttributeTable *poRAT );
-    virtual int         GetOverviewCount();
+                            double* pdfMean, double* pdfStdDev ) override;
+    virtual             GDALRasterAttributeTable *GetDefaultRAT() override;
+    virtual CPLErr      SetDefaultRAT( const GDALRasterAttributeTable *poRAT ) override;
+    virtual int         GetOverviewCount() override;
     virtual GDALRasterBand*
-                        GetOverview( int );
-    virtual CPLErr      CreateMaskBand( int nFlags );
+                        GetOverview( int ) override;
+    virtual CPLErr      CreateMaskBand( int nFlags ) override;
     virtual GDALRasterBand*
-                        GetMaskBand();
-    virtual int         GetMaskFlags();
+                        GetMaskBand() override;
+    virtual int         GetMaskFlags() override;
 };
 
 //  ---------------------------------------------------------------------------
@@ -294,6 +322,7 @@ private:
     GByte*              pabyBlockBuf;
     GByte*              pabyCompressBuf;
     OWStatement*        poBlockStmt;
+    OWStatement*        poStmtWrite;
 
     int                 nCurrentLevel;
     long                nLevelOffset;
@@ -407,6 +436,7 @@ public:
                                                 int nBandBlocks );
     void                SetWriteOnly( bool value ) { bWriteOnly = value; };
     void                SetRPC();
+    void                SetMaxLevel( int nMaxLevel );
     void                GetRPC();
 
 public:
@@ -436,7 +466,7 @@ public:
     CPLString           sCompressionType;
     int                 nCompressQuality;
     CPLString           sWKText;
-
+    CPLString           sAuthority;
     CPLList*            psNoDataList;
 
     int                 nRasterColumns;

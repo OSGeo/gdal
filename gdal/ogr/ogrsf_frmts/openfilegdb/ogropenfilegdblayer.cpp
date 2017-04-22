@@ -51,7 +51,7 @@ class OGROpenFileGDBGeomFieldDefn: public OGRGeomFieldDefn
 
         void UnsetLayer() { m_poLayer = NULL; }
 
-        virtual OGRSpatialReference* GetSpatialRef()
+        virtual OGRSpatialReference* GetSpatialRef() override
         {
             if( poSRS )
                 return poSRS;
@@ -87,7 +87,7 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
             m_poLayer = NULL;
         }
 
-        virtual int GetFieldCount()
+        virtual int GetFieldCount() override
         {
             if( nFieldCount )
                 return nFieldCount;
@@ -99,12 +99,12 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
             return nFieldCount;
         }
 
-        virtual int GetGeomFieldCount()
+        virtual int GetGeomFieldCount() override
         {
             /* FileGDB v9 case */
             if( !m_bHasBuildFieldDefn &&
                 m_poLayer != NULL && m_poLayer->m_eGeomType != wkbNone &&
-                m_poLayer->m_osDefinition.size() == 0 )
+                m_poLayer->m_osDefinition.empty() )
             {
                 m_bHasBuildFieldDefn = TRUE;
                 (void) m_poLayer->BuildLayerDefinition();
@@ -112,12 +112,12 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
             return nGeomFieldCount;
         }
 
-        virtual OGRGeomFieldDefn* GetGeomFieldDefn( int i )
+        virtual OGRGeomFieldDefn* GetGeomFieldDefn( int i ) override
         {
             /* FileGDB v9 case */
             if( !m_bHasBuildFieldDefn &&
                 m_poLayer != NULL && m_poLayer->m_eGeomType != wkbNone &&
-                m_poLayer->m_osDefinition.size() == 0 )
+                m_poLayer->m_osDefinition.empty() )
             {
                 m_bHasBuildFieldDefn = TRUE;
                 (void) m_poLayer->BuildLayerDefinition();
@@ -168,7 +168,7 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer( const char* pszGDBFilename,
 
     m_eGeomType = eGeomType;
 
-    if( m_osDefinition.size() )
+    if( !m_osDefinition.empty() )
     {
         BuildGeometryColumnGDBv10();
     }
@@ -231,10 +231,42 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
     {
         m_eGeomType =
             FileGDBOGRGeometryConverter::GetGeometryTypeFromESRI(pszShapeType);
+
+        if( EQUAL(pszShapeType, "esriGeometryMultiPatch") )
+        {
+            if( m_poLyrTable == NULL )
+            {
+                m_poLyrTable = new FileGDBTable();
+                if( !(m_poLyrTable->Open(m_osGDBFilename, GetDescription())) )
+                {
+                    delete m_poLyrTable;
+                    m_poLyrTable = NULL;
+                    m_bValidLayerDefn = FALSE;
+                }
+            }
+            if( m_poLyrTable != NULL )
+            {
+                m_iGeomFieldIdx = m_poLyrTable->GetGeomFieldIdx();
+                if( m_iGeomFieldIdx >= 0 )
+                {
+                    FileGDBGeomField* poGDBGeomField =
+                        reinterpret_cast<FileGDBGeomField *>(
+                            m_poLyrTable->GetField(m_iGeomFieldIdx));
+                    if( m_poGeomConverter == NULL )
+                    {
+                        m_poGeomConverter =
+                            FileGDBOGRGeometryConverter::BuildConverter(poGDBGeomField);
+                    }
+                    TryToDetectMultiPatchKind();
+                }
+            }
+        }
+
         if( bHasZ )
             m_eGeomType = wkbSetZ( m_eGeomType );
         if( bHasM )
             m_eGeomType = wkbSetM( m_eGeomType );
+
         const char* pszWKT =
             CPLGetXMLValue( psInfo, "SpatialReference.WKT", NULL );
         const int nWKID =
@@ -328,7 +360,60 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
         m_eGeomType = wkbNone;
     }
     CPLDestroyXMLNode(psTree);
+
     return TRUE;
+}
+
+/************************************************************************/
+/*                   TryToDetectMultiPatchKind()                        */
+/************************************************************************/
+
+// If the first and last feature have the same geometry type, then use
+// it for the whole layer.
+void OGROpenFileGDBLayer::TryToDetectMultiPatchKind()
+{
+    CPLAssert( m_poLyrTable != NULL );
+    CPLAssert( m_iGeomFieldIdx >= 0 );
+
+    if( m_poLyrTable->GetTotalRecordCount() == 0 )
+        return;
+    int nFirstIdx = m_poLyrTable->GetAndSelectNextNonEmptyRow(0);
+    if( nFirstIdx < 0 )
+        return;
+
+    const OGRField* psField = m_poLyrTable->GetFieldValue(m_iGeomFieldIdx);
+    if( psField == NULL )
+        return;
+    OGRGeometry* poGeom = m_poGeomConverter->GetAsGeometry(psField);
+    if( poGeom == NULL )
+        return;
+    const OGRwkbGeometryType eType = poGeom->getGeometryType();
+    delete poGeom;
+
+    int nLastIdx = m_poLyrTable->GetTotalRecordCount()-1;
+    while( nLastIdx > nFirstIdx && 
+           m_poLyrTable->GetOffsetInTableForRow(nLastIdx) == 0 )
+    {
+        nLastIdx --;
+    }
+    if( nLastIdx > nFirstIdx && m_poLyrTable->SelectRow(nLastIdx) )
+    {
+        psField = m_poLyrTable->GetFieldValue(m_iGeomFieldIdx);
+        if( psField == NULL )
+        {
+            m_eGeomType = eType;
+            return;
+        }
+        poGeom = m_poGeomConverter->GetAsGeometry(psField);
+        if( poGeom == NULL )
+        {
+            m_eGeomType = eType;
+            return;
+        }
+        if( eType == poGeom->getGeometryType() )
+            m_eGeomType = eType;
+        delete poGeom;
+    }
 }
 
 /************************************************************************/
@@ -340,13 +425,16 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
     if( m_bValidLayerDefn >= 0 )
         return m_bValidLayerDefn;
 
-    m_poLyrTable = new FileGDBTable();
-    if( !(m_poLyrTable->Open(m_osGDBFilename, GetDescription())) )
+    if( m_poLyrTable == NULL )
     {
-        delete m_poLyrTable;
-        m_poLyrTable = NULL;
-        m_bValidLayerDefn = FALSE;
-        return FALSE;
+        m_poLyrTable = new FileGDBTable();
+        if( !(m_poLyrTable->Open(m_osGDBFilename, GetDescription())) )
+        {
+            delete m_poLyrTable;
+            m_poLyrTable = NULL;
+            m_bValidLayerDefn = FALSE;
+            return FALSE;
+        }
     }
 
     m_bValidLayerDefn = TRUE;
@@ -357,8 +445,11 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         FileGDBGeomField* poGDBGeomField =
             reinterpret_cast<FileGDBGeomField *>(
                 m_poLyrTable->GetField(m_iGeomFieldIdx));
-        m_poGeomConverter =
+        if( m_poGeomConverter == NULL )
+        {
+            m_poGeomConverter =
             FileGDBOGRGeometryConverter::BuildConverter(poGDBGeomField);
+        }
 
         if( CPLTestBool(
                 CPLGetConfigOption("OPENFILEGDB_IN_MEMORY_SPI", "YES")) )
@@ -381,7 +472,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
     }
 
     if( m_iGeomFieldIdx >= 0 &&
-        (m_osDefinition.size() == 0 ||
+        (m_osDefinition.empty() ||
          m_poFeatureDefn->OGRFeatureDefn::GetGeomFieldCount() == 0) )
     {
         /* FileGDB v9 case */
@@ -399,7 +490,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             case FGTGT_MULTIPOINT: eGeomType = wkbMultiPoint; break;
             case FGTGT_LINE: eGeomType = wkbMultiLineString; break;
             case FGTGT_POLYGON: eGeomType = wkbMultiPolygon; break;
-            case FGTGT_MULTIPATCH: eGeomType = wkbMultiPolygon; break;
+            case FGTGT_MULTIPATCH: eGeomType = wkbUnknown; break;
         }
 
         if( m_eGeomType != wkbUnknown && wkbFlatten(eGeomType) != wkbFlatten(m_eGeomType) )
@@ -409,8 +500,15 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         }
 
         m_eGeomType = eGeomType;
+
+        if( eGDBGeomType == FGTGT_MULTIPATCH )
+        {
+            TryToDetectMultiPatchKind();
+        }
+
         if( poGDBGeomField->Has3D() )
             m_eGeomType = wkbSetZ(m_eGeomType);
+
 
         // Check that the first feature has actually a M value before advertizing
         // it.
@@ -435,7 +533,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         m_poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
 
         OGRSpatialReference* poSRS = NULL;
-        if( poGDBGeomField->GetWKT().size() &&
+        if( !poGDBGeomField->GetWKT().empty() &&
             poGDBGeomField->GetWKT()[0] != '{' )
         {
             poSRS = new OGRSpatialReference( poGDBGeomField->GetWKT().c_str() );
@@ -451,7 +549,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             poSRS->Dereference();
         }
     }
-    else if( m_osDefinition.size() == 0 && m_iGeomFieldIdx < 0 )
+    else if( m_osDefinition.empty() && m_iGeomFieldIdx < 0 )
     {
         m_eGeomType = wkbNone;
     }
@@ -526,8 +624,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             oFieldDefn.SetWidth(nWidth);
         oFieldDefn.SetNullable(poGDBField->IsNullable());
         const OGRField* psDefault = poGDBField->GetDefault();
-        if( !(psDefault->Set.nMarker1 == OGRUnsetMarker &&
-              psDefault->Set.nMarker2 == OGRUnsetMarker) )
+        if( !OGR_RawField_IsUnset(psDefault) && !OGR_RawField_IsNull(psDefault) )
         {
             if( eType == OFTString )
             {
@@ -545,7 +642,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                 // a00000004.gdbtable does not match the default values (in
                 // binary) found in the field definition section of the
                 // .gdbtable of the layers themselves So check consistency.
-                if( m_osDefinition.size() && psTree == NULL )
+                if( !m_osDefinition.empty() && psTree == NULL )
                 {
                     psTree = CPLParseXMLString(m_osDefinition.c_str());
                     if( psTree != NULL )
@@ -656,7 +753,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
 OGRwkbGeometryType OGROpenFileGDBLayer::GetGeomType()
 {
     if( m_eGeomType == wkbUnknown ||
-        m_osDefinition.size() == 0 /* FileGDB v9 case */ )
+        m_osDefinition.empty() /* FileGDB v9 case */ )
     {
         (void) BuildLayerDefinition();
     }
@@ -769,6 +866,7 @@ static int CompValues(OGRFieldDefn* poFieldDefn,
                       const swq_expr_node* poValue1,
                       const swq_expr_node* poValue2)
 {
+    int ret = 0;
     switch( poFieldDefn->GetType() )
     {
         case OFTInteger:
@@ -783,26 +881,25 @@ static int CompValues(OGRFieldDefn* poFieldDefn,
             else
                 n2 = (int) poValue2->int_value;
             if( n1 < n2 )
-                return -1;
-
-            if( n1 == n2 )
-                return 0;
+                ret = -1;
+            else if( n1 == n2 )
+                ret = 0;
             else
-                return 1;
+                ret = 1;
             break;
         }
 
         case OFTReal:
             if( poValue1->float_value < poValue2->float_value )
-                return -1;
-            if( poValue1->float_value == poValue2->float_value )
-                return 0;
+                ret = -1;
+            else if( poValue1->float_value == poValue2->float_value )
+                ret = 0;
             else
-                return 1;
+                ret = 1;
             break;
 
         case OFTString:
-            return strcmp(poValue1->string_value, poValue2->string_value);
+            ret = strcmp(poValue1->string_value, poValue2->string_value);
             break;
 
         case OFTDate:
@@ -816,16 +913,15 @@ static int CompValues(OGRFieldDefn* poFieldDefn,
                  poValue2->field_type == SWQ_DATE ||
                  poValue2->field_type == SWQ_TIME))
             {
-                return strcmp(poValue1->string_value, poValue2->string_value);
+                ret = strcmp(poValue1->string_value, poValue2->string_value);
             }
-            return 0;
             break;
         }
 
         default:
-            return 0;
             break;
     }
+    return ret;
 }
 
 /***********************************************************************/
@@ -1384,10 +1480,14 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
             if( !m_poFeatureDefn->GetFieldDefn(iOGRIdx)->IsIgnored() )
             {
                 const OGRField* psField = m_poLyrTable->GetFieldValue(iGDBIdx);
-                if( psField != NULL )
+                if( poFeature == NULL )
+                    poFeature = new OGRFeature(m_poFeatureDefn);
+                if( psField == NULL )
                 {
-                    if( poFeature == NULL )
-                        poFeature = new OGRFeature(m_poFeatureDefn);
+                    poFeature->SetFieldNull(iOGRIdx);
+                }
+                else
+                {
 
                     if( iGDBIdx == m_iFieldToReadAsBinary )
                         poFeature->SetField(iOGRIdx, (const char*) psField->Binary.paData);

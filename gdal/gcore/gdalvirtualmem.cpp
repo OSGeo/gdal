@@ -27,12 +27,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
-#include "cpl_virtualmem.h"
+#include "cpl_port.h"
 #include "gdal.h"
 #include "gdal_priv.h"
 
+#include <cstddef>
+#include <cstring>
+
 #include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_virtualmem.h"
 
 // To be changed if we go to 64-bit RasterIO coordinates and spacing.
 typedef int coord_type;
@@ -276,7 +282,7 @@ void GDALVirtualMem::DoIOPixelInterleaved(
 
     GetXYBand(nOffset, x, y, band);
 #ifdef DEBUG_VERBOSE
-    fprintf(stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",
+    fprintf(stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",/*ok*/
             eRWFlag, static_cast<int>(nOffset), x, y, band);
 #endif
 
@@ -461,7 +467,7 @@ void GDALVirtualMem::DoIOBandSequential(
     int band = 0;
     GetXYBand(nOffset, x, y, band);
 #if DEBUG_VERBOSE
-    fprintf( stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",
+    fprintf( stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",/*ok*/
              eRWFlag, static_cast<int>(nOffset), x, y, band );
 #endif
 

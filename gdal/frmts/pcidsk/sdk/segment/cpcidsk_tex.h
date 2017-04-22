@@ -53,8 +53,8 @@ namespace PCIDSK
 
         // PCIDSK_TEX
 
-        std::string ReadText();
-        void WriteText( const std::string &text );
+        std::string ReadText() override;
+        void WriteText( const std::string &text ) override;
     };
 } // end namespace PCIDSK
 

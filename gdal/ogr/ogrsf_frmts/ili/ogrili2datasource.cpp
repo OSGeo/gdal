@@ -161,7 +161,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
         return FALSE;
     }
 
-    if (osModelFilename.size())
+    if (!osModelFilename.empty() )
         poReader->ReadModel( poImdReader, osModelFilename );
 
     poReader->SetSourceFile( pszName );
@@ -191,9 +191,8 @@ int OGRILI2DataSource::Create( const char *pszFilename,
 
     if( pszModelFilename == NULL )
     {
-        CPLError( CE_Warning, CPLE_OpenFailed,
-                  "Model file '%s' (%s) not found : %s.",
-                  pszModelFilename, pszFilename, VSIStrerror( errno ) );
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Model file not specified." );
         CSLDestroy(filenames);
         return FALSE;
     }
@@ -322,11 +321,11 @@ OGRLayer *OGRILI2DataSource::GetLayer( int iLayer )
     list<OGRLayer *>::const_iterator layerIt = listLayer.begin();
     int i = 0;
     while (i < iLayer && layerIt != listLayer.end()) {
-        i++;
-        layerIt++;
+        ++i;
+        ++layerIt;
     }
 
-    if (i == iLayer) {
+    if (i == iLayer && layerIt != listLayer.end()) {
         OGRILI2Layer *tmpLayer = reinterpret_cast<OGRILI2Layer *>(*layerIt);
         return tmpLayer;
     }

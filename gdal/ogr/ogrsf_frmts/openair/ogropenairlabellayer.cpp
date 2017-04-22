@@ -130,7 +130,7 @@ OGRFeature *OGROpenAirLabelLayer::GetNextRawFeature()
 
         if (STARTS_WITH_CI(pszLine, "AC "))
         {
-            if (osCLASS.size() != 0)
+            if (!osCLASS.empty())
             {
                 osNAME = "";
                 osCEILING = "";

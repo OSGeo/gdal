@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef VSIL_TARGET_H
+#define VSIL_TARGET_H
+
 #include "kdu_file_io.h"
 #include "cpl_error.h"
 #include "cpl_vsi.h"
@@ -54,7 +57,7 @@ public:
             }
         }
 
-    bool write(const kdu_byte *buf, int num_bytes)
+    bool write(const kdu_byte *buf, int num_bytes) override
         {
             if( file == NULL )
                 return false;
@@ -65,7 +68,7 @@ public:
                 return true;
         }
 
-    bool start_rewrite(kdu_long backtrack)
+    bool start_rewrite(kdu_long backtrack) override
         {
             if( file == NULL )
                 return false;
@@ -76,7 +79,7 @@ public:
                 return true;
         }
 
-    bool end_rewrite()
+    bool end_rewrite() override
         {
             if( file == NULL )
                 return false;
@@ -87,7 +90,7 @@ public:
                 return true;
         }
 
-    bool close()
+    bool close() override
         {
             if (file != NULL)
                 VSIFCloseL( file );
@@ -98,3 +101,5 @@ public:
 private: // Data
     VSILFILE *file;
 };
+
+#endif // VSIL_TARGET_H

@@ -448,13 +448,13 @@ static int ReadGrib1Sect1 (uChar *pds, uInt4 gribLen, uInt4 *curLoc,
       pdsMeta->P1 = pdsMeta->refTime + P1_DeltaTime;
    } else {
       pdsMeta->P1 = pdsMeta->refTime;
-      printf ("Warning! : Can't figure out time unit of %d\n", *pds);
+      printf ("Warning! : Can't figure out time unit of %u\n", *pds);
    }
    if (ParseSect4Time2secV1 (pds[2], *pds, &P2_DeltaTime) == 0) {
       pdsMeta->P2 = pdsMeta->refTime + P2_DeltaTime;
    } else {
       pdsMeta->P2 = pdsMeta->refTime;
-      printf ("Warning! : Can't figure out time unit of %d\n", *pds);
+      printf ("Warning! : Can't figure out time unit of %u\n", *pds);
    }
    /* The following is based on Table 5. */
    /* Note: For ensemble forecasts, 119 has meaning. */
@@ -487,7 +487,7 @@ static int ReadGrib1Sect1 (uChar *pds, uInt4 gribLen, uInt4 *curLoc,
             pdsMeta->P2 = pdsMeta->P1 = pdsMeta->refTime + P1_DeltaTime;
          } else {
             pdsMeta->P2 = pdsMeta->P1 = pdsMeta->refTime;
-            printf ("Warning! : Can't figure out time unit of %d\n", *pds);
+            printf ("Warning! : Can't figure out time unit of %u\n", *pds);
          }
          pdsMeta->validTime = pdsMeta->P1;
          break;
@@ -594,8 +594,8 @@ static int ReadGrib1Sect1 (uChar *pds, uInt4 gribLen, uInt4 *curLoc,
               sectLen);
       */
    } else {
-      printf ("Un-handled possible ensemble section center %d "
-              "subcenter %d\n", *center, *subcenter);
+      printf ("Un-handled possible ensemble section center %u "
+              "subcenter %u\n", *center, *subcenter);
    }
    return 0;
 }
@@ -831,7 +831,7 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
 #ifdef DEBUG
    if (gds[1] != 255) {
       printf ("\n\tCaution: GRIB1 GDS: FOR ALL NWS products, PV should be "
-              "255 rather than %d\n", gds[1]);
+              "255 rather than %u\n", gds[1]);
    }
 #endif
    if ((gds[1] != 255) && (gds[1] > 6)) {
@@ -1248,7 +1248,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
    P1 = GRIB_UNSIGN_INT2 (bds[5], bds[6]);
    P2 = GRIB_UNSIGN_INT2 (bds[7], bds[8]);
    printf ("N1 N2 P1 P2 : %d %d %d %d\n", N1, N2, P1, P2);
-   printf ("Reserved %d\n", bds[9]);
+   printf ("Reserved %u\n", bds[9]);
    bds += 10;
    secLen += 10;
 
@@ -1256,7 +1256,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
 
    for (i = 0; i < P1; i++) {
       width[i] = *bds;
-      printf ("(Width %d %d)\n", i, width[i]);
+      printf ("(Width %d %u)\n", i, width[i]);
       bds++;
       secLen++;
    }
@@ -1264,7 +1264,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
       bufLoc = 8;
       for (i = 0; i < P2; i++) {
          memBitRead (&uli_temp, sizeof (sInt4), bds, 1, &bufLoc, &numUsed);
-         printf ("(%d %d) ", i, uli_temp);
+         printf ("(%d %u) ", i, uli_temp);
          if (numUsed != 0) {
             printf ("\n");
             bds += numUsed;
@@ -1275,7 +1275,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
          bds++;
          secLen++;
       }
-      printf ("Observed Sec Len %d\n", secLen);
+      printf ("Observed Sec Len %u\n", secLen);
    } else {
       /* Jump over widths and secondary bitmap */
       bds += (N1 - 21);
@@ -1285,7 +1285,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
    bufLoc = 8;
    for (i = 0; i < P1; i++) {
       memBitRead (&uli_temp, sizeof (sInt4), bds, numBits, &bufLoc, &numUsed);
-      printf ("(%d %d) (numUsed %ld numBits %d)", i, uli_temp, 
+      printf ("(%d %u) (numUsed %ld numBits %d)", i, uli_temp,
               (long) numUsed, numBits);
       if (numUsed != 0) {
          printf ("\n");
@@ -1294,11 +1294,12 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
       }
    }
    if (bufLoc != 8) {
+      // cppcheck-suppress uselessAssignmentPtrArg
       bds++;
       secLen++;
    }
 
-   printf ("Observed Sec Len %d\n", secLen);
+   printf ("Observed Sec Len %u\n", secLen);
    printf ("N2 = %d\n", N2);
 
    errSprintf ("Don't know how to handle Complex GRIB1 packing yet.\n");
@@ -1517,6 +1518,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
             newIndex = i;
          }
          /* A 0 in bitmap means no data. A 1 in bitmap means data. */
+         // cppcheck-suppress nullPointer
          if (!bitmap[i]) {
             meta->gridAttrib.numMiss++;
             data[newIndex] = UNDEFINED;
@@ -1566,6 +1568,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
             } else {
                newIndex = i;
             }
+            // cppcheck-suppress nullPointer
             if (!bitmap[i]) {
                data[newIndex] = resetPrim;
             }

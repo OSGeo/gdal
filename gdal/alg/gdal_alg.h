@@ -423,6 +423,8 @@ typedef struct
     double  dfPower;
     /*! The radius of search circle. */
     double  dfRadius;
+    /*! Smoothing parameter. */
+    double  dfSmoothing;
 
     /*! Maximum number of data points to use.
      *
@@ -613,6 +615,17 @@ void CPL_DLL GDALTriangulationFree(GDALTriangulation* psDT);
 // GDAL internal use only
 void GDALTriangulationTerminate(void);
 /*! @endcond */
+
+GDALDatasetH CPL_DLL GDALOpenVerticalShiftGrid(
+                                        const char* pszProj4Geoidgrids,
+                                        int* pbError );
+
+GDALDatasetH CPL_DLL GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
+                                         GDALDatasetH hGridDataset,
+                                         int bInverse,
+                                         double dfSrcUnitToMeter,
+                                         double dfDstUnitToMeter,
+                                         const char* const* papszOptions );
 
 CPL_C_END
 

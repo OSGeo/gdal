@@ -578,7 +578,7 @@ int AOLayer::TestCapability( const char* pszCap )
 
     else if (EQUAL(pszCap,OLCFastGetExtent))
         return TRUE;
-
+#ifdef notdef
     // Have not implemented this yet
     else if (EQUAL(pszCap,OLCCreateField))
         return FALSE;
@@ -587,7 +587,7 @@ int AOLayer::TestCapability( const char* pszCap )
     else if (EQUAL(pszCap,OLCSequentialWrite)
           || EQUAL(pszCap,OLCRandomWrite))
         return FALSE;
-
+#endif
     else
         return FALSE;
 }

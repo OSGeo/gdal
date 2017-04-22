@@ -13,7 +13,7 @@ can be written.  Existing images cannot be updated in place.<p>
 
 The JPEG2000 file format supports lossy and lossless compression of
 8bit and 16bit images with 1 or more bands (components).  Via the
-<a href="http://www.mappingscience.com/msi.html">GeoJP2 (tm)</a> mechanism,
+<a href="https://web.archive.org/web/20151028081930/http://www.lizardtech.com/download/geo/geotiff_box.txt">GeoJP2 (tm)</a> mechanism,
 GeoTIFF style coordinate system and georeferencing information can be embedded
 within the JP2 file.  JPEG2000 files use a substantially different format and
 compression mechanism than the traditional JPEG compression and JPEG JFIF
@@ -41,7 +41,7 @@ stored as XML raw content in the xml:XMP metadata domain.<p>
 <h2>Configuration Options</h2>
 
 The JP2KAK driver supports the following
-<a href="http://trac.osgeo.org/gdal/ConfigOptions">Config Options</a>.
+<a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">Config Options</a>.
 These runtime options can be used to alter the behavior of the driver.
 
 <ul>
@@ -175,16 +175,35 @@ to better understand their meaning.<p>
 <li> <b>Rweight</b>: Kakadu library default used.
 </ul>
 
-See Also:<p>
+<h2>Known Kakadu Issues</h2>
+
+<h3>Alpha Channel Writing in v7.8</h3>
+
+Kakadu v7.8 has a bug in jp2_channels::set_opacity_mapping that can
+cause an error when writing images with an alpha channel.  Please
+upgrade to version 7.9.
+
+<pre>
+Error: GdalIO: Error in Kakadu File Format Support: Attempting to
+create a Component Mapping (cmap) box, one of whose channels refers to
+a non-existent image component or palette lookup table. (code = 1)
+</pre>
+
+<h3>kdu_get_num_processors always returns 0 for some platforms</h3>
+
+On non-windows / non-mac installs (e.g. Linux), Kakadu might not
+include unistd.h in kdu_arch.cpp.  This means that
+_SC_NPROCESSORS_ONLN and _SC_NPROCESSORS_CONF are not defined and
+kdu_get_num_processors will always return 0.  Therefore the jp2kak
+driver might not default to creating worker threads.
+
+<h2>See Also:</h2>
 
 <ul>
 
 <li> Implemented as <tt>gdal/frmts/jp2kak/jp2kakdataset.cpp</tt>. </li>
 
 <li> If you're using a Kakadu release before v7.5, configure &amp; compile GDAL with eg. <code>CXXFLAGS="-DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=3 -DKDU_PATCH_VERSION=2"</code> for Kakadu version 7.3.2.</li>
-
-<li> <a href="http://www.remotesensing.org/jpeg2000/">JPEG2000 for Geospatial
-Applications</a> page, includes GeoJP2(tm) discussion.</li>
 
 <li> Alternate <a href="frmt_jpeg2000.html">JPEG2000 driver</a>.</li>
 

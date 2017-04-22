@@ -88,12 +88,12 @@ class SAGADataset : public GDALPamDataset
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData );
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
-    virtual char **GetFileList();
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual char **GetFileList() override;
 
-    CPLErr GetGeoTransform( double *padfGeoTransform );
-    CPLErr SetGeoTransform( double *padfGeoTransform );
+    CPLErr GetGeoTransform( double *padfGeoTransform ) override;
+    CPLErr SetGeoTransform( double *padfGeoTransform ) override;
 };
 
 /************************************************************************/
@@ -121,10 +121,10 @@ class SAGARasterBand : public GDALPamRasterBand
 public:
     SAGARasterBand( SAGADataset *, int );
 
-    CPLErr          IReadBlock( int, int, void * );
-    CPLErr          IWriteBlock( int, int, void * );
+    CPLErr          IReadBlock( int, int, void * ) override;
+    CPLErr          IWriteBlock( int, int, void * ) override;
 
-    double          GetNoDataValue( int *pbSuccess = NULL );
+    double          GetNoDataValue( int *pbSuccess = NULL ) override;
 };
 
 /************************************************************************/

@@ -578,6 +578,9 @@ HTML_HEADER            =
 
 HTML_FOOTER            = doc/gdal_footer.html
 
+# Custom layout (see http://www.stack.nl/~dimitri/doxygen/manual/customize.html)
+LAYOUT_FILE 	       = DoxygenLayout.xml
+
 # The HTML_STYLESHEET tag can be used to specify a user-defined cascading
 # style sheet that is used by each HTML page. It can be used to
 # fine-tune the look of the HTML output. If the tag is left blank doxygen
@@ -942,6 +945,8 @@ PREDEFINED             = HAVE_DLFCN_H \
                          HAVE_CURL \
                          CPL_UNUSED= \
                          UNUSED_IF_NO_GEOS= \
+                         UNUSED_IF_NO_SFCGAL= \
+                         UNUSED_PARAMETER= \
                          isinf \
                          HAVE_LIBXML2 \
                          HAVE_RECENT_LIBXML2 \
@@ -953,7 +958,7 @@ PREDEFINED             = HAVE_DLFCN_H \
 # The macro definition that is found in the sources will be used.
 # Use the PREDEFINED tag if you want to use a different macro definition.
 
-EXPAND_AS_DEFINED      = CPL_PRINT_FUNC_FORMAT
+EXPAND_AS_DEFINED      = CPL_PRINT_FUNC_FORMAT CPL_FORMAT_STRING
 
 # If the SKIP_FUNCTION_MACROS tag is set to YES (the default) then
 # doxygen's preprocessor will remove all function-like macros that are alone

@@ -307,7 +307,7 @@ the dataset for multi-band style nodata values).
 <li> An optional nodata mask band marking pixels as nodata or in some cases
 transparency as discussed in <a
 href="http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask">RFC 15: Band
-Masks</a>.
+Masks</a> and documented in \ref GDALRasterBand::GetMaskBand().
 
 <li> An optional list of category names (effectively class names in a
 thematic image).

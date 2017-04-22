@@ -12,7 +12,7 @@ CXX=g++
 CFLAGS=-fpic
 LDFLAGS=-shared
 PHP_INC=`php-config --includes`
-EXTRA_INC=-I../../port -I../../gcore -I../../alg -I../../ogr
+EXTRA_INC=-I../../port -I../../gcore -I../../alg -I../../ogr -I../../apps
 EXTRA_LIB=
 
 all_libs = php_gdal.so php_ogr.so php_gdalconst.so php_osr.so

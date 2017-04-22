@@ -31,9 +31,9 @@
 #ifndef OGR_FEATURE_H_INCLUDED
 #define OGR_FEATURE_H_INCLUDED
 
-#include "ogr_geometry.h"
-#include "ogr_featurestyle.h"
 #include "cpl_atomic_ops.h"
+#include "ogr_featurestyle.h"
+#include "ogr_geometry.h"
 
 /**
  * \file ogr_feature.h
@@ -74,11 +74,9 @@ class CPL_DLL OGRFieldDefn
 
     int                 bNullable;
 
-    void                Initialize( const char *, OGRFieldType );
-
   public:
                         OGRFieldDefn( const char *, OGRFieldType );
-                        OGRFieldDefn( OGRFieldDefn * );
+               explicit OGRFieldDefn( OGRFieldDefn * );
                         ~OGRFieldDefn();
 
     void                SetName( const char * );
@@ -157,7 +155,7 @@ protected:
 public:
                             OGRGeomFieldDefn( const char *pszNameIn,
                                               OGRwkbGeometryType eGeomTypeIn );
-                            OGRGeomFieldDefn( OGRGeomFieldDefn * );
+                  explicit OGRGeomFieldDefn( OGRGeomFieldDefn * );
         virtual            ~OGRGeomFieldDefn();
 
         void                SetName( const char * );
@@ -224,7 +222,7 @@ class CPL_DLL OGRFeatureDefn
 //! @endcond
 
   public:
-                OGRFeatureDefn( const char * pszName = NULL );
+       explicit OGRFeatureDefn( const char * pszName = NULL );
     virtual    ~OGRFeatureDefn();
 
     virtual const char  *GetName();
@@ -293,13 +291,13 @@ class CPL_DLL OGRFeature
 
   protected:
 //! @cond Doxygen_Suppress
-    char *              m_pszStyleString;
+    char                *m_pszStyleString;
     OGRStyleTable       *m_poStyleTable;
-    char *              m_pszTmpFieldValue;
+    char                *m_pszTmpFieldValue;
 //! @endcond
 
   public:
-                        OGRFeature( OGRFeatureDefn * );
+    explicit            OGRFeature( OGRFeatureDefn * );
     virtual            ~OGRFeature();
 
     OGRFeatureDefn     *GetDefnRef() { return poDefn; }
@@ -335,6 +333,12 @@ class CPL_DLL OGRFeature
     int                 IsFieldSet( int iField );
 
     void                UnsetField( int iField );
+
+    bool                IsFieldNull( int iField );
+
+    void                SetFieldNull( int iField );
+
+    bool                IsFieldSetAndNotNull( int iField );
 
     OGRField           *GetRawFieldRef( int i ) { return pauFields + i; }
 
@@ -488,24 +492,24 @@ class CPL_DLL OGRFeatureQuery
     OGRFeatureDefn *poTargetDefn;
     void           *pSWQExpr;
 
-    char          **FieldCollector( void *, char ** );
+    char      **FieldCollector( void *, char ** );
 
-    GIntBig       *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *,
+    GIntBig    *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *,
                                            GIntBig& nFIDCount );
 
     int         CanUseIndex( swq_expr_node*, OGRLayer * );
 
   public:
                 OGRFeatureQuery();
-                ~OGRFeatureQuery();
+               ~OGRFeatureQuery();
 
     OGRErr      Compile( OGRFeatureDefn *, const char *,
                          int bCheck = TRUE,
                          swq_custom_func_registrar*
-                             poCustomFuncRegistrar = NULL );
+                         poCustomFuncRegistrar = NULL );
     int         Evaluate( OGRFeature * );
 
-    GIntBig       *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
+    GIntBig    *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
 
     int         CanUseIndex( OGRLayer * );
 

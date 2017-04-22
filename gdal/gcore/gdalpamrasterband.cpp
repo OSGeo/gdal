@@ -29,8 +29,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
+#include "cpl_port.h"
 #include "gdal_pam.h"
+
+#include <climits>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 #include "gdal_rat.h"
 
 CPL_CVSID("$Id$");
@@ -446,17 +462,17 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree,
         && CPLGetXMLNode( psTree, "Maximum" ) != NULL )
     {
         psPam->bHaveMinMax = TRUE;
-        psPam->dfMin = CPLAtof(CPLGetXMLValue(psTree, "Minimum","0"));
-        psPam->dfMax = CPLAtof(CPLGetXMLValue(psTree, "Maximum","0"));
+        psPam->dfMin = CPLAtofM(CPLGetXMLValue(psTree, "Minimum","0"));
+        psPam->dfMax = CPLAtofM(CPLGetXMLValue(psTree, "Maximum","0"));
     }
 
     if( CPLGetXMLNode( psTree, "Mean" ) != NULL
         && CPLGetXMLNode( psTree, "StandardDeviation" ) != NULL )
     {
         psPam->bHaveStats = TRUE;
-        psPam->dfMean = CPLAtof(CPLGetXMLValue(psTree, "Mean","0"));
+        psPam->dfMean = CPLAtofM(CPLGetXMLValue(psTree, "Mean","0"));
         psPam->dfStdDev =
-            CPLAtof(CPLGetXMLValue(psTree, "StandardDeviation", "0"));
+            CPLAtofM(CPLGetXMLValue(psTree, "StandardDeviation", "0"));
     }
 
 /* -------------------------------------------------------------------- */
@@ -1010,8 +1026,8 @@ PamParseHistogram( CPLXMLNode *psHistItem,
     if( psHistItem == NULL )
         return FALSE;
 
-    *pdfMin = CPLAtof(CPLGetXMLValue( psHistItem, "HistMin", "0"));
-    *pdfMax = CPLAtof(CPLGetXMLValue( psHistItem, "HistMax", "1"));
+    *pdfMin = CPLAtofM(CPLGetXMLValue( psHistItem, "HistMin", "0"));
+    *pdfMax = CPLAtofM(CPLGetXMLValue( psHistItem, "HistMax", "1"));
     *pnBuckets = atoi(CPLGetXMLValue( psHistItem, "BucketCount","2"));
 
     if( *pnBuckets <= 0 || *pnBuckets > INT_MAX / 2 )
@@ -1077,9 +1093,9 @@ PamFindMatchingHistogram( CPLXMLNode *psSavedHistograms,
             continue;
 
         const double dfHistMin =
-            CPLAtof(CPLGetXMLValue( psXMLHist, "HistMin", "0"));
+            CPLAtofM(CPLGetXMLValue( psXMLHist, "HistMin", "0"));
         const double dfHistMax =
-            CPLAtof(CPLGetXMLValue( psXMLHist, "HistMax", "0"));
+            CPLAtofM(CPLGetXMLValue( psXMLHist, "HistMax", "0"));
 
         if( !(ARE_REAL_EQUAL(dfHistMin, dfMin) )
             || !(ARE_REAL_EQUAL(dfHistMax, dfMax) )

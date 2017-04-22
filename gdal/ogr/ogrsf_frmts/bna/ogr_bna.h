@@ -84,17 +84,17 @@ class OGRBNALayer : public OGRLayer
                                              OffsetAndLine* offsetAndLineFeaturesTable,
                                              int partialIndexTable);
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
-    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK );
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
+    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    OGRFeature *        GetFeature( GIntBig nFID );
+    OGRFeature *        GetFeature( GIntBig nFID ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -139,17 +139,17 @@ class OGRBNADataSource : public OGRDataSource
     int                 Create( const char *pszFilename,
                               char **papszOptions );
 
-    const char*         GetName() { return pszName; }
+    const char*         GetName() override { return pszName; }
 
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer*           GetLayer( int );
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer*           GetLayer( int ) override;
 
     OGRLayer *          ICreateLayer( const char * pszLayerName,
                                     OGRSpatialReference *poSRS,
                                     OGRwkbGeometryType eType,
-                                    char ** papszOptions );
+                                    char ** papszOptions ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 };
 
 #endif /* ndef OGR_BNA_H_INCLUDED */

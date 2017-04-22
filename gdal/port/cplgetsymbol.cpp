@@ -27,7 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_conv.h"
+
+#include <cstddef>
+
+#include "cpl_config.h"
+#include "cpl_error.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
@@ -83,10 +89,7 @@ CPL_CVSID("$Id$");
 void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 {
-    void        *pLibrary;
-    void        *pSymbol;
-
-    pLibrary = dlopen(pszLibrary, RTLD_LAZY);
+    void *pLibrary = dlopen(pszLibrary, RTLD_LAZY);
     if( pLibrary == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -94,7 +97,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
         return NULL;
     }
 
-    pSymbol = dlsym( pLibrary, pszSymbolName );
+    void *pSymbol = dlsym( pLibrary, pszSymbolName );
 
 #if (defined(__APPLE__) && defined(__MACH__))
     /* On mach-o systems, C symbols have a leading underscore and depending
@@ -103,7 +106,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
      */
     if( pSymbol == NULL )
     {
-        char withUnder[256];
+        char withUnder[256] = {};
         snprintf(withUnder, sizeof(withUnder), "_%s", pszSymbolName);
         pSymbol = dlsym( pLibrary, withUnder );
     }
@@ -140,14 +143,14 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 {
-    void        *pLibrary;
-    void        *pSymbol;
-    UINT        uOldErrorMode;
+    void *pLibrary = NULL;
+    void *pSymbol = NULL;
 
-    /* Avoid error boxes to pop up (#5211, #5525) */
-    uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
+    // Avoid error boxes to pop up (#5211, #5525).
+    UINT uOldErrorMode =
+        SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
 
-#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
+#if _MSC_VER >= 1310 || __MSVCRT_VERSION__ >= 0x0601
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
@@ -163,10 +166,10 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
     if( pLibrary <= (void*)HINSTANCE_ERROR )
     {
-        LPVOID      lpMsgBuf = NULL;
-        int         nLastError = GetLastError();
+        LPVOID lpMsgBuf = NULL;
+        int nLastError = GetLastError();
 
-        /* Restore old error mode */
+        // Restore old error mode.
         SetErrorMode(uOldErrorMode);
 
         FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER
@@ -182,7 +185,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
         return NULL;
     }
 
-    /* Restore old error mode */
+    // Restore old error mode.
     SetErrorMode(uOldErrorMode);
 
     pSymbol = (void *) GetProcAddress( (HINSTANCE) pLibrary, pszSymbolName );
@@ -190,14 +193,14 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     if( pSymbol == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Can't find requested entry point: %s\n", pszSymbolName );
+                  "Can't find requested entry point: %s", pszSymbolName );
         return NULL;
     }
 
     return( pSymbol );
 }
 
-#endif /* def _WIN32 */
+#endif  // def _WIN32
 
 /* ==================================================================== */
 /*      Dummy implementation.                                           */

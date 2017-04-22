@@ -41,20 +41,20 @@ namespace PCIDSK {
             const char *segment_pointer, bool bLoad=true);
         ~CPCIDSKBinarySegment();
 
-        const char* GetBuffer(void) const
+        const char* GetBuffer(void) const override
         {
             return seg_data.buffer;
         }
 
-        unsigned int GetBufferSize(void) const
+        unsigned int GetBufferSize(void) const override
         {
             return seg_data.buffer_size;
         }
         void SetBuffer(const char* pabyBuf, 
-            unsigned int nBufSize);
+            unsigned int nBufSize) override;
 
         //synchronize the segment on disk.
-        void Synchronize();
+        void Synchronize() override;
     private:
         
         // Helper housekeeping functions

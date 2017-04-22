@@ -27,9 +27,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
-#include "gdal_frmts.h"
+#include "cpl_port.h"
 #include "memdataset.h"
+
+#include <climits>
+#include <cstdlib>
+#include <cstring>
+
+#include <vector>
+
+#include "cpl_config.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_frmts.h"
 
 CPL_CVSID("$Id$");
 
@@ -62,6 +77,37 @@ GDALRasterBandH MEMCreateRasterBandEx( GDALDataset *poDS, int nBand,
     return reinterpret_cast<GDALRasterBandH>(
         new MEMRasterBand( poDS, nBand, pabyData, eType, nPixelOffset,
                            nLineOffset, bAssumeOwnership ) );
+}
+
+/************************************************************************/
+/*                           MEMRasterBand()                            */
+/************************************************************************/
+
+MEMRasterBand::MEMRasterBand( GByte *pabyDataIn, GDALDataType eTypeIn,
+                              int nXSizeIn, int nYSizeIn ) :
+    GDALPamRasterBand(FALSE),
+    pabyData(pabyDataIn),
+    nPixelOffset(0),
+    nLineOffset(0),
+    bOwnData(true),
+    bNoDataSet(FALSE),
+    dfNoData(0.0),
+    poColorTable(NULL),
+    eColorInterp(GCI_Undefined),
+    pszUnitType(NULL),
+    papszCategoryNames(NULL),
+    dfOffset(0.0),
+    dfScale(1.0),
+    psSavedHistograms(NULL)
+{
+    eAccess = GA_Update;
+    eDataType = eTypeIn;
+    nRasterXSize = nXSizeIn;
+    nRasterYSize = nYSizeIn;
+    nBlockXSize = nXSizeIn;
+    nBlockYSize = 1;
+    nPixelOffset = GDALGetDataTypeSizeBytes(eTypeIn);
+    nLineOffset = nPixelOffset * static_cast<size_t>(nBlockXSize);
 }
 
 /************************************************************************/
@@ -701,6 +747,47 @@ GDALRasterBand * MEMRasterBand::GetOverview( int i )
 }
 
 /************************************************************************/
+/*                         CreateMaskBand()                             */
+/************************************************************************/
+
+CPLErr MEMRasterBand::CreateMaskBand( int nFlagsIn )
+{
+    InvalidateMaskBand();
+
+    MEMDataset* poMemDS = dynamic_cast<MEMDataset*>(poDS);
+    if( (nFlagsIn & GMF_PER_DATASET) != 0 && nBand != 1 && poMemDS != NULL )
+    {
+        MEMRasterBand* poFirstBand =
+            reinterpret_cast<MEMRasterBand*>(poMemDS->GetRasterBand(1));
+        if( poFirstBand != NULL)
+            return poFirstBand->CreateMaskBand( nFlagsIn );
+    }
+
+    GByte* pabyMaskData = static_cast<GByte*>(VSI_CALLOC_VERBOSE(nRasterXSize,
+                                                                 nRasterYSize));
+    if( pabyMaskData == NULL )
+        return CE_Failure;
+
+    nMaskFlags = nFlagsIn;
+    bOwnMask = true;
+    poMask = new MEMRasterBand( pabyMaskData, GDT_Byte,
+                                nRasterXSize, nRasterYSize );
+    if( (nFlagsIn & GMF_PER_DATASET) != 0 && nBand == 1 && poMemDS != NULL )
+    {
+        for( int i = 2; i <= poMemDS->GetRasterCount(); ++i )
+        {
+            MEMRasterBand* poOtherBand =
+                reinterpret_cast<MEMRasterBand*>(poMemDS->GetRasterBand(i));
+            poOtherBand->InvalidateMaskBand();
+            poOtherBand->nMaskFlags = nFlagsIn;
+            poOtherBand->bOwnMask = false;
+            poOtherBand->poMask = poMask;
+        }
+    }
+    return CE_None;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*      MEMDataset                                                     */
 /* ==================================================================== */
@@ -1007,6 +1094,50 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Force cascading. Help to get accurate results when masks are    */
+/*      involved.                                                       */
+/* -------------------------------------------------------------------- */
+    if( nOverviews > 1 &&
+        (STARTS_WITH_CI(pszResampling, "AVER") |
+         STARTS_WITH_CI(pszResampling, "GAUSS") ||
+         EQUAL(pszResampling, "CUBIC") ||
+         EQUAL(pszResampling, "CUBICSPLINE") ||
+         EQUAL(pszResampling, "LANCZOS") ||
+         EQUAL(pszResampling, "BILINEAR")) )
+    {
+        double dfTotalPixels = 0;
+        for( int i = 0; i < nOverviews; i++ )
+        {
+            dfTotalPixels +=
+                static_cast<double>(nRasterXSize) * nRasterYSize /
+                    (panOverviewList[i] * panOverviewList[i]);
+        }
+
+        double dfAccPixels = 0;
+        for( int i = 0; i < nOverviews; i++ )
+        {
+            double dfPixels =
+                static_cast<double>(nRasterXSize) * nRasterYSize /
+                    (panOverviewList[i] * panOverviewList[i]);
+            void* pScaledProgress = GDALCreateScaledProgress(
+                    dfAccPixels / dfTotalPixels,
+                    (dfAccPixels + dfPixels) / dfTotalPixels,
+                    pfnProgress, pProgressData );
+            CPLErr eErr = IBuildOverviews(
+                                    pszResampling,
+                                    1, &panOverviewList[i],
+                                    nListBands, panBandList,
+                                    GDALScaledProgress,
+                                    pScaledProgress );
+            GDALDestroyScaledProgress( pScaledProgress );
+            dfAccPixels += dfPixels;
+            if( eErr == CE_Failure )
+                return eErr;
+        }
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Establish which of the overview levels we already have, and     */
 /*      which are new.                                                  */
 /* -------------------------------------------------------------------- */
@@ -1041,6 +1172,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
         if( !bExisting )
         {
             MEMDataset* poOvrDS = new MEMDataset();
+            poOvrDS->eAccess = GA_Update;
             poOvrDS->nRasterXSize = (nRasterXSize + panOverviewList[i] - 1)
                                             / panOverviewList[i];
             poOvrDS->nRasterYSize = (nRasterYSize + panOverviewList[i] - 1)
@@ -1074,6 +1206,8 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
 /*      Refresh overviews that were listed.                             */
 /* -------------------------------------------------------------------- */
     GDALRasterBand **papoOverviewBands = static_cast<GDALRasterBand **>(
+        CPLCalloc(sizeof(void*), nOverviews) );
+    GDALRasterBand **papoMaskOverviewBands = static_cast<GDALRasterBand **>(
         CPLCalloc(sizeof(void*), nOverviews) );
 
     CPLErr eErr = CE_None;
@@ -1111,10 +1245,58 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
             }
         }
 
-        if( nNewOverviews > 0 )
+        // If the band has an explicit mask, we need to create overviews
+        // for it
+        MEMRasterBand* poMEMBand = reinterpret_cast<MEMRasterBand*>(poBand);
+        const bool bMustGenerateMaskOvr =
+                ( (poMEMBand->bOwnMask && poMEMBand->poMask != NULL) ||
+        // Or if it is a per-dataset mask, in which case just do it for the
+        // first band
+                  ((poMEMBand->nMaskFlags & GMF_PER_DATASET) != 0 && iBand == 0) );
+
+        if( nNewOverviews > 0 && bMustGenerateMaskOvr )
+        {
+            for( int i = 0; i < nNewOverviews; i++ )
+            {
+                MEMRasterBand* poMEMOvrBand =
+                    reinterpret_cast<MEMRasterBand*>(papoOverviewBands[i]);
+                if( !(poMEMOvrBand->bOwnMask && poMEMOvrBand->poMask != NULL) &&
+                    (poMEMOvrBand->nMaskFlags & GMF_PER_DATASET) == 0 )
+                {
+                    poMEMOvrBand->CreateMaskBand( poMEMBand->nMaskFlags );
+                }
+                papoMaskOverviewBands[i] = poMEMOvrBand->GetMaskBand();
+            }
+
+            void* pScaledProgress = GDALCreateScaledProgress(
+                    1.0 * iBand / nBands,
+                    1.0 * (iBand+0.5) / nBands,
+                    pfnProgress, pProgressData );
+
+            MEMRasterBand* poMaskBand = reinterpret_cast<MEMRasterBand*>(
+                                                        poBand->GetMaskBand());
+            // Make the mask band to be its own mask, similarly to what is
+            // done for alpha bands in GDALRegenerateOverviews() (#5640)
+            poMaskBand->InvalidateMaskBand();
+            poMaskBand->bOwnMask = false;
+            poMaskBand->poMask = poMaskBand;
+            poMaskBand->nMaskFlags = 0;
+            eErr = GDALRegenerateOverviews(
+                                        (GDALRasterBandH) poMaskBand,
+                                        nNewOverviews,
+                                        (GDALRasterBandH*)papoMaskOverviewBands,
+                                        pszResampling,
+                                        GDALScaledProgress, pScaledProgress );
+            poMaskBand->InvalidateMaskBand();
+            GDALDestroyScaledProgress( pScaledProgress );
+        }
+
+        // Generate overview of bands *AFTER* mask overviews
+        if( nNewOverviews > 0 && eErr == CE_None  )
         {
             void* pScaledProgress = GDALCreateScaledProgress(
-                    1.0 * iBand / nBands, 1.0 * (iBand+1) / nBands,
+                    1.0 * (iBand+(bMustGenerateMaskOvr ? 0.5 : 1)) / nBands,
+                    1.0 * (iBand+1)/ nBands,
                     pfnProgress, pProgressData );
             eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
                                             nNewOverviews,
@@ -1129,9 +1311,22 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
     CPLFree( papoOverviewBands );
+    CPLFree( papoMaskOverviewBands );
     CPLFree( pahBands );
 
     return eErr;
+}
+
+/************************************************************************/
+/*                         CreateMaskBand()                             */
+/************************************************************************/
+
+CPLErr MEMDataset::CreateMaskBand( int nFlagsIn )
+{
+    GDALRasterBand* poFirstBand = GetRasterBand(1);
+    if( poFirstBand == NULL )
+        return CE_Failure;
+    return poFirstBand->CreateMaskBand( nFlagsIn | GMF_PER_DATASET );
 }
 
 /************************************************************************/

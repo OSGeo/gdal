@@ -55,8 +55,10 @@
 #include "kdu_image.h"
 #include "roi_sources.h"
 
+// From rouault:
 // I don't think JPIP support currently works due to changes in
 // classes like kdu_window ... some fixing required if someone wants it.
+
 // #define USE_JPIP
 
 #ifdef USE_JPIP
@@ -65,4 +67,4 @@
 #  define kdu_client void
 #endif
 
-#endif
+#endif  // JP2KAK_HEADERS_H

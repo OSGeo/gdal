@@ -45,7 +45,7 @@ void LC_Error(short feil_nr, const char *logtx, const char *vartx)
       case 2:  sprintf(szErrMsg,"%s","Observer følgende! \n\n");break;
       case 3:  sprintf(szErrMsg,"%s","Det er oppstått en feil! \n\n");break;
       case 4:  sprintf(szErrMsg,"%s","Alvorlig feil avslutt programmet! \n\n");break;
-      default: szErrMsg[0]='\0';
+      default: /*szErrMsg[0]='\0';*/ break;
    }
 }
 

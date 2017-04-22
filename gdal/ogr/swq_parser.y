@@ -28,14 +28,21 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "ogr_geometry.h"
+#include "cpl_port.h"
 #include "swq.h"
+
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "ogr_core.h"
+#include "ogr_geometry.h"
 
 CPL_CVSID("$Id$");
 
-#define YYSTYPE  swq_expr_node*
+#define YYSTYPE swq_expr_node *
 
 /* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */
 /* See http://www.gnu.org/s/bison/manual/html_node/Memory-Management.html that suggests */
@@ -79,6 +86,8 @@ CPL_CVSID("$Id$");
 %token SWQT_CAST                "CAST"
 %token SWQT_UNION               "UNION"
 %token SWQT_ALL                 "ALL"
+%token SWQT_LIMIT               "LIMIT"
+%token SWQT_OFFSET              "OFFSET"
 
 %token SWQT_VALUE_START
 %token SWQT_SELECT_START
@@ -93,7 +102,7 @@ CPL_CVSID("$Id$");
 %left SWQT_AND
 %left SWQT_NOT
 
-%left '=' '<' '>' '!'  SWQT_BETWEEN SWQT_IN SWQT_LIKE SWQT_IS
+%left '=' '<' '>' '!' SWQT_BETWEEN SWQT_IN SWQT_LIKE SWQT_IS
 %left SWQT_ESCAPE
 
 %left '+' '-'
@@ -102,7 +111,7 @@ CPL_CVSID("$Id$");
 
 %token SWQT_RESERVED_KEYWORD    "reserved keyword"
 
-/* Any grammar rule that does $$ =  must be listed afterwards */
+/* Any grammar rule that does $$ = must be listed afterwards */
 /* as well as SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER that are allocated by swqlex() */
 %destructor { delete $$; } SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER
 %destructor { delete $$; } value_expr_list field_value value_expr value_expr_non_logical type_def table_def
@@ -509,7 +518,7 @@ type_def:
     | SWQT_IDENTIFIER '(' SWQT_IDENTIFIER ')'
     {
         OGRwkbGeometryType eType = OGRFromOGCGeomType($3->string_value);
-        if( !EQUAL($1->string_value,"GEOMETRY") ||
+        if( !EQUAL($1->string_value, "GEOMETRY") ||
             (wkbFlatten(eType) == wkbUnknown &&
             !STARTS_WITH_CI($3->string_value, "GEOMETRY")) )
         {
@@ -527,7 +536,7 @@ type_def:
     | SWQT_IDENTIFIER '(' SWQT_IDENTIFIER ',' SWQT_INTEGER_NUMBER ')'
     {
         OGRwkbGeometryType eType = OGRFromOGCGeomType($3->string_value);
-        if( !EQUAL($1->string_value,"GEOMETRY") ||
+        if( !EQUAL($1->string_value, "GEOMETRY") ||
             (wkbFlatten(eType) == wkbUnknown &&
             !STARTS_WITH_CI($3->string_value, "GEOMETRY")) )
         {
@@ -548,12 +557,12 @@ select_statement:
     | '(' select_core ')' opt_union_all
 
 select_core:
-    SWQT_SELECT select_field_list SWQT_FROM table_def opt_joins opt_where opt_order_by
+    SWQT_SELECT select_field_list SWQT_FROM table_def opt_joins opt_where opt_order_by opt_limit opt_offset
     {
         delete $4;
     }
 
-    | SWQT_SELECT SWQT_DISTINCT select_field_list SWQT_FROM table_def opt_joins opt_where opt_order_by
+    | SWQT_SELECT SWQT_DISTINCT select_field_list SWQT_FROM table_def opt_joins opt_where opt_order_by opt_limit opt_offset
     {
         context->poCurSelect->query_mode = SWQM_DISTINCT_LIST;
         delete $5;
@@ -633,7 +642,7 @@ column_spec:
     | SWQT_IDENTIFIER '(' '*' ')'
         {
                 // special case for COUNT(*), confirm it.
-            if( !EQUAL($1->string_value,"COUNT") )
+            if( !EQUAL($1->string_value, "COUNT") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "Syntax Error with %s(*).",
@@ -664,7 +673,7 @@ column_spec:
     | SWQT_IDENTIFIER '(' '*' ')' as_clause
         {
                 // special case for COUNT(*), confirm it.
-            if( !EQUAL($1->string_value,"COUNT") )
+            if( !EQUAL($1->string_value, "COUNT") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "Syntax Error with %s(*).",
@@ -699,7 +708,7 @@ column_spec:
     | SWQT_IDENTIFIER '(' SWQT_DISTINCT field_value ')'
         {
                 // special case for COUNT(DISTINCT x), confirm it.
-            if( !EQUAL($1->string_value,"COUNT") )
+            if( !EQUAL($1->string_value, "COUNT") )
             {
                 CPLError(
                     CE_Failure, CPLE_AppDefined,
@@ -724,7 +733,7 @@ column_spec:
     | SWQT_IDENTIFIER '(' SWQT_DISTINCT field_value ')' as_clause
         {
             // special case for COUNT(DISTINCT x), confirm it.
-            if( !EQUAL($1->string_value,"COUNT") )
+            if( !EQUAL($1->string_value, "COUNT") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "DISTINCT keyword can only be used in COUNT() operator." );
@@ -804,6 +813,22 @@ sort_spec:
             delete $1;
             $1 = NULL;
         }
+
+opt_limit:
+    | SWQT_LIMIT SWQT_INTEGER_NUMBER
+    {
+        context->poCurSelect->SetLimit( $2->int_value );
+        delete $2;
+        $2 = NULL;
+    }
+
+opt_offset:
+    | SWQT_OFFSET SWQT_INTEGER_NUMBER
+    {
+        context->poCurSelect->SetOffset( $2->int_value );
+        delete $2;
+        $2 = NULL;
+    }
 
 table_def:
     SWQT_IDENTIFIER

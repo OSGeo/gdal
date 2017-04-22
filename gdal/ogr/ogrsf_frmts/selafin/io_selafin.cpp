@@ -89,6 +89,8 @@ namespace Selafin {
         paadfCoords[0] = NULL;
         paadfCoords[1] = NULL;
         for( size_t i = 0; i < 7; ++i ) anUnused[i] = 0;
+        adfOrigin[0] = 0.0;
+        adfOrigin[1] = 0.0;
     }
 
     Header::~Header() {

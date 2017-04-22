@@ -530,7 +530,8 @@ void OGRNTFDataSource::EnsureTileNameUnique( NTFFileReader *poNewReader )
     {
         bIsUnique = TRUE;
         if( iSequenceNumber++ == -1 )
-            strncpy( szCandidateName, poNewReader->GetTileName(), 10 );
+            strncpy( szCandidateName, poNewReader->GetTileName(),
+                     sizeof(szCandidateName) - 1 );
         else
             snprintf( szCandidateName, sizeof(szCandidateName), "%010d", iSequenceNumber );
 

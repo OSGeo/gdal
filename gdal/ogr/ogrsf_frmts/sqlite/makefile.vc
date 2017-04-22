@@ -2,7 +2,8 @@
 OBJ	=	ogrsqlitedriver.obj ogrsqlitedatasource.obj \
 		ogrsqlitelayer.obj ogrsqlitetablelayer.obj ogrsqliteviewlayer.obj  \
 		ogrsqliteselectlayer.obj ogrsqlitesinglefeaturelayer.obj \
-		ogrsqlitevfs.obj ogrsqlitevirtualogr.obj ogrsqliteexecutesql.obj
+		ogrsqlitevfs.obj ogrsqlitevirtualogr.obj ogrsqliteexecutesql.obj \
+		rasterlite2.obj ogrsqliteutility.obj
 
 GDAL_ROOT	=	..\..\..
 

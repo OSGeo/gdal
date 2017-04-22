@@ -27,10 +27,21 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_spatialref.h"
-#include "ogr_p.h"
+#include "cpl_port.h"
+#include "ogr_srs_api.h"
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "ogr_core.h"
+#include "ogr_p.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -68,9 +79,9 @@ static bool parseURN( char *pszURN,
 /*      Extract object type                                             */
 /* -------------------------------------------------------------------- */
     if( ppszObjectType != NULL )
-        *ppszObjectType = (const char *) pszURN + 12;
+        *ppszObjectType = pszURN + 12;
 
-    int  i = 12;
+    int i = 12;
     while( pszURN[i] != ':' && pszURN[i] != '\0' )
         i++;
 
@@ -84,7 +95,7 @@ static bool parseURN( char *pszURN,
 /*      Extract authority                                               */
 /* -------------------------------------------------------------------- */
     if( ppszAuthority != NULL )
-        *ppszAuthority = (char *) pszURN + i;
+        *ppszAuthority = pszURN + i;
 
     while( pszURN[i] != ':' && pszURN[i] != '\0' )
         i++;
@@ -99,7 +110,7 @@ static bool parseURN( char *pszURN,
 /*      Extract version                                                 */
 /* -------------------------------------------------------------------- */
     if( ppszVersion != NULL )
-        *ppszVersion = (char *) pszURN + i;
+        *ppszVersion = pszURN + i;
 
     while( pszURN[i] != ':' && pszURN[i] != '\0' )
         i++;
@@ -114,7 +125,7 @@ static bool parseURN( char *pszURN,
 /*      Extract code.                                                   */
 /* -------------------------------------------------------------------- */
     if( ppszCode != NULL )
-        *ppszCode = (char *) pszURN + i;
+        *ppszCode = pszURN + i;
 
     return true;
 }
@@ -133,14 +144,16 @@ static void addURN( CPLXMLNode *psTarget,
     if( pszVersion == NULL )
         pszVersion = "";
 
-    char szURN[200];
-    CPLAssert( strlen(pszAuthority)+strlen(pszObjectType) < sizeof(szURN)-30 );
+    char szURN[200] = {};
+    CPLAssert( strlen(pszAuthority) + strlen(pszObjectType) <
+               sizeof(szURN) - 30 );
 
     snprintf( szURN, sizeof(szURN), "urn:ogc:def:%s:%s:%s:",
-             pszObjectType, pszAuthority, pszVersion );
+              pszObjectType, pszAuthority, pszVersion );
 
     if( nCode != 0 )
-        snprintf( szURN + strlen(szURN), sizeof(szURN) - strlen(szURN), "%d", nCode );
+        snprintf( szURN + strlen(szURN), sizeof(szURN) - strlen(szURN),
+                  "%d", nCode );
 
     CPLCreateXMLNode(
         CPLCreateXMLNode( psTarget, CXT_Attribute, "xlink:href" ),
@@ -179,11 +192,11 @@ AddValueIDWithURN( CPLXMLNode *psTarget,
 /*      </srsId>                                                        */
 /************************************************************************/
 static CPLXMLNode *addAuthorityIDBlock( CPLXMLNode *psTarget,
-                                     const char *pszElement,
-                                     const char *pszAuthority,
-                                     const char *pszObjectType,
-                                     int nCode,
-                                     const char *pszVersion = "" )
+                                        const char *pszElement,
+                                        const char *pszAuthority,
+                                        const char *pszObjectType,
+                                        int nCode,
+                                        const char *pszVersion = "" )
 
 {
 /* -------------------------------------------------------------------- */
@@ -192,11 +205,12 @@ static CPLXMLNode *addAuthorityIDBlock( CPLXMLNode *psTarget,
     if( pszVersion == NULL )
         pszVersion = "";
 
-    char szURN[200];
-    CPLAssert( strlen(pszAuthority)+strlen(pszObjectType) < sizeof(szURN)-30 );
+    char szURN[200] = {};
+    CPLAssert( strlen(pszAuthority) + strlen(pszObjectType) <
+               sizeof(szURN) - 30 );
 
     snprintf( szURN, sizeof(szURN), "urn:ogc:def:%s:%s:%s:",
-             pszObjectType, pszAuthority, pszVersion );
+              pszObjectType, pszAuthority, pszVersion );
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the base name, eg. <srsID>.                             */
@@ -220,7 +234,7 @@ static CPLXMLNode *addAuthorityIDBlock( CPLXMLNode *psTarget,
 /* -------------------------------------------------------------------- */
 /*      Attach code value to name node.                                 */
 /* -------------------------------------------------------------------- */
-    char szCode[32];
+    char szCode[32] = {};
     snprintf( szCode, sizeof(szCode), "%d", nCode );
 
     CPLCreateXMLNode( psName, CXT_Text, szCode );
@@ -238,11 +252,10 @@ static void addGMLId( CPLXMLNode *psParent )
     CPLMutexHolderD( &hGMLIdMutex );
 
     static int nNextGMLId = 1;
-    char   szIdText[40];
+    char szIdText[40] = {};
 
     snprintf( szIdText, sizeof(szIdText), "ogrcrs%d", nNextGMLId++ );
 
-    // CPLXMLNode *psId =
     CPLCreateXMLNode(
         CPLCreateXMLNode( psParent, CXT_Attribute, "gml:id" ),
         CXT_Text, szIdText );
@@ -271,11 +284,9 @@ static CPLXMLNode *exportAuthorityToXML( const OGR_SRSNode *poAuthParent,
 /* -------------------------------------------------------------------- */
 /*      Create identification.                                          */
 /* -------------------------------------------------------------------- */
-    const char *pszCode, *pszCodeSpace, *pszEdition;
-
-    pszCode = poAuthority->GetChild(1)->GetValue();
-    pszCodeSpace = poAuthority->GetChild(0)->GetValue();
-    pszEdition = NULL;
+    const char *pszCode = poAuthority->GetChild(1)->GetValue();
+    const char *pszCodeSpace = poAuthority->GetChild(0)->GetValue();
+    const char *pszEdition = NULL;
 
     if( bUseSubName )
         return addAuthorityIDBlock( psXMLParent, pszTagName, pszCodeSpace,
@@ -294,8 +305,7 @@ static void addProjArg( const OGRSpatialReference *poSRS, CPLXMLNode *psBase,
                         int nParameterID, const char *pszWKTName )
 
 {
-    CPLXMLNode *psNode
-        = CPLCreateXMLNode( psBase, CXT_Element, "gml:usesValue" );
+    CPLXMLNode *psNode = CPLCreateXMLNode(psBase, CXT_Element, "gml:usesValue");
 
 /* -------------------------------------------------------------------- */
 /*      Handle the UOM.                                                 */
@@ -304,8 +314,7 @@ static void addProjArg( const OGRSpatialReference *poSRS, CPLXMLNode *psBase,
         ? "urn:ogc:def:uom:EPSG::9102"
         : "urn:ogc:def:uom:EPSG::9001";
 
-    CPLXMLNode *psValue
-        = CPLCreateXMLNode( psNode, CXT_Element, "gml:value" );
+    CPLXMLNode *psValue = CPLCreateXMLNode(psNode, CXT_Element, "gml:value");
 
     CPLCreateXMLNode(
         CPLCreateXMLNode( psValue, CXT_Attribute, "uom" ),
@@ -314,8 +323,7 @@ static void addProjArg( const OGRSpatialReference *poSRS, CPLXMLNode *psBase,
 /* -------------------------------------------------------------------- */
 /*      Add the parameter value itself.                                 */
 /* -------------------------------------------------------------------- */
-    double dfParmValue
-        = poSRS->GetNormProjParm( pszWKTName, dfDefault, NULL );
+    double dfParmValue = poSRS->GetNormProjParm( pszWKTName, dfDefault, NULL );
 
     CPLCreateXMLNode( psValue, CXT_Text,
                       CPLString().Printf( "%.16g", dfParmValue ) );
@@ -342,14 +350,14 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
         CPLCreateXMLNode(
             CPLCreateXMLNode( psXMLParent, CXT_Element, "gml:usesAxis" ),
             CXT_Element, "gml:CoordinateSystemAxis" );
-    if (!psAxisXML)
+    if( !psAxisXML )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "addAxis failed." );
         return NULL;
     }
     addGMLId( psAxisXML );
 
-    if( EQUAL(pszAxis,"Lat") )
+    if( EQUAL(pszAxis, "Lat") )
     {
         CPLCreateXMLNode(
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
@@ -361,7 +369,7 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisAbbrev", "Lat" );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisDirection", "north" );
     }
-    else if( EQUAL(pszAxis,"Long") )
+    else if( EQUAL(pszAxis, "Long") )
     {
         CPLCreateXMLNode(
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
@@ -373,7 +381,7 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisAbbrev", "Lon" );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisDirection", "east" );
     }
-    else if( EQUAL(pszAxis,"E") )
+    else if( EQUAL(pszAxis, "E") )
     {
         CPLCreateXMLNode(
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
@@ -384,7 +392,7 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisAbbrev", "E" );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisDirection", "east" );
     }
-    else if( EQUAL(pszAxis,"N") )
+    else if( EQUAL(pszAxis, "N") )
     {
         CPLCreateXMLNode(
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
@@ -418,8 +426,8 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
 /*      Establish initial infrastructure.                               */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode  *psGCS_XML
-        = CPLCreateXMLNode( NULL, CXT_Element, "gml:GeographicCRS" );
+    CPLXMLNode *psGCS_XML =
+        CPLCreateXMLNode( NULL, CXT_Element, "gml:GeographicCRS" );
     addGMLId( psGCS_XML );
 
 /* -------------------------------------------------------------------- */
@@ -439,12 +447,12 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
 /*      ellipsoidalCS.  Basically this defines the axes and their       */
 /*      units.                                                          */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psECS
-        = CPLCreateXMLNode(
-        CPLCreateXMLNode( psGCS_XML, CXT_Element, "gml:usesEllipsoidalCS" ),
-        CXT_Element, "gml:EllipsoidalCS" );
+    CPLXMLNode *psECS =
+        CPLCreateXMLNode(
+            CPLCreateXMLNode( psGCS_XML, CXT_Element, "gml:usesEllipsoidalCS" ),
+            CXT_Element, "gml:EllipsoidalCS" );
 
-    addGMLId( psECS  );
+    addGMLId( psECS );
 
     CPLCreateXMLElementAndValue( psECS, "gml:csName", "ellipsoidal" );
 
@@ -456,7 +464,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
 /*      Start with the datum.                                           */
 /* -------------------------------------------------------------------- */
-    const OGR_SRSNode    *poDatum = poGeogCS->GetNode( "DATUM" );
+    const OGR_SRSNode *poDatum = poGeogCS->GetNode( "DATUM" );
 
     if( poDatum == NULL )
     {
@@ -464,10 +472,10 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
         return NULL;
     }
 
-    CPLXMLNode *psDatumXML
-        = CPLCreateXMLNode(
-        CPLCreateXMLNode( psGCS_XML, CXT_Element, "gml:usesGeodeticDatum" ),
-        CXT_Element, "gml:GeodeticDatum" );
+    CPLXMLNode *psDatumXML =
+        CPLCreateXMLNode(
+            CPLCreateXMLNode( psGCS_XML, CXT_Element, "gml:usesGeodeticDatum" ),
+            CXT_Element, "gml:GeodeticDatum" );
 
     addGMLId( psDatumXML );
 
@@ -489,10 +497,10 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
     char *pszPMName = (char* ) "Greenwich";
     double dfPMOffset = poSRS->GetPrimeMeridian( &pszPMName );
 
-    CPLXMLNode *psPM
-        = CPLCreateXMLNode(
-        CPLCreateXMLNode( psDatumXML, CXT_Element, "gml:usesPrimeMeridian" ),
-        CXT_Element, "gml:PrimeMeridian" );
+    CPLXMLNode *psPM =
+        CPLCreateXMLNode(
+            CPLCreateXMLNode(psDatumXML, CXT_Element, "gml:usesPrimeMeridian"),
+            CXT_Element, "gml:PrimeMeridian");
 
     addGMLId( psPM );
 
@@ -501,8 +509,8 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
     if( poPMNode )
         exportAuthorityToXML( poPMNode, "gml:meridianID", psPM, "meridian" );
 
-    CPLXMLNode *psAngle
-        = CPLCreateXMLNode(
+    CPLXMLNode *psAngle =
+        CPLCreateXMLNode(
             CPLCreateXMLNode( psPM, CXT_Element, "gml:greenwichLongitude" ),
             CXT_Element, "gml:angle" );
 
@@ -519,9 +527,9 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
 
     if( poEllipsoid != NULL )
     {
-        CPLXMLNode *psEllipseXML
-            = CPLCreateXMLNode(
-                CPLCreateXMLNode(psDatumXML,CXT_Element,"gml:usesEllipsoid" ),
+        CPLXMLNode *psEllipseXML =
+            CPLCreateXMLNode(
+                CPLCreateXMLNode(psDatumXML, CXT_Element, "gml:usesEllipsoid" ),
                 CXT_Element, "gml:Ellipsoid" );
 
         addGMLId( psEllipseXML );
@@ -532,11 +540,10 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
         exportAuthorityToXML( poEllipsoid, "gml:ellipsoidID", psEllipseXML,
                               "ellipsoid");
 
-        CPLXMLNode *psParmXML
-            = CPLCreateXMLNode( psEllipseXML, CXT_Element,
-                                      "gml:semiMajorAxis" );
+        CPLXMLNode *psParmXML =
+            CPLCreateXMLNode( psEllipseXML, CXT_Element, "gml:semiMajorAxis" );
 
-        CPLCreateXMLNode( CPLCreateXMLNode(psParmXML,CXT_Attribute,"uom"),
+        CPLCreateXMLNode( CPLCreateXMLNode(psParmXML, CXT_Attribute, "uom"),
                           CXT_Text, "urn:ogc:def:uom:EPSG::9001" );
 
         CPLCreateXMLNode( psParmXML, CXT_Text,
@@ -548,7 +555,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
                                   "gml:secondDefiningParameter" ),
                 CXT_Element, "gml:inverseFlattening" );
 
-        CPLCreateXMLNode( CPLCreateXMLNode(psParmXML,CXT_Attribute,"uom"),
+        CPLCreateXMLNode( CPLCreateXMLNode(psParmXML, CXT_Attribute, "uom"),
                           CXT_Text, "urn:ogc:def:uom:EPSG::9201" );
 
         CPLCreateXMLNode( psParmXML, CXT_Text,
@@ -573,8 +580,8 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
 /*      Establish initial infrastructure.                               */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode   *psCRS_XML
-        = CPLCreateXMLNode( NULL, CXT_Element, "gml:ProjectedCRS" );
+    CPLXMLNode *psCRS_XML =
+        CPLCreateXMLNode( NULL, CXT_Element, "gml:ProjectedCRS" );
     addGMLId( psCRS_XML );
 
 /* -------------------------------------------------------------------- */
@@ -599,28 +606,27 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
 /*      Our projected coordinate system is "defined by Conversion".     */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psDefinedBy
-        = CPLCreateXMLNode( psCRS_XML, CXT_Element,
-                                    "gml:definedByConversion" );
+    CPLXMLNode *psDefinedBy =
+        CPLCreateXMLNode( psCRS_XML, CXT_Element, "gml:definedByConversion" );
 
 /* -------------------------------------------------------------------- */
 /*      Projections are handled as ParameterizedTransformations.        */
 /* -------------------------------------------------------------------- */
     const char *pszProjection = poSRS->GetAttrValue("PROJECTION");
-    CPLXMLNode *psConv
-        = CPLCreateXMLNode( psDefinedBy, CXT_Element, "gml:Conversion");
+    CPLXMLNode *psConv =
+        CPLCreateXMLNode( psDefinedBy, CXT_Element, "gml:Conversion");
     addGMLId( psConv );
 
-    CPLCreateXMLNode(CPLCreateXMLNode(psConv, CXT_Element, "gml:coordinateOperationName"),
-                     CXT_Text, pszProjection);
+    CPLCreateXMLNode(
+        CPLCreateXMLNode(psConv, CXT_Element, "gml:coordinateOperationName"),
+        CXT_Text, pszProjection);
 
 /* -------------------------------------------------------------------- */
 /*      Transverse Mercator                                             */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
+    if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
     {
-        AddValueIDWithURN( psConv, "gml:usesMethod", "EPSG", "method",
-                           9807 );
+        AddValueIDWithURN( psConv, "gml:usesMethod", "EPSG", "method", 9807 );
 
         addProjArg( poSRS, psConv, "Angular", 0.0,
                     8801, SRS_PP_LATITUDE_OF_ORIGIN );
@@ -633,7 +639,6 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
         addProjArg( poSRS, psConv, "Linear", 0.0,
                     8807, SRS_PP_FALSE_NORTHING );
     }
-
 /* -------------------------------------------------------------------- */
 /*      Lambert Conformal Conic                                         */
 /* -------------------------------------------------------------------- */
@@ -662,8 +667,8 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
 /*      Define the cartesian coordinate system.                         */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode  *psCCS
-        = CPLCreateXMLNode(
+    CPLXMLNode *psCCS =
+        CPLCreateXMLNode(
             CPLCreateXMLNode( psCRS_XML, CXT_Element, "gml:usesCartesianCS" ),
             CXT_Element, "gml:CartesianCS" );
 
@@ -750,38 +755,41 @@ static void importXMLUnits( CPLXMLNode *psSrcXML, const char *pszClass,
                             OGRSpatialReference *poSRS, const char *pszTarget)
 
 {
-    const char *pszUnitName, *pszUnitsPer;
     OGR_SRSNode *poNode = poSRS->GetAttrNode( pszTarget );
 
-    CPLAssert( EQUAL(pszClass,"AngularUnit")
-               || EQUAL(pszClass,"LinearUnit") );
+    CPLAssert( EQUAL(pszClass, "AngularUnit")
+               || EQUAL(pszClass, "LinearUnit") );
 
     psSrcXML = CPLGetXMLNode( psSrcXML, pszClass );
+
+    OGR_SRSNode *poUnits = NULL;
+    const char *pszUnitName = NULL;
+    const char *pszUnitsPer = NULL;
+
+    // TODO(schwehr): Remove the goto.
     if( psSrcXML == NULL )
         goto DefaultTarget;
 
-    pszUnitName = CPLGetXMLValue( psSrcXML, "NameSet.name", "unnamed" );
-    if( EQUAL(pszClass,"AngularUnit") )
-        pszUnitsPer = CPLGetXMLValue( psSrcXML, "radiansPerUnit", NULL );
-    else
-        pszUnitsPer = CPLGetXMLValue( psSrcXML, "metresPerUnit", NULL );
+    pszUnitName =
+        CPLGetXMLValue( psSrcXML, "NameSet.name", "unnamed" );
+
+    pszUnitsPer =
+        EQUAL(pszClass, "AngularUnit")
+        ? CPLGetXMLValue( psSrcXML, "radiansPerUnit", NULL )
+        : CPLGetXMLValue( psSrcXML, "metresPerUnit", NULL );
 
     if( pszUnitsPer == NULL )
     {
-        CPLDebug( "OGR_SRS_XML",
-                  "Missing PerUnit value for %s.",
-                  pszClass );
+        CPLDebug( "OGR_SRS_XML", "Missing PerUnit value for %s.", pszClass );
         goto DefaultTarget;
     }
 
     if( poNode == NULL )
     {
-        CPLDebug( "OGR_SRS_XML", "Can't find %s in importXMLUnits.",
-                  pszTarget );
+        CPLDebug("OGR_SRS_XML", "Can't find %s in importXMLUnits.", pszTarget);
         goto DefaultTarget;
     }
 
-    OGR_SRSNode *poUnits = NULL;
     if( poNode->FindChild("UNIT") != -1 )
     {
         poUnits = poNode->GetChild( poNode->FindChild( "UNIT" ) );
@@ -800,7 +808,7 @@ static void importXMLUnits( CPLXMLNode *psSrcXML, const char *pszClass,
 
   DefaultTarget:
     poUnits = new OGR_SRSNode( "UNIT" );
-    if( EQUAL(pszClass,"AngularUnit") )
+    if( EQUAL(pszClass, "AngularUnit") )
     {
         poUnits->AddChild( new OGR_SRSNode( SRS_UA_DEGREE ) );
         poUnits->AddChild( new OGR_SRSNode( SRS_UA_DEGREE_CONV ) );
@@ -844,9 +852,7 @@ static void importXMLAuthority( CPLXMLNode *psSrcXML,
     if( strlen(pszCode) == 0 )
         pszCode = (char *) CPLGetXMLValue( psNameNode, "", "" );
 
-    int nCode = 0;
-    if( pszCode != NULL )
-        nCode = atoi(pszCode);
+    const int nCode = pszCode != NULL ? atoi(pszCode) :0;
 
     if( nCode != 0 )
         poSRS->SetAuthority( pszTargetKey, pszAuthority, nCode );
@@ -862,10 +868,10 @@ static void importXMLAuthority( CPLXMLNode *psSrcXML,
 /************************************************************************/
 
 static bool ParseOGCDefURN( const char *pszURN,
-                           CPLString *poObjectType,
-                           CPLString *poAuthority,
-                           CPLString *poVersion,
-                           CPLString *poValue )
+                            CPLString *poObjectType,
+                            CPLString *poAuthority,
+                            CPLString *poVersion,
+                            CPLString *poValue )
 
 {
     if( poObjectType != NULL )
@@ -925,19 +931,21 @@ static int getEPSGObjectCodeValue( CPLXMLNode *psNode,
         return nDefault;
 
     const char* pszHrefVal = CPLGetXMLValue( psNode, "xlink:href", NULL );
-    if (pszHrefVal == NULL)
+    if( pszHrefVal == NULL )
         pszHrefVal = CPLGetXMLValue( psNode, "href", NULL );
 
-    CPLString osObjectType, osAuthority, osValue;
+    CPLString osObjectType;
+    CPLString osAuthority;
+    CPLString osValue;
     if( !ParseOGCDefURN( pszHrefVal,
                          &osObjectType, &osAuthority, NULL, &osValue ) )
         return nDefault;
 
-    if( !EQUAL(osAuthority,"EPSG")
+    if( !EQUAL(osAuthority, "EPSG")
         || !EQUAL(osObjectType, pszEPSGObjectType) )
         return nDefault;
 
-    if( strlen(osValue) > 0 )
+    if( !osValue.empty() )
         return atoi(osValue);
 
     const char *pszValue = CPLGetXMLValue( psNode, "", NULL);
@@ -964,8 +972,8 @@ static double getProjectionParm( CPLXMLNode *psRootNode,
         if( psUsesParameter->eType != CXT_Element )
             continue;
 
-        if( !EQUAL(psUsesParameter->pszValue,"usesParameterValue")
-            && !EQUAL(psUsesParameter->pszValue,"usesValue") )
+        if( !EQUAL(psUsesParameter->pszValue, "usesParameterValue")
+            && !EQUAL(psUsesParameter->pszValue, "usesValue") )
             continue;
 
         if( getEPSGObjectCodeValue( CPLGetXMLNode(psUsesParameter,
@@ -975,10 +983,10 @@ static double getProjectionParm( CPLXMLNode *psRootNode,
             const char *pszValue = CPLGetXMLValue( psUsesParameter, "value",
                                                    NULL );
 
-            if( pszValue != NULL )
-                return CPLAtof(pszValue);
-            else
+            if( pszValue == NULL )
                 return dfDefault;
+
+            return CPLAtof(pszValue);
         }
     }
 
@@ -1025,13 +1033,10 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
                                    CPLXMLNode *psCRS )
 
 {
-    const char     *pszGeogName, *pszDatumName, *pszEllipsoidName, *pszPMName;
-    double         dfSemiMajor, dfInvFlattening, dfPMOffset = 0.0;
-
 /* -------------------------------------------------------------------- */
 /*      Set the GEOGCS name from the srsName.                           */
 /* -------------------------------------------------------------------- */
-    pszGeogName =
+    const char *pszGeogName =
         CPLGetXMLValue( psCRS, "srsName", "Unnamed GeogCS" );
 
 /* -------------------------------------------------------------------- */
@@ -1050,7 +1055,7 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
 
         if( oIdSRS.GetAuthorityCode( "LOCAL_CS" ) != NULL
             && oIdSRS.GetAuthorityName( "LOCAL_CS" ) != NULL
-            && EQUAL(oIdSRS.GetAuthorityName("LOCAL_CS"),"EPSG") )
+            && EQUAL(oIdSRS.GetAuthorityName("LOCAL_CS"), "EPSG") )
         {
             return poSRS->importFromEPSG(
                 atoi(oIdSRS.GetAuthorityCode("LOCAL_CS")) );
@@ -1060,20 +1065,21 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
 /*      Get datum name.                                                 */
 /* -------------------------------------------------------------------- */
-    pszDatumName =
+    const char *pszDatumName =
         CPLGetXMLValue( psDatum, "datumName", "Unnamed Datum" );
 
 /* -------------------------------------------------------------------- */
 /*      Get ellipsoid information.                                      */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psE = CPLGetXMLNode( psDatum, "usesEllipsoid.Ellipsoid" );
-    pszEllipsoidName =
+    const char *pszEllipsoidName =
         CPLGetXMLValue( psE, "ellipsoidName", "Unnamed Ellipsoid" );
 
-    dfSemiMajor = getNormalizedValue( psE, "semiMajorAxis", "Linear",
-                                      SRS_WGS84_SEMIMAJOR );
+    const double dfSemiMajor =
+        getNormalizedValue( psE, "semiMajorAxis", "Linear",
+                            SRS_WGS84_SEMIMAJOR );
 
-    dfInvFlattening =
+    const double dfInvFlattening =
         getNormalizedValue( psE, "secondDefiningParameter.inverseFlattening",
                             "Unitless", 0.0 );
 
@@ -1087,6 +1093,9 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
 /*      Get the prime meridian.                                         */
 /* -------------------------------------------------------------------- */
+    const char *pszPMName = NULL;
+    double dfPMOffset = 0.0;
+
     CPLXMLNode *psPM =
         CPLGetXMLNode( psDatum, "usesPrimeMeridian.PrimeMeridian" );
     if( psPM == NULL )
@@ -1114,7 +1123,7 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
 /*      Look for angular units.  We don't check that all axes match     */
 /*      at this time.                                                   */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
+#if 0  // Does not compile.
     CPLXMLNode *psAxis =
         CPLGetXMLNode( psGeo2DCRS,
                        "EllipsoidalCoordinateSystem.CoordinateAxis" );
@@ -1159,7 +1168,7 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 
     if( poSRS->GetAuthorityCode( "PROJCS" ) != NULL
         && poSRS->GetAuthorityName( "PROJCS" ) != NULL
-        && EQUAL(poSRS->GetAuthorityName("PROJCS"),"EPSG")
+        && EQUAL(poSRS->GetAuthorityName("PROJCS"), "EPSG")
         && (CPLGetXMLNode( psCRS, "definedByConversion.Conversion" ) == NULL
             || CPLGetXMLNode( psCRS, "baseCRS.GeographicCRS" ) == NULL) )
     {
@@ -1170,11 +1179,10 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 /*      Try to set the GEOGCS info.                                     */
 /* -------------------------------------------------------------------- */
 
-    OGRErr eErr = OGRERR_NONE;
     CPLXMLNode *psSubXML = CPLGetXMLNode( psCRS, "baseCRS.GeographicCRS" );
     if( psSubXML != NULL )
     {
-        eErr = importGeogCSFromXML( poSRS, psSubXML );
+        const OGRErr eErr = importGeogCSFromXML( poSRS, psSubXML );
         if( eErr != OGRERR_NONE )
             return eErr;
     }
@@ -1183,22 +1191,21 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 /*      Get the conversion node.  It should be the only child of the    */
 /*      definedByConversion node.                                       */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psConv = NULL;
-
-    psConv = CPLGetXMLNode( psCRS, "definedByConversion.Conversion" );
+    CPLXMLNode *psConv = CPLGetXMLNode(psCRS, "definedByConversion.Conversion");
     if( psConv == NULL || psConv->eType != CXT_Element )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to find a conversion node under the definedByConversion\n"
-                  "node of the ProjectedCRS." );
+                  "Unable to find a conversion node under the "
+                  "definedByConversion node of the ProjectedCRS." );
         return OGRERR_CORRUPT_DATA;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Determine the conversion method in effect.                      */
 /* -------------------------------------------------------------------- */
-    int nMethod = getEPSGObjectCodeValue( CPLGetXMLNode( psConv, "usesMethod"),
-                                          "method", 0 );
+    const int nMethod =
+        getEPSGObjectCodeValue( CPLGetXMLNode( psConv, "usesMethod"),
+                                "method", 0 );
 
 /* -------------------------------------------------------------------- */
 /*      Transverse Mercator.                                            */
@@ -1248,7 +1255,7 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
 
 {
-    this->Clear();
+    Clear();
 
 /* -------------------------------------------------------------------- */
 /*      Parse the XML.                                                  */
@@ -1269,13 +1276,13 @@ OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
 
     for( CPLXMLNode* psNode = psTree; psNode != NULL; psNode = psNode->psNext )
     {
-        if( EQUAL(psNode->pszValue,"GeographicCRS") )
+        if( EQUAL(psNode->pszValue, "GeographicCRS") )
         {
             eErr = importGeogCSFromXML( this, psNode );
             break;
         }
 
-        else if( EQUAL(psNode->pszValue,"ProjectedCRS") )
+        else if( EQUAL(psNode->pszValue, "ProjectedCRS") )
         {
             eErr = importProjCSFromXML( this, psNode );
             break;

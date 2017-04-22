@@ -63,40 +63,16 @@ OGRVFKDataSource::~OGRVFKDataSource()
 /*!
   \brief Open VFK datasource
 
-  \param pszFileName datasource name
-  \param bTestOpen True to test if datasource is possible to open
+  \param poOpenInfo open info
 
   \return TRUE on success or FALSE on failure
 */
-int OGRVFKDataSource::Open(const char *pszFileName, int bTestOpen)
+int OGRVFKDataSource::Open(GDALOpenInfo* poOpenInfo)
 {
-    GDALOpenInfo *poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly );
-
-    if (poOpenInfo->fpL == NULL) {
-        if (!bTestOpen)
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Failed to open VFK file `%s'",
-                     pszFileName);
-        delete poOpenInfo;
-        return FALSE;
-    }
-
-    /* load a header chunk and check for signs it is VFK data
-       source */
-    if (bTestOpen) {
-        if (poOpenInfo->nHeaderBytes < 16 ||
-            (!STARTS_WITH((const char*)poOpenInfo->pabyHeader, "&H") &&
-             !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3"))) {
-            delete poOpenInfo;
-            return FALSE;
-        }
-    }
-    delete poOpenInfo;
-
-    pszName = CPLStrdup(pszFileName);
+    pszName = CPLStrdup(poOpenInfo->pszFilename);
 
     /* create VFK reader */
-    poReader = CreateVFKReader(pszFileName);
+    poReader = CreateVFKReader(poOpenInfo->pszFilename);
     if (poReader == NULL || !poReader->IsValid()) {
         /*
         CPLError(CE_Failure, CPLE_AppDefined,

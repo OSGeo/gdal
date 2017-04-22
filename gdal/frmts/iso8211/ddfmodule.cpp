@@ -27,8 +27,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "iso8211.h"
+
+#include <cstdio>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 

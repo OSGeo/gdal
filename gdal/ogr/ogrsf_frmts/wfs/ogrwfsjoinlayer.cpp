@@ -151,7 +151,7 @@ OGRWFSJoinLayer::OGRWFSJoinLayer( OGRWFSDataSource* poDSIn,
         /* Make sure to have the right case */
         const char* pszFieldName = apoLayers[0]->GetLayerDefn()->
             GetFieldDefn(nFieldIndex)->GetNameRef();
-        if( osSortBy.size() )
+        if( !osSortBy.empty() )
             osSortBy += ",";
         osSortBy += pszFieldName;
         if( !psSelectInfo->order_defs[i].ascending_flag )
@@ -274,7 +274,7 @@ OGRWFSJoinLayer* OGRWFSJoinLayer::Build(OGRWFSDataSource* poDS,
                                       FALSE, /* bGmlObjectIdNeedsGMLPrefix */
                                       "",
                                       &bOutNeedsNullCheck);
-        if( osFilter.size() == 0 )
+        if( osFilter.empty() )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Unsupported JOIN clause");
@@ -297,7 +297,7 @@ OGRWFSJoinLayer* OGRWFSJoinLayer::Build(OGRWFSDataSource* poDS,
                                       FALSE, /* bGmlObjectIdNeedsGMLPrefix */
                                       "",
                                       &bOutNeedsNullCheck);
-        if( osFilter.size() == 0 )
+        if( osFilter.empty() )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Unsupported WHERE clause");
@@ -352,7 +352,7 @@ CPLString OGRWFSJoinLayer::MakeGetFeatureURL(int bRequestHits)
 
     int nRequestMaxFeatures = 0;
     if (poDS->IsPagingAllowed() && !bRequestHits &&
-        CPLURLGetValue(osURL, "COUNT").size() == 0 )
+        CPLURLGetValue(osURL, "COUNT").empty() )
     {
         osURL = CPLURLAddKVP(osURL, "STARTINDEX",
             CPLSPrintf("%d", nPagingStartIndex +
@@ -399,7 +399,7 @@ CPLString OGRWFSJoinLayer::MakeGetFeatureURL(int bRequestHits)
     {
         osURL = CPLURLAddKVP(osURL, "RESULTTYPE", "hits");
     }
-    else if( osSortBy.size() )
+    else if( !osSortBy.empty() )
     {
         osURL = CPLURLAddKVP(osURL, "SORTBY", WFS_EscapeURL(osSortBy));
     }
@@ -580,7 +580,7 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
         for(int i=0;i<(int)aoSrcFieldNames.size();i++)
         {
             int iSrcField = poSrcFeature->GetFieldIndex(aoSrcFieldNames[i]);
-            if( iSrcField >= 0 && poSrcFeature->IsFieldSet(iSrcField) )
+            if( iSrcField >= 0 && poSrcFeature->IsFieldSetAndNotNull(iSrcField) )
             {
                 OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
                 if( eType == poSrcFeature->GetFieldDefnRef(iSrcField)->GetType() )

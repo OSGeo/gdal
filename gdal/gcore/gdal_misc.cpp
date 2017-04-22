@@ -27,20 +27,35 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_minixml.h"
-#include "cpl_multiproc.h"
-#include "cpl_string.h"
-#include "gdal_mdreader.h"
-#include "gdal_priv.h"
-#include "ogr_spatialref.h"
+#include "cpl_port.h"
+#include "gdal.h"
 
 #include <cctype>
+#include <cerrno>
+#include <clocale>
 #include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fcntl.h>
 
 #include <algorithm>
 #include <iostream>
 #include <limits>
 #include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_mdreader.h"
+#include "gdal_priv.h"
+#include "gdal_version.h"
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -2468,7 +2483,7 @@ void GDALComposeGeoTransforms(const double *padfGT1, const double *padfGT2,
         padfGT2[4] * padfGT1[0]
         + padfGT2[5] * padfGT1[3]
         + padfGT2[3] * 1.0;
-    memcpy(padfGTOut, gtwrk, sizeof(double) * CPL_ARRAYSIZE(gtwrk));
+    memcpy(padfGTOut, gtwrk, sizeof(gtwrk));
 }
 
 /************************************************************************/
@@ -2541,7 +2556,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
         if( EQUAL(papszArgv[iArg],"--version") )
         {
-            printf( "%s\n", GDALVersionInfo( "--version" ) );
+            printf( "%s\n", GDALVersionInfo( "--version" ) );/*ok*/
             CSLDestroy( papszReturn );
             return 0;
         }
@@ -2551,7 +2566,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--build") )
         {
-            printf( "%s", GDALVersionInfo( "BUILD_INFO" ) );
+            printf( "%s", GDALVersionInfo( "BUILD_INFO" ) );/*ok*/
             CSLDestroy( papszReturn );
             return 0;
         }
@@ -2561,7 +2576,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--license") )
         {
-            printf( "%s\n", GDALVersionInfo( "LICENSE" ) );
+            printf( "%s\n", GDALVersionInfo( "LICENSE" ) );/*ok*/
             CSLDestroy( papszReturn );
             return 0;
         }
@@ -2711,7 +2726,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             if( nOptions == 0 )
                 nOptions = GDAL_OF_RASTER;
 
-            printf( "Supported Formats:\n" );
+            printf( "Supported Formats:\n" );/*ok*/
             for( int iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
             {
                 GDALDriverH hDriver = GDALGetDriver(iDr);
@@ -2761,7 +2776,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 else
                     pszKind = "unknown kind";
 
-                printf( "  %s -%s- (%s%s%s%s): %s\n",
+                printf( "  %s -%s- (%s%s%s%s): %s\n",/*ok*/
                         GDALGetDriverShortName( hDriver ),
                         pszKind,
                         pszRFlag, pszWFlag, pszVirtualIO, pszSubdatasets,
@@ -2802,52 +2817,52 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 return -1;
             }
 
-            printf( "Format Details:\n" );
-            printf( "  Short Name: %s\n", GDALGetDriverShortName( hDriver ) );
-            printf( "  Long Name: %s\n", GDALGetDriverLongName( hDriver ) );
+            printf( "Format Details:\n" );/*ok*/
+            printf( "  Short Name: %s\n", GDALGetDriverShortName( hDriver ) );/*ok*/
+            printf( "  Long Name: %s\n", GDALGetDriverLongName( hDriver ) );/*ok*/
 
             papszMD = GDALGetMetadata( hDriver, NULL );
             if( CPLFetchBool( papszMD, GDAL_DCAP_RASTER, false ) )
-                printf( "  Supports: Raster\n" );
+                printf( "  Supports: Raster\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_VECTOR, false ) )
-                printf( "  Supports: Vector\n" );
+                printf( "  Supports: Vector\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
-                printf( "  Supports: Geography Network\n" );
+                printf( "  Supports: Geography Network\n" );/*ok*/
 
             const char* pszExt = CSLFetchNameValue( papszMD, GDAL_DMD_EXTENSIONS );
             if( pszExt != NULL )
-                printf( "  Extension%s: %s\n", (strchr(pszExt, ' ') ? "s" : ""),
+                printf( "  Extension%s: %s\n", (strchr(pszExt, ' ') ? "s" : ""),/*ok*/
                         pszExt );
 
             if( CSLFetchNameValue( papszMD, GDAL_DMD_MIMETYPE ) )
-                printf( "  Mime Type: %s\n",
+                printf( "  Mime Type: %s\n",/*ok*/
                         CSLFetchNameValue( papszMD, GDAL_DMD_MIMETYPE ) );
             if( CSLFetchNameValue( papszMD, GDAL_DMD_HELPTOPIC ) )
-                printf( "  Help Topic: %s\n",
+                printf( "  Help Topic: %s\n",/*ok*/
                         CSLFetchNameValue( papszMD, GDAL_DMD_HELPTOPIC ) );
 
             if( CPLFetchBool( papszMD, GDAL_DMD_SUBDATASETS, false ) )
-                printf( "  Supports: Subdatasets\n" );
+                printf( "  Supports: Subdatasets\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_OPEN, false ) )
-                printf( "  Supports: Open() - Open existing dataset.\n" );
+                printf( "  Supports: Open() - Open existing dataset.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_CREATE, false ) )
-                printf( "  Supports: Create() - Create writable dataset.\n" );
+                printf( "  Supports: Create() - Create writable dataset.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_CREATECOPY, false ) )
-                printf( "  Supports: CreateCopy() - Create dataset by copying another.\n" );
+                printf( "  Supports: CreateCopy() - Create dataset by copying another.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_VIRTUALIO, false ) )
-                printf( "  Supports: Virtual IO - eg. /vsimem/\n" );
+                printf( "  Supports: Virtual IO - eg. /vsimem/\n" );/*ok*/
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONDATATYPES ) )
-                printf( "  Creation Datatypes: %s\n",
+                printf( "  Creation Datatypes: %s\n",/*ok*/
                         CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONDATATYPES ) );
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONFIELDDATATYPES ) )
-                printf( "  Creation Field Datatypes: %s\n",
+                printf( "  Creation Field Datatypes: %s\n",/*ok*/
                         CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONFIELDDATATYPES ) );
             if( CPLFetchBool( papszMD, GDAL_DCAP_NOTNULL_FIELDS, false ) )
-                printf( "  Supports: Creating fields with NOT NULL constraint.\n" );
+                printf( "  Supports: Creating fields with NOT NULL constraint.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_DEFAULT_FIELDS, false ) )
-                printf( "  Supports: Creating fields with DEFAULT values.\n" );
+                printf( "  Supports: Creating fields with DEFAULT values.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_NOTNULL_GEOMFIELDS, false ) )
-                printf( "  Supports: Creating geometry fields with NOT NULL constraint.\n" );
+                printf( "  Supports: Creating geometry fields with NOT NULL constraint.\n" );/*ok*/
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONOPTIONLIST ) )
             {
                 CPLXMLNode *psCOL =
@@ -2859,7 +2874,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
                 CPLDestroyXMLNode( psCOL );
 
-                printf( "\n%s\n", pszFormattedXML );
+                printf( "\n%s\n", pszFormattedXML );/*ok*/
                 CPLFree( pszFormattedXML );
             }
             if( CSLFetchNameValue( papszMD, GDAL_DS_LAYER_CREATIONOPTIONLIST ) )
@@ -2873,12 +2888,12 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
                 CPLDestroyXMLNode( psCOL );
 
-                printf( "\n%s\n", pszFormattedXML );
+                printf( "\n%s\n", pszFormattedXML );/*ok*/
                 CPLFree( pszFormattedXML );
             }
 
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CONNECTION_PREFIX ) )
-                printf( "  Connection prefix: %s\n",
+                printf( "  Connection prefix: %s\n",/*ok*/
                         CSLFetchNameValue( papszMD, GDAL_DMD_CONNECTION_PREFIX ) );
 
             if( CSLFetchNameValue( papszMD, GDAL_DMD_OPENOPTIONLIST ) )
@@ -2892,7 +2907,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
                 CPLDestroyXMLNode( psCOL );
 
-                printf( "%s\n", pszFormattedXML );
+                printf( "%s\n", pszFormattedXML );/*ok*/
                 CPLFree( pszFormattedXML );
             }
             return 0;
@@ -2903,18 +2918,18 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--help-general") )
         {
-            printf( "Generic GDAL utility command options:\n" );
-            printf( "  --version: report version of GDAL in use.\n" );
-            printf( "  --license: report GDAL license info.\n" );
-            printf( "  --formats: report all configured format drivers.\n" );
-            printf( "  --format [format]: details of one format.\n" );
-            printf( "  --optfile filename: expand an option file into the argument list.\n" );
-            printf( "  --config key value: set system configuration option.\n" );
-            printf( "  --debug [on/off/value]: set debug level.\n" );
-            printf( "  --pause: wait for user input, time to attach debugger\n" );
-            printf( "  --locale [locale]: install locale for debugging "
+            printf( "Generic GDAL utility command options:\n" );/*ok*/
+            printf( "  --version: report version of GDAL in use.\n" );/*ok*/
+            printf( "  --license: report GDAL license info.\n" );/*ok*/
+            printf( "  --formats: report all configured format drivers.\n" );/*ok*/
+            printf( "  --format [format]: details of one format.\n" );/*ok*/
+            printf( "  --optfile filename: expand an option file into the argument list.\n" );/*ok*/
+            printf( "  --config key value: set system configuration option.\n" );/*ok*/
+            printf( "  --debug [on/off/value]: set debug level.\n" );/*ok*/
+            printf( "  --pause: wait for user input, time to attach debugger\n" );/*ok*/
+            printf( "  --locale [locale]: install locale for debugging "/*ok*/
                     "(i.e. en_US.UTF-8)\n" );
-            printf( "  --help-general: report detailed help on general options.\n" );
+            printf( "  --help-general: report detailed help on general options.\n" );/*ok*/
             CSLDestroy( papszReturn );
             return 0;
         }

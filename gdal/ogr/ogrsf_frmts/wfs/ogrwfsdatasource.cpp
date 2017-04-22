@@ -119,13 +119,13 @@ class OGRWFSWrappedResultLayer : public OGRLayer
             delete poDS;
         }
 
-        virtual void        ResetReading() { poLayer->ResetReading(); }
-        virtual OGRFeature *GetNextFeature() { return poLayer->GetNextFeature(); }
-        virtual OGRErr      SetNextByIndex( GIntBig nIndex ) { return poLayer->SetNextByIndex(nIndex); }
-        virtual OGRFeature *GetFeature( GIntBig nFID ) { return poLayer->GetFeature(nFID); }
-        virtual OGRFeatureDefn *GetLayerDefn() { return poLayer->GetLayerDefn(); }
-        virtual GIntBig     GetFeatureCount( int bForce = TRUE ) { return poLayer->GetFeatureCount(bForce); }
-        virtual int         TestCapability( const char * pszCap )  { return poLayer->TestCapability(pszCap); }
+        virtual void        ResetReading() override { poLayer->ResetReading(); }
+        virtual OGRFeature *GetNextFeature() override { return poLayer->GetNextFeature(); }
+        virtual OGRErr      SetNextByIndex( GIntBig nIndex ) override { return poLayer->SetNextByIndex(nIndex); }
+        virtual OGRFeature *GetFeature( GIntBig nFID ) override { return poLayer->GetFeature(nFID); }
+        virtual OGRFeatureDefn *GetLayerDefn() override { return poLayer->GetLayerDefn(); }
+        virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override { return poLayer->GetFeatureCount(bForce); }
+        virtual int         TestCapability( const char * pszCap ) override  { return poLayer->TestCapability(pszCap); }
 };
 
 /************************************************************************/
@@ -208,7 +208,7 @@ OGRWFSDataSource::~OGRWFSDataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    if (osLayerMetadataTmpFileName.size() != 0)
+    if (!osLayerMetadataTmpFileName.empty())
         VSIUnlink(osLayerMetadataTmpFileName);
     delete poLayerMetadataDS;
     delete poLayerGetCapabilitiesDS;
@@ -251,7 +251,7 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszNameIn)
 
     if (EQUAL(pszNameIn, "WFSLayerMetadata"))
     {
-        if (osLayerMetadataTmpFileName.size() != 0)
+        if (!osLayerMetadataTmpFileName.empty())
             return poLayerMetadataLayer;
 
         osLayerMetadataTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p/WFSLayerMetadata.csv", this);
@@ -492,7 +492,7 @@ bool OGRWFSDataSource::DetectRequiresEnvelopeSpatialFilter( CPLXMLNode* psRoot )
 
 CPLString OGRWFSDataSource::GetPostTransactionURL()
 {
-    if (osPostTransactionURL.size())
+    if (!osPostTransactionURL.empty() )
         return osPostTransactionURL;
 
     osPostTransactionURL = osBaseURL;
@@ -834,7 +834,7 @@ CPLHTTPResult* OGRWFSDataSource::SendGetCapabilities(const char* pszBaseURL,
     osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
     osURL = CPLURLAddKVP(osURL, "REQUEST", "GetCapabilities");
     osTypeName = CPLURLGetValue(osURL, "TYPENAME");
-    if( osTypeName.size() == 0 )
+    if( osTypeName.empty() )
         osTypeName = CPLURLGetValue(osURL, "TYPENAMES");
     osURL = CPLURLAddKVP(osURL, "TYPENAME", NULL);
     osURL = CPLURLAddKVP(osURL, "TYPENAMES", NULL);
@@ -1016,7 +1016,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
             nBaseStartIndex = atoi(pszParm);
 
         CPLString strOriginalTypeName = CPLURLGetValue(pszBaseURL, "TYPENAME");
-        if( strOriginalTypeName.size() == 0 )
+        if( strOriginalTypeName.empty() )
             strOriginalTypeName = CPLURLGetValue(pszBaseURL, "TYPENAMES");
         osTypeName = WFS_DecodeURL(strOriginalTypeName);
 
@@ -1138,7 +1138,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
             SetMetadataItem(asMetadata[i].pszMDI, pszVal);
     }
 
-    if( osVersion.size() == 0 )
+    if( osVersion.empty() )
         osVersion = CPLGetXMLValue(psWFSCapabilities, "version", "1.0.0");
     if( strcmp(osVersion.c_str(), "1.0.0") == 0 )
     {
@@ -1160,10 +1160,10 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
     {
         CPLString osMaxFeatures = CPLURLGetValue(osBaseURL, "COUNT" );
         /* Ok, people are used to MAXFEATURES, so be nice to recognize it if it is used for WFS 2.0 ... */
-        if (osMaxFeatures.size() == 0 )
+        if (osMaxFeatures.empty() )
         {
             osMaxFeatures = CPLURLGetValue(osBaseURL, "MAXFEATURES");
-            if( osMaxFeatures.size() != 0 &&
+            if( !osMaxFeatures.empty() &&
                 CPLTestBool(CPLGetConfigOption("OGR_WFS_FIX_MAXFEATURES", "YES")) )
             {
                 CPLDebug("WFS", "MAXFEATURES wrongly used for WFS 2.0. Using COUNT instead");
@@ -1274,7 +1274,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
     }
 
     char** papszTypenames = NULL;
-    if (osTypeName.size() != 0)
+    if (!osTypeName.empty())
         papszTypenames = CSLTokenizeStringComplex( osTypeName, ",", FALSE, FALSE );
 
     for( CPLXMLNode* psChildIter = psChild->psChild;
@@ -1329,7 +1329,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                         psOutputFormatIter = psOutputFormatIter->psNext;
                     }
 
-                    if (strcmp(osVersion.c_str(), "1.1.0") == 0 && osFormats.size() > 0)
+                    if (strcmp(osVersion.c_str(), "1.1.0") == 0 && !osFormats.empty())
                     {
                         bool bFoundGML31 = false;
                         for(size_t i=0;i<osFormats.size();i++)
@@ -1353,7 +1353,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
 
                 /* If a SRSNAME parameter has been encoded in the URL, use it as the SRS */
                 CPLString osSRSName = CPLURLGetValue(osBaseURL, "SRSNAME");
-                if (osSRSName.size() != 0)
+                if (!osSRSName.empty())
                 {
                     pszDefaultSRS = osSRSName.c_str();
                 }
@@ -1455,7 +1455,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                 OGRWFSLayer* poLayer = new OGRWFSLayer(
                     this, poSRS, bAxisOrderAlreadyInverted,
                     osBaseURL, l_pszName, pszNS, pszNSVal);
-                if (osOutputFormat.size())
+                if (!osOutputFormat.empty() )
                     poLayer->SetRequiredOutputFormat(osOutputFormat);
 
                 if( pszTitle )
@@ -1793,14 +1793,14 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
     GMLParseXSD( osTmpFileName, aosClasses, bFullyUnderstood );
 
     int nLayersFound = 0;
-    if ((int)aosClasses.size() > 0)
+    if (!(int)aosClasses.empty())
     {
         std::vector<GMLFeatureClass*>::const_iterator oIter = aosClasses.begin();
         std::vector<GMLFeatureClass*>::const_iterator oEndIter = aosClasses.end();
         while (oIter != oEndIter)
         {
             GMLFeatureClass* poClass = *oIter;
-            oIter ++;
+            ++oIter;
 
             OGRWFSLayer* poLayer = NULL;
 
@@ -2025,7 +2025,7 @@ CPLString WFS_DecodeURL(const CPLString &osSrc)
     {
         if (osSrc[i]=='%' && i+2 < osSrc.length())
         {
-            int ii = 0;
+            unsigned int ii = 0;
             sscanf(osSrc.substr(i+1,2).c_str(), "%x", &ii);
             char ch = static_cast<char>(ii);
             ret += ch;
@@ -2154,7 +2154,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
             poFeature->SetField(0, osFID);
             CPL_IGNORE_RET_VAL(poMEMLayer->CreateFeature(poFeature));
             delete poFeature;
-            oIter ++;
+            ++oIter;
         }
 
         OGRLayer* poResLayer = new OGRWFSWrappedResultLayer(poMEMDS, poMEMLayer);
@@ -2186,7 +2186,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
             return NULL;
         }
 
-        while(*pszIter && *pszIter == ' ')
+        while(*pszIter == ' ')
             pszIter ++;
         if (!STARTS_WITH_CI(pszIter, "WHERE "))
         {
@@ -2223,7 +2223,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
         if (bNeedsNullCheck && !HasNullCheck())
             osOGCFilter = "";
 
-        if (osOGCFilter.size() == 0)
+        if (osOGCFilter.empty())
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot convert WHERE clause into a OGC filter");
             return NULL;

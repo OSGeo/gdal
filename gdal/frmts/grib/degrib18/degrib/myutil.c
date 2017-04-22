@@ -88,6 +88,7 @@
  *     same as fgets except it can expand as needed.
  *****************************************************************************
  */
+#if 0  // Unused with GDAL.
 #define MIN_STEPSIZE 80
 size_t reallocFGets (char **Ptr, size_t *LenBuff, FILE *fp)
 {
@@ -124,6 +125,7 @@ size_t reallocFGets (char **Ptr, size_t *LenBuff, FILE *fp)
 }
 
 #undef MIN_STEPSIZE
+#endif
 
 /*****************************************************************************
  * mySplit() --
@@ -149,6 +151,8 @@ size_t reallocFGets (char **Ptr, size_t *LenBuff, FILE *fp)
  * NOTES
  *****************************************************************************
  */
+
+#if 0  // Unused with GDAL.
 void mySplit (const char *data, char symbol, size_t *Argc, char ***Argv,
               char f_trim)
 {
@@ -176,7 +180,7 @@ void mySplit (const char *data, char symbol, size_t *Argc, char ***Argv,
          }
          argc++;
          head = ptr + 1;
-         /* The following head != NULL is in case data is not '\0' terminated 
+         /* The following head != NULL is in case data is not '\0' terminated
           */
          if ((head != NULL) && (*head == '\0')) {
             /* Handle a break character just before the \0 */
@@ -198,7 +202,9 @@ void mySplit (const char *data, char symbol, size_t *Argc, char ***Argv,
    *Argc = argc;
    *Argv = argv;
 }
+#endif
 
+#if 0  // Unused with GDAL.
 int myAtoI (const char *ptr, sInt4 *value)
 {
    char *extra = NULL;         /* The data after the end of the double. */
@@ -241,6 +247,7 @@ int myAtoI (const char *ptr, sInt4 *value)
    }
    return 1;
 }
+#endif
 
 /*****************************************************************************
  * myAtoF() -- used to be myIsReal()
@@ -267,6 +274,8 @@ int myAtoI (const char *ptr, sInt4 *value)
  * NOTES
  *****************************************************************************
  */
+
+#if 0  // Unused with GDAL.
 int myAtoF (const char *ptr, double *value)
 {
    char *extra = NULL;         /* The data after the end of the double. */
@@ -309,7 +318,9 @@ int myAtoF (const char *ptr, double *value)
    }
    return 1;
 }
+#endif
 
+#if 0  // Unused with GDAL.
 /* Change of name was to deprecate usage... Switch to myAtoF */
 int myIsReal_old (const char *ptr, double *value)
 {
@@ -337,6 +348,7 @@ int myIsReal_old (const char *ptr, double *value)
    *value = atof (ptr);
    return 1;
 }
+#endif
 
 /* Return:
  * 0 if 'can't stat the file' (most likely not a file)
@@ -352,6 +364,7 @@ int myIsReal_old (const char *ptr, double *value)
  * Could return mode: RDCF___rwxrwxrwx where R is 1/0 based on regular file
  * D is 1/0 based on directory, first rwx is user permissions...
  */
+#if 0  // Unused with GDAL.
 int myStat (char *filename, char *perm, sInt4 *size, double *mtime)
 {
    struct stat stbuf;
@@ -437,8 +450,9 @@ int myStat (char *filename, char *perm, sInt4 *size, double *mtime)
       return 3;
    }
 }
+#endif
 
-/** 
+/**
 static int FileMatch (const char *filename, const char *filter)
 {
    const char *ptr1;
@@ -471,6 +485,7 @@ static int FileMatch (const char *filename, const char *filter)
 }
 **/
 
+#if 0  // Unused with GDAL.
 int myGlob (CPL_UNUSED const char *dirName,
             CPL_UNUSED const char *filter,
             CPL_UNUSED size_t *Argc,
@@ -507,6 +522,7 @@ return 0; // TODO: reimplement for Win32
    return 0;
 */
 }
+#endif
 
 /*****************************************************************************
  * FileCopy() --
@@ -532,6 +548,7 @@ return 0; // TODO: reimplement for Win32
  * NOTES
  *****************************************************************************
  */
+#if 0  // Unused with GDAL.
 int FileCopy (const char *fileIn, const char *fileOut)
 {
    FILE *ifp;           /* The file pointer to read from. */
@@ -558,6 +575,7 @@ int FileCopy (const char *fileIn, const char *fileOut)
    fclose (ofp);
    return 0;
 }
+#endif
 
 /*****************************************************************************
  * FileTail() --
@@ -580,6 +598,8 @@ int FileCopy (const char *fileIn, const char *fileOut)
  * NOTES
  *****************************************************************************
  */
+
+#if 0  // Unused with GDAL.
 void FileTail (const char *fileName, char **tail)
 {
    const char *ptr;     /* A pointer to last \ or // in fileName. */
@@ -601,6 +621,7 @@ void FileTail (const char *fileName, char **tail)
    *tail = (char *) malloc (strlen (ptr) + 1);
    strcpy (*tail, ptr);
 }
+#endif
 
 /*****************************************************************************
  * myRound() --
@@ -683,7 +704,14 @@ void strTrim (char *str)
 
    /* Remove the trailing white space before working on the leading ones. */
    len = strlen (str);
-   for (i = len - 1; (/* (i >= 0) && */ (isspace ((unsigned char)str[i]))); i--) {
+   if (len == 0) {
+       return;
+   }
+   for (i = len - 1; i > 0 && isspace ((unsigned char)str[i]); i--) {
+   }
+   if (i == 0 && str[i] == ' ') {
+       str[0] = '\0';
+       return;
    }
    len = i + 1;
    str[len] = '\0';
@@ -724,15 +752,19 @@ void strTrim (char *str)
 void strTrimRight (char *str, char c)
 {
    size_t i;            /* loop counter for traversing str. */
+   const size_t len = str == NULL ? 0 : strlen(str);
 
    /* str shouldn't be null, but if it is, we want to handle it. */
    myAssert (str != NULL);
-   if (str == NULL) {
+   if (len == 0) {
       return;
    }
 
    for (i = strlen (str) - 1;
-        (/* (i >= 0) && */ ((isspace ((unsigned char)str[i])) || (str[i] == c))); i--) {
+        i > 0 && (isspace ((unsigned char)str[i]) || str[i] == c); i--) {
+   }
+   if (i == 0 && (isspace ((unsigned char)str[i]) || str[i] == c)) {
+     str[i] = '\0';
    }
    str[i + 1] = '\0';
 }
@@ -798,6 +830,7 @@ void strCompact (char *str, char c)
  * NOTES
  *****************************************************************************
  */
+#if 0  // Unused with GDAL.
 void strReplace (char *str, char c1, char c2)
 {
    char *ptr = str;
@@ -814,6 +847,7 @@ void strReplace (char *str, char c1, char c2)
       }
    }
 }
+#endif
 
 /*****************************************************************************
  * strToUpper() --
@@ -834,6 +868,7 @@ void strReplace (char *str, char c1, char c2)
  * NOTES
  *****************************************************************************
  */
+#if 0  // Unused with GDAL.
 void strToUpper (char *str)
 {
    char *ptr = str;     /* Used to traverse str. */
@@ -847,6 +882,7 @@ void strToUpper (char *str)
    while ((*ptr++ = toupper (*str++)) != '\0') {
    }
 }
+#endif
 
 /*****************************************************************************
  * strToLower() --
@@ -867,6 +903,7 @@ void strToUpper (char *str)
  * NOTES
  *****************************************************************************
  */
+#if 0  // Unused with GDAL.
 void strToLower (char *str)
 {
    char *ptr = str;     /* Used to traverse str. */
@@ -880,6 +917,7 @@ void strToLower (char *str)
    while ((*ptr++ = tolower (*str++)) != '\0') {
    }
 }
+#endif
 
 /*
  * Returns: Length of the string.
@@ -919,6 +957,7 @@ int str2lw (char *s) {
  *   See K&R p 106
  *****************************************************************************
  */
+#if 0  // Unused with GDAL.
 int strcmpNoCase (const char *str1, const char *str2)
 {
    /* str1, str2 shouldn't be null, but if it is, we want to handle it. */
@@ -961,6 +1000,7 @@ int strcmpNoCase (const char *str1, const char *str2)
    return 0;
 */
 }
+#endif
 
  /*****************************************************************************
  * GetIndexFromStr() -- Review 12/2002
@@ -968,7 +1008,7 @@ int strcmpNoCase (const char *str1, const char *str2)
  * Arthur Taylor / MDL
  *
  * PURPOSE
- *   Looks through a list of strings (with a NULL value at the end) for a
+ *   Looks through a list of strings (with a NUL value at the end) for a
  * given string.  Returns the index where it found it.
  *
  * ARGUMENTS
@@ -988,7 +1028,7 @@ int strcmpNoCase (const char *str1, const char *str2)
  *   Why not const char **Opt?
  *****************************************************************************
  */
-int GetIndexFromStr (const char *str, char **Opt, int *Index)
+int GetIndexFromStr (const char *str, const char * const *Opt, int *Index)
 {
    int cnt = 0;         /* Current Count in Opt. */
 
@@ -1031,6 +1071,7 @@ int GetIndexFromStr (const char *str, char **Opt, int *Index)
  * NOTES
  *****************************************************************************
  */
+#if 0  // Unused with GDAL.
 static sChar Clock_GetTimeZone ()
 {
    struct tm l_time;
@@ -1052,6 +1093,7 @@ static sChar Clock_GetTimeZone ()
    }
    return timeZone;
 }
+#endif
 
 /*****************************************************************************
  * myParseTime() --
@@ -1080,6 +1122,7 @@ static sChar Clock_GetTimeZone ()
  *   Use: int Clock_ScanDateNumber (double *clock, char *buffer) instead.
  *****************************************************************************
  */
+#if 0  // Unused with GDAL.
 int myParseTime3 (const char *is, time_t * AnsTime)
 {
    char buffer[5];      /* A temporary variable for parsing "is". */
@@ -1126,6 +1169,7 @@ int myParseTime3 (const char *is, time_t * AnsTime)
    *AnsTime = mktime (&l_time) - (Clock_GetTimeZone () * 3600);
    return 0;
 }
+#endif
 
 #ifdef MYUTIL_TEST
 int main (int argc, char **argv)

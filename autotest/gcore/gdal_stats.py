@@ -744,6 +744,36 @@ def stats_uint16():
     return 'success'
 
 ###############################################################################
+# Test a case where the nodata value is almost the maximum value of float32
+
+def stats_nodata_almost_max_float32():
+
+    gdal.FileFromMemBuffer('/vsimem/float32_almost_nodata_max_float32.tif',
+                           open('data/float32_almost_nodata_max_float32.tif', 'rb').read() )
+
+    ds = gdal.Open('/vsimem/float32_almost_nodata_max_float32.tif')
+    minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
+    if minmax != (0,0):
+        gdaltest.post_reason('did not get expected minmax')
+        print(minmax)
+        return 'fail'
+    stats = ds.GetRasterBand(1).ComputeStatistics(False)
+    if stats != [0,0,0,0]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+    hist = ds.GetRasterBand(1).GetHistogram(approx_ok = 0)
+    if hist[0] != 3:
+        gdaltest.post_reason('did not get expected hist')
+        print(hist)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/float32_almost_nodata_max_float32.tif')
+
+    return 'success'
+
+###############################################################################
 # Run tests
 
 gdaltest_list = [
@@ -768,7 +798,8 @@ gdaltest_list = [
     stats_flt_min,
     stats_dbl_min,
     stats_byte_partial_tiles,
-    stats_uint16
+    stats_uint16,
+    stats_nodata_almost_max_float32,
     ]
 
 if __name__ == '__main__':

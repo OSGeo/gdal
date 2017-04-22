@@ -207,7 +207,7 @@ static void OGCWKTSetProj( char * pszProjection,
 
 {
     int		iParm, nCount = CSLCount(papszMethods);
-    const char	*apszParmNames[8];
+    const char	*apszParmNames[8] = { NULL };
 
     apszParmNames[0] = pszParm1;
     apszParmNames[1] = pszParm2;

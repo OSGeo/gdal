@@ -43,6 +43,8 @@ if ! test -d fix_typos; then
     cat codespell/data/dictionary.txt qgis.txt debian.txt | awk 'NF' > gdal_dict.txt
     echo "difered->deferred" >> gdal_dict.txt
     echo "differed->deferred" >> gdal_dict.txt
+    cat gdal_dict.txt | grep -v 404 > gdal_dict.txt.tmp
+    mv gdal_dict.txt.tmp gdal_dict.txt
     cd ..
 fi
 
@@ -50,7 +52,8 @@ EXCLUDED_FILES="*/.svn*,configure,config.status,config.sub,*/autom4te.cache/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/hdf-eos/*,teststream.out,ogrogdilayer.cpp"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/doc/br/*,*/data/*,figures.mp,*/tmp/*,*/ruby/*"
 EXCLUDED_FILES="$EXCLUDED_FILES,*/fix_typos/*,fix_typos.sh,*.eps,geopackage_aspatial.html"
-EXCLUDED_FILES="$EXCLUDED_FILES,PROVENANCE.TXT,libtool,ltmain.sh,libtool.m4"
+EXCLUDED_FILES="$EXCLUDED_FILES,*/kdu_cache_wrapper.h,*/PublicDecompWT/*,*/man/*,./html/*"
+EXCLUDED_FILES="$EXCLUDED_FILES,PROVENANCE.TXT,libtool,ltmain.sh,libtool.m4,./m4/*"
 WORDS_WHITE_LIST="poSession,FIDN,TRAFIC,HTINK,repID,oCurr,INTREST,oPosition"
 WORDS_WHITE_LIST="$WORDS_WHITE_LIST,CPL_SUPRESS_CPLUSPLUS,SRP_NAM,ADRG_NAM,'SRP_NAM,AuxilaryTarget"
 # IRIS driver metadata item names: FIXME ?
@@ -61,7 +64,14 @@ WORDS_WHITE_LIST="$WORDS_WHITE_LIST,JBUF_PASS_THRU"
 WORDS_WHITE_LIST="$WORDS_WHITE_LIST,IS_WRITEABLE,E_GIF_ERR_NOT_WRITEABLE"
 # libtiff
 WORDS_WHITE_LIST="$WORDS_WHITE_LIST,THRESHHOLD_BILEVEL,THRESHHOLD_HALFTONE,THRESHHOLD_ERRORDIFFUSE"
+# mffdataset.cpp
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,oUTMorLL"
+# hf2dataset.cpp
+WORDS_WHITE_LIST="$WORDS_WHITE_LIST,fVertPres"
 
 python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S $EXCLUDED_FILES \
     -x scripts/typos_whitelist.txt --words-white-list=$WORDS_WHITE_LIST \
-    -D fix_typos/gdal_dict.txt  ..
+    ../autotest
+python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S $EXCLUDED_FILES \
+    -x scripts/typos_whitelist.txt --words-white-list=$WORDS_WHITE_LIST \
+    -D ./fix_typos/gdal_dict.txt  .

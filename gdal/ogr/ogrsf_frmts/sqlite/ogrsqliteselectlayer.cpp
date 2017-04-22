@@ -90,9 +90,8 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
             if( wkbFlatten(poGeomFieldDefn->GetType()) != wkbUnknown )
                 continue;
 
-            int nBytes = 0;
             if( sqlite3_column_type( hStmt, poGeomFieldDefn->iCol ) == SQLITE_BLOB &&
-                (nBytes = sqlite3_column_bytes( hStmt, poGeomFieldDefn->iCol )) > 39 )
+                sqlite3_column_bytes( hStmt, poGeomFieldDefn->iCol ) > 39 )
             {
                 const GByte* pabyBlob = (const GByte*)sqlite3_column_blob( hStmt, poGeomFieldDefn->iCol );
                 int eByteOrder = pabyBlob[1];
@@ -325,11 +324,11 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
     bDoStep = TRUE;
 
 #ifdef DEBUG
-    CPLDebug( "OGR_SQLITE", "prepare(%s)", poBehaviour->osSQLCurrent.c_str() );
+    CPLDebug( "OGR_SQLITE", "prepare_v2(%s)", poBehaviour->osSQLCurrent.c_str() );
 #endif
 
     const int rc =
-        sqlite3_prepare( poDS->GetDB(), poBehaviour->osSQLCurrent,
+        sqlite3_prepare_v2( poDS->GetDB(), poBehaviour->osSQLCurrent,
                          static_cast<int>(poBehaviour->osSQLCurrent.size()),
                          &hStmt, NULL );
 
@@ -337,7 +336,7 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
         return OGRERR_NONE;
 
     CPLError( CE_Failure, CPLE_AppDefined,
-              "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
+              "In ResetStatement(): sqlite3_prepare_v2(%s):\n  %s",
               poBehaviour->osSQLCurrent.c_str(), sqlite3_errmsg(poDS->GetDB()) );
     hStmt = NULL;
     return OGRERR_FAILURE;
@@ -505,7 +504,7 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
         else
         {
             osSpatialWhere = oPair.second->GetSpatialWhere(nIdx, poLayer->GetFilterGeom());
-            if (osSpatialWhere.size() == 0)
+            if (osSpatialWhere.empty())
             {
                 CPLDebug("SQLITE", "Cannot get spatial where clause");
                 bSpatialFilterInSQL = FALSE;
@@ -514,21 +513,21 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
     }
 
     CPLString osCustomWhere;
-    if( osSpatialWhere.size() != 0 )
+    if( !osSpatialWhere.empty() )
     {
         osCustomWhere = osSpatialWhere;
     }
     if( poLayer->GetAttrQueryString() != NULL && poLayer->GetAttrQueryString()[0] != '\0' )
     {
-        if( osSpatialWhere.size() != 0)
+        if( !osSpatialWhere.empty())
             osCustomWhere += " AND (";
         osCustomWhere += poLayer->GetAttrQueryString();
-        if( osSpatialWhere.size() != 0)
+        if( !osSpatialWhere.empty())
             osCustomWhere += ")";
     }
 
     /* Nothing to do */
-    if( osCustomWhere.size() == 0 )
+    if( osCustomWhere.empty() )
         return TRUE;
 
     while (i < osSQLBase.size() && osSQLBase[i] == ' ')

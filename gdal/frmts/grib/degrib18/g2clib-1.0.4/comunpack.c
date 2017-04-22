@@ -41,17 +41,17 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
 //
 // ATTRIBUTES:
 //   LANGUAGE: C
-//   MACHINE: 
+//   MACHINE:
 //
 //$$$//
 {
 
-      g2int   nbitsd=0,isign;
-      g2int  j,iofst,ival1,ival2,minsd,itemp,l,k,n,non=0;
-      g2int  *ifld,*ifldmiss=0;
-      g2int  *gref,*gwidth,*glen;
-      g2int  itype,ngroups,nbitsgref,nbitsgwidth,nbitsglen;
-      g2int  msng1,msng2;
+      g2int nbitsd=0,isign;
+      g2int j,iofst,ival1,ival2,minsd,itemp,l,k,n,non=0;
+      g2int *ifld=NULL,*ifldmiss=NULL;
+      g2int *gref=NULL,*gwidth=NULL,*glen=NULL;
+      g2int itype,ngroups,nbitsgref,nbitsgwidth,nbitsglen;
+      g2int msng1,msng2;
       g2float ref,bscale,dscale,rmiss1,rmiss2;
       g2int totBit, totLen;
 
@@ -86,9 +86,9 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
 //  Get missing values, if supplied
 //
       if ( idrstmpl[6] == 1 ) {
-         if (itype == 0) 
+         if (itype == 0)
             rdieee(idrstmpl+7,&rmiss1,1);
-         else 
+         else
             rmiss1=(g2float)idrstmpl[7];
       }
       if ( idrstmpl[6] == 2 ) {
@@ -101,9 +101,9 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
             rmiss2=(g2float)idrstmpl[8];
          }
       }
-      
+
       //printf("RMISSs: %f %f %f \n",rmiss1,rmiss2,ref);
-// 
+//
 //  Extract spatial differencing values, if using DRS Template 5.3
 //
       if (idrsnum == 3) {
@@ -164,7 +164,7 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
 
       for (j=0;j<ngroups;j++)
           gwidth[j]=gwidth[j]+idrstmpl[10];
-      
+
 //
 //  Extract Each Group's length (number of values in each group)
 //
@@ -181,7 +181,7 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
          for (j=0;j<ngroups;j++)
               glen[j]=0;
       }
-      for (j=0;j<ngroups;j++) 
+      for (j=0;j<ngroups;j++)
            glen[j]=(glen[j]*idrstmpl[13])+idrstmpl[12];
       glen[ngroups-1]=idrstmpl[14];
 //
@@ -194,10 +194,11 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
         totBit += (gwidth[j]*glen[j]);
         totLen += glen[j];
       }
-      if (totLen != ndpts) {
-        return 1;
-      }
-      if (totBit / 8. > lensec) {
+      if (totLen != ndpts || totBit / 8. > lensec) {
+        free(ifld);
+        free(gwidth);
+        free(glen);
+        free(gref);
         return 1;
       }
 //
@@ -315,9 +316,9 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
                fld[n]=(((g2float)ifld[non++]*bscale)+ref)*dscale;
                //printf(" SAG %d %f %d %f %f %f\n",n,fld[n],ifld[non-1],bscale,ref,dscale);
             }
-            else if ( ifldmiss[n] == 1 ) 
+            else if ( ifldmiss[n] == 1 )
                fld[n]=rmiss1;
-            else if ( ifldmiss[n] == 2 ) 
+            else if ( ifldmiss[n] == 2 )
                fld[n]=rmiss2;
          }
          if ( ifldmiss != 0 ) free(ifldmiss);
@@ -326,5 +327,5 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
       if ( ifld != 0 ) free(ifld);
 
       return(0);
-      
+
 }

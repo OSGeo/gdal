@@ -38,10 +38,17 @@ CPL_CVSID("$Id$");
 OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
                           const char* pszLayerName,
                           SVGGeometryType svgGeomTypeIn,
-                          OGRSVGDataSource* poDSIn) :
+#ifndef HAVE_EXPAT
+                          CPL_UNUSED
+#endif
+                          OGRSVGDataSource* poDSIn ) :
     poFeatureDefn(NULL),
     poSRS(NULL),
-    poDS(NULL),
+#ifdef HAVE_EXPAT
+    poDS(poDSIn),
+#endif
+    osLayerName(pszLayerName),
+    svgGeomType(svgGeomTypeIn),
     nTotalFeatures(0),
     nNextFID(0),
     fpSVG(NULL),
@@ -68,9 +75,6 @@ OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
 #endif
 
 {
-    poDS = poDSIn;
-    svgGeomType = svgGeomTypeIn;
-    osLayerName = pszLayerName;
     SetDescription( pszLayerName );
 
     poSRS = new OGRSpatialReference("PROJCS[\"WGS 84 / Pseudo-Mercator\","

@@ -40,10 +40,12 @@ CPL_CVSID("$Id$");
 OGROCILayer::OGROCILayer()
 
 {
+    poFeatureDefn = NULL;
     poDS = NULL;
     poStatement = NULL;
 
     pszQueryStatement = NULL;
+    nResultOffset = 0;
     pszGeomName = NULL;
     iGeomColumn = -1;
     pszFIDName = NULL;
@@ -185,6 +187,8 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
     {
         if( papszResult[iField] != NULL )
             poFeature->SetField( iField, papszResult[iField] );
+        else
+            poFeature->SetFieldNull( iField );
     }
 
 /* -------------------------------------------------------------------- */

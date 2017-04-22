@@ -56,6 +56,24 @@ translated, as far as possible, as attribute filters that are applied on the
 underlying OGR layers. Joins can be very expensive operations if the secondary table is not
 indexed on the key field being used.<p>
 
+\subsection ogr_sql_sqlite_delimited_identifiers Delimited identifiers
+
+If names of layers or attributes are reserved keywords in SQL like 'FROM' or they
+begin with a number or underscore they must be handled as "delimited identifiers" and
+enclosed between double quotation marks in queries. Double quotas can be used even when
+they are not strictly needed.
+
+\code
+SELECT "p"."geometry", "p"."FROM", "p"."3D" FROM "poly" p
+\endcode
+
+When SQL statements are used in the command shell and the statement itself is put
+between double quotes, the internal double quotes must be escaped with \
+
+\code
+ogrinfo p.shp -sql "SELECT geometry \"FROM\", \"3D\" FROM p"
+\endcode
+
 \subsection ogr_sql_sqlite_geometry Geometry field
 
 The <b>GEOMETRY</b> special field represents the geometry of the feature

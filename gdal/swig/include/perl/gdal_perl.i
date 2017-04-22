@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+%include init.i
+
 %init %{
   /* gdal_perl.i %init code */
   UseExceptions();
@@ -37,6 +39,8 @@
 %include callback.i
 %include confess.i
 %include cpl_exceptions.i
+
+%include band.i
 
 %rename (GetMetadata) GetMetadata_Dict;
 %ignore GetMetadata_List;
@@ -127,8 +131,7 @@ use Carp;
 use Encode;
 use Exporter 'import';
 use Geo::GDAL::Const;
-use Geo::OGR;
-use Geo::OSR;
+
 # $VERSION is the Perl module (CPAN) version number, which must be
 # an increasing floating point number.  $GDAL_VERSION is the
 # version number of the GDAL that this module is a part of. It is
@@ -208,15 +211,22 @@ use Scalar::Util 'blessed';
 use vars qw/
     @EXPORT_OK %EXPORT_TAGS
     @DATA_TYPES @OPEN_FLAGS @RESAMPLING_TYPES @RIO_RESAMPLING_TYPES @NODE_TYPES
-    %TYPE_STRING2INT %TYPE_INT2STRING
-    %OF_STRING2INT
-    %RESAMPLING_STRING2INT %RESAMPLING_INT2STRING
-    %RIO_RESAMPLING_STRING2INT %RIO_RESAMPLING_INT2STRING
-    %NODE_TYPE_STRING2INT %NODE_TYPE_INT2STRING
-    @error %stdout_redirection
+    %S2I %I2S @error %stdout_redirection
     /;
-@EXPORT_OK = qw/Driver Open BuildVRT/;
-%EXPORT_TAGS = (all => [qw(Driver Open BuildVRT)]);
+BEGIN {
+@EXPORT_OK = qw(
+    Driver Open BuildVRT
+    ParseXMLString NodeData Child Children NodeData ParseXMLString SerializeXMLTree
+    error last_error named_parameters keep unkeep parent note unnote make_processing_options
+    VSIStdoutSetRedirection VSIStdoutUnsetRedirection
+    i2s s2i s_exists);
+%EXPORT_TAGS = (
+    all => [qw(Driver Open BuildVRT)],
+    XML => [qw(ParseXMLString NodeData Child Children NodeData ParseXMLString SerializeXMLTree)],
+    INTERNAL => [qw(error last_error named_parameters keep unkeep parent note unnote make_processing_options
+                    VSIStdoutSetRedirection VSIStdoutUnsetRedirection i2s s2i s_exists)]
+    );
+}
 *BuildVRT = *Geo::GDAL::Dataset::BuildVRT;
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
@@ -228,27 +238,27 @@ for (keys %Geo::GDAL::Const::) {
 }
 for my $string (@DATA_TYPES) {
     my $int = eval "\$Geo::GDAL::Const::GDT_$string";
-    $TYPE_STRING2INT{$string} = $int;
-    $TYPE_INT2STRING{$int} = $string;
+    $S2I{data_type}{$string} = $int;
+    $I2S{data_type}{$int} = $string;
 }
 for my $string (@OPEN_FLAGS) {
     my $int = eval "\$Geo::GDAL::Const::OF_$string";
-    $OF_STRING2INT{$string} = $int;
+    $S2I{open_flag}{$string} = $int;
 }
 for my $string (@RESAMPLING_TYPES) {
     my $int = eval "\$Geo::GDAL::Const::GRA_$string";
-    $RESAMPLING_STRING2INT{$string} = $int;
-    $RESAMPLING_INT2STRING{$int} = $string;
+    $S2I{resampling}{$string} = $int;
+    $I2S{resampling}{$int} = $string;
 }
 for my $string (@RIO_RESAMPLING_TYPES) {
     my $int = eval "\$Geo::GDAL::Const::GRIORA_$string";
-    $RIO_RESAMPLING_STRING2INT{$string} = $int;
-    $RIO_RESAMPLING_INT2STRING{$int} = $string;
+    $S2I{rio_resampling}{$string} = $int;
+    $I2S{rio_resampling}{$int} = $string;
 }
 for my $string (@NODE_TYPES) {
     my $int = eval "\$Geo::GDAL::Const::CXT_$string";
-    $NODE_TYPE_STRING2INT{$string} = $int;
-    $NODE_TYPE_INT2STRING{$int} = $string;
+    $S2I{node_type}{$string} = $int;
+    $I2S{node_type}{$int} = $string;
 }
 
 our $HAVE_PDL;
@@ -282,7 +292,17 @@ sub error {
 }
 
 sub last_error {
-    my $error = $error[$#error] // '';
+    my $error;
+    # all errors should be in @error
+    if (@error) {
+        $error = $error[$#error];
+    } elsif ($@) {
+        # swig exceptions are not in @error
+        $error = $@;
+        $error =~ s/ at .*//;
+    } else {
+        $error = 'unknown error';
+    }
     chomp($error);
     return $error;
 }
@@ -333,16 +353,60 @@ sub named_parameters {
     return \%named;
 }
 
-sub string2int {
-    my ($string, $string2int_hash, $int2string_hash, $default) = @_;
-    $string = $default if defined $default && !defined $string;
-    return unless defined $string;
-    return $string if $int2string_hash && exists $int2string_hash->{$string};
-    error(1, $string, $string2int_hash) unless exists $string2int_hash->{$string};
-    $string2int_hash->{$string};
+sub i2s {
+    my ($class, $int) = @_;
+    return $I2S{$class}{$int} if exists $I2S{$class}{$int};
+    return $int;
 }
 
-sub RELEASE_PARENTS {
+sub s2i {
+    my ($class, $string, $backwards, $default) = @_;
+    $string = $default if defined $default && !defined $string;
+    return unless defined $string;
+    return $string if $backwards && exists $I2S{$class}{$string};
+    error(1, $string, $S2I{$class}) unless exists $S2I{$class}{$string};
+    $S2I{$class}{$string};
+}
+
+sub s_exists {
+    my ($class, $string) = @_;
+    return exists $S2I{$class}{$string};
+}
+
+sub make_processing_options {
+    my ($o) = @_;
+    my @options;
+    my $processor = sub {
+        my $val = shift;
+        if (ref $val eq 'ARRAY') {
+            return @$val;
+        } elsif (not ref $val) {
+            if ($val =~ /\s/ && $val =~ /^[+\-0-9.,% ]+$/) {
+                return split /\s+/, $val;
+            }
+            return $val;
+        } else {
+            error("'$val' is not a valid processing option.");
+        }
+    };
+    if (ref $o eq 'HASH') {
+        for my $key (keys %$o) {
+            my $val = $o->{$key};
+            # without hyphen is deprecated
+            $key = '-'.$key unless $key =~ /^-/;
+            push @options, $key;
+            push @options, $processor->($val);
+        }
+    } elsif (ref $o eq 'ARRAY') {
+        for my $item (@$o) {
+            push @options, $processor->($item);
+        }
+    }
+    $o = \@options;
+    return $o;
+}
+
+sub RELEASE_PARENT {
 }
 
 sub FindFile {
@@ -375,13 +439,13 @@ sub NodeTypes {
 
 sub NodeType {
     my $type = shift;
-    return $NODE_TYPE_INT2STRING{$type} if $type =~ /^\d/;
-    return $NODE_TYPE_STRING2INT{$type};
+    return i2s(node_type => $type) if $type =~ /^\d/;
+    return s2i(node_type => $type);
 }
 
 sub NodeData {
     my $node = shift;
-    return (Geo::GDAL::NodeType($node->[0]), $node->[1]);
+    return (NodeType($node->[0]), $node->[1]);
 }
 
 sub Children {
@@ -395,12 +459,12 @@ sub Child {
 }
 
 sub GetDataTypeSize {
-    return _GetDataTypeSize(string2int(shift, \%TYPE_STRING2INT, \%TYPE_INT2STRING));
+    return _GetDataTypeSize(s2i(data_type => shift, 1));
 }
 
 sub DataTypeValueRange {
     my $t = shift;
-    Geo::GDAL::error(1, $t, \%TYPE_STRING2INT) unless exists $TYPE_STRING2INT{$t};
+    s2i(data_type => $t);
     # these values are from gdalrasterband.cpp
     return (0,255) if $t =~ /Byte/;
     return (0,65535) if $t =~/UInt16/;
@@ -412,13 +476,13 @@ sub DataTypeValueRange {
 }
 
 sub DataTypeIsComplex {
-    return _DataTypeIsComplex(string2int(shift, \%TYPE_STRING2INT));
+    return _DataTypeIsComplex(s2i(data_type => shift));
 }
 
 sub PackCharacter {
     my $t = shift;
-    $t = $TYPE_INT2STRING{$t} if exists $TYPE_INT2STRING{$t};
-    Geo::GDAL::error(1, $t, \%TYPE_STRING2INT) unless exists $TYPE_STRING2INT{$t};
+    $t = i2s(data_type => $t);
+    s2i(data_type => $t); # test
     my $is_big_endian = unpack("h*", pack("s", 1)) =~ /01/; # from Programming Perl
     return 'C' if $t =~ /^Byte$/;
     return ($is_big_endian ? 'n': 'v') if $t =~ /^UInt16$/;
@@ -450,7 +514,11 @@ sub Drivers {
 
 sub Driver {
     return 'Geo::GDAL::Driver' unless @_;
-    return GetDriver(@_);
+    my $name = shift;
+    my $driver = GetDriver($name);
+    error("Driver \"$name\" not found. Is it built in? Check with Geo::GDAL::Drivers or Geo::OGR::Drivers.") 
+        unless $driver;
+    return $driver;
 }
 
 sub AccessTypes {
@@ -458,13 +526,13 @@ sub AccessTypes {
 }
 
 sub Open {
-    my $p = Geo::GDAL::named_parameters(\@_, Name => '.', Access => 'ReadOnly', Type => 'Any', Options => {}, Files => []);
+    my $p = named_parameters(\@_, Name => '.', Access => 'ReadOnly', Type => 'Any', Options => {}, Files => []);
     my @flags;
     my %o = (READONLY => 1, UPDATE => 1);
-    Geo::GDAL::error(1, $p->{access}, \%o) unless $o{uc($p->{access})};
+    error(1, $p->{access}, \%o) unless $o{uc($p->{access})};
     push @flags, uc($p->{access});
     %o = (RASTER => 1, VECTOR => 1, ANY => 1);
-    Geo::GDAL::error(1, $p->{type}, \%o) unless $o{uc($p->{type})};
+    error(1, $p->{type}, \%o) unless $o{uc($p->{type})};
     push @flags, uc($p->{type}) unless uc($p->{type}) eq 'ANY';
     my $dataset = OpenEx(Name => $p->{name}, Flags => \@flags, Options => $p->{options}, Files => $p->{files});
     unless ($dataset) {
@@ -479,7 +547,7 @@ sub OpenShared {
     my @p = @_; # name, update
     my @flags = qw/RASTER SHARED/;
     $p[1] //= 'ReadOnly';
-    Geo::GDAL::error(1, $p[1], {ReadOnly => 1, Update => 1}) unless ($p[1] eq 'ReadOnly' or $p[1] eq 'Update');
+    error(1, $p[1], {ReadOnly => 1, Update => 1}) unless ($p[1] eq 'ReadOnly' or $p[1] eq 'Update');
     push @flags, qw/READONLY/ if $p[1] eq 'ReadOnly';
     push @flags, qw/UPDATE/ if $p[1] eq 'Update';
     my $dataset = OpenEx($p[0], \@flags);
@@ -488,7 +556,7 @@ sub OpenShared {
 }
 
 sub OpenEx {
-    my $p = Geo::GDAL::named_parameters(\@_, Name => '.', Flags => [], Drivers => [], Options => {}, Files => []);
+    my $p = named_parameters(\@_, Name => '.', Flags => [], Drivers => [], Options => {}, Files => []);
     unless ($p) {
         my $name = shift // '';
         my @flags = @_;
@@ -497,8 +565,7 @@ sub OpenEx {
     if ($p->{flags}) {
         my $f = 0;
         for my $flag (@{$p->{flags}}) {
-            Geo::GDAL::error(1, $flag, \%OF_STRING2INT) unless exists $OF_STRING2INT{$flag};
-            $f |= $Geo::GDAL::OF_STRING2INT{$flag};
+            $f |= s2i(open_flag => $flag);
         }
         $p->{flags} = $f;
     }
@@ -525,7 +592,7 @@ sub RegenerateOverview {
 
 sub ReprojectImage {
     my @p = @_;
-    $p[4] = string2int($p[4], \%RESAMPLING_STRING2INT);
+    $p[4] = s2i(resampling => $p[4]);
     return _ReprojectImage(@p);
 }
 
@@ -536,22 +603,8 @@ sub AutoCreateWarpedVRT {
             $p[$i] = $p[$i]->ExportToWkt;
         }
     }
-    $p[3] = string2int($p[3], \%RESAMPLING_STRING2INT, undef, 'NearestNeighbour');
+    $p[3] = s2i(resampling => $p[3], undef, 'NearestNeighbour');
     return _AutoCreateWarpedVRT(@p);
-}
-
-sub make_processing_options {
-    my ($o) = @_;
-    if (ref $o eq 'HASH') {
-        for my $key (keys %$o) {
-            unless ($key =~ /^-/) {
-                $o->{'-'.$key} = $o->{$key};
-                delete $o->{$key};
-            }
-        }
-        $o = [%$o];
-    }
-    return $o;
 }
 
 
@@ -588,6 +641,8 @@ use strict;
 use warnings;
 use Carp;
 use Scalar::Util 'blessed';
+
+Geo::GDAL->import(qw(:XML :INTERNAL));
 
 use vars qw/@CAPABILITIES @DOMAINS/;
 for (keys %Geo::GDAL::Const::) {
@@ -652,14 +707,14 @@ sub CreationOptionList {
     my @options;
     my $h = $self->GetMetadata->{DMD_CREATIONOPTIONLIST};
     if ($h) {
-        $h = Geo::GDAL::ParseXMLString($h);
-        my($type, $value) = Geo::GDAL::NodeData($h);
+        $h = ParseXMLString($h);
+        my($type, $value) = NodeData($h);
         if ($value eq 'CreationOptionList') {
-            for my $o (Geo::GDAL::Children($h)) {
+            for my $o (Children($h)) {
                 my %option;
-                for my $a (Geo::GDAL::Children($o)) {
-                    my(undef, $key) = Geo::GDAL::NodeData($a);
-                    my(undef, $value) = Geo::GDAL::NodeData(Geo::GDAL::Child($a, 0));
+                for my $a (Children($o)) {
+                    my(undef, $key) = NodeData($a);
+                    my(undef, $value) = NodeData(Child($a, 0));
                     if ($key eq 'Value') {
                         push @{$option{$key}}, $value;
                     } else {
@@ -685,7 +740,7 @@ sub stdout_redirection_wrapper {
     if ($name && blessed $name) {
         $object = $name;
         my $ref = $object->can('write');
-        Geo::GDAL::VSIStdoutSetRedirection($ref);
+        VSIStdoutSetRedirection($ref);
         $name = '/vsistdout/';
     }
     my $ds;
@@ -696,19 +751,19 @@ sub stdout_redirection_wrapper {
         if ($ds) {
             $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object;
         } else {
-            Geo::GDAL::VSIStdoutUnsetRedirection();
+            VSIStdoutUnsetRedirection();
             $object->close;
         }
     }
-    confess(Geo::GDAL->last_error) if $@;
+    confess(last_error()) if $@;
     confess("Failed. Use Geo::OGR::Driver for vector drivers.") unless $ds;
     return $ds;
 }
 
 sub Create {
     my $self = shift;
-    my $p = Geo::GDAL::named_parameters(\@_, Name => 'unnamed', Width => 256, Height => 256, Bands => 1, Type => 'Byte', Options => {});
-    my $type = Geo::GDAL::string2int($p->{type}, \%Geo::GDAL::TYPE_STRING2INT);
+    my $p = named_parameters(\@_, Name => 'unnamed', Width => 256, Height => 256, Bands => 1, Type => 'Byte', Options => {});
+    my $type = s2i(data_type => $p->{type});
     return $self->stdout_redirection_wrapper(
         $p->{name},
         $self->can('_Create'),
@@ -719,7 +774,7 @@ sub Create {
 
 sub Copy {
     my $self = shift;
-    my $p = Geo::GDAL::named_parameters(\@_, Name => 'unnamed', Src => undef, Strict => 1, Options => {}, Progress => undef, ProgressData => undef);
+    my $p = named_parameters(\@_, Name => 'unnamed', Src => undef, Strict => 1, Options => {}, Progress => undef, ProgressData => undef);
     return $self->stdout_redirection_wrapper(
         $p->{name},
         $self->can('_CreateCopy'),
@@ -733,8 +788,8 @@ sub Open {
     my @flags = qw/RASTER/;
     push @flags, qw/READONLY/ if $p[1] eq 'ReadOnly';
     push @flags, qw/UPDATE/ if $p[1] eq 'Update';
-    my $dataset = Geo::GDAL::OpenEx($p[0], \@flags, [$self->Name()]);
-    Geo::GDAL::error("Failed to open $p[0]. Is it a raster dataset?") unless $dataset;
+    my $dataset = OpenEx($p[0], \@flags, [$self->Name()]);
+    error("Failed to open $p[0]. Is it a raster dataset?") unless $dataset;
     return $dataset;
 }
 
@@ -749,18 +804,23 @@ use Scalar::Util 'blessed';
 use Carp;
 use Exporter 'import';
 
-use vars qw/@EXPORT @DOMAINS @CAPABILITIES %CAPABILITIES %BANDS %LAYERS %RESULT_SET/;
+Geo::GDAL->import(qw(:INTERNAL));
+
+use vars qw/@EXPORT @DOMAINS @CAPABILITIES %CAPABILITIES/;
+ 
 @EXPORT = qw/BuildVRT/;
 @DOMAINS = qw/IMAGE_STRUCTURE SUBDATASETS GEOLOCATION/;
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
     my $self = shift;
-    delete $BANDS{$self};
+    unkeep($self);
 }
+
+*Driver = *GetDriver;
 
 sub Dataset {
     my $self = shift;
-    return $BANDS{tied(%$self)};
+    parent($self);
 }
 
 sub Domains {
@@ -792,16 +852,15 @@ sub GetRasterBand {
     my ($self, $index) = @_;
     $index //= 1;
     my $band = _GetRasterBand($self, $index);
-    Geo::GDAL::error(2, $index, 'Band') unless $band;
-    $BANDS{tied(%{$band})} = $self;
-    return $band;
+    error(2, $index, 'Band') unless $band;
+    keep($band, $self);
 }
 *Band = *GetRasterBand;
 
 sub AddBand {
     my ($self, $type, $options) = @_;
     $type //= 'Byte';
-    $type = Geo::GDAL::string2int($type, \%Geo::GDAL::TYPE_STRING2INT);
+    $type = s2i(data_type => $type);
     $self->_AddBand($type, $options);
     return unless defined wantarray;
     return $self->GetRasterBand($self->{RasterCount});
@@ -814,9 +873,8 @@ sub CreateMaskBand {
 sub ExecuteSQL {
     my $self = shift;
     my $layer = $self->_ExecuteSQL(@_);
-    $LAYERS{tied(%$layer)} = $self;
-    $RESULT_SET{tied(%$layer)} = 1;
-    return $layer;
+    note($layer, "is result set");
+    keep($layer, $self);
 }
 
 sub ReleaseResultSet {
@@ -827,9 +885,8 @@ sub GetLayer {
     my($self, $name) = @_;
     my $layer = defined $name ? GetLayerByName($self, "$name") : GetLayerByIndex($self, 0);
     $name //= '';
-    Geo::GDAL::error(2, $name, 'Layer') unless $layer;
-    $LAYERS{tied(%$layer)} = $self;
-    return $layer;
+    error(2, $name, 'Layer') unless $layer;
+    keep($layer, $self);
 }
 *Layer = *GetLayer;
 
@@ -846,15 +903,15 @@ sub GetLayerNames {
 
 sub CreateLayer {
     my $self = shift;
-    my $p = Geo::GDAL::named_parameters(\@_,
-                                        Name => 'unnamed',
-                                        SRS => undef,
-                                        GeometryType => 'Unknown',
-                                        Options => {},
-                                        Schema => undef,
-                                        Fields => undef,
-                                        ApproxOK => 1);
-    Geo::GDAL::error("The 'Fields' argument must be an array reference.") if $p->{fields} && ref($p->{fields}) ne 'ARRAY';
+    my $p = named_parameters(\@_,
+                             Name => 'unnamed',
+                             SRS => undef,
+                             GeometryType => 'Unknown',
+                             Options => {},
+                             Schema => undef,
+                             Fields => undef,
+                             ApproxOK => 1);
+    error("The 'Fields' argument must be an array reference.") if $p->{fields} && ref($p->{fields}) ne 'ARRAY';
     if (defined $p->{schema}) {
         my $s = $p->{schema};
         $p->{geometrytype} = $s->{GeometryType} if exists $s->{GeometryType};
@@ -864,18 +921,18 @@ sub CreateLayer {
     $p->{fields} = [] unless ref($p->{fields}) eq 'ARRAY';
     # if fields contains spatial fields, then do not create default one
     for my $f (@{$p->{fields}}) {
-        if ($f->{GeometryType} or exists $Geo::OGR::Geometry::TYPE_STRING2INT{$f->{Type}}) {
+        error("Field definitions must be hash references.") unless ref $f eq 'HASH';
+        if ($f->{GeometryType} || ($f->{Type} && s_exists(geometry_type => $f->{Type}))) {
             $p->{geometrytype} = 'None';
             last;
         }
     }
-    my $gt = Geo::GDAL::string2int($p->{geometrytype}, \%Geo::OGR::Geometry::TYPE_STRING2INT);
+    my $gt = s2i(geometry_type => $p->{geometrytype});
     my $layer = _CreateLayer($self, $p->{name}, $p->{srs}, $gt, $p->{options});
-    $LAYERS{tied(%$layer)} = $self;
     for my $f (@{$p->{fields}}) {
         $layer->CreateField($f);
     }
-    return $layer;
+    keep($layer, $self);
 }
 
 sub DeleteLayer {
@@ -885,7 +942,7 @@ sub DeleteLayer {
         my $layer = GetLayerByIndex($self, $i);
         $index = $i, last if $layer->GetName eq $name;
     }
-    Geo::GDAL::error(2, $name, 'Layer') unless defined $index;
+    error(2, $name, 'Layer') unless defined $index;
     _DeleteLayer($self, $index);
 }
 
@@ -914,7 +971,7 @@ sub GeoTransform {
             SetGeoTransform($self, \@_);
         }
     };
-    confess(Geo::GDAL->last_error) if $@;
+    confess(last_error()) if $@;
     return unless defined wantarray;
     my $t = GetGeoTransform($self);
     if (wantarray) {
@@ -926,24 +983,40 @@ sub GeoTransform {
 
 sub Extent {
     my $self = shift;
-    return $self->GeoTransform->Extent($self->Size);
+    my $t = $self->GeoTransform;
+    my $extent = $t->Extent($self->Size);
+    if (@_) {
+        my ($xoff, $yoff, $w, $h) = @_;
+        my ($x, $y) = $t->Apply([$xoff, $xoff+$w, $xoff+$w, $xoff], [$yoff, $yoff, $yoff+$h, $yoff+$h]);
+        my $xmin = shift @$x;
+        my $xmax = $xmin;
+        for my $x (@$x) {
+            $xmin = $x if $x < $xmin;
+            $xmax = $x if $x > $xmax;
+        }
+        my $ymin = shift @$y;
+        my $ymax = $ymin;
+        for my $y (@$y) {
+            $ymin = $y if $y < $ymin;
+            $ymax = $y if $y > $ymax;
+        }
+        $extent = Geo::GDAL::Extent->new($xmin, $ymin, $xmax, $ymax);
+    }
+    return $extent;
 }
 
 sub Tile { # $xoff, $yoff, $xsize, $ysize, assuming strict north up
     my ($self, $e) = @_;
     my ($w, $h) = $self->Size;
-    #print "sz $w $h\n";
-    my $gt = $self->GeoTransform;
-    #print "gt @$gt\n";
-    confess "GeoTransform is not \"north up\"." unless $gt->NorthUp;
-    my $x = $gt->Extent($w, $h);
-    my $xoff = floor(($e->[0] - $gt->[0])/$gt->[1]);
+    my $t = $self->GeoTransform;
+    confess "GeoTransform is not \"north up\"." unless $t->NorthUp;
+    my $xoff = floor(($e->[0] - $t->[0])/$t->[1]);
     $xoff = 0 if $xoff < 0;
-    my $yoff = floor(($gt->[3] - $e->[3])/(-$gt->[5]));
+    my $yoff = floor(($e->[1] - $t->[3])/$t->[5]);
     $yoff = 0 if $yoff < 0;
-    my $xsize = ceil(($e->[2] - $gt->[0])/$gt->[1]) - $xoff;
+    my $xsize = ceil(($e->[2] - $t->[0])/$t->[1]) - $xoff;
     $xsize = $w - $xoff if $xsize > $w - $xoff;
-    my $ysize = ceil(($gt->[3] - $e->[1])/(-$gt->[5])) - $yoff;
+    my $ysize = ceil(($e->[3] - $t->[3])/$t->[5]) - $yoff;
     $ysize = $h - $yoff if $ysize > $h - $yoff;
     return ($xoff, $yoff, $xsize, $ysize);
 }
@@ -962,10 +1035,10 @@ sub GCPs {
 }
 
 sub ReadTile {
-    my ($self, $xoff, $yoff, $xsize, $ysize) = @_;
+    my ($self, $xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $alg) = @_;
     my @data;
     for my $i (0..$self->Bands-1) {
-        $data[$i] = $self->Band($i+1)->ReadTile($xoff, $yoff, $xsize, $ysize);
+        $data[$i] = $self->Band($i+1)->ReadTile($xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $alg);
     }
     return \@data;
 }
@@ -983,24 +1056,24 @@ sub ReadRaster {
     my $self = shift;
     my ($width, $height) = $self->Size;
     my ($type) = $self->Band->DataType;
-    my $p = Geo::GDAL::named_parameters(\@_,
-                                        XOff => 0,
-                                        YOff => 0,
-                                        XSize => $width,
-                                        YSize => $height,
-                                        BufXSize => undef,
-                                        BufYSize => undef,
-                                        BufType => $type,
-                                        BandList => [1],
-                                        BufPixelSpace => 0,
-                                        BufLineSpace => 0,
-                                        BufBandSpace => 0,
-                                        ResampleAlg => 'NearestNeighbour',
-                                        Progress => undef,
-                                        ProgressData => undef
+    my $p = named_parameters(\@_,
+                             XOff => 0,
+                             YOff => 0,
+                             XSize => $width,
+                             YSize => $height,
+                             BufXSize => undef,
+                             BufYSize => undef,
+                             BufType => $type,
+                             BandList => [1],
+                             BufPixelSpace => 0,
+                             BufLineSpace => 0,
+                             BufBandSpace => 0,
+                             ResampleAlg => 'NearestNeighbour',
+                             Progress => undef,
+                             ProgressData => undef
         );
-    $p->{resamplealg} = Geo::GDAL::string2int($p->{resamplealg}, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT);
-    $p->{buftype} = Geo::GDAL::string2int($p->{buftype}, \%Geo::GDAL::TYPE_STRING2INT, \%Geo::GDAL::TYPE_INT2STRING);
+    $p->{resamplealg} = s2i(rio_resampling => $p->{resamplealg});
+    $p->{buftype} = s2i(data_type => $p->{buftype}, 1);
     $self->_ReadRaster($p->{xoff},$p->{yoff},$p->{xsize},$p->{ysize},$p->{bufxsize},$p->{bufysize},$p->{buftype},$p->{bandlist},$p->{bufpixelspace},$p->{buflinespace},$p->{bufbandspace},$p->{resamplealg},$p->{progress},$p->{progressdata});
 }
 
@@ -1008,21 +1081,21 @@ sub WriteRaster {
     my $self = shift;
     my ($width, $height) = $self->Size;
     my ($type) = $self->Band->DataType;
-    my $p = Geo::GDAL::named_parameters(\@_,
-                                        XOff => 0,
-                                        YOff => 0,
-                                        XSize => $width,
-                                        YSize => $height,
-                                        Buf => undef,
-                                        BufXSize => undef,
-                                        BufYSize => undef,
-                                        BufType => $type,
-                                        BandList => [1],
-                                        BufPixelSpace => 0,
-                                        BufLineSpace => 0,
-                                        BufBandSpace => 0
+    my $p = named_parameters(\@_,
+                             XOff => 0,
+                             YOff => 0,
+                             XSize => $width,
+                             YSize => $height,
+                             Buf => undef,
+                             BufXSize => undef,
+                             BufYSize => undef,
+                             BufType => $type,
+                             BandList => [1],
+                             BufPixelSpace => 0,
+                             BufLineSpace => 0,
+                             BufBandSpace => 0
         );
-    $p->{buftype} = Geo::GDAL::string2int($p->{buftype}, \%Geo::GDAL::TYPE_STRING2INT, \%Geo::GDAL::TYPE_INT2STRING);
+    $p->{buftype} = s2i(data_type => $p->{buftype}, 1);
     $self->_WriteRaster($p->{xoff},$p->{yoff},$p->{xsize},$p->{ysize},$p->{buf},$p->{bufxsize},$p->{bufysize},$p->{buftype},$p->{bandlist},$p->{bufpixelspace},$p->{buflinespace},$p->{bufbandspace});
 }
 
@@ -1033,7 +1106,7 @@ sub BuildOverviews {
     eval {
         $self->_BuildOverviews(@p);
     };
-    confess(Geo::GDAL->last_error) if $@;
+    confess(last_error()) if $@;
 }
 
 sub stdout_redirection_wrapper {
@@ -1042,7 +1115,7 @@ sub stdout_redirection_wrapper {
     if ($name && blessed $name) {
         $object = $name;
         my $ref = $object->can('write');
-        Geo::GDAL::VSIStdoutSetRedirection($ref);
+        VSIStdoutSetRedirection($ref);
         $name = '/vsistdout/';
     }
     my $ds;
@@ -1053,17 +1126,17 @@ sub stdout_redirection_wrapper {
         if ($ds) {
             $Geo::GDAL::stdout_redirection{tied(%$ds)} = $object;
         } else {
-            Geo::GDAL::VSIStdoutUnsetRedirection();
+            VSIStdoutUnsetRedirection();
             $object->close;
         }
     }
-    confess(Geo::GDAL->last_error) if $@;
+    confess(last_error()) if $@;
     return $ds;
 }
 
 sub DEMProcessing {
     my ($self, $dest, $Processing, $ColorFilename, $options, $progress, $progress_data) = @_;
-    $options = Geo::GDAL::GDALDEMProcessingOptions->new(Geo::GDAL::make_processing_options($options));
+    $options = Geo::GDAL::GDALDEMProcessingOptions->new(make_processing_options($options));
     return $self->stdout_redirection_wrapper(
         $dest,
         \&Geo::GDAL::wrapper_GDALDEMProcessing,
@@ -1073,7 +1146,7 @@ sub DEMProcessing {
 
 sub Nearblack {
     my ($self, $dest, $options, $progress, $progress_data) = @_;
-    $options = Geo::GDAL::GDALNearblackOptions->new(Geo::GDAL::make_processing_options($options));
+    $options = Geo::GDAL::GDALNearblackOptions->new(make_processing_options($options));
     my $b = blessed($dest);
     if ($b && $b eq 'Geo::GDAL::Dataset') {
         Geo::GDAL::wrapper_GDALNearblackDestDS($dest, $self, $options, $progress, $progress_data);
@@ -1094,10 +1167,10 @@ sub Translate {
             my ($dest, $self) = @_;
             my $ds;
             if ($self->_GetRasterBand(1)) {
-                $options = Geo::GDAL::GDALTranslateOptions->new(Geo::GDAL::make_processing_options($options));
+                $options = Geo::GDAL::GDALTranslateOptions->new(make_processing_options($options));
                 $ds = Geo::GDAL::wrapper_GDALTranslate($dest, $self, $options, $progress, $progress_data);
             } else {
-                $options = Geo::GDAL::GDALVectorTranslateOptions->new(Geo::GDAL::make_processing_options($options));
+                $options = Geo::GDAL::GDALVectorTranslateOptions->new(make_processing_options($options));
                 Geo::GDAL::wrapper_GDALVectorTranslateDestDS($dest, $self, $options, $progress, $progress_data);
                 $ds = Geo::GDAL::wrapper_GDALVectorTranslateDestName($dest, $self, $options, $progress, $progress_data);
             }
@@ -1108,20 +1181,19 @@ sub Translate {
 
 sub Warped {
     my $self = shift;
-    my $p = Geo::GDAL::named_parameters(\@_, SrcSRS => undef, DstSRS => undef, ResampleAlg => 'NearestNeighbour', MaxError => 0);
+    my $p = named_parameters(\@_, SrcSRS => undef, DstSRS => undef, ResampleAlg => 'NearestNeighbour', MaxError => 0);
     for my $srs (qw/srcsrs dstsrs/) {
         $p->{$srs} = $p->{$srs}->ExportToWkt if $p->{$srs} && blessed $p->{$srs};
     }
-    $p->{resamplealg} = Geo::GDAL::string2int($p->{resamplealg}, \%Geo::GDAL::RESAMPLING_STRING2INT);
+    $p->{resamplealg} = s2i(resampling => $p->{resamplealg});
     my $warped = Geo::GDAL::_AutoCreateWarpedVRT($self, $p->{srcsrs}, $p->{dstsrs}, $p->{resamplealg}, $p->{maxerror});
-    $BANDS{tied(%{$warped})} = $self if $warped; # self must live as long as warped
-    return $warped;
+    keep($warped, $self) if $warped; # self must live as long as warped
 }
 
 sub Warp {
     my ($self, $dest, $options, $progress, $progress_data) = @_;
     # can be run as object method (one dataset) and as package sub (a list of datasets)
-    $options = Geo::GDAL::GDALWarpAppOptions->new(Geo::GDAL::make_processing_options($options));
+    $options = Geo::GDAL::GDALWarpAppOptions->new(make_processing_options($options));
     my $b = blessed($dest);
     $self = [$self] unless ref $self eq 'ARRAY';
     if ($b && $b eq 'Geo::GDAL::Dataset') {
@@ -1138,13 +1210,13 @@ sub Warp {
 
 sub Info {
     my ($self, $o) = @_;
-    $o = Geo::GDAL::GDALInfoOptions->new(Geo::GDAL::make_processing_options($o));
-    return Geo::GDAL::GDALInfo($self, $o);
+    $o = Geo::GDAL::GDALInfoOptions->new(make_processing_options($o));
+    return GDALInfo($self, $o);
 }
 
 sub Grid {
     my ($self, $dest, $options, $progress, $progress_data) = @_;
-    $options = Geo::GDAL::GDALGridOptions->new(Geo::GDAL::make_processing_options($options));
+    $options = Geo::GDAL::GDALGridOptions->new(make_processing_options($options));
     return $self->stdout_redirection_wrapper(
         $dest,
         \&Geo::GDAL::wrapper_GDALGrid,
@@ -1154,11 +1226,12 @@ sub Grid {
 
 sub Rasterize {
     my ($self, $dest, $options, $progress, $progress_data) = @_;
-    $options = Geo::GDAL::GDALRasterizeOptions->new(Geo::GDAL::make_processing_options($options));
+    $options = Geo::GDAL::GDALRasterizeOptions->new(make_processing_options($options));
     my $b = blessed($dest);
     if ($b && $b eq 'Geo::GDAL::Dataset') {
         Geo::GDAL::wrapper_GDALRasterizeDestDS($dest, $self, $options, $progress, $progress_data);
     } else {
+        # TODO: options need to force a new raster be made, otherwise segfault
         return $self->stdout_redirection_wrapper(
             $dest,
             \&Geo::GDAL::wrapper_GDALRasterizeDestName,
@@ -1169,8 +1242,8 @@ sub Rasterize {
 
 sub BuildVRT {
     my ($dest, $sources, $options, $progress, $progress_data) = @_;
-    $options = Geo::GDAL::GDALBuildVRTOptions->new(Geo::GDAL::make_processing_options($options));
-    Geo::GDAL::error("Usage: Geo::GDAL::DataSet::BuildVRT(\$vrt_file_name, \\\@sources)")
+    $options = Geo::GDAL::GDALBuildVRTOptions->new(make_processing_options($options));
+    error("Usage: Geo::GDAL::DataSet::BuildVRT(\$vrt_file_name, \\\@sources)")
         unless ref $sources eq 'ARRAY' && defined $sources->[0];
     unless (blessed($dest)) {
         if (blessed($sources->[0])) {
@@ -1195,14 +1268,14 @@ sub BuildVRT {
 
 sub ComputeColorTable {
     my $self = shift;
-    my $p = Geo::GDAL::named_parameters(\@_,
-                                        Red => undef,
-                                        Green => undef,
-                                        Blue => undef,
-                                        NumColors => 256,
-                                        Progress => undef,
-                                        ProgressData => undef,
-                                        Method => 'MedianCut');
+    my $p = named_parameters(\@_,
+                             Red => undef,
+                             Green => undef,
+                             Blue => undef,
+                             NumColors => 256,
+                             Progress => undef,
+                             ProgressData => undef,
+                             Method => 'MedianCut');
     for my $b ($self->Bands) {
         for my $cion ($b->ColorInterpretation) {
             if ($cion eq 'RedBand') { $p->{red} //= $b; last; }
@@ -1222,14 +1295,14 @@ sub ComputeColorTable {
 
 sub Dither {
     my $self = shift;
-    my $p = Geo::GDAL::named_parameters(\@_,
-                                        Red => undef,
-                                        Green => undef,
-                                        Blue => undef,
-                                        Dest => undef,
-                                        ColorTable => undef,
-                                        Progress => undef,
-                                        ProgressData => undef);
+    my $p = named_parameters(\@_,
+                             Red => undef,
+                             Green => undef,
+                             Blue => undef,
+                             Dest => undef,
+                             ColorTable => undef,
+                             Progress => undef,
+                             ProgressData => undef);
     for my $b ($self->Bands) {
         for my $cion ($b->ColorInterpretation) {
             if ($cion eq 'RedBand') { $p->{red} //= $b; last; }
@@ -1270,19 +1343,21 @@ use POSIX;
 use Carp;
 use Scalar::Util 'blessed';
 
-use vars qw/ %RATS
-    @COLOR_INTERPRETATIONS
-    %COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
+Geo::GDAL->import(qw(:INTERNAL));
+
+use vars qw/
+    @COLOR_INTERPRETATIONS @DOMAINS
     %MASK_FLAGS %DATATYPE2PDL %PDL2DATATYPE
     /;
+
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
     push(@COLOR_INTERPRETATIONS, $1), next if /^GCI_(\w+)/;
 }
 for my $string (@COLOR_INTERPRETATIONS) {
     my $int = eval "\$Geo::GDAL::Constc::GCI_$string";
-    $COLOR_INTERPRETATION_STRING2INT{$string} = $int;
-    $COLOR_INTERPRETATION_INT2STRING{$int} = $string;
+    $Geo::GDAL::S2I{color_interpretation}{$string} = $int;
+    $Geo::GDAL::I2S{color_interpretation}{$int} = $string;
 }
 @DOMAINS = qw/IMAGE_STRUCTURE RESAMPLING/;
 %MASK_FLAGS = (AllValid => 1, PerDataset => 2, Alpha => 4, NoData => 8);
@@ -1340,27 +1415,28 @@ sub DESTROY {
     if (exists $OWNER{$self}) {
         delete $OWNER{$self};
     }
-    $self->RELEASE_PARENTS();
+    $self->RELEASE_PARENT;
 }
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
     my $self = shift;
-    delete $Geo::GDAL::Dataset::BANDS{$self};
+    unkeep($self);
 }
 
 sub Dataset {
     my $self = shift;
-    return $Geo::GDAL::Dataset::BANDS{tied(%{$self})};
+    parent($self);
 }
 
 sub Size {
     my $self = shift;
     return ($self->{XSize}, $self->{YSize});
 }
+*BlockSize = *GetBlockSize;
 
 sub DataType {
     my $self = shift;
-    return $Geo::GDAL::TYPE_INT2STRING{$self->{DataType}};
+    return i2s(data_type => $self->{DataType});
 }
 
 sub PackCharacter {
@@ -1402,19 +1478,23 @@ sub ScaleAndOffset {
 }
 
 sub ReadTile {
-    my($self, $xoff, $yoff, $xsize, $ysize) = @_;
+    my($self, $xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $alg) = @_;
     $xoff //= 0;
     $yoff //= 0;
     $xsize //= $self->{XSize} - $xoff;
     $ysize //= $self->{YSize} - $yoff;
+    $w_tile //= $xsize;
+    $h_tile //= $ysize;
+    $alg //= 'NearestNeighbour';
+    $alg = s2i(rio_resampling => $alg);
     my $t = $self->{DataType};
-    my $buf = $self->_ReadRaster($xoff, $yoff, $xsize, $ysize, $xsize, $ysize, $t, 0, 0, $Geo::GDAL::Const::GRIORA_NearestNeighbour);
+    my $buf = $self->_ReadRaster($xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $t, 0, 0, $alg);
     my $pc = Geo::GDAL::PackCharacter($t);
-    my $w = $xsize * Geo::GDAL::GetDataTypeSize($t)/8;
+    my $w = $w_tile * Geo::GDAL::GetDataTypeSize($t)/8;
     my $offset = 0;
     my @data;
-    for my $y (0..$ysize-1) {
-        my @d = unpack($pc."[$xsize]", substr($buf, $offset, $w));
+    for my $y (0..$h_tile-1) {
+        my @d = unpack($pc."[$w_tile]", substr($buf, $offset, $w));
         push @data, \@d;
         $offset += $w;
     }
@@ -1425,6 +1505,7 @@ sub WriteTile {
     my($self, $data, $xoff, $yoff) = @_;
     $xoff //= 0;
     $yoff //= 0;
+    error('The data must be in a two-dimensional array') unless ref $data eq 'ARRAY' && ref $data->[0] eq 'ARRAY';
     my $xsize = @{$data->[0]};
     if ($xsize > $self->{XSize} - $xoff) {
         warn "Buffer XSize too large ($xsize) for this raster band (width = $self->{XSize}, offset = $xoff).";
@@ -1445,11 +1526,11 @@ sub WriteTile {
 sub ColorInterpretation {
     my($self, $ci) = @_;
     if (defined $ci) {
-        $ci = Geo::GDAL::string2int($ci, \%COLOR_INTERPRETATION_STRING2INT);
+        $ci = s2i(color_interpretation => $ci);
         SetRasterColorInterpretation($self, $ci);
     }
     return unless defined wantarray;
-    $COLOR_INTERPRETATION_INT2STRING{GetRasterColorInterpretation($self)};
+    i2s(color_interpretation => GetRasterColorInterpretation($self));
 }
 
 sub ColorTable {
@@ -1472,21 +1553,20 @@ sub AttributeTable {
     SetDefaultRAT($self, $_[0]) if @_ and defined $_[0];
     return unless defined wantarray;
     my $r = GetDefaultRAT($self);
-    $RATS{tied(%$r)} = $self if $r;
-    return $r;
+    keep($r, $self) if $r;
 }
 *RasterAttributeTable = *AttributeTable;
 
 sub GetHistogram {
     my $self = shift;
-    my $p = Geo::GDAL::named_parameters(\@_,
-                                        Min => -0.5,
-                                        Max => 255.5,
-                                        Buckets => 256,
-                                        IncludeOutOfRange => 0,
-                                        ApproxOK => 0,
-                                        Progress => undef,
-                                        ProgressData => undef);
+    my $p = named_parameters(\@_,
+                             Min => -0.5,
+                             Max => 255.5,
+                             Buckets => 256,
+                             IncludeOutOfRange => 0,
+                             ApproxOK => 0,
+                             Progress => undef,
+                             ProgressData => undef);
     $p->{progressdata} = 1 if $p->{progress} and not defined $p->{progressdata};
     _GetHistogram($self, $p->{min}, $p->{max}, $p->{buckets},
                   $p->{includeoutofrange}, $p->{approxok},
@@ -1495,17 +1575,17 @@ sub GetHistogram {
 
 sub Contours {
     my $self = shift;
-    my $p = Geo::GDAL::named_parameters(\@_,
-                                        DataSource => undef,
-                                        LayerConstructor => {Name => 'contours'},
-                                        ContourInterval => 100,
-                                        ContourBase => 0,
-                                        FixedLevels => [],
-                                        NoDataValue => undef,
-                                        IDField => -1,
-                                        ElevField => -1,
-                                        Progress => undef,
-                                        ProgressData => undef);
+    my $p = named_parameters(\@_,
+                             DataSource => undef,
+                             LayerConstructor => {Name => 'contours'},
+                             ContourInterval => 100,
+                             ContourBase => 0,
+                             FixedLevels => [],
+                             NoDataValue => undef,
+                             IDField => -1,
+                             ElevField => -1,
+                             Progress => undef,
+                             ProgressData => undef);
     $p->{datasource} //= Geo::OGR::GetDriver('Memory')->CreateDataSource('ds');
     $p->{layerconstructor}->{Schema} //= {};
     $p->{layerconstructor}->{Schema}{Fields} //= [];
@@ -1545,22 +1625,22 @@ sub ReadRaster {
     my $self = shift;
     my ($width, $height) = $self->Size;
     my ($type) = $self->DataType;
-    my $p = Geo::GDAL::named_parameters(\@_,
-                                        XOff => 0,
-                                        YOff => 0,
-                                        XSize => $width,
-                                        YSize => $height,
-                                        BufXSize => undef,
-                                        BufYSize => undef,
-                                        BufType => $type,
-                                        BufPixelSpace => 0,
-                                        BufLineSpace => 0,
-                                        ResampleAlg => 'NearestNeighbour',
-                                        Progress => undef,
-                                        ProgressData => undef
+    my $p = named_parameters(\@_,
+                             XOff => 0,
+                             YOff => 0,
+                             XSize => $width,
+                             YSize => $height,
+                             BufXSize => undef,
+                             BufYSize => undef,
+                             BufType => $type,
+                             BufPixelSpace => 0,
+                             BufLineSpace => 0,
+                             ResampleAlg => 'NearestNeighbour',
+                             Progress => undef,
+                             ProgressData => undef
         );
-    $p->{resamplealg} = Geo::GDAL::string2int($p->{resamplealg}, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT);
-    $p->{buftype} = Geo::GDAL::string2int($p->{buftype}, \%Geo::GDAL::TYPE_STRING2INT, \%Geo::GDAL::TYPE_INT2STRING);
+    $p->{resamplealg} = s2i(rio_resampling => $p->{resamplealg});
+    $p->{buftype} = s2i(data_type => $p->{buftype}, 1);
     $self->_ReadRaster($p->{xoff},$p->{yoff},$p->{xsize},$p->{ysize},$p->{bufxsize},$p->{bufysize},$p->{buftype},$p->{bufpixelspace},$p->{buflinespace},$p->{resamplealg},$p->{progress},$p->{progressdata});
 }
 
@@ -1568,20 +1648,20 @@ sub WriteRaster {
     my $self = shift;
     my ($width, $height) = $self->Size;
     my ($type) = $self->DataType;
-    my $p = Geo::GDAL::named_parameters(\@_,
-                                        XOff => 0,
-                                        YOff => 0,
-                                        XSize => $width,
-                                        YSize => $height,
-                                        Buf => undef,
-                                        BufXSize => undef,
-                                        BufYSize => undef,
-                                        BufType => $type,
-                                        BufPixelSpace => 0,
-                                        BufLineSpace => 0
+    my $p = named_parameters(\@_,
+                             XOff => 0,
+                             YOff => 0,
+                             XSize => $width,
+                             YSize => $height,
+                             Buf => undef,
+                             BufXSize => undef,
+                             BufYSize => undef,
+                             BufType => $type,
+                             BufPixelSpace => 0,
+                             BufLineSpace => 0
         );
     confess "Usage: \$band->WriteRaster( Buf => \$data, ... )" unless defined $p->{buf};
-    $p->{buftype} = Geo::GDAL::string2int($p->{buftype}, \%Geo::GDAL::TYPE_STRING2INT, \%Geo::GDAL::TYPE_INT2STRING);
+    $p->{buftype} = s2i(data_type => $p->{buftype}, 1);
     $self->_WriteRaster($p->{xoff},$p->{yoff},$p->{xsize},$p->{ysize},$p->{buf},$p->{bufxsize},$p->{bufysize},$p->{buftype},$p->{bufpixelspace},$p->{buflinespace});
 }
 
@@ -1616,7 +1696,8 @@ sub Piddle {
     my $t = $self->{DataType};
     unless (defined wantarray) {
         my $pdl = shift;
-        error("The datatype of the Piddle and the band do not match.") unless $PDL2DATATYPE{$pdl->get_datatype} == $t;
+        error("The datatype of the Piddle and the band do not match.") 
+          unless $PDL2DATATYPE{$pdl->get_datatype} == $t;
         my ($xoff, $yoff, $xsize, $ysize) = @_;
         $xoff //= 0;
         $yoff //= 0;
@@ -1643,7 +1724,7 @@ sub Piddle {
     $xdim //= $xsize;
     $ydim //= $ysize;
     $alg //= 'NearestNeighbour';
-    $alg = Geo::GDAL::string2int($alg, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT);
+    $alg = s2i(rio_resampling => $alg);
     my $buf = $self->_ReadRaster($xoff, $yoff, $xsize, $ysize, $xdim, $ydim, $t, 0, 0, $alg);
     my $pdl = PDL->new;
     my $datatype = $DATATYPE2PDL{$t};
@@ -1653,21 +1734,22 @@ sub Piddle {
     my $data = $pdl->get_dataref();
     $$data = $buf;
     $pdl->upd_data;
+    # FIXME: we want approximate equality since no data value can be very large floating point value
+    my $bad = GetNoDataValue($self);
+    return $pdl->setbadif($pdl == $bad) if defined $bad;
     return $pdl;
 }
 
 sub GetMaskBand {
     my $self = shift;
     my $band = _GetMaskBand($self);
-    $Geo::GDAL::Dataset::BANDS{tied(%{$band})} = $self;
-    return $band;
+    keep($band, $self);
 }
 
 sub GetOverview {
     my ($self, $index) = @_;
     my $band = _GetOverview($self, $index);
-    $Geo::GDAL::Dataset::BANDS{tied(%{$band})} = $self;
-    return $band;
+    keep($band, $self);
 }
 
 sub RegenerateOverview {
@@ -1686,7 +1768,12 @@ sub RegenerateOverviews {
 
 sub Polygonize {
     my $self = shift;
-    my $p = Geo::GDAL::named_parameters(\@_, Mask => undef, OutLayer => undef, PixValField => 'val', Options => undef, Progress => undef, ProgressData => undef);
+    my $p = named_parameters(\@_, Mask => undef, OutLayer => undef, PixValField => 'val', Options => undef, Progress => undef, ProgressData => undef);
+    my %known_options = (Connectedness => 1, ForceIntPixel => 1, DATASET_FOR_GEOREF => 1, '8CONNECTED' => 1);
+    for my $option (keys %{$p->{options}}) {
+        error(1, $option, \%known_options) unless exists $known_options{$option};
+    }
+
     my $dt = $self->DataType;
     my %leInt32 = (Byte => 1, Int16 => 1, Int32 => 1, UInt16 => 1);
     my $leInt32 = $leInt32{$dt};
@@ -1696,7 +1783,7 @@ sub Polygonize {
                     Fields => [{Name => 'val', Type => $dt},
                                {Name => 'geom', Type => 'Polygon'}]);
     $p->{pixvalfield} = $p->{outlayer}->GetLayerDefn->GetFieldIndex($p->{pixvalfield});
-    $p->{options}{'8CONNECTED'} = $p->{options}{Connectedness} if $p->{options}{Connectedness};
+    $p->{options}{'8CONNECTED'} = 1 if $p->{options}{Connectedness} && $p->{options}{Connectedness} == 8;
     if ($leInt32 || $p->{options}{ForceIntPixel}) {
         Geo::GDAL::_Polygonize($self, $p->{mask}, $p->{outlayer}, $p->{pixvalfield}, $p->{options}, $p->{progress}, $p->{progressdata});
     } else {
@@ -1708,7 +1795,7 @@ sub Polygonize {
 
 sub Sieve {
     my $self = shift;
-    my $p = Geo::GDAL::named_parameters(\@_, Mask => undef, Dest => undef, Threshold => 10, Options => undef, Progress => undef, ProgressData => undef);
+    my $p = named_parameters(\@_, Mask => undef, Dest => undef, Threshold => 10, Options => undef, Progress => undef, ProgressData => undef);
     unless ($p->{dest}) {
         my ($w, $h) = $self->Size;
         $p->{dest} = Geo::GDAL::Driver('MEM')->Create(Name => 'sieved', Width => $w, Height => $h, Type => $self->DataType)->Band;
@@ -1724,7 +1811,7 @@ sub Sieve {
 
 sub Distance {
     my $self = shift;
-    my $p = Geo::GDAL::named_parameters(\@_, Distance => undef, Options => undef, Progress => undef, ProgressData => undef);
+    my $p = named_parameters(\@_, Distance => undef, Options => undef, Progress => undef, ProgressData => undef);
     for my $key (keys %{$p->{options}}) {
         $p->{options}{uc($key)} = $p->{options}{$key};
     }
@@ -1745,12 +1832,13 @@ use strict;
 use warnings;
 use Carp;
 
-use vars qw/%PALETTE_INTERPRETATION_STRING2INT %PALETTE_INTERPRETATION_INT2STRING/;
+Geo::GDAL->import(qw(:INTERNAL));
+
 for (keys %Geo::GDAL::Const::) {
     if (/^GPI_(\w+)/) {
         my $int = eval "\$Geo::GDAL::Const::GPI_$1";
-        $PALETTE_INTERPRETATION_STRING2INT{$1} = $int;
-        $PALETTE_INTERPRETATION_INT2STRING{$int} = $1;
+        $Geo::GDAL::S2I{palette_interpretation}{$1} = $int;
+        $Geo::GDAL::I2S{palette_interpretation}{$int} = $1;
     }
 }
 %}
@@ -1761,7 +1849,7 @@ use Carp;
 sub new {
     my($pkg, $pi) = @_;
     $pi //= 'RGB';
-    $pi = Geo::GDAL::string2int($pi, \%PALETTE_INTERPRETATION_STRING2INT);
+    $pi = s2i(palette_interpretation => $pi);
     my $self = Geo::GDALc::new_ColorTable($pi);
     bless $self, $pkg if defined($self);
 }
@@ -1770,7 +1858,7 @@ sub new {
 %perlcode %{
 sub GetPaletteInterpretation {
     my $self = shift;
-    return $PALETTE_INTERPRETATION_INT2STRING{GetPaletteInterpretation($self)};
+    return i2s(palette_interpretation => GetPaletteInterpretation($self));
 }
 
 sub SetColorEntry {
@@ -1785,7 +1873,7 @@ sub SetColorEntry {
     eval {
         $self->_SetColorEntry($index, $color);
     };
-    confess(Geo::GDAL->last_error) if $@;
+    confess(last_error()) if $@;
 }
 
 sub ColorEntry {
@@ -1824,11 +1912,9 @@ use strict;
 use warnings;
 use Carp;
 
-use vars qw/
-    @FIELD_TYPES @FIELD_USAGES
-    %FIELD_TYPE_STRING2INT %FIELD_TYPE_INT2STRING
-    %FIELD_USAGE_STRING2INT %FIELD_USAGE_INT2STRING
-    /;
+Geo::GDAL->import(qw(:INTERNAL));
+
+use vars qw(@FIELD_TYPES @FIELD_USAGES);
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
     push(@FIELD_TYPES, $1), next if /^GFT_(\w+)/;
@@ -1836,13 +1922,13 @@ for (keys %Geo::GDAL::Const::) {
 }
 for my $string (@FIELD_TYPES) {
     my $int = eval "\$Geo::GDAL::Constc::GFT_$string";
-    $FIELD_TYPE_STRING2INT{$string} = $int;
-    $FIELD_TYPE_INT2STRING{$int} = $string;
+    $Geo::GDAL::S2I{rat_field_type}{$string} = $int;
+    $Geo::GDAL::I2S{rat_field_type}{$int} = $string;
 }
 for my $string (@FIELD_USAGES) {
     my $int = eval "\$Geo::GDAL::Constc::GFU_$string";
-    $FIELD_USAGE_STRING2INT{$string} = $int;
-    $FIELD_USAGE_INT2STRING{$int} = $string;
+    $Geo::GDAL::S2I{rat_field_usage}{$string} = $int;
+    $Geo::GDAL::I2S{rat_field_usage}{$int} = $string;
 }
 
 sub FieldTypes {
@@ -1853,29 +1939,29 @@ sub FieldUsages {
     return @FIELD_USAGES;
 }
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
     my $self = shift;
-    delete $Geo::GDAL::Band::RATS{$self};
+    unkeep($self);
 }
 
 sub Band {
     my $self = shift;
-    return $Geo::GDAL::Band::RATS{tied(%$self)};
+    parent($self);
 }
 
 sub GetUsageOfCol {
     my($self, $col) = @_;
-    $FIELD_USAGE_INT2STRING{_GetUsageOfCol($self, $col)};
+    i2s(rat_field_usage => _GetUsageOfCol($self, $col));
 }
 
 sub GetColOfUsage {
     my($self, $usage) = @_;
-    _GetColOfUsage($self, $FIELD_USAGE_STRING2INT{$usage});
+    _GetColOfUsage($self, s2i(rat_field_usage => $usage));
 }
 
 sub GetTypeOfCol {
     my($self, $col) = @_;
-    $FIELD_TYPE_INT2STRING{_GetTypeOfCol($self, $col)};
+    i2s(rat_field_type => _GetTypeOfCol($self, $col));
 }
 
 sub Columns {
@@ -1901,8 +1987,8 @@ sub CreateColumn {
     for my $color (qw/Red Green Blue Alpha/) {
         carp "RAT column type will be 'Integer' for usage '$color'." if $usage eq $color and $type ne 'Integer';
     }
-    $type = Geo::GDAL::string2int($type, \%FIELD_TYPE_STRING2INT);
-    $usage = Geo::GDAL::string2int($usage, \%FIELD_USAGE_STRING2INT);
+    $type = s2i(rat_field_type => $type);
+    $usage = s2i(rat_field_usage => $usage);
     _CreateColumn($self, $name, $type, $usage);
 }
 
@@ -1931,7 +2017,7 @@ package Geo::GDAL::GCP;
 *swig_Line_get = *Geo::GDALc::GCP_Row_get;
 *swig_Line_set = *Geo::GDALc::GCP_Row_set;
 
-
+Geo::GDAL->import(qw(:INTERNAL));
 
 package Geo::GDAL::VSIF;
 use strict;
@@ -1942,6 +2028,8 @@ our @ISA = qw(Exporter);
 
 our @EXPORT_OK   = qw(Open Close Write Read Seek Tell Truncate MkDir ReadDir ReadDirRecursive Rename RmDir Stat Unlink);
 our %EXPORT_TAGS = (all => \@EXPORT_OK);
+
+Geo::GDAL->import(qw(:INTERNAL));
 
 sub Open {
     my ($path, $mode) = @_;
@@ -2022,7 +2110,7 @@ sub RmDir {
     };
     if ($@) {
         my $r = $recursive ? ' recursively' : '';
-        Geo::GDAL::error("Cannot remove directory \"$dirname\"$r.");
+        error("Cannot remove directory \"$dirname\"$r.");
     }
 }
 *Rmdir = *RmDir;
@@ -2046,19 +2134,29 @@ use warnings;
 use Carp;
 use Scalar::Util 'blessed';
 
+Geo::GDAL->import(qw(:INTERNAL));
+
 sub new {
     my $class = shift;
     my $self;
     if (@_ == 0) {
         $self = [0,1,0,0,0,1];
-    } elsif (@_ == 1) {
-        $self = $_[0];
+    } elsif (ref $_[0]) {
+        @$self = @{$_[0]};
+    } elsif ($_[0] =~ /^[a-zA-Z]/i) {
+        my $p = named_parameters(\@_, GCPs => undef, ApproxOK => 1, Extent => undef, CellSize => 1);
+        if ($p->{gcps}) {
+            $self = Geo::GDAL::GCPsToGeoTransform($p->{gcps}, $p->{approxok});
+        } elsif ($p->{extent}) {
+            $self = Geo::GDAL::GeoTransform->new($p->{extent}[0], $p->{cellsize}, 0, $p->{extent}[2], 0, -$p->{cellsize});
+        } else {
+            error("Missing GCPs or Extent");
+        }
     } else {
         my @a = @_;
         $self = \@a;
     }
     bless $self, $class;
-    return $self;
 }
 
 sub NorthUp {
@@ -2079,7 +2177,7 @@ sub FromGCPs {
         }
     }
     my $approx_ok = shift // 1;
-    Geo::GDAL::error('Usage: Geo::GDAL::GeoTransform::FromGCPs(\@gcps, $approx_ok)') unless @$gcps;
+    error('Usage: Geo::GDAL::GeoTransform::FromGCPs(\@gcps, $approx_ok)') unless @$gcps;
     my $self = Geo::GDAL::GCPsToGeoTransform($gcps, $approx_ok);
     bless $self, 'Geo::GDAL::GetTransform';
     return $self;
@@ -2124,11 +2222,13 @@ use warnings;
 use Carp;
 use Scalar::Util 'blessed';
 
+Geo::GDAL->import(qw(:INTERNAL));
+
 sub new {
     my $class = shift;
     my $self;
     if (@_ == 0) {
-        $self = [0,0,0,0];
+        $self = [0,0,-1,0];
     } elsif (ref $_[0]) {
         @$self = @{$_[0]};
     } else {
@@ -2138,8 +2238,14 @@ sub new {
     return $self;
 }
 
+sub IsEmpty {
+    my $self = shift;
+    return $self->[2] < $self->[0];
+}
+
 sub Size {
     my $self = shift;
+    return (0,0) if $self->IsEmpty;
     return ($self->[2] - $self->[0], $self->[3] - $self->[1]);
 }
 
@@ -2150,7 +2256,7 @@ sub Overlaps {
 
 sub Overlap {
     my ($self, $e) = @_;
-    return undef unless $self->Overlaps($e);
+    return Geo::GDAL::Extent->new() unless $self->Overlaps($e);
     my $ret = Geo::GDAL::Extent->new($self);
     $ret->[0] = $e->[0] if $self->[0] < $e->[0];
     $ret->[1] = $e->[1] if $self->[1] < $e->[1];
@@ -2161,10 +2267,15 @@ sub Overlap {
 
 sub ExpandToInclude {
     my ($self, $e) = @_;
-    $self->[0] = $e->[0] if $e->[0] < $self->[0];
-    $self->[1] = $e->[1] if $e->[1] < $self->[1];
-    $self->[2] = $e->[2] if $e->[2] > $self->[2];
-    $self->[3] = $e->[3] if $e->[3] > $self->[3];
+    return if $e->IsEmpty;
+    if ($self->IsEmpty) {
+        @$self = @$e;
+    } else {
+        $self->[0] = $e->[0] if $e->[0] < $self->[0];
+        $self->[1] = $e->[1] if $e->[1] < $self->[1];
+        $self->[2] = $e->[2] if $e->[2] > $self->[2];
+        $self->[3] = $e->[3] if $e->[3] > $self->[3];
+    }
 }
 
 package Geo::GDAL::XML;
@@ -2172,6 +2283,8 @@ package Geo::GDAL::XML;
 use strict;
 use warnings;
 use Carp;
+
+Geo::GDAL->import(qw(:INTERNAL));
 
 # XML related subs in Geo::GDAL
 
@@ -2186,7 +2299,7 @@ use Carp;
 sub new {
     my $class = shift;
     my $xml = shift // '';
-    my $self = Geo::GDAL::ParseXMLString($xml);
+    my $self = ParseXMLString($xml);
     bless $self, $class;
     $self->traverse(sub {my $node = shift; bless $node, $class});
     return $self;
@@ -2196,7 +2309,7 @@ sub traverse {
     my ($self, $sub) = @_;
     my $type = $self->[0];
     my $data = $self->[1];
-    $type = Geo::GDAL::NodeType($type);
+    $type = NodeType($type);
     $sub->($self, $type, $data);
     for my $child (@{$self}[2..$#$self]) {
         traverse($child, $sub);
@@ -2205,30 +2318,7 @@ sub traverse {
 
 sub serialize {
     my $self = shift;
-    return Geo::GDAL::SerializeXMLTree($self);
+    return SerializeXMLTree($self);
 }
 
 %}
-
-%{
-typedef void OGRLayerShadow;
-%}
-%extend GDALRasterBandShadow {
-    %apply (int nList, double* pList) {(int nFixedLevelCount, double *padfFixedLevels)};
-    %apply (int defined, double value) {(int bUseNoData, double dfNoDataValue)};
-    CPLErr ContourGenerate(double dfContourInterval, double dfContourBase,
-                           int nFixedLevelCount, double *padfFixedLevels,
-                           int bUseNoData, double dfNoDataValue,
-                           OGRLayerShadow *hLayer, int iIDField, int iElevField,
-                           GDALProgressFunc progress = NULL,
-                           void* progress_data = NULL) {
-        return GDALContourGenerate( self, dfContourInterval, dfContourBase,
-                                    nFixedLevelCount, padfFixedLevels,
-                                    bUseNoData, dfNoDataValue,
-                                    hLayer, iIDField, iElevField,
-                                    progress,
-                                    progress_data );
-    }
-    %clear (int nFixedLevelCount, double *padfFixedLevels);
-    %clear (int bUseNoData, double dfNoDataValue);
-}

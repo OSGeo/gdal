@@ -368,8 +368,7 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int type, std::string name,
     //see function BuildChildrenLayer in jtfile.cpp, the call on GDBSegNext
     //in the loop on gasTypeTable can create issue in PCIDSKSegNext 
     //(in pcic/gdbfrtms/pcidskopen.cpp)
-    snprintf( type_str, sizeof(type_str), "%03d", (type % 1000) );
-
+    CPLsnprintf( type_str, sizeof(type_str), "%03d", (type % 1000) );
     for( i = previous; i < segment_count; i++ )
     {
         if( type != SEG_UNKNOWN 
@@ -767,8 +766,8 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
             new_file.file = interfaces.OpenEDB( filename, "r+" );
             new_file.writable = true;
         } 
-        catch( PCIDSK::PCIDSKException ex ) {}
-        catch( std::exception ex ) {}
+        catch( const PCIDSK::PCIDSKException& ) {}
+        catch( const std::exception& ) {}
     }
 
     if( new_file.file == NULL )
@@ -787,8 +786,8 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
 
     edb_file_list.push_back( new_file );
 
-    *file_p = edb_file_list[edb_file_list.size()-1].file;
-    *io_mutex_p  = edb_file_list[edb_file_list.size()-1].io_mutex;
+    *file_p = edb_file_list.back().file;
+    *io_mutex_p  = edb_file_list.back().io_mutex;
 
     return new_file.writable;
 }
@@ -809,7 +808,7 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
 /* -------------------------------------------------------------------- */
 /*      Does this reference the PCIDSK file itself?                     */
 /* -------------------------------------------------------------------- */
-    if( filename.size() == 0 )
+    if( filename.empty() )
     {
         *io_handle_pp = &io_handle;
         *io_mutex_pp = &io_mutex;
@@ -857,8 +856,8 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
 
     file_list.push_back( new_file );
 
-    *io_handle_pp = &(file_list[file_list.size()-1].io_handle);
-    *io_mutex_pp  = &(file_list[file_list.size()-1].io_mutex);
+    *io_handle_pp = &(file_list.back().io_handle);
+    *io_mutex_pp  = &(file_list.back().io_mutex);
 }
 
 /************************************************************************/
@@ -913,36 +912,36 @@ int CPCIDSKFile::CreateSegment( std::string name, std::string description,
 
 {
 /* -------------------------------------------------------------------- */
-/*	Set the size of fixed length segments.				*/
+/*      Set the size of fixed length segments.                          */
 /* -------------------------------------------------------------------- */
     int expected_data_blocks = 0;
     bool prezero = false;
 
     switch( seg_type )
     {
-      case SEG_LUT:
-	expected_data_blocks = 2;
-	break;
+    case SEG_LUT:
+        expected_data_blocks = 2;
+        break;
 
-      case SEG_PCT:
-	expected_data_blocks = 6;
-	break;
+    case SEG_PCT:
+        expected_data_blocks = 6;
+        break;
 
-      case SEG_SIG:
-	expected_data_blocks = 12;
-	break;
+    case SEG_SIG:
+        expected_data_blocks = 12;
+        break;
 
-      case SEG_GCP2:
-	// expected_data_blocks = 67;
-	// Change seg type to new GCP segment type
-	expected_data_blocks = 129;
-	break;
-	
-      case SEG_GEO:
-	expected_data_blocks = 6;
-	break;
+    case SEG_GCP2:
+        // expected_data_blocks = 67;
+        // Change seg type to new GCP segment type
+        expected_data_blocks = 129;
+        break;
 
-      case SEG_TEX:
+    case SEG_GEO:
+        expected_data_blocks = 6;
+        break;
+
+    case SEG_TEX:
         expected_data_blocks = 64;
         prezero = true;
         break;
@@ -1218,7 +1217,7 @@ void CPCIDSKFile::MoveSegmentToEOF( int segment )
 /************************************************************************/
 /*
  const char *pszResampling;
- 	     Can be "NEAREST" for Nearest Neighbour resampling (the fastest),
+             Can be "NEAREST" for Nearest Neighbour resampling (the fastest),
              "AVERAGE" for block averaging or "MODE" for block mode.  This
              establishing the type of resampling to be applied when preparing
              the decimated overviews. Other methods can be set as well, but

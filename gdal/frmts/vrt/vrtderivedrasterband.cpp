@@ -115,6 +115,7 @@ static void (*PyGILState_Release)(PyGILState_STATE) = NULL;
 
 typedef struct
 {
+    //cppcheck-suppress unusedStructMember
     char big_enough[256];
 } Py_buffer;
 static int (*PyBuffer_FillInfo)(Py_buffer *view, PyObject *obj, void *buf,
@@ -395,7 +396,7 @@ static bool LoadPythonAPI()
                                                         NULL, FALSE ));
                             osVersion = pszStr;
                             if( !osVersion.empty() &&
-                                osVersion[osVersion.size() - 1] == '\n' )
+                                osVersion.back() == '\n' )
                             {
                                 osVersion.resize(osVersion.size() - 1);
                             }
@@ -891,7 +892,7 @@ class VRT_GIL_Holder
 
     public:
 
-        VRT_GIL_Holder(bool bExclusiveLock);
+        explicit VRT_GIL_Holder(bool bExclusiveLock);
         virtual ~VRT_GIL_Holder();
 };
 
@@ -1384,7 +1385,7 @@ bool VRTDerivedRasterBand::InitializePython()
     PyObject* poCompiledString = Py_CompileString(
         ("import numpy\n"
         "def GDALCreateNumpyArray(buffer, dtype, height, width):\n"
-        "    return numpy.frombuffer(buffer, dtype.decode('ascii'))."
+        "    return numpy.frombuffer(buffer, str(dtype.decode('ascii')))."
                                                 "reshape([height, width])\n"
         "\n" + m_poPrivate->m_osCode).c_str(),
         osModuleName, Py_file_input);

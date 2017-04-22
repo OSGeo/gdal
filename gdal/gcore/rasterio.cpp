@@ -28,17 +28,32 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_cpu_features.h"
+#include "cpl_port.h"
+#include "gdal.h"
 #include "gdal_priv.h"
+
+#include <climits>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include <algorithm>
+#include <limits>
+#include <stdexcept>
+
+#include "cpl_conv.h"
+#include "cpl_cpu_features.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 #include "gdal_priv_templates.hpp"
 #include "gdal_vrt.h"
 #include "gdalwarper.h"
 #include "memdataset.h"
 #include "vrtdataset.h"
-
-#include <algorithm>
-#include <limits>
-#include <stdexcept>
 
 CPL_CVSID("$Id$");
 
@@ -106,14 +121,14 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             iSrcY = iBufYOff + nYOff;
 
             if( iSrcY < nLBlockY * nBlockYSize
-                || iSrcY >= (nLBlockY+1) * nBlockYSize )
+                || iSrcY - nBlockYSize >= nLBlockY * nBlockYSize )
             {
                 nLBlockY = iSrcY / nBlockYSize;
                 bool bJustInitialize =
                     eRWFlag == GF_Write
                     && nXOff == 0 && nXSize == nBlockXSize
                     && nYOff <= nLBlockY * nBlockYSize
-                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize;
+                    && nYOff + nYSize - nBlockYSize >= nLBlockY * nBlockYSize;
 
                 // Is this a partial tile at right and/or bottom edges of
                 // the raster, and that is going to be completely written?
@@ -124,7 +139,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     nXOff == 0 && nXSize == nBlockXSize &&
                     nYOff <= nLBlockY * nBlockYSize &&
                     nYOff + nYSize == GetYSize() &&
-                    (nLBlockY+1) * nBlockYSize > GetYSize() )
+                    nLBlockY * nBlockYSize > GetYSize() - nBlockYSize )
                 {
                     bJustInitialize = true;
                     bMemZeroBuffer = true;
@@ -135,8 +150,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                 poBlock = GetLockedBlockRef( 0, nLBlockY, bJustInitialize );
                 if( poBlock == NULL )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined,
+                {CPLError( CE_Failure, CPLE_AppDefined,
                               "GetBlockRef failed at X block offset %d, "
                               "Y block offset %d", 0, nLBlockY );
                     eErr = CE_Failure;
@@ -265,7 +279,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
          && bUseIntegerRequestCoords )
     {
 #if DEBUG_VERBOSE
-        printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 2\n",
+        printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 2\n",/*ok*/
                 nXOff, nYOff, nXSize, nYSize,
                 static_cast<int>(eRWFlag) );
 #endif
@@ -293,16 +307,21 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             iSrcX = nXOff;
             while( iSrcX < nXSpanEnd )
             {
-                nXSpan = (nLBlockX + 1) * nBlockXSize;
+                nXSpan = nLBlockX * nBlockXSize;
+                if( nXSpan < INT_MAX - nBlockXSize )
+                    nXSpan += nBlockXSize;
+                else
+                    nXSpan = INT_MAX;
+                const int nXRight = nXSpan;
                 nXSpan = ( nXSpan < nXSpanEnd ? nXSpan:nXSpanEnd ) - iSrcX;
-                const int nXSpanSize = nXSpan * static_cast<int>(nPixelSpace);
+                const size_t nXSpanSize = nXSpan * static_cast<size_t>(nPixelSpace);
 
                 bool bJustInitialize =
                     eRWFlag == GF_Write
                     && nYOff <= nLBlockY * nBlockYSize
-                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
+                    && nYOff + nYSize - nBlockYSize >= nLBlockY * nBlockYSize
                     && nXOff <= nLBlockX * nBlockXSize
-                    && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
+                    && nXOff + nXSize >= nXRight;
 
                 // Is this a partial tile at right and/or bottom edges of
                 // the raster, and that is going to be completely written?
@@ -312,12 +331,12 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff <= nLBlockX * nBlockXSize &&
                     nYOff <= nLBlockY * nBlockYSize &&
-                    (nXOff + nXSize >= (nLBlockX+1) * nBlockXSize ||
+                    (nXOff + nXSize >= nXRight ||
                      (nXOff + nXSize == GetXSize() &&
-                      (nLBlockX+1) * nBlockXSize > GetXSize())) &&
-                    (nYOff + nYSize >= (nLBlockY+1) * nBlockYSize ||
+                      nXRight > GetXSize())) &&
+                    (nYOff + nYSize - nBlockYSize >= nLBlockY * nBlockYSize ||
                      (nYOff + nYSize == GetYSize() &&
-                      (nLBlockY+1) * nBlockYSize > GetYSize())) )
+                      nLBlockY * nBlockYSize > GetYSize() - nBlockYSize)) )
                 {
                     bJustInitialize = true;
                     bMemZeroBuffer = true;
@@ -480,18 +499,18 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /*      Ensure we have the appropriate block loaded.                    */
     /* -------------------------------------------------------------------- */
                 if( iDstX < nLBlockX * nBlockXSize
-                    || iDstX >= (nLBlockX+1) * nBlockXSize
+                    || iDstX - nBlockXSize >= nLBlockX * nBlockXSize
                     || iDstY < nLBlockY * nBlockYSize
-                    || iDstY >= (nLBlockY+1) * nBlockYSize )
+                    || iDstY - nBlockYSize >= nLBlockY * nBlockYSize )
                 {
                     nLBlockX = iDstX / nBlockXSize;
                     nLBlockY = iDstY / nBlockYSize;
 
                     const bool bJustInitialize =
                         nYOff <= nLBlockY * nBlockYSize
-                        && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
+                        && nYOff + nYSize - nBlockYSize >= nLBlockY * nBlockYSize
                         && nXOff <= nLBlockX * nBlockXSize
-                        && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
+                        && nXOff + nXSize - nBlockXSize >= nLBlockX * nBlockXSize;
                     /*bool bMemZeroBuffer = FALSE;
                     if( !bJustInitialize &&
                         nXOff <= nLBlockX * nBlockXSize &&
@@ -611,6 +630,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         int nLimitBlockY = 0;
         const bool bByteCopy = eDataType == eBufType && nBandDataSize == 1;
         int nStartBlockX = -nBlockXSize;
+        const double EPS = 1e-10;
 
 /* -------------------------------------------------------------------- */
 /*      Read case                                                       */
@@ -618,8 +638,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
         for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
         {
-            dfSrcY = (iBufYOff+0.5) * dfSrcYInc + dfYOff;
-            dfSrcX = 0.5 * dfSrcXInc + dfXOff;
+            // Add small epsilon to avoid some numeric precision issues.
+            dfSrcY = (iBufYOff+0.5) * dfSrcYInc + dfYOff + EPS;
+            dfSrcX = 0.5 * dfSrcXInc + dfXOff + EPS;
             iSrcY = static_cast<int>(dfSrcY);
 
             GPtrDiff_t iBufOffset =
@@ -629,7 +650,11 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             if( iSrcY >= nLimitBlockY )
             {
                 nLBlockY = iSrcY / nBlockYSize;
-                nLimitBlockY = (nLBlockY + 1) * nBlockYSize;
+                nLimitBlockY = nLBlockY * nBlockYSize;
+                if( nLimitBlockY < INT_MAX - nBlockYSize )
+                    nLimitBlockY += nBlockYSize;
+                else
+                    nLimitBlockY = INT_MAX;
                 // Make sure a new block is loaded.
                 nStartBlockX = -nBlockXSize;
             }
@@ -1023,14 +1048,10 @@ CPLErr GDALRasterBand::RasterIOResampled(
                                  nFullResXSizeQueried, nFullResYSizeQueried );
         GByte * pabyChunkNoDataMask = NULL;
 
-        GDALRasterBand* poMaskBand = NULL;
-        int l_nMaskFlags = 0;
-        bool bUseNoDataMask = false;
+        GDALRasterBand* poMaskBand = GetMaskBand();
+        int l_nMaskFlags = GetMaskFlags();
 
-        poMaskBand = GetMaskBand();
-        l_nMaskFlags = GetMaskFlags();
-
-        bUseNoDataMask = ((l_nMaskFlags & GMF_ALL_VALID) == 0);
+        bool bUseNoDataMask = ((l_nMaskFlags & GMF_ALL_VALID) == 0);
         if (bUseNoDataMask)
         {
             pabyChunkNoDataMask = static_cast<GByte *>(
@@ -1171,6 +1192,7 @@ CPLErr GDALRasterBand::RasterIOResampled(
 
                 if( !bSkipResample && eErr == CE_None )
                 {
+                    const bool bPropagateNoData = false;
                     eErr = pfnResampleFunc(
                         dfXRatioDstToSrc,
                         dfYRatioDstToSrc,
@@ -1191,7 +1213,8 @@ CPLErr GDALRasterBand::RasterIOResampled(
                         pszResampling,
                         bHasNoData, fNoDataValue,
                         GetColorTable(),
-                        eDataType );
+                        eDataType,
+                        bPropagateNoData);
                 }
 
                 nBlocksDone ++;
@@ -1472,14 +1495,10 @@ CPLErr GDALDataset::RasterIOResampled(
                 nFullResXSizeQueried, nFullResYSizeQueried );
         GByte * pabyChunkNoDataMask = NULL;
 
-        GDALRasterBand* poMaskBand = NULL;
-        int nMaskFlags = 0;
-        bool bUseNoDataMask = false;
+        GDALRasterBand* poMaskBand = poFirstSrcBand->GetMaskBand();
+        int nMaskFlags = poFirstSrcBand->GetMaskFlags();
 
-        poMaskBand = poFirstSrcBand->GetMaskBand();
-        nMaskFlags = poFirstSrcBand->GetMaskFlags();
-
-        bUseNoDataMask = ((nMaskFlags & GMF_ALL_VALID) == 0);
+        bool bUseNoDataMask = ((nMaskFlags & GMF_ALL_VALID) == 0);
         if (bUseNoDataMask)
         {
             pabyChunkNoDataMask = (GByte *)
@@ -1665,6 +1684,7 @@ CPLErr GDALDataset::RasterIOResampled(
                          i < nBandCount && !bSkipResample && eErr == CE_None;
                          i++ )
                     {
+                        const bool bPropagateNoData = false;
                         eErr = pfnResampleFunc(
                             dfXRatioDstToSrc,
                             dfYRatioDstToSrc,
@@ -1686,7 +1706,8 @@ CPLErr GDALDataset::RasterIOResampled(
                             FALSE /*bHasNoData*/,
                             0.f /* fNoDataValue */,
                             NULL /* color table*/,
-                            eDataType );
+                            eDataType,
+                            bPropagateNoData );
                     }
                 }
 
@@ -1778,12 +1799,12 @@ void CPL_STDCALL GDALSwapWords( void *pData, int nWordSize, int nWordCount,
 
       case 8:
         CPLAssert( nWordSkip >= 8 || nWordCount == 1 );
-#ifdef CPL_SWAP64
+#ifdef CPL_HAS_GINT64
         if( CPL_IS_ALIGNED(pabyData, 8) && (nWordSkip % 8) == 0 )
         {
             for( int i = 0; i < nWordCount; i++ )
             {
-                *((GUIntBig*)pabyData) = CPL_SWAP64(*((GUIntBig*)pabyData));
+                *((GUInt64*)pabyData) = CPL_SWAP64(*((GUInt64*)pabyData));
                 pabyData += nWordSkip;
             }
         }
@@ -3513,9 +3534,9 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 /*      Ensure we have the appropriate block loaded.                    */
 /* -------------------------------------------------------------------- */
             if( iSrcX < nLBlockX * nBlockXSize
-                || iSrcX >= (nLBlockX+1) * nBlockXSize
+                || iSrcX - nBlockXSize >= nLBlockX * nBlockXSize
                 || iSrcY < nLBlockY * nBlockYSize
-                || iSrcY >= (nLBlockY+1) * nBlockYSize )
+                || iSrcY - nBlockYSize >= nLBlockY * nBlockYSize )
             {
                 nLBlockX = iSrcX / nBlockXSize;
                 nLBlockY = iSrcY / nBlockYSize;
@@ -3523,9 +3544,9 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                 const bool bJustInitialize =
                     eRWFlag == GF_Write
                     && nYOff <= nLBlockY * nBlockYSize
-                    && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
+                    && nYOff + nYSize - nBlockYSize >= nLBlockY * nBlockYSize
                     && nXOff <= nLBlockX * nBlockXSize
-                    && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
+                    && nXOff + nXSize - nBlockXSize >= nLBlockX * nBlockXSize;
                 /*bool bMemZeroBuffer = FALSE;
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff <= nLBlockX * nBlockXSize &&
@@ -3750,15 +3771,11 @@ static void GDALCopyWholeRasterGetSwathSize(
         }
     }
 
-    const int nMemoryPerCol = nSwathCols * nPixelSize;
-
-    // Do the computation on a big int since for example when translating the
-    // JPL WMS layer, we overflow 32 bits.
-    const GIntBig nSwathBufSize =
-        static_cast<GIntBig>(nMemoryPerCol) * nSwathLines;
+    const GIntBig nMemoryPerCol = static_cast<GIntBig>(nSwathCols) * nPixelSize;
+    const GIntBig nSwathBufSize = nMemoryPerCol * nSwathLines;
     if( nSwathBufSize > static_cast<GIntBig>(nTargetSwathSize) )
     {
-        nSwathLines = nTargetSwathSize / nMemoryPerCol;
+        nSwathLines = static_cast<int>(nTargetSwathSize / nMemoryPerCol);
         if (nSwathLines == 0)
             nSwathLines = 1;
 
@@ -3768,17 +3785,19 @@ static void GDALCopyWholeRasterGetSwathSize(
             "since requirement (" CPL_FRMT_GIB " bytes) exceed target swath "
             "size (%d bytes) (GDAL_SWATH_SIZE config. option)",
             nSwathLines,
-            static_cast<GIntBig>(nBlockYSize) * nMemoryPerCol,
+            nBlockYSize * nMemoryPerCol,
             nTargetSwathSize);
     }
     // If we are processing single scans, try to handle several at once.
     // If we are handling swaths already, only grow the swath if a row
     // of blocks is substantially less than our target buffer size.
     else if( nSwathLines == 1
-        || nMemoryPerCol * nSwathLines < nTargetSwathSize / 10 )
+        || nMemoryPerCol * nSwathLines <
+                        static_cast<GIntBig>(nTargetSwathSize) / 10 )
     {
         nSwathLines =
-            std::min(nYSize, std::max(1, nTargetSwathSize / nMemoryPerCol));
+            std::min(nYSize, std::max(1,
+                     static_cast<int>(nTargetSwathSize / nMemoryPerCol)));
 
         /* If possible try to align to source and target block height */
         if ((nSwathLines % nMaxBlockYSize) != 0 &&
@@ -4023,11 +4042,11 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
         GDALRasterIOExtraArg sExtraArg;
         INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-        const int nTotalBlocks =
-            nBandCount *
-            ((nYSize + nSwathLines - 1) / nSwathLines) *
-            ((nXSize + nSwathCols - 1) / nSwathCols);
-        int nBlocksDone = 0;
+        const GIntBig nTotalBlocks =
+            static_cast<GIntBig>(nBandCount) *
+            DIV_ROUND_UP(nYSize, nSwathLines) *
+            DIV_ROUND_UP(nXSize, nSwathCols);
+        GIntBig nBlocksDone = 0;
 
         for( int iBand = 0; iBand < nBandCount && eErr == CE_None; iBand++ )
         {
@@ -4109,10 +4128,10 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
         GDALRasterIOExtraArg sExtraArg;
         INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-        const int nTotalBlocks =
-            ((nYSize + nSwathLines - 1) / nSwathLines) *
-            ((nXSize + nSwathCols - 1) / nSwathCols);
-        int nBlocksDone = 0;
+        const GIntBig nTotalBlocks =
+            static_cast<GIntBig>(DIV_ROUND_UP(nYSize, nSwathLines)) *
+            DIV_ROUND_UP(nXSize, nSwathCols);
+        GIntBig nBlocksDone = 0;
 
         for( int iY = 0; iY < nYSize && eErr == CE_None; iY += nSwathLines )
         {

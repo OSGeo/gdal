@@ -25,9 +25,11 @@
     #define NEED_DEF "A parameter which must be defined or not empty, is not."
     #define WRONG_CLASS "Object has a wrong class."
     #define NEED_REF "A parameter which must be a reference, is not."
+    #define NEED_HASH_REF "A parameter/item which must be a hash reference, is not."
     #define NEED_ARRAY_REF "A parameter/item which must be an array reference, is not."
     #define NEED_BINARY_DATA "A parameter which must be binary data, is not."
     #define NEED_CODE_REF "A parameter which must be an anonymous subroutine, is not."
     #define WRONG_ITEM_IN_ARRAY "An item in an array parameter has wrong type."
     #define ARRAY_TO_XML_FAILED "An array parameter cannot be converted to an XMLTree."
+    #define NOT_ENOUGH_ELEMENTS "The supplied array does not have enough elements."
 %}

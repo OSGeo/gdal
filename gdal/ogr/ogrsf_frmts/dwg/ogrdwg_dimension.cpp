@@ -30,10 +30,6 @@
 #include "ogr_dwg.h"
 #include "cpl_conv.h"
 
-#include "DbDimension.h"
-#include "DbRotatedDimension.h"
-#include "DbAlignedDimension.h"
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -173,9 +169,7 @@ the approach is as above in all these cases.
 /* -------------------------------------------------------------------- */
 /*      Compute the text angle.                                         */
 /* -------------------------------------------------------------------- */
-    double dfAngle = 0.0;
-
-    dfAngle = atan2(dfVec2Y,dfVec2X) * 180.0 / M_PI;
+    double dfAngle = atan2(dfVec2Y,dfVec2X) * 180.0 / M_PI;
 
 /* -------------------------------------------------------------------- */
 /*      Rescale the direction vectors so we can use them in             */
@@ -291,7 +285,7 @@ the approach is as above in all these cases.
 /*      feature for the next feature read.                              */
 /* -------------------------------------------------------------------- */
 
-    // a single space suppresses labelling.
+    // a single space suppresses labeling.
     if( osText == " " )
         return poFeature;
 
@@ -300,7 +294,7 @@ the approach is as above in all these cases.
     poLabelFeature->SetGeometryDirectly( new OGRPoint( oTextPos.x, oTextPos.y ) );
 
     // Do we need to compute the dimension value?
-    if( osText.size() == 0 )
+    if( osText.empty() )
     {
         FormatDimension( osText, POINT_DIST( oArrow1.x, oArrow1.y,
                                              dfArrowX2, dfArrowY2 ) );
@@ -368,7 +362,7 @@ void OGRDWGLayer::FormatDimension( CPLString &osText, double dfValue )
     // to spend the effort.  See QCAD's rs_dimlinear.cpp and related files
     // for example.
 
-    sprintf(szFormat, "%%.%df", nPrecision );
+    snprintf(szFormat, sizeof(szFormat), "%%.%df", nPrecision );
     CPLsnprintf(szBuffer, sizeof(szBuffer), szFormat, dfValue);
     char* pszComma = strchr(szBuffer, ',');
     if (pszComma)

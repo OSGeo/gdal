@@ -28,10 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <errno.h>
 #include <iconv.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <string.h>
 
 static unsigned utf8decode(const char* p, const char* end, int* len)
@@ -213,7 +213,6 @@ int main(int argc, char* argv[])
             printf("for(i = 0x%02X; i < 0x%02X; i++)\n", nLastIdentical, i);
             printf("    info->map[i] = i;\n");
         }
-        nLastIdentical = -1;
     }
 
     iconv_close( sConv );

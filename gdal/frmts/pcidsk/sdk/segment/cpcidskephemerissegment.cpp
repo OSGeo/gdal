@@ -142,9 +142,9 @@ void CPCIDSKEphemerisSegment::Synchronize()
 }
 
 /************************************************************************/
-/*			ConvertDeg()					*/
+/*                              ConvertDeg()                            */
 /************************************************************************/
-/**									
+/**
  * if mode is 0, convert angle from 0 to 360 to 0 to 180 and 0 to -180 
  * if mode is 1, convert angle from 0 to 180 and 0 to -180 to 0 to 360 
  *
@@ -158,28 +158,28 @@ double CPCIDSKEphemerisSegment::ConvertDeg(double degree, int mode)
     if (mode == 0)
     {
 /* -------------------------------------------------------------------- */
-/*	degree is in range of 0 to 360					*/
+/*      degree is in range of 0 to 360                                  */
 /* -------------------------------------------------------------------- */
-	if (degree > 180)
-	    result = degree - 360;
-	else
-	    result = degree;
+        if (degree > 180)
+            result = degree - 360;
+        else
+            result = degree;
     }
     else
     {
 /* -------------------------------------------------------------------- */
-/*	degree is in range of 0 to 180 and 0 to -180			*/
+/*      degree is in range of 0 to 180 and 0 to -180                    */
 /* -------------------------------------------------------------------- */
-	if (degree < 0)
-	    result = 360 + degree;
-	else
-	    result = degree;
+        if (degree < 0)
+            result = 360 + degree;
+        else
+            result = degree;
     }
     return (result);
 }
 
 /************************************************************************/
-/*		      ReadAvhrrEphemerisSegment()                       */
+/*                      ReadAvhrrEphemerisSegment()                     */
 /************************************************************************/
 /**
  *  Read the contents of blocks 9, 11, and onwards from the orbit
@@ -197,7 +197,7 @@ CPCIDSKEphemerisSegment::ReadAvhrrEphemerisSegment(int nStartBlock,
 
     int nDataLength = seg_data.buffer_size;
 /* -------------------------------------------------------------------- */
-/*  Allocate the AVHRR segment portion of EphemerisSeg_t.		*/
+/*  Allocate the AVHRR segment portion of EphemerisSeg_t.               */
 /* -------------------------------------------------------------------- */
     psEphSegRec->AvhrrSeg = new AvhrrSeg_t();
     as = psEphSegRec->AvhrrSeg;
@@ -248,7 +248,7 @@ CPCIDSKEphemerisSegment::ReadAvhrrEphemerisSegment(int nStartBlock,
     as->szSemiMajorAxis = seg_data.Get(nPos+464,16);
                                                                       
 /* -------------------------------------------------------------------- */
-/*  Skip the 10th block which is reserved for future use.		*/
+/*  Skip the 10th block which is reserved for future use.               */
 /* -------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------- */
@@ -274,7 +274,7 @@ CPCIDSKEphemerisSegment::ReadAvhrrEphemerisSegment(int nStartBlock,
     nBlock = 12;
 
     if ( as->nNumRecordsPerBlock == 0 )
-	return;
+        return;
 
     for(nLine = 0; nLine < as->nNumScanlineRecords;
                    nLine += as->nNumRecordsPerBlock)
@@ -282,10 +282,10 @@ CPCIDSKEphemerisSegment::ReadAvhrrEphemerisSegment(int nStartBlock,
         int nNumRecords = MinFunction(as->nNumRecordsPerBlock,
                                       as->nNumScanlineRecords - nLine);
         nPos = nStartBlock + 512*(nBlock-1);
-	if( nDataLength < 512*nBlock )
-	{
-	    break;
-	}
+        if( nDataLength < 512*nBlock )
+        {
+            break;
+        }
      
         for(int i = 0; i < nNumRecords; ++i)
         {
@@ -299,7 +299,7 @@ CPCIDSKEphemerisSegment::ReadAvhrrEphemerisSegment(int nStartBlock,
 }
 
 /************************************************************************/
-/*		        ReadAvhrrScanlineRecord()                       */
+/*                      ReadAvhrrScanlineRecord()                       */
 /************************************************************************/
 /**                                                                      
  *  Read from a byte buffer in order to set a scanline record.     
@@ -337,7 +337,7 @@ CPCIDSKEphemerisSegment::ReadAvhrrScanlineRecord(int nPos,
 }
 
 /************************************************************************/
-/*			   ReadAvhrrInt32()                             */
+/*                         ReadAvhrrInt32()                             */
 /************************************************************************/
 /**                                                                      
  * Read an integer from a given buffer of at least 4 bytes. 
@@ -355,7 +355,7 @@ CPCIDSKEphemerisSegment::ReadAvhrrInt32(unsigned char* pbyBuf)
 }
 
 /************************************************************************/
-/*		      WriteAvhrrEphemerisSegment()                      */
+/*                    WriteAvhrrEphemerisSegment()                      */
 /************************************************************************/
 /**
  *  Write the contents of blocks 9, 10, and onwards to the orbit
@@ -370,14 +370,14 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
     int  nBlock = 0, nLine = 0;
     int nPos = 0;
 /* -------------------------------------------------------------------- */
-/*  Check that the AvhrrSeg is not NULL.				*/
+/*  Check that the AvhrrSeg is not NULL.                                */
 /* -------------------------------------------------------------------- */
     AvhrrSeg_t *as = NULL;
     as = psEphSegRec->AvhrrSeg;
 
     if ( as == NULL)
     {
-	return ThrowPCIDSKException("The AvhrrSeg is NULL.");
+        return ThrowPCIDSKException("The AvhrrSeg is NULL.");
     }
 
 /* -------------------------------------------------------------------- */
@@ -394,7 +394,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
     memset(seg_data.buffer+nPos,' ',nToAdd);
 
 /* -------------------------------------------------------------------- */
-/*  Write the first avhrr Block.					*/
+/*  Write the first avhrr Block.                                        */
 /* -------------------------------------------------------------------- */
 
     seg_data.Put(as->szImageFormat.c_str(),nPos,16);
@@ -439,7 +439,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
     seg_data.Put(as->szSemiMajorAxis.c_str(),nPos+464,16,true);
 
 /* -------------------------------------------------------------------- */
-/*  second avhrr block is all zeros.					*/
+/*  second avhrr block is all zeros.                                    */
 /* -------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------- */
@@ -456,13 +456,13 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
 /* -------------------------------------------------------------------- */
 /*  Write the fourth avhrr block onwards.                               */
 /* -------------------------------------------------------------------- */
-    if ( as->Line.size() == 0 )
-	return;
+    if ( as->Line.empty() )
+        return;
 
     nBlock = 4;
 
     if ( as->nNumRecordsPerBlock == 0 )
-	return;
+        return;
 
     for(nLine = 0; nLine < as->nNumScanlineRecords;
                    nLine += as->nNumRecordsPerBlock)
@@ -481,7 +481,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
 }
 
 /************************************************************************/
-/*  		   WriteAvhrrScanlineRecord()                           */
+/*                       WriteAvhrrScanlineRecord()                     */
 /************************************************************************/
 /**                                                                      
  * Write a scanline record to a byte buffer.  
@@ -522,7 +522,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrScanlineRecord(
 }
 
 /************************************************************************/
-/*			   WriteAvhrrInt32()                            */
+/*                         WriteAvhrrInt32()                            */
 /************************************************************************/
 /**                                                                      
  * Write an integer into a given buffer of at least 4 bytes.            
@@ -555,20 +555,20 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
 
 {
     EphemerisSeg_t *l_segment;
-    int		i;
+    int             i;
     int nPos = nStartBlock;
 
     l_segment = new EphemerisSeg_t();
 
 /* -------------------------------------------------------------------- */
-/*	Process first block.						*/
+/*      Process first block.                                            */
 /* -------------------------------------------------------------------- */
 
     l_segment->SatelliteDesc = seg_data.Get(nPos+8,32);  
     l_segment->SceneID = seg_data.Get(nPos+40, 32);
 
 /* -------------------------------------------------------------------- */
-/*	Process the second block.					*/
+/*      Process the second block.                                       */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 512;
 
@@ -600,7 +600,7 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
     l_segment->TimeInterval = seg_data.GetDouble(nPos+242, 22);
     l_segment->NumLineCentre = seg_data.GetDouble(nPos+264, 22);
     l_segment->LongCentre = seg_data.GetDouble(nPos+286, 22);
-    l_segment->AngularSpd = seg_data.GetDouble(nPos+308, 22);		
+    l_segment->AngularSpd = seg_data.GetDouble(nPos+308, 22);
     l_segment->AscNodeLong = seg_data.GetDouble(nPos+330, 22);
     l_segment->ArgPerigee = seg_data.GetDouble(nPos+352, 22);
     l_segment->LatCentre = seg_data.GetDouble(nPos+374, 22);
@@ -613,7 +613,7 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
         l_segment->bDescending = false;
 
 /* -------------------------------------------------------------------- */
-/*	Process the third block.					*/
+/*      Process the third block.                                        */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 2*512;
 
@@ -714,8 +714,8 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
     }
 
 /* -------------------------------------------------------------------- */
-/*	6th and 7th block of ORBIT l_segment are blank.			*/
-/*	Read in the 8th block.						*/
+/*      6th and 7th block of ORBIT l_segment are blank.                 */
+/*      Read in the 8th block.                                          */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 7*512;
     
@@ -732,18 +732,18 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
                               seg_data.Get(nPos,8));
 
 /* -------------------------------------------------------------------- */
-/*	Orbit l_segment is a Satellite Attitude Segment(ATTITUDE) only	*/
-/*	for SPOT 1A.							*/
+/*      Orbit l_segment is a Satellite Attitude Segment(ATTITUDE) only  */
+/*      for SPOT 1A.                                                    */
 /* -------------------------------------------------------------------- */
     if (l_segment->Type == OrbAttitude)
     {
-        AttitudeSeg_t 	*AttitudeSeg;
-        int		nBlock, nData;
+        AttitudeSeg_t  *AttitudeSeg;
+        int             nBlock, nData;
 
         AttitudeSeg = l_segment->AttitudeSeg = new AttitudeSeg_t();  
-	
+
 /* -------------------------------------------------------------------- */
-/*	Read in the 9th block.						*/
+/*      Read in the 9th block.                                          */
 /* -------------------------------------------------------------------- */
         nPos = nStartBlock + 512*8;
         
@@ -759,22 +759,22 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
                 AttitudeSeg->NumberOfLine / ATT_SEG_LINE_PER_BLOCK;
 
 /* -------------------------------------------------------------------- */
-/*	Read in the line required.					*/
+/*      Read in the line required.                                      */
 /* -------------------------------------------------------------------- */
         for (nBlock=0, nData=0; nBlock<AttitudeSeg->NumberBlockData; 
              nBlock++)
         {
 /* -------------------------------------------------------------------- */
-/*	Read in 10+nBlock th block as required.				*/
+/*      Read in 10+nBlock th block as required.                         */
 /* -------------------------------------------------------------------- */
             nPos = nStartBlock + 512*(9+nBlock);
 
 /* -------------------------------------------------------------------- */
-/*	Fill in the lines as required.					*/
+/*      Fill in the lines as required.                                  */
 /* -------------------------------------------------------------------- */
             for (i=0; 
                  i<ATT_SEG_LINE_PER_BLOCK 
-		     && nData < AttitudeSeg->NumberOfLine; 
+                    && nData < AttitudeSeg->NumberOfLine; 
                  i++, nData++)
             {
                 AttitudeLine_t oAttitudeLine;
@@ -795,16 +795,16 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
         }
     }
 /* -------------------------------------------------------------------- */
-/*	Radar l_segment (LATLONG)						*/
+/*      Radar l_segment (LATLONG)                                       */
 /* -------------------------------------------------------------------- */
     else if (l_segment->Type == OrbLatLong)
     {
         RadarSeg_t *RadarSeg;
-        int	nBlock, nData;
+        int         nBlock, nData;
 
         RadarSeg = l_segment->RadarSeg = new RadarSeg_t(); 
 /* -------------------------------------------------------------------- */
-/*	Read in the 9th block.						*/
+/*      Read in the 9th block.                                          */
 /* -------------------------------------------------------------------- */
         nPos = nStartBlock + 512*8;
 
@@ -820,7 +820,7 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
         RadarSeg->ClockAngle = seg_data.GetDouble(nPos+128, 16);
 
 /* -------------------------------------------------------------------- */
-/*	Read in the 10th block.						*/
+/*      Read in the 10th block.                                         */
 /* -------------------------------------------------------------------- */
         nPos = nStartBlock + 9*512;
 
@@ -828,14 +828,14 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
         RadarSeg->NumberData = seg_data.GetInt(nPos+8, 8);
 
 /* -------------------------------------------------------------------- */
-/* 	Read in the 11-th through 11+RadarSeg->NumberBlockData th block	*/
-/*	for the ancillary data present.					*/
+/*      Read in the 11-th through 11+RadarSeg->NumberBlockData th block */
+/*      for the ancillary data present.                                 */
 /* -------------------------------------------------------------------- */
         for (nBlock = 0, nData = 0; 
              nBlock < RadarSeg->NumberBlockData; nBlock++)
         {
 /* -------------------------------------------------------------------- */
-/*	Read in one block of data.					*/
+/*      Read in one block of data.                                      */
 /* -------------------------------------------------------------------- */
             nPos = nStartBlock + 512*(10+nBlock);
 
@@ -843,15 +843,15 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
                  i<ANC_DATA_PER_BLK &&  nData < RadarSeg->NumberData; 
                  i++, nData++)
             {
-                int	offset;
-                char	*currentindex;
-                void	*currentptr;
-                double	tmp;
-                int32	tmpInt;
+                int     offset;
+                char   *currentindex;
+                void   *currentptr;
+                double  tmp;
+                int32   tmpInt;
                 const double million = 1000000.0;
                 
 /* -------------------------------------------------------------------- */
-/*	Reading in one ancillary data at a time.			*/
+/*      Reading in one ancillary data at a time.                        */
 /* -------------------------------------------------------------------- */
                 AncillaryData_t oData;
                 offset = i*ANC_DATA_SIZE;
@@ -923,13 +923,13 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
         if (RadarSeg->NumberData != nData)
         {
             return (EphemerisSeg_t*)ThrowPCIDSKExceptionPtr("Number "
-		     "of data lines read (%d) does not match with"
+                     "of data lines read (%d) does not match with"
                      "\nwhat is specified in l_segment (%d).\n", nData, 
                      RadarSeg->NumberData);
         }
     }
 /* -------------------------------------------------------------------- */
-/*	AVHRR l_segment 							*/
+/*      AVHRR l_segment                                                 */
 /* -------------------------------------------------------------------- */
     else if (l_segment->Type == OrbAvhrr)
     {
@@ -954,7 +954,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
                                               int nStartBlock )
 
 {
-    int		i,j;
+    int i,j;
 
 /* -------------------------------------------------------------------- */
 /*      The binary data must be at least 8 blocks (4096 bytes) long     */
@@ -966,7 +966,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
     int nPos = nStartBlock;
 
 /* -------------------------------------------------------------------- */
-/*	Write the first block						*/
+/*      Write the first block                                           */
 /* -------------------------------------------------------------------- */
 
     seg_data.Put("ORBIT   ",nPos,8);
@@ -974,7 +974,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
     seg_data.Put(psOrbit->SceneID.c_str(), nPos+40,32,true);
 
 /* -------------------------------------------------------------------- */
-/*	Write the second block						*/
+/*      Write the second block                                          */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 1*512;
     
@@ -1012,7 +1012,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
         seg_data.Put("ASCENDING ",nPos+484,10);
 
 /* -------------------------------------------------------------------- */
-/*	Write the third block						*/
+/*      Write the third block                                           */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 512*2;
 
@@ -1048,7 +1048,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
     seg_data.Put(psOrbit->UtmYLL,nPos+479,22,"%22.14f");
 
 /* -------------------------------------------------------------------- */
-/*	Write the fourth block						*/
+/*      Write the fourth block                                          */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 512*3;
     
@@ -1069,7 +1069,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
     seg_data.Put(psOrbit->HtLL,nPos+224,22,"%16.7f");
 
 /* -------------------------------------------------------------------- */
-/*	Write the fifth block						*/
+/*      Write the fifth block                                           */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 512*4;
 
@@ -1081,36 +1081,36 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
     seg_data.Put(psOrbit->NumberSuffixBytes,nPos+80,16);
 
 /* -------------------------------------------------------------------- */
-/*	Write the sixth and seventh block (blanks)			*/
-/*	For SPOT it is not blank					*/
+/*      Write the sixth and seventh block (blanks)                      */
+/*      For SPOT it is not blank                                        */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 512*5;
 
     if (psOrbit->SPNCoeff > 0)
     {
         if (psOrbit->SPNCoeff == 20)
-	{
+        {
             seg_data.Put("SPOT1BOD",nPos,8);
             seg_data.Put(psOrbit->SPNCoeff,nPos+22,22);
 
-	    j = 44;
-	    for (i=0; i<20; i++)
-	    {
-                seg_data.Put(psOrbit->SPCoeff1B[i],
-                                     nPos+j,22,"%22.14f");
-		j += 22;
-	    }
-	}
-	else
-	{
-            seg_data.Put("SPOT1BNW",nPos,8);
-            seg_data.Put(psOrbit->SPNCoeff,nPos+22,22);
-
-	    j = 44;
+            j = 44;
             for (i=0; i<20; i++)
             {
                 seg_data.Put(psOrbit->SPCoeff1B[i],
-                                     nPos+j,22,"%22.14f");
+                                    nPos+j,22,"%22.14f");
+                j += 22;
+            }
+        }
+        else
+        {
+            seg_data.Put("SPOT1BNW",nPos,8);
+            seg_data.Put(psOrbit->SPNCoeff,nPos+22,22);
+
+            j = 44;
+            for (i=0; i<20; i++)
+            {
+                seg_data.Put(psOrbit->SPCoeff1B[i],
+                                    nPos+j,22,"%22.14f");
                 j += 22;
             }
 
@@ -1132,7 +1132,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
     } 
 
 /* -------------------------------------------------------------------- */
-/*	Write the eighth block.						*/
+/*      Write the eighth block.                                         */
 /* -------------------------------------------------------------------- */
     nPos = nStartBlock + 512*7;
     
@@ -1150,13 +1150,13 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
     }
 
 /* ==================================================================== */
-/*	Orbit segment is a Satellite Attitude Segment(ATTITUDE) only	*/
-/*	for SPOT 1A.							*/
+/*      Orbit segment is a Satellite Attitude Segment(ATTITUDE) only    */
+/*      for SPOT 1A.                                                    */
 /* ==================================================================== */
     if (psOrbit->Type == OrbAttitude)
     {
         AttitudeSeg_t *AttitudeSeg;
-        int		nBlock, nData;
+        int            nBlock, nData;
 
         AttitudeSeg = psOrbit->AttitudeSeg;
 
@@ -1202,7 +1202,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
                512 * AttitudeSeg->NumberBlockData);
 
 /* -------------------------------------------------------------------- */
-/*	Write out the line required.					*/
+/*      rite out the line required.                                     */
 /* -------------------------------------------------------------------- */
         for (nBlock=0, nData=0; nBlock<AttitudeSeg->NumberBlockData; 
              nBlock++)
@@ -1210,12 +1210,12 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
             nPos = nStartBlock + 512*(nBlock + 9);
 
 /* -------------------------------------------------------------------- */
-/*	Fill in buffer as required.					*/
+/*      Fill in buffer as required.                                     */
 /* -------------------------------------------------------------------- */
             for (i=0; 
-                 i<ATT_SEG_LINE_PER_BLOCK 
-		     && nData < AttitudeSeg->NumberOfLine; 
-                 i++, nData++)
+                i<ATT_SEG_LINE_PER_BLOCK 
+                    && nData < AttitudeSeg->NumberOfLine; 
+                i++, nData++)
             {
                 seg_data.Put(
                     AttitudeSeg->Line[nData].ChangeInAttitude,
@@ -1229,19 +1229,19 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
         if (nData != AttitudeSeg->NumberOfLine)
         {
             return ThrowPCIDSKException("Number of data line written"
-		    " (%d) does not match with\nwhat is specified "
-		    " in the segment (%d).\n", 
-		    nData, AttitudeSeg->NumberOfLine);
+                    " (%d) does not match with\nwhat is specified "
+                    " in the segment (%d).\n", 
+                    nData, AttitudeSeg->NumberOfLine);
         }
     }
 
 /* ==================================================================== */
-/*	Radar segment (LATLONG)						*/
+/*      Radar segment (LATLONG)                                         */
 /* ==================================================================== */
     else if (psOrbit->Type == OrbLatLong)
     {
         RadarSeg_t *RadarSeg;
-        int	   nBlock, nData;
+        int         nBlock, nData;
 
         RadarSeg = psOrbit->RadarSeg;
 
@@ -1273,7 +1273,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
         seg_data.Put(RadarSeg->ClockAngle,nPos+128,16,"%16.7f");
 
 /* -------------------------------------------------------------------- */
-/*	Write out the tenth block.					*/
+/*      Write out the tenth block.                                      */
 /* -------------------------------------------------------------------- */
         nPos = nStartBlock + 512*9;
 
@@ -1291,8 +1291,8 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
                512 * RadarSeg->NumberBlockData);
         
 /* -------------------------------------------------------------------- */
-/* 	Write out the 11-th through 11+psOrbit->NumberBlockData  block	*/
-/*	for the ancillary data present.					*/
+/*      Write out the 11-th through 11+psOrbit->NumberBlockData  block  */
+/*      for the ancillary data present.                                 */
 /* -------------------------------------------------------------------- */
         for (nBlock = 0, nData = 0; 
              nBlock < RadarSeg->NumberBlockData; nBlock++)
@@ -1301,19 +1301,19 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
                  i<ANC_DATA_PER_BLK &&  nData < RadarSeg->NumberData;
                  i++, nData++)
             {
-                int		offset;
-                char		*currentptr, *currentindex;
-                double		tmp, tmpDouble;
+                int             offset;
+                char            *currentptr, *currentindex;
+                double          tmp, tmpDouble;
                 const double million = 1000000.0;
-                int32		tmpInt;
+                int32           tmpInt;
                 
 /* -------------------------------------------------------------------- */
-/*	Point to correct block						*/
+/*      Point to correct block                                          */
 /* -------------------------------------------------------------------- */
                 nPos = nStartBlock + 512*(10+nBlock);
             
 /* -------------------------------------------------------------------- */
-/*	Writing out one ancillary data at a time.			*/
+/*      Writing out one ancillary data at a time.                       */
 /* -------------------------------------------------------------------- */
                 offset = i*ANC_DATA_SIZE;
 
@@ -1381,7 +1381,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
     }
 
 /* ==================================================================== */
-/*	AVHRR segment 							*/
+/*      AVHRR segment                                                   */
 /* ==================================================================== */
     else if ( psOrbit->Type == OrbAvhrr &&
               psOrbit->AvhrrSeg->nNumRecordsPerBlock > 0 )

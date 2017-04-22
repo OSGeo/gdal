@@ -455,6 +455,20 @@ def test_gdal_translate_lib_103():
     return 'success'
 
 ###############################################################################
+# Test translate with a MEM source to a anonymous VRT
+
+def test_gdal_translate_lib_104():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    src_ds.GetRasterBand(1).Fill(255)
+    ds = gdal.Translate('', '../gcore/data/byte.tif', format = 'VRT', width = 1, height = 1)
+    if ds.GetRasterBand(1).Checksum() != 3:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_lib_cleanup():
@@ -489,6 +503,7 @@ gdaltest_list = [
     test_gdal_translate_lib_101,
     test_gdal_translate_lib_102,
     test_gdal_translate_lib_103,
+    test_gdal_translate_lib_104,
     test_gdal_translate_lib_cleanup
     ]
 

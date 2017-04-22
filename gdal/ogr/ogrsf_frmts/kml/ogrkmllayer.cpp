@@ -341,7 +341,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     if( poDS_->GetLayerCount() == 1 && nWroteFeatureCount_ == 0 )
     {
         CPLString osRet = WriteSchema();
-        if( osRet.size() )
+        if( !osRet.empty() )
             VSIFPrintfL( fp, "%s", osRet.c_str() );
         bSchemaWritten_ = true;
 
@@ -362,7 +362,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         {
             OGRFieldDefn *poField = poFeatureDefn_->GetFieldDefn( iField );
 
-            if( poFeature->IsFieldSet( iField )
+            if( poFeature->IsFieldSetAndNotNull( iField )
                 && EQUAL(poField->GetNameRef(), poDS_->GetNameField()) )
             {
                 const char *pszRaw = poFeature->GetFieldAsString( iField );
@@ -385,7 +385,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         {
             OGRFieldDefn *poField = poFeatureDefn_->GetFieldDefn( iField );
 
-            if( poFeature->IsFieldSet( iField )
+            if( poFeature->IsFieldSetAndNotNull( iField )
                 && EQUAL(poField->GetNameRef(), poDS_->GetDescriptionField()) )
             {
                 const char *pszRaw = poFeature->GetFieldAsString( iField );
@@ -494,7 +494,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     {
         OGRFieldDefn *poField = poFeatureDefn_->GetFieldDefn( iField );
 
-        if( poFeature->IsFieldSet( iField ))
+        if( poFeature->IsFieldSetAndNotNull( iField ))
         {
             if (NULL != poDS_->GetNameField() &&
                 EQUAL(poField->GetNameRef(), poDS_->GetNameField()) )
@@ -558,8 +558,15 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         pszGeometry =
             OGR_G_ExportToKML( (OGRGeometryH)poWGS84Geom,
                                poDS_->GetAltitudeMode());
-
-        VSIFPrintfL( fp, "      %s\n", pszGeometry );
+        if( pszGeometry != NULL )
+        {
+            VSIFPrintfL( fp, "      %s\n", pszGeometry );
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Export of geometry to KML failed");
+        }
         CPLFree( pszGeometry );
 
         poWGS84Geom->getEnvelope( &sGeomBounds );

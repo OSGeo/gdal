@@ -7,12 +7,13 @@
 
 <h1>SENTINEL2 -- Sentinel-2 Products</h1>
 
-<p>Driver for Sentinel-2 Level-1B, Level-1C and Level-2A products. (GDAL &gt;= 2.1)</p>
+<p>Driver for Sentinel-2 Level-1B, Level-1C and Level-2A products. (GDAL &gt;= 2.1).
+Starting with GDAL 2.1.3, Level-1C with "Safe Compact" encoding are also supported.</p>
 
 <p>The SENTINEL2 driver will be used if the main metadata .xml file at the
 root of a SENTINEL2 data product is opened (whose name is typically
 S2A_OPER_MTD_SAFL1C_....xml). It can also accept directly .zip files downloaded
-from the <a href="https://scihub.esa.int/">Sentinels Scientific Data Hub</a></p>
+from the <a href="https://scihub.copernicus.eu/">Sentinels Scientific Data Hub</a></p>
 
 <p>To be able to read the imagery, GDAL must be configured with at least one of
 the JPEG2000 capable drivers.</p>
@@ -85,7 +86,8 @@ All tiles of same resolution and projection are mosaiced together.
 If a product spans over several UTM zones,
 they will be exposed as separate subdatasets.</p>
 
-<p>It is also possible to open the metadata .xml file of each tile, in which case
+<p>It is also possible to open the metadata .xml file of each tile (only for
+original L1C encoding, not supported on "Safe Compact" encoding), in which case
 the driver will typically expose the 4 above mentioned types of sub-datasets.</p>
 
 <h2>Level-2A</h2>

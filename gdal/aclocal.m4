@@ -1,6 +1,6 @@
-# generated automatically by aclocal 1.14.1 -*- Autoconf -*-
+# generated automatically by aclocal 1.15 -*- Autoconf -*-
 
-# Copyright (C) 1996-2013 Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -15,6 +15,8 @@ m4_ifndef([AC_CONFIG_MACRO_DIRS], [m4_defun([_AM_CONFIG_MACRO_DIRS], [])m4_defun
 m4_include([m4/acinclude.m4])
 m4_include([m4/ax_cflags_warn_all.m4])
 m4_include([m4/ax_check_compile_flag.m4])
+m4_include([m4/ax_cxx_compile_stdcxx.m4])
+m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 m4_include([m4/ax_lib_expat.m4])
 m4_include([m4/ax_lib_libkml.m4])
 m4_include([m4/ax_lib_sqlite3.m4])
@@ -31,3 +33,4 @@ m4_include([m4/ltsugar.m4])
 m4_include([m4/ltversion.m4])
 m4_include([m4/lt~obsolete.m4])
 m4_include([m4/pkg.m4])
+m4_include([m4/sfcgal.m4])

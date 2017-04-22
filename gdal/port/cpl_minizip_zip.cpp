@@ -26,17 +26,20 @@
    Read zip.h for more info
 */
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
-#include "zlib.h"
-#include "cpl_conv.h"
-#include "cpl_minizip_zip.h"
 #include "cpl_port.h"
-#include "cpl_string.h"
+#include "cpl_minizip_zip.h"
 
 #include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minizip_unzip.h"
+#include "cpl_string.h"
 
 #ifdef NO_ERRNO_H
     extern int errno;
@@ -44,7 +47,7 @@
 #   include <errno.h>
 #endif
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 #ifndef VERSIONMADEBY
 # define VERSIONMADEBY   (0x0) /* platform dependent */
@@ -172,9 +175,9 @@ static linkedlist_datablock_internal* allocate_new_datablock()
                  ALLOC(sizeof(linkedlist_datablock_internal));
     if (ldi!=NULL)
     {
-        ldi->next_datablock = NULL ;
-        ldi->filled_in_this_block = 0 ;
-        ldi->avail_in_this_block = SIZEDATA_INDATABLOCK ;
+        ldi->next_datablock = NULL;
+        ldi->filled_in_this_block = 0;
+        ldi->avail_in_this_block = SIZEDATA_INDATABLOCK;
     }
     return ldi;
 }
@@ -224,7 +227,7 @@ static int add_data_in_datablock(linkedlist_data*ll,
             ldi->next_datablock = allocate_new_datablock();
             if (ldi->next_datablock == NULL)
                 return ZIP_INTERNALERROR;
-            ldi = ldi->next_datablock ;
+            ldi = ldi->next_datablock;
             ll->last_block = ldi;
         }
 
@@ -240,7 +243,7 @@ static int add_data_in_datablock(linkedlist_data*ll,
 
         ldi->filled_in_this_block += copy_this;
         ldi->avail_in_this_block -= copy_this;
-        from_copy += copy_this ;
+        from_copy += copy_this;
         len -= copy_this;
     }
     return ZIP_OK;
@@ -311,14 +314,15 @@ static uLong ziplocal_TmzDateToDosDate( const tm_zip *ptm,
 
 /****************************************************************************/
 
-static int ziplocal_getByte(const zlib_filefunc_def* pzlib_filefunc_def,
-                            voidpf filestream, int *pi)
+static int ziplocal_getByte( const zlib_filefunc_def* pzlib_filefunc_def,
+                             voidpf filestream, int *pi )
 {
     unsigned char c = 0;
-    int err = (int)ZREAD(*pzlib_filefunc_def,filestream,&c,1);
+    const int err =
+        static_cast<int>(ZREAD(*pzlib_filefunc_def, filestream, &c, 1));
     if (err==1)
     {
-        *pi = (int)c;
+        *pi = static_cast<int>(c);
         return ZIP_OK;
     }
     else
@@ -412,17 +416,18 @@ static uLong ziplocal_SearchCentralDir(
             uBackRead = uMaxBack;
         else
             uBackRead+=BUFREADCOMMENT;
-        uLong uReadPos = uSizeFile-uBackRead ;
+        uLong uReadPos = uSizeFile-uBackRead;
 
         uLong uReadSize = ((BUFREADCOMMENT+4) < (uSizeFile-uReadPos)) ?
                      (BUFREADCOMMENT+4) : (uSizeFile-uReadPos);
-        if (ZSEEK(*pzlib_filefunc_def,filestream,uReadPos,ZLIB_FILEFUNC_SEEK_SET)!=0)
+        if( ZSEEK(*pzlib_filefunc_def, filestream, uReadPos,
+                  ZLIB_FILEFUNC_SEEK_SET) != 0 )
             break;
 
         if (ZREAD(*pzlib_filefunc_def,filestream,buf,uReadSize)!=uReadSize)
             break;
 
-        for (int i=(int)uReadSize-3; (i--)>0;)
+        for( int i = static_cast<int>(uReadSize) - 3; (i--) > 0;)
             if (((*(buf+i))==0x50) && ((*(buf+i+1))==0x4b) &&
                 ((*(buf+i+2))==0x05) && ((*(buf+i+3))==0x06))
             {
@@ -712,7 +717,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     zi->ci.stream_initialised = 0;
     zi->ci.pos_in_buffered_data = 0;
     zi->ci.raw = raw;
-    zi->ci.pos_local_header = (uLong) ZTELL(zi->z_filefunc,zi->filestream) ;
+    zi->ci.pos_local_header = (uLong) ZTELL(zi->z_filefunc,zi->filestream);
     zi->ci.size_centralheader = SIZECENTRALHEADER + size_filename +
                                       size_extrafield_global + size_comment;
     zi->ci.central_header = (char*)ALLOC((uInt)zi->ci.size_centralheader);
@@ -1094,7 +1099,7 @@ extern int ZEXPORT cpl_zipClose (
     centraldir_pos_inzip = (uLong) ZTELL(zi->z_filefunc,zi->filestream);
     if (err==ZIP_OK)
     {
-        linkedlist_datablock_internal* ldi = zi->central_dir.first_block ;
+        linkedlist_datablock_internal* ldi = zi->central_dir.first_block;
         while (ldi!=NULL)
         {
             if ((err==ZIP_OK) && (ldi->filled_in_this_block>0))
@@ -1208,7 +1213,7 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
         return NULL;
     }
 
-    CPLZip* psZip = (CPLZip*)CPLMalloc(sizeof(CPLZip));
+    CPLZip* psZip = static_cast<CPLZip *>(CPLMalloc(sizeof(CPLZip)));
     psZip->hZip = hZip;
     psZip->papszFilenames = papszFilenames;
     return psZip;
@@ -1268,7 +1273,7 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
         const GUInt16 nDataLength = 1 + 4 +
                                     static_cast<GUInt16>(strlen(pszFilename));
         nExtraLength = 2 + 2 + nDataLength;
-        pabyExtra = reinterpret_cast<GByte*>(CPLMalloc(nExtraLength));
+        pabyExtra = static_cast<GByte*>(CPLMalloc(nExtraLength));
         const GUInt16 nHeaderIdLE = CPL_LSBWORD16(0x7075);
         memcpy(pabyExtra, &nHeaderIdLE, 2);
         const GUInt16 nDataLengthLE = CPL_LSBWORD16(nDataLength);

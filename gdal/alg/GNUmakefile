@@ -10,10 +10,14 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdalsievefilter.o gdalwarpkernel_opencl.o polygonize.o \
 		contour.o gdaltransformgeolocs.o \
 		gdal_octave.o gdal_simplesurf.o gdalmatching.o delaunay.o \
-		gdalpansharpen.o
+		gdalpansharpen.o gdalapplyverticalshiftgrid.o
 
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
+endif
+
+ifeq ($(HAVE_SFCGAL),yes)
+CPPFLAGS 	:=	-DHAVE_SFCGAL=1 $(SFCGAL_CFLAGS) $(CPPFLAGS)
 endif
 
 ifeq ($(HAVE_ARMADILLO),yes)
@@ -27,7 +31,7 @@ ifeq ($(QHULL_SETTING),internal)
 CPPFLAGS 	:=	-DINTERNAL_QHULL $(CPPFLAGS)
 endif
 
-CPPFLAGS	:=	$(CPPFLAGS) $(OPENCL_FLAGS)
+CPPFLAGS	:=	-I../frmts/vrt $(CPPFLAGS) $(OPENCL_FLAGS) $(PROJ_FLAGS) $(PROJ_INCLUDE)
 
 default:	$(OBJ:.o=.$(OBJ_EXT)) gdalgridavx.$(OBJ_EXT) gdalgridsse.$(OBJ_EXT)
 

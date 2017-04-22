@@ -571,7 +571,10 @@ normally documented in the format specific documentation.
  @param pszName the name for the new layer.  This should ideally not
 match any existing layer on the datasource.
  @param hSpatialRef handle to the coordinate system to use for the new layer,
-or NULL if no coordinate system is available.
+or NULL if no coordinate system is available. The driver might only increase
+the reference counter of the object to take ownership, and not make a full copy,
+so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
+are done with the object.
  @param eType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written.
  @param papszOptions a StringList of name=value options.  Options are driver
@@ -2146,7 +2149,7 @@ This function is the same as the C function OGR_L_DeleteField().
 
 \fn OGRErr OGR_L_DeleteField( OGRLayerH hLayer, int iField);
 
-\brief Create a new field on a layer.
+\brief Delete an existing field on a layer.
 
 You must use this to delete existing fields
 on a real layer. Internally the OGRFeatureDefn for the layer will be updated

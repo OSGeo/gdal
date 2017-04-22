@@ -150,7 +150,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
     {
         if( poFeature->GetFID() == OGRNullFID )
         {
-            if( poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) )
+            if( poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) )
             {
                 poFeature->SetFID(
                     poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex));
@@ -158,7 +158,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
         }
         else
         {
-            if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+            if( !poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) ||
                 poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -189,7 +189,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
         const int nFieldCount = poFeatureDefn->GetFieldCount();
         for( int iField = 0; iField < nFieldCount; iField++ )
         {
-            if( !poFeature->IsFieldSet( iField ) &&
+            if( !poFeature->IsFieldSetAndNotNull( iField ) &&
                 poFeature->GetFieldDefnRef(iField)->GetDefault() != NULL )
             {
                 bHasDefaultValue = true;
@@ -346,7 +346,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                     osCommand +=
                         CPLString().Printf(
                             "GeomFromEWKT('SRID=%d;%s'::TEXT) ", poGFldDefn->nSRSId, pszWKT );
-                    OGRFree( pszWKT );
+                    CPLFree( pszWKT );
                 }
                 else
                     osCommand += "''";
@@ -429,7 +429,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                                                 nPostGISMinor );
         }
 
-        if (osCommand.size() > 0)
+        if (!osCommand.empty())
             osCommand += "\t";
         if ( pszGeom )
         {
@@ -481,7 +481,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
     int nFIDIndex = -1;
     if( bFIDColumnInCopyFields )
     {
-        if (osCommand.size() > 0)
+        if (!osCommand.empty())
             osCommand += "\t";
 
         nFIDIndex = poFeatureDefn->GetFieldIndex( pszFIDColumn );
@@ -500,7 +500,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
     /* Now process the remaining fields */
 
     int nFieldCount = poFeatureDefn->GetFieldCount();
-    bool bAddTab = osCommand.size() > 0;
+    bool bAddTab = !osCommand.empty();
 
     for( int i = 0; i < nFieldCount;  i++ )
     {
@@ -514,7 +514,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
             osCommand += "\t";
         bAddTab = true;
 
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
         {
             osCommand += "\\N" ;
 
@@ -685,7 +685,7 @@ OGRErr OGRPGDumpLayer::StartCopy( int bSetFID )
 
     CPLString osFields = BuildCopyFields(bSetFID);
 
-    size_t size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
+    size_t size = osFields.size() +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
 
     snprintf( pszCommand, size,
@@ -730,7 +730,7 @@ CPLString OGRPGDumpLayer::BuildCopyFields( int bSetFID )
 
     for( int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
     {
-        if( osFieldList.size() > 0 )
+        if( !osFieldList.empty() )
             osFieldList += ", ";
 
         OGRGeomFieldDefn* poGFldDefn = poFeatureDefn->GetGeomFieldDefn(i);
@@ -742,7 +742,7 @@ CPLString OGRPGDumpLayer::BuildCopyFields( int bSetFID )
     bFIDColumnInCopyFields = pszFIDColumn != NULL && bSetFID;
     if( bFIDColumnInCopyFields )
     {
-        if( osFieldList.size() > 0 )
+        if( !osFieldList.empty() )
             osFieldList += ", ";
 
         nFIDIndex = poFeatureDefn->GetFieldIndex( pszFIDColumn );
@@ -757,7 +757,7 @@ CPLString OGRPGDumpLayer::BuildCopyFields( int bSetFID )
 
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
-       if( osFieldList.size() > 0 )
+       if( !osFieldList.empty() )
             osFieldList += ", ";
 
         osFieldList += OGRPGDumpEscapeColumnName(pszName);
@@ -951,6 +951,12 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
                                  OGRPGCommonEscapeStringCbk pfnEscapeString,
                                  void* userdata)
 {
+    if( poFeature->IsFieldNull(i) )
+    {
+        osCommand += "NULL";
+        return;
+    }
+
     OGRFeatureDefn* poFeatureDefn = poFeature->GetDefnRef();
     OGRFieldType nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
     OGRFieldSubType eSubType = poFeatureDefn->GetFieldDefn(i)->GetSubType();
@@ -1553,7 +1559,7 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
         osFieldType =
             OGRPGCommonLayerGetType(oField, bPreservePrecision,
                                     CPL_TO_BOOL(bApproxOK));
-        if (osFieldType.size() == 0)
+        if (osFieldType.empty())
             return OGRERR_FAILURE;
     }
 
@@ -1764,7 +1770,7 @@ void OGRPGDumpLayer::SetOverrideColumnTypes( const char* pszOverrideColumnTypes 
             osCur += *pszIter;
         pszIter ++;
     }
-    if( osCur.size() )
+    if( !osCur.empty() )
         papszOverrideColumnTypes = CSLAddString(papszOverrideColumnTypes, osCur);
 }
 
@@ -1775,14 +1781,14 @@ void OGRPGDumpLayer::SetOverrideColumnTypes( const char* pszOverrideColumnTypes 
 CPLErr OGRPGDumpLayer::SetMetadata(char** papszMD, const char* pszDomain)
 {
     OGRLayer::SetMetadata(papszMD, pszDomain);
-    if( osForcedDescription.size() != 0 &&
+    if( !osForcedDescription.empty() &&
         (pszDomain == NULL || EQUAL(pszDomain, "")) )
     {
         OGRLayer::SetMetadataItem("DESCRIPTION", osForcedDescription);
     }
 
     if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
-        osForcedDescription.size() == 0 )
+        osForcedDescription.empty() )
     {
         const char* l_pszDescription = OGRLayer::GetMetadataItem("DESCRIPTION");
         CPLString osCommand;
@@ -1805,7 +1811,7 @@ CPLErr OGRPGDumpLayer::SetMetadataItem(const char* pszName, const char* pszValue
                                        const char* pszDomain)
 {
     if( (pszDomain == NULL || EQUAL(pszDomain, "")) && pszName != NULL &&
-        EQUAL(pszName, "DESCRIPTION") && osForcedDescription.size() )
+        EQUAL(pszName, "DESCRIPTION") && !osForcedDescription.empty() )
     {
         return CE_None;
     }

@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test Arc/Info ASCII Grid support. Ported from gdrivers/aaigrid.py.
@@ -24,25 +23,18 @@
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-//
-//  $Log: test_gdal_aaigrid.cpp,v $
-//  Revision 1.3  2006/12/06 15:39:13  mloskot
-//  Added file header comment and copyright note.
-//
-//
-///////////////////////////////////////////////////////////////////////////////
-#include <tut.h> // TUT
-#include <tut_gdal.h>
-#include <gdal_common.h>
-#include <gdal.h> // GDAL
+
+#include "gdal_unit_test.h"
+
+#include <cpl_string.h>
 #include <gdal_alg.h>
 #include <gdal_priv.h>
-#include <cpl_string.h>
-#include <sstream> // C++
-#include <string>
-#include <vector>
+#include <gdal.h>
 
 #include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace tut
 {

@@ -21,6 +21,7 @@ extern "C" {
 #include <time.h>
 #include "type.h"
 
+#if 0  // Unused with GDAL.
 size_t reallocFGets (char **Ptr, size_t *LenBuff, FILE * fp);
 
 void mySplit (const char *data, char symbol, size_t *Argc, char ***Argv,
@@ -42,6 +43,7 @@ int myGlob (const char *dirName, const char *filter, size_t * Argc,
 int FileCopy (const char *fileIn, const char *fileOut);
 
 void FileTail (const char *fileName, char **tail);
+#endif  // Unused with GDAL.
 
 double myRound (double data, uChar place);
 
@@ -51,6 +53,7 @@ void strTrimRight (char *str, char c);
 
 void strCompact (char *str, char c);
 
+#if 0  // Unused with GDAL.
 void strReplace (char *str, char c1, char c2);
 
 void strToUpper (char *str);
@@ -58,12 +61,15 @@ void strToUpper (char *str);
 void strToLower (char *str);
 
 int strcmpNoCase (const char *str1, const char *str2);
+#endif  // Unused with GDAL.
 
-int GetIndexFromStr (const char *str, char **Opt, int *Index);
+int GetIndexFromStr (const char *str, const char * const *Opt, int *Index);
 
+#if 0  // Unused with GDAL.
 /* Rename because changed error return from -1 to 1 */
 /* Rename because trying to phase it out. */
 int myParseTime3 (const char *is, time_t * AnsTime);
+#endif  // Unused with GDAL.
 
 #ifdef __cplusplus
 }

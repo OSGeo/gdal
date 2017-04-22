@@ -693,3 +693,31 @@ public:
 
 } /*extend */
 };
+
+/************************************************************************/
+/*                        ApplyVerticalShiftGrid()                      */
+/************************************************************************/
+
+%newobject ApplyVerticalShiftGrid;
+%apply Pointer NONNULL {GDALDatasetShadow *src_ds, GDALDatasetShadow *grid_ds};
+#ifndef SWIGJAVA
+%feature( "kwargs" ) ApplyVerticalShiftGrid;
+#endif
+%inline %{
+GDALDatasetShadow* ApplyVerticalShiftGrid( GDALDatasetShadow *src_ds,
+                                           GDALDatasetShadow *grid_ds,
+                                           bool inverse = false,
+                                           double srcUnitToMeter = 1.0,
+                                           double dstUnitToMeter = 1.0,
+                                           char** options = NULL ) {
+  GDALDatasetShadow *ds = GDALApplyVerticalShiftGrid( src_ds, grid_ds,
+                                                      inverse,
+                                                      srcUnitToMeter,
+                                                      dstUnitToMeter,
+                                                      options );
+  return ds;
+
+}
+%}
+%clear GDALDatasetShadow *src_ds, GDALDatasetShadow *grid_ds;
+

@@ -83,10 +83,10 @@ public:
     ISIS2Dataset();
     virtual ~ISIS2Dataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -144,7 +144,7 @@ char **ISIS2Dataset::GetFileList()
 {
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    if( strlen(osExternalCube) > 0 )
+    if( !osExternalCube.empty() )
         papszFileList = CSLAddString( papszFileList, osExternalCube );
 
     return papszFileList;
@@ -157,7 +157,7 @@ char **ISIS2Dataset::GetFileList()
 const char *ISIS2Dataset::GetProjectionRef()
 
 {
-    if( strlen(osProjection) > 0 )
+    if( !osProjection.empty() )
         return osProjection;
 
     return GDALPamDataset::GetProjectionRef();
@@ -787,8 +787,8 @@ void ISIS2Dataset::CleanString( CPLString &osInput )
 
 {
    if(  ( osInput.size() < 2 ) ||
-        ((osInput.at(0) != '"'   || osInput.at(osInput.size()-1) != '"' ) &&
-        ( osInput.at(0) != '\'' || osInput.at(osInput.size()-1) != '\'')) )
+        ((osInput.at(0) != '"'   || osInput.back() != '"' ) &&
+        ( osInput.at(0) != '\'' || osInput.back() != '\'')) )
         return;
 
     char *pszWrk = CPLStrdup(osInput.c_str() + 1);

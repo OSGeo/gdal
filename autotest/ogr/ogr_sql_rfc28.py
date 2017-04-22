@@ -1313,6 +1313,259 @@ def ogr_rfc28_46():
     return 'success'
 
 ###############################################################################
+# Test LIMIT and OFFSET
+
+def ogr_rfc28_47():
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY LIMIT 0" )
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY LIMIT 1" )
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [168] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY ORDER BY EAS_ID LIMIT 1" )
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [158] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY ORDER BY PRFEDEA LIMIT 1" )
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'PRFEDEA', ['35043369'] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY WHERE 0 ORDER BY EAS_ID LIMIT 1" )
+    if lyr.GetNextFeature() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY WHERE EAS_ID = 168 LIMIT 11" )
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [168] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY WHERE EAS_ID = 168 OFFSET 0" )
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [168] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY WHERE EAS_ID = 168 OFFSET 1" )
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY OFFSET 10" )
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY OFFSET 8" )
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [165,170] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY LIMIT 1 OFFSET 8" )
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [165] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY LIMIT 2 OFFSET 8" )
+    lyr.SetNextByIndex(1)
+    f = lyr.GetNextFeature()
+    if f['EAS_ID'] != 170:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY ORDER BY EAS_ID DESC LIMIT 2" )
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [179,173] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM POLY ORDER BY EAS_ID DESC LIMIT 1 OFFSET 1" )
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [173] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT DISTINCT EAS_ID FROM POLY ORDER BY EAS_ID DESC LIMIT 2 OFFSET 3" )
+    tr = ogrtest.check_features_against_list( lyr, 'EAS_ID', [171,170] )
+    gdaltest.ds.ReleaseResultSet( lyr )
+    if not tr:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test date/datetime comparisons (#6810)
+
+def ogr_rfc28_48():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('lyr')
+    fld_defn = ogr.FieldDefn('dt', ogr.OFTDateTime)
+    lyr.CreateField(fld_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('dt', '2017/02/17 11:06:34')
+    lyr.CreateFeature(feat)
+
+    with gdaltest.error_handler():
+        if lyr.SetAttributeFilter('dt >= 2500000000') == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    lyr.SetAttributeFilter("dt >= 'a'")
+    with gdaltest.error_handler():
+        if lyr.GetFeatureCount() != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    lyr.SetAttributeFilter("'a' <= dt")
+    with gdaltest.error_handler():
+        if lyr.GetFeatureCount() != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    lyr.SetAttributeFilter("dt BETWEEN dt AND 'a'")
+    with gdaltest.error_handler():
+        if lyr.GetFeatureCount() != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    lyr.SetAttributeFilter("dt >= '2017/02/17 11:06:34'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt >= '2017/02/17'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt >= '2017/02/17 11:06:35'")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt > '2017/02/17 11:06:33'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt > '2017/02/17 11:06:34'")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt <= '2017/02/17 11:06:34'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt <= '2017/02/17 11:06:33'")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt < '2017/02/17 11:06:35'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt < '2017/02/17 11:06:34'")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt = '2017/02/17 11:06:34'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt = '2017/02/17 11:06:34.001'")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt BETWEEN dt AND dt")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt BETWEEN '2017/02/17 11:06:33.999' AND '2017/02/17 11:06:34.001'")
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt BETWEEN '2017/02/17 11:06:34.001' AND dt")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetAttributeFilter("dt BETWEEN dt AND '2017/02/17 11:06:33.999'")
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
@@ -1371,6 +1624,8 @@ gdaltest_list = [
     ogr_rfc28_44,
     ogr_rfc28_45,
     ogr_rfc28_46,
+    ogr_rfc28_47,
+    ogr_rfc28_48,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':

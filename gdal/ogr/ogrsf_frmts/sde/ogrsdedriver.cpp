@@ -49,7 +49,7 @@ OGRSDEDriver::~OGRSDEDriver()
 const char *OGRSDEDriver::GetName()
 
 {
-    return "SDE";
+    return "OGR_SDE";
 }
 
 /************************************************************************/

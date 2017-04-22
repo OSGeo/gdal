@@ -93,6 +93,7 @@ class OGROpenFileGDBLayer : public OGRLayer
     static void         GetBoundsFuncEx(const void* hFeature,
                                         CPLRectObj* pBounds,
                                         void* pQTUserData);
+    void                TryToDetectMultiPatchKind();
 
 public:
 
@@ -120,29 +121,29 @@ public:
   SPIState              GetSpatialIndexState() const { return m_eSpatialIndexState; }
   int                   IsValidLayerDefn() { return BuildLayerDefinition(); }
 
-  virtual const char* GetName() { return m_osName.c_str(); }
-  virtual OGRwkbGeometryType GetGeomType();
+  virtual const char* GetName() override { return m_osName.c_str(); }
+  virtual OGRwkbGeometryType GetGeomType() override;
 
-  virtual const char* GetFIDColumn();
+  virtual const char* GetFIDColumn() override;
 
-  virtual void        ResetReading();
-  virtual OGRFeature* GetNextFeature();
-  virtual OGRFeature* GetFeature( GIntBig nFeatureId );
-  virtual OGRErr      SetNextByIndex( GIntBig nIndex );
+  virtual void        ResetReading() override;
+  virtual OGRFeature* GetNextFeature() override;
+  virtual OGRFeature* GetFeature( GIntBig nFeatureId ) override;
+  virtual OGRErr      SetNextByIndex( GIntBig nIndex ) override;
 
-  virtual GIntBig     GetFeatureCount( int bForce = TRUE );
-  virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-  virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+  virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
+  virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+  virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-  virtual OGRFeatureDefn* GetLayerDefn();
+  virtual OGRFeatureDefn* GetLayerDefn() override;
 
-  virtual void        SetSpatialFilter( OGRGeometry * );
-  virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+  virtual void        SetSpatialFilter( OGRGeometry * ) override;
+  virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
-  virtual OGRErr      SetAttributeFilter( const char* pszFilter );
+  virtual OGRErr      SetAttributeFilter( const char* pszFilter ) override;
 
-  virtual int         TestCapability( const char * );
+  virtual int         TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -183,20 +184,20 @@ public:
 
   int                 Open(const char * );
 
-  virtual const char* GetName() { return m_pszName; }
-  virtual int         GetLayerCount() { return static_cast<int>(m_apoLayers.size()); }
+  virtual const char* GetName() override { return m_pszName; }
+  virtual int         GetLayerCount() override { return static_cast<int>(m_apoLayers.size()); }
 
-  virtual OGRLayer*   GetLayer( int );
-  virtual OGRLayer*   GetLayerByName( const char* pszName );
+  virtual OGRLayer*   GetLayer( int ) override;
+  virtual OGRLayer*   GetLayerByName( const char* pszName ) override;
 
   virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                   OGRGeometry *poSpatialFilter,
-                                  const char *pszDialect );
-  virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
+                                  const char *pszDialect ) override;
+  virtual void        ReleaseResultSet( OGRLayer * poResultsSet ) override;
 
-  virtual int         TestCapability( const char * );
+  virtual int         TestCapability( const char * ) override;
 
-  virtual char      **GetFileList();
+  virtual char      **GetFileList() override;
 };
 
 int OGROpenFileGDBIsComparisonOp(int op);

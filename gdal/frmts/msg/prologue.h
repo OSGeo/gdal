@@ -39,7 +39,7 @@
 class ReferenceGridRecord
 {
 public:
-  ReferenceGridRecord(std::ifstream & ifile);
+  explicit ReferenceGridRecord(std::ifstream & ifile);
 
   int NumberOfLines;
   int NumberOfColumns;
@@ -51,7 +51,7 @@ public:
 class PlannedCoverageVIS_IRRecord
 {
 public:
-  PlannedCoverageVIS_IRRecord(std::ifstream & ifile);
+  explicit PlannedCoverageVIS_IRRecord(std::ifstream & ifile);
 
   int SouthernLinePlanned;
   int NorthernLinePlanned;
@@ -62,7 +62,7 @@ public:
 class PlannedCoverageHRVRecord
 {
 public:
-  PlannedCoverageHRVRecord(std::ifstream & ifile);
+  explicit PlannedCoverageHRVRecord(std::ifstream & ifile);
   int LowerSouthLinePlanned;
   int LowerNorthLinePlanned;
   int LowerEastColumnPlanned;
@@ -75,8 +75,10 @@ public:
 
 class ImageDescriptionRecord
 {
+  CPL_DISALLOW_COPY_ASSIGN( ImageDescriptionRecord )
+
 public:
-  ImageDescriptionRecord(std::ifstream & ifile);
+  explicit ImageDescriptionRecord(std::ifstream & ifile);
   virtual ~ImageDescriptionRecord();
 
   unsigned char TypeOfProjection; // 1 == Geostationary, Earth centered in grid
@@ -93,7 +95,7 @@ public:
 class RadiometricProcessingRecord
 {
 public:
-  RadiometricProcessingRecord(std::ifstream & ifile);
+  explicit RadiometricProcessingRecord(std::ifstream & ifile);
 
   double Cal_Slope [12];
   double Cal_Offset [12];

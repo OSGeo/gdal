@@ -1869,7 +1869,7 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
     if( poFSPT->GetRepeatCount() != 1 )
     {
 #ifdef DEBUG
-        fprintf( stderr,
+        fprintf( stderr, /*ok*/
                  "Point features with other than one spatial linkage.\n" );
         poFRecord->Dump( stderr );
 #endif
@@ -3266,10 +3266,11 @@ bool S57Reader::FindAndApplyUpdates( const char * pszPath )
         //Creaing file extension
         CPLString extension;
         CPLString dirname;
+
         if( 1 <= iUpdate &&  iUpdate < 10 )
         {
             char buf[2];
-            snprintf( buf, sizeof(buf), "%i", iUpdate );
+            CPLsnprintf( buf, sizeof(buf), "%i", iUpdate );
             extension.append("00");
             extension.append(buf);
             dirname.append(buf);
@@ -3277,7 +3278,7 @@ bool S57Reader::FindAndApplyUpdates( const char * pszPath )
         else if( 10 <= iUpdate && iUpdate < 100 )
         {
             char buf[3];
-            snprintf( buf, sizeof(buf), "%i", iUpdate );
+            CPLsnprintf( buf, sizeof(buf), "%i", iUpdate );
             extension.append("0");
             extension.append(buf);
             dirname.append(buf);
@@ -3285,7 +3286,7 @@ bool S57Reader::FindAndApplyUpdates( const char * pszPath )
         else if( 100 <= iUpdate && iUpdate < 1000 )
         {
             char buf[4];
-            snprintf( buf, sizeof(buf), "%i", iUpdate );
+            CPLsnprintf( buf, sizeof(buf), "%i", iUpdate );
             extension.append(buf);
             dirname.append(buf);
         }
@@ -3400,8 +3401,8 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 
                 for( int i = 0; i < nVCount; i++ )
                 {
-                    GInt32 nX = CPL_LSBINT32PTR(pabyData + 4*(i*3+1));
-                    GInt32 nY = CPL_LSBINT32PTR(pabyData + 4*(i*3+0));
+                    GInt32 nX = CPL_LSBSINT32PTR(pabyData + 4*(i*3+1));
+                    GInt32 nY = CPL_LSBSINT32PTR(pabyData + 4*(i*3+0));
 
                     if( bGotExtents )
                     {
@@ -3431,8 +3432,8 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 
                 for( int i = 0; i < nVCount; i++ )
                 {
-                    const GInt32 nX = CPL_LSBINT32PTR(pabyData + 4*(i*2+1));
-                    const GInt32 nY = CPL_LSBINT32PTR(pabyData + 4*(i*2+0));
+                    const GInt32 nX = CPL_LSBSINT32PTR(pabyData + 4*(i*2+1));
+                    const GInt32 nY = CPL_LSBSINT32PTR(pabyData + 4*(i*2+0));
 
                     if( bGotExtents )
                     {

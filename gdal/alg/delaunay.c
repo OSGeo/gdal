@@ -171,6 +171,14 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
     VSIFree(points);
     points = NULL;
 
+#if qh_QHpointer  /* see user.h */
+    if (qh_qh == NULL)
+    {
+        CPLReleaseMutex(hMutex);
+        return NULL;
+    }
+#endif
+
     /* Establish a map from QHull facet id to the index in our array of sequential facets */
     panMapQHFacetIdToFacetIdx = (int*)VSI_MALLOC2_VERBOSE(sizeof(int), qh facet_id);
     if( panMapQHFacetIdToFacetIdx == NULL )

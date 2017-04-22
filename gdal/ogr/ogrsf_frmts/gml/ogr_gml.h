@@ -77,24 +77,24 @@ class OGRGMLLayer : public OGRLayer
 
                         virtual ~OGRGMLLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
 
-    GIntBig             GetFeatureCount( int bForce = TRUE );
-    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    GIntBig             GetFeatureCount( int bForce = TRUE ) override;
+    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -124,7 +124,7 @@ class OGRGMLDataSource : public OGRDataSource
     bool                bIsOutputGML3;
     bool                bIsOutputGML3Deegree; /* if TRUE, then bIsOutputGML3 is also TRUE */
     bool                bIsOutputGML32; /* if TRUE, then bIsOutputGML3 is also TRUE */
-    bool                bIsLongSRSRequired;
+    OGRGMLSRSNameFormat eSRSNameFormat;
     bool                bWriteSpaceIndentation;
 
     OGRSpatialReference* poWriteGlobalSRS;
@@ -171,16 +171,16 @@ class OGRGMLDataSource : public OGRDataSource
     bool                Open( GDALOpenInfo* poOpenInfo );
     bool                Create( const char *pszFile, char **papszOptions );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
     virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
+                                      char ** = NULL ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     VSILFILE            *GetOutputFP() const { return fpOutput; }
     IGMLReader          *GetReader() const { return poReader; }
@@ -194,8 +194,8 @@ class OGRGMLDataSource : public OGRDataSource
     bool                IsGML3Output() const { return bIsOutputGML3; }
     bool                IsGML3DeegreeOutput() const { return bIsOutputGML3Deegree; }
     bool                IsGML32Output() const { return bIsOutputGML32; }
-    bool                IsLongSRSRequired() const { return bIsLongSRSRequired; }
-    int                 WriteSpaceIndentation() const { return bWriteSpaceIndentation; }
+    OGRGMLSRSNameFormat GetSRSNameFormat() const { return eSRSNameFormat; }
+    bool                WriteSpaceIndentation() const { return bWriteSpaceIndentation; }
     const char         *GetGlobalSRSName();
 
     bool                GetInvertAxisOrderIfLatLong() const { return m_bInvertAxisOrderIfLatLong; }
@@ -217,8 +217,8 @@ class OGRGMLDataSource : public OGRDataSource
 
     virtual OGRLayer *          ExecuteSQL( const char *pszSQLCommand,
                                             OGRGeometry *poSpatialFilter,
-                                            const char *pszDialect );
-    virtual void                ReleaseResultSet( OGRLayer * poResultsSet );
+                                            const char *pszDialect ) override;
+    virtual void                ReleaseResultSet( OGRLayer * poResultsSet ) override;
 
     static bool          CheckHeader(const char* pszStr);
 };

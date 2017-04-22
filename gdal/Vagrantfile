@@ -7,26 +7,56 @@ require 'socket'
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-
-  vm_ram = ENV['VAGRANT_VM_RAM'] || 1024
+  # specify memory size in MiB
+  vm_ram = ENV['VAGRANT_VM_RAM'] || 2048
   vm_cpu = ENV['VAGRANT_VM_CPU'] || 2
-
-  config.vm.box = "precise64"
+  vm_ram_bytes = vm_ram * 1024 * 1024
 
   config.vm.hostname = "gdal-vagrant"
-  config.vm.box_url = "http://files.vagrantup.com/precise64.box"
   config.vm.host_name = "gdal-vagrant"
 
-  config.vm.network :forwarded_port, guest: 80, host: 8080
+  # proxy configurations.
+  # these options are also specified by environment variables;
+  #   VAGRANT_HTTP_PROXY, VAGRANT_HTTPS_PROXY, VAGRANT_FTP_PROXY
+  #   VAGRANT_NO_PROXY, VAGRANT_SVN_PROXY, VAGRANT_GIT_PROXY
+  # if you want to set these on Vagrantfile, edit followings.
+  if Vagrant.has_plugin?("vagrant-proxyconf")
+    config.proxy.enabled   = false  # true|false
+    #config.proxy.http      = "http://192.168.0.2:3128"
+    #config.proxy.ftp       = "http://192.168.0.2:3128"
+    #config.proxy.https     = "DIRECT"
+    #config.proxy.no_proxy  = "localhost,127.0.0.1,.example.com"
+    #config.svn_proxy.http  = ""
+    #config.git_proxy.http  = ""
+  end
 
   config.vm.synced_folder "../autotest/", "/home/vagrant/autotest/"
 
-  config.vm.provider :virtualbox do |vb|
+  config.vm.provider :virtualbox do |vb,ovrd|
+     ovrd.vm.network :forwarded_port, guest: 80, host: 8080
+     ovrd.vm.box = "precise64"
+     ovrd.vm.box_url = "http://files.vagrantup.com/precise64.box"
      vb.customize ["modifyvm", :id, "--memory", vm_ram]
      vb.customize ["modifyvm", :id, "--cpus", vm_cpu]
      vb.customize ["modifyvm", :id, "--ioapic", "on"]
      vb.name = "gdal-vagrant"
-   end
+  end
+
+  config.vm.provider :lxc do |lxc,ovrd|
+    ovrd.vm.box = "fgrehm/precise64-lxc"
+    lxc.backingstore = 'dir'
+    lxc.customize 'cgroup.memory.limit_in_bytes', vm_ram_bytes
+    lxc.customize 'aa_allow_incomplete', 1
+    lxc.container_name = "gdal-vagrant"
+  end
+ 
+  config.vm.provider :hyperv do |hyperv,ovrd|
+    ovrd.vm.box = "hashicorp/precise64"
+    ovrd.ssh.username = "vagrant"
+    hyperv.cpus = vm_cpu
+    hyperv.memory = vm_ram
+    hyperv.vmname = "gdal-vagrant"
+  end
 
   ppaRepos = [
     "ppa:ubuntugis/ubuntugis-unstable", "ppa:marlam/gta"
@@ -58,6 +88,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "libpoppler-dev",
     "libspatialite-dev",
     "gpsbabel",
+    "libboost-all-dev",
+    "libgmp-dev",
+    "libmpfr-dev",
     "swig",
     "libhdf4-alt-dev",
     "libhdf5-serial-dev",
@@ -85,11 +118,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "mono-mcs"
   ];
 
-  unless File.exists?(".no_apt_cache")
-    cache_dir = "apt-cache/#{config.vm.box}"
-    FileUtils.mkdir_p(cache_dir) unless Dir.exists?(cache_dir)
-    puts "Using local apt cache, #{cache_dir}"
-    config.vm.synced_folder cache_dir, "/var/cache/apt/archives"
+  if Vagrant.has_plugin?("vagrant-cachier")
+    config.cache.scope = :box
   end
 
   if Dir.glob("#{File.dirname(__FILE__)}/.vagrant/machines/default/*/id").empty?
@@ -106,6 +136,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	  pkg_cmd << "apt-get install -q -y " + packageList.join(" ") << " ; "
 	  config.vm.provision :shell, :inline => pkg_cmd
     scripts = [
+      "sfcgal.sh",
       "swig-1.3.40.sh",
       "libkml.sh",
       "openjpeg.sh",

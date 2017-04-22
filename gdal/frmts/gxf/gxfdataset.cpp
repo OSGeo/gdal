@@ -57,8 +57,8 @@ class GXFDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr      GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 /************************************************************************/
@@ -74,9 +74,9 @@ class GXFRasterBand : public GDALPamRasterBand
   public:
 
                 GXFRasterBand( GXFDataset *, int );
-    double      GetNoDataValue( int* bGotNoDataValue );
+    double      GetNoDataValue( int* bGotNoDataValue ) override;
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

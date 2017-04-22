@@ -28,28 +28,43 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_error.h"
+#include "cpl_port.h"
+#include "gt_wkt_srs.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include <algorithm>
+#if HAVE_CXX11 && !defined(__MINGW32__)
+#define HAVE_CXX11_MUTEX 1
+#endif
+#if HAVE_CXX11_MUTEX
+#include <mutex>
+#endif
+
 #include "cpl_conv.h"
 #include "cpl_csv.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
-#include "gdal.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 #include "gdal_csv.h"
-#include "geovalues.h"
 #include "gt_citation.h"
-#include "gt_wkt_srs.h"
 #include "gt_wkt_srs_for_gdal.h"
 #include "gt_wkt_srs_priv.h"
 #include "gtiff.h"
+#include "gdal.h"
+#include "geokeys.h"
+#include "geovalues.h"
+#include "ogr_core.h"
 #include "ogr_spatialref.h"
+#include "ogr_srs_api.h"
+#include "tiff.h"
+#include "tiffio.h"
 #include "tifvsi.h"
 #include "xtiffio.h"
-
-#include <cmath>
-#include <algorithm>
-
-#if HAVE_CXX11
-#include <mutex>
-#endif
 
 CPL_CVSID("$Id$")
 
@@ -76,17 +91,13 @@ CPL_C_END
 
 static const char * const papszDatumEquiv[] =
 {
-    "Militar_Geographische_Institut",
-    "Militar_Geographische_Institute",
-    "World_Geodetic_System_1984",
-    "WGS_1984",
-    "WGS_72_Transit_Broadcast_Ephemeris",
-    "WGS_1972_Transit_Broadcast_Ephemeris",
-    "World_Geodetic_System_1972",
-    "WGS_1972",
-    "European_Terrestrial_Reference_System_89",
-    "European_Reference_System_1989",
-    NULL
+  "Militar_Geographische_Institut", "Militar_Geographische_Institute",
+  "World_Geodetic_System_1984", "WGS_1984",
+  "WGS_72_Transit_Broadcast_Ephemeris", "WGS_1972_Transit_Broadcast_Ephemeris",
+  "World_Geodetic_System_1972", "WGS_1972",
+  "European_Terrestrial_Reference_System_89", "European_Reference_System_1989",
+  "D_North_American_1927", "North_American_Datum_1927", // #6863
+  NULL
 };
 
 // Older libgeotiff's won't list this.
@@ -98,19 +109,19 @@ static const char * const papszDatumEquiv[] =
 /*                       LibgeotiffOneTimeInit()                        */
 /************************************************************************/
 
-#if HAVE_CXX11
+#if HAVE_CXX11_MUTEX
 static std::mutex oDeleteMutex;
 #else
 static CPLMutex* hMutex = NULL;
-#endif  // HAVE_CXX11
+#endif  // HAVE_CXX11_MUTEX
 
 void LibgeotiffOneTimeInit()
 {
-#if HAVE_CXX11
+#if HAVE_CXX11_MUTEX
     std::lock_guard<std::mutex> oLock(oDeleteMutex);
 #else
     CPLMutexHolder oHolder( &hMutex);
-#endif  // HAVE_CXX11
+#endif  // HAVE_CXX11_MUTEX
 
     static bool bOneTimeInitDone = false;
 
@@ -133,7 +144,7 @@ void LibgeotiffOneTimeInit()
 
 void LibgeotiffOneTimeCleanupMutex()
 {
-#if !HAVE_CXX11
+#if !HAVE_CXX11_MUTEX
     // >= C++11 uses a lock_guard that does not need cleanup.
     if( hMutex == NULL )
         return;
@@ -720,7 +731,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                                                 psDefn->SemiMinor );
 
         /* Take official inverse flattening definition in the WGS84 case */
-        if (fabs(dfSemiMajor-SRS_WGS84_SEMIMAJOR) < 1e-10 &&
+        if (fabs(dfSemiMajor - SRS_WGS84_SEMIMAJOR) < 1e-10 &&
             fabs(dfInvFlattening - SRS_WGS84_INVFLATTENING) < 1e-10)
             dfInvFlattening = SRS_WGS84_INVFLATTENING;
     }
@@ -1121,7 +1132,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         if( (verticalCSType >= 5001 && verticalCSType <= 5033)
             && verticalDatum == -1 )
         {
-            verticalDatum = verticalCSType+1000;
+            verticalDatum = verticalCSType + 1000;
             verticalCSType = -1;
         }
 
@@ -1179,7 +1190,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                                         szSearchKey, CC_Integer,
                                         "coord_ref_sys_name" );
                 if( pszValue != NULL && *pszValue != '\0' )
-                    strncpy( citation, pszValue, sizeof(citation) );
+                    snprintf( citation, sizeof(citation), "%s", pszValue );
             }
 
             if( verticalUnits < 1 || verticalUnits == KvUserDefined )
@@ -1480,14 +1491,14 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         nUOMLengthCode = atoi(poSRS->GetAuthorityCode("PROJCS|UNIT"));
     else if( (pszLinearUOMName != NULL
          && EQUAL(pszLinearUOMName,SRS_UL_FOOT))
-        || fabs(dfLinearUOM-GTIFAtof(SRS_UL_FOOT_CONV)) < 0.0000001 )
+        || fabs(dfLinearUOM - GTIFAtof(SRS_UL_FOOT_CONV)) < 0.0000001 )
         nUOMLengthCode = 9002;  // International foot.
     else if( (pszLinearUOMName != NULL
               && EQUAL(pszLinearUOMName,SRS_UL_US_FOOT)) ||
-             std::abs(dfLinearUOM-GTIFAtof(SRS_UL_US_FOOT_CONV)) <
+             std::abs(dfLinearUOM - GTIFAtof(SRS_UL_US_FOOT_CONV)) <
              0.0000001 )
         nUOMLengthCode = 9003;  // US survey foot.
-    else if( fabs(dfLinearUOM-1.0) > 0.00000001 )
+    else if( fabs(dfLinearUOM - 1.0) > 0.00000001 )
         nUOMLengthCode = KvUserDefined;
 
 /* -------------------------------------------------------------------- */
@@ -2726,7 +2737,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
             char szID[32] = {};
             GDAL_GCP *psGCP = *ppasGCPList + iGCP;
 
-            snprintf( szID, sizeof(szID), "%d", iGCP+1 );
+            snprintf( szID, sizeof(szID), "%d", iGCP + 1 );
             psGCP->pszId = CPLStrdup( szID );
             psGCP->pszInfo = CPLStrdup("");
             psGCP->dfGCPPixel = padfTiePoints[iGCP*6+0];

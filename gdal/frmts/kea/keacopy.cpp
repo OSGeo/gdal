@@ -458,7 +458,7 @@ static void KEACopyGCPs(GDALDataset *pDataset, kealib::KEAImageIO *pImageIO)
         {
         }
 
-        for( std::vector<kealib::KEAImageGCP*>::iterator itr = KEAGCPs.begin(); itr != KEAGCPs.end(); itr++)
+        for( std::vector<kealib::KEAImageGCP*>::iterator itr = KEAGCPs.begin(); itr != KEAGCPs.end(); ++itr)
         {
             delete (*itr);
         }

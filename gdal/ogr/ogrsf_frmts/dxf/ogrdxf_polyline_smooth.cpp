@@ -101,7 +101,7 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
     std::vector<DXFSmoothPolylineVertex>::const_iterator oIter = m_vertices.begin();
     std::vector<DXFSmoothPolylineVertex>::const_iterator oEndIter = m_vertices.end();
 
-    oEndIter--;
+    --oEndIter;
 
     DXFSmoothPolylineVertex begin = *oIter;
 
@@ -110,7 +110,7 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 
     while(oIter != oEndIter)
     {
-        oIter++;
+        ++oIter;
         DXFSmoothPolylineVertex end = *oIter;
 
         const double len = GetLength(begin,end);
@@ -171,7 +171,7 @@ void DXFSmoothPolyline::EmitArc(
     const DXFSmoothPolylineVertex& end,
     double radius, double len, double bulge,
     OGRLineString* poLS,
-    double dfZ ) const
+    double dfZ )
 {
     assert(poLS);
 
@@ -309,7 +309,7 @@ void DXFSmoothPolyline::Close()
     if(m_vertices.size() >= 2)
     {
         const bool bVisuallyClosed =
-            (m_vertices[m_vertices.size() - 1].shares_2D_pos(m_vertices[0]));
+            (m_vertices.back().shares_2D_pos(m_vertices[0]));
 
         if(!bVisuallyClosed)
         {

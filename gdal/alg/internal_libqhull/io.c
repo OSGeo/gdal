@@ -1747,7 +1747,7 @@ void qh_printend(FILE *fp, qh_PRINT format, facetT *facetlist, setT *facets, boo
     prints each ridge of facet
 */
 void qh_printend4geom(FILE *fp, facetT *facet, int *nump, boolT printall) {
-  realT color[3];
+  realT color[3] = { 0.0 };
   int i, num= *nump;
   facetT *neighbor, **neighborp;
   ridgeT *ridge, **ridgep;
@@ -2975,7 +2975,7 @@ void qh_printpoints_out(FILE *fp, facetT *facetlist, setT *facets, boolT printal
     prints a 2-d, 3-d, or 4-d point as 3-d VECT's relative to normal or to center point
 */
 void qh_printpointvect(FILE *fp, pointT *point, coordT *normal, pointT *center, realT radius, realT color[3]) {
-  realT diff[4], pointA[4];
+  realT diff[4] = { 0.0 }, pointA[4] = { 0.0 };
   int k;
 
   for (k=qh hull_dim; k--; ) {
@@ -3158,7 +3158,7 @@ void qh_printvdiagram(FILE *fp, qh_PRINT format, facetT *facetlist, setT *facets
   vertices= qh_markvoronoi(facetlist, facets, printall, &isLower, &numcenters);
   totcount= qh_printvdiagram2 (NULL, NULL, vertices, innerouter, False);
   qh_fprintf(fp, 9231, "%d\n", totcount);
-  totcount= qh_printvdiagram2 (fp, printvridge, vertices, innerouter, True /* inorder*/);
+  /*totcount=*/ qh_printvdiagram2 (fp, printvridge, vertices, innerouter, True /* inorder*/);
   qh_settempfree(&vertices);
 #if 0  /* for testing qh_eachvoronoi_all */
   qh_fprintf(fp, 9232, "\n");

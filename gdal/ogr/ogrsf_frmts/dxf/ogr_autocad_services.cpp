@@ -76,7 +76,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
                  && pszInput[2] == '+' )
         {
             CPLString osHex;
-            int iChar = 0;
+            unsigned int iChar = 0;
 
             osHex.assign( pszInput+3, 4 );
             sscanf( osHex.c_str(), "%x", &iChar );
@@ -458,7 +458,7 @@ void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
     }
     else
     {
-        CPLAssert( osOldStyle[osOldStyle.size()-1] == ')' );
+        CPLAssert( osOldStyle.back() == ')' );
         osPreAngle.assign( osOldStyle, 0, osOldStyle.size() - 1 );
         osPostAngle = ")";
     }
@@ -496,7 +496,7 @@ void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
     }
     else
     {
-        CPLAssert( osOldStyle[osOldStyle.size()-1] == ')' );
+        CPLAssert( osOldStyle.back() == ')' );
         osPreScale.assign( osOldStyle, 0, osOldStyle.size() - 1 );
         osPostScale = ")";
     }

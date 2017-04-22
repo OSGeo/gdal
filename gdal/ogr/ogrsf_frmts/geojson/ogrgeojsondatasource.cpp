@@ -27,16 +27,35 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_geojson.h"
-#include "ogrgeojsonutils.h"
-#include "ogrgeojsonreader.h"
-#include "gdal_utils.h"
-#include <cpl_http.h>
-#include <json.h> // JSON-C
-#include "ogrgeojsonwriter.h"
+
 #include <cstddef>
 #include <cstdlib>
+#include <cstring>
 #include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_http.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "cpl_vsi_error.h"
+#include "json.h"
+// #include "json_object.h"
+#include "gdal_utils.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_geometry.h"
+#include "ogr_spatialref.h"
+#include "ogrgeojsonreader.h"
+#include "ogrgeojsonutils.h"
+#include "ogrgeojsonwriter.h"
+#include "ogrsf_frmts.h"
+// #include "symbol_renames.h"
+
 
 CPL_CVSID("$Id$");
 
@@ -117,6 +136,7 @@ int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
         return FALSE;
     }
 
+    SetDescription( poOpenInfo->pszFilename );
     LoadLayers(poOpenInfo->papszOpenOptions);
     if( nLayers_ == 0 )
     {
@@ -226,6 +246,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
     const char* pszNativeMediaType =
         CSLFetchNameValue(papszOptions, "NATIVE_MEDIA_TYPE");
     bool bWriteCRSIfWGS84 = true;
+    bool bFoundNameInNativeData = false;
     if( pszNativeMediaType &&
         EQUAL(pszNativeMediaType, "application/vnd.geo+json") )
     {
@@ -268,6 +289,17 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
                     continue;
                 }
 
+                if( strcmp(it.key, "name") == 0 )
+                    bFoundNameInNativeData = true;
+
+                // If a native description exists, ignore it if an explicit
+                // DESCRIPTION option has been provided.
+                if( strcmp(it.key, "description") == 0 &&
+                    CSLFetchNameValue(papszOptions, "DESCRIPTION") )
+                {
+                    continue;
+                }
+
                 json_object* poKey = json_object_new_string(it.key);
                 VSIFPrintfL( fpOut_, "%s: ",
                              json_object_to_json_string(poKey) );
@@ -277,6 +309,26 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
             }
             json_object_put(poObj);
         }
+    }
+
+    if( !bFoundNameInNativeData &&
+        CPLFetchBool(papszOptions, "WRITE_NAME", true) &&
+        !EQUAL(pszNameIn, OGRGeoJSONLayer::DefaultName) &&
+        !EQUAL(pszNameIn, "") )
+    {
+        json_object* poName = json_object_new_string(pszNameIn);
+        VSIFPrintfL( fpOut_, "\"name\": %s,\n",
+                     json_object_to_json_string(poName) );
+        json_object_put(poName);
+    }
+
+    const char* pszDescription = CSLFetchNameValue(papszOptions, "DESCRIPTION");
+    if( pszDescription )
+    {
+        json_object* poDesc = json_object_new_string(pszDescription);
+        VSIFPrintfL( fpOut_, "\"description\": %s,\n",
+                     json_object_to_json_string(poDesc) );
+        json_object_put(poDesc);
     }
 
     OGRCoordinateTransformation* poCT = NULL;
@@ -414,12 +466,12 @@ int OGRGeoJSONDataSource::Create( const char* pszName,
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
-    fpOut_ = VSIFOpenL( pszName, "w" );
+    fpOut_ = VSIFOpenExL( pszName, "w", true );
     if( NULL == fpOut_)
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to create GeoJSON datasource: %s.",
-                  pszName );
+                  "Failed to create GeoJSON datasource: %s: %s",
+                  pszName, VSIGetLastErrorMsg() );
         return FALSE;
     }
 
@@ -504,21 +556,7 @@ int OGRGeoJSONDataSource::ReadFromFile( GDALOpenInfo* poOpenInfo )
 
     CPLAssert( NULL != pszGeoData_ );
 
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb+");
-        if( fp == NULL )
-        {
-            CPLError(CE_Failure, CPLE_FileIO,
-                     "Update not supported because file is not writable");
-            return FALSE;
-        }
-        else
-        {
-            bUpdatable_ = true;
-        }
-        VSIFCloseL(fp);
-    }
+    bUpdatable_ = ( poOpenInfo->eAccess == GA_Update );
 
     return TRUE;
 }
@@ -779,15 +817,6 @@ void OGRGeoJSONDataSource::FlushCache()
         {
             papoLayers_[i]->SetUpdated(false);
 
-            CPLString osBackup(pszName_);
-            osBackup += ".bak";
-            if( VSIRename(pszName_, osBackup) < 0 )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot create backup copy");
-                return;
-            }
-
             bool bOK = false;
 
             // Disable all filters.
@@ -837,8 +866,10 @@ void OGRGeoJSONDataSource::FlushCache()
                     GDALVectorTranslateOptionsNew(papszOptions, NULL);
                 CSLDestroy(papszOptions);
                 GDALDatasetH hSrcDS = this;
+                CPLString osNewFilename(pszName_);
+                osNewFilename += ".tmp";
                 GDALDatasetH hOutDS =
-                    GDALVectorTranslate(pszName_, NULL, 1, &hSrcDS,
+                    GDALVectorTranslate(osNewFilename, NULL, 1, &hSrcDS,
                                         psOptions, NULL);
                 GDALVectorTranslateOptionsFree(psOptions);
 
@@ -848,20 +879,31 @@ void OGRGeoJSONDataSource::FlushCache()
                     GDALClose(hOutDS);
                     bOK = (CPLGetLastErrorType() == CE_None);
                 }
+                if( bOK )
+                {
+                    CPLString osBackup(pszName_);
+                    osBackup += ".bak";
+                    if( VSIRename(pszName_, osBackup) < 0 )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                "Cannot create backup copy");
+                    }
+                    else if( VSIRename(osNewFilename, pszName_) < 0 )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                "Cannot rename %s to %s",
+                                osNewFilename.c_str(), pszName_);
+                    }
+                    else
+                    {
+                        VSIUnlink(osBackup);
+                    }
+                }
             }
 
             // Restore filters.
             papoLayers_[i]->m_poAttrQuery = poAttrQueryBak;
             papoLayers_[i]->m_poFilterGeom = poFilterGeomBak;
-
-            if( bOK )
-            {
-                VSIUnlink(osBackup);
-            }
-            else
-            {
-                VSIRename(osBackup, pszName_);
-            }
         }
     }
 }

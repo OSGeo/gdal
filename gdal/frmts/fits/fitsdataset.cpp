@@ -84,8 +84,8 @@ public:
   FITSRasterBand(FITSDataset*, int);
   virtual ~FITSRasterBand();
 
-  virtual CPLErr IReadBlock( int, int, void * );
-  virtual CPLErr IWriteBlock( int, int, void * );
+  virtual CPLErr IReadBlock( int, int, void * ) override;
+  virtual CPLErr IWriteBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

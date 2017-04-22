@@ -48,7 +48,7 @@ namespace PCIDSK
         PCIDSKBuffer( const char *src, int size );
         ~PCIDSKBuffer();
 
-        char	*buffer;
+        char        *buffer;
         int         buffer_size;
 
         PCIDSKBuffer &operator=(const PCIDSKBuffer& src);

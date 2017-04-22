@@ -55,6 +55,12 @@ def thread_test_1_worker(args_dict):
 
 def thread_test_1():
 
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+    except:
+        return 'skip'
+
     threads = []
     args_array = []
     for i in range(4):

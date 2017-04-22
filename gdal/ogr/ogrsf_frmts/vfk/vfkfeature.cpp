@@ -211,7 +211,7 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
                 char s[3] = {}; /* 15 */
 
                 float r = 0.0f;
-                if (2 != sscanf(ftype, "%s %f", s, &r) || r < 0) {
+                if (2 != sscanf(ftype, "%2s %f", s, &r) || r < 0) {
                     CPLDebug("OGR-VFK", "%s: invalid circle (unknown or negative radius) "
                              "fid = " CPL_FRMT_GIB, m_poDataBlock->GetName(), m_nFID);
                     m_bValid = false;
@@ -490,6 +490,9 @@ bool VFKFeature::SetProperty( int iIndex, const char *pszValue )
     switch (fType) {
     case OFTInteger:
         m_propertyList[iIndex] = VFKProperty(atoi(pszValue));
+        break;
+    case OFTInteger64:
+        m_propertyList[iIndex] = VFKProperty(CPLAtoGIntBig(pszValue));
         break;
     case OFTReal:
         m_propertyList[iIndex] = VFKProperty(CPLAtof(pszValue));

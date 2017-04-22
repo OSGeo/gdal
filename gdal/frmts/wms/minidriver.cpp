@@ -9,7 +9,7 @@
  * Copyright (c) 2007, Adam Nowacki
  *               2016, Lucian Plesea
  *
- * A single global MiniDriverManger exists, containing factories for all possible
+ * A single global MiniDriverManager exists, containing factories for all possible
  * types of WMS minidrivers.  Minidriver object factories get registered in wmsdriver.cpp,
  * during the WMS driver registration with GDAL
  *
@@ -83,7 +83,7 @@ WMSMiniDriver *NewWMSMiniDriver(const CPLString &name) {
     return factory->New();
 }
 
-// Registeres a minidriver factory with the global minidriver manager
+// Registers a minidriver factory with the global minidriver manager
 void WMSRegisterMiniDriverFactory(WMSMiniDriverFactory *mdf) {
     g_mini_driver_manager.Register(mdf);
 }

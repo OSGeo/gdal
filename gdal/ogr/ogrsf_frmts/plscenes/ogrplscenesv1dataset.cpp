@@ -141,9 +141,9 @@ OGRLayer* OGRPLScenesV1Dataset::ParseCatalog(json_object* poCatalog)
 
     OGRPLScenesV1Layer* poPLLayer = new OGRPLScenesV1Layer(
                             this, pszId, pszSpecURL, pszItemsURL, nCount);
-    if( osDisplayName.size() )
+    if( !osDisplayName.empty() )
         poPLLayer->SetMetadataItem("SHORT_DESCRIPTION", osDisplayName.c_str());
-    if( osDisplayDescription.size() )
+    if( !osDisplayDescription.empty() )
         poPLLayer->SetMetadataItem("DESCRIPTION", osDisplayDescription.c_str());
     m_papoLayers = (OGRPLScenesV1Layer**) CPLRealloc(m_papoLayers,
                                 sizeof(OGRPLScenesV1Layer*) * (m_nLayers + 1));
@@ -196,7 +196,7 @@ void OGRPLScenesV1Dataset::EstablishLayerList()
     CPLString osURL(m_osNextCatalogPageURL);
     m_osNextCatalogPageURL = "";
 
-    while( osURL.size() != 0 )
+    while( !osURL.empty() )
     {
         json_object* poObj = RunRequest(osURL);
         if( poObj == NULL )
@@ -278,7 +278,6 @@ json_object* OGRPLScenesV1Dataset::RunRequest(const char* pszURL,
     if( STARTS_WITH(m_osBaseURL, "/vsimem/") &&
         STARTS_WITH(pszURL, "/vsimem/") )
     {
-        CPLDebug("PLSCENES", "Fetching %s", pszURL);
         psResult = (CPLHTTPResult*) CPLCalloc(1, sizeof(CPLHTTPResult));
         vsi_l_offset nDataLengthLarge = 0;
         CPLString osURL(pszURL);
@@ -289,6 +288,7 @@ json_object* OGRPLScenesV1Dataset::RunRequest(const char* pszURL,
             osURL += "&POSTFIELDS=";
             osURL += pszPostContent;
         }
+        CPLDebug("PLSCENES", "Fetching %s", osURL.c_str());
         GByte* pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLengthLarge, FALSE);
         size_t nDataLength = static_cast<size_t>(nDataLengthLarge);
         if( pabyBuf )
@@ -583,7 +583,7 @@ retry:
 
     osRasterURL = pszLink ? pszLink : "";
     json_object_put(poObj);
-    if( osRasterURL.size() == 0 )
+    if( osRasterURL.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find link to scene %s",
                  osScene.c_str());
@@ -639,7 +639,7 @@ retry:
             {
                 for(int i=0;i<poFeat->GetFieldCount();i++)
                 {
-                    if( poFeat->IsFieldSet(i) )
+                    if( poFeat->IsFieldSetAndNotNull(i) )
                     {
                         const char* pszKey = poFeat->GetFieldDefnRef(i)->GetNameRef();
                         const char* pszVal = poFeat->GetFieldAsString(i);
@@ -683,9 +683,9 @@ retry:
     if( bUseVSICURL )
     {
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_USE_HEAD",
-                                    osOldHead.size() ? osOldHead.c_str(): NULL);
+                                    !osOldHead.empty() ? osOldHead.c_str(): NULL);
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME",
-                                    osOldAllowedFilename.size() ? osOldAllowedFilename.c_str(): NULL);
+                                    !osOldAllowedFilename.empty() ? osOldAllowedFilename.c_str(): NULL);
     }
 
     return poOutDS;
@@ -707,7 +707,7 @@ GDALDataset* OGRPLScenesV1Dataset::Open(GDALOpenInfo* poOpenInfo)
     poDS->m_osAPIKey = CSLFetchNameValueDef(papszOptions, "api_key",
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "API_KEY",
                                 CPLGetConfigOption("PL_API_KEY","")) );
-    if( poDS->m_osAPIKey.size() == 0 )
+    if( poDS->m_osAPIKey.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing PL_API_KEY configuration option or API_KEY open option");

@@ -27,17 +27,33 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
-#include "gdal_proxy.h"
-#include "gdal_utils.h"
-#include "gdal_utils_priv.h"
-#include "gdal_vrt.h"
-#include "vrtdataset.h"
-
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 
+#include "cpl_port.h"
+#include "gdal_utils.h"
+#include "gdal_utils_priv.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
 #include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_vrt.h"
+#include "gdal_priv.h"
+#include "gdal_proxy.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_srs_api.h"
+#include "vrtdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -180,6 +196,7 @@ class VRTBuilder
     char               *pszVRTNoData;
     char               *pszOutputSRS;
     char               *pszResampling;
+    char              **papszOpenOptions;
 
     /* Internal variables */
     char               *pszProjectionRef;
@@ -219,7 +236,8 @@ class VRTBuilder
                            int bAddAlpha, int bHideNoData, int nSubdataset,
                            const char* pszSrcNoData, const char* pszVRTNoData,
                            const char* pszOutputSRS,
-                           const char* pszResampling);
+                           const char* pszResampling,
+                           const char* const* papszOpenOptionsIn );
 
                ~VRTBuilder();
 
@@ -243,12 +261,14 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilenameIn,
                        int bAddAlphaIn, int bHideNoDataIn, int nSubdatasetIn,
                        const char* pszSrcNoDataIn, const char* pszVRTNoDataIn,
                        const char* pszOutputSRSIn,
-                       const char* pszResamplingIn)
+                       const char* pszResamplingIn,
+                       const char* const * papszOpenOptionsIn )
 {
     pszOutputFilename = CPLStrdup(pszOutputFilenameIn);
     nInputFiles = nInputFilesIn;
     pahSrcDS = NULL;
     ppszInputFilenames = NULL;
+    papszOpenOptions = CSLDuplicate(const_cast<char**>(papszOpenOptionsIn));
 
     if( ppszInputFilenamesIn )
     {
@@ -356,6 +376,7 @@ VRTBuilder::~VRTBuilder()
     CPLFree(padfVRTNoData);
     CPLFree(pszOutputSRS);
     CPLFree(pszResampling);
+    CSLDestroy(papszOpenOptions);
 }
 
 /************************************************************************/
@@ -799,6 +820,9 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
                                         psDatasetProperties->nRasterYSize,
                                         GA_ReadOnly, TRUE, pszProjectionRef,
                                         psDatasetProperties->adfGeoTransform);
+        reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->
+                                        SetOpenOptions( papszOpenOptions );
+
         GDALProxyPoolDatasetAddSrcBandDescription(hProxyDS,
                                             psDatasetProperties->firstBandType,
                                             psDatasetProperties->nBlockXSize,
@@ -905,6 +929,8 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
                                         psDatasetProperties->nRasterYSize,
                                         GA_ReadOnly, TRUE, pszProjectionRef,
                                         psDatasetProperties->adfGeoTransform);
+        reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->
+                                        SetOpenOptions( papszOpenOptions );
 
         for(int j=0;j<nMaxBandNo;j++)
         {
@@ -1040,7 +1066,10 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
             padfSrcNoData = (double *) CPLMalloc(sizeof(double) * nSrcNoDataCount);
             for(int i=0;i<nSrcNoDataCount;i++)
             {
-                if( !ArgIsNumeric(papszTokens[i]) && !EQUAL(papszTokens[i], "nan") )
+                if( !ArgIsNumeric(papszTokens[i]) &&
+                    !EQUAL(papszTokens[i], "nan") &&
+                    !EQUAL(papszTokens[i], "-inf") &&
+                    !EQUAL(papszTokens[i], "inf") )
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg, "Invalid -srcnodata value");
                     CSLDestroy(papszTokens);
@@ -1065,7 +1094,10 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
             padfVRTNoData = (double *) CPLMalloc(sizeof(double) * nVRTNoDataCount);
             for(int i=0;i<nVRTNoDataCount;i++)
             {
-                if( !ArgIsNumeric(papszTokens[i]) && !EQUAL(papszTokens[i], "nan") )
+                if( !ArgIsNumeric(papszTokens[i]) &&
+                    !EQUAL(papszTokens[i], "nan") &&
+                    !EQUAL(papszTokens[i], "-inf") &&
+                    !EQUAL(papszTokens[i], "inf") )
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg, "Invalid -vrtnodata value");
                     CSLDestroy(papszTokens);
@@ -1089,7 +1121,9 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
 
         GDALDatasetH hDS =
             (pahSrcDS) ? pahSrcDS[i] :
-                         GDALOpen(ppszInputFilenames[i], GA_ReadOnly );
+                GDALOpenEx( ppszInputFilenames[i],
+                            GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
+                            papszOpenOptions, NULL );
         pasDatasetProperties[i].isFileOK = FALSE;
 
         if (hDS)
@@ -1293,6 +1327,7 @@ struct GDALBuildVRTOptions
     int nBandCount;
     int nMaxBandNo;
     char* pszResampling;
+    char** papszOpenOptions;
 
     /*! allow or suppress progress monitor and other non-error output */
     int bQuiet;
@@ -1324,6 +1359,7 @@ GDALBuildVRTOptions* GDALBuildVRTOptionsClone(const GDALBuildVRTOptions *psOptio
         psOptions->panBandList = static_cast<int*>(CPLMalloc(sizeof(int) * psOptionsIn->nBandCount));
         memcpy(psOptions->panBandList, psOptionsIn->panBandList, sizeof(int) * psOptionsIn->nBandCount);
     }
+    if( psOptionsIn->papszOpenOptions ) psOptions->papszOpenOptions = CSLDuplicate(psOptionsIn->papszOpenOptions);
     return psOptions;
 }
 
@@ -1436,7 +1472,8 @@ GDALDatasetH GDALBuildVRT( const char *pszDest,
                         psOptions->bSeparate, psOptions->bAllowProjectionDifference,
                         psOptions->bAddAlpha, psOptions->bHideNoData, psOptions->nSubdataset,
                         psOptions->pszSrcNoData, psOptions->pszVRTNoData,
-                        psOptions->pszOutputSRS, psOptions->pszResampling);
+                        psOptions->pszOutputSRS, psOptions->pszResampling,
+                        psOptions->papszOpenOptions);
 
     GDALDatasetH hDstDS =
         (GDALDatasetH)oBuilder.Build(psOptions->pfnProgress, psOptions->pProgressData);
@@ -1508,7 +1545,7 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
     int argc = CSLCount(papszArgv);
-    for( int iArg = 0; iArg < argc; iArg++ )
+    for( int iArg = 0; papszArgv != NULL && iArg < argc; iArg++ )
     {
         if( EQUAL(papszArgv[iArg],"-tileindex") && iArg + 1 < argc )
         {
@@ -1672,6 +1709,12 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
             CPLFree(psOptions->pszResampling);
             psOptions->pszResampling = CPLStrdup(papszArgv[++iArg]);
         }
+        else if( EQUAL(papszArgv[iArg], "-oo") && iArg+1 < argc )
+        {
+            psOptions->papszOpenOptions =
+                    CSLAddString( psOptions->papszOpenOptions,
+                                  papszArgv[++iArg] );
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
@@ -1724,6 +1767,7 @@ void GDALBuildVRTOptionsFree( GDALBuildVRTOptions *psOptions )
         CPLFree( psOptions->pszOutputSRS );
         CPLFree( psOptions->panBandList );
         CPLFree( psOptions->pszResampling );
+        CSLDestroy( psOptions->papszOpenOptions );
     }
 
     CPLFree(psOptions);

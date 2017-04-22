@@ -40,8 +40,7 @@ CPL_CVSID("$Id$");
 OGRMySQLResultLayer::OGRMySQLResultLayer( OGRMySQLDataSource *poDSIn,
                                           const char * pszRawQueryIn,
                                           MYSQL_RES *hResultSetIn ) :
-    pszRawStatement(CPLStrdup(pszRawQueryIn)),
-    nSRSId(0)  // TODO(schwehr): Does this shadow nSRSId in OGRMySQLLayer?
+    pszRawStatement(CPLStrdup(pszRawQueryIn))
 {
     poDS = poDSIn;
     iNextShapeId = 0;

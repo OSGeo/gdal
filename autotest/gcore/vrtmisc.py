@@ -510,6 +510,43 @@ def vrtmisc_16():
 
     return "success"
 
+###############################################################################
+# Check that the serialized xml:VRT doesn't include itself (#6767)
+
+def vrtmisc_17():
+
+    ds = gdal.Open('data/byte.tif')
+    vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_17.vrt', ds)
+    xml_vrt = vrt_ds.GetMetadata('xml:VRT')[0]
+    vrt_ds = None
+
+    gdal.Unlink('/vsimem/vrtmisc_17.vrt')
+
+    if xml_vrt.find('xml:VRT') >= 0:
+        return 'fail'
+
+    return "success"
+
+###############################################################################
+# Check GetMetadata('xml:VRT') behaviour on a in-memory VRT copied from a VRT
+
+def vrtmisc_18():
+
+    ds = gdal.Open('data/byte.vrt')
+    vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('', ds)
+    xml_vrt = vrt_ds.GetMetadata('xml:VRT')[0]
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    vrt_ds = None
+
+    if xml_vrt.find('<SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>') < 0 and \
+       xml_vrt.find('<SourceFilename relativeToVRT="1">data\\byte.tif</SourceFilename>') < 0:
+        gdaltest.post_reason('fail')
+        print(xml_vrt)
+        return 'fail'
+
+    return "success"
 
 ###############################################################################
 # Cleanup.
@@ -534,6 +571,8 @@ gdaltest_list = [
     vrtmisc_14,
     vrtmisc_15,
     vrtmisc_16,
+    vrtmisc_17,
+    vrtmisc_18,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':

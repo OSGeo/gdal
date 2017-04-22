@@ -144,8 +144,9 @@ int CPL_DLL CPLTestBoolean( const char *pszValue );
 #ifdef __cplusplus
 #ifdef DO_NOT_USE_DEBUG_BOOL
 #define CPLTestBool(x) CPL_TO_BOOL(CPLTestBoolean(x))
-#define CPLFetchBool(list,key,default) CPL_TO_BOOL(CSLFetchBoolean(list,key,default))
-#else
+#define CPLFetchBool(list,key,default) \
+    CPL_TO_BOOL(CSLFetchBoolean(list,key,default))
+#else /* DO_NOT_USE_DEBUG_BOOL */
 /* Prefer these for C++ code. */
 #ifdef DEBUG_BOOL
 extern "C++" {
@@ -195,15 +196,15 @@ char CPL_DLL ** CSLParseCommandLine(const char* pszCommandLine);
 
 /** Scheme for CPLEscapeString()/CPLUnescapeString() for backlash quoting */
 #define CPLES_BackslashQuotable 0
-/** Scheme for CPLEscapeString()/CPLUnescapeString() for XML escaping */
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for XML */
 #define CPLES_XML               1
-/** Scheme for CPLEscapeString()/CPLUnescapeString() for URL encoding */
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for URL */
 #define CPLES_URL               2
-/** Scheme for CPLEscapeString()/CPLUnescapeString() for SQL escaping */
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for SQL */
 #define CPLES_SQL               3
-/** Scheme for CPLEscapeString()/CPLUnescapeString() for CSV escaping */
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for CSV */
 #define CPLES_CSV               4
-/** Scheme for CPLEscapeString()/CPLUnescapeString() for XML escaping (preserving quotes) */
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for XML (preserves quotes) */
 #define CPLES_XML_BUT_QUOTES    5
 
 char CPL_DLL *CPLEscapeString( const char *pszString, int nLength,
@@ -237,32 +238,49 @@ size_t CPL_DLL CPLStrnlen(const char *pszStr, size_t nMaxLen);
 /* -------------------------------------------------------------------- */
 /*      Locale independent formatting functions.                        */
 /* -------------------------------------------------------------------- */
-int CPL_DLL CPLvsnprintf(char *str, size_t size, const char* fmt,
-                         va_list args) CPL_PRINT_FUNC_FORMAT (3, 0);
-int CPL_DLL CPLsnprintf(char *str, size_t size,
-                        const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(3,4);
+int CPL_DLL CPLvsnprintf( char *str, size_t size,
+                          CPL_FORMAT_STRING(const char* fmt),
+                          va_list args )
+    CPL_PRINT_FUNC_FORMAT(3, 0 );
+
+/* ALIAS_CPLSNPRINTF_AS_SNPRINTF might be defined to enable GCC 7 */
+/* -Wformat-truncation= warnings, but shouldn't be set for normal use */
+#if defined(ALIAS_CPLSNPRINTF_AS_SNPRINTF)
+#define CPLsnprintf snprintf
+#else
+int CPL_DLL CPLsnprintf( char *str, size_t size,
+                         CPL_FORMAT_STRING(const char* fmt), ... )
+    CPL_PRINT_FUNC_FORMAT(3, 4);
+#endif
+
 /*! @cond Doxygen_Suppress */
 #if defined(GDAL_COMPILATION) && !defined(DONT_DEPRECATE_SPRINTF)
-int CPL_DLL CPLsprintf(char *str, const char* fmt, ...)
-    CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use CPLsnprintf instead");
+int CPL_DLL CPLsprintf( char *str, CPL_FORMAT_STRING(const char* fmt), ... )
+    CPL_PRINT_FUNC_FORMAT(2, 3)
+    CPL_WARN_DEPRECATED("Use CPLsnprintf instead");
 #else
-int CPL_DLL CPLsprintf(char *str, const char* fmt, ...)
+int CPL_DLL CPLsprintf( char *str, CPL_FORMAT_STRING(const char* fmt), ... )
     CPL_PRINT_FUNC_FORMAT(2, 3);
 #endif
 /*! @endcond */
-int CPL_DLL CPLprintf(const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(1, 2);
+int CPL_DLL CPLprintf( CPL_FORMAT_STRING(const char* fmt), ... )
+    CPL_PRINT_FUNC_FORMAT(1, 2);
 
 /* For some reason Doxygen_Suppress is needed to avoid warning. Not sure why */
 /*! @cond Doxygen_Suppress */
 /* caution: only works with limited number of formats */
-int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...) CPL_SCAN_FUNC_FORMAT(2, 3);
+int CPL_DLL CPLsscanf( const char* str,
+                       CPL_SCANF_FORMAT_STRING(const char* fmt), ... )
+    CPL_SCAN_FUNC_FORMAT(2, 3);
 /*! @endcond */
 
-const char CPL_DLL *CPLSPrintf(const char *fmt, ...)
+const char CPL_DLL *CPLSPrintf( CPL_FORMAT_STRING(const char *fmt), ... )
     CPL_PRINT_FUNC_FORMAT(1, 2) CPL_WARN_UNUSED_RESULT;
-char CPL_DLL **CSLAppendPrintf(char **papszStrList, const char *fmt, ...)
+char CPL_DLL **CSLAppendPrintf( char **papszStrList,
+                                CPL_FORMAT_STRING(const char *fmt), ... )
     CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPLVASPrintf(char **buf, const char *fmt, va_list args )
+int CPL_DLL CPLVASPrintf( char **buf,
+                          CPL_FORMAT_STRING(const char *fmt), va_list args )
     CPL_PRINT_FUNC_FORMAT(2, 0);
 
 /* -------------------------------------------------------------------- */
@@ -296,11 +314,11 @@ char CPL_DLL *CPLRecodeFromWChar(
 wchar_t CPL_DLL *CPLRecodeToWChar(
     const char *pszSource, const char *pszSrcEncoding,
     const char *pszDstEncoding ) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPLIsUTF8(const char* pabyData, int nLen);
+int CPL_DLL CPLIsUTF8( const char* pabyData, int nLen );
 char CPL_DLL *CPLForceToASCII(
     const char* pabyData, int nLen,
-    char chReplacementChar) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPLStrlenUTF8(const char *pszUTF8Str);
+    char chReplacementChar ) CPL_WARN_UNUSED_RESULT;
+int CPL_DLL CPLStrlenUTF8( const char *pszUTF8Str );
 
 CPL_C_END
 
@@ -310,48 +328,27 @@ CPL_C_END
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
+extern "C++"
+{
+#ifndef DOXYGEN_SKIP
 #include <string>
-
-/*
- * Simple trick to avoid "using" declaration in header for new compilers
- * but make it still working with old compilers which throw C2614 errors.
- *
- * Define MSVC_OLD_STUPID_BEHAVIOUR
- * for old compilers: VC++ 5 and 6 as well as eVC++ 3 and 4.
- */
-
-/*
- * Detect old MSVC++ compiler <= 6.0
- * 1200 - VC++ 6.0
- * 1200-1202 - eVC++ 4.0
- */
-#if defined(_MSC_VER)
-# if (_MSC_VER <= 1202)
-#  define MSVC_OLD_STUPID_BEHAVIOUR
-# endif
-#endif
-
-/* Avoid C2614 errors */
-#ifdef MSVC_OLD_STUPID_BEHAVIOUR
-    using std::string;
-# define gdal_std_string string
-#else
-/*! @cond Doxygen_Suppress */
-# define gdal_std_string std::string
-/*! @endcond */
 #endif
 
 //! Convenient string class based on std::string.
-class CPL_DLL CPLString : public gdal_std_string
+class CPL_DLL CPLString : public std::string
 {
 public:
 
     /** Constructor */
     CPLString(void) {}
     /** Constructor */
-    CPLString( const std::string &oStr ) : gdal_std_string( oStr ) {}
+    // cppcheck-suppress noExplicitConstructor
+    CPLString( const std::string &oStr ) : std::string( oStr ) {}
     /** Constructor */
-    CPLString( const char *pszStr ) : gdal_std_string( pszStr ) {}
+    // cppcheck-suppress noExplicitConstructor
+    CPLString( const char *pszStr ) : std::string( pszStr ) {}
+    /** Constructor */
+    CPLString( const char *pszStr, size_t n ) : std::string( pszStr, n ) {}
 
     /** Return string as zero terminated character array */
     operator const char* (void) const { return c_str(); }
@@ -359,35 +356,44 @@ public:
     /** Return character at specified index */
     char& operator[](std::string::size_type i)
     {
-        return gdal_std_string::operator[](i);
+        return std::string::operator[](i);
     }
 
     /** Return character at specified index */
     const char& operator[](std::string::size_type i) const
     {
-        return gdal_std_string::operator[](i);
+        return std::string::operator[](i);
     }
 
     /** Return character at specified index */
     char& operator[](int i)
     {
-        return gdal_std_string::operator[](
+        return std::string::operator[](
             static_cast<std::string::size_type>(i));
     }
 
     /** Return character at specified index */
     const char& operator[](int i) const
     {
-        return gdal_std_string::operator[](
+        return std::string::operator[](
             static_cast<std::string::size_type>(i));
     }
+
+    // Note: This is standard in C++11.
+#ifndef HAVE_CXX11
+    /** Return last character (undefined behaviour if string is empty) */
+    const char& back() const { return operator[](size()-1); }
+    /** Return last character (undefined behaviour if string is empty) */
+    char& back() { return operator[](size()-1); }
+#endif
 
     /** Clear the string */
     void Clear() { resize(0); }
 
     /** Assign specified string and take ownership of it (assumed to be
-     * allocated with CPLMalloc()). NULL can be safely passed to clear the string */
-    void Seize(char *pszValue)
+     * allocated with CPLMalloc()). NULL can be safely passed to clear the
+     * string. */
+    void Seize( char *pszValue )
     {
         if (pszValue == NULL )
             Clear();
@@ -401,9 +407,11 @@ public:
     /* There seems to be a bug in the way the compiler count indices...
      * Should be CPL_PRINT_FUNC_FORMAT (1, 2) */
     CPLString &Printf(
-        const char *pszFormat, ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
+        CPL_FORMAT_STRING(const char *pszFormat), ... )
+        CPL_PRINT_FUNC_FORMAT (2, 3);
     CPLString &vPrintf(
-        const char *pszFormat, va_list args ) CPL_PRINT_FUNC_FORMAT(2, 0);
+        CPL_FORMAT_STRING(const char *pszFormat), va_list args )
+        CPL_PRINT_FUNC_FORMAT(2, 0);
     CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
     CPLString &Trim();
     CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
@@ -420,9 +428,11 @@ public:
     CPLString &tolower( void );
 };
 
-CPLString CPLOPrintf(const char *pszFormat, ... ) CPL_PRINT_FUNC_FORMAT (1, 2);
-CPLString CPLOvPrintf(
-    const char *pszFormat, va_list args) CPL_PRINT_FUNC_FORMAT (1, 0);
+CPLString CPL_DLL CPLOPrintf(CPL_FORMAT_STRING(const char *pszFormat), ... )
+    CPL_PRINT_FUNC_FORMAT (1, 2);
+CPLString CPL_DLL CPLOvPrintf(
+    CPL_FORMAT_STRING(const char *pszFormat), va_list args)
+    CPL_PRINT_FUNC_FORMAT (1, 0);
 
 /* -------------------------------------------------------------------- */
 /*      URL processing functions, here since they depend on CPLString.  */
@@ -460,6 +470,9 @@ class CPL_DLL CPLStringList
     /** Return size of list */
     int    size() const { return Count(); }
     int    Count() const;
+
+    /** Return whether the list is empty. */
+    bool   empty() const { return Count() == 0; }
 
     CPLStringList &AddString( const char *pszNewString );
     CPLStringList &AddStringDirectly( char *pszNewString );
@@ -516,6 +529,8 @@ class CPL_DLL CPLStringList
     /** Return lists */
     operator char**(void) { return List(); }
 };
+
+} // extern "C++"
 
 #endif /* def __cplusplus && !CPL_SUPRESS_CPLUSPLUS */
 

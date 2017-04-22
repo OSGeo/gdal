@@ -54,7 +54,10 @@ def GeomType2Name( type ):
             ogr.wkbMultiCurve : ('wkbMultiCurve', 'Z'),
             ogr.wkbMultiSurface : ('wkbMultiSurface', 'Z'),
             ogr.wkbCurve : ('wkbCurve', 'Z'),
-            ogr.wkbSurface : ('wkbSurface', 'Z') }
+            ogr.wkbSurface : ('wkbSurface', 'Z'),
+            ogr.wkbPolyhedralSurface : ('wkbPolyhedralSurface', 'Z'),
+            ogr.wkbTIN : ('wkbTIN', 'Z'),
+            ogr.wkbTriangle : ('wkbTriangle', 'Z') }
     ret = dic[flat_type][0]
     if flat_type != type:
         if ogr.GT_HasM(type):

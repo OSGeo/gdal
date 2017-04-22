@@ -58,8 +58,8 @@ class DTEDDataset : public GDALPamDataset
                  DTEDDataset();
     virtual     ~DTEDDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 
     const char* GetFileName() { return pszFilename; }
     void SetFileName(const char* pszFilename);
@@ -85,12 +85,12 @@ class DTEDRasterBand : public GDALPamRasterBand
 
                 DTEDRasterBand( DTEDDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual double  GetNoDataValue( int *pbSuccess = NULL );
+    virtual double  GetNoDataValue( int *pbSuccess = NULL ) override;
 
-    virtual const char* GetUnitType() { return "m"; }
+    virtual const char* GetUnitType() override { return "m"; }
 };
 
 /************************************************************************/
@@ -668,13 +668,14 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*     Check horizontal source size.                                    */
 /* -------------------------------------------------------------------- */
     int expectedXSize;
-    if( std::abs(nLLOriginLat) >= 80 )
+    int nReferenceLat = nLLOriginLat < 0 ? - (nLLOriginLat + 1) : nLLOriginLat;
+    if( nReferenceLat >= 80 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 6 + 1;
-    else if( std::abs(nLLOriginLat) >= 75 )
+    else if( nReferenceLat >= 75 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 4 + 1;
-    else if( std::abs(nLLOriginLat) >= 70 )
+    else if( nReferenceLat >= 70 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 3 + 1;
-    else if( std::abs(nLLOriginLat) >= 50 )
+    else if( nReferenceLat >= 50 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 2 + 1;
     else
         expectedXSize = poSrcDS->GetRasterYSize();
@@ -793,7 +794,8 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if (iPartialCell < 1)
            iPartialCell=1;
     }
-    snprintf( szPartialCell, sizeof(szPartialCell), "%02d",iPartialCell);
+
+    CPLsnprintf( szPartialCell, sizeof(szPartialCell), "%02d",iPartialCell);
     DTEDSetMetadata(psDTED, DTEDMD_PARTIALCELL_DSI, szPartialCell);
 
 /* -------------------------------------------------------------------- */

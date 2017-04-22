@@ -280,8 +280,8 @@ class USGSDEMDataset : public GDALPamDataset
 
     static int  Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
-    CPLErr GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 /************************************************************************/
@@ -297,9 +297,9 @@ class USGSDEMRasterBand : public GDALPamRasterBand
   public:
                 explicit USGSDEMRasterBand( USGSDEMDataset * );
 
-    virtual const char *GetUnitType();
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual const char *GetUnitType() override;
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -480,7 +480,9 @@ USGSDEMDataset::USGSDEMDataset() :
     fVRes(0.0),
     pszUnits(NULL),
     fp(NULL)
-{ }
+{
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
+}
 
 /************************************************************************/
 /*                            ~USGSDEMDataset()                         */
@@ -604,7 +606,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
         CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 876, 0));
         char szDateBuffer[5];
         CPL_IGNORE_RET_VAL(VSIFReadL(szDateBuffer, 4, 1, InDem));
-        szDateBuffer[4] = 0;
+        /* szDateBuffer[4] = 0; */
 
         // Horizontal datum
         // 1=North American Datum 1927 (NAD 27)

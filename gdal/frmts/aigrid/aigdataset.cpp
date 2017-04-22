@@ -73,9 +73,9 @@ class CPL_DLL AIGDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef(void);
-    virtual char **GetFileList(void);
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual char **GetFileList(void) override;
 };
 
 /************************************************************************/
@@ -93,14 +93,14 @@ class AIGRasterBand : public GDALPamRasterBand
 
                    AIGRasterBand( AIGDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual double GetMinimum( int *pbSuccess );
-    virtual double GetMaximum( int *pbSuccess );
-    virtual double GetNoDataValue( int *pbSuccess );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual double GetMinimum( int *pbSuccess ) override;
+    virtual double GetMaximum( int *pbSuccess ) override;
+    virtual double GetNoDataValue( int *pbSuccess ) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-    virtual GDALRasterAttributeTable *GetDefaultRAT();
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
+    virtual GDALRasterAttributeTable *GetDefaultRAT() override;
 };
 
 /************************************************************************/
@@ -611,7 +611,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
                 bGotOne = true;
                 break;
             }
-        } while(0);
+        } while( false );
     }
 
     for( int iFile = 0;
@@ -692,7 +692,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     CSLDestroy( papszFiles );
 
     // Look in parent if we don't find a .clr in the coverage dir.
-    if( strlen(osClrFilename) == 0 )
+    if( osClrFilename.empty() )
     {
         osTestName.Printf( "%s/../%s.clr",
                            psInfo->pszCoverName,
@@ -711,7 +711,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
             osClrFilename = osTestName;
     }
 
-    if( strlen(osClrFilename) > 0 )
+    if( !osClrFilename.empty() )
         poDS->TranslateColorTable( osClrFilename );
 
 /* -------------------------------------------------------------------- */
@@ -927,13 +927,13 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
     {
         CPLString osNewFilename;
 
-        if( !EQUALN(papszFileList[i],osOldPath,strlen(osOldPath)) )
+        if( !EQUALN(papszFileList[i],osOldPath,osOldPath.size()) )
         {
             CPLAssert( false );
             return CE_Failure;
         }
 
-        osNewFilename = osNewPath + (papszFileList[i] + strlen(osOldPath));
+        osNewFilename = osNewPath + (papszFileList[i] + osOldPath.size());
 
         papszNewFileList = CSLAddString( papszNewFileList, osNewFilename );
     }

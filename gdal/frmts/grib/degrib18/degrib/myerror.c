@@ -168,7 +168,7 @@ static void AllocSprintf (char **Ptr, size_t *LenBuff, const char *fmt,
                   case 'L':
                      sprintf (bufpart, format, va_arg (ap, sInt4));
                      break;
-                     /* 
+                     /*
                       * gcc warning for 'h': "..." promotes short int to
                       * int.  Could get rid of 'h' option but decided to
                       * leave it in since we might have a different

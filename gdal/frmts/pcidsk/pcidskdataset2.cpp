@@ -138,9 +138,9 @@ void PCIDSK2Band::Initialize()
 PCIDSK2Band::~PCIDSK2Band()
 
 {
-    while( apoOverviews.size() > 0 )
+    while( !apoOverviews.empty() )
     {
-        delete apoOverviews[apoOverviews.size()-1];
+        delete apoOverviews.back();
         apoOverviews.pop_back();
     }
     CSLDestroy( papszLastMDListValue );
@@ -156,6 +156,13 @@ PCIDSK2Band::~PCIDSK2Band()
 void PCIDSK2Band::SetDescription( const char *pszDescription )
 
 {
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set description on read-only file." );
+        return;
+    }
+
     try
     {
         poChannel->SetDescription( pszDescription );
@@ -264,7 +271,7 @@ bool PCIDSK2Band::CheckForColorTable()
 
         // If there is no metadata, assume a single PCT in a file with only
         // one raster band must be intended for it.
-        if( osDefaultPCT.size() == 0
+        if( osDefaultPCT.empty()
             && poDS != NULL
             && poDS->GetRasterCount() == 1 )
         {
@@ -275,7 +282,7 @@ bool PCIDSK2Band::CheckForColorTable()
                 poPCTSeg = NULL;
         }
         // Parse default PCT ref assuming an in file reference.
-        else if( osDefaultPCT.size() != 0
+        else if( !osDefaultPCT.empty()
                  && strstr(osDefaultPCT.c_str(),"PCT:") != NULL )
         {
             poPCTSeg = poFile->GetSegment(
@@ -398,6 +405,13 @@ CPLErr PCIDSK2Band::SetColorTable( GDALColorTable *poCT )
     if( poFile == NULL )
         return CE_Failure;
 
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set color table on read-only file." );
+        return CE_Failure;
+    }
+
     try
     {
 /* -------------------------------------------------------------------- */
@@ -496,9 +510,9 @@ void PCIDSK2Band::RefreshOverviewList()
 /* -------------------------------------------------------------------- */
 /*      Clear existing overviews.                                       */
 /* -------------------------------------------------------------------- */
-    while( apoOverviews.size() > 0 )
+    while( !apoOverviews.empty() )
     {
-        delete apoOverviews[apoOverviews.size()-1];
+        delete apoOverviews.back();
         apoOverviews.pop_back();
     }
 
@@ -577,7 +591,7 @@ CPLErr PCIDSK2Band::IWriteBlock( int iBlockX, int iBlockY, void *pData )
 int PCIDSK2Band::GetOverviewCount()
 
 {
-    if( apoOverviews.size() > 0 )
+    if( !apoOverviews.empty() )
         return static_cast<int>( apoOverviews.size() );
 
     return GDALPamRasterBand::GetOverviewCount();
@@ -615,6 +629,13 @@ CPLErr PCIDSK2Band::SetMetadata( char **papszMD,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = NULL;
+
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set metadata on read-only file." );
+        return CE_Failure;
+    }
 
     try
     {
@@ -661,6 +682,13 @@ CPLErr PCIDSK2Band::SetMetadataItem( const char *pszName,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = NULL;
+
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set metadata on read-only file." );
+        return CE_Failure;
+    }
 
     try
     {
@@ -798,7 +826,7 @@ PCIDSK2Dataset::~PCIDSK2Dataset()
 {
     FlushCache();
 
-    while( apoLayers.size() > 0 )
+    while( !apoLayers.empty() )
     {
         delete apoLayers.back();
         apoLayers.pop_back();
@@ -1039,6 +1067,13 @@ CPLErr PCIDSK2Dataset::SetMetadata( char **papszMD,
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = NULL;
 
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set metadata on read-only file." );
+        return CE_Failure;
+    }
+
     try
     {
         for( int iItem = 0; papszMD && papszMD[iItem]; iItem++ )
@@ -1083,6 +1118,13 @@ CPLErr PCIDSK2Dataset::SetMetadataItem( const char *pszName,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = NULL;
+
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set metadata on read-only file." );
+        return CE_Failure;
+    }
 
     try
     {
@@ -1210,6 +1252,13 @@ CPLErr PCIDSK2Dataset::SetGeoTransform( double * padfTransform )
     if( poGeoref == NULL )
         return GDALPamDataset::SetGeoTransform( padfTransform );
 
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set GeoTransform on read-only file." );
+        return CE_Failure;
+    }
+
     try
     {
         poGeoref->WriteSimple( poGeoref->GetGeosys(),
@@ -1323,6 +1372,16 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
                              &padfPrjParams ) == OGRERR_NONE ) )
     {
         return GDALPamDataset::SetProjection( pszWKT );
+    }
+
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set projection on read-only file." );
+        CPLFree( pszGeosys );
+        CPLFree( pszUnits );
+        CPLFree( padfPrjParams );
+        return CE_Failure;
     }
 
     try
@@ -2096,7 +2155,7 @@ PCIDSK2Dataset::ICreateLayer( const char * pszLayerName,
 
     apoLayers.push_back( new OGRPCIDSKLayer( poSeg, poVecSeg, TRUE ) );
 
-    return apoLayers[apoLayers.size()-1];
+    return apoLayers.back();
 }
 
 /************************************************************************/

@@ -207,7 +207,7 @@ def ogr_dxf_6():
         gdaltest.post_reason( 'not keeping 2D text as 2D' )
         return 'fail'
 
-    if feat.GetStyleString() != 'LABEL(f:"Arial",t:"Test",a:30,s:5g,p:7,c:#000000)':
+    if feat.GetStyleString() != 'LABEL(f:"normallatin1",t:"Test",a:30,s:5g,p:7,c:#000000)':
         print(feat.GetStyleString())
         gdaltest.post_reason( 'got wrong style string' )
         return 'fail'
@@ -299,7 +299,7 @@ def ogr_dxf_9():
         gdaltest.post_reason( 'Did not get expected first mtext.' )
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = 'LABEL(f:"normallatin1",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
         return 'fail'
@@ -730,7 +730,7 @@ def ogr_dxf_16():
         gdaltest.post_reason( 'Did not get expected first mtext.' )
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = 'LABEL(f:"normallatin1",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
         return 'fail'
@@ -2320,6 +2320,68 @@ def ogr_dxf_32():
     return 'success'
 
 ###############################################################################
+# Polyface Mesh tests
+
+def ogr_dxf_33():
+    ds = ogr.Open('data/polyface.dxf')
+    layer = ds.GetLayer(0)
+    feat = layer.GetNextFeature()
+    if feat.Layer != '0':
+        return 'fail #1'
+
+    geom = feat.GetGeometryRef()
+    if geom.GetGeometryType() != ogr.wkbPolyhedralSurfaceZ:
+        gdaltest.post_reason( 'did not get expected geometry type; got %s instead of wkbPolyhedralSurface', geom.GetGeometryType() )
+        return 'fail #2'
+
+    wkt_string = geom.ExportToIsoWkt()
+    wkt_string_expected = 'POLYHEDRALSURFACE Z (((0 0 0,1 0 0,1 1 0,0 1 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 0 0,1 1 0,1 1 1,1 0 1,1 0 0)),((1 1 0,1 1 1,0 1 1,0 1 0,1 1 0)),((0 0 0,0 1 0,0 1 1,0 0 1,0 0 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))'
+    if wkt_string != wkt_string_expected:
+        gdaltest.post_reason( 'did not get expected WKT of extracted geometry')
+        return 'fail'
+
+    faces = geom.GetGeometryCount()
+    if faces != 6:
+        gdaltest.post_reason( 'did not get expected number of faces, got %d instead of %d', faces, 6)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Writing Triangle geometry and checking if it is written properly
+
+def ogr_dxf_34():
+    ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/triangle_test.dxf' )
+    lyr = ds.CreateLayer( 'entities' )
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'TRIANGLE ((0 0,0 1,1 0,0 0))' ) )
+
+    lyr.CreateFeature( dst_feat )
+    dst_feat = None
+
+    lyr = None
+    ds = None
+
+    # Read back.
+    ds = ogr.Open('tmp/triangle_test.dxf')
+    lyr = ds.GetLayer(0)
+
+    # Check first feature
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    expected_wkt = 'POLYGON ((0 0,0 1,1 0,0 0))'
+    received_wkt = geom.ExportToWkt()
+
+    if expected_wkt != received_wkt:
+        gdaltest.post_reason( 'did not get expected geometry back')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('tmp/triangle_test.dxf' )
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -2364,6 +2426,8 @@ gdaltest_list = [
     ogr_dxf_30,
     ogr_dxf_31,
     ogr_dxf_32,
+    ogr_dxf_33,
+    ogr_dxf_34,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':

@@ -40,6 +40,14 @@
             </xs:annotation>
         </xs:element>
 
+        <xs:element name="reference_existing_abstract_target_elt_nillable" type="gml:ReferenceType" nillable="true">
+            <xs:annotation>
+                <xs:appinfo>
+                    <targetElement xmlns="http://fake_gml">myns:existing_abstract_target_elt</targetElement>
+                </xs:appinfo>
+            </xs:annotation>
+        </xs:element>
+
     </xs:sequence>
   </xs:complexType>
 </xs:element>

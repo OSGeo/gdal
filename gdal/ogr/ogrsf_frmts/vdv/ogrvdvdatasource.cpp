@@ -162,7 +162,6 @@ void OGRIDFDataSource::Parse()
     bool bRecodeFromLatin1 = false;
     int iNodeID = -1;
     int iLinkID = -1;
-    int iCount = -1;
     int iFromNode = -1;
     int iToNode = -1;
     IDFLayerType eLayerType = LAYER_OTHER;
@@ -186,7 +185,7 @@ void OGRIDFDataSource::Parse()
             osTablename = pszLine + 4;
             osAtr = "";
             osFrm = "";
-            iX = iY = iNodeID = iLinkID = iCount = iFromNode = iToNode = -1;
+            iX = iY = iNodeID = iLinkID = iFromNode = iToNode = -1;
             eLayerType = LAYER_OTHER;
         }
         else if( STARTS_WITH(pszLine, "atr;") )
@@ -233,7 +232,7 @@ void OGRIDFDataSource::Parse()
                 }
                 else if( EQUAL(osTablename, "LinkCoordinate") &&
                         (iLinkID = CSLFindString(papszAtr, "LINK_ID")) >= 0 &&
-                        (iCount = CSLFindString(papszAtr, "COUNT")) >= 0 &&
+                        CSLFindString(papszAtr, "COUNT") >= 0 &&
                         (iX = CSLFindString(papszAtr, "X")) >= 0 &&
                         (iY = CSLFindString(papszAtr, "Y")) >= 0 )
                 {
@@ -247,7 +246,7 @@ void OGRIDFDataSource::Parse()
                     poCurLayer = m_poMemDS->CreateLayer(osTablename, NULL, wkbNone, apszOptions);
                 }
 
-                if( osAtr.size() && CSLCount(papszAtr) == CSLCount(papszFrm) )
+                if( !osAtr.empty() && CSLCount(papszAtr) == CSLCount(papszFrm) )
                 {
                     /* Note: we use AddFieldDefn() directly on the layer defn */
                     /* This works with the current implementation of the MEM driver */
@@ -262,7 +261,7 @@ void OGRIDFDataSource::Parse()
             char** papszTokens = CSLTokenizeStringComplex(pszLine + 4,";",TRUE,TRUE);
             OGRFeatureDefn* poFDefn = poCurLayer->GetLayerDefn();
             OGRFeature* poFeature = new OGRFeature(poFDefn);
-            for(int i=0; papszTokens[i] != NULL && i < poFDefn->GetFieldCount();i++)
+            for(int i=0; i < poFDefn->GetFieldCount() && papszTokens[i] != NULL ;i++)
             {
                 if( papszTokens[i][0] )
                 {
@@ -281,7 +280,7 @@ void OGRIDFDataSource::Parse()
                 }
             }
 
-            if( eLayerType == LAYER_NODE )
+            if( eLayerType == LAYER_NODE && iX >= 0 && iY >= 0 && iNodeID >= 0 )
             {
                 double dfX = poFeature->GetFieldAsDouble(iX);
                 double dfY = poFeature->GetFieldAsDouble(iY);
@@ -291,7 +290,8 @@ void OGRIDFDataSource::Parse()
                 poGeom->assignSpatialReference(poFDefn->GetGeomFieldDefn(0)->GetSpatialRef());
                 poFeature->SetGeometryDirectly(poGeom);
             }
-            else if( eLayerType == LAYER_LINK )
+            else if( eLayerType == LAYER_LINK && iFromNode >= 0 &&
+                     iToNode >= 0 )
             {
                 GIntBig nFromNode = poFeature->GetFieldAsInteger64(iFromNode);
                 GIntBig nToNode = poFeature->GetFieldAsInteger64(iToNode);
@@ -308,7 +308,8 @@ void OGRIDFDataSource::Parse()
                     poFeature->SetGeometryDirectly(poLS);
                 }
             }
-            else if( eLayerType == LAYER_LINKCOORDINATE )
+            else if( eLayerType == LAYER_LINKCOORDINATE &&
+                     iX >= 0 && iY >= 0 && iLinkID >= 0 )
             {
                 double dfX = poFeature->GetFieldAsDouble(iX);
                 double dfY = poFeature->GetFieldAsDouble(iY);
@@ -671,7 +672,7 @@ OGRVDVLayer::OGRVDVLayer(const CPLString& osTableName,
         {
             CPLString osChs(pszLine+4);
             osChs.Trim();
-            if( osChs.size() >= 2 && osChs[0] == '"' && osChs[osChs.size()-1] == '"' )
+            if( osChs.size() >= 2 && osChs[0] == '"' && osChs.back() == '"' )
                 osChs = osChs.substr(1, osChs.size()-2);
             m_bRecodeFromLatin1 = EQUAL(osChs, "ISO8859-1") ||
                                   EQUAL(osChs, "ISO_LATIN_1");
@@ -701,7 +702,7 @@ OGRVDVLayer::OGRVDVLayer(const CPLString& osTableName,
         CPLDebug("VDV", "Didn't find tbl; line");
 
     VSIFSeekL(m_fpL, nCurOffset, SEEK_SET);
-    if( osAtr.size() && osFrm.size() )
+    if( !osAtr.empty() && !osFrm.empty() )
     {
         char** papszAtr = CSLTokenizeString2(osAtr,";",
                     CSLT_ALLOWEMPTYTOKENS|CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
@@ -810,8 +811,8 @@ OGRFeature* OGRVDVLayer::GetNextFeature()
                 CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES| CSLT_STRIPENDSPACES);
         poFeature = new OGRFeature(m_poFeatureDefn);
         poFeature->SetFID( m_nFID ++ );
-        for(int i=0; papszTokens[i] != NULL &&
-                     i < m_poFeatureDefn->GetFieldCount();i++)
+        for(int i=0; i < m_poFeatureDefn->GetFieldCount() &&
+                     papszTokens[i] != NULL ;i++)
         {
             if( papszTokens[i][0] && !EQUAL(papszTokens[i], "NULL") )
             {
@@ -826,7 +827,7 @@ OGRFeature* OGRVDVLayer::GetNextFeature()
                 else
                     osToken = papszTokens[i];
                 // Strip trailing spaces
-                while( osToken.size() && osToken[osToken.size()-1] == ' ' )
+                while( !osToken.empty() && osToken.back() == ' ' )
                     osToken.resize(osToken.size()-1);
                 OGRFieldType eFieldType = m_poFeatureDefn->GetFieldDefn(i)->GetType();
                 if( m_bRecodeFromLatin1 && eFieldType == OFTString )
@@ -1227,7 +1228,7 @@ OGRErr OGRVDVWriterLayer::ICreateFeature(OGRFeature* poFeature)
     {
         if( i > 0)
             bOK &= VSIFPrintfL(m_fpL, "; ") > 0;
-        if( poFeature->IsFieldSet(i) )
+        if( poFeature->IsFieldSetAndNotNull(i) )
         {
             const OGRFieldType eType = m_poFeatureDefn->GetFieldDefn(i)->GetType();
             if( eType == OFTInteger || eType == OFTInteger64 )

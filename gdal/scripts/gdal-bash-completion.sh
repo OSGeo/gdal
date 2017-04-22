@@ -67,7 +67,7 @@ _gdalbuildvrt()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-tileindex -resolution -te -tr -tap -separate -b -sd -allow_projection_difference -q -addalpha -hidenodata -srcnodata -vrtnodata -a_srs -r -input_file_list -overwrite "
+      key_list="-tileindex -resolution -te -tr -tap -separate -b -sd -allow_projection_difference -q -addalpha -hidenodata -srcnodata -vrtnodata -a_srs -r -oo -input_file_list -overwrite "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -82,7 +82,7 @@ _gdal_calc.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-A --A_band -B...-Z "
+      key_list="--calc=expression --outfile=out_filename -A --A_band=n -B...-Z "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -172,7 +172,7 @@ _gdal_edit.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -ro -a_srs -a_ullr -tr -unsetgt -a_nodata -unsetnodata -unsetstats -stats -approx_stats -gcp -unsetmd -oo -mo --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -ro -a_srs -a_ullr -tr -unsetgt -a_nodata -unsetnodata -offset -scale -unsetstats -stats -approx_stats -gcp -unsetmd -oo -mo --version --license --formats --format --optfile --config --debug --pause --locale "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -459,7 +459,7 @@ _gdal_retile.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-v -q -co -of -ps -ot -tileIndex -tileIndexField -csv -csvDelim -s_srs -pyramidOnly -levels -r -useDirForEachRow -multi -targetDir "
+      key_list="-v -q -co -of -ps -overlap -ot -tileIndex -tileIndexField -csv -csvDelim -s_srs -pyramidOnly -levels -r -useDirForEachRow -targetDir "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -604,7 +604,7 @@ _gdalwarp()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general --formats -s_srs -t_srs -to -order -tps -rpc -geoloc -et -refine_gcps -te -tr -tap -ts -ovr -wo -ot -wt -srcnodata -dstnodata -dstalpha -r -wm -multi -q -cutline -cl -cwhere -csql -cblend -crop_to_cutline -of -co -overwrite -nomd -cvmd -setci -oo -doo --version --license --format --optfile --config --debug --pause --locale "
+      key_list="--help-general --formats -s_srs -t_srs -to -novshiftgrid -order -tps -rpc -geoloc -et -refine_gcps -te -tr -tap -ts -ovr -wo -ot -wt -srcnodata -dstnodata -dstalpha -r -wm -multi -q -cutline -cl -cwhere -csql -cblend -crop_to_cutline -of -co -overwrite -nomd -cvmd -setci -oo -doo --version --license --format --optfile --config --debug --pause --locale "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -634,7 +634,7 @@ _ogr2ogr()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -skipfailures -append -update -select -where -progress -sql -dialect -preserve_fid -fid -spat -spat_srs -geomfield -a_srs -t_srs -s_srs -f -overwrite -dsco -lco -nln -nlt -dim --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -skipfailures -append -update -select -where -progress -sql -dialect -preserve_fid -fid -limit -spat -spat_srs -geomfield -a_srs -t_srs -s_srs -f -overwrite -dsco -lco -nln -nlt -dim --version --license --formats --format --optfile --config --debug --pause --locale "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -660,7 +660,7 @@ _ogrinfo()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -ro -q -where -spat -geomfield -fid -sql -dialect -al -so -fields=YES -fields=NO -geom=YES -geom=NO -geom=SUMMARY -formats -oo -nomd -listmdd -mdd -nocount -noextent --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -ro -q -where -spat -geomfield -fid -sql -dialect -al -rl -so -fields=YES -fields=NO -geom=YES -geom=NO -geom=SUMMARY -formats -oo -nomd -listmdd -mdd -nocount -noextent --version --license --formats --format --optfile --config --debug --pause --locale "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -701,7 +701,7 @@ _ogrtindex()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-lnum -lname -f -write_absolute_path -skip_different_projection -accept_different_schemas "
+      key_list="-lnum -lname -f -write_absolute_path -skip_different_projection -t_srs -src_srs_name -src_srs_format -accept_different_schemas "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -720,3 +720,18 @@ _ogrtindex()
   return 0
 }
 complete -o default -F _ogrtindex ogrtindex
+_ogrmerge.py()
+{
+  local cur prev
+  COMPREPLY=()
+  _get_comp_words_by_ref cur prev
+  case "$cur" in
+    -*)
+      key_list=""
+      COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
+      return 0
+      ;;
+  esac
+  return 0
+}
+complete -o default -F _ogrmerge.py ogrmerge.py

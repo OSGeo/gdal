@@ -517,6 +517,39 @@ def ogr_join_22():
     return 'success'
 
 ###############################################################################
+# Test join with NULL keys
+
+def ogr_join_23():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('first')
+    ogrtest.quick_create_layer_def(lyr, [['f']])
+    ogrtest.quick_create_feature(lyr, [ None ], None)
+    ogrtest.quick_create_feature(lyr, [ 'key1' ], None)
+
+    lyr = ds.CreateLayer('second')
+    ogrtest.quick_create_layer_def(lyr, [['f']])
+    ogrtest.quick_create_feature(lyr, [ 'key1' ], None)
+    ogrtest.quick_create_feature(lyr, [ None ], None)
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM first JOIN second ON first.f = second.f")
+    feat = sql_lyr.GetNextFeature()
+    if feat.IsFieldSetAndNotNull('second.f'):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat['f'] != 'key1' or feat['second.f'] != 'key1':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 
 def ogr_join_cleanup():
     gdaltest.lyr = None
@@ -547,6 +580,7 @@ gdaltest_list = [
     ogr_join_20,
     ogr_join_21,
     ogr_join_22,
+    ogr_join_23,
     ogr_join_cleanup ]
 
 if __name__ == '__main__':

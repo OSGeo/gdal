@@ -196,7 +196,10 @@ emit_dht (j_compress_ptr cinfo, int l_index, boolean is_ac)
   }
 
   if (htbl == NULL)
+  {
     ERREXIT1(cinfo, JERR_NO_HUFF_TABLE, l_index);
+    return;
+  }
   
   if (! htbl->sent_table) {
     emit_marker(cinfo, M_DHT);

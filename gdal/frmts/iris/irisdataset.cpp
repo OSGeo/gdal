@@ -70,7 +70,7 @@ class IRISDataset : public GDALPamDataset
     double                adfGeoTransform[6];
     bool                  bHasLoadedProjection;
     void                  LoadProjection();
-    std::pair<double, double> GeodesicCalculation(
+    static std::pair<double, double> GeodesicCalculation(
         float fLat, float fLon, float fAngle, float fDist,
         float fEquatorialRadius, float fPolarRadius, float fFlattening );
 
@@ -81,8 +81,8 @@ public:
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
-    CPLErr GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 const char* const IRISDataset::aszProductNames[] = {
@@ -155,10 +155,10 @@ public:
     IRISRasterBand( IRISDataset *, int );
     virtual ~IRISRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
-    virtual double          GetNoDataValue( int * );
-    virtual CPLErr          SetNoDataValue( double );
+    virtual double          GetNoDataValue( int * ) override;
+    virtual CPLErr          SetNoDataValue( double ) override;
 };
 
 /************************************************************************/

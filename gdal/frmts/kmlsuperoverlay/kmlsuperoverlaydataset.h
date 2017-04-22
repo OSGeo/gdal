@@ -31,14 +31,11 @@
 #ifndef KMLSUPEROVERLAYDATASET_H_INCLUDED
 #define KMLSUPEROVERLAYDATASET_H_INCLUDED
 
-#include "gdal_pam.h"
-#include "gdal_priv.h"
-#include "cpl_minixml.h"
 #include <map>
 
-CPL_C_START
-void CPL_DLL GDALRegister_KMLSUPEROVERLAY();
-CPL_C_END
+#include "cpl_minixml.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
 
 /************************************************************************/
 /*                    KmlSuperOverlayReadDataset                        */
@@ -78,7 +75,7 @@ class KmlSuperOverlayReadDataset : public GDALDataset
     LinkedDataset      *psLastLink;
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
   public:
                   KmlSuperOverlayReadDataset();
@@ -87,9 +84,15 @@ class KmlSuperOverlayReadDataset : public GDALDataset
     static int          Identify(GDALOpenInfo *);
     static GDALDataset *Open(const char* pszFilename, KmlSuperOverlayReadDataset* poParent = NULL, int nRec = 0);
     static GDALDataset *Open(GDALOpenInfo *);
+ 
+    static const int KMLSO_ContainsOpaquePixels = 0x1;
+    static const int KMLSO_ContainsTransparentPixels = 0x2;
+    static const int KMLSO_ContainsPartiallyTransparentPixels = 0x4;
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef();
+    static int DetectTransparency( int rxsize, int rysize, int rx, int ry, int dxsize, int dysize, GDALDataset* poSrcDs );
+
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char *GetProjectionRef() override;
 
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
@@ -98,7 +101,7 @@ class KmlSuperOverlayReadDataset : public GDALDataset
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg);
+                               GDALRasterIOExtraArg* psExtraArg) override;
 };
 
 /************************************************************************/
@@ -112,15 +115,15 @@ class KmlSuperOverlayRasterBand: public GDALRasterBand
                                                int nBand );
   protected:
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg);
-    virtual GDALColorInterp GetColorInterpretation();
+                              GDALRasterIOExtraArg* psExtraArg) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual int GetOverviewCount();
-    virtual GDALRasterBand *GetOverview(int);
+    virtual int GetOverviewCount() override;
+    virtual GDALRasterBand *GetOverview(int) override;
 };
 
 #endif /* ndef KMLSUPEROVERLAYDATASET_H_INCLUDED */

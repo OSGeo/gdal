@@ -69,10 +69,10 @@ public:
     VICARDataset();
     virtual ~VICARDataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -95,6 +95,7 @@ VICARDataset::VICARDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    memset( abyHeader, 0, sizeof(abyHeader) );
 }
 
 /************************************************************************/
@@ -118,7 +119,7 @@ char **VICARDataset::GetFileList()
 {
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    if( strlen(osExternalCube) > 0 )
+    if( !osExternalCube.empty() )
         papszFileList = CSLAddString( papszFileList, osExternalCube );
 
     return papszFileList;
@@ -131,7 +132,7 @@ char **VICARDataset::GetFileList()
 const char *VICARDataset::GetProjectionRef()
 
 {
-    if( strlen(osProjection) > 0 )
+    if( !osProjection.empty() )
         return osProjection;
 
     return GDALPamDataset::GetProjectionRef();
@@ -163,12 +164,13 @@ int VICARDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->pabyHeader == NULL )
         return FALSE;
 
+    char *pszHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
     return
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "LBLSIZE" ) != NULL &&
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "FORMAT" ) != NULL &&
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NL" ) != NULL &&
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NS" ) != NULL &&
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NB" ) != NULL;
+        strstr(pszHeader, "LBLSIZE") != NULL &&
+        strstr(pszHeader, "FORMAT") != NULL &&
+        strstr(pszHeader, "NL") != NULL &&
+        strstr(pszHeader, "NS") != NULL &&
+        strstr(pszHeader, "NB") != NULL;
 }
 
 /************************************************************************/
@@ -178,7 +180,7 @@ int VICARDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 {
 /* -------------------------------------------------------------------- */
-/*      Does this look like a VICAR dataset?                             */
+/*      Does this look like a VICAR dataset?                            */
 /* -------------------------------------------------------------------- */
     if( !Identify( poOpenInfo ) )
         return NULL;

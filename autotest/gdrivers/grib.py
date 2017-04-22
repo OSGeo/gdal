@@ -236,7 +236,7 @@ def grib_9():
     #if ds is None:
     #    return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 # Test support for PNG compressed
@@ -256,7 +256,7 @@ def grib_10():
         print(cs)
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 gdaltest_list = [
     grib_1,

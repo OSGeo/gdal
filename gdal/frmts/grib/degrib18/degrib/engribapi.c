@@ -13,7 +13,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <string.h>
 #include <math.h>
 
 #include "grib2api.h"
@@ -1350,7 +1350,7 @@ int fillSect5 (enGribMeta *en, uShort2 tmplNum, sShort2 BSF, sShort2 DSF,
  *    > 0 (max length of sect 6 and sect 7).
  *    -1 Can't handle this kind of bitmap (pre-defined).
  *    -2 No missing value when trying to create the bmap.
- *    -3 Can't handle Nx * Ny != lenData. 
+ *    -3 Can't handle Nx * Ny != lenData.
  *
  *  4/2006 Arthur Taylor (MDL): Created.
  *

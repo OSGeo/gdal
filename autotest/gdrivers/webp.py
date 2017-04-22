@@ -59,7 +59,7 @@ def webp_2():
 
     ds = gdal.Open('data/rgbsmall.webp')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 21464 and cs != 21450:
+    if cs != 21464 and cs != 21450 and cs != 21459:
         gdaltest.post_reason('did not get expected checksum on band 1')
         print(cs)
         return 'fail'
@@ -82,7 +82,7 @@ def webp_3():
     gdal.Unlink('/vsimem/webp_3.webp')
 
     # 21502 is for libwebp 0.3.0
-    if cs1 != 21464 and cs1 != 21502 and cs1 != 21695:
+    if cs1 != 21464 and cs1 != 21502 and cs1 != 21695 and cs1 != 21700:
         gdaltest.post_reason('did not get expected checksum on band 1')
         print(cs1)
         return 'fail'
@@ -110,7 +110,7 @@ def webp_4():
     gdal.Unlink('/vsimem/webp_4.webp')
 
     # 22849 is for libwebp 0.3.0
-    if cs1 != 22001 and cs1 != 22849 and cs1 != 34422 and cs1 != 36652:
+    if cs1 != 22001 and cs1 != 22849 and cs1 != 34422 and cs1 != 36652 and cs1 != 36658:
         gdaltest.post_reason('did not get expected checksum on band 1')
         print(cs1)
         return 'fail'
@@ -142,7 +142,7 @@ def webp_5():
     out_ds = None
     gdal.Unlink('/vsimem/webp_5.webp')
 
-    if cs1 != 12603:
+    if cs1 != 12603 and cs1 != 18536 and cs1 != 14800:
         gdaltest.post_reason('did not get expected checksum on band 1')
         print(cs1)
         return 'fail'

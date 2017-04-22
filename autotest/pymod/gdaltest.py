@@ -58,11 +58,13 @@ jpeg2000_drv = None
 jp2ecw_drv = None
 jp2mrsid_drv = None
 jp2openjpeg_drv = None
+jp2lura_drv = None
 jp2kak_drv_unregistered = False
 jpeg2000_drv_unregistered = False
 jp2ecw_drv_unregistered = False
 jp2mrsid_drv_unregistered = False
 jp2openjpeg_drv_unregistered = False
+jp2lura_drv_unregistered = False
 
 from sys import version_info
 if version_info >= (3,0,0):
@@ -891,7 +893,7 @@ class GDALTest:
         gt = (123.0, 1.18, 0.0, 456.0, 0.0, -1.18 )
         if prj is None:
             # This is a challenging SRS since it has non-meter linear units.
-            prj='PROJCS["NAD83 / Ohio South",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",40.03333333333333],PARAMETER["standard_parallel_2",38.73333333333333],PARAMETER["latitude_of_origin",38],PARAMETER["central_meridian",-82.5],PARAMETER["false_easting",1968500],PARAMETER["false_northing",0],UNIT["feet",0.3048006096012192]]'
+            prj='PROJCS["NAD83 / Ohio South",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",40.03333333333333],PARAMETER["standard_parallel_2",38.73333333333333],PARAMETER["latitude_of_origin",38],PARAMETER["central_meridian",-82.5],PARAMETER["false_easting",1968500],PARAMETER["false_northing",0],UNIT["US survey foot",0.3048006096012192]]'
 
         src_osr = osr.SpatialReference()
         src_osr.ImportFromWkt(prj)
@@ -1404,8 +1406,8 @@ def compare_ds(ds1, ds2, xoff = 0, yoff = 0, width = 0, height = 0, verbose=1):
 # Deregister all JPEG2000 drivers, except the one passed as an argument
 
 def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
-    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv
-    global jp2kak_drv_unregistered,jpeg2000_drv_unregistered,jp2ecw_drv_unregistered,jp2mrsid_drv_unregistered,jp2openjpeg_drv_unregistered
+    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv,jp2lura_drv
+    global jp2kak_drv_unregistered,jpeg2000_drv_unregistered,jp2ecw_drv_unregistered,jp2mrsid_drv_unregistered,jp2openjpeg_drv_unregistered,jp2lura_drv_unregistered
 
     # Deregister other potential conflicting JPEG2000 drivers that will
     # be re-registered in the cleanup
@@ -1454,6 +1456,15 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
     except:
         pass
 
+    try:
+        jp2lura_drv = gdal.GetDriverByName('JP2Lura')
+        if name_of_driver_to_keep != 'JP2Lura' and jp2lura_drv:
+            gdal.Debug('gdaltest.','Deregistering JP2Lura')
+            jp2lura_drv.Deregister()
+            jp2lura_drv_unregistered = True
+    except:
+        pass
+
     return True
 
 ###############################################################################
@@ -1461,8 +1472,8 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
 # deregister_all_jpeg2000_drivers_but
 
 def reregister_all_jpeg2000_drivers():
-    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv
-    global jp2kak_drv_unregistered,jpeg2000_drv_unregistered,jp2ecw_drv_unregistered,jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered
+    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv,jp2lura_drv
+    global jp2kak_drv_unregistered,jpeg2000_drv_unregistered,jp2ecw_drv_unregistered,jp2mrsid_drv_unregistered,jp2openjpeg_drv_unregistered,jp2lura_drv_unregistered
 
     try:
         if jp2kak_drv_unregistered:
@@ -1501,6 +1512,14 @@ def reregister_all_jpeg2000_drivers():
             jp2openjpeg_drv.Register()
             jp2openjpeg_drv = False
             gdal.Debug('gdaltest','Registering JP2OpenJPEG')
+    except:
+        pass
+
+    try:
+        if jp2lura_drv_unregistered:
+            jp2lura_drv.Register()
+            jp2lura_drv = False
+            gdal.Debug('gdaltest','Registering JP2Lura')
     except:
         pass
 
@@ -1820,6 +1839,9 @@ def find_lib_windows(libname):
         if i < 0:
             continue
         if path[i+1:].find('\\') >= 0:
+            continue
+        # Avoid matching gdal_PLUGIN.dll
+        if path[i+1:].find('_') >= 0:
             continue
         soname = path
         break

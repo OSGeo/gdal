@@ -296,6 +296,141 @@ def kmlsuperoverlay_6():
     return 'success'
 
 ###############################################################################
+# Test raster KML with single Overlay (such as https://trac.osgeo.org/gdal/ticket/6712)
+
+def kmlsuperoverlay_7():
+
+    ds = gdal.Open('data/small_world.kml')
+    if ds.GetProjectionRef().find('WGS_1984') < 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    got_gt = ds.GetGeoTransform()
+    ref_gt = [ -180.0, 0.9, 0.0, 90.0, 0.0, -0.9 ]
+    for i in range(6):
+        if abs(got_gt[i] - ref_gt[i]) > 1e-6:
+            gdaltest.post_reason('failure')
+            print(got_gt)
+            return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 30111:
+        print(cs)
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that a raster with lots of blank space doesn't have unnecessary child
+# KML/PNG files in transparent areas
+
+def kmlsuperoverlay_8():
+
+    # a large raster with actual data on each end and blank space in between
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="2048" rasterYSize="512">
+  <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]</SRS>
+  <GeoTransform>  0,  0.01,  0,  0,  0, 0.01</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="512" RasterYSize="512" DataType="Byte" BlockXSize="512" BlockYSize="16" />
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512" />
+      <DstRect xOff="0" yOff="0" xSize="512" ySize="512" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="512" RasterYSize="512" DataType="Byte" BlockXSize="512" BlockYSize="16" />
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512" />
+      <DstRect xOff="1536" yOff="0" xSize="512" ySize="512" />
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="512" RasterYSize="512" DataType="Byte" BlockXSize="512" BlockYSize="16" />
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512" />
+      <DstRect xOff="0" yOff="0" xSize="512" ySize="512" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="512" RasterYSize="512" DataType="Byte" BlockXSize="512" BlockYSize="16" />
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512" />
+      <DstRect xOff="1536" yOff="0" xSize="512" ySize="512" />
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="512" RasterYSize="512" DataType="Byte" BlockXSize="512" BlockYSize="16" />
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512" />
+      <DstRect xOff="0" yOff="0" xSize="512" ySize="512" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="512" RasterYSize="512" DataType="Byte" BlockXSize="512" BlockYSize="16" />
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512" />
+      <DstRect xOff="1536" yOff="0" xSize="512" ySize="512" />
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="4">
+    <ColorInterp>Alpha</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">data/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="512" RasterYSize="512" DataType="Byte" BlockXSize="512" BlockYSize="16" />
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512" />
+      <DstRect xOff="0" yOff="0" xSize="512" ySize="512" />
+      <ScaleOffset>255</ScaleOffset>
+      <ScaleRatio>0</ScaleRatio>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">data/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="512" RasterYSize="512" DataType="Byte" BlockXSize="512" BlockYSize="16" />
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512" />
+      <DstRect xOff="1536" yOff="0" xSize="512" ySize="512" />
+      <ScaleOffset>255</ScaleOffset>
+      <ScaleRatio>0</ScaleRatio>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('tmp/tmp.kml', src_ds, options=['FORMAT=AUTO'])
+    del ds
+    src_ds = None
+
+    if set(os.listdir('tmp/0/0')) != set(('0.kml', '0.png')):
+      gdaltest.post_reason('failure')
+      return 'fail'
+    if set(os.listdir('tmp/3/1')) != set(('0.jpg', '0.kml', '1.jpg', '1.kml', '2.jpg', '2.kml', '3.jpg', '3.kml',
+        '4.jpg', '4.kml', '5.jpg', '5.kml', '6.jpg', '6.kml', '7.jpg', '7.kml',)):
+      gdaltest.post_reason('failure')
+      return 'fail'
+    if set(os.listdir('tmp/3/2')) != set():
+      # dir should be empty - 3/2 is entirely transparent so we skip generating files.
+      gdaltest.post_reason('failure')
+      return 'fail'
+
+    shutil.rmtree('tmp/0')
+    shutil.rmtree('tmp/1')
+    shutil.rmtree('tmp/2')
+    shutil.rmtree('tmp/3')
+    os.remove('tmp/tmp.kml')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def  kmlsuperoverlay_cleanup():
@@ -310,6 +445,8 @@ gdaltest_list = [
     kmlsuperoverlay_4,
     kmlsuperoverlay_5,
     kmlsuperoverlay_6,
+    kmlsuperoverlay_7,
+    kmlsuperoverlay_8,
     kmlsuperoverlay_cleanup ]
 
 if __name__ == '__main__':

@@ -29,14 +29,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/*
- * TIFF Library UNIX-specific Routines.
- */
-#include "cpl_conv.h"
-#include "cpl_vsi.h"
+// TIFF Library UNIX-specific Routines.
+
+#include "cpl_port.h"
 #include "tifvsi.h"
 
+#include <string.h>
 #include <cerrno>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include "cpl_conv.h"
+#include "cpl_vsi.h"
 
 // We avoid including xtiffio.h since it drags in the libgeotiff version
 // of the VSI functions.

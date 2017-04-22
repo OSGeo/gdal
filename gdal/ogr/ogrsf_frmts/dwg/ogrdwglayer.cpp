@@ -31,33 +31,16 @@
 
 #include "ogrdxf_polyline_smooth.h"
 
-#include "DbPolyline.h"
-#include "Db2dPolyline.h"
-#include "Db3dPolyline.h"
-#include "Db3dPolylineVertex.h"
-#include "DbLine.h"
-#include "DbPoint.h"
-#include "DbEllipse.h"
-#include "DbArc.h"
-#include "DbMText.h"
-#include "DbText.h"
-#include "DbCircle.h"
-#include "DbSpline.h"
-#include "DbBlockReference.h"
-#include "DbAttribute.h"
-#include "DbFiler.h"
-#include "Ge/GeScale3d.h"
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            OGRDWGLayer()                             */
 /************************************************************************/
 
-OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDS )
+OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDSIn )
 
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
 
     iNextFID = 0;
 
@@ -85,12 +68,12 @@ OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDS )
 
     for (pBlkIter->start(); ! pBlkIter->done(); pBlkIter->step())
     {
-        poBlock = pBlkIter->getRecordId().safeOpenObject();
+        m_poBlock = pBlkIter->getRecordId().safeOpenObject();
 
-        if( EQUAL(poBlock->getName(),"*Model_Space") )
+        if( EQUAL(m_poBlock->getName(),"*Model_Space") )
             break;
         else
-            poBlock = NULL;
+            m_poBlock = NULL;
     }
 
     ResetReading();
@@ -136,7 +119,7 @@ CPLString OGRDWGLayer::TextUnescape( OdString oString )
 void OGRDWGLayer::SetBlockTable( OdDbBlockTableRecordPtr poNewBlock )
 
 {
-    poBlock = poNewBlock;
+    m_poBlock = poNewBlock;
 
     ResetReading();
 }
@@ -165,8 +148,8 @@ void OGRDWGLayer::ResetReading()
     iNextFID = 0;
     ClearPendingFeatures();
 
-    if( !poBlock.isNull() )
-        poEntIter = poBlock->newIterator();
+    if( !m_poBlock.isNull() )
+        poEntIter = m_poBlock->newIterator();
 }
 
 /************************************************************************/
@@ -204,7 +187,7 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
 
     while( poClass != NULL )
     {
-        if( osSubClasses.size() > 0 )
+        if( !osSubClasses.empty() )
             osSubClasses = ":" + osSubClasses;
 
         osSubClasses = ((const char *) poClass->name()) + osSubClasses;
@@ -289,7 +272,7 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
             break;
         }
 
-        if( osFullXData.size() > 0 )
+        if( !osFullXData.empty() )
             osFullXData += " ";
         osFullXData += (const char *) osXDataItem;
     }
@@ -432,7 +415,7 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
     CPLString osText = TextUnescape( poMTE->contents() );
 
-    if( osText != "" && osText[osText.size()-1] == '\n' )
+    if( !osText.empty() && osText.back() == '\n' )
         osText.resize( osText.size() - 1 );
 
     poFeature->SetField( "Text", osText );
@@ -555,7 +538,7 @@ OGRFeature *OGRDWGLayer::TranslateTEXT( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
     CPLString osText = TextUnescape( poText->textString() );
 
-    if( osText != "" && osText[osText.size()-1] == '\n' )
+    if( !osText.empty() && osText.back() == '\n' )
         osText.resize( osText.size() - 1 );
 
     poFeature->SetField( "Text", osText );
@@ -956,20 +939,16 @@ OGRFeature *OGRDWGLayer::TranslateARC( OdDbEntityPtr poEntity )
 {
     OdDbArcPtr poAE = OdDbArc::cast( poEntity );
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
-    double dfRadius = 0.0;
-    double dfStartAngle = 0.0;
-    double dfEndAngle = 360.0;
-    OdGePoint3d oCenter;
 
     TranslateGenericProperties( poFeature, poEntity );
 
 /* -------------------------------------------------------------------- */
 /*      Collect parameters.                                             */
 /* -------------------------------------------------------------------- */
-    dfEndAngle = -1 * poAE->startAngle() * 180 / M_PI;
-    dfStartAngle = -1 * poAE->endAngle() * 180 / M_PI;
-    dfRadius = poAE->radius();
-    oCenter = poAE->center();
+    double dfEndAngle = -1 * poAE->startAngle() * 180 / M_PI;
+    double dfStartAngle = -1 * poAE->endAngle() * 180 / M_PI;
+    double dfRadius = poAE->radius();
+    OdGePoint3d oCenter = poAE->center();
 
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
@@ -1099,15 +1078,15 @@ public:
     double dfZScale;
     double dfAngle;
 
-    OGRSpatialReference *GetSourceCS() { return NULL; }
-    OGRSpatialReference *GetTargetCS() { return NULL; }
+    OGRSpatialReference *GetSourceCS() override { return NULL; }
+    OGRSpatialReference *GetTargetCS() override { return NULL; }
     int Transform( int nCount,
-                   double *x, double *y, double *z )
+                   double *x, double *y, double *z ) override
         { return TransformEx( nCount, x, y, z, NULL ); }
 
     int TransformEx( int nCount,
                      double *x, double *y, double *z = NULL,
-                     int *pabSuccess = NULL )
+                     int *pabSuccess = NULL ) override
         {
             int i;
             for( i = 0; i < nCount; i++ )
@@ -1116,7 +1095,8 @@ public:
 
                 x[i] *= dfXScale;
                 y[i] *= dfYScale;
-                z[i] *= dfZScale;
+                if( z )
+                    z[i] *= dfZScale;
 
                 dfXNew = x[i] * cos(dfAngle) - y[i] * sin(dfAngle);
                 dfYNew = x[i] * sin(dfAngle) + y[i] * cos(dfAngle);
@@ -1126,7 +1106,8 @@ public:
 
                 x[i] += dfXOffset;
                 y[i] += dfYOffset;
-                z[i] += dfZOffset;
+                if( z )
+                    z[i] += dfZOffset;
 
                 if( pabSuccess )
                     pabSuccess[i] = TRUE;

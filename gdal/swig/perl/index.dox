@@ -342,6 +342,21 @@ my $feature = $lauer->InsertFeature({test => 13, geom => {WKT => 'POINT (10 20)'
 my $geom = $feature->{geom}; # will lead to memory error!
 \endcode
 
+\section index_processing_options Processing options
+
+Some methods are thin wrappers for <a
+href="http://www.gdal.org/pages.html">GDAL command line tools</a>.
+
+The options for these methods should be given in an anonymous hash
+where the key is the option name (-ot, -mask, etc) and the value is
+the option value. If the option expects a list of values, the list
+should be given as a reference to an array.
+
+In addition to the above, the API supports giving the options in an
+anonymous array; keys without hyphen (not if the options are in an
+array); and lists of values given as a string, separated with
+whitespace (only for lists of numeric values).
+
 \section index_footer Note
 
 This documentation is generated from files within the GDAL

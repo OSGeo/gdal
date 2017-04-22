@@ -198,6 +198,96 @@ def osr_epsg_9():
     return 'success'
 
 ###############################################################################
+#   Test AutoIdentifyEPSG() on Polar Stereographic
+
+def osr_epsg_10():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""PROJCS["PS         WGS84",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Polar_Stereographic"],
+    PARAMETER["latitude_of_origin",-71],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]]]""")
+
+    if srs.AutoIdentifyEPSG() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if srs.GetAuthorityCode(None) != '3031':
+        gdaltest.post_reason('fail')
+        print(srs.ExportToWkt())
+        return 'fail'
+
+    srs_ref = osr.SpatialReference()
+    srs_ref.ImportFromEPSG(3031)
+    if srs.IsSame(srs_ref) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""PROJCS["PS         WGS84",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Polar_Stereographic"],
+    PARAMETER["latitude_of_origin",71],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]]]""")
+
+    if srs.AutoIdentifyEPSG() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if srs.GetAuthorityCode(None) != '3995':
+        gdaltest.post_reason('fail')
+        print(srs.ExportToWkt())
+        return 'fail'
+
+    srs_ref = osr.SpatialReference()
+    srs_ref.ImportFromEPSG(3995)
+    if srs.IsSame(srs_ref) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test datum shift for EPSG:2065 (PCS based override)
+
+def osr_epsg_11():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 2065 )
+
+    if srs.ExportToWkt().find('TOWGS84[570.8,85.7,462.8,4.998,1.587,5.261,3.56]') == -1:
+        gdaltest.post_reason('did not get expected TOWGS84')
+        print(srs.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     osr_epsg_1,
@@ -209,6 +299,8 @@ gdaltest_list = [
     osr_epsg_7,
     osr_epsg_8,
     osr_epsg_9,
+    osr_epsg_10,
+    osr_epsg_11,
     None ]
 
 if __name__ == '__main__':

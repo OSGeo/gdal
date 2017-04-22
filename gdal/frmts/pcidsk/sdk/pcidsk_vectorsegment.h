@@ -75,10 +75,10 @@ for large vector segments.
 
 */
 
-    class PCIDSK_DLL PCIDSKVectorSegment
-    {
+class PCIDSK_DLL PCIDSKVectorSegment
+{
     public:
-        virtual	~PCIDSKVectorSegment() {}
+        virtual ~PCIDSKVectorSegment() {}
 
 /**
 \brief Fetch RST. 

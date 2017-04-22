@@ -15,6 +15,7 @@
  */
 #include <string.h>
 #include <stdlib.h>
+#include <limits>
 #include "meta.h"
 #include "metaname.h"
 #include "myerror.h"
@@ -29,7 +30,7 @@ const char *centerLookup (unsigned short int center)
     * http://www.wmo.ch/web/www/WMOCodes/Operational/CommonTables/BUFRCommon-2005feb.pdf
     * http://www.wmo.int/web/www/WMOCodes/Operational/CommonTables/BUFRCommon-2005nov.pdf
     * also see:
-    * http://www.nco.ncep.noaa.gov/pmb/docs/on388/table0.html 
+    * http://www.nco.ncep.noaa.gov/pmb/docs/on388/table0.html
     * I typed this in on 11/2/2006 */
 /* *INDENT-OFF* */
    static const struct {
@@ -951,12 +952,12 @@ static const GRIB2ParmTable MeteoAtmos[] = {
             {"SLDP", "Supercooled Large Droplet Probability", "%", UC_NONE},
 /* Mike added 3/2012 */
 /* 24 */    {"CONTKE", "Convective Turbulent Kinetic Energy", "J/kg", UC_NONE},
-/* 25 */    {"WIWW", "Weather Interpretation ww (WMO)", " ", UC_NONE},          	
+/* 25 */    {"WIWW", "Weather Interpretation ww (WMO)", " ", UC_NONE},
 /* 26 */    {"CONVO", "Convective Outlook",  "0=No Risk Area; 1=Reserved; "
              "2=General Thunderstorm Risk Area; 3=Reserved; 4=Slight Risk Area; "
              "5=Reserved; 6=Moderate Risk Area;  7=Reserved; 8=High Risk Area; "
              "9-10=Reserved; 11=Dry Thunderstorm (Dry Lightning) Risk Area; "
-             "12-13=Reserved; 14=Critical Risk Area; 15-17=Reserved" 
+             "12-13=Reserved; 14=Critical Risk Area; 15-17=Reserved"
              "18=Extremely Critical Risk Area; 255=missing", UC_NONE},
 };
 
@@ -967,7 +968,7 @@ static const GRIB2ParmTable MeteoAtmoChem[] = {
    /* 2 */  {"MASSMR", "Mass Mixing Ratio (Mass Fraction in Air)", "kg/kg", UC_NONE},
    /* 3 */  {"AEMFLX", "Atmosphere Emission Mass Flux", "kg/(m^2*s)", UC_NONE},
    /* 4 */  {"ANPMFLX", "Atmosphere Net Production Mass Flux", "kg/(m^2*s)", UC_NONE},
-   /* 5 */  {"ANPEMFLX", "Atmosphere Net Production and Emision Mass Flux", "kg/(m^2*s)", UC_NONE},
+   /* 5 */  {"ANPEMFLX", "Atmosphere Net Production and Emission Mass Flux", "kg/(m^2*s)", UC_NONE},
    /* 6 */  {"SDDMFLX", "Surface Dry Deposition Mass Flux", "kg/(m^2*s)", UC_NONE},
    /* 7 */  {"SWDMFLX", "Surface Wet Deposition Mass Flux", "kg/(m^2*s)", UC_NONE},
    /* 8 */  {"AREMFLX", "Atmosphere Re-Emission Mass Flux", "kg/(m^2*s)", UC_NONE},
@@ -1500,7 +1501,7 @@ static const NDFD_AbrevOverideTable NDFD_Overide[] = {
 static const GRIB2LocalTable NDFD_LclTable[] = {
    /* 0 */ {0, 0, 193, "ApparentT", "Apparent Temperature", "K", UC_K2F},
    /* 1 */ {0, 1, 192, "Wx", "Weather string", "-", UC_NONE},
-           {0, 1, 227, "IceAccum", "Ice Accumulation", "kg/m^2", UC_InchWater}, 
+           {0, 1, 227, "IceAccum", "Ice Accumulation", "kg/m^2", UC_InchWater},
    /* grandfather'ed in a NDFD choice for POP. */
    /* 2 */ {0, 10, 8, "PoP12", "Prob of 0.01 In. of Precip", "%", UC_NONE},
            {0, 13, 194, "smokes", "Surface level smoke from fires",
@@ -1535,7 +1536,7 @@ static const GRIB2LocalTable NDFD_LclTable[] = {
            {10, 3, 193, "ETSurge", "Extra Tropical Storm Surge", "m", UC_M2Feet},
    /* Mike added 2/2012 */
            {0, 1, 198, "MinRH", "Minimum Relative Humidity", "%", UC_NONE}
-}; 
+};
 
 static const GRIB2LocalTable HPC_LclTable[] = {
    /* 0 */ {0, 1, 192, "HPC-Wx", "HPC Code", "-", UC_NONE},
@@ -1607,7 +1608,7 @@ static const GRIB2LocalTable NCEP_LclTable[] = {
 /* It is important to use 'Wx' instead of 'PWTHER' since the rest of the code
  * uses "Wx" to test if it should be dealing with weather strings.  Since these
  * are the same as the NDFD "Wx" strings, it was simpler to maintain the NDFD
- * convention on abbrevations.  We could use 'Predominant Weather' as the long
+ * convention on abbreviations.  We could use 'Predominant Weather' as the long
  * descriptor, but the NDFD 'Weather String' seems quite reasonable. */
 /*            {0, 1, 226, "PWTHER", "Predominant Weather", "-", UC_NONE},*/
             {0, 1, 226, "Wx", "Weather String", "-", UC_NONE},
@@ -1799,7 +1800,7 @@ static const GRIB2LocalTable NCEP_LclTable[] = {
 */
             {0, 19, 232, "VAFTD", "Volcanic Ash Forecast Transport and Dispersion", "log10(kg/m^3)", UC_NONE},
             {0, 19, 233, "ICPRB", "Icing probability", "-", UC_NONE},
-            {0, 19, 234, "ICSEV", "Icing severity", "-", UC_NONE}, 
+            {0, 19, 234, "ICSEV", "Icing severity", "-", UC_NONE},
 
    /* 47 */ {0, 191, 192, "NLAT", "Latitude (-90 to 90)", "deg", UC_NONE},
    /* 48 */ {0, 191, 193, "ELON", "East Longitude (0 to 360)", "deg", UC_NONE},
@@ -1821,7 +1822,7 @@ static const GRIB2LocalTable NCEP_LclTable[] = {
             {0, 192, 10, "COVQVV", "Covariance between specific humidity and vertical components of the wind", "kg/kg*Pa/s", UC_NONE},
             {0, 192, 11, "COVPSPS", "Covariance between surface pressure and surface pressure", "Pa*Pa", UC_NONE},
             {0, 192, 12, "COVQQ", "Covariance between specific humidity and specific humidity", "kg/kg*kg/kg", UC_NONE},
-            {0, 192, 13, "COVVVVV", "Covariance between veritical and vertical components of the wind", "Pa^2/s^2", UC_NONE},
+            {0, 192, 13, "COVVVVV", "Covariance between vertical and vertical components of the wind", "Pa^2/s^2", UC_NONE},
             {0, 192, 14, "COVTT", "Covariance between temperature and temperature", "K*K", UC_NONE},
 
    /* 50 */ {1, 0, 192, "BGRUN", "Baseflow-Groundwater Runoff", "kg/(m^2)", UC_NONE},
@@ -2203,6 +2204,21 @@ static void ElemNameProb (uShort2 center, uShort2 subcenter, int prodType,
    *unit = (char *) malloc (strlen ("[%]") + 1);
    strcpy (*unit, "[%]");
 
+   {
+      // 25.4 mm = 1 inch
+      const double tmp = upperProb * 25.4;
+
+      // TODO(schwehr): Make a function and reuse it for other limit checks.
+      if (upperProb > tmp ||
+          tmp > std::numeric_limits<int>::max() ||
+          tmp < std::numeric_limits<int>::min() ||
+          CPLIsNan(tmp) ) {
+         // TODO(schwehr): What is the correct response?
+         errSprintf ("ERROR: upperProb out of range.  Setting to 0.\n");
+         upperProb = 0.0;
+      }
+   }
+
    if (f_isNdfd || f_isMos) {
       /* Deal with NDFD/MOS handling of Prob Precip_Tot -> PoP12 */
       if ((prodType == 0) && (cat == 1) && (subcat == 8)) {
@@ -2245,7 +2261,7 @@ static void ElemNameProb (uShort2 center, uShort2 subcenter, int prodType,
             if (lenTime > 0) {
                if (timeRangeUnit == 3) {
                   if (upperProb != (double) .254) {
-                     mallocSprintf (name, "PoP%02dm-%03d", lenTime, (int) (int) (upperProb / .254 + .5));
+                     mallocSprintf (name, "PoP%02dm-%03d", lenTime, (int) (upperProb / .254 + .5));
                   } else {
                      mallocSprintf (name, "PoP%02dm", lenTime);
                   }
@@ -2286,7 +2302,7 @@ static void ElemNameProb (uShort2 center, uShort2 subcenter, int prodType,
          *convert = UC_NONE;
          return;
       }
-      /* 
+      /*
        * Deal with NDFD handling of Prob. Wind speeds.
        * There are different solutions for naming the Prob. Wind fields
        * AAT(Mine): ProbSurge5c
@@ -2319,7 +2335,7 @@ static void ElemNameProb (uShort2 center, uShort2 subcenter, int prodType,
       }
    }
    if (f_isNdfd) {
-      /* 
+      /*
        * Deal with NDFD handling of Prob. Wind speeds.
        * There are different solutions for naming the Prob. Wind fields
        * Tim Boyer: TCWindSpdIncr34 TCWindSpdIncr50 TCWindSpdIncr64
@@ -2809,7 +2825,7 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
                }
             }
          }
-         /* Allow hydrologic PoP, thunderstorm probability (TSTM), or APCP to 
+         /* Allow hydrologic PoP, thunderstorm probability (TSTM), or APCP to
           * have lenTime labels. */
          f_accum = (((prodType == 1) && (cat == 1) && (subcat == 2)) ||
                     ((prodType == 0) && (cat == 19) && (subcat == 2)) ||
@@ -2847,7 +2863,7 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
       for (i = 0; i < tableLen; i++) {
          if ((prodType == local[i].prodType) && (cat == local[i].cat) &&
              (subcat == local[i].subcat)) {
-            /* Allow specific products with non-zero lenTime to reflect that. 
+            /* Allow specific products with non-zero lenTime to reflect that.
              */
             f_accum = 0;
             if (f_accum && (lenTime > 0)) {
@@ -3157,7 +3173,7 @@ int ComputeUnit (int convert, char *origName, sChar f_unit, double *unitM,
       case UC_InchWater: /* Convert from kg/(m^2) to inches water. */
          if (f_unit == 1) {
             strcpy (name, "[inch]");
-            /* 
+            /*
              * kg/m**2 / density of water (1000 kg/m**3)
              * 1/1000 m * 1/2.54 in/cm * 100 cm/m = 1/25.4 inches
              */

@@ -88,8 +88,8 @@ class ISCEDataset : public RawDataset
                 ISCEDataset();
     virtual ~ISCEDataset();
 
-    virtual void        FlushCache();
-    virtual char      **GetFileList();
+    virtual void        FlushCache() override;
+    virtual char      **GetFileList() override;
 
     static int          Identify( GDALOpenInfo *poOpenInfo );
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );

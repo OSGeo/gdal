@@ -1,7 +1,12 @@
 
-/*! \page gdal_sieve gdal_sieve.py
+/*!
+\if man
+\page gdal_sieve
+\else
+\page gdal_sieve gdal_sieve.py
+\endif
 
-removes small raster polygons
+Removes small raster polygons.
 
 \section gdal_sieve_synopsis SYNOPSIS
 
@@ -16,6 +21,10 @@ The gdal_sieve.py script removes raster polygons smaller than a provided
 threshold size (in pixels) and replaces replaces them with the pixel value
 of the largest neighbour polygon.  The result can be written back to the
 existing raster band, or copied into a new file.
+
+The input dataset is read as integer data which means that floating point
+values are rounded to integers. Re-scaling source data may be necessary in
+some cases (e.g. 32-bit floating point data with min=0 and max=1).
 
 Additional details on the algorithm are available in the GDALSieveFilter()
 docs.

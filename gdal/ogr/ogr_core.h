@@ -45,11 +45,19 @@
  */
 
 /*! @cond Doxygen_Suppress */
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
+
+extern "C++"
+{
+#include <limits>
+
 class CPL_DLL OGREnvelope
 {
   public:
-        OGREnvelope() : MinX(0.0), MaxX(0.0), MinY(0.0), MaxY(0.0)
+        OGREnvelope() : MinX(std::numeric_limits<double>::infinity()),
+                        MaxX(-std::numeric_limits<double>::infinity()),
+                        MinY(std::numeric_limits<double>::infinity()),
+                        MaxY(-std::numeric_limits<double>::infinity())
         {
         }
 
@@ -67,41 +75,24 @@ class CPL_DLL OGREnvelope
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
-    int  IsInit() const { return MinX != 0 || MinY != 0 || MaxX != 0 || MaxY != 0; }
+    int  IsInit() const { return MinX != std::numeric_limits<double>::infinity(); }
 
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
 
     void Merge( OGREnvelope const& sOther ) {
-        if( IsInit() )
-        {
-            MinX = MIN(MinX,sOther.MinX);
-            MaxX = MAX(MaxX,sOther.MaxX);
-            MinY = MIN(MinY,sOther.MinY);
-            MaxY = MAX(MaxY,sOther.MaxY);
-        }
-        else
-        {
-            MinX = sOther.MinX;
-            MaxX = sOther.MaxX;
-            MinY = sOther.MinY;
-            MaxY = sOther.MaxY;
-        }
+        MinX = MIN(MinX,sOther.MinX);
+        MaxX = MAX(MaxX,sOther.MaxX);
+        MinY = MIN(MinY,sOther.MinY);
+        MaxY = MAX(MaxY,sOther.MaxY);
     }
+
     void Merge( double dfX, double dfY ) {
-        if( IsInit() )
-        {
-            MinX = MIN(MinX,dfX);
-            MaxX = MAX(MaxX,dfX);
-            MinY = MIN(MinY,dfY);
-            MaxY = MAX(MaxY,dfY);
-        }
-        else
-        {
-            MinX = MaxX = dfX;
-            MinY = MaxY = dfY;
-        }
+        MinX = MIN(MinX,dfX);
+        MaxX = MAX(MaxX,dfX);
+        MinY = MIN(MinY,dfY);
+        MaxY = MAX(MaxY,dfY);
     }
 
     void Intersect( OGREnvelope const& sOther ) {
@@ -124,10 +115,7 @@ class CPL_DLL OGREnvelope
         }
         else
         {
-            MinX = 0;
-            MaxX = 0;
-            MinY = 0;
-            MaxY = 0;
+            *this = OGREnvelope();
         }
     }
 
@@ -143,6 +131,9 @@ class CPL_DLL OGREnvelope
                MaxX >= other.MaxX && MaxY >= other.MaxY;
     }
 };
+
+} // extern "C++"
+
 #else
 typedef struct
 {
@@ -157,11 +148,16 @@ typedef struct
  * Simple container for a bounding region in 3D.
  */
 
-#if defined(__cplusplus) && !defined(CPL_SURESS_CPLUSPLUS)
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
+
+extern "C++" {
+
 class CPL_DLL OGREnvelope3D : public OGREnvelope
 {
   public:
-        OGREnvelope3D() : OGREnvelope(), MinZ(0.0), MaxZ(0.0)
+        OGREnvelope3D() : OGREnvelope(),
+                          MinZ(std::numeric_limits<double>::infinity()),
+                          MaxZ(-std::numeric_limits<double>::infinity())
         {
         }
 
@@ -178,47 +174,27 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
-    int  IsInit() const { return MinX != 0 || MinY != 0 || MaxX != 0 || MaxY != 0 || MinZ != 0 || MaxZ != 0; }
+    int  IsInit() const { return MinX != std::numeric_limits<double>::infinity(); }
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
 
     void Merge( OGREnvelope3D const& sOther ) {
-        if( IsInit() )
-        {
-            MinX = MIN(MinX,sOther.MinX);
-            MaxX = MAX(MaxX,sOther.MaxX);
-            MinY = MIN(MinY,sOther.MinY);
-            MaxY = MAX(MaxY,sOther.MaxY);
-            MinZ = MIN(MinZ,sOther.MinZ);
-            MaxZ = MAX(MaxZ,sOther.MaxZ);
-        }
-        else
-        {
-            MinX = sOther.MinX;
-            MaxX = sOther.MaxX;
-            MinY = sOther.MinY;
-            MaxY = sOther.MaxY;
-            MinZ = sOther.MinZ;
-            MaxZ = sOther.MaxZ;
-        }
+        MinX = MIN(MinX,sOther.MinX);
+        MaxX = MAX(MaxX,sOther.MaxX);
+        MinY = MIN(MinY,sOther.MinY);
+        MaxY = MAX(MaxY,sOther.MaxY);
+        MinZ = MIN(MinZ,sOther.MinZ);
+        MaxZ = MAX(MaxZ,sOther.MaxZ);
     }
+
     void Merge( double dfX, double dfY, double dfZ ) {
-        if( IsInit() )
-        {
-            MinX = MIN(MinX,dfX);
-            MaxX = MAX(MaxX,dfX);
-            MinY = MIN(MinY,dfY);
-            MaxY = MAX(MaxY,dfY);
-            MinZ = MIN(MinZ,dfZ);
-            MaxZ = MAX(MaxZ,dfZ);
-        }
-        else
-        {
-            MinX = MaxX = dfX;
-            MinY = MaxY = dfY;
-            MinZ = MaxZ = dfZ;
-        }
+        MinX = MIN(MinX,dfX);
+        MaxX = MAX(MaxX,dfX);
+        MinY = MIN(MinY,dfY);
+        MaxY = MAX(MaxY,dfY);
+        MinZ = MIN(MinZ,dfZ);
+        MaxZ = MAX(MaxZ,dfZ);
     }
 
     void Intersect( OGREnvelope3D const& sOther ) {
@@ -245,12 +221,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
         }
         else
         {
-            MinX = 0;
-            MaxX = 0;
-            MinY = 0;
-            MaxY = 0;
-            MinZ = 0;
-            MaxZ = 0;
+            *this = OGREnvelope3D();
         }
     }
 
@@ -268,6 +239,9 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
                MinZ <= other.MinZ && MaxZ >= other.MaxZ;
     }
 };
+
+} // extern "C++"
+
 #else
 typedef struct
 {
@@ -284,11 +258,11 @@ typedef struct
 CPL_C_START
 
 /*! @cond Doxygen_Suppress */
-void CPL_DLL *OGRMalloc( size_t );
-void CPL_DLL *OGRCalloc( size_t, size_t );
-void CPL_DLL *OGRRealloc( void *, size_t );
-char CPL_DLL *OGRStrdup( const char * );
-void CPL_DLL OGRFree( void * );
+void CPL_DLL *OGRMalloc( size_t ) CPL_WARN_DEPRECATED("Use CPLMalloc instead.");
+void CPL_DLL *OGRCalloc( size_t, size_t ) CPL_WARN_DEPRECATED("Use CPLCalloc instead.");
+void CPL_DLL *OGRRealloc( void *, size_t ) CPL_WARN_DEPRECATED("Use CPLRealloc instead.");
+char CPL_DLL *OGRStrdup( const char * ) CPL_WARN_DEPRECATED("Use CPLStrdup instead.");
+void CPL_DLL OGRFree( void * ) CPL_WARN_DEPRECATED("Use CPLFree instead.");
 /*! @endcond */
 
 #ifdef STRICT_OGRERR_TYPE
@@ -660,8 +634,21 @@ typedef enum
 
 /** Special value for a unset FID */
 #define OGRNullFID            -1
-/** Special value for OGRField.Set.nMarker1 and nMarker2 */
+
+/** Special value set in OGRField.Set.nMarker1, nMarker2 and nMarker3 for
+ *  a unset field.
+ *  Direct use of this value is strongly discouraged.
+ *  Use OGR_RawField_SetUnset() or OGR_RawField_IsUnset() instead.
+ */
 #define OGRUnsetMarker        -21121
+
+/** Special value set in OGRField.Set.nMarker1, nMarker2 and nMarker3 for
+ *  a null field.
+ *  Direct use of this value is strongly discouraged.
+ *  Use OGR_RawField_SetNull() or OGR_RawField_IsNull() instead.
+ *  @since GDAL 2.2
+ */
+#define OGRNullMarker         -21122
 
 /************************************************************************/
 /*                               OGRField                               */
@@ -706,6 +693,7 @@ typedef union {
     struct {
         int     nMarker1;
         int     nMarker2;
+        int     nMarker3;
     } Set;
 
     struct {

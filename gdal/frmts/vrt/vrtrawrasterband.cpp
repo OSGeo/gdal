@@ -27,10 +27,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_minixml.h"
-#include "cpl_string.h"
+#include "cpl_port.h"
 #include "rawdataset.h"
 #include "vrtdataset.h"
+
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_hash_set.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -366,17 +379,6 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
 }
 
 /************************************************************************/
-/*                           VRTRawStripSpace()                         */
-/************************************************************************/
-
-static const char* VRTRawStripSpace(const char* pszStr)
-{
-    while( *pszStr == ' ' )
-        pszStr ++;
-    return pszStr;
-}
-
-/************************************************************************/
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
@@ -418,25 +420,18 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Set other layout information.                                   */
 /* -------------------------------------------------------------------- */
-    char szOffset[22] = { '\0' };
 
-    CPLPrintUIntBig( szOffset, m_poRawRaster->GetImgOffset(),
-                     sizeof(szOffset) - 1 );
-    szOffset[sizeof(szOffset)-1] = '\0';
     CPLCreateXMLElementAndValue( psTree, "ImageOffset",
-                                 VRTRawStripSpace(szOffset) );
+                                 CPLSPrintf( CPL_FRMT_GUIB,
+                                             m_poRawRaster->GetImgOffset()) );
 
-    CPLPrintUIntBig( szOffset, m_poRawRaster->GetPixelOffset(),
-                     sizeof(szOffset) - 1 );
-    szOffset[sizeof(szOffset)-1] = '\0';
     CPLCreateXMLElementAndValue( psTree, "PixelOffset",
-                                 VRTRawStripSpace(szOffset) );
+                                 CPLSPrintf( "%d",
+                                             m_poRawRaster->GetPixelOffset()) );
 
-    CPLPrintUIntBig( szOffset, m_poRawRaster->GetLineOffset(),
-                     sizeof(szOffset) - 1 );
-    szOffset[sizeof(szOffset)-1] = '\0';
     CPLCreateXMLElementAndValue( psTree, "LineOffset",
-                                 VRTRawStripSpace(szOffset) );
+                                 CPLSPrintf( "%d",
+                                             m_poRawRaster->GetLineOffset()) );
 
 #if CPL_IS_LSB == 1
     if( m_poRawRaster->GetNativeOrder() )

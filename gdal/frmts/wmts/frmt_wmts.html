@@ -44,9 +44,9 @@ the URL to the GetCapabilities response of a WTMS service:
 
 <li><p>
 the URL to the GetCapabilities response of a WTMS service, prefixed with <i>WMTS:</i>,
-and possibly with optional layer, tilematrixset, style and extendbeyonddateline parameters,
+and possibly with optional layer, tilematrixset, tilematrix/zoom_level, style and extendbeyonddateline parameters,
 with the following syntax
-<i>WMTS:url[,layer=layer_id][,tilematrixset=tms_id][,style=style_id][,extendbeyonddateline=yes/no]</i>.
+<i>WMTS:url[,layer=layer_id][,tilematrixset=tms_id][,tilematrix=tm_id|,zoom_level=level][,style=style_id][,extendbeyonddateline=yes/no]</i>.
 
 <pre>gdalinfo "WMTS:http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml"</pre>
 <pre>gdalinfo "WMTS:http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml,layer=lb"</pre>
@@ -55,7 +55,7 @@ with the following syntax
 
 <li><p>
 the <i>WMTS:</i> prefix with open options URL (required), LAYER, TILEMATRIXSET,
-STYLE, EXTENDBEYONDDATELINE.
+TILEMATRIX, ZOOM_LEVEL, STYLE, EXTENDBEYONDDATELINE.
 <pre>gdalinfo WMTS: -oo URL=http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml -oo LAYER=lb</pre>
 </p></li>
 
@@ -95,6 +95,14 @@ It is important that there be no spaces or other content before the <tt>&lt;GDAL
                 <tr>
                         <td class="xml">  &lt;TileMatrixSet&gt;<span class="value">tile_matrix_set_id</span>&lt;/TileMatrixSet&gt;</td>
                         <td class="desc">Tile Matrix Set identifier. Must be one of the listed tile matrix set for the layer. (optional, but may be needed to disambiguate between several tile matrix sets)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;TileMatrix&gt;<span class="value">tile_matrix_id</span>&lt;/TileMatrix&gt;</td>
+                        <td class="desc">Tile Matrix identifier. Must be one of the listed tile matrix of the select tile matrix set for the layer. (optional, GDAL &gt;= 2.2. Exclusive with ZoomLevel. If not specified the last tile matrix, ie the one with the best resolution, is selected)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;ZoomLevel&gt;<span class="value">int_value</span>&lt;/ZoomLevel&gt;</td>
+                        <td class="desc">Index of the maximum zoom level / tile matrix to use. The first one (ie the one of lower resolution) is indexed 0. (optional, GDAL &gt;= 2.2. Exclusive with TileMatrix. If not specified the last tile matrix, ie the one with the best resolution, is selected)</td>
                 </tr>
                 <tr>
                         <td class="xml">  &lt;Format&gt;<span class="value">image/png</span>&lt;/Format&gt;</td>

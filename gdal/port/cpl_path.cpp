@@ -27,16 +27,31 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_atomic_ops.h"
+#include "cpl_port.h"
 #include "cpl_conv.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
+
+#include <cctype>
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include <algorithm>
+#include <string>
+
+#include "cpl_atomic_ops.h"
+#include "cpl_config.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
-/* should be size of larged possible filename */
+// Should be size of larged possible filename.
 static const int CPL_PATH_BUF_SIZE = 2048;
 static const int CPL_PATH_BUF_COUNT = 10;
 
@@ -46,7 +61,7 @@ static const char SEP_STRING[] = "\\";
 static const char SEP_STRING[] = "/";
 #endif
 
-static const char* CPLStaticBufferTooSmall(char *pszStaticResult)
+static const char* CPLStaticBufferTooSmall( char *pszStaticResult )
 {
     CPLError(CE_Failure, CPLE_AppDefined, "Destination buffer too small");
     if( pszStaticResult == NULL )
@@ -63,8 +78,8 @@ static char *CPLGetStaticResult()
 
 {
     int bMemoryError = FALSE;
-    char *pachBufRingInfo
-        = static_cast<char *>( CPLGetTLSEx( CTLS_PATHBUF, &bMemoryError ) );
+    char *pachBufRingInfo =
+        static_cast<char *>( CPLGetTLSEx( CTLS_PATHBUF, &bMemoryError ) );
     if( bMemoryError )
         return NULL;
     if( pachBufRingInfo == NULL )
@@ -82,8 +97,8 @@ static char *CPLGetStaticResult()
 /*      time.                                                           */
 /* -------------------------------------------------------------------- */
     int *pnBufIndex = reinterpret_cast<int *>( pachBufRingInfo );
-    size_t nOffset
-        = sizeof(int) + static_cast<size_t>( *pnBufIndex * CPL_PATH_BUF_SIZE );
+    const size_t nOffset =
+        sizeof(int) + static_cast<size_t>( *pnBufIndex * CPL_PATH_BUF_SIZE );
     char *pachBuffer = pachBufRingInfo + nOffset;
 
     *pnBufIndex = (*pnBufIndex + 1) % CPL_PATH_BUF_COUNT;
@@ -139,13 +154,13 @@ const char *CPLGetPath( const char *pszFilename )
 
 {
     const int iFileStart = CPLFindFilenameStart(pszFilename);
-    char       *pszStaticResult = CPLGetStaticResult();
+    char *pszStaticResult = CPLGetStaticResult();
 
     if( pszStaticResult == NULL || iFileStart >= CPL_PATH_BUF_SIZE )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
-    CPLAssert( ! (pszFilename >= pszStaticResult
-                  && pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
+    CPLAssert( !(pszFilename >= pszStaticResult
+                 && pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
     if( iFileStart == 0 )
     {
@@ -194,13 +209,13 @@ const char *CPLGetDirname( const char *pszFilename )
 
 {
     const int iFileStart = CPLFindFilenameStart(pszFilename);
-    char       *pszStaticResult = CPLGetStaticResult();
+    char *pszStaticResult = CPLGetStaticResult();
 
     if( pszStaticResult == NULL || iFileStart >= CPL_PATH_BUF_SIZE )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
-    CPLAssert( ! (pszFilename >= pszStaticResult
-                  && pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
+    CPLAssert( !(pszFilename >= pszStaticResult
+                 && pszFilename < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
     if( iFileStart == 0 )
     {
@@ -277,14 +292,14 @@ const char *CPLGetFilename( const char *pszFullFilename )
 const char *CPLGetBasename( const char *pszFullFilename )
 
 {
-    const size_t iFileStart
-        = static_cast<size_t>( CPLFindFilenameStart( pszFullFilename ) );
-    char    *pszStaticResult = CPLGetStaticResult();
+    const size_t iFileStart =
+        static_cast<size_t>( CPLFindFilenameStart( pszFullFilename ) );
+    char *pszStaticResult = CPLGetStaticResult();
     if( pszStaticResult == NULL )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
-    CPLAssert( ! ( pszFullFilename >= pszStaticResult
-                   && pszFullFilename < pszStaticResult + CPL_PATH_BUF_SIZE ) );
+    CPLAssert( !( pszFullFilename >= pszStaticResult
+                  && pszFullFilename < pszStaticResult + CPL_PATH_BUF_SIZE ) );
 
     size_t iExtStart = strlen(pszFullFilename);
     for( ;
@@ -330,16 +345,16 @@ const char *CPLGetBasename( const char *pszFullFilename )
 const char *CPLGetExtension( const char *pszFullFilename )
 
 {
-    size_t iFileStart
-        = static_cast<size_t>( CPLFindFilenameStart( pszFullFilename ) );
-    char    *pszStaticResult = CPLGetStaticResult();
+    size_t iFileStart =
+        static_cast<size_t>( CPLFindFilenameStart( pszFullFilename ) );
+    char *pszStaticResult = CPLGetStaticResult();
     if( pszStaticResult == NULL )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
-    CPLAssert( ! ( pszFullFilename >= pszStaticResult
-                   && pszFullFilename < pszStaticResult + CPL_PATH_BUF_SIZE ) );
+    CPLAssert( !( pszFullFilename >= pszStaticResult
+                  && pszFullFilename < pszStaticResult + CPL_PATH_BUF_SIZE ) );
 
-    size_t  iExtStart = strlen(pszFullFilename);
+    size_t iExtStart = strlen(pszFullFilename);
     for( ;
          iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
          iExtStart-- ) {}
@@ -347,7 +362,7 @@ const char *CPLGetExtension( const char *pszFullFilename )
     if( iExtStart == iFileStart )
         iExtStart = strlen(pszFullFilename)-1;
 
-    if (CPLStrlcpy( pszStaticResult, pszFullFilename+iExtStart+1,
+    if( CPLStrlcpy( pszStaticResult, pszFullFilename+iExtStart+1,
                     CPL_PATH_BUF_SIZE )
         >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )
         return CPLStaticBufferTooSmall(pszStaticResult);
@@ -368,8 +383,8 @@ const char *CPLGetExtension( const char *pszFullFilename )
  * If HAVE_GETCWD macro is not defined, the function returns NULL.
  **/
 
+#ifdef HAVE_GETCWD
 char *CPLGetCurrentDir()
-
 {
 #ifdef _MAX_PATH
     const size_t nPathMax = _MAX_PATH;
@@ -380,15 +395,14 @@ char *CPLGetCurrentDir()
 #endif
 
     char *pszDirPath = static_cast<char *>( VSI_MALLOC_VERBOSE( nPathMax ) );
-    if ( !pszDirPath )
+    if( !pszDirPath )
         return NULL;
 
-#ifdef HAVE_GETCWD
     return getcwd( pszDirPath, nPathMax );
-#else
-    return NULL;
-#endif /* HAVE_GETCWD */
 }
+#else  // !HAVE_GETCWD
+char *CPLGetCurrentDir() { return NULL; }
+#endif // HAVE_GETCWD
 
 /************************************************************************/
 /*                         CPLResetExtension()                          */
@@ -408,7 +422,7 @@ char *CPLGetCurrentDir()
 const char *CPLResetExtension( const char *pszPath, const char *pszExt )
 
 {
-    char    *pszStaticResult = CPLGetStaticResult();
+    char *pszStaticResult = CPLGetStaticResult();
     if( pszStaticResult == NULL )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
@@ -418,11 +432,11 @@ const char *CPLResetExtension( const char *pszPath, const char *pszExt )
 /* -------------------------------------------------------------------- */
 /*      First, try and strip off any existing extension.                */
 /* -------------------------------------------------------------------- */
-    if ( CPLStrlcpy( pszStaticResult, pszPath, CPL_PATH_BUF_SIZE )
-         >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )
+    if( CPLStrlcpy( pszStaticResult, pszPath, CPL_PATH_BUF_SIZE )
+        >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
-    if (*pszStaticResult)
+    if( *pszStaticResult )
     {
         for( size_t i = strlen(pszStaticResult) - 1; i > 0; i-- )
         {
@@ -463,10 +477,10 @@ const char *CPLResetExtension( const char *pszPath, const char *pszExt )
  * an extension if desired.
  *
  * <pre>
- * CPLFormFilename("abc/xyz","def", ".dat" ) == "abc/xyz/def.dat"
+ * CPLFormFilename("abc/xyz", "def", ".dat" ) == "abc/xyz/def.dat"
  * CPLFormFilename(NULL,"def", NULL ) == "def"
- * CPLFormFilename(NULL,"abc/def.dat", NULL ) == "abc/def.dat"
- * CPLFormFilename("/abc/xyz/","def.dat", NULL ) == "/abc/xyz/def.dat"
+ * CPLFormFilename(NULL, "abc/def.dat", NULL ) == "abc/def.dat"
+ * CPLFormFilename("/abc/xyz/", "def.dat", NULL ) == "/abc/xyz/def.dat"
  * </pre>
  *
  * @param pszPath directory path to the directory containing the file.  This
@@ -501,8 +515,8 @@ const char *CPLFormFilename( const char * pszPath,
     if( pszBasename[0] == '.' && pszBasename[1] == '/' )
         pszBasename += 2;
 
-    const char  *pszAddedPathSep = "";
-    const char  *pszAddedExtSep = "";
+    const char *pszAddedPathSep = "";
+    const char *pszAddedExtSep = "";
 
     if( pszPath == NULL )
         pszPath = "";
@@ -510,14 +524,14 @@ const char *CPLFormFilename( const char * pszPath,
     if( !CPLIsFilenameRelative(pszPath) &&
         strcmp(pszBasename, "..") == 0 )
     {
-        /* /a/b + .. --> /a */
+        // /a/b + .. --> /a
         if( pszPath[nLenPath-1] == '\\' || pszPath[nLenPath-1] == '/' )
-            nLenPath --;
+            nLenPath--;
         size_t nLenPathOri = nLenPath;
         while( nLenPath > 0 && pszPath[nLenPath-1] != '\\' &&
                pszPath[nLenPath-1] != '/')
         {
-            nLenPath --;
+            nLenPath--;
         }
         if( nLenPath == 1 && pszPath[0] == '/' )
         {
@@ -527,7 +541,7 @@ const char *CPLFormFilename( const char * pszPath,
                  (nLenPath > 2 && pszPath[1] == ':') ||
                  (nLenPath > 6 && strncmp(pszPath, "\\\\$\\", 4) == 0) )
         {
-            nLenPath --;
+            nLenPath--;
             pszBasename = "";
         }
         else
@@ -540,13 +554,13 @@ const char *CPLFormFilename( const char * pszPath,
              && pszPath[nLenPath-1] != '/'
              && pszPath[nLenPath-1] != '\\' )
     {
-        /* FIXME? would be better to ask the filesystems what they */
-        /* prefer as directory separator */
-        if (strcmp(pszPath, "/vsimem") == 0 ||
+        // FIXME? Would be better to ask the filesystems what it
+        // prefers as directory separator?
+        if( strcmp(pszPath, "/vsimem") == 0 ||
             STARTS_WITH(pszPath, "/vsimem/") ||
             STARTS_WITH(pszPath, "/vsicurl/") ||
             STARTS_WITH(pszPath, "/vsicurl_streaming/") ||
-            STARTS_WITH(pszPath, "/vsizip/"))
+            STARTS_WITH(pszPath, "/vsizip/") )
             pszAddedPathSep = "/";
         else
             pszAddedPathSep = SEP_STRING;
@@ -609,13 +623,12 @@ const char *CPLFormCIFilename( const char * pszPath,
                                const char * pszExtension )
 
 {
-    // On case insensitive filesystems, just default to
-    // CPLFormFilename()
+    // On case insensitive filesystems, just default to CPLFormFilename().
     if( !VSIIsCaseSensitiveFS(pszPath) )
         return CPLFormFilename( pszPath, pszBasename, pszExtension );
 
-    const char  *pszAddedExtSep = "";
-    size_t       nLen = strlen(pszBasename)+2;
+    const char *pszAddedExtSep = "";
+    size_t nLen = strlen(pszBasename) + 2;
 
     if( pszExtension != NULL )
         nLen += strlen(pszExtension);
@@ -681,11 +694,11 @@ const char *CPLFormCIFilename( const char * pszPath,
  *
  * Examples:
  * <pre>
- * CPLProjectRelativeFilename("abc/def","tmp/abc.gif") == "abc/def/tmp/abc.gif"
- * CPLProjectRelativeFilename("abc/def","/tmp/abc.gif") == "/tmp/abc.gif"
+ * CPLProjectRelativeFilename("abc/def", "tmp/abc.gif") == "abc/def/tmp/abc.gif"
+ * CPLProjectRelativeFilename("abc/def", "/tmp/abc.gif") == "/tmp/abc.gif"
  * CPLProjectRelativeFilename("/xy", "abc.gif") == "/xy/abc.gif"
- * CPLProjectRelativeFilename("/abc/def","../abc.gif") == "/abc/def/../abc.gif"
- * CPLProjectRelativeFilename("C:\WIN","abc.gif") == "C:\WIN\abc.gif"
+ * CPLProjectRelativeFilename("/abc/def", "../abc.gif") == "/abc/def/../abc.gif"
+ * CPLProjectRelativeFilename("C:\WIN", "abc.gif") == "C:\WIN\abc.gif"
  * </pre>
  *
  * @param pszProjectDir the directory relative to which the secondary files
@@ -706,11 +719,11 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
     if( pszStaticResult == NULL )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
-    CPLAssert( ! ( pszProjectDir >= pszStaticResult
-                   && pszProjectDir < pszStaticResult + CPL_PATH_BUF_SIZE ) );
-    CPLAssert( ! ( pszSecondaryFilename >= pszStaticResult
-                   && pszSecondaryFilename
-                   < pszStaticResult + CPL_PATH_BUF_SIZE) );
+    CPLAssert( !(pszProjectDir >= pszStaticResult
+                 && pszProjectDir < pszStaticResult + CPL_PATH_BUF_SIZE ) );
+    CPLAssert( !(pszSecondaryFilename >= pszStaticResult
+                 && pszSecondaryFilename
+                 < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
     if( !CPLIsFilenameRelative( pszSecondaryFilename ) )
         return pszSecondaryFilename;
@@ -725,12 +738,12 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
     if( pszProjectDir[strlen(pszProjectDir)-1] != '/'
         && pszProjectDir[strlen(pszProjectDir)-1] != '\\' )
     {
-        /* FIXME? would be better to ask the filesystems what they */
-        /* prefer as directory separator */
-        const char* pszAddedPathSep;
-        if (strcmp(pszStaticResult, "/vsimem") == 0 ||
+        // FIXME: Better to ask the filesystems what it
+        // prefers as directory separator?
+        const char* pszAddedPathSep = NULL;
+        if( strcmp(pszStaticResult, "/vsimem") == 0 ||
             STARTS_WITH(pszStaticResult, "/vsicurl/") ||
-            STARTS_WITH(pszStaticResult, "/vsimem/"))
+            STARTS_WITH(pszStaticResult, "/vsimem/") )
             pszAddedPathSep = "/";
         else
             pszAddedPathSep = SEP_STRING;
@@ -768,7 +781,7 @@ int CPLIsFilenameRelative( const char *pszFilename )
     if( (pszFilename[0] != '\0'
          && (STARTS_WITH(pszFilename+1, ":\\")
              || STARTS_WITH(pszFilename+1, ":/")))
-        || STARTS_WITH(pszFilename, "\\\\?\\") /* Windows extended Length Path */
+        || STARTS_WITH(pszFilename, "\\\\?\\")  // Windows extended Length Path.
         || pszFilename[0] == '\\'
         || pszFilename[0] == '/' )
         return FALSE;
@@ -825,7 +838,7 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
 /*      One simple case is when the base dir is '.' and the target      */
 /*      filename is relative.                                           */
 /* -------------------------------------------------------------------- */
-    if( (nBasePathLen == 0 || EQUAL(pszBaseDir,"."))
+    if( (nBasePathLen == 0 || EQUAL(pszBaseDir, "."))
         && CPLIsFilenameRelative(pszTarget) )
     {
         if( pbGotRelative != NULL )
@@ -850,7 +863,7 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
 /*      If we don't have a common path prefix, then we can't get a      */
 /*      relative path.                                                  */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszBaseDir,pszTarget,nBasePathLen)
+    if( !EQUALN(pszBaseDir, pszTarget, nBasePathLen)
         || (pszTarget[nBasePathLen] != '\\'
             && pszTarget[nBasePathLen] != '/') )
     {
@@ -898,14 +911,14 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
 const char *CPLCleanTrailingSlash( const char *pszPath )
 
 {
-    char       *pszStaticResult = CPLGetStaticResult();
+    char *pszStaticResult = CPLGetStaticResult();
     if( pszStaticResult == NULL )
         return CPLStaticBufferTooSmall(pszStaticResult);
     CPLAssert( ! ( pszPath >= pszStaticResult
                    && pszPath < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
     const size_t iPathLength = strlen(pszPath);
-    if (iPathLength >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )
+    if( iPathLength >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
     CPLStrlcpy( pszStaticResult, pszPath, iPathLength+1 );
@@ -959,7 +972,7 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
 /*      matches the old name, to rename to the new name.                */
 /* -------------------------------------------------------------------- */
     if( CSLCount(papszFileList) == 1
-        && strcmp(pszOldFilename,papszFileList[0]) == 0 )
+        && strcmp(pszOldFilename, papszFileList[0]) == 0 )
     {
         return CSLAddString( NULL, pszNewFilename );
     }
@@ -974,7 +987,7 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
 /* -------------------------------------------------------------------- */
     if( osOldBasename != osNewBasename )
     {
-        for( int i=0; papszFileList[i] != NULL; i++ )
+        for( int i = 0; papszFileList[i] != NULL; i++ )
         {
             if( osOldBasename == CPLGetBasename( papszFileList[i] ) )
                 continue;
@@ -982,8 +995,8 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
             const CPLString osFilePath = CPLGetPath( papszFileList[i] );
             const CPLString osFileName = CPLGetFilename( papszFileList[i] );
 
-            if( !EQUALN(osFileName,osOldBasename,osOldBasename.size())
-                || !EQUAL(osFilePath,osOldPath)
+            if( !EQUALN(osFileName, osOldBasename, osOldBasename.size())
+                || !EQUAL(osFilePath, osOldPath)
                 || osFileName[osOldBasename.size()] != '.' )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -999,10 +1012,10 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
 /* -------------------------------------------------------------------- */
     if( osOldBasename != osNewBasename )
     {
-        const CPLString osOldExtra = CPLGetFilename(pszOldFilename)
-            + strlen(osOldBasename);
-        const CPLString osNewExtra = CPLGetFilename(pszNewFilename)
-            + strlen(osNewBasename);
+        const CPLString osOldExtra =
+            CPLGetFilename(pszOldFilename) + osOldBasename.size();
+        const CPLString osNewExtra =
+            CPLGetFilename(pszNewFilename) + osNewBasename.size();
 
         if( osOldExtra != osNewExtra )
         {
@@ -1019,18 +1032,15 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
     char **papszNewList = NULL;
     const CPLString osNewPath = CPLGetPath( pszNewFilename );
 
-    for( int i=0; papszFileList[i] != NULL; i++ )
+    for( int i = 0; papszFileList[i] != NULL; i++ )
     {
-        CPLString osNewFilename;
         const CPLString osOldFilename = CPLGetFilename( papszFileList[i] );
 
-        if( osOldBasename == osNewBasename )
-            osNewFilename =
-                CPLFormFilename( osNewPath, osOldFilename, NULL );
-        else
-            osNewFilename =
-                CPLFormFilename( osNewPath, osNewBasename,
-                                 osOldFilename.c_str()+strlen(osOldBasename));
+        const CPLString osNewFilename =
+            osOldBasename == osNewBasename
+            ? CPLFormFilename( osNewPath, osOldFilename, NULL )
+            : CPLFormFilename( osNewPath, osNewBasename,
+                               osOldFilename.c_str() + osOldBasename.size());
 
         papszNewList = CSLAddString( papszNewList, osNewFilename );
     }
@@ -1079,4 +1089,33 @@ const char *CPLGenerateTempFilename( const char *pszStem )
                        CPLAtomicInc( &nTempFileCounter ) );
 
     return CPLFormFilename( pszDir, osFilename, NULL );
+}
+
+/************************************************************************/
+/*                         CPLExpandTilde()                             */
+/************************************************************************/
+
+/**
+ * Expands ~/ at start of filename.
+ * 
+ * Assumes that the HOME configuration option is defined.
+ *
+ * @param pszFilename filename potentially starting with ~/
+ *
+ * @return an expanded filename.
+ *
+ * @since GDAL 2.2
+ */
+
+const char *CPLExpandTilde( const char *pszFilename )
+
+{
+    if( !STARTS_WITH_CI(pszFilename, "~/") )
+        return pszFilename;
+
+    const char* pszHome = CPLGetConfigOption("HOME", NULL);
+    if( pszHome == NULL )
+        return pszFilename;
+
+    return CPLFormFilename( pszHome, pszFilename + 2, NULL );
 }

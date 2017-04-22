@@ -35,7 +35,6 @@
  ***************************************************************************/
 
 #include "wmsdriver.h"
-
 #include "minidriver_wms.h"
 #include "minidriver_tileservice.h"
 #include "minidriver_worldwind.h"
@@ -62,6 +61,8 @@ GDALWMSDataset::GDALWMSDataset() :
     m_offline_mode(0),
     m_http_max_conn(0),
     m_http_timeout(0),
+    m_http_options(NULL),
+    m_tileOO(NULL),
     m_clamp_requests(true),
     m_unsafeSsl(false),
     m_zeroblock_on_serverexceptions(0),
@@ -70,7 +71,7 @@ GDALWMSDataset::GDALWMSDataset() :
     m_default_tile_count_x(1),
     m_default_tile_count_y(1),
     m_default_overview_count(-1),
-    m_bNeedsDataWindow(TRUE)
+    m_bNeedsDataWindow(true)
 {
     m_hint.m_valid = false;
     m_data_window.m_sx = -1;
@@ -84,6 +85,8 @@ GDALWMSDataset::~GDALWMSDataset() {
     if (m_mini_driver) delete m_mini_driver;
     if (m_cache) delete m_cache;
     if (m_poColorTable) delete m_poColorTable;
+    CSLDestroy(m_http_options);
+    CSLDestroy(m_tileOO);
 }
 
 /************************************************************************/
@@ -97,6 +100,158 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     {
         m_osXML = pszXML;
         CPLFree(pszXML);
+    }
+
+    // Generic options that apply to all minidrivers
+
+    // UserPwd
+    const char *pszUserPwd = CPLGetXMLValue(config, "UserPwd", "");
+    if (pszUserPwd[0] != '\0')
+        m_osUserPwd = pszUserPwd;
+
+    const char *pszUserAgent = CPLGetXMLValue(config, "UserAgent", "");
+    if (pszUserAgent[0] != '\0')
+        m_osUserAgent = pszUserAgent;
+    else
+        m_osUserAgent = CPLGetConfigOption("GDAL_HTTP_USERAGENT", "");
+
+    const char *pszReferer = CPLGetXMLValue(config, "Referer", "");
+    if (pszReferer[0] != '\0')
+        m_osReferer = pszReferer;
+
+    if (ret == CE_None) {
+        const char *pszHttpZeroBlockCodes = CPLGetXMLValue(config, "ZeroBlockHttpCodes", "");
+        if (pszHttpZeroBlockCodes[0] == '\0') {
+            m_http_zeroblock_codes.insert(204);
+        }
+        else {
+            char **kv = CSLTokenizeString2(pszHttpZeroBlockCodes, ",", CSLT_HONOURSTRINGS);
+            for (int i = 0; i < CSLCount(kv); i++) {
+                int code = atoi(kv[i]);
+                if (code <= 0) {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of ZeroBlockHttpCodes "
+                        "\"%s\", comma separated HTTP response codes expected.", kv[i]);
+                    ret = CE_Failure;
+                    break;
+                }
+                m_http_zeroblock_codes.insert(code);
+            }
+            CSLDestroy(kv);
+        }
+    }
+
+    if (ret == CE_None) {
+        const char *pszZeroExceptions = CPLGetXMLValue(config, "ZeroBlockOnServerException", "");
+        if (pszZeroExceptions[0] != '\0') {
+            m_zeroblock_on_serverexceptions = StrToBool(pszZeroExceptions);
+            if (m_zeroblock_on_serverexceptions == -1) {
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of ZeroBlockOnServerException "
+                    "\"%s\", true/false expected.", pszZeroExceptions);
+                ret = CE_Failure;
+            }
+        }
+    }
+
+    if (ret == CE_None) {
+        const char *max_conn = CPLGetXMLValue(config, "MaxConnections", "");
+        if (max_conn[0] != '\0') {
+            m_http_max_conn = atoi(max_conn);
+        }
+        else {
+            m_http_max_conn = 2;
+        }
+    }
+
+    if (ret == CE_None) {
+        const char *timeout = CPLGetXMLValue(config, "Timeout", "");
+        if (timeout[0] != '\0') {
+            m_http_timeout = atoi(timeout);
+        }
+        else {
+            m_http_timeout = 300;
+        }
+    }
+
+    if (ret == CE_None) {
+        const char *offline_mode = CPLGetXMLValue(config, "OfflineMode", "");
+        if (offline_mode[0] != '\0') {
+            const int offline_mode_bool = StrToBool(offline_mode);
+            if (offline_mode_bool == -1) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "GDALWMS: Invalid value of OfflineMode, true / false expected.");
+                ret = CE_Failure;
+            }
+            else {
+                m_offline_mode = offline_mode_bool;
+            }
+        }
+        else {
+            m_offline_mode = 0;
+        }
+    }
+
+    if (ret == CE_None) {
+        const char *advise_read = CPLGetXMLValue(config, "AdviseRead", "");
+        if (advise_read[0] != '\0') {
+            const int advise_read_bool = StrToBool(advise_read);
+            if (advise_read_bool == -1) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "GDALWMS: Invalid value of AdviseRead, true / false expected.");
+                ret = CE_Failure;
+            }
+            else {
+                m_use_advise_read = advise_read_bool;
+            }
+        }
+        else {
+            m_use_advise_read = 0;
+        }
+    }
+
+    if (ret == CE_None) {
+        const char *verify_advise_read = CPLGetXMLValue(config, "VerifyAdviseRead", "");
+        if (m_use_advise_read) {
+            if (verify_advise_read[0] != '\0') {
+                const int verify_advise_read_bool = StrToBool(verify_advise_read);
+                if (verify_advise_read_bool == -1) {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                        "GDALWMS: Invalid value of VerifyAdviseRead, true / false expected.");
+                    ret = CE_Failure;
+                }
+                else {
+                    m_verify_advise_read = verify_advise_read_bool;
+                }
+            }
+            else {
+                m_verify_advise_read = 1;
+            }
+        }
+    }
+
+    if (ret == CE_None) {
+        CPLXMLNode *cache_node = CPLGetXMLNode(config, "Cache");
+        if (cache_node != NULL) {
+            m_cache = new GDALWMSCache();
+            if (m_cache->Initialize(cache_node) != CE_None) {
+                delete m_cache;
+                m_cache = NULL;
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "GDALWMS: Failed to initialize cache.");
+                ret = CE_Failure;
+            }
+        }
+    }
+
+    if (ret == CE_None) {
+        const int v = StrToBool(CPLGetXMLValue(config, "UnsafeSSL", "false"));
+        if (v == -1) {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "GDALWMS: Invalid value of UnsafeSSL: true or false expected.");
+            ret = CE_Failure;
+        }
+        else {
+            m_unsafeSsl = v;
+        }
     }
 
     // Initialize the minidriver, which can set parameters for the dataset using member functions
@@ -121,26 +276,18 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
         return CE_Failure;
     }
 
+    // Set up minidriver
     m_mini_driver->m_parent_dataset = this;
-
-    if (m_mini_driver->Initialize(service_node, l_papszOpenOptions) == CE_None)
-    {
-        m_mini_driver_caps.m_capabilities_version = -1;
-        m_mini_driver->GetCapabilities(&m_mini_driver_caps);
-        if (m_mini_driver_caps.m_capabilities_version == -1)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "GDALWMS: Internal error, mini-driver capabilities version not set.");
-            ret = CE_Failure;
-        }
-    }
-    else
+    if (m_mini_driver->Initialize(service_node, l_papszOpenOptions) != CE_None)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Failed to initialize minidriver.");
         delete m_mini_driver;
         m_mini_driver = NULL;
-
         ret = CE_Failure;
+    }
+    else
+    {
+        m_mini_driver->GetCapabilities(&m_mini_driver_caps);
     }
 
     /*
@@ -339,12 +486,15 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
         if (ret == CE_None)
         {
             const char *data_type = CPLGetXMLValue(config, "DataType", "Byte");
-            m_data_type = GDALGetDataTypeByName( data_type );
-            if ( m_data_type == GDT_Unknown || m_data_type >= GDT_TypeCount )
+            m_data_type = GDALGetDataTypeByName(data_type);
+            if (m_data_type == GDT_Unknown || m_data_type >= GDT_TypeCount)
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "GDALWMS: Invalid value in DataType. Data type \"%s\" is not supported.", data_type );
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "GDALWMS: Invalid value in DataType. Data type \"%s\" is not supported.", data_type);
                 ret = CE_Failure;
+            }
+            else if (!STARTS_WITH(data_type, "Byte")) { // Valid, non-byte
+                m_tileOO = CSLSetNameValue(m_tileOO, "@DATATYPE", data_type);
             }
         }
 
@@ -383,125 +533,12 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
         }
     }
 
-    // UserPwd
-    const char *pszUserPwd = CPLGetXMLValue(config, "UserPwd", "");
-    if (pszUserPwd[0] != '\0')
-        m_osUserPwd = pszUserPwd;
-
-    const char *pszUserAgent = CPLGetXMLValue(config, "UserAgent", "");
-    if (pszUserAgent[0] != '\0')
-        m_osUserAgent = pszUserAgent;
-
-    const char *pszReferer = CPLGetXMLValue(config, "Referer", "");
-    if (pszReferer[0] != '\0')
-        m_osReferer = pszReferer;
-
-    if (ret == CE_None) {
-        const char *pszHttpZeroBlockCodes = CPLGetXMLValue(config, "ZeroBlockHttpCodes", "");
-        if(pszHttpZeroBlockCodes[0] == '\0') {
-            m_http_zeroblock_codes.push_back(204);
-        } else {
-            char **kv = CSLTokenizeString2(pszHttpZeroBlockCodes,",",CSLT_HONOURSTRINGS);
-            int nCount = CSLCount(kv);
-            for(int i=0; i<nCount; i++) {
-                int code = atoi(kv[i]);
-                if(code <= 0) {
-                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of ZeroBlockHttpCodes "
-                        "\"%s\", comma separated HTTP response codes expected.", kv[i]);
-                    ret = CE_Failure;
-                    break;
-                }
-                m_http_zeroblock_codes.push_back(code);
-            }
-            CSLDestroy(kv);
-        }
-    }
-
-    if (ret == CE_None) {
-        const char *pszZeroExceptions = CPLGetXMLValue(config, "ZeroBlockOnServerException", "");
-        if(pszZeroExceptions[0] != '\0') {
-            m_zeroblock_on_serverexceptions = StrToBool(pszZeroExceptions);
-            if (m_zeroblock_on_serverexceptions == -1) {
-                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of ZeroBlockOnServerException "
-                    "\"%s\", true/false expected.", pszZeroExceptions);
-                ret = CE_Failure;
-            }
-        }
-    }
-
-    if (ret == CE_None) {
-        const char *max_conn = CPLGetXMLValue(config, "MaxConnections", "");
-        if (max_conn[0] != '\0') {
-            m_http_max_conn = atoi(max_conn);
-        } else {
-            m_http_max_conn = 2;
-        }
-    }
-    if (ret == CE_None) {
-        const char *timeout = CPLGetXMLValue(config, "Timeout", "");
-        if (timeout[0] != '\0') {
-            m_http_timeout = atoi(timeout);
-        } else {
-            m_http_timeout = 300;
-        }
-    }
-    if (ret == CE_None) {
-        const char *offline_mode = CPLGetXMLValue(config, "OfflineMode", "");
-        if (offline_mode[0] != '\0') {
-            const int offline_mode_bool = StrToBool(offline_mode);
-            if (offline_mode_bool == -1) {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "GDALWMS: Invalid value of OfflineMode, true / false expected.");
-                ret = CE_Failure;
-            } else {
-                m_offline_mode = offline_mode_bool;
-            }
-        } else {
-            m_offline_mode = 0;
-        }
-    }
-
-    if (ret == CE_None) {
-        const char *advise_read = CPLGetXMLValue(config, "AdviseRead", "");
-        if (advise_read[0] != '\0') {
-            const int advise_read_bool = StrToBool(advise_read);
-            if (advise_read_bool == -1) {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "GDALWMS: Invalid value of AdviseRead, true / false expected.");
-                ret = CE_Failure;
-            } else {
-                m_use_advise_read = advise_read_bool;
-            }
-        } else {
-            m_use_advise_read = 0;
-        }
-    }
-
-    if (ret == CE_None) {
-        const char *verify_advise_read = CPLGetXMLValue(config, "VerifyAdviseRead", "");
-        if (m_use_advise_read) {
-            if (verify_advise_read[0] != '\0') {
-                const int verify_advise_read_bool = StrToBool(verify_advise_read);
-                if (verify_advise_read_bool == -1) {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                        "GDALWMS: Invalid value of VerifyAdviseRead, true / false expected.");
-                    ret = CE_Failure;
-                } else {
-                    m_verify_advise_read = verify_advise_read_bool;
-                }
-            } else {
-                m_verify_advise_read = 1;
-            }
-        }
-    }
-
     // Let the local configuration override the minidriver supplied projection
-
     if (ret == CE_None) {
         const char *proj = CPLGetXMLValue(config, "Projection", "");
         if (proj[0] != '\0') {
             m_projection = ProjToWKT(proj);
-            if (m_projection.size() == 0) {
+            if (m_projection.empty()) {
                 CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Bad projection specified.");
                 ret = CE_Failure;
             }
@@ -524,32 +561,6 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     }
 
     if (ret == CE_None) {
-        CPLXMLNode *cache_node = CPLGetXMLNode(config, "Cache");
-        if (cache_node != NULL) {
-            m_cache = new GDALWMSCache();
-            if (m_cache->Initialize(cache_node) != CE_None) {
-                delete m_cache;
-                m_cache = NULL;
-                CPLError(CE_Failure, CPLE_AppDefined,
-                    "GDALWMS: Failed to initialize cache.");
-                ret = CE_Failure;
-            }
-        }
-    }
-
-    if (ret == CE_None) {
-        const int v = StrToBool(CPLGetXMLValue(config, "UnsafeSSL", "false"));
-        if (v == -1) {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "GDALWMS: Invalid value of UnsafeSSL: true or false expected.");
-            ret = CE_Failure;
-        } else {
-            m_unsafeSsl = v;
-        }
-    }
-
-    if (ret == CE_None) {
-        /* If we do not have projection already set ask mini-driver. */
         if (!m_projection.size()) {
             const char *proj = m_mini_driver->GetProjectionInWKT();
             if (proj != NULL) {
@@ -557,6 +568,10 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
             }
         }
     }
+
+    // Finish the minidriver initialization
+    if (ret == CE_None)
+        m_mini_driver->EndInit();
 
     return ret;
 }
@@ -678,3 +693,35 @@ const char *GDALWMSDataset::GetMetadataItem( const char * pszName,
 
     return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
 }
+
+// Builds a CSL of options or returns the previous one
+const char * const * GDALWMSDataset::GetHTTPRequestOpts()
+{
+    if (m_http_options != NULL)
+        return m_http_options;
+
+    char **opts = NULL;
+    if (m_http_timeout != -1)
+        opts = CSLAddString(opts, CPLOPrintf("TIMEOUT=%d", m_http_timeout));
+
+    if (!m_osUserAgent.empty())
+        opts = CSLAddNameValue(opts, "USERAGENT", m_osUserAgent);
+    else
+        opts = CSLAddString(opts, "USERAGENT=GDAL WMS driver (http://www.gdal.org/frmt_wms.html)");
+
+    if (!m_osReferer.empty())
+        opts = CSLAddNameValue(opts, "REFERER", m_osReferer);
+
+    if (m_unsafeSsl >= 1)
+        opts = CSLAddString(opts, "UNSAFESSL=1");
+
+    if (!m_osUserPwd.empty())
+        opts = CSLAddNameValue(opts, "USERPWD", m_osUserPwd);
+
+    if (m_http_max_conn > 0)
+        opts = CSLAddString(opts, CPLOPrintf("MAXCONN=%d", m_http_max_conn));
+
+    m_http_options = opts;
+    return m_http_options;
+}
+

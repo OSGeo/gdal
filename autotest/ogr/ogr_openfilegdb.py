@@ -56,7 +56,7 @@ ogrtest.openfilegdb_datalist = [ [ "none", ogr.wkbNone, None],
                 [ "multilinestring25D_multipart", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20),(5 6 -30,7 8 -40))" ],
                 [ "polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
                 [ "multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
-                [ "multipatch", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 0,0 1 0,1 0 0,0 0 0)),((0 1 0,1 0 0,1 1 0,0 1 0)),((10 0 0,10 1 0,11 0 0,10 0 0)),((10 0 0,11 0 0,10 -1 0,10 0 0)),((5 0 0,5 1 0,6 0 0,5 0 0)),((100 0 0,100 1 0,101 1 0,101 0 0,100 0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0)))" ],
+                [ "multipatch", ogr.wkbGeometryCollection25D, "GEOMETRYCOLLECTION Z (TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0))),TIN Z (((10.0 0.0 0,10.0 1.0 0,11.0 0.0 0,10.0 0.0 0)),((10.0 0.0 0,11.0 0.0 0,10.0 -1.0 0,10.0 0.0 0))),TIN Z (((5.0 0.0 0,5.0 1.0 0,6.0 0.0 0,5.0 0.0 0))),MULTIPOLYGON Z (((100.0 0.0 0,100.0 1.0 0,101.0 1.0 0,101.0 0.0 0,100.0 0.0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0))))" ],
                 [ "null_polygon", ogr.wkbPolygon, None],
                 [ "empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
                 [ "empty_multipoint", ogr.wkbMultiPoint, "MULTIPOINT EMPTY", None],
@@ -322,12 +322,6 @@ def ogr_openfilegdb_1(filename = 'data/testopenfilegdb.gdb.zip', version10 = Tru
             except:
                 expected_wkt = data[2]
             geom = feat.GetGeometryRef()
-            if geom is not None and geom.GetGeometryType() != expected_geom_type:
-                gdaltest.post_reason('fail')
-                feat.DumpReadable()
-                print(geom.GetGeometryType())
-                print(expected_geom_type)
-                return 'fail'
             if geom:
                 geom = geom.ExportToWkt()
             if geom != expected_wkt and ogrtest.check_feature_geometry(feat, expected_wkt) == 1:

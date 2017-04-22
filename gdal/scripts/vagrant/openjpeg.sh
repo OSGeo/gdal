@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # abort install if any errors occur and enable tracing
 set -o errexit
@@ -12,7 +12,7 @@ fi
 #NUMTHREADS=1 # disable MP
 export NUMTHREADS
 
-wget http://sourceforge.net/projects/openjpeg.mirror/files/openjpeg-2.0.0.tar.gz/download -O openjpeg-2.0.0.tar.gz
+wget --no-check-certificate https://sourceforge.net/projects/openjpeg.mirror/files/openjpeg-2.0.0.tar.gz/download -O openjpeg-2.0.0.tar.gz
 tar xvzf openjpeg-2.0.0.tar.gz
 cd openjpeg-2.0.0
 mkdir build

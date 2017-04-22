@@ -105,7 +105,9 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
   {
      void* user_data = CPLGetErrorHandlerUserData();
      if( user_data != NULL )
-       Py_XDECREF((PyObject*)user_data);
+     {
+         Py_XDECREF((PyObject*)user_data);
+     }
      CPLPopErrorHandler();
   }
 %}
@@ -369,10 +371,25 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 
 %apply Pointer NONNULL {const char * pszFilename};
 /* Added in GDAL 1.7.0 */
-#ifdef SWIGJAVA
+
+#if defined(SWIGPYTHON)
+
+%apply (GIntBig nLen, char *pBuf) {( GIntBig nBytes, const GByte *pabyData )};
+%inline {
+void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const GByte *pabyData)
+{
+    const size_t nSize = static_cast<size_t>(nBytes);
+    GByte* pabyDataDup = (GByte*)VSIMalloc(nSize);
+    if (pabyDataDup == NULL)
+            return;
+    memcpy(pabyDataDup, pabyData, nSize);
+    VSIFCloseL(VSIFileFromMemBuffer(utf8_path, (GByte*) pabyDataDup, nSize, TRUE));
+}
+}
+%clear ( GIntBig nBytes, const GByte *pabyData );
+#else
+#if defined(SWIGJAVA)
 %apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
-#elif defined(SWIGPYTHON)
-%apply (int nLen, char *pBuf) {( int nBytes, const GByte *pabyData )};
 #endif
 %inline {
 void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByte *pabyData)
@@ -385,8 +402,9 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByt
 }
 
 }
-#if defined(SWIGJAVA) || defined(SWIGPYTHON)
+#if defined(SWIGJAVA)
 %clear ( int nBytes, const GByte *pabyData );
+#endif
 #endif
 
 /* Added in GDAL 1.7.0 */
@@ -536,12 +554,12 @@ VSI_RETVAL VSIFTruncateL( VSILFILE* fp, long length );
 %inline {
 int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE* fp)
 {
-    if (nLen < size * memb)
+    if (nLen < static_cast<GIntBig>(size) * memb)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent buffer size with 'size' and 'memb' values");
         return 0;
     }
-    return VSIFWriteL(pBuf, size, memb, fp);
+    return static_cast<int>(VSIFWriteL(pBuf, size, memb, fp));
 }
 }
 #elif defined(SWIGPERL)

@@ -29,6 +29,12 @@
 
 #include "gdalgeorefpamdataset.h"
 
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "gdal.h"
+
 //! @cond Doxygen_Suppress
 /************************************************************************/
 /*                       GDALGeorefPamDataset()                         */
@@ -112,7 +118,8 @@ char      **GDALGeorefPamDataset::GetMetadata( const char * pszDomain )
         if( m_bPixelIsPoint )
         {
             m_papszMainMD = CSLSetNameValue(m_papszMainMD,
-                                            GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
+                                            GDALMD_AREA_OR_POINT,
+                                            GDALMD_AOP_POINT);
         }
         else
         {
@@ -197,7 +204,7 @@ int GDALGeorefPamDataset::GetGCPCount()
         ((nGCPCount != 0 && nPAMIndex < m_nGCPGeorefSrcIndex) ||
          m_nGCPGeorefSrcIndex < 0 || nGCPCount == 0))
     {
-        int nPAMGCPCount = GDALPamDataset::GetGCPCount();
+        const int nPAMGCPCount = GDALPamDataset::GetGCPCount();
         if( nPAMGCPCount )
             return nPAMGCPCount;
     }

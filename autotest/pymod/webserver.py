@@ -62,6 +62,13 @@ class GDAL_Handler(BaseHTTPRequestHandler):
             self.end_headers()
             return
 
+        if self.path == '/gs_fake_bucket/resource2.bin':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            self.send_header('Content-Length', 1000000)
+            self.end_headers()
+            return
+
         # Simulate a redirect to a S3 signed URL
         if self.path == '/test_redirect/test.bin':
             import time
@@ -462,6 +469,32 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.wfile.write("""foo""".encode('ascii'))
                 return
 
+            if self.path == '/s3_fake_bucket_with_requester_pays/resource':
+                self.protocol_version = 'HTTP/1.1'
+
+                if 'x-amz-request-payer' not in self.headers:
+                    sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                    self.send_response(403)
+                    return
+                expected_authorization_8080 = 'AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-request-payer,Signature=cf713a394e1b629ac0e468d60d3d4a12f5236fd72d21b6005c758b0dfc7049cd'
+                expected_authorization_8081 = 'AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-request-payer,Signature=4756166679008a1a40cd6ff91dbbef670a71c11bf8e3c998dd7385577c3ac4d9'
+                if self.headers['Authorization'] != expected_authorization_8080 and self.headers['Authorization'] != expected_authorization_8081:
+                    sys.stderr.write("Bad Authorization: '%s'\n" % str(self.headers['Authorization']))
+                    self.send_response(403)
+                    return
+                if self.headers['x-amz-request-payer'] != 'requester':
+                    sys.stderr.write("Bad x-amz-request-payer: '%s'\n" % str(self.headers['x-amz-request-payer']))
+                    self.send_response(403)
+                    return
+
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Length', 3)
+                self.end_headers()
+                self.wfile.write("""foo""".encode('ascii'))
+                return
+
+
             if self.path == '/s3_fake_bucket/resource2.bin':
                 self.protocol_version = 'HTTP/1.1'
                 if 'Range' in self.headers:
@@ -641,6 +674,84 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                    not self.headers['Host'].startswith('localhost'):
                     sys.stderr.write('Bad headers: %s\n' % str(self.headers))
                     self.send_response(403)
+
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'application/xml')
+                response = """<?xml version="1.0" encoding="UTF-8"?>
+                    <ListBucketResult>
+                        <Prefix>a_dir/</Prefix>
+                        <Contents>
+                            <Key>a_dir/resource4.bin</Key>
+                            <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                            <Size>456789</Size>
+                        </Contents>
+                        <CommonPrefixes>
+                            <Prefix>a_dir/subdir/</Prefix>
+                        </CommonPrefixes>
+                    </ListBucketResult>
+                """
+                self.send_header('Content-Length', len(response))
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
+            if self.path == '/gs_fake_bucket_http_header_file/resource':
+                self.protocol_version = 'HTTP/1.1'
+
+                if 'foo' not in self.headers or self.headers['foo'] != 'bar':
+                    sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                    self.send_response(403)
+                    return
+
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Length', 1)
+                self.end_headers()
+                self.wfile.write("""Y""".encode('ascii'))
+                return
+
+            if self.path == '/gs_fake_bucket/resource':
+                self.protocol_version = 'HTTP/1.1'
+
+                if 'Authorization' not in self.headers:
+                    sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                    self.send_response(403)
+                    return
+                expected_authorization = 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='
+                if self.headers['Authorization'] != expected_authorization :
+                    sys.stderr.write("Bad Authorization: '%s'\n" % str(self.headers['Authorization']))
+                    self.send_response(403)
+                    return
+
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Length', 3)
+                self.end_headers()
+                self.wfile.write("""foo""".encode('ascii'))
+                return
+
+            if self.path == '/gs_fake_bucket2?delimiter=/&prefix=a_dir/':
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'application/xml')
+                response = """<?xml version="1.0" encoding="UTF-8"?>
+                    <ListBucketResult>
+                        <Prefix>a_dir/</Prefix>
+                        <NextMarker>bla</NextMarker>
+                        <Contents>
+                            <Key>a_dir/resource3.bin</Key>
+                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                            <Size>123456</Size>
+                        </Contents>
+                    </ListBucketResult>
+                """
+                self.send_header('Content-Length', len(response))
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
+            if self.path == '/gs_fake_bucket2?delimiter=/&marker=bla&prefix=a_dir/':
 
                 self.protocol_version = 'HTTP/1.1'
                 self.send_response(200)
@@ -1027,7 +1138,7 @@ class GDAL_ThreadedHttpServer(Thread):
 
     def stop(self):
         self.server.stop_server()
-        # Explictly destroy the object so that the socket is really closed
+        # Explicitly destroy the object so that the socket is really closed
         del self.server
 
     def run_server(self, timeout):

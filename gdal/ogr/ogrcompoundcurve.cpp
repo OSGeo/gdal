@@ -26,9 +26,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_geometry.h"
+
+#include <cmath>
+#include <cstddef>
+
+#include "cpl_error.h"
+#include "ogr_core.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
-#include <assert.h>
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -40,10 +48,7 @@ CPL_CVSID("$Id$");
  * \brief Create an empty compound curve.
  */
 
-OGRCompoundCurve::OGRCompoundCurve()
-
-{
-}
+OGRCompoundCurve::OGRCompoundCurve() {}
 
 /************************************************************************/
 /*             OGRCompoundCurve( const OGRCompoundCurve& )              */
@@ -61,17 +66,13 @@ OGRCompoundCurve::OGRCompoundCurve()
 OGRCompoundCurve::OGRCompoundCurve( const OGRCompoundCurve& other ) :
     OGRCurve(other),
     oCC(other.oCC)
-{
-}
+{}
 
 /************************************************************************/
 /*                         ~OGRCompoundCurve()                          */
 /************************************************************************/
 
-OGRCompoundCurve::~OGRCompoundCurve()
-
-{
-}
+OGRCompoundCurve::~OGRCompoundCurve() {}
 
 /************************************************************************/
 /*                 operator=( const OGRCompoundCurve&)                  */
@@ -106,7 +107,7 @@ OGRwkbGeometryType OGRCompoundCurve::getGeometryType() const
 {
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
         return wkbCompoundCurveZM;
-    else if( flags & OGR_G_MEASURED  )
+    else if( flags & OGR_G_MEASURED )
         return wkbCompoundCurveM;
     else if( flags & OGR_G_3D )
         return wkbCompoundCurveZ;
@@ -151,16 +152,17 @@ OGRErr OGRCompoundCurve::importFromWkb( unsigned char * pabyData,
                                         int nSize,
                                         OGRwkbVariant eWkbVariant )
 {
-    OGRwkbByteOrder eByteOrder;
+    OGRwkbByteOrder eByteOrder = wkbNDR;
     int nDataOffset = 0;
-    /* coverity[tainted_data] */
+    // coverity[tainted_data]
     OGRErr eErr = oCC.importPreambuleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 9, eWkbVariant);
     if( eErr != OGRERR_NONE )
         return eErr;
 
     return oCC.importBodyFromWkb(this, pabyData, nSize, nDataOffset,
-                                 FALSE /* bAcceptCompoundCurve */, addCurveDirectlyFromWkb,
+                                 FALSE,  // bAcceptCompoundCurve
+                                 addCurveDirectlyFromWkb,
                                  eWkbVariant);
 }
 
@@ -169,9 +171,10 @@ OGRErr OGRCompoundCurve::importFromWkb( unsigned char * pabyData,
 /************************************************************************/
 OGRErr OGRCompoundCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
                                       unsigned char * pabyData,
-                                      OGRwkbVariant eWkbVariant  ) const
+                                      OGRwkbVariant eWkbVariant ) const
 {
-    if( eWkbVariant == wkbVariantOldOgc ) /* does not make sense for new geometries, so patch it */
+    // Does not make sense for new geometries, so patch it.
+    if( eWkbVariant == wkbVariantOldOgc )
         eWkbVariant = wkbVariantIso;
     return oCC.exportToWkb(this, eByteOrder, pabyData, eWkbVariant);
 }
@@ -180,7 +183,8 @@ OGRErr OGRCompoundCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*                       addCurveDirectlyFromWkt()                      */
 /************************************************************************/
 
-OGRErr OGRCompoundCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf, OGRCurve* poCurve )
+OGRErr OGRCompoundCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
+                                                  OGRCurve* poCurve )
 {
     return ((OGRCompoundCurve*)poSelf)->addCurveDirectly(poCurve);
 }
@@ -192,10 +196,10 @@ OGRErr OGRCompoundCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf, OGRCurve*
 OGRErr OGRCompoundCurve::importFromWkt( char ** ppszInput )
 {
     return importCurveCollectionFromWkt( ppszInput,
-                                         FALSE, /* bAllowEmptyComponent */
-                                         TRUE, /* bAllowLineString */
-                                         TRUE, /* bAllowCurve */
-                                         FALSE, /* bAllowCompoundCurve */
+                                         FALSE, // bAllowEmptyComponent
+                                         TRUE, // bAllowLineString
+                                         TRUE, // bAllowCurve
+                                         FALSE, // bAllowCompoundCurve
                                          addCurveDirectlyFromWkt );
 }
 
@@ -203,7 +207,7 @@ OGRErr OGRCompoundCurve::importFromWkt( char ** ppszInput )
 /*                            exportToWkt()                             */
 /************************************************************************/
 OGRErr OGRCompoundCurve::exportToWkt( char ** ppszDstText,
-                                      CPL_UNUSED OGRwkbVariant eWkbVariant ) const
+                                      OGRwkbVariant /* eWkbVariant */ ) const
 
 {
     return oCC.exportToWkt(this, ppszDstText);
@@ -310,11 +314,11 @@ void OGRCompoundCurve::Value( double dfDistance, OGRPoint *poPoint ) const
         return;
     }
 
-    double dfLength = 0;
+    double dfLength = 0.0;
     for( int iGeom = 0; iGeom < oCC.nCurveCount; iGeom++ )
     {
-        double dfSegLength = oCC.papoCurves[iGeom]->get_Length();
-        if (dfSegLength > 0)
+        const double dfSegLength = oCC.papoCurves[iGeom]->get_Length();
+        if( dfSegLength > 0 )
         {
             if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >=
                                              dfDistance) )
@@ -335,9 +339,10 @@ void OGRCompoundCurve::Value( double dfDistance, OGRPoint *poPoint ) const
 /*                         CurveToLineInternal()                        */
 /************************************************************************/
 
-OGRLineString* OGRCompoundCurve::CurveToLineInternal(double dfMaxAngleStepSizeDegrees,
-                                                     const char* const* papszOptions,
-                                                     int bIsLinearRing) const
+OGRLineString *
+OGRCompoundCurve::CurveToLineInternal( double dfMaxAngleStepSizeDegrees,
+                                       const char* const* papszOptions,
+                                       int bIsLinearRing ) const
 {
     OGRLineString* const poLine = bIsLinearRing
         ? new OGRLinearRing()
@@ -345,8 +350,9 @@ OGRLineString* OGRCompoundCurve::CurveToLineInternal(double dfMaxAngleStepSizeDe
     poLine->assignSpatialReference(getSpatialReference());
     for( int iGeom = 0; iGeom < oCC.nCurveCount; iGeom++ )
     {
-        OGRLineString* poSubLS = oCC.papoCurves[iGeom]->CurveToLine(dfMaxAngleStepSizeDegrees,
-                                                                    papszOptions);
+        OGRLineString* poSubLS =
+            oCC.papoCurves[iGeom]->CurveToLine(dfMaxAngleStepSizeDegrees,
+                                               papszOptions);
         poLine->addSubLineString(poSubLS, (iGeom == 0) ? 0 : 1);
         delete poSubLS;
     }
@@ -357,8 +363,9 @@ OGRLineString* OGRCompoundCurve::CurveToLineInternal(double dfMaxAngleStepSizeDe
 /*                          CurveToLine()                               */
 /************************************************************************/
 
-OGRLineString* OGRCompoundCurve::CurveToLine(double dfMaxAngleStepSizeDegrees,
-                                             const char* const* papszOptions) const
+OGRLineString *
+OGRCompoundCurve::CurveToLine( double dfMaxAngleStepSizeDegrees,
+                               const char* const* papszOptions ) const
 {
     return CurveToLineInternal(dfMaxAngleStepSizeDegrees, papszOptions, FALSE);
 }
@@ -367,7 +374,7 @@ OGRLineString* OGRCompoundCurve::CurveToLine(double dfMaxAngleStepSizeDegrees,
 /*                               Equals()                                */
 /************************************************************************/
 
-OGRBoolean  OGRCompoundCurve::Equals( OGRGeometry *poOther ) const
+OGRBoolean OGRCompoundCurve::Equals( OGRGeometry *poOther ) const
 {
     if( poOther == this )
         return TRUE;
@@ -412,7 +419,7 @@ void OGRCompoundCurve::setMeasured( OGRBoolean bIsMeasured )
  * @return number of curves.
  */
 
-int          OGRCompoundCurve::getNumCurves() const
+int OGRCompoundCurve::getNumCurves() const
 {
     return oCC.nCurveCount;
 }
@@ -424,11 +431,10 @@ int          OGRCompoundCurve::getNumCurves() const
 /**
  * \brief Fetch reference to indicated internal ring.
  *
- * Note that the returned curve pointer is to an internal data object of
- * the OGRCompoundCurve.  It should not be modified or deleted by the application,
- * and the pointer is only valid till the polygon is next modified.  Use
- * the OGRGeometry::clone() method to make a separate copy within the
- * application.
+ * Note that the returned curve pointer is to an internal data object of the
+ * OGRCompoundCurve.  It should not be modified or deleted by the application,
+ * and the pointer is only valid till the polygon is next modified.  Use the
+ * OGRGeometry::clone() method to make a separate copy within the application.
  *
  * Relates to the ISO SQL/MM ST_CurveN() function.
  *
@@ -437,7 +443,7 @@ int          OGRCompoundCurve::getNumCurves() const
  * @return pointer to curve.  May be NULL.
  */
 
-OGRCurve    *OGRCompoundCurve::getCurve( int iRing )
+OGRCurve *OGRCompoundCurve::getCurve( int iRing )
 {
     return oCC.getCurve(iRing);
 }
@@ -449,11 +455,10 @@ OGRCurve    *OGRCompoundCurve::getCurve( int iRing )
 /**
  * \brief Fetch reference to indicated internal ring.
  *
- * Note that the returned curve pointer is to an internal data object of
- * the OGRCompoundCurve.  It should not be modified or deleted by the application,
- * and the pointer is only valid till the polygon is next modified.  Use
- * the OGRGeometry::clone() method to make a separate copy within the
- * application.
+ * Note that the returned curve pointer is to an internal data object of the
+ * OGRCompoundCurve.  It should not be modified or deleted by the application,
+ * and the pointer is only valid till the polygon is next modified.  Use the
+ * OGRGeometry::clone() method to make a separate copy within the application.
  *
  * Relates to the ISO SQL/MM ST_CurveN() function.
  *
@@ -509,7 +514,7 @@ OGRCurve* OGRCompoundCurve::stealCurve( int iCurve )
 OGRErr OGRCompoundCurve::addCurve( OGRCurve* poCurve, double dfToleranceEps )
 {
     OGRCurve* poClonedCurve = (OGRCurve*)poCurve->clone();
-    OGRErr eErr = addCurveDirectly( poClonedCurve, dfToleranceEps );
+    const OGRErr eErr = addCurveDirectly( poClonedCurve, dfToleranceEps );
     if( eErr != OGRERR_NONE )
         delete poClonedCurve;
     return eErr;
@@ -549,11 +554,13 @@ OGRErr OGRCompoundCurve::addCurveDirectlyInternal( OGRCurve* poCurve,
 {
     if( poCurve->getNumPoints() == 1 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid curve: not enough points");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid curve: not enough points");
         return OGRERR_FAILURE;
     }
 
-    OGRwkbGeometryType eCurveType = wkbFlatten(poCurve->getGeometryType());
+    const OGRwkbGeometryType eCurveType =
+        wkbFlatten(poCurve->getGeometryType());
     if( EQUAL(poCurve->getGeometryName(), "LINEARRING") )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Linearring not allowed.");
@@ -561,7 +568,8 @@ OGRErr OGRCompoundCurve::addCurveDirectlyInternal( OGRCurve* poCurve,
     }
     else if( eCurveType == wkbCompoundCurve )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot add a compound curve inside a compound curve");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot add a compound curve inside a compound curve");
         return OGRERR_FAILURE;
     }
 
@@ -574,7 +582,8 @@ OGRErr OGRCompoundCurve::addCurveDirectlyInternal( OGRCurve* poCurve,
             return OGRERR_FAILURE;
         }
 
-        OGRPoint end, start;
+        OGRPoint end;
+        OGRPoint start;
         oCC.papoCurves[oCC.nCurveCount-1]->EndPoint(&end);
         poCurve->StartPoint(&start);
         if( fabs(end.getX() - start.getX()) > dfToleranceEps ||
@@ -584,7 +593,8 @@ OGRErr OGRCompoundCurve::addCurveDirectlyInternal( OGRCurve* poCurve,
             CPLError(CE_Failure, CPLE_AppDefined, "Non contiguous curves");
             return OGRERR_FAILURE;
         }
-        ((OGRSimpleCurve*)poCurve)->setPoint(0, &end); /* patch so that it matches exactly */
+        // Patch so that it matches exactly.
+        ((OGRSimpleCurve*)poCurve)->setPoint(0, &end);
     }
 
     return oCC.addCurveDirectly(this, poCurve, bNeedRealloc);
@@ -594,7 +604,7 @@ OGRErr OGRCompoundCurve::addCurveDirectlyInternal( OGRCurve* poCurve,
 /*                             transform()                              */
 /************************************************************************/
 
-OGRErr  OGRCompoundCurve::transform( OGRCoordinateTransformation *poCT )
+OGRErr OGRCompoundCurve::transform( OGRCoordinateTransformation *poCT )
 {
     return oCC.transform(this, poCT);
 }
@@ -612,7 +622,7 @@ void OGRCompoundCurve::flattenTo2D()
 /*                              segmentize()                            */
 /************************************************************************/
 
-void OGRCompoundCurve::segmentize(double dfMaxLength)
+void OGRCompoundCurve::segmentize( double dfMaxLength )
 {
     oCC.segmentize(dfMaxLength);
 }
@@ -630,22 +640,23 @@ void OGRCompoundCurve::swapXY()
 /*                         hasCurveGeometry()                           */
 /************************************************************************/
 
-OGRBoolean OGRCompoundCurve::hasCurveGeometry(int bLookForNonLinear) const
+OGRBoolean OGRCompoundCurve::hasCurveGeometry( int bLookForNonLinear ) const
 {
     if( bLookForNonLinear )
     {
         return oCC.hasCurveGeometry(bLookForNonLinear);
     }
-    else
-        return TRUE;
+
+    return TRUE;
 }
 
 /************************************************************************/
 /*                         getLinearGeometry()                        */
 /************************************************************************/
 
-OGRGeometry* OGRCompoundCurve::getLinearGeometry(double dfMaxAngleStepSizeDegrees,
-                                                   const char* const* papszOptions) const
+OGRGeometry *
+OGRCompoundCurve::getLinearGeometry( double dfMaxAngleStepSizeDegrees,
+                                     const char* const* papszOptions ) const
 {
     return CurveToLine(dfMaxAngleStepSizeDegrees, papszOptions);
 }
@@ -661,7 +672,7 @@ int OGRCompoundCurve::getNumPoints() const
     {
         nPoints += oCC.papoCurves[i]->getNumPoints();
         if( i != 0 )
-            nPoints --;
+            nPoints--;
     }
     return nPoints;
 }
@@ -677,18 +688,18 @@ class OGRCompoundCurvePointIterator: public OGRPointIterator
         OGRPointIterator       *poCurveIter;
 
     public:
-        OGRCompoundCurvePointIterator(const OGRCompoundCurve* poCCIn) :
+        explicit OGRCompoundCurvePointIterator( const OGRCompoundCurve* poCCIn ) :
             poCC(poCCIn), iCurCurve(0), poCurveIter(NULL) {}
         virtual ~OGRCompoundCurvePointIterator() { delete poCurveIter; }
 
-        virtual OGRBoolean getNextPoint(OGRPoint* p);
+        virtual OGRBoolean getNextPoint( OGRPoint* p ) override;
 };
 
 /************************************************************************/
 /*                            getNextPoint()                            */
 /************************************************************************/
 
-OGRBoolean OGRCompoundCurvePointIterator::getNextPoint(OGRPoint* p)
+OGRBoolean OGRCompoundCurvePointIterator::getNextPoint( OGRPoint* p )
 {
     if( iCurCurve == poCC->getNumCurves() )
         return FALSE;
@@ -696,12 +707,12 @@ OGRBoolean OGRCompoundCurvePointIterator::getNextPoint(OGRPoint* p)
         poCurveIter = poCC->getCurve(0)->getPointIterator();
     if( !poCurveIter->getNextPoint(p) )
     {
-        iCurCurve ++;
+        iCurCurve++;
         if( iCurCurve == poCC->getNumCurves() )
             return FALSE;
         delete poCurveIter;
         poCurveIter = poCC->getCurve(iCurCurve)->getPointIterator();
-        /* skip first point */
+        // Skip first point.
         return poCurveIter->getNextPoint(p) &&
                poCurveIter->getNextPoint(p);
     }
@@ -722,11 +733,12 @@ OGRPointIterator* OGRCompoundCurve::getPointIterator() const
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-OGRLineString* OGRCompoundCurve::CastToLineString(OGRCompoundCurve* poCC)
+OGRLineString* OGRCompoundCurve::CastToLineString( OGRCompoundCurve* poCC )
 {
-    for(int i=0;i<poCC->oCC.nCurveCount;i++)
+    for( int i = 0; i < poCC->oCC.nCurveCount; i++ )
     {
-        poCC->oCC.papoCurves[i] = OGRCurve::CastToLineString(poCC->oCC.papoCurves[i]);
+        poCC->oCC.papoCurves[i] =
+            OGRCurve::CastToLineString(poCC->oCC.papoCurves[i]);
         if( poCC->oCC.papoCurves[i] == NULL )
         {
             delete poCC;
@@ -762,11 +774,12 @@ OGRLineString* OGRCompoundCurve::CastToLineString(OGRCompoundCurve* poCC)
  * @return new geometry.
  */
 
-OGRLinearRing* OGRCompoundCurve::CastToLinearRing(OGRCompoundCurve* poCC)
+OGRLinearRing* OGRCompoundCurve::CastToLinearRing( OGRCompoundCurve* poCC )
 {
     for( int i = 0; i < poCC->oCC.nCurveCount; i++ )
     {
-        poCC->oCC.papoCurves[i] = OGRCurve::CastToLineString(poCC->oCC.papoCurves[i]);
+        poCC->oCC.papoCurves[i] =
+            OGRCurve::CastToLineString(poCC->oCC.papoCurves[i]);
         if( poCC->oCC.papoCurves[i] == NULL )
         {
             delete poCC;
@@ -776,7 +789,8 @@ OGRLinearRing* OGRCompoundCurve::CastToLinearRing(OGRCompoundCurve* poCC)
 
     if( poCC->oCC.nCurveCount == 1 )
     {
-        OGRLinearRing* poLR = OGRCurve::CastToLinearRing( poCC->oCC.papoCurves[0] );
+        OGRLinearRing* poLR =
+            OGRCurve::CastToLinearRing( poCC->oCC.papoCurves[0] );
         if( poLR != NULL )
         {
             poLR->assignSpatialReference(poCC->getSpatialReference());
@@ -786,7 +800,8 @@ OGRLinearRing* OGRCompoundCurve::CastToLinearRing(OGRCompoundCurve* poCC)
         return poLR;
     }
 
-    OGRLinearRing* poLR = (OGRLinearRing*)poCC->CurveToLineInternal(0, NULL, TRUE);
+    OGRLinearRing* poLR =
+        (OGRLinearRing *) poCC->CurveToLineInternal(0, NULL, TRUE);
     delete poCC;
     return poLR;
 }
@@ -817,10 +832,10 @@ double OGRCompoundCurve::get_Area() const
     if( IsEmpty() || !get_IsClosed() )
         return 0;
 
-    /* Optimization for convex rings */
+    // Optimization for convex rings.
     if( IsConvex() )
     {
-        /* Compute area of shape without the circular segments */
+        // Compute area of shape without the circular segments.
         OGRPointIterator* poIter = getPointIterator();
         OGRLineString oLS;
         oLS.setNumPoints( getNumPoints() );
@@ -832,19 +847,17 @@ double OGRCompoundCurve::get_Area() const
         double dfArea = oLS.get_Area();
         delete poIter;
 
-        /* Add the area of the spherical segments */
+        // Add the area of the spherical segments.
         dfArea += get_AreaOfCurveSegments();
 
         return dfArea;
     }
-    else
-    {
-        OGRLineString* poLS = CurveToLine();
-        double dfArea = poLS->get_Area();
-        delete poLS;
 
-        return dfArea;
-    }
+    OGRLineString* poLS = CurveToLine();
+    double dfArea = poLS->get_Area();
+    delete poLS;
+
+    return dfArea;
 }
 
 /************************************************************************/

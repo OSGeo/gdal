@@ -133,17 +133,17 @@ class OGRGeoRSSLayer : public OGRLayer
                                     int bWriteMode = FALSE);
                         ~OGRGeoRSSLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
-    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK );
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
+    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK ) override;
 
-    OGRFeatureDefn *    GetLayerDefn();
+    OGRFeatureDefn *    GetLayerDefn() override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
-    GIntBig             GetFeatureCount( int bForce );
+    GIntBig             GetFeatureCount( int bForce ) override;
 
     void                LoadSchema();
 
@@ -201,17 +201,17 @@ class OGRGeoRSSDataSource : public OGRDataSource
     int                 Create( const char *pszFilename,
                               char **papszOptions );
 
-    const char*         GetName() { return pszName; }
+    const char*         GetName() override { return pszName; }
 
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer*           GetLayer( int );
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer*           GetLayer( int ) override;
 
     OGRLayer *          ICreateLayer( const char * pszLayerName,
                                     OGRSpatialReference *poSRS,
                                     OGRwkbGeometryType eType,
-                                    char ** papszOptions );
+                                    char ** papszOptions ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     VSILFILE *          GetOutputFP() { return fpOutput; }
     OGRGeoRSSFormat     GetFormat() { return eFormat; }

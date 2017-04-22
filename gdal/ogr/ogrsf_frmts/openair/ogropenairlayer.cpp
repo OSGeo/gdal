@@ -165,7 +165,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 if (oLR.getNumPoints() == 0)
                     return NULL;
 
-                if (osCLASS.size() != 0 &&
+                if (!osCLASS.empty() &&
                     oStyleMap.find(osCLASS) != oStyleMap.end())
                 {
                     memcpy(&sStyle, oStyleMap[osCLASS], sizeof(sStyle));
@@ -181,7 +181,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
 
         if (STARTS_WITH_CI(pszLine, "AC ") || STARTS_WITH_CI(pszLine, "AC,"))
         {
-            if (osCLASS.size() != 0)
+            if (!osCLASS.empty())
             {
                 if (sStyle.penStyle != -1 || sStyle.fillR != -1)
                 {
@@ -219,7 +219,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         }
         else if (STARTS_WITH_CI(pszLine, "AN "))
         {
-            if (osNAME.size() != 0)
+            if (!osNAME.empty())
                 break;
             osNAME = pszLine + 3;
         }
@@ -233,7 +233,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         }
         else if (STARTS_WITH_CI(pszLine, "SP "))
         {
-            if (osCLASS.size() != 0)
+            if (!osCLASS.empty())
             {
                 char** papszTokens = CSLTokenizeString2(pszLine+3, ", ", 0);
                 if (CSLCount(papszTokens) == 5)
@@ -249,7 +249,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         }
         else if (STARTS_WITH_CI(pszLine, "SB "))
         {
-            if (osCLASS.size() != 0)
+            if (!osCLASS.empty())
             {
                 char** papszTokens = CSLTokenizeString2(pszLine+3, ", ", 0);
                 if (CSLCount(papszTokens) == 3)
@@ -443,18 +443,18 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         }
         if (sStyle.fillR != -1)
         {
-            if (osStyle.size() != 0)
+            if (!osStyle.empty())
                 osStyle += ";";
             osStyle += CPLString().Printf("BRUSH(fc:#%02X%02X%02X)",
                                  sStyle.fillR, sStyle.fillG, sStyle.fillB);
         }
         else
         {
-            if (osStyle.size() != 0)
+            if (!osStyle.empty())
                 osStyle += ";";
             osStyle += "BRUSH(fc:#00000000,id:\"ogr-brush-1\")";
         }
-        if (osStyle.size() != 0)
+        if (!osStyle.empty())
             poFeature->SetStyleString(osStyle);
     }
 

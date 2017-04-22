@@ -61,7 +61,7 @@ class COSARRasterBand : public GDALRasterBand
 
 public:
         COSARRasterBand(COSARDataset *, unsigned long nRTNB);
-        virtual CPLErr IReadBlock(int, int, void *);
+        virtual CPLErr IReadBlock(int, int, void *) override;
 };
 
 /*****************************************************************************

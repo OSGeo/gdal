@@ -1320,6 +1320,7 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
     char *apszOptions[] = { szDataPointer, NULL };
 
     memset( szDataPointer, 0, sizeof(szDataPointer) );
+    // cppcheck-suppress redundantCopy
     snprintf( szDataPointer, sizeof(szDataPointer), "DATAPOINTER=" );
     CPLPrintPointer( szDataPointer+strlen(szDataPointer),
                      psWInfo->panData,

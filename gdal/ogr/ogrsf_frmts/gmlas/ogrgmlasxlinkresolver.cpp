@@ -255,10 +255,10 @@ bool GMLASXLinkResolver::IsRawContentResolutionEnabled() const
 }
 
 /************************************************************************/
-/*                      GetMachingResolutionRule()                      */
+/*                      GetMatchingResolutionRule()                      */
 /************************************************************************/
 
-int GMLASXLinkResolver::GetMachingResolutionRule(const CPLString& osURL) const
+int GMLASXLinkResolver::GetMatchingResolutionRule(const CPLString& osURL) const
 {
     for(size_t i = 0; i < m_oConf.m_aoURLSpecificRules.size(); ++i )
     {

@@ -43,7 +43,7 @@ eval {
 ok((@list > 0 and $@ eq ''), "DataTypes, got $@");
 
 for my $type (Geo::GDAL::DataTypes()) {
-    my $nr = $Geo::GDAL::TYPE_STRING2INT{$type};
+    my $nr = Geo::GDAL::s2i(data_type => $type);
     my $c = Geo::GDAL::GetDataTypeName($nr);
     ok($type eq $c, "Data type $type");
     eval {
@@ -220,6 +220,11 @@ my $transform = Geo::GDAL::GeoTransform->new;
 $dataset->GeoTransform($transform);
 my $transform2 = $dataset->GeoTransform();
 is_deeply($transform, $transform2, "Set and get geotransform.");
+
+eval {
+    $dataset->GeoTransform(5,2,0,3,0);
+};
+ok($@ ne '', "It is an error to set GeoTransform with too few values.");
 
 my @t = (5,2,0,3,0,4);
 my @c = (2,3);

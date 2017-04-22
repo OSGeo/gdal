@@ -973,7 +973,7 @@ cellsize     0
 100   0 100   0   0   0
   0 100   0 100   0   0
   0   0   0   0   0 100""")
- 
+
     ds = gdal.Translate('/vsimem/rasterio_14_out.asc', '/vsimem/rasterio_14.asc', options = '-of AAIGRID -r average -outsize 50% 50%')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 110:
@@ -1032,7 +1032,7 @@ yllcorner    0
 cellsize     0
   0   100
 100   100""")
- 
+
     ds = gdal.Translate('/vsimem/rasterio_15_out.asc', '/vsimem/rasterio_15.asc', options = '-of AAIGRID -outsize 200% 200%')
     data_ref = ds.GetRasterBand(1).ReadRaster()
     ds = None
@@ -1067,7 +1067,7 @@ cellsize     0
   0   100 0   0   0   0
   0   0   0   0   0   0
   0   0   0   0   0  0""")
- 
+
     ds = gdal.Translate('/vsimem/rasterio_16_out.asc', '/vsimem/rasterio_16.asc', options = '-of AAIGRID -r mode -outsize 50% 50%')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 15:

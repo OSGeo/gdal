@@ -161,7 +161,7 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
             VSIFPrintfL(fp, "          <%s>", pszName);
         else
             VSIFPrintfL(fp, "          <property name=\"%s\">", pszName);
-        if( poFeature->IsFieldSet(i) )
+        if( poFeature->IsFieldSetAndNotNull(i) )
         {
             const OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
             if( eType == OFTString )

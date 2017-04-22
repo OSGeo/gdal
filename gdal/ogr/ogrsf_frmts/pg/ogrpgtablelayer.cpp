@@ -60,28 +60,28 @@ class OGRPGTableFeatureDefn : public OGRPGFeatureDefn
         {
         }
 
-        virtual void UnsetLayer()
+        virtual void UnsetLayer() override
         {
             poLayer = NULL;
             OGRPGFeatureDefn::UnsetLayer();
         }
 
-        virtual int         GetFieldCount()
+        virtual int         GetFieldCount() override
             { SolveFields(); return OGRPGFeatureDefn::GetFieldCount(); }
-        virtual OGRFieldDefn *GetFieldDefn( int i )
+        virtual OGRFieldDefn *GetFieldDefn( int i ) override
             { SolveFields(); return OGRPGFeatureDefn::GetFieldDefn(i); }
-        virtual int         GetFieldIndex( const char * pszName )
+        virtual int         GetFieldIndex( const char * pszName ) override
             { SolveFields(); return OGRPGFeatureDefn::GetFieldIndex(pszName); }
 
-        virtual int         GetGeomFieldCount()
+        virtual int         GetGeomFieldCount() override
             { if (poLayer != NULL && !poLayer->HasGeometryInformation())
                   SolveFields();
               return OGRPGFeatureDefn::GetGeomFieldCount(); }
-        virtual OGRGeomFieldDefn *GetGeomFieldDefn( int i )
+        virtual OGRGeomFieldDefn *GetGeomFieldDefn( int i ) override
             { if (poLayer != NULL && !poLayer->HasGeometryInformation())
                   SolveFields();
               return OGRPGFeatureDefn::GetGeomFieldDefn(i); }
-        virtual int         GetGeomFieldIndex( const char * pszName)
+        virtual int         GetGeomFieldIndex( const char * pszName) override
             { if (poLayer != NULL && !poLayer->HasGeometryInformation())
                   SolveFields();
               return OGRPGFeatureDefn::GetGeomFieldIndex(pszName); }
@@ -281,7 +281,7 @@ const char *OGRPGTableLayer::GetMetadataItem(const char* pszName, const char* ps
 CPLErr OGRPGTableLayer::SetMetadata(char** papszMD, const char* pszDomain)
 {
     OGRLayer::SetMetadata(papszMD, pszDomain);
-    if( osForcedDescription.size() && (pszDomain == NULL || EQUAL(pszDomain, "")) )
+    if( !osForcedDescription.empty() && (pszDomain == NULL || EQUAL(pszDomain, "")) )
     {
         OGRLayer::SetMetadataItem("DESCRIPTION", osForcedDescription);
     }
@@ -314,7 +314,7 @@ CPLErr OGRPGTableLayer::SetMetadataItem(const char* pszName, const char* pszValu
                                         const char* pszDomain)
 {
     if( (pszDomain == NULL || EQUAL(pszDomain, "")) && pszName != NULL &&
-        EQUAL(pszName, "DESCRIPTION") && osForcedDescription.size() )
+        EQUAL(pszName, "DESCRIPTION") && !osForcedDescription.empty() )
     {
         pszValue = osForcedDescription;
     }
@@ -834,9 +834,9 @@ void OGRPGTableLayer::BuildWhere()
                        szBox3D_1, szBox3D_2, poGeomFieldDefn->nSRSId );
     }
 
-    if( strlen(osQuery) > 0 )
+    if( !osQuery.empty() )
     {
-        if( strlen(osWHERE) == 0 )
+        if( osWHERE.empty() )
         {
             osWHERE.Printf( "WHERE %s ", osQuery.c_str()  );
         }
@@ -863,10 +863,10 @@ void OGRPGTableLayer::BuildFullQueryStatement()
         pszQueryStatement = NULL;
     }
     pszQueryStatement = (char *)
-        CPLMalloc(strlen(osFields)+strlen(osWHERE)
+        CPLMalloc(osFields.size()+osWHERE.size()
                   +strlen(pszSqlTableName) + 40);
     snprintf( pszQueryStatement,
-              strlen(osFields)+strlen(osWHERE)
+              osFields.size()+osWHERE.size()
                   +strlen(pszSqlTableName) + 40,
              "SELECT %s FROM %s %s",
              osFields.c_str(), pszSqlTableName, osWHERE.c_str() );
@@ -970,7 +970,7 @@ CPLString OGRPGTableLayer::BuildFields()
         CPLString osEscapedGeom =
             OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef());
 
-        if( osFieldList.size() > 0 )
+        if( !osFieldList.empty() )
             osFieldList += ", ";
 
         if( poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY )
@@ -1062,7 +1062,7 @@ CPLString OGRPGTableLayer::BuildFields()
     {
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
-        if( osFieldList.size() > 0 )
+        if( !osFieldList.empty() )
             osFieldList += ", ";
 
 #if defined(BINARY_CURSOR_ENABLED)
@@ -1235,7 +1235,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
     /* In case the FID column has also been created as a regular field */
     if( iFIDAsRegularColumnIndex >= 0 )
     {
-        if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+        if( !poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) ||
             poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1325,7 +1325,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                         osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
                     else
                         osCommand += CPLString().Printf("'%s'::GEOMETRY", pszHexEWKB);
-                    OGRFree( pszHexEWKB );
+                    CPLFree( pszHexEWKB );
                 }
                 else
                     osCommand += "NULL";
@@ -1352,7 +1352,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                         osCommand +=
                             CPLString().Printf(
                                 "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
-                    OGRFree( pszWKT );
+                    CPLFree( pszWKT );
                 }
                 else
                     osCommand += "NULL";
@@ -1364,6 +1364,8 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
     {
         if( iFIDAsRegularColumnIndex == i )
             continue;
+        if( !poFeature->IsFieldSet(i) )
+            continue;
         if( bNeedComma )
             osCommand += ", ";
         else
@@ -1372,7 +1374,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
         osCommand = osCommand
             + OGRPGEscapeColumnName(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + " = ";
 
-        if( !poFeature->IsFieldSet( i ) )
+        if( poFeature->IsFieldNull( i ) )
         {
             osCommand += "NULL";
         }
@@ -1382,6 +1384,8 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                                         (OGRPGCommonEscapeStringCbk)OGRPGEscapeString, hPGConn);
         }
     }
+    if( !bNeedComma ) // nothing to do
+        return OGRERR_NONE;
 
     /* Add the WHERE clause */
     osCommand += " WHERE ";
@@ -1445,7 +1449,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
     {
         if( nFID == OGRNullFID )
         {
-            if( poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) )
+            if( poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) )
             {
                 poFeature->SetFID(
                     poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex));
@@ -1453,7 +1457,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
         else
         {
-            if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+            if( !poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) ||
                 poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != nFID )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1760,7 +1764,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                     osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
                 else
                     osCommand += CPLString().Printf("'%s'::GEOMETRY", pszHexEWKB);
-                OGRFree( pszHexEWKB );
+                CPLFree( pszHexEWKB );
             }
             else
             {
@@ -1781,7 +1785,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                         osCommand +=
                             CPLString().Printf(
                                 "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
-                    OGRFree( pszWKT );
+                    CPLFree( pszWKT );
                 }
                 else
                     osCommand += "''";
@@ -1935,7 +1939,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                                                 poDS->sPostGISVersion.nMinor );
         }
 
-        if (osCommand.size() > 0)
+        if (!osCommand.empty())
             osCommand += "\t";
 
         if ( pszGeom )
@@ -1966,7 +1970,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     OGRErr result = OGRERR_NONE;
 
     int copyResult = PQputCopyData(hPGConn, osCommand.c_str(),
-                                   static_cast<int>(strlen(osCommand.c_str())));
+                                   static_cast<int>(osCommand.size()));
 #ifdef DEBUG_VERBOSE
     CPLDebug("PG", "PQputCopyData(%s)", osCommand.c_str());
 #endif
@@ -2127,7 +2131,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         osFieldType = OGRPGCommonLayerGetType(oField,
                                               CPL_TO_BOOL(bPreservePrecision),
                                               CPL_TO_BOOL(bApproxOK));
-        if (osFieldType.size() == 0)
+        if (osFieldType.empty())
             return OGRERR_FAILURE;
     }
 
@@ -2489,7 +2493,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         CPLString osFieldType = OGRPGCommonLayerGetType(oField,
                                                        CPL_TO_BOOL(bPreservePrecision),
                                                        true);
-        if (osFieldType.size() == 0)
+        if (osFieldType.empty())
         {
             poDS->SoftRollbackTransaction();
 
@@ -2862,7 +2866,7 @@ OGRErr OGRPGTableLayer::StartCopy()
 
     CPLString osFields = BuildCopyFields();
 
-    size_t size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
+    size_t size = osFields.size() +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
 
     snprintf( pszCommand, size,
@@ -2954,14 +2958,14 @@ CPLString OGRPGTableLayer::BuildCopyFields()
     {
         OGRGeomFieldDefn* poGeomFieldDefn =
             poFeatureDefn->myGetGeomFieldDefn(i);
-        if( osFieldList.size() > 0 )
+        if( !osFieldList.empty() )
             osFieldList += ", ";
         osFieldList += OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef());
     }
 
     if( bFIDColumnInCopyFields )
     {
-        if( osFieldList.size() > 0 )
+        if( !osFieldList.empty() )
             osFieldList += ", ";
 
         nFIDIndex = poFeatureDefn->GetFieldIndex( pszFIDColumn );
@@ -2976,7 +2980,7 @@ CPLString OGRPGTableLayer::BuildCopyFields()
 
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
-        if( osFieldList.size() > 0 )
+        if( !osFieldList.empty() )
             osFieldList += ", ";
 
         osFieldList += OGRPGEscapeColumnName(pszName);
@@ -3060,7 +3064,7 @@ void OGRPGTableLayer::SetOverrideColumnTypes( const char* pszOverrideColumnTypes
             osCur += *pszIter;
         pszIter ++;
     }
-    if( osCur.size() )
+    if( !osCur.empty() )
         papszOverrideColumnTypes = CSLAddString(papszOverrideColumnTypes, osCur);
 }
 

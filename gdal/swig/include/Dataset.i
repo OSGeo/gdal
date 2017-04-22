@@ -617,8 +617,8 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
             else
             {
                 int nRes = 1 << nLevel;
-                buf_xsize = ceil(xSize / (1.0 * nRes));
-                buf_ysize = ceil(ySize / (1.0 * nRes));
+                buf_xsize = static_cast<int>(ceil(xSize / (1.0 * nRes)));
+                buf_ysize = static_cast<int>(ceil(ySize / (1.0 * nRes)));
             }
         }
     }
@@ -707,7 +707,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
                                       char** options = NULL )
     {
         int nPixelSpace;
-        GIntBig nBandSpace;
+        int nBandSpace;
         if( bIsBandSequential != 0 && bIsBandSequential != 1 )
             return NULL;
         if( band_list == 0 )
@@ -720,7 +720,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
         else
         {
             nBandSpace = GDALGetDataTypeSize(eBufType) / 8;
-            nPixelSpace  = nBandSpace * band_list;
+            nPixelSpace = nBandSpace * band_list;
         }
         CPLVirtualMem* vmem = GDALDatasetGetVirtualMem( self,
                                          eRWFlag,

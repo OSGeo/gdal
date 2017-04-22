@@ -506,6 +506,7 @@ int OGROSMLayer::AddInOtherOrAllTags( const char* pszK )
             pszColon[1] = '\0';  /* Evil but OK */
             bAddToOtherTags = ( aoSetIgnoreKeys.find(pszK) ==
                                 aoSetIgnoreKeys.end() );
+            // cppcheck-suppress redundantAssignment
             pszColon[1] = chBackup;
         }
         else
@@ -682,7 +683,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
         {
             if( oAttr.anIndexToBind[j] >= 0 )
             {
-                if( !poFeature->IsFieldSet(oAttr.anIndexToBind[j]) )
+                if( !poFeature->IsFieldSetAndNotNull(oAttr.anIndexToBind[j]) )
                 {
                     sqlite3_bind_null( oAttr.hStmt, j + 1 );
                 }
@@ -804,17 +805,12 @@ void OGROSMLayer::AddComputedAttribute( const char* pszName,
 {
     if( poDS->hDBForComputedAttributes == NULL )
     {
-#ifdef HAVE_SQLITE_VFS
         const int rc =
             sqlite3_open_v2(
                 ":memory:", &(poDS->hDBForComputedAttributes),
                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
                 SQLITE_OPEN_NOMUTEX,
                 NULL );
-#else
-        const int rc =
-            sqlite3_open( ":memory:", &(poDS->hDBForComputedAttributes) );
-#endif
         if( rc != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -865,12 +861,12 @@ void OGROSMLayer::AddComputedAttribute( const char* pszName,
     CPLDebug("OSM", "SQL : \"%s\"", osSQL.c_str());
 
     sqlite3_stmt *hStmt = NULL;
-    int rc = sqlite3_prepare( poDS->hDBForComputedAttributes, osSQL, -1,
+    int rc = sqlite3_prepare_v2( poDS->hDBForComputedAttributes, osSQL, -1,
                               &hStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "sqlite3_prepare() failed :  %s",
+                  "sqlite3_prepare_v2() failed :  %s",
                   sqlite3_errmsg(poDS->hDBForComputedAttributes) );
         return;
     }
@@ -878,10 +874,10 @@ void OGROSMLayer::AddComputedAttribute( const char* pszName,
     OGRFieldDefn oField(pszName, eType);
     poFeatureDefn->AddFieldDefn(&oField);
     oComputedAttributes.push_back(OGROSMComputedAttribute(pszName));
-    oComputedAttributes[oComputedAttributes.size()-1].eType = eType;
-    oComputedAttributes[oComputedAttributes.size()-1].nIndex = poFeatureDefn->GetFieldCount() - 1;
-    oComputedAttributes[oComputedAttributes.size()-1].osSQL = pszSQL;
-    oComputedAttributes[oComputedAttributes.size()-1].hStmt = hStmt;
-    oComputedAttributes[oComputedAttributes.size()-1].aosAttrToBind = aosAttrToBind;
-    oComputedAttributes[oComputedAttributes.size()-1].anIndexToBind = anIndexToBind;
+    oComputedAttributes.back().eType = eType;
+    oComputedAttributes.back().nIndex = poFeatureDefn->GetFieldCount() - 1;
+    oComputedAttributes.back().osSQL = pszSQL;
+    oComputedAttributes.back().hStmt = hStmt;
+    oComputedAttributes.back().aosAttrToBind = aosAttrToBind;
+    oComputedAttributes.back().anIndexToBind = anIndexToBind;
 }

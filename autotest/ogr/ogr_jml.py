@@ -105,7 +105,7 @@ def ogr_jml_1():
        feat.GetFieldAsString('date') != '2014/10/18 00:00:00' or \
        feat.GetFieldAsString('datetime') != '2014/10/18 21:36:45' or \
        feat.GetField('R_G_B') != '0000FF' or \
-       feat.IsFieldSet('not_ignored') or \
+       not feat.IsFieldNull('not_ignored') or \
        feat.GetStyleString() != 'BRUSH(fc:#0000FF)' or \
        feat.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 10,10 10,10 0,0 0))':
             feat.DumpReadable()

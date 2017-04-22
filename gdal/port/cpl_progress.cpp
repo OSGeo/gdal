@@ -27,11 +27,13 @@
  ****************************************************************************/
 
 #include "cpl_progress.h"
-#include "cpl_conv.h"
 
 #include <cmath>
+#include <cstdio>
 
 #include <algorithm>
+
+#include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
 
@@ -145,8 +147,8 @@ void * CPL_STDCALL GDALCreateScaledProgress( double dfMin, double dfMax,
     if( pfnProgress == NULL || pfnProgress == GDALDummyProgress )
         return NULL;
 
-    GDALScaledProgressInfo *psInfo
-        = static_cast<GDALScaledProgressInfo *>(
+    GDALScaledProgressInfo *psInfo =
+        static_cast<GDALScaledProgressInfo *>(
             CPLCalloc( sizeof(GDALScaledProgressInfo), 1 ) );
 
     if( std::abs(dfMin-dfMax) < 0.0000001 )
@@ -212,14 +214,11 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
  * @return Always returns TRUE indicating the process should continue.
  */
 
-/**/
-/**/
-
 int CPL_STDCALL GDALTermProgress( double dfComplete,
-                                  const char * /* pszMessage */,
-                                  void * /* pProgressArg */ )
+                                  CPL_UNUSED const char * pszMessage,
+                                  CPL_UNUSED void * pProgressArg )
 {
-    int nThisTick = std::min(40, std::max(0,
+    const int nThisTick = std::min(40, std::max(0,
         static_cast<int>(dfComplete * 40.0) ));
 
     // Have we started a new progress run?

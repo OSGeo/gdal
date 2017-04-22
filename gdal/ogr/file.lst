@@ -4,11 +4,14 @@ OBJ =	ogrgeometryfactory.o \
 	ogrlinestring.o \
 	ogrlinearring.o \
 	ogrpolygon.o \
+	ogrtriangle.o \
 	ogrutils.o \
 	ogrgeometry.o \
 	ogrgeometrycollection.o \
 	ogrmultipolygon.o \
 	ogrsurface.o \
+	ogrpolyhedralsurface.o \
+	ogrtriangulatedsurface.o \
 	ogrmultipoint.o \
 	ogrmultilinestring.o \
     ogrcircularstring.o \

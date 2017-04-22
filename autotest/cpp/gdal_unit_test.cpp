@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Main program of C++ Unit Tests runner for GDAL
@@ -23,31 +22,21 @@
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-//
-//  $Log: gdal_unit_test.cpp,v $
-//  Revision 1.5  2007/01/04 18:15:54  mloskot
-//  Updated C++ Unit Test package for Windows CE
-//
-//  Revision 1.4  2006/12/06 15:39:13  mloskot
-//  Added file header comment and copyright note.
-//
-//
-///////////////////////////////////////////////////////////////////////////////
+
 #ifdef _MSC_VER
 #define WIN32_LEAN_AND_MEAN
 #endif // _MSC_VER
 
-// TUT
-#include <tut.h>
-#include <tut_reporter.h>
-#include <gdal_common.h>
-// GDAL
-#include <gdal.h>
-#include <ogrsf_frmts.h>
+#include <gdal_unit_test.h>
+
 #include <cpl_conv.h>
 #include <cpl_multiproc.h>
+#include <gdal.h>
 #include <ogr_api.h>
-// STD
+#include <ogrsf_frmts.h>
+
+#include <tut_reporter.hpp>
+
 #include <iostream>
 #include <string>
 
@@ -57,17 +46,20 @@ namespace tut
 
     // Common test data path
     // Customize these paths if you need.
-
-#ifdef _WIN32_WCE
-    std::string const common::gdal_dir("\\My Documents\\gdaltest");
-    std::string const common::gdal_dictdir(gdal_dir + "\\dict");
-    std::string const common::data_basedir(gdal_dir + "\\data");
-    std::string const common::tmp_basedir(gdal_dir + "\\tmp");
-#else
     std::string const common::data_basedir("data");
     std::string const common::tmp_basedir("tmp");
-#endif // _WIN32_WCE
 
+    void check_test_group(char const* name)
+    {
+        std::string grpname(name);
+        if (grpname.empty())
+            throw std::runtime_error("missing test group name");
+
+        tut::groupnames gl = runner.get().list_groups();
+        tut::groupnames::const_iterator found = std::find(gl.begin(), gl.end(), grpname);
+        if (found == gl.end())
+            throw std::runtime_error("test group " + grpname + " not found");
+    }
 } // namespace tut
 
 int main(int argc, char* argv[])
@@ -76,53 +68,74 @@ int main(int argc, char* argv[])
     ::GDALAllRegister();
     ::OGRRegisterAll();
 
-    GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    std::cout
+        << "GDAL C/C++ API tests"
+        << " (" << ::GDALVersionInfo("--version") << ")"
+        << "\n---------------------------------------------------------\n";
 
-    // We don't actually use the arguments ourself.
-    CSLDestroy( argv );
-    argv = NULL;
+    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    if (argc < 1)
+    {
+        std::cout
+            << "\n---------------------------------------------------------\n"
+            << "No tests to run\n";
+        return EXIT_SUCCESS;
+    }
 
-#ifdef _WIN32_WCE
-    // Register GDAL dictionaries location.
-    // Windows CE doesn't support environment variables.
-    CPLPushFinderLocation(tut::common::gdal_dictdir.c_str());
-#endif
-
-    // Retrieve GDAL version
-    std::string gdalVersion(::GDALVersionInfo("RELEASE_NAME"));
-
-    std::cout << "C++ Test Suite for GDAL C/C++ API\n"
-        << "----------------------------------------\n"
-        << "GDAL library version: " << gdalVersion
-        << "\nGDAL test data: " << tut::common::data_basedir
-        << "\n----------------------------------------\n";
+        
 
     // Initialize TUT framework
-    tut::reporter visi;
-    tut::runner.get().set_callback(&visi);
-
-    bool bOk = false;
-    try
+    int nRetCode = EXIT_FAILURE;
     {
-        bOk = tut::runner.get().run_tests();
-    }
-    catch( const std::exception& ex )
-    {
-        std::cerr << "TUT raised ex: " << ex.what() << std::endl;
+        tut::reporter visi;
+        tut::runner.get().set_callback(&visi);
+
+        try
+        {
+            if (argc == 1)
+            {
+                tut::runner.get().run_tests();
+            }
+            else if (argc == 2 && std::string(argv[1]) == "--list")
+            {
+                tut::groupnames gl = tut::runner.get().list_groups();
+                tut::groupnames::const_iterator b = gl.begin();
+                tut::groupnames::const_iterator e = gl.end();
+                tut::groupnames::difference_type d = std::distance(b, e);
+                std::cout << "Registered " << d << " test groups:\n" << std::endl;
+                while (b != e)
+                {
+                    std::cout << "  " << *b << std::endl;
+                    ++b;
+                }
+            }
+            else if (argc == 2 && std::string(argv[1]) != "--list")
+            {
+                tut::check_test_group(argv[1]);
+                tut::runner.get().run_tests(argv[1]);
+            }
+            else if (argc == 3)
+            {
+                tut::check_test_group(argv[1]);
+
+                tut::test_result result;
+                tut::runner.get().run_test(argv[1], std::atoi(argv[2]), result);
+            }
+            nRetCode = EXIT_SUCCESS;
+        }
+        catch (const std::exception& ex)
+        {
+            std::cerr << "GDAL C/C++ API tests error: " << ex.what() << std::endl;
+            nRetCode = EXIT_FAILURE;
+        }
     }
 
-    int nRetCode = bOk ? 0 : 1;
-
+    CSLDestroy(argv);
     GDALDestroyDriverManager();
     OGRCleanupAll();
 
     CPLDumpSharedList( NULL );
     CPLCleanupTLS();
-
-#ifdef _WIN32_WCE
-    std::cout << "Press enter to quit\n";
-    std::cin.get();
-#endif // _WIN32_WCE
 
     return nRetCode;
 }

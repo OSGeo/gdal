@@ -31,28 +31,15 @@
 // Must be first for DEBUG_BOOL case
 #include "ogr_gmlas.h"
 
+#define CONSTANT_DEFINITION
+#undef OGR_GMLAS_CONSTS_INCLUDED_REFEFINABLE
+#include "ogr_gmlas_consts.h"
+
 #include "cpl_minixml.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
-
-const bool GMLASXLinkResolutionConf::DEFAULT_RESOLUTION_ENABLED_DEFAULT = false;
-const bool GMLASXLinkResolutionConf::ALLOW_REMOTE_DOWNLOAD_DEFAULT = true;
-const bool GMLASXLinkResolutionConf::CACHE_RESULTS_DEFAULT = false;
-
-const bool GMLASConfiguration::ALLOW_REMOTE_SCHEMA_DOWNLOAD_DEFAULT = true;
-const bool GMLASConfiguration::ALWAYS_GENERATE_OGR_ID_DEFAULT = false;
-const bool GMLASConfiguration::REMOVE_UNUSED_LAYERS_DEFAULT = false;
-const bool GMLASConfiguration::REMOVE_UNUSED_FIELDS_DEFAULT = false;
-const bool GMLASConfiguration::USE_ARRAYS_DEFAULT = true;
-const bool GMLASConfiguration::INCLUDE_GEOMETRY_XML_DEFAULT = false;
-const bool GMLASConfiguration::INSTANTIATE_GML_FEATURES_ONLY_DEFAULT = true;
-const bool GMLASConfiguration::ALLOW_XSD_CACHE_DEFAULT = true;
-const bool GMLASConfiguration::VALIDATE_DEFAULT = false;
-const bool GMLASConfiguration::FAIL_IF_VALIDATION_ERROR_DEFAULT = false;
-const bool GMLASConfiguration::EXPOSE_METADATA_LAYERS_DEFAULT = false;
-const bool GMLASConfiguration::WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT = true;
-const bool GMLASConfiguration::CASE_INSENSITIVE_IDENTIFIER_DEFAULT = true;
-const bool GMLASConfiguration::PG_IDENTIFIER_LAUNDERING_DEFAULT = true;
 
 /************************************************************************/
 /*                          GMLASConfiguration()                        */
@@ -64,15 +51,26 @@ GMLASConfiguration::GMLASConfiguration()
     , m_bRemoveUnusedLayers(REMOVE_UNUSED_LAYERS_DEFAULT)
     , m_bRemoveUnusedFields(REMOVE_UNUSED_FIELDS_DEFAULT)
     , m_bUseArrays(USE_ARRAYS_DEFAULT)
+    , m_bUseNullState(USE_NULL_STATE_DEFAULT)
     , m_bIncludeGeometryXML(INCLUDE_GEOMETRY_XML_DEFAULT)
     , m_bInstantiateGMLFeaturesOnly(INSTANTIATE_GML_FEATURES_ONLY_DEFAULT)
     , m_nIdentifierMaxLength(0)
     , m_bCaseInsensitiveIdentifier(CASE_INSENSITIVE_IDENTIFIER_DEFAULT)
     , m_bPGIdentifierLaundering(PG_IDENTIFIER_LAUNDERING_DEFAULT)
+    , m_nMaximumFieldsForFlattening(MAXIMUM_FIELDS_FLATTENING_DEFAULT)
     , m_bAllowXSDCache(ALLOW_XSD_CACHE_DEFAULT)
+    , m_bSchemaFullChecking(SCHEMA_FULL_CHECKING_DEFAULT)
+    , m_bHandleMultipleImports(HANDLE_MULTIPLE_IMPORTS_DEFAULT)
     , m_bValidate(VALIDATE_DEFAULT)
     , m_bFailIfValidationError(FAIL_IF_VALIDATION_ERROR_DEFAULT)
     , m_bExposeMetadataLayers(WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT)
+    , m_eSWEActivationMode(SWE_ACTIVATE_IF_NAMESPACE_FOUND)
+    , m_bSWEProcessDataRecord(SWE_PROCESS_DATA_RECORD_DEFAULT)
+    , m_bSWEProcessDataArray(SWE_PROCESS_DATA_ARRAY_DEFAULT)
+    , m_nIndentSize(INDENT_SIZE_DEFAULT)
+    , m_osSRSNameFormat(szSRSNAME_DEFAULT)
+    , m_osWrapping(szWFS2_FEATURECOLLECTION)
+    , m_osWFS20SchemaLocation(szWFS20_SCHEMALOCATION)
 {
 }
 
@@ -228,13 +226,55 @@ static void CPL_STDCALL GMLASConfigurationErrorHandler(CPLErr /*eErr*/,
 }
 
 /************************************************************************/
+/*                           ParseNamespaces()                          */
+/************************************************************************/
+
+static void ParseNamespaces(CPLXMLNode* psContainerNode,
+                            std::map<CPLString, CPLString>& oMap)
+{
+    CPLXMLNode* psNamespaces = CPLGetXMLNode(psContainerNode, "Namespaces");
+    if( psNamespaces != NULL )
+    {
+        for( CPLXMLNode* psIter = psNamespaces->psChild;
+                            psIter != NULL;
+                            psIter = psIter->psNext )
+        {
+            if( psIter->eType == CXT_Element &&
+                EQUAL(psIter->pszValue, "Namespace") )
+            {
+                CPLString osPrefix = CPLGetXMLValue(psIter, "prefix", "");
+                CPLString osURI = CPLGetXMLValue(psIter, "uri", "");
+                if( !osPrefix.empty() && !osURI.empty() )
+                {
+                    if( oMap.find(osPrefix) ==
+                        oMap.end() )
+                    {
+                        oMap[osPrefix] = osURI;
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                    "Prefix %s was already mapped to %s. "
+                                    "Attempt to map it to %s ignored",
+                                    osPrefix.c_str(),
+                                    oMap[osPrefix].
+                                                                    c_str(),
+                                    osURI.c_str());
+                    }
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                                 Load()                               */
 /************************************************************************/
 
 bool GMLASConfiguration::Load(const char* pszFilename)
 {
     // Allow configuration to be inlined
-    CPLXMLNode* psRoot = STARTS_WITH(pszFilename, "<Configuration>") ?
+    CPLXMLNode* psRoot = STARTS_WITH(pszFilename, "<Configuration") ?
                                 CPLParseXMLString(pszFilename) :
                                 CPLParseXMLFile(pszFilename);
     if( psRoot == NULL )
@@ -257,7 +297,7 @@ bool GMLASConfiguration::Load(const char* pszFilename)
             CPLPushErrorHandlerEx(GMLASConfigurationErrorHandler, &aosErrors);
             int bRet = CPLValidateXML(pszFilename, pszXSD, NULL);
             CPLPopErrorHandler();
-            if( !bRet && aosErrors.size() > 0 &&
+            if( !bRet && !aosErrors.empty() &&
                 strstr(aosErrors[0].c_str(), "missing libxml2 support") == NULL )
             {
                 for(size_t i = 0; i < aosErrors.size(); i++)
@@ -286,6 +326,14 @@ bool GMLASConfiguration::Load(const char* pszFilename)
             CPLGetXMLValue(psRoot, "=Configuration.SchemaCache.Directory",
                            "");
     }
+
+    m_bSchemaFullChecking = CPLGetXMLBoolValue( psRoot,
+                    "=Configuration.SchemaAnalysisOptions.SchemaFullChecking",
+                    SCHEMA_FULL_CHECKING_DEFAULT);
+
+    m_bHandleMultipleImports = CPLGetXMLBoolValue( psRoot,
+                    "=Configuration.SchemaAnalysisOptions.HandleMultipleImports",
+                    HANDLE_MULTIPLE_IMPORTS_DEFAULT);
 
     m_bValidate = CPLGetXMLBoolValue( psRoot,
                                       "=Configuration.Validation.enabled",
@@ -317,6 +365,9 @@ bool GMLASConfiguration::Load(const char* pszFilename)
     m_bUseArrays = CPLGetXMLBoolValue( psRoot,
                                 "=Configuration.LayerBuildingRules.UseArrays",
                                 USE_ARRAYS_DEFAULT );
+    m_bUseNullState = CPLGetXMLBoolValue( psRoot,
+                                "=Configuration.LayerBuildingRules.UseNullState",
+                                USE_NULL_STATE_DEFAULT );
     m_bIncludeGeometryXML = CPLGetXMLBoolValue( psRoot,
                        "=Configuration.LayerBuildingRules.GML.IncludeGeometryXML",
                        INCLUDE_GEOMETRY_XML_DEFAULT );
@@ -333,6 +384,91 @@ bool GMLASConfiguration::Load(const char* pszFilename)
                 "=Configuration.LayerBuildingRules.PostgreSQLIdentifierLaundering",
                 PG_IDENTIFIER_LAUNDERING_DEFAULT );
 
+    CPLXMLNode* psFlatteningRules = CPLGetXMLNode(psRoot,
+                        "=Configuration.LayerBuildingRules.FlatteningRules");
+    if( psFlatteningRules )
+    {
+        m_nMaximumFieldsForFlattening = atoi( CPLGetXMLValue( psFlatteningRules,
+                "MaximumNumberOfFields",
+                CPLSPrintf("%d", MAXIMUM_FIELDS_FLATTENING_DEFAULT) ) );
+
+        ParseNamespaces(psFlatteningRules, m_oMapPrefixToURIFlatteningRules);
+
+        for( CPLXMLNode* psIter = psFlatteningRules->psChild;
+                         psIter != NULL;
+                         psIter = psIter->psNext )
+        {
+            if( psIter->eType == CXT_Element &&
+                EQUAL(psIter->pszValue, "ForceFlatteningXPath") )
+            {
+                m_osForcedFlattenedXPath.push_back(
+                    CPLGetXMLValue(psIter, "", "") );
+            }
+            else if( psIter->eType == CXT_Element &&
+                     EQUAL(psIter->pszValue, "DisableFlatteningXPath") )
+            {
+                m_osDisabledFlattenedXPath.push_back(
+                    CPLGetXMLValue(psIter, "", "") );
+            }
+        }
+    }
+
+    const char* pszSWEProcessingActivation = CPLGetXMLValue( psRoot,
+        "=Configuration.LayerBuildingRules.SWEProcessing.Activation",
+        "ifSWENamespaceFoundInTopElement" );
+    if( EQUAL(pszSWEProcessingActivation, "ifSWENamespaceFoundInTopElement") )
+        m_eSWEActivationMode = SWE_ACTIVATE_IF_NAMESPACE_FOUND;
+    else if( CPLTestBool(pszSWEProcessingActivation) )
+        m_eSWEActivationMode = SWE_ACTIVATE_TRUE;
+    else
+        m_eSWEActivationMode = SWE_ACTIVATE_FALSE;
+    m_bSWEProcessDataRecord = CPLTestBool(CPLGetXMLValue( psRoot,
+        "=Configuration.LayerBuildingRules.SWEProcessing.ProcessDataRecord",
+        "true" ));
+    m_bSWEProcessDataArray = CPLTestBool(CPLGetXMLValue( psRoot,
+        "=Configuration.LayerBuildingRules.SWEProcessing.ProcessDataArray",
+        "true" ));
+
+    CPLXMLNode* psTypingConstraints = CPLGetXMLNode(psRoot,
+                                            "=Configuration.TypingConstraints");
+    if( psTypingConstraints )
+    {
+        ParseNamespaces(psTypingConstraints, m_oMapPrefixToURITypeConstraints);
+
+        for( CPLXMLNode* psIter = psTypingConstraints->psChild;
+                         psIter != NULL;
+                         psIter = psIter->psNext )
+        {
+            if( psIter->eType == CXT_Element &&
+                EQUAL(psIter->pszValue, "ChildConstraint") )
+            {
+                const CPLString& osXPath( CPLGetXMLValue(psIter, "ContainerXPath", "") );
+                CPLXMLNode* psChildrenTypes = CPLGetXMLNode(psIter, "ChildrenElements");
+                if( IsValidXPath(osXPath) )
+                {
+                    for( CPLXMLNode* psIter2 =
+                            psChildrenTypes ? psChildrenTypes->psChild : NULL;
+                                     psIter2 != NULL;
+                                     psIter2 = psIter2->psNext )
+                    {
+                        if( psIter2->eType == CXT_Element &&
+                            EQUAL(psIter2->pszValue, "Element") )
+                        {
+                            m_oMapChildrenElementsConstraints[osXPath].push_back(
+                                CPLGetXMLValue(psIter2, "", "") );
+                        }
+                    }
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "XPath syntax %s not supported",
+                             osXPath.c_str());
+                }
+            }
+        }
+    }
+
     CPLXMLNode* psIgnoredXPaths = CPLGetXMLNode(psRoot,
                                             "=Configuration.IgnoredXPaths");
     if( psIgnoredXPaths )
@@ -342,40 +478,7 @@ bool GMLASConfiguration::Load(const char* pszFilename)
                        "WarnIfIgnoredXPathFoundInDocInstance",
                        WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT );
 
-        CPLXMLNode* psNamespaces = CPLGetXMLNode(psIgnoredXPaths,
-                                                 "Namespaces");
-        if( psNamespaces != NULL )
-        {
-            for( CPLXMLNode* psIter = psNamespaces->psChild;
-                             psIter != NULL;
-                             psIter = psIter->psNext )
-            {
-                if( psIter->eType == CXT_Element &&
-                    EQUAL(psIter->pszValue, "Namespace") )
-                {
-                    CPLString osPrefix = CPLGetXMLValue(psIter, "prefix", "");
-                    CPLString osURI = CPLGetXMLValue(psIter, "uri", "");
-                    if( !osPrefix.empty() && !osURI.empty() )
-                    {
-                        if( m_oMapPrefixToURIIgnoredXPaths.find(osPrefix) ==
-                            m_oMapPrefixToURIIgnoredXPaths.end() )
-                        {
-                            m_oMapPrefixToURIIgnoredXPaths[osPrefix] = osURI;
-                        }
-                        else
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Prefix %s was already mapped to %s. "
-                                     "Attempt to map it to %s ignored",
-                                     osPrefix.c_str(),
-                                     m_oMapPrefixToURIIgnoredXPaths[osPrefix].
-                                                                        c_str(),
-                                     osURI.c_str());
-                        }
-                    }
-                }
-            }
-        }
+        ParseNamespaces(psIgnoredXPaths, m_oMapPrefixToURIIgnoredXPaths);
 
         for( CPLXMLNode* psIter = psIgnoredXPaths->psChild;
                          psIter != NULL;
@@ -409,6 +512,33 @@ bool GMLASConfiguration::Load(const char* pszFilename)
                                             "=Configuration.XLinkResolution");
     if( psXLinkResolutionNode != NULL )
         m_oXLinkResolution.LoadFromXML( psXLinkResolutionNode );
+
+    // Parse WriterConfig
+    CPLXMLNode* psWriterConfig = CPLGetXMLNode( psRoot,
+                                                "=Configuration.WriterConfig");
+    if( psWriterConfig != NULL )
+    {
+        m_nIndentSize = atoi( CPLGetXMLValue( psWriterConfig,
+                                    "IndentationSize",
+                                    CPLSPrintf("%d", INDENT_SIZE_DEFAULT ) ) );
+        m_nIndentSize = std::min( INDENT_SIZE_MAX,
+                                  std::max( INDENT_SIZE_MIN, m_nIndentSize ) );
+
+        m_osComment = CPLGetXMLValue( psWriterConfig, "Comment", "" );
+
+        m_osLineFormat = CPLGetXMLValue( psWriterConfig, "LineFormat", "" );
+
+        m_osSRSNameFormat = CPLGetXMLValue( psWriterConfig, "SRSNameFormat", "" );
+
+        m_osWrapping = CPLGetXMLValue( psWriterConfig, "Wrapping",
+                                       szWFS2_FEATURECOLLECTION );
+
+        m_osTimestamp = CPLGetXMLValue( psWriterConfig, "Timestamp", "" );
+
+        m_osWFS20SchemaLocation = CPLGetXMLValue( psWriterConfig,
+                                                  "WFS20SchemaLocation",
+                                                  szWFS20_SCHEMALOCATION );
+    }
 
     Finalize();
 

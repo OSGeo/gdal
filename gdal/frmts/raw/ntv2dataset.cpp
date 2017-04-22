@@ -105,10 +105,10 @@ class NTv2Dataset : public RawDataset
                 NTv2Dataset();
     virtual ~NTv2Dataset();
 
-    virtual CPLErr SetGeoTransform( double * padfTransform );
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef();
-    virtual void   FlushCache(void);
+    virtual CPLErr SetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef() override;
+    virtual void   FlushCache(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -684,7 +684,6 @@ CPLErr NTv2Dataset::SetGeoTransform( double * padfTransform )
 /* -------------------------------------------------------------------- */
 /*      Update grid header.                                             */
 /* -------------------------------------------------------------------- */
-    double dfValue = 0.0;
     char achHeader[11*16] = { '\0' };
 
     // read grid header
@@ -692,7 +691,7 @@ CPLErr NTv2Dataset::SetGeoTransform( double * padfTransform )
     CPL_IGNORE_RET_VAL(VSIFReadL( achHeader, 11, 16, fpImage ));
 
     // S_LAT
-    dfValue =
+    double dfValue =
         3600 * (adfGeoTransform[3] + (nRasterYSize-0.5) * adfGeoTransform[5]);
     SwapPtr64IfNecessary( m_bMustSwap, &dfValue );
     memcpy( achHeader +  4*16 + 8, &dfValue, 8 );
@@ -981,8 +980,8 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write the end record.                                           */
 /* -------------------------------------------------------------------- */
-    memset( achHeader, 0, 16 );
     memcpy( achHeader, "END     ", 8 );
+    memset( achHeader + 8, 0, 8 );
     CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 1, 16, fp ));
     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 

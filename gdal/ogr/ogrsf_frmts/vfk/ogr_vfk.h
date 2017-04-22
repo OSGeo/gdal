@@ -68,16 +68,16 @@ public:
                 OGRwkbGeometryType, OGRVFKDataSource *);
     ~OGRVFKLayer();
 
-    OGRFeature          *GetNextFeature();
-    OGRFeature          *GetFeature(GIntBig);
+    OGRFeature          *GetNextFeature() override;
+    OGRFeature          *GetFeature(GIntBig) override;
 
-    OGRFeatureDefn      *GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn      *GetLayerDefn() override { return poFeatureDefn; }
 
-    void                 ResetReading();
+    void                 ResetReading() override;
 
-    int                  TestCapability(const char *);
+    int                  TestCapability(const char *) override;
 
-    GIntBig              GetFeatureCount(int = TRUE);
+    GIntBig              GetFeatureCount(int = TRUE) override;
 };
 
 /************************************************************************/
@@ -102,14 +102,14 @@ public:
     OGRVFKDataSource();
     ~OGRVFKDataSource();
 
-    int            Open(const char *, int);
+    int            Open(GDALOpenInfo* poOpenInfo);
 
-    const char    *GetName() { return pszName; }
+    const char    *GetName() override { return pszName; }
 
-    int            GetLayerCount() { return nLayers; }
-    OGRLayer      *GetLayer(int);
+    int            GetLayerCount() override { return nLayers; }
+    OGRLayer      *GetLayer(int) override;
 
-    int            TestCapability(const char *);
+    int            TestCapability(const char *) override;
 
     IVFKReader    *GetReader() const { return poReader; }
 };

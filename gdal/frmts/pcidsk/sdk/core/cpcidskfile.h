@@ -56,53 +56,53 @@ namespace PCIDSK
         CPCIDSKFile( std::string filename );
         virtual ~CPCIDSKFile();
 
-        virtual PCIDSKInterfaces *GetInterfaces() { return &interfaces; }
+        virtual PCIDSKInterfaces *GetInterfaces() override { return &interfaces; }
 
-        PCIDSKChannel  *GetChannel( int band );
-        PCIDSKSegment  *GetSegment( int segment );
-        std::vector<PCIDSKSegment *> GetSegments();
+        PCIDSKChannel  *GetChannel( int band ) override;
+        PCIDSKSegment  *GetSegment( int segment ) override;
+        std::vector<PCIDSKSegment *> GetSegments() override;
 
         PCIDSKSegment  *GetSegment( int type, std::string name,
-            int previous = 0 );
+            int previous = 0 ) override;
         int  CreateSegment( std::string name, std::string description,
-            eSegType seg_type, int data_blocks );
-        void DeleteSegment( int segment );
+            eSegType seg_type, int data_blocks ) override;
+        void DeleteSegment( int segment ) override;
         void CreateOverviews( int chan_count, int *chan_list, 
-            int factor, std::string resampling );
+            int factor, std::string resampling ) override;
 
-        int       GetWidth() const { return width; }
-        int       GetHeight() const { return height; }
-        int       GetChannels() const { return channel_count; }
-        std::string GetInterleaving() const { return interleaving; }
-        bool      GetUpdatable() const { return updatable; } 
-        uint64    GetFileSize() const { return file_size; }
+        int       GetWidth() const override { return width; }
+        int       GetHeight() const override { return height; }
+        int       GetChannels() const override { return channel_count; }
+        std::string GetInterleaving() const override { return interleaving; }
+        bool      GetUpdatable() const override { return updatable; } 
+        uint64    GetFileSize() const override { return file_size; }
 
         // the following are only for pixel interleaved IO
-        int       GetPixelGroupSize() const { return pixel_group_size; }
-        void     *ReadAndLockBlock( int block_index, int xoff=-1, int xsize=-1 );
-        void      UnlockBlock( bool mark_dirty = false );
+        int       GetPixelGroupSize() const override { return pixel_group_size; }
+        void     *ReadAndLockBlock( int block_index, int xoff=-1, int xsize=-1 ) override;
+        void      UnlockBlock( bool mark_dirty = false ) override;
         void      WriteBlock( int block_index, void *buffer );
         void      FlushBlock();
 
-        void      WriteToFile( const void *buffer, uint64 offset, uint64 size );
-        void      ReadFromFile( void *buffer, uint64 offset, uint64 size );
+        void      WriteToFile( const void *buffer, uint64 offset, uint64 size ) override;
+        void      ReadFromFile( void *buffer, uint64 offset, uint64 size ) override;
 
         std::string GetFilename() const { return base_filename; }
 
         void      GetIODetails( void ***io_handle_pp, Mutex ***io_mutex_pp,
-                                std::string filename="", bool writable=false );
+                                std::string filename="", bool writable=false ) override;
 
         bool      GetEDBFileDetails( EDBFile** file_p, Mutex **io_mutex_p,
                                      std::string filename );
 
-        std::string GetMetadataValue( const std::string& key ) 
+        std::string GetMetadataValue( const std::string& key ) override 
             { return metadata.GetMetadataValue(key); }
-        void        SetMetadataValue( const std::string& key, const std::string& value ) 
+        void        SetMetadataValue( const std::string& key, const std::string& value ) override 
             { metadata.SetMetadataValue(key,value); }
-        std::vector<std::string> GetMetadataKeys() 
+        std::vector<std::string> GetMetadataKeys() override 
             { return metadata.GetMetadataKeys(); }
 
-        void      Synchronize();
+        void      Synchronize() override;
 
     // not exposed to applications.
         void      ExtendFile( uint64 blocks_requested, bool prezero = false );

@@ -220,3 +220,91 @@ $f = Geo::OGR::Feature->new(Fields => \@fields);
     my $c = $f->Geometry(Point => $b);
     ok($b->As(Format => 'ISO WKT') eq $c->As(Format => 'ISO WKT'), "Set and get the point field.");
 }
+
+eval {
+    my $geom_type = 'Point';
+    
+    my $fields = [{i => 'Integer'}];
+    
+    my $defn = Geo::OGR::FeatureDefn->new(
+        GeometryType => $geom_type, 
+        Fields => $fields);
+
+    my $feature = Geo::OGR::Feature->new($defn);
+
+    my $layer = Geo::OGR::Driver('Memory')
+        ->Create('test')
+        ->CreateLayer(
+        Name => 'test',
+        GeometryType => $geom_type,
+        Fields => $fields
+        );
+
+    my $name = 'name';
+
+    my $values_in_array = [1, {WKT => 'POINT (1 2)'}];
+    my $values_in_hash = {i => 1, Geometry => {WKT => 'POINT (1 2)'}};
+
+    $feature->Row($values_in_hash);
+
+    my $values_in_feature = $feature;
+    
+    my $f = Geo::OGR::Feature->new(Schema => {Name => $name, Fields => $fields, GeometryType => $geom_type}, 
+                                   Values => $values_in_feature);
+    
+    $f = Geo::OGR::Feature->new($defn);
+    $f = Geo::OGR::Feature->new($feature);
+    $f = Geo::OGR::Feature->new($layer);
+
+    $f = Geo::OGR::Feature->new(Name => $name, Fields => $fields, GeometryType => $geom_type);
+    $f = Geo::OGR::Feature->new({Name => $name, Fields => $fields, GeometryType => $geom_type});
+
+    $f = Geo::OGR::Feature->new(Fields => $fields, GeometryType => $geom_type);
+    $f = Geo::OGR::Feature->new({Fields => $fields, GeometryType => $geom_type});
+
+    $f = Geo::OGR::Feature->new(Fields => $fields);
+    $f = Geo::OGR::Feature->new({Fields => $fields});
+
+    $f = Geo::OGR::Feature->new(Schema => {Name => $name, Fields => $fields, GeometryType => $geom_type}, 
+                                Values => $values_in_array);
+
+    $f = Geo::OGR::Feature->new(Schema => {Name => $name, Fields => $fields, GeometryType => $geom_type}, 
+                                Values => $values_in_hash);
+    
+    $f = Geo::OGR::Feature->new(Schema => {Name => $name, Fields => $fields, GeometryType => $geom_type}, 
+                                Values => $values_in_feature);
+
+    $f = Geo::OGR::Feature->new(Schema => {Fields => $fields, GeometryType => $geom_type}, 
+                                Values => $values_in_array);
+
+    $f = Geo::OGR::Feature->new(Schema => {Fields => $fields, GeometryType => $geom_type}, 
+                                Values => $values_in_hash);
+    
+    $f = Geo::OGR::Feature->new(Schema => {Fields => $fields, GeometryType => $geom_type}, 
+                                Values => $values_in_feature);
+
+    $f = Geo::OGR::Feature->new(Schema => $defn, 
+                                Values => $values_in_array);
+    
+    $f = Geo::OGR::Feature->new(Schema => $feature,
+                                Values => $values_in_hash);
+    
+    $f = Geo::OGR::Feature->new(Schema => $layer,
+                                Values => $values_in_feature);
+
+    $fields = [{i => 'Integer'}, {geom => $geom_type}];
+
+    $f = Geo::OGR::Feature->new(Schema => {Fields => $fields}, 
+                                Values => $values_in_array);
+    
+    $f = Geo::OGR::Feature->new(Schema => {Fields => $fields}, 
+                                Values => $values_in_hash);
+    
+    $f = Geo::OGR::Feature->new(Schema => {Fields => $fields}, 
+                                Values => $values_in_feature);
+    
+
+};
+
+ok(!$@, "Multiple ways to construct a feature tested.");
+

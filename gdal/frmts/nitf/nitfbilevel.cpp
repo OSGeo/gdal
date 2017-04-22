@@ -27,16 +27,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "nitflib.h"
+
+#include <cstring>
+
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
 #include "gdal.h"
-#include "nitflib.h"
-
+// #include "tiff.h"
 CPL_C_START
 #include "tiffio.h"
 CPL_C_END
-
 #include "tifvsi.h"
 
 CPL_CVSID("$Id$");

@@ -41,9 +41,10 @@ from osgeo import gdal
 # or empty names, or files that are not valid datasets...
 
 def matches_non_existing_error_msg(msg):
-    m1 = "does not exist in the file system,\nand is not recognized as a supported dataset name.\n" in msg
+    m1 = "does not exist in the file system, and is not recognized as a supported dataset name." in msg
     m2 = 'No such file or directory' in msg
-    return m1 or m2
+    m3 = 'Permission denied' in msg
+    return m1 or m2 or m3
 
 def basic_test_1():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
@@ -89,7 +90,9 @@ def basic_test_5():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('data/doctype.xml', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`data/doctype.xml\' not recognized as a supported file format.\n':
+    last_error = gdal.GetLastErrorMsg()
+    expected = '`data/doctype.xml\' not recognized as a supported file format'
+    if ds is None and expected in last_error:
         return 'success'
     else:
         return 'fail'

@@ -126,7 +126,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
       case 100:
       {
           CPLString osSubClass = poFeature->GetFieldAsString("SubClasses");
-          if( osSubClass.size() > 0 )
+          if( !osSubClass.empty() )
               osSubClass += ":";
           osSubClass += pszValue;
           poFeature->SetField( "SubClasses", osSubClass.c_str() );
@@ -162,7 +162,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
       {
           CPLString osAggregate = poFeature->GetFieldAsString("ExtendedEntity");
 
-          if( osAggregate.size() > 0 )
+          if( !osAggregate.empty() )
               osAggregate += " ";
           osAggregate += pszValue;
 
@@ -290,7 +290,7 @@ private:
     double dfDeterminant;
     double aadfInverse[4][4];
 
-    double Det2x2( double a, double b, double c, double d )
+    static double Det2x2( double a, double b, double c, double d )
     {
         return a*d - b*c;
     }
@@ -352,30 +352,30 @@ public:
     }
     }
 
-    void CrossProduct(const double *a, const double *b, double *vResult) {
+    static void CrossProduct(const double *a, const double *b, double *vResult) {
         vResult[0] = a[1] * b[2] - a[2] * b[1];
         vResult[1] = a[2] * b[0] - a[0] * b[2];
         vResult[2] = a[0] * b[1] - a[1] * b[0];
     }
 
-    void Scale2Unit(double* adfV) {
-    double dfLen=sqrt(adfV[0]*adfV[0] + adfV[1]*adfV[1] + adfV[2]*adfV[2]);
-    if (dfLen != 0)
-    {
-            adfV[0] /= dfLen;
-            adfV[1] /= dfLen;
-            adfV[2] /= dfLen;
+    static void Scale2Unit(double* adfV) {
+        double dfLen=sqrt(adfV[0]*adfV[0] + adfV[1]*adfV[1] + adfV[2]*adfV[2]);
+        if (dfLen != 0)
+        {
+                adfV[0] /= dfLen;
+                adfV[1] /= dfLen;
+                adfV[2] /= dfLen;
+        }
     }
-    }
-    OGRSpatialReference *GetSourceCS() { return NULL; }
-    OGRSpatialReference *GetTargetCS() { return NULL; }
+    OGRSpatialReference *GetSourceCS() override { return NULL; }
+    OGRSpatialReference *GetTargetCS() override { return NULL; }
     int Transform( int nCount,
-                   double *x, double *y, double *z )
+                   double *x, double *y, double *z ) override
         { return TransformEx( nCount, x, y, z, NULL ); }
 
     int TransformEx( int nCount,
                      double *adfX, double *adfY, double *adfZ,
-                     int *pabSuccess = NULL )
+                     int *pabSuccess = NULL ) override
         {
             for( int i = 0; i < nCount; i++ )
             {
@@ -478,6 +478,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
     bool bHaveZ = false;
     int nAttachmentPoint = -1;
     CPLString osText;
+    CPLString osStyleName = "Arial";
 
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
@@ -524,6 +525,10 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
             dfAngle = CPLAtof(szLineBuf);
             break;
 
+          case 7:
+            osStyleName = TextUnescape(szLineBuf);
+            break;
+
           default:
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
@@ -550,7 +555,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 /* -------------------------------------------------------------------- */
 /*      Apply text after stripping off any extra terminating newline.   */
 /* -------------------------------------------------------------------- */
-    if( osText != "" && osText[osText.size()-1] == '\n' )
+    if( !osText.empty() && osText.back() == '\n' )
         osText.resize( osText.size() - 1 );
 
     poFeature->SetField( "Text", osText );
@@ -596,7 +601,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
     CPLString osStyle;
     char szBuffer[64];
 
-    osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
+    osStyle.Printf("LABEL(f:\"%s\",t:\"%s\"", osStyleName.c_str(), osText.c_str());
 
     if( dfAngle != 0.0 )
     {
@@ -652,6 +657,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     double dfAngle = 0.0;
     double dfHeight = 0.0;
     CPLString osText;
+    CPLString osStyleName = "Arial";
     bool bHaveZ = false;
     int nAnchorPosition = 1;
     int nHorizontalAlignment = 0;
@@ -695,6 +701,10 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
             nVerticalAlignment = atoi(szLineBuf);
             break;
 
+          case 7:
+            osStyleName = TextUnescape(szLineBuf);
+            break;
+          
           default:
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
@@ -804,8 +814,8 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     CPLString osStyle;
     char szBuffer[64];
 
-    osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
-
+    osStyle.Printf("LABEL(f:\"%s\",t:\"%s\"", osStyleName.c_str(), osText.c_str());
+    
     osStyle += CPLString().Printf(",p:%d", nAnchorPosition);
 
     if( dfAngle != 0.0 )
@@ -1148,9 +1158,9 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         return NULL;
     }
 
-    if( (nPolylineFlag & (16 ^ 64)) != 0 )
+    if( (nPolylineFlag & 16) != 0 )
     {
-        CPLDebug( "DXF", "Polygon/polyface mesh not supported." );
+        CPLDebug( "DXF", "Polygon mesh not supported." );
         delete poFeature;
         return NULL;
     }
@@ -1163,8 +1173,15 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
     double dfZ = 0.0;
     double dfBulge = 0.0;
     int nVertexFlag = 0;
+    DXFSmoothPolyline   smoothPolyline;
+    int                 vertexIndex71 = 0;
+    int                 vertexIndex72 = 0;
+    int                 vertexIndex73 = 0;
+    int                 vertexIndex74 = 0;
+    OGRPoint **papoPoints = NULL;
+    int nPoints = 0;
+    OGRPolyhedralSurface *poPS = new OGRPolyhedralSurface();
 
-    DXFSmoothPolyline smoothPolyline;
     smoothPolyline.setCoordinateDimension(2);
 
     while( nCode == 0 && !EQUAL(szLineBuf,"SEQEND") )
@@ -1177,6 +1194,12 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             {
                 DXF_LAYER_READER_ERROR();
                 delete poFeature;
+                delete poPS;
+                // delete the list of points
+                for (int i = 0; i < nPoints; i++)
+                    delete papoPoints[i];
+                CPLFree(papoPoints);
+
                 return NULL;
             }
 
@@ -1209,14 +1232,103 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                 nVertexFlag = atoi(szLineBuf);
                 break;
 
+              case 71:
+                vertexIndex71 = atoi(szLineBuf);
+                break;
+
+              case 72:
+                vertexIndex72 = atoi(szLineBuf);
+                break;
+
+              case 73:
+                vertexIndex73 = atoi(szLineBuf);
+                break;
+
+              case 74:
+                vertexIndex74 = atoi(szLineBuf);
+                break;
+
               default:
                 break;
             }
         }
+
+        if (((nVertexFlag & 64) != 0) && ((nVertexFlag & 128) != 0))
+        {
+            // add the point to the list of points
+            OGRPoint *poPoint = new OGRPoint(dfX, dfY, dfZ);
+            OGRPoint** papoNewPoints = (OGRPoint **) VSI_REALLOC_VERBOSE( papoPoints,
+                                                     sizeof(void*) * (nPoints+1) );
+
+            papoPoints = papoNewPoints;
+            papoPoints[nPoints] = poPoint;
+            nPoints++;
+        }
+
+        // Note - If any index out of vertexIndex71, vertexIndex72, vertexIndex73 or vertexIndex74
+        // is negative, it means that the line starting from that vertex is invisible
+
+        if (nVertexFlag == 128 && papoPoints != NULL)
+        {
+            // create a polygon and add it to the Polyhedral Surface
+            OGRLinearRing *poLR = new OGRLinearRing();
+            int iPoint = 0;
+            int startPoint = -1;
+            poLR->set3D(TRUE);
+            if (vertexIndex71 > 0 && vertexIndex71 <= nPoints)
+            {
+                if (startPoint == -1)
+                    startPoint = vertexIndex71-1;
+                poLR->setPoint(iPoint,papoPoints[vertexIndex71-1]);
+                iPoint++;
+                vertexIndex71 = 0;
+            }
+            if (vertexIndex72 > 0 && vertexIndex72 <= nPoints)
+            {
+                if (startPoint == -1)
+                    startPoint = vertexIndex72-1;
+                poLR->setPoint(iPoint,papoPoints[vertexIndex72-1]);
+                iPoint++;
+                vertexIndex72 = 0;
+            }
+            if (vertexIndex73 > 0 && vertexIndex73 <= nPoints)
+            {
+                if (startPoint == -1)
+                    startPoint = vertexIndex73-1;
+                poLR->setPoint(iPoint,papoPoints[vertexIndex73-1]);
+                iPoint++;
+                vertexIndex73 = 0;
+            }
+            if (vertexIndex74 > 0 && vertexIndex74 <= nPoints)
+            {
+                if (startPoint == -1)
+                    startPoint = vertexIndex74-1;
+                poLR->setPoint(iPoint,papoPoints[vertexIndex74-1]);
+                iPoint++;
+                vertexIndex74 = 0;
+            }
+
+            // complete the ring
+            poLR->setPoint(iPoint,papoPoints[startPoint]);
+
+            OGRPolygon *poPolygon = new OGRPolygon();
+            poPolygon->addRing((OGRCurve *)poLR);
+
+            poPS->addGeometryDirectly(poPolygon);
+
+            // delete the ring to prevent leakage
+            delete poLR;
+        }
+
         if( nCode < 0 )
         {
             DXF_LAYER_READER_ERROR();
             delete poFeature;
+            delete poPS;
+            // delete the list of points
+            for (int i = 0; i < nPoints; i++)
+                delete papoPoints[i];
+            CPLFree(papoPoints);
             return NULL;
         }
 
@@ -1226,15 +1338,30 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         dfBulge = 0.0;
     }
 
+    // delete the list of points
+    for (int i = 0; i < nPoints; i++)
+        delete papoPoints[i];
+    CPLFree(papoPoints);
+
     if(smoothPolyline.IsEmpty())
     {
         delete poFeature;
+        delete poPS;
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Close polyline if necessary.                                    */
-/* -------------------------------------------------------------------- */
+    if (poPS->getNumGeometries() > 0)
+    {
+        poFeature->SetGeometryDirectly((OGRGeometry *)poPS);
+        return poFeature;
+    }
+
+    else
+        delete poPS;
+
+    /* -------------------------------------------------------------------- */
+    /*      Close polyline if necessary.                                    */
+    /* -------------------------------------------------------------------- */
     if(nPolylineFlag & 0x01)
         smoothPolyline.Close();
 
@@ -1569,7 +1696,7 @@ OGRFeature *OGRDXFLayer::TranslateARC()
 /************************************************************************/
 
 void rbspline2(int npts,int k,int p1,double b[],double h[],
-        bool xflag, double x[], double p[]);
+        bool bCalculateKnots, double knots[], double p[]);
 
 OGRFeature *OGRDXFLayer::TranslateSPLINE()
 
@@ -2048,21 +2175,22 @@ public:
     double dfZScale;
     double dfAngle;
 
-    OGRSpatialReference *GetSourceCS() { return NULL; }
-    OGRSpatialReference *GetTargetCS() { return NULL; }
+    OGRSpatialReference *GetSourceCS() override { return NULL; }
+    OGRSpatialReference *GetTargetCS() override { return NULL; }
     int Transform( int nCount,
-                   double *x, double *y, double *z )
+                   double *x, double *y, double *z ) override
         { return TransformEx( nCount, x, y, z, NULL ); }
 
     int TransformEx( int nCount,
                      double *x, double *y, double *z = NULL,
-                     int *pabSuccess = NULL )
+                     int *pabSuccess = NULL ) override
         {
             for( int i = 0; i < nCount; i++ )
             {
                 x[i] *= dfXScale;
                 y[i] *= dfYScale;
-                z[i] *= dfZScale;
+                if( z )
+                    z[i] *= dfZScale;
 
                 const double dfXNew = x[i] * cos(dfAngle) - y[i] * sin(dfAngle);
                 const double dfYNew = x[i] * sin(dfAngle) + y[i] * cos(dfAngle);
@@ -2072,7 +2200,8 @@ public:
 
                 x[i] += dfXOffset;
                 y[i] += dfYOffset;
-                z[i] += dfZOffset;
+                if( z )
+                    z[i] += dfZOffset;
 
                 if( pabSuccess )
                     pabSuccess[i] = TRUE;

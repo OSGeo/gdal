@@ -116,6 +116,21 @@ class GDALPDFPageContext
         std::vector<GDALPDFRasterDesc> asRasterDesc;
         int          nAnnotsId;
         std::vector<int> anAnnotationsId;
+
+        GDALPDFPageContext() :
+            poClippingDS( NULL ),
+            eStreamCompressMethod( COMPRESS_NONE ),
+            dfDPI( 0.0 ),
+            nPageId( 0 ),
+            nContentId( 0 ),
+            nResourcesId( 0 ),
+            nAnnotsId( 0 )
+        {
+            sMargins.nLeft = 0;
+            sMargins.nRight = 0;
+            sMargins.nTop = 0;
+            sMargins.nBottom = 0;
+        }
 };
 
 class GDALPDFOCGDesc

@@ -159,7 +159,7 @@ void ppmWrite(const char *fname, const char *data, const ILSize &sz) {
         fwrite(data,sz.x,sz.y,fp);
         break;
     default:
-        fprintf(stderr,"Can't write ppm file with %d bands\n",sz.c);
+        fprintf(stderr,"Can't write ppm file with %d bands\n",sz.c);/*ok*/
         return;
     }
     fclose(fp);
@@ -234,7 +234,7 @@ CPLString getFname(const CPLString &in, const char *ext)
 CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, const char *def)
 {
     CPLString fn = CPLGetXMLValue(node, token, "");
-    if (fn.size() == 0) // Not provided
+    if (fn.empty()) // Not provided
         return getFname(in, def);
     size_t slashPos = fn.find_first_of("\\/");
 
@@ -242,7 +242,8 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
     if (slashPos == 0                               // Starts with slash
         || (slashPos == 2 && fn[1] == ':')          // Starts with disk letter column
         || !(slashPos == fn.find_first_not_of('.')) // Does not start with dots and then slash
-        || in.find_first_of("\\/") == in.npos)      // We con't get a basename from in
+        || EQUALN(in,"<MRF_META>",10)               // XML string input
+        || in.find_first_of("\\/") == in.npos)      // We can't get a basename from in
         return fn;
 
     // Relative path, prepand the path from the in file name
@@ -614,13 +615,18 @@ void GDALRegister_mrf()
         "   <Option name='BLOCKSIZE' type='int' description='Block size, both x and y, default 512'/>\n"
         "   <Option name='BLOCKXSIZE' type='int' description='Block x size, default=512'/>\n"
         "   <Option name='BLOCKYSIZE' type='int' description='Block y size, default=512'/>\n"
-        "   <Option name='NETBYTEORDER' type='boolean' description='Force endian for certain compress options, default is host order'/>\n"
-        "   <Option name='CACHEDSOURCE' type='string' description='The source raster, if this is a cache'/>\n"
+        "   <Option name='NETBYTEORDER' type='boolean' "
+                    "description='Force endian for certain compress options, default is host order'/>\n"
+        "   <Option name='CACHEDSOURCE' type='string' "
+                    "description='The source raster, if this is a cache'/>\n"
         "   <Option name='UNIFORM_SCALE' type='int' description='Scale of overlays in MRF, usually 2'/>\n"
         "   <Option name='NOCOPY' type='boolean' description='Leave created MRF empty, default=no'/>\n"
         "   <Option name='DATANAME' type='string' description='Data file name'/>\n"
         "   <Option name='INDEXNAME' type='string' description='Index file name'/>\n"
-        "   <Option name='PHOTOMETRIC' type='string-select' default='DEFAULT' description='Band interpretation, may affect block encoding'>\n"
+        "   <Option name='SPACING' type='int' "
+                    "description='Leave this many unused bytes before each tile, default=0'/>\n"
+        "   <Option name='PHOTOMETRIC' type='string-select' default='DEFAULT' "
+                    "description='Band interpretation, may affect block encoding'>\n"
         "       <Value>MULTISPECTRAL</Value>"
         "       <Value>RGB</Value>"
         "       <Value>YCC</Value>"

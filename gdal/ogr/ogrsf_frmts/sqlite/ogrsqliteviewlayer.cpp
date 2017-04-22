@@ -29,6 +29,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_sqlite.h"
+#include "ogrsqliteutility.h"
 #include <string>
 
 CPL_CVSID("$Id$");
@@ -89,8 +90,8 @@ CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewNameIn,
     osUnderlyingGeometryColumn = pszUnderlyingGeometryColumn;
     poUnderlyingLayer = NULL;
 
-    pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszViewName));
-    pszEscapedUnderlyingTableName = CPLStrdup(OGRSQLiteEscape(pszUnderlyingTableName));
+    pszEscapedTableName = CPLStrdup(SQLEscapeLiteral(pszViewName));
+    pszEscapedUnderlyingTableName = CPLStrdup(SQLEscapeLiteral(pszUnderlyingTableName));
 
     return CE_None;
 }
@@ -132,11 +133,11 @@ OGRSQLiteLayer* OGRSQLiteViewLayer::GetUnderlyingLayer()
                                             osUnderlyingTableName.c_str(),
                                             osUnderlyingGeometryColumn.c_str());
             poUnderlyingLayer =
-                (OGRSQLiteLayer*) poDS->GetLayerByName(osNewUnderlyingTableName);
+                (OGRSQLiteLayer*) poDS->GetLayerByNameNotVisible(osNewUnderlyingTableName);
         }
         if( poUnderlyingLayer == NULL )
             poUnderlyingLayer =
-                (OGRSQLiteLayer*) poDS->GetLayerByName(osUnderlyingTableName);
+                (OGRSQLiteLayer*) poDS->GetLayerByNameNotVisible(osUnderlyingTableName);
     }
     return poUnderlyingLayer;
 }
@@ -202,10 +203,10 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
     hColStmt = NULL;
     const char *pszSQL =
         CPLSPrintf( "SELECT \"%s\", * FROM '%s' LIMIT 1",
-                    OGRSQLiteEscapeName(pszFIDColumn).c_str(),
+                    SQLEscapeName(pszFIDColumn).c_str(),
                     pszEscapedTableName );
 
-    int rc = sqlite3_prepare( hDB, pszSQL, -1, &hColStmt, NULL );
+    int rc = sqlite3_prepare_v2( hDB, pszSQL, -1, &hColStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -267,12 +268,12 @@ OGRErr OGRSQLiteViewLayer::ResetStatement()
     iNextShapeId = 0;
 
     osSQL.Printf( "SELECT \"%s\", * FROM '%s' %s",
-                  OGRSQLiteEscapeName(pszFIDColumn).c_str(),
+                  SQLEscapeName(pszFIDColumn).c_str(),
                   pszEscapedTableName,
                   osWHERE.c_str() );
 
     const int rc =
-        sqlite3_prepare( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
+        sqlite3_prepare_v2( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
                          &hStmt, NULL );
 
     if( rc == SQLITE_OK )
@@ -281,7 +282,7 @@ OGRErr OGRSQLiteViewLayer::ResetStatement()
     }
 
     CPLError( CE_Failure, CPLE_AppDefined,
-              "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
+              "In ResetStatement(): sqlite3_prepare_v2(%s):\n  %s",
               osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
     hStmt = NULL;
     return OGRERR_FAILURE;
@@ -327,20 +328,20 @@ OGRFeature *OGRSQLiteViewLayer::GetFeature( GIntBig nFeatureId )
     iNextShapeId = nFeatureId;
 
     osSQL.Printf( "SELECT \"%s\", * FROM '%s' WHERE \"%s\" = %d",
-                  OGRSQLiteEscapeName(pszFIDColumn).c_str(),
+                  SQLEscapeName(pszFIDColumn).c_str(),
                   pszEscapedTableName,
-                  OGRSQLiteEscapeName(pszFIDColumn).c_str(),
+                  SQLEscapeName(pszFIDColumn).c_str(),
                   (int) nFeatureId );
 
     CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
 
     const int rc =
-        sqlite3_prepare( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
+        sqlite3_prepare_v2( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
                          &hStmt, NULL );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "In GetFeature(): sqlite3_prepare(%s):\n  %s",
+                  "In GetFeature(): sqlite3_prepare_v2(%s):\n  %s",
                   osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
 
         return NULL;
@@ -421,7 +422,7 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
             osSQL.Printf("SELECT name FROM sqlite_master "
                         "WHERE name='idx_%s_%s'",
                         pszEscapedUnderlyingTableName,
-                        OGRSQLiteEscape(osUnderlyingGeometryColumn).c_str());
+                        SQLEscapeLiteral(osUnderlyingGeometryColumn).c_str());
 
             int  rc = sqlite3_get_table( poDS->GetDB(), osSQL.c_str(),
                                         &papszResult, &nRowCount,
@@ -448,9 +449,9 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
         if (bHasSpatialIndex)
         {
             return FormatSpatialFilterFromRTree(poFilterGeom,
-                CPLSPrintf("\"%s\"", OGRSQLiteEscapeName(pszFIDColumn).c_str()),
+                CPLSPrintf("\"%s\"", SQLEscapeName(pszFIDColumn).c_str()),
                 pszEscapedUnderlyingTableName,
-                OGRSQLiteEscape(osUnderlyingGeometryColumn).c_str());
+                SQLEscapeLiteral(osUnderlyingGeometryColumn).c_str());
         }
         else
         {
@@ -462,7 +463,7 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
     if( poFilterGeom != NULL && poDS->IsSpatialiteLoaded() )
     {
         return FormatSpatialFilterFromMBR(poFilterGeom,
-            OGRSQLiteEscapeName(poFeatureDefn->GetGeomFieldDefn(iGeomCol)->GetNameRef()).c_str());
+            SQLEscapeName(poFeatureDefn->GetGeomFieldDefn(iGeomCol)->GetNameRef()).c_str());
     }
 
     return "";
@@ -482,15 +483,15 @@ void OGRSQLiteViewLayer::BuildWhere()
 
     CPLString osSpatialWHERE = GetSpatialWhere(m_iGeomFieldFilter,
                                                m_poFilterGeom);
-    if (osSpatialWHERE.size() != 0)
+    if (!osSpatialWHERE.empty())
     {
         osWHERE = "WHERE ";
         osWHERE += osSpatialWHERE;
     }
 
-    if( osQuery.size() > 0 )
+    if( !osQuery.empty() )
     {
-        if( osWHERE.size() == 0 )
+        if( osWHERE.empty() )
         {
             osWHERE = "WHERE ";
             osWHERE += osQuery;
@@ -515,7 +516,7 @@ int OGRSQLiteViewLayer::TestCapability( const char * pszCap )
         return FALSE;
 
     if (EQUAL(pszCap,OLCFastFeatureCount))
-        return m_poFilterGeom == NULL || osGeomColumn.size() == 0 ||
+        return m_poFilterGeom == NULL || osGeomColumn.empty() ||
                bHasSpatialIndex;
 
     else if (EQUAL(pszCap,OLCFastSpatialFilter))
