@@ -2006,7 +2006,7 @@ bool OGRJSonParse( const char* pszText, json_object** ppoObj,
         if( bVerboseError )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "GeoJSON parsing error: %s (at offset %d)",
+                     "JSON parsing error: %s (at offset %d)",
                      json_tokener_error_desc(jstok->err), jstok->char_offset);
         }
 
