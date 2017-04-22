@@ -43,6 +43,7 @@ try:
 except:
     has_gdal = False
 
+
 def _esc_literal(literal):
     return literal.replace("'", "''")
 
@@ -525,7 +526,8 @@ class GPKGChecker:
             for i in range(4):
                 c.execute("SELECT 1 FROM sqlite_master WHERE " +
                           "type = 'trigger' " +
-                          "AND name = '%s_update%d'" % (_esc_literal(rtree_name), i+1))
+                          "AND name = '%s_update%d'" %
+                          (_esc_literal(rtree_name), i+1))
                 self._assert(c.fetchone() is not None, 75,
                              "%s_update%d trigger missing" % (rtree_name, i+1))
 
