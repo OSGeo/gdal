@@ -479,9 +479,6 @@ GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
         psWO->padfSrcNoDataReal =
                 static_cast<double*>(CPLMalloc(sizeof(double)));
         psWO->padfSrcNoDataReal[0] = dfSrcNoData;
-        psWO->padfSrcNoDataImag =
-                static_cast<double*>(CPLMalloc(sizeof(double)));
-        psWO->padfSrcNoDataImag[0] = 0.0;
     }
 
     psWO->padfDstNoDataReal = static_cast<double*>(CPLMalloc(sizeof(double)));
@@ -490,8 +487,6 @@ GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
                                               false );
     psWO->padfDstNoDataReal[0] = 
         (bErrorOnMissingShift) ? -std::numeric_limits<float>::infinity() : 0.0;
-    psWO->padfDstNoDataImag = static_cast<double*>(CPLMalloc(sizeof(double)));
-    psWO->padfDstNoDataImag[0] = 0.0;
     psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
                                                  "INIT_DEST",
                                                  "NO_DATA");

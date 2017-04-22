@@ -4082,14 +4082,10 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
         psWO->padfSrcNoDataReal =
             static_cast<double*>(CPLMalloc(sizeof(double)));
         psWO->padfSrcNoDataReal[0] = dfNoDataValue;
-        psWO->padfSrcNoDataImag = static_cast<double*>(
-                CPLCalloc(1, sizeof(double)));
 
         psWO->padfDstNoDataReal =
             static_cast<double*>(CPLMalloc(sizeof(double)));
         psWO->padfDstNoDataReal[0] = dfNoDataValue;
-        psWO->padfDstNoDataImag = static_cast<double*>(
-                CPLCalloc(1, sizeof(double)));
     }
     psWO->eWorkingDataType = eDT;
     psWO->eResampleAlg = eResampleAlg;

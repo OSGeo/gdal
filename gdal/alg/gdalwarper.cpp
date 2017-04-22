@@ -185,13 +185,10 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
             {
                 psWOptions->padfSrcNoDataReal = static_cast<double *>(
                     CPLMalloc(sizeof(double) * psWOptions->nBandCount));
-                psWOptions->padfSrcNoDataImag = static_cast<double *>(
-                    CPLMalloc(sizeof(double) * psWOptions->nBandCount));
 
                 for( int ii = 0; ii < psWOptions->nBandCount; ii++ )
                 {
                     psWOptions->padfSrcNoDataReal[ii] = -1.1e20;
-                    psWOptions->padfSrcNoDataImag[ii] = 0.0;
                 }
             }
 
@@ -212,13 +209,10 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
             {
                 psWOptions->padfDstNoDataReal = static_cast<double *>(
                     CPLMalloc(sizeof(double) * psWOptions->nBandCount));
-                psWOptions->padfDstNoDataImag = static_cast<double *>(
-                    CPLMalloc(sizeof(double) * psWOptions->nBandCount));
 
                 for( int ii = 0; ii < psWOptions->nBandCount; ii++ )
                 {
                     psWOptions->padfDstNoDataReal[ii] = -1.1e20;
-                    psWOptions->padfDstNoDataImag[ii] = 0.0;
                 }
             }
 

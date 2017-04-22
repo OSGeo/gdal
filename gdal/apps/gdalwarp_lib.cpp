@@ -1405,8 +1405,6 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 }
                 psWO->padfSrcNoDataReal = (double *)
                     CPLMalloc(psWO->nBandCount*sizeof(double));
-                psWO->padfSrcNoDataImag = (double *)
-                    CPLMalloc(psWO->nBandCount*sizeof(double));
 
                 for( int i = 0; i < psWO->nBandCount; i++ )
                 {
@@ -1417,12 +1415,10 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                     if( bHaveNodata )
                     {
                         psWO->padfSrcNoDataReal[i] = dfReal;
-                        psWO->padfSrcNoDataImag[i] = 0.0;
                     }
                     else
                     {
                         psWO->padfSrcNoDataReal[i] = -123456.789;
-                        psWO->padfSrcNoDataImag[i] = 0.0;
                     }
                 }
             }
@@ -1532,8 +1528,6 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             {
                 psWO->padfDstNoDataReal = (double *)
                     CPLMalloc(psWO->nBandCount*sizeof(double));
-                psWO->padfDstNoDataImag = (double *)
-                    CPLCalloc(psWO->nBandCount, sizeof(double));
                 for( int i = 0; i < psWO->nBandCount; i++ )
                 {
                     GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, i+1 );
@@ -1550,8 +1544,12 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         {
             psWO->padfDstNoDataReal = (double *)
                 CPLMalloc(psWO->nBandCount*sizeof(double));
-            psWO->padfDstNoDataImag = (double *)
-                CPLMalloc(psWO->nBandCount*sizeof(double));
+
+            if( psWO->padfSrcNoDataImag != NULL)
+            {
+                psWO->padfDstNoDataImag = (double *)
+                    CPLMalloc(psWO->nBandCount*sizeof(double));
+            }
 
             if( !psOptions->bQuiet )
                 printf( "Copying nodata values from source %s to destination %s.\n",
@@ -1560,7 +1558,10 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             for( int i = 0; i < psWO->nBandCount; i++ )
             {
                 psWO->padfDstNoDataReal[i] = psWO->padfSrcNoDataReal[i];
-                psWO->padfDstNoDataImag[i] = psWO->padfSrcNoDataImag[i];
+                if( psWO->padfSrcNoDataImag != NULL)
+                {
+                    psWO->padfDstNoDataImag[i] = psWO->padfSrcNoDataImag[i];
+                }
                 CPLDebug("WARP", "srcNoData=%f dstNoData=%f",
                             psWO->padfSrcNoDataReal[i], psWO->padfDstNoDataReal[i] );
 
