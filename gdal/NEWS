@@ -57,9 +57,9 @@ Build(Unix):
  * configure: make pdfium detection not fail if there are just warnings. And make configure fail if --with-pdfium was required but failed (#6653)
  * Make ./configure --with-xerces fail if not found
  * Don't install script documentation in INST_BIN (github #157)
- * configure: autodetect webp without requiring explicit --with-webp
+ * configure: auto-detect webp without requiring explicit --with-webp
  * configure: use pkg-config for HDF5 detection so that works out of the box on recent Ubuntu
- * autodetect JDK 8 on Ubuntu
+ * auto-detect JDK 8 on Ubuntu
  * MDB: allow libjvm.so to be dlopen'd with --with-jvm-lib=dlopen (Unix only, github #177)
  * configure: delete temporary directories on the mac
  * configure: make sure --with-macosx-framework is correctly defined
@@ -153,7 +153,7 @@ Core:
  * Average and mode overview/rasterio resampling: correct source pixel computation due to numerical precision issues when downsampling by an integral factor, and also in oversampling use cases (github #156)
  * Overview building: add experimental GDAL_OVR_PROPAGATE_NODATA config option that can be set to YES so that a nodata value in source samples will cause the target pixel to be zeroed. Only implemented for AVERAGE resampling right now
  * GDALValidateOptions(): fix check of min/max values
- * GMLJP2 v2: update to 2.0.1 corigendum and add capability to set gml:RectifiedGrid/gmlcov:rangeType content. Set SRSNAME_FORMAT=OGC_URL by default when converting to GML. Add gml:boundedBy in gmljp2:GMLJP2RectifiedGridCoverage
+ * GMLJP2 v2: update to 2.0.1 corrigendum and add capability to set gml:RectifiedGrid/gmlcov:rangeType content. Set SRSNAME_FORMAT=OGC_URL by default when converting to GML. Add gml:boundedBy in gmljp2:GMLJP2RectifiedGridCoverage
  * GMLJP2 v2: ensure KML root node id unicity when converting annotations on the fly. When generating GML features, make sure that PREFIX and TARGET_NAMESPACE are unique when specifying several documents.
 
 Algorithms:
@@ -218,7 +218,7 @@ AIGRID driver:
  * fix 2.1.0 regression when reading statistics (.sta) file with only 3 values, and fix <2.1 behaviour to read them in LSB order (#6633)
  
 AAIGRID driver:
- * autodetect Float64 when the nodata value is not representable in the Float32 range
+ * auto-detect Float64 when the nodata value is not representable in the Float32 range
 
 ADRG driver:
  * handle north and south polar zones (ZNA 9 and 18) (#6783)
@@ -226,12 +226,8 @@ ADRG driver:
 ASRP driver:
  * fix georeferencing of polar arc zone images (#6560)
 
-BMP driver:
-
 BPG driver:
 * declare GDALRegister_BPG as C exported for building as a plugin (#6693)
-
-BLX driver:
 
 DIMAP driver:
  * DIMAP: for DIMAP 2, read RPC from RPC_xxxxx.XML file (#6539)
@@ -252,10 +248,6 @@ ENVI driver:
 
 GeoRaster driver:
  * fix report of rotation (#6593)
-
-GIF driver:
-
-GMT driver:
 
 GPKG driver:
  * implement tiled gridded elevation data extension
@@ -317,8 +309,6 @@ HDF4 driver:
 HDF5 driver:
  * correct number of GCPs to avoid dummy trailing (0,0)->(0,0,0) and remove +180 offset applied to GCP longitude. Add instead a heuristics to determine if the product is crossing the antimeridian, and a HDF5_SHIFT_GCPX_BY_180 config option to be able to override the heuristics (#6666)
 
-HF2 driver:
-
 HFA driver:
  * fix reading and writing of TOWGS84 parameters (github #132)
  * export overview type from HFA files to GDAL metadata as OVERVIEWS_ALGORITHM (github #135)
@@ -332,8 +322,6 @@ Idrisi driver:
 
 ILWIS driver:
  * avoid IniFile::Load() to set the bChanged flag, so as to avoid a rewrite of files when just opening datasets
-
-INGR driver:
 
 ISCE driver:
  * fix computation of line offset for multi-band BIP files, and warn if detecting a wrong file produced by GDAL 2.1.0 (#6556)
@@ -361,8 +349,6 @@ JP2OpenJPEG driver:
  * for single-line organized images, such as found in some GRIB2 JPEG2000 images, use a Wx1 block size to avoid huge performance issues (#6719)
   * ignore warnings related to empty tag-trees.
 
-JPEG driver:
-
 JPIPKAK driver:
  * fix random crashes JPIP in multi-tread environment (#6809)
 
@@ -375,10 +361,6 @@ KMLSuperOverlay driver:
 
 LAN driver:
  * remove wrong byte-swapping for big-endian hosts
-
-LCP driver:
-
-Leveller driver:
 
 MAP driver:
  * change logic to detect image file when its path is not absolute
@@ -411,18 +393,12 @@ NetCDF driver:
  * read/write US_survey_foot unit for linear units of projection
  * apply 'add_offset' and 'scale_factor' on x and y variables when present, such as in files produced by NOAA from the new GOES-16 (GOES-R) satellite (github #200)
 
-NGSGEOID driver:
-
 NITF driver:
  * implement creation of RPC00B TRE for RPC metadata in CreateCopy() mode
  * add support for reading&writing _rpc.txt files
  * nitf_spec.xml: Add support for MTIRPB TRE in NITF image segment. Also makes minor change to BLOCKA to include default values (github #127)
  * nitf_spec.xml: add IMASDA and IMRFCA TREs
  * GetFileList(): Small optimization to avoid useless file probing.
-
-Northwoord driver:
-
-NTv2 driver:
 
 NWT_GRD:
  * detect short writes
@@ -435,12 +411,8 @@ PDF driver:
  * implement reading from/writing to PAM for geotransform and projection (#6603)
  * prevent crashes on dataset reopening in case of short write
 
-PDS driver:
-
 PLScenes driver:
  * add a METADATA open option
-
-PNG driver:
 
 PostgisRaster driver:
  * fix potential crash when one tile has a lower number of bands than the max of the table (#6267)
@@ -450,8 +422,6 @@ R driver:
  
 Raw drivers:
  * prevent crashes on dataset closing in case of short write
-
-RIK driver:
 
 RMF driver:
  * fix wrong counter decrement that caused compressed RMF to be incorrectly decompressed (github #153)
@@ -479,8 +449,6 @@ SRTMHGT driver:
  * open directly .hgt.zip files
  * accept filenames like NXXEYYY.SRTMGL1.hgt (#6614)
  * handle files for latitude >= 50 (#6840)
-
-VICAR driver:
 
 VRT driver:
  * add default pixel functions: real, imag, complex, mod, phase, conj, etc... for complex data types (github #141)
@@ -657,15 +625,11 @@ GPKG driver:
  * use GEOMETRYCOLLECTION instead of GEOMCOLLECTION for SQL and gpkg_geometry_columns.geometry_type_name
  * do not warn if gpkg_metadata extension declared
 
-GPX driver:
-
 ILI driver:
  * ILI1: fix crash in JoinSurfaceLayer() when the multicurve of the feature of the poSurfaceLineLayer layer is empty (#6688)
  * ILI1: make polygon reconstruction in Surface layers robust to curves not in natural order (#6728)
  * ILI2: assign FID to features (#6839)
  * ILI2: fix crashing bug in Create() if model file not specified
-
-JML driver:
 
 KML driver:
  * add a DOCUMENT_ID datasource creation option to set the id of the root <Document> node
@@ -674,8 +638,6 @@ LIBKML driver:
  * fix crash when reading <gx:TimeStamp> or <gx:TimeSpan> elements (#6518)
  * add a DOCUMENT_ID datasource creation option to set the id of the root <Document> node
  * emit style related errors as warnings to make datasets openable by SWIG bindings (#6850)
-
-Memory driver:
 
 MITAB driver:
  * limit (width, precision) of numeric fields on creation to (20,16) for compatibility with MapInfo (#6392)
@@ -695,8 +657,6 @@ MySQL driver:
 NAS driver:
  * support multiple 'anlass' in updates
 
-NTF driver:
-
 NWT_GRD:
  * add write support (#6533)
 
@@ -704,8 +664,6 @@ OCI driver:
  * Add options for faster feature loading (#6606)
  * add WORKSPACE open option
  * correctly handle OFTInteger64 case in loader layer (bug found by cppcheck multiCondition)
-
-ODBC driver:
 
 ODS driver:
  * fix FID filtering (#6788)
@@ -733,8 +691,6 @@ OSM driver:
 PG driver:
  * fix insertion of binary/bytea content in non-copy mode (#6566)
  * fix errors caused by missing geometry_columns/spatial_ref_sys tables in non PostGIS databases, that prevent reading more than 500 features (QGIS #10904)
-
-PGDump driver:
 
 PLScenes driver:
  * add HTTP retry logic (#6655)
@@ -770,8 +726,8 @@ SOSI driver:
 SQLite/Spatialite driver:
  * do not emit error when running ExecuteSQL() with a spatial filter on an empty layer (#6639)
  * add read/write support for String/Integer/Integer64/RealList types as serialized JSon arrays
- * Spatiliate: avoid crash when creating layer with geom_type = wkbCurve (fixes #6660)
- * Spatiliate: do not report some BLOB columns as geometry columns of tables/views (when found before the geometry column(s)) (#6695, #6659)
+ * Spatialite: avoid crash when creating layer with geom_type = wkbCurve (fixes #6660)
+ * Spatialite: do not report some BLOB columns as geometry columns of tables/views (when found before the geometry column(s)) (#6695, #6659)
  * fix update of features with multiple geometry columns (#6696)
  * speed-up dataset closing when creating a database with many spatial layers
  * Spatialite: avoid spatial views to cause layers 'layer_name(geometry_name)' to be publicly listed (#6740)
@@ -783,8 +739,6 @@ SQLite/Spatialite driver:
  * SQLite/GPKG: change default page_size to 4096 bytes.
  * Update layer statistics for Spatialite 4 DB (#6838)
  * Remove traces of support of SQLite < 3.6.0
-
-SXF driver:
 
 VFK driver:
  * allow reading multiple VFK files into single DB support amendment VFK files
@@ -803,8 +757,6 @@ WFS driver:
 
 XLSX driver:
  * only list worksheets (and no charts) as layers (#6680)
-
-XPlane driver:
 
 == SWIG Language Bindings ==
 
@@ -3196,7 +3148,7 @@ SQLite/Spatialite driver:
  * Spatialite: fix insertion in spatial_ref_sys to avoid issues with non-numeric authority codes (auth_srid)
  * Spatialite: make creation of database much faster with spatialite 4.1 by using InitSpatialMetaData(1) (#5270)
  * Spatialite: use thread-safe initialization for spatialite >= 4.1.2
- * avoid spatiliate views to emit (hidden) errors that cause troubles to MapServer OGR input driver (#5060)
+ * avoid Spatialite views to emit (hidden) errors that cause troubles to MapServer OGR input driver (#5060)
  * attempt to make VirtualOGR (and thus sqlite dialect) work even with a libsqlite3 compiled with SQLITE_OMIT_LOAD_EXTENSION (on Unix only)
  * add warning when calling CreateField() with a field name that is 'ROWID' since it can cause corrupted spatial index
  * serialize StringList as non-truncated strings
