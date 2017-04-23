@@ -3557,6 +3557,17 @@ def ogr_geojson_62():
 
     return 'success'
 
+###############################################################################
+# Extensive test of field tye promotion
+
+def ogr_geojson_63():
+
+    ds_ref = ogr.Open('data/test_type_promotion_ref.json')
+    lyr_ref = ds_ref.GetLayer(0)
+    ds = ogr.Open('data/test_type_promotion.json')
+    lyr = ds.GetLayer(0)
+    return ogrtest.compare_layers(lyr, lyr_ref)
+
 gdaltest_list = [
     ogr_geojson_1,
     ogr_geojson_2,
@@ -3620,6 +3631,7 @@ gdaltest_list = [
     ogr_geojson_60,
     ogr_geojson_61,
     ogr_geojson_62,
+    ogr_geojson_63,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
