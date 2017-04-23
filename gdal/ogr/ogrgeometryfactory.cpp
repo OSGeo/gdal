@@ -1337,7 +1337,8 @@ typedef enum
  * @param papszOptions a list of strings for passing options
  *
  * @return a single resulting geometry (either OGRPolygon, OGRCurvePolygon,
- * OGRMultiPolygon, OGRMultiSurface or OGRGeometryCollection).
+ * OGRMultiPolygon, OGRMultiSurface or OGRGeometryCollection). Returns a
+ * POLYGON EMPTY in the case of nPolygonCount being 0.
  */
 
 OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
@@ -1345,6 +1346,14 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                                                    int *pbIsValidGeometry,
                                                    const char** papszOptions )
 {
+    if( nPolygonCount == 0 )
+    {
+        if( pbIsValidGeometry )
+            *pbIsValidGeometry = TRUE;
+
+        return new OGRPolygon();
+    }
+
     OGRGeometry* geom = NULL;
     OrganizePolygonMethod method = METHOD_NORMAL;
     bool bHasCurves = false;
