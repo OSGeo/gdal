@@ -1568,6 +1568,39 @@ OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj )
 }
 
 /************************************************************************/
+/*                        OGRGeoJSONGetCoordinate()                     */
+/************************************************************************/
+
+static double OGRGeoJSONGetCoordinate( json_object* poObj,
+                                       const char* pszCoordName,
+                                       int nIndex,
+                                       bool& bValid )
+{
+    json_object* poObjCoord = json_object_array_get_idx( poObj, nIndex );
+    if( NULL == poObjCoord )
+    {
+        CPLDebug( "GeoJSON", "Point: got null object for %s.", pszCoordName );
+        bValid = false;
+        return 0.0;
+    }
+
+    const int iType = json_object_get_type(poObjCoord);
+    if( json_type_double != iType && json_type_int != iType )
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Invalid '%s' coordinate. "
+            "Type is not double or integer for \'%s\'.",
+            pszCoordName,
+            json_object_to_json_string(poObjCoord) );
+        bValid = false;
+        return 0.0;
+    }
+
+    return json_object_get_double( poObjCoord );
+}
+
+/************************************************************************/
 /*                           OGRGeoJSONReadRawPoint                     */
 /************************************************************************/
 
@@ -1587,84 +1620,25 @@ bool OGRGeoJSONReadRawPoint( json_object* poObj, OGRPoint& point )
             return false;
         }
 
-        // Read X coordinate.
-        json_object* poObjCoord = json_object_array_get_idx( poObj, 0 );
-        if( poObjCoord == NULL )
-        {
-            CPLDebug( "GeoJSON", "Point: got null object." );
-            return false;
-        }
-
-        int iType = json_object_get_type(poObjCoord);
-        if( json_type_double != iType && json_type_int != iType )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid X coordinate. "
-                     "Type is not double or integer for \'%s\'.",
-                     json_object_to_json_string(poObj) );
-            return false;
-        }
-
-        if( iType == json_type_double )
-            point.setX(json_object_get_double( poObjCoord ));
-        else
-            point.setX(json_object_get_int( poObjCoord ));
-
-        // Read Y coordinate.
-        poObjCoord = json_object_array_get_idx( poObj, 1 );
-        if( poObjCoord == NULL )
-        {
-            CPLDebug( "GeoJSON", "Point: got null object." );
-            return false;
-        }
-
-        iType = json_object_get_type(poObjCoord);
-        if( json_type_double != iType && json_type_int != iType )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Invalid Y coordinate. "
-                      "Type is not double or integer for \'%s\'.",
-                      json_object_to_json_string(poObj) );
-            return false;
-        }
-
-        if( iType == json_type_double )
-            point.setY(json_object_get_double( poObjCoord ));
-        else
-            point.setY(json_object_get_int( poObjCoord ));
+        bool bValid = true;
+        const double dfX = OGRGeoJSONGetCoordinate(poObj, "x", 0, bValid);
+        const double dfY = OGRGeoJSONGetCoordinate(poObj, "y", 1, bValid);
+        point.setX(dfX);
+        point.setY(dfY);
 
         // Read Z coordinate.
         if( nSize >= GeoJSONObject::eMaxCoordinateDimension )
         {
             // Don't *expect* mixed-dimension geometries, although the
             // spec doesn't explicitly forbid this.
-            poObjCoord = json_object_array_get_idx( poObj, 2 );
-            if( poObjCoord == NULL )
-            {
-                CPLDebug( "GeoJSON", "Point: got null object." );
-                return false;
-            }
-
-            iType = json_object_get_type(poObjCoord);
-            if( json_type_double != iType && json_type_int != iType )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Invalid Z coordinate. "
-                          "Type is not double or integer for \'%s\'.",
-                          json_object_to_json_string(poObj) );
-                return false;
-            }
-
-            if( iType == json_type_double )
-                point.setZ(json_object_get_double( poObjCoord ));
-            else
-                point.setZ(json_object_get_int( poObjCoord ));
+            const double dfZ = OGRGeoJSONGetCoordinate(poObj, "z", 2, bValid);
+            point.setZ(dfZ);
         }
         else
         {
             point.flattenTo2D();
         }
-        return true;
+        return bValid;
     }
 
     return false;
