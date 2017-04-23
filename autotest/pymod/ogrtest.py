@@ -82,6 +82,9 @@ def check_feature_geometry( feat, geom, max_error = 0.0001 ):
         gdaltest.post_reason( 'expected geometry but got NULL.' )
         return 1
 
+    if f_geom is None and geom is None:
+        return 0
+
     if f_geom.GetGeometryName() != geom.GetGeometryName():
         gdaltest.post_reason( 'geometry names do not match.  "%s" ! = "%s"' %
                               (f_geom.GetGeometryName(),
