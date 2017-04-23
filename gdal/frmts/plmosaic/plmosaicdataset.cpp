@@ -1407,7 +1407,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
 
         OGRSpatialReference oSRSSrc, oSRSDst;
         oSRSSrc.SetFromUserInput(pszWKT);
-        oSRSDst.importFromEPSG(4326);
+        oSRSDst.SetFromUserInput(SRS_WKT_WGS84);
         OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation(&oSRSSrc,
                                                                               &oSRSDst);
         double x = adfGeoTransform[0] + nPixel * adfGeoTransform[1];

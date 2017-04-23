@@ -149,11 +149,7 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
     {
         // If there is none defined, we use 4326.
         poSRS = new OGRSpatialReference();
-        if( OGRERR_NONE != poSRS->importFromEPSG( 4326 ) )
-        {
-            delete poSRS;
-            poSRS = NULL;
-        }
+        poSRS->SetFromUserInput(SRS_WKT_WGS84);
     }
 
     CPLErrorReset();
