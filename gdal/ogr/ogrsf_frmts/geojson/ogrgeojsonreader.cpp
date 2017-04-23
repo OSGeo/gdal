@@ -233,13 +233,7 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
     else if( GeoJSONObject::eFeature == objType )
     {
         OGRFeature* poFeature = ReadFeature( poLayer, poObj );
-        if( !AddFeature( poLayer, poFeature ) )
-        {
-            CPLDebug( "GeoJSON", "Translation of single feature failed." );
-
-            delete poLayer;
-            return;
-        }
+        AddFeature( poLayer, poFeature );
     }
 /* -------------------------------------------------------------------- */
 /*      Translate multi-feature FeatureCollection object.               */
