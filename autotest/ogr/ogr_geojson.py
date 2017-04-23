@@ -824,6 +824,19 @@ def ogr_geojson_18():
     lyr = None
     ds = None
 
+    ds = ogr.Open('data/esripolygonempty.json')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    feature = lyr.GetNextFeature()
+    if feature.GetGeometryRef().ExportToWkt() != 'POLYGON EMPTY':
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
     return 'success'
 
 ###############################################################################
