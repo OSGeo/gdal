@@ -465,6 +465,51 @@ OGRwkbGeometryType OGRESRIJSONGetGeometryType( json_object* poObj )
 }
 
 /************************************************************************/
+/*                     OGRESRIJSONGetCoordinateToDouble()               */
+/************************************************************************/
+
+static double OGRESRIJSONGetCoordinateToDouble( json_object* poObjCoord,
+                                                const char* pszCoordName,
+                                                bool& bValid )
+{
+    const int iType = json_object_get_type(poObjCoord);
+    if( json_type_double != iType && json_type_int != iType )
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Invalid '%s' coordinate. "
+            "Type is not double or integer for \'%s\'.",
+            pszCoordName,
+            json_object_to_json_string(poObjCoord) );
+        bValid = false;
+        return 0.0;
+    }
+
+    return json_object_get_double( poObjCoord );
+}
+
+/************************************************************************/
+/*                       OGRESRIJSONGetCoordinate()                     */
+/************************************************************************/
+
+static double OGRESRIJSONGetCoordinate( json_object* poObj,
+                                        const char* pszCoordName,
+                                        bool& bValid )
+{
+    json_object* poObjCoord = OGRGeoJSONFindMemberByName( poObj, pszCoordName );
+    if( NULL == poObjCoord )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Invalid Point object. "
+            "Missing '%s' member.", pszCoordName );
+        bValid = false;
+        return 0.0;
+    }
+
+    return OGRESRIJSONGetCoordinateToDouble( poObjCoord, pszCoordName, bValid );
+}
+
+/************************************************************************/
 /*                          OGRESRIJSONReadPoint()                      */
 /************************************************************************/
 
@@ -472,61 +517,19 @@ OGRPoint* OGRESRIJSONReadPoint( json_object* poObj)
 {
     CPLAssert( NULL != poObj );
 
-    json_object* poObjX = OGRGeoJSONFindMemberByName( poObj, "x" );
-    if( NULL == poObjX )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "Invalid Point object. "
-            "Missing \'x\' member." );
+    bool bValid = true;
+    const double dfX = OGRESRIJSONGetCoordinate(poObj, "x", bValid);
+    const double dfY = OGRESRIJSONGetCoordinate(poObj, "y", bValid);
+    if( !bValid )
         return NULL;
-    }
-
-    const int iTypeX = json_object_get_type(poObjX);
-    if( json_type_double != iTypeX && json_type_int != iTypeX )
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Invalid X coordinate. Type is not double or integer for \'%s\'.",
-            json_object_to_json_string(poObjX) );
-        return NULL;
-    }
-
-    json_object* poObjY = OGRGeoJSONFindMemberByName( poObj, "y" );
-    if( NULL == poObjY )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid Point object. "
-                  "Missing \'y\' member." );
-        return NULL;
-    }
-
-    const int iTypeY = json_object_get_type(poObjY);
-    if( json_type_double != iTypeY && json_type_int != iTypeY )
-    {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Invalid Y coordinate. Type is not double or integer for \'%s\'.",
-            json_object_to_json_string(poObjY) );
-        return NULL;
-    }
-
-    const double dfX = json_object_get_double( poObjX );
-    const double dfY = json_object_get_double( poObjY );
 
     json_object* poObjZ = OGRGeoJSONFindMemberByName( poObj, "z" );
     if( NULL == poObjZ )
         return new OGRPoint(dfX, dfY);
 
-    const int iTypeZ = json_object_get_type(poObjZ);
-    if( json_type_double != iTypeZ && json_type_int != iTypeZ )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid Z coordinate. Type is not double or integer "
-                  "for \'%s\'.",
-                  json_object_to_json_string(poObjZ) );
+    const double dfZ = OGRESRIJSONGetCoordinateToDouble(poObjZ, "z", bValid);
+    if( !bValid )
         return NULL;
-    }
-    const double dfZ = json_object_get_double( poObjZ );
     return new OGRPoint(dfX, dfY, dfZ);
 }
 
