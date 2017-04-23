@@ -1552,7 +1552,7 @@ def ogr_geojson_32():
         return 'fail'
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT (2 49,3 50)')
+    ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT M ((2 49 1),(3 50 2))')
     if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
         feature.DumpReadable()
         return 'fail'
@@ -1563,7 +1563,7 @@ def ogr_geojson_32():
     return 'success'
 
 ###############################################################################
-# Test reading ESRI multipoint file with hasZ=true, but only 2 points.
+# Test reading ESRI multipoint file with hasZ=true, but only 2 components.
 
 def ogr_geojson_33():
 
@@ -1602,7 +1602,7 @@ def ogr_geojson_33():
     return 'success'
 
 ###############################################################################
-# Test reading ESRI multipoint file with m, but no z (hasM=true, hasZ omitted)
+# Test reading ESRI multipoint file with z and m
 
 def ogr_geojson_34():
 
@@ -1630,7 +1630,7 @@ def ogr_geojson_34():
         return 'fail'
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT (2 49 1,3 50 2)')
+    ref_geom = ogr.CreateGeometryFromWkt('MULTIPOINT ZM ((2 49 1 100),(3 50 2 100))')
     if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
         feature.DumpReadable()
         return 'fail'
