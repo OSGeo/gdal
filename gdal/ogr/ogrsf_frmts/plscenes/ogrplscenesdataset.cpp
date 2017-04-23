@@ -255,21 +255,13 @@ json_object* OGRPLScenesDataset::RunRequest(const char* pszURL,
         return NULL;
     }
 
-    json_tokener* jstok = NULL;
     json_object* poObj = NULL;
-
-    jstok = json_tokener_new();
-    poObj = json_tokener_parse_ex(jstok, (const char*) psResult->pabyData, -1);
-    if( jstok->err != json_tokener_success)
+    const char* pszText = reinterpret_cast<const char*>(psResult->pabyData);
+    if( !OGRJSonParse(pszText, &poObj, true) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "JSON parsing error: %s (at offset %d)",
-                    json_tokener_error_desc(jstok->err), jstok->char_offset);
-        json_tokener_free(jstok);
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    json_tokener_free(jstok);
 
     CPLHTTPDestroyResult(psResult);
 

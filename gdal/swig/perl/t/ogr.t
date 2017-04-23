@@ -85,7 +85,7 @@ use vars qw/%test_driver $loaded $verbose @types %pack_types @fails @tested_driv
     eval {
 	$g = Geo::OGR::Geometry->new(GeoJSON => "abc");
     };
-    ok ($@ =~ /GeoJSON parsing error/, "new from GeoJSON: $@");
+    ok ($@ =~ /JSON parsing error/, "new from GeoJSON: $@");
 }
 
 {

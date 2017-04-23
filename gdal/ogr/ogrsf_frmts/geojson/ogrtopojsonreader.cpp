@@ -60,26 +60,15 @@ OGRTopoJSONReader::~OGRTopoJSONReader()
 
 OGRErr OGRTopoJSONReader::Parse( const char* pszText )
 {
-    if( NULL != pszText )
+    json_object *jsobj = NULL;
+    if( NULL != pszText && !OGRJSonParse(pszText, &jsobj, true) )
     {
-        json_tokener *jstok = json_tokener_new();
-        json_object *jsobj = json_tokener_parse_ex(jstok, pszText, -1);
-        if( jstok->err != json_tokener_success)
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "TopoJSON parsing error: %s (at offset %d)",
-                      json_tokener_error_desc(jstok->err), jstok->char_offset );
-
-            json_tokener_free(jstok);
-            return OGRERR_CORRUPT_DATA;
-        }
-        json_tokener_free(jstok);
-
-        // JSON tree is shared for while lifetime of the reader object
-        // and will be released in the destructor.
-        poGJObject_ = jsobj;
+        return OGRERR_CORRUPT_DATA;
     }
 
+    // JSON tree is shared for while lifetime of the reader object
+    // and will be released in the destructor.
+    poGJObject_ = jsobj;
     return OGRERR_NONE;
 }
 
