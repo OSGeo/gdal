@@ -421,7 +421,6 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
         //CPLDebug("MBTILES", "Grid value = %s", (const char*)pabyUncompressed);
     }
 
-    struct json_tokener *jstok = NULL;
     json_object* jsobj = NULL;
 
     if (nUncompressedSize == 0)
@@ -429,20 +428,10 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
         goto end;
     }
 
-    jstok = json_tokener_new();
-    jsobj = json_tokener_parse_ex(jstok, (const char*)pabyUncompressed, -1);
-    if( jstok->err != json_tokener_success)
+    if( !OGRJSonParse((const char*)pabyUncompressed, &jsobj, true) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "JSON parsing error: %s (at offset %d)",
-                    json_tokener_error_desc(jstok->err),
-                    jstok->char_offset);
-        json_tokener_free(jstok);
-
         goto end;
     }
-
-    json_tokener_free(jstok);
 
     if (json_object_is_type(jsobj, json_type_object))
     {
