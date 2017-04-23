@@ -3448,6 +3448,126 @@ def ogr_geojson_60():
 
     return 'success'
 
+
+###############################################################################
+# Test corner cases
+
+def ogr_geojson_61():
+
+    # Invalid JSon
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx("""{ "type": "FeatureCollection", """)
+    if ds is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Invalid single geometry
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx("""{ "type": "Point", "x" : { "coordinates" : null } } """)
+    if ds is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test crs object
+
+def ogr_geojson_62():
+
+    # crs type=name tests
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"name" }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"name", "properties":null }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"name", "properties":1 }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"name", "properties":{"name":null} }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"name", "properties":{"name":1} }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"name", "properties":{"name":"x"} }, "features":[] }""")
+
+    ds = gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"name", "properties":{"name": "urn:ogc:def:crs:EPSG::32631"} }, "features":[] }""")
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    if srs.ExportToWkt().find('32631') < 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # crs type=EPSG (not even documented in GJ2008 spec!) tests. Just for coverage completness
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"EPSG" }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":null }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":1 }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":{"code":null} }, "features":[] }""")
+
+    with gdaltest.error_handler():
+        gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":{"code":1} }, "features":[] }""")
+
+    with gdaltest.error_handler():
+        gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":{"code":"x"} }, "features":[] }""")
+
+    ds = gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":{"code": 32631} }, "features":[] }""")
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    if srs.ExportToWkt().find('32631') < 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # crs type=link tests
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"link" }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"link", "properties":null }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"link", "properties":1 }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"link", "properties":{"href":null} }, "features":[] }""")
+
+    with gdaltest.error_handler():
+        gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"link", "properties":{"href":1} }, "features":[] }""")
+
+    with gdaltest.error_handler():
+        gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"link", "properties":{"href": "1"} }, "features":[] }""")
+
+
+    # crs type=OGC (not even documented in GJ2008 spec!) tests. Just for coverage completness
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"OGC" }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":null }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":1 }, "features":[] }""")
+
+    gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":{"urn":null} }, "features":[] }""")
+
+    with gdaltest.error_handler():
+        gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":{"urn":1} }, "features":[] }""")
+
+    with gdaltest.error_handler():
+        gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":{"urn":"x"} }, "features":[] }""")
+
+    ds = gdal.OpenEx("""{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":{"urn": "urn:ogc:def:crs:EPSG::32631"} }, "features":[] }""")
+    lyr = ds.GetLayer(0)
+    srs = lyr.GetSpatialRef()
+    if srs.ExportToWkt().find('32631') < 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Extensive test of field tye promotion
+
+def ogr_geojson_63():
+
+    ds_ref = ogr.Open('data/test_type_promotion_ref.json')
+    lyr_ref = ds_ref.GetLayer(0)
+    ds = ogr.Open('data/test_type_promotion.json')
+    lyr = ds.GetLayer(0)
+    return ogrtest.compare_layers(lyr, lyr_ref)
+
 gdaltest_list = [
     ogr_geojson_1,
     ogr_geojson_2,
@@ -3509,6 +3629,9 @@ gdaltest_list = [
     ogr_geojson_58,
     ogr_geojson_59,
     ogr_geojson_60,
+    ogr_geojson_61,
+    ogr_geojson_62,
+    ogr_geojson_63,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
