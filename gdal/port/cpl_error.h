@@ -81,7 +81,6 @@ typedef enum
   CPLE_UserInterrupt,
   CPLE_ObjectNull,
   CPLE_HttpResponse,
-  CPLE_HttpResponse,
   CPLE_AWSBucketNotFound,
   CPLE_AWSObjectNotFound,
   CPLE_AWSAccessDenied,
