@@ -2884,6 +2884,25 @@ def netcdf_71():
     return 'success'
 
 ###############################################################################
+# test int64 attributes / dim
+
+def netcdf_72():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    ds = gdal.Open('data/int64dim.nc')
+    mdi = ds.GetRasterBand(1).GetMetadataItem('NETCDF_DIM_TIME')
+    if mdi != '123456789012':
+        print(mdi)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -2964,7 +2983,8 @@ gdaltest_list = [
     netcdf_68,
     netcdf_69,
     netcdf_70,
-    netcdf_71
+    netcdf_71,
+    netcdf_72
 ]
 
 ###############################################################################
