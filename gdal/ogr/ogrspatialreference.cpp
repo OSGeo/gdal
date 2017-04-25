@@ -2571,6 +2571,12 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
         return OGRERR_FAILURE;
     }
 
+    if( *pszCur == '\0' )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "URL %s malformed.", pszURL);
+        return OGRERR_FAILURE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
