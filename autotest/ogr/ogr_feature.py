@@ -941,10 +941,8 @@ def ogr_feature_default():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.PushErrorHandler()
     field_def.SetDefault("'a")
-    gdal.PopErrorHandler()
-    if field_def.GetDefault() is not None:
+    if field_def.GetDefault() != "'a":
         gdaltest.post_reason('fail')
         return 'fail'
 
