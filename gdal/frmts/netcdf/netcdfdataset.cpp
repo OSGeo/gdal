@@ -1195,12 +1195,14 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
                     snprintf(szMetaTemp, sizeof(szMetaTemp), "%d", sData);
                     break;
                 case NC_INT:
+                {
                     int nData;
                     /* status = */ nc_get_vara_int(cdfid, nVarID,
                                                start,
                                                count, &nData);
                     snprintf(szMetaTemp, sizeof(szMetaTemp), "%d", nData);
                     break;
+                }
                 case NC_FLOAT:
                     float fData;
                     /* status = */ nc_get_vara_float(cdfid, nVarID,
@@ -1233,12 +1235,32 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
                     snprintf(szMetaTemp, sizeof(szMetaTemp), "%u", usData);
                     break;
                 case NC_UINT:
+                {
                     unsigned int unData;
                     /* status = */ nc_get_vara_uint(cdfid, nVarID,
                                                 start,
                                                 count, &unData);
                     snprintf(szMetaTemp, sizeof(szMetaTemp), "%u", unData);
                     break;
+                }
+                case NC_INT64:
+                {
+                    long long nData;
+                    /* status = */ nc_get_vara_longlong(cdfid, nVarID,
+                                                start,
+                                                count, &nData);
+                    snprintf(szMetaTemp, sizeof(szMetaTemp), CPL_FRMT_GIB, nData);
+                    break;
+                }
+                case NC_UINT64:
+                {
+                    unsigned long long unData;
+                    /* status = */ nc_get_vara_ulonglong(cdfid, nVarID,
+                                                start,
+                                                count, &unData);
+                    snprintf(szMetaTemp, sizeof(szMetaTemp), CPL_FRMT_GUIB, unData);
+                    break;
+                }
 #endif
                 default:
                     CPLDebug("GDAL_netCDF", "invalid dim %s, type=%d",
@@ -8759,6 +8781,40 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
         CPLFree(punTemp);
         break;
     }
+    case NC_INT64:
+    {
+        long long *pnTemp = static_cast<long long *>(
+            CPLCalloc(nVarLen, sizeof(long long)));
+        nc_get_vara_longlong(nCdfId, nVarId, start, count, pnTemp);
+        char szTemp[256];
+        size_t m = 0;
+        for(; m < nVarLen - 1; m++)
+        {
+            snprintf(szTemp, sizeof(szTemp), CPL_FRMT_GIB ",", pnTemp[m]);
+            NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+        }
+        snprintf(szTemp, sizeof(szTemp), CPL_FRMT_GIB, pnTemp[m]);
+        NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+        CPLFree(pnTemp);
+        break;
+    }
+    case NC_UINT64:
+    {
+        unsigned long long *pnTemp = static_cast<unsigned long long *>(
+            CPLCalloc(nVarLen, sizeof(unsigned long long)));
+        nc_get_vara_ulonglong(nCdfId, nVarId, start, count, pnTemp);
+        char szTemp[256];
+        size_t m = 0;
+        for(; m < nVarLen - 1; m++)
+        {
+            snprintf(szTemp, sizeof(szTemp), CPL_FRMT_GUIB ",", pnTemp[m]);
+            NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+        }
+        snprintf(szTemp, sizeof(szTemp), CPL_FRMT_GUIB, pnTemp[m]);
+        NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+        CPLFree(pnTemp);
+        break;
+    }
 #endif
     default:
         CPLDebug("GDAL_netCDF", "NCDFGetVar1D unsupported type %d", nVarType);
@@ -8767,7 +8823,7 @@ static CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
         break;
     }
 
-    if( nVarLen > 1 && nVarType != NC_CHAR )
+    if( pszVarValue != NULL && nVarLen > 1 && nVarType != NC_CHAR )
         NCDFSafeStrcat(&pszVarValue, "}", &nVarValueSize);
 
     /* set return values */
