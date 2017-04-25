@@ -434,14 +434,9 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
     CPLFree(pszDefault);
     pszDefault = NULL;
 
-    if( pszDefaultIn && pszDefaultIn[0] == '\'' )
+    if( pszDefaultIn && pszDefaultIn[0] == '\''  &&
+        pszDefaultIn[strlen(pszDefaultIn)-1] == '\'' )
     {
-        if( pszDefaultIn[strlen(pszDefaultIn)-1] != '\'' )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Incorrectly quoted string literal");
-            return;
-        }
         const char* pszPtr = pszDefaultIn + 1;  // Used after for.
         for( ; *pszPtr != '\0'; pszPtr++ )
         {

@@ -1436,8 +1436,16 @@ void OGRPGCommonLayerNormalizeDefault(OGRFieldDefn* poFieldDefn,
         return;
     CPLString osDefault(pszDefault);
     size_t nPos = osDefault.find("::character varying");
-    if( nPos != std::string::npos )
+    if( nPos != std::string::npos &&
+        nPos + strlen("::character varying") == osDefault.size() )
+    {
         osDefault.resize(nPos);
+    }
+    else if( (nPos = osDefault.find("::text")) != std::string::npos &&
+             nPos + strlen("::text") == osDefault.size() )
+    {
+        osDefault.resize(nPos);
+    }
     else if( strcmp(osDefault, "now()") == 0 )
         osDefault = "CURRENT_TIMESTAMP";
     else if( strcmp(osDefault, "('now'::text)::date") == 0 )
