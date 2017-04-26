@@ -557,7 +557,7 @@ IdrisiDataset::~IdrisiDataset()
 {
     FlushCache();
 
-    if( papszRDC != NULL )
+    if( papszRDC != NULL && eAccess == GA_Update  )
     {
         //int bSuccessMin = FALSE;
         //int bSuccessMax = FALSE;
@@ -583,11 +583,8 @@ IdrisiDataset::~IdrisiDataset()
             poBand->SetMinMax( dfMin, dfMax);
         }
 
-        if( eAccess == GA_Update )
-        {
-            CSLSetNameValueSeparator( papszRDC, ": " );
-            SaveAsCRLF( papszRDC, pszDocFilename );
-        }
+        CSLSetNameValueSeparator( papszRDC, ": " );
+        SaveAsCRLF( papszRDC, pszDocFilename );
         CSLDestroy( papszRDC );
     }
 
@@ -1041,6 +1038,12 @@ GDALDataset *IdrisiDataset::Create( const char *pszFilename,
             "Attempt to create file %s' failed.\n", pszFilename );
         return NULL;
     }
+
+    const int nTargetDTSize = EQUAL(pszLDataType, rstBYTE) ? 1 :
+                              EQUAL(pszLDataType, rstINTEGER) ? 2 :
+                              EQUAL(pszLDataType, rstRGB24) ? 3 : 4;
+    VSIFTruncateL(fp,
+                  static_cast<vsi_l_offset>(nXSize) * nYSize * nTargetDTSize);
     VSIFCloseL( fp );
 
     return (IdrisiDataset *) GDALOpen( pszFilename, GA_Update );
