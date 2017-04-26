@@ -915,14 +915,12 @@ int OGROCILayer::LookupTableSRID()
 /* -------------------------------------------------------------------- */
     OGROCIStringBuf oCommand;
 
-    oCommand.Appendf( 1000, "SELECT SRID FROM ALL_SDO_GEOM_METADATA "
-                      "WHERE TABLE_NAME = UPPER('%s') AND COLUMN_NAME = UPPER('%s')",
-                      pszTableName, pszGeomName );
+    oCommand.Append( "SELECT SRID FROM ALL_SDO_GEOM_METADATA "
+                      "WHERE TABLE_NAME = UPPER(:table_name) AND COLUMN_NAME = UPPER(:geometry_name)" );
 
     if( pszOwner != NULL )
     {
-        oCommand.Appendf( 500, " AND OWNER = '%s'", pszOwner );
-        CPLFree( pszOwner );
+        oCommand.Append( " AND OWNER = :owner");
     }
 
 /* -------------------------------------------------------------------- */
@@ -930,8 +928,19 @@ int OGROCILayer::LookupTableSRID()
 /* -------------------------------------------------------------------- */
     OGROCIStatement oGetTables( poDS->GetSession() );
     int nSRID = -1;
+    
+    if( oGetTables.Prepare( oCommand.GetString() ) != CE_None )
+        return nSRID;
+    
+    oGetTables.BindString(":table_name", pszTableName);
+    oGetTables.BindString(":geometry_name", pszGeomName);
+    if( pszOwner != NULL )
+    {
+        oGetTables.BindString(":owner", pszOwner);
+        CPLFree( pszOwner );
+    }
 
-    if( oGetTables.Execute( oCommand.GetString() ) == CE_None )
+    if( oGetTables.Execute( NULL ) == CE_None )
     {
         char **papszRow = oGetTables.SimpleFetchRow();
 

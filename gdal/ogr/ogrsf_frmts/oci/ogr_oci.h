@@ -149,6 +149,9 @@ class CPL_DLL OGROCIStatement {
     CPLErr       BindScalar( const char *pszPlaceName,
                              void *pData, int nDataLen, int nSQLType,
                              sb2 *paeInd = NULL );
+    CPLErr       BindString( const char *pszPlaceName,
+                             const char *pszData,
+                             sb2 *paeInd = NULL );
     CPLErr       BindObject( const char *pszPlaceName, void *pahObject,
                              OCIType *hTDO, void **papIndicators );
 

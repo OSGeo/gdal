@@ -202,6 +202,19 @@ CPLErr OGROCIStatement::BindScalar( const char *pszPlaceName,
 }
 
 /************************************************************************/
+/*                             BindString()                             */
+/************************************************************************/
+
+CPLErr OGROCIStatement::BindString( const char *pszPlaceName,
+                                    const char *pszData, sb2 *paeInd )
+
+{
+    return BindScalar(
+        pszPlaceName, const_cast<void*>(reinterpret_cast<const void*>(pszData)),
+        static_cast<int>(strlen(pszData)) + 1, SQLT_STR , paeInd);
+}
+
+/************************************************************************/
 /*                              Execute()                               */
 /************************************************************************/
 
