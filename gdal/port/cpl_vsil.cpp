@@ -1576,8 +1576,8 @@ VSIFileManager *VSIFileManager::Get()
     {
         nConstructerPID = static_cast<GPtrDiff_t>(CPLGetPID());
 #ifdef DEBUG_VERBOSE
-        printf("Thread %d: VSIFileManager in construction\n",  // ok
-               nConstructerPID);
+        printf("Thread " CPL_FRMT_GIB": VSIFileManager in construction\n",  // ok
+               static_cast<GIntBig>(nConstructerPID));
 #endif
         poManager = new VSIFileManager;
         VSIInstallLargeFileHandler();
@@ -1602,8 +1602,8 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallCryptFileHandler();
 
 #ifdef DEBUG_VERBOSE
-        printf("Thread %d: VSIFileManager construction finished\n",  // ok
-               nConstructerPID);
+        printf("Thread " CPL_FRMT_GIB": VSIFileManager construction finished\n",  // ok
+               static_cast<GIntBig>(nConstructerPID));
 #endif
         nConstructerPID = 0;
     }

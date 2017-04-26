@@ -408,17 +408,17 @@ static GDALServerSpawnedProcess* aspRecycled[MAX_RECYCLED];
 #ifdef DEBUG_VERBOSE
 class EnterObject
 {
-    const char* pszFunction;
+    const char* m_pszFunction;
 
     public:
-        EnterObject(const char* pszFunction) : pszFunction(pszFunction)
+        EnterObject(const char* pszFunction) : m_pszFunction(pszFunction)
         {
-            CPLDebug("GDAL", "Enter %s", pszFunction);
+            CPLDebug("GDAL", "Enter %s", m_pszFunction);
         }
 
         ~EnterObject()
         {
-            CPLDebug("GDAL", "Leave %s", pszFunction);
+            CPLDebug("GDAL", "Leave %s", m_pszFunction);
         }
 };
 

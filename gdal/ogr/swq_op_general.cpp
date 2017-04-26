@@ -276,16 +276,13 @@ char* OGRHStoreGetValue(const char* pszHStore, const char* pszSearchedKey)
 
 static const char * OGRFormatDate(const OGRField *psField)
 {
-    CPLString osResult;
-
-    osResult.Printf("%04d/%02d/%02d %02d:%02d:%06.3f",
+    return CPLSPrintf("%04d/%02d/%02d %02d:%02d:%06.3f",
                     psField->Date.Year,
                     psField->Date.Month,
                     psField->Date.Day,
                     psField->Date.Hour,
                     psField->Date.Minute,
                     psField->Date.Second );
-    return CPLSPrintf(osResult);
 }
 #endif
 

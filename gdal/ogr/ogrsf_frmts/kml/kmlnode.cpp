@@ -219,7 +219,8 @@ static int nDepth = 0;
 static char* genSpaces()
 {
     static char spaces[128];
-    for(int i=0;i<nDepth;i++)
+    int i;
+    for(i=0;i<nDepth;i++)
         spaces[i] = ' ';
     spaces[i] = '\0';
     return spaces;
@@ -280,7 +281,7 @@ int KMLNode::classify(KML* poKML, int nRecLevel)
     for(kml_nodes_t::size_type z = 0; z < size; z++)
     {
 #ifdef DEBUG_VERBOSE
-        CPLDebug( "KML", "%s[%d] %s", genSpaces(), z,
+        CPLDebug( "KML", "%s[%d] %s", genSpaces(), static_cast<int>(z),
                   (*pvpoChildren_)[z]->sName_.c_str() );
 #endif
 

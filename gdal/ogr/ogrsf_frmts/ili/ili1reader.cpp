@@ -108,7 +108,7 @@ int ILI1Reader::ReadModel( ImdReader *poImdReader,
   {
 #if DEBUG_VERBOSE
     CPLDebug( "OGR_ILI", "Adding OGRILI1Layer with table '%s'",
-              it->poTableDefn->GetName() );
+              it->GetTableDefnRef()->GetName() );
 #endif
     OGRILI1Layer* layer = new OGRILI1Layer( it->GetTableDefnRef(),
                                             it->poGeomFieldInfos, poDS);
@@ -129,7 +129,7 @@ int ILI1Reader::ReadModel( ImdReader *poImdReader,
             = it2->second.iliGeomType;
 #if DEBUG_VERBOSE
         CPLDebug( "OGR_ILI", "Adding OGRILI1Layer with geometry table '%s'",
-                  it2->second.geomTable->GetName() );
+                  poGeomTableDefn->GetName() );
 #endif
         OGRILI1Layer* geomlayer
             = new OGRILI1Layer(poGeomTableDefn, oGeomFieldInfos, poDS);
