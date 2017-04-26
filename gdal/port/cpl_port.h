@@ -653,8 +653,7 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #  define CPLIsNan(x) _isnan(x)
 #  define CPLIsInf(x) (!_isnan(x) && !_finite(x))
 #  define CPLIsFinite(x) _finite(x)
-#elif defined(__cplusplus) && defined(__MINGW32__) &&  __GNUC__ == 4 && __GNUC_MINOR__ == 2
-/* Hack for compatibility with ancient i586-mingw32msvc toolchain */
+#elif defined(__cplusplus) && defined(HAVE_STD_IS_NAN) && HAVE_STD_IS_NAN
 extern "C++" {
 #include <cmath>
 static inline int CPLIsNan(float f) { return std::isnan(f); }
