@@ -513,37 +513,43 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 
         for (int i = 0; ppszAttr[i]; i += 2)
         {
-            if (strcmp(ppszAttr[i], "lat") == 0)
+            if (strcmp(ppszAttr[i], "lat") == 0 && ppszAttr[i + 1][0])
             {
                 hasFoundLat = true;
                 latVal = CPLAtof(ppszAttr[i + 1]);
             }
-            else if (strcmp(ppszAttr[i], "lon") == 0)
+            else if (strcmp(ppszAttr[i], "lon") == 0 && ppszAttr[i + 1][0])
             {
                 hasFoundLon = true;
                 lonVal = CPLAtof(ppszAttr[i + 1]);
             }
         }
 
+        poFeature->SetFID( nNextFID++ );
+
         if (hasFoundLat && hasFoundLon)
         {
-            poFeature->SetFID( nNextFID++ );
             poFeature->SetGeometryDirectly( new OGRPoint( lonVal, latVal ) );
+        }
+        else
+        {
+            CPLDebug("GPX", "Skipping %s (FID=%d) without lat and/or lon",
+                     pszName, nNextFID);
+        }
 
-            if (gpxGeomType == GPX_ROUTE_POINT)
-            {
-                rtePtId++;
-                poFeature->SetField( FLD_ROUTE_FID, rteFID-1);
-                poFeature->SetField( FLD_ROUTE_PT_ID, rtePtId-1);
-            }
-            else if (gpxGeomType == GPX_TRACK_POINT)
-            {
-                trkSegPtId++;
+        if (gpxGeomType == GPX_ROUTE_POINT)
+        {
+            rtePtId++;
+            poFeature->SetField( FLD_ROUTE_FID, rteFID-1);
+            poFeature->SetField( FLD_ROUTE_PT_ID, rtePtId-1);
+        }
+        else if (gpxGeomType == GPX_TRACK_POINT)
+        {
+            trkSegPtId++;
 
-                poFeature->SetField( FLD_TRACK_FID, trkFID-1);
-                poFeature->SetField( FLD_TRACK_SEG_ID, trkSegId-1);
-                poFeature->SetField( FLD_TRACK_PT_ID, trkSegPtId-1);
-            }
+            poFeature->SetField( FLD_TRACK_FID, trkFID-1);
+            poFeature->SetField( FLD_TRACK_SEG_ID, trkSegId-1);
+            poFeature->SetField( FLD_TRACK_PT_ID, trkSegPtId-1);
         }
     }
     else if (gpxGeomType == GPX_TRACK && strcmp(pszName, "trk") == 0)
@@ -616,12 +622,12 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                 hasFoundLon = false;
                 for (int i = 0; ppszAttr[i]; i += 2)
                 {
-                    if (strcmp(ppszAttr[i], "lat") == 0)
+                    if (strcmp(ppszAttr[i], "lat") == 0 && ppszAttr[i + 1][0])
                     {
                         hasFoundLat = true;
                         latVal = CPLAtof(ppszAttr[i + 1]);
                     }
-                    else if (strcmp(ppszAttr[i], "lon") == 0)
+                    else if (strcmp(ppszAttr[i], "lon") == 0 && ppszAttr[i + 1][0])
                     {
                         hasFoundLon = true;
                         lonVal = CPLAtof(ppszAttr[i + 1]);
@@ -631,6 +637,11 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                 if (hasFoundLat && hasFoundLon)
                 {
                     lineString->addPoint(lonVal, latVal);
+                }
+                else
+                {
+                    CPLDebug("GPX", "Skipping %s without lat and/or lon",
+                             pszName);
                 }
             }
         }
@@ -643,12 +654,12 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                 hasFoundLon = false;
                 for (int i = 0; ppszAttr[i]; i += 2)
                 {
-                    if (strcmp(ppszAttr[i], "lat") == 0)
+                    if (strcmp(ppszAttr[i], "lat") == 0 && ppszAttr[i + 1][0])
                     {
                         hasFoundLat = true;
                         latVal = CPLAtof(ppszAttr[i + 1]);
                     }
-                    else if (strcmp(ppszAttr[i], "lon") == 0)
+                    else if (strcmp(ppszAttr[i], "lon") == 0 && ppszAttr[i + 1][0])
                     {
                         hasFoundLon = true;
                         lonVal = CPLAtof(ppszAttr[i + 1]);
@@ -658,6 +669,11 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                 if (hasFoundLat && hasFoundLon)
                 {
                     lineString->addPoint(lonVal, latVal);
+                }
+                else
+                {
+                    CPLDebug("GPX", "Skipping %s without lat and/or lon",
+                             pszName);
                 }
             }
         }
