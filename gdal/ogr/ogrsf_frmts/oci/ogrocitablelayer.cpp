@@ -300,23 +300,28 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
         poDefn->AddFieldDefn( &oField );
     }
 
-    CPLString osSQL;
-    osSQL.Printf("SELECT COLUMN_NAME, DATA_DEFAULT FROM user_tab_columns WHERE DATA_DEFAULT IS NOT NULL AND TABLE_NAME = '%s'",
-                 CPLString(pszTable).toupper().c_str());
-    OGRLayer* poSQLLyr = poDS->ExecuteSQL(osSQL, NULL, NULL);
-    if( poSQLLyr != NULL )
+    OGROCIStatement defaultValuesStatement( poSession );
+    
+    const char* pszDefaultValueSQL =
+        "SELECT COLUMN_NAME, DATA_DEFAULT\n"
+        "FROM user_tab_columns\n"
+        "WHERE DATA_DEFAULT IS NOT NULL AND TABLE_NAME = UPPER(:table_name)";
+
+    defaultValuesStatement.Prepare(pszDefaultValueSQL);
+    defaultValuesStatement.BindString(":table_name", pszTable);
+
+    if( defaultValuesStatement.Execute( NULL ) == CE_None )
     {
-        OGRFeature* poFeature;
-        while( (poFeature = poSQLLyr->GetNextFeature()) != NULL )
+        char **papszRow;
+
+        while( (papszRow = defaultValuesStatement.SimpleFetchRow()) != NULL )
         {
-            const char* pszColName = poFeature->GetFieldAsString(0);
-            const char* pszDefault = poFeature->GetFieldAsString(1);
+            const char* pszColName = papszRow[0];
+            const char* pszDefault = papszRow[1];
             int nIdx = poDefn->GetFieldIndex(pszColName);
             if( nIdx >= 0 )
                 poDefn->GetFieldDefn(nIdx)->SetDefault(pszDefault);
-            delete poFeature;
         }
-        poDS->ReleaseResultSet(poSQLLyr);
     }
 
     if( EQUAL(pszExpectedFIDName, "OGR_FID") && pszFIDName )
@@ -339,40 +344,40 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
 
     if( pszGeomName != NULL && strlen(pszGeomName) > 0 )
     {
-        OGROCIStringBuf oDimCmd;
         OGROCIStatement oDimStatement( poSession );
         char **papszResult;
         int iDim = -1;
 
-        oDimCmd.Append( "SELECT COUNT(*) FROM ALL_SDO_GEOM_METADATA u," );
-        oDimCmd.Append( "  TABLE(u.diminfo) t" );
-        oDimCmd.Append( "  WHERE u.table_name = '" );
-        oDimCmd.Append( osTableName );
-        oDimCmd.Append( "' AND u.column_name = '" );
-        oDimCmd.Append( pszGeomName  );
-        oDimCmd.Append( "'" );
+        const char* pszDimCmd = 
+            "SELECT COUNT(*)\n"
+            "FROM ALL_SDO_GEOM_METADATA u, TABLE(u.diminfo) t\n"
+            "WHERE u.table_name = :table_name\n"
+            "  AND u.column_name = :geometry_name";
 
-        oDimStatement.Execute( oDimCmd.GetString() );
+        oDimStatement.Prepare( pszDimCmd );
+        oDimStatement.BindString( ":table_name", osTableName.c_str() );
+        oDimStatement.BindString( ":geometry_name", pszGeomName );
+        oDimStatement.Execute( NULL );
 
         papszResult = oDimStatement.SimpleFetchRow();
 
         if( CSLCount(papszResult) < 1 )
         {
-            OGROCIStringBuf oDimCmd2;
             OGROCIStatement oDimStatement2( poSession );
             char **papszResult2;
 
             CPLErrorReset();
 
-            oDimCmd2.Appendf( 1024,
+            const char* pszDimCmd2 =
                 "select m.sdo_index_dims\n"
                 "from   all_sdo_index_metadata m, all_sdo_index_info i\n"
                 "where  i.index_name = m.sdo_index_name\n"
                 "   and i.sdo_index_owner = m.sdo_index_owner\n"
-                "   and i.table_name = upper('%s')",
-                osTableName.c_str() );
+                "   and i.table_name = upper(:table_name)";
 
-            oDimStatement2.Execute( oDimCmd2.GetString() );
+            oDimStatement2.Prepare( pszDimCmd2 );
+            oDimStatement2.BindString( ":table_name", osTableName.c_str());
+            oDimStatement2.Execute( NULL );
 
             papszResult2 = oDimStatement2.SimpleFetchRow();
 
@@ -401,20 +406,20 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
         }
 
         {
-            OGROCIStringBuf oDimCmd2;
             OGROCIStatement oDimStatement2( poSession );
             char **papszResult2;
 
             CPLErrorReset();
-            oDimCmd2.Appendf( 1024,
+            const char* pszLayerTypeCmd =
                 "select m.SDO_LAYER_GTYPE "
                 "from all_sdo_index_metadata m, all_sdo_index_info i "
                 "where i.index_name = m.sdo_index_name "
                 "and i.sdo_index_owner = m.sdo_index_owner "
-                "and i.table_name = upper('%s')",
-                osTableName.c_str() );
+                "and i.table_name = upper(:table_name)";
 
-            oDimStatement2.Execute( oDimCmd2.GetString() );
+            oDimStatement2.Prepare( pszLayerTypeCmd );
+            oDimStatement2.BindString( ":table_name", osTableName.c_str() );
+            oDimStatement2.Execute( NULL );
 
             papszResult2 = oDimStatement2.SimpleFetchRow();
 
