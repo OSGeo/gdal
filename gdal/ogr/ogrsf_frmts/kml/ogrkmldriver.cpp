@@ -72,7 +72,7 @@ static GDALDataset *OGRKMLDriverOpen( GDALOpenInfo* poOpenInfo )
         if( poDS->GetLayerCount() == 0 )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
-                "No layers in KML file: %s.", pszName );
+                "No layers in KML file: %s.", poOpenInfo->pszFilename );
 
             delete poDS;
             poDS = NULL;

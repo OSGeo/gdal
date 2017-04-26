@@ -351,7 +351,7 @@ json_object* OGRPLScenesV1Dataset::RunRequest(const char* pszURL,
 
     const char* pszText = reinterpret_cast<const char*>(psResult->pabyData);
 #ifdef DEBUG_VERBOSE
-    CPLDebug("PLScenes", "%s", (pszText);
+    CPLDebug("PLScenes", "%s", pszText);
 #endif
 
     json_object* poObj = NULL;

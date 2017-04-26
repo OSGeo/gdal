@@ -79,10 +79,6 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("PostGIS_Raster",
-        "PostGISRasterRasterBand constructor: Band created (srid = %d)",
-        poDS->nSrid);
-
-    CPLDebug("PostGIS_Raster",
         "PostGISRasterRasterBand constructor: Band size: (%d X %d)",
         nRasterXSize, nRasterYSize);
 
