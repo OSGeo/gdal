@@ -655,7 +655,9 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #  define CPLIsFinite(x) _finite(x)
 #elif defined(__cplusplus) && defined(HAVE_STD_IS_NAN) && HAVE_STD_IS_NAN
 extern "C++" {
+#ifndef DOXYGEN_SKIP
 #include <cmath>
+#endif
 static inline int CPLIsNan(float f) { return std::isnan(f); }
 static inline int CPLIsNan(double f) { return std::isnan(f); }
 static inline int CPLIsInf(float f) { return std::isinf(f); }
