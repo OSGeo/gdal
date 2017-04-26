@@ -258,3 +258,6 @@
 
 /* Define to 1 if you have the `uselocale' function. */
 #undef HAVE_USELOCALE
+
+/* Define to 1 if you have the `std::isnan' function. */
+#undef HAVE_STD_IS_NAN
