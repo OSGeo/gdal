@@ -144,76 +144,87 @@ static bool gmlHugeFileSQLiteInit( huge_helper *helper )
     sqlite3 *hDB = helper->hDB;
 
     // DB table: NODES.
-    const char *osCommand =
-        "CREATE TABLE nodes ("
-        "     gml_id VARCHAR PRIMARY KEY, "
-        "     x DOUBLE, "
-        "     y DOUBLE, "
-        "     z DOUBLE)";
-    int rc = sqlite3_exec(hDB, osCommand, NULL, NULL, &pszErrMsg);
-    if( rc != SQLITE_OK )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to create table nodes: %s",
-                 pszErrMsg);
-        sqlite3_free(pszErrMsg);
-        return false;
+        const char osCommand[] =
+            "CREATE TABLE nodes ("
+            "     gml_id VARCHAR PRIMARY KEY, "
+            "     x DOUBLE, "
+            "     y DOUBLE, "
+            "     z DOUBLE)";
+        const int rc = sqlite3_exec(hDB, osCommand, NULL, NULL, &pszErrMsg);
+        if( rc != SQLITE_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to create table nodes: %s",
+                     pszErrMsg);
+            sqlite3_free(pszErrMsg);
+            return false;
+        }
     }
 
     // DB table: GML_EDGES.
-    osCommand = "CREATE TABLE gml_edges ("
-                "     gml_id VARCHAR PRIMARY KEY, "
-                "     gml_string BLOB, "
-                "     gml_resolved BLOB, "
-                "     node_from_id TEXT, "
-                "     node_from_x DOUBLE, "
-                "     node_from_y DOUBLE, "
-                "     node_from_z DOUBLE, "
-                "     node_to_id TEXT, "
-                "     node_to_x DOUBLE, "
-                "     node_to_y DOUBLE, "
-                "     node_to_z DOUBLE)";
-    rc = sqlite3_exec(hDB, osCommand, NULL, NULL, &pszErrMsg);
-    if( rc != SQLITE_OK )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to create table gml_edges: %s",
-                 pszErrMsg);
-        sqlite3_free(pszErrMsg);
-        return false;
+        const char osCommand[] =
+            "CREATE TABLE gml_edges ("
+            "     gml_id VARCHAR PRIMARY KEY, "
+            "     gml_string BLOB, "
+            "     gml_resolved BLOB, "
+            "     node_from_id TEXT, "
+            "     node_from_x DOUBLE, "
+            "     node_from_y DOUBLE, "
+            "     node_from_z DOUBLE, "
+            "     node_to_id TEXT, "
+            "     node_to_x DOUBLE, "
+            "     node_to_y DOUBLE, "
+            "     node_to_z DOUBLE)";
+        const int rc = sqlite3_exec(hDB, osCommand, NULL, NULL, &pszErrMsg);
+        if( rc != SQLITE_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to create table gml_edges: %s",
+                     pszErrMsg);
+            sqlite3_free(pszErrMsg);
+            return false;
+        }
     }
 
     // DB table: NODES / Insert cursor.
-    osCommand = "INSERT OR IGNORE INTO nodes (gml_id, x, y, z) "
-                "VALUES (?, ?, ?, ?)";
-    sqlite3_stmt *hStmt = NULL;
-    rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hStmt, NULL);
-    if( rc != SQLITE_OK )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to create INSERT stmt for: nodes");
-        return false;
+        const char osCommand[] =
+            "INSERT OR IGNORE INTO nodes (gml_id, x, y, z) VALUES (?, ?, ?, ?)";
+        sqlite3_stmt *hStmt = NULL;
+        const int rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hStmt, NULL);
+        if( rc != SQLITE_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to create INSERT stmt for: nodes");
+            return false;
+        }
+        helper->hNodes = hStmt;
     }
-    helper->hNodes = hStmt;
 
     // DB table: GML_EDGES / Insert cursor.
-    osCommand = "INSERT INTO gml_edges "
-                "(gml_id, gml_string, gml_resolved, "
-                "node_from_id, node_from_x, node_from_y, "
-                "node_from_z, node_to_id, node_to_x, "
-                "node_to_y, node_to_z) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hStmt, NULL);
-    if( rc != SQLITE_OK )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to create INSERT stmt for: gml_edges");
-        return false;
+        const char osCommand[] =
+            "INSERT INTO gml_edges "
+            "(gml_id, gml_string, gml_resolved, "
+            "node_from_id, node_from_x, node_from_y, "
+            "node_from_z, node_to_id, node_to_x, "
+            "node_to_y, node_to_z) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        sqlite3_stmt *hStmt = NULL;
+        const int rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hStmt, NULL);
+        if( rc != SQLITE_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to create INSERT stmt for: gml_edges");
+            return false;
+        }
+        helper->hEdges = hStmt;
     }
-    helper->hEdges = hStmt;
 
     // Starting a TRANSACTION.
-    rc = sqlite3_exec(hDB, "BEGIN", NULL, NULL, &pszErrMsg);
+    const int rc = sqlite3_exec(hDB, "BEGIN", NULL, NULL, &pszErrMsg);
     if( rc != SQLITE_OK )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
