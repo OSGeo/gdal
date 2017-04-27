@@ -1204,25 +1204,7 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
             if( nShiftStart + nShiftSize >= nOldEnd )
                 return CE_None;
 
-            if( VSIFSeekL( fp, nShiftStart + nShiftSize, SEEK_SET ) != 0 )
-            {
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Unable to seek near end of file.\n" );
-                return CE_Failure;
-            }
-
-            /* ftruncate()? */
-            for( vsi_l_offset nPos = nShiftStart + nShiftSize;
-                 nPos > nOldEnd; nPos++ )
-            {
-                if( VSIFWriteL( (void *)" ", 1, 1, fp ) != 1 )
-                {
-                    CPLError( CE_Failure, CPLE_FileIO,
-                              "Unable to write padding to grid file "
-                              "(Out of space?).\n" );
-                    return CE_Failure;
-                }
-            }
+            VSIFTruncateL( fp, nShiftStart + nShiftSize );
 
             return CE_None;
         }
