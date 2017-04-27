@@ -177,6 +177,11 @@ class GPKGChecker:
                       "definition FROM gpkg_spatial_ref_sys "
                       "WHERE srs_id IN (-1, 0, 4326) ORDER BY srs_id")
         ret = c.fetchall()
+        self._assert(len(ret) == 3, 11,
+                     'There should be at least 3 records in '
+                     'gpkg_spatial_ref_sys')
+        if len(ret) != 3:
+            return
         self._assert(ret[0][1] == 'NONE', 11,
                      'wrong value for organization for srs_id = -1: %s' %
                      ret[0][1])
