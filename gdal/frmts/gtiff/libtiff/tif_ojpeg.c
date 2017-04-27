@@ -1,4 +1,4 @@
-/* $Id: tif_ojpeg.c,v 1.68 2017-01-12 19:23:20 erouault Exp $ */
+/* $Id: tif_ojpeg.c,v 1.69 2017-04-27 17:29:26 erouault Exp $ */
 
 /* WARNING: The type of JPEG encapsulation defined by the TIFF Version 6.0
    specification is now totally obsolete and deprecated for new applications and
@@ -1794,6 +1794,8 @@ OJPEGReadHeaderInfoSecTablesQTable(TIFF* tif)
                                 _TIFFfree(ob);
 				return(0);
                         }
+			if (sp->qtable[m]!=0)
+				_TIFFfree(sp->qtable[m]);
 			sp->qtable[m]=ob;
 			sp->sof_tq[m]=m;
 		}
@@ -1861,6 +1863,8 @@ OJPEGReadHeaderInfoSecTablesDcTable(TIFF* tif)
                                 _TIFFfree(rb);
 				return(0);
                         }
+			if (sp->dctable[m]!=0)
+				_TIFFfree(sp->dctable[m]);
 			sp->dctable[m]=rb;
 			sp->sos_tda[m]=(m<<4);
 		}
@@ -1928,6 +1932,8 @@ OJPEGReadHeaderInfoSecTablesAcTable(TIFF* tif)
                                 _TIFFfree(rb);
 				return(0);
                         }
+			if (sp->actable[m]!=0)
+				_TIFFfree(sp->actable[m]);
 			sp->actable[m]=rb;
 			sp->sos_tda[m]=(sp->sos_tda[m]|m);
 		}
