@@ -503,7 +503,7 @@ void CPLReleaseMutex( CPLMutex * /* hMutex */ ) {}
 #else
 void CPLReleaseMutex( CPLMutex *hMutex )
 {
-    unsigned char *pabyMutex = retinterpret_cast<unsigned char *>(hMutex);
+    unsigned char *pabyMutex = reinterpret_cast<unsigned char *>(hMutex);
 
     CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e'
                && pabyMutex[3] == 'd' );
