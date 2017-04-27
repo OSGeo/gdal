@@ -241,11 +241,7 @@ static bool gmlHugeResolveEdgeNodes( const CPLXMLNode *psNode,
                                      const char *pszFromId,
                                      const char *pszToId )
 {
-    if( psNode->eType == CXT_Element && EQUAL(psNode->pszValue, "Edge") )
-    {
-        ;
-    }
-    else
+    if( psNode->eType != CXT_Element || !EQUAL(psNode->pszValue, "Edge") )
     {
         return false;
     }
@@ -351,42 +347,48 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
     sqlite3 *hDB = helper->hDB;
 
     // Query cursor.
-    const char *osCommand =
-        "SELECT e.gml_id, e.gml_string, e.node_from_id, "
-        "e.node_from_x, e.node_from_y, e.node_from_z, "
-        "n1.gml_id, n1.x, n1.y, n1.z, e.node_to_id, "
-        "e.node_to_x, e.node_to_y, e.node_to_z, "
-        "n2.gml_id, n2.x, n2.y, n2.z "
-        "FROM gml_edges AS e "
-        "LEFT JOIN nodes AS n1 ON (n1.gml_id = e.node_from_id) "
-        "LEFT JOIN nodes AS n2 ON (n2.gml_id = e.node_to_id)";
     sqlite3_stmt *hQueryStmt = NULL;
-    int rc = sqlite3_prepare_v2( hDB, osCommand, -1, &hQueryStmt, NULL );
-    if( rc != SQLITE_OK )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to create QUERY stmt for Edge resolver");
-        return false;
+        const char osCommand[] =
+            "SELECT e.gml_id, e.gml_string, e.node_from_id, "
+            "e.node_from_x, e.node_from_y, e.node_from_z, "
+            "n1.gml_id, n1.x, n1.y, n1.z, e.node_to_id, "
+            "e.node_to_x, e.node_to_y, e.node_to_z, "
+            "n2.gml_id, n2.x, n2.y, n2.z "
+            "FROM gml_edges AS e "
+            "LEFT JOIN nodes AS n1 ON (n1.gml_id = e.node_from_id) "
+            "LEFT JOIN nodes AS n2 ON (n2.gml_id = e.node_to_id)";
+        const int rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hQueryStmt, NULL);
+        if( rc != SQLITE_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to create QUERY stmt for Edge resolver");
+            return false;
+        }
     }
 
     // Update cursor.
-    osCommand = "UPDATE gml_edges "
-                "SET gml_resolved = ?, "
-                "gml_string = NULL "
-                "WHERE gml_id = ?";
     sqlite3_stmt *hUpdateStmt = NULL;
-    rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hUpdateStmt, NULL);
-    if( rc != SQLITE_OK )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to create UPDATE stmt for resolved Edges");
-        sqlite3_finalize(hQueryStmt);
-        return false;
+        const char osCommand[] =
+            "UPDATE gml_edges "
+            "SET gml_resolved = ?, "
+            "gml_string = NULL "
+            "WHERE gml_id = ?";
+        const int rc =
+            sqlite3_prepare_v2(hDB, osCommand, -1, &hUpdateStmt, NULL);
+        if( rc != SQLITE_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to create UPDATE stmt for resolved Edges");
+            sqlite3_finalize(hQueryStmt);
+            return false;
+        }
     }
 
     // Starting a TRANSACTION.
     char *pszErrMsg = NULL;
-    rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, &pszErrMsg );
+    int rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, &pszErrMsg );
     if( rc != SQLITE_OK )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1153,11 +1155,11 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
         const int iCount = poColl->getNumGeometries();
         if( iCount == 1 )
         {
-            OGRGeometry *poChild = (OGRGeometry *)poColl->getGeometryRef(0);
+            OGRGeometry *poChild = poColl->getGeometryRef(0);
             int type = wkbFlatten(poChild->getGeometryType());
             if( type == wkbLineString )
             {
-                OGRLineString *poLine = (OGRLineString *)poChild;
+                OGRLineString *poLine = static_cast<OGRLineString *>(poChild);
                 const int iPoints = poLine->getNumPoints();
                 if( iPoints >= 2 )
                 {
