@@ -444,7 +444,7 @@ const char *CPLGetThreadingModel()
 /*                           CPLCreateMutex()                           */
 /************************************************************************/
 
-#ifndef MUTEX_NONE
+#ifdef MUTEX_NONE
 CPLMutex *CPLCreateMutex()
 {
     return (CPLMutex *) 0xdeadbeef;
@@ -465,7 +465,7 @@ CPLMutex *CPLCreateMutex()
 }
 #endif
 
-CPLMutex *CPLCreateMutexEx( int nOptions )
+CPLMutex *CPLCreateMutexEx( int /*nOptions*/ )
 
 {
     return CPLCreateMutex();
@@ -481,7 +481,7 @@ int CPLAcquireMutex( CPLMutex *hMutex, double /* dfWaitInSeconds */ )
     return TRUE;
 }
 #else
-int CPLAcquireMutex( CPLMutex *hMutex, double dfWaitInSeconds )
+int CPLAcquireMutex( CPLMutex *hMutex, double /*dfWaitInSeconds*/ )
 {
     unsigned char *pabyMutex = reinterpret_cast<unsigned char *>(hMutex);
 
@@ -2150,11 +2150,11 @@ void CPLDestroySpinLock( CPLSpinLock* psSpin )
 void *CPLGetTLS( int nIndex )
 
 {
-    void** papTLSList = CPLGetTLSList(NULL);
+    void** l_papTLSList = CPLGetTLSList(NULL);
 
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
-    return papTLSList[nIndex];
+    return l_papTLSList[nIndex];
 }
 
 /************************************************************************/
@@ -2164,13 +2164,13 @@ void *CPLGetTLS( int nIndex )
 void *CPLGetTLSEx( int nIndex, int* pbMemoryErrorOccurred )
 
 {
-    void** papTLSList = CPLGetTLSList(pbMemoryErrorOccurred);
-    if( papTLSList == NULL )
+    void** l_papTLSList = CPLGetTLSList(pbMemoryErrorOccurred);
+    if( l_papTLSList == NULL )
         return NULL;
 
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
-    return papTLSList[nIndex];
+    return l_papTLSList[nIndex];
 }
 
 /************************************************************************/
@@ -2192,12 +2192,12 @@ void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
 void CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree )
 
 {
-    void **papTLSList = CPLGetTLSList(NULL);
+    void **l_papTLSList = CPLGetTLSList(NULL);
 
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
-    papTLSList[nIndex] = pData;
-    papTLSList[CTLS_MAX + nIndex] = (void*) pfnFree;
+    l_papTLSList[nIndex] = pData;
+    l_papTLSList[CTLS_MAX + nIndex] = (void*) pfnFree;
 }
 
 /************************************************************************/
@@ -2211,12 +2211,12 @@ void CPLSetTLSWithFreeFuncEx( int nIndex, void *pData,
                               int* pbMemoryErrorOccurred )
 
 {
-    void **papTLSList = CPLGetTLSList(pbMemoryErrorOccurred);
+    void **l_papTLSList = CPLGetTLSList(pbMemoryErrorOccurred);
 
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
-    papTLSList[nIndex] = pData;
-    papTLSList[CTLS_MAX + nIndex] = (void*) pfnFree;
+    l_papTLSList[nIndex] = pData;
+    l_papTLSList[CTLS_MAX + nIndex] = (void*) pfnFree;
 }
 #ifndef HAVE_SPINLOCK_IMPL
 
