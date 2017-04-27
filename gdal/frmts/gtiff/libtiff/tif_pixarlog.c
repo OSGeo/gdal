@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.49 2016-12-02 23:05:51 erouault Exp $ */
+/* $Id: tif_pixarlog.c,v 1.50 2017-02-18 20:30:26 erouault Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -699,6 +699,9 @@ PixarLogSetupDecode(TIFF* tif)
 	if (sp->user_datafmt == PIXARLOGDATAFMT_UNKNOWN)
 		sp->user_datafmt = PixarLogGuessDataFmt(td);
 	if (sp->user_datafmt == PIXARLOGDATAFMT_UNKNOWN) {
+                _TIFFfree(sp->tbuf);
+                sp->tbuf = NULL;
+                sp->tbuf_size = 0;
 		TIFFErrorExt(tif->tif_clientdata, module,
 			"PixarLog compression can't handle bits depth/data format combination (depth: %d)", 
 			td->td_bitspersample);
@@ -706,6 +709,9 @@ PixarLogSetupDecode(TIFF* tif)
 	}
 
 	if (inflateInit(&sp->stream) != Z_OK) {
+                _TIFFfree(sp->tbuf);
+                sp->tbuf = NULL;
+                sp->tbuf_size = 0;
 		TIFFErrorExt(tif->tif_clientdata, module, "%s", sp->stream.msg ? sp->stream.msg : "(null)");
 		return (0);
 	} else {
