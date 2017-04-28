@@ -327,6 +327,7 @@ HFA driver:
 
 Idrisi driver:
  * use geotransform of source dataset even if it doesn't have a SRS (#6727)
+ * make Create() zero-initialize the .rst file (#6873)
 
 ILWIS driver:
  * avoid IniFile::Load() to set the bChanged flag, so as to avoid a rewrite of files when just opening datasets
@@ -403,6 +404,7 @@ NetCDF driver:
  * read/write US_survey_foot unit for linear units of projection
  * apply 'add_offset' and 'scale_factor' on x and y variables when present, such as in files produced by NOAA from the new GOES-16 (GOES-R) satellite (github #200)
  * add a HONOUR_VALID_RANGE=YES/NO open option to control whether pixel values outside of the validity range should be set to the nodata value (#6857)
+ * fix crash on int64/uint64 dimensions and variables, and add support for them (#6870)
 
 NITF driver:
  * add support for writing JPEG2000 compressed images with JP2OpenJPEG driver
@@ -589,6 +591,7 @@ GeoJSON driver:
  * in case top level id is a negative integer, put the value in a 'id' attribute (#6538)
  * ESRI Json reader: support multilinestring from esriGeometryPolyline
  * ESRI Json reader: do not set field width of 2147483647 (#6529)
+ * ESRI Json reader: support reading M and ZM geometries
  * Add CPL_json_object_object_get() and use it, to avoid deprecation warnings on json_object_object_get()
  * TopoJSON reader: sanitize invalid polygons (such as found in the 'TopoJSON' layer of http://bl.ocks.org/mbostock/raw/4090846/us.json)
  * writer: fix segfaults on NULL geometry with -lco WRITE_BBOX=YES (#6698)
@@ -644,6 +647,9 @@ GPKG driver:
  * add minimalistic support for definition_12_063 column in gpkg_spatial_ref_sys, so that insertion of new SRS doesn't fail
  * use GEOMETRYCOLLECTION instead of GEOMCOLLECTION for SQL and gpkg_geometry_columns.geometry_type_name
  * do not warn if gpkg_metadata extension declared
+
+GPX driver:
+ * ignore wpt/rtept/trkpt with empty content for lat or lon
 
 ILI driver:
  * ILI1: fix crash in JoinSurfaceLayer() when the multicurve of the feature of the poSurfaceLineLayer layer is empty (#6688)
@@ -713,6 +719,7 @@ OSM driver:
 PG driver:
  * fix insertion of binary/bytea content in non-copy mode (#6566)
  * fix errors caused by missing geometry_columns/spatial_ref_sys tables in non PostGIS databases, that prevent reading more than 500 features (QGIS #10904)
+ * avoid errors with field default expressions like 'foo'::text (#6872)
 
 PLScenes driver:
  * add HTTP retry logic (#6655)
@@ -724,6 +731,7 @@ S57 driver:
  * fix crashes if the s57objectclasses.csv resource file contains invalid lines
  * remove data/s57attributes_aml.csv data/s57attributes_iw.csv data/s57objectclasses_aml.csv data/s57objectclasses_iw.csv and move their content into main s57attributes.csv and s57objectclasses.csv files (#6673)
  * Update s57 attributes and object classes according to s-57 reference (github #202)
+ * add POSACC and QUAPOS fields for geometric primitive layers (github #205)
 
 SDE driver:
  * rename driver to OGR_SDE. Fix build (#6714)
