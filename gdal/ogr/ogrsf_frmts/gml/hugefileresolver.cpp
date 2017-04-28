@@ -388,15 +388,17 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
 
     // Starting a TRANSACTION.
     char *pszErrMsg = NULL;
-    int rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, &pszErrMsg );
-    if( rc != SQLITE_OK )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to perform BEGIN TRANSACTION: %s", pszErrMsg);
-        sqlite3_free(pszErrMsg);
-        sqlite3_finalize(hQueryStmt);
-        sqlite3_finalize(hUpdateStmt);
-        return false;
+        const int rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to perform BEGIN TRANSACTION: %s", pszErrMsg);
+            sqlite3_free(pszErrMsg);
+            sqlite3_finalize(hQueryStmt);
+            sqlite3_finalize(hUpdateStmt);
+            return false;
+        }
     }
 
     int iCount = 0;
@@ -441,7 +443,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
         double zNodeTo = 0.0;
         bool bIsZNodeToNull = false;
 
-        rc = sqlite3_step(hQueryStmt);
+        int rc = sqlite3_step(hQueryStmt);
         if( rc == SQLITE_DONE )
             break;
 
@@ -803,7 +805,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
     sqlite3_finalize(hUpdateStmt);
 
     // Committing the current TRANSACTION.
-    rc = sqlite3_exec(hDB, "COMMIT", NULL, NULL, &pszErrMsg);
+    const int rc = sqlite3_exec(hDB, "COMMIT", NULL, NULL, &pszErrMsg);
     if( rc != SQLITE_OK )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
