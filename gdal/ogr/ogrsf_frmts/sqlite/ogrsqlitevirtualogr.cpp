@@ -940,7 +940,7 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
                            (ch = pszFieldName[j]) != '\0'; j++ )
             {
                 if (!(isalnum((int)ch) || ch == '_'))
-                    bNeedsQuoting = FALSE;
+                    bNeedsQuoting = TRUE;
             }
 
             if( bNeedsQuoting )
