@@ -639,6 +639,143 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
     return eErr;
 }
 
+/**
+ * \fn void* GDALWarpOperation::CreateDestinationBuffer(
+            int nDstXSize, int nDstYSize, int *pbInitialized);
+ *
+ * This method creates a destination buffer for use with WarpRegionToBuffer.
+ * The output is initialized based on the INIT_DEST settings.
+ *
+ * @param nDstXSize Width of output window on destination buffer to be produced.
+ * @param nDstYSize Height of output window on destination buffer to be produced.
+ * @param pbInitialized Filled with boolean indicating if the buffer was initialized.
+ *
+ * @return Buffer capable for use as a warp operation output destination
+ */
+void* GDALWarpOperation::CreateDestinationBuffer(
+    int nDstXSize, int nDstYSize, int *pbInitialized)
+{
+
+/* -------------------------------------------------------------------- */
+/*      Allocate block of memory large enough to hold all the bands     */
+/*      for this block.                                                 */
+/* -------------------------------------------------------------------- */
+    const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
+    const int nBandSize = nWordSize * nDstXSize * nDstYSize;
+
+    if( nDstXSize > INT_MAX / nDstYSize ||
+        nDstXSize * nDstYSize > INT_MAX / (nWordSize * psOptions->nBandCount) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Integer overflow : nDstXSize=%d, nDstYSize=%d",
+                  nDstXSize, nDstYSize);
+        return NULL;
+    }
+
+    void *pDstBuffer = VSI_MALLOC_VERBOSE( nBandSize * psOptions->nBandCount );
+    if( pDstBuffer == NULL )
+    {
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize if requested in the options                                 */
+/* -------------------------------------------------------------------- */
+    const char *pszInitDest = CSLFetchNameValue( psOptions->papszWarpOptions,
+                                                 "INIT_DEST" );
+
+    if( pszInitDest == NULL || EQUAL(pszInitDest, "") ) 
+    {
+        if( pbInitialized != NULL )
+        {
+            *pbInitialized = FALSE;
+        } 
+        
+        return pDstBuffer; 
+    }
+
+
+    if( pbInitialized != NULL )
+    {
+        *pbInitialized = TRUE;
+    }
+
+    char **papszInitValues =
+            CSLTokenizeStringComplex( pszInitDest, ",", FALSE, FALSE );
+    const int nInitCount = CSLCount(papszInitValues);
+
+    for( int iBand = 0; iBand < psOptions->nBandCount; iBand++ )
+    {
+        double adfInitRealImag[2] = { 0.0, 0.0 };
+        const char *pszBandInit =
+            papszInitValues[std::min(iBand, nInitCount - 1)];
+
+        if( EQUAL(pszBandInit, "NO_DATA")
+            && psOptions->padfDstNoDataReal != NULL )
+        {
+            adfInitRealImag[0] = psOptions->padfDstNoDataReal[iBand];
+            if( psOptions->padfDstNoDataImag != NULL )
+            {
+                adfInitRealImag[1] = psOptions->padfDstNoDataImag[iBand];
+            }
+        }
+        else
+        {
+            CPLStringToComplex( pszBandInit,
+                                adfInitRealImag + 0, adfInitRealImag + 1);
+        }
+
+        GByte *pBandData =
+            static_cast<GByte *>(pDstBuffer) + iBand * nBandSize;
+
+        if( psOptions->eWorkingDataType == GDT_Byte )
+        {
+            memset( pBandData,
+                    std::max(
+                        0, std::min(255,
+                                    static_cast<int>(adfInitRealImag[0]))),
+                    nBandSize);
+        }
+        else if( !CPLIsNan(adfInitRealImag[0]) && adfInitRealImag[0] == 0.0 &&
+                 !CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0 )
+        {
+            memset( pBandData, 0, nBandSize );
+        }
+        else if( !CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0 )
+        {
+            GDALCopyWords( &adfInitRealImag, GDT_Float64, 0,
+                            pBandData, psOptions->eWorkingDataType,
+                            nWordSize,
+                            nDstXSize * nDstYSize );
+        }
+        else
+        {
+            GDALCopyWords( &adfInitRealImag, GDT_CFloat64, 0,
+                            pBandData, psOptions->eWorkingDataType,
+                            nWordSize,
+                            nDstXSize * nDstYSize );
+        }
+    }
+
+    CSLDestroy( papszInitValues );
+
+    return pDstBuffer;
+}
+
+
+/**
+ * \fn void GDALWarpOperation::DestroyDestinationBuffer( void *pDstBuffer )
+ *
+ * This method destroys a buffer previously retrieved from CreateDestinationBuffer
+ *
+ * @param pDstBuffer destination buffer to be destroyed
+ *
+ */
+void GDALWarpOperation::DestroyDestinationBuffer( void *pDstBuffer )
+{
+    VSIFree( pDstBuffer );
+}
+
 /************************************************************************/
 /*                         GDALCreateWarpOperation()                    */
 /************************************************************************/
@@ -1366,97 +1503,11 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
 /*      Allocate the output buffer.                                     */
 /* -------------------------------------------------------------------- */
-    const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
-    const int nBandSize = nWordSize * nDstXSize * nDstYSize;
-
-    if( nDstXSize > INT_MAX / nDstYSize ||
-        nDstXSize * nDstYSize > INT_MAX / (nWordSize * psOptions->nBandCount) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Integer overflow : nDstXSize=%d, nDstYSize=%d",
-                  nDstXSize, nDstYSize);
-        return CE_Failure;
-    }
-
-    void *pDstBuffer = VSI_MALLOC_VERBOSE( nBandSize * psOptions->nBandCount );
+    int bDstBufferInitialized = FALSE;
+    void *pDstBuffer = CreateDestinationBuffer(nDstXSize, nDstYSize, &bDstBufferInitialized); 
     if( pDstBuffer == NULL )
     {
         return CE_Failure;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If the INIT_DEST option is given the initialize the output      */
-/*      destination buffer to the indicated value without reading it    */
-/*      from the hDstDS.  This is sometimes used to optimize            */
-/*      operation to a new output file ... it doesn't have to           */
-/*      written out and read back for nothing.                          */
-/* NOTE:The following code is 99% similar in gdalwarpoperation.cpp and  */
-/*      vrtwarped.cpp. Be careful to keep it in sync !                  */
-/* -------------------------------------------------------------------- */
-    const char *pszInitDest = CSLFetchNameValue( psOptions->papszWarpOptions,
-                                                 "INIT_DEST" );
-
-    if( pszInitDest != NULL && !EQUAL(pszInitDest, "") )
-    {
-        char **papszInitValues =
-            CSLTokenizeStringComplex( pszInitDest, ",", FALSE, FALSE );
-        const int nInitCount = CSLCount(papszInitValues);
-
-        for( int iBand = 0; iBand < psOptions->nBandCount; iBand++ )
-        {
-            double adfInitRealImag[2] = { 0.0, 0.0 };
-            const char *pszBandInit =
-                papszInitValues[std::min(iBand, nInitCount - 1)];
-
-            if( EQUAL(pszBandInit, "NO_DATA")
-                && psOptions->padfDstNoDataReal != NULL )
-            {
-                adfInitRealImag[0] = psOptions->padfDstNoDataReal[iBand];
-                if( psOptions->padfDstNoDataImag != NULL )
-                {
-                    adfInitRealImag[1] = psOptions->padfDstNoDataImag[iBand];
-                }
-            }
-            else
-            {
-                CPLStringToComplex( pszBandInit,
-                                    adfInitRealImag + 0, adfInitRealImag + 1);
-            }
-
-            GByte *pBandData =
-                static_cast<GByte *>(pDstBuffer) + iBand * nBandSize;
-
-            if( psOptions->eWorkingDataType == GDT_Byte )
-                memset( pBandData,
-                        std::max(
-                            0, std::min(255,
-                                        static_cast<int>(adfInitRealImag[0]))),
-                        nBandSize);
-            else if( !CPLIsNan(adfInitRealImag[0]) &&
-                     adfInitRealImag[0] == 0.0 &&
-                     !CPLIsNan(adfInitRealImag[1]) &&
-                     adfInitRealImag[1] == 0.0 )
-            {
-                memset( pBandData, 0, nBandSize );
-            }
-            else if( !CPLIsNan(adfInitRealImag[1]) &&
-                     adfInitRealImag[1] == 0.0 )
-            {
-                GDALCopyWords( &adfInitRealImag, GDT_Float64, 0,
-                               pBandData, psOptions->eWorkingDataType,
-                               nWordSize,
-                               nDstXSize * nDstYSize );
-            }
-            else
-            {
-                GDALCopyWords( &adfInitRealImag, GDT_CFloat64, 0,
-                               pBandData, psOptions->eWorkingDataType,
-                               nWordSize,
-                               nDstXSize * nDstYSize );
-            }
-        }
-
-        CSLDestroy( papszInitValues );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1464,7 +1515,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /*      then read it from disk so we can overlay on existing imagery.   */
 /* -------------------------------------------------------------------- */
     GDALDataset* poDstDS = reinterpret_cast<GDALDataset*>(psOptions->hDstDS);
-    if( pszInitDest == NULL )
+    if( !bDstBufferInitialized )
     {
         CPLErr eErr = CE_None;
         if( psOptions->nBandCount == 1 )
@@ -1492,7 +1543,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 
         if( eErr != CE_None )
         {
-            CPLFree( pDstBuffer );
+            DestroyDestinationBuffer(pDstBuffer);
             return eErr;
         }
 
@@ -1552,7 +1603,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
 /*      Cleanup and return.                                             */
 /* -------------------------------------------------------------------- */
-    VSIFree( pDstBuffer );
+    DestroyDestinationBuffer( pDstBuffer );
 
     return eErr;
 }
