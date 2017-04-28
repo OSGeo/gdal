@@ -443,11 +443,11 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
         double zNodeTo = 0.0;
         bool bIsZNodeToNull = false;
 
-        int rc = sqlite3_step(hQueryStmt);
-        if( rc == SQLITE_DONE )
+        const int rc2 = sqlite3_step(hQueryStmt);
+        if( rc2 == SQLITE_DONE )
             break;
 
-        if( rc == SQLITE_ROW )
+        if( rc2 == SQLITE_ROW )
         {
             bError = false;
             pszGmlId = reinterpret_cast<const char *>(
@@ -747,22 +747,24 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
                                           SQLITE_STATIC);
                         sqlite3_bind_text(hUpdateStmt, 2, pszGmlId, -1,
                                           SQLITE_STATIC);
-                        rc = sqlite3_step(hUpdateStmt);
-                        if( rc != SQLITE_OK && rc != SQLITE_DONE )
                         {
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                     "UPDATE resolved Edge \"%s\" "
-                                     "sqlite3_step() failed:\n  %s",
-                                     pszGmlId, sqlite3_errmsg(hDB));
+                            const int rc = sqlite3_step(hUpdateStmt);
+                            if( rc != SQLITE_OK && rc != SQLITE_DONE )
+                            {
+                                CPLError(CE_Failure, CPLE_AppDefined,
+                                         "UPDATE resolved Edge \"%s\" "
+                                         "sqlite3_step() failed:\n  %s",
+                                         pszGmlId, sqlite3_errmsg(hDB));
+                            }
                         }
                         CPLFree(gmlText);
                         iCount++;
                         if( (iCount % 1024) == 1023 )
                         {
                             // Committing the current TRANSACTION.
-                            rc = sqlite3_exec(hDB, "COMMIT", NULL, NULL,
-                                              &pszErrMsg);
-                            if( rc != SQLITE_OK )
+                            const int rc3 = sqlite3_exec(
+                                hDB, "COMMIT", NULL, NULL, &pszErrMsg);
+                            if( rc3 != SQLITE_OK )
                             {
                                 CPLError(
                                     CE_Failure, CPLE_AppDefined,
@@ -772,9 +774,9 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
                                 return false;
                             }
                             // Restarting a new TRANSACTION.
-                            rc = sqlite3_exec(hDB, "BEGIN", NULL, NULL,
-                                              &pszErrMsg);
-                            if( rc != SQLITE_OK )
+                            const int rc4 = sqlite3_exec(
+                                hDB, "BEGIN", NULL, NULL, &pszErrMsg);
+                            if( rc4 != SQLITE_OK )
                             {
                                 CPLError(
                                     CE_Failure, CPLE_AppDefined,
