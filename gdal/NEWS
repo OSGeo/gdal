@@ -769,6 +769,7 @@ SQLite/Spatialite driver:
  * SQLite/GPKG: change default page_size to 4096 bytes.
  * Update layer statistics for Spatialite 4 DB (#6838)
  * Remove traces of support of SQLite < 3.6.0
+ * SQLite dialect: properly quote column names when needed (github #214)
 
 VFK driver:
  * allow reading multiple VFK files into single DB support amendment VFK files
