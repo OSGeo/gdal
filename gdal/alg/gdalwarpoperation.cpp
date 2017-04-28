@@ -470,18 +470,8 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
         && GDALGetRasterCount( psOptions->hSrcDS )
         == GDALGetRasterCount( psOptions->hDstDS ) )
     {
-        psOptions->nBandCount = GDALGetRasterCount( psOptions->hSrcDS );
-
-        psOptions->panSrcBands = static_cast<int *>(
-            CPLMalloc(sizeof(int) * psOptions->nBandCount));
-        psOptions->panDstBands = static_cast<int *>(
-            CPLMalloc(sizeof(int) * psOptions->nBandCount));
-
-        for( int i = 0; i < psOptions->nBandCount; i++ )
-        {
-            psOptions->panSrcBands[i] = i+1;
-            psOptions->panDstBands[i] = i+1;
-        }
+        GDALWarpInitDefaultBandMapping( 
+            psOptions, GDALGetRasterCount( psOptions->hSrcDS ) );
     }
 
 /* -------------------------------------------------------------------- */

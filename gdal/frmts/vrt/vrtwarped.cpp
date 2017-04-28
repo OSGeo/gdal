@@ -120,17 +120,7 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
 
     psWO->hSrcDS = hSrcDS;
 
-    psWO->nBandCount = GDALGetRasterCount( hSrcDS );
-    psWO->panSrcBands = static_cast<int *>(
-        CPLMalloc( sizeof(int) * psWO->nBandCount ) );
-    psWO->panDstBands = static_cast<int *>(
-        CPLMalloc( sizeof(int) * psWO->nBandCount ) );
-
-    for( int i = 0; i < psWO->nBandCount; i++ )
-    {
-        psWO->panSrcBands[i] = i+1;
-        psWO->panDstBands[i] = i+1;
-    }
+    GDALWarpInitDefaultBandMapping( psWO, GDALGetRasterCount( hSrcDS ) );
 
     /* TODO: should fill in no data where available */
 

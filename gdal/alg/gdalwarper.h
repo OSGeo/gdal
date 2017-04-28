@@ -225,6 +225,9 @@ void CPL_DLL CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions * );
 GDALWarpOptions CPL_DLL * CPL_STDCALL
 GDALCloneWarpOptions( const GDALWarpOptions * );
 
+void CPL_DLL CPL_STDCALL
+GDALWarpInitDefaultBandMapping( GDALWarpOptions *, int nBandCount );
+
 /*! @cond Doxygen_Suppress */
 CPLXMLNode CPL_DLL * CPL_STDCALL
       GDALSerializeWarpOptions( const GDALWarpOptions * );
