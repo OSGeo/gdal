@@ -1438,7 +1438,7 @@ bool ENVIDataset::ProcessMapinfo( const char *pszMapinfo )
     {
         oSRS.Clear();
 
-        if( STARTS_WITH_CI(papszFields[0], "UTM") && nCount > 9 )
+        if( STARTS_WITH_CI(papszFields[0], "UTM") && nCount >= 9 )
         {
             oSRS.SetUTM(atoi(papszFields[7]), !EQUAL(papszFields[8], "South"));
             if( nCount >= 10 && strstr(papszFields[9], "=") == NULL )
