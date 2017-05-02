@@ -409,30 +409,31 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
 /*      Collect a color table.                                          */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLNode( psTree, "ColorTable" ) != NULL )
+    if( CPLGetXMLNode(psTree, "ColorTable") != NULL )
     {
         GDALColorTable oTable;
-        int        iEntry = 0;
+        int iEntry = 0;
 
-        for( CPLXMLNode *psEntry = CPLGetXMLNode( psTree, "ColorTable" )->psChild;
+        for( CPLXMLNode *psEntry = CPLGetXMLNode(psTree, "ColorTable")->psChild;
              psEntry != NULL; psEntry = psEntry->psNext )
         {
-            if( !(psEntry->eType == CXT_Element &&
-                  EQUAL(psEntry->pszValue, "Entry")) )
+            if( psEntry->eType != CXT_Element ||
+                !EQUAL(psEntry->pszValue, "Entry") )
             {
                 continue;
             }
-            GDALColorEntry sCEntry;
 
-            sCEntry.c1 = (short) atoi(CPLGetXMLValue( psEntry, "c1", "0" ));
-            sCEntry.c2 = (short) atoi(CPLGetXMLValue( psEntry, "c2", "0" ));
-            sCEntry.c3 = (short) atoi(CPLGetXMLValue( psEntry, "c3", "0" ));
-            sCEntry.c4 = (short) atoi(CPLGetXMLValue( psEntry, "c4", "255" ));
+            const GDALColorEntry sCEntry = {
+                static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c1", "0"))),
+                static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c2", "0"))),
+                static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c3", "0"))),
+                static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c4", "255")))
+            };
 
-            oTable.SetColorEntry( iEntry++, &sCEntry );
+            oTable.SetColorEntry(iEntry++, &sCEntry);
         }
 
-        SetColorTable( &oTable );
+        SetColorTable(&oTable);
     }
 
 /* -------------------------------------------------------------------- */
