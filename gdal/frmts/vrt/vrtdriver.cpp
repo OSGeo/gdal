@@ -369,11 +369,11 @@ VRTCreateCopy( const char * pszFilename,
 void GDALRegister_VRT()
 
 {
-    // First register the pixel functions
-    GDALRegisterDefaultPixelFunc();
-
     if( GDALGetDriverByName( "VRT" ) != NULL )
         return;
+
+    // First register the pixel functions
+    GDALRegisterDefaultPixelFunc();
 
     VRTDriver *poDriver = new VRTDriver();
 
