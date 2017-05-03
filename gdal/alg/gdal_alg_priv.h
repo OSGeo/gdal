@@ -137,10 +137,10 @@ typedef GDALRasterPolygonEnumeratorT<GInt32, IntEqualityTest> GDALRasterPolygonE
 
 typedef void* (*GDALTransformDeserializeFunc)( CPLXMLNode *psTree );
 
-void* GDALRegisterTransformDeserializer(const char* pszTransformName,
+void CPL_DLL *GDALRegisterTransformDeserializer(const char* pszTransformName,
                                        GDALTransformerFunc pfnTransformerFunc,
                                        GDALTransformDeserializeFunc pfnDeserializeFunc);
-void GDALUnregisterTransformDeserializer(void* pData);
+void CPL_DLL GDALUnregisterTransformDeserializer(void* pData);
 
 void GDALCleanupTransformDeserializerMutex();
 
