@@ -147,22 +147,9 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
     psWOptions->hSrcDS = hSrcDS;
     psWOptions->hDstDS = hDstDS;
 
-    if( psWOptions->nBandCount == 0 )
-    {
-        psWOptions->nBandCount = std::min(GDALGetRasterCount(hSrcDS),
-                                     GDALGetRasterCount(hDstDS));
-
-        psWOptions->panSrcBands = static_cast<int *>(
-            CPLMalloc(sizeof(int) * psWOptions->nBandCount));
-        psWOptions->panDstBands = static_cast<int *>(
-            CPLMalloc(sizeof(int) * psWOptions->nBandCount));
-
-        for( int iBand = 0; iBand < psWOptions->nBandCount; iBand++ )
-        {
-            psWOptions->panSrcBands[iBand] = iBand+1;
-            psWOptions->panDstBands[iBand] = iBand+1;
-        }
-    }
+    GDALWarpInitDefaultBandMapping(
+        psWOptions, std::min(GDALGetRasterCount(hSrcDS),
+                                    GDALGetRasterCount(hDstDS)));
 
 /* -------------------------------------------------------------------- */
 /*      Set source nodata values if the source dataset seems to have    */
@@ -1336,6 +1323,38 @@ GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
 }
 
 /************************************************************************/
+/*                      GDALWarpInitDefaultBandMapping()                */
+/************************************************************************/
+
+/**
+ * \brief Init src and dst band mappings such that Bands[i] = i+1
+ *  for nBandCount
+ *  Does nothing if psOptionsIn->nBandCount is non-zero.
+ *
+ * @param psOptionsIn options to initialize.
+ * @param nBandCount bands to initialize for.
+ * 
+ */
+void CPL_STDCALL
+GDALWarpInitDefaultBandMapping( GDALWarpOptions * psOptionsIn, int nBandCount )
+{
+    if( psOptionsIn->nBandCount != 0 ) { return; }
+    
+    psOptionsIn->nBandCount = nBandCount;
+
+    psOptionsIn->panSrcBands = static_cast<int *>(
+        CPLMalloc(sizeof(int) * psOptionsIn->nBandCount));
+    psOptionsIn->panDstBands = static_cast<int *>(
+        CPLMalloc(sizeof(int) * psOptionsIn->nBandCount));
+
+    for( int i = 0; i < psOptionsIn->nBandCount; i++ )
+    {
+        psOptionsIn->panSrcBands[i] = i+1;
+        psOptionsIn->panDstBands[i] = i+1;
+    }
+}
+
+/************************************************************************/
 /*                      GDALSerializeWarpOptions()                      */
 /************************************************************************/
 
@@ -1686,24 +1705,24 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psBandTree = CPLGetXMLNode( psTree, "BandList" );
 
-    psWO->nBandCount = 0;
-
+    int nBandCount = 0;
     CPLXMLNode *psBand = psBandTree ? psBandTree->psChild : NULL;
-
     for( ; psBand != NULL; psBand = psBand->psNext )
     {
         if( psBand->eType != CXT_Element
             || !EQUAL(psBand->pszValue,"BandMapping") )
             continue;
 
-        psWO->nBandCount++;
+        nBandCount++;
     }
+
+    GDALWarpInitDefaultBandMapping(psWO, nBandCount);
 
 /* ==================================================================== */
 /*      Now actually process each bandmapping.                          */
 /* ==================================================================== */
     int iBand = 0;
-
+    
     psBand = psBandTree ? psBandTree->psChild : NULL;
 
     for( ; psBand != NULL; psBand = psBand->psNext )
@@ -1715,14 +1734,8 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
 /*      Source band                                                     */
 /* -------------------------------------------------------------------- */
-        if( psWO->panSrcBands == NULL )
-          psWO->panSrcBands = static_cast<int *>(
-              CPLMalloc(sizeof(int)*psWO->nBandCount));
-
         pszValue = CPLGetXMLValue(psBand,"src",NULL);
-        if( pszValue == NULL )
-            psWO->panSrcBands[iBand] = iBand + 1;
-        else
+        if( pszValue != NULL )
             psWO->panSrcBands[iBand] = atoi(pszValue);
 
 /* -------------------------------------------------------------------- */
@@ -1730,13 +1743,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
         pszValue = CPLGetXMLValue(psBand,"dst",NULL);
         if( pszValue != NULL )
-        {
-            if( psWO->panDstBands == NULL )
-                psWO->panDstBands = static_cast<int *>(
-                    CPLMalloc(sizeof(int)*psWO->nBandCount));
-
             psWO->panDstBands[iBand] = atoi(pszValue);
-        }
 
 /* -------------------------------------------------------------------- */
 /*      Source nodata.                                                  */
