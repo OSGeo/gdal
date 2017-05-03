@@ -59,6 +59,19 @@
 
 CPL_CVSID("$Id$");
 
+static int GetMinBitsForPair(const bool pabSigned[], const int panBits[])
+{
+    if( pabSigned[0] != pabSigned[1] )
+    {
+        const int nUnsignedTypeIndex = pabSigned[0] ? 1 : 0;
+        const int nSignedTypeIndex = pabSigned[0] ? 0 : 1;
+
+        return std::max(panBits[nSignedTypeIndex], 2 * panBits[nUnsignedTypeIndex]);
+    }
+    
+    return std::max(panBits[0], panBits[1]); 
+}
+
 /************************************************************************/
 /*                         GDALDataTypeUnion()                          */
 /************************************************************************/
@@ -77,132 +90,160 @@ GDALDataType CPL_STDCALL
 GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 
 {
-    bool bSigned = false;
-    bool bFloating = false;
-    int nBits = 0;
+    const int panBits[] = { 
+        GDALGetDataTypeSizeBits( eType1 ), 
+        GDALGetDataTypeSizeBits( eType2 ) 
+    };
 
-    const bool bComplex = CPL_TO_BOOL(
-        GDALDataTypeIsComplex(eType1) | GDALDataTypeIsComplex(eType2) );
-
-    switch( eType1 )
-    {
-      case GDT_Byte:
-        nBits = 8;
-        bSigned = false;
-        bFloating = false;
-        break;
-
-      case GDT_Int16:
-      case GDT_CInt16:
-        nBits = 16;
-        bSigned = true;
-        bFloating = false;
-        break;
-
-      case GDT_UInt16:
-        nBits = 16;
-        bSigned = false;
-        bFloating = false;
-        break;
-
-      case GDT_Int32:
-      case GDT_CInt32:
-        nBits = 32;
-        bSigned = true;
-        bFloating = false;
-        break;
-
-      case GDT_UInt32:
-        nBits = 32;
-        bSigned = false;
-        bFloating = false;
-        break;
-
-      case GDT_Float32:
-      case GDT_CFloat32:
-        nBits = 32;
-        bSigned = true;
-        bFloating = true;
-        break;
-
-      case GDT_Float64:
-      case GDT_CFloat64:
-        nBits = 64;
-        bSigned = true;
-        bFloating = true;
-        break;
-
-      default:
-        CPLAssert( false );
+    if(panBits[0] == 0 || panBits[1] == 0)
         return GDT_Unknown;
+    
+    const bool pabSigned[] = { 
+        CPL_TO_BOOL( GDALDataTypeIsSigned( eType1 ) ),
+        CPL_TO_BOOL( GDALDataTypeIsSigned( eType2 ) )
+    };
+    
+    const bool bSigned = pabSigned[0] || pabSigned[1];
+    const bool bFloating =
+        CPL_TO_BOOL( GDALDataTypeIsFloating( eType1 ) ) ||
+        CPL_TO_BOOL( GDALDataTypeIsFloating( eType2 ) );
+    const bool bComplex = 
+        CPL_TO_BOOL( GDALDataTypeIsComplex( eType1 ) ) ||
+        CPL_TO_BOOL( GDALDataTypeIsComplex( eType2 ) );
+
+    const int nBits = GetMinBitsForPair( pabSigned, panBits );
+
+    return GDALFindDataType(nBits, bSigned, bFloating, bComplex);
+}
+
+/************************************************************************/
+/*                        GDALDataTypeUnionWithValue()                  */
+/************************************************************************/
+
+/**
+ * \brief Union a data type with the one found for a value
+ *
+ * @param eDT the first data type
+ * @param dValue the value for which to find a data type and union with eDT
+ * @param bComplex if the value is complex
+ *
+ * @return a data type able to express eDT and dValue.
+ * @since GDAL 2.3
+ */
+GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue( 
+    GDALDataType eDT, double dValue, int bComplex )
+{
+    const GDALDataType eDT2 = GDALFindDataTypeForValue( dValue, bComplex);
+    return GDALDataTypeUnion( eDT, eDT2 );
+}
+
+/************************************************************************/
+/*                        GetMinBitsForValue()                          */
+/************************************************************************/
+static int GetMinBitsForValue(double dValue)
+{
+    if( round(dValue) == dValue )
+    {
+        if( dValue <= std::numeric_limits<GByte>::max() &&
+            dValue >= std::numeric_limits<GByte>::min() )
+            return 8;
+
+        if( dValue <= std::numeric_limits<GInt16>::max() &&
+            dValue >= std::numeric_limits<GInt16>::min() )
+            return 16;
+
+        if( dValue <= std::numeric_limits<GUInt16>::max() &&
+            dValue >= std::numeric_limits<GUInt16>::min() )
+            return 16;
+
+        if( dValue <= std::numeric_limits<GInt32>::max() &&
+            dValue >= std::numeric_limits<GInt32>::min() )
+            return 32;
+
+        if( dValue <= std::numeric_limits<GUInt32>::max() &&
+            dValue >= std::numeric_limits<GUInt32>::min() )
+            return 32;
+    }
+    else if( ((float)dValue) == dValue )
+    {
+        return 32;
     }
 
-    switch( eType2 )
+    return 64;
+}
+
+/************************************************************************/
+/*                        GDALFindDataType()                            */
+/************************************************************************/
+
+/**
+ * \brief Finds the smallest data type able to support the given
+ *  requirements
+ *
+ * @param nBits number of bits necessary
+ * @param bSigned if negative values are necessary
+ * @param bFloating if non-integer values necessary
+ * @param bComplex if complex values are necessary
+ *
+ * @return a best fit GDALDataType for supporting the requirements
+ * @since GDAL 2.3
+ */
+GDALDataType CPL_STDCALL GDALFindDataType( 
+    int nBits, int bSigned, int bFloating, int bComplex )
+{
+    if( bSigned ) { nBits = std::max( nBits, 16 ); }
+    if( bComplex ) { nBits = std::max( nBits, !bSigned ? 32 : 16 ); }
+    if( bFloating ) { nBits = std::max( nBits, !bSigned ? 64 : 32 ); }
+
+    if( nBits <= 8 ) { return GDT_Byte; }
+
+    if( nBits <= 16 )
     {
-      case GDT_Byte:
-        break;
-
-      case GDT_Int16:
-      case GDT_CInt16:
-        nBits = std::max(nBits, 16);
-        bSigned = true;
-        break;
-
-      case GDT_UInt16:
-        nBits = std::max(nBits, 16);
-        break;
-
-      case GDT_Int32:
-      case GDT_CInt32:
-        nBits = std::max(nBits, 32);
-        bSigned = true;
-        break;
-
-      case GDT_UInt32:
-        nBits = std::max(nBits, 32);
-        break;
-
-      case GDT_Float32:
-      case GDT_CFloat32:
-        nBits = std::max(nBits, 32);
-        bSigned = true;
-        bFloating = true;
-        break;
-
-      case GDT_Float64:
-      case GDT_CFloat64:
-        nBits = std::max(nBits, 64);
-        bSigned = true;
-        bFloating = true;
-        break;
-
-      default:
-        CPLAssert( false );
-        return GDT_Unknown;
-    }
-
-    if( nBits == 8 )
-        return GDT_Byte;
-    else if( nBits == 16 && bComplex )
-        return GDT_CInt16;
-    else if( nBits == 16 && bSigned )
-        return GDT_Int16;
-    else if( nBits == 16 && !bSigned )
+        if( bComplex ) return GDT_CInt16;
+        if( bSigned ) return GDT_Int16;
         return GDT_UInt16;
-    else if( nBits == 32 && bFloating && bComplex )
-        return GDT_CFloat32;
-    else if( nBits == 32 && bFloating )
-        return GDT_Float32;
-    else if( nBits == 32 && bComplex )
-        return GDT_CInt32;
-    else if( nBits == 32 && bSigned )
-        return GDT_Int32;
-    else if( nBits == 32 && !bSigned )
+    }
+
+    if( nBits <= 32 )
+    {
+        if( bFloating )
+        {
+            if( bComplex ) return GDT_CFloat32;
+            return GDT_Float32;
+        }
+
+        if( bComplex ) return GDT_CInt32;
+        if( bSigned ) return GDT_Int32;
         return GDT_UInt32;
-    else if( nBits == 64 && bComplex )
+    }
+    
+    if( bComplex )
         return GDT_CFloat64;
-    else
-        return GDT_Float64;
+    
+    return GDT_Float64;
+}
+
+/************************************************************************/
+/*                        GDALFindDataTypeForValue()                    */
+/************************************************************************/
+
+/**
+ * \brief Finds the smallest data type able to support the provided value
+ *
+ * @param dValue value to support
+ * @param bComplex is the value complex
+ *
+ * @return a best fit GDALDataType for supporting the value
+ * @since GDAL 2.3
+ */
+GDALDataType CPL_STDCALL GDALFindDataTypeForValue( 
+    double dValue, int bComplex )
+{
+    const bool bFloating = round(dValue) != dValue;
+    const bool bSigned = bFloating || dValue < 0;
+    const int nBits = GetMinBitsForValue(dValue);
+
+    return GDALFindDataType(nBits, bSigned, bFloating, bComplex);
 }
 
 /************************************************************************/
@@ -317,6 +358,57 @@ int CPL_STDCALL GDALDataTypeIsComplex( GDALDataType eDataType )
 
       default:
         return FALSE;
+    }
+}
+
+/************************************************************************/
+/*                       GDALDataTypeIsFloating()                       */
+/************************************************************************/
+
+/**
+ * \brief Is data type floating?
+ *
+ * @return TRUE if the passed type is floating
+ * @since GDAL 2.3
+ */
+
+int CPL_STDCALL GDALDataTypeIsFloating( GDALDataType eDataType )
+{
+    switch( eDataType )
+    {
+      case GDT_Float32:
+      case GDT_Float64:
+      case GDT_CFloat32:
+      case GDT_CFloat64:
+        return TRUE;
+
+      default:
+        return FALSE;
+    }
+}
+
+/************************************************************************/
+/*                       GDALDataTypeIsSigned()                         */
+/************************************************************************/
+
+/**
+ * \brief Is data type signed?
+ *
+ * @return TRUE if the passed type is signed.
+ * @since GDAL 2.3
+ */
+
+int CPL_STDCALL GDALDataTypeIsSigned( GDALDataType eDataType )
+{
+    switch( eDataType )
+    {
+      case GDT_Byte:
+      case GDT_UInt16:
+      case GDT_UInt32:
+        return FALSE;
+
+      default:
+        return TRUE;
     }
 }
 
