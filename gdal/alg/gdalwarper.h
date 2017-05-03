@@ -225,6 +225,21 @@ void CPL_DLL CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions * );
 GDALWarpOptions CPL_DLL * CPL_STDCALL
 GDALCloneWarpOptions( const GDALWarpOptions * );
 
+void CPL_DLL CPL_STDCALL 
+GDALWarpInitDstNoDataReal( GDALWarpOptions *, double dNoDataReal );
+
+void CPL_DLL CPL_STDCALL 
+GDALWarpInitSrcNoDataReal( GDALWarpOptions *, double dNoDataReal );
+
+void CPL_DLL CPL_STDCALL 
+GDALWarpInitNoDataReal( GDALWarpOptions *, double dNoDataReal );
+
+void CPL_DLL CPL_STDCALL 
+GDALWarpInitDstNoDataImag( GDALWarpOptions *, double dNoDataImag );
+
+void CPL_DLL CPL_STDCALL 
+GDALWarpInitSrcNoDataImag( GDALWarpOptions *, double dNoDataImag );
+
 void CPL_DLL CPL_STDCALL
 GDALWarpInitDefaultBandMapping( GDALWarpOptions *, int nBandCount );
 
