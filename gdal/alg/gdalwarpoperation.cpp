@@ -474,76 +474,7 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
             psOptions, GDALGetRasterCount( psOptions->hSrcDS ) );
     }
 
-/* -------------------------------------------------------------------- */
-/*      If no working data type was provided, set one now.              */
-/*                                                                      */
-/*      Default to the highest resolution output band.  But if the      */
-/*      input band is higher resolution and has a nodata value "out     */
-/*      of band" with the output type we may need to use the higher     */
-/*      resolution input type to ensure we can identify nodata values.  */
-/* -------------------------------------------------------------------- */
-    if( psOptions->eWorkingDataType == GDT_Unknown
-        && psOptions->hSrcDS != NULL
-        && psOptions->hDstDS != NULL
-        && psOptions->nBandCount >= 1 )
-    {
-        psOptions->eWorkingDataType = GDT_Byte;
-
-        for( int iBand = 0; iBand < psOptions->nBandCount; iBand++ )
-        {
-            GDALRasterBandH hDstBand = GDALGetRasterBand(
-                psOptions->hDstDS, psOptions->panDstBands[iBand] );
-            GDALRasterBandH hSrcBand = GDALGetRasterBand(
-                psOptions->hSrcDS, psOptions->panSrcBands[iBand] );
-
-            if( hDstBand != NULL )
-                psOptions->eWorkingDataType =
-                    GDALDataTypeUnion( psOptions->eWorkingDataType,
-                                       GDALGetRasterDataType( hDstBand ) );
-
-            if( hSrcBand != NULL
-                && psOptions->padfSrcNoDataReal != NULL )
-            {
-                bool bMergeSource = false;
-
-                if( psOptions->padfSrcNoDataImag != NULL
-                    && psOptions->padfSrcNoDataImag[iBand] != 0.0
-                    && !GDALDataTypeIsComplex( psOptions->eWorkingDataType ) )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] < 0.0
-                         && (psOptions->eWorkingDataType == GDT_Byte
-                             || psOptions->eWorkingDataType == GDT_UInt16
-                             || psOptions->eWorkingDataType == GDT_UInt32) )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] < -32768.0
-                         && psOptions->eWorkingDataType == GDT_Int16 )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] < -2147483648.0
-                         && psOptions->eWorkingDataType == GDT_Int32 )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] > 256
-                         && psOptions->eWorkingDataType == GDT_Byte )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] > 32767
-                         && psOptions->eWorkingDataType == GDT_Int16 )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] > 65535
-                         && psOptions->eWorkingDataType == GDT_UInt16 )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] > 2147483648.0
-                         && psOptions->eWorkingDataType == GDT_Int32 )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] > 4294967295.0
-                         && psOptions->eWorkingDataType == GDT_UInt32 )
-                    bMergeSource = true;
-
-                if( bMergeSource )
-                    psOptions->eWorkingDataType =
-                        GDALDataTypeUnion( psOptions->eWorkingDataType,
-                                           GDALGetRasterDataType( hSrcBand ) );
-            }
-        }
-    }
+    GDALWarpResolveWorkingDataType(psOptions);
 
 /* -------------------------------------------------------------------- */
 /*      Default memory available.                                       */

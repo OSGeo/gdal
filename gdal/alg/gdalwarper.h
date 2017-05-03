@@ -241,6 +241,9 @@ void CPL_DLL CPL_STDCALL
 GDALWarpInitSrcNoDataImag( GDALWarpOptions *, double dNoDataImag );
 
 void CPL_DLL CPL_STDCALL
+GDALWarpResolveWorkingDataType( GDALWarpOptions * );
+
+void CPL_DLL CPL_STDCALL
 GDALWarpInitDefaultBandMapping( GDALWarpOptions *, int nBandCount );
 
 /*! @cond Doxygen_Suppress */

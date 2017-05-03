@@ -1417,6 +1417,94 @@ GDALWarpInitSrcNoDataImag( GDALWarpOptions * psOptionsIn, double dNoDataImag )
 }
 
 /************************************************************************/
+/*                      GDALWarpResolveWorkingDataType()                */
+/************************************************************************/
+
+/**
+ * \brief If the working data type is unknown, this method will determine
+ *  a valid working data type to support the data in the src and dest
+ *  data sets and any noData values. 
+ *
+ * @param psOptions options to initialize.
+ * 
+ */
+void CPL_STDCALL
+GDALWarpResolveWorkingDataType( GDALWarpOptions *psOptions )
+{
+    if( psOptions == NULL ) { return; }
+/* -------------------------------------------------------------------- */
+/*      If no working data type was provided, set one now.              */
+/*                                                                      */
+/*      Ensure that the working data type can encapsulate any value     */
+/*      in the target, source, and the no data for either.              */
+/* -------------------------------------------------------------------- */
+    if( psOptions->eWorkingDataType != GDT_Unknown ) { return; }
+
+    
+    psOptions->eWorkingDataType = GDT_Byte;
+
+    for( int iBand = 0; iBand < psOptions->nBandCount; iBand++ )
+    {
+        if( psOptions->hDstDS != NULL)
+        {
+            GDALRasterBandH hDstBand = GDALGetRasterBand(
+                psOptions->hDstDS, psOptions->panDstBands[iBand] );
+            
+            if( hDstBand != NULL )
+            {
+                psOptions->eWorkingDataType =
+                    GDALDataTypeUnion( psOptions->eWorkingDataType,
+                                        GDALGetRasterDataType( hDstBand ) );
+            }
+        }
+        else if( psOptions->hSrcDS != NULL )
+        {
+            GDALRasterBandH hSrcBand = GDALGetRasterBand(
+                psOptions->hSrcDS, psOptions->panSrcBands[iBand] );
+
+            if( hSrcBand != NULL)
+            {
+                psOptions->eWorkingDataType =
+                    GDALDataTypeUnion( psOptions->eWorkingDataType,
+                                        GDALGetRasterDataType( hSrcBand ) );
+            }
+        }
+
+        if( psOptions->padfSrcNoDataReal != NULL )
+        {
+            psOptions->eWorkingDataType = GDALDataTypeUnionWithValue( 
+                psOptions->eWorkingDataType, 
+                psOptions->padfSrcNoDataReal[iBand], 
+                false );
+        }
+
+        if( psOptions->padfSrcNoDataImag != NULL )
+        {
+           psOptions->eWorkingDataType = GDALDataTypeUnionWithValue( 
+                psOptions->eWorkingDataType, 
+                psOptions->padfSrcNoDataImag[iBand], 
+                true );
+        }
+
+        if( psOptions->padfDstNoDataReal != NULL )
+        {
+            psOptions->eWorkingDataType = GDALDataTypeUnionWithValue( 
+                psOptions->eWorkingDataType, 
+                psOptions->padfDstNoDataReal[iBand], 
+                false );
+        }
+
+        if( psOptions->padfDstNoDataImag != NULL )
+        {
+            psOptions->eWorkingDataType = GDALDataTypeUnionWithValue( 
+                psOptions->eWorkingDataType, 
+                psOptions->padfDstNoDataImag[iBand], 
+                true );
+        }
+    }
+}
+
+/************************************************************************/
 /*                      GDALWarpInitDefaultBandMapping()                */
 /************************************************************************/
 
