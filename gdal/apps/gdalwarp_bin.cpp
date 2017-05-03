@@ -268,7 +268,7 @@ id,WKT
 - (GDAL &gt;= 2.2) To transform a DEM from geoid elevations (using EGM96) to WGS84 ellipsoidal heights:<p>
 
 \verbatim
-gdalwarp -override in_dem.tif out_dem.tif -s_srs EPSG:4326+5773 -t_srs EPSG:4979
+gdalwarp -overwrite in_dem.tif out_dem.tif -s_srs EPSG:4326+5773 -t_srs EPSG:4979
 \endverbatim
 
 <p>
