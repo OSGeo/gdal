@@ -66,7 +66,8 @@ def test_gdalsrsinfo_2():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
                                    ' -o proj4 ../gcore/data/byte.tif')
 
-    if ret.strip() != "'+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs '":
+    if ret.strip() != "+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs":
+        print(ret.strip())
         return 'fail'
 
     return 'success'
@@ -313,7 +314,7 @@ def test_gdalsrsinfo_14():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
                                    ' -o proj4 /vsizip/../gcore/data/byte.tif.zip')
 
-    if ret.strip() != "'+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs '":
+    if ret.strip() != "+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs":
         return 'fail'
 
     return 'success'
@@ -328,7 +329,7 @@ def test_gdalsrsinfo_14bis():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
                                    ' -o proj4 ../ogr/data/Stacks.shp')
 
-    if ret.strip() != "'+proj=lcc +lat_1=28.38333333333333 +lat_2=30.28333333333334 +lat_0=27.83333333333333 +lon_0=-99 +x_0=600000.0000000001 +y_0=4000000 +datum=NAD83 +units=us-ft +no_defs '":
+    if ret.strip() != "+proj=lcc +lat_1=28.38333333333333 +lat_2=30.28333333333334 +lat_0=27.83333333333333 +lon_0=-99 +x_0=600000.0000000001 +y_0=4000000 +datum=NAD83 +units=us-ft +no_defs":
         return 'fail'
 
     return 'success'
@@ -343,7 +344,7 @@ def test_gdalsrsinfo_15():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
                                    ' -o proj4 ../osr/data/lcc_esri.prj')
 
-    if ret.strip() != "'+proj=lcc +lat_1=34.33333333333334 +lat_2=36.16666666666666 +lat_0=33.75 +lon_0=-79 +x_0=609601.22 +y_0=0 +datum=NAD83 +units=m +no_defs '":
+    if ret.strip() != "+proj=lcc +lat_1=34.33333333333334 +lat_2=36.16666666666666 +lat_0=33.75 +lon_0=-79 +x_0=609601.22 +y_0=0 +datum=NAD83 +units=m +no_defs":
         return 'fail'
 
     return 'success'

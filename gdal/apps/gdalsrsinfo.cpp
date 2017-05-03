@@ -384,7 +384,7 @@ CPLErr PrintSRS( const OGRSpatialReference &oSRS,
     if ( EQUAL("proj4", pszOutputType ) ) {
         if ( bPrintSep ) printf( "PROJ.4 : ");
         oSRS.exportToProj4( &pszOutput );
-        printf( "\'%s\'\n", pszOutput );
+        printf( "%s\n", pszOutput );
     }
 
     else if ( EQUAL("wkt", pszOutputType ) ) {
