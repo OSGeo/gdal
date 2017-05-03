@@ -225,6 +225,27 @@ void CPL_DLL CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions * );
 GDALWarpOptions CPL_DLL * CPL_STDCALL
 GDALCloneWarpOptions( const GDALWarpOptions * );
 
+void CPL_DLL CPL_STDCALL 
+GDALWarpInitDstNoDataReal( GDALWarpOptions *, double dNoDataReal );
+
+void CPL_DLL CPL_STDCALL 
+GDALWarpInitSrcNoDataReal( GDALWarpOptions *, double dNoDataReal );
+
+void CPL_DLL CPL_STDCALL 
+GDALWarpInitNoDataReal( GDALWarpOptions *, double dNoDataReal );
+
+void CPL_DLL CPL_STDCALL 
+GDALWarpInitDstNoDataImag( GDALWarpOptions *, double dNoDataImag );
+
+void CPL_DLL CPL_STDCALL 
+GDALWarpInitSrcNoDataImag( GDALWarpOptions *, double dNoDataImag );
+
+void CPL_DLL CPL_STDCALL
+GDALWarpResolveWorkingDataType( GDALWarpOptions * );
+
+void CPL_DLL CPL_STDCALL
+GDALWarpInitDefaultBandMapping( GDALWarpOptions *, int nBandCount );
+
 /*! @cond Doxygen_Suppress */
 CPLXMLNode CPL_DLL * CPL_STDCALL
       GDALSerializeWarpOptions( const GDALWarpOptions * );
@@ -453,6 +474,9 @@ public:
     virtual        ~GDALWarpOperation();
 
     CPLErr          Initialize( const GDALWarpOptions *psNewOptions );
+    void*           CreateDestinationBuffer( int nDstXSize, int nDstYSize, 
+                                             int *pbWasInitialized = NULL );
+    static void     DestroyDestinationBuffer(void* pDstBuffer);
 
     const GDALWarpOptions         *GetOptions();
 

@@ -470,90 +470,11 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
         && GDALGetRasterCount( psOptions->hSrcDS )
         == GDALGetRasterCount( psOptions->hDstDS ) )
     {
-        psOptions->nBandCount = GDALGetRasterCount( psOptions->hSrcDS );
-
-        psOptions->panSrcBands = static_cast<int *>(
-            CPLMalloc(sizeof(int) * psOptions->nBandCount));
-        psOptions->panDstBands = static_cast<int *>(
-            CPLMalloc(sizeof(int) * psOptions->nBandCount));
-
-        for( int i = 0; i < psOptions->nBandCount; i++ )
-        {
-            psOptions->panSrcBands[i] = i+1;
-            psOptions->panDstBands[i] = i+1;
-        }
+        GDALWarpInitDefaultBandMapping( 
+            psOptions, GDALGetRasterCount( psOptions->hSrcDS ) );
     }
 
-/* -------------------------------------------------------------------- */
-/*      If no working data type was provided, set one now.              */
-/*                                                                      */
-/*      Default to the highest resolution output band.  But if the      */
-/*      input band is higher resolution and has a nodata value "out     */
-/*      of band" with the output type we may need to use the higher     */
-/*      resolution input type to ensure we can identify nodata values.  */
-/* -------------------------------------------------------------------- */
-    if( psOptions->eWorkingDataType == GDT_Unknown
-        && psOptions->hSrcDS != NULL
-        && psOptions->hDstDS != NULL
-        && psOptions->nBandCount >= 1 )
-    {
-        psOptions->eWorkingDataType = GDT_Byte;
-
-        for( int iBand = 0; iBand < psOptions->nBandCount; iBand++ )
-        {
-            GDALRasterBandH hDstBand = GDALGetRasterBand(
-                psOptions->hDstDS, psOptions->panDstBands[iBand] );
-            GDALRasterBandH hSrcBand = GDALGetRasterBand(
-                psOptions->hSrcDS, psOptions->panSrcBands[iBand] );
-
-            if( hDstBand != NULL )
-                psOptions->eWorkingDataType =
-                    GDALDataTypeUnion( psOptions->eWorkingDataType,
-                                       GDALGetRasterDataType( hDstBand ) );
-
-            if( hSrcBand != NULL
-                && psOptions->padfSrcNoDataReal != NULL )
-            {
-                bool bMergeSource = false;
-
-                if( psOptions->padfSrcNoDataImag != NULL
-                    && psOptions->padfSrcNoDataImag[iBand] != 0.0
-                    && !GDALDataTypeIsComplex( psOptions->eWorkingDataType ) )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] < 0.0
-                         && (psOptions->eWorkingDataType == GDT_Byte
-                             || psOptions->eWorkingDataType == GDT_UInt16
-                             || psOptions->eWorkingDataType == GDT_UInt32) )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] < -32768.0
-                         && psOptions->eWorkingDataType == GDT_Int16 )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] < -2147483648.0
-                         && psOptions->eWorkingDataType == GDT_Int32 )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] > 256
-                         && psOptions->eWorkingDataType == GDT_Byte )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] > 32767
-                         && psOptions->eWorkingDataType == GDT_Int16 )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] > 65535
-                         && psOptions->eWorkingDataType == GDT_UInt16 )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] > 2147483648.0
-                         && psOptions->eWorkingDataType == GDT_Int32 )
-                    bMergeSource = true;
-                else if( psOptions->padfSrcNoDataReal[iBand] > 4294967295.0
-                         && psOptions->eWorkingDataType == GDT_UInt32 )
-                    bMergeSource = true;
-
-                if( bMergeSource )
-                    psOptions->eWorkingDataType =
-                        GDALDataTypeUnion( psOptions->eWorkingDataType,
-                                           GDALGetRasterDataType( hSrcBand ) );
-            }
-        }
-    }
+    GDALWarpResolveWorkingDataType(psOptions);
 
 /* -------------------------------------------------------------------- */
 /*      Default memory available.                                       */
@@ -647,6 +568,143 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
     }
 
     return eErr;
+}
+
+/**
+ * \fn void* GDALWarpOperation::CreateDestinationBuffer(
+            int nDstXSize, int nDstYSize, int *pbInitialized);
+ *
+ * This method creates a destination buffer for use with WarpRegionToBuffer.
+ * The output is initialized based on the INIT_DEST settings.
+ *
+ * @param nDstXSize Width of output window on destination buffer to be produced.
+ * @param nDstYSize Height of output window on destination buffer to be produced.
+ * @param pbInitialized Filled with boolean indicating if the buffer was initialized.
+ *
+ * @return Buffer capable for use as a warp operation output destination
+ */
+void* GDALWarpOperation::CreateDestinationBuffer(
+    int nDstXSize, int nDstYSize, int *pbInitialized)
+{
+
+/* -------------------------------------------------------------------- */
+/*      Allocate block of memory large enough to hold all the bands     */
+/*      for this block.                                                 */
+/* -------------------------------------------------------------------- */
+    const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
+    const int nBandSize = nWordSize * nDstXSize * nDstYSize;
+
+    if( nDstXSize > INT_MAX / nDstYSize ||
+        nDstXSize * nDstYSize > INT_MAX / (nWordSize * psOptions->nBandCount) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Integer overflow : nDstXSize=%d, nDstYSize=%d",
+                  nDstXSize, nDstYSize);
+        return NULL;
+    }
+
+    void *pDstBuffer = VSI_MALLOC_VERBOSE( nBandSize * psOptions->nBandCount );
+    if( pDstBuffer == NULL )
+    {
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize if requested in the options                                 */
+/* -------------------------------------------------------------------- */
+    const char *pszInitDest = CSLFetchNameValue( psOptions->papszWarpOptions,
+                                                 "INIT_DEST" );
+
+    if( pszInitDest == NULL || EQUAL(pszInitDest, "") ) 
+    {
+        if( pbInitialized != NULL )
+        {
+            *pbInitialized = FALSE;
+        } 
+        
+        return pDstBuffer; 
+    }
+
+
+    if( pbInitialized != NULL )
+    {
+        *pbInitialized = TRUE;
+    }
+
+    char **papszInitValues =
+            CSLTokenizeStringComplex( pszInitDest, ",", FALSE, FALSE );
+    const int nInitCount = CSLCount(papszInitValues);
+
+    for( int iBand = 0; iBand < psOptions->nBandCount; iBand++ )
+    {
+        double adfInitRealImag[2] = { 0.0, 0.0 };
+        const char *pszBandInit =
+            papszInitValues[std::min(iBand, nInitCount - 1)];
+
+        if( EQUAL(pszBandInit, "NO_DATA")
+            && psOptions->padfDstNoDataReal != NULL )
+        {
+            adfInitRealImag[0] = psOptions->padfDstNoDataReal[iBand];
+            if( psOptions->padfDstNoDataImag != NULL )
+            {
+                adfInitRealImag[1] = psOptions->padfDstNoDataImag[iBand];
+            }
+        }
+        else
+        {
+            CPLStringToComplex( pszBandInit,
+                                adfInitRealImag + 0, adfInitRealImag + 1);
+        }
+
+        GByte *pBandData =
+            static_cast<GByte *>(pDstBuffer) + iBand * nBandSize;
+
+        if( psOptions->eWorkingDataType == GDT_Byte )
+        {
+            memset( pBandData,
+                    std::max(
+                        0, std::min(255,
+                                    static_cast<int>(adfInitRealImag[0]))),
+                    nBandSize);
+        }
+        else if( !CPLIsNan(adfInitRealImag[0]) && adfInitRealImag[0] == 0.0 &&
+                 !CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0 )
+        {
+            memset( pBandData, 0, nBandSize );
+        }
+        else if( !CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0 )
+        {
+            GDALCopyWords( &adfInitRealImag, GDT_Float64, 0,
+                            pBandData, psOptions->eWorkingDataType,
+                            nWordSize,
+                            nDstXSize * nDstYSize );
+        }
+        else
+        {
+            GDALCopyWords( &adfInitRealImag, GDT_CFloat64, 0,
+                            pBandData, psOptions->eWorkingDataType,
+                            nWordSize,
+                            nDstXSize * nDstYSize );
+        }
+    }
+
+    CSLDestroy( papszInitValues );
+
+    return pDstBuffer;
+}
+
+
+/**
+ * \fn void GDALWarpOperation::DestroyDestinationBuffer( void *pDstBuffer )
+ *
+ * This method destroys a buffer previously retrieved from CreateDestinationBuffer
+ *
+ * @param pDstBuffer destination buffer to be destroyed
+ *
+ */
+void GDALWarpOperation::DestroyDestinationBuffer( void *pDstBuffer )
+{
+    VSIFree( pDstBuffer );
 }
 
 /************************************************************************/
@@ -1376,97 +1434,11 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
 /*      Allocate the output buffer.                                     */
 /* -------------------------------------------------------------------- */
-    const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
-    const int nBandSize = nWordSize * nDstXSize * nDstYSize;
-
-    if( nDstXSize > INT_MAX / nDstYSize ||
-        nDstXSize * nDstYSize > INT_MAX / (nWordSize * psOptions->nBandCount) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Integer overflow : nDstXSize=%d, nDstYSize=%d",
-                  nDstXSize, nDstYSize);
-        return CE_Failure;
-    }
-
-    void *pDstBuffer = VSI_MALLOC_VERBOSE( nBandSize * psOptions->nBandCount );
+    int bDstBufferInitialized = FALSE;
+    void *pDstBuffer = CreateDestinationBuffer(nDstXSize, nDstYSize, &bDstBufferInitialized); 
     if( pDstBuffer == NULL )
     {
         return CE_Failure;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If the INIT_DEST option is given the initialize the output      */
-/*      destination buffer to the indicated value without reading it    */
-/*      from the hDstDS.  This is sometimes used to optimize            */
-/*      operation to a new output file ... it doesn't have to           */
-/*      written out and read back for nothing.                          */
-/* NOTE:The following code is 99% similar in gdalwarpoperation.cpp and  */
-/*      vrtwarped.cpp. Be careful to keep it in sync !                  */
-/* -------------------------------------------------------------------- */
-    const char *pszInitDest = CSLFetchNameValue( psOptions->papszWarpOptions,
-                                                 "INIT_DEST" );
-
-    if( pszInitDest != NULL && !EQUAL(pszInitDest, "") )
-    {
-        char **papszInitValues =
-            CSLTokenizeStringComplex( pszInitDest, ",", FALSE, FALSE );
-        const int nInitCount = CSLCount(papszInitValues);
-
-        for( int iBand = 0; iBand < psOptions->nBandCount; iBand++ )
-        {
-            double adfInitRealImag[2] = { 0.0, 0.0 };
-            const char *pszBandInit =
-                papszInitValues[std::min(iBand, nInitCount - 1)];
-
-            if( EQUAL(pszBandInit, "NO_DATA")
-                && psOptions->padfDstNoDataReal != NULL )
-            {
-                adfInitRealImag[0] = psOptions->padfDstNoDataReal[iBand];
-                if( psOptions->padfDstNoDataImag != NULL )
-                {
-                    adfInitRealImag[1] = psOptions->padfDstNoDataImag[iBand];
-                }
-            }
-            else
-            {
-                CPLStringToComplex( pszBandInit,
-                                    adfInitRealImag + 0, adfInitRealImag + 1);
-            }
-
-            GByte *pBandData =
-                static_cast<GByte *>(pDstBuffer) + iBand * nBandSize;
-
-            if( psOptions->eWorkingDataType == GDT_Byte )
-                memset( pBandData,
-                        std::max(
-                            0, std::min(255,
-                                        static_cast<int>(adfInitRealImag[0]))),
-                        nBandSize);
-            else if( !CPLIsNan(adfInitRealImag[0]) &&
-                     adfInitRealImag[0] == 0.0 &&
-                     !CPLIsNan(adfInitRealImag[1]) &&
-                     adfInitRealImag[1] == 0.0 )
-            {
-                memset( pBandData, 0, nBandSize );
-            }
-            else if( !CPLIsNan(adfInitRealImag[1]) &&
-                     adfInitRealImag[1] == 0.0 )
-            {
-                GDALCopyWords( &adfInitRealImag, GDT_Float64, 0,
-                               pBandData, psOptions->eWorkingDataType,
-                               nWordSize,
-                               nDstXSize * nDstYSize );
-            }
-            else
-            {
-                GDALCopyWords( &adfInitRealImag, GDT_CFloat64, 0,
-                               pBandData, psOptions->eWorkingDataType,
-                               nWordSize,
-                               nDstXSize * nDstYSize );
-            }
-        }
-
-        CSLDestroy( papszInitValues );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1474,7 +1446,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /*      then read it from disk so we can overlay on existing imagery.   */
 /* -------------------------------------------------------------------- */
     GDALDataset* poDstDS = reinterpret_cast<GDALDataset*>(psOptions->hDstDS);
-    if( pszInitDest == NULL )
+    if( !bDstBufferInitialized )
     {
         CPLErr eErr = CE_None;
         if( psOptions->nBandCount == 1 )
@@ -1502,7 +1474,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 
         if( eErr != CE_None )
         {
-            CPLFree( pDstBuffer );
+            DestroyDestinationBuffer(pDstBuffer);
             return eErr;
         }
 
@@ -1562,7 +1534,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
 /*      Cleanup and return.                                             */
 /* -------------------------------------------------------------------- */
-    VSIFree( pDstBuffer );
+    DestroyDestinationBuffer( pDstBuffer );
 
     return eErr;
 }

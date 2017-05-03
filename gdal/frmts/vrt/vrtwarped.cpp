@@ -120,19 +120,35 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
 
     psWO->hSrcDS = hSrcDS;
 
-    psWO->nBandCount = GDALGetRasterCount( hSrcDS );
-    psWO->panSrcBands = static_cast<int *>(
-        CPLMalloc( sizeof(int) * psWO->nBandCount ) );
-    psWO->panDstBands = static_cast<int *>(
-        CPLMalloc( sizeof(int) * psWO->nBandCount ) );
+    GDALWarpInitDefaultBandMapping( psWO, GDALGetRasterCount( hSrcDS ) );
 
+/* -------------------------------------------------------------------- */
+/*      Setup no data values                                            */
+/* -------------------------------------------------------------------- */
     for( int i = 0; i < psWO->nBandCount; i++ )
     {
-        psWO->panSrcBands[i] = i+1;
-        psWO->panDstBands[i] = i+1;
+        GDALRasterBandH rasterBand = GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[i]);
+        
+        int hasNoDataValue;
+        double noDataValue = GDALGetRasterNoDataValue(rasterBand, &hasNoDataValue);
+
+        if( hasNoDataValue )
+        {
+            GDALWarpInitNoDataReal(psWO, -1e10);
+            
+            psWO->padfSrcNoDataReal[i] = noDataValue;
+            psWO->padfDstNoDataReal[i] = noDataValue;
+        }
     }
 
-    /* TODO: should fill in no data where available */
+    if( psWO->padfDstNoDataReal != NULL )
+    {
+        if (CSLFetchNameValue( psWO->papszWarpOptions, "INIT_DEST" ) == NULL)
+        {
+            psWO->papszWarpOptions =
+                CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "NO_DATA");
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the transformer.                                         */
@@ -245,6 +261,7 @@ GDALCreateWarpedVRT( GDALDatasetH hSrcDS,
 
 {
     VALIDATE_POINTER1( hSrcDS, "GDALCreateWarpedVRT", NULL );
+    VALIDATE_POINTER1( psOptions, "GDALCreateWarpedVRT", NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Create the VRTDataset and populate it with bands.               */
@@ -252,28 +269,31 @@ GDALCreateWarpedVRT( GDALDatasetH hSrcDS,
     VRTWarpedDataset *poDS = new VRTWarpedDataset( nPixels, nLines );
 
     psOptions->hDstDS = poDS;
-
     poDS->SetGeoTransform( padfGeoTransform );
+
+    GDALWarpResolveWorkingDataType(psOptions);
 
     for( int i = 0; i < psOptions->nBandCount; i++ )
     {
-        GDALRasterBand *poSrcBand = static_cast<GDALRasterBand *>(
-            GDALGetRasterBand( hSrcDS, i+1 ) );
-
-        poDS->AddBand( poSrcBand->GetRasterDataType(), NULL );
+        int nDstBand = psOptions->panDstBands[i];
+        while( poDS->GetRasterCount() < nDstBand )
+        {   
+            poDS->AddBand( psOptions->eWorkingDataType, NULL );
+        }
 
         VRTWarpedRasterBand *poBand = static_cast<VRTWarpedRasterBand *>(
-            poDS->GetRasterBand( i+1 ) );
+            poDS->GetRasterBand( nDstBand ) );
+        GDALRasterBand *poSrcBand = static_cast<GDALRasterBand *>(
+            GDALGetRasterBand( hSrcDS, psOptions->panSrcBands[i] ) );
+
         poBand->CopyCommonInfoFrom( poSrcBand );
     }
 
-    if( psOptions->nDstAlphaBand == psOptions->nBandCount + 1 )
+    while( poDS->GetRasterCount() < psOptions->nDstAlphaBand )
     {
-        GDALRasterBand *poSrcBand = reinterpret_cast<GDALRasterBand *>(
-            GDALGetRasterBand( hSrcDS, 1) );
-        poDS->AddBand( poSrcBand->GetRasterDataType(), NULL );
+        poDS->AddBand( psOptions->eWorkingDataType, NULL );
     }
-
+    
 /* -------------------------------------------------------------------- */
 /*      Initialize the warp on the VRTWarpedDataset.                    */
 /* -------------------------------------------------------------------- */
@@ -440,7 +460,7 @@ CPLErr VRTWarpedDataset::Initialize( void *psWO )
         = GDALCloneWarpOptions(static_cast<GDALWarpOptions *>( psWO ) );
 
     /* Avoid errors when adding an alpha band, but source dataset has */
-    /* no alpha band (#4571) */
+    /* no alpha band (#4571), and generally don't leave our buffer uninitialized */
     if (CSLFetchNameValue( psWO_Dup->papszWarpOptions, "INIT_DEST" ) == NULL)
         psWO_Dup->papszWarpOptions =
             CSLSetNameValue(psWO_Dup->papszWarpOptions, "INIT_DEST", "0");
@@ -1481,14 +1501,6 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
     if( m_poWarper == NULL )
         return CE_Failure;
 
-    const GDALWarpOptions *psWO = m_poWarper->GetOptions();
-
-/* -------------------------------------------------------------------- */
-/*      Allocate block of memory large enough to hold all the bands     */
-/*      for this block.                                                 */
-/* -------------------------------------------------------------------- */
-    const int nWordSize = GDALGetDataTypeSizeBytes(psWO->eWorkingDataType);
-
     int nReqXSize = m_nBlockXSize;
     if( iBlockX * m_nBlockXSize + nReqXSize > nRasterXSize )
         nReqXSize = nRasterXSize - iBlockX * m_nBlockXSize;
@@ -1496,97 +1508,19 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
     if( iBlockY * m_nBlockYSize + nReqYSize > nRasterYSize )
         nReqYSize = nRasterYSize - iBlockY * m_nBlockYSize;
 
-    // FIXME? : risk of overflow in multiplication if nReqXSize or
-    // nReqYSize are very large.
-    const int nDstBufferSize
-        = nReqXSize * nReqYSize * psWO->nBandCount * nWordSize;
-
     GByte *pabyDstBuffer = static_cast<GByte *>(
-        VSI_MALLOC_VERBOSE(nDstBufferSize) );
+        m_poWarper->CreateDestinationBuffer(nReqXSize, nReqYSize));
 
     if( pabyDstBuffer == NULL )
     {
         return CE_Failure;
     }
 
-    memset( pabyDstBuffer, 0, nDstBufferSize );
-
-/* -------------------------------------------------------------------- */
-/*      Process INIT_DEST option to initialize the buffer prior to      */
-/*      warping into it.                                                */
-/* NOTE:The following code is 99% similar in gdalwarpoperation.cpp and  */
-/*      vrtwarped.cpp. Be careful to keep it in sync !                  */
-/* -------------------------------------------------------------------- */
-    const char *pszInitDest = CSLFetchNameValue( psWO->papszWarpOptions,
-                                                 "INIT_DEST" );
-
-    if( pszInitDest != NULL && !EQUAL(pszInitDest, "") )
-    {
-        char **papszInitValues =
-            CSLTokenizeStringComplex( pszInitDest, ",", FALSE, FALSE );
-        const int nInitCount = CSLCount(papszInitValues);
-        const int nBandSize = nReqXSize * nReqYSize * nWordSize;
-
-        for( int iBand = 0; iBand < psWO->nBandCount; iBand++ )
-        {
-            const char *pszBandInit
-                = papszInitValues[std::min( iBand, nInitCount - 1 )];
-
-            double adfInitRealImag[2] = { 0.0, 0.0 };
-            if( EQUAL(pszBandInit,"NO_DATA")
-                && psWO->padfDstNoDataReal != NULL )
-            {
-                adfInitRealImag[0] = psWO->padfDstNoDataReal[iBand];
-                if( psWO->padfDstNoDataImag != NULL )
-                {
-                    adfInitRealImag[1] = psWO->padfDstNoDataImag[iBand];
-                }
-            }
-            else
-            {
-                CPLStringToComplex( pszBandInit,
-                                    adfInitRealImag + 0, adfInitRealImag + 1);
-            }
-
-            GByte *pBandData = reinterpret_cast<GByte *>(
-                pabyDstBuffer ) + iBand * nBandSize;
-
-            if( psWO->eWorkingDataType == GDT_Byte )
-                memset( pBandData,
-                        std::max( 0,
-                                  std::min( 255,
-                                            static_cast<int>(
-                                                adfInitRealImag[0] ) ) ),
-                        nBandSize);
-            else if( !CPLIsNan(adfInitRealImag[0]) &&
-                     adfInitRealImag[0] == 0.0 &&
-                     !CPLIsNan(adfInitRealImag[1]) &&
-                     adfInitRealImag[1] == 0.0 )
-            {
-                memset( pBandData, 0, nBandSize );
-            }
-            else if( !CPLIsNan(adfInitRealImag[1]) &&
-                     adfInitRealImag[1] == 0.0 )
-            {
-                GDALCopyWords( &adfInitRealImag, GDT_Float64, 0,
-                               pBandData,psWO->eWorkingDataType,nWordSize,
-                               nReqXSize * nReqYSize );
-            }
-            else
-            {
-                GDALCopyWords( &adfInitRealImag, GDT_CFloat64, 0,
-                               pBandData,psWO->eWorkingDataType,nWordSize,
-                               nReqXSize * nReqYSize );
-            }
-        }
-
-        CSLDestroy( papszInitValues );
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Warp into this buffer.                                          */
 /* -------------------------------------------------------------------- */
-
+    
+    const GDALWarpOptions *psWO = m_poWarper->GetOptions();
     const CPLErr eErr =
         m_poWarper->WarpRegionToBuffer(
             iBlockX * m_nBlockXSize, iBlockY * m_nBlockYSize,
@@ -1595,18 +1529,25 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
 
     if( eErr != CE_None )
     {
-        VSIFree( pabyDstBuffer );
+        m_poWarper->DestroyDestinationBuffer(pabyDstBuffer);
         return eErr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Copy out into cache blocks for each band.                       */
 /* -------------------------------------------------------------------- */
-    for( int iBand = 0; iBand < std::min(nBands, psWO->nBandCount); iBand++ )
+    const int nWordSize = GDALGetDataTypeSizeBytes(psWO->eWorkingDataType);
+    for( int i = 0; i < psWO->nBandCount; i++ )
     {
-        GDALRasterBand *poBand = GetRasterBand(iBand+1);
+        int nDstBand = psWO->panDstBands[i];
+        if( GetRasterCount() < nDstBand ) { continue; }
+
+        GDALRasterBand *poBand = GetRasterBand(nDstBand);
         GDALRasterBlock *poBlock
             = poBand->GetLockedBlockRef( iBlockX, iBlockY, TRUE );
+
+        const GByte* pabyDstBandBuffer = 
+            pabyDstBuffer + i*nReqXSize*nReqYSize*nWordSize;
 
         if( poBlock != NULL )
         {
@@ -1615,8 +1556,7 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
                 if( nReqXSize == m_nBlockXSize && nReqYSize == m_nBlockYSize )
                 {
                     GDALCopyWords(
-                        pabyDstBuffer +
-                        iBand*m_nBlockXSize*m_nBlockYSize*nWordSize,
+                        pabyDstBandBuffer,
                         psWO->eWorkingDataType, nWordSize,
                         poBlock->GetDataRef(),
                         poBlock->GetDataType(),
@@ -1625,16 +1565,14 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
                 }
                 else
                 {
-                    GByte* pabyBlock = reinterpret_cast<GByte *>(
+                     GByte* pabyBlock = reinterpret_cast<GByte *>(
                         poBlock->GetDataRef() );
                     const int nDTSize =
                         GDALGetDataTypeSizeBytes(poBlock->GetDataType());
                     for(int iY=0;iY<nReqYSize;iY++)
                     {
                         GDALCopyWords(
-                            pabyDstBuffer +
-                            iBand*nReqXSize*nReqYSize*nWordSize +
-                            iY * nReqXSize*nWordSize,
+                            pabyDstBandBuffer + iY * nReqXSize*nWordSize,
                             psWO->eWorkingDataType, nWordSize,
                             pabyBlock + iY * m_nBlockXSize * nDTSize,
                             poBlock->GetDataType(),
@@ -1648,7 +1586,7 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
         }
     }
 
-    VSIFree( pabyDstBuffer );
+    m_poWarper->DestroyDestinationBuffer(pabyDstBuffer);
 
     return CE_None;
 }
