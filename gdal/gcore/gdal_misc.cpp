@@ -66,10 +66,11 @@ static int GetMinBitsForPair(const bool pabSigned[], const int panBits[])
         const int nUnsignedTypeIndex = pabSigned[0] ? 1 : 0;
         const int nSignedTypeIndex = pabSigned[0] ? 0 : 1;
 
-        return std::max(panBits[nSignedTypeIndex], 2 * panBits[nUnsignedTypeIndex]);
+        return std::max(panBits[nSignedTypeIndex],
+                        2 * panBits[nUnsignedTypeIndex]);
     }
-    
-    return std::max(panBits[0], panBits[1]); 
+
+    return std::max(panBits[0], panBits[1]);
 }
 
 /************************************************************************/
@@ -90,28 +91,28 @@ GDALDataType CPL_STDCALL
 GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 
 {
-    const int panBits[] = { 
-        GDALGetDataTypeSizeBits( eType1 ), 
-        GDALGetDataTypeSizeBits( eType2 ) 
+    const int panBits[] = {
+        GDALGetDataTypeSizeBits(eType1),
+        GDALGetDataTypeSizeBits(eType2)
     };
 
-    if(panBits[0] == 0 || panBits[1] == 0)
+    if( panBits[0] == 0 || panBits[1] == 0 )
         return GDT_Unknown;
-    
-    const bool pabSigned[] = { 
-        CPL_TO_BOOL( GDALDataTypeIsSigned( eType1 ) ),
-        CPL_TO_BOOL( GDALDataTypeIsSigned( eType2 ) )
+
+    const bool pabSigned[] = {
+        CPL_TO_BOOL(GDALDataTypeIsSigned(eType1)),
+        CPL_TO_BOOL(GDALDataTypeIsSigned(eType2))
     };
-    
+
     const bool bSigned = pabSigned[0] || pabSigned[1];
     const bool bFloating =
-        CPL_TO_BOOL( GDALDataTypeIsFloating( eType1 ) ) ||
-        CPL_TO_BOOL( GDALDataTypeIsFloating( eType2 ) );
-    const bool bComplex = 
-        CPL_TO_BOOL( GDALDataTypeIsComplex( eType1 ) ) ||
-        CPL_TO_BOOL( GDALDataTypeIsComplex( eType2 ) );
+        CPL_TO_BOOL(GDALDataTypeIsFloating(eType1)) ||
+        CPL_TO_BOOL(GDALDataTypeIsFloating(eType2));
+    const bool bComplex =
+        CPL_TO_BOOL(GDALDataTypeIsComplex(eType1)) ||
+        CPL_TO_BOOL(GDALDataTypeIsComplex(eType2));
 
-    const int nBits = GetMinBitsForPair( pabSigned, panBits );
+    const int nBits = GetMinBitsForPair(pabSigned, panBits);
 
     return GDALFindDataType(nBits, bSigned, bFloating, bComplex);
 }
@@ -130,11 +131,11 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
  * @return a data type able to express eDT and dValue.
  * @since GDAL 2.3
  */
-GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue( 
+GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(
     GDALDataType eDT, double dValue, int bComplex )
 {
-    const GDALDataType eDT2 = GDALFindDataTypeForValue( dValue, bComplex);
-    return GDALDataTypeUnion( eDT, eDT2 );
+    const GDALDataType eDT2 = GDALFindDataTypeForValue(dValue, bComplex);
+    return GDALDataTypeUnion(eDT, eDT2);
 }
 
 /************************************************************************/
@@ -188,12 +189,12 @@ static int GetMinBitsForValue(double dValue)
  * @return a best fit GDALDataType for supporting the requirements
  * @since GDAL 2.3
  */
-GDALDataType CPL_STDCALL GDALFindDataType( 
+GDALDataType CPL_STDCALL GDALFindDataType(
     int nBits, int bSigned, int bFloating, int bComplex )
 {
-    if( bSigned ) { nBits = std::max( nBits, 16 ); }
-    if( bComplex ) { nBits = std::max( nBits, !bSigned ? 32 : 16 ); }
-    if( bFloating ) { nBits = std::max( nBits, !bSigned ? 64 : 32 ); }
+    if( bSigned ) { nBits = std::max(nBits, 16); }
+    if( bComplex ) { nBits = std::max(nBits, !bSigned ? 32 : 16); }
+    if( bFloating ) { nBits = std::max(nBits, !bSigned ? 64 : 32); }
 
     if( nBits <= 8 ) { return GDT_Byte; }
 
@@ -216,10 +217,10 @@ GDALDataType CPL_STDCALL GDALFindDataType(
         if( bSigned ) return GDT_Int32;
         return GDT_UInt32;
     }
-    
+
     if( bComplex )
         return GDT_CFloat64;
-    
+
     return GDT_Float64;
 }
 
@@ -236,7 +237,7 @@ GDALDataType CPL_STDCALL GDALFindDataType(
  * @return a best fit GDALDataType for supporting the value
  * @since GDAL 2.3
  */
-GDALDataType CPL_STDCALL GDALFindDataTypeForValue( 
+GDALDataType CPL_STDCALL GDALFindDataTypeForValue(
     double dValue, int bComplex )
 {
     const bool bFloating = round(dValue) != dValue;
