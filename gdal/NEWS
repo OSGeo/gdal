@@ -69,6 +69,8 @@ Build(Unix):
  * configure: take into account CXXFLAGS and LDFLAGS in a few more cases (cryptopp, podofo, libdap)
  * Vagrant: all lxc and Hyper-V provider support; use vagrant-cachier for package caching
  * configure: update DWG support to work with Teigha libraries
+ * Internal libgeotiff: hide symbols in --with-hide-internal-symbols mode
+ * Shape: do not export Shapelib symbols for builds --with-hide-internal-symbols (#6860)
 
 Build(Windows):
  * Try to avoid confusion between libqhull io.h and mingw own io.h (#6590)
@@ -183,6 +185,7 @@ Utilities:
  * gdalwarp: allow to set UNIFIED_SRC_NODATA=NO to override the default that set it to YES
  * gdalwarp: fix -to SRC_METHOD=NO_GEOTRANSFORM -to DST_METHOD=NO_GEOTRANSFORM mode (#6721)
  * gdalwarp: add support for shifting the values of input DEM when source and/or target SRS references a proj.4 vertical datum shift grid
+ * gdalwarp: fix crash when -multi and -to RPC_DEM are used together (#6869)
  * gdal_translate: when using -projwin with default nearest neighbour resampling, align on integer source pixels (#6610)
  * gdal_translate & gdalwarp: lower the default value of GDAL_MAX_DATASET_POOL_SIZE to 100 on MacOSX (#6604)
  * gdal_translate: avoid useless directory scanning on GeoTIFF files
@@ -237,7 +240,8 @@ DIMAP driver:
 DODS driver:
  * fix crash on URL that are not DODS servers (#6718)
 
-ECRG driver:
+DTED driver:
+ * correctly create files at latitudes -80, -75, -70 and -50 (#6859)
 
 ECW driver:
  * Add option ECW_ALWAYS_UPWARD=TRUE/FALSE  to work around issues with "Downward" oriented images (#6516).
@@ -248,6 +252,9 @@ ENVI driver:
 
 GeoRaster driver:
  * fix report of rotation (#6593)
+ * support for JP2-F compression (#6861)
+ * support direct loading of JPEG-F when blocking=no (#6861)
+ * default blocking increased from 256x256 to 512x512 (#6861)
 
 GPKG driver:
  * implement tiled gridded elevation data extension
@@ -284,6 +291,7 @@ GTiff driver:
  * in COPY_SRC_OVERVIEWS=YES mode, set nodata value on overview bands
  * read GCPs in ESRI <GeodataXform> .aux.xml
  * explicitly write YCbCrSubsampling tag, so as to avoid (latest version of) libtiff to try reading the first strip to guess it. Helps performance for cloud optimized geotiffs
+ * map D_North_American_1927 datum citation name to OGC North_American_Datum_1927 so that datum is properly recognized (#6863)
  * Internal libtiff. Resync with CVS (post 4.0.7)
  * Internal libtiff: fix 1.11 regression that prevents from reading one-strip files that have no StripByteCounts tag (#6490)
 
@@ -319,6 +327,7 @@ HFA driver:
 
 Idrisi driver:
  * use geotransform of source dataset even if it doesn't have a SRS (#6727)
+ * make Create() zero-initialize the .rst file (#6873)
 
 ILWIS driver:
  * avoid IniFile::Load() to set the bChanged flag, so as to avoid a rewrite of files when just opening datasets
@@ -367,6 +376,8 @@ MAP driver:
 
 MBTiles driver:
  * on opening if detecting 3 bands, expose 4 bands since there might be transparent border tiles (#6836)
+ * fix setting of minzoom when computing overviews out of order
+ * do not open .mbtiles that contain vector tiles, which are not supported by the driver
 
 MEM driver:
  * disable R/W mutex for tiny performance increase in resampled RasterIO
@@ -392,8 +403,13 @@ NetCDF driver:
  * fix erroneous detection of a non-longitude X axis as a longitude axis that caused a shift of 360m on the georeferencing (#6759)
  * read/write US_survey_foot unit for linear units of projection
  * apply 'add_offset' and 'scale_factor' on x and y variables when present, such as in files produced by NOAA from the new GOES-16 (GOES-R) satellite (github #200)
+ * add a HONOUR_VALID_RANGE=YES/NO open option to control whether pixel values outside of the validity range should be set to the nodata value (#6857)
+ * fix crash on int64/uint64 dimensions and variables, and add support for them (#6870)
 
 NITF driver:
+ * add support for writing JPEG2000 compressed images with JP2OpenJPEG driver
+ * fix writing with JP2KAK driver (emit codestream only instead of JP2 format)
+ * fix setting of NBPR/NBPC/NPPBH/NPPBV fields for JPEG2000 (fixes #4322); in JP2ECW case, make sure that the default PROFILE=NPJE implies 1024 block size at the NITF level
  * implement creation of RPC00B TRE for RPC metadata in CreateCopy() mode
  * add support for reading&writing _rpc.txt files
  * nitf_spec.xml: Add support for MTIRPB TRE in NITF image segment. Also makes minor change to BLOCKA to include default values (github #127)
@@ -403,6 +419,9 @@ NITF driver:
 NWT_GRD:
  * detect short writes
 
+OpenJPEG driver:
+ * support direct extracting of GeoRaster JP2-F BLOB (#6861)
+ 
 PCIDSK driver:
  * handle Exceptions returned from destructor and check access rights in setters (github #183)
 
@@ -501,6 +520,7 @@ if operating on two layers with same geom dim.
  * OGR SQL: add comparisons on date / datetime (#6810)
  * OGR SQL: increase efficiency of DISTINCT operator
  * OGREnvelope: change initialization to fix issue when getting MULTIPOINT(0 0,1 1) envelope (#6841)
+ * OGRParse: fix parsing logic to avoid false positive detection of string as datetime (#6867)
 
 OGRSpatialReference:
  * Upgrade to EPSG database v9.0 (#6772)
@@ -566,13 +586,16 @@ GeoJSON driver:
  * writer: add a RFC7946=YES creation option (#6705)
  * read and write 'name' and 'description' members at FeatureCollection level
  * fix field type detection when first value of a field is null (#6517)
+ * improve/fix field type promotion
  * fix wrong behaviour when there's a 'id' at Feature level and 'id' or 'ID' field in properties (#6538)
  * in case top level id is a negative integer, put the value in a 'id' attribute (#6538)
  * ESRI Json reader: support multilinestring from esriGeometryPolyline
  * ESRI Json reader: do not set field width of 2147483647 (#6529)
+ * ESRI Json reader: support reading M and ZM geometries
  * Add CPL_json_object_object_get() and use it, to avoid deprecation warnings on json_object_object_get()
  * TopoJSON reader: sanitize invalid polygons (such as found in the 'TopoJSON' layer of http://bl.ocks.org/mbostock/raw/4090846/us.json)
  * writer: fix segfaults on NULL geometry with -lco WRITE_BBOX=YES (#6698)
+ * writer: fix crash if NATIVE_MEDIA_TYPE creation option is specified alone
  * Add support of TopoJSON without 'transform' element (github #192)
  * don't set SRS if 'crs' set to null (github #206)
 
@@ -625,6 +648,9 @@ GPKG driver:
  * use GEOMETRYCOLLECTION instead of GEOMCOLLECTION for SQL and gpkg_geometry_columns.geometry_type_name
  * do not warn if gpkg_metadata extension declared
 
+GPX driver:
+ * ignore wpt/rtept/trkpt with empty content for lat or lon
+
 ILI driver:
  * ILI1: fix crash in JoinSurfaceLayer() when the multicurve of the feature of the poSurfaceLineLayer layer is empty (#6688)
  * ILI1: make polygon reconstruction in Surface layers robust to curves not in natural order (#6728)
@@ -664,6 +690,8 @@ OCI driver:
  * Add options for faster feature loading (#6606)
  * add WORKSPACE open option
  * correctly handle OFTInteger64 case in loader layer (bug found by cppcheck multiCondition)
+ * support for long identifiers (up to 128 long) when running of 12.2 or + (#6866)
+ * OCILOB VSIL driver: new driver to streams in and out of Oracle BLOB as a GDAL large virtual file system (#6861)
 
 ODS driver:
  * fix FID filtering (#6788)
@@ -691,6 +719,7 @@ OSM driver:
 PG driver:
  * fix insertion of binary/bytea content in non-copy mode (#6566)
  * fix errors caused by missing geometry_columns/spatial_ref_sys tables in non PostGIS databases, that prevent reading more than 500 features (QGIS #10904)
+ * avoid errors with field default expressions like 'foo'::text (#6872)
 
 PLScenes driver:
  * add HTTP retry logic (#6655)
@@ -702,6 +731,7 @@ S57 driver:
  * fix crashes if the s57objectclasses.csv resource file contains invalid lines
  * remove data/s57attributes_aml.csv data/s57attributes_iw.csv data/s57objectclasses_aml.csv data/s57objectclasses_iw.csv and move their content into main s57attributes.csv and s57objectclasses.csv files (#6673)
  * Update s57 attributes and object classes according to s-57 reference (github #202)
+ * add POSACC and QUAPOS fields for geometric primitive layers (github #205)
 
 SDE driver:
  * rename driver to OGR_SDE. Fix build (#6714)
@@ -739,6 +769,7 @@ SQLite/Spatialite driver:
  * SQLite/GPKG: change default page_size to 4096 bytes.
  * Update layer statistics for Spatialite 4 DB (#6838)
  * Remove traces of support of SQLite < 3.6.0
+ * SQLite dialect: properly quote column names when needed (github #214)
 
 VFK driver:
  * allow reading multiple VFK files into single DB support amendment VFK files
@@ -796,6 +827,7 @@ Python bindings:
  * fix gdal.DEMProcessingOptions(zeroForFlat=True) (#6775)
  * fix 'import osgeo.gdal_array' with python3 and SWIG 3.0.10 (#6801)
  * allow gdal.FileFromMemBuffer() to use buffer > 2GB (#6828)
+ * accept unicode strings as field name argument in Feature (like SetField, GetField, etc...) and FeatureDefn methods
 
 = GDAL/OGR 2.1.0 Release Notes =
 
