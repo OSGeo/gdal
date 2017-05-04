@@ -606,8 +606,8 @@
 #
 # @note If Fields or Schema|Fields is not given, a default geometry
 # field (Name => '', GeometryType => 'Unknown') is created. If it is
-# given and it contains spatial fields, GeometryType is ignored. The
-# type can be also set with the named parameter.
+# given and it contains spatial fields, both GeometryType and SRS are
+# ignored. The type can be also set with the named parameter.
 #
 # Example:
 # \code
@@ -1008,8 +1008,10 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # @param classifier Anonymous array of format [ $comparison,
 # $classifier ], where $comparison is a string '<', '<=', '>', or '>='
 # and $classifier is an anonymous array of format [ $value,
-# $value|$classifier, $value|$classifier ], where $value is numeric
-# value against which the reclassified value is compared to.
+# $value|$classifier, $value|$classifier ], where $value is a numeric
+# value against which the reclassified value is compared to. If the
+# comparison returns true, then the second $value or $classifier is
+# applied, and if not then the third $value or $classifier.
 # @note Numeric value requires decimal point.
 #
 # In the example below, the real line is divided into ranges
