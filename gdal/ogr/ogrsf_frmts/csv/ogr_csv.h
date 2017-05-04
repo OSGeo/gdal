@@ -33,6 +33,13 @@
 
 #include "ogrsf_frmts.h"
 
+#if defined(_MSC_VER) && _MSC_VER <= 1600 // MSVC <= 2010
+# define GDAL_OVERRIDE
+#else
+# define GDAL_OVERRIDE override
+#endif // MSVC <= 2010
+ 
+
 typedef enum
 {
     OGR_CSV_GEOM_NONE,
@@ -128,7 +135,7 @@ class OGRCSVLayer : public OGRLayer
   public:
     OGRCSVLayer( const char *pszName, VSILFILE *fp, const char *pszFilename,
                  int bNew, int bInWriteMode, char chDelimiter );
-    virtual ~OGRCSVLayer() override;
+    virtual ~OGRCSVLayer() GDAL_OVERRIDE;
 
     const char         *GetFilename() const { return pszFilename; }
     char                GetDelimiter() const { return chDelimiter; }
@@ -199,7 +206,7 @@ class OGRCSVDataSource : public OGRDataSource
 
   public:
                         OGRCSVDataSource();
-                        virtual ~OGRCSVDataSource() override;
+                        virtual ~OGRCSVDataSource() GDAL_OVERRIDE;
 
     int                 Open( const char *pszFilename,
                               int bUpdate, int bForceAccept,
