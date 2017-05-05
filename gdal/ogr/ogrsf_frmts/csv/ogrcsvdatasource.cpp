@@ -912,10 +912,7 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
     {
         bUseCRLF = true;
     }
-    else if( EQUAL(pszCRLFFormat, "LF") )
-    {
-    }
-    else
+    else if( !EQUAL(pszCRLFFormat, "LF") )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "LINEFORMAT=%s not understood, use one of CRLF or LF.",
