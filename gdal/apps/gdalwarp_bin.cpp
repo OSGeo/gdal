@@ -186,8 +186,10 @@ nodata (unset/transparent) pixels. </dd>
 <dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in
 megabytes) that the warp API is allowed to use for caching.</dd>
 <dt> <b>-multi</b>:</dt><dd> Use multithreaded warping implementation.
-Multiple threads will be used to process chunks of image and perform
-input/output operation simultaneously.</dd>
+Two threads will be used to process chunks of image and perform
+input/output operation simultaneously. Note that computation is not
+multithreaded itself. To do that, you can use the -wo NUM_THREADS=val/ALL_CPUS
+option, which can be combined with -multi</dd>
 <dt> <b>-q</b>:</dt><dd> Be quiet.</dd>
 <dt> <b>-of</b> <em>format</em>:</dt><dd> Select the output format. The default is GeoTIFF (GTiff). Use the short format name. </dd>
 <dt> <b>-co</b> <em>"NAME=VALUE"</em>:</dt><dd> passes a creation option to
