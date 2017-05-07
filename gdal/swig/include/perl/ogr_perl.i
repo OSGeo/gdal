@@ -122,6 +122,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
 /* wrapped geometry methods: */
 %rename (_ExportToWkb) ExportToWkb;
+%rename (_GetGeometryRef) GetGeometryRef;
 
 %perlcode %{
 
@@ -475,6 +476,14 @@ sub Feature {
     }
 }
 
+sub Features {
+    my $self = shift;
+    $self->ResetReading;
+    return sub {
+        return $self->GetNextFeature;
+    }
+}
+
 sub ForFeatures {
     my $self = shift;
     my $code = shift;
@@ -485,6 +494,16 @@ sub ForFeatures {
         $code->($f);
         $self->SetFeature($f) if $in_place;
     };
+}
+
+sub Geometries {
+    my $self = shift;
+    $self->ResetReading;
+    return sub {
+        my $f = $self->GetNextFeature;
+        return 0 unless $f;
+        return $f->Geometry;
+    }
 }
 
 sub ForGeometries {
@@ -1176,6 +1195,7 @@ sub Geometry {
             eval {
                 $geometry = Geo::OGR::Geometry->new($geometry);
             };
+            confess last_error() if $@;
             my $gtype = $geometry->GeometryType;
             error("The type of the inserted geometry ('$gtype') is not the same as the type of the field ('$type').")
                 if $type ne 'Unknown' and $type ne $gtype;
@@ -1192,6 +1212,7 @@ sub Geometry {
     return unless $geometry;
     keep($geometry, $self);
 }
+*GetGeometryRef = *_GetGeometryRef;
 *GetGeometry = *Geometry;
 *SetGeometry = *Geometry;
 
@@ -1939,11 +1960,21 @@ sub Dissolve {
     }
     return @c;
 }
+
+sub GetGeometryRef {
+    my ($self, $i) = @_;
+    my $ref = $self->_GetGeometryRef($i);
+    keep($ref, $self);
+    return $ref;
+}
+*Geometry = *GetGeometryRef;
+    
 *AsText = *ExportToWkt;
 *AsBinary = *ExportToWkb;
 *AsGML = *ExportToGML;
 *AsKML = *ExportToKML;
 *AsJSON = *ExportToJson;
+*GeometryCount = *GetGeometryCount;
 *BuildPolygonFromEdges = *Geo::OGR::BuildPolygonFromEdges;
 *ForceToPolygon = *Geo::OGR::ForceToPolygon;
 
