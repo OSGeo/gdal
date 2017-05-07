@@ -301,9 +301,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
         if( eErr != CE_None )
         {
-            if( pabyWorkData != pData )
-                VSIFree( pabyWorkData );
-
+            VSIFree( pabyWorkData );
             VSIFree( pabyOutData );
 
             return eErr;
@@ -496,7 +494,9 @@ CPLErr VRTKernelFilteredSource::FilterData( int nXSize, int nYSize,
         const float fNoData =
             static_cast<float>( m_poRasterBand->GetNoDataValue(&bHasNoData) );
 
-        for( int nAxis = 0; m_bSeparable ? nAxis < 2 : nAxis < 1; ++nAxis)
+        const int nAxisCount = m_bSeparable ? 2 : 1;
+
+        for( int nAxis = 0; nAxis < nAxisCount; ++nAxis)
         {
             const int nISize = nAxis == 0 ? nYSize : nXSize;
             const int nJSize = nAxis == 0 ? nXSize : nYSize;
