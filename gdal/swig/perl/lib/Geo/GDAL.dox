@@ -24,6 +24,15 @@
 ## @ignore error
 ## @ignore named_parameters
 
+## @ignore i2s
+## @ignore s2i
+## @ignore keep
+## @ignore note
+## @ignore unkeep
+## @ignore unnote
+## @ignore parent
+## @ignore s_exists
+
 ## @ignore GeneralCmdLineProcessor
 ## @ignore ParseCommandLine
 

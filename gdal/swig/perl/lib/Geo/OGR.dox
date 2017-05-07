@@ -1117,10 +1117,8 @@
 ## @method $GetDimension()
 # @return 0, 1, or 2
 
-## @ignore AsText
 ## @ignore ExportToWkt
 ## @ignore ExportToIsoWkt
-## @ignore AsBinary
 ## @ignore AsHEXWKB
 ## @ignore AsHEXEWKB
 ## @ignore ExportToWkb
@@ -1131,6 +1129,16 @@
 ## @ignore ExportToKML
 ## @ignore AsJSON
 ## @ignore ExportToJson
+
+## @method $AsText()
+# Export the geometry into WKT.
+# @sa Geo::OGR::Geometry::As
+# @return the geometry as WKT.
+
+## @method $AsBinary()
+# Export the geometry into WKB.
+# @sa Geo::OGR::Geometry::As
+# @return the geometry as WKB.
 
 ## @method $As(%params)
 # Export the geometry into a known format.
@@ -1286,7 +1294,14 @@
 ## @method Geo::OGR::Geometry Clone()
 # @return a new Geo::OGR::Geometry object
 
+@ignore GetGeometryName
+@ignore GetGeometryType
+
 ## @method $GeometryType()
+#
+# @note The deprecated method GetGeometryType returns the
+# type as an integer
+#
 # @return the geometry type of this geometry (one of Geo::OGR::GeometryTypes).
 
 ## @method $Length()
@@ -1298,13 +1313,24 @@
 # @note a.k.a. GetArea
 # @return the area of the polygon or multipolygon
 
-## @method $GetGeometryCount()
+@ignore GetGeometryCount
+
+## @method $GeometryCount()
+# Return the number of elements in this geometry or geometries in this collection.
+# @note a.k.a. GetGeometryCount
 # @return an integer
 
-## @method $GetGeometryRef($index)
-# @param index index to the geometry, which is a part of this geometry
+## @method $Geometry($n)
+# Return the n:th (note zero-based index) element in this geometry or
+# geometry in this collection.
+# @note a.k.a. GetGeometryRef
+# @param n index to the geometry, which is a part of this geometry
 # @return a new Geo::OGR::Geometry object whose data is a part of the
-# parent geometry
+# parent geometry (this geometry is kept alive while the returned
+# geometry exists)
+
+## @method $GetGeometryRef($index)
+# @deprecated Use Geo::OGR::Geometry
 
 ## @method Geo::OGR::Geometry ConvexHull()
 # @return a new Geo::OGR::Geometry object
@@ -1481,14 +1507,3 @@
 
 ## @method $WkbSize()
 # @return an integer
-
-## @method $GetGeometryType()
-# @deprecated use Geo::OGR::Geometry::GeometryType, which returns the
-# type as a string.
-#
-# @return type as an integer
-
-## @method $GetGeometryName()
-# @deprecated use Geo::OGR::Geometry::GeometryType.
-#
-# @return a string
