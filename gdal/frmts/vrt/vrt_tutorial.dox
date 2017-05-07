@@ -447,7 +447,7 @@ and the Coefs must have Size * Size entries separated by spaces.
     </KernelFilteredSource>
 \endcode
 
-Starting with GDAL 2.2, a separable kernel may also be used.  In this case the
+Starting with GDAL 2.3, a separable kernel may also be used.  In this case the
 number of Coefs entries should correspond to the Size.  The Coefs specify a
 one-dimensional kernel which is applied along each axis in succession, resulting
 in far quicker execution. Many common image-processing filters are separable.
