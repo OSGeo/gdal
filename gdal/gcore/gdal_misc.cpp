@@ -65,8 +65,18 @@ inline double round(double r) {
 }
 #endif
 
-static int GetMinBitsForPair(const bool pabSigned[], const int panBits[])
+static int GetMinBitsForPair(
+    const bool pabSigned[], const bool pabFloating[], const int panBits[])
 {
+    if(pabFloating[0] != pabFloating[1])
+    {
+        const int nNotFloatingTypeIndex = pabFloating[0] ? 1 : 0;
+        const int nFloatingTypeIndex = pabFloating[0] ? 0 : 1;
+
+        return std::max(panBits[nFloatingTypeIndex],
+                        2 * panBits[nNotFloatingTypeIndex]);
+    }
+
     if( pabSigned[0] != pabSigned[1] )
     {
         const int nUnsignedTypeIndex = pabSigned[0] ? 1 : 0;
@@ -137,16 +147,19 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
         CPL_TO_BOOL(GDALDataTypeIsSigned(eType1)),
         CPL_TO_BOOL(GDALDataTypeIsSigned(eType2))
     };
-
     const bool bSigned = pabSigned[0] || pabSigned[1];
-    const bool bFloating =
-        CPL_TO_BOOL(GDALDataTypeIsFloating(eType1)) ||
-        CPL_TO_BOOL(GDALDataTypeIsFloating(eType2));
+    
+    const bool pabFloating[] = {
+        CPL_TO_BOOL(GDALDataTypeIsFloating(eType1)),
+        CPL_TO_BOOL(GDALDataTypeIsFloating(eType2))
+    };
+    const bool bFloating = pabFloating[0] || pabFloating[1];
+    
     const bool bComplex =
         CPL_TO_BOOL(GDALDataTypeIsComplex(eType1)) ||
         CPL_TO_BOOL(GDALDataTypeIsComplex(eType2));
 
-    const int nBits = GetMinBitsForPair(pabSigned, panBits);
+    const int nBits = GetMinBitsForPair(pabSigned, pabFloating, panBits);
 
     return GDALFindDataType(nBits, bSigned, bFloating, bComplex);
 }
