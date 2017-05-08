@@ -585,7 +585,7 @@ CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
     const int nCoefs = CSLCount(papszCoefItems);
 
     const bool bSquare = nCoefs == nNewKernelSize * nNewKernelSize;
-    const bool bSeparable = nCoefs == nNewKernelSize;
+    const bool bSeparable = nCoefs == nNewKernelSize && nCoefs != 1;
 
     if( !bSquare && !bSeparable )
     {
