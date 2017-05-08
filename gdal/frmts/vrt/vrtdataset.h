@@ -1029,6 +1029,8 @@ class VRTKernelFilteredSource : public VRTFilteredSource
 protected:
     int     m_nKernelSize;
 
+    bool    m_bSeparable;
+
     double  *m_padfKernelCoefs;
 
     int     m_bNormalized;
@@ -1043,7 +1045,7 @@ public:
     virtual CPLErr  FilterData( int nXSize, int nYSize, GDALDataType eType,
                                 GByte *pabySrcData, GByte *pabyDstData ) CPL_OVERRIDE;
 
-    CPLErr          SetKernel( int nKernelSize, double *padfCoefs );
+    CPLErr          SetKernel( int nKernelSize, bool bSeparable, double *padfCoefs );
     void            SetNormalized( int );
 };
 

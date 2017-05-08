@@ -147,6 +147,14 @@ def vrtfilt_5():
     return 'success'
 
 ###############################################################################
+# Verify separable Gaussian blur filter.
+
+def vrtfilt_6():
+
+    tst = gdaltest.GDALTest( 'VRT', 'avfilt_1d.vrt', 1, 22377 )
+    return tst.testOpen()
+
+###############################################################################
 # Cleanup.
 
 def vrtfilt_cleanup():
@@ -158,6 +166,7 @@ gdaltest_list = [
     vrtfilt_3,
     vrtfilt_4,
     vrtfilt_5,
+    vrtfilt_6,
     vrtfilt_cleanup ]
 
 if __name__ == '__main__':

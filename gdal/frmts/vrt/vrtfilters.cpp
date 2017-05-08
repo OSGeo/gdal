@@ -233,27 +233,16 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     const int nLineOffset = nPixelOffset * nExtraXSize;
 
 /* -------------------------------------------------------------------- */
-/*      Allocate the output buffer if the passed in output buffer is    */
-/*      not of the same type as our working format, or if the passed    */
-/*      in buffer has an unusual organization.                          */
+/*      Allocate the output buffer in the same dimensions as the work   */
+/*      buffer. This allows the filter process to write edge pixels     */
+/*      if needed for two-pass (separable) filtering.                   */
 /* -------------------------------------------------------------------- */
-    GByte *pabyOutData = NULL;
-
-    if( nPixelSpace != nPixelOffset || nLineSpace != nLineOffset
-        || eOperDataType != eBufType )
+    GByte *pabyOutData = static_cast<GByte *>(
+        VSI_MALLOC3_VERBOSE( nExtraXSize, nExtraYSize, nPixelOffset ) );
+    if( pabyOutData == NULL )
     {
-        pabyOutData = static_cast<GByte *>(
-            VSI_MALLOC3_VERBOSE( nOutXSize, nOutYSize, nPixelOffset ) );
-
-        if( pabyOutData == NULL )
-        {
-            CPLFree( pabyWorkData );
-            return CE_Failure;
-        }
-    }
-    else
-    {
-        pabyOutData = reinterpret_cast<GByte *>( pData );
+        CPLFree( pabyWorkData );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
@@ -312,11 +301,8 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
         if( eErr != CE_None )
         {
-            if( pabyWorkData != pData )
-                VSIFree( pabyWorkData );
-
-            if( pabyOutData != pData )
-                VSIFree( pabyOutData );
+            VSIFree( pabyWorkData );
+            VSIFree( pabyOutData );
 
             return eErr;
         }
@@ -365,14 +351,13 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Filter the data.                                                */
 /* -------------------------------------------------------------------- */
-    const CPLErr eErr = FilterData( nOutXSize, nOutYSize, eOperDataType,
+    const CPLErr eErr = FilterData( nExtraXSize, nExtraYSize, eOperDataType,
                                     pabyWorkData, pabyOutData );
 
     VSIFree( pabyWorkData );
     if( eErr != CE_None )
     {
-        if( pabyOutData != pData )
-            VSIFree( pabyOutData );
+        VSIFree( pabyOutData );
 
         return eErr;
     }
@@ -380,18 +365,19 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Copy from work buffer to target buffer.                         */
 /* -------------------------------------------------------------------- */
-    if( pabyOutData != pData )
-    {
-        for( int i = 0; i < nOutYSize; i++ )
-        {
-            GDALCopyWords( pabyOutData + i * (nPixelOffset * nOutXSize),
-                           eOperDataType, nPixelOffset,
-                           reinterpret_cast<GByte *>( pData ) + i * nLineSpace,
-                           eBufType, static_cast<int>(nPixelSpace), nOutXSize );
-        }
+    GByte *pabySrcRow =
+        pabyOutData + (nLineOffset + nPixelOffset) * m_nExtraEdgePixels;
+    GByte *pabyDstRow = reinterpret_cast<GByte *>( pData );
 
-        VSIFree( pabyOutData );
+    for( int i = 0; i < nOutYSize; i++,
+         pabySrcRow += nLineOffset, pabyDstRow += nLineSpace )
+    {
+        GDALCopyWords( pabySrcRow, eOperDataType, nPixelOffset,
+                       pabyDstRow, eBufType, static_cast<int>(nPixelSpace),
+                       nOutXSize );
     }
+
+    VSIFree( pabyOutData );
 
     return CE_None;
 }
@@ -408,6 +394,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
 VRTKernelFilteredSource::VRTKernelFilteredSource() :
     m_nKernelSize(0),
+    m_bSeparable(FALSE),
     m_padfKernelCoefs(NULL),
     m_bNormalized(FALSE)
 {
@@ -440,6 +427,7 @@ void VRTKernelFilteredSource::SetNormalized( int bNormalizedIn )
 /************************************************************************/
 
 CPLErr VRTKernelFilteredSource::SetKernel( int nNewKernelSize,
+                                           bool bSeparable,
                                            double *padfNewCoefs )
 
 {
@@ -454,11 +442,15 @@ CPLErr VRTKernelFilteredSource::SetKernel( int nNewKernelSize,
 
     CPLFree( m_padfKernelCoefs );
     m_nKernelSize = nNewKernelSize;
+    m_bSeparable = bSeparable;
+
+    int nKernelBufferSize =
+        m_nKernelSize * (m_bSeparable ? 1 : m_nKernelSize);
 
     m_padfKernelCoefs = static_cast<double *>(
-        CPLMalloc(sizeof(double) * m_nKernelSize * m_nKernelSize ) );
+        CPLMalloc(sizeof(double) * nKernelBufferSize ) );
     memcpy( m_padfKernelCoefs, padfNewCoefs,
-            sizeof(double) * m_nKernelSize * m_nKernelSize );
+            sizeof(double) * nKernelBufferSize );
 
     SetExtraEdgePixels( (nNewKernelSize - 1) / 2 );
 
@@ -495,65 +487,71 @@ CPLErr VRTKernelFilteredSource::FilterData( int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     if( eType == GDT_Float32 )
     {
+        float *pafSrcData = reinterpret_cast<float *>( pabySrcData );
+        float *pafDstData = reinterpret_cast<float *>( pabyDstData );
+
         int bHasNoData = FALSE;
         const float fNoData =
             static_cast<float>( m_poRasterBand->GetNoDataValue(&bHasNoData) );
 
-        for( int iY = 0; iY < nYSize; iY++ )
+        const int nAxisCount = m_bSeparable ? 2 : 1;
+
+        for( int nAxis = 0; nAxis < nAxisCount; ++nAxis)
         {
-            for( int iX = 0; iX < nXSize; iX++ )
+            const int nISize = nAxis == 0 ? nYSize : nXSize;
+            const int nJSize = nAxis == 0 ? nXSize : nYSize;
+            const int nIStride = nAxis == 0 ? nXSize : 1;
+            const int nJStride = nAxis == 0 ? 1 : nXSize;
+
+            const int nIMin =          m_nExtraEdgePixels;
+            const int nIMax = nISize - m_nExtraEdgePixels;
+            const int nJMin =          (m_bSeparable ? 0 : m_nExtraEdgePixels);
+            const int nJMax = nJSize - (m_bSeparable ? 0 : m_nExtraEdgePixels);
+
+            for( int iJ = nJMin; iJ < nJMax; ++iJ )
             {
-                const int iIndex =
-                    ( iY + m_nKernelSize / 2 ) *
-                    ( nXSize + 2 * m_nExtraEdgePixels )
-                    + iX + m_nKernelSize / 2;
-                const float fCenter =
-                    reinterpret_cast<float *>( pabySrcData )[iIndex];
+                if( nAxis == 1 )
+                    memcpy( pafSrcData + iJ * nJStride,
+                            pafDstData + iJ * nJStride,
+                            sizeof(float) * nXSize );
 
-                float fResult = 0.0;
-
-                // Check if center srcpixel is NoData
-                if( !bHasNoData || fCenter != fNoData )
+                for( int iI = nIMin; iI < nIMax; ++iI )
                 {
-                    int iKern = 0;
-                    double dfSum = 0.0;
-                    double dfKernSum = 0.0;
+                    const int iIndex = iI * nIStride + iJ * nJStride;
 
-                    for( int iYY = 0; iYY < m_nKernelSize; iYY++ )
+                    if( bHasNoData && pafSrcData[iIndex] == fNoData )
                     {
-                        float *pafData =
-                            reinterpret_cast<float *>( pabySrcData )
-                            + (iY+iYY) * (nXSize+2*m_nExtraEdgePixels) + iX;
+                        pafDstData[iIndex] = fNoData;
+                        continue;
+                    }
 
-                        for( int i = 0; i < m_nKernelSize; i++, pafData++,
-                             iKern++ )
+                    double dfSum = 0.0, dfKernSum = 0.0;
+
+                    for( int iII  = -m_nExtraEdgePixels, iK = 0;
+                             iII <=  m_nExtraEdgePixels; ++iII )
+                    {
+                        for( int iJJ  = (m_bSeparable ? 0 : -m_nExtraEdgePixels);
+                                 iJJ <= (m_bSeparable ? 0 :  m_nExtraEdgePixels);
+                                 ++iJJ, ++iK )
                         {
-                            if( !bHasNoData || *pafData != fNoData )
-                            {
-                                dfSum += *pafData * m_padfKernelCoefs[iKern];
-                                dfKernSum += m_padfKernelCoefs[iKern];
-                            }
+                            const float *pfData = pafSrcData + iIndex +
+                                iII * nIStride + iJJ * nJStride;
+                            if( bHasNoData && *pfData == fNoData )
+                                continue;
+                            dfSum += *pfData * m_padfKernelCoefs[iK];
+                            dfKernSum += m_padfKernelCoefs[iK];
                         }
                     }
-                    if( m_bNormalized )
-                    {
-                        if( dfKernSum != 0.0 )
-                            fResult = static_cast<float>( dfSum / dfKernSum );
-                        else
-                            fResult = 0.0;
-                    }
-                    else
-                    {
-                        fResult = static_cast<float>( dfSum );
-                    }
 
-                    reinterpret_cast<float *>( pabyDstData )[iX + iY * nXSize] =
-                        fResult;
-                }
-                else
-                {
-                    reinterpret_cast<float *>( pabyDstData )[iX + iY * nXSize] =
-                        fNoData;
+                    double fResult;
+
+                    if( !m_bNormalized )
+                        fResult = dfSum;
+                    else if( dfKernSum == 0.0 )
+                        fResult = 0.0;
+                    else
+                        fResult = dfSum / dfKernSum;
+                    pafDstData[iIndex] = static_cast<float>( fResult );
                 }
             }
         }
@@ -586,14 +584,17 @@ CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
 
     const int nCoefs = CSLCount(papszCoefItems);
 
-    if( nCoefs != nNewKernelSize * nNewKernelSize )
+    const bool bSquare = nCoefs == nNewKernelSize * nNewKernelSize;
+    const bool bSeparable = nCoefs == nNewKernelSize && nCoefs != 1;
+
+    if( !bSquare && !bSeparable )
     {
         CSLDestroy( papszCoefItems );
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Got wrong number of filter kernel coefficients (%s).  "
-                  "Expected %d, got %d.",
+                  "Expected %d or %d, got %d.",
                   CPLGetXMLValue(psTree,"Kernel.Coefs",""),
-                  nNewKernelSize * nNewKernelSize, nCoefs );
+                  nNewKernelSize * nNewKernelSize, nNewKernelSize, nCoefs );
         return CE_Failure;
     }
 
@@ -603,7 +604,7 @@ CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
     for( int i = 0; i < nCoefs; i++ )
         padfNewCoefs[i] = CPLAtof(papszCoefItems[i]);
 
-    const CPLErr eErr = SetKernel( nNewKernelSize, padfNewCoefs );
+    const CPLErr eErr = SetKernel( nNewKernelSize, bSeparable, padfNewCoefs );
 
     CPLFree( padfNewCoefs );
     CSLDestroy( papszCoefItems );
