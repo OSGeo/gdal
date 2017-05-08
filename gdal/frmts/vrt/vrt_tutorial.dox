@@ -446,6 +446,23 @@ and the Coefs must have Size * Size entries separated by spaces.
       </Kernel>
     </KernelFilteredSource>
 \endcode
+
+Starting with GDAL 2.3, a separable kernel may also be used.  In this case the
+number of Coefs entries should correspond to the Size.  The Coefs specify a
+one-dimensional kernel which is applied along each axis in succession, resulting
+in far quicker execution. Many common image-processing filters are separable.
+For example, a Gaussian blur:
+
+\code
+    <KernelFilteredSource>
+      <SourceFilename>/debian/home/warmerda/openev/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <Kernel normalized="1">
+        <Size>13</Size>
+        <Coefs>0.01111 0.04394 0.13534 0.32465 0.60653 0.8825 1.0 0.8825 0.60653 0.32465 0.13534 0.04394 0.01111</Coefs>
+      </Kernel>
+    </KernelFilteredSource>
+\endcode
 </li>
 
 <li> <b>MaskBand</b>: (GDAL >= 1.8.0) This element represents a mask band that is
