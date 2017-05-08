@@ -7,7 +7,7 @@
       <SourceBand>1</SourceBand>
       <SrcRect xOff="0" yOff="0" xSize="50" ySize="50"/>
       <DstRect xOff="0" yOff="0" xSize="50" ySize="50"/>
-      <Kernel>
+      <Kernel normalized="1">
         <Size>13</Size>
         <Coefs>0.01111 0.04394 0.13534 0.32465 0.60653 0.8825 1.0 0.8825 0.60653 0.32465 0.13534 0.04394 0.01111</Coefs>
       </Kernel>

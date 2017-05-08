@@ -151,7 +151,7 @@ def vrtfilt_5():
 
 def vrtfilt_6():
 
-    tst = gdaltest.GDALTest( 'VRT', 'avfilt_1d.vrt', 1, 26125 )
+    tst = gdaltest.GDALTest( 'VRT', 'avfilt_1d.vrt', 1, 22377 )
     return tst.testOpen()
 
 ###############################################################################
