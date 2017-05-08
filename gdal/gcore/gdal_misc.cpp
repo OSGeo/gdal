@@ -79,6 +79,34 @@ static int GetMinBitsForPair(const bool pabSigned[], const int panBits[])
     return std::max(panBits[0], panBits[1]);
 }
 
+static int GetDataTypeElementSizeBits( GDALDataType eDataType )
+{
+    switch( eDataType )
+    {
+      case GDT_Byte:
+        return 8;
+
+      case GDT_UInt16:
+      case GDT_Int16:
+      case GDT_CInt16:
+        return 16;
+
+      case GDT_UInt32:
+      case GDT_Int32:
+      case GDT_Float32:
+      case GDT_CInt32:
+      case GDT_CFloat32:
+        return 32;
+
+      case GDT_Float64:
+      case GDT_CFloat64:
+        return 64;
+
+      default:
+        return 0;
+    }
+}
+
 /************************************************************************/
 /*                         GDALDataTypeUnion()                          */
 /************************************************************************/
@@ -98,8 +126,8 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 
 {
     const int panBits[] = {
-        GDALGetDataTypeSizeBits(eType1),
-        GDALGetDataTypeSizeBits(eType2)
+        GetDataTypeElementSizeBits(eType1),
+        GetDataTypeElementSizeBits(eType2)
     };
 
     if( panBits[0] == 0 || panBits[1] == 0 )
