@@ -74,13 +74,14 @@ GDALMRFDataset::GDALMRFDataset() :
     zslice(0),
     idxSize(0),
     clonedSource(FALSE),
-    bypass_cache(
-        BOOLTEST(CPLGetConfigOption("MRF_BYPASSCACHING", "FALSE"))),
+    nocopy(FALSE),
+    bypass_cache(BOOLTEST(CPLGetConfigOption("MRF_BYPASSCACHING", "FALSE"))),
     mp_safe(FALSE),
     hasVersions(FALSE),
     verCount(0),
     bCrystalized(TRUE), // Assume not in create mode
     spacing(0),
+    no_errors(0),
     poSrcDS(NULL),
     level(-1),
     cds(NULL),
@@ -563,7 +564,6 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Different ways to open an MRF
     if (poOpenInfo->nHeaderBytes >= 10) {
-
         const char *pszHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
         if (STARTS_WITH(pszHeader, "<MRF_META>")) // Regular file name
             config = CPLParseXMLFile(pszFileName);
@@ -615,6 +615,9 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         ret = ds->Initialize(config);
     }
+
+    if (ret == CE_None)
+        ds->ProcessOpenOptions(poOpenInfo->papszOpenOptions);
 
     CPLDestroyXMLNode(config);
 
@@ -1620,6 +1623,15 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
     return poDS;
 }
 
+
+// Apply create options to the current dataset, only valid during creation
+void GDALMRFDataset::ProcessOpenOptions(char **papszOptions)
+{
+    CPLStringList opt(papszOptions, FALSE);
+
+    no_errors = opt.FetchBoolean("NOERRORS", FALSE);
+}
+
 // Apply create options to the current dataset, only valid during creation
 void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
 {
@@ -1653,7 +1665,10 @@ void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
     img.nbo = opt.FetchBoolean("NETBYTEORDER", FALSE);
 
     val = opt.FetchNameValue("CACHEDSOURCE");
-    if (val) source = val;
+    if (val) {
+        source = val;
+        nocopy = opt.FetchBoolean("NOCOPY", FALSE);
+    }
 
     val = opt.FetchNameValue("UNIFORM_SCALE");
     if (val) scale = atoi(val);
@@ -1803,9 +1818,8 @@ void GDALMRFDataset::Crystalize()
     CPLXMLNode *config = BuildConfig();
     WriteConfig(config);
     CPLDestroyXMLNode(config);
-    if (!IdxFP() || !DataFP())
-        throw CPLString().Printf("MRF: Can't create file %s", strerror(errno));
-
+    if (!nocopy && (!IdxFP() || !DataFP()))
+        throw CPLString().Printf("MRF: %s", strerror(errno));
     bCrystalized = TRUE;
 }
 
