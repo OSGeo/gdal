@@ -61,12 +61,22 @@ CPL_CVSID("$Id$");
 
 #if defined(WIN32) && _MSC_VER < 1800
 inline double round(double r) {
-	return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
+    return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
 }
 #endif
 
-static int GetMinBitsForPair(const bool pabSigned[], const int panBits[])
+static int GetMinBitsForPair(
+    const bool pabSigned[], const bool pabFloating[], const int panBits[])
 {
+    if(pabFloating[0] != pabFloating[1])
+    {
+        const int nNotFloatingTypeIndex = pabFloating[0] ? 1 : 0;
+        const int nFloatingTypeIndex = pabFloating[0] ? 0 : 1;
+
+        return std::max(panBits[nFloatingTypeIndex],
+                        2 * panBits[nNotFloatingTypeIndex]);
+    }
+
     if( pabSigned[0] != pabSigned[1] )
     {
         const int nUnsignedTypeIndex = pabSigned[0] ? 1 : 0;
@@ -77,6 +87,34 @@ static int GetMinBitsForPair(const bool pabSigned[], const int panBits[])
     }
 
     return std::max(panBits[0], panBits[1]);
+}
+
+static int GetDataTypeElementSizeBits( GDALDataType eDataType )
+{
+    switch( eDataType )
+    {
+      case GDT_Byte:
+        return 8;
+
+      case GDT_UInt16:
+      case GDT_Int16:
+      case GDT_CInt16:
+        return 16;
+
+      case GDT_UInt32:
+      case GDT_Int32:
+      case GDT_Float32:
+      case GDT_CInt32:
+      case GDT_CFloat32:
+        return 32;
+
+      case GDT_Float64:
+      case GDT_CFloat64:
+        return 64;
+
+      default:
+        return 0;
+    }
 }
 
 /************************************************************************/
@@ -97,28 +135,30 @@ GDALDataType CPL_STDCALL
 GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 
 {
-    const int panBits[] = {
-        GDALGetDataTypeSizeBits(eType1),
-        GDALGetDataTypeSizeBits(eType2)
+    const int panBits[] = { 
+        GetDataTypeElementSizeBits( eType1 ), 
+        GetDataTypeElementSizeBits( eType2 ) 
     };
 
     if( panBits[0] == 0 || panBits[1] == 0 )
         return GDT_Unknown;
 
-    const bool pabSigned[] = {
-        CPL_TO_BOOL(GDALDataTypeIsSigned(eType1)),
-        CPL_TO_BOOL(GDALDataTypeIsSigned(eType2))
+    const bool pabSigned[] = { 
+        CPL_TO_BOOL( GDALDataTypeIsSigned( eType1 ) ),
+        CPL_TO_BOOL( GDALDataTypeIsSigned( eType2 ) )
     };
 
     const bool bSigned = pabSigned[0] || pabSigned[1];
-    const bool bFloating =
-        CPL_TO_BOOL(GDALDataTypeIsFloating(eType1)) ||
-        CPL_TO_BOOL(GDALDataTypeIsFloating(eType2));
-    const bool bComplex =
-        CPL_TO_BOOL(GDALDataTypeIsComplex(eType1)) ||
-        CPL_TO_BOOL(GDALDataTypeIsComplex(eType2));
+    const bool pabFloating[] = {
+        CPL_TO_BOOL(GDALDataTypeIsFloating(eType1)),
+        CPL_TO_BOOL(GDALDataTypeIsFloating(eType2))
+    };
+    const bool bFloating = pabFloating[0] || pabFloating[1];
+    const bool bComplex = 
+        CPL_TO_BOOL( GDALDataTypeIsComplex( eType1 ) ) ||
+        CPL_TO_BOOL( GDALDataTypeIsComplex( eType2 ) );
 
-    const int nBits = GetMinBitsForPair(pabSigned, panBits);
+    const int nBits = GetMinBitsForPair(pabSigned, pabFloating, panBits);
 
     return GDALFindDataType(nBits, bSigned, bFloating, bComplex);
 }
