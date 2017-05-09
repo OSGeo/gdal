@@ -5,9 +5,10 @@ set -e
 sudo mv /etc/apt/sources.list.d/pgdg* /tmp
 sudo apt-get remove postgis libpq5 libpq-dev postgresql-9.1-postgis postgresql-9.1-postgis-2.2-scripts postgresql-9.2-postgis postgresql-9.3-postgis postgresql-9.1 postgresql-9.2 postgresql-9.3 libgdal1
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
-sudo add-apt-repository -y ppa:marlam/gta
+#sudo add-apt-repository -y ppa:marlam/gta
 sudo apt-get update -qq
-sudo apt-get install python-numpy postgis postgresql-9.1 postgresql-client-9.1 postgresql-9.1-postgis-2.1 postgresql-9.1-postgis-2.1-scripts libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-7-jdk libepsilon-dev libgta-dev liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev
+sudo apt-get install python-numpy postgis postgresql-9.1 postgresql-client-9.1 postgresql-9.1-postgis-2.1 postgresql-9.1-postgis-2.1-scripts libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-7-jdk libepsilon-dev liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev
+# libgta-dev
 sudo apt-get install python-lxml
 sudo apt-get install python-pip
 sudo apt-get install libogdi3.2-dev
