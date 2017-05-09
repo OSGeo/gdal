@@ -9,7 +9,8 @@ scripts/detect_tabulations.sh
 scripts/detect_printf.sh
 scripts/detect_self_assignment.sh
 
-CC="ccache clang" CXX="ccache clang" ./configure --prefix=/usr --without-libtool --without-cpp11 --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-gta --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-openjpeg=/usr/local --with-mongocxx=/usr/local
+CC="ccache clang" CXX="ccache clang" ./configure --prefix=/usr --without-libtool --without-cpp11 --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-openjpeg=/usr/local --with-mongocxx=/usr/local
+#  --with-gta
 make docs >docs_log.txt 2>&1
 if cat docs_log.txt | grep -i warning | grep -v russian | grep -v brazilian; then echo "Doxygen warnings found" && cat docs_log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
 make man >man_log.txt 2>&1
