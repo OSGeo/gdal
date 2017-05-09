@@ -633,6 +633,13 @@ void GDALRegister_mrf()
         "   </Option>\n"
         "</CreationOptionList>\n");
 
+    driver->SetMetadataItem(
+      GDAL_DMD_OPENOPTIONLIST,
+      "<OpenOptionList>"
+      "    <Option name='NOERRORS' type='boolean' description='Ignore decompression errors' default='FALSE'/>"
+      "</OpenOptionList>"
+      );
+
     driver->pfnOpen = GDALMRFDataset::Open;
     driver->pfnIdentify = GDALMRFDataset::Identify;
     driver->pfnCreateCopy = GDALMRFDataset::CreateCopy;
