@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.55 2017-05-10 19:38:49 erouault Exp $ */
+/* $Id: tif_read.c,v 1.56 2017-05-10 19:54:54 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -507,7 +507,7 @@ TIFFReadRawStripOrTile2(TIFF* tif, uint32 strip_or_tile, int is_strip,
         /* on 32 bit processes where virtual memory is scarce.  */
         while( already_read < size )
         {
-            tmsize_t read;
+            tmsize_t bytes_read;
             tmsize_t to_read = size - already_read;
 #if SIZEOF_VOIDP == 8 || SIZEOF_SIZE_T == 8
             if( to_read >= threshold && threshold < MAX_THRESHOLD &&
@@ -542,9 +542,9 @@ TIFFReadRawStripOrTile2(TIFF* tif, uint32 strip_or_tile, int is_strip,
                 tif->tif_rawdata = new_rawdata;
             }
 
-            read = TIFFReadFile(tif, tif->tif_rawdata + already_read, to_read);
-            already_read += read;
-            if (read != to_read) {
+            bytes_read = TIFFReadFile(tif, tif->tif_rawdata + already_read, to_read);
+            already_read += bytes_read;
+            if (bytes_read != to_read) {
                 memset( tif->tif_rawdata + already_read, 0,
                         tif->tif_rawdatasize - already_read );
 #if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
