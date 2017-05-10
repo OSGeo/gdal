@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.42 2017-02-25 17:05:12 erouault Exp $ */
+/* $Id: tif_predict.c,v 1.43 2017-05-10 15:21:16 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -117,6 +117,9 @@ PredictorSetupDecode(TIFF* tif)
 	TIFFPredictorState* sp = PredictorState(tif);
 	TIFFDirectory* td = &tif->tif_dir;
 
+	/* Note: when PredictorSetup() fails, the effets of setupdecode() */
+	/* will not be "cancelled" so setupdecode() might be robust to */
+	/* be called several times. */
 	if (!(*sp->setupdecode)(tif) || !PredictorSetup(tif))
 		return 0;
 
