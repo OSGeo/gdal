@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.50 2017-02-18 20:30:26 erouault Exp $ */
+/* $Id: tif_pixarlog.c,v 1.51 2017-05-10 15:21:16 erouault Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -677,6 +677,12 @@ PixarLogSetupDecode(TIFF* tif)
 	tmsize_t tbuf_size;
 
 	assert(sp != NULL);
+
+	/* This function can possibly be called several times by */
+	/* PredictorSetupDecode() if this function succeeds but */
+	/* PredictorSetup() fails */
+	if( (sp->state & PLSTATE_INIT) != 0 )
+		return 1;
 
 	/* Make sure no byte swapping happens on the data
 	 * after decompression. */
