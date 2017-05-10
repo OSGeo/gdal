@@ -46,7 +46,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     GDALDatasetH hDS = GDALOpen( "/vsimem/test", GA_ReadOnly );
     if( hDS )
     {
-        const int nBands = GDALGetRasterCount(hDS);
+        const int nBands = std::min(10, GDALGetRasterCount(hDS));
         for( int i = 0; i < nBands; i++ )
         {
             GDALRasterBandH hBand = GDALGetRasterBand(hDS, i+1);
