@@ -2983,6 +2983,51 @@ def tiff_read_excessive_memory_TIFFFillStrip():
 
 ###############################################################################
 
+def tiff_read_excessive_memory_TIFFFillStrip2():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/excessive-memory-TIFFFillStrip2.tif')
+        ds.GetRasterBand(1).Checksum()
+
+    return 'success'
+
+###############################################################################
+
+def tiff_read_big_strip():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options = '-co compress=lzw -outsize 10000 2000  -co blockysize=2000 -r bilinear -ot float32')
+    ds = gdal.Open('/vsimem/test.tif')
+    if ds.GetRasterBand(1).Checksum() != 2676:
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+
+    return 'success'
+
+###############################################################################
+
+def tiff_read_big_tile():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options = '-co compress=lzw -outsize 10000 2000 -co tiled=yes -co blockxsize=10000 -co blockysize=2000 -r bilinear -ot float32')
+    ds = gdal.Open('/vsimem/test.tif')
+    if ds.GetRasterBand(1).Checksum() != 2676:
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+
+    return 'success'
+
+###############################################################################
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
@@ -3081,6 +3126,9 @@ gdaltest_list.append( (tiff_read_minimum_tiff_tags_no_warning) )
 gdaltest_list.append( (tiff_read_minimum_tiff_tags_with_warning) )
 gdaltest_list.append( (tiff_read_leak_ZIPSetupDecode) )
 gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillStrip) )
+gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillStrip2) )
+gdaltest_list.append( (tiff_read_big_strip) )
+gdaltest_list.append( (tiff_read_big_tile) )
 
 # gdaltest_list = [ tiff_read_ycbcr_lzw ]
 
