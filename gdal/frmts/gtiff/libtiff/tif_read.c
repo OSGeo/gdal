@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.53 2017-01-11 19:02:49 erouault Exp $ */
+/* $Id: tif_read.c,v 1.54 2017-05-10 13:37:19 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -544,6 +544,39 @@ TIFFFillStrip(TIFF* tif, uint32 strip)
 #endif
 			return (0);
 		}
+
+		/* To avoid excessive memory allocations: */
+		/* Byte count should normally not be larger than a number of */
+		/* times the uncompressed size plus some margin */
+                if( bytecount > 1024 * 1024 )
+                {
+			/* 10 and 4096 are just values that could be adjusted. */
+			/* Hopefully they are safe enough for all codecs */
+			tmsize_t stripsize = TIFFStripSize(tif);
+			if( stripsize != 0 &&
+			    (bytecount - 4096) / 10 > (uint64)stripsize  )
+			{
+				uint64 newbytecount = (uint64)stripsize * 10 + 4096;
+				if( (int64)newbytecount >= 0 )
+				{
+#if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
+					TIFFWarningExt(tif->tif_clientdata, module,
+					  "Too large strip byte count %I64u, strip %lu. Limiting to %I64u",
+					     (unsigned __int64) bytecount,
+					     (unsigned long) strip,
+					     (unsigned __int64) newbytecount);
+#else
+					TIFFErrorExt(tif->tif_clientdata, module,
+					  "Too large strip byte count %llu, strip %lu. Limiting to %llu",
+					     (unsigned long long) bytecount,
+					     (unsigned long) strip,
+					     (unsigned long long) newbytecount);
+#endif
+					bytecount = newbytecount;
+				}
+			}
+		}
+
 		if (isMapped(tif) &&
 		    (isFillOrder(tif, td->td_fillorder)
 		    || (tif->tif_flags & TIFF_NOBITREV))) {
