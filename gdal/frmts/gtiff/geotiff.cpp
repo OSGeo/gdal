@@ -265,6 +265,10 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
 
     TIFF       *hTIFF;
     VSILFILE   *fpL;
+#if defined(INTERNAL_LIBTIFF) && defined(DEFER_STRILE_LOAD)
+    uint32      nStripArrayAlloc;
+#endif
+
     bool        bStreamingIn;
 
     bool        bStreamingOut;
@@ -6825,6 +6829,9 @@ CPLErr GTiffSplitBitmapBand::IWriteBlock( int /* nBlockXOff */,
 GTiffDataset::GTiffDataset() :
     hTIFF(NULL),
     fpL(NULL),
+#if defined(INTERNAL_LIBTIFF) && defined(DEFER_STRILE_LOAD)
+    nStripArrayAlloc(0),
+#endif
     bStreamingIn(false),
     bStreamingOut(false),
     fpToWrite(NULL),
@@ -8835,8 +8842,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
                                      vsi_l_offset* pnSize )
 
 {
-#ifdef INTERNAL_LIBTIFF
-#ifdef DEFER_STRILE_LOAD
+#if defined(INTERNAL_LIBTIFF) && defined(DEFER_STRILE_LOAD)
     // Optimization to avoid fetching the whole Strip/TileCounts and
     // Strip/TileOffsets arrays.
     if( eAccess == GA_ReadOnly &&
@@ -8850,26 +8856,64 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
     {
         if( hTIFF->tif_dir.td_stripoffset == NULL )
         {
-            hTIFF->tif_dir.td_stripoffset =
-                static_cast<uint64 *>( _TIFFmalloc(
-                    sizeof(uint64) * hTIFF->tif_dir.td_nstrips ) );
-            hTIFF->tif_dir.td_stripbytecount =
-                static_cast<uint64 *>( _TIFFmalloc(
-                    sizeof(uint64) * hTIFF->tif_dir.td_nstrips ) );
-            if( hTIFF->tif_dir.td_stripoffset &&
-                hTIFF->tif_dir.td_stripbytecount )
+            nStripArrayAlloc = 0;
+        }
+        if( static_cast<uint32>(nBlockId) >= nStripArrayAlloc )
+        {
+            uint32 nStripArrayAllocBefore = nStripArrayAlloc;
+            uint32 nStripArrayAllocNew;
+            if( nStripArrayAlloc == 0 &&
+                hTIFF->tif_dir.td_nstrips < 1024 * 1024 )
             {
-                memset(hTIFF->tif_dir.td_stripoffset, 0xFF,
-                       sizeof(uint64) * hTIFF->tif_dir.td_nstrips );
-                memset(hTIFF->tif_dir.td_stripbytecount, 0xFF,
-                       sizeof(uint64) * hTIFF->tif_dir.td_nstrips );
+                nStripArrayAllocNew = hTIFF->tif_dir.td_nstrips;
             }
             else
             {
+                nStripArrayAllocNew = std::max(
+                    static_cast<uint32>(nBlockId) + 1, 1024U * 512U );
+                if( nStripArrayAllocNew < 0xFFFFFFFFU / 2  )
+                    nStripArrayAllocNew *= 2;
+                nStripArrayAllocNew = std::min(
+                    nStripArrayAllocNew, hTIFF->tif_dir.td_nstrips);
+            }
+            const uint64 nArraySize64 =
+                static_cast<uint64>(sizeof(uint64)) * nStripArrayAllocNew;
+            const size_t nArraySize = static_cast<size_t>(nArraySize64);
+#if SIZEOF_VOIDP == 4
+            if( nArraySize != nArraySize64 )
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Cannot allocate strip offet and bytecount arrays");
+                return false;
+            }
+#endif
+            uint64* offsetArray = static_cast<uint64 *>(
+                _TIFFrealloc( hTIFF->tif_dir.td_stripoffset, nArraySize ) );
+            uint64* bytecountArray = static_cast<uint64 *>(
+                _TIFFrealloc( hTIFF->tif_dir.td_stripbytecount, nArraySize ) );
+            if( offsetArray )
+                hTIFF->tif_dir.td_stripoffset = offsetArray;
+            if( bytecountArray )
+                hTIFF->tif_dir.td_stripbytecount = bytecountArray;
+            if( offsetArray && bytecountArray )
+            {
+                nStripArrayAlloc = nStripArrayAllocNew;
+                memset(hTIFF->tif_dir.td_stripoffset + nStripArrayAllocBefore,
+                    0xFF,
+                    (nStripArrayAlloc - nStripArrayAllocBefore) * sizeof(uint64) );
+                memset(hTIFF->tif_dir.td_stripbytecount + nStripArrayAllocBefore,
+                    0xFF,
+                    (nStripArrayAlloc - nStripArrayAllocBefore) * sizeof(uint64) );
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Cannot allocate strip offet and bytecount arrays");
                 _TIFFfree(hTIFF->tif_dir.td_stripoffset);
                 hTIFF->tif_dir.td_stripoffset = NULL;
                 _TIFFfree(hTIFF->tif_dir.td_stripbytecount);
                 hTIFF->tif_dir.td_stripbytecount = NULL;
+                nStripArrayAlloc = 0;
             }
         }
         if( hTIFF->tif_dir.td_stripbytecount == NULL )
@@ -8896,7 +8940,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
                     GTiffCacheOffsetOrCount(fp,
                                             l_nDirOffset,
                                             nBlockId,
-                                            hTIFF->tif_dir.td_nstrips,
+                                            nStripArrayAlloc,
                                             hTIFF->tif_dir.td_stripoffset,
                                             sizeof(uint32));
                 }
@@ -8905,7 +8949,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
                     GTiffCacheOffsetOrCount(fp,
                                             l_nDirOffset,
                                             nBlockId,
-                                            hTIFF->tif_dir.td_nstrips,
+                                            nStripArrayAlloc,
                                             hTIFF->tif_dir.td_stripoffset,
                                             sizeof(uint64));
                 }
@@ -8929,7 +8973,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
                     GTiffCacheOffsetOrCount(fp,
                                             l_nDirOffset,
                                             nBlockId,
-                                            hTIFF->tif_dir.td_nstrips,
+                                            nStripArrayAlloc,
                                             hTIFF->tif_dir.td_stripbytecount,
                                             sizeof(uint32));
                 }
@@ -8938,7 +8982,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
                     GTiffCacheOffsetOrCount(fp,
                                             l_nDirOffset,
                                             nBlockId,
-                                            hTIFF->tif_dir.td_nstrips,
+                                            nStripArrayAlloc,
                                             hTIFF->tif_dir.td_stripbytecount,
                                             sizeof(uint64));
                 }
@@ -8959,8 +9003,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
             *pnSize = hTIFF->tif_dir.td_stripbytecount[nBlockId];
         return hTIFF->tif_dir.td_stripbytecount[nBlockId] != 0;
     }
-#endif  // DEFER_STRILE_LOAD
-#endif  // INTERNAL_LIBTIFF
+#endif  // defined(INTERNAL_LIBTIFF) && defined(DEFER_STRILE_LOAD)
     toff_t *panByteCounts = NULL;
     toff_t *panOffsets = NULL;
 
