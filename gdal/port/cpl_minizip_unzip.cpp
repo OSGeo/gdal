@@ -193,10 +193,9 @@ static int unzlocal_getShort (const zlib_filefunc_def* pzlib_filefunc_def,
                              voidpf filestream,
                              uLong *pX)
 {
-    uLong x;
     int i = 0;
     int err = unzlocal_getByte(pzlib_filefunc_def,filestream,&i);
-    x = (uLong)i;
+    uLong x = (uLong)i;
 
     if (err==UNZ_OK)
         err = unzlocal_getByte(pzlib_filefunc_def,filestream,&i);
@@ -213,10 +212,9 @@ static int unzlocal_getLong (const zlib_filefunc_def* pzlib_filefunc_def,
                             voidpf filestream,
                             uLong *pX)
 {
-    uLong x;
     int i = 0;
     int err = unzlocal_getByte(pzlib_filefunc_def,filestream,&i);
-    x = (uLong)i;
+    uLong x = (uLong)i;
 
     if (err==UNZ_OK)
         err = unzlocal_getByte(pzlib_filefunc_def,filestream,&i);
@@ -241,10 +239,9 @@ static int unzlocal_getLong64 (const zlib_filefunc_def* pzlib_filefunc_def,
                             voidpf filestream,
                             uLong64 *pX)
 {
-    uLong64 x;
     int i = 0;
     int err = unzlocal_getByte(pzlib_filefunc_def,filestream,&i);
-    x = (uLong64)i;
+    uLong64 x = (uLong64)i;
 
     if (err==UNZ_OK)
         err = unzlocal_getByte(pzlib_filefunc_def,filestream,&i);
@@ -347,37 +344,32 @@ extern int ZEXPORT cpl_unzStringFileNameCompare (const char*  fileName1,
 static uLong64 unzlocal_SearchCentralDir(const zlib_filefunc_def* pzlib_filefunc_def,
                                       voidpf filestream)
 {
-    unsigned char* buf;
-    uLong64 uSizeFile;
-    uLong64 uBackRead;
-    uLong64 uMaxBack=0xffff; /* maximum size of global comment */
-    uLong64 uPosFound=0;
-
     if (ZSEEK(*pzlib_filefunc_def,filestream,0,ZLIB_FILEFUNC_SEEK_END) != 0)
         return 0;
 
-    uSizeFile = ZTELL(*pzlib_filefunc_def,filestream);
-
-    if (uMaxBack>uSizeFile)
-        uMaxBack = uSizeFile;
-
-    buf = (unsigned char*)ALLOC(BUFREADCOMMENT+4);
+    unsigned char* buf = (unsigned char*)ALLOC(BUFREADCOMMENT+4);
     if (buf==NULL)
         return 0;
 
-    uBackRead = 4;
+    const uLong64 uSizeFile = ZTELL(*pzlib_filefunc_def,filestream);
+
+    uLong64 uMaxBack=0xffff; /* maximum size of global comment */
+    if (uMaxBack>uSizeFile)
+        uMaxBack = uSizeFile;
+
+    uLong64 uPosFound=0;
+    uLong64 uBackRead = 4;
     while (uBackRead<uMaxBack)
     {
-        uLong uReadSize;
-        uLong64 uReadPos;
         if (uBackRead+BUFREADCOMMENT>uMaxBack)
             uBackRead = uMaxBack;
         else
             uBackRead+=BUFREADCOMMENT;
-        uReadPos = uSizeFile-uBackRead;
+        const uLong64 uReadPos = uSizeFile - uBackRead;
 
-        uReadSize = ((BUFREADCOMMENT+4) < (uSizeFile-uReadPos)) ?
-                     (BUFREADCOMMENT+4) : (uLong)(uSizeFile-uReadPos);
+        const uLong uReadSize =
+            ((BUFREADCOMMENT+4) < (uSizeFile-uReadPos)) ?
+            (BUFREADCOMMENT+4) : (uLong)(uSizeFile-uReadPos);
         if( ZSEEK(*pzlib_filefunc_def, filestream, uReadPos,
                   ZLIB_FILEFUNC_SEEK_SET) != 0 )
             break;
@@ -835,7 +827,7 @@ static int unzlocal_GetCurrentFileInfoInternal (
     lSeek+=file_info.size_filename;
     if ((err==UNZ_OK) && (szFileName!=NULL))
     {
-        uLong uSizeRead;
+        uLong uSizeRead = 0;
         if (file_info.size_filename<fileNameBufferSize)
         {
             *(szFileName+file_info.size_filename)='\0';
@@ -855,7 +847,7 @@ static int unzlocal_GetCurrentFileInfoInternal (
 #if 0
     if ((err==UNZ_OK) && (extraField!=NULL))
     {
-        uLong64 uSizeRead;
+        uLong64 uSizeRead = 0;
         if (file_info.size_file_extra<extraFieldBufferSize)
             uSizeRead = file_info.size_file_extra;
         else
@@ -959,8 +951,8 @@ static int unzlocal_GetCurrentFileInfoInternal (
                     /* Check expected CRC for filename */
                     if( nameCRC32 == crc32(0, (const Bytef*)szFileName, static_cast<uInt>(file_info.size_filename)) )
                     {
-                        uLong utf8Size = dataSize - 1 - 4;
-                        uLong uSizeRead;
+                        const uLong utf8Size = dataSize - 1 - 4;
+                        uLong uSizeRead = 0;
 
                         bHasUTF8Filename = true;
 
@@ -1020,7 +1012,7 @@ static int unzlocal_GetCurrentFileInfoInternal (
 #if 0
     if ((err==UNZ_OK) && (szComment!=NULL))
     {
-        uLong64 uSizeRead;
+        uLong64 uSizeRead = 0;
         if (file_info.size_file_comment<commentBufferSize)
         {
             *(szComment+file_info.size_file_comment)='\0';
@@ -1597,7 +1589,8 @@ extern int ZEXPORT cpl_unzReadCurrentFile  (unzFile file, voidp buf, unsigned le
 
         if ((pfile_in_zip_read_info->compression_method==0) || (pfile_in_zip_read_info->raw))
         {
-            uInt uDoCopy, i;
+            uInt uDoCopy = 0;
+            uInt i = 0;
 
             if ((pfile_in_zip_read_info->stream.avail_in == 0) &&
                 (pfile_in_zip_read_info->rest_read_compressed == 0))
