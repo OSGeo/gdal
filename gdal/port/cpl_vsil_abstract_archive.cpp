@@ -576,7 +576,7 @@ VSIArchiveFilesystemHandler::OpenArchiveFile( const char* archiveFilename,
 
         // Skip optional leading subdir.
         const CPLString osFileName = poReader->GetFileName();
-        if( IsEitherSlash(osFileName.back()) )
+        if( osFileName.empty() || IsEitherSlash(osFileName.back()) )
         {
             if( poReader->GotoNextFile() == FALSE )
             {

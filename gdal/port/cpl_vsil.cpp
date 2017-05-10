@@ -626,7 +626,7 @@ VSIVirtualHandle *VSIFilesystemHandler::Open( const char *pszFilename,
 #endif
 
 /************************************************************************/
-/*                             VSIFOpenExL()                              */
+/*                             VSIFOpenExL()                            */
 /************************************************************************/
 
 /**
