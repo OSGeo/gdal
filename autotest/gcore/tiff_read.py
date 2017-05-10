@@ -3028,6 +3028,38 @@ def tiff_read_big_tile():
 
 ###############################################################################
 
+def tiff_read_huge_number_strips():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['LIBTIFF'] != 'INTERNAL':
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/huge-number-strips.tif')
+        ds.GetRasterBand(1).Checksum()
+
+    return 'success'
+
+###############################################################################
+
+def tiff_read_many_blocks():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['LIBTIFF'] != 'INTERNAL':
+        return 'skip'
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test.tif', 1, 2000000, options = ['BLOCKYSIZE=1'])
+    ds = None
+    ds = gdal.Open('/vsimem/test.tif')
+    if ds.GetRasterBand(1).Checksum() != 0:
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+
+    return 'success'
+
+###############################################################################
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
     if ut is None:
@@ -3129,6 +3161,9 @@ gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillStrip) )
 gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillStrip2) )
 gdaltest_list.append( (tiff_read_big_strip) )
 gdaltest_list.append( (tiff_read_big_tile) )
+gdaltest_list.append( (tiff_read_huge_number_strips) )
+gdaltest_list.append( (tiff_read_many_blocks) )
+
 
 # gdaltest_list = [ tiff_read_ycbcr_lzw ]
 
