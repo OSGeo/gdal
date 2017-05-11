@@ -1512,16 +1512,11 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     //  Allocate memory buffer to read one block from one band
     // --------------------------------------------------------------------
 
-    long int nAlloc = (long int) nBlockXSize * (long int) nBlockYSize *
-                      (long int) ( GDALGetDataTypeSize( eType ) / 8 );
-
-    CPLDebug("GEOR","Buffer size (%ld)",nAlloc);
-
-    void *pData = VSI_MALLOC_VERBOSE( nAlloc );
+    void *pData = VSI_MALLOC3_VERBOSE( nBlockXSize, nBlockYSize, 
+                                       GDALGetDataTypeSizeBytes(eType) );
 
     if( pData == NULL )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate (%ld) bytes", nAlloc );
         delete poDstDS;
         return NULL;
     }
