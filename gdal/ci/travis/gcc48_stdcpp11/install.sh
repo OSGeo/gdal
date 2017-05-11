@@ -7,7 +7,8 @@ export CCACHE_CPP2=yes
 
 # Disable --with-fgdb=/usr/local since it causes /usr/local/include/GeodatabaseManagement.h:56:1: error: expected constructor, destructor, or type conversion before ‘(’ token EXT_FILEGDB_API fgdbError CreateGeodatabase(const std::wstring& path, Geodatabase& geodatabase);
 # Disable --with-mongocxx=/usr/local since it should also likely be compiled with C+11, but this fails because boost itself should probably be
-CC="ccache gcc-4.8 -std=c11" CXX="ccache g++-4.8 -std=c++11 -Wzero-as-null-pointer-constant -DNULL_AS_NULLPTR" ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-gta --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local  --with-libkml --with-openjpeg=/usr/local --with-pdfium=/usr/local --enable-pdf-plugin
+CC="ccache gcc-4.8 -std=c11" CXX="ccache g++-4.8 -std=c++11 -Wzero-as-null-pointer-constant -DNULL_AS_NULLPTR" ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local  --with-libkml --with-openjpeg=/usr/local --with-pdfium=/usr/local --enable-pdf-plugin
+# --with-gta
 make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
