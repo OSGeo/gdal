@@ -1484,11 +1484,44 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     poDstDS->GetRasterBand( 1 )->GetBlockSize( &nBlockXSize, &nBlockYSize );
 
-    void *pData = VSI_MALLOC_VERBOSE( nBlockXSize * nBlockYSize *
-        GDALGetDataTypeSize( eType ) / 8 );
+    // --------------------------------------------------------------------
+    //  JP2-F has one block with full image size. Use tile size instead
+    // --------------------------------------------------------------------
+
+    const char* pszFetched = "";
+
+    pszFetched = CSLFetchNameValue( papszOptions, "COMPRESS" );
+
+    if( pszFetched != NULL && EQUAL( pszFetched, "JP2-F" ) )
+    {
+        nBlockXSize = DEFAULT_JP2_TILE_COLUMNS;
+        nBlockYSize = DEFAULT_JP2_TILE_ROWS;
+        pszFetched = CSLFetchNameValue( papszOptions, "JP2_BLOCKXSIZE" );
+        if( pszFetched != NULL )
+        {
+            nBlockXSize = atoi( pszFetched );
+        }
+        pszFetched = CSLFetchNameValue( papszOptions, "JP2_BLOCKYSIZE" );
+        if( pszFetched != NULL )
+        {
+            nBlockYSize = atoi( pszFetched );
+        }
+    }
+
+    // --------------------------------------------------------------------
+    //  Allocate memory buffer to read one block from one band
+    // --------------------------------------------------------------------
+
+    long int nAlloc = (long int) nBlockXSize * (long int) nBlockYSize *
+                      (long int) ( GDALGetDataTypeSize( eType ) / 8 );
+
+    CPLDebug("GEOR","Buffer size (%ld)",nAlloc);
+
+    void *pData = VSI_MALLOC_VERBOSE( nAlloc );
 
     if( pData == NULL )
     {
+        CPLError( CE_Failure, CPLE_OutOfMemory, "Cannot allocate (%ld) bytes", nAlloc );
         delete poDstDS;
         return NULL;
     }
