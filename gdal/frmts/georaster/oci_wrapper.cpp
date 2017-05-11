@@ -270,7 +270,7 @@ OWConnection::OWConnection( const char* pszUserIn,
     // ------------------------------------------------------
     //  Initialize/Describe types
     // ------------------------------------------------------
-/*
+
     CheckError( OCIHandleAlloc(
         (dvoid*) hEnv,
         (dvoid**) (dvoid*) &hDescribe,
@@ -288,7 +288,6 @@ OWConnection::OWConnection( const char* pszUserIn,
     {
         hPCTDO      = DescribeType( SDO_PC );
     }
-*/
 }
 
 void OWConnection::QueryVersion()
