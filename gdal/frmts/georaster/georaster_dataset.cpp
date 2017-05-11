@@ -1490,9 +1490,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     //  JP2-F has one block with full image size. Use tile size instead
     // --------------------------------------------------------------------
 
-    const char* pszFetched = "";
-
-    pszFetched = CSLFetchNameValue( papszOptions, "COMPRESS" );
+    const char* pszFetched = CSLFetchNameValue( papszOptions, "COMPRESS" );
 
     if( pszFetched != NULL && EQUAL( pszFetched, "JP2-F" ) )
     {
