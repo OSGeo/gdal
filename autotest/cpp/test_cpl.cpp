@@ -1058,4 +1058,29 @@ namespace tut
         ensure_equals ( CPLString("abc",1).c_str(), "a" );
     }
 
+    template<>
+    template<>
+    void object::test<22>()
+    {
+        // NOTE: Assumes cpl_error.cpp defines DEFAULT_LAST_ERR_MSG_SIZE=500
+        char pszMsg[] =
+            "0abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()_+=|"
+            "1abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()_+=|"
+            "2abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()_+=|"
+            "3abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()_+=|"
+            "4abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()_+=|"
+            "5abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()_+=|"
+            "6abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()_+=|"
+            "7abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()_+=|"
+            "8abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()_+=|"
+            "9abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()_+=|" // 500
+            "0abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*()_+=|" // 550
+            ;
+
+        CPLErrorReset();
+        CPLErrorSetState(CE_Warning, 1, pszMsg);
+        ensure_equals(strlen(pszMsg) - 50 - 1,       // length - 50 - 1 (null-terminator)
+                      strlen(CPLGetLastErrorMsg())); // DEFAULT_LAST_ERR_MSG_SIZE - 1
+    }
+
 } // namespace tut
