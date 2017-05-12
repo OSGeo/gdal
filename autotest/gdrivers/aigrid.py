@@ -237,6 +237,29 @@ def aigrid_online_1():
     return 'success'
 
 ###############################################################################
+# Test on real dataset downloaded from http://download.osgeo.org/gdal/data/aig/nzdem
+
+def aigrid_online_2():
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/aig/ai_bug_6886.zip', 'ai_bug_6886.zip'):
+        return 'skip'
+
+    try:
+        os.stat('tmp/cache/ai_bug')
+    except:
+        try:
+            gdaltest.unzip('tmp/cache', 'tmp/cache/ai_bug_6886')
+            try:
+                os.stat('tmp/cache/ai_bug')
+            except:
+                return 'skip'
+        except:
+            return 'skip'
+
+    tst = gdaltest.GDALTest( 'AIG', 'tmp/cache/ai_bug/ai_bug/hdr.adf', 1, 16018, filename_absolute = 1 )
+    return tst.testOpen()
+
+###############################################################################
 
 gdaltest_list = [
     aigrid_1,
@@ -245,7 +268,8 @@ gdaltest_list = [
     aigrid_4,
     aigrid_5,
     aigrid_6,
-    aigrid_online_1 ]
+    aigrid_online_1,
+    aigrid_online_2 ]
 
 if __name__ == '__main__':
 
