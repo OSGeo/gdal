@@ -469,6 +469,9 @@ void GDALMRFDataset::SetMaxValue(const char *pszVal) {
 int GDALMRFDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
+    if (STARTS_WITH("<MRF_META>", poOpenInfo->pszFilename))
+        return TRUE;
+
     CPLString fn(poOpenInfo->pszFilename);
     if (fn.find(":MRF:") != string::npos)
         return TRUE;
