@@ -1093,7 +1093,13 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     if (eErr != CE_None)
         return NULL;
 
-    return (GDALDataset*) GDALOpen(osFilename.c_str(), GA_ReadOnly);
+    GDALOpenInfo oOpenInfo(osFilename.c_str(), GA_ReadOnly);
+    HF2Dataset* poDS = reinterpret_cast<HF2Dataset*>(Open(&oOpenInfo));
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 
 /************************************************************************/
