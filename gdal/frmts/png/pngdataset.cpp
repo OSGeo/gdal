@@ -926,7 +926,7 @@ const char *PNGDataset::GetMetadataItem( const char * pszName,
 int PNGDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    if( poOpenInfo->nHeaderBytes < 4 )
+    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 4 )
         return FALSE;
 
     if( png_sig_cmp(poOpenInfo->pabyHeader, static_cast<png_size_t>( 0 ),
@@ -946,6 +946,9 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // During fuzzing, do not use Identify to reject crazy content.
     if( !Identify( poOpenInfo ) )
+        return NULL;
+#else
+    if( poOpenInfo->fpL == NULL )
         return NULL;
 #endif
 
