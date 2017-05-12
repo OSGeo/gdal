@@ -349,7 +349,8 @@ retry_read_header:
 
     if (nOffset != -1)
         nOffset = NITFCollectSegmentInfo( psFile, nHeaderLen, nOffset, "RE", 4, 7, &nNextData);
-    else
+
+    if( nOffset < 0 )
     {
         NITFClose(psFile);
         return NULL;

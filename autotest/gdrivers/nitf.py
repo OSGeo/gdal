@@ -2520,6 +2520,16 @@ def nitf_72():
     return 'success'
 
 ###############################################################################
+# Test case for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1525
+
+def nitf_73():
+
+    with gdaltest.error_handler():
+        gdal.Open('data/oss_fuzz_1525.ntf')
+
+    return 'success'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -3532,6 +3542,7 @@ gdaltest_list = [
     nitf_70,
     nitf_71,
     nitf_72,
+    nitf_73,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
