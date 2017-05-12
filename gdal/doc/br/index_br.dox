@@ -26,8 +26,8 @@ A bilioteca GDAL tamb&eacute;m conta com uma variadade de programas
 <a class="el" href="gdal_utilities.html"> utilit&aacute;rios de linha de comando</a>
 para a tradu&ccedil;&atilde;o de formatos bem como uma s&eacute;rie de outras fun&ccedil;&otilde;es.
 A p&aacute;gina
-<a href="http://trac.osgeo.org/gdal/wiki/Release/2.0.0-News">novidades</a> descreve o
-lan&ccedil;amento em Outubro de 2016 da release 2.1.2 da biblioteca GDAL/OGR.
+<a href="http://trac.osgeo.org/gdal/wiki/Release/2.2.0-News">novidades</a> descreve o
+lan&ccedil;amento em Maio de 2017 da release 2.2.0 da biblioteca GDAL/OGR.
 
 Tradicionalmente a bilioteca GDAL referia-se a dados Raster enquanto que OGR
 referia-se a dados Vetorias (Simple Features). Mas a partir da ver&ccedil;&atilde;o 2.0 as duas partes
