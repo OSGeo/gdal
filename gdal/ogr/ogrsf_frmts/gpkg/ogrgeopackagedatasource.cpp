@@ -4318,6 +4318,8 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
     if (pszFIDColumnName == NULL)
         pszFIDColumnName = "fid";
 
+    if( CPLTestBool(CPLGetConfigOption("GPKG_NAME_CHECK", "YES")) )
+    {
     if ( strspn(pszFIDColumnName, "`~!@#$%^&*()+-={}|[]\\:\";'<>?,./") > 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -4341,6 +4343,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The layer name may not contain special characters or spaces");
         return NULL;
+    }
     }
 
     /* Check for any existing layers that already use this name */
