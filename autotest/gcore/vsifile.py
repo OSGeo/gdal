@@ -610,6 +610,39 @@ def vsifile_12():
 
     return 'success'
 
+###############################################################################
+# Test reading filename with prefixes without terminating slash
+
+def vsifile_13():
+
+    gdal.VSIFOpenL('/vsigzip', 'rb')
+    gdal.VSIFOpenL('/vsizip', 'rb')
+    gdal.VSIFOpenL('/vsitar', 'rb')
+    gdal.VSIFOpenL('/vsimem', 'rb')
+    gdal.VSIFOpenL('/vsisparse', 'rb')
+    gdal.VSIFOpenL('/vsisubfile', 'rb')
+    gdal.VSIFOpenL('/vsicurl', 'rb')
+    gdal.VSIFOpenL('/vsis3', 'rb')
+    gdal.VSIFOpenL('/vsicurl_streaming', 'rb')
+    gdal.VSIFOpenL('/vsis3_streaming', 'rb')
+    gdal.VSIFOpenL('/vsistdin', 'rb')
+    gdal.VSIFOpenL('/vsistdout', 'wb')
+
+    gdal.VSIStatL('/vsigzip')
+    gdal.VSIStatL('/vsizip')
+    gdal.VSIStatL('/vsitar')
+    gdal.VSIStatL('/vsimem')
+    gdal.VSIStatL('/vsisparse')
+    gdal.VSIStatL('/vsisubfile')
+    gdal.VSIStatL('/vsicurl')
+    gdal.VSIStatL('/vsis3')
+    gdal.VSIStatL('/vsicurl_streaming')
+    gdal.VSIStatL('/vsis3_streaming')
+    gdal.VSIStatL('/vsistdin')
+    gdal.VSIStatL('/vsistdout')
+
+    return 'success'
+
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
@@ -621,7 +654,8 @@ gdaltest_list = [ vsifile_1,
                   vsifile_9,
                   vsifile_10,
                   vsifile_11,
-                  vsifile_12 ]
+                  vsifile_12,
+                  vsifile_13 ]
 
 if __name__ == '__main__':
 
