@@ -5720,12 +5720,23 @@ GTiffOddBitsBand::GTiffOddBitsBand( GTiffDataset *poGDSIn, int nBandIn )
         : GTiffRasterBand( poGDSIn, nBandIn )
 
 {
-    eDataType = GDT_Byte;
-    if( poGDS->nSampleFormat == SAMPLEFORMAT_IEEEFP )
+    eDataType = GDT_Unknown;
+    if( (poGDS->nBitsPerSample == 16 || poGDS->nBitsPerSample == 24) &&
+        poGDS->nSampleFormat == SAMPLEFORMAT_IEEEFP )
         eDataType = GDT_Float32;
-    else if( poGDS->nBitsPerSample > 8 && poGDS->nBitsPerSample < 16 )
+    // FIXME ? in autotest we currently open gcore/data/int24.tif
+    // which is declared as signed, but we consider it as unsigned
+    else if( (poGDS->nSampleFormat == SAMPLEFORMAT_UINT ||
+              poGDS->nSampleFormat == SAMPLEFORMAT_INT) &&
+             poGDS->nBitsPerSample < 8 )
+        eDataType = GDT_Byte;
+    else if( (poGDS->nSampleFormat == SAMPLEFORMAT_UINT ||
+              poGDS->nSampleFormat == SAMPLEFORMAT_INT) &&
+             poGDS->nBitsPerSample > 8 && poGDS->nBitsPerSample < 16 )
         eDataType = GDT_UInt16;
-    else if( poGDS->nBitsPerSample > 16 )
+    else if( (poGDS->nSampleFormat == SAMPLEFORMAT_UINT ||
+              poGDS->nSampleFormat == SAMPLEFORMAT_INT) &&
+             poGDS->nBitsPerSample > 16 && poGDS->nBitsPerSample < 32 )
         eDataType = GDT_UInt32;
 }
 
@@ -13134,8 +13145,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
     if( GetRasterBand(1)->GetRasterDataType() == GDT_Unknown )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Unsupported TIFF configuration." );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported TIFF configuration: BitsPerSample(=%d) and "
+                 "SampleType(=%d)",
+                 nBitsPerSample,
+                 nSampleFormat);
         return CE_Failure;
     }
 
