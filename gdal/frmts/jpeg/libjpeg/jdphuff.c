@@ -166,11 +166,15 @@ start_pass_phuff_decoder (j_decompress_ptr cinfo)
     if (is_DC_band) {
       if (cinfo->Ah == 0) {	/* DC refinement needs no table */
 	tbl = compptr->dc_tbl_no;
+	if (tbl < 0 || tbl >= NUM_HUFF_TBLS)
+		ERREXIT1(cinfo, JERR_NO_HUFF_TABLE, tbl);
 	jpeg_make_d_derived_tbl(cinfo, TRUE, tbl,
 				& entropy->derived_tbls[tbl]);
       }
     } else {
       tbl = compptr->ac_tbl_no;
+      if (tbl < 0 || tbl >= NUM_HUFF_TBLS)
+        ERREXIT1(cinfo, JERR_NO_HUFF_TABLE, tbl);
       jpeg_make_d_derived_tbl(cinfo, FALSE, tbl,
 			      & entropy->derived_tbls[tbl]);
       /* remember the single active table */
