@@ -2810,7 +2810,11 @@ def tiff_read_ycbcr_int12():
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/int12_ycbcr_contig.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     if gdal.GetLastErrorMsg().find('Cannot open TIFF file with') < 0:
+        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -3078,7 +3082,11 @@ def tiff_read_uint33():
 
     with gdaltest.error_handler():
         ds = gdal.Open('data/uint33.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     if gdal.GetLastErrorMsg().find('Unsupported TIFF configuration') < 0:
+        gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
