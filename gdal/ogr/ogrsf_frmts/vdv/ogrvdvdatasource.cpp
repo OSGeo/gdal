@@ -343,7 +343,7 @@ void OGRIDFDataSource::Parse()
 
     // Patch Link geometries with the intermediate points of LinkCoordinate
     OGRLayer* poLinkLyr = m_poMemDS->GetLayerByName("Link");
-    if( poLinkLyr )
+    if( poLinkLyr && poLinkLyr->GetLayerDefn()->GetGeomFieldCount() )
     {
         iLinkID = poLinkLyr->GetLayerDefn()->GetFieldIndex("LINK_ID");
         if( iLinkID >= 0 )
