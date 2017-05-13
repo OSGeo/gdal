@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.51 2017-05-10 15:21:16 erouault Exp $ */
+/* $Id: tif_pixarlog.c,v 1.52 2017-05-13 18:29:38 erouault Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -636,29 +636,27 @@ PixarLogGuessDataFmt(TIFFDirectory *td)
 	return guess;
 }
 
+#define TIFF_SIZE_T_MAX ((size_t) ~ ((size_t)0))
+#define TIFF_TMSIZE_T_MAX (tmsize_t)(TIFF_SIZE_T_MAX >> 1)
+
 static tmsize_t
 multiply_ms(tmsize_t m1, tmsize_t m2)
 {
-	tmsize_t bytes = m1 * m2;
-
-	if (m1 && bytes / m1 != m2)
-		bytes = 0;
-
-	return bytes;
+        if( m1 == 0 || m2 > TIFF_TMSIZE_T_MAX / m1 )
+            return 0;
+        return m1 * m2;
 }
 
 static tmsize_t
 add_ms(tmsize_t m1, tmsize_t m2)
 {
-	tmsize_t bytes = m1 + m2;
-
 	/* if either input is zero, assume overflow already occurred */
 	if (m1 == 0 || m2 == 0)
-		bytes = 0;
-	else if (bytes <= m1 || bytes <= m2)
-		bytes = 0;
+		return 0;
+	else if (m1 > TIFF_TMSIZE_T_MAX - m2)
+		return 0;
 
-	return bytes;
+	return m1 + m2;
 }
 
 static int
