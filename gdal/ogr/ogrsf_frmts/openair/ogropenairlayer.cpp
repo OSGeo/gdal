@@ -300,7 +300,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 double dfLat = 0.0;
                 double dfLon = 0.0;
                 for(double dfAngle = dfStartAngle;
-                    (dfAngle - dfEndAngle) * nSign < 0;
+                    (dfAngle - dfEndAngle) * nSign < 0 &&
+                    fabs(dfStartAngle - dfEndAngle) <= 360.0;
                     dfAngle += nSign)
                 {
                     const double pct = (dfAngle - dfStartAngle) /
@@ -352,7 +353,8 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
 
                 const int nSign = (bClockWise) ? 1 : -1;
                 for(double dfAngle = dfStartAngle;
-                    (dfAngle - dfEndAngle) * nSign < 0;
+                    (dfAngle - dfEndAngle) * nSign < 0 &&
+                    fabs(dfStartAngle - dfEndAngle) <= 360.0;
                     dfAngle += nSign)
                 {
                     double dfLat = 0.0;
