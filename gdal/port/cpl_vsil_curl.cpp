@@ -2295,6 +2295,9 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
                                                   const char *pszAccess,
                                                   bool bSetError )
 {
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return NULL;
+
     if( strchr(pszAccess, 'w') != NULL ||
         strchr(pszAccess, '+') != NULL )
     {
@@ -3291,6 +3294,9 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename,
                                     VSIStatBufL *pStatBuf,
                                     int nFlags )
 {
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return -1;
+
     const CPLString osFilename(pszFilename);
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
@@ -4172,6 +4178,9 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
                                         const char *pszAccess,
                                         bool bSetError)
 {
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return NULL;
+
     if( strchr(pszAccess, 'w') != NULL || strchr(pszAccess, 'a') != NULL )
     {
         /*if( strchr(pszAccess, '+') != NULL)
@@ -4207,6 +4216,9 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
 int VSIS3FSHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
                           int nFlags )
 {
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return -1;
+
     CPLString osFilename(pszFilename);
     if( osFilename.find('/', GetFSPrefix().size()) == std::string::npos )
         osFilename += "/";
