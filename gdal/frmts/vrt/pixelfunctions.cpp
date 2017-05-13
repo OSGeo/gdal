@@ -199,11 +199,11 @@ static CPLErr ComplexPixelFunc( void **papoSources, int nSources, void *pData,
                                 GDALDataType eSrcType, GDALDataType eBufType,
                                 int nPixelSpace, int nLineSpace )
 {
-    const void * const pReal = papoSources[0];
-    const void * const pImag = papoSources[1];
-
     /* ---- Init ---- */
     if( nSources != 2 ) return CE_Failure;
+
+    const void * const pReal = papoSources[0];
+    const void * const pImag = papoSources[1];
 
     /* ---- Set pixels ---- */
     for( int iLine = 0, ii = 0; iLine < nYSize; ++iLine ) {
