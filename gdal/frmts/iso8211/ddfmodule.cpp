@@ -288,6 +288,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
                       "Header record is short on DDF file `%s'.",
                       pszFilename );
 
+        CPLFree( pachRecord );
         return FALSE;
     }
 
