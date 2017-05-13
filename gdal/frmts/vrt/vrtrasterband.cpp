@@ -342,7 +342,13 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
     const char* pszBand = CPLGetXMLValue( psTree, "band", NULL);
     if( pszBand != NULL )
     {
-        nBand = atoi(pszBand);
+        int nNewBand = atoi(pszBand);
+        if( nNewBand != nBand )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid band. Got %s, expected %d", pszBand, nBand);
+            return CE_Failure;
+        }
     }
 
 /* -------------------------------------------------------------------- */
