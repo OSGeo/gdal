@@ -6571,7 +6571,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
 
         // Bits per line rounds up to next byte boundary.
-        int nBitsPerLine = nBlockXSize * iPixelBitSkip;
+        GIntBig nBitsPerLine = static_cast<GIntBig>(nBlockXSize) * iPixelBitSkip;
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
@@ -6581,7 +6581,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         for( int iY = 0; iY < nBlockYSize; ++iY )
         {
-            int iBitOffset = iBandBitOffset + iY * nBitsPerLine;
+            GIntBig iBitOffset = iBandBitOffset + iY * nBitsPerLine;
 
             for( int iX = 0; iX < nBlockXSize; ++iX )
             {
