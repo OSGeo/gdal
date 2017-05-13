@@ -1,7 +1,7 @@
 
 include ../GDALmake.opt
 
-OBJ	=	gdal_fuzzer.o
+OBJ	=	gdal_fuzzer.o ogr_fuzzer.o
 
 CPPFLAGS	:=	$(CPPFLAGS)
 
