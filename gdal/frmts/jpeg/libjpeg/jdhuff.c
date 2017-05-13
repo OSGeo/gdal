@@ -103,6 +103,10 @@ start_pass_huff_decoder (j_decompress_ptr cinfo)
     actbl = compptr->ac_tbl_no;
     /* Compute derived values for Huffman tables */
     /* We may do this more than once for a table, but it's not expensive */
+    if (dctbl < 0 || dctbl >= NUM_HUFF_TBLS)
+      ERREXIT1(cinfo, JERR_NO_HUFF_TABLE, dctbl);
+    if (actbl < 0 || actbl >= NUM_HUFF_TBLS)
+      ERREXIT1(cinfo, JERR_NO_HUFF_TABLE, actbl);
     jpeg_make_d_derived_tbl(cinfo, TRUE, dctbl,
 			    & entropy->dc_derived_tbls[dctbl]);
     jpeg_make_d_derived_tbl(cinfo, FALSE, actbl,
