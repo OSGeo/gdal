@@ -2804,6 +2804,19 @@ def tiff_read_ycbcr_lzw():
     return 'success'
 
 ###############################################################################
+# Test reading YCbCr images with nbits > 8
+
+def tiff_read_ycbcr_int12():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/int12_ycbcr_contig.tif')
+    if gdal.GetLastErrorMsg().find('Cannot open TIFF file with') < 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test reading band unit from VERT_CS unit (#6675)
 
 def tiff_read_unit_from_srs():
@@ -3148,6 +3161,7 @@ gdaltest_list.append( (tiff_read_jpeg_cloud_optimized) )
 gdaltest_list.append( (tiff_read_corrupted_jpeg_cloud_optimized) )
 
 gdaltest_list.append( (tiff_read_ycbcr_lzw) )
+gdaltest_list.append( (tiff_read_ycbcr_int12) )
 
 gdaltest_list.append( (tiff_read_unit_from_srs) )
 gdaltest_list.append( (tiff_read_arcgis93_geodataxform_gcp) )
