@@ -39,6 +39,18 @@ typedef enum {			/* Operating modes for buffer controllers */
 #define DSTATE_STOPPING	210	/* looking for EOI in jpeg_finish_decompress */
 
 
+/*
+ * Left shift macro that handles a negative operand without causing any
+ * sanitizer warnings
+ */
+
+#ifdef INT32_IS_ACTUALLY_LONG
+#define LEFT_SHIFT(a, b) ((INT32)((unsigned long)(a) << (b)))
+#else
+#define LEFT_SHIFT(a, b) ((INT32)((unsigned int)(a) << (b)))
+#endif
+
+
 /* Declarations for compression modules */
 
 /* Master control module */

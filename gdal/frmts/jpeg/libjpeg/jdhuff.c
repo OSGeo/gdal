@@ -448,9 +448,11 @@ jpeg_huff_decode (bitread_working_state * state,
  * On some machines, a shift and add will be faster than a table lookup.
  */
 
+#define NEG_1 ((unsigned int)-1)
+#define AVOID_TABLES
 #ifdef AVOID_TABLES
 
-#define HUFF_EXTEND(x,s)  ((x) < (1<<((s)-1)) ? (x) + (((-1)<<(s)) + 1) : (x))
+#define HUFF_EXTEND(x,s)  ((x) + ((((x) - (1<<((s)-1))) >> 31) & (((NEG_1)<<(s)) + 1)))
 
 #else
 
