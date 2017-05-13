@@ -1531,6 +1531,9 @@ VSIVirtualHandle* VSIGZipFilesystemHandler::Open( const char *pszFilename,
                                                   const char *pszAccess,
                                                   bool /* bSetError */ )
 {
+    if( !STARTS_WITH_CI(pszFilename, "/vsigzip/") )
+        return NULL;
+
     VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename + strlen("/vsigzip/"));
 
@@ -1635,6 +1638,9 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename,
                                     VSIStatBufL *pStatBuf,
                                     int nFlags )
 {
+    if( !STARTS_WITH_CI(pszFilename, "/vsigzip/") )
+        return -1;
+
     CPLMutexHolder oHolder(&hMutex);
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
