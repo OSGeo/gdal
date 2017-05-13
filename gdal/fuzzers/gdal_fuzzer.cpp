@@ -43,6 +43,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
     VSIFCloseL(fp);
     GDALAllRegister();
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     GDALDatasetH hDS = GDALOpen( "/vsimem/test", GA_ReadOnly );
     if( hDS )
     {
@@ -56,6 +57,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         }
         GDALClose(hDS);
     }
+    CPLPopErrorHandler();
     VSIUnlink( "/vsimem/test" );
     return 0;
 }
