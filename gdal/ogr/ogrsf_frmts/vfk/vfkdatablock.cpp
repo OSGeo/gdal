@@ -128,6 +128,8 @@ void IVFKDataBlock::SetProperties(const char *poLine)
 
             poProp = ++poChar;
             nLength = 0;
+            if( *poProp == '\0' )
+                break;
         }
         else if (*poChar == ';') {
             pszType = (char *) CPLRealloc(pszType, nLength + 1);
@@ -141,6 +143,8 @@ void IVFKDataBlock::SetProperties(const char *poLine)
 
             poProp = ++poChar;
             nLength = 0;
+            if( *poProp == '\0' )
+                break;
         }
         poChar++;
         nLength++;
