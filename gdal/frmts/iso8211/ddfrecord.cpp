@@ -291,9 +291,9 @@ int DDFRecord::ReadHeader()
     _sizeFieldPos = achLeader[21] - '0';
     _sizeFieldTag = achLeader[23] - '0';
 
-    if( _sizeFieldLength < 0 || _sizeFieldLength > 9
-        || _sizeFieldPos < 0 || _sizeFieldPos > 9
-        || _sizeFieldTag < 0 || _sizeFieldTag > 9 )
+    if( _sizeFieldLength <= 0 || _sizeFieldLength > 9
+        || _sizeFieldPos <= 0 || _sizeFieldPos > 9
+        || _sizeFieldTag <= 0 || _sizeFieldTag > 9 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "ISO8211 record leader appears to be corrupt." );
