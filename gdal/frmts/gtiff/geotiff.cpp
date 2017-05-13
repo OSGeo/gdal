@@ -5865,7 +5865,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             return eErr;
     }
 
-    const GUInt32 nMaxVal = (1 << poGDS->nBitsPerSample) - 1;
+    const GUInt32 nMaxVal = (1U << poGDS->nBitsPerSample) - 1;
 
 /* -------------------------------------------------------------------- */
 /*      Handle case of "separate" images or single band images where    */
