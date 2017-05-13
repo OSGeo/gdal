@@ -696,6 +696,7 @@ OGRErr VFKReaderSQLite::ExecuteSQL( const char *pszSQLCommand, bool bQuiet )
                      "In ExecuteSQL(%s): %s",
                      pszSQLCommand, pszErrMsg);
 
+        sqlite3_free(pszErrMsg);
         return  OGRERR_FAILURE;
     }
 
