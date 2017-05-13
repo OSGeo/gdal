@@ -6232,8 +6232,8 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt(
             poCurve = dynamic_cast<OGRCurve *>(poGeom);
             if( poCurve == NULL )
             {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRCurve.");
+                delete poGeom;
+                eErr = OGRERR_CORRUPT_DATA;
             }
         }
         else
