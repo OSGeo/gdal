@@ -3574,11 +3574,16 @@ void GDALDeserializeGCPListFromXML( CPLXMLNode* psGCPList,
          psXMLGCP != NULL;
          psXMLGCP = psXMLGCP->psNext )
     {
+
+        if( !EQUAL(psXMLGCP->pszValue,"GCP") ||
+            psXMLGCP->eType != CXT_Element )
+            continue;
+
         nGCPMax++;
     }
 
     *ppasGCPList = static_cast<GDAL_GCP *>(
-        CPLCalloc(sizeof(GDAL_GCP), nGCPMax) );
+        nGCPMax ? CPLCalloc(sizeof(GDAL_GCP), nGCPMax) : NULL );
     *pnGCPCount = 0;
 
     for( CPLXMLNode *psXMLGCP = psGCPList->psChild;

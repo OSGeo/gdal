@@ -1190,6 +1190,14 @@ def vrt_read_26():
 
     return 'success'
 
+###############################################################################
+# Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1553
+
+def vrt_read_27():
+
+    gdal.Open('data/empty_gcplist.vrt')
+
+    return 'success'
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
@@ -1224,6 +1232,7 @@ gdaltest_list.append( vrt_read_23 )
 gdaltest_list.append( vrt_read_24 )
 gdaltest_list.append( vrt_read_25 )
 gdaltest_list.append( vrt_read_26 )
+gdaltest_list.append( vrt_read_27 )
 
 if __name__ == '__main__':
 
