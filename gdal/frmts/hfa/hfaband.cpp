@@ -656,27 +656,31 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             }
             else if( eDataType == EPT_u2 )
             {
+                // nDataValue & 0x3 is just to avoid UBSAN warning on shifting
+                // negative values
                 if( (nPixelsOutput & 0x3) == 0 )
                     pabyDest[nPixelsOutput >> 2] =
                         static_cast<GByte>(nDataValue);
                 else if( (nPixelsOutput & 0x3) == 1 )
                     pabyDest[nPixelsOutput >> 2] |=
-                        static_cast<GByte>(nDataValue << 2);
+                        static_cast<GByte>((nDataValue & 0x3) << 2);
                 else if( (nPixelsOutput & 0x3) == 2 )
                     pabyDest[nPixelsOutput >> 2] |=
-                        static_cast<GByte>(nDataValue << 4);
+                        static_cast<GByte>((nDataValue & 0x3) << 4);
                 else
                     pabyDest[nPixelsOutput >> 2] |=
-                        static_cast<GByte>(nDataValue << 6);
+                        static_cast<GByte>((nDataValue & 0x3) << 6);
             }
             else if( eDataType == EPT_u4 )
             {
+                // nDataValue & 0xF is just to avoid UBSAN warning on shifting
+                // negative values
                 if( (nPixelsOutput & 0x1) == 0)
                     pabyDest[nPixelsOutput >> 1] =
                         static_cast<GByte>(nDataValue);
                 else
                     pabyDest[nPixelsOutput >> 1] |=
-                        static_cast<GByte>(nDataValue << 4);
+                        static_cast<GByte>((nDataValue & 0xF) << 4);
             }
             else if( eDataType == EPT_s8 )
             {
