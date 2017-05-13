@@ -1307,14 +1307,16 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                 iPoint++;
                 vertexIndex74 = 0;
             }
+            if( startPoint >= 0 )
+            {
+                // complete the ring
+                poLR->setPoint(iPoint,papoPoints[startPoint]);
 
-            // complete the ring
-            poLR->setPoint(iPoint,papoPoints[startPoint]);
+                OGRPolygon *poPolygon = new OGRPolygon();
+                poPolygon->addRing((OGRCurve *)poLR);
 
-            OGRPolygon *poPolygon = new OGRPolygon();
-            poPolygon->addRing((OGRCurve *)poLR);
-
-            poPS->addGeometryDirectly(poPolygon);
+                poPS->addGeometryDirectly(poPolygon);
+            }
 
             // delete the ring to prevent leakage
             delete poLR;
