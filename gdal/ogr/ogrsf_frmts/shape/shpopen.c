@@ -690,6 +690,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         psSHP->sHooks.Error( ".shx file is unreadable, or corrupt." );
         psSHP->sHooks.FClose( psSHP->fpSHP );
         psSHP->sHooks.FClose( psSHP->fpSHX );
+        free( pabyBuf );
         free( psSHP );
 
         return( NULL );
