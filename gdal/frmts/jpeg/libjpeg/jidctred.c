@@ -145,7 +145,7 @@ jpeg_idct_4x4 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 	inptr[DCTSIZE*3] == 0 && inptr[DCTSIZE*5] == 0 &&
 	inptr[DCTSIZE*6] == 0 && inptr[DCTSIZE*7] == 0) {
       /* AC terms all zero; we need not examine term 4 for 4x4 output */
-      int dcval = LEFT_SHIFT(DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]),
+      int dcval = (int)LEFT_SHIFT(DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]),
                              PASS1_BITS);
 
       wsptr[DCTSIZE*0] = dcval;
@@ -297,7 +297,7 @@ jpeg_idct_2x2 (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     if (inptr[DCTSIZE*1] == 0 && inptr[DCTSIZE*3] == 0 &&
 	inptr[DCTSIZE*5] == 0 && inptr[DCTSIZE*7] == 0) {
       /* AC terms all zero; we need not examine terms 2,4,6 for 2x2 output */
-      int dcval = LEFT_SHIFT(DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]),
+      int dcval = (int)LEFT_SHIFT(DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]),
                              PASS1_BITS);
 
       wsptr[DCTSIZE*0] = dcval;
