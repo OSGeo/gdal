@@ -388,11 +388,11 @@ def process(argv, progress=None, progress_arg=None):
                 writer.open_element('OGRVRTLayer',
                                     attrs={'name': layer_name})
                 attrs = None
-                if os.path.exists(src_dsname) and \
-                   src_dsname.find('/') < 0 and \
-                   src_ds.name.find('\\') < 0 and \
+                if EQUAL(output_format, 'VRT') and \
                    os.path.exists(src_dsname) and \
-                   not os.path.isabs(src_dsname):
+                   not os.path.isabs(src_dsname) and \
+                   vrt_filename.find('/') < 0 and \
+                   vrt_filename.find('\\') < 0:
                     attrs = {'relativeToVRT': '1'}
                 writer.write_element_value('SrcDataSource', src_dsname,
                                            attrs=attrs)
@@ -479,11 +479,11 @@ def process(argv, progress=None, progress_arg=None):
                 writer.open_element('OGRVRTLayer',
                                     attrs={'name': layer_name})
                 attrs = None
-                if os.path.exists(src_dsname) and \
-                   src_dsname.find('/') < 0 and \
-                   src_ds.name.find('\\') < 0 and \
+                if EQUAL(output_format, 'VRT') and \
                    os.path.exists(src_dsname) and \
-                   not os.path.isabs(src_dsname):
+                   not os.path.isabs(src_dsname) and \
+                   vrt_filename.find('/') < 0 and \
+                   vrt_filename.find('\\') < 0:
                     attrs = {'relativeToVRT': '1'}
                 writer.write_element_value('SrcDataSource', src_dsname,
                                            attrs=attrs)
