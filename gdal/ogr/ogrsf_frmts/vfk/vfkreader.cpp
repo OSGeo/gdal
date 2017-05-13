@@ -330,6 +330,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                 }
                 if (!poDataBlockCurrent) {
                     CPLFree(pszBlockName);
+                    CPLFree(pszLine);
                     continue; // assert ?
                 }
 
