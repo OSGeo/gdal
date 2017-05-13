@@ -696,7 +696,7 @@ void CPL_DLL CPLErrorSetState( CPLErr eErrClass, CPLErrorNum err_no,
     psCtx->nLastErrNo = err_no;
     strncpy(psCtx->szLastErrMsg, pszMsg, psCtx->nLastErrMsgMax);
     psCtx->szLastErrMsg[
-        MAX(psCtx->nLastErrMsgMax-1,
+        MIN(psCtx->nLastErrMsgMax-1,
             static_cast<int>( strlen(pszMsg) ))] = '\0';
     psCtx->eLastErrType = eErrClass;
 }
