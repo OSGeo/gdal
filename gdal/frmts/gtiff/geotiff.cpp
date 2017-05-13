@@ -12911,6 +12911,25 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         return CE_Failure;
     }
 
+    // If photometric is YCbCr, scanline/strip/tile interfaces assumes that
+    // we are ready with downsampled data. And we are not.
+    if( nCompression != COMPRESSION_JPEG &&
+        nCompression != COMPRESSION_OJPEG &&
+        nPhotometric == PHOTOMETRIC_YCBCR &&
+        nPlanarConfig == PLANARCONFIG_CONTIG &&
+        !bTreatAsRGBA )
+    {
+        uint16 nF1, nF2;
+        TIFFGetFieldDefaulted(hTIFF,TIFFTAG_YCBCRSUBSAMPLING,&nF1,&nF2);
+        if( nF1 != 1 || nF2 != 1 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Cannot open TIFF file with YCbCr, subsampling and "
+                      "BitsPerSample > 8 that is not JPEG compressed" );
+            return CE_Failure;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Should we treat this via the split interface?                   */
 /* -------------------------------------------------------------------- */
