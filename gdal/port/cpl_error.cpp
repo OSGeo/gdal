@@ -711,10 +711,10 @@ void CPL_DLL CPLErrorSetState( CPLErr eErrClass, CPLErrorNum err_no,
     }
 
     psCtx->nLastErrNo = err_no;
-    strncpy(psCtx->szLastErrMsg, pszMsg, psCtx->nLastErrMsgMax);
-    psCtx->szLastErrMsg[
-        std::max(psCtx->nLastErrMsgMax-1,
-                 static_cast<int>( strlen(pszMsg) ))] = '\0';
+    const size_t size = std::min(
+        static_cast<size_t>(psCtx->nLastErrMsgMax-1), strlen(pszMsg) );
+    strncpy( psCtx->szLastErrMsg, pszMsg, size );
+    psCtx->szLastErrMsg[size] = '\0';
     psCtx->eLastErrType = eErrClass;
 }
 
