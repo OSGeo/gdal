@@ -146,7 +146,12 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Prescan the KML file so we can later work with the structure    */
 /* -------------------------------------------------------------------- */
-    poKMLFile_->parse();
+    if( !poKMLFile_->parse() )
+    {
+        delete poKMLFile_;
+        poKMLFile_ = NULL;
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Classify the nodes                                              */
