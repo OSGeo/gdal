@@ -183,7 +183,7 @@ jpeg_idct_islow (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 	inptr[DCTSIZE*5] == 0 && inptr[DCTSIZE*6] == 0 &&
 	inptr[DCTSIZE*7] == 0) {
       /* AC terms all zero */
-      int dcval = LEFT_SHIFT(DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]),
+      int dcval = (int)LEFT_SHIFT(DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]),
                              PASS1_BITS);
 
       wsptr[DCTSIZE*0] = dcval;
