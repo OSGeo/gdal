@@ -840,6 +840,21 @@ def ogr_kml_read_folder_with_subfolder_placemark():
     return 'success'
 
 ###############################################################################
+# Test reading invalid KML (#6878)
+
+def ogr_kml_read_truncated():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('data/truncated.kml')
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Build tests runner
 
 gdaltest_list = [
@@ -864,6 +879,7 @@ gdaltest_list = [
     ogr_kml_empty_layer,
     ogr_kml_two_layers,
     ogr_kml_read_folder_with_subfolder_placemark,
+    ogr_kml_read_truncated,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
