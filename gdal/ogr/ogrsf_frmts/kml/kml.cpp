@@ -70,12 +70,12 @@ bool KML::open(const char * pszFilename)
     return pKMLFile_ != NULL;
 }
 
-void KML::parse()
+bool KML::parse()
 {
     if( NULL == pKMLFile_ )
     {
         sError_ = "No file given";
-        return;
+        return false;
     }
 
     if(poTrunk_ != NULL) {
@@ -115,20 +115,39 @@ void KML::parse()
                       static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
             XML_ParserFree(oParser);
             VSIRewindL(pKMLFile_);
-            return;
+
+            while( poCurrent_ )
+            {
+                KMLNode* poTemp = poCurrent_->getParent();
+                delete poCurrent_;
+                poCurrent_ = poTemp;
+            }
+            poTrunk_ = NULL;
+
+            return false;
         }
         nWithoutEventCounter ++;
     } while (!nDone && nLen > 0 && nWithoutEventCounter < 10);
 
     XML_ParserFree(oParser);
     VSIRewindL(pKMLFile_);
-    poCurrent_ = NULL;
 
     if (nWithoutEventCounter == 10)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too much data inside one element. File probably corrupted");
+        while( poCurrent_ )
+        {
+            KMLNode* poTemp = poCurrent_->getParent();
+            delete poCurrent_;
+            poCurrent_ = poTemp;
+        }
+        poTrunk_ = NULL;
+        return false;
     }
+
+    poCurrent_ = NULL;
+    return true;
 }
 
 void KML::checkValidity()
