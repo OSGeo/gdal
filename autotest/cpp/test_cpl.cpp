@@ -1083,4 +1083,38 @@ namespace tut
                       strlen(CPLGetLastErrorMsg())); // DEFAULT_LAST_ERR_MSG_SIZE - 1
     }
 
+    template<>
+    template<>
+    void object::test<23>()
+    {
+        char* pszText = CPLUnescapeString("&lt;&gt;&amp;&apos;&quot;&#x3f;&#x3F;&#63;", NULL, CPLES_XML);
+        ensure_equals( CPLString(pszText), "<>&'\"???");
+        CPLFree(pszText);
+
+        // Integer overflow
+        pszText = CPLUnescapeString("&10000000000000000;", NULL, CPLES_XML);
+        // We do not really care about the return value
+        CPLFree(pszText);
+
+        // Integer overflow
+        pszText = CPLUnescapeString("&#10000000000000000;", NULL, CPLES_XML);
+        // We do not really care about the return value
+        CPLFree(pszText);
+
+        // Error case
+        pszText = CPLUnescapeString("&foo", NULL, CPLES_XML);
+        ensure_equals( CPLString(pszText), "");
+        CPLFree(pszText);
+
+        // Error case
+        pszText = CPLUnescapeString("&#x", NULL, CPLES_XML);
+        ensure_equals( CPLString(pszText), "");
+        CPLFree(pszText);
+
+        // Error case
+        pszText = CPLUnescapeString("&#", NULL, CPLES_XML);
+        ensure_equals( CPLString(pszText), "");
+        CPLFree(pszText);
+    }
+
 } // namespace tut
