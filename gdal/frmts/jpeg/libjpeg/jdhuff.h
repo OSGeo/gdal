@@ -75,9 +75,12 @@ EXTERN(void) jpeg_make_d_derived_tbl
  * necessary.
  */
 
-typedef INT32 bit_buf_type;	/* type of bit-extraction buffer */
-#define BIT_BUF_SIZE  32	/* size of buffer in bits */
+typedef unsigned long bit_buf_type;	/* type of bit-extraction buffer */
+#define BIT_BUF_SIZE  (8 * (int)sizeof(bit_buf_type))	/* size of buffer in bits */
 
+/* E. Rouault: the below comment might be true, but a char must */
+/* be at least 8 bits large, so BIT_BUF_SIZE should be large enough when */
+/* using sizeof() */
 /* If long is > 32 bits on your machine, and shifting/masking longs is
  * reasonably fast, making bit_buf_type be long and setting BIT_BUF_SIZE
  * appropriately should be a win.  Unfortunately we can't define the size
