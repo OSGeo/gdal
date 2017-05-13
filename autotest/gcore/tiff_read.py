@@ -3093,6 +3093,19 @@ def tiff_read_uint33():
     return 'success'
 
 ###############################################################################
+# Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1545
+def tiff_read_corrupted_deflate_singlestrip():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/corrupted_deflate_singlestrip.tif')
+        ds.GetRasterBand(1).Checksum()
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -3197,11 +3210,12 @@ gdaltest_list.append( (tiff_read_big_tile) )
 gdaltest_list.append( (tiff_read_huge_number_strips) )
 gdaltest_list.append( (tiff_read_many_blocks) )
 gdaltest_list.append( (tiff_read_uint33) )
+gdaltest_list.append( (tiff_read_corrupted_deflate_singlestrip) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
 
-# gdaltest_list = [ tiff_read_ycbcr_lzw ]
+# gdaltest_list = [ tiff_read_online_1 ]
 
 if __name__ == '__main__':
 
