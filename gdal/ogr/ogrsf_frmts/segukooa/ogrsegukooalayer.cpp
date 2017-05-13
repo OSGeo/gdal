@@ -605,7 +605,7 @@ OGRFeature *OGRSEGP1Layer::GetNextRawFeature()
         }
 
         /* Normal layout -> extract other fields */
-        if (nLatitudeCol == 27)
+        if (nLatitudeCol == 27 && nLineLen >= 26-1+1)
         {
             char szLineName[16 + 1];
             ExtractField(szLineName, pszLine, 2-1, 16);
