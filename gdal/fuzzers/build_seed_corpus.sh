@@ -38,3 +38,11 @@ printf "***NEWFILE***:my.id\n" >> all_geoms_tab.tar
 cat $(dirname $0)/../../autotest/ogr/data/all_geoms.id >> all_geoms_tab.tar
 rm -f $OUT/mitab_tab_fuzzer_seed_corpus.zip
 zip -r $OUT/mitab_tab_fuzzer_seed_corpus.zip all_geoms_tab.tar >/dev/null
+
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > small_mif.tar
+printf "***NEWFILE***:my.mif\n" >> small_mif.tar
+cat $(dirname $0)/../../autotest/ogr/data/small.mif >> small_mif.tar
+printf "***NEWFILE***:my.mid\n" >> small_mif.tar
+cat $(dirname $0)/../../autotest/ogr/data/small.mid >> small_mif.tar
+rm -f $OUT/mitab_mif_fuzzer_seed_corpus.zip
+zip -r $OUT/mitab_mif_fuzzer_seed_corpus.zip small_mif.tar >/dev/null
