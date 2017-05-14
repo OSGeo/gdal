@@ -470,8 +470,14 @@ bool S57Reader::Ingest()
         DDFField *poKeyField = poRecord->GetField(1);
         if (poKeyField == NULL)
             return false;
+        DDFFieldDefn* poKeyFieldDefn = poKeyField->GetFieldDefn();
+        if( poKeyFieldDefn == NULL )
+            continue;
+        const char* pszName = poKeyFieldDefn->GetName();
+        if( pszName == NULL )
+            continue;
 
-        if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"VRID") )
+        if( EQUAL(pszName,"VRID") )
         {
             const int nRCNM = poRecord->GetIntSubfield( "VRID",0, "RCNM",0 );
             const int nRCID = poRecord->GetIntSubfield( "VRID",0, "RCID",0 );
@@ -501,14 +507,14 @@ bool S57Reader::Ingest()
             }
         }
 
-        else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"FRID") )
+        else if( EQUAL(pszName,"FRID") )
         {
             int         nRCID = poRecord->GetIntSubfield( "FRID",0, "RCID",0);
 
             oFE_Index.AddRecord( nRCID, poRecord->Clone() );
         }
 
-        else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"DSID") )
+        else if( EQUAL(pszName,"DSID") )
         {
             CPLFree( pszDSNM );
             pszDSNM =
@@ -523,7 +529,7 @@ bool S57Reader::Ingest()
             }
         }
 
-        else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"DSPM") )
+        else if( EQUAL(pszName,"DSPM") )
         {
             nCOMF = std::max(1, poRecord->GetIntSubfield( "DSPM",0, "COMF",0));
             nSOMF = std::max(1, poRecord->GetIntSubfield( "DSPM",0, "SOMF",0));
@@ -541,7 +547,7 @@ bool S57Reader::Ingest()
         {
             CPLDebug( "S57",
                       "Skipping %s record in S57Reader::Ingest().",
-                      poKeyField->GetFieldDefn()->GetName() );
+                      pszName );
         }
     }
 
