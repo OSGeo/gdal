@@ -371,6 +371,7 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
 
     if( VSIFSeekL( fp, nOff, SEEK_SET ) != 0 )
     {
+        poHandle->Close();
         delete poHandle;
         poHandle = NULL;
     }
