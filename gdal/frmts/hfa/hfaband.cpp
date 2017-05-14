@@ -1156,6 +1156,8 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock,
         return CE_Failure;
 
     const int iBlock = nXBlock + nYBlock * nBlocksPerRow;
+    const int nDataTypeSizeBytes = std::max(1, HFAGetDataTypeBits(eDataType) / 8);
+    const int nGDALBlockSize = nDataTypeSizeBytes * nBlockXSize * nBlockYSize;
 
     // If the block isn't valid, we just return all zeros, and an
     // indication of success.
@@ -1190,8 +1192,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock,
         // in update state and data for this block will be available later.
         if( psInfo->eAccess == HFA_Update )
         {
-            memset(pData, 0, HFAGetDataTypeBits(eDataType) * nBlockXSize *
-                                 nBlockYSize / 8);
+            memset(pData, 0, nGDALBlockSize);
             return CE_None;
         }
         else
@@ -1224,8 +1225,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock,
             // XXX: Suppose that file in update state
             if( psInfo->eAccess == HFA_Update )
             {
-                memset(pData, 0, HFAGetDataTypeBits(eDataType) * nBlockXSize *
-                                     nBlockYSize / 8);
+                memset(pData, 0, nGDALBlockSize);
                 return CE_None;
             }
             else
@@ -1260,8 +1260,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock,
 
     if( VSIFReadL(pData, static_cast<size_t>(nBlockSize), 1, fpData) != 1 )
     {
-        memset(pData, 0,
-               HFAGetDataTypeBits(eDataType) * nBlockXSize * nBlockYSize / 8);
+        memset(pData, 0, nGDALBlockSize);
 
         if( fpData != fpExternal )
             CPLDebug("HFABand", "Read of %x:%08x bytes at %d on %p failed.\n%s",
@@ -1406,8 +1405,9 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
     if( panBlockFlag[iBlock] & BFLG_COMPRESSED )
     {
         // Write compressed data.
-        int nInBlockSize =
-            (nBlockXSize * nBlockYSize * HFAGetDataTypeBits(eDataType) + 7) / 8;
+        int nInBlockSize = static_cast<int>(
+            (nBlockXSize * nBlockYSize *
+                static_cast<GIntBig>(HFAGetDataTypeBits(eDataType)) + 7) / 8);
 
         // Create the compressor object.
         HFACompress compress(pData, nInBlockSize, eDataType);
