@@ -3587,7 +3587,7 @@ void GDALDeserializeGCPListFromXML( CPLXMLNode* psGCPList,
     *pnGCPCount = 0;
 
     for( CPLXMLNode *psXMLGCP = psGCPList->psChild;
-         psXMLGCP != NULL;
+         *ppasGCPList != NULL && psXMLGCP != NULL;
          psXMLGCP = psXMLGCP->psNext )
     {
         GDAL_GCP *psGCP = *ppasGCPList + *pnGCPCount;
