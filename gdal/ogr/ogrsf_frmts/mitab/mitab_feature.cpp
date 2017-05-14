@@ -3086,6 +3086,7 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                 poPolygon = NULL;  // We'll alloc a new polygon next loop.
             }
         }
+        delete poPolygon; // should only trigger on corrupted files
 
         CPLFree(pasSecHdrs);
         CPLFree(panXY);
