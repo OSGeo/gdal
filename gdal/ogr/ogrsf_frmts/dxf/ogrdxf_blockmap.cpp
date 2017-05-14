@@ -80,6 +80,12 @@ bool OGRDXFDataSource::ReadBlocksSection()
         if (nCode >= 0)
             UnreadValue();
 
+        if( oBlockMap.find(osBlockName) != oBlockMap.end() )
+        {
+            DXF_READER_ERROR();
+            return false;
+        }
+
         // Now we will process entities till we run out at the ENDBLK code.
         // we aggregate the geometries of the features into a multi-geometry,
         // but throw away other stuff attached to the features.
