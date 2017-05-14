@@ -542,6 +542,7 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput,
                                       &nMaxPoints, &nPoints );
         if( pszInput == NULL || nPoints == 0 )
         {
+            CPLFree(padfM);
             return OGRERR_CORRUPT_DATA;
         }
         if( (flagsFromInput & OGR_G_3D) && !(flags & OGR_G_3D) )
