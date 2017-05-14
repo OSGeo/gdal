@@ -358,10 +358,11 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             {
                 char       szModule[128];
 
-                strncpy( szModule, candidateFileList[i],
-                         strlen(candidateFileList[i])-1 );
-
-                szModule[strlen(candidateFileList[i])-1] = '\0';
+                snprintf( szModule, sizeof(szModule), "%s",
+                          candidateFileList[i] );
+                const size_t nLen = strlen(szModule);
+                if( nLen )
+                    szModule[nLen-1] = '\0';
 
                 papszFileList = CSLAddString(papszFileList, szModule);
             }
