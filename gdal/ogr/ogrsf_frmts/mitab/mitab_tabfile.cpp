@@ -659,7 +659,7 @@ int TABFile::ParseTABFileFields()
         while(*pszStr != '\0' && isspace((unsigned char)*pszStr))
             pszStr++;
 
-        if (STARTS_WITH_CI(pszStr, "Fields"))
+        if (STARTS_WITH_CI(pszStr, "Fields") && CPLStrnlen(pszStr, 7) >= 7)
         {
             /*---------------------------------------------------------
              * We found the list of table fields
