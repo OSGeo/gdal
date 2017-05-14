@@ -259,18 +259,22 @@ OGRErr OGRCurveCollection::importBodyFromWkb( OGRGeometry* poGeom,
         }
 
         if( eErr == OGRERR_NONE )
+        {
+            // Do that before adding the curve to the collection, since that
+            // might change its dimensions.
+            const int nSubGeomWkbSize = poSubGeom->WkbSize();
+            if( nSize != -1 )
+                nSize -= nSubGeomWkbSize;
+
+            nDataOffset += nSubGeomWkbSize;
+
             eErr = pfnAddCurveDirectlyFromWkb(poGeom, (OGRCurve*)poSubGeom);
+        }
         if( eErr != OGRERR_NONE )
         {
             delete poSubGeom;
             return eErr;
         }
-
-        int nSubGeomWkbSize = poSubGeom->WkbSize();
-        if( nSize != -1 )
-            nSize -= nSubGeomWkbSize;
-
-        nDataOffset += nSubGeomWkbSize;
     }
 
     return OGRERR_NONE;
