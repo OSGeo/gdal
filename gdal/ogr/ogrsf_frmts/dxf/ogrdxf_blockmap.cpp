@@ -98,7 +98,9 @@ bool OGRDXFDataSource::ReadBlocksSection()
             }
             else
             {
-                poColl->addGeometryDirectly( poFeature->StealGeometry() );
+                OGRGeometry* poSubGeom = poFeature->StealGeometry();
+                if( poSubGeom )
+                    poColl->addGeometryDirectly( poSubGeom );
                 delete poFeature;
             }
         }
