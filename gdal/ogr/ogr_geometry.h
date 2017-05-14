@@ -622,6 +622,8 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
 
 class CPL_DLL OGRLineString : public OGRSimpleCurve
 {
+    static OGRLinearRing*          CasterToLinearRing(OGRCurve* poCurve);
+
   protected:
 //! @cond Doxygen_Suppress
     static OGRLineString* TransferMembersAndDestroy(
@@ -683,6 +685,8 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
 
 class CPL_DLL OGRLinearRing : public OGRLineString
 {
+    static OGRLineString*       CasterToLineString( OGRCurve* poCurve );
+
   protected:
 //! @cond Doxygen_Suppress
     friend class OGRPolygon;
@@ -918,6 +922,8 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     OGRLineString* CurveToLineInternal( double dfMaxAngleStepSizeDegrees,
                                         const char* const* papszOptions,
                                         int bIsLinearRing ) const;
+    static OGRLineString* CasterToLineString( OGRCurve* poCurve );
+    static OGRLinearRing* CasterToLinearRing( OGRCurve* poCurve );
 
   protected:
 //! @cond Doxygen_Suppress

@@ -777,17 +777,31 @@ OGRLineString* OGRLinearRing::CastToLineString( OGRLinearRing* poLR )
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
 
+OGRLineString* OGRLinearRing::CasterToLineString( OGRCurve* poCurve )
+{
+    OGRLinearRing* poLR = dynamic_cast<OGRLinearRing*>(poCurve);
+    CPLAssert(poLR);
+    return OGRLinearRing::CastToLinearRing(poLR);
+}
+
 OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const
 {
-    return (OGRCurveCasterToLineString) OGRLinearRing::CastToLineString;
+    return OGRLinearRing::CasterToLineString;
 }
 
 /************************************************************************/
 /*                        GetCasterToLinearRing()                       */
 /************************************************************************/
 
+static OGRLinearRing* CasterToLinearRing(OGRCurve* poCurve)
+{
+    OGRLinearRing* poLR = dynamic_cast<OGRLinearRing*>(poCurve);
+    CPLAssert(poLR);
+    return poLR;
+}
+
 OGRCurveCasterToLinearRing OGRLinearRing::GetCasterToLinearRing() const
 {
-    return (OGRCurveCasterToLinearRing) OGRGeometry::CastToIdentity;
+    return ::CasterToLinearRing;
 }
 //! @endcond
