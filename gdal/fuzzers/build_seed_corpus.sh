@@ -5,6 +5,23 @@ if [ "$OUT" == "" ]; then
     exit 1
 fi
 
+rm -f $OUT/gtiff_fuzzer_seed_corpus.zp
+cd $(dirname $0)/../../autotest/gcore/data
+zip -r $OUT/gtiff_fuzzer_seed_corpus.zip *.tif >/dev/null
+cd $OLDPWD
+cd $(dirname $0)/../../autotest/gdrivers/data
+zip -r $OUT/gtiff_fuzzer_seed_corpus.zip *.tif >/dev/null
+cd $OLDPWD
+
+rm -f $OUT/hfa_fuzzer_seed_corpus.zp
+cd $(dirname $0)/../../autotest/gcore/data
+zip -r $OUT/hfa_fuzzer_seed_corpus.zip *.img >/dev/null
+cd $OLDPWD
+cd $(dirname $0)/../../autotest/gdrivers/data
+zip -r $OUT/hfa_fuzzer_seed_corpus.zip *.img >/dev/null
+cd $OLDPWD
+
+
 cd $(dirname $0)/../../autotest/gcore/data
 rm -f $OUT/gdal_fuzzer_seed_corpus.zip
 zip -r $OUT/gdal_fuzzer_seed_corpus.zip . >/dev/null

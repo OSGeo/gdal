@@ -34,6 +34,7 @@
 #include "gdal.h"
 #include "cpl_vsi.h"
 #include "gdal_alg.h"
+#include "gdal_frmts.h"
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
@@ -42,7 +43,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     VSILFILE* fp = VSIFileFromMemBuffer( "/vsimem/test",
             reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
     VSIFCloseL(fp);
+#ifdef REGISTER_FUNC
+    REGISTER_FUNC();
+#else
     GDALAllRegister();
+#endif
     CPLPushErrorHandler(CPLQuietErrorHandler);
     GDALDatasetH hDS = GDALOpen( "/vsimem/test", GA_ReadOnly );
     if( hDS )
