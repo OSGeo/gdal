@@ -1053,6 +1053,8 @@ class CPL_DLL OGRSurface : public OGRGeometry
 
 class CPL_DLL OGRCurvePolygon : public OGRSurface
 {
+    static OGRPolygon*      CasterToPolygon(OGRSurface* poSurface);
+
   private:
     OGRBoolean      ContainsPoint( const OGRPoint* p ) const;
     virtual int   checkRing( OGRCurve * poNewRing ) const;
@@ -1164,6 +1166,8 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
 
 class CPL_DLL OGRPolygon : public OGRCurvePolygon
 {
+    static OGRCurvePolygon*     CasterToCurvePolygon(OGRSurface* poSurface);
+
   protected:
 //! @cond Doxygen_Suppress
     friend class OGRMultiSurface;
@@ -1250,6 +1254,7 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 class CPL_DLL OGRTriangle : public OGRPolygon
 {
   private:
+    static OGRPolygon*          CasterToPolygon(OGRSurface* poSurface);
     bool quickValidityCheck() const;
 
   protected:

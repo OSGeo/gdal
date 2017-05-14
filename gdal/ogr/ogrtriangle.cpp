@@ -259,8 +259,17 @@ OGRErr OGRTriangle::addRingDirectly( OGRCurve * poNewRing )
 /*                      GetCasterToPolygon()                            */
 /************************************************************************/
 
+OGRPolygon* OGRTriangle::CasterToPolygon(OGRSurface* poSurface)
+{
+    OGRTriangle* poTriangle = dynamic_cast<OGRTriangle*>(poSurface);
+    CPLAssert(poTriangle);
+    OGRPolygon* poRet = new OGRPolygon( *poTriangle );
+    delete poTriangle;
+    return poRet;
+}
+
 OGRSurfaceCasterToPolygon OGRTriangle::GetCasterToPolygon() const {
-    return (OGRSurfaceCasterToPolygon) OGRTriangle::CastToPolygon;
+    return OGRTriangle::CasterToPolygon;
 }
 
 /************************************************************************/
