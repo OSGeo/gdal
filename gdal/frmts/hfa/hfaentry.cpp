@@ -99,10 +99,10 @@ HFAEntry* HFAEntry::New( HFAInfo_t *psHFAIn, GUInt32 nPos,
     GInt32 anEntryNums[6] = {};
 
     if( VSIFSeekL( poEntry->psHFA->fp, poEntry->nFilePos, SEEK_SET ) == -1 ||
-        VSIFReadL( anEntryNums, sizeof(GInt32), 6, poEntry->psHFA->fp ) < 1 )
+        VSIFReadL( anEntryNums, 1, sizeof(GInt32) * 6, poEntry->psHFA->fp ) < 1 )
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "VSIFReadL(%p,6*4) @ %d failed in HFAEntry().\n%s",
+                 "VSIFReadL(%p,6*4) @ %u failed in HFAEntry().\n%s",
                  poEntry->psHFA->fp, poEntry->nFilePos, VSIStrerror(errno));
         delete poEntry;
         return NULL;
