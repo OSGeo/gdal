@@ -220,6 +220,7 @@ OGRErr GDALGeoPackageDataset::PragmaCheck(
         CPLError( CE_Failure, CPLE_AppDefined,
                   "bad result for PRAGMA %s, got %d rows, expected %d",
                   pszPragma, nRowCount, nRowsExpected );
+        sqlite3_free_table(papszResult);
         return OGRERR_FAILURE;
     }
 
@@ -228,6 +229,7 @@ OGRErr GDALGeoPackageDataset::PragmaCheck(
         CPLError( CE_Failure, CPLE_AppDefined,
                   "invalid %s (expected '%s', got '%s')",
                   pszPragma, pszExpected, papszResult[1]);
+        sqlite3_free_table(papszResult);
         return OGRERR_FAILURE;
     }
 
