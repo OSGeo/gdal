@@ -623,6 +623,7 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
         psDBF->sHooks.FClose( psDBF->fp );
         free( pabyBuf );
         free( psDBF->pszCurrentRecord );
+        free( psDBF->pszCodePage );
         free( psDBF );
         return NULL;
     }
