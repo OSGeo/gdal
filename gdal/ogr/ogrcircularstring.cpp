@@ -693,16 +693,32 @@ OGRCircularString::getLinearGeometry( double dfMaxAngleStepSizeDegrees,
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
 
+static OGRLineString* CasterToLineString(OGRCurve* poGeom)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "%s found. Conversion impossible", poGeom->getGeometryName());
+    delete poGeom;
+    return NULL;
+}
+
 OGRCurveCasterToLineString OGRCircularString::GetCasterToLineString() const {
-    return (OGRCurveCasterToLineString) OGRGeometry::CastToError;
+    return ::CasterToLineString;
 }
 
 /************************************************************************/
 /*                        GetCasterToLinearRing()                       */
 /************************************************************************/
 
+static OGRLinearRing* CasterToLinearRing(OGRCurve* poGeom)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "%s found. Conversion impossible", poGeom->getGeometryName());
+    delete poGeom;
+    return NULL;
+}
+
 OGRCurveCasterToLinearRing OGRCircularString::GetCasterToLinearRing() const {
-    return (OGRCurveCasterToLinearRing) OGRGeometry::CastToError;
+    return ::CasterToLinearRing;
 }
 //! @endcond
 

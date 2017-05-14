@@ -810,16 +810,30 @@ OGRLinearRing* OGRCompoundCurve::CastToLinearRing( OGRCompoundCurve* poCC )
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
 
+OGRLineString* OGRCompoundCurve::CasterToLineString( OGRCurve* poCurve )
+{
+    OGRCompoundCurve* poCC = dynamic_cast<OGRCompoundCurve*>(poCurve);
+    CPLAssert(poCC);
+    return OGRCompoundCurve::CastToLineString(poCC);
+}
+
 OGRCurveCasterToLineString OGRCompoundCurve::GetCasterToLineString() const {
-    return (OGRCurveCasterToLineString) OGRCompoundCurve::CastToLineString;
+    return OGRCompoundCurve::CasterToLineString;
 }
 
 /************************************************************************/
 /*                        GetCasterToLinearRing()                       */
 /************************************************************************/
 
+OGRLinearRing* OGRCompoundCurve::CasterToLinearRing( OGRCurve* poCurve )
+{
+    OGRCompoundCurve* poCC = dynamic_cast<OGRCompoundCurve*>(poCurve);
+    CPLAssert(poCC);
+    return OGRCompoundCurve::CastToLinearRing(poCC);
+}
+
 OGRCurveCasterToLinearRing OGRCompoundCurve::GetCasterToLinearRing() const {
-    return (OGRCurveCasterToLinearRing) OGRCompoundCurve::CastToLinearRing;
+    return OGRCompoundCurve::CasterToLinearRing;
 }
 //! @endcond
 

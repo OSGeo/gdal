@@ -2811,18 +2811,32 @@ OGRLinearRing* OGRLineString::CastToLinearRing( OGRLineString* poLS )
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
 
+static OGRLineString* CasterToLineString(OGRCurve* poCurve)
+{
+    OGRLineString* poLS = dynamic_cast<OGRLineString*>(poCurve);
+    CPLAssert(poLS);
+    return poLS;
+}
+
 OGRCurveCasterToLineString OGRLineString::GetCasterToLineString() const
 {
-    return (OGRCurveCasterToLineString) OGRGeometry::CastToIdentity;
+    return ::CasterToLineString;
 }
 
 /************************************************************************/
 /*                        GetCasterToLinearRing()                       */
 /************************************************************************/
 
+OGRLinearRing* OGRLineString::CasterToLinearRing(OGRCurve* poCurve)
+{
+    OGRLineString* poLS = dynamic_cast<OGRLineString*>(poCurve);
+    CPLAssert(poLS);
+    return OGRLineString::CastToLinearRing(poLS);
+}
+
 OGRCurveCasterToLinearRing OGRLineString::GetCasterToLinearRing() const
 {
-    return (OGRCurveCasterToLinearRing) OGRLineString::CastToLinearRing;
+    return OGRLineString::CasterToLinearRing;
 }
 
 /************************************************************************/
