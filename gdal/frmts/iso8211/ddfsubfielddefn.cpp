@@ -145,6 +145,9 @@ int DDFSubfieldDefn::SetFormat( const char * pszFormat )
       case 'b':
         // Is the width expressed in bits? (is it a bitstring)
         bIsVariable = FALSE;
+        if( pszFormatString[1] == '\0' )
+            return FALSE;
+
         if( pszFormatString[1] == '(' )
         {
             nFormatWidth = atoi(pszFormatString+2);
