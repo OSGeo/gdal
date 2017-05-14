@@ -262,16 +262,23 @@ void DXFSmoothPolyline::EmitArc(
 /*      Tessellate the arc segment and append to the linestring.        */
 /* -------------------------------------------------------------------- */
 
-    OGRLineString* poArcpoLS =
-        (OGRLineString*)OGRGeometryFactory::approximateArcAngles(
-            ogrArcCenter.x, ogrArcCenter.y, dfZ,
-            ogrArcRadius, ogrArcRadius, ogrArcRotation,
-            ogrArcStartAngle, ogrArcEndAngle,
-            0.0);
+    if( fabs(ogrArcEndAngle - ogrArcStartAngle) <= 361.0 )
+    {
+        OGRLineString* poArcpoLS =
+            (OGRLineString*)OGRGeometryFactory::approximateArcAngles(
+                ogrArcCenter.x, ogrArcCenter.y, dfZ,
+                ogrArcRadius, ogrArcRadius, ogrArcRotation,
+                ogrArcStartAngle, ogrArcEndAngle,
+                0.0);
 
-    poLS->addSubLineString(poArcpoLS);
+        poLS->addSubLineString(poArcpoLS);
 
-    delete poArcpoLS;
+        delete poArcpoLS;
+    }
+    else
+    {
+        // TODO: emit error ?
+    }
 }
 
 /************************************************************************/
