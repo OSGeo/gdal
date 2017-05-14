@@ -297,6 +297,14 @@ OGRErr OGRCurveCollection::importBodyFromWkb(
 
         if( eErr == OGRERR_NONE )
         {
+            // Do that before adding the curve to the collection, since that
+            // might change its dimensions.
+            const int nSubGeomWkbSize = poSubGeom->WkbSize();
+            if( nSize != -1 )
+                nSize -= nSubGeomWkbSize;
+
+            nDataOffset += nSubGeomWkbSize;
+
             OGRCurve *poCurve = dynamic_cast<OGRCurve *>(poSubGeom);
             if( poCurve == NULL )
             {
@@ -311,11 +319,6 @@ OGRErr OGRCurveCollection::importBodyFromWkb(
             return eErr;
         }
 
-        const int nSubGeomWkbSize = poSubGeom->WkbSize();
-        if( nSize != -1 )
-            nSize -= nSubGeomWkbSize;
-
-        nDataOffset += nSubGeomWkbSize;
     }
 
     return OGRERR_NONE;
