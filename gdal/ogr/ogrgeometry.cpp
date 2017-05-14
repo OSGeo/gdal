@@ -6122,7 +6122,7 @@ OGRErr OGRGeometry::importPreambuleOfCollectionFromWkb( unsigned char * pabyData
     if( OGR_SWAP( eByteOrder ) )
         nGeomCount = CPL_SWAP32(nGeomCount);
 
-    if( nGeomCount < 0 || nGeomCount > INT_MAX / 4 )
+    if( nGeomCount < 0 || nGeomCount > INT_MAX / nMinSubGeomSize )
     {
         nGeomCount = 0;
         return OGRERR_CORRUPT_DATA;
@@ -6232,8 +6232,8 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt(
             poCurve = dynamic_cast<OGRCurve *>(poGeom);
             if( poCurve == NULL )
             {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRCurve.");
+                delete poGeom;
+                eErr = OGRERR_CORRUPT_DATA;
             }
         }
         else
