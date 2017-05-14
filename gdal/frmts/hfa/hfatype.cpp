@@ -245,7 +245,7 @@ HFAType::SetInstValue( const char *pszFieldPath,
         const int nInc = papoFields[iField]->GetInstBytes(
             pabyData + nByteOffset, nDataSize - nByteOffset);
 
-        if( nInc < 0 ||
+        if( nInc <= 0 ||
             nByteOffset > INT_MAX - nInc )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
@@ -321,7 +321,7 @@ HFAType::GetInstCount( const char *pszFieldPath,
         const int nInc = papoFields[iField]->GetInstBytes(
             pabyData + nByteOffset, nDataSize - nByteOffset);
 
-        if( nInc < 0 || nByteOffset > INT_MAX - nInc )
+        if( nInc <= 0 || nByteOffset > INT_MAX - nInc )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
             return -1;
@@ -413,7 +413,7 @@ HFAType::ExtractInstValue( const char *pszFieldPath,
         const int nInc = papoFields[iField]->GetInstBytes(
             pabyData + nByteOffset, nDataSize - nByteOffset);
 
-        if( nInc < 0 || nByteOffset > INT_MAX - nInc )
+        if( nInc <= 0 || nByteOffset > INT_MAX - nInc )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
             return false;
@@ -452,7 +452,7 @@ void HFAType::DumpInstValue( FILE *fpOut,
                                nDataSize, pszPrefix);
 
         const int nInstBytes = poField->GetInstBytes(pabyData, nDataSize);
-        if( nInstBytes < 0 || nDataOffset > UINT_MAX - nInstBytes )
+        if( nInstBytes <= 0 || nDataOffset > UINT_MAX - nInstBytes )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
             return;
@@ -484,7 +484,7 @@ int HFAType::GetInstBytes( GByte *pabyData, int nDataSize )
 
         const int nInstBytes =
             poField->GetInstBytes(pabyData, nDataSize - nTotal);
-        if( nInstBytes < 0 || nTotal > INT_MAX - nInstBytes )
+        if( nInstBytes <= 0 || nTotal > INT_MAX - nInstBytes )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
             return -1;

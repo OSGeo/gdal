@@ -782,7 +782,7 @@ HFAField::SetInstValue( const char *pszField, int nIndexValue,
                         poItemObjectType->
                             GetInstBytes(pabyData + nExtraOffset,
                                          nDataSize - nExtraOffset);
-                    if( nInc < 0 || nExtraOffset > INT_MAX - nInc )
+                    if( nInc <= 0 || nExtraOffset > INT_MAX - nInc )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Invalid return value");
@@ -1279,7 +1279,7 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
                         poItemObjectType->GetInstBytes(
                             pabyData + nExtraOffset,
                             nDataSize - nExtraOffset);
-                    if( nInc < 0 || nExtraOffset > INT_MAX - nInc )
+                    if( nInc <= 0 || nExtraOffset > INT_MAX - nInc )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Invalid return value");
@@ -1448,7 +1448,7 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
             const int nThisBytes =
                 poItemObjectType->GetInstBytes(pabyData,
                                                 nDataSize - nInstBytes);
-            if( nThisBytes < 0 || nInstBytes > INT_MAX - nThisBytes )
+            if( nThisBytes <= 0 || nInstBytes > INT_MAX - nThisBytes )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
                 return -1;
