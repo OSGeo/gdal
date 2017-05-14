@@ -537,6 +537,8 @@ void NASAKeywordHandler::SkipWhite()
             {
                 pszHeaderNext++;
             }
+            if( *pszHeaderNext == '\0' )
+                return;
 
             pszHeaderNext += 2;
 
