@@ -27,7 +27,7 @@ for format in $formats; do
         -lFuzzingEngine $SRC_DIR/libgdal.a $SRC/install/lib/*.a
 done
 
-fuzzerFiles=$(find $(dirname $0) -name "*.cpp")
+fuzzerFiles=$(dirname $0)/*.cpp
 for F in $fuzzerFiles; do
     fuzzerName=$(basename $F .cpp)
     echo "Building fuzzer $fuzzerName"
