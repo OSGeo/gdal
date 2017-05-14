@@ -83,6 +83,7 @@ static GDALDataset *OGROpenAirDriverOpen( GDALOpenInfo* poOpenInfo )
             return NULL;
         if( !poOpenInfo->TryToIngest(30000) )
             return NULL;
+        pabyHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
         bIsOpenAir =
             strstr(pabyHeader, "\nAC ") != NULL &&
             strstr(pabyHeader, "\nAN ") != NULL &&
