@@ -433,13 +433,15 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
            }
           CSLDestroy(papszToken);
         }
-        else if (STARTS_WITH_CI(pszLine, "UNIQUE"))
+        else if (m_pszUnique == NULL &&
+                 STARTS_WITH_CI(pszLine, "UNIQUE"))
         {
             bColumns = FALSE; bCoordSys = FALSE;
 
             m_pszUnique = CPLStrdup(pszLine + 6);
         }
-        else if (STARTS_WITH_CI(pszLine, "INDEX"))
+        else if (m_pszIndex == NULL &&
+                 STARTS_WITH_CI(pszLine, "INDEX"))
         {
             bColumns = FALSE; bCoordSys = FALSE;
 
