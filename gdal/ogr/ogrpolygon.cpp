@@ -893,17 +893,31 @@ OGRCurvePolygon* OGRPolygon::CastToCurvePolygon( OGRPolygon* poPoly )
 /*                      GetCasterToPolygon()                            */
 /************************************************************************/
 
+static OGRPolygon* CasterToPolygon(OGRSurface* poSurface)
+{
+    OGRPolygon* poPoly = dynamic_cast<OGRPolygon*>(poSurface);
+    CPLAssert(poPoly);
+    return poPoly;
+}
+
 OGRSurfaceCasterToPolygon OGRPolygon::GetCasterToPolygon() const
 {
-    return (OGRSurfaceCasterToPolygon) OGRGeometry::CastToIdentity;
+    return ::CasterToPolygon;
 }
 
 /************************************************************************/
 /*                      OGRSurfaceCasterToCurvePolygon()                */
 /************************************************************************/
 
+OGRCurvePolygon* OGRPolygon::CasterToCurvePolygon(OGRSurface* poSurface)
+{
+    OGRPolygon* poPoly = dynamic_cast<OGRPolygon*>(poSurface);
+    CPLAssert(poPoly);
+    return OGRPolygon::CastToCurvePolygon(poPoly);
+}
+
 OGRSurfaceCasterToCurvePolygon OGRPolygon::GetCasterToCurvePolygon() const
 {
-    return (OGRSurfaceCasterToCurvePolygon) OGRPolygon::CastToCurvePolygon;
+    return OGRPolygon::CasterToCurvePolygon;
 }
 /*! @endcond */

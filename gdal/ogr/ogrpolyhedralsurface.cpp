@@ -646,9 +646,17 @@ OGRErr OGRPolyhedralSurface::transform( OGRCoordinateTransformation *poCT )
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
+static OGRPolygon* CasterToPolygon(OGRSurface* poGeom)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "%s found. Conversion impossible", poGeom->getGeometryName());
+    delete poGeom;
+    return NULL;
+}
+
 OGRSurfaceCasterToPolygon OGRPolyhedralSurface::GetCasterToPolygon() const
 {
-    return (OGRSurfaceCasterToPolygon) OGRGeometry::CastToError;
+    return ::CasterToPolygon;
 }
 //! @endcond
 
@@ -657,9 +665,17 @@ OGRSurfaceCasterToPolygon OGRPolyhedralSurface::GetCasterToPolygon() const
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
+static OGRCurvePolygon* CasterToCurvePolygon(OGRSurface* poGeom)
+{
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "%s found. Conversion impossible", poGeom->getGeometryName());
+    delete poGeom;
+    return NULL;
+}
+
 OGRSurfaceCasterToCurvePolygon OGRPolyhedralSurface::GetCasterToCurvePolygon() const
 {
-    return (OGRSurfaceCasterToCurvePolygon) OGRGeometry::CastToError;
+    return ::CasterToCurvePolygon;
 }
 //! @endcond
 
