@@ -143,7 +143,7 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     long nRTNB;
     /* Check if we're actually a COSAR data set. */
-    if( pOpenInfo->nHeaderBytes < 4 )
+    if( pOpenInfo->nHeaderBytes < 4 || pOpenInfo->fpL == NULL)
         return NULL;
 
     if (!STARTS_WITH_CI((char *)pOpenInfo->pabyHeader+MAGIC1_OFFSET, "CSAR"))
