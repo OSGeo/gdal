@@ -12831,9 +12831,16 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         nBlockYSize = nRowsPerStrip;
     }
 
-    nBlocksPerBand =
-        DIV_ROUND_UP(nRasterYSize, nBlockYSize) *
-        DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+    const int l_nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
+    const int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+    if( l_nBlocksPerColumn > INT_MAX / l_nBlocksPerRow )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Too many blocks: %d x %d",
+                  l_nBlocksPerRow, l_nBlocksPerColumn );
+        return CE_Failure;
+    }
+    nBlocksPerBand = l_nBlocksPerColumn * l_nBlocksPerRow;
 
 /* -------------------------------------------------------------------- */
 /*      Should we handle this using the GTiffBitmapBand?                */
