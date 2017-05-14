@@ -73,7 +73,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
             pszInput++;
         }
         else if( pszInput[0] == '\\' && pszInput[1] == 'U'
-                 && pszInput[2] == '+' )
+                 && pszInput[2] == '+' && CPLStrnlen(pszInput, 7) >= 7 )
         {
             CPLString osHex;
             unsigned int iChar = 0;
@@ -107,6 +107,8 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
 
             while( *pszInput != ';' && *pszInput != '\0' )
                 pszInput++;
+            if( *pszInput == '\0' )
+                break;
         }
         else if( pszInput[0] == '\\' && pszInput[1] == '\\' )
         {
