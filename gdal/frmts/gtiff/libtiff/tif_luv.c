@@ -1,4 +1,4 @@
-/* $Id: tif_luv.c,v 1.46 2017-05-13 18:29:38 erouault Exp $ */
+/* $Id: tif_luv.c,v 1.47 2017-05-14 10:17:27 erouault Exp $ */
 
 /*
  * Copyright (c) 1997 Greg Ward Larson
@@ -1314,8 +1314,10 @@ LogL16InitState(TIFF* tif)
 	}
         if( isTiled(tif) )
             sp->tbuflen = multiply_ms(td->td_tilewidth, td->td_tilelength);
-        else
+        else if( td->td_rowsperstrip != (uint32)-1 )
             sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_rowsperstrip);
+        else
+            sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_imagelength);
 	if (multiply_ms(sp->tbuflen, sizeof (int16)) == 0 ||
 	    (sp->tbuf = (uint8*) _TIFFmalloc(sp->tbuflen * sizeof (int16))) == NULL) {
 		TIFFErrorExt(tif->tif_clientdata, module, "No space for SGILog translation buffer");
