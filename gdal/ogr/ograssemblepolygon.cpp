@@ -360,6 +360,11 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             poPolygon->addRingDirectly(aoRings[rn]);
         }
     }
+    else
+    {
+        for(size_t i = 0; i < aoRings.size(); ++i )
+            delete aoRings[i];
+    }
 
     if( peErr != NULL )
     {
