@@ -835,8 +835,10 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 /*                       The DEM file name                              */
 /* -------------------------------------------------------------------- */
     const char *pszDEMPath = CSLFetchNameValue( papszOptions, "RPC_DEM" );
-    if( pszDEMPath != NULL && strcmp(pszDEMPath, "/vsistdin/") != 0 )
+    if( pszDEMPath != NULL )
+    {
         psTransform->pszDEMPath = CPLStrdup(pszDEMPath);
+    }
 
 /* -------------------------------------------------------------------- */
 /*                      The DEM interpolation                           */
@@ -1801,6 +1803,7 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                 = CPLGetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "");
             CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "YES");
         }
+        CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
         psTransform->poDS = reinterpret_cast<GDALDataset *>(
             GDALOpen(psTransform->pszDEMPath, GA_ReadOnly));
         if( psTransform->poDS != NULL &&

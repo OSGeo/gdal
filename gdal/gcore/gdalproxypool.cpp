@@ -326,6 +326,7 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
 
     refCountOfDisableRefCount ++;
     int nFlag = ((eAccess == GA_Update) ? GDAL_OF_UPDATE : GDAL_OF_READONLY) | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR;
+    CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
     cur->poDS = (GDALDataset*) GDALOpenEx( pszFileName, nFlag, NULL,
                            (const char* const* )papszOpenOptions, NULL );
     refCountOfDisableRefCount --;
