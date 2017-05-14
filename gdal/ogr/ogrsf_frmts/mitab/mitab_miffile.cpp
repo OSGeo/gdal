@@ -445,7 +445,9 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
 
             m_pszIndex = CPLStrdup(pszLine + 5);
         }
-        else if (STARTS_WITH_CI(pszLine, "COORDSYS") )
+        else if (m_pszCoordSys == NULL &&
+                 STARTS_WITH_CI(pszLine, "COORDSYS") &&
+                 CPLStrnlen(pszLine, 9) >= 9)
         {
             bCoordSys = TRUE;
             m_pszCoordSys = CPLStrdup(pszLine + 9);
