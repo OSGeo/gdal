@@ -216,8 +216,9 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
             poSurface = dynamic_cast<OGRSurface*>(poGeom);
             if( poSurface == NULL )
             {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRSurface.");
+                delete poGeom;
+                eErr = OGRERR_CORRUPT_DATA;
+                break;
             }
         }
         else
