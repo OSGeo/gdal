@@ -2970,3 +2970,46 @@ void *CPLZLibInflate( const void *, size_t, void *, size_t, size_t *pnOutBytes )
 }
 
 #endif /* !defined(HAVE_LIBZ) */
+
+/************************************************************************/
+/* ==================================================================== */
+/*                          CPLConfigOptionSetter                       */
+/* ==================================================================== */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+/************************************************************************/
+/*                         CPLConfigOptionSetter()                      */
+/************************************************************************/
+
+CPLConfigOptionSetter::CPLConfigOptionSetter(
+                        const char* pszKey, const char* pszValue,
+                        bool bSetOnlyIfUndefined ) :
+    m_pszKey(CPLStrdup(pszKey)),
+    m_pszOldValue(NULL),
+    m_bRestoreOldValue(false)
+{
+    const char* pszOldValue = CPLGetConfigOption(pszKey, NULL);
+    if( (bSetOnlyIfUndefined && pszOldValue == NULL) || !bSetOnlyIfUndefined )
+    {
+        m_bRestoreOldValue = true;
+        if( pszOldValue )
+            m_pszOldValue = CPLStrdup(pszOldValue);
+        CPLSetThreadLocalConfigOption(pszKey, pszValue);
+    }
+}
+
+/************************************************************************/
+/*                        ~CPLConfigOptionSetter()                      */
+/************************************************************************/
+
+CPLConfigOptionSetter::~CPLConfigOptionSetter()
+{
+    if( m_bRestoreOldValue )
+    {
+        CPLSetThreadLocalConfigOption(m_pszKey, m_pszOldValue);
+        CPLFree(m_pszOldValue);
+    }
+    CPLFree(m_pszKey);
+}
+//! @endcond
