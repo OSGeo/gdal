@@ -3106,6 +3106,20 @@ def tiff_read_corrupted_deflate_singlestrip():
     return 'success'
 
 ###############################################################################
+# Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1563
+
+def tiff_read_packbits_not_enough_data():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/packbits-not-enough-data.tif')
+        ds.GetRasterBand(1).Checksum()
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -3211,6 +3225,7 @@ gdaltest_list.append( (tiff_read_huge_number_strips) )
 gdaltest_list.append( (tiff_read_many_blocks) )
 gdaltest_list.append( (tiff_read_uint33) )
 gdaltest_list.append( (tiff_read_corrupted_deflate_singlestrip) )
+gdaltest_list.append( (tiff_read_packbits_not_enough_data) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )

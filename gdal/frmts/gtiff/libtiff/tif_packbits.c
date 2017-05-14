@@ -1,4 +1,4 @@
-/* $Id: tif_packbits.c,v 1.25 2017-01-11 20:33:35 erouault Exp $ */
+/* $Id: tif_packbits.c,v 1.26 2017-05-14 02:26:07 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -243,6 +243,12 @@ PackBitsDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 				    "Discarding %lu bytes to avoid buffer overrun",
 				    (unsigned long) ((tmsize_t)n - occ));
 				n = (long)occ;
+			}
+			if( cc == 0 )
+			{
+				TIFFWarningExt(tif->tif_clientdata, module,
+					       "Terminating PackBitsDecode due to lack of data.");
+				break;
 			}
 			occ -= n;
 			b = *bp++;
