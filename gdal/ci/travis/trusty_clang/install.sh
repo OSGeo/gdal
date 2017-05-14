@@ -13,6 +13,14 @@ make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
 cd ..
+
+cd fuzzers
+make USER_DEFS="-Wextra -Werror" -j3
+cd tests
+make USER_DEFS="-Wextra -Werror" -j3 check
+cd ..
+cd ..
+
 cd swig/java
 cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-8-openjdk-amd64\//" > java.opt.tmp
 mv java.opt.tmp java.opt
