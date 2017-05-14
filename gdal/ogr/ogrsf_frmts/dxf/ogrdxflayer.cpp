@@ -1584,20 +1584,27 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     if( dfStartAngle > dfEndAngle )
         dfEndAngle += 360.0;
 
-    OGRGeometry *poEllipse =
-        OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
-                                                  dfPrimaryRadius,
-                                                  dfSecondaryRadius,
-                                                  dfRotation,
-                                                  dfStartAngle, dfEndAngle,
-                                                  0.0 );
+    if( fabs(dfEndAngle - dfStartAngle) <= 361.0 )
+    {
+        OGRGeometry *poEllipse =
+            OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
+                                                    dfPrimaryRadius,
+                                                    dfSecondaryRadius,
+                                                    dfRotation,
+                                                    dfStartAngle, dfEndAngle,
+                                                    0.0 );
 
-    if( !bHaveZ )
-        poEllipse->flattenTo2D();
+        if( !bHaveZ )
+            poEllipse->flattenTo2D();
 
-    if( bApplyOCSTransform == true )
-        ApplyOCSTransformer( poEllipse );
-    poFeature->SetGeometryDirectly( poEllipse );
+        if( bApplyOCSTransform == true )
+            ApplyOCSTransformer( poEllipse );
+        poFeature->SetGeometryDirectly( poEllipse );
+    }
+    else
+    {
+        // TODO: emit error ?
+    }
 
     PrepareLineStyle( poFeature );
 
@@ -1677,16 +1684,23 @@ OGRFeature *OGRDXFLayer::TranslateARC()
     if( dfStartAngle > dfEndAngle )
         dfEndAngle += 360.0;
 
-    OGRGeometry *poArc =
-        OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
-                                                  dfRadius, dfRadius, 0.0,
-                                                  dfStartAngle, dfEndAngle,
-                                                  0.0 );
-    if( !bHaveZ )
-        poArc->flattenTo2D();
+    if( fabs(dfEndAngle - dfStartAngle) <= 361.0 )
+    {
+        OGRGeometry *poArc =
+            OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
+                                                    dfRadius, dfRadius, 0.0,
+                                                    dfStartAngle, dfEndAngle,
+                                                    0.0 );
+        if( !bHaveZ )
+            poArc->flattenTo2D();
 
-    ApplyOCSTransformer( poArc );
-    poFeature->SetGeometryDirectly( poArc );
+        ApplyOCSTransformer( poArc );
+        poFeature->SetGeometryDirectly( poArc );
+    }
+    else
+    {
+        // TODO: emit error ?
+    }
 
     PrepareLineStyle( poFeature );
 

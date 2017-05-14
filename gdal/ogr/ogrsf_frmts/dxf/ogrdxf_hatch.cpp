@@ -318,14 +318,21 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
                 dfEndAngle *= -1;
             }
 
-            OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
-                dfCenterX, dfCenterY, 0.0,
-                dfRadius, dfRadius, 0.0,
-                dfStartAngle, dfEndAngle, 0.0 );
+            if( fabs(dfEndAngle - dfStartAngle) <= 361.0 )
+            {
+                OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
+                    dfCenterX, dfCenterY, 0.0,
+                    dfRadius, dfRadius, 0.0,
+                    dfStartAngle, dfEndAngle, 0.0 );
 
-            poArc->flattenTo2D();
+                poArc->flattenTo2D();
 
-            poGC->addGeometryDirectly( poArc );
+                poGC->addGeometryDirectly( poArc );
+            }
+            else
+            {
+                // TODO: emit error ?
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -406,14 +413,21 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             const double dfRotation =
                 -1 * atan2( dfMajorY, dfMajorX ) * 180 / M_PI;
 
-            OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
-                dfCenterX, dfCenterY, 0.0,
-                dfMajorRadius, dfMinorRadius, dfRotation,
-                dfStartAngle, dfEndAngle, 0.0 );
+            if( fabs(dfEndAngle - dfStartAngle) <= 361.0 )
+            {
+                OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
+                    dfCenterX, dfCenterY, 0.0,
+                    dfMajorRadius, dfMinorRadius, dfRotation,
+                    dfStartAngle, dfEndAngle, 0.0 );
 
-            poArc->flattenTo2D();
+                poArc->flattenTo2D();
 
-            poGC->addGeometryDirectly( poArc );
+                poGC->addGeometryDirectly( poArc );
+            }
+            else
+            {
+                // TODO: emit error ?
+            }
         }
         else
         {
