@@ -22,9 +22,15 @@ for format in $formats; do
     format_lc=$(echo $format | tr '[:upper:]' '[:lower:]')
     fuzzerName="${format_lc}_fuzzer"
     echo "Building fuzzer $fuzzerName"
-    $CXX $CXXFLAGS -std=c++11 -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts \
-        $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=GDALRegister_$format -o $OUT/$fuzzerName \
-        -lFuzzingEngine $SRC_DIR/libgdal.a $SRC/install/lib/*.a
+    if test -d $SRC/install/lib; then
+        $CXX $CXXFLAGS -std=c++11 -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts \
+            $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=GDALRegister_$format -o $OUT/$fuzzerName \
+            -lFuzzingEngine $SRC_DIR/libgdal.a $EXTRA_LIBS $SRC/install/lib/*.a
+    else
+        $CXX $CXXFLAGS -std=c++11 -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts \
+            $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=GDALRegister_$format -o $OUT/$fuzzerName \
+            -lFuzzingEngine $SRC_DIR/libgdal.a $EXTRA_LIBS
+    fi
 done
 
 fuzzerFiles=$(dirname $0)/*.cpp
@@ -34,10 +40,10 @@ for F in $fuzzerFiles; do
     if test -d $SRC/install/lib; then
         $CXX $CXXFLAGS -std=c++11 -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts \
             $F -o $OUT/$fuzzerName \
-            -lFuzzingEngine $SRC_DIR/libgdal.a $SRC/install/lib/*.a
+            -lFuzzingEngine $SRC_DIR/libgdal.a $EXTRA_LIBS $SRC/install/lib/*.a
     else
         $CXX $CXXFLAGS -std=c++11 -I$SRC_DIR/port -I$SRC_DIR/gcore -I$SRC_DIR/alg -I$SRC_DIR/ogr -I$SRC_DIR/ogr/ogrsf_frmts \
             $F -o $OUT/$fuzzerName \
-            -lFuzzingEngine $SRC_DIR/libgdal.a
+            -lFuzzingEngine $SRC_DIR/libgdal.a $EXTRA_LIBS
     fi
 done
