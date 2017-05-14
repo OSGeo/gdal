@@ -2043,7 +2043,13 @@ void HFARasterBand::ReadAuxMetadata()
               CPLString osValueList;
 
               CPLErr eErr = CE_None;
-              const int nCount = poEntry->GetFieldCount(pszFieldName, &eErr);
+              int nCount = poEntry->GetFieldCount(pszFieldName, &eErr);
+              if( nCount > 65536 )
+              {
+                  nCount = 65536;
+                  CPLDebug("HFA", "Limiting %s to %d entries",
+                           pszAuxMetaData[i + 2], nCount);
+              }
               for( int iValue = 0;
                    eErr == CE_None && iValue < nCount;
                    iValue++ )
@@ -2073,7 +2079,13 @@ void HFARasterBand::ReadAuxMetadata()
               CPLString osValueList;
 
               CPLErr eErr = CE_None;
-              const int nCount = poEntry->GetFieldCount(pszFieldName, &eErr);
+              int nCount = poEntry->GetFieldCount(pszFieldName, &eErr);
+              if( nCount > 65536 )
+              {
+                  nCount = 65536;
+                  CPLDebug("HFA", "Limiting %s to %d entries",
+                           pszAuxMetaData[i + 2], nCount);
+              }
               for( int iValue = 0;
                    eErr == CE_None && iValue < nCount;
                    iValue++ )
