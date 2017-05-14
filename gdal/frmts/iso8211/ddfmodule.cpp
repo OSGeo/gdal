@@ -249,9 +249,9 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
         _sizeFieldPos                 = DDFScanInt(achLeader+21,1);
         _sizeFieldTag                 = DDFScanInt(achLeader+23,1);
 
-        if( _recLength < nLeaderSize || _fieldControlLength == 0
-            || _fieldAreaStart < 24 || _sizeFieldLength == 0
-            || _sizeFieldPos == 0 || _sizeFieldTag == 0 )
+        if( _recLength < nLeaderSize || _fieldControlLength <= 0
+            || _fieldAreaStart < 24 || _sizeFieldLength <= 0
+            || _sizeFieldPos <= 0 || _sizeFieldTag <= 0 )
         {
             bValid = FALSE;
         }
@@ -299,7 +299,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 
     nFieldEntryWidth = _sizeFieldLength + _sizeFieldPos + _sizeFieldTag;
 
-    for( i = nLeaderSize; i < _recLength; i += nFieldEntryWidth )
+    for( i = nLeaderSize; i + nFieldEntryWidth <= _recLength; i += nFieldEntryWidth )
     {
         if( pachRecord[i] == DDF_FIELD_TERMINATOR )
             break;
