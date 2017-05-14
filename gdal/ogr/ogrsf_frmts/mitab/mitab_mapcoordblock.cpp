@@ -450,7 +450,8 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
             pasHdrs[i].numVertices = ReadInt32();
         else
             pasHdrs[i].numVertices = ReadInt16();
-        if( pasHdrs[i].numVertices < 0 )
+        // INT_MAX / 2 since there are 2 values (x, y) per vertex
+        if( pasHdrs[i].numVertices < 0 || pasHdrs[i].numVertices > INT_MAX / 2 )
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "Invalid number of vertices for section %d", i);
@@ -479,7 +480,7 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
         if (CPLGetLastErrorType() != 0)
             return -1;
 
-        if( numVerticesTotal > INT_MAX - pasHdrs[i].numVertices )
+        if( numVerticesTotal > INT_MAX / 2 - pasHdrs[i].numVertices )
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "Invalid number of vertices for section %d", i);
