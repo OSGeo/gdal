@@ -362,6 +362,14 @@ VSIStdinFilesystemHandler::Open( const char *pszFilename,
     if( strcmp(pszFilename, "/vsistdin/") != 0 )
         return NULL;
 
+    if( !CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "YES")) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "/vsistdin/ disabled. Set CPL_ALLOW_VSISTDIN to YES to "
+                "enable it");
+        return NULL;
+    }
+
     if( strchr(pszAccess, 'w') != NULL ||
         strchr(pszAccess, '+') != NULL )
     {
@@ -386,6 +394,14 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
 
     if( strcmp(pszFilename, "/vsistdin/") != 0 )
         return -1;
+
+    if( !CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "YES")) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "/vsistdin/ disabled. Set CPL_ALLOW_VSISTDIN to YES to "
+                "enable it");
+        return -1;
+    }
 
     if( nFlags & VSI_STAT_SIZE_FLAG )
     {

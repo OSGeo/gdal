@@ -1866,15 +1866,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
     if( pszValue != NULL )
     {
-        if( strcmp(pszValue, "/vsistdin/") == 0 &&
-            !CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "NO")) )
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                    "SourceDataset = /vsistdin/ only allowed if "
-                    "CPL_ALLOW_VSISTDIN is set to YES");
-            GDALDestroyWarpOptions( psWO );
-            return NULL;
-        }
+        CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
 
         char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psTree);
         psWO->hSrcDS = GDALOpenEx(

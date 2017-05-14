@@ -578,8 +578,8 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
                                                "X_DATASET" );
     if( pszDSName != NULL )
     {
-        if( strcmp(pszDSName, "/vsistdin/") != 0 )
-            psTransform->hDS_X = GDALOpenShared( pszDSName, GA_ReadOnly );
+        CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
+        psTransform->hDS_X = GDALOpenShared( pszDSName, GA_ReadOnly );
     }
     else
     {
@@ -597,8 +597,8 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
     pszDSName = CSLFetchNameValue( papszGeolocationInfo, "Y_DATASET" );
     if( pszDSName != NULL )
     {
-        if( strcmp(pszDSName, "/vsistdin/") != 0 )
-            psTransform->hDS_Y = GDALOpenShared( pszDSName, GA_ReadOnly );
+        CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
+        psTransform->hDS_Y = GDALOpenShared( pszDSName, GA_ReadOnly );
     }
     else
     {
