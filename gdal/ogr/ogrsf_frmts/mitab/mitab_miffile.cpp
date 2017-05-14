@@ -1066,6 +1066,9 @@ int MIFFile::Close()
     CPLFree(m_pszDelimiter);
     m_pszDelimiter = NULL;
 
+    CPLFree(m_pszUnique);
+    m_pszUnique = NULL;
+
     CPLFree(m_pszFname);
     m_pszFname = NULL;
 
