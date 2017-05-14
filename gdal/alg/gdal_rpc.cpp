@@ -835,7 +835,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 /*                       The DEM file name                              */
 /* -------------------------------------------------------------------- */
     const char *pszDEMPath = CSLFetchNameValue( papszOptions, "RPC_DEM" );
-    if( pszDEMPath != NULL )
+    if( pszDEMPath != NULL && strcmp(pszDEMPath, "/vsistdin/") != 0 )
         psTransform->pszDEMPath = CPLStrdup(pszDEMPath);
 
 /* -------------------------------------------------------------------- */

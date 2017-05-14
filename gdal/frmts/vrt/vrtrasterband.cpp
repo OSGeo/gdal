@@ -499,6 +499,16 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         else
             pszSrcDSName = CPLStrdup( pszFilename );
 
+        if( strcmp(pszSrcDSName, "/vsistdin/") == 0 &&
+            !CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "NO")) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "SourceFilename = /vsistdin/ only allowed if "
+                    "CPL_ALLOW_VSISTDIN is set to YES");
+            CPLFree( pszSrcDSName );
+            return CE_Failure;
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Get the raster band.                                            */
 /* -------------------------------------------------------------------- */

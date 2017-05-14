@@ -1866,6 +1866,16 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
     if( pszValue != NULL )
     {
+        if( strcmp(pszValue, "/vsistdin/") == 0 &&
+            !CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "NO")) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                    "SourceDataset = /vsistdin/ only allowed if "
+                    "CPL_ALLOW_VSISTDIN is set to YES");
+            GDALDestroyWarpOptions( psWO );
+            return NULL;
+        }
+
         char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psTree);
         psWO->hSrcDS = GDALOpenEx(
             pszValue, GDAL_OF_SHARED | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
@@ -1880,7 +1890,9 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
     pszValue = CPLGetXMLValue(psTree, "DestinationDataset",NULL);
 
     if( pszValue != NULL )
+    {
         psWO->hDstDS = GDALOpenShared( pszValue, GA_Update );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      First, count band mappings so we can establish the bandcount.   */

@@ -344,6 +344,9 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
         CPLDebug( "gdalsrsinfo",
                   "trying to get SRS from user input [%s]", pszInput );
 
+        if( CPLGetConfigOption("CPL_ALLOW_VSISTDIN", NULL) == NULL )
+            CPLSetConfigOption("CPL_ALLOW_VSISTDIN", "YES");
+
         eErr = oSRS.SetFromUserInput( pszInput );
 
        if(  eErr != OGRERR_NONE ) {

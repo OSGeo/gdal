@@ -621,6 +621,16 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         }
     }
 
+    if( strcmp(pszSrcDSName, "/vsistdin/") == 0 &&
+        !CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "NO")) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SourceFilename = /vsistdin/ only allowed if "
+                 "CPL_ALLOW_VSISTDIN is set to YES");
+        CPLFree( pszSrcDSName );
+        return CE_Failure;
+    }
+
     char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psSrc);
     if( strstr(pszSrcDSName,"<VRTDataset") != NULL )
         papszOpenOptions =
