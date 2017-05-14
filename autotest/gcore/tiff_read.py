@@ -3120,6 +3120,19 @@ def tiff_read_packbits_not_enough_data():
     return 'success'
 
 ###############################################################################
+# Test reading images with more than 2billion blocks
+
+def tiff_read_toomanyblocks():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/toomanyblocks.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -3226,6 +3239,7 @@ gdaltest_list.append( (tiff_read_many_blocks) )
 gdaltest_list.append( (tiff_read_uint33) )
 gdaltest_list.append( (tiff_read_corrupted_deflate_singlestrip) )
 gdaltest_list.append( (tiff_read_packbits_not_enough_data) )
+gdaltest_list.append( (tiff_read_toomanyblocks) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
