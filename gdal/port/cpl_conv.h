@@ -332,4 +332,34 @@ private:
 #endif /* def __cplusplus */
 //! @endcond
 
+
+
+/* -------------------------------------------------------------------- */
+/*      C++ object for temporarily forcing a config option              */
+/* -------------------------------------------------------------------- */
+
+//! @cond Doxygen_Suppress
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+class CPL_DLL CPLConfigOptionSetter
+{
+public:
+    CPLConfigOptionSetter(const char* pszKey, const char* pszValue,
+                          bool bSetOnlyIfUndefined);
+    ~CPLConfigOptionSetter();
+
+private:
+    char* m_pszKey;
+    char *m_pszOldValue;
+    bool m_bRestoreOldValue;
+
+    /* Make it non-copyable */
+    CPLConfigOptionSetter(const CPLConfigOptionSetter&);
+    CPLConfigOptionSetter& operator=(const CPLConfigOptionSetter&);
+};
+
+#endif /* def __cplusplus */
+//! @endcond
+
+
 #endif /* ndef CPL_CONV_H_INCLUDED */
