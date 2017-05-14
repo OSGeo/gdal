@@ -3320,7 +3320,7 @@ void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *
     const char* pszDSName = GetDescription();
     if (strlen(fmt) + strlen(pszDSName) + 3 >= sizeof(szNewFmt) - 1)
         pszDSName = CPLGetFilename(pszDSName);
-    if (pszDSName[0] != '\0' &&
+    if (pszDSName[0] != '\0' && strchr(pszDSName, '%') == NULL &&
         strlen(fmt) + strlen(pszDSName) + 3 < sizeof(szNewFmt) - 1)
     {
         snprintf(szNewFmt, sizeof(szNewFmt), "%s: %s",
