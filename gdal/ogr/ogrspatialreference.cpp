@@ -2134,6 +2134,15 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         return importFromEPSG(27700);
     }
 
+    if( strcmp(pszDefinition, "/vsistdin/") == 0 &&
+        !CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "NO")) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetFromUserInput(\"/vsistdin/\") only allowed if "
+                 "CPL_ALLOW_VSISTDIN is set to YES");
+        return OGRERR_FAILURE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try to open it as a file.                                       */
 /* -------------------------------------------------------------------- */
