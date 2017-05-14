@@ -1811,8 +1811,14 @@ CPLErr HFABand::GetPCT( int * pnColors,
         if( poColumnEntry == NULL )
             return CE_Failure;
 
-        // TODO(schwehr): Check that nPCTColors is not too big.
         nPCTColors = poColumnEntry->GetIntField("numRows");
+        if( nPCTColors < 0 || nPCTColors > 65536 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid number of colors: %d", nPCTColors);
+            return CE_Failure;
+        }
+
         for( int iColumn = 0; iColumn < 4; iColumn++ )
         {
             apadfPCT[iColumn] = static_cast<double *>(
