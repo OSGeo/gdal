@@ -469,6 +469,7 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
 
         if (EQUAL(papszTok[0], "!version"))
         {
+            CPLFree(m_pszVersion);
             m_pszVersion = CPLStrdup(papszTok[1]);
         }
         else if (EQUAL(papszTok[0], "!charset"))
@@ -514,6 +515,7 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
              * The tokenized array will contain:
              *  {"where", "table1", "field1", "table2", "field2"}
              *--------------------------------------------------------*/
+            CSLDestroy(m_papszWhereClause);
             m_papszWhereClause =CSLTokenizeStringComplex(m_papszTABFile[iLine],
                                                          " \t(),;=.",
                                                          TRUE, FALSE);
