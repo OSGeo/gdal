@@ -107,6 +107,24 @@ OGRErr OGRGeometryFactory::createFromWkb( unsigned char *pabyData,
                                           OGRwkbVariant eWkbVariant )
 
 {
+    int nBytesConsumedOutIgnored = -1;
+    return createFromWkb( const_cast<const unsigned char*>(pabyData),
+                          poSR,
+                          ppoReturn,
+                          nBytes,
+                          eWkbVariant,
+                          nBytesConsumedOutIgnored);
+}
+
+OGRErr OGRGeometryFactory::createFromWkb( const unsigned char *pabyData,
+                                          OGRSpatialReference * poSR,
+                                          OGRGeometry **ppoReturn,
+                                          int nBytes,
+                                          OGRwkbVariant eWkbVariant,
+                                          int& nBytesConsumedOut )
+
+{
+    nBytesConsumedOut = -1;
     *ppoReturn = NULL;
 
     if( nBytes < 9 && nBytes != -1 )
@@ -159,7 +177,8 @@ OGRErr OGRGeometryFactory::createFromWkb( unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
 /*      Import from binary.                                             */
 /* -------------------------------------------------------------------- */
-    const OGRErr eErr = poGeom->importFromWkb( pabyData, nBytes, eWkbVariant );
+    const OGRErr eErr = poGeom->importFromWkb( pabyData, nBytes, eWkbVariant,
+                                               nBytesConsumedOut );
     if( eErr != OGRERR_NONE )
     {
         delete poGeom;

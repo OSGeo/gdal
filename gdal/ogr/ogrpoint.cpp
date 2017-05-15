@@ -295,11 +295,13 @@ int OGRPoint::WkbSize() const
 /*      format.                                                         */
 /************************************************************************/
 
-OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
+OGRErr OGRPoint::importFromWkb( const unsigned char *pabyData,
                                 int nSize,
-                                OGRwkbVariant eWkbVariant )
+                                OGRwkbVariant eWkbVariant,
+                                int& nBytesConsumedOut )
 
 {
+    nBytesConsumedOut = -1;
     OGRwkbByteOrder eByteOrder = wkbNDR;
 
     flags = 0;
@@ -319,6 +321,9 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
         else if( nSize < 21 )
             return OGRERR_NOT_ENOUGH_DATA;
     }
+
+    nBytesConsumedOut = 5 + 8 * (2 + ((flags & OGR_G_3D) ? 1 : 0)+
+                                     ((flags & OGR_G_MEASURED) ? 1 : 0));
 
 /* -------------------------------------------------------------------- */
 /*      Get the vertex.                                                 */

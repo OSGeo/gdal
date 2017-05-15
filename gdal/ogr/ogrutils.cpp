@@ -1671,7 +1671,7 @@ OGRErr OGRCheckPermutation( int* panPermutation, int nSize )
     return eErr;
 }
 
-OGRErr OGRReadWKBGeometryType( unsigned char * pabyData,
+OGRErr OGRReadWKBGeometryType( const unsigned char * pabyData,
                                OGRwkbVariant eWkbVariant,
                                OGRwkbGeometryType *peGeometryType )
 {
