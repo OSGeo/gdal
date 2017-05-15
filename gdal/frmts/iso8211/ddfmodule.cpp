@@ -562,7 +562,7 @@ DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
     {
         const char *pszThisName = papoFieldDefns[i]->GetName();
 
-        if( *pszThisName == *pszFieldName
+        if( *pszThisName == *pszFieldName && *pszFieldName != '\0'
             && strcmp( pszFieldName+1, pszThisName+1) == 0 )
             return papoFieldDefns[i];
     }
