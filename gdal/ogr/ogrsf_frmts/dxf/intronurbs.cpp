@@ -168,12 +168,20 @@ static void rbasis( int c, double t, int npts,
             double d = 0.0;
             double e = 0.0;
             if (temp[i] != 0)    /* if the lower order basis function is zero skip the calculation */
-                d = ((t-x[i])*temp[i])/(x[i+k-1]-x[i]);
+            {
+                double denom = x[i+k-1]-x[i];
+                if( denom != 0 )
+                    d = ((t-x[i])*temp[i])/denom;
+            }
             // else
             //    d = 0.0 ;
 
             if (temp[i+1] != 0)     /* if the lower order basis function is zero skip the calculation */
-                e = ((x[i+k]-t)*temp[i+1])/(x[i+k]-x[i+1]);
+            {
+                double denom = x[i+k]-x[i+1];
+                if( denom != 0 )
+                    e = ((x[i+k]-t)*temp[i+1])/denom;
+            }
             // else
             //     e = 0.0;
 
