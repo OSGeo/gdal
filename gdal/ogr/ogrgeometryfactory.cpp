@@ -116,6 +116,40 @@ OGRErr OGRGeometryFactory::createFromWkb( unsigned char *pabyData,
                           nBytesConsumedOutIgnored);
 }
 
+/**
+ * \brief Create a geometry object of the appropriate type from it's
+ * well known binary representation.
+ *
+ * Note that if nBytes is passed as zero, no checking can be done on whether
+ * the pabyData is sufficient.  This can result in a crash if the input
+ * data is corrupt.  This function returns no indication of the number of
+ * bytes from the data source actually used to represent the returned
+ * geometry object.  Use OGRGeometry::WkbSize() on the returned geometry to
+ * establish the number of bytes it required in WKB format.
+ *
+ * Also note that this is a static method, and that there
+ * is no need to instantiate an OGRGeometryFactory object.
+ *
+ * The C function OGR_G_CreateFromWkb() is the same as this method.
+ *
+ * @param pabyData pointer to the input BLOB data.
+ * @param poSR pointer to the spatial reference to be assigned to the
+ *             created geometry object.  This may be NULL.
+ * @param ppoReturn the newly created geometry object will be assigned to the
+ *                  indicated pointer on return.  This will be NULL in case
+ *                  of failure. If not NULL, *ppoReturn should be freed with
+ *                  OGRGeometryFactory::destroyGeometry() after use.
+ * @param nBytes the number of bytes available in pabyData, or -1 if it isn't
+ *               known.
+ * @param eWkbVariant WKB variant.
+ * @param nBytesConsumedOut output parameter. Number of bytes consumed.
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ * @since GDAL 2.3
+ */
+
 OGRErr OGRGeometryFactory::createFromWkb( const unsigned char *pabyData,
                                           OGRSpatialReference * poSR,
                                           OGRGeometry **ppoReturn,
