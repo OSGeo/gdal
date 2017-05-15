@@ -605,9 +605,7 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
     if( pszColon )
         pszNoNSName = pszColon + 1;
 
-    if ((eFormat == GEORSS_ATOM && currentDepth == 1 && strcmp(pszNoNSName, "entry") == 0) ||
-        ((eFormat == GEORSS_RSS || eFormat == GEORSS_RSS_RDF) &&
-         (currentDepth == 1 || currentDepth == 2) && strcmp(pszNoNSName, "item") == 0))
+    if( bInFeature && currentDepth == featureDepth )
     {
         bInFeature = false;
         bInTagWithSubTag = false;
