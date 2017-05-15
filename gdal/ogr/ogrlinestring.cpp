@@ -1467,15 +1467,17 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
 /*      format.                                                         */
 /************************************************************************/
 
-OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
+OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
                                       int nSize,
-                                      OGRwkbVariant eWkbVariant )
+                                      OGRwkbVariant eWkbVariant,
+                                      int& nBytesConsumedOut )
 
 {
     OGRwkbByteOrder     eByteOrder;
     int                 nDataOffset = 0;
     int                 nNewNumPoints = 0;
 
+    nBytesConsumedOut = -1;
     OGRErr eErr = importPreambuleOfCollectionFromWkb( pabyData,
                                                       nSize,
                                                       nDataOffset,
@@ -1504,6 +1506,10 @@ OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
     setNumPoints( nNewNumPoints, FALSE );
     if( nPointCount < nNewNumPoints )
         return OGRERR_FAILURE;
+
+    nBytesConsumedOut = 9 + 8 * nPointCount *
+                                    (2 + ((flags & OGR_G_3D) ? 1 : 0)+
+                                         ((flags & OGR_G_MEASURED) ? 1 : 0));
 
 /* -------------------------------------------------------------------- */
 /*      Get the vertex.                                                 */

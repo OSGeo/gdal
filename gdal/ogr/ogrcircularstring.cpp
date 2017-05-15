@@ -137,12 +137,15 @@ const char * OGRCircularString::getGeometryName() const
 /*      format.                                                         */
 /************************************************************************/
 
-OGRErr OGRCircularString::importFromWkb( unsigned char * pabyData,
+OGRErr OGRCircularString::importFromWkb( const unsigned char * pabyData,
                                          int nSize,
-                                         OGRwkbVariant eWkbVariant )
+                                         OGRwkbVariant eWkbVariant,
+                                         int& nBytesConsumedOut )
 
 {
-    OGRErr eErr = OGRSimpleCurve::importFromWkb(pabyData, nSize, eWkbVariant);
+    OGRErr eErr = OGRSimpleCurve::importFromWkb(pabyData, nSize,
+                                                eWkbVariant,
+                                                nBytesConsumedOut);
     if( eErr == OGRERR_NONE )
     {
         if( !IsValidFast() )

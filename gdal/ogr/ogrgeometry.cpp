@@ -1358,9 +1358,44 @@ void OGR_G_GetEnvelope3D( OGRGeometryH hGeom, OGREnvelope3D *psEnvelope )
     reinterpret_cast<OGRGeometry *>(hGeom)->getEnvelope( psEnvelope );
 }
 
+
+/************************************************************************/
+/*                        importFromWkb()                               */
+/************************************************************************/
+
 /**
- * \fn OGRErr OGRGeometry::importFromWkb( unsigned char * pabyData,
- * int nSize, OGRwkbVariant eWkbVariant =wkbVariantOldOgc );
+ * \brief Assign geometry from well known binary data.
+ *
+ * The object must have already been instantiated as the correct derived
+ * type of geometry object to match the binaries type.  This method is used
+ * by the OGRGeometryFactory class, but not normally called by application
+ * code.
+ *
+ * This method relates to the SFCOM IWks::ImportFromWKB() method.
+ *
+ * This method is the same as the C function OGR_G_ImportFromWkb().
+ *
+ * @param pabyData the binary input data.
+ * @param nSize the size of pabyData in bytes, or -1 if not known.
+ * @param eWkbVariant if wkbVariantPostGIS1, special interpretation is
+ * done for curve geometries code
+ *
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ */
+
+OGRErr OGRGeometry::importFromWkb( unsigned char * pabyData,
+                                   int nSize, OGRwkbVariant eWkbVariant )
+{
+    int nBytesConsumedOutIgnored = -1;
+    return importFromWkb( const_cast<const unsigned char*>(pabyData),
+                          nSize, eWkbVariant, nBytesConsumedOutIgnored );
+}
+
+/**
+ * \fn OGRErr OGRGeometry::importFromWkb( const unsigned char * pabyData,
+ * int nSize, OGRwkbVariant eWkbVariant, int& nBytesConsumedOut );
  *
  * \brief Assign geometry from well known binary data.
  *
@@ -1374,13 +1409,16 @@ void OGR_G_GetEnvelope3D( OGRGeometryH hGeom, OGREnvelope3D *psEnvelope )
  * This method is the same as the C function OGR_G_ImportFromWkb().
  *
  * @param pabyData the binary input data.
- * @param nSize the size of pabyData in bytes, or zero if not known.
+ * @param nSize the size of pabyData in bytes, or -1 if not known.
  * @param eWkbVariant if wkbVariantPostGIS1, special interpretation is
  * done for curve geometries code
+ * @param nBytesConsumedOut output parameter. Number of bytes consumed.
  *
  * @return OGRERR_NONE if all goes well, otherwise any of
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
  * OGRERR_CORRUPT_DATA may be returned.
+ * 
+ * @since GDAL 2.3
  */
 
 /************************************************************************/
@@ -1398,7 +1436,7 @@ void OGR_G_GetEnvelope3D( OGRGeometryH hGeom, OGREnvelope3D *psEnvelope )
  *
  * @param hGeom handle on the geometry to assign the well know binary data to.
  * @param pabyData the binary input data.
- * @param nSize the size of pabyData in bytes, or zero if not known.
+ * @param nSize the size of pabyData in bytes, or -1 if not known.
  *
  * @return OGRERR_NONE if all goes well, otherwise any of
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
@@ -6048,7 +6086,7 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-OGRErr OGRGeometry::importPreambuleFromWkb( unsigned char * pabyData,
+OGRErr OGRGeometry::importPreambuleFromWkb( const unsigned char * pabyData,
                                             int nSize,
                                             OGRwkbByteOrder& eByteOrder,
                                             OGRwkbVariant eWkbVariant )
@@ -6088,7 +6126,7 @@ OGRErr OGRGeometry::importPreambuleFromWkb( unsigned char * pabyData,
 /*      OGRCurvePolygon and OGRGeometryCollection.                      */
 /************************************************************************/
 
-OGRErr OGRGeometry::importPreambuleOfCollectionFromWkb( unsigned char * pabyData,
+OGRErr OGRGeometry::importPreambuleOfCollectionFromWkb( const unsigned char * pabyData,
                                                         int& nSize,
                                                         int& nDataOffset,
                                                         OGRwkbByteOrder& eByteOrder,
@@ -6139,7 +6177,10 @@ OGRErr OGRGeometry::importPreambuleOfCollectionFromWkb( unsigned char * pabyData
 
     nDataOffset = 9;
     if( nSize != -1 )
+    {
+        CPLAssert( nSize >= nDataOffset );
         nSize -= nDataOffset;
+    }
 
     return OGRERR_NONE;
 }

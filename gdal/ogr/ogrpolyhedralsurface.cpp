@@ -213,10 +213,12 @@ void OGRPolyhedralSurface::getEnvelope( OGREnvelope3D * psEnvelope ) const
 /*                           importFromWkb()                            */
 /************************************************************************/
 
-OGRErr OGRPolyhedralSurface::importFromWkb ( unsigned char * pabyData,
+OGRErr OGRPolyhedralSurface::importFromWkb ( const unsigned char * pabyData,
                                              int nSize,
-                                             OGRwkbVariant eWkbVariant )
+                                             OGRwkbVariant eWkbVariant,
+                                             int& nBytesConsumedOut )
 {
+    nBytesConsumedOut = -1;
     oMP.nGeomCount = 0;
     OGRwkbByteOrder eByteOrder = wkbXDR;
     int nDataOffset = 0;
@@ -246,7 +248,7 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( unsigned char * pabyData,
     for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
     {
         // Parse the polygons
-        unsigned char* pabySubData = pabyData + nDataOffset;
+        const unsigned char* pabySubData = pabyData + nDataOffset;
         if( nSize < 9 && nSize != -1 )
             return OGRERR_NOT_ENOUGH_DATA;
 
@@ -265,9 +267,11 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( unsigned char * pabyData,
         }
 
         OGRGeometry* poSubGeom = NULL;
+        int nSubGeomBytesConsumed = -1;
         eErr = OGRGeometryFactory::createFromWkb( pabySubData, NULL,
                                                   &poSubGeom, nSize,
-                                                  eWkbVariant );
+                                                  eWkbVariant,
+                                                  nSubGeomBytesConsumed );
 
         if( eErr != OGRERR_NONE )
         {
@@ -283,12 +287,16 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( unsigned char * pabyData,
         if (oMP.papoGeoms[iGeom]->IsMeasured())
             flags |= OGR_G_MEASURED;
 
-        int nSubGeomWkbSize = oMP.papoGeoms[iGeom]->WkbSize();
+        CPLAssert( nSubGeomBytesConsumed > 0 );
         if( nSize != -1 )
-            nSize -= nSubGeomWkbSize;
+        {
+            CPLAssert( nSize >= nSubGeomBytesConsumed );
+            nSize -= nSubGeomBytesConsumed;
+        }
 
-        nDataOffset += nSubGeomWkbSize;
+        nDataOffset += nSubGeomBytesConsumed;
     }
+    nBytesConsumedOut = nDataOffset;
 
     return OGRERR_NONE;
 }

@@ -316,11 +316,13 @@ int OGRPolygon::WkbSize() const
 /*      format.                                                         */
 /************************************************************************/
 
-OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
+OGRErr OGRPolygon::importFromWkb( const unsigned char * pabyData,
                                   int nSize,
-                                  OGRwkbVariant eWkbVariant )
+                                  OGRwkbVariant eWkbVariant,
+                                  int& nBytesConsumedOut )
 
 {
+    nBytesConsumedOut = -1;
     OGRwkbByteOrder eByteOrder = wkbNDR;
     int nDataOffset = 0;
     // coverity[tainted_data]
@@ -336,9 +338,11 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
     {
         OGRLinearRing* poLR = new OGRLinearRing();
         oCC.papoCurves[iRing] = poLR;
+        int nBytesConsumedRing = -1;
         eErr = poLR->_importFromWkb( eByteOrder, flags,
-                                                 pabyData + nDataOffset,
-                                                 nSize );
+                                     pabyData + nDataOffset,
+                                     nSize,
+                                     nBytesConsumedRing );
         if( eErr != OGRERR_NONE )
         {
             delete oCC.papoCurves[iRing];
@@ -346,11 +350,16 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
             return eErr;
         }
 
+        CPLAssert( nBytesConsumedRing > 0 );
         if( nSize != -1 )
-            nSize -= poLR->_WkbSize( flags );
+        {
+            CPLAssert( nSize >= nBytesConsumedRing );
+            nSize -= nBytesConsumedRing;
+        }
 
-        nDataOffset += poLR->_WkbSize( flags );
+        nDataOffset += nBytesConsumedRing;
     }
+    nBytesConsumedOut = nDataOffset;
 
     return OGRERR_NONE;
 }
