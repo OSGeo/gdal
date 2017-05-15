@@ -434,10 +434,10 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
                  "Invalid numSections");
         return -1;
     }
-    int nTotalHdrSizeUncompressed = nSectionSize * numSections;
+    const int nTotalHdrSizeUncompressed = nSectionSize * numSections;
 
     const int nVertexSize =
-                (bCompressed) ? 2 * sizeof(GUInt16) : 2 * sizeof(GUInt32);
+                bCompressed ? 2 * sizeof(GUInt16) : 2 * sizeof(GUInt32);
     numVerticesTotal = 0;
 
     for( int i = 0;  i < numSections; i++ )
