@@ -658,7 +658,7 @@ void KML::unregisterLayerIfMatchingThisNode(KMLNode* poNode)
                         (nNumLayers_ - 1 - i) * sizeof(KMLNode*) );
             }
             nNumLayers_ --;
-            continue;
+            break;
         }
         i++;
     }

@@ -855,6 +855,27 @@ def ogr_kml_read_truncated():
     return 'success'
 
 ###############################################################################
+# Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1591
+
+def ogr_kml_read_weird_empty_folders():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    ds = ogr.Open('data/weird_empty_folders.kml')
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    if ds.GetLayer(0).GetFeatureCount() != 0:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayer(0).GetFeatureCount())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Build tests runner
 
 gdaltest_list = [
@@ -880,6 +901,7 @@ gdaltest_list = [
     ogr_kml_two_layers,
     ogr_kml_read_folder_with_subfolder_placemark,
     ogr_kml_read_truncated,
+    ogr_kml_read_weird_empty_folders,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
