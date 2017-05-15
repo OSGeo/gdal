@@ -63,6 +63,7 @@
 #include <string>
 
 #include <iostream>
+#include <limits>
 
 using namespace PCIDSK;
 
@@ -438,7 +439,11 @@ void CPCIDSKFile::InitializeFromHeader()
 /*      try to avoid doing too much other processing on them.           */
 /* -------------------------------------------------------------------- */
     int segment_block_count = atoi(fh.Get(456,8));
-    
+    if( segment_block_count < 0 ||
+        segment_block_count > std::numeric_limits<int>::max() / 512 )
+        return ThrowPCIDSKException( "Invalid segment_block_count: %d",
+                                     segment_block_count );
+
     segment_count = (segment_block_count * 512) / 32;
     segment_pointers.SetSize( segment_block_count * 512 );
     segment_pointers_offset = atouint64(fh.Get(440,16)) * 512 - 512;
