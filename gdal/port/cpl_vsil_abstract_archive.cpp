@@ -287,9 +287,9 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
     else
         pszFilename += strlen(GetPrefix()) + 1;
 
+    const std::vector<CPLString> oExtensions = GetExtensions();
     while(pszFilename[i])
     {
-        std::vector<CPLString> oExtensions = GetExtensions();
         std::vector<CPLString>::const_iterator iter;
         int nToSkip = 0;
 
