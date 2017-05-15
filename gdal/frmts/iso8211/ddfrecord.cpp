@@ -129,6 +129,8 @@ int DDFRecord::Read()
     {
         return ReadHeader();
     }
+    if( nFieldOffset < 0 )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise we read just the data and carefully overlay it on     */
@@ -267,13 +269,14 @@ int DDFRecord::ReadHeader()
     nReadBytes = static_cast<int>(VSIFReadL(achLeader,1,nLeaderSize,poModule->GetFP()));
     if( nReadBytes == 0 && VSIFEofL( poModule->GetFP() ) )
     {
+        nFieldOffset = -1;
         return FALSE;
     }
     else if( nReadBytes != (int) nLeaderSize )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Leader is short on DDF file." );
-
+        nFieldOffset = -1;
         return FALSE;
     }
 
@@ -297,6 +300,7 @@ int DDFRecord::ReadHeader()
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "ISO8211 record leader appears to be corrupt." );
+        nFieldOffset = -1;
         return FALSE;
     }
 
@@ -315,7 +319,7 @@ int DDFRecord::ReadHeader()
                   "Data record appears to be corrupt on DDF file.\n"
                   " -- ensure that the files were uncompressed without modifying\n"
                   "carriage return/linefeeds (by default WINZIP does this)." );
-
+        nFieldOffset = -1;
         return FALSE;
     }
 
@@ -334,7 +338,7 @@ int DDFRecord::ReadHeader()
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Data record is short on DDF file." );
-
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -353,7 +357,7 @@ int DDFRecord::ReadHeader()
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Data record is short on DDF file." );
-
+                nFieldOffset = -1;
                 return FALSE;
             }
             CPLDebug( "ISO8211",
@@ -363,6 +367,7 @@ int DDFRecord::ReadHeader()
         if( nFieldOffset >= nDataSize )
         {
             CPLError(CE_Failure, CPLE_AssertionFailed, "nFieldOffset < nDataSize");
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -377,6 +382,7 @@ int DDFRecord::ReadHeader()
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Invalid entry width = %d", nFieldEntryWidth);
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -431,6 +437,7 @@ int DDFRecord::ReadHeader()
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Not enough byte to initialize field `%s'.",
                           szTag );
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -475,6 +482,7 @@ int DDFRecord::ReadHeader()
             CPLError( CE_Failure, CPLE_OutOfMemory,
                       "Invalid record buffer size : %d.",
                       nFieldEntryWidth );
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -482,6 +490,7 @@ int DDFRecord::ReadHeader()
 
         if( tmpBuf == NULL )
         {
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -494,6 +503,7 @@ int DDFRecord::ReadHeader()
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Data record is short on DDF file.");
                 CPLFree(tmpBuf);
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -538,6 +548,7 @@ int DDFRecord::ReadHeader()
                 tmpBuf = (char*)VSI_MALLOC_VERBOSE(nFieldLength);
             if( tmpBuf == NULL )
             {
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -547,6 +558,7 @@ int DDFRecord::ReadHeader()
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Data record is short on DDF file.");
                 CPLFree(tmpBuf);
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -555,6 +567,7 @@ int DDFRecord::ReadHeader()
             if( newBuf == NULL )
             {
                 CPLFree(tmpBuf);
+                nFieldOffset = -1;
                 return FALSE;
             }
             memcpy(newBuf, pachData, nDataSize);
@@ -568,6 +581,7 @@ int DDFRecord::ReadHeader()
         if( nFieldOffset >= nDataSize )
         {
             CPLError(CE_Failure, CPLE_AssertionFailed, "nFieldOffset < nDataSize");
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -604,6 +618,7 @@ int DDFRecord::ReadHeader()
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Undefined field `%s' encountered in data record.",
                           szTag );
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -613,6 +628,7 @@ int DDFRecord::ReadHeader()
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Not enough byte to initialize field `%s'.",
                           szTag );
+                nFieldOffset = -1;
                 return FALSE;
             }
 
