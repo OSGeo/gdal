@@ -109,6 +109,8 @@ private:
 
     int nLayerNumber_;
     int nNumFeatures_;
+
+    void unregisterLayerIfMatchingThisNode(KML* poKML);
 };
 
 #endif /* KMLNODE_H_INCLUDED */
