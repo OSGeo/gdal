@@ -329,6 +329,16 @@ int KMLNode::classify(KML* poKML, int nRecLevel)
     return TRUE;
 }
 
+
+void KMLNode::unregisterLayerIfMatchingThisNode(KML* poKML)
+{
+    for(std::size_t z = 0; z < countChildren(); z++)
+    {
+        getChild(z)->unregisterLayerIfMatchingThisNode(poKML);
+    }
+    poKML->unregisterLayerIfMatchingThisNode(this);
+}
+
 void KMLNode::eliminateEmpty(KML* poKML)
 {
     for(kml_nodes_t::size_type z = 0; z < pvpoChildren_->size(); z++)
@@ -337,7 +347,7 @@ void KMLNode::eliminateEmpty(KML* poKML)
            && (poKML->isContainer((*pvpoChildren_)[z]->sName_)
                || poKML->isFeatureContainer((*pvpoChildren_)[z]->sName_)))
         {
-            poKML->unregisterLayerIfMatchingThisNode((*pvpoChildren_)[z]);
+            (*pvpoChildren_)[z]->unregisterLayerIfMatchingThisNode(poKML);
             delete (*pvpoChildren_)[z];
             pvpoChildren_->erase(pvpoChildren_->begin() + z);
             z--;
