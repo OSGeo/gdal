@@ -3586,6 +3586,9 @@ void GDALDeserializeGCPListFromXML( CPLXMLNode* psGCPList,
         nGCPMax ? CPLCalloc(sizeof(GDAL_GCP), nGCPMax) : NULL );
     *pnGCPCount = 0;
 
+    if( nGCPMax == 0 )
+        return;
+
     for( CPLXMLNode *psXMLGCP = psGCPList->psChild;
          *ppasGCPList != NULL && psXMLGCP != NULL;
          psXMLGCP = psXMLGCP->psNext )
