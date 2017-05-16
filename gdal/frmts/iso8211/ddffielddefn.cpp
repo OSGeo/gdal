@@ -558,7 +558,9 @@ int DDFFieldDefn::BuildSubfields()
 /*      brackets.                                                       */
 /*                                                                      */
 /*      Given a string like "(A,3(B,C),D),X,Y)" return "A,3(B,C),D".    */
-/*      Give a string like "3A,2C" return "3A".                         */
+/*      Giveh a string like "3A,2C" return "3A".                        */
+/*      Giveh a string like "(3A,2C" return NULL.                       */
+/*      Giveh a string like "3A),2C" return NULL.                       */
 /************************************************************************/
 
 char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
@@ -573,12 +575,19 @@ char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
         if( pszSrc[i] == '(' )
             nBracket++;
         else if( pszSrc[i] == ')' )
+        {
             nBracket--;
+            if( nBracket < 0 )
+                return NULL;
+        }
     }
+    if( nBracket > 0 )
+        return NULL;
 
     char *pszReturn = NULL;
     if( pszSrc[0] == '(' )
     {
+        CPLAssert( i >= 2 );
         pszReturn = CPLStrdup( pszSrc + 1 );
         pszReturn[i-2] = '\0';
     }
@@ -615,7 +624,18 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
         if( (iSrc == 0 || pszSrc[iSrc-1] == ',') && pszSrc[iSrc] == '(' )
         {
             char *pszContents = ExtractSubstring( pszSrc+iSrc );
+            if( pszContents == NULL )
+            {
+                pszDest[0] = '\0';
+                return pszDest;
+            }
             char *pszExpandedContents = ExpandFormat( pszContents );
+            if( pszExpandedContents[0] == '\0' )
+            {
+                CPLFree(pszContents);
+                pszDest[0] = '\0';
+                return pszDest;
+            }
 
             if( strlen(pszExpandedContents) + strlen(pszDest) + 1 > nDestMax )
             {
@@ -644,7 +664,18 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
                 iSrc++;
 
             char *pszContents = ExtractSubstring( pszNext );
+            if( pszContents == NULL )
+            {
+                pszDest[0] = '\0';
+                return pszDest;
+            }
             char *pszExpandedContents = ExpandFormat( pszContents );
+            if( pszExpandedContents[0] == '\0' )
+            {
+                CPLFree(pszContents);
+                pszDest[0] = '\0';
+                return pszDest;
+            }
 
             for( int i = 0; i < nRepeat; i++ )
             {
@@ -718,6 +749,14 @@ int DDFFieldDefn::ApplyFormats()
 /* -------------------------------------------------------------------- */
 
     char *pszFormatList = ExpandFormat( _formatControls );
+    if( pszFormatList[0] == '\0' )
+    {
+        CPLError( CE_Warning, static_cast<CPLErrorNum>(CPLE_DiscardedFormat),
+                  "Invalid format controls for `%s': %s",
+                  pszTag, _formatControls );
+        CPLFree( pszFormatList );
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Tokenize based on commas.                                       */
