@@ -1388,7 +1388,8 @@ int VSIIngestFile( VSILFILE* fp,
 
         // With "large" VSI I/O API we can read data chunks larger than
         // VSIMalloc could allocate. Catch it here.
-        if( nDataLen > static_cast<vsi_l_offset>(static_cast<size_t>(nDataLen))
+        if( nDataLen != static_cast<vsi_l_offset>(static_cast<size_t>(nDataLen))
+            || nDataLen + 1 < nDataLen
             || (nMaxSize >= 0 &&
                 nDataLen > static_cast<vsi_l_offset>(nMaxSize)) )
         {
