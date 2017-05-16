@@ -157,7 +157,10 @@ int VSISubFileHandle::Seek( vsi_l_offset nOffset, int nWhence )
 vsi_l_offset VSISubFileHandle::Tell()
 
 {
-    return VSIFTellL( fp ) - nSubregionOffset;
+    vsi_l_offset nBasePos = VSIFTellL( fp );
+    if( nBasePos >= nSubregionOffset )
+        return nBasePos - nSubregionOffset;
+    return 0;
 }
 
 /************************************************************************/
