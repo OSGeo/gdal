@@ -32,17 +32,30 @@
 #include "ogr_api.h"
 #include "cpl_error.h"
 #include "cpl_vsi.h"
+#include "ogrsf_frmts.h"
+
+#ifndef REGISTER_FUNC
+#define REGISTER_FUNC OGRRegisterAll
+#endif
+
+#ifndef MEM_FILENAME
+#define MEM_FILENAME "/vsimem/test"
+#endif
+
+#ifndef GDAL_FILENAME
+#define GDAL_FILENAME MEM_FILENAME
+#endif
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    VSILFILE* fp = VSIFileFromMemBuffer( "/vsimem/test",
+    VSILFILE* fp = VSIFileFromMemBuffer( MEM_FILENAME,
             reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
     VSIFCloseL(fp);
-    OGRRegisterAll();
+    REGISTER_FUNC();
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    OGRDataSourceH hDS = OGROpen( "/vsimem/test", FALSE, NULL );
+    OGRDataSourceH hDS = OGROpen( GDAL_FILENAME, FALSE, NULL );
     if( hDS )
     {
         const int nLayers = OGR_DS_GetLayerCount(hDS);
@@ -58,6 +71,6 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         OGR_DS_Destroy(hDS);
     }
     CPLPopErrorHandler();
-    VSIUnlink( "/vsimem/test" );
+    VSIUnlink( MEM_FILENAME );
     return 0;
 }
