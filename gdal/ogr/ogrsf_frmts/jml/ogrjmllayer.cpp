@@ -193,6 +193,8 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             {
                 if( !oColumn.osAttributeName.empty() &&
                     ppszAttr != NULL &&
+                    ppszAttr[0] != NULL &&
+                    ppszAttr[1] != NULL &&
                     oColumn.osAttributeName.compare(ppszAttr[0]) == 0 &&
                     oColumn.osAttributeValue.compare(ppszAttr[1]) == 0 )
                 {
@@ -215,6 +217,8 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             }
             else if( !oColumn.osAttributeName.empty() &&
                       ppszAttr != NULL &&
+                      ppszAttr[0] != NULL &&
+                      ppszAttr[1] != NULL &&
                       oColumn.osAttributeName.compare(ppszAttr[0]) == 0 )
             {
                 /* <osElementName osAttributeName="value"></osElementName> */
