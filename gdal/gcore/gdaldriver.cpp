@@ -693,6 +693,8 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
  * If the driver doesn't implement CreateCopy(), but does implement Create()
  * then the default CreateCopy() mechanism built on calling Create() will
  * be used.
+ * So to test if CreateCopy() is available, you can test if GDAL_DCAP_CREATECOPY
+ * or GDAL_DCAP_CREATE is set in the GDAL metadata.
  *
  * It is intended that CreateCopy() will often be used with a source dataset
  * which is a virtual dataset allowing configuration of band types, and other
