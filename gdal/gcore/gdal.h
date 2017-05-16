@@ -315,10 +315,24 @@ typedef GIntBig GSpacing;
 /** Capability set by a driver that implements the Open() API. */
 #define GDAL_DCAP_OPEN       "DCAP_OPEN"
 
-/** Capability set by a driver that implements the Create() API. */
+/** Capability set by a driver that implements the Create() API.
+ * 
+ * If GDAL_DCAP_CREATE is set, but GDAL_DCAP_CREATECOPY not, a generic
+ * CreateCopy() implementation is available and will use the Create() API of
+ * the driver.
+ * So to test if some CreateCopy() implementation is available, generic or
+ * specialize, test for both GDAL_DCAP_CREATE and GDAL_DCAP_CREATECOPY.
+ */
 #define GDAL_DCAP_CREATE     "DCAP_CREATE"
 
-/** Capability set by a driver that implements the CreateCopy() API. */
+/** Capability set by a driver that implements the CreateCopy() API. 
+ * 
+ * If GDAL_DCAP_CREATECOPY is not defined, but GDAL_DCAP_CREATE is set, a generic
+ * CreateCopy() implementation is available and will use the Create() API of
+ * the driver.
+ * So to test if some CreateCopy() implementation is available, generic or
+ * specialize, test for both GDAL_DCAP_CREATE and GDAL_DCAP_CREATECOPY.
+ */
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
 
 /** Capability set by a driver that can read/create datasets through the VSI*L API. */
