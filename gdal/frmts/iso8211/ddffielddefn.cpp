@@ -827,6 +827,14 @@ int DDFFieldDefn::ApplyFormats()
         }
         else
         {
+            if( nFixedWidth > INT_MAX - papoSubfields[i]->GetWidth() )
+            {
+                CPLError( CE_Warning,
+                          static_cast<CPLErrorNum>(CPLE_DiscardedFormat),
+                          "Invalid format controls for `%s': %s",
+                          pszTag, _formatControls );
+                return FALSE;
+            }
             nFixedWidth += papoSubfields[i]->GetWidth();
         }
     }
