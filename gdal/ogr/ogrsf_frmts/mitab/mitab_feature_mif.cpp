@@ -988,12 +988,23 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     int numLineSections = (CSLCount(papszToken) == 2) ? atoi(papszToken[1]) : 0;
     CSLDestroy(papszToken);
     papszToken = NULL;
+    if( numLineSections < 0 ||
+        numLineSections > INT_MAX / static_cast<int>(sizeof(OGRPolygon*)) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid number of sections: %d", numLineSections);
+        return -1;
+    }
 
     OGRPolygon **tabPolygons = NULL;
+    const int MAX_INITIAL_SECTIONS = 100000;
+    const int numInitalLineSections =
+        ( numLineSections < MAX_INITIAL_SECTIONS ) ?
+                            numLineSections : MAX_INITIAL_SECTIONS;
     if (numLineSections > 0)
     {
         tabPolygons = static_cast<OGRPolygon**>(
-                    VSI_MALLOC2_VERBOSE(numLineSections, sizeof(OGRPolygon*)));
+            VSI_MALLOC2_VERBOSE(numInitalLineSections, sizeof(OGRPolygon*)));
         if( tabPolygons == NULL )
             return -1;
     }
@@ -1006,6 +1017,22 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     for(iSection=0; iSection<numLineSections; iSection++)
     {
+        if( iSection == MAX_INITIAL_SECTIONS )
+        {
+            OGRPolygon** newTabPolygons = static_cast<OGRPolygon**>(
+                    VSI_REALLOC_VERBOSE(tabPolygons,
+                                        numLineSections *sizeof(OGRPolygon*)));
+            if( newTabPolygons == NULL )
+            {
+                iSection --;
+                for( ; iSection >= 0; --iSection )
+                    delete tabPolygons[iSection];
+                VSIFree(tabPolygons);
+                return -1;
+            }
+            tabPolygons = newTabPolygons;
+        }
+
         int numSectionVertices = 0;
 
         tabPolygons[iSection] = new OGRPolygon();
