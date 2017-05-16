@@ -1503,6 +1503,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         if( eType == wkbCurvePolygon )
             bHasCurves = true;
         if( asPolyEx[i].poPolygon != NULL
+            && !asPolyEx[i].poPolygon->IsEmpty()
             && asPolyEx[i].poPolygon->getNumInteriorRings() == 0
             && asPolyEx[i].poPolygon->
                 getExteriorRingCurve()->getNumPoints() >= 4)
