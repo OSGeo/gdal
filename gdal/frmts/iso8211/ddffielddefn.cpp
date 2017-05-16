@@ -637,14 +637,22 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
                 return pszDest;
             }
 
-            if( strlen(pszExpandedContents) + strlen(pszDest) + 1 > nDestMax )
+            const size_t nExpandedContentsLen = strlen(pszExpandedContents);
+            if( nExpandedContentsLen + iDst + 1 > nDestMax )
             {
-                nDestMax = 2 * (strlen(pszExpandedContents) + strlen(pszDest));
+                nDestMax = 2 * (nExpandedContentsLen + iDst);
+                if( nDestMax > 1024 * 1024 )
+                {
+                    CPLFree( pszContents );
+                    CPLFree( pszExpandedContents );
+                    pszDest[0] = '\0';
+                    return pszDest;
+                }
                 pszDest = static_cast<char *>(CPLRealloc(pszDest,nDestMax + 1));
             }
 
-            strcat( pszDest, pszExpandedContents );
-            iDst = strlen(pszDest);
+            strcat( pszDest + iDst, pszExpandedContents );
+            iDst += nExpandedContentsLen;
 
             iSrc = iSrc + strlen(pszContents) + 2;
 
@@ -657,6 +665,13 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
                  && isdigit(pszSrc[iSrc]) )
         {
             nRepeat = atoi(pszSrc+iSrc);
+            // 100: arbitrary number. Higher values might cause performance
+            // problems in the below loop
+            if( nRepeat < 0 || nRepeat > 100 )
+            {
+                pszDest[0] = '\0';
+                return pszDest;
+            }
 
             // Skip over repeat count.
             const char *pszNext = pszSrc + iSrc;  // Used after for.
@@ -677,23 +692,33 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
                 return pszDest;
             }
 
+            const size_t nExpandedContentsLen = strlen(pszExpandedContents);
             for( int i = 0; i < nRepeat; i++ )
             {
-                if( strlen(pszExpandedContents) + strlen(pszDest) + 1 + 1 >
+                if( nExpandedContentsLen + iDst + 1 + 1 >
                     nDestMax )
                 {
                     nDestMax =
-                        2 * (strlen(pszExpandedContents) + strlen(pszDest) + 1);
+                        2 * (nExpandedContentsLen + iDst + 1);
+                    if( nDestMax > 1024 * 1024 )
+                    {
+                        CPLFree( pszContents );
+                        CPLFree( pszExpandedContents );
+                        pszDest[0] = '\0';
+                        return pszDest;
+                    }
                     pszDest =
                         static_cast<char *>(CPLRealloc(pszDest,nDestMax + 1));
                 }
 
-                strcat( pszDest, pszExpandedContents );
+                strcat( pszDest + iDst, pszExpandedContents );
+                iDst += nExpandedContentsLen;
                 if( i < nRepeat-1 )
-                    strcat( pszDest, "," );
+                {
+                    strcat( pszDest + iDst, "," );
+                    iDst ++;
+                }
             }
-
-            iDst = strlen(pszDest);
 
             if( pszNext[0] == '(' )
                 iSrc = iSrc + strlen(pszContents) + 2;
