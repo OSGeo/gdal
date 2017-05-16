@@ -623,6 +623,56 @@ def basic_test_16():
 
     return 'success'
 
+###############################################################################
+# Test mix of gdal/ogr.UseExceptions()/DontUseExceptions()
+
+def basic_test_17():
+
+    from osgeo import ogr
+
+    for i in range(2):
+        ogr.UseExceptions()
+        gdal.UseExceptions()
+        try:
+            gdal.Open('do_not_exist')
+        except:
+            pass
+        gdal.DontUseExceptions()
+        ogr.DontUseExceptions()
+        if gdal.GetUseExceptions():
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if ogr.GetUseExceptions():
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    for i in range(2):
+        ogr.UseExceptions()
+        gdal.UseExceptions()
+        try:
+            gdal.Open('do_not_exist')
+        except:
+            pass
+        flag = False
+        try:
+            ogr.DontUseExceptions()
+            gdal.DontUseExceptions()
+            flag = True
+        except:
+            gdal.DontUseExceptions()
+            ogr.DontUseExceptions()
+        if flag:
+            gdaltest.post_reason('expected failure')
+            return 'fail'
+        if gdal.GetUseExceptions():
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if ogr.GetUseExceptions():
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ basic_test_1,
                   basic_test_2,
                   basic_test_3,
@@ -638,7 +688,8 @@ gdaltest_list = [ basic_test_1,
                   basic_test_13,
                   basic_test_14,
                   basic_test_15,
-                  basic_test_16 ]
+                  basic_test_16,
+                  basic_test_17 ]
 
 
 if __name__ == '__main__':

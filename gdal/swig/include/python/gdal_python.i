@@ -81,6 +81,9 @@
     return 0
 %}
 
+%{
+#define MODULE_NAME           "gdal"
+%}
 
 %include "python_exceptions.i"
 %include "python_strings.i"

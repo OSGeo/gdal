@@ -3241,6 +3241,9 @@ SWIG_FromCharPtr(const char *cptr)
 }
 
 
+#define MODULE_NAME           "ogr"
+
+
 static int bUseExceptions=0;
 static CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
@@ -3283,6 +3286,11 @@ void UseExceptions() {
   if( !bUseExceptions )
   {
     bUseExceptions = 1;
+    char* pszNewValue = CPLStrdup(CPLSPrintf("%s %s",
+                   MODULE_NAME,
+                   CPLGetConfigOption("__chain_python_error_handlers", "")));
+    CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
+    CPLFree(pszNewValue);
     pfnPreviousHandler =
         CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
   }
@@ -3293,6 +3301,19 @@ void DontUseExceptions() {
   CPLErrorReset();
   if( bUseExceptions )
   {
+    const char* pszValue = CPLGetConfigOption("__chain_python_error_handlers", "");
+    if( strncmp(pszValue, MODULE_NAME, strlen(MODULE_NAME)) != 0 ||
+        pszValue[strlen(MODULE_NAME)] != ' ')
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot call %s.DontUseExceptions() at that point since the "
+                 "stack of error handlers is: %s", MODULE_NAME, pszValue);
+        return;
+    }
+    const char* pszNewValue = pszValue + strlen(MODULE_NAME) + 1;
+    if( pszNewValue[0] == ' ' && pszNewValue[1] == '\0' )
+        pszNewValue = NULL;
+    CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
     bUseExceptions = 0;
     CPLSetErrorHandler( pfnPreviousHandler );
   }

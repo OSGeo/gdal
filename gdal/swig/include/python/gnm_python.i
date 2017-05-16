@@ -19,6 +19,9 @@
 %rename (RegisterAll) OGRRegisterAll();
 
 #ifndef FROM_GDAL_I
+%{
+#define MODULE_NAME           "gnm"
+%}
 %include "python_exceptions.i"
 %include "python_strings.i"
 

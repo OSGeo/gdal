@@ -3176,6 +3176,9 @@ typedef struct OGRStyleTableHS OGRStyleTableShadow;
 typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 
 
+#define MODULE_NAME           "gnm"
+
+
 static int bUseExceptions=0;
 static CPLErrorHandler pfnPreviousHandler = CPLDefaultErrorHandler;
 
@@ -3218,6 +3221,11 @@ void UseExceptions() {
   if( !bUseExceptions )
   {
     bUseExceptions = 1;
+    char* pszNewValue = CPLStrdup(CPLSPrintf("%s %s",
+                   MODULE_NAME,
+                   CPLGetConfigOption("__chain_python_error_handlers", "")));
+    CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
+    CPLFree(pszNewValue);
     pfnPreviousHandler =
         CPLSetErrorHandler( (CPLErrorHandler) PythonBindingErrorHandler );
   }
@@ -3228,6 +3236,19 @@ void DontUseExceptions() {
   CPLErrorReset();
   if( bUseExceptions )
   {
+    const char* pszValue = CPLGetConfigOption("__chain_python_error_handlers", "");
+    if( strncmp(pszValue, MODULE_NAME, strlen(MODULE_NAME)) != 0 ||
+        pszValue[strlen(MODULE_NAME)] != ' ')
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot call %s.DontUseExceptions() at that point since the "
+                 "stack of error handlers is: %s", MODULE_NAME, pszValue);
+        return;
+    }
+    const char* pszNewValue = pszValue + strlen(MODULE_NAME) + 1;
+    if( pszNewValue[0] == ' ' && pszNewValue[1] == '\0' )
+        pszNewValue = NULL;
+    CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
     bUseExceptions = 0;
     CPLSetErrorHandler( pfnPreviousHandler );
   }
@@ -3324,6 +3345,82 @@ static void GDALPythonFreeCStr(void* ptr, int bToFree)
        free(ptr);
 }
 
+
+
+
+typedef struct {
+    PyObject *psPyCallback;
+    PyObject *psPyCallbackData;
+    int nLastReported;
+} PyProgressData;
+
+/************************************************************************/
+/*                          PyProgressProxy()                           */
+/************************************************************************/
+
+static int CPL_STDCALL
+PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
+
+{
+    PyProgressData *psInfo = (PyProgressData *) pData;
+    PyObject *psArgs, *psResult;
+    int      bContinue = TRUE;
+
+    if( psInfo->nLastReported == (int) (100.0 * dfComplete) )
+        return TRUE;
+
+    if( psInfo->psPyCallback == NULL || psInfo->psPyCallback == Py_None )
+        return TRUE;
+
+    psInfo->nLastReported = (int) (100.0 * dfComplete);
+
+    if( pszMessage == NULL )
+        pszMessage = "";
+
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
+    if( psInfo->psPyCallbackData == NULL )
+        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, Py_None );
+    else
+        psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage,
+	                       psInfo->psPyCallbackData );
+
+    psResult = PyEval_CallObject( psInfo->psPyCallback, psArgs);
+    Py_XDECREF(psArgs);
+
+    if( PyErr_Occurred() != NULL )
+    {
+        PyErr_Clear();
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return FALSE;
+    }
+
+    if( psResult == NULL )
+    {
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return TRUE;
+    }
+
+    if( psResult == Py_None )
+    {
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return TRUE;
+    }
+
+    if( !PyArg_Parse( psResult, "i", &bContinue ) )
+    {
+        PyErr_Clear();
+        CPLError(CE_Failure, CPLE_AppDefined, "bad progress return value");
+        Py_XDECREF(psResult);
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return FALSE;
+    }
+
+    Py_XDECREF(psResult);
+    SWIG_PYTHON_THREAD_END_BLOCK;
+
+    return bContinue;
+}
 
 
 #include "gdal.h"
@@ -6072,9 +6169,9 @@ SWIGINTERN PyObject *GenericNetwork_swigregister(PyObject *SWIGUNUSEDPARM(self),
 
 static PyMethodDef SwigMethods[] = {
 	 { (char *)"SWIG_PyInstanceMethod_New", (PyCFunction)SWIG_PyInstanceMethod_New, METH_O, NULL},
-	 { (char *)"GetUseExceptions", _wrap_GetUseExceptions, METH_VARARGS, NULL},
-	 { (char *)"UseExceptions", _wrap_UseExceptions, METH_VARARGS, NULL},
-	 { (char *)"DontUseExceptions", _wrap_DontUseExceptions, METH_VARARGS, NULL},
+	 { (char *)"GetUseExceptions", _wrap_GetUseExceptions, METH_VARARGS, (char *)"GetUseExceptions() -> int"},
+	 { (char *)"UseExceptions", _wrap_UseExceptions, METH_VARARGS, (char *)"UseExceptions()"},
+	 { (char *)"DontUseExceptions", _wrap_DontUseExceptions, METH_VARARGS, (char *)"DontUseExceptions()"},
 	 { (char *)"GATDijkstraShortestPath_swigconstant", GATDijkstraShortestPath_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"GATKShortestPath_swigconstant", GATKShortestPath_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"GATConnectedComponents_swigconstant", GATConnectedComponents_swigconstant, METH_VARARGS, NULL},
@@ -6892,6 +6989,13 @@ SWIG_init(void) {
 #endif
   
   SWIG_InstallConstants(d,swig_const_table);
+  
+  
+  
+  if ( OGRGetDriverCount() == 0 ) {
+    OGRRegisterAll();
+  }
+  
   
   
   /* Initialize threading */
