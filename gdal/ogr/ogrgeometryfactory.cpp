@@ -1315,6 +1315,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         papoPolygons[i]->getEnvelope(&asPolyEx[i].sEnvelope);
 
         if( wkbFlatten(papoPolygons[i]->getGeometryType()) == wkbPolygon
+            && !asPolyEx[i].poPolygon->IsEmpty()
             && ((OGRPolygon *) papoPolygons[i])->getNumInteriorRings() == 0
             && ((OGRPolygon *)papoPolygons[i])->getExteriorRing()->getNumPoints() >= 4)
         {
