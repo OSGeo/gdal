@@ -633,6 +633,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
             if( pszExpandedContents[0] == '\0' )
             {
                 CPLFree(pszContents);
+                CPLFree( pszExpandedContents );
                 pszDest[0] = '\0';
                 return pszDest;
             }
@@ -688,6 +689,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
             if( pszExpandedContents[0] == '\0' )
             {
                 CPLFree(pszContents);
+                CPLFree( pszExpandedContents );
                 pszDest[0] = '\0';
                 return pszDest;
             }
