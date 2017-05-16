@@ -347,6 +347,10 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
         errno = ENOENT;
         return NULL;
     }
+    if( nOff + nSize < nOff )
+    {
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      We can't open the containing file with "w" access, so if tht    */
@@ -371,6 +375,30 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
     poHandle->fp = fp;
     poHandle->nSubregionOffset = nOff;
     poHandle->nSubregionSize = nSize;
+
+    // In read-only mode validate (offset, size) against underlying file size
+    if( strchr(pszAccess, 'r') != NULL && strchr(pszAccess, '+') == NULL )
+    {
+        if( VSIFSeekL( fp, 0, SEEK_END ) != 0 )
+        {
+            poHandle->Close();
+            delete poHandle;
+            return NULL;
+        }
+        vsi_l_offset nFpSize = VSIFTellL(fp);
+        // For a directory, the size will be max(vsi_l_offset) / 2
+        if( nFpSize == ~((vsi_l_offset)(0)) / 2 || nOff > nFpSize )
+        {
+            poHandle->Close();
+            delete poHandle;
+            return NULL;
+        }
+        if( nOff + nSize > nFpSize )
+        {
+            nSize = nFpSize - nOff;
+            poHandle->nSubregionSize = nSize;
+        }
+    }
 
     if( VSIFSeekL( fp, nOff, SEEK_SET ) != 0 )
     {
