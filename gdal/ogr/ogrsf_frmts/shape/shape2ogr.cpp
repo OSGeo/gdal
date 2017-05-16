@@ -178,7 +178,8 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                             psShape->padfZ[i] );
                     }
                 }
-                else if( psShape->nSHPType == SHPT_MULTIPOINTM )
+                else if( psShape->nSHPType == SHPT_MULTIPOINTM &&
+                         psShape->padfM )
                 {
                     poPoint = new OGRPoint(psShape->padfX[i], psShape->padfY[i],
                                            0.0, psShape->padfM[i]);
