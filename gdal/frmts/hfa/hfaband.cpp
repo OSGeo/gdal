@@ -346,12 +346,20 @@ CPLErr HFABand::LoadBlockInfo()
         return CE_Failure;
     }
 
+    if( sizeof(vsi_l_offset) + 2 * sizeof(int) >
+                    (~(size_t)0) / static_cast<unsigned int>(nBlocks) )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Too many blocks");
+        return CE_Failure;
+    }
+    const int MAX_INITIAL_BLOCKS = 1; //1000 * 1000;
+    const int nInitBlocks = std::min(nBlocks, MAX_INITIAL_BLOCKS);
     panBlockStart = static_cast<vsi_l_offset *>(
-        VSI_MALLOC2_VERBOSE(sizeof(vsi_l_offset), nBlocks));
+        VSI_MALLOC2_VERBOSE(sizeof(vsi_l_offset), nInitBlocks));
     panBlockSize =
-        static_cast<int *>(VSI_MALLOC2_VERBOSE(sizeof(int), nBlocks));
+        static_cast<int *>(VSI_MALLOC2_VERBOSE(sizeof(int), nInitBlocks));
     panBlockFlag =
-        static_cast<int *>(VSI_MALLOC2_VERBOSE(sizeof(int), nBlocks));
+        static_cast<int *>(VSI_MALLOC2_VERBOSE(sizeof(int), nInitBlocks));
 
     if( panBlockStart == NULL || panBlockSize == NULL || panBlockFlag == NULL )
     {
@@ -367,6 +375,54 @@ CPLErr HFABand::LoadBlockInfo()
     for( int iBlock = 0; iBlock < nBlocks; iBlock++ )
     {
         CPLErr eErr = CE_None;
+
+        if( iBlock == MAX_INITIAL_BLOCKS )
+        {
+            vsi_l_offset* panBlockStartNew = static_cast<vsi_l_offset *>(
+                VSI_REALLOC_VERBOSE(panBlockStart,
+                                    sizeof(vsi_l_offset) * nBlocks));
+            if( panBlockStartNew == NULL )
+            {
+                CPLFree(panBlockStart);
+                CPLFree(panBlockSize);
+                CPLFree(panBlockFlag);
+                panBlockStart = NULL;
+                panBlockSize = NULL;
+                panBlockFlag = NULL;
+                return CE_Failure;
+            }
+            panBlockStart = panBlockStartNew;
+
+            int* panBlockSizeNew = static_cast<int *>(
+                VSI_REALLOC_VERBOSE(panBlockSize,
+                                    sizeof(int) * nBlocks));
+            if( panBlockSizeNew == NULL )
+            {
+                CPLFree(panBlockStart);
+                CPLFree(panBlockSize);
+                CPLFree(panBlockFlag);
+                panBlockStart = NULL;
+                panBlockSize = NULL;
+                panBlockFlag = NULL;
+                return CE_Failure;
+            }
+            panBlockSize = panBlockSizeNew;
+
+            int* panBlockFlagNew = static_cast<int *>(
+                VSI_REALLOC_VERBOSE(panBlockFlag,
+                                    sizeof(int) * nBlocks));
+            if( panBlockFlagNew == NULL )
+            {
+                CPLFree(panBlockStart);
+                CPLFree(panBlockSize);
+                CPLFree(panBlockFlag);
+                panBlockStart = NULL;
+                panBlockSize = NULL;
+                panBlockFlag = NULL;
+                return CE_Failure;
+            }
+            panBlockFlag = panBlockFlagNew;
+        }
 
         char szVarName[64] = {};
         snprintf(szVarName, sizeof(szVarName), "blockinfo[%d].offset", iBlock);
