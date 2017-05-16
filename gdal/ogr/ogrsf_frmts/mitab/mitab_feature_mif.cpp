@@ -1769,6 +1769,14 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     CSLDestroy(papszToken);
     papszToken = NULL;
 
+    if( fabs(m_dEndAngle - m_dStartAngle) >= 721 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Wrong start and end angles: %f %f",
+                 m_dStartAngle, m_dEndAngle);
+        return -1;
+    }
+
     /*-------------------------------------------------------------
      * Start/End angles
      * Since the angles are specified for integer coordinates, and
