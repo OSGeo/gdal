@@ -213,7 +213,8 @@ void XMLCALL KML::startElement( void* pUserData, const char* pszName,
     poKML->nWithoutEventCounter = 0;
 
     if(poKML->poTrunk_ == NULL
-    || (poKML->poCurrent_->getName()).compare("description") != 0)
+    || (poKML->poCurrent_ != NULL &&
+        poKML->poCurrent_->getName().compare("description") != 0))
     {
         if (poKML->nDepth_ == 1024)
         {
@@ -244,7 +245,7 @@ void XMLCALL KML::startElement( void* pUserData, const char* pszName,
 
         poKML->nDepth_++;
     }
-    else
+    else if( poKML->poCurrent_ != NULL )
     {
         std::string sNewContent = "<";
         sNewContent += pszName;
