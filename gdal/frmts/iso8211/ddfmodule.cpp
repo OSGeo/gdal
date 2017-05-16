@@ -325,7 +325,9 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
         nEntryOffset += _sizeFieldLength;
         nFieldPos = DDFScanInt( pachRecord+nEntryOffset, _sizeFieldPos );
 
-        if (_fieldAreaStart+nFieldPos < 0 ||
+        if (nFieldPos < 0 ||
+            nFieldPos > INT_MAX - _fieldAreaStart ||
+            nFieldLength < 2 || // DDFFieldDefn::Initialize() assumes at least 2 bytes
             _recLength - (_fieldAreaStart+nFieldPos) < nFieldLength)
         {
             if( !bFailQuietly )
