@@ -489,6 +489,21 @@ int TABMAPFile::Close()
 }
 
 /************************************************************************/
+/*                         GetFileSize()                                */
+/************************************************************************/
+
+GUInt32 TABMAPFile::GetFileSize()
+{
+    if( !m_fp )
+        return 0;
+    vsi_l_offset nCurPos = VSIFTellL(m_fp);
+    VSIFSeekL(m_fp, 0, SEEK_END);
+    vsi_l_offset nSize = VSIFTellL(m_fp);
+    VSIFSeekL(m_fp, nCurPos, SEEK_SET);
+    return nSize > 0xFFFFFFFFU ? 0xFFFFFFFFU : static_cast<GUInt32>(nSize);
+}
+
+/************************************************************************/
 /*                            SyncToDisk()                             */
 /************************************************************************/
 

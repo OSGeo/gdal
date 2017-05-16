@@ -1415,6 +1415,8 @@ class TABMAPFile
                      int nBlockSizeForCreate = 512 );
     int         Close();
 
+    GUInt32     GetFileSize();
+
     int         SyncToDisk();
 
     int         SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode = TRUE);
