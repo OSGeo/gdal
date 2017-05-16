@@ -114,6 +114,19 @@ static const CPLErrorContext sFailureContext =
                                           psCtx == &sWarningContext || \
                                           psCtxt == &sFailureContext )
 
+
+/************************************************************************/
+/*                     CPLErrorContextGetString()                       */
+/************************************************************************/
+
+// Makes clang -fsanitize=undefined happy since it doesn't like
+// dereferencing szLastErrMsg[i>=DEFAULT_LAST_ERR_MSG_SIZE]
+
+static char* CPLErrorContextGetString(CPLErrorContext* psCtxt)
+{
+    return psCtxt->szLastErrMsg;
+}
+
 /************************************************************************/
 /*                         CPLGetErrorContext()                         */
 /************************************************************************/
@@ -296,8 +309,9 @@ void CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
                                    + psCtx->nLastErrMsgMax + 1));
                     CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
                 }
-                psCtx->szLastErrMsg[nPreviousSize] = '\n';
-                psCtx->szLastErrMsg[nPreviousSize+1] = '0';
+                char* pszLastErrMsg = CPLErrorContextGetString(psCtx);
+                pszLastErrMsg[nPreviousSize] = '\n';
+                pszLastErrMsg[nPreviousSize+1] = '0';
                 nPreviousSize++;
             }
         }
@@ -713,8 +727,9 @@ void CPL_DLL CPLErrorSetState( CPLErr eErrClass, CPLErrorNum err_no,
     psCtx->nLastErrNo = err_no;
     const size_t size = std::min(
         static_cast<size_t>(psCtx->nLastErrMsgMax-1), strlen(pszMsg) );
-    strncpy( psCtx->szLastErrMsg, pszMsg, size );
-    psCtx->szLastErrMsg[size] = '\0';
+    char* pszLastErrMsg = CPLErrorContextGetString(psCtx);
+    strncpy( pszLastErrMsg, pszMsg, size );
+    pszLastErrMsg[size] = '\0';
     psCtx->eLastErrType = eErrClass;
 }
 
