@@ -2038,6 +2038,13 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
         GInt32 nCoordBlockPtr = poPLineHdr->m_nCoordBlockPtr;
         const GUInt32 nCoordDataSize = poPLineHdr->m_nCoordDataSize;
+        if( nCoordDataSize > 1024 * 1024 && 
+            nCoordDataSize > poMapFile->GetFileSize() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too big nCoordDataSize = %u", nCoordDataSize);
+            return -1;
+        }
         // numLineSections = poPLineHdr->m_numLineSections; // Always 1
         m_bSmooth = poPLineHdr->m_bSmooth;
 
@@ -2145,6 +2152,15 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             poMapFile->ReadPenDef(m_nPenDefIndex, &m_sPenDef);
         }
 
+        const GUInt32 nMinimumBytesForSections = 24 * numLineSections;
+        if( nMinimumBytesForSections > 1024 * 1024 && 
+            nMinimumBytesForSections > poMapFile->GetFileSize() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too many numLineSections");
+            return -1;
+        }
+
         /*-------------------------------------------------------------
          * Read data from the coord. block
          *------------------------------------------------------------*/
@@ -2168,6 +2184,17 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed reading coordinate data at offset %d",
                      nCoordBlockPtr);
+            CPLFree(pasSecHdrs);
+            return -1;
+        }
+
+        const GUInt32 nMinimumBytesForPoints =
+                        (bComprCoord ? 4 : 8) * numPointsTotal;
+        if( nMinimumBytesForPoints > 1024 * 1024 && 
+            nMinimumBytesForPoints > poMapFile->GetFileSize() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too many numPointsTotal");
             CPLFree(pasSecHdrs);
             return -1;
         }
