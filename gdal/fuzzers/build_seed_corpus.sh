@@ -43,6 +43,7 @@ printf "***NEWFILE***:my.prj\n" >> poly_shp.tar
 cat $(dirname $0)/../../autotest/ogr/data/poly.PRJ >> poly_shp.tar
 rm -f $OUT/shape_fuzzer_seed_corpus.zip
 zip -r $OUT/shape_fuzzer_seed_corpus.zip poly_shp.tar >/dev/null
+rm poly_shp.tar
 
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > all_geoms_tab.tar
 printf "***NEWFILE***:my.tab\n" >> all_geoms_tab.tar
@@ -55,6 +56,7 @@ printf "***NEWFILE***:my.id\n" >> all_geoms_tab.tar
 cat $(dirname $0)/../../autotest/ogr/data/all_geoms.id >> all_geoms_tab.tar
 rm -f $OUT/mitab_tab_fuzzer_seed_corpus.zip
 zip -r $OUT/mitab_tab_fuzzer_seed_corpus.zip all_geoms_tab.tar >/dev/null
+rm all_geoms_tab.tar
 
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > small_mif.tar
 printf "***NEWFILE***:my.mif\n" >> small_mif.tar
@@ -63,3 +65,27 @@ printf "***NEWFILE***:my.mid\n" >> small_mif.tar
 cat $(dirname $0)/../../autotest/ogr/data/small.mid >> small_mif.tar
 rm -f $OUT/mitab_mif_fuzzer_seed_corpus.zip
 zip -r $OUT/mitab_mif_fuzzer_seed_corpus.zip small_mif.tar >/dev/null
+rm small_mif.tar
+
+rm -rf testopenfilegdb.gdb
+unzip $(dirname $0)/../../autotest/ogr/data/testopenfilegdb.gdb.zip >/dev/null
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > testopenfilegdb.gdb.tar
+for f in testopenfilegdb.gdb/*; do
+    printf "***NEWFILE***:$f\n" >> testopenfilegdb.gdb.tar
+    cat $f >> testopenfilegdb.gdb.tar
+done
+
+rm -rf testopenfilegdb92.gdb
+unzip $(dirname $0)/../../autotest/ogr/data/testopenfilegdb92.gdb.zip >/dev/null
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > testopenfilegdb92.gdb.tar
+for f in testopenfilegdb92.gdb/*; do
+    printf "***NEWFILE***:$f\n" >> testopenfilegdb92.gdb.tar
+    cat $f >> testopenfilegdb92.gdb.tar
+done
+
+rm -f $OUT/openfilegdb_fuzzer_seed_corpus.zip
+zip -r $OUT/openfilegdb_fuzzer_seed_corpus.zip testopenfilegdb.gdb.tar testopenfilegdb92.gdb.tar >/dev/null
+rm -r testopenfilegdb.gdb
+rm testopenfilegdb.gdb.tar
+rm -r testopenfilegdb92.gdb
+rm testopenfilegdb92.gdb.tar
