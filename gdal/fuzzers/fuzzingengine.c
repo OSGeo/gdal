@@ -26,39 +26,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <stddef.h>
-#include <stdint.h>
+#include <stdlib.h>
 
-#include "ogr_api.h"
-#include "cpl_error.h"
-#include "cpl_vsi.h"
-#include "ogrsf_frmts.h"
+int LLVMFuzzerTestOneInput(void *buf, size_t len);
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
-
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
+int main()
 {
-    VSILFILE* fp = VSIFileFromMemBuffer( "/vsimem/test.gdb.tar",
-            reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
-    VSIFCloseL(fp);
-    RegisterOGROpenFileGDB();
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    OGRDataSourceH hDS = OGROpen( "/vsimem/test.gdb.tar", FALSE, NULL );
-    if( hDS )
-    {
-        const int nLayers = OGR_DS_GetLayerCount(hDS);
-        for( int i = 0; i < nLayers; i++ )
-        {
-            OGRLayerH hLayer = OGR_DS_GetLayer(hDS, i);
-            OGRFeatureH hFeature;
-            while( (hFeature = OGR_L_GetNextFeature(hLayer)) != NULL )
-            {
-                OGR_F_Destroy(hFeature);
-            }
-        }
-        OGR_DS_Destroy(hDS);
-    }
-    CPLPopErrorHandler();
-    VSIUnlink( "/vsimem/test.gdb.tar" );
+    LLVMFuzzerTestOneInput(" ", 1);
     return 0;
 }

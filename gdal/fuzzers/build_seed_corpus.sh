@@ -1,11 +1,14 @@
 #!/bin/bash
 
+set -e
+
 if [ "$OUT" == "" ]; then
     echo "OUT env var not defined"
     exit 1
 fi
 
-rm -f $OUT/gtiff_fuzzer_seed_corpus.zp
+echo "Building gtiff_fuzzer_seed_corpus.zip"
+rm -f $OUT/gtiff_fuzzer_seed_corpus.zip
 cd $(dirname $0)/../../autotest/gcore/data
 zip -r $OUT/gtiff_fuzzer_seed_corpus.zip *.tif >/dev/null
 cd $OLDPWD
@@ -13,7 +16,8 @@ cd $(dirname $0)/../../autotest/gdrivers/data
 zip -r $OUT/gtiff_fuzzer_seed_corpus.zip *.tif >/dev/null
 cd $OLDPWD
 
-rm -f $OUT/hfa_fuzzer_seed_corpus.zp
+echo "Building hfa_fuzzer_seed_corpus.zip"
+rm -f $OUT/hfa_fuzzer_seed_corpus.zip
 cd $(dirname $0)/../../autotest/gcore/data
 zip -r $OUT/hfa_fuzzer_seed_corpus.zip *.img >/dev/null
 cd $OLDPWD
@@ -21,17 +25,19 @@ cd $(dirname $0)/../../autotest/gdrivers/data
 zip -r $OUT/hfa_fuzzer_seed_corpus.zip *.img >/dev/null
 cd $OLDPWD
 
-
+echo "Building gdal_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/gcore/data
 rm -f $OUT/gdal_fuzzer_seed_corpus.zip
 zip -r $OUT/gdal_fuzzer_seed_corpus.zip . >/dev/null
 cd $OLDPWD
 
+echo "Building ogr_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/ogr_fuzzer_seed_corpus.zip
 zip -r $OUT/ogr_fuzzer_seed_corpus.zip . >/dev/null
 cd $OLDPWD
 
+echo "Building shape_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > poly_shp.tar
 printf "***NEWFILE***:my.shp\n" >> poly_shp.tar
 cat $(dirname $0)/../../autotest/ogr/data/poly.shp >> poly_shp.tar
@@ -45,6 +51,7 @@ rm -f $OUT/shape_fuzzer_seed_corpus.zip
 zip -r $OUT/shape_fuzzer_seed_corpus.zip poly_shp.tar >/dev/null
 rm poly_shp.tar
 
+echo "Building mitab_tab_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > all_geoms_tab.tar
 printf "***NEWFILE***:my.tab\n" >> all_geoms_tab.tar
 cat $(dirname $0)/../../autotest/ogr/data/all_geoms.tab >> all_geoms_tab.tar
@@ -58,6 +65,7 @@ rm -f $OUT/mitab_tab_fuzzer_seed_corpus.zip
 zip -r $OUT/mitab_tab_fuzzer_seed_corpus.zip all_geoms_tab.tar >/dev/null
 rm all_geoms_tab.tar
 
+echo "Building mitab_mif_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > small_mif.tar
 printf "***NEWFILE***:my.mif\n" >> small_mif.tar
 cat $(dirname $0)/../../autotest/ogr/data/small.mif >> small_mif.tar
@@ -67,6 +75,7 @@ rm -f $OUT/mitab_mif_fuzzer_seed_corpus.zip
 zip -r $OUT/mitab_mif_fuzzer_seed_corpus.zip small_mif.tar >/dev/null
 rm small_mif.tar
 
+echo "Building openfilegdb_fuzzer_seed_corpus.zip"
 rm -rf testopenfilegdb.gdb
 unzip $(dirname $0)/../../autotest/ogr/data/testopenfilegdb.gdb.zip >/dev/null
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > testopenfilegdb.gdb.tar

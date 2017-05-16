@@ -36,20 +36,28 @@
 #include "gdal_alg.h"
 #include "gdal_frmts.h"
 
+#ifndef REGISTER_FUNC
+#define REGISTER_FUNC GDALAllRegister
+#endif
+
+#ifndef MEM_FILENAME
+#define MEM_FILENAME "/vsimem/test"
+#endif
+
+#ifndef GDAL_FILENAME
+#define GDAL_FILENAME MEM_FILENAME
+#endif
+
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    VSILFILE* fp = VSIFileFromMemBuffer( "/vsimem/test",
+    VSILFILE* fp = VSIFileFromMemBuffer( MEM_FILENAME,
             reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
     VSIFCloseL(fp);
-#ifdef REGISTER_FUNC
     REGISTER_FUNC();
-#else
-    GDALAllRegister();
-#endif
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    GDALDatasetH hDS = GDALOpen( "/vsimem/test", GA_ReadOnly );
+    GDALDatasetH hDS = GDALOpen( GDAL_FILENAME, GA_ReadOnly );
     if( hDS )
     {
         const int nBands = std::min(10, GDALGetRasterCount(hDS));
@@ -63,6 +71,6 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         GDALClose(hDS);
     }
     CPLPopErrorHandler();
-    VSIUnlink( "/vsimem/test" );
+    VSIUnlink( MEM_FILENAME );
     return 0;
 }
