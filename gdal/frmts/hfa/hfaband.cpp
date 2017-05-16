@@ -352,7 +352,7 @@ CPLErr HFABand::LoadBlockInfo()
         CPLError(CE_Failure, CPLE_OutOfMemory, "Too many blocks");
         return CE_Failure;
     }
-    const int MAX_INITIAL_BLOCKS = 1; //1000 * 1000;
+    const int MAX_INITIAL_BLOCKS = 1000 * 1000;
     const int nInitBlocks = std::min(nBlocks, MAX_INITIAL_BLOCKS);
     panBlockStart = static_cast<vsi_l_offset *>(
         VSI_MALLOC2_VERBOSE(sizeof(vsi_l_offset), nInitBlocks));
