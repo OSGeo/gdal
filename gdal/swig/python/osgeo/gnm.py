@@ -92,16 +92,16 @@ except AttributeError:
 
 
 def GetUseExceptions(*args):
+    """GetUseExceptions() -> int"""
     return _gnm.GetUseExceptions(*args)
-GetUseExceptions = _gnm.GetUseExceptions
 
 def UseExceptions(*args):
+    """UseExceptions()"""
     return _gnm.UseExceptions(*args)
-UseExceptions = _gnm.UseExceptions
 
 def DontUseExceptions(*args):
+    """DontUseExceptions()"""
     return _gnm.DontUseExceptions(*args)
-DontUseExceptions = _gnm.DontUseExceptions
 import ogr
 import osr
 
