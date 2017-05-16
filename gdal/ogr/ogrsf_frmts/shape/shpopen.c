@@ -2131,11 +2131,11 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             nNewBufSize = INT_MAX;
 
         /* Before allocating too much memory, check that the file is big enough */
-        if( nEntitySize >= 10 * 1024 * 1024 &&
-            (psSHP->panRecOffset[hEntity] >= psSHP->nFileSize ||
-             (unsigned int)nEntitySize > psSHP->nFileSize - psSHP->panRecOffset[hEntity]) )
+        /* and do not trust the file size in the header the first time we */
+        /* need to allocate more than 10 MB */
+        if( nNewBufSize >= 10 * 1024 * 1024 &&
+            psSHP->nBufSize < 10 * 1024 * 1024 )
         {
-            /* We do as is we didn't trust the file size in the header */
             SAOffset nFileSize;
             psSHP->sHooks.FSeek( psSHP->fpSHP, 0, 2 );
             nFileSize = psSHP->sHooks.FTell(psSHP->fpSHP);
@@ -2143,18 +2143,22 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
                 psSHP->nFileSize = 0xFFFFFFFFU;
             else
                 psSHP->nFileSize = (unsigned int)nFileSize;
+        }
 
-            if( psSHP->panRecOffset[hEntity] >= psSHP->nFileSize ||
-                (unsigned int)nEntitySize > psSHP->nFileSize - psSHP->panRecOffset[hEntity] )
-            {
-                char str[128];
-                snprintf( str, sizeof(str),
-                         "Error in fread() reading object of size %d at offset %u from .shp file",
-                         nEntitySize, psSHP->panRecOffset[hEntity] );
+        if( psSHP->panRecOffset[hEntity] >= psSHP->nFileSize ||
+            /* We should normally use nEntitySize instead of*/
+            /* psSHP->panRecSize[hEntity] in the below test, but because of */
+            /* the case of non conformant .shx files detailed a bit below, */
+            /* let be more tolerant */
+            psSHP->panRecSize[hEntity] > psSHP->nFileSize - psSHP->panRecOffset[hEntity] )
+        {
+            char str[128];
+            snprintf( str, sizeof(str),
+                        "Error in fread() reading object of size %d at offset %u from .shp file",
+                        nEntitySize, psSHP->panRecOffset[hEntity] );
 
-                psSHP->sHooks.Error( str );
-                return NULL;
-            }
+            psSHP->sHooks.Error( str );
+            return NULL;
         }
 
         pabyRecNew = (uchar *) SfRealloc(psSHP->pabyRec,nNewBufSize);
