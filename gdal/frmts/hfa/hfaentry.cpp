@@ -99,7 +99,7 @@ HFAEntry* HFAEntry::New( HFAInfo_t *psHFAIn, GUInt32 nPos,
     GInt32 anEntryNums[6] = {};
 
     if( VSIFSeekL( poEntry->psHFA->fp, poEntry->nFilePos, SEEK_SET ) == -1 ||
-        VSIFReadL( anEntryNums, 1, sizeof(GInt32) * 6, poEntry->psHFA->fp ) < 1 )
+        VSIFReadL( anEntryNums, sizeof(GInt32) * 6, 1, poEntry->psHFA->fp ) < 1 )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "VSIFReadL(%p,6*4) @ %u failed in HFAEntry().\n%s",
@@ -117,8 +117,8 @@ HFAEntry* HFAEntry::New( HFAInfo_t *psHFAIn, GUInt32 nPos,
     poEntry->nDataSize = anEntryNums[5];
 
     // Read the name, and type.
-    if( VSIFReadL(poEntry->szName, 1, 64, poEntry->psHFA->fp) < 1 ||
-        VSIFReadL(poEntry->szType, 1, 32, poEntry->psHFA->fp) < 1 )
+    if( VSIFReadL(poEntry->szName, 64, 1, poEntry->psHFA->fp) < 1 ||
+        VSIFReadL(poEntry->szType, 32, 1, poEntry->psHFA->fp) < 1 )
     {
         poEntry->szName[sizeof(poEntry->szName) - 1] = '\0';
         poEntry->szType[sizeof(poEntry->szType) - 1] = '\0';
@@ -486,7 +486,7 @@ void HFAEntry::LoadData()
         return;
     }
 
-    if( VSIFReadL(pabyData, 1, nDataSize, psHFA->fp) < 1 )
+    if( VSIFReadL(pabyData, nDataSize, 1, psHFA->fp) < 1 )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "VSIFReadL() failed in HFAEntry::LoadData().");
