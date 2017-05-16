@@ -311,7 +311,7 @@ void CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
                 }
                 char* pszLastErrMsg = CPLErrorContextGetString(psCtx);
                 pszLastErrMsg[nPreviousSize] = '\n';
-                pszLastErrMsg[nPreviousSize+1] = '0';
+                pszLastErrMsg[nPreviousSize+1] = '\0';
                 nPreviousSize++;
             }
         }
