@@ -238,12 +238,14 @@ the approach is as above in all these cases.
     dfVec2Y = (dfArrowY2 - dfArrowY1);
 
     // vector 1
-    double dfScaleFactor = dfTargetLength / VECTOR_LEN(dfVec1X, dfVec1Y);
+    const double dfVec1Len = VECTOR_LEN(dfVec1X, dfVec1Y);
+    double dfScaleFactor = (dfVec1Len == 0.0) ? 0.0 : dfTargetLength / dfVec1Len;
     dfVec1X *= dfScaleFactor;
     dfVec1Y *= dfScaleFactor;
 
     // vector 2
-    dfScaleFactor = dfTargetLength / VECTOR_LEN(dfVec2X,dfVec2Y);
+    const double dfVec2Len = VECTOR_LEN(dfVec2X,dfVec2Y);
+    dfScaleFactor = (dfVec2Len == 0.0) ? 0.0 : dfTargetLength / dfVec2Len;
     dfVec2X *= dfScaleFactor;
     dfVec2Y *= dfScaleFactor;
 
