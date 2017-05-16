@@ -777,7 +777,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                       "Failed to find spatial data location, guessing." );
 
         for( i=0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++ )
-            psImage->panBlockStart[i] = nLocBase + 6144 * i;
+            psImage->panBlockStart[i] = nLocBase + (GUIntBig)(6144) * i;
     }
 
 /* -------------------------------------------------------------------- */
