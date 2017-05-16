@@ -4883,6 +4883,14 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             (540.0-m_dEndAngle);
     }
 
+    if( fabs(m_dEndAngle - m_dStartAngle) >= 721 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Wrong start and end angles: %f %f",
+                 m_dStartAngle, m_dEndAngle);
+        return -1;
+    }
+
     if (poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==3 ||
         poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==4 ||
         poMapFile->GetHeaderBlock()->m_nCoordOriginQuadrant==0 )
