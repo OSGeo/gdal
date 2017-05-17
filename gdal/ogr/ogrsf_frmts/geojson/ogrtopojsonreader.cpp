@@ -186,7 +186,7 @@ static void ParseLineString( OGRLineString* poLS, json_object* poRing,
             bool bReverse = false;
             if( nArcId < 0 )
             {
-                nArcId = - nArcId - 1;
+                nArcId = -(nArcId + 1);
                 bReverse = true;
             }
             if( nArcId < nArcsDB )
