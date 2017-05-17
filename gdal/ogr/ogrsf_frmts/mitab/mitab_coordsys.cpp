@@ -252,7 +252,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     // Parse the passed string into words.
     while(*pszCoordSys == ' ')
         pszCoordSys++;  // Eat leading spaces.
-    if( STARTS_WITH_CI(pszCoordSys, "CoordSys") )
+    if( STARTS_WITH_CI(pszCoordSys, "CoordSys") && pszCoordSys[8] != '\0' )
         pszCoordSys += 9;
 
     char **papszFields =
