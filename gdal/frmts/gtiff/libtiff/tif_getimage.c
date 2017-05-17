@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.103 2017-02-25 17:05:12 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.104 2017-05-17 13:48:35 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -2263,6 +2263,29 @@ initYCbCrConversion(TIFFRGBAImage* img)
 	TIFFGetFieldDefaulted(img->tif, TIFFTAG_YCBCRCOEFFICIENTS, &luma);
 	TIFFGetFieldDefaulted(img->tif, TIFFTAG_REFERENCEBLACKWHITE,
 	    &refBlackWhite);
+
+        /* Do some validation to avoid later issues. Detect NaN for now */
+        if( luma[0] != luma[0] ||
+            luma[1] != luma[1] ||
+            luma[2] != luma[2] )
+        {
+            TIFFErrorExt(img->tif->tif_clientdata, module,
+                "Invalid values for YCbCrCoefficients tag");
+            return (0);
+        }
+
+        if( refBlackWhite[0] != refBlackWhite[0] ||
+            refBlackWhite[1] != refBlackWhite[1] ||
+            refBlackWhite[2] != refBlackWhite[2] ||
+            refBlackWhite[3] != refBlackWhite[3] ||
+            refBlackWhite[4] != refBlackWhite[4] ||
+            refBlackWhite[5] != refBlackWhite[5] )
+        {
+            TIFFErrorExt(img->tif->tif_clientdata, module,
+                "Invalid values for ReferenceBlackWhite tag");
+            return (0);
+        }
+
 	if (TIFFYCbCrToRGBInit(img->ycbcr, luma, refBlackWhite) < 0)
 		return(0);
 	return (1);
