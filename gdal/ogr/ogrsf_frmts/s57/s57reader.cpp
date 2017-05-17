@@ -2549,10 +2549,7 @@ int S57Reader::ParseName( DDFField * poField, int nIndex, int * pnRCNM )
     if( pnRCNM != NULL )
         *pnRCNM = pabyData[0];
 
-    return pabyData[1]
-         + pabyData[2] * 256
-         + pabyData[3] * 256 * 256
-         + pabyData[4] * 256 * 256 * 256;
+    return CPL_LSBSINT32PTR(pabyData + 1);
 }
 
 /************************************************************************/
