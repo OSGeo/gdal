@@ -399,7 +399,7 @@ CPLErr KEARasterBand::SetMetadataItem(const char *pszName, const char *pszValue,
         else if( EQUAL( pszName, "STATISTICS_HISTONUMBINS" ) )
         {
             GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
-            pTable->SetRowCount(atol(pszValue));
+            pTable->SetRowCount(atoi(pszValue));
             // leave to update m_papszMetadataList below
         }
         else
