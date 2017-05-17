@@ -3270,10 +3270,11 @@ void DontUseExceptions() {
                  "stack of error handlers is: %s", MODULE_NAME, pszValue);
         return;
     }
-    const char* pszNewValue = pszValue + strlen(MODULE_NAME) + 1;
+    char* pszNewValue = CPLStrdup(pszValue + strlen(MODULE_NAME) + 1);
     if( pszNewValue[0] == ' ' && pszNewValue[1] == '\0' )
         pszNewValue = NULL;
     CPLSetConfigOption("__chain_python_error_handlers", pszNewValue);
+    CPLFree(pszNewValue);
     bUseExceptions = 0;
     CPLSetErrorHandler( pfnPreviousHandler );
   }
