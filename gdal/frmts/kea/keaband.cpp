@@ -87,6 +87,7 @@ KEARasterBand::KEARasterBand( KEADataset *pDataset, int nSrcBand, GDALAccess eAc
     // Initialize the metadata as a CPLStringList.
     m_papszMetadataList = NULL;
     this->UpdateMetadataList();
+    m_pszHistoBinValues = NULL;
 }
 
 // destructor
@@ -98,6 +99,11 @@ KEARasterBand::~KEARasterBand()
     delete this->m_pColorTable;
     // destroy the metadata
     CSLDestroy(this->m_papszMetadataList);
+    if( this->m_pszHistoBinValues != NULL )
+    {
+        // histgram bin values as a string
+        CPLFree(this->m_pszHistoBinValues);
+    }
     // delete any overview bands
     this->deleteOverviewObjects();
 
@@ -148,6 +154,13 @@ void KEARasterBand::UpdateMetadataList()
     {
         m_papszMetadataList = CSLSetNameValue(m_papszMetadataList, "LAYER_TYPE", "thematic" );
     }
+
+    // STATISTICS_HISTONUMBINS
+    const GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
+    CPLString osWorkingResult;
+    osWorkingResult.Printf( "%lu", (unsigned long)pTable->GetRowCount());
+    m_papszMetadataList = CSLSetNameValue(m_papszMetadataList, "STATISTICS_HISTONUMBINS", osWorkingResult);
+
     // attribute table chunksize
     if( this->m_nAttributeChunkSize != -1 )
     {
@@ -155,6 +168,97 @@ void KEARasterBand::UpdateMetadataList()
         snprintf(szTemp, 100, "%d", this->m_nAttributeChunkSize );
         m_papszMetadataList = CSLSetNameValue(m_papszMetadataList, "ATTRIBUTETABLE_CHUNKSIZE", szTemp );
     }
+}
+
+// internal method to set the histogram column from a string (for metadata)
+
+CPLErr KEARasterBand::SetHistogramFromString(const char *pszString)
+{
+    // copy it so we can change it (put nulls in etc)
+    char *pszBinValues = CPLStrdup(pszString);
+    if( pszBinValues == NULL )
+        return CE_Failure;
+
+    // find the number of | chars
+    int nRows = 0, i = 0;
+    while( pszBinValues[i] != '\0' )
+    {
+        if( pszBinValues[i] == '|' )
+            nRows++;
+        i++;
+    }
+
+    GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
+    // find histogram column if it exists
+    int nCol = pTable->GetColOfUsage(GFU_PixelCount);
+    if( nCol == -1 )
+    {
+        if( pTable->CreateColumn("Histogram", GFT_Real, GFU_PixelCount) != CE_None )
+            return CE_Failure;
+
+        nCol = pTable->GetColumnCount() - 1;
+    }
+
+    if( nRows > pTable->GetRowCount() )
+        pTable->SetRowCount(nRows);
+
+    char * pszWork = pszBinValues;
+    for( int nBin = 0; nBin < nRows; ++nBin )
+    {
+        char * pszEnd = strchr( pszWork, '|' );
+        if ( pszEnd != NULL )
+        {
+            *pszEnd = 0;
+            double dValue = CPLAtof( pszWork );
+            pTable->SetValue(nBin, nCol, dValue);
+            pszWork = pszEnd + 1;
+        }
+    }
+
+    CPLFree(pszBinValues);
+
+    return CE_None;
+}
+
+// get histogram as string with values separated by '|'
+char *KEARasterBand::GetHistogramAsString()
+{
+    const GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
+    int nRows = pTable->GetRowCount();
+
+    // find histogram column if it exists
+    int nCol = pTable->GetColOfUsage(GFU_PixelCount);
+    if( nCol == -1 )
+        return NULL;
+
+    unsigned int nBufSize = 1024;
+    char * pszBinValues = (char *)CPLMalloc( nBufSize );
+    int    nBinValuesLen = 0;
+    pszBinValues[0] = 0;
+
+    for ( int nBin = 0; nBin < nRows; ++nBin )
+    {
+        char szBuf[32];
+        // RAT's don't handle GUIntBig - use double instead. Cast back
+        snprintf( szBuf, 31, CPL_FRMT_GUIB, (GUIntBig)pTable->GetValueAsDouble(nBin, nCol) );
+        if ( ( nBinValuesLen + strlen( szBuf ) + 2 ) > nBufSize )
+        {
+            nBufSize *= 2;
+            char* pszNewBinValues = (char *)VSIRealloc( pszBinValues, nBufSize );
+            if (pszNewBinValues == NULL)
+            {
+                break;
+            }
+
+            pszBinValues = pszNewBinValues;
+        }
+
+        strcat( pszBinValues+nBinValuesLen, szBuf );
+        strcat( pszBinValues+nBinValuesLen, "|" );
+        nBinValuesLen += static_cast<int>(strlen(pszBinValues+nBinValuesLen));
+    }
+
+    return pszBinValues;
 }
 
 // internal method to create the overviews
@@ -285,6 +389,19 @@ CPLErr KEARasterBand::SetMetadataItem(const char *pszName, const char *pszValue,
                 this->m_pImageIO->setImageBandLayerType(this->nBand, kealib::kea_thematic );
             }
         }
+        else if( EQUAL( pszName, "STATISTICS_HISTOBINVALUES" ) )
+        {
+            if( this->SetHistogramFromString(pszValue) != CE_None )
+                return CE_Failure;
+            else
+                return CE_None;
+        }
+        else if( EQUAL( pszName, "STATISTICS_HISTONUMBINS" ) )
+        {
+            GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
+            pTable->SetRowCount(atol(pszValue));
+            // leave to update m_papszMetadataList below
+        }
         else
         {
             // otherwise set it as normal
@@ -306,6 +423,15 @@ const char *KEARasterBand::GetMetadataItem (const char *pszName, const char *psz
     // only deal with 'default' domain - no geolocation etc
     if( ( pszDomain != NULL ) && ( *pszDomain != '\0' ) )
         return NULL;
+
+    if(EQUAL( pszName, "STATISTICS_HISTOBINVALUES" ) )
+    {
+        if( m_pszHistoBinValues != NULL )
+            CPLFree(m_pszHistoBinValues); // could have changed
+        m_pszHistoBinValues = this->GetHistogramAsString();
+        return m_pszHistoBinValues;
+    }
+
     // get it out of the CSLStringList so we can be sure it is persistent
     return CSLFetchNameValue(m_papszMetadataList, pszName);
 }
@@ -316,6 +442,9 @@ char **KEARasterBand::GetMetadata(const char *pszDomain)
     // only deal with 'default' domain - no geolocation etc
     if( ( pszDomain != NULL ) && ( *pszDomain != '\0' ) )
         return NULL;
+    // Note: ignoring STATISTICS_HISTOBINVALUES as these are likely to be very long
+    // not sure user should get those unless they really ask...
+
     // conveniently we already have it in this format
     return m_papszMetadataList;
 }
@@ -350,6 +479,11 @@ CPLErr KEARasterBand::SetMetadata(char **papszMetadata, const char *pszDomain)
                     {
                         this->m_pImageIO->setImageBandLayerType(this->nBand, kealib::kea_thematic );
                     }
+                }
+                else if( EQUAL( pszName, "STATISTICS_HISTOBINVALUES" ) )
+                {
+                    if( this->SetHistogramFromString(pszValue) != CE_None )
+                        return CE_Failure;
                 }
                 else
                 {
@@ -449,6 +583,110 @@ CPLErr KEARasterBand::DeleteNoDataValue()
     {
         return CE_Failure;
     }
+}
+
+CPLErr KEARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                        int *pnBuckets, GUIntBig ** ppanHistogram,
+                                        int bForce,
+                                        GDALProgressFunc fn, void *pProgressData)
+{
+    if( bForce )
+    {
+        return GDALPamRasterBand::GetDefaultHistogram(pdfMin, pdfMax, pnBuckets, 
+                        ppanHistogram, bForce, fn, pProgressData);
+    }
+    else
+    {
+        // returned cached if avail
+        // I've used the RAT interface here as it deals with data type
+        // conversions. Would be nice to have GUIntBig support in RAT though...
+        GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
+        int nRows = pTable->GetRowCount();
+
+        // find histogram column if it exists
+        int nCol = pTable->GetColOfUsage(GFU_PixelCount);
+        if( nCol == -1 )
+            return CE_Warning;
+
+        double dfRow0Min, dfBinSize;
+        if( !pTable->GetLinearBinning(&dfRow0Min, &dfBinSize) )
+            return CE_Warning;
+
+        *ppanHistogram = (GUIntBig*)VSIMalloc2(nRows, sizeof(GUIntBig));
+        if( *ppanHistogram == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                    "Memory Allocation failed in KEARasterBand::GetDefaultHistogram");
+            return CE_Failure;
+        }
+
+        double *pDoubleHisto = (double*)VSIMalloc2(nRows, sizeof(double));
+        if( pDoubleHisto == NULL )
+        {
+            CPLFree(*ppanHistogram);
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                    "Memory Allocation failed in KEARasterBand::GetDefaultHistogram");
+            return CE_Failure;
+        }
+
+        if( pTable->ValuesIO(GF_Read, nCol, 0, nRows, pDoubleHisto) != CE_None )
+            return CE_Failure;
+
+        // convert to GUIntBig
+        for( int n = 0; n < nRows; n++ )
+            (*ppanHistogram)[n] = static_cast<GUIntBig>(pDoubleHisto[n]);
+
+        CPLFree(pDoubleHisto);
+
+        *pnBuckets = nRows;
+        *pdfMin = dfRow0Min;
+        *pdfMax = dfRow0Min + ((nRows + 1) * dfBinSize);
+        return CE_None;
+    }
+}
+
+CPLErr KEARasterBand::SetDefaultHistogram( double /*dfMin*/, double /*dfMax*/,
+                                           int nBuckets, GUIntBig *panHistogram )
+{
+
+    GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
+    int nRows = pTable->GetRowCount();
+
+    // find histogram column if it exists
+    int nCol = pTable->GetColOfUsage(GFU_PixelCount);
+    if( nCol == -1 )
+    {
+        if( pTable->CreateColumn("Histogram", GFT_Real, GFU_PixelCount) != CE_None )
+            return CE_Failure;
+
+        nCol = pTable->GetColumnCount() - 1;
+    }
+
+    if( nBuckets > nRows )
+        pTable->SetRowCount(nBuckets);
+
+    // convert to double (RATs don't take GUIntBig yet)
+    double *pDoubleHist = (double*)VSIMalloc2(nBuckets, sizeof(double));
+
+    if( pDoubleHist == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                "Memory Allocation failed in KEARasterBand::SetDefaultHistogram");
+        return CE_Failure;
+    }
+
+    for( int n = 0; n < nBuckets; n++ )
+        pDoubleHist[n] = panHistogram[n];
+
+    if( pTable->ValuesIO(GF_Write, nCol, 0, nBuckets, pDoubleHist) != CE_None )
+    {
+        CPLFree(pDoubleHist);
+        return CE_Failure;
+    }
+
+    CPLFree(pDoubleHist);
+
+    return CE_None;
 }
 
 GDALRasterAttributeTable *KEARasterBand::GetDefaultRAT()
