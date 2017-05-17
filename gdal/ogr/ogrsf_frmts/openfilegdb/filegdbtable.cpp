@@ -235,7 +235,12 @@ static int ReadVarUInt(GByte*& pabyIter, GByte* pabyEnd, OutType& nOutVal)
         }
         nShift += 7;
         // To avoid undefined behaviour later when doing << nShift
-        returnErrorIf( nShift >= static_cast<int>(sizeof(OutType)) * 8 );
+        if( nShift >= static_cast<int>(sizeof(OutType)) * 8 )
+        {
+            pabyIter = pabyLocalIter;
+            nOutVal = nVal;
+            returnError();
+        }
     }
 }
 
