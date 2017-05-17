@@ -339,7 +339,11 @@ bool GTM::isValid()
         {
             VSILFILE* pGTMFileOri = pGTMFile;
             pGTMFile = fp;
-            if (isValid())
+            char* pszFilenameOri = pszFilename;
+            pszFilename = pszGZIPFileName;
+            const bool bRet = isValid();
+            pszFilename = pszFilenameOri;
+            if (bRet)
             {
                 VSIFCloseL(pGTMFileOri);
                 CPLFree(pszGZIPFileName);
