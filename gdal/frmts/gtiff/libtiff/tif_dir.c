@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.129 2017-01-11 16:09:02 erouault Exp $ */
+/* $Id: tif_dir.c,v 1.130 2017-05-17 21:54:05 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -686,7 +686,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 				case TIFF_SRATIONAL:
 				case TIFF_FLOAT:
 					{
-						float v2 = (float)va_arg(ap, double);
+						float v2 = TIFFClampDoubleToFloat(va_arg(ap, double));
 						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
