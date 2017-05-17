@@ -11526,6 +11526,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     std::vector<GTIFFErrorStruct> aoErrors;
     CPLPushErrorHandlerEx(GTIFFErrorHandler, &aoErrors);
     CPLSetCurrentErrorHandlerCatchDebug( FALSE );
+    // Open and disable "strip chopping" (c option)
     TIFF *l_hTIFF =
         VSI_TIFFOpen( pszFilename,
                       poOpenInfo->eAccess == GA_ReadOnly ? "rc" : "r+c",
@@ -11599,7 +11600,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         l_nPlanarConfig == PLANARCONFIG_CONTIG )
     {
         bool bReopenWithStripChop = true;
-        if( nYSize > 128 * 1024 * 1024 )
+        if( nYSize > 10 * 1024 * 1024 )
         {
             uint16 l_nSamplesPerPixel = 0;
             if( !TIFFGetField( l_hTIFF, TIFFTAG_SAMPLESPERPIXEL,
@@ -11620,7 +11621,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
             // There is a risk of DoS due to huge amount of memory allocated in
             // ChopUpSingleUncompressedStrip() in libtiff.
-            if( nStrips > 128 * 1024 * 1024 &&
+            if( nStrips > 10 * 1024 * 1024 &&
                 !CPLTestBool(
                     CPLGetConfigOption("GTIFF_FORCE_STRIP_CHOP", "NO")) )
             {
