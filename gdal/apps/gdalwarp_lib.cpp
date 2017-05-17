@@ -1348,21 +1348,35 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
             psWO->padfSrcNoDataReal = (double *)
                 CPLMalloc(psWO->nBandCount*sizeof(double));
-            psWO->padfSrcNoDataImag = (double *)
-                CPLMalloc(psWO->nBandCount*sizeof(double));
+            psWO->padfSrcNoDataImag = NULL;
 
             for( int i = 0; i < psWO->nBandCount; i++ )
             {
                 if( i < nTokenCount )
                 {
-                    CPLStringToComplex( papszTokens[i],
-                                        psWO->padfSrcNoDataReal + i,
-                                        psWO->padfSrcNoDataImag + i );
+                    if( strchr(papszTokens[i], 'i') != NULL)
+                    {
+                        if( psWO->padfSrcNoDataImag == NULL )
+                        {
+                            psWO->padfSrcNoDataImag = (double *)
+                                CPLCalloc(psWO->nBandCount, sizeof(double));
+                        }
+                        CPLStringToComplex( papszTokens[i],
+                                            psWO->padfSrcNoDataReal + i,
+                                            psWO->padfSrcNoDataImag + i );
+                    }
+                    else
+                    {
+                        psWO->padfSrcNoDataReal[i] = CPLAtof(papszTokens[i]);
+                    }
                 }
                 else
                 {
                     psWO->padfSrcNoDataReal[i] = psWO->padfSrcNoDataReal[i-1];
-                    psWO->padfSrcNoDataImag[i] = psWO->padfSrcNoDataImag[i-1];
+                    if( psWO->padfSrcNoDataImag != NULL )
+                    {
+                        psWO->padfSrcNoDataImag[i] = psWO->padfSrcNoDataImag[i-1];
+                    }
                 }
             }
 

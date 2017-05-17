@@ -1478,7 +1478,8 @@ GDALWarpResolveWorkingDataType( GDALWarpOptions *psOptions )
                 false );
         }
 
-        if( psOptions->padfSrcNoDataImag != NULL )
+        if( psOptions->padfSrcNoDataImag != NULL &&
+            psOptions->padfSrcNoDataImag[iBand] != 0.0 )
         {
            psOptions->eWorkingDataType = GDALDataTypeUnionWithValue( 
                 psOptions->eWorkingDataType, 
@@ -1494,7 +1495,8 @@ GDALWarpResolveWorkingDataType( GDALWarpOptions *psOptions )
                 false );
         }
 
-        if( psOptions->padfDstNoDataImag != NULL )
+        if( psOptions->padfDstNoDataImag != NULL &&
+            psOptions->padfDstNoDataImag[iBand] != 0.0 )
         {
             psOptions->eWorkingDataType = GDALDataTypeUnionWithValue( 
                 psOptions->eWorkingDataType, 
