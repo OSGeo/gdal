@@ -345,9 +345,10 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         int nNewBand = atoi(pszBand);
         if( nNewBand != nBand )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid band. Got %s, expected %d", pszBand, nBand);
-            return CE_Failure;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Invalid band number. Got %s, expected %d. Ignoring "
+                     "provided one, and using %d instead",
+                     pszBand, nBand, nBand);
         }
     }
 
