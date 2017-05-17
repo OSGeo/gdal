@@ -31,3 +31,12 @@ https://bugs.chromium.org/p/oss-fuzz/issues/list?q=gdal
   Test a particular fuzzer (replace shape_fuzzer by other fuzzers
   like the ones generated in /tmp by "make dummyfuzzers")
     $ python infra/helper.py run_fuzzer $PROJECT_NAME shape_fuzzer
+
+
+How to deal with issues reported in https://bugs.chromium.org/p/oss-fuzz/issues/list?q=gdal ?
+
+    1. Leave a comment in (chromium database) bug entry to indicate that you work on it
+    2. Work
+    3. Commit a bug fix with log including "Credit to OSS-Fuzz" and a link to the bugs.chromium.org ticket
+    4. Add in the bugs.chromium.org ticket a link to the Trac changeset implementing the fix.
+    5. Check chromium closed the bug (after one or two days typically)
