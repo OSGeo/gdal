@@ -29,7 +29,10 @@
 
 #include "gdal_unit_test.h"
 
+#include "cpl_conv.h"
+
 #include <gdal_alg.h>
+#include <gdalwarper.h>
 
 namespace tut
 {
@@ -41,7 +44,7 @@ namespace tut
     // Register test group
     typedef test_group<test_alg_data> group;
     typedef group::object object;
-    group test_alg_group("alg");
+    group test_alg_group("ALG");
 
     typedef struct
     {
@@ -81,4 +84,187 @@ namespace tut
         ensure_approx_equals(data.y, 0.0);
         GDAL_CG_Destroy(hCG);
     }
+
+    // GDALWarpResolveWorkingDataType: default type
+    template<>
+    template<>
+    void object::test<2>()
+    {
+        GDALWarpOptions* psOptions = GDALCreateWarpOptions();
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+        GDALDestroyWarpOptions(psOptions);
+    }
+
+    // GDALWarpResolveWorkingDataType: do not change user specified type
+    template<>
+    template<>
+    void object::test<3>()
+    {
+        GDALWarpOptions* psOptions = GDALCreateWarpOptions();
+        psOptions->eWorkingDataType = GDT_CFloat64;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_CFloat64 );
+        GDALDestroyWarpOptions(psOptions);
+    }
+
+    // GDALWarpResolveWorkingDataType: effect of padfSrcNoDataReal
+    template<>
+    template<>
+    void object::test<4>()
+    {
+        GDALWarpOptions* psOptions = GDALCreateWarpOptions();
+        psOptions->nBandCount = 1;
+        psOptions->padfSrcNoDataReal =
+            static_cast<double*>(CPLMalloc(sizeof(double)));
+        psOptions->padfSrcNoDataReal[0] = 0.0;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfSrcNoDataReal[0] = -1.0;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Int16 );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfSrcNoDataReal[0] = 2.0;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfSrcNoDataReal[0] = 256.0;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_UInt16 );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfSrcNoDataReal[0] = 2.5;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Float32 );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfSrcNoDataReal[0] = 2.12345678;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Float64 );
+
+        GDALDestroyWarpOptions(psOptions);
+    }
+
+    // GDALWarpResolveWorkingDataType: effect of padfSrcNoDataImag
+    template<>
+    template<>
+    void object::test<5>()
+    {
+        GDALWarpOptions* psOptions = GDALCreateWarpOptions();
+        psOptions->nBandCount = 1;
+        psOptions->padfSrcNoDataReal =
+            static_cast<double*>(CPLMalloc(sizeof(double)));
+        psOptions->padfSrcNoDataImag =
+            static_cast<double*>(CPLMalloc(sizeof(double)));
+        psOptions->padfSrcNoDataReal[0] = 0.0;
+        psOptions->padfSrcNoDataImag[0] = 0.0;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfSrcNoDataReal[0] = 0.0;
+        psOptions->padfSrcNoDataImag[0] = 1.0;
+        GDALWarpResolveWorkingDataType(psOptions);
+        // Could probably be CInt16
+        ensure_equals( psOptions->eWorkingDataType, GDT_CInt32 );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfSrcNoDataReal[0] = 0.0;
+        psOptions->padfSrcNoDataImag[0] = 1.5;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_CFloat32 );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfSrcNoDataReal[0] = 0.0;
+        psOptions->padfSrcNoDataImag[0] = 2.12345678;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_CFloat64 );
+
+        GDALDestroyWarpOptions(psOptions);
+    }
+
+    // GDALWarpResolveWorkingDataType: effect of padfDstNoDataReal
+    template<>
+    template<>
+    void object::test<6>()
+    {
+        GDALWarpOptions* psOptions = GDALCreateWarpOptions();
+        psOptions->nBandCount = 1;
+        psOptions->padfDstNoDataReal =
+            static_cast<double*>(CPLMalloc(sizeof(double)));
+        psOptions->padfDstNoDataReal[0] = 0.0;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfDstNoDataReal[0] = -1.0;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Int16 );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfDstNoDataReal[0] = 2.0;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfDstNoDataReal[0] = 256.0;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_UInt16 );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfDstNoDataReal[0] = 2.5;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Float32 );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfDstNoDataReal[0] = 2.12345678;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Float64 );
+
+        GDALDestroyWarpOptions(psOptions);
+    }
+
+    // GDALWarpResolveWorkingDataType: effect of padfDstNoDataImag
+    template<>
+    template<>
+    void object::test<7>()
+    {
+        GDALWarpOptions* psOptions = GDALCreateWarpOptions();
+        psOptions->nBandCount = 1;
+        psOptions->padfDstNoDataReal =
+            static_cast<double*>(CPLMalloc(sizeof(double)));
+        psOptions->padfDstNoDataImag =
+            static_cast<double*>(CPLMalloc(sizeof(double)));
+        psOptions->padfDstNoDataReal[0] = 0.0;
+        psOptions->padfDstNoDataImag[0] = 0.0;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_Byte );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfDstNoDataReal[0] = 0.0;
+        psOptions->padfDstNoDataImag[0] = 1.0;
+        GDALWarpResolveWorkingDataType(psOptions);
+        // Could probably be CInt16
+        ensure_equals( psOptions->eWorkingDataType, GDT_CInt32 );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfDstNoDataImag[0] = 0.0;
+        psOptions->padfDstNoDataImag[0] = 1.5;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_CFloat32 );
+
+        psOptions->eWorkingDataType = GDT_Unknown;
+        psOptions->padfDstNoDataImag[0] = 0.0;
+        psOptions->padfDstNoDataImag[0] = 2.12345678;
+        GDALWarpResolveWorkingDataType(psOptions);
+        ensure_equals( psOptions->eWorkingDataType, GDT_CFloat64 );
+
+        GDALDestroyWarpOptions(psOptions);
+    }
+
+
 } // namespace tut
