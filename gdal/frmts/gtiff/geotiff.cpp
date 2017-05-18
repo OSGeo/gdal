@@ -6726,6 +6726,7 @@ GDALColorTable *GTiffBitmapBand::GetColorTable()
 class GTiffSplitBitmapBand CPL_FINAL : public GTiffBitmapBand
 {
     friend class GTiffDataset;
+    int nLastLineValid;
 
   public:
 
@@ -6742,6 +6743,7 @@ class GTiffSplitBitmapBand CPL_FINAL : public GTiffBitmapBand
 
 GTiffSplitBitmapBand::GTiffSplitBitmapBand( GTiffDataset *poDSIn, int nBandIn )
         : GTiffBitmapBand( poDSIn, nBandIn )
+        , nLastLineValid( -1 )
 
 {
     nBlockXSize = poDS->GetRasterXSize();
@@ -6754,6 +6756,34 @@ GTiffSplitBitmapBand::GTiffSplitBitmapBand( GTiffDataset *poDSIn, int nBandIn )
 
 GTiffSplitBitmapBand::~GTiffSplitBitmapBand() {}
 
+
+/************************************************************************/
+/*                            GTIFFErrorHandler()                       */
+/************************************************************************/
+
+namespace {
+class GTIFFErrorStruct CPL_FINAL
+{
+  public:
+    CPLErr type;
+    CPLErrorNum no;
+    CPLString msg;
+
+    GTIFFErrorStruct() : type(CE_None), no(CPLE_None) {}
+    GTIFFErrorStruct(CPLErr eErrIn, CPLErrorNum noIn, const char* msgIn) :
+        type(eErrIn), no(noIn), msg(msgIn) {}
+};
+}
+
+static void CPL_STDCALL GTIFFErrorHandler( CPLErr eErr, CPLErrorNum no,
+                                           const char* msg )
+{
+    std::vector<GTIFFErrorStruct>* paoErrors =
+        static_cast<std::vector<GTIFFErrorStruct> *>(
+            CPLGetErrorHandlerUserData());
+    paoErrors->push_back(GTIFFErrorStruct(eErr, no, msg));
+}
+
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
@@ -6762,6 +6792,9 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int /* nBlockXOff */, int nBlockYOff,
                                          void * pImage )
 
 {
+    if( nLastLineValid >= 0 && nBlockYOff > nLastLineValid )
+        return CE_Failure;
+
     if( !poGDS->SetDirectory() )
         return CE_Failure;
 
@@ -6785,8 +6818,32 @@ CPLErr GTiffSplitBitmapBand::IReadBlock( int /* nBlockXOff */, int nBlockYOff,
     while( poGDS->nLastLineRead < nBlockYOff )
     {
         ++poGDS->nLastLineRead;
-        if( TIFFReadScanline( poGDS->hTIFF, poGDS->pabyBlockBuf,
-                              poGDS->nLastLineRead, 0 ) == -1
+
+        std::vector<GTIFFErrorStruct> aoErrors;
+        CPLPushErrorHandlerEx(GTIFFErrorHandler, &aoErrors);
+        int nRet = TIFFReadScanline( poGDS->hTIFF, poGDS->pabyBlockBuf,
+                                     poGDS->nLastLineRead, 0 );
+        CPLPopErrorHandler();
+
+        for( size_t iError = 0; iError < aoErrors.size(); ++iError )
+        {
+            CPLError( aoErrors[iError].type,
+                      aoErrors[iError].no,
+                      "%s",
+                      aoErrors[iError].msg.c_str() );
+            // FAX decoding only handles EOF condition as a warning, so
+            // catch it so as to turn on error when attempting to read
+            // following lines, to avoid performance issues.
+            if(  !poGDS->bIgnoreReadErrors &&
+                    aoErrors[iError].msg.find("Premature EOF") !=
+                                                    std::string::npos )
+            {
+                nLastLineValid = nBlockYOff;
+                nRet = -1;
+            }
+        }
+
+        if( nRet == -1
             && !poGDS->bIgnoreReadErrors )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -11178,33 +11235,6 @@ int GTiffDataset::Identify( GDALOpenInfo *poOpenInfo )
         return FALSE;
 
     return TRUE;
-}
-
-/************************************************************************/
-/*                            GTIFFErrorHandler()                       */
-/************************************************************************/
-
-namespace {
-class GTIFFErrorStruct CPL_FINAL
-{
-  public:
-    CPLErr type;
-    CPLErrorNum no;
-    CPLString msg;
-
-    GTIFFErrorStruct() : type(CE_None), no(CPLE_None) {}
-    GTIFFErrorStruct(CPLErr eErrIn, CPLErrorNum noIn, const char* msgIn) :
-        type(eErrIn), no(noIn), msg(msgIn) {}
-};
-}
-
-static void CPL_STDCALL GTIFFErrorHandler( CPLErr eErr, CPLErrorNum no,
-                                           const char* msg )
-{
-    std::vector<GTIFFErrorStruct>* paoErrors =
-        static_cast<std::vector<GTIFFErrorStruct> *>(
-            CPLGetErrorHandlerUserData());
-    paoErrors->push_back(GTIFFErrorStruct(eErr, no, msg));
 }
 
 /************************************************************************/
