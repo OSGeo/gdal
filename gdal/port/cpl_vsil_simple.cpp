@@ -127,7 +127,7 @@ int VSIFCloseL( FILE * fp )
 int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
 
 {
-    return VSIFSeek(fp, static_ast<int>(nOffset), nWhence);
+    return VSIFSeek(fp, static_cast<int>(nOffset), nWhence);
 }
 
 /************************************************************************/
