@@ -88,6 +88,13 @@ PCIDSKBuffer::~PCIDSKBuffer()
 void PCIDSKBuffer::SetSize( int size )
 
 {
+    if( size < 0 )
+    {
+        free( buffer );
+        buffer = NULL;
+        buffer_size = 0;
+        throw PCIDSKException( "Invalid buffer size: %d", size );
+    }
     buffer_size = size;
     char* new_buffer = (char *) realloc(buffer,size+1);
 
