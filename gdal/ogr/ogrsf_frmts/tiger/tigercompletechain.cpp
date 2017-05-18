@@ -432,6 +432,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to seek to %d of %s3",
                       nRecordId * nRT3RecLen, pszModule );
+            delete poFeature;
             return NULL;
         }
 
@@ -440,6 +441,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read record %d of %s3",
                       nRecordId, pszModule );
+            delete poFeature;
             return NULL;
         }
 
