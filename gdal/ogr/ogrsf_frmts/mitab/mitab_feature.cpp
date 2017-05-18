@@ -2152,7 +2152,15 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             poMapFile->ReadPenDef(m_nPenDefIndex, &m_sPenDef);
         }
 
-        const GUInt32 nMinimumBytesForSections = 24 * numLineSections;
+        const int nMinSizeOfSection = 24;
+        if( numLineSections > INT_MAX / nMinSizeOfSection )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too many numLineSections");
+            return -1;
+        }
+        const GUInt32 nMinimumBytesForSections =
+                                nMinSizeOfSection * numLineSections;
         if( nMinimumBytesForSections > 1024 * 1024 && 
             nMinimumBytesForSections > poMapFile->GetFileSize() )
         {
