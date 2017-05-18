@@ -643,6 +643,15 @@ def vsifile_13():
 
     return 'success'
 
+###############################################################################
+# Check performance issue (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1673)
+
+def vsifile_14():
+
+    with gdaltest.error_handler():
+        gdal.VSIFOpenL('/vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar/a.tgzb.tgzc.tgzd.tgze.tgzf.tgz.h.tgz.i.tgz', 'rb')
+    return 'success'
+
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
@@ -655,7 +664,8 @@ gdaltest_list = [ vsifile_1,
                   vsifile_10,
                   vsifile_11,
                   vsifile_12,
-                  vsifile_13 ]
+                  vsifile_13,
+                  vsifile_14 ]
 
 if __name__ == '__main__':
 
