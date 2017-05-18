@@ -295,6 +295,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
         nLineCount++;
 
         if ( (nLineCount == 1) && !EQUAL(pszLine, "IMAGINE_RAW_FILE") ) {
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return NULL;
         }
 
