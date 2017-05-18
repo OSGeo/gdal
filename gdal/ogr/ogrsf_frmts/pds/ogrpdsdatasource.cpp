@@ -164,7 +164,15 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
     {
         osTableFilename = GetKeywordSub(osTableLink, 1, "");
         CPLString osStartRecord = GetKeywordSub(osTableLink, 2, "");
-        nStartBytes = (atoi(osStartRecord.c_str()) - 1) * nRecordSize;
+        nStartBytes = atoi(osStartRecord.c_str()) - 1;
+        if( nStartBytes < 0 ||
+            (( nRecordSize > 0 && nStartBytes > INT_MAX / nRecordSize )) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Invalid StartBytes value");
+            return false;
+        }
+        nStartBytes *= nRecordSize;
         if (osTableFilename.empty() || osStartRecord.empty() ||
             nStartBytes < 0)
         {
