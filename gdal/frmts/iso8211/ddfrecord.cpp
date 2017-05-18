@@ -387,7 +387,7 @@ int DDFRecord::ReadHeader()
         }
 
         nFieldCount = 0;
-        for( i = 0; i < nDataSize; i += nFieldEntryWidth )
+        for( i = 0; i + nFieldEntryWidth <= nDataSize; i += nFieldEntryWidth )
         {
             if( pachData[i] == DDF_FIELD_TERMINATOR )
                 break;
