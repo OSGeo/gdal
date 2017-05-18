@@ -2728,8 +2728,13 @@ OGRLineString* OGRLineString::CurveToLine(
 double OGRSimpleCurve::get_LinearArea() const
 
 {
-    if( nPointCount < 2 )
+    if( nPointCount < 2 ||
+        (WkbSize() != 0 && /* if not a linearring, check it is closed */
+            (paoPoints[0].x != paoPoints[nPointCount-1].x ||
+             paoPoints[0].y != paoPoints[nPointCount-1].y)) )
+    {
         return 0;
+    }
 
     double dfAreaSum =
         paoPoints[0].x * (paoPoints[1].y - paoPoints[nPointCount-1].y);
