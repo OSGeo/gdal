@@ -676,7 +676,7 @@ CPLErr KEARasterBand::SetDefaultHistogram( double /*dfMin*/, double /*dfMax*/,
     }
 
     for( int n = 0; n < nBuckets; n++ )
-        pDoubleHist[n] = panHistogram[n];
+        pDoubleHist[n] = static_cast<double>(panHistogram[n]);
 
     if( pTable->ValuesIO(GF_Write, nCol, 0, nBuckets, pDoubleHist) != CE_None )
     {
