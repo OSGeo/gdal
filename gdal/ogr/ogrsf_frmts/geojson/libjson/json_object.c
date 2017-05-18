@@ -564,7 +564,9 @@ static int json_object_double_to_json_string(struct json_object* jso,
   char buf[128], *p, *q;
   int size;
 
-  size = snprintf(buf, 128, "%f", jso->o.c_double);
+  size = snprintf(buf, sizeof(buf), "%f", jso->o.c_double);
+  if( size < 0 || size > (int)sizeof(buf) )
+      size = (int)sizeof(buf);
   p = strchr(buf, ',');
   if (p) {
     *p = '.';
