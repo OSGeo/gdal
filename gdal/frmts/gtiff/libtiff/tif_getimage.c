@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.104 2017-05-17 13:48:35 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.105 2017-05-18 06:44:35 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -2265,8 +2265,10 @@ initYCbCrConversion(TIFFRGBAImage* img)
 	    &refBlackWhite);
 
         /* Do some validation to avoid later issues. Detect NaN for now */
+        /* and also if lumaGreen is zero since we divide by it later */
         if( luma[0] != luma[0] ||
             luma[1] != luma[1] ||
+            luma[1] == 0.0 ||
             luma[2] != luma[2] )
         {
             TIFFErrorExt(img->tif->tif_clientdata, module,
