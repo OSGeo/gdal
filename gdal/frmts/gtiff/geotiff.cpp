@@ -10530,8 +10530,11 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
         pszFilename += strlen("GTIFF_RAW:");
     }
 
-    if( !STARTS_WITH_CI(pszFilename, "GTIFF_DIR:") )
+    if( !STARTS_WITH_CI(pszFilename, "GTIFF_DIR:") ||
+        pszFilename[strlen("GTIFF_DIR:")] == '\0' )
+    {
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Split out filename, and dir#/offset.                            */
