@@ -59,11 +59,11 @@ CPCIDSKGCP2Segment::CPCIDSKGCP2Segment(PCIDSKFile *fileIn, int segmentIn, const 
     {
         Load();
     }
-    catch( const PCIDSKException& e )
+    catch( const PCIDSKException& )
     {
         delete pimpl_;
         pimpl_ = NULL;
-        throw e;
+        throw;
     }
 }
  
