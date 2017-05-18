@@ -457,6 +457,24 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
     else
         pszFilename += strlen(GetPrefix()) + 1;
 
+    // Parsing strings like /vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar/a.tgzb.tgzc.tgzd.tgze.tgzf.tgz.h.tgz.i.tgz
+    // takes a huge amount of time, so limit the number of nesting of such
+    // file systems.
+    int* pnCounter = static_cast<int*>(CPLGetTLS(CTLS_ABSTRACTARCHIVE_SPLIT));
+    if( pnCounter == NULL )
+    {
+        pnCounter = static_cast<int*>(CPLMalloc(sizeof(int)));
+        *pnCounter = 0;
+        CPLSetTLS(CTLS_ABSTRACTARCHIVE_SPLIT, pnCounter, TRUE);
+    }
+    if( *pnCounter == 3 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too deep recursion level in "
+                 "VSIArchiveFilesystemHandler::SplitFilename()");
+        return NULL;
+    }
+
     const std::vector<CPLString> oExtensions = GetExtensions();
     while( pszFilename[i] )
     {
@@ -511,6 +529,8 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
 
             if( !bArchiveFileExists )
             {
+                (*pnCounter) ++;
+
                 VSIFilesystemHandler *poFSHandler =
                     VSIFileManager::GetHandler( archiveFilename );
                 if( poFSHandler->Stat(
@@ -520,6 +540,8 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
                 {
                     bArchiveFileExists = true;
                 }
+
+                (*pnCounter) --;
             }
 
             if( bArchiveFileExists )
