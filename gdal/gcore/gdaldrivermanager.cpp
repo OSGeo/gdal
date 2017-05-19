@@ -44,7 +44,9 @@
 #include "gdal.h"
 #include "gdal_pam.h"
 #include "ogr_srs_api.h"
-#include "ogr_xerces.h"
+#ifdef HAVE_XERCES
+#  include "ogr_xerces.h"
+#endif  // HAVE_XERCES
 
 #ifdef _MSC_VER
 #  ifdef MSVC_USE_VLD
