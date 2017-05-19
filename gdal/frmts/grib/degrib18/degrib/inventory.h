@@ -54,7 +54,7 @@ void GRIB2InventoryPrint (inventoryType *Inv, uInt4 LenInv);
 int GRIB2Inventory (DataSource &fp, inventoryType ** Inv, uInt4 *LenInv,
                     int numMsg, int *MsgNum);
 
-int GRIB2RefTime (char *filename, double *refTime);
+int GRIB2RefTime (const char *filename, double *refTime);
 
 #ifdef __cplusplus
 }
