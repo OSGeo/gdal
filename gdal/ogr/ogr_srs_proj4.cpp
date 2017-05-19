@@ -1062,9 +1062,12 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             if( EQUAL(pszValue, ogr_pj_datums[i].pszPJ) )
             {
                 OGRSpatialReference oGCS;
-                oGCS.importFromEPSG( ogr_pj_datums[i].nEPSG );
-                CopyGeogCSFrom( &oGCS );
-                bFullyDefined = true;
+                if( oGCS.importFromEPSG( ogr_pj_datums[i].nEPSG )
+                                                    == OGRERR_NONE &&
+                    CopyGeogCSFrom( &oGCS ) == OGRERR_NONE )
+                {
+                    bFullyDefined = true;
+                }
                 break;
             }
         }
