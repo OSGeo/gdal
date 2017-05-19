@@ -439,6 +439,9 @@ void GMLReader::CleanupParser()
 GMLBinInputStream::GMLBinInputStream(VSILFILE *fpIn) :
     fp(fpIn),
     emptyString(0)
+#ifdef WORKAROUND_XERCESC_2094
+    ,bFirstCallToReadBytes(true)
+#endif
 {}
 
 GMLBinInputStream::~GMLBinInputStream() {}
@@ -450,7 +453,33 @@ XMLFilePos GMLBinInputStream::curPos() const
 
 XMLSize_t GMLBinInputStream::readBytes(XMLByte* const toFill, const XMLSize_t maxToRead)
 {
-    return (XMLSize_t)VSIFReadL(toFill, 1, maxToRead, fp);
+    XMLSize_t nRead = (XMLSize_t)VSIFReadL(toFill, 1, maxToRead, fp);
+#ifdef WORKAROUND_XERCESC_2094
+    if( bFirstCallToReadBytes && nRead > 10 )
+    {
+        // Workaround leak in Xerces-C when parsing an invalid encoding
+        // attribute and there are newline characters between <?xml and
+        // version="1.0". So replace those newlines by equivalent spaces....
+        // See https://issues.apache.org/jira/browse/XERCESC-2094
+        XMLSize_t nToSkip = 0;
+        if( memcmp(toFill, "<?xml", 5) == 0 )
+            nToSkip = 5;
+        else if( memcmp(toFill, "\xEF\xBB\xBF<?xml", 8) == 0 )
+            nToSkip = 8;
+        if( nToSkip > 0 )
+        {
+            for( XMLSize_t i = nToSkip; i < nRead; i++ )
+            {
+                if( toFill[i] == 0xD || toFill[i] == 0xA )
+                    toFill[i] = ' ';
+                else
+                    break;
+            }
+        }
+        bFirstCallToReadBytes = false;
+    }
+#endif
+    return nRead;
 }
 
 const XMLCh *GMLBinInputStream::getContentType() const { return &emptyString; }
