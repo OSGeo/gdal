@@ -1049,7 +1049,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
    return msgNum;
 }
 
-int GRIB2RefTime (char *filename, double *refTime)
+int GRIB2RefTime (const char *filename, double *refTime)
 {
    FileDataSource fp (filename);            /* The opened GRIB2 file. */
    sInt4 offset = 0;    /* Where we are in the file. */
@@ -1073,7 +1073,7 @@ int GRIB2RefTime (char *filename, double *refTime)
                          * in the file.  If not found, is not a GRIB file. */
    int c;               /* Determine if end of the file without fileLen. */
    sInt4 fileLen;       /* Length of the GRIB2 file. */
-   char *ptr;           /* used to find the file extension. */
+   const char *ptr;           /* used to find the file extension. */
    double refTime1;
 
    grib_limit = GRIB_LIMIT;
