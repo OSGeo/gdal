@@ -2388,7 +2388,7 @@ void GeoRasterWrapper::GetSpatialReference()
        adfVal[2] -= ( adfVal[0] / 2.0 );
        adfVal[5] -= ( adfVal[4] / 2.0 );
     }    
-    
+
     dfXCoefficient[0] = adfVal[0];
     dfXCoefficient[1] = adfVal[1];
     dfXCoefficient[2] = adfVal[2];
