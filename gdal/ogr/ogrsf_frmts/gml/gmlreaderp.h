@@ -210,6 +210,8 @@ public:
 
 #if defined(HAVE_XERCES)
 
+#define WORKAROUND_XERCESC_2094
+
 /************************************************************************/
 /*                        GMLBinInputStream                             */
 /************************************************************************/
@@ -217,6 +219,9 @@ class GMLBinInputStream : public BinInputStream
 {
     VSILFILE* fp;
     XMLCh emptyString;
+#ifdef WORKAROUND_XERCESC_2094
+    bool bFirstCallToReadBytes;
+#endif
 
 public :
 
