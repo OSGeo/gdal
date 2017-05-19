@@ -55,8 +55,8 @@ CPLString CPL_DLL &transcode( const XMLCh *panXMLString, CPLString& osRet,
 using OGR::transcode;
 #endif
 
-#endif /* HAVE_XERCES */
-
 void OGRCleanupXercesMutex(void);
+
+#endif /* HAVE_XERCES */
 
 #endif /* OGR_XERCES_INCLUDED */
