@@ -116,11 +116,22 @@ bool KML::parse()
             XML_ParserFree(oParser);
             VSIRewindL(pKMLFile_);
 
-            while( poCurrent_ )
+            if( poCurrent_ != NULL )
             {
-                KMLNode* poTemp = poCurrent_->getParent();
-                delete poCurrent_;
-                poCurrent_ = poTemp;
+                while( poCurrent_ )
+                {
+                    KMLNode* poTemp = poCurrent_->getParent();
+                    delete poCurrent_;
+                    poCurrent_ = poTemp;
+                }
+                // No need to destroy poTrunk_ : it has been destroyed in
+                // the last iteration
+            }
+            else
+            {
+                // Case of invalid content after closing element matching
+                // first <kml> element
+                delete poTrunk_;
             }
             poTrunk_ = NULL;
 

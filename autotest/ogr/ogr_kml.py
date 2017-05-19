@@ -876,6 +876,21 @@ def ogr_kml_read_weird_empty_folders():
     return 'success'
 
 ###############################################################################
+# Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1683
+
+def ogr_kml_read_junk_content_after_valid_doc():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('data/junk_content_after_valid_doc.kml')
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Build tests runner
 
 gdaltest_list = [
@@ -902,6 +917,7 @@ gdaltest_list = [
     ogr_kml_read_folder_with_subfolder_placemark,
     ogr_kml_read_truncated,
     ogr_kml_read_weird_empty_folders,
+    ogr_kml_read_junk_content_after_valid_doc,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
