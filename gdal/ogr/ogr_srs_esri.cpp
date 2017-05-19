@@ -2132,6 +2132,12 @@ OGRErr OGRSpatialReference::morphFromESRI()
                               const_cast<char **>(papszDatumMapping+2),
                               3 );
 
+    // Refresh poDatum as the above SetNode() calls might have invalidated
+    // it.
+    poDatum = GetAttrNode( "DATUM" );
+    if( poDatum != NULL )
+        poDatum = poDatum->GetChild(0);
+
 /* -------------------------------------------------------------------- */
 /*      Special case for Peru96 related SRS that should use the         */
 /*      Peru96 DATUM, but in ESRI world, both Peru96 and SIRGAS-Chile   */
