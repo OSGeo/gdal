@@ -36,6 +36,10 @@ ifeq ($(HAVE_LIBXML2),yes)
 CXXFLAGS	:=	$(CXXFLAGS) $(LIBXML2_INC) -DHAVE_LIBXML2
 endif
 
+ifeq ($(HAVE_XERCES),yes)
+CPPFLAGS 	:=	-DHAVE_XERCES $(XERCES_INCLUDE) $(CPPFLAGS)
+endif
+
 default: mdreader-target $(OBJ:.o=.$(OBJ_EXT)) rasterio_ssse3.$(OBJ_EXT)
 
 rasterio_ssse3.$(OBJ_EXT):   rasterio_ssse3.cpp
