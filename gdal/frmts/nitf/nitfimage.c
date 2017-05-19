@@ -945,7 +945,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             if( EQUAL(psImage->szIC,"M4") )
             {
                 for( i=0; i < nBlockCount; i++ )
-                        psImage->panBlockStart[i] = 6144 * i
+                        psImage->panBlockStart[i] = (GUIntBig)6144 * i
                             + psSegInfo->nSegmentStart + nIMDATOFF;
             }
             else if( EQUAL(psImage->szIC,"NM") )
