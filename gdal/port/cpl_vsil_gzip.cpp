@@ -1609,6 +1609,7 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly(
     if( VSIFReadL(signature, 1, 2, (VSILFILE*)poVirtualHandle) != 2 ||
         signature[0] != gz_magic[0] || signature[1] != gz_magic[1] )
     {
+        poVirtualHandle->Close();
         delete poVirtualHandle;
         return NULL;
     }
