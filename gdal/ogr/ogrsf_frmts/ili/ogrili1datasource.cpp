@@ -101,10 +101,15 @@ int OGRILI1DataSource::Open( const char * pszNewName,
     else
     {
         char **filenames = CSLTokenizeString2( pszNewName, ",", 0 );
-
+        int nCount = CSLCount(filenames);
+        if( nCount == 0 )
+        {
+            CSLDestroy(filenames);
+            return FALSE;
+        }
         osBasename = filenames[0];
 
-        if( CSLCount(filenames) > 1 )
+        if( nCount > 1 )
             osModelFilename = filenames[1];
 
         CSLDestroy( filenames );
