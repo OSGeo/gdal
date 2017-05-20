@@ -857,6 +857,7 @@ void GDALRegister_SGI()
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/rgb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#SGI" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = SGIDataset::Open;
     poDriver->pfnCreate = SGIDataset::Create;
