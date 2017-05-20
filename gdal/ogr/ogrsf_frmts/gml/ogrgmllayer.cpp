@@ -121,6 +121,17 @@ void OGRGMLLayer::ResetReading()
 }
 
 /************************************************************************/
+/*                              Increment()                             */
+/************************************************************************/
+
+static GIntBig Increment(GIntBig nVal)
+{
+    if( nVal <= GINTBIG_MAX - 1)
+        return nVal + 1;
+    return nVal;
+}
+
+/************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
@@ -196,12 +207,14 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         const char *pszGML_FID = poGMLFeature->GetFID();
         if( bInvalidFIDFound )
         {
-            nFID = iNextGMLId++;
+            nFID = iNextGMLId;
+            iNextGMLId = Increment(iNextGMLId);
         }
         else if( pszGML_FID == NULL )
         {
             bInvalidFIDFound = true;
-            nFID = iNextGMLId++;
+            nFID = iNextGMLId;
+            iNextGMLId = Increment(iNextGMLId);
         }
         else if( iNextGMLId == 0 )
         {
@@ -225,12 +238,13 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             if( j < 20 && sscanf(pszGML_FID + i + 1, CPL_FRMT_GIB, &nFID) == 1)
             {
                 if( iNextGMLId <= nFID )
-                    iNextGMLId = nFID + 1;
+                    iNextGMLId = Increment(nFID);
             }
             else
             {
                 bInvalidFIDFound = true;
-                nFID = iNextGMLId++;
+                nFID = iNextGMLId;
+                iNextGMLId = Increment(iNextGMLId);
             }
         }
         else  // if( iNextGMLId != 0 ).
@@ -245,14 +259,15 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             {
                 // fid with the prefix. Using its numerical part.
                 if( iNextGMLId < nFID )
-                    iNextGMLId = nFID + 1;
+                    iNextGMLId = Increment(nFID);
             }
             else
             {
                 // fid without the aforementioned prefix or a valid numerical
                 // part.
                 bInvalidFIDFound = true;
-                nFID = iNextGMLId++;
+                nFID = iNextGMLId;
+                iNextGMLId = Increment(iNextGMLId);
             }
         }
 
