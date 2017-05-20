@@ -1713,8 +1713,9 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the file.                                           */
 /* -------------------------------------------------------------------- */
+    PCIDSKFile *poFile = NULL;
     try {
-        PCIDSKFile *poFile =
+        poFile =
             PCIDSK::Open( poOpenInfo->pszFilename,
                           poOpenInfo->eAccess == GA_ReadOnly ? "r" : "r+",
                           PCIDSK2GetInterfaces() );
@@ -1762,12 +1763,14 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
+        delete poFile;
         return NULL;
     }
     catch( ... )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "PCIDSK::Create() failed, unexpected exception." );
+        delete poFile;
         return NULL;
     }
 }
