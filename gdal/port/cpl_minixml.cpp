@@ -190,7 +190,7 @@ static CPL_INLINE bool _AddToToken( ParseContext *psContext, char chNewChar )
 /*                             ReadToken()                              */
 /************************************************************************/
 
-static XMLTokenType ReadToken( ParseContext *psContext )
+static XMLTokenType ReadToken( ParseContext *psContext, CPLErr& eLastErrorType )
 
 {
     psContext->nTokenSize = 0;
@@ -238,7 +238,8 @@ static XMLTokenType ReadToken( ParseContext *psContext )
             chNext = ReadChar(psContext);
             if( chNext == '\0' )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                eLastErrorType = CE_Failure;
+                CPLError( eLastErrorType, CPLE_AppDefined,
                           "Parse error in DOCTYPE on or before line %d, "
                           "reached end of file without '>'.",
                           psContext->nInputLine );
@@ -270,7 +271,8 @@ static XMLTokenType ReadToken( ParseContext *psContext )
 
                 if( chNext == '\0' )
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined,
+                    eLastErrorType = CE_Failure;
+                    CPLError( eLastErrorType, CPLE_AppDefined,
                               "Parse error in DOCTYPE on or before line %d, "
                               "reached end of file without ']'.",
                           psContext->nInputLine );
@@ -388,8 +390,8 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         if( chNext != '"' )
         {
             psContext->eTokenType = TNone;
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
+            eLastErrorType = CE_Failure;
+            CPLError( eLastErrorType, CPLE_AppDefined,
                 "Parse error on line %d, reached EOF before closing quote.",
                 psContext->nInputLine);
         }
@@ -416,8 +418,8 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         if( chNext != '\'' )
         {
             psContext->eTokenType = TNone;
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
+            eLastErrorType = CE_Failure;
+            CPLError( eLastErrorType, CPLE_AppDefined,
                 "Parse error on line %d, reached EOF before closing quote.",
                 psContext->nInputLine);
         }
@@ -497,7 +499,8 @@ fail:
 /*                              PushNode()                              */
 /************************************************************************/
 
-static bool PushNode( ParseContext *psContext, CPLXMLNode *psNode )
+static bool PushNode( ParseContext *psContext, CPLXMLNode *psNode,
+                      CPLErr& eLastErrorType )
 
 {
     if( psContext->nStackMaxSize <= psContext->nStackSize )
@@ -505,6 +508,7 @@ static bool PushNode( ParseContext *psContext, CPLXMLNode *psNode )
         // Somewhat arbitrary number.
         if( psContext->nStackMaxSize >= 10000 )
         {
+            eLastErrorType = CE_Failure;
             CPLError(CE_Failure, CPLE_NotSupported,
                      "XML element depth beyond 10000. Giving up");
             VSIFree(psContext->papsStack);
@@ -518,6 +522,7 @@ static bool PushNode( ParseContext *psContext, CPLXMLNode *psNode )
                        sizeof(StackContext) * psContext->nStackMaxSize));
         if( papsStack == NULL )
         {
+            eLastErrorType = CE_Failure;
             CPLError(CE_Failure, CPLE_OutOfMemory,
                      "Out of memory allocating %d bytes",
                      static_cast<int>(sizeof(StackContext)) *
@@ -659,19 +664,25 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
     sContext.psFirstNode = NULL;
     sContext.psLastNode = NULL;
 
+#ifdef DEBUG
+    bool bRecoverableError = true;
+#endif
+    CPLErr eLastErrorType = CE_None;
+
 /* ==================================================================== */
 /*      Loop reading tokens.                                            */
 /* ==================================================================== */
-    while( ReadToken( &sContext ) != TNone )
+    while( ReadToken( &sContext, eLastErrorType ) != TNone )
     {
 /* -------------------------------------------------------------------- */
 /*      Create a new element.                                           */
 /* -------------------------------------------------------------------- */
         if( sContext.eTokenType == TOpen )
         {
-            if( ReadToken(&sContext) != TToken )
+            if( ReadToken(&sContext, eLastErrorType) != TToken )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                eLastErrorType = CE_Failure;
+                CPLError( eLastErrorType, CPLE_AppDefined,
                           "Line %d: Didn't find element token after "
                           "open angle bracket.",
                           sContext.nInputLine );
@@ -685,7 +696,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                                               sContext.pszToken );
                 if( !psElement ) break;
                 AttachNode( &sContext, psElement );
-                if( !PushNode( &sContext, psElement ) )
+                if( !PushNode( &sContext, psElement, eLastErrorType ) )
                     break;
             }
             else
@@ -701,8 +712,9 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                     if( CPLTestBool(CPLGetConfigOption("CPL_MINIXML_RELAXED",
                                                        "FALSE")) )
                     {
+                        eLastErrorType = CE_Warning;
                         CPLError(
-                            CE_Warning, CPLE_AppDefined,
+                            eLastErrorType, CPLE_AppDefined,
                             "Line %d: <%.500s> doesn't have matching <%.500s>.",
                             sContext.nInputLine,
                             sContext.pszToken, sContext.pszToken + 1 );
@@ -713,8 +725,9 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                     else
 #endif
                     {
+                        eLastErrorType = CE_Failure;
                         CPLError(
-                            CE_Failure, CPLE_AppDefined,
+                            eLastErrorType, CPLE_AppDefined,
                             "Line %d: <%.500s> doesn't have matching <%.500s>.",
                             sContext.nInputLine,
                             sContext.pszToken, sContext.pszToken + 1 );
@@ -729,8 +742,9 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
                     {
                         // TODO: At some point we could just error out like any
                         // other sane XML parser would do.
+                        eLastErrorType = CE_Warning;
                         CPLError(
-                            CE_Warning, CPLE_AppDefined,
+                            eLastErrorType, CPLE_AppDefined,
                             "Line %d: <%.500s> matches <%.500s>, but the case "
                             "isn't the same.  Going on, but this is invalid "
                             "XML that might be rejected in future versions.",
@@ -742,9 +756,10 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 #ifdef DEBUG
 end_processing_close:
 #endif
-                    if( ReadToken(&sContext) != TClose )
+                    if( ReadToken(&sContext, eLastErrorType) != TClose )
                     {
-                        CPLError( CE_Failure, CPLE_AppDefined,
+                        eLastErrorType = CE_Failure;
+                        CPLError( eLastErrorType, CPLE_AppDefined,
                                   "Line %d: Missing close angle bracket "
                                   "after <%.500s.",
                                   sContext.nInputLine,
@@ -768,7 +783,7 @@ end_processing_close:
             if( !psAttr ) break;
             AttachNode( &sContext, psAttr );
 
-            if( ReadToken(&sContext) != TEqual )
+            if( ReadToken(&sContext, eLastErrorType) != TEqual )
             {
                 // Parse stuff like <?valbuddy_schematron
                 // ../wmtsSimpleGetCapabilities.sch?>
@@ -800,18 +815,25 @@ end_processing_close:
                     continue;
                 }
 
-                CPLError( CE_Failure, CPLE_AppDefined,
+                eLastErrorType = CE_Failure;
+                CPLError( eLastErrorType, CPLE_AppDefined,
                           "Line %d: Didn't find expected '=' for value of "
                           "attribute '%.500s'.",
                           sContext.nInputLine, psAttr->pszValue );
+#ifdef DEBUG
+                // Accepting an attribute without child text
+                // would break too much assumptions in driver code
+                bRecoverableError = false;
+#endif
                 break;
             }
 
-            if( ReadToken(&sContext) == TToken )
+            if( ReadToken(&sContext, eLastErrorType) == TToken )
             {
                 /* TODO: at some point we could just error out like any other */
                 /* sane XML parser would do */
-                CPLError( CE_Warning, CPLE_AppDefined,
+                eLastErrorType = CE_Warning;
+                CPLError( eLastErrorType, CPLE_AppDefined,
                           "Line %d: Attribute value should be single or double "
                           "quoted.  Going on, but this is invalid XML that "
                           "might be rejected in future versions.",
@@ -819,9 +841,15 @@ end_processing_close:
             }
             else if( sContext.eTokenType != TString )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                eLastErrorType = CE_Failure;
+                CPLError( eLastErrorType, CPLE_AppDefined,
                           "Line %d: Didn't find expected attribute value.",
                           sContext.nInputLine );
+#ifdef DEBUG
+                // Accepting an attribute without child text
+                // would break too much assumptions in driver code
+                bRecoverableError = false;
+#endif
                 break;
             }
 
@@ -836,7 +864,8 @@ end_processing_close:
         {
             if( sContext.nStackSize == 0 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                eLastErrorType = CE_Failure;
+                CPLError( eLastErrorType, CPLE_AppDefined,
                           "Line %d: Found unbalanced '>'.",
                           sContext.nInputLine );
                 break;
@@ -851,7 +880,8 @@ end_processing_close:
         {
             if( sContext.nStackSize == 0 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                eLastErrorType = CE_Failure;
+                CPLError( eLastErrorType, CPLE_AppDefined,
                           "Line %d: Found unbalanced '/>'.",
                           sContext.nInputLine );
                 break;
@@ -867,7 +897,8 @@ end_processing_close:
         {
             if( sContext.nStackSize == 0 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                eLastErrorType = CE_Failure;
+                CPLError( eLastErrorType, CPLE_AppDefined,
                           "Line %d: Found unbalanced '?>'.",
                           sContext.nInputLine );
                 break;
@@ -875,7 +906,8 @@ end_processing_close:
             else if( sContext.papsStack[sContext.nStackSize-1].
                          psFirstNode->pszValue[0] != '?' )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                eLastErrorType = CE_Failure;
+                CPLError( eLastErrorType, CPLE_AppDefined,
                           "Line %d: Found '?>' without matching '<?'.",
                           sContext.nInputLine );
                 break;
@@ -920,7 +952,8 @@ end_processing_close:
 /* -------------------------------------------------------------------- */
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
+            eLastErrorType = CE_Failure;
+            CPLError( eLastErrorType, CPLE_AppDefined,
                       "Parse error at line %d, unexpected token:%.500s",
                       sContext.nInputLine, sContext.pszToken );
             break;
@@ -936,23 +969,21 @@ end_processing_close:
 #ifdef DEBUG
         // Makes life of fuzzers easier if we accept somewhat corrupted XML
         // like <x> ...
-        if( CPLTestBool(CPLGetConfigOption("CPL_MINIXML_RELAXED", "FALSE")) )
+        if( bRecoverableError &&
+            CPLTestBool(CPLGetConfigOption("CPL_MINIXML_RELAXED", "FALSE")) )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Parse error at EOF, not all elements have been closed, "
-                     "starting with %.500s",
-                     sContext.papsStack[sContext.nStackSize-1].
-                         psFirstNode->pszValue );
+            eLastErrorType = CE_Warning;
         }
         else
 #endif
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Parse error at EOF, not all elements have been closed, "
-                      "starting with %.500s",
-                      sContext.papsStack[sContext.nStackSize-1].
-                          psFirstNode->pszValue );
+            eLastErrorType = CE_Failure;
         }
+        CPLError( eLastErrorType, CPLE_AppDefined,
+                    "Parse error at EOF, not all elements have been closed, "
+                    "starting with %.500s",
+                    sContext.papsStack[sContext.nStackSize-1].
+                        psFirstNode->pszValue );
     }
 
 /* -------------------------------------------------------------------- */
@@ -962,14 +993,16 @@ end_processing_close:
     if( sContext.papsStack != NULL )
         CPLFree( sContext.papsStack );
 
-    if( CPLGetLastErrorType() == CE_Failure )
+    // We do not trust CPLGetLastErrorType() as if CPLTurnFailureIntoWarning()
+    // has been set we would never get failures
+    if( eLastErrorType == CE_Failure )
     {
         CPLDestroyXMLNode( sContext.psFirstNode );
         sContext.psFirstNode = NULL;
         sContext.psLastNode = NULL;
     }
 
-    if( CPLGetLastErrorType() == CE_None )
+    if( eLastErrorType == CE_None )
     {
         // Restore initial error state.
         CPLErrorSetState(eErrClass, nErrNum, osErrMsg);
