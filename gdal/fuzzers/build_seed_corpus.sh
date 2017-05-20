@@ -30,6 +30,12 @@ cd $(dirname $0)/../../autotest/gcore/data
 rm -f $OUT/gdal_fuzzer_seed_corpus.zip
 zip -r $OUT/gdal_fuzzer_seed_corpus.zip . >/dev/null
 cd $OLDPWD
+cd $(dirname $0)/../../autotest/gdrivers/data
+zip -r $OUT/gdal_fuzzer_seed_corpus.zip . >/dev/null
+cd $OLDPWD
+
+echo "Building gdal_filesystem_fuzzer_seed_corpus.zip"
+cp $OUT/gdal_fuzzer_seed_corpus.zip $OUT/gdal_filesystem_fuzzer_seed_corpus.zip
 
 echo "Building ogr_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data
