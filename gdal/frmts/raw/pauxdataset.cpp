@@ -76,6 +76,8 @@ class PAuxDataset : public RawDataset
     virtual const char *GetGCPProjection() override;
     virtual const GDAL_GCP *GetGCPs() override;
 
+    virtual char **GetFileList() override;
+
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -332,6 +334,18 @@ PAuxDataset::~PAuxDataset()
 
     CPLFree( pszAuxFilename );
     CSLDestroy( papszAuxLines );
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **PAuxDataset::GetFileList()
+
+{
+    char **papszFileList = RawDataset::GetFileList();
+    papszFileList = CSLAddString( papszFileList, pszAuxFilename );
+    return papszFileList;
 }
 
 /************************************************************************/
@@ -1100,6 +1114,7 @@ void GDALRegister_PAux()
         "       <Value>PIXEL</Value>"
         "   </Option>"
         "</CreationOptionList>" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = PAuxDataset::Open;
     poDriver->pfnCreate = PAuxDataset::Create;
