@@ -28,14 +28,21 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "ogr_api.h"
+#include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 #include "ogrsf_frmts.h"
 
 #ifndef REGISTER_FUNC
 #define REGISTER_FUNC OGRRegisterAll
+#endif
+
+#ifndef EXTENSION
+#define EXTENSION "bin"
 #endif
 
 #ifndef MEM_FILENAME
@@ -46,16 +53,42 @@
 #define GDAL_FILENAME MEM_FILENAME
 #endif
 
+extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
+
+int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
+{
+    const char* exe_path = (*argv)[0];
+    CPLSetConfigOption("GDAL_DATA", CPLGetPath(exe_path));
+    return 0;
+}
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
+#ifdef USE_FILESYSTEM
+    char szTempFilename[64];
+    snprintf(szTempFilename, sizeof(szTempFilename),
+             "/tmp/gdal_fuzzer_%d.%s",
+             (int)getpid(), EXTENSION);
+    VSILFILE* fp = VSIFOpenL(szTempFilename, "wb");
+    if( !fp )
+    {
+        fprintf(stderr, "Cannot create %s\n", szTempFilename);
+        return 1;
+    }
+    VSIFWriteL( buf, 1, len, fp );
+#else
     VSILFILE* fp = VSIFileFromMemBuffer( MEM_FILENAME,
             reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
+#endif
     VSIFCloseL(fp);
     REGISTER_FUNC();
     CPLPushErrorHandler(CPLQuietErrorHandler);
+#ifdef USE_FILESYSTEM
+    OGRDataSourceH hDS = OGROpen( szTempFilename, FALSE, NULL );
+#else
     OGRDataSourceH hDS = OGROpen( GDAL_FILENAME, FALSE, NULL );
+#endif
     if( hDS )
     {
         const int nLayers = OGR_DS_GetLayerCount(hDS);
@@ -71,6 +104,10 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         OGR_DS_Destroy(hDS);
     }
     CPLPopErrorHandler();
+#ifdef USE_FILESYSTEM
+    VSIUnlink( szTempFilename );
+#else
     VSIUnlink( MEM_FILENAME );
+#endif
     return 0;
 }

@@ -98,3 +98,6 @@ rm -r testopenfilegdb.gdb
 rm testopenfilegdb.gdb.tar
 rm -r testopenfilegdb92.gdb
 rm testopenfilegdb92.gdb.tar
+
+echo "Copying data to $OUT"
+cp $(dirname $0)/../data/* $OUT

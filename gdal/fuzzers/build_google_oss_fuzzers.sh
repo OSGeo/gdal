@@ -74,3 +74,6 @@ for F in $fuzzerFiles; do
     fuzzerName=$(basename $F .cpp)
     build_fuzzer $fuzzerName $F
 done
+
+build_fuzzer gdal_filesystem_fuzzer $(dirname $0)/gdal_fuzzer.cpp -DUSE_FILESYSTEM
+build_fuzzer ogr_filesystem_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DUSE_FILESYSTEM
