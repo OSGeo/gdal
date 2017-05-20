@@ -2998,6 +2998,24 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         /*-------------------------------------------------------------
          * Read data from the coord. block
          *------------------------------------------------------------*/
+
+        const int nMinSizeOfSection = 24;
+        if( numLineSections > INT_MAX / nMinSizeOfSection )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too many numLineSections");
+            return -1;
+        }
+        const GUInt32 nMinimumBytesForSections =
+                                nMinSizeOfSection * numLineSections;
+        if( nMinimumBytesForSections > 1024 * 1024 && 
+            nMinimumBytesForSections > poMapFile->GetFileSize() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too many numLineSections");
+            return -1;
+        }
+
         TABMAPCoordSecHdr *pasSecHdrs = static_cast<TABMAPCoordSecHdr *>(
             VSI_MALLOC2_VERBOSE(numLineSections, sizeof(TABMAPCoordSecHdr)));
         if( pasSecHdrs == NULL )
@@ -3019,6 +3037,17 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed reading coordinate data at offset %d",
                      nCoordBlockPtr);
+            CPLFree(pasSecHdrs);
+            return -1;
+        }
+
+        const GUInt32 nMinimumBytesForPoints =
+                        (bComprCoord ? 4 : 8) * numPointsTotal;
+        if( nMinimumBytesForPoints > 1024 * 1024 && 
+            nMinimumBytesForPoints > poMapFile->GetFileSize() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too many numPointsTotal");
             CPLFree(pasSecHdrs);
             return -1;
         }
