@@ -3845,7 +3845,14 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
         bOK &= VSIFSeekL( psImage->psFile->fp, nVQOffset + nVQVector, SEEK_SET ) == 0;
         bOK &= VSIFReadL( psImage->apanVQLUT[i], 4, 4096, psImage->psFile->fp ) == 4096;
         if( !bOK )
+        {
+            for( i = 0; i < 4; i++ )
+            {
+                CPLFree( psImage->apanVQLUT[i] );
+                psImage->apanVQLUT[i] = NULL;
+            }
             return FALSE;
+        }
     }
 
     return TRUE;
