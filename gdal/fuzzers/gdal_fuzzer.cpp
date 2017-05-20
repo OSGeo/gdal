@@ -61,12 +61,24 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     if( hDS )
     {
         const int nBands = std::min(10, GDALGetRasterCount(hDS));
-        for( int i = 0; i < nBands; i++ )
+        bool bDoCheckSum = true;
+        if( nBands > 0 )
         {
-            GDALRasterBandH hBand = GDALGetRasterBand(hDS, i+1);
-            GDALChecksumImage(hBand, 0, 0,
-                                  std::min(1024, GDALGetRasterXSize(hDS)),
-                                  std::min(1024, GDALGetRasterYSize(hDS)));
+            int nBlockXSize = 0, nBlockYSize = 0;
+            GDALGetBlockSize( GDALGetRasterBand(hDS, 1), &nBlockXSize,
+                              &nBlockYSize );
+            if( nBlockXSize > 10 * 1024 * 1024 / nBlockYSize )
+                bDoCheckSum = false;
+        }
+        if( bDoCheckSum )
+        {
+            for( int i = 0; i < nBands; i++ )
+            {
+                GDALRasterBandH hBand = GDALGetRasterBand(hDS, i+1);
+                GDALChecksumImage(hBand, 0, 0,
+                                    std::min(1024, GDALGetRasterXSize(hDS)),
+                                    std::min(1024, GDALGetRasterYSize(hDS)));
+            }
         }
         GDALClose(hDS);
     }
