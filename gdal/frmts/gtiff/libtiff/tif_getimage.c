@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.105 2017-05-18 06:44:35 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.106 2017-05-20 11:29:02 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -2239,6 +2239,11 @@ DECLARESepPutFunc(putseparate8bitYCbCr11tile)
 }
 #undef YCbCrtoRGB
 
+static int isInRefBlackWhiteRange(float f)
+{
+    return f >= (float)(-0x7FFFFFFF + 128) && f <= (float)0x7FFFFFFF;
+}
+
 static int
 initYCbCrConversion(TIFFRGBAImage* img)
 {
@@ -2276,12 +2281,12 @@ initYCbCrConversion(TIFFRGBAImage* img)
             return (0);
         }
 
-        if( refBlackWhite[0] != refBlackWhite[0] ||
-            refBlackWhite[1] != refBlackWhite[1] ||
-            refBlackWhite[2] != refBlackWhite[2] ||
-            refBlackWhite[3] != refBlackWhite[3] ||
-            refBlackWhite[4] != refBlackWhite[4] ||
-            refBlackWhite[5] != refBlackWhite[5] )
+        if( !isInRefBlackWhiteRange(refBlackWhite[0]) ||
+            !isInRefBlackWhiteRange(refBlackWhite[1]) ||
+            !isInRefBlackWhiteRange(refBlackWhite[2]) ||
+            !isInRefBlackWhiteRange(refBlackWhite[3]) ||
+            !isInRefBlackWhiteRange(refBlackWhite[4]) ||
+            !isInRefBlackWhiteRange(refBlackWhite[5]) )
         {
             TIFFErrorExt(img->tif->tif_clientdata, module,
                 "Invalid values for ReferenceBlackWhite tag");
