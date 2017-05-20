@@ -312,6 +312,21 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
         {
             toc->entries[i].frameEntries = NULL;
         }
+        // TODO: We could probably use another data structure, like a list,
+        // instead of an array referenced by the frame coordinate...
+        else if( static_cast<int>(toc->entries[i].nHorizFrames *
+                                  toc->entries[i].nVertFrames) >
+                 atoi(CPLGetConfigOption("RPFTOC_MAX_FRAME_COUNT", "1000000")) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "nHorizFrames=%d x nVertFrames=%d > %d. Please raise "
+                     "the value of the RPFTOC_MAX_FRAME_COUNT configuration "
+                     "option to more than %d if this dataset is legitimate.",
+                     toc->entries[i].nHorizFrames, toc->entries[i].nVertFrames,
+                     atoi(CPLGetConfigOption("RPFTOC_MAX_FRAME_COUNT", "1000000")),
+                     toc->entries[i].nHorizFrames * toc->entries[i].nVertFrames );
+            toc->entries[i].frameEntries = NULL;
+        }
         else
         {
             toc->entries[i].frameEntries = reinterpret_cast<RPFTocFrameEntry*>(
