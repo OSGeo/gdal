@@ -26,7 +26,6 @@ unless (-r $config) {
 # INST_MAN may be set by --mandir=DIR option to configure
 if ($ARGV[0] =~ /INSTALL_BASE=(.*)/) {
     my $INSTALL_BASE = $1;
-    print "$INSTALL_BASE\n";
     my $opt = "$source_tree/GDALmake.opt";
     open(my $fh, "<", $opt) or die "Can't open < $opt: $!";
     while (<$fh>) {
@@ -38,7 +37,6 @@ if ($ARGV[0] =~ /INSTALL_BASE=(.*)/) {
                 die 'prefix in GDALmake.opt is set different to \$INSTALL_BASE' unless $INSTALL_BASE eq $val;
             } elsif ($key eq 'INST_MAN') {
                 $val =~ s/\$\{prefix\}/$INSTALL_BASE/;
-                print "$val\n";
                 push @ARGV, "INSTALLSITEMAN1DIR=$val/man1";
                 push @ARGV, "INSTALLSITEMAN3DIR=$val/man3";
             }
