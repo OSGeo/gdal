@@ -58,6 +58,7 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
     OGRESRIFeatureServiceDataset* poDS;
     OGRFeatureDefn* poFeatureDefn;
     GIntBig         nFeaturesRead;
+    GIntBig         nFirstFID;
     GIntBig         nLastFID;
     bool            bOtherPage;
     bool            bUseSequentialFID;
@@ -116,6 +117,7 @@ OGRESRIFeatureServiceLayer::OGRESRIFeatureServiceLayer(
     OGRESRIFeatureServiceDataset* poDSIn) :
     poDS(poDSIn),
     nFeaturesRead(0),
+    nFirstFID(0),
     nLastFID(0),
     bOtherPage(false),
     bUseSequentialFID(false)
@@ -173,12 +175,22 @@ OGRFeature* OGRESRIFeatureServiceLayer::GetNextFeature()
             if( poSrcFeat == NULL )
                 return NULL;
             bOtherPage = true;
+            if( bWasInFirstPage && poSrcFeat->GetFID() != 0 &&
+                poSrcFeat->GetFID() == nFirstFID )
+            {
+                // End-less looping
+                CPLDebug("ESRIJSON", "Scrolling not working. Stopping");
+                delete poSrcFeat;
+                return NULL;
+            }
+            if( bWasInFirstPage && poSrcFeat->GetFID() == 0 &&
+                nLastFID == nFeaturesRead - 1 )
+            {
+                bUseSequentialFID = true;
+            }
         }
-        if( bOtherPage && bWasInFirstPage && poSrcFeat->GetFID() == 0 &&
-            nLastFID == nFeaturesRead - 1 )
-        {
-            bUseSequentialFID = true;
-        }
+        if( nFeaturesRead == 0 )
+            nFirstFID = poSrcFeat->GetFID();
 
         OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
         poFeature->SetFrom(poSrcFeat);
