@@ -50,7 +50,7 @@ CPL_CVSID("$Id$");
 /*      value in clean form.                                            */
 /************************************************************************/
 
-static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
+static char **GXFReadHeaderValue( VSILFILE * fp, char * pszHTitle )
 
 {
     const char	*pszLine;
@@ -63,7 +63,7 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
 /*      Try to read a line.  If we fail or if this isn't a proper       */
 /*      header value then return the failure.                           */
 /* -------------------------------------------------------------------- */
-    pszLine = CPLReadLine( fp );
+    pszLine = CPLReadLineL( fp );
     if( pszLine == NULL )
     {
         strcpy( pszHTitle, "#EOF" );
@@ -97,7 +97,7 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
 /* -------------------------------------------------------------------- */
     if( pszLine[i] == '\0' )
     {
-        pszLine = CPLReadLine( fp );
+        pszLine = CPLReadLineL( fp );
         if( pszLine == NULL )
         {
             strcpy( pszHTitle, "#EOF" );
@@ -110,7 +110,8 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
 /*      `#' mark at the beginning of a new line.                        */
 /* -------------------------------------------------------------------- */
     do {
-        int		nNextChar;
+        vsi_l_offset    nCurPos;
+        char            chNextChar = 0;
         char		*pszTrimmedLine;
         size_t      nLen = strlen(pszLine);
 
@@ -154,18 +155,19 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
 
         CPLFree( pszTrimmedLine );
 
-        nNextChar = VSIFGetc( fp );
-        if( VSIUngetc( nNextChar, fp ) == EOF)
+        nCurPos = VSIFTellL(fp);
+        if( VSIFReadL(&chNextChar, 1, 1, fp) != 1 )
         {
             CSLDestroy(papszReturn);
             return NULL;
         }
+        VSIFSeekL(fp, nCurPos, SEEK_SET);
 
-        if( nNextChar == '#' )
+        if( chNextChar == '#' )
             pszLine = NULL;
         else
         {
-            pszLine = CPLReadLine( fp );
+            pszLine = CPLReadLineL( fp );
             nLineCount ++;
         }
     } while( pszLine != NULL && nLineCount < MAX_LINE_COUNT_PER_HEADER );
@@ -189,7 +191,7 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
 GXFHandle GXFOpen( const char * pszFilename )
 
 {
-    FILE	*fp;
+    VSILFILE	*fp;
     GXFInfo_t	*psGXF;
     char	szTitle[71];
     char	**papszList;
@@ -203,7 +205,7 @@ GXFHandle GXFOpen( const char * pszFilename )
 /*      all the data to find the right spot taking into account DOS     */
 /*      CRs.                                                            */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, "rb" );
+    fp = VSIFOpenL( pszFilename, "rb" );
 
     if( fp == NULL )
     {
@@ -358,15 +360,15 @@ GXFHandle GXFOpen( const char * pszFilename )
         return NULL;
     }
 
-    psGXF->panRawLineOffset = (long *)
-        VSICalloc( sizeof(long), psGXF->nRawYSize+1 );
+    psGXF->panRawLineOffset = (vsi_l_offset *)
+        VSICalloc( sizeof(vsi_l_offset), psGXF->nRawYSize+1 );
     if( psGXF->panRawLineOffset == NULL )
     {
         GXFClose( psGXF );
         return NULL;
     }
 
-    psGXF->panRawLineOffset[0] = VSIFTell( psGXF->fp );
+    psGXF->panRawLineOffset[0] = VSIFTellL( psGXF->fp );
 
 /* -------------------------------------------------------------------- */
 /*      Update the zmin/zmax values to take into account #TRANSFORM     */
@@ -405,9 +407,9 @@ void GXFClose( GXFHandle hGXF )
     CPLFree( psGXF->pszTitle );
     CPLFree( psGXF->pszTransformName );
 
-    VSIFClose( psGXF->fp );
+    VSIFCloseL( psGXF->fp );
 
-    CPLReadLine( NULL );
+    CPLReadLineL( NULL );
 
     CPLFree( psGXF );
 }
@@ -443,19 +445,19 @@ double GXFParseBase90( GXFInfo_t * psGXF, const char * pszText,
 /*                       GXFReadRawScanlineFrom()                       */
 /************************************************************************/
 
-static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
-                                   long * pnNewOffset, double * padfLineBuf )
+static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, vsi_l_offset iOffset,
+                                      vsi_l_offset * pnNewOffset, double * padfLineBuf )
 
 {
     const char	*pszLine;
     int		nValuesRead = 0, nValuesSought = psGXF->nRawXSize;
 
-    if( VSIFSeek( psGXF->fp, iOffset, SEEK_SET ) != 0 )
+    if( VSIFSeekL( psGXF->fp, iOffset, SEEK_SET ) != 0 )
         return CE_Failure;
 
     while( nValuesRead < nValuesSought )
     {
-        pszLine = CPLReadLine( psGXF->fp );
+        pszLine = CPLReadLineL( psGXF->fp );
         if( pszLine == NULL )
             break;
 
@@ -516,7 +518,7 @@ static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                     nLineLen -= psGXF->nGType;
                     if( nLineLen < psGXF->nGType )
                     {
-                        pszLine = CPLReadLine( psGXF->fp );
+                        pszLine = CPLReadLineL( psGXF->fp );
                         if( pszLine == NULL )
                             return CE_Failure;
                         nLineLenOri = strlen(pszLine);
@@ -531,7 +533,7 @@ static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
 
                     if( nLineLen < psGXF->nGType )
                     {
-                        pszLine = CPLReadLine( psGXF->fp );
+                        pszLine = CPLReadLineL( psGXF->fp );
                         if( pszLine == NULL )
                             return CE_Failure;
                         nLineLenOri = strlen(pszLine);
@@ -571,7 +573,7 @@ static CPLErr GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
 /* -------------------------------------------------------------------- */
     if( pnNewOffset != NULL )
     {
-        *pnNewOffset = VSIFTell( psGXF->fp );
+        *pnNewOffset = VSIFTellL( psGXF->fp );
     }
 
     return CE_None;
