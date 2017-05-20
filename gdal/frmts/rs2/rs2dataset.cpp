@@ -1508,6 +1508,7 @@ void GDALRegister_RS2()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "RadarSat 2 XML Product" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rs2.html" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = RS2Dataset::Open;
     poDriver->pfnIdentify = RS2Dataset::Identify;
