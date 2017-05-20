@@ -183,6 +183,20 @@ if test "x$CXX" = x ; then
   AC_MSG_ERROR("You don't have a working C++ compiler.")
 fi
 
+AC_MSG_CHECKING([for std::isnan])
+AC_LANG_PUSH([C++])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+  [[#include <cmath>
+    int CPLIsNan(float f) { return std::isnan(f); }]])],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_STD_IS_NAN, 1,
+          [Define to 1 if you have the `std::isnan' function.])
+  ], [
+    AC_MSG_RESULT([no])
+  ])
+AC_LANG_POP([C++])
+
 dnl switch between libtool and native build system
 AC_ARG_WITH(libtool, [  --without-libtool     Don't use libtool to build the library],,)
 
