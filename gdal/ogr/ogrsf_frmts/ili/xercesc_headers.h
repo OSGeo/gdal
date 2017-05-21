@@ -46,10 +46,7 @@
 #include <sax2/XMLReaderFactory.hpp>
 #include <dom/DOM.hpp>
 #include <util/XMLString.hpp>
-
-#if _XERCES_VERSION >= 30000
-# include <sax2/Attributes.hpp>
-#endif
+#include <sax2/Attributes.hpp>
 
 #ifdef XERCES_CPP_NAMESPACE_USE
 XERCES_CPP_NAMESPACE_USE

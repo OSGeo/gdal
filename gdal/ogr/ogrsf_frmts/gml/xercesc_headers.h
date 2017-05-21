@@ -46,7 +46,6 @@
 #include <sax2/XMLReaderFactory.hpp>
 #include <sax2/Attributes.hpp>
 #include <sax/InputSource.hpp>
-#include <util/BinInputStream.hpp>
 
 #ifdef XERCES_CPP_NAMESPACE_USE
 XERCES_CPP_NAMESPACE_USE

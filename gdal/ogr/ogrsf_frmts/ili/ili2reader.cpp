@@ -581,19 +581,28 @@ int ILI2Reader::SaveClasses( const char *pszFile = NULL ) {
     // Add logic later to determine reasonable default schema file.
     if( pszFile == NULL )
         return FALSE;
+    
+    VSILFILE* fp = VSIFOpenL(pszFile, "rb");
+    if( fp == NULL )
+        return FALSE;
+
+    InputSource* is = OGRCreateXercesInputSource(fp);
 
     // parse and create layers and features
     try
     {
         CPLDebug( "OGR_ILI", "Parsing %s", pszFile);
-        m_poSAXReader->parse(pszFile);
+        m_poSAXReader->parse(*is);
+        VSIFCloseL(fp);
+        OGRDestroyXercesInputSource(is);
     }
     catch (const SAXException& toCatch)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Parsing failed: %s\n",
                   transcode(toCatch.getMessage()).c_str());
-
+        VSIFCloseL(fp);
+        OGRDestroyXercesInputSource(is);
         return FALSE;
     }
 
