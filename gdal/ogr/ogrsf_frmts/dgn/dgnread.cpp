@@ -1017,9 +1017,9 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           }
           // Read B-Spline surface boundary
           psBounds->number = psDGN->abyElem[36] + psDGN->abyElem[37]*256;
-          psBounds->numverts = numverts;
 
-          for (int i=0;i<psBounds->numverts;i++) {
+          for (int i=0;i<numverts &&
+                       44 + i * 8 + 4 <= psDGN->nElemBytes;i++) {
             psBounds->vertices[i].x = DGN_INT32( psDGN->abyElem + 40 + i*8 );
             psBounds->vertices[i].y = DGN_INT32( psDGN->abyElem + 44 + i*8 );
             psBounds->vertices[i].z = 0;
@@ -1030,6 +1030,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
                 psBounds->vertices[i].x += dx / 32767.0;
                 psBounds->vertices[i].y += dy / 32767.0;
             }
+            psBounds->numverts = i+1;
           }
         }
       break;
