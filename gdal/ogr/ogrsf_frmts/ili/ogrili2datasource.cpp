@@ -115,7 +115,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpen( pszName, "r" );
+    VSILFILE *fp = VSIFOpenL( pszName, "r" );
     if( fp == NULL )
     {
         if( !bTestOpen )
@@ -134,7 +134,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
     if( bTestOpen )
     {
         int nLen = static_cast<int>(
-            VSIFRead( szHeader, 1, sizeof(szHeader), fp ) );
+            VSIFReadL( szHeader, 1, sizeof(szHeader), fp ) );
         if (nLen == sizeof(szHeader))
             szHeader[sizeof(szHeader)-1] = '\0';
         else
@@ -144,7 +144,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
             || strstr(szHeader,"interlis.ch/INTERLIS2") == NULL )
         {
             // "www.interlis.ch/INTERLIS2.3"
-            VSIFClose( fp );
+            VSIFCloseL( fp );
             return FALSE;
         }
     }
@@ -153,7 +153,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
 /*      We assume now that it is ILI2.  Close and instantiate a         */
 /*      ILI2Reader on it.                                               */
 /* -------------------------------------------------------------------- */
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     poReader = CreateILI2Reader();
     if( poReader == NULL )
