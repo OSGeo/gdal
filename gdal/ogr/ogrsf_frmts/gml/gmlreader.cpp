@@ -349,7 +349,7 @@ bool GMLReader::SetupParserXerces()
     }
 
     if (m_GMLInputSource == NULL && fpGML != NULL)
-        m_GMLInputSource = new GMLInputSource(fpGML);
+        m_GMLInputSource = OGRCreateXercesInputSource(fpGML);
 
     return true;
 }
@@ -406,7 +406,7 @@ void GMLReader::CleanupParser()
 #ifdef HAVE_XERCES
     delete m_poSAXReader;
     m_poSAXReader = NULL;
-    delete m_GMLInputSource;
+    OGRDestroyXercesInputSource(m_GMLInputSource);
     m_GMLInputSource = NULL;
     delete m_poCompleteFeature;
     m_poCompleteFeature = NULL;
@@ -433,67 +433,6 @@ void GMLReader::CleanupParser()
 
     m_bReadStarted = false;
 }
-
-#ifdef HAVE_XERCES
-
-GMLBinInputStream::GMLBinInputStream(VSILFILE *fpIn) :
-    fp(fpIn),
-    emptyString(0)
-#ifdef WORKAROUND_XERCESC_2094
-    ,bFirstCallToReadBytes(true)
-#endif
-{}
-
-GMLBinInputStream::~GMLBinInputStream() {}
-
-XMLFilePos GMLBinInputStream::curPos() const
-{
-    return (XMLFilePos)VSIFTellL(fp);
-}
-
-XMLSize_t GMLBinInputStream::readBytes(XMLByte* const toFill, const XMLSize_t maxToRead)
-{
-    XMLSize_t nRead = (XMLSize_t)VSIFReadL(toFill, 1, maxToRead, fp);
-#ifdef WORKAROUND_XERCESC_2094
-    if( bFirstCallToReadBytes && nRead > 10 )
-    {
-        // Workaround leak in Xerces-C when parsing an invalid encoding
-        // attribute and there are newline characters between <?xml and
-        // version="1.0". So replace those newlines by equivalent spaces....
-        // See https://issues.apache.org/jira/browse/XERCESC-2094
-        XMLSize_t nToSkip = 0;
-        if( memcmp(toFill, "<?xml", 5) == 0 )
-            nToSkip = 5;
-        else if( memcmp(toFill, "\xEF\xBB\xBF<?xml", 8) == 0 )
-            nToSkip = 8;
-        if( nToSkip > 0 )
-        {
-            for( XMLSize_t i = nToSkip; i < nRead; i++ )
-            {
-                if( toFill[i] == 0xD || toFill[i] == 0xA )
-                    toFill[i] = ' ';
-                else
-                    break;
-            }
-        }
-        bFirstCallToReadBytes = false;
-    }
-#endif
-    return nRead;
-}
-
-const XMLCh *GMLBinInputStream::getContentType() const { return &emptyString; }
-
-GMLInputSource::GMLInputSource(VSILFILE *fp, MemoryManager *const manager) :
-    InputSource(manager),
-    binInputStream(new GMLBinInputStream(fp))
-{}
-
-GMLInputSource::~GMLInputSource() {}
-
-BinInputStream *GMLInputSource::makeStream() const { return binInputStream; }
-
-#endif  // HAVE_XERCES
 
 /************************************************************************/
 /*                        NextFeatureXerces()                           */
