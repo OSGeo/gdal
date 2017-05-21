@@ -259,7 +259,7 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
       const char *firsttok = CSLGetField(tokens, 0);
       if (EQUAL(firsttok, "OBJE"))
       {
-        if (featureDef->GetFieldCount() == 0)
+        if (featureDef->GetFieldCount() == 0 && curLayer->GetFeatureCount() == 0)
         {
           CPLError( CE_Warning, CPLE_AppDefined,
                     "No field definition found for table: %s",
