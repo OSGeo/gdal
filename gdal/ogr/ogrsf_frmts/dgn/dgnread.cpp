@@ -74,7 +74,7 @@ int DGNGotoElement( DGNHandle hDGN, int element_id )
     if( element_id < 0 || element_id >= psDGN->element_count )
         return FALSE;
 
-    if( VSIFSeek( psDGN->fp, psDGN->element_index[element_id].offset,
+    if( VSIFSeekL( psDGN->fp, psDGN->element_index[element_id].offset,
                   SEEK_SET ) != 0 )
         return FALSE;
 
@@ -95,7 +95,7 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /*      Read the first four bytes to get the level, type, and word      */
 /*      count.                                                          */
 /* -------------------------------------------------------------------- */
-    if( VSIFRead( psDGN->abyElem, 1, 4, psDGN->fp ) != 4 )
+    if( VSIFReadL( psDGN->abyElem, 1, 4, psDGN->fp ) != 4 )
         return FALSE;
 
     /* Is this an 0xFFFF endof file marker? */
@@ -113,7 +113,7 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
         return FALSE;
 
     /* coverity[tainted_data] */
-    if( (int) VSIFRead( psDGN->abyElem + 4, 2, nWords, psDGN->fp ) != nWords )
+    if( (int) VSIFReadL( psDGN->abyElem + 4, 2, nWords, psDGN->fp ) != nWords )
         return FALSE;
 
     psDGN->nElemBytes = nWords * 2 + 4;
@@ -1100,7 +1100,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
     psElement->element_id = psDGN->next_element_id - 1;
 
     psElement->offset =
-        static_cast<int>(VSIFTell( psDGN->fp )) - psDGN->nElemBytes;
+        static_cast<int>(VSIFTellL( psDGN->fp )) - psDGN->nElemBytes;
     psElement->size = psDGN->nElemBytes;
 
     return psElement;
@@ -1600,7 +1600,7 @@ void DGNRewind( DGNHandle hDGN )
 {
     DGNInfo *psDGN = (DGNInfo *) hDGN;
 
-    VSIRewind( psDGN->fp );
+    VSIRewindL( psDGN->fp );
 
     psDGN->next_element_id = 0;
     psDGN->in_complex_group = false;
@@ -1825,7 +1825,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
 
     int nMaxElements = 0;
 
-    long nLastOffset = VSIFTell( psDGN->fp );
+    long nLastOffset = VSIFTellL( psDGN->fp );
     while( DGNLoadRawElement( psDGN, &nType, &nLevel ) )
     {
         if( psDGN->element_count == nMaxElements )
@@ -1932,7 +1932,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
 
         psDGN->element_count++;
 
-        nLastOffset = VSIFTell( psDGN->fp );
+        nLastOffset = VSIFTellL( psDGN->fp );
     }
 
     DGNRewind( psDGN );
