@@ -64,8 +64,7 @@ build_ogr_specialized_fuzzer mitab_tab OGRRegisterAll "/vsimem/test.tar" "/vsita
 
 formats="GTiff HFA"
 for format in $formats; do
-    format_lc=$(echo $format | tr '[:upper:]' '[:lower:]')
-    fuzzerName="${format_lc}_fuzzer"
+    fuzzerName=$(echo $format | tr '[:upper:]' '[:lower:]')
     build_gdal_specialized_fuzzer $fuzzerName "GDALRegister_$format" "/vsimem/test" "/vsimem/test"
 done
 
