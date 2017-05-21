@@ -305,7 +305,13 @@ static OGRCurvePolygon *getPolygon(DOMElement *elem) {
   while (boundaryElem != NULL) {
     char* pszTagName = XMLString::transcode(boundaryElem->getTagName());
     if (cmpStr(ILI2_BOUNDARY, pszTagName) == 0)
-      pg->addRingDirectly(getBoundary(boundaryElem));
+    {
+        OGRCompoundCurve* poCC = getBoundary(boundaryElem);
+        if( pg->addRingDirectly(poCC) != OGRERR_NONE )
+        {
+            delete poCC;
+        }
+    }
     XMLString::release(&pszTagName);
     boundaryElem = (DOMElement *)boundaryElem->getNextSibling(); // inner boundaries
   }
