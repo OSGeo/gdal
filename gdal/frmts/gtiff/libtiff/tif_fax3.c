@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.c,v 1.79 2017-02-25 17:05:12 erouault Exp $ */
+/* $Id: tif_fax3.c,v 1.80 2017-04-27 19:50:01 erouault Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -1129,7 +1129,7 @@ Fax3PostEncode(TIFF* tif)
 static void
 Fax3Close(TIFF* tif)
 {
-	if ((Fax3State(tif)->mode & FAXMODE_NORTC) == 0) {
+	if ((Fax3State(tif)->mode & FAXMODE_NORTC) == 0 && tif->tif_rawcp) {
 		Fax3CodecState* sp = EncoderState(tif);
 		unsigned int code = EOL;
 		unsigned int length = 12;
@@ -1351,6 +1351,7 @@ InitCCITTFax3(TIFF* tif)
 		    "No space for state block");
 		return (0);
 	}
+	_TIFFmemset(tif->tif_data, 0, sizeof (Fax3CodecState));
 
 	sp = Fax3State(tif);
         sp->rw_mode = tif->tif_mode;
