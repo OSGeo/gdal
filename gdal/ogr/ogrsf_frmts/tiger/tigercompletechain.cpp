@@ -461,6 +461,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
                          poLine, 0 ) )
     {
         delete poFeature;
+        delete poLine;
         return NULL;
     }
 
