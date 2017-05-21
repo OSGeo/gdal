@@ -210,46 +210,6 @@ public:
 
 #if defined(HAVE_XERCES)
 
-#define WORKAROUND_XERCESC_2094
-
-/************************************************************************/
-/*                        GMLBinInputStream                             */
-/************************************************************************/
-class GMLBinInputStream : public BinInputStream
-{
-    VSILFILE* fp;
-    XMLCh emptyString;
-#ifdef WORKAROUND_XERCESC_2094
-    bool bFirstCallToReadBytes;
-#endif
-
-public :
-
-    explicit GMLBinInputStream(VSILFILE* fp);
-    virtual ~GMLBinInputStream();
-
-    virtual XMLFilePos curPos() const override;
-    virtual XMLSize_t readBytes(XMLByte* const toFill, const XMLSize_t maxToRead) override;
-    virtual const XMLCh* getContentType() const override ;
-};
-
-/************************************************************************/
-/*                           GMLInputSource                             */
-/************************************************************************/
-
-class GMLInputSource : public InputSource
-{
-    // TODO(schwehr): Rename to pBinInputStream to not look like a bool.
-    GMLBinInputStream* binInputStream;
-
-public:
-             GMLInputSource(VSILFILE* fp,
-                            MemoryManager* const manager = XMLPlatformUtils::fgMemoryManager);
-    virtual ~GMLInputSource();
-
-    virtual BinInputStream* makeStream() const override;
-};
-
 /************************************************************************/
 /*                         GMLXercesHandler                             */
 /************************************************************************/
@@ -380,7 +340,7 @@ class GMLReader : public IGMLReader
     SAX2XMLReader *m_poSAXReader;
     XMLPScanToken m_oToFill;
     GMLFeature   *m_poCompleteFeature;
-    GMLInputSource *m_GMLInputSource;
+    InputSource  *m_GMLInputSource;
     bool          m_bEOF;
     bool          m_bXercesInitialized;
     bool          SetupParserXerces();
