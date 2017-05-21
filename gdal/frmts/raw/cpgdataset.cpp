@@ -32,6 +32,8 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
+#include <vector>
+
 CPL_CVSID("$Id$");
 
 enum Interleave { BSQ, BIL, BIP };
@@ -50,7 +52,8 @@ class CPGDataset : public RawDataset
     friend class SIRC_QSLCRasterBand;
     friend class CPG_STOKESRasterBand;
 
-    FILE *afpImage[4];
+    VSILFILE *afpImage[4];
+    std::vector<CPLString> aosImageFilenames;
 
     int nGCPCount;
     GDAL_GCP *pasGCPList;
@@ -85,6 +88,8 @@ class CPGDataset : public RawDataset
 
     virtual const char *GetProjectionRef(void) override;
     virtual CPLErr GetGeoTransform( double * ) override;
+
+    virtual char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -125,7 +130,7 @@ CPGDataset::~CPGDataset()
     for( int iBand = 0; iBand < 4; iBand++ )
     {
         if( afpImage[iBand] != NULL )
-            VSIFClose( afpImage[iBand] );
+            VSIFCloseL( afpImage[iBand] );
     }
 
     if( nGCPCount > 0 )
@@ -137,6 +142,19 @@ CPGDataset::~CPGDataset()
     CPLFree( pszProjection );
     CPLFree( pszGCPProjection );
     CPLFree( padfStokesMatrix );
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **CPGDataset::GetFileList()
+
+{
+    char **papszFileList = RawDataset::GetFileList();
+    for( size_t i = 0; i < aosImageFilenames.size(); ++i )
+        papszFileList = CSLAddString(papszFileList, aosImageFilenames[i]);
+    return papszFileList;
 }
 
 /************************************************************************/
@@ -244,8 +262,8 @@ int CPGDataset::AdjustFilename( char **pszFilename,
         CPLFree(*pszFilename);
         *pszFilename = CPLStrdup(pszNewName);
     }
-    VSIStatBuf sStatBuf;
-    return VSIStat( *pszFilename, &sStatBuf ) == 0;
+    VSIStatBufL sStatBuf;
+    return VSIStatL( *pszFilename, &sStatBuf ) == 0;
 }
 
 /************************************************************************/
@@ -351,8 +369,8 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
     {
         const int offset = nRasterXSize * iLine * nDataSize * 16;
         const int nBytesToRead = nDataSize * nRasterXSize*16;
-        if (( VSIFSeek( afpImage[0], offset, SEEK_SET ) != 0 ) ||
-            static_cast<int>( VSIFRead(
+        if (( VSIFSeekL( afpImage[0], offset, SEEK_SET ) != 0 ) ||
+            static_cast<int>( VSIFReadL(
                 reinterpret_cast<GByte *>( padfStokesMatrix ),
                 1, nBytesToRead, afpImage[0] ) ) != nBytesToRead )
         {
@@ -373,8 +391,8 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
             const int offset = nDataSize * (nRasterXSize * iLine +
                                             nRasterXSize*band_index);
             const int nBytesToRead = nDataSize * nRasterXSize;
-            if (( VSIFSeek( afpImage[0], offset, SEEK_SET ) != 0 ) ||
-               static_cast<int>( VSIFRead(
+            if (( VSIFSeekL( afpImage[0], offset, SEEK_SET ) != 0 ) ||
+               static_cast<int>( VSIFReadL(
                    reinterpret_cast<GByte *>(
                        padfStokesMatrix + nBytesToRead*band_index ),
                    1, nBytesToRead, afpImage[0] ) ) != nBytesToRead )
@@ -398,8 +416,8 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
                 nDataSize * ( nRasterXSize * iLine +
                               nRasterXSize * nRasterYSize * band_index );
             const int nBytesToRead = nDataSize * nRasterXSize;
-            if (( VSIFSeek( afpImage[0], offset, SEEK_SET ) != 0 ) ||
-               static_cast<int>( VSIFRead(
+            if (( VSIFSeekL( afpImage[0], offset, SEEK_SET ) != 0 ) ||
+               static_cast<int>( VSIFReadL(
                    reinterpret_cast<GByte *>(
                        padfStokesMatrix + nBytesToRead * band_index ),
                    1, nBytesToRead, afpImage[0] ) ) != nBytesToRead )
@@ -597,7 +615,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
     {
 
         AdjustFilename( &pszWorkname, "" , "img" );
-        poDS->afpImage[0] = VSIFOpen( pszWorkname, "rb" );
+        poDS->afpImage[0] = VSIFOpenL( pszWorkname, "rb" );
         if( poDS->afpImage[0] == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
@@ -607,6 +625,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
             delete poDS;
             return NULL;
         }
+        poDS->aosImageFilenames.push_back(pszWorkname);
         for( int iBand = 0; iBand < 4; iBand++ )
         {
             SIRC_QSLCRasterBand *poBand =
@@ -622,7 +641,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
         {
             AdjustFilename( &pszWorkname, apszPolarizations[iBand], "img" );
 
-            poDS->afpImage[iBand] = VSIFOpen( pszWorkname, "rb" );
+            poDS->afpImage[iBand] = VSIFOpenL( pszWorkname, "rb" );
             if( poDS->afpImage[iBand] == NULL )
             {
                 CPLError( CE_Failure, CPLE_OpenFailed,
@@ -632,11 +651,12 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
                 delete poDS;
                 return NULL;
             }
+            poDS->aosImageFilenames.push_back(pszWorkname);
 
             RawRasterBand *poBand
                 = new RawRasterBand( poDS, iBand+1, poDS->afpImage[iBand],
                                      0, 8, 8*nSamples,
-                                     GDT_CFloat32, !CPL_IS_LSB, FALSE );
+                                     GDT_CFloat32, !CPL_IS_LSB, TRUE );
             poDS->SetBand( iBand+1, poBand );
 
             poBand->SetMetadataItem( "POLARIMETRIC_INTERP",
@@ -973,7 +993,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 
     AdjustFilename( &pszWorkname, "stokes" , "img" );
-    poDS->afpImage[0] = VSIFOpen( pszWorkname, "rb" );
+    poDS->afpImage[0] = VSIFOpenL( pszWorkname, "rb" );
     if( poDS->afpImage[0] == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -983,6 +1003,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
         delete poDS;
         return NULL;
     }
+    aosImageFilenames.push_back(pszWorkname);
     for( int iBand = 0; iBand < 16; iBand++ )
     {
         CPG_STOKESRasterBand *poBand
@@ -1246,8 +1267,8 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     GByte *pabyRecord = reinterpret_cast<GByte *>(
         CPLMalloc( nBytesToRead ) );
 
-    if( VSIFSeek( poGDS->afpImage[0], offset, SEEK_SET ) != 0
-        || static_cast<int>( VSIFRead(
+    if( VSIFSeekL( poGDS->afpImage[0], offset, SEEK_SET ) != 0
+        || static_cast<int>( VSIFReadL(
             pabyRecord, 1, nBytesToRead, poGDS->afpImage[0] ) )
         != nBytesToRead )
     {
@@ -1642,6 +1663,7 @@ void GDALRegister_CPG()
     poDriver->SetDescription( "CPG" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Convair PolGASP" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = CPGDataset::Open;
 
