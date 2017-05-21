@@ -94,7 +94,7 @@ static int ReadVarInt32(GByte** ppabyData)
         if( nShift >= 32 )
         {
             *ppabyData = pabyData;
-            return nVal | (nByte << nShift);
+            return nVal;
         }
     }
 }
@@ -138,7 +138,7 @@ static unsigned int ReadVarUInt32(GByte** ppabyData)
         if( nShift >= 32 )
         {
             *ppabyData = pabyData;
-            return nVal | (nByte << nShift);
+            return nVal;
         }
     }
 }
@@ -181,7 +181,7 @@ static GIntBig ReadVarInt64(GByte** ppabyData)
         if( nShift >= 64 )
         {
             *ppabyData = pabyData;
-            return nVal | ((GIntBig)nByte << nShift);
+            return nVal;
         }
     }
 }
