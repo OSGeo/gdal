@@ -315,19 +315,6 @@ DGNHandle
 
 {
 /* -------------------------------------------------------------------- */
-/*      Open seed file, and read TCB element.                           */
-/* -------------------------------------------------------------------- */
-    DGNInfo *psSeed = (DGNInfo *) DGNOpen( pszSeedFile, FALSE );
-    if( psSeed == NULL )
-        return NULL;
-
-    DGNSetOptions( psSeed, DGNO_CAPTURE_RAW_DATA );
-
-    DGNElemCore *psSrcTCB = DGNReadElement( psSeed );
-
-    CPLAssert( psSrcTCB->raw_bytes >= 1536 );
-
-/* -------------------------------------------------------------------- */
 /*      Open output file.                                               */
 /* -------------------------------------------------------------------- */
     VSILFILE *fpNew = VSIFOpenL( pszNewFilename, "wb" );
@@ -337,6 +324,22 @@ DGNHandle
                   "Failed to open output file: %s", pszNewFilename );
         return NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Open seed file, and read TCB element.                           */
+/* -------------------------------------------------------------------- */
+    DGNInfo *psSeed = (DGNInfo *) DGNOpen( pszSeedFile, FALSE );
+    if( psSeed == NULL )
+    {
+        VSIFCloseL( fpNew );
+        return NULL;
+    }
+
+    DGNSetOptions( psSeed, DGNO_CAPTURE_RAW_DATA );
+
+    DGNElemCore *psSrcTCB = DGNReadElement( psSeed );
+
+    CPLAssert( psSrcTCB->raw_bytes >= 1536 );
 
 /* -------------------------------------------------------------------- */
 /*      Modify TCB appropriately for the output file.                   */
