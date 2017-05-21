@@ -376,7 +376,8 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
         OGRwkbGeometryType geomType
             = (geomIdx < featureDef->GetGeomFieldCount()) ?
                featureDef->GetGeomFieldDefn(geomIdx)->GetType() : wkbNone;
-        ReadGeom(tokens, geomIdx, geomType, feature);
+        if( CSLCount(tokens) >= 3 )
+            ReadGeom(tokens, geomIdx, geomType, feature);
       }
       else if (EQUAL(firsttok, "ELIN"))
       {
@@ -391,7 +392,8 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
             geomIdx++;
         } while (geomIdx < featureDef->GetGeomFieldCount() &&
                  featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint);
-        ReadGeom(tokens, geomIdx, wkbMultiLineString, feature);
+        if( CSLCount(tokens) >= 3 )
+            ReadGeom(tokens, geomIdx, wkbMultiLineString, feature);
       }
       else if (EQUAL(firsttok, "PERI"))
       {
@@ -463,7 +465,11 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
     while (!end && (tokens = ReadParseLine()) != NULL)
     {
       const char *firsttok = CSLGetField(tokens, 0);
-      if (EQUAL(firsttok, "LIPT"))
+      if( firsttok == NULL )
+      {
+          // do nothing
+      }
+      else if (EQUAL(firsttok, "LIPT") && CSLCount(tokens) >= 3)
       {
         ogrPoint.setX(CPLAtof(tokens[1])); ogrPoint.setY(CPLAtof(tokens[2]));
         if (arc) {
@@ -476,7 +482,7 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
         }
         ogrLine->addPoint(&ogrPoint);
       }
-      else if (EQUAL(firsttok, "ARCP"))
+      else if (EQUAL(firsttok, "ARCP") && CSLCount(tokens) >= 3)
       {
         //Finish line and start arc
         if (ogrLine->getNumPoints() > 1) {
@@ -646,7 +652,13 @@ char ** ILI1Reader::ReadParseLine()
     if (strlen(pszLine) == 0) return NULL;
 
     char **tokens = CSLTokenizeString2( pszLine, " ", CSLT_PRESERVEESCAPES );
-    char *token = tokens[CSLCount(tokens)-1];
+    int nCount = CSLCount(tokens);
+    if( nCount == 0 )
+    {
+        CSLDestroy(tokens);
+        return NULL;
+    }
+    const char *token = tokens[nCount-1];
 
     //Append CONT lines
     while (strlen(pszLine) && token[0] == codeContinue && token[1] == '\0')
