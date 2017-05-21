@@ -67,7 +67,7 @@ ILI1Reader::ILI1Reader() :
 
 ILI1Reader::~ILI1Reader()
 {
-  if (fpItf) VSIFClose( fpItf );
+  if (fpItf) VSIFCloseL( fpItf );
 
   for( int i=0; i < nLayers; i++)
      delete papoLayers[i];
@@ -79,7 +79,7 @@ ILI1Reader::~ILI1Reader()
 /* -------------------------------------------------------------------- */
 int ILI1Reader::OpenFile( const char *pszFilename )
 {
-    fpItf = VSIFOpen( pszFilename, "r" );
+    fpItf = VSIFOpenL( pszFilename, "r" );
     if( fpItf == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -163,7 +163,7 @@ int ILI1Reader::ReadFeatures() {
         //read description
         do
         {
-          pszLine = CPLReadLine( fpItf );
+          pszLine = CPLReadLineL( fpItf );
         }
         while (pszLine && !STARTS_WITH_CI(pszLine, "////"));
         ret = (pszLine != NULL);
@@ -173,7 +173,7 @@ int ILI1Reader::ReadFeatures() {
         //read model
         do
         {
-          pszLine = CPLReadLine( fpItf );
+          pszLine = CPLReadLineL( fpItf );
         }
         while (pszLine && !STARTS_WITH_CI(pszLine, "////"));
         ret = (pszLine != NULL);
@@ -641,7 +641,7 @@ char ** ILI1Reader::ReadParseLine()
     if( fpItf == NULL )
         return NULL;
 
-    const char  *pszLine = CPLReadLine( fpItf );
+    const char  *pszLine = CPLReadLineL( fpItf );
     if( pszLine == NULL )
         return NULL;
 
@@ -657,7 +657,7 @@ char ** ILI1Reader::ReadParseLine()
       CPLFree(tokens[CSLCount(tokens)-1]);
       tokens[CSLCount(tokens)-1] = NULL;
 
-      pszLine = CPLReadLine( fpItf );
+      pszLine = CPLReadLineL( fpItf );
       if( pszLine == NULL )
       {
           break;

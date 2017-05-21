@@ -107,6 +107,7 @@ void RegisterOGRILI1() {
 "<OpenOptionList>"
 "  <Option name='MODEL' type='string' description='Filename of the model in IlisMeta format (.imd)'/>"
 "</OpenOptionList>" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRILI1DriverOpen;
     poDriver->pfnCreate = OGRILI1DriverCreate;
