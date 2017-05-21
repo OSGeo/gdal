@@ -821,12 +821,11 @@ int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
 void VSIMemFilesystemHandler::NormalizePath( CPLString &oPath )
 
 {
-    const size_t nSize = oPath.size();
-
-    for( size_t i = 0; i < nSize; i++ )
+    size_t nPos = 0;
+    while( (nPos = oPath.find('\\', nPos)) != std::string::npos )
     {
-        if( oPath[i] == '\\' )
-            oPath[i] = '/';
+        oPath[nPos] = '/';
+        nPos ++;
     }
 }
 

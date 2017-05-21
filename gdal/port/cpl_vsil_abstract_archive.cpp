@@ -476,6 +476,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
     }
 
     const std::vector<CPLString> oExtensions = GetExtensions();
+    int nAttempts = 0;
     while( pszFilename[i] )
     {
         int nToSkip = 0;
@@ -504,6 +505,13 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
 
         if( nToSkip != 0 )
         {
+            nAttempts ++;
+            // Arbitrary threshold to avoid DoS with things like
+            // /vsitar/my.tar/my.tar/my.tar/my.tar/my.tar/my.tar/my.tar
+            if( nAttempts == 5 )
+            {
+                break;
+            }
             VSIStatBufL statBuf;
             char* archiveFilename = CPLStrdup(pszFilename);
             bool bArchiveFileExists = false;
