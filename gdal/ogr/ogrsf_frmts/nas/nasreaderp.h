@@ -171,6 +171,8 @@ private:
     GMLReadState *m_poState;
 
     GMLFeature   *m_poCompleteFeature;
+    VSILFILE     *m_fp;
+    InputSource  *m_GMLInputSource;
 
     bool          SetupParser();
     void          CleanupParser();

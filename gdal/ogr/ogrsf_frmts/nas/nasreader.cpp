@@ -74,6 +74,8 @@ NASReader::NASReader() :
     m_bXercesInitialized(false),
     m_poState(NULL),
     m_poCompleteFeature(NULL),
+    m_fp(NULL),
+    m_GMLInputSource(NULL),
     m_pszFilteredClassName(NULL)
 {}
 
@@ -89,6 +91,9 @@ NASReader::~NASReader()
     CPLFree( m_pszFilename );
 
     CleanupParser();
+
+    if( m_fp )
+        VSIFCloseL(m_fp);
 
     if( m_bXercesInitialized )
         OGRDeinitializeXerces();
@@ -124,6 +129,12 @@ const char* NASReader::GetSourceFileName()
 bool NASReader::SetupParser()
 
 {
+    if( m_fp == NULL )
+        m_fp = VSIFOpenL( m_pszFilename, "rb" );
+    if( m_fp == NULL )
+        return false;
+    VSIFSeekL(m_fp, 0, SEEK_SET);
+
     if( !m_bXercesInitialized )
     {
         if( !OGRInitializeXerces() )
@@ -188,6 +199,11 @@ bool NASReader::SetupParser()
     // Push an empty state.
     PushState( new GMLReadState() );
 
+    if (m_GMLInputSource == NULL )
+    {
+        m_GMLInputSource = OGRCreateXercesInputSource(m_fp);
+    }
+
     return true;
 }
 
@@ -213,6 +229,9 @@ void NASReader::CleanupParser()
     delete m_poCompleteFeature;
     m_poCompleteFeature = NULL;
 
+    OGRDestroyXercesInputSource(m_GMLInputSource);
+    m_GMLInputSource = NULL;
+
     m_bReadStarted = false;
 }
 
@@ -234,7 +253,7 @@ GMLFeature *NASReader::NextFeature()
             if( m_poSAXReader == NULL )
                 return NULL;
 
-            if( !m_poSAXReader->parseFirst( m_pszFilename, m_oToFill ) )
+            if( !m_poSAXReader->parseFirst( *m_GMLInputSource, m_oToFill ) )
                 return NULL;
             m_bReadStarted = true;
         }
@@ -796,15 +815,15 @@ bool NASReader::SaveClasses( const char *pszFile )
 
     CPLDestroyXMLNode( psRoot );
 
-    FILE *fp = VSIFOpen( pszFile, "wb" );
+    VSILFILE *fp = VSIFOpenL( pszFile, "wb" );
 
     if( fp == NULL )
         bSuccess = false;
     else
     {
-        if( VSIFWrite( pszWholeText, strlen(pszWholeText), 1, fp ) != 1 )
+        if( VSIFWriteL( pszWholeText, strlen(pszWholeText), 1, fp ) != 1 )
             bSuccess = false;
-        VSIFClose( fp );
+        VSIFCloseL( fp );
     }
 
     CPLFree( pszWholeText );
