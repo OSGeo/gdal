@@ -861,7 +861,7 @@ void L1BDataset::ProcessRecordHeaders()
 /*      but the longest swaths.                                         */
 /* -------------------------------------------------------------------- */
     int nTargetLines;
-    double dfLineStep;
+    double dfLineStep = 0.0;
 
     if( bHighGCPDensityStrategy )
     {
@@ -888,7 +888,8 @@ void L1BDataset::ProcessRecordHeaders()
     {
         nTargetLines = std::min(DESIRED_LINES_OF_GCPS, nRasterYSize);
     }
-    dfLineStep = 1.0 * (nRasterYSize - 1) / ( nTargetLines - 1 );
+    if( nTargetLines > 1 )
+        dfLineStep = 1.0 * (nRasterYSize - 1) / ( nTargetLines - 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the GCP list.                                        */
