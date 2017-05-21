@@ -1455,6 +1455,7 @@ void GDALRegister_Rasterlite()
 "   <Option name='TARGET' type='int' description='(EPSILON driver) target size reduction as a percentage of the original (0-100)' default='96'/>"
 "   <Option name='FILTER' type='string' description='(EPSILON driver) Filter ID' default='daub97lift'/>"
 "</CreationOptionList>" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = RasterliteDataset::Open;
     poDriver->pfnIdentify = RasterliteDataset::Identify;
