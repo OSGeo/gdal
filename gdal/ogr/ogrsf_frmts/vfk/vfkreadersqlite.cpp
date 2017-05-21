@@ -690,11 +690,11 @@ OGRErr VFKReaderSQLite::ExecuteSQL( const char *pszSQLCommand, bool bQuiet )
         if (!bQuiet)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "In ExecuteSQL(%s): %s",
-                     pszSQLCommand, pszErrMsg);
+                     pszSQLCommand, pszErrMsg ? pszErrMsg : "(null)");
         else
             CPLError(CE_Warning, CPLE_AppDefined,
                      "In ExecuteSQL(%s): %s",
-                     pszSQLCommand, pszErrMsg);
+                     pszSQLCommand, pszErrMsg ? pszErrMsg : "(null)");
 
         sqlite3_free(pszErrMsg);
         return  OGRERR_FAILURE;
