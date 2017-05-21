@@ -1567,6 +1567,7 @@ void GDALRegister_Leveller()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ter" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Leveller heightfield" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_leveller.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnIdentify = LevellerDataset::Identify;
     poDriver->pfnOpen = LevellerDataset::Open;
