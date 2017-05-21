@@ -475,7 +475,10 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
           arc->addPoint(&ogrPoint);
           OGRErr error =  ogrCurve->addCurveDirectly(arc);
           if (error != OGRERR_NONE) {
-            CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", arc->exportToJson() );
+            char* pszJSon = arc->exportToJson();
+            CPLError(CE_Warning, CPLE_AppDefined, "Could not add geometry: %s",
+                     pszJSon ? pszJSon : "(null)" );
+            CPLFree(pszJSon);
             delete arc;
           }
           arc = NULL;
@@ -488,7 +491,11 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
         if (ogrLine->getNumPoints() > 1) {
           OGRErr error = ogrCurve->addCurveDirectly(ogrLine);
           if (error != OGRERR_NONE) {
-            CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ogrLine->exportToJson() );
+            char* pszJSon = ogrLine->exportToJson();
+            CPLError(CE_Warning, CPLE_AppDefined, "Could not add geometry: %s",
+                     pszJSon ? pszJSon : "(null)" );
+            CPLFree(pszJSon);
+            delete ogrLine;
           }
           ogrLine = new OGRLineString();
         } else {
@@ -505,7 +512,11 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
         if (ogrLine->getNumPoints() > 1) { // Ignore single LIPT after ARCP
           OGRErr error = ogrCurve->addCurveDirectly(ogrLine);
           if (error != OGRERR_NONE) {
-            CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ogrLine->exportToJson() );
+            char* pszJSon = ogrLine->exportToJson();
+            CPLError(CE_Warning, CPLE_AppDefined, "Could not add geometry: %s",
+                     pszJSon ? pszJSon : "(null)" );
+            CPLFree(pszJSon);
+            delete ogrLine;
           }
           ogrLine = NULL;
         }
@@ -514,7 +525,11 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
           {
             OGRErr error = ogrMultiLine->addGeometryDirectly(ogrCurve);
             if (error != OGRERR_NONE) {
-              CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ogrCurve->exportToJson() );
+              char* pszJSon = ogrCurve->exportToJson();
+              CPLError(CE_Warning, CPLE_AppDefined, "Could not add geometry: %s",
+                       pszJSon ? pszJSon : "(null)" );
+              CPLFree(pszJSon);
+              delete ogrCurve;
             }
             ogrCurve = NULL;
           }
@@ -522,7 +537,11 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
           {
             OGRErr error = ogrPoly->addRingDirectly(ogrCurve);
             if (error != OGRERR_NONE) {
-              CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ogrCurve->exportToJson() );
+              char* pszJSon = ogrCurve->exportToJson();
+              CPLError(CE_Warning, CPLE_AppDefined, "Could not add geometry: %s",
+                       pszJSon ? pszJSon : "(null)" );
+              CPLFree(pszJSon);
+              delete ogrCurve;
             }
             ogrCurve = NULL;
           }
