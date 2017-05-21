@@ -1030,7 +1030,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
                 psBounds->vertices[i].x += dx / 32767.0;
                 psBounds->vertices[i].y += dy / 32767.0;
             }
-            psBounds->numverts = i+1;
+            psBounds->numverts = static_cast<short>(i+1);
           }
         }
       break;
