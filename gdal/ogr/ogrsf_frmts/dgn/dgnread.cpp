@@ -1825,7 +1825,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
 
     int nMaxElements = 0;
 
-    long nLastOffset = VSIFTellL( psDGN->fp );
+    vsi_l_offset nLastOffset = VSIFTellL( psDGN->fp );
     while( DGNLoadRawElement( psDGN, &nType, &nLevel ) )
     {
         if( psDGN->element_count == nMaxElements )
@@ -1841,7 +1841,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
         psEI->level = (unsigned char) nLevel;
         psEI->type = (unsigned char) nType;
         psEI->flags = 0;
-        psEI->offset = (long) nLastOffset;
+        psEI->offset = nLastOffset;
 
         if( psDGN->abyElem[0] & 0x80 )
             psEI->flags |= DGNEIF_COMPLEX;
