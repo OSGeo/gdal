@@ -31,10 +31,11 @@
 #ifndef DGNLIBP_H_INCLUDED
 #define DGNLIBP_H_INCLUDED
 
+#include "cpl_vsi.h"
 #include "dgnlib.h"
 
 typedef struct {
-    FILE        *fp;
+    VSILFILE   *fp;
     int         next_element_id;
 
     int         nElemBytes;

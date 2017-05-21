@@ -128,6 +128,7 @@ void RegisterOGRDGN()
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
                                "<LayerCreationOptionList/>" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRDGNDriverOpen;
     poDriver->pfnIdentify = OGRDGNDriverIdentify;
