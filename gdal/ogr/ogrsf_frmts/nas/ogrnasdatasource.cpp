@@ -100,11 +100,11 @@ int OGRNASDataSource::Open( const char * pszNewName )
     bool bHaveSchema = false;
 
     const char *pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
-    VSIStatBuf sGFSStatBuf;
-    if( CPLStat( pszGFSFilename, &sGFSStatBuf ) == 0 )
+    VSIStatBufL sGFSStatBuf;
+    if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) == 0 )
     {
-        VSIStatBuf sNASStatBuf;
-        if( CPLStat( pszNewName, &sNASStatBuf ) == 0 &&
+        VSIStatBufL sNASStatBuf;
+        if( VSIStatL( pszNewName, &sNASStatBuf ) == 0 &&
             sNASStatBuf.st_mtime > sGFSStatBuf.st_mtime )
         {
             CPLDebug( "NAS",
@@ -138,13 +138,13 @@ int OGRNASDataSource::Open( const char * pszNewName )
 /* -------------------------------------------------------------------- */
     if( !bHaveSchema && poReader->GetClassCount() > 0 )
     {
-        FILE *fp = NULL;
+        VSILFILE *fp = NULL;
 
         pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
-        if( CPLStat( pszGFSFilename, &sGFSStatBuf ) != 0
-            && (fp = VSIFOpen( pszGFSFilename, "wt" )) != NULL )
+        if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) != 0
+            && (fp = VSIFOpenL( pszGFSFilename, "wt" )) != NULL )
         {
-            VSIFClose( fp );
+            VSIFCloseL( fp );
             poReader->SaveClasses( pszGFSFilename );
         }
         else
