@@ -842,7 +842,7 @@ int L1BDataset::FetchGCPs( GDAL_GCP *pasGCPListRow,
 
 void L1BDataset::ProcessRecordHeaders()
 {
-    void    *pRecordHeader = CPLMalloc( nRecordDataStart );
+    void    *pRecordHeader = CPLCalloc( 1, nRecordDataStart );
 
     CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nDataStartOffset, SEEK_SET));
     CPL_IGNORE_RET_VAL(VSIFReadL(pRecordHeader, 1, nRecordDataStart, fp));
@@ -893,14 +893,17 @@ void L1BDataset::ProcessRecordHeaders()
 /* -------------------------------------------------------------------- */
 /*      Initialize the GCP list.                                        */
 /* -------------------------------------------------------------------- */
-    pasGCPList = (GDAL_GCP *)VSI_CALLOC_VERBOSE( nTargetLines * nGCPsPerLine,
-                                        sizeof(GDAL_GCP) );
-    if (pasGCPList == NULL)
+    const int nGCPs = nTargetLines * nGCPsPerLine;
+    if( nGCPs > 0 )
     {
-        CPLFree( pRecordHeader );
-        return;
+        pasGCPList = (GDAL_GCP *)VSI_CALLOC_VERBOSE( nGCPs, sizeof(GDAL_GCP) );
+        if (pasGCPList == NULL)
+        {
+            CPLFree( pRecordHeader );
+            return;
+        }
+        GDALInitGCPs( nGCPs, pasGCPList );
     }
-    GDALInitGCPs( nTargetLines * nGCPsPerLine, pasGCPList );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the GCPs for each selected line.  We force the last       */
