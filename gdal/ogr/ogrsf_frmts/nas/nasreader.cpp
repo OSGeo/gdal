@@ -425,6 +425,11 @@ void NASReader::PopState()
             m_poCompleteFeature = m_poState->m_poFeature;
             m_poState->m_poFeature = NULL;
         }
+        else if( m_poState->m_poFeature != NULL )
+        {
+            delete m_poState->m_poFeature;
+            m_poState->m_poFeature = NULL;
+        }
 
         GMLReadState *poParent = m_poState->m_poParentState;
 

@@ -867,6 +867,11 @@ void GMLReader::PopState()
             m_poCompleteFeature = m_poState->m_poFeature;
             m_poState->m_poFeature = NULL;
         }
+        else if( !bUseExpatReader && m_poState->m_poFeature != NULL )
+        {
+            delete m_poState->m_poFeature;
+            m_poState->m_poFeature = NULL;
+        }
 #endif
 
 #ifdef HAVE_EXPAT
