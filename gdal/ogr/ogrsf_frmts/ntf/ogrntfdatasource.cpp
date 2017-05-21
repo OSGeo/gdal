@@ -183,7 +183,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
                             char ** papszLimitedFileList )
 
 {
-    VSIStatBuf      stat;
+    VSIStatBufL      stat;
     char            **papszFileList = NULL;
 
     pszName = CPLStrdup( pszFilename );
@@ -191,7 +191,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( CPLStat( pszFilename, &stat ) != 0
+    if( VSIStatL( pszFilename, &stat ) != 0
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
         if( !bTestOpen )
@@ -270,18 +270,18 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
     {
         if( bTestOpen )
         {
-            FILE *fp = VSIFOpen( papszFileList[i], "rb" );
+            VSILFILE *fp = VSIFOpenL( papszFileList[i], "rb" );
             if( fp == NULL )
                 continue;
 
             char szHeader[80] = {};
-            if( VSIFRead( szHeader, 80, 1, fp ) < 1 )
+            if( VSIFReadL( szHeader, 80, 1, fp ) < 1 )
             {
-                VSIFClose( fp );
+                VSIFCloseL( fp );
                 continue;
             }
 
-            VSIFClose( fp );
+            VSIFCloseL( fp );
 
             if( !STARTS_WITH_CI(szHeader, "01") )
                 continue;
@@ -380,7 +380,7 @@ void OGRNTFDataSource::ResetReading()
         papoNTFFileReader[i]->Close();
 
     iCurrentReader = -1;
-    nCurrentPos = -1;
+    nCurrentPos = (vsi_l_offset)-1;
     nCurrentFID = 1;
     iCurrentFC = 0;
 }
@@ -420,7 +420,7 @@ OGRFeature *OGRNTFDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
     if( iCurrentReader == -1 )
     {
         iCurrentReader++;
-        nCurrentPos = -1;
+        nCurrentPos = (vsi_l_offset)-1;
     }
 
     if( papoNTFFileReader[iCurrentReader]->GetFP() == NULL )
@@ -433,7 +433,7 @@ OGRFeature *OGRNTFDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
 /*      from for the last feature, even if some other access            */
 /*      mechanism has moved the file pointer.                           */
 /* -------------------------------------------------------------------- */
-    if( nCurrentPos != -1 )
+    if( nCurrentPos != (vsi_l_offset)-1 )
         papoNTFFileReader[iCurrentReader]->SetFPPos( nCurrentPos,
                                                      nCurrentFID );
 
@@ -450,7 +450,7 @@ OGRFeature *OGRNTFDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
             papoNTFFileReader[iCurrentReader]->DestroyIndex();
 
         iCurrentReader++;
-        nCurrentPos = -1;
+        nCurrentPos = (vsi_l_offset)-1;
         nCurrentFID = 1;
 
         poFeature = GetNextFeature(NULL, NULL, NULL, NULL);

@@ -186,7 +186,7 @@ void NTFFileReader::Close()
     nSavedFeatureId = nBaseFeatureId;
     if( fp != NULL )
     {
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         fp = NULL;
     }
 
@@ -213,7 +213,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, "rb" );
+    fp = VSIFOpenL( pszFilename, "rb" );
 
     // notdef: we should likely issue a proper CPL error message based
     // based on errno here.
@@ -453,7 +453,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /*      Handle the section header record.                               */
 /* -------------------------------------------------------------------- */
     nSavedFeatureId = nBaseFeatureId;
-    nStartPos = VSIFTell(fp);
+    nStartPos = VSIFTellL(fp);
 
     pszTileName = CPLStrdup(poRecord->GetField(3,12));        // SECT_REF
     while( pszTileName[strlen(pszTileName)-1] == ' ' )
@@ -1172,10 +1172,10 @@ NTFRecord *NTFFileReader::ReadRecord()
     {
         CPLErrorReset();
         if( fp != NULL )
-            nPreSavedPos = VSIFTell( fp );
+            nPreSavedPos = VSIFTellL( fp );
         NTFRecord *poRecord = new NTFRecord( fp );
         if( fp != NULL )
-            nPostSavedPos = VSIFTell( fp );
+            nPostSavedPos = VSIFTellL( fp );
 
         /* ensure termination if we fail to read a record */
         if( CPLGetLastErrorType() == CE_Failure )
@@ -1194,7 +1194,7 @@ NTFRecord *NTFFileReader::ReadRecord()
 /*      Return the current file pointer position.                       */
 /************************************************************************/
 
-void NTFFileReader::GetFPPos( long *pnPos, long *pnFID )
+void NTFFileReader::GetFPPos( vsi_l_offset *pnPos, long *pnFID )
 
 {
     if( poSavedRecord != NULL )
@@ -1210,7 +1210,7 @@ void NTFFileReader::GetFPPos( long *pnPos, long *pnFID )
 /*                              SetFPPos()                              */
 /************************************************************************/
 
-int NTFFileReader::SetFPPos( long nNewPos, long nNewFID )
+int NTFFileReader::SetFPPos( vsi_l_offset nNewPos, long nNewFID )
 
 {
     if( nNewFID == nSavedFeatureId )
@@ -1222,7 +1222,7 @@ int NTFFileReader::SetFPPos( long nNewPos, long nNewFID )
         poSavedRecord = NULL;
     }
 
-    if( fp != NULL && VSIFSeek( fp, nNewPos, SEEK_SET ) == 0 )
+    if( fp != NULL && VSIFSeekL( fp, nNewPos, SEEK_SET ) == 0 )
     {
         nPreSavedPos = nPostSavedPos = nNewPos;
         nSavedFeatureId = nNewFID;

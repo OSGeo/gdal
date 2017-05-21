@@ -44,7 +44,7 @@ static const int MAX_RECORD_LEN = 160;
 /*      transparent merging of continuation lines.                      */
 /************************************************************************/
 
-NTFRecord::NTFRecord( FILE * fp ) :
+NTFRecord::NTFRecord( VSILFILE * fp ) :
     nType(99),
     nLength(0),
     pszData(NULL)
@@ -146,19 +146,19 @@ NTFRecord::~NTFRecord()
 /*                          ReadPhysicalLine()                          */
 /************************************************************************/
 
-int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
+int NTFRecord::ReadPhysicalLine( VSILFILE *fp, char *pszLine )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Read enough data that we are sure we have a whole record.       */
 /* -------------------------------------------------------------------- */
-    int nRecordStart = static_cast<int>(VSIFTell( fp ));
+    int nRecordStart = static_cast<int>(VSIFTellL( fp ));
     const int nBytesRead =
-        static_cast<int>(VSIFRead( pszLine, 1, MAX_RECORD_LEN+2, fp ));
+        static_cast<int>(VSIFReadL( pszLine, 1, MAX_RECORD_LEN+2, fp ));
 
     if( nBytesRead == 0 )
     {
-        if( VSIFEof( fp ) )
+        if( VSIFEofL( fp ) )
             return -1;
         else
         {
@@ -204,7 +204,7 @@ int NTFRecord::ReadPhysicalLine( FILE *fp, char *pszLine )
 /* -------------------------------------------------------------------- */
 /*      Restore read pointer to beginning of next record.               */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeek( fp, nRecordEnd, SEEK_SET ) != 0 )
+    if( VSIFSeekL( fp, nRecordEnd, SEEK_SET ) != 0 )
         return -1;
 
     return l_nLength;
