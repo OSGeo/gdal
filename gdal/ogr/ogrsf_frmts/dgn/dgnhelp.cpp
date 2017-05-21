@@ -1262,7 +1262,8 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
             int nLinkageType = 0;
             int nEntityNum = 0;
             int nMSLink = 0;
-            if( psElement->attr_data[nAttrOffset+0] == 0x00
+            if( psElement->attr_bytes >= nAttrOffset + 7 &&
+                psElement->attr_data[nAttrOffset+0] == 0x00
                 && (psElement->attr_data[nAttrOffset+1] == 0x00
                     || psElement->attr_data[nAttrOffset+1] == 0x80) )
             {
@@ -1273,12 +1274,13 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
                     + psElement->attr_data[nAttrOffset+5] * 256
                     + psElement->attr_data[nAttrOffset+6] * 65536;
             }
-            else
+            else if( psElement->attr_bytes >= nAttrOffset + 4 )
                 nLinkageType = psElement->attr_data[nAttrOffset+2]
                     + psElement->attr_data[nAttrOffset+3] * 256;
 
             // Possibly an external database linkage?
-            if( nLinkSize == 16 && nLinkageType != DGNLT_SHAPE_FILL )
+            if( nLinkSize == 16 && nLinkageType != DGNLT_SHAPE_FILL &&
+                psElement->attr_bytes >= nAttrOffset + 12 )
             {
                 nEntityNum = psElement->attr_data[nAttrOffset+6]
                     + psElement->attr_data[nAttrOffset+7] * 256;
