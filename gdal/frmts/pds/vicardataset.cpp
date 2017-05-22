@@ -239,7 +239,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         bInstKnown = true;
     // Check for Framing Camera on Dawn
     else if ( EQUAL(poDS->GetKeyword("INSTRUMENT_ID"),"FC2") )
-	bInstKnown = true;
+        bInstKnown = true;
 
     /***********   Grab layout type (BSQ, BIP, BIL) ************/
 
@@ -426,10 +426,11 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     } else if (EQUAL( map_proj_name, "MERCATOR" )) {
         oSRS.SetMercator ( center_lat, center_lon, 1, 0, 0 );
     } else if (EQUAL( map_proj_name, "STEREOGRAPHIC" )) {
-	if ((fabs(center_lat)-90) < 0.0000001) {
-		oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
-	} else
-        oSRS.SetStereographic ( center_lat, center_lon, 1, 0, 0 );
+        if ((fabs(center_lat)-90) < 0.0000001) {
+            oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
+        } else {
+            oSRS.SetStereographic ( center_lat, center_lon, 1, 0, 0 );
+        }
     } else if (EQUAL( map_proj_name, "POLAR_STEREOGRAPHIC")) {
         oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
     } else if (EQUAL( map_proj_name, "TRANSVERSE_MERCATOR" )) {
@@ -609,9 +610,9 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                                    TRUE );
 
         poDS->SetBand( i+1, poBand );
-	//only set NoData if instrument is supported
-	if (bInstKnown)
-	    poBand->SetNoDataValue( dfNoData );
+        //only set NoData if instrument is supported
+        if (bInstKnown)
+            poBand->SetNoDataValue( dfNoData );
         if (bIsDTM) {
             poBand->SetScale( static_cast<double>(
                 CPLAtof(poDS->GetKeyword( "DTM.DTM_SCALING_FACTOR") ) ) );
