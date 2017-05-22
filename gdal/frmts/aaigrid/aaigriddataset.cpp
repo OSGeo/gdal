@@ -407,6 +407,20 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
         return FALSE;
     }
 
+    // TODO(schwehr): Would be good to also factor the file size into the max.
+    // TODO(schwehr): Allow the user to disable this check.
+    // Best guess as to a sane limit on number of cell.
+    // This driver keeps the entire resulting grid in RAM.
+    const int kMaxDimSize =  10000000;  // 1e7 cells.
+    const int kMaxNumCells = 1000000000;  // 1e9 cells.
+
+    if (nRasterXSize > kMaxDimSize || nRasterYSize > kMaxDimSize ||
+        nRasterXSize *nRasterYSize > kMaxNumCells)
+    {
+        CSLDestroy(papszTokens);
+        return FALSE;
+    }
+
     double dfCellDX = 0.0;
     double dfCellDY = 0.0;
     if ( (i = CSLFindString(papszTokens, "cellsize")) < 0 )
