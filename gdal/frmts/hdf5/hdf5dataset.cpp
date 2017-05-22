@@ -840,7 +840,7 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
         else if( H5Tequal(H5T_NATIVE_ULONG, hAttrNativeType) )
         {
             for( hsize_t i = 0; i < nAttrElmts; i++ ) {
-                snprintf(szData, nDataLen, "%ld ",
+                snprintf(szData, nDataLen, "%lu ",
                          static_cast<unsigned long *>(buf)[i]);
                 if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                     MAX_METADATA_LEN )
