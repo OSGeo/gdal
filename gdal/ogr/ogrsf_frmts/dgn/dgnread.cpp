@@ -426,7 +426,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       case DGNT_LINE:
       {
           DGNElemMultiPoint *psLine = static_cast<DGNElemMultiPoint *>(
-              CPLCalloc(sizeof(DGNElemMultiPoint), 1));
+              CPLCalloc(sizeof(DGNElemMultiPoint) + sizeof(DGNPoint), 1));
           psElement = (DGNElemCore *) psLine;
           psElement->stype = DGNST_MULTIPOINT;
           DGNParseCore( psDGN, psElement );
@@ -495,7 +495,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               return NULL;
           }
           DGNElemMultiPoint *psLine = static_cast<DGNElemMultiPoint *>(
-              CPLCalloc(sizeof(DGNElemMultiPoint)+(count-2)*sizeof(DGNPoint),
+              CPLCalloc(sizeof(DGNElemMultiPoint)+(count-1)*sizeof(DGNPoint),
                         1));
           psElement = (DGNElemCore *) psLine;
           psElement->stype = DGNST_MULTIPOINT;
@@ -532,8 +532,9 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
                     }
               }
           }
-          psLine->num_vertices = count;
-          for( int i = 0; i < psLine->num_vertices; i++ )
+          for( int i = 0; i < count &&
+                          (( psDGN->dimension == 3 ) ? 46 : 42) +
+                                i*pntsize + 4 <= psDGN->nElemBytes; i++ )
           {
               psLine->vertices[i].x =
                   DGN_INT32( psDGN->abyElem + 38 + i*pntsize );
@@ -550,6 +551,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
                 psLine->vertices[i].y += dy / 32767.0;
               }
               DGNTransformPoint( psDGN, psLine->vertices + i );
+              psLine->num_vertices = i+1;
           }
       }
       break;

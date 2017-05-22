@@ -466,7 +466,7 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
         DGNElemMultiPoint *psSrcMP = (DGNElemMultiPoint *) psSrcElement;
 
         const size_t nSize = sizeof(DGNElemMultiPoint)
-            + sizeof(DGNPoint) * (psSrcMP->num_vertices-2);
+            + sizeof(DGNPoint) * (psSrcMP->num_vertices-1);
 
         DGNElemMultiPoint *psMP =
             static_cast<DGNElemMultiPoint *>(CPLMalloc( nSize ));
@@ -881,7 +881,7 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
     DGNElemMultiPoint *psMP = static_cast<DGNElemMultiPoint *>(
         CPLCalloc( sizeof(DGNElemMultiPoint)
-                   + sizeof(DGNPoint) * (nPointCount-2), 1 ));
+                   + sizeof(DGNPoint) * (nPointCount-1), 1 ));
     DGNElemCore *psCore = &(psMP->core);
 
     DGNInitializeElemCore( hDGN, psCore );

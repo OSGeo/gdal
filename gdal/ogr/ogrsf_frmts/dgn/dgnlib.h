@@ -121,7 +121,10 @@ typedef struct {
   DGNElemCore   core;
 
   int           num_vertices;  /*!< Number of vertices in "vertices" */
-  DGNPoint      vertices[2];   /*!< Array of two or more vertices */
+  DGNPoint      vertices[1];   /*!< Array of two or more vertices */
+                               // Note: We set [1] to please clang UBSAN
+                               // regarding structures that are extended at
+                               // malloc time
 
 } DGNElemMultiPoint;
 
