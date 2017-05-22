@@ -5,7 +5,8 @@
 LOG_FILE=/tmp/cppcheck_gdal.txt
 
 echo "" > ${LOG_FILE}
-for dirname in alg port gcore ogr frmts gnm apps; do
+for dirname in apps; do
+#for dirname in alg port gcore ogr frmts gnm apps; do
     echo "Running cppcheck on $dirname... (can be long)"
     cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
         --enable=all --inconclusive --std=posix -UAFL_FRIENDLY -UANDROID \
