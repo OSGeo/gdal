@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Mapinfo Image Warper
  * Purpose:  Implementation of the GDALTransformer wrapper around CRS.C functions
