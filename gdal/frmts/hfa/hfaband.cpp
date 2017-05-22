@@ -1807,11 +1807,12 @@ double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors )
     // Field the MIFObject raw data pointer.
     int nMIFObjectSize = 0;
     const GByte *pabyMIFObject =
-        (const GByte *)poBinFunc->GetStringField("binFunction.MIFObject",
-                                                 NULL, &nMIFObjectSize);
+        reinterpret_cast<const GByte *>(
+            poBinFunc->GetStringField("binFunction.MIFObject",
+                                      NULL, &nMIFObjectSize));
 
     if( pabyMIFObject == NULL ||
-        nMIFObjectSize < 24 + (int)sizeof(double) * nPCTColors )
+        nMIFObjectSize < 24 + static_cast<int>(sizeof(double)) * nPCTColors )
         return NULL;
 
     // Confirm that this is a 64bit floating point basearray.
