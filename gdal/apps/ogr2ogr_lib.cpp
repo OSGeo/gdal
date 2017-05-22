@@ -3900,7 +3900,6 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                     poDstFDefn = poDstLayer->GetLayerDefn();
 
                 /* Sanity check : if it fails, the driver is buggy */
-                // cppcheck-suppress nullPointerRedundantCheck
                 if (poDstFDefn != NULL &&
                     poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
                 {
@@ -3910,7 +3909,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 }
                 else
                 {
-                    if( bHasRenamed )
+                    if( bHasRenamed && poDstFDefn != NULL )
                     {
                         const char* pszNewFieldName =
                             poDstFDefn->GetFieldDefn(nDstFieldCount)->GetNameRef();
