@@ -294,11 +294,14 @@ int VFKReaderSQLite::ReadDataBlocks()
     while(ExecuteSQL(hStmt) == OGRERR_NONE) {
         const char *pszName = (const char*) sqlite3_column_text(hStmt, 0);
         const char *pszDefn = (const char*) sqlite3_column_text(hStmt, 1);
-        IVFKDataBlock *poNewDataBlock =
-            (IVFKDataBlock *) CreateDataBlock(pszName);
-        poNewDataBlock->SetGeometryType();
-        poNewDataBlock->SetProperties(pszDefn);
-        VFKReader::AddDataBlock(poNewDataBlock, NULL);
+        if( pszName && pszDefn )
+        {
+            IVFKDataBlock *poNewDataBlock =
+                (IVFKDataBlock *) CreateDataBlock(pszName);
+            poNewDataBlock->SetGeometryType();
+            poNewDataBlock->SetProperties(pszDefn);
+            VFKReader::AddDataBlock(poNewDataBlock, NULL);
+        }
     }
 
     CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "BEGIN", NULL, NULL, NULL));
