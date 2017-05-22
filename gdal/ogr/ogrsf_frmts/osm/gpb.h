@@ -91,7 +91,7 @@ static int ReadVarInt32(GByte** ppabyData)
         nVal |= (nByte & 0x7f) << nShift;
         pabyData ++;
         nShift += 7;
-        if( nShift >= 32 )
+        if( nShift >= 8 * (int)sizeof(nVal) )
         {
             *ppabyData = pabyData;
             return nVal;
@@ -135,7 +135,7 @@ static unsigned int ReadVarUInt32(GByte** ppabyData)
         nVal |= (nByte & 0x7f) << nShift;
         pabyData ++;
         nShift += 7;
-        if( nShift >= 32 )
+        if( nShift >= 8 * (int)sizeof(nVal) )
         {
             *ppabyData = pabyData;
             return nVal;
@@ -178,7 +178,7 @@ static GIntBig ReadVarInt64(GByte** ppabyData)
         nVal |= ((GIntBig)(nByte & 0x7f)) << nShift;
         pabyData ++;
         nShift += 7;
-        if( nShift >= 64 )
+        if( nShift >= 8 * (int)sizeof(nVal) )
         {
             *ppabyData = pabyData;
             return nVal;
