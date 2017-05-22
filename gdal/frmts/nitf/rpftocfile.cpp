@@ -541,10 +541,10 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
 
         /* if nFrameFileIndexRecords == 65535 and pathLength == 65535 for each record,
            this leads to 4 GB allocation... Protect against this case */
-        if (!bOK || pathLength > 256)
+        if (!bOK || pathLength == 0 || pathLength > 256)
         {
             CPLError( CE_Failure, CPLE_NotSupported,
-                      "Path length is big : %d. Probably corrupted TOC file.",
+                      "Path length is invalid : %d. Probably corrupted TOC file.",
                       static_cast<int>( pathLength ) );
             RPFTOCFree(toc);
             return NULL;
