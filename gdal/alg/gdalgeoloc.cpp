@@ -332,6 +332,8 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
             if( iBMX < 0 || iBMY < 0 || iBMX >= nBMXSize || iBMY >= nBMYSize )
                 continue;
 
+            // This narrowing conversion is unlikely to be out of range unless
+            // dfLINE_STEP and dfLINE_OFFSET take on extreme values.
             psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] =
                 static_cast<float>(
                     iX * psTransform->dfPIXEL_STEP +
