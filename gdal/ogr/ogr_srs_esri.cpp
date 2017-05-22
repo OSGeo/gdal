@@ -2149,7 +2149,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
         const char* pszSRSName = GetAttrValue("PROJCS");
         if( pszSRSName == NULL )
             pszSRSName = GetAttrValue("GEOGCS");
-        if( strstr(pszSRSName, "Peru96") )
+        if( pszSRSName != NULL && strstr(pszSRSName, "Peru96") )
         {
             bPeru96Datum = true;
             poDatum->SetValue( "Peru96" );
