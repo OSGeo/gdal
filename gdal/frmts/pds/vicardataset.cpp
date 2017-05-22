@@ -225,8 +225,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         chByteOrder = 'I';
     }
 
-    /************ CHECK INSTRUMENT *****************/
-    /************ ONLY HRSC TESTED *****************/
+    /************ CHECK INSTRUMENT/DATA *****************/
 
     bool bIsDTM = false;
     value = poDS->GetKeyword( "DTM.DTM_OFFSET" );
@@ -234,11 +233,13 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         bIsDTM = true;
     }
 
-    value = poDS->GetKeyword( "BLTYPE" );
-    if (!EQUAL(value,"M94_HRSC") && !bIsDTM ) {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "%s instrument not tested. Continue with caution!\n\n", value);
-    }
+    bool bInstKnown = false;
+    // Check for HRSC
+    if ( EQUAL(poDS->GetKeyword("BLTYPE"),"M94_HRSC") )
+        bInstKnown = true;
+    // Check for Framing Camera on Dawn
+    else if ( EQUAL(poDS->GetKeyword("INSTRUMENT_ID"),"FC2") )
+	bInstKnown = true;
 
     /***********   Grab layout type (BSQ, BIP, BIL) ************/
 
@@ -425,6 +426,9 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     } else if (EQUAL( map_proj_name, "MERCATOR" )) {
         oSRS.SetMercator ( center_lat, center_lon, 1, 0, 0 );
     } else if (EQUAL( map_proj_name, "STEREOGRAPHIC" )) {
+	if ((fabs(center_lat)-90) < 0.0000001) {
+		oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
+	} else
         oSRS.SetStereographic ( center_lat, center_lon, 1, 0, 0 );
     } else if (EQUAL( map_proj_name, "POLAR_STEREOGRAPHIC")) {
         oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
@@ -605,7 +609,9 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                                    TRUE );
 
         poDS->SetBand( i+1, poBand );
-        poBand->SetNoDataValue( dfNoData );
+	//only set NoData if instrument is supported
+	if (bInstKnown)
+	    poBand->SetNoDataValue( dfNoData );
         if (bIsDTM) {
             poBand->SetScale( static_cast<double>(
                 CPLAtof(poDS->GetKeyword( "DTM.DTM_SCALING_FACTOR") ) ) );
@@ -725,7 +731,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->SetMetadataItem( apszKeywords[i], pszKeywordValue );
         }
     }
-    else if (bIsDTM && EQUAL( poDS->GetKeyword( "TARGET_NAME"), "VESTA" ))
+    else if (bIsDTM && ( EQUAL( poDS->GetKeyword( "TARGET_NAME"), "VESTA" ) || EQUAL( poDS->GetKeyword( "TARGET_NAME"), "CERES" )))
     {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "DAWN" );
         poDS->SetMetadataItem( "PRODUCT_TYPE", "DTM");
