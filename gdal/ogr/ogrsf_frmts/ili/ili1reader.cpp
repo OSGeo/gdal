@@ -706,6 +706,11 @@ char ** ILI1Reader::ReadParseLine()
 
       CSLDestroy(conttok);
     }
+    if( tokens[0] == NULL )
+    {
+        CSLDestroy(tokens);
+        tokens = NULL;
+    }
     return tokens;
 }
 
