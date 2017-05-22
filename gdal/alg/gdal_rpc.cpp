@@ -1905,10 +1905,10 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
 
         if( psTransform->bApplyDEMVDatumShift )
         {
-            CPLSetThreadLocalConfigOption(
-                "GTIFF_REPORT_COMPD_CS",
-                osPrevValueConfigOption.size()
-                ? osPrevValueConfigOption.c_str() : NULL);
+            CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS",
+                                          !osPrevValueConfigOption.empty()
+                                              ? osPrevValueConfigOption.c_str()
+                                              : NULL);
         }
 
         if( !bIsValid && psTransform->poDS != NULL )
