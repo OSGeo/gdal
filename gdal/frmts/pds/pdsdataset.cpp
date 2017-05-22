@@ -463,6 +463,9 @@ void PDSDataset::ParseSRS()
     } else if (EQUAL( map_proj_name, "MERCATOR" )) {
         oSRS.SetMercator ( center_lat, center_lon, 1, 0, 0 );
     } else if (EQUAL( map_proj_name, "STEREOGRAPHIC" )) {
+        if ( (fabs(center_lat)-90) < 0.0000001 ) {
+                oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
+        } else
         oSRS.SetStereographic ( center_lat, center_lon, 1, 0, 0 );
     } else if (EQUAL( map_proj_name, "POLAR_STEREOGRAPHIC")) {
         oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
