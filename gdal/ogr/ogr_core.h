@@ -51,6 +51,7 @@ extern "C++"
 {
 #include <limits>
 
+// cppcheck-suppress copyCtorAndEqOperator
 class CPL_DLL OGREnvelope
 {
   public:
@@ -152,6 +153,7 @@ typedef struct
 
 extern "C++" {
 
+// cppcheck-suppress copyCtorAndEqOperator
 class CPL_DLL OGREnvelope3D : public OGREnvelope
 {
   public:
