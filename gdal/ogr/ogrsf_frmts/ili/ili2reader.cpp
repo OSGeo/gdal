@@ -414,11 +414,12 @@ static char* fieldName(DOMElement* elem) {
 }
 
 void ILI2Reader::setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem) {
-  int type = 0;
+  int type = 0; 
   //recursively search children
-  for (DOMElement *childElem = (DOMElement *)elem->getFirstChild();
-        type == 0 && childElem && childElem->getNodeType() == DOMNode::ELEMENT_NODE;
-        childElem = (DOMElement*)childElem->getNextSibling()) {
+  for (DOMNode *childNode = elem->getFirstChild();
+        type == 0 && childNode && childNode->getNodeType() == DOMNode::ELEMENT_NODE;
+        childNode = childNode->getNextSibling()) {
+    DOMElement* childElem = dynamic_cast<DOMElement*>(childNode);
     type = getGeometryTypeOfElem(childElem);
     if (type == 0) {
       if (childElem->getFirstChild() && childElem->getFirstChild()->getNodeType() == DOMNode::ELEMENT_NODE) {
@@ -439,9 +440,10 @@ void ILI2Reader::setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem) {
 void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
   int type = 0;
   //recursively search children
-  for (DOMElement *childElem = (DOMElement *)elem->getFirstChild();
-        type == 0 && childElem && childElem->getNodeType() == DOMNode::ELEMENT_NODE;
-        childElem = (DOMElement*)childElem->getNextSibling()) {
+  for (DOMNode *childNode = elem->getFirstChild();
+        type == 0 && childNode && childNode->getNodeType() == DOMNode::ELEMENT_NODE;
+        childNode = childNode->getNextSibling()) {
+    DOMElement* childElem = dynamic_cast<DOMElement*>(childNode);
     type = getGeometryTypeOfElem(childElem);
     if (type == 0) {
       if (childElem->getFirstChild() && childElem->getFirstChild()->getNodeType() == DOMNode::ELEMENT_NODE) {
