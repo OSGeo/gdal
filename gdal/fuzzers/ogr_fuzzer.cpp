@@ -39,6 +39,9 @@
 
 #ifndef REGISTER_FUNC
 #define REGISTER_FUNC OGRRegisterAll
+#ifndef OGR_SKIP
+#define OGR_SKIP "CAD"
+#endif
 #endif
 
 #ifndef EXTENSION
@@ -82,6 +85,9 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
 #endif
     VSIFCloseL(fp);
+#ifdef OGR_SKIP
+    CPLSetConfigOption("OGR_SKIP", OGR_SKIP);
+#endif
     REGISTER_FUNC();
     CPLPushErrorHandler(CPLQuietErrorHandler);
 #ifdef USE_FILESYSTEM
