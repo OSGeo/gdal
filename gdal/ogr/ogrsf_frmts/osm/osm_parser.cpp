@@ -1553,6 +1553,13 @@ bool ReadBlob( GByte* pabyData, unsigned int nDataSize, BlobType eType,
             {
                 if( nUncompressedSize > psCtxt->nUncompressedAllocated )
                 {
+                    if( nUncompressedSize / 100 > nZlibCompressedSize )
+                    {
+                        // Too prevent excessive memory allocations
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Excessive uncompressed vs compressed ratio");
+                        GOTO_END_ERROR;
+                    }
                     GByte* pabyUncompressedNew = NULL;
                     if( psCtxt->nUncompressedAllocated <= INT_MAX )
                         psCtxt->nUncompressedAllocated =
