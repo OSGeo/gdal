@@ -993,7 +993,9 @@ OGRSpatialReference* OGRESRIJSONReadSpatialReference( json_object* poObj )
         OGRGeoJSONFindMemberByName( poObj, "spatialReference" );
     if( NULL != poObjSrs )
     {
-        json_object* poObjWkid = OGRGeoJSONFindMemberByName( poObjSrs, "wkid" );
+        json_object* poObjWkid = OGRGeoJSONFindMemberByName( poObjSrs, "latestWkid" );
+        if( poObjWkid == NULL )
+            poObjWkid = OGRGeoJSONFindMemberByName( poObjSrs, "wkid" );
         if( poObjWkid == NULL )
         {
             json_object* poObjWkt =
