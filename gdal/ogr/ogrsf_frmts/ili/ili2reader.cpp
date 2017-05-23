@@ -100,6 +100,8 @@ string trim(string tmpstr) {
 
 static int getGeometryTypeOfElem(DOMElement* elem) {
   int type = ILI2_STRING_TYPE;
+  if( elem == NULL )
+      return type;
   char* pszTagName = XMLString::transcode(elem->getTagName());
 
   if (elem->getNodeType() == DOMNode::ELEMENT_NODE) {
@@ -138,9 +140,11 @@ static char *getREFValue(DOMElement *elem) {
 
 static OGRPoint *getPoint(DOMElement *elem) {
   // elem -> COORD (or ARC)
+  DOMElement *coordElem = dynamic_cast<DOMElement*>(elem->getFirstChild());
+  if( coordElem == NULL )
+      return NULL;
   OGRPoint *pt = new OGRPoint();
 
-  DOMElement *coordElem = (DOMElement *)elem->getFirstChild();
   while (coordElem != NULL) {
     char* pszTagName = XMLString::transcode(coordElem->getTagName());
     char* pszObjValue = getObjValue(coordElem);
@@ -152,24 +156,27 @@ static OGRPoint *getPoint(DOMElement *elem) {
       pt->setZ(CPLAtof(pszObjValue));
     CPLFree(pszObjValue);
     XMLString::release(&pszTagName);
-    coordElem = (DOMElement *)coordElem->getNextSibling();
+    coordElem = dynamic_cast<DOMElement*>(coordElem->getNextSibling());
   }
   pt->flattenTo2D();
   return pt;
 }
 
 OGRCircularString *ILI2Reader::getArc(DOMElement *elem) {
+  // previous point -> start point
+  OGRPoint *ptStart = getPoint(dynamic_cast<DOMElement*>(elem->getPreviousSibling())); // COORD or ARC
+  if( ptStart == NULL )
+      return NULL;
+  
   // elem -> ARC
   OGRCircularString *arc = new OGRCircularString();
-  // previous point -> start point
-  OGRPoint *ptStart = getPoint((DOMElement *)elem->getPreviousSibling()); // COORD or ARC
   // end point
   OGRPoint *ptEnd = new OGRPoint();
   // point on the arc
   OGRPoint *ptOnArc = new OGRPoint();
   // double radius = 0; // radius
 
-  DOMElement *arcElem = (DOMElement *)elem->getFirstChild();
+  DOMElement *arcElem = dynamic_cast<DOMElement*>(elem->getFirstChild());
   while (arcElem != NULL) {
     char* pszTagName = XMLString::transcode(arcElem->getTagName());
     char* pszObjValue = getObjValue(arcElem);
@@ -190,7 +197,7 @@ OGRCircularString *ILI2Reader::getArc(DOMElement *elem) {
     }
     CPLFree(pszObjValue);
     XMLString::release(&pszTagName);
-    arcElem = (DOMElement *)arcElem->getNextSibling();
+    arcElem = dynamic_cast<DOMElement*>(arcElem->getNextSibling());
   }
   arc->addPoint(ptStart);
   arc->addPoint(ptOnArc);
@@ -206,14 +213,17 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
   OGRCompoundCurve *ogrCurve = new OGRCompoundCurve();
   OGRLineString *ls = new OGRLineString();
 
-  DOMElement *lineElem = (DOMElement *)elem->getFirstChild();
+  DOMElement *lineElem = dynamic_cast<DOMElement *>(elem->getFirstChild());
   while (lineElem != NULL) {
     char* pszTagName = XMLString::transcode(lineElem->getTagName());
     if (cmpStr(ILI2_COORD, pszTagName) == 0)
     {
       OGRPoint* poPoint = getPoint(lineElem);
-      ls->addPoint(poPoint);
-      delete poPoint;
+      if( poPoint )
+      {
+        ls->addPoint(poPoint);
+        delete poPoint;
+      }
     }
     else if (cmpStr(ILI2_ARC, pszTagName) == 0) {
       //Finish line and start arc
@@ -231,7 +241,7 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
       // radius
       // double radius = 0;
 
-      DOMElement *arcElem = (DOMElement *)lineElem->getFirstChild();
+      DOMElement *arcElem = dynamic_cast<DOMElement *>(lineElem->getFirstChild());
       while (arcElem != NULL) {
         char* pszTagName2 = XMLString::transcode(arcElem->getTagName());
         char* pszObjValue = getObjValue(arcElem);
@@ -253,11 +263,12 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
         CPLFree(pszObjValue);
         XMLString::release(&pszTagName2);
 
-        arcElem = (DOMElement *)arcElem->getNextSibling();
+        arcElem = dynamic_cast<DOMElement *>(arcElem->getNextSibling());
       }
 
-      OGRPoint *ptStart = getPoint((DOMElement *)lineElem->getPreviousSibling()); // COORD or ARC
-      arc->addPoint(ptStart);
+      OGRPoint *ptStart = getPoint(dynamic_cast<DOMElement *>(lineElem->getPreviousSibling())); // COORD or ARC
+      if( ptStart )
+        arc->addPoint(ptStart);
       arc->addPoint(ptOnArc);
       arc->addPoint(ptEnd);
       ogrCurve->addCurveDirectly(arc);
@@ -269,7 +280,7 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
     } */
     XMLString::release(&pszTagName);
 
-    lineElem = (DOMElement *)lineElem->getNextSibling();
+    lineElem = dynamic_cast<DOMElement *>(lineElem->getNextSibling());
   }
 
   if (ls->getNumPoints() > 1) {
@@ -283,7 +294,7 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
 
 static OGRCompoundCurve *getBoundary(DOMElement *elem) {
 
-  DOMElement *lineElem = (DOMElement *)elem->getFirstChild();
+  DOMElement *lineElem = dynamic_cast<DOMElement *>(elem->getFirstChild());
   if (lineElem != NULL)
   {
     char* pszTagName = XMLString::transcode(lineElem->getTagName());
@@ -371,14 +382,16 @@ OGRGeometry *ILI2Reader::getGeometry(DOMElement *elem, int type) {
       default :
         if (type >= ILI2_GEOMCOLL_TYPE) {
           int subType = getGeometryTypeOfElem(childElem); //????
-          gm->addGeometryDirectly(getGeometry(childElem, subType));
+          OGRGeometry* poSubGeom = getGeometry(childElem, subType);
+          if( poSubGeom )
+            gm->addGeometryDirectly(poSubGeom);
         }
         break;
     }
     XMLString::release(&pszTagName);
 
     // GEOMCOLL
-    childElem = (DOMElement *)childElem->getNextSibling();
+    childElem = dynamic_cast<DOMElement *>(childElem->getNextSibling());
   }
 
   return gm;
@@ -467,15 +480,18 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
       char *fName = fieldName(childElem);
       int fIndex = feature->GetGeomFieldIndex(fName);
       OGRGeometry *geom = getGeometry(childElem, type);
-      if (fIndex == -1) { // Unknown model
-        feature->SetGeometryDirectly(geom);
-      } else {
-        OGRwkbGeometryType geomType = feature->GetGeomFieldDefnRef(fIndex)->GetType();
-        if (geomType == wkbMultiLineString || geomType == wkbPolygon) {
-          feature->SetGeomFieldDirectly(fIndex, geom->getLinearGeometry());
-          delete geom;
+      if( geom ) 
+      {
+        if (fIndex == -1) { // Unknown model
+            feature->SetGeometryDirectly(geom);
         } else {
-          feature->SetGeomFieldDirectly(fIndex, geom);
+            OGRwkbGeometryType geomType = feature->GetGeomFieldDefnRef(fIndex)->GetType();
+            if (geomType == wkbMultiLineString || geomType == wkbPolygon) {
+            feature->SetGeomFieldDirectly(fIndex, geom->getLinearGeometry());
+            delete geom;
+            } else {
+            feature->SetGeomFieldDirectly(fIndex, geom);
+            }
         }
       }
       CPLFree(fName);
