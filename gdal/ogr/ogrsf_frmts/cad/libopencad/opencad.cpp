@@ -50,10 +50,12 @@ static int CheckCADFile(CADFileIO * pCADFileIO)
     if( pCADFileIO == nullptr )
         return 0;
 
+#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) && !defined(OPENCAD_DISABLE_EXTENSION_CHECK)
     const char * pszFilePath = pCADFileIO->GetFilePath();
     size_t nPathLen = strlen( pszFilePath );
 
-    if( toupper( pszFilePath[nPathLen - 3] ) == 'D' &&
+    if( nPathLen > 3 &&
+        toupper( pszFilePath[nPathLen - 3] ) == 'D' &&
         toupper( pszFilePath[nPathLen - 2] ) == 'X' &&
         toupper( pszFilePath[nPathLen - 1] ) == 'F' )
     {
@@ -61,12 +63,14 @@ static int CheckCADFile(CADFileIO * pCADFileIO)
         std::cerr << "DXF ASCII and binary is not supported yet.";
         return 0;
     }
-    if( ! ( toupper( pszFilePath[nPathLen - 3] ) == 'D' &&
+    if( ! ( nPathLen > 3 &&
+            toupper( pszFilePath[nPathLen - 3] ) == 'D' &&
             toupper( pszFilePath[nPathLen - 2] ) == 'W' &&
             toupper( pszFilePath[nPathLen - 1] ) == 'G' ) )
     {
         return 0;
     }
+#endif
 
     if( !pCADFileIO->IsOpened() )
         pCADFileIO->Open( CADFileIO::OpenMode::read | CADFileIO::OpenMode::binary );
