@@ -306,15 +306,30 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
             return NULL;
         }
 
-        if( toc->entries[i].nHorizFrames == 0 ||
+        if( toc->entries[i].vertInterval <= 1e-10 ||
+            !CPLIsFinite(toc->entries[i].vertInterval) ||
+            toc->entries[i].horizInterval <= 1e-10 ||
+            !CPLIsFinite(toc->entries[i].horizInterval) ||
+            !(fabs(toc->entries[i].seLong) <= 360.0) ||
+            !(fabs(toc->entries[i].nwLong) <= 360.0) ||
+            !(fabs(toc->entries[i].nwLat) <= 90.0) ||
+            !(fabs(toc->entries[i].seLat) <= 90.0) ||
+            toc->entries[i].seLong < toc->entries[i].nwLong ||
+            toc->entries[i].nwLat < toc->entries[i].seLat ||
+            toc->entries[i].nHorizFrames == 0 ||
             toc->entries[i].nVertFrames == 0 ||
             toc->entries[i].nHorizFrames > INT_MAX / toc->entries[i].nVertFrames )
         {
-            toc->entries[i].frameEntries = NULL;
+            CPLError(CE_Failure, CPLE_FileIO, "Invalid TOC entry");
+            toc->entries[i].nVertFrames = 0;
+            toc->entries[i].nHorizFrames = 0;
+            RPFTOCFree(toc);
+            return NULL;
         }
+
         // TODO: We could probably use another data structure, like a list,
         // instead of an array referenced by the frame coordinate...
-        else if( static_cast<int>(toc->entries[i].nHorizFrames *
+        if( static_cast<int>(toc->entries[i].nHorizFrames *
                                   toc->entries[i].nVertFrames) >
                  atoi(CPLGetConfigOption("RPFTOC_MAX_FRAME_COUNT", "1000000")) )
         {
