@@ -1307,6 +1307,13 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
                                           pnRemainingDataSize);
             }
         }
+        else
+        {
+            // E. Rouault: not completely sure about this, but helps avoid
+            // DoS timeouts in cases like
+            // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1806
+            return false;
+        }
         break;
 
       default:
