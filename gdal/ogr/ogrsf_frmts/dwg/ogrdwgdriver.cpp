@@ -71,6 +71,12 @@ OGRDataSource *OGRDWGDriver::Open( const char * pszFilename, int /*bUpdate*/ )
     if( !EQUAL(CPLGetExtension(pszFilename),"dwg") )
         return NULL;
 
+    // Check that this is a real file since the driver doesn't support
+    // VSI*L API
+    VSIStatBuf sStat;
+    if( VSIStat(pszFilename, &sStat) != 0 )
+        return NULL;
+
     if( !OGRTEIGHAInitialize() )
         return NULL;
 
