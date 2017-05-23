@@ -42,8 +42,11 @@ cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/ogr_fuzzer_seed_corpus.zip
 zip -r $OUT/ogr_fuzzer_seed_corpus.zip . >/dev/null
 cd $OLDPWD
-cd $(dirname $0)/../../autotest/ogr/data
-zip -r $OUT/ogr_fuzzer_seed_corpus.zip . >/dev/null
+
+echo "Building cad_fuzzer_seed_corpus.zip"
+cd $(dirname $0)/../../autotest/ogr/data/cad
+rm -f $OUT/cad_fuzzer_seed_corpus.zip
+zip -r $OUT/cad_fuzzer_seed_corpus.zip . >/dev/null
 cd $OLDPWD
 
 echo "Building shape_fuzzer_seed_corpus.zip"

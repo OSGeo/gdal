@@ -44,7 +44,7 @@ build_ogr_specialized_fuzzer()
     memFilename=$3
     gdalFilename=$4
     fuzzerName="${format}_fuzzer"
-    build_fuzzer $fuzzerName $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=$registerFunc -DMEM_FILENAME="\"$memFilename\"" -DGDAL_FILENAME="\"$gdalFilename\""
+    build_fuzzer $fuzzerName $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=$registerFunc -DMEM_FILENAME="\"$memFilename\"" -DGDAL_FILENAME="\"$gdalFilename\"" -DOGR_SKIP="\"CAD\""
 }
 
 build_gdal_specialized_fuzzer()
@@ -61,6 +61,7 @@ build_ogr_specialized_fuzzer openfilegdb RegisterOGROpenFileGDB "/vsimem/test.gd
 build_ogr_specialized_fuzzer shape OGRRegisterAll "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.shp"
 build_ogr_specialized_fuzzer mitab_mif OGRRegisterAll "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.mif"
 build_ogr_specialized_fuzzer mitab_tab OGRRegisterAll "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.tab"
+build_fuzzer cad_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRCAD
 
 formats="GTiff HFA"
 for format in $formats; do
