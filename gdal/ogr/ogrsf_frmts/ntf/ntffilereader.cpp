@@ -354,7 +354,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
 /*      Handle database header record.                                  */
 /* -------------------------------------------------------------------- */
-        else if( poRecord->GetType() == NRT_DHR )
+        else if( poRecord->GetType() == NRT_DHR && pszProduct == NULL )
         {
             pszProduct = CPLStrdup(poRecord->GetField(3,22));
             for( int iChar = static_cast<int>(strlen(pszProduct))-1;
