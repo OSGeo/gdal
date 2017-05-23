@@ -3548,9 +3548,9 @@ DWGFileR2000::~DWGFileR2000()
 
 int DWGFileR2000::ReadSectionLocators()
 {
-    char  abyBuf[255];
-    int   dImageSeeker, SLRecordsCount;
-    short dCodePage;
+    char  abyBuf[255] = { 0 };
+    int   dImageSeeker = 0, SLRecordsCount = 0;
+    short dCodePage = 0;
 
     pFileIO->Rewind();
     memset( abyBuf, 0, DWG_VERSION_STR_SIZE + 1 );
@@ -3578,14 +3578,19 @@ int DWGFileR2000::ReadSectionLocators()
     for( size_t i = 0; i < static_cast<size_t>(SLRecordsCount); ++i )
     {
         SectionLocatorRecord readedRecord;
-        pFileIO->Read( & readedRecord.byRecordNumber, 1 );
-        pFileIO->Read( & readedRecord.dSeeker, 4 );
-        pFileIO->Read( & readedRecord.dSize, 4 );
+        if( pFileIO->Read( & readedRecord.byRecordNumber, 1 ) != 1 ||
+            pFileIO->Read( & readedRecord.dSeeker, 4 ) != 4 ||
+            pFileIO->Read( & readedRecord.dSize, 4 ) != 4 )
+        {
+            return CADErrorCodes::HEADER_SECTION_READ_FAILED;
+        }
 
         sectionLocatorRecords.push_back( readedRecord );
         DebugMsg( "  Record #%d : %d %d\n", sectionLocatorRecords[i].byRecordNumber, sectionLocatorRecords[i].dSeeker,
                   sectionLocatorRecords[i].dSize );
     }
+    if( sectionLocatorRecords.empty() )
+        return CADErrorCodes::HEADER_SECTION_READ_FAILED;
 
     return CADErrorCodes::SUCCESS;
 }
