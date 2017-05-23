@@ -71,53 +71,10 @@ static void error_occurred(int nLine)
 #define GET_FIELDNUMBER(nKey) (nKey >> 3)
 
 /************************************************************************/
-/*                           ReadVarInt32()                             */
-/************************************************************************/
-
-static int ReadVarInt32(GByte** ppabyData)
-{
-    int nVal = 0;
-    int nShift = 0;
-    GByte* pabyData = *ppabyData;
-
-    while(true)
-    {
-        int nByte = *pabyData;
-        if (!(nByte & 0x80))
-        {
-            *ppabyData = pabyData + 1;
-            return nVal | (nByte << nShift);
-        }
-        nVal |= (nByte & 0x7f) << nShift;
-        pabyData ++;
-        nShift += 7;
-        if( nShift >= 8 * (int)sizeof(nVal) )
-        {
-            *ppabyData = pabyData;
-            return nVal;
-        }
-    }
-}
-
-#define READ_VARINT32(pabyData, pabyDataLimit, nVal)  \
-    { \
-        nVal = ReadVarInt32(&pabyData); \
-        if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
-    }
-
-#define READ_VARSINT32(pabyData, pabyDataLimit, nVal)  \
-    { \
-        nVal = ReadVarInt32(&pabyData); \
-        nVal = ((nVal & 1) == 0) ? (int)(((unsigned int)nVal) >> 1) : -(int)(((unsigned int)nVal) >> 1)-1; \
-        if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
-    }
-
-/************************************************************************/
 /*                          ReadVarUInt32()                             */
 /************************************************************************/
 
 #ifndef DO_NOT_DEFINE_READ_VARUINT32
-
 static unsigned int ReadVarUInt32(GByte** ppabyData)
 {
     unsigned int nVal = 0;
@@ -130,13 +87,19 @@ static unsigned int ReadVarUInt32(GByte** ppabyData)
         if (!(nByte & 0x80))
         {
             *ppabyData = pabyData + 1;
-            return nVal | (nByte << nShift);
+            return nVal | ((unsigned)nByte << nShift);
         }
         nVal |= (nByte & 0x7f) << nShift;
         pabyData ++;
         nShift += 7;
-        if( nShift >= 8 * (int)sizeof(nVal) )
+        if( nShift == 28 )
         {
+            nByte = *pabyData;
+            if (!(nByte & 0x80))
+            {
+                *ppabyData = pabyData + 1;
+                return nVal | (((unsigned)nByte & 0xf) << nShift);
+            }
             *ppabyData = pabyData;
             return nVal;
         }
@@ -155,15 +118,21 @@ static unsigned int ReadVarUInt32(GByte** ppabyData)
         if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData)) GOTO_END_ERROR; \
     }
 
-#endif /* DO_NOT_DEFINE_READ_VARUINT32 */
+#define READ_SIZE(pabyData, pabyDataLimit, nSize) \
+    { \
+        READ_VARUINT32(pabyData, pabyDataLimit, nSize); \
+        if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData)) GOTO_END_ERROR; \
+    }
+
+#endif
 
 /************************************************************************/
-/*                           ReadVarInt64()                             */
+/*                          ReadVarUInt64()                             */
 /************************************************************************/
 
-static GIntBig ReadVarInt64(GByte** ppabyData)
+static GUIntBig ReadVarUInt64(GByte** ppabyData)
 {
-    GIntBig nVal = 0;
+    GUIntBig nVal = 0;
     int nShift = 0;
     GByte* pabyData = *ppabyData;
 
@@ -173,13 +142,19 @@ static GIntBig ReadVarInt64(GByte** ppabyData)
         if (!(nByte & 0x80))
         {
             *ppabyData = pabyData + 1;
-            return nVal | ((GIntBig)nByte << nShift);
+            return nVal | ((GUIntBig)nByte << nShift);
         }
-        nVal |= ((GIntBig)(nByte & 0x7f)) << nShift;
+        nVal |= ((GUIntBig)(nByte & 0x7f)) << nShift;
         pabyData ++;
         nShift += 7;
-        if( nShift >= 8 * (int)sizeof(nVal) )
+        if( nShift == 63 )
         {
+            nByte = *pabyData;
+            if (!(nByte & 0x80))
+            {
+                *ppabyData = pabyData + 1;
+                return nVal | (((GUIntBig)nByte & 1) << nShift);
+            }
             *ppabyData = pabyData;
             return nVal;
         }
@@ -188,21 +163,57 @@ static GIntBig ReadVarInt64(GByte** ppabyData)
 
 #define READ_VARINT64(pabyData, pabyDataLimit, nVal)  \
     { \
-        nVal = ReadVarInt64(&pabyData); \
+        nVal = (GIntBig)ReadVarUInt64(&pabyData); \
         if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
     }
 
 #define READ_VARSINT64(pabyData, pabyDataLimit, nVal)  \
     { \
-        nVal = ReadVarInt64(&pabyData); \
-        nVal = ((nVal & 1) == 0) ? (GIntBig)(((GUIntBig)nVal) >> 1) : -(GIntBig)(((GUIntBig)nVal) >> 1)-1; \
+        GUIntBig l_nVal = ReadVarUInt64(&pabyData); \
+        nVal = ((l_nVal & 1) == 0) ? (GIntBig)(l_nVal >> 1) : -(GIntBig)(l_nVal >> 1)-1; \
         if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
     }
 
 #define READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nVal)  \
     { \
-        nVal = ReadVarInt64(&pabyData); \
-        nVal = ((nVal & 1) == 0) ? (GIntBig)(((GUIntBig)nVal) >> 1) : -(GIntBig)(((GUIntBig)nVal) >> 1)-1; \
+        GUIntBig l_nVal = ReadVarUInt64(&pabyData); \
+        nVal = ((l_nVal & 1) == 0) ? (GIntBig)(l_nVal >> 1) : -(GIntBig)(l_nVal >> 1)-1; \
+    }
+
+/************************************************************************/
+/*                           ReadVarInt64()                             */
+/************************************************************************/
+
+#ifndef DO_NOT_DEFINE_READ_VARINT64
+static GIntBig ReadVarInt64(GByte** ppabyData)
+{
+    return (GIntBig)ReadVarUInt64(ppabyData);
+}
+#endif
+
+/************************************************************************/
+/*                           ReadVarInt32()                             */
+/************************************************************************/
+
+static int ReadVarInt32(GByte** ppabyData)
+{
+    /*  If you use int32 or int64 as the type for a negative number, */
+    /* the resulting varint is always ten bytes long */
+    GIntBig nVal = (GIntBig)ReadVarUInt64(ppabyData);
+    return (int)nVal;
+}
+
+#define READ_VARINT32(pabyData, pabyDataLimit, nVal)  \
+    { \
+        nVal = ReadVarInt32(&pabyData); \
+        if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
+    }
+
+#define READ_VARSINT32(pabyData, pabyDataLimit, nVal)  \
+    { \
+        nVal = ReadVarInt32(&pabyData); \
+        nVal = ((nVal & 1) == 0) ? (int)(((unsigned int)nVal) >> 1) : -(int)(((unsigned int)nVal) >> 1)-1; \
+        if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
     }
 
 /************************************************************************/
