@@ -32,6 +32,10 @@
 #ifndef OGR_MYSQL_H_INCLUDED
 #define OGR_MYSQL_H_INCLUDED
 
+// Include cpl_port.h before mysql stuff to avoid issues with CPLIsFinite()
+// See https://trac.osgeo.org/gdal/ticket/6899
+#include "cpl_port.h"
+
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4324 ) /* 'my_alignment_imp<0x02>' : structure was padded due to __declspec(align()) */
