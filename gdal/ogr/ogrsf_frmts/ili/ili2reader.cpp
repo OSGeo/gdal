@@ -301,7 +301,7 @@ static OGRCompoundCurve *getBoundary(DOMElement *elem) {
 static OGRCurvePolygon *getPolygon(DOMElement *elem) {
   OGRCurvePolygon *pg = new OGRCurvePolygon();
 
-  DOMElement *boundaryElem = (DOMElement *)elem->getFirstChild(); // outer boundary
+  DOMElement *boundaryElem = dynamic_cast<DOMElement *>(elem->getFirstChild()); // outer boundary
   while (boundaryElem != NULL) {
     char* pszTagName = XMLString::transcode(boundaryElem->getTagName());
     if (cmpStr(ILI2_BOUNDARY, pszTagName) == 0)
@@ -313,7 +313,7 @@ static OGRCurvePolygon *getPolygon(DOMElement *elem) {
         }
     }
     XMLString::release(&pszTagName);
-    boundaryElem = (DOMElement *)boundaryElem->getNextSibling(); // inner boundaries
+    boundaryElem = dynamic_cast<DOMElement *>(boundaryElem->getNextSibling()); // inner boundaries
   }
 
   return pg;
