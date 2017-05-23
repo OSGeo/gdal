@@ -43,6 +43,10 @@
 #define REGISTER_FUNC GDALAllRegister
 #endif
 
+#ifndef GDAL_SKIP
+#define GDAL_SKIP "CAD"
+#endif
+
 #ifndef EXTENSION
 #define EXTENSION "bin"
 #endif
@@ -84,6 +88,9 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
 #endif
     VSIFCloseL(fp);
+#ifdef GDAL_SKIP
+    CPLSetConfigOption("GDAL_SKIP", GDAL_SKIP);
+#endif
     REGISTER_FUNC();
     CPLPushErrorHandler(CPLQuietErrorHandler);
 #ifdef USE_FILESYSTEM
