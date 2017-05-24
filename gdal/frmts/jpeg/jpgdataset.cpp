@@ -1896,8 +1896,11 @@ int JPGDatasetCommon::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo *poOpenInfo )
 
 {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    // During fuzzing, do not use Identify to reject crazy content.
     if( !Identify(poOpenInfo) )
         return NULL;
+#endif
 
     if( poOpenInfo->eAccess == GA_Update )
     {
