@@ -139,8 +139,8 @@ static const char * const CRS_error_message[] = {
 static
 void* GDALCreateSimilarGCPTransformer( void *hTransformArg, double dfRatioX, double dfRatioY )
 {
-    int i;
-    GDAL_GCP *pasGCPList;
+    int i = 0;
+    GDAL_GCP *pasGCPList = NULL;
     GCPTransformInfo *psInfo = (GCPTransformInfo *) hTransformArg;
 
     VALIDATE_POINTER1( hTransformArg, "GDALCreateSimilarGCPTransformer", NULL );
@@ -178,10 +178,13 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 int nReqOrder, int bReversed, int bRefine, double dfTolerance, int nMinimumGcps)
 
 {
-    GCPTransformInfo *psInfo;
-    double *padfGeoX, *padfGeoY, *padfRasterX, *padfRasterY;
-    int    *panStatus, iGCP;
-    int    nCRSresult;
+    GCPTransformInfo *psInfo = NULL;
+    double *padfGeoX = NULL;
+    double *padfGeoY = NULL;
+    double *padfRasterX = NULL;
+    double *padfRasterY = NULL;
+    int *panStatus = NULL, iGCP;
+    int nCRSresult = 0;
     struct Control_Points sPoints;
 
     memset( &sPoints, 0, sizeof(sPoints) );
@@ -385,7 +388,7 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
                       int *panSuccess )
 
 {
-    int    i;
+    int i = 0;
     GCPTransformInfo *psInfo = (GCPTransformInfo *) pTransformArg;
 
     if( psInfo->bReversed )
@@ -424,7 +427,7 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
 CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
 
 {
-    CPLXMLNode *psTree;
+    CPLXMLNode *psTree = NULL;
     GCPTransformInfo *psInfo = (GCPTransformInfo *) pTransformArg;
 
     VALIDATE_POINTER1( pTransformArg, "GDALSerializeGCPTransformer", NULL );
@@ -485,12 +488,12 @@ void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree )
 {
     GDAL_GCP *pasGCPList = 0;
     int nGCPCount = 0;
-    void *pResult;
-    int nReqOrder;
-    int bReversed;
-    int bRefine;
-    int nMinimumGcps;
-    double dfTolerance;
+    void *pResult = NULL;
+    int nReqOrder = 0;
+    int bReversed = 0;
+    int bRefine = 0;
+    int nMinimumGcps = 0;
+    double dfTolerance = 0.0;
 
     /* -------------------------------------------------------------------- */
     /*      Check for GCPs.                                                 */
@@ -597,7 +600,13 @@ CRS_georef (
                ORDER USED TO CALCULATE THE COEFFICIENTS */
 )
   {
-  double e3, e2n, en2, n3, e2, en, n2;
+  double e3 = 0.0;
+  double e2n = 0.0;
+  double en2 = 0.0;
+  double n3 = 0.0;
+  double e2 = 0.0;
+  double en = 0.0;
+  double n2 = 0.0;
 
   switch(order)
     {
@@ -659,8 +668,8 @@ CRS_compute_georef_equations (struct Control_Points *cp,
                                       double E21[], double N21[],
                                       int order)
 {
-    double *tempptr;
-    int status;
+    double *tempptr = NULL;
+    int status = 0;
 
     if(order < 1 || order > MAXORDER)
         return(MPARMERR);
@@ -706,10 +715,11 @@ static int
 calccoef (struct Control_Points *cp, double E[], double N[], int order)
 {
     struct MATRIX m;
-    double *a;
-    double *b;
-    int numactive;   /* NUMBER OF ACTIVE CONTROL POINTS */
-    int status, i;
+    double *a = NULL;
+    double *b = NULL;
+    int numactive = 0;   /* NUMBER OF ACTIVE CONTROL POINTS */
+    int status = 0;
+    int i = 0;
 
     memset( &m, 0, sizeof(m) );
 
@@ -778,9 +788,10 @@ static int exactdet (
     double N[]     /* NORTHING COEFFICIENTS */
 )
   {
-  int pntnow, currow, j;
+  int pntnow = 0;
+  int currow = 1;
+  int j = 0;
 
-  currow = 1;
   for(pntnow = 0 ; pntnow < cp->count ; pntnow++)
     {
     if(cp->status[pntnow] > 0)
@@ -824,7 +835,7 @@ static int calcls (
     double N[]     /* NORTHING COEFFICIENTS */
 )
 {
-    int i, j, n, numactive = 0;
+    int i = 0, j = 0, n = 0, numactive = 0;
 
     /* INITIALIZE THE UPPER HALF OF THE MATRIX AND THE TWO COLUMN VECTORS */
 
@@ -919,9 +930,14 @@ static double term (int nTerm, double e, double n)
 static int solvemat (struct MATRIX *m,
   double a[], double b[], double E[], double N[])
 {
-    int i, j, i2, j2, imark;
-    double factor, temp;
-    double  pivot;  /* ACTUAL VALUE OF THE LARGEST PIVOT CANDIDATE */
+    int i = 0;
+    int j = 0;
+    int i2 = 0;
+    int j2 = 0;
+    int imark = 0;
+    double factor = 0.0;
+    double temp = 0.0;
+    double pivot = 0.0;  /* ACTUAL VALUE OF THE LARGEST PIVOT CANDIDATE */
 
     for(i = 1 ; i <= m->n ; i++)
     {
@@ -1025,14 +1041,19 @@ static int solvemat (struct MATRIX *m,
 /***************************************************************************/
 static int worst_outlier(struct Control_Points *cp, double E[], double N[], double dfTolerance)
 {
-    double *padfResiduals;
-    int nI, nIndex;
-    double dfDifference, dfSampleResidual, dfLineResidual, dfSampleRes, dfLineRes, dfCurrentDifference;
-    double dfE1, dfN1, dfE2, dfN2, dfEn;
-
-    padfResiduals = (double *) CPLCalloc(sizeof(double),cp->count);
-    dfSampleResidual = 0.0;
-    dfLineResidual = 0.0;
+    int nI = 0, nIndex = 0;
+    double dfDifference = 0.0;
+    double dfSampleRes = 0.0;
+    double dfLineRes = 0.0;
+    double dfCurrentDifference = 0.0;
+    double dfE1 = 0.0;
+    double dfN1 = 0.0;
+    double dfE2 = 0.0;
+    double dfN2 = 0.0;
+    double dfEn = 0.0;
+    double dfSampleResidual = 0.0;
+    double dfLineResidual = 0.0;
+    double *padfResiduals = (double *) CPLCalloc(sizeof(double),cp->count);
 
     for(nI = 0; nI < cp->count; nI++)
     {
@@ -1086,10 +1107,17 @@ static int worst_outlier(struct Control_Points *cp, double E[], double N[], doub
 /***************************************************************************/
 static int remove_outliers( GCPTransformInfo *psInfo )
 {
-    double *padfGeoX, *padfGeoY, *padfRasterX, *padfRasterY;
-    int *panStatus;
-    int nI, nCRSresult, nGCPCount, nMinimumGcps, nReqOrder;
-    double dfTolerance;
+    double *padfGeoX = NULL;
+    double *padfGeoY = NULL;
+    double *padfRasterX = NULL;
+    double *padfRasterY = NULL;
+    int *panStatus = NULL;
+    int nI = 0;
+    int nCRSresult = 0;
+    int nGCPCount = 0;
+    int nMinimumGcps = 0;
+    int nReqOrder = 0;
+    double dfTolerance = 0;
     struct Control_Points sPoints;
 
     memset( &sPoints, 0, sizeof(sPoints) );
@@ -1128,9 +1156,9 @@ static int remove_outliers( GCPTransformInfo *psInfo )
 
     while(sPoints.count > nMinimumGcps)
     {
-        int nIndex;
-
-        nIndex = worst_outlier(&sPoints, psInfo->adfFromGeoX, psInfo->adfFromGeoY, dfTolerance);
+        int nIndex =
+            worst_outlier(&sPoints, psInfo->adfFromGeoX, psInfo->adfFromGeoY,
+                          dfTolerance);
 
         //If no outliers were detected, stop the GCP elimination
         if(nIndex == -1)
