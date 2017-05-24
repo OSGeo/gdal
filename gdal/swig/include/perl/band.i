@@ -3,7 +3,7 @@
 %header %{
   double NVClassify(int comparison, double nv, AV* classifier, const char **error) {
      /* recursive, return nv < classifier[0] ? classifier[1] : classifier[2]
-        returns error if there are not three values in the classifier,
+        sets error if there are not three values in the classifier,
         first is not a number, or second or third are not a number of arrayref
      */
      SV** f = av_fetch(classifier, 0, 0);
@@ -32,18 +32,15 @@
              return SvNV(*t);
          else if (t && SvROK(*t) && (SvTYPE(SvRV(*t)) == SVt_PVAV))
              return NVClassify(comparison, nv, (AV*)(SvRV(*t)), error);
-         else {
+         else
              *error = "The decision in a classifier must be a number or a reference to a classifier.";
-             return 0;
-         }
-     } else {
+     } else
          *error = "The first value in a classifier must be a number.";
-         return 0;
-     }
+     return 0;
   }
   void NVClass(int comparison, double nv, AV* classifier, int *klass, const char **error) {
-     /* recursive, return nv < classifier[0] ? classifier[1] : classifier[2]
-        returns NULL if there are not three values in the classifier,
+     /* recursive, return in klass nv < classifier[0] ? classifier[1] : classifier[2]
+        sets error if there are not three values in the classifier,
         first is not a number, or second or third are not a number of arrayref
      */
      SV** f = av_fetch(classifier, 0, 0);
@@ -77,14 +74,10 @@
              return;
          else if (t && SvROK(*t) && (SvTYPE(SvRV(*t)) == SVt_PVAV))
              NVClass(comparison, nv, (AV*)(SvRV(*t)), klass, error);
-         else {
+         else
              *error = "The decision in a classifier must be a number or a reference to a classifier.";
-             return;
-         }
-     } else {
+     } else
          *error = "The first value in a classifier must be a number.";
-         return;
-     }
   }
   AV* to_array_classifier(SV* classifier, int* comparison, const char **error) {
       if (SvROK(classifier) && (SvTYPE(SvRV(classifier)) == SVt_PVAV)) {
@@ -100,16 +93,18 @@
                   *comparison = 2;
               else if (strcmp(c, ">=") == 0)
                   *comparison = 3;
-              else
+              else {
                   *error = "The first element in classifier object must be a comparison.";
+                  return NULL;
+              }
           }
           if (s && SvROK(*s) && (SvTYPE(SvRV(*s)) == SVt_PVAV))
               return (AV*)SvRV(*s);
           else
               *error = "The second element in classifier object must be an array reference.";
-      } else {
+      } else
           *error = NEED_ARRAY_REF;
-      }
+      return NULL;
   }
 %}
 
