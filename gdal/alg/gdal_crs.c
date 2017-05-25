@@ -183,7 +183,8 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
     double *padfGeoY = NULL;
     double *padfRasterX = NULL;
     double *padfRasterY = NULL;
-    int *panStatus = NULL, iGCP;
+    int *panStatus = NULL;
+    int iGCP = 0;
     int nCRSresult = 0;
     struct Control_Points sPoints;
 
