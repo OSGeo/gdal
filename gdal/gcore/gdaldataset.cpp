@@ -5520,29 +5520,26 @@ GDALDataset::ExecuteSQL( const char *pszStatement,
     if( STARTS_WITH_CI(pszStatement, "ALTER TABLE") )
     {
         char **papszTokens = CSLTokenizeString(pszStatement);
-        if( CSLCount(papszTokens) >= 4 &&
-            EQUAL(papszTokens[3], "ADD") )
+        const int nTokens = CSLCount(papszTokens);
+        if( nTokens >= 4 && EQUAL(papszTokens[3], "ADD") )
         {
             ProcessSQLAlterTableAddColumn(pszStatement);
             CSLDestroy(papszTokens);
             return NULL;
         }
-        else if( CSLCount(papszTokens) >= 4 &&
-                 EQUAL(papszTokens[3], "DROP") )
+        else if( nTokens >= 4 && EQUAL(papszTokens[3], "DROP") )
         {
             ProcessSQLAlterTableDropColumn( pszStatement );
             CSLDestroy(papszTokens);
             return NULL;
         }
-        else if( CSLCount(papszTokens) >= 4 &&
-                 EQUAL(papszTokens[3], "RENAME") )
+        else if( nTokens >= 4 && EQUAL(papszTokens[3], "RENAME") )
         {
             ProcessSQLAlterTableRenameColumn(pszStatement);
             CSLDestroy(papszTokens);
             return NULL;
         }
-        else if( CSLCount(papszTokens) >= 4 &&
-                 EQUAL(papszTokens[3], "ALTER") )
+        else if( nTokens >= 4 && EQUAL(papszTokens[3], "ALTER") )
         {
             ProcessSQLAlterTableAlterColumn(pszStatement);
             CSLDestroy(papszTokens);
