@@ -128,7 +128,7 @@ OGRNTFLayer * OGRNTFDataSource::GetNamedLayer( const char * pszNameIn )
     for( int i = 0; i < nLayers; i++ )
     {
         if( EQUAL(papoLayers[i]->GetLayerDefn()->GetName(),pszNameIn) )
-            return (OGRNTFLayer *) papoLayers[i];
+            return static_cast<OGRNTFLayer *>(papoLayers[i]);
     }
 
     return NULL;
@@ -141,8 +141,8 @@ OGRNTFLayer * OGRNTFDataSource::GetNamedLayer( const char * pszNameIn )
 void OGRNTFDataSource::AddLayer( OGRLayer * poNewLayer )
 
 {
-    papoLayers = (OGRLayer **)
-        CPLRealloc( papoLayers, sizeof(void*) * ++nLayers );
+    papoLayers = static_cast<OGRLayer **>(
+        CPLRealloc( papoLayers, sizeof(void*) * ++nLayers ) );
 
     papoLayers[nLayers-1] = poNewLayer;
 }
@@ -263,8 +263,8 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 /*      open ... we don't want to occupy a lot of file handles when      */
 /*      handling a whole directory.                                     */
 /* -------------------------------------------------------------------- */
-    papoNTFFileReader = (NTFFileReader **)
-        CPLCalloc(sizeof(void*), CSLCount(papszFileList));
+    papoNTFFileReader = static_cast<NTFFileReader **>(
+        CPLCalloc(sizeof(void*), CSLCount(papszFileList)));
 
     for( int i = 0; papszFileList != NULL && papszFileList[i] != NULL; i++ )
     {

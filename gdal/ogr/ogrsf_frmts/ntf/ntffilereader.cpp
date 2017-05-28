@@ -326,8 +326,8 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         {
             nAttCount++;
 
-            pasAttDesc = (NTFAttDesc *)
-                CPLRealloc( pasAttDesc, sizeof(NTFAttDesc) * nAttCount );
+            pasAttDesc = static_cast<NTFAttDesc *>(
+                CPLRealloc( pasAttDesc, sizeof(NTFAttDesc) * nAttCount ));
 
             ProcessAttDesc( poRecord, pasAttDesc + nAttCount - 1 );
         }
@@ -1589,9 +1589,9 @@ void NTFFileReader::IndexFile()
         {
             const int nNewSize = std::max(iId+1, anIndexSize[iType] * 2 + 10);
 
-            apapoRecordIndex[iType] = (NTFRecord **)
+            apapoRecordIndex[iType] = static_cast<NTFRecord **>(
                 CPLRealloc(apapoRecordIndex[iType],
-                           sizeof(void *) * nNewSize);
+                           sizeof(void *) * nNewSize));
 
             for( int i = anIndexSize[iType]; i < nNewSize; i++ )
                 (apapoRecordIndex[iType])[i] = NULL;
@@ -1960,10 +1960,10 @@ void NTFFileReader::CacheAddByGeomId( int nGeomId, OGRGeometry *poGeometry )
 /* -------------------------------------------------------------------- */
     if( nGeomId >= nLineCacheSize )
     {
-        int     nNewSize = nGeomId + 100;
+        const int nNewSize = nGeomId + 100;
 
-        papoLineCache = (OGRGeometry **)
-            CPLRealloc( papoLineCache, sizeof(void*) * nNewSize );
+        papoLineCache = static_cast<OGRGeometry **>(
+            CPLRealloc( papoLineCache, sizeof(void*) * nNewSize ));
         memset( papoLineCache + nLineCacheSize, 0,
                 sizeof(void*) * (nNewSize - nLineCacheSize) );
         nLineCacheSize = nNewSize;

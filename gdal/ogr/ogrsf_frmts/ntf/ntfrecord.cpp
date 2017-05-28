@@ -78,7 +78,7 @@ NTFRecord::NTFRecord( VSILFILE * fp ) :
         if( pszData == NULL )
         {
             nLength = nNewLength - 2;
-            pszData = (char *) VSI_MALLOC_VERBOSE(nLength+1);
+            pszData = static_cast<char *>(VSI_MALLOC_VERBOSE(nLength+1));
             if (pszData == NULL)
             {
                 return;
@@ -96,7 +96,8 @@ NTFRecord::NTFRecord( VSILFILE * fp ) :
                 return;
             }
 
-            char* pszNewData = (char *) VSI_REALLOC_VERBOSE(pszData,nLength+(nNewLength-4)+1);
+            char* pszNewData = static_cast<char *>(
+                VSI_REALLOC_VERBOSE(pszData, nLength + (nNewLength - 4) + 1));
             if (pszNewData == NULL)
             {
                 VSIFree(pszData);
@@ -230,7 +231,7 @@ const char * NTFRecord::GetField( int nStart, int nEnd )
     {
         CPLFree( pszFieldBuf );
         nFieldBufSize = nSize + 1;
-        pszFieldBuf = (char *) CPLMalloc(nFieldBufSize);
+        pszFieldBuf = static_cast<char *>(CPLMalloc(nFieldBufSize));
     }
 
 /* -------------------------------------------------------------------- */
