@@ -1255,6 +1255,19 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t 
     vsi_l_offset iterOffset = curOffset;
     while (nBufferRequestSize)
     {
+        // Don't try to read after end of file.
+        CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+        if( cachedFileProp->bHasComputedFileSize &&
+            iterOffset >= cachedFileProp->fileSize )
+        {
+            if( iterOffset == curOffset )
+            {
+                CPLDebug("VSICURL", "Request at offset " CPL_FRMT_GUIB
+                         ", after end of file", iterOffset);
+            }
+            break;
+        }
+
         const CachedRegion* psRegion = poFS->GetRegion(pszURL, iterOffset);
         if (psRegion == NULL)
         {
