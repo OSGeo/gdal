@@ -127,7 +127,8 @@ void NTFFileReader::EstablishRasterAccess()
 /* -------------------------------------------------------------------- */
     delete poRecord;
 
-    panColumnOffset = (vsi_l_offset *) CPLCalloc(sizeof(vsi_l_offset),nRasterXSize);
+    panColumnOffset = static_cast<vsi_l_offset *>(
+        CPLCalloc(sizeof(vsi_l_offset), nRasterXSize));
 
     GetFPPos( panColumnOffset+0, NULL );
 

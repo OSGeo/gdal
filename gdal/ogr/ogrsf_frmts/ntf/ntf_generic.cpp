@@ -99,13 +99,13 @@ void NTFGenericClass::CheckAddAttr( const char * pszName,
         papszAttrNames = CSLAddString( papszAttrNames, pszName );
         papszAttrFormats = CSLAddString( papszAttrFormats, pszFormat );
 
-        panAttrMaxWidth = (int *)
-            CPLRealloc( panAttrMaxWidth, sizeof(int) * nAttrCount );
+        panAttrMaxWidth = static_cast<int *>(
+            CPLRealloc( panAttrMaxWidth, sizeof(int) * nAttrCount ));
 
         panAttrMaxWidth[nAttrCount-1] = nWidth;
 
-        pabAttrMultiple = (int *)
-            CPLRealloc( pabAttrMultiple, sizeof(int) * nAttrCount );
+        pabAttrMultiple = static_cast<int *>(
+            CPLRealloc( pabAttrMultiple, sizeof(int) * nAttrCount ));
 
         pabAttrMultiple[nAttrCount-1] = FALSE;
     }
@@ -384,7 +384,7 @@ static OGRFeature *TranslateGenericNode( NTFFileReader *poReader,
     if( papoGroup[0]->GetLength() > 18 )
     {
         nLinkCount = atoi(papoGroup[0]->GetField(15,18));
-        panLinks = (int *) CPLCalloc(sizeof(int),nLinkCount);
+        panLinks = static_cast<int *>(CPLCalloc(sizeof(int), nLinkCount));
     }
 
     poFeature->SetField( "NUM_LINKS", nLinkCount );
@@ -437,7 +437,7 @@ static OGRFeature *TranslateGenericCollection( NTFFileReader *poReader,
     if( papoGroup[0]->GetLength() > 18 )
     {
         nPartCount = atoi(papoGroup[0]->GetField(9,12));
-        panParts = (int *) CPLCalloc(sizeof(int),nPartCount);
+        panParts = static_cast<int *>(CPLCalloc(sizeof(int), nPartCount));
     }
 
     poFeature->SetField( "NUM_PARTS", nPartCount );
