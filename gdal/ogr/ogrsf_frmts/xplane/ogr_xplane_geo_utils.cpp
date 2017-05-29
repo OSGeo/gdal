@@ -85,6 +85,10 @@ double OGRXPlane_Track( double LatA_deg, double LonA_deg,
     {
         return 0; // Arbitrary number
     }
+    else if( fabs(LatA_deg) < 1e-10 && fabs(LatB_deg) < 1e-10 )
+    {
+        return (LonB_deg > LonA_deg) ? 90.0 : 270.0;
+    }
     else
     {
         const double LatA_rad = LatA_deg * DEG2RAD;
