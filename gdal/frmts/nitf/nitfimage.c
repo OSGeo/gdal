@@ -707,7 +707,14 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      Setup some image access values.  Some of these may not apply    */
 /*      for compressed images, or band interleaved by block images.     */
 /* -------------------------------------------------------------------- */
-    psImage->nWordSize = psImage->nBitsPerSample / 8;
+    if( psImage->nBitsPerSample <= 8 )
+        psImage->nWordSize = 1;
+    else if( psImage->nBitsPerSample <= 16 )
+        psImage->nWordSize = 2;
+    else if( psImage->nBitsPerSample <= 32 )
+        psImage->nWordSize = 4;
+    else
+        psImage->nWordSize = psImage->nBitsPerSample / 8;
     if( psImage->chIMODE == 'S' )
     {
         psImage->nPixelOffset = psImage->nWordSize;
@@ -1282,11 +1289,8 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         else
         {
 #ifdef CPL_LSB
-            if( psImage->nWordSize * 8 == psImage->nBitsPerSample )
-            {
-                NITFSwapWords( psImage, pData,
-                            psImage->nBlockWidth * psImage->nBlockHeight);
-            }
+            NITFSwapWords( psImage, pData,
+                        psImage->nBlockWidth * psImage->nBlockHeight);
 #endif
 
             return BLKREAD_OK;
@@ -2207,6 +2211,12 @@ static void NITFSwapWordsInternal( void *pData, int nWordSize, int nWordCount,
 static void NITFSwapWords( NITFImage *psImage, void *pData, int nWordCount )
 
 {
+    if( psImage->nWordSize * 8 != psImage->nBitsPerSample )
+    {
+        // FIXME ?
+        return;
+    }
+
     if( EQUAL(psImage->szPVType,"C") )
     {
         /* According to http://jitc.fhu.disa.mil/nitf/tag_reg/imagesubheader/pvtype.html */
