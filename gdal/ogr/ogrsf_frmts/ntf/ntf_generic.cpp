@@ -172,7 +172,9 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
         else
             papoGroup = poReader->ReadRecordGroup();
 
-        if( papoGroup == NULL || papoGroup[0]->GetType() == 99 )
+        if( papoGroup == NULL ||
+            papoGroup[0]->GetType() < 0 ||
+            papoGroup[0]->GetType() >= 99 )
             break;
 
 /* -------------------------------------------------------------------- */
