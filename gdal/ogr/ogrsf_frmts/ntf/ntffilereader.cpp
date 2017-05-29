@@ -687,8 +687,8 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
 
     else
     {
-        fprintf( stderr, "GType = %d\n", nGType );
-        CPLAssert( FALSE );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unhandled GType = %d", nGType );
     }
 
     if( poGeometry != NULL )
