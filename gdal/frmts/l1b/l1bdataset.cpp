@@ -894,16 +894,17 @@ void L1BDataset::ProcessRecordHeaders()
 /* -------------------------------------------------------------------- */
 /*      Initialize the GCP list.                                        */
 /* -------------------------------------------------------------------- */
-    const int nGCPs = nTargetLines * nGCPsPerLine;
-    if( nGCPs > 0 )
+    const int nExpectedGCPs = nTargetLines * nGCPsPerLine;
+    if( nExpectedGCPs > 0 )
     {
-        pasGCPList = (GDAL_GCP *)VSI_CALLOC_VERBOSE( nGCPs, sizeof(GDAL_GCP) );
+        pasGCPList = (GDAL_GCP *)VSI_CALLOC_VERBOSE(
+                                    nExpectedGCPs, sizeof(GDAL_GCP) );
         if (pasGCPList == NULL)
         {
             CPLFree( pRecordHeader );
             return;
         }
-        GDALInitGCPs( nGCPs, pasGCPList );
+        GDALInitGCPs( nExpectedGCPs, pasGCPList );
     }
 
 /* -------------------------------------------------------------------- */
@@ -970,10 +971,15 @@ void L1BDataset::ProcessRecordHeaders()
         }
     }
 
-    if( nGCPCount < nTargetLines * nGCPsPerLine )
+    if( nGCPCount < nExpectedGCPs )
     {
-        GDALDeinitGCPs( nTargetLines * nGCPsPerLine - nGCPCount,
+        GDALDeinitGCPs( nExpectedGCPs - nGCPCount,
                         pasGCPList + nGCPCount );
+        if( nGCPCount == 0 )
+        {
+            CPLFree( pasGCPList );
+            pasGCPList = NULL;
+        }
     }
 
     CPLFree( pRecordHeader );
