@@ -54,25 +54,32 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord )
     papszCodeVal = (char **) CPLMalloc(sizeof(char*) * nNumCode );
     papszCodeDes = (char **) CPLMalloc(sizeof(char*) * nNumCode );
 
+    const int nRecordLen = poRecord->GetLength();
     pszText = poRecord->GetData() + 22;
     for( iThisField=0;
-         *pszText != '\0' && iThisField < nNumCode;
+         nRecordLen > 22 && *pszText != '\0' && iThisField < nNumCode;
          iThisField++ )
     {
         char    szVal[128], szDes[128];
         int     iLen;
 
         iLen = 0;
-        while( *pszText != '\\' && *pszText != '\0' )
+        while( iLen < static_cast<int>(sizeof(szVal)) - 1 &&
+               *pszText != '\\' && *pszText != '\0' )
+        {
             szVal[iLen++] = *(pszText++);
+        }
         szVal[iLen] = '\0';
 
         if( *pszText == '\\' )
             pszText++;
 
         iLen = 0;
-        while( *pszText != '\\' && *pszText != '\0' )
+        while( iLen < static_cast<int>(sizeof(szDes)) - 1 &&
+               *pszText != '\\' && *pszText != '\0' )
+        {
             szDes[iLen++] = *(pszText++);
+        }
         szDes[iLen] = '\0';
 
         if( *pszText == '\\' )
