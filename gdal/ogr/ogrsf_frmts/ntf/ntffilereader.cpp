@@ -345,6 +345,11 @@ int NTFFileReader::Open( const char * pszFilenameIn )
                           poCodeList->szValType );
                 delete poCodeList;
             }
+            else if( psAttDesc->poCodeList != NULL )
+            {
+                // Should not happen on sane files.
+                delete poCodeList;
+            }
             else
             {
                 psAttDesc->poCodeList = poCodeList;
