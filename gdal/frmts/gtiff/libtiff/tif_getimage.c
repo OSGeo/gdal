@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.106 2017-05-20 11:29:02 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.107 2017-05-29 11:29:06 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -2241,7 +2241,7 @@ DECLARESepPutFunc(putseparate8bitYCbCr11tile)
 
 static int isInRefBlackWhiteRange(float f)
 {
-    return f >= (float)(-0x7FFFFFFF + 128) && f <= (float)0x7FFFFFFF;
+    return f > (float)(-0x7FFFFFFF + 128) && f < (float)0x7FFFFFFF;
 }
 
 static int
