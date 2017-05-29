@@ -537,9 +537,12 @@ void OGRNTFDataSource::EnsureTileNameUnique( NTFFileReader *poNewReader )
 
         for( int iReader = 0; iReader < nNTFFileCount && bIsUnique; iReader++ )
         {
-            if( strcmp( szCandidateName,
-                        GetFileReader( iReader )->GetTileName() ) == 0 )
+            const char* pszTileName = GetFileReader( iReader )->GetTileName();
+            if( pszTileName != NULL &&
+                strcmp( szCandidateName, pszTileName ) == 0 )
+            {
                 bIsUnique = FALSE;
+            }
         }
     } while( !bIsUnique );
 
