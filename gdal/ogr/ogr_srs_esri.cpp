@@ -1775,7 +1775,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
             OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
             int iSP1Child = FindProjParm( "Standard_Parallel_1", poPROJCS );
             int iLatOrigChild = FindProjParm( "Latitude_Of_Origin", poPROJCS );
-            if( iSP1Child != -1 && iLatOrigChild != 1 )
+            if( iSP1Child != -1 && iLatOrigChild != -1 )
             {
                 /* Do a sanity check before removing Standard_Parallel_1 */
                 if( EQUAL(poPROJCS->GetChild(iSP1Child)->GetValue(),
