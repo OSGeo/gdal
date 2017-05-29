@@ -278,7 +278,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
 /*      Handle feature class name records.                              */
 /* -------------------------------------------------------------------- */
-        if( poRecord->GetType() == NRT_FCR )
+        if( poRecord->GetType() == NRT_FCR && poRecord->GetLength() >= 37 )
         {
             nFCCount++;
 
