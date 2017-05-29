@@ -293,7 +293,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
                     break;
             }
 
-            if( j == 80 || szHeader[j-1] != '%' )
+            if( j == 80 || (j > 0 && szHeader[j-1] != '%') )
                 continue;
         }
 
