@@ -789,7 +789,7 @@ static OGRFeature *TranslateGenericCPoly( NTFFileReader *poReader,
          && papoGroup[1]->GetType() != NRT_GEOMETRY3D) )
         return NULL;
 
-    if( papoGroup[1] != NULL
+    if( papoGroup[2] != NULL
         && papoGroup[2]->GetType() != NRT_ATTREC )
         return NULL;
 
