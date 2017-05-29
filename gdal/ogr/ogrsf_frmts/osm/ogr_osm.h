@@ -457,8 +457,7 @@ class OGROSMDataSource : public OGRDataSource
     bool                TransferToDiskIfNecesserary();
 
     bool                AllocBucket(int iBucket);
-    bool                AllocMoreBuckets( int nNewBucketIdx,
-                                          bool bAllocBucket = false );
+    bool                AllocMoreBuckets( int nNewBucketIdx );
 
     void                AddComputedAttributes(int iCurLayer,
                                              const std::vector<OGROSMComputedAttribute>& oAttributes);
