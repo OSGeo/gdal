@@ -2220,6 +2220,7 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
                 GDALDeserializeTransformer( psIter->psChild,
                                             &psInfo->pSrcTransformer,
                                             &psInfo->pSrcTransformArg );
+                break;
             }
         }
     }
