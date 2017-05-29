@@ -450,6 +450,35 @@ end_error:
 }
 
 /************************************************************************/
+/*                     AddWithOverflowAccepted()                        */
+/************************************************************************/
+
+static GIntBig AddWithOverflowAccepted(GIntBig a, GIntBig b)
+{
+    // Assumes complement-to-two signed integer representation and that
+    // the compiler will safely cast a negative number to unsigned and a
+    // big unsigned to negative integer.
+    return static_cast<GIntBig>(
+                        static_cast<GUIntBig>(a) + static_cast<GUIntBig>(b));
+}
+
+static int AddWithOverflowAccepted(int a, int b)
+{
+    // Assumes complement-to-two signed integer representation and that
+    // the compiler will safely cast a negative number to unsigned and a
+    // big unsigned to negative integer.
+    return static_cast<int>(
+                        static_cast<unsigned>(a) + static_cast<unsigned>(b));
+}
+
+static unsigned AddWithOverflowAccepted(unsigned a, int b)
+{
+    // Assumes complement-to-two signed integer representation and that
+    // the compiler will safely cast a negative number to unsigned.
+    return a + static_cast<unsigned>(b);
+}
+
+/************************************************************************/
 /*                         ReadDenseNodes()                             */
 /************************************************************************/
 
@@ -625,21 +654,21 @@ bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
 
             READ_VARSINT64_NOCHECK(pabyDataIDs, pabyDataIDsLimit, nDelta1);
             READ_VARSINT64(pabyDataLat, pabyDataLimit, nDelta2);
-            nID += nDelta1;
-            nLat += nDelta2;
+            nID = AddWithOverflowAccepted(nID, nDelta1);
+            nLat = AddWithOverflowAccepted(nLat, nDelta2);
 
             READ_VARSINT64(pabyDataLon, pabyDataLimit, nDelta1);
-            nLon += nDelta1;
+            nLon = AddWithOverflowAccepted(nLon, nDelta1);
 
             if( pabyDataTimeStamp )
             {
                 READ_VARSINT64(pabyDataTimeStamp, pabyDataLimit, nDelta2);
-                nTimeStamp += nDelta2;
+                nTimeStamp = AddWithOverflowAccepted(nTimeStamp, nDelta2);
             }
             if( pabyDataChangeset )
             {
                 READ_VARSINT64(pabyDataChangeset, pabyDataLimit, nDelta1);
-                nChangeset += nDelta1;
+                nChangeset = AddWithOverflowAccepted(nChangeset, nDelta1);
             }
             if( pabyDataVersion )
             {
@@ -649,13 +678,13 @@ bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
             {
                 int nDeltaUID = 0;
                 READ_VARSINT32(pabyDataUID, pabyDataLimit, nDeltaUID);
-                nUID += nDeltaUID;
+                nUID = AddWithOverflowAccepted(nUID, nDeltaUID);
             }
             if( pabyDataUserSID )
             {
                 int nDeltaUserSID = 0;
                 READ_VARSINT32(pabyDataUserSID, pabyDataLimit, nDeltaUserSID);
-                nUserSID += nDeltaUserSID;
+                nUserSID = AddWithOverflowAccepted(nUserSID, nDeltaUserSID);
                 if( nUserSID >= nStrCount )
                     GOTO_END_ERROR;
             }
