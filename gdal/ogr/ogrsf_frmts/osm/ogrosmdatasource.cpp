@@ -573,7 +573,7 @@ bool OGROSMDataSource::AllocBucket( int iBucket )
 /*                         AllocMoreBuckets()                           */
 /************************************************************************/
 
-bool OGROSMDataSource::AllocMoreBuckets( int nNewBucketIdx, bool bAllocBucket )
+bool OGROSMDataSource::AllocMoreBuckets( int nNewBucketIdx )
 {
     CPLAssert(nNewBucketIdx >= nBuckets);
 
@@ -597,33 +597,15 @@ bool OGROSMDataSource::AllocMoreBuckets( int nNewBucketIdx, bool bAllocBucket )
     }
     papsBuckets = papsNewBuckets;
 
-    bool bOOM = false;
-    int i = nBuckets;  // Used after for.
-    for( ; i < nNewBuckets && !bOOM; i++)
+    for(int i = nBuckets; i < nNewBuckets; i++)
     {
         papsBuckets[i].nOff = -1;
-        if( bAllocBucket )
-        {
-            if( !AllocBucket(i) )
-                bOOM = true;
-        }
+        if( bCompressNodes )
+            papsBuckets[i].u.panSectorSize = NULL;
         else
-        {
-            if( bCompressNodes )
-                papsBuckets[i].u.panSectorSize = NULL;
-            else
-                papsBuckets[i].u.pabyBitmap = NULL;
-        }
+            papsBuckets[i].u.pabyBitmap = NULL;
     }
-    nBuckets = i;
-
-    if( bOOM )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "AllocMoreBuckets() failed. Use OSM_USE_CUSTOM_INDEXING=NO");
-        bStopParsing = true;
-        return false;
-    }
+    nBuckets = nNewBuckets;
 
     return true;
 }
