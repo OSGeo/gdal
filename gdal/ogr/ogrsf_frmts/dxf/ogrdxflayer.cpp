@@ -1764,14 +1764,35 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
 
           case 71:
             nDegree = atoi(szLineBuf);
+            // Arbitrary threshold
+            if( nDegree < 0 || nDegree > 100)
+            {
+                DXF_LAYER_READER_ERROR();
+                delete poFeature;
+                return NULL;
+            }
             break;
 
           case 72:
             nKnots = atoi(szLineBuf);
+            // Arbitrary threshold
+            if( nKnots < 0 || nKnots > 10000000)
+            {
+                DXF_LAYER_READER_ERROR();
+                delete poFeature;
+                return NULL;
+            }
             break;
 
           case 73:
             nControlPoints = atoi(szLineBuf);
+            // Arbitrary threshold
+            if( nControlPoints < 0 || nControlPoints > 10000000)
+            {
+                DXF_LAYER_READER_ERROR();
+                delete poFeature;
+                return NULL;
+            }
             break;
 
           default:
