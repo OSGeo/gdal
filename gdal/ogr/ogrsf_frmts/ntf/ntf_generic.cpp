@@ -199,7 +199,8 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
                   poReader->ProcessAttRec( poRecord, NULL,
                                            &papszTypes, &papszValues );
 
-                  for( int iAtt = 0; papszTypes[iAtt] != NULL; iAtt++ )
+                  for( int iAtt = 0; papszTypes != NULL &&
+                                     papszTypes[iAtt] != NULL; iAtt++ )
                   {
                       NTFAttDesc *poAttDesc =
                           poReader->GetAttDesc( papszTypes[iAtt] );

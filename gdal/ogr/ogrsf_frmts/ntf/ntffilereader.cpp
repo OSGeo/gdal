@@ -456,8 +456,12 @@ int NTFFileReader::Open( const char * pszFilenameIn )
     nStartPos = VSIFTellL(fp);
 
     pszTileName = CPLStrdup(poRecord->GetField(3,12));        // SECT_REF
-    while( pszTileName[strlen(pszTileName)-1] == ' ' )
-        pszTileName[strlen(pszTileName)-1] = '\0';
+    size_t nTileNameLen = strlen(pszTileName);
+    while( nTileNameLen > 0 && pszTileName[nTileNameLen-1] == ' ' )
+    {
+        pszTileName[nTileNameLen-1] = '\0';
+        nTileNameLen --;
+    }
 
     nCoordWidth = atoi(poRecord->GetField(15,19));            // XYLEN
     if( nCoordWidth == 0 )
@@ -849,7 +853,12 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
                                   char *** ppapszValues )
 
 {
-    if( poRecord->GetType() != NRT_ATTREC )
+    if( pnAttId != NULL )
+        *pnAttId = 0;
+    *ppapszTypes = NULL;
+    *ppapszValues = NULL;
+
+    if( poRecord->GetType() != NRT_ATTREC || poRecord->GetLength() < 8 )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -862,8 +871,6 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
 /*      Loop handling attribute till we get a '0' indicating the end    */
 /*      of the record.                                                  */
 /* ==================================================================== */
-    *ppapszTypes = NULL;
-    *ppapszValues = NULL;
 
     int iOffset = 8;
     const char *pszData = poRecord->GetData();
