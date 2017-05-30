@@ -2813,6 +2813,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         const bool bFpAvailableBefore = oOpenInfo.fpL != NULL;
+        CPLErrorReset();
 #endif
 
         GDALDataset *poDS = NULL;
