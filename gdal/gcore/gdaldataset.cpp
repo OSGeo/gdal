@@ -2811,6 +2811,10 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
             GDALValidateOpenOptions(poDriver, papszOptionsToValidate);
         }
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        const bool bFpAvailableBefore = oOpenInfo.fpL != NULL;
+#endif
+
         GDALDataset *poDS = NULL;
         if ( poDriver->pfnOpen != NULL )
         {
@@ -2922,6 +2926,16 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
             return poDS;
         }
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        if( bFpAvailableBefore && oOpenInfo.fpL == NULL )
+        {
+            // In case the file descriptor was "consumed" by a driver
+            // that ultimately failed, re-open it for next drivers.
+            oOpenInfo.fpL = VSIFOpenL(
+                pszFilename,
+                (oOpenInfo.eAccess == GA_Update) ? "r+b" : "rb");
+        }
+#else
         if( CPLGetLastErrorNo() != 0 && CPLGetLastErrorType() > CE_Warning)
         {
             int *pnRecCount =
@@ -2932,6 +2946,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
             CSLDestroy(papszOpenOptionsCleaned);
             return NULL;
         }
+#endif
     }
 
     CSLDestroy(papszOpenOptionsCleaned);
