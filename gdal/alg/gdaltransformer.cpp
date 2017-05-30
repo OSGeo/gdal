@@ -1909,10 +1909,7 @@ int GDALGenImgProjTransform( void *pTransformArgIn, int bDstToSrc,
                              int *panSuccess )
 {
     GDALGenImgProjTransformInfo *psInfo =
-        (GDALGenImgProjTransformInfo *) pTransformArgIn;
-    double *padfGeoTransform;
-    GDALTransformerFunc pTransformer;
-    void *pTransformArg;
+        static_cast<GDALGenImgProjTransformInfo *>(pTransformArgIn);
 
 #ifdef DEBUG_APPROX_TRANSFORMER
     CPLAssert(nPointCount > 0);
@@ -1928,6 +1925,9 @@ int GDALGenImgProjTransform( void *pTransformArgIn, int bDstToSrc,
 /*      Convert from src (dst) pixel/line to src (dst)                  */
 /*      georeferenced coordinates.                                      */
 /* -------------------------------------------------------------------- */
+    double *padfGeoTransform = NULL;
+    void *pTransformArg = NULL;
+    GDALTransformerFunc pTransformer = NULL;
     if( bDstToSrc )
     {
         padfGeoTransform = psInfo->adfDstGeoTransform;
