@@ -69,9 +69,6 @@ static const int WAY_BUFFER_SIZE =
 
 static const int NODE_PER_BUCKET = 65536;
 
-// Initial Maximum count of buckets.
-static const int INIT_BUCKET_COUNT = 65536;
-
 static bool VALID_ID_FOR_CUSTOM_INDEXING( GIntBig _id )
 {
     return
@@ -276,8 +273,6 @@ OGROSMDataSource::OGROSMDataSource() :
     nBucketOld(-1),
     nOffInBucketReducedOld(-1),
     pabySector(NULL),
-    papsBuckets(NULL),
-    nBuckets(0),
     bNeedsToSaveWayInfo(false),
     m_nFileSize(FILESIZE_NOT_INIT)
 {}
@@ -372,24 +367,21 @@ OGROSMDataSource::~OGROSMDataSource()
     }
 
     CPLFree(pabySector);
-    if( papsBuckets )
+    std::map<int, Bucket>::iterator oIter = oMapBuckets.begin();
+    for( ; oIter != oMapBuckets.end(); ++oIter )
     {
-        for( int i = 0; i < nBuckets; i++)
+        if( bCompressNodes )
         {
-            if( bCompressNodes )
-            {
-                int nRem = i % (knPAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
-                if( nRem == 0 )
-                    CPLFree(papsBuckets[i].u.panSectorSize);
-            }
-            else
-            {
-                int nRem = i % (knPAGE_SIZE / BUCKET_BITMAP_SIZE);
-                if( nRem == 0 )
-                    CPLFree(papsBuckets[i].u.pabyBitmap);
-            }
+            int nRem = oIter->first % (knPAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
+            if( nRem == 0 )
+                CPLFree(oIter->second.u.panSectorSize);
         }
-        CPLFree(papsBuckets);
+        else
+        {
+            int nRem = oIter->first % (knPAGE_SIZE / BUCKET_BITMAP_SIZE);
+            if( nRem == 0 )
+                CPLFree(oIter->second.u.pabyBitmap);
+        }
     }
 }
 
@@ -529,85 +521,70 @@ bool OGROSMDataSource::FlushCurrentSector()
 /*                            AllocBucket()                             */
 /************************************************************************/
 
-bool OGROSMDataSource::AllocBucket( int iBucket )
+Bucket* OGROSMDataSource::AllocBucket( int iBucket )
 {
     if( bCompressNodes )
     {
         const int nRem = iBucket % (knPAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
-        if( papsBuckets[iBucket - nRem].u.panSectorSize == NULL )
-            papsBuckets[iBucket - nRem].u.panSectorSize =
+        Bucket* psPrevBucket = GetBucket(iBucket - nRem);
+        if( psPrevBucket->u.panSectorSize == NULL )
+            psPrevBucket->u.panSectorSize =
                 static_cast<GByte*>(VSI_CALLOC_VERBOSE(1, knPAGE_SIZE));
-        if( papsBuckets[iBucket - nRem].u.panSectorSize != NULL )
+        GByte* panSectorSize = psPrevBucket->u.panSectorSize;
+        Bucket* psBucket = GetBucket( iBucket );
+        if( panSectorSize != NULL )
         {
-            papsBuckets[iBucket].u.panSectorSize =
-                papsBuckets[iBucket - nRem].u.panSectorSize +
+            psBucket->u.panSectorSize =
+                panSectorSize +
                 nRem * BUCKET_SECTOR_SIZE_ARRAY_SIZE;
-            return true;
+            return psBucket;
         }
-        papsBuckets[iBucket].u.panSectorSize = NULL;
+        psBucket->u.panSectorSize = NULL;
     }
     else
     {
         const int nRem = iBucket % (knPAGE_SIZE / BUCKET_BITMAP_SIZE);
-        if( papsBuckets[iBucket - nRem].u.pabyBitmap == NULL )
-            papsBuckets[iBucket - nRem].u.pabyBitmap =
+        Bucket* psPrevBucket = GetBucket(iBucket - nRem);
+        if( psPrevBucket->u.pabyBitmap == NULL )
+            psPrevBucket->u.pabyBitmap =
                 reinterpret_cast<GByte *>(VSI_CALLOC_VERBOSE(1, knPAGE_SIZE));
-        if( papsBuckets[iBucket - nRem].u.pabyBitmap != NULL )
+        GByte* pabyBitmap = psPrevBucket->u.pabyBitmap; 
+        Bucket* psBucket = GetBucket( iBucket );
+        if( pabyBitmap != NULL )
         {
-            papsBuckets[iBucket].u.pabyBitmap =
-                papsBuckets[iBucket - nRem].u.pabyBitmap +
+            psBucket->u.pabyBitmap =
+                pabyBitmap +
                 nRem * BUCKET_BITMAP_SIZE;
-            return true;
+            return psBucket;
         }
-        papsBuckets[iBucket].u.pabyBitmap = NULL;
+        psBucket->u.pabyBitmap = NULL;
     }
 
     // Out of memory.
     CPLError( CE_Failure, CPLE_AppDefined,
               "AllocBucket() failed. Use OSM_USE_CUSTOM_INDEXING=NO" );
     bStopParsing = true;
-    return false;
+    return NULL;
 }
 
 /************************************************************************/
-/*                         AllocMoreBuckets()                           */
+/*                             GetBucket()                              */
 /************************************************************************/
 
-bool OGROSMDataSource::AllocMoreBuckets( int nNewBucketIdx )
+Bucket* OGROSMDataSource::GetBucket(int nBucketId)
 {
-    CPLAssert(nNewBucketIdx >= nBuckets);
-
-    const int nNewBuckets = std::max(nBuckets + nBuckets / 2, nNewBucketIdx);
-
-    size_t nNewSize = sizeof(Bucket) * nNewBuckets;
-    if( static_cast<GUIntBig>(nNewSize) !=
-        sizeof(Bucket) * static_cast<GUIntBig>(nNewBuckets) )
+    std::map<int, Bucket>::iterator oIter = oMapBuckets.find(nBucketId);
+    if( oIter == oMapBuckets.end() )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "AllocMoreBuckets() failed. Use OSM_USE_CUSTOM_INDEXING=NO");
-        bStopParsing = true;
-        return false;
-    }
-
-    Bucket* papsNewBuckets = (Bucket*) VSI_REALLOC_VERBOSE(papsBuckets, nNewSize);
-    if( papsNewBuckets == NULL )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "AllocMoreBuckets() failed. Use OSM_USE_CUSTOM_INDEXING=NO");
-        bStopParsing = true;
-        return false;
-    }
-    papsBuckets = papsNewBuckets;
-
-    for(int i = nBuckets; i < nNewBuckets; i++)
-    {
-        papsBuckets[i].nOff = -1;
+        Bucket* psBucket = &oMapBuckets[nBucketId];
+        psBucket->nOff = -1;
         if( bCompressNodes )
-            papsBuckets[i].u.panSectorSize = NULL;
+            psBucket->u.panSectorSize = NULL;
         else
-            papsBuckets[i].u.pabyBitmap = NULL;
+            psBucket->u.pabyBitmap = NULL;
+        return psBucket;
     }
-    nBuckets = nNewBuckets;
-
-    return true;
+    return &(oIter->second);
 }
 
 /************************************************************************/
@@ -671,14 +648,13 @@ bool OGROSMDataSource::FlushCurrentSectorCompressedCase()
         memset(pabySector, 0, SECTOR_SIZE);
         nNodesFileSize += nCompressSize;
 
-        if( nBucketOld >= nBuckets )
+        Bucket* psBucket = GetBucket(nBucketOld);
+        if( psBucket->u.panSectorSize == NULL )
         {
-            if( !AllocMoreBuckets(nBucketOld + 1) )
+            psBucket = AllocBucket(nBucketOld);
+            if( psBucket == NULL )
                 return false;
         }
-        Bucket* psBucket = &papsBuckets[nBucketOld];
-        if( psBucket->u.panSectorSize == NULL && !AllocBucket(nBucketOld) )
-            return false;
         CPLAssert( psBucket->u.panSectorSize != NULL );
         psBucket->u.panSectorSize[nOffInBucketReducedOld] =
                                     COMPRESS_SIZE_TO_BYTE(nCompressSize);
@@ -743,19 +719,18 @@ bool OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
     const int nOffInBucketReducedRemainer =
         nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
-    if( nBucket >= nBuckets )
-    {
-        if( !AllocMoreBuckets(nBucket + 1) )
-            return false;
-    }
-    Bucket* psBucket = &papsBuckets[nBucket];
+    Bucket* psBucket = GetBucket(nBucket);
 
     if( !bCompressNodes )
     {
         const int nBitmapIndex = nOffInBucketReduced / 8;
         const int nBitmapRemainer = nOffInBucketReduced % 8;
-        if( psBucket->u.pabyBitmap == NULL && !AllocBucket(nBucket) )
-            return false;
+        if( psBucket->u.pabyBitmap == NULL )
+        {
+            psBucket = AllocBucket(nBucket);
+            if( psBucket == NULL )
+                return false;
+        }
         CPLAssert( psBucket->u.pabyBitmap != NULL );
         psBucket->u.pabyBitmap[nBitmapIndex] |= (1 << nBitmapRemainer);
     }
@@ -1110,9 +1085,10 @@ void OGROSMDataSource::LookupNodesCustom( )
         int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
 
-        if( nBucket >= nBuckets )
+        std::map<int, Bucket>::const_iterator oIter = oMapBuckets.find(nBucket);
+        if( oIter == oMapBuckets.end() )
             continue;
-        Bucket* psBucket = &papsBuckets[nBucket];
+        const Bucket* psBucket = &(oIter->second);
 
         if( bCompressNodes )
         {
@@ -1191,14 +1167,15 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
 
         if( nOffInBucketReduced != l_nOffInBucketReducedOld )
         {
-            if( nBucket >= nBuckets )
+            std::map<int, Bucket>::const_iterator oIter = oMapBuckets.find(nBucket);
+            if( oIter == oMapBuckets.end() )
             {
                 CPLError(CE_Failure,  CPLE_AppDefined,
                         "Cannot read node " CPL_FRMT_GIB, id);
                 continue;
                 // FIXME ?
             }
-            Bucket* psBucket = &papsBuckets[nBucket];
+            const Bucket* psBucket = &(oIter->second);
             if( psBucket->u.panSectorSize == NULL )
             {
                 CPLError(CE_Failure,  CPLE_AppDefined,
@@ -1289,14 +1266,15 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
         const int nBitmapIndex = nOffInBucketReduced / 8;
         const int nBitmapRemainer = nOffInBucketReduced % 8;
 
-        if( nBucket >= nBuckets )
+        std::map<int, Bucket>::const_iterator oIter = oMapBuckets.find(nBucket);
+        if( oIter == oMapBuckets.end() )
         {
             CPLError(CE_Failure,  CPLE_AppDefined,
                     "Cannot read node " CPL_FRMT_GIB, id);
             continue;
             // FIXME ?
         }
-        Bucket* psBucket = &papsBuckets[nBucket];
+        const Bucket* psBucket = &(oIter->second);
         if( psBucket->u.pabyBitmap == NULL )
         {
             CPLError(CE_Failure,  CPLE_AppDefined,
@@ -2858,7 +2836,7 @@ int OGROSMDataSource::Open( const char * pszFilename,
     {
         pabySector = static_cast<GByte *>(VSI_CALLOC_VERBOSE(1, SECTOR_SIZE));
 
-        if( pabySector == NULL || !AllocMoreBuckets(INIT_BUCKET_COUNT) )
+        if( pabySector == NULL )
         {
             return FALSE;
         }
@@ -3785,18 +3763,21 @@ int OGROSMDataSource::MyResetReading()
         nNodesFileSize = 0;
 
         memset(pabySector, 0, SECTOR_SIZE);
-        for(int i = 0; i < nBuckets; i++)
+
+        std::map<int, Bucket>::iterator oIter = oMapBuckets.begin();
+        for( ; oIter != oMapBuckets.end(); ++oIter )
         {
-            papsBuckets[i].nOff = -1;
+            Bucket* psBucket = &(oIter->second);
+            psBucket->nOff = -1;
             if( bCompressNodes )
             {
-                if( papsBuckets[i].u.panSectorSize )
-                    memset(papsBuckets[i].u.panSectorSize, 0, BUCKET_SECTOR_SIZE_ARRAY_SIZE);
+                if( psBucket->u.panSectorSize )
+                    memset(psBucket->u.panSectorSize, 0, BUCKET_SECTOR_SIZE_ARRAY_SIZE);
             }
             else
             {
-                if( papsBuckets[i].u.pabyBitmap )
-                    memset(papsBuckets[i].u.pabyBitmap, 0, BUCKET_BITMAP_SIZE);
+                if( psBucket->u.pabyBitmap )
+                    memset(psBucket->u.pabyBitmap, 0, BUCKET_BITMAP_SIZE);
             }
         }
     }
