@@ -469,11 +469,11 @@ int NTFFileReader::Open( const char * pszFilenameIn )
     }
 
     nCoordWidth = atoi(poRecord->GetField(15,19));            // XYLEN
-    if( nCoordWidth == 0 )
+    if( nCoordWidth <= 0 )
         nCoordWidth = 10;
 
     nZWidth = atoi(poRecord->GetField(31,35));                // ZLEN
-    if( nZWidth == 0 )
+    if( nZWidth <= 0 )
         nZWidth = 10;
 
     dfXYMult = atoi(poRecord->GetField(21,30)) / 1000.0;      // XY_MULT
