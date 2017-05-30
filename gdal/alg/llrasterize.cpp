@@ -320,7 +320,7 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                 const double dfDeltaVariant =
                     nDeltaX == 0
                     ? 0.0
-                    : (dfVariant1 - dfVariant) / static_cast<double>(nDeltaX);
+                    : (dfVariant1 - dfVariant) / nDeltaX;
 
                 while( nDeltaX-- >= 0 )
                 {
@@ -352,7 +352,7 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                 double dfDeltaVariant =
                     nDeltaY == 0
                     ? 0.0
-                    : (dfVariant1 - dfVariant) / static_cast<double>(nDeltaY);
+                    : (dfVariant1 - dfVariant) / nDeltaY;
 
                 while( nDeltaY-- >= 0 )
                 {
@@ -462,7 +462,7 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                     iY = 0;
                 if( iYEnd >= nRasterYSize )
                     iYEnd = nRasterYSize - 1;
-                dfVariant += dfDeltaVariant * (static_cast<double>(iY) - dfY);
+                dfVariant += dfDeltaVariant * (iY - dfY);
 
                 if( padfVariant == NULL )
                     for( ; iY <= iYEnd; iY++ )
@@ -499,7 +499,7 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                     iX = 0;
                 if( iXEnd >= nRasterXSize )
                     iXEnd = nRasterXSize - 1;
-                dfVariant += dfDeltaVariant * (static_cast<double>(iX) - dfX);
+                dfVariant += dfDeltaVariant * (iX - dfX);
 
                 if( padfVariant == NULL )
                     for( ; iX <= iXEnd; iX++ )
@@ -519,8 +519,7 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
             // Clip segment in X.
             if( dfXEnd > nRasterXSize )
             {
-                dfYEnd -=
-                    (dfXEnd - static_cast<double>(nRasterXSize)) * dfSlope;
+                dfYEnd -= (dfXEnd - nRasterXSize) * dfSlope;
                 dfXEnd = nRasterXSize;
             }
             if( dfX < 0.0 )
@@ -543,8 +542,7 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                 }
                 if( dfYEnd >= nRasterYSize )
                 {
-                    dfXEnd +=
-                        (dfYEnd - static_cast<double>(nRasterYSize)) / dfSlope;
+                    dfXEnd += (dfYEnd - nRasterYSize) / dfSlope;
                     // dfYEnd is no longer used afterwards, but for
                     // consistency it should be:
                     // dfYEnd = nRasterXSize;
@@ -554,7 +552,7 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
             {
                 if( dfY >= nRasterYSize )
                 {
-                  dfDiffX = (static_cast<double>(nRasterYSize) - dfY) / dfSlope;
+                  dfDiffX = (nRasterYSize - dfY) / dfSlope;
                     dfX += dfDiffX;
                     dfVariant += dfDeltaVariant * dfDiffX;
                     dfY = nRasterYSize;
