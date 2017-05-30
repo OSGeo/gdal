@@ -1317,6 +1317,13 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
 
                 return BLKREAD_OK;
             }
+            else
+            {
+                CPLError( CE_Failure, CPLE_NotSupported,
+                          "ABPP=%d and IMODE=%c not supported",
+                          psImage->nBitsPerSample, psImage->chIMODE );
+                return BLKREAD_FAIL;
+            }
         }
     }
 
