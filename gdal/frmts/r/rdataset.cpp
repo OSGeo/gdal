@@ -298,7 +298,10 @@ int RDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if( poOpenInfo->pabyHeader == NULL )
+        return NULL;
+#else
     // During fuzzing, do not use Identify to reject crazy content.
     if( !Identify(poOpenInfo) )
         return NULL;
