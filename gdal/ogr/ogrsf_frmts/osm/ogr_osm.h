@@ -395,8 +395,8 @@ class OGROSMDataSource : public OGRDataSource
     int                 nBucketOld;
     int                 nOffInBucketReducedOld;
     GByte              *pabySector;
-    Bucket             *papsBuckets;
-    int                 nBuckets;
+    std::map<int, Bucket> oMapBuckets;
+    Bucket*             GetBucket(int nBucketId);
 
     bool                bNeedsToSaveWayInfo;
 
@@ -456,8 +456,7 @@ class OGROSMDataSource : public OGRDataSource
 
     bool                TransferToDiskIfNecesserary();
 
-    bool                AllocBucket(int iBucket);
-    bool                AllocMoreBuckets( int nNewBucketIdx );
+    Bucket*             AllocBucket(int iBucket);
 
     void                AddComputedAttributes(int iCurLayer,
                                              const std::vector<OGROSMComputedAttribute>& oAttributes);
