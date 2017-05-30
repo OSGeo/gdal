@@ -210,14 +210,10 @@ No known bug
                     pfnScanlineFunc( pCBData, y, horizontal_x1,
                                      horizontal_x2 - 1,
                                      (dfVariant == NULL)?0:dfVariant[0] );
-                    continue;
                 }
-                else
-                {
-                    // Skip top horizontal segments (they are already filled in
-                    // the regular loop).
-                    continue;
-                }
+                // else: Skip top horizontal segments.
+                // They are already filled in the regular loop.
+                continue;
             }
 
             if( dy < dy2 && dy >= dy1 )
