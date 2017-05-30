@@ -896,6 +896,8 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef CPL_MSB
             CPL_SWAP32PTR( &header.iMPPDen );
 #endif
+            if( header.iMPPDen == 0 )
+                return NULL;
 
             headerType = "RIK1";
         }
