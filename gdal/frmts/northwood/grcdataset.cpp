@@ -126,7 +126,7 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
     oEntry.c1 = 255;
     oEntry.c2 = 255;
     oEntry.c3 = 255;
-    oEntry.c4 = 255;                // alpha 255 = transparent
+    oEntry.c4 = 0;                  // alpha 0 = transparent
 
     poGDS->poColorTable->SetColorEntry( 0, &oEntry );
 
@@ -136,7 +136,7 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
         oEntry.c1 = poGDS->pGrd->stClassDict->stClassifedItem[i]->r;
         oEntry.c2 = poGDS->pGrd->stClassDict->stClassifedItem[i]->g;
         oEntry.c3 = poGDS->pGrd->stClassDict->stClassifedItem[i]->b;
-        oEntry.c4 = 0;            // alpha 0 = solid
+        oEntry.c4 = 255;          // alpha 255 = solid
 
         poGDS->poColorTable->SetColorEntry( poDS->pGrd->
                                           stClassDict->stClassifedItem[i]->
