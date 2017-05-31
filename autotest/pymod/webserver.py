@@ -42,6 +42,8 @@ from sys import version_info
 
 do_log = False
 
+s3_no_cached_test_changed_content = False
+
 TIME_SKEW = 30 * 60
 
 class GDAL_Handler(BaseHTTPRequestHandler):
@@ -695,6 +697,81 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(response.encode('ascii'))
                 return
+
+
+            if self.path == '/s3_non_cached/test.txt':
+                global s3_no_cached_test_changed_content
+                if s3_no_cached_test_changed_content:
+                    content = """bar2""".encode('ascii')
+                else:
+                    content = """foo""".encode('ascii')
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Length', len(content))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
+            if self.path == '/s3_non_cached/?delimiter=/':
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'application/xml')
+                if s3_no_cached_test_changed_content:
+                    response = """<?xml version="1.0" encoding="UTF-8"?>
+                        <ListBucketResult>
+                            <Prefix>/</Prefix>
+                            <Contents>
+                                <Key>/test.txt</Key>
+                                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                                <Size>40</Size>
+                            </Contents>
+                            <Contents>
+                                <Key>/test2.txt</Key>
+                                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                                <Size>40</Size>
+                            </Contents>
+                        </ListBucketResult>
+                    """
+                else:
+                    response = """<?xml version="1.0" encoding="UTF-8"?>
+                        <ListBucketResult>
+                            <Prefix>/</Prefix>
+                            <Contents>
+                                <Key>/test.txt</Key>
+                                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                                <Size>30</Size>
+                            </Contents>
+                        </ListBucketResult>
+                    """
+
+                self.send_header('Content-Length', len(response))
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
+
+            if self.path == '/s3_non_cached_test_use_content_1':
+                s3_no_cached_test_changed_content = False
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Length', 2)
+                self.end_headers()
+                self.wfile.write("""ok""".encode('ascii'))
+                return
+
+            if self.path == '/s3_non_cached_test_use_content_2':
+                s3_no_cached_test_changed_content = True
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Length', 2)
+                self.end_headers()
+                self.wfile.write("""ok""".encode('ascii'))
+                return
+
+
 
             if self.path == '/gs_fake_bucket_http_header_file/resource':
                 self.protocol_version = 'HTTP/1.1'
