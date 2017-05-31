@@ -166,7 +166,7 @@ STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outb
     if (inlen < 4)
         return -1;
 
-    reg = *(inbuf+3) | (*(inbuf+2)<<8) | (*(inbuf+1)<<16) | (*(inbuf+0)<<24);
+    reg = *(inbuf+3) | (*(inbuf+2)<<8) | (*(inbuf+1)<<16) | ((unsigned)*(inbuf+0)<<24);
     inbuf+=4; inlen-=4;
 
     newdata = (reg>>19)&0x1fff;
@@ -469,9 +469,9 @@ static int get_unsigned32(blxcontext_t *ctx, unsigned char **data) {
     int result;
 
     if(ctx->endian == LITTLEENDIAN)
-	result = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | (*(*data+3)<<24);
+	result = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | ((unsigned)*(*data+3)<<24);
     else
-	result = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | (*(*data)<<24);
+	result = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | ((unsigned)*(*data)<<24);
     *data+=4;
     return result;
 }
