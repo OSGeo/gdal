@@ -42,7 +42,7 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogrsurface.obj ogr_ap
 		swq_op_general.obj swq_expr_node.obj ogrpgeogeometry.obj \
 		ogrgeomediageometry.obj ogr_geocoding.obj osr_cs_wkt.obj \
 		osr_cs_wkt_parser.obj ogrgeomfielddefn.obj ograpispy.obj \
-		ogr_xerces.obj
+		ogr_xerces.obj ogr_geo_utils.obj
 
 default:        ogr.lib 
 

@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Project:  X-Plane aeronautical data reader
+ * Project:  OGR
  * Purpose:  Geo-computations
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_xplane_geo_utils.h"
+#include "ogr_geo_utils.h"
 #include "cpl_port.h"
 
 CPL_CVSID("$Id$");
@@ -38,7 +38,7 @@ static const double DEG2RAD = M_PI / 180.0;
 static const double RAD2DEG = 1.0 / DEG2RAD;
 
 static
-double OGRXPlane_Safe_acos( double x )
+double OGR_Safe_acos( double x )
 {
     if( x > 1 )
         x = 1;
@@ -48,11 +48,11 @@ double OGRXPlane_Safe_acos( double x )
 }
 
 /************************************************************************/
-/*                         OGRXPlane_Distance()                         */
+/*                      OGR_GreatCircle_Distance()                      */
 /************************************************************************/
 
-double OGRXPlane_Distance( double LatA_deg, double LonA_deg,
-                           double LatB_deg, double LonB_deg )
+double OGR_GreatCircle_Distance( double LatA_deg, double LonA_deg,
+                                 double LatB_deg, double LonB_deg )
 {
     const double cosP = cos((LonB_deg - LonA_deg) * DEG2RAD);
     const double LatA_rad = LatA_deg * DEG2RAD;
@@ -62,15 +62,15 @@ double OGRXPlane_Distance( double LatA_deg, double LonA_deg,
     const double cosb = cos(LatB_rad);
     const double sinb = sin(LatB_rad);
     const double cos_angle = sina*sinb + cosa*cosb*cosP;
-    return OGRXPlane_Safe_acos(cos_angle) * RAD2METER;
+    return OGR_Safe_acos(cos_angle) * RAD2METER;
 }
 
 /************************************************************************/
-/*                           OGRXPlane_Track()                          */
+/*                      OGR_GreatCircle_InitialHeading()                */
 /************************************************************************/
 
-double OGRXPlane_Track( double LatA_deg, double LonA_deg,
-                        double LatB_deg, double LonB_deg )
+double OGR_GreatCircle_InitialHeading( double LatA_deg, double LonA_deg,
+                                       double LatB_deg, double LonB_deg )
 {
     if( fabs (LatA_deg - 90) < 1e-10 || fabs (LatB_deg + 90) < 1e-10 )
     {
@@ -119,14 +119,14 @@ double OGRXPlane_Track( double LatA_deg, double LonA_deg,
 }
 
 /************************************************************************/
-/*                       OGRXPlane_ExtendPosition()                     */
+/*                     OGR_GreatCircle_ExtendPosition()                 */
 /************************************************************************/
 
-int OGRXPlane_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
-                             double dfDistance, double dfHeading,
-                             double* pdfLatB_deg, double* pdfLonB_deg)
+int OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
+                                   double dfDistance, double dfHeadingInA,
+                                   double* pdfLatB_deg, double* pdfLonB_deg)
 {
-    const double dfHeadingRad = dfHeading * DEG2RAD;
+    const double dfHeadingRad = dfHeadingInA * DEG2RAD;
     const double cos_Heading = cos (dfHeadingRad);
     const double sin_Heading = sin (dfHeadingRad);
 
@@ -142,14 +142,14 @@ int OGRXPlane_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
         cos_Distance * cos_complement_LatA +
         sin_Distance * sin_complement_LatA * cos_Heading;
 
-    const double complement_latB  = OGRXPlane_Safe_acos(cos_complement_latB);
+    const double complement_latB  = OGR_Safe_acos(cos_complement_latB);
 
     const double Cos_dG =
         (cos_Distance - cos_complement_latB * cos_complement_LatA) /
         (sin(complement_latB) * sin_complement_LatA);
     *pdfLatB_deg = 90 - complement_latB * RAD2DEG;
 
-    const double dG_deg  = OGRXPlane_Safe_acos(Cos_dG) * RAD2DEG;
+    const double dG_deg  = OGR_Safe_acos(Cos_dG) * RAD2DEG;
 
     if (sin_Heading < 0)
         *pdfLonB_deg = dfLonA_deg - dG_deg;

@@ -31,7 +31,7 @@
 #include "ogr_p.h"
 #include "ogr_openair.h"
 #include "ogr_srs_api.h"
-#include "ogr_xplane_geo_utils.h"
+#include "ogr_geo_utils.h"
 
 CPL_CVSID("$Id$");
 
@@ -308,11 +308,11 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                         (dfEndAngle - dfStartAngle);
                     const double dfDist = dfStartDistance * (1-pct) +
                         dfEndDistance * pct;
-                    OGRXPlane_ExtendPosition(dfCenterLat, dfCenterLon,
+                    OGR_GreatCircle_ExtendPosition(dfCenterLat, dfCenterLon,
                                              dfDist, dfAngle, &dfLat, &dfLon);
                     oLR.addPoint(dfLon, dfLat);
                 }
-                OGRXPlane_ExtendPosition(
+                OGR_GreatCircle_ExtendPosition(
                     dfCenterLat, dfCenterLon,
                     dfEndDistance, dfEndAngle, &dfLat, &dfLon );
                 oLR.addPoint(dfLon, dfLat);
@@ -337,13 +337,13 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 OGROpenAirGetLatLon(papszTokens[0], dfFirstLat, dfFirstLon) &&
                 OGROpenAirGetLatLon(papszTokens[1], dfSecondLat, dfSecondLon))
             {
-                const double dfStartDistance = OGRXPlane_Distance(dfCenterLat,
+                const double dfStartDistance = OGR_GreatCircle_Distance(dfCenterLat,
                         dfCenterLon, dfFirstLat, dfFirstLon);
-                const double dfEndDistance = OGRXPlane_Distance(dfCenterLat,
+                const double dfEndDistance = OGR_GreatCircle_Distance(dfCenterLat,
                         dfCenterLon, dfSecondLat, dfSecondLon);
-                const double dfStartAngle = OGRXPlane_Track(dfCenterLat,
+                const double dfStartAngle = OGR_GreatCircle_InitialHeading(dfCenterLat,
                         dfCenterLon, dfFirstLat, dfFirstLon);
-                double dfEndAngle = OGRXPlane_Track(dfCenterLat,
+                double dfEndAngle = OGR_GreatCircle_InitialHeading(dfCenterLat,
                         dfCenterLon, dfSecondLat, dfSecondLon);
 
                 if (bClockWise && dfEndAngle < dfStartAngle)
@@ -363,7 +363,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                         (dfEndAngle - dfStartAngle);
                     const double dfDist = dfStartDistance * (1-pct) +
                         dfEndDistance * pct;
-                    OGRXPlane_ExtendPosition(dfCenterLat, dfCenterLon,
+                    OGR_GreatCircle_ExtendPosition(dfCenterLat, dfCenterLon,
                                              dfDist, dfAngle, &dfLat, &dfLon);
                     oLR.addPoint(dfLon, dfLat);
                 }
@@ -394,11 +394,11 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 double dfLon = 0.0;
                 for( double dfAngle = 0; dfAngle < 360; dfAngle += 1.0 )
                 {
-                    OGRXPlane_ExtendPosition(dfCenterLat, dfCenterLon,
+                    OGR_GreatCircle_ExtendPosition(dfCenterLat, dfCenterLon,
                                              dfRADIUS, dfAngle, &dfLat, &dfLon);
                     oLR.addPoint(dfLon, dfLat);
                 }
-                OGRXPlane_ExtendPosition(dfCenterLat, dfCenterLon,
+                OGR_GreatCircle_ExtendPosition(dfCenterLat, dfCenterLon,
                                          dfRADIUS, 0, &dfLat, &dfLon);
                 oLR.addPoint(dfLon, dfLat);
 

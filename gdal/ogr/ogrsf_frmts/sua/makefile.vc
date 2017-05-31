@@ -1,6 +1,6 @@
 
 OBJ	=	ogrsuadriver.obj ogrsuadatasource.obj ogrsualayer.obj
-EXTRAFLAGS =	-I.. -I..\.. -I..\xplane
+EXTRAFLAGS =	-I.. -I..\..
 
 GDAL_ROOT	=	..\..\..
 
