@@ -441,9 +441,9 @@ static int get_int32(blxcontext_t *ctx, unsigned char **data) {
     unionint result = { 0 };
 
     if(ctx->endian == LITTLEENDIAN)
-	result.u = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | (*(*data+3)<<24);
+	result.u = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | ((unsigned)*(*data+3)<<24);
     else
-	result.u = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | (*(*data)<<24);
+	result.u = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | ((unsigned)*(*data)<<24);
     *data+=4;
     return result.i;
 }
