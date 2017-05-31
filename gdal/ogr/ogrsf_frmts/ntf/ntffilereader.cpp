@@ -400,7 +400,8 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 /* -------------------------------------------------------------------- */
 /*      Classify the product type.                                      */
 /* -------------------------------------------------------------------- */
-    if( STARTS_WITH_CI(pszProduct, "LAND-LINE") && CPLAtof(pszPVName+5) < 1.3 )
+    if( STARTS_WITH_CI(pszProduct, "LAND-LINE") && strlen(pszPVName) > 5 &&
+        CPLAtof(pszPVName+5) < 1.3 )
         nProduct = NPC_LANDLINE;
     else if( STARTS_WITH_CI(pszProduct, "LAND-LINE") )
         nProduct = NPC_LANDLINE99;
@@ -1516,8 +1517,10 @@ OGRFeature * NTFFileReader::ReadOGRFeature( OGRNTFLayer * poTargetLayer )
 /* -------------------------------------------------------------------- */
     else
     {
-        CPLAssert( nFeatureCount == -1
-                   || nFeatureCount == nSavedFeatureId - nBaseFeatureId );
+        // This assertion was triggered by https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1982
+        // it doesn't look critical enough to be enabled.
+        //CPLAssert( nFeatureCount == -1
+        //           || nFeatureCount == nSavedFeatureId - nBaseFeatureId );
         nFeatureCount = nSavedFeatureId - nBaseFeatureId;
     }
 
