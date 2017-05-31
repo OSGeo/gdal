@@ -46,14 +46,14 @@ void gbits(unsigned char *in,g2int *iout,g2int iskip,g2int nbyte,g2int nskip,
 
 //        now transfer whole bytes
          while (bitcnt >= 8) {
-             itmp = itmp<<8 | (int)*(in+l_index);
+             itmp = (int)(((unsigned)itmp)<<8 | (int)*(in+l_index));
              bitcnt = bitcnt - 8;
              l_index++;
          }
 
 //        get data from last byte
          if (bitcnt > 0) {
-             itmp = ( itmp << bitcnt ) | ( ((int)*(in+l_index) >> (8-bitcnt)) & ones[bitcnt-1] );
+             itmp = (int)( (unsigned)itmp << bitcnt ) | ( ((int)*(in+l_index) >> (8-bitcnt)) & ones[bitcnt-1] );
          }
 
          *(iout+i) = itmp;
