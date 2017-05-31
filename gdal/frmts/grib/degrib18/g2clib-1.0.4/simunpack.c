@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include "grib2.h"
 
-g2int simunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2float *fld);
-
-g2int simunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2float *fld)
+g2int simunpack(unsigned char *cpack,g2int cpack_length,g2int *idrstmpl,g2int ndpts,g2float *fld)
 ////$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
 // SUBPROGRAM:    simunpack
@@ -61,7 +59,7 @@ g2int simunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2float *fld)
 //  is the data value at each gridpoint
 //
       if (nbits != 0) {
-         gbits(cpack,ifld,0,nbits,0,ndpts);
+         gbits(cpack,cpack_length,ifld,0,nbits,0,ndpts);
          for (j=0;j<ndpts;j++) {
            fld[j]=(((g2float)ifld[j]*bscale)+ref)*dscale;
          }

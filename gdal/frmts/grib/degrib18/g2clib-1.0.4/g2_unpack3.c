@@ -201,7 +201,7 @@ g2int g2_unpack3(unsigned char *cgrib,g2int *iofst,g2int **igds,g2int **igdstmpl
          else {
             *ideflist=lideflist;
          }
-         gbits(cgrib,lideflist,*iofst,nbits,0,*idefnum);
+         gbits(cgrib,G2_UNKNOWN_SIZE,lideflist,*iofst,nbits,0,*idefnum);
          *iofst=*iofst+(nbits*(*idefnum));
       }
       else {

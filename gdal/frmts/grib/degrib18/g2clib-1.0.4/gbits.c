@@ -2,7 +2,7 @@
 
 void gbit(unsigned char *in,g2int *iout,g2int iskip,g2int nbyte)
 {
-      gbits(in,iout,iskip,nbyte,(g2int)0,(g2int)1);
+      gbits(in,G2_UNKNOWN_SIZE,iout,iskip,nbyte,(g2int)0,(g2int)1);
 }
 
 void sbit(unsigned char *out,const g2int *in,g2int iskip,g2int nbyte)
@@ -11,7 +11,7 @@ void sbit(unsigned char *out,const g2int *in,g2int iskip,g2int nbyte)
 }
 
 
-void gbits(unsigned char *in,g2int *iout,g2int iskip,g2int nbyte,g2int nskip,
+void gbits(unsigned char *in,g2int in_length,g2int *iout,g2int iskip,g2int nbyte,g2int nskip,
            g2int n)
 /*          Get bits - unpack bits:  Extract arbitrary size values from a
 /          packed bit string, right justifying each value in the unpacked
@@ -39,6 +39,8 @@ void gbits(unsigned char *in,g2int *iout,g2int iskip,g2int nbyte,g2int nskip,
 
 //        first byte
          tbit= ( bitcnt < (8-ibit) ) ? bitcnt : 8-ibit;  // find min
+         if( in_length != G2_UNKNOWN_SIZE && l_index >= in_length )
+             return; /* TODO error ? */
          itmp = (int)*(in+l_index) & ones[7-ibit];
          if (tbit != 8-ibit) itmp >>= (8-ibit-tbit);
          l_index++;
@@ -46,6 +48,8 @@ void gbits(unsigned char *in,g2int *iout,g2int iskip,g2int nbyte,g2int nskip,
 
 //        now transfer whole bytes
          while (bitcnt >= 8) {
+            if( in_length != G2_UNKNOWN_SIZE && l_index >= in_length )
+                return; /* TODO error ? */
              itmp = (int)(((unsigned)itmp)<<8 | (int)*(in+l_index));
              bitcnt = bitcnt - 8;
              l_index++;
@@ -53,6 +57,8 @@ void gbits(unsigned char *in,g2int *iout,g2int iskip,g2int nbyte,g2int nskip,
 
 //        get data from last byte
          if (bitcnt > 0) {
+            if( in_length != G2_UNKNOWN_SIZE && l_index >= in_length )
+                return; /* TODO error ? */
              itmp = (int)( (unsigned)itmp << bitcnt ) | ( ((int)*(in+l_index) >> (8-bitcnt)) & ones[bitcnt-1] );
          }
 

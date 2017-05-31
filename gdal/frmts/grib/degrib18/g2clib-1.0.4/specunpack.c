@@ -64,10 +64,10 @@ g2int specunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2int JJ,
          unpk=(g2float *)malloc(ndpts*sizeof(g2float));
          ifld=(g2int *)malloc(ndpts*sizeof(g2int));
 
-         gbits(cpack,ifld,0,32,0,Ts);
+         gbits(cpack,G2_UNKNOWN_SIZE,ifld,0,32,0,Ts);
          iofst=32*Ts;
          rdieee(ifld,unpk,Ts);          // read IEEE unpacked floats
-         gbits(cpack,ifld,iofst,nbits,0,ndpts-Ts);  // unpack scaled data
+         gbits(cpack,G2_UNKNOWN_SIZE,ifld,iofst,nbits,0,ndpts-Ts);  // unpack scaled data
 //
 //   Calculate Laplacian scaling factors for each possible wave number.
 //

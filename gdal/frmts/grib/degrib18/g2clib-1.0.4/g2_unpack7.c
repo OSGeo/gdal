@@ -10,7 +10,7 @@
 
 
 
-g2int g2_unpack7(unsigned char *cgrib,g2int *iofst,g2int igdsnum,g2int *igdstmpl,
+g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igdsnum,g2int *igdstmpl,
                g2int idrsnum,g2int *idrstmpl,g2int ndpts,g2float **fld)
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
@@ -92,6 +92,9 @@ g2int g2_unpack7(unsigned char *cgrib,g2int *iofst,g2int igdsnum,g2int *igdstmpl
       }
 
       ipos=(*iofst/8);
+      if( ipos >= cgrib_length ) {
+          return 7;
+      }
       lfld=(g2float *)calloc(ndpts,sizeof(g2float));
       if (lfld == 0) {
          ierr=6;
@@ -102,14 +105,14 @@ g2int g2_unpack7(unsigned char *cgrib,g2int *iofst,g2int igdsnum,g2int *igdstmpl
       }
 
       if (idrsnum == 0)
-        simunpack(cgrib+ipos,idrstmpl,ndpts,lfld);
+        simunpack(cgrib+ipos,cgrib_length-ipos,idrstmpl,ndpts,lfld);
       else if (idrsnum == 2 || idrsnum == 3) {
         if (comunpack(cgrib+ipos,lensec,idrsnum,idrstmpl,ndpts,lfld) != 0) {
           return 7;
         }
       }
       else if (idrsnum == 50) {            // Spectral Simple
-        simunpack(cgrib+ipos,idrstmpl,ndpts-1,lfld+1);
+        simunpack(cgrib+ipos,cgrib_length-ipos,idrstmpl,ndpts-1,lfld+1);
         rdieee(idrstmpl+4,lfld+0,1);
       }
       else if (idrsnum == 51)              //  Spectral complex

@@ -820,7 +820,8 @@ void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * 
    /* Expand the desired subgrid. */
    unpack = 1;
    expand = 1;
-   ierr = g2_getfld (c_ipack, subgNum + 1, unpack, expand, &gfld);
+   /* The size of c_ipack is *nd5 * sizeof(sInt4) */
+   ierr = g2_getfld (c_ipack, *nd5 * sizeof(sInt4), subgNum + 1, unpack, expand, &gfld);
    if (ierr != 0) {
       switch (ierr) {
          case 1:       /* Beginning characters "GRIB" not found. */
