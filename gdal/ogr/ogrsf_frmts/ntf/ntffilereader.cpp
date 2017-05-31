@@ -793,10 +793,10 @@ int NTFFileReader::ProcessAttDesc( NTFRecord * poRecord, NTFAttDesc* psAD )
     int      iChar;
     const char *pszData;
 
-    if( poRecord->GetType() != NRT_ADR )
+    psAD->poCodeList = NULL;
+    if( poRecord->GetType() != NRT_ADR || poRecord->GetLength() < 13 )
         return FALSE;
 
-    psAD->poCodeList = NULL;
     snprintf( psAD->val_type, sizeof(psAD->val_type), "%s", poRecord->GetField( 3, 4 ));
     snprintf( psAD->fwidth, sizeof(psAD->fwidth), "%s", poRecord->GetField( 5, 7 ));
     snprintf( psAD->finter, sizeof(psAD->finter), "%s", poRecord->GetField( 8, 12 ));
