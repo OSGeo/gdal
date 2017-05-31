@@ -640,6 +640,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
                 CPLAcquireMutex(hGRIBMutex, 1000.0);
                 if (metaData != NULL)
                 {
+                    MetaFree(metaData);
                     delete metaData;
                 }
                 if (data != NULL)
