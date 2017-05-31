@@ -365,6 +365,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                           "Unexpected value in grid row %d (expected floating "
                           "point value, found \"%s\").\n",
                           nBlockYOff, szStart );
+                VSIFree( szLineBuf );
                 return CE_Failure;
             }
 
