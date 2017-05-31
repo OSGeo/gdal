@@ -264,7 +264,10 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
                 return FALSE;
             }
 
-            if( !VSIFReadL( &psItem->szClassName, psItem->usLen, 1, pGrd->fp ) )
+            // 0-len class names are possible
+            psItem->szClassName[0] = '\0';
+            if( psItem->usLen > 0 &&
+                !VSIFReadL( &psItem->szClassName, psItem->usLen, 1, pGrd->fp ) )
                 return FALSE;
         }
     }
