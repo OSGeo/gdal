@@ -281,17 +281,20 @@ GXFHandle GXFOpen( const char * pszFilename )
         {
             psGXF->nSense = atoi(papszList[0]);
         }
-        else if( STARTS_WITH_CI(szTitle,"#MAP_PROJECTION") )
+        else if( STARTS_WITH_CI(szTitle,"#MAP_PROJECTION") &&
+                 psGXF->papszMapProjection == NULL )
         {
             psGXF->papszMapProjection = papszList;
             papszList = NULL;
         }
-        else if( STARTS_WITH_CI(szTitle,"#MAP_D") )
+        else if( STARTS_WITH_CI(szTitle,"#MAP_D") &&
+                 psGXF->papszMapDatumTransform == NULL  )
         {
             psGXF->papszMapDatumTransform = papszList;
             papszList = NULL;
         }
-        else if( STARTS_WITH_CI(szTitle, "#UNIT") )
+        else if( STARTS_WITH_CI(szTitle, "#UNIT") &&
+                 psGXF->pszUnitName == NULL )
         {
             char	**papszFields;
 
@@ -308,7 +311,8 @@ GXFHandle GXFOpen( const char * pszFilename )
 
             CSLDestroy( papszFields );
         }
-        else if( STARTS_WITH_CI(szTitle, "#TRAN") )
+        else if( STARTS_WITH_CI(szTitle, "#TRAN") &&
+                 psGXF->pszTransformName == NULL )
         {
             char	**papszFields;
 
