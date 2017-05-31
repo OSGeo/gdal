@@ -647,15 +647,23 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       timeRangeUnit = 1;
    } else if (timeRangeUnit == 1) {
    } else if (timeRangeUnit == 2) {
+      if( lenTime < INT_MIN / 24 || lenTime > INT_MAX / 24 )
+          return -8;
       lenTime = lenTime * 24;
       timeRangeUnit = 1;
    } else if (timeRangeUnit == 10) {
+      if( lenTime < INT_MIN / 3 || lenTime > INT_MAX / 3 )
+          return -8;
       lenTime = lenTime * 3;
       timeRangeUnit = 1;
    } else if (timeRangeUnit == 11) {
+      if( lenTime < INT_MIN / 6 || lenTime > INT_MAX / 6 )
+          return -8;
       lenTime = lenTime * 6;
       timeRangeUnit = 1;
    } else if (timeRangeUnit == 12) {
+      if( lenTime < INT_MIN / 12 || lenTime > INT_MAX / 12 )
+          return -8;
       lenTime = lenTime * 12;
       timeRangeUnit = 1;
    } else if (timeRangeUnit == 13) {
