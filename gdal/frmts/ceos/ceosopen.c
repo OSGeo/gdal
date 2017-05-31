@@ -148,6 +148,7 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Short read on CEOS record data.\n" );
+        CPLFree( psRecord->pachData );
         CPLFree( psRecord );
         return NULL;
     }
