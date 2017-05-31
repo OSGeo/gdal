@@ -10064,7 +10064,7 @@ public class ogr:public static DataSource OpenShared(String filename, int update
  * <li>UK .NTF</li>
  * <li>U.S. Census TIGER/Line</li>
  * <li>VRT - Virtual Datasource</li>
- * <li>X-Plane/Flighgear aeronautical data</li>
+ * <li>X-Plane/Flightgear aeronautical data</li>
  * </ul>
  * <p>
  * This function should generally be called once at the beginning of the application.
