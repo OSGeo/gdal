@@ -218,7 +218,6 @@ float ComputeVal( bool bSrcHasNoData, float fSrcNoDataValue,
     return pfnAlg(afWin, fDstNoDataValue, pData);
 }
 
-// TODO.................
 template<>
 float ComputeVal( bool bSrcHasNoData, GInt32 fSrcNoDataValue,
                   bool /* bIsSrcNoDataNan */,
