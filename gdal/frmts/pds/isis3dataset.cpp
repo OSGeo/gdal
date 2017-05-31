@@ -2319,10 +2319,11 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
             //  not the more standard Radius of Curvature method
             //PI = 4 * atan(1);
             const double radLat = center_lat * M_PI / 180;  // in radians
-            const double localRadius
-                = semi_major * semi_minor
-                / sqrt( pow( semi_minor * cos( radLat ), 2)
-                       + pow( semi_major * sin( radLat ), 2) );
+            const double meanRadius =
+                sqrt( pow( semi_minor * cos( radLat ), 2)
+                    + pow( semi_major * sin( radLat ), 2) );
+            const double localRadius = ( meanRadius == 0.0 ) ?
+                                0.0 : semi_major * semi_minor / meanRadius;
             osSphereName += "_localRadius";
             oSRS.SetGeogCS( osGeogName, osDatumName, osSphereName,
                             localRadius, 0.0,
