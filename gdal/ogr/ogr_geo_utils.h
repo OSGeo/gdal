@@ -27,17 +27,27 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef OGR_XPLANE_GEO_UTILS_H_INCLUDED
-#define OGR_XPLANE_GEO_UTILS_H_INCLUDED
+#ifndef OGR_GEO_UTILS_H_INCLUDED
+#define OGR_GEO_UTILS_H_INCLUDED
 
-double OGRXPlane_Distance(double dfLatA_deg, double dfLonA_deg,
-                          double dfLatB_deg, double dfLonB_deg);
+/** The following functions provide computations based on great-circle/
+ * orthodromic path, on a sphere with a radius of ~6366707 m.
+ * The computations are not necessarily implemented in a very accurate/
+ * stable way, and shouldn't be used for points that are too close (less than
+ * one meter).
+ * They are good enough for example to compute the coordinates of the polygon
+ * for an airport runway, from its extreme points, track and length.
+ */
 
-double OGRXPlane_Track(double dfLatA_deg, double dfLonA_deg,
-                       double dfLatB_deg, double dfLonB_deg);
+double OGR_GreatCircle_Distance(double dfLatA_deg, double dfLonA_deg,
+                                double dfLatB_deg, double dfLonB_deg);
 
-int OGRXPlane_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
-                             double dfDistance, double dfHeading,
-                             double* pdfLatB_deg, double* pdfLonB_deg);
+double OGR_GreatCircle_InitialHeading(double dfLatA_deg, double dfLonA_deg,
+                                      double dfLatB_deg, double dfLonB_deg);
 
-#endif /* ndef OGR_XPLANE_GEO_UTILS_H_INCLUDED */
+/* such as ExtendPosition(A, Distance(A,B), InitialHeading(A,B)) ~= B */
+int OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
+                                   double dfDistance, double dfHeadingInA,
+                                   double* pdfLatB_deg, double* pdfLonB_deg);
+
+#endif /* ndef OGR_GEO_UTILS_H_INCLUDED */

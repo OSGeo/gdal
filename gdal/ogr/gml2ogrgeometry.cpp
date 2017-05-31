@@ -55,7 +55,7 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
-#include "ogrsf_frmts/xplane/ogr_xplane_geo_utils.h"
+#include "ogr_geo_utils.h"
 
 CPL_CVSID("$Id$");
 
@@ -1425,12 +1425,12 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                                 double dfDistance = 0.0;
                                 if( bLastCurveWasApproximateArcInvertedAxisOrder )
                                     dfDistance =
-                                        OGRXPlane_Distance(
+                                        OGR_GreatCircle_Distance(
                                             p.getX(), p.getY(),
                                             p2.getX(), p2.getY());
                                 else
                                     dfDistance =
-                                        OGRXPlane_Distance(
+                                        OGR_GreatCircle_Distance(
                                             p.getY(), p.getX(),
                                             p2.getY(), p2.getX());
                                 // CPLDebug("OGR", "%f %f",
@@ -1482,12 +1482,12 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                                 double dfDistance = 0.0;
                                 if( bLastCurveWasApproximateArcInvertedAxisOrder )
                                     dfDistance =
-                                        OGRXPlane_Distance(
+                                        OGR_GreatCircle_Distance(
                                             p.getX(), p.getY(),
                                             p2.getX(), p2.getY());
                                 else
                                     dfDistance =
-                                        OGRXPlane_Distance(
+                                        OGR_GreatCircle_Distance(
                                             p.getY(), p.getX(),
                                             p2.getY(), p2.getX());
                                 // CPLDebug(
@@ -1850,7 +1850,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 double dfLat = 0.0;
                 if( bInvertedAxisOrder )
                 {
-                    OGRXPlane_ExtendPosition(
+                    OGR_GreatCircle_ExtendPosition(
                        dfCenterX, dfCenterY,
                        dfDistance,
                        // Not sure of angle conversion here.
@@ -1861,7 +1861,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 }
                 else
                 {
-                    OGRXPlane_ExtendPosition(dfCenterY, dfCenterX,
+                    OGR_GreatCircle_ExtendPosition(dfCenterY, dfCenterX,
                                              dfDistance, 90-dfAngle,
                                              &dfLat, &dfLong);
                     p.setX( dfLong );
@@ -1874,7 +1874,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             double dfLat = 0.0;
             if( bInvertedAxisOrder )
             {
-                OGRXPlane_ExtendPosition(dfCenterX, dfCenterY,
+                OGR_GreatCircle_ExtendPosition(dfCenterX, dfCenterY,
                                          dfDistance,
                                          // Not sure of angle conversion here.
                                          90.0 - dfEndAngle,
@@ -1884,7 +1884,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             }
             else
             {
-                OGRXPlane_ExtendPosition(dfCenterY, dfCenterX,
+                OGR_GreatCircle_ExtendPosition(dfCenterY, dfCenterX,
                                          dfDistance, 90-dfEndAngle,
                                          &dfLat, &dfLong);
                 p.setX( dfLong );
@@ -1973,7 +1973,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 double dfLat = 0.0;
                 if( bInvertedAxisOrder )
                 {
-                    OGRXPlane_ExtendPosition(dfCenterX, dfCenterY,
+                    OGR_GreatCircle_ExtendPosition(dfCenterX, dfCenterY,
                                              dfDistance, dfAngle,
                                              &dfLat, &dfLong);
                     p.setY( dfLat );
@@ -1981,7 +1981,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 }
                 else
                 {
-                    OGRXPlane_ExtendPosition(dfCenterY, dfCenterX,
+                    OGR_GreatCircle_ExtendPosition(dfCenterY, dfCenterX,
                                              dfDistance, dfAngle,
                                              &dfLat, &dfLong);
                     p.setX( dfLong );
