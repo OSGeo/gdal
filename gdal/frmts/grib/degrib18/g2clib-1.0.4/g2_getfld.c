@@ -388,6 +388,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
           }
           else {
             ierr=10;
+            free( igds );
             return(ierr);
           }
         }
