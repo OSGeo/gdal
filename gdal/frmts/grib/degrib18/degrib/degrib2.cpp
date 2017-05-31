@@ -1151,14 +1151,14 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
 
    if (strcmp (meta->element, "Wx") != 0) {
       ParseGrid (&(meta->gridAttrib), Grib_Data, grib_DataLen, Nx, Ny,
-                 meta->gds.scan, IS->iain, ibitmap, IS->ib, unitM, unitB, 0,
+                 meta->gds.scan, IS->nd2x3, IS->iain, ibitmap, IS->ib, unitM, unitB, 0,
                  NULL, f_subGrid, x1, y1, x2, y2);
    } else {
       /* Handle weather grid.  ParseGrid looks up the values... If they are
        * "<Invalid>" it sets it to missing (or creates one).  If the table
        * entry is used it sets f_valid to 2. */
       ParseGrid (&(meta->gridAttrib), Grib_Data, grib_DataLen, Nx, Ny,
-                 meta->gds.scan, IS->iain, ibitmap, IS->ib, unitM, unitB, 1,
+                 meta->gds.scan, IS->nd2x3, IS->iain, ibitmap, IS->ib, unitM, unitB, 1,
                  (sect2_WxType *) &(meta->pds2.sect2.wx), f_subGrid, x1, y1,
                  x2, y2);
 
