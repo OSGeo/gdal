@@ -1553,7 +1553,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
                            &bufLoc, &numUsed);
                assert( numUsed <= bdsRemainingSize );
                bds += numUsed;
-               bdsRemainingSize -= numUsed;
+               bdsRemainingSize -= (uInt4)numUsed;
                d_temp = (refVal + (uli_temp * pow (2.0, ESF))) / pow (10.0, DSF);
                /* Convert Units. */
                if (unitM == -10) {
@@ -1630,7 +1630,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
                         &numUsed);
             assert( numUsed <= bdsRemainingSize );
             bds += numUsed;
-            bdsRemainingSize -= numUsed;
+            bdsRemainingSize -= (uInt4)numUsed;
             d_temp = (refVal + (uli_temp * pow (2.0, ESF))) / pow (10.0, DSF);
 
 #ifdef DEBUG
