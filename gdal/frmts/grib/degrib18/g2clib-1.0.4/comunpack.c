@@ -138,7 +138,7 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
 //
       //printf("SAG1: %ld %ld %ld \n",nbitsgref,ngroups,iofst);
       if (nbitsgref != 0) {
-         gbits(cpack,gref+0,iofst,nbitsgref,0,ngroups);
+         gbits(cpack,G2_UNKNOWN_SIZE,gref+0,iofst,nbitsgref,0,ngroups);
          itemp=nbitsgref*ngroups;
          iofst=iofst+itemp;
          if (itemp%8 != 0) iofst=iofst+(8-(itemp%8));
@@ -152,7 +152,7 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
 //
       //printf("SAG2: %ld %ld %ld %ld \n",nbitsgwidth,ngroups,iofst,idrstmpl[10]);
       if (nbitsgwidth != 0) {
-         gbits(cpack,gwidth+0,iofst,nbitsgwidth,0,ngroups);
+         gbits(cpack,G2_UNKNOWN_SIZE,gwidth+0,iofst,nbitsgwidth,0,ngroups);
          itemp=nbitsgwidth*ngroups;
          iofst=iofst+itemp;
          if (itemp%8 != 0) iofst=iofst+(8-(itemp%8));
@@ -172,7 +172,7 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
       //printf("ALLOC glen: %d %x\n",(int)ngroups,glen);
       //printf("SAG3: %ld %ld %ld %ld %ld \n",nbitsglen,ngroups,iofst,idrstmpl[13],idrstmpl[12]);
       if (nbitsglen != 0) {
-         gbits(cpack,glen,iofst,nbitsglen,0,ngroups);
+         gbits(cpack,G2_UNKNOWN_SIZE,glen,iofst,nbitsglen,0,ngroups);
          itemp=nbitsglen*ngroups;
          iofst=iofst+itemp;
          if (itemp%8 != 0) iofst=iofst+(8-(itemp%8));
@@ -208,7 +208,7 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
          n=0;
          for (j=0;j<ngroups;j++) {
            if (gwidth[j] != 0) {
-             gbits(cpack,ifld+n,iofst,gwidth[j],0,glen[j]);
+             gbits(cpack,G2_UNKNOWN_SIZE,ifld+n,iofst,gwidth[j],0,glen[j]);
              for (k=0;k<glen[j];k++) {
                ifld[n]=ifld[n]+gref[j];
                n=n+1;
@@ -233,7 +233,7 @@ int comunpack(unsigned char *cpack,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2
            if (gwidth[j] != 0) {
              msng1=(g2int)int_power(2.0,gwidth[j])-1;
              msng2=msng1-1;
-             gbits(cpack,ifld+n,iofst,gwidth[j],0,glen[j]);
+             gbits(cpack,G2_UNKNOWN_SIZE,ifld+n,iofst,gwidth[j],0,glen[j]);
              iofst=iofst+(gwidth[j]*glen[j]);
              for (k=0;k<glen[j];k++) {
                if (ifld[n] == msng1) {

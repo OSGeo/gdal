@@ -2,18 +2,7 @@
 #include <stdlib.h>
 #include "grib2.h"
 
-g2int g2_unpack1(unsigned char *,g2int *,g2int **,g2int *);
-g2int g2_unpack2(unsigned char *,g2int *,g2int *,unsigned char **);
-g2int g2_unpack3(unsigned char *,g2int *,g2int **,g2int **,
-                         g2int *,g2int **,g2int *);
-g2int g2_unpack4(unsigned char *,g2int *,g2int *,g2int **,
-                         g2int *,g2float **,g2int *);
-g2int g2_unpack5(unsigned char *,g2int *,g2int *,g2int *, g2int **,g2int *);
-g2int g2_unpack6(unsigned char *,g2int *,g2int ,g2int *, g2int **);
-g2int g2_unpack7(unsigned char *,g2int *,g2int ,g2int *,
-                         g2int ,g2int *,g2int ,g2float **);
-
-g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
+g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unpack,g2int expand,
                 gribfield **gfld)
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
@@ -481,7 +470,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int ifldnum,g2int unpack,g2int expand,
         //
         if (isecnum==7 && numfld==ifldnum && unpack) {
           iofst=iofst-40;       // reset offset to beginning of section
-          jerr=g2_unpack7(cgrib,&iofst,lgfld->igdtnum,lgfld->igdtmpl,
+          jerr=g2_unpack7(cgrib,cgrib_length,&iofst,lgfld->igdtnum,lgfld->igdtmpl,
                           lgfld->idrtnum,lgfld->idrtmpl,lgfld->ndpts,
                           &lgfld->fld);
           if (jerr == 0) {

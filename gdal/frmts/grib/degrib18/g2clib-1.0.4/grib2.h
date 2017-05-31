@@ -198,10 +198,12 @@ typedef struct gribfield gribfield;
 
 #define RINT(d)   (floor(d+0.5))
 
+#define G2_UNKNOWN_SIZE -1
+
 /*  Prototypes for unpacking API  */
 void seekgb(FILE *,g2int ,g2int ,g2int *,g2int *);
 g2int g2_info(unsigned char *,g2int *,g2int *,g2int *,g2int *);
-g2int g2_getfld(unsigned char *,g2int ,g2int ,g2int ,gribfield **);
+g2int g2_getfld(unsigned char *,g2int cgrib_length,g2int ,g2int ,g2int ,gribfield **);
 void g2_free(gribfield *);
 
 /*  Prototypes for packing API  */
@@ -228,7 +230,7 @@ extern void compack(g2float *,g2int,g2int,g2int *,unsigned char *,g2int *);
 void misspack(g2float *,g2int ,g2int ,g2int *, unsigned char *, g2int *);
 void gbit(unsigned char *,g2int *,g2int ,g2int );
 void sbit(unsigned char *,const g2int *,g2int ,g2int );
-void gbits(unsigned char *,g2int *,g2int ,g2int ,g2int ,g2int );
+void gbits(unsigned char *,g2int in_length,g2int *,g2int ,g2int ,g2int ,g2int );
 void sbits(unsigned char *,const g2int *,g2int ,g2int ,g2int ,g2int );
 
 int pack_gp(g2int *, g2int *, g2int *,
@@ -247,9 +249,9 @@ g2int g2_unpack5(unsigned char *cgrib,g2int *iofst,g2int *ndpts,g2int *idrsnum,
                g2int **idrstmpl,g2int *mapdrslen);
 g2int g2_unpack6(unsigned char *cgrib,g2int *iofst,g2int ngpts,g2int *ibmap,
                g2int **bmap);
-g2int g2_unpack7(unsigned char *cgrib,g2int *iofst,g2int igdsnum,g2int *igdstmpl,
+g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igdsnum,g2int *igdstmpl,
                g2int idrsnum,g2int *idrstmpl,g2int ndpts,g2float **fld);
-g2int simunpack(unsigned char *,g2int *, g2int,g2float *);
+g2int simunpack(unsigned char *,g2int cpack_length,g2int *, g2int,g2float *);
 int comunpack(unsigned char *,g2int,g2int,g2int *,g2int,g2float *);
 g2int specunpack(unsigned char *,g2int *,g2int,g2int,g2int, g2int, g2float *);
 g2int jpcunpack(unsigned char *,g2int,g2int *,g2int, g2float *);

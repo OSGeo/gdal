@@ -66,7 +66,7 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
             return(1);
          }
          iret=(g2int)dec_png(cpack,len,&width,&height,ctemp, ndpts, nbits);
-         gbits(ctemp,ifld,0,nbits,0,ndpts);
+         gbits(ctemp,ndpts*nbytes,ifld,0,nbits,0,ndpts);
          for (j=0;j<ndpts;j++) {
             fld[j] = refD + bscale*(g2float)(ifld[j]);
          }
