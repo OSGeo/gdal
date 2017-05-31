@@ -4952,7 +4952,7 @@ struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
  * can be modified by setting the configuration option VSI_CACHE_SIZE (in
  * bytes). Content in that cache is discarded when the file handle is closed.
  * 
- * In addition, a global LRU cache of 16 MB is shared among all downloaded content 
+ * In addition, a global LRU cache of 16 MB shared among all downloaded content 
  * is enabled by default, and content in it may be reused after a file handle
  * has been closed and reopen. Starting with GDAL 2.3, the
  * CPL_VSIL_CURL_NON_CACHED configuration option can be set to values like
@@ -5035,7 +5035,7 @@ void VSIInstallCurlFileHandler( void )
  * can be modified by setting the configuration option VSI_CACHE_SIZE (in
  * bytes). Content in that cache is discarded when the file handle is closed.
  * 
- * In addition, a global LRU cache of 16 MB is shared among all downloaded content 
+ * In addition, a global LRU cache of 16 MB shared among all downloaded content 
  * is enabled by default, and content in it may be reused after a file handle
  * has been closed and reopen. Starting with GDAL 2.3, the
  * CPL_VSIL_CURL_NON_CACHED configuration option can be set to values like
@@ -5107,7 +5107,7 @@ void VSIInstallS3FileHandler( void )
  * can be modified by setting the configuration option VSI_CACHE_SIZE (in
  * bytes). Content in that cache is discarded when the file handle is closed.
  * 
- * In addition, a global LRU cache of 16 MB is shared among all downloaded content 
+ * In addition, a global LRU cache of 16 MB shared among all downloaded content 
  * is enabled by default, and content in it may be reused after a file handle
  * has been closed and reopen. Starting with GDAL 2.3, the
  * CPL_VSIL_CURL_NON_CACHED configuration option can be set to values like
