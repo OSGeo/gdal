@@ -1272,7 +1272,11 @@ do {                                                                    \
 
     if( poDS->sHeader.nExtHdrOffset && poDS->sHeader.nExtHdrSize )
     {
-        /* coverity[tainted_data] */
+        if( poDS->sHeader.nExtHdrSize > 1000000 )
+        {
+            delete poDS;
+            return NULL;
+        }
         GByte *pabyExtHeader = reinterpret_cast<GByte *>(
             VSICalloc( poDS->sHeader.nExtHdrSize, 1 ) );
         if( pabyExtHeader == NULL )
@@ -1285,9 +1289,12 @@ do {                                                                    \
                    SEEK_SET );
         VSIFReadL( pabyExtHeader, 1, poDS->sHeader.nExtHdrSize, poDS->fp );
 
-        RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nEllipsoid, 24 );
-        RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nDatum, 32 );
-        RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nZone, 36 );
+        if( poDS->sHeader.nExtHdrSize >= 36 + 4 )
+        {
+            RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nEllipsoid, 24 );
+            RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nDatum, 32 );
+            RMF_READ_LONG( pabyExtHeader, poDS->sExtHeader.nZone, 36 );
+        }
 
         CPLFree( pabyExtHeader );
     }
