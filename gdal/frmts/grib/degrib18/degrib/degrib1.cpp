@@ -12,6 +12,7 @@
  *****************************************************************************
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -1209,7 +1210,7 @@ static int ReadGrib1Sect3 (uChar *bms, uInt4 gribLen, uInt4 *curLoc,
    return 0;
 }
 
-#ifdef DEBUG
+#ifdef USE_UNPACKCMPLX
 static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *curLoc,
                         CPL_UNUSED short int DSF, CPL_UNUSED double *data, CPL_UNUSED grib_MetaData *meta,
                         CPL_UNUSED char f_bms, CPL_UNUSED uChar *bitmap, CPL_UNUSED double unitM,
@@ -1307,7 +1308,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
    return -2;
 
 }
-#endif /* DEBUG */
+#endif /* USE_UNPACKCMPLX */
 
 /*****************************************************************************
  * ReadGrib1Sect4() --
@@ -1320,7 +1321,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
  * ARGUMENTS
  *     bds = The compressed part of the message dealing with "BDS". (Input)
  * gribLen = The total length of the GRIB1 message. (Input)
- *  curLoc = Current location in the GRIB1 message. (Output)
+ *  curLoc = Current location in the GRIB1 message. (Input/Output)
  *     DSF = Decimal Scale Factor for unpacking the data. (Input)
  *    data = The extracted grid. (Output)
  *    meta = The meta data associated with the grid (Input/Output)
@@ -1361,7 +1362,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
    uChar numUnusedBit;  /* # of extra bits at end of record. */
    uChar f_spherHarm;   /* Flag if data contains Spherical Harmonics. */
    uChar f_cmplxPack;   /* Flag if complex packing was used. */
-#ifdef DEBUG
+#ifdef USE_UNPACKCMPLX
    uChar f_octet14;     /* Flag if octet 14 was used. */
 #endif
    uChar bufLoc;        /* Keeps track of where to start getting more data
@@ -1383,6 +1384,13 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
       errSprintf ("(Nx * Ny != numPts) ?? in BDS (GRIB 1 Section 4)\n");
       return -2;
    }
+   if( *curLoc >= gribLen )
+       return -1;
+
+   uInt4 bdsRemainingSize = gribLen - *curLoc;
+   if( bdsRemainingSize < 3 )
+       return -1;
+
    sectLen = GRIB_UNSIGN_INT3 (*bds, bds[1], bds[2]);
 #ifdef DEBUG
 /*
@@ -1395,12 +1403,15 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
       return -1;
    }
    bds += 3;
+   bdsRemainingSize -= 3;
 
    /* Assert: bds now points to the main pack flag. */
+   if( bdsRemainingSize < 1 )
+       return -1;
    f_spherHarm = (*bds) & GRIB2BIT_1;
    f_cmplxPack = (*bds) & GRIB2BIT_2;
    meta->gridAttrib.fieldType = (*bds) & GRIB2BIT_3;
-#ifdef DEBUG
+#ifdef USE_UNPACKCMPLX
    f_octet14 = (*bds) & GRIB2BIT_4;
 #endif
 
@@ -1430,15 +1441,25 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
       meta->gridAttrib.packType = 0;
    }
    bds++;
+   bdsRemainingSize --;
 
    /* Assert: bds now points to E (power of 2 scaling factor). */
+   if( bdsRemainingSize < 2 )
+       return -1;
    ESF = GRIB_SIGN_INT2 (*bds, bds[1]);
    bds += 2;
+   bdsRemainingSize -= 2;
+
+   if( bdsRemainingSize < 4 )
+       return -1;
    MEMCPY_BIG (&uli_temp, bds, sizeof (sInt4));
    refVal = fval_360 (uli_temp);
    bds += 4;
+   bdsRemainingSize -= 4;
 
    /* Assert: bds is now the number of bits in a group. */
+   if( bdsRemainingSize < 1 )
+       return -1;
    numBits = *bds;
 /*
 #ifdef DEBUG
@@ -1447,8 +1468,9 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
 #endif
 */
    if (f_cmplxPack) {
+#ifdef USE_UNPACKCMPLX
       bds++;
-#ifdef DEBUG
+      bdsRemainingSize --;
       return UnpackCmplx (bds, gribLen, curLoc, DSF, data, meta, f_bms,
                           bitmap, unitM, unitB, ESF, refVal, numBits,
                           f_octet14);
@@ -1477,6 +1499,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
       return -2;
    }
    bds++;
+   bdsRemainingSize -= 1;
 
    /* Convert Units. */
    if (unitM == -10) {
@@ -1524,9 +1547,13 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
             data[newIndex] = UNDEFINED;
          } else {
             if (numBits != 0) {
+               if( bdsRemainingSize < (unsigned) (numBits + 7) / 8)
+                   return -1;
                memBitRead (&uli_temp, sizeof (sInt4), bds, numBits,
                            &bufLoc, &numUsed);
+               assert( numUsed <= bdsRemainingSize );
                bds += numUsed;
+               bdsRemainingSize -= numUsed;
                d_temp = (refVal + (uli_temp * pow (2.0, ESF))) / pow (10.0, DSF);
                /* Convert Units. */
                if (unitM == -10) {
@@ -1597,9 +1624,13 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
                newIndex = i;
             }
 
+            if( bdsRemainingSize < (unsigned) (numBits + 7) / 8)
+                return -1;
             memBitRead (&uli_temp, sizeof (sInt4), bds, numBits, &bufLoc,
                         &numUsed);
+            assert( numUsed <= bdsRemainingSize );
             bds += numUsed;
+            bdsRemainingSize -= numUsed;
             d_temp = (refVal + (uli_temp * pow (2.0, ESF))) / pow (10.0, DSF);
 
 #ifdef DEBUG
