@@ -127,6 +127,9 @@ void NTFFileReader::EstablishRasterAccess()
 /* -------------------------------------------------------------------- */
     delete poRecord;
 
+    if( !GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize) )
+        return;
+
     panColumnOffset = static_cast<vsi_l_offset *>(
         CPLCalloc(sizeof(vsi_l_offset), nRasterXSize));
 
