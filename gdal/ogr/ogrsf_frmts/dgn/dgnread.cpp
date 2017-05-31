@@ -465,7 +465,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               psLine->vertices[1].z = DGN_INT32( psDGN->abyElem + 56 );
           }
 
-          if (deltaStart && deltaLength)
+          if (deltaStart && deltaLength &&
+              deltaStart + 1 * 4 + 2 + 2 <= psLine->core.attr_bytes)
           {
               for (int i=0; i<2; i++)
               {
@@ -543,7 +544,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               if( psDGN->dimension == 3 )
                   psLine->vertices[i].z =
                       DGN_INT32( psDGN->abyElem + 46 + i*pntsize );
-              if (deltaStart && deltaLength)
+              if (deltaStart && deltaLength &&
+                  deltaStart + i * 4 + 2 + 2 <= psLine->core.attr_bytes)
               {
                 int dx = DGN_INT16(psLine->core.attr_data + deltaStart + i * 4);
                 int dy = DGN_INT16(psLine->core.attr_data + deltaStart + i * 4 + 2);
@@ -1025,7 +1027,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
             psBounds->vertices[i].x = DGN_INT32( psDGN->abyElem + 40 + i*8 );
             psBounds->vertices[i].y = DGN_INT32( psDGN->abyElem + 44 + i*8 );
             psBounds->vertices[i].z = 0;
-            if (deltaStart && deltaLength)
+            if (deltaStart && deltaLength &&
+                deltaStart + i * 4 + 2 + 2 <= psBounds->core.attr_bytes)
             {
                 int dx = DGN_INT16(psBounds->core.attr_data + deltaStart + i * 4);
                 int dy = DGN_INT16(psBounds->core.attr_data + deltaStart + i * 4 + 2);
