@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.208 2017-04-27 15:46:22 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.209 2017-06-01 12:44:04 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3580,6 +3580,10 @@ TIFFReadDirectory(TIFF* tif)
 							goto bad;
 						dp->tdir_tag=IGNORE;
 						break;
+                                        default:
+                                            if( !_TIFFCheckFieldIsValidForCodec(tif, dp->tdir_tag) )
+                                                dp->tdir_tag=IGNORE;
+                                            break;
 				}
 			}
 		}
