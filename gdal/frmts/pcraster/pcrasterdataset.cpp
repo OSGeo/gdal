@@ -297,6 +297,10 @@ PCRasterDataset::PCRasterDataset( MAP* mapIn) :
   // Read header info.
   nRasterXSize = static_cast<int>(RgetNrCols(d_map));
   nRasterYSize = static_cast<int>(RgetNrRows(d_map));
+  if( !GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize) )
+  {
+      return;
+  }
   d_west = static_cast<double>(RgetXUL(d_map));
   d_north = static_cast<double>(RgetYUL(d_map));
   d_cellSize = static_cast<double>(RgetCellSize(d_map));
