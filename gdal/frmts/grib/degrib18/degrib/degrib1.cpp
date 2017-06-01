@@ -636,7 +636,7 @@ static int ReadGrib1Sect1 (uChar *pds, uInt4 pdsLen, uInt4 gribLen, uInt4 *curLo
  */
 int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
 {
-   char temp[3];        /* Used to determine the section length. */
+   uChar temp[3];        /* Used to determine the section length. */
    uInt4 sectLen;       /* Length in bytes of the current section. */
    uChar *pds;          /* The part of the message dealing with the PDS. */
    pdsG1Type pdsMeta;   /* The pds parsed into a usable data structure. */
@@ -719,7 +719,7 @@ int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
 
 int GRIB1_RefTime (DataSource &fp, uInt4 gribLen, double *refTime)
 {
-   char temp[3];        /* Used to determine the section length. */
+   uChar temp[3];        /* Used to determine the section length. */
    uInt4 sectLen;       /* Length in bytes of the current section. */
    uChar *pds;          /* The part of the message dealing with the PDS. */
    pdsG1Type pdsMeta;   /* The pds parsed into a usable data structure. */
