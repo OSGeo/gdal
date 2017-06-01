@@ -437,10 +437,18 @@ static OGRFeature *TranslateGenericCollection( NTFFileReader *poReader,
     int         nPartCount=0;
     int         *panParts = NULL;
 
-    if( papoGroup[0]->GetLength() > 18 )
+    if( papoGroup[0]->GetLength() >= 20 )
     {
         nPartCount = atoi(papoGroup[0]->GetField(9,12));
-        panParts = static_cast<int *>(CPLCalloc(sizeof(int), nPartCount));
+        if( nPartCount > 0 &&
+            nPartCount-1 <= (papoGroup[0]->GetLength() - 20) / 8 )
+        {
+            panParts = static_cast<int *>(CPLCalloc(sizeof(int), nPartCount));
+        }
+        else
+        {
+            nPartCount = 0;
+        }
     }
 
     poFeature->SetField( "NUM_PARTS", nPartCount );
@@ -551,7 +559,8 @@ static OGRFeature *TranslateGenericName( NTFFileReader *poReader,
     // TEXT
     int nNumChar = atoi(papoGroup[0]->GetField(13,14));
 
-    poFeature->SetField( "TEXT", papoGroup[0]->GetField( 15, 15+nNumChar-1));
+    if( nNumChar > 0 && papoGroup[0]->GetLength() >= 15+nNumChar-1 )
+        poFeature->SetField( "TEXT", papoGroup[0]->GetField( 15, 15+nNumChar-1));
 
     // Geometry
     for( int iRec = 0; papoGroup[iRec] != NULL; iRec++ )
@@ -723,7 +732,7 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
         // NUM_PARTS
         int             nNumLinks = atoi(papoGroup[1]->GetField( 9, 12 ));
 
-        if( nNumLinks > MAX_LINK )
+        if( nNumLinks < 0 || nNumLinks > MAX_LINK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "MAX_LINK exceeded in ntf_generic.cpp." );
@@ -825,6 +834,13 @@ static OGRFeature *TranslateGenericCPoly( NTFFileReader *poReader,
     int         anPolyId[MAX_LINK*2];
 
     nNumLink = atoi(papoGroup[0]->GetField(9,12));
+    if( nNumLink < 0 || nNumLink > MAX_LINK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "MAX_LINK exceeded in ntf_generic.cpp." );
+        return poFeature;
+    }
+
     for( int iLink = 0; iLink < nNumLink; iLink++ )
     {
         anPolyId[iLink] = atoi(papoGroup[0]->GetField(13 + iLink*7,
