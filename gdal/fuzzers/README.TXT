@@ -10,6 +10,9 @@ https://bugs.chromium.org/p/oss-fuzz/issues/list?q=gdal
 
 It is possible to filter issues related to a particular fuzzer program
 (here cad_fuzzer) with:
+https://bugs.chromium.org/p/oss-fuzz/issues/list?can=2&q=cad_fuzzer+gdal
+
+Alternative:
 https://oss-fuzz.com/v2/testcases?open=yes&q=cad_fuzzer
 
 - Simple build of fuzzer main functions:
