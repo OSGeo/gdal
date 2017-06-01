@@ -1028,7 +1028,9 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 
     const double dfXSize = 1 + ((dfMaxX - dfMinX) / adfStepX[0] + 0.5);
     const double dfYSize = 1 + ((dfMaxY - dfMinY) / adfStepY[0] + 0.5);
-    if( dfXSize <= 0 || dfXSize > INT_MAX || dfYSize <= 0 || dfYSize > INT_MAX )
+    // Test written such as to detect NaN values
+    if( !(dfXSize > 0 && dfXSize < INT_MAX) ||
+        !(dfYSize > 0 && dfYSize < INT_MAX ) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid dimensions");
         VSIFCloseL(fp);
