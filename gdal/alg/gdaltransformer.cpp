@@ -1553,7 +1553,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle optional source approximation transformer.               */
+/*      Handle optional destination approximation transformer.          */
 /* -------------------------------------------------------------------- */
     if( psInfo->pDstTransformer )
     {
