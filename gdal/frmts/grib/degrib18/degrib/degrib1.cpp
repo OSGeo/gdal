@@ -353,6 +353,7 @@ static double fval_360 (uInt4 aval)
  *
  * ARGUMENTS
  *       pds = The compressed part of the message dealing with "PDS". (Input)
+ *    pdsLen = Sie of pds in bytes. (Input)
  *   gribLen = The total length of the GRIB1 message. (Input)
  *    curLoc = Current location in the GRIB1 message. (Output)
  *   pdsMeta = The filled out pdsMeta data structure. (Output)
@@ -378,13 +379,13 @@ static double fval_360 (uInt4 aval)
  * NOTES
  *****************************************************************************
  */
-static int ReadGrib1Sect1 (uChar *pds, uInt4 gribLen, uInt4 *curLoc,
+static int ReadGrib1Sect1 (uChar *pds, uInt4 pdsLen, uInt4 gribLen, uInt4 *curLoc,
                            pdsG1Type *pdsMeta, char *f_gds, uChar *gridID,
                            char *f_bms, short int *DSF,
                            unsigned short int *center,
                            unsigned short int *subcenter)
 {
-   sInt4 sectLen;       /* Length in bytes of the current section. */
+   uInt4 sectLen;       /* Length in bytes of the current section. */
    int year;            /* The year of the GRIB1 Message. */
    double P1_DeltaTime; /* Used to parse the time for P1 */
    double P2_DeltaTime; /* Used to parse the time for P2 */
@@ -394,8 +395,13 @@ static int ReadGrib1Sect1 (uChar *pds, uInt4 gribLen, uInt4 *curLoc,
    int i;
 */
 #endif
+   /* We will read the first required 28 bytes */
+   if( pdsLen < 28 )
+       return -1;
 
    sectLen = GRIB_UNSIGN_INT3 (*pds, pds[1], pds[2]);
+   if( sectLen > pdsLen )
+       return -1;
 #ifdef DEBUG
 /*
    printf ("Section 1 length = %ld\n", sectLen);
@@ -676,7 +682,7 @@ int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
       return -1;
    }
 
-   if (ReadGrib1Sect1 (pds, gribLen, &curLoc, &pdsMeta, &f_gds, &gridID,
+   if (ReadGrib1Sect1 (pds, sectLen, gribLen, &curLoc, &pdsMeta, &f_gds, &gridID,
                        &f_bms, &DSF, &center, &subcenter) != 0) {
       preErrSprintf ("Inside GRIB1_Inventory\n");
       free (pds);
@@ -745,7 +751,7 @@ int GRIB1_RefTime (DataSource &fp, uInt4 gribLen, double *refTime)
       return -1;
    }
 
-   if (ReadGrib1Sect1 (pds, gribLen, &curLoc, &pdsMeta, &f_gds, &gridID,
+   if (ReadGrib1Sect1 (pds, sectLen, gribLen, &curLoc, &pdsMeta, &f_gds, &gridID,
                        &f_bms, &DSF, &center, &subcenter) != 0) {
       preErrSprintf ("Inside GRIB1_Inventory\n");
       free (pds);
@@ -1758,7 +1764,7 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
 
    /* Preceding was in degrib2, next part is specific to GRIB1. */
    curLoc = 8;
-   if (ReadGrib1Sect1 (c_ipack + curLoc, gribLen, &curLoc, &(meta->pds1),
+   if (ReadGrib1Sect1 (c_ipack + curLoc, gribLen - curLoc, gribLen, &curLoc, &(meta->pds1),
                        &f_gds, &gridID, &f_bms, &DSF, &(meta->center),
                        &(meta->subcenter)) != 0) {
       preErrSprintf ("Inside ReadGrib1Record\n");
