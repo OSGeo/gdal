@@ -3,7 +3,7 @@
 #include "grib2.h"
 
 
-g2int g2_unpack3(unsigned char *cgrib,g2int *iofst,g2int **igds,g2int **igdstmpl,
+g2int g2_unpack3(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int **igds,g2int **igdstmpl,
                          g2int *mapgridlen,g2int **ideflist,g2int *idefnum)
 ////$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
@@ -201,7 +201,7 @@ g2int g2_unpack3(unsigned char *cgrib,g2int *iofst,g2int **igds,g2int **igdstmpl
          else {
             *ideflist=lideflist;
          }
-         gbits(cgrib,G2_UNKNOWN_SIZE,lideflist,*iofst,nbits,0,*idefnum);
+         gbits(cgrib,cgrib_length,lideflist,*iofst,nbits,0,*idefnum);
          *iofst=*iofst+(nbits*(*idefnum));
       }
       else {

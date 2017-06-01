@@ -375,7 +375,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
           iofst=iofst-40;       // reset offset to beginning of section
           if (lgfld->igdtmpl!=0) free(lgfld->igdtmpl);
           if (lgfld->list_opt!=0) free(lgfld->list_opt);
-          jerr=g2_unpack3(cgrib,&iofst,&igds,&lgfld->igdtmpl,
+          jerr=g2_unpack3(cgrib,cgrib_length,&iofst,&igds,&lgfld->igdtmpl,
                           &lgfld->igdtlen,&lgfld->list_opt,&lgfld->num_opt);
           if (jerr == 0) {
             have3=1;
@@ -405,7 +405,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
             lgfld->unpacked=unpack;
             lgfld->expanded=0;
             iofst=iofst-40;       // reset offset to beginning of section
-            jerr=g2_unpack4(cgrib,&iofst,&lgfld->ipdtnum,
+            jerr=g2_unpack4(cgrib,cgrib_length,&iofst,&lgfld->ipdtnum,
                             &lgfld->ipdtmpl,&lgfld->ipdtlen,&lgfld->coord_list,
                             &lgfld->num_coord);
             if (jerr == 0)
@@ -440,7 +440,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
           if (unpack) {   // unpack bitmap
             iofst=iofst-40;           // reset offset to beginning of section
             bmpsave=lgfld->bmap;      // save pointer to previous bitmap
-            jerr=g2_unpack6(cgrib,&iofst,lgfld->ngrdpts,&lgfld->ibmap,
+            jerr=g2_unpack6(cgrib,cgrib_length,&iofst,lgfld->ngrdpts,&lgfld->ibmap,
                          &lgfld->bmap);
             if (jerr == 0) {
               have6=1;
