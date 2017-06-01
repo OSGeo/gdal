@@ -296,7 +296,7 @@ int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd )
                      pGrd->stInflection[0].b, pMap, &nWarkerMark );
     }
     // find what inflections zmin is between
-    for( i = 0; i < pGrd->iNumColorInflections; i++ )
+    for( i = 1; i < pGrd->iNumColorInflections; i++ )
     {
         if( pGrd->fZMin < pGrd->stInflection[i].zVal )
         {
