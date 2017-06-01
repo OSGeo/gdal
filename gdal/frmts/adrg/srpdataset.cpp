@@ -736,7 +736,7 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
                 { /*USRP1.2*/
                     const char* pszDAT =
                         record->GetStringSubfield("QUV", 0, "DAT1", 0);
-                    if( pszDAT != NULL )
+                    if( pszDAT != NULL && strlen(pszDAT) >= 12 )
                     {
                         char dat[9];
                         strncpy(dat, pszDAT+4, 8);
@@ -756,7 +756,7 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
                 { /*USRP1.2*/
                     const char* pszDAT =
                         record->GetStringSubfield("QUV", 0, "DAT2", 0);
-                    if( pszDAT != NULL )
+                    if( pszDAT != NULL && strlen(pszDAT) >= 12 )
                     {
                         char dat[9];
                         strncpy(dat,pszDAT+4,8);
