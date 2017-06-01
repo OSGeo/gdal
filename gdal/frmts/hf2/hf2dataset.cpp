@@ -290,6 +290,18 @@ int HF2Dataset::LoadBlockMap()
 
     const int nXBlocks = (nRasterXSize + nTileSize - 1) / nTileSize;
     const int nYBlocks = (nRasterYSize + nTileSize - 1) / nTileSize;
+    if( nXBlocks * nYBlocks > 1000000 )
+    {
+        vsi_l_offset nCurOff = VSIFTellL(fp);
+        VSIFSeekL( fp, 0, SEEK_END );
+        vsi_l_offset nSize = VSIFTellL(fp);
+        VSIFSeekL( fp, nCurOff, SEEK_SET );
+        // Check that the file is big enough to have 8 bytes per block
+        if( static_cast<vsi_l_offset>(nXBlocks) * nYBlocks < (nSize - nCurOff) / 8 )
+        {
+            return FALSE;
+        }
+    }
     panBlockOffset = (vsi_l_offset*) VSIMalloc3(sizeof(vsi_l_offset), nXBlocks, nYBlocks);
     if (panBlockOffset == NULL)
     {
@@ -455,6 +467,12 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     if (!GDALCheckDatasetDimensions(nXSize, nYSize))
+    {
+        return NULL;
+    }
+    const int nXBlocks = (nXSize + nTileSize - 1) / nTileSize;
+    const int nYBlocks = (nYSize + nTileSize - 1) / nTileSize;
+    if( nXBlocks > INT_MAX / nYBlocks )
     {
         return NULL;
     }
