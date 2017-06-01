@@ -1477,10 +1477,9 @@ void TABFontPoint::SetFontStyleMIFValue(int nStyle)
  **********************************************************************/
 void TABFontPoint::SetSymbolAngle(double dAngle)
 {
-    while(dAngle < 0.0)
+    dAngle = fmod(dAngle, 360.0);
+    if(dAngle < 0.0)
         dAngle += 360.0;
-    while(dAngle > 360.0)
-        dAngle -= 360.0;
 
     m_dAngle = dAngle;
 }
@@ -5100,16 +5099,18 @@ int TABArc::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
  **********************************************************************/
 void TABArc::SetStartAngle(double dAngle)
 {
-    while(dAngle < 0.0)   dAngle += 360.0;
-    while(dAngle > 360.0) dAngle -= 360.0;
+    dAngle = fmod(dAngle, 360.0);
+    if(dAngle < 0.0)
+        dAngle += 360.0;
 
     m_dStartAngle = dAngle;
 }
 
 void TABArc::SetEndAngle(double dAngle)
 {
-    while(dAngle < 0.0)   dAngle += 360.0;
-    while(dAngle > 360.0) dAngle -= 360.0;
+    dAngle = fmod(dAngle, 360.0);
+    if(dAngle < 0.0)
+        dAngle += 360.0;
 
     m_dEndAngle = dAngle;
 }
@@ -5705,8 +5706,9 @@ double TABText::GetTextAngle()
 void TABText::SetTextAngle(double dAngle)
 {
     // Make sure angle is in the range [0..360]
-    while(dAngle < 0.0)   dAngle += 360.0;
-    while(dAngle > 360.0) dAngle -= 360.0;
+    dAngle = fmod(dAngle, 360.0);
+    if(dAngle < 0.0)
+        dAngle += 360.0;
     m_dAngle = dAngle;
     UpdateMBR();
 }
