@@ -12519,6 +12519,17 @@ SWIGINTERN PyObject *_wrap_Layer_Intersection(PyObject *SWIGUNUSEDPARM(self), Py
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
+      
+      /* In some cases 0 is passed instead of None. */
+      /* See https://github.com/OSGeo/gdal/pull/219 */
+      if ( PyLong_Check(obj4) || PyInt_Check(obj4) )
+      {
+        if( PyLong_AsLong(obj4) == 0 )
+        {
+          obj4 = Py_None;
+        }
+      }
+      
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
         CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
@@ -12712,6 +12723,17 @@ SWIGINTERN PyObject *_wrap_Layer_Union(PyObject *SWIGUNUSEDPARM(self), PyObject 
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
+      
+      /* In some cases 0 is passed instead of None. */
+      /* See https://github.com/OSGeo/gdal/pull/219 */
+      if ( PyLong_Check(obj4) || PyInt_Check(obj4) )
+      {
+        if( PyLong_AsLong(obj4) == 0 )
+        {
+          obj4 = Py_None;
+        }
+      }
+      
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
         CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
@@ -12905,6 +12927,17 @@ SWIGINTERN PyObject *_wrap_Layer_SymDifference(PyObject *SWIGUNUSEDPARM(self), P
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
+      
+      /* In some cases 0 is passed instead of None. */
+      /* See https://github.com/OSGeo/gdal/pull/219 */
+      if ( PyLong_Check(obj4) || PyInt_Check(obj4) )
+      {
+        if( PyLong_AsLong(obj4) == 0 )
+        {
+          obj4 = Py_None;
+        }
+      }
+      
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
         CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
@@ -13098,6 +13131,17 @@ SWIGINTERN PyObject *_wrap_Layer_Identity(PyObject *SWIGUNUSEDPARM(self), PyObje
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
+      
+      /* In some cases 0 is passed instead of None. */
+      /* See https://github.com/OSGeo/gdal/pull/219 */
+      if ( PyLong_Check(obj4) || PyInt_Check(obj4) )
+      {
+        if( PyLong_AsLong(obj4) == 0 )
+        {
+          obj4 = Py_None;
+        }
+      }
+      
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
         CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
@@ -13291,6 +13335,17 @@ SWIGINTERN PyObject *_wrap_Layer_Update(PyObject *SWIGUNUSEDPARM(self), PyObject
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
+      
+      /* In some cases 0 is passed instead of None. */
+      /* See https://github.com/OSGeo/gdal/pull/219 */
+      if ( PyLong_Check(obj4) || PyInt_Check(obj4) )
+      {
+        if( PyLong_AsLong(obj4) == 0 )
+        {
+          obj4 = Py_None;
+        }
+      }
+      
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
         CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
@@ -13484,6 +13539,17 @@ SWIGINTERN PyObject *_wrap_Layer_Clip(PyObject *SWIGUNUSEDPARM(self), PyObject *
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
+      
+      /* In some cases 0 is passed instead of None. */
+      /* See https://github.com/OSGeo/gdal/pull/219 */
+      if ( PyLong_Check(obj4) || PyInt_Check(obj4) )
+      {
+        if( PyLong_AsLong(obj4) == 0 )
+        {
+          obj4 = Py_None;
+        }
+      }
+      
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
         CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
@@ -13677,6 +13743,17 @@ SWIGINTERN PyObject *_wrap_Layer_Erase(PyObject *SWIGUNUSEDPARM(self), PyObject 
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
+      
+      /* In some cases 0 is passed instead of None. */
+      /* See https://github.com/OSGeo/gdal/pull/219 */
+      if ( PyLong_Check(obj4) || PyInt_Check(obj4) )
+      {
+        if( PyLong_AsLong(obj4) == 0 )
+        {
+          obj4 = Py_None;
+        }
+      }
+      
       if (obj4 && obj4 != Py_None ) {
         void* cbfunction = NULL;
         CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj4,
