@@ -1293,7 +1293,13 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 {
     /* %typemap(in) (GDALProgressFunc callback = NULL) */
     /* callback_func typemap */
-    if ($input && $input != Py_None && $input != 0) {
+    PyObject* repr = PyObject_Repr($input);
+    const char* s = PyString_AsString(repr);
+    if (s[0] == '0') {
+        $input = Py_None;
+    }
+
+    if ($input && $input != Py_None) {
         void* cbfunction = NULL;
         CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( $input,
                          (void**)&cbfunction,
