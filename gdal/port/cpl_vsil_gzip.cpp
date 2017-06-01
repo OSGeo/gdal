@@ -215,6 +215,7 @@ class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
     vsi_l_offset      GetUncompressedSize() { return m_uncompressed_size; }
 
     void              SaveInfo_unlocked();
+    void              UnsetCanSaveInfo() { m_bCanSaveInfo = false; }
 };
 
 class VSIGZipFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
@@ -1492,31 +1493,20 @@ void VSIGZipFilesystemHandler::SaveInfo_unlocked( VSIGZipHandle* poHandle )
 {
     CPLAssert(poHandle->GetBaseFileName() != NULL);
 
-    if( poHandleLastGZipFile &&
+    if( poHandleLastGZipFile == NULL ||
         strcmp(poHandleLastGZipFile->GetBaseFileName(),
-               poHandle->GetBaseFileName()) == 0 )
-    {
-        if( poHandle->GetLastReadOffset() >
+               poHandle->GetBaseFileName()) != 0 ||
+        poHandle->GetLastReadOffset() >
             poHandleLastGZipFile->GetLastReadOffset() )
-        {
-            VSIGZipHandle* poTmp = poHandleLastGZipFile;
-            poHandleLastGZipFile = NULL;
-            poTmp->SaveInfo_unlocked();
-            delete poTmp;
-            poHandleLastGZipFile = poHandle->Duplicate();
-            if( poHandleLastGZipFile )
-                poHandleLastGZipFile->CloseBaseHandle();
-        }
-    }
-    else
     {
         VSIGZipHandle* poTmp = poHandleLastGZipFile;
         poHandleLastGZipFile = NULL;
         if( poTmp )
         {
-            poTmp->SaveInfo_unlocked();
+            poTmp->UnsetCanSaveInfo();
             delete poTmp;
         }
+        CPLAssert(poHandleLastGZipFile == NULL);
         poHandleLastGZipFile = poHandle->Duplicate();
         if( poHandleLastGZipFile )
             poHandleLastGZipFile->CloseBaseHandle();
@@ -1616,7 +1606,7 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly(
 
     if( poHandleLastGZipFile )
     {
-        poHandleLastGZipFile->SaveInfo_unlocked();
+        poHandleLastGZipFile->UnsetCanSaveInfo();
         delete poHandleLastGZipFile;
         poHandleLastGZipFile = NULL;
     }
