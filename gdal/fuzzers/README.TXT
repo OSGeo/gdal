@@ -8,6 +8,10 @@ and call scripts in this directory.
 The list of issues is in:
 https://bugs.chromium.org/p/oss-fuzz/issues/list?q=gdal
 
+It is possible to filter issues related to a particular fuzzer program
+(here cad_fuzzer) with:
+https://oss-fuzz.com/v2/testcases?open=yes&q=cad_fuzzer
+
 - Simple build of fuzzer main functions:
     $ make
 
