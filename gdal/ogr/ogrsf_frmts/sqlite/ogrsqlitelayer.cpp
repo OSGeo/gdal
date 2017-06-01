@@ -2569,7 +2569,7 @@ OGRErr OGRSQLiteLayer::ImportSpatiaLiteGeometry( const GByte *pabyData,
         /* the original curve geometry after the spatialite blob, so in case */
         /* we detect that there's still binary */
         /* content after the spatialite blob, this may be our original geometry */
-        if( pabyData[39 + nBytesConsumed] == 0xFE && 39 + nBytesConsumed + 1 < nBytes )
+        if( 39 + nBytesConsumed + 1 < nBytes && pabyData[39 + nBytesConsumed] == 0xFE )
         {
             OGRGeometry* poOriginalGeometry = NULL;
             eErr = OGRGeometryFactory::createFromWkb(
