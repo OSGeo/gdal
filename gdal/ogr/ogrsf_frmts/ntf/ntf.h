@@ -280,6 +280,8 @@ class NTFFileReader
     int               bCacheLines;
     int               nLineCacheSize;
     OGRGeometry     **papoLineCache;
+    
+    void              AddToIndexGroup( NTFRecord * poRecord );
 
   public:
                       NTFFileReader( OGRNTFDataSource * );
