@@ -968,6 +968,19 @@ CPLErr AIGReadBlockIndex( AIGInfo_t * psInfo, AIGTileInfo *psTInfo,
 /*      into the buffer.                                                */
 /* -------------------------------------------------------------------- */
     psTInfo->nBlocks = (nLength-100) / 8;
+    if( psTInfo->nBlocks >= 1000000 )
+    {
+        // Avoid excessive memory consumption.
+        vsi_l_offset nFileSize;
+        VSIFSeekL(fp, 0, SEEK_END);
+        nFileSize = VSIFTellL(fp);
+        if( nFileSize < 100 ||
+            (vsi_l_offset)psTInfo->nBlocks > (nFileSize - 100) / 8 )
+        {
+            CPL_IGNORE_RET_VAL_INT(VSIFCloseL( fp ));
+            return CE_Failure;
+        }
+    }
     panIndex = (GUInt32 *) VSI_MALLOC2_VERBOSE(psTInfo->nBlocks, 8);
     if (panIndex == NULL)
     {
