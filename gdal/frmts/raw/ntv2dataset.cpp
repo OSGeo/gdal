@@ -586,10 +586,15 @@ int NTv2Dataset::OpenGrid( char *pachHeader, vsi_l_offset nGridOffsetIn )
     e_long *= -1;
     w_long *= -1;
 
-    nRasterXSize =
-        static_cast<int>( floor((e_long - w_long) / long_inc + 1.5) );
-    nRasterYSize =
-        static_cast<int>( floor((n_lat - s_lat) / lat_inc + 1.5) );
+    if( long_inc == 0.0 || lat_inc == 0.0 )
+        return FALSE;
+    const double dfXSize = floor((e_long - w_long) / long_inc + 1.5);
+    const double dfYSize = floor((n_lat - s_lat) / lat_inc + 1.5);
+    if( !(dfXSize >= 0 && dfXSize < INT_MAX) ||
+        !(dfYSize >= 0 && dfYSize < INT_MAX) )
+        return FALSE;
+    nRasterXSize = static_cast<int>( dfXSize );
+    nRasterYSize = static_cast<int>( dfYSize );
 
     if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
         return FALSE;
