@@ -222,6 +222,7 @@ class VSIGZipFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
     CPLMutex* hMutex;
     VSIGZipHandle* poHandleLastGZipFile;
+    bool           m_bInSaveInfo;
 
 public:
     VSIGZipFilesystemHandler();
@@ -1463,6 +1464,7 @@ VSIGZipFilesystemHandler::VSIGZipFilesystemHandler()
     hMutex = NULL;
 
     poHandleLastGZipFile = NULL;
+    m_bInSaveInfo = false;
 }
 
 /************************************************************************/
@@ -1472,7 +1474,10 @@ VSIGZipFilesystemHandler::VSIGZipFilesystemHandler()
 VSIGZipFilesystemHandler::~VSIGZipFilesystemHandler()
 {
     if( poHandleLastGZipFile )
+    {
+        poHandleLastGZipFile->UnsetCanSaveInfo();
         delete poHandleLastGZipFile;
+    }
 
     if( hMutex != NULL )
         CPLDestroyMutex( hMutex );
@@ -1491,6 +1496,11 @@ void VSIGZipFilesystemHandler::SaveInfo( VSIGZipHandle* poHandle )
 
 void VSIGZipFilesystemHandler::SaveInfo_unlocked( VSIGZipHandle* poHandle )
 {
+    if( m_bInSaveInfo )
+        return;
+    m_bInSaveInfo = true;
+
+    CPLAssert( poHandle != poHandleLastGZipFile );
     CPLAssert(poHandle->GetBaseFileName() != NULL);
 
     if( poHandleLastGZipFile == NULL ||
@@ -1511,6 +1521,7 @@ void VSIGZipFilesystemHandler::SaveInfo_unlocked( VSIGZipHandle* poHandle )
         if( poHandleLastGZipFile )
             poHandleLastGZipFile->CloseBaseHandle();
     }
+    m_bInSaveInfo = false;
 }
 
 /************************************************************************/
