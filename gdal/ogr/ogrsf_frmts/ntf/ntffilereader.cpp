@@ -1734,6 +1734,8 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
     {
         nPrevType = papoPrevGroup[0]->GetType();
         nPrevId = atoi(papoPrevGroup[0]->GetField(3,8));
+        if( nPrevId < 0 )
+            return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1816,6 +1818,8 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
 
         // Add all the text position records.
         nSelCount = atoi(poAnchor->GetField(9,10));
+        if( nSelCount < 0 )
+            return NULL;
 
         for( int iSel = 0; iSel < nSelCount; iSel++ )
         {
@@ -1886,6 +1890,8 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
     else if( poAnchor->GetType() == NRT_COLLECT )
     {
         int     nParts = atoi(poAnchor->GetField(9,12));
+        if( nParts < 0 )
+            return NULL;
         int     nAttOffset = 13 + nParts * 8;
         int     l_nAttCount = 0;
 
@@ -1939,6 +1945,8 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
     else if( poAnchor->GetType() == NRT_CPOLY )
     {
         int     nPolyCount = atoi(poAnchor->GetField(9,12));
+        if( nPolyCount < 0 )
+            return NULL;
         int     nPostPoly = nPolyCount*7 + 12;
 
         if( poAnchor->GetLength() >= nPostPoly + 6 )
