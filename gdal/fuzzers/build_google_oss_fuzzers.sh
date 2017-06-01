@@ -68,6 +68,10 @@ for format in $formats; do
     fuzzerName=$(echo $format | tr '[:upper:]' '[:lower:]')
     build_gdal_specialized_fuzzer $fuzzerName "GDALRegister_$format" "/vsimem/test" "/vsimem/test"
 done
+build_gdal_specialized_fuzzer adrg GDALRegister_ADRG  "/vsimem/test.tar" "/vsitar//vsimem/test.tar/ABCDEF01.GEN"
+build_gdal_specialized_fuzzer srp GDALRegister_SRP "/vsimem/test.tar" "/vsitar//vsimem/test.tar/FKUSRP01.IMG"
+build_gdal_specialized_fuzzer envi GDALRegister_ENVI "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.dat"
+build_gdal_specialized_fuzzer aig GDALRegister_AIGrid "/vsimem/test.tar" "/vsitar//vsimem/test.tar/hdr.adf"
 
 fuzzerFiles=$(dirname $0)/*.cpp
 for F in $fuzzerFiles; do
