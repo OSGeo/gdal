@@ -891,6 +891,10 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
         {
             CPLDebug( "NTF", "Couldn't translate attrec type `%2.2s'.",
                       pszData + iOffset );
+            CSLDestroy(*ppapszTypes);
+            CSLDestroy(*ppapszValues);
+            *ppapszTypes = NULL;
+            *ppapszValues = NULL;
             return FALSE;
         }
 
