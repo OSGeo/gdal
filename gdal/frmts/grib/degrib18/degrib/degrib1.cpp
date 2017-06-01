@@ -554,7 +554,7 @@ static int ReadGrib1Sect1 (uChar *pds, uInt4 pdsLen, uInt4 gribLen, uInt4 *curLo
          /* 87 ... 100 was reserved, but may not be encoded */
          if ((sectLen < 100) && (sectLen != 86)) {
             printf ("Warning! Problems with Ensemble Clustering section\n");
-            printf ("Section length == %d\n", sectLen);
+            printf ("Section length == %u\n", sectLen);
             return 0;
          }
          if (pdsMeta->f_hasProb == 0) {
