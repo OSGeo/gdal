@@ -39,7 +39,7 @@ g2int getpoly(unsigned char *csec3,g2int *jj,g2int *kk,g2int *mm)
       g2int   iofst,igdtlen,num_opt,jerr;
 
       iofst=0;       // set offset to beginning of section
-      jerr=g2_unpack3(csec3,&iofst,&igds,&igdstmpl,
+      jerr=g2_unpack3(csec3,G2_UNKNOWN_SIZE,&iofst,&igds,&igdstmpl,
                       &igdtlen,&list_opt,&num_opt);
       if (jerr == 0) {
          switch ( igds[4] )     //  Template number

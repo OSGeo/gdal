@@ -241,13 +241,13 @@ int pack_gp(g2int *, g2int *, g2int *,
 
 g2int g2_unpack1(unsigned char *cgrib,g2int *iofst,g2int **ids,g2int *idslen);
 g2int g2_unpack2(unsigned char *cgrib,g2int *iofst,g2int *lencsec2,unsigned char **csec2);
-g2int g2_unpack3(unsigned char *cgrib,g2int *iofst,g2int **igds,g2int **igdstmpl,
+g2int g2_unpack3(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int **igds,g2int **igdstmpl,
                          g2int *mapgridlen,g2int **ideflist,g2int *idefnum);
-g2int g2_unpack4(unsigned char *cgrib,g2int *iofst,g2int *ipdsnum,g2int **ipdstmpl,
+g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipdsnum,g2int **ipdstmpl,
                g2int *mappdslen,g2float **coordlist,g2int *numcoord);
 g2int g2_unpack5(unsigned char *cgrib,g2int *iofst,g2int *ndpts,g2int *idrsnum,
                g2int **idrstmpl,g2int *mapdrslen);
-g2int g2_unpack6(unsigned char *cgrib,g2int *iofst,g2int ngpts,g2int *ibmap,
+g2int g2_unpack6(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int ngpts,g2int *ibmap,
                g2int **bmap);
 g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igdsnum,g2int *igdstmpl,
                g2int idrsnum,g2int *idrstmpl,g2int ndpts,g2float **fld);

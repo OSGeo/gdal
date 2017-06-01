@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "grib2.h"
 
-g2int g2_unpack6(unsigned char *cgrib,g2int *iofst,g2int ngpts,g2int *ibmap,
+g2int g2_unpack6(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int ngpts,g2int *ibmap,
                g2int **bmap)
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
@@ -77,7 +77,7 @@ g2int g2_unpack6(unsigned char *cgrib,g2int *iofst,g2int ngpts,g2int *ibmap,
             *bmap=lbmap;
          }
          intbmap=(g2int *)calloc(ngpts,sizeof(g2int));
-         gbits(cgrib,G2_UNKNOWN_SIZE,intbmap,*iofst,1,0,ngpts);
+         gbits(cgrib,cgrib_length,intbmap,*iofst,1,0,ngpts);
          *iofst=*iofst+ngpts;
          for (j=0;j<ngpts;j++) {
            lbmap[j]=(g2int)intbmap[j];

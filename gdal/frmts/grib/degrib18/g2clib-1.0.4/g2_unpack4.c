@@ -3,7 +3,7 @@
 #include "grib2.h"
 
 
-g2int g2_unpack4(unsigned char *cgrib,g2int *iofst,g2int *ipdsnum,g2int **ipdstmpl,
+g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipdsnum,g2int **ipdstmpl,
                g2int *mappdslen,g2float **coordlist,g2int *numcoord)
 ////$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
@@ -173,7 +173,7 @@ g2int g2_unpack4(unsigned char *cgrib,g2int *iofst,g2int *ipdsnum,g2int **ipdstm
          else {
             *coordlist=lcoordlist;
          }
-        gbits(cgrib,G2_UNKNOWN_SIZE,coordieee,*iofst,32,0,*numcoord);
+        gbits(cgrib,cgrib_length,coordieee,*iofst,32,0,*numcoord);
         rdieee(coordieee,*coordlist,*numcoord);
         free(coordieee);
         *iofst=*iofst+(32*(*numcoord));

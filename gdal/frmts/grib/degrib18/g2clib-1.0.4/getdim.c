@@ -42,7 +42,7 @@ g2int getdim(unsigned char *csec3,g2int *width,g2int *height,g2int *iscan)
       list_opt=0;
       igds=0;
       iofst=0;       // set offset to beginning of section
-      jerr= g2_unpack3(csec3,&iofst,&igds,&igdstmpl,
+      jerr= g2_unpack3(csec3,G2_UNKNOWN_SIZE,&iofst,&igds,&igdstmpl,
                        &igdtlen,&list_opt,&num_opt);
       if (jerr == 0) {
          switch ( igds[4] )     //  Template number
