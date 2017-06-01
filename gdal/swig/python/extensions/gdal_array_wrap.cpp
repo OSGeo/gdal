@@ -5020,6 +5020,17 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
+      
+      /* In some cases 0 is passed instead of None. */
+      /* See https://github.com/OSGeo/gdal/pull/219 */
+      if ( PyLong_Check(obj9) || PyInt_Check(obj9) )
+      {
+        if( PyLong_AsLong(obj9) == 0 )
+        {
+          obj9 = Py_None;
+        }
+      }
+      
       if (obj9 && obj9 != Py_None ) {
         void* cbfunction = NULL;
         CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj9,
@@ -5182,6 +5193,17 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
     {
       /* %typemap(in) (GDALProgressFunc callback = NULL) */
       /* callback_func typemap */
+      
+      /* In some cases 0 is passed instead of None. */
+      /* See https://github.com/OSGeo/gdal/pull/219 */
+      if ( PyLong_Check(obj9) || PyInt_Check(obj9) )
+      {
+        if( PyLong_AsLong(obj9) == 0 )
+        {
+          obj9 = Py_None;
+        }
+      }
+      
       if (obj9 && obj9 != Py_None ) {
         void* cbfunction = NULL;
         CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj9,
