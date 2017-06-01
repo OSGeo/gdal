@@ -81,3 +81,16 @@ done
 
 build_fuzzer gdal_filesystem_fuzzer $(dirname $0)/gdal_fuzzer.cpp -DUSE_FILESYSTEM
 build_fuzzer ogr_filesystem_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DUSE_FILESYSTEM
+
+echo "[libfuzzer]" > $OUT/wkb_import_fuzzer.options
+echo "max_len = 100000" >> $OUT/wkb_import_fuzzer.options
+
+echo "[libfuzzer]" > $OUT/wkt_import_fuzzer.options
+echo "max_len = 100000" >> $OUT/wkt_import_fuzzer.options
+
+echo "[libfuzzer]" > $OUT/spatialite_geom_import_fuzzer.options
+echo "max_len = 100000" >> $OUT/spatialite_geom_import_fuzzer.options
+
+echo "[libfuzzer]" > $OUT/osr_set_from_user_input_fuzzer.options
+echo "max_len = 10000" >> $OUT/osr_set_from_user_input_fuzzer.options
+
