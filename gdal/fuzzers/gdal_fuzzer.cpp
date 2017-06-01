@@ -35,6 +35,7 @@
 
 #include "gdal.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "gdal_alg.h"
 #include "gdal_frmts.h"
@@ -100,15 +101,30 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 #endif
     if( hDS )
     {
-        const int nBands = std::min(10, GDALGetRasterCount(hDS));
+        const int nTotalBands = GDALGetRasterCount(hDS);
+        const int nBands = std::min(10, nTotalBands);
         bool bDoCheckSum = true;
         if( nBands > 0 )
         {
+            // If we know that we will need to allocate a lot of memory
+            // given the block size and interleaving mode, do not read
+            // pixels to avoid out of memory conditions by ASAN
             int nBlockXSize = 0, nBlockYSize = 0;
             GDALGetBlockSize( GDALGetRasterBand(hDS, 1), &nBlockXSize,
                               &nBlockYSize );
-            if( nBlockXSize > 10 * 1024 * 1024 / nBlockYSize )
+            const GDALDataType eDT =
+                GDALGetRasterDataType( GDALGetRasterBand(hDS, 1) );
+            const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
+            const char* pszInterleave =
+                GDALGetMetadataItem( hDS, "INTERLEAVE", "IMAGE_STRUCTURE" );
+            const int nSimultaneousBands =
+                (pszInterleave && EQUAL(pszInterleave, "PIXEL")) ?
+                            nTotalBands : 1;
+            if( nBlockXSize >
+                10 * 1024 * 1024 / nDTSize / nBlockYSize / nSimultaneousBands )
+            {
                 bDoCheckSum = false;
+            }
         }
         if( bDoCheckSum )
         {
@@ -120,6 +136,17 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                                     std::min(1024, GDALGetRasterYSize(hDS)));
             }
         }
+
+        // Test other API
+        GDALGetProjectionRef(hDS);
+        double adfGeoTransform[6];
+        GDALGetGeoTransform(hDS, adfGeoTransform);
+        CSLDestroy(GDALGetFileList(hDS));
+        GDALGetGCPCount(hDS);
+        GDALGetGCPs(hDS);
+        GDALGetGCPProjection(hDS);
+        GDALGetMetadata(hDS, NULL);
+
         GDALClose(hDS);
     }
     CPLPopErrorHandler();
