@@ -673,7 +673,8 @@ static int BSBSeekAndCheckScanlineNumber ( BSBInfo *psInfo, int nScanline,
         while( nScanline != 0 && nLineMarker == 0 && byNext == 0 && !bErrorFlag )
             byNext = BSBGetc( psInfo, psInfo->bNO1, &bErrorFlag );
 
-        nLineMarker = nLineMarker * 128 + (byNext & 0x7f);
+        /* Avoid int32 overflow. The unsigned overflow is OK */
+        nLineMarker = (int)((unsigned)nLineMarker * 128U + (unsigned)(byNext & 0x7f));
     } while( (byNext & 0x80) != 0 );
 
     if ( bErrorFlag )
