@@ -481,6 +481,12 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
                         pszName, pszFormatString, nMaxBytes );
               return 0;
           }
+          if( nFormatWidth > static_cast<int>(sizeof(abyData)) )
+          {
+              CPLError( CE_Failure, CPLE_AppDefined,
+                        "Format width %d too large", nFormatWidth );
+              return 0;
+          }
 
           if( pnConsumedBytes != NULL )
               *pnConsumedBytes = nFormatWidth;
