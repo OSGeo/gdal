@@ -392,6 +392,13 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     if( fpPrimary == NULL )
         return NULL;
 
+    if( psRT1Info->nRecordLength > static_cast<int>(sizeof(achRecord)) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Record length too large" );
+        return NULL;
+    }
+
     if( VSIFSeekL( fpPrimary, (nRecordId+nRT1RecOffset) * nRecordLength,
                   SEEK_SET ) != 0 )
     {
@@ -426,6 +433,14 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     {
         char    achRT3Rec[OGR_TIGER_RECBUF_LEN];
         int     nRT3RecLen = psRT3Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
+
+        if( psRT3Info->nRecordLength > static_cast<int>(sizeof(achRT3Rec)) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Record length too large" );
+            delete poFeature;
+            return NULL;
+        }
 
         if( VSIFSeekL( fpRT3, nRecordId * nRT3RecLen, SEEK_SET ) != 0 )
         {
