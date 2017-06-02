@@ -828,7 +828,13 @@ int NTFFileReader::ProcessAttRecGroup( NTFRecord **papoRecords,
         char **papszValues1 = NULL;
         if( !ProcessAttRec( papoRecords[iRec], NULL,
                             &papszTypes1, &papszValues1 ) )
+        {
+            CSLDestroy(*ppapszTypes);
+            CSLDestroy(*ppapszValues);
+            *ppapszTypes = NULL;
+            *ppapszValues = NULL;
             return FALSE;
+        }
 
         if( *ppapszTypes == NULL )
         {
@@ -942,6 +948,8 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
         else
             iOffset += 2 + atoi(psAttDesc->fwidth);
     }
+    if( *ppapszTypes == NULL )
+        return FALSE;
 
     return TRUE;
 }
