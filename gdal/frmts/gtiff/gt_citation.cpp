@@ -592,12 +592,14 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
 
         if( strstr( szCTString, "Projection Name = ") && strstr( szCTString, "_StatePlane_"))
         {
-            const char *pStr = strstr( szCTString, "Projection Name = ") + strlen("Projection Name = ");
+            const char *pStr =
+                strstr( szCTString, "Projection Name = ") +
+                strlen("Projection Name = ");
+            CPLString osCSName(pStr);
             const char* pReturn = strchr( pStr, '\n');
-            char CSName[128];
-            strncpy(CSName, pStr, pReturn-pStr);
-            CSName[pReturn-pStr] = '\0';
-            if( poSRS->ImportFromESRIStatePlaneWKT(0, NULL, NULL, 32767, CSName) == OGRERR_NONE )
+            if( pReturn )
+                osCSName.resize(pReturn - pStr);
+            if( poSRS->ImportFromESRIStatePlaneWKT(0, NULL, NULL, 32767, osCSName) )
             {
                 // for some erdas citation keys, the state plane CS name is incomplete, the unit check is necessary.
                 OGRBoolean done = FALSE;
