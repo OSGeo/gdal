@@ -1081,19 +1081,17 @@ error:
 
 CPLErr GSAGDataset::GetGeoTransform( double *padfGeoTransform )
 {
-    if( padfGeoTransform == NULL )
-        return CE_Failure;
+    padfGeoTransform[0] = 0;
+    padfGeoTransform[1] = 1;
+    padfGeoTransform[2] = 0;
+    padfGeoTransform[3] = 0;
+    padfGeoTransform[4] = 0;
+    padfGeoTransform[5] = 1;
 
     GSAGRasterBand *poGRB = (GSAGRasterBand *)GetRasterBand( 1 );
 
     if( poGRB == NULL )
     {
-        padfGeoTransform[0] = 0;
-        padfGeoTransform[1] = 1;
-        padfGeoTransform[2] = 0;
-        padfGeoTransform[3] = 0;
-        padfGeoTransform[4] = 0;
-        padfGeoTransform[5] = 1;
         return CE_Failure;
     }
 
@@ -1104,6 +1102,9 @@ CPLErr GSAGDataset::GetGeoTransform( double *padfGeoTransform )
 
     if( eErr == CE_None )
         return CE_None;
+
+    if( nRasterXSize == 1 || nRasterYSize == 1 )
+        return CE_Failure;
 
     /* calculate pixel size first */
     padfGeoTransform[1] = (poGRB->dfMaxX - poGRB->dfMinX)/(nRasterXSize - 1);
