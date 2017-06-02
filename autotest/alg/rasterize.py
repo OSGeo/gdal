@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import struct
 import sys
 
 sys.path.append( '../pymod' )
@@ -328,12 +329,40 @@ def rasterize_5():
 
     return 'success'
 
+
+###############################################################################
+# Test bug fix for #5580 (used to hang)
+
+def rasterize_6():
+
+    # Setup working spatial reference
+    sr_wkt = 'LOCAL_CS["arbitrary"]'
+    sr = osr.SpatialReference( sr_wkt )
+
+    wkb = struct.pack('B' * 93, 0, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0, 0, 5, 65, 28, 138, 141, 120, 239, 76, 104, 65, 87, 9, 185, 80, 29, 20, 208, 65, 28, 144, 191, 125, 165, 41, 54, 65, 87, 64, 14, 111, 103, 53, 124, 65, 30, 132, 127, 255, 255, 255, 254, 65, 87, 63, 241, 218, 241, 62, 127, 65, 30, 132, 128, 0, 0, 0, 0, 65, 87, 9, 156, 142, 126, 144, 236, 65, 28, 138, 141, 120, 239, 76, 104, 65, 87, 9, 185, 80, 29, 20, 208)
+
+    data_source = ogr.GetDriverByName('MEMORY').CreateDataSource('')
+    layer = data_source.CreateLayer('', sr, geom_type=ogr.wkbPolygon)
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometryDirectly(ogr.CreateGeometryFromWkb(wkb))
+    layer.CreateFeature(feature)
+
+    mask_ds = gdal.GetDriverByName('Mem').Create('', 5000, 5000, 1, gdal.GDT_Byte)
+    mask_ds.SetGeoTransform([499000, 0.4, 0, 6095000, 0, -0.4])
+    mask_ds.SetProjection(sr_wkt)
+
+    gdal.RasterizeLayer(mask_ds, [1], layer, burn_values=[1], options=["ALL_TOUCHED"])
+
+    return 'success'
+
+
 gdaltest_list = [
     rasterize_1,
     rasterize_2,
     rasterize_3,
     rasterize_4,
     rasterize_5,
+    rasterize_6
     ]
 
 if __name__ == '__main__':
