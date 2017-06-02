@@ -448,7 +448,8 @@ protected:
     int verCount;     // The last version
     int bCrystalized; // Unset only during the create process
     int spacing;      // How many spare bytes before each tile data
-    int no_errors;     // Ignore read errors
+    int no_errors;    // Ignore read errors
+    int missing;      // set if no_errors is set and data is missing
 
     // Freeform sticky dataset options, as a list of key-value pairs
     CPLStringList optlist;
