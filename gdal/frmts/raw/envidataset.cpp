@@ -2305,10 +2305,32 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
         nBandOffset = (vsi_l_offset)nLineOffset * nLines;
     }
 
+    // Currently each ENVIRasterBand allocates nPixelOffset * nRasterXSize bytes
+    // so for a pixel interleaved scheme, this will allocates lots of memory !
+    // Actually this is quadratic in the number of bands !
+    // Do a few sanity checks to avoid excessive memory allocation on
+    // small files.
+    // But ultimately we should fix RawRasterBand to have a shared buffer
+    // among bands.
+    if( nBands > 10 ||
+        static_cast<vsi_l_offset>(nPixelOffset) * poDS->nRasterXSize > 20000 )
+    {
+        vsi_l_offset nExpectedFileSize =
+                nHeaderSize + nBandOffset * (nBands - 1) +
+                            (poDS->nRasterXSize-1) * nPixelOffset;
+        CPL_IGNORE_RET_VAL( VSIFSeekL(poDS->fpImage, 0, SEEK_END) );
+        vsi_l_offset nFileSize = VSIFTellL(poDS->fpImage);
+        if( nFileSize < nExpectedFileSize )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Image file is too small");
+            delete poDS;
+            return NULL;
+        }
+    }
+
     // Create band information objects.
-    poDS->nBands = nBands;
     CPLErrorReset();
-    for( int i = 0; i < poDS->nBands; i++ )
+    for( int i = 0; i < nBands; i++ )
     {
         poDS->SetBand(i + 1,
                       new ENVIRasterBand(poDS, i + 1, poDS->fpImage,
@@ -2317,7 +2339,6 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
                                          bNativeOrder, TRUE));
         if( CPLGetLastErrorType() != CE_None )
         {
-            poDS->nBands = i + 1;
             delete poDS;
             return NULL;
         }
