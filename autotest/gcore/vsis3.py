@@ -334,87 +334,106 @@ def vsis3_3():
         return 'fail'
 
     # Test CPL_VSIL_CURL_NON_CACHED
-    gdal.SetConfigOption('CPL_VSIL_CURL_NON_CACHED', '/vsis3/s3_non_cached/test.txt')
+    for config_option_value in [ '/vsis3/s3_non_cached/test.txt',
+                        '/vsis3/s3_non_cached',
+                        '/vsis3/s3_non_cached:/vsis3/unrelated',
+                        '/vsis3/unrelated:/vsis3/s3_non_cached',
+                        '/vsis3/unrelated:/vsis3/s3_non_cached:/vsis3/unrelated' ]:
+        gdal.SetConfigOption('CPL_VSIL_CURL_NON_CACHED', config_option_value)
 
-    # So that the server knows we want it to serve initial content
-    gdaltest.gdalurlopen('http://127.0.0.1:%d/s3_non_cached_test_use_content_1' % gdaltest.webserver_port)
+        # So that the server knows we want it to serve initial content
+        gdaltest.gdalurlopen('http://127.0.0.1:%d/s3_non_cached_test_use_content_1' % gdaltest.webserver_port)
 
-    f = open_for_read('/vsis3/s3_non_cached/test.txt')
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    data = gdal.VSIFReadL(1, 3, f).decode('ascii')
-    gdal.VSIFCloseL(f)
-    if data != 'foo':
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+        f = open_for_read('/vsis3/s3_non_cached/test.txt')
+        if f is None:
+            gdaltest.post_reason('fail')
+            print(config_option_value)
+            return 'fail'
+        data = gdal.VSIFReadL(1, 3, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+        if data != 'foo':
+            gdaltest.post_reason('fail')
+            print(config_option_value)
+            print(data)
+            return 'fail'
 
-    # So that the server knows we want it to serve other content
-    gdaltest.gdalurlopen('http://127.0.0.1:%d/s3_non_cached_test_use_content_2' % gdaltest.webserver_port)
+        # So that the server knows we want it to serve other content
+        gdaltest.gdalurlopen('http://127.0.0.1:%d/s3_non_cached_test_use_content_2' % gdaltest.webserver_port)
 
-    size = gdal.VSIStatL('/vsis3/s3_non_cached/test.txt').size
-    if size != 4:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+        size = gdal.VSIStatL('/vsis3/s3_non_cached/test.txt').size
+        if size != 4:
+            gdaltest.post_reason('fail')
+            print(config_option_value)
+            print(data)
+            return 'fail'
 
-    # So that the server knows we want it to serve initial content
-    gdaltest.gdalurlopen('http://127.0.0.1:%d/s3_non_cached_test_use_content_1' % gdaltest.webserver_port)
+        # So that the server knows we want it to serve initial content
+        gdaltest.gdalurlopen('http://127.0.0.1:%d/s3_non_cached_test_use_content_1' % gdaltest.webserver_port)
 
-    size = gdal.VSIStatL('/vsis3/s3_non_cached/test.txt').size
-    if size != 3:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+        size = gdal.VSIStatL('/vsis3/s3_non_cached/test.txt').size
+        if size != 3:
+            gdaltest.post_reason('fail')
+            print(config_option_value)
+            print(data)
+            return 'fail'
 
-    # So that the server knows we want it to serve other content
-    gdaltest.gdalurlopen('http://127.0.0.1:%d/s3_non_cached_test_use_content_2' % gdaltest.webserver_port)
+        # So that the server knows we want it to serve other content
+        gdaltest.gdalurlopen('http://127.0.0.1:%d/s3_non_cached_test_use_content_2' % gdaltest.webserver_port)
 
-    f = open_for_read('/vsis3/s3_non_cached/test.txt')
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-    gdal.VSIFCloseL(f)
-    if data != 'bar2':
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+        f = open_for_read('/vsis3/s3_non_cached/test.txt')
+        if f is None:
+            gdaltest.post_reason('fail')
+            print(config_option_value)
+            return 'fail'
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+        if data != 'bar2':
+            gdaltest.post_reason('fail')
+            print(config_option_value)
+            print(data)
+            return 'fail'
 
-    gdal.SetConfigOption('CPL_VSIL_CURL_NON_CACHED', None)
+        gdal.SetConfigOption('CPL_VSIL_CURL_NON_CACHED', None)
 
     # Retry without option
+    for config_option_value in [ None,
+                                '/vsis3/s3_non_cached/bar.txt' ]:
+        gdal.SetConfigOption('CPL_VSIL_CURL_NON_CACHED', config_option_value)
 
-    # So that the server knows we want it to serve initial content
-    gdaltest.gdalurlopen('http://127.0.0.1:%d/s3_non_cached_test_use_content_1' % gdaltest.webserver_port)
+        # So that the server knows we want it to serve initial content
+        gdaltest.gdalurlopen('http://127.0.0.1:%d/s3_non_cached_test_use_content_1' % gdaltest.webserver_port)
 
-    f = open_for_read('/vsis3/s3_non_cached/test.txt')
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    data = gdal.VSIFReadL(1, 3, f).decode('ascii')
-    gdal.VSIFCloseL(f)
-    if data != 'foo':
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+        f = open_for_read('/vsis3/s3_non_cached/test.txt')
+        if f is None:
+            gdaltest.post_reason('fail')
+            print(config_option_value)
+            return 'fail'
+        data = gdal.VSIFReadL(1, 3, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+        if data != 'foo':
+            gdaltest.post_reason('fail')
+            print(config_option_value)
+            print(data)
+            return 'fail'
 
-    # So that the server knows we want it to serve other content
-    gdaltest.gdalurlopen('http://127.0.0.1:%d/s3_non_cached_test_use_content_2' % gdaltest.webserver_port)
+        # So that the server knows we want it to serve other content
+        gdaltest.gdalurlopen('http://127.0.0.1:%d/s3_non_cached_test_use_content_2' % gdaltest.webserver_port)
 
-    f = open_for_read('/vsis3/s3_non_cached/test.txt')
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-    gdal.VSIFCloseL(f)
-    # We should still get foo because of caching
-    if data != 'foo':
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+        f = open_for_read('/vsis3/s3_non_cached/test.txt')
+        if f is None:
+            gdaltest.post_reason('fail')
+            print(config_option_value)
+            return 'fail'
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+        # We should still get foo because of caching
+        if data != 'foo':
+            gdaltest.post_reason('fail')
+            print(config_option_value)
+            print(data)
+            return 'fail'
 
+    gdal.SetConfigOption('CPL_VSIL_CURL_NON_CACHED', None)
 
     return 'success'
 

@@ -1975,8 +1975,19 @@ VSICurlFilesystemHandler::~VSICurlFilesystemHandler()
 
 bool VSICurlFilesystemHandler::AllowCachedDataFor(const char* pszFilename)
 {
-    return CPLString(CPLGetConfigOption("CPL_VSIL_CURL_NON_CACHED", "")).find(
-            pszFilename) == std::string::npos;
+    bool bCachedAllowed = true;
+    char** papszTokens = CSLTokenizeString2(
+        CPLGetConfigOption("CPL_VSIL_CURL_NON_CACHED", ""), ":", 0 );
+    for( int i = 0; papszTokens && papszTokens[i]; i++)
+    {
+        if( STARTS_WITH(pszFilename, papszTokens[i]) )
+        {
+            bCachedAllowed = false;
+            break;
+        }
+    }
+    CSLDestroy(papszTokens);
+    return bCachedAllowed;
 }
 
 /************************************************************************/
