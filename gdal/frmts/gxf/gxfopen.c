@@ -436,11 +436,12 @@ double GXFParseBase90( GXFInfo_t * psGXF, const char * pszText,
                        int bScale )
 
 {
-    int		i = 0, nValue = 0;
+    int		i = 0;
+    unsigned int nValue = 0;
 
     while( i < psGXF->nGType )
     {
-        nValue = nValue*90 + (pszText[i] - 37);
+        nValue = nValue*90U + (unsigned)(pszText[i] - 37);
         i++;
     }
 
