@@ -503,6 +503,8 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         1 / ( 1 - Conversions::rpol/Conversions::req)
     );
 
+    CPLFree(poDS->pszProjection);
+    poDS->pszProjection = NULL;
     oSRS.exportToWkt( &(poDS->pszProjection) );
 
     CALIBRATION* cal = poDS->msg_reader_core->get_calibration_parameters();
