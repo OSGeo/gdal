@@ -982,7 +982,15 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( poDS->fpImage != NULL )
         {
-            int iWordSize = GDALGetDataTypeSize(eType) / 8;
+            int iWordSize = GDALGetDataTypeSizeBytes(eType);
+
+            if( nBands > INT_MAX / iWordSize ||
+                poDS->nRasterXSize > INT_MAX / (nBands * iWordSize) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "int overflow");
+                delete poDS;
+                return NULL;
+            }
 
             for( int iBand = 0; iBand < nBands; iBand++ )
             {
