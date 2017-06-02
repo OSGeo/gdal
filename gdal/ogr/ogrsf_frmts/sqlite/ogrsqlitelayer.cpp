@@ -2331,6 +2331,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             eErr = poGC->addGeometryDirectly( poThisGeom );
             if( eErr != OGRERR_NONE )
             {
+                delete poThisGeom;
                 delete poGC;
                 return eErr;
             }
