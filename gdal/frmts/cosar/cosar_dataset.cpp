@@ -50,6 +50,7 @@ class COSARDataset : public GDALDataset
 {
 public:
         COSARDataset() : fp(NULL) { }
+        ~COSARDataset();
         VSILFILE *fp;
 
         static GDALDataset *Open( GDALOpenInfo * );
@@ -139,6 +140,14 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 /*****************************************************************************
  * COSARDataset Implementation
  *****************************************************************************/
+
+COSARDataset::~COSARDataset()
+{
+    if( fp != NULL )
+    {
+        VSIFCloseL(fp);
+    }
+}
 
 GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     long nRTNB;
