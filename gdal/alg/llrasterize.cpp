@@ -428,7 +428,7 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
             }
 
             // Special case for vertical lines.
-            if( floor(dfX) == floor(dfXEnd) )
+            if( floor(dfX) == floor(dfXEnd) || fabs(dfX - dfXEnd) < .01 )
             {
                 if( dfYEnd < dfY )
                 {
@@ -436,7 +436,7 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                     llSwapDouble( &dfVariant, &dfVariantEnd );
                 }
 
-                int iX = (int) floor(dfX);
+                const int iX = static_cast<int>(floor(dfXEnd));
                 int iY = (int) floor(dfY);
                 int iYEnd = (int) floor(dfYEnd);
 
@@ -469,7 +469,7 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                                     / ( dfXEnd - dfX );//per unit change in iX
 
             // special case for horizontal lines
-            if( floor(dfY) == floor(dfYEnd) )
+            if( floor(dfY) == floor(dfYEnd) || fabs(dfY - dfYEnd) < .01 )
             {
                 if( dfXEnd < dfX )
                 {
