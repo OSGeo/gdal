@@ -63,13 +63,6 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
     if( fpPrimary == NULL )
         return NULL;
 
-    if( psRTInfo->nRecordLength > static_cast<int>(sizeof(achRecord)) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Record length too large" );
-        return NULL;
-    }
-
     if( VSIFSeekL( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 ) {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to %d of %sP",
@@ -77,6 +70,8 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
         return NULL;
     }
 
+    // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
+    // char and sizeof(achRecord) == OGR_TIGER_RECBUF_LEN > 255
     if( VSIFReadL( achRecord, psRTInfo->nRecordLength, 1, fpPrimary ) != 1 ) {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %sP",

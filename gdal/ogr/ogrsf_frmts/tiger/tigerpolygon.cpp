@@ -528,13 +528,6 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
     if( fpRTS != NULL )
     {
         char    achRTSRec[OGR_TIGER_RECBUF_LEN];
-        if( psRTSInfo->nRecordLength > static_cast<int>(sizeof(achRTSRec)) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "Record length too large" );
-            delete poFeature;
-            return NULL;
-        }
 
         if( VSIFSeekL( fpRTS, nRecordId * nRTSRecLen, SEEK_SET ) != 0 )
         {
@@ -545,6 +538,8 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
             return NULL;
         }
 
+        // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
+        // char and sizeof(achRecord) == OGR_TIGER_RECBUF_LEN > 255
         if( VSIFReadL( achRTSRec, psRTSInfo->nRecordLength, 1, fpRTS ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
