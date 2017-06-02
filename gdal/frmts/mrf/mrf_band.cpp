@@ -686,6 +686,7 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     if (poDS->bypass_cache && !poDS->source.empty())
         return FetchBlock(xblk, yblk, buffer);
 
+    tinfo.size = 0; // Just in case it is missing
     if (CE_None != poDS->ReadTileIdx(tinfo, req, img)) {
         if (poDS->no_errors) {
             return FillBlock(buffer);

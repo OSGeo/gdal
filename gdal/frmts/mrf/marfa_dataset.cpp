@@ -82,6 +82,7 @@ GDALMRFDataset::GDALMRFDataset() :
     bCrystalized(TRUE), // Assume not in create mode
     spacing(0),
     no_errors(0),
+    missing(0),
     poSrcDS(NULL),
     level(-1),
     cds(NULL),
@@ -469,7 +470,7 @@ void GDALMRFDataset::SetMaxValue(const char *pszVal) {
 int GDALMRFDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (STARTS_WITH("<MRF_META>", poOpenInfo->pszFilename))
+  if (STARTS_WITH(poOpenInfo->pszFilename, "<MRF_META>"))
         return TRUE;
 
     CPLString fn(poOpenInfo->pszFilename);
@@ -972,6 +973,10 @@ VSILFILE *GDALMRFDataset::IdxFP() {
     if (ifp.FP != NULL)
         return ifp.FP;
 
+    // If missing is set, we already checked, there is no index
+    if (missing)
+        return NULL;
+
     // If name starts with '(' it is not a real file name
     if (current.idxfname[0] == '(')
         return NULL;
@@ -985,6 +990,12 @@ VSILFILE *GDALMRFDataset::IdxFP() {
     }
 
     ifp.FP = VSIFOpenL(current.idxfname, mode);
+
+    // If file didn't open for reading and no_errors is set, just return null and make a note
+    if (ifp.FP == NULL && eAccess == GA_ReadOnly && no_errors) {
+        missing = 1;
+        return NULL;
+    }
 
     // need to create the index file
     if (ifp.FP == NULL && !bCrystalized && (eAccess == GA_Update || !source.empty())) {
@@ -1631,7 +1642,6 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
 void GDALMRFDataset::ProcessOpenOptions(char **papszOptions)
 {
     CPLStringList opt(papszOptions, FALSE);
-
     no_errors = opt.FetchBoolean("NOERRORS", FALSE);
 }
 
@@ -2027,6 +2037,10 @@ CPLErr GDALMRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImag
 
 {
     VSILFILE *l_ifp = IdxFP();
+
+    // Initialize the tinfo structure, in case the files are missing
+    if (missing)
+      return CE_None;
 
     GIntBig offset = bias + IdxOffset(pos, img);
     if (l_ifp == NULL && img.comp == IL_NONE ) {
