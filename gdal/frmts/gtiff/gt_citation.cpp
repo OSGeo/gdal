@@ -630,11 +630,11 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
             const char *pStr =
                 strstr( szCTString, "Projection Name = ") +
                 strlen("Projection Name = ");
+            CPLString osCSName(pStr);
             const char* pReturn = strchr( pStr, '\n');
-            char CSName[128] = { '\0' };
-            strncpy(CSName, pStr, pReturn - pStr);
-            CSName[pReturn-pStr] = '\0';
-            if( poSRS->ImportFromESRIStatePlaneWKT(0, NULL, NULL, 32767, CSName)
+            if( pReturn )
+                osCSName.resize(pReturn - pStr);
+            if( poSRS->ImportFromESRIStatePlaneWKT(0, NULL, NULL, 32767, osCSName)
                 == OGRERR_NONE )
             {
                 // For some erdas citation keys, the state plane CS name is
