@@ -69,7 +69,10 @@ CPCIDSKGCP2Segment::CPCIDSKGCP2Segment(PCIDSKFile *fileIn, int segmentIn, const 
  
 CPCIDSKGCP2Segment::~CPCIDSKGCP2Segment()
 {
-    RebuildSegmentData();
+    if( pimpl_ != NULL )
+    {
+        RebuildSegmentData();
+    }
     delete pimpl_;
 }
 
