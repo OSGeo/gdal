@@ -195,6 +195,8 @@ CPLErr IRISRasterBand::IReadBlock( int /* nBlockXOff */,
     // Every product type has its own size. TODO: Move it like dataType.
     int nDataLength = 1;
     if( poGDS->nDataTypeCode == 2 ) nDataLength = 1;
+    else if( poGDS->nDataTypeCode == 8 ) nDataLength = 2;
+    else if( poGDS->nDataTypeCode == 9 ) nDataLength = 2;
     else if( poGDS->nDataTypeCode == 37 ) nDataLength = 2;
     else if( poGDS->nDataTypeCode == 33 ) nDataLength = 2;
     else if( poGDS->nDataTypeCode == 32 ) nDataLength = 1;
