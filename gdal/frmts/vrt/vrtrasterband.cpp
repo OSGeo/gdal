@@ -359,6 +359,12 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
     if( pszDataType != NULL )
     {
         eDataType = GDALGetDataTypeByName(pszDataType);
+        if( eDataType == GDT_Unknown )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Invalid dataType = %s", pszDataType );
+            return CE_Failure;
+        }
     }
 
 /* -------------------------------------------------------------------- */
