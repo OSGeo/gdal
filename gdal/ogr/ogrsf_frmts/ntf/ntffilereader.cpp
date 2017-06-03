@@ -991,13 +991,16 @@ NTFAttDesc * NTFFileReader::GetAttDesc( const char * pszType )
 /*      the long user name.  The value will be transformed from         */
 /*      fixed point (with the decimal implicit) to fixed point with     */
 /*      an explicit decimal point if it has a "R" format.               */
+/*      Note: the returned *ppszAttValue has a very short lifetime      */
+/*      and should immediately be used. Further calls to                */
+/*      ProcessAttValue or CPLSPrintf() will invalidate it.             */
 /************************************************************************/
 
 int NTFFileReader::ProcessAttValue( const char *pszValType,
                                     const char *pszRawValue,
-                                    char **ppszAttName,
-                                    char **ppszAttValue,
-                                    char **ppszCodeDesc )
+                                    const char **ppszAttName,
+                                    const char **ppszAttValue,
+                                    const char **ppszCodeDesc )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1017,23 +1020,33 @@ int NTFFileReader::ProcessAttValue( const char *pszValType,
 /* -------------------------------------------------------------------- */
     if( psAttDesc->finter[0] == 'R' )
     {
-        static char      szRealString[30];
-        const char *pszDecimalPortion;
-        int       nWidth, nPrecision;
+        const char *pszDecimalPortion = NULL; // Used after for.
 
         for( pszDecimalPortion = psAttDesc->finter;
              *pszDecimalPortion != ',' && *pszDecimalPortion != '\0';
              pszDecimalPortion++ ) {}
+        if( *pszDecimalPortion == '\0' )
+        {
+            *ppszAttValue = "";
+        }
+        else
+        {
+            const int nWidth = static_cast<int>(strlen(pszRawValue));
+            const int nPrecision = atoi(pszDecimalPortion+1);
+            if( nPrecision < 0 || nPrecision >= nWidth )
+            {
+                *ppszAttValue = "";
+            }
+            else
+            {
+                CPLString osResult(pszRawValue);
+                osResult.resize(nWidth - nPrecision);
+                osResult += ".";
+                osResult += pszRawValue+nWidth-nPrecision;
 
-        nWidth = static_cast<int>(strlen(pszRawValue));
-        nPrecision = atoi(pszDecimalPortion+1);
-
-        strncpy( szRealString, pszRawValue, nWidth - nPrecision );
-        szRealString[nWidth-nPrecision] = '.';
-        strcpy( szRealString+nWidth-nPrecision+1,
-                pszRawValue+nWidth-nPrecision );
-
-        *ppszAttValue = szRealString;
+                *ppszAttValue = CPLSPrintf("%s", osResult.c_str());
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1042,11 +1055,7 @@ int NTFFileReader::ProcessAttValue( const char *pszValType,
 /* -------------------------------------------------------------------- */
     else if( psAttDesc->finter[0] == 'I' )
     {
-        static char    szIntString[30]; // FIXME thread unsafe
-
-        snprintf( szIntString, sizeof(szIntString), "%d", atoi(pszRawValue) );
-
-        *ppszAttValue = szIntString;
+        *ppszAttValue = CPLSPrintf("%d", atoi(pszRawValue) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1054,7 +1063,7 @@ int NTFFileReader::ProcessAttValue( const char *pszValType,
 /* -------------------------------------------------------------------- */
     else
     {
-        *ppszAttValue = (char *) pszRawValue;
+        *ppszAttValue = pszRawValue;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1066,7 +1075,7 @@ int NTFFileReader::ProcessAttValue( const char *pszValType,
     }
     else if( psAttDesc->poCodeList != NULL )
     {
-        *ppszCodeDesc = (char *)psAttDesc->poCodeList->Lookup( *ppszAttValue );
+        *ppszCodeDesc = psAttDesc->poCodeList->Lookup( *ppszAttValue );
     }
     else
     {
@@ -1150,7 +1159,9 @@ int NTFFileReader::ApplyAttributeValue( OGRFeature * poFeature, int iField,
 /*      Process the attribute value ... this really only has a          */
 /*      useful effect for real numbers.                                 */
 /* -------------------------------------------------------------------- */
-    char        *pszAttLongName, *pszAttValue, *pszCodeDesc;
+    const char *pszAttLongName = NULL;
+    const char *pszAttValue = NULL;
+    const char *pszCodeDesc = NULL;
 
     if( !ProcessAttValue( pszAttName, papszValues[iValue],
                      &pszAttLongName, &pszAttValue, &pszCodeDesc ) )
