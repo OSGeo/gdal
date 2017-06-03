@@ -1603,31 +1603,32 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
 
     CSLDestroy(options);
 
-    char **meta = poSrcDS->GetMetadata();
-    if (poDS && CSLCount(meta))
-        poDS->SetMetadata(meta);
+    if (!poDS)
+      return NULL;
 
-    // Copy input GCPs, PAM handles it
-    if (poSrcDS->GetGCPCount())
-        poDS->SetGCPs(poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(), poSrcDS->GetGCPProjection());
+    poDS->oOvManager.Initialize(poDS, poDS->GetPhysicalFilename(), poDS->GetFileList());
 
-    meta = poSrcDS->GetMetadata("RPC");
-    if (poDS && CSLCount(meta))
-        poDS->SetMetadata(meta, "RPC");
+    CPLErr err;
+    // Have PAM copy all, but skip the mask
+    int nCloneFlags = GCIF_PAM_DEFAULT & ~GCIF_MASK;
 
     // If copy is disabled, we're done, we just created an empty MRF
-    if (!poDS || on(CSLFetchNameValue(papszOptions, "NOCOPY")))
-        return poDS;
-
-    // Use the GDAL copy call
-    // Need to flag the dataset as compressed (COMPRESSED=TRUE) to force block writes
-    // This might not be what we want, if the input and out order is truly separate
-    char **papszCWROptions = NULL;
-    papszCWROptions = CSLAddNameValue(papszCWROptions, "COMPRESSED", "TRUE");
-    CPLErr err = GDALDatasetCopyWholeRaster((GDALDatasetH)poSrcDS,
+    if (!on(CSLFetchNameValue(papszOptions, "NOCOPY"))) {
+      // Use the GDAL copy call
+      // Need to flag the dataset as compressed (COMPRESSED=TRUE) to force block writes
+      // This might not be what we want, if the input and out order is truly separate
+      nCloneFlags |= GCIF_MASK; // We do copy the data, so copy the mask too if necessary
+      char **papszCWROptions = NULL;
+      papszCWROptions = CSLAddNameValue(papszCWROptions, "COMPRESSED", "TRUE");
+      CPLErr err = GDALDatasetCopyWholeRaster((GDALDatasetH)poSrcDS,
         (GDALDatasetH)poDS, papszCWROptions, pfnProgress, pProgressData);
 
-    CSLDestroy(papszCWROptions);
+      CSLDestroy(papszCWROptions);
+    }
+
+
+    if (CE_None == err)
+      err = poDS->CloneInfo(poSrcDS, nCloneFlags);
 
     if (CE_Failure == err) {
         delete poDS;
