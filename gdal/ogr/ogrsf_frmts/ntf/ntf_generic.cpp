@@ -328,9 +328,9 @@ static void AddGenericAttributes( NTFFileReader * poReader,
 /* -------------------------------------------------------------------- */
         if( iListField != -1 )
         {
-            char *pszAttLongName = NULL;
-            char *pszAttValue = NULL;
-            char *pszCodeDesc = NULL;
+            const char *pszAttLongName = NULL;
+            const char *pszAttValue = NULL;
+            const char *pszCodeDesc = NULL;
 
             poReader->ProcessAttValue( papszTypes[iAtt], papszValues[iAtt],
                                        &pszAttLongName, &pszAttValue,
@@ -639,7 +639,7 @@ static OGRFeature *TranslateGenericPoint( NTFFileReader *poReader,
         snprintf( szValType, sizeof(szValType), "%s", papoGroup[0]->GetField(9,10) );
         if( !EQUAL(szValType,"  ") )
         {
-            char *pszProcessedValue = NULL;
+            const char *pszProcessedValue = NULL;
 
             if( poReader->ProcessAttValue(szValType,
                                           papoGroup[0]->GetField(11,16),
@@ -691,7 +691,7 @@ static OGRFeature *TranslateGenericLine( NTFFileReader *poReader,
         snprintf( szValType, sizeof(szValType), "%s", papoGroup[0]->GetField(9,10) );
         if( !EQUAL(szValType,"  ") )
         {
-            char *pszProcessedValue = NULL;
+            const char *pszProcessedValue = NULL;
 
             if( poReader->ProcessAttValue(szValType,
                                           papoGroup[0]->GetField(11,16),
