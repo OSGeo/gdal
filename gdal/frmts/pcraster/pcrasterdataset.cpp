@@ -292,6 +292,9 @@ PCRasterDataset::PCRasterDataset( MAP* mapIn) :
     d_west(0.0),
     d_north(0.0),
     d_cellSize(0.0),
+    d_cellRepresentation(CR_UNDEFINED),
+    d_valueScale(VS_UNDEFINED),
+    d_defaultNoDataValue(0.0),
     d_location_changed(false)
 {
   // Read header info.
