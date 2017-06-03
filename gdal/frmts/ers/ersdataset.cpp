@@ -980,7 +980,7 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->osRawFilename = osDataFilePath;
 
-        if( poDS->fpImage != NULL )
+        if( poDS->fpImage != NULL && nBands > 0 )
         {
             int iWordSize = GDALGetDataTypeSizeBytes(eType);
 
