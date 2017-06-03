@@ -314,14 +314,14 @@ CPLErr WEBPDataset::Uncompress()
             pabyCompressed,
             static_cast<uint32_t>( nSize ),
             static_cast<uint8_t*>( pabyUncompressed),
-            static_cast<size_t>(nRasterXSize) * nRasterYSize * nBands,
+            nRasterXSize * nRasterYSize * nBands,
             nRasterXSize * nBands );
     else
         pRet = WebPDecodeRGBInto(
             pabyCompressed,
             static_cast<uint32_t>( nSize ),
             static_cast<uint8_t*>( pabyUncompressed ),
-            static_cast<size_t>(nRasterXSize) * nRasterYSize * nBands,
+            nRasterXSize * nRasterYSize * nBands,
             nRasterXSize * nBands );
 
     VSIFree(pabyCompressed);
