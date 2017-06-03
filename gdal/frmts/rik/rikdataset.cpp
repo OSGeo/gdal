@@ -840,6 +840,8 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         CPL_SWAP32PTR( &header.iHorBlocks );
         CPL_SWAP32PTR( &header.iVertBlocks );
 #endif
+        if ( header.iMPPNum == 0 )
+            return NULL;
 
         VSIFReadL( &header.iBitsPerPixel, 1, sizeof(header.iBitsPerPixel), poOpenInfo->fpL );
         VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fpL );
@@ -878,8 +880,11 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         if (!CPLIsFinite(header.fSouth) ||
             !CPLIsFinite(header.fWest) ||
             !CPLIsFinite(header.fNorth) ||
-            !CPLIsFinite(header.fEast))
+            !CPLIsFinite(header.fEast) ||
+            header.iMPPNum == 0)
+        {
             return NULL;
+        }
 
         const bool offsetBounds = header.fSouth < 4000000;
 
