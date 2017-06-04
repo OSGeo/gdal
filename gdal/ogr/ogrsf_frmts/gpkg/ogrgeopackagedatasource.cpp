@@ -5772,6 +5772,10 @@ void GPKG_GDAL_HasColorTable(sqlite3_context* pContext,
 /*                      InstallSQLFunctions()                           */
 /************************************************************************/
 
+#ifndef SQLITE_DETERMINISTIC
+#define SQLITE_DETERMINISTIC 0
+#endif
+
 void GDALGeoPackageDataset::InstallSQLFunctions()
 {
 #ifdef SPATIALITE_412_OR_LATER
@@ -5865,10 +5869,6 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
 /************************************************************************/
 /*                         OpenOrCreateDB()                             */
 /************************************************************************/
-
-#ifndef SQLITE_DETERMINISTIC
-#define SQLITE_DETERMINISTIC 0
-#endif
 
 bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
 {
