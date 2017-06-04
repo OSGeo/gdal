@@ -900,11 +900,10 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
     iOffset = 8;
     pszData = poRecord->GetData();
 
-    while( pszData[iOffset] != '0' && pszData[iOffset] != '\0' )
+    while( iOffset < poRecord->GetLength() && pszData[iOffset] != '0' )
     {
         NTFAttDesc *psAttDesc;
         int         nEnd;
-        int         nFWidth;
 
 /* -------------------------------------------------------------------- */
 /*      Extract the two letter code name for the attribute, and use     */
@@ -926,7 +925,9 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
 /*      Establish the width of the value.  Zero width fields are        */
 /*      terminated by a backslash.                                      */
 /* -------------------------------------------------------------------- */
-        nFWidth = atoi(psAttDesc->fwidth);
+        const int nFWidth = atoi(psAttDesc->fwidth);
+        if( nFWidth < 0 )
+            break;
         if( nFWidth == 0 )
         {
             const char * pszData2 = poRecord->GetData();
@@ -957,7 +958,7 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
                 iOffset++;
         }
         else
-            iOffset += 2 + atoi(psAttDesc->fwidth);
+            iOffset += 2 + nFWidth;
     }
     if( *ppapszTypes == NULL )
         return FALSE;
