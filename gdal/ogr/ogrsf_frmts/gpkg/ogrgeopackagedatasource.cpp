@@ -625,32 +625,75 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     eAccess = poOpenInfo->eAccess; /* hum annoying duplication */
     m_pszFilename = CPLStrdup( osFilename );
 
-    /* See if we can open the SQLite database */
-    if( !OpenOrCreateDB(bUpdate
+#ifdef ENABLE_SQL_GPKG_FORMAT
+    if( poOpenInfo->pabyHeader &&
+        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL GPKG") &&
+        poOpenInfo->fpL != NULL )
+    {
+        if( sqlite3_open_v2( ":memory:", &hDB, SQLITE_OPEN_READWRITE, NULL )
+                != SQLITE_OK )
+        {
+            return FALSE;
+        }
+
+        // Ingest the lines of the dump
+        VSIFSeekL( poOpenInfo->fpL, 0, SEEK_SET );
+        const char* pszLine;
+        while( (pszLine = CPLReadLineL( poOpenInfo->fpL )) != NULL )
+        {
+            // Blacklist a few words tat might have security implications
+            // Basically we just want to allow CREATE TABLE and INSERT INTO
+            if( CPLString(pszLine).ifind("ATTACH") != std::string::npos ||
+                CPLString(pszLine).ifind("DETACH") != std::string::npos ||
+                CPLString(pszLine).ifind("PRAGMA") != std::string::npos ||
+                CPLString(pszLine).ifind("SELECT") != std::string::npos ||
+                CPLString(pszLine).ifind("UPDATE") != std::string::npos ||
+                CPLString(pszLine).ifind("REPLACE") != std::string::npos ||
+                CPLString(pszLine).ifind("DELETE") != std::string::npos ||
+                CPLString(pszLine).ifind("DROP") != std::string::npos ||
+                CPLString(pszLine).ifind("ALTER") != std::string::npos||
+                CPLString(pszLine).ifind("VIRTUAL") != std::string::npos )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Rejected statement: %s", pszLine);
+                return FALSE;
+            }
+            sqlite3_exec( hDB, pszLine, NULL, NULL, NULL );
+        }
+
+        InstallSQLFunctions();
+    }
+
+    else
+#endif
+    {
+        /* See if we can open the SQLite database */
+        if( !OpenOrCreateDB(bUpdate
                         ? SQLITE_OPEN_READWRITE
                         : SQLITE_OPEN_READONLY) )
-        return FALSE;
+            return FALSE;
 
 
-    memcpy(&m_nApplicationId, pabyHeader + knApplicationIdPos, 4);
-    m_nApplicationId = CPL_MSBWORD32(m_nApplicationId);
-    memcpy(&m_nUserVersion, pabyHeader + knUserVersionPos, 4);
-    m_nUserVersion = CPL_MSBWORD32(m_nUserVersion);
-    if( m_nApplicationId == GP10_APPLICATION_ID )
-    {
-        CPLDebug("GPKG", "GeoPackage v1.0");
-    }
-    else if( m_nApplicationId == GP11_APPLICATION_ID )
-    {
-        CPLDebug("GPKG", "GeoPackage v1.1");
-    }
-    else if( m_nApplicationId == GPKG_APPLICATION_ID &&
-             m_nUserVersion >= GPKG_1_2_VERSION )
-    {
-        CPLDebug("GPKG", "GeoPackage v%d.%d.%d",
-                 m_nUserVersion / 10000,
-                 (m_nUserVersion % 10000) / 100,
-                 m_nUserVersion % 100);
+        memcpy(&m_nApplicationId, pabyHeader + knApplicationIdPos, 4);
+        m_nApplicationId = CPL_MSBWORD32(m_nApplicationId);
+        memcpy(&m_nUserVersion, pabyHeader + knUserVersionPos, 4);
+        m_nUserVersion = CPL_MSBWORD32(m_nUserVersion);
+        if( m_nApplicationId == GP10_APPLICATION_ID )
+        {
+            CPLDebug("GPKG", "GeoPackage v1.0");
+        }
+        else if( m_nApplicationId == GP11_APPLICATION_ID )
+        {
+            CPLDebug("GPKG", "GeoPackage v1.1");
+        }
+        else if( m_nApplicationId == GPKG_APPLICATION_ID &&
+                m_nUserVersion >= GPKG_1_2_VERSION )
+        {
+            CPLDebug("GPKG", "GeoPackage v%d.%d.%d",
+                    m_nUserVersion / 10000,
+                    (m_nUserVersion % 10000) / 100,
+                    m_nUserVersion % 100);
+        }
     }
 
     /* Requirement 6: The SQLite PRAGMA integrity_check SQL command SHALL return “ok” */
@@ -5726,20 +5769,11 @@ void GPKG_GDAL_HasColorTable(sqlite3_context* pContext,
 }
 
 /************************************************************************/
-/*                         OpenOrCreateDB()                             */
+/*                      InstallSQLFunctions()                           */
 /************************************************************************/
 
-#ifndef SQLITE_DETERMINISTIC
-#define SQLITE_DETERMINISTIC 0
-#endif
-
-bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
+void GDALGeoPackageDataset::InstallSQLFunctions()
 {
-    const bool bSuccess =
-        CPL_TO_BOOL(OGRSQLiteBaseDataSource::OpenOrCreateDB(flags, FALSE));
-    if( !bSuccess )
-        return false;
-
 #ifdef SPATIALITE_412_OR_LATER
     InitNewSpatialite();
 
@@ -5826,6 +5860,24 @@ bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
                                 SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL,
                                 GPKG_GDAL_HasColorTable, NULL, NULL);
     }
+}
+
+/************************************************************************/
+/*                         OpenOrCreateDB()                             */
+/************************************************************************/
+
+#ifndef SQLITE_DETERMINISTIC
+#define SQLITE_DETERMINISTIC 0
+#endif
+
+bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
+{
+    const bool bSuccess =
+        CPL_TO_BOOL(OGRSQLiteBaseDataSource::OpenOrCreateDB(flags, FALSE));
+    if( !bSuccess )
+        return false;
+
+    InstallSQLFunctions();
 
     return true;
 }
