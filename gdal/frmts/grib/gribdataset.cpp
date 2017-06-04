@@ -256,12 +256,31 @@ CPLErr GRIBRasterBand::LoadData()
         if( !m_Grib_Data )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Out of memory.");
+            if (m_Grib_MetaData != NULL)
+            {
+                MetaFree(m_Grib_MetaData);
+                delete m_Grib_MetaData;
+                m_Grib_MetaData = NULL;
+            }
             return CE_Failure;
         }
 
         // Check the band matches the dataset as a whole, size wise. (#3246)
         nGribDataXSize = m_Grib_MetaData->gds.Nx;
         nGribDataYSize = m_Grib_MetaData->gds.Ny;
+        if( nGribDataXSize <= 0 || nGribDataYSize <= 0 ||
+            nGribDataXSize > INT_MAX / nGribDataYSize ||
+            nGribDataXSize > INT_MAX / (nGribDataYSize * static_cast<int>(sizeof(double))) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Band %d of GRIB dataset is %dx%d, which is too large.",
+                     nBand,
+                     nGribDataXSize, nGribDataYSize);
+            MetaFree(m_Grib_MetaData);
+            delete m_Grib_MetaData;
+            m_Grib_MetaData = NULL;
+            return CE_Failure;
+        }
 
         poGDS->nCachedBytes += nGribDataXSize * nGribDataYSize * sizeof(double);
         poGDS->poLastUsedBand = this;
