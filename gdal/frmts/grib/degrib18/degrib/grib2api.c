@@ -1384,7 +1384,7 @@ static void clear (float * ain, sInt4 * iain, sInt4 * nd2x3, sInt4 * idat,
  * NOTES
  *****************************************************************************
  */
-static void BigByteCpy (sInt4 * dst, sInt4 * ipack, CPL_UNUSED sInt4 nd5,
+static void BigByteCpy (sInt4 * dst, sInt4 * ipack, sInt4 nd5,
                         unsigned int startInt, unsigned int startByte,
                         int numByte)
 {
@@ -1401,6 +1401,11 @@ static void BigByteCpy (sInt4 * dst, sInt4 * ipack, CPL_UNUSED sInt4 nd5,
    intIndex = startInt;
    byteIndex = startByte;
    for (i = 0; i < numByte; i++) {
+       if( intIndex >= (unsigned)nd5 )
+       {
+           /* TODO should error out */
+           return;
+       }
       curInt = (uInt4) ipack[intIndex];
       curByte = (curInt << Lshift[byteIndex]) >> 24;
       *dst = (*dst << 8) + curByte;
