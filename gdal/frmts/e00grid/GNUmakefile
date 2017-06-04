@@ -12,4 +12,6 @@ clean:
 
 all:	$(OBJ:.o=.$(OBJ_EXT))
 
+$(O_OBJ):       e00read.c
+
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
