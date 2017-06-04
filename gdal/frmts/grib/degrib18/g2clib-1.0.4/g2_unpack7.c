@@ -107,7 +107,7 @@ g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igds
       if (idrsnum == 0)
         simunpack(cgrib+ipos,cgrib_length-ipos,idrstmpl,ndpts,lfld);
       else if (idrsnum == 2 || idrsnum == 3) {
-        if (comunpack(cgrib+ipos,lensec,idrsnum,idrstmpl,ndpts,lfld) != 0) {
+        if (comunpack(cgrib+ipos,cgrib_length-ipos,lensec,idrsnum,idrstmpl,ndpts,lfld) != 0) {
           return 7;
         }
       }

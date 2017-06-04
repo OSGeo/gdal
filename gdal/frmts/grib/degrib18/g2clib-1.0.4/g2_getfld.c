@@ -422,7 +422,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
         //
         if (isecnum == 5 && numfld == ifldnum) {
           iofst=iofst-40;       // reset offset to beginning of section
-          jerr=g2_unpack5(cgrib,&iofst,&lgfld->ndpts,&lgfld->idrtnum,
+          jerr=g2_unpack5(cgrib,cgrib_length,&iofst,&lgfld->ndpts,&lgfld->idrtnum,
                           &lgfld->idrtmpl,&lgfld->idrtlen);
           if (jerr == 0)
             have5=1;
