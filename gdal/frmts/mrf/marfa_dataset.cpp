@@ -1608,7 +1608,7 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
 
     poDS->oOvManager.Initialize(poDS, poDS->GetPhysicalFilename(), poDS->GetFileList());
 
-    CPLErr err;
+    CPLErr err = CE_None;
     // Have PAM copy all, but skip the mask
     int nCloneFlags = GCIF_PAM_DEFAULT & ~GCIF_MASK;
 
@@ -1620,7 +1620,7 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
       nCloneFlags |= GCIF_MASK; // We do copy the data, so copy the mask too if necessary
       char **papszCWROptions = NULL;
       papszCWROptions = CSLAddNameValue(papszCWROptions, "COMPRESSED", "TRUE");
-      CPLErr err = GDALDatasetCopyWholeRaster((GDALDatasetH)poSrcDS,
+      err = GDALDatasetCopyWholeRaster((GDALDatasetH)poSrcDS,
         (GDALDatasetH)poDS, papszCWROptions, pfnProgress, pProgressData);
 
       CSLDestroy(papszCWROptions);
