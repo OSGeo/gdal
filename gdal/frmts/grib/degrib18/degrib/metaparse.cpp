@@ -2393,10 +2393,24 @@ void ParseGrid (gridAttribType *attrib, double **Grib_Data,
    myAssert (((!f_subGrid) && (subNx == Nx)) || (f_subGrid));
    myAssert (((!f_subGrid) && (subNy == Ny)) || (f_subGrid));
 
+   if( subNy == 0 || subNx > 0xFFFFFFFFU / subNy )
+   {
+       errSprintf ("Too large raster");
+       *grib_DataLen = 0;
+       *Grib_Data = NULL;
+       return;
+   }
+   
    if (subNx * subNy > *grib_DataLen) {
       *grib_DataLen = subNx * subNy;
       *Grib_Data = (double *) realloc ((void *) (*Grib_Data),
                                        (*grib_DataLen) * sizeof (double));
+      if( *Grib_Data == NULL )
+      {
+          errSprintf ("Memory allocation failed");
+          *grib_DataLen = 0;
+          return;
+      }
    }
    grib_Data = *Grib_Data;
 
