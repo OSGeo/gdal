@@ -2903,6 +2903,23 @@ def netcdf_72():
     return 'success'
 
 ###############################################################################
+# test geostationary with radian units (https://github.com/OSGeo/gdal/pull/220)
+
+def netcdf_73():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/geos_rad.nc')
+    gt = ds.GetGeoTransform()
+    expected_gt = (-5979486.362104082, 1087179.4077774752, 0.0, -5979487.123448145, 0.0, 1087179.4077774752)
+    if max([abs(gt[i]-expected_gt[i]) for i in range(6)]) > 1:
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -2984,7 +3001,8 @@ gdaltest_list = [
     netcdf_69,
     netcdf_70,
     netcdf_71,
-    netcdf_72
+    netcdf_72,
+    netcdf_73
 ]
 
 ###############################################################################
