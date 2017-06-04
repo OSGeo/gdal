@@ -187,6 +187,12 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     pDS->nRasterYSize = CPL_SWAP32(pDS->nRasterYSize);
 #endif
 
+    if( !GDALCheckDatasetDimensions(pDS->nRasterXSize, pDS->nRasterYSize) )
+    {
+        delete pDS;
+        return NULL;
+    }
+
     VSIFSeekL(pDS->fp, RTNB_OFFSET, SEEK_SET);
     VSIFReadL(&nRTNB, 1, 4, pDS->fp);
 #ifdef CPL_LSB
