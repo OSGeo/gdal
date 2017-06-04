@@ -42,6 +42,10 @@
 
 #define ENABLE_GPKG_OGR_CONTENTS
 
+// Enable accepting a SQL dump (starting with a "-- SQL GPKG" line) as a valid
+// file. This makes fuzzer life easier
+#define ENABLE_SQL_GPKG_FORMAT
+
 typedef enum
 {
     GPKG_ATTRIBUTES,
@@ -266,6 +270,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
         OGRErr              SetApplicationAndUserVersionId();
         bool                ReOpenDB();
         bool                OpenOrCreateDB( int flags );
+        void                InstallSQLFunctions();
         bool                HasGDALAspatialExtension();
 };
 
