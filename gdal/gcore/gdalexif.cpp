@@ -153,7 +153,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
       //      if(bSwabflag)
       //      TIFFSwabArrayOfLong((GUInt32*) data, 2*count);
     for(;count>0;count--) {
-      if( (lp[0]==0) && (lp[1] == 0) ) {
+      if( (lp[0]==0) || (lp[1] == 0) ) {
           snprintf(szTemp, sizeof(szTemp), "%s(0)",sep);
       }
       else{
@@ -172,8 +172,13 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_SRATIONAL: {
     const GInt32 *lp = (const GInt32*)data;
     for(;count>0;count--) {
-      CPLsnprintf(szTemp, sizeof(szTemp), "%s(%g)", sep,
-          (float) lp[0]/ (float) lp[1]);
+      if( (lp[0]==0) || (lp[1] == 0) ) {
+          snprintf(szTemp, sizeof(szTemp), "%s(0)",sep);
+      }
+      else{
+        CPLsnprintf(szTemp, sizeof(szTemp), "%s(%g)", sep,
+            (float) lp[0]/ (float) lp[1]);
+      }
       sep = " ";
       lp += 2;
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
