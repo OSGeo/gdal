@@ -146,7 +146,7 @@ class GSAGRasterBand : public GDALPamRasterBand
 /* See http://gcc.gnu.org/ml/gcc/2003-08/msg01195.html for some         */
 /* explanation.                                                         */
 /************************************************************************/
-
+    
 static bool AlmostEqual( double dfVal1, double dfVal2 )
 
 {
@@ -168,6 +168,7 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDSIn, int nBandIn,
     dfMaxY(0.0),
     dfMinZ(0.0),
     dfMaxZ(0.0),
+    panLineOffset(NULL),
     nLastReadLine(poDSIn->nRasterYSize),
     nMaxLineSize(128),
     padfRowMinZ(NULL),
@@ -183,6 +184,17 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDSIn, int nBandIn,
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 
+    if( poDSIn->nRasterYSize > 1000000 )
+    {
+        // Sanity check to avoid excessive memory allocations
+        VSIFSeekL( poDSIn->fp, 0, SEEK_END );
+        vsi_l_offset nFileSize = VSIFTellL(poDSIn->fp);
+        if( static_cast<vsi_l_offset>(poDSIn->nRasterYSize) > nFileSize )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Truncated file");
+            return;
+        }
+    }
     panLineOffset = static_cast<vsi_l_offset *>(
         VSI_CALLOC_VERBOSE( poDSIn->nRasterYSize+1, sizeof(vsi_l_offset) ));
     if( panLineOffset == NULL )
