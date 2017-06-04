@@ -888,7 +888,7 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
     int iOffset = 8;
     const char *pszData = poRecord->GetData();
 
-    while( pszData[iOffset] != '0' && pszData[iOffset] != '\0' )
+    while( iOffset < poRecord->GetLength() && pszData[iOffset] != '0' )
     {
 /* -------------------------------------------------------------------- */
 /*      Extract the two letter code name for the attribute, and use     */
@@ -911,6 +911,8 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
 /*      terminated by a backslash.                                      */
 /* -------------------------------------------------------------------- */
         const int nFWidth = atoi(psAttDesc->fwidth);
+        if( nFWidth < 0 )
+            break;
         int nEnd = 0;
         if( nFWidth == 0 )
         {
@@ -942,7 +944,7 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
                 iOffset++;
         }
         else
-            iOffset += 2 + atoi(psAttDesc->fwidth);
+            iOffset += 2 + nFWidth;
     }
     if( *ppapszTypes == NULL )
         return FALSE;
