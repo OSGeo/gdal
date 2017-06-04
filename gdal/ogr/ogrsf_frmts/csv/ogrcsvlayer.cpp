@@ -57,6 +57,8 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 
+#define DIGIT_ZERO '0'
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1702,9 +1704,9 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
              papszTokens[iLatitudeField][0] != 0 )
     {
         // Some records have dummy 0,0 value.
-        if( papszTokens[iLongitudeField][0] != '0' ||
+        if( papszTokens[iLongitudeField][0] != DIGIT_ZERO ||
             papszTokens[iLongitudeField][1] != '\0' ||
-            papszTokens[iLatitudeField][0] != '0' ||
+            papszTokens[iLatitudeField][0] != DIGIT_ZERO ||
             papszTokens[iLatitudeField][1] != '\0' )
         {
             const double dfLon = CPLAtof(papszTokens[iLongitudeField]);

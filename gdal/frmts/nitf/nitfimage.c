@@ -59,6 +59,8 @@ int NITFReadBLOCKA_GCPs ( NITFImage *psImage );
 
 #define GOTO_header_too_small() do { nFaultyLine = __LINE__; goto header_too_small; } while(0)
 
+#define DIGIT_ZERO '0'
+
 /************************************************************************/
 /*                          NITFImageAccess()                           */
 /************************************************************************/
@@ -2301,7 +2303,7 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
 #ifdef WIN32
     if( nLen == 14 ) // Old MSVC versions: 3 digits for the exponent
     {
-        if( szTemp[11] != '0' || szTemp[12] != '0' )
+        if( szTemp[11] != DIGIT_ZERO || szTemp[12] != DIGIT_ZERO )
         {
             CPLError(CE_Warning, CPLE_AppDefined, "%g rounded to 0", dfVal);
             snprintf(pszBuffer, 12 + 1, "%s", "+0.000000E+0");
@@ -2314,7 +2316,7 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
 #endif
     {
         CPLAssert( nLen == 13 );
-        if( szTemp[11] != '0')
+        if( szTemp[11] != DIGIT_ZERO)
         {
             CPLError(CE_Warning, CPLE_AppDefined, "%g rounded to 0", dfVal);
             snprintf(pszBuffer, 12 + 1, "%s", "+0.000000E+0");
