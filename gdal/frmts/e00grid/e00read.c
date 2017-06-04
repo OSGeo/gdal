@@ -456,6 +456,19 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
 
     while(!bEOL && (c=_GetNextSourceChar(psInfo)) != '\0')
     {
+
+        if (iOutBufPtr < 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Corruption around line %d.",
+                     psInfo->nInputLineNo);
+            /* Force the program to abort by simulating a EOF
+             */
+            psInfo->bEOF = 1;
+            bEOL = 1;
+            break;
+        }
+
         if (c != '~')
         {
             /* Normal character... just copy it */
