@@ -3632,6 +3632,20 @@ def gpkg_44():
     return 'success'
 
 ###############################################################################
+# Test opening a .gpkg file
+
+def gpkg_45():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte.gpkg')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -3697,6 +3711,7 @@ gdaltest_list = [
     gpkg_42,
     gpkg_43,
     gpkg_44,
+    gpkg_45,
     gpkg_cleanup,
 ]
 #gdaltest_list = [ gpkg_init, gpkg_39, gpkg_cleanup ]
