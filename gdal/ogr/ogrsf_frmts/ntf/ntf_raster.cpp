@@ -256,7 +256,7 @@ OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
     OGRFieldDefn oHeight( "HEIGHT", OFTReal );
     poFeatureDefn->AddFieldDefn( &oHeight );
 
-    nFeatureCount = (poReader->GetRasterXSize() / nDEMSample)
+    nFeatureCount = static_cast<GIntBig>(poReader->GetRasterXSize() / nDEMSample)
                   * (poReader->GetRasterYSize() / nDEMSample);
 }
 
