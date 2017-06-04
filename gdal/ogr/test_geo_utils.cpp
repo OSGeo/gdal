@@ -22,5 +22,17 @@ int main( int /* argc */ , char* /* argv */ [])
   printf("heading=%f, distance=%f\n", heading, distance);
   printf("%.15f=%.15f, %.15f=%.15f\n", latA, latC, lonA, lonC);
 
+  OGR_GreatCircle_ExtendPosition(0, 100, 100000, 0, &latC, &lonC);
+  printf("lat=%.15f, lon=%.15f\n", latC, lonC);
+
+  OGR_GreatCircle_ExtendPosition(0, 100, 100000, 90, &latC, &lonC);
+  printf("lat=%.15f, lon=%.15f\n", latC, lonC);
+
+  OGR_GreatCircle_ExtendPosition(0, 100, 100000, 180, &latC, &lonC);
+  printf("lat=%.15f, lon=%.15f\n", latC, lonC);
+
+  OGR_GreatCircle_ExtendPosition(0, 100, 100000, 270, &latC, &lonC);
+  printf("lat=%.15f, lon=%.15f\n", latC, lonC);
+
   return 0;
 }
