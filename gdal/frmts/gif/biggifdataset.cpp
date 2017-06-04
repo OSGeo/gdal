@@ -329,6 +329,12 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->nRasterXSize = poDS->hGifFile->SavedImages[0].ImageDesc.Width;
     poDS->nRasterYSize = poDS->hGifFile->SavedImages[0].ImageDesc.Height;
+    if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) )
+    {
+        delete poDS;
+        return NULL;
+    }
+
     if( poDS->hGifFile->SavedImages[0].ImageDesc.ColorMap == NULL &&
         poDS->hGifFile->SColorMap == NULL )
     {
