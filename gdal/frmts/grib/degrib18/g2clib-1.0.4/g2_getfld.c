@@ -494,7 +494,15 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
                }
             }
             else {
-               lgfld->expanded=1;
+               if( lgfld->ngrdpts != lgfld->ndpts )
+               {
+                   /* Added by E. Rouault to fix https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2070 */
+                   lgfld->expanded=0;
+               }
+               else 
+               {
+                    lgfld->expanded=1;
+               }
             }
           }
           else {
