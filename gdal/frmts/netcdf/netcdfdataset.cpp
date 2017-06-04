@@ -3138,8 +3138,8 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                     nc_type nAttype=NC_NAT;
                     nc_inq_att(cdfid, nVarDimXID, "units", &nAttype, &nAttlen);
                     if( nAttlen < sizeof(szUnits) &&
-                        (status = nc_get_att_text( cdfid, nVarDimXID, "units",
-                        szUnits )) == NC_NOERR )
+                        nc_get_att_text( cdfid, nVarDimXID, "units",
+                        szUnits ) == NC_NOERR )
                     {
                         szUnits[nAttlen] = '\0';
                         if( EQUAL( szUnits, "microradian" ) )
@@ -3156,8 +3156,8 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                     szUnits[0] = '\0';
                     nc_inq_att(cdfid, nVarDimYID, "units", &nAttype, &nAttlen);
                     if( nAttlen < sizeof(szUnits) &&
-                       (status = nc_get_att_text( cdfid, nVarDimYID, "units",
-                       szUnits )) == NC_NOERR )
+                       nc_get_att_text( cdfid, nVarDimYID, "units",
+                       szUnits ) == NC_NOERR )
                     {
                         szUnits[nAttlen] = '\0';
                         if( EQUAL( szUnits, "microradian" ) )
