@@ -49,6 +49,8 @@
 #define STARTS_WITH_CI(a,b) EQUALN(a,b,strlen(b))
 #endif
 
+#define DIGIT_ZERO '0'
+
 CPL_CVSID("$Id$");
 
 CPL_C_START
@@ -1162,7 +1164,7 @@ static CPLString SENTINEL2GetBandListForResolution(
         if( !osBandNames.empty() )
             osBandNames += ", ";
         const char* pszName = *oIterBandnames;
-        if( *pszName == '0' )
+        if( *pszName == DIGIT_ZERO )
             pszName ++;
         if( atoi(pszName) > 0 )
             osBandNames += "B" + CPLString(pszName);
