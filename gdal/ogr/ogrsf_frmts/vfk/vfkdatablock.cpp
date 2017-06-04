@@ -105,12 +105,9 @@ VFKPropertyDefn *IVFKDataBlock::GetProperty(int iIndex) const
 */
 void IVFKDataBlock::SetProperties(const char *poLine)
 {
-    const char *poChar = NULL;
-
     /* skip data block name */
-    for (poChar = poLine; *poChar != '\0' && *poChar != ';'; poChar++)
-        ;
-    if (*poChar == '\0')
+    const char *poChar = strchr(poLine, ';');
+    if( poChar == NULL )
         return;
 
     poChar++;
