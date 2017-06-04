@@ -36,6 +36,8 @@
 
 #include <algorithm>
 
+#define DIGIT_ZERO '0'
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1177,7 +1179,7 @@ int WCSDataset::ExtractGridInfo100()
     {
         const char *pszSV = CPLGetXMLValue( psCO, "rangeSet.RangeSet.nullValues.singleValue", NULL );
 
-        if( pszSV != NULL && (CPLAtof(pszSV) != 0.0 || *pszSV == '0') )
+        if( pszSV != NULL && (CPLAtof(pszSV) != 0.0 || *pszSV == DIGIT_ZERO) )
         {
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "NoDataValue",
@@ -1604,7 +1606,7 @@ int WCSDataset::ExtractGridInfo()
         const char *pszSV =
             CPLGetXMLValue( psCO, "Range.Field.NullValue", NULL );
 
-        if( pszSV != NULL && (CPLAtof(pszSV) != 0.0 || *pszSV == '0') )
+        if( pszSV != NULL && (CPLAtof(pszSV) != 0.0 || *pszSV == DIGIT_ZERO) )
         {
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "NoDataValue",
