@@ -4319,6 +4319,38 @@ def ogr_gpkg_50():
     return 'success'
 
 ###############################################################################
+# Test opening a .gpkg.sql file
+
+def ogr_gpkg_51():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = ogr.Open('data/poly.gpkg.sql')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test opening a .gpkg file
+
+def ogr_gpkg_52():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = ogr.Open('data/poly.gpkg')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -4393,6 +4425,8 @@ gdaltest_list = [
     ogr_gpkg_48,
     ogr_gpkg_49,
     ogr_gpkg_50,
+    ogr_gpkg_51,
+    ogr_gpkg_52,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
