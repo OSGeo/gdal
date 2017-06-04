@@ -987,7 +987,9 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = head->ySize;
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
-        !GDALCheckBandCount(head->cSize, FALSE))
+        !GDALCheckBandCount(head->cSize, FALSE) ||
+        head->xPageSize == 0 ||
+        head->yPageSize == 0)
     {
         return NULL;
     }
