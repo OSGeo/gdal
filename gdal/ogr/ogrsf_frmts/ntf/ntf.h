@@ -464,7 +464,7 @@ class OGRNTFRasterLayer : public OGRLayer
     int                 iCurrentFC;
 
     int                 nDEMSample;
-    int                 nFeatureCount;
+    GIntBig             nFeatureCount;
 
   public:
                         OGRNTFRasterLayer( OGRNTFDataSource * poDS,
