@@ -35,6 +35,8 @@ CPL_CVSID("$Id$");
 
 #define N_ELEMENTS(x)  (sizeof(x)/sizeof(x[0]))
 
+#define DIGIT_ZERO '0'
+
 class ADRGDataset : public GDALPamDataset
 {
     friend class ADRGRasterBand;
@@ -1667,7 +1669,7 @@ GDALDataset *ADRGDataset::Create( const char* pszFilename,
 
     CPLString osBaseFileName(CPLGetBasename(pszFilename));
     if( osBaseFileName.size() != 8 ||
-        osBaseFileName[6] != '0' ||
+        osBaseFileName[6] != DIGIT_ZERO ||
         osBaseFileName[7] != '1' )
     {
         CPLError( CE_Failure, CPLE_NotSupported,

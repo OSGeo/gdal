@@ -37,6 +37,8 @@
 
 CPL_CVSID("$Id$");
 
+#define DIGIT_ZERO '0'
+
 static int DefaultNTFRecordGrouper( NTFFileReader *, NTFRecord **,
                                     NTFRecord * );
 
@@ -888,7 +890,7 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
     int iOffset = 8;
     const char *pszData = poRecord->GetData();
 
-    while( pszData[iOffset] != '0' && pszData[iOffset] != '\0' )
+    while( pszData[iOffset] != DIGIT_ZERO && pszData[iOffset] != '\0' )
     {
 /* -------------------------------------------------------------------- */
 /*      Extract the two letter code name for the attribute, and use     */

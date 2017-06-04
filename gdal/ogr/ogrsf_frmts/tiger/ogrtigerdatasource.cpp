@@ -35,6 +35,8 @@
 
 CPL_CVSID("$Id$");
 
+#define DIGIT_ZERO '0'
+
 /************************************************************************/
 /*                        TigerClassifyVersion()                        */
 /************************************************************************/
@@ -452,7 +454,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                 && nVersionCode != 21
                 && nVersionCode != 24
                 && pszRecStart[3]  != '9'
-                && pszRecStart[3]  != '0'
+                && pszRecStart[3]  != DIGIT_ZERO
                 && !bIsGDT )
                 continue;
 
