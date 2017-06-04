@@ -438,6 +438,23 @@ def rasterlite_11():
     return 'success'
 
 ###############################################################################
+# Test opening a .rasterlite file
+
+def rasterlite_12():
+
+    if gdaltest.rasterlite_drv is None:
+        return 'skip'
+
+    if gdaltest.has_spatialite is False:
+        return 'skip'
+
+    ds = gdal.Open('data/byte.rasterlite')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def rasterlite_cleanup():
@@ -479,6 +496,7 @@ gdaltest_list = [
     rasterlite_9,
     rasterlite_10,
     rasterlite_11,
+    rasterlite_12,
     rasterlite_cleanup ]
 
 if __name__ == '__main__':
