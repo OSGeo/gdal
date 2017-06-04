@@ -138,6 +138,20 @@ int OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
     const double cos_complement_LatA = sin(dfLatA_rad);
     const double sin_complement_LatA = cos(dfLatA_rad);
 
+    if( cos_complement_LatA == 0.0 && cos_Heading == 0.0 )
+    {
+        *pdfLonB_deg = dfLonA_deg;
+        if( fabs(dfHeadingInA) < 1e-10 )
+        {
+            *pdfLatB_deg = dfDistanceRad * RAD2DEG;
+        }
+        else
+        {
+            *pdfLatB_deg = -dfDistanceRad * RAD2DEG;
+        }
+        return 1;
+    }
+
     const double cos_complement_latB =
         cos_Distance * cos_complement_LatA +
         sin_Distance * sin_complement_LatA * cos_Heading;
