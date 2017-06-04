@@ -3123,6 +3123,58 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                 yMinMax[1] = dfCoordOffset + yMinMax[1] * dfCoordScale;
             }
 
+
+            // Geostationary satellites can specify units in (micro)radians
+            // So we check if they do, and if so convert to linear units (meters)
+            const char *pszProjName = oSRS.GetAttrValue( "PROJECTION" );
+            if( pszProjName != NULL )
+            {
+                if( EQUAL( pszProjName, SRS_PT_GEOSTATIONARY_SATELLITE ) )
+                {
+                    double satelliteHeight = oSRS.GetProjParm(SRS_PP_SATELLITE_HEIGHT, 1.0);
+                    size_t nAttlen = 0;
+                    char szUnits[NC_MAX_NAME+1];
+                    szUnits[0] = '\0';
+                    nc_type nAttype=NC_NAT;
+                    nc_inq_att(cdfid, nVarDimXID, "units", &nAttype, &nAttlen);
+                    if( nAttlen < sizeof(szUnits) &&
+                        nc_get_att_text( cdfid, nVarDimXID, "units",
+                        szUnits ) == NC_NOERR )
+                    {
+                        szUnits[nAttlen] = '\0';
+                        if( EQUAL( szUnits, "microradian" ) )
+                        {
+                            xMinMax[0] = xMinMax[0] * satelliteHeight * 0.000001;
+                            xMinMax[1] = xMinMax[1] * satelliteHeight * 0.000001;
+                        }
+                        else if( EQUAL( szUnits, "rad" ) )
+                        {
+                            xMinMax[0] = xMinMax[0] * satelliteHeight;
+                            xMinMax[1] = xMinMax[1] * satelliteHeight;
+                        }
+                    }
+                    szUnits[0] = '\0';
+                    nc_inq_att(cdfid, nVarDimYID, "units", &nAttype, &nAttlen);
+                    if( nAttlen < sizeof(szUnits) &&
+                       nc_get_att_text( cdfid, nVarDimYID, "units",
+                       szUnits ) == NC_NOERR )
+                    {
+                        szUnits[nAttlen] = '\0';
+                        if( EQUAL( szUnits, "microradian" ) )
+                        {
+                            yMinMax[0] = yMinMax[0] * satelliteHeight * 0.000001;
+                            yMinMax[1] = yMinMax[1] * satelliteHeight * 0.000001;
+                        }
+                        else if( EQUAL( szUnits, "rad" ) )
+                        {
+                            yMinMax[0] = yMinMax[0] * satelliteHeight;
+                            yMinMax[1] = yMinMax[1] * satelliteHeight;
+                        }
+                    }
+                }
+            }
+
+
             adfTempGeoTransform[0] = xMinMax[0];
             adfTempGeoTransform[2] = 0;
             adfTempGeoTransform[3] = yMinMax[1];
