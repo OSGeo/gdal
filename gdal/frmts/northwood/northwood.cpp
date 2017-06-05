@@ -65,6 +65,8 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
                 sizeof(pGrd->nXSide) );
         CPL_LSBPTR32(&pGrd->nXSide);
     }
+    if( pGrd->nXSide <= 1 )
+        return FALSE;
 
     memcpy( reinterpret_cast<void *>( &usTmp ),
             reinterpret_cast<void *>( &nwtHeader[11] ),
@@ -204,7 +206,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
     if( pGrd->cFormat & 0x80 )        // if is GRC load the Dictionary
     {
         VSIFSeekL( pGrd->fp,
-                   1024 + (pGrd->nXSide * pGrd->nYSide) * (pGrd->nBitsPerPixel/8),
+                   1024 + (static_cast<vsi_l_offset>(pGrd->nXSide) * pGrd->nYSide) * (pGrd->nBitsPerPixel/8),
                    SEEK_SET );
 
         if( !VSIFReadL( &usTmp, 2, 1, pGrd->fp) )
