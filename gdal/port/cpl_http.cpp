@@ -615,6 +615,37 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 }
 
 #ifdef HAVE_CURL
+
+#ifdef WIN32
+
+#include <windows.h>
+
+/************************************************************************/
+/*                     CPLFindWin32CurlCaBundleCrt()                    */
+/************************************************************************/
+
+static const char* CPLFindWin32CurlCaBundleCrt()
+{
+    DWORD nResLen;
+    const DWORD nBufSize = PATH_MAX + 1;
+    char *pszFilePart = NULL;
+
+    char *pszPath = static_cast<char*>(CPLCalloc(1, nBufSize));
+
+    nResLen = SearchPathA(NULL, "curl-ca-bundle.crt", NULL,
+                          nBufSize, pszPath, &pszFilePart);
+    if (nResLen > 0)
+    {
+        const char* pszRet = CPLSPrintf("%s", pszPath);
+        CPLFree(pszPath);
+        return pszRet;
+    }
+    CPLFree(pszPath);
+    return NULL;
+}
+
+#endif // WIN32
+
 /************************************************************************/
 /*                         CPLHTTPSetOptions()                          */
 /************************************************************************/
@@ -785,6 +816,12 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         // Name of environment variable used by the curl binary (tested
         // after CURL_CA_BUNDLE
         pszCAInfo = CPLGetConfigOption("SSL_CERT_FILE", NULL);
+#ifdef WIN32
+    if( pszCAInfo == NULL )
+    {
+        pszCAInfo = CPLFindWin32CurlCaBundleCrt();
+    }
+#endif
     if( pszCAInfo != NULL )
     {
         curl_easy_setopt(http_handle, CURLOPT_CAINFO, pszCAInfo);
