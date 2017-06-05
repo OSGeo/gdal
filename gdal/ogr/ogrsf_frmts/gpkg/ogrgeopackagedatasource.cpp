@@ -641,6 +641,9 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         const char* pszLine;
         while( (pszLine = CPLReadLineL( poOpenInfo->fpL )) != NULL )
         {
+            if( STARTS_WITH(pszLine, "--") )
+                continue;
+
             // Blacklist a few words tat might have security implications
             // Basically we just want to allow CREATE TABLE and INSERT INTO
             if( CPLString(pszLine).ifind("ATTACH") != std::string::npos ||
@@ -654,9 +657,34 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                 CPLString(pszLine).ifind("ALTER") != std::string::npos||
                 CPLString(pszLine).ifind("VIRTUAL") != std::string::npos )
             {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Rejected statement: %s", pszLine);
-                return FALSE;
+                bool bOK = false;
+                // Accept creation of spatial index
+                if( STARTS_WITH_CI(pszLine, "CREATE VIRTUAL TABLE ") )
+                {
+                    const char* pszStr = pszLine +
+                                        strlen("CREATE VIRTUAL TABLE ");
+                    if( *pszStr == '"' )
+                        pszStr ++;
+                    while( (*pszStr >= 'a' && *pszStr <= 'z') ||
+                            (*pszStr >= 'A' && *pszStr <= 'Z') ||
+                            *pszStr == '_' )
+                    {
+                        pszStr ++;
+                    }
+                    if( *pszStr == '"' )
+                        pszStr ++;
+                    if( EQUAL(pszStr,
+                        " USING rtree(id, minx, maxx, miny, maxy);") )
+                    {
+                        bOK = true;
+                    }
+                }
+                if( !bOK )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                            "Rejected statement: %s", pszLine);
+                    return FALSE;
+                }
             }
             sqlite3_exec( hDB, pszLine, NULL, NULL, NULL );
         }
