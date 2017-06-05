@@ -565,6 +565,10 @@ static int FindSectLen (char *c_ipack, sInt4 gribLen, sInt4 ns[8],
                                   nd2x3, table50)) != 0) {
          return ans;
       }
+      if( curTot + 4 > gribLen ) {
+            errSprintf ("ERROR: Ran out of data in Section 1\n");
+            return -1;
+      }
       /* Try to read section 8.  If it is "7777" == 926365495 regardless of
        * endian'ness then we have a simple message, otherwise it is complex,
        * and we need to read more. */
