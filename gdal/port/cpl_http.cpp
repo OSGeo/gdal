@@ -627,7 +627,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 static const char* CPLFindWin32CurlCaBundleCrt()
 {
     DWORD nResLen;
-    const DWORD nBufSize = PATH_MAX + 1;
+    const DWORD nBufSize = MAX_PATH + 1;
     char *pszFilePart = NULL;
 
     char *pszPath = static_cast<char*>(CPLCalloc(1, nBufSize));
