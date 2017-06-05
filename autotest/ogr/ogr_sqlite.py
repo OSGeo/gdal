@@ -3546,6 +3546,23 @@ def ogr_spatialite_11():
     return 'success'
 
 ###############################################################################
+# Test opening a .sql file
+
+def ogr_spatialite_12():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    ds = ogr.Open('data/poly_spatialite.sqlite.sql')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_sqlite_cleanup():
@@ -3733,6 +3750,7 @@ gdaltest_list = [
     ogr_sqlite_44,
     ogr_sqlite_45,
     ogr_spatialite_11,
+    ogr_spatialite_12,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,
 ]

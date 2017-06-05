@@ -67,6 +67,10 @@
 
 #define UNINITIALIZED_SRID  -2
 
+// Enable accepting a SQL dump (starting with a "-- SQL SQLITE" line) as a valid
+// file. This makes fuzzer life easier
+#define ENABLE_SQL_SQLITE_FORMAT
+
 /************************************************************************/
 /*      Format used to store geometry data in the database.             */
 /************************************************************************/
@@ -813,8 +817,7 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
                         OGRSQLiteDataSource();
                         virtual ~OGRSQLiteDataSource();
 
-    int                 Open( const char *, int bUpdateIn,
-                              char** papszOpenOptions, int nOpenFlags );
+    int                 Open( GDALOpenInfo* poOpenInfo );
     int                 Create( const char *, char **papszOptions );
 
     int                 OpenTable( const char *pszTableName,
