@@ -101,6 +101,10 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         for( int i = 0; i < nLayers; i++ )
         {
             OGRLayerH hLayer = OGR_DS_GetLayer(hDS, i);
+            OGR_L_GetSpatialRef(hLayer);
+            OGR_L_GetGeomType(hLayer);
+            OGR_L_GetFIDColumn(hLayer);
+            OGR_L_GetGeometryColumn(hLayer);
             OGRFeatureH hFeature;
             while( (hFeature = OGR_L_GetNextFeature(hLayer)) != NULL )
             {
