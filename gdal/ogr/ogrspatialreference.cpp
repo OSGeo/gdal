@@ -1241,6 +1241,9 @@ OGRErr OGRSpatialReference::SetTargetLinearUnits( const char *pszTargetKey,
                                                   double dfInMeters )
 
 {
+    if( dfInMeters <= 0.0 )
+        return OGRERR_FAILURE;
+
     bNormInfoSet = FALSE;
 
     OGR_SRSNode *poCS = NULL;
