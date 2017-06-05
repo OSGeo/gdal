@@ -1332,7 +1332,8 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
 #ifdef ENABLE_SQL_SQLITE_FORMAT
         if( poOpenInfo->pabyHeader &&
             (STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL SQLITE") ||
-             STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL RASTERLITE")) &&
+             STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL RASTERLITE") ||
+             STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL MBTILES")) &&
             poOpenInfo->fpL != NULL )
         {
             if( sqlite3_open_v2( ":memory:", &hDB, SQLITE_OPEN_READWRITE, NULL )
