@@ -716,7 +716,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
-    else
+    else if( pabyHeader != NULL )
 #endif
     {
         /* See if we can open the SQLite database */
