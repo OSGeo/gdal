@@ -598,6 +598,8 @@ int NTv2Dataset::OpenGrid( char *pachHeader, vsi_l_offset nGridOffsetIn )
 
     if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
         return FALSE;
+    if( nRasterXSize > INT_MAX / 16 )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
@@ -612,7 +614,7 @@ int NTv2Dataset::OpenGrid( char *pachHeader, vsi_l_offset nGridOffsetIn )
             new RawRasterBand( this, iBand+1, fpImage,
                                nGridOffset + 4*iBand + 11*16
                                + (nRasterXSize-1) * 16
-                               + (nRasterYSize-1) * 16 * nRasterXSize,
+                               + static_cast<vsi_l_offset>(nRasterYSize-1) * 16 * nRasterXSize,
                                -16, -16 * nRasterXSize,
                                GDT_Float32, !m_bMustSwap, TRUE, FALSE );
         SetBand( iBand+1, poBand );
