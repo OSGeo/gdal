@@ -476,6 +476,23 @@ def mbtiles_10():
     return 'success'
 
 ###############################################################################
+# Test opening a .mbtiles.sql file
+
+def mbtiles_11():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'PNG' ) is None:
+        return 'skip'
+    ds = gdal.Open('data/byte.mbtiles.sql')
+    if ds.GetRasterBand(1).Checksum() != 4118:
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def mbtiles_cleanup():
@@ -496,6 +513,7 @@ gdaltest_list = [
     mbtiles_8,
     mbtiles_9,
     mbtiles_10,
+    mbtiles_11,
     mbtiles_cleanup ]
 
 #gdaltest_list = [ mbtiles_1, mbtiles_9 ]

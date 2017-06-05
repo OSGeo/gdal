@@ -52,6 +52,10 @@ static const char * const apszAllowedDrivers[] = {"JPEG", "PNG", NULL};
 #define TMS_ORIGIN_X        -MAX_GM
 #define TMS_ORIGIN_Y         MAX_GM
 
+// Enable accepting a SQL dump (starting with a "-- SQL MBTILES" line) as a valid
+// file. This makes fuzzer life easier
+#define ENABLE_SQL_SQLITE_FORMAT
+
 class MBTilesBand;
 
 /************************************************************************/
@@ -1228,6 +1232,14 @@ const char *MBTilesDataset::GetMetadataItem( const char* pszName, const char * p
 
 int MBTilesDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
+#ifdef ENABLE_SQL_SQLITE_FORMAT
+    if( poOpenInfo->pabyHeader &&
+        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL MBTILES") )
+    {
+        return TRUE;
+    }
+#endif
+
     if ( (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") ||
       // Allow direct Amazon S3 signed URLs that contains .mbtiles in the middle of the URL
           strstr(poOpenInfo->pszFilename, ".mbtiles") != NULL) &&

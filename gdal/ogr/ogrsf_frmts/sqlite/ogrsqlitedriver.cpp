@@ -102,6 +102,11 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
     {
         return -1;
     }
+    if( poOpenInfo->pabyHeader &&
+        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL MBTILES") )
+    {
+        return -1;
+    }
 #endif
 
     if( !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
@@ -116,7 +121,7 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
         return FALSE;
     }
 
-    // Could be a Rasterlite file as well
+    // Could be a Rasterlite or MBTiles file as well
     return -1;
 }
 
