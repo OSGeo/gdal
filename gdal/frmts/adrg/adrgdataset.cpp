@@ -951,7 +951,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
 
         BRV = record->GetIntSubfield("GEN", 0, "BRV", 0);
         CPLDebug("ADRG", "BRV=%d", BRV);
-        if( ARV <= 0 || BRV <= 0 )
+        if( ARV <= 0 || (ZNA != 9 && ZNA != 18 && BRV <= 0) )
             return NULL;
 
         const char* pszLSO = record->GetStringSubfield("GEN", 0, "LSO", 0);

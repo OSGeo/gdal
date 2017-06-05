@@ -398,6 +398,8 @@ CPLErr SRPDataset::GetGeoTransform( double * padfGeoTransform)
 {
     if( EQUAL(osProduct,"ASRP") )
     {
+        if( ARV == 0 )
+            return CE_Failure;
         if( ZNA == 9)
         {
             // North Polar Case
@@ -420,6 +422,8 @@ CPLErr SRPDataset::GetGeoTransform( double * padfGeoTransform)
         }
         else
         {
+            if( BRV == 0 )
+                return CE_Failure;
             padfGeoTransform[0] = LSO/3600.0;
             padfGeoTransform[1] = 360. / ARV;
             padfGeoTransform[2] = 0.0;
