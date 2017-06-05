@@ -1244,6 +1244,7 @@ int MBTilesDataset::Identify(GDALOpenInfo* poOpenInfo)
       // Allow direct Amazon S3 signed URLs that contains .mbtiles in the middle of the URL
           strstr(poOpenInfo->pszFilename, ".mbtiles") != NULL) &&
         poOpenInfo->nHeaderBytes >= 1024 &&
+        poOpenInfo->pabyHeader &&
         STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "SQLite Format 3"))
     {
         return TRUE;
