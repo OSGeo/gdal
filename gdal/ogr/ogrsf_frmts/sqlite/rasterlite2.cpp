@@ -2055,8 +2055,9 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
 
     if( CSLFetchNameValue(papszOptions, "APPEND_SUBDATASET") )
     {
-        if( !poDS->Open( pszName, TRUE, NULL, GDAL_OF_RASTER |
-                                              GDAL_OF_VECTOR ) )
+        GDALOpenInfo oOpenInfo(pszName,
+                               GDAL_OF_RASTER | GDAL_OF_VECTOR | GDAL_OF_UPDATE);
+        if( !poDS->Open(&oOpenInfo) )
         {
             delete poDS;
             return NULL;
@@ -2303,10 +2304,12 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
     delete poDS;
 
     poDS = new OGRSQLiteDataSource();
-    poDS->Open( CPLSPrintf("RASTERLITE2:%s:%s",
+    GDALOpenInfo oOpenInfo(
+        CPLSPrintf("RASTERLITE2:%s:%s",
                            EscapeNameAndQuoteIfNeeded(pszName).c_str(),
                            EscapeNameAndQuoteIfNeeded(osCoverageName).c_str()),
-                TRUE, NULL, GDAL_OF_RASTER );
+        GDAL_OF_RASTER | GDAL_OF_UPDATE);
+    poDS->Open(&oOpenInfo);
     return poDS;
 }
 

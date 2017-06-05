@@ -91,6 +91,14 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 100 )
         return FALSE;
 
+#ifdef ENABLE_SQL_SQLITE_FORMAT
+    if( poOpenInfo->pabyHeader &&
+        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL SQLITE") )
+    {
+        return TRUE;
+    }
+#endif
+
     if( !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
         return FALSE;
 
@@ -168,8 +176,7 @@ static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
     OGRSQLiteDataSource *poDS = new OGRSQLiteDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update,
-                     poOpenInfo->papszOpenOptions, poOpenInfo->nOpenFlags ) )
+    if( !poDS->Open( poOpenInfo ) )
     {
         delete poDS;
         return NULL;
