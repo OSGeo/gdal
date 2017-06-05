@@ -610,6 +610,20 @@ def rl2_23():
 
     return 'success'
 
+###############################################################################
+# Test opening a .rl2.sql file
+
+def rl2_24():
+
+    if gdaltest.rl2_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte.rl2.sql')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+    return 'success'
+
 gdaltest_list = [
     rl2_1,
     rl2_2,
@@ -633,7 +647,8 @@ gdaltest_list = [
     rl2_20,
     rl2_21,
     rl2_22,
-    rl2_23
+    rl2_23,
+    rl2_24
 ]
 
 if __name__ == '__main__':
