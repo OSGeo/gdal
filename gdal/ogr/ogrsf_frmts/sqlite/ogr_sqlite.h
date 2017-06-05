@@ -67,7 +67,8 @@
 
 #define UNINITIALIZED_SRID  -2
 
-// Enable accepting a SQL dump (starting with a "-- SQL SQLITE" line) as a valid
+// Enable accepting a SQL dump (starting with a "-- SQL SQLITE" or
+// "-- SQL RASTERLITE" line) as a valid
 // file. This makes fuzzer life easier
 #define ENABLE_SQL_SQLITE_FORMAT
 

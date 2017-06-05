@@ -636,6 +636,8 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             return FALSE;
         }
 
+        InstallSQLFunctions();
+
         // Ingest the lines of the dump
         VSIFSeekL( poOpenInfo->fpL, 0, SEEK_SET );
         const char* pszLine;
@@ -679,6 +681,24 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                         bOK = true;
                     }
                 }
+                // Accept INSERT INTO rtree_poly_geom SELECT fid, ST_MinX(geom), ST_MaxX(geom), ST_MinY(geom), ST_MaxY(geom) FROM poly;
+                else if( STARTS_WITH_CI(pszLine, "INSERT INTO rtree_") &&
+                    CPLString(pszLine).ifind("SELECT") != std::string::npos )
+                {
+                    char** papszTokens = CSLTokenizeString2( pszLine, " (),,", 0 );
+                    if( CSLCount(papszTokens) == 15 &&
+                        EQUAL(papszTokens[3], "SELECT") &&
+                        EQUAL(papszTokens[5], "ST_MinX") &&
+                        EQUAL(papszTokens[7], "ST_MaxX") &&
+                        EQUAL(papszTokens[9], "ST_MinY") &&
+                        EQUAL(papszTokens[11], "ST_MaxY") &&
+                        EQUAL(papszTokens[13], "FROM") )
+                    {
+                        bOK = TRUE;
+                    }
+                    CSLDestroy(papszTokens);
+                }
+
                 if( !bOK )
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
@@ -686,10 +706,14 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                     return FALSE;
                 }
             }
-            sqlite3_exec( hDB, pszLine, NULL, NULL, NULL );
+            char* pszErrMsg = NULL;
+            if( sqlite3_exec( hDB, pszLine, NULL, NULL, &pszErrMsg ) != SQLITE_OK )
+            {
+                if( pszErrMsg )
+                    CPLDebug("SQLITE", "Error %s", pszErrMsg);
+            }
+            sqlite3_free(pszErrMsg);
         }
-
-        InstallSQLFunctions();
     }
 
     else

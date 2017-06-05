@@ -188,7 +188,8 @@ void OGRSQLiteDriverUnload(GDALDriver*)
 
 bool OGRSQLiteBaseDataSource::InitNewSpatialite()
 {
-    if( CPLTestBool(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")) )
+    if( hSpatialiteCtxt == NULL &&
+        CPLTestBool(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")) )
     {
 #ifdef SPATIALITE_DLOPEN
         if( !OGRSQLiteLoadSpatialiteSymbols() )
@@ -1330,7 +1331,8 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
 
 #ifdef ENABLE_SQL_SQLITE_FORMAT
         if( poOpenInfo->pabyHeader &&
-            STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL SQLITE") &&
+            (STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL SQLITE") ||
+             STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL RASTERLITE")) &&
             poOpenInfo->fpL != NULL )
         {
             if( sqlite3_open_v2( ":memory:", &hDB, SQLITE_OPEN_READWRITE, NULL )
@@ -1338,6 +1340,11 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
             {
                 return FALSE;
             }
+
+#ifdef SPATIALITE_412_OR_LATER
+            // We need it here for ST_MinX() and the like
+            InitNewSpatialite();
+#endif
 
             // Ingest the lines of the dump
             VSIFSeekL( poOpenInfo->fpL, 0, SEEK_SET );
@@ -1379,6 +1386,24 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
                             bOK = true;
                         }
                     }
+                    // Accept INSERT INTO idx_byte_metadata_geometry SELECT rowid, ST_MinX(geometry), ST_MaxX(geometry), ST_MinY(geometry), ST_MaxY(geometry) FROM byte_metadata;
+                    else if( STARTS_WITH_CI(pszLine, "INSERT INTO idx_") &&
+                        CPLString(pszLine).ifind("SELECT") != std::string::npos )
+                    {
+                        char** papszTokens = CSLTokenizeString2( pszLine, " (),,", 0 );
+                        if( CSLCount(papszTokens) == 15 &&
+                            EQUAL(papszTokens[3], "SELECT") &&
+                            EQUAL(papszTokens[5], "ST_MinX") &&
+                            EQUAL(papszTokens[7], "ST_MaxX") &&
+                            EQUAL(papszTokens[9], "ST_MinY") &&
+                            EQUAL(papszTokens[11], "ST_MaxY") &&
+                            EQUAL(papszTokens[13], "FROM") )
+                        {
+                            bOK = TRUE;
+                        }
+                        CSLDestroy(papszTokens);
+                    }
+
                     if( !bOK )
                     {
                         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1386,7 +1411,13 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
                         return FALSE;
                     }
                 }
-                sqlite3_exec( hDB, pszLine, NULL, NULL, NULL );
+                char* pszErrMsg = NULL;
+                if( sqlite3_exec( hDB, pszLine, NULL, NULL, &pszErrMsg ) != SQLITE_OK )
+                {
+                    if( pszErrMsg )
+                        CPLDebug("SQLITE", "Error %s", pszErrMsg);
+                }
+                sqlite3_free(pszErrMsg);
             }
         }
         else
