@@ -35,6 +35,11 @@
 
 #include <algorithm>
 
+// Enable accepting a SQL dump (starting with a "-- SQL SQLITE" or
+// "-- SQL RASTERLITE" line) as a valid
+// file. This makes fuzzer life easier
+#define ENABLE_SQL_SQLITE_FORMAT
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -946,6 +951,15 @@ end:
 
 int RasterliteDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
+
+#ifdef ENABLE_SQL_SQLITE_FORMAT
+    if( poOpenInfo->pabyHeader &&
+        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL RASTERLITE") )
+    {
+        return TRUE;
+    }
+#endif
+
     if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") &&
         !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GPKG") &&
         poOpenInfo->nHeaderBytes >= 1024 &&
@@ -990,6 +1004,14 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Parse "file name"                                               */
 /* -------------------------------------------------------------------- */
+#ifdef ENABLE_SQL_SQLITE_FORMAT
+    if( poOpenInfo->pabyHeader &&
+        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL RASTERLITE") )
+    {
+        osFileName = poOpenInfo->pszFilename;
+    }
+    else
+#endif
     if (poOpenInfo->nHeaderBytes >= 1024 &&
         STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "SQLite Format 3"))
     {

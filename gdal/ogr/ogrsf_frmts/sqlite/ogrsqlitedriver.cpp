@@ -97,6 +97,11 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
     {
         return TRUE;
     }
+    if( poOpenInfo->pabyHeader &&
+        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL RASTERLITE") )
+    {
+        return -1;
+    }
 #endif
 
     if( !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
