@@ -92,18 +92,15 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
         return FALSE;
 
 #ifdef ENABLE_SQL_SQLITE_FORMAT
-    if( poOpenInfo->pabyHeader &&
-        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL SQLITE") )
+    if( STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL SQLITE") )
     {
         return TRUE;
     }
-    if( poOpenInfo->pabyHeader &&
-        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL RASTERLITE") )
+    if( STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL RASTERLITE") )
     {
         return -1;
     }
-    if( poOpenInfo->pabyHeader &&
-        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL MBTILES") )
+    if( STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL MBTILES") )
     {
         return -1;
     }
