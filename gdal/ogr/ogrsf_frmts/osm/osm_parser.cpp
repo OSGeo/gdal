@@ -1102,7 +1102,7 @@ bool ReadWay( GByte* pabyData, GByte* pabyDataLimit,
             {
                 GIntBig nDeltaRef = 0;
                 READ_VARSINT64_NOCHECK(pabyData, pabyDataNewLimit, nDeltaRef);
-                nRefVal += nDeltaRef;
+                nRefVal = AddWithOverflowAccepted(nRefVal, nDeltaRef);
 
                 psCtxt->panNodeRefs[sWay.nRefs ++] = nRefVal;
             }
@@ -1290,7 +1290,7 @@ bool ReadRelation( GByte* pabyData, GByte* pabyDataLimit,
             {
                 GIntBig nDeltaMemID = 0;
                 READ_VARSINT64(pabyData, pabyDataLimit, nDeltaMemID);
-                nMemID += nDeltaMemID;
+                nMemID = AddWithOverflowAccepted(nMemID, nDeltaMemID);
 
                 psCtxt->pasMembers[nIter].nID = nMemID;
             }
