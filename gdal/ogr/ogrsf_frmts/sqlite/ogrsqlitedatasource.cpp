@@ -1352,6 +1352,9 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
             const char* pszLine;
             while( (pszLine = CPLReadLineL( poOpenInfo->fpL )) != NULL )
             {
+                if( STARTS_WITH(pszLine, "--") )
+                    continue;
+
                 // Blacklist a few words tat might have security implications
                 // Basically we just want to allow CREATE TABLE and INSERT INTO
                 if( CPLString(pszLine).ifind("ATTACH") != std::string::npos ||
@@ -1366,8 +1369,14 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
                     CPLString(pszLine).ifind("VIRTUAL") != std::string::npos )
                 {
                     bool bOK = false;
+                    if( EQUAL(pszLine,
+                              "CREATE VIRTUAL TABLE SpatialIndex "
+                              "USING VirtualSpatialIndex();") )
+                    {
+                        bOK = TRUE;
+                    }
                     // Accept creation of spatial index
-                    if( STARTS_WITH_CI(pszLine, "CREATE VIRTUAL TABLE ") )
+                    else if( STARTS_WITH_CI(pszLine, "CREATE VIRTUAL TABLE ") )
                     {
                         const char* pszStr = pszLine +
                                             strlen("CREATE VIRTUAL TABLE ");
@@ -1416,7 +1425,10 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
                 if( sqlite3_exec( hDB, pszLine, NULL, NULL, &pszErrMsg ) != SQLITE_OK )
                 {
                     if( pszErrMsg )
-                        CPLDebug("SQLITE", "Error %s", pszErrMsg);
+                    {
+                        CPLDebug("SQLITE", "Error %s at line %s",
+                                 pszErrMsg, pszLine);
+                    }
                 }
                 sqlite3_free(pszErrMsg);
             }
