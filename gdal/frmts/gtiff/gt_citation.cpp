@@ -101,8 +101,7 @@ char* ImagineCitationTranslation(char* psCitation, geokey_t keyID)
     if(STARTS_WITH_CI(psCitation, "IMAGINE GeoTIFF Support"))
     {
         // this is a handle IMAGING style citation
-        char name[256];
-        name[0] = '\0';
+        CPLString osName;
         char* p = NULL;
         char* p1 = NULL;
 
@@ -132,22 +131,22 @@ char* ImagineCitationTranslation(char* psCitation, geokey_t keyID)
             switch (keyID)
             {
               case PCSCitationGeoKey:
-                if(strstr(psCitation, "Projection = "))
-                    strcpy(name, "PRJ Name = ");
+                if( strstr(psCitation, "Projection = ") )
+                    osName = "PRJ Name = ";
                 else
-                    strcpy(name, "PCS Name = ");
+                    osName = "PCS Name = ";
                 break;
               case GTCitationGeoKey:
-                strcpy(name, "PCS Name = ");
+                osName = "PCS Name = ";
                 break;
               case GeogCitationGeoKey:
-                if(!strstr(p, "Unable to"))
-                    strcpy(name, "GCS Name = ");
+                if( !strstr(p, "Unable to") )
+                    osName = "GCS Name = ";
                 break;
               default:
                 break;
             }
-            if(strlen(name)>0)
+            if(!osName.empty())
             {
                 char* p2;
                 if((p2 = strstr(psCitation, "Projection Name = ")) != NULL)
@@ -163,9 +162,8 @@ char* ImagineCitationTranslation(char* psCitation, geokey_t keyID)
                     p1 = p2;
                 if(p1 >= p)
                 {
-                    strncat(name, p, p1-p+1);
-                    strcat(name, "|");
-                    name[strlen(name)] = '\0';
+                    osName.append(p, p1 - p + 1);
+                    osName += '|';
                 }
             }
         }
@@ -193,12 +191,12 @@ char* ImagineCitationTranslation(char* psCitation, geokey_t keyID)
             }
             if(p && p1 && p1>p)
             {
-                if(EQUAL(keyNames[i], "Units = "))
-                    strcat(name, "LUnits = ");
+                if( EQUAL(keyNames[i], "Units = ") )
+                    osName += "LUnits = ";
                 else
-                    strcat(name, keyNames[i]);
-                if(p1[0] == '\0' || p1[0] == '\n' || p1[0] == ' ')
-                    p1 --;
+                    osName += keyNames[i];
+                if( p1[0] == '\0' || p1[0] == '\n' || p1[0] == ' ' )
+                    p1--;
                 char* p2 = p1 - 1;
                 while( p2 != NULL && (p2[0] == ' ' || p2[0] == '\0' || p2[0] == '\n') )
                     p2--;
@@ -206,14 +204,13 @@ char* ImagineCitationTranslation(char* psCitation, geokey_t keyID)
                     p1 = p2;
                 if(p1 >= p)
                 {
-                    strncat(name, p, p1-p+1);
-                    strcat(name, "|");
-                    name[strlen(name)] = '\0';
+                    osName.append(p, p1 - p + 1);
+                    osName += '|';
                 }
             }
         }
-        if(strlen(name) > 0)
-            ret = CPLStrdup(name);
+        if( !osName.empty() )
+            ret = CPLStrdup(osName);
     }
     return ret;
 
