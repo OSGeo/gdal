@@ -387,7 +387,10 @@ static OGRFeature *TranslateGenericNode( NTFFileReader *poReader,
     if( papoGroup[0]->GetLength() > 18 )
     {
         nLinkCount = atoi(papoGroup[0]->GetField(15,18));
-        panLinks = static_cast<int *>(CPLCalloc(sizeof(int), nLinkCount));
+        if( nLinkCount > 0 )
+        {
+            panLinks = static_cast<int *>(CPLCalloc(sizeof(int), nLinkCount));
+        }
     }
 
     poFeature->SetField( "NUM_LINKS", nLinkCount );
