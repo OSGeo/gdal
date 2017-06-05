@@ -396,7 +396,10 @@ static OGRFeature *TranslateGenericNode( NTFFileReader *poReader,
     if( papoGroup[0]->GetLength() > 18 )
     {
         nLinkCount = atoi(papoGroup[0]->GetField(15,18));
-        panLinks = (int *) CPLCalloc(sizeof(int),nLinkCount);
+        if( nLinkCount > 0 )
+        {
+            panLinks = static_cast<int *>(CPLCalloc(sizeof(int), nLinkCount));
+        }
     }
 
     poFeature->SetField( "NUM_LINKS", nLinkCount );
@@ -407,14 +410,16 @@ static OGRFeature *TranslateGenericNode( NTFFileReader *poReader,
         panLinks[iLink] = atoi(papoGroup[0]->GetField(20+iLink*12,
                                                       25+iLink*12));
 
-    poFeature->SetField( "GEOM_ID_OF_LINK", nLinkCount, panLinks );
+    if( panLinks != NULL )
+        poFeature->SetField( "GEOM_ID_OF_LINK", nLinkCount, panLinks );
 
     // DIR
     for( iLink = 0; iLink < nLinkCount; iLink++ )
         panLinks[iLink] = atoi(papoGroup[0]->GetField(19+iLink*12,
                                                       19+iLink*12));
 
-    poFeature->SetField( "DIR", nLinkCount, panLinks );
+    if( panLinks != NULL )
+        poFeature->SetField( "DIR", nLinkCount, panLinks );
 
     // should we add LEVEL and/or ORIENT?
 
