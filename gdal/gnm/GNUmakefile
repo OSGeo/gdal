@@ -25,7 +25,10 @@ obj:	$(OBJ)
 sublibs:
 	(cd gnm_frmts; $(MAKE))
 	
-install:	;
+install:
+	for f in *.h ; \
+	    do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; \
+	done
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 	
