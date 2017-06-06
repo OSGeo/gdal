@@ -494,9 +494,9 @@ static int TransferFloat (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
          }
       }
    } else {
-      if (nx * ny != ngrdpts) {
+      if (nx == 0 || ny != ngrdpts / nx) {
 #ifdef DEBUG
-         printf ("nx * ny (%d) != ngrdpts(%d)\n", nx * ny, ngrdpts);
+         printf ("nx(%d) * ny(%d) != ngrdpts(%d)\n", nx, ny, ngrdpts);
 #endif
          return 2;
       }
