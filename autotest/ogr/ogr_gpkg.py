@@ -4351,6 +4351,34 @@ def ogr_gpkg_52():
     return 'success'
 
 ###############################################################################
+# Test opening a .gpkg file with inconsistency regarding table case (#6916)
+
+def ogr_gpkg_53():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = ogr.Open('data/poly_inconsistent_case.gpkg.sql')
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None:
+        return 'fail'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' data/poly_inconsistent_case.gpkg.sql')
+
+        if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -4427,6 +4455,7 @@ gdaltest_list = [
     ogr_gpkg_50,
     ogr_gpkg_51,
     ogr_gpkg_52,
+    ogr_gpkg_53,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
