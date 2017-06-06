@@ -1,0 +1,92 @@
+netcdf byte {
+dimensions:
+	x = 20 ;
+	y = 20 ;
+variables:
+	char transverse_mercator ;
+		transverse_mercator:grid_mapping_name = "transverse_mercator" ;
+		transverse_mercator:longitude_of_central_meridian = -117. ;
+		transverse_mercator:false_easting = 500000. ;
+		transverse_mercator:false_northing = 0. ;
+		transverse_mercator:latitude_of_projection_origin = 0. ;
+		transverse_mercator:scale_factor_at_central_meridian = 0.9996 ;
+		transverse_mercator:long_name = "CRS definition" ;
+		transverse_mercator:longitude_of_prime_meridian = 0. ;
+		transverse_mercator:semi_major_axis = 6378206.4 ;
+		transverse_mercator:inverse_flattening = 294.978698213898 ;
+		transverse_mercator:spatial_ref = "PROJCS[\"NAD27 / UTM zone 11N\",GEOGCS[\"NAD27\",DATUM[\"North_American_Datum_1927\",SPHEROID[\"Clarke 1866\",6378206.4,294.9786982138982,AUTHORITY[\"EPSG\",\"7008\"]],AUTHORITY[\"EPSG\",\"6267\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4267\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",-117],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH],AUTHORITY[\"EPSG\",\"26711\"]]" ;
+		transverse_mercator:GeoTransform = "440720 60 0 3751320 0 -60 " ;
+	double x(x) ;
+		x:standard_name = "projection_x_coordinate" ;
+		x:long_name = "x coordinate of projection" ;
+		x:units = "m" ;
+	double y(y) ;
+		y:standard_name = "projection_y_coordinate" ;
+		y:long_name = "y coordinate of projection" ;
+		y:units = "m" ;
+	byte Band1(y, x) ;
+		Band1:long_name = "GDAL Band Number 1" ;
+		Band1:_Unsigned = "true" ;
+		Band1:valid_range = 0s, 255s ;
+		Band1:_FillValue = 0b ;
+		Band1:grid_mapping = "transverse_mercator" ;
+
+// global attributes:
+		:GDAL_AREA_OR_POINT = "Area" ;
+		:Conventions = "CF-1.5" ;
+		:GDAL = "GDAL 2.3.0dev, released 2017/99/99" ;
+		:history = "Thu Apr 27 15:23:11 2017: GDAL CreateCopy( byte.nc, ... )" ;
+data:
+
+ transverse_mercator = "" ;
+
+ x = 440752, 440810, 440870, 440930, 440990, 441050, 441110, 441170, 441230, 
+    441290, 441350, 441410, 441470, 441530, 441590, 441650, 441710, 441770, 
+    441830, 441890 ;
+
+ y = 3750152, 3750210, 3750270, 3750330, 3750390, 3750450, 3750510, 3750570, 
+    3750630, 3750690, 3750750, 3750810, 3750870, 3750930, 3750990, 3751050, 
+    3751110, 3751170, 3751230, 3751290 ;
+
+ Band1 =
+  -75, -75, -100, -108, -100, -100, -100, -75, -124, -108, 115, -124, 107, 
+    107, 107, 107, 107, 115, 99, 107,
+  -83, -9, -1, -50, -124, 107, -116, 123, -108, -124, -91, -91, -108, -116, 
+    -124, 123, 107, 123, 107, 123,
+  -100, -75, -116, -83, 123, -124, 99, 115, 123, 74, 115, 99, 123, -116, 
+    -100, -124, -91, -116, -116, 99,
+  -67, -83, -116, -116, -91, 115, -124, 90, 99, 115, 90, 99, 99, 107, 99, 
+    -124, 99, 107, -124, -124,
+  -91, -108, -100, 123, 107, 107, 107, 115, -116, 99, 115, 99, 99, 107, 115, 
+    -124, 115, 90, 123, 115,
+  -116, 107, -116, 90, 107, 115, 107, 90, 99, 123, 115, 115, 115, 123, 123, 
+    -108, 115, -108, 99, -124,
+  -108, -124, -124, 107, 123, 99, 99, 115, 99, -124, 99, -116, 115, -108, 
+    123, 99, -124, 123, -108, -116,
+  -83, -108, 99, 123, 123, 107, 123, 99, 107, -67, -83, 107, 115, 115, 107, 
+    99, -116, 107, -83, -116,
+  123, 123, 123, 107, -116, 123, 123, 115, 115, 90, 107, -83, 107, 107, 107, 
+    107, 99, -124, 123, 115,
+  -124, -124, -124, 123, 99, -124, 123, 107, -108, 99, 115, 123, -116, -83, 
+    123, 107, 123, 123, 123, 107,
+  -116, -116, 99, -116, 99, 115, 123, 107, -124, 107, 115, 107, 115, 123, 
+    -124, 123, 107, 123, -124, -124,
+  123, 115, -124, 115, 123, -124, 115, -124, -124, 123, 123, -124, 99, 115, 
+    99, 123, -124, 115, 115, 107,
+  -108, 123, -108, 115, -108, 123, -116, 123, 107, 115, -124, 115, 107, 115, 
+    99, 123, 99, -75, 99, 107,
+  -59, -83, -108, -116, -116, -124, 99, -124, 123, 115, -116, -124, -124, 99, 
+    -124, 123, -124, -83, 123, 115,
+  -67, -83, -83, -108, -108, 115, -108, 123, 107, -124, 115, -124, -100, 99, 
+    123, 115, -124, -124, -50, 107,
+  -124, -100, -124, -116, -124, -124, 115, 115, 115, 123, -108, 123, -91, 
+    123, -124, 107, 107, -124, -100, 123,
+  -108, -124, 123, 123, 115, -124, -124, 123, 115, 123, 115, 123, 107, 115, 
+    -108, 107, 115, -116, 115, -124,
+  115, -124, -116, -124, 123, 115, -116, 107, -116, 115, -124, 123, 107, 
+    -124, -124, 115, 115, 107, 115, 107,
+  115, -124, 107, 123, -108, 115, -91, 115, -116, 107, 123, 123, 99, -124, 
+    123, -124, -124, -124, 99, -100,
+  107, 123, -124, 115, -124, -124, -116, -124, -124, -124, 107, -124, 107, 
+    -124, -124, 107, 123, 115, -100, -108 ;
+}

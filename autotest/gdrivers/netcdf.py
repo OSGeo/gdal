@@ -2937,6 +2937,38 @@ def netcdf_74():
     return 'success'
 
 ###############################################################################
+# test opening a ncdump file
+
+def netcdf_75():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NetCDF', 'byte.nc.txt',
+                             1, 4672 )
+
+    wkt = """PROJCS["NAD27 / UTM zone 11N",
+    GEOGCS["NAD27",
+        DATUM["North_American_Datum_1927",
+            SPHEROID["Clarke 1866",6378206.4,294.9786982139006,
+                AUTHORITY["EPSG","7008"]],
+            AUTHORITY["EPSG","6267"]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433],
+        AUTHORITY["EPSG","4267"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AUTHORITY["EPSG","26711"]]"""
+
+    return tst.testOpen( check_prj = wkt )
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -3020,7 +3052,8 @@ gdaltest_list = [
     netcdf_71,
     netcdf_72,
     netcdf_73,
-    netcdf_74
+    netcdf_74,
+    netcdf_75
 ]
 
 ###############################################################################

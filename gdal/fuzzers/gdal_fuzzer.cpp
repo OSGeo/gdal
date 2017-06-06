@@ -67,6 +67,8 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
 {
     const char* exe_path = (*argv)[0];
     CPLSetConfigOption("GDAL_DATA", CPLGetPath(exe_path));
+    CPLSetConfigOption("CPL_TMPDIR", "/tmp");
+    CPLSetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", "YES");
     return 0;
 }
 
