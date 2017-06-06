@@ -1508,14 +1508,22 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
    bdsRemainingSize -= 1;
 
    /* Convert Units. */
+   {
+   double pow_10_DSF = pow (10.0, DSF);
+   if( pow_10_DSF == 0.0 ) {
+      errSprintf ("pow_10_DSF == 0.0\n");
+      return -2;
+   }
    if (unitM == -10) {
       meta->gridAttrib.min = pow (10.0, (refVal * pow (2.0, ESF) /
-                                       pow (10.0, DSF)));
+                                       pow_10_DSF));
    } else {
 /*      meta->gridAttrib.min = unitM * (refVal / pow (10.0, DSF)) + unitB; */
       meta->gridAttrib.min = unitM * (refVal * pow (2.0, ESF) /
-                                      pow (10.0, DSF)) + unitB;
+                                      pow_10_DSF) + unitB;
    }
+   }
+
    meta->gridAttrib.max = meta->gridAttrib.min;
    meta->gridAttrib.f_maxmin = 1;
    meta->gridAttrib.numMiss = 0;
