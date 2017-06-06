@@ -1006,24 +1006,36 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 
     if( eLayout == PDS_BIP )
     {
+        if( nItemSize > INT_MAX / l_nBands )
+            return FALSE;
         nPixelOffset = nItemSize * l_nBands;
         nBandOffset = nItemSize;
-        nLineOffset = ((nPixelOffset * nCols + record_bytes - 1)/record_bytes)
+        if( nPixelOffset > INT_MAX / nCols )
+            return FALSE;
+        nLineOffset = DIV_ROUND_UP(nPixelOffset * nCols, record_bytes )
             * record_bytes;
     }
     else if( eLayout == PDS_BSQ )
     {
         nPixelOffset = nItemSize;
-        nLineOffset = ((nPixelOffset * nCols + record_bytes - 1)/record_bytes)
+        if( nPixelOffset > INT_MAX / nCols )
+            return FALSE;
+        nLineOffset = DIV_ROUND_UP(nPixelOffset * nCols, record_bytes )
             * record_bytes;
+        if( nLineOffset > INT_MAX / nRows )
+            return FALSE;
         nBandOffset = nLineOffset * nRows
             + nSuffixLines * (nCols + nSuffixItems) * nSuffixBytes;
     }
     else /* assume BIL */
     {
         nPixelOffset = nItemSize;
+        if( nItemSize > INT_MAX / nCols )
+            return FALSE;
         nBandOffset = nItemSize * nCols;
-        nLineOffset = ((nBandOffset * nCols + record_bytes - 1)/record_bytes)
+        if( nBandOffset > INT_MAX / nCols )
+            return FALSE;
+        nLineOffset = DIV_ROUND_UP(nBandOffset * nCols, record_bytes)
             * record_bytes;
     }
 
