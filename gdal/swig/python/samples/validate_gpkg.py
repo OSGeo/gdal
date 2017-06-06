@@ -277,7 +277,7 @@ class GPKGChecker:
         rows = c.fetchall()
         for (table_name, last_change, srs_id) in rows:
             c.execute("SELECT 1 FROM sqlite_master WHERE "
-                      "name = ? AND type IN ('table', 'view')", (table_name,))
+                      "lower(name) = lower(?) AND type IN ('table', 'view')", (table_name,))
             self._assert(c.fetchone() is not None, 14,
                          ('table_name=%s in gpkg_contents is not a ' +
                           'table or view') % table_name)
@@ -324,7 +324,7 @@ class GPKGChecker:
         found_geom = False
         count_pkid = 0
         for (_, name, type, notnull, default, pk) in cols:
-            if name == geom_column_name:
+            if name.lower() == geom_column_name.lower():
                 found_geom = True
                 self._assert(
                     type in base_geom_types or
@@ -1268,7 +1268,7 @@ class GPKGChecker:
                   "WHERE extension_name = 'gpkg_rtree_index' ")
         rows = c.fetchall()
         for (table_name, scope) in rows:
-            c.execute("SELECT 1 FROM gpkg_contents WHERE table_name = ? "
+            c.execute("SELECT 1 FROM gpkg_contents WHERE lower(table_name) = lower(?) "
                       "AND data_type = 'features'", (table_name,))
             self._assert(c.fetchone() is not None, 75,
                          ('gpkg_extensions declares gpkg_rtree_index for %s,' +
