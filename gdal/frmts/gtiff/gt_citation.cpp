@@ -268,43 +268,43 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
             pStr += strlen(pStr);
             nameSet = true;
         }
-        if( strstr(name, "PCS Name = ") )
+        if( strstr(name, "PCS Name = ") && ret[CitPcsName] == NULL )
         {
             ret[CitPcsName] = CPLStrdup(name + strlen("PCS Name = "));
             nameFound = true;
         }
-        if( strstr(name, "PRJ Name = ") )
+        if( strstr(name, "PRJ Name = ") && ret[CitProjectionName] == NULL )
         {
             ret[CitProjectionName] =
                 CPLStrdup(name + strlen("PRJ Name = "));
             nameFound = true;
         }
-        if( strstr(name, "LUnits = ") )
+        if( strstr(name, "LUnits = ") && ret[CitLUnitsName] == NULL )
         {
             ret[CitLUnitsName] = CPLStrdup(name + strlen("LUnits = "));
             nameFound = true;
         }
-        if( strstr(name, "GCS Name = ") )
+        if( strstr(name, "GCS Name = ") && ret[CitGcsName] == NULL )
         {
             ret[CitGcsName] = CPLStrdup(name + strlen("GCS Name = "));
             nameFound = true;
         }
-        if( strstr(name, "Datum = ") )
+        if( strstr(name, "Datum = ") && ret[CitDatumName] == NULL )
         {
             ret[CitDatumName] = CPLStrdup(name + strlen("Datum = "));
             nameFound = true;
         }
-        if( strstr(name, "Ellipsoid = ") )
+        if( strstr(name, "Ellipsoid = ") && ret[CitEllipsoidName] == NULL )
         {
             ret[CitEllipsoidName] = CPLStrdup(name + strlen("Ellipsoid = "));
             nameFound = true;
         }
-        if( strstr(name, "Primem = ") )
+        if( strstr(name, "Primem = ") && ret[CitPrimemName] == NULL )
         {
             ret[CitPrimemName] = CPLStrdup(name + strlen("Primem = "));
             nameFound = true;
         }
-        if( strstr(name, "AUnits = ") )
+        if( strstr(name, "AUnits = ") && ret[CitAUnitsName] == NULL )
         {
             ret[CitAUnitsName] = CPLStrdup(name + strlen("AUnits = "));
             nameFound = true;
