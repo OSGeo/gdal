@@ -2350,7 +2350,7 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
 
     SQLResult oResultTable;
     char* pszSQL = sqlite3_mprintf(
-        "SELECT * FROM sqlite_master WHERE name = '%q' "
+        "SELECT * FROM sqlite_master WHERE lower(name) = lower('%q') "
         "AND type IN ('table', 'view')",
          pszDstTableName);
     OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
@@ -3133,7 +3133,7 @@ bool OGRGeoPackageTableLayer::IsTable()
 {
     SQLResult oResultTable;
     char* pszSQL = sqlite3_mprintf(
-        "SELECT * FROM sqlite_master WHERE name = '%q' AND type = 'table'",
+        "SELECT * FROM sqlite_master WHERE lower(name) = lower('%q') AND type = 'table'",
          m_pszTableName);
     OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
     sqlite3_free(pszSQL);
@@ -3403,7 +3403,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
         char* pszSQL = sqlite3_mprintf(
             "SELECT name, type, sql FROM sqlite_master WHERE "
             "type IN ('trigger','index') "
-            "AND tbl_name='%q' AND sql LIKE '%%%q%%'",
+            "AND lower(tbl_name)=lower('%q') AND sql LIKE '%%%q%%'",
             m_pszTableName,
             SQLEscapeDoubleQuote(osOldColName).c_str() );
         eErr = SQLQuery(hDB, pszSQL, &oTriggers);
