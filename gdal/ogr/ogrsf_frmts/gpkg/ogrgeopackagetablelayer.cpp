@@ -576,7 +576,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     {
         SQLResult oResult;
         char* pszSQL = sqlite3_mprintf(
-            "SELECT type FROM sqlite_master WHERE name = '%q' AND type "
+            "SELECT type FROM sqlite_master WHERE lower(name) = lower('%q') AND type "
             "IN ('view', 'table')",
             m_pszTableName);
         err = SQLQuery(poDb, pszSQL, &oResult);
@@ -2949,7 +2949,7 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
     SyncToDisk();
 
     char* pszSQL = sqlite3_mprintf(
-        "SELECT 1 FROM sqlite_master WHERE name = '%q' "
+        "SELECT 1 FROM sqlite_master WHERE lower(name) = lower('%q') "
         "AND type IN ('table', 'view')",
          pszDstTableName);
     const bool bAlreadyExists =
@@ -3703,7 +3703,7 @@ OGRErr OGRGeoPackageTableLayer::RecreateTable(const CPLString& osColumnsForCreat
 
     char* pszSQL = sqlite3_mprintf(
         "SELECT sql FROM sqlite_master WHERE type IN ('trigger','index') "
-        "AND tbl_name='%q' LIMIT 10000",
+        "AND lower(tbl_name)=lower('%q') LIMIT 10000",
         m_pszTableName );
     SQLResult oTriggers;
     OGRErr eErr = SQLQuery(hDB, pszSQL, &oTriggers);
@@ -4046,7 +4046,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
         char* pszSQL = sqlite3_mprintf(
             "SELECT name, type, sql FROM sqlite_master WHERE "
             "type IN ('trigger','index') "
-            "AND tbl_name='%q' AND sql LIKE '%%%q%%' LIMIT 10000",
+            "AND lower(tbl_name)=lower('%q') AND sql LIKE '%%%q%%' LIMIT 10000",
             m_pszTableName,
             SQLEscapeName(osOldColName).c_str() );
         eErr = SQLQuery(hDB, pszSQL, &oTriggers);
