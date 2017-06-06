@@ -159,6 +159,9 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
       if (nbitsgref != 0) {
          if( gbits(cpack,cpack_length,gref+0,iofst,nbitsgref,0,ngroups) != 0 )
          {
+             free(ifld);
+             free(gwidth);
+             free(gref);
              return -1;
          }
          itemp=nbitsgref*ngroups;
@@ -172,6 +175,9 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
       if (nbitsgwidth != 0) {
          if( gbits(cpack,cpack_length,gwidth+0,iofst,nbitsgwidth,0,ngroups) != 0 )
          {
+             free(ifld);
+             free(gwidth);
+             free(gref);
              return -1;
          }
          itemp=nbitsgwidth*ngroups;
@@ -276,6 +282,7 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
                  free(gwidth);
                  free(glen);
                  free(gref);
+                 free(ifldmiss);
                  return -1;
              }
              iofst=iofst+(gwidth[j]*glen[j]);
