@@ -135,23 +135,26 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 /* -------------------------------------------------------------------- */
 
     long int nPixelOffset=0;
-    if (EQUAL( CSLFetchNameValue(papszKeywordList,"FORMAT" ), "BYTE" )) {
+    const char* pszFormat = CSLFetchNameValueDef(papszKeywordList,"FORMAT","");
+    if (EQUAL( pszFormat, "BYTE" )) {
         nPixelOffset = 1;
     }
-    else if (EQUAL( CSLFetchNameValue(papszKeywordList,"FORMAT" ), "HALF" )) {
+    else if (EQUAL( pszFormat, "HALF" )) {
         nPixelOffset = 2;
     }
-    else if (EQUAL( CSLFetchNameValue(papszKeywordList,"FORMAT" ), "FULL" )) {
+    else if (EQUAL( pszFormat, "FULL" )) {
         nPixelOffset = 4;
     }
-    else if (EQUAL( CSLFetchNameValue(papszKeywordList,"FORMAT" ), "REAL" )) {
+    else if (EQUAL( pszFormat, "REAL" )) {
         nPixelOffset = 4;
     }
+    if( nPixelOffset == 0 )
+        return FALSE;
 
-    const long int nCols = atoi( CSLFetchNameValue( papszKeywordList, "NS" ) );
-    const long int nRows = atoi( CSLFetchNameValue( papszKeywordList, "NL" ) );
-    const int nBands = atoi( CSLFetchNameValue( papszKeywordList, "NB" ) );
-    const int nBB = atoi( CSLFetchNameValue( papszKeywordList, "NBB" ) );
+    const long int nCols = atoi( CSLFetchNameValueDef( papszKeywordList, "NS", "" ) );
+    const long int nRows = atoi( CSLFetchNameValueDef( papszKeywordList, "NL", "" ) );
+    const int nBands = atoi( CSLFetchNameValueDef( papszKeywordList, "NB", "" ) );
+    const int nBB = atoi( CSLFetchNameValueDef( papszKeywordList, "NBB", "" ) );
 
     const long int nLineOffset = nPixelOffset * nCols + nBB ;
     const long int nBandOffset = nLineOffset * nRows;
