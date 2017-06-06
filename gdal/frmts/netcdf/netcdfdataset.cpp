@@ -5624,6 +5624,7 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                                          const char* pszTmpFilename,
                                          VSILFILE* fpSrc )
 {
+    CPL_IGNORE_RET_VAL(eFormat);
     int nCreateMode = NC_CLOBBER;
 #ifdef NETCDF_HAS_NC4
     if( eFormat == NCDF_FORMAT_NC4 )
