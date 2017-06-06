@@ -42,6 +42,11 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 
+// Whether to support opening a ncdump file as a file dataset
+// Useful for fuzzing purposes
+#define ENABLE_NCDUMP
+
+
 /************************************************************************/
 /* ==================================================================== */
 /*                           defines                                    */
@@ -760,6 +765,9 @@ class netCDFDataset : public GDALPamDataset
 
     /* basic dataset vars */
     CPLString     osFilename;
+#ifdef ENABLE_NCDUMP
+    bool          bFileToDestroyAtClosing;
+#endif
     int           cdfid;
     char          **papszSubDatasets;
     char          **papszMetadata;
