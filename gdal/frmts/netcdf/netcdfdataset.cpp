@@ -8244,7 +8244,8 @@ static CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     switch( nAttrType )
     {
     case NC_CHAR:
-        nc_get_att_text(nCdfId, nVarId, pszAttrName, pszAttrValue);
+        CPL_IGNORE_RET_VAL(
+            nc_get_att_text(nCdfId, nVarId, pszAttrName, pszAttrValue));
         pszAttrValue[nAttrLen] = '\0';
         dfValue = 0.0;
         break;
