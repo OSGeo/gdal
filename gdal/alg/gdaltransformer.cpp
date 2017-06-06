@@ -980,6 +980,8 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 {
     char **papszOptions = NULL;
     void *pRet;
+    const char *pszSrcMethod = NULL;
+    const char *pszDstMethod = NULL;
 
     if( pszSrcWKT != NULL )
         papszOptions = CSLSetNameValue( papszOptions, "SRC_SRS", pszSrcWKT );
@@ -990,6 +992,17 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
     if( nOrder != 0 )
         papszOptions = CSLSetNameValue( papszOptions, "MAX_GCP_ORDER",
                                         CPLString().Printf("%d",nOrder) );
+
+
+    if( hSrcDS != NULL )
+      pszSrcMethod = GDALGetMetadataItem(hSrcDS, "METHOD", NULL);
+    if( hDstDS != NULL )
+      pszDstMethod = GDALGetMetadataItem(hDstDS, "METHOD", NULL);
+    if( pszSrcMethod != NULL )
+        papszOptions = CSLSetNameValue( papszOptions, "SRC_METHOD", pszSrcMethod );
+    if( pszDstMethod != NULL )
+        papszOptions = CSLSetNameValue( papszOptions, "DST_METHOD", pszDstMethod );
+
 
     pRet = GDALCreateGenImgProjTransformer2( hSrcDS, hDstDS, papszOptions );
     CSLDestroy( papszOptions );
