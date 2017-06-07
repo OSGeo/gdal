@@ -2969,6 +2969,23 @@ def netcdf_75():
     return tst.testOpen( check_prj = wkt )
 
 ###############################################################################
+# test opening a vector ncdump file
+
+def netcdf_76():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/poly.nc.txt')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None or f.GetGeometryRef() is None:
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -3053,7 +3070,8 @@ gdaltest_list = [
     netcdf_72,
     netcdf_73,
     netcdf_74,
-    netcdf_75
+    netcdf_75,
+    netcdf_76
 ]
 
 ###############################################################################
