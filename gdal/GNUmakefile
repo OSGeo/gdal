@@ -42,6 +42,9 @@ force-lib:
 	$(LD_SHARED) $(GDAL_SLIB_SONAME) $(GDAL_OBJ) $(GDAL_LIBS) $(LDFLAGS) $(LIBS) \
 		-o $(GDAL_SLIB)
 
+# convenient alias
+static-lib: $(GDAL_LIB)
+
 $(GDAL_LIB):	$(GDAL_OBJ) GDALmake.opt
 	rm -f libgdal.a
 	$(AR) r $(GDAL_LIB) $(GDAL_OBJ)
