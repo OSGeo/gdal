@@ -180,6 +180,7 @@ static void DumpGeoTIFFBox(CPLXMLNode* psBox,
         }
         VSIUnlink(osTmpFilename);
     }
+    CPLFree(pabyBoxData);
 }
 
 static void DumpFTYPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
