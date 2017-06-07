@@ -868,6 +868,9 @@ CPLErr GS7BGDataset::GetGeoTransform( double *padfGeoTransform )
     if( eErr == CE_None )
         return CE_None;
 
+    if( nRasterXSize == 1 || nRasterYSize == 1 )
+        return CE_Failure;
+
     /* calculate pixel size first */
     padfGeoTransform[1] = (poGRB->dfMaxX - poGRB->dfMinX)/(nRasterXSize - 1);
     padfGeoTransform[5] = (poGRB->dfMinY - poGRB->dfMaxY)/(nRasterYSize - 1);
