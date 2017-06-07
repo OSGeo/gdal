@@ -465,6 +465,9 @@ def rasterlite_13():
     if gdaltest.has_spatialite is False:
         return 'skip'
 
+    if gdaltest.rasterlite_drv.GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
+        return 'skip'
+
     ds = gdal.Open('data/byte.rasterlite.sql')
     if ds.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('validation failed')
