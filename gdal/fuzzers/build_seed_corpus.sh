@@ -76,6 +76,12 @@ rm -f $OUT/aig_fuzzer_seed_corpus.zip
 zip -r $OUT/aig_fuzzer_seed_corpus.zip aig.tar >/dev/null
 rm aig.tar
 
+echo "Building get_jpeg2000_structure_fuzzer_seed_corpus.zip"
+rm -f $OUT/get_jpeg2000_structure_fuzzer_seed_corpus.zip
+cd $(dirname $0)/../../autotest/gdrivers/data
+zip -r $OUT/get_jpeg2000_structure_fuzzer_seed_corpus.zip *.jp2 >/dev/null
+cd $OLDPWD
+
 
 echo "Building gdal_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/gcore/data
