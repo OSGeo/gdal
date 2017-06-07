@@ -46,7 +46,9 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
     VSIFCloseL(fp);
     char** papszOptions = CSLSetNameValue(NULL, "ALL", "YES");
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     CPLXMLNode* psNode = GDALGetJPEG2000Structure(MEM_FILENAME, papszOptions);
+    CPLPopErrorHandler();
     CSLDestroy(papszOptions);
     if( psNode )
         CPLDestroyXMLNode(psNode);
