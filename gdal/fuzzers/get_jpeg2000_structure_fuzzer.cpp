@@ -32,6 +32,7 @@
 #include "gdal.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
@@ -39,6 +40,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
+    GDALRegister_GTiff();
+    GDALRegister_VRT();
     VSILFILE* fp = VSIFileFromMemBuffer( MEM_FILENAME,
             reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
     VSIFCloseL(fp);
