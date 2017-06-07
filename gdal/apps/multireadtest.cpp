@@ -73,11 +73,11 @@ int main( int argc, char ** argv )
 
     for( iArg = 1; iArg < argc; iArg++ )
     {
-        if( EQUAL(argv[iArg],"-i") && iArg < argc-1 )
+        if( iArg < argc-1 && EQUAL(argv[iArg],"-i") )
             nIterations = atoi(argv[++iArg]);
-        else if( EQUAL(argv[iArg],"-oi") && iArg < argc-1 )
+        else if( iArg < argc-1 && EQUAL(argv[iArg],"-oi") )
             nOpenIterations = atoi(argv[++iArg]);
-        else if( EQUAL(argv[iArg],"-t") && iArg < argc-1 )
+        else if( iArg < argc-1 && EQUAL(argv[iArg],"-t") )
             nThreadCount = atoi(argv[++iArg]);
         else if( EQUAL(argv[iArg],"-nlo") )
             bLockOnOpen = FALSE;

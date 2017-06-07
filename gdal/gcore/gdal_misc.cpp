@@ -3076,7 +3076,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
 /*      --locale                                                        */
 /* -------------------------------------------------------------------- */
-        else if( EQUAL(papszArgv[iArg],"--locale") && iArg < nArgc-1 )
+        else if( iArg < nArgc-1 && EQUAL(papszArgv[iArg],"--locale") )
         {
             CPLsetlocale( LC_ALL, papszArgv[++iArg] );
         }

@@ -241,15 +241,15 @@ int main( int argc, char ** argv )
             CSLDestroy(argv);
             return 0;
         }
-        else if( EQUAL(argv[i],"-b") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(argv[i],"-b") )
         {
             anBandList.push_back( atoi(argv[++i]) );
         }
-        else if( EQUAL(argv[i],"-overview") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(argv[i],"-overview") )
         {
             nOverview = atoi(argv[++i]) - 1;
         }
-        else if( EQUAL(argv[i],"-l_srs") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(argv[i],"-l_srs") )
         {
             CPLFree(pszSourceSRS);
             pszSourceSRS = SanitizeSRS(argv[++i]);
@@ -278,7 +278,7 @@ int main( int argc, char ** argv )
             bValOnly = true;
             bQuiet = true;
         }
-        else if( EQUAL(argv[i], "-oo") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(argv[i], "-oo") )
         {
             papszOpenOptions = CSLAddString( papszOpenOptions,
                                                 argv[++i] );

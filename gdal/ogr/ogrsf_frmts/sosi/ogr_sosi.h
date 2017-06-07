@@ -165,6 +165,8 @@ class OGRSOSIDataType {
     OGRSOSISimpleDataType* poElements;
     int                    nElementCount;
 
+    OGRSOSIDataType& operator= (const OGRSOSIDataType& );
+
 public:
     explicit OGRSOSIDataType (int nSize);
 

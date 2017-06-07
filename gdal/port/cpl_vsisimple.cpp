@@ -434,11 +434,19 @@ static GIntBig nMaxCumulAllocSize = -1;
 /*                             VSICalloc()                              */
 /************************************************************************/
 
+#ifndef DEBUG_VSIMALLOC
+
 /** Analog of calloc(). Use VSIFree() to free */
 void *VSICalloc( size_t nCount, size_t nSize )
-
 {
-#ifdef DEBUG_VSIMALLOC
+    // cppcheck-suppress invalidFunctionArg
+    return calloc( nCount, nSize );
+}
+
+#else  // DEBUG_VSIMALLOC
+
+void *VSICalloc( size_t nCount, size_t nSize )
+{
     size_t nMul = nCount * nSize;
     if( nCount != 0 && nMul / nCount != nSize )
     {
@@ -534,10 +542,8 @@ void *VSICalloc( size_t nCount, size_t nSize )
 #endif
     // cppcheck-suppress memleak
     return ptr + 2 * sizeof(void*);
-#else
-    return calloc( nCount, nSize );
-#endif
 }
+#endif   // DEBUG_VSIMALLOC
 
 /************************************************************************/
 /*                             VSIMalloc()                              */

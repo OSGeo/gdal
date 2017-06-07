@@ -93,7 +93,7 @@ int main( int nArgc, char **papszArgv )
                    GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( EQUAL(papszArgv[iArg],"-f") && iArg < nArgc-1 )
+        else if( iArg < nArgc-1 && EQUAL(papszArgv[iArg],"-f") )
         {
             pszFormat = papszArgv[++iArg];
             if( !EQUAL(pszFormat, "ESRI Shapefile") )
@@ -111,7 +111,7 @@ int main( int nArgc, char **papszArgv )
         {
             accept_different_schemas = true;
         }
-        else if( EQUAL(papszArgv[iArg],"-tileindex") && iArg < nArgc-1 )
+        else if( iArg < nArgc-1 && EQUAL(papszArgv[iArg],"-tileindex") )
         {
             pszTileIndexField = papszArgv[++iArg];
         }
@@ -121,16 +121,16 @@ int main( int nArgc, char **papszArgv )
             iArg++;
             bLayersWildcarded = false;
         }
-        else if( strcmp(papszArgv[iArg],"-t_srs") == 0 && iArg < nArgc-1 )
+        else if( iArg < nArgc-1 && strcmp(papszArgv[iArg],"-t_srs") == 0 )
         {
             pszTargetSRS = papszArgv[++iArg];
             bSetTargetSRS = true;
         }
-        else if( strcmp(papszArgv[iArg], "-src_srs_name") == 0 && iArg < nArgc-1 )
+        else if( iArg < nArgc-1 && strcmp(papszArgv[iArg], "-src_srs_name") == 0 )
         {
             pszSrcSRSName = papszArgv[++iArg];
         }
-        else if( strcmp(papszArgv[iArg], "-src_srs_format") == 0 && iArg < nArgc-1 )
+        else if( iArg < nArgc-1 && strcmp(papszArgv[iArg], "-src_srs_format") == 0 )
         {
             const char* pszSRSFormat;
             bSrcSRSFormatSpecified = true;

@@ -144,6 +144,8 @@ class ods_formula_node {
 
     bool           EvaluateCELL( IODSCellEvaluator* poEvaluator );
 
+    ods_formula_node& operator= (const ods_formula_node& );
+
  public:
     ods_formula_node();
 

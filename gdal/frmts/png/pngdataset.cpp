@@ -512,12 +512,8 @@ static bool safe_png_read_image(png_structp hPNG,
 CPLErr PNGDataset::LoadInterlacedChunk( int iLine )
 
 {
-    int nPixelOffset;
-
-    if( nBitDepth == 16 )
-        nPixelOffset = 2 * GetRasterCount();
-    else
-        nPixelOffset = 1 * GetRasterCount();
+    const int nPixelOffset =
+        ( nBitDepth == 16 ) ? 2 * GetRasterCount() : GetRasterCount();
 
     // What is the biggest chunk we can safely operate on?
     static const int MAX_PNG_CHUNK_BYTES = 100000000;
@@ -616,11 +612,8 @@ CPLErr PNGDataset::LoadScanline( int nLine )
     if( nLine >= nBufferStartLine && nLine < nBufferStartLine + nBufferLines)
         return CE_None;
 
-    int nPixelOffset;
-    if( nBitDepth == 16 )
-        nPixelOffset = 2 * GetRasterCount();
-    else
-        nPixelOffset = 1 * GetRasterCount();
+    const int nPixelOffset =
+        ( nBitDepth == 16 ) ? 2 * GetRasterCount() : GetRasterCount();
 
     // If the file is interlaced, we load the entire image into memory using the
     // high-level API.

@@ -4079,7 +4079,9 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    int hour, min;       /* The reference hour minute. */
    double sec;          /* The reference second. */
    char f_bitmap = 0;   /* Bitmap flag: not implemented in specs. */
+#ifdef always_true
    char f_simple = 0;   /* Simple Pack flag: not implemented in specs. */
+#endif
    int gridType;        /* Which type of grid. (Polar, Mercator, Lambert). */
    int dataCnt;         /* Keeps track of which element we are writing. */
    sInt4 max0;          /* The max value in a group.  Represents primary or *
@@ -4342,7 +4344,9 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
       i |= 2;
    if (f_sndOrder)
       i |= 4;
+#ifdef always_true
    if (!f_simple)
+#endif
       i |= 8;
    if (!f_grid)
       i |= 16;

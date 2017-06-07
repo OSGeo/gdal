@@ -630,8 +630,7 @@ boolean GeoRasterDataset::JP2_CopyDirect( const char* pszJP2Filename,
                           "amount read differs from JP2 Box data length" );
             }
 
-            nLBox = (int) nDataLength + 8;
-            nLBox = CPL_MSBWORD32( nLBox );
+            nLBox = CPL_MSBWORD32( (int) nDataLength + 8 );
 
             memcpy( &nTBox, oBox.GetType(), 4 );
 
@@ -646,8 +645,7 @@ boolean GeoRasterDataset::JP2_CopyDirect( const char* pszJP2Filename,
             size_t nSize = 0;
             size_t nDataLength = oBox.GetDataLength();
  
-            nLBox = (int) nDataLength + 8;
-            nLBox = CPL_MSBWORD32( nLBox );
+            nLBox = CPL_MSBWORD32( (int) nDataLength + 8 );
 
             memcpy( &nTBox, oBox.GetType(), 4 );
 

@@ -127,13 +127,13 @@ int main( int argc, char ** argv )
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( EQUAL(argv[i],"-of") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(argv[i],"-of") )
         {
             pszFormat = argv[++i];
             bFormatExplicitlySet = TRUE;
         }
 
-        else if( EQUAL(argv[i],"-ot") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(argv[i],"-ot") )
         {
             int iType;
 
@@ -161,24 +161,24 @@ int main( int argc, char ** argv )
             i += 1;
         }
 
-        else if( EQUAL(argv[i],"-co") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(argv[i],"-co") )
         {
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
         }
 
-        else if( STARTS_WITH_CI(argv[i], "-src_scale") && i < argc-2)
+        else if( i < argc-1 && STARTS_WITH_CI(argv[i], "-src_scale") )
         {
             // TODO
             i += 2;
         }
 
-        else if( STARTS_WITH_CI(argv[i], "-dst_scale") && i < argc-2 )
+        else if( i < argc-2 && STARTS_WITH_CI(argv[i], "-dst_scale") )
         {
             // TODO
             i += 2;
         }
 
-        else if( EQUAL(argv[i],"-config") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(argv[i],"-config") )
         {
             pszConfigFile = argv[++i];
         }

@@ -766,7 +766,7 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
     int argc = CSLCount(papszArgv);
     for( int i = 0; papszArgv != NULL && i < argc; i++ )
     {
-        if( EQUAL(papszArgv[i],"-of") && i < argc-1 )
+        if( i < argc-1 && EQUAL(papszArgv[i],"-of") )
         {
             ++i;
             CPLFree(psOptions->pszFormat);
@@ -782,11 +782,11 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
             if( psOptionsForBinary )
                 psOptionsForBinary->bQuiet = TRUE;
         }
-        else if( EQUAL(papszArgv[i],"-co") && i+1<argc )
+        else if( i+1<argc && EQUAL(papszArgv[i],"-co")  )
         {
             psOptions->papszCreationOptions = CSLAddString( psOptions->papszCreationOptions, papszArgv[++i] );
         }
-        else if( EQUAL(papszArgv[i], "-o") && i+1<argc )
+        else if( i+1<argc && EQUAL(papszArgv[i], "-o") )
         {
             i++;
             if( psOptionsForBinary )
@@ -801,7 +801,7 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
 
         /***** -color c1,c2,c3...cn *****/
 
-        else if( EQUAL(papszArgv[i], "-color") && i+1<argc )
+        else if( i+1<argc && EQUAL(papszArgv[i], "-color") )
         {
             Color oColor;
 
@@ -848,11 +848,11 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
             psOptions->oColors.push_back( oColor );
         }
 
-        else if( EQUAL(papszArgv[i], "-nb") && i+1<argc )
+        else if( i+1<argc && EQUAL(papszArgv[i], "-nb") )
         {
             psOptions->nMaxNonBlack = atoi(papszArgv[++i]);
         }
-        else if( EQUAL(papszArgv[i], "-near") && i+1<argc )
+        else if( i+1<argc && EQUAL(papszArgv[i], "-near") )
         {
             psOptions->nNearDist = atoi(papszArgv[++i]);
         }

@@ -1554,22 +1554,19 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else if( eDataType == GDT_Int32 )
     {
-        if( sizeof(long) == 4 )
-        {
+#if SIZEOF_UNSIGNED_LONG == 4
             status = nc_get_vara_long(cdfid, nZId, start, edge,
                                       static_cast<long *>(pImageNC));
             if( status == NC_NOERR )
                 CheckData<long>(pImage, pImageNC, edge[nBandXPos],
                                 edge[nBandYPos], false);
-        }
-        else
-        {
+#else
             status = nc_get_vara_int(cdfid, nZId, start, edge,
                                      static_cast<int *>(pImageNC));
             if( status == NC_NOERR )
                 CheckData<int>(pImage, pImageNC, edge[nBandXPos],
                                edge[nBandYPos], false);
-        }
+#endif
     }
     else if( eDataType == GDT_Float32 )
     {

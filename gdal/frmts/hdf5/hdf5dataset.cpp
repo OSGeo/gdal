@@ -156,17 +156,19 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
         return GDT_UInt32;
     else if( H5Tequal(H5T_NATIVE_LONG,   TypeID) )
     {
-        if( sizeof(long) == 4 )
-            return GDT_Int32;
-        else
-            return GDT_Unknown;
+#if SIZEOF_UNSIGNED_LONG == 4
+        return GDT_Int32;
+#else
+        return GDT_Unknown;
+#endif
     }
     else if( H5Tequal(H5T_NATIVE_ULONG,  TypeID) )
     {
-        if( sizeof(unsigned long) == 4 )
-            return GDT_UInt32;
-        else
-            return GDT_Unknown;
+#if SIZEOF_UNSIGNED_LONG == 4
+        return GDT_UInt32;
+#else
+        return GDT_Unknown;
+#endif
     }
     else if( H5Tequal(H5T_NATIVE_FLOAT,  TypeID) )
         return GDT_Float32;

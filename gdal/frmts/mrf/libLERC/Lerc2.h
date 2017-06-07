@@ -1213,9 +1213,11 @@ Lerc2::DataType Lerc2::GetDataType(T z) const
   else if (ti == typeid(unsigned short))  return DT_UShort;
   else if (ti == typeid(int))             return DT_Int;
   else if (ti == typeid(long)
+      // cppcheck-suppress knownConditionTrueFalse
        && sizeof(long) == 4)              return DT_Int;
   else if (ti == typeid(unsigned int))    return DT_UInt;
   else if (ti == typeid(unsigned long)
+      // cppcheck-suppress knownConditionTrueFalse
        && sizeof(unsigned long) == 4)     return DT_UInt;
   else if (ti == typeid(float))           return DT_Float;
   else if (ti == typeid(double))          return DT_Double;

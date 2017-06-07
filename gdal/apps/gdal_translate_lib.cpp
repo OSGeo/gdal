@@ -1803,7 +1803,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
     int argc = CSLCount(papszArgv);
     for( int i = 0; papszArgv != NULL && i < argc; i++ )
     {
-        if( EQUAL(papszArgv[i],"-of") && i < argc-1 )
+        if( i < argc-1 && EQUAL(papszArgv[i],"-of") )
         {
             ++i;
             CPLFree(psOptions->pszFormat);
@@ -1922,7 +1922,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             if( psOptionsForBinary )
                 psOptionsForBinary->bCopySubDatasets = TRUE;
         }
-        else if( EQUAL(papszArgv[i],"-gcp") && i + 4 < argc )
+        else if( i + 4 < argc && EQUAL(papszArgv[i],"-gcp") )
         {
             char* endptr = NULL;
             /* -gcp pixel line easting northing [elev] */
@@ -1962,7 +1962,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             i += 1;
         }
 
-        else if( EQUAL(papszArgv[i],"-a_ullr") && i + 4 < argc )
+        else if( i + 4 < argc && EQUAL(papszArgv[i],"-a_ullr") )
         {
             psOptions->adfULLR[0] = CPLAtofM(papszArgv[i+1]);
             psOptions->adfULLR[1] = CPLAtofM(papszArgv[i+2]);
@@ -2096,7 +2096,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
                                                  papszArgv[++i] );
         }
 
-        else if( EQUAL(papszArgv[i],"-outsize") && i+2 < argc && papszArgv[i+1] != NULL )
+        else if( i+2 < argc && EQUAL(papszArgv[i],"-outsize") && papszArgv[i+1] != NULL )
         {
             ++i;
             if( papszArgv[i][strlen(papszArgv[i])-1] == '%' )
@@ -2111,7 +2111,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             bOutsideExplicitlySet = true;
         }
 
-        else if( EQUAL(papszArgv[i],"-tr") && i+2 < argc )
+        else if( i+2 < argc && EQUAL(papszArgv[i],"-tr") )
         {
             psOptions->dfXRes = CPLAtofM(papszArgv[++i]);
             psOptions->dfYRes = fabs(CPLAtofM(papszArgv[++i]));
@@ -2123,7 +2123,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             }
         }
 
-        else if( EQUAL(papszArgv[i],"-srcwin") && i+4 < argc )
+        else if( i+4 < argc && EQUAL(papszArgv[i],"-srcwin") )
         {
             psOptions->adfSrcWin[0] = CPLAtof(papszArgv[++i]);
             psOptions->adfSrcWin[1] = CPLAtof(papszArgv[++i]);
@@ -2131,7 +2131,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             psOptions->adfSrcWin[3] = CPLAtof(papszArgv[++i]);
         }
 
-        else if( EQUAL(papszArgv[i],"-projwin") && i+4 < argc )
+        else if( i+4 < argc && EQUAL(papszArgv[i],"-projwin") )
         {
             psOptions->dfULX = CPLAtofM(papszArgv[++i]);
             psOptions->dfULY = CPLAtofM(papszArgv[++i]);
@@ -2139,7 +2139,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             psOptions->dfLRY = CPLAtofM(papszArgv[++i]);
         }
 
-        else if( EQUAL(papszArgv[i],"-projwin_srs") && i+1 < argc )
+        else if( i+1 < argc && EQUAL(papszArgv[i],"-projwin_srs") )
         {
             psOptions->pszProjSRS = CPLStrdup(papszArgv[i+1]);
             i++;
@@ -2156,13 +2156,13 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             psOptions->bErrorOnCompletelyOutside = TRUE;
         }
 
-        else if( EQUAL(papszArgv[i],"-a_srs") && i+1 < argc )
+        else if( i+1 < argc && EQUAL(papszArgv[i],"-a_srs") )
         {
             psOptions->pszOutputSRS = CPLStrdup(papszArgv[i+1]);
             i++;
         }
 
-        else if( EQUAL(papszArgv[i],"-expand") && i+1 < argc && papszArgv[i+1] != NULL )
+        else if( i+1 < argc && EQUAL(papszArgv[i],"-expand") && papszArgv[i+1] != NULL )
         {
             i++;
             if (EQUAL(papszArgv[i], "gray"))
@@ -2195,7 +2195,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
         {
             psOptions->bNoRAT = TRUE;
         }
-        else if( EQUAL(papszArgv[i], "-oo") && i+1 < argc )
+        else if( i+1 < argc && EQUAL(papszArgv[i], "-oo") )
         {
             i++;
             if( psOptionsForBinary )
@@ -2205,7 +2205,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
                                                 papszArgv[i] );
             }
         }
-        else if( EQUAL(papszArgv[i],"-r") && i+1 < argc )
+        else if( i+1 < argc && EQUAL(papszArgv[i],"-r") )
         {
             psOptions->pszResampling = CPLStrdup(papszArgv[++i]);
         }

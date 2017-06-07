@@ -301,6 +301,7 @@ class GDALRasterAttributeField
 
 //! Raster Attribute Table container.
 
+// cppcheck-suppress copyCtorAndEqOperator
 class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
 {
  private:

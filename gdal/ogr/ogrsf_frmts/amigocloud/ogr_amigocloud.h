@@ -60,6 +60,7 @@ class OGRAmigoCloudGeomFieldDefn: public OGRGeomFieldDefn
         }
 };
 
+// cppcheck-suppress copyCtorAndEqOperator
 class OGRAmigoCloudFID
 {
     public:
