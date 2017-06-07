@@ -6207,9 +6207,10 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         bTreatAsSubdataset = false;
         poDS->eFormat = eTmpFormat;
     }
+    else
 #endif
 
-    else if( STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:") )
     {
         char **papszName =
             CSLTokenizeString2(poOpenInfo->pszFilename,
