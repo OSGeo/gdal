@@ -105,6 +105,11 @@ int OGRRECDataSource::Open( const char * pszFilename )
 /*      field that is a number greater than zero.                       */
 /* -------------------------------------------------------------------- */
     const char * pszLine = CPLReadLine( fp );
+    if( pszLine == NULL )
+    {
+        VSIFClose( fp );
+        return FALSE;
+    }
 
     const int nFieldCount = atoi(pszLine);
     if( nFieldCount < 1 || nFieldCount > 1000 )
