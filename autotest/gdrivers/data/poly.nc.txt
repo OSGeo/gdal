@@ -1,0 +1,64 @@
+netcdf poly {
+dimensions:
+	record = 2 ;
+	ogc_wkt_max_width = 1000 ;
+	PRFEDEA_max_width = 16 ;
+variables:
+	char ogc_wkt(record, ogc_wkt_max_width) ;
+		ogc_wkt:long_name = "Geometry as ISO WKT" ;
+		ogc_wkt:grid_mapping = "transverse_mercator" ;
+	char transverse_mercator ;
+		transverse_mercator:grid_mapping_name = "transverse_mercator" ;
+		transverse_mercator:longitude_of_central_meridian = -2. ;
+		transverse_mercator:false_easting = 400000. ;
+		transverse_mercator:false_northing = -100000. ;
+		transverse_mercator:latitude_of_projection_origin = 49. ;
+		transverse_mercator:scale_factor_at_central_meridian = 0.9996012717 ;
+		transverse_mercator:long_name = "CRS definition" ;
+		transverse_mercator:longitude_of_prime_meridian = 0. ;
+		transverse_mercator:semi_major_axis = 6377563.396 ;
+		transverse_mercator:inverse_flattening = 299.3249646 ;
+		transverse_mercator:spatial_ref = "PROJCS[\"OSGB 1936 / British National Grid\",GEOGCS[\"OSGB 1936\",DATUM[\"OSGB_1936\",SPHEROID[\"Airy_1830\",6377563.396,299.3249646]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",49],PARAMETER[\"central_meridian\",-2],PARAMETER[\"scale_factor\",0.9996012717],PARAMETER[\"false_easting\",400000],PARAMETER[\"false_northing\",-100000],UNIT[\"Meter\",1]]" ;
+	double AREA(record) ;
+		AREA:long_name = "Field AREA" ;
+		AREA:ogr_field_name = "AREA" ;
+		AREA:ogr_field_type = "Real" ;
+		AREA:ogr_field_width = 12 ;
+		AREA:ogr_field_precision = 3 ;
+		AREA:grid_mapping = "transverse_mercator" ;
+	double EAS_ID(record) ;
+		EAS_ID:long_name = "Field EAS_ID" ;
+		EAS_ID:ogr_field_name = "EAS_ID" ;
+		EAS_ID:ogr_field_type = "Integer64" ;
+		EAS_ID:ogr_field_width = 11 ;
+		EAS_ID:grid_mapping = "transverse_mercator" ;
+	char PRFEDEA(record, PRFEDEA_max_width) ;
+		PRFEDEA:long_name = "Field PRFEDEA" ;
+		PRFEDEA:ogr_field_name = "PRFEDEA" ;
+		PRFEDEA:ogr_field_type = "String" ;
+		PRFEDEA:ogr_field_width = 16 ;
+		PRFEDEA:grid_mapping = "transverse_mercator" ;
+
+// global attributes:
+		:Conventions = "CF-1.6" ;
+		:GDAL = "GDAL 2.3.0dev, released 2017/99/99" ;
+		:history = "Wed Jun 07 11:30:26 2017: GDAL Create( poly.nc, ... )" ;
+		:ogr_layer_name = "poly" ;
+		:ogr_geometry_field = "ogc_wkt" ;
+		:ogr_layer_type = "POLYGON" ;
+data:
+
+ ogc_wkt =
+  "POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5))",
+  "POLYGON ((480035.34375 4765558.5,480039.03125 4765539.5,479730.375 4765400.5,479647.0 4765369.5,479690.1875 4765259.5,479819.84375 4765180.5,479779.84375 4765109.5,479681.78125 4764940.0,479468.0 4764942.5,479411.4375 4764940.5,479353.0 4764939.5,479208.65625 4764882.5,479196.8125 4764879.0,479123.28125 4765015.0,479046.53125 4765117.0,479029.71875 4765110.5,479014.9375 4765147.5,479149.9375 4765200.5,479639.625 4765399.5,480035.34375 4765558.5))" ;
+
+ transverse_mercator = "" ;
+
+ AREA = 215229.266, 247328.172 ;
+
+ EAS_ID = 168, 179 ;
+
+ PRFEDEA =
+  "3504\"3411",
+  "35043423" ;
+}

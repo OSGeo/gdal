@@ -6055,6 +6055,67 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                         CSLDestroy(papszTokens);
                     }
                 }
+                else if( oMapVarIdToType[nVarId] == NC_CHAR )
+                {
+                    if( aoStart.size() == 2 )
+                    {
+                        std::vector<CPLString> aoStrings;
+                        bool bInString = false;
+                        CPLString osCurString;
+                        for( size_t i = 0; i < osAccVal.size() ; )
+                        {
+                            if( !bInString )
+                            {
+                                if( osAccVal[i] == '"' )
+                                {
+                                    bInString = true;
+                                    osCurString.clear();
+                                }
+                                i++;
+                            }
+                            else if( osAccVal[i] == '\\' &&
+                                i + 1 < osAccVal.size() &&
+                                     osAccVal[i+1] == '"' )
+                            {
+                                osCurString += '"';
+                                i += 2;
+                            }
+                            else if( osAccVal[i] == '"' )
+                            {
+                                aoStrings.push_back(osCurString);
+                                osCurString.clear();
+                                bInString = false;
+                                i ++;
+                            }
+                            else
+                            {
+                                osCurString += osAccVal[i];
+                                i ++;
+                            }
+                        }
+                        const size_t nRecords = oMapDimIdToDimLen[aoDimIds[0]];
+                        const size_t nWidth = oMapDimIdToDimLen[aoDimIds[1]];
+                        size_t nIters = aoStrings.size();
+                        if( nIters > nRecords )
+                            nIters = nRecords;
+                        for(size_t i=0; i< nIters; i++)
+                        {
+                            size_t anIndex[2];
+                            anIndex[0] = i;
+                            anIndex[1] = 0;
+                            size_t anCount[2];
+                            anCount[0] = 1;
+                            anCount[1] = aoStrings[i].size();
+                            if( anCount[1] > nWidth )
+                                anCount[1] = nWidth;
+                            status = nc_put_vara_text(
+                                nCdfId, nVarId, anIndex, anCount,
+                                aoStrings[i].c_str());
+                            if( status != NC_NOERR )
+                                break;
+                        }
+                    }
+                }
                 if( status != NC_NOERR )
                 {
                     CPLDebug("netCDF", "nc_put_var_(%s) failed: %s",
