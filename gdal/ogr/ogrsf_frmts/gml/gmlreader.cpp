@@ -702,19 +702,19 @@ int GMLReader::GetFeatureElementIndex( const char *pszElement,
 
         // Begin of CSW SearchResults.
         else if (nElementLength == (int)strlen("BriefRecord") &&
-                 nLenLast == (int)strlen("SearchResults") &&
+                 nLenLast == strlen("SearchResults") &&
                  strcmp(pszElement, "BriefRecord") == 0 &&
                  strcmp(pszLast, "SearchResults") == 0)
         {
         }
         else if (nElementLength == (int)strlen("SummaryRecord") &&
-                 nLenLast == (int)strlen("SearchResults") &&
+                 nLenLast == strlen("SearchResults") &&
                  strcmp(pszElement, "SummaryRecord") == 0 &&
                  strcmp(pszLast, "SearchResults") == 0)
         {
         }
         else if (nElementLength == (int)strlen("Record") &&
-                 nLenLast == (int)strlen("SearchResults") &&
+                 nLenLast == strlen("SearchResults") &&
                  strcmp(pszElement, "Record") == 0 &&
                  strcmp(pszLast, "SearchResults") == 0)
         {
