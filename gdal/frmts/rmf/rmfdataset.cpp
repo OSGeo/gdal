@@ -1349,10 +1349,30 @@ do {                                                                    \
         }
     }
 #endif
+    if( poDS->sHeader.nWidth >= INT_MAX ||
+        poDS->sHeader.nHeight >= INT_MAX ||
+        !GDALCheckDatasetDimensions(poDS->sHeader.nWidth, poDS->sHeader.nHeight) )
+    {
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*  Read array of blocks offsets/sizes.                                 */
 /* -------------------------------------------------------------------- */
+
+    // To avoid useless excessive memory allocation
+    if( poDS->sHeader.nTileTblSize > 1000000 )
+    {
+        VSIFSeekL( poDS->fp, 0, SEEK_END );
+        vsi_l_offset nFileSize = VSIFTellL( poDS->fp );
+        if( nFileSize < poDS->sHeader.nTileTblSize )
+        {
+            delete poDS;
+            return NULL;
+        }
+    }
+
     if( VSIFSeekL( poDS->fp,
                    poDS->GetFileOffset( poDS->sHeader.nTileTblOffset ),
                    SEEK_SET ) < 0 )
@@ -1361,7 +1381,6 @@ do {                                                                    \
         return NULL;
     }
 
-    /* coverity[tainted_data] */
     poDS->paiTiles = reinterpret_cast<GUInt32 *>(
         VSIMalloc( poDS->sHeader.nTileTblSize ) );
     if( !poDS->paiTiles )
@@ -1415,12 +1434,6 @@ do {                                                                    \
 
     poDS->nRasterXSize = poDS->sHeader.nWidth;
     poDS->nRasterYSize = poDS->sHeader.nHeight;
-
-    if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) )
-    {
-        delete poDS;
-        return NULL;
-    }
 
     if( poDS->eRMFType == RMFT_RSW )
     {
