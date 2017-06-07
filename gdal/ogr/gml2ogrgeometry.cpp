@@ -1596,7 +1596,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return NULL;
         }
 
-        if( poCC->getNumPoints() != 3 )
+        // Normally a gml:Arc has only 3 points of controls, but in the
+        // wild we can found some GML with 5 points, so accept any odd
+        // number >= 3 (ArcString should be used for > 3 points)
+        if( poCC->getNumPoints() < 3 || (poCC->getNumPoints() % 2) != 1 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Bad number of points in Arc");
