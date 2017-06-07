@@ -63,6 +63,7 @@ build_ogr_specialized_fuzzer mitab_mif OGRRegisterAll "/vsimem/test.tar" "/vsita
 build_ogr_specialized_fuzzer mitab_tab OGRRegisterAll "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.tab"
 build_ogr_specialized_fuzzer csv RegisterOGRCSV "/vsimem/test.csv" "/vsimem/test.csv"
 build_fuzzer cad_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRCAD
+build_fuzzer rec_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRREC -DUSE_FILESYSTEM -DEXTENSION="\"rec\""
 
 formats="GTiff HFA"
 for format in $formats; do
