@@ -46,7 +46,7 @@ typedef enum
 
 class OGRElasticDataSource;
 
-
+// cppcheck-suppress copyCtorAndEqOperator
 class OGRESSortDesc
 {
     public:

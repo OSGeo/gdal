@@ -118,7 +118,7 @@ if [[ $? -eq 0 ]] ; then
     ret_code=1
 fi
 
-grep "syntaxError" ${LOG_FILE}
+grep "syntaxError" ${LOG_FILE} | grep -v "is invalid C code"
 if [[ $? -eq 0 ]] ; then
     echo "syntaxError check failed"
     ret_code=1
@@ -465,7 +465,8 @@ grep "error," ${LOG_FILE} | grep -v "uninitvar" | \
     grep -v "frmts/hdf4/hdf-eos/EHapi.c:2159,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
     grep -v "frmts/hdf4/hdf-eos/EHapi.c:2208,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
     grep -v "frmts/hdf4/hdf-eos/EHapi.c:2227,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
-    grep -v "frmts/grib/degrib18/g2clib-1.0.4"
+    grep -v "frmts/grib/degrib18/g2clib-1.0.4" | \
+    grep -v "is invalid C code"
 
 if [[ $? -eq 0 ]] ; then
     echo "Errors check failed"

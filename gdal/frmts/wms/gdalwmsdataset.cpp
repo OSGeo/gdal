@@ -119,7 +119,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     if (pszReferer[0] != '\0')
         m_osReferer = pszReferer;
 
-    if (ret == CE_None) {
+    {
         const char *pszHttpZeroBlockCodes = CPLGetXMLValue(config, "ZeroBlockHttpCodes", "");
         if (pszHttpZeroBlockCodes[0] == '\0') {
             m_http_zeroblock_codes.insert(204);

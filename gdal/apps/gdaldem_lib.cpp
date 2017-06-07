@@ -361,8 +361,8 @@ CPLErr GDALGeneric3x3Processing(
     if( !bDstHasNoData )
         fDstNoDataValue = 0.0;
 
-    int nLine1Off = 0*nXSize;
-    int nLine2Off = 1*nXSize;
+    int nLine1Off = 0;
+    int nLine2Off = nXSize;
     int nLine3Off = 2*nXSize;
 
     // Move a 3x3 pafWindow over each cell
@@ -3787,7 +3787,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
             continue;
         }
 
-        if( EQUAL(papszArgv[i],"-of") && i < argc-1 )
+        if( i < argc-1 && EQUAL(papszArgv[i],"-of") )
         {
             ++i;
             CPLFree(psOptions->pszFormat);

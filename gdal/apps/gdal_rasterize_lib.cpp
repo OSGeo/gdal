@@ -797,7 +797,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
     int argc = CSLCount(papszArgv);
     for( int i = 0; papszArgv != NULL && i < argc; i++ )
     {
-        if( EQUAL(papszArgv[i],"-of") && i < argc-1 )
+        if( i < argc-1 && EQUAL(papszArgv[i],"-of") )
         {
             ++i;
             CPLFree(psOptions->pszFormat);
@@ -815,12 +815,12 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
                 psOptionsForBinary->bQuiet = TRUE;
         }
 
-        else if( EQUAL(papszArgv[i],"-a") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-a") )
         {
             CPLFree(psOptions->pszBurnAttribute);
             psOptions->pszBurnAttribute = CPLStrdup(papszArgv[++i]);
         }
-        else if( EQUAL(papszArgv[i],"-b") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-b") )
         {
             if (strchr(papszArgv[i+1], ' '))
             {
@@ -854,7 +854,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             psOptions->papszRasterizeOptions =
                 CSLSetNameValue( psOptions->papszRasterizeOptions, "MERGE_ALG", "ADD");
         }
-        else if( EQUAL(papszArgv[i],"-chunkysize") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-chunkysize") )
         {
             psOptions->papszRasterizeOptions =
                 CSLSetNameValue( psOptions->papszRasterizeOptions, "CHUNKYSIZE",
@@ -869,7 +869,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             psOptions->papszRasterizeOptions =
                 CSLSetNameValue( psOptions->papszRasterizeOptions, "ALL_TOUCHED", "TRUE" );
         }
-        else if( EQUAL(papszArgv[i],"-burn") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-burn") )
         {
             if (strchr(papszArgv[i+1], ' '))
             {
@@ -892,26 +892,26 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
                 }
             }
         }
-        else if( EQUAL(papszArgv[i],"-where") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-where") )
         {
             CPLFree(psOptions->pszWHERE);
             psOptions->pszWHERE = CPLStrdup(papszArgv[++i]);
         }
-        else if( EQUAL(papszArgv[i],"-l") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-l") )
         {
             psOptions->papszLayers = CSLAddString( psOptions->papszLayers, papszArgv[++i] );
         }
-        else if( EQUAL(papszArgv[i],"-sql") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-sql") )
         {
             CPLFree(psOptions->pszSQL);
             psOptions->pszSQL = CPLStrdup(papszArgv[++i]);
         }
-        else if( EQUAL(papszArgv[i],"-dialect") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-dialect") )
         {
             CPLFree(psOptions->pszDialect);
             psOptions->pszDialect = CPLStrdup(papszArgv[++i]);
         }
-        else if( EQUAL(papszArgv[i],"-init") && i < argc - 1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-init") )
         {
             if (strchr(papszArgv[i+1], ' '))
             {
@@ -935,14 +935,14 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             }
             psOptions->bCreateOutput = TRUE;
         }
-        else if( EQUAL(papszArgv[i],"-a_nodata") && i < argc - 1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-a_nodata") )
         {
             psOptions->dfNoData = CPLAtof(papszArgv[i+1]);
             psOptions->bNoDataSet = TRUE;
             i += 1;
             psOptions->bCreateOutput = TRUE;
         }
-        else if( EQUAL(papszArgv[i],"-a_srs") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-a_srs") )
         {
             OSRDestroySpatialReference(psOptions->hSRS);
             psOptions->hSRS = OSRNewSpatialReference( NULL );
@@ -960,7 +960,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             psOptions->bCreateOutput = TRUE;
         }
 
-        else if( EQUAL(papszArgv[i],"-te") && i < argc - 4 )
+        else if( i < argc-4 && EQUAL(papszArgv[i],"-te") )
         {
             psOptions->sEnvelop.MinX = CPLAtof(papszArgv[++i]);
             psOptions->sEnvelop.MinY = CPLAtof(papszArgv[++i]);
@@ -969,7 +969,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             psOptions->bGotBounds = TRUE;
             psOptions->bCreateOutput = TRUE;
         }
-        else if( EQUAL(papszArgv[i],"-a_ullr") && i < argc - 4 )
+        else if( i < argc-4 && EQUAL(papszArgv[i],"-a_ullr") )
         {
             psOptions->sEnvelop.MinX = CPLAtof(papszArgv[++i]);
             psOptions->sEnvelop.MaxY = CPLAtof(papszArgv[++i]);
@@ -978,12 +978,12 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             psOptions->bGotBounds = TRUE;
             psOptions->bCreateOutput = TRUE;
         }
-        else if( EQUAL(papszArgv[i],"-co") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-co") )
         {
             psOptions->papszCreationOptions = CSLAddString( psOptions->papszCreationOptions, papszArgv[++i] );
             psOptions->bCreateOutput = TRUE;
         }
-        else if( EQUAL(papszArgv[i],"-ot") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-ot") )
         {
             int iType;
 
@@ -1007,7 +1007,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             i++;
             psOptions->bCreateOutput = TRUE;
         }
-        else if( (EQUAL(papszArgv[i],"-ts") || EQUAL(papszArgv[i],"-outsize")) && i < argc-2 )
+        else if( i < argc-2 && (EQUAL(papszArgv[i],"-ts") || EQUAL(papszArgv[i],"-outsize")) )
         {
             psOptions->nXSize = atoi(papszArgv[++i]);
             psOptions->nYSize = atoi(papszArgv[++i]);
@@ -1020,7 +1020,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             }
             psOptions->bCreateOutput = TRUE;
         }
-        else if( EQUAL(papszArgv[i],"-tr") && i < argc-2 )
+        else if( i < argc-2 && EQUAL(papszArgv[i],"-tr") )
         {
             psOptions->dfXRes = CPLAtof(papszArgv[++i]);
             psOptions->dfYRes = fabs(CPLAtof(papszArgv[++i]));
