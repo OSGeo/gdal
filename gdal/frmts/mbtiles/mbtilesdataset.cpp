@@ -1656,8 +1656,8 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
     const char* pszSQL =
         CPLSPrintf("SELECT tile_data FROM tiles WHERE "
                    "tile_column = %d AND tile_row = %d AND zoom_level = %d",
-                   (nMinTileCol  + nMaxTileCol) / 2,
-                   (nMinTileRow  + nMaxTileRow) / 2,
+                   nMinTileCol / 2 + nMaxTileCol / 2,
+                   nMinTileRow / 2 + nMaxTileRow / 2,
                    nMaxLevel);
     CPLDebug("MBTILES", "%s", pszSQL);
 
