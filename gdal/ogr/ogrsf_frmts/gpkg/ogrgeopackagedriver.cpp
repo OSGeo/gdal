@@ -407,6 +407,10 @@ COMPRESSION_OPTIONS
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
+#ifdef ENABLE_SQL_GPKG_FORMAT
+    poDriver->SetMetadataItem("ENABLE_SQL_GPKG_FORMAT", "YES");
+#endif
+
     poDriver->pfnOpen = OGRGeoPackageDriverOpen;
     poDriver->pfnIdentify = OGRGeoPackageDriverIdentify;
     poDriver->pfnCreate = OGRGeoPackageDriverCreate;

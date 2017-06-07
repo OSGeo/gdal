@@ -2944,6 +2944,9 @@ def netcdf_75():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
+    if gdaltest.netcdf_drv.GetMetadataItem("ENABLE_NCDUMP") != 'YES':
+        return 'skip'
+
     tst = gdaltest.GDALTest( 'NetCDF', 'byte.nc.txt',
                              1, 4672 )
 
@@ -2974,6 +2977,9 @@ def netcdf_75():
 def netcdf_76():
 
     if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if gdaltest.netcdf_drv.GetMetadataItem("ENABLE_NCDUMP") != 'YES':
         return 'skip'
 
     ds = ogr.Open('data/poly.nc.txt')

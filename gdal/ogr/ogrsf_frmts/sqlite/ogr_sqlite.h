@@ -67,10 +67,12 @@
 
 #define UNINITIALIZED_SRID  -2
 
+#if defined(DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) || defined(ALLOW_FORMAT_DUMPS)
 // Enable accepting a SQL dump (starting with a "-- SQL SQLITE" or
 // "-- SQL RASTERLITE" or "--SQL MBTILES" line) as a valid
 // file. This makes fuzzer life easier
 #define ENABLE_SQL_SQLITE_FORMAT
+#endif
 
 /************************************************************************/
 /*      Format used to store geometry data in the database.             */

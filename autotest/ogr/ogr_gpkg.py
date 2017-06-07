@@ -4326,6 +4326,9 @@ def ogr_gpkg_51():
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
+    if gdaltest.gpkg_dr.GetMetadataItem("ENABLE_SQL_GPKG_FORMAT") != 'YES':
+        return 'skip'
+
     ds = ogr.Open('data/poly.gpkg.sql')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -4356,6 +4359,9 @@ def ogr_gpkg_52():
 def ogr_gpkg_53():
 
     if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    if gdaltest.gpkg_dr.GetMetadataItem("ENABLE_SQL_GPKG_FORMAT") != 'YES':
         return 'skip'
 
     ds = ogr.Open('data/poly_inconsistent_case.gpkg.sql')
