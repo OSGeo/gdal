@@ -101,6 +101,18 @@ rm -f $OUT/cad_fuzzer_seed_corpus.zip
 zip -r $OUT/cad_fuzzer_seed_corpus.zip . >/dev/null
 cd $OLDPWD
 
+echo "Building csv_fuzzer_seed_corpus.zip"
+cd $(dirname $0)/../../autotest/ogr/data
+rm -f $OUT/csv_fuzzer_seed_corpus.zip
+zip -r $OUT/csv_fuzzer_seed_corpus.zip *.csv >/dev/null
+cd $OLDPWD
+
+echo "Building rec_fuzzer_seed_corpus.zip"
+cd $(dirname $0)/../../autotest/ogr/data
+rm -f $OUT/rec_fuzzer_seed_corpus.zip
+zip -r $OUT/rec_fuzzer_seed_corpus.zip *.rec >/dev/null
+cd $OLDPWD
+
 echo "Building shape_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > poly_shp.tar
 printf "***NEWFILE***:my.shp\n" >> poly_shp.tar
