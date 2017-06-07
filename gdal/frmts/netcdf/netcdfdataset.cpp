@@ -2843,7 +2843,8 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
         nc_inq_varid(cdfid, poDS->papszDimName[nYDimID], &nVarDimYID);
     }
 
-    if( !bReadSRSOnly && (nVarDimXID != -1) && (nVarDimYID != -1) )
+    if( !bReadSRSOnly && (nVarDimXID != -1) && (nVarDimYID != -1) &&
+        xdim > 0 && ydim > 0 )
     {
         pdfXCoord = static_cast<double *>(CPLCalloc(xdim, sizeof(double)));
         pdfYCoord = static_cast<double *>(CPLCalloc(ydim, sizeof(double)));
@@ -7191,6 +7192,23 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                  nMaxBandCount,
                  static_cast<unsigned int>(nTotLevCount));
         nTotLevCount = static_cast<unsigned int>(nMaxBandCount);
+    }
+    if( poDS->nRasterXSize == 0 || poDS->nRasterYSize == 0 )
+    {
+        poDS->nRasterXSize = 0;
+        poDS->nRasterYSize = 0;
+        nTotLevCount = 0;
+        if( poDS->nLayers == 0 )
+        {
+            CPLFree(paDimIds);
+            CPLFree(panBandDimPos);
+            CPLFree(panBandZLev);
+            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                        // with GDALDataset own mutex.
+            delete poDS;
+            CPLAcquireMutex(hNCMutex, 1000.0);
+            return NULL;
+        }
     }
     for( unsigned int lev = 0; lev < nTotLevCount ; lev++ )
     {
