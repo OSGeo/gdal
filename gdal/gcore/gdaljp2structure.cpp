@@ -139,7 +139,7 @@ static void DumpGeoTIFFBox(CPLXMLNode* psBox,
     {
         CPLString osTmpFilename(CPLSPrintf("/vsimem/tmp_%p.tif", oBox.GetFILE()));
         CPL_IGNORE_RET_VAL(VSIFCloseL(VSIFileFromMemBuffer(
-            osTmpFilename, pabyBoxData, nBoxDataLength, TRUE) ));
+            osTmpFilename, pabyBoxData, nBoxDataLength, FALSE) ));
         CPLPushErrorHandler(CPLQuietErrorHandler);
         GDALDataset* poDS = (GDALDataset*) GDALOpen(osTmpFilename, GA_ReadOnly);
         CPLPopErrorHandler();
