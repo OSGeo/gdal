@@ -88,6 +88,9 @@ echo "max_len = 100000" >> $OUT/wkb_import_fuzzer.options
 echo "[libfuzzer]" > $OUT/wkt_import_fuzzer.options
 echo "max_len = 100000" >> $OUT/wkt_import_fuzzer.options
 
+echo "[libfuzzer]" > $OUT/gml_geom_import_fuzzer.options
+echo "max_len = 100000" >> $OUT/gml_geom_import_fuzzer.options
+
 echo "[libfuzzer]" > $OUT/spatialite_geom_import_fuzzer.options
 echo "max_len = 100000" >> $OUT/spatialite_geom_import_fuzzer.options
 

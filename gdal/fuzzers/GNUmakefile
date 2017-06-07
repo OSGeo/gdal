@@ -7,6 +7,7 @@ OBJ	=	gdal_fuzzer.o \
 		wkt_import_fuzzer.o \
 		osr_set_from_user_input_fuzzer.o \
 		spatialite_geom_import_fuzzer.o \
+		gml_geom_import_fuzzer.o \
 		fuzzingengine.o
 
 CPPFLAGS	:=	$(CPPFLAGS) -I../ogr/ogrsf_frmts/sqlite
