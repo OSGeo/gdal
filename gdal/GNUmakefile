@@ -42,8 +42,12 @@ force-lib:
 	$(LD_SHARED) $(GDAL_SLIB_SONAME) $(GDAL_OBJ) $(GDAL_LIBS) $(LDFLAGS) $(LIBS) \
 		-o $(GDAL_SLIB)
 
-# convenient alias
-static-lib: $(GDAL_LIB)
+static-lib: lib-dependencies GDALmake.opt
+	$(MAKE) static-lib-stage2
+	
+static-lib-stage2: $(GDAL_OBJ)
+	rm -f libgdal.a
+	$(AR) r $(GDAL_LIB) $(GDAL_OBJ)
 
 $(GDAL_LIB):	$(GDAL_OBJ) GDALmake.opt
 	rm -f libgdal.a
@@ -63,7 +67,9 @@ ifeq ($(MACOSX_FRAMEWORK),yes)
 	install_name_tool -id ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL .libs/libgdal.dylib
 endif
 
-check-lib:	port-target core-target frmts-target ogr-target gnm-target appslib-target
+lib-dependencies:	port-target core-target frmts-target ogr-target gnm-target appslib-target
+
+check-lib:	lib-dependencies
 	$(MAKE) $(LIBGDAL-yes)
 
 appslib-target:
