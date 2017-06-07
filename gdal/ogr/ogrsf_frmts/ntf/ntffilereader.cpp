@@ -931,7 +931,8 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
         if( nFWidth == 0 )
         {
             const char * pszData2 = poRecord->GetData();
-
+            if( iOffset + 2 >= poRecord->GetLength() )
+                break;
             for( nEnd = iOffset + 2;
                  pszData2[nEnd] != '\\' && pszData2[nEnd] != '\0';
                  nEnd++ ) {}
@@ -954,6 +955,8 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
         if( nFWidth == 0 )
         {
             iOffset = nEnd;
+            if( iOffset >= poRecord->GetLength() )
+                break;
             if( pszData[iOffset] == '\\' )
                 iOffset++;
         }
