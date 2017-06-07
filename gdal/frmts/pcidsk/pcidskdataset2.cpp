@@ -1825,7 +1825,14 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
                 return NULL;
             }
 
-            poDS->SetBand( iBand+1, new PCIDSK2Band( poDS, poFile, iBand+1 ));
+            if( PCIDSK2Dataset::PCIDSKTypeToGDAL( poChannel->GetType() )
+                    == GDT_Unknown )
+            {
+                continue;
+            }
+
+            poDS->SetBand( poDS->GetRasterCount() + 1,
+                new PCIDSK2Band( poDS, poFile, poDS->GetRasterCount() + 1 ));
         }
 
 /* -------------------------------------------------------------------- */
@@ -1845,6 +1852,12 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
             {
                 delete poDS;
                 return NULL;
+            }
+
+            if( PCIDSK2Dataset::PCIDSKTypeToGDAL( poChannel->GetType() )
+                    == GDT_Unknown )
+            {
+                continue;
             }
 
             poDS->SetBand( poDS->GetRasterCount()+1,
