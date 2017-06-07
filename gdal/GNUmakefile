@@ -195,6 +195,21 @@ web-update:	docs
 
 install:	default install-actions
 
+install-static-lib: static-lib gdal.pc
+	$(INSTALL_LIB) $(GDAL_LIB) $(DESTDIR)$(INST_LIB)
+	$(INSTALL_DIR) $(DESTDIR)$(INST_DATA)
+	$(INSTALL_DIR) $(DESTDIR)$(INST_INCLUDE)
+	(cd port; $(MAKE) install)
+	(cd gcore; $(MAKE) install)
+	(cd frmts; $(MAKE) install)
+	(cd alg; $(MAKE) install)
+	(cd ogr; $(MAKE) install)
+	(cd gnm; $(MAKE) install)
+	for f in LICENSE.TXT data/*.* ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_DATA) ; done
+	$(LIBTOOL_FINISH) $(DESTDIR)$(INST_LIB)
+	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)/pkgconfig
+	$(INSTALL_DATA) gdal.pc $(DESTDIR)$(INST_LIB)/pkgconfig/gdal.pc
+
 install-actions: install-lib
 	$(INSTALL_DIR) $(DESTDIR)$(INST_BIN)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_DATA)
