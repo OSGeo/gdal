@@ -35,10 +35,12 @@
 
 #include <algorithm>
 
+#if defined(DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) || defined(ALLOW_FORMAT_DUMPS)
 // Enable accepting a SQL dump (starting with a "-- SQL SQLITE" or
 // "-- SQL RASTERLITE" line) as a valid
 // file. This makes fuzzer life easier
 #define ENABLE_SQL_SQLITE_FORMAT
+#endif
 
 CPL_CVSID("$Id$");
 
@@ -1479,6 +1481,10 @@ void GDALRegister_Rasterlite()
 "   <Option name='FILTER' type='string' description='(EPSILON driver) Filter ID' default='daub97lift'/>"
 "</CreationOptionList>" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+#ifdef ENABLE_SQL_SQLITE_FORMAT
+    poDriver->SetMetadataItem("ENABLE_SQL_SQLITE_FORMAT", "YES");
+#endif
 
     poDriver->pfnOpen = RasterliteDataset::Open;
     poDriver->pfnIdentify = RasterliteDataset::Identify;

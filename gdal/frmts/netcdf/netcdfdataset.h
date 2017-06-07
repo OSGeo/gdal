@@ -42,9 +42,11 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 
+#if defined(DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) || defined(ALLOW_FORMAT_DUMPS)
 // Whether to support opening a ncdump file as a file dataset
 // Useful for fuzzing purposes
 #define ENABLE_NCDUMP
+#endif
 
 
 /************************************************************************/

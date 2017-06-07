@@ -8399,6 +8399,10 @@ void GDALRegister_netCDF()
     poDriver->SetMetadataItem("GDAL_HAS_HDF5", "YES");
 #endif
 
+#ifdef ENABLE_NCDUMP
+    poDriver->SetMetadataItem("ENABLE_NCDUMP", "YES");
+#endif
+
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
                               "Integer Integer64 Real String Date DateTime");
 

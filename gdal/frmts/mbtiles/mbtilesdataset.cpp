@@ -52,9 +52,11 @@ static const char * const apszAllowedDrivers[] = {"JPEG", "PNG", NULL};
 #define TMS_ORIGIN_X        -MAX_GM
 #define TMS_ORIGIN_Y         MAX_GM
 
+#if defined(DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) || defined(ALLOW_FORMAT_DUMPS)
 // Enable accepting a SQL dump (starting with a "-- SQL MBTILES" line) as a valid
 // file. This makes fuzzer life easier
 #define ENABLE_SQL_SQLITE_FORMAT
+#endif
 
 class MBTilesBand;
 
@@ -2759,6 +2761,10 @@ COMPRESSION_OPTIONS
 "  <Option name='WRITE_MINMAXZOOM' type='boolean' description='Whether to write the minzoom and maxzoom metadata' default='YES'/>"
 "</CreationOptionList>");
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+#ifdef ENABLE_SQL_SQLITE_FORMAT
+    poDriver->SetMetadataItem("ENABLE_SQL_SQLITE_FORMAT", "YES");
+#endif
 
     poDriver->pfnOpen = MBTilesDataset::Open;
     poDriver->pfnIdentify = MBTilesDataset::Identify;

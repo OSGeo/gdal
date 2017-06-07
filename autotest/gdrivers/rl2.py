@@ -618,6 +618,9 @@ def rl2_24():
     if gdaltest.rl2_drv is None:
         return 'skip'
 
+    if gdal.GetDriverByName('SQLite').GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
+        return 'skip'
+
     ds = gdal.Open('data/byte.rl2.sql')
     if ds.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('validation failed')

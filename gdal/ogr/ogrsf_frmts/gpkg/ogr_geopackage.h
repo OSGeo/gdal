@@ -42,9 +42,11 @@
 
 #define ENABLE_GPKG_OGR_CONTENTS
 
+#if defined(DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) || defined(ALLOW_FORMAT_DUMPS)
 // Enable accepting a SQL dump (starting with a "-- SQL GPKG" line) as a valid
 // file. This makes fuzzer life easier
 #define ENABLE_SQL_GPKG_FORMAT
+#endif
 
 typedef enum
 {

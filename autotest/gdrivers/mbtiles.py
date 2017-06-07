@@ -483,6 +483,9 @@ def mbtiles_11():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
+    if gdaltest.mbtiles_drv.GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
+        return 'skip'
+
     if gdal.GetDriverByName( 'PNG' ) is None:
         return 'skip'
     ds = gdal.Open('data/byte.mbtiles.sql')

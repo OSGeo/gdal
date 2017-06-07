@@ -3625,6 +3625,9 @@ def gpkg_44():
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
+    if gdaltest.gpkg_dr.GetMetadataItem("ENABLE_SQL_GPKG_FORMAT") != 'YES':
+        return 'skip'
+
     ds = gdal.Open('data/byte.gpkg.sql')
     if ds.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('validation failed')

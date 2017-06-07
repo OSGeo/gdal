@@ -3553,6 +3553,9 @@ def ogr_spatialite_12():
     if gdaltest.has_spatialite == False:
         return 'skip'
 
+    if gdal.GetDriverByName('SQLite').GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
+        return 'skip'
+
     ds = ogr.Open('data/poly_spatialite.sqlite.sql')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
