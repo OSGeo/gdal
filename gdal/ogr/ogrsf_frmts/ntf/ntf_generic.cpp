@@ -206,7 +206,7 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
                   {
                       NTFAttDesc *poAttDesc =
                           poReader->GetAttDesc( papszTypes[iAtt] );
-                      if( poAttDesc != NULL )
+                      if( poAttDesc != NULL && papszValues[iAtt] != NULL )
                       {
                           poClass->CheckAddAttr( poAttDesc->val_type,
                                                  poAttDesc->finter,
