@@ -2361,7 +2361,7 @@ static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
  * NOTES
  *****************************************************************************
  */
-void ParseGrid (gridAttribType *attrib, double **Grib_Data,
+void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
                 uInt4 *grib_DataLen, uInt4 Nx, uInt4 Ny, int scan,
                 sInt4 nd2x3, sInt4 *iain, sInt4 ibitmap, sInt4 *ib, double unitM,
                 double unitB, uChar f_wxType, sect2_WxType *WxType,
@@ -2402,15 +2402,35 @@ void ParseGrid (gridAttribType *attrib, double **Grib_Data,
    }
    
    if (subNx * subNy > *grib_DataLen) {
+
+      if( subNx * subNy > 100 * 1024 * 1024 )
+      {
+          long curPos = fp.DataSourceFtell();
+          fp.DataSourceFseek(0, SEEK_END);
+          long fileSize = fp.DataSourceFtell();
+          fp.DataSourceFseek(curPos, SEEK_SET);
+          // allow a compression ratio of 1:1000
+          if( subNx * subNy / 1000 > (uInt4)fileSize )
+          {
+            errSprintf ("ERROR: File too short\n");
+            *grib_DataLen = 0;
+            *Grib_Data = NULL;
+            return;
+          }
+      }
+
       *grib_DataLen = subNx * subNy;
-      *Grib_Data = (double *) realloc ((void *) (*Grib_Data),
+      double* newData = (double *) realloc ((void *) (*Grib_Data),
                                        (*grib_DataLen) * sizeof (double));
-      if( *Grib_Data == NULL )
+      if( newData == NULL )
       {
           errSprintf ("Memory allocation failed");
+          free(*Grib_Data);
+          *Grib_Data = NULL;
           *grib_DataLen = 0;
           return;
       }
+      *Grib_Data = newData;
    }
    grib_Data = *Grib_Data;
 
