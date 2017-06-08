@@ -69,6 +69,8 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     CPLSetConfigOption("GDAL_DATA", CPLGetPath(exe_path));
     CPLSetConfigOption("CPL_TMPDIR", "/tmp");
     CPLSetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", "YES");
+    // Disable PDF text rendering as fontconfig cannot access its config files
+    CPLSetConfigOption("GDAL_PDF_RENDERING_OPTIONS", "RASTER,VECTOR");
     return 0;
 }
 
