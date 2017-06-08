@@ -43,6 +43,16 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+#define DISABLE_CRC_CHECK
+#endif
+
+#ifdef DISABLE_CRC_CHECK
+// Needs to be defined before including png.h
+#define PNG_INTERNAL
+#endif
+
 #include "png.h"
 
 #include <csetjmp>

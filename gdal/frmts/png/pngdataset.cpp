@@ -462,6 +462,21 @@ void PNGDataset::FlushCache()
     }
 }
 
+#ifdef DISABLE_CRC_CHECK
+/************************************************************************/
+/*                     PNGDatasetDisableCRCCheck()                      */
+/************************************************************************/
+
+static void PNGDatasetDisableCRCCheck( png_structp hPNG )
+{
+    hPNG->flags &= ~PNG_FLAG_CRC_CRITICAL_MASK;
+    hPNG->flags |= PNG_FLAG_CRC_CRITICAL_IGNORE;
+
+    hPNG->flags &= ~PNG_FLAG_CRC_ANCILLARY_MASK;
+    hPNG->flags |= PNG_FLAG_CRC_ANCILLARY_NOWARN; 
+}
+#endif
+
 /************************************************************************/
 /*                              Restart()                               */
 /*                                                                      */
@@ -474,6 +489,10 @@ void PNGDataset::Restart()
     png_destroy_read_struct( &hPNG, &psPNGInfo, NULL );
 
     hPNG = png_create_read_struct( PNG_LIBPNG_VER_STRING, this, NULL, NULL );
+
+#ifdef DISABLE_CRC_CHECK
+    PNGDatasetDisableCRCCheck( hPNG );
+#endif
 
     png_set_error_fn( hPNG, &sSetJmpContext, png_gdal_error, png_gdal_warning );
     if( setjmp( sSetJmpContext ) != 0 )
@@ -983,6 +1002,10 @@ GDALDataset *PNGDataset::OpenStage2( GDALOpenInfo * poOpenInfo, PNGDataset*& poD
         delete poDS;
         return NULL;
     }
+
+#ifdef DISABLE_CRC_CHECK
+    PNGDatasetDisableCRCCheck( poDS->hPNG );
+#endif
 
     poDS->psPNGInfo = png_create_info_struct( poDS->hPNG );
 
