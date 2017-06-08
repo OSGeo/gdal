@@ -29,10 +29,6 @@
 
 //! @cond Doxygen_Suppress
 
-#ifdef RENAME_INTERNAL_LIBTIFF_SYMBOLS
-#include "../frmts/gtiff/libtiff/gdal_libtiff_symbol_rename.h"
-#endif
-
 static const struct gpsname {
     GUInt16     tag;
     const char* name;
@@ -223,16 +219,5 @@ typedef struct {
         GUInt32          tdir_count;     /* number of items; length in spec */
         GUInt32          tdir_offset;    /* byte offset to field data */
 } GDALEXIFTIFFDirEntry;
-
-CPL_C_START
-/* Table of tag datatype widths. */
-extern int TIFFDataWidth(GDALEXIFTIFFDataType);
-extern void TIFFSwabShort(GUInt16*);
-extern void TIFFSwabLong(GUInt32*);
-extern void TIFFSwabDouble(double*);
-extern void TIFFSwabArrayOfShort(GUInt16*, unsigned long);
-extern void TIFFSwabArrayOfLong(GUInt32*, unsigned long);
-extern void TIFFSwabArrayOfDouble(double*, unsigned long);
-CPL_C_END
 
 //! @endcond
