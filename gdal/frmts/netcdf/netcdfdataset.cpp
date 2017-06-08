@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <limits>
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -5653,6 +5654,7 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
     std::map<CPLString, int> oMapVarToId;
     std::map<int, std::vector<int> > oMapVarIdToVectorOfDimId;
     std::map<int, int> oMapVarIdToType;
+    std::set<CPLString> oSetAttrDefined;
     oMapVarToId[""] = -1;
     size_t nTotalVarSize = 0;
     while( (pszLine = CPLReadLineL(fpSrc)) != NULL )
@@ -5697,6 +5699,10 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                     }
                     else
                     {
+#ifdef DEBUG_VERBOSE
+                        CPLDebug("netCDF", "nc_def_dim(%s, %d) (%s) succeeded",
+                                 pszDimName, nDimSize, pszLine);
+#endif
                         oMapDimToId[pszDimName] = nDimId;
                         oMapDimIdToDimLen[nDimId] = nDimSize;
                     }
@@ -5715,6 +5721,34 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                 char** papszTokens = CSLTokenizeString2(pszLine, " \t=(),;", 0);
                 if( CSLCount(papszTokens) >= 2 )
                 {
+                    const char* pszVarName = papszTokens[1];
+                    bool bValidName = true;
+                    for( int i = 0; pszVarName[i]; i++ )
+                    {
+                        if( !((pszVarName[i] >= 'a' && pszVarName[i] <= 'z') ||
+                              (pszVarName[i] >= 'A' && pszVarName[i] <= 'Z') ||
+                              (pszVarName[i] >= '0' && pszVarName[i] <= '9') ||
+                              pszVarName[i] == '_') )
+                        {
+                            bValidName = false;
+                        }
+                    }
+                    if( !bValidName )
+                    {
+                        CPLDebug("netCDF",
+                                 "nc_def_var(%s) failed: illegal character found",
+                                 pszVarName);
+                        CSLDestroy(papszTokens);
+                        continue;
+                    }
+                    if( oMapVarToId.find(pszVarName) != oMapVarToId.end() )
+                    {
+                        CPLDebug("netCDF",
+                                 "nc_def_var(%s) failed: already defined",
+                                 pszVarName);
+                        CSLDestroy(papszTokens);
+                        continue;
+                    }
                     const char* pszVarType = papszTokens[0];
                     int nc_datatype = NC_BYTE;
                     size_t nDataTypeSize = 1;
@@ -5775,7 +5809,7 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                         nDataTypeSize = 8;
                     }
 #endif
-                    const char* pszVarName = papszTokens[1];
+
                     int nDims = CSLCount(papszTokens) - 2;
                     std::vector<int> aoDimIds;
                     bool bFailed = false;
@@ -5836,11 +5870,15 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                                    (nDims) ? &aoDimIds[0] : NULL, &nVarId);
                     if( status != NC_NOERR )
                     {
-                        CPLDebug("netCDF", "nc_def_var(%s) failed",
-                                 pszVarName);
+                        CPLDebug("netCDF", "nc_def_var(%s) failed: %s",
+                                 pszVarName, nc_strerror(status));
                     }
                     else
                     {
+#ifdef DEBUG_VERBOSE
+                        CPLDebug("netCDF", "nc_def_var(%s) (%s) succeeded",
+                                 pszVarName, pszLine);
+#endif
                         oMapVarToId[pszVarName] = nVarId;
                         oMapVarIdToType[nVarId] = nc_datatype;
                         oMapVarIdToVectorOfDimId[nVarId] = aoDimIds;
@@ -5854,7 +5892,40 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                 CPLString osAttrName( pszColumn + 1, pszEqual - pszColumn - 1);
                 osAttrName.Trim();
                 if( oMapVarToId.find(osVarName) == oMapVarToId.end() )
+                {
+                    CPLDebug("netCDF",
+                             "nc_put_att(%s:%s) failed: "
+                             "no corresponding variable",
+                             osVarName.c_str(), osAttrName.c_str());
                     continue;
+                }
+                bool bValidName = true;
+                for( size_t i = 0; i < osAttrName.size(); i++ )
+                {
+                    if( !((osAttrName[i] >= 'a' && osAttrName[i] <= 'z') ||
+                            (osAttrName[i] >= 'A' && osAttrName[i] <= 'Z') ||
+                            (osAttrName[i] >= '0' && osAttrName[i] <= '9') ||
+                            osAttrName[i] == '_') )
+                    {
+                        bValidName = false;
+                    }
+                }
+                if( !bValidName )
+                {
+                    CPLDebug("netCDF",
+                             "nc_put_att(%s:%s) failed: illegal character found",
+                             osVarName.c_str(), osAttrName.c_str());
+                    continue;
+                }
+                if( oSetAttrDefined.find(osVarName + ":" + osAttrName) !=
+                        oSetAttrDefined.end() )
+                {
+                    CPLDebug("netCDF",
+                             "nc_put_att(%s:%s) failed: already defined",
+                             osVarName.c_str(), osAttrName.c_str());
+                    continue;
+                }
+
                 const int nVarId = oMapVarToId[osVarName];
                 const char* pszValue = pszEqual + 1;
                 while( *pszValue == ' ' )
@@ -5914,39 +5985,72 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                     }
                     if( CPLGetValueType(osVal) == CPL_VALUE_INTEGER )
                     {
-                        if( nc_datatype == NC_BYTE )
-                        {
-                            signed char chVal =
-                                static_cast<signed char>(atoi(osVal));
-                            status = nc_put_att_schar(
-                                nCdfId, nVarId, osAttrName, NC_BYTE, 1, &chVal);
-                        }
-                        else if( nc_datatype == NC_SHORT )
-                        {
-                            short nVal =
-                                static_cast<short>(atoi(osVal));
-                            status = nc_put_att_short(
-                                nCdfId, nVarId, osAttrName, NC_SHORT, 1, &nVal);
-                        }
-                        else
-                        {
-                            int nVal = atoi(osVal);
-                            status = nc_put_att_int(
-                                nCdfId, nVarId, osAttrName, NC_INT, 1, &nVal);
-                        }
+                        if( nc_datatype < 0 )
+                            nc_datatype = NC_INT;
                     }
                     else if( CPLGetValueType(osVal) == CPL_VALUE_REAL )
+                    {
+                        nc_datatype = NC_DOUBLE;
+                    }
+                    else
+                    {
+                        nc_datatype = -1;
+                    }
+
+                    // For _FillValue, check that the attribute type matches
+                    // the variable type. Leaks memory with NC4 otherwise
+                    if( osAttrName == "_FillValue" )
+                    {
+                        if( nVarId < 0 ||
+                            nc_datatype != oMapVarIdToType[nVarId] )
+                        {
+                            nc_datatype = -1;
+                        }
+                    }
+
+                    if( nc_datatype == NC_BYTE )
+                    {
+                        signed char chVal =
+                            static_cast<signed char>(atoi(osVal));
+                        status = nc_put_att_schar(
+                            nCdfId, nVarId, osAttrName, NC_BYTE, 1, &chVal);
+                    }
+                    else if( nc_datatype == NC_SHORT )
+                    {
+                        short nVal =
+                            static_cast<short>(atoi(osVal));
+                        status = nc_put_att_short(
+                            nCdfId, nVarId, osAttrName, NC_SHORT, 1, &nVal);
+                    }
+                    else if( nc_datatype == NC_INT )
+                    {
+                        int nVal =
+                            static_cast<int>(atoi(osVal));
+                        status = nc_put_att_int(
+                            nCdfId, nVarId, osAttrName, NC_INT, 1, &nVal);
+                    }
+                    else if( nc_datatype == NC_DOUBLE )
                     {
                         double dfVal = CPLAtof(osVal);
                         status = nc_put_att_double(
                             nCdfId, nVarId, osAttrName, NC_DOUBLE, 1, &dfVal);
                     }
+
                 }
                 if( status != NC_NOERR )
                 {
                     CPLDebug("netCDF", "nc_put_att_(%s:%s) failed: %s",
                              osVarName.c_str(), osAttrName.c_str(),
                              nc_strerror(status));
+                }
+                else
+                {
+                    oSetAttrDefined.insert(osVarName + ":" + osAttrName);
+#ifdef DEBUG_VERBOSE
+                    CPLDebug("netCDF", "nc_put_att_(%s:%s) (%s) succeeded",
+                             osVarName.c_str(), osAttrName.c_str(),
+                             pszLine);
+#endif
                 }
             }
         }
