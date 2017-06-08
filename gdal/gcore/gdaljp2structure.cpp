@@ -700,12 +700,16 @@ static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         }
         if( nRemainingLength == 0 )
         {
+            const char* pszVRes =
+                (nDenomV == 0) ? "invalid" :
+                    CPLSPrintf("%.03f", 1.0 * nNumV / nDenomV * pow(10.0, nExpV));
             AddElement(psDecodedContent, psLastChild,
-                CPLCreateXMLElementAndValue( NULL, "VRes",
-                    CPLSPrintf("%.03f", 1.0 * nNumV / nDenomV * pow(10.0, nExpV))));
+                CPLCreateXMLElementAndValue( NULL, "VRes", pszVRes ));
+            const char* pszHRes = 
+                (nDenomH == 0) ? "invalid" :
+                    CPLSPrintf("%.03f", 1.0 * nNumH / nDenomH * pow(10.0, nExpH));
             AddElement(psDecodedContent, psLastChild,
-                CPLCreateXMLElementAndValue( NULL, "HRes",
-                CPLSPrintf("%.03f", 1.0 * nNumH / nDenomH * pow(10.0, nExpH))));
+                CPLCreateXMLElementAndValue( NULL, "HRes", pszHRes ));
         }
         else if( nRemainingLength > 0 )
             AddElement(psDecodedContent, psLastChild,
