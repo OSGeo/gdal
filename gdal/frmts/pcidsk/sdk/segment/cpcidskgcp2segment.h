@@ -51,6 +51,8 @@ namespace PCIDSK {
         
         // Clear a GCP Segment
         void ClearGCPs(void) override;
+        
+        void Synchronize() override;
     private:
         void Load();
         void RebuildSegmentData(void);

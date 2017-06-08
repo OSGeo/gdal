@@ -69,10 +69,6 @@ CPCIDSKGCP2Segment::CPCIDSKGCP2Segment(PCIDSKFile *fileIn, int segmentIn, const 
  
 CPCIDSKGCP2Segment::~CPCIDSKGCP2Segment()
 {
-    if( pimpl_ != NULL )
-    {
-        RebuildSegmentData();
-    }
     delete pimpl_;
 }
 
@@ -181,8 +177,6 @@ void CPCIDSKGCP2Segment::SetGCPs(std::vector<PCIDSK::GCP> const& gcps)
     pimpl_->num_gcps = static_cast<unsigned int>(gcps.size());
     pimpl_->gcps = gcps; // copy them in
     pimpl_->changed = true;
-    
-    RebuildSegmentData();
 }
  
 // Return the count of GCPs in the segment
@@ -191,11 +185,20 @@ unsigned int  CPCIDSKGCP2Segment::GetGCPCount(void) const
     return pimpl_->num_gcps;
 }
 
+void CPCIDSKGCP2Segment::Synchronize()
+{
+    if( pimpl_ != NULL )
+    {
+        RebuildSegmentData();
+    }
+}
+
 void CPCIDSKGCP2Segment::RebuildSegmentData(void)
 {
-    if (pimpl_->changed == false) {
+    if (pimpl_->changed == false || !GetUpdatable()) {
         return;
     }
+    pimpl_->changed = false;
     
     // Rebuild the segment data based on the contents of the struct
     int num_blocks = (pimpl_->num_gcps + 1) / 2;
@@ -302,6 +305,4 @@ void  CPCIDSKGCP2Segment::ClearGCPs(void)
     pimpl_->num_gcps = 0;
     pimpl_->gcps.clear();
     pimpl_->changed = true;
-    
-    RebuildSegmentData();
 }
