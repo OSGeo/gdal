@@ -26,6 +26,7 @@ extern "C" {
 #ifdef MEMWATCH
   #include "memwatch.h"
 #endif
+#include "datasource.h"
 
 #ifndef GRIB2BIT_ENUM
 #define GRIB2BIT_ENUM
@@ -559,7 +560,7 @@ int MetaParse (grib_MetaData * meta, sInt4 *is0, sInt4 ns0,
                sInt4 *is5, sInt4 ns5, sInt4 grib_len,
                float xmissp, float xmisss, int simpVer);
 
-void ParseGrid (gridAttribType * attrib, double **Grib_Data,
+void ParseGrid (DataSource &fp, gridAttribType * attrib, double **Grib_Data,
                 uInt4 *grib_DataLen, uInt4 Nx, uInt4 Ny, int scan,
                 sInt4 nd2x3, sInt4 *iain, sInt4 ibitmap, sInt4 *ib, double unitM,
                 double unitB, uChar f_wxType, sect2_WxType * WxType,
