@@ -916,14 +916,14 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
 {
     GByte abyMarker[2];
     CPLXMLNode* psCSBox = CPLCreateXMLNode( psBox, CXT_Element, "JP2KCodeStream" );
+    CPLXMLNode* psLastChildCSBox = NULL;
     if( VSIFSeekL(fp, nBoxDataOffset, SEEK_SET) != 0 )
     {
-        _AddError(psCSBox, "Cannot read codestream", 0);
+        AddError(psCSBox, psLastChildCSBox, "Cannot read codestream", 0);
         return psCSBox;
     }
     GByte* pabyMarkerData = (GByte*)CPLMalloc(65535+1);
     GIntBig nNextTileOffset = 0;
-    CPLXMLNode* psLastChildCSBox = NULL;
     while( true )
     {
         GIntBig nOffset = (GIntBig)VSIFTellL(fp);
