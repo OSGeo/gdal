@@ -2560,7 +2560,7 @@ void ParseGrid (gridAttribType *attrib, double **Grib_Data,
             }
          }
          /* embed the missing value. */
-         for (scanIndex = 0; scanIndex < Nx * Ny; scanIndex++) {
+         for (scanIndex = 0; scanIndex < (uInt4)nd2x3 && scanIndex < Nx * Ny; scanIndex++) {
             ScanIndex2XY (scanIndex, &x, &y, scan, Nx, Ny);
             /* ScanIndex returns value as if scan was 0100 */
             newIndex = (x - 1) + (y - 1) * Nx;
