@@ -996,7 +996,7 @@ GDALDataset* JPGDatasetCommon::InitEXIFOverview()
     }
 
     if (bSwabflag)
-        TIFFSwabShort(&nEntryCount);
+        CPL_SWAP16PTR(&nEntryCount);
 
     // Some files are corrupt, a large entry count is a sign of this.
     if( nEntryCount > 125 )
@@ -1031,7 +1031,7 @@ GDALDataset* JPGDatasetCommon::InitEXIFOverview()
     }
 
     if (bSwabflag)
-        TIFFSwabShort(&nEntryCount);
+        CPL_SWAP16PTR(&nEntryCount);
     if( nEntryCount > 125 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -1059,10 +1059,10 @@ GDALDataset* JPGDatasetCommon::InitEXIFOverview()
         }
         if (bSwabflag)
         {
-            TIFFSwabShort(&sEntry.tdir_tag);
-            TIFFSwabShort(&sEntry.tdir_type);
-            TIFFSwabLong(&sEntry.tdir_count);
-            TIFFSwabLong(&sEntry.tdir_offset);
+            CPL_SWAP16PTR(&sEntry.tdir_tag);
+            CPL_SWAP16PTR(&sEntry.tdir_type);
+            CPL_SWAP32PTR(&sEntry.tdir_count);
+            CPL_SWAP32PTR(&sEntry.tdir_offset);
         }
 
 #ifdef DEBUG_VERBOSE
