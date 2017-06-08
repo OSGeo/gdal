@@ -859,7 +859,7 @@ static CPLXMLNode* CreateMarker(CPLXMLNode* psCSBox,
     return psMarker;
 }
 
-static CPLXMLNode* AddError(CPLXMLNode* psParent, const char* pszErrorMsg,
+static CPLXMLNode* _AddError(CPLXMLNode* psParent, const char* pszErrorMsg,
                             GIntBig nOffset = 0)
 {
     CPLXMLNode* psError = CPLCreateXMLNode( psParent, CXT_Element, "Error" );
@@ -879,7 +879,7 @@ static void AddError(CPLXMLNode* psParent,
                      GIntBig nOffset = 0)
 {
     AddElement( psParent, psLastChild,
-                AddError(NULL, pszErrorMsg, nOffset) );
+                _AddError(NULL, pszErrorMsg, nOffset) );
 }
 
 static const char* GetMarkerName(GByte byVal)
@@ -918,7 +918,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
     CPLXMLNode* psCSBox = CPLCreateXMLNode( psBox, CXT_Element, "JP2KCodeStream" );
     if( VSIFSeekL(fp, nBoxDataOffset, SEEK_SET) != 0 )
     {
-        AddError(psCSBox, "Cannot read codestream", 0);
+        _AddError(psCSBox, "Cannot read codestream", 0);
         return psCSBox;
     }
     GByte* pabyMarkerData = (GByte*)CPLMalloc(65535+1);
@@ -976,7 +976,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             else if( nNextTileOffset && nNextTileOffset >= nOffset + 2 )
             {
                 if( VSIFSeekL(fp, nNextTileOffset, SEEK_SET) != 0 )
-                    AddError(psCSBox, "Cannot seek to", nNextTileOffset);
+                    AddError(psCSBox, psLastChildCSBox,
+                             "Cannot seek to", nNextTileOffset);
                 nNextTileOffset = 0;
             }
             else
@@ -1019,7 +1020,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         CPLXMLNode* psLastChild = NULL;
         if( VSIFReadL(pabyMarkerData, nMarkerSize - 2, 1, fp) != 1 )
         {
-            AddError(psMarker, "Cannot read marker data", nOffset);
+            AddError(psMarker, psLastChild,
+                     "Cannot read marker data", nOffset);
             break;
         }
         GByte* pabyMarkerDataIter = pabyMarkerData;
