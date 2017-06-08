@@ -874,11 +874,26 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDSIn,
     // Create a Bitmap buffer
     // ----------------------------------------------------------------
 
+    if( nBMPSize > INT_MAX )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too large block size: %u bytes", nBMPSize);
+        return;
+    }
+    if( nBMPSize > 10 * 1024 * 1024 )
+    {
+        VSIFSeekL( poDSIn->fp, 0, SEEK_END );
+        if( VSIFTellL( poDSIn->fp ) < nBMPSize )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "File too short");
+            return;
+        }
+    }
     pabyBMPBlock = (GByte*) VSIMalloc( nBMPSize );
     if (pabyBMPBlock == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot allocate %d bytes", nBMPSize);
+                 "Cannot allocate %u bytes", nBMPSize);
     }
 
     // ----------------------------------------------------------------
