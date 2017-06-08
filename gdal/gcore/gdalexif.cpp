@@ -229,32 +229,32 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
  */
 static int EXIF_TIFFDataWidth(GDALEXIFTIFFDataType type)
 {
-	switch(type)
-	{
-		case 0:  /* nothing */
-		case TIFF_BYTE:
-		case TIFF_ASCII:
-		case TIFF_SBYTE:
-		case TIFF_UNDEFINED:
-			return 1;
-		case TIFF_SHORT:
-		case TIFF_SSHORT:
-			return 2;
-		case TIFF_LONG:
-		case TIFF_SLONG:
-		case TIFF_FLOAT:
-		case TIFF_IFD:
-			return 4;
-		case TIFF_RATIONAL:
-		case TIFF_SRATIONAL:
-		case TIFF_DOUBLE:
-		//case TIFF_LONG8:
-		//case TIFF_SLONG8:
-		//case TIFF_IFD8:
-			return 8;
-		default:
-			return 0; /* will return 0 for unknown types */
-	}
+    switch(type)
+    {
+        case 0:  /* nothing */
+        case TIFF_BYTE:
+        case TIFF_ASCII:
+        case TIFF_SBYTE:
+        case TIFF_UNDEFINED:
+            return 1;
+        case TIFF_SHORT:
+        case TIFF_SSHORT:
+            return 2;
+        case TIFF_LONG:
+        case TIFF_SLONG:
+        case TIFF_FLOAT:
+        case TIFF_IFD:
+            return 4;
+        case TIFF_RATIONAL:
+        case TIFF_SRATIONAL:
+        case TIFF_DOUBLE:
+        //case TIFF_LONG8:
+        //case TIFF_SLONG8:
+        //case TIFF_IFD8:
+            return 8;
+        default:
+            return 0; /* will return 0 for unknown types */
+    }
 }
 
 
