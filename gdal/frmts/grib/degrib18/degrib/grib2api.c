@@ -1633,13 +1633,13 @@ void unpk_grib2 (sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
 {
    unsigned char *c_ipack; /* The compressed data as char instead of sInt4
                             * so it is easier to work with. */
-   sInt4 gdsTmpl;
-   sInt4 pdsTmpl;
-   sInt4 drsTmpl;
-   sInt4 numGrps;
+   sInt4 gdsTmpl = 0;
+   sInt4 pdsTmpl = 0;
+   sInt4 drsTmpl = 0;
+   sInt4 numGrps = 0;
    /* char f_useMDL = 0; */   /* Instructed 3/8/2005 10:30 to not use MDL. */
-   uChar f_noBitmap;    /* 0 if bitmap, else no bitmap. */
-   sInt4 orderDiff;
+   uChar f_noBitmap = 0;    /* 0 if bitmap, else no bitmap. */
+   sInt4 orderDiff = 0;
 
    if (FindTemplateIDs (ipack, *nd5, 0, &gdsTmpl, &pdsTmpl, &drsTmpl,
                         &numGrps, &f_noBitmap, &orderDiff) != 0) {
