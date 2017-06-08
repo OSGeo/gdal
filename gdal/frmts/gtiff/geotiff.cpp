@@ -10182,7 +10182,7 @@ static GTIF* GTiffDatasetGTIFNew( TIFF* hTIFF )
 
 static GTIF* GTiffDatasetGTIFNew( TIFF* hTIFF )
 {
-    return GTIFNew(TIFF);
+    return GTIFNew(hTIFF);
 }
 #endif
 
