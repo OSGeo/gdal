@@ -30,7 +30,7 @@
  */
 #define GvCurrentVersion   1
 
-#define LIBGEOTIFF_VERSION 1420
+#define LIBGEOTIFF_VERSION 1430
 
 #include "geo_config.h"
 #include "geokeys.h"
@@ -77,6 +77,20 @@ typedef enum {
    TYPE_UNKNOWN=11
 } tagtype_t;
 
+#define LIBGEOTIFF_WARNING 0
+#define LIBGEOTIFF_ERROR   1
+
+#ifndef GTIF_PRINT_FUNC_FORMAT
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define GTIF_PRINT_FUNC_FORMAT( format_idx, arg_idx )  __attribute__((__format__ (__printf__, format_idx, arg_idx)))
+#else
+#define GTIF_PRINT_FUNC_FORMAT( format_idx, arg_idx )
+#endif
+#endif
+
+typedef void (*GTErrorCallback) (struct gtiff*,
+                                 int level,
+                                 const char* msg, ...) GTIF_PRINT_FUNC_FORMAT(3,4);
 
 /**********************************************************************
  *
@@ -86,11 +100,17 @@ typedef enum {
 
 /* TIFF-level interface */
 GTIF GTIF_DLL *GTIFNew(void *tif);
+GTIF GTIF_DLL *GTIFNewEx(void *tif,
+                         GTErrorCallback error_callback, void* user_data);
 GTIF GTIF_DLL *GTIFNewSimpleTags(void *tif);
 GTIF GTIF_DLL *GTIFNewWithMethods(void *tif, TIFFMethod*);
+GTIF GTIF_DLL *GTIFNewWithMethodsEx(void *tif, TIFFMethod* methods,
+                                    GTErrorCallback error_callback,
+                                    void* user_data);
 void GTIF_DLL  GTIFFree(GTIF *gtif);
 int  GTIF_DLL  GTIFWriteKeys(GTIF *gtif);
 void GTIF_DLL  GTIFDirectoryInfo(GTIF *gtif, int *versions, int *keycount);
+void GTIF_DLL *GTIFGetUserData(GTIF *gtif);
 
 /* GeoKey Access */
 int  GTIF_DLL  GTIFKeyInfo(GTIF *gtif, geokey_t key, int *size, tagtype_t* type);
