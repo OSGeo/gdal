@@ -48,6 +48,7 @@ namespace PCIDSK
 
         virtual void Initialize() {}
 
+        virtual bool GetUpdatable() const = 0;
         virtual void WriteToFile( const void *buffer, uint64 offset, uint64 size)=0;
         virtual void ReadFromFile( void *buffer, uint64 offset, uint64 size ) = 0;
 
