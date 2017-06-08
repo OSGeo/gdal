@@ -457,14 +457,19 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
             memcpy(data, &poTIFFDirEntry->tdir_offset, 4);
             if (bSwabflag)
             {
+                GUInt32 nValUInt32;
                 // Unswab 32bit value, and reswab per data type.
-                CPL_SWAP32PTR(reinterpret_cast<GUInt32*>(data));
+                memcpy(&nValUInt32, data, 4);
+                CPL_SWAP32PTR(&nValUInt32);
+                memcpy(data, &nValUInt32, 4);
 
                 switch (poTIFFDirEntry->tdir_type) {
                   case TIFF_LONG:
                   case TIFF_SLONG:
                   case TIFF_FLOAT:
-                    CPL_SWAP32PTR(reinterpret_cast<GUInt32*>(data));
+                    memcpy(&nValUInt32, data, 4);
+                    CPL_SWAP32PTR(&nValUInt32);
+                    memcpy(data, &nValUInt32, 4);
                     break;
 
                   case TIFF_SSHORT:
