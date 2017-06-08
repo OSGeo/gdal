@@ -1786,9 +1786,9 @@ void ENVIDataset::ProcessStatsFile()
 
     // TODO(schwehr): What are 1, 4, 8, and 40?
     int lOffset = 0;
-    if( VSIFSeekL(fpStaFile, 40 + (nb + 1) * 4, SEEK_SET) == 0 &&
+    if( VSIFSeekL(fpStaFile, 40 + static_cast<vsi_l_offset>(nb + 1) * 4, SEEK_SET) == 0 &&
         VSIFReadL(&lOffset, sizeof(int), 1, fpStaFile) == 1 &&
-        VSIFSeekL(fpStaFile, 40 + (nb + 1) * 8 + byteSwapInt(lOffset) + nb,
+        VSIFSeekL(fpStaFile, 40 + static_cast<vsi_l_offset>(nb + 1) * 8 + byteSwapInt(lOffset) + nb,
                   SEEK_SET) == 0)
     {
         // This should be the beginning of the statistics.
