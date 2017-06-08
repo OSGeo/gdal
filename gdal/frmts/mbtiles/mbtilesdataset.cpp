@@ -1489,11 +1489,14 @@ bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds,
             int nMaxTileCol = OGR_F_GetFieldAsInteger(hFeat, 1);
             int nMinTileRow = OGR_F_GetFieldAsInteger(hFeat, 2);
             int nMaxTileRow = OGR_F_GetFieldAsInteger(hFeat, 3);
-            minX = MBTilesTileCoordToWorldCoord(nMinTileCol, nMaxLevel);
-            minY = MBTilesTileCoordToWorldCoord(nMinTileRow, nMaxLevel);
-            maxX = MBTilesTileCoordToWorldCoord(nMaxTileCol + 1, nMaxLevel);
-            maxY = MBTilesTileCoordToWorldCoord(nMaxTileRow + 1, nMaxLevel);
-            bHasBounds = true;
+            if( nMaxTileCol < INT_MAX && nMaxTileRow < INT_MAX )
+            {
+                minX = MBTilesTileCoordToWorldCoord(nMinTileCol, nMaxLevel);
+                minY = MBTilesTileCoordToWorldCoord(nMinTileRow, nMaxLevel);
+                maxX = MBTilesTileCoordToWorldCoord(nMaxTileCol + 1, nMaxLevel);
+                maxY = MBTilesTileCoordToWorldCoord(nMaxTileRow + 1, nMaxLevel);
+                bHasBounds = true;
+            }
         }
 
         OGR_F_Destroy(hFeat);
