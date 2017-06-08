@@ -1173,8 +1173,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             READ_MARKER_FIELD_UINT16("SGcod_NumLayers");
             READ_MARKER_FIELD_UINT8("SGcod_MCT");
             READ_MARKER_FIELD_UINT8("SPcod_NumDecompositions");
-            READ_MARKER_FIELD_UINT8_COMMENT("SPcod_xcb_minus_2", CPLSPrintf("%d", 1 << (2+nLastVal)));
-            READ_MARKER_FIELD_UINT8_COMMENT("SPcod_ycb_minus_2", CPLSPrintf("%d", 1 << (2+nLastVal)));
+            READ_MARKER_FIELD_UINT8_COMMENT("SPcod_xcb_minus_2", nLastVal <= 8 ? CPLSPrintf("%d", 1 << (2+nLastVal)) : "invalid");
+            READ_MARKER_FIELD_UINT8_COMMENT("SPcod_ycb_minus_2", nLastVal <= 8 ? CPLSPrintf("%d", 1 << (2+nLastVal)) : "invalid");
             if( nRemainingMarkerSize >= 1 ) {
                 nLastVal = *pabyMarkerDataIter;
                 CPLString osInterp;
