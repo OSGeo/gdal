@@ -263,6 +263,18 @@ static int GRIB2SectToBuffer (DataSource &fp,
        return -1;
    }
    if (*buffLen < *secLen) {
+      if( *secLen > 100 * 1024 * 1024 )
+      {
+          long curPos = fp.DataSourceFtell();
+          fp.DataSourceFseek(0, SEEK_END);
+          long fileSize = fp.DataSourceFtell();
+          fp.DataSourceFseek(curPos, SEEK_SET);
+          if( *secLen > fileSize )
+          {
+            errSprintf ("ERROR: File too short\n");
+            return -1;
+          }
+      }
       char* buffnew = (char *) realloc ((void *) *buff, *secLen * sizeof (char));
       if( buffnew == NULL )
       {
