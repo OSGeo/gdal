@@ -143,6 +143,11 @@ static void DumpGeoTIFFBox(CPLXMLNode* psBox,
         CPLPushErrorHandler(CPLQuietErrorHandler);
         GDALDataset* poDS = (GDALDataset*) GDALOpen(osTmpFilename, GA_ReadOnly);
         CPLPopErrorHandler();
+        if( poDS && poDS->GetRasterCount() > 1 )
+        {
+            GDALClose(poDS);
+            poDS = NULL;
+        }
         if( poDS )
         {
             CPLString osTmpVRTFilename(CPLSPrintf("/vsimem/tmp_%p.vrt", oBox.GetFILE()));
