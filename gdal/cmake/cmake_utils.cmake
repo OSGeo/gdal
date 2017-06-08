@@ -1,0 +1,5 @@
+macro(gdal_add_definitions defn)
+  if("${${defn}}" STREQUAL "1")
+    add_definitions(-D${defn})
+  endif()
+endmacro()
