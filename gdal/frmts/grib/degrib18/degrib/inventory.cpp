@@ -269,7 +269,7 @@ static int GRIB2SectToBuffer (DataSource &fp,
           fp.DataSourceFseek(0, SEEK_END);
           long fileSize = fp.DataSourceFtell();
           fp.DataSourceFseek(curPos, SEEK_SET);
-          if( *secLen > fileSize )
+          if( *secLen > (uInt4)fileSize )
           {
             errSprintf ("ERROR: File too short\n");
             return -1;
@@ -859,7 +859,9 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
    int grib_limit;      /* How many bytes to look for before the first "GRIB"
                          * in the file.  If not found, is not a GRIB file. */
    int c;               /* Determine if end of the file without fileLen. */
+#ifdef DEBUG
    sInt4 fileLen;       /* Length of the GRIB2 file. */
+#endif
    unsigned short int center, subcenter; /* Who produced it. */
    // char *ptr;           /* used to find the file extension. */
 
@@ -922,12 +924,14 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
                     msgNum);
             printf ("%s", msg);
             free (msg);
+#ifdef DEBUG
             /* find out how big the file is. */
             fp.DataSourceFseek (0L, SEEK_END);
             fileLen = static_cast<int>(fp.DataSourceFtell());
             /* fseek (fp, 0L, SEEK_SET); */
             printf ("There were %d trailing bytes in the file.\n",
                     fileLen - offset);
+#endif
             free (buffer);
             free (buff);
             //fclose (fp);
@@ -1111,7 +1115,9 @@ int GRIB2RefTime (const char *filename, double *refTime)
    int grib_limit;      /* How many bytes to look for before the first "GRIB"
                          * in the file.  If not found, is not a GRIB file. */
    int c;               /* Determine if end of the file without fileLen. */
+#ifdef DEBUG
    sInt4 fileLen;       /* Length of the GRIB2 file. */
+#endif
    const char *ptr;           /* used to find the file extension. */
    double refTime1;
 
@@ -1161,12 +1167,14 @@ int GRIB2RefTime (const char *filename, double *refTime)
             printf ("Warning: Inside GRIB2RefTime, Message # %d\n", msgNum);
             printf ("%s", msg);
             free (msg);
+#ifdef DEBUG
             /* find out how big the file is. */
             fp.DataSourceFseek (0L, SEEK_END);
             fileLen = static_cast<int>(fp.DataSourceFtell());
             /* fseek (fp, 0L, SEEK_SET); */
             printf ("There were %d trailing bytes in the file.\n",
                     fileLen - offset);
+#endif
             free (buffer);
             free (buff);
             //fclose (fp);
