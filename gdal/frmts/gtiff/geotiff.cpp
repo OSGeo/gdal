@@ -10149,6 +10149,44 @@ static void GTiffWriteDummyGeokeyDirectory( TIFF* hTIFF )
     }
 }
 
+#if LIBGEOTIFF_VERSION >= 1430
+
+/************************************************************************/
+/*               GTiffDatasetLibGeotiffErrorCallback()                  */
+/************************************************************************/
+
+static void GTiffDatasetLibGeotiffErrorCallback(GTIF*,
+                                                int level,
+                                                const char* pszMsg, ...)
+{
+    va_list ap;
+    va_start(ap, pszMsg);
+    CPLErrorV( (level == LIBGEOTIFF_WARNING ) ? CE_Warning : CE_Failure,
+               CPLE_AppDefined, pszMsg, ap );
+    va_end(ap);
+}
+
+/************************************************************************/
+/*                           GTiffDatasetGTIFNew()                      */
+/************************************************************************/
+
+static GTIF* GTiffDatasetGTIFNew( TIFF* hTIFF )
+{
+    return GTIFNewEx(hTIFF, GTiffDatasetLibGeotiffErrorCallback, NULL);
+}
+#else
+
+/************************************************************************/
+/*                           GTiffDatasetGTIFNew()                      */
+/************************************************************************/
+
+static GTIF* GTiffDatasetGTIFNew( TIFF* hTIFF )
+{
+    return GTIFNew(TIFF);
+}
+#endif
+
+
 /************************************************************************/
 /*                          WriteGeoTIFFInfo()                          */
 /************************************************************************/
@@ -10316,7 +10354,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
         // by writing a dummy geokey directory. (#2546)
         GTiffWriteDummyGeokeyDirectory(hTIFF);
 
-        GTIF *psGTIF = GTIFNew( hTIFF );
+        GTIF *psGTIF = GTiffDatasetGTIFNew( hTIFF );
 
         // Set according to coordinate system.
         if( bHasProjection )
@@ -11783,7 +11821,7 @@ void GTiffDataset::LoadMDAreaOrPoint()
     if( !SetDirectory() )
         return;
 
-    GTIF* hGTIF = GTIFNew(hTIFF);
+    GTIF* hGTIF = GTiffDatasetGTIFNew(hTIFF);
 
     if( !hGTIF )
     {
@@ -11823,7 +11861,7 @@ void GTiffDataset::LookForProjection()
     CPLFree( pszProjection );
     pszProjection = NULL;
 
-    GTIF *hGTIF = GTIFNew(hTIFF);
+    GTIF *hGTIF = GTiffDatasetGTIFNew(hTIFF);
 
     if( !hGTIF )
     {
@@ -13630,7 +13668,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
             int nIndex = *oIter;
             if( m_nINTERNALGeorefSrcIndex == nIndex )
             {
-                GTIF *psGTIF = GTIFNew( hTIFF );  // How expensive this is?
+                GTIF *psGTIF = GTiffDatasetGTIFNew( hTIFF );  // How expensive this is?
 
                 if( psGTIF )
                 {
@@ -16192,7 +16230,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         l_pszProjection != NULL && strlen(l_pszProjection) > 0;
     if( (bHasProjection || bPixelIsPoint) && bGeoTIFF )
     {
-        GTIF *psGTIF = GTIFNew( l_hTIFF );
+        GTIF *psGTIF = GTiffDatasetGTIFNew( l_hTIFF );
 
         if( bHasProjection )
         {
