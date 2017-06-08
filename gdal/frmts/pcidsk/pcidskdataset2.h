@@ -132,7 +132,8 @@ class PCIDSK2Band : public GDALPamRasterBand
     void        Initialize();
 
   public:
-                PCIDSK2Band( PCIDSK2Dataset *, PCIDSK::PCIDSKFile *, int );
+                PCIDSK2Band( PCIDSK::PCIDSKFile *poFileIn,
+                             PCIDSK::PCIDSKChannel *poChannelIn );
     explicit    PCIDSK2Band( PCIDSK::PCIDSKChannel * );
     virtual ~PCIDSK2Band();
 
