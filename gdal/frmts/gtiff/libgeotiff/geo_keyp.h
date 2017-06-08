@@ -77,9 +77,13 @@ struct gtiff;
 #endif
 #endif
 
+#ifndef GTERRORCALLBACK_DEFINED
+#define GTERRORCALLBACK_DEFINED
+/* Defined in both geotiff.h and geo_kep.h */
 typedef void (*GTErrorCallback) (struct gtiff*,
                                  int level,
                                  const char* msg, ...) GTIF_PRINT_FUNC_FORMAT(3,4);
+#endif
 
 struct gtiff {
    tiff_t*    gt_tif;      /* TIFF file descriptor  */
