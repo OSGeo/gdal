@@ -49,18 +49,14 @@ const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
 /*      This constructor is used for main file channels.                */
 /************************************************************************/
 
-PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDSIn,
-                          PCIDSKFile *poFileIn,
-                          int nBandIn )
+PCIDSK2Band::PCIDSK2Band( PCIDSKFile *poFileIn,
+                          PCIDSKChannel *poChannelIn )
 
 {
     Initialize();
 
-    this->poDS = poDSIn;
-    this->poFile = poFileIn;
-    this->nBand = nBandIn;
-
-    poChannel = poFile->GetChannel( nBand );
+    poFile = poFileIn;
+    poChannel = poChannelIn;
 
     nBlockXSize = static_cast<int>( poChannel->GetBlockWidth() );
     nBlockYSize = static_cast<int>( poChannel->GetBlockHeight() );
@@ -1727,6 +1723,16 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
+        const bool bValidRasterDimensions = poFile->GetWidth() &&
+                                            poFile->GetHeight();
+        if( !bValidRasterDimensions &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 )
+        {
+            delete poFile;
+            return NULL;
+        }
+
         /* Check if this is a vector-only PCIDSK file and that we are */
         /* opened in raster-only mode */
         if( poOpenInfo->eAccess == GA_ReadOnly &&
@@ -1797,6 +1803,14 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
     poDS->nRasterXSize = poFile->GetWidth();
     poDS->nRasterYSize = poFile->GetHeight();
 
+    const bool bValidRasterDimensions = poFile->GetWidth() &&
+                                        poFile->GetHeight();
+    if( !bValidRasterDimensions )
+    {
+        poDS->nRasterXSize = 512;
+        poDS->nRasterYSize = 512;
+    }
+
     try {
 
 /* -------------------------------------------------------------------- */
@@ -1815,7 +1829,8 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create band objects.                                            */
 /* -------------------------------------------------------------------- */
-        for( int iBand = 0; iBand < poFile->GetChannels(); iBand++ )
+        for( int iBand = 0; bValidRasterDimensions &&
+                            iBand < poFile->GetChannels(); iBand++ )
         {
             PCIDSKChannel* poChannel = poFile->GetChannel( iBand + 1 );
             if (poChannel->GetBlockWidth() <= 0 ||
@@ -1832,7 +1847,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
             }
 
             poDS->SetBand( poDS->GetRasterCount() + 1,
-                new PCIDSK2Band( poDS, poFile, poDS->GetRasterCount() + 1 ));
+                new PCIDSK2Band( poFile, poChannel ));
         }
 
 /* -------------------------------------------------------------------- */
@@ -1841,7 +1856,8 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
         int nLastBitmapSegment = 0;
         PCIDSKSegment *poBitSeg = NULL;
 
-        while( (poBitSeg = poFile->GetSegment( SEG_BIT, "",
+        while( bValidRasterDimensions &&
+               (poBitSeg = poFile->GetSegment( SEG_BIT, "",
                                                nLastBitmapSegment)) != NULL )
         {
             PCIDSKChannel *poChannel =
