@@ -4618,9 +4618,12 @@ CPLErr netCDFDataset::ReadAttributes( int cdfidIn, int var)
 
 {
     char szVarName[NC_MAX_NAME + 1];
-    int nbAttr;
+    int nbAttr = 0;
 
-    nc_inq_varnatts(cdfidIn, var, &nbAttr);
+    int status = nc_inq_varnatts(cdfidIn, var, &nbAttr);
+    NCDF_ERR(status);
+    if( status != NC_NOERR )
+        return CE_Failure;
     if( var == NC_GLOBAL )
     {
         strcpy(szVarName, "NC_GLOBAL");
@@ -4628,15 +4631,17 @@ CPLErr netCDFDataset::ReadAttributes( int cdfidIn, int var)
     else
     {
         szVarName[0] = '\0';
-        int status = nc_inq_varname(cdfidIn, var, szVarName);
+        status = nc_inq_varname(cdfidIn, var, szVarName);
         NCDF_ERR(status);
+        if( status != NC_NOERR )
+            return CE_Failure;
     }
 
     for( int l = 0; l < nbAttr; l++ )
     {
         char szAttrName[NC_MAX_NAME + 1];
         szAttrName[0] = 0;
-        int status = nc_inq_attname(cdfidIn, var, l, szAttrName);
+        status = nc_inq_attname(cdfidIn, var, l, szAttrName);
         NCDF_ERR(status);
         char szMetaName[NC_MAX_NAME * 2 + 1 + 1];
         snprintf(szMetaName, sizeof(szMetaName), "%s#%s", szVarName,
