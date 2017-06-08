@@ -367,6 +367,10 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen, GPkgHeader *poH
 #endif
             nEnvelopeDim = 4; /* 2D+ZM envelope */
         }
+        else
+        {
+            return OGRERR_FAILURE;
+        }
     }
 
     /* SrsId */
