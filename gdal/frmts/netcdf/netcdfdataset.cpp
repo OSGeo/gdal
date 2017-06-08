@@ -6194,8 +6194,15 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         strstr(pszHeader, "dimensions:") &&
         strstr(pszHeader, "variables:") )
     {
-        poDS->bFileToDestroyAtClosing = true;
-        poDS->osFilename = CPLGenerateTempFilename("netcdf_tmp");
+        // By default create a temporary file that will be destroyed,
+        // unless NETCDF_TMP_FILE is defined. Can be useful to see which
+        // netCDF file has been generated from a potential fuzzed input.
+        poDS->osFilename = CPLGetConfigOption("NETCDF_TMP_FILE", "");
+        if( poDS->osFilename.empty() )
+        {
+            poDS->bFileToDestroyAtClosing = true;
+            poDS->osFilename = CPLGenerateTempFilename("netcdf_tmp");
+        }
         if( !netCDFDatasetCreateTempFile( eTmpFormat,
                                           poDS->osFilename,
                                           poOpenInfo->fpL ) )
