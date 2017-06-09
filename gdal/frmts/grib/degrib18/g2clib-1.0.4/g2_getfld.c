@@ -483,7 +483,17 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
                   n=0;
                   newfld=(g2float *)calloc(lgfld->ngrdpts,sizeof(g2float));
                   for (j=0;j<lgfld->ngrdpts;j++) {
-                      if (lgfld->bmap[j]==1) newfld[j]=lgfld->fld[n++];
+                      if (lgfld->bmap[j]==1)
+                      {
+                          if( n >= lgfld->ndpts )
+                          {
+                              printf("g2_getfld: overflow of lgfld->fld array\n");
+                              ierr=14;
+                              free(newfld);
+                              return(ierr);
+                          }
+                          newfld[j]=lgfld->fld[n++];
+                      }
                   }
                   free(lgfld->fld);
                   lgfld->fld=newfld;
