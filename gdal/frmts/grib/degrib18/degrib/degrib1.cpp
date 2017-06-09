@@ -1817,6 +1817,22 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
 
    /* Allocate memory for the grid. */
    if (meta->gds.numPts > *grib_DataLen) {
+      if( meta->gds.numPts > 100 * 1024 * 1024 )
+      {
+          long curPos = fp.DataSourceFtell();
+          fp.DataSourceFseek(0, SEEK_END);
+          long fileSize = fp.DataSourceFtell();
+          fp.DataSourceFseek(curPos, SEEK_SET);
+          // allow a compression ratio of 1:1000
+          if( meta->gds.numPts / 1000 > (uInt4)fileSize )
+          {
+            errSprintf ("ERROR: File too short\n");
+            *grib_DataLen = 0;
+            *Grib_Data = NULL;
+            return -2;
+          }
+      }
+
       *grib_DataLen = meta->gds.numPts;
       *Grib_Data = (double *) realloc ((void *) (*Grib_Data),
                                        (*grib_DataLen) * sizeof (double));

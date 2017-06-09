@@ -323,7 +323,7 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
     {
         // Simple 1:1 case.
         memcpy(pImage,
-               m_Grib_Data + nRasterXSize * (nRasterYSize - nBlockYOff - 1),
+               m_Grib_Data + static_cast<size_t>(nRasterXSize) * (nRasterYSize - nBlockYOff - 1),
                nRasterXSize * sizeof(double));
 
         return CE_None;
@@ -337,7 +337,7 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
     const int nCopyWords = std::min(nRasterXSize, nGribDataXSize);
 
     memcpy(pImage,
-           m_Grib_Data + nGribDataXSize * (nGribDataYSize - nBlockYOff - 1),
+           m_Grib_Data + static_cast<size_t>(nGribDataXSize) * (nGribDataYSize - nBlockYOff - 1),
            nCopyWords * sizeof(double));
 
     return CE_None;
