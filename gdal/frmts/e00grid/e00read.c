@@ -491,7 +491,7 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
                  */
                 c = _GetNextSourceChar(psInfo);
                 n = c - ' ';
-                for(i=0; i<n; i++)
+                for(i=0; i<n && iOutBufPtr <= 80; i++)
                     psInfo->szOutBuf[iOutBufPtr++] = ' ';
                 bPreviousCodeWasNumeric = 0;
             }
@@ -565,7 +565,7 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
                  */
                 iCurDigit = 0;
                 while((c=_GetNextSourceChar(psInfo)) != '\0' &&
-                      c != ' ' && c != '~')
+                      c != ' ' && c != '~' && iOutBufPtr <= 80 )
                 {
                     n = c - '!';
                     if (n == 92 && (c=_GetNextSourceChar(psInfo)) != '\0')
