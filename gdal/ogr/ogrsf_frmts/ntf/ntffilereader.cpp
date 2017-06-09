@@ -899,6 +899,7 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
 
     iOffset = 8;
     pszData = poRecord->GetData();
+    bool bError = false;
 
     while( iOffset < poRecord->GetLength() && pszData[iOffset] != '0' )
     {
@@ -914,7 +915,8 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
         {
             CPLDebug( "NTF", "Couldn't translate attrec type `%2.2s'.",
                       pszData + iOffset );
-            return FALSE;
+            bError = true;
+            break;
         }
 
         *ppapszTypes =
@@ -927,12 +929,18 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
 /* -------------------------------------------------------------------- */
         const int nFWidth = atoi(psAttDesc->fwidth);
         if( nFWidth < 0 )
+        {
+            bError = true;
             break;
+        }
         if( nFWidth == 0 )
         {
             const char * pszData2 = poRecord->GetData();
             if( iOffset + 2 >= poRecord->GetLength() )
+            {
+                bError = true;
                 break;
+            }
             for( nEnd = iOffset + 2;
                  pszData2[nEnd] != '\\' && pszData2[nEnd] != '\0';
                  nEnd++ ) {}
@@ -956,17 +964,26 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
         {
             iOffset = nEnd;
             if( iOffset >= poRecord->GetLength() )
+            {
+                bError = true;
                 break;
+            }
             if( pszData[iOffset] == '\\' )
                 iOffset++;
         }
         else
             iOffset += 2 + nFWidth;
     }
-    if( *ppapszTypes == NULL )
-        return FALSE;
 
-    return TRUE;
+    if( bError )
+    {
+        CSLDestroy(*ppapszTypes);
+        CSLDestroy(*ppapszValues);
+        *ppapszTypes = NULL;
+        *ppapszValues = NULL;
+    }
+
+    return( *ppapszTypes != NULL );
 }
 
 /************************************************************************/
