@@ -471,6 +471,23 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
         //
         if (isecnum==7 && numfld==ifldnum && unpack) {
           iofst=iofst-40;       // reset offset to beginning of section
+          
+          /* If expand is requested and we cannot do it, then early exit */
+          /* to avoid useless operations */
+          /* Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2183 */
+          /* See grib2api.c : */
+          /* Check if NCEP had problems expanding the data.  If so we currently
+            * abort.  May need to revisit this behavior. */
+          if( expand )
+          {
+              if ( !(lgfld->ibmap != 255 && lgfld->bmap != 0) && 
+                   lgfld->ngrdpts != lgfld->ndpts )
+              {
+                  ierr=14;
+                  return(ierr);
+              }
+          }
+
           jerr=g2_unpack7(cgrib,cgrib_length,&iofst,lgfld->igdtnum,lgfld->igdtmpl,
                           lgfld->idrtnum,lgfld->idrtmpl,lgfld->ndpts,
                           &lgfld->fld);
