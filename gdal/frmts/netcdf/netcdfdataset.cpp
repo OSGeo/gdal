@@ -3024,17 +3024,18 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 
             // For Latitude we allow an error of 0.1 degrees for gaussian
             // gridding (only if this is not a projected SRS).
-
-            if( (abs(abs(nSpacingBegin) - abs(nSpacingLast))  <= 1) &&
-                (abs(abs(nSpacingBegin) - abs(nSpacingMiddle)) <= 1) &&
-                (abs(abs(nSpacingMiddle) - abs(nSpacingLast)) <= 1) )
+            // Note: we use fabs() instead of abs() to avoid int32 overflow
+            // issues.
+            if( (fabs(fabs(nSpacingBegin) - fabs(nSpacingLast))  <= 1) &&
+                (fabs(fabs(nSpacingBegin) - fabs(nSpacingMiddle)) <= 1) &&
+                (fabs(fabs(nSpacingMiddle) - fabs(nSpacingLast)) <= 1) )
             {
                 bLatSpacingOK = true;
             }
             else if( !oSRS.IsProjected() &&
-                     (((abs(abs(nSpacingBegin) - abs(nSpacingLast))) <= 100) &&
-                      ((abs(abs(nSpacingBegin) - abs(nSpacingMiddle))) <= 100) &&
-                      ((abs(abs(nSpacingMiddle) - abs(nSpacingLast))) <= 100)) )
+                     (((fabs(fabs(nSpacingBegin) - fabs(nSpacingLast))) <= 100) &&
+                      ((fabs(fabs(nSpacingBegin) - fabs(nSpacingMiddle))) <= 100) &&
+                      ((fabs(fabs(nSpacingMiddle) - fabs(nSpacingLast))) <= 100)) )
             {
                 bLatSpacingOK = true;
                 CPLError(CE_Warning, CPLE_AppDefined,
