@@ -211,7 +211,9 @@ OGRErr GDALGeoPackageDataset::PragmaCheck(
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to execute PRAGMA %s", pszPragma);
+                  "Unable to execute PRAGMA %s: %s", pszPragma,
+                  pszErrMsg ? pszErrMsg : "(null)" );
+        sqlite3_free( pszErrMsg );
         return OGRERR_FAILURE;
     }
 
