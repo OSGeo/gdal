@@ -764,6 +764,24 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
     return true;
 }
 
+/************************************************************************/
+/*                     OGR2OGRSpatialReferenceHolder                    */
+/************************************************************************/
+
+class OGR2OGRSpatialReferenceHolder
+{
+        OGRSpatialReference* m_poSRS;
+
+    public:
+        OGR2OGRSpatialReferenceHolder() : m_poSRS(NULL) {}
+       ~OGR2OGRSpatialReferenceHolder() { if( m_poSRS) m_poSRS->Release(); }
+
+       void assignNoRefIncrease(OGRSpatialReference* poSRS) {
+           CPLAssert(m_poSRS == NULL);
+           m_poSRS = poSRS;
+       }
+       OGRSpatialReference* get() { return m_poSRS; }
+};
 
 /************************************************************************/
 /*                       TranslateFeature()                             */
@@ -1210,10 +1228,9 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                                   const GDALVectorTranslateOptions *psOptionsIn, int *pbUsageError )
 
 {
-    OGRSpatialReference oOutputSRS;
+    OGR2OGRSpatialReferenceHolder oOutputSRSHolder;
     OGRSpatialReference oSourceSRS;
     OGRSpatialReference oSpatSRS;
-    OGRSpatialReference *poOutputSRS = NULL;
     OGRSpatialReference *poSourceSRS = NULL;
     OGRSpatialReference* poSpatSRS = NULL;
     bool bAppend = false;
@@ -1546,7 +1563,9 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 /* -------------------------------------------------------------------- */
     if( psOptions->pszOutputSRSDef != NULL )
     {
-        if( oOutputSRS.SetFromUserInput( psOptions->pszOutputSRSDef ) != OGRERR_NONE )
+        oOutputSRSHolder.assignNoRefIncrease(new OGRSpatialReference());
+        if( oOutputSRSHolder.get()->
+                SetFromUserInput( psOptions->pszOutputSRSDef ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Failed to process SRS definition: %s",
                     psOptions->pszOutputSRSDef );
@@ -1554,7 +1573,6 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             if( hDstDS == NULL ) GDALClose( poODS );
             return NULL;
         }
-        poOutputSRS = &oOutputSRS;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1607,7 +1625,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     {
         poGCPCoordTrans = new GCPCoordTransformation( psOptions->nGCPCount, psOptions->pasGCPs,
                                                       psOptions->nTransformOrder,
-                                                      poSourceSRS ? poSourceSRS : poOutputSRS );
+                                                      poSourceSRS ? poSourceSRS : oOutputSRSHolder.get() );
         if( !(poGCPCoordTrans->IsValid()) )
         {
             delete poGCPCoordTrans;
@@ -1633,7 +1651,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     SetupTargetLayer oSetup;
     oSetup.m_poDstDS = poODS;
     oSetup.m_papszLCO = psOptions->papszLCO;
-    oSetup.m_poOutputSRS = poOutputSRS;
+    oSetup.m_poOutputSRS = oOutputSRSHolder.get();
     oSetup.m_bNullifyOutputSRS = psOptions->bNullifyOutputSRS;
     oSetup.m_papszSelFields = psOptions->papszSelFields;
     oSetup.m_bAppend = bAppend;
@@ -1665,7 +1683,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oTranslator.m_bTransform = psOptions->bTransform;
     oTranslator.m_bWrapDateline = psOptions->bWrapDateline;
     oTranslator.m_osDateLineOffset = osDateLineOffset;
-    oTranslator.m_poOutputSRS = poOutputSRS;
+    oTranslator.m_poOutputSRS = oOutputSRSHolder.get();
     oTranslator.m_bNullifyOutputSRS = psOptions->bNullifyOutputSRS;
     oTranslator.m_poUserSourceSRS = poSourceSRS;
     oTranslator.m_poGCPCoordTrans = poGCPCoordTrans;
