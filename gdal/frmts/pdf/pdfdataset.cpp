@@ -707,6 +707,11 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
 
     int nXBlocks = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     int iTile = poGDS->aiTiles[nBlockYOff * nXBlocks + nBlockXOff];
+    if( iTile < 0 )
+    {
+        memset(pImage, 0, nBlockXSize * nBlockYSize);
+        return CE_None;
+    }
 
     GDALPDFTileDesc& sTile = poGDS->asTiles[iTile];
     GDALPDFObject* poImage = sTile.poImage;
