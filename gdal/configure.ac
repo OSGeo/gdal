@@ -4737,7 +4737,7 @@ dnl building for Windows). This test should work for the case of
 dnl cross-compilation too.
 dnl ---------------------------------------------------------------------------
 case "${host_os}" in
-    cygwin* | mingw32* | pw32*)
+    cygwin* | mingw* | pw32*)
       EXE_EXT=.exe
       SO_EXT=dll
       ;;
