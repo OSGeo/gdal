@@ -983,6 +983,21 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
       }
       /* Make sure we have room for the GRID part of the output. */
       if (nd2x3 > IS->nd2x3) {
+        if( nd2x3 > 100 * 1024 * 1024 )
+        {
+            long curPos = fp.DataSourceFtell();
+            fp.DataSourceFseek(0, SEEK_END);
+            long fileSize = fp.DataSourceFtell();
+            fp.DataSourceFseek(curPos, SEEK_SET);
+            // allow a compression ratio of 1:1000
+            if( nd2x3 / 1000 > fileSize )
+            {
+                preErrSprintf ("File too short\n");
+                free (buff);
+                return -2;
+            }
+        }
+
          IS->nd2x3 = nd2x3;
          IS->iain = (sInt4 *) realloc ((void *) IS->iain,
                                        IS->nd2x3 * sizeof (sInt4));
