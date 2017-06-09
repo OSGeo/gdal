@@ -629,6 +629,16 @@ int ILI2Reader::SaveClasses( const char *pszFile = NULL ) {
         VSIFCloseL(fp);
         OGRDestroyXercesInputSource(is);
     }
+    catch (const DOMException& toCatch)
+    {
+        // Can happen with createElement() in ILI2Handler::startElement()
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "DOMException: %s\n",
+                  transcode(toCatch.getMessage()).c_str());
+        VSIFCloseL(fp);
+        OGRDestroyXercesInputSource(is);
+        return FALSE;
+    }
     catch (const SAXException& toCatch)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
