@@ -123,6 +123,8 @@ const char *RECGetField( const char *pszSrc, int nStart, int nWidth )
 {
     static char szWorkField[128] = {};
 
+    if( nWidth >= static_cast<int>(sizeof(szWorkField)) )
+        nWidth = sizeof(szWorkField)-1;
     strncpy( szWorkField, pszSrc + nStart - 1, nWidth );
     szWorkField[nWidth] = '\0';
 
