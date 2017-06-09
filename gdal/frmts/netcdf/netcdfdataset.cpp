@@ -3026,16 +3026,19 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             // gridding (only if this is not a projected SRS).
             // Note: we use fabs() instead of abs() to avoid int32 overflow
             // issues.
-            if( (fabs(fabs(nSpacingBegin) - fabs(nSpacingLast))  <= 1) &&
-                (fabs(fabs(nSpacingBegin) - fabs(nSpacingMiddle)) <= 1) &&
-                (fabs(fabs(nSpacingMiddle) - fabs(nSpacingLast)) <= 1) )
+            const double dfSpacingBegin = nSpacingBegin;
+            const double dfSpacingMiddle = nSpacingMiddle;
+            const double dfSpacingLast = nSpacingLast;
+            if( (fabs(fabs(dfSpacingBegin) - fabs(dfSpacingLast))  <= 1) &&
+                (fabs(fabs(dfSpacingBegin) - fabs(dfSpacingMiddle)) <= 1) &&
+                (fabs(fabs(dfSpacingMiddle) - fabs(dfSpacingLast)) <= 1) )
             {
                 bLatSpacingOK = true;
             }
             else if( !oSRS.IsProjected() &&
-                     (((fabs(fabs(nSpacingBegin) - fabs(nSpacingLast))) <= 100) &&
-                      ((fabs(fabs(nSpacingBegin) - fabs(nSpacingMiddle))) <= 100) &&
-                      ((fabs(fabs(nSpacingMiddle) - fabs(nSpacingLast))) <= 100)) )
+                     (((fabs(fabs(dfSpacingBegin) - fabs(dfSpacingLast))) <= 100) &&
+                      ((fabs(fabs(dfSpacingBegin) - fabs(dfSpacingMiddle))) <= 100) &&
+                      ((fabs(fabs(dfSpacingMiddle) - fabs(dfSpacingLast))) <= 100)) )
             {
                 bLatSpacingOK = true;
                 CPLError(CE_Warning, CPLE_AppDefined,
