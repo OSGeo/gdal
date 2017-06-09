@@ -745,7 +745,7 @@ void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * 
                   sInt4 * idat, sInt4 * nidat, float * rdat, sInt4 * nrdat,
                   sInt4 * is0, CPL_UNUSED sInt4 * ns0, sInt4 * is1, CPL_UNUSED sInt4 * ns1,
                   sInt4 * is2, sInt4 * ns2, sInt4 * is3, CPL_UNUSED sInt4 * ns3,
-                  sInt4 * is4, CPL_UNUSED sInt4 * ns4, sInt4 * is5, CPL_UNUSED sInt4 * ns5,
+                  sInt4 * is4, sInt4 * ns4, sInt4 * is5, CPL_UNUSED sInt4 * ns5,
                   sInt4 * is6, CPL_UNUSED sInt4 * ns6, sInt4 * is7, CPL_UNUSED sInt4 * ns7,
                   sInt4 * ib, sInt4 * ibitmap, unsigned char *c_ipack,
                   sInt4 * nd5, float * xmissp, float * xmisss,
@@ -1031,6 +1031,11 @@ void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * 
    curIndex = 9;
    for (i = 0; i < gfld->ipdtlen; i++) {
       const struct pdstemplate *templatespds = get_templatespds();
+      if( curIndex >= *ns4 )
+      {
+          /* Should we error out instead ? */
+          break;
+      }
       is4[curIndex] = gfld->ipdtmpl[i];
       curIndex += abs (templatespds[pdsIndex].mappds[i]);
    }
