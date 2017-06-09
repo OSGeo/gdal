@@ -603,8 +603,6 @@ int ILI2Reader::SaveClasses( const char *pszFile = NULL ) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "DOMException: %s\n",
                   transcode(toCatch.getMessage()).c_str());
-        VSIFCloseL(fp);
-        OGRDestroyXercesInputSource(is);
         return FALSE;
     }
     catch (const SAXException& toCatch)
@@ -612,7 +610,6 @@ int ILI2Reader::SaveClasses( const char *pszFile = NULL ) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Parsing failed: %s\n",
                   transcode(toCatch.getMessage()).c_str());
-
         return FALSE;
     }
 
