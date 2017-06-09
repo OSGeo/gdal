@@ -32987,7 +32987,7 @@ EXTRA_INCLUDES=$EXTRA_INCLUDES
 
 
 case "${host_os}" in
-    cygwin* | mingw32* | pw32*)
+    cygwin* | mingw* | pw32*)
       EXE_EXT=.exe
       SO_EXT=dll
       ;;
