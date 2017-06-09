@@ -1743,9 +1743,10 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
                 {
                     oFieldDefn.SetType( OFTReal );
                     oFieldDefn.SetWidth( poClass->panAttrMaxWidth[iGAtt]+1 );
-                    if( pszFormat[2] == ',' )
+                    const size_t nFormatLen = strlen(pszFormat);
+                    if( nFormatLen >= 4 && pszFormat[2] == ',' )
                         oFieldDefn.SetPrecision(atoi(pszFormat+3));
-                    else if( pszFormat[3] == ',' )
+                    else if( nFormatLen >= 5 && pszFormat[3] == ',' )
                         oFieldDefn.SetPrecision(atoi(pszFormat+4));
                 }
 
