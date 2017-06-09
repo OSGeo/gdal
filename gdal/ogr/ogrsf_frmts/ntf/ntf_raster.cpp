@@ -182,6 +182,8 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 /* -------------------------------------------------------------------- */
     SetFPPos( panColumnOffset[iColumn], iColumn );
     NTFRecord *poRecord = ReadRecord();
+    if( poRecord == NULL )
+        return CE_Failure;
 
     if( iColumn < nRasterXSize-1 )
     {
