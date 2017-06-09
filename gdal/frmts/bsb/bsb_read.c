@@ -437,7 +437,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
         && psInfo->nColorSize >= 0x31 && psInfo->nColorSize <= 0x38 )
         psInfo->nColorSize -= 0x30;
 
-    if( ! (psInfo->nColorSize > 0 && psInfo->nColorSize < 9) )
+    if( ! (psInfo->nColorSize > 0 && psInfo->nColorSize <=7) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "BSBOpen : Bad value for nColorSize (%d). Probably due to corrupted BSB file",
