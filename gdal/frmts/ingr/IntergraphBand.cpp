@@ -115,6 +115,9 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDSIn,
 
     if( nEntries > 0 )
     {
+        // Not sure what max to use, but 65536 seems far enough
+        if( nEntries > 65536 )
+            nEntries = 65536;
         switch ( hHeaderTwo.ColorTableType )
         {
         case EnvironVColorTable:
