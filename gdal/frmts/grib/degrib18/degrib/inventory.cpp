@@ -1073,6 +1073,8 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
       if (numMsg == msgNum) {
          break;
       }
+      {
+      uInt4 increment;
       /* Continue on to the next GRIB2 message. */
       if (version == -1) {
          /* TDLPack uses 4 bytes for FORTRAN record size, then another 8
@@ -1081,9 +1083,13 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
           * bytes for a final FORTRAN record size.  However it only stores
           * in_ the gribLen the non-rounded amount, so we need to take care
           * of the rounding, and the trailing 4 bytes here. */
-         offset += buffLen + ((sInt4) ceil (gribLen / 8.0)) * 8 + 4;
+         increment = buffLen + ((uInt4) ceil (gribLen / 8.0)) * 8 + 4;
       } else {
-         offset += buffLen + gribLen;
+         increment = buffLen + gribLen;
+      }
+      if( increment < buffLen || increment > (uInt4)(INT_MAX - offset) )
+          break;
+      offset += increment;
       }
       fp.DataSourceFseek (offset, SEEK_SET);
    }
