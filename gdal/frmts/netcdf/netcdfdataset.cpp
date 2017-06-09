@@ -8563,6 +8563,10 @@ static bool NCDFIsGDALVersionGTE(const char *pszVersion, int nTarget)
          iToken++ )
     {
         nVersions[iToken] = atoi(papszTokens[iToken]);
+        if( nVersions[iToken] < 0 )
+            nVersions[iToken] = 0;
+        else if( nVersions[iToken] > 99 )
+            nVersions[iToken] = 99;
     }
 
     int nVersion = 0;
