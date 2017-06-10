@@ -271,6 +271,16 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else if( poGDS->eRMFType == RMFT_RSW )
     {
+        const GUInt32 nMaxBlockBytes = nBlockBytes * 4; // 4 bands
+        if( nTileBytes > nMaxBlockBytes )
+        {
+            CPLDebug("RMF",
+                     "Only reading %u bytes instead of the %u declared "
+                     "in the tile array",
+                     nMaxBlockBytes, nTileBytes);
+            nTileBytes = nMaxBlockBytes;
+        }
+
         GByte *pabyTile = reinterpret_cast<GByte *>( VSIMalloc( nTileBytes ) );
 
         if( !pabyTile )
