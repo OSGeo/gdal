@@ -1016,7 +1016,7 @@ Burns vector geometries into a raster.
 Usage: gdal_rasterize [-b band]* [-i] [-at]
        {[-burn value]* | [-a attribute_name] | [-3d]} [-add]
        [-l layername]* [-where expression] [-sql select_statement]
-       [-dialect dialect] [-of format] [-a_srs srs_def]
+       [-dialect dialect] [-of format] [-a_srs srs_def] [-to NAME=VALUE]*
        [-co "NAME=VALUE"]* [-a_nodata value] [-init value]*
        [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]
        [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
@@ -1104,6 +1104,11 @@ the input vector file will be used if available. If incompatible projections
 between input and output files, no attempt will be made to reproject features.
 The <i>srs_def</i> may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4,
 EPSG:n or a file containing the WKT. </dd>
+
+<dt> <b>-to</b> <em>NAME=VALUE</em>:</dt><dd> (GDAL >= 2.3.0) set a transformer
+option suitable to pass to GDALCreateGenImgProjTransformer2(). This is
+used when converting geometries coordinates to target raster pixel space. For
+example this can be used to specify RPC related transformer options.</dd>
 
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> (GDAL >= 1.8.0)
 Passes a creation option to the output format driver.  Multiple <b>-co</b>

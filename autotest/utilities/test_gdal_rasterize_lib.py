@@ -283,6 +283,22 @@ def test_gdal_rasterize_lib_102():
 
         return 'fail'
 
+
+    # Re-try with transformer options
+    target_ds.GetRasterBand(1).Fill(255)
+    ret = gdal.Rasterize(target_ds, vector_ds, burnValues = [0],
+                         transformerOptions = ['RPC_HEIGHT=1000'])
+    if ret != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check results.
+    checksum = target_ds.GetRasterBand(1).Checksum()
+    if checksum != 2003:
+        print(checksum)
+        gdaltest.post_reason( 'Did not get expected image checksum' )
+
+        return 'fail'
     target_ds = None
 
     return 'success'

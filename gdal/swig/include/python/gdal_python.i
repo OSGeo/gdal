@@ -1568,6 +1568,7 @@ def RasterizeOptions(options = [], format = None,
          outputType = GDT_Unknown, 
          creationOptions = None, noData = None, initValues = None,
          outputBounds = None, outputSRS = None,
+         transformerOptions = None,
          width = None, height = None,
          xRes = None, yRes = None, targetAlignedPixels = False,
          bands = None, inverse = False, allTouched = False,
@@ -1582,6 +1583,7 @@ def RasterizeOptions(options = [], format = None,
           creationOptions --- list of creation options
           outputBounds --- assigned output bounds: [minx, miny, maxx, maxy]
           outputSRS --- assigned output SRS
+          transformerOptions --- list of transformer options
           width --- width of the output raster in pixel
           height --- height of the output raster in pixel
           xRes, yRes --- output resolution in target SRS
@@ -1629,6 +1631,9 @@ def RasterizeOptions(options = [], format = None,
             new_options += ['-te', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3])]
         if outputSRS is not None:
             new_options += ['-a_srs', str(outputSRS) ]
+        if transformerOptions is not None:
+            for opt in transformerOptions:
+                new_options += ['-to', opt ]
         if width is not None and height is not None:
             new_options += ['-ts', str(width), str(height)]
         if xRes is not None and yRes is not None:

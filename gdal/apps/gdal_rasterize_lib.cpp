@@ -45,6 +45,7 @@
 #include "cpl_string.h"
 #include "gdal.h"
 #include "gdal_alg.h"
+#include "gdal_priv.h"
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
@@ -140,6 +141,7 @@ static CPLErr ProcessLayer(
     GDALDatasetH hDstDS, std::vector<int> anBandList,
     const std::vector<double> &adfBurnValues, int b3D, int bInverse,
     const char *pszBurnAttribute, char **papszRasterizeOptions,
+    char** papszTO,
     GDALProgressFunc pfnProgress, void* pProgressData )
 
 {
@@ -305,20 +307,65 @@ static CPLErr ProcessLayer(
     }
 
 /* -------------------------------------------------------------------- */
+/*      If we have transformer options, create the transformer here     */
+/*      Coordinate transformation to the target SRS has already been    */
+/*      done, so we just need to convert to target raster space.        */
+/*      Note: this is somewhat identical to what is done in             */
+/*      GDALRasterizeGeometries() itself, except we can pass transformer*/
+/*      options.                                                        */
+/* -------------------------------------------------------------------- */
+
+    void* pTransformArg = NULL;
+    GDALTransformerFunc pfnTransformer = NULL;
+    CPLErr eErr = CE_None;
+    if( papszTO != NULL )
+    {
+        GDALDataset* poDS = reinterpret_cast<GDALDataset*>(hDstDS);
+        char** papszTransformerOptions = CSLDuplicate(papszTO);
+        double adfGeoTransform[6] = { 0.0 };
+        if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None &&
+            poDS->GetGCPCount() == 0 &&
+            poDS->GetMetadata("RPC") == NULL )
+        {
+            papszTransformerOptions = CSLSetNameValue(
+                papszTransformerOptions, "DST_METHOD", "NO_GEOTRANSFORM");
+        }
+
+        pTransformArg =
+            GDALCreateGenImgProjTransformer2( NULL, hDstDS,
+                                              papszTransformerOptions );
+        CSLDestroy( papszTransformerOptions );
+
+        pfnTransformer = GDALGenImgProjTransform;
+        if( pTransformArg == NULL )
+        {
+            eErr = CE_Failure;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Perform the burn.                                               */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = GDALRasterizeGeometries( hDstDS, static_cast<int>(anBandList.size()), &(anBandList[0]),
-                             static_cast<int>(ahGeometries.size()), &(ahGeometries[0]),
-                             NULL, NULL, &(adfFullBurnValues[0]),
-                             papszRasterizeOptions,
-                             pfnProgress, pProgressData );
+    if( eErr == CE_None )
+    {
+        eErr = GDALRasterizeGeometries(
+            hDstDS,
+            static_cast<int>(anBandList.size()), &(anBandList[0]),
+            static_cast<int>(ahGeometries.size()), &(ahGeometries[0]),
+            pfnTransformer, pTransformArg,
+            &(adfFullBurnValues[0]),
+            papszRasterizeOptions,
+            pfnProgress, pProgressData );
+    }
 
 /* -------------------------------------------------------------------- */
-/*      Cleanup geometries.                                             */
+/*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    int iGeom;
 
-    for( iGeom = static_cast<int>(ahGeometries.size())-1; iGeom >= 0; iGeom-- )
+    if( pTransformArg )
+        GDALDestroyTransformer( pTransformArg );
+
+    for( int iGeom = static_cast<int>(ahGeometries.size())-1; iGeom >= 0; iGeom-- )
         OGR_G_DestroyGeometry( ahGeometries[iGeom] );
 
     return eErr;
@@ -498,6 +545,7 @@ struct GDALRasterizeOptions
     std::vector<int> anBandList;
     std::vector<double> adfBurnValues;
     char **papszRasterizeOptions;
+    char **papszTO;
     double dfXRes;
     double dfYRes;
     char **papszCreationOptions;
@@ -652,7 +700,10 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
 
             eErr = ProcessLayer( hLayer, psOptions->hSRS != NULL, hDstDS, psOptions->anBandList,
                           psOptions->adfBurnValues, psOptions->b3D, psOptions->bInverse, psOptions->pszBurnAttribute,
-                          psOptions->papszRasterizeOptions, psOptions->pfnProgress, psOptions->pProgressData );
+                          psOptions->papszRasterizeOptions,
+                          psOptions->papszTO,
+                          psOptions->pfnProgress,
+                          psOptions->pProgressData );
 
             GDALDatasetReleaseResultSet( hSrcDataset, hLayer );
         }
@@ -727,7 +778,9 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
 
         eErr = ProcessLayer( hLayer, psOptions->hSRS != NULL, hDstDS, psOptions->anBandList,
                       psOptions->adfBurnValues, psOptions->b3D, psOptions->bInverse, psOptions->pszBurnAttribute,
-                      psOptions->papszRasterizeOptions, GDALScaledProgress, pScaledProgress );
+                      psOptions->papszRasterizeOptions,
+                      psOptions->papszTO,
+                      GDALScaledProgress, pScaledProgress );
 
         GDALDestroyScaledProgress( pScaledProgress );
         if( eErr != CE_None )
@@ -783,6 +836,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
     psOptions->pszBurnAttribute = NULL;
     psOptions->pszWHERE = NULL;
     psOptions->papszRasterizeOptions = NULL;
+    psOptions->papszTO = NULL;
     psOptions->dfXRes = 0;
     psOptions->dfYRes = 0;
     psOptions->eOutputType = GDT_Float64;
@@ -1041,6 +1095,11 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             psOptions->bTargetAlignedPixels = TRUE;
             psOptions->bCreateOutput = TRUE;
         }
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-to") )
+        {
+            psOptions->papszTO =
+                CSLAddString( psOptions->papszTO, papszArgv[++i] );
+        }
 
         else if( papszArgv[i][0] == '-' )
         {
@@ -1164,6 +1223,7 @@ void GDALRasterizeOptionsFree(GDALRasterizeOptions *psOptions)
         CSLDestroy(psOptions->papszCreationOptions);
         CSLDestroy(psOptions->papszLayers);
         CSLDestroy(psOptions->papszRasterizeOptions);
+        CSLDestroy(psOptions->papszTO);
         CPLFree(psOptions->pszSQL);
         CPLFree(psOptions->pszDialect);
         CPLFree(psOptions->pszBurnAttribute);
