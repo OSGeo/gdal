@@ -1341,8 +1341,10 @@ do {                                                                    \
                 VSIFReadL( &nValue, 1, sizeof(nValue),
                            poDS->fp ) != sizeof(nValue) )
             {
-                delete poDS;
-                return NULL;
+                CPLDebug("RMF", "Cannot read ROI at index %u", i);
+                break;
+                //delete poDS;
+                //return NULL;
             }
 
             CPLDebug( "RMF", "%d", nValue );
@@ -1422,7 +1424,7 @@ do {                                                                    \
          i < poDS->sHeader.nTileTblSize / sizeof(GUInt32);
          i += 2 )
     {
-        CPLDebug( "RMF", "    %d / %d",
+        CPLDebug( "RMF", "    %u / %u",
                   poDS->paiTiles[i], poDS->paiTiles[i + 1] );
     }
 #endif
