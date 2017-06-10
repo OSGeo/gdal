@@ -308,9 +308,9 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
             if( nRawBytes > nTileBytes )
             {
-                GByte *pszRawBuf = reinterpret_cast<GByte *>(
+                GByte *pabyRawBuf = reinterpret_cast<GByte *>(
                     VSIMalloc( nRawBytes ) );
-                if( pszRawBuf == NULL )
+                if( pabyRawBuf == NULL )
                 {
                     CPLError( CE_Failure, CPLE_FileIO,
                               "Can't allocate a buffer for raw data of "
@@ -323,9 +323,9 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 }
 
                 (*poGDS->Decompress)( pabyTile, nTileBytes,
-                                      pszRawBuf, nRawBytes );
+                                      pabyRawBuf, nRawBytes );
                 CPLFree( pabyTile );
-                pabyTile = pszRawBuf;
+                pabyTile = pabyRawBuf;
                 nTileBytes = nRawBytes;
             }
         }
