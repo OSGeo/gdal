@@ -1340,8 +1340,12 @@ static
 void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                                       VSILFILE* fp,
                                       GDALJP2Box* poParentBox,
-                                      char** papszOptions)
+                                      char** papszOptions,
+                                      int nRecLevel)
 {
+    if( nRecLevel == 5 )
+        return;
+
     static const char* const szHex = "0123456789ABCDEF";
     GDALJP2Box oBox( fp );
     CPLXMLNode* psLastChild = NULL;
@@ -1366,7 +1370,9 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
 
             if( oBox.IsSuperBox() )
             {
-                GDALGetJPEG2000StructureInternal(psBox, fp, &oBox, papszOptions);
+                GDALGetJPEG2000StructureInternal(psBox, fp, &oBox,
+                                                 papszOptions,
+                                                 nRecLevel + 1);
             }
             else
             {
@@ -1562,7 +1568,7 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
     {
         psParent = CPLCreateXMLNode( NULL, CXT_Element, "JP2File" );
         CPLAddXMLAttributeAndValue(psParent, "filename", pszFilename );
-        GDALGetJPEG2000StructureInternal(psParent, fp, NULL, papszOptions );
+        GDALGetJPEG2000StructureInternal(psParent, fp, NULL, papszOptions, 0);
     }
 
     CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
