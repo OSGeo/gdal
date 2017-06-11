@@ -785,6 +785,8 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                 pabyIter += 2;
                 nRemainingLength -= 2;
             }
+            else
+                break;
             if( nRemainingLength >= ML )
             {
                 CPLString osHex("0x");
@@ -798,6 +800,8 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                             CPLSPrintf("SM%d", iNSF),
                             (int)ML, osHex.c_str());
             }
+            else
+                break;
         }
         GUInt16 NVF = 0;
         if( nRemainingLength >= 2 )
@@ -825,6 +829,8 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                             CPLSPrintf("VF%d", iNVF),
                             (int)ML, osHex.c_str());
             }
+            else
+                break;
             if( nRemainingLength >= ML )
             {
                 CPLString osHex("0x");
@@ -838,6 +844,8 @@ static void DumpRREQBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                             CPLSPrintf("VM%d", iNVF),
                             (int)ML, osHex.c_str());
             }
+            else
+                break;
         }
         if( nRemainingLength > 0 )
             AddElement( psDecodedContent, psLastChild,
