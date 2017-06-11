@@ -5938,6 +5938,16 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                 status = NC_EBADTYPE;
                 if( *pszValue == '"' )
                 {
+                    // For _FillValue, the attribute type should match
+                    // the variable type. Leaks memory with NC4 otherwise
+                    if( osAttrName == "_FillValue" )
+                    {
+                        CPLDebug("netCDF", "nc_put_att_(%s:%s) failed: %s",
+                                osVarName.c_str(), osAttrName.c_str(),
+                                nc_strerror(status));
+                        continue;
+                    }
+
                     // Unquote and unescape string value
                     CPLString osVal(pszValue + 1);
                     while( !osVal.empty() )
