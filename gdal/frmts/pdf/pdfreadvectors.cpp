@@ -78,7 +78,8 @@ int PDFDataset::OpenVectorLayers(GDALPDFDictionary* poPageDict)
     else
     {
         ExploreContents(poContents, poResources);
-        ExploreTree(poStructTreeRoot, 0);
+        std::set< std::pair<int,int> > aoSetAlreadyVisited;
+        ExploreTree(poStructTreeRoot, aoSetAlreadyVisited, 0);
     }
 
     CleanupIntermediateResources();
@@ -237,10 +238,17 @@ int PDFDataset::GetLayerCount()
 /*                            ExploreTree()                             */
 /************************************************************************/
 
-void PDFDataset::ExploreTree(GDALPDFObject* poObj, int nRecLevel)
+void PDFDataset::ExploreTree(GDALPDFObject* poObj,
+                             std::set< std::pair<int,int> > aoSetAlreadyVisited,
+                             int nRecLevel)
 {
     if (nRecLevel == 16)
         return;
+
+    std::pair<int,int> oObjPair( poObj->GetRefNum(), poObj->GetRefGen() );
+    if( aoSetAlreadyVisited.find( oObjPair ) != aoSetAlreadyVisited.end() )
+        return;
+    aoSetAlreadyVisited.insert( oObjPair );
 
     if (poObj->GetType() != PDFObjectType_Dictionary)
         return;
@@ -306,12 +314,13 @@ void PDFDataset::ExploreTree(GDALPDFObject* poObj, int nRecLevel)
         else
         {
             for(int i=0;i<poArray->GetLength();i++)
-                ExploreTree(poArray->Get(i), nRecLevel + 1);
+                ExploreTree(poArray->Get(i), aoSetAlreadyVisited,
+                            nRecLevel + 1);
         }
     }
     else if (poK->GetType() == PDFObjectType_Dictionary)
     {
-        ExploreTree(poK, nRecLevel + 1);
+        ExploreTree(poK, aoSetAlreadyVisited, nRecLevel + 1);
     }
 }
 

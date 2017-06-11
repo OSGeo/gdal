@@ -46,7 +46,9 @@
 #include "pdfobject.h"
 
 #include <map>
+#include <set>
 #include <stack>
+#include <utility>
 #include <bitset>   // For detecting usage of PDF library
 
 #define     PDFLIB_POPPLER    0
@@ -311,7 +313,9 @@ private:
 
     int                 bSetStyle;
 
-    void                ExploreTree(GDALPDFObject* poObj, int nRecLevel);
+    void                ExploreTree(GDALPDFObject* poObj,
+                                    std::set< std::pair<int,int> > aoSetAlreadyVisited,
+                                    int nRecLevel);
     void                ExploreContents(GDALPDFObject* poObj, GDALPDFObject* poResources);
 
     void                ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
