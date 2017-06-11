@@ -273,16 +273,17 @@ OGRErr OGRCurveCollection::importBodyFromWkb(
         if( nSize < 9 && nSize != -1 )
             return OGRERR_NOT_ENOUGH_DATA;
 
-        OGRwkbGeometryType eSubGeomType = wkbUnknown;
+        OGRwkbGeometryType eFlattenSubGeomType = wkbUnknown;
         if( OGRReadWKBGeometryType( pabySubData, eWkbVariant,
-                                    &eSubGeomType ) != OGRERR_NONE )
+                                    &eFlattenSubGeomType ) != OGRERR_NONE )
             return OGRERR_FAILURE;
+        eFlattenSubGeomType = wkbFlatten(eFlattenSubGeomType);
 
         OGRErr eErr = OGRERR_NONE;
         int nSubGeomBytesConsumedOut = -1;
-        if( (eSubGeomType != wkbCompoundCurve &&
-             OGR_GT_IsCurve(eSubGeomType)) ||
-            (bAcceptCompoundCurve && eSubGeomType == wkbCompoundCurve) )
+        if( (eFlattenSubGeomType != wkbCompoundCurve &&
+             OGR_GT_IsCurve(eFlattenSubGeomType)) ||
+            (bAcceptCompoundCurve && eFlattenSubGeomType == wkbCompoundCurve) )
         {
             eErr = OGRGeometryFactory::
                 createFromWkb( pabySubData, NULL,
@@ -294,7 +295,7 @@ OGRErr OGRCurveCollection::importBodyFromWkb(
             CPLDebug(
                 "OGR",
                 "Cannot add geometry of type (%d) to geometry of type (%d)",
-                eSubGeomType, poGeom->getGeometryType());
+                eFlattenSubGeomType, poGeom->getGeometryType());
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
 
