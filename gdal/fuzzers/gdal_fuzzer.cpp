@@ -113,21 +113,34 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             // If we know that we will need to allocate a lot of memory
             // given the block size and interleaving mode, do not read
             // pixels to avoid out of memory conditions by ASAN
-            int nBlockXSize = 0, nBlockYSize = 0;
-            GDALGetBlockSize( GDALGetRasterBand(hDS, 1), &nBlockXSize,
-                              &nBlockYSize );
-            const GDALDataType eDT =
-                GDALGetRasterDataType( GDALGetRasterBand(hDS, 1) );
-            const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
-            const char* pszInterleave =
-                GDALGetMetadataItem( hDS, "INTERLEAVE", "IMAGE_STRUCTURE" );
-            const int nSimultaneousBands =
-                (pszInterleave && EQUAL(pszInterleave, "PIXEL")) ?
-                            nTotalBands : 1;
-            if( nBlockXSize >
-                10 * 1024 * 1024 / nDTSize / nBlockYSize / nSimultaneousBands )
+            int nPixels = 0;
+            for( int i = 0; i < nBands; i++ )
             {
-                bDoCheckSum = false;
+                int nBXSize = 0, nBYSize = 0;
+                GDALGetBlockSize( GDALGetRasterBand(hDS, i+1), &nBXSize,
+                                  &nBYSize );
+                if( nBYSize == 0 || nBXSize > INT_MAX / nBYSize )
+                {
+                    bDoCheckSum = false;
+                    break;
+                }
+                if( nBXSize * nBYSize > nPixels )
+                    nPixels = nBXSize * nBYSize;
+            }
+            if( bDoCheckSum )
+            {
+                const GDALDataType eDT =
+                    GDALGetRasterDataType( GDALGetRasterBand(hDS, 1) );
+                const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
+                const char* pszInterleave =
+                    GDALGetMetadataItem( hDS, "INTERLEAVE", "IMAGE_STRUCTURE" );
+                const int nSimultaneousBands =
+                    (pszInterleave && EQUAL(pszInterleave, "PIXEL")) ?
+                                nTotalBands : 1;
+                if( nPixels > 10 * 1024 * 1024 / nDTSize / nSimultaneousBands )
+                {
+                    bDoCheckSum = false;
+                }
             }
         }
         if( bDoCheckSum )
