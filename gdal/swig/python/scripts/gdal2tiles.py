@@ -647,6 +647,29 @@ def scale_query_to_tile(dsquery, dstile, tiledriver, options, tilefilename=''):
             exit_with_error("ReprojectImage() failed on %s, error %d" % (tilefilename, res))
 
 
+def setup_no_data_values(input_dataset, options):
+    """
+    Extract the NODATA values from the dataset or use the passed arguments as override if any
+    """
+    in_nodata = []
+    if options.srcnodata:
+        nds = list(map(float, options.srcnodata.split(',')))
+        if len(nds) < input_dataset.RasterCount:
+            in_nodata = (nds * input_dataset.RasterCount)[:input_dataset.RasterCount]
+        else:
+            in_nodata = nds
+    else:
+        for i in range(1, input_dataset.RasterCount+1):
+            raster_no_data = input_dataset.GetRasterBand(i).GetNoDataValue()
+            if raster_no_data is not None:
+                in_nodata.append(raster_no_data)
+
+    if options.verbose:
+        print("NODATA: %s" % in_nodata)
+
+    return in_nodata
+
+
 def gettempfilename(suffix):
     """Returns a temporary filename"""
     if '_' in os.environ:
@@ -1096,20 +1119,7 @@ class GDAL2Tiles(object):
                 "gdal2tiles temp.vrt" % self.input
             )
 
-        # Get NODATA value
-        in_nodata = []
-        for i in range(1, self.in_ds.RasterCount+1):
-            if self.in_ds.GetRasterBand(i).GetNoDataValue() is not None:
-                in_nodata.append(self.in_ds.GetRasterBand(i).GetNoDataValue())
-        if self.options.srcnodata:
-            nds = list(map(float, self.options.srcnodata.split(',')))
-            if len(nds) < self.in_ds.RasterCount:
-                in_nodata = (nds * self.in_ds.RasterCount)[:self.in_ds.RasterCount]
-            else:
-                in_nodata = nds
-
-        if self.options.verbose:
-            print("NODATA: %s" % in_nodata)
+        in_nodata = setup_no_data_values(self.in_ds, self.options)
 
         if self.options.verbose:
             print("Preprocessed file:",
