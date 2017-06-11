@@ -460,7 +460,7 @@ class OGRNTFRasterLayer : public OGRLayer
     float              *pafColumn;
     int                 iColumnOffset;
 
-    int                 iCurrentFC;
+    GIntBig             iCurrentFC;
 
     int                 nDEMSample;
     int                 nFeatureCount;
