@@ -424,7 +424,7 @@ class OGRNTFFeatureClassLayer : public OGRLayer
 
     OGRNTFDataSource   *poDS;
 
-    int                 iCurrentFC;
+    GIntBig            iCurrentFC;
 
   public:
     explicit             OGRNTFFeatureClassLayer( OGRNTFDataSource * poDS );
