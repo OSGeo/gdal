@@ -559,9 +559,12 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
 
         const int nIndexValueWidth = subfieldDefn->GetWidth();
 
+        char offset[30] = {0};
         /* Should be strict comparison, but apparently a few datasets */
         /* have GetDataSize() greater than the required minimum (#3862) */
-        if (nIndexValueWidth > (INT_MAX - 1) / (NFL * NFC) ||
+        if (nIndexValueWidth <= 0 ||
+            static_cast<size_t>(nIndexValueWidth) >= sizeof(offset) ||
+            nIndexValueWidth > (INT_MAX - 1) / (NFL * NFC) ||
             field->GetDataSize() < nIndexValueWidth * NFL * NFC + 1)
         {
             return false;
@@ -576,7 +579,6 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
             return false;
         }
         const char* ptr = field->GetData();
-        char offset[30] = {0};
         offset[nIndexValueWidth] = '\0';
 
         for( int i = 0; i < NFL * NFC; i++ )
