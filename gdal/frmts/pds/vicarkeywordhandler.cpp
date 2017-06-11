@@ -175,23 +175,24 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     if (pszLBLSIZE)
         nOffset = static_cast<int>(pszLBLSIZE - (const char *)pszEOLHeader);
     pch1 = strstr( reinterpret_cast<char *>( pszEOLHeader + nOffset ), "=" );
-    if( pch1 == NULL )
+    if( pch1 == NULL || *pch1 == '\0' )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
         VSIFree(pszEOLHeader);
         return FALSE;
     }
-    VSIFree(pszEOLHeader);
     pch1 ++;
     pch2 = strstr( pch1, " " );
     if( pch2 == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
+        VSIFree(pszEOLHeader);
         return FALSE;
     }
     strncpy( keyval, pch1, std::min(static_cast<size_t>(pch2 - pch1),
                                     sizeof(keyval) - 1 ) );
     keyval[std::min( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
+    VSIFree(pszEOLHeader);
 
     int EOLabelSize = atoi( keyval );
     if( EOLabelSize <= 0 || EOLabelSize > 100 * 1024 * 1024 )
