@@ -989,13 +989,14 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
             return -4;
          }
          /* Parse the interesting data out of sect 1. */
-         if( bufferLen < 13 - 5 + sizeof(short int) )
+         if( bufferLen < 13 - 5 + 7 )
          {
             errSprintf ("ERROR: Problems with section 1\n");
             free (buffer);
             free (buff);
             return -4;
          }
+         /* InventoryParseTime reads 7 bytes */
          InventoryParseTime (buffer + 13 - 5, &(inv->refTime));
          MEMCPY_BIG (&center, buffer + 6 - 5, sizeof (short int));
          MEMCPY_BIG (&subcenter, buffer + 8 - 5, sizeof (short int));
