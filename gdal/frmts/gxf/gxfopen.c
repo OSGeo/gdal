@@ -364,10 +364,26 @@ GXFHandle GXFOpen( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Allocate, and initialize the raw scanline offset array.         */
 /* -------------------------------------------------------------------- */
-    if( psGXF->nRawYSize <= 0 )
+    if( psGXF->nRawYSize <= 0 || psGXF->nRawYSize >= INT_MAX )
     {
         GXFClose( psGXF );
         return NULL;
+    }
+
+    /* Avoid excessive memory allocation */
+    if( psGXF->nRawYSize >= 1000000 )
+    {
+        vsi_l_offset nCurOffset;
+        vsi_l_offset nFileSize;
+        nCurOffset = VSIFTellL( psGXF->fp );
+        VSIFSeekL( psGXF->fp, 0, SEEK_END );
+        nFileSize = VSIFTellL( psGXF->fp );
+        VSIFSeekL( psGXF->fp, nCurOffset, SEEK_SET );
+        if( (vsi_l_offset)psGXF->nRawYSize > nFileSize )
+        {
+            GXFClose( psGXF );
+            return NULL;
+        }
     }
 
     psGXF->panRawLineOffset = (vsi_l_offset *)
