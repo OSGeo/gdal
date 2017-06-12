@@ -152,7 +152,7 @@ int OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
         return 0;
     }
 
-    if( cos_complement_LatA == 0.0 && cos_Heading == 0.0 )
+    if( cos_complement_LatA == 0.0 && sin_Heading == 0.0 )
     {
         *pdfLonB_deg = dfLonA_deg;
         if( fabs(dfHeadingInA) < 1e-10 )
@@ -166,15 +166,30 @@ int OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
         return 1;
     }
 
+    if( cos_complement_LatA == 0.0 && cos_Heading == 0.0 )
+    {
+        *pdfLatB_deg = dfLatA_deg;
+        if( fabs(dfHeadingInA - 90.0) < 1e-10 )
+        {
+            *pdfLonB_deg = dfLonA_deg + dfDistanceRad * RAD2DEG;
+        }
+        else
+        {
+            *pdfLonB_deg = dfLonA_deg - dfDistanceRad * RAD2DEG;
+        }
+        return 1;
+    }
+
     const double cos_complement_latB =
         cos_Distance * cos_complement_LatA +
         sin_Distance * sin_complement_LatA * cos_Heading;
 
     const double complement_latB  = OGR_Safe_acos(cos_complement_latB);
 
+    const double dfDenomin = sin(complement_latB) * sin_complement_LatA;
     const double Cos_dG =
         (cos_Distance - cos_complement_latB * cos_complement_LatA) /
-        (sin(complement_latB) * sin_complement_LatA);
+        dfDenomin;
     *pdfLatB_deg = 90 - complement_latB * RAD2DEG;
 
     const double dG_deg  = OGR_Safe_acos(Cos_dG) * RAD2DEG;
