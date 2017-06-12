@@ -469,7 +469,7 @@ static int TransferFloat (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
 {
    int i;               /* loop counter over all grid points. */
    sInt4 x, y;       /* Where we are in a grid of scan value 0100???? */
-   int curIndex;        /* Where in ain to store the current data. */
+   uInt4 curIndex;        /* Where in ain to store the current data. */
 
    if (nd2x3 < ngrdpts) {
 #ifdef DEBUG
@@ -504,8 +504,9 @@ static int TransferFloat (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
          for (i = 0; i < ngrdpts; i++) {
             ScanIndex2XY (i, &x, &y, *scan, nx, ny);
             /* ScanIndex returns value as if scan was 0100(0000) */
-            curIndex = (x - 1) + (y - 1) * nx;
-            myAssert (curIndex < nd2x3);
+            curIndex = (uInt4)(x - 1) + (uInt4)(y - 1) * (uInt4)nx;
+            if (curIndex >= (uInt4)nd2x3)
+                return 1;
             ib[curIndex] = bmap[i];
             /* Check if we are supposed to insert xmissp into the field */
             if ((iclean != 0) && (ib[curIndex] == 0)) {
@@ -518,8 +519,9 @@ static int TransferFloat (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
          for (i = 0; i < ngrdpts; i++) {
             ScanIndex2XY (i, &x, &y, *scan, nx, ny);
             /* ScanIndex returns value as if scan was 0100(0000) */
-            curIndex = (x - 1) + (y - 1) * nx;
-            myAssert (curIndex < nd2x3);
+            curIndex = (uInt4)(x - 1) + (uInt4)(y - 1) * (uInt4)nx;
+            if( curIndex >= (uInt4)nd2x3 )
+                return 1;
             ain[curIndex] = fld[i];
          }
       }
