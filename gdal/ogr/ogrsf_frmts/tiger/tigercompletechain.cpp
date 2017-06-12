@@ -628,6 +628,11 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
     char        achShapeRec[OGR_TIGER_RECBUF_LEN];
     int         nShapeRecLen = psRT2Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
 
+    if( nShapeRecLen <= 0 )
+    {
+        return -2;
+    }
+
     while( nChainsRead < nMaxChainToRead )
     {
         if( VSIFSeekL( fpShape, (nWorkingRecId-1) * nShapeRecLen,
