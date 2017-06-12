@@ -297,7 +297,7 @@ int HF2Dataset::LoadBlockMap()
         vsi_l_offset nSize = VSIFTellL(fp);
         VSIFSeekL( fp, nCurOff, SEEK_SET );
         // Check that the file is big enough to have 8 bytes per block
-        if( static_cast<vsi_l_offset>(nXBlocks) * nYBlocks > nSize / 8 )
+        if( static_cast<vsi_l_offset>(nXBlocks) * nYBlocks < nSize / 8 )
         {
             return FALSE;
         }
