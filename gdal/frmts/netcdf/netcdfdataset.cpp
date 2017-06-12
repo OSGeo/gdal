@@ -2981,9 +2981,12 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                      pdfXCoord[xdim - 2], pdfXCoord[xdim - 1]);
 #endif
 
-            if( (abs(abs(nSpacingBegin) - abs(nSpacingLast))  <= 1) &&
-                (abs(abs(nSpacingBegin) - abs(nSpacingMiddle)) <= 1) &&
-                (abs(abs(nSpacingMiddle) - abs(nSpacingLast)) <= 1) )
+            const double dfSpacingBegin = nSpacingBegin;
+            const double dfSpacingMiddle = nSpacingMiddle;
+            const double dfSpacingLast = nSpacingLast;
+            if( (fabs(fabs(dfSpacingBegin) - fabs(dfSpacingLast))  <= 1) &&
+                (fabs(fabs(dfSpacingBegin) - fabs(dfSpacingMiddle)) <= 1) &&
+                (fabs(fabs(dfSpacingMiddle) - fabs(dfSpacingLast)) <= 1) )
             {
                 bLonSpacingOK = true;
             }
