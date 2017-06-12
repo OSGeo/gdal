@@ -6938,7 +6938,7 @@ GTiff driver:
  * ensure zip/jpeg quality is preserved in crystalize. (#2642)
  * support handling nodata via pam/aux mechanisms (#2505)
  * ensure TIFFFlush() is called in FlushCache() (#2512)
- * Replace Crystalize() by SetDirectory() in GTiffDataset::IBuildOverviews() so that 2 consecutive ds.BuilOverviews() calls work without needing to close and reopen the dataset in between
+ * Replace Crystalize() by SetDirectory() in GTiffDataset::IBuildOverviews() so that 2 consecutive ds.BuildOverviews() calls work without needing to close and reopen the dataset in between
  * Prevent crash when disk is full
  * Add detection of big-endian bigtiffs when BIGTIFF_SUPPORT is *NOT* defined
  * Add missing ScaleAtCenter parameter for Hotine Oblique Mercator when writing the geotiff keys

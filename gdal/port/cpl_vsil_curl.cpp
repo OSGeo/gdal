@@ -4968,7 +4968,7 @@ struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
  * has been closed and reopen. Starting with GDAL 2.3, the
  * CPL_VSIL_CURL_NON_CACHED configuration option can be set to values like
  * "/vsicurl/http://example.com/foo.tif:/vsicurl/http://example.com/some_directory",
- * so that at file handle closing, all cached content related to the mentionned
+ * so that at file handle closing, all cached content related to the mentioned
  * file(s) is no longer cached. This can help when dealing with resources that
  * can be modified during execution of GDAL related code.
  *
@@ -5051,7 +5051,7 @@ void VSIInstallCurlFileHandler( void )
  * has been closed and reopen. Starting with GDAL 2.3, the
  * CPL_VSIL_CURL_NON_CACHED configuration option can be set to values like
  * "/vsis3/bucket/foo.tif:/vsis3/another_bucket/some_directory",
- * so that at file handle closing, all cached content related to the mentionned
+ * so that at file handle closing, all cached content related to the mentioned
  * file(s) is no longer cached. This can help when dealing with resources that
  * can be modified during execution of GDAL related code.
  * 
@@ -5123,7 +5123,7 @@ void VSIInstallS3FileHandler( void )
  * has been closed and reopen. Starting with GDAL 2.3, the
  * CPL_VSIL_CURL_NON_CACHED configuration option can be set to values like
  * "/vsigs/bucket/foo.tif:/vsigs/another_bucket/some_directory",
- * so that at file handle closing, all cached content related to the mentionned
+ * so that at file handle closing, all cached content related to the mentioned
  * file(s) is no longer cached. This can help when dealing with resources that
  * can be modified during execution of GDAL related code.
  *

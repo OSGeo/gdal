@@ -998,13 +998,13 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     OGRPolygon **tabPolygons = NULL;
     const int MAX_INITIAL_SECTIONS = 100000;
-    const int numInitalLineSections =
+    const int numInitialLineSections =
         ( numLineSections < MAX_INITIAL_SECTIONS ) ?
                             numLineSections : MAX_INITIAL_SECTIONS;
     if (numLineSections > 0)
     {
         tabPolygons = static_cast<OGRPolygon**>(
-            VSI_MALLOC2_VERBOSE(numInitalLineSections, sizeof(OGRPolygon*)));
+            VSI_MALLOC2_VERBOSE(numInitialLineSections, sizeof(OGRPolygon*)));
         if( tabPolygons == NULL )
             return -1;
     }
