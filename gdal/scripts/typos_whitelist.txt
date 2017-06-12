@@ -65,3 +65,4 @@ See COMMITERS file.
       facet->visitid= 0 iff vertex-at-infinity (i.e., unbounded)
     sets same iff vertices have the same orientation
       nearzero iff diagonal[k] < qh NEARzero[k]
+ogr2ogr --config OGR_STROKE_CURVE TRUE -SQL 'SELECT Rechtsstatus,publiziertAb,MetadatenGeobasisdaten,Eigentumsbeschraenkung,ZustaendigeStelle,Flaeche FROM "OeREBKRM09trsfr.Transferstruktur.Geometrie"' shpdir ch.bazl.sicherheitszonenplan.oereb_20131118.xtf,OeREBKRM09vs.imd OeREBKRM09trsfr.Transferstruktur.Geometrie

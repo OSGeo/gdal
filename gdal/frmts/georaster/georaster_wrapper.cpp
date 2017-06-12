@@ -244,7 +244,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
         strlen( papszParam[1] ) == 0 &&
         strlen( papszParam[2] ) == 0 )
     {
-        /* In an external procedure environment, before openning any
+        /* In an external procedure environment, before opening any
          * dataset, the caller must pass the with_context as an
          * string metadata item OCI_CONTEXT_PTR to the driver. */ 
 

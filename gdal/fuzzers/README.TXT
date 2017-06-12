@@ -1,4 +1,4 @@
-This directory contain fuzzer main funtions and scripts for the
+This directory contain fuzzer main functions and scripts for the
 Google OSS Fuzz project: https://github.com/google/oss-fuzz/
 
 The main build scripts are in:

@@ -56,7 +56,7 @@ void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile);
 void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
 
 //  ---------------------------------------------------------------------------
-//  JPEG2000 support - Install the Vitual File System handler to OCI LOB
+//  JPEG2000 support - Install the Virtual File System handler to OCI LOB
 //  ---------------------------------------------------------------------------
 
 CPL_C_START

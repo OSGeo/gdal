@@ -9125,7 +9125,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
             if( nArraySize != nArraySize64 )
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory,
-                         "Cannot allocate strip offet and bytecount arrays");
+                         "Cannot allocate strip offset and bytecount arrays");
                 return false;
             }
 #endif
@@ -9150,7 +9150,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
             else
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory,
-                         "Cannot allocate strip offet and bytecount arrays");
+                         "Cannot allocate strip offset and bytecount arrays");
                 _TIFFfree(hTIFF->tif_dir.td_stripoffset);
                 hTIFF->tif_dir.td_stripoffset = NULL;
                 _TIFFfree(hTIFF->tif_dir.td_stripbytecount);
