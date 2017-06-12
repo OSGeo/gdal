@@ -260,7 +260,7 @@ JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDS, int nBan
     this->bPromoteTo8Bit = bPromoteTo8Bit;
 
     if( (nBits % 8) != 0 )
-        SetMetadataItem("NBITS",
+        GDALRasterBand::SetMetadataItem("NBITS",
                         CPLString().Printf("%d",nBits),
                         "IMAGE_STRUCTURE" );
 }
@@ -1208,7 +1208,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poDS->nBands > 1 )
     {
-        poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+        poDS->GDALDataset::SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
 
     poDS->LoadJP2Metadata(poOpenInfo);
@@ -1218,6 +1218,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
+
+    poDS->SetPamFlags( poDS->GetPamFlags() & ~GPF_DIRTY );
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
