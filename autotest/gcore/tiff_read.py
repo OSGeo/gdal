@@ -3177,6 +3177,7 @@ def tiff_read_stripoffset_types():
         ('data/classictiff_two_strip_short.tif', [162, 163]),
         ('data/classictiff_two_strip_be_short.tif', [162, 163]),
         ('data/classictiff_four_strip_short.tif', [178, 179, 180, 181]),
+        ('data/classictiff_four_strip_be_short.tif', [178, 179, 180, 181]),
         ('data/bigtiff_four_strip_short.tif', [316, 317, 318, 319]),
         ('data/bigtiff_four_strip_be_short.tif', [316, 317, 318, 319]),
         ('data/bigtiff_one_block_long8.tif', [272]),
