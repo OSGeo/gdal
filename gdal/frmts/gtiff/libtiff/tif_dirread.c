@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.209 2017-06-01 12:44:04 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.210 2017-06-12 10:45:35 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -5542,6 +5542,11 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
 	uint64* newoffsets;
 
 	bytecount = td->td_stripbytecount[0];
+        /* On a newly created file, just re-opened to be filled, we */
+        /* don't want strip chop to trigger as it is going to cause issues */
+        /* later ( StripOffsets and StripByteCounts improperly filled) . */
+        if( bytecount == 0 && tif->tif_mode != O_RDONLY )
+            return;
 	offset = td->td_stripoffset[0];
 	assert(td->td_planarconfig == PLANARCONFIG_CONTIG);
 	if ((td->td_photometric == PHOTOMETRIC_YCBCR)&&
