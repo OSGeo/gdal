@@ -38,6 +38,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "gdal_alg.h"
+#include "gdal_priv.h"
 #include "gdal_frmts.h"
 
 #ifndef REGISTER_FUNC
@@ -108,24 +109,30 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         const int nTotalBands = GDALGetRasterCount(hDS);
         const int nBands = std::min(10, nTotalBands);
         bool bDoCheckSum = true;
+        int nXSizeToRead = std::min(1024, GDALGetRasterXSize(hDS));
+        int nYSizeToRead = std::min(1024, GDALGetRasterYSize(hDS));
         if( nBands > 0 )
         {
             // If we know that we will need to allocate a lot of memory
             // given the block size and interleaving mode, do not read
             // pixels to avoid out of memory conditions by ASAN
-            int nPixels = 0;
+            GIntBig nPixels = 0;
             for( int i = 0; i < nBands; i++ )
             {
                 int nBXSize = 0, nBYSize = 0;
                 GDALGetBlockSize( GDALGetRasterBand(hDS, i+1), &nBXSize,
                                   &nBYSize );
-                if( nBYSize == 0 || nBXSize > INT_MAX / nBYSize )
+                if( nBXSize == 0 || nBYSize == 0 ||
+                    nBXSize > INT_MAX / nBYSize )
                 {
                     bDoCheckSum = false;
                     break;
                 }
-                if( nBXSize * nBYSize > nPixels )
-                    nPixels = nBXSize * nBYSize;
+                GIntBig nNewPixels = static_cast<GIntBig>(nBXSize) * nBYSize;
+                nNewPixels *= DIV_ROUND_UP(nXSizeToRead, nBXSize);
+                nNewPixels *= DIV_ROUND_UP(nYSizeToRead, nBYSize);
+                if( nNewPixels > nPixels )
+                    nPixels = nNewPixels;
             }
             if( bDoCheckSum )
             {
@@ -148,9 +155,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             for( int i = 0; i < nBands; i++ )
             {
                 GDALRasterBandH hBand = GDALGetRasterBand(hDS, i+1);
-                GDALChecksumImage(hBand, 0, 0,
-                                    std::min(1024, GDALGetRasterXSize(hDS)),
-                                    std::min(1024, GDALGetRasterYSize(hDS)));
+                GDALChecksumImage(hBand, 0, 0, nXSizeToRead, nYSizeToRead);
             }
         }
 
