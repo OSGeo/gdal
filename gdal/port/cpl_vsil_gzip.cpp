@@ -963,6 +963,17 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
         {
             vsi_l_offset uncompressed_pos =
                 VSIFTellL((VSILFILE*)m_poBaseHandle);
+            if( uncompressed_pos - startOff > m_compressed_size )
+            {
+                // File size has changed !
+                // We should probably have a better fix than that.
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "File size of underlying /vsigzip/ file has changed");
+                z_eof = 1;
+                in = 0;
+                CPL_VSIL_GZ_RETURN(0);
+                return 0;
+            }
             GZipSnapshot* snapshot =
                 &snapshots[(uncompressed_pos - startOff) /
                            snapshot_byte_interval];
@@ -1590,6 +1601,11 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly(
 
     CPLMutexHolder oHolder(&hMutex);
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    // Disable caching in fuzzing mode as the /vsigzip/ file is likely to
+    // change very often
+    // TODO: filename-based logic isn't enough. We should probably check
+    // timestamp and/or file size.
     if( poHandleLastGZipFile != NULL &&
         strcmp(pszFilename + strlen("/vsigzip/"),
                poHandleLastGZipFile->GetBaseFileName()) == 0 &&
@@ -1599,6 +1615,7 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly(
         if( poHandle )
             return poHandle;
     }
+#endif
 
     VSIVirtualHandle* poVirtualHandle =
         poFSHandler->Open( pszFilename + strlen("/vsigzip/"), "rb" );
