@@ -7469,11 +7469,18 @@ def tiff_write_163():
         return 'skip'
 
     gdal.Translate('/vsimem/tiff_write_163.tif', 'data/byte.tif',
-                   options = '-outsize 1 10000 -co BLOCKYSIZE=10000' )
+                   options = '-outsize 1 20000 -co BLOCKYSIZE=20000 -co PROFILE=BASELINE' )
     ds = gdal.Open('/vsimem/tiff_write_163.tif')
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 56567:
+    if cs != 47567:
+        gdaltest.post_reason('fail')
         print(cs)
+        return 'fail'
+    # Check that IsBlockAvailable() works properly in that mode
+    offset_0_2 = ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_2', 'TIFF')
+    if offset_0_2 != str(146 + 2 * 8192):
+        gdaltest.post_reason('fail')
+        print(offset_0_2)
         return 'fail'
     ds = None
 
