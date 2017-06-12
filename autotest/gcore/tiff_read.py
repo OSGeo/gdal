@@ -3132,6 +3132,88 @@ def tiff_read_toomanyblocks():
 
     return 'success'
 
+
+###############################################################################
+# Test reading images where the number of items in StripByteCounts/StripOffsets
+# tag is lesser than the number of strips
+
+def tiff_read_size_of_stripbytecount_lower_than_stripcount():
+
+    ds = gdal.Open('data/size_of_stripbytecount_lower_than_stripcount.tif')
+    # There are 3 strips but StripByteCounts has just two elements;
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_1', 'TIFF') != '171':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_1', 'TIFF') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_2', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_2', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('data/size_of_stripbytecount_at_1_and_lower_than_stripcount.tif')
+    # There are 3 strips but StripByteCounts has just one element;
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_0', 'TIFF') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test different datatypes for StripOffsets tag with little/big, classic/bigtiff
+
+def tiff_read_stripoffset_types():
+
+    tests = [
+        ('data/classictiff_one_block_byte.tif', []), # unsupported
+        ('data/classictiff_one_block_long.tif', [158]),
+        ('data/classictiff_one_block_be_long.tif', [158]),
+        ('data/classictiff_one_strip_long.tif', [146]),
+        ('data/classictiff_one_strip_be_long.tif', [146]),
+        ('data/classictiff_two_strip_short.tif', [162, 163]),
+        ('data/classictiff_two_strip_be_short.tif', [162, 163]),
+        ('data/classictiff_four_strip_short.tif', [178, 179, 180, 181]),
+        ('data/bigtiff_four_strip_short.tif', [316, 317, 318, 319]),
+        ('data/bigtiff_four_strip_be_short.tif', [316, 317, 318, 319]),
+        ('data/bigtiff_one_block_long8.tif', [272]),
+        ('data/bigtiff_one_block_be_long8.tif', [272]),
+        ('data/bigtiff_one_strip_long.tif', [252]),
+        ('data/bigtiff_one_strip_be_long.tif', [252]),
+        ('data/bigtiff_one_strip_long8.tif', [252]),
+        ('data/bigtiff_one_strip_be_long8.tif', [252]),
+        ('data/bigtiff_two_strip_long.tif', [284, 285]),
+        ('data/bigtiff_two_strip_be_long.tif', [284, 285]),
+        ('data/bigtiff_two_strip_long8.tif', [284, 285]),
+        ('data/bigtiff_two_strip_be_long8.tif', [284, 285]),
+    ]
+
+    for (filename, expected_offsets) in tests:
+
+        # Only when built against internal libtiff we reject byte datatype
+        if len(expected_offsets) == 0 and \
+           gdal.GetDriverByName('GTiff').GetMetadataItem('LIBTIFF') != 'INTERNAL':
+            continue
+
+        ds = gdal.Open(filename)
+        offsets = []
+        for row in range(4):
+            with gdaltest.error_handler():
+                mdi = ds.GetRasterBand(1).GetMetadataItem(
+                    'BLOCK_OFFSET_0_%d' % row, 'TIFF')
+            if mdi is None:
+                break
+            offsets.append(int(mdi))
+        if offsets != expected_offsets:
+            print(filename, expected_offsets, offsets)
+
+    return 'success'
+
+
+
 ###############################################################################
 
 for item in init_list:
@@ -3240,11 +3322,13 @@ gdaltest_list.append( (tiff_read_uint33) )
 gdaltest_list.append( (tiff_read_corrupted_deflate_singlestrip) )
 gdaltest_list.append( (tiff_read_packbits_not_enough_data) )
 gdaltest_list.append( (tiff_read_toomanyblocks) )
+gdaltest_list.append( (tiff_read_size_of_stripbytecount_lower_than_stripcount) )
+gdaltest_list.append( (tiff_read_stripoffset_types) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
 
-# gdaltest_list = [ tiff_read_online_1 ]
+# gdaltest_list = [ tiff_read_stripoffset_types ]
 
 if __name__ == '__main__':
 

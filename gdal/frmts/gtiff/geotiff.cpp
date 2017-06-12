@@ -8821,10 +8821,11 @@ void GTiffDataset::Crystalize()
     nDirOffset = TIFFCurrentDirOffset( hTIFF );
 }
 
-#ifdef INTERNAL_LIBTIFF
+#if defined(INTERNAL_LIBTIFF) && defined(DEFER_STRILE_LOAD)
 
 static
 void GTiffCacheOffsetOrCount( VSILFILE* fp,
+                              bool bSwab,
                               vsi_l_offset nBaseOffset,
                               int nBlockId,
                               uint32 nstrips,
@@ -8876,12 +8877,24 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
          static_cast<GIntBig>(nOffsetEndPage);
          ++i )
     {
-        if( sizeofval == 4 )
+        if( sizeofval == 2 )
+        {
+            uint16 val;
+            memcpy(&val,
+                   buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
+                   sizeof(val));
+            if( bSwab )
+                CPL_SWAP16PTR(&val);
+            panVals[nBlockId + i] = val;
+        }
+        else if( sizeofval == 4 )
         {
             uint32 val;
             memcpy(&val,
                    buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
                    sizeof(val));
+            if( bSwab )
+                CPL_SWAP32PTR(&val);
             panVals[nBlockId + i] = val;
         }
         else
@@ -8890,12 +8903,137 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
             memcpy(&val,
                    buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
                    sizeof(val));
+            if( bSwab )
+                CPL_SWAP64PTR(&val);
             panVals[nBlockId + i] = val;
         }
     }
 }
 
-#endif  // INTERNAL_LIBTIFF
+static void ReadStripArray( VSILFILE* fp,
+                            TIFF* hTIFF,
+                            const TIFFDirEntry* psEntry,
+                            int nBlockId,
+                            uint32 nStripArrayAlloc,
+                            uint64* panOffsetOrCountArray )
+{
+    const bool bSwab = (hTIFF->tif_flags & TIFF_SWAB) != 0;
+    if( (hTIFF->tif_flags&TIFF_BIGTIFF) &&
+        psEntry->tdir_type == TIFF_SHORT &&
+        psEntry->tdir_count <= 4 )
+    {
+        uint16 offset;
+        const GByte* src = reinterpret_cast<const GByte*>(
+                                    &(psEntry->tdir_offset.toff_long8));
+        for( size_t i = 0; i < 4 && i < nStripArrayAlloc; i++ )
+        {
+            memcpy(&offset, src + sizeof(offset) * i, sizeof(offset));
+            if( bSwab )
+                CPL_SWAP16PTR(&offset);
+            panOffsetOrCountArray[i] = offset;
+        }
+    }
+    else if( (hTIFF->tif_flags&TIFF_BIGTIFF) &&
+        psEntry->tdir_type == TIFF_LONG &&
+        psEntry->tdir_count <= 2 )
+    {
+        uint32 offset;
+        const GByte* src = reinterpret_cast<const GByte*>(
+                                    &(psEntry->tdir_offset.toff_long8));
+        for( size_t i = 0; i < 2 && i < nStripArrayAlloc; i++ )
+        {
+            memcpy(&offset, src + sizeof(offset) * i, sizeof(offset));
+            if( bSwab )
+                CPL_SWAP32PTR(&offset);
+            panOffsetOrCountArray[i] = offset;
+        }
+    }
+    else if( (hTIFF->tif_flags&TIFF_BIGTIFF) &&
+        psEntry->tdir_type == TIFF_LONG8 &&
+        psEntry->tdir_count <= 1 )
+    {
+        uint64 offset = psEntry->tdir_offset.toff_long8;
+        if( bSwab )
+            CPL_SWAP64PTR(&offset);
+        panOffsetOrCountArray[0] = offset;
+    }
+    else if( !(hTIFF->tif_flags&TIFF_BIGTIFF) &&
+        psEntry->tdir_type == TIFF_SHORT &&
+        psEntry->tdir_count <= 2 )
+    {
+        uint16 offset;
+        const GByte* src = reinterpret_cast<const GByte*>(
+                                    &(psEntry->tdir_offset.toff_long));
+
+        for( size_t i = 0; i < 2 && i < nStripArrayAlloc; i++ )
+        {
+            memcpy(&offset, src + sizeof(offset) * i, sizeof(offset));
+            if( bSwab )
+                CPL_SWAP16PTR(&offset);
+            panOffsetOrCountArray[i] = offset;
+        }
+    }
+    else if( !(hTIFF->tif_flags&TIFF_BIGTIFF) &&
+        psEntry->tdir_type == TIFF_LONG &&
+        psEntry->tdir_count <= 1 )
+    {
+        uint32 offset = psEntry->tdir_offset.toff_long;
+        if( bSwab )
+            CPL_SWAP32PTR(&offset);
+        panOffsetOrCountArray[0] = offset;
+    }
+    else
+    {
+        vsi_l_offset l_nDirOffset = 0;
+        if( hTIFF->tif_flags&TIFF_BIGTIFF )
+        {
+            uint64 offset = psEntry->tdir_offset.toff_long8;
+            if( bSwab )
+                CPL_SWAP64PTR(&offset);
+            l_nDirOffset = offset;
+        }
+        else
+        {
+            uint32 offset = psEntry->tdir_offset.toff_long;
+            if( bSwab )
+                CPL_SWAP32PTR(&offset);
+            l_nDirOffset = offset;
+        }
+
+        if( psEntry->tdir_type == TIFF_SHORT )
+        {
+            GTiffCacheOffsetOrCount(fp,
+                                    bSwab,
+                                    l_nDirOffset,
+                                    nBlockId,
+                                    nStripArrayAlloc,
+                                    panOffsetOrCountArray,
+                                    sizeof(uint16));
+        }
+        else if( psEntry->tdir_type == TIFF_LONG )
+        {
+            GTiffCacheOffsetOrCount(fp,
+                                    bSwab,
+                                    l_nDirOffset,
+                                    nBlockId,
+                                    nStripArrayAlloc,
+                                    panOffsetOrCountArray,
+                                    sizeof(uint32));
+        }
+        else
+        {
+            GTiffCacheOffsetOrCount(fp,
+                                    bSwab,
+                                    l_nDirOffset,
+                                    nBlockId,
+                                    nStripArrayAlloc,
+                                    panOffsetOrCountArray,
+                                    sizeof(uint64));
+        }
+    }
+}
+
+#endif  // #if defined(INTERNAL_LIBTIFF) && defined(DEFER_STRILE_LOAD)
 
 /************************************************************************/
 /*                          IsBlockAvailable()                          */
@@ -8913,15 +9051,51 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
 #if defined(INTERNAL_LIBTIFF) && defined(DEFER_STRILE_LOAD)
     // Optimization to avoid fetching the whole Strip/TileCounts and
     // Strip/TileOffsets arrays.
+
+    // Note: if strip choping is in effect, _TIFFFillStrilesInternal()
+    // will have 0-memset td_stripoffset_entry/td_stripbytecount_entry, so
+    // we won't enter the below block
+
     if( eAccess == GA_ReadOnly &&
-        !(hTIFF->tif_flags & TIFF_SWAB) &&
-        hTIFF->tif_dir.td_nstrips > 2 &&
-        (hTIFF->tif_dir.td_stripoffset_entry.tdir_type == TIFF_LONG ||
-         hTIFF->tif_dir.td_stripoffset_entry.tdir_type == TIFF_LONG8) &&
-        (hTIFF->tif_dir.td_stripbytecount_entry.tdir_type == TIFF_LONG ||
-         hTIFF->tif_dir.td_stripbytecount_entry.tdir_type == TIFF_LONG8) &&
+        hTIFF->tif_dir.td_stripoffset_entry.tdir_type != 0 &&
+        hTIFF->tif_dir.td_stripbytecount_entry.tdir_type != 0 &&
         !bStreamingIn )
     {
+        if( !((hTIFF->tif_dir.td_stripoffset_entry.tdir_type == TIFF_SHORT ||
+               hTIFF->tif_dir.td_stripoffset_entry.tdir_type == TIFF_LONG ||
+               hTIFF->tif_dir.td_stripoffset_entry.tdir_type == TIFF_LONG8) &&
+              (hTIFF->tif_dir.td_stripbytecount_entry.tdir_type == TIFF_SHORT ||
+               hTIFF->tif_dir.td_stripbytecount_entry.tdir_type == TIFF_LONG ||
+               hTIFF->tif_dir.td_stripbytecount_entry.tdir_type == TIFF_LONG8)) )
+        {
+            if( nStripArrayAlloc == 0 )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Unhandled type for StripOffset/StripByteCount");
+                nStripArrayAlloc = ~nStripArrayAlloc;
+            }
+            if( pnOffset )
+                *pnOffset = 0;
+            if( pnSize )
+                *pnSize = 0;
+            return false;
+        }
+
+        // The size of tags can be actually lesser than the number of strips
+        // (libtiff accepts such files)
+        if( static_cast<uint32>(nBlockId) >=
+                hTIFF->tif_dir.td_stripoffset_entry.tdir_count ||
+            static_cast<uint32>(nBlockId) >=
+                hTIFF->tif_dir.td_stripbytecount_entry.tdir_count )
+        {
+            // In case the tags aren't large enough.
+            if( pnOffset )
+                *pnOffset = 0;
+            if( pnSize )
+                *pnSize = 0;
+            return false;
+        }
+
         if( hTIFF->tif_dir.td_stripoffset == NULL )
         {
             nStripArrayAlloc = 0;
@@ -8993,67 +9167,23 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
             const vsi_l_offset nCurOffset = VSIFTellL(fp);
             if( ~(hTIFF->tif_dir.td_stripoffset[nBlockId]) == 0 )
             {
-                vsi_l_offset l_nDirOffset = 0;
-                if( hTIFF->tif_flags&TIFF_BIGTIFF )
-                    l_nDirOffset =
-                        hTIFF->
-                            tif_dir.td_stripoffset_entry.tdir_offset.toff_long8;
-                else
-                    l_nDirOffset =
-                        hTIFF->
-                            tif_dir.td_stripoffset_entry.tdir_offset.toff_long;
+                ReadStripArray( fp,
+                                hTIFF,
+                                &hTIFF->tif_dir.td_stripoffset_entry,
+                                nBlockId,
+                                nStripArrayAlloc,
+                                hTIFF->tif_dir.td_stripoffset );
 
-                if( hTIFF->tif_dir.td_stripoffset_entry.tdir_type == TIFF_LONG )
-                {
-                    GTiffCacheOffsetOrCount(fp,
-                                            l_nDirOffset,
-                                            nBlockId,
-                                            nStripArrayAlloc,
-                                            hTIFF->tif_dir.td_stripoffset,
-                                            sizeof(uint32));
-                }
-                else
-                {
-                    GTiffCacheOffsetOrCount(fp,
-                                            l_nDirOffset,
-                                            nBlockId,
-                                            nStripArrayAlloc,
-                                            hTIFF->tif_dir.td_stripoffset,
-                                            sizeof(uint64));
-                }
             }
 
             if( ~(hTIFF->tif_dir.td_stripbytecount[nBlockId]) == 0 )
             {
-                vsi_l_offset l_nDirOffset = 0;
-                if( hTIFF->tif_flags&TIFF_BIGTIFF )
-                    l_nDirOffset =
-                        hTIFF->
-                            tif_dir.td_stripbytecount_entry.tdir_offset.toff_long8;
-                else
-                    l_nDirOffset =
-                        hTIFF->
-                            tif_dir.td_stripbytecount_entry.tdir_offset.toff_long;
-
-                if( hTIFF->tif_dir.td_stripbytecount_entry.tdir_type ==
-                    TIFF_LONG )
-                {
-                    GTiffCacheOffsetOrCount(fp,
-                                            l_nDirOffset,
-                                            nBlockId,
-                                            nStripArrayAlloc,
-                                            hTIFF->tif_dir.td_stripbytecount,
-                                            sizeof(uint32));
-                }
-                else
-                {
-                    GTiffCacheOffsetOrCount(fp,
-                                            l_nDirOffset,
-                                            nBlockId,
-                                            nStripArrayAlloc,
-                                            hTIFF->tif_dir.td_stripbytecount,
-                                            sizeof(uint64));
-                }
+                ReadStripArray( fp,
+                                hTIFF,
+                                &hTIFF->tif_dir.td_stripbytecount_entry,
+                                nBlockId,
+                                nStripArrayAlloc,
+                                hTIFF->tif_dir.td_stripbytecount );
             }
             if( VSIFSeekL(fp, nCurOffset, SEEK_SET) != 0 )
             {
