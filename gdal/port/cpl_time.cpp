@@ -111,8 +111,10 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
 
     int y = EPOCH_YEAR;
     int yleap = 0;
-    while( days < 0
-           || days >= static_cast<GIntBig>( year_lengths[yleap = isleap(y)] ) )
+    int iters = 0;
+    while( iters < 1000 &&
+           (days < 0
+           || days >= static_cast<GIntBig>( year_lengths[yleap = isleap(y)] )) )
     {
         int newy = y + static_cast<int>( days / DAYSPERNYEAR );
         if( days < 0 )
@@ -121,6 +123,15 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
             LEAPS_THROUGH_END_OF(newy - 1) -
             LEAPS_THROUGH_END_OF(y - 1);
         y = newy;
+        iters ++;
+    }
+    if( iters == 1000 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Invalid unixTime = " CPL_FRMT_GIB,
+                 unixTime);
+        memset(pRet, 0, sizeof(*pRet));
+        return pRet;
     }
 
     pRet->tm_year = static_cast<int>( y - TM_YEAR_BASE );
