@@ -353,7 +353,7 @@ static double fval_360 (uInt4 aval)
  *
  * ARGUMENTS
  *       pds = The compressed part of the message dealing with "PDS". (Input)
- *    pdsLen = Sie of pds in bytes. (Input)
+ *    pdsLen = Size of pds in bytes. (Input)
  *   gribLen = The total length of the GRIB1 message. (Input)
  *    curLoc = Current location in the GRIB1 message. (Output)
  *   pdsMeta = The filled out pdsMeta data structure. (Output)
