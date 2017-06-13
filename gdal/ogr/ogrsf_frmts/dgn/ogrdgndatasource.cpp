@@ -187,7 +187,7 @@ OGRLayer *OGRDGNDataSource::ICreateLayer( const char *pszLayerName,
     if( nLayers > 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "DGN driver only supports one layer will all the elements "
+                  "DGN driver only supports one layer with all the elements "
                   "in it." );
         return NULL;
     }
