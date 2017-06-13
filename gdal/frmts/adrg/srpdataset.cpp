@@ -184,7 +184,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     SRPDataset* l_poDS = (SRPDataset*)this->poDS;
-    int offset;
+    vsi_l_offset offset;
     int nBlock = nBlockYOff * l_poDS->NFC + nBlockXOff;
     if (nBlockXOff >= l_poDS->NFC || nBlockYOff >= l_poDS->NFL)
     {
@@ -208,19 +208,20 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if (l_poDS->TILEINDEX)
     {
         if( l_poDS->PCB == 0 ) // uncompressed
-            offset = l_poDS->offsetInIMG + (l_poDS->TILEINDEX[nBlock] - 1) * 128 * 128;
+            offset = l_poDS->offsetInIMG + static_cast<vsi_l_offset>(l_poDS->TILEINDEX[nBlock] - 1) * 128 * 128;
         else // compressed
-            offset = l_poDS->offsetInIMG + (l_poDS->TILEINDEX[nBlock] - 1);
+            offset = l_poDS->offsetInIMG +  static_cast<vsi_l_offset>(l_poDS->TILEINDEX[nBlock] - 1);
     }
     else
-        offset = l_poDS->offsetInIMG + nBlock * 128 * 128;
+        offset = l_poDS->offsetInIMG + static_cast<vsi_l_offset>(nBlock) * 128 * 128;
 
 /* -------------------------------------------------------------------- */
 /*      Seek to target location.                                        */
 /* -------------------------------------------------------------------- */
     if (VSIFSeekL(l_poDS->fdIMG, offset, SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Cannot seek to offset %d", offset);
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Cannot seek to offset " CPL_FRMT_GUIB, offset);
         return CE_Failure;
     }
 
@@ -233,7 +234,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( VSIFReadL(pImage, 1, 128 * 128, l_poDS->fdIMG) != 128*128 )
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Cannot read data at offset %d", offset);
+                     "Cannot read data at offset " CPL_FRMT_GUIB, offset);
             return CE_Failure;
         }
     }
@@ -252,7 +253,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( nBytesRead == 0 )
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Cannot read data at offset %d", offset);
+                     "Cannot read data at offset " CPL_FRMT_GUIB, offset);
             CPLFree(pabyCData);
             return CE_Failure;
         }
