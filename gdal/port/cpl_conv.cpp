@@ -326,9 +326,13 @@ char *CPLStrlwr( char *pszString )
 /************************************************************************/
 /*                              CPLFGets()                              */
 /*                                                                      */
-/*      Note: CR = \r = ASCII 13                                        */
-/*            LF = \n = ASCII 10                                        */
+/*      Note: LF = \n = ASCII 10                                        */
+/*            CR = \r = ASCII 13                                        */
 /************************************************************************/
+
+// ASCII characters.
+static const char knLF = 10;
+static const char knCR = 13;
 
 /**
  * Reads in at most one less than nBufferSize characters from the fp
@@ -373,10 +377,10 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE *fp )
 /*      is also a pending \n.  Check for it.                            */
 /* -------------------------------------------------------------------- */
     if( nBufferSize == nActuallyRead + 1 &&
-        pszBuffer[nActuallyRead - 1] == 13 )
+        pszBuffer[nActuallyRead - 1] == knCR /* 13 */ )
     {
         const int chCheck = fgetc(fp);
-        if( chCheck != 10 )
+        if( chCheck != knLF )
         {
             // unget the character.
             if( VSIFSeek(fp, nOriginalOffset + nActuallyRead, SEEK_SET) == -1 )
@@ -392,13 +396,13 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE *fp )
 /*      need to do any "seeking" since we want the newline eaten.       */
 /* -------------------------------------------------------------------- */
     if( nActuallyRead > 1 &&
-        pszBuffer[nActuallyRead-1] == 10 &&
-        pszBuffer[nActuallyRead-2] == 13 )
+        pszBuffer[nActuallyRead-1] == knLF &&
+        pszBuffer[nActuallyRead-2] == knCR )
     {
         pszBuffer[nActuallyRead - 2] = '\0';
     }
-    else if( pszBuffer[nActuallyRead - 1] == 10 ||
-             pszBuffer[nActuallyRead - 1] == 13 )
+    else if( pszBuffer[nActuallyRead - 1] == knLF ||
+             pszBuffer[nActuallyRead - 1] == knCR )
     {
         pszBuffer[nActuallyRead - 1] = '\0';
     }
@@ -408,7 +412,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE *fp )
 /*      apparently), and if we find it we need to trim the string,      */
 /*      and seek back.                                                  */
 /* -------------------------------------------------------------------- */
-    char *pszExtraNewline = strchr(pszBuffer, 13);
+    char *pszExtraNewline = strchr(pszBuffer, knCR /* 13 */);
 
     if( pszExtraNewline != NULL )
     {
@@ -424,7 +428,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE *fp )
         // "realize it" till a character has been read. Try to read till
         // we get to the right spot and get our CR.
         int chCheck = fgetc(fp);
-        while( (chCheck != 13 && chCheck != EOF) ||
+        while( (chCheck != knCR /* 13 */ && chCheck != EOF) ||
                VSIFTell(fp) < nOriginalOffset + nActuallyRead )
         {
             static bool bWarned = false;
@@ -592,8 +596,8 @@ const char *CPLReadLine( FILE *fp )
         nBytesReadThisTime = strlen(pszRLBuffer + nReadSoFar);
         nReadSoFar += nBytesReadThisTime;
     } while( nBytesReadThisTime >= 127 &&
-             pszRLBuffer[nReadSoFar - 1] != 13 &&
-             pszRLBuffer[nReadSoFar - 1] != 10 );
+             pszRLBuffer[nReadSoFar - 1] != knCR &&
+             pszRLBuffer[nReadSoFar - 1] != knLF );
 
     return pszRLBuffer;
 }
@@ -709,16 +713,16 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
         bool bBreak = false;
         while( nChunkBytesConsumed < nChunkBytesRead - 1 && !bBreak )
         {
-            if( (szChunk[nChunkBytesConsumed] == 13 &&
-                 szChunk[nChunkBytesConsumed+1] == 10) ||
-                (szChunk[nChunkBytesConsumed] == 10 &&
-                 szChunk[nChunkBytesConsumed+1] == 13) )
+            if( (szChunk[nChunkBytesConsumed] == knCR &&
+                 szChunk[nChunkBytesConsumed+1] == knLF) ||
+                (szChunk[nChunkBytesConsumed] == knLF &&
+                 szChunk[nChunkBytesConsumed+1] == knCR) )
             {
                 nChunkBytesConsumed += 2;
                 bBreak = true;
             }
-            else if( szChunk[nChunkBytesConsumed] == 10
-                     || szChunk[nChunkBytesConsumed] == 13 )
+            else if( szChunk[nChunkBytesConsumed] == knLF ||
+                     szChunk[nChunkBytesConsumed] == knCR )
             {
                 nChunkBytesConsumed += 1;
                 bBreak = true;
@@ -746,8 +750,8 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
         if( nChunkBytesConsumed == nChunkBytesRead - 1 &&
             nChunkBytesRead < nChunkSize )
         {
-            if( szChunk[nChunkBytesConsumed] == 10 ||
-                szChunk[nChunkBytesConsumed] == 13 )
+            if( szChunk[nChunkBytesConsumed] == knLF ||
+                szChunk[nChunkBytesConsumed] == knCR )
             {
                 nChunkBytesConsumed++;
                 break;
