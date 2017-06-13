@@ -369,6 +369,7 @@ namespace Selafin {
     int read_intarray(VSILFILE *fp,int *&panData,bool bDiscard) {
         int nLength=0;
         read_integer(fp,nLength);
+        panData = NULL;
         if (nLength<0 || nLength+1<=0) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
             return -1;
@@ -386,11 +387,13 @@ namespace Selafin {
             }
             for (int i=0;i<nLength/4;++i) if (read_integer(fp,panData[i])==0) {
                 CPLFree(panData);
+                panData = NULL;
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
                 return -1;
             }
             if (VSIFSeekL(fp,4,SEEK_CUR)!=0) {
                 CPLFree(panData);
+                panData = NULL;
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
                 return -1;
             }
