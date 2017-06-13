@@ -9057,8 +9057,8 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
     // we won't enter the below block
 
     if( eAccess == GA_ReadOnly &&
-        hTIFF->tif_dir.td_stripoffset_entry.tdir_type != 0 &&
-        hTIFF->tif_dir.td_stripbytecount_entry.tdir_type != 0 &&
+        hTIFF->tif_dir.td_stripoffset_entry.tdir_tag != 0 &&
+        hTIFF->tif_dir.td_stripbytecount_entry.tdir_tag != 0 &&
         !bStreamingIn )
     {
         if( !((hTIFF->tif_dir.td_stripoffset_entry.tdir_type == TIFF_SHORT ||
