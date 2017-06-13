@@ -414,6 +414,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
             if( papszRow[1] == NULL || papszRow[2] == NULL )
             {
                 CPLDebug("SQLite", "Did not get expected col value");
+                sqlite3_free_table(papszResult);
                 continue;
             }
             if( papszRow[0] != NULL )
