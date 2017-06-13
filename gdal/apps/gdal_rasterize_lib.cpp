@@ -167,7 +167,7 @@ static CPLErr ProcessLayer(
         else if( GDALGetMetadata(hDstDS, "RPC") != NULL )
         {
             hDstSRS = OSRNewSpatialReference(NULL);
-            OSRSetFromUserInput(hDstSRS, SRS_WKT_WGS84);
+            CPL_IGNORE_RET_VAL( OSRSetFromUserInput(hDstSRS, SRS_WKT_WGS84) );
         }
 
         OGRSpatialReferenceH hSrcSRS = OGR_L_GetSpatialRef(hSrcLayer);
