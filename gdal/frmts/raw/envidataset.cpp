@@ -2306,8 +2306,8 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
     }
 
     // Currently each ENVIRasterBand allocates nPixelOffset * nRasterXSize bytes
-    // so for a pixel interleaved scheme, this will allocates lots of memory !
-    // Actually this is quadratic in the number of bands !
+    // so for a pixel interleaved scheme, this will allocate lots of memory!
+    // Actually this is quadratic in the number of bands!
     // Do a few sanity checks to avoid excessive memory allocation on
     // small files.
     // But ultimately we should fix RawRasterBand to have a shared buffer
