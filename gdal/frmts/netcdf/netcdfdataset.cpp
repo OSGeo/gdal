@@ -8021,7 +8021,7 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         else
         {
             szBandName[0] = '\0';
-}
+        }
 
         // Get long_name from <var>#long_name.
         char szLongName[NC_MAX_NAME + 1];
