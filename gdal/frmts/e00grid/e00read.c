@@ -590,7 +590,20 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
                 /* If odd number of digits, then flush the last one
                  */
                 if (bOddNumDigits)
+                {
+                    if( iOutBufPtr == 0 )
+                    {
+                        CPLError(CE_Failure, CPLE_FileIO,
+                                "Input file possibly corrupt around line %d.",
+                                psInfo->nInputLineNo);
+                        /* Force the program to abort by simulating a EOF
+                        */
+                        psInfo->bEOF = 1;
+                        bEOL = 1;
+                        break;
+                    }
                     iOutBufPtr--;
+                }
 
                 /* Insert the exponent string before the 2 last digits
                  * (we assume the exponent string is 2 chars. long)
