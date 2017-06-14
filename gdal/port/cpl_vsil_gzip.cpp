@@ -1615,6 +1615,8 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly(
         if( poHandle )
             return poHandle;
     }
+#else
+    CPL_IGNORE_RET_VAL(pszAccess);
 #endif
 
     VSIVirtualHandle* poVirtualHandle =
