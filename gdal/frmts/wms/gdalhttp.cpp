@@ -236,7 +236,8 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         if (psRequest->Error.empty()
             && psRequest->nStatus != 0
             && psRequest->nStatus != 200
-            && strstr(psRequest->ContentType, "text"))
+            && strstr(psRequest->ContentType, "text")
+            && psRequest->pabyData != NULL )
             psRequest->Error = reinterpret_cast<const char *>(psRequest->pabyData);
 
         CPLDebug("HTTP", "Request [%d] %s : status = %d, content type = %s, error = %s",
