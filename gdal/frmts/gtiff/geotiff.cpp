@@ -6402,7 +6402,9 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else if( eDataType == GDT_Float32 )
     {
         const int nWordBytes = poGDS->nBitsPerSample / 8;
-        GByte *pabyImage = poGDS->pabyBlockBuf + (nBand - 1) * nWordBytes;
+        const GByte *pabyImage = poGDS->pabyBlockBuf +
+            ( ( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE ) ? 0 :
+              (nBand - 1) * nWordBytes );
         const int iSkipBytes =
             ( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE ) ?
             nWordBytes : poGDS->nBands * nWordBytes;
@@ -6413,7 +6415,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             for( int i = 0; i < nBlockPixels; ++i )
             {
                 static_cast<GUInt32 *>(pImage)[i] =
-                    HalfToFloat( *reinterpret_cast<GUInt16 *>(pabyImage) );
+                    HalfToFloat( *reinterpret_cast<const GUInt16 *>(pabyImage) );
                 pabyImage += iSkipBytes;
             }
         }
