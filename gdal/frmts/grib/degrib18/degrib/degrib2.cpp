@@ -432,7 +432,7 @@ static int FindSectLen2to7 (char *c_ipack, sInt4 gribLen, sInt4 ns[8],
 */
 
    /* Figure out the size of section 5. */
-   if (*curTot + 5 > gribLen) {
+   if (*curTot + 9 + 2 > gribLen) {
       errSprintf ("ERROR: Ran out of data in Section 5\n");
       return -1;
    }
