@@ -233,7 +233,7 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
 /*      Try to read the header record.                                  */
 /* -------------------------------------------------------------------- */
     psRecord = CEOSReadRecord( psImage );
-    if( psRecord == NULL )
+    if( psRecord == NULL || psRecord->nLength < 288 + 4 )
     {
         CEOSClose( psImage );
         return NULL;
