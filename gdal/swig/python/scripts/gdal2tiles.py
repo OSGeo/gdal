@@ -44,6 +44,7 @@ from multiprocessing import Pipe, Pool, Process
 import os
 import tempfile
 import sys
+from xml.etree import ElementTree
 
 from osgeo import gdal
 from osgeo import osr
@@ -466,6 +467,10 @@ class Zoomify(object):
                             "%s-%s-%s.%s" % (z, x, y, self.tileformat))
 
 
+class GDALError(Exception):
+    pass
+
+
 def exit_with_error(message, details=""):
     # Message printing and exit code kept from the way it worked using the OptionParser (in case
     # someone parses the error output)
@@ -695,6 +700,22 @@ def setup_input_srs(input_dataset, options):
             input_srs.ImportFromWkt(input_srs_wkt)
 
     return input_srs, input_srs_wkt
+
+
+def setup_output_srs(input_srs, options):
+    """
+    Setup the desired SRS (based on options)
+    """
+    output_srs = osr.SpatialReference()
+
+    if options.profile == 'mercator':
+        output_srs.ImportFromEPSG(3857)
+    elif options.profile == 'geodetic':
+        output_srs.ImportFromEPSG(4326)
+    else:
+        output_srs = input_srs
+
+    return output_srs
 
 
 def gettempfilename(suffix):
@@ -1155,16 +1176,7 @@ class GDAL2Tiles(object):
 
         in_srs, in_srs_wkt = setup_input_srs(self.in_ds, self.options)
 
-        self.out_srs = osr.SpatialReference()
-
-        if self.options.profile == 'mercator':
-            self.out_srs.ImportFromEPSG(3857)
-        elif self.options.profile == 'geodetic':
-            self.out_srs.ImportFromEPSG(4326)
-        else:
-            self.out_srs = in_srs
-
-        # Are the reference systems the same? Reproject if necessary.
+        self.out_srs = setup_output_srs(in_srs, self.options)
 
         self.out_ds = None
 
