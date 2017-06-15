@@ -317,17 +317,21 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
 
 %pythoncode %{
 
-  def ComputeStatistics(self, approx_ok):
+  def ComputeStatistics(self, *args):
     """ComputeStatistics(Band self, bool approx_ok, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
 
     # For backward compatibility. New SWIG has stricter typing and really
     # enforces bool
+    approx_ok = args[0]
     if approx_ok == 0:
         approx_ok = False
     elif approx_ok == 1:
         approx_ok = True
+    new_args = [ approx_ok ]
+    for arg in args[1:]:
+        new_args.append( arg )
 
-    return _gdal.Band_ComputeStatistics(self, approx_ok)
+    return _gdal.Band_ComputeStatistics(self, *new_args)
 
 
   def ReadRaster(self, xoff = 0, yoff = 0, xsize = None, ysize = None,
