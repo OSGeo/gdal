@@ -670,6 +670,33 @@ def setup_no_data_values(input_dataset, options):
     return in_nodata
 
 
+def setup_input_srs(input_dataset, options):
+    """
+    Determines and returns the Input Spatial Reference System (SRS) as an osr object and as a
+    WKT representation
+
+    Uses in priority the one passed in the command line arguments. If None, tries to extract them
+    from the input dataset
+    """
+
+    input_srs = None
+    input_srs_wkt = None
+
+    if options.s_srs:
+        input_srs = osr.SpatialReference()
+        input_srs.SetFromUserInput(options.s_srs)
+        input_srs_wkt = input_srs.ExportToWkt()
+    else:
+        input_srs_wkt = input_dataset.GetProjection()
+        if not input_srs_wkt and input_dataset.GetGCPCount() != 0:
+            input_srs_wkt = input_dataset.GetGCPProjection()
+        if input_srs_wkt:
+            input_srs = osr.SpatialReference()
+            input_srs.ImportFromWkt(input_srs_wkt)
+
+    return input_srs, input_srs_wkt
+
+
 def gettempfilename(suffix):
     """Returns a temporary filename"""
     if '_' in os.environ:
@@ -1126,19 +1153,7 @@ class GDAL2Tiles(object):
                   "( %sP x %sL - %s bands)" % (self.in_ds.RasterXSize, self.in_ds.RasterYSize,
                                                self.in_ds.RasterCount))
 
-        in_srs = None
-
-        if self.options.s_srs:
-            in_srs = osr.SpatialReference()
-            in_srs.SetFromUserInput(self.options.s_srs)
-            in_srs_wkt = in_srs.ExportToWkt()
-        else:
-            in_srs_wkt = self.in_ds.GetProjection()
-            if not in_srs_wkt and self.in_ds.GetGCPCount() != 0:
-                in_srs_wkt = self.in_ds.GetGCPProjection()
-            if in_srs_wkt:
-                in_srs = osr.SpatialReference()
-                in_srs.ImportFromWkt(in_srs_wkt)
+        in_srs, in_srs_wkt = setup_input_srs(self.in_ds, self.options)
 
         self.out_srs = osr.SpatialReference()
 
