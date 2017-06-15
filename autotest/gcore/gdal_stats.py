@@ -303,6 +303,9 @@ def stats_nan_8():
 ###############################################################################
 # Test statistics computation when nodata = +/- inf
 
+def stats_nodata_inf_progress_cbk(value, string, extra):
+    extra[0] = value
+
 def stats_nodata_inf():
 
     ds = gdal.GetDriverByName('HFA').Create('/vsimem/stats_nodata_inf.img', 3, 1,1, gdal.GDT_Float32)
@@ -312,7 +315,12 @@ def stats_nodata_inf():
     ds.GetRasterBand(1).WriteRaster(2, 0, 1, 1, struct.pack('f', -2), buf_type = gdal.GDT_Float32 )
 
     ds.GetRasterBand(1).Checksum()
-    stats = ds.GetRasterBand(1).ComputeStatistics(False)
+    user_data = [ 0 ]
+    stats = ds.GetRasterBand(1).ComputeStatistics(False, stats_nodata_inf_progress_cbk, user_data)
+    if user_data[0] != 1.0:
+        gdaltest.post_reason('did not get expected pct')
+        print(user_data[0])
+        return 'fail'
     ds = None
 
     gdal.GetDriverByName('HFA').Delete('/vsimem/stats_nodata_inf.img')
