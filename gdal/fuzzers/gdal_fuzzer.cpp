@@ -72,6 +72,8 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     CPLSetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", "YES");
     // Disable PDF text rendering as fontconfig cannot access its config files
     CPLSetConfigOption("GDAL_PDF_RENDERING_OPTIONS", "RASTER,VECTOR");
+    // to avoid timeout in WMS driver
+    CPLSetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST", "YES");
     return 0;
 }
 

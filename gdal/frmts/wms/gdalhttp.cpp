@@ -206,6 +206,17 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
             }
         }
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        if( CPLTestBool(CPLGetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST",  "NO")) )
+        {
+            // oss-fuzz has no network interface and apparently this causes
+            // endless loop here. There might be a better/more general way of
+            // detecting this, and avoid this oss-fuzz specific trick, but
+            // for now that's good enough.
+            break;
+        }
+#endif
+
         while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
     }
 
