@@ -165,8 +165,11 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
 void CEOSDestroyRecord( CEOSRecord * psRecord )
 
 {
-    CPLFree( psRecord->pachData );
-    CPLFree( psRecord );
+    if( psRecord )
+    {
+        CPLFree( psRecord->pachData );
+        CPLFree( psRecord );
+    }
 }
 
 /************************************************************************/
@@ -235,6 +238,7 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
     psRecord = CEOSReadRecord( psImage );
     if( psRecord == NULL || psRecord->nLength < 288 + 4 )
     {
+        CEOSDestroyRecord( psRecord );
         CEOSClose( psImage );
         return NULL;
     }
