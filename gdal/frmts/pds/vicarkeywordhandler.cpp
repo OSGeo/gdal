@@ -250,16 +250,19 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
     osName = "";
     osValue = "";
 
-    if( !ReadWord( osName ) ) {
-    return FALSE;}
+    if( !ReadWord( osName ) )
+    {
+        // VICAR has no NULL string termination
+        if( *pszHeaderNext == '\0') {
+            osName="END";
+            return TRUE;
+        }
+        return FALSE;
+    }
 
     SkipWhite();
-
-    // VICAR has no NULL string termination
-    if( *pszHeaderNext == '\0') {
-        osName="END";
-        return TRUE;
-    }
+    if( *pszHeaderNext == '\0' )
+        return FALSE;
 
     pszHeaderNext++;
 
@@ -312,7 +315,7 @@ int VICARKeywordHandler::ReadWord( CPLString &osWord )
     SkipWhite();
 
     if( *pszHeaderNext == '\0')
-        return TRUE;
+        return FALSE;
 
     if( !( *pszHeaderNext != '='  && !isspace((unsigned char)*pszHeaderNext)) )
         return FALSE;
