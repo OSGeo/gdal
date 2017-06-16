@@ -138,7 +138,7 @@ static const int gz_magic[2] = {0x1f, 0x8b};  // gzip magic header
 
 typedef struct
 {
-    vsi_l_offset  uncompressed_pos;
+    vsi_l_offset  posInBaseHandle;
     z_stream      stream;
     uLong         crc;
     int           transparent;
@@ -285,10 +285,10 @@ VSIGZipHandle* VSIGZipHandle::Duplicate()
          i < m_compressed_size / snapshot_byte_interval + 1;
          i++ )
     {
-        if( snapshots[i].uncompressed_pos == 0 )
+        if( snapshots[i].posInBaseHandle == 0 )
             break;
 
-        poHandle->snapshots[i].uncompressed_pos = snapshots[i].uncompressed_pos;
+        poHandle->snapshots[i].posInBaseHandle = snapshots[i].posInBaseHandle;
         inflateCopy( &poHandle->snapshots[i].stream, &snapshots[i].stream);
         poHandle->snapshots[i].crc = snapshots[i].crc;
         poHandle->snapshots[i].transparent = snapshots[i].transparent;
@@ -442,7 +442,7 @@ VSIGZipHandle::~VSIGZipHandle()
              i < m_compressed_size / snapshot_byte_interval + 1;
              i++ )
         {
-            if( snapshots[i].uncompressed_pos )
+            if( snapshots[i].posInBaseHandle )
             {
                 inflateEnd(&(snapshots[i].stream));
             }
@@ -752,7 +752,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
          i < m_compressed_size / snapshot_byte_interval + 1;
          i++ )
     {
-        if( snapshots[i].uncompressed_pos == 0 )
+        if( snapshots[i].posInBaseHandle == 0 )
             break;
         if( snapshots[i].out <= out + offset &&
             (i == m_compressed_size / snapshot_byte_interval ||
@@ -764,17 +764,17 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
 #ifdef ENABLE_DEBUG
             CPLDebug(
                 "SNAPSHOT", "using snapshot %d : "
-                "uncompressed_pos(snapshot)=" CPL_FRMT_GUIB
+                "posInBaseHandle(snapshot)=" CPL_FRMT_GUIB
                 " in(snapshot)=" CPL_FRMT_GUIB
                 " out(snapshot)=" CPL_FRMT_GUIB
                 " out=" CPL_FRMT_GUIB
                 " offset=" CPL_FRMT_GUIB,
-                i, snapshots[i].uncompressed_pos, snapshots[i].in,
+                i, snapshots[i].posInBaseHandle, snapshots[i].in,
                 snapshots[i].out, out, offset);
 #endif
             offset = out + offset - snapshots[i].out;
             if( VSIFSeekL((VSILFILE*)m_poBaseHandle,
-                          snapshots[i].uncompressed_pos, SEEK_SET) != 0 )
+                          snapshots[i].posInBaseHandle, SEEK_SET) != 0 )
                 CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
 
             inflateEnd(&stream);
@@ -961,12 +961,16 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
         }
         if( stream.avail_in == 0 && !z_eof )
         {
-            vsi_l_offset uncompressed_pos =
+            vsi_l_offset posInBaseHandle =
                 VSIFTellL((VSILFILE*)m_poBaseHandle);
-            if( uncompressed_pos - startOff > m_compressed_size )
+            if( posInBaseHandle - startOff > m_compressed_size )
             {
-                // File size has changed !
-                // We should probably have a better fix than that.
+                // If we reach here, file size has changed (because at
+                // construction time startOff + m_compressed_size marked the
+                // end of file).
+                // We should probably have a better fix than that, by detecting
+                // at open time that the saved snapshot is not valid and
+                // discarding it.
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "File size of underlying /vsigzip/ file has changed");
                 z_eof = 1;
@@ -975,9 +979,9 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
                 return 0;
             }
             GZipSnapshot* snapshot =
-                &snapshots[(uncompressed_pos - startOff) /
+                &snapshots[(posInBaseHandle - startOff) /
                            snapshot_byte_interval];
-            if( snapshot->uncompressed_pos == 0 )
+            if( snapshot->posInBaseHandle == 0 )
             {
                 snapshot->crc =
                     crc32(crc, pStart,
@@ -985,16 +989,16 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
 #ifdef ENABLE_DEBUG
                 CPLDebug("SNAPSHOT",
                          "creating snapshot %d : "
-                         "uncompressed_pos=" CPL_FRMT_GUIB
+                         "posInBaseHandle=" CPL_FRMT_GUIB
                          " in=" CPL_FRMT_GUIB
                          " out=" CPL_FRMT_GUIB
                          " crc=%X",
-                         static_cast<int>((uncompressed_pos - startOff) /
+                         static_cast<int>((posInBaseHandle - startOff) /
                                           snapshot_byte_interval),
-                         uncompressed_pos, in, out,
+                         posInBaseHandle, in, out,
                          static_cast<unsigned int>(snapshot->crc));
 #endif
-                snapshot->uncompressed_pos = uncompressed_pos;
+                snapshot->posInBaseHandle = posInBaseHandle;
                 inflateCopy(&snapshot->stream, &stream);
                 snapshot->transparent = m_transparent;
                 snapshot->in = in;
