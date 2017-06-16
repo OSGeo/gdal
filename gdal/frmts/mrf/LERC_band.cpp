@@ -508,6 +508,11 @@ LERC_Band::LERC_Band(GDALMRFDataset *pDS, const ILImage &image,
     // Encode in V2 by default.
     version = GetOptlist().FetchBoolean("V1", FALSE) ? 1 : 2;
 
+    if( image.pageSizeBytes > INT_MAX / 2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+        return;
+    }
     // Enlarge the page buffer in this case, LERC may expand data.
     pDS->SetPBufferSize( 2 * image.pageSizeBytes);
 }
