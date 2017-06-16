@@ -366,6 +366,10 @@ static int TransferInt (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
    sInt4 x, y;       /* Where we are in a grid of scan value 0100???? */
    int curIndex;        /* Where in iain to store the current data. */
 
+   if( nx == 0 || ny == 0 )
+   {
+       return 1;
+   }
    if (nd2x3 < ngrdpts) {
 #ifdef DEBUG
       printf ("nd2x3(%d) is < ngrdpts(%d)\n", nd2x3, ngrdpts);
@@ -471,6 +475,10 @@ static int TransferFloat (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
    sInt4 x, y;       /* Where we are in a grid of scan value 0100???? */
    uInt4 curIndex;        /* Where in ain to store the current data. */
 
+   if( nx == 0 || ny == 0 )
+   {
+       return 1;
+   }
    if (nd2x3 < ngrdpts) {
 #ifdef DEBUG
       printf ("nd2x3(%d) is < ngrdpts(%d)\n", nd2x3, ngrdpts);
