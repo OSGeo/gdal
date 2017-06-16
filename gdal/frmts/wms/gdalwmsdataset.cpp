@@ -525,7 +525,8 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
                 double scale = 0.5;
                 for (int j = 0; j < nOverviews; ++j)
                 {
-                    band->AddOverview(scale);
+                    if( !band->AddOverview(scale) )
+                        break;
                     band->m_color_interp = color_interp;
                     scale *= 0.5;
                 }

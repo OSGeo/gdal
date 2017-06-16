@@ -300,8 +300,13 @@ GDALRasterBand *GDALWMSRasterBand::GetOverview(int n) {
     else return NULL;
 }
 
-void GDALWMSRasterBand::AddOverview(double scale) {
+bool GDALWMSRasterBand::AddOverview(double scale) {
     GDALWMSRasterBand *overview = new GDALWMSRasterBand(m_parent_dataset, nBand, scale);
+    if( overview->GetXSize() == 0 || overview->GetYSize() == 0 )
+    {
+        delete overview;
+        return false;
+    }
     std::vector<GDALWMSRasterBand *>::iterator it = m_overviews.begin();
     for (; it != m_overviews.end(); ++it) {
         GDALWMSRasterBand *p = *it;
@@ -313,6 +318,7 @@ void GDALWMSRasterBand::AddOverview(double scale) {
         GDALWMSRasterBand *p = *it;
         p->m_overview = i;
     }
+    return true;
 }
 
 bool GDALWMSRasterBand::IsBlockInCache(int x, int y) {

@@ -438,7 +438,7 @@ class GDALWMSRasterBand : public GDALPamRasterBand {
 public:
     GDALWMSRasterBand( GDALWMSDataset *parent_dataset, int band, double scale );
     virtual ~GDALWMSRasterBand();
-    void AddOverview(double scale);
+    bool AddOverview(double scale);
     virtual double GetNoDataValue( int * ) override;
     virtual double GetMinimum( int * ) override;
     virtual double GetMaximum( int * ) override;
