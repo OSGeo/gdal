@@ -719,6 +719,12 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             oTM.osIdentifier = l_pszIdentifier;
             oTM.dfScaleDenominator = CPLAtof(pszScaleDenominator);
             oTM.dfPixelSize = oTM.dfScaleDenominator * WMTS_PITCH;
+            if( oTM.dfPixelSize <= 0.0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid ScaleDenominator");
+                return FALSE;
+            }
             if( oTMS.oSRS.IsGeographic() )
                 oTM.dfPixelSize *= WMTS_WGS84_DEG_PER_METER;
             double dfVal1 = CPLAtof(pszTopLeftCorner);
