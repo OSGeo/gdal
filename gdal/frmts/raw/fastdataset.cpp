@@ -990,41 +990,44 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     // Coordinates should follow the word "PROJECTION", otherwise we can
     // be confused by other occurrences of the corner keywords.
     char *pszGeomRecord = strstr( pszHeader, "PROJECTION" );
-    // Read corner coordinates
-    pszTemp = strstr( pszGeomRecord, CORNER_UPPER_LEFT );
-    if ( pszTemp && !EQUAL( pszTemp, "" ) )
+    if( pszGeomRecord )
     {
-        pszTemp += strlen( CORNER_UPPER_LEFT ) + 28;
-        dfULX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
-        pszTemp += CORNER_VALUE_SIZE + 1;
-        dfULY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
-    }
+        // Read corner coordinates
+        pszTemp = strstr( pszGeomRecord, CORNER_UPPER_LEFT );
+        if ( pszTemp && !EQUAL( pszTemp, "" ) )
+        {
+            pszTemp += strlen( CORNER_UPPER_LEFT ) + 28;
+            dfULX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
+            pszTemp += CORNER_VALUE_SIZE + 1;
+            dfULY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
+        }
 
-    pszTemp = strstr( pszGeomRecord, CORNER_UPPER_RIGHT );
-    if ( pszTemp && !EQUAL( pszTemp, "" ) )
-    {
-        pszTemp += strlen( CORNER_UPPER_RIGHT ) + 28;
-        dfURX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
-        pszTemp += CORNER_VALUE_SIZE + 1;
-        dfURY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
-    }
+        pszTemp = strstr( pszGeomRecord, CORNER_UPPER_RIGHT );
+        if ( pszTemp && !EQUAL( pszTemp, "" ) )
+        {
+            pszTemp += strlen( CORNER_UPPER_RIGHT ) + 28;
+            dfURX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
+            pszTemp += CORNER_VALUE_SIZE + 1;
+            dfURY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
+        }
 
-    pszTemp = strstr( pszGeomRecord, CORNER_LOWER_LEFT );
-    if ( pszTemp && !EQUAL( pszTemp, "" ) )
-    {
-        pszTemp += strlen( CORNER_LOWER_LEFT ) + 28;
-        dfLLX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
-        pszTemp += CORNER_VALUE_SIZE + 1;
-        dfLLY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
-    }
+        pszTemp = strstr( pszGeomRecord, CORNER_LOWER_LEFT );
+        if ( pszTemp && !EQUAL( pszTemp, "" ) )
+        {
+            pszTemp += strlen( CORNER_LOWER_LEFT ) + 28;
+            dfLLX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
+            pszTemp += CORNER_VALUE_SIZE + 1;
+            dfLLY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
+        }
 
-    pszTemp = strstr( pszGeomRecord, CORNER_LOWER_RIGHT );
-    if ( pszTemp && !EQUAL( pszTemp, "" ) )
-    {
-        pszTemp += strlen( CORNER_LOWER_RIGHT ) + 28;
-        dfLRX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
-        pszTemp += CORNER_VALUE_SIZE + 1;
-        dfLRY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
+        pszTemp = strstr( pszGeomRecord, CORNER_LOWER_RIGHT );
+        if ( pszTemp && !EQUAL( pszTemp, "" ) )
+        {
+            pszTemp += strlen( CORNER_LOWER_RIGHT ) + 28;
+            dfLRX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
+            pszTemp += CORNER_VALUE_SIZE + 1;
+            dfLRY = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
+        }
     }
 
     if ( dfULX != 0.0 && dfULY != 0.0
