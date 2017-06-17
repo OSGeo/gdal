@@ -547,7 +547,8 @@ int64_t json_object_get_int64(struct json_object *jso)
   case json_type_boolean:
     return jso->o.c_boolean;
   case json_type_string:
-	if (json_parse_int64(jso->o.c_string.str, &cint) == 0) return cint;
+    if (json_parse_int64(jso->o.c_string.str, &cint) == 0) return cint;
+    /* FALLTHRU */
   default:
     return 0;
   }
