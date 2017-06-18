@@ -105,7 +105,7 @@ bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec)
     // save the 0-3 bytes not used in the last UInt
     unsigned int numBytesNotNeeded = numTailBytesNotNeeded(numElements, numBits);
     unsigned int n2 = numBytesNotNeeded;
-    while (n2--)
+    for (;n2;--n2)
     {
       unsigned int dstValue;
       memcpy(&dstValue, dstPtr, sizeof(unsigned int));
@@ -171,7 +171,7 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec)
     memcpy(&lastUInt, srcPtr, sizeof(unsigned int));
     unsigned int numBytesNotNeeded = numTailBytesNotNeeded(numElements, numBits);
     unsigned int n2 = numBytesNotNeeded;
-    while (n2--)
+    for (; n2; --n2)
     {
       unsigned int srcValue;
       memcpy(&srcValue, srcPtr, sizeof(unsigned int));

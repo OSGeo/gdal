@@ -90,7 +90,7 @@ template<typename T> inline int isAllVal(const T *b, size_t bytecount, double nd
 {
     T val = static_cast<T>(ndv);
     size_t count = bytecount / sizeof(T);
-    while (count--) {
+    for (; count; --count) {
         if (*(b++) != val) {
             return FALSE;
         }
