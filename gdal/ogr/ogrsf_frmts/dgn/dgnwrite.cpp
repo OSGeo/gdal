@@ -262,7 +262,7 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
         const unsigned char abyEOF[2] = { 0xff, 0xff };
 
         VSIFWriteL( abyEOF, 2, 1, psDGN->fp );
-        VSIFSeekL( psDGN->fp, -2, SEEK_CUR );
+        VSIFSeekL( psDGN->fp, VSIFTellL(psDGN->fp)-2, SEEK_SET );
     }
 
     return TRUE;

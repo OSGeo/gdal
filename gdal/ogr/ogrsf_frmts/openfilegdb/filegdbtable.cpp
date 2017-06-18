@@ -1109,13 +1109,14 @@ static void ReadVarIntAndAddNoCheck(GByte*& pabyIter, GIntBig& nOutVal)
 
     b = *pabyIter;
     GUIntBig nVal = (b & 0x3F);
-    int nSign = 1;
-    if( (b & 0x40) != 0 )
-        nSign = -1;
+    bool bNegative = (b & 0x40) != 0;
     if( (b & 0x80) == 0 )
     {
         pabyIter ++;
-        nOutVal += nVal * nSign;
+        if( bNegative )
+            nOutVal -= nVal;
+        else
+            nOutVal += nVal;
         return;
     }
 
@@ -1129,7 +1130,10 @@ static void ReadVarIntAndAddNoCheck(GByte*& pabyIter, GIntBig& nOutVal)
         if( (b64 & 0x80) == 0 )
         {
             pabyIter = pabyLocalIter;
-            nOutVal += nVal * nSign;
+            if( bNegative )
+                nOutVal -= nVal;
+            else
+                nOutVal += nVal;
             return;
         }
         nShift += 7;

@@ -575,7 +575,7 @@ void OGRVDVDataSource::DetectLayers()
                         poLayer->SetFeatureCount(nFeatureCount);
                     poLayer = NULL;
                     nFeatureCount = 0;
-                    nStartOffset = VSIFTellL(m_fpL) - nRead + i - 4 + 1;
+                    nStartOffset = VSIFTellL(m_fpL) + i + 1 - nRead - 4;
                     bInTableName = true;
                     osTableName.resize(0);
                     chNextExpected = 0;
