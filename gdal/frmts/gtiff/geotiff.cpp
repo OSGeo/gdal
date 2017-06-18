@@ -8836,6 +8836,7 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
 {
     static const vsi_l_offset IO_CACHE_PAGE_SIZE = 4096;
 
+    const int sizeofvalint = static_cast<int>(sizeofval);
     const vsi_l_offset nOffset = nBaseOffset + sizeofval * nBlockId;
     const vsi_l_offset nOffsetStartPage =
         (nOffset / IO_CACHE_PAGE_SIZE) * IO_CACHE_PAGE_SIZE;
@@ -8875,7 +8876,7 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
         iStartBefore = -nBlockId;
     for( int i = iStartBefore;
          static_cast<uint32>(nBlockId + i) < nstrips &&
-         static_cast<GIntBig>(nOffset) + (i + 1) * static_cast<int>(sizeofval) <=
+         static_cast<GIntBig>(nOffset) + (i + 1) * sizeofvalint <=
          static_cast<GIntBig>(nOffsetEndPage);
          ++i )
     {
@@ -8883,7 +8884,7 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
         {
             uint16 val;
             memcpy(&val,
-                   buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
+                   buffer + (nOffset - nOffsetStartPage) + i * sizeofvalint,
                    sizeof(val));
             if( bSwab )
                 CPL_SWAP16PTR(&val);
@@ -8893,7 +8894,7 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
         {
             uint32 val;
             memcpy(&val,
-                   buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
+                   buffer + (nOffset - nOffsetStartPage) + i * sizeofvalint,
                    sizeof(val));
             if( bSwab )
                 CPL_SWAP32PTR(&val);
@@ -8903,7 +8904,7 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
         {
             uint64 val;
             memcpy(&val,
-                   buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
+                   buffer + (nOffset - nOffsetStartPage) + i * sizeofvalint,
                    sizeof(val));
             if( bSwab )
                 CPL_SWAP64PTR(&val);

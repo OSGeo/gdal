@@ -702,7 +702,7 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
                                                         nSrcHeightInBlocks )
             {
                 const int nYBlocks =
-                    nSrcHeightInBlocks - (dst_blk_y + y_crop_blocks);
+                    (int)nSrcHeightInBlocks - (int)(dst_blk_y + y_crop_blocks);
                 if( nYBlocks > 0 )
                 {
                     JBLOCKARRAY src_buffer =

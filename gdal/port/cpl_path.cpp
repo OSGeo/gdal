@@ -345,6 +345,9 @@ const char *CPLGetBasename( const char *pszFullFilename )
 const char *CPLGetExtension( const char *pszFullFilename )
 
 {
+    if( pszFullFilename[0] == '\0' )
+        return "";
+
     size_t iFileStart =
         static_cast<size_t>( CPLFindFilenameStart( pszFullFilename ) );
     char *pszStaticResult = CPLGetStaticResult();

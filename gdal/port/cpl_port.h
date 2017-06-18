@@ -1242,4 +1242,11 @@ inline bool operator!= (const bool& one, const MSVCPedanticBool& other) { return
 #endif /* defined(__cplusplus) && defined(DEBUG_BOOL) */
 /*! @endcond */
 
+#if __clang_major__ >= 4 || (__clang_major__ == 3 && __clang_minor__ >= 8)
+#define CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW __attribute__((no_sanitize("unsigned-integer-overflow")))
+#else
+#define CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+#endif
+
+
 #endif /* ndef CPL_BASE_H_INCLUDED */

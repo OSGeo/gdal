@@ -1022,9 +1022,9 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
                 CPLDebug("GZIP", "avail_in before = %d", stream.avail_in);
 #endif
                 stream.avail_in =
-                    stream.avail_in +
-                    static_cast<uInt>(offsetEndCompressedData -
-                                      VSIFTellL((VSILFILE*)m_poBaseHandle));
+                    stream.avail_in -
+                    static_cast<uInt>(VSIFTellL((VSILFILE*)m_poBaseHandle) -
+                                      offsetEndCompressedData);
                 if( VSIFSeekL((VSILFILE*)m_poBaseHandle,
                               offsetEndCompressedData, SEEK_SET) != 0 )
                     CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");

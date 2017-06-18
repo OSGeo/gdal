@@ -428,13 +428,15 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
     }
 
     // Figure out where to start writing.
-    // Negative nPixelOffset is used to specify the offset.
-    const GIntBig nPixelOffsetActual =
+    // Write formulas such that unsigned int overflow doesn't occur
+    const GUIntBig nPixelOffsetToSubstract =
         nPixelOffset >= 0
-        ? 0 : nPixelOffset * static_cast<GIntBig>(nBlockXSize - 1);
+        ? 0 : static_cast<GUIntBig>(-static_cast<GIntBig>(nPixelOffset)) * (nBlockXSize - 1);
     const vsi_l_offset nWriteStart = static_cast<vsi_l_offset>(
-        nImgOffset + static_cast<GIntBig>(nBlockYOff) * nLineOffset +
-        nPixelOffsetActual);
+        (nLineOffset >= 0 ?
+            nImgOffset + static_cast<GUIntBig>(nLineOffset) * nBlockYOff :
+            nImgOffset - static_cast<GUIntBig>(-static_cast<GIntBig>(nLineOffset)) * nBlockYOff )
+        - nPixelOffsetToSubstract);
 
     // Seek to correct location.
     if( Seek(nWriteStart, SEEK_SET) == -1 )

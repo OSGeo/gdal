@@ -133,12 +133,13 @@ static GUInt32 burnStack( int size )
     memset(buf, static_cast<GByte>(size & 0xff), sizeof(buf));
     for( size_t i = 0; i < sizeof(buf); i++ )
         ret += ret * buf[i];
-    size -= sizeof(buf);
+    size -= (int)sizeof(buf);
     if( size > 0 )
         ret += burnStack(size);
     return ret;
 }
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
 {
         GUInt32 buf[64] = {};
