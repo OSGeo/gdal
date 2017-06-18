@@ -838,8 +838,18 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
         m_nYTileOffset = m_nXTileOffset * l_nBlocksPerRow;
     }
 
-    m_nFirstTileOffset = nFirstTileOffsetIn
-        + (nBand-1) * m_nYTileOffset * l_nBlocksPerColumn;
+    m_nFirstTileOffset = nFirstTileOffsetIn;
+    if( nBand > 1 )
+    {
+        if( m_nYTileOffset > GINTBIG_MAX / (nBand - 1) ||
+            (nBand-1) * m_nYTileOffset > GINTBIG_MAX / l_nBlocksPerColumn ||
+            m_nFirstTileOffset > GINTBIG_MAX - (nBand-1) * m_nYTileOffset * l_nBlocksPerColumn )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+            return;
+        }
+        m_nFirstTileOffset += (nBand-1) * m_nYTileOffset * l_nBlocksPerColumn;
+    }
 }
 
 /************************************************************************/
@@ -2549,12 +2559,18 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( poDS->m_bIsTiled )
         {
+            CPLErrorReset();
             ISISTiledBand* poISISBand =
                 new ISISTiledBand( poDS, poDS->m_fpImage, i+1, eDataType,
                                         tileSizeX, tileSizeY,
                                         nSkipBytes, 0, 0,
                                         bNativeOrder );
-
+            if( CPLGetLastErrorType() != CE_None )
+            {
+                delete poISISBand;
+                delete poDS;
+                return NULL;
+            }
             poBand = poISISBand;
             poDS->SetBand( i+1, poBand );
 
