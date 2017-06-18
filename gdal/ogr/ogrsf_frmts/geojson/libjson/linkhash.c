@@ -39,6 +39,7 @@ int lh_ptr_equal(const void *k1, const void *k2)
 	return (k1 == k2);
 }
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 unsigned long lh_char_hash(const void *k)
 {
 	unsigned int h = 0;

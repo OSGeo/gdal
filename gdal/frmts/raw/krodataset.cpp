@@ -251,6 +251,10 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
                   GDALGetDataTypeName( eType ) );
         return NULL;
     }
+    if( nXSize == 0 || nYSize == 0 || nBands == 0 )
+    {
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to create file.                                             */

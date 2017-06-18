@@ -547,6 +547,7 @@ int CPLHashSetEqualPointer( const void* elt1, const void* elt2 )
  * @return the hash value of the string
  */
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 unsigned long CPLHashSetHashStr( const void *elt )
 {
     if( elt == NULL )

@@ -4502,6 +4502,14 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
     }
 }
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static void UnshiftSumSquare( GUIntBig& nSumSquare,
+                              GUIntBig  nSumThis,
+                              GUIntBig  i )
+{
+    nSumSquare += 32768 * (2 * nSumThis - i * 32768);
+}
+
 // AVX2/SSE2 optimization for GUInt16 case
 template<>
 void ComputeStatisticsInternal<GUInt16>( int nXCheck,
@@ -4635,7 +4643,7 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
                         anSumSquare[1] + anSumSquare[2] + anSumSquare[3];
 #ifndef naive_version
         // Unshift the sum of squares
-        nSumSquare += 32768 * (2 * nSumThis - static_cast<GUIntBig>(i) * 32768);
+        UnshiftSumSquare(nSumSquare, nSumThis, static_cast<GUIntBig>(i));
 #endif
         nSum += nSumThis;
 
