@@ -4602,7 +4602,7 @@ end_loop:
         bool bGoOn = true;
         if (pfnProgress)
         {
-            bGoOn = pfnProgress(nCount * 1.0 / nCountLayerFeatures, "", pProgressArg) != FALSE;
+            bGoOn = pfnProgress(nCountLayerFeatures ? nCount * 1.0 / nCountLayerFeatures: 1.0, "", pProgressArg) != FALSE;
         }
         if( !bGoOn )
         {
