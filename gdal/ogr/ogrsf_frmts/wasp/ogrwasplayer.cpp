@@ -172,23 +172,61 @@ OGRWAsPLayer::~OGRWAsPLayer()
         }
 
         /* output all end lines (one neighbor only) and all their neighbors*/
-        std::vector<bool> oHasBeenMerged( oBoundaries.size(), false);
-        for ( size_t i = 0; i < oBoundaries.size(); i++)
+        if( !oBoundaries.empty() )
         {
-            if ( !oHasBeenMerged[i] && ( startNeighbors[i] < 0 || endNeighbors[i] < 0 ) )
+            std::vector<bool> oHasBeenMerged( oBoundaries.size(), false);
+            for ( size_t i = 0; i < oBoundaries.size(); i++)
             {
+                if ( !oHasBeenMerged[i] && ( startNeighbors[i] < 0 || endNeighbors[i] < 0 ) )
+                {
+                    oHasBeenMerged[i] = true;
+                    Boundary * p = &oBoundaries[i];
+                    int j =  startNeighbors[i] < 0 ? endNeighbors[i] : startNeighbors[i];
+                    if ( startNeighbors[i] >= 0 )
+                    {
+                        /* reverse the line and left/right */
+                        p->poLine->reversePoints();
+                        std::swap( p->dfLeft, p->dfRight );
+                    }
+                    while ( j >= 0 )
+                    {
+                        assert( !oHasBeenMerged[j] );
+                        oHasBeenMerged[j] = true;
+
+                        OGRLineString * other = oBoundaries[j].poLine;
+                        OGRPoint endP, startOther;
+                        p->poLine->EndPoint( &endP );
+                        other->StartPoint( &startOther );
+                        if ( !endP.Equals( &startOther ) ) other->reversePoints();
+                        p->poLine->addSubLineString( other, 1 );
+
+                        /* next neighbor */
+                        if ( endNeighbors[j] >= 0 && !oHasBeenMerged[endNeighbors[j]] )
+                            j = endNeighbors[j];
+                        else if ( startNeighbors[j] >= 0 && !oHasBeenMerged[startNeighbors[j]] )
+                            j = startNeighbors[j];
+                        else
+                            j = -1;
+                    }
+                    WriteRoughness( p->poLine, p->dfLeft, p->dfRight );
+                }
+            }
+            /* output all rings */
+            for ( size_t i = 0; i < oBoundaries.size(); i++)
+            {
+                if ( oHasBeenMerged[i] ) continue;
                 oHasBeenMerged[i] = true;
                 Boundary * p = &oBoundaries[i];
                 int j =  startNeighbors[i] < 0 ? endNeighbors[i] : startNeighbors[i];
+                assert( j != -1 );
                 if ( startNeighbors[i] >= 0 )
                 {
                     /* reverse the line and left/right */
                     p->poLine->reversePoints();
                     std::swap( p->dfLeft, p->dfRight );
                 }
-                while ( j >= 0 )
+                while ( !oHasBeenMerged[j] )
                 {
-                    assert( !oHasBeenMerged[j] );
                     oHasBeenMerged[j] = true;
 
                     OGRLineString * other = oBoundaries[j].poLine;
@@ -199,50 +237,15 @@ OGRWAsPLayer::~OGRWAsPLayer()
                     p->poLine->addSubLineString( other, 1 );
 
                     /* next neighbor */
-                    if ( endNeighbors[j] >= 0 && !oHasBeenMerged[endNeighbors[j]] )
+                    if ( endNeighbors[j] >= 0  )
                         j = endNeighbors[j];
-                    else if ( startNeighbors[j] >= 0 && !oHasBeenMerged[startNeighbors[j]] )
+                    else if ( startNeighbors[j] >= 0 )
                         j = startNeighbors[j];
                     else
-                        j = -1;
+                        assert(false); /* there must be a neighbor since it's a ring */
                 }
                 WriteRoughness( p->poLine, p->dfLeft, p->dfRight );
             }
-        }
-        /* output all rings */
-        for ( size_t i = 0; i < oBoundaries.size(); i++)
-        {
-            if ( oHasBeenMerged[i] ) continue;
-            oHasBeenMerged[i] = true;
-            Boundary * p = &oBoundaries[i];
-            int j =  startNeighbors[i] < 0 ? endNeighbors[i] : startNeighbors[i];
-            assert( j != -1 );
-            if ( startNeighbors[i] >= 0 )
-            {
-                /* reverse the line and left/right */
-                p->poLine->reversePoints();
-                std::swap( p->dfLeft, p->dfRight );
-            }
-            while ( !oHasBeenMerged[j] )
-            {
-                oHasBeenMerged[j] = true;
-
-                OGRLineString * other = oBoundaries[j].poLine;
-                OGRPoint endP, startOther;
-                p->poLine->EndPoint( &endP );
-                other->StartPoint( &startOther );
-                if ( !endP.Equals( &startOther ) ) other->reversePoints();
-                p->poLine->addSubLineString( other, 1 );
-
-                /* next neighbor */
-                if ( endNeighbors[j] >= 0  )
-                    j = endNeighbors[j];
-                else if ( startNeighbors[j] >= 0 )
-                    j = startNeighbors[j];
-                else
-                    assert(false); /* there must be a neighbor since it's a ring */
-            }
-            WriteRoughness( p->poLine, p->dfLeft, p->dfRight );
         }
     }
     else
