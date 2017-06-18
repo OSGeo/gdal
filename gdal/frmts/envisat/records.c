@@ -1247,7 +1247,7 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
                         const EnvisatFieldDescr* pField, char *szBuf, size_t nBufLen)
 {
     int i, nOffset = 0;
-    const void *pData;
+    const GByte *pData;
 
     if ( pField->nOffset >= nRecLen )
     {
@@ -1258,7 +1258,7 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
         return CE_Failure;
     }
 
-    pData = (GByte*)pRecord + pField->nOffset;
+    pData = (const GByte*)pRecord + pField->nOffset;
 
     szBuf[0] = '\0';
 
