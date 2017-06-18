@@ -166,7 +166,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
       {
           if( !GDALIsValueInRange<GByte>(dfNoDataValue) )
           {
-              memset(pImage, nBlockXSize * nBlockYSize, 0);
+              memset(pImage, 0, nBlockXSize * nBlockYSize);
           }
           else
           {
@@ -184,7 +184,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
       {
           if( !GDALIsValueInRange<GUInt32>(dfNoDataValue) )
           {
-              memset(pImage, nBlockXSize * nBlockYSize, 0);
+              memset(pImage, 0, nBlockXSize * nBlockYSize);
           }
           else
           {
@@ -203,7 +203,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
       {
           if( !GDALIsValueInRange<GInt32>(dfNoDataValue) )
           {
-              memset(pImage, nBlockXSize * nBlockYSize, 0);
+              memset(pImage, 0, nBlockXSize * nBlockYSize);
           }
           else
           {
@@ -223,7 +223,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
           if( !bIsNoDataNan && !CPLIsInf(dfNoDataValue) &&
               !GDALIsValueInRange<float>(dfNoDataValue) )
           {
-              memset(pImage, nBlockXSize * nBlockYSize, 0);
+              memset(pImage, 0, nBlockXSize * nBlockYSize);
           }
           else
           {
