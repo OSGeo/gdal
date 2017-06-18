@@ -225,6 +225,9 @@ CPLErr NWT_GRDRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     CPLAssert(nBlockXOff == 0);
     NWT_GRDDataset *poGDS = reinterpret_cast<NWT_GRDDataset *>(poDS);
 
+    if( dfScale == 0.0 )
+        return CE_Failure;
+
     // Ensure the blocksize is not beyond the system limits and
     // initialise the size of the record
     if (nBlockXSize > INT_MAX / 2) {
