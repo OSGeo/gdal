@@ -315,7 +315,7 @@ void KMLNode::unregisterLayerIfMatchingThisNode(KML* poKML)
 
 void KMLNode::eliminateEmpty(KML* poKML)
 {
-    for(kml_nodes_t::size_type z = 0; z < pvpoChildren_->size(); z++)
+    for(kml_nodes_t::size_type z = 0; z < pvpoChildren_->size();)
     {
         if((*pvpoChildren_)[z]->eType_ == Empty
            && (poKML->isContainer((*pvpoChildren_)[z]->sName_)
@@ -324,11 +324,11 @@ void KMLNode::eliminateEmpty(KML* poKML)
             (*pvpoChildren_)[z]->unregisterLayerIfMatchingThisNode(poKML);
             delete (*pvpoChildren_)[z];
             pvpoChildren_->erase(pvpoChildren_->begin() + z);
-            z--;
         }
         else
         {
             (*pvpoChildren_)[z]->eliminateEmpty(poKML);
+            ++z;
         }
     }
 }

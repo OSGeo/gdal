@@ -60,7 +60,7 @@ SHP_CVSID("$Id$")
 #endif
 
 #define READ_MSB_INT(ptr) \
-        (((ptr)[0] << 24) | ((ptr)[1] << 16) | ((ptr)[2] << 8) | (ptr)[3])
+        (int)(((unsigned)(ptr)[0] << 24) | ((ptr)[1] << 16) | ((ptr)[2] << 8) | (ptr)[3])
 
 #define CACHED_DEPTH_LIMIT      8
 

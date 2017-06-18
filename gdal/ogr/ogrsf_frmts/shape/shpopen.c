@@ -1884,8 +1884,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     }
     else if( nShapeId == -1 || psSHP->panRecSize[nShapeId] < nRecordSize-8 )
     {
-        unsigned int nExpectedSize = psSHP->nFileSize + nRecordSize;
-        if( nExpectedSize < psSHP->nFileSize ) // due to unsigned int overflow
+        if( psSHP->nFileSize > 0xFFFFFFFFU - nRecordSize)
         {
             char str[128];
             snprintf( str, sizeof(str), "Failed to write shape object. "

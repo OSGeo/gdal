@@ -453,6 +453,7 @@ end_error:
 /*                     AddWithOverflowAccepted()                        */
 /************************************************************************/
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static GIntBig AddWithOverflowAccepted(GIntBig a, GIntBig b)
 {
     // Assumes complement-to-two signed integer representation and that
@@ -462,6 +463,7 @@ static GIntBig AddWithOverflowAccepted(GIntBig a, GIntBig b)
                         static_cast<GUIntBig>(a) + static_cast<GUIntBig>(b));
 }
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static int AddWithOverflowAccepted(int a, int b)
 {
     // Assumes complement-to-two signed integer representation and that
@@ -471,6 +473,7 @@ static int AddWithOverflowAccepted(int a, int b)
                         static_cast<unsigned>(a) + static_cast<unsigned>(b));
 }
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static unsigned AddWithOverflowAccepted(unsigned a, int b)
 {
     // Assumes complement-to-two signed integer representation and that

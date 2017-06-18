@@ -1596,6 +1596,8 @@ void OGROSMDataSource::IndexWay(GIntBig nWayID, bool bIsArea,
 
 int OGROSMDataSource::FindNode(GIntBig nID)
 {
+    if( nReqIds == 0 )
+        return -1;
     int iFirst = 0;
     int iLast = nReqIds - 1;
     while(iFirst < iLast)
