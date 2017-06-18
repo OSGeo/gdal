@@ -822,8 +822,13 @@ char *CPLScanString( const char *pszString, int nMaxLength,
     if( bTrimSpaces )
     {
         size_t i = strlen(pszBuffer);
-        while( i-- > 0 && isspace(static_cast<unsigned char>(pszBuffer[i])) )
+        while( i > 0 )
+        {
+            i --;
+            if( !isspace(static_cast<unsigned char>(pszBuffer[i])) )
+                break;
             pszBuffer[i] = '\0';
+        }
     }
 
     if( bNormalize )

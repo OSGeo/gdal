@@ -1281,43 +1281,52 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
         case EDT_Int16:
             for (i = 0; i < pField->nCount; ++i)
             {
+                GInt16 nVal;
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
+                memcpy(&nVal, pData + i * sizeof(nVal), sizeof(nVal));
                 nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset, "%d",
-                                   CPL_MSBWORD16(((const GInt16*)pData)[i]));
+                                   CPL_MSBWORD16(nVal));
             }
             break;
         case EDT_UInt16:
             for (i = 0; i < pField->nCount; ++i)
             {
+                GUInt16 nVal;
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%d",
-                                   CPL_MSBWORD16(((const GUInt16*)pData)[i]));
+                memcpy(&nVal, pData + i * sizeof(nVal), sizeof(nVal));
+                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%u",
+                                   CPL_MSBWORD16(nVal));
             }
             break;
         case EDT_Int32:
             for (i = 0; i < pField->nCount; ++i)
             {
+                GInt32 nVal;
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
+                memcpy(&nVal, pData + i * sizeof(nVal), sizeof(nVal));
                 nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%d",
-                                   CPL_MSBWORD32(((const GInt32*)pData)[i]));
+                                   CPL_MSBWORD32(nVal));
             }
             break;
         case EDT_UInt32:
             for (i = 0; i < pField->nCount; ++i)
             {
+                GUInt32 nVal;
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%d",
-                                   CPL_MSBWORD32(((const GUInt32*)pData)[i]));
+                memcpy(&nVal, pData + i * sizeof(nVal), sizeof(nVal));
+                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%u",
+                                   CPL_MSBWORD32(nVal));
             }
             break;
         case EDT_Float32:
             for (i = 0; i < pField->nCount; ++i)
             {
-                float fValue = ((const float*)pData)[i];
+                float fValue;
+                memcpy(&fValue, pData + i * sizeof(fValue), sizeof(fValue));
 #ifdef CPL_LSB
                 CPL_SWAP32PTR( &fValue );
 #endif
@@ -1330,7 +1339,8 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
         case EDT_Float64:
             for (i = 0; i < pField->nCount; ++i)
             {
-                double dfValue = ((const double*)pData)[i];
+                double dfValue;
+                memcpy(&dfValue, pData + i * sizeof(dfValue), sizeof(dfValue));
 #ifdef CPL_LSB
                 CPL_SWAPDOUBLE( &dfValue );
 #endif
