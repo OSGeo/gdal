@@ -165,9 +165,8 @@ template <typename T> static void CntZImgUFill(CntZImage &zImg, T *dst, const IL
     int h = static_cast<int>(zImg.getHeight());
     int w = static_cast<int>(zImg.getWidth());
     T *ptr = dst;
-    T ndv = static_cast<T>(img.NoDataValue);
     // Use 0 if nodata is not defined
-    if (!img.hasNoData) ndv = 0;
+    const T ndv = img.hasNoData ? static_cast<T>(img.NoDataValue) : 0;
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++)
             *ptr++ = (zImg(i, j).cnt == 0) ? ndv : static_cast<T>(zImg(i, j).z);
