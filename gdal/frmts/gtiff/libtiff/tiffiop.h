@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.90 2016-12-02 21:56:56 erouault Exp $ */
+/* $Id: tiffiop.h,v 1.91 2017-06-18 10:31:50 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -314,6 +314,13 @@ typedef size_t TIFFIOSize_t;
 #define _TIFF_stat_s struct stat
 #define _TIFF_off_t off_t
 #endif
+
+#if __clang_major__ >= 4 || (__clang_major__ == 3 && __clang_minor__ >= 8)
+#define TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW __attribute__((no_sanitize("unsigned-integer-overflow")))
+#else
+#define TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+#endif
+
 
 #if defined(__cplusplus)
 extern "C" {
