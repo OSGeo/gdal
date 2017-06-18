@@ -51,6 +51,7 @@
 #include <ctime>
 #include <algorithm>
 
+#include "cpl_atomic_ops.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_vsi.h"
@@ -82,6 +83,7 @@ struct _CPLLock
 
 #ifdef DEBUG_CONTENTION
     bool     bDebugPerf;
+    volatile int nCurrentHolders;
     GUIntBig nStartTime;
     GIntBig  nMaxDiff;
     double   dfAvgDiff;
@@ -2300,6 +2302,8 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             psLock->u.hMutex = hMutex;
 #ifdef DEBUG_CONTENTION
             psLock->bDebugPerf = false;
+            psLock->nCurrentHolders = 0;
+            psLock->nStartTime = 0;
 #endif
             return psLock;
         }
@@ -2319,6 +2323,8 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             psLock->u.hSpinLock = hSpinLock;
 #ifdef DEBUG_CONTENTION
             psLock->bDebugPerf = false;
+            psLock->nCurrentHolders = 0;
+            psLock->nStartTime = 0;
 #endif
             return psLock;
         }
@@ -2359,9 +2365,12 @@ int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
             return FALSE;
     }
 #ifdef DEBUG_CONTENTION
-    if( ret && (*ppsLock)->bDebugPerf )
+    if( ret && CPLAtomicInc(&((*ppsLock)->nCurrentHolders)) == 1 )
     {
-        (*ppsLock)->nStartTime = nStartTime;
+        if( (*ppsLock)->bDebugPerf )
+        {
+            (*ppsLock)->nStartTime = nStartTime;
+        }
     }
 #endif
     return ret;
@@ -2374,13 +2383,25 @@ int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
 int CPLAcquireLock( CPLLock* psLock )
 {
 #ifdef DEBUG_CONTENTION
+    GUIntBig nStartTime = 0;
     if( psLock->bDebugPerf )
-        psLock->nStartTime = CPLrdtsc();
+        nStartTime = CPLrdtsc();
 #endif
+    int ret;
     if( psLock->eType == LOCK_SPIN )
-        return CPLAcquireSpinLock( psLock->u.hSpinLock );
+        ret = CPLAcquireSpinLock( psLock->u.hSpinLock );
     else
-        return CPLAcquireMutex( psLock->u.hMutex, 1000 );
+        ret =  CPLAcquireMutex( psLock->u.hMutex, 1000 );
+#ifdef DEBUG_CONTENTION
+    if( ret && CPLAtomicInc(&(psLock->nCurrentHolders)) == 1 )
+    {
+        if( psLock->bDebugPerf )
+        {
+            psLock->nStartTime = nStartTime;
+        }
+    }
+#endif
+    return ret;
 }
 
 /************************************************************************/
@@ -2394,7 +2415,9 @@ void CPLReleaseLock( CPLLock* psLock )
     GIntBig nMaxDiff = 0;
     double dfAvgDiff = 0;
     GUIntBig nIters = 0;
-    if( psLock->bDebugPerf && psLock->nStartTime )
+    if( CPLAtomicDec(&(psLock->nCurrentHolders)) == 0 &&
+        psLock->bDebugPerf &&
+        psLock->nStartTime )
     {
         const GUIntBig nStopTime = CPLrdtscp();
         const GIntBig nDiffTime =
