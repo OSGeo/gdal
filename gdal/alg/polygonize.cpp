@@ -741,14 +741,14 @@ GBool GDALFloatEquals( float A, float B )
 
     // Make aInt lexicographically ordered as a twos-complement int.
     if( aInt < 0 )
-        aInt = 0x80000000 - aInt;
+        aInt = INT_MIN - aInt;
 
     // Make bInt lexicographically ordered as a twos-complement int.
     int bInt = 0;
     memcpy(&bInt, &B, 4);
 
     if( bInt < 0 )
-        bInt = 0x80000000 - bInt;
+        bInt = INT_MIN - bInt;
 #ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
     const int intDiff =
         abs(static_cast<int>(static_cast<GUIntBig>(

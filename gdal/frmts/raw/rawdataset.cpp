@@ -287,13 +287,15 @@ CPLErr RawRasterBand::AccessLine( int iLine )
         return CE_None;
 
     // Figure out where to start reading.
-    // Negative nPixelOffset is used to specify the offset.
-    const GIntBig nPixelOffsetActual =
+    // Write formulas such that unsigned int overflow doesn't occur
+    const GUIntBig nPixelOffsetToSubstract =
         nPixelOffset >= 0
-        ? 0 : nPixelOffset * static_cast<GIntBig>(nBlockXSize - 1);
+        ? 0 : static_cast<GUIntBig>(-static_cast<GIntBig>(nPixelOffset)) * (nBlockXSize - 1);
     const vsi_l_offset nReadStart = static_cast<vsi_l_offset>(
-        nImgOffset + static_cast<GIntBig>(iLine) * nLineOffset +
-        nPixelOffsetActual);
+        (nLineOffset >= 0 ?
+            nImgOffset + static_cast<GUIntBig>(nLineOffset) * iLine :
+            nImgOffset - static_cast<GUIntBig>(-static_cast<GIntBig>(nLineOffset)) * iLine )
+        - nPixelOffsetToSubstract);
 
     // Seek to the correct line.
     if( Seek(nReadStart, SEEK_SET) == -1 )
