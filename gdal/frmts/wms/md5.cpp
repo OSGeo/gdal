@@ -202,6 +202,7 @@ struct cvs_MD5Context *ctx)
 * reflect the addition of 16 longwords of new data.  MD5Update blocks
 * the data and converts bytes into longwords for this routine.
 */
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 void
 cvs_MD5Transform (
                   cvs_uint32 buf[4],

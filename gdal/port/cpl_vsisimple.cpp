@@ -1203,10 +1203,10 @@ void *VSICallocVerbose( size_t nCount, size_t nSize, const char* pszFile,
     if( pRet == NULL && nCount != 0 && nSize != 0 )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 "%s, %d: cannot allocate " CPL_FRMT_GUIB "x" CPL_FRMT_GUIB " bytes",
                  pszFile ? pszFile : "(unknown file)",
                  nLine,
-                 static_cast<GUIntBig>(nCount) * static_cast<GUIntBig>(nSize));
+                 static_cast<GUIntBig>(nCount), static_cast<GUIntBig>(nSize));
     }
     return pRet;
 }

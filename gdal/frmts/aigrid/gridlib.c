@@ -110,6 +110,7 @@ CPLErr AIGProcessIntConstBlock( GByte *pabyCur, int nDataSize, int nMin,
 /*                         AIGRolloverSignedAdd()                       */
 /************************************************************************/
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static GInt32 AIGRolloverSignedAdd(GInt32 a, GInt32 b)
 {
     // Not really portable as assumes complement to 2 representation
