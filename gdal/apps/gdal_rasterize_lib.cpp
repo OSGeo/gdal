@@ -449,6 +449,12 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
 
     if (dfXRes == 0 && dfYRes == 0)
     {
+        if( nXSize == 0 || nYSize == 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Size and resolutions are missing");
+            return NULL;
+        }
         dfXRes = (sEnvelop.MaxX - sEnvelop.MinX) / nXSize;
         dfYRes = (sEnvelop.MaxY - sEnvelop.MinY) / nYSize;
     }

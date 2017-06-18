@@ -2582,8 +2582,14 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
         nDstXOff, nDstYOff, nDstXSize, nDstYSize,
         dfMinXOut, dfMinYOut, dfMaxXOut, dfMaxYOut);
 #endif
-    *pnSrcXOff = std::max(0, static_cast<int>(floor(dfMinXOut)));
-    *pnSrcYOff = std::max(0, static_cast<int>(floor(dfMinYOut)));
+    const int nMinXOutClamped =
+        dfMinXOut > INT_MAX ? INT_MAX :
+        dfMinXOut >= 0.0 ? static_cast<int>(dfMinXOut) : 0;
+    *pnSrcXOff = nMinXOutClamped;
+    const int nMinYOutClamped =
+        dfMinYOut > INT_MAX ? INT_MAX :
+        dfMinYOut >= 0.0 ? static_cast<int>(dfMinYOut) : 0;
+    *pnSrcYOff = nMinYOutClamped;
     *pnSrcXOff = std::min(*pnSrcXOff, nRasterXSize);
     *pnSrcYOff = std::min(*pnSrcYOff, nRasterYSize);
 
@@ -2601,8 +2607,8 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     nSrcXSizeRaw = std::max(0, nSrcXSizeRaw);
     nSrcYSizeRaw = std::max(0, nSrcYSizeRaw);
 
-    *pnSrcXOff = std::max(0, static_cast<int>(floor(dfMinXOut)) - nResWinSize);
-    *pnSrcYOff = std::max(0, static_cast<int>(floor(dfMinYOut)) - nResWinSize);
+    *pnSrcXOff = std::max(0, nMinXOutClamped - nResWinSize);
+    *pnSrcYOff = std::max(0, nMinYOutClamped - nResWinSize);
     *pnSrcXOff = std::min(*pnSrcXOff, nRasterXSize);
     *pnSrcYOff = std::min(*pnSrcYOff, nRasterYSize);
 
