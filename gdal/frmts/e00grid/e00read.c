@@ -599,7 +599,7 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
                         /* Force the program to abort by simulating a EOF
                         */
                         psInfo->bEOF = 1;
-                        bEOL = 1;
+                        /*bEOL = 1;*/
                         break;
                     }
                     iOutBufPtr--;
