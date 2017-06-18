@@ -1003,6 +1003,7 @@ char *VSIStrdup( const char * pszString )
 /*                          VSICheckMul2()                              */
 /************************************************************************/
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static size_t VSICheckMul2( size_t mul1, size_t mul2, bool *pbOverflowFlag,
                             const char* pszFile, int nLine )
 {
@@ -1040,6 +1041,7 @@ static size_t VSICheckMul2( size_t mul1, size_t mul2, bool *pbOverflowFlag,
 /*                          VSICheckMul3()                              */
 /************************************************************************/
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static size_t VSICheckMul3( size_t mul1, size_t mul2, size_t mul3,
                             bool *pbOverflowFlag,
                             const char* pszFile, int nLine )

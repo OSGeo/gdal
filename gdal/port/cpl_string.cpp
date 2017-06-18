@@ -2220,6 +2220,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
  * application using CPLFree() when no longer needed.
  */
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
 
 {
