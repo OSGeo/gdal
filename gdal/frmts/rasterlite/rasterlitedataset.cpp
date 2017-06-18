@@ -1295,10 +1295,18 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Compute raster size, geotransform and projection                */
 /* -------------------------------------------------------------------- */
-        poDS->nRasterXSize = static_cast<int>(
-            (oEnvelope.MaxX - oEnvelope.MinX) / poDS->padfXResolutions[0] + 0.5 );
-        poDS->nRasterYSize = static_cast<int>(
-            (oEnvelope.MaxY - oEnvelope.MinY) / poDS->padfYResolutions[0] + 0.5 );
+        const double dfRasterXSize =
+            (oEnvelope.MaxX - oEnvelope.MinX) / poDS->padfXResolutions[0] + 0.5;
+        const double dfRasterYSize =
+            (oEnvelope.MaxY - oEnvelope.MinY) / poDS->padfYResolutions[0] + 0.5;
+        if( !(dfRasterXSize >= 1 && dfRasterXSize <= INT_MAX) ||
+            !(dfRasterYSize >= 1 && dfRasterYSize <= INT_MAX) )
+        {
+            delete poDS;
+            return NULL;
+        }
+        poDS->nRasterXSize = static_cast<int>(dfRasterXSize);
+        poDS->nRasterYSize = static_cast<int>(dfRasterYSize);
 
         poDS->bValidGeoTransform = TRUE;
         poDS->adfGeoTransform[0] = oEnvelope.MinX;
