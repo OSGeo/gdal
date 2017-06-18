@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.127 2017-01-31 13:02:27 erouault Exp $ */
+/* $Id: tif_jpeg.c,v 1.128 2017-06-18 10:31:50 erouault Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1043,13 +1043,13 @@ JPEGPreDecode(TIFF* tif, uint16 s)
 	/*
 	 * Check image parameters and set decompression parameters.
 	 */
-	segment_width = td->td_imagewidth;
-	segment_height = td->td_imagelength - tif->tif_row;
 	if (isTiled(tif)) {
                 segment_width = td->td_tilewidth;
                 segment_height = td->td_tilelength;
 		sp->bytesperline = TIFFTileRowSize(tif);
 	} else {
+		segment_width = td->td_imagewidth;
+		segment_height = td->td_imagelength - tif->tif_row;
 		if (segment_height > td->td_rowsperstrip)
 			segment_height = td->td_rowsperstrip;
 		sp->bytesperline = TIFFScanlineSize(tif);
