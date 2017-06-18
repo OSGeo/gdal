@@ -87,6 +87,7 @@
 #include "gdal_mdreader.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
+#include "gdal_priv_templates.hpp"
 #include "geo_normalize.h"
 #include "geotiff.h"
 #include "geovalues.h"
@@ -7725,30 +7726,36 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData( const void* pBuffer )
     {
         if( nSampleFormat == SAMPLEFORMAT_INT )
         {
-            return *(reinterpret_cast<const signed char*>(pBuffer)) ==
+            return GDALIsValueInRange<signed char>(dfEffectiveNoData) &&
+                   *(reinterpret_cast<const signed char*>(pBuffer)) ==
                         static_cast<signed char>(dfEffectiveNoData);
         }
-        return *(reinterpret_cast<const GByte*>(pBuffer)) ==
+        return GDALIsValueInRange<GByte>(dfEffectiveNoData) &&
+               *(reinterpret_cast<const GByte*>(pBuffer)) ==
                         static_cast<GByte>(dfEffectiveNoData);
     }
     if( nBitsPerSample == 16 && eDT == GDT_UInt16 )
     {
-        return *(reinterpret_cast<const GUInt16*>(pBuffer)) ==
+        return GDALIsValueInRange<GUInt16>(dfEffectiveNoData) &&
+               *(reinterpret_cast<const GUInt16*>(pBuffer)) ==
                         static_cast<GUInt16>(dfEffectiveNoData);
     }
     if( nBitsPerSample == 16 && eDT == GDT_Int16 )
     {
-        return *(reinterpret_cast<const GInt16*>(pBuffer)) ==
+        return GDALIsValueInRange<GInt16>(dfEffectiveNoData) &&
+               *(reinterpret_cast<const GInt16*>(pBuffer)) ==
                         static_cast<GInt16>(dfEffectiveNoData);
     }
     if( nBitsPerSample == 32 && eDT == GDT_UInt32 )
     {
-        return *(reinterpret_cast<const GUInt32*>(pBuffer)) ==
+        return GDALIsValueInRange<GUInt32>(dfEffectiveNoData) &&
+               *(reinterpret_cast<const GUInt32*>(pBuffer)) ==
                         static_cast<GUInt32>(dfEffectiveNoData);
     }
     if( nBitsPerSample == 32 && eDT == GDT_Int32 )
     {
-        return *(reinterpret_cast<const GInt32*>(pBuffer)) ==
+        return GDALIsValueInRange<GInt32>(dfEffectiveNoData) &&
+               *(reinterpret_cast<const GInt32*>(pBuffer)) ==
                         static_cast<GInt32>(dfEffectiveNoData);
     }
     if( nBitsPerSample == 32 && eDT == GDT_Float32 )
@@ -7756,7 +7763,8 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData( const void* pBuffer )
         if( CPLIsNan(dfNoDataValue) )
             return CPL_TO_BOOL(
                 CPLIsNan(*(reinterpret_cast<const float*>(pBuffer))));
-        return *(reinterpret_cast<const float*>(pBuffer)) ==
+        return GDALIsValueInRange<float>(dfEffectiveNoData) &&
+               *(reinterpret_cast<const float*>(pBuffer)) ==
                         static_cast<float>(dfEffectiveNoData);
     }
     if( nBitsPerSample == 64 && eDT == GDT_Float64 )
