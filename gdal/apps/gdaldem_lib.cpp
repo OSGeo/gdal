@@ -1150,6 +1150,8 @@ float GDALHillshadeMultiDirectionalAlg (const T* afWin,
     const double xx = x * x;
     const double yy = y * y;
     const double xx_plus_yy = xx + yy;
+    if( xx_plus_yy == 0.0 )
+        return static_cast<float>(1.0 + psData->sin_altRadians_mul_254);
 
     // ... then the shade value from different azimuth
     double val225_mul_127 = psData->sin_altRadians_mul_127 +
@@ -1177,8 +1179,7 @@ float GDALHillshadeMultiDirectionalAlg (const T* afWin,
                    weight_360 * val360_mul_127) / xx_plus_yy,
             1 + psData->square_z * xx_plus_yy);
 
-    const double cang = 1.0 + (
-        (xx_plus_yy == 0.0) ? psData->sin_altRadians_mul_254 : cang_mul_127);
+    const double cang = 1.0 + cang_mul_127;
 
     return static_cast<float>(cang);
 }
@@ -1637,6 +1638,15 @@ static bool GDALColorReliefGetRGBA( ColorAssociation* pasColorAssociation,
             *pnG = pasColorAssociation[i-1].nG;
             *pnB = pasColorAssociation[i-1].nB;
             *pnA = pasColorAssociation[i-1].nA;
+            return true;
+        }
+
+        if( CPLIsNan(pasColorAssociation[i-1].dfVal) )
+        {
+            *pnR = pasColorAssociation[i].nR;
+            *pnG = pasColorAssociation[i].nG;
+            *pnB = pasColorAssociation[i].nB;
+            *pnA = pasColorAssociation[i].nA;
             return true;
         }
 

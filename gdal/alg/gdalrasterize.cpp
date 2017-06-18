@@ -148,16 +148,22 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
             unsigned char *pbyInsert = psInfo->pabyChunkBuf
                                       + iBand * psInfo->nXSize * psInfo->nYSize
                                       + nY * psInfo->nXSize + nX;
-
+            double dfVal;
             if( psInfo->eMergeAlg == GRMA_Add ) {
-                *pbyInsert += (unsigned char)( psInfo->padfBurnValue[iBand] +
+                dfVal = *pbyInsert + ( psInfo->padfBurnValue[iBand] +
                           ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
                              0 : dfVariant ) );
             } else {
-                *pbyInsert = (unsigned char)( psInfo->padfBurnValue[iBand] +
+                dfVal = psInfo->padfBurnValue[iBand] +
                           ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
-                             0 : dfVariant ) );
+                             0 : dfVariant );
             }
+            if( dfVal > 255.0 )
+                 *pbyInsert = 255;
+            else if( dfVal < 0.0 )
+                *pbyInsert = 0;
+            else
+                *pbyInsert = (unsigned char)( dfVal );
         }
     }
     else if( psInfo->eType == GDT_Float64 )
