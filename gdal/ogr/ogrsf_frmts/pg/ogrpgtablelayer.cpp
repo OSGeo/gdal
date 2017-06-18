@@ -1381,7 +1381,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
         else
         {
             OGRPGCommonAppendFieldValue(osCommand, poFeature, i,
-                                        (OGRPGCommonEscapeStringCbk)OGRPGEscapeString, hPGConn);
+                                        OGRPGEscapeString, hPGConn);
         }
     }
     if( !bNeedComma ) // nothing to do
@@ -1608,11 +1608,12 @@ CPLString OGRPGEscapeColumnName(const char* pszColumnName)
 /*                         OGRPGEscapeString( )                         */
 /************************************************************************/
 
-CPLString OGRPGEscapeString(PGconn *hPGConn,
+CPLString OGRPGEscapeString(void *hPGConnIn,
                             const char* pszStrValue, int nMaxLength,
                             const char* pszTableName,
                             const char* pszFieldName )
 {
+    PGconn *hPGConn = reinterpret_cast<PGconn*>(hPGConnIn);
     CPLString osCommand;
 
     /* We need to quote and escape string fields. */
