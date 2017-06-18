@@ -829,8 +829,9 @@ char *CPLScanString( const char *pszString, int nMaxLength,
     if( bNormalize )
     {
         size_t i = strlen(pszBuffer);
-        while( i-- > 0 )
+        while( i > 0 )
         {
+            i --;
             if( pszBuffer[i] == ':' )
                 pszBuffer[i] = '_';
         }
