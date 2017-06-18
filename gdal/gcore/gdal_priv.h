@@ -1523,7 +1523,7 @@ int CPL_DLL GDALCheckBandCount( int nBands, int bIsZeroAllowed );
 // stored as a string at some point. See #3573, #4183, #4506
 #define ARE_REAL_EQUAL(dfVal1, dfVal2) \
  /* Is it FLT_MIN ? Cf #6578 */ \
- (((float)dfVal2 == (float)1.17549435e-38) ? ((float)dfVal1 == (float)dfVal2) : \
+ ((fabs(dfVal2) <= 3.4028234664e+38 && (float)dfVal2 == (float)1.17549435e-38 && fabs(dfVal1) <= 3.4028234664e+38) ? ((float)dfVal1 == (float)dfVal2) : \
  /* Or DBL_MIN ? */ \
   (dfVal2 == 2.2250738585072014e-308) ? (dfVal1 == dfVal2) : \
  /* General case */ \
