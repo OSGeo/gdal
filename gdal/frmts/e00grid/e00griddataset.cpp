@@ -567,7 +567,10 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     const int nRasterXSize = atoi(pszLine);
     const int nRasterYSize = atoi(pszLine + E00_INT_SIZE);
 
-    if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
+    if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize) ||
+        /* ASCII format. Huge rasters do not make sense */
+        nRasterXSize > 100000 ||
+        nRasterYSize > 100000 )
     {
         delete poDS;
         return NULL;
@@ -719,8 +722,13 @@ void E00GRIDDataset::ReadMetadata()
 
     if (e00ReadPtr == NULL)
     {
-        const int nRoundedBlockXSize = ((nRasterXSize + VALS_PER_LINE - 1) /
-                                                VALS_PER_LINE) * VALS_PER_LINE;
+        const int nRoundedBlockXSize =
+            DIV_ROUND_UP(nRasterXSize, VALS_PER_LINE) * VALS_PER_LINE;
+        if( static_cast<vsi_l_offset>(nRasterYSize) >
+                                    GUINTBIG_MAX / nRoundedBlockXSize )
+        {
+            return;
+        }
         const vsi_l_offset nValsToSkip =
                                (vsi_l_offset)nRasterYSize * nRoundedBlockXSize;
         const vsi_l_offset nLinesToSkip = nValsToSkip / VALS_PER_LINE;
