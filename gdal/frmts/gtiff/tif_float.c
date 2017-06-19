@@ -149,14 +149,14 @@ GUInt32 TripleToFloat( GUInt32 iTriple )
 /*      Denormalized number -- renormalize it.                          */
 /* -------------------------------------------------------------------- */
 
-            while (!(iMantissa & 0x00002000))
+            while (!(iMantissa & 0x00010000))
             {
                 iMantissa <<= 1;
                 iExponent -= 1;
             }
 
             iExponent += 1;
-            iMantissa &= ~0x00002000U;
+            iMantissa &= ~0x00010000U;
         }
     }
     else if (iExponent == 127)
