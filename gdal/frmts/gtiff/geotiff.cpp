@@ -11677,7 +11677,7 @@ static bool GTiffCheckCurrentDirIsCompatOfStripChop( TIFF* l_hTIFF,
                                                      bool& bCandidateForStripChopReopening )
 {
     uint32 nXSize = 0;
-    TIFFGetField( l_hTIFF, TIFFTAG_IMAGELENGTH, &nXSize );
+    TIFFGetField( l_hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
 
     uint32 nYSize = 0;
     TIFFGetField( l_hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
@@ -11878,6 +11878,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         int iDirIndex = 1;
         // Inspect all directories to decide if we can safely re-open in
         // strip chop mode
+
+        toff_t nCurOffset = TIFFCurrentDirOffset(l_hTIFF);
+
         while( !TIFFLastDirectory( l_hTIFF ) &&
                TIFFReadDirectory( l_hTIFF ) != 0 )
         {
@@ -11905,6 +11908,11 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
                               poOpenInfo->fpL );
             if( l_hTIFF == NULL )
                 return NULL;
+        }
+        else
+        {
+            if( TIFFCurrentDirOffset(l_hTIFF) != nCurOffset )
+                TIFFSetSubDirectory( l_hTIFF, nCurOffset );
         }
     }
 
