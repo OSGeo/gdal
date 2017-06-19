@@ -42,7 +42,7 @@
 #pragma warning( disable : 4244 )
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <winsock2.h>
 #undef min
 #undef max
