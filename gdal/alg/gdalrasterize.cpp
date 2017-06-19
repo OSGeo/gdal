@@ -36,6 +36,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <vector>
+#include <algorithm>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -159,7 +160,7 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
                              0 : dfVariant );
             }
             if( dfVal > 255.0 )
-                 *pbyInsert = 255;
+                *pbyInsert = 255;
             else if( dfVal < 0.0 )
                 *pbyInsert = 0;
             else
@@ -613,6 +614,12 @@ static CPLErr GDALRasterizeOptions( char **papszOptions,
  * <li>"MERGE_ALG": May be REPLACE (the default) or ADD.  REPLACE results in
  * overwriting of value, while ADD adds the new value to the existing raster,
  * suitable for heatmaps for instance.</li>
+ * <li>"CHUNKYSIZE": The height in lines of the chunk to operate on.
+ * The larger the chunk size the less times we need to make a pass through all
+ * the shapes. If it is not set or set to zero the default chunk size will be
+ * used. Default size will be estimated based on the GDAL cache buffer size
+ * using formula: cache_size_bytes/scanline_size_bytes, so the chunk will
+ * not exceed the cache. Not used in OPTIM=RASTER mode.</li>
  * </ul>
  * @param pfnProgress the progress function to report completion.
  * @param pProgressArg callback data for progress function.
@@ -715,10 +722,10 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
     {
         eOptim = GRO_Raster;
         // TODO make more tests with various inputs/outputs to ajust the parameters
-        if( nYBlockSize > 1 && nGeomCount > 10000 && (poBand->GetXSize() * (long long)poBand->GetYSize() / nGeomCount > 50) )
+        if( nYBlockSize > 1 && nGeomCount > 10000 && (poBand->GetXSize() * static_cast<long long>(poBand->GetYSize()) / nGeomCount > 50) )
         {
             eOptim = GRO_Vector;
-            printf("The vector optim has been chosen automatically\n");
+            CPLDebug("GDAL", "The vector optim has been chosen automatically");
         }
     }
 
@@ -747,13 +754,15 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
         const char *pszYChunkSize = CSLFetchNameValue(papszOptions, "CHUNKYSIZE");
         if( pszYChunkSize == NULL || ((nYChunkSize = atoi(pszYChunkSize))) == 0)
         {
-            // TODO use GDAL_CACHEMAX for the buffer size ?
-            nYChunkSize = 100000000 / nScanlineBytes;
+            const GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
+            nYChunkSize = (nYChunkSize64 > INT_MAX) ? INT_MAX 
+                          : static_cast<int>(nYChunkSize64);
         }
     
+        if( nYChunkSize < 1 )
+            nYChunkSize = 1;
         if( nYChunkSize > poDS->GetRasterYSize() )
             nYChunkSize = poDS->GetRasterYSize();
-        // TODO max( nYChunkSize , 1) ? or raise a failure if image too large for the buffer ?
     
         CPLDebug( "GDAL", "Rasterizer operating on %d swaths of %d scanlines.",
                   (poDS->GetRasterYSize() + nYChunkSize - 1) / nYChunkSize,
@@ -839,9 +848,9 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 
         const int nPixelSize = nBandCount * GDALGetDataTypeSizeBytes(eType);
 
-        // TODO use GDAL_CACHEMAX for the buffer size ?
         // rem: optimized for square blocks
-        const int nbMaxBlocks = 500000000 / nPixelSize / nYBlockSize / nXBlockSize;
+        const GIntBig nbMaxBlocks64 = GDALGetCacheMax64() / nPixelSize / nYBlockSize / nXBlockSize;
+        const int nbMaxBlocks = (nbMaxBlocks64 > INT_MAX ) ? INT_MAX : static_cast<int>(nbMaxBlocks64);
         const int nbBlocsX = std::max(1, std::min(int(sqrt(nbMaxBlocks)), nXBlocks));
         const int nbBlocsY = std::max(1, std::min(nbMaxBlocks / nbBlocsX, nYBlocks));
 
@@ -865,11 +874,14 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
         for( int iShape = 0; iShape < nGeomCount; iShape++ )
         {
 
+            OGRGeometry * poGeometry = reinterpret_cast<OGRGeometry *>(pahGeometries[iShape]);
+            if ( poGeometry == NULL || poGeometry->IsEmpty() )
+              continue;
 /* -------------------------------------------------------------------- */
 /*      get the envelope of the geometry and transform it to pixels coo */
 /* -------------------------------------------------------------------- */
             OGREnvelope psGeomEnvelope;
-            ((OGRGeometry *) pahGeometries[iShape])->getEnvelope(&psGeomEnvelope);
+            poGeometry->getEnvelope(&psGeomEnvelope);
             if( pfnTransformer != NULL )
             {
                 double apCorners[4];
@@ -877,7 +889,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
                 apCorners[1] = psGeomEnvelope.MaxX;
                 apCorners[2] = psGeomEnvelope.MinY;
                 apCorners[3] = psGeomEnvelope.MaxY;
-                // TODO: needad to add all appropriate error checking 
+                // TODO: need to add all appropriate error checking 
                 pfnTransformer( pTransformArg, FALSE, 2, &(apCorners[0]),
                                 &(apCorners[2]), NULL, panSuccessTransform );
                 psGeomEnvelope.MinX = std::min(apCorners[0], apCorners[1]);
@@ -928,7 +940,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
                     gv_rasterize_one_shape( pabyChunkBuf, xB * nXBlockSize, yB * nYBlockSize,
                                             nThisXChunkSize, nThisYChunkSize,
                                             nBandCount, eType, bAllTouched,
-                                            (OGRGeometry *) pahGeometries[iShape],
+                                            reinterpret_cast<OGRGeometry *>(pahGeometries[iShape]),
                                             padfGeomBurnValue + iShape*nBandCount,
                                             eBurnValueSource, eMergeAlg,
                                             pfnTransformer, pTransformArg );
@@ -1088,8 +1100,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
         poBand->GetRasterDataType() == GDT_Byte ? GDT_Byte : GDT_Float64;
 
     const int nScanlineBytes =
-        nBandCount * poDS->GetRasterXSize()
-        * GDALGetDataTypeSizeBytes(eType);
+        nBandCount * poDS->GetRasterXSize() * GDALGetDataTypeSizeBytes(eType);
 
     int nYChunkSize = 0;
     if( !(pszYChunkSize && ((nYChunkSize = atoi(pszYChunkSize))) != 0) )
