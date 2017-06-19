@@ -11670,6 +11670,80 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
 }
 
 /************************************************************************/
+/*                  GTiffCheckCurrentDirIsCompatOfStripChop()           */
+/************************************************************************/
+
+static bool GTiffCheckCurrentDirIsCompatOfStripChop( TIFF* l_hTIFF,
+                                                     bool& bCandidateForStripChopReopening )
+{
+    uint32 nXSize = 0;
+    TIFFGetField( l_hTIFF, TIFFTAG_IMAGELENGTH, &nXSize );
+
+    uint32 nYSize = 0;
+    TIFFGetField( l_hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
+
+    if( nXSize > INT_MAX || nYSize > INT_MAX )
+    {
+        return false;
+    }
+
+    uint16 l_nPlanarConfig = 0;
+    if( !TIFFGetField( l_hTIFF, TIFFTAG_PLANARCONFIG, &(l_nPlanarConfig) ) )
+        l_nPlanarConfig = PLANARCONFIG_CONTIG;
+
+    uint16 l_nCompression = 0;
+    if( !TIFFGetField( l_hTIFF, TIFFTAG_COMPRESSION, &(l_nCompression) ) )
+        l_nCompression = COMPRESSION_NONE;
+
+    uint32 l_nRowsPerStrip = 0;
+    if( !TIFFGetField( l_hTIFF, TIFFTAG_ROWSPERSTRIP, &(l_nRowsPerStrip) ) )
+        l_nRowsPerStrip = nYSize;
+
+    bool bCanReopenWithStripChop = true;
+    if( !TIFFIsTiled( l_hTIFF ) &&
+        l_nCompression == COMPRESSION_NONE &&
+        l_nRowsPerStrip >= nYSize &&
+        l_nPlanarConfig == PLANARCONFIG_CONTIG )
+    {
+        bCandidateForStripChopReopening = true;
+        if( nYSize > 10 * 1024 * 1024 )
+        {
+            uint16 l_nSamplesPerPixel = 0;
+            if( !TIFFGetField( l_hTIFF, TIFFTAG_SAMPLESPERPIXEL,
+                               &l_nSamplesPerPixel ) )
+                l_nSamplesPerPixel = 1;
+
+            uint16 l_nBitsPerSample = 0;
+            if( !TIFFGetField(l_hTIFF, TIFFTAG_BITSPERSAMPLE,
+                              &(l_nBitsPerSample)) )
+                l_nBitsPerSample = 1;
+
+            const vsi_l_offset nLineSize =
+                (l_nSamplesPerPixel * static_cast<vsi_l_offset>(nXSize) *
+                 l_nBitsPerSample + 7) / 8;
+            int nDefaultStripHeight = static_cast<int>(8192 / nLineSize);
+            if( nDefaultStripHeight == 0 ) nDefaultStripHeight = 1;
+            const vsi_l_offset nStrips = nYSize / nDefaultStripHeight;
+
+            // There is a risk of DoS due to huge amount of memory allocated in
+            // ChopUpSingleUncompressedStrip() in libtiff.
+            if( nStrips > 10 * 1024 * 1024 &&
+                !CPLTestBool(
+                    CPLGetConfigOption("GTIFF_FORCE_STRIP_CHOP", "NO")) )
+            {
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Potential denial of service detected. Avoid using strip "
+                    "chop. Set the GTIFF_FORCE_STRIP_CHOP configuration open "
+                    "to go over this test." );
+                bCanReopenWithStripChop = false;
+            }
+        }
+    }
+    return bCanReopenWithStripChop;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -11791,56 +11865,34 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    uint16 l_nPlanarConfig = 0;
-    if( !TIFFGetField( l_hTIFF, TIFFTAG_PLANARCONFIG, &(l_nPlanarConfig) ) )
-        l_nPlanarConfig = PLANARCONFIG_CONTIG;
-
     uint16 l_nCompression = 0;
     if( !TIFFGetField( l_hTIFF, TIFFTAG_COMPRESSION, &(l_nCompression) ) )
         l_nCompression = COMPRESSION_NONE;
 
-    uint32 l_nRowsPerStrip = 0;
-    if( !TIFFGetField( l_hTIFF, TIFFTAG_ROWSPERSTRIP, &(l_nRowsPerStrip) ) )
-        l_nRowsPerStrip = nYSize;
-
-    if( !TIFFIsTiled( l_hTIFF ) &&
-        l_nCompression == COMPRESSION_NONE &&
-        l_nRowsPerStrip >= nYSize &&
-        l_nPlanarConfig == PLANARCONFIG_CONTIG )
+    bool bCandidateForStripChopReopening = false;
+    if( GTiffCheckCurrentDirIsCompatOfStripChop(l_hTIFF,
+                                    bCandidateForStripChopReopening ) &&
+        bCandidateForStripChopReopening )
     {
         bool bReopenWithStripChop = true;
-        if( nYSize > 10 * 1024 * 1024 )
+        int iDirIndex = 1;
+        // Inspect all directories to decide if we can safely re-open in
+        // strip chop mode
+        while( !TIFFLastDirectory( l_hTIFF ) &&
+               TIFFReadDirectory( l_hTIFF ) != 0 )
         {
-            uint16 l_nSamplesPerPixel = 0;
-            if( !TIFFGetField( l_hTIFF, TIFFTAG_SAMPLESPERPIXEL,
-                               &l_nSamplesPerPixel ) )
-                l_nSamplesPerPixel = 1;
-
-            uint16 l_nBitsPerSample = 0;
-            if( !TIFFGetField(l_hTIFF, TIFFTAG_BITSPERSAMPLE,
-                              &(l_nBitsPerSample)) )
-                l_nBitsPerSample = 1;
-
-            const vsi_l_offset nLineSize =
-                (l_nSamplesPerPixel * static_cast<vsi_l_offset>(nXSize) *
-                 l_nBitsPerSample + 7) / 8;
-            int nDefaultStripHeight = static_cast<int>(8192 / nLineSize);
-            if( nDefaultStripHeight == 0 ) nDefaultStripHeight = 1;
-            const vsi_l_offset nStrips = nYSize / nDefaultStripHeight;
-
-            // There is a risk of DoS due to huge amount of memory allocated in
-            // ChopUpSingleUncompressedStrip() in libtiff.
-            if( nStrips > 10 * 1024 * 1024 &&
-                !CPLTestBool(
-                    CPLGetConfigOption("GTIFF_FORCE_STRIP_CHOP", "NO")) )
+            // Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
+#if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION < 20120922))
+            if( iDirIndex == 32768 )
+                break;
+#endif
+            if( !GTiffCheckCurrentDirIsCompatOfStripChop(l_hTIFF,
+                                    bCandidateForStripChopReopening) )
             {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "Potential denial of service detected. Avoid using strip "
-                    "chop. Set the GTIFF_FORCE_STRIP_CHOP configuration open "
-                    "to go over this test." );
                 bReopenWithStripChop = false;
+                break;
             }
+            iDirIndex ++;
         }
 
         if( bReopenWithStripChop )
