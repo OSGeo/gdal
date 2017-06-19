@@ -11881,9 +11881,18 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
         toff_t nCurOffset = TIFFCurrentDirOffset(l_hTIFF);
 
-        while( !TIFFLastDirectory( l_hTIFF ) &&
-               TIFFReadDirectory( l_hTIFF ) != 0 )
+        while( !TIFFLastDirectory( l_hTIFF ) )
         {
+            const CPLErr eLastErrorType = CPLGetLastErrorType();
+            const CPLErrorNum eLastErrorNo = CPLGetLastErrorNo();
+            const CPLString osLastErrorMsg(CPLGetLastErrorMsg());
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            bool bOk = TIFFReadDirectory( l_hTIFF ) != 0;
+            CPLPopErrorHandler();
+            CPLErrorSetState(eLastErrorType, eLastErrorNo, osLastErrorMsg);
+            if( !bOk )
+                break;
+
             // Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
 #if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION < 20120922))
             if( iDirIndex == 32768 )
