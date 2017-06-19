@@ -324,6 +324,10 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffsetIn, int nWhence )
         }
         else if( nWhence == SEEK_CUR )
         {
+            if( nOffsetIn > INT_MAX )
+            {
+                //printf("likely negative offset intended\n");
+            }
             m_nOffset += nOffsetIn;
         }
     }

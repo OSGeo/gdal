@@ -87,6 +87,7 @@
 #include "gdal_mdreader.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
+#include "gdal_priv_templates.hpp"
 #include "geo_normalize.h"
 #include "geotiff.h"
 #include "geovalues.h"
@@ -6417,7 +6418,9 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else if( eDataType == GDT_Float32 )
     {
         const int nWordBytes = poGDS->nBitsPerSample / 8;
-        GByte *pabyImage = poGDS->pabyBlockBuf + (nBand - 1) * nWordBytes;
+        const GByte *pabyImage = poGDS->pabyBlockBuf +
+            ( ( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE ) ? 0 :
+              (nBand - 1) * nWordBytes );
         const int iSkipBytes =
             ( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE ) ?
             nWordBytes : poGDS->nBands * nWordBytes;
@@ -6428,7 +6431,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             for( int i = 0; i < nBlockPixels; ++i )
             {
                 static_cast<GUInt32 *>(pImage)[i] =
-                    HalfToFloat( *reinterpret_cast<GUInt16 *>(pabyImage) );
+                    HalfToFloat( *reinterpret_cast<const GUInt16 *>(pabyImage) );
                 pabyImage += iSkipBytes;
             }
         }
@@ -7723,30 +7726,36 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData( const void* pBuffer )
     {
         if( nSampleFormat == SAMPLEFORMAT_INT )
         {
-            return *(reinterpret_cast<const signed char*>(pBuffer)) ==
+            return GDALIsValueInRange<signed char>(dfEffectiveNoData) &&
+                   *(reinterpret_cast<const signed char*>(pBuffer)) ==
                         static_cast<signed char>(dfEffectiveNoData);
         }
-        return *(reinterpret_cast<const GByte*>(pBuffer)) ==
+        return GDALIsValueInRange<GByte>(dfEffectiveNoData) &&
+               *(reinterpret_cast<const GByte*>(pBuffer)) ==
                         static_cast<GByte>(dfEffectiveNoData);
     }
     if( nBitsPerSample == 16 && eDT == GDT_UInt16 )
     {
-        return *(reinterpret_cast<const GUInt16*>(pBuffer)) ==
+        return GDALIsValueInRange<GUInt16>(dfEffectiveNoData) &&
+               *(reinterpret_cast<const GUInt16*>(pBuffer)) ==
                         static_cast<GUInt16>(dfEffectiveNoData);
     }
     if( nBitsPerSample == 16 && eDT == GDT_Int16 )
     {
-        return *(reinterpret_cast<const GInt16*>(pBuffer)) ==
+        return GDALIsValueInRange<GInt16>(dfEffectiveNoData) &&
+               *(reinterpret_cast<const GInt16*>(pBuffer)) ==
                         static_cast<GInt16>(dfEffectiveNoData);
     }
     if( nBitsPerSample == 32 && eDT == GDT_UInt32 )
     {
-        return *(reinterpret_cast<const GUInt32*>(pBuffer)) ==
+        return GDALIsValueInRange<GUInt32>(dfEffectiveNoData) &&
+               *(reinterpret_cast<const GUInt32*>(pBuffer)) ==
                         static_cast<GUInt32>(dfEffectiveNoData);
     }
     if( nBitsPerSample == 32 && eDT == GDT_Int32 )
     {
-        return *(reinterpret_cast<const GInt32*>(pBuffer)) ==
+        return GDALIsValueInRange<GInt32>(dfEffectiveNoData) &&
+               *(reinterpret_cast<const GInt32*>(pBuffer)) ==
                         static_cast<GInt32>(dfEffectiveNoData);
     }
     if( nBitsPerSample == 32 && eDT == GDT_Float32 )
@@ -7754,7 +7763,8 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData( const void* pBuffer )
         if( CPLIsNan(dfNoDataValue) )
             return CPL_TO_BOOL(
                 CPLIsNan(*(reinterpret_cast<const float*>(pBuffer))));
-        return *(reinterpret_cast<const float*>(pBuffer)) ==
+        return GDALIsValueInRange<float>(dfEffectiveNoData) &&
+               *(reinterpret_cast<const float*>(pBuffer)) ==
                         static_cast<float>(dfEffectiveNoData);
     }
     if( nBitsPerSample == 64 && eDT == GDT_Float64 )
@@ -8834,6 +8844,7 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
 {
     static const vsi_l_offset IO_CACHE_PAGE_SIZE = 4096;
 
+    const int sizeofvalint = static_cast<int>(sizeofval);
     const vsi_l_offset nOffset = nBaseOffset + sizeofval * nBlockId;
     const vsi_l_offset nOffsetStartPage =
         (nOffset / IO_CACHE_PAGE_SIZE) * IO_CACHE_PAGE_SIZE;
@@ -8873,7 +8884,7 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
         iStartBefore = -nBlockId;
     for( int i = iStartBefore;
          static_cast<uint32>(nBlockId + i) < nstrips &&
-         static_cast<GIntBig>(nOffset) + (i + 1) * static_cast<int>(sizeofval) <=
+         static_cast<GIntBig>(nOffset) + (i + 1) * sizeofvalint <=
          static_cast<GIntBig>(nOffsetEndPage);
          ++i )
     {
@@ -8881,7 +8892,7 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
         {
             uint16 val;
             memcpy(&val,
-                   buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
+                   buffer + (nOffset - nOffsetStartPage) + i * sizeofvalint,
                    sizeof(val));
             if( bSwab )
                 CPL_SWAP16PTR(&val);
@@ -8891,7 +8902,7 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
         {
             uint32 val;
             memcpy(&val,
-                   buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
+                   buffer + (nOffset - nOffsetStartPage) + i * sizeofvalint,
                    sizeof(val));
             if( bSwab )
                 CPL_SWAP32PTR(&val);
@@ -8901,7 +8912,7 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
         {
             uint64 val;
             memcpy(&val,
-                   buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
+                   buffer + (nOffset - nOffsetStartPage) + i * sizeofvalint,
                    sizeof(val));
             if( bSwab )
                 CPL_SWAP64PTR(&val);

@@ -1281,6 +1281,12 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
         snprintf(szMetaName, sizeof(szMetaName), "NETCDF_DIM_%s", szVarName);
         SetMetadataItem(szMetaName, szMetaTemp);
 
+        // Avoid int32 overflow. Perhaps something more sensible to do here ?
+        if( result > 0 && Sum > INT_MAX / result )
+            break;
+        if( Taken > INT_MAX - result * Sum )
+            break;
+
         Taken += result * Sum;
     }  // End loop non-spatial dimensions.
 
@@ -2839,6 +2845,23 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
     {
         nc_inq_varid(cdfid, poDS->papszDimName[nXDimID], &nVarDimXID);
         nc_inq_varid(cdfid, poDS->papszDimName[nYDimID], &nVarDimYID);
+
+        // Check that they are 1D or 2D variables
+        if( nVarDimXID >= 0 )
+        {
+            int ndims = -1;
+            nc_inq_varndims(cdfid, nVarDimXID, &ndims);
+            if( ndims == 0 || ndims > 2 )
+                nVarDimXID = -1;
+        }
+
+        if( nVarDimYID >= 0 )
+        {
+            int ndims = -1;
+            nc_inq_varndims(cdfid, nVarDimYID, &ndims);
+            if( ndims == 0 || ndims > 2 )
+                nVarDimYID = -1;
+        }
     }
 
     if( !bReadSRSOnly && (nVarDimXID != -1) && (nVarDimYID != -1) &&
@@ -8021,7 +8044,7 @@ netCDFDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
         else
         {
             szBandName[0] = '\0';
-}
+        }
 
         // Get long_name from <var>#long_name.
         char szLongName[NC_MAX_NAME + 1];

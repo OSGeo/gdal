@@ -1349,7 +1349,8 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                                       VSILFILE* fp,
                                       GDALJP2Box* poParentBox,
                                       char** papszOptions,
-                                      int nRecLevel)
+                                      int nRecLevel,
+                                      vsi_l_offset nFileOrParentBoxSize)
 {
     if( nRecLevel == 5 )
         return;
@@ -1376,11 +1377,29 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
             CPLAddXMLAttributeAndValue(psBox, "data_length",
                                        CPLSPrintf(CPL_FRMT_GIB, nBoxDataLength ) );
 
+            if( strcmp(pszBoxType, "jp2c") != 0 && nBoxDataLength > 100 * 1024 )
+            {
+                if( nFileOrParentBoxSize == 0 )
+                {
+                    CPL_IGNORE_RET_VAL(VSIFSeekL(fp, 0, SEEK_END));
+                    nFileOrParentBoxSize = VSIFTellL(fp);
+                }
+            }
+            if( nFileOrParentBoxSize > 0 &&
+                oBox.GetDataOffset() + static_cast<vsi_l_offset>(nBoxDataLength) > nFileOrParentBoxSize )
+            {
+                CPLXMLNode* psLastChildBox = NULL;
+                AddError(psBox, psLastChildBox, "Invalid box_length");
+                break;
+            }
+
             if( oBox.IsSuperBox() )
             {
                 GDALGetJPEG2000StructureInternal(psBox, fp, &oBox,
                                                  papszOptions,
-                                                 nRecLevel + 1);
+                                                 nRecLevel + 1,
+                                                 oBox.GetDataOffset() +
+                                                    static_cast<vsi_l_offset>(nBoxDataLength));
             }
             else
             {
@@ -1576,7 +1595,8 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
     {
         psParent = CPLCreateXMLNode( NULL, CXT_Element, "JP2File" );
         CPLAddXMLAttributeAndValue(psParent, "filename", pszFilename );
-        GDALGetJPEG2000StructureInternal(psParent, fp, NULL, papszOptions, 0);
+        vsi_l_offset nFileSize = 0;
+        GDALGetJPEG2000StructureInternal(psParent, fp, NULL, papszOptions, 0, nFileSize);
     }
 
     CPL_IGNORE_RET_VAL(VSIFCloseL(fp));

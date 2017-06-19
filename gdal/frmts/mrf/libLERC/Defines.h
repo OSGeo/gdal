@@ -37,6 +37,12 @@ Contributors:
 #define override
 #endif
 
+#if __clang_major__ >= 4 || (__clang_major__ == 3 && __clang_minor__ >= 8)
+#define LERC_NOSANITIZE_UNSIGNED_INT_OVERFLOW __attribute__((no_sanitize("unsigned-integer-overflow")))
+#else
+#define LERC_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+#endif
+
 #define NAMESPACE_LERC_START namespace LercNS {
 #define NAMESPACE_LERC_END }
 #define USING_NAMESPACE_LERC using namespace LercNS;

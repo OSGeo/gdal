@@ -1597,7 +1597,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         }
 
         // Normally a gml:Arc has only 3 points of controls, but in the
-        // wild we can found some GML with 5 points, so accept any odd
+        // wild we sometimes find GML with 5 points, so accept any odd
         // number >= 3 (ArcString should be used for > 3 points)
         if( poCC->getNumPoints() < 3 || (poCC->getNumPoints() % 2) != 1 )
         {

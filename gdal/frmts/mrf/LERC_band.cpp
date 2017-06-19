@@ -165,9 +165,8 @@ template <typename T> static void CntZImgUFill(CntZImage &zImg, T *dst, const IL
     int h = static_cast<int>(zImg.getHeight());
     int w = static_cast<int>(zImg.getWidth());
     T *ptr = dst;
-    T ndv = static_cast<T>(img.NoDataValue);
     // Use 0 if nodata is not defined
-    if (!img.hasNoData) ndv = 0;
+    const T ndv = img.hasNoData ? static_cast<T>(img.NoDataValue) : 0;
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++)
             *ptr++ = (zImg(i, j).cnt == 0) ? ndv : static_cast<T>(zImg(i, j).z);
@@ -508,6 +507,11 @@ LERC_Band::LERC_Band(GDALMRFDataset *pDS, const ILImage &image,
     // Encode in V2 by default.
     version = GetOptlist().FetchBoolean("V1", FALSE) ? 1 : 2;
 
+    if( image.pageSizeBytes > INT_MAX / 2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+        return;
+    }
     // Enlarge the page buffer in this case, LERC may expand data.
     pDS->SetPBufferSize( 2 * image.pageSizeBytes);
 }

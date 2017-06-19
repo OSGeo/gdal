@@ -1327,8 +1327,10 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
         }
 
         /* FIXME:  Should use SEEK_CUR, review integer promotions... */
-        if( VSIFSeekL( fp, VSIFTellL(fp)-nRead+nShiftSize-nOverlap,
-                       SEEK_SET ) != 0 )
+        vsi_l_offset nNewPos = (nShiftSize >= 0 ) ?
+            VSIFTellL(fp)+nShiftSize-nRead-nOverlap :
+            VSIFTellL(fp) - (-nShiftSize) -nRead-nOverlap;
+        if( VSIFSeekL( fp, nNewPos, SEEK_SET ) != 0 )
         {
             VSIFree( pabyBuffer );
             CPLError( CE_Failure, CPLE_FileIO,
@@ -1681,7 +1683,8 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
     ssRange << dfMin << " " << dfMax << "\x0D\x0A";
     if( ssRange.str().length() != nDummyRangeLen )
     {
-        int nShiftSize = static_cast<int>(ssRange.str().length() - nDummyRangeLen);
+        int nShiftSize = static_cast<int>(ssRange.str().length()) -
+                         static_cast<int>(nDummyRangeLen);
         if( ShiftFileContents( fp, nRangeStart + nDummyRangeLen,
                                nShiftSize, "\x0D\x0A" ) != CE_None )
         {

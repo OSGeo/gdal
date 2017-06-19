@@ -54,8 +54,12 @@ CPL_CVSID("$Id$");
 // Unable to put this in cpl_port.h as include limit breaks grib.
 inline bool CPLIsDoubleAnInt(double d)
 {
-    if (d > std::numeric_limits<int>::max()) return false;
-    if (d < std::numeric_limits<int>::min()) return false;
+    // Write it this way to detect NaN
+    if ( !(d >= std::numeric_limits<int>::min() &&
+           d <= std::numeric_limits<int>::max()) )
+    {
+        return false;
+    }
     return d == static_cast<double>(static_cast<int>(d));
 }
 

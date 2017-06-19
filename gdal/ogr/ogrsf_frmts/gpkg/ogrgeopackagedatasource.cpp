@@ -1434,9 +1434,9 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
             // overflows, but that's already a insane value.
             "AND zoom_level >= 0 AND zoom_level <= 65536 "
             "AND pixel_x_size > 0 AND pixel_y_size > 0 "
-            "AND tile_width > 0 AND tile_width <= 65536 "
-            "AND tile_height > 0 AND tile_height <= 65536 "
-            "AND matrix_width > 0 AND matrix_height > 0",
+            "AND tile_width >= 1 AND tile_width <= 65536 "
+            "AND tile_height >= 1 AND tile_height <= 65536 "
+            "AND matrix_width >= 1 AND matrix_height >= 1",
             osQuotedTableName.c_str());
     CPLString osSQL(pszSQL);
     const char* pszZoomLevel =  CSLFetchNameValue(papszOpenOptionsIn, "ZOOM_LEVEL");
@@ -1616,10 +1616,14 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     for( int i = 1; i < oResult.nRowCount; i++ )
     {
         GDALGeoPackageDataset* poOvrDS = new GDALGeoPackageDataset();
-        poOvrDS->InitRaster(
+        if( !poOvrDS->InitRaster(
             this, pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
             pszContentsMinX, pszContentsMinY, pszContentsMaxX, pszContentsMaxY,
-            papszOpenOptionsIn, oResult, i);
+            papszOpenOptionsIn, oResult, i) )
+        {
+            delete poOvrDS;
+            break;
+        }
 
         m_papoOverviewDS = (GDALGeoPackageDataset**) CPLRealloc(m_papoOverviewDS,
                         sizeof(GDALGeoPackageDataset*) * (m_nOverviewCount+1));

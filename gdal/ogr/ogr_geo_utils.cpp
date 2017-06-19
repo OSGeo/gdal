@@ -28,6 +28,7 @@
 
 #include "ogr_geo_utils.h"
 #include "cpl_port.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -152,10 +153,10 @@ int OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
         return 0;
     }
 
-    if( cos_complement_LatA == 0.0 && sin_Heading == 0.0 )
+    if( cos_complement_LatA == 0.0 && fabs(sin_Heading) < 1e-10 )
     {
         *pdfLonB_deg = dfLonA_deg;
-        if( fabs(dfHeadingInA) < 1e-10 )
+        if( fabs(fmod(dfHeadingInA+360.0,360.0)) < 1e-10 )
         {
             *pdfLatB_deg = dfDistanceRad * RAD2DEG;
         }
@@ -187,6 +188,8 @@ int OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
     const double complement_latB  = OGR_Safe_acos(cos_complement_latB);
 
     const double dfDenomin = sin(complement_latB) * sin_complement_LatA;
+    if( dfDenomin == 0.0 )
+        CPLDebug("OGR", "OGR_GreatCircle_Distance: dfDenomin == 0.0");
     const double Cos_dG =
         (cos_Distance - cos_complement_latB * cos_complement_LatA) /
         dfDenomin;

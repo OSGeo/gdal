@@ -377,7 +377,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE *fp )
 /*      is also a pending \n.  Check for it.                            */
 /* -------------------------------------------------------------------- */
     if( nBufferSize == nActuallyRead + 1 &&
-        pszBuffer[nActuallyRead - 1] == knCR /* 13 */ )
+        pszBuffer[nActuallyRead - 1] == knCR )
     {
         const int chCheck = fgetc(fp);
         if( chCheck != knLF )
@@ -412,7 +412,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE *fp )
 /*      apparently), and if we find it we need to trim the string,      */
 /*      and seek back.                                                  */
 /* -------------------------------------------------------------------- */
-    char *pszExtraNewline = strchr(pszBuffer, knCR /* 13 */);
+    char *pszExtraNewline = strchr(pszBuffer, knCR);
 
     if( pszExtraNewline != NULL )
     {
@@ -428,7 +428,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE *fp )
         // "realize it" till a character has been read. Try to read till
         // we get to the right spot and get our CR.
         int chCheck = fgetc(fp);
-        while( (chCheck != knCR /* 13 */ && chCheck != EOF) ||
+        while( (chCheck != knCR && chCheck != EOF) ||
                VSIFTell(fp) < nOriginalOffset + nActuallyRead )
         {
             static bool bWarned = false;
@@ -822,15 +822,21 @@ char *CPLScanString( const char *pszString, int nMaxLength,
     if( bTrimSpaces )
     {
         size_t i = strlen(pszBuffer);
-        while( i-- > 0 && isspace(static_cast<unsigned char>(pszBuffer[i])) )
+        while( i > 0 )
+        {
+            i --;
+            if( !isspace(static_cast<unsigned char>(pszBuffer[i])) )
+                break;
             pszBuffer[i] = '\0';
+        }
     }
 
     if( bNormalize )
     {
         size_t i = strlen(pszBuffer);
-        while( i-- > 0 )
+        while( i > 0 )
         {
+            i --;
             if( pszBuffer[i] == ':' )
                 pszBuffer[i] = '_';
         }

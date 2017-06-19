@@ -57,7 +57,7 @@ int dec_png(unsigned char *pngbuf,g2int len,g2int *width,g2int *height,unsigned 
 
 /*  check if stream is a valid PNG format   */
 
-    if ( png_sig_cmp(pngbuf,0,8) != 0)
+    if ( len < 8 || png_sig_cmp(pngbuf,0,8) != 0)
        return (-3);
 
 /* create and initialize png_structs  */

@@ -630,7 +630,10 @@ decode_mcu (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
   }
 
   /* Account for restart interval (no-op if not using restarts) */
-  entropy->restarts_to_go--;
+  if( entropy->restarts_to_go == 0 )
+      entropy->restarts_to_go = ~0U;
+  else
+      entropy->restarts_to_go--;
 
   return TRUE;
 }

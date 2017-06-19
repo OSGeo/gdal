@@ -206,11 +206,26 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
             }
         }
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        if( CPLTestBool(CPLGetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST",  "NO")) )
+        {
+            // oss-fuzz has no network interface and apparently this causes
+            // endless loop here. There might be a better/more general way of
+            // detecting this, and avoid this oss-fuzz specific trick, but
+            // for now that's good enough.
+            break;
+        }
+#endif
+
         while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
     }
 
     if (conn_i != nRequestCount) { // something gone really really wrong
-        CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPFetchMulti(): conn_i != nRequestCount, this should never happen ...");
+        // oddly built libcurl or perhaps absence of network interface
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLHTTPFetchMulti(): conn_i != nRequestCount, this should never happen ...");
+        nRequestCount = conn_i;
+        ret = CE_Failure;
     }
 
     for (i = 0; i < nRequestCount; ++i) {
@@ -236,7 +251,8 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         if (psRequest->Error.empty()
             && psRequest->nStatus != 0
             && psRequest->nStatus != 200
-            && strstr(psRequest->ContentType, "text"))
+            && strstr(psRequest->ContentType, "text")
+            && psRequest->pabyData != NULL )
             psRequest->Error = reinterpret_cast<const char *>(psRequest->pabyData);
 
         CPLDebug("HTTP", "Request [%d] %s : status = %d, content type = %s, error = %s",

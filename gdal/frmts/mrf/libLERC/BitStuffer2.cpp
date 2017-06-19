@@ -275,7 +275,7 @@ void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, i
   // save the 0-3 bytes not used in the last UInt
   unsigned int numBytesNotNeeded = NumTailBytesNotNeeded(numElements, numBits);
   unsigned int n = numBytesNotNeeded;
-  while (n--)
+  for (;n;--n)
   {
     unsigned int dstValue;
     memcpy(&dstValue, dstPtr, sizeof(unsigned int));
@@ -306,7 +306,7 @@ void BitStuffer2::BitUnStuff(const Byte** ppByte, vector<unsigned int>& dataVec,
   memcpy(&lastUInt, srcPtr, sizeof(unsigned int));
   unsigned int numBytesNotNeeded = NumTailBytesNotNeeded(numElements, numBits);
   unsigned int n = numBytesNotNeeded;
-  while (n--)
+  for(;n;--n)
   {
     unsigned int srcValue;
     memcpy(&srcValue, srcPtr, sizeof(unsigned int));

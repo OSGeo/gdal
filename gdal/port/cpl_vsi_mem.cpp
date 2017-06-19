@@ -315,6 +315,10 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
     bExtendFileAtNextWrite = false;
     if( nWhence == SEEK_CUR )
     {
+        if( nOffset > INT_MAX )
+        {
+            //printf("likely negative offset intended\n");
+        }
         m_nOffset += nOffset;
     }
     else if( nWhence == SEEK_SET )

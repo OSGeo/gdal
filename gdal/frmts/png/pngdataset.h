@@ -45,7 +45,9 @@
 #include "gdal_pam.h"
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-#define DISABLE_CRC_CHECK
+// Disabled for now since currently this only works for libpng 1.2
+// libpng 1.6 requires additional includes. See #6928
+// #define DISABLE_CRC_CHECK
 #endif
 
 #ifdef DISABLE_CRC_CHECK

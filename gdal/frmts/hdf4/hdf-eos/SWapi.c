@@ -155,19 +155,19 @@ static struct swathRegion *SWXRegion[NSWATHREGN];
 #define UTLSTR_MAX_SIZE 512
 
 /* Swath Prototypes (internal routines) */
-static intn SWchkswid(int32, char *, int32 *, int32 *, int32 *);
+static intn SWchkswid(int32, const char *, int32 *, int32 *, int32 *);
 static int32 SWfinfo(int32, const char *, const char *, int32 *,
                      int32 [], int32 *, char *);
-static intn SWdefinefield(int32, char *, char *, char *, int32, int32);
-static intn SWwrrdattr(int32, char *, int32, int32, char *, VOIDP);
+static intn SWdefinefield(int32, const char *, const char *, const char *, int32, int32);
+static intn SWwrrdattr(int32, const char *, int32, int32, const char *, VOIDP);
 static intn SW1dfldsrch(int32, int32, const char *, const char *, int32 *,
                         int32 *, int32 *);
 static intn SWSDfldsrch(int32, int32, const char *, int32 *, int32 *, 
                         int32 *, int32 *, int32 [], int32 *);
 static intn SWwrrdfield(int32, const char *, const char *,
                         int32 [], int32 [], int32 [], VOIDP);
-static int32 SWinqfields(int32, char *, char *, int32 [], int32 []);
-static intn SWscan2longlat(int32, char *, VOIDP, int32 [], int32 [],
+static int32 SWinqfields(int32, const char *, char *, int32 [], int32 []);
+static intn SWscan2longlat(int32, const char *, VOIDP, int32 [], int32 [],
                            int32 *, int32, int32);
 
 
@@ -201,7 +201,7 @@ static intn SWscan2longlat(int32, char *, VOIDP, int32 [], int32 [],
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-SWopen(char *filename, intn i_access)
+SWopen(const char *filename, intn i_access)
 
 {
     int32           fid /* HDF-EOS file ID */ ;
@@ -245,7 +245,7 @@ SWopen(char *filename, intn i_access)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-SWcreate(int32 fid, char *swathname)
+SWcreate(int32 fid, const char *swathname)
 {
     intn            i;		/* Loop index */
     intn            nswathopen = 0;	/* # of swath structures open */
@@ -488,7 +488,7 @@ SWcreate(int32 fid, char *swathname)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-SWattach(int32 fid, char *swathname)
+SWattach(int32 fid, const char *swathname)
 
 {
     intn            i;		/* Loop index */
@@ -818,7 +818,7 @@ SWattach(int32 fid, char *swathname)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 static intn
-SWchkswid(int32 swathID, char *routname,
+SWchkswid(int32 swathID, const char *routname,
 	  int32 * fid, int32 * sdInterfaceID, int32 * swVgrpID)
 
 {
@@ -975,7 +975,7 @@ SWdefdim(int32 swathID, char *dimname, int32 dim)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-SWdiminfo(int32 swathID, char *dimname)
+SWdiminfo(int32 swathID, const char *dimname)
 
 {
     intn            status;	/* routine return status variable */
@@ -1095,7 +1095,7 @@ SWdiminfo(int32 swathID, char *dimname)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWmapinfo(int32 swathID, char *geodim, char *datadim, int32 * offset,
+SWmapinfo(int32 swathID, const char *geodim, const char *datadim, int32 * offset,
 	  int32 * increment)
 
 {
@@ -1227,7 +1227,7 @@ SWmapinfo(int32 swathID, char *geodim, char *datadim, int32 * offset,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-SWidxmapinfo(int32 swathID, char *geodim, char *datadim, int32 l_index[])
+SWidxmapinfo(int32 swathID, const char *geodim, const char *datadim, int32 l_index[])
 {
     intn            status;	/* routine return status variable */
 
@@ -1307,7 +1307,7 @@ SWidxmapinfo(int32 swathID, char *geodim, char *datadim, int32 l_index[])
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWcompinfo(int32 swathID, char *fieldname, int32 * compcode, intn compparm[])
+SWcompinfo(int32 swathID, const char *fieldname, int32 * compcode, intn compparm[])
 {
     intn            i;		/* Loop Index */
     intn            status;	/* routine return status variable */
@@ -1323,7 +1323,7 @@ SWcompinfo(int32 swathID, char *fieldname, int32 * compcode, intn compparm[])
     char            swathname[80];	/* Swath Name */
     char           *utlstr;     /* Utility string */
 
-    char           *HDFcomp[5] = {"HDFE_COMP_NONE", "HDFE_COMP_RLE",
+    const char           *HDFcomp[5] = {"HDFE_COMP_NONE", "HDFE_COMP_RLE",
 	"HDFE_COMP_NBIT", "HDFE_COMP_SKPHUFF",
     "HDFE_COMP_DEFLATE"};	/* Compression Codes */
 
@@ -1558,7 +1558,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
     /* Get pointers to appropriate "Field" section within SM */
     if (strcmp(fieldtype, "Geolocation Fields") == 0)
     {
-	metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
+	metabuf = EHmetagroup(sdInterfaceID, swathname, "s",
 				       "GeoField", metaptrs);
 	
 	if(metabuf == NULL)
@@ -1569,7 +1569,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
     }
     else
     {
-	metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
+	metabuf = EHmetagroup(sdInterfaceID, swathname, "s",
 				       "DataField", metaptrs);
 	if(metabuf == NULL)
 	{
@@ -1833,7 +1833,7 @@ SWfieldinfo(int32 swathID, const char *fieldname, int32 * rank, int32 dims[],
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWdefdimmap(int32 swathID, char *geodim, char *datadim, int32 offset,
+SWdefdimmap(int32 swathID, const char *geodim, const char *datadim, int32 offset,
 	    int32 increment)
 
 {
@@ -1930,7 +1930,7 @@ SWdefdimmap(int32 swathID, char *geodim, char *datadim, int32 offset,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWdefidxmap(int32 swathID, char *geodim, char *datadim, int32 l_index[])
+SWdefidxmap(int32 swathID, const char *geodim, const char *datadim, int32 l_index[])
 
 {
     intn            status;	/* routine return status variable */
@@ -2147,7 +2147,7 @@ SWdefcomp(int32 swathID, int32 compcode, intn compparm[])
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 static intn
-SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
+SWdefinefield(int32 swathID, const char *fieldtype, const char *fieldname, const char *dimlist,
 	      int32 numbertype, int32 merge)
 
 {
@@ -2188,7 +2188,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
     char            errbuf2[128];	/* Error message buffer 2 */
     char            compparmbuf[128];	/* Compression parameter string buffer */
 
-    char           *HDFcomp[5] = {"HDFE_COMP_NONE", "HDFE_COMP_RLE",
+    const char           *HDFcomp[5] = {"HDFE_COMP_NONE", "HDFE_COMP_RLE",
 	"HDFE_COMP_NBIT", "HDFE_COMP_SKPHUFF",
     "HDFE_COMP_DEFLATE"};
     /* Compression code names */
@@ -2464,7 +2464,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
 		    VSfdefine(vdataID, fieldname, numbertype, 1);
 		    VSsetfields(vdataID, fieldname);
 
-		    recSize = VSsizeof(vdataID, fieldname);
+		    recSize = VSsizeof(vdataID, (char*) fieldname);
 		    if (dims[0] == 0)
 		    {
 			/*
@@ -2816,7 +2816,7 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWdefgeofield(int32 swathID, char *fieldname, char *dimlist,
+SWdefgeofield(int32 swathID, const char *fieldname, const char *dimlist,
 	      int32 numbertype, int32 merge)
 {
     intn            status;	/* routine return status variable */
@@ -2864,7 +2864,7 @@ SWdefgeofield(int32 swathID, char *fieldname, char *dimlist,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWdefdatafield(int32 swathID, char *fieldname, char *dimlist,
+SWdefdatafield(int32 swathID, const char *fieldname, const char *dimlist,
 	       int32 numbertype, int32 merge)
 {
     intn            status;	/* routine return status variable */
@@ -2914,7 +2914,7 @@ SWdefdatafield(int32 swathID, char *fieldname, char *dimlist,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWwritegeometa(int32 swathID, char *fieldname, char *dimlist,
+SWwritegeometa(int32 swathID, const char *fieldname, const char *dimlist,
 	       int32 numbertype)
 {
     intn            status = 0;	/* routine return status variable */
@@ -2979,7 +2979,7 @@ SWwritegeometa(int32 swathID, char *fieldname, char *dimlist,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWwritedatameta(int32 swathID, char *fieldname, char *dimlist,
+SWwritedatameta(int32 swathID, const char *fieldname, const char *dimlist,
 		int32 numbertype)
 {
     intn            status = 0;	/* routine return status variable */
@@ -3043,8 +3043,8 @@ SWwritedatameta(int32 swathID, char *fieldname, char *dimlist,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 static intn
-SWwrrdattr(int32 swathID, char *attrname, int32 numbertype, int32 count,
-	   char *wrcode, VOIDP datbuf)
+SWwrrdattr(int32 swathID, const char *attrname, int32 numbertype, int32 count,
+	   const char *wrcode, VOIDP datbuf)
 
 {
     intn            status;	/* routine return status variable */
@@ -3102,7 +3102,7 @@ SWwrrdattr(int32 swathID, char *attrname, int32 numbertype, int32 count,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWwriteattr(int32 swathID, char *attrname, int32 numbertype, int32 count,
+SWwriteattr(int32 swathID, const char *attrname, int32 numbertype, int32 count,
 	    VOIDP datbuf)
 {
     intn            status = 0;	/* routine return status variable */
@@ -3145,7 +3145,7 @@ SWwriteattr(int32 swathID, char *attrname, int32 numbertype, int32 count,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWreadattr(int32 swathID, char *attrname, VOIDP datbuf)
+SWreadattr(int32 swathID, const char *attrname, VOIDP datbuf)
 {
     intn            status = 0;	/* routine return status variable */
     int32           dum = 0;	/* dummy variable */
@@ -3196,7 +3196,7 @@ SWreadattr(int32 swathID, char *attrname, VOIDP datbuf)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWattrinfo(int32 swathID, char *attrname, int32 * numbertype, int32 * count)
+SWattrinfo(int32 swathID, const char *attrname, int32 * numbertype, int32 * count)
 {
     intn            status = 0;	/* routine return status variable */
 
@@ -3815,7 +3815,7 @@ SWinqidxmaps(int32 swathID, char *idxmaps, int32 idxsizes[])
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 static int32
-SWinqfields(int32 swathID, char *fieldtype, char *fieldlist, int32 rank[],
+SWinqfields(int32 swathID, const char *fieldtype, char *fieldlist, int32 rank[],
 	    int32 numbertype[])
 
 {
@@ -4354,7 +4354,7 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-SWinqswath(char *filename, char *swathlist, int32 * strbufsize)
+SWinqswath(const char *filename, char *swathlist, int32 * strbufsize)
 {
     int32           nSwath;	/* Number of swath structures in file */
 
@@ -5168,7 +5168,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWwritefield(int32 swathID, char *fieldname,
+SWwritefield(int32 swathID, const char *fieldname,
 	     int32 start[], int32 stride[], int32 edge[], VOIDP data)
 
 {
@@ -6833,7 +6833,7 @@ SWdeftimeperiod(int32 swathID, float64 starttime, float64 stoptime,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWextractregion(int32 swathID, int32 regionID, char *fieldname,
+SWextractregion(int32 swathID, int32 regionID, const char *fieldname,
 		int32 externalflag, VOIDP buffer)
 
 {
@@ -7648,7 +7648,7 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 static intn
-SWscan2longlat(int32 swathID, char *fieldname, VOIDP buffer, int32 start[], 
+SWscan2longlat(int32 swathID, const char *fieldname, VOIDP buffer, int32 start[], 
 int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
 {
 
@@ -7999,7 +7999,7 @@ int32 edge[], int32 *idxmap, int32 startscanline, int32 stopscanline)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWextractperiod(int32 swathID, int32 periodID, char *fieldname,
+SWextractperiod(int32 swathID, int32 periodID, const char *fieldname,
 		int32 externalflag, VOIDP buffer)
 
 {
@@ -8127,7 +8127,7 @@ SWdupregion(int32 oldregionID)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
+SWregioninfo(int32 swathID, int32 regionID, const char *fieldname,
 	     int32 * ntype, int32 * rank, int32 dims[], int32 * size)
 
 {
@@ -8790,7 +8790,7 @@ SWregioninfo(int32 swathID, int32 regionID, char *fieldname,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWperiodinfo(int32 swathID, int32 periodID, char *fieldname,
+SWperiodinfo(int32 swathID, int32 periodID, const char *fieldname,
 	     int32 * ntype, int32 * rank, int32 dims[], int32 * size)
 {
     intn            status;	/* routine return status variable */
@@ -8902,7 +8902,7 @@ for (j=0; j<8; j++) \
 
 
 int32
-SWdefvrtregion(int32 swathID, int32 regionID, char *vertObj, float64 range[])
+SWdefvrtregion(int32 swathID, int32 regionID, const char *vertObj, float64 range[])
 {
     intn            i;		/* Loop index */
     intn            j = 0;		/* Loop index */
@@ -9407,7 +9407,7 @@ SWdefvrtregion(int32 swathID, int32 regionID, char *vertObj, float64 range[])
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-SWdefscanregion(int32 swathID, char *fieldname, float64 range[], CPL_UNUSED int32 mode)
+SWdefscanregion(int32 swathID, const char *fieldname, float64 range[], CPL_UNUSED int32 mode)
 {
     intn            j;		/* Loop index */
     intn            k;		/* Loop index */
@@ -9694,7 +9694,7 @@ SWdefscanregion(int32 swathID, char *fieldname, float64 range[], CPL_UNUSED int3
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWsetfillvalue(int32 swathID, char *fieldname, VOIDP fillval)
+SWsetfillvalue(int32 swathID, const char *fieldname, VOIDP fillval)
 {
     intn            status;	/* routine return status variable */
 
@@ -9781,7 +9781,7 @@ SWsetfillvalue(int32 swathID, char *fieldname, VOIDP fillval)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWgetfillvalue(int32 swathID, char *fieldname, VOIDP fillval)
+SWgetfillvalue(int32 swathID, const char *fieldname, VOIDP fillval)
 {
     intn            status;	/* routine return status variable */
 
@@ -11285,7 +11285,7 @@ SWupdateidxmap(int32 swathID, int32 regionID, int32 l_indexin[], int32 l_indexou
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-SWgeomapinfo(int32 swathID, char *geodim)
+SWgeomapinfo(int32 swathID, const char *geodim)
 
 {
     intn            status;	/* routine return status variable */
@@ -11329,7 +11329,7 @@ SWgeomapinfo(int32 swathID, char *geodim)
 	Vgetname(SWXSwath[swathID % idOffset].IDTable, swathname);
 
 	/* Get pointers to "DimensionMap" section within SM */
-	metabufr = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
+	metabufr = EHmetagroup(sdInterfaceID, swathname, "s",
 				       "DimensionMap", metaptrsr);
 
 	if(metabufr == NULL)
@@ -11344,7 +11344,7 @@ SWgeomapinfo(int32 swathID, char *geodim)
 	metaptrsr[0] = strstr(metaptrsr[0], utlstrr);
 	
 	/* Get pointers to "IndexDimensionMap" section within SM */
-	metabufi = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
+	metabufi = EHmetagroup(sdInterfaceID, swathname, "s",
 				       "IndexDimensionMap", metaptrsi);
 	if(metabufi == NULL)
 	{

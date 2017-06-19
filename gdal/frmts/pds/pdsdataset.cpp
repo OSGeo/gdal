@@ -780,6 +780,8 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         record_bytes = atoi(GetKeyword(osPrefix+"RECORD_BYTES"));
 
     // this can happen with "record_type = undefined".
+    if( record_bytes < 0 )
+        return FALSE;
     if( record_bytes == 0 )
         record_bytes = 1;
 
@@ -787,13 +789,25 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     if( nQube >0 && osQube.find("<BYTES>") != CPLString::npos )
         nSkipBytes = nQube - 1;
     else if (nQube > 0 )
+    {
+        if( nQube - 1 > INT_MAX / record_bytes )
+        {
+            return FALSE;
+        }
         nSkipBytes = (nQube - 1) * record_bytes;
+    }
     else if( nDetachedOffset > 0 )
     {
         if (bDetachedOffsetInBytes)
             nSkipBytes = nDetachedOffset;
         else
+        {
+            if( record_bytes > INT_MAX / nDetachedOffset )
+            {
+                return FALSE;
+            }
             nSkipBytes = nDetachedOffset * record_bytes;
+        }
     }
     else
         nSkipBytes = 0;

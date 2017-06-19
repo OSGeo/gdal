@@ -76,7 +76,7 @@
 #define NUMERICOID              1700
 #define NUMERICARRAYOID         1231
 
-CPLString OGRPGEscapeString(PGconn *hPGConn,
+CPLString OGRPGEscapeString(void *hPGConn,
                             const char* pszStrValue, int nMaxLength = -1,
                             const char* pszTableName = "",
                             const char* pszFieldName = "");

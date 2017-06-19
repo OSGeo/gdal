@@ -77,9 +77,9 @@ g2int g2_unpack3(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int **ig
       *igdstmpl=0;       // NULL
       *ideflist=0;       // NULL
 
-      gbit(cgrib,&lensec,*iofst,32);        // Get Length of Section
+      gbit2(cgrib,cgrib_length,&lensec,*iofst,32);        // Get Length of Section
       *iofst=*iofst+32;
-      gbit(cgrib,&isecnum,*iofst,8);         // Get Section Number
+      gbit2(cgrib,cgrib_length,&isecnum,*iofst,8);         // Get Section Number
       *iofst=*iofst+8;
 
       if ( isecnum != 3 ) {
@@ -93,15 +93,15 @@ g2int g2_unpack3(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int **ig
       ligds=(g2int *)calloc(5,sizeof(g2int));
       *igds=ligds;
 
-      gbit(cgrib,ligds+0,*iofst,8);     // Get source of Grid def.
+      gbit2(cgrib,cgrib_length,ligds+0,*iofst,8);     // Get source of Grid def.
       *iofst=*iofst+8;
-      gbit(cgrib,ligds+1,*iofst,32);    // Get number of grid pts.
+      gbit2(cgrib,cgrib_length,ligds+1,*iofst,32);    // Get number of grid pts.
       *iofst=*iofst+32;
-      gbit(cgrib,ligds+2,*iofst,8);     // Get num octets for opt. list
+      gbit2(cgrib,cgrib_length,ligds+2,*iofst,8);     // Get num octets for opt. list
       *iofst=*iofst+8;
-      gbit(cgrib,ligds+3,*iofst,8);     // Get interpret. for opt. list
+      gbit2(cgrib,cgrib_length,ligds+3,*iofst,8);     // Get interpret. for opt. list
       *iofst=*iofst+8;
-      gbit(cgrib,ligds+4,*iofst,16);    // Get Grid Def Template num.
+      gbit2(cgrib,cgrib_length,ligds+4,*iofst,16);    // Get Grid Def Template num.
       *iofst=*iofst+16;
 
       if (ligds[4] != 65535) {
@@ -135,11 +135,11 @@ g2int g2_unpack3(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int **ig
         for (i=0;i<*mapgridlen;i++) {
           nbits=abs(mapgrid->map[i])*8;
           if ( mapgrid->map[i] >= 0 ) {
-            gbit(cgrib,ligdstmpl+i,*iofst,nbits);
+            gbit2(cgrib,cgrib_length,ligdstmpl+i,*iofst,nbits);
           }
           else {
-            gbit(cgrib,&isign,*iofst,1);
-            gbit(cgrib,ligdstmpl+i,*iofst+1,nbits-1);
+            gbit2(cgrib,cgrib_length,&isign,*iofst,1);
+            gbit2(cgrib,cgrib_length,ligdstmpl+i,*iofst+1,nbits-1);
             if (isign == 1) ligdstmpl[i]=-1*ligdstmpl[i];
           }
           *iofst=*iofst+nbits;
@@ -163,11 +163,11 @@ g2int g2_unpack3(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int **ig
           for (i=*mapgridlen;i<newlen;i++) {
             nbits=abs(mapgrid->ext[j])*8;
             if ( mapgrid->ext[j] >= 0 ) {
-              gbit(cgrib,ligdstmpl+i,*iofst,nbits);
+              gbit2(cgrib,cgrib_length,ligdstmpl+i,*iofst,nbits);
             }
             else {
-              gbit(cgrib,&isign,*iofst,1);
-              gbit(cgrib,ligdstmpl+i,*iofst+1,nbits-1);
+              gbit2(cgrib,cgrib_length,&isign,*iofst,1);
+              gbit2(cgrib,cgrib_length,ligdstmpl+i,*iofst+1,nbits-1);
               if (isign == 1) ligdstmpl[i]=-1*ligdstmpl[i];
             }
             *iofst=*iofst+nbits;
