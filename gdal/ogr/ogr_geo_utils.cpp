@@ -153,16 +153,16 @@ int OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
         return 0;
     }
 
-    if( cos_complement_LatA == 0.0 && fabs(sin_Heading) < 1e-10 )
+    if( fabs(sin_Heading) < 1e-10 )
     {
         *pdfLonB_deg = dfLonA_deg;
         if( fabs(fmod(dfHeadingInA+360.0,360.0)) < 1e-10 )
         {
-            *pdfLatB_deg = dfDistanceRad * RAD2DEG;
+            *pdfLatB_deg = dfLatA_deg + dfDistanceRad * RAD2DEG;
         }
         else
         {
-            *pdfLatB_deg = -dfDistanceRad * RAD2DEG;
+            *pdfLatB_deg = dfLatA_deg - dfDistanceRad * RAD2DEG;
         }
         return 1;
     }

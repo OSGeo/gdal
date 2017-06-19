@@ -75,7 +75,7 @@ install:
 	done
 
 test_geo_utils$(EXE):	test_geo_utils.$(OBJ_EXT) ogr_geo_utils.$(OBJ_EXT)
-	$(LD) $(LDFLAGS) test_geo_utils.$(OBJ_EXT) ogr_geo_utils.$(OBJ_EXT) -o test_geo_utils$(EXE) -lm
+	$(LD) $(LDFLAGS) test_geo_utils.$(OBJ_EXT) ogr_geo_utils.$(OBJ_EXT) $(CONFIG_LIBS) -o test_geo_utils$(EXE)
 
 # The sed substitution below workarounds a bug with gcc 4.1 -O2 (checked on 64bit platforms)
 # that produces buggy compiled code.
