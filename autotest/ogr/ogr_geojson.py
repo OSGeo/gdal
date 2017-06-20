@@ -3568,6 +3568,33 @@ def ogr_geojson_63():
     lyr = ds.GetLayer(0)
     return ogrtest.compare_layers(lyr, lyr_ref)
 
+###############################################################################
+# Test exporting XYM / XYZM (#6935)
+
+def ogr_geojson_64():
+
+    g = ogr.CreateGeometryFromWkt('POINT ZM(1 2 3 4)')
+    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()), 
+                            ogr.CreateGeometryFromWkt('POINT Z(1 2 3)') ) != 0:
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('POINT M(1 2 3)')
+    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()), 
+                            ogr.CreateGeometryFromWkt('POINT (1 2)') ) != 0:
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('LINESTRING ZM(1 2 3 4,5 6 7 8)')
+    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()), 
+                            ogr.CreateGeometryFromWkt('LINESTRING Z(1 2 3,5 6 7)') ) != 0:
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('LINESTRING M(1 2 3,4 5 6)')
+    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()), 
+                            ogr.CreateGeometryFromWkt('LINESTRING (1 2,4 5)') ) != 0:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_geojson_1,
     ogr_geojson_2,
@@ -3632,6 +3659,7 @@ gdaltest_list = [
     ogr_geojson_61,
     ogr_geojson_62,
     ogr_geojson_63,
+    ogr_geojson_64,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

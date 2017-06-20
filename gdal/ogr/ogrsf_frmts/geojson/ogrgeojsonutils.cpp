@@ -300,22 +300,21 @@ const char* OGRGeoJSONGetGeometryName( OGRGeometry const* poGeometry )
 {
     CPLAssert( NULL != poGeometry );
 
-    const OGRwkbGeometryType eType = poGeometry->getGeometryType();
+    const OGRwkbGeometryType eType = wkbFlatten(poGeometry->getGeometryType());
 
-    if( wkbPoint == eType || wkbPoint25D == eType )
+    if( wkbPoint == eType )
         return "Point";
-    else if( wkbLineString == eType || wkbLineString25D == eType )
+    else if( wkbLineString == eType )
         return "LineString";
-    else if( wkbPolygon == eType || wkbPolygon25D == eType )
+    else if( wkbPolygon == eType )
         return "Polygon";
-    else if( wkbMultiPoint == eType || wkbMultiPoint25D == eType )
+    else if( wkbMultiPoint == eType )
         return "MultiPoint";
-    else if( wkbMultiLineString == eType || wkbMultiLineString25D == eType )
+    else if( wkbMultiLineString == eType )
         return "MultiLineString";
-    else if( wkbMultiPolygon == eType || wkbMultiPolygon25D == eType )
+    else if( wkbMultiPolygon == eType )
         return "MultiPolygon";
-    else if( wkbGeometryCollection == eType ||
-             wkbGeometryCollection25D == eType )
+    else if( wkbGeometryCollection == eType )
         return "GeometryCollection";
 
     return "Unknown";
