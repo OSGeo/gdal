@@ -471,12 +471,20 @@ BSBInfo *BSBOpen( const char *pszFilename )
         int nVal;
         int listIsOK = 1;
         int nOffsetIndexTable;
+        vsi_l_offset nFileLenLarge;
         int nFileLen;
 
         /* Seek fp to point the last 4 byte integer which points
         * the offset of the first line */
         VSIFSeekL( fp, 0, SEEK_END );
-        nFileLen = (int)VSIFTellL( fp );
+        nFileLenLarge = VSIFTellL( fp );
+        if( nFileLenLarge > INT_MAX )
+        {
+            // Potentially the format could support up to 32 bit unsigned ?
+            BSBClose( psInfo );
+            return NULL;
+        }
+        nFileLen = (int)nFileLenLarge;
         VSIFSeekL( fp, nFileLen - 4, SEEK_SET );
 
         VSIFReadL(&nVal, 1, 4, fp);//last 4 bytes
@@ -489,7 +497,8 @@ BSBInfo *BSBOpen( const char *pszFilename )
         /* If we look into the file closely, there is no data for */
         /* that last row (the end of line psInfo->nYSize - 1 is the start */
         /* of the index table), so we can decrement psInfo->nYSize. */
-        if( psInfo->nYSize - 1 > INT_MAX / 4 ||
+        if( nOffsetIndexTable <= 0 ||
+            psInfo->nYSize - 1 > INT_MAX / 4 ||
             4 * (psInfo->nYSize - 1) > INT_MAX - nOffsetIndexTable )
         {
             /* int32 overflow */
