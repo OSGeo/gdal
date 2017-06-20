@@ -657,7 +657,7 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
             json_object_array_add(
                 poObjBBOX,
                 json_object_new_coord(sEnvelope.MinY, oOptions));
-            if( poGeometry->getCoordinateDimension() == 3 )
+            if( wkbHasZ(poGeometry->getGeometryType()) )
                 json_object_array_add(
                     poObjBBOX,
                     json_object_new_coord(sEnvelope.MinZ, oOptions));
@@ -667,7 +667,7 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
             json_object_array_add(
                 poObjBBOX,
                 json_object_new_coord(sEnvelope.MaxY, oOptions));
-            if( poGeometry->getCoordinateDimension() == 3 )
+            if( wkbHasZ(poGeometry->getGeometryType()) )
                 json_object_array_add(
                     poObjBBOX,
                     json_object_new_coord(sEnvelope.MaxZ, oOptions));
@@ -869,11 +869,11 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
         return NULL;
     }
 
-    OGRwkbGeometryType eType = poGeometry->getGeometryType();
+    OGRwkbGeometryType eFType = wkbFlatten(poGeometry->getGeometryType());
     // For point empty, return a null geometry. For other empty geometry types,
     // we will generate an empty coordinate array, which is propably also
     // borderline.
-    if( (wkbPoint == eType || wkbPoint25D == eType) && poGeometry->IsEmpty() )
+    if( eFType == wkbPoint && poGeometry->IsEmpty() )
     {
         return NULL;
     }
@@ -894,7 +894,7 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
 /* -------------------------------------------------------------------- */
     json_object* poObjGeom = NULL;
 
-    if( wkbGeometryCollection == eType || wkbGeometryCollection25D == eType )
+    if( eFType == wkbGeometryCollection  )
     {
         poObjGeom =
             OGRGeoJSONWriteGeometryCollection(
@@ -903,27 +903,27 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
     }
     else
     {
-        if( wkbPoint == eType || wkbPoint25D == eType )
+        if( wkbPoint == eFType )
             poObjGeom =
                 OGRGeoJSONWritePoint( static_cast<OGRPoint*>(poGeometry),
                                       oOptions );
-        else if( wkbLineString == eType || wkbLineString25D == eType )
+        else if( wkbLineString == eFType )
             poObjGeom =
                 OGRGeoJSONWriteLineString(
                     static_cast<OGRLineString*>(poGeometry), oOptions );
-        else if( wkbPolygon == eType || wkbPolygon25D == eType )
+        else if( wkbPolygon == eFType )
             poObjGeom =
                 OGRGeoJSONWritePolygon( static_cast<OGRPolygon*>(poGeometry),
                                         oOptions );
-        else if( wkbMultiPoint == eType || wkbMultiPoint25D == eType )
+        else if( wkbMultiPoint == eFType )
             poObjGeom =
                 OGRGeoJSONWriteMultiPoint(
                     static_cast<OGRMultiPoint*>(poGeometry), oOptions );
-        else if( wkbMultiLineString == eType || wkbMultiLineString25D == eType )
+        else if( wkbMultiLineString == eFType )
             poObjGeom =
                 OGRGeoJSONWriteMultiLineString(
                     static_cast<OGRMultiLineString*>(poGeometry), oOptions );
-        else if( wkbMultiPolygon == eType || wkbMultiPolygon25D == eType )
+        else if( wkbMultiPolygon == eFType )
             poObjGeom =
                 OGRGeoJSONWriteMultiPolygon(
                     static_cast<OGRMultiPolygon*>(poGeometry), oOptions );
@@ -960,14 +960,14 @@ json_object* OGRGeoJSONWritePoint( OGRPoint* poPoint,
     json_object* poObj = NULL;
 
     // Generate "coordinates" object for 2D or 3D dimension.
-    if( 3 == poPoint->getCoordinateDimension() )
+    if( wkbHasZ(poPoint->getGeometryType()) )
     {
         poObj = OGRGeoJSONWriteCoords( poPoint->getX(),
                                        poPoint->getY(),
                                        poPoint->getZ(),
                                        oOptions );
     }
-    else if( 2 == poPoint->getCoordinateDimension() )
+    else if( !poPoint->IsEmpty() )
     {
         poObj = OGRGeoJSONWriteCoords( poPoint->getX(),
                                        poPoint->getY(),
@@ -1226,9 +1226,10 @@ json_object* OGRGeoJSONWriteLineCoords( OGRLineString* poLine,
     json_object* poObjCoords = json_object_new_array();
 
     const int nCount = poLine->getNumPoints();
+    const bool bHasZ = wkbHasZ(poLine->getGeometryType());
     for( int i = 0; i < nCount; ++i )
     {
-        if( poLine->getCoordinateDimension() == 2 )
+        if( !bHasZ )
             poObjPoint =
                 OGRGeoJSONWriteCoords( poLine->getX(i), poLine->getY(i),
                                        oOptions );
@@ -1264,10 +1265,11 @@ json_object* OGRGeoJSONWriteRingCoords( OGRLinearRing* poLine,
                          (!bIsExteriorRing && !poLine->isClockwise()));
 
     const int nCount = poLine->getNumPoints();
+    const bool bHasZ = wkbHasZ(poLine->getGeometryType());
     for( int i = 0; i < nCount; ++i )
     {
         const int nIdx = (bInvertOrder) ? nCount - 1 - i: i;
-        if( poLine->getCoordinateDimension() == 2 )
+        if( !bHasZ )
             poObjPoint =
                 OGRGeoJSONWriteCoords( poLine->getX(nIdx), poLine->getY(nIdx),
                                        oOptions );
