@@ -930,6 +930,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                                  fabs(*oIter - static_cast<int>(*oIter / dfStepX + 0.5) * dfStepX) / dfStepX < RELATIVE_ERROR )
                         {
                             nCountStepX = -1; // disable update of mean
+                            ++ oIter;
                         }
                         else if( dfStepX > *oIter &&
                                  fabs(dfStepX - static_cast<int>(dfStepX / *oIter + 0.5) * (*oIter)) / dfStepX < RELATIVE_ERROR )
