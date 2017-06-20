@@ -143,6 +143,7 @@ void CPL_DLL CPL_STDCALL CPLErrorReset( void );
 CPLErrorNum CPL_DLL CPL_STDCALL CPLGetLastErrorNo( void );
 CPLErr CPL_DLL CPL_STDCALL CPLGetLastErrorType( void );
 const char CPL_DLL * CPL_STDCALL CPLGetLastErrorMsg( void );
+GUInt32 CPL_DLL CPL_STDCALL CPLGetErrorCounter( void );
 void CPL_DLL * CPL_STDCALL CPLGetErrorHandlerUserData(void);
 void CPL_DLL CPLErrorSetState( CPLErr eErrClass, CPLErrorNum err_no, const char* pszMsg );
 /*! @cond Doxygen_Suppress */

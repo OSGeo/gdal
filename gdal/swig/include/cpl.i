@@ -156,6 +156,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (get_last_error_no) CPLGetLastErrorNo;
 %rename (get_last_error_type) CPLGetLastErrorType;
 %rename (get_last_error_msg) CPLGetLastErrorMsg;
+%rename (get_error_counter) CPLGetErrorCounter;
 %rename (push_finder_location) CPLPushFinderLocation;
 %rename (pop_finder_location) CPLPopFinderLocation;
 %rename (finder_clean) CPLFinderClean;
@@ -179,6 +180,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (GetLastErrorNo) CPLGetLastErrorNo;
 %rename (GetLastErrorType) CPLGetLastErrorType;
 %rename (GetLastErrorMsg) CPLGetLastErrorMsg;
+%rename (GetErrorCounter) CPLGetErrorCounter;
 %rename (PushFinderLocation) CPLPushFinderLocation;
 %rename (PopFinderLocation) CPLPopFinderLocation;
 %rename (FinderClean) CPLFinderClean;
@@ -306,6 +308,23 @@ CPLErr CPLGetLastErrorType();
 }
 #endif
 const char *CPLGetLastErrorMsg();
+
+
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
+/* We don't want errors to be cleared or thrown by this */
+/* call */
+%exception CPLGetErrorCounter
+{
+#ifdef SWIGPYTHON
+%#ifdef SED_HACKS
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+%#endif
+#endif
+    result = CPLGetErrorCounter();
+}
+#endif
+unsigned int CPLGetErrorCounter();
+
 
 int VSIGetLastErrorNo();
 const char *VSIGetLastErrorMsg();

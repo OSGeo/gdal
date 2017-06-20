@@ -75,6 +75,7 @@ typedef struct {
     CPLErrorHandlerNode *psHandlerStack;
     int     nLastErrMsgMax;
     int     nFailureIntoWarning;
+    GUInt32 nErrorCounter;
     char    szLastErrMsg[DEFAULT_LAST_ERR_MSG_SIZE];
     // Do not add anything here. szLastErrMsg must be the last field.
     // See CPLRealloc() below.
@@ -87,6 +88,7 @@ static const CPLErrorContext sNoErrorContext =
     NULL,
     0,
     0,
+    0,
     ""
 };
 
@@ -97,6 +99,7 @@ static const CPLErrorContext sWarningContext =
     NULL,
     0,
     0,
+    0,
     "A warning was emitted"
 };
 
@@ -105,6 +108,7 @@ static const CPLErrorContext sFailureContext =
     0,
     CE_Warning,
     NULL,
+    0,
     0,
     0,
     "A failure was emitted"
@@ -365,6 +369,10 @@ void CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
 /* -------------------------------------------------------------------- */
     psCtx->nLastErrNo = err_no;
     psCtx->eLastErrType = eErrClass;
+    if( psCtx->nErrorCounter == ~(0U) )
+        psCtx->nErrorCounter = 0;
+    else
+        psCtx->nErrorCounter ++;
 
     if( CPLGetConfigOption("CPL_LOG_ERRORS", NULL) != NULL )
         CPLDebug( "CPLError", "%s", psCtx->szLastErrMsg );
@@ -679,6 +687,7 @@ void CPL_STDCALL CPLErrorReset()
     psCtx->nLastErrNo = CPLE_None;
     psCtx->szLastErrMsg[0] = '\0';
     psCtx->eLastErrType = CE_None;
+    psCtx->nErrorCounter = 0;
 }
 
 /**********************************************************************
@@ -803,6 +812,29 @@ const char* CPL_STDCALL CPLGetLastErrorMsg()
         return "";
 
     return psCtx->szLastErrMsg;
+}
+
+/**********************************************************************
+ *                          CPLGetErrorCounter()
+ **********************************************************************/
+
+/**
+ * Get the error counter
+ *
+ * Fetches the number of errors emitted in the current error context,
+ * since the last call to CPLErrorReset()
+ *
+ * @return the error counter.
+ * @since GDAL 2.3
+ */
+
+GUInt32 CPL_STDCALL CPLGetErrorCounter()
+{
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+    if( psCtx == NULL )
+        return 0;
+
+    return psCtx->nErrorCounter;
 }
 
 /************************************************************************/
