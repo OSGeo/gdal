@@ -355,6 +355,7 @@ static void _ReadNextSourceLine(E00ReadPtr psInfo)
             if (pszLine)
             {
                 strncpy(psInfo->szInBuf, pszLine, E00_READ_BUF_SIZE);
+                psInfo->szInBuf[E00_READ_BUF_SIZE-1] = '\0';
             }
             else
             {
@@ -371,6 +372,7 @@ static void _ReadNextSourceLine(E00ReadPtr psInfo)
              */
             int nLen;
             nLen = (int)strlen(psInfo->szInBuf);
+            CPLAssert(nLen < E00_READ_BUF_SIZE);
             while(nLen > 0 && (psInfo->szInBuf[nLen-1] == '\n' ||
                                psInfo->szInBuf[nLen-1] == '\r'   ) )
             {
