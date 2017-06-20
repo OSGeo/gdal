@@ -302,7 +302,74 @@ def test_gdal_rasterize_lib_102():
     target_ds = None
 
     return 'success'
-    
+
+###############################################################################
+# Simple rasterization with all values of the optim option
+
+def test_gdal_rasterize_lib_4():
+
+
+    # Setup working spatial reference
+    #sr_wkt = 'LOCAL_CS["arbitrary"]'
+    #sr = osr.SpatialReference( sr_wkt )
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32631)
+    sr_wkt = sr.ExportToWkt()
+
+    # Create a raster to rasterize into.
+    for optim in [ 'RASTER', 'VECTOR', 'AUTO' ]:
+        target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100, 3,
+                                                        gdal.GDT_Byte )
+        target_ds.SetGeoTransform( (1000,1,0,1100,0,-1) )
+        target_ds.SetProjection( sr_wkt )
+
+        # Create a layer to rasterize from.
+
+        vector_ds = \
+                gdal.GetDriverByName('Memory').Create( '', 0, 0, 0 )
+        rast_lyr = vector_ds.CreateLayer( 'rast1', srs=sr )
+
+        rast_lyr.GetLayerDefn()
+        field_defn = ogr.FieldDefn('foo')
+        rast_lyr.CreateField(field_defn)
+
+        # Add a polygon.
+
+        wkt_geom = 'POLYGON((1020 1030,1020 1045,1050 1045,1050 1030,1020 1030))'
+
+        feat = ogr.Feature( rast_lyr.GetLayerDefn() )
+        feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+
+        rast_lyr.CreateFeature( feat )
+
+        # Add feature without geometry to test fix for #3310
+        feat = ogr.Feature( rast_lyr.GetLayerDefn() )
+        rast_lyr.CreateFeature( feat )
+
+        # Add a linestring.
+
+        wkt_geom = 'LINESTRING(1000 1000, 1100 1050)'
+
+        feat = ogr.Feature( rast_lyr.GetLayerDefn() )
+        feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+
+        rast_lyr.CreateFeature( feat )
+
+        ret = gdal.Rasterize(target_ds, vector_ds, bands = [3,2,1], burnValues = [200,220,240], layers = 'rast1', optim = optim)
+        if ret != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Check results.
+        expected = 6452
+        checksum = target_ds.GetRasterBand(2).Checksum()
+        if checksum != expected:
+            print(checksum, optim)
+            gdaltest.post_reason( 'Did not get expected image checksum' )
+
+            return 'fail'
+
+        target_ds = None
 
     return 'success'
 
@@ -311,7 +378,8 @@ gdaltest_list = [
     test_gdal_rasterize_lib_3,
     test_gdal_rasterize_lib_100,
     test_gdal_rasterize_lib_101,
-    test_gdal_rasterize_lib_102
+    test_gdal_rasterize_lib_102,
+    test_gdal_rasterize_lib_4
     ]
 
 if __name__ == '__main__':

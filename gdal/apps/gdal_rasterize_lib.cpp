@@ -932,6 +932,11 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             psOptions->papszRasterizeOptions =
                 CSLSetNameValue( psOptions->papszRasterizeOptions, "ALL_TOUCHED", "TRUE" );
         }
+        else if( i < argc-1 && EQUAL(papszArgv[i],"-optim") )
+        {
+            psOptions->papszRasterizeOptions = 
+                CSLSetNameValue( psOptions->papszRasterizeOptions, "OPTIM", papszArgv[++i] );
+        }
         else if( i < argc-1 && EQUAL(papszArgv[i],"-burn") )
         {
             if (strchr(papszArgv[i+1], ' '))
