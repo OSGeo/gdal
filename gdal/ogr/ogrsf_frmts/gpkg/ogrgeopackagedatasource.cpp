@@ -1631,7 +1631,8 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
 
         int nTileWidth, nTileHeight;
         poOvrDS->GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
-        if( poOvrDS->GetRasterXSize() < nTileWidth &&
+        if( eAccess == GA_ReadOnly &&
+            poOvrDS->GetRasterXSize() < nTileWidth &&
             poOvrDS->GetRasterYSize() < nTileHeight )
         {
             break;

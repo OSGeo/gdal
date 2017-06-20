@@ -3649,6 +3649,49 @@ def gpkg_45():
     return 'success'
 
 ###############################################################################
+# Test fix for #6932
+
+def gpkg_46():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.Create('/vsimem/gpkg_46.gpkg', 6698, 6698,
+                                 options = ['TILING_SCHEME=GoogleMapsCompatible'])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    ds.SetProjection(srs.ExportToWkt())
+    ds.SetGeoTransform([500,0.037322767717371,0,750,0,-0.037322767717371])
+    ds = None
+
+    ds = gdal.Open('/vsimem/gpkg_46.gpkg', gdal.GA_Update)
+    ds.BuildOverviews('NEAR', [2,4,8,16,32,64,128,256])
+    ds = None
+
+    ds = gdal.Open('/vsimem/gpkg_46.gpkg')
+    sql_lyr = ds.ExecuteSQL('SELECT zoom_level, matrix_width * pixel_x_size * tile_width, matrix_height * pixel_y_size * tile_height FROM gpkg_tile_matrix ORDER BY zoom_level')
+    count = 0
+    for f in sql_lyr:
+        count += 1
+        if abs(f.GetField(1) - 40075016.6855785) > 1e-7 or \
+           abs(f.GetField(2) - 40075016.6855785) > 1e-7:
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            ds.ReleaseResultSet(sql_lyr)
+            gdal.Unlink('/vsimem/gpkg_46.gpkg')
+            return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink('/vsimem/gpkg_46.gpkg')
+
+    if count != 23:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -3715,9 +3758,10 @@ gdaltest_list = [
     gpkg_43,
     gpkg_44,
     gpkg_45,
+    gpkg_46,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_39, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_46, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )
