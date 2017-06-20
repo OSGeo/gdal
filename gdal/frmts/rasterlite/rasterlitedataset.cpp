@@ -992,7 +992,6 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 
     CPLString osFileName;
     CPLString osTableName;
-    char **papszTokens = NULL;
     int nLevel = 0;
     double minx = 0.0;
     double miny = 0.0;
@@ -1022,7 +1021,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
     }
     else
     {
-        papszTokens = CSLTokenizeStringComplex(
+        char** papszTokens = CSLTokenizeStringComplex(
                 poOpenInfo->pszFilename + 11, ",", FALSE, FALSE );
         int nTokens = CSLCount(papszTokens);
         if (nTokens == 0)
@@ -1069,6 +1068,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
                          "Invalid option : %s", papszTokens[i]);
             }
         }
+        CSLDestroy(papszTokens);
     }
 
     if (OGRGetDriverCount() == 0)
@@ -1303,7 +1303,8 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             !(dfRasterYSize >= 1 && dfRasterYSize <= INT_MAX) )
         {
             delete poDS;
-            return NULL;
+            poDS = NULL;
+            goto end;
         }
         poDS->nRasterXSize = static_cast<int>(dfRasterXSize);
         poDS->nRasterYSize = static_cast<int>(dfRasterYSize);
@@ -1436,7 +1437,6 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 end:
     if (hDS)
         OGRReleaseDataSource(hDS);
-    CSLDestroy(papszTokens);
 
     return poDS;
 }
