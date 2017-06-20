@@ -54,7 +54,12 @@ static GDALDataset* OGRPLScenesOpen(GDALOpenInfo* poOpenInfo)
                 CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "VERSION", ""));
     CSLDestroy(papszOptions);
     if( EQUAL(osVersion, "v0"))
-        return OGRPLScenesDataset::Open(poOpenInfo);
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "This API version has been removed. "
+                 "Please use DATA_V1 API instead");
+        return NULL;
+    }
     if( EQUAL(osVersion, "v1") )
         return OGRPLScenesV1Dataset::Open(poOpenInfo);
     if( EQUAL(osVersion, "data_v1") || EQUAL(osVersion, "")  )
@@ -85,7 +90,6 @@ void RegisterOGRPLSCENES()
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='VERSION' type='string-select' description='API version' default='DATA_V1'>"
-"    <Value>V0</Value>"
 "    <Value>V1</Value>"
 "    <Value>DATA_V1</Value>"
 "  </Option>"
@@ -93,7 +97,7 @@ void RegisterOGRPLSCENES()
 "  <Option name='FOLLOW_LINKS' type='boolean' description='Whether assets links should be followed for each scene (API v1 / data v1 only)' default='NO'/>"
 "  <Option name='SCENE' type='string' description='Scene id (for raster fetching)'/>"
 "  <Option name='ITEMTYPES' alias='CATALOG' type='string' description='Catalog id (API v1 / data v1 only, mandatory for raster fetching)'/>"
-"  <Option name='ASSET' alias='PRODUCT_TYPE' type='string' description='Asset category/Product type. For v0 API: visual, analytic or thumb (for raster fetching)' default='visual'/>"
+"  <Option name='ASSET' alias='PRODUCT_TYPE' type='string' description='Asset category/Product type.' default='visual'/>"
 "  <Option name='RANDOM_ACCESS' type='boolean' description='Whether raster should be accessed in random access mode (but with potentially not optimal throughput). If no, in-memory ingestion is done' default='YES'/>"
 "  <Option name='ACTIVATION_TIMEOUT' type='int' description='Number of seconds during which to wait for asset activation (API v1 / data v1 only, raster)' default='3600'/>"
 "  <Option name='FILTER' type='string' description='Custom filter (API v1 / data v1 only)'/>"
