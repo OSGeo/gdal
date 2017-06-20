@@ -1324,6 +1324,7 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
 
         if( !bJustInitialize )
         {
+            const GUInt32 nErrorCounter = CPLGetErrorCounter();
             int bCallLeaveReadWrite = EnterReadWrite(GF_Read);
             eErr = IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef());
             if( bCallLeaveReadWrite) LeaveReadWrite();
@@ -1332,8 +1333,10 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
                 poBlock->DropLock();
                 FlushBlock( nXBlockOff, nYBlockOff );
                 ReportError( CE_Failure, CPLE_AppDefined,
-                    "IReadBlock failed at X offset %d, Y offset %d",
-                    nXBlockOff, nYBlockOff );
+                    "IReadBlock failed at X offset %d, Y offset %d%s",
+                    nXBlockOff, nYBlockOff,
+                    (nErrorCounter != CPLGetErrorCounter()) ?
+                        CPLSPrintf(": %s", CPLGetLastErrorMsg()) : "");
                 return NULL;
             }
 
