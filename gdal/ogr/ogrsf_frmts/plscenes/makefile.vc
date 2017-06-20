@@ -1,5 +1,5 @@
 
-OBJ	=	ogrplscenesdriver.obj ogrplscenesdataset.obj ogrplscenesv1dataset.obj ogrplsceneslayer.obj ogrplscenesv1layer.obj \
+OBJ	=	ogrplscenesdriver.obj \
 		ogrplscenesdatav1layer.obj ogrplscenesdatav1dataset.obj
 
 EXTRAFLAGS =	-I.. -I..\..  -I..\geojson -I..\geojson\libjson
