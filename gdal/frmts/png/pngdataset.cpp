@@ -653,10 +653,17 @@ CPLErr PNGDataset::LoadScanline( int nLine )
 
     // Read till we get the desired row.
     png_bytep row = pabyBuffer;
+    const GUInt32 nErrorCounter = CPLGetErrorCounter();
     while( nLine > nLastLineRead )
     {
         if( !safe_png_read_rows( hPNG, row, sSetJmpContext ) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Error while reading row %d%s", nLine,
+                     (nErrorCounter != CPLGetErrorCounter()) ?
+                        CPLSPrintf(": %s", CPLGetLastErrorMsg()) : "");
             return CE_Failure;
+        }
         nLastLineRead++;
     }
 

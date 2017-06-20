@@ -148,11 +148,19 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 if( poBlock )
                     poBlock->DropLock();
 
+                const GUInt32 nErrorCounter = CPLGetErrorCounter();
                 poBlock = GetLockedBlockRef( 0, nLBlockY, bJustInitialize );
                 if( poBlock == NULL )
-                {CPLError( CE_Failure, CPLE_AppDefined,
-                              "GetBlockRef failed at X block offset %d, "
-                              "Y block offset %d", 0, nLBlockY );
+                {
+                    if( strstr(CPLGetLastErrorMsg(), "IReadBlock failed") == NULL )
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                            "GetBlockRef failed at X block offset %d, "
+                            "Y block offset %d%s",
+                            0, nLBlockY,
+                            (nErrorCounter != CPLGetErrorCounter()) ?
+                                    CPLSPrintf(": %s", CPLGetLastErrorMsg()) : "");
+                    }
                     eErr = CE_Failure;
                     break;
                 }
@@ -345,13 +353,20 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Ensure we have the appropriate block loaded.                    */
 /* -------------------------------------------------------------------- */
+                const GUInt32 nErrorCounter = CPLGetErrorCounter();
                 poBlock = GetLockedBlockRef( nLBlockX, nLBlockY,
                                              bJustInitialize );
                 if( !poBlock )
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                              "GetBlockRef failed at X block offset %d, "
-                              "Y block offset %d", nLBlockX, nLBlockY );
+                    if( strstr(CPLGetLastErrorMsg(), "IReadBlock failed") == NULL )
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                "GetBlockRef failed at X block offset %d, "
+                                "Y block offset %d%s",
+                                nLBlockX, nLBlockY,
+                                (nErrorCounter != CPLGetErrorCounter()) ?
+                                    CPLSPrintf(": %s", CPLGetLastErrorMsg()) : "");
+                    }
                     return( CE_Failure );
                 }
 
