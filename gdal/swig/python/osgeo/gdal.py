@@ -1275,6 +1275,10 @@ def GetLastErrorMsg(*args):
     """GetLastErrorMsg() -> char const *"""
     return _gdal.GetLastErrorMsg(*args)
 
+def GetErrorCounter(*args):
+    """GetErrorCounter() -> unsigned int"""
+    return _gdal.GetErrorCounter(*args)
+
 def VSIGetLastErrorNo(*args):
     """VSIGetLastErrorNo() -> int"""
     return _gdal.VSIGetLastErrorNo(*args)
