@@ -61,6 +61,13 @@ typedef struct {
     GDALRasterMergeAlg eMergeAlg;
 } GDALRasterizeInfo;
 
+typedef enum {
+    GRO_Raster = 0,
+    GRO_Vector = 1,
+    GRO_Auto = 2,
+} GDALRasterizeOptim;
+
+
 /************************************************************************/
 /*      Low level rasterizer API.                                       */
 /************************************************************************/
