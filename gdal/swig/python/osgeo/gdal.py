@@ -976,7 +976,7 @@ def RasterizeOptions(options = [], format = None,
          xRes = None, yRes = None, targetAlignedPixels = False,
          bands = None, inverse = False, allTouched = False,
          burnValues = None, attribute = None, useZ = False, layers = None,
-         SQLStatement = None, SQLDialect = None, where = None,
+         SQLStatement = None, SQLDialect = None, where = None, optim = None,
          callback = None, callback_data = None):
     """ Create a RasterizeOptions() object that can be passed to gdal.Rasterize()
         Keyword arguments are :
@@ -1071,6 +1071,8 @@ def RasterizeOptions(options = [], format = None,
             new_options += ['-dialect', str(SQLDialect) ]
         if where is not None:
             new_options += ['-where', str(where) ]
+        if optim is not None:
+            new_options += ['-optim', str(optim) ]
 
     return (GDALRasterizeOptions(new_options), callback, callback_data)
 
