@@ -5724,8 +5724,8 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                     status = nc_def_dim(nCdfId, pszDimName, nDimSize, &nDimId);
                     if( status != NC_NOERR )
                     {
-                        CPLDebug("netCDF", "nc_def_dim(%s, %d) failed",
-                                 pszDimName, nDimSize);
+                        CPLDebug("netCDF", "nc_def_dim(%s, %d) failed: %s",
+                                 pszDimName, nDimSize, nc_strerror(status));
                     }
                     else
                     {
@@ -5841,6 +5841,17 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
 #endif
 
                     int nDims = CSLCount(papszTokens) - 2;
+                    if( nDims >= 32 )
+                    {
+                        // The number of dimensions in a netCDFv4 file is
+                        // limited by #define H5S_MAX_RANK    32
+                        // but libnetcdf doesn't check that...
+                        CPLDebug("netCDF",
+                                 "nc_def_var(%s) failed: too many dimensions",
+                                 pszVarName);
+                        CSLDestroy(papszTokens);
+                        continue;
+                    }
                     std::vector<int> aoDimIds;
                     bool bFailed = false;
                     size_t nSize = 1;
