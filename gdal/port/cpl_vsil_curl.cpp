@@ -438,7 +438,8 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
                                            double* pdfRetryDelay,
                                            bool* pbUseHead,
                                            bool* pbListDir,
-                                           bool* pbEmptyDir)
+                                           bool* pbEmptyDir,
+                                           char*** ppapszHTTPOptions)
 {
     if( !STARTS_WITH(pszFilename, "/vsicurl/") )
         return pszFilename;
@@ -488,6 +489,27 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
                         if( pbEmptyDir )
                             *pbEmptyDir = CPLTestBool(pszValue);
                     }
+                    else if( EQUAL(pszKey, "useragent") ||
+                             EQUAL(pszKey, "referer") ||
+                             EQUAL(pszKey, "cookie") ||
+                             EQUAL(pszKey, "header_file") ||
+                             EQUAL(pszKey, "unsafessl") ||
+                             EQUAL(pszKey, "timeout") ||
+                             EQUAL(pszKey, "connecttimeout") ||
+                             EQUAL(pszKey, "low_speed_time") ||
+                             EQUAL(pszKey, "low_speed_limit") ||
+                             EQUAL(pszKey, "proxy") ||
+                             EQUAL(pszKey, "proxyauth") ||
+                             EQUAL(pszKey, "proxyuserpwd") )
+                    {
+                        // Above names are the ones supported by
+                        // CPLHTTPSetOptions()
+                        if( ppapszHTTPOptions )
+                        {
+                            *ppapszHTTPOptions = CSLSetNameValue(
+                                *ppapszHTTPOptions, pszKey, pszValue);
+                        }
+                    }
                     else
                     {
                         CPLError(CE_Warning, CPLE_NotSupported,
@@ -531,6 +553,7 @@ VSICurlHandle::VSICurlHandle( VSICurlFilesystemHandler* poFSIn,
                                              "YES")))
 {
     m_osFilename = pszFilename;
+    m_papszHTTPOptions = CPLHTTPGetOptionsFromEnv();
     if( pszURLIn )
     {
         m_pszURL = CPLStrdup(pszURLIn);
@@ -541,11 +564,11 @@ VSICurlHandle::VSICurlHandle( VSICurlFilesystemHandler* poFSIn,
                                                        &m_nMaxRetry,
                                                        &m_dfRetryDelay,
                                                        &m_bUseHead,
-                                                       NULL, NULL));
+                                                       NULL, NULL,
+                                                       &m_papszHTTPOptions));
     }
 
     m_bCached = poFSIn->AllowCachedDataFor(pszFilename);
-    m_papszHTTPOptions = CPLHTTPGetOptionsFromEnv();
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(m_pszURL);
     eExists = cachedFileProp->eExists;
     fileSize = cachedFileProp->fileSize;
@@ -2536,7 +2559,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
     bool bEmptyDir = false;
     CPLString osURL(
         VSICurlGetURLFromFilename(pszFilename, NULL, NULL, NULL,
-                                  &bListDir, &bEmptyDir));
+                                  &bListDir, &bEmptyDir, NULL));
 
     const char* pszOptionVal =
         CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
@@ -2791,7 +2814,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList( const char* pszFilename,
     *pbGotFileList = false;
 
     CPLString osURL(VSICurlGetURLFromFilename(pszFilename, NULL, NULL, NULL,
-                                              NULL, NULL));
+                                              NULL, NULL, NULL));
     const char* pszDir = strchr(osURL.c_str(), '/');
     if( pszDir == NULL )
         pszDir = "";
@@ -3249,7 +3272,7 @@ static bool VSICurlParseFullFTPLine( char* pszLine,
 CPLString
 VSICurlFilesystemHandler::GetURLFromDirname( const CPLString& osDirname )
 {
-    return VSICurlGetURLFromFilename(osDirname, NULL, NULL, NULL, NULL, NULL);
+    return VSICurlGetURLFromFilename(osDirname, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 /************************************************************************/
@@ -3269,7 +3292,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
     bool bEmptyDir = false;
     CPLString osURL(
         VSICurlGetURLFromFilename(pszDirname, NULL, NULL, NULL,
-                                  &bListDir, &bEmptyDir));
+                                  &bListDir, &bEmptyDir, NULL));
     if( bEmptyDir )
     {
         *pbGotFileList = true;
@@ -3548,7 +3571,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename,
     bool bEmptyDir = false;
     CPLString osURL(
         VSICurlGetURLFromFilename(pszFilename, NULL, NULL, NULL,
-                                  &bListDir, &bEmptyDir));
+                                  &bListDir, &bEmptyDir, NULL));
 
     const char* pszOptionVal =
         CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
