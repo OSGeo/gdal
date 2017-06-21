@@ -1444,6 +1444,10 @@ def VSIFWriteL(*args):
     """VSIFWriteL(int nLen, int size, int memb, VSILFILE * fp) -> int"""
     return _gdal.VSIFWriteL(*args)
 
+def VSICurlClearCache(*args):
+    """VSICurlClearCache()"""
+    return _gdal.VSICurlClearCache(*args)
+
 def ParseCommandLine(*args):
     """ParseCommandLine(char const * utf8_path) -> char **"""
     return _gdal.ParseCommandLine(*args)

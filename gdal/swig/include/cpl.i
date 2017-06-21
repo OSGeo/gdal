@@ -602,6 +602,8 @@ void VSIStdoutUnsetRedirection()
 }
 #endif
 
+void VSICurlClearCache();
+
 #endif /* !defined(SWIGJAVA) */
 
 %apply (char **CSL) {char **};

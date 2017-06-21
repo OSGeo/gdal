@@ -61,6 +61,11 @@ void VSIInstallGSFileHandler( void )
     // Not supported.
 }
 
+void VSICurlClearCache( void )
+{
+    // Not supported.
+}
+
 /************************************************************************/
 /*                      VSICurlInstallReadCbk()                         */
 /************************************************************************/
@@ -330,6 +335,8 @@ public:
                                                 vsi_l_offset nFileOffsetStart );
 
     CURL               *GetCurlHandleFor( CPLString osURL );
+
+    void                ClearCache();
 };
 
 /************************************************************************/
@@ -1929,40 +1936,7 @@ VSICurlFilesystemHandler::VSICurlFilesystemHandler()
 
 VSICurlFilesystemHandler::~VSICurlFilesystemHandler()
 {
-    for( int i=0; i < nRegions; i++ )
-    {
-        CPLFree(papsRegions[i]->pData);
-        CPLFree(papsRegions[i]);
-    }
-    CPLFree(papsRegions);
-
-    std::map<CPLString, CachedFileProp*>::const_iterator iterCacheFileSize;
-
-    for( iterCacheFileSize = cacheFileSize.begin();
-         iterCacheFileSize != cacheFileSize.end();
-         ++iterCacheFileSize )
-    {
-        delete iterCacheFileSize->second;
-    }
-
-    std::map<CPLString, CachedDirList*>::const_iterator iterCacheDirList;
-
-    for( iterCacheDirList = cacheDirList.begin();
-         iterCacheDirList != cacheDirList.end();
-         ++iterCacheDirList )
-    {
-        CSLDestroy(iterCacheDirList->second->papszFileList);
-        CPLFree(iterCacheDirList->second);
-    }
-
-    std::map<GIntBig, CachedConnection*>::const_iterator iterConnections;
-    for( iterConnections = mapConnections.begin();
-         iterConnections != mapConnections.end();
-         ++iterConnections )
-    {
-        curl_easy_cleanup(iterConnections->second->hCurlHandle);
-        delete iterConnections->second;
-    }
+    ClearCache();
 
     if( hMutex != NULL )
         CPLDestroyMutex( hMutex );
@@ -2289,6 +2263,53 @@ void VSICurlFilesystemHandler::InvalidateCachedData( const char* pszURL )
             i ++;
         }
     }
+}
+
+/************************************************************************/
+/*                            ClearCache()                              */
+/************************************************************************/
+
+void VSICurlFilesystemHandler::ClearCache()
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    for( int i=0; i < nRegions; i++ )
+    {
+        CPLFree(papsRegions[i]->pData);
+        CPLFree(papsRegions[i]);
+    }
+    CPLFree(papsRegions);
+    nRegions = 0;
+    papsRegions = NULL;
+
+    std::map<CPLString, CachedFileProp*>::const_iterator iterCacheFileSize;
+    for( iterCacheFileSize = cacheFileSize.begin();
+         iterCacheFileSize != cacheFileSize.end();
+         ++iterCacheFileSize )
+    {
+        delete iterCacheFileSize->second;
+    }
+    cacheFileSize.clear();
+
+    std::map<CPLString, CachedDirList*>::const_iterator iterCacheDirList;
+    for( iterCacheDirList = cacheDirList.begin();
+         iterCacheDirList != cacheDirList.end();
+         ++iterCacheDirList )
+    {
+        CSLDestroy(iterCacheDirList->second->papszFileList);
+        CPLFree(iterCacheDirList->second);
+    }
+    cacheDirList.clear();
+
+    std::map<GIntBig, CachedConnection*>::const_iterator iterConnections;
+    for( iterConnections = mapConnections.begin();
+         iterConnections != mapConnections.end();
+         ++iterConnections )
+    {
+        curl_easy_cleanup(iterConnections->second->hCurlHandle);
+        delete iterConnections->second;
+    }
+    mapConnections.clear();
 }
 
 /************************************************************************/
@@ -4970,7 +4991,8 @@ struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
  * "/vsicurl/http://example.com/foo.tif:/vsicurl/http://example.com/some_directory",
  * so that at file handle closing, all cached content related to the mentioned
  * file(s) is no longer cached. This can help when dealing with resources that
- * can be modified during execution of GDAL related code.
+ * can be modified during execution of GDAL related code. Alternatively,
+ * VSICurlClearCache() can be used.
  *
  * Starting with GDAL 2.1, /vsicurl/ will try to query directly redirected URLs
  * to Amazon S3 signed URLs during their validity period, so as to minimize
@@ -5053,7 +5075,8 @@ void VSIInstallCurlFileHandler( void )
  * "/vsis3/bucket/foo.tif:/vsis3/another_bucket/some_directory",
  * so that at file handle closing, all cached content related to the mentioned
  * file(s) is no longer cached. This can help when dealing with resources that
- * can be modified during execution of GDAL related code.
+ * can be modified during execution of GDAL related code. Alternatively,
+ * VSICurlClearCache() can be used.
  * 
  * On writing, the file is uploaded using the S3
  * <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/mpUploadInitiate.html">multipart upload API</a>.
@@ -5125,7 +5148,8 @@ void VSIInstallS3FileHandler( void )
  * "/vsigs/bucket/foo.tif:/vsigs/another_bucket/some_directory",
  * so that at file handle closing, all cached content related to the mentioned
  * file(s) is no longer cached. This can help when dealing with resources that
- * can be modified during execution of GDAL related code.
+ * can be modified during execution of GDAL related code. Alternatively,
+ * VSICurlClearCache() can be used.
  *
  * VSIStatL() will return the size in st_size member.
  *
@@ -5135,6 +5159,31 @@ void VSIInstallS3FileHandler( void )
 void VSIInstallGSFileHandler( void )
 {
     VSIFileManager::InstallHandler( "/vsigs/", new VSIGSFSHandler );
+}
+
+/************************************************************************/
+/*                         VSICurlClearCache()                          */
+/************************************************************************/
+
+/**
+ * \brief Clean local cache associated with /vsicurl/ (and related file systems)
+ *
+ * /vsicurl (and related file systems like /vsis3/ , /vsigs/) cache a number of
+ * metadata and data for faster execution in read-only scenarios. But when the
+ * content on the server-side may change during the same process, those
+ * mechanisms can prevent opening new files, or give an outdated version of them.
+ *
+ * @since GDAL 2.2.1
+ */
+
+void VSICurlClearCache( void )
+{
+    VSICurlFilesystemHandler *poFSHandler =
+        dynamic_cast<VSICurlFilesystemHandler*>(
+            VSIFileManager::GetHandler( "/vsis3/" ));
+
+    if( poFSHandler )
+        poFSHandler->ClearCache();
 }
 
 #endif /* HAVE_CURL */

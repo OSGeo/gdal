@@ -306,6 +306,7 @@ void CPL_DLL VSIInstallLargeFileHandler(void);
 /*! @endcond */
 void CPL_DLL VSIInstallSubFileHandler(void);
 void VSIInstallCurlFileHandler(void);
+void CPL_DLL VSICurlClearCache(void);
 void VSIInstallCurlStreamingFileHandler(void);
 void VSIInstallS3FileHandler(void);
 void VSIInstallS3StreamingFileHandler(void);
