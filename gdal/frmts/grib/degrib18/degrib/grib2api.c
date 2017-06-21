@@ -1047,6 +1047,14 @@ void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * 
           break;
       }
       is4[curIndex] = gfld->ipdtmpl[i];
+      if( i == MAXPDSMAPLEN )
+      {
+        jer[8 + *ndjer] = 2;
+        jer[8] = 2004;    /* undefined sect 4 template */
+        *kjer = 9;
+        g2_free (gfld);
+        return;
+      }
       curIndex += abs (templatespds[pdsIndex].mappds[i]);
    }
 
