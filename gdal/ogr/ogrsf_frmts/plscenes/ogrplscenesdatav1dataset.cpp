@@ -573,22 +573,18 @@ retry:
 
     osRasterURL = InsertAPIKeyInURL(osRasterURL);
 
-    CPLString osOldHead(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", ""));
-    CPLString osOldAllowedFilename(CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME", ""));
-
     const bool bUseVSICURL =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "RANDOM_ACCESS", true);
     if( bUseVSICURL && !(STARTS_WITH(m_osBaseURL, "/vsimem/")) )
     {
-        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_USE_HEAD", "NO");
-        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME",
-                                      ("/vsicurl/" + osRasterURL).c_str());
+        CPLString osTmpURL("/vsicurl/use_head=no,max_retry=3,empty_dir=yes,url=" + osRasterURL);
+        CPLDebug("PLSCENES", "URL = %s", osTmpURL.c_str());
 
         VSIStatBufL sStat;
-        if( VSIStatL(("/vsicurl/" + osRasterURL).c_str(), &sStat) == 0 &&
+        if( VSIStatL(osTmpURL, &sStat) == 0 &&
             sStat.st_size > 0 )
         {
-            osRasterURL = "/vsicurl/" + osRasterURL;
+            osRasterURL = osTmpURL;
         }
         else
         {
@@ -656,7 +652,6 @@ retry:
 
         CPLErrorReset();
         poOutDS->SetDescription(poOpenInfo->pszFilename);
-        CSLDestroy(poOutDS->GetFileList()); /* so as to probe all auxiliary files before resetting the allowed extensions */
     }
     else if( CPLGetLastErrorType() == CE_None )
     {
@@ -672,14 +667,6 @@ retry:
                      "%s", json_object_to_json_string_ext( poObj, JSON_C_TO_STRING_PRETTY ));
             json_object_put(poObj);
         }
-    }
-
-    if( bUseVSICURL )
-    {
-        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_USE_HEAD",
-                                    !osOldHead.empty() ? osOldHead.c_str(): NULL);
-        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME",
-                                    !osOldAllowedFilename.empty() ? osOldAllowedFilename.c_str(): NULL);
     }
 
     return poOutDS;
