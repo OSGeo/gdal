@@ -346,6 +346,16 @@ def vsicurl_test_redirect():
     return 'success'
 
 ###############################################################################
+# TODO: better testing
+
+def vsicurl_test_clear_cache():
+
+    gdal.VSICurlClearCache()
+    gdal.VSICurlClearCache()
+
+    return 'success'
+
+###############################################################################
 def vsicurl_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -368,6 +378,7 @@ gdaltest_list = [ vsicurl_1,
                   vsicurl_11,
                   vsicurl_start_webserver,
                   vsicurl_test_redirect,
+                  vsicurl_test_clear_cache,
                   vsicurl_stop_webserver ]
 
 if __name__ == '__main__':

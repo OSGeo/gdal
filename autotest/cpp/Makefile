@@ -5,6 +5,8 @@ CXXFLAGS := $(shell gdal-config --cflags) -I. -Itut $(CPPFLAGS)
 CXXFLAGS += -Wall
 CXXFLAGS += -Wextra -Wno-unused-function
 # CXXFLAGS += -Werror
+#CXXFLAGS += -fsanitize=undefined
+#LDFLAGS := -fsanitize=undefined
 
 ifdef HARDEN
 CXXFLAGS += -O2 -g
