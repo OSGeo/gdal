@@ -286,7 +286,8 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( nRows < 1 || nCols < 1 || nBands < 1 )
+    if( !GDALCheckDatasetDimensions(nCols, nRows) ||
+        !GDALCheckBandCount(nBands, false) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s appears to be a VICAR file, but failed to find some "
@@ -587,10 +588,17 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Compute the line offsets.                                        */
 /* -------------------------------------------------------------------- */
 
-    const long int nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    const long int nPixelOffset = nItemSize;
-    const long int nLineOffset = nPixelOffset * nCols + atoi(poDS->GetKeyword("NBB")) ;
-    const long int nBandOffset = nLineOffset * nRows;
+    const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
+    const int nPixelOffset = nItemSize;
+    const int nNBB = atoi(poDS->GetKeyword("NBB"));
+    if( nPixelOffset > INT_MAX / nCols || nNBB < 0 ||
+        nPixelOffset * nCols > INT_MAX - nNBB )
+    {
+        delete poDS;
+        return NULL;
+    }
+    const int nLineOffset = nPixelOffset * nCols + nNBB;
+    const vsi_l_offset nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
 
     int nSkipBytes = atoi(poDS->GetKeyword("LBLSIZE"));
 
@@ -601,7 +609,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         GDALRasterBand *poBand
             = new RawRasterBand( poDS, i+1, poDS->fpImage, nSkipBytes + nBandOffset * i,
-                                 static_cast<int>(nPixelOffset), static_cast<int>(nLineOffset), eDataType,
+                                 nPixelOffset, nLineOffset, eDataType,
 #ifdef CPL_LSB
                                    chByteOrder == 'I' || chByteOrder == 'L',
 #else
