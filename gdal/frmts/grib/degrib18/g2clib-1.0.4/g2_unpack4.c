@@ -67,9 +67,9 @@ g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipd
       *ipdstmpl=0;    // NULL
       *coordlist=0;    // NULL
 
-      gbit(cgrib,&lensec,*iofst,32);        // Get Length of Section
+      gbit2(cgrib,cgrib_length,&lensec,*iofst,32);        // Get Length of Section
       *iofst=*iofst+32;
-      gbit(cgrib,&isecnum,*iofst,8);         // Get Section Number
+      gbit2(cgrib,cgrib_length,&isecnum,*iofst,8);         // Get Section Number
       *iofst=*iofst+8;
 
       if ( isecnum != 4 ) {
@@ -80,9 +80,9 @@ g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipd
          return(ierr);
       }
 
-      gbit(cgrib,numcoord,*iofst,16);    // Get num of coordinate values
+      gbit2(cgrib,cgrib_length,numcoord,*iofst,16);    // Get num of coordinate values
       *iofst=*iofst+16;
-      gbit(cgrib,ipdsnum,*iofst,16);    // Get Prod. Def Template num.
+      gbit2(cgrib,cgrib_length,ipdsnum,*iofst,16);    // Get Prod. Def Template num.
       *iofst=*iofst+16;
 
       //   Get Product Definition Template
@@ -113,11 +113,11 @@ g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipd
       for (i=0;i<mappds->maplen;i++) {
         nbits=abs(mappds->map[i])*8;
         if ( mappds->map[i] >= 0 ) {
-          gbit(cgrib,lipdstmpl+i,*iofst,nbits);
+          gbit2(cgrib,cgrib_length,lipdstmpl+i,*iofst,nbits);
         }
         else {
-          gbit(cgrib,&isign,*iofst,1);
-          gbit(cgrib,lipdstmpl+i,*iofst+1,nbits-1);
+          gbit2(cgrib,cgrib_length,&isign,*iofst,1);
+          gbit2(cgrib,cgrib_length,lipdstmpl+i,*iofst+1,nbits-1);
           if (isign == 1) lipdstmpl[i]=-1*lipdstmpl[i];
         }
         *iofst=*iofst+nbits;
@@ -140,11 +140,11 @@ g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipd
         for (i=*mappdslen;i<newlen;i++) {
           nbits=abs(mappds->ext[j])*8;
           if ( mappds->ext[j] >= 0 ) {
-            gbit(cgrib,lipdstmpl+i,*iofst,nbits);
+            gbit2(cgrib,cgrib_length,lipdstmpl+i,*iofst,nbits);
           }
           else {
-            gbit(cgrib,&isign,*iofst,1);
-            gbit(cgrib,lipdstmpl+i,*iofst+1,nbits-1);
+            gbit2(cgrib,cgrib_length,&isign,*iofst,1);
+            gbit2(cgrib,cgrib_length,lipdstmpl+i,*iofst+1,nbits-1);
             if (isign == 1) lipdstmpl[i]=-1*lipdstmpl[i];
           }
           *iofst=*iofst+nbits;
