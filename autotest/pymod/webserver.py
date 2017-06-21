@@ -43,6 +43,7 @@ from sys import version_info
 do_log = False
 
 s3_no_cached_test_changed_content = False
+test_retry_attempt = 0
 
 TIME_SKEW = 30 * 60
 
@@ -94,6 +95,20 @@ class GDAL_Handler(BaseHTTPRequestHandler):
             response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
             response += '\r\n'
             self.wfile.write(response.encode('ascii'))
+            return
+
+        if self.path == '/test_retry/test.txt':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            self.send_header('Content-Length', 3)
+            self.end_headers()
+            return
+
+        if self.path == '/test_retry_reset_counter':
+            global test_retry_attempt
+            test_retry_attempt = 0
+            self.send_response(200)
+            self.end_headers()
             return
 
         self.send_error(404,'File Not Found: %s' % self.path)
@@ -850,6 +865,31 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(response.encode('ascii'))
                 return
+
+
+            global test_retry_attempt
+            if self.path == '/test_retry/test.txt':
+                if test_retry_attempt == 0:
+                    self.protocol_version = 'HTTP/1.1'
+                    self.send_response(502)
+                    self.end_headers()
+                else:
+                    content = """foo""".encode('ascii')
+                    self.protocol_version = 'HTTP/1.1'
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/plain')
+                    self.send_header('Content-Length', len(content))
+                    self.end_headers()
+                    self.wfile.write(content)
+                test_retry_attempt += 1
+                return
+
+            if self.path == '/test_retry_reset_counter':
+                test_retry_attempt = 0
+                self.send_response(200)
+                self.end_headers()
+                return
+
 
             if self.path == '/index.html':
                 self.send_response(200)

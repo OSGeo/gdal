@@ -356,6 +356,55 @@ def vsicurl_test_clear_cache():
     return 'success'
 
 ###############################################################################
+
+def vsicurl_test_retry():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    f = gdal.VSIFOpenL('/vsicurl/http://localhost:%d/test_retry_reset_counter' % gdaltest.webserver_port, 'rb')
+    if f:
+        gdal.VSIFReadL(1,1,f)
+        gdal.VSIFCloseL(f)
+
+    f = gdal.VSIFOpenL('/vsicurl/http://localhost:%d/test_retry/test.txt' % gdaltest.webserver_port, 'rb')
+    data_len = 0
+    if f:
+        data_len = len(gdal.VSIFReadL(1,1,f))
+        gdal.VSIFCloseL(f)
+    if data_len != 0:
+        gdaltest.post_reason('fail')
+        print(data_len)
+        return 'fail'
+
+    gdal.VSICurlClearCache()
+    f = gdal.VSIFOpenL('/vsicurl/http://localhost:%d/test_retry_reset_counter' % gdaltest.webserver_port, 'rb')
+    if f:
+        gdal.VSIFReadL(1,1,f)
+        gdal.VSIFCloseL(f)
+    gdal.VSICurlClearCache()
+
+    f = gdal.VSIFOpenL('/vsicurl/max_retry=1,retry_delay=0.1,url=http://localhost:%d/test_retry/test.txt' % gdaltest.webserver_port, 'rb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        data = gdal.VSIFReadL(1,3,f).decode('ascii')
+    error_msg = gdal.GetLastErrorMsg()
+    gdal.VSIFCloseL(f)
+    if data != 'foo':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+    if error_msg.find('502') < 0:
+        gdaltest.post_reason('fail')
+        print(error_msg)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def vsicurl_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -379,6 +428,7 @@ gdaltest_list = [ vsicurl_1,
                   vsicurl_start_webserver,
                   vsicurl_test_redirect,
                   vsicurl_test_clear_cache,
+                  vsicurl_test_retry,
                   vsicurl_stop_webserver ]
 
 if __name__ == '__main__':

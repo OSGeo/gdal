@@ -488,11 +488,13 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     const char *pszRetryDelay =
         CSLFetchNameValue( papszOptions, "RETRY_DELAY" );
     if( pszRetryDelay == NULL )
-        pszRetryDelay = CPLGetConfigOption( "GDAL_HTTP_RETRY_DELAY", "30" );
+        pszRetryDelay = CPLGetConfigOption( "GDAL_HTTP_RETRY_DELAY",
+                                    CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY) );
     const char *pszMaxRetries = CSLFetchNameValue( papszOptions, "MAX_RETRY" );
     if( pszMaxRetries == NULL )
-        pszMaxRetries = CPLGetConfigOption( "GDAL_HTTP_MAX_RETRY", "0" );
-    int nRetryDelaySecs = atoi(pszRetryDelay);
+        pszMaxRetries = CPLGetConfigOption( "GDAL_HTTP_MAX_RETRY",
+                                    CPLSPrintf("%d",CPL_HTTP_MAX_RETRY) );
+    double dfRetryDelaySecs = CPLAtof(pszRetryDelay);
     int nMaxRetries = atoi(pszMaxRetries);
     int nRetryCount = 0;
     bool bRequestRetry;
@@ -575,10 +577,10 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "HTTP error code: %d - %s. "
-                             "Retrying again in %d secs",
+                             "Retrying again in %.1f secs",
                              static_cast<int>(response_code), pszURL,
-                             nRetryDelaySecs);
-                    CPLSleep(nRetryDelaySecs);
+                             dfRetryDelaySecs);
+                    CPLSleep(dfRetryDelaySecs);
                     nRetryCount++;
 
                     CPLFree(psResult->pszContentType);

@@ -41,6 +41,11 @@
  * Interface for downloading HTTP, FTP documents
  */
 
+/*! @cond Doxygen_Suppress */
+#define CPL_HTTP_MAX_RETRY      0
+#define CPL_HTTP_RETRY_DELAY    30.0
+/*! @endcond */
+
 CPL_C_START
 
 /*! Describe a part of a multipart message */
