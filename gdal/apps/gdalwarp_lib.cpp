@@ -407,7 +407,7 @@ static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO, int nSrcCoun
             double dfAverageSegmentLength = GetAverageSegmentLength(hGeomInSrcSRS);
             OGR_G_Segmentize(hGeomInSrcSRS, dfAverageSegmentLength/4);
 
-            memcpy(&sLastEnvelope, &sCurEnvelope, sizeof(OGREnvelope));
+            sLastEnvelope = sCurEnvelope;
         }
 
         OGR_G_DestroyGeometry(hGeomInSrcSRS);

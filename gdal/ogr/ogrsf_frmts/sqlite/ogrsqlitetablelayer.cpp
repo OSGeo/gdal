@@ -1135,7 +1135,7 @@ OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
     OGRSQLiteGeomFieldDefn* poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(iGeomField);
     if (poGeomFieldDefn->bCachedExtentIsValid)
     {
-        memcpy(psExtent, &poGeomFieldDefn->oCachedExtent, sizeof(poGeomFieldDefn->oCachedExtent));
+        *psExtent = poGeomFieldDefn->oCachedExtent;
         return OGRERR_NONE;
     }
 
@@ -1182,7 +1182,7 @@ OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
                 poGeomFieldDefn->bCachedExtentIsValid = TRUE;
                 if( poDS->GetUpdate() )
                     bStatisticsNeedsToBeFlushed = TRUE;
-                memcpy(&poGeomFieldDefn->oCachedExtent, psExtent, sizeof(poGeomFieldDefn->oCachedExtent));
+                poGeomFieldDefn->oCachedExtent = *psExtent;
             }
         }
 
@@ -1201,7 +1201,7 @@ OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
     {
         poGeomFieldDefn->bCachedExtentIsValid = TRUE;
         bStatisticsNeedsToBeFlushed = TRUE;
-        memcpy(&poGeomFieldDefn->oCachedExtent, psExtent, sizeof(poGeomFieldDefn->oCachedExtent));
+        poGeomFieldDefn->oCachedExtent = *psExtent;
     }
     return eErr;
 }

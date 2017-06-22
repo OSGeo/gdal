@@ -44,7 +44,6 @@ OGRPGeoTableLayer::OGRPGeoTableLayer( OGRPGeoDataSource *poDSIn ) :
     iNextShapeId = 0;
     nSRSId = -1;
     poFeatureDefn = NULL;
-    memset( &sExtent, 0, sizeof(sExtent) );
 }
 
 /************************************************************************/

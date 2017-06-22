@@ -569,8 +569,6 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     ELASHeader sHeader;
 
-    memset( &sHeader, 0, 1024 );
-
     sHeader.NBIH = CPL_MSBWORD32(1024);
 
     sHeader.NBPR = CPL_MSBWORD32(nBands * nBandOffset);

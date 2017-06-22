@@ -642,7 +642,7 @@ OGRErr OGRSQLiteSelectLayerCommonBehaviour::GetExtent(int iGeomField, OGREnvelop
         const OGREnvelope* psCachedExtent = poDS->GetEnvelopeFromSQL(osSQLBase);
         if (psCachedExtent)
         {
-            memcpy(psExtent, psCachedExtent, sizeof(*psCachedExtent));
+            *psExtent = *psCachedExtent;
             return OGRERR_NONE;
         }
     }

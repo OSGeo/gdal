@@ -42,8 +42,6 @@ OGRWalkTableLayer::OGRWalkTableLayer( OGRWalkDataSource *poDSIn ) :
 
     iNextShapeId = 0;
     poFeatureDefn = NULL;
-
-    memset( &sExtent, 0, sizeof(sExtent) );
 }
 
 /************************************************************************/

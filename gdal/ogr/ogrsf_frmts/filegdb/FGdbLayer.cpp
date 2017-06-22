@@ -1195,7 +1195,7 @@ OGRErr FGdbLayer::ICreateFeature( OGRFeature *poFeature )
         poGeom->getEnvelope(&sFeatureGeomEnvelope);
         if (!m_bLayerEnvelopeValid)
         {
-            memcpy(&sLayerEnvelope, &sFeatureGeomEnvelope, sizeof(sLayerEnvelope));
+            sLayerEnvelope = sFeatureGeomEnvelope;
             m_bLayerEnvelopeValid = true;
         }
         else
