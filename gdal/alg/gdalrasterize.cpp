@@ -851,7 +851,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
         // rem: optimized for square blocks
         const GIntBig nbMaxBlocks64 = GDALGetCacheMax64() / nPixelSize / nYBlockSize / nXBlockSize;
         const int nbMaxBlocks = (nbMaxBlocks64 > INT_MAX ) ? INT_MAX : static_cast<int>(nbMaxBlocks64);
-        const int nbBlocsX = std::max(1, std::min(int(sqrt(nbMaxBlocks)), nXBlocks));
+        const int nbBlocsX = std::max(1, std::min(static_cast<int>(sqrt(static_cast<double>(nbMaxBlocks))), nXBlocks));
         const int nbBlocsY = std::max(1, std::min(nbMaxBlocks / nbBlocsX, nYBlocks));
 
         const int nScanblocks =
