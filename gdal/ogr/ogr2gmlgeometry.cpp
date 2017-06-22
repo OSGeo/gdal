@@ -484,11 +484,9 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 {
     OGREnvelope sEnvelope;
 
-    memset( &sEnvelope, 0, sizeof(sEnvelope) );
     reinterpret_cast<OGRGeometry *>(hGeometry)->getEnvelope( &sEnvelope );
 
-    if( sEnvelope.MinX == 0 && sEnvelope.MaxX == 0 &&
-        sEnvelope.MinY == 0 && sEnvelope.MaxY == 0 )
+    if( !sEnvelope.IsInit() )
     {
         // TODO: There is apparently a special way of representing a null box
         // geometry. Should use it here eventually.
