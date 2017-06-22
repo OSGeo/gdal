@@ -75,8 +75,13 @@ CPLErr WMSMiniDriver_TMS::TiledImageRequest(WMSHTTPRequest &request,
     int tms_y;
 
     if (data_window->m_y_origin != GDALWMSDataWindow::TOP) {
-        tms_y = static_cast<int>(floor(((data_window->m_y1 - data_window->m_y0)
-                                      / (iri.m_y1 - iri.m_y0)) + 0.5)) - tiri.m_y - 1;
+        if( iri.m_y0 == iri.m_y1 )
+            return CE_Failure;
+        const double dfTmp = floor(((data_window->m_y1 - data_window->m_y0)
+                                      / (iri.m_y1 - iri.m_y0)) + 0.5);
+        if( !(dfTmp >= 0 && dfTmp < INT_MAX) )
+            return CE_Failure;
+        tms_y = static_cast<int>(dfTmp) - tiri.m_y - 1;
     } else {
         tms_y = tiri.m_y;
     }
