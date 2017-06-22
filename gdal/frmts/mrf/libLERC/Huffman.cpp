@@ -62,7 +62,9 @@ bool Huffman::ComputeCodes(const vector<int>& histo)
   }
 
   m_codeTable.resize(size);
-  memset(&m_codeTable[0], 0, size * sizeof(m_codeTable[0]));
+  std::fill( m_codeTable.begin(), m_codeTable.end(),
+             std::pair<short, unsigned int>(0, 0) );
+
   if (!pq.top().TreeToLUT(0, 0, m_codeTable))    // fill the LUT
     return false;
 
@@ -201,7 +203,8 @@ bool Huffman::ReadCodeTable(const Byte** ppByte)
     return false;
 
   m_codeTable.resize(size);
-  memset(&m_codeTable[0], 0, size * sizeof(m_codeTable[0]));
+  std::fill( m_codeTable.begin(), m_codeTable.end(),
+             std::pair<short, unsigned int>(0, 0) );
 
   for (int i = i0; i < i1; i++)
   {
@@ -521,8 +524,7 @@ bool Huffman::ConvertCodesToCanonical()
   //   codeLength * tableSize - index
 
   int tableSize = (int)m_codeTable.size();
-  vector<pair<int, int> > sortVec(tableSize);
-  memset(&sortVec[0], 0, tableSize * sizeof(pair<int, int>));
+  vector<pair<int, int> > sortVec(tableSize, pair<int, int>(0,0));
 
   for (int i = 0; i < tableSize; i++)
     if (m_codeTable[i].first > 0)
