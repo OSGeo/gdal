@@ -52,6 +52,7 @@ static GDALDataset* OGRPLScenesOpen(GDALOpenInfo* poOpenInfo)
             poOpenInfo->pszFilename+strlen("PLScenes:"), ",", TRUE, FALSE );
     CPLString osVersion = CSLFetchNameValueDef(papszOptions, "version",
                 CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "VERSION", ""));
+    CSLDestroy(papszOptions);
 
     if( EQUAL(osVersion, "v0") || EQUAL(osVersion, "v1") )
     {
