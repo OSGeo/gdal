@@ -1140,7 +1140,7 @@ OGRErr OGRUnionLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForc
     if( iGeomField >= 0 && iGeomField < nGeomFields &&
         papoGeomFields[iGeomField]->sStaticEnvelope.IsInit() )
     {
-        memcpy(psExtent, &papoGeomFields[iGeomField]->sStaticEnvelope, sizeof(OGREnvelope));
+        *psExtent = papoGeomFields[iGeomField]->sStaticEnvelope;
         return OGRERR_NONE;
     }
 

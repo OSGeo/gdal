@@ -4151,7 +4151,7 @@ OGRErr OGROSMDataSource::GetExtent( OGREnvelope *psExtent )
 
     if( bExtentValid )
     {
-        memcpy(psExtent, &sExtent, sizeof(sExtent));
+        *psExtent = sExtent;
         return OGRERR_NONE;
     }
 

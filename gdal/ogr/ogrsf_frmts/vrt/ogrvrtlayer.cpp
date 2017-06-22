@@ -2106,8 +2106,7 @@ OGRErr OGRVRTLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce
 
     if( apoGeomFieldProps[iGeomField]->sStaticEnvelope.IsInit() )
     {
-        memcpy(psExtent, &apoGeomFieldProps[iGeomField]->sStaticEnvelope,
-               sizeof(OGREnvelope));
+        *psExtent = apoGeomFieldProps[iGeomField]->sStaticEnvelope;
         return OGRERR_NONE;
     }
 

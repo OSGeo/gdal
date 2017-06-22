@@ -834,7 +834,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
     psOptions->bCreateOutput = FALSE;
     psOptions->b3D = FALSE;
     psOptions->bInverse = FALSE;
-    memset(&(psOptions->sEnvelop), 0, sizeof(psOptions->sEnvelop));
+    // sEnvelop implicitly initialized
     psOptions->papszCreationOptions = NULL;
     psOptions->papszLayers = NULL;
     psOptions->pszSQL = NULL;
