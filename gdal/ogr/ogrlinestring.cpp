@@ -451,8 +451,16 @@ void OGRSimpleCurve::setNumPoints( int nNewPointCount, int bZeroizeNewContent )
         paoPoints = paoNewPoints;
 
         if( bZeroizeNewContent )
-            memset( paoPoints + nPointCount,
-                0, sizeof(OGRRawPoint) * (nNewPointCount - nPointCount) );
+        {
+            // gcc 8.0 (dev) complains about -Wclass-memaccess
+            // since OGRRawPoint() has a constructor. So use a void* pointer.
+            // Doing the memset() here is correct since the constructor sets to 0.
+            // We could instad use a std::fill(), but at every other places
+            // we treat this class as a regular POD (see above use of realloc())
+            void* dest = static_cast<void*>(paoPoints + nPointCount);
+            memset( dest,
+                    0, sizeof(OGRRawPoint) * (nNewPointCount - nPointCount) );
+        }
 
         if( flags & OGR_G_3D )
         {
