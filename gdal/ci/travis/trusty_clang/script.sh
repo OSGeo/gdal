@@ -40,7 +40,8 @@ mv ogr_fgdb.* disabled
 cd ..
 # Run ogr_pgeo.py in isolation from the rest
 cd ogr
-python ogr_pgeo.py
+# This crashes on Trusty since travis-ci upgraded their Trusty workers
+#python ogr_pgeo.py
 mv ogr_pgeo.* disabled
 cd ..
 # Run all the Python autotests
