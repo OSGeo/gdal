@@ -361,8 +361,8 @@ static void DumpBPCCBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         GByte* pabyIter = pabyBoxData;
         int nBPCIndex = 0;
         CPLXMLNode* psLastChild = NULL;
-        // TODO(rouault): Why "< 16384"?  Maybe make it a symbolic constant?
-        while( nRemainingLength >= 1 && nBPCIndex < 16384 )
+        const int nbMaxJPEG2000Components = 16384; // per the JPEG2000 standard
+        while( nRemainingLength >= 1 && nBPCIndex < nbMaxJPEG2000Components )
         {
             AddField(psDecodedContent,
                      psLastChild,
@@ -1354,7 +1354,9 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                                       int nRecLevel,
                                       vsi_l_offset nFileOrParentBoxSize)
 {
-    // TODO(rouault): Why is this 5?
+    // Limit recursion to a reasonable level. I believe that in practice 2
+    // should be sufficient, but just in case someone creates deeply
+    // embedded "super-boxes", allow up to 5.
     if( nRecLevel == 5 )
         return;
 
