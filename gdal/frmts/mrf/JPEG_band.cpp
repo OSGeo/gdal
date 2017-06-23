@@ -307,7 +307,11 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
         rp[1] = rp[0] + linesize;
         // if this fails, it calls the error handler
         // which will report an error
-        jpeg_read_scanlines(&cinfo, JSAMPARRAY(rp), 2);
+        if( jpeg_read_scanlines(&cinfo, JSAMPARRAY(rp), 2) == 0 )
+        {
+            jpeg_destroy_decompress(&cinfo);
+            return CE_Failure;
+        }
     }
     jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
