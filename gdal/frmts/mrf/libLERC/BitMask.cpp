@@ -60,10 +60,20 @@ bool BitMask::RLEdecompress(const Byte* src, size_t nRemainingBytes) {
             Byte b = *src++;
             nRemainingBytes --;
             sz += count;
+            if( sz < 0 )
+            {
+                LERC_BRKPNT();
+                return false;
+            }
             while (0 != count++)
                 *dst++ = b;
         } else { // No repeats
             sz -= count;
+            if( sz < 0 )
+            {
+                LERC_BRKPNT();
+                return false;
+            }
             if (nRemainingBytes < static_cast<size_t>(count) )
             {
               LERC_BRKPNT();
