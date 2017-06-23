@@ -52,7 +52,7 @@ public:
   int RLEsize() const;
   // Decompress a RLE bitmask, bitmask size should be already set
   // Returns false if input seems wrong
-  bool RLEdecompress(const Byte* src);
+  bool RLEdecompress(const Byte* src, size_t nRemainingBytes);
 
 private:
   Byte*  m_pBits;

@@ -82,6 +82,8 @@ NAMESPACE_MRF_START
 //
 #define ZFLAG_SMASK 0x1c0
 
+#define PADDING_BYTES 3
+
 // Force LERC to be included, normally off, detected in the makefile
 // #define LERC
 

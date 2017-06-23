@@ -744,7 +744,7 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     if (dfp == NULL)
         return CE_Failure;
 
-    void *data = VSIMalloc(static_cast<size_t>(tinfo.size + 3));
+    void *data = VSIMalloc(static_cast<size_t>(tinfo.size + PADDING_BYTES));
     if (data == NULL)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
@@ -767,7 +767,7 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     }
 
     /* initialize padding bytes */
-    memset(((char*)data) + static_cast<size_t>(tinfo.size), 0, 3);
+    memset(((char*)data) + static_cast<size_t>(tinfo.size), 0, PADDING_BYTES);
 
     buf_mgr src = {(char *)data, static_cast<size_t>(tinfo.size)};
     buf_mgr dst;
