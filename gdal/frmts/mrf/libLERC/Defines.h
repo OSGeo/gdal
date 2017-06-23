@@ -95,4 +95,11 @@ struct Quant : public std::pair<unsigned int, unsigned int>
 #endif // SWAPB
 
 NAMESPACE_LERC_END
+
+#ifdef DEBUG
+void LERC_BRKPNT();
+#else
+#define LERC_BRKPNT() do {} while(0)
+#endif
+
 #endif

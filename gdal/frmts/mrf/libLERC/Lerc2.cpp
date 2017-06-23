@@ -30,6 +30,12 @@ Contributors:  Thomas Maurer
 
 using namespace std;
 
+#ifdef DEBUG
+void LERC_BRKPNT()
+{
+}
+#endif
+
 NAMESPACE_LERC_START
 
 // -------------------------------------------------------------------------- ;
