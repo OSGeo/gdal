@@ -142,7 +142,6 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
     oCodeStream.get_tile_dims(valid_tiles.pos, -1, tile_dims);
     nBlockXSize = std::min(std::min(tile_dims.size.x, 2048), nRasterXSize);
     nBlockYSize = std::min(std::min(tile_dims.size.y, 2048), nRasterYSize);
-
     CPLDebug( "JP2KAK", "JP2KAKRasterBand::JP2KAKRasterBand() : "
             "Tile dimension : %d X %d\n",
             nBlockXSize, nBlockYSize);
