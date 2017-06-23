@@ -54,10 +54,10 @@ public:
   // when done, call
   // delete[] *arr;
   // cppcheck-suppress functionStatic
-  bool decompress(const Byte* arrRLE, Byte** arr, size_t& numBytes) const;
+  bool decompress(const Byte* arrRLE, size_t nRemainingSize, Byte** arr, size_t& numBytes) const;
 
   // arr already allocated, just fill
-  static bool decompress(const Byte* arrRLE, Byte* arr);
+  static bool decompress(const Byte* arrRLE, size_t nRemainingSize, Byte* arr);
 
 protected:
   int m_minNumEven;

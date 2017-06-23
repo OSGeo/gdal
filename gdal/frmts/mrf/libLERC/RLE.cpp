@@ -228,7 +228,7 @@ bool RLE::compress(const Byte* arr, size_t numBytes,
   {
     Byte* arr2 = NULL;
     size_t numBytes2 = 0;
-    if (!decompress(*arrRLE, &arr2, numBytes2) || numBytes2 != numBytes)
+    if (!decompress(*arrRLE, numBytesRLE, &arr2, numBytes2) || numBytes2 != numBytes)
     {
       delete[] arr2;
       return false;
@@ -244,7 +244,7 @@ bool RLE::compress(const Byte* arr, size_t numBytes,
 
 // -------------------------------------------------------------------------- ;
 
-bool RLE::decompress(const Byte* arrRLE, Byte** arr, size_t& numBytes) const
+bool RLE::decompress(const Byte* arrRLE, size_t nRemainingSizeIn, Byte** arr, size_t& numBytes) const
 {
   if (!arrRLE)
     return false;
@@ -252,12 +252,23 @@ bool RLE::decompress(const Byte* arrRLE, Byte** arr, size_t& numBytes) const
   // first count the encoded bytes
   const Byte* srcPtr = arrRLE;
   size_t sum = 0;
+  size_t nRemainingSize = nRemainingSizeIn;
+  if( nRemainingSize < 2 )
+    return false;
   short cnt = readCount(&srcPtr);
+  nRemainingSize -= 2;
   while (cnt != -32768)
   {
     sum += (cnt < 0) ? -cnt : cnt;
-    srcPtr += (cnt > 0) ? cnt : 1;
+    size_t nInc = (cnt > 0) ? cnt : 1;
+    if( nRemainingSize < nInc )
+        return false;
+    srcPtr += nInc;
+    nRemainingSize -= nInc;
+    if( nRemainingSize < 2 )
+      return false;
     cnt = readCount(&srcPtr);
+    nRemainingSize -= 2;
   }
 
   numBytes = sum;
@@ -270,30 +281,44 @@ bool RLE::decompress(const Byte* arrRLE, Byte** arr, size_t& numBytes) const
   if (!*arr)
     return false;
 
-  return decompress(arrRLE, *arr);
+  return decompress(arrRLE, nRemainingSizeIn, *arr);
 }
 
 // -------------------------------------------------------------------------- ;
 
-bool RLE::decompress(const Byte* arrRLE, Byte* arr)
+bool RLE::decompress(const Byte* arrRLE, size_t nRemainingSize, Byte* arr)
 {
   if (!arrRLE || !arr)
     return false;
 
   const Byte* srcPtr = arrRLE;
   Byte* dstPtr = arr;
+  if( nRemainingSize < 2 )
+    return false;
   short cnt = readCount(&srcPtr);
+  nRemainingSize -= 2;
   while (cnt != -32768)
   {
     int i = (cnt < 0) ? -cnt: cnt ;
     if (cnt > 0)
+    {
+      if( nRemainingSize < static_cast<size_t>(i) )
+        return false;
+      nRemainingSize -= i;
       while (i--) *dstPtr++ = *srcPtr++;
+    }
     else
     {
+      if( nRemainingSize < 1 )
+        return false;
+      nRemainingSize -= 1;
       Byte b = *srcPtr++;
       while (i--) *dstPtr++ = b;
     }
+    if( nRemainingSize < 2 )
+        return false;
     cnt = readCount(&srcPtr);
+    nRemainingSize -= 2;
   }
 
   return true;
