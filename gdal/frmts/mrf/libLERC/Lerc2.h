@@ -1002,20 +1002,21 @@ bool Lerc2::ReadTile(const Byte** ppByte, size_t& nRemainingBytesInOut,
     }
     else
     {
-      if (!m_bitStuffer2.Decode(&ptr, nRemainingBytes, bufferVec))
+      const size_t nMaxBufferVecElts = size_t((i1 - i0) * (j1 - j0));
+      if (!m_bitStuffer2.Decode(&ptr, nRemainingBytes, bufferVec, nMaxBufferVecElts))
         return false;
 
       double invScale = 2 * m_headerInfo.maxZError;    // for int types this is int
-      unsigned int* srcPtr = &bufferVec[0];
-
-      if (bufferVec.size() == size_t((i1 - i0) * (j1 - j0)))    // all valid
+      size_t bufferVecIdx = 0;
+      if (bufferVec.size() == nMaxBufferVecElts)    // all valid
       {
         for (int i = i0; i < i1; i++)
         {
           int k = i * m_headerInfo.nCols + j0;
           for (int j = j0; j < j1; j++, k++)
           {
-            double z = offset + *srcPtr++ * invScale;
+            double z = offset + bufferVec[bufferVecIdx] * invScale;
+            bufferVecIdx ++;
             data[k] = (T)std::min(z, m_headerInfo.zMax);    // make sure we stay in the orig range
           }
         }
@@ -1028,7 +1029,10 @@ bool Lerc2::ReadTile(const Byte** ppByte, size_t& nRemainingBytesInOut,
           for (int j = j0; j < j1; j++, k++)
             if (m_bitMask.IsValid(k))
             {
-              double z = offset + *srcPtr++ * invScale;
+              if( bufferVecIdx == bufferVec.size() )
+                return false;
+              double z = offset + bufferVec[bufferVecIdx] * invScale;
+              bufferVecIdx ++;
               data[k] = (T)std::min(z, m_headerInfo.zMax);    // make sure we stay in the orig range
             }
         }

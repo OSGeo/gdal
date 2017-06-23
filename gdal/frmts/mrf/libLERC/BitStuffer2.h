@@ -45,7 +45,7 @@ public:
   static bool EncodeSimple(Byte** ppByte, const std::vector<unsigned int>& dataVec);
   // cppcheck-suppress functionStatic
   bool EncodeLut(Byte** ppByte, const std::vector<Quant>& sortedDataVec) const;
-  bool Decode(const Byte** ppByte, size_t& nRemainingBytes, std::vector<unsigned int>& dataVec) const;
+  bool Decode(const Byte** ppByte, size_t& nRemainingBytes, std::vector<unsigned int>& dataVec, size_t nMaxBufferVecElts) const;
 
   static unsigned int ComputeNumBytesNeededSimple(unsigned int numElem, unsigned int maxElem);
   static unsigned int ComputeNumBytesNeededLut(const std::vector<Quant>& sortedDataVec,
