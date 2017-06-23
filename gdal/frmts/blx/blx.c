@@ -759,6 +759,12 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 		for(i=0; i<n-1; i++)
 		    linfo[level][c].lut[i] = (blxdata)get_short_le(&inptr);
 		linfo[level][c].dlen = get_short_le(&inptr);
+                if( linfo[level][c].dlen < 0 )
+                {
+                    BLXerror0("Cell corrupt");
+                    outbuf = NULL;
+                    goto error;
+                }
                 len -= sizeof(short) * n;
 	    } else {
 		linfo[level][c].dlen = 0;
