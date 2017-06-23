@@ -47,6 +47,24 @@ rm -f $OUT/srp_fuzzer_seed_corpus.zip
 zip -r $OUT/srp_fuzzer_seed_corpus.zip srp.tar >/dev/null
 rm srp.tar
 
+
+echo "Building mrf_fuzzer_seed_corpus.zip"
+rm -f $OUT/mrf_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/gdrivers/data/mrf
+for subdir in *; do
+    cd $subdir
+    printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/mrf_$subdir.tar
+    for file in *; do
+        printf "***NEWFILE***:$file\n" >> $CUR_DIR/mrf_$subdir.tar
+        cat $file >> $CUR_DIR/mrf_$subdir.tar
+    done
+    cd ..
+done
+cd $CUR_DIR
+zip -r $OUT/mrf_fuzzer_seed_corpus.zip mrf_*.tar >/dev/null
+rm mrf_*.tar
+
 echo "Building envi_fuzzer_seed_corpus.zip"
 rm -f $OUT/envi_fuzzer_seed_corpus.zip
 
