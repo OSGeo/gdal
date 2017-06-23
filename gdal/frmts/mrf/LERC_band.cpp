@@ -355,7 +355,7 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     }
 
     // If not Lerc2 switch to Lerc
-    if (!lerc2.GetHeaderInfo(ptr, hdInfo))
+    if (!lerc2.GetHeaderInfo(ptr, src.size, hdInfo))
         return DecompressLERC(dst, src, img);
 
     // It is Lerc2 test that it looks reasonable
@@ -373,9 +373,10 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     }
 
     bool success = false;
+    size_t nRemaingBytes = src.size;
     BitMask2 bitMask(img.pagesize.x, img.pagesize.y);
     switch (img.dt) {
-#define DECODE(T) success = lerc2.Decode(&ptr, reinterpret_cast<T *>(dst.buffer), bitMask.Bits())
+#define DECODE(T) success = lerc2.Decode(&ptr, nRemaingBytes, reinterpret_cast<T *>(dst.buffer), bitMask.Bits())
     case GDT_Byte:      DECODE(GByte);      break;
     case GDT_UInt16:    DECODE(GUInt16);    break;
     case GDT_Int16:     DECODE(GInt16);     break;
@@ -454,7 +455,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
         Lerc2 l2;
         Lerc2::HeaderInfo hinfo;
         hinfo.RawInit();
-        if (l2.GetHeaderInfo(reinterpret_cast<Byte *>(psz), hinfo)) {
+        if (l2.GetHeaderInfo(reinterpret_cast<Byte *>(psz), poOpenInfo->nHeaderBytes, hinfo)) {
             size.x = hinfo.nCols;
             size.y = hinfo.nRows;
             // Set the datatype, which marks it as valid

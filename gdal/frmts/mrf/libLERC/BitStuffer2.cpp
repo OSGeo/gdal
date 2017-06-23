@@ -146,13 +146,16 @@ bool BitStuffer2::EncodeLut(Byte** ppByte,
 
 // if you change Encode(...) / Decode(...), don't forget to update ComputeNumBytesNeeded(...)
 
-bool BitStuffer2::Decode(const Byte** ppByte, vector<unsigned int>& dataVec) const
+bool BitStuffer2::Decode(const Byte** ppByte, size_t& nRemainingBytes, vector<unsigned int>& dataVec) const
 {
   if (!ppByte)
     return false;
 
+  if( nRemainingBytes < 1 )
+     return false;
   Byte numBitsByte = **ppByte;
   (*ppByte)++;
+  nRemainingBytes -= 1;
 
   int bits67 = numBitsByte >> 6;
   int n = (bits67 == 0) ? 4 : 3 - bits67;
@@ -161,7 +164,7 @@ bool BitStuffer2::Decode(const Byte** ppByte, vector<unsigned int>& dataVec) con
   numBitsByte &= 31;    // bits 0-4;
 
   unsigned int numElements = 0;
-  if (!DecodeUInt(ppByte, numElements, n))
+  if (!DecodeUInt(ppByte, nRemainingBytes, numElements, n))
     return false;
 
   int numBits = numBitsByte;
@@ -170,21 +173,29 @@ bool BitStuffer2::Decode(const Byte** ppByte, vector<unsigned int>& dataVec) con
   if (!doLut)
   {
     if (numBits > 0)    // numBits can be 0
-      BitUnStuff(ppByte, dataVec, numElements, numBits);
+      if( !BitUnStuff(ppByte, nRemainingBytes, dataVec, numElements, numBits) )
+        return false;
   }
   else
   {
+    if( nRemainingBytes < 1 )
+      return false;
     Byte nLutByte = **ppByte;
     (*ppByte)++;
+    nRemainingBytes -= 1;
 
     int nLut = nLutByte - 1;
-    BitUnStuff(ppByte, m_tmpLutVec, nLut, numBits);    // unstuff lut w/o the 0
+    // unstuff lut w/o the 0
+    if( !BitUnStuff(ppByte, nRemainingBytes, m_tmpLutVec, nLut, numBits) )
+        return false;
 
     int nBitsLut = 0;
     while (nLut >> nBitsLut)
       nBitsLut++;
 
-    BitUnStuff(ppByte, dataVec, numElements, nBitsLut);    // unstuff indexes
+    // unstuff indexes
+    if( !BitUnStuff(ppByte, nRemainingBytes, dataVec, numElements, nBitsLut) )
+      return false;
 
     // replace indexes by values
     m_tmpLutVec.insert(m_tmpLutVec.begin(), 0);    // put back in the 0
@@ -288,7 +299,9 @@ void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, i
 
 // -------------------------------------------------------------------------- ;
 
-void BitStuffer2::BitUnStuff(const Byte** ppByte, vector<unsigned int>& dataVec,
+bool BitStuffer2::BitUnStuff(const Byte** ppByte, 
+                             size_t& nRemainingBytes,
+                             vector<unsigned int>& dataVec,
                              unsigned int numElements, int numBits) const
 {
   dataVec.resize(numElements, 0);    // init with 0
@@ -297,6 +310,8 @@ void BitStuffer2::BitUnStuff(const Byte** ppByte, vector<unsigned int>& dataVec,
   unsigned int numBytes = numUInts * sizeof(unsigned int);
   unsigned int* arr = (unsigned int*)(*ppByte);
 
+  if( nRemainingBytes < numBytes )
+    return false;
   unsigned int* srcPtr = arr;
   srcPtr += numUInts;
 
@@ -354,6 +369,8 @@ void BitStuffer2::BitUnStuff(const Byte** ppByte, vector<unsigned int>& dataVec,
   }
 
   *ppByte += numBytes - numBytesNotNeeded;
+  nRemainingBytes -= (numBytes - numBytesNotNeeded);
+  return true;
 }
 
 // -------------------------------------------------------------------------- ;
