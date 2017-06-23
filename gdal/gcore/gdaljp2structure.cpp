@@ -1356,7 +1356,7 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
 {
     // Limit recursion to a reasonable level. I believe that in practice 2
     // should be sufficient, but just in case someone creates deeply
-    // embedded "super-boxes", allow up to 5.
+    // nested "super-boxes", allow up to 5.
     if( nRecLevel == 5 )
         return;
 
