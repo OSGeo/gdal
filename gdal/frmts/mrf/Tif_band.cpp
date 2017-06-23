@@ -154,6 +154,23 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
         VSIUnlink(fname);
         return CE_Failure;
     }
+    int nBlockXSize, nBlockYSize;
+    poTiff->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    const int nDTSize = GDALGetDataTypeSizeBytes(
+                        poTiff->GetRasterBand(1)->GetRasterDataType());
+    if( poTiff->GetRasterXSize() != img.pagesize.x ||
+        poTiff->GetRasterYSize() != img.pagesize.y ||
+        poTiff->GetRasterCount() < img.pagesize.c ||
+        nBlockXSize != img.pagesize.x ||
+        nBlockYSize != img.pagesize.y ||
+        static_cast<vsi_l_offset>(nBlockXSize) * nBlockYSize * nDTSize != dst.size )
+    {
+        CPLError(CE_Failure,CPLE_AppDefined,
+            "MRF: TIFF inconsistant with MRF parameters");
+        GDALClose(poTiff);
+        VSIUnlink(fname);
+        return CE_Failure;
+    }
 
     CPLErr ret;
     // Bypass the GDAL caching
