@@ -46,6 +46,7 @@
 
 CPL_C_START
 #include <jpeglib.h>
+#include "jerror.h"
 CPL_C_END
 
 CPL_CVSID("$Id$");
@@ -103,9 +104,9 @@ static void stub_source_dec(j_decompress_ptr /*cinfo*/) {}
 */
 static boolean fill_input_buffer_dec(j_decompress_ptr cinfo)
 {
-    if (0 != cinfo->src->bytes_in_buffer)
-        return TRUE;
     CPLError(CE_Failure, CPLE_AppDefined, "Invalid JPEG stream");
+    cinfo->err->msg_code = JERR_INPUT_EMPTY;
+    cinfo->err->error_exit((j_common_ptr)(cinfo));
     return FALSE;
 }
 
