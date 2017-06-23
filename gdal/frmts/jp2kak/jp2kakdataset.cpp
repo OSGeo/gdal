@@ -135,9 +135,17 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBandIn, int nDiscardLevelsIn,
     }
     SetMetadataItem("COMPRESSION", "JP2000", "IMAGE_STRUCTURE");
 
-    // Use a 2048x128 "virtual" block size unless the file is small.
-    nBlockXSize = std::min(nRasterXSize, 2048);
-    nBlockYSize = std::min(nRasterYSize, 128);
+    // Use tile dimension as block size, unless it is too big
+    kdu_dims valid_tiles;
+    kdu_dims tile_dims;
+    oCodeStream.get_valid_tiles(valid_tiles);
+    oCodeStream.get_tile_dims(valid_tiles.pos, -1, tile_dims);
+    nBlockXSize = std::min(std::min(tile_dims.size.x, 2048), nRasterXSize);
+    nBlockYSize = std::min(std::min(tile_dims.size.y, 2048), nRasterYSize);
+
+    CPLDebug( "JP2KAK", "JP2KAKRasterBand::JP2KAKRasterBand() : "
+            "Tile dimension : %d X %d\n",
+            nBlockXSize, nBlockYSize);
 
     // Figure out the color interpretation for this band.
     eInterp = GCI_Undefined;
