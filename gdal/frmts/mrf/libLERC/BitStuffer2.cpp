@@ -146,7 +146,7 @@ bool BitStuffer2::EncodeLut(Byte** ppByte,
 
 // if you change Encode(...) / Decode(...), don't forget to update ComputeNumBytesNeeded(...)
 
-bool BitStuffer2::Decode(const Byte** ppByte, size_t& nRemainingBytes, vector<unsigned int>& dataVec) const
+bool BitStuffer2::Decode(const Byte** ppByte, size_t& nRemainingBytes, vector<unsigned int>& dataVec, size_t nMaxBufferVecElts) const
 {
   if (!ppByte)
     return false;
@@ -165,6 +165,9 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nRemainingBytes, vector<un
 
   unsigned int numElements = 0;
   if (!DecodeUInt(ppByte, nRemainingBytes, numElements, n))
+    return false;
+  // To avoid excessive memory allocation attempts
+  if( numElements > nMaxBufferVecElts )
     return false;
 
   int numBits = numBitsByte;
