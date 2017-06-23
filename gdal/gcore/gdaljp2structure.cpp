@@ -361,10 +361,11 @@ static void DumpBPCCBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         GByte* pabyIter = pabyBoxData;
         int nBPCIndex = 0;
         CPLXMLNode* psLastChild = NULL;
+        // TODO(rouault): Why "< 16384"?  Maybe make it a symbolic constant?
         while( nRemainingLength >= 1 && nBPCIndex < 16384 )
         {
             AddField(psDecodedContent,
-                     psLastChild, 
+                     psLastChild,
                         CPLSPrintf("BPC%d", nBPCIndex),
                         *pabyIter,
                         GetInterpretationOfBPC(*pabyIter));
@@ -1353,6 +1354,7 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                                       int nRecLevel,
                                       vsi_l_offset nFileOrParentBoxSize)
 {
+    // TODO(rouault): Why is this 5?
     if( nRecLevel == 5 )
         return;
 
