@@ -877,7 +877,16 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         pszHeaderFile = CPLGetConfigOption( "GDAL_HTTP_HEADER_FILE", NULL );
     if( pszHeaderFile != NULL )
     {
-        VSILFILE *fp = VSIFOpenL( pszHeaderFile, "rb" );
+        VSILFILE *fp = NULL;
+        // Do not allow /vsicurl/ access from /vsicurl because of GetCurlHandleFor()
+        // e.g. "/vsicurl/,HEADER_FILE=/vsicurl/,url= " would cause use of
+        // memory after free
+        if( strstr(pszHeaderFile, "/vsicurl/") == NULL &&
+            strstr(pszHeaderFile, "/vsis3/") == NULL &&
+            strstr(pszHeaderFile, "/vsigs/") == NULL )
+        {
+            fp = VSIFOpenL( pszHeaderFile, "rb" );
+        }
         if( fp == NULL )
         {
             CPLError(CE_Failure, CPLE_FileIO,
