@@ -143,7 +143,7 @@ Note: this is only a very partial backport of more extensive fixes done in GDAL 
 * DXF: prevent null ptr deref on corrupted file
 * DXF: fix out-of-bounds read on corrupted files
 * DXF: fix memory leak in case of corrupted file
-* KML::unregisterLayerIfMatchingThisNode(): use memmove() instead of memcpy(). Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=158
+* KML::unregisterLayerIfMatchingThisNode(): use memmove() instead of memcpy(). Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1580
 * KML: fix crash on weird structure with recursively empty folders. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1591
 * KML: fix null ptr dereference on corrupted file. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1634
 * OGRCurveCollection::importBodyFromWkb(): fix potential crash if the curve in the collection has not the same dimension has the collection dimension. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1584
