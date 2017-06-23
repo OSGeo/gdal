@@ -1,3 +1,195 @@
+= GDAL/OGR 2.1.4 Release Notes = 
+
+The 2.1.4 release is a bug fix release.
+
+== Build ==
+ * configure: remove bashism  (#6791)
+ * configure: fix --without-mrf (#6811)
+ * Add HDF4_INCLUDE option to MSVC builds (#6805)
+ * DWG: fix compilation problems (#6843)
+ * configure: fix detection of 64bit file API with clang 5 (#6912)
+ * configure: use .exe extension when building with mingw64* toolchains (#6919)
+ * mongoDB: compilation fix on Windows
+
+== Port ==
+
+* CPLSerializeXMLNode(): fix potential buffer overflow (#6851)
+*/vsicurl/: fix occasional inappropriate failures in Read() with some combinations of initial offset, file size and read request size (#6901)
+
+== Algorithms ==
+
+* gdal_rasterize: fix crash when rasterizing empty polygon (#6844)
+* GDALRasterize(): avoid hang in some cases with all_touched option (#5580)
+
+== GDAL utilities ==
+
+* Man pages: remove redundant utility name (#6822)
+* gdaldem: backport r37897 (#6847)
+* gdalwarp: fix crash when -multi and -to RPC_DEM are used together (#6869)
+
+== GDAL drivers ==
+
+AIGRID driver:
+ * fix handling on raw 32-bit AIG blocks (#6886)
+
+DTED driver:
+ * correctly create files at latitudes -80, -75, -70 and -50 (#6859)
+
+GeoRaster driver:
+ * support for JP2-F compression (#6861)
+ * support direct loading of JPEG-F when blocking=no (#6861)
+ * default blocking increased from 256x256 to 512x512 (#6861)
+ * fix handling of memory allocation failure (#6884)
+
+OpenJpeg driver:
+ * support direct extracting of GeoRaster JP2-F BLOB (#6861)
+
+GPKG driver:
+ * set matrix_width/matrix_height in gpkg_tile_matrix in conformance with req 45 (#6826)
+ * avoid corruption of gpkg_tile_matrix when building overviews, down to a level where they are smaller than the tile size (#6932)
+
+GTiff driver:
+ * map D_North_American_1927 datum citation name to OGC North_American_Datum_1927 so that datum is properly recognized (#6863)
+
+Idrisi driver:
+ * make Create() zero-initialize the .rst file (#6873)
+
+MBTiles driver:
+ * on opening if detecting 3 bands, expose 4 bands since there might be transparent border tiles (#6836)
+
+netCDF driver:
+ * fix crash on int64/uint64 dimensions and variables, and add support for them (#6870)
+
+NWT_GRC driver:
+ * Fix handling of alpha values in GRC color table (#6905)
+ 
+SRTMHGT driver:
+ * handle files for latitude >= 50 (#6840)
+
+VRT driver:
+ * fix 2.1 regression that can cause crash in VRTSimpleSource::GetFileList() (#6802)
+
+WMTS driver:
+ * accept tiles of small dimensions (https://github.com/OSGeo/gdal/pull/210)
+ 
+== OGR core ==
+
+* OGR SQL: fix IN filtering on MapInfo indexed columns (2.0 regression, #6798)
+* Fix issue when getting MULTIPOINT(0 0,1 1) envelope (#6841)
+* OGRPolygon: make IsEmpty() return TRUE if the polygon is made of an empty ring (#6844)
+* OGRParse: fix parsing logic to avoid false positive detection of string as datetime (#6867)
+
+== OGR utilities ==
+
+* ogr2ogr/GDALVectorTranslate(): fix crash when using -f PDF -a_srs (fixes #6920)
+
+== OGR drivers ==
+
+Amigocloud driver:
+ * backport part of change of trunk r36639 that should have been backported in 2.1 in r36640 but was missed for some reason (https://github.com/OSGeo/gdal/pull/137)
+
+GeoJSON driver:
+ * ESRIJson: avoid endless looping on servers that don't support resultOffset (#6895)
+
+GPKG driver:
+ * make GetFeature() works on non conformant tables that have no integer primary key field (#6799), and be robust to non standard column types
+ * GPKG: declare feature id column of features tables and tile pyramid user data tables as NOT NULL (#6807, relates to ​https://github.com/opengeospatial/geopackage/issues/282)
+ * GPKG/SQLite: fix ExecuteSQL() to work with a statement with 2 SELECT and ORDER BY clause (#6832)
+ * GPKG: make driver robust to difference of cases between table_name in gpkg_contents/gpkg_geometry_columns and name in sqlite_master (#6916)
+
+ILI2 driver:
+ * assign FID to features (#6839)
+
+LIBKML driver:
+ * emit style related errors as warnings to make datasets openable by SWIG bindings (#6850)
+
+OCI driver:
+ * support for long identifiers (up to 128 long) when running of 12.2 or + (#6866)
+
+ODS driver:
+ * fix FID filtering (#6788)
+
+OpenFileGDB driver:
+ * fix bug when field description offset is beyond 4GB (#6830)
+
+PG driver:
+ * avoid errors with field default expressions like 'foo'::text (#6872)
+
+== Java bindings ==
+
+* Fix crash on GetDefaultHistogram() if the C++ method returns an error (#6812)
+ 
+== Perl bindings ==
+
+* Backport r37220 for fixing #6796
+* Backport r37222
+
+== Python bindings ==
+
+* fix 'import osgeo.gdal_array' with python3 and SWIG 3.0.10 (#6801)
+* allow gdal.FileFromMemBuffer() to use buffer > 2GB (fixes #6828)
+
+== Security oriented fixes ==
+
+Note: this is only a very partial backport of more extensive fixes done in GDAL trunk. Credit to OSS-Fuzz for all of them (some have been found locally, so no related ticket)
+
+* Fix CPLErrorSetState to ensure it does not write beyond DEFAULT_LAST_ERR_MSG_SIZE and correctly null-terminates last message. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1529.
+* OpenAIR: fix potential out-of-buffer read if we need to ingest 30000 bytes. Credit to OSS Fuzz
+* GDALDataset and GDALRasterBand::ReportError(): fix crash if dataset name has a % character
+* NASAKeywordHandler::SkipWhite(): fix out of bounds read
+* MITAB: ParseTABFileFields(): fix out of bounds read
+* MITAB: avoid potentially veryyyy long loop when stroking arcs. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1644
+* MITAB: avoid heap-buffer-overflow in MITABCoordSys2TABProjInfo(). Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1653
+* DXF: prevent null ptr deref on corrupted file
+* DXF: fix out-of-bounds read on corrupted files
+* DXF: fix memory leak in case of corrupted file
+* KML::unregisterLayerIfMatchingThisNode(): use memmove() instead of memcpy(). Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=158
+* KML: fix crash on weird structure with recursively empty folders. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1591
+* KML: fix null ptr dereference on corrupted file. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1634
+* OGRCurveCollection::importBodyFromWkb(): fix potential crash if the curve in the collection has not the same dimension has the collection dimension. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1584
+* TIGER: fix potential stack buffer overflow. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1586
+* VFK: avoid out-of-bounds read. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1596
+* VFK: fix out-of-bounds read. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2074
+* CPLHexToBinary(): avoid reading outside of hex2char array on on-ASCII input. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1606
+* OGR PDS: avoid int32 overflow. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1607
+* GeoRSS: fix null pointer dereference on corrupted files. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1611
+* VSIArchiveFilesystemHandler::SplitFilename(): improve performance. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1597
+* OGRGeometryFactory::organizePolygons(): fix crash on empty polygons. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1620
+* JML: fix null pointer dereference on invalid files. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1622
+* Shape: prevent null ptr deref on truncated MultiPointM geometry. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1638
+* /vsisubfile/: avoid Tell() to return negative values. And make VSIIngestFile() more robust to unsigned overflow. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1642
+* GTM: avoid useless recursive opening of files when provided with a gzip-compressed input. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1650
+* GTiff: fix heap-buffer-overflow. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1677
+* GTiff: avoid heap-buffer-overfow on corrupted State Plane citation. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2050
+* GTiff: avoid potential stack buffer overflow on corrupted Imagine citation. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2105
+* GTiff: prevent heap overflow and fix reading of multi-band band-interleaved 16/24-bit float datasets. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2264
+* GTiff: fix potential infinite loop when parsing some 24-bit float denormalized numbers. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2315
+* Internal libjson-c: fix stack buffer overflow. Submitted upstream as https://github.com/json-c/json-c/pull/325. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1682
+* ILI1/ILI2: fix null pointer dereference when opening filename ','. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1689
+* ILI1: fix various crashes and memleaks on corrupted files (including, but not limited to, https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1760 , 1784, 1926)
+* ILI2: use proper cast operator. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1813
+* ILI2: fix crash due to unhandled exception. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2191
+* OGRSpatialReference::morphFromESRI(): fix heap-use-after-free issue. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1690
+* GML / NAS: fix memory leak in error code path, and potential heap-buffer-read-overflow
+* morphFromESRI(): prevent potential null pointer dereference. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1783
+* NTF: fix various issues: heap & stack buffer-overflow, null ptr derefs, memory leaks. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1819 , 1820 , 1823, 1833, 1854, 1862, 1910, 1931, 1961, 1982, 1990, 1993, 1995, 1996, 2003, 2033, 2052, 2077, 2084, 2103, 2130, 2135, 2146, 2166, 2185, 2187
+* morphFromESRI(): avoid potential null pointer dereference. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1867
+* GXF: validate nGType to avoid later out-of-bound read in GXFReadRawScanlineFrom(). Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1975
+* GXF: fix int overflow and avoid excessive memory allocation. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2207
+* TIGER: avoid stack buffer overflows. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2020
+* ISO8211: prevent stack buffer oveflow. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2022
+* VICAR: fix null pointer dereference. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2116
+* GPKG: fix potential heap-buffer overflow in GPkgHeaderFromWKB(). Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2150
+* GPKG: fix potential null ptr deref. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2240
+* REC: fix potential stack buffer overflow. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2165
+* E00GRID: fix heap buffer overflow. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2182
+* E00GRID: avoid index-out-of-bounds write access. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2237
+* E00GRID: fix index out of bounds access. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2327
+* VICAR: avoid use-after-free and heap-buffer-overflow. Fixes https://oss-fuzz.com/v2/testcase-detail/4825577427042304
+* OGRCompoundCurve::importFromWkb(): avoid potential stack overflow. Fixes https://oss-fuzz.com/v2/testcase-detail/5192348843638784
+* Selafin: fix double frees. Fixes https://oss-fuzz.com/v2/testcase-detail/6429713822121984
+* netCDF: avoid stack buffer overflow. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2302
+
 = GDAL/OGR 2.1.3 Release Notes = 
 
 The 2.1.3 release is a bug fix release.
