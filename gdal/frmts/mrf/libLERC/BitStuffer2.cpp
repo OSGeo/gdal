@@ -200,7 +200,11 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nRemainingBytes, vector<un
     // replace indexes by values
     m_tmpLutVec.insert(m_tmpLutVec.begin(), 0);    // put back in the 0
     for (unsigned int i = 0; i < numElements; i++)
+    {
+      if( dataVec[i] >= m_tmpLutVec.size() )
+        return false;
       dataVec[i] = m_tmpLutVec[dataVec[i]];
+    }
   }
 
   return true;
