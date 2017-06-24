@@ -160,16 +160,19 @@ template <typename T> static void CntZImgFill(CntZImage &zImg, T *src, const ILI
 }
 
 // Unload a zImg into a buffer
-template <typename T> static void CntZImgUFill(CntZImage &zImg, T *dst, const ILImage &img)
+template <typename T> static bool CntZImgUFill(CntZImage &zImg, T *dst, size_t dstBufferBytes, const ILImage &img)
 {
     int h = static_cast<int>(zImg.getHeight());
     int w = static_cast<int>(zImg.getWidth());
+    if( dstBufferBytes < w * h* sizeof(T) )
+        return false;
     T *ptr = dst;
     // Use 0 if nodata is not defined
     const T ndv = img.hasNoData ? static_cast<T>(img.NoDataValue) : 0;
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++)
             *ptr++ = (zImg(i, j).cnt == 0) ? ndv : static_cast<T>(zImg(i, j).z);
+    return true;
 }
 
 //  LERC 1 compression
@@ -231,7 +234,8 @@ static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     }
 
 // Unpack from zImg to dst buffer, calling the right type
-#define UFILL(T) CntZImgUFill(zImg, reinterpret_cast<T *>(dst.buffer), img)
+    bool success = false;
+#define UFILL(T) success = CntZImgUFill(zImg, reinterpret_cast<T *>(dst.buffer), dst.size, img)
     switch (img.dt) {
     case GDT_Byte:      UFILL(GByte);   break;
     case GDT_UInt16:    UFILL(GUInt16); break;
@@ -243,7 +247,10 @@ static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     default: break;
     }
 #undef UFILL
-
+    if (!success) {
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during LERC compression");
+        return CE_Failure;
+    }
     return CE_None;
 }
 
