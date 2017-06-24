@@ -2711,7 +2711,7 @@ class GDALGeneric3x3RasterBand : public GDALRasterBand
     int bIsSrcNoDataNan;
     GDALDataType eReadDT;
 
-    void                    InitWidthNoData( void* pImage );
+    void                    InitWithNoData( void* pImage );
 
   public:
                  GDALGeneric3x3RasterBand( GDALGeneric3x3Dataset<T> *poDS,
@@ -2825,7 +2825,7 @@ GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(
 }
 
 template<class T>
-void GDALGeneric3x3RasterBand<T>::InitWidthNoData(void* pImage)
+void GDALGeneric3x3RasterBand<T>::InitWithNoData(void* pImage)
 {
     GDALGeneric3x3Dataset<T> * poGDS = (GDALGeneric3x3Dataset<T> *) poDS;
     if( eDataType == GDT_Byte )
@@ -2862,7 +2862,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
                                     0, 0);
                 if( eErr != CE_None )
                 {
-                    InitWidthNoData(pImage);
+                    InitWithNoData(pImage);
                     return eErr;
                 }
             }
@@ -2926,7 +2926,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
                         0, 0);
                     if( eErr != CE_None )
                     {
-                        InitWidthNoData(pImage);
+                        InitWithNoData(pImage);
                         return eErr;
                     }
                 }
@@ -2977,7 +2977,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
     }
     else if( nBlockYOff == 0 || nBlockYOff == nRasterYSize - 1 )
     {
-        InitWidthNoData(pImage);
+        InitWithNoData(pImage);
         return CE_None;
     }
 
@@ -3000,7 +3000,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
 
             if( eErr != CE_None )
             {
-                InitWidthNoData(pImage);
+                InitWithNoData(pImage);
                 return eErr;
             }
         }
@@ -3018,7 +3018,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
                                  0, 0);
                 if( eErr != CE_None )
                 {
-                    InitWidthNoData(pImage);
+                    InitWithNoData(pImage);
                     return eErr;
                 }
             }
