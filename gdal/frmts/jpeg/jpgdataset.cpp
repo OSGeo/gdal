@@ -1332,6 +1332,47 @@ CPLErr JPGDataset::LoadScanline( int iLine )
 
     if (!bHasDoneJpegStartDecompress)
     {
+
+        /* In some cases, libjpeg needs to allocate a lot of memory */
+        /* http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf */
+        if( jpeg_has_multiple_scans(&(sDInfo)) )
+        {
+            /* In this case libjpeg will need to allocate memory or backing */
+            /* store for all coefficients */
+            /* See call to jinit_d_coef_controller() from master_selection() */
+            /* in libjpeg */
+            vsi_l_offset nRequiredMemory = 
+                static_cast<vsi_l_offset>(sDInfo.image_width) *
+                sDInfo.image_height * sDInfo.num_components *
+                ((sDInfo.data_precision+7)/8);
+            /* BLOCK_SMOOTHING_SUPPORTED is generally defined, so we need */
+            /* to replicate the logic of jinit_d_coef_controller() */
+            if( sDInfo.progressive_mode )
+                nRequiredMemory *= 3;
+
+    #ifndef GDAL_LIBJPEG_LARGEST_MEM_ALLOC
+    #define GDAL_LIBJPEG_LARGEST_MEM_ALLOC (100 * 1024 * 1024)
+    #endif
+
+            if( nRequiredMemory > GDAL_LIBJPEG_LARGEST_MEM_ALLOC &&
+                CPLGetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", NULL) == NULL )
+            {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                        "Reading this image would require libjpeg to allocate "
+                        "at least " CPL_FRMT_GUIB " bytes. "
+                        "This is disabled since above the " CPL_FRMT_GUIB " threshold. "
+                        "You may override this restriction by defining the "
+                        "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
+                        "or recompile GDAL by defining the "
+                        "GDAL_LIBJPEG_LARGEST_MEM_ALLOC macro to a value greater "
+                        "than " CPL_FRMT_GUIB,
+                        static_cast<GUIntBig>(nRequiredMemory),
+                        static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC),
+                        static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC));
+                    return CE_Failure;
+            }
+        }
+
         sDInfo.progress = &sJProgress;
         sJProgress.progress_monitor = JPGDataset::ProgressMonitor;
         jpeg_start_decompress(&sDInfo);
