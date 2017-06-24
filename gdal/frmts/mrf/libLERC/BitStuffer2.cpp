@@ -202,6 +202,11 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nRemainingBytes, vector<un
     (*ppByte)++;
     nRemainingBytes -= 1;
 
+    if( nLutByte == 0 )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
     int nLut = nLutByte - 1;
     // unstuff lut w/o the 0
     if( !BitUnStuff(ppByte, nRemainingBytes, m_tmpLutVec, nLut, numBits) )
@@ -340,7 +345,14 @@ bool BitStuffer2::BitUnStuff(const Byte** ppByte,
                              vector<unsigned int>& dataVec,
                              unsigned int numElements, int numBits) const
 {
-  dataVec.resize(numElements, 0);    // init with 0
+  try
+  {
+    dataVec.resize(numElements, 0);    // init with 0
+  }
+  catch( const std::bad_alloc& )
+  {
+    return false;
+  }
 
   unsigned int numUInts = (numElements * numBits + 31) / 32;
   unsigned int numBytes = numUInts * sizeof(unsigned int);
