@@ -1069,7 +1069,7 @@ bool CntZImage::readCntTile(Byte** ppByte, size_t& nRemainingBytesInOut, int i0,
   }
 
   *ppByte = ptr;
-  nRemainingBytes = nRemainingBytesInOut;
+  nRemainingBytesInOut = nRemainingBytes;
   return true;
 }
 
