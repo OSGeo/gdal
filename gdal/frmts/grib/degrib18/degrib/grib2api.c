@@ -1431,7 +1431,7 @@ static void BigByteCpy (sInt4 * dst, sInt4 * ipack, sInt4 nd5,
        }
       curInt = (uInt4) ipack[intIndex];
       curByte = (curInt << Lshift[byteIndex]) >> 24;
-      *dst = (*dst << 8) + curByte;
+      *dst = (sInt4)((unsigned)*dst << 8) + curByte;
       byteIndex++;
       if (byteIndex == 4) {
          byteIndex = 0;
