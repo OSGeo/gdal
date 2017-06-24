@@ -226,6 +226,35 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     return CE_None;
 }
 
+/************************************************************************/
+/*                          ProgressMonitor()                           */
+/************************************************************************/
+
+/* Avoid the risk of denial-of-service on crafted JPEGs with an insane */
+/* number of scans. */
+/* See http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf */
+static void ProgressMonitor(j_common_ptr cinfo)
+{
+    if (cinfo->is_decompressor)
+    {
+        const int scan_no =
+            reinterpret_cast<j_decompress_ptr>(cinfo)->input_scan_number;
+        const int MAX_SCANS = 100;
+        if (scan_no >= MAX_SCANS)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Scan number %d exceeds maximum scans (%d)",
+                     scan_no, MAX_SCANS);
+
+            MRFJPEGErrorStruct* psErrorStruct =
+                (MRFJPEGErrorStruct* ) cinfo->client_data;
+
+            // return control to the setjmp point
+            longjmp(psErrorStruct->setjmpBuffer, 1);
+        }
+    }
+}
+
 /**
 *\brief In memory decompression of JPEG file
 *
@@ -288,6 +317,10 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
         cinfo.out_color_space = JCS_GRAYSCALE;
 
     int linesize = cinfo.image_width * nbands * ((cinfo.data_precision == 8) ? 1 : 2);
+
+    struct jpeg_progress_mgr sJProgress;
+    cinfo.progress = &sJProgress;
+    sJProgress.progress_monitor = ProgressMonitor;
 
     jpeg_start_decompress(&cinfo);
 

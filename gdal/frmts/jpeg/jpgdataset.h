@@ -276,9 +276,11 @@ class JPGDataset : public JPGDatasetCommon
     bool ErrorOutOnNonFatalError();
 
     static void EmitMessage(j_common_ptr cinfo, int msg_level);
+    static void ProgressMonitor (j_common_ptr cinfo );
 
     struct jpeg_decompress_struct sDInfo;
     struct jpeg_error_mgr sJErr;
+    struct jpeg_progress_mgr sJProgress;
 
     virtual CPLErr LoadScanline(int) override;
     virtual CPLErr Restart() override;

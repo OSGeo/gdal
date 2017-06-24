@@ -1280,6 +1280,7 @@ JPGDataset::JPGDataset() : nQLevel(0)
     sDInfo.data_precision = 8;
 
     memset(&sJErr, 0, sizeof(sJErr));
+    memset(&sJProgress, 0, sizeof(sJProgress));
 }
 
 /************************************************************************/
@@ -1331,6 +1332,8 @@ CPLErr JPGDataset::LoadScanline( int iLine )
 
     if (!bHasDoneJpegStartDecompress)
     {
+        sDInfo.progress = &sJProgress;
+        sJProgress.progress_monitor = JPGDataset::ProgressMonitor;
         jpeg_start_decompress(&sDInfo);
         bHasDoneJpegStartDecompress = true;
     }
@@ -1635,6 +1638,8 @@ CPLErr JPGDataset::Restart()
     }
     else
     {
+        sDInfo.progress = &sJProgress;
+        sJProgress.progress_monitor = JPGDataset::ProgressMonitor;
         jpeg_start_decompress(&sDInfo);
         bHasDoneJpegStartDecompress = true;
     }
@@ -2529,6 +2534,35 @@ void JPGDataset::EmitMessage(j_common_ptr cinfo, int msg_level)
 
         // Always count warnings in num_warnings.
         err->num_warnings++;
+    }
+}
+
+
+/************************************************************************/
+/*                          ProgressMonitor()                           */
+/************************************************************************/
+
+/* Avoid the risk of denial-of-service on crafted JPEGs with an insane */
+/* number of scans. */
+/* See http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf */
+void JPGDataset::ProgressMonitor(j_common_ptr cinfo)
+{
+    if (cinfo->is_decompressor)
+    {
+        const int scan_no =
+            reinterpret_cast<j_decompress_ptr>(cinfo)->input_scan_number;
+        const int MAX_SCANS = 100;
+        if (scan_no >= MAX_SCANS)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Scan number %d exceeds maximum scans (%d)",
+                     scan_no, MAX_SCANS);
+
+            GDALJPEGErrorStruct *psErrorStruct =
+                static_cast<GDALJPEGErrorStruct *>(cinfo->client_data);
+            // Return control to the setjmp point.
+            longjmp(psErrorStruct->setjmp_buffer, 1);
+        }
     }
 }
 
