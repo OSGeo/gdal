@@ -179,7 +179,10 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytesInOut)
   size_t nRemainingBytes = nRemainingBytesInOut;
 
   if( nRemainingBytes < sizeof(int) )
+  {
+      LERC_BRKPNT();
       return false;
+  }
   int version;
   // FIXME endianness handling
   memcpy(&version, ptr, sizeof(int));    // version
@@ -191,7 +194,10 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytesInOut)
 
   vector<int> intVec(4, 0);
   if( nRemainingBytes < sizeof(int) * ( intVec.size() - 1 ) )
+  {
+      LERC_BRKPNT();
       return false;
+  }
   for (size_t i = 1; i < intVec.size(); i++)
   {
     memcpy(&intVec[i], ptr, sizeof(int)); // FIXME endianness handling
@@ -208,9 +214,15 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytesInOut)
   vector<unsigned int> dataVec(i1 - i0, 0);
   BitStuffer2 bitStuffer2;
   if (!bitStuffer2.Decode(&ptr, nRemainingBytes, dataVec, i1 - i0))    // unstuff the code lengths
+  {
+    LERC_BRKPNT();
     return false;
+  }
   if( dataVec.size() != static_cast<size_t>(i1 - i0) )
+  {
+    LERC_BRKPNT();
     return false;
+  }
 
   m_codeTable.resize(size);
   std::fill( m_codeTable.begin(), m_codeTable.end(),
@@ -223,7 +235,10 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytesInOut)
   }
 
   if (!BitUnStuffCodes(&ptr, nRemainingBytes, i0, i1))    // unstuff the codes
+  {
+    LERC_BRKPNT();
     return false;
+  }
 
   *ppByte = ptr;
   nRemainingBytesInOut = nRemainingBytes;
@@ -496,7 +511,10 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytesInOut,
     if (len > 0)
     {
       if( nRemainingBytes < sizeof(unsigned) )
+      {
+        LERC_BRKPNT();
         return false;
+      }
       m_codeTable[k].second = ((*srcPtr) << bitPos) >> (32 - len);
       nRemainingBytes -= sizeof(unsigned);
 
@@ -508,7 +526,10 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytesInOut,
         {
           bitPos = 0;
           if( nRemainingBytes < sizeof(unsigned) )
+          {
+            LERC_BRKPNT();
             return false;
+          }
           srcPtr++;
           nRemainingBytes -= sizeof(unsigned);
         }
@@ -517,7 +538,10 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytesInOut,
       {
         bitPos += len - 32;
         if( nRemainingBytes < sizeof(unsigned) )
+        {
+           LERC_BRKPNT();
            return false;
+        }
         srcPtr++;
         nRemainingBytes -= sizeof(unsigned);
         m_codeTable[k].second |= (*srcPtr) >> (32 - bitPos);
@@ -527,7 +551,10 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytesInOut,
 
   size_t numUInts = srcPtr - arr + (bitPos > 0 ? 1 : 0);
   if( nRemainingBytes < sizeof(unsigned) * numUInts )
+  {
+    LERC_BRKPNT();
     return false;
+  }
   *ppByte += numUInts * sizeof(unsigned int);
   nRemainingBytesInOut = numUInts * sizeof(unsigned int);
   return true;

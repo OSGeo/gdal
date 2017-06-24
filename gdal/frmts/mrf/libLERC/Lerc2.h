@@ -362,7 +362,10 @@ bool Lerc2::Decode(const Byte** ppByte, size_t& nRemainingBytes, T* arr, Byte* p
   }
 
   if( nRemainingBytes < 1 )
+  {
+    LERC_BRKPNT();
     return false;
+  }
   Byte readDataOneSweep = **ppByte;    // read flag
   (*ppByte)++;
   nRemainingBytes -= 1;
@@ -370,12 +373,18 @@ bool Lerc2::Decode(const Byte** ppByte, size_t& nRemainingBytes, T* arr, Byte* p
   if (!readDataOneSweep)
   {
     if (!ReadTiles(ppByte, nRemainingBytes, arr))
+    {
+      LERC_BRKPNT();
       return false;
+    }
   }
   else
   {
     if (!ReadDataOneSweep(ppByte, nRemainingBytes, arr))
+    {
+      LERC_BRKPNT();
       return false;
+    }
   }
 
   return true;
@@ -421,7 +430,10 @@ bool Lerc2::ReadDataOneSweep(const Byte** ppByte, size_t& nRemainingBytesInOut, 
       if (m_bitMask.IsValid(k))
       {
         if( nRemainingBytes < sizeof(T) )
+        {
+          LERC_BRKPNT();
           return false;
+        }
         data[k] = *srcPtr++;
         nRemainingBytes -= sizeof(T);
         cntPixel++;
@@ -599,7 +611,10 @@ bool Lerc2::ReadTiles(const Byte** ppByte, size_t& nRemainingBytes, T* data) con
     && m_headerInfo.maxZError == 0.5)    // for lossless only, maybe later extend to lossy, but Byte and lossy is rare
   {
     if (nRemainingBytes < 1 )
+    {
+      LERC_BRKPNT();
       return false;
+    }
     Byte flag = **ppByte;    // read flag Huffman / Lerc2
     (*ppByte)++;
     nRemainingBytes --;
@@ -630,7 +645,10 @@ bool Lerc2::ReadTiles(const Byte** ppByte, size_t& nRemainingBytes, T* data) con
   if( mbSize <= 0 || height < 0 || width < 0 ||
       height > std::numeric_limits<int>::max() - (mbSize - 1) ||
       width > std::numeric_limits<int>::max() - (mbSize - 1) )
+  {
+    LERC_BRKPNT();
     return false;
+  }
   int numTilesVert = (height + mbSize - 1) / mbSize;
   int numTilesHori = (width + mbSize - 1) / mbSize;
 
@@ -649,7 +667,10 @@ bool Lerc2::ReadTiles(const Byte** ppByte, size_t& nRemainingBytes, T* data) con
         tileW = width - j0;
 
       if (!ReadTile(ppByte, nRemainingBytes, data, i0, i0 + tileH, j0, j0 + tileW, bufferVec))
+      {
+        LERC_BRKPNT();
         return false;
+      }
     }
   }
 
@@ -935,7 +956,10 @@ bool Lerc2::ReadTile(const Byte** ppByte, size_t& nRemainingBytesInOut,
   int numPixel = 0;
 
   if( nRemainingBytes < 1 )
+  {
+    LERC_BRKPNT();
     return false;
+  }
   Byte comprFlag = *ptr++;
   nRemainingBytes -= 1;
   int bits67 = comprFlag >> 6;
@@ -973,7 +997,10 @@ bool Lerc2::ReadTile(const Byte** ppByte, size_t& nRemainingBytesInOut,
         if (m_bitMask.IsValid(k))
         {
           if( nRemainingBytes < sizeof(T) )
+          {
+            LERC_BRKPNT();
             return false;
+          }
           data[k] = *srcPtr++;
           nRemainingBytes -= sizeof(T);
           numPixel++;
@@ -988,7 +1015,10 @@ bool Lerc2::ReadTile(const Byte** ppByte, size_t& nRemainingBytesInOut,
     DataType dtUsed = GetDataTypeUsed(bits67);
     double offset;
     if( !ReadVariableDataType(&ptr, nRemainingBytes, dtUsed, &offset) )
+    {
+      LERC_BRKPNT();
       return false;
+    }
 
     if (comprFlag == 3)
     {
@@ -1004,7 +1034,10 @@ bool Lerc2::ReadTile(const Byte** ppByte, size_t& nRemainingBytesInOut,
     {
       const size_t nMaxBufferVecElts = size_t((i1 - i0) * (j1 - j0));
       if (!m_bitStuffer2.Decode(&ptr, nRemainingBytes, bufferVec, nMaxBufferVecElts))
+      {
+        LERC_BRKPNT();
         return false;
+      }
 
       double invScale = 2 * m_headerInfo.maxZError;    // for int types this is int
       size_t bufferVecIdx = 0;
@@ -1030,7 +1063,10 @@ bool Lerc2::ReadTile(const Byte** ppByte, size_t& nRemainingBytesInOut,
             if (m_bitMask.IsValid(k))
             {
               if( bufferVecIdx == bufferVec.size() )
+              {
+                LERC_BRKPNT();
                 return false;
+              }
               double z = offset + bufferVec[bufferVecIdx] * invScale;
               bufferVecIdx ++;
               data[k] = (T)std::min(z, m_headerInfo.zMax);    // make sure we stay in the orig range
@@ -1177,7 +1213,10 @@ bool Lerc2::ReadVariableDataType(const Byte** ppByte, size_t& nRemainingBytes, D
     case DT_Char:
     {
       if( nRemainingBytes < 1 )
+      {
+        LERC_BRKPNT();
         return false;
+      }
       char c = *((char*)ptr);
       *ppByte = ptr + 1;
       *pdfOutVal = c;
@@ -1187,7 +1226,10 @@ bool Lerc2::ReadVariableDataType(const Byte** ppByte, size_t& nRemainingBytes, D
     case DT_Byte:
     {
       if( nRemainingBytes < 1 )
+      {
+        LERC_BRKPNT();
         return false;
+      }
       Byte b = *((Byte*)ptr);
       *ppByte = ptr + 1;
       *pdfOutVal = b;
@@ -1197,7 +1239,10 @@ bool Lerc2::ReadVariableDataType(const Byte** ppByte, size_t& nRemainingBytes, D
     case DT_Short:
     {
       if( nRemainingBytes < 2 )
+      {
+        LERC_BRKPNT();
         return false;
+      }
       short s;
       memcpy(&s, ptr, sizeof(short));
       *ppByte = ptr + 2;
@@ -1208,7 +1253,10 @@ bool Lerc2::ReadVariableDataType(const Byte** ppByte, size_t& nRemainingBytes, D
     case DT_UShort:
     {
       if( nRemainingBytes < 2 )
+      {
+        LERC_BRKPNT();
         return false;
+      }
       unsigned short us;
       memcpy(&us, ptr, sizeof(unsigned short));
       *ppByte = ptr + 2;
@@ -1219,7 +1267,10 @@ bool Lerc2::ReadVariableDataType(const Byte** ppByte, size_t& nRemainingBytes, D
     case DT_Int:
     {
       if( nRemainingBytes < 4 )
+      {
+        LERC_BRKPNT();
         return false;
+      }
       int i;
       memcpy(&i, ptr, sizeof(int));
       *ppByte = ptr + 4;
@@ -1230,7 +1281,10 @@ bool Lerc2::ReadVariableDataType(const Byte** ppByte, size_t& nRemainingBytes, D
     case DT_UInt:
     {
       if( nRemainingBytes < 4 )
+      {
+        LERC_BRKPNT();
         return false;
+      }
       unsigned int n;
       memcpy(&n, ptr, sizeof(unsigned int));
       *ppByte = ptr + 4;
@@ -1241,7 +1295,10 @@ bool Lerc2::ReadVariableDataType(const Byte** ppByte, size_t& nRemainingBytes, D
     case DT_Float:
     {
       if( nRemainingBytes < 4 )
+      {
+        LERC_BRKPNT();
         return false;
+      }
       float f;
       memcpy(&f, ptr, sizeof(float));
       *ppByte = ptr + 4;
@@ -1252,7 +1309,10 @@ bool Lerc2::ReadVariableDataType(const Byte** ppByte, size_t& nRemainingBytes, D
     case DT_Double:
     {
       if( nRemainingBytes < 8 )
+      {
+        LERC_BRKPNT();
         return false;
+      }
       double d;
       memcpy(&d, ptr, sizeof(double));
       *ppByte = ptr + 8;
@@ -1530,7 +1590,10 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, size_t& nRemainingBytesInOut, T* 
 
   size_t numUInts = srcPtr - arr + (bitPos > 0 ? 1 : 0) + 1;    // add one more as the decode LUT can read ahead
   if( nRemainingBytes < numUInts * sizeof(unsigned int))
+  {
+    LERC_BRKPNT();
     return false;
+  }
   *ppByte += numUInts * sizeof(unsigned int);
   nRemainingBytesInOut -= numUInts * sizeof(unsigned int);
   return true;
