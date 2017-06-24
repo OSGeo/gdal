@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.128 2017-06-18 10:31:50 erouault Exp $ */
+/* $Id: tif_jpeg.c,v 1.129 2017-06-24 13:03:25 erouault Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -145,6 +145,8 @@ typedef struct {
 
 	jpeg_error_mgr	err;		/* libjpeg error manager */
 	JMP_BUF		exit_jmpbuf;	/* for catching libjpeg failures */
+	
+	struct jpeg_progress_mgr progress;
 	/*
 	 * The following two members could be a union, but
 	 * they're small enough that it's not worth the effort.
@@ -234,6 +236,32 @@ TIFFjpeg_output_message(j_common_ptr cinfo)
 	(*cinfo->err->format_message) (cinfo, buffer);
 	TIFFWarningExt(((JPEGState *) cinfo)->tif->tif_clientdata, "JPEGLib", "%s", buffer);
 }
+
+/* Avoid the risk of denial-of-service on crafted JPEGs with an insane */
+/* number of scans. */
+/* See http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf */
+static void
+TIFFjpeg_progress_monitor(j_common_ptr cinfo)
+{
+    JPEGState *sp = (JPEGState *) cinfo;	/* NB: cinfo assumed first */
+    if (cinfo->is_decompressor)
+    {
+        const int scan_no =
+            ((j_decompress_ptr)cinfo)->input_scan_number;
+        const int MAX_SCANS = 100;
+        if (scan_no >= MAX_SCANS)
+        {
+            TIFFErrorExt(((JPEGState *) cinfo)->tif->tif_clientdata, 
+                     "TIFFjpeg_progress_monitor",
+                     "Scan number %d exceeds maximum scans (%d)",
+                     scan_no, MAX_SCANS);
+
+            jpeg_abort(cinfo);			/* clean up libjpeg state */
+            LONGJMP(sp->exit_jmpbuf, 1);		/* return to libtiff caller */
+        }
+    }
+}
+
 
 /*
  * Interface routines.  This layer of routines exists
@@ -339,6 +367,10 @@ TIFFjpeg_read_header(JPEGState* sp, boolean require_image)
 static int
 TIFFjpeg_start_decompress(JPEGState* sp)
 {
+        /* progress monitor */
+        sp->cinfo.d.progress = &sp->progress;
+        sp->progress.progress_monitor = TIFFjpeg_progress_monitor;
+
 	return CALLVJPEG(sp, jpeg_start_decompress(&sp->cinfo.d));
 }
 
