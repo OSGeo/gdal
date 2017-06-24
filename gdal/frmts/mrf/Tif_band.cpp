@@ -156,14 +156,15 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     }
     int nBlockXSize, nBlockYSize;
     poTiff->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    const int nDTSize = GDALGetDataTypeSizeBytes(
-                        poTiff->GetRasterBand(1)->GetRasterDataType());
+    const GDALDataType eGTiffDT = poTiff->GetRasterBand(1)->GetRasterDataType();
+    const int nDTSize = GDALGetDataTypeSizeBytes(eGTiffDT);
     if( poTiff->GetRasterXSize() != img.pagesize.x ||
         poTiff->GetRasterYSize() != img.pagesize.y ||
-        poTiff->GetRasterCount() < img.pagesize.c ||
+        poTiff->GetRasterCount() != img.pagesize.c ||
         nBlockXSize != img.pagesize.x ||
         nBlockYSize != img.pagesize.y ||
-        static_cast<vsi_l_offset>(nBlockXSize) * nBlockYSize * nDTSize != dst.size )
+        img.dt != eGTiffDT ||
+        static_cast<vsi_l_offset>(nBlockXSize) * nBlockYSize * nDTSize * img.pagesize.c != dst.size )
     {
         CPLError(CE_Failure,CPLE_AppDefined,
             "MRF: TIFF inconsistant with MRF parameters");
