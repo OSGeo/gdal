@@ -90,7 +90,10 @@ NASHandler::NASHandler( NASReader *poReader ) :
     m_bIgnoreFeature(false),
     m_bInUpdate(false),
     m_bInUpdateProperty(false),
-    m_nDepthElement(0)
+    m_nDepthElement(0),
+    m_nUpdateOrDeleteDepth(0),
+    m_nUpdatePropertyDepth(0),
+    m_nNameOrValueDepth(0)
 {}
 
 /************************************************************************/
@@ -316,7 +319,8 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
 /* -------------------------------------------------------------------- */
 /*      Is it a feature?  If so push a whole new state, and return.     */
 /* -------------------------------------------------------------------- */
-    else if( m_poReader->IsFeatureElement( m_osElementName ) )
+    else if( !m_bInUpdateProperty &&
+             m_poReader->IsFeatureElement( m_osElementName ) )
     {
         m_osLastTypeName = m_osElementName;
 
@@ -376,7 +380,8 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
 /*      the typeName attribute so we can assign it to the feature that  */
 /*      will be produced when we process the Filter element.            */
 /* -------------------------------------------------------------------- */
-    else if( m_osElementName == "Delete" || m_osElementName == "Update" )
+    else if( m_nUpdateOrDeleteDepth == 0 &&
+             (m_osElementName == "Delete" || m_osElementName == "Update") )
     {
         const XMLCh Name[] = { 't', 'y', 'p', 'e', 'N', 'a', 'm', 'e', '\0' };
 
@@ -394,19 +399,24 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
         {
             m_bInUpdate = true;
         }
+        m_nUpdateOrDeleteDepth = m_nDepth;
     }
 
-    else if ( m_bInUpdate && m_osElementName == "Property" )
+    else if ( m_nUpdatePropertyDepth  == 0 &&
+              m_bInUpdate && m_osElementName == "Property" )
     {
         m_bInUpdateProperty = true;
+        m_nUpdatePropertyDepth = m_nDepth;
     }
 
-    else if ( m_bInUpdateProperty && ( m_osElementName == "Name" ||
+    else if ( m_nNameOrValueDepth == 0 &&
+              m_bInUpdateProperty && ( m_osElementName == "Name" ||
                                        m_osElementName == "Value" ) )
     {
         // collect attribute name or value
         CPLFree( m_pszCurField );
         m_pszCurField = CPLStrdup("");
+        m_nNameOrValueDepth = m_nDepth;
     }
 
 /* -------------------------------------------------------------------- */
@@ -505,19 +515,21 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
 
    if( m_bInUpdateProperty )
    {
-       if( m_osElementName == "Name" )
+       if( m_osElementName == "Name" && m_nDepth == m_nNameOrValueDepth )
        {
            CPLAssert( m_osLastPropertyName == "" );
            m_osLastPropertyName = m_pszCurField;
            m_pszCurField = NULL;
+           m_nNameOrValueDepth = 0;
        }
-       else if( m_osElementName == "Value" )
+       else if( m_osElementName == "Value" && m_nDepth == m_nNameOrValueDepth )
        {
            CPLAssert( m_osLastPropertyValue == "" );
            m_osLastPropertyValue = m_pszCurField;
            m_pszCurField = NULL;
+           m_nNameOrValueDepth = 0;
        }
-       else if( m_osElementName == "Property" )
+       else if( m_nDepth == m_nUpdatePropertyDepth && m_osElementName == "Property" )
        {
            if( EQUAL( m_osLastPropertyName, "adv:lebenszeitintervall/adv:AA_Lebenszeitintervall/adv:endet" ) )
            {
@@ -539,6 +551,7 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
            m_osLastPropertyName = "";
            m_osLastPropertyValue = "";
            m_bInUpdateProperty = false;
+           m_nUpdatePropertyDepth = 0;
        }
 
        poState->PopPath();
@@ -546,9 +559,14 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
        return;
    }
 
-   if ( m_bInUpdate && m_osElementName == "Update" )
+   if( m_nUpdateOrDeleteDepth > 0 &&
+             (m_osElementName == "Delete" || m_osElementName == "Update") )
    {
-       m_bInUpdate = false;
+        if ( m_bInUpdate && m_osElementName == "Update" )
+        {
+            m_bInUpdate = false;
+        }
+        m_nUpdateOrDeleteDepth = 0;
    }
 
 /* -------------------------------------------------------------------- */
