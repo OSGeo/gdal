@@ -813,6 +813,93 @@ def update_no_data_values(warped_vrt_dataset, nodata_values, options=None):
         return corrected_dataset
 
 
+def add_alpha_band_to_string_vrt(vrt_string):
+    # TODO: gbataille - Old code speak of this being equivalent to gdalwarp -dstalpha
+    # To be checked
+
+    vrt_root = ElementTree.fromstring(vrt_string)
+
+    index = 0
+    nb_bands = 0
+    for subelem in list(vrt_root):
+        if subelem.tag == "VRTRasterBand":
+            nb_bands += 1
+            color_node = subelem.find("./ColorInterp")
+            if color_node and color_node.text == "Alpha":
+                raise Exception("Alpha band already present")
+        else:
+            if nb_bands:
+                # This means that we are one element after the Band definitions
+                break
+
+        index += 1
+
+    tb = ElementTree.TreeBuilder()
+    tb.start("VRTRasterBand",
+             {'dataType': "Byte", "band": str(nb_bands + 1), "subClass": "VRTWarpedRasterBand"})
+    tb.start("ColorInterp", {})
+    tb.data("Alpha")
+    tb.end("ColorInterp")
+    tb.end("VRTRasterBand")
+    elem = tb.close()
+
+    vrt_root.insert(index, elem)
+
+    warp_options = vrt_root.find(".//GDALWarpOptions")
+    tb = ElementTree.TreeBuilder()
+    tb.start("DstAlphaBand", {})
+    tb.data(str(nb_bands + 1))
+    tb.end("DstAlphaBand")
+    elem = tb.close()
+    warp_options.append(elem)
+
+    # TODO: gbataille - this is a GDALWarpOptions. Why put it in a specific place?
+    tb = ElementTree.TreeBuilder()
+    tb.start("Option", {"name": "INIT_DEST"})
+    tb.data("0")
+    tb.end("Option")
+    elem = tb.close()
+    warp_options.append(elem)
+
+    return ElementTree.tostring(vrt_root).decode()
+
+
+def update_alpha_value_for_non_alpha_inputs(warped_vrt_dataset, options=None):
+    """
+    Handles dataset with 1 or 3 bands, i.e. without alpha channel, in the case the nodata value has
+    not been forced by options
+    """
+    if warped_vrt_dataset.RasterCount in [1, 3]:
+        print("1")
+        tempfilename = gettempfilename('-gdal2tiles.vrt')
+        print("2", tempfilename)
+        warped_vrt_dataset.GetDriver().CreateCopy(tempfilename, warped_vrt_dataset)
+        print("3")
+        with open(tempfilename) as f:
+            orig_data = f.read()
+        # orig_data = open(tempfilename).read()
+        print("4", orig_data)
+        alpha_data = add_alpha_band_to_string_vrt(orig_data)
+        print("5", alpha_data)
+        with open(tempfilename, 'w') as f:
+            f.write(alpha_data)
+
+        # open(tempfilename, "w").write(alpha_data)
+        print("6")
+        warped_vrt_dataset = gdal.Open(tempfilename)
+        print("7")
+        os.unlink(tempfilename)
+        print("8")
+
+        if options and options.verbose:
+            print("Modified -dstalpha warping result saved into 'tiles1.vrt'")
+            # TODO: gbataille - test replacing that with a gdal write of the dataset (more
+            # accurately what's used, even if should be the same
+            open("tiles1.vrt", "w").write(alpha_data)
+
+    return warped_vrt_dataset
+
+
 def gettempfilename(suffix):
     """Returns a temporary filename"""
     if '_' in os.environ:
@@ -1300,61 +1387,20 @@ class GDAL2Tiles(object):
                 if in_nodata:
                     self.out_ds = update_no_data_values(
                         self.out_ds, in_nodata, options=self.options)
-
-                # Correction of AutoCreateWarpedVRT for Mono (1 band) and RGB (3 bands) files
-                # without NODATA:
-                # equivalent of gdalwarp -dstalpha
-                if in_nodata == [] and self.out_ds.RasterCount in [1, 3]:
-                    tempfilename = gettempfilename('-gdal2tiles.vrt')
-                    self.out_ds.GetDriver().CreateCopy(tempfilename, self.out_ds)
-                    # open as a text file
-                    s = open(tempfilename).read()
-                    # Add the warping options
-                    s = s.replace(
-                        "<BlockXSize>",
-                        """
-<VRTRasterBand dataType="Byte" band="%i" subClass="VRTWarpedRasterBand">
-<ColorInterp>Alpha</ColorInterp>
-</VRTRasterBand>
-<BlockXSize>
-                        """ % (self.out_ds.RasterCount + 1))
-                    s = s.replace(
-                        "</GDALWarpOptions>",
-                        """
-<DstAlphaBand>%i</DstAlphaBand>
-</GDALWarpOptions>
-                        """ % (self.out_ds.RasterCount + 1))
-                    s = s.replace(
-                        "</WorkingDataType>",
-                        """
-                        </WorkingDataType>
-                        <Option name="INIT_DEST">0</Option>
-                        """)
-                    # save the corrected VRT
-                    open(tempfilename, "w").write(s)
-                    # open by GDAL as self.out_ds
-                    self.out_ds = gdal.Open(tempfilename)
-                    # delete the temporary file
-                    os.unlink(tempfilename)
-
-                    if self.options.verbose:
-                        print("Modified -dstalpha warping result saved into 'tiles1.vrt'")
-                        open("tiles1.vrt", "w").write(s)
-                s = '''
-                '''
+                else:
+                    self.out_ds = update_alpha_value_for_non_alpha_inputs(
+                        self.out_ds, options=self.options)
 
             if self.out_ds and self.options.verbose:
                 print("Projected file:", "tiles.vrt", "( %sP x %sL - %s bands)" % (
-                    self.out_ds.RasterXSize, self.out_ds.RasterYSize, self.out_ds.RasterCount))
+                    self.out_ds.RasterXSize,
+                    self.out_ds.RasterYSize,
+                    self.out_ds.RasterCount))
 
         if not self.out_ds:
             self.out_ds = self.in_ds
 
         self.out_ds.GetDriver().CreateCopy(self.temp_vrt, self.out_ds)
-
-        #
-        # Here we should have a raster (out_ds) in the correct Spatial Reference system
-        #
 
         # Get alpha band (either directly or from NODATA value)
         self.alphaband = self.out_ds.GetRasterBand(1).GetMaskBand()
