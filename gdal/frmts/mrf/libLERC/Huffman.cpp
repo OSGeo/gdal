@@ -209,41 +209,52 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytesInOut)
   int i0 = intVec[2];
   int i1 = intVec[3];
 
-  if (i0 >= i1 || size > (int)m_maxHistoSize)
-    return false;
-
-  vector<unsigned int> dataVec(i1 - i0, 0);
-  BitStuffer2 bitStuffer2;
-  if (!bitStuffer2.Decode(&ptr, nRemainingBytes, dataVec, i1 - i0))    // unstuff the code lengths
-  {
-    LERC_BRKPNT();
-    return false;
-  }
-  if( dataVec.size() != static_cast<size_t>(i1 - i0) )
+  if (i0 >= i1 || i0 < 0 || size < 0 || size > (int)m_maxHistoSize ||
+      i1 - i0 >= size)
   {
     LERC_BRKPNT();
     return false;
   }
 
-  m_codeTable.resize(size);
-  std::fill( m_codeTable.begin(), m_codeTable.end(),
-             std::pair<short, unsigned int>(0, 0) );
-
-  for (int i = i0; i < i1; i++)
+  try
   {
-    int k = GetIndexWrapAround(i, size);
-    m_codeTable[k].first = (short)dataVec[i - i0];
+    vector<unsigned int> dataVec(i1 - i0, 0);
+    BitStuffer2 bitStuffer2;
+    if (!bitStuffer2.Decode(&ptr, nRemainingBytes, dataVec, i1 - i0))    // unstuff the code lengths
+    {
+        LERC_BRKPNT();
+        return false;
+    }
+    if( dataVec.size() != static_cast<size_t>(i1 - i0) )
+    {
+        LERC_BRKPNT();
+        return false;
+    }
+
+    m_codeTable.resize(size);
+    std::fill( m_codeTable.begin(), m_codeTable.end(),
+                std::pair<short, unsigned int>(0, 0) );
+
+    for (int i = i0; i < i1; i++)
+    {
+        int k = GetIndexWrapAround(i, size);
+        m_codeTable[k].first = (short)dataVec[i - i0];
+    }
+
+    if (!BitUnStuffCodes(&ptr, nRemainingBytes, i0, i1))    // unstuff the codes
+    {
+        LERC_BRKPNT();
+        return false;
+    }
+
+    *ppByte = ptr;
+    nRemainingBytesInOut = nRemainingBytes;
+    return true;
   }
-
-  if (!BitUnStuffCodes(&ptr, nRemainingBytes, i0, i1))    // unstuff the codes
+  catch( std::bad_alloc& )
   {
-    LERC_BRKPNT();
     return false;
   }
-
-  *ppByte = ptr;
-  nRemainingBytesInOut = nRemainingBytes;
-  return true;
 }
 
 // -------------------------------------------------------------------------- ;
