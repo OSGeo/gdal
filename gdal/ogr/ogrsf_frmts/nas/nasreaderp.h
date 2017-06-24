@@ -73,6 +73,9 @@ class NASHandler : public DefaultHandler
     bool       m_bInUpdate;
     bool       m_bInUpdateProperty;
     int        m_nDepthElement;
+    int        m_nUpdateOrDeleteDepth;
+    int        m_nUpdatePropertyDepth;
+    int        m_nNameOrValueDepth;
     CPLString  m_osIgnoredElement;
 
     CPLString  m_osLastTypeName;
