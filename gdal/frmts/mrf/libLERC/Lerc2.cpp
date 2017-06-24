@@ -312,7 +312,7 @@ bool Lerc2::ReadMask(const Byte** ppByte, size_t& nRemainingSizeInOut)
       LERC_BRKPNT();
       return false;
     }
-    if (!rle.decompress(ptr, nRemainingSize, m_bitMask.Bits()))
+    if (!rle.decompress(ptr, nRemainingSize, m_bitMask.Bits(), m_bitMask.Size()))
     {
       LERC_BRKPNT();
       return false;

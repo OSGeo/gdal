@@ -57,7 +57,7 @@ public:
   bool decompress(const Byte* arrRLE, size_t nRemainingSize, Byte** arr, size_t& numBytes) const;
 
   // arr already allocated, just fill
-  static bool decompress(const Byte* arrRLE, size_t nRemainingSize, Byte* arr);
+  static bool decompress(const Byte* arrRLE, size_t nRemainingSize, Byte* arr, size_t arrSize);
 
 protected:
   int m_minNumEven;
