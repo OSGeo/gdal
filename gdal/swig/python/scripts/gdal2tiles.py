@@ -744,6 +744,75 @@ def reproject_dataset(from_dataset, from_srs, to_srs, options=None):
         return from_dataset
 
 
+def add_gdal_warp_options_to_string(vrt_string, warp_options):
+    if not warp_options:
+        return vrt_string
+
+    vrt_root = ElementTree.fromstring(vrt_string)
+    options = vrt_root.find("GDALWarpOptions")
+
+    if options is None:
+        return vrt_string
+
+    for key, value in warp_options.items():
+        tb = ElementTree.TreeBuilder()
+        tb.start("Option", {"name": key})
+        tb.data(value)
+        tb.end("Option")
+        elem = tb.close()
+        options.insert(0, elem)
+
+    return ElementTree.tostring(vrt_root).decode()
+
+
+def update_no_data_values(warped_vrt_dataset, nodata_values, options=None):
+    """
+    Takes an array of NODATA values and forces them on the WarpedVRT file dataset passed
+    """
+    # TODO: gbataille - Seems that I forgot tests there
+    if nodata_values != []:
+        temp_file = gettempfilename('-gdal2tiles.vrt')
+        warped_vrt_dataset.GetDriver().CreateCopy(temp_file, warped_vrt_dataset)
+        with open(temp_file, 'r') as f:
+            vrt_string = f.read()
+
+        vrt_string = add_gdal_warp_options_to_string(
+            vrt_string, {"INIT_DEST": "NO_DATA", "UNIFIED_SRC_NODATA": "YES"})
+
+# TODO: gbataille - check the need for this replacement. Seems to work without
+#         # replace BandMapping tag for NODATA bands....
+#         for i in range(len(nodata_values)):
+#             s = s.replace(
+#                 '<BandMapping src="%i" dst="%i"/>' % ((i+1), (i+1)),
+#                 """
+# <BandMapping src="%i" dst="%i">
+# <SrcNoDataReal>%i</SrcNoDataReal>
+# <SrcNoDataImag>0</SrcNoDataImag>
+# <DstNoDataReal>%i</DstNoDataReal>
+# <DstNoDataImag>0</DstNoDataImag>
+# </BandMapping>
+#                 """ % ((i+1), (i+1), nodata_values[i], nodata_values[i]))
+
+        # save the corrected VRT
+        with open(temp_file, 'w') as f:
+            f.write(vrt_string)
+
+        corrected_dataset = gdal.Open(temp_file)
+        os.unlink(temp_file)
+
+        # set NODATA_VALUE metadata
+        corrected_dataset.SetMetadataItem(
+            'NODATA_VALUES', ' '.join([str(i) for i in nodata_values]))
+
+        if options and options.verbose:
+            print("Modified warping result saved into 'tiles1.vrt'")
+            # TODO: gbataille - test replacing that with a gdal write of the dataset (more
+            # accurately what's used, even if should be the same
+            open("tiles1.vrt", "w").write(vrt_string)
+
+        return corrected_dataset
+
+
 def gettempfilename(suffix):
     """Returns a temporary filename"""
     if '_' in os.environ:
@@ -1228,46 +1297,9 @@ class GDAL2Tiles(object):
                     (self.in_ds.GetGCPCount() != 0)):
                 self.out_ds = reproject_dataset(self.in_ds, in_srs, self.out_srs)
 
-                # Correction of AutoCreateWarpedVRT for NODATA values
-                if in_nodata != []:
-                    tempfilename = gettempfilename('-gdal2tiles.vrt')
-                    self.out_ds.GetDriver().CreateCopy(tempfilename, self.out_ds)
-                    # open as a text file
-                    s = open(tempfilename).read()
-                    # Add the warping options
-                    s = s.replace(
-                        "<GDALWarpOptions>",
-                        """
-<GDALWarpOptions>
-  <Option name="INIT_DEST">NO_DATA</Option>
-  <Option name="UNIFIED_SRC_NODATA">YES</Option>
-                        """)
-                    # replace BandMapping tag for NODATA bands....
-                    for i in range(len(in_nodata)):
-                        s = s.replace(
-                            '<BandMapping src="%i" dst="%i"/>' % ((i+1), (i+1)),
-                            """
-    <BandMapping src="%i" dst="%i">
-      <SrcNoDataReal>%i</SrcNoDataReal>
-      <SrcNoDataImag>0</SrcNoDataImag>
-      <DstNoDataReal>%i</DstNoDataReal>
-      <DstNoDataImag>0</DstNoDataImag>
-    </BandMapping>
-                            """ % ((i+1), (i+1), in_nodata[i], in_nodata[i]))
-                    # save the corrected VRT
-                    open(tempfilename, "w").write(s)
-                    # open by GDAL as self.out_ds
-                    self.out_ds = gdal.Open(tempfilename)
-                    # delete the temporary file
-                    os.unlink(tempfilename)
-
-                    # set NODATA_VALUE metadata
-                    self.out_ds.SetMetadataItem(
-                        'NODATA_VALUES', ' '.join([str(i) for i in in_nodata]))
-
-                    if self.options.verbose:
-                        print("Modified warping result saved into 'tiles1.vrt'")
-                        open("tiles1.vrt", "w").write(s)
+                if in_nodata:
+                    self.out_ds = update_no_data_values(
+                        self.out_ds, in_nodata, options=self.options)
 
                 # Correction of AutoCreateWarpedVRT for Mono (1 band) and RGB (3 bands) files
                 # without NODATA:
@@ -1310,11 +1342,6 @@ class GDAL2Tiles(object):
                         open("tiles1.vrt", "w").write(s)
                 s = '''
                 '''
-
-            else:
-                exit_with_error(
-                    "Input file has unknown SRS.",
-                    "Use --s_srs ESPG:xyz (or similar) to provide source reference system.")
 
             if self.out_ds and self.options.verbose:
                 print("Projected file:", "tiles.vrt", "( %sP x %sL - %s bands)" % (
