@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.129 2017-06-24 13:03:25 erouault Exp $ */
+/* $Id: tif_jpeg.c,v 1.130 2017-06-24 15:33:28 erouault Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -26,6 +26,8 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
+
+#include <stdlib.h>
 
 #include "tiffiop.h"
 #ifdef JPEG_SUPPORT
@@ -362,6 +364,12 @@ static int
 TIFFjpeg_read_header(JPEGState* sp, boolean require_image)
 {
 	return CALLJPEG(sp, -1, jpeg_read_header(&sp->cinfo.d, require_image));
+}
+
+static int
+TIFFjpeg_has_multiple_scans(JPEGState* sp)
+{
+	return CALLJPEG(sp, 0, jpeg_has_multiple_scans(&sp->cinfo.d));
 }
 
 static int
@@ -1137,6 +1145,47 @@ JPEGPreDecode(TIFF* tif, uint16 s)
 		return (0);
 	}
 #endif
+
+        /* In some cases, libjpeg needs to allocate a lot of memory */
+        /* http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf */
+        if( TIFFjpeg_has_multiple_scans(sp) )
+        {
+            /* In this case libjpeg will need to allocate memory or backing */
+            /* store for all coefficients */
+            /* See call to jinit_d_coef_controller() from master_selection() */
+            /* in libjpeg */
+            toff_t nRequiredMemory = (toff_t)sp->cinfo.d.image_width *
+                                     sp->cinfo.d.image_height *
+                                     sp->cinfo.d.num_components *
+                                     ((td->td_bitspersample+7)/8);
+            /* BLOCK_SMOOTHING_SUPPORTED is generally defined, so we need */
+            /* to replicate the logic of jinit_d_coef_controller() */
+            if( sp->cinfo.d.progressive_mode )
+                nRequiredMemory *= 3;
+
+#ifndef TIFF_LIBJPEG_LARGEST_MEM_ALLOC
+#define TIFF_LIBJPEG_LARGEST_MEM_ALLOC (100 * 1024 * 1024)
+#endif
+
+            if( nRequiredMemory > TIFF_LIBJPEG_LARGEST_MEM_ALLOC &&
+                getenv("LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC") == NULL )
+            {
+                    TIFFErrorExt(tif->tif_clientdata, module,
+                        "Reading this strip would require libjpeg to allocate "
+                        "at least %u bytes. "
+                        "This is disabled since above the %u threshold. "
+                        "You may override this restriction by defining the "
+                        "LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
+                        "or recompile libtiff by defining the "
+                        "TIFF_LIBJPEG_LARGEST_MEM_ALLOC macro to a value greater "
+                        "than %u",
+                        (unsigned)nRequiredMemory,
+                        (unsigned)TIFF_LIBJPEG_LARGEST_MEM_ALLOC,
+                        (unsigned)TIFF_LIBJPEG_LARGEST_MEM_ALLOC);
+                    return (0);
+            }
+        }
+
 	if (td->td_planarconfig == PLANARCONFIG_CONTIG) {
 		/* Component 0 should have expected sampling factors */
 		if (sp->cinfo.d.comp_info[0].h_samp_factor != sp->h_sampling ||
