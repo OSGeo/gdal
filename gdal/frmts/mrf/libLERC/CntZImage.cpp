@@ -1177,7 +1177,7 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
       }
 
       double invScale = 2 * maxZErrorInFile;
-      unsigned int* srcPtr = &dataVec[0];
+      size_t nDataVecIdx = 0;
 
       for (int i = i0; i < i1; i++)
       {
@@ -1186,7 +1186,10 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
         {
           if (dstPtr->cnt > 0)
           {
-            float z = (float)(offset + *srcPtr++ * invScale);
+            if( nDataVecIdx == dataVec.size() )
+              return false;
+            float z = (float)(offset + dataVec[nDataVecIdx] * invScale);
+            nDataVecIdx ++;
             dstPtr->z = min(z, maxZInImg);    // make sure we stay in the orig range
           }
           dstPtr++;
