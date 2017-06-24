@@ -213,6 +213,11 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nRemainingBytes, vector<un
     int nBitsLut = 0;
     while (nLut >> nBitsLut)
       nBitsLut++;
+    if( nBitsLut == 0 )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
 
     // unstuff indexes
     if( !BitUnStuff(ppByte, nRemainingBytes, dataVec, numElements, nBitsLut) )
