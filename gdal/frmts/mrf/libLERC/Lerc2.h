@@ -1528,9 +1528,9 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, size_t& nRemainingBytesInOut, T* 
   int width = m_headerInfo.nCols;
   T prevVal = 0;
 
-  size_t nRemainingBytes = nRemainingBytesInOut;
   const unsigned int* arr = (const unsigned int*)(*ppByte);
   const unsigned int* srcPtr = arr;
+  size_t nRemainingBytesTmp = nRemainingBytesInOut;
   int bitPos = 0;
   int numBitsLUT = 0;
 
@@ -1544,7 +1544,7 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, size_t& nRemainingBytesInOut, T* 
       for (int j = 0; j < width; j++, k++)
       {
         int val = 0;
-        if (!huffman.DecodeOneValue(&srcPtr, nRemainingBytes, bitPos, numBitsLUT, val))
+        if (!huffman.DecodeOneValue(&srcPtr, nRemainingBytesTmp, bitPos, numBitsLUT, val))
           return false;
 
         T delta = (T)(val - offset);
@@ -1567,7 +1567,7 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, size_t& nRemainingBytesInOut, T* 
         if (m_bitMask.IsValid(k))
         {
           int val = 0;
-          if (!huffman.DecodeOneValue(&srcPtr, nRemainingBytes, bitPos, numBitsLUT, val))
+          if (!huffman.DecodeOneValue(&srcPtr, nRemainingBytesTmp, bitPos, numBitsLUT, val))
             return false;
 
           T delta = (T)(val - offset);
@@ -1589,7 +1589,7 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, size_t& nRemainingBytesInOut, T* 
   }
 
   size_t numUInts = srcPtr - arr + (bitPos > 0 ? 1 : 0) + 1;    // add one more as the decode LUT can read ahead
-  if( nRemainingBytes < numUInts * sizeof(unsigned int))
+  if( nRemainingBytesInOut < numUInts * sizeof(unsigned int))
   {
     LERC_BRKPNT();
     return false;

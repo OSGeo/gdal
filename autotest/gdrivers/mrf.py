@@ -411,6 +411,28 @@ def mrf_lerc_nodata():
 
     return 'success'
 
+def mrf_lerc_with_huffman():
+
+    gdal.Translate('/vsimem/out.mrf', 'data/small_world.tif', format = 'MRF',
+                   width = 5000, height = 5000, creationOptions = ['COMPRESS=LERC'])
+    ds = gdal.Open('/vsimem/out.mrf')
+    cs= ds.GetRasterBand(1).Checksum()
+    expected_cs = 31204
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/out.mrf')
+    gdal.Unlink('/vsimem/out.mrf.aux.xml')
+    gdal.Unlink('/vsimem/out.idx')
+    gdal.Unlink('/vsimem/out.ppg')
+    gdal.Unlink('/vsimem/out.til')
+
+    return 'success'
+
 def mrf_cached_source():
 
     # Caching MRF
@@ -721,6 +743,7 @@ gdaltest_list += [ mrf_overview_partial_block ]
 gdaltest_list += [ mrf_overview_near_implicit_level ]
 gdaltest_list += [ mrf_overview_external ]
 gdaltest_list += [ mrf_lerc_nodata ]
+gdaltest_list += [ mrf_lerc_with_huffman ]
 gdaltest_list += [ mrf_cached_source ]
 gdaltest_list += [ mrf_versioned ]
 gdaltest_list += [ mrf_cleanup ]

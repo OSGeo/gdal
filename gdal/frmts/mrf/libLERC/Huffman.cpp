@@ -201,6 +201,7 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytesInOut)
   for (size_t i = 1; i < intVec.size(); i++)
   {
     memcpy(&intVec[i], ptr, sizeof(int)); // FIXME endianness handling
+    ptr += sizeof(int);
   }
   nRemainingBytes -= sizeof(int) * ( intVec.size() - 1 );
 
@@ -516,7 +517,6 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytesInOut,
         return false;
       }
       m_codeTable[k].second = ((*srcPtr) << bitPos) >> (32 - len);
-      nRemainingBytes -= sizeof(unsigned);
 
       if (32 - bitPos >= len)
       {
@@ -550,13 +550,13 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytesInOut,
   }
 
   size_t numUInts = srcPtr - arr + (bitPos > 0 ? 1 : 0);
-  if( nRemainingBytes < sizeof(unsigned) * numUInts )
+  if( nRemainingBytesInOut < sizeof(unsigned) * numUInts )
   {
     LERC_BRKPNT();
     return false;
   }
   *ppByte += numUInts * sizeof(unsigned int);
-  nRemainingBytesInOut = numUInts * sizeof(unsigned int);
+  nRemainingBytesInOut -= numUInts * sizeof(unsigned int);
   return true;
 }
 
