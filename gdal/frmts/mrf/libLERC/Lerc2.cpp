@@ -286,7 +286,10 @@ bool Lerc2::ReadMask(const Byte** ppByte, size_t& nRemainingSizeInOut)
 
   int numBytesMask;
   if( nRemainingSize < sizeof(int) )
+  {
+    LERC_BRKPNT();
     return false;
+  }
   memcpy(&numBytesMask, ptr, sizeof(int));
   ptr += sizeof(int);
   nRemainingSize -= sizeof(int);
@@ -305,9 +308,15 @@ bool Lerc2::ReadMask(const Byte** ppByte, size_t& nRemainingSizeInOut)
   {
     RLE rle;
     if( nRemainingSize < static_cast<size_t>(numBytesMask) )
+    {
+      LERC_BRKPNT();
       return false;
+    }
     if (!rle.decompress(ptr, nRemainingSize, m_bitMask.Bits()))
+    {
+      LERC_BRKPNT();
       return false;
+    }
 
     ptr += numBytesMask;
     nRemainingSize -= numBytesMask;

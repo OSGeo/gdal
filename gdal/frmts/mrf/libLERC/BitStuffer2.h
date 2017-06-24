@@ -110,7 +110,10 @@ bool BitStuffer2::DecodeUInt(const Byte** ppByte, size_t& nRemainingBytes, unsig
 {
   const Byte* ptr = *ppByte;
   if( nRemainingBytes < static_cast<size_t>(numBytes) )
+  {
+    LERC_BRKPNT();
     return false;
+  }
 
   if (numBytes == 1)
     k = *ptr;

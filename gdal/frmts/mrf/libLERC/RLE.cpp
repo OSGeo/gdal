@@ -254,7 +254,10 @@ bool RLE::decompress(const Byte* arrRLE, size_t nRemainingSizeIn, Byte** arr, si
   size_t sum = 0;
   size_t nRemainingSize = nRemainingSizeIn;
   if( nRemainingSize < 2 )
+  {
+    LERC_BRKPNT();
     return false;
+  }
   short cnt = readCount(&srcPtr);
   nRemainingSize -= 2;
   while (cnt != -32768)
@@ -262,11 +265,17 @@ bool RLE::decompress(const Byte* arrRLE, size_t nRemainingSizeIn, Byte** arr, si
     sum += (cnt < 0) ? -cnt : cnt;
     size_t nInc = (cnt > 0) ? cnt : 1;
     if( nRemainingSize < nInc )
+    {
+        LERC_BRKPNT();
         return false;
+    }
     srcPtr += nInc;
     nRemainingSize -= nInc;
     if( nRemainingSize < 2 )
+    {
+      LERC_BRKPNT();
       return false;
+    }
     cnt = readCount(&srcPtr);
     nRemainingSize -= 2;
   }
@@ -294,7 +303,10 @@ bool RLE::decompress(const Byte* arrRLE, size_t nRemainingSize, Byte* arr)
   const Byte* srcPtr = arrRLE;
   Byte* dstPtr = arr;
   if( nRemainingSize < 2 )
+  {
+    LERC_BRKPNT();
     return false;
+  }
   short cnt = readCount(&srcPtr);
   nRemainingSize -= 2;
   while (cnt != -32768)
@@ -303,20 +315,29 @@ bool RLE::decompress(const Byte* arrRLE, size_t nRemainingSize, Byte* arr)
     if (cnt > 0)
     {
       if( nRemainingSize < static_cast<size_t>(i) )
+      {
+        LERC_BRKPNT();
         return false;
+      }
       nRemainingSize -= i;
       while (i--) *dstPtr++ = *srcPtr++;
     }
     else
     {
       if( nRemainingSize < 1 )
+      {
+        LERC_BRKPNT();
         return false;
+      }
       nRemainingSize -= 1;
       Byte b = *srcPtr++;
       while (i--) *dstPtr++ = b;
     }
     if( nRemainingSize < 2 )
+    {
+        LERC_BRKPNT();
         return false;
+    }
     cnt = readCount(&srcPtr);
     nRemainingSize -= 2;
   }
