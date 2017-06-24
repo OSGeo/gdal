@@ -55,6 +55,8 @@ inline CPLErr NONE(buf_mgr &dst, buf_mgr &src)
 
 CPLErr Raw_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 {
+    if( src.size > dst.size )
+        return CE_Failure;
     return NONE(dst,src);
 }
 
