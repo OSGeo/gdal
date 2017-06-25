@@ -1,3 +1,5 @@
+#ifndef CPL_CONFIG_H
+#define CPL_CONFIG_H
 
 /* We define this here in general so that a VC++ build will publicly
    declare STDCALL interfaces even if an application is built against it
@@ -14,12 +16,61 @@
 #define HAVE_VPRINTF 1
 #define HAVE_VSNPRINTF 1
 #define HAVE_SNPRINTF 1
+
+#ifdef GDAL_COMPILATION
+
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+
+#include <stdio.h>
+#include <stdarg.h>
+#include <assert.h>
+
+/* Before VS 2015, _snprintf / _vsnprintf are not guaranteed to NUL terminate the */
+/* buffer. So do that. But we sill preserve the non-C99 compliance of returning */
+/* potentially a negative value. */
+__inline int CPL_safer_vsnprintf(char *str, size_t size, const char *format, va_list ap)
+{
+    int ret = _vsnprintf(str, size, format, ap);
+    /* CPLsprintf() call CPLvsnprintf() with a fake size of INT_MAX, and */
+    /* later may substract offset. So basically do not do anything if */
+    /* the buffer is bigger than INT_MAX/2 */
+    if(size > 0 && size < 0x3FFFFFFF)
+        str[size-1] = '\0';
+    return ret;
+}
+
+__inline int CPL_safer_snprintf(char* str, size_t size, const char* format, ...)
+{
+    int ret;
+    va_list args;
+    va_start(args, format);
+    ret = CPL_safer_vsnprintf(str, size, format, args);
+    va_end(args);
+    return ret;
+}
+
+#define HAVE_CPL_SAFER_SNPRINTF
+#ifdef snprintf
+#undef snprintf
+#endif
+#ifdef vsnprintf
+#undef vsnprintf
+#endif
+#define snprintf CPL_safer_snprintf
+#define vsnprintf CPL_safer_vsnprintf
+
+#endif /* defined(_MSC_VER) && (_MSC_VER < 1900) */
+
+#else /* GDAL_COMPILATION */
+
 #if defined(_MSC_VER) && (_MSC_VER < 1500)
 #  define vsnprintf _vsnprintf
 #endif
 #if defined(_MSC_VER) && (_MSC_VER < 1900)
 #  define snprintf _snprintf
 #endif
+
+#endif /* GDAL_COMPILATION */
 
 #define HAVE_GETCWD 1
 /* gmt_notunix.h from GMT project also redefines getcwd. See #3138 */
@@ -119,3 +170,4 @@
 
 /* #define CPL_DISABLE_DLL */
 
+#endif /* CPL_CONFIG_H */

@@ -1127,7 +1127,8 @@ static const char* CPLvsnprintf_get_end_of_formatting( const char* fmt )
   * @param fmt formatting string
   * @param args arguments
   * @return the number of characters (excluding terminating nul) that would be
-  * written if size is big enough
+  * written if size is big enough. Or potentially -1 with Microsoft C runtime
+  * for Visual Studio < 2015.
   * @since GDAL 2.0
   */
 int CPLvsnprintf( char *str, size_t size,
@@ -1322,7 +1323,8 @@ int CPLvsnprintf( char *str, size_t size,
   * @param fmt formatting string
   * @param ... arguments
   * @return the number of characters (excluding terminating nul) that would be
-  * written if size is big enough
+  * written if size is big enough. Or potentially -1 with Microsoft C runtime
+  * for Visual Studio < 2015.
   * @since GDAL 2.0
   */
 

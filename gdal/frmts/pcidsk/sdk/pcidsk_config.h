@@ -111,7 +111,7 @@ extern "C" int CPLsnprintf(char *str, size_t size, const char* fmt, ...) PCIDSK_
 #endif
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
+#if defined(_MSC_VER) && (_MSC_VER < 1900) && !defined(HAVE_CPL_SAFER_SNPRINTF)
 #  define snprintf _snprintf
 #endif
 
