@@ -2754,11 +2754,14 @@ class GDAL2Tiles(object):
 
 
 def worker_tile_details(send_pipe, argv):
-    gdal2tiles = GDAL2Tiles(argv[1:])
-    gdal2tiles.open_input()
-    gdal2tiles.generate_metadata()
-    tile_job_info = gdal2tiles.generate_base_tiles()
-    send_pipe.send(tile_job_info)
+    try:
+        gdal2tiles = GDAL2Tiles(argv[1:])
+        gdal2tiles.open_input()
+        gdal2tiles.generate_metadata()
+        tile_job_info = gdal2tiles.generate_base_tiles()
+        send_pipe.send(tile_job_info)
+    except Exception as e:
+        print("Failed ", str(e))
 
 
 def main():
@@ -2767,9 +2770,12 @@ def main():
     print("Begin tiles details calc")
     p = Process(target=worker_tile_details, args=[sender, argv])
     p.start()
+    # Make sure to consume the queue before joining. If the payload is too big, it won't be put in
+    # one go in the queue and therefore the sending process will never finish, waiting for space in
+    # the queue to send data
+    confs = receiver.recv()
     p.join()
     print("Tiles details calc complete.")
-    confs = receiver.recv()
     nb_process = 2
     pool = Pool(nb_process)
     chunksize = int(math.ceil(len(confs) / nb_process))
