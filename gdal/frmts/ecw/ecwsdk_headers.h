@@ -104,6 +104,11 @@
 /* to a CNCSError object */
 static inline CNCSError GetCNCSError(NCSError nCode) { return CNCSError(nCode); }
 
+#if ECWSDK_VERSION<50
+/* For NCSStrDup */
+#include "NCSUtil.h"
+#endif
+
 #ifdef HAVE_CPL_SAFER_SNPRINTF
 #ifdef snprintf
 #undef snprintf
