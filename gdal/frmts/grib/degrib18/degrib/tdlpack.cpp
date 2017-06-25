@@ -3196,7 +3196,7 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
                        sInt4 li_primMiss, char f_secMiss,
                        sInt4 li_secMiss, size_t xFactor)
 {
-   uInt4 minBit;        /* The fewest # of bits, with no subdivision. */
+   uInt4 minBit = 1;     /* The fewest # of bits, with no subdivision. */
    TDLGroupType *subGroup; /* The subgroups that we tried splitting the
                             * primary group into. */
    int numSubGroup;     /* The number of groups in subGroup. */
@@ -3218,7 +3218,7 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
       /* 11 = primMiss 10 = secMiss 01, 00 = data. */
       minBit = 2;
    }
-   // cppcheck-suppress duplicateBranch
+#ifdef useless
    else if (f_primMiss) {
       /* 1 = primMiss 0 = data. */
       /* might try minBit = 1 here. */
@@ -3227,6 +3227,7 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
       /* 1, 0 = data. */
       minBit = 1;
    }
+#endif
 
    *numLclGroup = 0;
    *lclGroup = (TDLGroupType *) malloc (numGroup * sizeof (TDLGroupType));
