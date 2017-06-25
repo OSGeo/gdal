@@ -1274,8 +1274,11 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
             {
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset, "%d",
+                int ret = snprintf(szBuf + nOffset, nBufLen -nOffset, "%d",
                                    ((const char*)pData)[i]);
+                if( ret < 0 || ret >= (int)nBufLen - nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
         case EDT_Int16:
@@ -1285,8 +1288,11 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
                 memcpy(&nVal, pData + i * sizeof(nVal), sizeof(nVal));
-                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset, "%d",
+                int ret = snprintf(szBuf + nOffset, nBufLen -nOffset, "%d",
                                    CPL_MSBWORD16(nVal));
+                if( ret < 0 || ret >= (int)nBufLen -nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
         case EDT_UInt16:
@@ -1296,8 +1302,11 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
                 memcpy(&nVal, pData + i * sizeof(nVal), sizeof(nVal));
-                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%u",
+                int ret = snprintf(szBuf + nOffset, nBufLen -nOffset,"%u",
                                    CPL_MSBWORD16(nVal));
+                if( ret < 0 || ret >= (int)nBufLen -nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
         case EDT_Int32:
@@ -1307,8 +1316,11 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
                 memcpy(&nVal, pData + i * sizeof(nVal), sizeof(nVal));
-                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%d",
+                int ret = snprintf(szBuf + nOffset, nBufLen -nOffset,"%d",
                                    CPL_MSBWORD32(nVal));
+                if( ret < 0 || ret >= (int)nBufLen -nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
         case EDT_UInt32:
@@ -1318,8 +1330,11 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
                 memcpy(&nVal, pData + i * sizeof(nVal), sizeof(nVal));
-                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%u",
+                int ret = snprintf(szBuf + nOffset, nBufLen -nOffset,"%u",
                                    CPL_MSBWORD32(nVal));
+                if( ret < 0 || ret >= (int)nBufLen -nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
         case EDT_Float32:
@@ -1333,7 +1348,10 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
 
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += CPLsnprintf(szBuf + nOffset, nBufLen -nOffset,"%f", fValue);
+                int ret = CPLsnprintf(szBuf + nOffset, nBufLen -nOffset,"%f", fValue);
+                if( ret < 0 || ret >= (int)nBufLen -nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
         case EDT_Float64:
@@ -1346,7 +1364,10 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
 #endif
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += CPLsnprintf(szBuf + nOffset, nBufLen -nOffset,"%f", dfValue);
+                int ret = CPLsnprintf(szBuf + nOffset, nBufLen -nOffset,"%f", dfValue);
+                if( ret < 0 || ret >= (int)nBufLen -nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
 /*
@@ -1409,7 +1430,9 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
                 seconds = CPL_MSBWORD32(((const GUInt32*)pData)[1]);
                 microseconds = CPL_MSBWORD32(((const GUInt32*)pData)[2]);
 
-                snprintf(szBuf, nBufLen, "%d, %u, %u", days, seconds, microseconds);
+                int ret = snprintf(szBuf, nBufLen, "%d, %u, %u", days, seconds, microseconds);
+                if( ret < 0 || ret >= (int)nBufLen )
+                    return CE_Failure;
             }
             break;
         default:
