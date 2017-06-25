@@ -4946,6 +4946,7 @@ else
 fi
 
 
+
 as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$ERROR_ON_UNKNOWN_OPTIONS_-Wno-sign-compare" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wno-sign-compare" >&5
 $as_echo_n "checking whether C compiler accepts -Wno-sign-compare... " >&6; }
