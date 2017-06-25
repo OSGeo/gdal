@@ -296,6 +296,7 @@ CADVariant::CADVariant( double x, double y, double z ) :
 {
     char str_buff[256];
     snprintf( str_buff, sizeof(str_buff), "[%.15g,%.15g,%.15g]", x, y, z );
+    str_buff[sizeof(str_buff)-1] = '\0';
     stringVal = str_buff;
 }
 

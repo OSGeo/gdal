@@ -84,7 +84,7 @@
 #  define OCAD_PRINT_FUNC_FORMAT( format_idx, arg_idx )
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
+#if defined(_MSC_VER) && (_MSC_VER < 1900) && !defined(HAVE_CPL_SAFER_SNPRINTF)
 #  define snprintf _snprintf
 #endif
 
