@@ -193,6 +193,11 @@ bool BitStuffer2::Decode(const Byte** ppByte, size_t& nRemainingBytes, vector<un
   }
   else
   {
+    if( numBits == 0 )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
     if( nRemainingBytes < 1 )
     {
       LERC_BRKPNT();
