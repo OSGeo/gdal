@@ -1117,4 +1117,27 @@ namespace tut
         CPLFree(pszText);
     }
 
+    template<>
+    template<>
+    void object::test<24>()
+    {
+        /* Check that our possibly #define'd snprintf() nul */
+        /* terminates */
+        char szBuffer[10] = "123456789";
+        snprintf(szBuffer, 0, "%s", "xy");
+        ensure( memcmp(szBuffer, "123", 3) == 0 );
+        snprintf(szBuffer, 2, "%s", "xy");
+        ensure( memcmp(szBuffer, "x" "\0" "3", 3) == 0 );
+        strcpy(szBuffer, "123456789");
+        snprintf(szBuffer, 1, "%s", "xy");
+        ensure( memcmp(szBuffer, "\0" "23", 3) == 0 );
+        strcpy(szBuffer, "123456789");
+        snprintf(szBuffer, 3, "%s", "xy");
+        ensure( memcmp(szBuffer, "xy" "\0" "4", 4) == 0 );
+        strcpy(szBuffer, "123456789");
+        snprintf(szBuffer, INT_MAX, "%s", "xy");
+        ensure( memcmp(szBuffer, "xy" "\0" "4", 4) == 0 );
+    }
+
+
 } // namespace tut
