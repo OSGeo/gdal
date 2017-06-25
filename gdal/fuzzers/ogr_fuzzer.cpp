@@ -108,7 +108,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             OGR_L_GetFIDColumn(hLayer);
             OGR_L_GetGeometryColumn(hLayer);
             OGRFeatureH hFeature;
-            while( (hFeature = OGR_L_GetNextFeature(hLayer)) != NULL )
+            for( int j = 0; j < 1000 &&
+                    (hFeature = OGR_L_GetNextFeature(hLayer)) != NULL; j++ )
             {
                 OGR_F_Destroy(hFeature);
             }
