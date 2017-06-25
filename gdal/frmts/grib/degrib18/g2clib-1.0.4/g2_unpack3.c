@@ -163,11 +163,19 @@ g2int g2_unpack3(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int **ig
           for (i=*mapgridlen;i<newlen;i++) {
             nbits=abs(mapgrid->ext[j])*8;
             if ( mapgrid->ext[j] >= 0 ) {
-              gbit2(cgrib,cgrib_length,ligdstmpl+i,*iofst,nbits);
+              if(gbit2(cgrib,cgrib_length,ligdstmpl+i,*iofst,nbits) < 0)
+              {
+                  ierr = 6;
+                  break;
+              }
             }
             else {
-              gbit2(cgrib,cgrib_length,&isign,*iofst,1);
-              gbit2(cgrib,cgrib_length,ligdstmpl+i,*iofst+1,nbits-1);
+              if( gbit2(cgrib,cgrib_length,&isign,*iofst,1) < 0 ||
+                  gbit2(cgrib,cgrib_length,ligdstmpl+i,*iofst+1,nbits-1) < 0 )
+              {
+                  ierr = 6;
+                  break;
+              }
               if (isign == 1) ligdstmpl[i]=-1*ligdstmpl[i];
             }
             *iofst=*iofst+nbits;
@@ -178,6 +186,12 @@ g2int g2_unpack3(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int **ig
         }
         if( mapgrid->ext != 0 ) free(mapgrid->ext);
         if( mapgrid != 0 ) free(mapgrid);
+        if( ierr != 0 )
+        {
+            *idefnum=0;
+            *ideflist=0;   //NULL
+            return(ierr);
+        }
       }
       else {              // No Grid Definition Template
         *mapgridlen=0;
