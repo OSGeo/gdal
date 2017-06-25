@@ -5718,6 +5718,8 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                 const char* pszDimName = papszTokens[0];
                 int nDimSize = EQUAL(papszTokens[1], "UNLIMITED") ?
                                         NC_UNLIMITED : atoi(papszTokens[1]);
+                if( nDimSize >= 1000 )
+                    nDimSize = 1000; // to avoid very long processing
                 if( nDimSize >= 0 )
                 {
                     int nDimId = -1;
