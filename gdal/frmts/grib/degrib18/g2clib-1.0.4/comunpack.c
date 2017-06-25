@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "grib2.h"
 
 
@@ -215,9 +216,19 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
          if (itemp%8 != 0) iofst=iofst+(8-(itemp%8));
       }
 
-      // TODO potential int overflow
       for (j=0;j<ngroups;j++)
+      {
+           if( glen[j] > INT_MAX / idrstmpl[13] ||
+               glen[j] *  idrstmpl[13] > INT_MAX - idrstmpl[12] )
+           {
+                free(ifld);
+                free(gwidth);
+                free(glen);
+                free(gref);
+                return -1;
+           }
            glen[j]=(glen[j]*idrstmpl[13])+idrstmpl[12];
+      }
       glen[ngroups-1]=idrstmpl[14];
 //
 //  Test to see if the group widths and lengths are consistent with number of
@@ -335,7 +346,19 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
             if ( idrstmpl[6] == 0 ) itemp=ndpts;        // no missing values
             else  itemp=non;
             for (n=1;n<itemp;n++) {
+               if( ifld[n] > INT_MAX - minsd )
+               {
+                   free(ifldmiss);
+                   free(ifld);
+                   return -1;
+               }
                ifld[n]=ifld[n]+minsd;
+               if( ifld[n] > INT_MAX - ifld[n-1] )
+               {
+                   free(ifldmiss);
+                   free(ifld);
+                   return -1;
+               }
                ifld[n]=ifld[n]+ifld[n-1];
             }
          }
