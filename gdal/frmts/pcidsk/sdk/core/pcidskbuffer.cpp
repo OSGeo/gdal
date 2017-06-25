@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "pcidsk_config.h"
 #include "pcidsk_buffer.h"
 #include "pcidsk_exception.h"
 #include "core/pcidsk_utils.h"
@@ -36,12 +37,6 @@
 #include <sstream>
 
 using namespace PCIDSK;
-
-#ifdef _MSC_VER
-#ifndef snprintf
-#define snprintf _snprintf
-#endif // !defined(snprintf)
-#endif
 
 /************************************************************************/
 /*                            PCIDSKBuffer()                            */
