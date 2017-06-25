@@ -900,6 +900,19 @@ def update_alpha_value_for_non_alpha_inputs(warped_vrt_dataset, options=None):
     return warped_vrt_dataset
 
 
+def nb_data_bands(dataset):
+    """
+    Return the number of data (non-alpha) bands of a gdal dataset
+    """
+    alphaband = dataset.GetRasterBand(1).GetMaskBand()
+    if ((alphaband.GetMaskFlags() & gdal.GMF_ALPHA) or
+            dataset.RasterCount == 4 or
+            dataset.RasterCount == 2):
+        return dataset.RasterCount - 1
+    else:
+        return dataset.RasterCount
+
+
 def gettempfilename(suffix):
     """Returns a temporary filename"""
     if '_' in os.environ:
@@ -1404,12 +1417,7 @@ class GDAL2Tiles(object):
 
         # Get alpha band (either directly or from NODATA value)
         self.alphaband = self.out_ds.GetRasterBand(1).GetMaskBand()
-        if ((self.alphaband.GetMaskFlags() & gdal.GMF_ALPHA) or
-                self.out_ds.RasterCount == 4 or
-                self.out_ds.RasterCount == 2):
-            self.dataBandsCount = self.out_ds.RasterCount - 1
-        else:
-            self.dataBandsCount = self.out_ds.RasterCount
+        self.dataBandsCount = nb_data_bands(self.out_ds)
 
         # KML test
         isepsg4326 = False
