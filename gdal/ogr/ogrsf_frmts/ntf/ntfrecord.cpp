@@ -224,6 +224,9 @@ const char * NTFRecord::GetField( int nStart, int nEnd )
 {
     const int nSize = nEnd - nStart + 1;
 
+    if( pszData == NULL )
+        return "";
+
 /* -------------------------------------------------------------------- */
 /*      Reallocate working buffer larger if needed.                     */
 /* -------------------------------------------------------------------- */
