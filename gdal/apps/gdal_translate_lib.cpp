@@ -1696,7 +1696,10 @@ static void AttachMetadata( GDALDatasetH hDS, char **papszMetadataOptions )
         const char *pszValue;
 
         pszValue = CPLParseNameValue( papszMetadataOptions[i], &pszKey );
-        GDALSetMetadataItem(hDS,pszKey,pszValue,NULL);
+        if( pszKey && pszValue )
+        {
+            GDALSetMetadataItem(hDS,pszKey,pszValue,NULL);
+        }
         CPLFree( pszKey );
     }
 }
