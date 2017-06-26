@@ -1250,8 +1250,8 @@ class GDAL2Tiles(object):
         """Constructor function - initialization"""
         self.out_drv = None
         self.mem_drv = None
-        self.in_ds = None
-        self.out_ds = None
+        self.input_dataset = None
+        self.warped_input_dataset = None
         self.out_srs = None
         self.nativezoom = None
         self.tminmax = None
@@ -1269,8 +1269,8 @@ class GDAL2Tiles(object):
         self.ominy = None
 
         self.stopped = False
-        self.input = None
-        self.output = None
+        self.input_file = None
+        self.output_folder = None
 
         # Tile format
         self.tilesize = 256
@@ -1295,7 +1295,7 @@ class GDAL2Tiles(object):
 
         # RUN THE ARGUMENT PARSER:
 
-        self.input, self.output, self.options = process_args(arguments)
+        self.input_file, self.output_folder, self.options = process_args(arguments)
 
         if self.options.resampling == 'near':
             self.querysize = self.tilesize
@@ -1335,48 +1335,50 @@ class GDAL2Tiles(object):
 
         # Open the input file
 
-        if self.input:
-            self.in_ds = gdal.Open(self.input, gdal.GA_ReadOnly)
+        if self.input_file:
+            self.input_dataset = gdal.Open(self.input_file, gdal.GA_ReadOnly)
         else:
             raise Exception("No input file was specified")
 
         if self.options.verbose:
             print("Input file:",
-                  "( %sP x %sL - %s bands)" % (self.in_ds.RasterXSize, self.in_ds.RasterYSize,
-                                               self.in_ds.RasterCount))
+                  "( %sP x %sL - %s bands)" % (self.input_dataset.RasterXSize,
+                                               self.input_dataset.RasterYSize,
+                                               self.input_dataset.RasterCount))
 
-        if not self.in_ds:
+        if not self.input_dataset:
             # Note: GDAL prints the ERROR message too
-            exit_with_error("It is not possible to open the input file '%s'." % self.input)
+            exit_with_error("It is not possible to open the input file '%s'." % self.input_file)
 
         # Read metadata from the input file
-        if self.in_ds.RasterCount == 0:
-            exit_with_error("Input file '%s' has no raster band" % self.input)
+        if self.input_dataset.RasterCount == 0:
+            exit_with_error("Input file '%s' has no raster band" % self.input_file)
 
-        if self.in_ds.GetRasterBand(1).GetRasterColorTable():
+        if self.input_dataset.GetRasterBand(1).GetRasterColorTable():
             exit_with_error(
                 "Please convert this file to RGB/RGBA and run gdal2tiles on the result.",
                 "From paletted file you can create RGBA file (temp.vrt) by:\n"
                 "gdal_translate -of vrt -expand rgba %s temp.vrt\n"
                 "then run:\n"
-                "gdal2tiles temp.vrt" % self.input
+                "gdal2tiles temp.vrt" % self.input_file
             )
 
-        in_nodata = setup_no_data_values(self.in_ds, self.options)
+        in_nodata = setup_no_data_values(self.input_dataset, self.options)
 
         if self.options.verbose:
             print("Preprocessed file:",
-                  "( %sP x %sL - %s bands)" % (self.in_ds.RasterXSize, self.in_ds.RasterYSize,
-                                               self.in_ds.RasterCount))
+                  "( %sP x %sL - %s bands)" % (self.input_dataset.RasterXSize,
+                                               self.input_dataset.RasterYSize,
+                                               self.input_dataset.RasterCount))
 
-        in_srs, in_srs_wkt = setup_input_srs(self.in_ds, self.options)
+        in_srs, in_srs_wkt = setup_input_srs(self.input_dataset, self.options)
 
         self.out_srs = setup_output_srs(in_srs, self.options)
 
         # If input and output reference systems are different, we reproject the input dataset into
         # the output reference system for easier manipulation
 
-        self.out_ds = None
+        self.warped_input_dataset = None
 
         if self.options.profile in ('mercator', 'geodetic'):
 
@@ -1385,7 +1387,7 @@ class GDAL2Tiles(object):
                     "Input file has unknown SRS.",
                     "Use --s_srs ESPG:xyz (or similar) to provide source reference system.")
 
-            if not has_georeference(self.in_ds):
+            if not has_georeference(self.input_dataset):
                 exit_with_error(
                     "There is no georeference - neither affine transformation (worldfile) "
                     "nor GCPs. You can generate only 'raster' profile tiles.",
@@ -1394,30 +1396,31 @@ class GDAL2Tiles(object):
                 )
 
             if ((in_srs.ExportToProj4() != self.out_srs.ExportToProj4()) or
-                    (self.in_ds.GetGCPCount() != 0)):
-                self.out_ds = reproject_dataset(self.in_ds, in_srs, self.out_srs)
+                    (self.input_dataset.GetGCPCount() != 0)):
+                self.warped_input_dataset = reproject_dataset(
+                    self.input_dataset, in_srs, self.out_srs)
 
                 if in_nodata:
-                    self.out_ds = update_no_data_values(
-                        self.out_ds, in_nodata, options=self.options)
+                    self.warped_input_dataset = update_no_data_values(
+                        self.warped_input_dataset, in_nodata, options=self.options)
                 else:
-                    self.out_ds = update_alpha_value_for_non_alpha_inputs(
-                        self.out_ds, options=self.options)
+                    self.warped_input_dataset = update_alpha_value_for_non_alpha_inputs(
+                        self.warped_input_dataset, options=self.options)
 
-            if self.out_ds and self.options.verbose:
+            if self.warped_input_dataset and self.options.verbose:
                 print("Projected file:", "tiles.vrt", "( %sP x %sL - %s bands)" % (
-                    self.out_ds.RasterXSize,
-                    self.out_ds.RasterYSize,
-                    self.out_ds.RasterCount))
+                    self.warped_input_dataset.RasterXSize,
+                    self.warped_input_dataset.RasterYSize,
+                    self.warped_input_dataset.RasterCount))
 
-        if not self.out_ds:
-            self.out_ds = self.in_ds
+        if not self.warped_input_dataset:
+            self.warped_input_dataset = self.input_dataset
 
-        self.out_ds.GetDriver().CreateCopy(self.temp_vrt, self.out_ds)
+        self.warped_input_dataset.GetDriver().CreateCopy(self.temp_vrt, self.warped_input_dataset)
 
         # Get alpha band (either directly or from NODATA value)
-        self.alphaband = self.out_ds.GetRasterBand(1).GetMaskBand()
-        self.dataBandsCount = nb_data_bands(self.out_ds)
+        self.alphaband = self.warped_input_dataset.GetRasterBand(1).GetMaskBand()
+        self.dataBandsCount = nb_data_bands(self.warped_input_dataset)
 
         # KML test
         isepsg4326 = False
@@ -1430,7 +1433,7 @@ class GDAL2Tiles(object):
                 print("KML autotest OK!")
 
         # Read the georeference
-        self.out_gt = self.out_ds.GetGeoTransform()
+        self.out_gt = self.warped_input_dataset.GetGeoTransform()
 
         # Test the size of the pixel
 
@@ -1443,9 +1446,9 @@ class GDAL2Tiles(object):
 
         # Output Bounds - coordinates in the output SRS
         self.ominx = self.out_gt[0]
-        self.omaxx = self.out_gt[0] + self.out_ds.RasterXSize * self.out_gt[1]
+        self.omaxx = self.out_gt[0] + self.warped_input_dataset.RasterXSize * self.out_gt[1]
         self.omaxy = self.out_gt[3]
-        self.ominy = self.out_gt[3] - self.out_ds.RasterYSize * self.out_gt[1]
+        self.ominy = self.out_gt[3] - self.warped_input_dataset.RasterYSize * self.out_gt[1]
         # Note: maybe round(x, 14) to avoid the gdal_translate behaviour, when 0 becomes -1e-15
 
         if self.options.verbose:
@@ -1474,8 +1477,10 @@ class GDAL2Tiles(object):
             # Get the minimal zoom level (map covers area equivalent to one tile)
             if self.tminz is None:
                 self.tminz = self.mercator.ZoomForPixelSize(
-                    self.out_gt[1] * max(self.out_ds.RasterXSize,
-                                         self.out_ds.RasterYSize) / float(self.tilesize))
+                    self.out_gt[1] *
+                    max(self.warped_input_dataset.RasterXSize,
+                        self.warped_input_dataset.RasterYSize) /
+                    float(self.tilesize))
 
             # Get the maximal zoom level
             # (closest possible zoom level up on the resolution of raster)
@@ -1516,8 +1521,10 @@ class GDAL2Tiles(object):
             # (closest possible zoom level up on the resolution of raster)
             if self.tminz is None:
                 self.tminz = self.geodetic.ZoomForPixelSize(
-                    self.out_gt[1] * max(self.out_ds.RasterXSize,
-                                         self.out_ds.RasterYSize) / float(self.tilesize))
+                    self.out_gt[1] *
+                    max(self.warped_input_dataset.RasterXSize,
+                        self.warped_input_dataset.RasterYSize) /
+                    float(self.tilesize))
 
             # Get the maximal zoom level
             # (closest possible zoom level up on the resolution of raster)
@@ -1533,8 +1540,8 @@ class GDAL2Tiles(object):
                 return math.log10(x) / math.log10(2)
 
             self.nativezoom = int(
-                max(math.ceil(log2(self.out_ds.RasterXSize/float(self.tilesize))),
-                    math.ceil(log2(self.out_ds.RasterYSize/float(self.tilesize)))))
+                max(math.ceil(log2(self.warped_input_dataset.RasterXSize/float(self.tilesize))),
+                    math.ceil(log2(self.warped_input_dataset.RasterYSize/float(self.tilesize)))))
 
             if self.options.verbose:
                 print("Native zoom of the raster:", self.nativezoom)
@@ -1553,8 +1560,8 @@ class GDAL2Tiles(object):
             for tz in range(0, self.tmaxz+1):
                 tsize = 2.0**(self.nativezoom-tz)*self.tilesize
                 tminx, tminy = 0, 0
-                tmaxx = int(math.ceil(self.out_ds.RasterXSize / tsize)) - 1
-                tmaxy = int(math.ceil(self.out_ds.RasterYSize / tsize)) - 1
+                tmaxx = int(math.ceil(self.warped_input_dataset.RasterXSize / tsize)) - 1
+                tmaxy = int(math.ceil(self.warped_input_dataset.RasterYSize / tsize)) - 1
                 self.tsize[tz] = math.ceil(tsize)
                 self.tminmax[tz] = (tminx, tminy, tmaxx, tmaxy)
 
@@ -1584,8 +1591,8 @@ class GDAL2Tiles(object):
         tiles are generated during the tile processing).
         """
 
-        if not os.path.exists(self.output):
-            os.makedirs(self.output)
+        if not os.path.exists(self.output_folder):
+            os.makedirs(self.output_folder)
 
         if self.options.profile == 'mercator':
 
@@ -1598,24 +1605,24 @@ class GDAL2Tiles(object):
             # Generate googlemaps.html
             if self.options.webviewer in ('all', 'google') and self.options.profile == 'mercator':
                 if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output, 'googlemaps.html'))):
-                    f = open(os.path.join(self.output, 'googlemaps.html'), 'wb')
+                        os.path.exists(os.path.join(self.output_folder, 'googlemaps.html'))):
+                    f = open(os.path.join(self.output_folder, 'googlemaps.html'), 'wb')
                     f.write(self.generate_googlemaps().encode('utf-8'))
                     f.close()
 
             # Generate openlayers.html
             if self.options.webviewer in ('all', 'openlayers'):
                 if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output, 'openlayers.html'))):
-                    f = open(os.path.join(self.output, 'openlayers.html'), 'wb')
+                        os.path.exists(os.path.join(self.output_folder, 'openlayers.html'))):
+                    f = open(os.path.join(self.output_folder, 'openlayers.html'), 'wb')
                     f.write(self.generate_openlayers().encode('utf-8'))
                     f.close()
 
             # Generate leaflet.html
             if self.options.webviewer in ('all', 'leaflet'):
                 if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output, 'leaflet.html'))):
-                    f = open(os.path.join(self.output, 'leaflet.html'), 'wb')
+                        os.path.exists(os.path.join(self.output_folder, 'leaflet.html'))):
+                    f = open(os.path.join(self.output_folder, 'leaflet.html'), 'wb')
                     f.write(self.generate_leaflet().encode('utf-8'))
                     f.close()
 
@@ -1630,8 +1637,8 @@ class GDAL2Tiles(object):
             # Generate openlayers.html
             if self.options.webviewer in ('all', 'openlayers'):
                 if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output, 'openlayers.html'))):
-                    f = open(os.path.join(self.output, 'openlayers.html'), 'wb')
+                        os.path.exists(os.path.join(self.output_folder, 'openlayers.html'))):
+                    f = open(os.path.join(self.output_folder, 'openlayers.html'), 'wb')
                     f.write(self.generate_openlayers().encode('utf-8'))
                     f.close()
 
@@ -1645,14 +1652,14 @@ class GDAL2Tiles(object):
             # Generate openlayers.html
             if self.options.webviewer in ('all', 'openlayers'):
                 if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output, 'openlayers.html'))):
-                    f = open(os.path.join(self.output, 'openlayers.html'), 'wb')
+                        os.path.exists(os.path.join(self.output_folder, 'openlayers.html'))):
+                    f = open(os.path.join(self.output_folder, 'openlayers.html'), 'wb')
                     f.write(self.generate_openlayers().encode('utf-8'))
                     f.close()
 
         # Generate tilemapresource.xml.
-        if not self.options.resume or not os.path.exists(os.path.join(self.output, 'tilemapresource.xml')):
-            f = open(os.path.join(self.output, 'tilemapresource.xml'), 'wb')
+        if not self.options.resume or not os.path.exists(os.path.join(self.output_folder, 'tilemapresource.xml')):
+            f = open(os.path.join(self.output_folder, 'tilemapresource.xml'), 'wb')
             f.write(self.generate_tilemapresource().encode('utf-8'))
             f.close()
 
@@ -1667,8 +1674,8 @@ class GDAL2Tiles(object):
             # Generate Root KML
             if self.kml:
                 if (not self.options.resume or not
-                        os.path.exists(os.path.join(self.output, 'doc.kml'))):
-                    f = open(os.path.join(self.output, 'doc.kml'), 'wb')
+                        os.path.exists(os.path.join(self.output_folder, 'doc.kml'))):
+                    f = open(os.path.join(self.output_folder, 'doc.kml'), 'wb')
                     f.write(generate_kml(
                         None, None, None, self.tileext, self.tilesize, self.tileswne, self.options,
                         children
@@ -1692,7 +1699,7 @@ class GDAL2Tiles(object):
         # Set the bounds
         tminx, tminy, tmaxx, tmaxy = self.tminmax[self.tmaxz]
 
-        ds = self.out_ds
+        ds = self.warped_input_dataset
         tilebands = self.dataBandsCount + 1
         querysize = self.querysize
 
@@ -1713,7 +1720,7 @@ class GDAL2Tiles(object):
                     break
                 ti += 1
                 tilefilename = os.path.join(
-                    self.output, str(tz), str(tx), "%s.%s" % (ty, self.tileext))
+                    self.output_folder, str(tz), str(tx), "%s.%s" % (ty, self.tileext))
                 if self.options.verbose:
                     print(ti, '/', tcount, tilefilename)
 
@@ -1754,8 +1761,8 @@ class GDAL2Tiles(object):
                 else:     # 'raster' profile:
 
                     tsize = int(self.tsize[tz])   # tilesize in raster coordinates for actual zoom
-                    xsize = self.out_ds.RasterXSize     # size of the raster in pixels
-                    ysize = self.out_ds.RasterYSize
+                    xsize = self.warped_input_dataset.RasterXSize     # size of the raster in pixels
+                    ysize = self.warped_input_dataset.RasterYSize
                     if tz >= self.nativezoom:
                         querysize = self.tilesize
 
@@ -1801,7 +1808,7 @@ class GDAL2Tiles(object):
                 tile_details=[tile],
                 src_file=self.temp_vrt,
                 nb_data_bands=self.dataBandsCount,
-                output_file_path=self.output,
+                output_file_path=self.output_folder,
                 tile_extension=self.tileext,
                 tile_driver=self.tiledriver,
                 tile_size=self.tilesize,
@@ -1839,7 +1846,7 @@ class GDAL2Tiles(object):
                         break
 
                     ti += 1
-                    tilefilename = os.path.join(self.output,
+                    tilefilename = os.path.join(self.output_folder,
                                                 str(tz),
                                                 str(tx),
                                                 "%s.%s" % (ty, self.tileext))
@@ -1873,7 +1880,7 @@ class GDAL2Tiles(object):
                             minx, miny, maxx, maxy = self.tminmax[tz+1]
                             if x >= minx and x <= maxx and y >= miny and y <= maxy:
                                 dsquerytile = gdal.Open(
-                                    os.path.join(self.output, str(tz+1), str(x),
+                                    os.path.join(self.output_folder, str(tz+1), str(x),
                                                  "%s.%s" % (y, self.tileext)),
                                     gdal.GA_ReadOnly)
                                 if (ty == 0 and y == 1) or (ty != 0 and (y % (2*ty)) != 0):
@@ -1906,7 +1913,10 @@ class GDAL2Tiles(object):
 
                     # Create a KML file for this tile.
                     if self.kml:
-                        f = open(os.path.join(self.output, '%d/%d/%d.kml' % (tz, tx, ty)), 'wb')
+                        f = open(os.path.join(
+                            self.output_folder,
+                            '%d/%d/%d.kml' % (tz, tx, ty)
+                        ), 'wb')
                         f.write(generate_kml(
                             tx, ty, tz, self.tileext, self.tilesize, self.tileswne, self.options,
                             children
