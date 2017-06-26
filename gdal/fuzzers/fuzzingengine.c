@@ -30,9 +30,11 @@
 #include <stdio.h>
 
 int LLVMFuzzerTestOneInput(void *buf, size_t len);
+int LLVMFuzzerInitialize(int* argc, char*** argv);
 
 int main(int argc, char* argv[])
 {
+    LLVMFuzzerInitialize(&argc, &argv);
     if( argc < 2 )
     {
         return LLVMFuzzerTestOneInput(" ", 1);

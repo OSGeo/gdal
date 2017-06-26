@@ -9,6 +9,7 @@ OBJ	=	gdal_fuzzer.o \
 		spatialite_geom_import_fuzzer.o \
 		gml_geom_import_fuzzer.o \
 		get_jpeg2000_structure_fuzzer.o \
+		gdal_translate_fuzzer.o \
 		fuzzingengine.o
 
 CPPFLAGS	:=	$(CPPFLAGS) -I../ogr/ogrsf_frmts/sqlite

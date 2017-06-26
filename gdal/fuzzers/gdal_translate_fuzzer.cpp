@@ -26,39 +26,72 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <stddef.h>
-#include <stdint.h>
-
 #include "gdal.h"
-#include "cpl_minixml.h"
+#include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_alg.h"
+#include "gdal_utils.h"
 #include "gdal_frmts.h"
 
 extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
-int LLVMFuzzerInitialize(int* /*argc*/, char*** /*argv*/)
+int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
 {
+    const char* exe_path = (*argv)[0];
+    CPLSetConfigOption("GDAL_DATA", CPLGetPath(exe_path));
+    CPLSetConfigOption("CPL_TMPDIR", "/tmp");
+    CPLSetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", "YES");
+    // Disable PDF text rendering as fontconfig cannot access its config files
+    CPLSetConfigOption("GDAL_PDF_RENDERING_OPTIONS", "RASTER,VECTOR");
+    // to avoid timeout in WMS driver
+    CPLSetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST", "YES");
+    GDALAllRegister();
     return 0;
 }
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
-
-#define MEM_FILENAME "/vsimem/test"
-
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    GDALRegister_GTiff();
-    GDALRegister_VRT();
-    VSILFILE* fp = VSIFileFromMemBuffer( MEM_FILENAME,
+    VSILFILE* fp = VSIFileFromMemBuffer( "/vsimem/test.tar",
             reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
     VSIFCloseL(fp);
-    char** papszOptions = CSLSetNameValue(NULL, "ALL", "YES");
+
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    CPLXMLNode* psNode = GDALGetJPEG2000Structure(MEM_FILENAME, papszOptions);
+
+    char** papszArgv = NULL;
+    fp = VSIFOpenL("/vsitar//vsimem/test.tar/cmd.txt", "rb");
+    if( fp != NULL )
+    {
+        const char* pszLine = NULL;
+        while( (pszLine = CPLReadLineL(fp)) != NULL )
+            papszArgv = CSLAddString(papszArgv, pszLine);
+        VSIFCloseL(fp);
+    }
+
+    if( papszArgv != NULL )
+    {
+        GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(papszArgv, NULL);
+        if( psOptions )
+        {
+            GDALDatasetH hSrcDS = GDALOpen( "/vsitar//vsimem/test.tar/in", GA_ReadOnly );
+            if( hSrcDS != NULL )
+            {
+                GDALDatasetH hOutDS = GDALTranslate("/vsimem/out", hSrcDS,
+                                                    psOptions, NULL);
+                if( hOutDS )
+                    GDALClose(hOutDS);
+                GDALClose(hSrcDS);
+            }
+            GDALTranslateOptionsFree(psOptions);
+        }
+        CSLDestroy(papszArgv);
+    }
+
+    VSIUnlink("/vsimem/test.tar");
+    VSIUnlink("/vsimem/out");
+
     CPLPopErrorHandler();
-    CSLDestroy(papszOptions);
-    if( psNode )
-        CPLDestroyXMLNode(psNode);
-    VSIUnlink(MEM_FILENAME);
+
     return 0;
 }
