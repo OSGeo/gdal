@@ -257,6 +257,8 @@ struct GDALTranslateOptions
         a file containing the WKT. Note that this does not cause reprojection of the
         dataset to the specified SRS. */
     char *pszProjSRS;
+
+    int nLimitOutSize;
 };
 
 /************************************************************************/
@@ -874,6 +876,30 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         && psOptions->nRGBExpand == 0 && !psOptions->bStats && !psOptions->bNoRAT )
     {
 
+        // For gdal_translate_fuzzer
+        if( psOptions->nLimitOutSize > 0 )
+        {
+            vsi_l_offset nRawOutSize =
+                static_cast<vsi_l_offset>(GDALGetRasterXSize(hSrcDataset)) *
+                GDALGetRasterYSize(hSrcDataset) *
+                psOptions->nBandCount;
+            if( psOptions->nBandCount )
+            {
+                nRawOutSize *= GDALGetDataTypeSizeBytes(
+                    ((GDALDataset *) hSrcDataset)->GetRasterBand(1)->GetRasterDataType() );
+            }
+            if( nRawOutSize > static_cast<vsi_l_offset>(psOptions->nLimitOutSize) )
+            {
+                CPLError( CE_Failure, CPLE_IllegalArg,
+                          "Attempt to create %dx%d dataset is above authorized limit.",
+                          GDALGetRasterXSize(hSrcDataset),
+                          GDALGetRasterYSize(hSrcDataset) );
+                GDALTranslateOptionsFree(psOptions);
+                return NULL;
+            }
+        }
+
+
         hOutDS = GDALCreateCopy( hDriver, pszDest, hSrcDataset,
                                  psOptions->bStrict, psOptions->papszCreateOptions,
                                  psOptions->pfnProgress, psOptions->pProgressData );
@@ -937,6 +963,27 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         GDALTranslateOptionsFree(psOptions);
         return NULL;
     }
+
+    // For gdal_translate_fuzzer
+    if( psOptions->nLimitOutSize > 0 )
+    {
+        vsi_l_offset nRawOutSize = static_cast<vsi_l_offset>(nOXSize) * nOYSize *
+                                psOptions->nBandCount;
+        if( psOptions->nBandCount )
+        {
+            nRawOutSize *= GDALGetDataTypeSizeBytes(
+                ((GDALDataset *) hSrcDataset)->GetRasterBand(1)->GetRasterDataType() );
+        }
+        if( nRawOutSize > static_cast<vsi_l_offset>(psOptions->nLimitOutSize) )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "Attempt to create %dx%d dataset is above authorized limit.",
+                      nOXSize, nOYSize);
+            GDALTranslateOptionsFree(psOptions);
+            return NULL;
+        }
+    }
+
 
 /* ==================================================================== */
 /*      Create a virtual dataset.                                       */
@@ -1791,6 +1838,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
     psOptions->dfXRes = 0.0;
     psOptions->dfYRes = 0.0;
     psOptions->pszProjSRS = NULL;
+    psOptions->nLimitOutSize = 0;
 
     bool bParsedMaskArgument = false;
     bool bOutsideExplicitlySet = false;
@@ -2209,6 +2257,14 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
         {
             psOptions->pszResampling = CPLStrdup(papszArgv[++i]);
         }
+
+        // Undocumented option used by gdal_translate_fuzzer
+        else if( i+1 < argc && EQUAL(papszArgv[i],"-limit_outsize") )
+        {
+            psOptions->nLimitOutSize = atoi(papszArgv[i+1]);
+            i++;
+        }
+
         else if( papszArgv[i][0] == '-' )
         {
             CPLError(CE_Failure, CPLE_NotSupported,

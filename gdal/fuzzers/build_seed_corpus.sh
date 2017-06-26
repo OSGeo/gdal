@@ -8,10 +8,33 @@ if [ "$OUT" == "" ]; then
 fi
 
 echo "Building gdal_translate_fuzzer_seed_corpus.zip"
-printf "FUZZER_FRIENDLY_ARCHIVE\n" > test.tar
-printf "***NEWFILE***:cmd.txt\n" >> test.tar
-printf "\n" >> test.tar
-printf "***NEWFILE***:in\n" >> test.tar
+echo "FUZZER_FRIENDLY_ARCHIVE" > test.tar
+echo "***NEWFILE***:cmd.txt" >> test.tar
+echo "-outsize" >> test.tar
+echo "20" >> test.tar
+echo "20" >> test.tar
+echo "-of" >> test.tar
+echo "GTiff" >> test.tar
+echo "-b" >> test.tar
+echo "1" >> test.tar
+echo "-ot" >> test.tar
+echo "Byte" >> test.tar
+echo "-r" >> test.tar
+echo "nearest" >> test.tar
+echo "-a_srs" >> test.tar
+echo "EPSG:26711" >> test.tar
+echo "-stats" >> test.tar
+echo "-scale" >> test.tar
+echo "-mo" >> test.tar
+echo "FOO=BAR" >> test.tar
+echo "-co" >> test.tar
+echo "COMPRESS=NONE" >> test.tar
+echo "-srcwin" >> test.tar
+echo "0" >> test.tar
+echo "0" >> test.tar
+echo "20" >> test.tar
+echo "20" >> test.tar
+echo "***NEWFILE***:in" >> test.tar
 cat $(dirname $0)/../../autotest/gcore/data/byte.tif >> test.tar
 rm -f $OUT/gdal_translate_fuzzer_seed_corpus.zip
 zip -r $OUT/gdal_translate_fuzzer_seed_corpus.zip test.tar >/dev/null

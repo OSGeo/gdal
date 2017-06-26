@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
-#include "gdal_alg.h"
+#include "gdal_priv.h"
 #include "gdal_utils.h"
 #include "gdal_frmts.h"
 
@@ -65,8 +65,14 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     {
         const char* pszLine = NULL;
         while( (pszLine = CPLReadLineL(fp)) != NULL )
-            papszArgv = CSLAddString(papszArgv, pszLine);
+        {
+            if( !EQUAL(pszLine, "-limit_outsize") )
+                papszArgv = CSLAddString(papszArgv, pszLine);
+        }
         VSIFCloseL(fp);
+        // Prevent generating too big output raster
+        papszArgv = CSLAddString(papszArgv, "-limit_outsize");
+        papszArgv = CSLAddString(papszArgv, "1000000");
     }
 
     if( papszArgv != NULL )
@@ -77,10 +83,23 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             GDALDatasetH hSrcDS = GDALOpen( "/vsitar//vsimem/test.tar/in", GA_ReadOnly );
             if( hSrcDS != NULL )
             {
-                GDALDatasetH hOutDS = GDALTranslate("/vsimem/out", hSrcDS,
-                                                    psOptions, NULL);
-                if( hOutDS )
-                    GDALClose(hOutDS);
+#ifdef notdef
+                GDALDataset* poSrcDS = reinterpret_cast<GDALDataset*>(hSrcDS);
+                vsi_l_offset nSize =
+                    static_cast<vsi_l_offset>(poSrcDS->GetRasterCount()) *
+                    poSrcDS->GetRasterXSize() *
+                    poSrcDS->GetRasterYSize();
+                if( poSrcDS->GetRasterCount() )
+                    nSize *= GDALGetDataTypeSizeBytes(
+                            poSrcDS->GetRasterBand(1)->GetRasterDataType() );
+                if( nSize < 10 * 1024 * 1024 )
+#endif
+                {
+                    GDALDatasetH hOutDS = GDALTranslate("/vsimem/out", hSrcDS,
+                                                        psOptions, NULL);
+                    if( hOutDS )
+                        GDALClose(hOutDS);
+                }
                 GDALClose(hSrcDS);
             }
             GDALTranslateOptionsFree(psOptions);
