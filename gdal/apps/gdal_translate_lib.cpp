@@ -2189,6 +2189,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 
         else if( i+1 < argc && EQUAL(papszArgv[i],"-projwin_srs") )
         {
+            CPLFree(psOptions->pszProjSRS);
             psOptions->pszProjSRS = CPLStrdup(papszArgv[i+1]);
             i++;
         }
@@ -2206,6 +2207,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 
         else if( i+1 < argc && EQUAL(papszArgv[i],"-a_srs") )
         {
+            CPLFree(psOptions->pszOutputSRS);
             psOptions->pszOutputSRS = CPLStrdup(papszArgv[i+1]);
             i++;
         }
@@ -2255,6 +2257,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
         }
         else if( i+1 < argc && EQUAL(papszArgv[i],"-r") )
         {
+            CPLFree(psOptions->pszResampling);
             psOptions->pszResampling = CPLStrdup(papszArgv[++i]);
         }
 
