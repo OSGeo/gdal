@@ -925,7 +925,7 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize, size_t const n
     crc = crc32 (crc, pStart, (uInt) (stream.next_out - pStart));
 
     if (len == stream.avail_out &&
-            (z_err == Z_DATA_ERROR || z_err == Z_ERRNO))
+            (z_err == Z_DATA_ERROR || z_err == Z_ERRNO || z_err == Z_BUF_ERROR))
     {
         z_eof = 1;
         in = 0;
