@@ -8848,6 +8848,49 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_VSIFEofL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  VSILFILE *arg1 = (VSILFILE *) 0 ;
+  int res1 ;
+  PyObject * obj0 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:VSIFEofL",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0,SWIG_as_voidptrptr(&arg1), 0, 0);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFEofL" "', argument " "1"" of type '" "VSILFILE *""'"); 
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)VSIFEofL(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_VSIFCloseL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   VSILFILE *arg1 = (VSILFILE *) 0 ;
@@ -32091,6 +32134,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"VSIStatL", _wrap_VSIStatL, METH_VARARGS, (char *)"VSIStatL(char const * utf8_path, int nFlags=0) -> int"},
 	 { (char *)"VSIFOpenL", _wrap_VSIFOpenL, METH_VARARGS, (char *)"VSIFOpenL(char const * utf8_path, char const * pszMode) -> VSILFILE *"},
 	 { (char *)"VSIFOpenExL", _wrap_VSIFOpenExL, METH_VARARGS, (char *)"VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError) -> VSILFILE *"},
+	 { (char *)"VSIFEofL", _wrap_VSIFEofL, METH_VARARGS, (char *)"VSIFEofL(VSILFILE * fp) -> int"},
 	 { (char *)"VSIFCloseL", _wrap_VSIFCloseL, METH_VARARGS, (char *)"VSIFCloseL(VSILFILE * fp) -> VSI_RETVAL"},
 	 { (char *)"VSIFSeekL", _wrap_VSIFSeekL, METH_VARARGS, (char *)"VSIFSeekL(VSILFILE * fp, GIntBig offset, int whence) -> int"},
 	 { (char *)"VSIFTellL", _wrap_VSIFTellL, METH_VARARGS, (char *)"VSIFTellL(VSILFILE * fp) -> GIntBig"},

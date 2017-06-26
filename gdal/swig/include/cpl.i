@@ -548,6 +548,8 @@ VSILFILE   *wrapper_VSIFOpenExL( const char *utf8_path, const char *pszMode, int
 }
 %}
 
+int VSIFEofL( VSILFILE* fp );
+
 VSI_RETVAL VSIFCloseL( VSILFILE* fp );
 
 #if defined(SWIGPYTHON)

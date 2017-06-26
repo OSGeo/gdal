@@ -1407,6 +1407,10 @@ def VSIFOpenExL(*args):
     """VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError) -> VSILFILE *"""
     return _gdal.VSIFOpenExL(*args)
 
+def VSIFEofL(*args):
+    """VSIFEofL(VSILFILE * fp) -> int"""
+    return _gdal.VSIFEofL(*args)
+
 def VSIFCloseL(*args):
     """VSIFCloseL(VSILFILE * fp) -> VSI_RETVAL"""
     return _gdal.VSIFCloseL(*args)
