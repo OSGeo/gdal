@@ -1041,10 +1041,6 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
                     z_err = Z_ERRNO;
                     break;
                 }
-                // if( ferror (file) ) {
-                //    z_err = Z_ERRNO;
-                //    break;
-                // }
             }
             stream.next_in = inbuf;
         }
@@ -1111,7 +1107,7 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
     crc = crc32(crc, pStart, static_cast<uInt>(stream.next_out - pStart));
 
     if( len == stream.avail_out &&
-        (z_err == Z_DATA_ERROR || z_err == Z_ERRNO) )
+        (z_err == Z_DATA_ERROR || z_err == Z_ERRNO || z_err == Z_BUF_ERROR) )
     {
         z_eof = 1;
         in = 0;
