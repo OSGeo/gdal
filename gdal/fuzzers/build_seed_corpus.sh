@@ -7,6 +7,16 @@ if [ "$OUT" == "" ]; then
     exit 1
 fi
 
+echo "Building gdal_translate_fuzzer_seed_corpus.zip"
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > test.tar
+printf "***NEWFILE***:cmd.txt\n" >> test.tar
+printf "\n" >> test.tar
+printf "***NEWFILE***:in\n" >> test.tar
+cat $(dirname $0)/../../autotest/gcore/data/byte.tif >> test.tar
+rm -f $OUT/gdal_translate_fuzzer_seed_corpus.zip
+zip -r $OUT/gdal_translate_fuzzer_seed_corpus.zip test.tar >/dev/null
+rm test.tar
+
 echo "Building gtiff_fuzzer_seed_corpus.zip"
 rm -f $OUT/gtiff_fuzzer_seed_corpus.zip
 cd $(dirname $0)/../../autotest/gcore/data

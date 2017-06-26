@@ -32,6 +32,13 @@
 #include "ogr_api.h"
 #include "cpl_error.h"
 
+extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
+
+int LLVMFuzzerInitialize(int* /*argc*/, char*** /*argv*/)
+{
+    return 0;
+}
+
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
