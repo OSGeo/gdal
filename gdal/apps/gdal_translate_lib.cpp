@@ -2147,12 +2147,14 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
         else if( i+2 < argc && EQUAL(papszArgv[i],"-outsize") && papszArgv[i+1] != NULL )
         {
             ++i;
-            if( papszArgv[i][strlen(papszArgv[i])-1] == '%' )
+            if( papszArgv[i][0] != '\0' &&
+                papszArgv[i][strlen(papszArgv[i])-1] == '%' )
                 psOptions->dfOXSizePct = CPLAtofM(papszArgv[i]);
             else
                 psOptions->nOXSizePixel = atoi(papszArgv[i]);
             ++i;
-            if( papszArgv[i][strlen(papszArgv[i])-1] == '%' )
+            if( papszArgv[i][0] != '\0' &&
+                papszArgv[i][strlen(papszArgv[i])-1] == '%' )
                 psOptions->dfOYSizePct = CPLAtofM(papszArgv[i]);
             else
                 psOptions->nOYSizePixel = atoi(papszArgv[i]);
