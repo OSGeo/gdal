@@ -652,6 +652,20 @@ def vsifile_14():
         gdal.VSIFOpenL('/vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar/a.tgzb.tgzc.tgzd.tgze.tgzf.tgz.h.tgz.i.tgz', 'rb')
     return 'success'
 
+###############################################################################
+# Test issue with Eof() not detecting end of corrupted gzip stream (#6944)
+
+def vsifile_15():
+
+    fp = gdal.VSIFOpenL('/vsigzip/data/corrupted_z_buf_error.gz', 'rb')
+    if fp is None:
+        return 'fail'
+    while not gdal.VSIFEofL(fp):
+        with gdaltest.error_handler():
+            gdal.VSIFReadL(1,4,fp)
+
+    return 'success'
+
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
@@ -665,7 +679,8 @@ gdaltest_list = [ vsifile_1,
                   vsifile_11,
                   vsifile_12,
                   vsifile_13,
-                  vsifile_14 ]
+                  vsifile_14,
+                  vsifile_15 ]
 
 if __name__ == '__main__':
 
