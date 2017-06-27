@@ -1606,7 +1606,9 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
     if (!poDS)
       return NULL;
 
-    poDS->oOvManager.Initialize(poDS, poDS->GetPhysicalFilename(), poDS->GetFileList());
+    char** papszFileList = poDS->GetFileList();
+    poDS->oOvManager.Initialize(poDS, poDS->GetPhysicalFilename(), papszFileList);
+    CSLDestroy(papszFileList);
 
     CPLErr err = CE_None;
     // Have PAM copy all, but skip the mask
