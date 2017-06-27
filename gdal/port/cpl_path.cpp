@@ -49,7 +49,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // Should be size of larged possible filename.
 static const int CPL_PATH_BUF_SIZE = 2048;

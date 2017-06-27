@@ -32,7 +32,7 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static void DumpBand( GDALDatasetH hBaseDS, GDALRasterBandH hBand,
                       const char *pszName );

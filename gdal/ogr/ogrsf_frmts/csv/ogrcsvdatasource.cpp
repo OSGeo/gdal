@@ -47,7 +47,7 @@
 #include "ogreditablelayer.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     OGRCSVEditableLayerSynchronizer                  */

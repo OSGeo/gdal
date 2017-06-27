@@ -38,7 +38,7 @@
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     GDALTransformGeolocations()                      */

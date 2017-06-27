@@ -30,7 +30,7 @@
 #include "cpl_minixml.h"
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      OGROpenFileGDBGeomFieldDefn                     */

@@ -37,7 +37,7 @@
 #include "cpl_error.h"
 
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const size_t OGR_EXPAT_MAX_ALLOWED_ALLOC = 10000000;
 

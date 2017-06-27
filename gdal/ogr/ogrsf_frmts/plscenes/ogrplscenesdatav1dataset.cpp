@@ -30,7 +30,7 @@
 #include "ogrgeojsonreader.h"
 #include <time.h>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       OGRPLScenesDataV1Dataset()                     */

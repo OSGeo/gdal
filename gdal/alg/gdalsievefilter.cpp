@@ -44,7 +44,7 @@
 #include "gdal.h"
 #include "gdal_alg_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define MY_MAX_INT 2147483647
 

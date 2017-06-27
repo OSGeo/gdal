@@ -35,7 +35,7 @@
 
 #include <time.h>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         GMLASXLinkResolver()                         */

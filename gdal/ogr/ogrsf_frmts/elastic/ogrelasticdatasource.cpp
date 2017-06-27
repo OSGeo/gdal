@@ -35,7 +35,7 @@
 #include "ogrgeojsonreader.h"
 #include "swq.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        OGRElasticDataSource()                        */

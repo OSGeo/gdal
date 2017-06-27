@@ -31,7 +31,7 @@
 #include "cpl_time.h"
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 namespace OpenFileGDB
 {

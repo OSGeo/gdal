@@ -54,7 +54,7 @@
 
 #include "ogr_json_header.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                             OGRFeature()                             */

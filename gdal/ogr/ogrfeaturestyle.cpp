@@ -45,7 +45,7 @@
 #include "ogr_core.h"
 #include "ogr_feature.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /****************************************************************************/
 /*                Class Parameter (used in the String)                      */

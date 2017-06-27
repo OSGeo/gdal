@@ -32,7 +32,7 @@
 #include "gnm_priv.h"
 #include "gnmdb.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static int GNMDBDriverIdentify( GDALOpenInfo* poOpenInfo )
 

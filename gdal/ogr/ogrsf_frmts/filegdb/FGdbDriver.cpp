@@ -35,7 +35,7 @@
 #include "cpl_multiproc.h"
 #include "ogrmutexeddatasource.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRFileGDB();
 

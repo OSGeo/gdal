@@ -31,7 +31,7 @@
 #include "cpl_conv.h"
 #include "ogr_pg.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define PQexec this_is_an_error
 

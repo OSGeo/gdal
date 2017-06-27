@@ -47,7 +47,7 @@
 // #include "gdalsse_priv.h"
 #include "gdalwarper.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     GDALResampleChunk32R_Near()                      */

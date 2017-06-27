@@ -32,7 +32,7 @@
 #include "gnm_priv.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 enum operation
 {

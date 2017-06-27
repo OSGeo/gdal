@@ -88,7 +88,7 @@
 extern "C" GIntBig CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* Unix or Windows NT/2000/XP */
 #if !defined(WIN32)

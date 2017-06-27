@@ -40,7 +40,7 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static inline double dist(double x0, double y0, double x1, double y1)
 {

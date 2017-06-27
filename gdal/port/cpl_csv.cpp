@@ -42,7 +42,7 @@
 #include "cpl_multiproc.h"
 #include "gdal_csv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* ==================================================================== */
 /*      The CSVTable is a persistent set of info about an open CSV      */

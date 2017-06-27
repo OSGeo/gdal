@@ -60,7 +60,7 @@
 
 using std::vector;
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*! output format */
 typedef enum {

@@ -51,7 +51,7 @@
 #include "ogr_core.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int SHPP_TRISTRIP  = 0;
 static const int SHPP_TRIFAN    = 1;

@@ -29,7 +29,7 @@
 #include "ogr_xplane_apt_reader.h"
 #include "ogr_geo_utils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                   OGRXPlaneCreateAptFileReader                       */

@@ -81,7 +81,7 @@
 // Uncomment to get list of options that have been fetched and set.
 // #define DEBUG_CONFIG_OPTIONS
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static CPLMutex *hConfigMutex = NULL;
 static volatile char **g_papszConfigOptions = NULL;

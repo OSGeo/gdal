@@ -28,7 +28,7 @@
 
 #include "ogr_gft.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        OGRGFTResultLayer()                           */

@@ -48,7 +48,7 @@
 
 //! @cond Doxygen_Suppress
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static bool IsEitherSlash( char c )
 {

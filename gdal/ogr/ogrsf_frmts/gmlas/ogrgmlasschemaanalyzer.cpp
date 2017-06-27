@@ -41,7 +41,7 @@ static XSModel* getGrammarPool(XMLGrammarPool* pool)
 #include "ogr_gmlas.h"
 #include "ogr_pgdump.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        IsCompatibleOfArray()                         */

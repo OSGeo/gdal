@@ -49,7 +49,7 @@
 #include "gdal_priv.h"
 #include "gdal_rat.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         GDALPamRasterBand()                          */

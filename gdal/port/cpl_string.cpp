@@ -59,7 +59,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*=====================================================================
                     StringList manipulation functions.

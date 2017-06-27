@@ -35,7 +35,7 @@
 #include <cmath>
 #include <list>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRDGNLayer()                              */

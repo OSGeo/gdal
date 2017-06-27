@@ -32,7 +32,7 @@
 #include "ogr_georss.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const char* const apszAllowedATOMFieldNamesWithSubElements[] =
     { "author", "contributor", NULL };

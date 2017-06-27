@@ -30,7 +30,7 @@
 #include "cpl_string.h"
 #include "ogr_mem.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          ~OGRMemDriver()                             */

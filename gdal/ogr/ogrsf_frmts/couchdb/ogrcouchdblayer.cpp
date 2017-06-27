@@ -30,7 +30,7 @@
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonutils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRCouchDBLayer()                             */

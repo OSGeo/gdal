@@ -57,7 +57,7 @@
 #include "ogr_srs_api.h"
 
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 CPL_C_START
 void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree );

@@ -29,7 +29,7 @@
 
 #include "cpl_vsi_virtual.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if defined(WIN32)
 

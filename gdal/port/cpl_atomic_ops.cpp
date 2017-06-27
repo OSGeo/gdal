@@ -33,7 +33,7 @@
 
 // TODO: If C++11, use #include <atomic>.
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if defined(__MACH__) && defined(__APPLE__)
 

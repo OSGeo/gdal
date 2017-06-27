@@ -30,7 +30,7 @@
 #include "cpl_port.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const double RAD2METER = (180.0 / M_PI) * 60.0 * 1852.0;
 static const double METER2RAD = 1.0 / RAD2METER;

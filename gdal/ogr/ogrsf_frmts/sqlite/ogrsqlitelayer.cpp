@@ -42,7 +42,7 @@
 #include "ogrsqliteutility.h"
 #include <cassert>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRSQLiteLayer()                           */

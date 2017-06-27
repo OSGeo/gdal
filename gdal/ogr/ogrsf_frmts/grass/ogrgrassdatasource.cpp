@@ -31,7 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if GRASS_VERSION_MAJOR  >= 7
 #define G__setenv                G_setenv_nogisrc

@@ -55,7 +55,7 @@
 #include "memdataset.h"
 #include "vrtdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                             IRasterIO()                              */

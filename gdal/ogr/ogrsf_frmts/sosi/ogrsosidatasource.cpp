@@ -31,7 +31,7 @@
 #include <map>
 #include <math.h>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* This is the most common encoding for SOSI files. Let's at least try if
  * it is supported, or generate a meaningful error message.               */

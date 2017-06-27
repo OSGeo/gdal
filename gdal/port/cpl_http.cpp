@@ -50,7 +50,7 @@
 
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // list of named persistent http sessions
 

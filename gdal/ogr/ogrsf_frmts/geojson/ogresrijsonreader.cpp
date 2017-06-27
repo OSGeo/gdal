@@ -50,7 +50,7 @@
 #include "ogrgeojsonutils.h"
 // #include "symbol_renames.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRESRIJSONReader()                         */

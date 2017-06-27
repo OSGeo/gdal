@@ -65,7 +65,7 @@ woven in by Terry Thorsen 1/2003.
 #   include <errno.h>
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifndef CASESENSITIVITYDEFAULT_NO
 #  if !defined(unix) && !defined(CASESENSITIVITYDEFAULT_YES)

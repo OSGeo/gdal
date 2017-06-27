@@ -52,7 +52,7 @@
 #  include <wctype.h>      /* iswspace() */
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /**********************************************************************
  *                   IMapInfoFile::IMapInfoFile()

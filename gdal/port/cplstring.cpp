@@ -39,7 +39,7 @@
 #include "cpl_config.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*
  * The CPLString class is derived from std::string, so the vast majority

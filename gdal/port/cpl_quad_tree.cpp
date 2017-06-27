@@ -39,7 +39,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int MAX_DEFAULT_TREE_DEPTH = 12;
 static const int MAX_SUBNODES = 4;

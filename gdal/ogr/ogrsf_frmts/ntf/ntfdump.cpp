@@ -30,7 +30,7 @@
 #include "cpl_vsi.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static void NTFDump( const char * pszFile, char **papszOptions );
 static void NTFCount( const char * pszFile );

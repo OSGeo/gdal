@@ -33,7 +33,7 @@
 #include "ogr_geo_utils.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRSUALayer()                             */

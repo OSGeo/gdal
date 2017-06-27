@@ -37,7 +37,7 @@
 #include <iostream>
 #include <string>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 KML::KML() :
     poTrunk_(NULL),

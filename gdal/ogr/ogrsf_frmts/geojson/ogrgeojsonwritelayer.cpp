@@ -32,7 +32,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // Remove annoying warnings Microsoft Visual C++.
 #if defined(_MSC_VER)

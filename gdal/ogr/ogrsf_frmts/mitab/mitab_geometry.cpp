@@ -39,7 +39,7 @@
 
 #include "ogr_core.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define OGR_NUM_RINGS(poly)   (poly->getNumInteriorRings()+1)
 #define OGR_GET_RING(poly, i) (i==0?poly->getExteriorRing():poly->getInteriorRing(i-1))

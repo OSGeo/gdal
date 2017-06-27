@@ -48,7 +48,7 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifdef NDEBUG
 // Non NDEBUG: Ignore the result.

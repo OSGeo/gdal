@@ -50,7 +50,7 @@
 #include "ogr_p.h"
 #include "parsexsd.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                   ReplaceSpaceByPct20IfNeeded()                      */

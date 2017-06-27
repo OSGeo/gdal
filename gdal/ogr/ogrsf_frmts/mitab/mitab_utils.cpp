@@ -47,7 +47,7 @@
 #  include <mbctype.h>  // Multibyte chars stuff.
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /**********************************************************************
  *                       TABGenerateArc()

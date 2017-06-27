@@ -42,7 +42,7 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_http.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifndef HAVE_CURL
 

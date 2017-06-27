@@ -31,7 +31,7 @@
 #include "gnm_api.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 GNMNetwork::GNMNetwork() : GDALDataset() {}
 

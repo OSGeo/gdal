@@ -34,7 +34,7 @@
 #include "cpl_string.h"
 #include <time.h>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRFMECacheIndex()                          */

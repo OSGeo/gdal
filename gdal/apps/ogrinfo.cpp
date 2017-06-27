@@ -37,7 +37,7 @@
 
 #include <set>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 int     bReadOnly = FALSE;
 int     bVerbose = TRUE;

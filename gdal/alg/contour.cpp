@@ -45,7 +45,7 @@
 #include "ogr_api.h"
 #include "ogr_core.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // The amount of a contour interval that pixels should be fudged by if they
 // match a contour level exactly.

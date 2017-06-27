@@ -31,7 +31,7 @@
 
 #include <cstdlib>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRJMLWriterLayer()                        */

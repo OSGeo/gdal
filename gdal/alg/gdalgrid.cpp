@@ -51,7 +51,7 @@
 #include "cpl_worker_thread_pool.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const double TO_RADIANS = M_PI / 180.0;
 

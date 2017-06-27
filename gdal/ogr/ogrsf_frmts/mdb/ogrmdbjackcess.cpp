@@ -28,7 +28,7 @@
 
 #include "ogr_mdb.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if JVM_LIB_DLOPEN
 #include <limits.h>

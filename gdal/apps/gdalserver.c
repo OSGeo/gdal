@@ -86,7 +86,7 @@ int  CPL_DLL  GDALServerLoopInstanceRunIteration(void* pInstance);
 void CPL_DLL  GDALServerLoopInstanceDestroy(void* pInstance);
 CPL_C_END
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static int bVerbose = FALSE;
 

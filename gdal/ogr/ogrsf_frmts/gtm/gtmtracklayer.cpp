@@ -28,7 +28,7 @@
  ****************************************************************************/
 #include "ogr_gtm.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 GTMTrackLayer::GTMTrackLayer( const char* pszNameIn,
                               OGRSpatialReference *poSRSIn,

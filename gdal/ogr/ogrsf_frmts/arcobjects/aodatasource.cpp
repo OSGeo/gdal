@@ -32,7 +32,7 @@
 #include "gdal.h"
 #include "aoutils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          AODataSource()                           */

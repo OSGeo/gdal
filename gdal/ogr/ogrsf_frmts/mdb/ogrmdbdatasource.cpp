@@ -32,7 +32,7 @@
 #include <vector>
 #include "ogrgeomediageometry.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRMDBDataSource()                          */

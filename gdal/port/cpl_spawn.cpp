@@ -66,7 +66,7 @@ static const int PIPE_BUFFER_SIZE = 4096;
 static const int IN_FOR_PARENT = 0;
 static const int OUT_FOR_PARENT = 1;
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout);
 

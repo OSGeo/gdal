@@ -28,7 +28,7 @@
 
 #include "ogr_cloudant.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRCloudant();
 

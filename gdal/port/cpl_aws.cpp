@@ -36,7 +36,7 @@
 #include "cpl_minixml.h"
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // #define DEBUG_VERBOSE 1
 

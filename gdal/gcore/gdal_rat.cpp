@@ -56,7 +56,7 @@
 #endif
 #include "ogrgeojsonwriter.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /**
  * \class GDALRasterAttributeTable

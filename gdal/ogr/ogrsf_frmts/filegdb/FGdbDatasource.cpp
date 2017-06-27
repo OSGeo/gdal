@@ -36,7 +36,7 @@
 #include "FGdbUtils.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 using std::vector;
 using std::wstring;

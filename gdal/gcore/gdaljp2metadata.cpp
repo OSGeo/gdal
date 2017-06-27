@@ -61,7 +61,7 @@
 
 /*! @cond Doxygen_Suppress */
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const unsigned char msi_uuid2[16] = {
     0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,

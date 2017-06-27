@@ -39,7 +39,7 @@
 #include "gdal_mdreader.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /**
  * GDALMDReaderKompsat()

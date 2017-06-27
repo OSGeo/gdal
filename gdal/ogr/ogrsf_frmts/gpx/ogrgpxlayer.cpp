@@ -32,7 +32,7 @@
 #include "cpl_string.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int FLD_TRACK_FID = 0;
 static const int FLD_TRACK_SEG_ID = 1;

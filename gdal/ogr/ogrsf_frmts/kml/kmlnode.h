@@ -41,7 +41,7 @@ std::string Nodetype2String(Nodetype const& type);
 
 class KMLNode
 {
-    CPL_DISALLOW_COPY_ASSIGN( KMLNode );
+    CPL_DISALLOW_COPY_ASSIGN( KMLNode )
 public:
 
     KMLNode();

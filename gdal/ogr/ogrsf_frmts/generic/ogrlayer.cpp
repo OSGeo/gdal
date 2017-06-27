@@ -34,7 +34,7 @@
 #include "swq.h"
 #include "ograpispy.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                              OGRLayer()                              */
