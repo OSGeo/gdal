@@ -1059,7 +1059,8 @@ def optparse_init():
                  action="store_true", dest="quiet",
                  help="Disable messages and status to stdout")
     p.add_option("--processes",
-                 dest="processes",
+                 dest="nb_processes",
+                 type='int',
                  help="Number of processes to use for tiling")
 
     # KML options
@@ -1246,7 +1247,7 @@ class GDAL2Tiles(object):
         """Stop the rendering immediately"""
         self.stopped = True
 
-    def __init__(self, arguments):
+    def __init__(self, input_file, output_folder, options):
         """Constructor function - initialization"""
         self.out_drv = None
         self.mem_drv = None
@@ -1293,9 +1294,9 @@ class GDAL2Tiles(object):
         # Otherwise the overview tiles are generated from existing underlying tiles
         self.overviewquery = False
 
-        # RUN THE ARGUMENT PARSER:
-
-        self.input_file, self.output_folder, self.options = process_args(arguments)
+        self.input_file = input_file
+        self.output_folder = output_folder
+        self.options = options
 
         if self.options.resampling == 'near':
             self.querysize = self.tilesize
@@ -2771,9 +2772,9 @@ class GDAL2Tiles(object):
         return s
 
 
-def worker_tile_details(send_pipe, argv):
+def worker_tile_details(send_pipe, input_file, output_folder, options):
     try:
-        gdal2tiles = GDAL2Tiles(argv[1:])
+        gdal2tiles = GDAL2Tiles(input_file, output_folder, options)
         gdal2tiles.open_input()
         gdal2tiles.generate_metadata()
         tile_job_info = gdal2tiles.generate_base_tiles()
@@ -2785,8 +2786,9 @@ def worker_tile_details(send_pipe, argv):
 def main():
     (receiver, sender) = Pipe(False)
     argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    input_file, output_folder, options = process_args(argv[1:])
     print("Begin tiles details calc")
-    p = Process(target=worker_tile_details, args=[sender, argv])
+    p = Process(target=worker_tile_details, args=[sender, input_file, output_folder, options])
     p.start()
     # Make sure to consume the queue before joining. If the payload is too big, it won't be put in
     # one go in the queue and therefore the sending process will never finish, waiting for space in
@@ -2794,9 +2796,9 @@ def main():
     confs = receiver.recv()
     p.join()
     print("Tiles details calc complete.")
-    nb_process = 2
-    pool = Pool(nb_process)
-    chunksize = int(math.ceil(len(confs) / nb_process))
+    nb_processes = options.nb_processes or 1
+    pool = Pool(nb_processes)
+    chunksize = int(math.ceil(len(confs) / nb_processes))
     pool.map(create_base_tiles, confs, chunksize)
     pool.close()
     pool.join()
