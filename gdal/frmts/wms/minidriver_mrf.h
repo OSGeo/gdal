@@ -81,7 +81,7 @@ struct ILSize {
     GIntBig l; // Dual use, sometimes it holds the number of pages
 };
 
-}; // namespace WMSMiniDriver_MRF
+} // namespace WMSMiniDriver_MRF
 
 class WMSMiniDriver_MRF : public WMSMiniDriver {
 public:
