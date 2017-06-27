@@ -50,6 +50,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "gdal_proxy.h"
+#include "gdal_priv_templates.hpp"
 
 /*! @cond Doxygen_Suppress */
 
@@ -1780,7 +1781,9 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                         continue;
 
                     if( m_bNoDataSet &&
-                        ARE_REAL_EQUAL(fSampledValue, m_dfNoDataValue))
+                        GDALIsValueInRange<float>(m_dfNoDataValue) &&
+                        ARE_REAL_EQUAL(fSampledValue,
+                                       static_cast<float>(m_dfNoDataValue)))
                         continue;
 
                     nPixelCount++;
@@ -2456,7 +2459,8 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                 if( bNoDataSetIsNan && CPLIsNan(fResult) )
                     continue;
                 if( bNoDataSetAndNotNan &&
-                    ARE_REAL_EQUAL(fResult, m_dfNoDataValue) )
+                    GDALIsValueInRange<WorkingDT>(m_dfNoDataValue) &&
+                    ARE_REAL_EQUAL(fResult, static_cast<WorkingDT>(m_dfNoDataValue)) )
                     continue;
 
                 if( m_nColorTableComponent )

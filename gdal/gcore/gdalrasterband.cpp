@@ -50,6 +50,7 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_rat.h"
+#include "gdal_priv_templates.hpp"
 
 CPL_CVSID("$Id$");
 
@@ -2958,8 +2959,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
     bool bGotFloatNoDataValue = false;
     float fNoDataValue = 0.0f;
     if( eDataType == GDT_Float32 && bGotNoDataValue &&
-        (fabs(dfNoDataValue) <= std::numeric_limits<float>::max() ||
-         CPLIsInf(dfNoDataValue)) )
+        GDALIsValueInRange<float>(dfNoDataValue) )
     {
         fNoDataValue = static_cast<float>(dfNoDataValue);
         bGotFloatNoDataValue = true;
@@ -3042,7 +3042,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                   {
                     const float fValue = static_cast<float *>(pData)[iOffset];
                     if( CPLIsNan(fValue) ||
-                        (bGotFloatNoDataValue && fValue == fNoDataValue) )
+                        (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
                         continue;
                     dfValue = fValue;
                     break;
@@ -3100,7 +3100,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     CPLAssert( false );
                 }
 
-                if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                if( eDataType != GDT_Float32 &&
+                    bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                     continue;
 
                 const int nIndex =
@@ -3234,7 +3235,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                       {
                         const float fValue = static_cast<float *>(pData)[iOffset];
                         if( CPLIsNan(fValue) ||
-                            (bGotFloatNoDataValue && fValue == fNoDataValue) )
+                            (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
                             continue;
                         dfValue = fValue;
                         break;
@@ -3289,7 +3290,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                         return CE_Failure;
                     }
 
-                    if( bGotNoDataValue &&
+                    if( eDataType != GDT_Float32 && bGotNoDataValue &&
                         ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                         continue;
 
@@ -4770,8 +4771,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     bool bGotFloatNoDataValue = false;
     float fNoDataValue = 0.0f;
     if( eDataType == GDT_Float32 && bGotNoDataValue &&
-        (fabs(dfNoDataValue) <= std::numeric_limits<float>::max() ||
-         CPLIsInf(dfNoDataValue)) )
+        GDALIsValueInRange<float>(dfNoDataValue) )
     {
         fNoDataValue = static_cast<float>(dfNoDataValue);
         bGotFloatNoDataValue = true;
@@ -4858,7 +4858,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                   {
                     const float fValue = static_cast<float *>(pData)[iOffset];
                     if( CPLIsNan(fValue) ||
-                        (bGotFloatNoDataValue && fValue == fNoDataValue) )
+                        (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
                         continue;
                     dfValue = fValue;
                     break;
@@ -4888,7 +4888,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     CPLAssert( false );
                 }
 
-                if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                if( eDataType != GDT_Float32 &&
+                    bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                     continue;
 
                 if( bFirstValue )
@@ -5131,7 +5132,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                       {
                         const float fValue = static_cast<float *>(pData)[iOffset];
                         if( CPLIsNan(fValue) ||
-                            (bGotFloatNoDataValue && fValue == fNoDataValue) )
+                            (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
                             continue;
                         dfValue = fValue;
                         break;
@@ -5161,7 +5162,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                         CPLAssert( false );
                     }
 
-                    if( bGotNoDataValue &&
+                    if( eDataType != GDT_Float32 && bGotNoDataValue &&
                         ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                         continue;
 
@@ -5489,7 +5490,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                   {
                     const float fValue = static_cast<float *>(pData)[iOffset];
                     if( CPLIsNan(fValue) ||
-                        (bGotFloatNoDataValue && fValue == fNoDataValue) )
+                        (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
                         continue;
                     dfValue = fValue;
                     break;
@@ -5519,7 +5520,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                     CPLAssert( false );
                 }
 
-                if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                if( eDataType != GDT_Float32 &&
+                    bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                     continue;
 
                 if( bFirstValue )
@@ -5618,7 +5620,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                       {
                           const float fValue = static_cast<float *>(pData)[iOffset];
                           if( CPLIsNan(fValue) ||
-                              (bGotFloatNoDataValue && fValue == fNoDataValue) )
+                              (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
                               continue;
                           dfValue = fValue;
                           break;
@@ -5648,7 +5650,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                         CPLAssert( false );
                     }
 
-                    if( bGotNoDataValue &&
+                    if( eDataType != GDT_Float32 && bGotNoDataValue &&
                         ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                         continue;
 
