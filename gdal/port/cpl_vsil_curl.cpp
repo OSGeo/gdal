@@ -2407,6 +2407,7 @@ void VSICurlFilesystemHandler::InvalidateCachedData( const char* pszURL )
         if( psRegion->pszURLHash == pszURLHash )
         {
             CPLFree(psRegion->pData);
+            CPLFree(psRegion);
             if( i < nRegions - 1 )
             {
                 memmove(papsRegions, papsRegions + 1,
