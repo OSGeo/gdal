@@ -129,7 +129,7 @@ bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec)
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer::read(Byte** ppByte, size_t& nRemainingBytes, vector<unsigned int>& dataVec)
+bool BitStuffer::read(Byte** ppByte, size_t& nRemainingBytes, vector<unsigned int>& dataVec, size_t nMaxBufferVecElts)
 {
   if (!ppByte)
     return false;
@@ -150,6 +150,11 @@ bool BitStuffer::read(Byte** ppByte, size_t& nRemainingBytes, vector<unsigned in
 
   unsigned int numElements = 0;
   if (!readUInt(ppByte, nRemainingBytes, numElements, n))
+  {
+    LERC_BRKPNT();
+    return false;
+  }
+  if( numElements > nMaxBufferVecElts )
   {
     LERC_BRKPNT();
     return false;

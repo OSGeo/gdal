@@ -1043,7 +1043,9 @@ bool CntZImage::readCntTile(Byte** ppByte, size_t& nRemainingBytesInOut, int i0,
 
     vector<unsigned int>& dataVec = m_tmpDataVec;
     BitStuffer bitStuffer;
-    if (!bitStuffer.read(&ptr, nRemainingBytes, dataVec))
+    size_t nMaxElts =
+            static_cast<size_t>(i1-i0) * static_cast<size_t>(j1-j0);
+    if (!bitStuffer.read(&ptr, nRemainingBytes, dataVec, nMaxElts))
     {
       LERC_BRKPNT();
       return false;
@@ -1170,7 +1172,9 @@ bool CntZImage::readZTile(Byte** ppByte, size_t& nRemainingBytesInOut,
     {
       vector<unsigned int>& dataVec = m_tmpDataVec;
       BitStuffer bitStuffer;
-      if (!bitStuffer.read(&ptr, nRemainingBytes, dataVec))
+      size_t nMaxElts =
+            static_cast<size_t>(i1-i0) * static_cast<size_t>(j1-j0);
+      if (!bitStuffer.read(&ptr, nRemainingBytes, dataVec, nMaxElts))
       {
         LERC_BRKPNT();
         return false;
