@@ -74,9 +74,9 @@ private:
 
 // Size of an image, also used as a tile or pixel location
 struct ILSize {
-    ILSize():  x(0), y(0), z(0), c(0), l(0) {};
+    ILSize():  x(0), y(0), z(0), c(0), l(0) {}
     ILSize(GInt32 _x, GInt32 _y, GInt32 _z = 1, GInt32 _c = 1, GInt32 _l = -1) :
-        x(_x), y(_y), z(_z), c(_c), l(_l) {};
+        x(_x), y(_y), z(_z), c(_c), l(_l) {}
     GInt32 x, y, z, c;
     GIntBig l; // Dual use, sometimes it holds the number of pages
 };

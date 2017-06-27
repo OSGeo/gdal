@@ -201,7 +201,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
                                                       int nUpdateSeqIn,
                                                       bool bGeoJSONDocumentIn );
 
-    void                        SetUpdateSeq(int nUpdateSeqIn) { nUpdateSeq = nUpdateSeqIn; };
+    void                        SetUpdateSeq(int nUpdateSeqIn) { nUpdateSeq = nUpdateSeqIn; }
 
     int                       HasFilterOnFieldOrCreateIfNecessary(const char* pszFieldName);
 

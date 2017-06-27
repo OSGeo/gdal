@@ -58,7 +58,7 @@ class HKVRasterBand : public RawRasterBand
                                unsigned int nImgOffset, int nPixelOffset,
                                int nLineOffset,
                                GDALDataType eDataType, int bNativeOrder );
-    virtual     ~HKVRasterBand() {};
+    virtual     ~HKVRasterBand() {}
 
     virtual CPLErr SetNoDataValue( double ) override;
 };
@@ -71,7 +71,7 @@ class HKVSpheroidList : public SpheroidList
 {
  public:
   HKVSpheroidList();
-  ~HKVSpheroidList() {};
+  ~HKVSpheroidList() {}
 };
 
 HKVSpheroidList :: HKVSpheroidList()
@@ -199,7 +199,7 @@ class HKVDataset : public RawDataset
                 HKVDataset();
     virtual     ~HKVDataset();
 
-    virtual int GetGCPCount() override /* const */ { return nGCPCount; };
+    virtual int GetGCPCount() override /* const */ { return nGCPCount; }
     virtual const char *GetGCPProjection() override;
     virtual const GDAL_GCP *GetGCPs() override;
 

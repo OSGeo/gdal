@@ -207,11 +207,11 @@ public:
                      float newLon);
     int getNumWaypoints() { return numWaypoints; }
     int getNumTrackpoints() { return numTrackpoints; }
-    int getTracks() { return numTracks; };
+    int getTracks() { return numTracks; }
 
     int incNumWaypoints() { return ++numWaypoints; }
     int incNumTrackpoints() { return ++numTrackpoints; }
-    int incNumTracks() { return ++numTracks; };
+    int incNumTracks() { return ++numTracks; }
 private:
     VSILFILE* fpOutput;
 

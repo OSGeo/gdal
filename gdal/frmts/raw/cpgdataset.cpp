@@ -207,7 +207,7 @@ class CPG_STOKESRasterBand : public GDALRasterBand
                    CPG_STOKESRasterBand( GDALDataset *poDS,
                                          GDALDataType eType,
                                          int bNativeOrder );
-    virtual ~CPG_STOKESRasterBand() {};
+    virtual ~CPG_STOKESRasterBand() {}
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
 };

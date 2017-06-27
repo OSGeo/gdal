@@ -38,8 +38,8 @@ CPL_CVSID("$Id$");
 
 class WMSMiniDriverManager {
 public:
-    WMSMiniDriverManager() {};
-    ~WMSMiniDriverManager() { erase(); };
+    WMSMiniDriverManager() {}
+    ~WMSMiniDriverManager() { erase(); }
 
 public:
     void Register(WMSMiniDriverFactory *mdf);

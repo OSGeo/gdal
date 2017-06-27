@@ -209,7 +209,7 @@ class OGRWFSLayer : public OGRLayer
 
     void                SetRequiredOutputFormat(const char* pszRequiredOutputFormatIn);
 
-    const char         *GetRequiredOutputFormat() { return pszRequiredOutputFormat; };
+    const char         *GetRequiredOutputFormat() { return pszRequiredOutputFormat; }
 
     void                SetOrderBy(const std::vector<OGRWFSSortDesc>& aoSortColumnsIn);
     bool                HasGotApproximateLayerDefn() { GetLayerDefn(); return bGotApproximateLayerDefn; }

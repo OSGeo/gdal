@@ -36,7 +36,7 @@
 
 struct WMSHTTPRequest {
     WMSHTTPRequest()
-        :options(NULL), nStatus(0), pabyData(NULL), nDataLen(0), nDataAlloc(0), m_curl_handle(NULL), m_headers(NULL), x(0), y(0) {};
+        :options(NULL), nStatus(0), pabyData(NULL), nDataLen(0), nDataAlloc(0), m_curl_handle(NULL), m_headers(NULL), x(0), y(0) {}
     ~WMSHTTPRequest();
 
     /* Input */

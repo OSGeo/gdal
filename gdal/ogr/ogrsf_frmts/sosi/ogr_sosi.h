@@ -153,10 +153,10 @@ public:
     void setType (const char *pszName, OGRFieldType nType);
     const char          *GetName() {
         return pszName;
-    };
+    }
     OGRFieldType        GetType() {
         return nType;
-    };
+    }
 };
 
 class OGRSOSIDataType {
@@ -180,10 +180,10 @@ public:
     void setElement(int nIndex, const char *name, OGRFieldType type);
     OGRSOSISimpleDataType* getElements() {
         return poElements;
-    };
+    }
     int getElementCount() {
         return nElementCount;
-    };
+    }
 };
 
 typedef std::map<CPLString, OGRSOSIDataType> C2F;

@@ -5394,7 +5394,7 @@ class GTiffSplitBand CPL_FINAL : public GTiffRasterBand
 
   public:
              GTiffSplitBand( GTiffDataset *, int );
-    virtual ~GTiffSplitBand() {};
+    virtual ~GTiffSplitBand() {}
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IWriteBlock( int, int, void * ) override;
@@ -5707,7 +5707,7 @@ class GTiffOddBitsBand : public GTiffRasterBand
   public:
 
                    GTiffOddBitsBand( GTiffDataset *, int );
-    virtual ~GTiffOddBitsBand() {};
+    virtual ~GTiffOddBitsBand() {}
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IWriteBlock( int, int, void * ) override;

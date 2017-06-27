@@ -411,8 +411,8 @@ class TABMAPObjHdr
         m_nMinY(0),
         m_nMaxX(0),
         m_nMaxY(0)
-        {};
-    virtual ~TABMAPObjHdr() {};
+        {}
+    virtual ~TABMAPObjHdr() {}
 
     static TABMAPObjHdr *NewObj(TABGeomType nNewObjType, GInt32 nId=0);
     static TABMAPObjHdr *ReadNextObj(TABMAPObjectBlock *poObjBlock,
@@ -422,10 +422,10 @@ class TABMAPObjHdr
     int         WriteObjTypeAndId(TABMAPObjectBlock *);
     void        SetMBR(GInt32 nMinX, GInt32 nMinY, GInt32 nMaxX, GInt32 mMaxY);
 
-    virtual int WriteObj(TABMAPObjectBlock *) {return -1;};
+    virtual int WriteObj(TABMAPObjectBlock *) {return -1;}
 
 //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) {return -1;};
+    virtual int ReadObj(TABMAPObjectBlock *) {return -1;}
 };
 
 class TABMAPObjHdrWithCoord : public TABMAPObjHdr
@@ -443,13 +443,13 @@ class TABMAPObjNone CPL_FINAL : public TABMAPObjHdr
 {
   public:
 
-    TABMAPObjNone() {};
-    virtual ~TABMAPObjNone() {};
+    TABMAPObjNone() {}
+    virtual ~TABMAPObjNone() {}
 
-    virtual int WriteObj(TABMAPObjectBlock *) override {return 0;};
+    virtual int WriteObj(TABMAPObjectBlock *) override {return 0;}
 
 //  protected:
-    virtual int ReadObj(TABMAPObjectBlock *) override {return 0;};
+    virtual int ReadObj(TABMAPObjectBlock *) override {return 0;}
 };
 
 class TABMAPObjPoint: public TABMAPObjHdr
@@ -460,8 +460,8 @@ class TABMAPObjPoint: public TABMAPObjHdr
     GByte       m_nSymbolId;
 
     TABMAPObjPoint():
-        m_nX(0), m_nY(0), m_nSymbolId(0) {};
-    virtual ~TABMAPObjPoint() {};
+        m_nX(0), m_nY(0), m_nSymbolId(0) {}
+    virtual ~TABMAPObjPoint() {}
 
     virtual int WriteObj(TABMAPObjectBlock *) override;
 
@@ -488,8 +488,8 @@ class TABMAPObjFontPoint: public TABMAPObjPoint
         m_nB(0),
         m_nAngle(0),
         m_nFontId(0)
-        {};
-    virtual ~TABMAPObjFontPoint() {};
+        {}
+    virtual ~TABMAPObjFontPoint() {}
 
     virtual int WriteObj(TABMAPObjectBlock *) override;
 
@@ -508,8 +508,8 @@ class TABMAPObjCustomPoint CPL_FINAL : public TABMAPObjPoint
         m_nUnknown_(0),
         m_nCustomStyle(0),
         m_nFontId(0)
-        {};
-    virtual ~TABMAPObjCustomPoint() {};
+        {}
+    virtual ~TABMAPObjCustomPoint() {}
 
     virtual int WriteObj(TABMAPObjectBlock *) override;
 
@@ -532,8 +532,8 @@ class TABMAPObjLine CPL_FINAL : public TABMAPObjHdr
         m_nX2(0),
         m_nY2(0),
         m_nPenId(0)
-        {};
-    virtual ~TABMAPObjLine() {};
+        {}
+    virtual ~TABMAPObjLine() {}
 
     virtual int WriteObj(TABMAPObjectBlock *) override;
 
@@ -562,8 +562,8 @@ class TABMAPObjPLine CPL_FINAL : public TABMAPObjHdrWithCoord
         m_nPenId(0),
         m_nBrushId(0),
         m_bSmooth(0)
-        {};
-    virtual ~TABMAPObjPLine() {};
+        {}
+    virtual ~TABMAPObjPLine() {}
 
     virtual int WriteObj(TABMAPObjectBlock *) override;
 
@@ -584,8 +584,8 @@ class TABMAPObjRectEllipse CPL_FINAL : public TABMAPObjHdr
         m_nCornerHeight(0),
         m_nPenId(0),
         m_nBrushId(0)
-        {};
-    virtual ~TABMAPObjRectEllipse() {};
+        {}
+    virtual ~TABMAPObjRectEllipse() {}
 
     virtual int WriteObj(TABMAPObjectBlock *) override;
 
@@ -612,8 +612,8 @@ class TABMAPObjArc CPL_FINAL : public TABMAPObjHdr
         m_nArcEllipseMaxX(0),
         m_nArcEllipseMaxY(0),
         m_nPenId(0)
-        {};
-    virtual ~TABMAPObjArc() {};
+        {}
+    virtual ~TABMAPObjArc() {}
 
     virtual int WriteObj(TABMAPObjectBlock *) override;
 
@@ -660,8 +660,8 @@ class TABMAPObjText CPL_FINAL : public TABMAPObjHdrWithCoord
         m_nHeight(0),
         m_nFontId(0),
         m_nPenId(0)
-        {};
-    virtual ~TABMAPObjText() {};
+        {}
+    virtual ~TABMAPObjText() {}
 
     virtual int WriteObj(TABMAPObjectBlock *) override;
 
@@ -686,8 +686,8 @@ class TABMAPObjMultiPoint CPL_FINAL : public TABMAPObjHdrWithCoord
         m_nSymbolId(0),
         m_nLabelX(0),
         m_nLabelY(0)
-        {};
-    virtual ~TABMAPObjMultiPoint() {};
+        {}
+    virtual ~TABMAPObjMultiPoint() {}
 
     virtual int WriteObj(TABMAPObjectBlock *) override;
 
@@ -725,7 +725,7 @@ class TABMAPObjCollection CPL_FINAL : public TABMAPObjHdrWithCoord
         m_nRegionPenId(0),
         m_nRegionBrushId(0),
         m_nPolylinePenId(0)
-        {};
+        {}
     virtual ~TABMAPObjCollection()
     {}
 
@@ -775,7 +775,7 @@ class TABBinBlockManager
 
     GInt32      AllocNewBlock(const char* pszReason = "");
     void        Reset();
-    void        SetLastPtr(int nBlockPtr) {m_nLastAllocatedBlock=nBlockPtr; };
+    void        SetLastPtr(int nBlockPtr) {m_nLastAllocatedBlock=nBlockPtr; }
 
     void        PushGarbageBlockAsFirst(GInt32 nBlockPtr);
     void        PushGarbageBlockAsLast(GInt32 nBlockPtr);
@@ -829,9 +829,9 @@ class TABRawBinBlock
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0);
 
     int         GetBlockType();
-    virtual int GetBlockClass() { return TAB_RAWBIN_BLOCK; };
+    virtual int GetBlockClass() { return TAB_RAWBIN_BLOCK; }
 
-    GInt32      GetStartAddress() {return m_nFileOffset;};
+    GInt32      GetStartAddress() {return m_nFileOffset;}
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
 #endif
@@ -872,11 +872,11 @@ class TABRawBinBlock
     int         WriteZeros(int nBytesToWrite);
     int         WritePaddedString(int nFieldSize, const char *pszString);
 
-    void        SetModifiedFlag(GBool bModified) {m_bModified=bModified;};
+    void        SetModifiedFlag(GBool bModified) {m_bModified=bModified;}
 
     // This semi-private method gives a direct access to the internal
     // buffer... to be used with extreme care!!!!!!!!!
-    GByte *     GetCurDataPtr() { return (m_pabyBuf + m_nCurPos); } ;
+    GByte *     GetCurDataPtr() { return (m_pabyBuf + m_nCurPos); }
 };
 
 /*---------------------------------------------------------------------
@@ -905,7 +905,7 @@ class TABMAPHeaderBlock CPL_FINAL : public TABRawBinBlock
                                   VSILFILE *fpSrc = NULL, int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0) override;
 
-    virtual int GetBlockClass() override { return TABMAP_HEADER_BLOCK; };
+    virtual int GetBlockClass() override { return TABMAP_HEADER_BLOCK; }
 
     int         Int2Coordsys(GInt32 nX, GInt32 nY, double &dX, double &dY);
     int         Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY,
@@ -1016,12 +1016,12 @@ class TABMAPIndexBlock CPL_FINAL : public TABRawBinBlock
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0) override;
     virtual int CommitToFile() override;
 
-    virtual int GetBlockClass() override { return TABMAP_INDEX_BLOCK; };
+    virtual int GetBlockClass() override { return TABMAP_INDEX_BLOCK; }
 
     void        UnsetCurChild();
 
     int         GetNumFreeEntries();
-    int         GetNumEntries()         {return m_numEntries;};
+    int         GetNumEntries()         {return m_numEntries;}
     TABMAPIndexEntry *GetEntry( int iIndex );
     int         AddEntry(GInt32 XMin, GInt32 YMin,
                          GInt32 XMax, GInt32 YMax,
@@ -1033,7 +1033,7 @@ class TABMAPIndexBlock CPL_FINAL : public TABRawBinBlock
     void        SetMBR(GInt32 nXMin, GInt32 nYMin,
                        GInt32 nXMax, GInt32 nYMax);
 
-    GInt32      GetNodeBlockPtr() { return GetStartAddress();};
+    GInt32      GetNodeBlockPtr() { return GetStartAddress();}
 
     void        SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr);
     void        SetParentRef(TABMAPIndexBlock *poParent);
@@ -1123,7 +1123,7 @@ class TABMAPObjectBlock CPL_FINAL : public TABRawBinBlock
                                   VSILFILE *fpSrc = NULL, int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0) override;
 
-    virtual int GetBlockClass() override { return TABMAP_OBJECT_BLOCK; };
+    virtual int GetBlockClass() override { return TABMAP_OBJECT_BLOCK; }
 
     virtual int ReadIntCoord(GBool bCompressed, GInt32 &nX, GInt32 &nY);
     int         WriteIntCoord(GInt32 nX, GInt32 nY, GBool bCompressed);
@@ -1154,7 +1154,7 @@ class TABMAPObjectBlock CPL_FINAL : public TABRawBinBlock
     TABGeomType GetCurObjectType() { return m_nCurObjectType; }
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = NULL) override { Dump(fpOut, FALSE); };
+    virtual void Dump(FILE *fpOut = NULL) override { Dump(fpOut, FALSE); }
     void Dump(FILE *fpOut, GBool bDetails);
 #endif
 };
@@ -1202,7 +1202,7 @@ class TABMAPCoordBlock CPL_FINAL : public TABRawBinBlock
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0) override;
     virtual int CommitToFile() override;
 
-    virtual int GetBlockClass() override { return TABMAP_COORD_BLOCK; };
+    virtual int GetBlockClass() override { return TABMAP_COORD_BLOCK; }
 
     void        SetMAPBlockManagerRef(TABBinBlockManager *poBlockManager);
     virtual int ReadBytes(int numBytes, GByte *pabyDstBuf) override;
@@ -1218,18 +1218,18 @@ class TABMAPCoordBlock CPL_FINAL : public TABRawBinBlock
                                   GBool bCompressed);
 
     void        SetNextCoordBlock(GInt32 nNextCoordBlockAddress);
-    GInt32      GetNextCoordBlock()   { return m_nNextCoordBlock; };
+    GInt32      GetNextCoordBlock()   { return m_nNextCoordBlock; }
 
     int         WriteIntCoord(GInt32 nX, GInt32 nY, GBool bCompressed);
 
-    int         GetNumBlocksInChain() { return m_numBlocksInChain; };
+    int         GetNumBlocksInChain() { return m_numBlocksInChain; }
 
-    void        ResetTotalDataSize() {m_nTotalDataSize = 0;};
-    int         GetTotalDataSize() {return m_nTotalDataSize;};
+    void        ResetTotalDataSize() {m_nTotalDataSize = 0;}
+    int         GetTotalDataSize() {return m_nTotalDataSize;}
 
     void        SeekEnd();
     void        StartNewFeature();
-    int         GetFeatureDataSize() {return m_nFeatureDataSize;};
+    int         GetFeatureDataSize() {return m_nFeatureDataSize;}
 //__TODO__ Can we flush GetFeatureMBR() and all MBR tracking in this class???
     void        GetFeatureMBR(GInt32 &nXMin, GInt32 &nYMin,
                               GInt32 &nXMax, GInt32 &nYMax);
@@ -1268,7 +1268,7 @@ class TABMAPToolBlock CPL_FINAL : public TABRawBinBlock
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0) override;
     virtual int CommitToFile() override;
 
-    virtual int GetBlockClass() override { return TABMAP_TOOL_BLOCK; };
+    virtual int GetBlockClass() override { return TABMAP_TOOL_BLOCK; }
 
     void        SetMAPBlockManagerRef(TABBinBlockManager *poBlockManager);
     virtual int ReadBytes(int numBytes, GByte *pabyDstBuf) override;
@@ -1277,7 +1277,7 @@ class TABMAPToolBlock CPL_FINAL : public TABRawBinBlock
     void        SetNextToolBlock(GInt32 nNextCoordBlockAddress);
 
     GBool       EndOfChain();
-    int         GetNumBlocksInChain() { return m_numBlocksInChain; };
+    int         GetNumBlocksInChain() { return m_numBlocksInChain; }
 
     int         CheckAvailableSpace(int nToolType);
 
@@ -1529,16 +1529,16 @@ class TABINDNode
                          int nPrevNodePtr=0, int nNextNodePtr=0);
 
     int         SetFieldType(TABFieldType eType);
-    TABFieldType GetFieldType()         {return m_eFieldType;};
+    TABFieldType GetFieldType()         {return m_eFieldType;}
 
-    void        SetUnique(GBool bUnique){m_bUnique = bUnique;};
-    GBool       IsUnique()              {return m_bUnique;};
+    void        SetUnique(GBool bUnique){m_bUnique = bUnique;}
+    GBool       IsUnique()              {return m_bUnique;}
 
-    int         GetKeyLength()          {return m_nKeyLength;};
-    int         GetSubTreeDepth()       {return m_nSubTreeDepth;};
-    GInt32      GetNodeBlockPtr()       {return m_nCurDataBlockPtr;};
-    int         GetNumEntries()         {return m_numEntriesInNode;};
-    int         GetMaxNumEntries()      {return (512-12)/(m_nKeyLength+4);};
+    int         GetKeyLength()          {return m_nKeyLength;}
+    int         GetSubTreeDepth()       {return m_nSubTreeDepth;}
+    GInt32      GetNodeBlockPtr()       {return m_nCurDataBlockPtr;}
+    int         GetNumEntries()         {return m_numEntriesInNode;}
+    int         GetMaxNumEntries()      {return (512-12)/(m_nKeyLength+4);}
 
     GInt32      FindFirst(GByte *pKeyValue);
     GInt32      FindNext(GByte *pKeyValue);
@@ -1599,7 +1599,7 @@ class TABINDFile
                      GBool bTestOpenNoError=FALSE);
     int         Close();
 
-    int         GetNumIndexes() {return m_numIndexes;};
+    int         GetNumIndexes() {return m_numIndexes;}
     int         SetIndexFieldType(int nIndexNumber, TABFieldType eType);
     int         SetIndexUnique(int nIndexNumber, GBool bUnique=TRUE);
     GByte      *BuildKey(int nIndexNumber, GInt32 nValue);
@@ -1684,7 +1684,7 @@ class TABDATFile
 
     GInt32      GetNumRecords();
     TABRawBinBlock *GetRecordBlock(int nRecordId);
-    GBool       IsCurrentRecordDeleted() { return m_bCurRecordDeletedFlag;};
+    GBool       IsCurrentRecordDeleted() { return m_bCurRecordDeletedFlag;}
     int         CommitRecordToFile();
 
     int         MarkAsDeleted();
@@ -1793,7 +1793,7 @@ class TABRelation
                      char **papszSelectedFields);
     int         CreateRelFields();
 
-    OGRFeatureDefn *GetFeatureDefn()  {return m_poDefn;};
+    OGRFeatureDefn *GetFeatureDefn()  {return m_poDefn;}
     TABFieldType    GetNativeFieldType(int nFieldId);
     TABFeature     *GetFeature(int nFeatureId);
 
@@ -1809,8 +1809,8 @@ class TABRelation
     GBool       IsFieldIndexed(int nFieldId);
     GBool       IsFieldUnique(int nFieldId);
 
-    const char *GetMainFieldName()      {return m_pszMainFieldName;};
-    const char *GetRelFieldName()       {return m_pszRelFieldName;};
+    const char *GetMainFieldName()      {return m_pszMainFieldName;}
+    const char *GetRelFieldName()       {return m_pszRelFieldName;}
 };
 
 /*---------------------------------------------------------------------

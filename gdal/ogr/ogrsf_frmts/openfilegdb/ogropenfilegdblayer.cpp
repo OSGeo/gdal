@@ -45,7 +45,7 @@ class OGROpenFileGDBGeomFieldDefn: public OGRGeomFieldDefn
                                     OGRwkbGeometryType eGeomTypeIn) :
             OGRGeomFieldDefn(pszNameIn, eGeomTypeIn),
             m_poLayer(poLayer)
-        {};
+        {}
 
         ~OGROpenFileGDBGeomFieldDefn() {}
 

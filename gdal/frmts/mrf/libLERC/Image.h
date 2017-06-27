@@ -38,7 +38,7 @@ class Image
 {
 public:
 
-  virtual ~Image()    {};
+  virtual ~Image()    {}
 
   enum Type
   {
@@ -70,14 +70,14 @@ public:
 
 protected:
 
-  Image() : type_(Last_Type_), width_(0), height_(0)   {};
+  Image() : type_(Last_Type_), width_(0), height_(0)   {}
 
   /// compare
   bool operator == (const Image& img) const
   {
       return type_ == img.type_ && width_ == img.width_ && height_ == img.height_;
   }
-  bool operator != (const Image& img) const     { return !operator==(img); };
+  bool operator != (const Image& img) const     { return !operator==(img); }
 
   Type type_;
   int width_, height_;

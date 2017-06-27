@@ -50,7 +50,7 @@ public:
   TImage(const TImage& tImg) : data_(NULL) { *this = tImg;  }
   virtual ~TImage() {
       clear();
-  };
+  }
 
   /// assignment
   TImage& operator=(const TImage& tImg);
@@ -70,7 +70,7 @@ public:
 
   /// compare
   bool operator == (const Image& img) const;
-  bool operator != (const Image& img) const	{ return !operator==(img); };
+  bool operator != (const Image& img) const	{ return !operator==(img); }
 
 protected:
   Element* data_;

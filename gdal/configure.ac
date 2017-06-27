@@ -91,6 +91,11 @@ dnl GCC 7 warnings
 dnl Do not enable yet. Causes warning in alg/gdalthinplate.cpp due to armadillo templates
 dnl AX_CHECK_COMPILE_FLAG([-Wduplicated-branches], [C_WFLAGS="$C_WFLAGS -Wduplicated-branches" CXX_WFLAGS="$CXX_WFLAGS -Wduplicated-branches"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
+dnl GCC 8 warnings
+AC_LANG_PUSH([C++])
+AX_CHECK_COMPILE_FLAG([-Wextra-semi], [CXX_WFLAGS="$CXX_WFLAGS -Wextra-semi"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AC_LANG_PUSH([C++])
+
 AX_CHECK_COMPILE_FLAG([-Wno-sign-compare], [NO_SIGN_COMPARE="-Wno-sign-compare"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl clang >= 3.9

@@ -51,7 +51,7 @@ static unsigned char *ParseXPM( const char *pszInput,
 class XPMDataset : public GDALPamDataset
 {
   public:
-                 XPMDataset() {};
+                 XPMDataset() {}
                  ~XPMDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );

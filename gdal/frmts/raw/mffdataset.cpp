@@ -198,7 +198,7 @@ class MFFSpheroidList : public SpheroidList
 {
 public:
   MFFSpheroidList();
-  ~MFFSpheroidList() {};
+  ~MFFSpheroidList() {}
 };
 
 MFFSpheroidList :: MFFSpheroidList()
