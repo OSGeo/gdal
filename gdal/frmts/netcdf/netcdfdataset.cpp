@@ -7026,7 +7026,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                 poDS->bSetProjection = false;
                 poDS->bSetGeoTransform = false;
 
-            if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 )
+                if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 )
                 {
                     // Strip out uninteresting metadata.
                     poDS->papszMetadata = CSLSetNameValue(
@@ -7056,10 +7056,6 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                     poLayer->SetGridMapping(osGridMapping);
                 }
                 poLayer->SetProfile(nProfileDimId, nParentIndexVarID);
-                poDS->papoLayers = static_cast<netCDFLayer **>(
-                    CPLRealloc(poDS->papoLayers,
-                               (poDS->nLayers + 1) * sizeof(netCDFLayer *)));
-                poDS->papoLayers[poDS->nLayers++] = poLayer;
 
                 for( size_t j = 0; j < anPotentialVectorVarID.size(); j++ )
                 {
@@ -7079,6 +7075,20 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                         poLayer->AddField(anPotentialVectorVarID[j]);
                     }
                 }
+
+                if( poLayer->GetLayerDefn()->GetFieldCount() != 0 ||
+                    poLayer->GetGeomType() != wkbNone )
+                {
+                    poDS->papoLayers = static_cast<netCDFLayer **>(
+                        CPLRealloc(poDS->papoLayers,
+                                (poDS->nLayers + 1) * sizeof(netCDFLayer *)));
+                    poDS->papoLayers[poDS->nLayers++] = poLayer;
+                }
+                else
+                {
+                    delete poLayer;
+                }
+
             }
         }
 
