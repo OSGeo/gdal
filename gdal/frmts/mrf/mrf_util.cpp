@@ -503,7 +503,7 @@ int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess) {
 #endif
     VSIFCloseL(ifp);
     return !ret;
-};
+}
 
 // Similar to compress2() but with flags to control zlib features
 // Returns true if it worked
