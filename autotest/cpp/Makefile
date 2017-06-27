@@ -2,7 +2,7 @@
 
 CXX = g++
 #CXXFLAGS := $(shell gdal-config --cflags)
-CXXFLAGS = -I../../gdal/port -I../../gdal/alg -I../../gdal/gcore -I../../gdal/ogr -I../../gdal/ogr/ogrsf_frmts -I../../gdal/apps
+CXXFLAGS = -I../../gdal/port -I../../gdal/alg -I../../gdal/gcore -I../../gdal/ogr -I../../gdal/ogr/ogrsf_frmts -I../../gdal/apps -I../../gdal/frmts/vrt
 CXXFLAGS += -I. -Itut $(CPPFLAGS)
 CXXFLAGS += -Wall
 CXXFLAGS += -Wextra -Wno-unused-function
