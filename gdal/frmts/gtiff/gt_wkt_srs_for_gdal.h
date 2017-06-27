@@ -55,6 +55,6 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
                             int *pnGCPCount, GDAL_GCP **ppasGCPList,
                             int *pbPixelIsPoint, char*** ppapszRPCMD );
 
-CPL_C_END;
+CPL_C_END
 
 #endif // GT_WKT_SRS_FOR_GDAL_H_INCLUDED
