@@ -663,6 +663,7 @@ def vsifile_15():
     while not gdal.VSIFEofL(fp):
         with gdaltest.error_handler():
             gdal.VSIFReadL(1,4,fp)
+    gdal.VSIFCloseL(fp)
 
     return 'success'
 
