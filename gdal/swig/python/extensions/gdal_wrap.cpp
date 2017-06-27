@@ -8686,7 +8686,10 @@ SWIGINTERN PyObject *_wrap_VSIStatL(PyObject *SWIGUNUSEDPARM(self), PyObject *ar
     if (result == 0)
     resultobj = SWIG_NewPointerObj((void*)new_StatBuf( arg2 ),SWIGTYPE_p_StatBuf,1);
     else
-    resultobj = Py_None;
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
+    }
   }
   {
     /* %typemap(freearg) (const char *utf8_path) */

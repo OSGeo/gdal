@@ -1840,7 +1840,10 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
   if (result == 0)
     $result = SWIG_NewPointerObj((void*)new_StatBuf( $1 ),SWIGTYPE_p_StatBuf,1);
   else
+  {
     $result = Py_None;
+    Py_INCREF($result);
+  }
 }
 
 %typemap(in,numinputs=0) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly) (void* ptr, size_t nsize, GDALDataType datatype, int readonly)
