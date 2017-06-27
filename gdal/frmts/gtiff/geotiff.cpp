@@ -12496,6 +12496,8 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
     poDS->osFilename = poOpenInfo->pszFilename;
     poDS->poActiveDS = poDS;
     poDS->fpL = l_fpL;
+    poDS->hTIFF = l_hTIFF;
+    poDS->bCloseTIFFHandle = true;
 
     if( !EQUAL(pszFilename,poOpenInfo->pszFilename)
         && !STARTS_WITH_CI(poOpenInfo->pszFilename, "GTIFF_RAW:") )
@@ -12525,7 +12527,6 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    poDS->bCloseTIFFHandle = true;
     return poDS;
 }
 
