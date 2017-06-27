@@ -117,7 +117,8 @@ class PNGDataset : public GDALPamDataset
     int         bHasReadICCMetadata;
     void        LoadICCProfile();
 
-    static void WriteMetadataAsText(png_structp hPNG, png_infop psPNGInfo,
+    static void WriteMetadataAsText(jmp_buf sSetJmpContext,
+                                    png_structp hPNG, png_infop psPNGInfo,
                                     const char* pszKey, const char* pszValue);
     static GDALDataset *OpenStage2( GDALOpenInfo *, PNGDataset*& );
 
