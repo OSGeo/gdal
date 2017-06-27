@@ -34,7 +34,7 @@
 #include <algorithm>
 #include <string>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 {

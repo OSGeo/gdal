@@ -39,7 +39,7 @@
 #pragma clang diagnostic pop
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define RASTERLITE_WAVELET_HEADER "StartWaveletsImage$$"
 #define RASTERLITE_WAVELET_FOOTER "$$EndWaveletsImage"

@@ -29,7 +29,7 @@
 
 #include <string.h>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* Various offsets, in bytes */
 // Commented out the unused defines.

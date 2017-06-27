@@ -48,7 +48,7 @@
 #include "gdal_priv.h"
 #include "gdalwarper.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      GDALAutoCreateWarpedVRT()                       */

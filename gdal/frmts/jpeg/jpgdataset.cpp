@@ -69,7 +69,7 @@ CPL_C_END
 #include "memdataset.h"
 #include "vsidataio.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int TIFF_VERSION = 42;
 

@@ -50,7 +50,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // Release 1.6.3 or 1.6.4 changed the type of count in some API functions.
 

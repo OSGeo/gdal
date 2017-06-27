@@ -42,7 +42,7 @@ this file is only about 3k of object code.  */
 #include "cpl_port.h"
 #include "md5.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* Little-endian byte-swapping routines.  Note that these do not
 depend on the size of datatypes such as cvs_uint32, nor do they require

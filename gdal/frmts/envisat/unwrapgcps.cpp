@@ -30,7 +30,7 @@
 #include <cmath>
 #include <cstdio>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // number of histogram bins (36 a 10dg)
 static const int NBIN = 36;

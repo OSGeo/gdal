@@ -2,7 +2,7 @@
 #include "sdeerror.h"
 #include "cpl_port.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           IssueSDEError()                            */

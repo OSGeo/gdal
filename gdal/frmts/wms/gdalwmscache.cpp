@@ -29,7 +29,7 @@
 
 #include "wmsdriver.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 GDALWMSCache::GDALWMSCache() :
     m_cache_path("./gdalwmscache"),

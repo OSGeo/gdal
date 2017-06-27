@@ -30,7 +30,7 @@
 #include "gdal_pam.h"
 #include "pcrasterdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 void GDALRegister_PCRaster()
 {

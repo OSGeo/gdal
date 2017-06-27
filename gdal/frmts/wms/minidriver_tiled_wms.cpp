@@ -32,7 +32,7 @@
 #include "wmsdriver.h"
 #include "minidriver_tiled_wms.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const char SIG[] = "GDAL_WMS TiledWMS: ";
 

@@ -38,7 +38,7 @@
 #include <vector>
 #include "pdfobject.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        ROUND_TO_INT_IF_CLOSE()                       */

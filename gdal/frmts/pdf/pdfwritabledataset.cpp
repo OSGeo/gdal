@@ -30,7 +30,7 @@
 #include "pdfcreatecopy.h"
 #include "memdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      PDFWritableVectorDataset()                      */

@@ -37,7 +37,7 @@
 
 using std::fill;
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 typedef struct {
     GInt32      NBIH;   /* bytes in header, normally 1024 */

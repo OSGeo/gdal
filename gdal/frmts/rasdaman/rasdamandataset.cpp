@@ -40,7 +40,7 @@
 
 void CPL_DLL CPL_STDCALL GDALRegister_RASDAMAN();
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // cppcheck-suppress copyCtorAndEqOperator
 class Subset

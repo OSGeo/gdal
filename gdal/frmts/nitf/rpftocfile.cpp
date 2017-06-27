@@ -58,7 +58,7 @@
 #include "cpl_vsi.h"
 #include "nitflib.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        RPFTOCTrim()                                    */
