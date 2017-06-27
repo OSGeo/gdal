@@ -130,7 +130,7 @@ class OGRKMLDataSource : public OGRDataSource
     VSILFILE* GetOutputFP() { return fpOutput_; }
     void GrowExtents( OGREnvelope *psGeomBounds );
 #ifdef HAVE_EXPAT
-    KML* GetKMLFile() { return poKMLFile_; };
+    KML* GetKMLFile() { return poKMLFile_; }
 #endif
 
     bool IsFirstCTError() const { return !bIssuedCTError_; }

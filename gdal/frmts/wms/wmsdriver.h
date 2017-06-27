@@ -154,8 +154,8 @@ public:
 class WMSMiniDriver {
 friend class GDALWMSDataset;
 public:
-    WMSMiniDriver() : m_parent_dataset(NULL) {};
-    virtual ~WMSMiniDriver() {};
+    WMSMiniDriver() : m_parent_dataset(NULL) {}
+    virtual ~WMSMiniDriver() {}
 
 public:
     // MiniDriver specific initialization from XML, required
@@ -163,7 +163,7 @@ public:
     virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) = 0;
 
     // Called once at the end of the dataset initialization
-    virtual CPLErr EndInit() { return CE_None; };
+    virtual CPLErr EndInit() { return CE_None; }
 
     // Error message returned in url, required
     // Set error message in request.Error
@@ -173,24 +173,24 @@ public:
         CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri) = 0;
 
     // change capabilities to be used by the parent
-    virtual void GetCapabilities(CPL_UNUSED WMSMiniDriverCapabilities *caps) {};
+    virtual void GetCapabilities(CPL_UNUSED WMSMiniDriverCapabilities *caps) {}
 
     // signal by setting the m_has_getinfo in the GetCapabilities call
     virtual void GetTiledImageInfo(CPL_UNUSED CPLString &url,
         CPL_UNUSED const GDALWMSImageRequestInfo &iri,
         CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
         CPL_UNUSED int nXInBlock,
-        CPL_UNUSED int nYInBlock) {};
+        CPL_UNUSED int nYInBlock) {}
 
     virtual const char *GetProjectionInWKT() {
         if (!m_projection_wkt.empty())
             return m_projection_wkt.c_str();
         return NULL;
-    };
+    }
 
     virtual char **GetMetadataDomainList() {
         return NULL;
-    };
+    }
 
 protected:
     CPLString m_base_url;
@@ -200,8 +200,8 @@ protected:
 
 class WMSMiniDriverFactory {
 public:
-    WMSMiniDriverFactory() {};
-    virtual ~WMSMiniDriverFactory() {};
+    WMSMiniDriverFactory() {}
+    virtual ~WMSMiniDriverFactory() {}
 
 public:
     virtual WMSMiniDriver* New() const = 0;
@@ -263,8 +263,8 @@ public:
 
     void SetColorTable(GDALColorTable *pct) { m_poColorTable=pct; }
 
-    void mSetBand(int i, GDALRasterBand *band) { SetBand(i,band); };
-    GDALWMSRasterBand *mGetBand(int i) { return reinterpret_cast<GDALWMSRasterBand *>(GetRasterBand(i)); };
+    void mSetBand(int i, GDALRasterBand *band) { SetBand(i,band); }
+    GDALWMSRasterBand *mGetBand(int i) { return reinterpret_cast<GDALWMSRasterBand *>(GetRasterBand(i)); }
 
     const GDALWMSDataWindow *WMSGetDataWindow() const {
         return &m_data_window;

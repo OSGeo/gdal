@@ -112,12 +112,12 @@ public:
   const ImageDescriptionRecord * idr()
   {
     return m_idr;
-  };
+  }
 
   const RadiometricProcessingRecord * rpr()
   {
     return m_rpr;
-  };
+  }
 
 private:
   ImageDescriptionRecord * m_idr;

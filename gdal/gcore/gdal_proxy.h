@@ -46,7 +46,7 @@
 class CPL_DLL GDALProxyDataset : public GDALDataset
 {
     protected:
-        GDALProxyDataset() {};
+        GDALProxyDataset() {}
 
         virtual GDALDataset *RefUnderlyingDataset() = 0;
         virtual void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset);
@@ -106,7 +106,7 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
 class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
 {
     protected:
-        GDALProxyRasterBand() {};
+        GDALProxyRasterBand() {}
 
         virtual GDALRasterBand* RefUnderlyingRasterBand() = 0;
         virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand);

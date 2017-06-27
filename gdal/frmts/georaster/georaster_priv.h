@@ -224,9 +224,9 @@ public:
                             GDALProgressFunc pfnProgress,
                             void* pProgresoversData ) override;
     virtual CPLErr      CreateMaskBand( int nFlags ) override;
-    virtual OGRErr      StartTransaction(int /* bForce */ =FALSE) override {return CE_None;};
-    virtual OGRErr      CommitTransaction() override {return CE_None;};
-    virtual OGRErr      RollbackTransaction() override {return CE_None;};
+    virtual OGRErr      StartTransaction(int /* bForce */ =FALSE) override {return CE_None;}
+    virtual OGRErr      CommitTransaction() override {return CE_None;}
+    virtual OGRErr      RollbackTransaction() override {return CE_None;}
     
     virtual char**      GetFileList() override;
 
@@ -421,7 +421,7 @@ public:
     bool                FlushBlock( long nCacheBlock );
     bool                GetNoData( int nLayer, double* pdfNoDataValue );
     bool                SetNoData( int nLayer, const char* pszValue );
-    CPLXMLNode*         GetMetadata() { return phMetadata; };
+    CPLXMLNode*         GetMetadata() { return phMetadata; }
     bool                SetVAT( int nBand, const char* pszName );
     char*               GetVAT( int nBand );
     bool                GeneratePyramid(
@@ -436,7 +436,7 @@ public:
                                                 int nColumnBlocks,
                                                 int nRowBlocks,
                                                 int nBandBlocks );
-    void                SetWriteOnly( bool value ) { bWriteOnly = value; };
+    void                SetWriteOnly( bool value ) { bWriteOnly = value; }
     void                SetRPC();
     void                SetMaxLevel( int nMaxLevel );
     void                GetRPC();

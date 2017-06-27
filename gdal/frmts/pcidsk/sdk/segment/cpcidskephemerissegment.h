@@ -43,7 +43,7 @@ namespace PCIDSK {
         const EphemerisSeg_t& GetEphemeris() const override
         {
             return *mpoEphemeris;
-        };
+        }
         void SetEphemeris(const EphemerisSeg_t& oEph) override
         {
             if(mpoEphemeris)
@@ -52,7 +52,7 @@ namespace PCIDSK {
             }
             mpoEphemeris = new EphemerisSeg_t(oEph);
             mbModified = true;
-        };
+        }
 
         //synchronize the segment on disk.
         void Synchronize() override;

@@ -65,7 +65,7 @@ class OGRODSLayer : public OGRMemLayer
     bool                GetHasHeaderLine() { return bHasHeaderLine; }
     void                SetHasHeaderLine(bool bIn) { bHasHeaderLine = bIn; }
 
-    const char         *GetName() override { return OGRMemLayer::GetLayerDefn()->GetName(); };
+    const char         *GetName() override { return OGRMemLayer::GetLayerDefn()->GetName(); }
     OGRwkbGeometryType  GetGeomType() override { return wkbNone; }
     virtual OGRSpatialReference *GetSpatialRef() override { return NULL; }
 

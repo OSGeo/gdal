@@ -42,7 +42,7 @@ class GeomFieldInfo
 public:
     CPLString       iliGeomType;
 
-    GeomFieldInfo() : geomTable(NULL) {};
+    GeomFieldInfo() : geomTable(NULL) {}
     ~GeomFieldInfo() {
        if( geomTable )
            geomTable->Release();
@@ -89,7 +89,7 @@ public:
     GeomFieldInfos  poGeomFieldInfos;
     StructFieldInfos poStructFieldInfos;
 
-    FeatureDefnInfo() : poTableDefn(NULL) {};
+    FeatureDefnInfo() : poTableDefn(NULL) {}
     ~FeatureDefnInfo() {
        if( poTableDefn )
            poTableDefn->Release();

@@ -47,7 +47,7 @@ class KRODataset : public RawDataset
     VSILFILE    *fpImage;  // image data file.
 
   public:
-                    KRODataset() : fpImage(NULL) {};
+                    KRODataset() : fpImage(NULL) {}
                    ~KRODataset();
 
     static GDALDataset *Open( GDALOpenInfo * );

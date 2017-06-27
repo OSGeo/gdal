@@ -784,7 +784,7 @@ static swq_field_type OGRWFSDWithinBeyondChecker( swq_expr_node *op,
 class OGRWFSCustomFuncRegistrar: public swq_custom_func_registrar
 {
     public:
-        OGRWFSCustomFuncRegistrar() {};
+        OGRWFSCustomFuncRegistrar() {}
         virtual const swq_operation *GetOperator( const char * ) override ;
 };
 

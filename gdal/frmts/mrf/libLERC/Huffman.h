@@ -37,8 +37,8 @@ NAMESPACE_LERC_START
 class Huffman
 {
 public:
-  Huffman() : m_maxHistoSize(1 << 15), m_maxNumBitsLUT(12), m_numBitsToSkipInTree(0), m_root(NULL) {};
-  ~Huffman() { Clear(); };
+  Huffman() : m_maxHistoSize(1 << 15), m_maxNumBitsLUT(12), m_numBitsToSkipInTree(0), m_root(NULL) {}
+  ~Huffman() { Clear(); }
 
   // Limitation: We limit the max Huffman code length to 32 bit. If this happens, the function ComputeCodes()
   // returns false. In that case don't use Huffman coding but Lerc only instead.

@@ -472,13 +472,13 @@ public:
   static bool QueryDataTypeSupported( EPTType eHFADataType );
 
   // Get methods - only valid after compressBlock has been called.
-  GByte*  getCounts() const { return m_pCounts; };
-  GUInt32 getCountSize() const { return m_nSizeCounts; };
-  GByte*  getValues() const { return m_pValues; };
-  GUInt32 getValueSize() const { return m_nSizeValues; };
-  GUInt32 getMin() const { return m_nMin; };
-  GUInt32 getNumRuns() const { return m_nNumRuns; };
-  GByte   getNumBits() const { return m_nNumBits; };
+  GByte*  getCounts() const { return m_pCounts; }
+  GUInt32 getCountSize() const { return m_nSizeCounts; }
+  GByte*  getValues() const { return m_pValues; }
+  GUInt32 getValueSize() const { return m_nSizeValues; }
+  GUInt32 getMin() const { return m_nMin; }
+  GUInt32 getNumRuns() const { return m_nNumRuns; }
+  GByte   getNumBits() const { return m_nNumBits; }
 
 private:
   static void makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCount );

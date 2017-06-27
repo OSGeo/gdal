@@ -74,7 +74,7 @@ class GDALGMLJP2Expr
         eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(pszVal) {}
     GDALGMLJP2Expr( CPLString osVal ) :
         eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(osVal) {}
-    ~GDALGMLJP2Expr() {};
+    ~GDALGMLJP2Expr() {}
 
     GDALGMLJP2Expr          Evaluate( xmlXPathContextPtr pXPathCtx,
                                       xmlDocPtr pDoc );

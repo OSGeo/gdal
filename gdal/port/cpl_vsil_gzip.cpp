@@ -2054,7 +2054,7 @@ class VSIZipWriteHandle CPL_FINAL : public VSIVirtualHandle
     void  StartNewFile( VSIZipWriteHandle* poSubFile );
     void  StopCurrentFile();
     void* GetHandle() { return m_hZIP; }
-    VSIZipWriteHandle* GetChildInWriting() { return poChildInWriting; };
+    VSIZipWriteHandle* GetChildInWriting() { return poChildInWriting; }
     void SetAutoDeleteParent() { bAutoDeleteParent = true; }
 };
 

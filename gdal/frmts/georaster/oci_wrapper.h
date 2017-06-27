@@ -323,13 +323,13 @@ public:
 
     OCIType*            DescribeType( const char *pszTypeName );
 
-    bool                Succeeded() { return bSuceeeded; };
+    bool                Succeeded() { return bSuceeeded; }
 
-    char*               GetUser() { return pszUser; };
-    char*               GetPassword() { return pszPassword; };
-    char*               GetServer() { return pszServer; };
-    int                 GetVersion () { return nVersion; };
-    sb4                 GetCharSize () { return nCharSize; };
+    char*               GetUser() { return pszUser; }
+    char*               GetPassword() { return pszPassword; }
+    char*               GetServer() { return pszServer; }
+    int                 GetVersion () { return nVersion; }
+    sb4                 GetCharSize () { return nCharSize; }
 
     OCIType*            GetGeometryType() { return hGeometryTDO; }
     OCIType*            GetGeoRasterType() { return hGeoRasterTDO; }
@@ -341,8 +341,8 @@ public:
     bool                EndTransaction() {return Commit(); }
 
     bool                IsExtProc() { return bExtProc; }
-    char*               GetExtProcUser() { return pszExtProcUser; };
-    char*               GetExtProcSchema() { return pszExtProcSchema; };
+    char*               GetExtProcUser() { return pszExtProcUser; }
+    char*               GetExtProcSchema() { return pszExtProcSchema; }
 };
 
 /***************************************************************************/

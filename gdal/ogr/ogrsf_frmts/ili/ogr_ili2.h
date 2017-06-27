@@ -71,7 +71,7 @@ class OGRILI2Layer : public OGRLayer
 
     OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    CPLString           GetIliGeomType( const char* cFieldName) { return oGeomFieldInfos[cFieldName].iliGeomType; };
+    CPLString           GetIliGeomType( const char* cFieldName) { return oGeomFieldInfos[cFieldName].iliGeomType; }
 
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE ) override;
 

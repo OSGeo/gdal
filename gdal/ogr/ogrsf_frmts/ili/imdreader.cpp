@@ -71,11 +71,13 @@ public:
         poTableDefn = new OGRFeatureDefn(layerName);
         poTableDefn->Reference();
         CPLFree(layerName);
-    };
+    }
+
     ~IliClass()
     {
         poTableDefn->Release();
-    };
+    }
+
     const char* GetName() {
         return poTableDefn->GetName();
     }
@@ -101,7 +103,7 @@ public:
         }
 
         return CPLStrdup(psClassTID);
-    };
+    }
     void AddFieldNode(CPLXMLNode* nodeIn, int iOrderPos)
     {
         if (iOrderPos >= (int)oFields.size())
