@@ -37,7 +37,7 @@ public:
 
   // these 2 do not allocate memory. Byte ptr is moved like a file pointer.
   static bool write(Byte** ppByte, const std::vector<unsigned int>& dataVec);
-  static bool read( Byte** ppByte, size_t& nRemainingBytes, std::vector<unsigned int>& dataVec);
+  static bool read( Byte** ppByte, size_t& nRemainingBytes, std::vector<unsigned int>& dataVec, size_t nMaxBufferVecElts);
 
   static unsigned int computeNumBytesNeeded(unsigned int numElem, unsigned int maxElem);
   static unsigned int numExtraBytesToAllocate()  { return 3; }
