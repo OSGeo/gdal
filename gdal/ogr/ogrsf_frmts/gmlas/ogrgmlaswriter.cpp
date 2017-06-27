@@ -3101,7 +3101,7 @@ void GMLASWriter::PrintLine(VSILFILE* fp, const char *fmt, ...)
     VSIFWriteL(m_osEOL.c_str(), 1, m_osEOL.size(), fp);
 }
 
-}; /* namespace GMLAS */
+} /* namespace GMLAS */
 
 
 /************************************************************************/
