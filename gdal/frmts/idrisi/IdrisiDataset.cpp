@@ -585,8 +585,8 @@ IdrisiDataset::~IdrisiDataset()
 
         CSLSetNameValueSeparator( papszRDC, ": " );
         SaveAsCRLF( papszRDC, pszDocFilename );
-        CSLDestroy( papszRDC );
     }
+    CSLDestroy( papszRDC );
 
     if( poColorTable )
     {
