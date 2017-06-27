@@ -222,11 +222,11 @@ TIF_Band::TIF_Band( GDALMRFDataset *pDS, const ILImage &image,
     if (q >2) q-=2;
     papszOptions = CSLAddNameValue(papszOptions, "ZLEVEL",
                                    CPLString().Printf("%d", q));
-};
+}
 
 TIF_Band::~TIF_Band()
 {
     CSLDestroy(papszOptions);
-};
+}
 
 NAMESPACE_MRF_END
