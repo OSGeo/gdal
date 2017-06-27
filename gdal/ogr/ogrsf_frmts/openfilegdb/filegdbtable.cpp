@@ -3220,4 +3220,4 @@ OGRwkbGeometryType FileGDBOGRGeometryConverter::GetGeometryTypeFromESRI(
     return wkbUnknown;
 }
 
-}; /* namespace OpenFileGDB */
+} /* namespace OpenFileGDB */

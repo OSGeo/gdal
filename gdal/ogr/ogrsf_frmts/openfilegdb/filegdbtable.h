@@ -390,6 +390,6 @@ class FileGDBOGRGeometryConverter
 
 int FileGDBDoubleDateToOGRDate(double dfVal, OGRField* psField);
 
-}; /* namespace OpenFileGDB */
+} /* namespace OpenFileGDB */
 
 #endif /* ndef FILEGDBTABLE_H_INCLUDED */

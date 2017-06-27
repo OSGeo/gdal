@@ -287,7 +287,7 @@ static const sEnumerationElement helipadEdgeLigthingType[] =
     { 3, "Red" } /* proposed for V90x */
 };
 
-DEFINE_XPLANE_ENUMERATION(HelipadEdgeLightingEnumeration, helipadEdgeLigthingType);
+DEFINE_XPLANE_ENUMERATION(HelipadEdgeLightingEnumeration, helipadEdgeLigthingType)
 
 class OGRXPlaneHelipadLayer : public OGRXPlaneLayer
 {
@@ -440,7 +440,7 @@ static const sEnumerationElement APTLightBeaconColorType[] =
     { 4, "White-white-green" }     /* military field */
 };
 
-DEFINE_XPLANE_ENUMERATION(APTLightBeaconColorEnumeration, APTLightBeaconColorType);
+DEFINE_XPLANE_ENUMERATION(APTLightBeaconColorEnumeration, APTLightBeaconColorType)
 
 class OGRXPlaneAPTLightBeaconLayer : public OGRXPlaneLayer
 {
@@ -501,7 +501,7 @@ static const sEnumerationElement VASI_PAPI_WIGWAG_Type[] =
     { 6, "Wig-Wag lights" }
 };
 
-DEFINE_XPLANE_ENUMERATION(VASI_PAPI_WIGWAG_Enumeration, VASI_PAPI_WIGWAG_Type);
+DEFINE_XPLANE_ENUMERATION(VASI_PAPI_WIGWAG_Enumeration, VASI_PAPI_WIGWAG_Type)
 
 class OGRXPlane_VASI_PAPI_WIGWAG_Layer : public OGRXPlaneLayer
 {
