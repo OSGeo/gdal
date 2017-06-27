@@ -32,7 +32,7 @@
 #include "cpl_conv.h"
 #include "bsb_read.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                                main()                                */

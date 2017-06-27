@@ -44,7 +44,7 @@
 #include "netcdf.h"
 #include "ogr_core.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 extern CPLMutex *hNCMutex; /* shared with netcdf. See netcdfdataset.cpp */
 

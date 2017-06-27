@@ -37,7 +37,7 @@
 #include "cpl_vsi.h"
 #include "hfa.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, EPTType eDataType ) :
     m_pData(pData),

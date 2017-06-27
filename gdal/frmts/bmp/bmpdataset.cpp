@@ -32,7 +32,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // Enable if you want to see lots of BMP debugging output.
 // #define BMP_DEBUG

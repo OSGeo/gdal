@@ -47,7 +47,7 @@
 #include "nitflib.h"
 #include "vrtdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int GEOTRSFRM_TOPLEFT_X = 0;
 static const int GEOTRSFRM_WE_RES = 1;

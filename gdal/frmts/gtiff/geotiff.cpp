@@ -107,7 +107,7 @@
 #include "xtiffio.h"
 
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if SIZEOF_VOIDP == 4
 static bool bGlobalStripIntegerOverflow = false;

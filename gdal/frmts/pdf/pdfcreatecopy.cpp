@@ -45,7 +45,7 @@
 /* Cf PDF reference v1.7, Appendix C, page 993 */
 #define MAXIMUM_SIZE_IN_UNITS   14400
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define PIXEL_TO_GEO_X(x,y) adfGeoTransform[0] + x * adfGeoTransform[1] + y * adfGeoTransform[2]
 #define PIXEL_TO_GEO_Y(x,y) adfGeoTransform[3] + x * adfGeoTransform[4] + y * adfGeoTransform[5]

@@ -29,7 +29,7 @@
 
 #include "keaoverview.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // constructor
 KEAOverview::KEAOverview(KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn,

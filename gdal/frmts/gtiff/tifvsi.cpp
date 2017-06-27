@@ -50,7 +50,7 @@
 #include "gdal_libgeotiff_symbol_rename.h"
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 CPL_C_START
 extern TIFF CPL_DLL * XTIFFClientOpen( const char* name, const char* mode,

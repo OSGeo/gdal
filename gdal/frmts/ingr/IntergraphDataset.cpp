@@ -40,7 +40,7 @@
 #include "IntergraphBand.h"
 #include "IngrTypes.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //  ----------------------------------------------------------------------------
 //                                        IntergraphDataset::IntergraphDataset()

@@ -33,7 +33,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 WMSMiniDriver_WMS::WMSMiniDriver_WMS() : m_iversion(0) {}
 

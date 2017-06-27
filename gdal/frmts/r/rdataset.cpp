@@ -49,7 +49,7 @@
 #include "gdal_priv.h"
 #include "../raw/rawdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // static const int R_NILSXP = 0;
 static const int R_LISTSXP = 2;

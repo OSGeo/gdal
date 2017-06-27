@@ -60,7 +60,7 @@
 #include "cpl_vsi.h"
 #include "hfa.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const char * const apszAuxMetadataItems[] = {
 // node/entry            field_name                  metadata_key       type

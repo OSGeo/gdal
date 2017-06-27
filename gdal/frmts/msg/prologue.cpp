@@ -30,7 +30,7 @@
 
 #include "prologue.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static
 int size_SatelliteStatus()

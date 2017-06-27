@@ -40,7 +40,7 @@
 
 #include "georaster_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //  ---------------------------------------------------------------------------
 //                                                           GeoRasterDataset()

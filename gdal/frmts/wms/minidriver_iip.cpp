@@ -29,7 +29,7 @@
 #include "wmsdriver.h"
 #include "minidriver_iip.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 WMSMiniDriver_IIP::WMSMiniDriver_IIP() {}
 

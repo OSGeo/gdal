@@ -42,7 +42,7 @@
 #define ENABLE_SQL_SQLITE_FORMAT
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        RasterliteOpenSQLiteDB()                      */

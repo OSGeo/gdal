@@ -34,7 +34,7 @@
  **********************************************************************/
  #include "postgisraster.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
  /**********************************************************************
  * \brief Replace the quotes by single quotes in the input string

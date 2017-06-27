@@ -46,7 +46,7 @@
 #include "gdal.h"
 #include "gdal_frmts.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        MEMCreateRasterBand()                         */

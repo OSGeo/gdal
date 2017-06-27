@@ -35,7 +35,7 @@
 #include "gdal_frmts.h"
 #include "jpipkakdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*
 ** The following are for testing premature stream termination support.

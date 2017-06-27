@@ -51,7 +51,7 @@ CPL_C_START
 #endif
 CPL_C_END
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 NAMESPACE_MRF_START
 

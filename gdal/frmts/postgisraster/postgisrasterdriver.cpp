@@ -31,7 +31,7 @@
 #include "postgisraster.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************
  * \brief Constructor

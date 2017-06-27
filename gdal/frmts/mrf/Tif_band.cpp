@@ -45,7 +45,7 @@
 
 #include "marfa.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 NAMESPACE_MRF_START
 

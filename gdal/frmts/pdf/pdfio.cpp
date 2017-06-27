@@ -34,7 +34,7 @@
 
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
 /* Poppler 0.31.0 is the first one that needs to know the file size */

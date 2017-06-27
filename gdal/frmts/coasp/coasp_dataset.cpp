@@ -39,7 +39,7 @@
 #include "gdal_frmts.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int TYPE_GENERIC = 0;
 static const int TYPE_GEOREF = 1;

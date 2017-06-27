@@ -32,7 +32,7 @@
 
 #include "gdal_ecw.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if defined(FRMT_ecw) && (ECWSDK_VERSION >= 40)
 

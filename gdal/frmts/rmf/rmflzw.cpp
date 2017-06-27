@@ -49,7 +49,7 @@
 
 #include "rmfdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // Code marks that there is no predecessor in the string
 static const GUInt32 NO_PRED = 0xFFFF;

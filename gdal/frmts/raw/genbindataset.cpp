@@ -34,7 +34,7 @@
 
 #include <cstdlib>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* ==================================================================== */
 /*      Table relating USGS and ESRI state plane zones.                 */

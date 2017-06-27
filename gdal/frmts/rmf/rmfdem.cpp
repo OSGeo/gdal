@@ -31,7 +31,7 @@
 
 #include "rmfdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*
  * The encoded data stream is a series of records.

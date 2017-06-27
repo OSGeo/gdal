@@ -40,7 +40,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 typedef enum {                  // File formats
     L1B_NONE,           // Not a L1B format

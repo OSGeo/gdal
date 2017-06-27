@@ -30,7 +30,7 @@
 #include "cpl_string.h"
 #include "records.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* --- ASAR record descriptors --------------------------------------------- */
 static const EnvisatFieldDescr ASAR_ANTENNA_ELEV_PATT_ADSR[] = {

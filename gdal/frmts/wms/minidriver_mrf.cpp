@@ -33,7 +33,7 @@
 #include "wmsdriver.h"
 #include "minidriver_mrf.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 using namespace WMSMiniDriver_MRF_ns;
 

@@ -60,7 +60,7 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static CPLString OSR_GDS( char **papszNV, const char *pszField,
                           const char *pszDefaultValue );

@@ -43,7 +43,7 @@ CPL_C_START
 CPL_C_END
 #include "tifvsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       NITFUncompressBILEVEL()                        */

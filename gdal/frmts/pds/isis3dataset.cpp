@@ -104,7 +104,7 @@ static const char* const pszLABEL_BYTES_PLACEHOLDER = "!*^LABEL_BYTES^*!";
 static const char* const pszHISTORY_STARTBYTE_PLACEHOLDER =
                                                     "!*^HISTORY_STARTBYTE^*!";
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
