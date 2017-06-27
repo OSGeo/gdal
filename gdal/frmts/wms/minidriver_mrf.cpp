@@ -152,7 +152,7 @@ void *SectorCache::data(size_t address) {
 // Keep in sync with the type enum
 static const int ir_size[WMSMiniDriver_MRF::tEND] = { 16, 8 };
 
-WMSMiniDriver_MRF::WMSMiniDriver_MRF(): m_type(tMRF), fp(NULL), m_request(NULL),index_cache(NULL) {};
+WMSMiniDriver_MRF::WMSMiniDriver_MRF(): m_type(tMRF), fp(NULL), m_request(NULL),index_cache(NULL) {}
 
 WMSMiniDriver_MRF::~WMSMiniDriver_MRF() {
     if (index_cache)
