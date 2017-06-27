@@ -286,7 +286,7 @@ void     TABMAPToolBlock::SetNextToolBlock(GInt32 nNextToolBlockAddress)
 void TABMAPToolBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
 {
     m_poBlockManagerRef = poBlockMgr;
-};
+}
 
 /**********************************************************************
  *                   TABMAPToolBlock::ReadBytes()
