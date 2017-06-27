@@ -143,7 +143,7 @@ public:
    LTIDLLPixel(LTIColorSpace colorSpace,
             lt_uint16 numBands,
             LTIDataType dataType) : T(colorSpace,numBands,dataType) {}
-   virtual ~LTIDLLPixel() {};
+   virtual ~LTIDLLPixel() {}
 };
 
 template <class T>
@@ -156,7 +156,7 @@ public:
                 bool useWorldFile = false) : T(oStream, useWorldFile) {}
    LTIDLLReader(LTIOStreamInf *poStream,
                 LTIOStreamInf *poWorldFile = NULL) : T(poStream, poWorldFile) {}
-   virtual ~LTIDLLReader() {};
+   virtual ~LTIDLLReader() {}
 };
 
 template <class T>
@@ -164,7 +164,7 @@ class LTIDLLNavigator : public T
 {
 public:
    explicit LTIDLLNavigator(const LTIImage& image ) : T(image) {}
-   virtual ~LTIDLLNavigator() {};
+   virtual ~LTIDLLNavigator() {}
 };
 
 template <class T>
@@ -175,7 +175,7 @@ public:
                   lt_uint32 totalNumCols,
                   lt_uint32 totalNumRows,
                   void** data ) : T(pixelProps,totalNumCols,totalNumRows,data) {}
-   virtual ~LTIDLLBuffer() {};
+   virtual ~LTIDLLBuffer() {}
 };
 
 template <class T>
@@ -183,7 +183,7 @@ class LTIDLLCopy : public T
 {
 public:
    explicit LTIDLLCopy(const T& original) : T(original) {}
-   virtual ~LTIDLLCopy() {};
+   virtual ~LTIDLLCopy() {}
 };
 
 template <class T>
