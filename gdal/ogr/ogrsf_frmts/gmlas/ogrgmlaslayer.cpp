@@ -340,7 +340,10 @@ void OGRGMLASLayer::ProcessDataRecordCreateFields(
                     CPLXMLNode* psDupTree = CPLCloneXMLTree(psChildNode);
                     CPLXMLNode* psValue = CPLGetXMLNode(psDupTree, "value");
                     if( psValue != NULL )
+                    {
                         CPLRemoveXMLChild(psDupTree, psValue);
+                        CPLDestroyXMLNode(psValue);
+                    }
                     char* pszXML = CPLSerializeXMLTree(psDupTree);
                     CPLDestroyXMLNode(psDupTree);
                     poFieldDescFeature->SetField( szFIELD_DOCUMENTATION, pszXML);
