@@ -32,7 +32,7 @@
 #include "cpl_time.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int SWITCH_THRESHOLD = 10000;
 static const int MAX_THRESHOLD = 100000;

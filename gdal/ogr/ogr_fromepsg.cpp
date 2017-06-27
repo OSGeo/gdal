@@ -50,7 +50,7 @@
 #include "ogr_spatialref.h"
 
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 extern void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue );
 

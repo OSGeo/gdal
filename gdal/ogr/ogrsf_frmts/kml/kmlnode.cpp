@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           Help functions                             */

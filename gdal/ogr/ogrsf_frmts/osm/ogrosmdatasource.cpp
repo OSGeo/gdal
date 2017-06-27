@@ -147,7 +147,7 @@ size_t GetMaxTotalAllocs();
 static void WriteVarInt64(GUIntBig nSVal, GByte** ppabyData);
 static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData);
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 class DSToBeOpened
 {

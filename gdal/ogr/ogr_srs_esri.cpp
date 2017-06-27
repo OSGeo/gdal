@@ -50,7 +50,7 @@
 #include "ogr_p.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 extern void OGREPSGDatumNameMassage( char ** ppszDatum );
 

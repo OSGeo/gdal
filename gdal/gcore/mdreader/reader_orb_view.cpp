@@ -37,7 +37,7 @@
 #include "cpl_string.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /**
  * GDALMDReaderOrbView()

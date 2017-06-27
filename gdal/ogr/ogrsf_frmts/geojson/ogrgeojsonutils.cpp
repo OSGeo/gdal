@@ -33,7 +33,7 @@
 #include <ogr_geometry.h>
 #include <json.h> // JSON-C
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           GeoJSONIsObject()                          */

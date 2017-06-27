@@ -51,7 +51,7 @@
 
 using std::vector;
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int MAXSTRINGLENGTH = 65535;
 static const int EXIFOFFSETTAG = 0x8769;

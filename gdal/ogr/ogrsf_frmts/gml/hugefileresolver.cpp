@@ -51,7 +51,7 @@
 #include <sqlite3.h>
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /****************************************************/
 /*      SQLite is absolutely required in order to   */

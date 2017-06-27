@@ -31,7 +31,7 @@
 #include "cpl_string.h"
 #include "FGdbUtils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 using std::string;
 using std::wstring;

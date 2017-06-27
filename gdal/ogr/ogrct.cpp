@@ -44,7 +44,7 @@
 #include "proj_api.h"
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* ==================================================================== */
 /*      PROJ.4 interface stuff.                                         */

@@ -55,7 +55,7 @@
 #  pragma warning(disable:4512)
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       STATIC MEMBERS DEFINITION                      */

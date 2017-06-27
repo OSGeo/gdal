@@ -41,7 +41,7 @@
 #include "cpl_string.h"
 #include "cpl_time.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if !defined(HAVE_CURL) || defined(CPL_MULTIPROC_STUB)
 

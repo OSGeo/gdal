@@ -36,7 +36,7 @@
 
 #define PQexec this_is_an_error
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static void OGRPGNoticeProcessor( void *arg, const char * pszMessage );
 

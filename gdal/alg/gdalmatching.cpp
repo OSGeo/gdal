@@ -31,7 +31,7 @@
 #include "gdal_simplesurf.h"
 
 //! @cond Doxygen_Suppress
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 //! @endcond
 
 // TODO(schwehr): What?  This below: "0,001"

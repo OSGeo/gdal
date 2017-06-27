@@ -33,7 +33,7 @@
 #include "ogr_api.h"
 #include <map>
 #include <list>
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static void Usage();
 

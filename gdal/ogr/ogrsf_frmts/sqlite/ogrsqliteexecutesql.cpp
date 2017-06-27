@@ -33,7 +33,7 @@
 #include "ogrsqliteutility.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       OGRSQLiteExecuteSQLLayer                       */

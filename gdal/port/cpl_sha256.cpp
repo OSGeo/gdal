@@ -34,7 +34,7 @@
 #include <string.h>
 #include "cpl_sha256.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define ROTL(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 #define ROTR(x, n) (((x) >> (n)) | ((x) << (32 - (n))))

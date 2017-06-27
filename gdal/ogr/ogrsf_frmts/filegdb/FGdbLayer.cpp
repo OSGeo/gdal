@@ -36,7 +36,7 @@
 #include "FGdbUtils.h"
 #include "cpl_minixml.h" // the only way right now to extract schema information
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 using std::string;
 using std::wstring;

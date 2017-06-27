@@ -30,7 +30,7 @@
 #include "ogr_sosi.h"
 #include <map>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRSOSILayer()                             */

@@ -57,7 +57,7 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int SRSDIM_LOC_GEOMETRY = 1 << 0;
 static const int SRSDIM_LOC_POSLIST = 1 << 1;

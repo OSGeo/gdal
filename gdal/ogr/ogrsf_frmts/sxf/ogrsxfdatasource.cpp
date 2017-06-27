@@ -39,7 +39,7 @@
 #include <map>
 #include <string>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const long aoVCS[] =
 {

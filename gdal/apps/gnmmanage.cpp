@@ -37,7 +37,7 @@
 //#include "gnm.h"
 //#include "gnm_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 enum operation
 {

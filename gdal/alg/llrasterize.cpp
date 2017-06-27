@@ -39,7 +39,7 @@
 
 #include "gdal_alg.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static int llCompareInt(const void *a, const void *b)
 {

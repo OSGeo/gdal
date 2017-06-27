@@ -31,7 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_gpx.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int SPACE_FOR_METADATA = 160;
 

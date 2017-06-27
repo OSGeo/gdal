@@ -61,7 +61,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* Hum, we cannot include gdal_priv.h from a .c file... */
 CPL_C_START

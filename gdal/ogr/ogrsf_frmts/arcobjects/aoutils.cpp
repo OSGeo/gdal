@@ -28,7 +28,7 @@
 
 #include "aoutils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 bool AOErr(HRESULT hr, std::string desc)
 {

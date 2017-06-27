@@ -44,7 +44,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static CPLMutex *hMutex = NULL;
 static std::map<CPLString, GDALDataset *> *poMap = NULL;

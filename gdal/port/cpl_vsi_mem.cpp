@@ -54,7 +54,7 @@
 
 //! @cond Doxygen_Suppress
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*
 ** Notes on Multithreading:

@@ -33,7 +33,7 @@
 
 #include "cpl_sha256.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         GMLASResourceCache()                         */

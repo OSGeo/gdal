@@ -34,7 +34,7 @@
 
 // #define IMMEDIATE_OPENING 1
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          DS_SHPOpen()                                */

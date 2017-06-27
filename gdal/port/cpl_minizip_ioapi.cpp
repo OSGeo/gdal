@@ -33,7 +33,7 @@
 #include "zconf.h"
 #include "zlib.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static
 voidpf ZCALLBACK fopen_file_func ( voidpf /* opaque */ ,

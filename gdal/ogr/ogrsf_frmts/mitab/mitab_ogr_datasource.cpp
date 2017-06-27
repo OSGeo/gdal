@@ -32,7 +32,7 @@
 
 #include "mitab_ogr_driver.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*=======================================================================
  *                 OGRTABDataSource

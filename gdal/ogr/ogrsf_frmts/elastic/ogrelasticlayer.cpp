@@ -42,7 +42,7 @@
 #include <cstdlib>
 #include <set>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRElasticLayer()                          */

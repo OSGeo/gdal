@@ -28,7 +28,7 @@
 
 #include "ogr_gft.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define GDAL_API_KEY "AIzaSyA_2h1_wXMOLHNSVeo-jf1ACME-M1XMgP0"
 #define FUSION_TABLE_SCOPE "https://www.googleapis.com/Fauth/fusiontables"

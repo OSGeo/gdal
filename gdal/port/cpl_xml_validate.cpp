@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifdef HAVE_LIBXML2
 #include <libxml/xmlversion.h>

@@ -32,7 +32,7 @@
 #include "aoutils.h"
 #include <strstream>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                              AOLayer()                               */

@@ -32,7 +32,7 @@
 
 #include <string>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 KMLVector::~KMLVector() {}
 

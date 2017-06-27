@@ -34,7 +34,7 @@
 #include "ods_formula.h"
 #include <set>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 namespace OGRODS {
 

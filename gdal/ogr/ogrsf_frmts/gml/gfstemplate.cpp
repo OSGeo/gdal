@@ -43,7 +43,7 @@
 #include "gmlreader.h"
 #include "ogr_core.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        GFSTemplateItem                               */

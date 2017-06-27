@@ -57,7 +57,7 @@
 #include "ogr_srs_api.h"
 #include "ogr_geo_utils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if HAVE_CXX11
 constexpr double kdfD2R = M_PI / 180.0;

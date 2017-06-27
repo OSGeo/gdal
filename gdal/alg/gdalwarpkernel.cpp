@@ -71,7 +71,7 @@
 
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const double BAND_DENSITY_THRESHOLD = 0.0000000001;
 static const float SRC_DENSITY_THRESHOLD =  0.000000001f;

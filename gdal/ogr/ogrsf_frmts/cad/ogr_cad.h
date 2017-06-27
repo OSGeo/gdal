@@ -98,7 +98,7 @@ protected:
     void FillTransform(CADImage* pImage, double dfUnits);
     int GetCadEncoding() const;
 private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALCADDataset);
+    CPL_DISALLOW_COPY_ASSIGN(GDALCADDataset)
 };
 
 CPLString CADRecode( const CPLString& sString, int CADEncoding );

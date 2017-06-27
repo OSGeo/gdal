@@ -33,7 +33,7 @@
 #include "cpl_minixml.h"
 #include <vector>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /******************************************************************************/
 /*! \page gdallocationinfo gdallocationinfo

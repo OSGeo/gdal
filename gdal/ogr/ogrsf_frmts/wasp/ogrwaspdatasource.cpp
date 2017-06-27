@@ -33,7 +33,7 @@
 #include <cassert>
 #include <sstream>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRWAsPDataSource()                          */

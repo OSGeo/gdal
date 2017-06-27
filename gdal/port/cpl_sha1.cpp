@@ -33,7 +33,7 @@
 #include <string.h>
 #include "cpl_sha1.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 
 typedef struct {

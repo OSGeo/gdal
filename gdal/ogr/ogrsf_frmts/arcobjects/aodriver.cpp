@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include "aoutils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            AODriver()                            */

@@ -35,7 +35,7 @@
 
 #include <xercesc/sax2/Attributes.hpp>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //
 // constants

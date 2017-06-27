@@ -52,7 +52,7 @@
 
 static const int MAX_BUFFER_SIZE = 65536;
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
 {

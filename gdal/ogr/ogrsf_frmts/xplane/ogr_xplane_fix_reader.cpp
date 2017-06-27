@@ -28,7 +28,7 @@
 
 #include "ogr_xplane_fix_reader.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                   OGRXPlaneCreateFixFileReader                       */

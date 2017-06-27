@@ -35,7 +35,7 @@
 
 #include <cassert>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static void Usage();
 
