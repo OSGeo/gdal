@@ -1703,8 +1703,15 @@ bool netCDFLayer::AddField(int nVarID)
     int nDimCount = 1;
     nc_inq_varndims( m_nLayerCDFId, nVarID, &nDimCount );
     int anDimIds[2] = { -1, -1 };
-    if( nDimCount <= 2 )
-        nc_inq_vardimid( m_nLayerCDFId, nVarID, anDimIds );
+    if( (vartype == NC_CHAR && nDimCount <= 2) ||
+        (vartype != NC_CHAR && nDimCount == 1) )
+    {
+        nc_inq_vardimid(m_nLayerCDFId, nVarID, anDimIds);
+    }
+    else
+    {
+        return false;
+    }
 
     switch( vartype )
     {
