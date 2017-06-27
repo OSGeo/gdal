@@ -1535,6 +1535,7 @@ def ogr_sql_48():
             f.DumpReadable()
             return 'fail'
         i = i + 1
+    ds.ReleaseResultSet(sql_lyr)
     if i != 1001:
         gdaltest.post_reason('fail')
         return 'fail'
