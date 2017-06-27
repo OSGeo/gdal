@@ -60,6 +60,13 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     CPLPushErrorHandler(CPLQuietErrorHandler);
 
     char** papszArgv = NULL;
+
+    // Prevent generating too big output raster. Make sure they are set at
+    // the beginning to avoid being accidentally eaten by invalid arguments
+    // afterwards.
+    papszArgv = CSLAddString(papszArgv, "-limit_outsize");
+    papszArgv = CSLAddString(papszArgv, "1000000");
+
     fp = VSIFOpenL("/vsitar//vsimem/test.tar/cmd.txt", "rb");
     if( fp != NULL )
     {
@@ -70,9 +77,6 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 papszArgv = CSLAddString(papszArgv, pszLine);
         }
         VSIFCloseL(fp);
-        // Prevent generating too big output raster
-        papszArgv = CSLAddString(papszArgv, "-limit_outsize");
-        papszArgv = CSLAddString(papszArgv, "1000000");
     }
 
     if( papszArgv != NULL )
@@ -104,8 +108,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             }
             GDALTranslateOptionsFree(psOptions);
         }
-        CSLDestroy(papszArgv);
     }
+    CSLDestroy(papszArgv);
 
     VSIUnlink("/vsimem/test.tar");
     VSIUnlink("/vsimem/out");
