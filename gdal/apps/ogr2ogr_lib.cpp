@@ -4253,6 +4253,11 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
     bool bRet = true;
     while( true )
     {
+        if( m_nLimit >= 0 && psInfo->nFeaturesRead >= m_nLimit )
+        {
+            break;
+        }
+
         OGRFeature      *poDstFeature = NULL;
 
         if( poFeatureIn != NULL )
@@ -4261,8 +4266,6 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             poFeature = poSrcLayer->GetFeature(psOptions->nFIDToFetch);
         else
             poFeature = poSrcLayer->GetNextFeature();
-        if( m_nLimit >= 0 && psInfo->nFeaturesRead >= m_nLimit )
-            break;
 
         if( poFeature == NULL )
             break;
