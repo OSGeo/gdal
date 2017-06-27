@@ -979,7 +979,7 @@ bool CntZImage::readCntTile(Byte** ppByte, size_t& nRemainingBytesInOut, int i0,
   if (comprFlag == 2)    // entire tile is constant 0 (invalid)
   {                      // here we depend on resizeFill0()
     *ppByte = ptr;
-    nRemainingBytes = nRemainingBytesInOut;
+    nRemainingBytesInOut = nRemainingBytes;
     return true;
   }
 
@@ -997,7 +997,7 @@ bool CntZImage::readCntTile(Byte** ppByte, size_t& nRemainingBytesInOut, int i0,
     }
 
     *ppByte = ptr;
-    nRemainingBytes = nRemainingBytesInOut;
+    nRemainingBytesInOut = nRemainingBytes;
     return true;
   }
 
