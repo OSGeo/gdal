@@ -1138,7 +1138,7 @@ io_error:
     CPLError(CE_Failure, CPLE_FileIO,
         "GDAL MRF: %s : %s", strerror(errno), current.datfname.c_str());
     return NULL;
-};
+}
 
 // Builds an XML tree from the current MRF.  If written to a file it becomes an MRF
 CPLXMLNode * GDALMRFDataset::BuildConfig()
