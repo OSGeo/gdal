@@ -617,13 +617,13 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 
     if( dfXDirection != 0.0 )
     {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfX - dfXDirection);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfXDirection);
         osStyle += CPLString().Printf(",dx:%s", szBuffer);
     }
 
     if( dfYDirection != 0.0 )
     {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfY - dfYDirection);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfYDirection);
         osStyle += CPLString().Printf(",dy:%s", szBuffer);
     }
 
@@ -854,13 +854,13 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 
     if( dfXDirection != 0.0 )
     {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfX - dfXDirection);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfXDirection - dfX);
         osStyle += CPLString().Printf(",dx:%s", szBuffer);
     }
 
     if( dfYDirection != 0.0 )
     {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfY - dfYDirection);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfYDirection - dfY);
         osStyle += CPLString().Printf(",dy:%s", szBuffer);
     }
 
