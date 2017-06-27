@@ -305,7 +305,7 @@ namespace GMLASConstants
     STRING_CONST(szAT_ANY_ATTR, "@*");
     STRING_CONST(szMATCH_ALL, "/*");
     STRING_CONST(szEXTRA_SUFFIX, ";extra=");
-};
+}
 
 #undef STRING_CONST
 #undef INT_CONST
