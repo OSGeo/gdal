@@ -148,14 +148,14 @@ static const sEnumerationElement runwayVisualApproachPathIndicatorTypeV810[] =
     { 4, "Space Shuttle PAPI" }
 };
 
-DEFINE_XPLANE_ENUMERATION(RunwaySurfaceEnumeration, runwaySurfaceType);
-DEFINE_XPLANE_ENUMERATION(RunwayShoulderEnumeration, runwayShoulderType);
-DEFINE_XPLANE_ENUMERATION(RunwayMarkingEnumeration, runwayMarkingType);
-DEFINE_XPLANE_ENUMERATION(RunwayApproachLightingEnumeration, approachLightingType);
-DEFINE_XPLANE_ENUMERATION(RunwayApproachLightingEnumerationV810, approachLightingTypeV810);
-DEFINE_XPLANE_ENUMERATION(RunwayEdgeLightingEnumeration, runwayEdgeLigthingType);
-DEFINE_XPLANE_ENUMERATION(RunwayREILEnumeration, runwayREILType);
-DEFINE_XPLANE_ENUMERATION(RunwayVisualApproachPathIndicatorEnumerationV810, runwayVisualApproachPathIndicatorTypeV810);
+DEFINE_XPLANE_ENUMERATION(RunwaySurfaceEnumeration, runwaySurfaceType)
+DEFINE_XPLANE_ENUMERATION(RunwayShoulderEnumeration, runwayShoulderType)
+DEFINE_XPLANE_ENUMERATION(RunwayMarkingEnumeration, runwayMarkingType)
+DEFINE_XPLANE_ENUMERATION(RunwayApproachLightingEnumeration, approachLightingType)
+DEFINE_XPLANE_ENUMERATION(RunwayApproachLightingEnumerationV810, approachLightingTypeV810)
+DEFINE_XPLANE_ENUMERATION(RunwayEdgeLightingEnumeration, runwayEdgeLigthingType)
+DEFINE_XPLANE_ENUMERATION(RunwayREILEnumeration, runwayREILType)
+DEFINE_XPLANE_ENUMERATION(RunwayVisualApproachPathIndicatorEnumerationV810, runwayVisualApproachPathIndicatorTypeV810)
 
 class OGRXPlaneRunwayThresholdLayer : public OGRXPlaneLayer
 {
