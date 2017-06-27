@@ -626,7 +626,10 @@ def vsifile_13():
     gdal.VSIFOpenL('/vsicurl_streaming', 'rb')
     gdal.VSIFOpenL('/vsis3_streaming', 'rb')
     gdal.VSIFOpenL('/vsistdin', 'rb')
-    gdal.VSIFOpenL('/vsistdout', 'wb')
+
+    fp = gdal.VSIFOpenL('/vsistdout', 'wb')
+    if fp is not None:
+        gdal.VSIFCloseL(fp)
 
     gdal.VSIStatL('/vsigzip')
     gdal.VSIStatL('/vsizip')
