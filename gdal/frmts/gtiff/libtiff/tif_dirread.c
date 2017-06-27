@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.212 2017-06-18 10:31:50 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.213 2017-06-27 13:44:44 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -636,6 +636,8 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryFloat(TIFF* tif, TIFFDirEntry* d
 				err=TIFFReadDirEntryCheckedDouble(tif,direntry,&m);
 				if (err!=TIFFReadDirEntryErrOk)
 					return(err);
+				if ((m > FLT_MAX) || (m < FLT_MIN))
+					return(TIFFReadDirEntryErrRange);
 				*value=(float)m;
 				return(TIFFReadDirEntryErrOk);
 			}
