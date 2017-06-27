@@ -1838,4 +1838,4 @@ int FileGDBIndexIterator::GetMinMaxSumCount(double& dfMin, double& dfMax,
     return TRUE;
 }
 
-}; /* namespace OpenFileGDB */
+} /* namespace OpenFileGDB */

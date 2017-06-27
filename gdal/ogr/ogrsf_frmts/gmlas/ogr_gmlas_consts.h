@@ -36,9 +36,9 @@
 #define BOOL_CONST(x,y)      const bool x = y
 #define INT_CONST(x,y)       const int x = y
 #else
-#define STRING_CONST(x,y)    extern const char* const x;
-#define BOOL_CONST(x,y)      extern const bool x;
-#define INT_CONST(x,y)       extern const int x;
+#define STRING_CONST(x,y)    extern const char* const x
+#define BOOL_CONST(x,y)      extern const bool x
+#define INT_CONST(x,y)       extern const int x
 #endif
 
 namespace GMLASConstants
