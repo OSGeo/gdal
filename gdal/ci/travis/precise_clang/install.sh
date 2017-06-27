@@ -16,7 +16,8 @@ make docs >docs_log.txt 2>&1
 if cat docs_log.txt | grep -i warning | grep -v russian | grep -v brazilian; then echo "Doxygen warnings found" && cat docs_log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
 make man >man_log.txt 2>&1
 if cat man_log.txt | grep -i warning; then echo "Doxygen warnings found" && cat docs_log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
-make USER_DEFS="-Wextra -Werror" -j3
+#make USER_DEFS="-Wextra -Werror" -j3
+make USER_DEFS="-Wextra" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
 cd ..
