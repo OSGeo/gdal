@@ -113,7 +113,7 @@ static boolean fill_input_buffer_dec(j_decompress_ptr cinfo)
 /**
 *\brief: Do nothing stub function for JPEG library, not called
 */
-static void skip_input_data_dec(j_decompress_ptr /*cinfo*/, long /*l*/) {};
+static void skip_input_data_dec(j_decompress_ptr /*cinfo*/, long /*l*/) {}
 
 // Destination should be already set up
 static void init_or_terminate_destination(j_compress_ptr /*cinfo*/) {}
