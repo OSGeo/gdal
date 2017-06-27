@@ -182,13 +182,16 @@ void GMLFeature::Dump( CPL_UNUSED FILE * fp )
     {
         const GMLProperty *psGMLProperty = GetProperty(i);
         printf("  %s = ", m_poClass->GetProperty(i)->GetName()); /*ok*/
-        for ( int j = 0; j < psGMLProperty->nSubProperties; j ++)
+        if( psGMLProperty != NULL )
         {
-            if (j > 0)
-                printf(", ");  /*ok*/
-            printf("%s", psGMLProperty->papszSubProperties[j]);  /*ok*/
+            for ( int j = 0; j < psGMLProperty->nSubProperties; j ++)
+            {
+                if (j > 0)
+                    printf(", ");  /*ok*/
+                printf("%s", psGMLProperty->papszSubProperties[j]);  /*ok*/
+            }
+            printf("\n");/*ok*/
         }
-        printf("\n");/*ok*/
     }
 
     for( int i = 0; i < m_nGeometryCount; i++ )
