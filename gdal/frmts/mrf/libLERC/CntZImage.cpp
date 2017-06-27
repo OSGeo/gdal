@@ -36,7 +36,7 @@ CntZImage::CntZImage()
 {
   type_ = CNT_Z;
   memset(&m_infoFromComputeNumBytes, 0, sizeof(m_infoFromComputeNumBytes));
-};
+}
 
 // -------------------------------------------------------------------------- ;
 
