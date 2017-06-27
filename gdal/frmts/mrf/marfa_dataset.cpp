@@ -749,6 +749,7 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
 
     // Basic checks
     if (!node || image.size.x < 1 || image.size.y < 1 ||
+        image.size.z < 0 || image.size.c < 0 ||
         !GDALCheckBandCount(image.size.c, FALSE)) {
         CPLError(CE_Failure, CPLE_AppDefined, "Raster size missing or invalid");
         return CE_Failure;
