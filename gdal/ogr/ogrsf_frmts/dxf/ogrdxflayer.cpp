@@ -615,6 +615,18 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
         osStyle += CPLString().Printf(",s:%sg", szBuffer);
     }
 
+    if( dfXDirection != 0.0 )
+    {
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfXDirection);
+        osStyle += CPLString().Printf(",dx:%s", szBuffer);
+    }
+
+    if( dfYDirection != 0.0 )
+    {
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfYDirection);
+        osStyle += CPLString().Printf(",dy:%s", szBuffer);
+    }
+
     if( nAttachmentPoint >= 0 && nAttachmentPoint <= 9 )
     {
         const static int anAttachmentMap[10] =
@@ -656,6 +668,8 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     double dfZ = 0.0;
     double dfAngle = 0.0;
     double dfHeight = 0.0;
+    double dfXDirection = 0.0;
+    double dfYDirection = 0.0;
     CPLString osText;
     CPLString osStyleName = "Arial";
     bool bHaveZ = false;
@@ -673,6 +687,14 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 
           case 20:
             dfY = CPLAtof(szLineBuf);
+            break;
+
+          case 11:
+            dfXDirection = CPLAtof(szLineBuf);
+            break;
+
+          case 21:
+            dfYDirection = CPLAtof(szLineBuf);
             break;
 
           case 30:
@@ -828,6 +850,18 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     {
         CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g", dfHeight);
         osStyle += CPLString().Printf(",s:%sg", szBuffer);
+    }
+
+    if( dfXDirection != 0.0 )
+    {
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfXDirection - dfX);
+        osStyle += CPLString().Printf(",dx:%s", szBuffer);
+    }
+
+    if( dfYDirection != 0.0 )
+    {
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfYDirection - dfY);
+        osStyle += CPLString().Printf(",dy:%s", szBuffer);
     }
 
     const unsigned char *pabyDWGColors = ACGetColorTable();
