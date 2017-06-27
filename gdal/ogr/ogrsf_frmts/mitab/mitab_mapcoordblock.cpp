@@ -655,7 +655,7 @@ int     TABMAPCoordBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
 void TABMAPCoordBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
 {
     m_poBlockManagerRef = poBlockMgr;
-};
+}
 
 /**********************************************************************
  *                   TABMAPCoordBlock::ReadBytes()
