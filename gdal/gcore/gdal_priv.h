@@ -67,6 +67,8 @@ class GDALAsyncReader;
 #include "cpl_atomic_ops.h"
 #include <vector>
 #include <map>
+#include <limits>
+#include <cmath>
 #include "ogr_core.h"
 
 //! @cond Doxygen_Suppress
@@ -1519,16 +1521,6 @@ CPLErr CPL_DLL GDALParseGMLCoverage( CPLXMLNode *psTree,
 int CPL_DLL GDALCheckDatasetDimensions( int nXSize, int nYSize );
 int CPL_DLL GDALCheckBandCount( int nBands, int bIsZeroAllowed );
 
-// Test if 2 floating point values match. Useful when comparing values
-// stored as a string at some point. See #3573, #4183, #4506
-#define ARE_REAL_EQUAL(dfVal1, dfVal2) \
- /* Is it FLT_MIN ? Cf #6578 */ \
- ((fabs(dfVal2) <= 3.4028234664e+38 && (float)dfVal2 == (float)1.17549435e-38 && fabs(dfVal1) <= 3.4028234664e+38) ? ((float)dfVal1 == (float)dfVal2) : \
- /* Or DBL_MIN ? */ \
-  (dfVal2 == 2.2250738585072014e-308) ? (dfVal1 == dfVal2) : \
- /* General case */ \
-  (dfVal1 == dfVal2 || fabs(dfVal1 - dfVal2) < 1e-10 || (dfVal2 != 0 && fabs(1 - dfVal1 / dfVal2) < 1e-10 )))
-
 /* Internal use only */
 
 /* CPL_DLL exported, but only for in-tree drivers that can be built as plugins */
@@ -1578,6 +1570,15 @@ void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg* psExtraArg,
 
 GDALDataset* GDALCreateOverviewDataset(GDALDataset* poDS, int nOvrLevel,
                                        int bThisLevelOnly);
+
+// Should cover particular cases of #3573, #4183, #4506, #6578
+// Behaviour is undefined if fVal1 or fVal2 are NaN (should be tested before
+// calling this function)
+template<class T> inline bool ARE_REAL_EQUAL(T fVal1, T fVal2, int ulp = 2)
+{
+    return fVal1 == fVal2 || /* Should cover infinity */
+           std::abs(fVal1 - fVal2) < std::numeric_limits<float>::epsilon() * std::abs(fVal1+fVal2) * ulp;
+}
 
 #define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
 

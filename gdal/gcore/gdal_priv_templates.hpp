@@ -103,6 +103,7 @@ inline T GDALClampValue(const T tValue, const T tMax, const T tMin)
 /************************************************************************/
 /**
  * Returns whether a value is in the type range.
+ * NaN is considered not to be in type range.
  *
  * @param dfValue the value
  * @return whether the value is in the type range.
@@ -113,15 +114,16 @@ template <class T> inline bool GDALIsValueInRange(double dfValue)
            dfValue <= std::numeric_limits<T>::max();
 }
 
-template <> inline bool GDALIsValueInRange<double>(double)
+template <> inline bool GDALIsValueInRange<double>(double dfValue)
 {
-    return true;
+    return !CPLIsNan(dfValue);
 }
 
 template <> inline bool GDALIsValueInRange<float>(double dfValue)
 {
-    return dfValue >= -std::numeric_limits<float>::max() &&
-           dfValue <= std::numeric_limits<float>::max();
+    return CPLIsInf(dfValue) ||
+           (dfValue >= -std::numeric_limits<float>::max() &&
+            dfValue <= std::numeric_limits<float>::max());
 }
 
 /************************************************************************/

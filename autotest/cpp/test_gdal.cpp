@@ -27,6 +27,7 @@
 
 #include <gdal_priv.h>
 #include <gdal_utils.h>
+#include <gdal_priv_templates.hpp>
 #include <gdal.h>
 
 #include <limits>
@@ -347,6 +348,55 @@ namespace tut
         ensure( abyBuffer[16] == 7 );
         GDALSwapWords(abyBuffer, 4, 2, 9 );
 
+    }
+
+    // Test ARE_REAL_EQUAL()
+    template<> template<> void object::test<11>()
+    {
+        ensure( ARE_REAL_EQUAL(0.0, 0.0) );
+        ensure( !ARE_REAL_EQUAL(0.0, 0.1) );
+        ensure( !ARE_REAL_EQUAL(0.1, 0.0) );
+        ensure( ARE_REAL_EQUAL(1.0, 1.0) );
+        ensure( !ARE_REAL_EQUAL(1.0, 0.99) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<double>::min(), -std::numeric_limits<double>::min()) );
+        ensure( ARE_REAL_EQUAL(std::numeric_limits<double>::min(), std::numeric_limits<double>::min()) );
+        ensure( !ARE_REAL_EQUAL(std::numeric_limits<double>::min(), 0.0) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()) );
+        ensure( ARE_REAL_EQUAL(std::numeric_limits<double>::max(), std::numeric_limits<double>::max()) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity()) );
+        ensure( ARE_REAL_EQUAL(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()) );
+        ensure( !ARE_REAL_EQUAL(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::max()) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<double>::min(), -std::numeric_limits<double>::min()) );
+
+        ensure( ARE_REAL_EQUAL(0.0f, 0.0f) );
+        ensure( !ARE_REAL_EQUAL(0.0f, 0.1f) );
+        ensure( !ARE_REAL_EQUAL(0.1f, 0.0f) );
+        ensure( ARE_REAL_EQUAL(1.0f, 1.0f) );
+        ensure( !ARE_REAL_EQUAL(1.0f, 0.99f) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<float>::min(), -std::numeric_limits<float>::min()) );
+        ensure( ARE_REAL_EQUAL(std::numeric_limits<float>::min(), std::numeric_limits<float>::min()) );
+        ensure( !ARE_REAL_EQUAL(std::numeric_limits<float>::min(), 0.0f) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max()) );
+        ensure( ARE_REAL_EQUAL(std::numeric_limits<float>::max(), std::numeric_limits<float>::max()) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity()) );
+        ensure( ARE_REAL_EQUAL(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()) );
+        ensure( !ARE_REAL_EQUAL(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::max()) );
+    }
+
+    // Test GDALIsValueInRange()
+    template<> template<> void object::test<12>()
+    {
+        ensure( GDALIsValueInRange<GByte>(0) );
+        ensure( GDALIsValueInRange<GByte>(255) );
+        ensure( !GDALIsValueInRange<GByte>(-1) );
+        ensure( !GDALIsValueInRange<GByte>(256) );
+        ensure( GDALIsValueInRange<float>(std::numeric_limits<float>::max()) );
+        ensure( GDALIsValueInRange<float>(std::numeric_limits<float>::infinity()) );
+        ensure( !GDALIsValueInRange<float>(std::numeric_limits<double>::max()) );
+        ensure( GDALIsValueInRange<double>(std::numeric_limits<double>::infinity()) );
+        ensure( !GDALIsValueInRange<double>(CPLAtof("nan")) );
+        ensure( !GDALIsValueInRange<float>(CPLAtof("nan")) );
+        ensure( !GDALIsValueInRange<GByte>(CPLAtof("nan")) );
     }
 
 } // namespace tut
