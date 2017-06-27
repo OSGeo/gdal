@@ -1696,6 +1696,14 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GByte *pabyScanline = reinterpret_cast<GByte *>(
         CPLMalloc( nBands * nXSize * nWordSize ) );
 
+    if( setjmp( sSetJmpContext ) != 0 )
+    {
+        VSIFCloseL( fpImage );
+        png_destroy_write_struct( &hPNG, &psPNGInfo );
+        CPLFree( pabyScanline );
+        return NULL;
+    }
+
     for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
         png_bytep       row = pabyScanline;
@@ -1727,6 +1735,13 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     CPLFree( pabyScanline );
+
+    if( setjmp( sSetJmpContext ) != 0 )
+    {
+        VSIFCloseL( fpImage );
+        png_destroy_write_struct( &hPNG, &psPNGInfo );
+        return NULL;
+    }
 
     png_write_end( hPNG, psPNGInfo );
     png_destroy_write_struct( &hPNG, &psPNGInfo );

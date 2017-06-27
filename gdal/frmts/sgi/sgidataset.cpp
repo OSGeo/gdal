@@ -828,6 +828,8 @@ GDALDataset *SGIDataset::Create( const char * pszFilename,
                   "Failure writing SGI file '%s'.\n%s",
                   pszFilename,
                   VSIStrerror( errno ) );
+        VSIFCloseL( fp );
+        CPLFree( pabyRLELine );
         return NULL;
     }
 
