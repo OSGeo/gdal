@@ -3028,6 +3028,22 @@ def tiff_read_big_strip():
     return 'success'
 
 ###############################################################################
+# (Potentially) test libtiff CHUNKY_STRIP_READ_SUPPORT 
+
+def tiff_read_big_strip_chunky_way():
+
+    gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options = '-co compress=lzw -outsize 1000 2001  -co blockysize=2001 -r bilinear')
+    ds = gdal.Open('/vsimem/test.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 38337:
+        print(cs)
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+
+    return 'success'
+
+###############################################################################
 
 def tiff_read_big_tile():
 
@@ -3316,6 +3332,7 @@ gdaltest_list.append( (tiff_read_leak_ZIPSetupDecode) )
 gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillStrip) )
 gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillStrip2) )
 gdaltest_list.append( (tiff_read_big_strip) )
+gdaltest_list.append( (tiff_read_big_strip_chunky_way) )
 gdaltest_list.append( (tiff_read_big_tile) )
 gdaltest_list.append( (tiff_read_huge_number_strips) )
 gdaltest_list.append( (tiff_read_many_blocks) )
