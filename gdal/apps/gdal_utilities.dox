@@ -497,8 +497,8 @@ Builds or rebuilds overview images.
 
 \verbatim
 gdaladdo [-r {nearest,average,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}]
-         [-b band]*
-         [-ro] [-clean] [-oo NAME=VALUE]* [--help-general] filename levels
+         [-b band]* [-minsize val]
+         [-ro] [-clean] [-oo NAME=VALUE]* [--help-general] filename [levels]
 \endverbatim
 
 \section gdaladdo_description DESCRIPTION
@@ -517,8 +517,14 @@ to select a set of input bands to generate overviews.</dd>
 external overview (for GeoTIFF especially). </dd>
 <dt> <b>-clean</b></dt>:<dd> (available from GDAL 1.7.0) remove all overviews. </dd>
 <dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Dataset open option (format specific)</dd>
+<dt> <b>-minsize</b> <i>val</i>:</dt><dd> (starting with GDAL 2.3) Maximum width or height of the
+smallest overview level. Only taken into account if explicit levels are not specified.
+Defaults to 256. </dd>
 <dt> <i>filename</i>:</dt><dd> The file to build overviews for (or whose overviews must be removed). </dd>
-<dt> <i>levels</i>:</dt><dd> A list of integral overview levels to build. Ignored with -clean option.</dd>
+<dt> <i>levels</i>:</dt><dd> A list of integral overview levels to build. Ignored with -clean option.
+Starting with GDAL 2.3, levels are no longer required to build overviews. In which case, appropriate
+overview power-of-two factors will be selected until the smallest overview is smaller than the
+value of the -minsize switch.</dd>
 </dl>
 
 <i>Mode</i> (available from GDAL 1.6.0) selects the value which appears most often of all the sampled points.
@@ -602,6 +608,13 @@ Functionality of this utility can be done from C with GDALBuildOverviews().
 \htmlonly
 Example:
 \endhtmlonly
+
+Create overviews,embedded in the supplied TIFF file, with automatic computatino
+of levels (GDAL 2.3 or later)
+
+\verbatim
+gdaladdo -r average abc.tif
+\endverbatim
 
 Create overviews, embedded in the supplied TIFF file:
 

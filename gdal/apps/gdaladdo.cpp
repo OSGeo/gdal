@@ -40,7 +40,8 @@ static void Usage(const char* pszErrorMsg = NULL)
 
 {
     printf( "Usage: gdaladdo [-r {nearest,average,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}]\n"
-            "                [-ro] [-clean] [-q] [-oo NAME=VALUE]* [--help-general] filename levels\n"
+            "                [-ro] [-clean] [-q] [-oo NAME=VALUE]* [-minsize val]\n"
+            "                [--help-general] filename [levels]\n"
             "\n"
             "  -r : choice of resampling method (default: nearest)\n"
             "  -ro : open the dataset in read-only mode, in order to generate\n"
@@ -60,10 +61,10 @@ static void Usage(const char* pszErrorMsg = NULL)
             "  --config BIGTIFF_OVERVIEW {IF_NEEDED|IF_SAFER|YES|NO} : is BigTIFF used\n"
             "\n"
             "Examples:\n"
-            " %% gdaladdo -r average abc.tif 2 4 8 16\n"
+            " %% gdaladdo -r average abc.tif\n"
             " %% gdaladdo --config COMPRESS_OVERVIEW JPEG\n"
             "             --config PHOTOMETRIC_OVERVIEW YCBCR\n"
-            "             --config INTERLEAVE_OVERVIEW PIXEL -ro abc.tif 2 4 8 16\n");
+            "             --config INTERLEAVE_OVERVIEW PIXEL -ro abc.tif\n");
 
     if( pszErrorMsg != NULL )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
@@ -119,6 +120,7 @@ int main( int nArgc, char ** papszArgv )
     int             *panBandList = NULL;
     int              nBandCount = 0;
     char           **papszOpenOptions = NULL;
+    int              nMinSize = 256;
 
     /* Check that we are running against at least GDAL 1.7 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -183,11 +185,17 @@ int main( int nArgc, char ** papszArgv )
             papszOpenOptions = CSLAddString( papszOpenOptions,
                                              papszArgv[++iArg] );
         }
+        else if( EQUAL(papszArgv[iArg], "-minsize") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            nMinSize = atoi( papszArgv[++iArg] );
+        }
         else if( papszArgv[iArg][0] == '-' )
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
         else if( pszFilename == NULL )
             pszFilename = papszArgv[iArg];
-        else if( atoi(papszArgv[iArg]) > 0 )
+        else if( atoi(papszArgv[iArg]) > 0 &&
+                 static_cast<size_t>(nLevelCount) < CPL_ARRAYSIZE(anLevels) )
         {
             anLevels[nLevelCount++] = atoi(papszArgv[iArg]);
             if( anLevels[nLevelCount-1] == 1 )
@@ -201,9 +209,6 @@ int main( int nArgc, char ** papszArgv )
 
     if( pszFilename == NULL )
         Usage("No datasource specified.");
-
-    if( nLevelCount == 0 && !bClean )
-        Usage("No overview level specified.");
 
 /* -------------------------------------------------------------------- */
 /*      Open data file.                                                 */
@@ -245,21 +250,36 @@ int main( int nArgc, char ** papszArgv )
         printf( "Cleaning overviews failed.\n" );
         nResultStatus = 200;
     }
-
+    else
+    {
 /* -------------------------------------------------------------------- */
 /*      Generate overviews.                                             */
 /* -------------------------------------------------------------------- */
 
-    //Only HFA support selected layers
-    if(nBandCount > 0)
-        CPLSetConfigOption( "USE_RRD", "YES" );
+        if( nLevelCount == 0 )
+        {
+            int nXSize = GDALGetRasterXSize(hDataset);
+            int nYSize = GDALGetRasterYSize(hDataset);
+            int nOvrFactor = 1;
+            while( DIV_ROUND_UP(nXSize, nOvrFactor) > nMinSize ||
+                   DIV_ROUND_UP(nYSize, nOvrFactor) > nMinSize )
+            {
+                nOvrFactor *= 2;
+                anLevels[nLevelCount++] = nOvrFactor;
+            }
+        }
 
-    if (nLevelCount > 0 && nResultStatus == 0 &&
-        GDALBuildOverviews( hDataset,pszResampling, nLevelCount, anLevels,
-                             nBandCount, panBandList, pfnProgress, NULL ) != CE_None )
-    {
-        printf( "Overview building failed.\n" );
-        nResultStatus = 100;
+        //Only HFA support selected layers
+        if(nBandCount > 0)
+            CPLSetConfigOption( "USE_RRD", "YES" );
+
+        if (nLevelCount > 0 && 
+            GDALBuildOverviews( hDataset,pszResampling, nLevelCount, anLevels,
+                                nBandCount, panBandList, pfnProgress, NULL ) != CE_None )
+        {
+            printf( "Overview building failed.\n" );
+            nResultStatus = 100;
+        }
     }
 
 /* -------------------------------------------------------------------- */
