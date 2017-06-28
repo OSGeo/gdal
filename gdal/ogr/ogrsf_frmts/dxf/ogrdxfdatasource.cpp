@@ -648,6 +648,9 @@ void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
     OGRFieldDefn  oTextField( "Text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
 
+    OGRFieldDefn  oRawCodeValuesField( "RawCodeValues", OFTString );
+    poFeatureDefn->AddFieldDefn( &oRawCodeValuesField );
+
     if( !bInlineBlocks )
     {
         OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
