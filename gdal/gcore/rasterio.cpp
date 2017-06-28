@@ -690,16 +690,14 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                  iBufXOff++, dfSrcX += dfSrcXInc )
             {
                 iSrcX = static_cast<int>( dfSrcX );
-                int nDiffX = iSrcX - nStartBlockX;
 
     /* -------------------------------------------------------------------- */
     /*      Ensure we have the appropriate block loaded.                    */
     /* -------------------------------------------------------------------- */
-                if( nDiffX >= nBlockXSize )
+                if( iSrcX >= nBlockXSize + nStartBlockX )
                 {
                     nLBlockX = iSrcX / nBlockXSize;
                     nStartBlockX = nLBlockX * nBlockXSize;
-                    nDiffX = iSrcX - nStartBlockX;
 
                     if( poBlock != NULL )
                         poBlock->DropLock();
@@ -713,6 +711,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                     pabySrcBlock = (GByte *) poBlock->GetDataRef();
                 }
+                const GPtrDiff_t nDiffX = static_cast<GPtrDiff_t>(iSrcX - nStartBlockX);
 
                 // To make Coverity happy.  Should not happen by design.
                 if( pabySrcBlock == NULL )
@@ -727,14 +726,14 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                 if( bByteCopy )
                 {
-                    iSrcOffset = (GPtrDiff_t)nDiffX + iSrcOffsetCst;
+                    iSrcOffset = nDiffX + iSrcOffsetCst;
                     static_cast<GByte *>(pData)[iBufOffset] =
                         pabySrcBlock[iSrcOffset];
                 }
                 else if( eDataType == eBufType )
                 {
                     iSrcOffset =
-                        (static_cast<GPtrDiff_t>(nDiffX) + iSrcOffsetCst)
+                        (nDiffX + iSrcOffsetCst)
                         * nBandDataSize;
                     memcpy( static_cast<GByte *>(pData) + iBufOffset,
                             pabySrcBlock + iSrcOffset, nBandDataSize );
@@ -744,7 +743,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     // Type to type conversion ... ouch, this is expensive way
                     // of handling single words.
                     iSrcOffset =
-                        (static_cast<GPtrDiff_t>(nDiffX) + iSrcOffsetCst)
+                        (nDiffX + iSrcOffsetCst)
                         * nBandDataSize;
                     GDALCopyWords(
                         pabySrcBlock + iSrcOffset, eDataType, 0,
