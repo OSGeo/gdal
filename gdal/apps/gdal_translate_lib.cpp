@@ -1413,6 +1413,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             if(pbUsageError)
                 *pbUsageError = TRUE;
             GDALTranslateOptionsFree(psOptions);
+            delete poVDS;
             return NULL;
         }
 
@@ -1429,6 +1430,17 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             /* To avoid a divide by zero */
             if( dfScaleSrcMax == dfScaleSrcMin )
                 dfScaleSrcMax += 0.1;
+
+            // Can still occur for very big values
+            if( dfScaleSrcMax == dfScaleSrcMin )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "-scale cannot be applied due to source "
+                          "minimum and maximum being equal" );
+                GDALTranslateOptionsFree(psOptions);
+                delete poVDS;
+                return NULL;
+            }
 
             if( !bExponentScaling )
             {
