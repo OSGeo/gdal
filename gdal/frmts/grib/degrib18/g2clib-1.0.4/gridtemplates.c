@@ -203,6 +203,10 @@ xxtemplate *extgridtemplate(g2int number,g2int *list)
            if ( ! new->needext ) return(new);
 
            if ( number == 120 ) {
+              /* Not sure of the threshold, but 100000 looks to be large */
+              /* enough */
+              if( list[1] < 0 || list[1] > 100000 )
+                return new;
               new->extlen=list[1]*2;
               new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
               for (i=0;i<new->extlen;i++) {
@@ -215,6 +219,10 @@ xxtemplate *extgridtemplate(g2int number,g2int *list)
               }
            }
            else if ( number == 1000 ) {
+               /* Not sure of the threshold, but 100000 looks to be large */
+              /* enough */
+              if( list[19] < 0 || list[19] > 100000 )
+                return new;
               new->extlen=list[19];
               new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
               for (i=0;i<new->extlen;i++) {
@@ -222,6 +230,10 @@ xxtemplate *extgridtemplate(g2int number,g2int *list)
               }
            }
            else if ( number == 1200 ) {
+              /* Not sure of the threshold, but 100000 looks to be large */
+              /* enough */
+              if( list[15] < 0 || list[15] > 100000 )
+                return new;
               new->extlen=list[15];
               new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
               for (i=0;i<new->extlen;i++) {
