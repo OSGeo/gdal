@@ -126,7 +126,12 @@ OGRFeature *OGRDXFLayer::TranslateDIMENSION()
             break;
         }
     }
-
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
+    }
     if( nCode == 0 )
         poDS->UnreadValue();
 
