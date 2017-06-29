@@ -87,7 +87,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             GDALDatasetH hSrcDS = GDALOpen( "/vsitar//vsimem/test.tar/in", GA_ReadOnly );
             if( hSrcDS != NULL )
             {
-#ifdef notdef
+                // Also check that reading the source doesn't involve too
+                // much memory
                 GDALDataset* poSrcDS = reinterpret_cast<GDALDataset*>(hSrcDS);
                 vsi_l_offset nSize =
                     static_cast<vsi_l_offset>(poSrcDS->GetRasterCount()) *
@@ -97,7 +98,6 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     nSize *= GDALGetDataTypeSizeBytes(
                             poSrcDS->GetRasterBand(1)->GetRasterDataType() );
                 if( nSize < 10 * 1024 * 1024 )
-#endif
                 {
                     GDALDatasetH hOutDS = GDALTranslate("/vsimem/out", hSrcDS,
                                                         psOptions, NULL);
