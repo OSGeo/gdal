@@ -1210,7 +1210,84 @@ def vrt_read_28():
         return 'fail'
 
     return 'success'
-    
+
+
+###############################################################################
+# Check VRT source sharing and non-sharing situations (#6949)
+
+def vrt_read_29():
+
+    f = open('data/byte.tif')
+    lst_before = gdaltest.get_opened_files()
+    if len(lst_before) == 0:
+        return 'skip'
+    f.close()
+    lst_before = gdaltest.get_opened_files()
+
+    gdal.Translate('tmp/vrt_read_29.tif', 'data/byte.tif')
+
+    vrt_text = """<VRTDataset rasterXSize="20" rasterYSize="20">
+    <VRTRasterBand dataType="Byte" band="1">
+        <SimpleSource>
+        <SourceFilename>tmp/vrt_read_29.tif</SourceFilename>
+        <SourceBand>1</SourceBand>
+        <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+        <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+        <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+        </SimpleSource>
+    </VRTRasterBand>
+    <VRTRasterBand dataType="Byte" band="2">
+        <SimpleSource>
+        <SourceFilename>tmp/vrt_read_29.tif</SourceFilename>
+        <SourceBand>1</SourceBand>
+        <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+        <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+        <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+        </SimpleSource>
+    </VRTRasterBand>
+    </VRTDataset>"""
+
+    ds = gdal.Open(vrt_text)
+    # Just after opening, we shouldn't have read the source
+    lst = gdaltest.get_opened_files()
+    if lst.sort() != lst_before.sort():
+        gdaltest.post_reason('fail')
+        print(lst)
+        print(lst_before)
+        return 'fail'
+
+    # Check that the 2 bands share the same source handle
+    ds.GetRasterBand(1).Checksum()
+    lst = gdaltest.get_opened_files()
+    if len(lst) != len(lst_before)+1:
+        gdaltest.post_reason('fail')
+        print(lst)
+        print(lst_before)
+        return 'fail'
+    ds.GetRasterBand(2).Checksum()
+    lst = gdaltest.get_opened_files()
+    if len(lst) != len(lst_before)+1:
+        gdaltest.post_reason('fail')
+        print(lst)
+        print(lst_before)
+        return 'fail'
+
+    # Open a second VRT dataset handle
+    ds2 = gdal.Open(vrt_text)
+
+    # Check that it consumes an extra handle
+    ds2.GetRasterBand(1).Checksum()
+    lst = gdaltest.get_opened_files()
+    if len(lst) != len(lst_before)+2:
+        gdaltest.post_reason('fail')
+        print(lst)
+        print(lst_before)
+        return 'fail'
+
+    gdal.Unlink('tmp/vrt_read_29.tif')
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -1246,6 +1323,7 @@ gdaltest_list.append( vrt_read_25 )
 gdaltest_list.append( vrt_read_26 )
 gdaltest_list.append( vrt_read_27 )
 gdaltest_list.append( vrt_read_28 )
+gdaltest_list.append( vrt_read_29 )
 
 if __name__ == '__main__':
 
