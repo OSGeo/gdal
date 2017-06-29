@@ -79,6 +79,8 @@ struct _GDALProxyPoolCacheEntry
 class GDALDatasetPool
 {
     private:
+        bool bInDestruction;
+
         /* Ref count of the pool singleton */
         /* Taken by "toplevel" GDALProxyPoolDataset in its constructor and released */
         /* in its destructor. See also refCountOfDisableRefCount for the difference */
@@ -136,6 +138,7 @@ class GDALDatasetPool
 
 GDALDatasetPool::GDALDatasetPool(int maxSizeIn)
 {
+    bInDestruction = false;
     maxSize = maxSizeIn;
     currentSize = 0;
     firstEntry = NULL;
@@ -150,6 +153,7 @@ GDALDatasetPool::GDALDatasetPool(int maxSizeIn)
 
 GDALDatasetPool::~GDALDatasetPool()
 {
+    bInDestruction = true;
     GDALProxyPoolCacheEntry* cur = firstEntry;
     GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
     while(cur)
@@ -216,6 +220,9 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
                                                       int bShared,
                                                       bool bForceOpen)
 {
+    if( bInDestruction )
+        return NULL;
+
     GDALProxyPoolCacheEntry* cur = firstEntry;
     GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
     GDALProxyPoolCacheEntry* lastEntryWithZeroRefCount = NULL;
