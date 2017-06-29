@@ -2592,7 +2592,8 @@ void JPGDataset::ProgressMonitor(j_common_ptr cinfo)
     {
         const int scan_no =
             reinterpret_cast<j_decompress_ptr>(cinfo)->input_scan_number;
-        const int MAX_SCANS = 100;
+        const int MAX_SCANS = atoi(
+            CPLGetConfigOption("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", "100"));
         if (scan_no >= MAX_SCANS)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
