@@ -221,6 +221,7 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
         CPLHashSet      *metadataItemSet;
 
         GDALProxyPoolCacheEntry* cacheEntry;
+        char            *m_pszOwner;
 
         GDALDataset *RefUnderlyingDataset(bool bForceOpen);
 
@@ -236,7 +237,8 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
                             GDALAccess eAccess = GA_ReadOnly,
                             int bShared = FALSE,
                             const char * pszProjectionRef = NULL,
-                            double * padfGeoTransform = NULL);
+                            double * padfGeoTransform = NULL,
+                            const char* pszOwner = NULL);
         virtual ~GDALProxyPoolDataset();
 
         void         SetOpenOptions(char** papszOpenOptions);

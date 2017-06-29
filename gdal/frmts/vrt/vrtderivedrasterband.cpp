@@ -1959,10 +1959,12 @@ int  VRTDerivedRasterBand::IGetDataCoverageStatus( int /* nXOff */,
 /************************************************************************/
 
 CPLErr VRTDerivedRasterBand::XMLInit( CPLXMLNode *psTree,
-                                      const char *pszVRTPath )
+                                      const char *pszVRTPath,
+                                      void* pUniqueHandle )
 
 {
-    const CPLErr eErr = VRTSourcedRasterBand::XMLInit( psTree, pszVRTPath );
+    const CPLErr eErr = VRTSourcedRasterBand::XMLInit( psTree, pszVRTPath,
+                                                       pUniqueHandle );
     if( eErr != CE_None )
         return eErr;
 

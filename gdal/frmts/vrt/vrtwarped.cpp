@@ -1694,17 +1694,6 @@ CPLErr VRTWarpedRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                              XMLInit()                               */
-/************************************************************************/
-
-CPLErr VRTWarpedRasterBand::XMLInit( CPLXMLNode * psTree,
-                                     const char *pszVRTPathIn )
-
-{
-    return VRTRasterBand::XMLInit( psTree, pszVRTPathIn );
-}
-
-/************************************************************************/
 /*                           SerializeToXML()                           */
 /************************************************************************/
 

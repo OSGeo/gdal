@@ -136,7 +136,8 @@ void VRTDriver::AddSourceParser( const char *pszElementName,
 /*                            ParseSource()                             */
 /************************************************************************/
 
-VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
+VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath,
+                                   void* pUniqueHandle )
 
 {
 
@@ -161,7 +162,7 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
     if( pfnParser == NULL )
         return NULL;
 
-    return pfnParser( psSrc, pszVRTPath );
+    return pfnParser( psSrc, pszVRTPath, pUniqueHandle );
 }
 
 /************************************************************************/

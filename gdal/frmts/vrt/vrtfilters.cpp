@@ -565,11 +565,13 @@ CPLErr VRTKernelFilteredSource::FilterData( int nXSize, int nYSize,
 /************************************************************************/
 
 CPLErr VRTKernelFilteredSource::XMLInit( CPLXMLNode *psTree,
-                                         const char *pszVRTPath )
+                                         const char *pszVRTPath,
+                                         void* pUniqueHandle )
 
 {
     {
-        const CPLErr eErr = VRTFilteredSource::XMLInit( psTree, pszVRTPath );
+        const CPLErr eErr = VRTFilteredSource::XMLInit( psTree, pszVRTPath,
+                                                        pUniqueHandle );
         if( eErr != CE_None )
             return eErr;
     }
@@ -665,13 +667,14 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML( const char *pszVRTPath )
 /*                       VRTParseFilterSources()                        */
 /************************************************************************/
 
-VRTSource *VRTParseFilterSources( CPLXMLNode *psChild, const char *pszVRTPath )
+VRTSource *VRTParseFilterSources( CPLXMLNode *psChild, const char *pszVRTPath,
+                                  void* pUniqueHandle )
 
 {
     if( EQUAL(psChild->pszValue, "KernelFilteredSource") )
     {
         VRTSource *poSrc = new VRTKernelFilteredSource();
-        if( poSrc->XMLInit( psChild, pszVRTPath ) == CE_None )
+        if( poSrc->XMLInit( psChild, pszVRTPath, pUniqueHandle ) == CE_None )
             return poSrc;
 
         delete poSrc;

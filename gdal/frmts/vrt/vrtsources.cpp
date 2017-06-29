@@ -471,7 +471,8 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
+CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
+                                 void* pUniqueHandle )
 
 {
     m_osResampling = CPLGetXMLValue( psSrc, "resampling", "");
@@ -665,9 +666,11 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         /* ----------------------------------------------------------------- */
         /*      Create a proxy dataset                                       */
         /* ----------------------------------------------------------------- */
+        CPLString osUniqueHandle( CPLSPrintf("%p", pUniqueHandle) );
         GDALProxyPoolDataset * const proxyDS =
             new GDALProxyPoolDataset( pszSrcDSName, nRasterXSize, nRasterYSize,
-                                      GA_ReadOnly, bShared );
+                                      GA_ReadOnly, bShared, NULL, NULL,
+                                      osUniqueHandle.c_str() );
         proxyDS->SetOpenOptions(papszOpenOptions);
         poSrcDS = proxyDS;
 
@@ -2080,14 +2083,16 @@ CPLXMLNode *VRTComplexSource::SerializeToXML( const char *pszVRTPath )
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
+CPLErr VRTComplexSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
+                                  void* pUniqueHandle )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Do base initialization.                                         */
 /* -------------------------------------------------------------------- */
     {
-        const CPLErr eErr = VRTSimpleSource::XMLInit( psSrc, pszVRTPath );
+        const CPLErr eErr = VRTSimpleSource::XMLInit( psSrc, pszVRTPath,
+                                                      pUniqueHandle );
         if( eErr != CE_None )
             return eErr;
     }
@@ -2869,7 +2874,8 @@ CPLErr VRTFuncSource::GetHistogram( int /* nXSize */,
 /*                        VRTParseCoreSources()                         */
 /************************************************************************/
 
-VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath )
+VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath,
+                                void* pUniqueHandle )
 
 {
     VRTSource * poSource = NULL;
@@ -2896,7 +2902,7 @@ VRTSource *VRTParseCoreSources( CPLXMLNode *psChild, const char *pszVRTPath )
         return NULL;
     }
 
-    if( poSource->XMLInit( psChild, pszVRTPath ) == CE_None )
+    if( poSource->XMLInit( psChild, pszVRTPath, pUniqueHandle ) == CE_None )
         return poSource;
 
     delete poSource;
