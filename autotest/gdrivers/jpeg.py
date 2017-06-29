@@ -1067,6 +1067,38 @@ def jpeg_26():
     return 'success'
 
 ###############################################################################
+# Test reading a file that contains the 2 denial of service
+# vulnerabilities listed in 
+# http://www.libjpeg-jpeg_26.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
+
+def jpeg_27():
+
+    # Should error out with 'Reading this strip would require
+    #libjpeg to allocate at least...' 
+    gdal.ErrorReset()
+    ds = gdal.Open('/vsisubfile/146,/vsizip/../gcore/data/eofloop_valid_huff.tif.zip')
+    with gdaltest.error_handler():
+        cs = ds.GetRasterBand(1).Checksum()
+        if cs != 0 or gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Should error out with 'Scan number...
+    gdal.ErrorReset()
+    ds = gdal.Open('/vsisubfile/146,/vsizip/../gcore/data/eofloop_valid_huff.tif.zip')
+    with gdaltest.error_handler():
+        gdal.SetConfigOption('GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC', 'YES')
+        gdal.SetConfigOption('GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER', '10')
+        cs = ds.GetRasterBand(1).Checksum()
+        gdal.SetConfigOption('GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC', None)
+        gdal.SetConfigOption('GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER', None)
+        if gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def jpeg_cleanup():
@@ -1110,6 +1142,7 @@ gdaltest_list = [
     jpeg_24,
     jpeg_25,
     jpeg_26,
+    jpeg_27,
     jpeg_cleanup ]
 
 if __name__ == '__main__':
