@@ -245,6 +245,11 @@ def ingr_18():
 
     return 'success'
 
+def ingr_cleanup():
+
+    gdal.Unlink('data/frmt09.cot.aux.xml')
+    return 'success'
+
 gdaltest_list = [
     ingr_1,
     ingr_2,
@@ -263,7 +268,8 @@ gdaltest_list = [
     ingr_15,
     ingr_16,
     ingr_17,
-    ingr_18 ]
+    ingr_18,
+    ingr_cleanup ]
 
 if __name__ == '__main__':
 
