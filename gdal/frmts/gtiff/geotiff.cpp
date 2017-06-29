@@ -350,7 +350,8 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
 
     bool        IsBlockAvailable( int nBlockId,
                                   vsi_l_offset* pnOffset = NULL,
-                                  vsi_l_offset* pnSize = NULL );
+                                  vsi_l_offset* pnSize = NULL,
+                                  bool *pbErrOccured = NULL );
 
     bool        bGeoTIFFInfoChanged;
     bool        bForceUnsetGTOrGCPs;
@@ -801,9 +802,12 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
     vsi_l_offset nOffset = 0;
     vsi_l_offset nByteCount = 0;
-    if( !poGDS->poParentDS->IsBlockAvailable(nBlockId, &nOffset, &nByteCount) )
+    bool bErrOccured = false;
+    if( !poGDS->poParentDS->IsBlockAvailable(nBlockId, &nOffset, &nByteCount, &bErrOccured) )
     {
         memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize );
+        if( bErrOccured )
+            return CE_Failure;
         return CE_None;
     }
 
@@ -4151,10 +4155,13 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Just set to zeros and return.                                   */
 /* -------------------------------------------------------------------- */
     vsi_l_offset nOffset = 0;
+    bool bErrOccured = false;
     if( nBlockId != poGDS->nLoadedBlock &&
-        !poGDS->IsBlockAvailable(nBlockId, &nOffset) )
+        !poGDS->IsBlockAvailable(nBlockId, &nOffset, NULL, &bErrOccured) )
     {
         NullBlock( pImage );
+        if( bErrOccured )
+            return CE_Failure;
         return CE_None;
     }
 
@@ -6355,10 +6362,16 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      exist yet, but that we want to read.  Just set to zeros and     */
 /*      return.                                                         */
 /* -------------------------------------------------------------------- */
-    if( nBlockId != poGDS->nLoadedBlock && !poGDS->IsBlockAvailable(nBlockId) )
+    if( nBlockId != poGDS->nLoadedBlock )
     {
-        NullBlock( pImage );
-        return CE_None;
+        bool bErrOccured = false;
+        if( !poGDS->IsBlockAvailable(nBlockId, NULL, NULL, &bErrOccured) )
+        {
+            NullBlock( pImage );
+            if( bErrOccured )
+                return CE_Failure;
+            return CE_None;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -8624,10 +8637,13 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, bool bReadFromDisk )
 /*      doesn't yet exist on disk, just zero the memory buffer and      */
 /*      pretend we loaded it.                                           */
 /* -------------------------------------------------------------------- */
-    if( !IsBlockAvailable( nBlockId ) )
+    bool bErrOccured = false;
+    if( !IsBlockAvailable( nBlockId, NULL, NULL, &bErrOccured ) )
     {
         memset( pabyBlockBuf, 0, nBlockBufSize );
         nLoadedBlock = nBlockId;
+        if( bErrOccured )
+            return CE_Failure;
         return CE_None;
     }
 
@@ -8834,7 +8850,7 @@ void GTiffDataset::Crystalize()
 #if defined(INTERNAL_LIBTIFF) && defined(DEFER_STRILE_LOAD)
 
 static
-void GTiffCacheOffsetOrCount( VSILFILE* fp,
+bool GTiffCacheOffsetOrCount( VSILFILE* fp,
                               bool bSwab,
                               vsi_l_offset nBaseOffset,
                               int nBlockId,
@@ -8860,12 +8876,12 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read offset/size for strile %d", nBlockId);
         panVals[nBlockId] = 0;
-        return;
+        return false;
     }
     if( VSIFSeekL(fp, nOffsetStartPage, SEEK_SET) != 0 )
     {
         panVals[nBlockId] = 0;
-        return;
+        return false;
     }
 
     const size_t nToRead =
@@ -8876,7 +8892,7 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot read offset/size for strile around ~%d", nBlockId);
-        memset(buffer + nRead, 0, nToRead - nRead);
+        return false;
     }
     int iStartBefore =
         - static_cast<int>((nOffset - nOffsetStartPage) / sizeofval);
@@ -8919,9 +8935,10 @@ void GTiffCacheOffsetOrCount( VSILFILE* fp,
             panVals[nBlockId + i] = val;
         }
     }
+    return true;
 }
 
-static void ReadStripArray( VSILFILE* fp,
+static bool ReadStripArray( VSILFILE* fp,
                             TIFF* hTIFF,
                             const TIFFDirEntry* psEntry,
                             int nBlockId,
@@ -8943,6 +8960,7 @@ static void ReadStripArray( VSILFILE* fp,
                 CPL_SWAP16PTR(&offset);
             panOffsetOrCountArray[i] = offset;
         }
+        return true;
     }
     else if( (hTIFF->tif_flags&TIFF_BIGTIFF) &&
         psEntry->tdir_type == TIFF_LONG &&
@@ -8958,6 +8976,7 @@ static void ReadStripArray( VSILFILE* fp,
                 CPL_SWAP32PTR(&offset);
             panOffsetOrCountArray[i] = offset;
         }
+        return true;
     }
     else if( (hTIFF->tif_flags&TIFF_BIGTIFF) &&
         psEntry->tdir_type == TIFF_LONG8 &&
@@ -8967,6 +8986,7 @@ static void ReadStripArray( VSILFILE* fp,
         if( bSwab )
             CPL_SWAP64PTR(&offset);
         panOffsetOrCountArray[0] = offset;
+        return true;
     }
     else if( !(hTIFF->tif_flags&TIFF_BIGTIFF) &&
         psEntry->tdir_type == TIFF_SHORT &&
@@ -8983,6 +9003,7 @@ static void ReadStripArray( VSILFILE* fp,
                 CPL_SWAP16PTR(&offset);
             panOffsetOrCountArray[i] = offset;
         }
+        return true;
     }
     else if( !(hTIFF->tif_flags&TIFF_BIGTIFF) &&
         psEntry->tdir_type == TIFF_LONG &&
@@ -8992,6 +9013,7 @@ static void ReadStripArray( VSILFILE* fp,
         if( bSwab )
             CPL_SWAP32PTR(&offset);
         panOffsetOrCountArray[0] = offset;
+        return true;
     }
     else
     {
@@ -9013,7 +9035,7 @@ static void ReadStripArray( VSILFILE* fp,
 
         if( psEntry->tdir_type == TIFF_SHORT )
         {
-            GTiffCacheOffsetOrCount(fp,
+            return GTiffCacheOffsetOrCount(fp,
                                     bSwab,
                                     l_nDirOffset,
                                     nBlockId,
@@ -9023,7 +9045,7 @@ static void ReadStripArray( VSILFILE* fp,
         }
         else if( psEntry->tdir_type == TIFF_LONG )
         {
-            GTiffCacheOffsetOrCount(fp,
+            return GTiffCacheOffsetOrCount(fp,
                                     bSwab,
                                     l_nDirOffset,
                                     nBlockId,
@@ -9033,7 +9055,7 @@ static void ReadStripArray( VSILFILE* fp,
         }
         else
         {
-            GTiffCacheOffsetOrCount(fp,
+            return GTiffCacheOffsetOrCount(fp,
                                     bSwab,
                                     l_nDirOffset,
                                     nBlockId,
@@ -9056,9 +9078,13 @@ static void ReadStripArray( VSILFILE* fp,
 
 bool GTiffDataset::IsBlockAvailable( int nBlockId,
                                      vsi_l_offset* pnOffset,
-                                     vsi_l_offset* pnSize )
+                                     vsi_l_offset* pnSize,
+                                     bool *pbErrOccured )
 
 {
+    if( pbErrOccured )
+        *pbErrOccured = false;
+
 #if defined(INTERNAL_LIBTIFF) && defined(DEFER_STRILE_LOAD)
     // Optimization to avoid fetching the whole Strip/TileCounts and
     // Strip/TileOffsets arrays.
@@ -9089,6 +9115,8 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
                 *pnOffset = 0;
             if( pnSize )
                 *pnSize = 0;
+            if( pbErrOccured )
+                *pbErrOccured = true;
             return false;
         }
 
@@ -9104,6 +9132,8 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
                 *pnOffset = 0;
             if( pnSize )
                 *pnSize = 0;
+            if( pbErrOccured )
+                *pbErrOccured = true;
             return false;
         }
 
@@ -9137,6 +9167,8 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory,
                          "Cannot allocate strip offset and bytecount arrays");
+                if( pbErrOccured )
+                    *pbErrOccured = true;
                 return false;
             }
 #endif
@@ -9170,7 +9202,11 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
             }
         }
         if( hTIFF->tif_dir.td_stripbytecount == NULL )
+        {
+            if( pbErrOccured )
+                *pbErrOccured = true;
             return false;
+        }
         if( ~(hTIFF->tif_dir.td_stripoffset[nBlockId]) == 0 ||
             ~(hTIFF->tif_dir.td_stripbytecount[nBlockId]) == 0 )
         {
@@ -9178,23 +9214,32 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
             const vsi_l_offset nCurOffset = VSIFTellL(fp);
             if( ~(hTIFF->tif_dir.td_stripoffset[nBlockId]) == 0 )
             {
-                ReadStripArray( fp,
+                if( !ReadStripArray( fp,
                                 hTIFF,
                                 &hTIFF->tif_dir.td_stripoffset_entry,
                                 nBlockId,
                                 nStripArrayAlloc,
-                                hTIFF->tif_dir.td_stripoffset );
-
+                                hTIFF->tif_dir.td_stripoffset ) )
+                {
+                    if( pbErrOccured )
+                        *pbErrOccured = true;
+                    return false;
+                }
             }
 
             if( ~(hTIFF->tif_dir.td_stripbytecount[nBlockId]) == 0 )
             {
-                ReadStripArray( fp,
+                if( !ReadStripArray( fp,
                                 hTIFF,
                                 &hTIFF->tif_dir.td_stripbytecount_entry,
                                 nBlockId,
                                 nStripArrayAlloc,
-                                hTIFF->tif_dir.td_stripbytecount );
+                                hTIFF->tif_dir.td_stripbytecount ) )
+                {
+                    if( pbErrOccured )
+                        *pbErrOccured = true;
+                    return false;
+                }
             }
             if( VSIFSeekL(fp, nCurOffset, SEEK_SET) != 0 )
             {
@@ -9203,6 +9248,8 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
                 // that was verified to be "NULL" is not restored as it was
                 // along other paths.
                 // coverity[end_of_path]
+                if( pbErrOccured )
+                    *pbErrOccured = true;
                 return false;
             }
         }
@@ -9226,13 +9273,22 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
               TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panOffsets )) ) )
     {
         if( panByteCounts == NULL || (pnOffset != NULL && panOffsets == NULL) )
+        {
+            if( pbErrOccured )
+                *pbErrOccured = true;
             return false;
+        }
 
         if( pnOffset )
             *pnOffset = panOffsets[nBlockId];
         if( pnSize )
             *pnSize = panByteCounts[nBlockId];
         return panByteCounts[nBlockId] != 0;
+    }
+    else
+    {
+        if( pbErrOccured )
+            *pbErrOccured = true;
     }
 
     return false;
