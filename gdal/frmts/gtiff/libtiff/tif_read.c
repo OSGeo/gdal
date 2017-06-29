@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.59 2017-05-13 15:34:06 erouault Exp $ */
+/* $Id: tif_read.c,v 1.60 2017-06-29 07:37:12 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -262,6 +262,7 @@ TIFFFillStripPartial( TIFF *tif, int strip, tmsize_t read_ahead, int restart )
         tif->tif_rawdataoff = tif->tif_rawdataoff + tif->tif_rawdataloaded - unused_data ;
         tif->tif_rawdataloaded = unused_data + to_read;
 
+        tif->tif_rawcc = tif->tif_rawdataloaded;
         tif->tif_rawcp = tif->tif_rawdata;
                         
         if (!isFillOrder(tif, td->td_fillorder) &&
@@ -275,10 +276,28 @@ TIFFFillStripPartial( TIFF *tif, int strip, tmsize_t read_ahead, int restart )
         ** restart the decoder.
         */
         if( restart )
-                return TIFFStartStrip(tif, strip);
+        {
+
+#ifdef JPEG_SUPPORT
+            /* A bit messy since breaks the codec abstraction. Ultimately */
+            /* there should be a function pointer for that, but it seems */
+            /* only JPEG is affected. */
+            /* For JPEG, if there are multiple scans (can generally be known */
+            /* with the  read_ahead used), we need to read the whole strip */
+            if( tif->tif_dir.td_compression==COMPRESSION_JPEG &&
+                (uint64)tif->tif_rawcc < td->td_stripbytecount[strip] )
+            {
+                if( TIFFJPEGIsFullStripRequired(tif) )
+                {
+                    return TIFFFillStrip(tif, strip);
+                }
+            }
+#endif
+
+            return TIFFStartStrip(tif, strip);
+        }
         else
         {
-                tif->tif_rawcc = tif->tif_rawdataloaded;
                 return 1;
         }
 }

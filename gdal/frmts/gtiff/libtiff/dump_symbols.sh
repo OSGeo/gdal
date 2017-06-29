@@ -43,8 +43,9 @@ echo "" >> $OUT_FILE
 # Was excluded by grep -v TIFFInit
 echo "#define TIFFInitDumpMode gdal_TIFFInitDumpMode" >> $OUT_FILE
 
-# Pasted and adapter from tif_codec.c
+# Pasted and adapted from tif_codec.c
 echo "#define TIFFReInitJPEG_12 gdal_TIFFReInitJPEG_12" >> $OUT_FILE
+echo "#define TIFFJPEGIsFullStripRequired_12 gdal_TIFFJPEGIsFullStripRequired_12" >> $OUT_FILE
 echo "#ifdef LZW_SUPPORT" >> $OUT_FILE
 echo "#define TIFFInitLZW gdal_TIFFInitLZW" >> $OUT_FILE
 echo "#endif" >> $OUT_FILE
