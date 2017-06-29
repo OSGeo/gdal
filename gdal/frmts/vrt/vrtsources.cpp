@@ -155,6 +155,24 @@ VRTSimpleSource::~VRTSimpleSource()
 }
 
 /************************************************************************/
+/*                           FlushCache()                               */
+/************************************************************************/
+
+CPLErr VRTSimpleSource::FlushCache()
+
+{
+    if( m_poMaskBandMainBand != NULL )
+    {
+        return m_poMaskBandMainBand->FlushCache();
+    }
+    else if( m_poRasterBand != NULL )
+    {
+        return m_poRasterBand->FlushCache();
+    }
+    return CE_None;
+}
+
+/************************************************************************/
 /*                    UnsetPreservedRelativeFilenames()                 */
 /************************************************************************/
 
