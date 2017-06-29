@@ -1682,4 +1682,18 @@ int VRTSourcedRasterBand::CloseDependentDatasets()
     return TRUE;
 }
 
+/************************************************************************/
+/*                               FlushCache()                           */
+/************************************************************************/
+
+CPLErr VRTSourcedRasterBand::FlushCache()
+{
+    CPLErr eErr = VRTRasterBand::FlushCache();
+    for( int i = 0; i < nSources && eErr == CE_None; i++ )
+    {
+        eErr = papoSources[i]->FlushCache();
+    }
+    return eErr;
+}
+
 /*! @endcond */

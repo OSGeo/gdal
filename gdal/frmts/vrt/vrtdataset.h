@@ -114,6 +114,7 @@ public:
                                int *pnMaxSize, CPLHashSet* hSetFiles);
 
     virtual int    IsSimpleSource() { return FALSE; }
+    virtual CPLErr FlushCache() { return CE_None; }
 };
 
 typedef VRTSource *(*VRTSourceParser)(CPLXMLNode *, const char *);
@@ -579,6 +580,8 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
     virtual int         CloseDependentDatasets() CPL_OVERRIDE;
 
     virtual int         IsSourcedRasterBand() CPL_OVERRIDE { return TRUE; }
+
+    virtual CPLErr      FlushCache() CPL_OVERRIDE;
 };
 
 /************************************************************************/
@@ -851,6 +854,7 @@ public:
 
     virtual int    IsSimpleSource() CPL_OVERRIDE { return TRUE; }
     virtual const char* GetType() { return "SimpleSource"; }
+    virtual CPLErr FlushCache() CPL_OVERRIDE;
 
     GDALRasterBand* GetBand();
     int             IsSameExceptBandNumber( VRTSimpleSource* poOtherSource );
