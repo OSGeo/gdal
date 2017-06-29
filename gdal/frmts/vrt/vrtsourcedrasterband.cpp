@@ -941,11 +941,13 @@ CPLErr CPL_STDCALL VRTAddSource( VRTSourcedRasterBandH hVRTBand,
 /************************************************************************/
 
 CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
-                                      const char *pszVRTPath )
+                                      const char *pszVRTPath,
+                                      void* pUniqueHandle )
 
 {
     {
-        const CPLErr eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath );
+        const CPLErr eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath,
+                                                    pUniqueHandle );
         if( eErr != CE_None )
             return eErr;
     }
@@ -965,7 +967,7 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
 
         CPLErrorReset();
         VRTSource * const poSource =
-            poDriver->ParseSource( psChild, pszVRTPath );
+            poDriver->ParseSource( psChild, pszVRTPath, pUniqueHandle );
         if( poSource != NULL )
             AddSource( poSource );
         else if( CPLGetLastErrorType() != CE_None )
@@ -1550,7 +1552,8 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
         if( psTree == NULL )
             return CE_Failure;
 
-        VRTSource * const poSource = poDriver->ParseSource( psTree, NULL );
+        VRTSource * const poSource = poDriver->ParseSource( psTree, NULL,
+                                                            GetDataset() );
         CPLDestroyXMLNode( psTree );
 
         if( poSource != NULL )
@@ -1580,7 +1583,8 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
         if( psTree == NULL )
             return CE_Failure;
 
-        VRTSource * const poSource = poDriver->ParseSource( psTree, NULL );
+        VRTSource * const poSource = poDriver->ParseSource( psTree, NULL,
+                                                            GetDataset() );
         CPLDestroyXMLNode( psTree );
 
         if( poSource != NULL )
@@ -1629,7 +1633,8 @@ CPLErr VRTSourcedRasterBand::SetMetadata( char **papszNewMD, const char *pszDoma
             if( psTree == NULL )
                 return CE_Failure;
 
-            VRTSource * const poSource = poDriver->ParseSource( psTree, NULL );
+            VRTSource * const poSource = poDriver->ParseSource( psTree, NULL,
+                                                                GetDataset() );
             CPLDestroyXMLNode( psTree );
 
             if( poSource == NULL )

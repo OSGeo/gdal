@@ -1527,6 +1527,12 @@ pseudo panchromatic intensity, but not bound to an output band.
 
 \section gdal_vrttut_mt Multi-threading issues
 
+The below section applies to GDAL &lt;= 2.2. Starting with GDAL 2.3, the use
+of VRT datasets is subject to the standard GDAL dataset multi-threaded rules
+(that is a VRT dataset handle may only be used by a same thread at a time,
+but you may open several dataset handles on the same VRT file and use them
+in different threads)
+
 When using VRT datasets in a multi-threading environment, you should be
 careful to open the VRT dataset by the thread that will use it afterwards. The
 reason for that is that the VRT dataset uses GDALOpenShared when opening the

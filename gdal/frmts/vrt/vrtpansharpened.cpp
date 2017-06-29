@@ -1626,17 +1626,6 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
-/*                              XMLInit()                               */
-/************************************************************************/
-
-CPLErr VRTPansharpenedRasterBand::XMLInit( CPLXMLNode * psTree,
-                                  const char *pszVRTPathIn )
-
-{
-    return VRTRasterBand::XMLInit( psTree, pszVRTPathIn );
-}
-
-/************************************************************************/
 /*                           SerializeToXML()                           */
 /************************************************************************/
 

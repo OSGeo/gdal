@@ -454,7 +454,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
                           pszSubclass );
 
             if( poBand != NULL
-                && poBand->XMLInit( psChild, pszVRTPathIn ) == CE_None )
+                && poBand->XMLInit( psChild, pszVRTPathIn, this ) == CE_None )
             {
                 SetMaskBand(poBand);
                 break;
@@ -499,7 +499,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPathIn )
                           pszSubclass );
 
             if( poBand != NULL
-                && poBand->XMLInit( psChild, pszVRTPathIn ) == CE_None )
+                && poBand->XMLInit( psChild, pszVRTPathIn, this ) == CE_None )
             {
                 SetBand( ++l_nBands, poBand );
             }
