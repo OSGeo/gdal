@@ -443,6 +443,7 @@
 #define TIFFReadDirectoryFindEntry gdal_TIFFReadDirectoryFindEntry
 #define TIFFReadDirectoryFindFieldInfo gdal_TIFFReadDirectoryFindFieldInfo
 #define TIFFReadDirEntryArray gdal_TIFFReadDirEntryArray
+#define TIFFReadDirEntryArrayWithLimit gdal_TIFFReadDirEntryArrayWithLimit
 #define TIFFReadDirEntryByte gdal_TIFFReadDirEntryByte
 #define TIFFReadDirEntryByteArray gdal_TIFFReadDirEntryByteArray
 #define TIFFReadDirEntryCheckedByte gdal_TIFFReadDirEntryCheckedByte
@@ -505,6 +506,7 @@
 #define TIFFReadDirEntryLong gdal_TIFFReadDirEntryLong
 #define TIFFReadDirEntryLong8 gdal_TIFFReadDirEntryLong8
 #define TIFFReadDirEntryLong8Array gdal_TIFFReadDirEntryLong8Array
+#define TIFFReadDirEntryLong8ArrayWithLimit gdal_TIFFReadDirEntryLong8ArrayWithLimit
 #define TIFFReadDirEntryLongArray gdal_TIFFReadDirEntryLongArray
 #define TIFFReadDirEntryOutputErr gdal_TIFFReadDirEntryOutputErr
 #define TIFFReadDirEntryPersampleShort gdal_TIFFReadDirEntryPersampleShort
@@ -741,6 +743,7 @@
 
 #define TIFFInitDumpMode gdal_TIFFInitDumpMode
 #define TIFFReInitJPEG_12 gdal_TIFFReInitJPEG_12
+#define TIFFJPEGIsFullStripRequired_12 gdal_TIFFJPEGIsFullStripRequired_12
 #ifdef LZW_SUPPORT
 #define TIFFInitLZW gdal_TIFFInitLZW
 #endif

@@ -3229,7 +3229,40 @@ def tiff_read_stripoffset_types():
 
     return 'success'
 
+###############################################################################
+# Test reading a JPEG-in-TIFF file that contains the 2 denial of service
+# vulnerabilities listed in 
+# http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
 
+def tiff_read_progressive_jpeg_denial_of_service():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    # Should error out with 'JPEGPreDecode:Reading this strip would require
+    #libjpeg to allocate at least...' 
+    gdal.ErrorReset()
+    ds = gdal.Open('/vsizip/data/eofloop_valid_huff.tif.zip')
+    with gdaltest.error_handler():
+        cs = ds.GetRasterBand(1).Checksum()
+        if cs != 0 or gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Should error out with 'TIFFjpeg_progress_monitor:Scan number...
+    gdal.ErrorReset()
+    ds = gdal.Open('/vsizip/data/eofloop_valid_huff.tif.zip')
+    with gdaltest.error_handler():
+        os.environ['LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC'] = 'YES'
+        os.environ['LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER'] = '10'
+        cs = ds.GetRasterBand(1).Checksum()
+        del os.environ['LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC']
+        del os.environ['LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER']
+        if gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
 
 ###############################################################################
 
@@ -3342,11 +3375,12 @@ gdaltest_list.append( (tiff_read_packbits_not_enough_data) )
 gdaltest_list.append( (tiff_read_toomanyblocks) )
 gdaltest_list.append( (tiff_read_size_of_stripbytecount_lower_than_stripcount) )
 gdaltest_list.append( (tiff_read_stripoffset_types) )
+gdaltest_list.append( (tiff_read_progressive_jpeg_denial_of_service) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
 
-# gdaltest_list = [ tiff_read_stripoffset_types ]
+# gdaltest_list = [ tiff_read_progressive_jpeg_denial_of_service ]
 
 if __name__ == '__main__':
 

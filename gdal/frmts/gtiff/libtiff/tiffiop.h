@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.91 2017-06-18 10:31:50 erouault Exp $ */
+/* $Id: tiffiop.h,v 1.92 2017-06-29 07:37:12 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -394,6 +394,7 @@ extern int TIFFInitOJPEG(TIFF*, int);
 #endif
 #ifdef JPEG_SUPPORT
 extern int TIFFInitJPEG(TIFF*, int);
+extern int TIFFJPEGIsFullStripRequired(TIFF*);
 #endif
 #ifdef JBIG_SUPPORT
 extern int TIFFInitJBIG(TIFF*, int);
