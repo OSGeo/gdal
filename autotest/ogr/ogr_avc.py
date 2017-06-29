@@ -108,25 +108,39 @@ def ogr_avc_3():
 
 def ogr_avc_4():
 
-    avc_ds = ogr.Open( 'data/testpointavc/testpointavc' )
-    lyr = avc_ds.GetLayer(0)
-    last_feature = None
-    count = 0
-    for f in lyr:
-        count += 1
-        last_feature = f
-    if count != 80:
-        gdaltest.post_reason('fail')
-        print(count)
-        return 'fail'
-    if last_feature.GetFieldCount() != 7:
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
-    if last_feature.GetField('ValueId') != 80 or last_feature.GetField('TESTPOINTAVC-ID') != 80:
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
+    for filename in [ 'data/testpointavc/testpointavc', 'data/testpoint.e00' ]:
+        avc_ds = ogr.Open( filename )
+        lyr = avc_ds.GetLayer(0)
+        last_feature = None
+        count = 0
+        for f in lyr:
+            count += 1
+            last_feature = f
+        if count != 80:
+            gdaltest.post_reason('fail')
+            print(filename)
+            print(count)
+            return 'fail'
+        count = lyr.GetFeatureCount()
+        if count != 80:
+            gdaltest.post_reason('fail')
+            print(filename)
+            print(count)
+            return 'fail'
+        if last_feature.GetFieldCount() != 7:
+            gdaltest.post_reason('fail')
+            print(filename)
+            f.DumpReadable()
+            return 'fail'
+        if filename == 'data/testpointavc/testpointavc':
+            fld_name = 'TESTPOINTAVC-ID'
+        else:
+            fld_name = 'WELLS-ID'
+        if last_feature.GetField('ValueId') != 80 or last_feature.GetField(fld_name) != 80:
+            gdaltest.post_reason('fail')
+            print(filename)
+            f.DumpReadable()
+            return 'fail'
 
     return 'success'
 
@@ -135,29 +149,45 @@ def ogr_avc_4():
 
 def ogr_avc_5():
 
-    avc_ds = ogr.Open( 'data/testpolyavc/testpolyavc' )
-    lyr = avc_ds.GetLayerByName('PAL')
-    last_feature = None
-    count = 0
-    for f in lyr:
-        count += 1
-        last_feature = f
-    if count != 3:
-        gdaltest.post_reason('fail')
-        print(count)
-        return 'fail'
-    if last_feature.GetFieldCount() != 5:
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
-    if last_feature.GetField('ArcIds') != [-4,-5] or abs(last_feature.GetField('AREA') - 9939.059) > 1e-3:
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
-    if last_feature.GetGeometryRef().ExportToWkt() != 'POLYGON ((340700.03125 4100199.5,340500.0 4100199.75,340599.96875 4100100.25,340700.03125 4100199.5))':
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
+    for filename in [ 'data/testpolyavc/testpolyavc', 'data/testpoly.e00' ]:
+        avc_ds = ogr.Open( filename )
+        lyr = avc_ds.GetLayerByName('PAL')
+        last_feature = None
+        count = 0
+        for f in lyr:
+            count += 1
+            last_feature = f
+        if count != 3:
+            gdaltest.post_reason('fail')
+            print(filename)
+            print(count)
+            return 'fail'
+        count = lyr.GetFeatureCount()
+        if count != 3:
+            gdaltest.post_reason('fail')
+            print(filename)
+            print(count)
+            return 'fail'
+        if last_feature.GetFieldCount() != 5:
+            gdaltest.post_reason('fail')
+            print(filename)
+            f.DumpReadable()
+            return 'fail'
+        if last_feature.GetField('ArcIds') != [-4,-5] or abs(last_feature.GetField('AREA') - 9939.059) > 1e-3:
+            gdaltest.post_reason('fail')
+            print(filename)
+            f.DumpReadable()
+            return 'fail'
+        if filename == 'data/testpolyavc/testpolyavc':
+            expected_wkt = 'POLYGON ((340700.03125 4100199.5,340500.0 4100199.75,340599.96875 4100100.25,340700.03125 4100199.5))'
+        else:
+            # Likely a bug in AVCE00 driver
+            expected_wkt = 'POLYGON ((340299.94 4100199.8,340099.88 4100200.0,340299.94 4100199.8))'
+        if last_feature.GetGeometryRef().ExportToWkt() != expected_wkt:
+            gdaltest.post_reason('fail')
+            print(filename)
+            f.DumpReadable()
+            return 'fail'
 
     return 'success'
 
