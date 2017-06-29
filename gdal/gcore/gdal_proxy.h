@@ -222,6 +222,8 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
 
         GDALProxyPoolCacheEntry* cacheEntry;
 
+        GDALDataset *RefUnderlyingDataset(bool bForceOpen);
+
     protected:
         virtual GDALDataset *RefUnderlyingDataset() CPL_OVERRIDE;
         virtual void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) CPL_OVERRIDE;
@@ -239,6 +241,8 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
 
         void         SetOpenOptions(char** papszOpenOptions);
         void         AddSrcBandDescription( GDALDataType eDataType, int nBlockXSize, int nBlockYSize);
+
+        virtual void FlushCache(void) CPL_OVERRIDE;
 
         virtual const char *GetProjectionRef(void) CPL_OVERRIDE;
         virtual CPLErr SetProjection( const char * ) CPL_OVERRIDE;
@@ -283,6 +287,8 @@ class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
 
         void Init();
 
+        GDALRasterBand* RefUnderlyingRasterBand(bool bForceOpen);
+
     protected:
         virtual GDALRasterBand* RefUnderlyingRasterBand() CPL_OVERRIDE;
         virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand) CPL_OVERRIDE;
@@ -312,6 +318,8 @@ class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
         virtual GDALRasterBand *GetOverview(int) CPL_OVERRIDE;
         virtual GDALRasterBand *GetRasterSampleOverview( GUIntBig nDesiredSamples) CPL_OVERRIDE; // TODO
         virtual GDALRasterBand *GetMaskBand() CPL_OVERRIDE;
+
+        virtual CPLErr FlushCache() CPL_OVERRIDE;
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALProxyPoolRasterBand)
 };

@@ -105,7 +105,8 @@ class GDALDatasetPool
         GDALProxyPoolCacheEntry* _RefDataset(const char* pszFileName,
                                              GDALAccess eAccess,
                                              char** papszOpenOptions,
-                                             int bShared);
+                                             int bShared,
+                                             bool bForceOpen);
         void _CloseDataset(const char* pszFileName, GDALAccess eAccess);
 
 #ifdef DEBUG_PROXY_POOL
@@ -120,7 +121,8 @@ class GDALDatasetPool
         static GDALProxyPoolCacheEntry* RefDataset(const char* pszFileName,
                                                    GDALAccess eAccess,
                                                    char** papszOpenOptions,
-                                                   int bShared);
+                                                   int bShared,
+                                                   bool bForceOpen);
         static void UnrefDataset(GDALProxyPoolCacheEntry* cacheEntry);
         static void CloseDataset(const char* pszFileName, GDALAccess eAccess);
 
@@ -211,7 +213,8 @@ void GDALDatasetPool::CheckLinks()
 GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
                                                       GDALAccess eAccess,
                                                       char** papszOpenOptions,
-                                                      int bShared)
+                                                      int bShared,
+                                                      bool bForceOpen)
 {
     GDALProxyPoolCacheEntry* cur = firstEntry;
     GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
@@ -252,6 +255,9 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
 
         cur = next;
     }
+
+    if( !bForceOpen )
+        return NULL;
 
     if (currentSize == maxSize)
     {
@@ -457,10 +463,12 @@ void GDALDatasetPoolForceDestroy()
 GDALProxyPoolCacheEntry* GDALDatasetPool::RefDataset(const char* pszFileName,
                                                      GDALAccess eAccess,
                                                      char** papszOpenOptions,
-                                                     int bShared)
+                                                     int bShared,
+                                                     bool bForceOpen)
 {
     CPLMutexHolderD( GDALGetphDLMutex() );
-    return singleton->_RefDataset(pszFileName, eAccess, papszOpenOptions, bShared);
+    return singleton->_RefDataset(pszFileName, eAccess, papszOpenOptions,
+                                  bShared, bForceOpen);
 }
 
 /************************************************************************/
@@ -673,6 +681,11 @@ void GDALProxyPoolDataset::AddSrcBandDescription( GDALDataType eDataType, int nB
 
 GDALDataset* GDALProxyPoolDataset::RefUnderlyingDataset()
 {
+    return RefUnderlyingDataset(true);
+}
+
+GDALDataset* GDALProxyPoolDataset::RefUnderlyingDataset(bool bForceOpen)
+{
     /* We pretend that the current thread is responsiblePID, that is */
     /* to say the thread that created that GDALProxyPoolDataset object. */
     /* This is for the case when a GDALProxyPoolDataset is created by a */
@@ -686,7 +699,7 @@ GDALDataset* GDALProxyPoolDataset::RefUnderlyingDataset()
     GIntBig curResponsiblePID = GDALGetResponsiblePIDForCurrentThread();
     GDALSetResponsiblePIDForCurrentThread(responsiblePID);
     cacheEntry = GDALDatasetPool::RefDataset(GetDescription(), eAccess, papszOpenOptions,
-                                             GetShared());
+                                             GetShared(), bForceOpen);
     GDALSetResponsiblePIDForCurrentThread(curResponsiblePID);
     if (cacheEntry != NULL)
     {
@@ -710,6 +723,20 @@ void GDALProxyPoolDataset::UnrefUnderlyingDataset(
         CPLAssert(cacheEntry->poDS == poUnderlyingDataset);
         if (cacheEntry->poDS != NULL)
             GDALDatasetPool::UnrefDataset(cacheEntry);
+    }
+}
+
+/************************************************************************/
+/*                         FlushCache()                                 */
+/************************************************************************/
+
+void  GDALProxyPoolDataset::FlushCache()
+{
+    GDALDataset* poUnderlyingDataset = RefUnderlyingDataset(false);
+    if (poUnderlyingDataset)
+    {
+        poUnderlyingDataset->FlushCache();
+        UnrefUnderlyingDataset(poUnderlyingDataset);
     }
 }
 
@@ -1013,9 +1040,9 @@ void GDALProxyPoolRasterBand::AddSrcMaskBandDescription( GDALDataType eDataTypeI
 /*                  RefUnderlyingRasterBand()                           */
 /************************************************************************/
 
-GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand()
+GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand(bool bForceOpen)
 {
-    GDALDataset* poUnderlyingDataset = ((GDALProxyPoolDataset*)poDS)->RefUnderlyingDataset();
+    GDALDataset* poUnderlyingDataset = ((GDALProxyPoolDataset*)poDS)->RefUnderlyingDataset(bForceOpen);
     if (poUnderlyingDataset == NULL)
         return NULL;
 
@@ -1028,6 +1055,11 @@ GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand()
     return poBand;
 }
 
+GDALRasterBand* GDALProxyPoolRasterBand::RefUnderlyingRasterBand()
+{
+    return RefUnderlyingRasterBand(true);
+}
+
 /************************************************************************/
 /*                  UnrefUnderlyingRasterBand()                       */
 /************************************************************************/
@@ -1036,6 +1068,22 @@ void GDALProxyPoolRasterBand::UnrefUnderlyingRasterBand(GDALRasterBand* poUnderl
 {
     if (poUnderlyingRasterBand)
         ((GDALProxyPoolDataset*)poDS)->UnrefUnderlyingDataset(poUnderlyingRasterBand->GetDataset());
+}
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+CPLErr GDALProxyPoolRasterBand::FlushCache()
+{
+    GDALRasterBand* poUnderlyingRasterBand = RefUnderlyingRasterBand(false);
+    if (poUnderlyingRasterBand)
+    {
+        CPLErr eErr = poUnderlyingRasterBand->FlushCache();
+        UnrefUnderlyingRasterBand(poUnderlyingRasterBand);
+        return eErr;
+    }
+    return CE_None;
 }
 
 /************************************************************************/
