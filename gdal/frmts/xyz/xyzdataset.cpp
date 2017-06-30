@@ -65,6 +65,7 @@ class XYZDataset : public GDALPamDataset
     int         bSameNumberOfValuesPerLine;
     double      dfMinZ;
     double      dfMaxZ;
+    bool        bEOF;
 
     static int          IdentifyEx( GDALOpenInfo *, int&, int& nCommentLineCount );
 
@@ -151,11 +152,16 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     {
         poGDS->nDataLineNum = 0;
         poGDS->nLineNum = 0;
+        poGDS->bEOF = false;
         VSIFSeekL(poGDS->fp, 0, SEEK_SET);
 
         for(int i=0;i<poGDS->nCommentLineCount;i++)
         {
-            CPLReadLine2L(poGDS->fp, 100, NULL);
+            if( CPLReadLine2L(poGDS->fp, 100, NULL) == NULL )
+            {
+                poGDS->bEOF = true;
+                return CE_Failure;
+            }
             poGDS->nLineNum ++;
         }
 
@@ -163,12 +169,15 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         {
             const char* pszLine = CPLReadLine2L(poGDS->fp, 100, NULL);
             if (pszLine == NULL)
+            {
+                poGDS->bEOF = true;
                 return CE_Failure;
+            }
             poGDS->nLineNum ++;
         }
     }
 
-    if( !poGDS->bSameNumberOfValuesPerLine && nBlockYOff != nLastYOff + 1 )
+    if( !poGDS->bSameNumberOfValuesPerLine )
     {
         if( nBlockYOff < nLastYOff )
         {
@@ -181,6 +190,10 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         }
         else
         {
+            if( poGDS->bEOF )
+            {
+                return CE_Failure;
+            }
             for( int iY = nLastYOff + 1; iY < nBlockYOff; iY++ )
             {
                 if( IReadBlock(0, iY, NULL) != CE_None )
@@ -188,13 +201,20 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             }
         }
     }
-    else if( poGDS->bSameNumberOfValuesPerLine )
+    else
     {
+        if( poGDS->bEOF )
+        {
+            return CE_Failure;
+        }
         while(poGDS->nDataLineNum < nLineInFile)
         {
             const char* pszLine = CPLReadLine2L(poGDS->fp, 100, NULL);
             if (pszLine == NULL)
+            {
+                poGDS->bEOF = true;
                 return CE_Failure;
+            }
             poGDS->nLineNum ++;
 
             const char* pszPtr = pszLine;
@@ -244,6 +264,7 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             const char* pszLine = CPLReadLine2L(poGDS->fp, 100, NULL);
             if (pszLine == NULL)
             {
+                poGDS->bEOF = true;
                 if( poGDS->bSameNumberOfValuesPerLine )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -453,7 +474,8 @@ XYZDataset::XYZDataset() :
     nDataLineNum(((GIntBig)0x7FFFFFFF) << 32 | 0xFFFFFFFF),
     bSameNumberOfValuesPerLine(TRUE),
     dfMinZ(0),
-    dfMaxZ(0)
+    dfMaxZ(0),
+    bEOF(false)
 {
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
@@ -661,7 +683,13 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     int nMinTokens = 0;
 
     for( int i = 0; i < nCommentLineCount; i++ )
-        CPLReadLine2L(fp, 100, NULL);
+    {
+        if( CPLReadLine2L(fp, 100, NULL) == NULL )
+        {
+            VSIFCloseL(fp);
+            return NULL;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Parse header line                                               */
@@ -793,6 +821,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         char chLocalDecimalSep = chDecimalSep ? chDecimalSep : '.';
+        int nUsefulColsFound = 0;
         while((ch = *pszPtr) != '\0')
         {
             if (ch == ' ')
@@ -811,11 +840,18 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                 if (bLastWasSep)
                 {
                     if (nCol == nXIndex)
+                    {
+                        nUsefulColsFound ++;
                         dfX = CPLAtofDelim(pszPtr, chLocalDecimalSep);
+                    }
                     else if (nCol == nYIndex)
+                    {
+                        nUsefulColsFound ++;
                         dfY = CPLAtofDelim(pszPtr, chLocalDecimalSep);
+                    }
                     else if (nCol == nZIndex)
                     {
+                        nUsefulColsFound ++;
                         dfZ = CPLAtofDelim(pszPtr, chLocalDecimalSep);
                         if( nDataLineNum == 0 )
                             dfMinZ = dfMaxZ = dfZ;
@@ -861,6 +897,14 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLError(CE_Failure, CPLE_AppDefined,
                      "At line " CPL_FRMT_GIB ", found %d tokens. Expected %d at least",
                       nLineNum, nCol, nMinTokens);
+            VSIFCloseL(fp);
+            return NULL;
+        }
+        if( nUsefulColsFound != 3 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "At line " CPL_FRMT_GIB ", did not find X, Y and/or Z values",
+                      nLineNum);
             VSIFCloseL(fp);
             return NULL;
         }
