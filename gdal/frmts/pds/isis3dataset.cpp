@@ -2083,8 +2083,12 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     /*************   Skipbytes     *****************************/
-    const int nSkipBytes =
-            atoi(poDS->GetKeyword("IsisCube.Core.StartByte", "1")) - 1;
+    int nSkipBytes =
+            atoi(poDS->GetKeyword("IsisCube.Core.StartByte", "1"));
+    if( nSkipBytes <= 1 )
+        nSkipBytes = 0;
+    else
+        nSkipBytes -= 1;
 
     /*******   Grab format type (BandSequential, Tiled)  *******/
     CPLString osFormat = poDS->GetKeyword( "IsisCube.Core.Format" );
