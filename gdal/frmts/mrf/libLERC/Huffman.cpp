@@ -555,6 +555,11 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytesInOut,
         }
         srcPtr++;
         nRemainingBytes -= sizeof(unsigned);
+        if( nRemainingBytes < sizeof(unsigned) )
+        {
+           LERC_BRKPNT();
+           return false;
+        }
         m_codeTable[k].second |= (*srcPtr) >> (32 - bitPos);
       }
     }
