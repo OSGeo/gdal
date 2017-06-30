@@ -359,7 +359,7 @@ class HFAField
 
     const char *Initialize( const char * );
 
-    void        CompleteDefn( HFADictionary * );
+    bool        CompleteDefn( HFADictionary * );
 
     void        Dump( FILE * );
 
@@ -405,7 +405,7 @@ class HFAType
 
     const char *Initialize( const char * );
 
-    void        CompleteDefn( HFADictionary * );
+    bool        CompleteDefn( HFADictionary * );
 
     void        Dump( FILE * );
 

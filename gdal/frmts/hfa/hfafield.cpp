@@ -235,7 +235,7 @@ const char *HFAField::Initialize( const char *pszInput )
 /*      Establish size, and pointers to component types.                */
 /************************************************************************/
 
-void HFAField::CompleteDefn( HFADictionary *poDict )
+bool HFAField::CompleteDefn( HFADictionary *poDict )
 
 {
     // Get a reference to the type object if we have a type name
@@ -250,7 +250,8 @@ void HFAField::CompleteDefn( HFADictionary *poDict )
     }
     else if( poItemObjectType != NULL )
     {
-        poItemObjectType->CompleteDefn(poDict);
+        if( !poItemObjectType->CompleteDefn(poDict) )
+            return false;
         if( poItemObjectType->nBytes == -1 )
             nBytes = -1;
         else if( poItemObjectType->nBytes != 0 &&
@@ -276,6 +277,7 @@ void HFAField::CompleteDefn( HFADictionary *poDict )
         else
             nBytes = nItemSize * nItemCount;
     }
+    return true;
 }
 
 /************************************************************************/
