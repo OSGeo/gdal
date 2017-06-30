@@ -2558,8 +2558,8 @@ def gpkg_26():
 
         gdal.Unlink('/vsimem/tmp.gpkg')
 
-    tests =  [ ('GoogleCRS84Quad', [42255, 47336, 24963, 35707], None),
-               ('GoogleMapsCompatible', [35429, 36787, 20035, 17849], None) ]
+    tests =  [ ('GoogleCRS84Quad', [[42255, 47336, 24963, 35707],[42253, 47333, 24961, 35707]], None),
+               ('GoogleMapsCompatible', [[35429, 36787, 20035, 17849]], None) ]
 
     for (scheme, expected_cs, other_options) in tests:
 
@@ -2572,7 +2572,7 @@ def gpkg_26():
 
         ds = gdal.Open('/vsimem/tmp.gpkg')
         got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
-        if got_cs != expected_cs:
+        if got_cs not in expected_cs:
             gdaltest.post_reason('fail')
             print('For %s, got %s, expected %s' % (scheme, str(got_cs), str(expected_cs)))
             if gdal.GetConfigOption('APPVEYOR') is None:
