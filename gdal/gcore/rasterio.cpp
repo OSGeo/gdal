@@ -2470,10 +2470,34 @@ static inline void GDALUnrolledCopy( T* CPL_RESTRICT pDest,
 
 #if (defined(__x86_64) || defined(_M_X64)) &&  !(defined(__GNUC__) && __GNUC__ < 4)
 
+#ifdef HAVE_SSSE3_AT_COMPILE_TIME
+
+void GDALUnrolledCopy_GByte_2_1_SSSE3( GByte* CPL_RESTRICT pDest,
+                                             const GByte* CPL_RESTRICT pSrc,
+                                             int nIters );
+
+void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
+                                             const GByte* CPL_RESTRICT pSrc,
+                                             int nIters );
+
+void GDALUnrolledCopy_GByte_4_1_SSSE3( GByte* CPL_RESTRICT pDest,
+                                             const GByte* CPL_RESTRICT pSrc,
+                                             int nIters );
+#endif
+
+
 template<> void GDALUnrolledCopy<GByte,2,1>( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
                                              int nIters )
 {
+#ifdef HAVE_SSSE3_AT_COMPILE_TIME
+    if( CPLHaveRuntimeSSSE3() )
+    {
+        GDALUnrolledCopy_GByte_2_1_SSSE3(pDest, pSrc, nIters);
+        return;
+    }
+#endif
+
     int i;
     const __m128i xmm_mask = _mm_set1_epi16(0xff);
     // If we were sure that there would always be 1 trailing byte, we could
@@ -2488,9 +2512,14 @@ template<> void GDALUnrolledCopy<GByte,2,1>( GByte* CPL_RESTRICT pDest,
         // Pack int16 to uint8
         xmm0 = _mm_packus_epi16(xmm0, xmm0);
         xmm1 = _mm_packus_epi16(xmm1, xmm1);
-        // Extract lower 64 bit word
-        GDALCopyXMMToInt64(xmm0, pDest + i + 0);
-        GDALCopyXMMToInt64(xmm1, pDest + i + 8);
+
+        // Move 64 lower bits of xmm1 to 64 upper bits of xmm0
+        xmm1 = _mm_slli_si128(xmm1, 8);
+        xmm0 = _mm_or_si128(xmm0, xmm1);
+
+        // Store result
+        _mm_storeu_si128( (__m128i*) (pDest + i), xmm0);
+
         pSrc += 2 * 16;
     }
     for( ; i < nIters; i++ )
@@ -2500,15 +2529,8 @@ template<> void GDALUnrolledCopy<GByte,2,1>( GByte* CPL_RESTRICT pDest,
     }
 }
 
+
 #ifdef HAVE_SSSE3_AT_COMPILE_TIME
-
-void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
-                                             const GByte* CPL_RESTRICT pSrc,
-                                             int nIters );
-
-void GDALUnrolledCopy_GByte_4_1_SSSE3( GByte* CPL_RESTRICT pDest,
-                                             const GByte* CPL_RESTRICT pSrc,
-                                             int nIters );
 
 template<> void GDALUnrolledCopy<GByte,3,1>( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
@@ -2563,11 +2585,13 @@ template<> void GDALUnrolledCopy<GByte,4,1>( GByte* CPL_RESTRICT pDest,
         xmm1 = _mm_packus_epi16(xmm1, xmm1);
         xmm2 = _mm_packus_epi16(xmm2, xmm2);
         xmm3 = _mm_packus_epi16(xmm3, xmm3);
-        // Extract lower 32 bit word
+
+        // Store lower 32 bit word
         GDALCopyXMMToInt32(xmm0, pDest + i + 0);
         GDALCopyXMMToInt32(xmm1, pDest + i + 4);
         GDALCopyXMMToInt32(xmm2, pDest + i + 8);
         GDALCopyXMMToInt32(xmm3, pDest + i + 12);
+
         pSrc += 4 * 16;
     }
     for( ; i < nIters; i++ )
@@ -2669,7 +2693,7 @@ static inline void GDALFastCopy( T* CPL_RESTRICT pDest,
  * semantics.   Assignment from non-complex to complex will result in the
  * imaginary part being set to zero on output.  Assignment from complex to
  * non-complex will result in the complex portion being lost and the real
- * component being preserved (<i>not magnitidue!</i>).
+ * component being preserved (<i>not magnitude!</i>).
  *
  * No assumptions are made about the source or destination words occurring
  * on word boundaries.  It is assumed that all values are in native machine
