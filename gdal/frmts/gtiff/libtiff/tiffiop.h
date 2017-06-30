@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.92 2017-06-29 07:37:12 erouault Exp $ */
+/* $Id: tiffiop.h,v 1.93 2017-06-30 13:11:18 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -371,6 +371,11 @@ extern void* _TIFFCheckRealloc(TIFF*, void*, tmsize_t, tmsize_t, const char*);
 
 extern double _TIFFUInt64ToDouble(uint64);
 extern float _TIFFUInt64ToFloat(uint64);
+
+extern tmsize_t
+_TIFFReadEncodedStripAndAllocBuffer(TIFF* tif, uint32 strip,
+                                    void **buf, tmsize_t bufsizetoalloc,
+                                    tmsize_t size_to_read);
 
 extern int TIFFInitDumpMode(TIFF*, int);
 #ifdef PACKBITS_SUPPORT
