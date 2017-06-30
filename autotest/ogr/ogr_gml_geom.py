@@ -1228,7 +1228,7 @@ def gml_invalid_geoms():
         ("""<gml:Curve><gml:segments>
             <gml:Arc><gml:posList>0 0 1 0 0 0</gml:posList></gml:Arc>
             <gml:LineStringSegment><gml:posList>-10 0 -1 0 0 0</gml:posList></gml:LineStringSegment>
-            </gml:segments></gml:Curve>""", None), # non contiguous segments
+            </gml:segments></gml:Curve>""", "COMPOUNDCURVE (CIRCULARSTRING (0 0,1 0,0 0),(0 0,-1 0,-10 0))"), # non contiguous segments
         ("""<gml:CompositeCurve>
             <gml:curveMember><gml:Curve><gml:segments><gml:LineString><gml:posList>0 0 1 0 0 0</gml:posList></gml:LineString></gml:segments></gml:Curve></gml:curveMember>
             <gml:curveMember>
