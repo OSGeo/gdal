@@ -3013,6 +3013,19 @@ def tiff_read_excessive_memory_TIFFFillStrip2():
 
 ###############################################################################
 
+def tiff_read_excessive_memory_TIFFFillTile():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/excessive-memory-TIFFFillTile.tif')
+        ds.GetRasterBand(1).Checksum()
+
+    return 'success'
+
+###############################################################################
+
 def tiff_read_big_strip():
 
     if not check_libtiff_internal_or_greater(4,0,8):
@@ -3364,6 +3377,7 @@ gdaltest_list.append( (tiff_read_minimum_tiff_tags_with_warning) )
 gdaltest_list.append( (tiff_read_leak_ZIPSetupDecode) )
 gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillStrip) )
 gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillStrip2) )
+gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillTile) )
 gdaltest_list.append( (tiff_read_big_strip) )
 gdaltest_list.append( (tiff_read_big_strip_chunky_way) )
 gdaltest_list.append( (tiff_read_big_tile) )
