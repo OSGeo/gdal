@@ -350,7 +350,11 @@ geometries by approximating them, and CONVERT_TO_CURVE to promote a
 non-linear type to its generalized curve type (POLYGON to CURVEPOLYGON,
 MULTIPOLYGON to MULTISURFACE, LINESTRING to COMPOUNDCURVE, MULTILINESTRING to
 MULTICURVE). Starting with 2.1 the type can be
-defined as measured ("25D" remains as an alias for single "Z").</dd>
+defined as measured ("25D" remains as an alias for single "Z").
+Some forced geometry conversions may result in invalid geometries, for example
+when forcing conversion of multi-part multipolygons with -nlt POLYGON, the
+resulting polygon will break the Simple Features rules.
+</dd>
 <dt> <b>-dim</b><em> val</em>:</dt><dd>(starting with GDAL 1.10) Force
 the coordinate dimension to val (valid values are XY, XYZ, XYM, and
 XYZM - for backwards compatibility 2 is an alias for XY and 3 is an
