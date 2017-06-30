@@ -151,23 +151,21 @@ index-servers = pypi
                 pypitest
 
 [pypi] # authentication details for live PyPI
-repository: https://pypi.python.org/pypi
+repository: https://upload.pypi.org/legacy/
 username: yourlogin
 password: yourpassword
 
 [pypitest] # authentication details for test PyPI
-repository: https://testpypi.python.org/pypi
+repository: https://test.pypi.org/legacy/
 username: yourlogin
 password: yourpassword
 
 b) cd swig/python
 
 c) For trial :
-    python setup.py register -r pypitest
     python setup.py sdist upload -r pypitest
 
 d) For real :
-    python setup.py register -r pypi
     python setup.py sdist upload -r pypi
 
 21) Build and bundle the java bindings.
