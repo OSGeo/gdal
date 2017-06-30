@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.61 2017-06-30 11:29:22 erouault Exp $ */
+/* $Id: tif_read.c,v 1.62 2017-06-30 13:11:18 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -461,18 +461,17 @@ TIFFReadScanline(TIFF* tif, void* buf, uint32 row, uint16 sample)
 }
 
 /*
- * Read a strip of data and decompress the specified
- * amount into the user-supplied buffer.
+ * Calculate the strip size according to the number of
+ * rows in the strip (check for truncated last strip on any
+ * of the separations).
  */
-tmsize_t
-TIFFReadEncodedStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
+static tmsize_t TIFFReadEncodedStripGetStripSize(TIFF* tif, uint32 strip, uint16* pplane)
 {
 	static const char module[] = "TIFFReadEncodedStrip";
 	TIFFDirectory *td = &tif->tif_dir;
 	uint32 rowsperstrip;
 	uint32 stripsperplane;
 	uint32 stripinplane;
-	uint16 plane;
 	uint32 rows;
 	tmsize_t stripsize;
 	if (!TIFFCheckRead(tif,0))
@@ -484,22 +483,36 @@ TIFFReadEncodedStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
 		    (unsigned long)td->td_nstrips);
 		return((tmsize_t)(-1));
 	}
-	/*
-	 * Calculate the strip size according to the number of
-	 * rows in the strip (check for truncated last strip on any
-	 * of the separations).
-	 */
+
 	rowsperstrip=td->td_rowsperstrip;
 	if (rowsperstrip>td->td_imagelength)
 		rowsperstrip=td->td_imagelength;
 	stripsperplane= TIFFhowmany_32_maxuint_compat(td->td_imagelength, rowsperstrip);
 	stripinplane=(strip%stripsperplane);
-	plane=(uint16)(strip/stripsperplane);
+	if( pplane ) *pplane=(uint16)(strip/stripsperplane);
 	rows=td->td_imagelength-stripinplane*rowsperstrip;
 	if (rows>rowsperstrip)
 		rows=rowsperstrip;
 	stripsize=TIFFVStripSize(tif,rows);
 	if (stripsize==0)
+		return((tmsize_t)(-1));
+	return stripsize;
+}
+
+/*
+ * Read a strip of data and decompress the specified
+ * amount into the user-supplied buffer.
+ */
+tmsize_t
+TIFFReadEncodedStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
+{
+	static const char module[] = "TIFFReadEncodedStrip";
+	TIFFDirectory *td = &tif->tif_dir;
+	tmsize_t stripsize;
+	uint16 plane;
+
+	stripsize=TIFFReadEncodedStripGetStripSize(tif, strip, &plane);
+	if (stripsize==((tmsize_t)(-1)))
 		return((tmsize_t)(-1));
 
     /* shortcut to avoid an extra memcpy() */
@@ -527,6 +540,49 @@ TIFFReadEncodedStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
 		return((tmsize_t)(-1));
 	(*tif->tif_postdecode)(tif,buf,stripsize);
 	return(stripsize);
+}
+
+/* Variant of TIFFReadEncodedStrip() that does 
+ * * if *buf == NULL, *buf = _TIFFmalloc(bufsizetoalloc) only after TIFFFillStrip() has
+ *   suceeded. This avoid excessive memory allocation in case of truncated
+ *   file.
+ * * calls regular TIFFReadEncodedStrip() if *buf != NULL
+ */
+tmsize_t
+_TIFFReadEncodedStripAndAllocBuffer(TIFF* tif, uint32 strip,
+                                    void **buf, tmsize_t bufsizetoalloc,
+                                    tmsize_t size_to_read)
+{
+    tmsize_t this_stripsize;
+    uint16 plane;
+
+    if( *buf != NULL )
+    {
+        return TIFFReadEncodedStrip(tif, strip, *buf, size_to_read);
+    }
+
+    this_stripsize=TIFFReadEncodedStripGetStripSize(tif, strip, &plane);
+    if (this_stripsize==((tmsize_t)(-1)))
+            return((tmsize_t)(-1));
+
+    if ((size_to_read!=(tmsize_t)(-1))&&(size_to_read<this_stripsize))
+            this_stripsize=size_to_read;
+    if (!TIFFFillStrip(tif,strip))
+            return((tmsize_t)(-1));
+
+    *buf = _TIFFmalloc(bufsizetoalloc);
+    if (*buf == NULL) {
+            TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "No space for strip buffer");
+            return((tmsize_t)(-1));
+    }
+    _TIFFmemset(*buf, 0, bufsizetoalloc);
+
+    if ((*tif->tif_decodestrip)(tif,*buf,this_stripsize,plane)<=0)
+            return((tmsize_t)(-1));
+    (*tif->tif_postdecode)(tif,*buf,this_stripsize);
+    return(this_stripsize);
+
+
 }
 
 static tmsize_t
