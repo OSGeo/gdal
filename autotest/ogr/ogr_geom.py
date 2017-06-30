@@ -2323,7 +2323,7 @@ def ogr_geom_compoundcurve():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     g.AddGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     gdal.PopErrorHandler()
-    if g.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1))':
+    if g.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1),(1 1,0 0))':
             gdaltest.post_reason('fail')
             return 'fail'
 
@@ -2336,7 +2336,7 @@ def ogr_geom_compoundcurve():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     g.AddGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
     gdal.PopErrorHandler()
-    if g.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1))':
+    if g.ExportToWkt() != 'COMPOUNDCURVE ((0 0,1 1),(1 1,0 0))':
             gdaltest.post_reason('fail')
             return 'fail'
 
