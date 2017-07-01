@@ -914,11 +914,25 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
        * Make room for entire message, and read it in.
        */
       /* nd5 needs to be gribLen in (sInt4) units rounded up. */
+      if( gribLen > 0xFFFFFFFFU - 3 ||
+          (gribLen + 3) / 4 > (uInt4)INT_MAX )
+      {
+         errSprintf("Invalid value of gribLen");
+         free (buff);
+         return -1;
+      }
       nd5 = (gribLen + 3) / 4;
       if (nd5 > IS->ipackLen) {
+         sInt4* ipackNew = (sInt4 *) realloc ((void *) (IS->ipack),
+                                              nd5 * sizeof (sInt4));
+         if( ipackNew == NULL )
+         {
+            errSprintf("Out of memory");
+            free (buff);
+            return -1;
+         }
          IS->ipackLen = nd5;
-         IS->ipack = (sInt4 *) realloc ((void *) (IS->ipack),
-                                        (IS->ipackLen) * sizeof (sInt4));
+         IS->ipack = ipackNew;
       }
       c_ipack = (char *) IS->ipack;
       /* Init last sInt4 to 0, to make sure that the padded bytes are 0. */
