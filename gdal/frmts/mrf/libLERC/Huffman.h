@@ -211,6 +211,11 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, size_t& nRemaini
     }
 
     node = bit ? node->child1 : node->child0;
+    if( node == NULL )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
 
     if (node->value >= 0)    // reached a leaf node
       value = node->value;
