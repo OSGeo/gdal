@@ -4017,7 +4017,10 @@ int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
         poGDS->FlushCache();
 
     if( !poGDS->SetDirectory() )
-        return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED;
+    {
+        return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+               GDAL_DATA_COVERAGE_STATUS_DATA;
+    }
 
     const int iXBlockStart = nXOff / nBlockXSize;
     const int iXBlockEnd = (nXOff + nXSize - 1) / nBlockXSize;
@@ -5423,7 +5426,8 @@ int GTiffSplitBand::IGetDataCoverageStatus( int , int ,
                                              int ,
                                              double* )
 {
-     return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED;
+     return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+            GDAL_DATA_COVERAGE_STATUS_DATA;
 }
 
 /************************************************************************/
@@ -5571,7 +5575,8 @@ int GTiffRGBABand::IGetDataCoverageStatus( int , int ,
                                              int ,
                                              double* )
 {
-     return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED;
+     return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+            GDAL_DATA_COVERAGE_STATUS_DATA;
 }
 
 /************************************************************************/
@@ -11179,7 +11184,8 @@ int GTiffSplitBitmapBand::IGetDataCoverageStatus( int , int ,
                                              int ,
                                              double* )
 {
-     return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED;
+     return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+            GDAL_DATA_COVERAGE_STATUS_DATA;
 }
 
 /************************************************************************/
