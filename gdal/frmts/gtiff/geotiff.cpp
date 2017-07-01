@@ -7242,7 +7242,10 @@ int GTiffDataset::GetJPEGOverviewCount()
         return 0;
 
     if( !SetDirectory() )
+    {
+        nJPEGOverviewCount = 0;
         return 0;
+    }
 
     // Get JPEG tables.
     uint32 nJPEGTableSize = 0;
@@ -7254,6 +7257,7 @@ int GTiffDataset::GetJPEGOverviewCount()
             nJPEGTableSize > INT_MAX ||
             static_cast<GByte*>(pJPEGTable)[nJPEGTableSize-1] != 0xD9 )
         {
+            nJPEGOverviewCount = 0;
             return 0;
         }
         nJPEGTableSize--;  // Remove final 0xD9.
