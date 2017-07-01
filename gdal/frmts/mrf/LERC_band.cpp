@@ -24,7 +24,7 @@ Contributors:  Lucian Plesea
 #include <CntZImage.h>
 #include <Lerc2.h>
 
-CPL_CVSID("$Id$")
+CPL_CVSID("$Id$");
 
 USING_NAMESPACE_LERC
 
@@ -100,7 +100,11 @@ static int checkV1(const char *s, size_t sz)
     if (val != 0.0 && val != 1.0) return 0;
 
     // If data header can't be read the actual size is unknown
-    if (static_cast<size_t>(66 + nBytesMask) >= sz) return -1;
+    if (nBytesMask > INT_MAX - 66 ||
+        static_cast<size_t>(66 + nBytesMask) >= sz)
+    {
+        return -1;
+    }
 
     s += nBytesMask;
 
