@@ -5755,6 +5755,12 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
                 {
                     const char* pszVarName = papszTokens[1];
                     bool bValidName = true;
+                    if( STARTS_WITH(pszVarName, "_nc4_non_coord_") )
+                    {
+                        // This is an internal netcdf prefix. Using it may
+                        // cause memory leaks.
+                        bValidName = false;
+                    }
                     for( int i = 0; pszVarName[i]; i++ )
                     {
                         if( !((pszVarName[i] >= 'a' && pszVarName[i] <= 'z') ||
