@@ -967,11 +967,9 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 /*      this never having been considered to be a match. This isn't     */
 /*      an error!                                                       */
 /* -------------------------------------------------------------------- */
-    if( nRows < 1 || nCols < 1 || l_nBands < 1 )
+    if( !GDALCheckDatasetDimensions(nCols, nRows) ||
+        !GDALCheckBandCount(l_nBands, false) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "File %s appears to be a PDS file, but failed to find some required keywords.",
-                  GetDescription() );
         return FALSE;
     }
 
@@ -1060,7 +1058,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     {
         RawRasterBand *poBand =
             new RawRasterBand( this, i+1, fpImage,
-                               nSkipBytes + nBandOffset * i,
+                               nSkipBytes + static_cast<vsi_l_offset>(nBandOffset) * i,
                                nPixelOffset, nLineOffset, eDataType,
 #ifdef CPL_LSB
                                chByteOrder == 'I' || chByteOrder == 'L',
