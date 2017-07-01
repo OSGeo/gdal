@@ -187,7 +187,7 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
         {
             memcpy( ((char *) buffer) + pixel_size * i, 
                     this_pixel, pixel_size );
-            this_pixel += pixel_size;
+            this_pixel += pixel_offset;
         }
     }
 
