@@ -392,15 +392,19 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 const double dfRADIUS = CPLAtof(pszLine) * 1852;
                 double dfLat = 0.0;
                 double dfLon = 0.0;
-                for( double dfAngle = 0; dfAngle < 360; dfAngle += 1.0 )
+                int nNextIdx = oLR.getNumPoints();
+                oLR.setNumPoints( nNextIdx + 361, false );
+                for( int nAngle = 0; nAngle < 360; nAngle++ )
                 {
                     OGR_GreatCircle_ExtendPosition(dfCenterLat, dfCenterLon,
-                                             dfRADIUS, dfAngle, &dfLat, &dfLon);
-                    oLR.addPoint(dfLon, dfLat);
+                                             dfRADIUS, nAngle, &dfLat, &dfLon);
+                    oLR.setPoint(nNextIdx, dfLon, dfLat);
+                    nNextIdx ++;
                 }
                 OGR_GreatCircle_ExtendPosition(dfCenterLat, dfCenterLon,
                                          dfRADIUS, 0, &dfLat, &dfLon);
-                oLR.addPoint(dfLon, dfLat);
+                oLR.setPoint(nNextIdx, dfLon, dfLat);
+                /* nNextIdx ++; */
 
                 /* dfLastLat = oLR.getY(oLR.getNumPoints() - 1); */
                 /* dfLastLon = oLR.getX(oLR.getNumPoints() - 1); */
