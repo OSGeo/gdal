@@ -6390,7 +6390,10 @@ int GTiffDataset::GetJPEGOverviewCount()
         return 0;
 
     if( !SetDirectory() )
+    {
+        nJPEGOverviewCount = 0;
         return 0;
+    }
 
     /* Get JPEG tables */
     uint32 nJPEGTableSize = 0;
@@ -6401,6 +6404,7 @@ int GTiffDataset::GetJPEGOverviewCount()
         if( pJPEGTable == NULL || (int)nJPEGTableSize <= 0 ||
             ((GByte*)pJPEGTable)[nJPEGTableSize-1] != 0xD9 )
         {
+            nJPEGOverviewCount = 0;
             return 0;
         }
         nJPEGTableSize --; /* remove final 0xD9 */
