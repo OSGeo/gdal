@@ -362,6 +362,10 @@ void OGRDXFLayer::FormatDimension( CPLString &osText, double dfValue )
 
 {
     int nPrecision = atoi(poDS->GetVariable("$LUPREC","4"));
+    if( nPrecision < 0 )
+        nPrecision = 0;
+    else if( nPrecision > 20 )
+        nPrecision = 20;
     char szFormat[32];
     char szBuffer[64];
 
