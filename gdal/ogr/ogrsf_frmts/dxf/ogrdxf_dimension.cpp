@@ -367,7 +367,11 @@ the approach is as above in all these cases.
 void OGRDXFLayer::FormatDimension( CPLString &osText, double dfValue )
 
 {
-    const int nPrecision = atoi(poDS->GetVariable("$LUPREC","4"));
+    int nPrecision = atoi(poDS->GetVariable("$LUPREC","4"));
+    if( nPrecision < 0 )
+        nPrecision = 0;
+    else if( nPrecision > 20 )
+        nPrecision = 20;
 
     // We could do a significantly more precise formatting if we want
     // to spend the effort.  See QCAD's rs_dimlinear.cpp and related files
