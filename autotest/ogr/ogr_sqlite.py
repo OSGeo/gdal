@@ -3488,6 +3488,14 @@ def ogr_sqlite_45():
     if gdaltest.sl_ds is None:
         return 'skip'
     
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    # Only available since sqlite 3.7.0
+    version = ogrtest.sqlite_version.split('.')
+    if not (len(version) >= 3 and int(version[0])*10000 + int(version[1])*100 + int(version[2]) >= 30700):
+        return 'skip'
+
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_45.db')
     sql_lyr = ds.ExecuteSQL('PRAGMA journal_mode = WAL')
     ds.ReleaseResultSet(sql_lyr)
