@@ -59,6 +59,10 @@
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 
+#if !defined(va_copy) && defined(__va_copy)
+#define va_copy __va_copy
+#endif
+
 CPL_CVSID("$Id$")
 
 /*=====================================================================

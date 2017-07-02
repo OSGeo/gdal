@@ -39,6 +39,10 @@
 #include "cpl_config.h"
 #include "cpl_conv.h"
 
+#if !defined(va_copy) && defined(__va_copy)
+#define va_copy __va_copy
+#endif
+
 CPL_CVSID("$Id$")
 
 /*

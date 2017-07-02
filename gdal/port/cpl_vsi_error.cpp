@@ -40,6 +40,10 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
+#if !defined(va_copy) && defined(__va_copy)
+#define va_copy __va_copy
+#endif
+
 // TODO(rouault): Why is this here?
 #if !defined(WIN32)
 #include <string.h>
