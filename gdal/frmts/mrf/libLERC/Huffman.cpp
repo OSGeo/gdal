@@ -527,6 +527,11 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytesInOut,
         LERC_BRKPNT();
         return false;
       }
+      if( len > 32 )
+      {
+        LERC_BRKPNT();
+        return false;
+      }
       m_codeTable[k].second = ((*srcPtr) << bitPos) >> (32 - len);
 
       if (32 - bitPos >= len)
