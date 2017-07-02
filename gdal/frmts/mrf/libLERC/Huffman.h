@@ -153,7 +153,7 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, size_t& nRemaini
     return false;
   }
   /* coverity[large_shift] */
-  int valTmp = ((**ppSrc) << bitPos) >> (32 - numBitsLUT);
+  int valTmp = (Load(*ppSrc) << bitPos) >> (32 - numBitsLUT);
   if (32 - bitPos < numBitsLUT)
   {
     if( nRemainingBytes < 2 * sizeof(unsigned) )
@@ -161,7 +161,7 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, size_t& nRemaini
       LERC_BRKPNT();
       return false;
     }
-    valTmp |= (*(*ppSrc + 1)) >> (64 - bitPos - numBitsLUT);
+    valTmp |= (Load(*ppSrc + 1)) >> (64 - bitPos - numBitsLUT);
   }
 
   if (m_decodeLUT[valTmp].first >= 0)    // if there, move the correct number of bits and done
@@ -201,7 +201,7 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, size_t& nRemaini
       return false;
     }
     /* coverity[large_shift] */
-    int bit = ((**ppSrc) << bitPos) >> 31;
+    int bit = (Load(*ppSrc) << bitPos) >> 31;
     bitPos++;
     if (bitPos == 32)
     {
