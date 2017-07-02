@@ -73,6 +73,11 @@
  * __END_OF_JASPER_LICENSE__
  */
 
+#ifndef __STDC_LIMIT_MACROS
+// Needed on RHEL 6 for SIZE_MAX availability, needed by Jasper
+#define __STDC_LIMIT_MACROS 1
+#endif
+
 #include "jpeg2000_vsil_io.h"
 #include "cpl_vsi.h"
 
