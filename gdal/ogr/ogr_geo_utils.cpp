@@ -153,10 +153,10 @@ int OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
         return 0;
     }
 
-    if( fabs(sin_Heading) < 1e-9 )
+    if( fabs(sin_Heading) < 1e-8 )
     {
         *pdfLonB_deg = dfLonA_deg;
-        if( fabs(fmod(dfHeadingInA+360.0,360.0)) < 1e-9 )
+        if( fabs(fmod(dfHeadingInA+360.0,360.0)) < 1e-8 )
         {
             *pdfLatB_deg = dfLatA_deg + dfDistanceRad * RAD2DEG;
         }
@@ -167,10 +167,10 @@ int OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
         return 1;
     }
 
-    if( fabs(cos_complement_LatA) < 1e-9 && fabs(cos_Heading) < 1e-9 )
+    if( fabs(cos_complement_LatA) < 1e-8 && fabs(cos_Heading) < 1e-8 )
     {
         *pdfLatB_deg = dfLatA_deg;
-        if( fabs(dfHeadingInA - 90.0) < 1e-9 )
+        if( fabs(dfHeadingInA - 90.0) < 1e-8 )
         {
             *pdfLonB_deg = dfLonA_deg + dfDistanceRad * RAD2DEG;
         }
