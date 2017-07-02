@@ -24,6 +24,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
 #include "pcidsk_config.h"
 #include "pcidsk_types.h"
 #include "pcidsk_exception.h"
@@ -35,7 +36,12 @@
 #include <cctype>
 #include <cstdio>
 #include <cmath>
+#include <cstdarg>
 #include <iostream>
+
+#if !defined(va_copy) && defined(__va_copy)
+#define va_copy __va_copy
+#endif
 
 using namespace PCIDSK;
 

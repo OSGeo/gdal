@@ -31,6 +31,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <cstdarg>
+
+#if !defined(va_copy) && defined(__va_copy)
+#define va_copy __va_copy
+#endif
 
 using PCIDSK::PCIDSKException;
 
