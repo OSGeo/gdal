@@ -1491,9 +1491,9 @@ bool Lerc2::EncodeHuffman(const T* data, Byte** ppByte, T& zMinA, T& zMaxA) cons
         if (32 - bitPos >= len)
         {
           if (bitPos == 0)
-            *dstPtr = 0;
+            Store(dstPtr, 0);
 
-          *dstPtr |= code << (32 - bitPos - len);
+          Store(dstPtr, Load(dstPtr) | (code << (32 - bitPos - len)));
           bitPos += len;
           if (bitPos == 32)
           {
@@ -1504,8 +1504,9 @@ bool Lerc2::EncodeHuffman(const T* data, Byte** ppByte, T& zMinA, T& zMaxA) cons
         else
         {
           bitPos += len - 32;
-          *dstPtr++ |= code >> bitPos;
-          *dstPtr = code << (32 - bitPos);
+          Store(dstPtr, Load(dstPtr) | (code >> bitPos));
+          dstPtr ++;
+          Store(dstPtr, code << (32 - bitPos));
         }
       }
   }

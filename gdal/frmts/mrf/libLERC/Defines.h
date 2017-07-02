@@ -24,11 +24,7 @@ Contributors:
 #include <utility>
 #include <cstddef>
 
-// This is useful when compiling within GDAL in DEBUG_BOOL mode, where a
-// MSVCPedanticBool class is used as an alias for the bool type, so as
-// to catch more easily int/bool misuses, even on Linux
-// Also for NULL_AS_NULLPTR mode where NULL is aliased to C++11 nullptr
-#if defined(DEBUG_BOOL) || defined(NULL_AS_NULLPTR)
+#if defined(GDAL_COMPILATION)
 #include "cpl_port.h"
 #endif
 
@@ -93,6 +89,28 @@ struct Quant : public std::pair<unsigned int, unsigned int>
 #define SWAP_8(x)
 
 #endif // SWAPB
+
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+inline void Store(unsigned int* dst, int val)
+{
+    memcpy(dst, &val, sizeof(unsigned int));
+}
+inline unsigned int Load(const unsigned int* src)
+{
+    unsigned int res;
+    memcpy(&res, src, sizeof(unsigned int));
+    return res;
+}
+#else
+inline void Store(unsigned int* dst, unsigned int val)
+{
+    *dst = val;
+}
+inline unsigned int Load(const unsigned int* src)
+{
+    return *src;
+}
+#endif
 
 NAMESPACE_LERC_END
 

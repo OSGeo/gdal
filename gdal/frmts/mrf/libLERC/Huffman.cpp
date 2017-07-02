@@ -479,9 +479,9 @@ bool Huffman::BitStuffCodes(Byte** ppByte, int i0, int i1) const
       if (32 - bitPos >= len)
       {
         if (bitPos == 0)
-          *dstPtr = 0;
+          Store(dstPtr, 0);
 
-        *dstPtr |= val << (32 - bitPos - len);
+        Store(dstPtr, Load(dstPtr) | (val << (32 - bitPos - len)));
         bitPos += len;
         if (bitPos == 32)
         {
@@ -492,8 +492,9 @@ bool Huffman::BitStuffCodes(Byte** ppByte, int i0, int i1) const
       else
       {
         bitPos += len - 32;
-        *dstPtr++ |= val >> bitPos;
-        *dstPtr = val << (32 - bitPos);
+        Store(dstPtr, Load(dstPtr) | (val >> bitPos));
+        dstPtr ++;
+        Store(dstPtr, val << (32 - bitPos));
       }
     }
   }
@@ -532,7 +533,7 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytesInOut,
         LERC_BRKPNT();
         return false;
       }
-      m_codeTable[k].second = ((*srcPtr) << bitPos) >> (32 - len);
+      m_codeTable[k].second = (Load(srcPtr) << bitPos) >> (32 - len);
 
       if (32 - bitPos >= len)
       {
@@ -565,7 +566,7 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytesInOut,
            LERC_BRKPNT();
            return false;
         }
-        m_codeTable[k].second |= (*srcPtr) >> (32 - bitPos);
+        m_codeTable[k].second |= Load(srcPtr) >> (32 - bitPos);
       }
     }
   }
