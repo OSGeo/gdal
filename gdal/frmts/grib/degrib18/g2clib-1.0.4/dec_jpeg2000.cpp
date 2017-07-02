@@ -1,3 +1,8 @@
+#ifndef __STDC_LIMIT_MACROS
+// Needed on RHEL 6 for SIZE_MAX availability, needed by Jasper
+#define __STDC_LIMIT_MACROS 1
+#endif
+
 #include <cpl_port.h>
 
 #include <stdio.h>
