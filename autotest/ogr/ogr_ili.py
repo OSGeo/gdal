@@ -67,6 +67,9 @@ def ogr_interlis1_2():
     if not gdaltest.have_ili_reader:
         return 'skip'
 
+    if not ogrtest.have_geos():
+        return 'skip'
+
     ds = ogr.Open('data/ili/Beispiel.itf,data/ili/Beispiel.imd')
     layers = ['Bodenbedeckung__BoFlaechen',
               'Bodenbedeckung__BoFlaechen_Form',
@@ -436,6 +439,9 @@ def ogr_interlis1_9():
 def ogr_interlis1_10():
 
     if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    if not ogrtest.have_geos():
         return 'skip'
 
     ds = ogr.Open('data/ili/Beispiel.itf,data/ili/Beispiel.imd')
