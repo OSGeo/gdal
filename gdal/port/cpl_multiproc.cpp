@@ -92,13 +92,32 @@ struct _CPLLock
 };
 
 #ifdef DEBUG_CONTENTION
+
+#if defined(__x86_64)
+#define GCC_CPUID(level, a, b, c, d)            \
+  __asm__ ("xchgq %%rbx, %q1\n"                 \
+           "cpuid\n"                            \
+           "xchgq %%rbx, %q1"                   \
+       : "=a" (a), "=r" (b), "=c" (c), "=d" (d) \
+       : "0" (level))
+#else
+#define GCC_CPUID(level, a, b, c, d)            \
+  __asm__ ("xchgl %%ebx, %1\n"                  \
+           "cpuid\n"                            \
+           "xchgl %%ebx, %1"                    \
+       : "=a" (a), "=r" (b), "=c" (c), "=d" (d) \
+       : "0" (level))
+#endif
+
 static GUIntBig CPLrdtsc()
 {
     unsigned int a;
     unsigned int d;
-    unsigned int x;
-    unsigned int y;
-    __asm__ volatile ("cpuid" : "=a" (x), "=d" (y) : "a"(0) : "cx", "bx" );
+    unsigned int unused1;
+    unsigned int unused2;
+    unsigned int unused3;
+    unsigned int unused4;
+    GCC_CPUID(0, unused1, unused2, unused3, unused4);
     __asm__ volatile ("rdtsc" : "=a" (a), "=d" (d) );
     return static_cast<GUIntBig>(a) | (static_cast<GUIntBig>(d) << 32);
 }
@@ -107,10 +126,12 @@ static GUIntBig CPLrdtscp()
 {
     unsigned int a;
     unsigned int d;
-    unsigned int x;
-    unsigned int y;
+    unsigned int unused1;
+    unsigned int unused2;
+    unsigned int unused3;
+    unsigned int unused4;
     __asm__ volatile ("rdtscp" : "=a" (a), "=d" (d) );
-    __asm__ volatile ("cpuid"  : "=a" (x), "=d" (y) : "a"(0) : "cx", "bx" );
+    GCC_CPUID(0, unused1, unused2, unused3, unused4);
     return static_cast<GUIntBig>(a) | (static_cast<GUIntBig>(d) << 32);
 }
 #endif
