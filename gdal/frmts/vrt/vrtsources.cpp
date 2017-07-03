@@ -1162,12 +1162,12 @@ int VRTSimpleSource::NeedMaxValAdjustment() const
     const char* pszNBITS =
         m_poRasterBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
     const int nBits = (pszNBITS) ? atoi(pszNBITS) : 0;
-    const int nBandMaxValue = (1 << nBits) - 1;
-    if( nBandMaxValue == 0 || nBandMaxValue > m_nMaxValue )
+    if( nBits >= 1 && nBits <= 31 )
     {
-        return TRUE;
+        const int nBandMaxValue = static_cast<int>((1U << nBits) - 1);
+        return nBandMaxValue > m_nMaxValue;
     }
-    return FALSE;
+    return TRUE;
 }
 
 /************************************************************************/

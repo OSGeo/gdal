@@ -905,8 +905,11 @@ CPLErr VRTSourcedRasterBand::AddSource( VRTSource *poNewSource )
         VRTSimpleSource* poSS = reinterpret_cast<VRTSimpleSource*>( poNewSource );
         if( GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != NULL)
         {
-            poSS->SetMaxValue(
-                    (1 << atoi(GetMetadataItem("NBITS", "IMAGE_STRUCTURE")))-1);
+            int nBits = atoi(GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
+            if( nBits >= 1 && nBits <= 31 )
+            {
+                poSS->SetMaxValue( static_cast<int>((1U << nBits) -1) );
+            }
         }
 
         CheckSource( poSS );
