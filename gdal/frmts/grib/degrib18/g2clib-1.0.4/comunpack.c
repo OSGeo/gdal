@@ -387,6 +387,13 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
             else  itemp=non;
             for (n=2;n<itemp;n++) {
                ifld[n]=ifld[n]+minsd;
+               if( ifld[n] > INT_MAX - ifld[n-1] ||
+                   ifld[n] + ifld[n-1] > INT_MAX - ifld[n-1] )
+               {
+                   free(ifldmiss);
+                   free(ifld);
+                   return -1;
+               }
                ifld[n]=ifld[n]+(2*ifld[n-1])-ifld[n-2];
             }
          }
