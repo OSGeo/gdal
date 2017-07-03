@@ -1246,7 +1246,7 @@ static bool IsASCII(const char* pszStr)
 static bool safe_png_set_text(jmp_buf sSetJmpContext,
                                    png_structp png_ptr,
                                    png_infop info_ptr,
-#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 4) || PNG_LIBPNG_VER_MAJOR > 1
+#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 6) || PNG_LIBPNG_VER_MAJOR > 1
                                    png_const_textp text_ptr,
 #else
                                    png_textp text_ptr,
