@@ -852,6 +852,11 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
          meta->gds.Dx = is3[63] * unit; /* degrees. */
          if (is3[12] == GS3_GAUSSIAN_LATLON) {
             int np = is3[67]; /* parallels between a pole and the equator */
+            if( np == 0 )
+            {
+                errSprintf ("Gaussian Lat/Lon grid is not defined completely.\n");
+                return -2;
+            }
             meta->gds.Dy = 90.0 / np;
          } else
             meta->gds.Dy = is3[67] * unit; /* degrees. */
