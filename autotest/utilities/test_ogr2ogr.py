@@ -1062,9 +1062,10 @@ def test_ogr2ogr_30():
         return 'skip'
     ds = None
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -splitlistfields tmp/test_ogr2ogr_30.shp ../ogr/data/testlistfields.gml')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -splitlistfields tmp/test_ogr2ogr_30.dbf ../ogr/data/testlistfields.gml')
+    gdal.Unlink('../ogr/data//testlistfields.gfs')
 
-    ds = ogr.Open('tmp/test_ogr2ogr_30.shp')
+    ds = ogr.Open('tmp/test_ogr2ogr_30.dbf')
     if ds is None:
         return 'fail'
     lyr = ds.GetLayer(0)
@@ -1082,7 +1083,7 @@ def test_ogr2ogr_30():
         return 'fail'
 
     ds = None
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_30.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_30.dbf')
 
     return 'success'
 
