@@ -1878,39 +1878,46 @@ char **CSLSetNameValue( char **papszList,
     if( pszName == NULL )
         return papszList;
 
-    const size_t nLen = strlen(pszName);
+    size_t nLen = strlen(pszName);
+    while( nLen > 0 && pszName[nLen-1] == ' ' )
+        nLen --;
     char **papszPtr = papszList;
     while( papszPtr && *papszPtr != NULL )
     {
-        if( EQUALN(*papszPtr, pszName, nLen)
-            && ( (*papszPtr)[nLen] == '=' ||
-                 (*papszPtr)[nLen] == ':' ) )
+        if( EQUALN(*papszPtr, pszName, nLen) )
         {
-            // Found it.
-            // Change the value... make sure to keep the ':' or '='.
-            const char cSep = (*papszPtr)[nLen];
-
-            CPLFree(*papszPtr);
-
-            // If the value is NULL, remove this entry completely.
-            if( pszValue == NULL )
+            int i;
+            for( i = nLen; (*papszPtr)[i] == ' '; ++i )
             {
-                while( papszPtr[1] != NULL )
+            }
+            if( (*papszPtr)[i] == '=' || (*papszPtr)[i] == ':' )
+            {
+                // Found it.
+                // Change the value... make sure to keep the ':' or '='.
+                const char cSep = (*papszPtr)[i];
+
+                CPLFree(*papszPtr);
+
+                // If the value is NULL, remove this entry completely.
+                if( pszValue == NULL )
                 {
-                    *papszPtr = papszPtr[1];
-                    ++papszPtr;
+                    while( papszPtr[1] != NULL )
+                    {
+                        *papszPtr = papszPtr[1];
+                        ++papszPtr;
+                    }
+                    *papszPtr = NULL;
                 }
-                *papszPtr = NULL;
-            }
 
-            // Otherwise replace with new value.
-            else
-            {
-                const size_t nLen2 = strlen(pszName)+strlen(pszValue)+2;
-                *papszPtr = static_cast<char *>(CPLMalloc(nLen2) );
-                snprintf( *papszPtr, nLen2, "%s%c%s", pszName, cSep, pszValue );
+                // Otherwise replace with new value.
+                else
+                {
+                    const size_t nLen2 = strlen(pszName)+strlen(pszValue)+2;
+                    *papszPtr = static_cast<char *>(CPLMalloc(nLen2) );
+                    snprintf( *papszPtr, nLen2, "%s%c%s", pszName, cSep, pszValue );
+                }
+                return papszList;
             }
-            return papszList;
         }
         ++papszPtr;
     }
@@ -1955,7 +1962,10 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
         char *pszKey = NULL;
         const char *pszValue = CPLParseNameValue( papszList[iLine], &pszKey );
         if( pszValue == NULL || pszKey == NULL )
+        {
+            CPLFree( pszKey );
             continue;
+        }
 
         char *pszNewLine = static_cast<char *>(
             CPLMalloc( strlen(pszValue) + strlen(pszKey)
