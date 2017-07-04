@@ -909,6 +909,9 @@ def vsis3_read_credentials_ec2():
     if gdaltest.webserver_port == 0:
         return 'skip'
 
+    if sys.platform not in ('linux', 'linux2', 'darwin'):
+        return 'skip'
+
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
                          'http://localhost:%d/latest/meta-data/iam/security-credentials/' % gdaltest.webserver_port)
     # Disable hypervisor related check to test if we are really on EC2
@@ -955,6 +958,9 @@ def vsis3_read_credentials_ec2():
 def vsis3_read_credentials_ec2_expiration():
 
     if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    if sys.platform not in ('linux', 'linux2', 'darwin'):
         return 'skip'
 
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
