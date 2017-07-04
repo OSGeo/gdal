@@ -316,10 +316,8 @@ namespace Selafin {
 
     int write_integer(VSILFILE *fp,int nData) {
         unsigned char anb[4];
-        for (int i=3;i>=0;--i) {
-            anb[i]=nData%0x100;
-            nData/=0x100;
-        }
+        CPL_MSBPTR32(&nData);
+        memcpy(anb, &nData, 4);
         if (VSIFWriteL(anb,1,4,fp)<4) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
             return 0;
