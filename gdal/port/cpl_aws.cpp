@@ -34,11 +34,20 @@
 #include "cpl_sha256.h"
 #include "cpl_time.h"
 #include "cpl_minixml.h"
+#include "cpl_multiproc.h"
+#include "cpl_http.h"
 #include <algorithm>
 
 CPL_CVSID("$Id$")
 
 // #define DEBUG_VERBOSE 1
+
+static CPLMutex *hMutex = NULL;
+static CPLString osIAMRole;
+static CPLString osGlobalAccessKeyId;
+static CPLString osGlobalSecretAccessKey;
+static CPLString osGlobalSessionToken;
+static GIntBig nGlobalExpiration = 0;
 
 /************************************************************************/
 /*                         CPLGetLowerCaseHex()                         */
@@ -410,6 +419,447 @@ bool VSIS3HandleHelper::GetBucketAndObjectKey( const char* pszURI,
 }
 
 /************************************************************************/
+/*                          ParseSimpleJson()                           */
+/*                                                                      */
+/*      Return a string list of name/value pairs extracted from a       */
+/*      JSON doc.  The EC2 IAM web service returns simple JSON          */
+/*      responses.  The parsing as done currently is very fragile       */
+/*      and depends on JSON documents being in a very very simple       */
+/*      form.                                                           */
+/************************************************************************/
+
+static CPLStringList ParseSimpleJson(const char *pszJson)
+
+{
+/* -------------------------------------------------------------------- */
+/*      We are expecting simple documents like the following with no    */
+/*      hierarchy or complex structure.                                 */
+/* -------------------------------------------------------------------- */
+/*
+    {
+    "Code" : "Success",
+    "LastUpdated" : "2017-07-03T16:20:17Z",
+    "Type" : "AWS-HMAC",
+    "AccessKeyId" : "bla",
+    "SecretAccessKey" : "bla",
+    "Token" : "bla",
+    "Expiration" : "2017-07-03T22:42:58Z"
+    }
+*/
+
+    CPLStringList oWords(
+        CSLTokenizeString2(pszJson, " \n\t,:{}", CSLT_HONOURSTRINGS ));
+    CPLStringList oNameValue;
+
+    for( int i=0; i < oWords.size(); i += 2 )
+    {
+        oNameValue.SetNameValue(oWords[i], oWords[i+1]);
+    }
+
+    return oNameValue;
+}
+
+/************************************************************************/
+/*                        Iso8601ToUnixTime()                           */
+/************************************************************************/
+
+static bool Iso8601ToUnixTime(const char* pszDT, GIntBig* pnUnixTime)
+{
+    int nYear;
+    int nMonth;
+    int nDay;
+    int nHour;
+    int nMinute;
+    int nSecond;
+    if( sscanf(pszDT, "%04d-%02d-%02dT%02d:%02d:%02d",
+                &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond) == 6 )
+    {
+        struct tm brokendowntime;
+        brokendowntime.tm_year = nYear - 1900;
+        brokendowntime.tm_mon = nMonth - 1;
+        brokendowntime.tm_mday = nDay;
+        brokendowntime.tm_hour = nHour;
+        brokendowntime.tm_min = nMinute;
+        brokendowntime.tm_sec = nSecond;
+        *pnUnixTime = CPLYMDHMSToUnixTime(&brokendowntime);
+        return true;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                  IsMachinePotentiallyEC2Instance()                   */
+/************************************************************************/
+
+static bool IsMachinePotentiallyEC2Instance()
+{
+#ifdef __linux
+    // Small optimization on Linux. If the kernel is recent
+    // enough, a /sys/hypervisor/uuid file should exist on EC2 instances
+    // and contain a string beginning with ec2.
+    // See http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
+    // If /sys/hypervisor exists, but /sys/hypervisor/uuid does not
+    // exist or doesn't start with ec2, then do not attempt any network
+    // access
+    bool bAttemptNetworkAccess = true;
+    if( CPLTestBool(CPLGetConfigOption(
+                        "CPL_AWS_CHECK_HYPERVISOR_UUID", "YES")) )
+    {
+        VSIStatBufL sStat;
+        if( VSIStatL("/sys/hypervisor", &sStat) == 0 )
+        {
+            char uuid[36+1] = { 0 };
+            VSILFILE* fp = VSIFOpenL("/sys/hypervisor/uuid", "rb");
+            if( fp != NULL )
+            {
+                VSIFReadL( uuid, 1, sizeof(uuid)-1, fp );
+                bAttemptNetworkAccess = EQUALN( uuid, "ec2", 3 );
+                VSIFCloseL(fp);
+            }
+            else
+            {
+                bAttemptNetworkAccess = false;
+            }
+        }
+    }
+    return bAttemptNetworkAccess;
+#elif defined(WIN32)
+    // We might add later a way of detecting if we run on EC2 using WMI
+    // See http://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/identify_ec2_instances.html
+    // For now, unconditionnaly try
+    return true;
+#else
+    // At time of writing EC2 instances can be only Linux or Windows
+    return false;
+#endif
+}
+
+/************************************************************************/
+/*                      GetConfigurationFromEC2()                       */
+/************************************************************************/
+
+bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
+                                                CPLString& osAccessKeyId,
+                                                CPLString& osSessionToken)
+{
+    CPLMutexHolder oHolder( &hMutex );
+    time_t nCurTime;
+    time(&nCurTime);
+    // Try to reuse credentials if they are still valid, but
+    // keep one minute of margin...
+    if( !osGlobalAccessKeyId.empty() && nCurTime < nGlobalExpiration - 60 )
+    {
+        osAccessKeyId = osGlobalAccessKeyId;
+        osSecretAccessKey = osGlobalSecretAccessKey;
+        osSessionToken = osGlobalSessionToken;
+        return true;
+    }
+
+    const CPLString osEC2CredentialsURL(
+        CPLGetConfigOption("CPL_AWS_EC2_CREDENTIALS_URL",
+            "http://169.254.169.254/latest/meta-data/iam/security-credentials/"));
+    if( osIAMRole.empty() && !osEC2CredentialsURL.empty() )
+    {
+        // If we don't know yet the IAM role, fetch it
+        if( IsMachinePotentiallyEC2Instance() )
+        {
+            char** papszOptions = CSLSetNameValue(NULL, "TIMEOUT", "1");
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLHTTPResult* psResult =
+                        CPLHTTPFetch( osEC2CredentialsURL, papszOptions );
+            CPLPopErrorHandler();
+            CSLDestroy(papszOptions);
+            if( psResult )
+            {
+                if( psResult->nStatus == 0 && psResult->pabyData != NULL )
+                {
+                    osIAMRole = reinterpret_cast<char*>(psResult->pabyData);
+                }
+                CPLHTTPDestroyResult(psResult);
+            }
+        }
+    }
+    if( osIAMRole.empty() )
+        return false;
+
+    // Now fetch the refreshed credentials
+    CPLStringList oResponse;
+    CPLHTTPResult* psResult = CPLHTTPFetch(
+        (osEC2CredentialsURL + osIAMRole).c_str(), NULL );
+    if( psResult )
+    {
+        if( psResult->nStatus == 0 && psResult->pabyData != NULL )
+        {
+            const CPLString osJSon =
+                    reinterpret_cast<char*>(psResult->pabyData);
+            oResponse = ParseSimpleJson(osJSon);
+        }
+        CPLHTTPDestroyResult(psResult);
+    }
+    osAccessKeyId = oResponse.FetchNameValueDef("AccessKeyId", "");
+    osSecretAccessKey =
+                oResponse.FetchNameValueDef("SecretAccessKey", "");
+    osSessionToken = oResponse.FetchNameValueDef("Token", "");
+    const CPLString osExpiration =
+        oResponse.FetchNameValueDef("Expiration", "");
+    GIntBig nExpirationUnix = 0;
+    if( !osAccessKeyId.empty() &&
+        !osSecretAccessKey.empty() &&
+        Iso8601ToUnixTime(osExpiration, &nExpirationUnix) )
+    {
+        osGlobalAccessKeyId = osAccessKeyId;
+        osGlobalSecretAccessKey = osSecretAccessKey;
+        osGlobalSessionToken = osSessionToken;
+        nGlobalExpiration = nExpirationUnix;
+        CPLDebug("AWS", "Storing AIM credentials until %s",
+                osExpiration.c_str());
+    }
+    return !osAccessKeyId.empty() && !osSecretAccessKey.empty();
+}
+
+
+/************************************************************************/
+/*                      UpdateAndWarnIfInconsistant()                   */
+/************************************************************************/
+
+static
+void UpdateAndWarnIfInconsistant(const char* pszKeyword,
+                                 CPLString& osVal,
+                                 const CPLString& osNewVal,
+                                 const CPLString& osCredentials,
+                                 const CPLString& osConfig)
+{
+    // nominally defined in ~/.aws/credentials but can
+    // be set here too. If both values exist, credentials
+    // has the priority
+    if( osVal.empty() )
+    {
+        osVal = osNewVal;
+    }
+    else if( osVal != osNewVal )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                    "%s defined in both %s "
+                    "and %s. The one of %s will be used",
+                    pszKeyword,
+                    osCredentials.c_str(),
+                    osConfig.c_str(),
+                    osCredentials.c_str());
+    }
+}
+
+/************************************************************************/
+/*                GetConfigurationFromAWSConfigFiles()                  */
+/************************************************************************/
+
+bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
+                                                CPLString& osSecretAccessKey,
+                                                CPLString& osAccessKeyId,
+                                                CPLString& osSessionToken,
+                                                CPLString& osRegion,
+                                                CPLString& osCredentials)
+{
+    // See http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
+    const char* pszProfile = CPLGetConfigOption("AWS_DEFAULT_PROFILE", "");
+    const CPLString& osProfile(pszProfile[0] != '\0' ? pszProfile : "default");
+
+#ifdef WIN32
+    const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
+#else
+    const char* pszHome = CPLGetConfigOption("HOME", NULL);
+#endif
+    const CPLString osDotAws( CPLFormFilename( pszHome, ".aws", NULL) );
+
+    // Read first ~/.aws/credential file
+    osCredentials =
+        // GDAL specific config option for testing purpose
+        CPLGetConfigOption( "CPL_AWS_CREDENTIALS_FILE",
+                        CPLFormFilename( osDotAws, "credentials", NULL ) );
+    VSILFILE* fp = VSIFOpenL( osCredentials, "rb" );
+    if( fp != NULL )
+    {
+        const char* pszLine;
+        bool bInProfile = false;
+        while( (pszLine = CPLReadLineL(fp)) != NULL )
+        {
+            if( pszLine[0] == '[' )
+            {
+                if( bInProfile )
+                    break;
+                if( CPLString(pszLine) == "[" + osProfile + "]" )
+                    bInProfile = true;
+            }
+            else if( bInProfile )
+            {
+                char* pszKey = NULL;
+                const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
+                if( pszKey && pszValue )
+                {
+                    if( EQUAL(pszKey, "aws_access_key_id") )
+                        osAccessKeyId = pszValue;
+                    else if( EQUAL(pszKey, "aws_secret_access_key") )
+                        osSecretAccessKey = pszValue;
+                    else if( EQUAL(pszKey, "aws_session_token") )
+                        osSessionToken = pszValue;
+                }
+                CPLFree(pszKey);
+            }
+        }
+        VSIFCloseL(fp);
+    }
+
+    // And then ~/.aws/config file (unless AWS_CONFIG_FILE is defined)
+    const char* pszAWSConfigFileEnv =
+                        CPLGetConfigOption( "AWS_CONFIG_FILE", NULL );
+    const CPLString osConfig( pszAWSConfigFileEnv ? pszAWSConfigFileEnv :
+                              CPLFormFilename( osDotAws, "config", NULL ) );
+    fp = VSIFOpenL( osConfig, "rb" );
+    if( fp != NULL )
+    {
+        const char* pszLine;
+        bool bInProfile = false;
+        while( (pszLine = CPLReadLineL(fp)) != NULL )
+        {
+            if( pszLine[0] == '[' )
+            {
+                if( bInProfile )
+                    break;
+                // In config file, the section name is nominally [profile foo]
+                // for the non default profile.
+                if( CPLString(pszLine) == "[" + osProfile + "]" ||
+                    CPLString(pszLine) == "[profile " + osProfile + "]")
+                {
+                    bInProfile = true;
+                }
+            }
+            else if( bInProfile )
+            {
+                char* pszKey = NULL;
+                const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
+                if( pszKey && pszValue )
+                {
+                    if( EQUAL(pszKey, "aws_access_key_id") )
+                    {
+                        UpdateAndWarnIfInconsistant(pszKey,
+                                                    osAccessKeyId,
+                                                    pszValue,
+                                                    osCredentials,
+                                                    osConfig);
+                    }
+                    else if( EQUAL(pszKey, "aws_secret_access_key") )
+                    {
+                        UpdateAndWarnIfInconsistant(pszKey,
+                                                    osSecretAccessKey,
+                                                    pszValue,
+                                                    osCredentials,
+                                                    osConfig);
+                    }
+                    else if( EQUAL(pszKey, "aws_session_token") )
+                    {
+                        UpdateAndWarnIfInconsistant(pszKey,
+                                                    osSessionToken,
+                                                    pszValue,
+                                                    osCredentials,
+                                                    osConfig);
+                    }
+                    else if( EQUAL(pszKey, "region") )
+                    {
+                        osRegion = pszValue;
+                    }
+                }
+                CPLFree(pszKey);
+            }
+        }
+        VSIFCloseL(fp);
+    }
+    else if( pszAWSConfigFileEnv != NULL )
+    {
+        if( pszAWSConfigFileEnv[0] != '\0' )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "%s does not exist or cannot be open",
+                     pszAWSConfigFileEnv);
+        }
+    }
+
+    return !osAccessKeyId.empty() && !osSecretAccessKey.empty();
+}
+
+/************************************************************************/
+/*                        GetConfiguration()                            */
+/************************************************************************/
+
+bool VSIS3HandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
+                                         CPLString& osAccessKeyId,
+                                         CPLString& osSessionToken,
+                                         CPLString& osRegion)
+{
+    osSecretAccessKey =
+        CPLGetConfigOption("AWS_SECRET_ACCESS_KEY", "");
+    // AWS_REGION is GDAL specific. Later overloaded by standard
+    // AWS_DEFAULT_REGION
+    osRegion = CPLGetConfigOption("AWS_REGION", "us-east-1");
+    if( !osSecretAccessKey.empty() )
+    {
+        osAccessKeyId = CPLGetConfigOption("AWS_ACCESS_KEY_ID", "");
+        if( osAccessKeyId.empty() )
+        {
+            VSIError(VSIE_AWSInvalidCredentials,
+                    "AWS_ACCESS_KEY_ID configuration option not defined");
+            return false;
+        }
+
+        osSessionToken = CPLGetConfigOption("AWS_SESSION_TOKEN", "");
+        return true;
+    }
+
+    // Next try reading from ~/.aws/credentials and ~/.aws/config
+    CPLString osCredentials;
+    if( GetConfigurationFromAWSConfigFiles(osSecretAccessKey, osAccessKeyId,
+                                           osSessionToken, osRegion,
+                                           osCredentials) )
+    {
+        return true;
+    }
+
+    // Last method: use IAM role security credentials on EC2 instances
+    if( GetConfigurationFromEC2(osSecretAccessKey, osAccessKeyId,
+                                osSessionToken) )
+    {
+        return true;
+    }
+
+    VSIError(VSIE_AWSInvalidCredentials,
+                "AWS_SECRET_ACCESS_KEY configuration option and %s not defined",
+                osCredentials.c_str());
+    return false;
+}
+
+/************************************************************************/
+/*                          CleanMutex()                                */
+/************************************************************************/
+
+void VSIS3HandleHelper::CleanMutex()
+{
+    if( hMutex != NULL )
+        CPLDestroyMutex( hMutex );
+    hMutex = NULL;
+}
+
+/************************************************************************/
+/*                          ClearCache()                                */
+/************************************************************************/
+
+void VSIS3HandleHelper::ClearCache()
+{
+    osIAMRole.clear();
+    osGlobalAccessKeyId.clear();
+    osGlobalSecretAccessKey.clear();
+    osGlobalSessionToken.clear();
+    nGlobalExpiration = 0;
+}
+
+/************************************************************************/
 /*                          BuildFromURI()                              */
 /************************************************************************/
 
@@ -417,26 +867,26 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
                                                     const char* pszFSPrefix,
                                                     bool bAllowNoObject )
 {
-    const CPLString osSecretAccessKey =
-        CPLGetConfigOption("AWS_SECRET_ACCESS_KEY", "");
-    if( osSecretAccessKey.empty() )
+    CPLString osSecretAccessKey;
+    CPLString osAccessKeyId;
+    CPLString osSessionToken;
+    CPLString osRegion;
+    if( !GetConfiguration(osSecretAccessKey, osAccessKeyId,
+                          osSessionToken, osRegion) )
     {
-        VSIError(VSIE_AWSInvalidCredentials,
-                 "AWS_SECRET_ACCESS_KEY configuration option not defined");
         return NULL;
     }
-    const CPLString osAccessKeyId = CPLGetConfigOption("AWS_ACCESS_KEY_ID", "");
-    if( osAccessKeyId.empty() )
+
+    // According to http://docs.aws.amazon.com/cli/latest/userguide/cli-environment.html
+    // " This variable overrides the default region of the in-use profile, if set."
+    const CPLString osDefaultRegion = CPLGetConfigOption("AWS_DEFAULT_REGION", "");
+    if( !osDefaultRegion.empty() )
     {
-        VSIError(VSIE_AWSInvalidCredentials,
-                 "AWS_ACCESS_KEY_ID configuration option not defined");
-        return NULL;
+        osRegion = osDefaultRegion;
     }
-    const CPLString osSessionToken =
-        CPLGetConfigOption("AWS_SESSION_TOKEN", "");
+
     const CPLString osAWSS3Endpoint =
         CPLGetConfigOption("AWS_S3_ENDPOINT", "s3.amazonaws.com");
-    const CPLString osAWSRegion = CPLGetConfigOption("AWS_REGION", "us-east-1");
     const CPLString osRequestPayer =
         CPLGetConfigOption("AWS_REQUEST_PAYER", "");
     CPLString osBucket;
@@ -454,7 +904,7 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
                            bIsValidNameForVirtualHosting ? "TRUE" : "FALSE"));
     return new VSIS3HandleHelper(osSecretAccessKey, osAccessKeyId,
                                  osSessionToken,
-                                 osAWSS3Endpoint, osAWSRegion,
+                                 osAWSS3Endpoint, osRegion,
                                  osRequestPayer,
                                  osBucket, osObjectKey, bUseHTTPS,
                                  bUseVirtualHosting);
