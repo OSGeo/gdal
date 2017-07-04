@@ -42,12 +42,14 @@ CPL_CVSID("$Id$")
 
 // #define DEBUG_VERBOSE 1
 
+#ifdef HAVE_CURL
 static CPLMutex *hMutex = NULL;
 static CPLString osIAMRole;
 static CPLString osGlobalAccessKeyId;
 static CPLString osGlobalSecretAccessKey;
 static CPLString osGlobalSessionToken;
 static GIntBig nGlobalExpiration = 0;
+#endif
 
 /************************************************************************/
 /*                         CPLGetLowerCaseHex()                         */
