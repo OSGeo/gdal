@@ -954,7 +954,7 @@ def vsis3_read_credentials_ec2():
     if gdaltest.webserver_port == 0:
         return 'skip'
 
-    if sys.platform not in ('linux', 'linux2', 'darwin'):
+    if sys.platform not in ('linux', 'linux2', 'win32'):
         return 'skip'
 
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
@@ -1005,7 +1005,7 @@ def vsis3_read_credentials_ec2_expiration():
     if gdaltest.webserver_port == 0:
         return 'skip'
 
-    if sys.platform not in ('linux', 'linux2', 'darwin'):
+    if sys.platform not in ('linux', 'linux2', 'win32'):
         return 'skip'
 
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
