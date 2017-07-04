@@ -440,7 +440,7 @@ static const char* myCSLFetchNameValue(char** papszStrList,
     {
         if( EQUALN(*papszStrList, pszName, nLen) )
         {
-            int i;
+            size_t i;
             for( i = nLen; (*papszStrList)[i] == ' '; ++i )
             {
             }

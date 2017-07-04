@@ -1886,7 +1886,7 @@ char **CSLSetNameValue( char **papszList,
     {
         if( EQUALN(*papszPtr, pszName, nLen) )
         {
-            int i;
+            size_t i;
             for( i = nLen; (*papszPtr)[i] == ' '; ++i )
             {
             }
