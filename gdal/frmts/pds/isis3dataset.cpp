@@ -2533,6 +2533,11 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
         nPixelOffset = nItemSize;
+        if( nCols > INT_MAX / nPixelOffset )
+        {
+            delete poDS;
+            return NULL;
+        }
         nLineOffset = nPixelOffset * nCols;
         nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
     }
