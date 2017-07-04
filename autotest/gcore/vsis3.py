@@ -675,6 +675,9 @@ def vsis3_6():
 
 def vsis3_read_credentials_file():
 
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
 
@@ -715,6 +718,9 @@ aws_secret_access_key = bar
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config
 
 def vsis3_read_credentials_config_file():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
 
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
@@ -774,6 +780,9 @@ aws_secret_access_key = bar
 
 def vsis3_read_credentials_config_file_non_default():
 
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
 
@@ -830,6 +839,9 @@ aws_secret_access_key = bar
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config
 
 def vsis3_read_credentials_config_file_inconsistent():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
 
     gdal.SetConfigOption('AWS_SECRET_ACCESS_KEY', '')
     gdal.SetConfigOption('AWS_ACCESS_KEY_ID', '')
@@ -894,6 +906,9 @@ aws_secret_access_key = bar
 
 def vsis3_read_credentials_ec2():
 
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
                          'http://localhost:%d/latest/meta-data/iam/security-credentials/' % gdaltest.webserver_port)
     # Disable hypervisor related check to test if we are really on EC2
@@ -938,6 +953,9 @@ def vsis3_read_credentials_ec2():
 # cached credentials
 
 def vsis3_read_credentials_ec2_expiration():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
 
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL',
                          'http://localhost:%d/latest/meta-data/iam/security-credentials/expire_in_past/' % gdaltest.webserver_port)
