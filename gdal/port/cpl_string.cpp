@@ -1765,9 +1765,9 @@ const char *CPLParseNameValue( const char *pszNameValue, char **ppszKey )
                 strncpy( *ppszKey, pszNameValue, i );
                 (*ppszKey)[i] = '\0';
                 while( i > 0 &&
-                       ( (*ppszKey)[i] == ' ' || (*ppszKey)[i] == '\t') )
+                       ( (*ppszKey)[i-1] == ' ' || (*ppszKey)[i-1] == '\t') )
                 {
-                    (*ppszKey)[i] = '\0';
+                    (*ppszKey)[i-1] = '\0';
                     i--;
                 }
             }

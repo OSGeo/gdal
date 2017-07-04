@@ -82,6 +82,16 @@ class VSIS3HandleHelper
                                           CPLString &osBucketOut, CPLString &osObjectKeyOut);
         void RebuildURL();
 
+        static bool GetConfigurationFromEC2(CPLString& osSecretAccessKey,
+                                            CPLString& osAccessKeyId,
+                                            CPLString& osSessionToken);
+
+        static bool GetConfigurationFromAWSConfigFiles(
+                                     CPLString& osSecretAccessKey,
+                                     CPLString& osAccessKeyId,
+                                     CPLString& osSessionToken,
+                                     CPLString& osRegion,
+                                     CPLString& osCredentials);
   protected:
 
     public:
@@ -123,6 +133,13 @@ class VSIS3HandleHelper
         void SetRequestPayer(const CPLString &osStr);
         void SetVirtualHosting(bool b);
         void SetObjectKey(const CPLString &osStr);
+
+        static bool GetConfiguration(CPLString& osSecretAccessKey,
+                                     CPLString& osAccessKeyId,
+                                     CPLString& osSessionToken,
+                                     CPLString& osRegion);
+        static void CleanMutex();
+        static void ClearCache();
 };
 
 class VSIS3UpdateParams

@@ -336,7 +336,7 @@ public:
 
     CURL               *GetCurlHandleFor( CPLString osURL );
 
-    void                ClearCache();
+    virtual void        ClearCache();
 };
 
 /************************************************************************/
@@ -3778,6 +3778,7 @@ protected:
 
 public:
         VSIS3FSHandler() {}
+        virtual ~VSIS3FSHandler();
 
         virtual VSIVirtualHandle *Open( const char *pszFilename,
                                         const char *pszAccess,
@@ -3790,6 +3791,8 @@ public:
 
         void UpdateMapFromHandle( VSIS3HandleHelper * poS3HandleHelper );
         void UpdateHandleFromMap( VSIS3HandleHelper * poS3HandleHelper );
+
+        virtual void        ClearCache() override;
 };
 
 /************************************************************************/
@@ -4479,6 +4482,28 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
 
     return
         VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+}
+
+/************************************************************************/
+/*                         ~VSIS3FSHandler()                            */
+/************************************************************************/
+
+VSIS3FSHandler::~VSIS3FSHandler()
+{
+    VSIS3HandleHelper::CleanMutex();
+}
+
+/************************************************************************/
+/*                            ClearCache()                              */
+/************************************************************************/
+
+void VSIS3FSHandler::ClearCache()
+{
+    VSICurlFilesystemHandler::ClearCache();
+
+    oMapBucketsToS3Params.clear();
+
+    VSIS3HandleHelper::ClearCache();
 }
 
 /************************************************************************/
@@ -5246,15 +5271,29 @@ void VSIInstallCurlFileHandler( void )
  *
  * The AWS_SECRET_ACCESS_KEY and AWS_ACCESS_KEY_ID configuration options *must*
  * be set.  The AWS_SESSION_TOKEN configuration option must be set when
- * temporary credentials are used.  The AWS_REGION configuration option may be
+ * temporary credentials are used.  The AWS_REGION (or AWS_DEFAULT_REGION
+ * starting with GDAL 2.3) configuration option may be
  * set to one of the supported
  * <a href="http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">S3
- * regions</a> and defaults to 'us-east-1' The AWS_S3_ENDPOINT configuration
- * option defaults to s3.amazonaws.com. Starting with GDAL 2.2, the
+ * regions</a> and defaults to 'us-east-1'.
+ * 
+ * Starting with GDAL 2.3, alternate ways of providing credentials similar to
+ * what the "aws" command line utility or Boto3 support can be used. If the
+ * above mentionned environment variables are not provided, the ~/.aws/credentials
+ * or %UserProfile%/.aws/credentials file will be read. The profile may be
+ * specified with the AWS_PROFILE environment variable (the default on is "default")
+ * The ~/.aws/config or %UserProfile%/.aws/config file may also be used to
+ * retrieve credentials and the AWS region.
+ * If none of the above method succeeds, instance profile credentials will be
+ * retrieved when GDAL is used on EC2 instances.
+ * 
+ * Starting with GDAL 2.2, the
  * AWS_REQUEST_PAYER configuration option may be set to "requester" to
  * facilitate use with
  * <a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/RequesterPaysBuckets.html">Requester
  * Pays buckets</a>.
+ * 
+ * The AWS_S3_ENDPOINT configuration option defaults to s3.amazonaws.com. 
  *
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
  * options can be used to define a proxy server. The syntax to use is the one of
@@ -5379,12 +5418,19 @@ void VSIInstallGSFileHandler( void )
 
 void VSICurlClearCache( void )
 {
-    VSICurlFilesystemHandler *poFSHandler =
-        dynamic_cast<VSICurlFilesystemHandler*>(
-            VSIFileManager::GetHandler( "/vsis3/" ));
+    // FIXME ? Currently we have different filesystem instances for
+    // vsicurl/, /vsis3/, /vsigs/ . So each one has its own cache of regions,
+    // file size, etc.
+    const char* const apszFS[] = { "/vsicurl/", "/vsis3/", "/vsigs/" };
+    for( size_t i = 0; i < CPL_ARRAYSIZE(apszFS); ++i )
+    {
+        VSICurlFilesystemHandler *poFSHandler =
+            dynamic_cast<VSICurlFilesystemHandler*>(
+                VSIFileManager::GetHandler( apszFS[i] ));
 
-    if( poFSHandler )
-        poFSHandler->ClearCache();
+        if( poFSHandler )
+            poFSHandler->ClearCache();
+    }
 }
 
 #endif /* HAVE_CURL */

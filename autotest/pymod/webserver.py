@@ -465,6 +465,15 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.wfile.write("""foo""".encode('ascii'))
                 return
 
+            if self.path == '/s3_fake_bucket/bar':
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Length', 3)
+                self.end_headers()
+                self.wfile.write("""bar""".encode('ascii'))
+                return
+
             if self.path == '/s3_fake_bucket_with_session_token/resource':
                 self.protocol_version = 'HTTP/1.1'
 
@@ -786,6 +795,44 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.wfile.write("""ok""".encode('ascii'))
                 return
 
+            if self.path == '/latest/meta-data/iam/security-credentials/' or \
+               self.path == '/latest/meta-data/iam/security-credentials/expire_in_past/':
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                response = 'myprofile'
+                self.send_header('Content-Length', len(response))
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
+            if self.path == '/latest/meta-data/iam/security-credentials/myprofile':
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                response = """{
+                    "AccessKeyId": "AWS_ACCESS_KEY_ID",
+                    "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+                    "Expiration": "3000-01-01T00:00:00Z"
+                }"""
+                self.send_header('Content-Length', len(response))
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
+            if self.path == '/latest/meta-data/iam/security-credentials/expire_in_past/myprofile':
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                response = """{
+                    "AccessKeyId": "AWS_ACCESS_KEY_ID",
+                    "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+                    "Expiration": "1970-01-01T00:00:00Z"
+                }"""
+                self.send_header('Content-Length', len(response))
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
 
 
             if self.path == '/gs_fake_bucket_http_header_file/resource':
