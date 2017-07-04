@@ -2600,19 +2600,21 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
             }
             else
             {
-                WorkingDT fResult = static_cast<WorkingDT>(m_dfScaleOff);
+                WorkingDT afResult[2] = {
+                    static_cast<WorkingDT>(m_dfScaleOff),
+                    0 };
 
                 if( m_nLUTItemCount )
-                    fResult = static_cast<WorkingDT>(LookupValue( fResult ));
+                    afResult[0] = static_cast<WorkingDT>(LookupValue( afResult[0] ));
 
-                if( m_nMaxValue != 0 && fResult > m_nMaxValue )
-                    fResult = static_cast<WorkingDT>(m_nMaxValue);
+                if( m_nMaxValue != 0 && afResult[0] > m_nMaxValue )
+                    afResult[0] = static_cast<WorkingDT>(m_nMaxValue);
 
                 if( eBufType == GDT_Byte )
                     *pDstLocation = static_cast<GByte>(
-                        std::min(255.0, std::max(0.0, fResult + 0.5)) );
+                        std::min(255.0, std::max(0.0, afResult[0] + 0.5)) );
                 else
-                    GDALCopyWords( &fResult, eWrkDataType, 0,
+                    GDALCopyWords( afResult, eWrkDataType, 0,
                                    pDstLocation, eBufType, 0, 1 );
             }
         }
