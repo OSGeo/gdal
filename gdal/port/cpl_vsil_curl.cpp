@@ -5281,7 +5281,7 @@ void VSIInstallCurlFileHandler( void )
  * what the "aws" command line utility or Boto3 support can be used. If the
  * above mentionned environment variables are not provided, the ~/.aws/credentials
  * or %UserProfile%/.aws/credentials file will be read. The profile may be
- * specified with the AWS_PROFILE environment variable (the default on is "default")
+ * specified with the AWS_PROFILE environment variable (the default profile is "default")
  * The ~/.aws/config or %UserProfile%/.aws/config file may also be used to
  * retrieve credentials and the AWS region.
  * If none of the above method succeeds, instance profile credentials will be
