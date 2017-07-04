@@ -4976,7 +4976,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 GDALRasterBlock * const poBlock =
                     GetLockedBlockRef( iXBlock, iYBlock );
                 if( poBlock == NULL )
-                    continue;
+                    return CE_Failure;
 
                 void* const pData = poBlock->GetDataRef();
 
@@ -5085,7 +5085,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
             GDALRasterBlock * const poBlock = GetLockedBlockRef( iXBlock, iYBlock );
             if( poBlock == NULL )
-                continue;
+                return CE_Failure;
 
             void* const pData = poBlock->GetDataRef();
 
@@ -5574,7 +5574,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
 
             GDALRasterBlock *poBlock = GetLockedBlockRef( iXBlock, iYBlock );
             if( poBlock == NULL )
-                continue;
+                return CE_Failure;
 
             void * const pData = poBlock->GetDataRef();
 
