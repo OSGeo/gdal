@@ -2488,6 +2488,23 @@ def tiff_read_strip_separate_as_rgba():
 
     gdal.Unlink('/vsimem/tiff_read_strip_separate_as_rgba.tif')
 
+    # 3 band with PHOTOMETRIC_MINISBLACK to trigger gtStripSeparate() to
+    # use the single band code path
+    gdal.Translate('/vsimem/tiff_read_strip_separate_as_rgba.tif',
+                   'data/rgbsmall.tif', options = '-co INTERLEAVE=BAND -co PHOTOMETRIC=MINISBLACK')
+
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+    ds = gdal.Open('/vsimem/tiff_read_strip_separate_as_rgba.tif')
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+    if got_cs != [21212,21212,21212,30658]:
+        gdaltest.post_reason( 'fail')
+        print(got_cs)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_read_strip_separate_as_rgba.tif')
+
     return 'success'
 
 ###############################################################################
