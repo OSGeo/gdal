@@ -123,6 +123,8 @@ static int checkV1(const char *s, size_t sz)
 #undef READ_GINT32
 
     // Actual LERC blob size
+    if( 66 + nBytesMask > INT_MAX - nBytesData )
+        return -1;
     int size = static_cast<int>(66 + nBytesMask + nBytesData);
     return (static_cast<size_t>(size) > sz) ? -size : size;
 }
