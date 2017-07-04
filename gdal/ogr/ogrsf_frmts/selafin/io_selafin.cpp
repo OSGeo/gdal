@@ -308,8 +308,8 @@ namespace Selafin {
             return 0;
         };
         if (!bDiscard) {
-            nData=0;
-            for (size_t i=0;i<4;++i) nData=(nData*0x100)+anb[i];
+            memcpy(&nData, anb, 4);
+            CPL_MSBPTR32(&nData);
         }
         return 1;
     }
