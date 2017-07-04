@@ -114,6 +114,13 @@ RCreateCopy( const char * pszFilename,
     const bool bASCII = CPLFetchBool(papszOptions, "ASCII", false);
     const bool bCompressed = CPLFetchBool(papszOptions, "COMPRESS", !bASCII);
 
+    vsi_l_offset nSize = static_cast<vsi_l_offset>(nBands) * nXSize * nYSize;
+    if( nSize > static_cast<vsi_l_offset>(INT_MAX) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Too big raster");
+        return NULL;
+    }
+
     // Some some rudimentary checks.
 
     // Setup the filename to actually use.  We prefix with
