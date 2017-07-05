@@ -1706,6 +1706,12 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
                     psBand, "SrcNoDataImag",
                     CPLString().Printf( "%.16g", psWO->padfSrcNoDataImag[i] ) );
         }
+        // Compatibility with GDAL <= 2.2: if we serialize a SrcNoDataReal,
+        // it needs a SrcNoDataImag as well
+        else if( psWO->padfSrcNoDataReal != NULL )
+        {
+            CPLCreateXMLElementAndValue(psBand, "SrcNoDataImag", "0");
+        }
 
         if( psWO->padfDstNoDataReal != NULL )
         {
@@ -1726,6 +1732,13 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
                     psBand, "DstNoDataImag",
                     CPLString().Printf( "%.16g", psWO->padfDstNoDataImag[i] ) );
         }
+        // Compatibility with GDAL <= 2.2: if we serialize a DstNoDataReal,
+        // it needs a SrcNoDataImag as well
+        else if( psWO->padfDstNoDataReal != NULL )
+        {
+            CPLCreateXMLElementAndValue(psBand, "DstNoDataImag", "0");
+        }
+
     }
 
 /* -------------------------------------------------------------------- */
