@@ -869,7 +869,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 bOK &= VSIFReadL( &l_nOffset, 4, 1, psFile->fp ) == 1;
                 CPL_MSBPTR32( &l_nOffset );
                 psImage->panBlockStart[i] = l_nOffset;
-                if( psImage->panBlockStart[i] != 0xffffffff )
+                if( psImage->panBlockStart[i] != UINT_MAX )
                 {
                     psImage->panBlockStart[i]
                         += psSegInfo->nSegmentStart + nIMDATOFF;
@@ -885,7 +885,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 {
                     for( iBand = 1; iBand < psImage->nBands; iBand++ )
                         psImage->panBlockStart[i + iBand * nStoredBlocks] =
-                            0xffffffff;
+                            UINT_MAX;
                 }
             }
         }
@@ -898,7 +898,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 bOK &= VSIFReadL( &l_nOffset, 4, 1, psFile->fp ) == 1;
                 CPL_MSBPTR32( &l_nOffset );
                 psImage->panBlockStart[i] = l_nOffset;
-                if( psImage->panBlockStart[i] != 0xffffffff )
+                if( psImage->panBlockStart[i] != UINT_MAX )
                 {
                     if (isM4 && (psImage->panBlockStart[i] % 6144) != 0)
                     {
@@ -935,7 +935,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                     bOK &= VSIFReadL( &l_nOffset, 4, 1, psFile->fp ) == 1;
                     CPL_MSBPTR32( &l_nOffset );
                     psImage->panBlockStart[i] = l_nOffset;
-                    if( psImage->panBlockStart[i] != 0xffffffff )
+                    if( psImage->panBlockStart[i] != UINT_MAX )
                     {
                         if ((psImage->panBlockStart[i] % 6144) != 0)
                         {
@@ -1227,7 +1227,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
     if( nBand == 0 )
         return BLKREAD_FAIL;
 
-    if( psImage->panBlockStart[iFullBlock] == 0xffffffff )
+    if( psImage->panBlockStart[iFullBlock] == UINT_MAX )
         return BLKREAD_NULL;
 
 /* -------------------------------------------------------------------- */
@@ -3532,8 +3532,8 @@ static void NITFLoadSubframeMaskTable( NITFImage *psImage )
         bOK &= VSIFReadL( &offset, sizeof(offset), 1,  psFile->fp ) == 1;
         CPL_MSBPTR32( &offset );
         //fprintf(stderr, "%d : %d\n", i, offset);
-        if (!bOK || offset == 0xffffffff)
-            psImage->panBlockStart[i] = 0xffffffff;
+        if (!bOK || offset == UINT_MAX)
+            psImage->panBlockStart[i] = UINT_MAX;
         else
             psImage->panBlockStart[i] = nLocBaseSpatialDataSubsection + offset;
     }

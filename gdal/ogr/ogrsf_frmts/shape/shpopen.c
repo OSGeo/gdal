@@ -676,10 +676,10 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 
     psSHP->nFileSize = ((unsigned int)pabyBuf[24]<<24)|(pabyBuf[25]<<16)|
                         (pabyBuf[26]<<8)|pabyBuf[27];
-    if( psSHP->nFileSize < 0xFFFFFFFFU / 2 )
+    if( psSHP->nFileSize < UINT_MAX / 2 )
         psSHP->nFileSize *= 2;
     else
-        psSHP->nFileSize = 0xFFFFFFFEU;
+        psSHP->nFileSize = (UINT_MAX / 2) * 2;
 
 /* -------------------------------------------------------------------- */
 /*  Read SHX file Header info                                           */
@@ -1023,10 +1023,10 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
 
     nSHPFilesize = ((unsigned int)pabyBuf[24]<<24)|(pabyBuf[25]<<16)|
                    (pabyBuf[26]<<8)|pabyBuf[27];
-    if( nSHPFilesize < 0xFFFFFFFFU / 2 )
+    if( nSHPFilesize < UINT_MAX / 2 )
         nSHPFilesize *= 2;
     else
-        nSHPFilesize = 0xFFFFFFFEU;
+        nSHPFilesize = (UINT_MAX / 2) * 2;
 
     snprintf( pszFullname, nFullnameLen, "%s.shx", pszBasename );
     fpSHX = psHooks->FOpen( pszFullname, pszSHXAccess );
@@ -1890,7 +1890,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     }
     else if( nShapeId == -1 || psSHP->panRecSize[nShapeId] < nRecordSize-8 )
     {
-        if( psSHP->nFileSize > 0xFFFFFFFFU - nRecordSize)
+        if( psSHP->nFileSize > UINT_MAX - nRecordSize)
         {
             char str[128];
             snprintf( str, sizeof(str), "Failed to write shape object. "
@@ -2150,8 +2150,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             SAOffset nFileSize;
             psSHP->sHooks.FSeek( psSHP->fpSHP, 0, 2 );
             nFileSize = psSHP->sHooks.FTell(psSHP->fpSHP);
-            if( nFileSize >= 0xFFFFFFFFU )
-                psSHP->nFileSize = 0xFFFFFFFFU;
+            if( nFileSize >= UINT_MAX )
+                psSHP->nFileSize = UINT_MAX;
             else
                 psSHP->nFileSize = (unsigned int)nFileSize;
         }

@@ -2398,7 +2398,7 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
    myAssert (((!f_subGrid) && (subNx == Nx)) || (f_subGrid));
    myAssert (((!f_subGrid) && (subNy == Ny)) || (f_subGrid));
 
-   if( subNy == 0 || subNx > 0xFFFFFFFFU / subNy )
+   if( subNy == 0 || subNx > UINT_MAX / subNy )
    {
        errSprintf ("Too large raster");
        *grib_DataLen = 0;

@@ -9218,7 +9218,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
             {
                 nStripArrayAllocNew = std::max(
                     static_cast<uint32>(nBlockId) + 1, 1024U * 512U );
-                if( nStripArrayAllocNew < 0xFFFFFFFFU / 2  )
+                if( nStripArrayAllocNew < UINT_MAX / 2  )
                     nStripArrayAllocNew *= 2;
                 nStripArrayAllocNew = std::min(
                     nStripArrayAllocNew, hTIFF->tif_dir.td_nstrips);
@@ -11749,7 +11749,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
             {
                 memcpy(&nTmp, pabyBuffer + 10 + i * 12 + 8, 4);
                 if( bSwap ) CPL_SWAP32PTR(&nTmp);
-                if( nTmp > static_cast<GUInt32>(0xFFFFFFFFU - nTagSize) )
+                if( nTmp > static_cast<GUInt32>(UINT_MAX - nTagSize) )
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Overflow with tag %d", nTag);
