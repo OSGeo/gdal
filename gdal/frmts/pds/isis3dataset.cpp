@@ -45,6 +45,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 #include "vrtdataset.h"
+#include "cpl_safemaths.hpp"
 
 // For gethostname()
 #ifdef _WIN32
@@ -2533,12 +2534,15 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
         nPixelOffset = nItemSize;
-        if( nCols > INT_MAX / nPixelOffset )
+        try
+        {
+            nLineOffset = (CPLSM(nPixelOffset) * CPLSM(nCols)).v();
+        }
+        catch( const CPLSafeIntOverflow& )
         {
             delete poDS;
             return NULL;
         }
-        nLineOffset = nPixelOffset * nCols;
         nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
     }
     /* else Tiled or external */
