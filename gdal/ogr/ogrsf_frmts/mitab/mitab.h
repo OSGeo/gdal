@@ -164,6 +164,10 @@ class IMapInfoFile : public OGRLayer
 
     virtual int SetCharset(const char* charset);
 
+    virtual const char* GetCharset() const;
+
+    const char* GetEncoding() const;
+
     ///////////////
     // semi-private.
     virtual int  GetProjInfo(TABProjInfo *poPI) = 0;
