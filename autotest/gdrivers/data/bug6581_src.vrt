@@ -15,7 +15,7 @@
     <ColorInterp>Green</ColorInterp>
     <ComplexSource>
       <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
-      <SourceBand>2</SourceBand>
+      <SourceBand>1</SourceBand>
       <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
       <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
       <DstRect xOff="0" yOff="0" xSize="1853" ySize="1343" />
@@ -27,7 +27,7 @@
     <ColorInterp>Blue</ColorInterp>
     <ComplexSource>
       <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
-      <SourceBand>3</SourceBand>
+      <SourceBand>1</SourceBand>
       <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
       <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
       <DstRect xOff="0" yOff="0" xSize="1853" ySize="1343" />
