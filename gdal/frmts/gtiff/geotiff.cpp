@@ -9223,6 +9223,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
                 nStripArrayAllocNew = std::min(
                     nStripArrayAllocNew, hTIFF->tif_dir.td_nstrips);
             }
+            CPLAssert( static_cast<uint32>(nBlockId) < nStripArrayAllocNew );
             const uint64 nArraySize64 =
                 static_cast<uint64>(sizeof(uint64)) * nStripArrayAllocNew;
             const size_t nArraySize = static_cast<size_t>(nArraySize64);
@@ -14468,6 +14469,19 @@ void GTiffDataset::ScanDirectories()
         if( TIFFCurrentDirOffset(hTIFF) != nThisDir )
             TIFFSetSubDirectory( hTIFF, nThisDir );
         *ppoActiveDSRef = NULL;
+    }
+
+    // Nasty hack. Probably something that should be fixed in libtiff
+    // In case the last directory cycles to the first directory, we have
+    // TIFFCurrentDirOffset(hTIFF) == nDirOffset, but the TIFFReadDirectory()
+    // hasn't done its job, so SetDirectory() would be confused and think it
+    // has nothing to do. To avoid that reset to a fake offset before calling
+    // SetDirectory()
+    if( TIFFCurrentDirOffset(hTIFF) == nDirOffset )
+    {
+        TIFFSetSubDirectory( hTIFF, 0 );
+        *ppoActiveDSRef = NULL;
+        SetDirectory();
     }
 
     // If we have a mask for the main image, loop over the overviews, and if
