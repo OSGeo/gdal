@@ -325,10 +325,10 @@ namespace Selafin {
         return 1;
     }
 
-    int read_string(VSILFILE *fp,char *&pszData,bool bDiscard) {
+    int read_string(VSILFILE *fp,char *&pszData,int nFileSize,bool bDiscard) {
         int nLength=0;
         read_integer(fp,nLength);
-        if (nLength<=0 || nLength+1<=0) {
+        if (nLength<=0 || nLength == INT_MAX || nLength > nFileSize) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
             return 0;
         }
@@ -339,14 +339,22 @@ namespace Selafin {
             }
         }
         else {
-            pszData=(char*)CPLMalloc(sizeof(char)*(nLength+1));
+            pszData=(char*)VSI_MALLOC_VERBOSE(nLength+1);
+            if( pszData == NULL )
+            {
+                return 0;
+            }
             if ((int)VSIFReadL(pszData,1,nLength,fp)<(int)nLength) {
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
+                VSIFree(pszData);
+                pszData = NULL;
                 return 0;
             }
             pszData[nLength]=0;
             if (VSIFSeekL(fp,4,SEEK_CUR)!=0) {
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
+                VSIFree(pszData);
+                pszData = NULL;
                 return 0;
             }
         }
@@ -490,7 +498,7 @@ namespace Selafin {
         poHeader->pszFilename=CPLStrdup(pszFilename);
         int *panTemp = NULL;
         // Read the title
-        int nLength = read_string(fp,poHeader->pszTitle);
+        int nLength = read_string(fp,poHeader->pszTitle,nFileSize);
         if (nLength==0) {
             delete poHeader;
             return NULL;
@@ -526,7 +534,7 @@ namespace Selafin {
             return NULL;
         }
         for (int i=0;i<poHeader->nVar;++i) {
-            nLength=read_string(fp,poHeader->papszVariables[i]);
+            nLength=read_string(fp,poHeader->papszVariables[i],nFileSize);
             if (nLength==0) {
                 poHeader->nVar = i;
                 delete poHeader;
