@@ -1069,17 +1069,36 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
     m_dfTMSMinX = dfMinX;
     m_dfTMSMaxY = dfMaxY;
 
+    // Despite prior checking, the type might be Binary and
+    // SQLResultGetValue() not working properly on it
     int nZoomLevel = atoi(SQLResultGetValue(&oResult, 0, nIdxInResult));
+    if( nZoomLevel < 0 || nZoomLevel > 65536 )
+    {
+        return false;
+    }
     double dfPixelXSize = CPLAtof(SQLResultGetValue(&oResult, 1, nIdxInResult));
     double dfPixelYSize = CPLAtof(SQLResultGetValue(&oResult, 2, nIdxInResult));
+    if( dfPixelXSize <= 0 || dfPixelYSize <= 0 )
+    {
+        return false;
+    }
     int nTileWidth = atoi(SQLResultGetValue(&oResult, 3, nIdxInResult));
     int nTileHeight = atoi(SQLResultGetValue(&oResult, 4, nIdxInResult));
+    if( nTileWidth <= 0 || nTileWidth > 65536 ||
+        nTileHeight <= 0 || nTileHeight > 65536 )
+    {
+        return false;
+    }
     int nTileMatrixWidth = static_cast<int>(
         std::min(static_cast<GIntBig>(INT_MAX),
                  CPLAtoGIntBig(SQLResultGetValue(&oResult, 5, nIdxInResult))));
     int nTileMatrixHeight = static_cast<int>(
         std::min(static_cast<GIntBig>(INT_MAX),
                  CPLAtoGIntBig(SQLResultGetValue(&oResult, 6, nIdxInResult))));
+    if( nTileMatrixWidth <= 0 || nTileMatrixHeight <= 0 )
+    {
+        return false;
+    }
 
     /* Use content bounds in priority over tile_matrix_set bounds */
     double dfGDALMinX = dfMinX;
