@@ -40,7 +40,7 @@
 from __future__ import print_function, division
 
 import math
-from multiprocessing import Pipe, Pool, Process
+from multiprocessing import Pipe, Pool, Process, Manager
 import os
 import tempfile
 import sys
@@ -930,7 +930,7 @@ def gettempfilename(suffix):
     return tempfile.mktemp(suffix)
 
 
-def create_base_tiles(tile_job_info):
+def create_base_tiles(tile_job_info, queue):
     gdal.AllRegister()
 
     dataBandsCount = tile_job_info.nb_data_bands
@@ -1024,8 +1024,7 @@ def create_base_tiles(tile_job_info):
                 ).encode('utf-8'))
                 f.close()
 
-        # if not self.options.verbose and not self.options.quiet:
-        #     self.progressbar(ti / float(tcount))
+        queue.put("tile %s %s %s" % (tx, ty, tz))
 
 
 def optparse_init():
@@ -2783,6 +2782,43 @@ def worker_tile_details(send_pipe, input_file, output_folder, options):
         print("Failed ", str(e))
 
 
+def progress_printer_thread(queue, nb_jobs):
+    pb = ProgressBar(nb_jobs)
+    pb.start()
+    for _ in range(nb_jobs):
+        queue.get()
+        pb.log_progress()
+        queue.task_done()
+
+
+class ProgressBar(object):
+
+    def __init__(self, total_items):
+        self.total_items = total_items
+        self.nb_items_done = 0
+        self.current_progress = 0
+        self.STEP = 2.5
+
+    def start(self):
+        sys.stdout.write("0")
+
+    def log_progress(self, nb_items=1):
+        self.nb_items_done += nb_items
+        progress = float(self.nb_items_done) / self.total_items * 100
+        if progress >= self.current_progress + self.STEP:
+            done = False
+            while not done:
+                if self.current_progress + self.STEP <= progress:
+                    self.current_progress += self.STEP
+                    if self.current_progress % 10 == 0:
+                        sys.stdout.write(str(int(self.current_progress)))
+                    else:
+                        sys.stdout.write(".")
+                else:
+                    done = True
+        sys.stdout.flush()
+
+
 def main():
     (receiver, sender) = Pipe(False)
     argv = gdal.GeneralCmdLineProcessor(sys.argv)
@@ -2797,11 +2833,27 @@ def main():
     p.join()
     print("Tiles details calc complete.")
     nb_processes = options.nb_processes or 1
-    pool = Pool(nb_processes)
-    chunksize = int(math.ceil(len(confs) / nb_processes))
-    pool.map(create_base_tiles, confs, chunksize)
+    # Have to create the Queue through a multiprocessing.Manager to get a Queue Proxy,
+    # otherwise you can't pass it as a param in the method invoked by the pool...
+    manager = Manager()
+    queue = manager.Queue()
+    pool = Pool(processes=nb_processes)
+    # TODO: gbataille - Have a non Multithread path (because some platform might not have access to
+    # multiprocessing.Queue
+    # TODO: gbataille - check the confs for which each element is an array... one useless level?
+    # TODO: gbataille - assign an ID to each job for print in verbose mode "ReadRaster Extent ..."
+    for conf in confs:
+        pool.apply_async(create_base_tiles, (conf, queue))
+
+    if not options.verbose and not options.quiet:
+        p = Process(target=progress_printer_thread, args=[queue, len(confs)])
+        p.start()
+
     pool.close()
-    pool.join()
+    pool.join()     # Jobs finished
+    if not options.verbose and not options.quiet:
+        p.join()        # Traces done
+
     os.unlink(confs[0].src_file)
 
 
