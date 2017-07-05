@@ -682,13 +682,14 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     {
         const char* pszLine;
         bool bInProfile = false;
+        const CPLString osBracketedProfile("[" + osProfile + "]");
         while( (pszLine = CPLReadLineL(fp)) != NULL )
         {
             if( pszLine[0] == '[' )
             {
                 if( bInProfile )
                     break;
-                if( CPLString(pszLine) == "[" + osProfile + "]" )
+                if( CPLString(pszLine) == osBracketedProfile )
                     bInProfile = true;
             }
             else if( bInProfile )
@@ -720,6 +721,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     {
         const char* pszLine;
         bool bInProfile = false;
+        const CPLString osBracketedProfile("[" + osProfile + "]");
+        const CPLString osBracketedProfileProfile("[profile " + osProfile + "]");
         while( (pszLine = CPLReadLineL(fp)) != NULL )
         {
             if( pszLine[0] == '[' )
@@ -728,8 +731,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
                     break;
                 // In config file, the section name is nominally [profile foo]
                 // for the non default profile.
-                if( CPLString(pszLine) == "[" + osProfile + "]" ||
-                    CPLString(pszLine) == "[profile " + osProfile + "]")
+                if( CPLString(pszLine) == osBracketedProfile ||
+                    CPLString(pszLine) == osBracketedProfileProfile )
                 {
                     bInProfile = true;
                 }
