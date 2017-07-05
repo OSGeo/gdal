@@ -12001,9 +12001,11 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         // strip chop mode
 
         toff_t nCurOffset = TIFFCurrentDirOffset(l_hTIFF);
+        bool bHasSeveralDirecotries = false;
 
         while( !TIFFLastDirectory( l_hTIFF ) )
         {
+            bHasSeveralDirecotries = true;
             const CPLErr eLastErrorType = CPLGetLastErrorType();
             const CPLErrorNum eLastErrorNo = CPLGetLastErrorNo();
             const CPLString osLastErrorMsg(CPLGetLastErrorMsg());
@@ -12039,10 +12041,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
             if( l_hTIFF == NULL )
                 return NULL;
         }
-        else
+        else if( bHasSeveralDirecotries )
         {
-            if( TIFFCurrentDirOffset(l_hTIFF) != nCurOffset )
-                TIFFSetSubDirectory( l_hTIFF, nCurOffset );
+            TIFFSetSubDirectory( l_hTIFF, nCurOffset );
         }
     }
 
