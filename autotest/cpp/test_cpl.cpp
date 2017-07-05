@@ -1041,7 +1041,7 @@ namespace tut
         ensure_equals ( CPLExpandTilde("/foo/bar"), "/foo/bar" );
 
         CPLSetConfigOption("HOME", "/foo");
-        ensure_equals ( CPLExpandTilde("~/bar"), "/foo/bar" );
+        ensure ( EQUAL(CPLExpandTilde("~/bar"), "/foo/bar") || EQUAL(CPLExpandTilde("~/bar"), "/foo\\bar") );
         CPLSetConfigOption("HOME", NULL);
     }
 
