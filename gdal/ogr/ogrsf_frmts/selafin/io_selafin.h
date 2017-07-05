@@ -200,7 +200,7 @@ int write_integer(VSILFILE *fp,int nData);
  * \param bDiscard If true, the function does not attempt to save the value read in the variable nData, but only advances in the file as it should. Default value is false.
  * \return Number of characters in string read
  */
-int read_string(VSILFILE *fp,char *&pszData,bool bDiscard=false);
+int read_string(VSILFILE *fp,char *&pszData,int nFileSize,bool bDiscard=false);
 
 /**
  * \brief Write a string to a Selafin file
