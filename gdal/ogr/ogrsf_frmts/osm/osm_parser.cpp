@@ -1600,7 +1600,7 @@ bool ReadBlob( GByte* pabyData, unsigned int nDataSize, BlobType eType,
                             std::max(psCtxt->nUncompressedAllocated * 2, nUncompressedSize);
                     else
                         psCtxt->nUncompressedAllocated = nUncompressedSize;
-                    if( psCtxt->nUncompressedAllocated > 0xFFFFFFFFU - EXTRA_BYTES )
+                    if( psCtxt->nUncompressedAllocated > UINT_MAX - EXTRA_BYTES )
                         GOTO_END_ERROR;
                     pabyUncompressedNew = (GByte*)VSI_REALLOC_VERBOSE(psCtxt->pabyUncompressed,
                                         psCtxt->nUncompressedAllocated + EXTRA_BYTES);

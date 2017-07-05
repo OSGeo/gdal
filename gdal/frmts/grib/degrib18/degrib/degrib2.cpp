@@ -914,7 +914,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
        * Make room for entire message, and read it in.
        */
       /* nd5 needs to be gribLen in (sInt4) units rounded up. */
-      if( gribLen > 0xFFFFFFFFU - 3 ||
+      if( gribLen > UINT_MAX - 3 ||
           (gribLen + 3) / 4 > (uInt4)INT_MAX )
       {
          errSprintf("Invalid value of gribLen");

@@ -1017,7 +1017,7 @@ GDALDataset* JPGDatasetCommon::InitEXIFOverview()
         return NULL;
     if( bSwabflag )
         CPL_SWAP32PTR(&nNextDirOff);
-    if( nNextDirOff == 0 || nNextDirOff > 0xFFFFFFFFU - nTIFFHEADER )
+    if( nNextDirOff == 0 || nNextDirOff > UINT_MAX - nTIFFHEADER )
         return NULL;
 
     // Seek to IFD1.
@@ -1100,7 +1100,7 @@ GDALDataset* JPGDatasetCommon::InitEXIFOverview()
         nImageWidth >= nRasterXSize ||
         nImageHeight >= nRasterYSize ||
         nJpegIFOffset == 0 ||
-        nJpegIFOffset > 0xFFFFFFFFU - nTIFFHEADER ||
+        nJpegIFOffset > UINT_MAX - nTIFFHEADER ||
         static_cast<int>(nJpegIFByteCount) <= 0 )
     {
         return NULL;

@@ -1032,8 +1032,8 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         VSIFSeekL( poOpenInfo->fpL, 0, SEEK_END );
         vsi_l_offset nBigFileSize = VSIFTellL( poOpenInfo->fpL );
-        if( nBigFileSize > 0xFFFFFFFFU )
-            nBigFileSize = 0xFFFFFFFFU;
+        if( nBigFileSize > UINT_MAX )
+            nBigFileSize = UINT_MAX;
         GUInt32 fileSize = static_cast<GUInt32>(nBigFileSize);
 
         GUInt32 nBlocksFromFileSize = (fileSize - offsets[0]) / (header.iBlockWidth * header.iBlockHeight);
