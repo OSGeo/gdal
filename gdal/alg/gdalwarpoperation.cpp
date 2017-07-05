@@ -550,7 +550,7 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
     const char *pszCutlineWKT =
         CSLFetchNameValue( psOptions->papszWarpOptions, "CUTLINE" );
 
-    if( pszCutlineWKT )
+    if( pszCutlineWKT && psOptions->hCutline == NULL )
     {
         if( OGR_G_CreateFromWkt( (char **) &pszCutlineWKT, NULL,
                                  (OGRGeometryH *) &(psOptions->hCutline) )
@@ -560,14 +560,11 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to parse CUTLINE geometry wkt." );
         }
-        else
-        {
-            const char *pszBD = CSLFetchNameValue( psOptions->papszWarpOptions,
-                                                   "CUTLINE_BLEND_DIST" );
-            if( pszBD )
-                psOptions->dfCutlineBlendDist = CPLAtof(pszBD);
-        }
     }
+    const char *pszBD = CSLFetchNameValue( psOptions->papszWarpOptions,
+                                            "CUTLINE_BLEND_DIST" );
+    if( pszBD )
+        psOptions->dfCutlineBlendDist = CPLAtof(pszBD);
 
 /* -------------------------------------------------------------------- */
 /*      If the options don't validate, then wipe them.                  */
