@@ -165,7 +165,7 @@ public:
 
 private:
     template<typename T>
-    friend class tut_posix;
+    friend struct tut_posix;
 
     friend class test_group_posix;
 
