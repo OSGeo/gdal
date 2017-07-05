@@ -45,7 +45,7 @@ namespace tut
 // Template of attribute reading function and its specializations
 //
 template <typename T>
-inline void read_feature_attribute(OGRFeatureH feature, int index, T& val)
+inline void read_feature_attribute(OGRFeatureH , int , T& )
 {
     assert(!"Can't find read_feature_attribute specialization for given type");
 }
