@@ -2820,18 +2820,21 @@ class ProgressBar(object):
 
 
 def main():
-    (receiver, sender) = Pipe(False)
+    (conf_receiver, conf_sender) = Pipe(False)
     argv = gdal.GeneralCmdLineProcessor(sys.argv)
     input_file, output_folder, options = process_args(argv[1:])
-    print("Begin tiles details calc")
-    p = Process(target=worker_tile_details, args=[sender, input_file, output_folder, options])
+    if options.verbose:
+        print("Begin tiles details calc")
+    p = Process(target=worker_tile_details, args=[conf_sender, input_file, output_folder, options])
     p.start()
     # Make sure to consume the queue before joining. If the payload is too big, it won't be put in
     # one go in the queue and therefore the sending process will never finish, waiting for space in
     # the queue to send data
-    confs = receiver.recv()
+    confs = conf_receiver.recv()
     p.join()
-    print("Tiles details calc complete.")
+    if options.verbose:
+        print("Tiles details calc complete.")
+
     nb_processes = options.nb_processes or 1
     # Have to create the Queue through a multiprocessing.Manager to get a Queue Proxy,
     # otherwise you can't pass it as a param in the method invoked by the pool...
