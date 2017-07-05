@@ -46,6 +46,7 @@ static const double NULL3 = -3.4028226550889044521e+38;
 #include "nasakeywordhandler.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
+#include "cpl_safemaths.hpp"
 
 CPL_CVSID("$Id$")
 
@@ -786,31 +787,30 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         record_bytes = 1;
 
     int nSkipBytes = 0;
-    if( nQube >0 && osQube.find("<BYTES>") != CPLString::npos )
-        nSkipBytes = nQube - 1;
-    else if (nQube > 0 )
+    try
     {
-        if( nQube - 1 > INT_MAX / record_bytes )
+        if( osQube.find("<BYTES>") != CPLString::npos )
+            nSkipBytes = (CPLSM(nQube) - CPLSM(1)).v();
+        else if (nQube > 0 )
         {
-            return FALSE;
+            nSkipBytes = (CPLSM(nQube - 1) * CPLSM(record_bytes)).v();
         }
-        nSkipBytes = (nQube - 1) * record_bytes;
-    }
-    else if( nDetachedOffset > 0 )
-    {
-        if (bDetachedOffsetInBytes)
-            nSkipBytes = nDetachedOffset;
-        else
+        else if( nDetachedOffset > 0 )
         {
-            if( record_bytes > INT_MAX / nDetachedOffset )
+            if (bDetachedOffsetInBytes)
+                nSkipBytes = nDetachedOffset;
+            else
             {
-                return FALSE;
+                nSkipBytes = (CPLSM(nDetachedOffset) * CPLSM(record_bytes)).v();
             }
-            nSkipBytes = nDetachedOffset * record_bytes;
         }
+        else
+            nSkipBytes = 0;
     }
-    else
-        nSkipBytes = 0;
+    catch( const CPLSafeIntOverflow& )
+    {
+        return FALSE;
+    }
 
     nSkipBytes += atoi(GetKeyword(osPrefix+"IMAGE.LINE_PREFIX_BYTES",""));
 
@@ -1016,39 +1016,37 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     int nPixelOffset;
     int nBandOffset;
 
-    if( eLayout == PDS_BIP )
+    try
     {
-        if( nItemSize > INT_MAX / l_nBands )
-            return FALSE;
-        nPixelOffset = nItemSize * l_nBands;
-        nBandOffset = nItemSize;
-        if( nPixelOffset > INT_MAX / nCols )
-            return FALSE;
-        nLineOffset = DIV_ROUND_UP(nPixelOffset * nCols, record_bytes )
-            * record_bytes;
+        if( eLayout == PDS_BIP )
+        {
+            nPixelOffset = (CPLSM(nItemSize) * CPLSM(l_nBands)).v();
+            nBandOffset = nItemSize;
+            nLineOffset = (CPLSM(nPixelOffset) * CPLSM(nCols)).v();
+            nLineOffset = DIV_ROUND_UP(nLineOffset, record_bytes )
+                * record_bytes;
+        }
+        else if( eLayout == PDS_BSQ )
+        {
+            nPixelOffset = nItemSize;
+            nLineOffset = (CPLSM(nPixelOffset) * CPLSM(nCols)).v();
+            nLineOffset = DIV_ROUND_UP(nLineOffset, record_bytes )
+                * record_bytes;
+            nBandOffset = (CPLSM(nLineOffset) * CPLSM(nRows)
+                + CPLSM(nSuffixLines) * (CPLSM(nCols) + CPLSM(nSuffixItems)) * CPLSM(nSuffixBytes)).v();
+        }
+        else /* assume BIL */
+        {
+            nPixelOffset = nItemSize;
+            nBandOffset = (CPLSM(nItemSize) * CPLSM(nCols)).v();
+            nLineOffset = (CPLSM(nBandOffset) * CPLSM(nCols)).v();
+            nLineOffset = DIV_ROUND_UP(nLineOffset, record_bytes)
+                * record_bytes;
+        }
     }
-    else if( eLayout == PDS_BSQ )
+    catch( const CPLSafeIntOverflow& )
     {
-        nPixelOffset = nItemSize;
-        if( nPixelOffset > INT_MAX / nCols )
-            return FALSE;
-        nLineOffset = DIV_ROUND_UP(nPixelOffset * nCols, record_bytes )
-            * record_bytes;
-        if( nLineOffset > INT_MAX / nRows )
-            return FALSE;
-        nBandOffset = nLineOffset * nRows
-            + nSuffixLines * (nCols + nSuffixItems) * nSuffixBytes;
-    }
-    else /* assume BIL */
-    {
-        nPixelOffset = nItemSize;
-        if( nItemSize > INT_MAX / nCols )
-            return FALSE;
-        nBandOffset = nItemSize * nCols;
-        if( nBandOffset > INT_MAX / nCols )
-            return FALSE;
-        nLineOffset = DIV_ROUND_UP(nBandOffset * nCols, record_bytes)
-            * record_bytes;
+        return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
