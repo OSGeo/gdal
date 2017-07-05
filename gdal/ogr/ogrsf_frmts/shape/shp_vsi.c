@@ -32,6 +32,7 @@
 #include "cpl_error.h"
 #include "cpl_conv.h"
 #include "cpl_vsi_error.h"
+#include <limits.h>
 
 CPL_CVSID("$Id$")
 
@@ -129,7 +130,7 @@ SAOffset VSI_SHP_Read( void *p, SAOffset size, SAOffset nmemb, SAFile file )
 int VSI_SHP_WriteMoreDataOK( SAFile file, SAOffset nExtraBytes )
 {
     OGRSHPDBFFile* pFile = (OGRSHPDBFFile*) file;
-    if( pFile->nCurOffset + nExtraBytes > 0x7FFFFFFF )
+    if( pFile->nCurOffset + nExtraBytes > INT_MAX )
     {
         if( pFile->bEnforce2GBLimit )
         {
