@@ -241,22 +241,18 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
         if( gwidth[j] < 0 || glen[j] < 0 ||
             (gwidth[j] > 0 && glen[j] > INT_MAX / gwidth[j]) )
         {
-            free(ifld);
-            free(gwidth);
-            free(glen);
-            free(gref);
-            return 1;
+            break;
         }
         width_mult_len = gwidth[j]*glen[j];
         if( totBit > INT_MAX - width_mult_len )
         {
-            free(ifld);
-            free(gwidth);
-            free(glen);
-            free(gref);
-            return 1;
+            break;
         }
         totBit += width_mult_len;
+        if( totLen > INT_MAX - glen[j] )
+        {
+            break;
+        }
         totLen += glen[j];
       }
       if (totLen != ndpts || totBit / 8. > lensec) {
