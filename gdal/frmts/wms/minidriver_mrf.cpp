@@ -159,6 +159,7 @@ WMSMiniDriver_MRF::~WMSMiniDriver_MRF() {
         delete index_cache;
     if (fp)
         VSIFCloseL(fp);
+    delete m_request;
 }
 
 CPLErr WMSMiniDriver_MRF::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
