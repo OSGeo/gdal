@@ -570,6 +570,19 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                   "blocks were found on it.",
                   poOpenInfo->pszFilename );
     }
+    else if( psImage->nBitsPerSample > 16 &&
+             (EQUAL(psImage->szIC, "C3") || EQUAL(psImage->szIC, "M3")) )
+    {
+        // Early rejection of JPEG compressed images with invalid bit depth
+        // Otherwise this will cause potentially heap buffer overflows
+        // as ReadJPEGBlock() assumes that the data type size is no larger
+        // than 2 bytes.
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "IC=%s and ABPP=%d are not supported",
+                 psImage->szIC, psImage->nBitsPerSample);
+        NITFClose( psFile );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
