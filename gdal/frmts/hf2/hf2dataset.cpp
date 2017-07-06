@@ -1035,12 +1035,28 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
                 for(int k=1;k<nReqYSize*nReqXSize;k++)
                 {
                     float fVal = ((float*)pTileBuffer)[k];
+                    if( CPLIsNan(fVal) )
+                    {
+                        CPLError(CE_Failure, CPLE_NotSupported,
+                                 "NaN value found");
+                        eErr = CE_Failure;
+                        break;
+                    }
                     if (fVal < fMinVal) fMinVal = fVal;
                     if (fVal > fMaxVal) fMaxVal = fVal;
                 }
+                if( eErr == CE_Failure )
+                    break;
 
                 float fIntRange = (fMaxVal - fMinVal) / fVertPres;
                 float fScale = (fMinVal == fMaxVal) ? 1 : (fMaxVal - fMinVal) / fIntRange;
+                if( fScale == 0.0f )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Scale == 0.0f");
+                    eErr = CE_Failure;
+                    break;
+                }
                 float fOffset = fMinVal;
                 WriteFloat(fp, fScale); /* scale */
                 WriteFloat(fp, fOffset); /* offset */
