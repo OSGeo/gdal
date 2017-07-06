@@ -674,7 +674,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
 
     // Read first ~/.aws/credential file
     osCredentials =
-        // GDAL specific config option for testing purpose
+        // GDAL specific config option (mostly for testing purpose, but also
+        // used in production in some cases)
         CPLGetConfigOption( "CPL_AWS_CREDENTIALS_FILE",
                         CPLFormFilename( osDotAws, "credentials", NULL ) );
     VSILFILE* fp = VSIFOpenL( osCredentials, "rb" );
