@@ -18,7 +18,17 @@ all:  ogr_dir gdal_dir const_dir osr_dir
 	set JAVA_HOME="$(JAVA_HOME)"
 	$(ANT_HOME)\bin\ant
 
-    
+install:
+	-mkdir $(GDAL_HOME)\java\jar
+	-mkdir $(GDAL_HOME)\java\src
+	-mkdir $(GDAL_HOME)\java\src\org
+	-mkdir $(GDAL_HOME)\java\src\apps
+	$(INSTALL)    *.dll  $(GDAL_HOME)\bin
+	$(INSTALL)    *.jar  $(GDAL_HOME)\java\jar
+	$(INSTALL)    *.java $(GDAL_HOME)\java\src
+	$(INSTALL) /e org    "$(GDAL_HOME)\java\src\org\"
+	$(INSTALL) /e apps   "$(GDAL_HOME)\java\src\apps\"
+
 ogr_dir:
 	cd ogr
 	$(MAKE) /f makefile.vc

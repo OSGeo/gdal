@@ -166,6 +166,25 @@ $(GDAL_DLL): $(LIB_DEPENDS)
 
 dll:	$(GDAL_DLL)
 
+bindings:
+	-for %d in ( $(BINDINGS) ) do \
+		cd swig \
+		&& $(MAKE) /f makefile.vc %d  \
+		&& cd .. \
+		|| exit 1
+
+bindings_install:
+	-for %d in ( $(BINDINGS) ) do    \
+		cd swig  \
+		&& $(MAKE) /f  makefile.vc %d_install \
+		&& cd ..   \
+		|| exit 1
+
+bindings_clean:
+	cd swig  \
+		&& $(MAKE) /f  makefile.vc  clean \
+		&& cd ..   \
+		|| exit 1
 install: default
 	-mkdir $(BINDIR)
 	-mkdir $(DATADIR)

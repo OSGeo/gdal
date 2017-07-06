@@ -21,6 +21,16 @@ python: gdalvars
         $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/gnm_wrap.cpp -outdir osgeo ..\include\gnm.i
         $(SWIG) -c++ -python -modern -new_repr -I../include/python -I../include/python/docs -o extensions/gdal_array_wrap.cpp -outdir osgeo ..\include\gdal_array.i
         $(PYDIR)\python.exe setup.py build
+	cd ..
+
+python_install: python
+	cd python
+	if not exist $(GDAL_HOME)\python         mkdir $(GDAL_HOME)\python\Lib\site-packages
+	if not exist $(GDAL_HOME)\python\script  mkdir $(GDAL_HOME)\python\script
+	set PYTHONPATH=$(GDAL_HOME)\python\Lib\site-packages
+	$(PYDIR)\python.exe setup.py install --prefix $(GDAL_HOME)\python
+	$(INSTALL) scripts\*.py $(GDAL_HOME)\python\script
+	cd ..
 
 #d:\Python\debug\Python-2.4\PCbuild\python_d.exe setup.py build   --debug
 
@@ -28,6 +38,12 @@ csharp: gdalvars
         cd csharp
         $(MAKE) /f makefile.vc interface
         $(MAKE) /f makefile.vc
+	cd ..
+
+csharp_install: csharp
+        cd csharp
+        $(MAKE) /f makefile.vc install
+	cd ..
 
 java: gdalvars
         cd java
@@ -53,13 +69,22 @@ java: gdalvars
         cd const
         $(SWIG) -java -c++ -package org.gdal.gdalconst -outdir ../org/gdal/gdalconst -I../../include/java -o gdalconst_wrap.cpp ../../../include/gdalconst.i
         cd ..
-		cd org\gdal
+	cd org\gdal
         if not exist gnm mkdir gnm
         cd ../../
-		cd gnm
+	cd gnm
         $(SWIG) -java -c++ -package org.gdal.gnm -outdir ../org/gdal/gnm -I../../include/java -o gnm_wrap.cpp ../../../include/gnm.i
         cd ..
         $(MAKE) /f makefile.vc
+	cd ..
+
+
+java_install: java
+	cd java \
+		&& $(MAKE) /f makefile.vc install \
+		&& cd ../  \
+		|| exit 1
+	cd ..
 
 #ruby: gdalvars
 #        cd ruby
@@ -69,10 +94,11 @@ java: gdalvars
 #        $(SWIG) -c++ -ruby -I../include/ruby -o ogr_wrap.cpp -autorename -prefix "gdal::" ../include/ogr.i
 #        $(MAKE) /f makefile.vc build
 #        $(MAKE) /f makefile.vc install 
-        
+
 test: gdalvars
-				cd $(GDAL_HOME)\..\gdalautotest
-				$(PYDIR)/python.exe run_all.py
+	cd $(GDAL_HOME)\..\gdalautotest
+	$(PYDIR)/python.exe run_all.py
+
 clean:
         -del setup.ini
         cd csharp
