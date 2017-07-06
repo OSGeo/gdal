@@ -1,4 +1,5 @@
 
+PLUGIN_DLL 	= gdal_JP2KAK.dll
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
@@ -9,6 +10,8 @@ OBJ_EXT =	obj
 OBJ_PREFIX =	$(KAKOBJDIR)
 OBJ_CONFIG =	release
 
+# Starting with Kakadu V7.9.1, one can use both Kakadu DLLs
+!IFDEF KAKOBJDIR
 KAK_APPS_OBJ =	\
 	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\args.obj \
 	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\image_in.obj \
@@ -28,6 +31,7 @@ KAK_APPS_OBJ = $(KAK_APPS_OBJ) \
        $(OBJ_PREFIX)\buffered_expand\$(OBJ_CONFIG)\ssse3_stripe_transfer.obj \
        $(OBJ_PREFIX)\render\$(OBJ_CONFIG)\ssse3_region_decompressor.obj \
 !ENDIF
+!ENDIF
 
 # TODO: add kdu_client_window.obj
 #!IFDEF KAKADU_7_7_OR_LATER
@@ -43,7 +47,16 @@ default:	$(OBJ) kakinstall
 kakinstall:
 	for %d in ( $(KAK_APPS_OBJ) ) do \
 	  xcopy /D /Y %d ..\o
-	
+
+plugin:	$(PLUGIN_DLL)
+$(PLUGIN_DLL): $(OBJ) kakinstall
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(KAKLIB)
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
+
 clean:
 	-del *.obj
+	-del $(PLUGIN_DLL)
 

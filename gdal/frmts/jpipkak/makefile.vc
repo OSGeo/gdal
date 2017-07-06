@@ -1,10 +1,16 @@
-
+PLUGIN_DLL 	= gdal_JPIPKAK.dll
 GDAL_ROOT	=	..\..
 
 KAKINC = -I$(KAKSRC)/managed/all_includes \
        -I$(KAKSRC)/apps/jp2 -I$(KAKSRC)/apps/caching_sources
 
-OBJ	=	jpipkakdataset.obj kdu_cache.obj
+OBJ	=	jpipkakdataset.obj
+# Starting with Kakadu V7.9.1, one can use both Kakadu DLLs
+!IFDEF KAKOBJDIR
+# File "kdu_cache.obj" is already in Kakadu library
+OBJ	= $(OBJ) kdu_cache.obj
+!ENDIF
+
 EXTRAFLAGS = 	$(KAKINC) -DKDU_PENTIUM_MSVC /EHsc
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
@@ -15,6 +21,14 @@ default:	$(OBJ)
 
 kdu_cache.cpp:	  $(KAKSRC)\apps\caching_sources\kdu_cache.cpp
 	copy $(KAKSRC)\apps\caching_sources\kdu_cache.cpp 
+
+plugin:	$(PLUGIN_DLL)
+$(PLUGIN_DLL): $(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(KAKLIB)
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
 
 clean:
 	-del *.obj
