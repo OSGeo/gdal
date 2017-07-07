@@ -4417,6 +4417,63 @@ def ogr_gmlas_swe_datarecord():
     return 'success'
 
 ###############################################################################
+#  Test a xs:any field at end of a type declaration
+
+def ogr_gmlas_any_field_at_end_of_declaration():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    # Simplified test case for
+    # http://schemas.earthresourceml.org/earthresourceml-lite/1.0/erml-lite.xsd 
+    # http://services.ga.gov.au/earthresource/ows?service=wfs&version=2.0.0&request=GetFeature&typenames=erl:CommodityResourceView&count=10
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_any_field_at_end_of_declaration.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              elementFormDefault="qualified"
+              attributeFormDefault="unqualified">
+
+<xs:element name="main_elt">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="foo" type="xs:string" minOccurs="1"/>
+        <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_any_field_at_end_of_declaration.xml',
+"""
+<main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="ogr_gmlas_any_field_at_end_of_declaration.xsd">
+    <foo>bar</foo>
+    <extra><something>baz</something></extra>
+</main_elt>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_any_field_at_end_of_declaration.xml')
+    lyr = ds.GetLayerByName('main_elt')
+    # Will warn about 'Unexpected element with xpath=main_elt/extra (subxpath=main_elt/extra) found'
+    # This should be fixed at some point
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetField('foo') != 'bar':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetField('value') != '<something>baz</something>':
+        print('Expected fail: value != <something>baz</something>')
+
+    gdal.Unlink('/vsimem/ogr_gmlas_any_field_at_end_of_declaration.xsd')
+    gdal.Unlink('/vsimem/ogr_gmlas_any_field_at_end_of_declaration.xml')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gmlas_cleanup():
@@ -4486,9 +4543,10 @@ gdaltest_list = [
     ogr_gmlas_typing_constraints,
     ogr_gmlas_swe_dataarray,
     ogr_gmlas_swe_datarecord,
+    ogr_gmlas_any_field_at_end_of_declaration,
     ogr_gmlas_cleanup ]
 
-# gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_swe_datarecord, ogr_gmlas_cleanup ]
+# gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_any_field_at_end_of_declaration, ogr_gmlas_cleanup ]
 
 if __name__ == '__main__':
 
