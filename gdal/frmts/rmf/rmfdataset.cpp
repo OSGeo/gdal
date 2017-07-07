@@ -1462,19 +1462,21 @@ do {                                                                    \
                 {
                     // Allocate memory for colour table and read it
                     poDS->nColorTableSize = 1 << poDS->sHeader.nBitDepth;
-                    if( poDS->nColorTableSize * 4 > poDS->sHeader.nClrTblSize )
+                    GUInt32 nExpectedColorTableBytes = poDS->nColorTableSize * 4;
+                    if(nExpectedColorTableBytes > poDS->sHeader.nClrTblSize )
                     {
+                        // We could probably test for strict equality in
+                        // the above test ???
                         CPLDebug( "RMF",
                                   "Wrong color table size. "
-                                  "Expected %d, got %d.",
-                                  poDS->nColorTableSize * 4,
+                                  "Expected %u, got %u.",
+                                  nExpectedColorTableBytes,
                                   poDS->sHeader.nClrTblSize );
                         delete poDS;
                         return NULL;
                     }
-                    /* coverity[tainted_data] */
                     poDS->pabyColorTable = reinterpret_cast<GByte *>(
-                        VSIMalloc( poDS->sHeader.nClrTblSize ) );
+                        VSIMalloc( nExpectedColorTableBytes ) );
                     if( poDS->pabyColorTable == NULL )
                     {
                         CPLDebug( "RMF", "Can't allocate color table." );
@@ -1491,8 +1493,8 @@ do {                                                                    \
                         return NULL;
                     }
                     if( VSIFReadL( poDS->pabyColorTable, 1,
-                                   poDS->sHeader.nClrTblSize, poDS->fp )
-                        < poDS->sHeader.nClrTblSize )
+                                   nExpectedColorTableBytes, poDS->fp )
+                        < nExpectedColorTableBytes )
                     {
                         CPLDebug( "RMF", "Can't read color table." );
                         delete poDS;
