@@ -268,6 +268,7 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     VSILFILE   *fpL;
 #if defined(INTERNAL_LIBTIFF) && defined(DEFER_STRILE_LOAD)
     uint32      nStripArrayAlloc;
+    vsi_l_offset m_nFileSize; // 0 when unknown, only valid in GA_ReadOnly mode
 #endif
 
     bool        bStreamingIn;
@@ -6975,6 +6976,7 @@ GTiffDataset::GTiffDataset() :
     fpL(NULL),
 #if defined(INTERNAL_LIBTIFF) && defined(DEFER_STRILE_LOAD)
     nStripArrayAlloc(0),
+    m_nFileSize(0),
 #endif
     bStreamingIn(false),
     bStreamingOut(false),
@@ -9207,6 +9209,32 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
         }
         if( static_cast<uint32>(nBlockId) >= nStripArrayAlloc )
         {
+            if( nBlockId > 1000000 )
+            {
+                // Avoid excessive memory allocation attempt
+                if( m_nFileSize == 0 )
+                {
+                    VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
+                    const vsi_l_offset nCurOffset = VSIFTellL(fp);
+                    CPL_IGNORE_RET_VAL( VSIFSeekL(fp, 0, SEEK_END) );
+                    m_nFileSize = VSIFTellL(fp);
+                    CPL_IGNORE_RET_VAL( VSIFSeekL(fp, nCurOffset, SEEK_SET) );
+                }
+                // For such a big blockid we need at least a TIFF_LONG
+                if( static_cast<vsi_l_offset>(nBlockId) >
+                                        m_nFileSize / (2 * sizeof(GUInt32)) )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "File too short");
+                    if( pnOffset )
+                        *pnOffset = 0;
+                    if( pnSize )
+                        *pnSize = 0;
+                    if( pbErrOccured )
+                        *pbErrOccured = true;
+                    return false;
+                }
+            }
+
             uint32 nStripArrayAllocBefore = nStripArrayAlloc;
             uint32 nStripArrayAllocNew;
             if( nStripArrayAlloc == 0 &&
@@ -13245,7 +13273,18 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                   l_nBlocksPerRow, l_nBlocksPerColumn );
         return CE_Failure;
     }
+
+    // Note: we could potentially go up to UINT_MAX blocks, but currently
+    // we use a int nBlockId
     nBlocksPerBand = l_nBlocksPerColumn * l_nBlocksPerRow;
+    if( nPlanarConfig == PLANARCONFIG_SEPARATE &&
+        nBlocksPerBand > INT_MAX / nBands )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Too many blocks: %d x %d x %d bands",
+                  l_nBlocksPerRow, l_nBlocksPerColumn, nBands );
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Should we handle this using the GTiffBitmapBand?                */

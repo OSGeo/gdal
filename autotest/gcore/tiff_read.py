@@ -3188,6 +3188,23 @@ def tiff_read_many_blocks():
     return 'success'
 
 ###############################################################################
+
+def tiff_read_many_blocks_truncated():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['LIBTIFF'] != 'INTERNAL':
+        return 'skip'
+
+    ds = gdal.Open('data/many_blocks_truncated.tif')
+    with gdaltest.error_handler():
+        ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_2000000', 'TIFF')
+    if gdal.GetLastErrorMsg() != 'File too short':
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test reading  images with nbits > 32
 
 def tiff_read_uint33():
@@ -3232,7 +3249,7 @@ def tiff_read_packbits_not_enough_data():
     return 'success'
 
 ###############################################################################
-# Test reading images with more than 2billion blocks
+# Test reading images with more than 2billion blocks for a single band
 
 def tiff_read_toomanyblocks():
 
@@ -3244,6 +3261,19 @@ def tiff_read_toomanyblocks():
 
     return 'success'
 
+
+###############################################################################
+# Test reading images with more than 2billion blocks for all bands
+
+def tiff_read_toomanyblocks_separate():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/toomanyblocks_separate.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Test reading images where the number of items in StripByteCounts/StripOffsets
@@ -3468,10 +3498,12 @@ gdaltest_list.append( (tiff_read_big_strip_chunky_way) )
 gdaltest_list.append( (tiff_read_big_tile) )
 gdaltest_list.append( (tiff_read_huge_number_strips) )
 gdaltest_list.append( (tiff_read_many_blocks) )
+gdaltest_list.append( (tiff_read_many_blocks_truncated) )
 gdaltest_list.append( (tiff_read_uint33) )
 gdaltest_list.append( (tiff_read_corrupted_deflate_singlestrip) )
 gdaltest_list.append( (tiff_read_packbits_not_enough_data) )
 gdaltest_list.append( (tiff_read_toomanyblocks) )
+gdaltest_list.append( (tiff_read_toomanyblocks_separate) )
 gdaltest_list.append( (tiff_read_size_of_stripbytecount_lower_than_stripcount) )
 gdaltest_list.append( (tiff_read_stripoffset_types) )
 gdaltest_list.append( (tiff_read_progressive_jpeg_denial_of_service) )
