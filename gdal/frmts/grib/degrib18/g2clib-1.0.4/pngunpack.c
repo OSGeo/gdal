@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "grib2.h"
 
 g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
@@ -56,6 +57,10 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
 //
       if (nbits != 0) {
          int nbytes = nbits/8;
+         if( ndpts != 0 && nbytes > INT_MAX / ndpts )
+         {
+             return 1;
+         }
          ifld=(g2int *)calloc(ndpts,sizeof(g2int));
          ctemp=(unsigned char *)calloc(ndpts*nbytes,1);
          if ( ifld == NULL || ctemp == NULL) {
