@@ -26,7 +26,11 @@ OGRFeature::IsFieldSetAndNotNull() if there is no need to distinguish both
 states.
 On the writing side, a few drivers will now distinguish between the unset
 and null state, namely GeoJSON, CouchDB, Cloudant, MongoDB, ElasticSearch and
-GML.
+GML. For example, for the GeoJSON driver, in GDAL 2.1 or before, a unset field
+was written as field_name: null. Starting with GDAL 2.2, only fields explicitly
+set as null with OGR_F_SetFieldNull() will be written with a null value.
+Unset fields of a feature will not be present in the corresponding JSon feature
+element. 
 
 MIGRATION GUIDE FROM GDAL 2.0 to GDAL 2.1
 ------------------------------------------
