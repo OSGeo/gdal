@@ -139,7 +139,7 @@ def wait_process(process):
     process.wait()
 
 # Compatible with Python 2.6 or above
-def _runexternal_subprocess(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False):
+def _runexternal_subprocess(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False, encoding = None):
     import subprocess
     import shlex
     command = shlex.split(cmd)
@@ -171,9 +171,11 @@ def _runexternal_subprocess(cmd, strin = None, check_memleak = True, display_liv
     if waitcode != 0:
         ret = ret + '\nERROR ret code = %d' % waitcode
 
+    if encoding is not None:
+        ret = ret.decode(encoding)
     return ret
 
-def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False):
+def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False, encoding = None):
     from gdaltest import is_travis_branch
     if not is_travis_branch('mingw'):
         has_subprocess = False
@@ -186,7 +188,11 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
         except:
             pass
         if has_subprocess:
-            return _runexternal_subprocess(cmd, strin=strin, check_memleak=check_memleak, display_live_on_parent_stdout=display_live_on_parent_stdout)
+            return _runexternal_subprocess(cmd,
+                                           strin=strin,
+                                           check_memleak=check_memleak,
+                                           display_live_on_parent_stdout=display_live_on_parent_stdout,
+                                           encoding=encoding)
 
     if strin is None:
         ret_stdout = os.popen(cmd)
@@ -211,6 +217,8 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
     if check_memleak:
         warn_if_memleak(cmd, out_str)
 
+    if encoding is not None:
+        out_str = out_str.decode(encoding)
     return out_str
 
 def read_in_thread(f, q):

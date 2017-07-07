@@ -33,6 +33,7 @@
 ###############################################################################
 
 import os
+import os.path
 import sys
 
 sys.path.append( '../pymod' )
@@ -43,6 +44,39 @@ import webserver
 
 from osgeo import gdal
 from osgeo import ogr
+
+
+###############################################################################
+
+def compare_ogrinfo_output(gmlfile, reffile, options = ''):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    tmpfilename = 'tmp/' + os.path.basename(gmlfile) + '.txt'
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() +
+        ' -ro -al GMLAS:' + gmlfile +
+        ' -oo EXPOSE_METADATA_LAYERS=YES '+
+        '-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES '+
+        '-oo @EXPOSE_SCHEMAS_NAME_IN_METADATA=NO ' +
+        '-oo @EXPOSE_CONFIGURATION_IN_METADATA=NO' + ' ' + options,
+        encoding = 'utf-8')
+    ret = ret.replace('\r\n', '\n')
+    ret = ret.replace('data\\', 'data/') # Windows
+    expected = open(reffile, 'rb').read().decode('utf-8')
+    expected = expected.replace('\r\n', '\n')
+    if ret != expected:
+        gdaltest.post_reason('fail')
+        print('Got:')
+        print(ret)
+        open(tmpfilename, 'wb').write(ret.encode('utf-8'))
+        print('Diff:')
+        os.system('diff -u ' + reffile + ' ' + tmpfilename)
+        #os.unlink(tmpfilename)
+        return 'fail'
+    return 'success'
 
 ###############################################################################
 # Basic test
@@ -70,30 +104,9 @@ def ogr_gmlas_basic():
        print('Skipping because of -sanitize')
        return 'skip'
 
-    import test_cli_utilities
+    return compare_ogrinfo_output('data/gmlas_test1.xml',
+                                  'data/gmlas_test1.txt')
 
-    if test_cli_utilities.get_ogrinfo_path() is None:
-        return 'skip'
-
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() +
-        ' -ro -al GMLAS:data/gmlas_test1.xml '+
-        '-oo EXPOSE_METADATA_LAYERS=YES '+
-        '-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES '+
-        '-oo @EXPOSE_SCHEMAS_NAME_IN_METADATA=NO ' +
-        '-oo @EXPOSE_CONFIGURATION_IN_METADATA=NO')
-    ret = ret.replace('\r\n', '\n')
-    expected = open('data/gmlas_test1.txt', 'rb').read().decode('utf-8')
-    expected = expected.replace('\r\n', '\n')
-    ret = ret.replace('data\\', 'data/') # Windows
-    if ret != expected:
-        gdaltest.post_reason('fail')
-        print('Got:')
-        print(ret)
-        open('tmp/ogr_gmlas_1.txt', 'wb').write(ret.encode('utf-8'))
-        print('Diff:')
-        os.system('diff -u data/gmlas_test1.txt tmp/ogr_gmlas_1.txt')
-        #os.unlink('tmp/ogr_gmlas_1.txt')
-        return 'fail'
 
     return 'success'
 
@@ -4474,6 +4487,26 @@ def ogr_gmlas_any_field_at_end_of_declaration():
     return 'success'
 
 ###############################################################################
+def ogr_gmlas_extra_piezometre():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    return compare_ogrinfo_output('data/gmlas/real_world/Piezometre.06512X0037.STREMY.2.gml',
+                                  'data/gmlas/real_world/output/Piezometre.06512X0037.STREMY.2.txt',
+                                  options = '-oo REMOVE_UNUSED_LAYERS=YES')
+
+###############################################################################
+def ogr_gmlas_extra_eureg():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    return compare_ogrinfo_output('data/gmlas/real_world/EUReg.example.gml',
+                                  'data/gmlas/real_world/output/EUReg.example.txt',
+                                  options = '-oo REMOVE_UNUSED_LAYERS=YES')
+
+###############################################################################
 #  Cleanup
 
 def ogr_gmlas_cleanup():
@@ -4548,10 +4581,16 @@ gdaltest_list = [
 
 # gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_any_field_at_end_of_declaration, ogr_gmlas_cleanup ]
 
+# Test only work if using "python ogr_gmlas.py"
+gdaltest_extra_list = [
+    ogr_gmlas_extra_piezometre,
+    ogr_gmlas_extra_eureg
+]
+
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'ogr_gmlas' )
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests( gdaltest_list + gdaltest_extra_list )
 
     gdaltest.summarize()

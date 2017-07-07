@@ -113,7 +113,7 @@ def spawn_async(cmd):
 def wait_process(process):
     process.wait()
 
-def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False):
+def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False, encoding='latin1'):
     command = shlex.split(cmd)
     if strin is None:
         p = subprocess.Popen(command, stdout=subprocess.PIPE)
@@ -127,13 +127,13 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
             ret = ''
             ret_stdout = p.stdout
             while True:
-                c = ret_stdout.read(1).decode('latin1')
+                c = ret_stdout.read(1).decode(encoding)
                 if c == '':
                     break
                 ret = ret + c
                 sys.stdout.write(c)
         else:
-            ret = p.stdout.read().decode('latin1')
+            ret = p.stdout.read().decode(encoding)
         p.stdout.close()
     else:
         ret = ''
