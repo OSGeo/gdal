@@ -4287,6 +4287,8 @@ def ogr_gmlas_swe_datarecord():
             <xs:element name="value" type="xs:string"/>
         </xs:sequence>
         <xs:attribute name="definition" type="xs:string"/>
+        <!-- attribute optional is ignored in the default configuration -->
+        <xs:attribute name="optional" type="xs:boolean" default="false" use="optional"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -4378,6 +4380,13 @@ def ogr_gmlas_swe_datarecord():
     <xs:attribute ref="xlink:href"/>
 </xs:attributeGroup>
 </xs:schema>""")
+
+    gdal.ErrorReset()
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_swe_datarecord.xml', open_options = ['VALIDATE=YES'])
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
 
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_swe_datarecord.xml')
     lyr = ds.GetLayerByName('main_elt_foo')
@@ -4479,7 +4488,7 @@ gdaltest_list = [
     ogr_gmlas_swe_datarecord,
     ogr_gmlas_cleanup ]
 
-# gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_swe_dataarray, ogr_gmlas_cleanup ]
+# gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_swe_datarecord, ogr_gmlas_cleanup ]
 
 if __name__ == '__main__':
 
