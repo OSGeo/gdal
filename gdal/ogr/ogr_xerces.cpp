@@ -262,7 +262,7 @@ XMLSize_t OGRXercesBinInputStream::readBytes(XMLByte* const toFill,
     if( bFirstCallToReadBytes && nRead > 10 )
     {
         // Workaround leak in Xerces-C when parsing an invalid encoding
-        // attribute and there are newline characters between <?xml and
+        // attribute and there are newline or tab characters between <?xml and
         // version="1.0". So replace those newlines by equivalent spaces....
         // See https://issues.apache.org/jira/browse/XERCESC-2094
         XMLSize_t nToSkip = 0;
@@ -274,7 +274,7 @@ XMLSize_t OGRXercesBinInputStream::readBytes(XMLByte* const toFill,
         {
             for( XMLSize_t i = nToSkip; i < nRead; i++ )
             {
-                if( toFill[i] == 0xD || toFill[i] == 0xA )
+                if( toFill[i] == 0xD || toFill[i] == 0xA || toFill[i] == 0x9 )
                     toFill[i] = ' ';
                 else
                     break;
