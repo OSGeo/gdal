@@ -903,6 +903,11 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
          gds += 2;
          if (gridType == GB1S2_GAUSSIAN_LATLON) {
             int np = GRIB_UNSIGN_INT2 (*gds, gds[1]); /* parallels between a pole and the equator */
+            if( np == 0 )
+            {
+                errSprintf ("Invalid Gaussian LatLon\n" );
+                return -1;
+            }
             gdsMeta->Dy = 90.0 / np;
          } else
             gdsMeta->Dy = GRIB_UNSIGN_INT2 (*gds, gds[1]) * unit;
