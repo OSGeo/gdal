@@ -1826,6 +1826,8 @@ void GMLASReader::ProcessAttributes(const Attributes& attrs)
             osAttrXPath += osAttrLocalname;
         }
 
+        //CPLDebug("GMLAS", "Attr %s=%s", osAttrXPath.c_str(), osAttrValue.c_str());
+
         const int nAttrIdx = m_oCurCtxt.m_poLayer->
                                     GetOGRFieldIndexFromXPath(osAttrXPath);
         int nFCIdx;
@@ -1909,6 +1911,17 @@ void GMLASReader::ProcessAttributes(const Attributes& attrs)
                         GetFields()[nFCIdx].GetFixedValue().empty() )
             {
                 // In validation mode, fixed attributes not present in the
+                // document are still reported, which cause spurious warnings
+            }
+            else if( m_bValidate &&
+                     (nFCIdx = m_oCurCtxt.m_poLayer->
+                        GetFCFieldIndexFromXPath(osAttrXPath)) >= 0 &&
+                     !m_oCurCtxt.m_poLayer->GetFeatureClass().
+                        GetFields()[nFCIdx].GetDefaultValue().empty() &&
+                     m_oCurCtxt.m_poLayer->GetFeatureClass().
+                        GetFields()[nFCIdx].GetDefaultValue() == m_osAttrValue )
+            {
+                // In validation mode, default attributes not present in the
                 // document are still reported, which cause spurious warnings
             }
             else if( m_oIgnoredXPathMatcher.MatchesRefXPath(
