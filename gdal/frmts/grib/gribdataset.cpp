@@ -154,7 +154,8 @@ void GRIBRasterBand::FindPDSTemplate()
         memcpy(&nSectSize, abyHead, 4);
         CPL_MSBPTR32(&nSectSize);
 
-        if( VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0 ||
+        if( nSectSize < 5 ||
+            VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0 ||
             VSIFReadL(abyHead, 5, 1, poGDS->fp) != 1 )
             break;
     }
@@ -163,35 +164,38 @@ void GRIBRasterBand::FindPDSTemplate()
     {
         memcpy(&nSectSize, abyHead, 4);
         CPL_MSBPTR32(&nSectSize);
-
-        GByte *pabyBody = static_cast<GByte *>(CPLMalloc(nSectSize - 5));
-        VSIFReadL(pabyBody, 1, nSectSize - 5, poGDS->fp);
-
-        GUInt16 nCoordCount = 0;
-        memcpy(&nCoordCount, pabyBody + 5 - 5, 2);
-        CPL_MSBPTR16(&nCoordCount);
-
-        GUInt16 nPDTN = 0;
-        memcpy(&nPDTN, pabyBody + 7 - 5, 2);
-        CPL_MSBPTR16(&nPDTN);
-
-        SetMetadataItem("GRIB_PDS_PDTN", CPLString().Printf("%d", nPDTN));
-
-        CPLString osOctet;
-        for( int i = 9; i < static_cast<int>(nSectSize); i++ )
+        if( nSectSize >= 9 &&
+            nSectSize <= 100000  /* arbitrary upper limit */ )
         {
-            char szByte[10] = { '\0' };
+            GByte *pabyBody = static_cast<GByte *>(CPLMalloc(nSectSize - 5));
+            VSIFReadL(pabyBody, 1, nSectSize - 5, poGDS->fp);
 
-            if( i == 9 )
-                snprintf(szByte, sizeof(szByte), "%d", pabyBody[i - 5]);
-            else
-                snprintf(szByte, sizeof(szByte), " %d", pabyBody[i - 5]);
-            osOctet += szByte;
+            GUInt16 nCoordCount = 0;
+            memcpy(&nCoordCount, pabyBody + 5 - 5, 2);
+            CPL_MSBPTR16(&nCoordCount);
+
+            GUInt16 nPDTN = 0;
+            memcpy(&nPDTN, pabyBody + 7 - 5, 2);
+            CPL_MSBPTR16(&nPDTN);
+
+            SetMetadataItem("GRIB_PDS_PDTN", CPLString().Printf("%d", nPDTN));
+
+            CPLString osOctet;
+            for( int i = 9; i < static_cast<int>(nSectSize); i++ )
+            {
+                char szByte[10] = { '\0' };
+
+                if( i == 9 )
+                    snprintf(szByte, sizeof(szByte), "%d", pabyBody[i - 5]);
+                else
+                    snprintf(szByte, sizeof(szByte), " %d", pabyBody[i - 5]);
+                osOctet += szByte;
+            }
+
+            SetMetadataItem("GRIB_PDS_TEMPLATE_NUMBERS", osOctet);
+
+            CPLFree(pabyBody);
         }
-
-        SetMetadataItem("GRIB_PDS_TEMPLATE_NUMBERS", osOctet);
-
-        CPLFree(pabyBody);
     }
 
     VSIFSeekL(poGDS->fp, nOffset, SEEK_SET);
