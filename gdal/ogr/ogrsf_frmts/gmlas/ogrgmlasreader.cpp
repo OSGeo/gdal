@@ -1411,6 +1411,20 @@ void GMLASReader::startElement(
             /* in swe:extension */
             idx = m_oCurCtxt.m_poLayer->GetOGRFieldIndexFromXPath(
               m_oCurCtxt.m_poLayer->GetFeatureClass().GetXPath() + szMATCH_ALL);
+            if( idx >= 0 &&
+                m_oCurCtxt.m_poLayer->GetFeatureClass().GetFields().size() > 1 )
+            {
+                // But only match this wildcard field if it is the only child
+                // of the feature class, otherwise that is going to prevent
+                // matching regular fields
+                // Practical case  the <any processContents="lax" minOccurs="0" maxOccurs="unbounded">
+                // declaratin of
+                // http://schemas.earthresourceml.org/earthresourceml-lite/1.0/erml-lite.xsd 
+                // http://services.ga.gov.au/earthresource/ows?service=wfs&version=2.0.0&request=GetFeature&typenames=erl:CommodityResourceView&count=10
+                // FIXME: currently we will thus ignore those extra content
+                // See ogr_gmlas_any_field_at_end_of_declaration test case
+                idx = -1;
+            }
         }
 
         if( idx >= 0 || geom_idx >= 0 )
