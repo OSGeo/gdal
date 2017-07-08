@@ -6401,6 +6401,16 @@ int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
          * Copy data from poObjHdr
          *------------------------------------------------------------*/
         TABMAPObjMultiPoint *poMPointHdr = (TABMAPObjMultiPoint *)poObjHdr;
+ 
+        const GUInt32 nMinimumBytesForPoints =
+                        (bComprCoord ? 4 : 8) * poMPointHdr->m_nNumPoints;
+        if( nMinimumBytesForPoints > 1024 * 1024 && 
+            nMinimumBytesForPoints > poMapFile->GetFileSize() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too many points");
+            return -1;
+        }
 
         // MBR
         poMapFile->Int2Coordsys(poMPointHdr->m_nMinX, poMPointHdr->m_nMinY,
