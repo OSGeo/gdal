@@ -185,6 +185,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
     if( poRecord == NULL )
         return CE_Failure;
 
+    CPLErr eErr = CE_None;
     if( iColumn < nRasterXSize-1 )
     {
         GetFPPos( panColumnOffset+iColumn+1, NULL );
@@ -200,8 +201,14 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 
         for( int iPixel = 0; iPixel < nRasterYSize; iPixel++ )
         {
+            const char* pszValue = poRecord->GetField(84+iPixel*4,87+iPixel*4);
+            if( pszValue[0] == '\0' || pszValue[0] == ' ' )
+            {
+                eErr = CE_Failure;
+                break;
+            }
             pafElev[iPixel] = (float) (dfVOffset + dfVScale *
-                atoi(poRecord->GetField(84+iPixel*4,87+iPixel*4)));
+                atoi(pszValue));
         }
     }
 
@@ -212,14 +219,19 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
     {
         for( int iPixel = 0; iPixel < nRasterYSize; iPixel++ )
         {
-            pafElev[iPixel] = (float)
-           (atoi(poRecord->GetField(19+iPixel*5,23+iPixel*5)) * GetZMult());
+            const char* pszValue = poRecord->GetField(19+iPixel*5,23+iPixel*5);
+            if( pszValue[0] == '\0' || pszValue[0] == ' ' )
+            {
+                eErr = CE_Failure;
+                break;
+            }
+            pafElev[iPixel] = (float)(atoi(pszValue) * GetZMult());
         }
     }
 
     delete poRecord;
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
