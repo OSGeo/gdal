@@ -2211,7 +2211,10 @@ int TABCollection::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             pszLine++;  // skip leading spaces
 
         if (*pszLine == '\0')
+        {
+            pszLine = fp->GetLastLine();
             continue;  // Skip blank lines
+        }
 
         if (STARTS_WITH_CI(pszLine, "REGION"))
         {
