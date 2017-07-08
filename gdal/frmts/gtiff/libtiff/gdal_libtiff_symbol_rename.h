@@ -520,6 +520,7 @@
 #define _TIFFReadEncodedStripAndAllocBuffer gdal__TIFFReadEncodedStripAndAllocBuffer
 #define TIFFReadEncodedStripGetStripSize gdal_TIFFReadEncodedStripGetStripSize
 #define TIFFReadEncodedTile gdal_TIFFReadEncodedTile
+#define _TIFFReadEncodedTileAndAllocBuffer gdal__TIFFReadEncodedTileAndAllocBuffer
 #define TIFFReadEXIFDirectory gdal_TIFFReadEXIFDirectory
 #define _tiffReadProc gdal__tiffReadProc
 #define TIFFReadRawStrip gdal_TIFFReadRawStrip
@@ -535,6 +536,7 @@
 #define TIFFReadRGBATileExt gdal_TIFFReadRGBATileExt
 #define TIFFReadScanline gdal_TIFFReadScanline
 #define TIFFReadTile gdal_TIFFReadTile
+#define _TIFFReadTileAndAllocBuffer gdal__TIFFReadTileAndAllocBuffer
 #define TIFFReadUInt64 gdal_TIFFReadUInt64
 #define _TIFFrealloc gdal__TIFFrealloc
 #define TIFFRegisterCODEC gdal_TIFFRegisterCODEC
