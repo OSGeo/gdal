@@ -382,15 +382,15 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
             if ( idrstmpl[6] == 0 ) itemp=ndpts;        // no missing values
             else  itemp=non;
             for (n=2;n<itemp;n++) {
-               ifld[n]=ifld[n]+minsd;
-               if( ifld[n] > INT_MAX - ifld[n-1] ||
-                   ifld[n] + ifld[n-1] > INT_MAX - ifld[n-1] )
+               /* Lazy way of detecting int overflows: operate on double */
+               double tmp = (double)ifld[n]+(double)minsd+(2.0 * ifld[n-1])-ifld[n-2];
+               if( tmp > INT_MAX || tmp < INT_MIN )
                {
                    free(ifldmiss);
                    free(ifld);
                    return -1;
                }
-               ifld[n]=ifld[n]+(2*ifld[n-1])-ifld[n-2];
+               ifld[n]=(int)tmp;
             }
          }
       }
