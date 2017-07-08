@@ -13447,11 +13447,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /* -------------------------------------------------------------------- */
 #if defined(BIGTIFF_SUPPORT)
     uint64 nChunkSize = 0;
-    if( bTreatAsRGBA )
-    {
-        nChunkSize = 4 * static_cast<uint64>(nBlockXSize) * nBlockYSize;
-    }
-    else if( bTreatAsSplit || bTreatAsSplitBitmap )
+    if( bTreatAsSplit || bTreatAsSplitBitmap )
     {
         nChunkSize = TIFFScanlineSize64( hTIFF );
     }
@@ -13461,6 +13457,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             nChunkSize = TIFFTileSize64( hTIFF );
         else
             nChunkSize = TIFFStripSize64( hTIFF );
+    }
+    if( bTreatAsRGBA )
+    {
+        nChunkSize = std::max(nChunkSize,
+                        4 * static_cast<uint64>(nBlockXSize) * nBlockYSize);
     }
     if( nChunkSize > static_cast<uint64>(INT_MAX) )
     {
