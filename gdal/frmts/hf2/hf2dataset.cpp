@@ -1049,6 +1049,13 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
                     break;
 
                 float fIntRange = (fMaxVal - fMinVal) / fVertPres;
+                if( fIntRange > static_cast<float>(std::numeric_limits<int>::max()) )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "VERTICAL_PRECISION too small regarding actual range of values");
+                    eErr = CE_Failure;
+                    break;
+                }
                 float fScale = (fMinVal == fMaxVal) ? 1 : (fMaxVal - fMinVal) / fIntRange;
                 if( fScale == 0.0f )
                 {
@@ -1064,14 +1071,14 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
                 {
                     float fLastVal = ((float*)pTileBuffer)[(nReqYSize - k - 1) * nReqXSize + 0];
                     float fIntLastVal = (fLastVal - fOffset) / fScale;
-                    CPLAssert(fIntLastVal >= -2147483648.0f && fIntLastVal <= 2147483647.0f);
+                    CPLAssert(fIntLastVal <= static_cast<float>(std::numeric_limits<int>::max()));
                     int nLastVal = (int)fIntLastVal;
                     GByte nWordSize = 1;
                     for(int l=1;l<nReqXSize;l++)
                     {
                         float fVal = ((float*)pTileBuffer)[(nReqYSize - k - 1) * nReqXSize + l];
                         float fIntVal = (fVal - fOffset) / fScale;
-                        CPLAssert(fIntVal >= -2147483648.0f && fIntVal <= 2147483647.0f);
+                        CPLAssert(fIntVal <= static_cast<float>(std::numeric_limits<int>::max()));
                         const int nVal = (int)fIntVal;
                         const int nDiff = nVal - nLastVal;
                         CPLAssert((int)((GIntBig)nVal - nLastVal) == nDiff);
