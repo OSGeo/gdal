@@ -923,6 +923,19 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
       }
       nd5 = (gribLen + 3) / 4;
       if (nd5 > IS->ipackLen) {
+         if( gribLen > 100 * 1024 * 1024 )
+         {
+             long nCurPos = fp.DataSourceFtell();
+             fp.DataSourceFseek(0, SEEK_END);
+             long fileSize = fp.DataSourceFtell();
+             fp.DataSourceFseek(nCurPos, SEEK_SET);
+             if( (unsigned long)fileSize < (unsigned long)gribLen )
+             {
+                errSprintf("File too short");
+                free (buff);
+                return -1;
+             }
+         }
          sInt4* ipackNew = (sInt4 *) realloc ((void *) (IS->ipack),
                                               nd5 * sizeof (sInt4));
          if( ipackNew == NULL )
