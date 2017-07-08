@@ -1382,6 +1382,14 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
             CPLAddXMLAttributeAndValue(psBox, "data_length",
                                        CPLSPrintf(CPL_FRMT_GIB, nBoxDataLength ) );
 
+            if( nBoxDataLength > GINTBIG_MAX - oBox.GetDataOffset() )
+            {
+                CPLXMLNode* psLastChildBox = NULL;
+                AddError(psBox, psLastChildBox, "Invalid box_length");
+                break;
+            }
+
+            // Check large non-jp2c boxes against filesize
             if( strcmp(pszBoxType, "jp2c") != 0 && nBoxDataLength > 100 * 1024 )
             {
                 if( nFileOrParentBoxSize == 0 )
@@ -1391,7 +1399,8 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                 }
             }
             if( nFileOrParentBoxSize > 0 &&
-                oBox.GetDataOffset() + static_cast<vsi_l_offset>(nBoxDataLength) > nFileOrParentBoxSize )
+                (static_cast<vsi_l_offset>(oBox.GetDataOffset()) > nFileOrParentBoxSize ||
+                 static_cast<vsi_l_offset>(nBoxDataLength) > nFileOrParentBoxSize - oBox.GetDataOffset()) )
             {
                 CPLXMLNode* psLastChildBox = NULL;
                 AddError(psBox, psLastChildBox, "Invalid box_length");
