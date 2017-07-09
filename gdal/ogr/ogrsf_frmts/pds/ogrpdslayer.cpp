@@ -30,6 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_p.h"
+#include "cpl_safemaths.hpp"
 
 #include <algorithm>
 
@@ -343,10 +344,31 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
             else if (EQUAL(papszTokens[0], "ROW_BYTES"))
             {
                 nRowBytes = atoi(papszTokens[1]);
+                if( nRowBytes < 0 || nRowBytes > 10*1024*1024)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Invalid value of ROW_BYTES");
+                    break;
+                }
             }
             else if (EQUAL(papszTokens[0], "ROW_SUFFIX_BYTES"))
             {
-                nRowBytes += atoi(papszTokens[1]);
+                try
+                {
+                    nRowBytes = (CPLSM(nRowBytes) + CPLSM(atoi(papszTokens[1]))).v();
+                }
+                catch( const CPLSafeIntOverflow& )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Invalid value of ROW_SUFFIX_BYTES");
+                    break;
+                }
+                if( nRowBytes < 0 || nRowBytes > 10*1024*1024)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Invalid value of ROW_SUFFIX_BYTES");
+                    break;
+                }
             }
             else if (EQUAL(papszTokens[0], "OBJECT") &&
                      EQUAL(papszTokens[1], "COLUMN"))

@@ -335,7 +335,8 @@ int OGRPDSDataSource::Open( const char * pszFilename )
     CPLString osRecordBytes = oKeywords.GetKeyword( "RECORD_BYTES", "" );
     int nRecordSize = atoi(osRecordBytes);
     if (osRecordType.empty() || osFileRecords.empty() ||
-        osRecordBytes.empty() || nRecordSize <= 0)
+        osRecordBytes.empty() || nRecordSize <= 0 ||
+        nRecordSize > 10*1024*1024)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "One of RECORD_TYPE, FILE_RECORDS or RECORD_BYTES is missing");
