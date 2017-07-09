@@ -69,9 +69,9 @@ class OGROSMComputedAttribute
         std::vector<int> anIndexToBind;
         bool         bHardcodedZOrder;
 
-        OGROSMComputedAttribute() : nIndex(-1), eType(OFTString), hStmt(NULL) {}
+        OGROSMComputedAttribute() : nIndex(-1), eType(OFTString), hStmt(NULL), bHardcodedZOrder(false) {}
         explicit OGROSMComputedAttribute(const char* pszName) :
-                osName(pszName), nIndex(-1), eType(OFTString), hStmt(NULL) {}
+                osName(pszName), nIndex(-1), eType(OFTString), hStmt(NULL), bHardcodedZOrder(false) {}
 };
 
 /************************************************************************/
