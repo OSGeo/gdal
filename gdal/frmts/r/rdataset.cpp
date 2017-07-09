@@ -455,20 +455,29 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         else if( nObjCode % 256 == R_REALSXP )
         {
             int nCount = poDS->ReadInteger();
-            while( nCount-- > 0 && !VSIFEofL(poDS->fp) )
+            while( nCount > 0 && !VSIFEofL(poDS->fp) )
+            {
+                nCount --;
                 poDS->ReadFloat();
+            }
         }
         else if( nObjCode % 256 == R_INTSXP )
         {
             int nCount = poDS->ReadInteger();
-            while( nCount-- > 0 && !VSIFEofL(poDS->fp) )
+            while( nCount > 0 && !VSIFEofL(poDS->fp) )
+            {
+                nCount --;
                 poDS->ReadInteger();
+            }
         }
         else if( nObjCode % 256 == R_STRSXP )
         {
             int nCount = poDS->ReadInteger();
-            while( nCount-- > 0 && !VSIFEofL(poDS->fp) )
+            while( nCount > 0 && !VSIFEofL(poDS->fp) )
+            {
+                nCount --;
                 poDS->ReadString();
+            }
         }
         else if( nObjCode % 256 == R_CHARSXP )
         {
