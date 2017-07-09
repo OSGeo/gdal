@@ -870,26 +870,16 @@ def update_alpha_value_for_non_alpha_inputs(warped_vrt_dataset, options=None):
     not been forced by options
     """
     if warped_vrt_dataset.RasterCount in [1, 3]:
-        print("1")
         tempfilename = gettempfilename('-gdal2tiles.vrt')
-        print("2", tempfilename)
         warped_vrt_dataset.GetDriver().CreateCopy(tempfilename, warped_vrt_dataset)
-        print("3")
         with open(tempfilename) as f:
             orig_data = f.read()
-        # orig_data = open(tempfilename).read()
-        print("4", orig_data)
         alpha_data = add_alpha_band_to_string_vrt(orig_data)
-        print("5", alpha_data)
         with open(tempfilename, 'w') as f:
             f.write(alpha_data)
 
-        # open(tempfilename, "w").write(alpha_data)
-        print("6")
         warped_vrt_dataset = gdal.Open(tempfilename)
-        print("7")
         os.unlink(tempfilename)
-        print("8")
 
         if options and options.verbose:
             print("Modified -dstalpha warping result saved into 'tiles1.vrt'")
