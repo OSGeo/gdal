@@ -930,7 +930,7 @@ def gettempfilename(suffix):
     return tempfile.mktemp(suffix)
 
 
-def create_base_tiles(tile_job_info, queue):
+def create_base_tile(tile_job_info, tile_detail, queue=None):
     gdal.AllRegister()
 
     dataBandsCount = tile_job_info.nb_data_bands
@@ -945,86 +945,201 @@ def create_base_tiles(tile_job_info, queue):
     out_drv = gdal.GetDriverByName(tile_job_info.tile_driver)
     alphaband = ds.GetRasterBand(1).GetMaskBand()
 
-    for tile_info in tile_job_info.tile_details:
-        tx = tile_info['tx']
-        ty = tile_info['ty']
-        tz = tile_info['tz']
-        rx = tile_info['rx']
-        ry = tile_info['ry']
-        rxsize = tile_info['rxsize']
-        rysize = tile_info['rysize']
-        wx = tile_info['wx']
-        wy = tile_info['wy']
-        wxsize = tile_info['wxsize']
-        wysize = tile_info['wysize']
-        querysize = tile_info['querysize']
+    tx = tile_detail.tx
+    ty = tile_detail.ty
+    tz = tile_detail.tz
+    rx = tile_detail.rx
+    ry = tile_detail.ry
+    rxsize = tile_detail.rxsize
+    rysize = tile_detail.rysize
+    wx = tile_detail.wx
+    wy = tile_detail.wy
+    wxsize = tile_detail.wxsize
+    wysize = tile_detail.wysize
+    querysize = tile_detail.querysize
 
-        # Tile dataset in memory
-        tilefilename = os.path.join(
-            output, str(tz), str(tx), "%s.%s" % (ty, tileext))
-        dstile = mem_drv.Create('', tilesize, tilesize, tilebands)
+    # Tile dataset in memory
+    tilefilename = os.path.join(
+        output, str(tz), str(tx), "%s.%s" % (ty, tileext))
+    dstile = mem_drv.Create('', tilesize, tilesize, tilebands)
 
-        data = alpha = None
+    data = alpha = None
 
-        if options.verbose:
-            print("\tReadRaster Extent: ",
-                  (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize))
+    if options.verbose:
+        print("\tReadRaster Extent: ",
+              (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize))
 
-        # Query is in 'nearest neighbour' but can be bigger in then the tilesize
-        # We scale down the query to the tilesize by supplied algorithm.
+    # Query is in 'nearest neighbour' but can be bigger in then the tilesize
+    # We scale down the query to the tilesize by supplied algorithm.
 
-        if rxsize != 0 and rysize != 0 and wxsize != 0 and wysize != 0:
-            data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize,
-                                 band_list=list(range(1, dataBandsCount+1)))
-            alpha = alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
+    if rxsize != 0 and rysize != 0 and wxsize != 0 and wysize != 0:
+        data = ds.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize,
+                             band_list=list(range(1, dataBandsCount+1)))
+        alpha = alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
 
-        # The tile in memory is a transparent file by default. Write pixel values into it if
-        # any
-        if data:
-            if tilesize == querysize:
-                # Use the ReadRaster result directly in tiles ('nearest neighbour' query)
-                dstile.WriteRaster(wx, wy, wxsize, wysize, data,
-                                   band_list=list(range(1, dataBandsCount+1)))
-                dstile.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
+    # The tile in memory is a transparent file by default. Write pixel values into it if
+    # any
+    if data:
+        if tilesize == querysize:
+            # Use the ReadRaster result directly in tiles ('nearest neighbour' query)
+            dstile.WriteRaster(wx, wy, wxsize, wysize, data,
+                               band_list=list(range(1, dataBandsCount+1)))
+            dstile.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
 
-                # Note: For source drivers based on WaveLet compression (JPEG2000, ECW,
-                # MrSID) the ReadRaster function returns high-quality raster (not ugly
-                # nearest neighbour)
-                # TODO: Use directly 'near' for WaveLet files
-            else:
-                # Big ReadRaster query in memory scaled to the tilesize - all but 'near'
-                # algo
-                dsquery = mem_drv.Create('', querysize, querysize, tilebands)
-                # TODO: fill the null value in case a tile without alpha is produced (now
-                # only png tiles are supported)
-                dsquery.WriteRaster(wx, wy, wxsize, wysize, data,
-                                    band_list=list(range(1, dataBandsCount+1)))
-                dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
+            # Note: For source drivers based on WaveLet compression (JPEG2000, ECW,
+            # MrSID) the ReadRaster function returns high-quality raster (not ugly
+            # nearest neighbour)
+            # TODO: Use directly 'near' for WaveLet files
+        else:
+            # Big ReadRaster query in memory scaled to the tilesize - all but 'near'
+            # algo
+            dsquery = mem_drv.Create('', querysize, querysize, tilebands)
+            # TODO: fill the null value in case a tile without alpha is produced (now
+            # only png tiles are supported)
+            dsquery.WriteRaster(wx, wy, wxsize, wysize, data,
+                                band_list=list(range(1, dataBandsCount+1)))
+            dsquery.WriteRaster(wx, wy, wxsize, wysize, alpha, band_list=[tilebands])
 
-                scale_query_to_tile(dsquery, dstile, tile_job_info.tile_driver, options,
-                                    tilefilename=tilefilename)
-                del dsquery
+            scale_query_to_tile(dsquery, dstile, tile_job_info.tile_driver, options,
+                                tilefilename=tilefilename)
+            del dsquery
 
-        del data
+    del data
 
-        if options.resampling != 'antialias':
-            # Write a copy of tile to png/jpg
-            out_drv.CreateCopy(tilefilename, dstile, strict=0)
+    if options.resampling != 'antialias':
+        # Write a copy of tile to png/jpg
+        out_drv.CreateCopy(tilefilename, dstile, strict=0)
 
-        del dstile
+    del dstile
 
-        # Create a KML file for this tile.
-        if tile_job_info.kml:
-            kmlfilename = os.path.join(output, str(tz), str(tx), '%d.kml' % ty)
-            if not options.resume or not os.path.exists(kmlfilename):
-                f = open(kmlfilename, 'wb')
-                f.write(generate_kml(
-                    tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
-                    tile_job_info.tile_swne, tile_job_info.options
-                ).encode('utf-8'))
-                f.close()
+    # Create a KML file for this tile.
+    if tile_job_info.kml:
+        kmlfilename = os.path.join(output, str(tz), str(tx), '%d.kml' % ty)
+        if not options.resume or not os.path.exists(kmlfilename):
+            f = open(kmlfilename, 'wb')
+            f.write(generate_kml(
+                tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
+                tile_job_info.tile_swne, tile_job_info.options
+            ).encode('utf-8'))
+            f.close()
 
+    if queue:
         queue.put("tile %s %s %s" % (tx, ty, tz))
+
+
+def create_overview_tiles(tile_job_info, output_folder, options):
+    """Generation of the overview tiles (higher in the pyramid) based on existing tiles"""
+    mem_driver = gdal.GetDriverByName('MEM')
+    tile_driver = tile_job_info.tile_driver
+    out_driver = gdal.GetDriverByName(tile_driver)
+
+    if not options.quiet:
+        print("Generating Overview Tiles:")
+
+    tilebands = tile_job_info.nb_data_bands + 1
+
+    # Usage of existing tiles: from 4 underlying tiles generate one as overview.
+
+    tcount = 0
+    for tz in range(tile_job_info.tmaxz - 1, tile_job_info.tminz - 1, -1):
+        tminx, tminy, tmaxx, tmaxy = tile_job_info.tminmax[tz]
+        tcount += (1 + abs(tmaxx-tminx)) * (1 + abs(tmaxy-tminy))
+
+    ti = 0
+
+    progress_bar = ProgressBar(tcount)
+    progress_bar.start()
+
+    for tz in range(tile_job_info.tmaxz - 1, tile_job_info.tminz - 1, -1):
+        tminx, tminy, tmaxx, tmaxy = tile_job_info.tminmax[tz]
+        for ty in range(tmaxy, tminy - 1, -1):
+            for tx in range(tminx, tmaxx + 1):
+
+                ti += 1
+                tilefilename = os.path.join(output_folder,
+                                            str(tz),
+                                            str(tx),
+                                            "%s.%s" % (ty, tile_job_info.tile_extension))
+
+                if options.verbose:
+                    print(ti, '/', tcount, tilefilename)
+
+                if options.resume and os.path.exists(tilefilename):
+                    if options.verbose:
+                        print("Tile generation skipped because of --resume")
+                    else:
+                        progress_bar.log_progress()
+                    continue
+
+                # Create directories for the tile
+                if not os.path.exists(os.path.dirname(tilefilename)):
+                    os.makedirs(os.path.dirname(tilefilename))
+
+                dsquery = mem_driver.Create('', 2 * tile_job_info.tile_size,
+                                            2 * tile_job_info.tile_size, tilebands)
+                # TODO: fill the null value
+                dstile = mem_driver.Create('', tile_job_info.tile_size, tile_job_info.tile_size,
+                                           tilebands)
+
+                # TODO: Implement more clever walking on the tiles with cache functionality
+                # probably walk should start with reading of four tiles from top left corner
+                # Hilbert curve
+
+                children = []
+                # Read the tiles and write them to query window
+                for y in range(2 * ty, 2 * ty + 2):
+                    for x in range(2 * tx, 2 * tx + 2):
+                        minx, miny, maxx, maxy = tile_job_info.tminmax[tz + 1]
+                        if x >= minx and x <= maxx and y >= miny and y <= maxy:
+                            dsquerytile = gdal.Open(
+                                os.path.join(output_folder, str(tz + 1), str(x),
+                                             "%s.%s" % (y, tile_job_info.tile_extension)),
+                                gdal.GA_ReadOnly)
+                            if (ty == 0 and y == 1) or (ty != 0 and (y % (2 * ty)) != 0):
+                                tileposy = 0
+                            else:
+                                tileposy = tile_job_info.tile_size
+                            if tx:
+                                tileposx = x % (2 * tx) * tile_job_info.tile_size
+                            elif tx == 0 and x == 1:
+                                tileposx = tile_job_info.tile_size
+                            else:
+                                tileposx = 0
+                            dsquery.WriteRaster(
+                                tileposx, tileposy, tile_job_info.tile_size,
+                                tile_job_info.tile_size,
+                                dsquerytile.ReadRaster(0, 0,
+                                                       tile_job_info.tile_size,
+                                                       tile_job_info.tile_size),
+                                band_list=list(range(1, tilebands + 1)))
+                            children.append([x, y, tz + 1])
+
+                scale_query_to_tile(dsquery, dstile, tile_driver, options,
+                                    tilefilename=tilefilename)
+                # Write a copy of tile to png/jpg
+                if options.resampling != 'antialias':
+                    # Write a copy of tile to png/jpg
+                    out_driver.CreateCopy(tilefilename, dstile, strict=0)
+
+                if options.verbose:
+                    print("\tbuild from zoom", tz + 1,
+                          " tiles:", (2 * tx, 2 * ty), (2 * tx + 1, 2 * ty),
+                          (2 * tx, 2 * ty + 1), (2 * tx + 1, 2 * ty + 1))
+
+                # Create a KML file for this tile.
+                if tile_job_info.kml:
+                    f = open(os.path.join(
+                        output_folder,
+                        '%d/%d/%d.kml' % (tz, tx, ty)
+                    ), 'wb')
+                    f.write(generate_kml(
+                        tx, ty, tz, tile_job_info.tile_extension, tile_job_info.tile_size,
+                        get_tile_swne(tile_job_info, options), options, children
+                    ).encode('utf-8'))
+                    f.close()
+
+                if not options.verbose and not options.quiet:
+                    progress_bar.log_progress()
 
 
 def optparse_init():
@@ -1188,11 +1303,39 @@ def options_post_processing(options, input_file, output_folder):
     return options
 
 
+class TileDetail(object):
+    tx = 0
+    ty = 0
+    tz = 0
+    rx = 0
+    ry = 0
+    rxsize = 0
+    rysize = 0
+    wx = 0
+    wy = 0
+    wxsize = 0
+    wysize = 0
+    querysize = 0
+
+    def __init__(self, **kwargs):
+        for key in kwargs:
+            if hasattr(self, key):
+                setattr(self, key, kwargs[key])
+
+    def __unicode__(self):
+        return "TileDetail %s\n%s\n%s\n" % (self.tx, self.ty, self.tz)
+
+    def __str__(self):
+        return "TileDetail %s\n%s\n%s\n" % (self.tx, self.ty, self.tz)
+
+    def __repr__(self):
+        return "TileDetail %s\n%s\n%s\n" % (self.tx, self.ty, self.tz)
+
+
 class TileJobInfo(object):
     """
     Plain object to hold tile job configuration for a dataset
     """
-    tile_details = []
     src_file = ""
     nb_data_bands = 0
     output_file_path = ""
@@ -1200,6 +1343,13 @@ class TileJobInfo(object):
     tile_size = 0
     tile_driver = None
     kml = False
+    tminmax = []
+    tminz = 0
+    tmaxz = 0
+    in_srs_wkt = 0
+    out_geo_trans = []
+    ominy = 0
+    is_epsg_4326 = False
     options = None
 
     def __init__(self, **kwargs):
@@ -1208,13 +1358,13 @@ class TileJobInfo(object):
                 setattr(self, key, kwargs[key])
 
     def __unicode__(self):
-        return "TileJobInfo %s\n%s\n" % (self.tile_details, self.options)
+        return "TileJobInfo %s\n" % (self.src_file)
 
     def __str__(self):
-        return "TileJobInfo %s\n%s\n" % (self.tile_details, self.options)
+        return "TileJobInfo %s\n" % (self.src_file)
 
     def __repr__(self):
-        return "TileJobInfo %s\n%s\n" % (self.tile_details, self.options)
+        return "TileJobInfo %s\n" % (self.src_file)
 
 
 class Gdal2TilesError(Exception):
@@ -1222,29 +1372,6 @@ class Gdal2TilesError(Exception):
 
 
 class GDAL2Tiles(object):
-
-    def process(self):
-        """The main processing function, runs all the main steps of processing"""
-
-        # Opening and preprocessing of the input file
-        self.open_input()
-
-        # Generation of main metadata files and HTML viewers
-        self.generate_metadata()
-
-        # Generation of the lowest tiles
-        self.generate_base_tiles()
-
-        # Generation of the overview tiles (higher in the pyramid)
-        self.generate_overview_tiles()
-
-    def progressbar(self, complete=0.0):
-        """Print progressbar for float value 0..1"""
-        gdal.TermProgress_nocb(complete)
-
-    def stop(self):
-        """Stop the rendering immediately"""
-        self.stopped = True
 
     def __init__(self, input_file, output_folder, options):
         """Constructor function - initialization"""
@@ -1268,7 +1395,6 @@ class GDAL2Tiles(object):
         self.omaxy = None
         self.ominy = None
 
-        self.stopped = False
         self.input_file = None
         self.output_folder = None
 
@@ -1371,7 +1497,7 @@ class GDAL2Tiles(object):
                                                self.input_dataset.RasterYSize,
                                                self.input_dataset.RasterCount))
 
-        in_srs, in_srs_wkt = setup_input_srs(self.input_dataset, self.options)
+        in_srs, self.in_srs_wkt = setup_input_srs(self.input_dataset, self.options)
 
         self.out_srs = setup_output_srs(in_srs, self.options)
 
@@ -1423,12 +1549,12 @@ class GDAL2Tiles(object):
         self.dataBandsCount = nb_data_bands(self.warped_input_dataset)
 
         # KML test
-        isepsg4326 = False
+        self.isepsg4326 = False
         srs4326 = osr.SpatialReference()
         srs4326.ImportFromEPSG(4326)
         if self.out_srs and srs4326.ExportToProj4() == self.out_srs.ExportToProj4():
             self.kml = True
-            isepsg4326 = True
+            self.isepsg4326 = True
             if self.options.verbose:
                 print("KML autotest OK!")
 
@@ -1566,7 +1692,7 @@ class GDAL2Tiles(object):
                 self.tminmax[tz] = (tminx, tminy, tmaxx, tmaxy)
 
             # Function which generates SWNE in LatLong for given tile
-            if self.kml and in_srs_wkt:
+            if self.kml and self.in_srs_wkt:
                 ct = osr.CoordinateTransformation(in_srs, srs4326)
 
                 def rastertileswne(x, y, z):
@@ -1716,8 +1842,6 @@ class GDAL2Tiles(object):
         for ty in range(tmaxy, tminy-1, -1):
             for tx in range(tminx, tmaxx+1):
 
-                if self.stopped:
-                    break
                 ti += 1
                 tilefilename = os.path.join(
                     self.output_folder, str(tz), str(tx), "%s.%s" % (ty, self.tileext))
@@ -1727,8 +1851,6 @@ class GDAL2Tiles(object):
                 if self.options.resume and os.path.exists(tilefilename):
                     if self.options.verbose:
                         print("Tile generation skipped because of --resume")
-                    else:
-                        self.progressbar(ti / float(tcount))
                     continue
 
                 # Create directories for the tile
@@ -1788,143 +1910,32 @@ class GDAL2Tiles(object):
 
                 # Read the source raster if anything is going inside the tile as per the computed
                 # geo_query
-                tile_details.append({
-                    "tx": tx,
-                    "ty": ty,
-                    "tz": tz,
-                    "rx": rx,
-                    "ry": ry,
-                    "rxsize": rxsize,
-                    "rysize": rysize,
-                    "wx": wx,
-                    "wy": wy,
-                    "wxsize": wxsize,
-                    "wysize": wysize,
-                    "querysize": querysize,
-                })
+                tile_details.append(
+                    TileDetail(
+                        tx=tx, ty=ty, tz=tz, rx=rx, ry=ry, rxsize=rxsize, rysize=rysize, wx=wx,
+                        wy=wy, wxsize=wxsize, wysize=wysize, querysize=querysize,
+                    )
+                )
 
-        confs = [
-            TileJobInfo(
-                tile_details=[tile],
-                src_file=self.temp_vrt,
-                nb_data_bands=self.dataBandsCount,
-                output_file_path=self.output_folder,
-                tile_extension=self.tileext,
-                tile_driver=self.tiledriver,
-                tile_size=self.tilesize,
-                kml=self.kml,
-                options=self.options,
-            )
-            for tile in tile_details
-        ]
+        conf = TileJobInfo(
+            src_file=self.temp_vrt,
+            nb_data_bands=self.dataBandsCount,
+            output_file_path=self.output_folder,
+            tile_extension=self.tileext,
+            tile_driver=self.tiledriver,
+            tile_size=self.tilesize,
+            kml=self.kml,
+            tminmax=self.tminmax,
+            tminz=self.tminz,
+            tmaxz=self.tmaxz,
+            in_srs_wkt=self.in_srs_wkt,
+            out_geo_trans=self.out_gt,
+            ominy=self.ominy,
+            is_epsg_4326=self.isepsg4326,
+            options=self.options,
+        )
 
-        return confs
-
-    def generate_overview_tiles(self):
-        """Generation of the overview tiles (higher in the pyramid) based on existing tiles"""
-
-        if not self.options.quiet:
-            print("Generating Overview Tiles:")
-
-        tilebands = self.dataBandsCount + 1
-
-        # Usage of existing tiles: from 4 underlying tiles generate one as overview.
-
-        tcount = 0
-        for tz in range(self.tmaxz-1, self.tminz-1, -1):
-            tminx, tminy, tmaxx, tmaxy = self.tminmax[tz]
-            tcount += (1+abs(tmaxx-tminx)) * (1+abs(tmaxy-tminy))
-
-        ti = 0
-
-        for tz in range(self.tmaxz-1, self.tminz-1, -1):
-            tminx, tminy, tmaxx, tmaxy = self.tminmax[tz]
-            for ty in range(tmaxy, tminy-1, -1):
-                for tx in range(tminx, tmaxx+1):
-
-                    if self.stopped:
-                        break
-
-                    ti += 1
-                    tilefilename = os.path.join(self.output_folder,
-                                                str(tz),
-                                                str(tx),
-                                                "%s.%s" % (ty, self.tileext))
-
-                    if self.options.verbose:
-                        print(ti, '/', tcount, tilefilename)
-
-                    if self.options.resume and os.path.exists(tilefilename):
-                        if self.options.verbose:
-                            print("Tile generation skipped because of --resume")
-                        else:
-                            self.progressbar(ti / float(tcount))
-                        continue
-
-                    # Create directories for the tile
-                    if not os.path.exists(os.path.dirname(tilefilename)):
-                        os.makedirs(os.path.dirname(tilefilename))
-
-                    dsquery = self.mem_drv.Create('', 2*self.tilesize, 2*self.tilesize, tilebands)
-                    # TODO: fill the null value
-                    dstile = self.mem_drv.Create('', self.tilesize, self.tilesize, tilebands)
-
-                    # TODO: Implement more clever walking on the tiles with cache functionality
-                    # probably walk should start with reading of four tiles from top left corner
-                    # Hilbert curve
-
-                    children = []
-                    # Read the tiles and write them to query window
-                    for y in range(2*ty, 2*ty+2):
-                        for x in range(2*tx, 2*tx+2):
-                            minx, miny, maxx, maxy = self.tminmax[tz+1]
-                            if x >= minx and x <= maxx and y >= miny and y <= maxy:
-                                dsquerytile = gdal.Open(
-                                    os.path.join(self.output_folder, str(tz+1), str(x),
-                                                 "%s.%s" % (y, self.tileext)),
-                                    gdal.GA_ReadOnly)
-                                if (ty == 0 and y == 1) or (ty != 0 and (y % (2*ty)) != 0):
-                                    tileposy = 0
-                                else:
-                                    tileposy = self.tilesize
-                                if tx:
-                                    tileposx = x % (2*tx) * self.tilesize
-                                elif tx == 0 and x == 1:
-                                    tileposx = self.tilesize
-                                else:
-                                    tileposx = 0
-                                dsquery.WriteRaster(
-                                    tileposx, tileposy, self.tilesize, self.tilesize,
-                                    dsquerytile.ReadRaster(0, 0, self.tilesize, self.tilesize),
-                                    band_list=list(range(1, tilebands+1)))
-                                children.append([x, y, tz+1])
-
-                    scale_query_to_tile(dsquery, dstile, self.tiledriver, self.options,
-                                        tilefilename=tilefilename)
-                    # Write a copy of tile to png/jpg
-                    if self.options.resampling != 'antialias':
-                        # Write a copy of tile to png/jpg
-                        self.out_drv.CreateCopy(tilefilename, dstile, strict=0)
-
-                    if self.options.verbose:
-                        print("\tbuild from zoom", tz+1,
-                              " tiles:", (2*tx, 2*ty), (2*tx+1, 2*ty),
-                              (2*tx, 2*ty+1), (2*tx+1, 2*ty+1))
-
-                    # Create a KML file for this tile.
-                    if self.kml:
-                        f = open(os.path.join(
-                            self.output_folder,
-                            '%d/%d/%d.kml' % (tz, tx, ty)
-                        ), 'wb')
-                        f.write(generate_kml(
-                            tx, ty, tz, self.tileext, self.tilesize, self.tileswne, self.options,
-                            children
-                        ).encode('utf-8'))
-                        f.close()
-
-                    if not self.options.verbose and not self.options.quiet:
-                        self.progressbar(ti / float(tcount))
+        return conf, tile_details
 
     def geo_query(self, ds, ulx, uly, lrx, lry, querysize=0):
         """
@@ -2771,15 +2782,19 @@ class GDAL2Tiles(object):
         return s
 
 
-def worker_tile_details(send_pipe, input_file, output_folder, options):
+def worker_tile_details(input_file, output_folder, options, send_pipe=None):
     try:
         gdal2tiles = GDAL2Tiles(input_file, output_folder, options)
         gdal2tiles.open_input()
         gdal2tiles.generate_metadata()
-        tile_job_info = gdal2tiles.generate_base_tiles()
-        send_pipe.send(tile_job_info)
+        tile_job_info, tile_details = gdal2tiles.generate_base_tiles()
+        return_data = (tile_job_info, tile_details)
+        if send_pipe:
+            send_pipe.send(return_data)
+
+        return return_data
     except Exception as e:
-        print("Failed ", str(e))
+        print("worker_tile_details failed ", str(e))
 
 
 def progress_printer_thread(queue, nb_jobs):
@@ -2812,6 +2827,8 @@ class ProgressBar(object):
                     self.current_progress += self.STEP
                     if self.current_progress % 10 == 0:
                         sys.stdout.write(str(int(self.current_progress)))
+                        if self.current_progress == 100:
+                            sys.stdout.write("\n")
                     else:
                         sys.stdout.write(".")
                 else:
@@ -2819,37 +2836,99 @@ class ProgressBar(object):
         sys.stdout.flush()
 
 
-def main():
-    (conf_receiver, conf_sender) = Pipe(False)
-    argv = gdal.GeneralCmdLineProcessor(sys.argv)
-    input_file, output_folder, options = process_args(argv[1:])
+def get_tile_swne(tile_job_info, options):
+    if options.profile == 'mercator':
+        mercator = GlobalMercator()
+        tile_swne = mercator.TileLatLonBounds
+    elif options.profile == 'geodetic':
+        geodetic = GlobalGeodetic(options.tmscompatible)
+        tile_swne = geodetic.TileLatLonBounds
+    elif options.profile == 'raster':
+        srs4326 = osr.SpatialReference()
+        srs4326.ImportFromEPSG(4326)
+        if tile_job_info.kml and tile_job_info.in_srs_wkt:
+            in_srs = osr.SpatialReference()
+            in_srs.ImportFromWkt(tile_job_info.in_srs_wkt)
+            ct = osr.CoordinateTransformation(in_srs, srs4326)
+
+            def rastertileswne(x, y, z):
+                pixelsizex = (2 ** (tile_job_info.tmaxz - z) * tile_job_info.out_geo_trans[1])
+                west = tile_job_info.out_geo_trans[0] + x * tile_job_info.tilesize * pixelsizex
+                east = west + tile_job_info.tilesize * pixelsizex
+                south = tile_job_info.ominy + y * tile_job_info.tilesize * pixelsizex
+                north = south + tile_job_info.tilesize * pixelsizex
+                if not tile_job_info.is_epsg_4326:
+                    # Transformation to EPSG:4326 (WGS84 datum)
+                    west, south = ct.TransformPoint(west, south)[:2]
+                    east, north = ct.TransformPoint(east, north)[:2]
+                return south, west, north, east
+
+            tile_swne = rastertileswne
+        else:
+            tile_swne = lambda x, y, z: (0, 0, 0, 0)   # noqa
+    else:
+        tile_swne = lambda x, y, z: (0, 0, 0, 0)   # noqa
+
+    return tile_swne
+
+
+def single_threaded_tiling(input_file, output_folder, options):
+    """
+    Keep a single threaded version that stays clear of multiprocessing, for platforms that would not
+    support it
+    """
     if options.verbose:
         print("Begin tiles details calc")
-    p = Process(target=worker_tile_details, args=[conf_sender, input_file, output_folder, options])
+    conf, tile_details = worker_tile_details(input_file, output_folder, options)
+
+    if options.verbose:
+        print("Tiles details calc complete.")
+
+    if not options.verbose and not options.quiet:
+        progress_bar = ProgressBar(len(tile_details))
+        progress_bar.start()
+
+    for tile_detail in tile_details:
+        create_base_tile(conf, tile_detail)
+
+        if not options.verbose and not options.quiet:
+            progress_bar.log_progress()
+
+    create_overview_tiles(conf, output_folder, options)
+
+    os.unlink(conf.src_file)
+
+
+def multi_threaded_tiling(input_file, output_folder, options):
+    nb_processes = options.nb_processes or 1
+    (conf_receiver, conf_sender) = Pipe(False)
+
+    if options.verbose:
+        print("Begin tiles details calc")
+    p = Process(target=worker_tile_details,
+                args=[input_file, output_folder, options],
+                kwargs={"send_pipe": conf_sender})
     p.start()
     # Make sure to consume the queue before joining. If the payload is too big, it won't be put in
     # one go in the queue and therefore the sending process will never finish, waiting for space in
     # the queue to send data
-    confs = conf_receiver.recv()
+    conf, tile_details = conf_receiver.recv()
     p.join()
     if options.verbose:
         print("Tiles details calc complete.")
-
-    nb_processes = options.nb_processes or 1
     # Have to create the Queue through a multiprocessing.Manager to get a Queue Proxy,
     # otherwise you can't pass it as a param in the method invoked by the pool...
     manager = Manager()
     queue = manager.Queue()
     pool = Pool(processes=nb_processes)
-    # TODO: gbataille - Have a non Multithread path (because some platform might not have access to
-    # multiprocessing.Queue
     # TODO: gbataille - check the confs for which each element is an array... one useless level?
     # TODO: gbataille - assign an ID to each job for print in verbose mode "ReadRaster Extent ..."
-    for conf in confs:
-        pool.apply_async(create_base_tiles, (conf, queue))
+    # TODO: gbataille - check memory footprint and time on big image. are they opened x times
+    for tile_detail in tile_details:
+        pool.apply_async(create_base_tile, (conf, tile_detail), {"queue": queue})
 
     if not options.verbose and not options.quiet:
-        p = Process(target=progress_printer_thread, args=[queue, len(confs)])
+        p = Process(target=progress_printer_thread, args=[queue, len(tile_details)])
         p.start()
 
     pool.close()
@@ -2857,7 +2936,23 @@ def main():
     if not options.verbose and not options.quiet:
         p.join()        # Traces done
 
-    os.unlink(confs[0].src_file)
+    create_overview_tiles(conf, output_folder, options)
+
+    os.unlink(conf.src_file)
+
+
+def main():
+    # TODO: gbataille - use mkdtemp to work in a temp directory
+    # TODO: gbataille - debug intermediate tiles.vrt not produced anymore?
+    # TODO: gbataille - Refactor generate overview tiles to not depend on self variables
+    argv = gdal.GeneralCmdLineProcessor(sys.argv)
+    input_file, output_folder, options = process_args(argv[1:])
+    nb_processes = options.nb_processes or 1
+
+    if nb_processes == 1:
+        single_threaded_tiling(input_file, output_folder, options)
+    else:
+        multi_threaded_tiling(input_file, output_folder, options)
 
 
 if __name__ == '__main__':
