@@ -226,6 +226,8 @@ OGROSMDataSource::OGROSMDataSource() :
     bInMemoryTmpDB(false),
     bMustUnlink(true),
     nNodesInTransaction(0),
+    nMinSizeKeysInSetClosedWaysArePolygons(0),
+    nMaxSizeKeysInSetClosedWaysArePolygons(0),
     pasLonLatCache(NULL),
     bReportAllNodes(false),
     bReportAllWays(false),
@@ -1827,31 +1829,61 @@ void OGROSMDataSource::ProcessWaysBatch()
 bool OGROSMDataSource::IsClosedWayTaggedAsPolygon( unsigned int nTags, const OSMTag* pasTags )
 {
     bool bIsArea = false;
+    const int nSizeArea = 4;
+    const int nStrnlenK = std::max(nSizeArea,
+                                   nMaxSizeKeysInSetClosedWaysArePolygons)+1;
+    std::string oTmpStr;
+    oTmpStr.reserve(nMaxSizeKeysInSetClosedWaysArePolygons);
     for( unsigned int i=0;i<nTags;i++)
     {
         const char* pszK = pasTags[i].pszK;
-        if( strcmp(pszK, "area") == 0 )
+        const int nKLen = static_cast<int>(CPLStrnlen(pszK, nStrnlenK));
+        if( nKLen > nMaxSizeKeysInSetClosedWaysArePolygons )
+            continue;
+
+        if( nKLen == nSizeArea && strcmp(pszK, "area") == 0 )
         {
-            if( strcmp(pasTags[i].pszV, "yes") == 0 )
+            const char* pszV = pasTags[i].pszV;
+            if( strcmp(pszV, "yes") == 0 )
             {
                 bIsArea = true;
+                // final true. We can't have several area tags...
+                break;
             }
-            else if( strcmp(pasTags[i].pszV, "no") == 0 )
+            else if( strcmp(pszV, "no") == 0 )
             {
                 bIsArea = false;
                 break;
             }
         }
-        else if( aoSetClosedWaysArePolygons.find(pszK) !=
-                  aoSetClosedWaysArePolygons.end() )
+        if( bIsArea )
+            continue;
+
+        if( nKLen >= nMinSizeKeysInSetClosedWaysArePolygons )
         {
-            bIsArea = true;
+            oTmpStr.assign(pszK, nKLen);
+            if(  aoSetClosedWaysArePolygons.find(oTmpStr) !=
+                    aoSetClosedWaysArePolygons.end() )
+            {
+                bIsArea = true;
+                continue;
+            }
         }
-        else if( aoSetClosedWaysArePolygons.find(
-                        pszK + std::string("=") + pasTags[i].pszV) !=
-                  aoSetClosedWaysArePolygons.end() )
+
+        const char* pszV = pasTags[i].pszV;
+        const int nVLen = static_cast<int>(CPLStrnlen(pszV, nStrnlenK));
+        if( nKLen + 1 + nVLen >= nMinSizeKeysInSetClosedWaysArePolygons &&
+            nKLen + 1 + nVLen <= nMaxSizeKeysInSetClosedWaysArePolygons )
         {
-            bIsArea = true;
+            oTmpStr.assign(pszK, nKLen);
+            oTmpStr.append(1, '=');
+            oTmpStr.append(pszV, nVLen);
+            if( aoSetClosedWaysArePolygons.find(oTmpStr) !=
+                  aoSetClosedWaysArePolygons.end() )
+            {
+                bIsArea = true;
+                continue;
+            }
         }
     }
     return bIsArea;
@@ -3430,9 +3462,16 @@ bool OGROSMDataSource::ParseConf( char** papszOpenOptionsIn )
         {
             char** papszTokens2 = CSLTokenizeString2(
                     pszLine + strlen("closed_ways_are_polygons="), ",", 0);
+            nMinSizeKeysInSetClosedWaysArePolygons = INT_MAX;
+            nMaxSizeKeysInSetClosedWaysArePolygons = 0;
             for(int i=0;papszTokens2[i] != NULL;i++)
             {
+                const int nTokenSize = static_cast<int>(strlen(papszTokens2[i]));
                 aoSetClosedWaysArePolygons.insert(papszTokens2[i]);
+                nMinSizeKeysInSetClosedWaysArePolygons = std::min(
+                    nMinSizeKeysInSetClosedWaysArePolygons, nTokenSize);
+                nMaxSizeKeysInSetClosedWaysArePolygons = std::max(
+                    nMinSizeKeysInSetClosedWaysArePolygons, nTokenSize);
             }
             CSLDestroy(papszTokens2);
         }
