@@ -37,6 +37,9 @@
 #include "cpl_string.h"
 
 #include <set>
+#if HAVE_CXX11
+#include <unordered_set>
+#endif
 #include <map>
 #include <vector>
 
@@ -321,7 +324,13 @@ class OGROSMDataSource : public OGRDataSource
 
     int                 nNodesInTransaction;
 
+#if HAVE_CXX11
+    std::unordered_set<std::string> aoSetClosedWaysArePolygons;
+#else
     std::set<std::string> aoSetClosedWaysArePolygons;
+#endif
+    int                 nMinSizeKeysInSetClosedWaysArePolygons;
+    int                 nMaxSizeKeysInSetClosedWaysArePolygons;
 
     LonLat             *pasLonLatCache;
 
