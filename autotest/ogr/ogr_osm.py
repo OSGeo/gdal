@@ -666,6 +666,13 @@ def ogr_osm_11():
         feat.DumpReadable()
         return 'fail'
 
+    lyr = ds.GetLayerByName('lines')
+    feat = lyr.GetNextFeature()
+    if feat.GetField('z_order') != 9:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
     return 'success'
 
 
