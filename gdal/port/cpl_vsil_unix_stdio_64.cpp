@@ -265,10 +265,12 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffsetIn, int nWhence )
     // if the next position to seek to is within the buffered page.
     if( bReadOnly && nWhence == SEEK_SET )
     {
-        if( nOffsetIn > m_nOffset && nOffsetIn < 4096 + m_nOffset )
+        const int l_PAGE_SIZE = 4096;
+        if( nOffsetIn > m_nOffset && nOffsetIn < l_PAGE_SIZE + m_nOffset )
         {
             const int nDiff = static_cast<int>(nOffsetIn - m_nOffset);
-            GByte abyTemp[4096] = {};
+            // Do not zero-initialize the buffer. We don't read from it
+            GByte abyTemp[l_PAGE_SIZE];
             const int nRead = static_cast<int>(fread(abyTemp, 1, nDiff, fp));
             if( nRead == nDiff )
             {
