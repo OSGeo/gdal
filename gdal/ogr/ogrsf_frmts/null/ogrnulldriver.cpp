@@ -214,6 +214,8 @@ int OGRNULLDataSource::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap, ODsCCreateLayer) )
         return TRUE;
+    if( EQUAL(pszCap, ODsCRandomLayerWrite) )
+        return TRUE;
     return FALSE;
 }
 
