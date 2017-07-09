@@ -539,6 +539,24 @@ static int OGROSMFormatForHSTORE( const char* pszV, char* pszAllTags )
 }
 
 /************************************************************************/
+/*                            GetValueOfTag()                           */
+/************************************************************************/
+
+static const char* GetValueOfTag(const char* pszKeyToSearch,
+                                 unsigned int nTags, const OSMTag* pasTags)
+{
+    for(unsigned int k = 0; k < nTags; k++)
+    {
+        const char* pszK = pasTags[k].pszK;
+        if( strcmp(pszK, pszKeyToSearch) == 0 )
+        {
+            return pasTags[k].pszV;
+        }
+    }
+    return NULL;
+}
+
+/************************************************************************/
 /*                        SetFieldsFromTags()                           */
 /************************************************************************/
 
@@ -679,6 +697,148 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
     for(size_t i=0; i<oComputedAttributes.size();i++)
     {
         const OGROSMComputedAttribute& oAttr = oComputedAttributes[i];
+        if( oAttr.bHardcodedZOrder )
+        {
+            const int nHighwayIdx = oAttr.anIndexToBind[0];
+            const int nBridgeIdx = oAttr.anIndexToBind[1];
+            const int nTunnelIdx = oAttr.anIndexToBind[2];
+            const int nRailwayIdx = oAttr.anIndexToBind[3];
+            const int nLayerIdx = oAttr.anIndexToBind[4];
+
+            int nZOrder = 0;
+    /*
+        "SELECT (CASE [highway] WHEN 'minor' THEN 3 WHEN 'road' THEN 3 "
+        "WHEN 'unclassified' THEN 3 WHEN 'residential' THEN 3 WHEN "
+        "'tertiary_link' THEN 4 WHEN 'tertiary' THEN 4 WHEN 'secondary_link' "
+        "THEN 6 WHEN 'secondary' THEN 6 WHEN 'primary_link' THEN 7 WHEN "
+        "'primary' THEN 7 WHEN 'trunk_link' THEN 8 WHEN 'trunk' THEN 8 "
+        "WHEN 'motorway_link' THEN 9 WHEN 'motorway' THEN 9 ELSE 0 END) + "
+        "(CASE WHEN [bridge] IN ('yes', 'true', '1') THEN 10 ELSE 0 END) + "
+        "(CASE WHEN [tunnel] IN ('yes', 'true', '1') THEN -10 ELSE 0 END) + "
+        "(CASE WHEN [railway] IS NOT NULL THEN 5 ELSE 0 END) + "
+        "(CASE WHEN [layer] IS NOT NULL THEN 10 * CAST([layer] AS INTEGER) " */
+
+            const char* pszHighway = NULL;
+            if( nHighwayIdx >= 0)
+            {
+                if( poFeature->IsFieldSetAndNotNull(nHighwayIdx) )
+                {
+                    pszHighway = poFeature->GetFieldAsString(nHighwayIdx);
+                }
+            }
+            else
+                pszHighway = GetValueOfTag("highway", nTags, pasTags);
+            if( pszHighway )
+            {
+                if( strcmp(pszHighway, "minor") == 0 ||
+                    strcmp(pszHighway, "road") == 0 ||
+                    strcmp(pszHighway, "unclassified") == 0 ||
+                    strcmp(pszHighway, "residential") == 0 )
+                {
+                    nZOrder += 3;
+                }
+                else if( strcmp(pszHighway, "tertiary_link") == 0 ||
+                         strcmp(pszHighway, "tertiary") == 0 )
+                {
+                    nZOrder += 4;
+                }
+                else if( strcmp(pszHighway, "secondary_link") == 0 ||
+                         strcmp(pszHighway, "secondary") == 0 )
+                {
+                    nZOrder += 6;
+                }
+                else if( strcmp(pszHighway, "primary_link") == 0 ||
+                         strcmp(pszHighway, "primary") == 0 )
+                {
+                    nZOrder += 7;
+                }
+                else if( strcmp(pszHighway, "trunk_link") == 0 ||
+                         strcmp(pszHighway, "trunk") == 0 )
+                {
+                    nZOrder += 8;
+                }
+                else if( strcmp(pszHighway, "motorway_link") == 0 ||
+                         strcmp(pszHighway, "motorway") == 0 )
+                {
+                    nZOrder += 9;
+                }
+            }
+
+            const char* pszBridge = NULL;
+            if( nBridgeIdx >= 0)
+            {
+                if( poFeature->IsFieldSetAndNotNull(nBridgeIdx) )
+                {
+                    pszBridge = poFeature->GetFieldAsString(nBridgeIdx);
+                }
+            }
+            else
+                pszBridge = GetValueOfTag("bridge", nTags, pasTags);
+            if( pszBridge )
+            {
+                if( strcmp(pszBridge, "yes") == 0 ||
+                    strcmp(pszBridge, "true") == 0 ||
+                    strcmp(pszBridge, "1") == 0 )
+                {
+                    nZOrder += 10;
+                }
+            }
+
+            const char* pszTunnel = NULL;
+            if( nTunnelIdx >= 0)
+            {
+                if( poFeature->IsFieldSetAndNotNull(nTunnelIdx) )
+                {
+                    pszTunnel = poFeature->GetFieldAsString(nTunnelIdx);
+                }
+            }
+            else
+                pszTunnel = GetValueOfTag("tunnel", nTags, pasTags);
+            if( pszTunnel )
+            {
+                if( strcmp(pszTunnel, "yes") == 0 ||
+                    strcmp(pszTunnel, "true") == 0 ||
+                    strcmp(pszTunnel, "1") == 0 )
+                {
+                    nZOrder -= 10;
+                }
+            }
+
+            const char* pszRailway = NULL;
+            if( nRailwayIdx >= 0 )
+            {
+                if( poFeature->IsFieldSetAndNotNull(nRailwayIdx) )
+                {
+                    pszRailway = poFeature->GetFieldAsString(nRailwayIdx);
+                }
+            }
+            else
+                pszRailway = GetValueOfTag("railway", nTags, pasTags);
+            if( pszRailway )
+            {
+                nZOrder += 5;
+            }
+
+            const char* pszLayer = NULL;
+            if( nLayerIdx >= 0 )
+            {
+                if( poFeature->IsFieldSetAndNotNull(nLayerIdx) )
+                {
+                    pszLayer = poFeature->GetFieldAsString(nLayerIdx);
+                }
+            }
+            else
+                pszLayer = GetValueOfTag("layer", nTags, pasTags);
+            if( pszLayer )
+            {
+                nZOrder += 10 * atoi(pszLayer);
+            }
+
+            poFeature->SetField( oAttr.nIndex, nZOrder);
+
+            continue;
+        }
+
         for(int j=0;j<static_cast<int>(oAttr.anIndexToBind.size());j++)
         {
             if( oAttr.anIndexToBind[j] >= 0 )
@@ -827,6 +987,19 @@ void OGROSMLayer::AddComputedAttribute( const char* pszName,
     }
 
     CPLString osSQL(pszSQL);
+    const bool bHardcodedZOrder = (eType == OFTInteger) &&
+      strcmp(pszSQL,
+        "SELECT (CASE [highway] WHEN 'minor' THEN 3 WHEN 'road' THEN 3 "
+        "WHEN 'unclassified' THEN 3 WHEN 'residential' THEN 3 WHEN "
+        "'tertiary_link' THEN 4 WHEN 'tertiary' THEN 4 WHEN 'secondary_link' "
+        "THEN 6 WHEN 'secondary' THEN 6 WHEN 'primary_link' THEN 7 WHEN "
+        "'primary' THEN 7 WHEN 'trunk_link' THEN 8 WHEN 'trunk' THEN 8 "
+        "WHEN 'motorway_link' THEN 9 WHEN 'motorway' THEN 9 ELSE 0 END) + "
+        "(CASE WHEN [bridge] IN ('yes', 'true', '1') THEN 10 ELSE 0 END) + "
+        "(CASE WHEN [tunnel] IN ('yes', 'true', '1') THEN -10 ELSE 0 END) + "
+        "(CASE WHEN [railway] IS NOT NULL THEN 5 ELSE 0 END) + "
+        "(CASE WHEN [layer] IS NOT NULL THEN 10 * CAST([layer] AS INTEGER) "
+        "ELSE 0 END)") == 0;
     std::vector<CPLString> aosAttrToBind;
     std::vector<int> anIndexToBind;
     size_t nStartSearch = 0;
@@ -874,10 +1047,12 @@ void OGROSMLayer::AddComputedAttribute( const char* pszName,
     OGRFieldDefn oField(pszName, eType);
     poFeatureDefn->AddFieldDefn(&oField);
     oComputedAttributes.push_back(OGROSMComputedAttribute(pszName));
-    oComputedAttributes.back().eType = eType;
-    oComputedAttributes.back().nIndex = poFeatureDefn->GetFieldCount() - 1;
-    oComputedAttributes.back().osSQL = pszSQL;
-    oComputedAttributes.back().hStmt = hStmt;
-    oComputedAttributes.back().aosAttrToBind = aosAttrToBind;
-    oComputedAttributes.back().anIndexToBind = anIndexToBind;
+    OGROSMComputedAttribute& oComputedAttribute = oComputedAttributes.back();
+    oComputedAttribute.eType = eType;
+    oComputedAttribute.nIndex = poFeatureDefn->GetFieldCount() - 1;
+    oComputedAttribute.osSQL = pszSQL;
+    oComputedAttribute.hStmt = hStmt;
+    oComputedAttribute.aosAttrToBind = aosAttrToBind;
+    oComputedAttribute.anIndexToBind = anIndexToBind;
+    oComputedAttribute.bHardcodedZOrder = bHardcodedZOrder;
 }

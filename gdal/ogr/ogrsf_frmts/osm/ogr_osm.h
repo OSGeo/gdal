@@ -67,6 +67,7 @@ class OGROSMComputedAttribute
         sqlite3_stmt  *hStmt;
         std::vector<CPLString> aosAttrToBind;
         std::vector<int> anIndexToBind;
+        bool         bHardcodedZOrder;
 
         OGROSMComputedAttribute() : nIndex(-1), eType(OFTString), hStmt(NULL) {}
         explicit OGROSMComputedAttribute(const char* pszName) :
