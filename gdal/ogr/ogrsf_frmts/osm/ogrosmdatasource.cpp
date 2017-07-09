@@ -1254,6 +1254,18 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
 {
     unsigned int j = 0;  // Used after for.
 
+    int l_nBucketOld = -1;
+    const Bucket* psBucket = NULL;
+    // To be glibc friendly, we will do reads aligned on 4096 byte offsets
+    const int knDISK_SECTOR_SIZE = 4096;
+    CPL_STATIC_ASSERT( (knDISK_SECTOR_SIZE % SECTOR_SIZE) == 0 );
+    GByte abyDiskSector[knDISK_SECTOR_SIZE];
+    // Offset in the nodes files for which abyDiskSector was read
+    GIntBig nOldOffset = -knDISK_SECTOR_SIZE-1;
+    // Number of valid bytes in abyDiskSector
+    size_t nValidBytes = 0;
+    int k = 0;
+    int nSectorBase = 0;
     for( unsigned int i = 0; i < nReqIds; i++ )
     {
         const GIntBig id = panReqIds[i];
@@ -1266,49 +1278,68 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
         const int nBitmapIndex = nOffInBucketReduced / 8;
         const int nBitmapRemainer = nOffInBucketReduced % 8;
 
-        std::map<int, Bucket>::const_iterator oIter = oMapBuckets.find(nBucket);
-        if( oIter == oMapBuckets.end() )
+        if( nBucket != l_nBucketOld )
         {
-            CPLError(CE_Failure,  CPLE_AppDefined,
-                    "Cannot read node " CPL_FRMT_GIB, id);
-            continue;
-            // FIXME ?
-        }
-        const Bucket* psBucket = &(oIter->second);
-        if( psBucket->u.pabyBitmap == NULL )
-        {
-            CPLError(CE_Failure,  CPLE_AppDefined,
-                    "Cannot read node " CPL_FRMT_GIB, id);
-            continue;
-            // FIXME ?
+            std::map<int, Bucket>::const_iterator oIter = oMapBuckets.find(nBucket);
+            if( oIter == oMapBuckets.end() )
+            {
+                CPLError(CE_Failure,  CPLE_AppDefined,
+                        "Cannot read node " CPL_FRMT_GIB, id);
+                continue;
+                // FIXME ?
+            }
+            psBucket = &(oIter->second);
+            if( psBucket->u.pabyBitmap == NULL )
+            {
+                CPLError(CE_Failure,  CPLE_AppDefined,
+                        "Cannot read node " CPL_FRMT_GIB, id);
+                continue;
+                // FIXME ?
+            }
+            l_nBucketOld = nBucket;
+            nOldOffset = -knDISK_SECTOR_SIZE-1;
+            k = 0;
+            nSectorBase = 0;
         }
 
-        int nSector = 0;
-        for( int k = 0; k < nBitmapIndex; k++ )
-            nSector += abyBitsCount[psBucket->u.pabyBitmap[k]];
+        /* If we stay in the same bucket, we can reuse the previously */
+        /* computed offset, instead of starting from bucket start */
+        for( ; k < nBitmapIndex; k++ )
+            nSectorBase += abyBitsCount[psBucket->u.pabyBitmap[k]];
+        int nSector = nSectorBase;
         if( nBitmapRemainer )
             nSector +=
                 abyBitsCount[psBucket->u.pabyBitmap[nBitmapIndex] &
                              ((1 << nBitmapRemainer) - 1)];
 
-        VSIFSeekL(
-            fpNodes,
-            psBucket->nOff + nSector * SECTOR_SIZE +
-            nOffInBucketReducedRemainer * sizeof(LonLat),
-            SEEK_SET);
-        if( VSIFReadL(pasLonLatArray + j, 1,
-                      sizeof(LonLat), fpNodes) != sizeof(LonLat) )
+        const GIntBig nNewOffset = psBucket->nOff + nSector * SECTOR_SIZE;
+        if( nNewOffset - nOldOffset >= knDISK_SECTOR_SIZE )
+        {
+            // Align on 4096 boundary to be glibc caching friendly
+            const GIntBig nAlignedNewPos = nNewOffset &
+                        ~(static_cast<GIntBig>(knDISK_SECTOR_SIZE)-1);
+            VSIFSeekL(fpNodes, nAlignedNewPos, SEEK_SET);
+            nValidBytes =
+                    VSIFReadL(abyDiskSector, 1, knDISK_SECTOR_SIZE, fpNodes);
+            nOldOffset = nAlignedNewPos;
+        }
+
+        const size_t nOffsetInDiskSector =
+            static_cast<size_t>(nNewOffset - nOldOffset) +
+            nOffInBucketReducedRemainer * sizeof(LonLat);
+        if( nOffsetInDiskSector + sizeof(LonLat) > nValidBytes )
         {
             CPLError(CE_Failure,  CPLE_AppDefined,
-                     "Cannot read node " CPL_FRMT_GIB, id);
-            // FIXME ?
+                    "Cannot read node " CPL_FRMT_GIB, id);
+            continue;
         }
-        else
-        {
-            panReqIds[j] = id;
-            if( pasLonLatArray[j].nLon || pasLonLatArray[j].nLat )
-                j++;
-        }
+        memcpy( &pasLonLatArray[j],
+                abyDiskSector + nOffsetInDiskSector,
+                sizeof(LonLat) );
+
+        panReqIds[j] = id;
+        if( pasLonLatArray[j].nLon || pasLonLatArray[j].nLat )
+            j++;
     }
     nReqIds = j;
 }
