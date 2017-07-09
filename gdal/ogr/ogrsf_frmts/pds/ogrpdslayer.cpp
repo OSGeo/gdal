@@ -509,8 +509,16 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
                                 pasFieldDesc[i].nByteCount]);
                 char chSaved = *pchEnd;
                 *pchEnd = 0;
-                poFeature->SetField(i, (const char*)(pabyRecord +
-                                                    pasFieldDesc[i].nStartByte));
+                const char* pszValue = (const char*)(pabyRecord +
+                                                    pasFieldDesc[i].nStartByte);
+                if( pasFieldDesc[i].eFormat == CHARACTER )
+                {
+                    poFeature->SetField(i, pszValue);
+                }
+                else
+                {
+                    poFeature->SetField(i, CPLString(pszValue).Trim().c_str());
+                }
                 *pchEnd = chSaved;
             }
             else if (pasFieldDesc[i].eFormat == MSB_UNSIGNED_INTEGER &&
