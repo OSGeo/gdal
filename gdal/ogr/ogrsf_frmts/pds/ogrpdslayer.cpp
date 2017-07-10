@@ -348,6 +348,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Invalid value of ROW_BYTES");
+                    CSLDestroy(papszTokens);
                     break;
                 }
             }
@@ -361,12 +362,14 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Invalid value of ROW_SUFFIX_BYTES");
+                    CSLDestroy(papszTokens);
                     break;
                 }
                 if( nRowBytes < 0 || nRowBytes > 10*1024*1024)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Invalid value of ROW_SUFFIX_BYTES");
+                    CSLDestroy(papszTokens);
                     break;
                 }
             }
