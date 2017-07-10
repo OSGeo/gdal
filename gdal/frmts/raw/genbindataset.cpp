@@ -636,10 +636,14 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         else
         {
             char *pszName = NULL;
-            CPLString osValue = CPLParseNameValue( pszLine, &pszName );
-            osValue.Trim();
+            const char* pszKey = CPLParseNameValue( pszLine, &pszName );
+            if( pszKey && pszName )
+            {
+                CPLString osValue = pszKey;
+                osValue.Trim();
 
-            papszHdr = CSLSetNameValue( papszHdr, pszName, osValue );
+                papszHdr = CSLSetNameValue( papszHdr, pszName, osValue );
+            }
             CPLFree( pszName );
 
             pszLine = CPLReadLineL( fp );
