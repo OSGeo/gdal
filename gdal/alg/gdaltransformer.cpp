@@ -3178,11 +3178,12 @@ GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
  *
  * Applies the following computation, converting a (pixel, line) coordinate
  * into a georeferenced (geo_x, geo_y) location.
- *
+ * <pre>
  *  *pdfGeoX = padfGeoTransform[0] + dfPixel * padfGeoTransform[1]
  *                                 + dfLine  * padfGeoTransform[2];
  *  *pdfGeoY = padfGeoTransform[3] + dfPixel * padfGeoTransform[4]
  *                                 + dfLine  * padfGeoTransform[5];
+ * </pre>
  *
  * @param padfGeoTransform Six coefficient GeoTransform to apply.
  * @param dfPixel Input pixel position.
