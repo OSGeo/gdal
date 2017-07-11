@@ -2755,6 +2755,21 @@ void GMLASReader::ProcessSWEDataRecord(CPLXMLNode* psRoot)
 }
 
 /************************************************************************/
+/*                            GMLASGetSRSName()                         */
+/************************************************************************/
+
+static const char* GMLASGetSRSName(CPLXMLNode* psNode)
+{
+    const char* pszSRSName = CPLGetXMLValue(psNode, szSRS_NAME, NULL);
+    if( pszSRSName == NULL )
+    {
+        // Case of a gml:Point where the srsName is on the gml:pos
+        pszSRSName = CPLGetXMLValue(psNode, "gml:pos.srsName", NULL);
+    }
+    return pszSRSName;
+}
+
+/************************************************************************/
 /*                            ProcessGeometry()                         */
 /************************************************************************/
 
@@ -2766,8 +2781,7 @@ void GMLASReader::ProcessGeometry(CPLXMLNode* psRoot)
 
     if( m_bInitialPass )
     {
-        const char* pszSRSName = CPLGetXMLValue(psRoot,
-                                                szSRS_NAME, NULL);
+        const char* pszSRSName = GMLASGetSRSName(psRoot);
         if( pszSRSName != NULL )
         {
             // If we are doing a first pass, store the SRS of the geometry
@@ -2813,8 +2827,13 @@ void GMLASReader::ProcessGeometry(CPLXMLNode* psRoot)
                     (OGR_G_CreateFromGMLTree( psRoot ));
     if( poGeom != NULL )
     {
-        const char* pszSRSName = CPLGetXMLValue(psRoot,
-                                                szSRS_NAME, NULL);
+        const char* pszSRSName = GMLASGetSRSName(psRoot);
+        if( pszSRSName == NULL )
+        {
+            // Case of a gml:Point where the srsName is on the gml:pos
+            pszSRSName = CPLGetXMLValue(psRoot, "gml:pos.srsName", NULL);
+        }
+
         bool bSwapXY = false;
         if( pszSRSName != NULL )
         {
