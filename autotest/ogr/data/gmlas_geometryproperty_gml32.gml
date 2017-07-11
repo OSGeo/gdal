@@ -9,7 +9,7 @@
     <ogr:test gml:id="poly.0">
       <ogr:geometryProperty> <gml:Point gml:id="poly.geom.Geometry" srsName="urn:ogc:def:crs:EPSG::4326"> <gml:pos>49 2</gml:pos> </gml:Point> </ogr:geometryProperty>
       <ogr:geometryPropertyEmpty xsi:nil="true"/>
-      <ogr:pointProperty><gml:Point gml:id="poly.geom.Point" srsName="http://www.opengis.net/def/crs/EPSG/0/4326"><gml:pos>50 3</gml:pos></gml:Point></ogr:pointProperty>
+      <ogr:pointProperty><gml:Point gml:id="poly.geom.Point"><gml:pos srsName="http://www.opengis.net/def/crs/EPSG/0/4326">50 3</gml:pos></gml:Point></ogr:pointProperty>
       <ogr:lineStringProperty><gml:LineString gml:id="poly.geom.LineString" srsName="EPSG:4326"><gml:pos>2 49</gml:pos></gml:LineString></ogr:lineStringProperty>
       <ogr:polygonProperty><gml:Polygon gml:id="poly.geom.Polygon"><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></ogr:polygonProperty>
       <ogr:multiPointProperty><gml:MultiPoint gml:id="poly.geom.MultiPoint"><gml:pointMember><gml:Point gml:id="poly.geom.MultiPoint.Point.1"><gml:pos>1.0 1.0</gml:pos></gml:Point></gml:pointMember><gml:pointMember><gml:Point gml:id="poly.geom.MultiPoint.Point.2"><gml:pos>2.0 2.0</gml:pos></gml:Point></gml:pointMember></gml:MultiPoint></ogr:multiPointProperty>

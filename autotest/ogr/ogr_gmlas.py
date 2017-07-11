@@ -661,7 +661,7 @@ def ogr_gmlas_geometryproperty():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    if f['pointProperty_xml'] != '<gml:Point gml:id="poly.geom.Point" srsName="http://www.opengis.net/def/crs/EPSG/0/4326"><gml:pos>50 3</gml:pos></gml:Point>':
+    if f['pointProperty_xml'] != '<gml:Point gml:id="poly.geom.Point"><gml:pos srsName="http://www.opengis.net/def/crs/EPSG/0/4326">50 3</gml:pos></gml:Point>':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
