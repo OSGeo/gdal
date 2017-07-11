@@ -42,6 +42,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
+#include "cpl_string.h"
 
 // We avoid including xtiffio.h since it drags in the libgeotiff version
 // of the VSI functions.
@@ -70,6 +71,10 @@ typedef struct
     vsi_l_offset nExpectedPos;
     GByte      *abyWriteBuffer;
     int         nWriteBufferSize;
+
+    // For pseudo-mmap'ed /vsimem/ file
+    vsi_l_offset nDataLength;
+    void*        pBase;
 } GDALTiffHandle;
 
 static tsize_t
@@ -216,8 +221,15 @@ _tiffSizeProc( thandle_t th )
 }
 
 static int
-_tiffMapProc( thandle_t /* th */, tdata_t* /* pbase */ , toff_t* /* psize */ )
+_tiffMapProc( thandle_t th, tdata_t* pbase , toff_t* psize )
 {
+    GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
+    if( psGTH->pBase )
+    {
+        *pbase = psGTH->pBase;
+        *psize = static_cast<toff_t>(psGTH->nDataLength);
+        return 1;
+    }
     return 0;
 }
 
@@ -244,7 +256,7 @@ TIFF* VSI_TIFFOpen( const char* name, const char* mode,
                     VSILFILE* fpL )
 {
     char access[32] = { '\0' };
-    bool bAllocBuffer = false;
+    bool bReadOnly = true;
     int a_out = 0;
     for( int i = 0; mode[i] != '\0'; i++ )
     {
@@ -260,13 +272,9 @@ TIFF* VSI_TIFFOpen( const char* name, const char* mode,
             || mode[i] == '+'
             || mode[i] == 'a' )
         {
-            bAllocBuffer = true;
+            bReadOnly = false;
         }
     }
-
-    // No need to buffer on /vsimem/
-    if( STARTS_WITH(name, "/vsimem/") )
-        bAllocBuffer = false;
 
     strcat( access, "b" );
 
@@ -274,13 +282,29 @@ TIFF* VSI_TIFFOpen( const char* name, const char* mode,
         return NULL;
 
     GDALTiffHandle* psGTH = static_cast<GDALTiffHandle *>(
-        CPLMalloc(sizeof(GDALTiffHandle)) );
+        CPLCalloc(1, sizeof(GDALTiffHandle)) );
     psGTH->fpL = fpL;
     psGTH->nExpectedPos = 0;
     psGTH->bAtEndOfFile = false;
+
+    // No need to buffer on /vsimem/
+    bool bAllocBuffer = !bReadOnly;
+    if( STARTS_WITH(name, "/vsimem/") )
+    {
+        if( bReadOnly &&
+            CPLTestBool(CPLGetConfigOption("GTIFF_USE_MMAP", "NO")) )
+        {
+            psGTH->nDataLength = 0;
+            psGTH->pBase = 
+                VSIGetMemFileBuffer(name, &psGTH->nDataLength, FALSE);
+        }
+        bAllocBuffer = false;
+    }
+
     psGTH->abyWriteBuffer =
         bAllocBuffer ? static_cast<GByte *>( VSIMalloc(BUFFER_SIZE) ) : NULL;
     psGTH->nWriteBufferSize = 0;
+
 
     TIFF *tif =
         XTIFFClientOpen( name, mode,

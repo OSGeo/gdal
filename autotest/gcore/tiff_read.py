@@ -3410,6 +3410,32 @@ def tiff_read_old_style_lzw():
     return 'success'
 
 ###############################################################################
+# Test libtiff mmap interface (actually not using mmap, but our /vsimem
+# mmap emulation)
+
+def tiff_read_mmap_interface():
+
+    src_ds = gdal.Open('data/byte.tif')
+    tmpfile = '/vsimem/tiff_read_mmap_interface.tif'
+    for options in [ [], ['TILED=YES'],
+                     ['COMPRESS=LZW'], ['COMPRESS=LZW', 'TILED=YES'] ]:
+        gdal.GetDriverByName('GTiff').CreateCopy(tmpfile,
+                                                 src_ds,
+                                                 options = options)
+        gdal.SetConfigOption('GTIFF_USE_MMAP', 'YES')
+        ds = gdal.Open(tmpfile)
+        cs = ds.GetRasterBand(1).Checksum()
+        gdal.SetConfigOption('GTIFF_USE_MMAP', None)
+        if cs != 4672:
+            gdaltest.post_reason('fail')
+            print(options, cs)
+            return 'fail'
+
+    gdal.Unlink(tmpfile)
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -3527,6 +3553,7 @@ gdaltest_list.append( (tiff_read_size_of_stripbytecount_lower_than_stripcount) )
 gdaltest_list.append( (tiff_read_stripoffset_types) )
 gdaltest_list.append( (tiff_read_progressive_jpeg_denial_of_service) )
 gdaltest_list.append( (tiff_read_old_style_lzw) )
+gdaltest_list.append( (tiff_read_mmap_interface) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )

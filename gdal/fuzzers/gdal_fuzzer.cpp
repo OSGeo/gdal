@@ -74,6 +74,9 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     CPLSetConfigOption("GDAL_PDF_RENDERING_OPTIONS", "RASTER,VECTOR");
     // to avoid timeout in WMS driver
     CPLSetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST", "YES");
+#ifdef GTIFF_USE_MMAP
+    CPLSetConfigOption("GTIFF_USE_MMAP", "YES");
+#endif
     return 0;
 }
 
