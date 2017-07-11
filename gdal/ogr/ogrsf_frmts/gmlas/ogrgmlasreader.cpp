@@ -2828,11 +2828,6 @@ void GMLASReader::ProcessGeometry(CPLXMLNode* psRoot)
     if( poGeom != NULL )
     {
         const char* pszSRSName = GMLASGetSRSName(psRoot);
-        if( pszSRSName == NULL )
-        {
-            // Case of a gml:Point where the srsName is on the gml:pos
-            pszSRSName = CPLGetXMLValue(psRoot, "gml:pos.srsName", NULL);
-        }
 
         bool bSwapXY = false;
         if( pszSRSName != NULL )
