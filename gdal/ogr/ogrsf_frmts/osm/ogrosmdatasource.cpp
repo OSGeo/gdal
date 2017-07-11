@@ -1280,7 +1280,7 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
         const int nBitmapIndex = nOffInBucketReduced / 8;
         const int nBitmapRemainer = nOffInBucketReduced % 8;
 
-        if( nBucket != l_nBucketOld )
+        if( psBucket == NULL || nBucket != l_nBucketOld )
         {
             std::map<int, Bucket>::const_iterator oIter = oMapBuckets.find(nBucket);
             if( oIter == oMapBuckets.end() )
