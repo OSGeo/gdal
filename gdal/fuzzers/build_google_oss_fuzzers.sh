@@ -57,6 +57,8 @@ build_gdal_specialized_fuzzer()
     build_fuzzer $fuzzerName $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=$registerFunc -DMEM_FILENAME="\"$memFilename\"" -DGDAL_FILENAME="\"$gdalFilename\""
 }
 
+build_fuzzer gtiff_mmap $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=GDALRegister_GTiff -DGTIFF_USE_MMAP
+
 fuzzerFiles=$(dirname $0)/*.cpp
 for F in $fuzzerFiles; do
     fuzzerName=$(basename $F .cpp)
