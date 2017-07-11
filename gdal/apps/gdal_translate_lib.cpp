@@ -47,6 +47,7 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "gdal_priv_templates.hpp"
 #include "gdal_vrt.h"
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
@@ -925,13 +926,35 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             GDALTranslateOptionsFree(psOptions);
             return NULL;
         }
-        nOXSize = int(psOptions->adfSrcWin[2] / psOptions->dfXRes * adfGeoTransform[1] + 0.5);
-        nOYSize = int(psOptions->adfSrcWin[3] / psOptions->dfYRes * fabs(adfGeoTransform[5]) + 0.5);
+        double dfOXSize = psOptions->adfSrcWin[2] / psOptions->dfXRes * adfGeoTransform[1] + 0.5;
+        double dfOYSize = psOptions->adfSrcWin[3] / psOptions->dfYRes * fabs(adfGeoTransform[5]) + 0.5;
+        if( dfOXSize < 1 || !GDALIsValueInRange<int>(dfOXSize) ||
+            dfOYSize < 1 || !GDALIsValueInRange<int>(dfOXSize) )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Invalid output size: %g x %g",
+                     dfOXSize, dfOYSize);
+            GDALTranslateOptionsFree(psOptions);
+            return NULL;
+        }
+        nOXSize = static_cast<int>(dfOXSize);
+        nOYSize = static_cast<int>(dfOYSize);
     }
     else if( psOptions->nOXSizePixel == 0 && psOptions->dfOXSizePct == 0.0 && psOptions->nOYSizePixel == 0 && psOptions->dfOYSizePct == 0.0)
     {
-        nOXSize = int(ceil(psOptions->adfSrcWin[2]-0.001));
-        nOYSize = int(ceil(psOptions->adfSrcWin[3]-0.001));
+        double dfOXSize = ceil(psOptions->adfSrcWin[2]-0.001);
+        double dfOYSize = ceil(psOptions->adfSrcWin[3]-0.001);
+        if( dfOXSize < 1 || !GDALIsValueInRange<int>(dfOXSize) ||
+            dfOYSize < 1 || !GDALIsValueInRange<int>(dfOXSize) )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Invalid output size: %g x %g",
+                     dfOXSize, dfOYSize);
+            GDALTranslateOptionsFree(psOptions);
+            return NULL;
+        }
+        nOXSize = static_cast<int>(dfOXSize);
+        nOYSize = static_cast<int>(dfOYSize);
     }
     else
     {
@@ -940,7 +963,18 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             if(psOptions->nOXSizePixel != 0)
                 nOXSize = psOptions->nOXSizePixel;
             else
-                nOXSize = (int) (psOptions->dfOXSizePct/100*psOptions->adfSrcWin[2]);
+            {
+                double dfOXSize = psOptions->dfOXSizePct/100*psOptions->adfSrcWin[2];
+                if( dfOXSize < 1 || !GDALIsValueInRange<int>(dfOXSize) )
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                            "Invalid output width: %g",
+                            dfOXSize);
+                    GDALTranslateOptionsFree(psOptions);
+                    return NULL;
+                }
+                nOXSize = static_cast<int>(dfOXSize);
+            }
         }
 
         if( !(psOptions->nOYSizePixel == 0 && psOptions->dfOYSizePct == 0.0) )
@@ -948,16 +982,49 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             if(psOptions->nOYSizePixel != 0)
                 nOYSize = psOptions->nOYSizePixel;
             else
-                nOYSize = (int) (psOptions->dfOYSizePct/100*psOptions->adfSrcWin[3]);
+            {
+                double dfOYSize = psOptions->dfOYSizePct/100*psOptions->adfSrcWin[3];
+                if( dfOYSize < 1 || !GDALIsValueInRange<int>(dfOYSize) )
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                            "Invalid output height: %g",
+                            dfOYSize);
+                    GDALTranslateOptionsFree(psOptions);
+                    return NULL;
+                }
+                nOYSize = static_cast<int>(dfOYSize);
+            }
         }
 
         if( psOptions->nOXSizePixel == 0 && psOptions->dfOXSizePct == 0.0 )
-            nOXSize = (int)((double)nOYSize * psOptions->adfSrcWin[2] / psOptions->adfSrcWin[3] + 0.5);
+        {
+            double dfOXSize = (double)nOYSize * psOptions->adfSrcWin[2] / psOptions->adfSrcWin[3] + 0.5;
+            if( dfOXSize < 1 || !GDALIsValueInRange<int>(dfOXSize) )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                        "Invalid output width: %g",
+                        dfOXSize);
+                GDALTranslateOptionsFree(psOptions);
+                return NULL;
+            }
+            nOXSize = static_cast<int>(dfOXSize);
+        }
         else if( psOptions->nOYSizePixel == 0 && psOptions->dfOYSizePct == 0.0 )
-            nOYSize = (int)((double)nOXSize * psOptions->adfSrcWin[3] / psOptions->adfSrcWin[2] + 0.5);
+        {
+            double dfOYSize = (double)nOXSize * psOptions->adfSrcWin[3] / psOptions->adfSrcWin[2] + 0.5;
+            if( dfOYSize < 1 || !GDALIsValueInRange<int>(dfOYSize) )
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                        "Invalid output height: %g",
+                        dfOYSize);
+                GDALTranslateOptionsFree(psOptions);
+                return NULL;
+            }
+            nOYSize = static_cast<int>(dfOYSize);
+        }
     }
 
-    if( nOXSize == 0 || nOYSize == 0 )
+    if( nOXSize <= 0 || nOYSize <= 0 )
     {
         CPLError( CE_Failure, CPLE_IllegalArg, "Attempt to create %dx%d dataset is illegal.", nOXSize, nOYSize);
         GDALTranslateOptionsFree(psOptions);
