@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.56 2017-07-11 08:55:07 erouault Exp $ */
+/* $Id: tif_lzw.c,v 1.57 2017-07-11 10:54:29 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -275,7 +275,8 @@ LZWPreDecode(TIFF* tif, uint16 s)
 	/*
 	 * Check for old bit-reversed codes.
 	 */
-	if (tif->tif_rawdata[0] == 0 && (tif->tif_rawdata[1] & 0x1)) {
+	if (tif->tif_rawcc >= 2 &&
+	    tif->tif_rawdata[0] == 0 && (tif->tif_rawdata[1] & 0x1)) {
 #ifdef LZW_COMPAT
 		if (!sp->dec_decode) {
 			TIFFWarningExt(tif->tif_clientdata, module,
