@@ -3390,6 +3390,25 @@ def tiff_read_progressive_jpeg_denial_of_service():
 
     return 'success'
 
+
+###############################################################################
+# Test reading old-style LZW
+
+def tiff_read_old_style_lzw():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    ds = gdal.Open('data/quad-lzw-old-style.tif')
+    # Shut down warning about old style LZW
+    with gdaltest.error_handler():
+        cs = ds.GetRasterBand(1).Checksum()
+    if cs != 34282:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 for item in init_list:
@@ -3507,6 +3526,7 @@ gdaltest_list.append( (tiff_read_toomanyblocks_separate) )
 gdaltest_list.append( (tiff_read_size_of_stripbytecount_lower_than_stripcount) )
 gdaltest_list.append( (tiff_read_stripoffset_types) )
 gdaltest_list.append( (tiff_read_progressive_jpeg_denial_of_service) )
+gdaltest_list.append( (tiff_read_old_style_lzw) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )

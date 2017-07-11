@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.55 2017-05-17 09:38:58 erouault Exp $ */
+/* $Id: tif_lzw.c,v 1.56 2017-07-11 08:55:07 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -655,6 +655,9 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 	}
 
 	bp = (unsigned char *)tif->tif_rawcp;
+#ifdef LZW_CHECKEOS
+	sp->dec_bitsleft = (((uint64)tif->tif_rawcc) << 3);
+#endif
 	nbits = sp->lzw_nbits;
 	nextdata = sp->lzw_nextdata;
 	nextbits = sp->lzw_nextbits;
@@ -764,6 +767,7 @@ LZWDecodeCompat(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 		}
 	}
 
+	tif->tif_rawcc -= (tmsize_t)( (uint8*) bp - tif->tif_rawcp );
 	tif->tif_rawcp = (uint8*) bp;
 	sp->lzw_nbits = (unsigned short)nbits;
 	sp->lzw_nextdata = nextdata;
