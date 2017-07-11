@@ -23,7 +23,7 @@ Prerequisites:
     new members. Only non-virtual methods can be added.
 
     It may also be helpful to check:
-      http://upstream-tracker.org/versions/gdal.html
+      https://abi-laboratory.pro/tracker/timeline/gdal/
 
 2) Delete existing fix_typos directory and run scripts/fix_typos.sh
 
