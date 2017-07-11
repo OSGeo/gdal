@@ -58,6 +58,7 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "gdal_priv.h"
 #include "hfa.h"
 
 CPL_CVSID("$Id$")
@@ -2170,6 +2171,18 @@ HFAHandle HFACreate( const char *pszFilename,
     char *pszFullFilename = NULL;
     char *pszRawFilename = NULL;
 
+    // Work out some details about the tiling scheme.
+    const int nBlocksPerRow = DIV_ROUND_UP(nXSize, nBlockSize);
+    const int nBlocksPerColumn = DIV_ROUND_UP(nYSize, nBlockSize);
+    if( nBlocksPerRow > INT_MAX / nBlocksPerColumn )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Too many blocks");
+        return NULL;
+    }
+    const int nBlocks = nBlocksPerRow * nBlocksPerColumn;
+    const int nBytesPerBlock =
+        (nBlockSize * nBlockSize * HFAGetDataTypeBits(eDataType) + 7) / 8;
+
     // Create the low level structure.
     HFAHandle psInfo = HFACreateLL(pszFilename);
     if( psInfo == NULL )
@@ -2188,13 +2201,6 @@ HFAHandle HFACreate( const char *pszFilename,
         poDF->SetPosition();
         poDF->SetStringField("dependent.string", pszDependentFile);
     }
-
-    // Work out some details about the tiling scheme.
-    const int nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
-    const int nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
-    const int nBlocks = nBlocksPerRow * nBlocksPerColumn;
-    const int nBytesPerBlock =
-        (nBlockSize * nBlockSize * HFAGetDataTypeBits(eDataType) + 7) / 8;
 
     CPLDebug("HFACreate", "Blocks per row %d, blocks per column %d, "
              "total number of blocks %d, bytes per block %d.",
