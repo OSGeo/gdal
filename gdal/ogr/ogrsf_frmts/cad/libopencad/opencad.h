@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016 NextGIS, <info@nextgis.com>
+ *  Copyright (c) 2016-2017 NextGIS, <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -31,10 +31,10 @@
 #ifndef OPENCAD_H
 #define OPENCAD_H
 
-#define OCAD_VERSION    "0.3.2"
+#define OCAD_VERSION    "0.3.3"
 #define OCAD_VERSION_MAJOR 0
 #define OCAD_VERSION_MINOR 3
-#define OCAD_VERSION_REV   2
+#define OCAD_VERSION_REV   3
 
 #ifndef OCAD_COMPUTE_VERSION
 #define OCAD_COMPUTE_VERSION(maj,min,rev) ((maj)*10000+(min)*100+rev) // maj - any, min < 99, rev < 99
@@ -56,20 +56,12 @@
 #else
 #   if defined (_MSC_VER)
 #    ifdef OCAD_EXPORTS
-#      ifdef __GNUC__
-#        define OCAD_EXTERN extern __attribute__((dllexport))
+#      define OCAD_EXTERN __declspec(dllexport) // extern 
 #      else
-#        define OCAD_EXTERN extern __declspec(dllexport)
+#      define OCAD_EXTERN __declspec(dllimport) // extern 
 #      endif
 #    else
-#      ifdef __GNUC__
-#        define OCAD_EXTERN extern __attribute__((dllimport))
-#      else
-#        define OCAD_EXTERN extern __declspec(dllimport)
-#      endif
-#    endif
-#   else
-#     if __GNUC__ >= 4
+#     if defined(__GNUC__) && __GNUC__ >= 4
 #       define OCAD_EXTERN __attribute__((visibility("default")))
 #     else
 #       define OCAD_EXTERN                extern
