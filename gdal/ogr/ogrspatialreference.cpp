@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <string>
 
 #include "cpl_atomic_ops.h"
@@ -1265,7 +1266,9 @@ OGRErr OGRSpatialReference::SetTargetLinearUnits( const char *pszTargetKey,
         return OGRERR_FAILURE;
 
     char szValue[128] = { '\0' };
-    if( dfInMeters == static_cast<int>(dfInMeters) )
+    if( dfInMeters < std::numeric_limits<int>::max() &&
+        dfInMeters > std::numeric_limits<int>::min() &&
+        dfInMeters == static_cast<int>(dfInMeters) )
         snprintf( szValue, sizeof(szValue),
                   "%d", static_cast<int>(dfInMeters) );
     else
