@@ -319,7 +319,7 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
 /* -------------------------------------------------------------------- */
 /*      Is it a feature?  If so push a whole new state, and return.     */
 /* -------------------------------------------------------------------- */
-    else if( !m_bInUpdateProperty &&
+    else if( !m_bInUpdateProperty && m_nDepthFeature == 0 &&
              m_poReader->IsFeatureElement( m_osElementName ) )
     {
         m_osLastTypeName = m_osElementName;
