@@ -75,7 +75,6 @@ using namespace std;
 int DWGFileR2000::ReadHeader( OpenOptions eOptions )
 {
     char bufferPre[255];
-    char * pabyBuf;
     size_t dHeaderVarsSectionLength = 0;
     const size_t dSizeOfSectionSize = 4;
 
