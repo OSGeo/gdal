@@ -126,6 +126,10 @@ public:
     CADBuffer(size_t size);
     ~CADBuffer();
 
+    // Disable copy
+    CADBuffer(const CADBuffer&) = delete;
+    CADBuffer& operator=(const CADBuffer&) = delete;
+
     void WriteRAW(const void* data, size_t size);
     void* GetRawBuffer() const { return m_pBuffer + m_nBitOffsetFromStart / 8; }
     unsigned char Read2B();

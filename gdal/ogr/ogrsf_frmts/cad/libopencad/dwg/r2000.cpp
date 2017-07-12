@@ -739,6 +739,7 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
 int DWGFileR2000::CreateFileMap()
 {
     size_t nSection = 0;
+    const size_t dSizeOfSectionSize = 2;
 
     typedef pair<long, long> ObjHandleOffset;
     ObjHandleOffset          previousObjHandleOffset;
@@ -754,7 +755,7 @@ int DWGFileR2000::CreateFileMap()
         unsigned short dSectionSize = 0;
 
         // read section size
-        const size_t dSizeOfSectionSize = 2;
+
         pFileIO->Read( &dSectionSize, dSizeOfSectionSize );
         unsigned short dSectionSizeOriginal = dSectionSize;
         SwapEndianness( dSectionSize, sizeof( dSectionSize ) );
@@ -762,7 +763,7 @@ int DWGFileR2000::CreateFileMap()
         DebugMsg( "Object map section #%d size: %d\n",
                   static_cast<int>(++nSection), dSectionSize );
 
-        if( dSectionSize == dSizeOfSectionSize || dSectionSize > 65535 )
+        if( dSectionSize == dSizeOfSectionSize )
             break; // last section is empty.
 
         CADBuffer buffer(dSectionSize + dSizeOfSectionSize + 10);
