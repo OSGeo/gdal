@@ -59,6 +59,7 @@ typedef struct
 #define FillCADConstantDetail( x, y ) {CADHeader::x, y, "$"#x}
 
 static const CADHeaderConstantDetail CADHeaderConstantDetails[]{
+        FillCADConstantDetail( OPENCADVER, 777),
         FillCADConstantDetail( ACADMAINTVER, 70 ), FillCADConstantDetail( ACADVER, 1 ),
         FillCADConstantDetail( ANGBASE, 50 ), FillCADConstantDetail( ANGDIR, 70 ), FillCADConstantDetail( ATTMODE, 70 ),
         FillCADConstantDetail( AUNITS, 70 ), FillCADConstantDetail( AUPREC, 70 ), FillCADConstantDetail( CECOLOR, 62 ),

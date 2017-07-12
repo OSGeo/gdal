@@ -57,7 +57,7 @@ protected:
 /**
  * @brief Base CAD geometry class
  */
-class CADGeometry
+class OCAD_EXTERN CADGeometry
 {
 public:
     CADGeometry();
@@ -129,7 +129,7 @@ public:
 /**
  * @brief Geometry class which a single Point
  */
-class CADPoint3D : public CADGeometry
+class OCAD_EXTERN CADPoint3D : public CADGeometry
 {
 public:
     CADPoint3D();
@@ -155,7 +155,7 @@ protected:
 /**
  * @brief Geometry class which represents a simple Line
  */
-class CADLine : public CADGeometry
+class OCAD_EXTERN CADLine : public CADGeometry
 {
 public:
     CADLine();
@@ -177,7 +177,7 @@ protected:
 /**
  * @brief Geometry class which represents Polyline 3D
  */
-class CADPolyline3D : public CADGeometry
+class OCAD_EXTERN CADPolyline3D : public CADGeometry
 {
 public:
     CADPolyline3D();
@@ -196,7 +196,7 @@ protected:
  * @brief Geometry class which represents LWPolyline
  */
 
-class CADLWPolyline : public CADPolyline3D
+class OCAD_EXTERN CADLWPolyline : public CADPolyline3D
 {
 public:
     CADLWPolyline();
@@ -233,7 +233,7 @@ protected:
 /**
  * @brief Geometry class which represents Circle
  */
-class CADCircle : public CADPoint3D
+class OCAD_EXTERN CADCircle : public CADPoint3D
 {
 public:
     CADCircle();
@@ -250,7 +250,7 @@ protected:
 /**
  * @brief Geometry class which represents Text
  */
-class CADText : public CADPoint3D
+class OCAD_EXTERN CADText : public CADPoint3D
 {
 public:
     CADText();
@@ -279,7 +279,7 @@ protected:
 /**
  * @brief Geometry class which represents Arc
  */
-class CADArc : public CADCircle
+class OCAD_EXTERN CADArc : public CADCircle
 {
 public:
     CADArc();
@@ -300,7 +300,7 @@ protected:
 /**
  * @brief Geometry class which represents Ellipse
  */
-class CADEllipse : public CADArc
+class OCAD_EXTERN CADEllipse : public CADArc
 {
 public:
     CADEllipse();
@@ -321,7 +321,7 @@ protected:
 /**
  * @brief Geometry class which represents Spline
  */
-class CADSpline : public CADGeometry
+class OCAD_EXTERN CADSpline : public CADGeometry
 {
 public:
     CADSpline();
@@ -371,7 +371,7 @@ protected:
 /**
  * @brief Geometry class which represents Solid
  */
-class CADSolid : public CADPoint3D
+class OCAD_EXTERN CADSolid : public CADPoint3D
 {
 public:
     CADSolid();
@@ -392,7 +392,7 @@ protected:
 /**
  * @brief Geometry class which represents Ray
  */
-class CADRay : public CADPoint3D
+class OCAD_EXTERN CADRay : public CADPoint3D
 {
 public:
     CADRay();
@@ -407,7 +407,7 @@ public:
 /**
  * @brief Geometry class which represents Hatch
  */
-class CADHatch : public CADGeometry
+class OCAD_EXTERN CADHatch : public CADGeometry
 {
 public:
     CADHatch();
@@ -417,7 +417,7 @@ public:
 /**
  * @brief Geometry class which represents Image (Raster Image)
  */
-class CADImage : public CADGeometry
+class OCAD_EXTERN CADImage : public CADGeometry
 {
 public:
     /**
@@ -487,7 +487,7 @@ protected:
 /**
  * @brief Geometry class which represents MText
  */
-class CADMText : public CADText
+class OCAD_EXTERN CADMText : public CADText
 {
 public:
     CADMText();
@@ -520,7 +520,7 @@ protected:
 /**
  * @brief Geometry class which represents 3DFace
  */
-class CADFace3D : public CADGeometry
+class OCAD_EXTERN CADFace3D : public CADGeometry
 {
 public:
     CADFace3D();
@@ -542,7 +542,7 @@ protected:
 /**
  * @brief Geometry class which represents Polyline (PFace)
  */
-class CADPolylinePFace : public CADGeometry
+class OCAD_EXTERN CADPolylinePFace : public CADGeometry
 {
 public:
     CADPolylinePFace();
@@ -559,7 +559,7 @@ protected:
 /**
  * @brief Geometry class which represents XLine
  */
-class CADXLine : public CADRay
+class OCAD_EXTERN CADXLine : public CADRay
 {
 public:
     CADXLine();
@@ -571,7 +571,7 @@ public:
 /**
  * @brief Geometry class which represents MLine
  */
-class CADMLine : public CADPoint3D
+class OCAD_EXTERN CADMLine : public CADPoint3D
 {
 public:
     CADMLine();
@@ -598,7 +598,7 @@ protected:
 /**
  * @brief Geometry class which represents Attribute
  */
-class CADAttrib : public CADText
+class OCAD_EXTERN CADAttrib : public CADText
 {
 public:
     CADAttrib();
@@ -628,7 +628,7 @@ protected:
 /**
  * @brief Geometry class which represents Attribute definition
  */
-class CADAttdef : public CADAttrib
+class OCAD_EXTERN CADAttdef : public CADAttrib
 {
 public:
     CADAttdef();
