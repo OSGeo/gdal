@@ -295,7 +295,13 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
       osFilename += CPLString(fileName).substr(0, 7);
       osFilename += ".hgt";
       GDALOpenInfo oOpenInfo(osFilename, poOpenInfo->eAccess);
-      return Open(&oOpenInfo);
+      GDALDataset* poDS = Open(&oOpenInfo);
+      if( poDS != NULL )
+      {
+          // override description with the main one
+          poDS->SetDescription(poOpenInfo->pszFilename);
+      }
+      return poDS;
   }
 
   char latLonValueString[4];
