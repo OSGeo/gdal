@@ -2628,7 +2628,7 @@ void VSIZipWriteHandle::StartNewFile( VSIZipWriteHandle* poSubFile )
  *
  * Starting with GDAL 2.2, an alternate syntax is available so as to enable
  * chaining and not being dependent on .zip extension :
- * /vsitar/{/path/to/the/archive}/path/inside/the/zip/file.
+ * /vsizip/{/path/to/the/archive}/path/inside/the/zip/file.
  * Note that /path/to/the/archive may also itself this alternate syntax.
  *
  * If the path is absolute, it should begin with a / on a Unix-like OS (or C:\
