@@ -123,7 +123,7 @@ public:
     };
 
 public:
-    CADBuffer(size_t size);
+    explicit CADBuffer(size_t size);
     ~CADBuffer();
 
     // Disable copy
