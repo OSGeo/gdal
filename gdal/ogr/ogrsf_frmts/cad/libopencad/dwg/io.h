@@ -111,35 +111,61 @@ struct bin< 0 >
 
 extern const int DWGCRC8Table[256];
 
-unsigned short CalculateCRC8( unsigned short initialVal, const char * ptr, int num );
+unsigned short CalculateCRC8(unsigned short initialVal, const char *ptr, int num );
 
-long          ReadRAWLONGLONG( const char * pabyInput, size_t& nBitOffsetFromStart );
-int           ReadRAWLONG( const char * pabyInput, size_t& nBitOffsetFromStart );
-short         ReadRAWSHORT( const char * pabyInput, size_t& nBitOffsetFromStart );
-double        ReadRAWDOUBLE( const char * pabyInput, size_t& nBitOffsetFromStart );
-unsigned char Read2B( const char * pabyInput, size_t& nBitOffsetFromStart );
-unsigned char Read3B( const char * pabyInput, size_t& nBitOffsetFromStart );
-unsigned char Read4B( const char * pabyInput, size_t& nBitOffsetFromStart );
-CADHandle     ReadHANDLE( const char * pabyInput, size_t& nBitOffsetFromStart );
-CADHandle     ReadHANDLE8BLENGTH( const char * pabyInput, size_t& nBitOffsetFromStart );
-void          SkipHANDLE( const char * pabyInput, size_t& nBitOffsetFromStart );
-bool          ReadBIT( const char * pabyInput, size_t& nBitOffsetFromStart );
-void          SkipBIT( const char * pabyInput, size_t& nBitOffsetFromStart );
-unsigned char ReadCHAR( const char * pabyInput, size_t& nBitOffsetFromStart );
-short         ReadBITSHORT( const char * pabyInput, size_t& nBitOffsetFromStart );
-int           ReadBITLONG( const char * pabyInput, size_t& nBitOffsetFromStart );
-double        ReadBITDOUBLE( const char * pabyInput, size_t& nBitOffsetFromStart );
-void          SkipBITDOUBLE( const char * pabyInput, size_t& nBitOffsetFromStart );
-double        ReadBITDOUBLEWD( const char * pabyInput, size_t& nBitOffsetFromStart, double defaultvalue );
-long          ReadMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart );
-long          ReadUMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart );
-unsigned int  ReadMSHORT( const char * pabyInput, size_t& nBitOffsetFromStart );
-std::string   ReadTV( const char * pabyInput, size_t& nBitOffsetFromStart );
-void          SkipTV( const char * pabyInput, size_t& nBitOffsetFromStart );
-void          SkipBITLONG( const char * pabyInput, size_t& nBitOffsetFromStart );
-void          SkipBITSHORT( const char * pabyInput, size_t& nBitOffsetFromStart );
+class CADBuffer
+{
+public:
+    enum SeekPosition {
+        BEG = 1,
+        CURRENT,
+        END
+    };
 
-CADVector ReadVector( const char * pabyInput, size_t& nBitOffsetFromStart );
-CADVector ReadRAWVector( const char * pabyInput, size_t& nBitOffsetFromStart );
+public:
+    CADBuffer(size_t size);
+    ~CADBuffer();
+
+    void WriteRAW(const void* data, size_t size);
+    void* GetRawBuffer() const { return m_pBuffer + m_nBitOffsetFromStart / 8; }
+    unsigned char Read2B();
+    unsigned char Read3B();
+    unsigned char Read4B();
+
+    double ReadBITDOUBLE();
+    void SkipBITDOUBLE();
+
+    int ReadRAWLONG();
+    short ReadRAWSHORT();
+    double ReadRAWDOUBLE();
+    CADHandle ReadHANDLE();
+    CADHandle ReadHANDLE8BLENGTH();
+    void SkipHANDLE();
+    bool ReadBIT();
+    void SkipBIT();
+    unsigned char ReadCHAR();
+    short ReadBITSHORT();
+    int ReadBITLONG();
+    double ReadBITDOUBLEWD(double defaultvalue);
+    long ReadMCHAR();
+    long ReadUMCHAR();
+    unsigned int ReadMSHORT();
+    std::string ReadTV();
+    void SkipTV();
+    void SkipBITLONG();
+    void SkipBITSHORT();
+    CADVector ReadVector();
+    CADVector ReadRAWVector();
+
+    void Seek(size_t offset, enum SeekPosition position = SeekPosition::CURRENT);
+    size_t PostionBit() const { return m_nBitOffsetFromStart; }
+private:
+    char* m_pBuffer;
+    size_t m_nBitOffsetFromStart;
+    const char* m_guard;
+};
+
+// long ReadRAWLONGLONG( const char * pabyInput, size_t& nBitOffsetFromStart);
+
 
 #endif // DWG_IO_H

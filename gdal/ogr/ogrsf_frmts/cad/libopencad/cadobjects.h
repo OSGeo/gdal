@@ -37,7 +37,7 @@
 /*
  * @brief Class which basically implements implements 3D vertex
  */
-class CADVector
+class OCAD_EXTERN CADVector
 {
 public:
     CADVector();
@@ -80,7 +80,7 @@ typedef std::vector<CADEed>    CADEedArray;
 /**
  * @brief The base CAD object class
  */
-class CADObject
+class OCAD_EXTERN CADObject
 {
 public:
     enum ObjectType
