@@ -2633,7 +2633,7 @@ OSMContext* OSM_Open( const char* pszFilename,
     {
         psCtxt->nBlobSizeAllocated = XML_BUFSIZE;
 
-        psCtxt->nStrAllocated = 65536;
+        psCtxt->nStrAllocated = 1024*1024;
         psCtxt->pszStrBuf = (char*) VSI_MALLOC_VERBOSE(psCtxt->nStrAllocated);
         if( psCtxt->pszStrBuf )
             psCtxt->pszStrBuf[0] = '\0';
