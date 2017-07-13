@@ -96,17 +96,24 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
         return CADErrorCodes::HEADER_SECTION_READ_FAILED;
     }
 
-    pFileIO->Read( &dHeaderVarsSectionLength, dSizeOfSectionSize );
+    readSize = pFileIO->Read( &dHeaderVarsSectionLength, dSizeOfSectionSize );
         DebugMsg( "Header variables section length: %d\n",
                   static_cast<int>(dHeaderVarsSectionLength) );
     if(dHeaderVarsSectionLength > 65536) //NOTE: maybe header section may be bigger
     {
+        DebugMsg( "File is corrupted (HEADER_VARS section length too big)" );
         return CADErrorCodes::HEADER_SECTION_READ_FAILED;
     }
 
     CADBuffer buffer(dHeaderVarsSectionLength + dSizeOfSectionSize + 10);
     buffer.WriteRAW(&dHeaderVarsSectionLength, dSizeOfSectionSize);
-    pFileIO->Read(buffer.GetRawBuffer(), dHeaderVarsSectionLength + 2 );
+    readSize = pFileIO->Read(buffer.GetRawBuffer(), dHeaderVarsSectionLength + 2 );
+    if(readSize != dHeaderVarsSectionLength + 2)
+    {
+        DebugMsg( "Failed to read %ld byte of file. Read only %ld",
+                  dHeaderVarsSectionLength + 2, readSize );
+        return CADErrorCodes::HEADER_SECTION_READ_FAILED;
+    }
 
     if( eOptions == OpenOptions::READ_ALL )
     {
@@ -698,7 +705,14 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
 
         CADBuffer buffer(dSectionSize + dSizeOfSectionSize + 10);
         buffer.WriteRAW(&dSectionSize, dSizeOfSectionSize);
-        pFileIO->Read( buffer.GetRawBuffer(), dSectionSize + 2 );
+        size_t readSize = pFileIO->Read( buffer.GetRawBuffer(), dSectionSize + 2 );
+        if(readSize != dSectionSize + 2)
+        {
+            DebugMsg( "Failed to read %ld byte of file. Read only %ld",
+                      dSectionSize + 2, readSize );
+            return CADErrorCodes::CLASSES_SECTION_READ_FAILED;
+        }
+
         size_t dSectionBitSize = (dSectionSize + dSizeOfSectionSize) * 8;
         while( buffer.PostionBit() < dSectionBitSize - 8)
         {
@@ -771,7 +785,13 @@ int DWGFileR2000::CreateFileMap()
         size_t nRecordsInSection   = 0;
 
         // read section datsa
-        pFileIO->Read( buffer.GetRawBuffer(), dSectionSize );
+        size_t readSize = pFileIO->Read( buffer.GetRawBuffer(), dSectionSize );
+        if(readSize != dSectionSize)
+        {
+            DebugMsg( "Failed to read %d byte of file. Read only %ld",
+                      dSectionSize, readSize );
+            return CADErrorCodes::OBJECTS_SECTION_READ_FAILED;
+        }
         unsigned int dSectionBitSize = dSectionSize * 8;
 
         while( buffer.PostionBit() < dSectionBitSize )
@@ -828,7 +848,14 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
     CADBuffer objectBuffer(dObjectSize + 64);
 
     pFileIO->Seek( mapObjects[dHandle], CADFileIO::SeekOrigin::BEG );
-    pFileIO->Read( objectBuffer.GetRawBuffer(), static_cast<size_t>(dObjectSize) );
+    size_t readSize = pFileIO->Read( objectBuffer.GetRawBuffer(),
+                                     static_cast<size_t>(dObjectSize) );
+    if(readSize != static_cast<size_t>(dObjectSize))
+    {
+        DebugMsg( "Failed to read %ld byte of file. Read only %ld",
+                  static_cast<size_t>(dObjectSize), readSize );
+        return nullptr;
+    }
 
     /* Unused dObjectSize = */ objectBuffer.ReadMSHORT();
     short dObjectType = objectBuffer.ReadBITSHORT();
