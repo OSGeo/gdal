@@ -700,6 +700,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
         GDALGetGeoTransform( hSrcDataset, adfGeoTransform );
 
+        if( adfGeoTransform[1] == 0.0 || adfGeoTransform[5] == 0.0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                     "The -projwin option was used, but the geotransform is "
+                     "invalid." );
+            GDALTranslateOptionsFree(psOptions);
+            return NULL;
+        }
         if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
