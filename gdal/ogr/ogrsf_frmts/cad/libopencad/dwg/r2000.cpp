@@ -110,8 +110,9 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
     readSize = pFileIO->Read(buffer.GetRawBuffer(), dHeaderVarsSectionLength + 2 );
     if(readSize != dHeaderVarsSectionLength + 2)
     {
-        DebugMsg( "Failed to read %ld byte of file. Read only %ld",
-                  dHeaderVarsSectionLength + 2, readSize );
+        DebugMsg( "Failed to read %d byte of file. Read only %d",
+                  static_cast<int>(dHeaderVarsSectionLength + 2),
+                  static_cast<int>(readSize) );
         return CADErrorCodes::HEADER_SECTION_READ_FAILED;
     }
 
@@ -708,8 +709,9 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
         size_t readSize = pFileIO->Read( buffer.GetRawBuffer(), dSectionSize + 2 );
         if(readSize != dSectionSize + 2)
         {
-            DebugMsg( "Failed to read %ld byte of file. Read only %ld",
-                      dSectionSize + 2, readSize );
+            DebugMsg( "Failed to read %d byte of file. Read only %d",
+                      static_cast<int>(dSectionSize + 2),
+                      static_cast<int>(readSize) );
             return CADErrorCodes::CLASSES_SECTION_READ_FAILED;
         }
 
@@ -788,8 +790,9 @@ int DWGFileR2000::CreateFileMap()
         size_t readSize = pFileIO->Read( buffer.GetRawBuffer(), dSectionSize );
         if(readSize != dSectionSize)
         {
-            DebugMsg( "Failed to read %d byte of file. Read only %ld",
-                      dSectionSize, readSize );
+            DebugMsg( "Failed to read %d byte of file. Read only %d",
+                      static_cast<int>(dSectionSize),
+                      static_cast<int>(readSize) );
             return CADErrorCodes::OBJECTS_SECTION_READ_FAILED;
         }
         unsigned int dSectionBitSize = dSectionSize * 8;
@@ -852,8 +855,9 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
                                      static_cast<size_t>(dObjectSize) );
     if(readSize != static_cast<size_t>(dObjectSize))
     {
-        DebugMsg( "Failed to read %ld byte of file. Read only %ld",
-                  static_cast<size_t>(dObjectSize), readSize );
+        DebugMsg( "Failed to read %d byte of file. Read only %d",
+                  static_cast<int>(dObjectSize),
+                  static_cast<int>(readSize) );
         return nullptr;
     }
 
