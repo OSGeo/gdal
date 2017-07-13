@@ -490,7 +490,7 @@ unsigned char CADBuffer::ReadCHAR()
     size_t        nBitOffsetInByte = m_nBitOffsetFromStart % 8;
 
     const char * pCharFirstByte = m_pBuffer + nByteOffset;
-    if(pCharFirstByte > m_guard)
+    if(pCharFirstByte + 2 > m_guard)
         return result;
 
     unsigned char aCharBytes[2]; // maximum bytes a single char can take.
