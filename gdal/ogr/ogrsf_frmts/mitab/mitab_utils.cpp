@@ -472,7 +472,7 @@ char *TABEscapeString(char *pszString)
 char *TABCleanFieldName(const char *pszSrcName)
 {
     char *pszNewName = CPLStrdup(pszSrcName);
-
+    //return pszNewName;
     if (strlen(pszNewName) > 31)
     {
         pszNewName[31] = '\0';

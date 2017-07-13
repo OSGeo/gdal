@@ -2265,6 +2265,105 @@ def ogr_mitab_44():
     return 'success'
 
 ###############################################################################
+#Test read/write MapInfo layers with encoding specified
+
+def ogr_mitab_45():
+
+    lyrNames = [ 'lyr1', 'lyr2' ]
+    fldNames = [ 'field1', 'field2' ]#'\xD0\xB0\xD0\xB7' ]
+    featNames = [ '\xD0\xB0\xD0\xB7',
+                  '\xD0\xB1\xD1\x83\xD0\xBA\xD0\xB8',
+                  '\xD0\xB2\xD0\xB5\xD0\xB4\xD0\xB8' ]
+    formats =  [  'MIF',  'TAB', 'MIF', 'TAB' ]
+    lyrNums =  [      1,      1,     2,     2 ]
+    dsExts =   [ '.mif', '.tab',    '',    '' ]
+
+    for formatN in range(len(formats)):
+        format = formats[formatN]
+        lyrCount = lyrNums[formatN]
+        ext = dsExts[formatN]
+        dsName='/vsimem/45/ogr_mitab_45_%s_%s%s' % (format, lyrCount, ext)
+
+        ds = gdaltest.mapinfo_drv.CreateDataSource(dsName, options = ['FORMAT='+format] )
+
+        if ds is None:
+            gdaltest.post_reason('Can\'t create dataset: ' + dsName)
+            return 'fail'
+
+        for i in range(lyrCount):
+            lyr = ds.CreateLayer(lyrNames[i], options = ['ENCODING=CP1251'])
+            if lyr is None:
+                gdaltest.post_reason('Can\'t create layer '+lyrNames[i]+
+                                     ' for '+dsName)
+                return 'fail'
+
+            for fldName in fldNames:
+                fld_defn = ogr.FieldDefn(fldName, ogr.OFTString)
+                fld_defn.SetWidth(254)
+                lyr.CreateField(fld_defn)
+
+            for featN in range(len(featNames)):
+                feat = ogr.Feature(lyr.GetLayerDefn())
+                feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (25 72)"))
+                for fldN in range(len(fldNames)):
+                    featValue = fldNames[fldN] + ' ' + featNames[featN]
+                    feat.SetField(fldNames[fldN], featValue)
+                lyr.CreateFeature(feat)
+        ds = None
+
+        #reopen and check
+        ds = ogr.Open(dsName)
+        if ds is None:
+            gdaltest.post_reason('Can\'t reopen dataset: ' + dsName)
+            return 'fail'
+
+        for i in range(lyrCount):
+            lyr = ds.GetLayer(i)
+            if lyr is None:
+                gdaltest.post_reason('Can\'t get layer '+lyrNames[i]+
+                                     ' from '+dsName)
+                return 'fail'
+
+            for fldN in range(len(fldNames)):
+                fldName = lyr.GetLayerDefn().GetFieldDefn(fldN).GetName()
+                expectedName = fldNames[fldN]
+                if fldName != expectedName:
+                    gdaltest.post_reason('Can\'t get field name\n' +
+                                         ' result name:   "' + fldName + '"\n'
+                                         ' expected name: "' + expectedName + '"\n'
+                                         ' from layer : ' + lyrNames[i] +
+                                         ' from dataset :'+ dsName)
+                    return 'fail'
+
+            for featN in range(len(featNames)):
+                feat = lyr.GetNextFeature()
+                for fldN in range(len(fldNames)):
+                    expectedValue = fldNames[fldN] + ' ' + featNames[featN]
+                    # column value by number
+                    value = feat.GetField(fldN)
+                    if value != expectedValue:
+                        gdaltest.post_reason('Can\'t get field value by number\n' +
+                                             ' result value:   "' + value + '"\n'
+                                             ' expected value: "' + expectedValue + '"\n'
+                                             ' from layer : ' + lyrNames[i] +
+                                             ' from dataset :'+ dsName)
+                        return 'fail'
+                    # column value by name
+                    value = feat.GetField(fldNames[fldN])
+                    if value != expectedValue:
+                        gdaltest.post_reason('Can\'t get field value by name\n' +
+                                             ' result value:   "' + value + '"\n'
+                                             ' expected value: "' + expectedValue + '"\n'
+                                             ' from layer : ' + lyrNames[i] +
+                                             ' from dataset :'+ dsName)
+                        return 'fail'
+
+        gdaltest.mapinfo_drv.DeleteDataSource(dsName)
+
+    return 'success'
+
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2326,6 +2425,7 @@ gdaltest_list = [
     ogr_mitab_42,
     ogr_mitab_43,
     ogr_mitab_44,
+    ogr_mitab_45,
     ogr_mitab_cleanup
     ]
 

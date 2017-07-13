@@ -195,7 +195,8 @@ void TABFile::ResetReading()
  **********************************************************************/
 int TABFile::Open(const char *pszFname, TABAccess eAccess,
                   GBool bTestOpenNoError /*=FALSE*/,
-                  int nBlockSizeForCreate)
+                  int nBlockSizeForCreate,
+                  const char* pszCharset /* = NULL */)
 {
     char *pszTmpFname = NULL;
     int nFnameLen = 0;
@@ -302,8 +303,10 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
          * Close() call... we will just set some defaults here.
          *------------------------------------------------------------*/
         m_nVersion = 300;
-        CPLFree(m_pszCharset);
-        m_pszCharset = CPLStrdup("Neutral");
+        if( pszCharset != NULL )
+            SetCharset(pszCharset);
+        else
+            SetCharset("Neutral");
         m_eTableType = TABTableNative;
 
         /*-------------------------------------------------------------
@@ -339,7 +342,15 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
     TABAdjustFilenameExtension(pszTmpFname);
 #endif
 
-    m_poDATFile = new TABDATFile;
+    m_poDATFile = new TABDATFile( "" );
+    if(eAccess == TABRead || eAccess == TABReadWrite)
+    {
+        m_poDATFile->SetEncoding( CharsetToEncoding(GetCharset()) );
+    }
+    else if(eAccess == TABWrite)
+    {
+        m_poDATFile->SetEncoding( CharsetToEncoding(pszCharset) );
+    }
 
     if ( m_poDATFile->Open(pszTmpFname, eAccess, m_eTableType) != 0)
     {
@@ -525,7 +536,7 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
                  */
                 bInsideTableDef = TRUE;
                 CPLFree(m_pszCharset);
-                m_pszCharset = CPLStrdup("Neutral");
+                SetCharset("Neutral");
                 m_eTableType = TABTableNative;
             }
         }
@@ -538,8 +549,7 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
         }
         else if (EQUAL(papszTok[0], "!charset"))
         {
-            CPLFree(m_pszCharset);
-            m_pszCharset = CPLStrdup(papszTok[1]);
+            SetCharset(papszTok[1]);
         }
         else if (EQUAL(papszTok[0], "Definition") &&
                  EQUAL(papszTok[1], "Table") )
@@ -598,7 +608,7 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
     CSLDestroy(papszTok);
 
     if (m_pszCharset == NULL)
-        m_pszCharset = CPLStrdup("Neutral");
+        SetCharset("Neutral");
 
     if (numFields == 0)
     {
@@ -700,17 +710,26 @@ int TABFile::ParseTABFileFields()
 
                 CPLAssert(m_poDefn);
                 poFieldDefn = NULL;
+
+                CPLString   osFieldName;
+                if( numTok > 0 )
+                {
+                    osFieldName = papszTok[0];
+                    if( strlen( GetEncoding() ) > 0 )
+                        osFieldName.Recode( GetEncoding(), CPL_ENC_UTF8 );
+                }
+
                 if (numTok >= 3 && EQUAL(papszTok[1], "char"))
                 {
                     /*-------------------------------------------------
                      * CHAR type
                      *------------------------------------------------*/
                     nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               papszTok[0],
+                                                               osFieldName,
                                                                TABFChar,
                                                             atoi(papszTok[2]),
                                                                0);
-                    poFieldDefn = new OGRFieldDefn(papszTok[0], OFTString);
+                    poFieldDefn = new OGRFieldDefn(osFieldName, OFTString);
                     poFieldDefn->SetWidth(atoi(papszTok[2]));
                 }
                 else if (numTok >= 2 && EQUAL(papszTok[1], "integer"))
@@ -719,11 +738,11 @@ int TABFile::ParseTABFileFields()
                      * INTEGER type
                      *------------------------------------------------*/
                     nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               papszTok[0],
+                                                               osFieldName,
                                                                TABFInteger,
                                                                0,
                                                                0);
-                    poFieldDefn = new OGRFieldDefn(papszTok[0], OFTInteger);
+                    poFieldDefn = new OGRFieldDefn(osFieldName, OFTInteger);
                     if( numTok > 2 && atoi(papszTok[2]) > 0 )
                         poFieldDefn->SetWidth( atoi(papszTok[2]) );
                 }
@@ -733,11 +752,11 @@ int TABFile::ParseTABFileFields()
                      * SMALLINT type
                      *------------------------------------------------*/
                     nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               papszTok[0],
+                                                               osFieldName,
                                                                TABFSmallInt,
                                                                0,
                                                                0);
-                    poFieldDefn = new OGRFieldDefn(papszTok[0], OFTInteger);
+                    poFieldDefn = new OGRFieldDefn(osFieldName, OFTInteger);
                     if( numTok > 2 && atoi(papszTok[2]) > 0 )
                         poFieldDefn->SetWidth( atoi(papszTok[2]) );
                 }
@@ -747,11 +766,11 @@ int TABFile::ParseTABFileFields()
                      * DECIMAL type
                      *------------------------------------------------*/
                     nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               papszTok[0],
+                                                               osFieldName,
                                                                TABFDecimal,
                                                            atoi(papszTok[2]),
                                                            atoi(papszTok[3]));
-                    poFieldDefn = new OGRFieldDefn(papszTok[0], OFTReal);
+                    poFieldDefn = new OGRFieldDefn(osFieldName, OFTReal);
                     poFieldDefn->SetWidth(atoi(papszTok[2]));
                     poFieldDefn->SetPrecision(atoi(papszTok[3]));
                 }
@@ -761,10 +780,10 @@ int TABFile::ParseTABFileFields()
                      * FLOAT type
                      *------------------------------------------------*/
                     nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               papszTok[0],
+                                                               osFieldName,
                                                                TABFFloat,
                                                                0, 0);
-                    poFieldDefn = new OGRFieldDefn(papszTok[0], OFTReal);
+                    poFieldDefn = new OGRFieldDefn(osFieldName, OFTReal);
                 }
                 else if (numTok >= 2 && EQUAL(papszTok[1], "date"))
                 {
@@ -772,11 +791,11 @@ int TABFile::ParseTABFileFields()
                      * DATE type (returned as a string: "DD/MM/YYYY")
                      *------------------------------------------------*/
                     nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               papszTok[0],
+                                                               osFieldName,
                                                                TABFDate,
                                                                0,
                                                                0);
-                    poFieldDefn = new OGRFieldDefn(papszTok[0],
+                    poFieldDefn = new OGRFieldDefn(osFieldName,
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTDate);
 #else
@@ -790,11 +809,11 @@ int TABFile::ParseTABFileFields()
                      * TIME type (returned as a string: "HH:MM:SS")
                      *------------------------------------------------*/
                     nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               papszTok[0],
+                                                               osFieldName,
                                                                TABFTime,
                                                                0,
                                                                0);
-                    poFieldDefn = new OGRFieldDefn(papszTok[0],
+                    poFieldDefn = new OGRFieldDefn(osFieldName,
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTTime);
 #else
@@ -808,11 +827,11 @@ int TABFile::ParseTABFileFields()
                      * DATETIME type (returned as a string: "DD/MM/YYYY HH:MM:SS")
                      *------------------------------------------------*/
                     nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               papszTok[0],
+                                                               osFieldName,
                                                                TABFDateTime,
                                                                0,
                                                                0);
-                    poFieldDefn = new OGRFieldDefn(papszTok[0],
+                    poFieldDefn = new OGRFieldDefn(osFieldName,
 #ifdef MITAB_USE_OFTDATETIME
                                                    OFTDateTime);
 #else
@@ -826,11 +845,11 @@ int TABFile::ParseTABFileFields()
                      * LOGICAL type (value "T" or "F")
                      *------------------------------------------------*/
                     nStatus = m_poDATFile->ValidateFieldInfoFromTAB(iField,
-                                                               papszTok[0],
+                                                               osFieldName,
                                                                TABFLogical,
                                                                0,
                                                                0);
-                    poFieldDefn = new OGRFieldDefn(papszTok[0], OFTString);
+                    poFieldDefn = new OGRFieldDefn(osFieldName, OFTString);
                     poFieldDefn->SetWidth(1);
                 }
                 else
@@ -991,8 +1010,13 @@ int TABFile::WriteTABFile()
                 }
                 else
                 {
+                    CPLString   osFieldName( poFieldDefn->GetNameRef() );
+
+                    if( strlen( GetEncoding() ) > 0 )
+                        osFieldName.Recode( CPL_ENC_UTF8, GetEncoding() );
+
                     VSIFPrintfL(fp, "    %s %s Index %d ;\n",
-                            poFieldDefn->GetNameRef(), pszFieldType,
+                            osFieldName.c_str(), pszFieldType,
                             GetFieldIndexNumber(iField) );
                 }
             }
@@ -1545,6 +1569,19 @@ int TABFile::WriteFeature(TABFeature *poFeature)
 
     delete poObjHdr;
 
+    return 0;
+}
+
+int TABFile::SetCharset(const char* pszCharset)
+{
+    if( 0 != IMapInfoFile::SetCharset(pszCharset) )
+    {
+        return -1;
+    }
+    if(m_poDATFile != NULL)
+    {
+        m_poDATFile->SetEncoding( CharsetToEncoding( pszCharset ) );
+    }
     return 0;
 }
 
@@ -2752,6 +2789,9 @@ int TABFile::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCAlterFieldDefn) )
         return m_eAccessMode != TABRead;
+
+    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return TRUE;
 
     else
         return FALSE;
