@@ -39,6 +39,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_csv.h"
@@ -754,12 +755,14 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     }
     else if( EQUAL(osProj, "utm") )
     {
-        if( static_cast<int>(OSR_GDV(papszPrj, "zone", 0.0)) != 0 )
+        const double dfOsrGdv = OSR_GDV(papszPrj, "zone", 0.0);
+        if( dfOsrGdv <= -1.0 && dfOsrGdv >= 1.0 &&
+            dfOsrGdv > std::numeric_limits<int>::min() &&
+            dfOsrGdv < std::numeric_limits<int>::max() )
         {
             const double dfYShift = OSR_GDV(papszPrj, "Yshift", 0.0);
 
-            SetUTM( static_cast<int>(OSR_GDV(papszPrj, "zone", 0.0)),
-                    dfYShift == 0.0 );
+            SetUTM(static_cast<int>(dfOsrGdv), dfYShift == 0.0);
         }
         else
         {
