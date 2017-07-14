@@ -246,8 +246,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         // Do nothing
     }
     else if( nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
-         (!m_bNoDataValueSet || (!CPLIsNan(m_dfNoDataValue) &&
-                                 m_dfNoDataValue == 0)) )
+         (!m_bNoDataValueSet || m_dfNoDataValue == 0.0) )
     {
         if( nLineSpace == nBufXSize * nPixelSpace )
         {
@@ -264,7 +263,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             }
         }
     }
-    else if( m_bNoDataValueSet )
+    else
     {
         double dfWriteValue = 0.0;
         if( m_bNoDataValueSet )

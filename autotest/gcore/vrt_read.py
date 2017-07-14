@@ -1288,6 +1288,31 @@ def vrt_read_29():
 
     return 'success'
 
+###############################################################################
+# Check VRT reading with DatasetRasterIO
+
+def vrt_read_30():
+
+    ds = gdal.Open("""<VRTDataset rasterXSize="2" rasterYSize="2">
+  <VRTRasterBand dataType="Byte" band="1">
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3">
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    data = ds.ReadRaster(0,0,2,2,2,2, buf_pixel_space = 3, buf_line_space = 2 * 3, buf_band_space = 1)
+    import struct
+    got = struct.unpack('B' * 2*2*3, data)
+    for i in range(2*2*3):
+        if got[i] != 0:
+            print(got)
+            return 'fail'
+    ds = None
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -1324,6 +1349,7 @@ gdaltest_list.append( vrt_read_26 )
 gdaltest_list.append( vrt_read_27 )
 gdaltest_list.append( vrt_read_28 )
 gdaltest_list.append( vrt_read_29 )
+gdaltest_list.append( vrt_read_30 )
 
 if __name__ == '__main__':
 
