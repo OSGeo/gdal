@@ -1329,7 +1329,8 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
         const size_t nOffsetInDiskSector =
             static_cast<size_t>(nNewOffset - nOldOffset) +
             nOffInBucketReducedRemainer * sizeof(LonLat);
-        if( nOffsetInDiskSector + sizeof(LonLat) > nValidBytes )
+        if( nValidBytes < sizeof(LonLat) ||
+            nOffsetInDiskSector > nValidBytes - sizeof(LonLat) )
         {
             CPLError(CE_Failure,  CPLE_AppDefined,
                     "Cannot read node " CPL_FRMT_GIB, id);
