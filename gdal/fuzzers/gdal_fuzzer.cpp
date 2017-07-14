@@ -133,6 +133,30 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     bDoCheckSum = false;
                     break;
                 }
+
+                // Currently decoding of PIXARLOG compressed TIFF requires
+                // a temporary buffer for the whole strip, so be careful for a
+                // GTiffSplitBand
+                // Could probably be fixed for the CHUNKY_STRIP_READ_SUPPORT
+                // mode.
+                // Workaround https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2606
+                if( nBYSize == 1 && nYSizeToRead > 1 &&
+                    GDALGetRasterYSize(hDS) > INT_MAX / nBXSize &&
+                    GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff") )
+                {
+                    const char* pszCompress =
+                        GDALGetMetadataItem(hDS, "COMPRESSION",
+                                            "IMAGE_STRUCTURE");
+                    if( pszCompress && EQUAL(pszCompress, "PIXARLOG") )
+                    {
+                        if( GDALGetMetadataItem(GDALGetRasterBand(hDS, 1),
+                                               "BLOCK_OFFSET_0_1", NULL) == NULL )
+                        {
+                            bDoCheckSum = false;
+                        }
+                    }
+                }
+
                 GIntBig nNewPixels = static_cast<GIntBig>(nBXSize) * nBYSize;
                 nNewPixels *= DIV_ROUND_UP(nXSizeToRead, nBXSize);
                 nNewPixels *= DIV_ROUND_UP(nYSizeToRead, nBYSize);
