@@ -303,7 +303,13 @@ bool Huffman::BuildTreeFromCodes(int& numBitsLUT)
     {
       unsigned int code = m_codeTable[k].second;
       int shift = 1;
-      while (code >> shift) shift++;
+      while (true)
+      {
+          code = code >> 1;
+          if( code == 0 )
+              break;
+          shift++;
+      }
       m_numBitsToSkipInTree = min(m_numBitsToSkipInTree, len - shift);
     }
   }
