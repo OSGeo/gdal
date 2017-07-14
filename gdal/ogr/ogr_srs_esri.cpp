@@ -756,9 +756,7 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     else if( EQUAL(osProj, "utm") )
     {
         const double dfOsrGdv = OSR_GDV(papszPrj, "zone", 0.0);
-        if( dfOsrGdv <= -1.0 && dfOsrGdv >= 1.0 &&
-            dfOsrGdv > std::numeric_limits<int>::min() &&
-            dfOsrGdv < std::numeric_limits<int>::max() )
+        if( dfOsrGdv > 0 && dfOsrGdv < 61 )
         {
             const double dfYShift = OSR_GDV(papszPrj, "Yshift", 0.0);
 
@@ -768,10 +766,12 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
         {
             const double dfCentralMeridian = OSR_GDV(papszPrj, "PARAM_1", 0.0);
             const double dfRefLat = OSR_GDV(papszPrj, "PARAM_2", 0.0);
-
-            const int nZone = static_cast<int>(
-                (dfCentralMeridian + 183.0) / 6.0 + 0.0000001 );
-            SetUTM( nZone, dfRefLat >= 0.0 );
+            if( dfCentralMeridian >= -180.0 && dfCentralMeridian <= 180.0 )
+            {
+                const int nZone = static_cast<int>(
+                    (dfCentralMeridian + 183.0) / 6.0 + 0.0000001 );
+                SetUTM( nZone, dfRefLat >= 0.0 );
+            }
         }
     }
     else if( EQUAL(osProj, "STATEPLANE") )
