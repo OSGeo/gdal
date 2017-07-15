@@ -1263,7 +1263,15 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
         if( !EQUAL(poParm->GetValue(), "PARAMETER") )
             continue;
 
-        const char *pszParmName = poParm->GetChild(0)->GetValue();
+        OGR_SRSNode *poParmNameNode = poParm->GetChild(0);
+        if( poParmNameNode == NULL )
+        {
+            CPLDebug( "OGRSpatialReference::Validate",
+                      "Parameter name for PROJECTION %s is corrupt.",
+                       pszProjection );
+            return OGRERR_CORRUPT_DATA;
+        }
+        const char *pszParmName = poParmNameNode->GetValue();
 
         int i = iOffset;  // Used after for.
         for( ; papszProjWithParms[i] != NULL; i++ )
