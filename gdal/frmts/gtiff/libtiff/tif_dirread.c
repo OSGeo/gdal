@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.216 2017-07-15 13:51:22 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.217 2017-07-15 14:27:50 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -813,7 +813,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryDataAndRealloc(
                             "Failed to allocate memory for %s "
                             "(%ld elements of %ld bytes each)",
                             "TIFFReadDirEntryArray",
-                             (long) 1, (long) already_read + to_read);
+                             (long) 1, (long) (already_read + to_read));
                 return TIFFReadDirEntryErrAlloc;
             }
             *pdest = new_dest;
