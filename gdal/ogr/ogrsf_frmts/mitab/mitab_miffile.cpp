@@ -608,9 +608,6 @@ int  MIFFile::AddFields(const char *pszLine)
         if( strlen( GetEncoding() ) > 0 )
         {
             osFieldName.Recode( GetEncoding(), CPL_ENC_UTF8 );
-//            printf( "MIF AddFields recode from %s to %s (%s->%s)\n",
-//                    papszToken[0], osFieldName.c_str(),
-//                    GetEncoding(), CPL_ENC_UTF8 );
         }
     }
 
