@@ -1657,7 +1657,7 @@ class TABDATFile
     char        m_szBuffer[256];
 
    public:
-    TABDATFile( const char* pszEncoding );
+    explicit TABDATFile( const char* pszEncoding );
     ~TABDATFile();
 
     int         Open(const char *pszFname, const char* pszAccess,
@@ -1827,7 +1827,7 @@ class TABRelation
 class MIDDATAFile
 {
    public:
-      MIDDATAFile( const char* pszEncoding );
+      explicit MIDDATAFile( const char* pszEncoding );
      ~MIDDATAFile();
 
      int         Open(const char *pszFname, const char *pszAccess);

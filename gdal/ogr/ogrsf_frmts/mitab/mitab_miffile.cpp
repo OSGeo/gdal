@@ -1705,8 +1705,9 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                 pszCleanName,
                 szNewFieldName );
     }
+
     //TODO: MapInfo can create columns with name in local encoding, but we can't
-    printf( "Add MIF field %s as %s\n", pszName, szNewFieldName );
+
     /*-----------------------------------------------------------------
      * Map MapInfo native types to OGR types
      *----------------------------------------------------------------*/

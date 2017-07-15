@@ -200,9 +200,6 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
                 if( !fp->GetEncoding().empty() )
                 {
                     osValue.Recode( fp->GetEncoding(), CPL_ENC_UTF8 );
-//                    printf( "ReadMID recode from %s to %s (%s->%s)\n",
-//                            papszToken[i], osValue.c_str(),
-//                            fp->GetEncoding().c_str(), CPL_ENC_UTF8 );
                 }
                 SetField(i,osValue);
                 break;
@@ -263,9 +260,6 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
             if( !fp->GetEncoding().empty() )
             {
                 osString.Recode( CPL_ENC_UTF8, fp->GetEncoding() );
-//                printf( "WriteMID recode from %s to %s (%s->%s)\n",
-//                        GetFieldAsString(iField), osString.c_str(),
-//                        fp->GetEncoding().c_str(), CPL_ENC_UTF8 );
             }
 
             int nStringLen = static_cast<int>( osString.length() );

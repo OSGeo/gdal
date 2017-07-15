@@ -356,9 +356,6 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
             if( !poDATFile->GetEncoding().empty() )
             {
                 osValue.Recode( poDATFile->GetEncoding(), CPL_ENC_UTF8 );
-//                printf( "ReadDAT recode from %s to %s (%s->%s)\n",
-//                         "xxx", osValue.c_str(),
-//                         poDATFile->GetEncoding().c_str(), CPL_ENC_UTF8 );
             }
             SetField(iField, osValue);
             break;
@@ -531,11 +528,7 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
                 if( !poDATFile->GetEncoding().empty() )
                 {
                     osValue.Recode( CPL_ENC_UTF8, poDATFile->GetEncoding() );
-//                    printf( "WriteDAT recode from %s to %s (%s->%s)\n",
-//                         GetFieldAsString(iField), osValue.c_str(),
-//                         CPL_ENC_UTF8, poDATFile->GetEncoding().c_str() );
                 }
-                //TODO: What about field width?
                 nStatus = poDATFile->WriteCharField(
                     osValue, poDATFile->GetFieldWidth(iField),
                     poINDFile, panIndexNo[iField]);

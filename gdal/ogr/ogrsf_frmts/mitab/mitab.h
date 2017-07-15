@@ -338,7 +338,7 @@ class TABFile CPL_FINAL : public IMapInfoFile
     TABMAPFile  *GetMAPFileRef() { return m_poMAPFile; }
 
     int         WriteFeature(TABFeature *poFeature);
-    virtual int SetCharset(const char* pszCharset);
+    virtual int SetCharset(const char* pszCharset) override;
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL) override;
 #endif
@@ -465,7 +465,7 @@ class TABView CPL_FINAL : public IMapInfoFile
             { return m_nMainTableIndex!=-1?
                      m_papoTABFiles[m_nMainTableIndex]->SetProjInfo(poPI):-1; }
     virtual int  SetMIFCoordSys(const char * /*pszMIFCoordSys*/) override {return -1;}
-    virtual int SetCharset(const char* pszCharset);
+    virtual int SetCharset(const char* pszCharset) override;
 
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL) override;
@@ -740,7 +740,7 @@ class MIFFile CPL_FINAL : public IMapInfoFile
     virtual int  SetProjInfo(TABProjInfo * /*poPI*/) override{return -1;}
     /*  { return m_poMAPFile->GetHeaderBlock()->SetProjInfo( poPI ); }*/
     virtual int  SetMIFCoordSys(const char * pszMIFCoordSys) override;
-    virtual int SetCharset(const char* pszCharset);
+    virtual int SetCharset(const char* pszCharset) override;
 
 #ifdef DEBUG
     virtual void Dump(FILE * /*fpOut*/ = NULL) override {}
