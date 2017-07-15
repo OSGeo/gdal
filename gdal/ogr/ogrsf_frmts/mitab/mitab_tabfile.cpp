@@ -1003,18 +1003,22 @@ int TABFile::WriteTABFile()
                     return -1;
                 }
 
+                CPLString   osFieldName( poFieldDefn->GetNameRef() );
+
+                if( strlen( GetEncoding() ) > 0 )
+                    osFieldName.Recode( CPL_ENC_UTF8, GetEncoding() );
+
+                char* pszCleanName = TABCleanFieldName( osFieldName );
+                osFieldName = pszCleanName;
+                CPLFree( pszCleanName );
+
                 if (GetFieldIndexNumber(iField) == 0)
                 {
-                    VSIFPrintfL(fp, "    %s %s ;\n", poFieldDefn->GetNameRef(),
+                    VSIFPrintfL(fp, "    %s %s ;\n", osFieldName.c_str(),
                             pszFieldType );
                 }
                 else
                 {
-                    CPLString   osFieldName( poFieldDefn->GetNameRef() );
-
-                    if( strlen( GetEncoding() ) > 0 )
-                        osFieldName.Recode( CPL_ENC_UTF8, GetEncoding() );
-
                     VSIFPrintfL(fp, "    %s %s Index %d ;\n",
                             osFieldName.c_str(), pszFieldType,
                             GetFieldIndexNumber(iField) );
@@ -1836,15 +1840,6 @@ int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
     {
         OGRFieldDefn *poFieldDefn = m_poDefn->GetFieldDefn(iField);
 
-        /*-------------------------------------------------------------
-         * Make sure field name is valid... check for special chars, etc.
-         *------------------------------------------------------------*/
-        char *pszCleanName = TABCleanFieldName(poFieldDefn->GetNameRef());
-        if (!EQUAL(pszCleanName, poFieldDefn->GetNameRef()))
-            poFieldDefn->SetName(pszCleanName);
-        CPLFree(pszCleanName);
-        pszCleanName = NULL;
-
         if (paeMapInfoNativeFieldTypes)
         {
             eMapInfoType = paeMapInfoNativeFieldTypes[iField];
@@ -1912,7 +1907,7 @@ int TABFile::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
  **********************************************************************/
 int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                             int nWidth /*=0*/, int nPrecision /*=0*/,
-                            GBool bIndexed /*=FALSE*/, GBool /*bUnique=FALSE*/, int bApproxOK)
+                            GBool bIndexed /*=FALSE*/, GBool /*bUnique=FALSE*/, int /*bApproxOK*/)
 {
     if (m_eAccessMode == TABRead || m_poDATFile == NULL)
     {
@@ -1942,45 +1937,30 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     else if (nWidth == 0)
         nWidth=254; /* char fields */
 
-    /*-----------------------------------------------------------------
-     * Make sure field name is valid... check for special chars, etc.
-     * (pszCleanName will have to be freed.)
-     *----------------------------------------------------------------*/
-    char *pszCleanName = TABCleanFieldName(pszName);
-
-    if( !bApproxOK &&
-        ( m_poDefn->GetFieldIndex(pszCleanName) >= 0 ||
-          !EQUAL(pszName, pszCleanName) ) )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Failed to add field named '%s'",
-                  pszName );
-    }
-
     char szNewFieldName[31+1];  // 31 is the max characters for a field name.
-    strncpy(szNewFieldName, pszCleanName, sizeof(szNewFieldName)-1);
+    strncpy(szNewFieldName, pszName, sizeof(szNewFieldName)-1);
     szNewFieldName[sizeof(szNewFieldName)-1] = '\0';
 
     int nRenameNum = 1;
 
     while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 10)
-      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1d", pszCleanName, nRenameNum++ );
+      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1d", pszName, nRenameNum++ );
 
     while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 100)
-      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s%.2d", pszCleanName, nRenameNum++ );
+      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s%.2d", pszName, nRenameNum++ );
 
     if (m_poDefn->GetFieldIndex(szNewFieldName) >= 0)
     {
       CPLError( CE_Failure, CPLE_NotSupported,
                 "Too many field names like '%s' when truncated to 31 letters "
-                "for MapInfo format.", pszCleanName );
+                "for MapInfo format.", pszName );
     }
 
-    if( !EQUAL(pszCleanName,szNewFieldName) )
+    if( !EQUAL(pszName,szNewFieldName) )
     {
       CPLError( CE_Warning, CPLE_NotSupported,
                 "Normalized/laundered field name: '%s' to '%s'",
-                pszCleanName,
+                pszName,
                 szNewFieldName );
     }
 
@@ -2077,7 +2057,6 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
       default:
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unsupported type for field %s", szNewFieldName);
-        CPLFree(pszCleanName);
         return -1;
     }
 
@@ -2109,7 +2088,6 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     if (nStatus == 0 && m_eAccessMode == TABReadWrite)
         nStatus = WriteTABFile();
 
-    CPLFree(pszCleanName);
     return nStatus;
 }
 

@@ -2270,10 +2270,10 @@ def ogr_mitab_44():
 def ogr_mitab_45():
 
     lyrNames = [ 'lyr1', 'lyr2' ]
-    fldNames = [ 'field1', 'field2' ]#'\xD0\xB0\xD0\xB7' ]
-    featNames = [ '\xD0\xB0\xD0\xB7',
-                  '\xD0\xB1\xD1\x83\xD0\xBA\xD0\xB8',
-                  '\xD0\xB2\xD0\xB5\xD0\xB4\xD0\xB8' ]
+    fldNames = [ 'field1', b'\xD0\xB0\xD0\xB7' ]
+    featNames = [ b'\xD0\xB0\xD0\xB7',
+                  b'\xD0\xB1\xD1\x83\xD0\xBA\xD0\xB8',
+                  b'\xD0\xB2\xD0\xB5\xD0\xB4\xD0\xB8' ]
     formats =  [  'MIF',  'TAB', 'MIF', 'TAB' ]
     lyrNums =  [      1,      1,     2,     2 ]
     dsExts =   [ '.mif', '.tab',    '',    '' ]
