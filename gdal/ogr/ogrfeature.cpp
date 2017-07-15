@@ -3848,7 +3848,8 @@ void OGRFeature::SetField( int iField, const char * pszValue )
             {
                 char** papszValueList =
                     CSLTokenizeString2(pszValue, ",:()", 0);
-                int nCount = atoi(papszValueList[0]);
+                const int nCount =
+                    papszValueList[0] == NULL ? 0 : atoi(papszValueList[0]);
                 std::vector<char*> aosValues;
                 if( nCount == CSLCount(papszValueList)-1 )
                 {
