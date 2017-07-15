@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.215 2017-07-15 13:23:09 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.216 2017-07-15 13:51:22 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -862,7 +862,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArrayWithLimit(
 	datasize=(*count)*typesize;
 	assert((tmsize_t)datasize>0);
 
-	if( isMapped(tif) && datasize > tif->tif_size )
+	if( isMapped(tif) && datasize > (uint32)tif->tif_size )
 		return TIFFReadDirEntryErrIo;
 
 	if( !isMapped(tif) &&
