@@ -2212,7 +2212,7 @@ int TABCollection::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
         if (*pszLine == '\0')
         {
-            pszLine = fp->GetLastLine();
+            pszLine = fp->GetLine();
             continue;  // Skip blank lines
         }
 
