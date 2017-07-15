@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <limits>
 #include "clock.h"
 #include "meta.h"
 #include "metaname.h"
@@ -1874,7 +1875,16 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
       }
       sndSurfType = meta->pds2.sect4.sndSurfType;
       scale = meta->pds2.sect4.sndSurfScale;
-      value = static_cast<int>(meta->pds2.sect4.sndSurfValue);
+      if (meta->pds2.sect4.sndSurfValue < std::numeric_limits<int>::max() &&
+          meta->pds2.sect4.sndSurfValue > std::numeric_limits<int>::min()) {
+         value = static_cast<int>(meta->pds2.sect4.sndSurfValue);
+      } else {
+         // sndSurfValue is out of range, so just call it missing.
+         // TODO(schwehr): Consider using a tmp double if the scale will
+         // make the resulting sndSurfValue be within range.
+         preErrSprintf ("sndSurfValue out of range\n");
+         value = GRIB2MISSING_s4;
+      }
       if ((value == GRIB2MISSING_s4) || (scale == GRIB2MISSING_s1) ||
           (sndSurfType == GRIB2MISSING_u1)) {
          sndSurfValue = 0;
