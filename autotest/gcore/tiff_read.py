@@ -3431,6 +3431,23 @@ def tiff_read_mmap_interface():
             print(options, cs)
             return 'fail'
 
+        f = gdal.VSIFOpenL(tmpfile, "rb")
+        data = gdal.VSIFReadL(1, gdal.VSIStatL(tmpfile).size-1, f)
+        gdal.VSIFCloseL(f)
+        f = gdal.VSIFOpenL(tmpfile, "wb")
+        gdal.VSIFWriteL(data, 1, len(data), f)
+        gdal.VSIFCloseL(f)
+        gdal.SetConfigOption('GTIFF_USE_MMAP', 'YES')
+        with gdaltest.error_handler():
+            ds = gdal.Open(tmpfile)
+            cs = ds.GetRasterBand(1).Checksum()
+        gdal.SetConfigOption('GTIFF_USE_MMAP', None)
+        if cs != 0:
+            gdaltest.post_reason('fail')
+            print(options, cs)
+            return 'fail'
+        gdal.Unlink(tmpfile)
+
     gdal.Unlink(tmpfile)
 
     return 'success'
@@ -3558,7 +3575,7 @@ gdaltest_list.append( (tiff_read_mmap_interface) )
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
 
-# gdaltest_list = [ tiff_read_progressive_jpeg_denial_of_service ]
+# gdaltest_list = [ tiff_read_mmap_interface ]
 
 if __name__ == '__main__':
 

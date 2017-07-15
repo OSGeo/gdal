@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.64 2017-07-04 13:28:42 erouault Exp $ */
+/* $Id: tif_read.c,v 1.65 2017-07-15 12:33:25 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -816,26 +816,7 @@ TIFFFillStrip(TIFF* tif, uint32 strip)
 			}
 		}
 
-		if (isMapped(tif) &&
-		    (isFillOrder(tif, td->td_fillorder)
-		    || (tif->tif_flags & TIFF_NOBITREV))) {
-			/*
-			 * The image is mapped into memory and we either don't
-			 * need to flip bits or the compression routine is
-			 * going to handle this operation itself.  In this
-			 * case, avoid copying the raw data and instead just
-			 * reference the data from the memory mapped file
-			 * image.  This assumes that the decompression
-			 * routines do not modify the contents of the raw data
-			 * buffer (if they try to, the application will get a
-			 * fault since the file is mapped read-only).
-			 */
-			if ((tif->tif_flags & TIFF_MYBUFFER) && tif->tif_rawdata) {
-				_TIFFfree(tif->tif_rawdata);
-				tif->tif_rawdata = NULL;
-				tif->tif_rawdatasize = 0;
-			}
-			tif->tif_flags &= ~TIFF_MYBUFFER;
+		if (isMapped(tif)) {
 			/*
 			 * We must check for overflow, potentially causing
 			 * an OOB read. Instead of simple
@@ -872,6 +853,28 @@ TIFFFillStrip(TIFF* tif, uint32 strip)
 				tif->tif_curstrip = NOSTRIP;
 				return (0);
 			}
+		}
+
+		if (isMapped(tif) &&
+		    (isFillOrder(tif, td->td_fillorder)
+		    || (tif->tif_flags & TIFF_NOBITREV))) {
+			/*
+			 * The image is mapped into memory and we either don't
+			 * need to flip bits or the compression routine is
+			 * going to handle this operation itself.  In this
+			 * case, avoid copying the raw data and instead just
+			 * reference the data from the memory mapped file
+			 * image.  This assumes that the decompression
+			 * routines do not modify the contents of the raw data
+			 * buffer (if they try to, the application will get a
+			 * fault since the file is mapped read-only).
+			 */
+			if ((tif->tif_flags & TIFF_MYBUFFER) && tif->tif_rawdata) {
+				_TIFFfree(tif->tif_rawdata);
+				tif->tif_rawdata = NULL;
+				tif->tif_rawdatasize = 0;
+			}
+			tif->tif_flags &= ~TIFF_MYBUFFER;
 			tif->tif_rawdatasize = (tmsize_t)bytecount;
 			tif->tif_rawdata = tif->tif_base + (tmsize_t)td->td_stripoffset[strip];
                         tif->tif_rawdataoff = 0;
@@ -1260,6 +1263,23 @@ TIFFFillTile(TIFF* tif, uint32 tile)
 			}
 		}
 
+		if (isMapped(tif)) {
+			/*
+			 * We must check for overflow, potentially causing
+			 * an OOB read. Instead of simple
+			 *
+			 *  td->td_stripoffset[tile]+bytecount > tif->tif_size
+			 *
+			 * comparison (which can overflow) we do the following
+			 * two comparisons:
+			 */
+			if (bytecount > (uint64)tif->tif_size ||
+			    td->td_stripoffset[tile] > (uint64)tif->tif_size - bytecount) {
+				tif->tif_curtile = NOTILE;
+				return (0);
+			}
+		}
+
 		if (isMapped(tif) &&
 		    (isFillOrder(tif, td->td_fillorder)
 		     || (tif->tif_flags & TIFF_NOBITREV))) {
@@ -1280,20 +1300,7 @@ TIFFFillTile(TIFF* tif, uint32 tile)
 				tif->tif_rawdatasize = 0;
 			}
 			tif->tif_flags &= ~TIFF_MYBUFFER;
-			/*
-			 * We must check for overflow, potentially causing
-			 * an OOB read. Instead of simple
-			 *
-			 *  td->td_stripoffset[tile]+bytecount > tif->tif_size
-			 *
-			 * comparison (which can overflow) we do the following
-			 * two comparisons:
-			 */
-			if (bytecount > (uint64)tif->tif_size ||
-			    td->td_stripoffset[tile] > (uint64)tif->tif_size - bytecount) {
-				tif->tif_curtile = NOTILE;
-				return (0);
-			}
+
 			tif->tif_rawdatasize = (tmsize_t)bytecount;
 			tif->tif_rawdata =
 				tif->tif_base + (tmsize_t)td->td_stripoffset[tile];
