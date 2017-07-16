@@ -173,7 +173,7 @@ class IMapInfoFile : public OGRLayer
 
     void SetEncoding( const char* );
     const char* GetEncoding() const;
-
+    int TestUtf8Capability() const;
     ///////////////
     // semi-private.
     virtual int  GetProjInfo(TABProjInfo *poPI) = 0;

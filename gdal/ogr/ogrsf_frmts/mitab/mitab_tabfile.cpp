@@ -2769,7 +2769,7 @@ int TABFile::TestCapability( const char * pszCap )
         return m_eAccessMode != TABRead;
 
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
-        return TRUE;
+        return TestUtf8Capability();
 
     else
         return FALSE;

@@ -2297,6 +2297,10 @@ def ogr_mitab_45():
                                      ' for '+dsName)
                 return 'fail'
 
+            if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
+                gdaltest.post_reason( 'skipping test: recode is not possible' )
+                return 'skip'
+
             for fldName in fldNames:
                 fld_defn = ogr.FieldDefn(fldName, ogr.OFTString)
                 fld_defn.SetWidth(254)

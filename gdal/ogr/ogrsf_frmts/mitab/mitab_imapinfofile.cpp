@@ -613,3 +613,33 @@ void IMapInfoFile::SetEncoding( const char* pszEncoding )
 {
     SetCharset( EncodingToCharset( pszEncoding ) );
 }
+
+int IMapInfoFile::TestUtf8Capability() const
+{
+    const char* pszEncoding( GetEncoding() );
+    if( strlen( pszEncoding ) == 0 )
+    {
+        return FALSE;
+    }
+
+    CPLClearRecodeWarningFlags();
+    CPLErrorReset();
+
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    char* pszTest( CPLRecode( "test", GetEncoding(), CPL_ENC_UTF8 ) );
+    CPLPopErrorHandler();
+
+    if( pszTest == NULL )
+    {
+        return FALSE;
+    }
+
+    CPLFree( pszTest );
+
+    if( CPLGetLastErrorType() != 0 )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
