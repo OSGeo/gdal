@@ -218,7 +218,7 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
 
       for (j=0;j<ngroups;j++)
       {
-           if( glen[j] > INT_MAX / idrstmpl[13] ||
+           if( (idrstmpl[13] != 0 && glen[j] > INT_MAX / idrstmpl[13]) ||
                glen[j] *  idrstmpl[13] > INT_MAX - idrstmpl[12] )
            {
                 free(ifld);
