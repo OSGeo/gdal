@@ -1250,14 +1250,13 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
                 "%Y%m%d%H%M", 0);
 
    const double deltTime = meta->pds2.sect4.validTime - meta->pds2.refTime;
-   if (deltTime < std::numeric_limits<sInt4>::max() &&
-       deltTime > std::numeric_limits<sInt4>::min()) {
-      meta->deltTime = static_cast<sInt4>(deltTime);
-   } else {
+   if (deltTime >= std::numeric_limits<sInt4>::max() ||
+       deltTime <= std::numeric_limits<sInt4>::min()) {
       meta->deltTime = 0;
       preErrSprintf ("deltTime over range\n");
       return -4;
    }
+   meta->deltTime = static_cast<sInt4>(deltTime);
 
    return 0;
 }
