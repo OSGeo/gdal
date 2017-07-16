@@ -1648,6 +1648,46 @@ End""")
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/in.lbl')
     return 'success'
 
+# Test complete removal of history
+def isis_29():
+
+    with gdaltest.error_handler():
+        gdal.Translate('/vsimem/in.lbl', 'data/byte.tif', format = 'ISIS3')
+
+    gdal.Translate('/vsimem/out.lbl', '/vsimem/in.lbl',
+                options = '-of ISIS3 -co USE_SRC_HISTORY=NO -co ADD_GDAL_HISTORY=NO')
+
+    ds = gdal.Open('/vsimem/out.lbl')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    lbl = json.loads(lbl)
+    if 'History' in lbl:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
+
+    gdal.Translate('/vsimem/out.lbl', '/vsimem/in.lbl',
+                options = '-of ISIS3 -co USE_SRC_HISTORY=NO -co ADD_GDAL_HISTORY=NO -co DATA_LOCATION=EXTERNAL')
+
+    ds = gdal.Open('/vsimem/out.lbl')
+    lbl = ds.GetMetadata_List('json:ISIS3')[0]
+    lbl = json.loads(lbl)
+    if 'History' in lbl:
+        gdaltest.post_reason('fail')
+        print(lbl)
+        return 'fail'
+    ds = None
+    if gdal.VSIStatL('/vsimem/out.History.IsisCube') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/out.lbl')
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/in.lbl')
+
+    return 'success'
+
 gdaltest_list = [
     isis_1,
     isis_2,
@@ -1676,7 +1716,8 @@ gdaltest_list = [
     isis_25,
     isis_26,
     isis_27,
-    isis_28 ]
+    isis_28,
+    isis_29 ]
 
 
 if __name__ == '__main__':
