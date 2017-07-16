@@ -357,7 +357,10 @@ void ImdReader::ReadModel(const char *pszFilename) {
     CPLXMLNode *psSectionNode
         = CPLGetXMLNode( psRootNode, "=TRANSFER.DATASECTION" );
     if( psSectionNode == NULL )
+    {
+        CPLDestroyXMLNode(psRootNode);
         return;
+    }
 
     StrNodeMap oTidLookup; /* for fast lookup of REF relations */
     ClassesMap oClasses;
