@@ -235,6 +235,13 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytesInOut)
     std::fill( m_codeTable.begin(), m_codeTable.end(),
                 std::pair<short, unsigned int>(0, 0) );
 
+    if( GetIndexWrapAround(i0, size) >= size ||
+        GetIndexWrapAround(i1 - 1, size) >= size )
+    {
+        LERC_BRKPNT();
+        return false;
+    }
+
     for (int i = i0; i < i1; i++)
     {
         int k = GetIndexWrapAround(i, size);
