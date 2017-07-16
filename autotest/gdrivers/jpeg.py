@@ -119,9 +119,10 @@ def jpeg_3():
     ds = gdal.GetDriverByName('JPEG').CreateCopy( 'tmp/byte.jpg', ds,
                                                   options = options )
 
-    expected_cs = 4794
+    # IJG, MozJPEG
+    expected_cs = [4794, 4787]
 
-    if ds.GetRasterBand(1).Checksum() != expected_cs:
+    if ds.GetRasterBand(1).Checksum() not in expected_cs:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
@@ -280,9 +281,10 @@ def jpeg_7():
     ds = gdal.GetDriverByName('JPEG').CreateCopy( '/vsimem/byte.jpg', ds,
                                                   options = options )
 
-    expected_cs = 4794
+    # IJG, MozJPEG
+    expected_cs = [4794, 4787]
 
-    if ds.GetRasterBand(1).Checksum() != expected_cs:
+    if ds.GetRasterBand(1).Checksum() not in expected_cs:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
@@ -1021,6 +1023,11 @@ def jpeg_24():
     if not has_arithmetic:
         gdal.PopErrorHandler()
     else:
+        if gdal.GetLastErrorMsg().find('Requested feature was omitted at compile time') >= 0:
+            ds = None
+            gdal.Unlink( '/vsimem/byte.jpg' )
+            return 'skip'
+
         expected_cs = 4743
 
         if ds.GetRasterBand(1).Checksum() != expected_cs:
