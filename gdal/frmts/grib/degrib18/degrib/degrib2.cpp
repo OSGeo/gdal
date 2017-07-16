@@ -975,6 +975,12 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
          free (buff);
          return -2;
       }
+      if( nd2x3 < 0 || nd2x3 > INT_MAX / static_cast<int>(sizeof (sInt4)) )
+      {
+         preErrSprintf ("Invalid nd2x3\n");
+         free (buff);
+         return -2;
+      }
 
       /* Make sure all 'is' arrays except ns[7] are MAX (IS.ns[] ,
        * local_ns[]). See note 1 for reason to exclude ns[7] from MAX (). */
@@ -1039,9 +1045,23 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
          if (nd5 < nd2x3) {
             nd5 = nd2x3;
             if (nd5 > IS->ipackLen) {
+               sInt4* ipackNew = (sInt4 *) realloc ((void *) (IS->ipack),
+                                                    nd5 * sizeof (sInt4));
+               if( ipackNew == NULL )
+               {
+                   errSprintf("Out of memory");
+                   free (buff);
+                   return -1;
+               }
+               // zero initialize to avoid later use of undefined values
+               // Not sure if it is strictly needed (perhaps some later
+               // steps should detect errors / data shortening), but
+               // cannot hurt.
+               // see https://trac.osgeo.org/gdal/ticket/6967
+               memset(ipackNew + IS->ipackLen, 0,
+                      (nd5 - IS->ipackLen) * sizeof(sInt4));
                IS->ipackLen = nd5;
-               IS->ipack = (sInt4 *) realloc ((void *) (IS->ipack),
-                                              IS->ipackLen * sizeof (sInt4));
+               IS->ipack = ipackNew;
             }
             /* Don't need to do the following, but we do in case code
              * changes. */
