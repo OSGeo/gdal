@@ -3128,20 +3128,27 @@ void ISIS3Dataset::BuildLabel()
     // Deal with History object
     BuildHistory();
 
-    CPLJsonObject& oHistory = oLabel["History"];
-    oHistory.clear();
-    oHistory["_type"] = "object";
-    oHistory["Name"] = "IsisCube";
-    if( m_osExternalFilename.empty() )
-        oHistory["StartByte"] = pszHISTORY_STARTBYTE_PLACEHOLDER;
-    else
-        oHistory["StartByte"] = 1;
-    oHistory["Bytes"] = static_cast<GIntBig>(m_osHistory.size());
-    if( !m_osExternalFilename.empty() )
+    if( !m_osHistory.empty() )
     {
-        CPLString osFilename(CPLGetBasename(GetDescription()));
-        osFilename += ".History.IsisCube";
-        oHistory["^History"] = osFilename;
+        CPLJsonObject& oHistory = oLabel["History"];
+        oHistory.clear();
+        oHistory["_type"] = "object";
+        oHistory["Name"] = "IsisCube";
+        if( m_osExternalFilename.empty() )
+            oHistory["StartByte"] = pszHISTORY_STARTBYTE_PLACEHOLDER;
+        else
+            oHistory["StartByte"] = 1;
+        oHistory["Bytes"] = static_cast<GIntBig>(m_osHistory.size());
+        if( !m_osExternalFilename.empty() )
+        {
+            CPLString osFilename(CPLGetBasename(GetDescription()));
+            osFilename += ".History.IsisCube";
+            oHistory["^History"] = osFilename;
+        }
+    }
+    else
+    {
+        oLabel.del("History");
     }
 
     // Deal with other objects that have StartByte & Bytes
@@ -3483,9 +3490,6 @@ void ISIS3Dataset::BuildHistory()
         osHistory += SerializeAsPDL( poObj );
         json_object_put(poObj);
     }
-
-    if( osHistory.empty() )
-        osHistory = " ";
 
     m_osHistory = osHistory;
 }
