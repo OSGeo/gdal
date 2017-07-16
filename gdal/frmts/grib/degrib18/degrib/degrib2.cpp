@@ -18,6 +18,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+
+#include <limits>
+
 #include "myassert.h"
 #include "myerror.h"
 #include "memendian.h"
@@ -1246,7 +1249,15 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    Clock_Print (meta->validTime, 20, meta->pds2.sect4.validTime,
                 "%Y%m%d%H%M", 0);
 
-   meta->deltTime = (sInt4) (meta->pds2.sect4.validTime - meta->pds2.refTime);
+   const double deltTime = meta->pds2.sect4.validTime - meta->pds2.refTime;
+   if (deltTime < std::numeric_limits<sInt4>::max() &&
+       deltTime > std::numeric_limits<sInt4>::min()) {
+      meta->deltTime = static_cast<sInt4>(deltTime);
+   } else {
+      meta->deltTime = 0;
+      preErrSprintf ("deltTime over range\n");
+      return -4;
+   }
 
    return 0;
 }
