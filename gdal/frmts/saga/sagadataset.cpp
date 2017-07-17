@@ -406,16 +406,34 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     /* -------------------------------------------------------------------- */
-    /*  We assume the user is pointing to the binary (i.e. .sdat) file.     */
+    /*  We assume the user is pointing to the binary (i.e. .sdat) file or a */
+    /*  compressed raster (.sg-grd-z) file.                                 */
     /* -------------------------------------------------------------------- */
-    if( !EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sdat"))
+    if( !EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sdat") &&
+        !EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sg-grd-z") )
     {
         return NULL;
     }
 
-    const CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
-    const CPLString osName = CPLGetBasename( poOpenInfo->pszFilename );
-    const CPLString osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
+    
+    CPLString osPath, osName, osHDRFilename;
+    if (EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sg-grd-z"))
+    {
+        const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
+        CPLString osNewName("/vsizip/{");
+        osNewName += fileName;
+        osNewName += "}/";
+        osPath = osNewName;
+        osNewName += CPLString(fileName).substr(0, strlen(fileName)-9); //assumes filename inside archive is the same as ouside
+        osHDRFilename = osNewName + ".sgrd";
+        osName = osNewName + ".sdat";
+    }
+    else
+    {
+        osPath = CPLGetPath( poOpenInfo->pszFilename );
+        osName = CPLGetBasename( poOpenInfo->pszFilename );
+        osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
+    }
 
     VSILFILE *fp = VSIFOpenL( osHDRFilename, "r" );
     if( fp == NULL )
@@ -520,16 +538,16 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->eAccess = poOpenInfo->eAccess;
     if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+        poDS->fp = VSIFOpenL( osName, "rb" );
     else
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
+        poDS->fp = VSIFOpenL( osName, "r+b" );
 
     if( poDS->fp == NULL )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "VSIFOpenL(%s) failed unexpectedly.",
-                  poOpenInfo->pszFilename );
+                  osName );
         return NULL;
     }
 
@@ -619,7 +637,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->SetDescription( osName );
     poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
