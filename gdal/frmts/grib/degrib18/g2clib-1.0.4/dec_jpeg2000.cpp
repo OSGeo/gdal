@@ -16,7 +16,7 @@ CPL_C_START
 #include "grib2.h"
 CPL_C_END
 
-int dec_jpeg2000(const void *injpc,g2int bufsize,g2int *outfld,g2int outpixels)
+int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
 /*$$$  SUBPROGRAM DOCUMENTATION BLOCK
 *                .      .    .                                       .
 * SUBPROGRAM:    dec_jpeg2000      Decodes JPEG2000 code stream
@@ -86,11 +86,28 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int *outfld,g2int outpixels)
     // is actually smaller than the requested number of pixels
     if( nYSize == 0 || nXSize > outpixels / nYSize )
     {
-        fprintf(stderr, "dec_jpeg2000: Image contains %d pixels > %d.\n",
-                nXSize * nYSize, outpixels);
+        fprintf(stderr, "dec_jpeg2000: Image contains %ld pixels > %d.\n",
+                (long)nXSize * nYSize, outpixels);
        GDALClose( poJ2KDataset );
        VSIUnlink( osFileName );
        return (-5);
+    }
+    // But on the other side if the image is much smaller than it is suspicious
+    if( nXSize < outpixels / nYSize / 100 )
+    {
+        fprintf(stderr, "dec_jpeg2000: Image contains %ld pixels << %d.\n",
+                (long)nXSize * nYSize, outpixels);
+       GDALClose( poJ2KDataset );
+       VSIUnlink( osFileName );
+       return (-5);
+    }
+    *outfld=(g2int *)calloc(outpixels,sizeof(g2int));
+    if ( *outfld == 0 ) {
+        fprintf(stderr, "Could not allocate space in jpcunpack.\n"
+                "Data field NOT unpacked.\n");
+        GDALClose( poJ2KDataset );
+        VSIUnlink( osFileName );
+        return(-5);
     }
     int nXOff = 0;
     int nYOff = 0;
@@ -105,7 +122,7 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int *outfld,g2int outpixels)
 
     //    Decompress the JPEG2000 into the output integer array.
     const CPLErr eErr = poJ2KDataset->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
-                            outfld, nBufXSize, nBufYSize, eBufType,
+                            *outfld, nBufXSize, nBufYSize, eBufType,
                             nBandCount, panBandMap,
                             nPixelSpace, nLineSpace, nBandSpace, NULL );
 

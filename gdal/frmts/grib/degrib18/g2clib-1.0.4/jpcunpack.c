@@ -3,7 +3,7 @@
 #include "grib2.h"
 
 g2int jpcunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
-                g2float *fld)
+                g2float **fld)
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
 //                .      .    .                                       .
 // SUBPROGRAM:    jpcunpack
@@ -38,7 +38,7 @@ g2int jpcunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
 {
 
       g2int  *ifld;
-      g2int  j,nbits /* ,iret */;
+      g2int  j,nbits, iret;
       g2float  ref,bscale,dscale;
 
       rdieee(idrstmpl+0,&ref,1);
@@ -49,22 +49,41 @@ g2int jpcunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
 //  if nbits equals 0, we have a constant field where the reference value
 //  is the data value at each gridpoint
 //
+      *fld = 0;
       if (nbits != 0) {
 
-         ifld=(g2int *)calloc(ndpts,sizeof(g2int));
-         if ( ifld == 0 ) {
-            fprintf(stderr, "Could not allocate space in jpcunpack.\n"
-                    "Data field NOT unpacked.\n");
-            return(1);
+         ifld = NULL;
+         iret= (g2int) dec_jpeg2000(cpack,len,&ifld,ndpts);
+         if( iret != 0 )
+         {
+             free(ifld);
+             return -1;
          }
-         /* iret= (g2int) */ dec_jpeg2000(cpack,len,ifld,ndpts);
+         *fld =(g2float *)calloc(ndpts,sizeof(g2float));
+         if( *fld == 0 )
+         {
+             free(ifld);
+             return -1;
+         }
          for (j=0;j<ndpts;j++) {
-           fld[j]=(((g2float)ifld[j]*bscale)+ref)*dscale;
+           (*fld)[j]=(((g2float)ifld[j]*bscale)+ref)*dscale;
          }
          free(ifld);
       }
       else {
-         for (j=0;j<ndpts;j++) fld[j]=ref;
+         // Limit to 2 GB
+         if( ndpts > 500 * 1024 * 1024 )
+         {
+             fprintf(stderr, "jpcunpack: ndpts = %d > 500 * 1024 * 1024", ndpts );
+             return -1;
+         }
+         *fld =(g2float *)calloc(ndpts,sizeof(g2float));
+         if( *fld == 0 )
+         {
+             free(ifld);
+             return -1;
+         }
+         for (j=0;j<ndpts;j++) (*fld)[j]=ref;
       }
 
       return(0);

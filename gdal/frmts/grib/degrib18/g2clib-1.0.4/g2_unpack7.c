@@ -95,13 +95,20 @@ g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igds
       if( ipos >= cgrib_length ) {
           return 7;
       }
-      lfld=(g2float *)calloc(ndpts,sizeof(g2float));
-      if (lfld == 0) {
-         ierr=6;
-         return(ierr);
+      if (idrsnum == 40 || idrsnum == 40000)
+      {
+          *fld= lfld = 0;
       }
-      else {
-         *fld=lfld;
+      else
+      {
+        lfld=(g2float *)calloc(ndpts,sizeof(g2float));
+        if (lfld == 0) {
+            ierr=6;
+            return(ierr);
+        }
+        else {
+            *fld=lfld;
+        }
       }
 
       if (idrsnum == 0)
@@ -126,8 +133,14 @@ g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igds
           return(ierr);
         }
       else if (idrsnum == 40 || idrsnum == 40000) {
-        jpcunpack(cgrib+ipos,lensec-5,idrstmpl,ndpts,lfld);
+        if( jpcunpack(cgrib+ipos,lensec-5,idrstmpl,ndpts,fld) != 0 )
+        {
+            ierr=7;
+            if ( *fld != 0 ) free(*fld);
+            *fld=0;     //NULL
+            return(ierr);
         }
+      }
 #ifdef USE_PNG
       else if (idrsnum == 41 || idrsnum == 40010) {
         pngunpack(cgrib+ipos,lensec-5,idrstmpl,ndpts,lfld);
