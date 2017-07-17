@@ -255,7 +255,7 @@ g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igds
 g2int simunpack(unsigned char *,g2int cpack_length,g2int *, g2int,g2float *);
 int comunpack(unsigned char *,g2int cpack_length,g2int,g2int,g2int *,g2int,g2float *);
 g2int specunpack(unsigned char *,g2int *,g2int,g2int,g2int, g2int, g2float *);
-g2int jpcunpack(unsigned char *,g2int,g2int *,g2int, g2float *);
+g2int jpcunpack(unsigned char *,g2int,g2int *,g2int, g2float **);
 void specpack(g2float *fld,g2int ndpts,g2int JJ,g2int KK,g2int MM,
               g2int *idrstmpl,unsigned char *cpack,g2int *lcpack);
 
@@ -283,7 +283,7 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
 void pngpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
              unsigned char *cpack,g2int *lcpack);
 
-int dec_jpeg2000(const void *injpc,g2int bufsize,g2int *outfld,g2int outpixels);
+int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels);
 
 #endif  /*  grib2_H  */
 
