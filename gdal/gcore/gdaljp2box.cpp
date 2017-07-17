@@ -74,7 +74,7 @@ GDALJP2Box::GDALJP2Box( VSILFILE *fpIn ) :
 GDALJP2Box::~GDALJP2Box()
 
 {
-    // TODO(schwher): Need to close fpVSIL?
+    // TODO(schwehr): Need to close fpVSIL?
     CPLFree( pabyData );
 }
 
