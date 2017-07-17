@@ -80,7 +80,6 @@ g2int jpcunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
          *fld =(g2float *)calloc(ndpts,sizeof(g2float));
          if( *fld == 0 )
          {
-             free(ifld);
              return -1;
          }
          for (j=0;j<ndpts;j++) (*fld)[j]=ref;
