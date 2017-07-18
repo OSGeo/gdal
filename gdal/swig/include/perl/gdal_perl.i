@@ -186,7 +186,7 @@ None by default.
 The GDAL home page is L<http://gdal.org/>
 
 The documentation of this module is written in Doxygen format. See
-L<http://ajolma.net/Geo-GDAL/snapshot/>
+L<http://arijolma.org/Geo-GDAL/snapshot/>
 
 =head1 AUTHOR
 
@@ -283,12 +283,13 @@ sub error {
             $error = shift;
         }
         push @error, $error;
-        confess($error);
+        $error = join("\n", reverse @error);
+        confess($error."\n");
     }
     my @stack = @error;
     chomp(@stack);
     @error = ();
-    return wantarray ? @stack : join("\n", @stack);
+    return wantarray ? @stack : join("\n", reverse @stack);
 }
 
 sub last_error {
