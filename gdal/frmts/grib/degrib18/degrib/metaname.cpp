@@ -2687,7 +2687,6 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
    size_t tableLen;
    size_t i;
    sChar f_accum;
-   float delt;
 
    /* Check for over-ride case for ozone.  Originally just for NDFD, but I
     * think it is useful for ozone data that originated elsewhere. */
@@ -2721,7 +2720,7 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
          /* If NCEP/ARL (genID=6) then it is dust */
          if (genID == 6) {
             if (f_fstValue && f_sndValue) {
-               delt = static_cast<float>(fstSurfValue - sndSurfValue);
+               const double delt = fstSurfValue - sndSurfValue;
                if ((delt <= 100) && (delt >= -100)) {
                   *name = (char *) malloc (strlen ("dusts") + 1);
                   strcpy (*name, "dusts");
@@ -2744,7 +2743,7 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
             }
          } else {
             if (f_fstValue && f_sndValue) {
-               delt = static_cast<float>(fstSurfValue - sndSurfValue);
+               const double delt = fstSurfValue - sndSurfValue;
                if ((delt <= 100) && (delt >= -100)) {
                   *name = (char *) malloc (strlen ("smokes") + 1);
                   strcpy (*name, "smokes");
