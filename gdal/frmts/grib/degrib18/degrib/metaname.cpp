@@ -2622,7 +2622,9 @@ static void ElemNamePerc (uShort2 center, uShort2 subcenter, int prodType,
 /* If last two characters in name are numbers, then the name contains
  * the percentile (or exceedance value) so don't tack on percentile here.*/
             len = strlen(local[i].name);
-            if (isdigit(local[i].name[len -1]) && isdigit(local[i].name[len -2])) {
+            if (len >= 2 &&
+                isdigit(local[i].name[len -1]) &&
+                isdigit(local[i].name[len -2])) {
                mallocSprintf (name, "%s", local[i].name);
             } else if ((strcmp (local[i].name, "Surge") == 0) ||
                        (strcmp (local[i].name, "SURGE") == 0)) {
