@@ -127,11 +127,15 @@ CPLErr JPNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
                 L2LA(dst.buffer, dst.buffer + dst.size, temp.buffer + temp.size);
         }
     }
-    else { // Should be PNG
-        assert(PNG_SIG == CPL_LSBWORD32(signature));
+    else if( PNG_SIG == CPL_LSBWORD32(signature) ) { // Should be PNG
         PNG_Codec codec(image);
         // PNG codec expands to 4 bands
         return codec.DecompressPNG(dst, src);
+    }
+    else {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Not a JPEG or PNG tile");
+        retval = CE_Failure;
     }
 
     return retval;
