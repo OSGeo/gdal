@@ -142,7 +142,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 // mode.
                 // Workaround https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2606
                 if( nBYSize == 1 && nYSizeToRead > 1 &&
-                    GDALGetRasterYSize(hDS) > INT_MAX / nBXSize &&
+                    GDALGetRasterYSize(hDS) > INT_MAX /
+                            static_cast<int>(sizeof(GUInt16)) / nBXSize &&
                     GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff") )
                 {
                     const char* pszCompress =
