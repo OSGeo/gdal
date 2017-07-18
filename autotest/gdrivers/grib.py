@@ -224,12 +224,13 @@ def grib_9():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' data/template4_15.grib -checksum')
+    ret, err = gdaltest.runexternal_out_and_err (test_cli_utilities.get_gdalinfo_path() + ' data/template4_15.grib -checksum')
 
-    # This is a JPEG2000 compressed file, so just check we can open it
-    if ret.find('Checksum=') < 0:
+    # This is a JPEG2000 compressed file, so just check we can open it or that we get a message saying there's no JPEG2000 driver available
+    if ret.find('Checksum=') < 0 and err.find('Is the JPEG2000 driver available?') < 0:
         gdaltest.post_reason('Could not open file')
         print(ret)
+        print(err)
         return 'fail'
 
     #ds = gdal.Open('data/template4_15.grib')
