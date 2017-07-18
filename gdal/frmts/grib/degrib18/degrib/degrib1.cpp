@@ -1183,6 +1183,12 @@ static int ReadGrib1Sect3 (uChar *bms, uInt4 gribLen, uInt4 *curLoc,
    uChar bits;          /* Used to locate which bit we are currently using. */
    uInt4 i;             /* Helps traverse the bitmap. */
 
+   uInt4 bmsRemainingSize = gribLen - *curLoc;
+   if( bmsRemainingSize < 6 )
+   {
+      errSprintf ("Ran out of data in BMS (GRIB 1 Section 3)\n");
+      return -1;
+   }
    sectLen = GRIB_UNSIGN_INT3 (*bms, bms[1], bms[2]);
 #ifdef DEBUG
 /*
@@ -1208,6 +1214,12 @@ static int ReadGrib1Sect3 (uChar *bms, uInt4 gribLen, uInt4 *curLoc,
    if (numeric != 0) {
       errSprintf ("Don't handle predefined bitmaps yet.\n");
       return -2;
+   }
+   bmsRemainingSize -= 6;
+   if( bmsRemainingSize < (NxNy+7) / 8 )
+   {
+      errSprintf ("Ran out of data in BMS (GRIB 1 Section 3)\n");
+      return -1;
    }
    bits = 0x80;
    for (i = 0; i < NxNy; i++) {
