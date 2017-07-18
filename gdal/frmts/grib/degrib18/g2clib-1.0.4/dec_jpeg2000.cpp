@@ -102,7 +102,7 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
        return (-5);
     }
     *outfld=(g2int *)calloc(outpixels,sizeof(g2int));
-    if ( *outfld == 0 ) {
+    if ( *outfld == NULL ) {
         fprintf(stderr, "Could not allocate space in jpcunpack.\n"
                 "Data field NOT unpacked.\n");
         GDALClose( poJ2KDataset );
