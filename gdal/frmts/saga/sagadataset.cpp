@@ -409,18 +409,21 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     /*  We assume the user is pointing to the binary (i.e. .sdat) file or a */
     /*  compressed raster (.sg-grd-z) file.                                 */
     /* -------------------------------------------------------------------- */
-    if( !EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sdat") &&
-        !EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sg-grd-z") )
+    CPLString osExtension(CPLGetExtension(poOpenInfo->pszFilename));
+
+    if( !EQUAL(osExtension, "sdat") &&
+        !EQUAL(osExtension, "sg-grd-z") )
     {
         return NULL;
     }
 
     
-    CPLString osPath, osName, osHDRFilename; if (EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sg-grd-z"))
+    CPLString osPath, osName, osHDRFilename;
+
+    if (EQUAL(osExtension, "sg-grd-z"))
     {
-        const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
-        CPLString osPath("/vsizip/{");
-        osPath += fileName;
+        osPath = "/vsizip/{";
+        osPath += poOpenInfo->pszFilename;
         osPath += "}/";
 
         char ** filesinzip = VSIReadDir(osPath);
@@ -436,14 +439,17 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
                  break;
             }
         }
+
+        CSLDestroy(filesinzip);
+
         osName = osPath +  file;
-        osHDRFilename = CPLFormFilename (osPath, CPLGetBasename(file) , ".sgrd");
+        osHDRFilename = CPLFormFilename (osPath, CPLGetBasename(file) , "sgrd");
     }
     else
     {
         osPath = CPLGetPath( poOpenInfo->pszFilename );
-        osName = CPLGetBasename( poOpenInfo->pszFilename );
-        osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
+        osName = poOpenInfo->pszFilename;
+        osHDRFilename = CPLFormCIFilename( osPath, CPLGetBasename( poOpenInfo->pszFilename ), "sgrd" );
     }
 
     VSILFILE *fp = VSIFOpenL( osHDRFilename, "r" );
@@ -549,16 +555,16 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->eAccess = poOpenInfo->eAccess;
     if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fp = VSIFOpenL( osName, "rb" );
+        poDS->fp = VSIFOpenL( osName.c_str(), "rb" );
     else
-        poDS->fp = VSIFOpenL( osName, "r+b" );
+        poDS->fp = VSIFOpenL( osName.c_str(), "r+b" );
 
     if( poDS->fp == NULL )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "VSIFOpenL(%s) failed unexpectedly.",
-                  osName );
+                  osName.c_str() );
         return NULL;
     }
 
