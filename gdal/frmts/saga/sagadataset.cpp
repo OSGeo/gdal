@@ -416,8 +416,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     
-    CPLString osPath, osName, osHDRFilename;
-    if (EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sg-grd-z"))
+    CPLString osPath, osName, osHDRFilename; if (EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sg-grd-z"))
     {
         const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
         CPLString osPath("/vsizip/{");
@@ -427,16 +426,17 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
         char ** filesinzip = VSIReadDir(osPath);
         if (filesinzip == NULL)
             return NULL; //empty zip file
+        
         CPLString file;
-		for (int iFile = 0; filesinzip != NULL && filesinzip[iFile] != NULL; iFile++)
-		{
-			if (EQUAL(CPLGetExtension(filesinzip[iFile]), "sdat"))
-			{
-				file = filesinzip[iFile];
-				break;
-			}
-		}
-		osName = osPath +  file;
+        for (int iFile = 0; filesinzip != NULL && filesinzip[iFile] != NULL; iFile++)
+        {
+            if (EQUAL(CPLGetExtension(filesinzip[iFile]), "sdat"))
+            {
+                 file = filesinzip[iFile];
+                 break;
+            }
+        }
+        osName = osPath +  file;
         osHDRFilename = CPLFormFilename (osPath, CPLGetBasename(file) , ".sgrd");
     }
     else
