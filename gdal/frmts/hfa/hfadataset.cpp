@@ -2247,24 +2247,24 @@ void HFARasterBand::ReadHistogramMetadata()
     {
         int nMaxValue = 0;
         int nMinValue = 1000000;
-        bool bAllInteger = true;
 
         for( int i = 0; i < nNumBins; i++ )
         {
-            if( padfBinValues[i] != floor(padfBinValues[i]) )
-                bAllInteger = false;
+            const double dfCurrent = padfBinValues[i];
 
-            nMaxValue = std::max(nMaxValue, static_cast<int>(padfBinValues[i]));
-            nMinValue = std::min(nMinValue, static_cast<int>(padfBinValues[i]));
-        }
+            if( dfCurrent != floor(dfCurrent) || /* not an integer value */
+                dfCurrent < 0.0 || dfCurrent > 1000.0 )
+            {
+                CPLFree(padfBinValues);
+                CPLFree(panHistValues);
+                CPLDebug(
+                    "HFA", "Unable to offer histogram because unique values "
+                    "list is not convenient to reform as HISTOBINVALUES.");
+                return;
+            }
 
-        if( nMinValue < 0 || nMaxValue > 1000 || !bAllInteger )
-        {
-            CPLFree(padfBinValues);
-            CPLFree(panHistValues);
-            CPLDebug("HFA", "Unable to offer histogram because unique values "
-                     "list is not convenient to reform as HISTOBINVALUES.");
-            return;
+            nMaxValue = std::max(nMaxValue, static_cast<int>(dfCurrent));
+            nMinValue = std::min(nMinValue, static_cast<int>(dfCurrent));
         }
 
         const int nNewBins = nMaxValue + 1;
