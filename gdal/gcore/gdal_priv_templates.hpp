@@ -175,16 +175,20 @@ inline void GDALCopyWord(const float fValueIn, double &dfValueOut)
 
 inline void GDALCopyWord(const double dfValueIn, float &fValueOut)
 {
-    if( dfValueIn >= std::numeric_limits<float>::max() )
+#if 0
+    // TODO: Help!  What is the correct behavior that is supposed to be
+    // here if dfValueIn is out of range for fValueOut?
+    if( dfValueIn > std::numeric_limits<float>::max() )
     {
-        fValueOut = std::numeric_limits<float>::max();
+        fValueOut = std::numeric_limits<float>::infinity();
         return;
     }
-    if( dfValueIn <= -std::numeric_limits<float>::max() )
+    if( dfValueIn < -std::numeric_limits<float>::max() )
     {
-        fValueOut = -std::numeric_limits<float>::max();
+        fValueOut = -std::numeric_limits<float>::infinity();
         return;
     }
+#endif
 
     fValueOut = static_cast<float>(dfValueIn);
 }
