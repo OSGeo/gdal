@@ -175,12 +175,17 @@ inline void GDALCopyWord(const float fValueIn, double &dfValueOut)
 
 inline void GDALCopyWord(const double dfValueIn, float &fValueOut)
 {
-    if( dfValueIn >= std::numeric_limits<float>::max() ||
-        dfValueIn <= std::numeric_limits<float>::min() )
+    if( dfValueIn >= std::numeric_limits<float>::max() )
     {
-        // TODO(schwehr): Warn and/or set fValueOut to something?
+        fValueOut = std::numeric_limits<float>::max();
         return;
     }
+    if( dfValueIn <= -std::numeric_limits<float>::max() )
+    {
+        fValueOut = -std::numeric_limits<float>::max();
+        return;
+    }
+
     fValueOut = static_cast<float>(dfValueIn);
 }
 
