@@ -290,6 +290,32 @@
                 "analytic_b12",
                 "metadata_aux"
             ]
+        },
+        "SkySatScene" :  {
+            "fields": [
+                { "name": "acquired", "type": "datetime" },
+                { "name": "anomalous_pixels", "type": "double" },
+                { "name": "cloud_cover", "type": "double" },
+                { "name": "gsd", "type": "double" },
+                { "name": "item_type", "type": "string" },
+                { "name": "provider", "type": "string" },
+                { "name": "published", "type": "datetime" },
+                { "name": "quality_category", "type": "string" },
+                { "name": "satellite_id", "type": "string" },
+                { "name": "satellite_azimuth", "type": "double" },
+                { "name": "strip_id", "type": "string" },
+                { "name": "sun_azimuth", "type": "double" },
+                { "name": "sun_elevation", "type": "double" },
+                { "name": "updated", "type": "datetime" },
+                { "name": "view_angle", "type": "double" }
+            ],
+            "assets": [
+                "basic_analytic_dn",
+                "basic_analytic_dn_rpc",
+                "basic_panchromatic_dn",
+                "basic_panchromatic_dn_rpc",
+                "basic_udm",
+            ]
         }
     }
 }
