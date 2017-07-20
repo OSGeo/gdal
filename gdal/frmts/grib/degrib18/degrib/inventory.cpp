@@ -18,6 +18,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+
+#include <algorithm>
+#include <limits>
+
 #include "clock.h"
 #include "memendian.h"
 #include "fileendian.h"
@@ -535,7 +539,10 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       inv->validTime = inv->refTime + inv->foreSec;
       timeIncrType = 255;
       timeRangeUnit = 1;
-      lenTime = (sInt4) (inv->foreSec / 3600);
+      lenTime = static_cast<sInt4>(
+          std::max(static_cast<double>(std::numeric_limits<sInt4>::min()),
+          std::min(static_cast<double>(std::numeric_limits<sInt4>::max()),
+                   inv->foreSec / 3600.0)));
       switch (templat) {
          case GS4_PROBABIL_PNT: /* 4.5 */
             if( *buffLen < 44 - 5 + 4)
