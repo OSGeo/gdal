@@ -2992,6 +2992,28 @@ def netcdf_76():
     return 'success'
 
 ###############################################################################
+# test opening a raster file that used to be confused with a vector file (#6974)
+
+def netcdf_77():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/fake_Oa01_radiance.nc')
+    subdatasets = ds.GetMetadata('SUBDATASETS')
+    if len(subdatasets) != 2 * 2:
+        gdaltest.post_reason('fail')
+        print(subdatasets)
+        return 'fail'
+
+    ds = gdal.Open('NETCDF:"data/fake_Oa01_radiance.nc":Oa01_radiance')
+    if len(ds.GetMetadata('GEOLOCATION')) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -3077,7 +3099,8 @@ gdaltest_list = [
     netcdf_73,
     netcdf_74,
     netcdf_75,
-    netcdf_76
+    netcdf_76,
+    netcdf_77
 ]
 
 ###############################################################################
