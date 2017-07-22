@@ -212,7 +212,7 @@ static void JPEG2000_VSIL_jas_stream_initbuf(jas_stream_t *stream, int bufmode, 
             /* The buffer must be large enough to accommodate maximum
                putback. */
             assert(bufsize > JAS_STREAM_MAXPUTBACK);
-            stream->bufbase_ = JAS_CAST(uchar *, buf);
+            stream->bufbase_ = JAS_CAST(unsigned char *, buf);
             stream->bufsize_ = bufsize - JAS_STREAM_MAXPUTBACK;
         }
     } else {
