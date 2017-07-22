@@ -418,7 +418,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     
-    CPLString osPath, osName, osHDRFilename;
+    CPLString osPath, osFullname, osName, osHDRFilename;
 
     if (EQUAL(osExtension, "sg-grd-z"))
     {
@@ -441,14 +441,16 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         CSLDestroy(filesinzip);
-
-        osName = osPath +  file;
+        
+        osFullname = CPLFormFilename (osPath, file, NULL);
+        osName = CPLGetBasename(file);
         osHDRFilename = CPLFormFilename (osPath, CPLGetBasename(file) , "sgrd");
     }
     else
     {
+        osFullname = poOpenInfo->pszFilename;
         osPath = CPLGetPath( poOpenInfo->pszFilename );
-        osName = poOpenInfo->pszFilename;
+        osName = CPLGetBasename(poOpenInfo->pszFilename);
         osHDRFilename = CPLFormCIFilename( osPath, CPLGetBasename( poOpenInfo->pszFilename ), "sgrd" );
     }
 
@@ -555,16 +557,16 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->eAccess = poOpenInfo->eAccess;
     if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fp = VSIFOpenL( osName.c_str(), "rb" );
+        poDS->fp = VSIFOpenL( osFullname.c_str(), "rb" );
     else
-        poDS->fp = VSIFOpenL( osName.c_str(), "r+b" );
+        poDS->fp = VSIFOpenL( osFullname.c_str(), "r+b" );
 
     if( poDS->fp == NULL )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "VSIFOpenL(%s) failed unexpectedly.",
-                  osName.c_str() );
+                  osFullname.c_str() );
         return NULL;
     }
 
@@ -654,7 +656,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetDescription( osName );
+    poDS->SetDescription( osFullname );
     poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
