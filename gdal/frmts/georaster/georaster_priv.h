@@ -152,8 +152,6 @@ private:
     char*               pszProjection;
     char**              papszSubdatasets;
     double              adfGeoTransform[6];
-    int                 nGCPCount;
-    GDAL_GCP*           pasGCPList;
     GeoRasterRasterBand*
                         poMaskBand;
     bool                bApplyNoDataArray;
@@ -207,10 +205,10 @@ public:
                             GSpacing nPixelSpace, GSpacing nLineSpace,
                             GSpacing nBandSpace,
                             GDALRasterIOExtraArg* psExtraArg ) override;
-    virtual int         GetGCPCount() override { return nGCPCount; }
+    virtual int         GetGCPCount() override;
     virtual const char* GetGCPProjection() override;
     virtual const GDAL_GCP*
-                        GetGCPs() override { return pasGCPList; }
+                        GetGCPs();
     virtual CPLErr      SetGCPs(
                             int nGCPCount,
                             const GDAL_GCP *pasGCPList,
@@ -347,7 +345,6 @@ private:
     void                InitializeLayersNode();
     bool                InitializeIO();
     void                InitializeLevel( int nLevel );
-    bool                FlushMetadata();
 
     void                LoadNoDataValues();
 
@@ -366,6 +363,12 @@ private:
 
 public:
 
+    int                 nGCPCount;
+    GDAL_GCP*           pasGCPList;
+    bool                bFlushGCP;
+    void                FlushGCP();
+
+    bool                FlushMetadata();
     static char**       ParseIdentificator( const char* pszStringID );
     static GeoRasterWrapper*
                         Open(
@@ -440,6 +443,8 @@ public:
     void                SetRPC();
     void                SetMaxLevel( int nMaxLevel );
     void                GetRPC();
+    void                GetGCP();
+    void                SetGCP( int nGCPCountIn, const GDAL_GCP *pasGCPListIn );
 
 public:
 

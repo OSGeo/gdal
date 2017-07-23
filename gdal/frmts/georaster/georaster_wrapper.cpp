@@ -106,6 +106,9 @@ GeoRasterWrapper::GeoRasterWrapper() :
     anULTCoordinate[0]  = 0;
     anULTCoordinate[1]  = 0;
     anULTCoordinate[2]  = 0;
+    pasGCPList          = NULL;
+    nGCPCount           = 0;
+    bFlushGCP           = false;
 }
 
 //  ---------------------------------------------------------------------------
@@ -125,6 +128,15 @@ GeoRasterWrapper::~GeoRasterWrapper()
     CPLFree( pabyBlockBuf );
     CPLFree( pabyCompressBuf );
     CPLFree( pahLevels );
+
+    if( bFlushGCP )
+    {
+        FlushGCP();
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+        pasGCPList = NULL;
+        nGCPCount = 0;
+    }
 
     if( CPLListCount( psNoDataList ) )
     {
@@ -1346,12 +1358,22 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  Check for RPCs
     //  -------------------------------------------------------------------
 
-    const char* pszModelType = CPLGetXMLValue( phMetadata,
-                               "spatialReferenceInfo.modelType", "None" );
+    CPLXMLNode* phModelType = CPLGetXMLNode( phMetadata,
+        "spatialReferenceInfo.modelType");
 
-    if( EQUAL( pszModelType, "FunctionalFitting" ) )
+    for( int n = 1 ; phModelType ; phModelType = phModelType->psNext, n++ )
     {
-        GetRPC();
+        const char* pszModelType = CPLGetXMLValue( phModelType, ".", "None" );
+
+        if( EQUAL( pszModelType, "StoredFunction" ) )
+        {
+            GetGCP();
+        }
+
+        if( EQUAL( pszModelType, "FunctionalFitting" ) )
+        {
+            GetRPC();
+        }
     }
 
     //  -------------------------------------------------------------------
@@ -2407,6 +2429,167 @@ void GeoRasterWrapper::GetSpatialReference()
 }
 
 //  ---------------------------------------------------------------------------
+//                                                                     GetGCP()
+//  ---------------------------------------------------------------------------
+
+void GeoRasterWrapper::GetGCP()
+{
+    CPLXMLNode* psGCP = CPLGetXMLNode( phMetadata, 
+                "spatialReferenceInfo.gcpGeoreferenceModel.gcp" );
+
+    CPLXMLNode* psFirst = psGCP;
+
+    if( nGCPCount > 0 && pasGCPList )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
+
+    pasGCPList = NULL;
+    nGCPCount = 0;
+
+    for( int i = 1 ; psGCP ; psGCP = psGCP->psNext, i++ )
+    {
+        if( ! EQUAL( CPLGetXMLValue( psGCP, "type",  "" ), "ControlPoint" ) )
+        {
+            continue;
+        }
+        nGCPCount++;
+    }
+
+    pasGCPList = static_cast<GDAL_GCP *>(
+            CPLCalloc(sizeof(GDAL_GCP), nGCPCount) );
+
+    psGCP = psFirst;
+
+    for( int i = 0 ; psGCP ; psGCP = psGCP->psNext, i++ )
+    {
+        if( ! EQUAL( CPLGetXMLValue( psGCP, "type",  "" ), "ControlPoint" ) )
+        {
+            continue;
+        }
+        pasGCPList[i].pszId    = CPLStrdup( CPLGetXMLValue( psGCP, "ID", "" ) );
+        pasGCPList[i].pszInfo  = CPLStrdup( "" );
+        pasGCPList[i].dfGCPLine  = CPLAtof( CPLGetXMLValue( psGCP, "row", "0.0" ) );
+        pasGCPList[i].dfGCPPixel = CPLAtof( CPLGetXMLValue( psGCP, "column", "0.0" ) );
+        pasGCPList[i].dfGCPX     = CPLAtof( CPLGetXMLValue( psGCP, "X", "0.0" ) );
+        pasGCPList[i].dfGCPY     = CPLAtof( CPLGetXMLValue( psGCP, "Y", "0.0" ) );
+        pasGCPList[i].dfGCPZ     = CPLAtof( CPLGetXMLValue( psGCP, "Z", "0.0" ));
+    }
+}
+
+//  ---------------------------------------------------------------------------
+//                                                                     SetGCP()
+//  ---------------------------------------------------------------------------
+
+void GeoRasterWrapper::SetGCP( int nGCPCountIn, const GDAL_GCP *pasGCPListIn)
+{
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
+
+    nGCPCount  = nGCPCountIn;
+    pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPListIn);
+    bFlushGCP  = true;
+}
+
+void GeoRasterWrapper::FlushGCP()
+{
+    const char* pszStatement = CPLSPrintf(
+        "DECLARE\n"
+        "  gr   sdo_georaster;\n"
+        "BEGIN\n"
+        "  SELECT %s INTO gr FROM %s%s t WHERE %s FOR UPDATE;\n",
+            sColumn.c_str(),
+            sSchema.c_str(),
+            sTable.c_str(),
+            sWhere.c_str());
+
+    int nDimns = 2;
+
+    for( int iGCP = 0; iGCP < nGCPCount; ++iGCP )
+    {
+        if( pasGCPList[iGCP].dfGCPZ != 0.0 )
+        {
+            nDimns = 3;
+            break;
+        }
+    }
+
+    if ( nDimns == 3 )
+    {
+        pszStatement = CPLSPrintf(
+            "%s"
+            "  sdo_geor.setControlPoint(gr,\n"
+            "    SDO_GEOR_GCP(TO_CHAR(:1), '', 1,\n"
+            "      2, sdo_number_array(:2, :3),\n"
+            "      3, sdo_number_array(:4, :5, :6),\n"
+            "      NULL, NULL));\n",
+            pszStatement);
+    }
+    else
+    {
+        pszStatement = CPLSPrintf(
+            "%s"
+            "  sdo_geor.setControlPoint(gr,\n"
+            "    SDO_GEOR_GCP(TO_CHAR(:1), '', 1,\n"
+            "      2, sdo_number_array(:2, :3),\n"
+            "      2, sdo_number_array(:4, :5),\n"
+            "      NULL, NULL));\n",
+            pszStatement);
+    }
+
+    pszStatement = CPLSPrintf(
+            "%s"
+            "  UPDATE %s%s t SET %s = gr WHERE %s;\n"
+            "END;\n",
+            pszStatement,
+            sSchema.c_str(),
+            sTable.c_str(),
+            sColumn.c_str(),
+            sWhere.c_str());
+
+    OWStatement* poStmt = poConnection->CreateStatement( pszStatement );
+
+    long   lBindN;
+    double dBindL = 0.0;
+    double dBindP = 0.0;
+    double dBindX = 0.0;
+    double dBindY = 0.0;
+    double dBindZ = 0.0;
+
+    poStmt->Bind( &lBindN );
+    poStmt->Bind( &dBindL );
+    poStmt->Bind( &dBindP );
+    poStmt->Bind( &dBindX );
+    poStmt->Bind( &dBindY );
+
+    if ( nDimns == 3 )
+    {
+        poStmt->Bind( &dBindZ );
+    }
+
+    for( int iGCP = 0; iGCP < nGCPCount; ++iGCP )
+    {
+        lBindN = iGCP + 1;
+        dBindL = pasGCPList[iGCP].dfGCPLine;
+        dBindP = pasGCPList[iGCP].dfGCPPixel;
+        dBindX = pasGCPList[iGCP].dfGCPX;
+        dBindY = pasGCPList[iGCP].dfGCPY;
+        dBindZ = nDimns == 3 ? pasGCPList[iGCP].dfGCPZ : 0.0;
+
+        if( ! poStmt->Execute() )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Error loading GCP.");
+        }
+    }
+
+    delete poStmt;
+}
+
+//  ---------------------------------------------------------------------------
 //                                                                     GetRPC()
 //  ---------------------------------------------------------------------------
 
@@ -2424,14 +2607,6 @@ void GeoRasterWrapper::GetRPC()
                                            "spatialReferenceInfo" );
 
     if( phSRSInfo == NULL )
-    {
-        return;
-    }
-
-    const char* pszModelType = CPLGetXMLValue( phMetadata,
-                               "spatialReferenceInfo.modelType", "None" );
-
-    if( EQUAL( pszModelType, "FunctionalFitting" ) == false )
     {
         return;
     }
