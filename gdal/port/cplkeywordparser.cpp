@@ -322,6 +322,8 @@ void CPLKeywordParser::SkipWhite()
             {
                 pszHeaderNext++;
             }
+            if( *pszHeaderNext == '\0' )
+                break;
 
             pszHeaderNext += 2;
             continue;
