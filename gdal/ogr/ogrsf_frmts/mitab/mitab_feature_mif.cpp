@@ -194,7 +194,16 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
                 break;
             }
 #endif
-
+            case OFTString:
+            {
+                CPLString   osValue( papszToken[i] );
+                if( !fp->GetEncoding().empty() )
+                {
+                    osValue.Recode( fp->GetEncoding(), CPL_ENC_UTF8 );
+                }
+                SetField(i,osValue);
+                break;
+            }
           default:
              SetField(i,papszToken[i]);
        }
@@ -246,9 +255,15 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
         {
           case OFTString:
           {
-            int nStringLen = static_cast<int>(strlen(GetFieldAsString(iField)));
-            char *pszString = (char*)CPLMalloc((nStringLen+1)*sizeof(char));
-            strcpy(pszString, GetFieldAsString(iField));
+            CPLString   osString( GetFieldAsString(iField) );
+
+            if( !fp->GetEncoding().empty() )
+            {
+                osString.Recode( CPL_ENC_UTF8, fp->GetEncoding() );
+            }
+
+            int nStringLen = static_cast<int>( osString.length() );
+            const char *pszString = osString.c_str();
             char *pszWorkString = (char*)CPLMalloc((2*(nStringLen)+1)*sizeof(char));
             int j = 0;
             for (int i =0; i < nStringLen; ++i)
@@ -271,12 +286,8 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
             }
 
             pszWorkString[j] = '\0';
-            CPLFree(pszString);
-            pszString = (char*)CPLMalloc((strlen(pszWorkString)+1)*sizeof(char));
-            strcpy(pszString, pszWorkString);
+            fp->WriteLine("\"%s\"",pszWorkString);
             CPLFree(pszWorkString);
-            fp->WriteLine("\"%s\"",pszString);
-            CPLFree(pszString);
             break;
           }
 #ifdef MITAB_USE_OFTDATETIME

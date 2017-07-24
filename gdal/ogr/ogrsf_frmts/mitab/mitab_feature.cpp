@@ -350,9 +350,14 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
         {
         case TABFChar:
         {
-            const char *pszValue =
-                poDATFile->ReadCharField(poDATFile->GetFieldWidth(iField));
-            SetField(iField, pszValue);
+            int         iWidth( poDATFile->GetFieldWidth(iField) );
+            CPLString   osValue( poDATFile->ReadCharField( iWidth ) );
+
+            if( !poDATFile->GetEncoding().empty() )
+            {
+                osValue.Recode( poDATFile->GetEncoding(), CPL_ENC_UTF8 );
+            }
+            SetField(iField, osValue);
             break;
         }
         case TABFDecimal:
@@ -518,9 +523,16 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
         switch(poDATFile->GetFieldType(iField))
         {
         case TABFChar:
-            nStatus = poDATFile->WriteCharField(
-                GetFieldAsString(iField), poDATFile->GetFieldWidth(iField),
-                poINDFile, panIndexNo[iField]);
+            {
+                CPLString   osValue( GetFieldAsString(iField) );
+                if( !poDATFile->GetEncoding().empty() )
+                {
+                    osValue.Recode( CPL_ENC_UTF8, poDATFile->GetEncoding() );
+                }
+                nStatus = poDATFile->WriteCharField(
+                    osValue, poDATFile->GetFieldWidth(iField),
+                    poINDFile, panIndexNo[iField]);
+            }
             break;
         case TABFDecimal:
             nStatus = poDATFile->WriteDecimalField(

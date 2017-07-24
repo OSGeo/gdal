@@ -119,7 +119,8 @@ void TABView::ResetReading()
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABView::Open(const char *pszFname, TABAccess eAccess,
-                  GBool bTestOpenNoError /*= FALSE*/ )
+                  GBool bTestOpenNoError /*= FALSE*/,
+                  const char* pszCharset /* = NULL */ )
 {
     char nStatus = 0;
 
@@ -141,6 +142,8 @@ int TABView::Open(const char *pszFname, TABAccess eAccess,
     else if (eAccess == TABWrite)
     {
         m_eAccessMode = TABWrite;
+        if( pszCharset != NULL )
+            SetCharset( pszCharset );
         nStatus = (char)OpenForWrite(pszFname);
     }
     else
@@ -394,7 +397,9 @@ int TABView::OpenForWrite(const char *pszFname)
 
         m_papoTABFiles[iFile] = new TABFile;
 
-        if ( m_papoTABFiles[iFile]->Open(m_papszTABFnames[iFile], m_eAccessMode) != 0)
+        if ( m_papoTABFiles[iFile]->Open(m_papszTABFnames[iFile],
+                                         m_eAccessMode, FALSE,
+                                         GetCharset() ) != 0)
         {
             // Open Failed... an error has already been reported, just return.
             CPLFree(pszPath);
@@ -964,6 +969,21 @@ int TABView::SetFieldIndexed(int nFieldId)
     return -1;
 }
 
+int TABView::SetCharset(const char* pszCharset)
+{
+    if( 0 != IMapInfoFile::SetCharset(pszCharset) )
+    {
+        return -1;
+    }
+
+    for( int i = 0; i != m_numTABFiles; ++i )
+    {
+        m_papoTABFiles[i]->SetCharset(pszCharset);
+    }
+
+    return 0;
+}
+
 /**********************************************************************
  *                   TABView::IsFieldIndexed()
  *
@@ -1147,6 +1167,9 @@ int TABView::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
         return TRUE;
+
+    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return TestUtf8Capability();
 
     else
         return FALSE;
