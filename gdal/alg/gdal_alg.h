@@ -162,6 +162,7 @@ int CPL_DLL GDALGenImgProjTransform(
     double *x, double *y, double *z, int *panSuccess );
 
 void GDALSetTransformerDstGeoTransform( void *, const double * );
+void GDALGetTransformerDstGeoTransform( void*, double* );
 
 /* Geo to geo reprojection transformer. */
 void CPL_DLL *
