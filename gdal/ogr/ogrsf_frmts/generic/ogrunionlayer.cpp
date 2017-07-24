@@ -1227,7 +1227,7 @@ void OGRUnionLayer::SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
 
 OGRFeature* OGRUnionLayer::TranslateFromSrcLayer(OGRFeature* poSrcFeature)
 {
-    CPLAssert(panMap != NULL);
+    CPLAssert(poSrcFeature->GetFieldCount() == 0 || panMap != NULL);
     CPLAssert(iCurLayer >= 0 && iCurLayer < nSrcLayers);
 
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
