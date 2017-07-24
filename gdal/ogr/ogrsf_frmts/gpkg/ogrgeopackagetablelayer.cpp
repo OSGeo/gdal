@@ -634,7 +634,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
                 oExtent.MinY = CPLAtof(pszMinY);
                 oExtent.MaxX = CPLAtof(pszMaxX);
                 oExtent.MaxY = CPLAtof(pszMaxY);
-                bReadExtent = true;
+                bReadExtent = oExtent.MinX <= oExtent.MaxX &&
+                              oExtent.MinY <= oExtent.MaxY;
             }
 
             /* Done with info from gpkg_contents now */
