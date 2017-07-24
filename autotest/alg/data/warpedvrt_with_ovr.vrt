@@ -1,0 +1,56 @@
+<VRTDataset rasterXSize="1368" rasterYSize="992" subClass="VRTWarpedDataset">
+  <GeoTransform>-2.9991966282908999e+002, 2.5531597443786556e+000, 0.0000000000000000e+000, 2.2681602079169127e+002, 0.0000000000000000e+000,-2.5612550811638806e+000</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Red</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Green</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Blue</ColorInterp>
+  </VRTRasterBand>
+  <BlockXSize>512</BlockXSize>
+  <BlockYSize>128</BlockYSize>
+  <GDALWarpOptions>
+    <WarpMemoryLimit>6.71089e+007</WarpMemoryLimit>
+    <ResampleAlg>NearestNeighbour</ResampleAlg>
+    <WorkingDataType>Byte</WorkingDataType>
+    <Option name="INIT_DEST">0</Option>
+    <SourceDataset relativeToVRT="1">warpedvrt_with_ovr.png</SourceDataset>
+    <Transformer>
+      <ApproxTransformer>
+        <MaxError>0.125</MaxError>
+        <BaseTransformer>
+          <GenImgProjTransformer>
+            <SrcTPSTransformer>
+              <TPSTransformer>
+                <Reversed>0</Reversed>
+                <GCPList>
+                  <GCP Id="" Pixel="80.2643" Line="80.4293" X="1.153433600000E+002" Y="1.587124633600E+002" />
+                  <GCP Id="" Pixel="454.5469" Line="16.1496" X="5.041050532427E+002" Y="1.587124633600E+002" />
+                  <GCP Id="" Pixel="835.5054" Line="158.7125" X="8.928667464854E+002" Y="1.587124633600E+002" />
+                  <GCP Id="" Pixel="1246.7216" Line="39.0842" X="1.281628439728E+003" Y="1.587124633600E+002" />
+                  <GCP Id="" Pixel="115.3434" Line="475.2671" X="1.153433600000E+002" Y="5.464258663137E+002" />
+                  <GCP Id="" Pixel="445.5084" Line="495.4674" X="5.041050532427E+002" Y="5.464258663137E+002" />
+                  <GCP Id="" Pixel="847.5850" Line="445.4686" X="8.928667464854E+002" Y="5.464258663137E+002" />
+                  <GCP Id="" Pixel="1202.1924" Line="490.4714" X="1.281628439728E+003" Y="5.464258663137E+002" />
+                  <GCP Id="" Pixel="64.0890" Line="822.4191" X="1.153433600000E+002" Y="9.341392692673E+002" />
+                  <GCP Id="" Pixel="461.5832" Line="873.4638" X="5.041050532427E+002" Y="9.341392692673E+002" />
+                  <GCP Id="" Pixel="844.4314" Line="829.3581" X="8.928667464854E+002" Y="9.341392692673E+002" />
+                  <GCP Id="" Pixel="1247.8054" Line="859.8323" X="1.281628439728E+003" Y="9.341392692673E+002" />
+                </GCPList>
+              </TPSTransformer>
+            </SrcTPSTransformer>
+            <DstGeoTransform>-0.69617369803609108,0.99213321513500075,0,1022.1492516466913,0,-0.99213321513500075</DstGeoTransform>
+            <DstInvGeoTransform>0.70169377198137839,1.0079291618756345,0,1030.2540385240566,0,-1.0079291618756345</DstInvGeoTransform>
+          </GenImgProjTransformer>
+        </BaseTransformer>
+      </ApproxTransformer>
+    </Transformer>
+    <BandList>
+      <BandMapping src="1" dst="1" />
+      <BandMapping src="2" dst="2" />
+      <BandMapping src="3" dst="3" />
+    </BandList>
+  </GDALWarpOptions>
+</VRTDataset>

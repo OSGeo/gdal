@@ -1790,6 +1790,21 @@ def warp_54():
 
     return 'success'
 
+###############################################################################
+# Test warped VRT with source overview, target GT != GenImgProjetion target GT
+# and subsampling (#6972)
+
+def warp_55():
+
+    ds = gdal.Open('data/warpedvrt_with_ovr.vrt')
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 25128:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    ds = None
+
+    return 'success'
 
 gdaltest_list = [
     warp_1,
@@ -1862,9 +1877,10 @@ gdaltest_list = [
     warp_51,
     warp_52,
     warp_53,
-    warp_54
+    warp_54,
+    warp_55
     ]
-#gdaltest_list = [ warp_54 ]
+#gdaltest_list = [ warp_55 ]
 
 if __name__ == '__main__':
 
