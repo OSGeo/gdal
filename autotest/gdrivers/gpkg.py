@@ -3692,6 +3692,29 @@ def gpkg_46():
     return 'success'
 
 ###############################################################################
+# Test fix for #6976
+
+def gpkg_47():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    tmpfile = '/vsimem/gpkg_47.gpkg'
+    ds = gdaltest.gpkg_dr.CreateCopy(tmpfile,
+                                     gdal.Open('data/byte.tif'))
+    ds.ExecuteSQL('UPDATE gpkg_contents SET min_x = 1, max_x = 0')
+    ds = None
+    with gdaltest.error_handler():
+        ds = gdal.Open(tmpfile)
+    if ds.RasterXSize != 256:
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(tmpfile)
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -3759,9 +3782,10 @@ gdaltest_list = [
     gpkg_44,
     gpkg_45,
     gpkg_46,
+    gpkg_47,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_46, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_47, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )

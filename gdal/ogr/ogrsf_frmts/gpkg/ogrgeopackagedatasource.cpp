@@ -1112,10 +1112,22 @@ bool GDALGeoPackageDataset::InitRaster( GDALGeoPackageDataset* poParentDS,
     if( pszContentsMinX != NULL && pszContentsMinY != NULL &&
         pszContentsMaxX != NULL && pszContentsMaxY != NULL )
     {
-        dfGDALMinX = CPLAtof(pszContentsMinX);
-        dfGDALMinY = CPLAtof(pszContentsMinY);
-        dfGDALMaxX = CPLAtof(pszContentsMaxX);
-        dfGDALMaxY = CPLAtof(pszContentsMaxY);
+        if( CPLAtof(pszContentsMinX) < CPLAtof(pszContentsMaxX) &&
+            CPLAtof(pszContentsMinY) < CPLAtof(pszContentsMaxY) )
+        {
+            dfGDALMinX = CPLAtof(pszContentsMinX);
+            dfGDALMinY = CPLAtof(pszContentsMinY);
+            dfGDALMaxX = CPLAtof(pszContentsMaxX);
+            dfGDALMaxY = CPLAtof(pszContentsMaxY);
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Illegal min_x/min_y/max_x/max_y values for %s in open "
+                     "options and/or gpkg_contents. Using bounds of "
+                     "gpkg_tile_matrix_set instead",
+                     pszTableName);
+        }
     }
     if( dfGDALMinX >= dfGDALMaxX || dfGDALMinY >= dfGDALMaxY )
     {
