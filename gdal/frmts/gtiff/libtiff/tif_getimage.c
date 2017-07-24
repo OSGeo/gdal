@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.110 2017-07-04 13:28:42 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.111 2017-07-24 09:52:23 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -661,7 +661,7 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
     leftmost_fromskew = img->col_offset % tw;
     leftmost_tw = tw - leftmost_fromskew;
     leftmost_toskew = toskew + leftmost_fromskew;
-    for (row = 0; row < h; row += nrow)
+    for (row = 0; ret != 0 && row < h; row += nrow)
     {
         rowstoread = th - (row + img->row_offset) % th;
     	nrow = (row + rowstoread > h ? h - row : rowstoread);
@@ -795,7 +795,7 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	leftmost_fromskew = img->col_offset % tw;
 	leftmost_tw = tw - leftmost_fromskew;
 	leftmost_toskew = toskew + leftmost_fromskew;
-	for (row = 0; row < h; row += nrow)
+	for (row = 0; ret != 0 && row < h; row += nrow)
 	{
 		rowstoread = th - (row + img->row_offset) % th;
 		nrow = (row + rowstoread > h ? h - row : rowstoread);
