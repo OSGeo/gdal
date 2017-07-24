@@ -406,16 +406,53 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     /* -------------------------------------------------------------------- */
-    /*  We assume the user is pointing to the binary (i.e. .sdat) file.     */
+    /*  We assume the user is pointing to the binary (i.e. .sdat) file or a */
+    /*  compressed raster (.sg-grd-z) file.                                 */
     /* -------------------------------------------------------------------- */
-    if( !EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sdat"))
+    CPLString osExtension(CPLGetExtension(poOpenInfo->pszFilename));
+
+    if( !EQUAL(osExtension, "sdat") &&
+        !EQUAL(osExtension, "sg-grd-z") )
     {
         return NULL;
     }
 
-    const CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
-    const CPLString osName = CPLGetBasename( poOpenInfo->pszFilename );
-    const CPLString osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
+    
+    CPLString osPath, osFullname, osName, osHDRFilename;
+
+    if (EQUAL(osExtension, "sg-grd-z"))
+    {
+        osPath = "/vsizip/{";
+        osPath += poOpenInfo->pszFilename;
+        osPath += "}/";
+
+        char ** filesinzip = VSIReadDir(osPath);
+        if (filesinzip == NULL)
+            return NULL; //empty zip file
+        
+        CPLString file;
+        for (int iFile = 0; filesinzip != NULL && filesinzip[iFile] != NULL; iFile++)
+        {
+            if (EQUAL(CPLGetExtension(filesinzip[iFile]), "sdat"))
+            {
+                 file = filesinzip[iFile];
+                 break;
+            }
+        }
+
+        CSLDestroy(filesinzip);
+        
+        osFullname = CPLFormFilename (osPath, file, NULL);
+        osName = CPLGetBasename(file);
+        osHDRFilename = CPLFormFilename (osPath, CPLGetBasename(file) , "sgrd");
+    }
+    else
+    {
+        osFullname = poOpenInfo->pszFilename;
+        osPath = CPLGetPath( poOpenInfo->pszFilename );
+        osName = CPLGetBasename(poOpenInfo->pszFilename);
+        osHDRFilename = CPLFormCIFilename( osPath, CPLGetBasename( poOpenInfo->pszFilename ), "sgrd" );
+    }
 
     VSILFILE *fp = VSIFOpenL( osHDRFilename, "r" );
     if( fp == NULL )
@@ -520,16 +557,16 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->eAccess = poOpenInfo->eAccess;
     if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+        poDS->fp = VSIFOpenL( osFullname.c_str(), "rb" );
     else
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
+        poDS->fp = VSIFOpenL( osFullname.c_str(), "r+b" );
 
     if( poDS->fp == NULL )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "VSIFOpenL(%s) failed unexpectedly.",
-                  poOpenInfo->pszFilename );
+                  osFullname.c_str() );
         return NULL;
     }
 
@@ -619,7 +656,7 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->SetDescription( osFullname );
     poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
