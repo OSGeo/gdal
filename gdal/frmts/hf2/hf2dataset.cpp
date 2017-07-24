@@ -217,7 +217,7 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
                     dfVal = std::numeric_limits<float>::max();
                 else if( dfVal < std::numeric_limits<float>::min() )
                     dfVal = std::numeric_limits<float>::min();
-                pafBlockData[nxoff * nBlockXSize + j * nRasterYSize + 0] = static_cast<float>(dfVal);
+                pafBlockData[nxoff * nBlockXSize + j * nRasterXSize + 0] = static_cast<float>(dfVal);
                 for(int i=1;i<nTileWidth;i++)
                 {
                     int nInc;
@@ -241,7 +241,7 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
                         dfVal = std::numeric_limits<float>::max();
                     else if( dfVal < std::numeric_limits<float>::min() )
                         dfVal = std::numeric_limits<float>::min();
-                    pafBlockData[nxoff * nBlockXSize + j * nRasterYSize + i] = static_cast<float>(dfVal);
+                    pafBlockData[nxoff * nBlockXSize + j * nRasterXSize + i] = static_cast<float>(dfVal);
                 }
             }
         }
