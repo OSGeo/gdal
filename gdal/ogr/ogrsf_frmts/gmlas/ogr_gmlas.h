@@ -532,6 +532,7 @@ typedef enum
     GMLAS_FT_DOUBLE,
     GMLAS_FT_DECIMAL,
     GMLAS_FT_DATE,
+    GMLAS_FT_GYEAR,
     GMLAS_FT_TIME,
     GMLAS_FT_DATETIME,
     GMLAS_FT_BASE64BINARY,
@@ -875,6 +876,11 @@ class GMLASSchemaAnalyzer
         /** Set of schemas opened */
         std::set<CPLString> m_oSetSchemaURLs;
 
+        /** Map from namespace URI to namespace prefix coming from the
+         * examination of xmlns:foo=bar attributes of the top element of the
+         * GML document */
+        std::map<CPLString,CPLString> m_oMapDocNSURIToPrefix;
+
         static bool IsSame( const XSModelGroup* poModelGroup1,
                                   const XSModelGroup* poModelGroup2 );
         XSModelGroupDefinition* GetGroupDefinition( const XSModelGroup* poModelGroup );
@@ -971,6 +977,8 @@ class GMLASSchemaAnalyzer
                                     { m_bPGIdentifierLaundering = b; }
         void SetMaximumFieldsForFlattening(int n)
                                     { m_nMaximumFieldsForFlattening = n; }
+        void SetMapDocNSURIToPrefix(const std::map<CPLString,CPLString>& oMap)
+                                    { m_oMapDocNSURIToPrefix = oMap; }
 
         bool Analyze(GMLASXSDCache& oCache,
                      const CPLString& osBaseDirname,
