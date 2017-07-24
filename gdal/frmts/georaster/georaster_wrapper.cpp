@@ -2583,22 +2583,20 @@ void GeoRasterWrapper::FlushGCP()
         dBindY = pasGCPList[iGCP].dfGCPY;
         dBindZ = nDimns == 3 ? pasGCPList[iGCP].dfGCPZ : 0.0;
 
+        // To avoid cppcheck false positive complaints about unreadVariable
+        CPL_IGNORE_RET_VAL(lBindN);
+        CPL_IGNORE_RET_VAL(dBindL);
+        CPL_IGNORE_RET_VAL(dBindP);
+        CPL_IGNORE_RET_VAL(dBindX);
+        CPL_IGNORE_RET_VAL(dBindY);
+        CPL_IGNORE_RET_VAL(dBindZ);
+
         // Consume bound values
 
         if( ! poStmt->Execute() )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Error loading GCP.");
         }
-
-        // This code is for you Travis
-        // Dont give me a unreadVariable
-
-        lBindN = 0L;
-        dBindL = 0.0;
-        dBindP = 0.0;
-        dBindX = 0.0;
-        dBindY = 0.0;
-        dBindZ = 0.0;
     }
 
     delete poStmt;

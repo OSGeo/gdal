@@ -208,7 +208,7 @@ public:
     virtual int         GetGCPCount() override;
     virtual const char* GetGCPProjection() override;
     virtual const GDAL_GCP*
-                        GetGCPs();
+                        GetGCPs() override;
     virtual CPLErr      SetGCPs(
                             int nGCPCount,
                             const GDAL_GCP *pasGCPList,
