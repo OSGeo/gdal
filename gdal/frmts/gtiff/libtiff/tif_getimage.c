@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.111 2017-07-24 09:52:23 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.112 2017-07-24 10:34:14 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -1869,7 +1869,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr44tile)
 
     (void) y;
     /* adjust fromskew */
-    fromskew = (fromskew * 18) / 4;
+    fromskew = (fromskew / 4) * (4*2+2);
     if ((h & 3) == 0 && (w & 3) == 0) {				        
         for (; h >= 4; h -= 4) {
             x = w>>2;
@@ -1972,7 +1972,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr42tile)
     int32 incr = 2*toskew+w;
 
     (void) y;
-    fromskew = (fromskew * 10) / 4;
+    fromskew = (fromskew / 4) * (4*2+2);
     if ((w & 3) == 0 && (h & 1) == 0) {
         for (; h >= 2; h -= 2) {
             x = w>>2;
@@ -2050,7 +2050,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr42tile)
 DECLAREContigPutFunc(putcontig8bitYCbCr41tile)
 {
     (void) y;
-    /* XXX adjust fromskew */
+    fromskew = (fromskew / 4) * (4*1+2);
     do {
 	x = w>>2;
 	while(x>0) {
@@ -2097,7 +2097,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr22tile)
 	uint32* cp2;
 	int32 incr = 2*toskew+w;
 	(void) y;
-	fromskew = (fromskew / 2) * 6;
+	fromskew = (fromskew / 2) * (2*2+2);
 	cp2 = cp+w+toskew;
 	while (h>=2) {
 		x = w;
@@ -2153,7 +2153,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr22tile)
 DECLAREContigPutFunc(putcontig8bitYCbCr21tile)
 {
 	(void) y;
-	fromskew = (fromskew * 4) / 2;
+	fromskew = (fromskew / 2) * (2*1+2);
 	do {
 		x = w>>1;
 		while(x>0) {
@@ -2192,7 +2192,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr12tile)
 	uint32* cp2;
 	int32 incr = 2*toskew+w;
 	(void) y;
-	fromskew = (fromskew / 2) * 4;
+	fromskew = (fromskew / 1) * (1 * 2 + 2);
 	cp2 = cp+w+toskew;
 	while (h>=2) {
 		x = w;
@@ -2228,7 +2228,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr12tile)
 DECLAREContigPutFunc(putcontig8bitYCbCr11tile)
 {
 	(void) y;
-	fromskew *= 3;
+	fromskew = (fromskew / 1) * (1 * 1 + 2);
 	do {
 		x = w; /* was x = w>>1; patched 2000/09/25 warmerda@home.com */
 		do {
