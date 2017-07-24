@@ -1788,7 +1788,7 @@ void GMLASReader::startElement(
             m_nCurGeomFieldIdx = -1;
         }
 
-        if( !bHasProcessedAttributes )
+        if( !bHasProcessedAttributes && m_nLevelSilentIgnoredXPath < 0 )
             ProcessAttributes(attrs);
     }
     else

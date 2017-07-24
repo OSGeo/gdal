@@ -67,13 +67,16 @@ static bool IsCompatibleOfArray( GMLASFieldType eType )
 class GMLASPrefixMappingHander: public DefaultHandler
 {
         std::map<CPLString, CPLString>& m_oMapURIToPrefix;
+        const std::map<CPLString, CPLString>& m_oMapDocNSURIToPrefix;
         CPLString& m_osGMLVersionFound;
 
   public:
         GMLASPrefixMappingHander(
                         std::map<CPLString, CPLString>& oMapURIToPrefix,
+                        const std::map<CPLString, CPLString>& oMapDocNSURIToPrefix,
                         CPLString& osGMLVersionFound) :
             m_oMapURIToPrefix( oMapURIToPrefix ),
+            m_oMapDocNSURIToPrefix( oMapDocNSURIToPrefix ),
             m_osGMLVersionFound( osGMLVersionFound )
         {}
 
@@ -133,7 +136,16 @@ void GMLASPrefixMappingHander::startPrefixMapping(const XMLCh* const prefix,
                                                   const XMLCh* const uri)
 {
     const CPLString osURI( transcode(uri) );
-    const CPLString osPrefix( transcode(prefix) );
+    CPLString osPrefix( transcode(prefix) );
+    if( osPrefix.empty() )
+    {
+        std::map<CPLString, CPLString>::const_iterator oIter 
+            = m_oMapDocNSURIToPrefix.find( osURI );
+        if( oIter != m_oMapDocNSURIToPrefix.end() )
+        {
+            osPrefix = oIter->second;
+        }
+    }
     if( !osPrefix.empty() )
     {
         std::map<CPLString, CPLString>::iterator oIter =
@@ -161,6 +173,7 @@ static
 void CollectNamespacePrefixes(const char* pszXSDFilename,
                               VSILFILE* fpXSD,
                               std::map<CPLString, CPLString>& oMapURIToPrefix,
+                              const std::map<CPLString, CPLString>& oMapDocNSURIToPrefix,
                               CPLString& osGMLVersionFound)
 {
     GMLASInputSource oSource(pszXSDFilename, fpXSD, false);
@@ -169,7 +182,9 @@ void CollectNamespacePrefixes(const char* pszXSDFilename,
     // loadGrammar(), so we have to parse the doc twice.
     SAX2XMLReader* poReader = XMLReaderFactory::createXMLReader ();
 
-    GMLASPrefixMappingHander contentHandler(oMapURIToPrefix, osGMLVersionFound);
+    GMLASPrefixMappingHander contentHandler(oMapURIToPrefix,
+                                            oMapDocNSURIToPrefix,
+                                            osGMLVersionFound);
     poReader->setContentHandler(&contentHandler);
 
     GMLASErrorHandler oErrorHandler;
@@ -186,13 +201,16 @@ void CollectNamespacePrefixes(const char* pszXSDFilename,
 class GMLASAnalyzerEntityResolver: public GMLASBaseEntityResolver
 {
         std::map<CPLString, CPLString>& m_oMapURIToPrefix;
+        const std::map<CPLString, CPLString>& m_oMapDocNSURIToPrefix;
 
   public:
         GMLASAnalyzerEntityResolver(const CPLString& osBasePath,
                             std::map<CPLString, CPLString>& oMapURIToPrefix,
+                            const std::map<CPLString, CPLString>& oMapDocNSURIToPrefix,
                             GMLASXSDCache& oCache)
             : GMLASBaseEntityResolver(osBasePath, oCache)
             , m_oMapURIToPrefix(oMapURIToPrefix)
+            , m_oMapDocNSURIToPrefix(oMapDocNSURIToPrefix)
         {
         }
 
@@ -209,6 +227,7 @@ void GMLASAnalyzerEntityResolver::DoExtraSchemaProcessing(
                                              VSILFILE* fp)
 {
     CollectNamespacePrefixes(osFilename, fp, m_oMapURIToPrefix,
+                             m_oMapDocNSURIToPrefix,
                              m_osGMLVersionFound);
     VSIFSeekL(fp, 0, SEEK_SET);
 }
@@ -860,6 +879,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     std::vector<CPLString> aoNamespaces;
     GMLASAnalyzerEntityResolver oXSDEntityResolver( CPLString(),
                                                     m_oMapURIToPrefix,
+                                                    m_oMapDocNSURIToPrefix,
                                                     oCache );
 
     aoNamespaces.push_back("");
@@ -1590,8 +1610,8 @@ void GMLASSchemaAnalyzer::GetConcreteImplementationTypes(
                 {
                     apoImplEltList.push_back(poSubElt);
                 }
-                GetConcreteImplementationTypes(poSubElt, apoImplEltList);
             }
+            GetConcreteImplementationTypes(poSubElt, apoImplEltList);
         }
     }
 }
@@ -2835,6 +2855,9 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
             {
                 // Do nothing with it since it cannot be instantiated
                 // in a valid way.
+                CPLDebug("GMLAS",
+                         "Ignoring %s that is abstract without realizations",
+                         osElementXPath.c_str());
             }
 
             // Simple type like string, int, etc...
