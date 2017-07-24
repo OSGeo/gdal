@@ -91,13 +91,13 @@ IMapInfoFile::~IMapInfoFile()
  **********************************************************************/
 
 int IMapInfoFile::Open(const char *pszFname, const char* pszAccess,
-                       GBool bTestOpenNoError)
+                       GBool bTestOpenNoError, const char* pszCharset )
 {
     // cppcheck-suppress nullPointer
     if( STARTS_WITH_CI(pszAccess, "r") )
-        return Open(pszFname, TABRead, bTestOpenNoError);
+        return Open(pszFname, TABRead, bTestOpenNoError, pszCharset);
     else if( STARTS_WITH_CI(pszAccess, "w") )
-        return Open(pszFname, TABWrite, bTestOpenNoError);
+        return Open(pszFname, TABWrite, bTestOpenNoError, pszCharset);
     else
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -511,9 +511,141 @@ int IMapInfoFile::SetCharset(const char* pszCharset)
 {
     if(pszCharset && strlen(pszCharset) > 0)
     {
+        if(pszCharset == m_pszCharset)
+        {
+            return 0;
+        }
         CPLFree(m_pszCharset);
         m_pszCharset = CPLStrdup(pszCharset);
         return 0;
     }
     return -1;
+}
+
+const char* IMapInfoFile::GetCharset() const
+{
+    return m_pszCharset;
+}
+
+// Table is adopted from
+// http://www.i-signum.com/Formation/download/MB_ReferenceGuide.pdf pp. 127-128
+static const char* const apszCharsets[][2] = {
+    { "Neutral", "" }, //No character conversions performed.
+    { "ISO8859_1", "ISO-8859-1" }, //ISO 8859-1 (UNIX)
+    { "ISO8859_2", "ISO-8859-2" }, //ISO 8859-2 (UNIX)
+    { "ISO8859_3", "ISO-8859-3" }, //ISO 8859-3 (UNIX)
+    { "ISO8859_4", "ISO-8859-4" }, //ISO 8859-4 (UNIX)
+    { "ISO8859_5", "ISO-8859-5" }, //ISO 8859-5 (UNIX)
+    { "ISO8859_6", "ISO-8859-6" }, //ISO 8859-6 (UNIX)
+    { "ISO8859_7", "ISO-8859-7" }, //ISO 8859-7 (UNIX)
+    { "ISO8859_8", "ISO-8859-8" }, //ISO 8859-8 (UNIX)
+    { "ISO8859_9", "ISO-8859-9" }, //ISO 8859-9 (UNIX)
+    { "PackedEUCJapaese", "EUC-JP" }, //UNIX, standard Japanese implementation.
+    { "WindowsLatin1", "CP1252" },
+    { "WindowsLatin2", "" },
+    { "WindowsArabic", "CP1256" },
+    { "WindowsCyrillic", "CP1251" },
+    { "WindowsGreek", "CP1253" },
+    { "WindowsHebrew", "CP1255" },
+    { "WindowsTurkish", "CP1254" }, //Windows Eastern Europe
+    { "WindowsTradChinese", "CP950" },//Windows Traditional Chinese
+    { "WindowsSimpChinese", "CP936" },//Windows Simplified Chinese
+    { "WindowsJapanese", "CP932" },
+    { "WindowsKorean", "CP949" },
+    { "CodePage437", "CP437" }, //DOS Code Page 437 = IBM Extended ASCII
+    { "CodePage850", "CP850" }, //DOS Code Page 850 = Multilingual
+    { "CodePage852", "CP852" }, //DOS Code Page 852 = Eastern Europe
+    { "CodePage855", "CP855" }, //DOS Code Page 855 = Cyrillic
+    { "CodePage857", "CP857" },
+    { "CodePage860", "CP860" }, //DOS Code Page 860 = Portuguese
+    { "CodePage861", "CP861" }, //DOS Code Page 861 = Icelandic
+    { "CodePage863", "CP863" }, //DOS Code Page 863 = French Canadian
+    { "CodePage864", "CP864" }, //DOS Code Page 864 = Arabic
+    { "CodePage865", "CP865" }, //DOS Code Page 865 = Nordic
+    { "CodePage869", "CP869" }, //DOS Code Page 869 = Modern Greek
+    { "LICS", "" }, //Lotus worksheet release 1,2 character set
+    { "LMBCS", "" },//Lotus worksheet release 3,4 character set
+    { NULL, NULL }
+};
+
+const char* IMapInfoFile::CharsetToEncoding( const char* pszCharset )
+{
+    if( pszCharset == NULL )
+    {
+        return apszCharsets[0][1];
+    }
+
+    for( size_t i = 0; apszCharsets[i][0] != NULL; ++i)
+    {
+        if( EQUAL( pszCharset, apszCharsets[i][0] ) )
+        {
+            return apszCharsets[i][1];
+        }
+    }
+
+    CPLError(CE_Warning, CPLE_NotSupported,
+             "Cannot find iconv encoding corresponding to MapInfo %s charset",
+             pszCharset);
+    return apszCharsets[0][1];
+}
+
+const char* IMapInfoFile::EncodingToCharset( const char* pszEncoding )
+{
+    if( pszEncoding == NULL )
+    {
+        return apszCharsets[0][0];
+    }
+
+    for( size_t i = 0; apszCharsets[i][1] != NULL; ++i)
+    {
+        if( EQUAL( pszEncoding, apszCharsets[i][1] ) )
+        {
+            return apszCharsets[i][0];
+        }
+    }
+
+    CPLError(CE_Warning, CPLE_NotSupported,
+             "Cannot find MapInfo charset corresponding to iconv %s encoding",
+             pszEncoding);
+    return apszCharsets[0][0];
+}
+
+const char* IMapInfoFile::GetEncoding() const
+{
+    return CharsetToEncoding( GetCharset() );
+}
+
+void IMapInfoFile::SetEncoding( const char* pszEncoding )
+{
+    SetCharset( EncodingToCharset( pszEncoding ) );
+}
+
+int IMapInfoFile::TestUtf8Capability() const
+{
+    const char* pszEncoding( GetEncoding() );
+    if( strlen( pszEncoding ) == 0 )
+    {
+        return FALSE;
+    }
+
+    CPLClearRecodeWarningFlags();
+    CPLErrorReset();
+
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    char* pszTest( CPLRecode( "test", GetEncoding(), CPL_ENC_UTF8 ) );
+    CPLPopErrorHandler();
+
+    if( pszTest == NULL )
+    {
+        return FALSE;
+    }
+
+    CPLFree( pszTest );
+
+    if( CPLGetLastErrorType() != 0 )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
 }

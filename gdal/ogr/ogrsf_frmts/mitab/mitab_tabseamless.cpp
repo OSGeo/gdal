@@ -121,7 +121,8 @@ void TABSeamless::ResetReading()
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABSeamless::Open(const char *pszFname, TABAccess eAccess,
-                      GBool bTestOpenNoError /*= FALSE*/ )
+                      GBool bTestOpenNoError /*= FALSE*/,
+                      const char* /*pszCharset = NULL */ )
 {
     char nStatus = 0;
 
@@ -810,6 +811,9 @@ int TABSeamless::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
         return TRUE;
+
+    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return TestUtf8Capability();
 
     else
         return FALSE;

@@ -72,7 +72,7 @@ CPL_CVSID("$Id$")
  *
  * Constructor.
  **********************************************************************/
-TABDATFile::TABDATFile() :
+TABDATFile::TABDATFile( const char* pszEncoding ) :
     m_pszFname(NULL),
     m_fp(NULL),
     m_eAccessMode(TABRead),
@@ -89,7 +89,8 @@ TABDATFile::TABDATFile() :
     m_nFirstRecordPtr(0),
     m_bWriteHeaderInitialized(FALSE),
     m_bWriteEOF(FALSE),
-    m_bUpdated(FALSE)
+    m_bUpdated(FALSE),
+    m_osEncoding(pszEncoding)
 #if HAVE_CXX11
     , m_szBuffer{}
 #endif
@@ -826,7 +827,7 @@ int TABDATFile::AddField(const char *pszName, TABFieldType eType,
     // and then copy the widen records.
     if( m_numRecords > 0 )
     {
-        TABDATFile oTempFile;
+        TABDATFile oTempFile(GetEncoding());
         CPLString osOriginalFile(m_pszFname);
         CPLString osTmpFile(m_pszFname);
         osTmpFile += ".tmp";
@@ -949,7 +950,7 @@ int TABDATFile::DeleteField( int iField )
     }
 
     // Otherwise we need to do a temporary file.
-    TABDATFile oTempFile;
+    TABDATFile oTempFile(GetEncoding());
     CPLString osOriginalFile(m_pszFname);
     CPLString osTmpFile(m_pszFname);
     osTmpFile += ".tmp";
@@ -1085,7 +1086,7 @@ int TABDATFile::ReorderFields( int *panMap )
     // We could theoretically update in place, but a sudden interruption
     // would leave the file in a undefined state.
 
-    TABDATFile oTempFile;
+    TABDATFile oTempFile(GetEncoding());
     CPLString osOriginalFile(m_pszFname);
     CPLString osTmpFile(m_pszFname);
     osTmpFile += ".tmp";
@@ -1288,7 +1289,7 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn *poNewFieldDefn,
     }
 
     // Otherwise we need to do a temporary file.
-    TABDATFile oTempFile;
+    TABDATFile oTempFile(GetEncoding());
     CPLString osOriginalFile(m_pszFname);
     CPLString osTmpFile(m_pszFname);
     osTmpFile += ".tmp";
@@ -2539,6 +2540,16 @@ int TABDATFile::WriteDecimalField(double dValue, int nWidth, int nPrec,
 
     return m_poRecordBlock->WriteBytes(nWidth,
                                        reinterpret_cast<const GByte *>(pszVal));
+}
+
+const CPLString& TABDATFile::GetEncoding() const
+{
+    return m_osEncoding;
+}
+
+void TABDATFile::SetEncoding( const CPLString& osEncoding )
+{
+    m_osEncoding = osEncoding;
 }
 
 /**********************************************************************

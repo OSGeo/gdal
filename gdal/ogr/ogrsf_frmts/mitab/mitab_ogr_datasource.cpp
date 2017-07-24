@@ -145,11 +145,13 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
     else
     {
         IMapInfoFile *poFile = NULL;
+        const char *pszEncoding( CSLFetchNameValue( papszOptions, "ENCODING" ) );
+        const char *pszCharset( IMapInfoFile::EncodingToCharset( pszEncoding ) );
 
         if( m_bCreateMIF )
         {
             poFile = new MIFFile;
-            if( poFile->Open(m_pszName, TABWrite, FALSE) != 0 )
+            if( poFile->Open(m_pszName, TABWrite, FALSE, pszCharset) != 0 )
             {
                 delete poFile;
                 return FALSE;
@@ -158,7 +160,8 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
         else
         {
             TABFile *poTabFile = new TABFile;
-            if( poTabFile->Open(m_pszName, TABWrite, FALSE, m_nBlockSize) != 0 )
+            if( poTabFile->Open(m_pszName, TABWrite, FALSE,
+                                m_nBlockSize, pszCharset) != 0 )
             {
                 delete poTabFile;
                 return FALSE;
@@ -314,6 +317,10 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
     IMapInfoFile *poFile = NULL;
     char *pszFullFilename = NULL;
 
+    const char *pszEncoding = CSLFetchNameValue( papszOptions, "ENCODING" );
+    const char *pszCharset( IMapInfoFile::EncodingToCharset( pszEncoding ) );
+
+
     if( m_bSingleFile )
     {
         if( m_bSingleLayerAlreadyCreated )
@@ -327,6 +334,8 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
         m_bSingleLayerAlreadyCreated = TRUE;
 
         poFile = (IMapInfoFile *) m_papoLayers[0];
+        if( pszEncoding )
+            poFile->SetCharset( pszCharset );
     }
 
     else
@@ -338,7 +347,8 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
 
             poFile = new MIFFile;
 
-            if( poFile->Open(pszFullFilename, TABWrite, FALSE) != 0 )
+            if( poFile->Open(pszFullFilename, TABWrite,
+                             FALSE, pszCharset) != 0 )
             {
                 CPLFree(pszFullFilename);
                 delete poFile;
@@ -351,7 +361,9 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
                 CPLStrdup(CPLFormFilename(m_pszDirectory, pszLayerName, "tab"));
 
             TABFile *poTABFile = new TABFile;
-            if( poTABFile->Open(pszFullFilename, TABWrite, FALSE, m_nBlockSize) != 0 )
+
+            if( poTABFile->Open(pszFullFilename, TABWrite, FALSE,
+                                m_nBlockSize, pszCharset) != 0 )
             {
                 CPLFree(pszFullFilename);
                 delete poTABFile;
