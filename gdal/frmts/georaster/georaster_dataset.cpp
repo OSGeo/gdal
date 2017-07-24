@@ -40,7 +40,7 @@
 
 #include "georaster_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //  ---------------------------------------------------------------------------
 //                                                           GeoRasterDataset()
@@ -59,8 +59,6 @@ GeoRasterDataset::GeoRasterDataset()
     adfGeoTransform[4]  = 0.0;
     adfGeoTransform[5]  = 1.0;
     pszProjection       = NULL;
-    nGCPCount           = 0;
-    pasGCPList          = NULL;
     poMaskBand          = NULL;
     bApplyNoDataArray   = false;
     poJP2Dataset        = NULL;
@@ -74,11 +72,7 @@ GeoRasterDataset::~GeoRasterDataset()
 {
     FlushCache();
 
-    if( nGCPCount > 0 )
-    {
-        GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
-    }
+    poGeoRaster->FlushMetadata();
 
     delete poGeoRaster;
 
@@ -630,8 +624,7 @@ boolean GeoRasterDataset::JP2_CopyDirect( const char* pszJP2Filename,
                           "amount read differs from JP2 Box data length" );
             }
 
-            nLBox = (int) nDataLength + 8;
-            nLBox = CPL_MSBWORD32( nLBox );
+            nLBox = CPL_MSBWORD32( (int) nDataLength + 8 );
 
             memcpy( &nTBox, oBox.GetType(), 4 );
 
@@ -646,8 +639,7 @@ boolean GeoRasterDataset::JP2_CopyDirect( const char* pszJP2Filename,
             size_t nSize = 0;
             size_t nDataLength = oBox.GetDataLength();
  
-            nLBox = (int) nDataLength + 8;
-            nLBox = CPL_MSBWORD32( nLBox );
+            nLBox = CPL_MSBWORD32( (int) nDataLength + 8 );
 
             memcpy( &nTBox, oBox.GetType(), 4 );
 
@@ -1350,6 +1342,17 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     if( ! poDstDS->bForcedSRID ) /* forced by create option SRID */
     {
         poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
+    }
+
+    // --------------------------------------------------------------------
+    //      Copy GCPs
+    // --------------------------------------------------------------------
+
+    if( poSrcDS->GetGCPCount() > 0 )
+    {
+        poDstDS->SetGCPs( poSrcDS->GetGCPCount(), 
+                          poSrcDS->GetGCPs(), 
+                          poSrcDS->GetGCPProjection() );
     }
 
     // --------------------------------------------------------------------
@@ -2605,13 +2608,46 @@ void GeoRasterDataset::SetSubdatasets( GeoRasterWrapper* poGRW )
     }
 }
 
+int GeoRasterDataset::GetGCPCount()
+{
+    if ( poGeoRaster )
+    {
+        return poGeoRaster->nGCPCount;
+    }
+
+    return 0;
+}
+
 //  ---------------------------------------------------------------------------
 //                                                                    SetGCPs()
 //  ---------------------------------------------------------------------------
 
-CPLErr GeoRasterDataset::SetGCPs( int, const GDAL_GCP *, const char * )
+CPLErr GeoRasterDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                                  const char *pszGCPProjection )
 {
+    if( GetAccess() == GA_Update )
+    {
+        poGeoRaster->SetGCP( nGCPCountIn, pasGCPListIn );
+        SetProjection( pszGCPProjection ); 
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetGCPs() is only supported on GeoRaster insert or update.");
+        return CE_Failure;
+    }
+
     return CE_None;
+}
+
+const GDAL_GCP* GeoRasterDataset::GetGCPs()
+{
+    if( poGeoRaster->nGCPCount > 0 && poGeoRaster->pasGCPList )
+    {
+        return poGeoRaster->pasGCPList;
+    }
+
+    return NULL;
 }
 
 //  ---------------------------------------------------------------------------
@@ -2619,9 +2655,8 @@ CPLErr GeoRasterDataset::SetGCPs( int, const GDAL_GCP *, const char * )
 //  ---------------------------------------------------------------------------
 
 const char* GeoRasterDataset::GetGCPProjection()
-
 {
-    if( nGCPCount > 0 )
+    if( poGeoRaster && poGeoRaster->nGCPCount > 0 )
         return pszProjection;
     else
         return "";
