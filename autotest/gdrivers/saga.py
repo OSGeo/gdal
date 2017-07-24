@@ -179,6 +179,27 @@ def saga_7():
     tst = gdaltest.GDALTest( 'SAGA', '4byteFloat.sdat', 1, 108 )
     return tst.testCreateCopy( new_filename = '/vsimem/createcopy.sdat' )
 
+
+###############################################################################
+# Test zipped saga grid (.sg-grd-z)
+
+def saga_8():
+    tst = gdaltest.GDALTest('SAGA', '4byteFloat.sg-grd-z', 1, 108)
+    return tst.testOpen(check_prj = """PROJCS["NAD_1927_UTM_Zone_11N",
+    GEOGCS["GCS_North_American_1927",
+        DATUM["North_American_Datum_1927",
+            SPHEROID["Clarke_1866",6378206.4,294.9786982]],
+        PRIMEM["Greenwich",0],
+        UNIT["Degree",0.017453292519943295]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["Meter",1]]""")
+
+
 gdaltest_list = [
     saga_1,
     saga_2,
@@ -186,7 +207,8 @@ gdaltest_list = [
     saga_4,
     saga_5,
     saga_6,
-    saga_7 ]
+    saga_7,
+    saga_8 ]
 
 if __name__ == '__main__':
 
