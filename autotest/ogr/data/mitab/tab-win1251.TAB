@@ -1,0 +1,17 @@
+!table
+!version 300
+!charset WindowsCyrillic
+
+Definition Table
+  Type NATIVE Charset "WindowsCyrillic"
+  Fields 5
+    Поле_А Char (10) ;
+    Поле_Б Char (10) ;
+    Поле_В Char (10) ;
+    Поле_Г Char (10) ;
+    Поле_Д Char (10) ;
+begin_metadata
+"\IsReadOnly" = "FALSE"
+"\MapInfo" = ""
+"\MapInfo\TableID" = "9aed27fd-b1d1-4a40-a770-e305bca5cba2"
+end_metadata

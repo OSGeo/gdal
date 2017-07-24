@@ -2265,6 +2265,169 @@ def ogr_mitab_44():
     return 'success'
 
 ###############################################################################
+#Test read/write MapInfo layers with encoding specified
+
+def ogr_mitab_45():
+
+    lyrNames = [ 'lyr1', 'lyr2' ]
+    fldNames = [ 'field1', 'поле1' ]
+    featNames = [ 'аз',
+                  'буки',
+                  'веди' ]
+    formats =  [  'MIF',  'TAB', 'MIF', 'TAB' ]
+    lyrNums =  [      1,      1,     2,     2 ]
+    dsExts =   [ '.mif', '.tab',    '',    '' ]
+
+    for formatN in range(len(formats)):
+        format = formats[formatN]
+        lyrCount = lyrNums[formatN]
+        ext = dsExts[formatN]
+        dsName='/vsimem/45/ogr_mitab_45_%s_%s%s' % (format, lyrCount, ext)
+
+        ds = gdaltest.mapinfo_drv.CreateDataSource(dsName, options = ['FORMAT='+format] )
+
+        if ds is None:
+            gdaltest.post_reason('Can\'t create dataset: ' + dsName)
+            return 'fail'
+
+        for i in range(lyrCount):
+            lyr = ds.CreateLayer(lyrNames[i], options = ['ENCODING=CP1251'])
+            if lyr is None:
+                gdaltest.post_reason('Can\'t create layer '+lyrNames[i]+
+                                     ' for '+dsName)
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
+                gdaltest.post_reason( 'skipping test: recode is not possible' )
+                return 'skip'
+
+            for fldName in fldNames:
+                fld_defn = ogr.FieldDefn(fldName, ogr.OFTString)
+                fld_defn.SetWidth(254)
+                lyr.CreateField(fld_defn)
+
+            for featN in range(len(featNames)):
+                feat = ogr.Feature(lyr.GetLayerDefn())
+                feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (25 72)"))
+                for fldN in range(len(fldNames)):
+                    featValue = fldNames[fldN] + ' ' + featNames[featN]
+                    feat.SetField(fldNames[fldN], featValue)
+                lyr.CreateFeature(feat)
+        ds = None
+
+        #reopen and check
+        ds = ogr.Open(dsName)
+        if ds is None:
+            gdaltest.post_reason('Can\'t reopen dataset: ' + dsName)
+            return 'fail'
+
+        for i in range(lyrCount):
+            lyr = ds.GetLayer(i)
+            if lyr is None:
+                gdaltest.post_reason('Can\'t get layer '+lyrNames[i]+
+                                     ' from '+dsName)
+                return 'fail'
+
+            for fldN in range(len(fldNames)):
+                fldName = lyr.GetLayerDefn().GetFieldDefn(fldN).GetName()
+                expectedName = fldNames[fldN]
+                if fldName != expectedName:
+                    gdaltest.post_reason('Can\'t get field name\n' +
+                                         ' result name:   "' + fldName + '"\n'
+                                         ' expected name: "' + expectedName + '"\n'
+                                         ' from layer : ' + lyrNames[i] +
+                                         ' from dataset :'+ dsName)
+                    return 'fail'
+
+            for featN in range(len(featNames)):
+                feat = lyr.GetNextFeature()
+                for fldN in range(len(fldNames)):
+                    expectedValue = fldNames[fldN] + ' ' + featNames[featN]
+                    # column value by number
+                    value = feat.GetField(fldN)
+                    if value != expectedValue:
+                        gdaltest.post_reason('Can\'t get field value by number\n' +
+                                             ' result value:   "' + value + '"\n'
+                                             ' expected value: "' + expectedValue + '"\n'
+                                             ' from layer : ' + lyrNames[i] +
+                                             ' from dataset :'+ dsName)
+                        return 'fail'
+                    # column value by name
+                    value = feat.GetField(fldNames[fldN])
+                    if value != expectedValue:
+                        gdaltest.post_reason('Can\'t get field value by name\n' +
+                                             ' result value:   "' + value + '"\n'
+                                             ' expected value: "' + expectedValue + '"\n'
+                                             ' from layer : ' + lyrNames[i] +
+                                             ' from dataset :'+ dsName)
+                        return 'fail'
+
+        gdaltest.mapinfo_drv.DeleteDataSource(dsName)
+
+    return 'success'
+
+###############################################################################
+#Test read MapInfo layers with encoding specified
+
+def ogr_mitab_46():
+
+    dsNames =  [ 'data/mitab/tab-win1251.TAB',
+                 'data/mitab/win1251.mif']
+    fldNames = [ 'Поле_А',     'Поле_Б',     'Поле_В',     'Поле_Г',     'Поле_Д' ]
+    fldVal = [ [ 'Значение А', 'Значение Б', 'Значение В', 'Значение Г', 'Значение Д' ],
+               [ 'Значение 1', 'Значение 2', 'Значение 3', 'Значение 4', 'Значение 5' ],
+               [ 'Полигон',    'Синий',      'Заливка',    'А а Б б',    'ЪЫЁЩ' ] ]
+
+    for dsName in dsNames:
+
+        ds = ogr.Open(dsName)
+        if ds is None:
+            gdaltest.post_reason('Can\'t open dataset: ' + dsName)
+            return 'fail'
+
+        lyr = ds.GetLayer(0)
+        if lyr is None:
+            gdaltest.post_reason('Can\'t get layer 0 from '+dsName)
+            return 'fail'
+
+        if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
+            gdaltest.post_reason( 'skipping test: recode is not possible' )
+            return 'skip'
+
+        for fldN in range(len(fldNames)):
+            fldName = lyr.GetLayerDefn().GetFieldDefn(fldN).GetName()
+            expectedName = fldNames[fldN]
+            if fldName != expectedName:
+                gdaltest.post_reason('Can\'t get field\n' +
+                                     ' result name:   "' + fldName + '"\n'
+                                     ' expected name: "' + expectedName + '"\n'
+                                     ' from dataset :'+ dsName)
+                return 'fail'
+
+        for featFldVal in fldVal:
+            feat = lyr.GetNextFeature()
+            for fldN in range(len(fldNames)):
+                expectedValue = featFldVal[fldN]
+                # column value by number
+                value = feat.GetField(fldN)
+                if value != expectedValue:
+                    gdaltest.post_reason('Can\'t get field value by number\n' +
+                                         ' result value:   "' + value + '"\n'
+                                         ' expected value: "' + expectedValue + '"\n'
+                                         ' from dataset :'+ dsName)
+                    return 'fail'
+                # column value by name
+                value = feat.GetField(fldNames[fldN])
+                if value != expectedValue:
+                    gdaltest.post_reason('Can\'t get field value by name\n' +
+                                         ' result value:   "' + value + '"\n'
+                                         ' expected value: "' + expectedValue + '"\n'
+                                         ' from dataset :'+ dsName)
+                    return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2326,6 +2489,8 @@ gdaltest_list = [
     ogr_mitab_42,
     ogr_mitab_43,
     ogr_mitab_44,
+    ogr_mitab_45,
+    ogr_mitab_46,
     ogr_mitab_cleanup
     ]
 

@@ -91,10 +91,12 @@ class IMapInfoFile : public OGRLayer
     virtual TABFileClass GetFileClass() {return TABFC_IMapInfoFile;}
 
     virtual int Open(const char *pszFname, const char* pszAccess,
-                     GBool bTestOpenNoError = FALSE );
+                     GBool bTestOpenNoError = FALSE,
+                     const char* pszCharset = NULL );
 
     virtual int Open(const char *pszFname, TABAccess eAccess,
-                     GBool bTestOpenNoError = FALSE ) = 0;
+                     GBool bTestOpenNoError = FALSE,
+                     const char* pszCharset = NULL ) = 0;
     virtual int Close() = 0;
 
     virtual int SetQuickSpatialIndexMode(CPL_UNUSED GBool bQuickSpatialIndexMode=TRUE) {return -1;}
@@ -164,6 +166,14 @@ class IMapInfoFile : public OGRLayer
 
     virtual int SetCharset(const char* charset);
 
+    virtual const char* GetCharset() const;
+
+    static const char* CharsetToEncoding( const char* );
+    static const char* EncodingToCharset( const char* );
+
+    void SetEncoding( const char* );
+    const char* GetEncoding() const;
+    int TestUtf8Capability() const;
     ///////////////
     // semi-private.
     virtual int  GetProjInfo(TABProjInfo *poPI) = 0;
@@ -230,15 +240,18 @@ class TABFile CPL_FINAL : public IMapInfoFile
     virtual TABFileClass GetFileClass() override {return TABFC_TABFile;}
 
     virtual int Open(const char *pszFname, const char* pszAccess,
-                     GBool bTestOpenNoError = FALSE ) override
-            { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
+                     GBool bTestOpenNoError = FALSE,
+                     const char* pszCharset = NULL ) override
+            { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError, pszCharset); }
     virtual int Open(const char *pszFname, TABAccess eAccess,
-                     GBool bTestOpenNoError = FALSE ) override
-            { return Open(pszFname, eAccess, bTestOpenNoError, 512); }
+                     GBool bTestOpenNoError = FALSE,
+                     const char* pszCharset = NULL ) override
+            { return Open(pszFname, eAccess, bTestOpenNoError, 512, pszCharset); }
 
     virtual int Open(const char *pszFname, TABAccess eAccess,
                      GBool bTestOpenNoError,
-                     int nBlockSizeForCreate );
+                     int nBlockSizeForCreate,
+                     const char* pszCharset );
 
     virtual int Close() override;
 
@@ -325,7 +338,7 @@ class TABFile CPL_FINAL : public IMapInfoFile
     TABMAPFile  *GetMAPFileRef() { return m_poMAPFile; }
 
     int         WriteFeature(TABFeature *poFeature);
-
+    virtual int SetCharset(const char* pszCharset) override;
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL) override;
 #endif
@@ -383,9 +396,11 @@ class TABView CPL_FINAL : public IMapInfoFile
     virtual TABFileClass GetFileClass() override {return TABFC_TABView;}
 
     virtual int Open(const char *pszFname, const char* pszAccess,
-                     GBool bTestOpenNoError = FALSE ) override { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
+                     GBool bTestOpenNoError = FALSE,
+                     const char* pszCharset = NULL ) override { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError, pszCharset); }
     virtual int Open(const char *pszFname, TABAccess eAccess,
-                     GBool bTestOpenNoError = FALSE ) override;
+                     GBool bTestOpenNoError = FALSE,
+                     const char* pszCharset = NULL ) override;
     virtual int Close() override;
 
     virtual int SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode=TRUE) override;
@@ -450,6 +465,7 @@ class TABView CPL_FINAL : public IMapInfoFile
             { return m_nMainTableIndex!=-1?
                      m_papoTABFiles[m_nMainTableIndex]->SetProjInfo(poPI):-1; }
     virtual int  SetMIFCoordSys(const char * /*pszMIFCoordSys*/) override {return -1;}
+    virtual int SetCharset(const char* pszCharset) override;
 
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL) override;
@@ -499,9 +515,11 @@ class TABSeamless CPL_FINAL : public IMapInfoFile
     virtual TABFileClass GetFileClass() override {return TABFC_TABSeamless;}
 
     virtual int Open(const char *pszFname, const char* pszAccess,
-                     GBool bTestOpenNoError = FALSE ) override { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
+                     GBool bTestOpenNoError = FALSE,
+                     const char* pszCharset = NULL ) override { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError, pszCharset); }
     virtual int Open(const char *pszFname, TABAccess eAccess,
-                     GBool bTestOpenNoError = FALSE ) override;
+                     GBool bTestOpenNoError = FALSE,
+                     const char* pszCharset = NULL ) override;
     virtual int Close() override;
 
     virtual const char *GetTableName() override
@@ -655,9 +673,11 @@ class MIFFile CPL_FINAL : public IMapInfoFile
     virtual TABFileClass GetFileClass() override {return TABFC_MIFFile;}
 
     virtual int Open(const char *pszFname, const char* pszAccess,
-                     GBool bTestOpenNoError = FALSE ) override { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
+                     GBool bTestOpenNoError = FALSE,
+                     const char* pszCharset = NULL ) override { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError, pszCharset); }
     virtual int Open(const char *pszFname, TABAccess eAccess,
-                     GBool bTestOpenNoError = FALSE ) override;
+                     GBool bTestOpenNoError = FALSE,
+                     const char* pszCharset = NULL ) override;
     virtual int Close() override;
 
     virtual const char *GetTableName() override
@@ -720,6 +740,7 @@ class MIFFile CPL_FINAL : public IMapInfoFile
     virtual int  SetProjInfo(TABProjInfo * /*poPI*/) override{return -1;}
     /*  { return m_poMAPFile->GetHeaderBlock()->SetProjInfo( poPI ); }*/
     virtual int  SetMIFCoordSys(const char * pszMIFCoordSys) override;
+    virtual int SetCharset(const char* pszCharset) override;
 
 #ifdef DEBUG
     virtual void Dump(FILE * /*fpOut*/ = NULL) override {}
