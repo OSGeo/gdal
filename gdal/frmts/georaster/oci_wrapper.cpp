@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: $
  *
  * Name:     oci_wrapper.cpp
  * Project:  Oracle Spatial GeoRaster Driver
@@ -30,7 +29,7 @@
 
 #include "oci_wrapper.h"
 
-CPL_CVSID("$Id: oci_wrapper.cpp 38015 2017-04-14 16:05:43Z ilucena $");
+CPL_CVSID("$Id: oci_wrapper.cpp 39343 2017-06-27 20:57:02Z rouault $")
 
 static const OW_CellDepth ahOW_CellDepth[] = {
     {"8BIT_U",          GDT_Byte},
@@ -660,6 +659,7 @@ OWStatement::OWStatement( OWConnection* pConnect, const char* pszStatement )
     nNextCol        = 0;
     nNextBnd        = 0;
     hError          = poConnection->hError;
+    nFetchCount     = 0;
 
     //  -----------------------------------------------------------
     //  Create Statement handler
