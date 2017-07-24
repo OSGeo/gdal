@@ -290,6 +290,7 @@ namespace GMLASConstants
     STRING_CONST(szXS_DOUBLE, "double");
     STRING_CONST(szXS_DECIMAL, "decimal");
     STRING_CONST(szXS_DATE, "date");
+    STRING_CONST(szXS_GYEAR, "gYear");
     STRING_CONST(szXS_TIME, "time");
     STRING_CONST(szXS_DATETIME, "dateTime");
     STRING_CONST(szXS_ANY_URI, "anyURI");

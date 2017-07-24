@@ -300,6 +300,7 @@ class GMLASTopElementParser : public DefaultHandler
             int         m_nStartElementCounter;
             bool        m_bFinish;
             bool        m_bFoundSWE;
+            std::map<CPLString,CPLString> m_oMapDocNSURIToPrefix;
 
     public:
                         GMLASTopElementParser();
@@ -311,6 +312,8 @@ class GMLASTopElementParser : public DefaultHandler
         const std::vector<PairURIFilename>& GetXSDs() const
                                             { return m_aoFilenames; }
         bool GetSWE() const { return m_bFoundSWE; }
+        const std::map<CPLString,CPLString>& GetMapDocNSURIToPrefix() const
+                                            { return m_oMapDocNSURIToPrefix; }
 
         virtual void startElement(
             const   XMLCh* const    uri,
@@ -434,6 +437,15 @@ void GMLASTopElementParser::startElement(
         {
             CPLDebug("GMLAS", "SWE namespace found");
             m_bFoundSWE = true;
+        }
+        else if( osAttrURIPrefix == szXMLNS_URI && !osAttrValue.empty() &&
+                 !osAttrLocalname.empty() )
+        {
+#ifdef DEBUG_VERBOSE
+            CPLDebug("GMLAS", "Namespace %s = %s",
+                     osAttrLocalname.c_str(), osAttrValue.c_str() );
+#endif
+            m_oMapDocNSURIToPrefix[ osAttrValue ] = osAttrLocalname;
         }
     }
 
@@ -807,6 +819,8 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
         {
             m_bFoundSWE = true;
         }
+        oAnalyzer.SetMapDocNSURIToPrefix(
+                                    topElementParser.GetMapDocNSURIToPrefix());
     }
     std::vector<PairURIFilename> aoXSDs;
     if( osXSDFilenames.empty() )

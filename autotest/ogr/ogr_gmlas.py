@@ -4487,6 +4487,68 @@ def ogr_gmlas_any_field_at_end_of_declaration():
     return 'success'
 
 ###############################################################################
+#  Test auxiliary schema without namespace prefix
+
+def ogr_gmlas_aux_schema_without_namespace_prefix():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix_main.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://main"
+           targetNamespace="http://main"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" type="xs:string"/>
+            <xs:element ref="generic" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+<xs:element name="generic" abstract="true" type="xs:anyType"/>
+</xs:schema>""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix_aux.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://aux"
+           targetNamespace="http://aux"
+           xmlns:main="http://main"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:import namespace="http://main" schemaLocation="ogr_gmlas_aux_schema_without_namespace_prefix_main.xsd"/>
+<xs:element name="genericInt" substitutionGroup="main:generic">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="value" type="xs:integer" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix.xml',
+"""
+<main:main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:main="http://main"
+          xmlns:aux="http://aux"
+          xsi:schemaLocation="http://main ogr_gmlas_aux_schema_without_namespace_prefix_main.xsd http://aux ogr_gmlas_aux_schema_without_namespace_prefix_aux.xsd">
+    <main:foo>bar</main:foo>
+    <aux:genericInt><aux:value>1</aux:value></aux:genericInt>
+</main:main_elt>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix.xml')
+    lyr = ds.GetLayerByName('main_elt')
+    f = lyr.GetNextFeature()
+    if not f.IsFieldSetAndNotNull('generic_pkid'):
+        f.DumpReadable()
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix_main.xsd')
+    gdal.Unlink('/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix_aux.xsd')
+
+    return 'success'
+
+###############################################################################
 def ogr_gmlas_extra_piezometre():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -4577,9 +4639,10 @@ gdaltest_list = [
     ogr_gmlas_swe_dataarray,
     ogr_gmlas_swe_datarecord,
     ogr_gmlas_any_field_at_end_of_declaration,
+    ogr_gmlas_aux_schema_without_namespace_prefix,
     ogr_gmlas_cleanup ]
 
-# gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_any_field_at_end_of_declaration, ogr_gmlas_cleanup ]
+# gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_aux_schema_without_namespace_prefix, ogr_gmlas_cleanup ]
 
 # Test only work if using "python ogr_gmlas.py"
 gdaltest_extra_list = [

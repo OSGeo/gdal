@@ -671,14 +671,14 @@ descriptionreference_nilreason: String (0.0)
 identifier_codespace: String (0.0)
 identifier: String (0.0)
 location_location_pkid: String (0.0)
-reportingyear: String (0.0) NOT NULL
+reportingyear: Integer (0.0) NOT NULL
 countryid_owns: Integer(Boolean) (0.0) DEFAULT 'false'
 countryid_href: String (0.0)
 countryid_title: String (0.0)
 countryid_nilreason: String (0.0)
 OGRFeature(reportdata):1
   id (String) = ES.RD.2017
-  reportingyear (String) = 2017
+  reportingyear (Integer) = 2017
   countryid_owns (Integer(Boolean)) = 0
   countryid_href (String) = http://dd.eionet.europa.eu/vocabulary/euregistryonindustrialsites/CountryCodeValue/ES
 
