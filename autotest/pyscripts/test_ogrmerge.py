@@ -60,7 +60,7 @@ def test_ogrmerge_1():
     return 'success'
 
 ###############################################################################
-# Test -append
+# Test -append and glob
 
 def test_ogrmerge_2():
     script_path = test_py_scripts.get_py_script('ogrmerge')
@@ -70,7 +70,7 @@ def test_ogrmerge_2():
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
         '-single -o /vsimem/out.shp ../ogr/data/poly.shp')
     test_py_scripts.run_py_script(script_path, 'ogrmerge',
-        '-append -single -o /vsimem/out.shp ../ogr/data/poly.shp')
+        '-append -single -o /vsimem/out.shp "../ogr/data/p*ly.shp"')
 
     ds = ogr.Open('/vsimem/out.shp')
     lyr = ds.GetLayer(0)

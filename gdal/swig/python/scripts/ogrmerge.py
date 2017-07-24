@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import glob
 import os
 import sys
 
@@ -237,7 +238,10 @@ def process(argv, progress=None, progress_arg=None):
             print('ERROR: Unrecognized argument : %s' % arg)
             return Usage()
         else:
-            src_datasets.append(arg)
+            if '*' in arg:
+                src_datasets += glob.glob(arg)
+            else:
+                src_datasets.append(arg)
         i = i + 1
 
     if dst_filename is None:
