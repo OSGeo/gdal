@@ -119,6 +119,12 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         int nYSizeToRead = std::min(1024, GDALGetRasterYSize(hDS));
         if( nBands > 0 )
         {
+            const char* pszInterleave =
+                GDALGetMetadataItem( hDS, "INTERLEAVE", "IMAGE_STRUCTURE" );
+            const int nSimultaneousBands =
+                (pszInterleave && EQUAL(pszInterleave, "PIXEL")) ?
+                            nTotalBands : 1;
+
             // If we know that we will need to allocate a lot of memory
             // given the block size and interleaving mode, do not read
             // pixels to avoid out of memory conditions by ASAN
@@ -143,7 +149,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 // Workaround https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2606
                 if( nBYSize == 1 && nYSizeToRead > 1 &&
                     GDALGetRasterYSize(hDS) > INT_MAX /
-                            static_cast<int>(sizeof(GUInt16)) / nBXSize &&
+                            static_cast<int>(sizeof(GUInt16)) /
+                                            nSimultaneousBands / nBXSize &&
                     GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff") )
                 {
                     const char* pszCompress =
@@ -170,11 +177,6 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 const GDALDataType eDT =
                     GDALGetRasterDataType( GDALGetRasterBand(hDS, 1) );
                 const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
-                const char* pszInterleave =
-                    GDALGetMetadataItem( hDS, "INTERLEAVE", "IMAGE_STRUCTURE" );
-                const int nSimultaneousBands =
-                    (pszInterleave && EQUAL(pszInterleave, "PIXEL")) ?
-                                nTotalBands : 1;
                 if( nPixels > 10 * 1024 * 1024 / nDTSize / nSimultaneousBands )
                 {
                     bDoCheckSum = false;
