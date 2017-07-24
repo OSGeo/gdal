@@ -56,7 +56,7 @@ void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile);
 void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
 
 //  ---------------------------------------------------------------------------
-//  JPEG2000 support - Install the Vitual File System handler to OCI LOB
+//  JPEG2000 support - Install the Virtual File System handler to OCI LOB
 //  ---------------------------------------------------------------------------
 
 CPL_C_START
@@ -152,8 +152,6 @@ private:
     char*               pszProjection;
     char**              papszSubdatasets;
     double              adfGeoTransform[6];
-    int                 nGCPCount;
-    GDAL_GCP*           pasGCPList;
     GeoRasterRasterBand*
                         poMaskBand;
     bool                bApplyNoDataArray;
@@ -207,10 +205,10 @@ public:
                             GSpacing nPixelSpace, GSpacing nLineSpace,
                             GSpacing nBandSpace,
                             GDALRasterIOExtraArg* psExtraArg ) override;
-    virtual int         GetGCPCount() override { return nGCPCount; }
+    virtual int         GetGCPCount() override;
     virtual const char* GetGCPProjection() override;
     virtual const GDAL_GCP*
-                        GetGCPs() override { return pasGCPList; }
+                        GetGCPs() override;
     virtual CPLErr      SetGCPs(
                             int nGCPCount,
                             const GDAL_GCP *pasGCPList,
@@ -224,9 +222,9 @@ public:
                             GDALProgressFunc pfnProgress,
                             void* pProgresoversData ) override;
     virtual CPLErr      CreateMaskBand( int nFlags ) override;
-    virtual OGRErr      StartTransaction(int /* bForce */ =FALSE) override {return CE_None;};
-    virtual OGRErr      CommitTransaction() override {return CE_None;};
-    virtual OGRErr      RollbackTransaction() override {return CE_None;};
+    virtual OGRErr      StartTransaction(int /* bForce */ =FALSE) override {return CE_None;}
+    virtual OGRErr      CommitTransaction() override {return CE_None;}
+    virtual OGRErr      RollbackTransaction() override {return CE_None;}
     
     virtual char**      GetFileList() override;
 
@@ -347,7 +345,6 @@ private:
     void                InitializeLayersNode();
     bool                InitializeIO();
     void                InitializeLevel( int nLevel );
-    bool                FlushMetadata();
 
     void                LoadNoDataValues();
 
@@ -366,6 +363,12 @@ private:
 
 public:
 
+    int                 nGCPCount;
+    GDAL_GCP*           pasGCPList;
+    bool                bFlushGCP;
+    void                FlushGCP();
+
+    bool                FlushMetadata();
     static char**       ParseIdentificator( const char* pszStringID );
     static GeoRasterWrapper*
                         Open(
@@ -421,7 +424,7 @@ public:
     bool                FlushBlock( long nCacheBlock );
     bool                GetNoData( int nLayer, double* pdfNoDataValue );
     bool                SetNoData( int nLayer, const char* pszValue );
-    CPLXMLNode*         GetMetadata() { return phMetadata; };
+    CPLXMLNode*         GetMetadata() { return phMetadata; }
     bool                SetVAT( int nBand, const char* pszName );
     char*               GetVAT( int nBand );
     bool                GeneratePyramid(
@@ -436,10 +439,12 @@ public:
                                                 int nColumnBlocks,
                                                 int nRowBlocks,
                                                 int nBandBlocks );
-    void                SetWriteOnly( bool value ) { bWriteOnly = value; };
+    void                SetWriteOnly( bool value ) { bWriteOnly = value; }
     void                SetRPC();
     void                SetMaxLevel( int nMaxLevel );
     void                GetRPC();
+    void                GetGCP();
+    void                SetGCP( int nGCPCountIn, const GDAL_GCP *pasGCPListIn );
 
 public:
 
