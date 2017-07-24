@@ -39,7 +39,7 @@ layer into the target dataset
 input vector layers is appended into a single target layer. This assumes that
 the schema of those vector layers is more or less the same.
 
-Internally this generates a <a href="drv_vrt.html">OGR VRT</a> file,
+Internally this generates a <a href="drv_vrt.html">VRT</a> file,
 and if the output format is not VRT,
 final translation is done with ogr2ogr / gdal.VectorTranslate.
 So for advanced uses, output to VRT, potential manual editing of it and
@@ -146,7 +146,7 @@ The syntax of layer_name_template is the same as for -nln.
 
 - Creates a VRT with a layer for each input shapefiles
 \verbatim
-ogrmerge.py -f OGR_VRT -o merged.vrt *.shp
+ogrmerge.py -f VRT -o merged.vrt *.shp
 \endverbatim
 
 - Same, but creates a GeoPackage file
