@@ -1,4 +1,4 @@
-/* $Id: tif_luv.c,v 1.48 2017-07-18 19:45:12 erouault Exp $ */
+/* $Id: tif_luv.c,v 1.49 2017-07-24 12:47:30 erouault Exp $ */
 
 /*
  * Copyright (c) 1997 Greg Ward Larson
@@ -1314,7 +1314,7 @@ LogL16InitState(TIFF* tif)
 	}
         if( isTiled(tif) )
             sp->tbuflen = multiply_ms(td->td_tilewidth, td->td_tilelength);
-        else if( td->td_rowsperstrip != (uint32)-1 )
+        else if( td->td_rowsperstrip < td->td_imagelength )
             sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_rowsperstrip);
         else
             sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_imagelength);
@@ -1416,7 +1416,7 @@ LogLuvInitState(TIFF* tif)
 	}
         if( isTiled(tif) )
             sp->tbuflen = multiply_ms(td->td_tilewidth, td->td_tilelength);
-        else if( td->td_rowsperstrip != (uint32)-1 )
+        else if( td->td_rowsperstrip < td->td_imagelength )
             sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_rowsperstrip);
         else
             sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_imagelength);
