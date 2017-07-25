@@ -4559,6 +4559,13 @@ int OGRGeometryFactory::GetCurveParmeters(
     double& R, double& cx, double& cy,
     double& alpha0, double& alpha1, double& alpha2 )
 {
+    if( CPLIsNan(x0) || CPLIsNan(y0) ||
+        CPLIsNan(x1) || CPLIsNan(y1) ||
+        CPLIsNan(y1) || CPLIsNan(y2) )
+    {
+        return FALSE;
+    }
+
     // Circle.
     if( x0 == x2 && y0 == y2 )
     {
