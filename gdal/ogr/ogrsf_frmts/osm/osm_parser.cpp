@@ -1873,7 +1873,8 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
             break;
         }
         const unsigned int nHeaderSize =
-            (abyHeaderSize[0] << 24) | (abyHeaderSize[1] << 16) |
+            (static_cast<unsigned int>(abyHeaderSize[0]) << 24) |
+            (abyHeaderSize[1] << 16) |
             (abyHeaderSize[2] << 8) | abyHeaderSize[3];
 
         psCtxt->nBytesRead += 4;
