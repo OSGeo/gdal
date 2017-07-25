@@ -146,6 +146,19 @@ cd $OLDPWD
 echo "Building gdal_filesystem_fuzzer_seed_corpus.zip"
 cp $OUT/gdal_fuzzer_seed_corpus.zip $OUT/gdal_filesystem_fuzzer_seed_corpus.zip
 
+echo "Building ogr_sdts_fuzzer_seed_corpus.zip"
+rm -f $OUT/ogr_sdts_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/ogr/data/D3607551_rd0s_1_sdts_truncated
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/ogr_sdts.tar
+for file in *.DDF; do
+    printf "***NEWFILE***:$file\n" >> $CUR_DIR/ogr_sdts.tar
+    cat $file >> $CUR_DIR/ogr_sdts.tar
+done
+cd $CUR_DIR
+zip -r $OUT/ogr_sdts_fuzzer_seed_corpus.zip ogr_sdts.tar >/dev/null
+rm ogr_sdts.tar
+
 echo "Building ogr_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/ogr_fuzzer_seed_corpus.zip
