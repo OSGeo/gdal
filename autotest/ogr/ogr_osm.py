@@ -946,6 +946,29 @@ def ogr_osm_17():
 
     return 'success'
 
+###############################################################################
+# Test correct reading of .pbf files with multiple densenode blocks and
+# regarding EOF
+
+def ogr_osm_18():
+
+    if ogrtest.osm_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/two_points.pbf')
+    lyr = ds.GetLayerByName('points')
+    count = 0
+    for f in lyr:
+        count += 1
+    ds = None
+
+    if count != 2:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -969,6 +992,7 @@ gdaltest_list = [
     ogr_osm_15,
     ogr_osm_16,
     ogr_osm_17,
+    ogr_osm_18,
     ]
 
 if __name__ == '__main__':
