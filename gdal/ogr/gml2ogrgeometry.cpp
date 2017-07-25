@@ -3696,27 +3696,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry, "Solid") )
     {
-        // Find exterior element.
-        const CPLXMLNode *psChild = FindBareXMLChild( psNode, "exterior");
-
-        psChild = GetChildElement(psChild);
-        if( psChild == NULL )
-        {
-            // <gml:Solid/> and <gml:Solid><gml:exterior/></gml:Solid> are valid
-            // GML.
-            return new OGRPolygon();
-        }
-
-        // Get the geometry inside <exterior>.
-        OGRGeometry* poGeom = GML2OGRGeometry_XMLNode_Internal(
-            psChild, nPseudoBoolGetSecondaryGeometryOption,
-            nRecLevel + 1, nSRSDimension, pszSRSName );
-        if( poGeom == NULL )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, "Invalid exterior element");
-            delete poGeom;
-            return NULL;
-        }
+        const CPLXMLNode * psChild;
 
         psChild = FindBareXMLChild( psNode, "interior");
         if( psChild != NULL )
@@ -3728,6 +3708,68 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                           "<interior> elements of <Solid> are ignored");
                 bWarnedOnce = true;
             }
+        }
+
+        // Find exterior element.
+        psChild = FindBareXMLChild( psNode, "exterior");
+
+        if( nSRSDimension == 0 )
+            nSRSDimension = 3;
+
+        psChild = GetChildElement(psChild);
+        if( psChild == NULL )
+        {
+            // <gml:Solid/> and <gml:Solid><gml:exterior/></gml:Solid> are valid
+            // GML.
+            return new OGRPolyhedralSurface();
+        }
+
+        if( EQUAL(BareGMLElement(psChild->pszValue), "CompositeSurface") )
+        {
+            OGRPolyhedralSurface* poPS = new OGRPolyhedralSurface();
+
+            // Iterate over children.
+            for( psChild = psChild->psChild;
+                 psChild != NULL;
+                 psChild = psChild->psNext )
+            {
+                const char* pszMemberElement = BareGMLElement(psChild->pszValue);
+                if( psChild->eType == CXT_Element
+                    && (EQUAL(pszMemberElement, "polygonMember") ||
+                        EQUAL(pszMemberElement, "surfaceMember")) )
+                {
+                    const CPLXMLNode* psSurfaceChild = GetChildElement(psChild);
+
+                    if( psSurfaceChild != NULL )
+                    {
+                        OGRGeometry* poGeom =
+                            GML2OGRGeometry_XMLNode_Internal( psSurfaceChild,
+                                nPseudoBoolGetSecondaryGeometryOption,
+                                nRecLevel + 1, nSRSDimension, pszSRSName );
+                        if( poGeom != NULL &&
+                            wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+                        {
+                            poPS->addGeometryDirectly(poGeom);
+                        }
+                        else
+                        {
+                            delete poGeom;
+                        }
+                    }
+                }
+            }
+            return poPS;
+        }
+
+        // Get the geometry inside <exterior>.
+        OGRGeometry* poGeom = GML2OGRGeometry_XMLNode_Internal(
+            psChild, nPseudoBoolGetSecondaryGeometryOption,
+            nRecLevel + 1, nSRSDimension, pszSRSName );
+        if( poGeom == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Invalid exterior element");
+            delete poGeom;
+            return NULL;
         }
 
         return poGeom;
