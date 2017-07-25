@@ -1714,6 +1714,7 @@ static OGRwkbGeometryType GetOGRGeometryType( XSTypeDefinition* poTypeDef )
         { "CompositeSurfacePropertyType", wkbSurface },
         { "CompositeSolidPropertyType", wkbUnknown },
         { "GeometricComplexPropertyType", wkbUnknown },
+        { "SolidPropertyType", wkbPolyhedralSurface }
     };
 
     CPLString osName(transcode(poTypeDef->getName()));
@@ -1732,7 +1733,6 @@ static OGRwkbGeometryType GetOGRGeometryType( XSTypeDefinition* poTypeDef )
   <complexType name="PolygonPatchArrayPropertyType">
   <complexType name="TrianglePatchArrayPropertyType">
   <complexType name="LineStringSegmentArrayPropertyType">
-  <complexType name="SolidPropertyType">
   <complexType name="SolidArrayPropertyType">
 #endif
 }
