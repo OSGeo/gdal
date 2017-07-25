@@ -4561,7 +4561,7 @@ int OGRGeometryFactory::GetCurveParmeters(
 {
     if( CPLIsNan(x0) || CPLIsNan(y0) ||
         CPLIsNan(x1) || CPLIsNan(y1) ||
-        CPLIsNan(y1) || CPLIsNan(y2) )
+        CPLIsNan(x2) || CPLIsNan(y2) )
     {
         return FALSE;
     }
