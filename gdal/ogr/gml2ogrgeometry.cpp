@@ -3696,16 +3696,14 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry, "Solid") )
     {
-        const CPLXMLNode * psChild;
-
-        psChild = FindBareXMLChild( psNode, "interior");
+        const CPLXMLNode *psChild = FindBareXMLChild( psNode, "interior");
         if( psChild != NULL )
         {
             static bool bWarnedOnce = false;
             if( !bWarnedOnce )
             {
-                CPLError( CE_Warning, CPLE_AppDefined,
-                          "<interior> elements of <Solid> are ignored");
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "<interior> elements of <Solid> are ignored");
                 bWarnedOnce = true;
             }
         }
