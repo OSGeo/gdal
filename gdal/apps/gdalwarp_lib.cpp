@@ -324,12 +324,14 @@ static const char* GetSrcDSProjection( GDALDatasetH hDS,
 /*                           CropToCutline()                            */
 /************************************************************************/
 
-static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO, int nSrcCount, GDALDatasetH *pahSrcDS,
-                           double& dfMinX, double& dfMinY, double& dfMaxX, double &dfMaxY )
+static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO,
+                             int nSrcCount, GDALDatasetH *pahSrcDS,
+                             double& dfMinX, double& dfMinY,
+                             double& dfMaxX, double &dfMaxY )
 {
-    // We could possibly directly reproject from cutline SRS to target SRS
-    // but whe applying the cutline it is reprojected to source raster image
-    // space, so using the source SRS. So as to be consistent, we reproject
+    // We could possibly directly reproject from cutline SRS to target SRS,
+    // but when applying the cutline, it is reprojected to source raster image
+    // space using the source SRS. To be consistent, we reproject
     // the cutline from cutline SRS to source SRS and then from source SRS to
     // target SRS.
     OGRSpatialReferenceH hCutlineSRS = OGR_G_GetSpatialReference( hCutline );
