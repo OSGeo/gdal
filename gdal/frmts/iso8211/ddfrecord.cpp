@@ -567,13 +567,13 @@ int DDFRecord::ReadHeader()
 
             // move this temp buffer into more permanent storage:
             char *newBuf = (char*)VSI_MALLOC_VERBOSE(nDataSize+nFieldLength+1);
-            newBuf[nDataSize+nFieldLength] = '\0';
             if( newBuf == NULL )
             {
                 CPLFree(tmpBuf);
                 nFieldOffset = -1;
                 return FALSE;
             }
+            newBuf[nDataSize+nFieldLength] = '\0';
             memcpy(newBuf, pachData, nDataSize);
             CPLFree(pachData);
             memcpy(&newBuf[nDataSize], tmpBuf, nFieldLength);
