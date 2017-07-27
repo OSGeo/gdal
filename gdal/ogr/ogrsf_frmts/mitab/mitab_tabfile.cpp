@@ -535,7 +535,6 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
                  * so we set default values for the other params.
                  */
                 bInsideTableDef = TRUE;
-                CPLFree(m_pszCharset);
                 SetCharset("Neutral");
                 m_eTableType = TABTableNative;
             }
