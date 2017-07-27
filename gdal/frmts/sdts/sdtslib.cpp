@@ -124,6 +124,8 @@ int SDTSModId::Set( DDFField *poField )
     {
         DDFSubfieldDefn *poSF
             = poField->GetFieldDefn()->FindSubfieldDefn( "MODN" );
+        if( poSF == NULL )
+            return FALSE;
         int nBytesRemaining;
         pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
         snprintf( szModule, sizeof(szModule), "%s",
