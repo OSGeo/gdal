@@ -610,6 +610,9 @@ void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer,
         poLineReader->Rewind();
     }
 
+    if( !IsIndexed() )
+        return;
+
 /* -------------------------------------------------------------------- */
 /*      Scan all polygons indexed on this reader, and assemble their    */
 /*      rings.                                                          */
