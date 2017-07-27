@@ -331,7 +331,8 @@ int DDFRecord::ReadHeader()
 /*      Read the remainder of the record.                               */
 /* -------------------------------------------------------------------- */
         nDataSize = _recLength - nLeaderSize;
-        pachData = (char *) CPLMalloc(nDataSize);
+        pachData = (char *) CPLMalloc(nDataSize+1);
+        pachData[nDataSize] = '\0';
 
         if( VSIFReadL( pachData, 1, nDataSize, poModule->GetFP()) !=
             (size_t) nDataSize )
@@ -350,7 +351,8 @@ int DDFRecord::ReadHeader()
                && (nDataSize < 2 || pachData[nDataSize-2] != DDF_FIELD_TERMINATOR) )
         {
             nDataSize++;
-            pachData = (char *) CPLRealloc(pachData,nDataSize);
+            pachData = (char *) CPLRealloc(pachData,nDataSize+1);
+            pachData[nDataSize] = '\0';
 
             if( VSIFReadL( pachData + nDataSize - 1, 1, 1, poModule->GetFP() )
                 != 1 )
@@ -508,7 +510,8 @@ int DDFRecord::ReadHeader()
             }
 
             // move this temp buffer into more permanent storage:
-            char *newBuf = (char*)CPLMalloc(nDataSize+nFieldEntryWidth);
+            char *newBuf = (char*)CPLMalloc(nDataSize+nFieldEntryWidth+1);
+            newBuf[nDataSize+nFieldEntryWidth] = '\0';
             if(pachData!=NULL) {
                 memcpy(newBuf, pachData, nDataSize);
                 CPLFree(pachData);
@@ -563,7 +566,8 @@ int DDFRecord::ReadHeader()
             }
 
             // move this temp buffer into more permanent storage:
-            char *newBuf = (char*)VSI_MALLOC_VERBOSE(nDataSize+nFieldLength);
+            char *newBuf = (char*)VSI_MALLOC_VERBOSE(nDataSize+nFieldLength+1);
+            newBuf[nDataSize+nFieldLength] = '\0';
             if( newBuf == NULL )
             {
                 CPLFree(tmpBuf);
@@ -944,8 +948,9 @@ DDFRecord * DDFRecord::Clone()
     poNR->nFieldOffset = nFieldOffset;
 
     poNR->nDataSize = nDataSize;
-    poNR->pachData = (char *) CPLMalloc(nDataSize);
+    poNR->pachData = (char *) CPLMalloc(nDataSize + 1);
     memcpy( poNR->pachData, pachData, nDataSize );
+    poNR->pachData[nDataSize] = '\0';
 
     poNR->nFieldCount = nFieldCount;
     poNR->paoFields = new DDFField[nFieldCount];
@@ -1137,7 +1142,10 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
 
     // Don't realloc things smaller ... we will cut off some data.
     if( nBytesToAdd > 0 )
-        pachData = (char *) CPLRealloc(pachData, nDataSize + nBytesToAdd );
+    {
+        pachData = (char *) CPLRealloc(pachData, nDataSize + nBytesToAdd + 1);
+        pachData[nDataSize+nBytesToAdd] = '\0';
+    }
 
     nDataSize += nBytesToAdd;
 
@@ -1494,7 +1502,8 @@ int DDFRecord::ResetDirectory()
     if( nDirSize != nFieldOffset )
     {
         const int nNewDataSize = nDataSize - nFieldOffset + nDirSize;
-        char *pachNewData = (char *) CPLMalloc(nNewDataSize);
+        char *pachNewData = (char *) CPLMalloc(nNewDataSize+1);
+        pachNewData[nNewDataSize] = '\0';
         memcpy( pachNewData + nDirSize,
                 pachData + nFieldOffset,
                 nNewDataSize - nDirSize );
