@@ -222,7 +222,18 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 /*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
     if( !CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false) )
-        QuietDelete( pszFilename );
+    {
+        // Someone issuing Create("foo.tif") on a
+        // memory driver doesn't expect files with those names to be deleted
+        // on a file system...
+        // This is somewhat messy. Ideally there should be a way for the
+        // driver to overload the default behaviour
+        if( !EQUAL(GetDescription(), "MEM") &&
+            !EQUAL(GetDescription(), "Memory") )
+        {
+            QuietDelete( pszFilename );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Validate creation options.                                      */
@@ -780,7 +791,18 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     if( !bAppendSubdataset &&
         CPLFetchBool(const_cast<const char **>(papszOptions),
                      "QUIET_DELETE_ON_CREATE_COPY", true) )
-        QuietDelete( pszFilename );
+    {
+        // Someone issuing CreateCopy("foo.tif") on a
+        // memory driver doesn't expect files with those names to be deleted
+        // on a file system...
+        // This is somewhat messy. Ideally there should be a way for the
+        // driver to overload the default behaviour
+        if( !EQUAL(GetDescription(), "MEM") &&
+            !EQUAL(GetDescription(), "Memory") )
+        {
+            QuietDelete( pszFilename );
+        }
+    }
 
     char** papszOptionsToDelete = NULL;
     int iIdxQuietDeleteOnCreateCopy =
