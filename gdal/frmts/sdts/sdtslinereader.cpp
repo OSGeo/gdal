@@ -116,7 +116,10 @@ int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
             padfY = padfX + nVertices;
             padfZ = padfX + 2*nVertices;
 
-            poIREF->GetSADR( poField, nVertices, padfX, padfY, padfZ );
+            if( !poIREF->GetSADR( poField, nVertices, padfX, padfY, padfZ ) )
+            {
+                return FALSE;
+            }
         }
     }
 
@@ -267,6 +270,9 @@ void SDTSLineReader::AttachToPolygons( SDTSTransfer * poTransfer,
                                        int iTargetPolyLayer )
 
 {
+    if( !IsIndexed() )
+        return;
+
 /* -------------------------------------------------------------------- */
 /*      We force a filling of the index because when we attach the      */
 /*      lines we are just providing a pointer back to the line          */

@@ -149,7 +149,10 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
     if( nDefaultSADRFormat
         && poField->GetFieldDefn()->GetSubfieldCount() == 2 )
     {
-        CPLAssert( poField->GetDataSize() >= nVertices * SDTS_SIZEOF_SADR );
+        if( poField->GetDataSize() < nVertices * SDTS_SIZEOF_SADR )
+        {
+            return FALSE;
+        }
 
         GInt32          anXY[2];
         const char      *pachRawData = poField->GetData();
@@ -181,8 +184,11 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
         int             nBytesRemaining = poField->GetDataSize();
         const char     *pachFieldData = poField->GetData();
 
-        CPLAssert( poFieldDefn->GetSubfieldCount() == 2
-                   || poFieldDefn->GetSubfieldCount() == 3 );
+        if( poFieldDefn->GetSubfieldCount() != 2 &&
+            poFieldDefn->GetSubfieldCount() != 3 )
+        {
+            return FALSE;
+        }
 
         for( int iVertex = 0; iVertex < nVertices; iVertex++ )
         {
