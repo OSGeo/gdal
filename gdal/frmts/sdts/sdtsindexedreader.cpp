@@ -188,8 +188,7 @@ void SDTSIndexedReader::FillIndex()
     {
         const int iRecordId = poFeature->oModId.nRecord;
 
-        CPLAssert( iRecordId < 1000000 );
-        if( iRecordId >= 1000000 )
+        if( iRecordId < 0 || iRecordId >= 1000000 )
         {
             delete poFeature;
             continue;
