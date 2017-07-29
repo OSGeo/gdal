@@ -258,7 +258,7 @@ int CPLKeywordParser::ReadWord( CPLString &osWord )
 
     SkipWhite();
 
-    if( *pszHeaderNext == '\0' )
+    if( *pszHeaderNext == '\0' || *pszHeaderNext == '=' )
         return FALSE;
 
     while( *pszHeaderNext != '\0'
