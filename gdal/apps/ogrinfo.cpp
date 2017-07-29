@@ -596,7 +596,7 @@ static void Usage(const char* pszErrorMsg)
     printf( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where|@filename]\n"
             "               [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]\n"
             "               [-sql statement|@filename] [-dialect sql_dialect] [-al] [-rl] [-so] [-fields={YES/NO}]\n"
-            "               [-geom={YES/NO/SUMMARY}] [-formats] [[-oo NAME=VALUE] ...]\n"
+            "               [-geom={YES/NO/SUMMARY}] [[-oo NAME=VALUE] ...]\n"
             "               [-nomd] [-listmdd] [-mdd domain|`all`]*\n"
             "               [-nocount] [-noextent]\n"
             "               datasource_name [layer [layer ...]]\n");
