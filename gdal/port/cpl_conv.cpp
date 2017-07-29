@@ -1501,7 +1501,7 @@ void CPLVerifyConfiguration()
 
 {
     static bool verified = false;
-    if( !verified )
+    if( verified )
     {
         return;
     }
