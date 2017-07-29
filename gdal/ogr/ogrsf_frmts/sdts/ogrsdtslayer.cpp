@@ -106,8 +106,8 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
         const int nLayerIdx = poTransfer->FindLayer( papszATIDRefs[iTable] );
         if( nLayerIdx < 0 )
             continue;
-        SDTSAttrReader *poAttrReader = (SDTSAttrReader *)
-            poTransfer->GetLayerIndexedReader(nLayerIdx);
+        SDTSAttrReader *poAttrReader = dynamic_cast<SDTSAttrReader *>(
+            poTransfer->GetLayerIndexedReader(nLayerIdx));
 
         if( poAttrReader == NULL )
             continue;
