@@ -174,7 +174,9 @@ CPLErr HFABand::LoadOverviews()
 
     if( poRRDNames != NULL )
     {
-        for( int iName = 0; true; iName++ )
+        // Limit to 1000 to avoid infinite loop as in
+        // https://oss-fuzz.com/v2/testcase-detail/6206784937132032
+        for( int iName = 0; iName < 1000; iName++ )
         {
             char szField[128] = {};
             snprintf(szField, sizeof(szField), "nameList[%d].string", iName);
