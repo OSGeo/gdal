@@ -290,6 +290,10 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
 /*      Fetch the next sdts style feature object from the reader.       */
 /* -------------------------------------------------------------------- */
     SDTSFeature *poSDTSFeature = poReader->GetNextFeature();
+    // Retain now the IsIndexed state to determine if we must delete or
+    // not poSDTSFeature when done with it, because later calls might cause
+    // indexing.
+    const bool bIsIndexed = poReader->IsIndexed();
 
     if( poSDTSFeature == NULL )
         return NULL;
@@ -397,7 +401,7 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
         poFeature->GetGeometryRef()->assignSpatialReference(
             poDS->GetSpatialRef() );
 
-    if( !poReader->IsIndexed() )
+    if( !bIsIndexed )
         delete poSDTSFeature;
 
     return poFeature;
