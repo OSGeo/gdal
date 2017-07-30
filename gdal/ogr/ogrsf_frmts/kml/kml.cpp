@@ -212,6 +212,10 @@ void XMLCALL KML::startElement( void* pUserData, const char* pszName,
 
     poKML->nWithoutEventCounter = 0;
 
+    const char* pszColumn = strchr(pszName, ':');
+    if( pszColumn)
+        pszName = pszColumn + 1;
+
     if(poKML->poTrunk_ == NULL
     || (poKML->poCurrent_ != NULL &&
         poKML->poCurrent_->getName().compare("description") != 0))
@@ -274,6 +278,10 @@ void XMLCALL KML::startElementValidate( void* pUserData, const char* pszName,
         return;
 
     poKML->validity = KML_VALIDITY_INVALID;
+
+    const char* pszColumn = strchr(pszName, ':');
+    if( pszColumn)
+        pszName = pszColumn + 1;
 
     if(strcmp(pszName, "kml") == 0 || strcmp(pszName, "Document") == 0)
     {
@@ -342,6 +350,10 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
     KML* poKML = static_cast<KML *>(pUserData);
 
     poKML->nWithoutEventCounter = 0;
+
+    const char* pszColumn = strchr(pszName, ':');
+    if( pszColumn)
+        pszName = pszColumn + 1;
 
     if(poKML->poCurrent_ != NULL &&
        poKML->poCurrent_->getName().compare(pszName) == 0)
