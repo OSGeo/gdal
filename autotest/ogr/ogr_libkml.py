@@ -2039,6 +2039,22 @@ def ogr_libkml_read_gx_timestamp():
     return 'success'
 
 ###############################################################################
+# Test reading KML with kml: prefix
+
+def ogr_libkml_read_placemark_with_kml_prefix():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/placemark_with_kml_prefix.kml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -2138,6 +2154,7 @@ gdaltest_list = [
     ogr_libkml_write_folder,
     ogr_libkml_write_container_properties,
     ogr_libkml_read_gx_timestamp,
+    ogr_libkml_read_placemark_with_kml_prefix,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':

@@ -891,6 +891,22 @@ def ogr_kml_read_junk_content_after_valid_doc():
     return 'success'
 
 ###############################################################################
+# Test reading KML with kml: prefix
+
+def ogr_kml_read_placemark_with_kml_prefix():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    ds = ogr.Open('data/placemark_with_kml_prefix.kml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Build tests runner
 
 gdaltest_list = [
@@ -918,6 +934,7 @@ gdaltest_list = [
     ogr_kml_read_truncated,
     ogr_kml_read_weird_empty_folders,
     ogr_kml_read_junk_content_after_valid_doc,
+    ogr_kml_read_placemark_with_kml_prefix,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':
