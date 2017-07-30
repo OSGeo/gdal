@@ -531,7 +531,7 @@ SDTSFeature *SDTSTransfer::GetIndexedFeatureRef( SDTSModId *poModId,
 DDFField *SDTSTransfer::GetAttr( SDTSModId *poModId )
 
 {
-    SDTSAttrRecord *poAttrRecord = reinterpret_cast<SDTSAttrRecord *>(
+    SDTSAttrRecord *poAttrRecord = dynamic_cast<SDTSAttrRecord *>(
         GetIndexedFeatureRef( poModId ) );
 
     if( poAttrRecord == NULL )
