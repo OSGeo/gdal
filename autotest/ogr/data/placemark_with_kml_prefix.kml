@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml:kml xmlns:kml="http://earth.google.com/kml/2.1">
+  <kml:Placemark>
+    <kml:name>Simple placemark</kml:name>
+    <kml:Point>
+      <kml:coordinates>2,49,0</kml:coordinates>
+    </kml:Point>
+  </kml:Placemark>
+</kml:kml>
