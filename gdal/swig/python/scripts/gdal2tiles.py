@@ -1230,14 +1230,6 @@ def process_args(argv):
 
 
 def options_post_processing(options, input_file, output_folder):
-    # Workaround for old versions of GDAL
-    try:
-        if ((options.verbose and options.resampling == 'near') or
-                gdal.TermProgress_nocb):
-            pass
-    except Exception:
-        exit_with_error("This version of GDAL is not supported. Please upgrade to 1.6+.")
-
     if not options.title:
         options.title = os.path.basename(input_file)
 
