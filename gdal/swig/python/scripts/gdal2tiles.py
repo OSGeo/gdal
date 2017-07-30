@@ -1683,7 +1683,7 @@ class GDAL2Tiles(object):
                     east = west + self.tilesize*pixelsizex
                     south = self.ominy + y*self.tilesize*pixelsizex
                     north = south + self.tilesize*pixelsizex
-                    if not isepsg4326:
+                    if not self.isepsg4326:
                         # Transformation to EPSG:4326 (WGS84 datum)
                         west, south = ct.TransformPoint(west, south)[:2]
                         east, north = ct.TransformPoint(east, north)[:2]
