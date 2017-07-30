@@ -628,7 +628,7 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "No projection method");
     }
-    if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
+    else if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
     {
         AddValueIDWithURN( psConv, "gml:usesMethod", "EPSG", "method", 9807 );
 
