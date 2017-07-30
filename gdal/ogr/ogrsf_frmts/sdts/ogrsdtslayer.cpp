@@ -293,7 +293,7 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
     // Retain now the IsIndexed state to determine if we must delete or
     // not poSDTSFeature when done with it, because later calls might cause
     // indexing.
-    const bool bIsIndexed = poReader->IsIndexed();
+    const bool bIsIndexed = CPL_TO_BOOL(poReader->IsIndexed());
 
     if( poSDTSFeature == NULL )
         return NULL;
