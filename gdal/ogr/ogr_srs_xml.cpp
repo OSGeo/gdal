@@ -275,25 +275,28 @@ static CPLXMLNode *exportAuthorityToXML( const OGR_SRSNode *poAuthParent,
 /* -------------------------------------------------------------------- */
 /*      Get authority node from parent.                                 */
 /* -------------------------------------------------------------------- */
-    if( poAuthParent->FindChild( "AUTHORITY" ) == -1 )
+    const int nAuthority = poAuthParent->FindChild("AUTHORITY");
+    if( nAuthority == -1 )
         return NULL;
 
-    const OGR_SRSNode *poAuthority = poAuthParent->GetChild(
-        poAuthParent->FindChild( "AUTHORITY" ));
+    const OGR_SRSNode *poAuthority = poAuthParent->GetChild(nAuthority);
 
 /* -------------------------------------------------------------------- */
 /*      Create identification.                                          */
 /* -------------------------------------------------------------------- */
-    const char *pszCode = poAuthority->GetChild(1)->GetValue();
+    if(poAuthority->GetChildCount() < 2)
+        return NULL;
+
     const char *pszCodeSpace = poAuthority->GetChild(0)->GetValue();
+    const char *pszCode = poAuthority->GetChild(1)->GetValue();
     const char *pszEdition = NULL;
 
     if( bUseSubName )
-        return addAuthorityIDBlock( psXMLParent, pszTagName, pszCodeSpace,
-                                 pszObjectType, atoi(pszCode), pszEdition );
+        return addAuthorityIDBlock(psXMLParent, pszTagName, pszCodeSpace,
+                                   pszObjectType, atoi(pszCode), pszEdition);
 
-    return AddValueIDWithURN( psXMLParent, pszTagName, pszCodeSpace,
-                              pszObjectType, atoi(pszCode), pszEdition );
+    return AddValueIDWithURN(psXMLParent, pszTagName, pszCodeSpace,
+                             pszObjectType, atoi(pszCode), pszEdition);
 }
 
 /************************************************************************/
