@@ -61,10 +61,11 @@ void SDTSFeature::ApplyATID( DDFField * poField )
     const int nRepeatCount = poField->GetRepeatCount();
     for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
-      paoATID = reinterpret_cast<SDTSModId *>(
+        paoATID = reinterpret_cast<SDTSModId *>(
           CPLRealloc( paoATID, sizeof(SDTSModId)*(nAttributes+1) ) );
 
         SDTSModId *poModId = paoATID + nAttributes;
+        memset(poModId, 0, sizeof(SDTSModId));
 
         if( bUsualFormat )
         {
