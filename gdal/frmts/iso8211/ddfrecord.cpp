@@ -672,7 +672,8 @@ DDFField * DDFRecord::FindField( const char * pszName, int iFieldIndex )
 {
     for( int i = 0; i < nFieldCount; i++ )
     {
-        if( EQUAL(paoFields[i].GetFieldDefn()->GetName(),pszName) )
+        DDFFieldDefn* poFieldDefn = paoFields[i].GetFieldDefn();
+        if( poFieldDefn && EQUAL(poFieldDefn->GetName(),pszName) )
         {
             if( iFieldIndex == 0 )
                 return paoFields + i;
