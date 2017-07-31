@@ -193,6 +193,11 @@ void SDTSIndexedReader::FillIndex()
             delete poFeature;
             continue;
         }
+        if( iRecordId < nIndexSize && papoFeatures[iRecordId] != NULL )
+        {
+            delete poFeature;
+            continue;
+        }
 
         if( iRecordId >= nIndexSize )
         {
@@ -207,7 +212,6 @@ void SDTSIndexedReader::FillIndex()
             nIndexSize = nNewSize;
         }
 
-        CPLAssert( papoFeatures[iRecordId] == NULL );
         papoFeatures[iRecordId] = poFeature;
     }
 }
