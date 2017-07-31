@@ -125,7 +125,10 @@ const char *HFAType::Initialize( const char *pszInput )
     int i = 0;  // Used after for.
     for( ; pszInput[i] != '\0' && pszInput[i] != ','; i++ ) {}
     if( pszInput[i] == '\0' )
+    {
+        pszTypeName = CPLStrdup(pszInput);
         return NULL;
+    }
 
     pszTypeName = static_cast<char *>(CPLMalloc(i + 1));
     strncpy(pszTypeName, pszInput, i);
