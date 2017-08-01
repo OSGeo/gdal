@@ -424,7 +424,7 @@ pointT *qh_detvnorm(vertexT *vertex, vertexT *vertexA, setT *centers, realT *off
       else
         angle= angle - 1.0;
       if (angle < 0.0)
-        angle -= angle;
+        angle = -angle; /* E.Rouault: not sure if this is correct. was originally angle -= angle; */
       trace4((qh ferr, 4015, "qh_detvnorm: points %d %d angle %2.2g nearzero %d\n",
                  pointid, pointidA, angle, nearzero));
       if (nearzero) {
