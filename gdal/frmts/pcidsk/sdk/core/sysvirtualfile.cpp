@@ -91,7 +91,14 @@ SysVirtualFile::SysVirtualFile( CPCIDSKFile *fileIn, int start_block,
 SysVirtualFile::~SysVirtualFile()
 
 {
-    Synchronize();
+    try
+    {
+        Synchronize();
+    }
+    catch( const PCIDSKException& e )
+    {
+        fprintf(stderr, "Exception in ~SysVirtualFile(): %s", e.what()); // ok
+    }
 }
 
 /************************************************************************/

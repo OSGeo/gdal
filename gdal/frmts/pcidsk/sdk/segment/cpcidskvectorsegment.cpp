@@ -93,7 +93,14 @@ CPCIDSKVectorSegment::CPCIDSKVectorSegment( PCIDSKFile *fileIn, int segmentIn,
 CPCIDSKVectorSegment::~CPCIDSKVectorSegment()
 
 {
-    Synchronize();
+    try
+    {
+        Synchronize();
+    }
+    catch( const PCIDSKException& e )
+    {
+        fprintf(stderr, "Exception in ~CPCIDSKVectorSegment(): %s", e.what()); // ok
+    }
 }
 
 /************************************************************************/
