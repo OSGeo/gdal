@@ -300,6 +300,29 @@ END
         print(ds.GetMetadataItem('NOTE'))
         return 'fail'
 
+
+    gdal.FileFromMemBuffer('/vsimem/pds_10',
+"""PDS_VERSION_ID                       = "PDS3"
+# Unpaired
+NOTE                                 = (x, y}
+END
+""")
+
+    with gdaltest.error_handler():
+        gdal.Open('/vsimem/pds_10')
+
+
+    gdal.FileFromMemBuffer('/vsimem/pds_10',
+"""PDS_VERSION_ID                       = "PDS3"
+# Unpaired
+NOTE                                 = {x, y)
+END
+""")
+
+    with gdaltest.error_handler():
+        gdal.Open('/vsimem/pds_10')
+
+
     gdal.Unlink('/vsimem/pds_10')
 
     return 'success'
