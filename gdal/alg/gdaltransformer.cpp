@@ -3136,7 +3136,7 @@ GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
     }
     const char* pszMaxErrorReverse =
                     CPLGetXMLValue( psTree, "MaxErrorReverse", NULL);
-    if( pszMaxErrorForward != NULL )
+    if( pszMaxErrorReverse != NULL )
     {
         dfMaxErrorReverse = CPLAtof(pszMaxErrorReverse);
     }
