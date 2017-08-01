@@ -757,6 +757,7 @@ error:
     for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
         CPLFree(papszRings[iRing]);
     CPLFree(papszRings);
+    CPLFree( pnRingBeginning );
     return eErr;
 }
 
