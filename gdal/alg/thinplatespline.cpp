@@ -406,7 +406,7 @@ static CPL_INLINE void VizGeorefSpline2DBase_func4(
     xv[0].d[1] = xr[1];
     xv[1].d[0] = xr[2];
     xv[1].d[1] = xr[3];
-    v2dfunion yv[2];
+    v2dfunion yv[2] = {};
     yv[0].d[0] = yr[0];
     yv[0].d[1] = yr[1];
     yv[1].d[0] = yr[2];
