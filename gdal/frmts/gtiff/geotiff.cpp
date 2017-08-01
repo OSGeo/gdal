@@ -14522,7 +14522,7 @@ void GTiffDataset::ScanDirectories()
     {
         TIFFSetSubDirectory( hTIFF, 0 );
         *ppoActiveDSRef = NULL;
-        SetDirectory();
+        CPL_IGNORE_RET_VAL( SetDirectory() );
     }
 
     // If we have a mask for the main image, loop over the overviews, and if
