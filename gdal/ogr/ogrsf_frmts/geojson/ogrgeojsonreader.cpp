@@ -35,6 +35,10 @@
 
 CPL_CVSID("$Id$")
 
+static
+OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj,
+                                     OGRSpatialReference* poLayerSRS );
+
 /************************************************************************/
 /*                           OGRGeoJSONReader                           */
 /************************************************************************/
@@ -219,7 +223,7 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
         || GeoJSONObject::eMultiPolygon == objType
         || GeoJSONObject::eGeometryCollection == objType )
     {
-        OGRGeometry* poGeometry = ReadGeometry( poObj );
+        OGRGeometry* poGeometry = ReadGeometry( poObj, poLayer->GetSpatialRef() );
         if( !AddFeature( poLayer, poGeometry ) )
         {
             CPLDebug( "GeoJSON", "Translation of single geometry failed." );
@@ -1005,9 +1009,10 @@ bool OGRGeoJSONReader::AddFeature( OGRGeoJSONLayer* poLayer,
 /*                           ReadGeometry                               */
 /************************************************************************/
 
-OGRGeometry* OGRGeoJSONReader::ReadGeometry( json_object* poObj )
+OGRGeometry* OGRGeoJSONReader::ReadGeometry( json_object* poObj,
+                                             OGRSpatialReference* poLayerSRS )
 {
-    OGRGeometry* poGeometry = OGRGeoJSONReadGeometry( poObj );
+    OGRGeometry* poGeometry = OGRGeoJSONReadGeometry( poObj, poLayerSRS );
 
 /* -------------------------------------------------------------------- */
 /*      Wrap geometry with GeometryCollection as a common denominator.  */
@@ -1344,7 +1349,8 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer,
         // NOTE: If geometry can not be parsed or read correctly
         //       then NULL geometry is assigned to a feature and
         //       geometry type for layer is classified as wkbUnknown.
-        OGRGeometry* poGeometry = ReadGeometry( poObjGeom );
+        OGRGeometry* poGeometry = ReadGeometry( poObjGeom,
+                                                poLayer->GetSpatialRef() );
         if( NULL != poGeometry )
         {
             poFeature->SetGeometryDirectly( poGeometry );
@@ -1521,6 +1527,13 @@ GeoJSONObject::Type OGRGeoJSONGetType( json_object* poObj )
 
 OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj )
 {
+    return OGRGeoJSONReadGeometry(poObj, NULL);
+}
+
+OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj,
+                                     OGRSpatialReference* poLayerSRS )
+{
+
     OGRGeometry* poGeometry = NULL;
 
     GeoJSONObject::Type objType = OGRGeoJSONGetType( poObj );
@@ -1560,9 +1573,15 @@ OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj )
                 }
             }
         }
+        else if( poLayerSRS )
+        {
+            poGeometry->assignSpatialReference(poLayerSRS);
+        }
         else
+        {
             // Assign WGS84 if no CRS defined on geometry.
             poGeometry->assignSpatialReference(OGRSpatialReference::GetWGS84SRS());
+        }
     }
     return poGeometry;
 }
