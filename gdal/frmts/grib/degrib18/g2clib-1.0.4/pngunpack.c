@@ -62,6 +62,8 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
              return 1;
          }
          ifld=(g2int *)calloc(ndpts,sizeof(g2int));
+         // Was checked just before
+         // coverity[integer_overflow]
          ctemp=(unsigned char *)calloc(ndpts*nbytes,1);
          if ( ifld == NULL || ctemp == NULL) {
             fprintf(stderr, "Could not allocate space in jpcunpack.\n"
