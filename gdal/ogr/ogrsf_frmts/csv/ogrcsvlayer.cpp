@@ -1920,7 +1920,7 @@ OGRErr OGRCSVLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
         }
         pszName = "WKT";
     }
-    if( STARTS_WITH_CI(pszName, "geom_") )
+    if( STARTS_WITH_CI(pszName, "geom_") && strlen(pszName) >= strlen("geom_") )
         pszName += strlen("geom_");
     if( !EQUAL(pszName, "WKT") && !STARTS_WITH_CI(pszName, "_WKT") )
         pszName = CPLSPrintf("_WKT%s", pszName);
