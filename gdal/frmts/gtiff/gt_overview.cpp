@@ -593,7 +593,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         const char *pszBIGTIFF = CPLGetConfigOption( "BIGTIFF_OVERVIEW", NULL );
 
         if( pszBIGTIFF == NULL )
-            pszBIGTIFF = "IF_NEEDED";
+            pszBIGTIFF = "IF_SAFER";
 
         bool bCreateBigTIFF = false;
         if( EQUAL(pszBIGTIFF,"IF_NEEDED") )
