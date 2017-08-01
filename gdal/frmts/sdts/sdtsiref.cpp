@@ -195,6 +195,7 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
             double adfXYZ[3] = { 0.0, 0.0, 0.0 };
 
             for( int iEntry = 0;
+                 nBytesRemaining > 0 &&
                  iEntry < poFieldDefn->GetSubfieldCount();
                  iEntry++ )
             {
