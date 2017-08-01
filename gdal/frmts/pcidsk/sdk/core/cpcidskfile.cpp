@@ -112,7 +112,14 @@ CPCIDSKFile::CPCIDSKFile( std::string filename )
 CPCIDSKFile::~CPCIDSKFile()
 
 {
-    Synchronize();
+    try
+    {
+        Synchronize();
+    }
+    catch( const PCIDSKException& e )
+    {
+        fprintf(stderr, "Exception in ~CPCIDSKFile(): %s", e.what()); // ok
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup last block buffer.                                      */

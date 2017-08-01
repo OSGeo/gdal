@@ -94,7 +94,14 @@ CTiledChannel::CTiledChannel( PCIDSKBuffer &image_headerIn,
 CTiledChannel::~CTiledChannel()
 
 {
-    Synchronize();
+    try
+    {
+        Synchronize();
+    }
+    catch( const PCIDSKException& e )
+    {
+        fprintf(stderr, "Exception in ~CTiledChannel(): %s", e.what()); // ok
+    }
 }
 
 /************************************************************************/
