@@ -144,6 +144,8 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
                      GBool bNoErrorMsg /* = FALSE */,
                      int nBlockSizeForCreate /* = 512 */)
 {
+    CPLErrorReset();
+
     VSILFILE    *fp=NULL;
     TABRawBinBlock *poBlock=NULL;
 
