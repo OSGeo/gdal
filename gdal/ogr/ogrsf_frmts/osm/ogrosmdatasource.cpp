@@ -1307,6 +1307,8 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
         /* If we stay in the same bucket, we can reuse the previously */
         /* computed offset, instead of starting from bucket start */
         for( ; k < nBitmapIndex; k++ )
+            // psBucket->u.pabyBitmap cannot be NULL
+            // coverity[var_deref_op]
             nSectorBase += abyBitsCount[psBucket->u.pabyBitmap[k]];
         int nSector = nSectorBase;
         if( nBitmapRemainer )
