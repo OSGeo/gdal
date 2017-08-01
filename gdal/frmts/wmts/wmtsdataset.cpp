@@ -1143,8 +1143,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
 
     if( STARTS_WITH(osGetCapabilitiesURL, "/vsimem/") )
     {
-        if( CPLGetXMLValue(psXML, "=Capabilities.ServiceMetadataURL.href", NULL) )
-            osGetCapabilitiesURL = CPLGetXMLValue(psXML, "=Capabilities.ServiceMetadataURL.href", NULL);
+        const char* pszHref = CPLGetXMLValue(psXML,
+                            "=Capabilities.ServiceMetadataURL.href", NULL);
+        if( pszHref )
+            osGetCapabilitiesURL = pszHref;
         else
         {
             osGetCapabilitiesURL = GetOperationKVPURL(psXML, "GetCapabilities");
