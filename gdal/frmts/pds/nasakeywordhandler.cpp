@@ -297,6 +297,7 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
                     oStackArrayBeginChar.back() != '(' )
                 {
                     CPLDebug("PDS", "Unpaired ( ) for %s", osName.c_str());
+                    json_object_put(poArray);
                     return FALSE;
                 }
                 oStackArrayBeginChar.pop_back();
@@ -311,6 +312,7 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
                     oStackArrayBeginChar.back() != '{' )
                 {
                     CPLDebug("PDS", "Unpaired { } for %s", osName.c_str());
+                    json_object_put(poArray);
                     return FALSE;
                 }
                 oStackArrayBeginChar.pop_back();
