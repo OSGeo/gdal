@@ -3595,6 +3595,32 @@ def ogr_geojson_64():
 
     return 'success'
 
+###############################################################################
+# Test feature geometry CRS when CRS set on the FeatureCollection
+# See https://github.com/r-spatial/sf/issues/449#issuecomment-319369945
+
+def ogr_geojson_65():
+
+    ds = ogr.Open("""{
+"type": "FeatureCollection",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32631" } },
+"features": [{
+"type": "Feature",
+"geometry": {
+"type": "Point",
+"coordinates": [500000,4500000]},
+"properties": {
+}}]}""")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    srs = f.GetGeometryRef().GetSpatialReference()
+    pcs = int(srs.GetAuthorityCode('PROJCS'))
+    if pcs != 32631:
+        gdaltest.post_reason('Spatial reference for individual geometry was not valid')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_geojson_1,
     ogr_geojson_2,
@@ -3660,6 +3686,7 @@ gdaltest_list = [
     ogr_geojson_62,
     ogr_geojson_63,
     ogr_geojson_64,
+    ogr_geojson_65,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
