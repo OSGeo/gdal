@@ -143,7 +143,7 @@ private:
 
 inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, size_t& nRemainingBytes, int& bitPos, int numBitsLUT, int& value) const
 {
-  if (!ppSrc || !(*ppSrc) || bitPos < 0 || bitPos > 32)
+  if (!ppSrc || !(*ppSrc) || bitPos < 0 || bitPos >= 32)
     return false;
 
   // first get the next (up to) 12 bits as a copy
@@ -152,7 +152,7 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, size_t& nRemaini
     LERC_BRKPNT();
     return false;
   }
-  /* coverity[large_shift] */
+
   int valTmp = (Load(*ppSrc) << bitPos) >> (32 - numBitsLUT);
   if (32 - bitPos < numBitsLUT)
   {
