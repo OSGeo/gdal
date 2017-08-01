@@ -146,6 +146,7 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
 
     if( osHeaderFile.empty() )
     {
+        // coverity[tainted_data]
         struct curl_slist* headers = 
             GetGSHeaders( "GET", "",  osSecretAccessKey, osAccessKeyId );
         if( headers == NULL )
