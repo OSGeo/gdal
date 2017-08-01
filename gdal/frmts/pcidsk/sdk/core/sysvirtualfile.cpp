@@ -46,9 +46,7 @@
 #include "segment/sysblockmap.h"
 #include <cassert>
 #include <cstring>
-#if 0
 #include <cstdio>
-#endif
 
 using namespace PCIDSK;
 
