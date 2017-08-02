@@ -142,15 +142,17 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 }
 
                 // Currently decoding of PIXARLOG compressed TIFF requires
-                // a temporary buffer for the whole strip, so be careful for a
+                // a temporary buffer for the whole strip (if stripped) or
+                // image (if tiled), so be careful for a
                 // GTiffSplitBand
                 // Could probably be fixed for the CHUNKY_STRIP_READ_SUPPORT
                 // mode.
                 // Workaround https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2606
-                if( nBYSize == 1 && nYSizeToRead > 1 &&
+                if( ((nBYSize == 1 && nYSizeToRead > 1) ||
+                     nBXSize < GDALGetRasterXSize(hDS)) &&
                     GDALGetRasterYSize(hDS) > INT_MAX /
                             static_cast<int>(sizeof(GUInt16)) /
-                                            nSimultaneousBands / nBXSize &&
+                                nSimultaneousBands / GDALGetRasterXSize(hDS) &&
                     GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff") )
                 {
                     const char* pszCompress =
