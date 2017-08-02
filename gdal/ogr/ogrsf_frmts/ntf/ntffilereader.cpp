@@ -719,6 +719,10 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D( NTFRecord * poRecord,
 
     if( nGType == 1 )
     {
+        if( 14+1+2*static_cast<GIntBig>(GetXYLen())+nZWidth-1 > INT_MAX )
+        {
+            return NULL;
+        }
         const double dfX =
             atoi(poRecord->GetField(14,14+GetXYLen()-1)) * GetXYMult()
             + GetXOrigin();
@@ -734,6 +738,12 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D( NTFRecord * poRecord,
 
     else if( nGType == 2 )
     {
+        if( 14 + static_cast<GIntBig>(nNumCoord-1) *
+                (GetXYLen()*2+nZWidth+2) +1+2*GetXYLen()+nZWidth-1 > INT_MAX )
+        {
+            return NULL;
+        }
+
         OGRLineString *poLine = new OGRLineString;
         double dfXLast = 0.0;
         double dfYLast = 0.0;
