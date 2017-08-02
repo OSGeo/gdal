@@ -225,7 +225,8 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
 /*      (wfs:Delete, wfsext:Replace or wfs:Update)?                     */
 /*      specialized sort of feature.                                    */
 /* -------------------------------------------------------------------- */
-    else if( m_osElementName == "Filter"
+    else if( m_nDepthFeature == 0 &&
+             m_osElementName == "Filter"
              && (pszLast = m_poReader->GetState()->GetLastComponent()) != NULL
              && (EQUAL(pszLast,"Delete") || EQUAL(pszLast,"Replace") ||
                  EQUAL(pszLast,"Update")) )
