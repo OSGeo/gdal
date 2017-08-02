@@ -5734,6 +5734,24 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
             if( CSLCount(papszTokens) == 2 )
             {
                 const char* pszDimName = papszTokens[0];
+                bool bIsASCII = true;
+                for( int i = 0; pszDimName[i] != '\0'; i++ )
+                {
+                    if( reinterpret_cast<const unsigned char*>(pszDimName)[i] > 127 )
+                    {
+                        bIsASCII = false;
+                        break;
+                    }
+                }
+                if( !bIsASCII )
+                {
+                    // Workaround https://github.com/Unidata/netcdf-c/pull/450
+                    CPLDebug("netCDF",
+                             "nc_def_dim(%s) failed: rejected because "
+                             "of non-ASCII characters", pszDimName);
+                    CSLDestroy(papszTokens);
+                    continue;
+                }
                 int nDimSize = EQUAL(papszTokens[1], "UNLIMITED") ?
                                         NC_UNLIMITED : atoi(papszTokens[1]);
                 if( nDimSize >= 1000 )
