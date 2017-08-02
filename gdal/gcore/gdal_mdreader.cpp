@@ -434,7 +434,6 @@ bool GDALCheckFileHeader(const CPLString& soFilePath,
     if( fpL == NULL )
         return false;
     char *pBuffer = new char[nBufferSize + 1];
-    pBuffer[nBufferSize] = '\0';
     const int nReadBytes = static_cast<int>(
         VSIFReadL( pBuffer, 1, nBufferSize, fpL ) );
     CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
@@ -443,6 +442,7 @@ bool GDALCheckFileHeader(const CPLString& soFilePath,
         delete [] pBuffer;
         return false;
     }
+    pBuffer[nReadBytes] = '\0';
 
     const bool bResult = strstr(pBuffer, pszTestString) != NULL;
     delete [] pBuffer;
