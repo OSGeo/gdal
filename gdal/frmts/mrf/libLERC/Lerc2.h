@@ -649,8 +649,8 @@ bool Lerc2::ReadTiles(const Byte** ppByte, size_t& nRemainingBytes, T* data) con
     LERC_BRKPNT();
     return false;
   }
-  int numTilesVert = (height + mbSize - 1) / mbSize;
-  int numTilesHori = (width + mbSize - 1) / mbSize;
+  int numTilesVert = height / mbSize + ((height % mbSize) != 0 ? 1 : 0);
+  int numTilesHori = width / mbSize + ((width % mbSize) != 0 ? 1 : 0);
 
   for (int iTile = 0; iTile < numTilesVert; iTile++)
   {
