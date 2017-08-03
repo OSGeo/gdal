@@ -675,15 +675,16 @@ GTiffJPEGOverviewBand::GTiffJPEGOverviewBand(GTiffJPEGOverviewDS* poDSIn, int nB
 
 CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage )
 {
-    GTiffJPEGOverviewDS* poGDS = (GTiffJPEGOverviewDS*)poDS;
+    GTiffJPEGOverviewDS* poGDS = static_cast<GTiffJPEGOverviewDS *>(poDS);
 
-    /* Compute the source block ID */
-    int nBlockId;
-    if( nBlockYSize == 1 )
-    {
-        nBlockId = 0;
-    }
-    else
+    // Compute the source block ID.
+    int nBlockId = 0;
+    int nParentBlockXSize, nParentBlockYSize;
+    poGDS->poParentDS->GetRasterBand(1)->
+        GetBlockSize(&nParentBlockXSize, &nParentBlockYSize);
+    const bool bIsSingleStripAsSplit = (nParentBlockYSize == 1 &&
+        static_cast<int>(poGDS->poParentDS->nBlockYSize) != nParentBlockYSize);
+    if( !bIsSingleStripAsSplit )
     {
         nBlocksPerRow = DIV_ROUND_UP(poGDS->poParentDS->nRasterXSize,
                                                poGDS->poParentDS->nBlockXSize);
@@ -697,15 +698,15 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
     if( !poGDS->poParentDS->SetDirectory() )
         return CE_Failure;
 
-    /* Make sure it is available */
-    const int nDataTypeSize = GDALGetDataTypeSize(eDataType)/8;
+    // Make sure it is available.
+    const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
     if( !poGDS->poParentDS->IsBlockAvailable(nBlockId) )
     {
         memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize );
         return CE_None;
     }
 
-    int nScaleFactor = 1 << poGDS->nOverviewLevel;
+    const int nScaleFactor = 1 << poGDS->nOverviewLevel;
     if( poGDS->poJPEGDS == NULL || nBlockId != poGDS->nBlockId )
     {
         toff_t *panByteCounts = NULL;
@@ -733,14 +734,18 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
             return CE_Failure;
         }
 
-        /* Special case for last strip that might be smaller than other strips */
-        /* In which case we must invalidate the dataset */
-        if( !TIFFIsTiled( hTIFF ) && poGDS->poParentDS->nBlockYSize > 1 &&
-            (nBlockYOff + 1 == (int)DIV_ROUND_UP(poGDS->poParentDS->nRasterYSize, poGDS->poParentDS->nBlockYSize) ||
-             (poGDS->poJPEGDS != NULL && poGDS->poJPEGDS->GetRasterYSize() != nBlockYSize * nScaleFactor)) )
+        // Special case for last strip that might be smaller than other strips
+        // In which case we must invalidate the dataset.
+        if( !TIFFIsTiled( hTIFF ) && !bIsSingleStripAsSplit &&
+            (nBlockYOff + 1 ==
+                 static_cast<int>(DIV_ROUND_UP( poGDS->poParentDS->nRasterYSize,
+                               poGDS->poParentDS->nBlockYSize )) ||
+             (poGDS->poJPEGDS != NULL &&
+              poGDS->poJPEGDS->GetRasterYSize() !=
+              nBlockYSize * nScaleFactor)) )
         {
             if( poGDS->poJPEGDS != NULL )
-                GDALClose( (GDALDatasetH) poGDS->poJPEGDS );
+                GDALClose( poGDS->poJPEGDS );
             poGDS->poJPEGDS = NULL;
         }
 
@@ -748,33 +753,36 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
         poGDS->osTmpFilename.Printf("/vsimem/sparse_%p", poGDS);
         VSILFILE* fp = VSIFOpenL(poGDS->osTmpFilename, "wb+");
 
-        /* If the size of the JPEG strip/tile is small enough, we will */
-        /* read it from the TIFF file and forge a in-memory JPEG file with */
-        /* the JPEG table followed by the JPEG data. */
-        bool bInMemoryJPEGFile = ( nByteCount < 256 * 256 );
+        // If the size of the JPEG strip/tile is small enough, we will
+        // read it from the TIFF file and forge a in-memory JPEG file with
+        // the JPEG table followed by the JPEG data.
+        const bool bInMemoryJPEGFile = nByteCount < 256 * 256;
         if( bInMemoryJPEGFile )
         {
-            /* If the previous file was opened as a /vsisparse/, we have to re-open */
+            // If the previous file was opened as a /vsisparse/, must re-open.
             if( poGDS->poJPEGDS != NULL &&
                 STARTS_WITH(poGDS->poJPEGDS->GetDescription(), "/vsisparse/") )
             {
-                GDALClose( (GDALDatasetH) poGDS->poJPEGDS );
+                GDALClose( poGDS->poJPEGDS );
                 poGDS->poJPEGDS = NULL;
             }
             osFileToOpen = poGDS->osTmpFilename;
 
-            bool bError = FALSE;
-            if( VSIFSeekL(fp, poGDS->nJPEGTableSize + nByteCount - 1, SEEK_SET) != 0 )
+            bool bError = false;
+            if( VSIFSeekL(fp, poGDS->nJPEGTableSize + nByteCount - 1, SEEK_SET)
+                != 0 )
                 bError = true;
             char ch = 0;
             if( !bError && VSIFWriteL(&ch, 1, 1, fp) != 1 )
                 bError = true;
-            GByte* pabyBuffer = VSIGetMemFileBuffer( poGDS->osTmpFilename, NULL, FALSE);
+            GByte* pabyBuffer =
+                VSIGetMemFileBuffer( poGDS->osTmpFilename, NULL, FALSE);
             memcpy(pabyBuffer, poGDS->pabyJPEGTable, poGDS->nJPEGTableSize);
             VSILFILE* fpTIF = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
             if( !bError && VSIFSeekL(fpTIF, nOffset, SEEK_SET) != 0 )
                 bError = true;
-            if( VSIFReadL(pabyBuffer + poGDS->nJPEGTableSize, (size_t)nByteCount, 1, fpTIF) != 1 )
+            if( VSIFReadL( pabyBuffer + poGDS->nJPEGTableSize,
+                           static_cast<size_t>(nByteCount), 1, fpTIF) != 1 )
                 bError = true;
             if( bError )
             {
@@ -784,32 +792,37 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
         }
         else
         {
-            /* If the JPEG strip/tile is too big (e.g. a single-strip JPEG-in-TIFF) */
-            /* we will use /vsisparse mechanism to make a fake JPEG file */
+            // If the JPEG strip/tile is too big (e.g. a single-strip
+            // JPEG-in-TIFF), we will use /vsisparse mechanism to make a
+            // fake JPEG file.
 
-            /* Always re-open */
-            GDALClose( (GDALDatasetH) poGDS->poJPEGDS );
+            // Always re-open.
+            GDALClose( poGDS->poJPEGDS );
             poGDS->poJPEGDS = NULL;
 
-            osFileToOpen = CPLSPrintf("/vsisparse/%s", poGDS->osTmpFilename.c_str());
+            osFileToOpen =
+                CPLSPrintf("/vsisparse/%s", poGDS->osTmpFilename.c_str());
 
-            if( VSIFPrintfL(fp, "<VSISparseFile><SubfileRegion><Filename relative='0'>%s</Filename>"
-                        "<DestinationOffset>0</DestinationOffset>"
-                        "<SourceOffset>0</SourceOffset>"
-                        "<RegionLength>%d</RegionLength>"
-                        "</SubfileRegion>"
-                        "<SubfileRegion>"
-                        "<Filename relative='0'>%s</Filename>"
-                        "<DestinationOffset>%d</DestinationOffset>"
-                        "<SourceOffset>" CPL_FRMT_GUIB "</SourceOffset>"
-                        "<RegionLength>" CPL_FRMT_GUIB "</RegionLength>"
-                        "</SubfileRegion></VSISparseFile>",
-                        poGDS->osTmpFilenameJPEGTable.c_str(),
-                        (int)poGDS->nJPEGTableSize,
-                        poGDS->poParentDS->GetDescription(),
-                        (int)poGDS->nJPEGTableSize,
-                        nOffset,
-                        nByteCount) < 0 )
+            if( VSIFPrintfL(
+                    fp,
+                    "<VSISparseFile><SubfileRegion>"
+                    "<Filename relative='0'>%s</Filename>"
+                    "<DestinationOffset>0</DestinationOffset>"
+                    "<SourceOffset>0</SourceOffset>"
+                    "<RegionLength>%d</RegionLength>"
+                    "</SubfileRegion>"
+                    "<SubfileRegion>"
+                    "<Filename relative='0'>%s</Filename>"
+                    "<DestinationOffset>%d</DestinationOffset>"
+                    "<SourceOffset>" CPL_FRMT_GUIB "</SourceOffset>"
+                    "<RegionLength>" CPL_FRMT_GUIB "</RegionLength>"
+                    "</SubfileRegion></VSISparseFile>",
+                    poGDS->osTmpFilenameJPEGTable.c_str(),
+                    static_cast<int>(poGDS->nJPEGTableSize),
+                    poGDS->poParentDS->GetDescription(),
+                    static_cast<int>(poGDS->nJPEGTableSize),
+                    nOffset,
+                    nByteCount) < 0 )
             {
                 CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                 return CE_Failure;
@@ -820,42 +833,52 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
         if( poGDS->poJPEGDS == NULL )
         {
             const char* apszDrivers[] = { "JPEG", NULL };
-            
+
             CPLString osOldVal;
-            if( poGDS->poParentDS->nPlanarConfig == PLANARCONFIG_CONTIG && poGDS->nBands == 4 )
+            if( poGDS->poParentDS->nPlanarConfig == PLANARCONFIG_CONTIG &&
+                poGDS->nBands == 4 )
             {
-                osOldVal = CPLGetThreadLocalConfigOption("GDAL_JPEG_TO_RGB", "");
+                osOldVal =
+                    CPLGetThreadLocalConfigOption("GDAL_JPEG_TO_RGB", "");
                 CPLSetThreadLocalConfigOption("GDAL_JPEG_TO_RGB", "NO");
             }
 
-            poGDS->poJPEGDS = (GDALDataset*) GDALOpenEx(osFileToOpen,
-                                                        GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                                                                apszDrivers,
-                                                                NULL, NULL);
+            poGDS->poJPEGDS =
+                static_cast<GDALDataset *>( GDALOpenEx(
+                    osFileToOpen,
+                    GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+                    apszDrivers, NULL, NULL) );
+
             if( poGDS->poJPEGDS != NULL )
             {
-                /* Force all implicit overviews to be available, even for small tiles */
-                CPLSetThreadLocalConfigOption("JPEG_FORCE_INTERNAL_OVERVIEWS", "YES");
+                // Force all implicit overviews to be available, even for
+                // small tiles.
+                CPLSetThreadLocalConfigOption( "JPEG_FORCE_INTERNAL_OVERVIEWS",
+                                               "YES");
                 GDALGetOverviewCount(GDALGetRasterBand(poGDS->poJPEGDS, 1));
-                CPLSetThreadLocalConfigOption("JPEG_FORCE_INTERNAL_OVERVIEWS", NULL);
+                CPLSetThreadLocalConfigOption( "JPEG_FORCE_INTERNAL_OVERVIEWS",
+                                               NULL);
 
                 poGDS->nBlockId = nBlockId;
             }
-            
-            if( poGDS->poParentDS->nPlanarConfig == PLANARCONFIG_CONTIG && poGDS->nBands == 4 )
+
+            if( poGDS->poParentDS->nPlanarConfig == PLANARCONFIG_CONTIG &&
+                poGDS->nBands == 4 )
             {
-                CPLSetThreadLocalConfigOption("GDAL_JPEG_TO_RGB", osOldVal.size() ? osOldVal.c_str() : NULL);
+                CPLSetThreadLocalConfigOption(
+                    "GDAL_JPEG_TO_RGB",
+                    !osOldVal.empty() ? osOldVal.c_str() : NULL );
             }
         }
         else
         {
-            /* Trick: we invalidate the JPEG dataset to force a reload */
-            /* of the new content */
+            // Trick: we invalidate the JPEG dataset to force a reload
+            // of the new content.
             CPLErrorReset();
             poGDS->poJPEGDS->FlushCache();
             if( CPLGetLastErrorNo() != 0 )
             {
-                GDALClose( (GDALDatasetH) poGDS->poJPEGDS );
+                GDALClose( poGDS->poJPEGDS );
                 poGDS->poJPEGDS = NULL;
                 return CE_Failure;
             }
@@ -868,8 +891,11 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
     {
         GDALDataset* l_poDS = poGDS->poJPEGDS;
 
-        int nReqXOff = 0, nReqYOff, nReqXSize, nReqYSize;
-        if( nBlockYSize == 1 )
+        int nReqXOff = 0;
+        int nReqYOff = 0;
+        int nReqXSize = 0;
+        int nReqYSize = 0;
+        if( bIsSingleStripAsSplit )
         {
             nReqYOff = nBlockYOff * nScaleFactor;
             nReqXSize = l_poDS->GetRasterXSize();
@@ -877,26 +903,55 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
         }
         else
         {
-            nReqYOff = 0;
-            nReqXSize = nBlockXSize * nScaleFactor;
+            if( nBlockXSize == poGDS->GetRasterXSize() )
+            {
+                nReqXSize = l_poDS->GetRasterXSize();
+            }
+            else
+            {
+                nReqXSize = nBlockXSize * nScaleFactor;
+            }
             nReqYSize = nBlockYSize * nScaleFactor;
         }
         int nBufXSize = nBlockXSize;
         int nBufYSize = nBlockYSize;
+        if( nBlockXOff == static_cast<int>(
+                          DIV_ROUND_UP(poGDS->poParentDS->nRasterXSize,
+                                       poGDS->poParentDS->nBlockXSize)) - 1 )
+        {
+            nReqXSize = poGDS->poParentDS->nRasterXSize -
+                                nBlockXOff * poGDS->poParentDS->nBlockXSize;
+        }
         if( nReqXOff + nReqXSize > l_poDS->GetRasterXSize() )
         {
             nReqXSize = l_poDS->GetRasterXSize() - nReqXOff;
-            nBufXSize = nReqXSize / nScaleFactor;
-            if( nBufXSize == 0 ) nBufXSize = 1;
+        }
+        if( !bIsSingleStripAsSplit &&
+            nBlockYOff == static_cast<int>(
+                          DIV_ROUND_UP(poGDS->poParentDS->nRasterYSize,
+                                       poGDS->poParentDS->nBlockYSize)) - 1 )
+        {
+            nReqYSize = poGDS->poParentDS->nRasterYSize -
+                                nBlockYOff * poGDS->poParentDS->nBlockYSize;
         }
         if( nReqYOff + nReqYSize > l_poDS->GetRasterYSize() )
         {
             nReqYSize = l_poDS->GetRasterYSize() - nReqYOff;
-            nBufYSize = nReqYSize / nScaleFactor;
-            if( nBufYSize == 0 ) nBufYSize = 1;
+        }
+        if( nBlockXOff * nBlockXSize > poGDS->GetRasterXSize() - nBufXSize )
+        {
+            memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+            nBufXSize = poGDS->GetRasterXSize() - nBlockXOff * nBlockXSize;
+        }
+        if( nBlockYOff * nBlockYSize > poGDS->GetRasterYSize() - nBufYSize )
+        {
+            memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+            nBufYSize = poGDS->GetRasterYSize() - nBlockYOff * nBlockYSize;
         }
 
-        int nSrcBand = ( poGDS->poParentDS->nPlanarConfig == PLANARCONFIG_SEPARATE ) ? 1 : nBand;
+        const int nSrcBand =
+            poGDS->poParentDS->nPlanarConfig == PLANARCONFIG_SEPARATE ?
+            1 : nBand;
         if( nSrcBand <= l_poDS->GetRasterCount() )
         {
             eErr = l_poDS->GetRasterBand(nSrcBand)->RasterIO(GF_Read,
@@ -7686,16 +7741,24 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
 #endif /* DEFER_STRILE_LOAD */
 #endif /* INTERNAL_LIBTIFF */
     toff_t *panByteCounts = NULL;
+    const bool bIsTiled = CPL_TO_BOOL( TIFFIsTiled(hTIFF) );
 
-    if( ( TIFFIsTiled( hTIFF )
+    if( ( bIsTiled
           && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts ) )
-        || ( !TIFFIsTiled( hTIFF )
+        || ( !bIsTiled
           && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts ) ) )
     {
         if( panByteCounts == NULL )
             return FALSE;
-        else
-            return panByteCounts[nBlockId] != 0;
+
+        const int nBlockCount =
+            bIsTiled ? TIFFNumberOfTiles(hTIFF) : TIFFNumberOfStrips(hTIFF);
+        if( nBlockId >= nBlockCount )
+        {
+            return false;
+        }
+
+        return panByteCounts[nBlockId] != 0;
     }
     else
         return FALSE;
