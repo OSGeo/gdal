@@ -778,7 +778,12 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     // Compute the source block ID.
     int nBlockId = 0;
-    if( nBlockYSize != 1 )
+    int nParentBlockXSize, nParentBlockYSize;
+    poGDS->poParentDS->GetRasterBand(1)->
+        GetBlockSize(&nParentBlockXSize, &nParentBlockYSize);
+    const bool bIsSingleStripAsSplit = (nParentBlockYSize == 1 &&
+                           poGDS->poParentDS->nBlockYSize != nParentBlockYSize);
+    if( !bIsSingleStripAsSplit )
     {
         nBlocksPerRow = DIV_ROUND_UP(poGDS->poParentDS->nRasterXSize,
                                                poGDS->poParentDS->nBlockXSize);
@@ -813,7 +818,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         // Special case for last strip that might be smaller than other strips
         // In which case we must invalidate the dataset.
         TIFF* hTIFF = poGDS->poParentDS->hTIFF;
-        if( !TIFFIsTiled( hTIFF ) && poGDS->poParentDS->nBlockYSize > 1 &&
+        if( !TIFFIsTiled( hTIFF ) && !bIsSingleStripAsSplit &&
             (nBlockYOff + 1 ==
                  DIV_ROUND_UP( poGDS->poParentDS->nRasterYSize,
                                poGDS->poParentDS->nBlockYSize ) ||
@@ -972,7 +977,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         int nReqYOff = 0;
         int nReqXSize = 0;
         int nReqYSize = 0;
-        if( nBlockYSize == 1 )
+        if( bIsSingleStripAsSplit )
         {
             nReqYOff = nBlockYOff * nScaleFactor;
             nReqXSize = l_poDS->GetRasterXSize();
@@ -980,22 +985,48 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
         else
         {
-            nReqXSize = nBlockXSize * nScaleFactor;
+            if( nBlockXSize == poGDS->GetRasterXSize() )
+            {
+                nReqXSize = l_poDS->GetRasterXSize();
+            }
+            else
+            {
+                nReqXSize = nBlockXSize * nScaleFactor;
+            }
             nReqYSize = nBlockYSize * nScaleFactor;
         }
         int nBufXSize = nBlockXSize;
         int nBufYSize = nBlockYSize;
+        if( nBlockXOff == DIV_ROUND_UP(poGDS->poParentDS->nRasterXSize,
+                                       poGDS->poParentDS->nBlockXSize) - 1 )
+        {
+            nReqXSize = poGDS->poParentDS->nRasterXSize -
+                                nBlockXOff * poGDS->poParentDS->nBlockXSize;
+        }
         if( nReqXOff + nReqXSize > l_poDS->GetRasterXSize() )
         {
             nReqXSize = l_poDS->GetRasterXSize() - nReqXOff;
-            nBufXSize = nReqXSize / nScaleFactor;
-            if( nBufXSize == 0 ) nBufXSize = 1;
+        }
+        if( !bIsSingleStripAsSplit &&
+            nBlockYOff == DIV_ROUND_UP(poGDS->poParentDS->nRasterYSize,
+                                       poGDS->poParentDS->nBlockYSize) - 1 )
+        {
+            nReqYSize = poGDS->poParentDS->nRasterYSize -
+                                nBlockYOff * poGDS->poParentDS->nBlockYSize;
         }
         if( nReqYOff + nReqYSize > l_poDS->GetRasterYSize() )
         {
             nReqYSize = l_poDS->GetRasterYSize() - nReqYOff;
-            nBufYSize = nReqYSize / nScaleFactor;
-            if( nBufYSize == 0 ) nBufYSize = 1;
+        }
+        if( nBlockXOff * nBlockXSize > poGDS->GetRasterXSize() - nBufXSize )
+        {
+            memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+            nBufXSize = poGDS->GetRasterXSize() - nBlockXOff * nBlockXSize;
+        }
+        if( nBlockYOff * nBlockYSize > poGDS->GetRasterYSize() - nBufYSize )
+        {
+            memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+            nBufYSize = poGDS->GetRasterYSize() - nBlockYOff * nBlockYSize;
         }
 
         const int nSrcBand =
@@ -9016,18 +9047,26 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
 #endif  // INTERNAL_LIBTIFF
     toff_t *panByteCounts = NULL;
     toff_t *panOffsets = NULL;
+    const bool bIsTiled = CPL_TO_BOOL( TIFFIsTiled(hTIFF) );
 
-    if( ( TIFFIsTiled( hTIFF )
+    if( ( bIsTiled
           && TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts )
           && (pnOffset == NULL ||
               TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &panOffsets )) )
-        || ( !TIFFIsTiled( hTIFF )
+        || ( !bIsTiled
           && TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts )
           && (pnOffset == NULL ||
               TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panOffsets )) ) )
     {
         if( panByteCounts == NULL || (pnOffset != NULL && panOffsets == NULL) )
             return false;
+
+        const int nBlockCount =
+            bIsTiled ? TIFFNumberOfTiles(hTIFF) : TIFFNumberOfStrips(hTIFF);
+        if( nBlockId >= nBlockCount )
+        {
+            return false;
+        }
 
         if( pnOffset )
             *pnOffset = panOffsets[nBlockId];
