@@ -4549,6 +4549,66 @@ def ogr_gmlas_aux_schema_without_namespace_prefix():
     return 'success'
 
 ###############################################################################
+# Test importing a GML geometry that is in an element that is a substitutionGroup
+# of another one (#6990)
+
+def ogr_gmlas_geometry_as_substitutiongroup():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/subdir/gmlas_fake_gml32.xsd',
+                           open('data/gmlas_fake_gml32.xsd', 'rb').read())
+
+    gdal.FileFromMemBuffer('/vsimem/subdir/ogr_gmlas_geometry_as_substitutiongroup.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:gml="http://fake_gml32"
+              elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:import namespace="http://fake_gml32" schemaLocation="../subdir/gmlas_fake_gml32.xsd"/>
+
+<xs:element name="main_elt" substitutionGroup="gml:AbstractFeature">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="gml:AbstractFeatureType">
+        <xs:sequence>
+            <xs:element ref="_foo"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="_foo" type="xs:anyType" abstract="true"/>
+
+<xs:element name="foo" type="gml:PointPropertyType" substitutionGroup="_foo"/>
+
+</xs:schema>""")
+
+    gdal.FileFromMemBuffer('/vsimem/subdir/ogr_gmlas_geometry_as_substitutiongroup.xml',
+"""
+<main:main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:main="http://main"
+          xmlns:gml="http://fake_gml32"
+          xsi:schemaLocation="http://main ogr_gmlas_geometry_as_substitutiongroup.xsd">
+    <main:foo><gml:Point gml:id="id"><gml:pos>5 6</gml:pos></gml:Point></main:foo>
+</main:main_elt>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/subdir/ogr_gmlas_geometry_as_substitutiongroup.xml')
+    lyr = ds.GetLayerByName('foo')
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef() is None:
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/subdir/ogr_gmlas_geometry_as_substitutiongroup.xml')
+    gdal.Unlink('/vsimem/subdir/ogr_gmlas_geometry_as_substitutiongroup.xsd')
+    gdal.Unlink('/vsimem/subdir/gmlas_fake_gml32.xsd')
+
+    return 'success'
+
+###############################################################################
 def ogr_gmlas_extra_piezometre():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -4640,6 +4700,7 @@ gdaltest_list = [
     ogr_gmlas_swe_datarecord,
     ogr_gmlas_any_field_at_end_of_declaration,
     ogr_gmlas_aux_schema_without_namespace_prefix,
+    ogr_gmlas_geometry_as_substitutiongroup,
     ogr_gmlas_cleanup ]
 
 # gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_aux_schema_without_namespace_prefix, ogr_gmlas_cleanup ]

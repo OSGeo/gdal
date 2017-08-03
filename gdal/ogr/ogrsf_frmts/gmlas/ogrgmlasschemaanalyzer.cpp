@@ -43,6 +43,8 @@ static XSModel* getGrammarPool(XMLGrammarPool* pool)
 
 CPL_CVSID("$Id$")
 
+static OGRwkbGeometryType GetOGRGeometryType( XSTypeDefinition* poTypeDef );
+
 /************************************************************************/
 /*                        IsCompatibleOfArray()                         */
 /************************************************************************/
@@ -1317,7 +1319,23 @@ bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
             BuildMapCountOccurrencesOfSameName(
                 poCT->getParticle()->getModelGroupTerm(),
                 oMapCountOccurrencesOfSameName);
-            if( !ExploreModelGroup(
+
+            OGRwkbGeometryType eGeomType = wkbUnknown;
+            if( IsGMLNamespace(transcode(poCT->getNamespace())) &&
+                (eGeomType = GetOGRGeometryType(poCT)) != wkbNone )
+            {
+                GMLASField oField;
+                oField.SetName( "geometry" );
+                oField.SetMinOccurs( 1 );
+                oField.SetMaxOccurs( 1 );
+                oField.SetType( GMLAS_FT_GEOMETRY, szFAKEXS_GEOMETRY );
+                oField.SetGeomType( eGeomType );
+                oField.SetXPath( osXPath + szMATCH_ALL );
+                oField.SetIncludeThisEltInBlob( true );
+
+                oClass.AddField( oField );
+            }
+            else if( !ExploreModelGroup(
                                 poCT->getParticle()->getModelGroupTerm(),
                                 poCT->getAttributeUses(),
                                 oClass,
