@@ -86,6 +86,7 @@ namespace PCIDSK
 
         void      WriteToFile( const void *buffer, uint64 offset, uint64 size ) override;
         void      ReadFromFile( void *buffer, uint64 offset, uint64 size ) override;
+        void      CheckFileBigEnough( uint64 bytes_to_read ) override;
 
         std::string GetFilename() const { return base_filename; }
 

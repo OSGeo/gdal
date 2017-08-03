@@ -411,6 +411,39 @@ std::vector<PCIDSK::PCIDSKSegment *> CPCIDSKFile::GetSegments()
 }
 
 /************************************************************************/
+/*                        CheckFileBigEnough()                          */
+/************************************************************************/
+
+void CPCIDSKFile::CheckFileBigEnough( uint64 nBytesToRead )
+{
+    if( nBytesToRead > 100 * 1024 * 1024 )
+    {
+        bool bTooBig = false;
+        // Do not trust too big filesize from header
+        if( GetFileSize() * 512 > 100 * 1024 * 1024 )
+        {
+            MutexHolder oHolder( io_mutex );
+
+            interfaces.io->Seek( io_handle, 0, SEEK_END );
+            if( nBytesToRead > interfaces.io->Tell( io_handle ) )
+            {
+                bTooBig = true;
+            }
+        }
+        else if ( nBytesToRead > GetFileSize() * 512 )
+        {
+            bTooBig = true;
+        }
+        if( bTooBig )
+        {
+            ThrowPCIDSKException( 
+                "File too short to read " PCIDSK_FRMT_UINT64 " bytes "
+                "of scanline.", nBytesToRead );
+        }
+    }
+}
+
+/************************************************************************/
 /*                        InitializeFromHeader()                        */
 /************************************************************************/
 
@@ -498,31 +531,7 @@ void CPCIDSKFile::InitializeFromHeader()
                 "Allocating " PCIDSK_FRMT_UINT64 " bytes for scanline "
                 "buffer failed.", block_size );
         }
-        if( block_size > 100 * 1024 * 1024 )
-        {
-            bool bTooBig = false;
-            // Do not trust too big filesize from header
-            if( GetFileSize() * 512 > 100 * 1024 * 1024 )
-            {
-                MutexHolder oHolder( io_mutex );
-
-                interfaces.io->Seek( io_handle, 0, SEEK_END );
-                if( block_size > interfaces.io->Tell( io_handle ) )
-                {
-                    bTooBig = true;
-                }
-            }
-            else if ( block_size > GetFileSize() * 512 )
-            {
-                bTooBig = true;
-            }
-            if( bTooBig )
-            {
-                return ThrowPCIDSKException( 
-                    "File too short to read " PCIDSK_FRMT_UINT64 " bytes "
-                    "of scanline.", block_size );
-            }
-        }
+        CheckFileBigEnough(block_size);
 
         last_block_data = malloc(static_cast<size_t>(block_size));
         if( last_block_data == NULL )
