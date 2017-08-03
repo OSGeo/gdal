@@ -132,13 +132,13 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
                                           CPL_UNUSED GDALDataType eDT,
                                           CPL_UNUSED char **papszOptions )
 {
-    VSIStatBuf  stat;
     int         bSingleNewFile = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Is the target a valid existing directory?                       */
 /* -------------------------------------------------------------------- */
-    if( CPLStat( pszName, &stat ) == 0 )
+    VSIStatBufL stat;
+    if( VSIStatL( pszName, &stat ) == 0 )
     {
         if( !VSI_ISDIR(stat.st_mode) )
         {
