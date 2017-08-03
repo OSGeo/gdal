@@ -86,8 +86,13 @@ int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
     for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
     {
         DDFField        *poField = poRecord->GetField( iField );
-        CPLAssert( poField != NULL );
-        const char *pszFieldName = poField->GetFieldDefn()->GetName();
+        if( poField == NULL )
+            return FALSE;
+        DDFFieldDefn* poFieldDefn = poField->GetFieldDefn();
+        if( poFieldDefn == NULL )
+            return FALSE;
+
+        const char *pszFieldName = poFieldDefn->GetName();
 
         if( EQUAL(pszFieldName,"LINE") )
             oModId.Set( poField );
