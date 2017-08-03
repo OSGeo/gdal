@@ -1396,7 +1396,6 @@ void GMLASReader::startElement(
         CPLDebug("GMLAS", "Current layer: %s", m_oCurCtxt.m_poLayer->GetName() );
 #endif
 
-
         bool bHasProcessedAttributes = false;
 
         // Find if we can match this element with one of our fields
@@ -1425,6 +1424,12 @@ void GMLASReader::startElement(
                 // See ogr_gmlas_any_field_at_end_of_declaration test case
                 idx = -1;
             }
+        }
+        if( idx < 0 && geom_idx < 0 && geom_idx != IDX_COMPOUND_FOLDED )
+        {
+            /* Special case for a layer that is a made of only a geometry */
+            geom_idx = m_oCurCtxt.m_poLayer->GetOGRGeomFieldIndexFromXPath(
+              m_oCurCtxt.m_poLayer->GetFeatureClass().GetXPath() + szMATCH_ALL);
         }
 
         if( idx >= 0 || geom_idx >= 0 )
