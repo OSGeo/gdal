@@ -173,6 +173,16 @@ void CPCIDSKSegment::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 }
 
 /************************************************************************/
+/*                        CheckFileBigEnough()                          */
+/************************************************************************/
+
+void CPCIDSKSegment::CheckFileBigEnough( uint64 bytes_to_read )
+
+{
+    file->CheckFileBigEnough( bytes_to_read );
+}
+
+/************************************************************************/
 /*                           GetUpdatable()                             */
 /************************************************************************/
 

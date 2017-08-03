@@ -102,6 +102,8 @@ void MetadataSegment::Load()
 /* -------------------------------------------------------------------- */
 /*      Load the segment contents into a buffer.                        */
 /* -------------------------------------------------------------------- */
+    CheckFileBigEnough( data_size );
+
     seg_data.SetSize( (int) (data_size - 1024) );
 
     ReadFromFile( seg_data.buffer, 0, data_size - 1024 );
