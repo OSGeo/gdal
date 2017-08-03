@@ -5206,6 +5206,7 @@ def tiff_write_126():
                      (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'TILED=YES'], [49887,58937], [59311,2826], [30829,34806], [11664,58937]),
                      (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=800'], [49887,58937], [59311,2826], [30829,34806], [11664,58937]),
                      (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'BLOCKYSIZE=32'], [49887,58937], [59311,2826], [30829,34806], [11664,58937]),
+                     (['COMPRESS=JPEG', 'BLOCKYSIZE=8'], [49887,58937], [59311,2826], [30829,34806], [11664,58937]),
                    ]
 
     for (options, cs1, cs2, cs3, cs4) in options_list:
