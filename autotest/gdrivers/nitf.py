@@ -2530,6 +2530,243 @@ def nitf_73():
     return 'success'
 
 ###############################################################################
+# Test cases for CCLSTA
+#  - Simple case
+
+def nitf_74():
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_74.ntf', 1, 1, options = \
+             ['FILE_TRE=CCINFA=0012AS 17ge:GENC:3:3-5:AUS00000'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_74.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf_74.ntf' )
+
+    expected_data = """<tres>
+  <tre name="CCINFA" location="file">
+    <field name="NUMCODE" value="001" />
+    <repeated name="CODES" number="1">
+      <group index="0">
+        <field name="CODE_LEN" value="2" />
+        <field name="CODE" value="AS" />
+        <field name="EQTYPE" value="" />
+        <field name="ESURN_LEN" value="17" />
+        <field name="ESURN" value="ge:GENC:3:3-5:AUS" />
+        <field name="DETAIL_LEN" value="00000" />
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+    if data != expected_data:
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+#  - TABLE AG.2 case
+
+def nitf_75():
+
+    listing_AG1 = """<?xml version="1.0" encoding="UTF-8"?>
+<genc:GeopoliticalEntityEntry 
+    xmlns:genc="http://api.nsgreg.nga.mil/schema/genc/3.0" 
+    xmlns:genc-cmn="http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://api.nsgreg.nga.mil/schema/genc/3.0 http://api.nsgreg.nga.mil/schema/genc/3.0.0/genc.xsd">
+    <genc:encoding>
+        <genc-cmn:char3Code>MMR</genc-cmn:char3Code>
+        <genc-cmn:char3CodeURISet>
+            <genc-cmn:codespaceURL>http://api.nsgreg.nga.mil/geo-political/GENC/3/3-5</genc-cmn:codespaceURL>
+            <genc-cmn:codespaceURN>urn:us:gov:dod:nga:def:geo-political:GENC:3:3-5</genc-cmn:codespaceURN>
+            <genc-cmn:codespaceURNBased>geo-political:GENC:3:3-5</genc-cmn:codespaceURNBased>
+            <genc-cmn:codespaceURNBasedShort>ge:GENC:3:3-5</genc-cmn:codespaceURNBasedShort>
+        </genc-cmn:char3CodeURISet>
+        <genc-cmn:char2Code>MM</genc-cmn:char2Code>
+        <genc-cmn:char2CodeURISet>
+            <genc-cmn:codespaceURL>http://api.nsgreg.nga.mil/geo-political/GENC/2/3-5</genc-cmn:codespaceURL>
+            <genc-cmn:codespaceURN>urn:us:gov:dod:nga:def:geo-political:GENC:2:3-5</genc-cmn:codespaceURN>
+            <genc-cmn:codespaceURNBased>geo-political:GENC:2:3-5</genc-cmn:codespaceURNBased>
+            <genc-cmn:codespaceURNBasedShort>ge:GENC:2:3-5</genc-cmn:codespaceURNBasedShort>
+        </genc-cmn:char2CodeURISet>
+        <genc-cmn:numericCode>104</genc-cmn:numericCode>
+        <genc-cmn:numericCodeURISet>
+            <genc-cmn:codespaceURL>http://api.nsgreg.nga.mil/geo-political/GENC/n/3-5</genc-cmn:codespaceURL>
+            <genc-cmn:codespaceURN>urn:us:gov:dod:nga:def:geo-political:GENC:n:3-5</genc-cmn:codespaceURN>
+            <genc-cmn:codespaceURNBased>geo-political:GENC:n:3-5</genc-cmn:codespaceURNBased>
+            <genc-cmn:codespaceURNBasedShort>ge:GENC:n:3-5</genc-cmn:codespaceURNBasedShort>
+        </genc-cmn:numericCodeURISet>
+    </genc:encoding>
+    <genc:name><![CDATA[BURMA]]></genc:name>
+    <genc:shortName><![CDATA[Burma]]></genc:shortName>
+    <genc:fullName><![CDATA[Union of Burma]]></genc:fullName>
+    <genc:gencStatus>exception</genc:gencStatus>
+    <genc:entryDate>2016-09-30</genc:entryDate>
+    <genc:entryType>unchanged</genc:entryType>
+    <genc:usRecognition>independent</genc:usRecognition>
+    <genc:entryNotesOnNaming><![CDATA[
+        The GENC Standard specifies the name "BURMA" where instead ISO 3166-1 specifies "MYANMAR"; GENC specifies the short name "Burma" where instead ISO 3166-1 specifies "Myanmar"; and GENC specifies the full name "Union of Burma" where instead ISO 3166-1 specifies "the Republic of the Union of Myanmar". The GENC Standard specifies the local short name for 'my'/'mya' as "Myanma Naingngandaw" where instead ISO 3166-1 specifies "Myanma".
+        ]]></genc:entryNotesOnNaming>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-01</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-02</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-03</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-04</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-05</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-06</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-07</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-11</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-12</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-13</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-14</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-15</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-16</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-17</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-18</genc:division>
+    <genc:localShortName>
+        <genc:name><![CDATA[Myanma Naingngandaw]]></genc:name>
+        <genc:iso6393Char3Code>mya</genc:iso6393Char3Code>
+    </genc:localShortName>
+</genc:GeopoliticalEntityEntry>"""
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1, options = \
+             ['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR04108 ' + \
+                 listing_AG1 + '3MMR 19ge:ISO1:3:VII-7:MMR00000' + '2S1 19ge:GENC:3:3-alt:SCT000002YYC16gg:1059:2:ed9:3E00000'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_75.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf_75.ntf' )
+
+    expected_data = """<tres>
+  <tre name="CCINFA" location="image">
+    <field name="NUMCODE" value="006" />
+    <repeated name="CODES" number="6">
+      <group index="0">
+        <field name="CODE_LEN" value="2" />
+        <field name="CODE" value="RQ" />
+        <field name="EQTYPE" value="" />
+        <field name="ESURN_LEN" value="17" />
+        <field name="ESURN" value="ge:GENC:3:3-5:PRI" />
+        <field name="DETAIL_LEN" value="00000" />
+      </group>
+      <group index="1">
+        <field name="CODE_LEN" value="2" />
+        <field name="CODE" value="RQ" />
+        <field name="EQTYPE" value="" />
+        <field name="ESURN_LEN" value="20" />
+        <field name="ESURN" value="as:ISO2:6:II-3:US-PR" />
+        <field name="DETAIL_LEN" value="00000" />
+      </group>
+      <group index="2">
+        <field name="CODE_LEN" value="2" />
+        <field name="CODE" value="BM" />
+        <field name="EQTYPE" value="" />
+        <field name="ESURN_LEN" value="17" />
+        <field name="ESURN" value="ge:GENC:3:3-5:MMR" />
+        <field name="DETAIL_LEN" value="04108" />
+        <field name="DETAIL_CMPR" value="" />
+        <field name="DETAIL" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;genc:GeopoliticalEntityEntry 
+    xmlns:genc=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0&quot; 
+    xmlns:genc-cmn=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn&quot; 
+    xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; 
+    xsi:schemaLocation=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0 http://api.nsgreg.nga.mil/schema/genc/3.0.0/genc.xsd&quot;&gt;
+    &lt;genc:encoding&gt;
+        &lt;genc-cmn:char3Code&gt;MMR&lt;/genc-cmn:char3Code&gt;
+        &lt;genc-cmn:char3CodeURISet&gt;
+            &lt;genc-cmn:codespaceURL&gt;http://api.nsgreg.nga.mil/geo-political/GENC/3/3-5&lt;/genc-cmn:codespaceURL&gt;
+            &lt;genc-cmn:codespaceURN&gt;urn:us:gov:dod:nga:def:geo-political:GENC:3:3-5&lt;/genc-cmn:codespaceURN&gt;
+            &lt;genc-cmn:codespaceURNBased&gt;geo-political:GENC:3:3-5&lt;/genc-cmn:codespaceURNBased&gt;
+            &lt;genc-cmn:codespaceURNBasedShort&gt;ge:GENC:3:3-5&lt;/genc-cmn:codespaceURNBasedShort&gt;
+        &lt;/genc-cmn:char3CodeURISet&gt;
+        &lt;genc-cmn:char2Code&gt;MM&lt;/genc-cmn:char2Code&gt;
+        &lt;genc-cmn:char2CodeURISet&gt;
+            &lt;genc-cmn:codespaceURL&gt;http://api.nsgreg.nga.mil/geo-political/GENC/2/3-5&lt;/genc-cmn:codespaceURL&gt;
+            &lt;genc-cmn:codespaceURN&gt;urn:us:gov:dod:nga:def:geo-political:GENC:2:3-5&lt;/genc-cmn:codespaceURN&gt;
+            &lt;genc-cmn:codespaceURNBased&gt;geo-political:GENC:2:3-5&lt;/genc-cmn:codespaceURNBased&gt;
+            &lt;genc-cmn:codespaceURNBasedShort&gt;ge:GENC:2:3-5&lt;/genc-cmn:codespaceURNBasedShort&gt;
+        &lt;/genc-cmn:char2CodeURISet&gt;
+        &lt;genc-cmn:numericCode&gt;104&lt;/genc-cmn:numericCode&gt;
+        &lt;genc-cmn:numericCodeURISet&gt;
+            &lt;genc-cmn:codespaceURL&gt;http://api.nsgreg.nga.mil/geo-political/GENC/n/3-5&lt;/genc-cmn:codespaceURL&gt;
+            &lt;genc-cmn:codespaceURN&gt;urn:us:gov:dod:nga:def:geo-political:GENC:n:3-5&lt;/genc-cmn:codespaceURN&gt;
+            &lt;genc-cmn:codespaceURNBased&gt;geo-political:GENC:n:3-5&lt;/genc-cmn:codespaceURNBased&gt;
+            &lt;genc-cmn:codespaceURNBasedShort&gt;ge:GENC:n:3-5&lt;/genc-cmn:codespaceURNBasedShort&gt;
+        &lt;/genc-cmn:numericCodeURISet&gt;
+    &lt;/genc:encoding&gt;
+    &lt;genc:name&gt;&lt;![CDATA[BURMA]]&gt;&lt;/genc:name&gt;
+    &lt;genc:shortName&gt;&lt;![CDATA[Burma]]&gt;&lt;/genc:shortName&gt;
+    &lt;genc:fullName&gt;&lt;![CDATA[Union of Burma]]&gt;&lt;/genc:fullName&gt;
+    &lt;genc:gencStatus&gt;exception&lt;/genc:gencStatus&gt;
+    &lt;genc:entryDate&gt;2016-09-30&lt;/genc:entryDate&gt;
+    &lt;genc:entryType&gt;unchanged&lt;/genc:entryType&gt;
+    &lt;genc:usRecognition&gt;independent&lt;/genc:usRecognition&gt;
+    &lt;genc:entryNotesOnNaming&gt;&lt;![CDATA[
+        The GENC Standard specifies the name &quot;BURMA&quot; where instead ISO 3166-1 specifies &quot;MYANMAR&quot;; GENC specifies the short name &quot;Burma&quot; where instead ISO 3166-1 specifies &quot;Myanmar&quot;; and GENC specifies the full name &quot;Union of Burma&quot; where instead ISO 3166-1 specifies &quot;the Republic of the Union of Myanmar&quot;. The GENC Standard specifies the local short name for 'my'/'mya' as &quot;Myanma Naingngandaw&quot; where instead ISO 3166-1 specifies &quot;Myanma&quot;.
+        ]]&gt;&lt;/genc:entryNotesOnNaming&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-01&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-02&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-03&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-04&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-05&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-06&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-07&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-11&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-12&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-13&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-14&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-15&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-16&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-17&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-18&lt;/genc:division&gt;
+    &lt;genc:localShortName&gt;
+        &lt;genc:name&gt;&lt;![CDATA[Myanma Naingngandaw]]&gt;&lt;/genc:name&gt;
+        &lt;genc:iso6393Char3Code&gt;mya&lt;/genc:iso6393Char3Code&gt;
+    &lt;/genc:localShortName&gt;
+&lt;/genc:GeopoliticalEntityEntry&gt;" />
+      </group>
+      <group index="3">
+        <field name="CODE_LEN" value="3" />
+        <field name="CODE" value="MMR" />
+        <field name="EQTYPE" value="" />
+        <field name="ESURN_LEN" value="19" />
+        <field name="ESURN" value="ge:ISO1:3:VII-7:MMR" />
+        <field name="DETAIL_LEN" value="00000" />
+      </group>
+      <group index="4">
+        <field name="CODE_LEN" value="2" />
+        <field name="CODE" value="S1" />
+        <field name="EQTYPE" value="" />
+        <field name="ESURN_LEN" value="19" />
+        <field name="ESURN" value="ge:GENC:3:3-alt:SCT" />
+        <field name="DETAIL_LEN" value="00000" />
+      </group>
+      <group index="5">
+        <field name="CODE_LEN" value="2" />
+        <field name="CODE" value="YY" />
+        <field name="EQTYPE" value="C" />
+        <field name="ESURN_LEN" value="16" />
+        <field name="ESURN" value="gg:1059:2:ed9:3E" />
+        <field name="DETAIL_LEN" value="00000" />
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+
+    if data != expected_data:
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -3543,6 +3780,8 @@ gdaltest_list = [
     nitf_71,
     nitf_72,
     nitf_73,
+    nitf_74,
+    nitf_75,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
