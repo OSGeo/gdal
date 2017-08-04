@@ -270,7 +270,7 @@ void OGRCircularString::ExtendEnvelopeWithCircular(
     // extremities of the circle.
     for( int i = 0; i < nPointCount - 2; i += 2 )
     {
-        double x0 = paoPoints[i].x;
+        const double x0 = paoPoints[i].x;
         const double y0 = paoPoints[i].y;
         const double x1 = paoPoints[i+1].x;
         const double y1 = paoPoints[i+1].y;
@@ -286,6 +286,11 @@ void OGRCircularString::ExtendEnvelopeWithCircular(
                                                   R, cx, cy,
                                                   alpha0, alpha1, alpha2))
         {
+            if( CPLIsNan(alpha0) || CPLIsNan(alpha2) ) {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "GetCurveParmeters returned NaN");
+                continue;
+            }
             int quadrantStart =
                 static_cast<int>(std::floor(alpha0 / (M_PI / 2)));
             int quadrantEnd = static_cast<int>(std::floor(alpha2 / (M_PI / 2)));
