@@ -1666,6 +1666,8 @@ OGRErr OGRSpatialReference::morphToESRI()
     if( pszProjection != NULL && EQUAL(pszProjection, SRS_PT_MERCATOR_2SP) )
     {
         SetNode( "PROJCS|PROJECTION", "Mercator" );
+        if( (poProjCS = GetAttrNode( "PROJCS" )) != NULL )
+            poProjCSNodeChild = poProjCS->GetChild(0);
     }
 
     // See #4861.
@@ -1673,6 +1675,8 @@ OGRErr OGRSpatialReference::morphToESRI()
              EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) )
     {
         SetNode( "PROJCS|PROJECTION", "Mercator" );
+        if( (poProjCS = GetAttrNode( "PROJCS" )) != NULL )
+            poProjCSNodeChild = poProjCS->GetChild(0);
 
         const double dfK0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
 
@@ -1779,7 +1783,10 @@ OGRErr OGRSpatialReference::morphToESRI()
         CPLFree( newGcsName );
         pszGcsName = GetAttrValue( "GEOGCS" );
       }
-      RemapGeogCSName(this, pszGcsName);
+      if( pszGcsName != NULL )
+      {
+        RemapGeogCSName(this, pszGcsName);
+      }
 
       // Specific processing and remapping
       pszProjection = GetAttrValue("PROJECTION");
