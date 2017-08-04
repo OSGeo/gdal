@@ -2564,7 +2564,7 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
    /* Walk through the grid, resetting the missing values, as determined by
     * the original grid. */
    if (f_readjust) {
-      for (scanIndex = 0; scanIndex < Nx * Ny; scanIndex++) {
+      for (scanIndex = 0; scanIndex < (uInt4)nd2x3 && scanIndex < Nx * Ny; scanIndex++) {
          ScanIndex2XY (scanIndex, &x, &y, scan, Nx, Ny);
          /* ScanIndex returns value as if scan was 0100 */
          newIndex = (x - 1) + (y - 1) * Nx;
