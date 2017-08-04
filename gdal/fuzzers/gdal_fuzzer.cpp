@@ -106,10 +106,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     REGISTER_FUNC();
     CPLPushErrorHandler(CPLQuietErrorHandler);
 #ifdef USE_FILESYSTEM
-    GDALDatasetH hDS = GDALOpen( szTempFilename, GA_ReadOnly );
+    const char* pszGDALFilename = szTempFilename;
 #else
-    GDALDatasetH hDS = GDALOpen( GDAL_FILENAME, GA_ReadOnly );
+    const char* pszGDALFilename = GDAL_FILENAME;
 #endif
+    GDALDatasetH hDS = GDALOpen( pszGDALFilename, GA_ReadOnly );
     if( hDS )
     {
         const int nTotalBands = GDALGetRasterCount(hDS);
@@ -121,9 +122,25 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         {
             const char* pszInterleave =
                 GDALGetMetadataItem( hDS, "INTERLEAVE", "IMAGE_STRUCTURE" );
-            const int nSimultaneousBands =
+            int nSimultaneousBands =
                 (pszInterleave && EQUAL(pszInterleave, "PIXEL")) ?
                             nTotalBands : 1;
+
+            // When using the RGBA interface in pixel-interleaved mode, take
+            // into account the raw number of bands to compute memory
+            // requirements
+            if( nBands == 4 && nSimultaneousBands != 1 &&
+                GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff") )
+            {
+                GDALDatasetH hRawDS = GDALOpen(
+                    (CPLString("GTIFF_RAW:")+pszGDALFilename).c_str(),
+                    GA_ReadOnly );
+                if( hRawDS )
+                {
+                    nSimultaneousBands = GDALGetRasterCount(hRawDS);
+                    GDALClose(hRawDS);
+                }
+            }
 
             // If we know that we will need to allocate a lot of memory
             // given the block size and interleaving mode, do not read
