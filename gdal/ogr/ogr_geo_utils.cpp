@@ -90,6 +90,10 @@ double OGR_GreatCircle_InitialHeading( double LatA_deg, double LonA_deg,
     {
         return (LonB_deg > LonA_deg) ? 90.0 : 270.0;
     }
+    else if( fabs(LonA_deg - LonB_deg) < 1e-10 )
+    {
+        return (LatA_deg > LatB_deg) ? 180.0 : 0.0;
+    }
     else
     {
         const double LatA_rad = LatA_deg * DEG2RAD;
