@@ -517,6 +517,8 @@ int32_t json_object_get_int(struct json_object *jso)
 	else
 		return (int32_t)cint64;
   case json_type_double:
+    if (jso->o.c_double >= INT32_MAX)
+      return INT32_MAX;
     return (int32_t)jso->o.c_double;
   case json_type_boolean:
     return jso->o.c_boolean;
