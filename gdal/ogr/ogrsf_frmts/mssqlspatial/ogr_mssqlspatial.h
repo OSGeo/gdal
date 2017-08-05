@@ -281,12 +281,12 @@ typedef union {
     } Float;
 
     struct {
-        int     nSize;
+        SQLLEN  nSize;
         char* pData[8000];
     } VarChar;
 
     struct {
-        int     nSize;
+        SQLLEN  nSize;
         GByte*  pData;
     } RawData;
 
