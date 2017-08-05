@@ -1561,11 +1561,11 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nSRSId);
                 papstBindBuffer[iCol]->RawData.nSize = poWriter.GetDataLen();
                 papstBindBuffer[iCol]->RawData.pData = (GByte *) CPLMalloc(papstBindBuffer[iCol]->RawData.nSize + 1);
-                if (poWriter.WriteSqlGeometry(papstBindBuffer[iCol]->RawData.pData, papstBindBuffer[iCol]->RawData.nSize) != OGRERR_NONE)
+                if (poWriter.WriteSqlGeometry(papstBindBuffer[iCol]->RawData.pData, (int)papstBindBuffer[iCol]->RawData.nSize) != OGRERR_NONE)
                     return OGRERR_FAILURE;
 
                 /* set data length */
-                if (Failed2( bcp_collen( hDBCBCP, papstBindBuffer[iCol]->RawData.nSize, iCol + 1) ))
+                if (Failed2( bcp_collen( hDBCBCP, (DBINT)papstBindBuffer[iCol]->RawData.nSize, iCol + 1) ))
                     return OGRERR_FAILURE;
             }
             else
@@ -1671,12 +1671,12 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                     else
                     {
 
-                        papstBindBuffer[iCol]->VarChar.nSize = CPLStrlenUTF8(poFeature->GetFieldAsString(iField)) * 2;
+                        papstBindBuffer[iCol]->VarChar.nSize = (SQLLEN)CPLStrlenUTF8(poFeature->GetFieldAsString(iField)) * 2;
                         wchar_t* buffer = CPLRecodeToWChar( poFeature->GetFieldAsString(iField), CPL_ENC_UTF8, CPL_ENC_UCS2);
                         memcpy(papstBindBuffer[iCol]->VarChar.pData, buffer, papstBindBuffer[iCol]->VarChar.nSize + 2);
                         CPLFree(buffer);
 
-                        if (Failed2( bcp_collen( hDBCBCP, papstBindBuffer[iCol]->VarChar.nSize, iCol + 1) ))
+                        if (Failed2( bcp_collen( hDBCBCP, (DBINT)papstBindBuffer[iCol]->VarChar.nSize, iCol + 1) ))
                             return OGRERR_FAILURE;
                     }
                 }
@@ -1781,10 +1781,12 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 else
                 {
                     /* image */
-                    papstBindBuffer[iCol]->RawData.pData = poFeature->GetFieldAsBinary(iField, &papstBindBuffer[iCol]->RawData.nSize);
+                    int nLen;
+                    papstBindBuffer[iCol]->RawData.pData = poFeature->GetFieldAsBinary(iField, &nLen);
+                    papstBindBuffer[iCol]->RawData.nSize = nLen;
 
                     /* set data length */
-                    if (Failed2( bcp_collen( hDBCBCP, papstBindBuffer[iCol]->RawData.nSize, iCol + 1) ))
+                    if (Failed2( bcp_collen( hDBCBCP, (DBINT)papstBindBuffer[iCol]->RawData.nSize, iCol + 1) ))
                         return OGRERR_FAILURE;
                 }
             }
@@ -1815,7 +1817,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
             if (papstBindBuffer[iCol]->RawData.nSize != SQL_NULL_DATA)
             {
                 if (Failed2( bcp_moretext( hDBCBCP,
-                    papstBindBuffer[iCol]->RawData.nSize,
+                    (DBINT)papstBindBuffer[iCol]->RawData.nSize,
                     papstBindBuffer[iCol]->RawData.pData ) ))
                 {
 
@@ -1849,12 +1851,12 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                 {
                     if (poFeature->IsFieldSetAndNotNull( iField ))
                     {
-                        papstBindBuffer[iCol]->VarChar.nSize = CPLStrlenUTF8(poFeature->GetFieldAsString(iField)) * 2;
+                        papstBindBuffer[iCol]->VarChar.nSize = (SQLLEN)CPLStrlenUTF8(poFeature->GetFieldAsString(iField)) * 2;
                         if (papstBindBuffer[iCol]->VarChar.nSize > 0)
                         {
                             wchar_t* buffer = CPLRecodeToWChar( poFeature->GetFieldAsString(iField), CPL_ENC_UTF8, CPL_ENC_UCS2);
                             if (Failed2( bcp_moretext( hDBCBCP,
-                                papstBindBuffer[iCol]->VarChar.nSize,
+                                (DBINT)papstBindBuffer[iCol]->VarChar.nSize,
                                 (LPCBYTE)buffer ) ))
                             {
 
@@ -1884,7 +1886,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
                     if (papstBindBuffer[iCol]->RawData.nSize > 0)
                     {
                         if (Failed2( bcp_moretext( hDBCBCP,
-                            papstBindBuffer[iCol]->RawData.nSize,
+                            (DBINT)papstBindBuffer[iCol]->RawData.nSize,
                             papstBindBuffer[iCol]->RawData.pData ) ))
                         {
 
@@ -2007,7 +2009,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
     int bind_num = 0;
     void** bind_buffer = (void**)CPLMalloc(sizeof(void*) * (nFieldCount + 1));
 #ifdef SQL_SS_UDT
-    int* bind_datalen = (int*)CPLMalloc(sizeof(int) * (nFieldCount + 1));
+    SQLLEN* bind_datalen = (SQLLEN*)CPLMalloc(sizeof(SQLLEN) * (nFieldCount + 1));
 #endif
 
     int i;
@@ -2045,7 +2047,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
                 OGRMSSQLGeometryWriter poWriter(poGeom, nGeomColumnType, nSRSId);
                 bind_datalen[bind_num] = poWriter.GetDataLen();
                 GByte *pabyData = (GByte *) CPLMalloc(bind_datalen[bind_num] + 1);
-                if (poWriter.WriteSqlGeometry(pabyData, bind_datalen[bind_num]) == OGRERR_NONE)
+                if (poWriter.WriteSqlGeometry(pabyData, (int)bind_datalen[bind_num]) == OGRERR_NONE)
                 {
                     SQLHANDLE ipd;
                     if ((!poSession->Failed( SQLBindParameter(oStatement.GetStatement(), (SQLUSMALLINT)(bind_num + 1),
