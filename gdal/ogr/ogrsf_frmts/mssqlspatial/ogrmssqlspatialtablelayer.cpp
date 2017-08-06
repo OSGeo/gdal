@@ -280,7 +280,7 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 /*      it is in the form <schema>.<tablename>                          */
 /* -------------------------------------------------------------------- */
     const char *pszDot = strstr(pszLayerNameIn,".");
-    if( pszDot != NULL )
+    if( pszDot != NULL && pszSchema == NULL )
     {
         pszTableName = CPLStrdup(pszDot + 1);
         pszSchemaName = CPLStrdup(pszLayerNameIn);
@@ -290,11 +290,16 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
     else
     {
         pszTableName = CPLStrdup(pszLayerNameIn);
-        pszSchemaName = CPLStrdup(pszSchema);
-        if ( EQUAL(pszSchemaName, "dbo") )
+        if ( pszSchema == NULL || EQUAL(pszSchema, "dbo") )
+        {
+            pszSchemaName = CPLStrdup("dbo");
             this->pszLayerName = CPLStrdup(pszLayerNameIn);
+        }
         else
+        {
+            pszSchemaName = CPLStrdup(pszSchema);
             this->pszLayerName = CPLStrdup(CPLSPrintf("%s.%s", pszSchemaName, pszTableName));
+        }
     }
     SetDescription( this->pszLayerName );
 
@@ -572,10 +577,11 @@ CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColum
     CPLODBCStatement* poStatement = new CPLODBCStatement( poDS->GetSession() );
     poStatement->Append( "select " );
     poStatement->Append( pszColumns );
-    poStatement->Append( " from " );
+    poStatement->Append( " from [" );
     poStatement->Append( pszSchemaName );
-    poStatement->Append( "." );
+    poStatement->Append( "].[" );
     poStatement->Append( pszTableName );
+    poStatement->Append( "]" );
 
     /* Append attribute query if we have it */
     if( pszQuery != NULL )
