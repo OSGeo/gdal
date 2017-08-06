@@ -228,6 +228,8 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
 
                     if( EQUAL(pszCoordinateFormat,"BI32") )
                     {
+                        if( nBytesConsumed < 4 )
+                            return FALSE;
                         GInt32  nValue;
                         memcpy( &nValue, pabyBString, 4 );
                         adfXYZ[iEntry]
@@ -235,6 +237,8 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
                     }
                     else if( EQUAL(pszCoordinateFormat,"BI16") )
                     {
+                        if( nBytesConsumed < 2 )
+                            return FALSE;
                         GInt16  nValue;
                         memcpy( &nValue, pabyBString, 2 );
                         adfXYZ[iEntry]
@@ -242,6 +246,8 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
                     }
                     else if( EQUAL(pszCoordinateFormat,"BU32") )
                     {
+                        if( nBytesConsumed < 4 )
+                            return FALSE;
                         GUInt32 nValue;
                         memcpy( &nValue, pabyBString, 4 );
                         adfXYZ[iEntry]
@@ -249,6 +255,8 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
                     }
                     else if( EQUAL(pszCoordinateFormat,"BU16") )
                     {
+                        if( nBytesConsumed < 2 )
+                            return FALSE;
                         GUInt16 nValue;
                         memcpy( &nValue, pabyBString, 2 );
                         adfXYZ[iEntry]
@@ -256,6 +264,8 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
                     }
                     else if( EQUAL(pszCoordinateFormat,"BFP32") )
                     {
+                        if( nBytesConsumed < 4 )
+                            return FALSE;
                         float   fValue;
 
                         memcpy( &fValue, pabyBString, 4 );
@@ -264,6 +274,8 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
                     }
                     else if( EQUAL(pszCoordinateFormat,"BFP64") )
                     {
+                        if( nBytesConsumed < 8 )
+                            return FALSE;
                         double  dfValue;
 
                         memcpy( &dfValue, pabyBString, 8 );
