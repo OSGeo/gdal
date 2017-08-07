@@ -37,7 +37,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
-#include <algorithm>
 #include <limits>
 
 #include "cpl_conv.h"
@@ -1016,7 +1015,9 @@ int OGRParseDate( const char *pszInput,
             nYear < std::numeric_limits<GInt16>::min() )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Years < -32768 or > 32767 are not supported");
+                     "Years < %d or > %d are not supported",
+                     std::numeric_limits<GInt16>::min(),
+                     std::numeric_limits<GInt16>::max());
             return FALSE;
         }
         psField->Date.Year = static_cast<GInt16>(nYear);
