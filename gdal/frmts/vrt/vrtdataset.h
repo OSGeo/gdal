@@ -794,6 +794,7 @@ protected:
 
     int                 m_bRelativeToVRTOri;
     CPLString           m_osSourceFileNameOri;
+    int                 m_nExplicitSharedStatus; // -1 unknown, 0 = unshared, 1 = shared
 
     int                 NeedMaxValAdjustment() const;
 
