@@ -357,6 +357,9 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     char *szEnd = szStart;
     for( int iCell=0; iCell<nBlockXSize; szStart = szEnd )
     {
+        while( isspace( (unsigned char)*szStart ) )
+            szStart++;
+
 	double dfValue = CPLStrtod( szStart, &szEnd );
 	if( szStart == szEnd )
 	{
@@ -371,8 +374,6 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             }
 
 	    /* Check if this was an expected failure */
-	    while( isspace( (unsigned char)*szStart ) )
-		szStart++;
 
 	    /* Found sign at end of input, seek back to re-read it */
             bool bOnlySign = false;
