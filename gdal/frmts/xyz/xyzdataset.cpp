@@ -547,6 +547,13 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
     const char* pszData
         = reinterpret_cast<const char *>( poOpenInfo->pabyHeader );
 
+    if( poOpenInfo->nHeaderBytes >= 4 && STARTS_WITH(pszData, "DSAA") )
+    {
+        // Do not match GSAG datasets
+        delete poOpenInfoToDelete;
+        return FALSE;
+    }
+
     /* Skip comments line at the beginning such as in */
     /* http://pubs.usgs.gov/of/2003/ofr-03-230/DATA/NSLCU.XYZ */
     int i = 0;
