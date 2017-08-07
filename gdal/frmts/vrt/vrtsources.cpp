@@ -109,7 +109,8 @@ VRTSimpleSource::VRTSimpleSource() :
     m_bNoDataSet(FALSE),
     m_dfNoDataValue(VRT_NODATA_UNSET),
     m_nMaxValue(0),
-    m_bRelativeToVRTOri(-1)
+    m_bRelativeToVRTOri(-1),
+    m_nExplicitSharedStatus(-1)
 {}
 
 /************************************************************************/
@@ -131,7 +132,8 @@ VRTSimpleSource::VRTSimpleSource( const VRTSimpleSource* poSrcSource,
     m_bNoDataSet(poSrcSource->m_bNoDataSet),
     m_dfNoDataValue(poSrcSource->m_dfNoDataValue),
     m_nMaxValue(poSrcSource->m_nMaxValue),
-    m_bRelativeToVRTOri(-1)
+    m_bRelativeToVRTOri(-1),
+    m_nExplicitSharedStatus(poSrcSource->m_nExplicitSharedStatus)
 {}
 
 /************************************************************************/
@@ -401,7 +403,11 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
                           CXT_Attribute, "relativeToVRT" ),
         CXT_Text, bRelativeToVRT ? "1" : "0" );
 
-    if( !CPLTestBool(CPLGetConfigOption("VRT_SHARED_SOURCE", "TRUE")) )
+    // Determine if we must write the shared attribute. The config option
+    // will override the m_nExplicitSharedStatus value
+    const char* pszShared = CPLGetConfigOption("VRT_SHARED_SOURCE", NULL);
+    if( (pszShared == NULL && m_nExplicitSharedStatus == 0) ||
+        (pszShared != NULL && !CPLTestBool(pszShared)) )
     {
         CPLCreateXMLNode(
             CPLCreateXMLNode( CPLGetXMLNode( psSrc, "SourceFilename" ),
@@ -499,11 +505,20 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath,
         atoi( CPLGetXMLValue( psSourceFileNameNode, "relativetoVRT", "0") );
     const char* pszShared = CPLGetXMLValue( psSourceFileNameNode,
                                             "shared", NULL );
+    if( pszShared == NULL )
+    {
+        pszShared = CPLGetConfigOption("VRT_SHARED_SOURCE", NULL );
+    }
     bool bShared = false;
     if( pszShared != NULL )
+    {
         bShared = CPLTestBool(pszShared);
+        m_nExplicitSharedStatus = bShared;
+    }
     else
-        bShared = CPLTestBool(CPLGetConfigOption("VRT_SHARED_SOURCE", "TRUE"));
+    {
+        bShared = true;
+    }
 
     char *pszSrcDSName = NULL;
     if( pszVRTPath != NULL && m_bRelativeToVRTOri )
