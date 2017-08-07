@@ -37,6 +37,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
+#include <algorithm>
 #include <limits>
 
 #include "cpl_conv.h"
@@ -1011,7 +1012,8 @@ int OGRParseDate( const char *pszInput,
               (*pszInput >= '0' && *pszInput <= '9')) )
             return FALSE;
         int nYear = atoi(pszInput);
-        if( nYear != static_cast<GInt16>(nYear) )
+        if (nYear > std::numeric_limits<GInt16>::max() ||
+            nYear < std::numeric_limits<GInt16>::min() )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Years < -32768 or > 32767 are not supported");
@@ -1037,9 +1039,10 @@ int OGRParseDate( const char *pszInput,
         else
             ++pszInput;
 
-        psField->Date.Month = static_cast<GByte>(atoi(pszInput));
-        if( psField->Date.Month == 0 || psField->Date.Month > 12 )
+        const int nMonth = atoi(pszInput);
+        if( nMonth <= 0 || nMonth > 12 )
             return FALSE;
+        psField->Date.Month = static_cast<GByte>(nMonth);
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             ++pszInput;
@@ -1048,9 +1051,10 @@ int OGRParseDate( const char *pszInput,
         else
             ++pszInput;
 
-        psField->Date.Day = static_cast<GByte>(atoi(pszInput));
-        if( psField->Date.Day == 0 || psField->Date.Day > 31 )
+        const int nDay = atoi(pszInput);
+        if( nDay <= 0 || nDay > 31 )
             return FALSE;
+        psField->Date.Day = static_cast<GByte>(nDay);
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             ++pszInput;
@@ -1074,9 +1078,10 @@ int OGRParseDate( const char *pszInput,
 
     if( strstr(pszInput, ":") != NULL )
     {
-        psField->Date.Hour = static_cast<GByte>(atoi(pszInput));
-        if( psField->Date.Hour > 23 )
+        const int nHour = atoi(pszInput);
+        if( nHour < 0 || nHour > 23 )
             return FALSE;
+        psField->Date.Hour = static_cast<GByte>(nHour);
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             ++pszInput;
@@ -1085,9 +1090,10 @@ int OGRParseDate( const char *pszInput,
         else
             ++pszInput;
 
-        psField->Date.Minute = static_cast<GByte>(atoi(pszInput));
-        if( psField->Date.Minute > 59 )
+        const int nMinute = atoi(pszInput);
+        if( nMinute < 0 || nMinute > 59 )
             return FALSE;
+        psField->Date.Minute = static_cast<GByte>(nMinute);
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             ++pszInput;
@@ -1095,9 +1101,9 @@ int OGRParseDate( const char *pszInput,
         {
             ++pszInput;
 
-            psField->Date.Second = static_cast<float>(CPLAtof(pszInput));
-            if( psField->Date.Second > 61 )
-                return FALSE;
+            const double dfSeconds = CPLAtof(pszInput);
+            if (dfSeconds > 61.0 || dfSeconds < 0.0) return FALSE;
+            psField->Date.Second = static_cast<float>(dfSeconds);
 
             while( (*pszInput >= '0' && *pszInput <= '9')
                 || *pszInput == '.' )
