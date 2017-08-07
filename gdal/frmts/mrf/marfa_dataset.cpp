@@ -864,6 +864,16 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
     }
 
     // Order of increment
+    if( image.pagesize.c != image.size.c && image.pagesize.c != 1 )
+    {
+        // Fixes heap buffer overflow in GDALMRFRasterBand::ReadInterleavedBlock()
+        // See https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2884
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "GDAL MRF: image.pagesize.c = %d and image.size.c = %d",
+                 image.pagesize.c, image.size.c);
+        return CE_Failure;
+    }
+
     image.order = OrderToken(CPLGetXMLValue(defimage, "Order",
         (image.pagesize.c != image.size.c) ? "BAND" : "PIXEL"));
     if (image.order == IL_ERR_ORD) {
