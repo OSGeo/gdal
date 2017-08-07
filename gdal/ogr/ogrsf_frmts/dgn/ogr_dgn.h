@@ -48,7 +48,7 @@ class OGRDGNLayer : public OGRLayer
 
     char               *pszLinkFormat;
 
-    OGRFeature         *ElementToFeature( DGNElemCore * );
+    OGRFeature         *ElementToFeature( DGNElemCore *, int nRecLevel );
 
     void                ConsiderBrush( DGNElemCore *, const char *pszPen,
                                        OGRFeature *poFeature );
