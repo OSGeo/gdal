@@ -1609,6 +1609,10 @@ static OGRFeature *TranslateLandlineName( NTFFileReader *poReader,
         || papoGroup[2]->GetType() != NRT_GEOMETRY )
         return NULL;
 
+    int         nNumChar = atoi(papoGroup[0]->GetField(13,14));
+    if( nNumChar <= 0 )
+        return NULL;
+
     OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     // NAME_ID
@@ -1618,7 +1622,6 @@ static OGRFeature *TranslateLandlineName( NTFFileReader *poReader,
     poFeature->SetField( 1, papoGroup[0]->GetField( 9, 12 ) );
 
     // TEXT
-    int         nNumChar = atoi(papoGroup[0]->GetField(13,14));
     poFeature->SetField( 2, papoGroup[0]->GetField( 15, 15+nNumChar-1) );
 
     // FONT
