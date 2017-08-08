@@ -86,8 +86,7 @@ class OGRXLSXLayer : public OGRMemLayer
     virtual OGRErr      SetNextByIndex( GIntBig nIndex ) override
     { Init(); return OGRMemLayer::SetNextByIndex(nIndex); }
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature ) override
-    { Init(); SetUpdated(); return OGRMemLayer::ICreateFeature(poFeature); }
+    virtual OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
 
     OGRFeatureDefn *    GetLayerDefn() override
     { Init(); return OGRMemLayer::GetLayerDefn(); }
