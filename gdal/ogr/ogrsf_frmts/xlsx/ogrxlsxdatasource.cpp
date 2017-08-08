@@ -48,7 +48,7 @@ OGRXLSXLayer::OGRXLSXLayer( OGRXLSXDataSource* poDSIn,
                             const char * pszName,
                             int bUpdatedIn ) :
     OGRMemLayer(pszName, NULL, wkbNone),
-    bInit(false),
+    bInit(CPL_TO_BOOL(bUpdatedIn)),
     poDS(poDSIn),
     osFilename(pszFilename),
     bUpdated(CPL_TO_BOOL(bUpdatedIn)),
@@ -140,6 +140,27 @@ OGRErr OGRXLSXLayer::ISetFeature( OGRFeature *poFeature )
         poFeature->SetFID(nFID - (1 + static_cast<int>(bHasHeaderLine)));
     SetUpdated();
     OGRErr eErr = OGRMemLayer::ISetFeature(poFeature);
+    poFeature->SetFID(nFID);
+    return eErr;
+}
+
+/************************************************************************/
+/*                          ICreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRXLSXLayer::ICreateFeature( OGRFeature *poFeature )
+{
+    Init();
+
+    GIntBig nFID = poFeature->GetFID();
+    if (nFID != OGRNullFID)
+    {
+        // Compensate what ISetFeature() will do since
+        // OGRMemLayer::ICreateFeature() will eventually call it
+        poFeature->SetFID(nFID + (1 + static_cast<int>(bHasHeaderLine)));
+    }
+    SetUpdated();
+    OGRErr eErr = OGRMemLayer::ICreateFeature(poFeature);
     poFeature->SetFID(nFID);
     return eErr;
 }
