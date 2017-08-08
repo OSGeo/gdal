@@ -720,12 +720,14 @@ OGRErr CPL_DLL OSRSetGnomonic(OGRSpatialReferenceH hSRS,
                               double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
 
+#ifdef undef
 /** Oblique Mercator (aka HOM (variant B) */
 OGRErr CPL_DLL OSRSetOM( OGRSpatialReferenceH hSRS,
                          double dfCenterLat, double dfCenterLong,
                          double dfAzimuth, double dfRectToSkew,
                          double dfScale,
                          double dfFalseEasting, double dfFalseNorthing );
+#endif
 
 /** Hotine Oblique Mercator using azimuth angle */
 OGRErr CPL_DLL OSRSetHOM( OGRSpatialReferenceH hSRS,
