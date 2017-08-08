@@ -507,6 +507,7 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
             return NULL;
         }
         frameEntry->filename[12] = '\0';
+        bOK &= strlen(frameEntry->filename) > 0;
 
         /* Check if the filename is an overview or legend */
         for( int j = 0; j < 12; j++ )
