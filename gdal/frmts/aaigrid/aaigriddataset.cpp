@@ -67,7 +67,7 @@ namespace {
 float DoubleToFloatClamp(double dfValue) {
     if( dfValue <= std::numeric_limits<float>::lowest() )
         // TODO(schwehr): C=++11: return std::numeric_limits<float>::lowest();
-        return -std::numeric_limits<float>::max()
+        return -std::numeric_limits<float>::max();
     if( dfValue >= std::numeric_limits<float>::max() )
         return std::numeric_limits<float>::max();
     return static_cast<float>(dfValue);
@@ -79,7 +79,7 @@ static CPLString OSR_GDS( char **papszNV, const char *pszField,
                           const char *pszDefaultValue );
 
 /************************************************************************/
-/*                           AAIGRasterBand()                            */
+/*                           AAIGRasterBand()                           */
 /************************************************************************/
 
 AAIGRasterBand::AAIGRasterBand( AAIGDataset *poDSIn, int nDataStart ) :
