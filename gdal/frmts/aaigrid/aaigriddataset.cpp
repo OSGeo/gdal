@@ -62,6 +62,18 @@
 
 CPL_CVSID("$Id$")
 
+namespace {
+
+float DoubleToFloatClamp(double dfValue) {
+    if( dfValue <= std::numeric_limits<float>::lowest() )
+        return std::numeric_limits<float>::lowest();
+    if( dfValue >= std::numeric_limits<float>::max() )
+        return std::numeric_limits<float>::max();
+    return static_cast<float>(dfValue);
+}
+
+}  // namespace
+
 static CPLString OSR_GDS( char **papszNV, const char *pszField,
                           const char *pszDefaultValue );
 
@@ -167,7 +179,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 reinterpret_cast<double *>(pImage)[iPixel] = CPLAtofM(szToken);
             else if( eDataType == GDT_Float32 )
                 reinterpret_cast<float *>(pImage)[iPixel] =
-                    static_cast<float>(CPLAtofM(szToken));
+                    DoubleToFloatClamp(CPLAtofM(szToken));
             else
                 reinterpret_cast<GInt32 *>(pImage)[iPixel] =
                     static_cast<GInt32>(atoi(szToken));
