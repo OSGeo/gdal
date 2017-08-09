@@ -165,23 +165,28 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 // Could probably be fixed for the CHUNKY_STRIP_READ_SUPPORT
                 // mode.
                 // Workaround https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2606
-                if( ((nBYSize == 1 && nYSizeToRead > 1) ||
+                const char* pszCompress =
+                    GDALGetMetadataItem(hDS, "COMPRESSION", "IMAGE_STRUCTURE");
+                if( ((nBYSize == 1 && nYSizeToRead > 1 &&
+                      GDALGetMetadataItem(GDALGetRasterBand(hDS, 1),
+                                        "BLOCK_OFFSET_0_1", "TIFF") == NULL) ||
                      nBXSize < GDALGetRasterXSize(hDS)) &&
-                    GDALGetRasterYSize(hDS) > INT_MAX /
-                            static_cast<int>(sizeof(GUInt16)) /
-                                nSimultaneousBands / GDALGetRasterXSize(hDS) &&
                     GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff") )
                 {
-                    const char* pszCompress =
-                        GDALGetMetadataItem(hDS, "COMPRESSION",
-                                            "IMAGE_STRUCTURE");
-                    if( pszCompress && EQUAL(pszCompress, "PIXARLOG") )
+                    if( EQUAL(pszCompress, "PIXARLOG") &&
+                        GDALGetRasterYSize(hDS) > INT_MAX /
+                            static_cast<int>(sizeof(GUInt16)) /
+                                nSimultaneousBands / GDALGetRasterXSize(hDS) )
                     {
-                        if( GDALGetMetadataItem(GDALGetRasterBand(hDS, 1),
-                                               "BLOCK_OFFSET_0_1", NULL) == NULL )
-                        {
-                            bDoCheckSum = false;
-                        }
+                        bDoCheckSum = false;
+                    }
+                    // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2874
+                    else if( EQUAL(pszCompress, "SGILOG24") &&
+                        GDALGetRasterYSize(hDS) > INT_MAX /
+                            static_cast<int>(sizeof(GUInt32)) /
+                                nSimultaneousBands / GDALGetRasterXSize(hDS) )
+                    {
+                        bDoCheckSum = false;
                     }
                 }
 
@@ -207,6 +212,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             for( int i = 0; i < nBands; i++ )
             {
                 GDALRasterBandH hBand = GDALGetRasterBand(hDS, i+1);
+                CPLDebug("FUZZER", "Checksum band %d: %d,%d,%d,%d",
+                         i+1,0, 0, nXSizeToRead, nYSizeToRead);
                 GDALChecksumImage(hBand, 0, 0, nXSizeToRead, nYSizeToRead);
             }
         }
