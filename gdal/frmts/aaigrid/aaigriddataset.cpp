@@ -66,7 +66,11 @@ namespace {
 
 float DoubleToFloatClamp(double dfValue) {
     if( dfValue <= std::numeric_limits<float>::lowest() )
+#if HAVE_CXX11
         return std::numeric_limits<float>::lowest();
+#else
+        return -std::numeric_limits<float>::max()
+#endif
     if( dfValue >= std::numeric_limits<float>::max() )
         return std::numeric_limits<float>::max();
     return static_cast<float>(dfValue);
