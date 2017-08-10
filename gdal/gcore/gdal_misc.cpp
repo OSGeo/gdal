@@ -2148,6 +2148,13 @@ double CPL_STDCALL GDALDecToPackedDMS( double dfDec )
  * inputs.  A special case has been implemented for corner corner coordinates
  * given in TL, TR, BR, BL order.  So when using this to get a geotransform
  * from 4 corner coordinates, pass them in this order.
+ * 
+ * Starting with GDAL 2.2.2, if bApproxOK = FALSE, the
+ * GDAL_GCPS_TO_GEOTRANSFORM_APPROX_OK configuration option will be read. If
+ * set to YES, then bApproxOK will be overriden with TRUE.
+ * Starting with GDAL 2.2.2, when exact fit is asked, the
+ * GDAL_GCPS_TO_GEOTRANSFORM_APPROX_THRESHOLD configuration option can be set to
+ * give the maximum error threshold in pixel. The default is 0.25.
  *
  * @param nGCPCount the number of GCPs being passed in.
  * @param pasGCPs the list of GCP structures.
@@ -2167,6 +2174,20 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
                         double *padfGeoTransform, int bApproxOK )
 
 {
+    double dfPixelThreshold = 0.25;
+    if( !bApproxOK )
+    {
+        bApproxOK =
+            CPLTestBool(CPLGetConfigOption(
+                            "GDAL_GCPS_TO_GEOTRANSFORM_APPROX_OK", "NO"));
+        if( !bApproxOK )
+        {
+            dfPixelThreshold =
+                CPLAtof(CPLGetConfigOption(
+                    "GDAL_GCPS_TO_GEOTRANSFORM_APPROX_THRESHOLD", "0.25"));
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Recognise a few special cases.                                  */
 /* -------------------------------------------------------------------- */
@@ -2413,8 +2434,8 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
                  + padfGeoTransform[3])
                 - pasGCPs[i].dfGCPY;
 
-            if( std::abs(dfErrorX) > 0.25 * dfPixelSize
-                || std::abs(dfErrorY) > 0.25 * dfPixelSize )
+            if( std::abs(dfErrorX) > dfPixelThreshold * dfPixelSize
+                || std::abs(dfErrorY) > dfPixelThreshold * dfPixelSize )
             {
                 CPLDebug("GDAL", "dfErrorX/dfPixelSize = %.2f, "
                          "dfErrorY/dfPixelSize = %.2f",
