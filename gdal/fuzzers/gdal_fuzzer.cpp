@@ -167,7 +167,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 // Workaround https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2606
                 const char* pszCompress =
                     GDALGetMetadataItem(hDS, "COMPRESSION", "IMAGE_STRUCTURE");
-                if( ((nBYSize == 1 && nYSizeToRead > 1 &&
+                if( pszCompress != NULL &&
+                    ((nBYSize == 1 && nYSizeToRead > 1 &&
                       GDALGetMetadataItem(GDALGetRasterBand(hDS, 1),
                                         "BLOCK_OFFSET_0_1", "TIFF") == NULL) ||
                      nBXSize < GDALGetRasterXSize(hDS)) &&
