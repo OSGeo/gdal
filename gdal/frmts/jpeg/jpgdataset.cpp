@@ -294,7 +294,6 @@ void JPGDatasetCommon::ReadICCProfile()
 
     const vsi_l_offset nCurOffset = VSIFTellL(fpImage);
 
-    int nTotalSize = 0;
     int nChunkCount = -1;
     int anChunkSize[256] = {};
     char *apChunk[256] = {};
@@ -339,6 +338,13 @@ void JPGDatasetCommon::ReadICCProfile()
             // Segment index: 1 bytes
             // Total segments: 1 bytes
             const int nICCChunkLength = nChunkLength - 16;
+            if( nICCChunkLength < 0 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "nICCChunkLength unreasonable: %d", nICCChunkLength);
+                bOk = false;
+                break;
+            }
             const int nICCChunkID = abyChunkHeader[16];
             const int nICCMaxChunkID = abyChunkHeader[17];
 
@@ -370,6 +376,11 @@ void JPGDatasetCommon::ReadICCProfile()
             // Load it.
             apChunk[nICCChunkID - 1] =
                 static_cast<char *>(VSIMalloc(nICCChunkLength));
+            if( apChunk[nICCChunkID - 1] == NULL )
+            {
+                bOk = false;
+                break;
+            }
             anChunkSize[nICCChunkID - 1] = nICCChunkLength;
 
             if( VSIFReadL(apChunk[nICCChunkID - 1], nICCChunkLength, 1,
@@ -383,6 +394,8 @@ void JPGDatasetCommon::ReadICCProfile()
         nChunkLoc += 2 + nChunkLength;
     }
 
+    int nTotalSize = 0;
+
     // Get total size and verify that there are no missing segments.
     if (bOk)
     {
@@ -394,36 +407,60 @@ void JPGDatasetCommon::ReadICCProfile()
                 bOk = false;
                 break;
             }
+            const int nSize = anChunkSize[i];
+            if( nSize < 0 ||
+                nTotalSize > std::numeric_limits<int>::max() - nSize )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "nTotalSize nonsensical");
+                bOk = false;
+                break;
+            }
             nTotalSize += anChunkSize[i];
         }
+    }
+
+    // TODO(schwehr): Can we know what the maximum reasonable size is?
+    if( nTotalSize > 2 << 28 )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "nTotalSize unreasonable: %d", nTotalSize);
+        bOk = false;
     }
 
     // Merge all segments together and set metadata.
     if (bOk && nChunkCount > 0)
     {
         char *pBuffer = static_cast<char *>(VSIMalloc(nTotalSize));
-        char *pBufferPtr = pBuffer;
-        for(int i = 0; i < nChunkCount; i++)
+        if( pBuffer == NULL )
         {
-            memcpy(pBufferPtr, apChunk[i], anChunkSize[i]);
-            pBufferPtr += anChunkSize[i];
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "ICCProfile too large.  nTotalSize: %d", nTotalSize);
         }
+        else
+        {
+            char *pBufferPtr = pBuffer;
+            for(int i = 0; i < nChunkCount; i++)
+            {
+                memcpy(pBufferPtr, apChunk[i], anChunkSize[i]);
+                pBufferPtr += anChunkSize[i];
+            }
 
-        // Escape the profile.
-        char *pszBase64Profile =
-            CPLBase64Encode(nTotalSize, reinterpret_cast<GByte *>(pBuffer));
+            // Escape the profile.
+            char *pszBase64Profile =
+                CPLBase64Encode(nTotalSize, reinterpret_cast<GByte *>(pBuffer));
 
-        // Avoid setting the PAM dirty bit just for that.
-        const int nOldPamFlags = nPamFlags;
+            // Avoid setting the PAM dirty bit just for that.
+            const int nOldPamFlags = nPamFlags;
 
-        // Set ICC profile metadata.
-        SetMetadataItem("SOURCE_ICC_PROFILE", pszBase64Profile,
-                        "COLOR_PROFILE");
+            // Set ICC profile metadata.
+            SetMetadataItem("SOURCE_ICC_PROFILE", pszBase64Profile,
+                            "COLOR_PROFILE");
 
-        nPamFlags = nOldPamFlags;
+            nPamFlags = nOldPamFlags;
 
-        VSIFree(pBuffer);
-        CPLFree(pszBase64Profile);
+            VSIFree(pBuffer);
+            CPLFree(pszBase64Profile);
+        }
     }
 
     for(int i = 0; i < nChunkCount; i++)
@@ -1341,7 +1378,7 @@ CPLErr JPGDataset::LoadScanline( int iLine )
             /* store for all coefficients */
             /* See call to jinit_d_coef_controller() from master_selection() */
             /* in libjpeg */
-            vsi_l_offset nRequiredMemory = 
+            vsi_l_offset nRequiredMemory =
                 static_cast<vsi_l_offset>(sDInfo.image_width) *
                 sDInfo.image_height * sDInfo.num_components *
                 ((sDInfo.data_precision+7)/8);
