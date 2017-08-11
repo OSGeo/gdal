@@ -436,6 +436,10 @@ bool Huffman::GetRange(int& i0, int& i1, int& maxCodeLength) const
   int j = 0;
   while (j < size)    // find the largest stretch of 0's, if any
   {
+    // FIXME? is the type of first (short) appropriate ? Or shouldn't that
+    // check be moved elsewhere
+    if( m_codeTable[j].first < 0 ) // avoids infinite loop
+      return false;
     while (j < size && m_codeTable[j].first > 0) j++;
     int k0 = j;
     while (j < size && m_codeTable[j].first == 0) j++;
