@@ -38,6 +38,7 @@ extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
 int LLVMFuzzerInitialize(int* /*argc*/, char*** /*argv*/)
 {
     CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "1");
+    CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
     return 0;
 }
 
