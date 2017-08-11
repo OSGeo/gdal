@@ -66,6 +66,7 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     CPLSetConfigOption("CPL_TMPDIR", "/tmp");
     CPLSetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", "YES");
     CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "1");
+    CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
     return 0;
 }
 

@@ -75,6 +75,7 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     // to avoid timeout in WMS driver
     CPLSetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST", "YES");
     CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "1");
+    CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
 #ifdef GTIFF_USE_MMAP
     CPLSetConfigOption("GTIFF_USE_MMAP", "YES");
 #endif
