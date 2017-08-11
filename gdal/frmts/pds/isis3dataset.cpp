@@ -2398,6 +2398,13 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
                      "Ignoring StartByte=%d for format=GeoTIFF",
                      1+nSkipBytes);
         }
+        if( osQubeFile == poOpenInfo->pszFilename )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "A ^Core file must be set");
+            delete poDS;
+            return NULL;
+        }
         poDS->m_poExternalDS = reinterpret_cast<GDALDataset *>(
                                 GDALOpen( osQubeFile, poOpenInfo->eAccess ) );
         if( poDS->m_poExternalDS == NULL )
