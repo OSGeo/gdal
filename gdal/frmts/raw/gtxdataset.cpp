@@ -96,6 +96,66 @@ class GTXDataset : public RawDataset
 
 /************************************************************************/
 /* ==================================================================== */
+/*                           GTXRasterBand                              */
+/* ==================================================================== */
+/************************************************************************/
+
+class GTXRasterBand : public RawRasterBand
+{
+  public:
+
+                 GTXRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
+                                 vsi_l_offset nImgOffset, int nPixelOffset,
+                                 int nLineOffset,
+                                 GDALDataType eDataType, int bNativeOrder );
+
+    virtual ~GTXRasterBand();
+
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+};
+
+
+/************************************************************************/
+/*                            GTXRasterBand()                           */
+/************************************************************************/
+
+GTXRasterBand::GTXRasterBand( GDALDataset *poDSIn, int nBandIn,
+                                VSILFILE * fpRawIn, vsi_l_offset nImgOffsetIn,
+                                int nPixelOffsetIn, int nLineOffsetIn,
+                                GDALDataType eDataTypeIn, int bNativeOrderIn ) :
+    RawRasterBand( poDSIn, nBandIn, fpRawIn,
+                   nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn,
+                   eDataTypeIn, bNativeOrderIn, TRUE )
+{
+}
+
+/************************************************************************/
+/*                           ~GTXRasterBand()                           */
+/************************************************************************/
+
+GTXRasterBand::~GTXRasterBand()
+{
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double GTXRasterBand::GetNoDataValue( int *pbSuccess )
+{
+    if( pbSuccess )
+        *pbSuccess = TRUE;
+    int bSuccess = FALSE;
+    double dfNoData = GDALPamRasterBand::GetNoDataValue(&bSuccess);
+    if( bSuccess )
+    {
+        return dfNoData;
+    }
+    return -88.8888;
+}
+
+/************************************************************************/
+/* ==================================================================== */
 /*                              GTXDataset                              */
 /* ==================================================================== */
 /************************************************************************/
@@ -230,13 +290,12 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
-    RawRasterBand *poBand = new RawRasterBand(
+    GTXRasterBand *poBand = new GTXRasterBand(
         poDS, 1, poDS->fpImage,
         (poDS->nRasterYSize-1) * poDS->nRasterXSize*nDTSize + 40,
         nDTSize, poDS->nRasterXSize * -nDTSize,
         eDT,
-        !CPL_IS_LSB, TRUE, FALSE );
-    poBand->SetNoDataValue( -88.8888 );
+        !CPL_IS_LSB );
     poDS->SetBand( 1, poBand );
 
 /* -------------------------------------------------------------------- */
