@@ -358,7 +358,27 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
     if (nbands == 1 && cinfo.num_components != nbands)
         cinfo.out_color_space = JCS_GRAYSCALE;
 
-    int linesize = cinfo.image_width * nbands * ((cinfo.data_precision == 8) ? 1 : 2);
+    const int datasize = ((cinfo.data_precision == 8) ? 1 : 2);
+    if( cinfo.image_width > static_cast<unsigned>(INT_MAX / (nbands * datasize)) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG decompress buffer overflow");
+        return CE_Failure;
+    }
+    int linesize = cinfo.image_width * nbands * datasize;
+
+    // We have a mismatch between the real and the declared data format
+    // warn and fail if output buffer is too small
+    if (linesize > static_cast<int>(INT_MAX / cinfo.image_height)) {
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG decompress buffer overflow");
+        return CE_Failure;
+    }
+    if (linesize*cinfo.image_height != dst.size) {
+        CPLError(CE_Warning, CPLE_AppDefined, "MRF: read JPEG size is wrong");
+        if (linesize*cinfo.image_height > dst.size) {
+            CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG decompress buffer overflow");
+            return CE_Failure;
+        }
+    }
 
     struct jpeg_progress_mgr sJProgress;
     cinfo.progress = &sJProgress;
@@ -366,16 +386,6 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
 
     jpeg_start_decompress(&cinfo);
 
-    // We have a mismatch between the real and the declared data format
-    // warn and fail if output buffer is too small
-    if (linesize*cinfo.image_height != dst.size) {
-        CPLError(CE_Warning, CPLE_AppDefined, "MRF: read JPEG size is wrong");
-        if (linesize*cinfo.image_height > dst.size) {
-            CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG decompress buffer overflow");
-            jpeg_destroy_decompress(&cinfo);
-            return CE_Failure;
-        }
-    }
     // Decompress, two lines at a time is what libjpeg does
     while (cinfo.output_scanline < cinfo.image_height) {
         char *rp[2];
