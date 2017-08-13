@@ -1214,7 +1214,6 @@ void GDALRegister_SAFE()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Sentinel-1 SAR SAFE Product" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_safe.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "NO" );
 
     poDriver->pfnOpen = SAFEDataset::Open;
     poDriver->pfnIdentify = SAFEDataset::Identify;
