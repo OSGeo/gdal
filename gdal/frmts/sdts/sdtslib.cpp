@@ -131,6 +131,8 @@ int SDTSModId::Set( DDFField *poField )
             return FALSE;
         int nBytesRemaining;
         pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
+        if( pachData == NULL )
+            return FALSE;
         snprintf( szModule, sizeof(szModule), "%s",
                  poSF->ExtractStringData( pachData, nBytesRemaining, NULL) );
 
