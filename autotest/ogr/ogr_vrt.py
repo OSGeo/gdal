@@ -3592,6 +3592,22 @@ def ogr_vrt_40():
     return 'success'
 
 ###############################################################################
+# Test GetExtent() on erroneous definition
+
+def ogr_vrt_41():
+
+    ds = ogr.Open("""<OGRVRTDataSource>
+  <OGRVRTLayer name="test">
+    <SrcDataSource>/i_dont/exist</SrcDataSource>
+  </OGRVRTLayer>
+</OGRVRTDataSource>""")
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_handler():
+        lyr.GetExtent()
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_vrt_cleanup():
@@ -3659,6 +3675,7 @@ gdaltest_list = [
     ogr_vrt_38,
     ogr_vrt_39,
     ogr_vrt_40,
+    ogr_vrt_41,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
