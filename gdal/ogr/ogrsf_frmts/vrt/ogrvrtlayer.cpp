@@ -1111,7 +1111,9 @@ error:
     CPLFree( pszSrcDSName );
     poFeatureDefn->Release();
     poFeatureDefn = new OGRFeatureDefn( osName );
+    poFeatureDefn->SetGeomType(wkbNone);
     poFeatureDefn->Reference();
+    apoGeomFieldProps.clear();
     return FALSE;
 }
 
