@@ -219,6 +219,9 @@ char **SDTSScanModuleReferences( DDFModule * poModule, const char * pszFName )
                     const char *pszModName
                         = poField->GetSubfieldData(poMODN, NULL, i);
 
+                    if( pszModName == NULL || strlen(pszModName) < 4 )
+                        continue;
+
                     char szName[5];
                     strncpy( szName, pszModName, 4 );
                     szName[4] = '\0';
