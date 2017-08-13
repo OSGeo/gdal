@@ -785,9 +785,9 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                            poGDS->poParentDS->nBlockYSize != nParentBlockYSize);
     if( !bIsSingleStripAsSplit )
     {
-        nBlocksPerRow = DIV_ROUND_UP(poGDS->poParentDS->nRasterXSize,
+        int l_nBlocksPerRow = DIV_ROUND_UP(poGDS->poParentDS->nRasterXSize,
                                                poGDS->poParentDS->nBlockXSize);
-        nBlockId = nBlockYOff * nBlocksPerRow + nBlockXOff;
+        nBlockId = nBlockYOff * l_nBlocksPerRow + nBlockXOff;
     }
     if( poGDS->poParentDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
     {
