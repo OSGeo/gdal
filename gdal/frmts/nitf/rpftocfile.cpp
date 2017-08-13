@@ -621,12 +621,15 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
             if( VSIStatL( frameEntry->fullFilePath, &sStatBuf ) != 0 )
             {
 #if !defined(_WIN32) && !defined(_WIN32_CE)
-                char* c = frameEntry->fullFilePath + strlen(subdir)+1;
-                while(*c)
+                if( strlen(frameEntry->fullFilePath) > strlen(subdir) )
                 {
-                    if (*c >= 'A' && *c <= 'Z')
-                        *c += 'a' - 'A';
-                    c++;
+                    char* c = frameEntry->fullFilePath + strlen(subdir)+1;
+                    while(*c)
+                    {
+                        if (*c >= 'A' && *c <= 'Z')
+                            *c += 'a' - 'A';
+                        c++;
+                    }
                 }
                 if( VSIStatL( frameEntry->fullFilePath, &sStatBuf ) != 0 )
 #endif
