@@ -994,7 +994,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         // Read corner coordinates
         pszTemp = strstr( pszGeomRecord, CORNER_UPPER_LEFT );
-        if ( pszTemp && !EQUAL( pszTemp, "" ) )
+        if ( pszTemp && !EQUAL( pszTemp, "" ) &&
+             strlen(pszTemp) >= strlen( CORNER_UPPER_LEFT ) +
+                                28 + CORNER_VALUE_SIZE + 1 )
         {
             pszTemp += strlen( CORNER_UPPER_LEFT ) + 28;
             dfULX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
@@ -1003,7 +1005,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         pszTemp = strstr( pszGeomRecord, CORNER_UPPER_RIGHT );
-        if ( pszTemp && !EQUAL( pszTemp, "" ) )
+        if ( pszTemp && !EQUAL( pszTemp, "" ) &&
+             strlen(pszTemp) >= strlen( CORNER_UPPER_RIGHT ) +
+                                28 + CORNER_VALUE_SIZE + 1 )
         {
             pszTemp += strlen( CORNER_UPPER_RIGHT ) + 28;
             dfURX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
@@ -1012,7 +1016,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         pszTemp = strstr( pszGeomRecord, CORNER_LOWER_LEFT );
-        if ( pszTemp && !EQUAL( pszTemp, "" ) )
+        if ( pszTemp && !EQUAL( pszTemp, "" ) &&
+             strlen(pszTemp) >= strlen( CORNER_LOWER_LEFT ) +
+                                28 + CORNER_VALUE_SIZE + 1 )
         {
             pszTemp += strlen( CORNER_LOWER_LEFT ) + 28;
             dfLLX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
@@ -1021,7 +1027,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         pszTemp = strstr( pszGeomRecord, CORNER_LOWER_RIGHT );
-        if ( pszTemp && !EQUAL( pszTemp, "" ) )
+        if ( pszTemp && !EQUAL( pszTemp, "" ) &&
+             strlen(pszTemp) >= strlen( CORNER_LOWER_RIGHT ) +
+                                28 + CORNER_VALUE_SIZE + 1 )
         {
             pszTemp += strlen( CORNER_LOWER_RIGHT ) + 28;
             dfLRX = CPLScanDouble( pszTemp, CORNER_VALUE_SIZE );
