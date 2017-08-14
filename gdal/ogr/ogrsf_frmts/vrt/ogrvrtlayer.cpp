@@ -1113,6 +1113,8 @@ error:
     poFeatureDefn = new OGRFeatureDefn( osName );
     poFeatureDefn->SetGeomType(wkbNone);
     poFeatureDefn->Reference();
+    for( size_t i = 0; i < apoGeomFieldProps.size(); i++ )
+        delete apoGeomFieldProps[i];
     apoGeomFieldProps.clear();
     return FALSE;
 }
