@@ -362,6 +362,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
     if( cinfo.image_width > static_cast<unsigned>(INT_MAX / (nbands * datasize)) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG decompress buffer overflow");
+        jpeg_destroy_decompress(&cinfo);
         return CE_Failure;
     }
     int linesize = cinfo.image_width * nbands * datasize;
@@ -370,12 +371,14 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
     // warn and fail if output buffer is too small
     if (linesize > static_cast<int>(INT_MAX / cinfo.image_height)) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG decompress buffer overflow");
+        jpeg_destroy_decompress(&cinfo);
         return CE_Failure;
     }
     if (linesize*cinfo.image_height != dst.size) {
         CPLError(CE_Warning, CPLE_AppDefined, "MRF: read JPEG size is wrong");
         if (linesize*cinfo.image_height > dst.size) {
             CPLError(CE_Failure, CPLE_AppDefined, "MRF: JPEG decompress buffer overflow");
+            jpeg_destroy_decompress(&cinfo);
             return CE_Failure;
         }
     }
