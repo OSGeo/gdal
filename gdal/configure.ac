@@ -2539,10 +2539,11 @@ if test "$with_openjpeg" = "no" ; then
 
 elif test "$with_openjpeg" = "yes" -o "$with_openjpeg" = "" ; then
 
-  AC_CHECK_HEADERS([openjpeg-2.0/openjpeg.h])
-  if test "$ac_cv_header_openjpeg_2_0_openjpeg_h" = "yes"; then
+  AC_CHECK_HEADERS([openjpeg-2.2/openjpeg.h])
+  if test "$ac_cv_header_openjpeg_2_2_openjpeg_h" = "yes"; then
     AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,)
     if test "$HAVE_OPENJPEG" = "yes"; then
+        OPENJPEG_VERSION=20200
         LIBS="-lopenjp2 $LIBS"
     fi
   else
@@ -2552,6 +2553,14 @@ elif test "$with_openjpeg" = "yes" -o "$with_openjpeg" = "" ; then
         if test "$HAVE_OPENJPEG" = "yes"; then
             OPENJPEG_VERSION=20100
             LIBS="-lopenjp2 $LIBS"
+        fi
+    else
+        AC_CHECK_HEADERS([openjpeg-2.0/openjpeg.h])
+        if test "$ac_cv_header_openjpeg_2_0_openjpeg_h" = "yes"; then
+            AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,)
+            if test "$HAVE_OPENJPEG" = "yes"; then
+                LIBS="-lopenjp2 $LIBS"
+            fi
         fi
     fi
   fi
@@ -2563,8 +2572,11 @@ else
   elif test -r $with_openjpeg/include/openjpeg-2.1/openjpeg.h ; then
     OPENJPEG_VERSION=20100
     EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
+  elif test -r $with_openjpeg/include/openjpeg-2.2/openjpeg.h ; then
+    OPENJPEG_VERSION=20200
+    EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
   else
-    AC_MSG_ERROR([openjpeg.h not found in $with_openjpeg/include/openjpeg-2.0 or $with_openjpeg/include/openjpeg-2.1])
+    AC_MSG_ERROR([openjpeg.h not found in $with_openjpeg/include/openjpeg-2.0 or $with_openjpeg/include/openjpeg-2.1 or $with_openjpeg/include/openjpeg-2.2])
   fi
 
   AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,-L$with_openjpeg/lib)
