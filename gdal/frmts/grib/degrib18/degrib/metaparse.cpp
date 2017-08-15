@@ -1277,11 +1277,17 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
       case GS4_ANALYSIS: /* 4.0 */
          break;
       case GS4_ENSEMBLE: /* 4.1 */
+         if (ns4 < 37) {
+            return -1;
+         }
          meta->pds2.sect4.typeEnsemble = (uChar) is4[34];
          meta->pds2.sect4.perturbNum = (uChar) is4[35];
          meta->pds2.sect4.numberFcsts = (uChar) is4[36];
          break;
       case GS4_ENSEMBLE_STAT: /* 4.1 */
+         if (ns4 < 46) {
+            return -1;
+         }
          meta->pds2.sect4.typeEnsemble = (uChar) is4[34];
          meta->pds2.sect4.perturbNum = (uChar) is4[35];
          meta->pds2.sect4.numberFcsts = (uChar) is4[36];
@@ -1320,6 +1326,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             }
             meta->pds2.sect4.Interval = (sect4_IntervalType *) temp_ptr;
             meta->pds2.sect4.numMissing = is4[45];
+            if (ns4 < 57 + (meta->pds2.sect4.numInterval-1)*12+1) {
+                return -1;
+            }
             for (i = 0; i < meta->pds2.sect4.numInterval; i++) {
                meta->pds2.sect4.Interval[i].processID =
                      (uChar) is4[49 + i * 12];
@@ -1341,10 +1350,16 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          }
          break;
       case GS4_DERIVED: /* 4.2 */
+         if (ns4 < 36) {
+            return -1;
+         }
          meta->pds2.sect4.derivedFcst = (uChar) is4[34];
          meta->pds2.sect4.numberFcsts = (uChar) is4[35];
          break;
       case GS4_DERIVED_INTERVAL: /* 4.12 */
+         if (ns4 < 45) {
+            return -1;
+         }
          meta->pds2.sect4.derivedFcst = (uChar) is4[34];
          meta->pds2.sect4.numberFcsts = (uChar) is4[35];
 
@@ -1383,6 +1398,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             }
             meta->pds2.sect4.Interval = (sect4_IntervalType *) temp_ptr;
             meta->pds2.sect4.numMissing = is4[44];
+            if (ns4 < 56 + (meta->pds2.sect4.numInterval-1)*12+1) {
+                return -1;
+            }
             for (i = 0; i < meta->pds2.sect4.numInterval; i++) {
                meta->pds2.sect4.Interval[i].processID =
                      (uChar) is4[48 + i * 12];
@@ -1404,6 +1422,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          }
          break;
       case GS4_STATISTIC: /* 4.8 */
+         if (ns4 < 43) {
+            return -1;
+         }
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[34], is4[36],
                         is4[37], is4[38], is4[39], is4[40]) != 0) {
             msg = errSprintf (NULL);
@@ -1439,6 +1460,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             }
             meta->pds2.sect4.Interval = (sect4_IntervalType *) temp_ptr;
             meta->pds2.sect4.numMissing = is4[42];
+            if (ns4 < 54 + (meta->pds2.sect4.numInterval-1)*12+1) {
+                return -1;
+            }
             for (i = 0; i < meta->pds2.sect4.numInterval; i++) {
                meta->pds2.sect4.Interval[i].processID =
                      (uChar) is4[46 + i * 12];
@@ -1460,6 +1484,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          }
          break;
       case GS4_PERCENTILE: /* 4.10 */
+         if (ns4 < 44) {
+            return -1;
+         }
          meta->pds2.sect4.percentile = is4[34];
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[35], is4[37],
                         is4[38], is4[39], is4[40], is4[41]) != 0) {
@@ -1496,6 +1523,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             }
             meta->pds2.sect4.Interval = (sect4_IntervalType *) temp_ptr;
             meta->pds2.sect4.numMissing = is4[43];
+            if (ns4 < 55 + (meta->pds2.sect4.numInterval-1)*12+1) {
+                return -1;
+            }
             for (i = 0; i < meta->pds2.sect4.numInterval; i++) {
                meta->pds2.sect4.Interval[i].processID =
                      (uChar) is4[47 + i * 12];
@@ -1517,6 +1547,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          }
          break;
       case GS4_PROBABIL_PNT: /* 4.5 */
+         if (ns4 < 44) {
+            return -1;
+         }
          meta->pds2.sect4.foreProbNum = (uChar) is4[34];
          meta->pds2.sect4.numForeProbs = (uChar) is4[35];
          meta->pds2.sect4.probType = (uChar) is4[36];
@@ -1526,6 +1559,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          meta->pds2.sect4.upperLimit.value = is4[43];
          break;
       case GS4_PROBABIL_TIME: /* 4.9 */
+         if (ns4 < 56) {
+            return -1;
+         }
          meta->pds2.sect4.foreProbNum = (uChar) is4[34];
          meta->pds2.sect4.numForeProbs = (uChar) is4[35];
          meta->pds2.sect4.probType = (uChar) is4[36];
@@ -1564,6 +1600,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          }
          meta->pds2.sect4.Interval = (sect4_IntervalType *) temp_ptr;
          meta->pds2.sect4.numMissing = is4[55];
+         if (ns4 < 67 + (meta->pds2.sect4.numInterval-1)*12+1) {
+            return -1;
+         }
          for (i = 0; i < meta->pds2.sect4.numInterval; i++) {
             meta->pds2.sect4.Interval[i].processID = (uChar) is4[59 + i * 12];
             meta->pds2.sect4.Interval[i].incrType = (uChar) is4[60 + i * 12];
