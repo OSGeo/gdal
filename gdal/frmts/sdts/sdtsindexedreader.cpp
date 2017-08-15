@@ -38,7 +38,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 SDTSIndexedReader::SDTSIndexedReader() :
-    nIndexSize(0),
+    nIndexSize(-1),
     papoFeatures(NULL),
     iCurrentFeature(0)
 {}
@@ -68,7 +68,7 @@ SDTSIndexedReader::~SDTSIndexedReader()
 int SDTSIndexedReader::IsIndexed()
 
 {
-    return nIndexSize != 0;
+    return nIndexSize >= 0;
 }
 
 /************************************************************************/
@@ -119,7 +119,7 @@ void SDTSIndexedReader::ClearIndex()
 SDTSFeature *SDTSIndexedReader::GetNextFeature()
 
 {
-    if( nIndexSize == 0 )
+    if( nIndexSize < 0 )
         return GetNextRawFeature();
 
     while( iCurrentFeature < nIndexSize )
@@ -155,7 +155,7 @@ SDTSFeature *SDTSIndexedReader::GetNextFeature()
 SDTSFeature *SDTSIndexedReader::GetIndexedFeatureRef( int iRecordId )
 
 {
-    if( nIndexSize == 0 )
+    if( nIndexSize < 0 )
         FillIndex();
 
     if( iRecordId < 0 || iRecordId >= nIndexSize )
@@ -178,10 +178,11 @@ SDTSFeature *SDTSIndexedReader::GetIndexedFeatureRef( int iRecordId )
 void SDTSIndexedReader::FillIndex()
 
 {
-    if( nIndexSize != 0 )
+    if( nIndexSize >= 0 )
         return;
 
     Rewind();
+    nIndexSize = 0;
 
     SDTSFeature *poFeature = NULL;
     while( (poFeature = GetNextRawFeature()) != NULL )
@@ -259,7 +260,7 @@ char ** SDTSIndexedReader::ScanModuleReferences( const char * pszFName )
 void SDTSIndexedReader::Rewind()
 
 {
-    if( nIndexSize != 0 )
+    if( nIndexSize >= 0 )
         iCurrentFeature = 0;
     else
         oDDFModule.Rewind();
