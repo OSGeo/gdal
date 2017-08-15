@@ -608,7 +608,7 @@
         </loop>
     </tre>
 
-    <tre name="PIAPRD" minlength="201" maxlength="63759" location="image">
+    <tre name="PIAPRD" minlength="201" maxlength="63759" location="file">
         <field name="ACCESSID" length="64" type="string"/>
         <field name="FMCONTROL" length="32" type="string"/>
         <field name="SUBDET" length="1" type="string"/>
