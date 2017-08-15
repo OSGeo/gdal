@@ -25166,19 +25166,19 @@ $as_echo "$as_me: OpenJPEG (JPEG2000) support disabled." >&6;}
 
 elif test "$with_openjpeg" = "yes" -o "$with_openjpeg" = "" ; then
 
-  for ac_header in openjpeg-2.0/openjpeg.h
+  for ac_header in openjpeg-2.2/openjpeg.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "openjpeg-2.0/openjpeg.h" "ac_cv_header_openjpeg_2_0_openjpeg_h" "$ac_includes_default"
-if test "x$ac_cv_header_openjpeg_2_0_openjpeg_h" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "openjpeg-2.2/openjpeg.h" "ac_cv_header_openjpeg_2_2_openjpeg_h" "$ac_includes_default"
+if test "x$ac_cv_header_openjpeg_2_2_openjpeg_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_OPENJPEG_2_0_OPENJPEG_H 1
+#define HAVE_OPENJPEG_2_2_OPENJPEG_H 1
 _ACEOF
 
 fi
 
 done
 
-  if test "$ac_cv_header_openjpeg_2_0_openjpeg_h" = "yes"; then
+  if test "$ac_cv_header_openjpeg_2_2_openjpeg_h" = "yes"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_stream_set_user_data_length in -lopenjp2" >&5
 $as_echo_n "checking for opj_stream_set_user_data_length in -lopenjp2... " >&6; }
 if ${ac_cv_lib_openjp2_opj_stream_set_user_data_length+:} false; then :
@@ -25222,6 +25222,7 @@ else
 fi
 
     if test "$HAVE_OPENJPEG" = "yes"; then
+        OPENJPEG_VERSION=20200
         LIBS="-lopenjp2 $LIBS"
     fi
   else
@@ -25284,6 +25285,66 @@ fi
             OPENJPEG_VERSION=20100
             LIBS="-lopenjp2 $LIBS"
         fi
+    else
+        for ac_header in openjpeg-2.0/openjpeg.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "openjpeg-2.0/openjpeg.h" "ac_cv_header_openjpeg_2_0_openjpeg_h" "$ac_includes_default"
+if test "x$ac_cv_header_openjpeg_2_0_openjpeg_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_OPENJPEG_2_0_OPENJPEG_H 1
+_ACEOF
+
+fi
+
+done
+
+        if test "$ac_cv_header_openjpeg_2_0_openjpeg_h" = "yes"; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_stream_set_user_data_length in -lopenjp2" >&5
+$as_echo_n "checking for opj_stream_set_user_data_length in -lopenjp2... " >&6; }
+if ${ac_cv_lib_openjp2_opj_stream_set_user_data_length+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lopenjp2  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char opj_stream_set_user_data_length ();
+int
+main ()
+{
+return opj_stream_set_user_data_length ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_openjp2_opj_stream_set_user_data_length=yes
+else
+  ac_cv_lib_openjp2_opj_stream_set_user_data_length=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openjp2_opj_stream_set_user_data_length" >&5
+$as_echo "$ac_cv_lib_openjp2_opj_stream_set_user_data_length" >&6; }
+if test "x$ac_cv_lib_openjp2_opj_stream_set_user_data_length" = xyes; then :
+  HAVE_OPENJPEG=yes
+else
+  HAVE_OPENJPEG=no
+fi
+
+            if test "$HAVE_OPENJPEG" = "yes"; then
+                LIBS="-lopenjp2 $LIBS"
+            fi
+        fi
     fi
   fi
 else
@@ -25294,8 +25355,11 @@ else
   elif test -r $with_openjpeg/include/openjpeg-2.1/openjpeg.h ; then
     OPENJPEG_VERSION=20100
     EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
+  elif test -r $with_openjpeg/include/openjpeg-2.2/openjpeg.h ; then
+    OPENJPEG_VERSION=20200
+    EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
   else
-    as_fn_error $? "openjpeg.h not found in $with_openjpeg/include/openjpeg-2.0 or $with_openjpeg/include/openjpeg-2.1" "$LINENO" 5
+    as_fn_error $? "openjpeg.h not found in $with_openjpeg/include/openjpeg-2.0 or $with_openjpeg/include/openjpeg-2.1 or $with_openjpeg/include/openjpeg-2.2" "$LINENO" 5
   fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_stream_set_user_data_length in -lopenjp2" >&5
