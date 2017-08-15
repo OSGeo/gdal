@@ -404,7 +404,8 @@ static int TransferInt (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
             ScanIndex2XY (i, &x, &y, *scan, nx, ny);
             /* ScanIndex returns value as if scan was 0100(0000) */
             curIndex = (x - 1) + (y - 1) * nx;
-            myAssert (curIndex < nd2x3);
+            if( curIndex < 0 || curIndex >= nd2x3 )
+                return 1;
             ib[curIndex] = bmap[i];
             /* Check if we are supposed to insert xmissp into the field */
             if ((iclean != 0) && (ib[curIndex] == 0)) {
@@ -418,7 +419,8 @@ static int TransferInt (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
             ScanIndex2XY (i, &x, &y, *scan, nx, ny);
             /* ScanIndex returns value as if scan was 0100(0000) */
             curIndex = (x - 1) + (y - 1) * nx;
-            myAssert (curIndex < nd2x3);
+            if( curIndex < 0 || curIndex >= nd2x3 )
+                return 1;
             iain[curIndex] = (sInt4)fld[i];
          }
       }
