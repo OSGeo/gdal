@@ -57,9 +57,9 @@ int main()
 
 In Python:
 \code
-    from osgeo import gdal, gdalconst
+    from osgeo import gdal
 
-    dataset = gdal.Open(filename, gdalconst.GA_ReadOnly)
+    dataset = gdal.Open(filename, gdal.GA_ReadOnly)
     if not dataset:
         ...
 \endcode
@@ -297,7 +297,7 @@ In Python:
     scanline = band.ReadRaster(xoff=0, yoff=0,
                                xsize=band.XSize, ysize=1,
                                buf_xsize=band.XSize, buf_ysize=1,
-                               buf_type=gdalconst.GDT_Float32)
+                               buf_type=gdal.GDT_Float32)
 \endcode
 
 Note that the returned scanline is of type string, and contains
