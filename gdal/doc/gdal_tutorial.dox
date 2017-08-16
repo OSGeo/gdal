@@ -57,11 +57,10 @@ int main()
 
 In Python:
 \code
-    import gdal
-    from gdalconst import *
+    from osgeo import gdal
 
-    dataset = gdal.Open( filename, GA_ReadOnly )
-    if dataset is None:
+    dataset = gdal.Open(filename, gdal.GA_ReadOnly)
+    if not dataset:
         ...
 \endcode
 
@@ -155,16 +154,19 @@ In C:
 
 In Python:
 \code
-    print 'Driver: ', dataset.GetDriver().ShortName,'/', \
-          dataset.GetDriver().LongName
-    print 'Size is ',dataset.RasterXSize,'x',dataset.RasterYSize, \
-          'x',dataset.RasterCount
-    print 'Projection is ',dataset.GetProjection()
+    print("Driver: {}/{}".format(dataset.GetDriver().ShortName,
+                                 dataset.GetDriver().LongName))
+
+    print("Size is {} x {} x {}".format(dataset.RasterXSize,
+                                        dataset.RasterYSize,
+                                        dataset.RasterCount))
+
+    print("Projection is {}".format(dataset.GetProjection()))
 
     geotransform = dataset.GetGeoTransform()
-    if not geotransform is None:
-	print 'Origin = (',geotransform[0], ',',geotransform[3],')'
-	print 'Pixel Size = (',geotransform[1], ',',geotransform[5],')'
+    if geotransform:
+        print("Origin = ({}, {})".format(geotransform[0], geotransform[3]))
+        print("Pixel Size = ({}, {})".format(geotransform[1], geotransform[5]))
 \endcode
 
 \section gdal_tutorial_band Fetching a Raster Band
@@ -238,22 +240,21 @@ In C:
 
 In Python (note several bindings are missing):
 \code
-	band = dataset.GetRasterBand(1)
+    band = dataset.GetRasterBand(1)
+    print("Band Type={}".format(gdal.GetDataTypeName(band.DataType)))
+          
+    min = band.GetMinimum()
+    max = band.GetMaximum()
+    if not min or not max:
+        (min,max) = band.ComputeRasterMinMax(True)
+    print("Min={:.3f}, Max={:.3f}".format(min,max))
+          
+    if band.GetOverviewCount() > 0:
+        print("Band has {} overviews".format(band.GetOverviewCount()))
+          
+    if band.GetRasterColorTable():
+        print("Band has a color table with {} entries".format(band.GetRasterColorTable().GetCount()))
 
-	print 'Band Type=',gdal.GetDataTypeName(band.DataType)
-
-	min = band.GetMinimum()
-	max = band.GetMaximum()
-	if min is None or max is None:
-	    (min,max) = band.ComputeRasterMinMax(1)
-	print 'Min=%.3f, Max=%.3f' % (min,max)
-
-	if band.GetOverviewCount() > 0:
-	    print 'Band has ', band.GetOverviewCount(), ' overviews.'
-
-        if not band.GetRasterColorTable() is None:
-	    print 'Band has a color table with ', \
-	    band.GetRasterColorTable().GetCount(), ' entries.'
 \endcode
 
 \section gdal_tutorial_read Reading Raster Data
@@ -293,8 +294,10 @@ The pafScanline buffer should be freed with CPLFree() when it is no longer used.
 In Python:
 
 \code
-  	scanline = band.ReadRaster( 0, 0, band.XSize, 1, \
-                                     band.XSize, 1, GDT_Float32 )
+    scanline = band.ReadRaster(xoff=0, yoff=0,
+                               xsize=band.XSize, ysize=1,
+                               buf_xsize=band.XSize, buf_ysize=1,
+                               buf_type=gdal.GDT_Float32)
 \endcode
 
 Note that the returned scanline is of type string, and contains
@@ -417,15 +420,15 @@ In C:
 In Python:
 
 \code
-    format = "GTiff"
-    driver = gdal.GetDriverByName( format )
+    fileformat = "GTiff"
+    driver = gdal.GetDriverByName(fileformat)
     metadata = driver.GetMetadata()
-    if metadata.has_key(gdal.DCAP_CREATE) \
-       and metadata[gdal.DCAP_CREATE] == 'YES':
-        print 'Driver %s supports Create() method.' % format
-    if metadata.has_key(gdal.DCAP_CREATECOPY) \
-       and metadata[gdal.DCAP_CREATECOPY] == 'YES':
-        print 'Driver %s supports CreateCopy() method.' % format
+
+    if metadata.get(gdal.DCAP_CREATE) == "YES":
+        print("Driver {} supports Create() method.".format(fileformat))
+        
+    if metadata.get(gdal.DCAP_CREATE) == "YES":
+        print("Driver {} supports CreateCopy() method.".format(fileformat))
 \endcode
 
 Note that a number of drivers are read-only and won't support Create()
@@ -473,8 +476,8 @@ In C:
 In Python:
 
 \code
-    src_ds = gdal.Open( src_filename )
-    dst_ds = driver.CreateCopy( dst_filename, src_ds, 0 )
+    src_ds = gdal.Open(src_filename)
+    dst_ds = driver.CreateCopy(dst_filename, src_ds, strict=0)
 
     # Once we're done, close properly the dataset
     dst_ds = None
@@ -531,9 +534,9 @@ In C:
 In Python:
 
 \code
-    src_ds = gdal.Open( src_filename )
-    dst_ds = driver.CreateCopy( dst_filename, src_ds, 0,
-                                [ 'TILED=YES', 'COMPRESS=PACKBITS' ] )
+    src_ds = gdal.Open(src_filename)
+    dst_ds = driver.CreateCopy(dst_filename, src_ds, strict=0,
+                               options=["TILED=YES", "COMPRESS=PACKBITS"])
 
     # Once we're done, close properly the dataset
     dst_ds = None
@@ -570,7 +573,8 @@ In C:
 In Python:
 
 \code
-    dst_ds = driver.Create( dst_filename, 512, 512, 1, gdal.GDT_Byte )
+    dst_ds = driver.Create(dst_filename, xsize=512, ysize=512,
+                           bands=1, eType=gdal.GDT_Byte)
 \endcode
 
 Once the dataset is successfully created, all appropriate metadata and raster
@@ -632,18 +636,17 @@ In C:
 In Python:
 
 \code
-    import osr
+    from osgeo import osr
     import numpy
 
-    dst_ds.SetGeoTransform( [ 444720, 30, 0, 3751320, 0, -30 ] )
-
+    dst_ds.SetGeoTransform([444720, 30, 0, 3751320, 0, -30])
     srs = osr.SpatialReference()
-    srs.SetUTM( 11, 1 )
-    srs.SetWellKnownGeogCS( 'NAD27' )
-    dst_ds.SetProjection( srs.ExportToWkt() )
+    srs.SetUTM(11, 1)
+    srs.SetWellKnownGeogCS("NAD27")
+    dst_ds.SetProjection(srs.ExportToWkt())
 
-    raster = numpy.zeros( (512, 512), dtype=numpy.uint8 )
-    dst_ds.GetRasterBand(1).WriteArray( raster )
+    raster = numpy.zeros((512, 512), dtype=numpy.uint8)
+    dst_ds.GetRasterBand(1).WriteArray(raster)
 
     # Once we're done, close properly the dataset
     dst_ds = None
