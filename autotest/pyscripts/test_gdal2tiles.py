@@ -62,6 +62,11 @@ def test_gdal2tiles_py_simple():
 
     ds = None
 
+    for filename in ['googlemaps.html', 'leaflet.html', 'openlayers.html', 'tilemapresource.xml'] :
+        if not os.path.exists('tmp/out_gdal2tiles_smallworld/' + filename):
+            gdaltest.post_reason('%s missing' % filename)
+            return 'fail'
+
     return 'success'
 
 
