@@ -1956,13 +1956,25 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
             oWK.papanBandSrcValid = NULL;
         }
 
+
+/* -------------------------------------------------------------------- */
+/*      If there's just a single band, then transfer                    */
+/*      papanBandSrcValid[0] as panUnifiedSrcValid.                     */
+/* -------------------------------------------------------------------- */
+        if( oWK.papanBandSrcValid != NULL && psOptions->nBandCount == 1 )
+        {
+            oWK.panUnifiedSrcValid = oWK.papanBandSrcValid[0];
+            CPLFree( oWK.papanBandSrcValid );
+            oWK.papanBandSrcValid = NULL;
+        }
+
 /* -------------------------------------------------------------------- */
 /*      If UNIFIED_SRC_NODATA is set, then compute a unified input      */
 /*      pixel mask if and only if all bands nodata is true.  That       */
 /*      is, we only treat a pixel as nodata if all bands match their    */
 /*      respective nodata values.                                       */
 /* -------------------------------------------------------------------- */
-        if( oWK.papanBandSrcValid != NULL &&
+        else if( oWK.papanBandSrcValid != NULL &&
             CPLFetchBool( psOptions->papszWarpOptions, "UNIFIED_SRC_NODATA",
                           false )
             && eErr == CE_None )
