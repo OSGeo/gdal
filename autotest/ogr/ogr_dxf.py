@@ -2512,6 +2512,20 @@ def ogr_dxf_35():
     return 'success'
 
 ###############################################################################
+# Test reading files with only INSERT content (#7006)
+
+def ogr_dxf_36():
+
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
+    ds = ogr.Open('data/insert_only.dxf')
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 5:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -2559,6 +2573,7 @@ gdaltest_list = [
     ogr_dxf_33,
     ogr_dxf_34,
     ogr_dxf_35,
+    ogr_dxf_36,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
