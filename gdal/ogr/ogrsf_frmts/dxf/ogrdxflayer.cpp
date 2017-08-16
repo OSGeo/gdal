@@ -2570,6 +2570,17 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
                           szLineBuf );
             }
         }
+
+        // If there are no more features, but we do still have pending features
+        // (for example, after an INSERT), return the first pending feature.
+        if ( poFeature == NULL && !apoPendingFeatures.empty() )
+        {
+            poFeature = apoPendingFeatures.front();
+            apoPendingFeatures.pop();
+
+            poFeature->SetFID( iNextFID++ );
+            return poFeature;
+        }
     }
 
 /* -------------------------------------------------------------------- */
