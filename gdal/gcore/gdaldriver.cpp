@@ -83,6 +83,21 @@ GDALDriver::~GDALDriver()
 }
 
 /************************************************************************/
+/*                         GDALCreateDriver()                           */
+/************************************************************************/
+
+/**
+ * \brief Create a GDALDriver.
+ *
+ * Creates a driver in the GDAL heap.
+ */
+
+GDALDriverH CPL_STDCALL GDALCreateDriver()
+{
+    return new GDALDriver();
+}
+
+/************************************************************************/
 /*                         GDALDestroyDriver()                          */
 /************************************************************************/
 
