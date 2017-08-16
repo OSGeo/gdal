@@ -371,7 +371,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             double dfRatio = 0.0;
 
             if( (nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) == 40 )
-                dfRatio = CPLAtof(szLineBuf) / 100.0;
+                dfRatio = CPLAtof(szLineBuf);
             else
                 break;
 
@@ -412,6 +412,14 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 
             const double dfRotation =
                 -1 * atan2( dfMajorY, dfMajorX ) * 180 / M_PI;
+
+            // The start and end angles are stored as circular angles. However,
+            // approximateArcAngles is expecting elliptical angles (what AutoCAD
+            // calls "parameters"), so let's transform them.
+            dfStartAngle = 180.0 * floor ( ( dfStartAngle + 90 ) / 180 ) +
+                    atan( ( 1.0 / dfRatio ) * tan( dfStartAngle * M_PI / 180 ) ) * 180 / M_PI;
+            dfEndAngle = 180.0 * floor ( ( dfEndAngle + 90 ) / 180 ) +
+                    atan( ( 1.0 / dfRatio ) * tan( dfEndAngle * M_PI / 180 ) ) * 180 / M_PI;
 
             if( fabs(dfEndAngle - dfStartAngle) <= 361.0 )
             {
