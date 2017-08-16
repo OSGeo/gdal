@@ -64,7 +64,8 @@ def validate(filename, check_tiled=True):
 
     main_band = ds.GetRasterBand(1)
     ovr_count = main_band.GetOverviewCount()
-    if filename + '.ovr' in ds.GetFileList():
+    filelist = ds.GetFileList()
+    if filelist is not None and filename + '.ovr' in filelist:
         raise ValidateCloudOptimizedGeoTIFFException(
             "Overviews should be internal")
 
