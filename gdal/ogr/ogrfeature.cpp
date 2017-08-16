@@ -558,7 +558,8 @@ OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
  *
  * \brief Fetch pointer to feature geometry.
  *
- * This method is the same as the C function OGR_F_GetGeometryRef().
+ * This method is essentially the same as the C function OGR_F_GetGeometryRef().
+ * (the only difference is that the C function honours OGRGetNonLinearGeometriesEnabledFlag())
  *
  * Starting with GDAL 1.11, this is equivalent to calling
  * OGRFeature::GetGeomFieldRef(0).
@@ -582,7 +583,8 @@ OGRGeometry *OGRFeature::GetGeometryRef()
 /**
  * \brief Fetch an handle to feature geometry.
  *
- * This function is the same as the C++ method OGRFeature::GetGeometryRef().
+ * This function is essentially the same as the C++ method OGRFeature::GetGeometryRef()
+ * (the only difference is that this C function honours OGRGetNonLinearGeometriesEnabledFlag())
  *
  * @param hFeat handle to the feature to get geometry from.
  * @return an handle to internal feature geometry.  This object should
