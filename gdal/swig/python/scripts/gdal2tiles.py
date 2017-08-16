@@ -1201,6 +1201,7 @@ class GDAL2Tiles(object):
                     f.close()
 
         # Generate tilemapresource.xml.
+        if not self.options.resume or not os.path.exists(os.path.join(self.output, 'tilemapresource.xml')):
             f = open(os.path.join(self.output, 'tilemapresource.xml'), 'wb')
             f.write(self.generate_tilemapresource().encode('utf-8'))
             f.close()
