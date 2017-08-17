@@ -38,6 +38,7 @@
 #include <cstring>
 #include <ctime>
 
+#include <limits>
 #include <new>
 #include <vector>
 
@@ -3512,7 +3513,7 @@ void OGRFeature::SetField( int iField, double dfValue )
     if( poFDefn == NULL )
         return;
 
-    OGRFieldType eType = poFDefn->GetType();
+    const OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTReal )
     {
         // if( poFDefn->GetSubType() == OFSTFloat32 &&
@@ -3527,7 +3528,12 @@ void OGRFeature::SetField( int iField, double dfValue )
     }
     else if( eType == OFTInteger )
     {
-        pauFields[iField].Integer = static_cast<int>(dfValue);
+        const int nMin = std::numeric_limits<int>::min();
+        const int nMax = std::numeric_limits<int>::max();
+        const int nVal =
+            dfValue < nMin ? nMin :
+            dfValue > nMax ? nMax : static_cast<int>(dfValue);
+        pauFields[iField].Integer = OGRFeatureGetIntegerValue(poFDefn, nVal);
         pauFields[iField].Set.nMarker2 = 0;
         pauFields[iField].Set.nMarker3 = 0;
     }
