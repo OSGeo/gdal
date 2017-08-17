@@ -71,7 +71,7 @@ void SDTSFeature::ApplyATID( DDFField * poField )
         {
             const char * pabyData
                 = poField->GetSubfieldData( poMODN, NULL, iRepeat );
-            if( strlen(pabyData) < 5 )
+            if( pabyData == NULL || strlen(pabyData) < 5 )
                 return;
 
             memcpy( poModId->szModule, pabyData, 4 );
