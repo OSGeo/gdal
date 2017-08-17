@@ -2559,6 +2559,11 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
             + std::abs(padfGeoTransform[2])
             + std::abs(padfGeoTransform[4])
             + std::abs(padfGeoTransform[5]));
+        if( dfPixelSize == 0.0 )
+        {
+            CPLDebug("GDAL", "dfPixelSize = 0");
+            return FALSE;
+        }
 
         for( int i = 0; i < nGCPCount; i++ )
         {
