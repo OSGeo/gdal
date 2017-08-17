@@ -91,7 +91,6 @@ NASHandler::NASHandler( NASReader *poReader ) :
     m_bIgnoreFeature(false),
     m_bInUpdate(false),
     m_bInUpdateProperty(false),
-    m_nDepthElement(0),
     m_nUpdateOrDeleteDepth(0),
     m_nUpdatePropertyDepth(0),
     m_nNameOrValueDepth(0)

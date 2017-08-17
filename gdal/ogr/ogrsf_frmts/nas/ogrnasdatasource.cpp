@@ -115,26 +115,26 @@ int OGRNASDataSource::Open( const char * pszNewName )
     }
     else
     {
-	/* -------------------------------------------------------------------- */
-	/*      Can we find a NAS Feature Schema (.gfs) for the input file?     */
-	/* -------------------------------------------------------------------- */
-	pszGFSFilename  = CPLResetExtension( pszNewName, "gfs" );
-	if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) == 0 )
-	{
-	    VSIStatBufL sNASStatBuf;
-	    if( VSIStatL( pszNewName, &sNASStatBuf ) == 0 &&
-		sNASStatBuf.st_mtime > sGFSStatBuf.st_mtime )
-	    {
-		 CPLDebug( "NAS",
-			   "Found %s but ignoring because it appears "
-			   "be older than the associated NAS file.",
-			   pszGFSFilename );
-	    }
-	    else
-	    {
-		bHaveSchema = poReader->LoadClasses( pszGFSFilename );
-	    }
-	}
+        /* -------------------------------------------------------------------- */
+        /*      Can we find a NAS Feature Schema (.gfs) for the input file?     */
+        /* -------------------------------------------------------------------- */
+        pszGFSFilename  = CPLResetExtension( pszNewName, "gfs" );
+        if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) == 0 )
+        {
+            VSIStatBufL sNASStatBuf;
+            if( VSIStatL( pszNewName, &sNASStatBuf ) == 0 &&
+                sNASStatBuf.st_mtime > sGFSStatBuf.st_mtime )
+            {
+                 CPLDebug( "NAS",
+                           "Found %s but ignoring because it appears "
+                           "be older than the associated NAS file.",
+                           pszGFSFilename );
+            }
+            else
+            {
+                bHaveSchema = poReader->LoadClasses( pszGFSFilename );
+            }
+        }
 
         if( !bHaveSchema )
         {
@@ -219,17 +219,6 @@ int OGRNASDataSource::Open( const char * pszNewName )
 OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
 
 {
-    OGRwkbGeometryType eGType = wkbNone;
-
-    if( poClass->GetGeometryPropertyCount() != 0 )
-    {
-        eGType = static_cast<OGRwkbGeometryType>(
-            poClass->GetGeometryProperty(0)->GetType() );
-
-        if( poClass->GetFeatureCount() == 0 )
-            eGType = wkbUnknown;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Translate SRS.                                                  */
 /* -------------------------------------------------------------------- */
