@@ -77,8 +77,7 @@ static int OGRNASDriverIdentify( GDALOpenInfo* poOpenInfo )
     char **papszIndicators = CSLTokenizeStringComplex(
         CPLGetConfigOption(
             "NAS_INDICATOR",
-            "NAS-Operationen.xsd;NAS-Operationen_optional.xsd;"
-            "AAA-Fachschema.xsd" ),
+            "NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite" ),
         ";", 0, 0 );
 
     bool bFound = false;
