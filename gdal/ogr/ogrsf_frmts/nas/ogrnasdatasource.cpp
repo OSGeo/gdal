@@ -82,11 +82,11 @@ int OGRNASDataSource::Open( const char * pszNewName )
     poReader = CreateNASReader();
     if( poReader == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "File %s appears to be NAS but the NAS reader cannot\n"
-                  "be instantiated, likely because Xerces support was not\n"
-                  "configured in.",
-                  pszNewName );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "File %s appears to be NAS but the NAS reader cannot\n"
+                 "be instantiated, likely because Xerces support was not\n"
+                 "configured in.",
+                 pszNewName );
         return FALSE;
     }
 
@@ -94,34 +94,57 @@ int OGRNASDataSource::Open( const char * pszNewName )
 
     pszName = CPLStrdup( pszNewName );
 
-/* -------------------------------------------------------------------- */
-/*      Can we find a NAS Feature Schema (.gfs) for the input file?     */
-/* -------------------------------------------------------------------- */
     bool bHaveSchema = false;
-
-    const char *pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
+    const char *pszGFSFilename;
     VSIStatBufL sGFSStatBuf;
-    if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) == 0 )
+
+    // Is some NAS Feature Schema (.gfs) TEMPLATE required?
+    const char *pszNASTemplateName = CPLGetConfigOption("NAS_GFS_TEMPLATE", NULL);
+    if( pszNASTemplateName != NULL )
     {
-        VSIStatBufL sNASStatBuf;
-        if( VSIStatL( pszNewName, &sNASStatBuf ) == 0 &&
-            sNASStatBuf.st_mtime > sGFSStatBuf.st_mtime )
+        // Load the TEMPLATE.
+        if( !poReader->LoadClasses(pszNASTemplateName) )
         {
-            CPLDebug( "NAS",
-                      "Found %s but ignoring because it appears\n"
-                      "be older than the associated NAS file.",
-                      pszGFSFilename );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "NAS schema %s could not be loaded\n",
+                     pszNASTemplateName );
+            return FALSE;
         }
-        else
+
+        CPLDebug("NAS", "Schema loaded.");
+    }
+    else
+    {
+	/* -------------------------------------------------------------------- */
+	/*      Can we find a NAS Feature Schema (.gfs) for the input file?     */
+	/* -------------------------------------------------------------------- */
+	pszGFSFilename  = CPLResetExtension( pszNewName, "gfs" );
+	if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) == 0 )
+	{
+	    VSIStatBufL sNASStatBuf;
+	    if( VSIStatL( pszNewName, &sNASStatBuf ) == 0 &&
+		sNASStatBuf.st_mtime > sGFSStatBuf.st_mtime )
+	    {
+		 CPLDebug( "NAS",
+			   "Found %s but ignoring because it appears "
+			   "be older than the associated NAS file.",
+			   pszGFSFilename );
+	    }
+	    else
+	    {
+		bHaveSchema = poReader->LoadClasses( pszGFSFilename );
+	    }
+	}
+
+        if( !bHaveSchema )
         {
-            bHaveSchema = poReader->LoadClasses( pszGFSFilename );
+            CPLError(CE_Failure, CPLE_AppDefined, "No schema information loaded");
         }
     }
 
 /* -------------------------------------------------------------------- */
-/*      Force a first pass to establish the schema.  Eventually we      */
-/*      will have mechanisms for remembering the schema and related     */
-/*      information.                                                    */
+/*      Force a first pass to establish the schema.  The loaded schema  */
+/*      if any will be cleaned from any unavailable classes.            */
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
     if( !bHaveSchema
@@ -150,13 +173,13 @@ int OGRNASDataSource::Open( const char * pszNewName )
         else
         {
             CPLDebug( "NAS",
-                      "Not saving %s files already exists or can't be created.",
+                      "Not saving %s. File already exists or can't be created.",
                       pszGFSFilename );
         }
     }
 
 /* -------------------------------------------------------------------- */
-/*      Translate the NASFeatureClasses into layers.                    */
+/*      Translate the GMLFeatureClasses into layers.                    */
 /* -------------------------------------------------------------------- */
     papoLayers = (OGRLayer **)
         CPLCalloc( sizeof(OGRNASLayer *), poReader->GetClassCount()+1 );
@@ -168,20 +191,23 @@ int OGRNASDataSource::Open( const char * pszNewName )
         nLayers++;
     }
 
-    poRelationLayer = new OGRNASRelationLayer( this );
-
-    // keep delete the last layer
-    if( nLayers>0 && EQUAL( papoLayers[nLayers-1]->GetName(), "Delete" ) )
+    if( EQUAL( CPLGetConfigOption("NAS_NO_RELATION_LAYER", "NO"), "NO") || poReader->GetClassCount() == 0 )
     {
-      papoLayers[nLayers]   = papoLayers[nLayers-1];
-      papoLayers[nLayers-1] = poRelationLayer;
-    }
-    else
-    {
-      papoLayers[nLayers] = poRelationLayer;
-    }
+        poRelationLayer = new OGRNASRelationLayer( this );
 
-    nLayers++;
+        // keep delete the last layer
+        if( nLayers>0 && EQUAL( papoLayers[nLayers-1]->GetName(), "Delete" ) )
+        {
+          papoLayers[nLayers]   = papoLayers[nLayers-1];
+          papoLayers[nLayers-1] = poRelationLayer;
+        }
+        else
+        {
+          papoLayers[nLayers] = poRelationLayer;
+        }
+
+        nLayers++;
+    }
 
     return TRUE;
 }
@@ -250,8 +276,7 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
 /*      Create an empty layer.                                          */
 /* -------------------------------------------------------------------- */
     OGRNASLayer *poLayer =
-        new OGRNASLayer( poClass->GetName(), poSRS, eGType, this );
-    delete poSRS;
+        new OGRNASLayer( poClass->GetName(), this );
 
 /* -------------------------------------------------------------------- */
 /*      Added attributes (properties).                                  */
@@ -286,6 +311,28 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
 
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }
+
+    for (int iField = 0;
+      iField < poClass->GetGeometryPropertyCount();
+      iField++)
+    {
+        GMLGeometryPropertyDefn *poProperty =
+                poClass->GetGeometryProperty(iField);
+        OGRGeomFieldDefn oField(poProperty->GetName(),
+                        (OGRwkbGeometryType)poProperty->GetType());
+        if (poClass->GetGeometryPropertyCount() == 1 &&
+            poClass->GetFeatureCount() == 0)
+        {
+                    oField.SetType(wkbUnknown);
+        }
+
+        oField.SetSpatialRef(poSRS);
+        oField.SetNullable(poProperty->IsNullable());
+        poLayer->GetLayerDefn()->AddGeomFieldDefn(&oField);
+    }
+
+    if( poSRS )
+        poSRS->Dereference();
 
     return poLayer;
 }

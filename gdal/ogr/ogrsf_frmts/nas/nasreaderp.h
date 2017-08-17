@@ -65,6 +65,7 @@ class NASHandler : public DefaultHandler
     int        m_nGeomLen;
 
     int        m_nGeometryDepth;
+    int        m_nGeometryPropertyIndex;
     bool       IsGeometryElement( const char * );
 
     int        m_nDepth;
@@ -76,7 +77,6 @@ class NASHandler : public DefaultHandler
     int        m_nUpdateOrDeleteDepth;
     int        m_nUpdatePropertyDepth;
     int        m_nNameOrValueDepth;
-    CPLString  m_osIgnoredElement;
 
     CPLString  m_osLastTypeName;
     CPLString  m_osLastReplacingFID;

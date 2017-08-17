@@ -251,6 +251,7 @@ public:
     void            SetGeometryDirectly( CPLXMLNode* psGeom );
     void            SetGeometryDirectly( int nIdx, CPLXMLNode* psGeom );
     void            AddGeometry( CPLXMLNode* psGeom );
+    int             GetGeometryCount() const { return m_nGeometryCount; }
     const CPLXMLNode* const * GetGeometryList() const { return m_papsGeometry; }
     const CPLXMLNode* GetGeometryRef( int nIdx ) const;
 

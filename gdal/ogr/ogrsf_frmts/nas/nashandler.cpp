@@ -85,6 +85,7 @@ NASHandler::NASHandler( NASReader *poReader ) :
     m_nGeomAlloc(0),
     m_nGeomLen(0),
     m_nGeometryDepth(0),
+    m_nGeometryPropertyIndex(-1),
     m_nDepth(0),
     m_nDepthFeature(0),
     m_bIgnoreFeature(false),
@@ -140,22 +141,9 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
 
     transcode( localname, m_osElementName );
 
-    if ( ( m_bIgnoreFeature && m_nDepth >= m_nDepthFeature ) ||
-         ( m_osIgnoredElement != "" && m_nDepth >= m_nDepthElement ) )
+    if ( m_bIgnoreFeature && m_nDepth >= m_nDepthFeature )
     {
         m_nDepth ++;
-        return;
-    }
-
-    // ignore attributes of external references and "objektkoordinaten"
-    // (see PostNAS #3 and #15)
-    if (m_osElementName == "zeigtAufExternes" ||
-        m_osElementName== "objektkoordinaten" )
-    {
-        m_osIgnoredElement = m_osElementName;
-        m_nDepthElement    = m_nDepth;
-        m_nDepth ++;
-
         return;
     }
 
@@ -191,6 +179,12 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
     if( m_pszGeometry != NULL
         || IsGeometryElement( m_osElementName ) )
     {
+        if( m_nGeometryPropertyIndex == -1 )
+        {
+          GMLFeatureClass* poClass = poState->m_poFeature->GetClass();
+          m_nGeometryPropertyIndex = poClass->GetGeometryPropertyIndexBySrcElement( poState->osPath.c_str() );
+        }
+
         const int nLNLen = static_cast<int>(m_osElementName.size());
         CPLString osAttributes = GetAttributes( &attrs );
 
@@ -290,8 +284,8 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
 
         if( EQUAL( pszLast, "Replace" ) )
         {
-            //CPLAssert( m_osLastReplacingFID != "" );
-            //CPLAssert( m_osLastSafeToIgnore != "" );
+            // CPLAssert( m_osLastReplacingFID != "" );
+            // CPLAssert( m_osLastSafeToIgnore != "" );
             m_poReader->SetFeaturePropertyDirectly(
                 "replacedBy", CPLStrdup(m_osLastReplacingFID) );
             m_poReader->SetFeaturePropertyDirectly(
@@ -495,16 +489,6 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
         return;
     }
 
-    if ( m_osIgnoredElement != "" && m_nDepth >= m_nDepthElement )
-    {
-        if ( m_nDepth == m_nDepthElement )
-        {
-            m_osIgnoredElement = "";
-            m_nDepthElement    = 0;
-        }
-        return;
-    }
-
 #ifdef DEBUG_VERBOSE
     CPLDebug("NAS",
               "%*sendElement %s m_bIgnoreFeature:%d depth:%d depthFeature:%d featureClass:%s",
@@ -628,13 +612,14 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
                         CPLSetXMLValue( psNode, "pos", CPLSPrintf("0 0 %s", pszPos) );
                     }
 
-                    if ( poState->m_poFeature->GetGeometryList() &&
-                         poState->m_poFeature->GetGeometryList()[0] )
+                    if ( m_nGeometryPropertyIndex >= 0 &&
+                         m_nGeometryPropertyIndex < poState->m_poFeature->GetGeometryCount() &&
+                         poState->m_poFeature->GetGeometryList()[m_nGeometryPropertyIndex] )
                     {
                         int iId = poState->m_poFeature->GetClass()->GetPropertyIndex( "gml_id" );
                         const GMLProperty *poIdProp = poState->m_poFeature->GetProperty(iId);
 #ifdef DEBUG_VERBOSE
-                        char *pszOldGeom = CPLSerializeXMLTree( poState->m_poFeature->GetGeometryList()[0] );
+                        char *pszOldGeom = CPLSerializeXMLTree( poState->m_poFeature->GetGeometryList()[m_nGeometryPropertyIndex] );
 
                         CPLDebug("NAS", "Overwriting other geometry (%s; replace:%s; with:%s)",
                                  poIdProp && poIdProp->nSubProperties>0 && poIdProp->papszSubProperties[0] ? poIdProp->papszSubProperties[0] : "(null)",
@@ -649,7 +634,21 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
 #endif
                     }
 
-                    poState->m_poFeature->SetGeometryDirectly( psNode );
+                    if( m_nGeometryPropertyIndex >= 0 )
+                        poState->m_poFeature->SetGeometryDirectly( m_nGeometryPropertyIndex, psNode );
+
+                    // no geometry property or property without element path
+                    else if( poState->m_poFeature->GetClass()->GetGeometryPropertyCount() == 0 ||
+                             ( poState->m_poFeature->GetClass()->GetGeometryPropertyCount() == 1 &&
+                               poState->m_poFeature->GetClass()->GetGeometryProperty(0)->GetSrcElement() &&
+                               *poState->m_poFeature->GetClass()->GetGeometryProperty(0)->GetSrcElement() == 0 ) )
+                        poState->m_poFeature->SetGeometryDirectly( psNode );
+
+                    else
+                        CPLError( CE_Warning, CPLE_AppDefined, "NAS: Unexpected geometry skipped (class:%s path:%s geom:%s)",
+                                  poState->m_poFeature->GetClass()->GetName(),
+                                  poState->osPath.c_str(),
+                                  m_pszGeometry );
                 }
                 else
                     CPLError( CE_Warning, CPLE_AppDefined, "NAS: Invalid geometry skipped" );
@@ -660,6 +659,7 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
             CPLFree( m_pszGeometry );
             m_pszGeometry = NULL;
             m_nGeomAlloc = m_nGeomLen = 0;
+            m_nGeometryPropertyIndex = -1;
         }
     }
 

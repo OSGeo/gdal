@@ -1276,8 +1276,8 @@ bool GMLReader::SaveClasses( const char *pszFile )
 /************************************************************************/
 
 bool GMLReader::PrescanForSchema( bool bGetExtents,
-                                 bool bAnalyzeSRSPerFeature,
-                                 bool bOnlyDetectSRS )
+                                  bool bAnalyzeSRSPerFeature,
+                                  bool bOnlyDetectSRS )
 
 {
     if( m_pszFilename == NULL )

@@ -14,12 +14,12 @@ OBJ =	ogrgeometryfactory.o \
 	ogrtriangulatedsurface.o \
 	ogrmultipoint.o \
 	ogrmultilinestring.o \
-    ogrcircularstring.o \
-    ogrcompoundcurve.o \
-    ogrcurvepolygon.o \
-    ogrcurvecollection.o \
-    ogrmulticurve.o \
-    ogrmultisurface.o \
+	ogrcircularstring.o \
+	ogrcompoundcurve.o \
+	ogrcurvepolygon.o \
+	ogrcurvecollection.o \
+	ogrmulticurve.o \
+	ogrmultisurface.o \
 	ogr_api.o \
 	ogrfeature.o \
 	ogrfeaturedefn.o \
@@ -54,9 +54,9 @@ OBJ =	ogrgeometryfactory.o \
 	ogrpgeogeometry.o \
 	ogrgeomediageometry.o \
 	ogr_geocoding.o \
-    osr_cs_wkt.o \
+	osr_cs_wkt.o \
 	osr_cs_wkt_parser.o \
-    ogrgeomfielddefn.o \
-    ograpispy.o \
-    ogr_xerces.o \
-    ogr_geo_utils.o
+	ogrgeomfielddefn.o \
+	ograpispy.o \
+	ogr_xerces.o \
+	ogr_geo_utils.o
