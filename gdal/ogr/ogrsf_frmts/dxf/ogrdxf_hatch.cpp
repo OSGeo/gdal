@@ -372,7 +372,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 
             if( (nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) == 40 )
                 dfRatio = CPLAtof(szLineBuf);
-            else
+            if( dfRatio == 0.0 )
                 break;
 
             double dfStartAngle = 0.0;
