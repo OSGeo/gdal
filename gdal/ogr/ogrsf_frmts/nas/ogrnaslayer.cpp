@@ -159,8 +159,6 @@ OGRFeature *OGRNASLayer::GetNextFeature()
         }
 
         if( bErrored ) {
-            delete poNASFeature;
-            poNASFeature = NULL;
 
             CPLString osGMLId;
             if( poFClass->GetPropertyIndex("gml_id") == 0 )
@@ -173,6 +171,9 @@ OGRFeature *OGRNASLayer::GetNextFeature()
                             psGMLProperty->papszSubProperties[0]);
                 }
             }
+
+            delete poNASFeature;
+            poNASFeature = NULL;
 
             const bool bGoOn = CPLTestBool(
                     CPLGetConfigOption("NAS_SKIP_CORRUPTED_FEATURES", "NO"));
