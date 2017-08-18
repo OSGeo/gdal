@@ -71,6 +71,8 @@ CPL_C_START
 
 extern int bOGRAPISpyEnabled;
 
+void OGRAPISpyDestroyMutex();
+
 int OGRAPISpyOpenTakeSnapshot(const char* pszName, int bUpdate);
 void OGRAPISpyOpen(const char* pszName, int bUpdate, int iSnapshot,
                    GDALDatasetH* phDS);
