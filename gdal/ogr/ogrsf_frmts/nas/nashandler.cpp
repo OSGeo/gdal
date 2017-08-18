@@ -178,7 +178,9 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
     if( m_pszGeometry != NULL
         || IsGeometryElement( m_osElementName ) )
     {
-        if( m_nGeometryPropertyIndex == -1 )
+        if( m_nGeometryPropertyIndex == -1 &&
+            poState->m_poFeature &&
+            poState->m_poFeature->GetClass() )
         {
           GMLFeatureClass* poClass = poState->m_poFeature->GetClass();
           m_nGeometryPropertyIndex = poClass->GetGeometryPropertyIndexBySrcElement( poState->osPath.c_str() );
