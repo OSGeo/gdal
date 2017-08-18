@@ -711,10 +711,20 @@ def ogr_geom_transform_to():
     # Output SRS is EPSG:32631
     sr2 = osr.SpatialReference()
     sr2.ImportFromEPSG(32631)
-    geom.TransformTo(sr2)
+    ret = geom.TransformTo(sr2)
 
-    if abs(geom.GetX() - 426857) > 1 or abs(geom.GetY() - 5427937) > 1:
+    if ret != 0 or abs(geom.GetX() - 426857) > 1 or abs(geom.GetY() - 5427937) > 1:
+        gdaltest.post_reason('failure')
         print(geom.ExportToWkt())
+        return 'fail'
+
+    # Geometry without SRS
+    geom = ogr.CreateGeometryFromWkt( 'POINT(2 49)')
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ret = geom.TransformTo(sr2)
+    if ret == 0 or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
