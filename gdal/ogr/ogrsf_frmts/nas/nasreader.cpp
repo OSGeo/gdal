@@ -935,6 +935,9 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
 
         CPLDebug("NAS",
                  "Skipping empty layer %s.", m_papoClass[i]->GetName() );
+
+        delete m_papoClass[i];
+        m_papoClass[i] = NULL;
     }
 
     m_nClassCount = j;
