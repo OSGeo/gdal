@@ -745,7 +745,7 @@ void OGRAPISpy_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 
 void OGRAPISpy_Dataset_StartTransaction( GDALDatasetH hDS, int bForce )
 {
-    (CPLMutexHolderD&hMutex);
+    CPLMutexHolderD(&hMutex);
     OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.StartTransaction(%d)\n",
             OGRAPISpyGetDSVar(reinterpret_cast<OGRDataSourceH>(hDS)).c_str(),
