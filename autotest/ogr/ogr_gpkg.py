@@ -4385,6 +4385,74 @@ def ogr_gpkg_53():
     return 'success'
 
 ###############################################################################
+# Test editing of a database with 2 layers (https://issues.qgis.org/issues/17034)
+
+def ogr_gpkg_54():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    # Must be on a real file system to demonstrate potential locking
+    # issue
+    tmpfile = 'tmp/ogr_gpkg_54.gpkg'
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource(tmpfile)
+    lyr = ds.CreateLayer('layer1', geom_type=ogr.wkbPoint)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(f)
+    f = None
+    lyr = ds.CreateLayer('layer2', geom_type=ogr.wkbPoint)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 1)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds1 = ogr.Open(tmpfile, update = 1)
+    ds2 = ogr.Open(tmpfile, update = 1)
+
+    lyr1 = ds1.GetLayer(0)
+    lyr2 = ds2.GetLayer(1)
+
+    f1 = lyr1.GetFeature(1)
+    f1.SetGeometry(ogr.CreateGeometryFromWkt('POINT (1 2)'))
+    lyr1.SetFeature(f1)
+
+    f2 = lyr2.GetFeature(1)
+    f2.SetGeometry(ogr.CreateGeometryFromWkt('POINT (3 4)'))
+    lyr2.SetFeature(f2)
+
+    f1 = lyr1.GetFeature(1)
+    f1.SetGeometry(ogr.CreateGeometryFromWkt('POINT (5 6)'))
+    lyr1.SetFeature(f1)
+
+    f2 = lyr2.GetFeature(1)
+    f2.SetGeometry(ogr.CreateGeometryFromWkt('POINT (7 8)'))
+    lyr2.SetFeature(f2)
+
+    ds1 = None
+    ds2 = None
+
+    ds = ogr.Open(tmpfile)
+    lyr1 = ds.GetLayer(0)
+    f = lyr1.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (5 6)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    lyr2 = ds.GetLayer(1)
+    f = lyr2.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (7 8)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(tmpfile)
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -4462,6 +4530,7 @@ gdaltest_list = [
     ogr_gpkg_51,
     ogr_gpkg_52,
     ogr_gpkg_53,
+    ogr_gpkg_54,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
