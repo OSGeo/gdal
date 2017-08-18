@@ -47,6 +47,38 @@
 %csmethodmodifiers __GetGCPs "private";
 %csmethodmodifiers GDALGCPsToGeoTransform "private";
 
+%apply (GDALProgressFunc callback) {GDALProgressFunc pfnProgress};
+%apply (void *buffer_ptr) {void *pProgressData};
+
+%rename (RasterIOExtraArg) GDALRasterIOExtraArg;
+typedef struct
+{
+    /*! Version of structure (to allow future extensions of the structure) */
+    int                    nVersion;
+
+    /*! Resampling algorithm */
+    GDALRIOResampleAlg     eResampleAlg;
+
+    /*! Progress callback */
+    GDALProgressFunc pfnProgress;
+    /*! Progress callback user data */
+    void *pProgressData;
+
+    /*! Indicate if dfXOff, dfYOff, dfXSize and dfYSize are set.
+        Mostly reserved from the VRT driver to communicate a more precise
+        source window. Must be such that dfXOff - nXOff < 1.0 and
+        dfYOff - nYOff < 1.0 and nXSize - dfXSize < 1.0 and nYSize - dfYSize < 1.0 */
+    int bFloatingPointWindowValidity;
+    /*! Pixel offset to the top left corner. Only valid if bFloatingPointWindowValidity = TRUE */
+    double dfXOff;
+    /*! Line offset to the top left corner. Only valid if bFloatingPointWindowValidity = TRUE */
+    double dfYOff;
+    /*! Width in pixels of the area of interest. Only valid if bFloatingPointWindowValidity = TRUE */
+    double dfXSize;
+    /*! Height in pixels of the area of interest. Only valid if bFloatingPointWindowValidity = TRUE */
+    double dfYSize;
+} GDALRasterIOExtraArg;
+
 DEFINE_EXTERNAL_CLASS(OGRLayerShadow, OSGeo.OGR.Layer)
 
 %define %rasterio_functions(GDALTYPE,CSTYPE)
@@ -66,6 +98,28 @@ DEFINE_EXTERNAL_CLASS(OGRLayerShadow, OSGeo.OGR.Layer)
       GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
       try {
           retval = WriteRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE, pixelSpace, lineSpace);
+      } finally {
+          handle.Free();
+      }
+      GC.KeepAlive(this);
+      return retval;
+  }
+  public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace, RasterIOExtraArg extraArg) {
+      CPLErr retval;
+      GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+      try {
+          retval = ReadRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE, pixelSpace, lineSpace, extraArg);
+      } finally {
+          handle.Free();
+      }
+      GC.KeepAlive(this);
+      return retval;
+  }
+  public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace, RasterIOExtraArg extraArg) {
+      CPLErr retval;
+      GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+      try {
+          retval = WriteRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE, pixelSpace, lineSpace, extraArg);
       } finally {
           handle.Free();
       }
@@ -111,6 +165,32 @@ DEFINE_EXTERNAL_CLASS(OGRLayerShadow, OSGeo.OGR.Layer)
       try {
           retval = WriteRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE,
                                bandCount, bandMap, pixelSpace, lineSpace, bandSpace);
+      } finally {
+          handle.Free();
+      }
+      GC.KeepAlive(this);
+      return retval;
+  }
+  public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
+     int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace, RasterIOExtraArg extraArg) {
+      CPLErr retval;
+      GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+      try {
+          retval = ReadRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE,
+                               bandCount, bandMap, pixelSpace, lineSpace, bandSpace, extraArg);
+      } finally {
+          handle.Free();
+      }
+      GC.KeepAlive(this);
+      return retval;
+  }
+  public CPLErr WriteRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize,
+     int bandCount, int[] bandMap, int pixelSpace, int lineSpace, int bandSpace, RasterIOExtraArg extraArg) {
+      CPLErr retval;
+      GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+      try {
+          retval = WriteRaster(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(), buf_xSize, buf_ySize, GDALTYPE,
+                               bandCount, bandMap, pixelSpace, lineSpace, bandSpace, extraArg);
       } finally {
           handle.Free();
       }
