@@ -124,6 +124,8 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 
         std::vector < OGRGeometry * > poGeom( poNASFeature->GetGeometryCount() );
 
+        bool bErrored = false, bFiltered = false;
+        CPLString osLastErrorMsg;
         for( int iGeom = 0; iGeom < poNASFeature->GetGeometryCount(); ++iGeom ) {
             if ( papsGeometry[iGeom] == NULL )
             {
@@ -131,7 +133,6 @@ OGRFeature *OGRNASLayer::GetNextFeature()
             }
             else
             {
-                CPLString osLastErrorMsg;
                 CPLPushErrorHandler(CPLQuietErrorHandler);
 
                 poGeom[iGeom] = (OGRGeometry*) OGR_G_CreateFromGMLTree(papsGeometry[iGeom]);
@@ -143,45 +144,53 @@ OGRFeature *OGRNASLayer::GetNextFeature()
                 // poGeom->dumpReadable( 0, "NAS: " );
 
                 if( poGeom[iGeom] == NULL )
+                    bErrored = true;
+            }
+
+            bFiltered = m_poFilterGeom != NULL && !FilterGeometry( poGeom[iGeom] );
+            if( bErrored || bFiltered )
+            {
+                while (iGeom > 0)
+                    delete poGeom[--iGeom];
+                poGeom.clear();
+
+                break;
+            }
+        }
+
+        if( bErrored ) {
+            delete poNASFeature;
+            poNASFeature = NULL;
+
+            CPLString osGMLId;
+            if( poFClass->GetPropertyIndex("gml_id") == 0 )
+            {
+                const GMLProperty *psGMLProperty =
+                    poNASFeature->GetProperty( 0 );
+                if( psGMLProperty && psGMLProperty->nSubProperties == 1 )
                 {
-                    CPLString osGMLId;
-                    if( poFClass->GetPropertyIndex("gml_id") == 0 )
-                    {
-                        const GMLProperty *psGMLProperty =
-                            poNASFeature->GetProperty( 0 );
-                        if( psGMLProperty && psGMLProperty->nSubProperties == 1 )
-                        {
-                            osGMLId.Printf("(gml_id=%s) ",
-                                    psGMLProperty->papszSubProperties[0]);
-                        }
-                    }
-
-                    const bool bGoOn = CPLTestBool(
-                            CPLGetConfigOption("NAS_SKIP_CORRUPTED_FEATURES", "NO"));
-                    CPLError(bGoOn ? CE_Warning : CE_Failure, CPLE_AppDefined,
-                            "Geometry of feature %d %scannot be parsed: %s%s",
-                            iNextNASId, osGMLId.c_str(), osLastErrorMsg.c_str(),
-                            bGoOn ? ". Skipping to next feature.":
-                            ". You may set the NAS_SKIP_CORRUPTED_FEATURES "
-                            "configuration option to YES to skip to the next "
-                            "feature");
-                    delete poNASFeature;
-                    poNASFeature = NULL;
-
-                    while (iGeom > 0)
-                        delete poGeom[--iGeom];
-                    poGeom.clear();
-
-                    if( bGoOn )
-                        continue;
-
-                    return NULL;
+                    osGMLId.Printf("(gml_id=%s) ",
+                            psGMLProperty->papszSubProperties[0]);
                 }
             }
 
-            if( m_poFilterGeom != NULL && !FilterGeometry( poGeom[iGeom]) )
+            const bool bGoOn = CPLTestBool(
+                    CPLGetConfigOption("NAS_SKIP_CORRUPTED_FEATURES", "NO"));
+            CPLError(bGoOn ? CE_Warning : CE_Failure, CPLE_AppDefined,
+                    "Geometry of feature %d %scannot be parsed: %s%s",
+                    iNextNASId, osGMLId.c_str(), osLastErrorMsg.c_str(),
+                    bGoOn ? ". Skipping to next feature.":
+                    ". You may set the NAS_SKIP_CORRUPTED_FEATURES "
+                    "configuration option to YES to skip to the next "
+                    "feature");
+            if( bGoOn )
                 continue;
+
+            return NULL;
         }
+
+        if( bFiltered )
+            continue;
 
 /* -------------------------------------------------------------------- */
 /*      Convert the whole feature into an OGRFeature.                   */
