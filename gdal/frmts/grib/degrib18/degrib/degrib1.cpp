@@ -813,7 +813,7 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
    int f_allOne;        /* Used to find out if the "lat/lon" extension part
                          * is all 1 hence missing. */
 
-   if( gribLen - *curLoc < 6 ) {
+   if( gribLen < *curLoc || gribLen - *curLoc < 6 ) {
       errSprintf ("Ran out of data in GDS (GRIB 1 Section 2)\n");
       return -1;
    }
