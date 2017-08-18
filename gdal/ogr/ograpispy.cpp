@@ -557,6 +557,7 @@ void OGRAPISpyPreClose( OGRDataSourceH hDS )
 {
     OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "ds%d = None\n", oMapDS[hDS].iDS);
+    oSetDSIndex.erase(oMapDS[hDS].iDS);
     oMapDS.erase(hDS);
     OGRAPISpyFileClose();
 }
