@@ -1912,9 +1912,6 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
 
     CreateSpatialIndexIfNecessary();
 
-    /* Clear out any existing query */
-    ResetReading();
-
     if( m_pszFidColumn == NULL )
         return OGRLayer::GetFeature(nFID);
 
@@ -1927,29 +1924,32 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
                  SQLEscapeName(m_pszFidColumn).c_str(),
                  nFID);
 
+    sqlite3_stmt* poStmt = NULL;
     int err = sqlite3_prepare_v2(
-        m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
+        m_poDS->GetDB(), soSQL.c_str(), -1, &poStmt, NULL);
     if ( err != SQLITE_OK )
     {
-        m_poQueryStatement = NULL;
+        sqlite3_finalize(poStmt);
         CPLError( CE_Failure, CPLE_AppDefined,
                   "failed to prepare SQL: %s", soSQL.c_str());
         return NULL;
     }
 
     /* Should be only one or zero results */
-    err = sqlite3_step(m_poQueryStatement);
+    err = sqlite3_step(poStmt);
 
     /* Aha, got one */
     if ( err == SQLITE_ROW )
     {
-        OGRFeature* poFeature = TranslateFeature(m_poQueryStatement);
+        OGRFeature* poFeature = TranslateFeature(poStmt);
+        sqlite3_finalize(poStmt);
         if( m_iFIDAsRegularColumnIndex >= 0 )
         {
             poFeature->SetField(m_iFIDAsRegularColumnIndex, poFeature->GetFID());
         }
         return poFeature;
     }
+    sqlite3_finalize(poStmt);
 
     /* Error out on all other return codes */
     return NULL;
