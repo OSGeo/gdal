@@ -78,6 +78,15 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
+#ifdef DEBUG
+#define OGRAPISPY_ENABLED
+#endif
+#ifdef OGRAPISPY_ENABLED
+// Keep in sync with ograpispy.cpp
+void OGRAPISPYCPLSetConfigOption(const char*, const char*);
+void OGRAPISPYCPLSetThreadLocalConfigOption(const char*, const char*);
+#endif
+
 // Uncomment to get list of options that have been fetched and set.
 // #define DEBUG_CONFIG_OPTIONS
 
@@ -1773,6 +1782,10 @@ CPLSetConfigOption( const char *pszKey, const char *pszValue )
 #endif
     CPLMutexHolderD(&hConfigMutex);
 
+#ifdef OGRAPISPY_ENABLED
+    OGRAPISPYCPLSetConfigOption(pszKey, pszValue);
+#endif
+
     g_papszConfigOptions = const_cast<volatile char **>(
         CSLSetNameValue(
             const_cast<char **>(g_papszConfigOptions), pszKey, pszValue));
@@ -1819,6 +1832,10 @@ CPLSetThreadLocalConfigOption( const char *pszKey, const char *pszValue )
 {
 #ifdef DEBUG_CONFIG_OPTIONS
     CPLAccessConfigOption(pszKey, FALSE);
+#endif
+
+#ifdef OGRAPISPY_ENABLED
+    OGRAPISPYCPLSetThreadLocalConfigOption(pszKey, pszValue);
 #endif
 
     int bMemoryError = FALSE;
