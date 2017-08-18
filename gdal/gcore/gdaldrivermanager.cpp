@@ -44,6 +44,7 @@
 #include "gdal.h"
 #include "gdal_pam.h"
 #include "ogr_srs_api.h"
+#include "ograpispy.h"
 #ifdef HAVE_XERCES
 #  include "ogr_xerces.h"
 #endif  // HAVE_XERCES
@@ -252,6 +253,10 @@ GDALDriverManager::~GDALDriverManager()
 
 #ifdef HAVE_XERCES
     OGRCleanupXercesMutex();
+#endif
+
+#ifdef OGRAPISPY_ENABLED
+    OGRAPISpyDestroyMutex();
 #endif
 
 /* -------------------------------------------------------------------- */
