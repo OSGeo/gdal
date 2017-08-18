@@ -519,6 +519,11 @@ OPTIONAL_POD(int, int);
       IntPtr ret = $imcall;$excode
       return ret;
 }
+%typemap(csvarout, excode=SWIGEXCODE2) (void *buffer_ptr)   %{
+    get {
+      IntPtr ret = $imcall;$excode
+      return ret;
+    } %}
 
 %apply (void *buffer_ptr) {GByte*, VSILFILE*};
 
@@ -546,6 +551,11 @@ OPTIONAL_POD(int, int);
 %typemap(imtype) (GDALProgressFunc callback)  "$module.GDALProgressFuncDelegate"
 %typemap(cstype) (GDALProgressFunc callback) "$module.GDALProgressFuncDelegate"
 %typemap(csin) (GDALProgressFunc callback)  "$csinput"
+%typemap(csvarout, excode=SWIGEXCODE2) (GDALProgressFunc callback)   %{
+    get {
+      Gdal.GDALProgressFuncDelegate ret = $imcall;$excode
+      return ret;
+    } %}
 %typemap(in) (GDALProgressFunc callback) %{ $1 = ($1_ltype)$input; %}
 %typemap(imtype) (void* callback_data) "string"
 %typemap(cstype) (void* callback_data) "string"
