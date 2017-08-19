@@ -2526,6 +2526,40 @@ def ogr_dxf_36():
     return 'success'
 
 ###############################################################################
+# Create a blocks layer only
+
+def ogr_dxf_37():
+
+    ds = ogr.GetDriverByName('DXF').CreateDataSource('/vsimem/ogr_dxf_37.dxf')
+
+    lyr = ds.CreateLayer( 'blocks' )
+
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'POINT (1 2)' ) )
+    lyr.CreateFeature( dst_feat )
+    dst_feat = None
+
+    lyr = None
+    ds = None
+
+    # Read back.
+    gdal.SetConfigOption('DXF_INLINE_BLOCKS', 'FALSE')
+    ds = ogr.Open('/vsimem/ogr_dxf_37.dxf')
+    gdal.SetConfigOption('DXF_INLINE_BLOCKS', None)
+    lyr = ds.GetLayerByName('blocks')
+
+    # Check first feature
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+    ds = None
+
+    gdal.Unlink( '/vsimem/ogr_dxf_37.dxf')
+
+    return 'success'
+
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -2574,6 +2608,7 @@ gdaltest_list = [
     ogr_dxf_34,
     ogr_dxf_35,
     ogr_dxf_36,
+    ogr_dxf_37,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
