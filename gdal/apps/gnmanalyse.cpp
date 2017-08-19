@@ -459,7 +459,7 @@ int main( int nArgc, char ** papszArgv )
             pszDataset = papszArgv[++iArg];
         }
 
-        else if( EQUAL(papszArgv[iArg],"-f") )
+        else if( (EQUAL(papszArgv[iArg],"-f") || EQUAL(papszArgv[iArg],"-of")) )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszFormat = papszArgv[++iArg];

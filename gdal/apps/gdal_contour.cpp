@@ -56,7 +56,7 @@ static void Usage(const char* pszErrorMsg = NULL)
     printf(
         "Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]\n"
         "                    [-snodata n] [-f <formatname>] [-i <interval>]\n"
-        "                    [-f <formatname>] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]\n"
+        "                    [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]\n"
         "                    [-off <offset>] [-fl <level> <level>...]\n"
         "                    [-nln <outlayername>] [-q]\n"
         "                    <src_filename> <dst_filename>\n" );
@@ -162,7 +162,7 @@ int main( int argc, char ** argv )
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nBandIn = atoi(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-f") )
+        else if( EQUAL(argv[i],"-f") || EQUAL(argv[i],"-of") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszFormat = argv[++i];

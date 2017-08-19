@@ -70,7 +70,7 @@ def gdal_pansharpen(argv):
     i = 1
     argc = len(argv)
     while i < argc:
-        if argv[i] == '-of' and i < len(argv)-1:
+        if (argv[i] == '-of' or argv[i] == '-f') and i < len(argv)-1:
             format = argv[i+1]
             i = i + 1
         elif argv[i] == '-r' and i < len(argv)-1:

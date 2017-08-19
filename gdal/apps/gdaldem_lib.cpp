@@ -3797,7 +3797,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
             continue;
         }
 
-        if( i < argc-1 && EQUAL(papszArgv[i],"-of") )
+        if( i < argc-1 && (EQUAL(papszArgv[i],"-of") || EQUAL(papszArgv[i],"-f")) )
         {
             ++i;
             CPLFree(psOptions->pszFormat);

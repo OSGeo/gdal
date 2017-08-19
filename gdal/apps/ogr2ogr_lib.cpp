@@ -4755,7 +4755,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             if( psOptionsForBinary )
                 psOptionsForBinary->bQuiet = TRUE;
         }
-        else if( i+1 < nArgc && EQUAL(papszArgv[i],"-f") )
+        else if( i+1 < nArgc && (EQUAL(papszArgv[i],"-f") || EQUAL(papszArgv[i],"-of")) )
         {
             CPLFree(psOptions->pszFormat);
             const char* pszFormatArg = papszArgv[++i];

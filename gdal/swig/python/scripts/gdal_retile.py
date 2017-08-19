@@ -766,7 +766,7 @@ def main(args = None):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == '-of':
+        if arg == '-of' or arg == '-f':
             i+=1
             Format = argv[i]
         elif arg == '-ot':

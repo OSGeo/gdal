@@ -71,7 +71,7 @@ i = 1
 while i < len(argv):
     arg = argv[i]
 
-    if arg == '-f':
+    if arg == '-f' or arg == '-of':
         i = i + 1
         format = argv[i]
 

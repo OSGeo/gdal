@@ -142,7 +142,7 @@ int main( int argc, char *argv[] )
         }
         else if( EQUAL(argv[iArg],"--help") )
             Usage(NULL);
-        else if( strcmp(argv[iArg],"-f") == 0 )
+        else if( (strcmp(argv[iArg],"-f") == 0 || strcmp(argv[iArg],"-of") == 0) )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszDriverName = argv[++iArg];

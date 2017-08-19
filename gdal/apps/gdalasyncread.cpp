@@ -123,7 +123,7 @@ int main( int argc, char ** argv )
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( EQUAL(argv[i],"-of") && i < argc-1 )
+        else if( (EQUAL(argv[i],"-of") || EQUAL(argv[i],"-f")) && i < argc-1 )
             pszFormat = argv[++i];
 
         else if( EQUAL(argv[i],"-quiet") )

@@ -40,7 +40,7 @@ static void Usage(const char* pszErrorMsg = NULL)
 
 {
     printf(
-        "Usage: gdal_grid [--help-general] [--formats]\n"
+        "Usage: gdal_grid [--help-general]\n"
         "    [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
         "          CInt16/CInt32/CFloat32/CFloat64}]\n"
         "    [-of format] [-co \"NAME=VALUE\"]\n"

@@ -860,7 +860,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
     int argc = CSLCount(papszArgv);
     for( int i = 0; papszArgv != NULL && i < argc; i++ )
     {
-        if( i < argc-1 && EQUAL(papszArgv[i],"-of") )
+        if( i < argc-1 && (EQUAL(papszArgv[i],"-of") || EQUAL(papszArgv[i],"-f")) )
         {
             ++i;
             CPLFree(psOptions->pszFormat);
