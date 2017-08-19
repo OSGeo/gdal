@@ -265,6 +265,7 @@ int OGRXLSXDataSource::GetLayerCount()
 /************************************************************************/
 
 int OGRXLSXDataSource::Open( const char * pszFilename,
+                             const char * pszPrefixedFilename,
                              VSILFILE* fpWorkbook,
                              VSILFILE* fpWorkbookRels,
                              VSILFILE* fpSharedStrings,
@@ -277,6 +278,7 @@ int OGRXLSXDataSource::Open( const char * pszFilename,
     bUpdatable = CPL_TO_BOOL(bUpdateIn);
 
     pszName = CPLStrdup( pszFilename );
+    osPrefixedFilename = pszPrefixedFilename;
 
     AnalyseWorkbookRels(fpWorkbookRels);
     AnalyseWorkbook(fpWorkbook);
@@ -1295,13 +1297,13 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszNameIn,
                 oMapRelsIdToTarget[pszId][0] == '/' )
             {
                 // Is it an "absolute" path ?
-                osFilename = "/vsizip/" + CPLString(pszName) +
+                osFilename = osPrefixedFilename +
                              oMapRelsIdToTarget[pszId];
             }
             else
             {
                 // or relative to the /xl subdirectory
-                osFilename = "/vsizip/" + CPLString(pszName) +
+                osFilename = osPrefixedFilename +
                              CPLString("/xl/") + oMapRelsIdToTarget[pszId];
             }
             papoLayers[nLayers++] = new OGRXLSXLayer(this, osFilename,

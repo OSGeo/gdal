@@ -155,6 +155,7 @@ public:
 class OGRXLSXDataSource : public GDALDataset
 {
     char*               pszName;
+    CPLString           osPrefixedFilename;
     bool                bUpdatable;
     bool                bUpdated;
 
@@ -220,6 +221,7 @@ class OGRXLSXDataSource : public GDALDataset
                         virtual ~OGRXLSXDataSource();
 
     int                 Open( const char * pszFilename,
+                              const char * pszPrefixedFilename,
                               VSILFILE* fpWorkbook,
                               VSILFILE* fpWorkbookRels,
                               VSILFILE* fpSharedStrings,

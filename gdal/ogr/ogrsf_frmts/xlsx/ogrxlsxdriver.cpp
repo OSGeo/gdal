@@ -46,8 +46,13 @@ static const char XLSX_MIMETYPE[] =
 
 static int OGRXLSXDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "XLSX"))
+    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "XLSX") &&
+        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "XLSX}"))
         return FALSE;
+
+    if( STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") ||
+        STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") )
+        return poOpenInfo->eAccess == GA_ReadOnly;
 
     return poOpenInfo->nHeaderBytes > 2 &&
            memcmp(poOpenInfo->pabyHeader, "PK", 2) == 0;
@@ -63,8 +68,15 @@ static GDALDataset* OGRXLSXDriverOpen( GDALOpenInfo* poOpenInfo )
     if (!OGRXLSXDriverIdentify(poOpenInfo) )
         return NULL;
 
-    const char* pszFilename = poOpenInfo->pszFilename;
-    VSILFILE* fpContent = VSIFOpenL(CPLSPrintf("/vsizip/%s/[Content_Types].xml", pszFilename), "rb");
+    CPLString osPrefixedFilename("/vsizip/");
+    osPrefixedFilename += poOpenInfo->pszFilename;
+    if( STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") ||
+        STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") )
+    {
+        osPrefixedFilename = poOpenInfo->pszFilename;
+    }
+
+    VSILFILE* fpContent = VSIFOpenL(CPLSPrintf("%s/[Content_Types].xml", osPrefixedFilename.c_str()), "rb");
     if (fpContent == NULL)
         return NULL;
 
@@ -77,23 +89,25 @@ static GDALDataset* OGRXLSXDriverOpen( GDALOpenInfo* poOpenInfo )
     if (strstr(szBuffer, XLSX_MIMETYPE) == NULL)
         return NULL;
 
-    VSILFILE* fpWorkbook = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/workbook.xml", pszFilename), "rb");
+    VSILFILE* fpWorkbook = VSIFOpenL(CPLSPrintf("%s/xl/workbook.xml", osPrefixedFilename.c_str()), "rb");
     if (fpWorkbook == NULL)
         return NULL;
 
-    VSILFILE* fpWorkbookRels = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/_rels/workbook.xml.rels", pszFilename), "rb");
+    VSILFILE* fpWorkbookRels = VSIFOpenL(CPLSPrintf("%s/xl/_rels/workbook.xml.rels", osPrefixedFilename.c_str()), "rb");
     if (fpWorkbookRels == NULL)
     {
         VSIFCloseL(fpWorkbook);
         return NULL;
     }
 
-    VSILFILE* fpSharedStrings = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/sharedStrings.xml", pszFilename), "rb");
-    VSILFILE* fpStyles = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/styles.xml", pszFilename), "rb");
+    VSILFILE* fpSharedStrings = VSIFOpenL(CPLSPrintf("%s/xl/sharedStrings.xml", osPrefixedFilename.c_str()), "rb");
+    VSILFILE* fpStyles = VSIFOpenL(CPLSPrintf("%s/xl/styles.xml", osPrefixedFilename.c_str()), "rb");
 
     OGRXLSXDataSource   *poDS = new OGRXLSXDataSource();
 
-    if( !poDS->Open( pszFilename, fpWorkbook, fpWorkbookRels, fpSharedStrings, fpStyles, poOpenInfo->eAccess == GA_Update ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, osPrefixedFilename,
+                     fpWorkbook, fpWorkbookRels, fpSharedStrings, fpStyles,
+                     poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         poDS = NULL;
