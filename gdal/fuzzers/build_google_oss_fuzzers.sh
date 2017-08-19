@@ -74,6 +74,7 @@ build_ogr_specialized_fuzzer csv RegisterOGRCSV "/vsimem/test.csv" "/vsimem/test
 build_ogr_specialized_fuzzer bna RegisterOGRBNA "/vsimem/test.bna" "/vsimem/test.bna"
 build_ogr_specialized_fuzzer wasp RegisterOGRWAsP "/vsimem/test.map" "/vsimem/test.map"
 build_ogr_specialized_fuzzer xlsx RegisterOGRXLSX "/vsimem/test.xlsx" "/vsitar/{/vsimem/test.xlsx}"
+build_ogr_specialized_fuzzer ods RegisterOGRODS "/vsimem/test.ods" "/vsitar/{/vsimem/test.ods}"
 build_fuzzer cad_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRCAD
 build_fuzzer rec_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRREC -DUSE_FILESYSTEM -DEXTENSION="\"rec\""
 
