@@ -3085,9 +3085,9 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                     !STARTS_WITH(*papszIter, "DS_") )
                 {
                     if( bFirstOtherOption )
-                        printf("  Other metadata items:\n");
+                        printf("  Other metadata items:\n"); /*ok*/
                     bFirstOtherOption = false;
-                    printf("    %s\n", *papszIter);
+                    printf("    %s\n", *papszIter); /*ok*/
                 }
             }
 
