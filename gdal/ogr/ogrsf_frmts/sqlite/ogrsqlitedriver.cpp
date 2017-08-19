@@ -368,6 +368,9 @@ void RegisterOGRSQLite()
 #ifdef ENABLE_SQL_SQLITE_FORMAT
     poDriver->SetMetadataItem("ENABLE_SQL_SQLITE_FORMAT", "YES");
 #endif
+#ifdef SQLITE_HAS_COLUMN_METADATA
+    poDriver->SetMetadataItem("SQLITE_HAS_COLUMN_METADATA", "YES");
+#endif
 
     poDriver->pfnOpen = OGRSQLiteDriverOpen;
     poDriver->pfnIdentify = OGRSQLiteDriverIdentify;

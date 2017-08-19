@@ -410,6 +410,9 @@ COMPRESSION_OPTIONS
 #ifdef ENABLE_SQL_GPKG_FORMAT
     poDriver->SetMetadataItem("ENABLE_SQL_GPKG_FORMAT", "YES");
 #endif
+#ifdef SQLITE_HAS_COLUMN_METADATA
+    poDriver->SetMetadataItem("SQLITE_HAS_COLUMN_METADATA", "YES");
+#endif
 
     poDriver->pfnOpen = OGRGeoPackageDriverOpen;
     poDriver->pfnIdentify = OGRGeoPackageDriverIdentify;
