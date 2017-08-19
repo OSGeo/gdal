@@ -1444,6 +1444,38 @@ void OGRGeoPackageTableLayer::DisableTriggers(bool bNullifyFeatureCount)
 #endif // #ifdef ENABLE_GPKG_OGR_CONTENTS
 
 /************************************************************************/
+/*                      CheckGeometryType()                             */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::CheckGeometryType( OGRFeature *poFeature )
+{
+    OGRwkbGeometryType eLayerGeomType = wkbFlatten(GetGeomType());
+    if( eLayerGeomType != wkbNone && eLayerGeomType != wkbUnknown )
+    {
+        OGRGeometry* poGeom = poFeature->GetGeometryRef();
+        if( poGeom != NULL )
+        {
+            OGRwkbGeometryType eGeomType =
+                wkbFlatten(poGeom->getGeometryType());
+            if( !OGR_GT_IsSubClassOf(eGeomType, eLayerGeomType) &&
+                m_eSetBadGeomTypeWarned.find(eGeomType) ==
+                                        m_eSetBadGeomTypeWarned.end() )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "A geometry of type %s is inserted into layer %s "
+                         "of geometry type %s, which is not allowed. "
+                         "This warning will no longer be emitted for this "
+                         "combination of layer and feature geometry type.",
+                         OGRToOGCGeomType(eGeomType),
+                         GetName(),
+                         OGRToOGCGeomType(eLayerGeomType));
+                m_eSetBadGeomTypeWarned.insert(eGeomType);
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                      ICreateFeature()                                 */
 /************************************************************************/
 
@@ -1466,6 +1498,8 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         DisableTriggers();
     }
 #endif
+
+    CheckGeometryType(poFeature);
 
     /* Substitute default values for null Date/DateTime fields as the standard */
     /* format of SQLite is not the one mandated by GeoPackage */
@@ -1642,6 +1676,8 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
 
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
+
+    CheckGeometryType(poFeature);
 
     /* Old version of SQLite have issues with some of the spatial index triggers */
 #if SQLITE_VERSION_NUMBER < 3007008

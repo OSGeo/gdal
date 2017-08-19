@@ -4453,6 +4453,40 @@ def ogr_gpkg_54():
     return 'success'
 
 ###############################################################################
+# Test inserting geometries incompatible with declared layer geometry type
+
+def ogr_gpkg_55():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    tmpfile = '/vsimem/ogr_gpkg_55.gpkg'
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource(tmpfile)
+    lyr = ds.CreateLayer('layer1', geom_type=ogr.wkbLineString)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        lyr.CreateFeature(f)
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('should have warned')
+        return 'fail'
+    f = None
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 1)'))
+    gdal.ErrorReset()
+    lyr.CreateFeature(f)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('should NOT have warned')
+        return 'fail'
+    f = None
+    ds = None
+
+    gdal.Unlink(tmpfile)
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -4531,6 +4565,7 @@ gdaltest_list = [
     ogr_gpkg_52,
     ogr_gpkg_53,
     ogr_gpkg_54,
+    ogr_gpkg_55,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

@@ -36,6 +36,7 @@
 #include "ogrsqliteutility.h"
 
 #include <vector>
+#include <set>
 
 #define UNKNOWN_SRID   -2
 #define DEFAULT_SRID    0
@@ -384,6 +385,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     bool                        m_bHasReadMetadataFromStorage;
     bool                        m_bHasTriedDetectingFID64;
     GPKGASpatialVariant         m_eASPatialVariant;
+    std::set<OGRwkbGeometryType> m_eSetBadGeomTypeWarned;
 
     virtual OGRErr      ResetStatement() override;
 
@@ -398,6 +400,8 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     void                CreateTriggers(const char* pszTableName = NULL);
     void                DisableTriggers(bool bNullifyFeatureCount = true);
 #endif
+
+    void                CheckGeometryType( OGRFeature *poFeature );
 
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
