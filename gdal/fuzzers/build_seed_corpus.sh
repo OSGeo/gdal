@@ -216,6 +216,26 @@ cd $CUR_DIR
 zip -r $OUT/xlsx_fuzzer_seed_corpus.zip xlsx_*.tar >/dev/null
 rm xlsx_*.tar
 
+echo "Building ods_fuzzer_seed_corpus.zip"
+rm -f $OUT/ods_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/ogr/data
+for filename in *.ods; do
+    mkdir tmpods
+    cd tmpods
+    unzip ../$filename
+    printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/ods_$filename.tar
+    for i in `find -type f`; do
+        printf "***NEWFILE***:$i\n" >> $CUR_DIR/ods_$filename.tar
+        cat $i >> $CUR_DIR/ods_$filename.tar
+    done
+    cd ..
+    rm -rf tmpods
+done
+cd $CUR_DIR
+zip -r $OUT/ods_fuzzer_seed_corpus.zip ods_*.tar >/dev/null
+rm ods_*.tar
+
 
 echo "Building rec_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data
