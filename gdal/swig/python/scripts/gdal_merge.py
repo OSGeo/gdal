@@ -362,12 +362,7 @@ def main( argv=None ):
             i = i + 1
             a_nodata = float(argv[i])
 
-        elif arg == '-f':
-            # for backward compatibility.
-            i = i + 1
-            format = argv[i]
-
-        elif arg == '-of':
+        elif arg == '-f' or arg == '-of':
             i = i + 1
             format = argv[i]
 

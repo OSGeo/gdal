@@ -100,7 +100,7 @@ int main( int nArgc, char ** papszArgv )
 
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
-        if( EQUAL(papszArgv[iArg],"-f") && iArg < nArgc-1 )
+        if( (EQUAL(papszArgv[iArg],"-f") || EQUAL(papszArgv[iArg],"-of")) && iArg < nArgc-1 )
         {
             pszFormat = papszArgv[++iArg];
         }

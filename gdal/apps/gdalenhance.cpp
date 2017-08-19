@@ -127,7 +127,7 @@ int main( int argc, char ** argv )
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( i < argc-1 && EQUAL(argv[i],"-of") )
+        else if( i < argc-1 && (EQUAL(argv[i],"-of") || EQUAL(argv[i],"-f")) )
         {
             pszFormat = argv[++i];
             bFormatExplicitlySet = TRUE;

@@ -3009,7 +3009,7 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
         {
             psOptions->bDisableSrcAlpha = true;
         }
-        else if( EQUAL(papszArgv[i],"-of") && i+1 < argc )
+        else if( (EQUAL(papszArgv[i],"-of") || EQUAL(papszArgv[i],"-f")) && i+1 < argc )
         {
             CPLFree(psOptions->pszFormat);
             psOptions->pszFormat = CPLStrdup(papszArgv[++i]);

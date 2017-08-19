@@ -93,7 +93,7 @@ int main( int nArgc, char **papszArgv )
                    GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( iArg < nArgc-1 && EQUAL(papszArgv[iArg],"-f") )
+        else if( iArg < nArgc-1 && (EQUAL(papszArgv[iArg],"-f") || EQUAL(papszArgv[iArg],"-of")) )
         {
             pszFormat = papszArgv[++iArg];
             if( !EQUAL(pszFormat, "ESRI Shapefile") )
