@@ -17901,8 +17901,11 @@ char **GTiffDataset::GetFileList()
     {
         for( int i = 0; papszMetadataFiles[i] != NULL; ++i )
         {
-            papszFileList =
-                CSLAddString( papszFileList, papszMetadataFiles[i] );
+            if( CSLFindString( papszFileList, papszMetadataFiles[i] ) < 0 )
+            {
+                papszFileList =
+                    CSLAddString( papszFileList, papszMetadataFiles[i] );
+            }
         }
     }
 
