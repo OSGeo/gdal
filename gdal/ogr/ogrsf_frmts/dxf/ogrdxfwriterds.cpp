@@ -749,6 +749,8 @@ bool OGRDXFWriterDS::WriteNewBlockRecords( VSILFILE * fpIn )
 bool OGRDXFWriterDS::WriteNewBlockDefinitions( VSILFILE * fpIn )
 
 {
+    if( poLayer == NULL )
+        poLayer = new OGRDXFWriterLayer( this, fpTemp );
     poLayer->ResetFP( fpIn );
 
 /* ==================================================================== */
