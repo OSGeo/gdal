@@ -3075,6 +3075,22 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "%s\n", pszFormattedXML );/*ok*/
                 CPLFree( pszFormattedXML );
             }
+
+            bool bFirstOtherOption = true;
+            for( char** papszIter = papszMD;
+                 papszIter && *papszIter; ++papszIter )
+            {
+                if( !STARTS_WITH(*papszIter, "DCAP_") &&
+                    !STARTS_WITH(*papszIter, "DMD_") &&
+                    !STARTS_WITH(*papszIter, "DS_") )
+                {
+                    if( bFirstOtherOption )
+                        printf("  Other metadata items:\n");
+                    bFirstOtherOption = false;
+                    printf("    %s\n", *papszIter);
+                }
+            }
+
             return 0;
         }
 
