@@ -568,6 +568,8 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
 
     const int nGType = atoi(poRecord->GetField(9,9));            // GTYPE
     const int nNumCoord = atoi(poRecord->GetField(10,13));       // NUM_COORD
+    if( nNumCoord < 0 )
+        return NULL;
     if( pnGeomId != NULL )
         *pnGeomId = atoi(poRecord->GetField(3,8));     // GEOM_ID
 
@@ -592,6 +594,14 @@ OGRGeometry *NTFFileReader::ProcessGeometry( NTFRecord * poRecord,
 /* -------------------------------------------------------------------- */
     else if( nGType == 2 || nGType == 3 || nGType == 4 )
     {
+
+        if( nNumCoord > 0 &&
+            poRecord->GetLength() <
+                14 + (nNumCoord-1) * (GetXYLen()*2+1) + GetXYLen()*2-1 )
+        {
+            return NULL;
+        }
+
         OGRLineString      *poLine = new OGRLineString;
         double dfXLast = 0.0;
         double dfYLast = 0.0;
