@@ -272,6 +272,8 @@ int OGRXLSXDataSource::Open( const char * pszFilename,
                              int bUpdateIn )
 
 {
+    SetDescription(pszFilename);
+
     bUpdatable = CPL_TO_BOOL(bUpdateIn);
 
     pszName = CPLStrdup( pszFilename );
@@ -1733,7 +1735,7 @@ static void WriteCore(const char* pszName)
 /*                            WriteWorkbook()                           */
 /************************************************************************/
 
-static void WriteWorkbook(const char* pszName, OGRDataSource* poDS)
+static void WriteWorkbook(const char* pszName, GDALDataset* poDS)
 {
     VSILFILE* fp =
         VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/workbook.xml", pszName), "wb");
