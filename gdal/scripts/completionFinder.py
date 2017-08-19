@@ -161,11 +161,12 @@ def getCompletionScript(name,optList):
         output.append("      key_list=\"Byte Int16 UInt16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64\"\n")
         output.append("      COMPREPLY=( $( compgen -W '$key_list' -- $cur) )\n")
         output.append("      ;;\n")
-      if ("-of" in optList) and isGdal:
-        output.append("    -of)\n")
-        output.append("      key_list=\"$( "+formatParsingCmd+")\"\n")
-        output.append("      COMPREPLY=( $( compgen -W '$key_list' -- $cur) )\n")
-        output.append("      ;;\n")
+      for arg in ("-f", "-of"):
+        if (arg in optList) and isGdal:
+            output.append("    %s)\n" % arg)
+            output.append("      key_list=\"$( "+formatParsingCmd+")\"\n")
+            output.append("      COMPREPLY=( $( compgen -W '$key_list' -- $cur) )\n")
+            output.append("      ;;\n")
       if ("--format" in optList) and isGdal:
         output.append("    --format)\n")
         output.append("      key_list=\"$( "+formatParsingCmd+")\"\n")
@@ -179,16 +180,17 @@ def getCompletionScript(name,optList):
       # replace ogrtindex by ogr2ogr to check --formats
       output.append("  tool=${COMP_WORDS[0]/ogrtindex/ogr2ogr}\n")
       output.append("  case \"$prev\" in\n")
-      if ("-f" in optList) and not isGdal:
-        # completion is more tricky here because of spaces
-        output.append("    -f)\n")
-        output.append("      key_list=\"$( "+formatParsingCmd+")\"\n")
-        output.append("      for iter in $key_list; do\n")
-        output.append("        if [[ $iter =~ ^$cur ]]; then\n")
-        output.append("          COMPREPLY+=( \"${iter//__/ }\" )\n")
-        output.append("        fi\n")
-        output.append("      done\n")
-        output.append("      ;;\n")
+      for arg in ("-f", "-of"):
+        if (arg in optList) and not isGdal:
+            # completion is more tricky here because of spaces
+            output.append("    %s)\n" % arg)
+            output.append("      key_list=\"$( "+formatParsingCmd+")\"\n")
+            output.append("      for iter in $key_list; do\n")
+            output.append("        if [[ $iter =~ ^$cur ]]; then\n")
+            output.append("          COMPREPLY+=( \"${iter//__/ }\" )\n")
+            output.append("        fi\n")
+            output.append("      done\n")
+            output.append("      ;;\n")
       output.append("  esac\n")
 
   output.append("  return 0\n")

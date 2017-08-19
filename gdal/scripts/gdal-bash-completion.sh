@@ -45,7 +45,7 @@ _gdaladdo()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-r -ro -clean -q -oo --help-general --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="-r -ro -clean -q -oo -minsize --help-general --version --license --formats --format --optfile --config --debug --pause --locale "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -142,7 +142,7 @@ _gdal_contour()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-b -a -3d -inodata -snodata -f -i -f -dsco -lco -off -fl -nln -q "
+      key_list="-b -a -3d -inodata -snodata -f -i -dsco -lco -off -fl -nln -q "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -194,7 +194,7 @@ _gdalenhance()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -of -co -ot -src_scale -dst_scale -lutbins -s_nodata -stddev -equalize -config --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -of -co -ot -equalize -config --version --license --formats --format --optfile --config --debug --pause --locale "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -239,7 +239,7 @@ _gdal_grid()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general --formats -ot -of -co -zfield -z_increase -z_multiply -a_srs -spat -clipsrc -clipsrcsql -clipsrclayer -clipsrcwhere -l -where -sql -txe -tye -outsize -a -q --version --license --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -ot -of -co -zfield -z_increase -z_multiply -a_srs -spat -clipsrc -clipsrcsql -clipsrclayer -clipsrcwhere -l -where -sql -txe -tye -outsize -a -q --version --license --formats --format --optfile --config --debug --pause --locale "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -433,7 +433,7 @@ _gdal_rasterize()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-b -i -at -burn -a -3d -add -l -where -sql -dialect -of -a_srs -co -a_nodata -init -te -tr -tap -ts -ot -q "
+      key_list="-b -i -at -burn -a -3d -add -l -where -sql -dialect -of -a_srs -to -co -a_nodata -init -te -tr -tap -ts -ot -optim -q "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -660,7 +660,7 @@ _ogrinfo()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -ro -q -where -spat -geomfield -fid -sql -dialect -al -rl -so -fields=YES -fields=NO -geom=YES -geom=NO -geom=SUMMARY -formats -oo -nomd -listmdd -mdd -nocount -noextent --version --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -ro -q -where -spat -geomfield -fid -sql -dialect -al -rl -so -fields=YES -fields=NO -geom=YES -geom=NO -geom=SUMMARY -oo -nomd -listmdd -mdd -nocount -noextent --version --license --formats --format --optfile --config --debug --pause --locale "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
@@ -683,6 +683,14 @@ _ogrlineref()
   tool=${COMP_WORDS[0]/ogrtindex/ogr2ogr}
   case "$prev" in
     -f)
+      key_list="$( $tool --formats | tail -n +2 | grep -o -E '"[^"]+"' | sed 's/\ /__/')"
+      for iter in $key_list; do
+        if [[ $iter =~ ^$cur ]]; then
+          COMPREPLY+=( "${iter//__/ }" )
+        fi
+      done
+      ;;
+    -of)
       key_list="$( $tool --formats | tail -n +2 | grep -o -E '"[^"]+"' | sed 's/\ /__/')"
       for iter in $key_list; do
         if [[ $iter =~ ^$cur ]]; then
