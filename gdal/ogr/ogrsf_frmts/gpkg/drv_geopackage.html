@@ -220,6 +220,11 @@ INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( '
 INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 4326, 0, 0)
 </pre>
 
+<p>This requires GDAL to be compiled with the SQLITE_HAS_COLUMN_METADATA option
+and SQLite3 with the SQLITE_ENABLE_COLUMN_METADATA option. Starting with GDAL 2.3,
+this can be easily verified if the SQLITE_HAS_COLUMN_METADATA=YES driver metadata item
+is declared (for example with "ogrinfo --format GPKG")</p>
+
 <h3>Examples</h3>
 
 <ul>
