@@ -647,8 +647,10 @@ int RemapPNamesBasedOnProjCSAndPName( OGRSpatialReference* pOgr,
                                       const char* pszProgCSName,
                                       char **mappingTable )
 {
-  int ret = 0;
   OGR_SRSNode *poPROJCS = pOgr->GetAttrNode( "PROJCS" );
+  if( poPROJCS == NULL ) return -1;
+
+  int ret = 0;
   for( int i = 0; mappingTable[i] != NULL; i += 3 )
   {
     while( mappingTable[i] != NULL &&
@@ -1044,8 +1046,10 @@ int RemapPValuesBasedOnProjCSAndPName( OGRSpatialReference* pOgr,
                                        const char* pszProgCSName,
                                        char **mappingTable )
 {
-    int ret = 0;
     OGR_SRSNode *poPROJCS = pOgr->GetAttrNode( "PROJCS" );
+    if( poPROJCS == NULL ) return -1;
+
+    int ret = 0;
     for( int i = 0; mappingTable[i] != NULL; i += 4 )
     {
         while( mappingTable[i] != NULL &&
@@ -1087,8 +1091,10 @@ int AddParamBasedOnPrjName( OGRSpatialReference* pOgr,
                             const char* pszProjectionName,
                             char **mappingTable )
 {
-    int ret = -1;
     OGR_SRSNode *poPROJCS = pOgr->GetAttrNode( "PROJCS" );
+    if( poPROJCS == NULL ) return -1;
+
+    int ret = -1;
     for( int i = 0; mappingTable[i] != NULL; i += 3 )
     {
         if( EQUALN(pszProjectionName, mappingTable[i],
@@ -1136,6 +1142,8 @@ int DeleteParamBasedOnPrjName( OGRSpatialReference* pOgr,
                    strlen(mappingTable[i])) )
         {
             OGR_SRSNode *poPROJCS = pOgr->GetAttrNode( "PROJCS" );
+            if( poPROJCS == NULL ) break;
+
             const char* pszParamName = mappingTable[i+1];
             int iIndex = -1;
             for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
