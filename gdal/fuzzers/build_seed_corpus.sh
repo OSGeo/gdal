@@ -190,6 +190,33 @@ rm -f $OUT/csv_fuzzer_seed_corpus.zip
 zip -r $OUT/csv_fuzzer_seed_corpus.zip *.csv >/dev/null
 cd $OLDPWD
 
+echo "Building bna_fuzzer_seed_corpus.zip"
+cd $(dirname $0)/../../autotest/ogr/data
+rm -f $OUT/bna_fuzzer_seed_corpus.zip
+zip -r $OUT/bna_fuzzer_seed_corpus.zip *.bna >/dev/null
+cd $OLDPWD
+
+echo "Building xlsx_fuzzer_seed_corpus.zip"
+rm -f $OUT/xlsx_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/ogr/data
+for filename in *.xlsx; do
+    mkdir tmpxlsx
+    cd tmpxlsx
+    unzip ../$filename
+    printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/xlsx_$filename.tar
+    for i in `find -type f`; do
+        printf "***NEWFILE***:$i\n" >> $CUR_DIR/xlsx_$filename.tar
+        cat $i >> $CUR_DIR/xlsx_$filename.tar
+    done
+    cd ..
+    rm -rf tmpxlsx
+done
+cd $CUR_DIR
+zip -r $OUT/xlsx_fuzzer_seed_corpus.zip xlsx_*.tar >/dev/null
+rm xlsx_*.tar
+
+
 echo "Building rec_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/rec_fuzzer_seed_corpus.zip
