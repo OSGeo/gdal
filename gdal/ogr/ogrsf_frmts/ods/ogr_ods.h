@@ -124,7 +124,7 @@ typedef struct
     int               nBeginDepth;
 } HandlerState;
 
-class OGRODSDataSource : public OGRDataSource
+class OGRODSDataSource : public GDALDataset
 {
     char*               pszName;
     bool                bUpdatable;
@@ -200,8 +200,6 @@ class OGRODSDataSource : public OGRDataSource
                               int bUpdatableIn );
     int                 Create( const char * pszName, char **papszOptions );
 
-    virtual const char*         GetName() override { return pszName; }
-
     virtual int                 GetLayerCount() override;
     virtual OGRLayer*           GetLayer( int ) override;
 
@@ -228,23 +226,5 @@ class OGRODSDataSource : public OGRDataSource
 };
 
 } /* end of OGRODS namespace */
-
-/************************************************************************/
-/*                             OGRODSDriver                             */
-/************************************************************************/
-
-class OGRODSDriver : public OGRSFDriver
-{
-  public:
-                virtual ~OGRODSDriver();
-
-    virtual const char*         GetName() override;
-    virtual OGRDataSource*      Open( const char *, int ) override;
-    virtual int                 TestCapability( const char * ) override;
-
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL ) override;
-    virtual OGRErr      DeleteDataSource( const char *pszName ) override;
-};
 
 #endif /* ndef OGR_ODS_H_INCLUDED */
