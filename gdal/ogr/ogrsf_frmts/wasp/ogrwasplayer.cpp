@@ -777,12 +777,21 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
         CPLError(CE_Failure, CPLE_FileIO, "looking for %d values and found %d on line: %s", poLayerDefn->GetFieldCount(), iNumValues-1, pszLine );
         return NULL;
     }
+    const double dfNumPairToRead = dfValues[iNumValues-1];
+    if( !(dfNumPairToRead >= 0 && dfNumPairToRead < 1000000) ||
+        static_cast<int>(dfNumPairToRead) != dfNumPairToRead )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Invalid coordinate number: %f", dfNumPairToRead );
+        return NULL;
+    }
 
     UNIQUEPTR< OGRFeature > poFeature( new OGRFeature( poLayerDefn ) );
     poFeature->SetFID( ++iFeatureCount );
     for ( int i=0; i<iNumValues-1; i++ ) poFeature->SetField( i, dfValues[i] );
 
-    const int iNumValuesToRead = static_cast<int>(2*dfValues[iNumValues-1]);
+
+    const int iNumValuesToRead = static_cast<int>(2*dfNumPairToRead);
     int iReadValues = 0;
     std::vector<double> values(iNumValuesToRead);
     for ( pszLine = CPLReadLineL( hFile );
