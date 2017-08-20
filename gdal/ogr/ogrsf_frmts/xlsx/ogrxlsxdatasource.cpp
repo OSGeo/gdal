@@ -645,7 +645,7 @@ void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
 
 void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
 {
-    if (stateStack[nStackDepth].nBeginDepth == nDepth)
+    if (stateStack[nStackDepth].nBeginDepth == nDepth && poCurLayer != NULL)
     {
         CPLAssert(strcmp(pszNameIn, "sheetData") == 0);
 
