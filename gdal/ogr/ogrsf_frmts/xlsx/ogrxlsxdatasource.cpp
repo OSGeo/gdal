@@ -593,7 +593,7 @@ void OGRXLSXDataSource::DetectHeaderLine()
         bFirstLineIsHeaders = true;
     }
     CPLDebug("XLSX", "%s %s",
-             poCurLayer->GetName(),
+             poCurLayer ? poCurLayer->GetName() : "NULL layer",
              bFirstLineIsHeaders ? "has header line" : "has no header line");
 }
 
@@ -759,7 +759,7 @@ void OGRXLSXDataSource::startElementRow(const char *pszNameIn,
 
 void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
 {
-    if (stateStack[nStackDepth].nBeginDepth == nDepth)
+    if (stateStack[nStackDepth].nBeginDepth == nDepth && poCurLayer != NULL)
     {
         CPLAssert(strcmp(pszNameIn, "row") == 0);
 
