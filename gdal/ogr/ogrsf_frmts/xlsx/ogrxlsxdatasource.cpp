@@ -699,7 +699,7 @@ void OGRXLSXDataSource::startElementRow(const char *pszNameIn,
         PushState(STATE_CELL);
 
         const char* pszR = GetAttributeValue(ppszAttr, "r", NULL);
-        if (pszR)
+        if (pszR && pszR[0] >= 'A' && pszR[0] <= 'Z')
         {
             /* Convert col number from base 26 */
             /*
@@ -708,7 +708,7 @@ void OGRXLSXDataSource::startElementRow(const char *pszNameIn,
             */
             int nNewCurCol = (pszR[0] - 'A');
             int i = 1;
-            while(pszR[i] >= 'A' && pszR[i] <= 'Z')
+            while(pszR[i] >= 'A' && pszR[i] <= 'Z' && nNewCurCol < 10000000)
             {
                 // We wouldn't need the +1 if this was a proper base 26
                 nNewCurCol = (nNewCurCol + 1) * 26 + (pszR[i] - 'A');
