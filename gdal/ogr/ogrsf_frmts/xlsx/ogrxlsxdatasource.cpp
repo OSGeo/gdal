@@ -708,7 +708,7 @@ void OGRXLSXDataSource::startElementRow(const char *pszNameIn,
             */
             int nNewCurCol = (pszR[0] - 'A');
             int i = 1;
-            while(pszR[i] >= 'A' && pszR[i] <= 'Z' && nNewCurCol < 10000000)
+            while(pszR[i] >= 'A' && pszR[i] <= 'Z' && nNewCurCol < 10000)
             {
                 // We wouldn't need the +1 if this was a proper base 26
                 nNewCurCol = (nNewCurCol + 1) * 26 + (pszR[i] - 'A');
