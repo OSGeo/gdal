@@ -56,7 +56,8 @@ def validate(ds, check_tiled=True):
         raise ValidateCloudOptimizedGeoTIFFException(
             "GDAL 2.2 or above required")
 
-    if isinstance(ds, str) or isinstance(ds, type(u'')):
+    unicode_type = type(''.encode('utf-8').decode('utf-8'))
+    if isinstance(ds, str) or isinstance(ds, unicode_type):
         gdal.PushErrorHandler()
         ds = gdal.Open(ds)
         gdal.PopErrorHandler()
@@ -200,7 +201,9 @@ def main():
         if len(errors) != 0:
             if not quiet:
                 print('%s is NOT a valid cloud optimized GeoTIFF.' % filename)
-                print(errors)
+                print('The following errors were foud:')
+                for error in errors:
+                    print(' - ' + error)
             ret = 1
         else:
             ret = 0
