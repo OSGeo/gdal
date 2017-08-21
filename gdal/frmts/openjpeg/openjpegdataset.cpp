@@ -1705,26 +1705,26 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-    poDS->bUseSetDecodeArea =
-        (poDS->nRasterXSize == (int)nTileW &&
-         poDS->nRasterYSize == (int)nTileH &&
-         (poDS->nRasterXSize > 1024 ||
-          poDS->nRasterYSize > 1024));
+        poDS->bUseSetDecodeArea =
+            (poDS->nRasterXSize == (int)nTileW &&
+            poDS->nRasterYSize == (int)nTileH &&
+            (poDS->nRasterXSize > 1024 ||
+            poDS->nRasterYSize > 1024));
 
-    /* Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
-    /* are tiled with tile dimensions 2048x2048. It would be a waste of */
-    /* memory to allocate such big blocks */
-    if( poDS->nRasterXSize < (int)nTileW &&
-        poDS->nRasterYSize < (int)nTileH )
-    {
-        poDS->bUseSetDecodeArea = TRUE;
-        nTileW = poDS->nRasterXSize;
-        nTileH = poDS->nRasterYSize;
-        if (nTileW > 2048) nTileW = 2048;
-        if (nTileH > 2048) nTileH = 2048;
-    }
-    else if (poDS->bUseSetDecodeArea)
-    {
+        /* Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
+        /* are tiled with tile dimensions 2048x2048. It would be a waste of */
+        /* memory to allocate such big blocks */
+        if( poDS->nRasterXSize < (int)nTileW &&
+            poDS->nRasterYSize < (int)nTileH )
+        {
+            poDS->bUseSetDecodeArea = TRUE;
+            nTileW = poDS->nRasterXSize;
+            nTileH = poDS->nRasterYSize;
+            if (nTileW > 2048) nTileW = 2048;
+            if (nTileH > 2048) nTileH = 2048;
+        }
+        else if (poDS->bUseSetDecodeArea)
+        {
             // Arbitrary threshold... ~4 million at least needed for the GRIB2
             // images mentioned below.
             if( nTileH == 1 && nTileW < 20 * 1024 * 1024 )
@@ -1734,9 +1734,9 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             else
             {
-        if (nTileW > 1024) nTileW = 1024;
-        if (nTileH > 1024) nTileH = 1024;
-    }
+                if (nTileW > 1024) nTileW = 1024;
+                if (nTileH > 1024) nTileH = 1024;
+            }
         }
     }
 
