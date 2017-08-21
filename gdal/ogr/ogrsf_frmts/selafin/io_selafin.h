@@ -203,7 +203,7 @@ int write_integer(VSILFILE *fp,int nData);
  * \param bDiscard If true, the function does not attempt to save the value read in the variable nData, but only advances in the file as it should. Default value is false.
  * \return Number of characters in string read
  */
-int read_string(VSILFILE *fp,char *&pszData,int nFileSize,bool bDiscard=false);
+int read_string(VSILFILE *fp,char *&pszData,vsi_l_offset nFileSize,bool bDiscard=false);
 
 /**
  * \brief Write a string to a Selafin file
@@ -229,7 +229,7 @@ int write_string(VSILFILE *fp,char *pszData,size_t nLength=0);
  * \param bDiscard If true, the function does not attempt to save the value read in the variable nData, but only advances in the file as it should. Default value is false.
  * \return Number of elements in array read, -1 if an error occurred
  */
-int read_intarray(VSILFILE *fp,int *&panData,int nFileSize,bool bDiscard=false);
+int read_intarray(VSILFILE *fp,int *&panData,vsi_l_offset nFileSize,bool bDiscard=false);
 
 /**
  * \brief Write an array of integers to a Selafin file
@@ -276,7 +276,7 @@ int write_float(VSILFILE *fp,double dfData);
  * \param bDiscard If true, the function does not attempt to save the value read in the variable nData, but only advances in the file as it should. Default value is false.
  * \return Number of elements in array read, -1 if an error occurred
  */
-int read_floatarray(VSILFILE *fp,double **papadfData,int nFileSize,bool bDiscard=false);
+int read_floatarray(VSILFILE *fp,double **papadfData,vsi_l_offset nFileSize,bool bDiscard=false);
 
 /**
  * \brief Write an array of floats to a Selafin file

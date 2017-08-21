@@ -326,10 +326,10 @@ namespace Selafin {
         return 1;
     }
 
-    int read_string(VSILFILE *fp,char *&pszData,int nFileSize,bool bDiscard) {
+    int read_string(VSILFILE *fp,char *&pszData,vsi_l_offset nFileSize,bool bDiscard) {
         int nLength=0;
         read_integer(fp,nLength);
-        if (nLength<=0 || nLength == INT_MAX || nLength > nFileSize) {
+        if (nLength<=0 || nLength == INT_MAX || static_cast<unsigned>(nLength) > nFileSize) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
             return 0;
         }
@@ -373,11 +373,11 @@ namespace Selafin {
         return 1;
     }
 
-    int read_intarray(VSILFILE *fp,int *&panData,int nFileSize,bool bDiscard) {
+    int read_intarray(VSILFILE *fp,int *&panData,vsi_l_offset nFileSize,bool bDiscard) {
         int nLength=0;
         read_integer(fp,nLength);
         panData = NULL;
-        if (nLength<0 || nLength+1<=0 || nLength/4 > nFileSize) {
+        if (nLength<0 || nLength+1<=0 || static_cast<unsigned>(nLength)/4 > nFileSize) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
             return -1;
         }
@@ -444,10 +444,10 @@ namespace Selafin {
         return 1;
     }
 
-    int read_floatarray(VSILFILE *fp,double **papadfData,int nFileSize,bool bDiscard) {
+    int read_floatarray(VSILFILE *fp,double **papadfData,vsi_l_offset nFileSize,bool bDiscard) {
         int nLength=0;
         read_integer(fp,nLength);
-        if (nLength<0 || nLength+1<=0 || nLength/4 > nFileSize) {
+        if (nLength<0 || nLength+1<=0 || static_cast<unsigned>(nLength)/4 > nFileSize) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
             return -1;
         }
