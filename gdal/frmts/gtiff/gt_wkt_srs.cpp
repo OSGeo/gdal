@@ -1142,7 +1142,23 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         OGR_SRSNode *poOldRoot = oSRS.GetRoot()->Clone();
 
         oSRS.Clear();
-        oSRS.SetNode( "COMPD_CS", "unknown" );
+
+/* -------------------------------------------------------------------- */
+/*      Set COMPD_CS name.                                              */
+/* -------------------------------------------------------------------- */
+        char szCTString[512];
+        szCTString[0] = '\0';
+        if( GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szCTString,
+                                 0, sizeof(szCTString) ) &&
+            strstr( szCTString, " = " ) == NULL )
+        {
+            oSRS.SetNode( "COMPD_CS", szCTString );
+        }
+        else
+        {
+            oSRS.SetNode( "COMPD_CS", "unknown" );
+        }
+
         oSRS.GetRoot()->AddChild( poOldRoot );
 
 /* -------------------------------------------------------------------- */
