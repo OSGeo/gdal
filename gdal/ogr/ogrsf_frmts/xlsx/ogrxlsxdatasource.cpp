@@ -624,18 +624,35 @@ void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
     {
         PushState(STATE_ROW);
 
+        nCurCol = 0;
+        apoCurLineValues.clear();
+        apoCurLineTypes.clear();
+
         int nNewCurLine = atoi(
-            GetAttributeValue(ppszAttr, "r", "0")) - 1;
+            GetAttributeValue(ppszAttr, "r", "0"));
+        if( nNewCurLine <= 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid row: %d", nNewCurLine);
+            return;
+        }
+        nNewCurLine --;
+        if( nNewCurLine > nCurLine && nNewCurLine - nCurLine > 10000 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid row: %d. Too big gap with previous valid row",
+                     nNewCurLine);
+            return;
+        }
         for(;nCurLine<nNewCurLine;)
         {
-            nCurCol = 0;
-            apoCurLineValues.resize(0);
-            apoCurLineTypes.resize(0);
             endElementRow("row");
+
+            nCurCol = 0;
+            apoCurLineValues.clear();
+            apoCurLineTypes.clear();
         }
-        nCurCol = 0;
-        apoCurLineValues.resize(0);
-        apoCurLineTypes.resize(0);
+
     }
 }
 
