@@ -828,6 +828,8 @@ bool OGRVRTDataSource::Initialize( CPLXMLNode *psTreeIn, const char *pszNewName,
 {
     CPLAssert( nLayers == 0 );
 
+    AddForbiddenNames(pszNewName);
+
     psTree = psTreeIn;
 
 /* -------------------------------------------------------------------- */
