@@ -78,14 +78,13 @@ static void InvertGeometries( GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
 /*      Create a ring that is a bit outside the raster dataset.         */
 /* -------------------------------------------------------------------- */
-    OGRGeometryH hUniversePoly, hUniverseRing;
-    double adfGeoTransform[6];
-    int brx = GDALGetRasterXSize( hDstDS ) + 2;
-    int bry = GDALGetRasterYSize( hDstDS ) + 2;
+    const int brx = GDALGetRasterXSize(hDstDS) + 2;
+    const int bry = GDALGetRasterYSize(hDstDS) + 2;
 
+    double adfGeoTransform[6] = {};
     GDALGetGeoTransform( hDstDS, adfGeoTransform );
 
-    hUniverseRing = OGR_G_CreateGeometry( wkbLinearRing );
+    OGRGeometryH hUniverseRing = OGR_G_CreateGeometry(wkbLinearRing);
 
     OGR_G_AddPoint_2D(
         hUniverseRing,
@@ -112,7 +111,7 @@ static void InvertGeometries( GDALDatasetH hDstDS,
         adfGeoTransform[0] + -2*adfGeoTransform[1] + -2*adfGeoTransform[2],
         adfGeoTransform[3] + -2*adfGeoTransform[4] + -2*adfGeoTransform[5] );
 
-    hUniversePoly = OGR_G_CreateGeometry( wkbPolygon );
+    OGRGeometryH hUniversePoly = OGR_G_CreateGeometry(wkbPolygon);
     OGR_G_AddGeometryDirectly( hUniversePoly, hUniverseRing );
 
     OGR_G_AddGeometryDirectly( hCollection, hUniversePoly );
@@ -678,9 +677,8 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
 
     if( psOptions->pszSQL != NULL )
     {
-        OGRLayerH hLayer;
-
-        hLayer = GDALDatasetExecuteSQL( hSrcDataset, psOptions->pszSQL, NULL, psOptions->pszDialect );
+        OGRLayerH hLayer = GDALDatasetExecuteSQL(
+            hSrcDataset, psOptions->pszSQL, NULL, psOptions->pszDialect);
         if( hLayer != NULL )
         {
             if (bCreateOutput)
