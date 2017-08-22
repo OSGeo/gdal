@@ -33,10 +33,14 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <string>
 #if HAVE_FCNTL_H
 #  include <fcntl.h>
 #endif
+
+#include <algorithm>
+#include <limits>
+#include <string>
+#include <utility>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -57,6 +61,47 @@ static const int R_CHARSXP = 9;
 static const int R_INTSXP = 13;
 static const int R_REALSXP = 14;
 static const int R_STRSXP = 16;
+
+namespace {
+
+// TODO(schwehr): Move this to port/? for general use.
+bool SafeMult(GIntBig a, GIntBig b, GIntBig *result) {
+    if (a == 0 || b == 0) {
+      *result = 0;
+      return true;
+    }
+
+    bool result_positive = (a >= 0 && b >= 0) || (a < 0 && b < 0);
+    if (result_positive) {
+        // Cannot convert min() to positive.
+        if (a == std::numeric_limits<GIntBig>::min() ||
+            b == std::numeric_limits<GIntBig>::min()) {
+            *result = 0;
+            return false;
+        }
+        if (a < 0) {
+            a = -a;
+            b = -b;
+        }
+        if (a > std::numeric_limits<GIntBig>::max() / b) {
+            *result = 0;
+            return false;
+        }
+        *result = a * b;
+        return true;
+    }
+
+    if (b < a) std::swap(a, b);
+    if (a < (std::numeric_limits<GIntBig>::min() + 1) / b) {
+        *result = 0;
+        return false;
+    }
+
+    *result = a * b;
+    return true;
+}
+
+}  // namespace
 
 /************************************************************************/
 /*                            RRasterBand()                             */
@@ -500,8 +545,11 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( nValueCount < static_cast<GIntBig>(nBandCount) * poDS->nRasterXSize *
-                          poDS->nRasterYSize )
+    GIntBig result = 0;
+    bool ok = SafeMult(nBandCount, poDS->nRasterXSize, &result);
+    ok &= SafeMult(result, poDS->nRasterYSize, &result);
+
+    if( !ok || nValueCount <  result )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Not enough pixel data.");
         delete poDS;
