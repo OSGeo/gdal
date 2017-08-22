@@ -495,19 +495,30 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     {
         // Pass copies of projection info, not originals (pointers get updated
         // by importFromWkt).
-        char *pszPtemp = CPLStrdup(pszProjection);
+        char *pszPtemp = pszProjection;
         OGRSpatialReference oUTM;
         oUTM.importFromWkt(&pszPtemp);
-        char *pszGCPtemp = NULL;
-        oUTM.GetAttrNode("GEOGCS")->exportToWkt(&pszGCPtemp);
 
-        OGRSpatialReference oLL;
-        oLL.importFromWkt(&pszGCPtemp);
-        poTransform = OGRCreateCoordinateTransformation( &oUTM, &oLL );
-        if( poTransform == NULL )
+        OGR_SRSNode* poGEOGCS = oUTM.GetAttrNode("GEOGCS");
+        if( poGEOGCS )
+        {
+            char *pszGCPProj = NULL;
+            poGEOGCS->exportToWkt(&pszGCPProj);
+
+            OGRSpatialReference oLL;
+            char* pszGCPtemp = pszGCPProj;
+            oLL.importFromWkt(&pszGCPtemp);
+            CPLFree(pszGCPProj);
+            poTransform = OGRCreateCoordinateTransformation( &oUTM, &oLL );
+            if( poTransform == NULL )
+            {
+                bSuccess = false;
+                CPLErrorReset();
+            }
+        }
+        else
         {
             bSuccess = false;
-            CPLErrorReset();
         }
     }
     else if ((( CSLFetchNameValue( papszGeoref, "projection.name" ) != NULL ) &&
