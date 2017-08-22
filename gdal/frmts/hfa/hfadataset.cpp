@@ -4101,7 +4101,9 @@ int WritePeStringIfNeeded( OGRSpatialReference* poSRS, HFAHandle hHFA )
         if( !ret )
         {
             OGR_SRSNode *poAUnits = poSRS->GetAttrNode("GEOGCS|UNIT");
-            name = poAUnits->GetChild(0)->GetValue();
+            OGR_SRSNode *poChild =
+                poAUnits == NULL ? NULL : poAUnits->GetChild(0);
+            name = poChild == NULL ? NULL : poChild->GetValue();
             if( name && !EQUAL(name, "Degree") )
                 ret = true;
         }
