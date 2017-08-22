@@ -2115,18 +2115,21 @@ OGRErr OGRSpatialReference::morphFromESRI()
         // http://trac.osgeo.org/gdal/ticket/2072
         if( EQUAL( pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP ) )
         {
-            OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
-            const int iSP1Child =
-                FindProjParm( "Standard_Parallel_1", poPROJCS );
-            const int iLatOrigChild =
-                FindProjParm( "Latitude_Of_Origin", poPROJCS );
-            if( iSP1Child != -1 && iLatOrigChild != -1 )
+            OGR_SRSNode *poPROJCS = GetAttrNode("PROJCS");
+            if( poPROJCS != NULL )
             {
-                // Do a sanity check before removing Standard_Parallel_1.
-                if( EQUAL(poPROJCS->GetChild(iSP1Child)->GetValue(),
-                          poPROJCS->GetChild(iLatOrigChild)->GetValue()) )
+                const int iSP1Child =
+                    FindProjParm("Standard_Parallel_1", poPROJCS);
+                const int iLatOrigChild =
+                    FindProjParm("Latitude_Of_Origin", poPROJCS);
+                if( iSP1Child != -1 && iLatOrigChild != -1 )
                 {
-                    poPROJCS->DestroyChild( iSP1Child );
+                    // Do a sanity check before removing Standard_Parallel_1.
+                    if( EQUAL(poPROJCS->GetChild(iSP1Child)->GetValue(),
+                              poPROJCS->GetChild(iLatOrigChild)->GetValue()) )
+                    {
+                        poPROJCS->DestroyChild(iSP1Child);
+                    }
                 }
             }
         }
