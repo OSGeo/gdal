@@ -800,6 +800,8 @@ bool OGRVRTDataSource::Initialize( CPLXMLNode *psTreeIn, const char *pszNewName,
 {
     CPLAssert(nLayers == 0);
 
+    AddForbiddenNames(pszNewName);
+
     psTree = psTreeIn;
 
     // Set name, and capture the directory path so we can use it
