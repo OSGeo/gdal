@@ -25,20 +25,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogrsf_frmts.h"
-#include "ogr_p.h"
+#include "cpl_port.h"
+
+#include "commonutils.h"
 #include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_string.h"
-#include "ogr_api.h"
 #include "gdal.h"
 #include "gdal_alg.h"
-#include "commonutils.h"
-#include <map>
-#include <vector>
-#include <set>
-#include <limits>
-#include "cpl_error.h"
+#include "ogr_api.h"
 #include "ogr_geos.h"
+#include "ogr_p.h"
+#include "ogrsf_frmts.h"
+
+#include <limits>
+#include <map>
+#include <set>
+#include <vector>
 
 CPL_CVSID("$Id$")
 

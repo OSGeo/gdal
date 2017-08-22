@@ -450,11 +450,12 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
                                   const char* pszLyr,
                                   const char* pszWhere)
 {
-    GDALDataset *poDS = (GDALDataset*) OGROpen( pszDS, FALSE, NULL );
+    GDALDataset *poDS =
+        reinterpret_cast<GDALDataset *>(OGROpen(pszDS, FALSE, NULL));
     if (poDS == NULL)
         return NULL;
 
-    OGRLayer *poLyr;
+    OGRLayer *poLyr = NULL;
     if (pszSQL != NULL)
         poLyr = poDS->ExecuteSQL( pszSQL, NULL, NULL );
     else if (pszLyr != NULL)
@@ -464,8 +465,9 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
 
     if (poLyr == NULL)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to identify source layer from datasource." );
-        GDALClose(( GDALDatasetH) poDS);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to identify source layer from datasource." );
+        GDALClose(poDS);
         return NULL;
     }
 
@@ -473,13 +475,14 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
         poLyr->SetAttributeFilter(pszWhere);
 
     OGRGeometry *poGeom = NULL;
-    OGRFeature *poFeat;
+    OGRFeature *poFeat = NULL;
     while ((poFeat = poLyr->GetNextFeature()) != NULL)
     {
         OGRGeometry* poSrcGeom = poFeat->GetGeometryRef();
         if (poSrcGeom)
         {
-            OGRwkbGeometryType eType = wkbFlatten( poSrcGeom->getGeometryType() );
+            const OGRwkbGeometryType eType =
+                wkbFlatten(poSrcGeom->getGeometryType());
 
             if (poGeom == NULL)
                 poGeom = OGRGeometryFactory::createGeometry( wkbMultiPolygon );
@@ -488,10 +491,9 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
                 ((OGRGeometryCollection*)poGeom)->addGeometry( poSrcGeom );
             else if( eType == wkbMultiPolygon )
             {
-                int iGeom;
                 int nGeomCount = OGR_G_GetGeometryCount( (OGRGeometryH)poSrcGeom );
 
-                for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+                for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
                 {
                     ((OGRGeometryCollection*)poGeom)->addGeometry(
                                 ((OGRGeometryCollection*)poSrcGeom)->getGeometryRef(iGeom) );
@@ -504,7 +506,7 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
                 OGRFeature::DestroyFeature(poFeat);
                 if( pszSQL != NULL )
                     poDS->ReleaseResultSet( poLyr );
-                GDALClose(( GDALDatasetH) poDS);
+                GDALClose(poDS);
                 return NULL;
             }
         }
@@ -514,7 +516,7 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
 
     if( pszSQL != NULL )
         poDS->ReleaseResultSet( poLyr );
-    GDALClose(( GDALDatasetH) poDS);
+    GDALClose(poDS);
 
     return poGeom;
 }
@@ -610,16 +612,14 @@ class OGRSplitListFieldLayer : public OGRLayer
 /************************************************************************/
 
 OGRSplitListFieldLayer::OGRSplitListFieldLayer(OGRLayer* poSrcLayerIn,
-                                               int nMaxSplitListSubFieldsIn)
-{
-    poSrcLayer = poSrcLayerIn;
-    nMaxSplitListSubFields = nMaxSplitListSubFieldsIn;
-    if (nMaxSplitListSubFields < 0)
-        nMaxSplitListSubFields = INT_MAX;
-    poFeatureDefn = NULL;
-    pasListFields = NULL;
-    nListFieldCount = 0;
-}
+                                               int nMaxSplitListSubFieldsIn) :
+    poSrcLayer(poSrcLayerIn),
+    poFeatureDefn(NULL),
+    pasListFields(NULL),
+    nListFieldCount(0),
+    nMaxSplitListSubFields(
+        nMaxSplitListSubFieldsIn < 0 ? INT_MAX : nMaxSplitListSubFieldsIn)
+{}
 
 /************************************************************************/
 /*                   ~OGRSplitListFieldLayer()                          */
@@ -2110,7 +2110,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 {
                     if( poODS != NULL )
                         poDriver = poODS->GetDriver();
-                    GDALClose( (GDALDatasetH) poODS );
+                    GDALClose(poODS);
                     poODS = NULL;
                 }
             }
