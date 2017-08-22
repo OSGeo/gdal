@@ -1703,6 +1703,15 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->bUseSetDecodeArea = false;
     }
+    /* Some Sentinel2 preview datasets are 343x343 large, but with 8x8 blocks */
+    /* Using the tile API for that is super slow, so expose a single block */
+    else if( poDS->nRasterXSize <= 1024 &&  poDS->nRasterYSize <= 1024 &&
+             nTileW < 32 && nTileH < 32 )
+    {
+        poDS->bUseSetDecodeArea = true;
+        nTileW = poDS->nRasterXSize;
+        nTileH = poDS->nRasterYSize;
+    }
     else
     {
         poDS->bUseSetDecodeArea =
@@ -1711,7 +1720,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             (poDS->nRasterXSize > 1024 ||
             poDS->nRasterYSize > 1024));
 
-        /* Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
+        /* Other Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
         /* are tiled with tile dimensions 2048x2048. It would be a waste of */
         /* memory to allocate such big blocks */
         if( poDS->nRasterXSize < (int)nTileW &&
