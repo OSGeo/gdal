@@ -3586,6 +3586,28 @@ def jp2openjpeg_49():
     return 'success'
 
 ###############################################################################
+# Test opening an image of small dimension with very small tiles (#7012)
+
+def jp2openjpeg_50():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/fake_sent2_preview.jp2')
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+    if blockxsize != ds.RasterXSize or blockysize != ds.RasterYSize:
+        gdaltest.post_reason('expected warning')
+        print(blockxsize, blockysize)
+        return 'fail'
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 2046:
+        gdaltest.post_reason('expected warning')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -3643,6 +3665,7 @@ gdaltest_list = [
     jp2openjpeg_47,
     jp2openjpeg_48,
     jp2openjpeg_49,
+    jp2openjpeg_50,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
