@@ -1703,28 +1703,37 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->bUseSetDecodeArea = false;
     }
-    else
+    /* Some Sentinel2 preview datasets are 343x343 large, but with 8x8 blocks */
+    /* Using the tile API for that is super slow, so expose a single block */
+    else if( poDS->nRasterXSize <= 1024 &&  poDS->nRasterYSize <= 1024 &&
+             nTileW < 32 && nTileH < 32 )
     {
-    poDS->bUseSetDecodeArea =
-        (poDS->nRasterXSize == (int)nTileW &&
-         poDS->nRasterYSize == (int)nTileH &&
-         (poDS->nRasterXSize > 1024 ||
-          poDS->nRasterYSize > 1024));
-
-    /* Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
-    /* are tiled with tile dimensions 2048x2048. It would be a waste of */
-    /* memory to allocate such big blocks */
-    if( poDS->nRasterXSize < (int)nTileW &&
-        poDS->nRasterYSize < (int)nTileH )
-    {
-        poDS->bUseSetDecodeArea = TRUE;
+        poDS->bUseSetDecodeArea = true;
         nTileW = poDS->nRasterXSize;
         nTileH = poDS->nRasterYSize;
-        if (nTileW > 2048) nTileW = 2048;
-        if (nTileH > 2048) nTileH = 2048;
     }
-    else if (poDS->bUseSetDecodeArea)
+    else
     {
+        poDS->bUseSetDecodeArea =
+            (poDS->nRasterXSize == (int)nTileW &&
+            poDS->nRasterYSize == (int)nTileH &&
+            (poDS->nRasterXSize > 1024 ||
+            poDS->nRasterYSize > 1024));
+
+        /* Other Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
+        /* are tiled with tile dimensions 2048x2048. It would be a waste of */
+        /* memory to allocate such big blocks */
+        if( poDS->nRasterXSize < (int)nTileW &&
+            poDS->nRasterYSize < (int)nTileH )
+        {
+            poDS->bUseSetDecodeArea = TRUE;
+            nTileW = poDS->nRasterXSize;
+            nTileH = poDS->nRasterYSize;
+            if (nTileW > 2048) nTileW = 2048;
+            if (nTileH > 2048) nTileH = 2048;
+        }
+        else if (poDS->bUseSetDecodeArea)
+        {
             // Arbitrary threshold... ~4 million at least needed for the GRIB2
             // images mentioned below.
             if( nTileH == 1 && nTileW < 20 * 1024 * 1024 )
@@ -1734,9 +1743,9 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             else
             {
-        if (nTileW > 1024) nTileW = 1024;
-        if (nTileH > 1024) nTileH = 1024;
-    }
+                if (nTileW > 1024) nTileW = 1024;
+                if (nTileH > 1024) nTileH = 1024;
+            }
         }
     }
 
