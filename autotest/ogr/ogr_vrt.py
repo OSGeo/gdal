@@ -1366,7 +1366,42 @@ def ogr_vrt_23(shared_ds_flag = ''):
 
 def ogr_vrt_24():
 
-    return ogr_vrt_23(' shared="1"')
+    ret = ogr_vrt_23(' shared="1"')
+    if ret != 'success':
+        return ret
+
+    rec1 = """<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource shared="1">/vsimem/rec2.vrt</SrcDataSource>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+
+    rec2 = """<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource shared="1">/vsimem/rec2.vrt</SrcDataSource>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+
+    gdal.FileFromMemBuffer('/vsimem/rec1.vrt', rec1)
+    gdal.FileFromMemBuffer('/vsimem/rec2.vrt', rec2)
+
+    ds = ogr.Open('/vsimem/rec1.vrt')
+    if ds is None:
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds.GetLayer(0).GetLayerDefn()
+    ds.GetLayer(0).GetFeatureCount()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('error expected !')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/rec1.vrt')
+    gdal.Unlink('/vsimem/rec2.vrt')
+
+    return 'success'
 
 
 ###############################################################################
