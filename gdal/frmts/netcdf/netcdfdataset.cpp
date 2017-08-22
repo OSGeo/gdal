@@ -3713,6 +3713,8 @@ int NCDFWriteSRSVariable(int cdfid, OGRSpatialReference* poSRS,
         // Write CF-1.5 compliant Projected attributes.
 
         const OGR_SRSNode *poPROJCS = poSRS->GetAttrNode("PROJCS");
+        if( poPROJCS == NULL )
+            return -1;
         const char *pszProjName = poSRS->GetAttrValue("PROJECTION");
         if( pszProjName == NULL )
             return -1;
