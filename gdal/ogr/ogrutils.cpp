@@ -1070,6 +1070,8 @@ int OGRParseDate( const char *pszInput,
 
     if( strstr(pszInput, ":") != NULL )
     {
+        if( !(*pszInput >= '0' && *pszInput <= '9') )
+            return FALSE;
         psField->Date.Hour = static_cast<GByte>(atoi(pszInput));
         if( psField->Date.Hour > 23 )
             return FALSE;
@@ -1081,6 +1083,8 @@ int OGRParseDate( const char *pszInput,
         else
             ++pszInput;
 
+        if( !(*pszInput >= '0' && *pszInput <= '9') )
+            return FALSE;
         psField->Date.Minute = static_cast<GByte>(atoi(pszInput));
         if( psField->Date.Minute > 59 )
             return FALSE;
@@ -1091,6 +1095,8 @@ int OGRParseDate( const char *pszInput,
         {
             ++pszInput;
 
+            if( !(*pszInput >= '0' && *pszInput <= '9') )
+                return FALSE;
             psField->Date.Second = static_cast<float>(CPLAtof(pszInput));
             if( psField->Date.Second > 61 )
                 return FALSE;
