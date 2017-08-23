@@ -767,11 +767,15 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     if(!opj_read_header(pStream,pCodec,&psImage))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed (psImage=%p)", psImage);
+#if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20200
+        // Hopefully the situation is better on openjpeg 2.2 regarding cleanup
+        eErr = CE_Failure;
+        goto end;
+#else
         // We may leak objects, but the cleanup of openjpeg can cause
         // double frees sometimes...
+#endif
         return CE_Failure;
-        //eErr = CE_Failure;
-        //goto end;
     }
 
     if (!opj_set_decoded_resolution_factor( pCodec, iLevel ))
