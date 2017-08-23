@@ -257,7 +257,8 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
     return Identify(&oOpenInfo);
   }
 
-  if( !EQUAL(fileName + strlen(fileName) - strlen(".hgt"), ".hgt") )
+  if( !EQUAL(fileName + strlen(fileName) - strlen(".hgt"), ".hgt") &&
+      !EQUAL(fileName + strlen(fileName) - strlen(".hgt.gz"), ".hgt.gz") )
     return FALSE;
 
 /* -------------------------------------------------------------------- */
