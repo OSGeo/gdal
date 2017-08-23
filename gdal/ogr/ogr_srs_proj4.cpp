@@ -1246,7 +1246,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             else
             {
                 // This case is untranslatable.  Should add all proj.4 unts.
-                SetLinearUnits( pszValue, 1.0 );
+                SetLinearUnits( !EQUAL(pszValue, "AUTHORITY") ? pszValue : "unknown", 1.0 );
             }
         }
     }
