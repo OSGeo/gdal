@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.86 2017-06-30 17:29:44 erouault Exp $ */
+/* $Id: tif_dirwrite.c,v 1.89 2017-08-23 13:33:42 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -821,7 +821,12 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 			TIFFDirEntry* nb;
 			for (na=0, nb=dir; ; na++, nb++)
 			{
-				assert(na<ndir);
+				if( na == ndir )
+                                {
+                                    TIFFErrorExt(tif->tif_clientdata,module,
+                                                 "Cannot find SubIFD tag");
+                                    goto bad;
+                                }
 				if (nb->tdir_tag==TIFFTAG_SUBIFD)
 					break;
 			}
@@ -1944,7 +1949,14 @@ TIFFWriteDirectoryTagSubifd(TIFF* tif, uint32* ndir, TIFFDirEntry* dir)
 		for (p=0; p < tif->tif_dir.td_nsubifd; p++)
 		{
                         assert(pa != 0);
-			assert(*pa <= 0xFFFFFFFFUL);
+
+                        /* Could happen if an classicTIFF has a SubIFD of type LONG8 (which is illegal) */
+                        if( *pa > 0xFFFFFFFFUL)
+                        {
+                            TIFFErrorExt(tif->tif_clientdata,module,"Illegal value for SubIFD tag");
+                            _TIFFfree(o);
+                            return(0);
+                        }
 			*pb++=(uint32)(*pa++);
 		}
 		n=TIFFWriteDirectoryTagCheckedIfdArray(tif,ndir,dir,TIFFTAG_SUBIFD,tif->tif_dir.td_nsubifd,o);
