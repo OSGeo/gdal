@@ -480,4 +480,95 @@ namespace tut
       OGR_SM_Destroy(hSM);
     }
 
+    template<>
+    template<>
+    void object::test<8>()
+    {
+        OGRField sField;
+        ensure(OGRParseDate("2017/11/31 12:34:56", &sField, 0));
+        ensure_equals(sField.Date.Year, 2017);
+        ensure_equals(sField.Date.Month, 11);
+        ensure_equals(sField.Date.Day, 31);
+        ensure_equals(sField.Date.Hour, 12);
+        ensure_equals(sField.Date.Minute, 34);
+        ensure_equals(sField.Date.Second, 56.0f);
+        ensure_equals(sField.Date.TZFlag, 0);
+
+        ensure(OGRParseDate("2017/11/31 12:34:56+00", &sField, 0));
+        ensure_equals(sField.Date.TZFlag, 100);
+
+        ensure(OGRParseDate("2017/11/31 12:34:56+12:00", &sField, 0));
+        ensure_equals(sField.Date.TZFlag, 100 + 12 * 4);
+
+        ensure(OGRParseDate("2017/11/31 12:34:56+1200", &sField, 0));
+        ensure_equals(sField.Date.TZFlag, 100 + 12 * 4);
+
+        ensure(OGRParseDate("2017/11/31 12:34:56+815", &sField, 0));
+        ensure_equals(sField.Date.TZFlag, 100 + 8 * 4 + 1);
+
+        ensure(OGRParseDate("2017/11/31 12:34:56-12:00", &sField, 0));
+        ensure_equals(sField.Date.TZFlag, 100 - 12 * 4);
+
+        ensure(OGRParseDate(" 2017/11/31 12:34:56", &sField, 0));
+        ensure_equals(sField.Date.Year, 2017);
+
+        ensure(OGRParseDate("2017/11/31 12:34:56.789", &sField, 0));
+        ensure_equals(sField.Date.Second, 56.789f);
+
+        ensure(OGRParseDate("2017-11-31T12:34:56", &sField, 0));
+        ensure_equals(sField.Date.Year, 2017);
+        ensure_equals(sField.Date.Month, 11);
+        ensure_equals(sField.Date.Day, 31);
+        ensure_equals(sField.Date.Hour, 12);
+        ensure_equals(sField.Date.Minute, 34);
+        ensure_equals(sField.Date.Second, 56.0f);
+        ensure_equals(sField.Date.TZFlag, 0);
+
+        ensure(OGRParseDate("2017-11-31T12:34:56Z", &sField, 0));
+        ensure_equals(sField.Date.Second, 56.0f);
+        ensure_equals(sField.Date.TZFlag, 100);
+
+        ensure(OGRParseDate("2017-11-31T12:34:56.789Z", &sField, 0));
+        ensure_equals(sField.Date.Second, 56.789f);
+        ensure_equals(sField.Date.TZFlag, 100);
+
+        ensure(OGRParseDate("2017-11-31", &sField, 0));
+        ensure_equals(sField.Date.Year, 2017);
+        ensure_equals(sField.Date.Month, 11);
+        ensure_equals(sField.Date.Day, 31);
+        ensure_equals(sField.Date.Hour, 0);
+        ensure_equals(sField.Date.Minute, 0);
+        ensure_equals(sField.Date.Second, 0.0f);
+        ensure_equals(sField.Date.TZFlag, 0);
+
+        ensure(OGRParseDate("12:34", &sField, 0));
+        ensure_equals(sField.Date.Year, 0);
+        ensure_equals(sField.Date.Month, 0);
+        ensure_equals(sField.Date.Day, 0);
+        ensure_equals(sField.Date.Hour, 12);
+        ensure_equals(sField.Date.Minute, 34);
+        ensure_equals(sField.Date.Second, 0.0f);
+        ensure_equals(sField.Date.TZFlag, 0);
+
+        ensure(OGRParseDate("12:34:56", &sField, 0));
+        ensure(OGRParseDate("12:34:56.789", &sField, 0));
+
+        ensure(!OGRParseDate("2017", &sField, 0));
+        ensure(!OGRParseDate("12:", &sField, 0));
+        ensure(!OGRParseDate("2017-a-31T12:34:56", &sField, 0));
+        ensure(!OGRParseDate("2017-00-31T12:34:56", &sField, 0));
+        ensure(!OGRParseDate("2017-13-31T12:34:56", &sField, 0));
+        ensure(!OGRParseDate("2017-01-00T12:34:56", &sField, 0));
+        ensure(!OGRParseDate("2017-01-aT12:34:56", &sField, 0));
+        ensure(!OGRParseDate("2017-01-32T12:34:56", &sField, 0));
+        ensure(!OGRParseDate("a:34:56", &sField, 0));
+        ensure(!OGRParseDate("2017-01-01Ta:34:56", &sField, 0));
+        ensure(!OGRParseDate("2017-01-01T25:34:56", &sField, 0));
+        ensure(!OGRParseDate("2017-01-01T00:a:00", &sField, 0));
+        ensure(!OGRParseDate("2017-01-01T00: 34:56", &sField, 0));
+        ensure(!OGRParseDate("2017-01-01T00:61:00", &sField, 0));
+        ensure(!OGRParseDate("2017-01-01T00:00:62", &sField, 0));
+        ensure(!OGRParseDate("2017-01-01T00:00:a", &sField, 0));
+    }
+
 } // namespace tut
