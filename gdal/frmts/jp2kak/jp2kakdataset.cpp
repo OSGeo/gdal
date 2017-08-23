@@ -2146,8 +2146,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     // Avoid splitting into too many tiles - apparently limiting to 64K tiles.
     // There is a hard limit on the number of tiles allowed in JPEG2000.
-    const double dfXbyY = static_cast<double>(nXSize * nYSize) / (1024 * 64);
-    while( dfXbyY >= static_cast<double>(nTileXSize * nTileYSize) )
+    const double dfXbyY = static_cast<double>(nXSize) * nYSize / (1024 * 64);
+    while( dfXbyY >= static_cast<double>(nTileXSize) * nTileYSize )
     {
         nTileXSize *= 2;
         nTileYSize *= 2;
@@ -2575,7 +2575,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             // Setup scaled progress monitor.
 
             const double dfPixelsDoneAfter =
-                dfPixelsDone + (nThisTileXSize * nThisTileYSize);
+                dfPixelsDone + static_cast<double>(nThisTileXSize) * nThisTileYSize;
 
             void *pScaledProgressData = GDALCreateScaledProgress(
                 dfPixelsDone / dfPixelsTotal, dfPixelsDoneAfter / dfPixelsTotal,
