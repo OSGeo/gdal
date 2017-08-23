@@ -1079,6 +1079,8 @@ int OGRParseDate( const char *pszInput,
 
     if( strstr(pszInput, ":") != NULL )
     {
+        if( !(*pszInput >= '0' && *pszInput <= '9') )
+            return FALSE;
         const int nHour = atoi(pszInput);
         if( nHour < 0 || nHour > 23 )
             return FALSE;
@@ -1091,6 +1093,8 @@ int OGRParseDate( const char *pszInput,
         else
             ++pszInput;
 
+        if( !(*pszInput >= '0' && *pszInput <= '9') )
+            return FALSE;
         const int nMinute = atoi(pszInput);
         if( nMinute < 0 || nMinute > 59 )
             return FALSE;
@@ -1102,6 +1106,8 @@ int OGRParseDate( const char *pszInput,
         {
             ++pszInput;
 
+            if( !(*pszInput >= '0' && *pszInput <= '9') )
+                return FALSE;
             const double dfSeconds = CPLAtof(pszInput);
             if (dfSeconds > 61.0 || dfSeconds < 0.0) return FALSE;
             psField->Date.Second = static_cast<float>(dfSeconds);
