@@ -89,7 +89,8 @@ static void Usage(const char* pszErrorMsg = NULL)
 
 static GDALGridOptionsForBinary *GDALGridOptionsForBinaryNew(void)
 {
-    return (GDALGridOptionsForBinary*) CPLCalloc(  1, sizeof(GDALGridOptionsForBinary) );
+    return static_cast<GDALGridOptionsForBinary *>(
+        CPLCalloc(1, sizeof(GDALGridOptionsForBinary)));
 }
 
 /************************************************************************/
