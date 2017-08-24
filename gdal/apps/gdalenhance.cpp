@@ -294,8 +294,10 @@ int main( int argc, char ** argv )
             exit( 1 );
         }
 
-        padfScaleMin = (double *) CPLCalloc(nBandCount,sizeof(double));
-        padfScaleMax = (double *) CPLCalloc(nBandCount,sizeof(double));
+        padfScaleMin =
+            static_cast<double *>(CPLCalloc(nBandCount,sizeof(double)));
+        padfScaleMax =
+            static_cast<double *>(CPLCalloc(nBandCount,sizeof(double)));
 
         for( iBand = 0; iBand < nBandCount; iBand++ )
         {
@@ -321,10 +323,12 @@ int main( int argc, char ** argv )
             if( papanLUTs == NULL )
             {
                 nLUTBins = CSLCount(papszTokens) - 3;
-                papanLUTs = (int **) CPLCalloc(sizeof(int*),nBandCount);
+                papanLUTs =
+                    static_cast<int **>(CPLCalloc(sizeof(int*), nBandCount));
             }
 
-            papanLUTs[iBand] = (int *) CPLCalloc(nLUTBins,sizeof(int));
+            papanLUTs[iBand] =
+                static_cast<int *>(CPLCalloc(nLUTBins, sizeof(int)));
 
             for( iLUT = 0; iLUT < nLUTBins; iLUT++ )
                 papanLUTs[iBand][iLUT] = atoi(papszTokens[iLUT+3]);
@@ -375,22 +379,21 @@ int main( int argc, char ** argv )
 /* ==================================================================== */
 /*      Create a virtual dataset.                                       */
 /* ==================================================================== */
-    VRTDataset *poVDS;
-    EnhanceCBInfo *pasEInfo = (EnhanceCBInfo *)
-        CPLCalloc(nBandCount, sizeof(EnhanceCBInfo));
+    EnhanceCBInfo *pasEInfo = static_cast<EnhanceCBInfo *>(
+        CPLCalloc(nBandCount, sizeof(EnhanceCBInfo)));
 
 /* -------------------------------------------------------------------- */
 /*      Make a virtual clone.                                           */
 /* -------------------------------------------------------------------- */
-    poVDS = new VRTDataset( GDALGetRasterXSize(hDataset),
-                            GDALGetRasterYSize(hDataset) );
+    VRTDataset *poVDS =
+        new VRTDataset(GDALGetRasterXSize(hDataset),
+                       GDALGetRasterYSize(hDataset));
 
     if( GDALGetGCPCount(hDataset) == 0 )
     {
-        const char *pszProjection;
         double adfGeoTransform[6];
 
-        pszProjection = GDALGetProjectionRef( hDataset );
+        const char *pszProjection = GDALGetProjectionRef(hDataset);
         if( pszProjection != NULL && strlen(pszProjection) > 0 )
             poVDS->SetProjection( pszProjection );
 
@@ -493,10 +496,12 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
     GUIntBig *panHistogram = NULL;
 
     // For now we always compute min/max
-    *ppadfScaleMin = (double *) CPLCalloc(sizeof(double),nBandCount);
-    *ppadfScaleMax = (double *) CPLCalloc(sizeof(double),nBandCount);
+    *ppadfScaleMin =
+        static_cast<double *>(CPLCalloc(sizeof(double), nBandCount));
+    *ppadfScaleMax =
+        static_cast<double *>(CPLCalloc(sizeof(double), nBandCount));
 
-    *ppapanLUTs = (int **) CPLCalloc(sizeof(int *),nBandCount);
+    *ppapanLUTs = static_cast<int **>(CPLCalloc(sizeof(int *), nBandCount));
 
 /* ==================================================================== */
 /*      Process all bands.                                              */
@@ -527,7 +532,8 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
 /*      We take care to use big integers as there may be more than 4    */
 /*      Gigapixels.                                                     */
 /* -------------------------------------------------------------------- */
-        GUIntBig *panCumHist = (GUIntBig *) CPLCalloc(sizeof(GUIntBig),nHistSize);
+        GUIntBig *panCumHist =
+            static_cast<GUIntBig *>(CPLCalloc(sizeof(GUIntBig), nHistSize));
         GUIntBig nTotal = 0;
         int iHist;
 
@@ -549,13 +555,14 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
 /* -------------------------------------------------------------------- */
 /*      Now compute a LUT from the cumulative histogram.                */
 /* -------------------------------------------------------------------- */
-        int *panLUT = (int *) CPLCalloc(sizeof(int),nLUTBins);
+        int *panLUT = static_cast<int *>(CPLCalloc(sizeof(int), nLUTBins));
         int iLUT;
 
         for( iLUT = 0; iLUT < nLUTBins; iLUT++ )
         {
             iHist = (iLUT * nHistSize) / nLUTBins;
-            int nValue = (int) ((panCumHist[iHist] * nLUTBins) / nTotal);
+            int nValue =
+                static_cast<int>((panCumHist[iHist] * nLUTBins) / nTotal);
 
             panLUT[iLUT] = std::max(0, std::min(nLUTBins - 1, nValue));
         }
@@ -586,9 +593,10 @@ static CPLErr EnhancerCallback( void *hCBData,
         exit( 2 );
     }
 
-    GByte *pabyOutImage = (GByte *) pData;
+    GByte *pabyOutImage = static_cast<GByte *>(pData);
     CPLErr eErr;
-    float *pafSrcImage = (float *) CPLCalloc(sizeof(float),nXSize*nYSize);
+    float *pafSrcImage =
+        static_cast<float *>(CPLCalloc(sizeof(float), nXSize * nYSize));
 
     eErr = psEInfo->poSrcBand->
         RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,

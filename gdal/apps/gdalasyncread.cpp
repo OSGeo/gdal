@@ -165,8 +165,8 @@ int main( int argc, char ** argv )
             }
 
             nBandCount++;
-            panBandList = (int *)
-                CPLRealloc(panBandList, sizeof(int) * nBandCount);
+            panBandList = static_cast<int *>(
+                CPLRealloc(panBandList, sizeof(int) * nBandCount));
             panBandList[nBandCount-1] = atoi(argv[++i]);
 
             if( panBandList[nBandCount-1] != nBandCount )
@@ -307,7 +307,7 @@ int main( int argc, char ** argv )
             exit(1 );
         }
 
-        panBandList = (int *) CPLMalloc(sizeof(int)*nBandCount);
+        panBandList = static_cast<int *>(CPLMalloc(sizeof(int) * nBandCount));
         for( i = 0; i < nBandCount; i++ )
             panBandList[i] = i+1;
     }
@@ -402,7 +402,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     const int nBytesPerPixel =
         nBandCount * GDALGetDataTypeSizeBytes(eOutputType);
-    void *pImage = VSIMalloc3( nOXSize, nOYSize, nBytesPerPixel );
+    void *pImage = VSIMalloc3(nOXSize, nOYSize, nBytesPerPixel);
 
     if( pImage == NULL )
     {

@@ -175,8 +175,8 @@ int main( int nArgc, char ** papszArgv )
             iArg++;
 
             nBandCount++;
-            panBandList = (int *)
-                CPLRealloc(panBandList, sizeof(int) * nBandCount);
+            panBandList = static_cast<int *>(
+                CPLRealloc(panBandList, sizeof(int) * nBandCount));
             panBandList[nBandCount-1] = nBand;
         }
         else if( EQUAL(papszArgv[iArg], "-oo") )
@@ -273,7 +273,7 @@ int main( int nArgc, char ** papszArgv )
         if(nBandCount > 0)
             CPLSetConfigOption( "USE_RRD", "YES" );
 
-        if (nLevelCount > 0 && 
+        if (nLevelCount > 0 &&
             GDALBuildOverviews( hDataset,pszResampling, nLevelCount, anLevels,
                                 nBandCount, panBandList, pfnProgress, NULL ) != CE_None )
         {
