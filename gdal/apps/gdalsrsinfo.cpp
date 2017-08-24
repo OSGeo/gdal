@@ -307,7 +307,7 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
                 }
             }
         }
-        GDALClose( (GDALDatasetH) poGDALDS );
+        GDALClose(poGDALDS);
         if ( ! bGotSRS )
             CPLDebug( "gdalsrsinfo", "did not open with GDAL" );
     }

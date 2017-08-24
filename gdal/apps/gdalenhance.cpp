@@ -461,9 +461,9 @@ int main( int argc, char ** argv )
     if( hOutDS != NULL )
         GDALClose( hOutDS );
 
-    GDALClose( (GDALDatasetH) poVDS );
+    GDALClose(poVDS);
 
-    GDALClose( hDataset );
+    GDALClose(hDataset);
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup and exit.                                               */

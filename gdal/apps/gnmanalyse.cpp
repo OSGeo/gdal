@@ -623,7 +623,7 @@ int main( int nArgc, char ** papszArgv )
         poDS->ReleaseResultSet(poResultLayer);
 
     if( poDS != NULL )
-        GDALClose( (GDALDatasetH)poDS );
+        GDALClose(poDS);
 
     GDALDestroyDriverManager();
 

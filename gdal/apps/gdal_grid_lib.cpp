@@ -590,7 +590,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to identify source layer from datasource." );
-        GDALClose( (GDALDatasetH) poDS );
+        GDALClose(poDS);
         return NULL;
     }
 
@@ -629,7 +629,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
                 OGRFeature::DestroyFeature( poFeat );
                 if ( pszSQL != NULL )
                     poDS->ReleaseResultSet( poLyr );
-                GDALClose( (GDALDatasetH) poDS );
+                GDALClose(poDS);
                 return NULL;
             }
         }
@@ -639,7 +639,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
 
     if( pszSQL != NULL )
         poDS->ReleaseResultSet( poLyr );
-    GDALClose( (GDALDatasetH) poDS );
+    GDALClose(poDS);
 
     return poGeom;
 }

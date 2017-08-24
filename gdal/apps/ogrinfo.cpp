@@ -565,7 +565,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
-    GDALClose( (GDALDatasetH)poDS );
+    GDALClose(poDS);
 
 #ifdef __AFL_HAVE_MANUAL_CONTROL
     }

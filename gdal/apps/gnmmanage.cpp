@@ -914,7 +914,7 @@ exit:
     CSLDestroy( papszLayers );
 
     if( poDS != NULL )
-        GDALClose( (GDALDatasetH)poDS );
+        GDALClose(poDS);
 
     GDALDestroyDriverManager();
 
