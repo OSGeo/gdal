@@ -1280,7 +1280,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Error : band %d has no color table",
                      std::abs(psOptions->panBandList[0]));
-            GDALClose((GDALDatasetH) poVDS);
+            GDALClose(poVDS);
             GDALTranslateOptionsFree(psOptions);
             return NULL;
         }
@@ -1309,7 +1309,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         else
         {
             CPLError( CE_Failure, CPLE_IllegalArg, "Error : invalid use of -expand option.");
-            GDALClose((GDALDatasetH) poVDS);
+            GDALClose(poVDS);
             GDALTranslateOptionsFree(psOptions);
             return NULL;
         }
@@ -1768,7 +1768,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                                 psOptions->pfnProgress, psOptions->pProgressData );
         hOutDS = GDALTranslateFlush(hOutDS);
 
-        GDALClose( (GDALDatasetH) poVDS );
+        GDALClose(poVDS);
     }
 
     GDALTranslateOptionsFree(psOptions);

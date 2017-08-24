@@ -1609,9 +1609,9 @@ int main( int nArgc, char ** papszArgv )
         }
 
         //clean up
-        GDALClose( (GDALDatasetH)poLnDS);
-        GDALClose( (GDALDatasetH)poPkDS);
-        GDALClose( (GDALDatasetH)poODS);
+        GDALClose(poLnDS);
+        GDALClose(poPkDS);
+        GDALClose(poODS);
 
         if (NULL != pszOutputLayerName)
             CPLFree(pszOutputLayerName);
@@ -1670,7 +1670,7 @@ int main( int nArgc, char ** papszArgv )
         eErr = GetPosition(poPartsLayer, dfX, dfY, bDisplayProgress, bQuiet);
 
         //clean up
-        GDALClose( (GDALDatasetH)poPartsDS);
+        GDALClose(poPartsDS);
 #else //HAVE_GEOS_PROJECT
         fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
         exit( 1 );
@@ -1724,7 +1724,7 @@ int main( int nArgc, char ** papszArgv )
         eErr = GetCoordinates(poPartsLayer, dfPos, bDisplayProgress, bQuiet);
 
         //clean up
-        GDALClose( (GDALDatasetH)poPartsDS);
+        GDALClose(poPartsDS);
     }
     else if (stOper == op_get_subline)
     {
@@ -1833,9 +1833,8 @@ int main( int nArgc, char ** papszArgv )
         //do the work
         eErr = CreateSubline(poPartsLayer, dfPosBeg, dfPosEnd, poOutLayer, bDisplayProgress, bQuiet);
 
-        //clean up
-        GDALClose( (GDALDatasetH) poPartsDS);
-        GDALClose( (GDALDatasetH) poODS);
+        GDALClose(poPartsDS);
+        GDALClose(poODS);
 
         if (NULL != pszOutputLayerName)
             CPLFree(pszOutputLayerName);

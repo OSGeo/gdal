@@ -294,7 +294,7 @@ int main( int nArgc, char **papszArgv )
                     }
                 }
 
-                GDALClose( (GDALDatasetH)poDS );
+                GDALClose(poDS);
             }
 
             poDstLayer = poDstDS->CreateLayer( "tileindex", poSrcSpatialRef );
