@@ -320,10 +320,10 @@ Resampling algorithm. Only used for TILING_SCHEME is different from CUSTOM. Defa
 to BILINEAR.</li>
 <li><b>PRECISION</b>=floating_point_value_in_vertical_units: Smallest significant value.
 Only used for tile gridded elevation data. Defaults to 1.</li>
-<li><b>VERSION</b>=AUTO/1.0/1.1/1.2: (GDAL &gt; 2.2) Set GeoPackage version
+<li><b>VERSION</b>=AUTO/1.0/1.1/1.2: (GDAL &gt;= 2.2) Set GeoPackage version
 (for application_id and user_version fields). In AUTO mode, this will be equivalent
-to 1.0, unless a tile gridded elevation dataset is created, in which case 1.2 will
-be used.</li>
+to 1.0, unless a tile gridded elevation dataset, or a non-spatial
+table (using the 'attributes' data type) is created, in which case 1.2 will be used.</li>
 </ul>
 
 <h2>Overviews</h2>
