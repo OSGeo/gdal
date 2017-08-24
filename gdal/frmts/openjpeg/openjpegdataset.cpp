@@ -787,11 +787,23 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
 
     if (bUseSetDecodeArea)
     {
+        /* We need to explicitely set the resolution factor on the image */
+        /* otherwise opj_set_decode_area() will assume we decode at full */
+        /* resolution. */
+        /* If using parameters.cp_reduce instead of opj_set_decoded_resolution_factor() */
+        /* we wouldn't need to do that, as opj_read_header() would automatically */
+        /* assign the comps[].factor to the appropriate value */
+        for(unsigned int iBand = 0; iBand < psImage->numcomps; iBand ++)
+        {
+            psImage->comps[iBand].factor = iLevel;
+        }
+        /* The decode area must be expressed in grid reference, ie at full*/
+        /* scale */
         if (!opj_set_decode_area(pCodec,psImage,
-                                 nBlockXOff*nBlockXSize,
-                                 nBlockYOff*nBlockYSize,
-                                 nBlockXOff*nBlockXSize+nWidthToRead,
-                                 nBlockYOff*nBlockYSize+nHeightToRead))
+                                 (nBlockXOff*nBlockXSize) << iLevel,
+                                 (nBlockYOff*nBlockYSize) << iLevel,
+                                 (nBlockXOff*nBlockXSize+nWidthToRead) << iLevel,
+                                 (nBlockYOff*nBlockYSize+nHeightToRead) << iLevel))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "opj_set_decode_area() failed");
             eErr = CE_Failure;
