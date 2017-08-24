@@ -9,7 +9,6 @@
 
 <p>This driver implements support for access to spatial tables in the
 <a href="http://www.opengeospatial.org/standards/geopackage">OGC GeoPackage format standard</a>
-(targeting 1.0/1.0.1)
 The GeoPackage standard uses a SQLite database file as a generic container, and the standard defines:
 </p>
 <ul>
@@ -23,6 +22,14 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
 
 <p>Starting with GDAL 2.0, GeoPackage raster/tiles are supported. See
 <a href="drv_geopackage_raster.html">GeoPackage raster</a> documentation page</p>
+
+<h2>Specification version</h2>
+
+<p>Starting with GDAL 2.2, the driver is able to create GeoPackage databases
+following the 1.0/1.0.1, 1.1 or 1.2 versions. By default, it will automatically
+adjust to the minimum version required for the features of GeoPackage used.
+Explicit version choice can be done by specifying the VERSION dataset creation
+option.</p>
 
 <h2>Limitations</h2>
 
@@ -127,7 +134,18 @@ most OGR utilities, or with the GDALOpenEx() API call.
 
 <h3>Dataset Creation Options</h3>
 
-<p>None related to vector</p>
+<p>The following creation options (specific to vector, or common with raster)
+are available:</p>
+
+<ul>
+<li><b>VERSION</b>=AUTO/1.0/1.1/1.2: (GDAL &gt;= 2.2) Set GeoPackage version
+(for application_id and user_version fields). In AUTO mode, this will be equivalent
+to 1.0, unless a tile gridded elevation dataset, or a non-spatial
+table (using the 'attributes' data type) is created, in which case 1.2 will be used.</li>
+</ul>
+
+<p>Other options are available for raster. See the
+<a href="drv_geopackage_raster.html">GeoPackage raster</a> documentation page</p>
 
 <h3>Layer Creation Options</h3>
 
