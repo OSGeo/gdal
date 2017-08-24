@@ -646,7 +646,11 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     if( eErr != CE_None )
     {
         delete poDstDS;
-        Delete( pszFilename );
+        if( !CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false) )
+        {
+            // Only delete if creating a new file
+            Delete( pszFilename );
+        }
         return NULL;
     }
     else
