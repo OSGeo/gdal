@@ -494,8 +494,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
     }
     CPLDebug("GDAL_GRID", "Work buffer: %d * %d", nBlockXSize, nBlockYSize);
 
-    void    *pData =
-        VSIMalloc3( nBlockXSize, nBlockYSize, nDataTypeSize );
+    void *pData = VSIMalloc3(nBlockXSize, nBlockYSize, nDataTypeSize);
     if( pData == NULL )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate work buffer");
@@ -920,7 +919,8 @@ static int IsNumber(const char* pszStr)
 
 GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* psOptionsForBinary)
 {
-    GDALGridOptions *psOptions = (GDALGridOptions *) CPLCalloc( 1, sizeof(GDALGridOptions) );
+    GDALGridOptions *psOptions =
+        static_cast<GDALGridOptions *>(CPLCalloc(1, sizeof(GDALGridOptions)));
 
     psOptions->pszFormat = CPLStrdup("GTiff");
     psOptions->bQuiet = TRUE;
